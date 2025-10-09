@@ -131,6 +131,19 @@ wavelength:
     # window
     window_size: 50
 
+  # This is used mostly for debugging and forcing a previous wave solution
+  #   instead of generating a new one (do not use without good reason)
+  from_file:
+    # whether to force from file (if False we will generate a new solution and
+    #   not use the following parameters)
+    force: True
+    # the final wave solution file to use (if force is True)
+    # must exist in the inpath directory (otherwise we generate a new solution)
+    final_wave_sol: REF_WAVE_2400416c_AB.fits
+    # the final cavity length file to use (if force is True) v0.7 format
+    # must exist in the inpath directory (otherwise we generate a new solution)
+    final_fit_cavity: cavity_length_ll_fit.dat
+
   # How many iterations to run to guess the wavelength solution
   #   Minimum is 2, recommended is at least 3
   number_iterations: 3

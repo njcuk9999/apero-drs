@@ -65,7 +65,7 @@ from apero.tools.module.static import drs_static
 from apero.plotting import plot_functions
 from apero.science.calib import wave as wave_mod
 from apero.instruments import select
-
+from apero.utils import drs_data
 
 # =============================================================================
 # Define variables
@@ -143,7 +143,8 @@ def main(params: ParamDict, recipe, sparams: Dict[str, Any]):
     # -------------------------------------------------------------------------
     # Update repo
     # -------------------------------------------------------------------------
-    drs_static.update_repo(params, recipe, save_path=cal_path)
+    drs_static.update_repo(params, recipe, save_path=cal_path,
+                           outdir='calib')
 
 
 def generate_hc_catagloue(params: ParamDict, recipe, 
@@ -212,6 +213,13 @@ def generate_wave_guess(params: ParamDict, recipe, sparams: Dict[str, Any],
     hc_cat_file.construct_filename(path=cal_path)
     # load the hc catalogue
     hc_cat_table = hc_cat_file.hdulist_load(params, 'HC_CAT')
+    # -------------------------------------------------------------------------
+    # deal with forcing a wave solution from file
+    if sparams['wavelength']['from_file']['force']:
+        forced = get_wavesol_from_file(params, recipe, sparams, cal_path,
+                                       hc_file, fp_file)
+        if forced:
+            return
     # -------------------------------------------------------------------------
     # get the number of orders
     norders, nxpix = hc_image.shape
@@ -1404,6 +1412,88 @@ def get_peak0_guess(params: ParamDict, sparams: Dict[str, Any],
     return pvalue
 
 
+def get_wavesol_from_file(params: ParamDict, recipe, sparams: Dict[str, Any],
+                          cal_path, hc_file, fp_file) -> bool:
+    """
+    Test way to push previous wavesolution into static files
+    """
+    # check if we have a final wave sol file
+    fparams = sparams['wavelength']['from_file']
+    # get instrument
+    pconst = load_functions.load_pconfig(select.INSTRUMENTS)
+    # get the fiber names
+    science_fibers, ref_fiber = pconst.FIBER_KINDS()
+    # get the input path
+    inpath = sparams['inpath']
+    # -------------------------------------------------------------------------
+    # deal with no final wave sol file
+    if fparams['final_wave_sol'] is None:
+        msg = ('No final_wave_sol file provided '
+               '- to force please update wavelength.from_file.final_wave_sol')
+        WLOG(params, 'warning', msg)
+        return False
+    else:
+        wavefile = str(os.path.join(inpath, fparams['final_wave_sol']))
+    # deal with no final fit cavity file
+    if fparams['final_fit_cavity'] is None:
+        msg = ('No final_fit_cavity file provided '
+               '- to force please update '
+               'wavelength.from_file.final_fit_cavity')
+        WLOG(params, 'warning', msg)
+        return False
+    else:
+        cavfile = str(os.path.join(inpath, fparams['final_fit_cavity']))
+    # -------------------------------------------------------------------------
+    # deal with final wave sol file not existing
+    if not os.path.exists(wavefile):
+        msg = ('final_wave_sol file provided does not exist: {0} '
+               '- to force please update '
+               'wavelength.from_file.final_wave_sol')
+        margs = [wavefile]
+        WLOG(params, 'warning', msg.format(*margs))
+        return False
+    # deal with final fit cavity file not existing
+    if not os.path.exists(cavfile):
+        msg = ('final_fit_cavity file provided does not exist: {0} '
+               '- to force please update '
+               'wavelength.from_file.final_fit_cavity')
+        margs = [cavfile]
+        WLOG(params, 'warning', msg.format(*margs))
+        return False
+    # -------------------------------------------------------------------------
+    # if we get to here print progress
+    msg = ('Force-loading final wave solution from file: {0} '
+           'and final fit to cavity from file: {1}. '
+           '\n\nWe will not generate a new wave solution.')
+    margs = [wavefile, cavfile]
+    WLOG(params, 'info', msg.format(*margs))
+    # -------------------------------------------------------------------------
+    # get wave time from mean of hc and fp files
+    fp_hdr = fp_file.get_header()
+    # -------------------------------------------------------------------------
+    # load the final wave solution
+    wargs = [ref_fiber, wavefile, fp_hdr, None, False]
+    wout = wave_mod.get_wave_solution_from_wavefile(params, *wargs)
+    wavefile, wavemap, wavepath, wavesource, wavetime = wout
+    # -------------------------------------------------------------------------
+    # extract keys from header
+    nbo = wavefile.get_hkey('KW_WAVE_NBO', dtype=int)
+    deg = wavefile.get_hkey('KW_WAVE_DEG', dtype=int)
+    # extract cofficients from header
+    wave_coeffs = wavefile.get_hkey_2d('KW_WAVECOEFFS',
+                                       dim1=nbo, dim2=deg + 1)
+    # -------------------------------------------------------------------------
+    # load previous fit to cavity
+    fit_cavity = list(drs_data.load_text_file(params, cavfile, dtype=float))
+    # -------------------------------------------------------------------------
+    package_wavesol(params, recipe, sparams, cal_path, hc_file, fp_file,
+                    wavemap, wave_coeffs, fit_cavity)
+    # -------------------------------------------------------------------------
+    # if we get to here we are successful in packaging the wave solution from
+    #  files --> return True so we don't continue
+    return True
+
+
 def package_wavesol(params: ParamDict, recipe, sparams: Dict[str, Any],
                     cal_path: str, hc_file, fp_file,
                     final_wave_sol: np.ndarray, final_wave_coeffs: np.ndarray, 
@@ -1424,17 +1514,16 @@ def package_wavesol(params: ParamDict, recipe, sparams: Dict[str, Any],
 
     :return: None, saves wave solution static files
     """
+    # set function name
+    func_name = __NAME__ + '.package_wavesol()'
     # get instrument
     pconst = load_functions.load_pconfig(select.INSTRUMENTS)
     # get the fiber names
     science_fibers, ref_fiber = pconst.FIBER_KINDS()
-    # get wave time from mean of hc and fp files
-    fp_hdr = fp_file.hdulist_load('FP_E2DS', getdata=False, gethdr=True)
-    hc_hdr = hc_file.hdulist_load('HC_E2DS', getdata=False, gethdr=True)
     # --------------------------------------------------------------------------
     # get wave time
-    hc_wavetime = hc_hdr[params['KW_MID_OBS_TIME'][0]]
-    fp_wavetime = fp_hdr[params['KW_MID_OBS_TIME'][0]]
+    hc_wavetime = hc_file.get_hkey('KW_MID_OBS_TIME', dtype=float)
+    fp_wavetime = fp_file.get_hkey('KW_MID_OBS_TIME', dtype=float)
     # take the wave time as then mean of hc and fp
     wave_time = (hc_wavetime + fp_wavetime) / 2
     # set up the header kwargs
@@ -1447,6 +1536,7 @@ def package_wavesol(params: ParamDict, recipe, sparams: Dict[str, Any],
                                     DIM1='file')
     # set up the wave properties
     wprops = ParamDict()
+    wprops['WAVEFILE'] = 'Unknown'
     wprops['WAVEMAP'] = final_wave_sol
     wprops['WAVETIME'] = wave_time
     wprops['WAVEPATH'] = cal_path
@@ -1470,10 +1560,18 @@ def package_wavesol(params: ParamDict, recipe, sparams: Dict[str, Any],
     wprops['MEAN_HC_VEL'] = 0.0
     wprops['ERR_HC_VEL'] = 0.0
     wprops['WAVE_POLY_TYPE'] = 'Chebyshev'
-
+    # set source of keys
+    keys = ['WAVEFILE', 'WAVEMAP', 'WAVETIME', 'WAVEPATH', 'WAVESOURCE', 'NBO',
+            'DEG', 'COEFFS', 'EORDERS', 'WFP_FILE', 'WFP_DRIFT',
+            'WFP_FWHM', 'WFP_CONTRAST', 'WFP_MASK', 'WFP_LINES',
+            'WFP_TARG_RV', 'WFP_WIDTH', 'WFP_STEP', 'CAVITY',
+            'CAVITY_DEG', 'CAVITY_PEDESTAL', 'MEAN_HC_VEL',
+            'ERR_HC_VEL', 'WAVE_POLY_TYPE']
+    wprops.set_sources(keys, func_name)
+    # --------------------------------------------------------------------------
     # get echelle orders
     wprops = wave_mod.get_echelle_orders(params, wprops)
-
+    # --------------------------------------------------------------------------
     # we loop around all fibers (we will use the same wave solution for all)
     for fiber in science_fibers + [ref_fiber]:
         # ---------------------------------------------------------------------
@@ -1481,13 +1579,14 @@ def package_wavesol(params: ParamDict, recipe, sparams: Dict[str, Any],
         static_file = recipe.outputs['STATIC_WAVE_REF'].newcopy(params=params)
         # construct the filename from file instance
         static_file.construct_filename(path=cal_path, fiber=fiber)
-
-        static_file = wave_mod.add_wave_keys(static_file, wprops)
         # ---------------------------------------------------------------------
         # add the fiber to the header kwargs
         hdr_kwargs['KW_FIBER'] = fiber
         # set the wave file
         wprops['WAVEFILE'] = static_file.basename
+        # ---------------------------------------------------------------------
+        # add the standard wave keys to the static file
+        static_file = wave_mod.add_wave_keys(static_file, wprops)
         # ---------------------------------------------------------------------
         drs_static.save_static_file(params, recipe, static_file,
                                     desc='wave solution',

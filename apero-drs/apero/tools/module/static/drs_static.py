@@ -15,6 +15,7 @@ Created on 2025-05-26 at 09:40
 """
 import os
 import shutil
+import time
 from typing import Any, Dict, List, Union
 
 import numpy as np
@@ -168,7 +169,8 @@ def save_static_file(params: ParamDict, recipe, static_file: DrsFitsFile,
     recipe.add_output_file(static_file)
 
 
-def update_repo(params: ParamDict, recipe, save_path: str):
+def update_repo(params: ParamDict, recipe, save_path: str,
+                outdir: str = ''):
     """
     Update the local github repository for APERO with the new version of the
     files (up to now they have been saved to the installation path not the
@@ -187,10 +189,17 @@ def update_repo(params: ParamDict, recipe, save_path: str):
     _asset_path = params['IPATH.RESET_ASSETS']
     # get the absolute path to the assets dir
     abs_asset_path = drs_data.construct_path(params, '', _asset_path)
-
-    # output files
+    # get the instrument
+    instrument = params['OBS.INSTRUMENT'].lower()
+    # -------------------------------------------------------------------------
+    # add outdir if set to abs_asset_path
+    abs_asset_path = os.path.join(abs_asset_path, instrument, outdir)
+    # make sure abs_asset_path exists
+    if not os.path.exists(abs_asset_path):
+        os.makedirs(abs_asset_path)
+    # ------------------------------------------------------------------------
+    # get the keys of the output files
     output_keys = list(recipe.output_files.keys())
-
     # loop around files
     for key in output_keys:
         # get the basename
@@ -205,7 +214,7 @@ def update_repo(params: ParamDict, recipe, save_path: str):
         out_path = in_path.replace(save_path, abs_asset_path)
         out_file = str(os.path.join(out_path, basename))
         # Get user to confirm removal of file
-        question = 'Update and replace {0}?'.format(out_file)
+        question = '\n\nUpdate and replace {0}?'.format(out_file)
         uinput = drs_text.user_input(question, dtype='YN')
         # only if user confirms removal of this file
         if uinput:
@@ -218,6 +227,8 @@ def update_repo(params: ParamDict, recipe, save_path: str):
             WLOG(params, '', msg.format(*margs))
             # copy file
             shutil.copy(in_file, out_file)
+        # to avoid input issues on some systems
+        time.sleep(0.25)
         # remove from recipe outputs (we don't want to index this file)
         del recipe.output_files[key]
 
@@ -231,8 +242,8 @@ def update_assets(params: ParamDict):
     :return None - updates remote assets
     """
     # Ask user if they wish to update the remote assets
-    question = 'Update remote assets with all changes?'
-    uinput = drs_text.user_input(question, dtype='YN')
+    question = '\n\nUpdate REMOTE assets with all changes?'
+    uinput = drs_text.user_input(question, dtype='YN', color='m')
     # deal with no --> return
     if not uinput:
         return

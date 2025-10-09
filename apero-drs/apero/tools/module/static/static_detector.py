@@ -106,7 +106,8 @@ def main(params: ParamDict, recipe, sparams: Dict[str, Any]):
     # -------------------------------------------------------------------------
     # Update repo
     # -------------------------------------------------------------------------
-    drs_static.update_repo(params, recipe, save_path=det_path)
+    drs_static.update_repo(params, recipe, save_path=det_path,
+                           outdir='engineering')
 
 
 # =============================================================================
