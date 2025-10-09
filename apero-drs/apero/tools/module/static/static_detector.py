@@ -420,7 +420,7 @@ def create_high_pass_flat(params: ParamDict, recipe,
     flat[bad_pix] = np.nan
     # -------------------------------------------------------------------------
     # get static file
-    static_file = recipe.outputs['STATIC_LED'].newcopy(params=params)
+    static_file = recipe.outputs['STATIC_FLAT'].newcopy(params=params)
     # construct the filename from file instance
     static_file.construct_filename(path=det_path)
     # -------------------------------------------------------------------------
@@ -567,7 +567,7 @@ def create_dark_curr(params: ParamDict, recipe, in_path: str,  det_path: str,
     hdr_kwargs = dict(KW_STATIC_DARKCURR_CMODE=combine_mode)
     # -------------------------------------------------------------------------
     # get static file
-    static_file = recipe.outputs['STATIC_DARK_CURRC_LED'].newcopy(params=params)
+    static_file = recipe.outputs['STATIC_DARK_CURR'].newcopy(params=params)
     # construct the filename from file instance
     static_file.construct_filename(path=det_path)
     stbl = static_file.hdulist['STATIC_FLAT_TABLE']
@@ -653,10 +653,10 @@ def create_hotpix_map(params: ParamDict, recipe, det_path: str,
     nsig = dark0[hot_pixels] / sigma
     # -------------------------------------------------------------------------
     # get static file
-    static_file = recipe.outputs['STATIC_DARK_CURRC_LED'].newcopy(params=params)
+    static_file = recipe.outputs['STATIC_HOTPIX'].newcopy(params=params)
     # construct the filename from file instance
     static_file.construct_filename(path=det_path)
-    stbl = static_file.hdulist['STATIC_FLAT_TABLE']
+    stbl = static_file.hdulist['hotpix']
     # Create table of hot pixel coordinates
     hotpix = stbl.create_table(nsig=nsig, xpix=xpix, ypix=ypix)
     # -------------------------------------------------------------------------

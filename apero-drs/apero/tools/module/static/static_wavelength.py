@@ -61,7 +61,6 @@ from aperocore.base import physics
 from aperocore import math as mp
 
 from apero.base import base as apero_base
-from apero.utils import drs_data
 from apero.tools.module.static import drs_static
 from apero.plotting import plot_functions
 from apero.science.calib import wave as wave_mod
@@ -150,6 +149,8 @@ def main(params: ParamDict, recipe, sparams: Dict[str, Any]):
 def generate_hc_catagloue(params: ParamDict, recipe, 
                           sparams: Dict[str, Any], cal_path: str, 
                           ofiles: Dict[str, Any]) -> Dict[str, Any]:
+    # print progress
+    WLOG(params, 'info', 'Generating HC catalogue')
     # get the wavelength sparams for input hc cat
     wparams = sparams['wavelength']
     # download the hc model
@@ -192,7 +193,9 @@ def generate_hc_catagloue(params: ParamDict, recipe,
 
 def generate_wave_guess(params: ParamDict, recipe, sparams: Dict[str, Any],
                         cal_path: str, ofiles: Dict[str, Any]):
-
+    # print progress
+    msg = 'Generating wavelength guess from HC and FP extracted files'
+    WLOG(params, 'info', msg)
     # get static hc e2ds file
     hc_file = ofiles['STATIC_HC_E2DS']
     # load the hc file
@@ -220,31 +223,53 @@ def generate_wave_guess(params: ParamDict, recipe, sparams: Dict[str, Any],
     # now we iterate several times to build the wavelength solution
     # first time we use the initial guess from the yaml file
     # then we use the previous solution to robustly fit the cavity
+    tot_iterations = sparams['wavelength']['number_iterations']
 
-    for iteration in range(sparams['wavelength']['number_iterations']):
-
+    for iteration in range(tot_iterations):
+        # print progress
+        msg = 'Static wavelength generation (iteration {0}/{1})'
+        margs = [iteration + 1, tot_iterations]
+        WLOG(params, 'info', msg.format(*margs))
         # initialize storage arrays
         fit_cavity = [sparams['wavelength']['cavity0']]
         # ---------------------------------------------------------------------
         # Step 1: Check if we have enough previous solutions to
         #         robustly fit the cavity
         # ---------------------------------------------------------------------
-        n_pickles = count_wave_pickles(sparams)
+        n_pickles = count_wave_pickles(params, sparams)
         # if we have more than 5 pickles, we can refine the cavity fit
         if n_pickles > 5:
-            rout = refine_cavity_fit(params, recipe, sparams, orders)
-            fit_cavity, known_orders = rout
+            # print progress
+            msg = ('We have {0} previous wave pickles '
+                   '- refining cavity fit (Iteration {1}/{2})')
+            margs = [n_pickles, iteration, tot_iterations]
+            WLOG(params, 'info', msg.format(*margs))
+            # refine the cavity fit
+            fit_cavity = refine_cavity_fit(params, recipe, sparams, orders)
         # ---------------------------------------------------------------------
         # Step 2: Build the wavelength solution (two iterations)
         # ---------------------------------------------------------------------
-        for iteration in range(2):
+        for bw_itr in range(2):
+            # print progress
+            msg = 'Building wave solution (iteration {0}/{1}: step {2}/{3})'
+            margs = [iteration + 1, tot_iterations, bw_itr + 1, 2]
+
+            WLOG(params, 'info', params['LOG.HEADER'])
+            WLOG(params, 'info', msg.format(*margs))
+            WLOG(params, 'info', params['LOG.HEADER'])
+            # build the wave solution
             build_wavesol(params, recipe, sparams, cal_path, hc_image,
-                          fp_image, hc_cat_table, iteration, fit_cavity, orders)
+                          fp_image, hc_cat_table, bw_itr, fit_cavity, orders)
         # ---------------------------------------------------------------------
         # Step 3: Build the final 2D wavelength solution for all orders
         # ---------------------------------------------------------------------
-        fout = build_final_wavesol(params, recipe, sparams, cal_path, hc_image,
-                                    fp_image, )
+        # print progress
+        msg = 'Building final wave solution for iteration {0}/{1}'
+        margs = [iteration + 1, tot_iterations]
+        WLOG(params, 'info', msg.format(*margs))
+        # build the final wave solution
+        fout = build_final_wavesol(params, recipe, sparams, fp_image,
+                                   fit_cavity)
         final_wave_sol, final_wave_coeffs, final_fit_cavity = fout       
         # ---------------------------------------------------------------------
         # plot the final wavelength solution for all orders
@@ -257,6 +282,11 @@ def generate_wave_guess(params: ParamDict, recipe, sparams: Dict[str, Any],
         # ---------------------------------------------------------------------
         # Step 4: compile into packaged wavelength solution and cavity fit file
         # ---------------------------------------------------------------------
+        # print progress
+        msg = 'Packaging the wave solution for iteration {0}/{1}'
+        margs = [iteration + 1, tot_iterations]
+        WLOG(params, 'info', msg.format(*margs))
+        # package the wave solution
         package_wavesol(params, recipe, sparams, cal_path, 
                         hc_file, fp_file,
                         final_wave_sol, final_wave_coeffs, final_fit_cavity)
@@ -399,14 +429,14 @@ def refine_cavity_fit(params: ParamDict, recipe, sparams: Dict[str, Any],
     ord_cavity_center[invalid] = np.polyval(fit_cavity_ord, 
                                             ord_wave_center[invalid])
     # -------------------------------------------------------------------------
-    # robustly fit the known orders
-    kfit, keep_orders = mp.robust_polyfit(known_orders, 1 / mid_wavelengths, 
-                                          1, 3)
-    # get the valid orders to keep
-    valid_orders = np.in1d(all_fp_order, known_orders[keep_orders])
-    # update ord wave and cavity centers
-    ord_wave_center = ord_wave_center[valid_orders]
-    ord_cavity_center = ord_cavity_center[valid_orders]
+    # # robustly fit the known orders
+    # kfit, keep_orders = mp.robust_polyfit(known_orders, 1 / mid_wavelengths,
+    #                                       1, 3)
+    # # get the valid orders to keep
+    # valid_orders = np.in1d(all_fp_order, known_orders[keep_orders])
+    # # update ord wave and cavity centers
+    # ord_wave_center = ord_wave_center[valid_orders]
+    # ord_cavity_center = ord_cavity_center[valid_orders]
 
     # -------------------------------------------------------------------------
     # Final robust fit to the cavity using all fp data and user validation
@@ -513,10 +543,12 @@ def build_wavesol(params: ParamDict, recipe, sparams: Dict[str, Any],
             msg = 'Skipping order {0} - csv file already exists'
             margs = [order_num]
             WLOG(params, '', msg.format(*margs))
+            WLOG(params, '', params['LOG.HEADER'])
         else:
-            msg = 'Building wavelength solution for order {0}'
+            msg = '\nBuilding wavelength solution for order {0}'
             margs = [order_num]
             WLOG(params, '', msg.format(*margs))
+            WLOG(params, '', params['LOG.HEADER'])
         # ---------------------------------------------------------------------
         # load the HC spectrum for this order
         hc_spectrum = hc_image[order_num]
@@ -582,8 +614,14 @@ def build_wavesol(params: ParamDict, recipe, sparams: Dict[str, Any],
         dict_fp['fp_pix'] = None
         dict_fp['peak0_guess'] = None
         # ---------------------------------------------------------------------
+        n_guesses = len(peak0_guesses)
         # try all possible FP cavity order guesses and find the best alignment
-        for it, peak0_guess in tqdm(enumerate(peak0_guesses)):
+        msg = ('Trying {0} FP cavity order guesses (to find best alignment)')
+        margs = [n_guesses]
+        WLOG(params, '', msg.format(*margs))
+        # loop around n_guesses
+        for it in tqdm(range(n_guesses)):
+            peak0_guess = peak0_guesses[it]
             # peak diff (guess vs measured)
             peak_diff = peak0_guess - fp_index
             # compute the guessed wavelength solution for this peak0
@@ -604,12 +642,12 @@ def build_wavesol(params: ParamDict, recipe, sparams: Dict[str, Any],
                 nvalid[it] = np.sum(synth_spectrum[pix_ref])
             else:
                 continue
-
             # compute a normalized metric for plotting and selection
-            nvalid2[it] = nvalid[it] - np.nanmedian(nvalid[it - 11:it])
+            with warnings.catch_warnings(record=True) as _:
+                nvalid2[it] = nvalid[it] - np.nanmedian(nvalid[it - 11:it])
 
             # if this guess is promising, refine the alignment
-            if nvalid[it] == 0:
+            if (nvalid2[it] == 0) or np.isnan(nvalid2[it]):
                 continue
 
             # compute pixel offsets betwen HC and FP lines
@@ -671,7 +709,7 @@ def build_wavesol(params: ParamDict, recipe, sparams: Dict[str, Any],
             valid = (fp_wave > np.min(mini_wave))
             valid &= (fp_wave < np.max(mini_wave))
             # only process if there are valid FP peaks
-            if len(fp_wave) > 0 and len(fp_pix) > 0:
+            if len(fp_wave) == 0 or len(fp_pix) == 0:
                 continue
             # store the FP solution for this guess (current best guess)
             dict_fp['fp_int'] = fp_int[valid]
@@ -681,17 +719,31 @@ def build_wavesol(params: ParamDict, recipe, sparams: Dict[str, Any],
         # ---------------------------------------------------------------------
         # normalize the nvalid2 array
         nvalid2 /= mp.cal_med_abs_dev(nvalid2)
-        # report the max nvalid 
-        msg = 'Order {0}: Nvalid[{1}]={2}'
-        margs = [order_num, np.nanmax(nvalid), np.nanmax(nvalid2)]
-        WLOG(params, '', msg.format(*margs))
+        # report the max nvalid
+        with warnings.catch_warnings(record=True) as _:
+            msg = 'Order {0}: Nvalid[{1}]={2}'
+            margs = [order_num, np.nanargmax(nvalid2), np.nanmax(nvalid2)]
+            WLOG(params, '', msg.format(*margs))
         # ---------------------------------------------------------------------
         # deal with no solution
-        if (iteration == 0) and np.nanmax(nvalid2) < nsig_accept_fp:
-            msg = 'Order {0}: No valid FP solution found - skipping order'
-            margs = [order_num]
-            WLOG(params, 'warning', msg.format(*margs))
-
+        with warnings.catch_warnings(record=True) as _:
+            cond1 = (iteration == 0) and (np.nanmax(nvalid2) < nsig_accept_fp)
+            cond2 = len(best_wave) == 0
+            # if we are dealing with iteration 0 and we have no peaks above
+            #  the acceptance threshold or we have no best wave solution
+            #  then skip this order
+            if (iteration == 0) and (np.nanmax(nvalid2) < nsig_accept_fp):
+                msg = ('Order {0}: No valid FP solution found '
+                       '(iter=0 and Max(Nvalid)<{1}) - skipping order')
+                margs = [order_num, nsig_accept_fp]
+                WLOG(params, 'warning', msg.format(*margs))
+                continue
+            if len(best_wave) == 0:
+                msg = ('Order {0}: No valid FP solution found '
+                       '(no best wave found) - skipping order')
+                margs = [order_num]
+                WLOG(params, 'warning', msg.format(*margs))
+                continue
         # set up the plotting kwargs
         pkwargs = dict()
         # get values from kwargs
@@ -719,11 +771,12 @@ def build_wavesol(params: ParamDict, recipe, sparams: Dict[str, Any],
 
 
 def build_final_wavesol(params: ParamDict, recipe, sparams: Dict[str, Any],
-                        cal_path: str, fp_image: np.ndarray, 
-                        fit_cavity: List[float]
+                        fp_image: np.ndarray, fit_cavity: List[float]
                         ) -> Tuple[np.ndarray, np.ndarray, List[float]]:
 
-    # For each order compute the final wavelength solution and store 
+    # get the input path
+    inpath = sparams['inpath']
+    # For each order compute the final wavelength solution and store
     #   coefficients in the header
     # get the wavelength fit degree from params
     wavedegn = params['CAL.WAVE.GEN.WAVESOL_FIT_DEG']
@@ -745,13 +798,28 @@ def build_final_wavesol(params: ParamDict, recipe, sparams: Dict[str, Any],
     middle_pixel_fp_peak = np.full((norders,), np.nan)
     # store the cavity middle
     cavity_middle = np.full((norders,), np.nan)
-
-
+    # get the wave pickle path
+    wave_pickle_path = os.path.join(inpath, 'wave_pickles')
+    # count the number of wave pickles
+    n_wave_picks = count_wave_pickles(params, sparams)
+    # -------------------------------------------------------------------------
+    # if we have less than 5 pickles we cannot robustly fit the middle fp
+    if n_wave_picks < 5:
+        msg = ('Less than 5 wave solutions built '
+               '(found {0} successfully built) '
+               '- cannot build final wave solution. '
+               '\n\t Please update the yaml file parameters to better match '
+               'this instrument.'
+               '\n\t Yamlfile = {1}')
+        margs = [n_wave_picks, params['INPUTS']['YAMLFILE']]
+        raise AperoCodedException(params, None, message=msg.format(*margs),
+                                  targs=margs)
+    # -------------------------------------------------------------------------
     # loop around all orders
     for order_num in range(norders):
         # construct wave filenames
         wave_order_basename = f'wave_order_{order_num}.csv'
-        wave_order_csvfile = os.path.join(cal_path, wave_order_basename)
+        wave_order_csvfile = os.path.join(wave_pickle_path, wave_order_basename)
         wave_order_pklfile = wave_order_csvfile.replace('.csv', '.pkl')
         # ---------------------------------------------------------------------
         # if pickle doesn't exist continue
@@ -1045,7 +1113,7 @@ def get_approx_wavesol(sparams: Dict[str, Any], order_num: int,
     return waveguess, wavestart, waveend
 
 
-def count_wave_pickles(sparams: Dict[str, Any]) -> int:
+def count_wave_pickles(params: ParamDict, sparams: Dict[str, Any]) -> int:
     """
     Count the number of wavelength solution pickles available in the
     wavelength directory.
@@ -1064,6 +1132,10 @@ def count_wave_pickles(sparams: Dict[str, Any]) -> int:
         return 0
     # list all files in the wave pickle path
     files = glob.glob(os.path.join(wave_pickle_path, 'wave_order_*.pkl'))
+    # print the number of previous solutions found
+    msg = 'Found {0} previous wavelength solution pickles (path={1})'
+    margs = [len(files), wave_pickle_path]
+    WLOG(params, '', msg.format(*margs))
     # return the number of files    
     return len(files)
 
@@ -1324,7 +1396,7 @@ def get_peak0_guess(params: ParamDict, sparams: Dict[str, Any],
     # -------------------------------------------------------------------------
     # fit a linear polynomial to the peak0 guesses
     with warnings.catch_warnings(record=True) as _:
-        pfit = mp.robust_polyfit(orders, peak0_guesses, 1, 3)
+        pfit, _ = mp.robust_polyfit(orders, peak0_guesses, 1, 3)
         # fit these value (for this order)
         pvalue = float(np.polyval(pfit, order_num))
     # -------------------------------------------------------------------------

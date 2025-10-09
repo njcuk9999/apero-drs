@@ -5642,8 +5642,12 @@ def plot_static_wave_check_plot(plotter: Plotter, **kwargs) -> bool:
     # -------------------------------------------------------------------------
     # make this an interactive graph (with a question button)
     yninst = YesNoButtonGraph(fig, plotter.matplotlib)
-    yninst.add('Is this cavity valid and to be used as input?',
-               adjust=dict(bottom=0.2))
+    message = ('Is this wavelength solution valid and to be used as input? '
+               '\nA good solution should have:'
+               '\n - Top plot: having a clear peak > 10'
+               '\n - Bottom plot: should have most catalogue lines lining up '
+               'with spectral features.')
+    yninst.add(message, adjust=dict(bottom=0.2))
     # show the graph
     plt.show(block=True)
     # -------------------------------------------------------------------------

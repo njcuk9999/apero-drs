@@ -259,7 +259,8 @@ def proxy_processing(params: ParamDict, recipe, sparams: Dict[str, Any],
 
     :return None - writes to disk
     """
-
+    # print progress
+    WLOG(params, 'info', 'Processing static night (to extract HC and FP)')
     # get the raw files
     raw_files = dict()
     raw_files['DARK'] = sparams['files']['raw_dark_files']
@@ -310,7 +311,8 @@ def proxy_processing(params: ParamDict, recipe, sparams: Dict[str, Any],
 
 def get_e2ds_files(params: ParamDict, recipe, sparams: Dict[str, Any],
                     cal_path: str, ofiles: Dict[str, Any]) -> Dict[str, Any]:
-    
+    # print progress
+    WLOG(params, 'info', 'Loading static night extracted HC and FP files')
     # get the raw files
     raw_files = dict()
     raw_files['DARK'] = sparams['files']['raw_dark_files']
@@ -403,6 +405,8 @@ def get_hc_cat_file(params: ParamDict, recipe, sparams: Dict[str, Any],
 
     :return ofiles: dict, updated dictionary of output files
     """
+    # print progress
+    WLOG(params, 'info', 'Obtaining HC catalogue')
     # get static file
     static_file = recipe.outputs['STATIC_HC_CAT'].newcopy(params=params)
     # construct the filename from file instance
