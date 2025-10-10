@@ -131,7 +131,7 @@ def main(params: ParamDict, recipe, sparams: Dict[str, Any]):
         ofiles = drs_static.proxy_processing(params, recipe, sparams, cal_path,
                                              ofiles)
     else:
-        ofiles = drs_static.get_e2ds_files(params, recipe, sparams, cal_path,
+        ofiles = drs_static.get_q2ds_files(params, recipe, sparams, cal_path,
                                            ofiles)
 
     # -------------------------------------------------------------------------
@@ -197,15 +197,15 @@ def generate_wave_guess(params: ParamDict, recipe, sparams: Dict[str, Any],
     # print progress
     msg = 'Generating wavelength guess from HC and FP extracted files'
     WLOG(params, 'info', msg)
-    # get static hc e2ds file
-    hc_file = ofiles['STATIC_HC_E2DS']
+    # get static hc q2ds file
+    hc_file = ofiles['STATIC_HC_Q2DS']
     # load the hc file
-    hc_image = hc_file.hdulist_load(params, 'EXT_E2DS_FF')
+    hc_image = hc_file.hdulist_load(params, 'QL_E2DS_FF')
     # -------------------------------------------------------------------------
-    # get static fp e2ds file
-    fp_file = ofiles['STATIC_FP_E2DS']
+    # get static fp q2ds file
+    fp_file = ofiles['STATIC_FP_Q2DS']
     # load the hc file
-    fp_image = fp_file.hdulist_load(params, 'EXT_E2DS_FF')
+    fp_image = fp_file.hdulist_load(params, 'QL_E2DS_FF')
     # -------------------------------------------------------------------------
     # get static file
     hc_cat_file = ofiles['STATIC_HC_CAT'].newcopy(params=params)
@@ -533,7 +533,7 @@ def build_wavesol(params: ParamDict, recipe, sparams: Dict[str, Any],
     # deal with wave pickle path not existing
     if not os.path.exists(wave_pickle_path):
         os.makedirs(wave_pickle_path)
-    # set the number of orders (from the HC E2DS file)
+    # set the number of orders (from the HC Q2DS file)
     norders, nbxpix = hc_image.shape
 
     # get the wave reference from the hc catalogue
@@ -1555,7 +1555,7 @@ def package_wavesol(params: ParamDict, recipe, sparams: Dict[str, Any],
     wprops['WFP_WIDTH'] = 'None'
     wprops['WFP_STEP'] = 'None'
     wprops['CAVITY'] = final_fit_cavity
-    wprops['CAVITY_DEG'] = len(final_fit_cavity)
+    wprops['CAVITY_DEG'] = len(final_fit_cavity) - 1
     wprops['CAVITY_PEDESTAL'] = 0.0
     wprops['MEAN_HC_VEL'] = 0.0
     wprops['ERR_HC_VEL'] = 0.0

@@ -1802,6 +1802,9 @@ class DrsRunSequence:
         # define and store description and schematic file
         self.description_file = None
         self.schematic = None
+        # define the default run and skip parameters
+        self.default_run = True
+        self.default_skip = True
 
     def __getstate__(self) -> dict:
         """

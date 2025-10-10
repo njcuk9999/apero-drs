@@ -1189,7 +1189,6 @@ class DatabaseManager:
         self.dbuser = None
         self.dbpath = None
         self.dbtable = None
-        self.dbreset = None
         self.dbpass = None
         self.dbname = None
         self.dbport = None
@@ -1291,8 +1290,6 @@ class DatabaseManager:
         # deal with advance connection parameters
         if 'USE_SSL' in ddict:
             self.connect_args['ssl_disabled'] = not ddict['USE_SSL']
-
-
         # ---------------------------------------------------------------------
         if 'PORT' in ddict:
             self.dbport = ddict['PORT']
@@ -1311,11 +1308,6 @@ class DatabaseManager:
                 self.dbtable = dbname
             else:
                 self.dbtable = tablename
-            # set reset path
-            if ddict[ykind]['RESET'] in [None, 'None', 'Null', '']:
-                self.dbreset = None
-            else:
-                self.dbreset = ddict[ykind]['RESET']
         # set url
         self.set_dburl()
 

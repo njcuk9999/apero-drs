@@ -12,7 +12,7 @@ Created on 2021-11-08
 import io
 import os
 from collections import OrderedDict
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 from ruamel.yaml import YAML
 from ruamel.yaml.comments import CommentedMap
@@ -82,11 +82,6 @@ GROUPS['radial velocity'] = ['rv']
 GROUPS['polar'] = ['polar']
 GROUPS['lbl'] = ['lbl']
 GROUPS['postprocessing'] = ['post']
-# Define the ruamel yaml float resolver args
-ryaml_tag = 'tag:yaml.org,2002:float'
-RYAML_RARGS = [ryaml_tag,
-               Resolver.yaml_implicit_resolvers[ryaml_tag][0][1],
-               Resolver.yaml_implicit_resolvers[ryaml_tag][0][2]]
 
 
 # =============================================================================
@@ -263,11 +258,12 @@ class RunIniFile:
         # get list of recipe groups for this set of sequences
         #   based on recipe_kind and GROUPS defined above
         groups = self._generate_recipe_list(mode='group')
-        recipes = self._generate_recipe_list(mode='recipes')
+        recipes, seqs = self._generate_recipe_list(mode='recipes')
         # get recipe look up dictionary
-        recipe_dict = dict()
-        for recipe in recipes:
-            recipe_dict[recipe.shortname] = recipe
+        recipe_dict, seq_dict = dict(), dict()
+        for it in range(len(recipes)):
+            recipe_dict[recipes[it].shortname] = recipes[it]
+            seq_dict[recipes[it].shortname] = seqs[it]
         # loop around recipes in sequence
         for group_name in groups:
             # get group
@@ -276,32 +272,37 @@ class RunIniFile:
             if len(group) == 0:
                 continue
             # loop around entries in group and add these rows
-            for s_it, srecipe in enumerate(group):
+            for s_it, shortname in enumerate(group):
+                # set up the comments and the run and skip defaults
+                if shortname in recipe_dict:
+                    run_comment = f'Run {recipe_dict[shortname].name}'
+                    skip_comment = f'Skip {recipe_dict[shortname].name}'
+                    run_default = seq_dict[shortname].default_run
+                    skip_default = seq_dict[shortname].default_skip
+                else:
+                    run_comment, skip_comment = None, None
+                    run_default = self.run_default
+                    skip_default = self.skip_default
                 # get run and skip values
-                run_value = self.run_extras.get(srecipe, self.run_default)
-                skip_value = self.skip_extras.get(srecipe, self.skip_default)
+                run_value = self.run_extras.get(shortname, run_default)
+                skip_value = self.skip_extras.get(shortname, skip_default)
                 # add group comment
                 run_text = 'Run the {0} recipes\n'.format(group_name)
                 skip_text = 'Skip the {0} recipes\n'.format(group_name)
-                # get comment
-                if srecipe in recipe_dict:
-                    run_comment = f'Run {recipe_dict[srecipe].name}'
-                    skip_comment = f'Skip {recipe_dict[srecipe].name}'
-                else:
-                    run_comment, skip_comment = None, None
+
 
                 # push into instances
-                run_inst = run_params.RunParam(name=srecipe, value=run_value,
+                run_inst = run_params.RunParam(name=shortname, value=run_value,
                                                section=run_text,
                                                after=run_comment,
                                                position=s_it + 1)
-                skip_inst = run_params.RunParam(name=srecipe, value=skip_value,
+                skip_inst = run_params.RunParam(name=shortname, value=skip_value,
                                                 section=skip_text,
                                                 after=skip_comment,
                                                 position=s_it + 1)
                 # add to run_text and skip_text
-                run_dict[srecipe] = run_inst
-                skip_dict[srecipe] = skip_inst
+                run_dict[shortname] = run_inst
+                skip_dict[shortname] = skip_inst
 
         # ---------------------------------------------------------------------
         # add the runs to the run section
@@ -464,10 +465,11 @@ class RunIniFile:
                 y_file.writelines(newlines)
 
 
-
     def _generate_recipe_list(self, mode='group',
                               sequences: Optional[List[DrsSequence]] = None
-                              ) -> Union[Dict[str, List[str]], List[DrsRecipe]]:
+                              ) -> Union[Dict[str, List[str]],
+                                         Tuple[List[DrsRecipe],
+                                               List[DrsSequence]]]:
         # construct the index database instance
         findexdbm = FileIndexDatabase(self.params)
         findexdbm.load_db()
@@ -483,7 +485,7 @@ class RunIniFile:
         ostars = drs_processing.get_non_telluric_stars(self.params, all_objects,
                                                        tstars)
         # ----------------------------------------------------------------------
-        recipes, shortnames = [], []
+        recipes, shortnames, seqs = [], [], []
         groups = dict()
         # deal with having / not having sequence
         if sequences is None:
@@ -507,6 +509,8 @@ class RunIniFile:
                     recipes.append(srecipe)
                     # add short names
                     shortnames.append(srecipe.shortname)
+                    # add to sequences list
+                    seqs.append(seq)
 
                 recipe_kind = srecipe.recipe_kind
                 shortname = srecipe.shortname
@@ -542,7 +546,7 @@ class RunIniFile:
         if mode == 'group':
             return groups
         else:
-            return recipes
+            return recipes, seqs
 
     def _add_command_sequences(self):
         """
@@ -576,8 +580,8 @@ class RunIniFile:
         for run_key in self.run_keys:
             sparams[run_key] = self.run_keys[run_key]
         # get list of recipe groups for this set of sequences
-        srecipes = self._generate_recipe_list(mode='recipes',
-                                              sequences=self.cmd_sequences)
+        srecipes, _ = self._generate_recipe_list(mode='recipes',
+                                                 sequences=self.cmd_sequences)
         # add recipe run keys
         for srecipe in srecipes:
             run_key = 'RUN_{0}'.format(srecipe.shortname)

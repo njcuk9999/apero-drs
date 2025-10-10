@@ -1055,9 +1055,6 @@ CDict.set('LINELIST_START', value=1, source=__NAME__, author='EA', group=cgroup)
 CDict.set('LINELIST_WAVECOL', value='ll', source=__NAME__, author='EA', group=cgroup)
 CDict.set('LINELIST_AMPCOL', value='amp', source=__NAME__, author='EA', group=cgroup)
 
-
-
-
 # Define whether to always extract HC/FP files in the wave code (even if they
 # have already been extracted
 CDict.set('ALWAYS_EXTRACT', value=False, source=__NAME__, author='EA', group=cgroup)

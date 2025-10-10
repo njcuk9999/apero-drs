@@ -1943,6 +1943,7 @@ pp_seq.description_file = 'pp_seq_{0}.rst'.format(__INSTRUMENT__.lower())
 pp_seq.add(apero_preprocess)
 
 pp_seq_opt = drs_recipe.DrsRunSequence('pp_seq_opt', __INSTRUMENT__)
+pp_seq_opt.default_run = False
 # define schematic file and description file
 pp_seq_opt.schematic = None
 pp_seq_opt.description_file = 'pp_seq_opt_{0}.rst'.format(__INSTRUMENT__.lower())
@@ -2200,6 +2201,7 @@ blank_seq = drs_recipe.DrsRunSequence('blank_seq', __INSTRUMENT__)
 # engineering sequences
 # -----------------------------------------------------------------------------
 eng_seq = drs_recipe.DrsRunSequence('eng_seq', __INSTRUMENT__)
+eng_seq.default_run = False
 # define schematic file and description file
 eng_seq.schematic = None
 eng_seq.description_file = 'eng_seq_{0}.rst'.format(__INSTRUMENT__.lower())
@@ -2228,6 +2230,12 @@ eng_seq.add(apero_extract, name='EXT_HC1FP', files=[files.pp_hc1_fp],
             recipe_kind='extract-hc1fp')
 eng_seq.add(apero_extract, name='EXT_EVERY', files=[files.pp_file],
             recipe_kind='extract-everything')
+eng_seq.add(apero_extract, name='EXTQUICK_HC', recipe_kind='extract-quick',
+              files=[files.pp_hc1_hc1],
+              arguments=dict(quicklook=True, fiber=ref_fiber))
+eng_seq.add(apero_extract, name='EXTQUICK_FP', recipe_kind='extract-quick',
+            files=[files.pp_fp_fp],
+            arguments=dict(quicklook=True, fiber=ref_fiber))
 
 # -----------------------------------------------------------------------------
 # lbl sequences

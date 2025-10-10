@@ -930,6 +930,7 @@ out_ql_e2ds = drs_finput('QL_E2DS', hkeys=dict(KW_OUTPUT='QL_E2DS'),
                          suffix='_q2ds', outclass=general_ofile,
                          description='Extracted 2D spectrum (quick output)')
 
+
 # extract E2DS with flat fielding
 out_ql_e2dsff = drs_finput('QL_E2DS_FF', hkeys=dict(KW_OUTPUT='QL_E2DS_FF'),
                            fibers=valid_efibers,
@@ -937,6 +938,8 @@ out_ql_e2dsff = drs_finput('QL_E2DS_FF', hkeys=dict(KW_OUTPUT='QL_E2DS_FF'),
                            suffix='_q2dsff', outclass=general_ofile,
                            description='Extracted + flat-fielded 2D spectrum '
                                        '(quick output)')
+ext1 = AperoImageModel('QL_E2DS_FF')
+out_ql_e2dsff.hdulist['QL_E2DS_FF'] = ext1
 
 # -----------------------------------------------------------------------------
 # extract files

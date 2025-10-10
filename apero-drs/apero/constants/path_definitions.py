@@ -293,6 +293,7 @@ class AssetPath(BlockPath):
         super().__init__(params, self.name, self.key, indexing=False,
                          logging=False, check=check)
         self.has_obs_dirs = False
+        self.fileset = 'static_file'
 
 
 class PlotPath(BlockPath):

@@ -1953,8 +1953,6 @@ def update_db_settings(aparams: ParamDict) -> ParamDict:
         sdict = dparams[ydbname]
         # add calib database
         aparams['DATABASE'][f'{ydbname}_NAME'] = sdict['NAME']
-        if 'RESET' in sdict:
-            aparams['DATABASE'][f'{ydbname}_RESET'] = sdict['RESET']
         aparams['DATABASE'][f'{ydbname}_TABLE'] = sdict['TABLE']
     # ------------------------------------------------------------------
     # return the update all_params

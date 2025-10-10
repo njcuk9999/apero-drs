@@ -315,12 +315,12 @@ def proxy_processing(params: ParamDict, recipe, sparams: Dict[str, Any],
     # ------------------------------------------------------------------------
     # copy out the data we require (for HC and FP)
     # ------------------------------------------------------------------------
-    ofiles = get_e2ds_files(params, recipe, sparams, cal_path, ofiles)
+    ofiles = get_q2ds_files(params, recipe, sparams, cal_path, ofiles)
     # return the output files
     return ofiles
 
 
-def get_e2ds_files(params: ParamDict, recipe, sparams: Dict[str, Any],
+def get_q2ds_files(params: ParamDict, recipe, sparams: Dict[str, Any],
                     cal_path: str, ofiles: Dict[str, Any]) -> Dict[str, Any]:
     # print progress
     WLOG(params, 'info', 'Loading static night extracted HC and FP files')
@@ -341,7 +341,7 @@ def get_e2ds_files(params: ParamDict, recipe, sparams: Dict[str, Any],
     # ------------------------------------------------------------------------
     # copy out the data we require (for HC and FP)
     # ------------------------------------------------------------------------
-    e2ds_files = dict()
+    q2ds_files = dict()
     # we require the HCONE_HCONE and FP_FP files
     # we rename the .fits to _e2dsff_{sci_fiber}.fits
     for key in ['HCONE_HCONE', 'FP_FP']:
@@ -351,7 +351,7 @@ def get_e2ds_files(params: ParamDict, recipe, sparams: Dict[str, Any],
         sci_fiber = sparams['wavelength']['wave_fiber']
         # get basename e2dsff file (including fiber)
         sci_basename = raw_file.replace('.fits',
-                                        '_pp_e2dsff_{0}.fits'.format(sci_fiber))
+                                        '_pp_q2dsff_{0}.fits'.format(sci_fiber))
         # get the in file
         in_file = os.path.join(red_night_dir, sci_basename)
         # deal with file not found
@@ -372,22 +372,22 @@ def get_e2ds_files(params: ParamDict, recipe, sparams: Dict[str, Any],
         # copy file
         shutil.copy(in_file, out_file)
         # add to storage
-        e2ds_files[key] = out_file
+        q2ds_files[key] = out_file
     # ------------------------------------------------------------------------
     # get the recipe defintion for apero_extract
     ext_recipe, _ = find_recipe(f'apero_extract_{instrument}.py', instrument,
                                 recipe.recipemod)
-    e2dsff_files = getattr(ext_recipe, 'outputs')['E2DSFF_FILE']
+    q2dsff_fileinst = getattr(ext_recipe, 'outputs')['Q2DSFF_FILE']
     # ------------------------------------------------------------------------
     # construct the DrsFitsFile instances for HC and FP
-    hc_e2ds = e2dsff_files.newcopy(filename=e2ds_files['HCONE_HCONE'], 
-                                   params=params, fiber=sci_fiber)
-    fp_e2ds = e2dsff_files.newcopy(filename=e2ds_files['FP_FP'], 
-                                   params=params, fiber=sci_fiber)
+    hc_q2ds = q2dsff_fileinst.newcopy(filename=q2ds_files['HCONE_HCONE'],
+                                      params=params, fiber=sci_fiber)
+    fp_q2ds = q2dsff_fileinst.newcopy(filename=q2ds_files['FP_FP'],
+                                      params=params, fiber=sci_fiber)
     # ------------------------------------------------------------------------
     # store the HCONE_HCONE and FP_FP files in recipe output files
-    ofiles['STATIC_HC_E2DS'] = hc_e2ds
-    ofiles['STATIC_FP_E2DS'] = fp_e2ds
+    ofiles['STATIC_HC_Q2DS'] = hc_q2ds
+    ofiles['STATIC_FP_Q2DS'] = fp_q2ds
     # ------------------------------------------------------------------------
     # deal with user wanting to remove the processed static data
     if sparams['wavelength']['remove_processed']:

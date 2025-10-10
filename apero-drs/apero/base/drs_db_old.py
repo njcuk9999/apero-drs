@@ -2679,7 +2679,6 @@ class BaseDatabaseManager:
         self.dbuser = None
         self.dbpath = None
         self.dbname = None
-        self.dbreset = None
         # set empty database
         self.database = None
         # check is not used in base class

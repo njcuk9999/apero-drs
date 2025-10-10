@@ -346,13 +346,6 @@ def create_calibration_database(params: ParamDict, pconst: Instrument,
                       uniques=cdb_cols.uniques)
     if verbose:
         WLOG(params, '', 'Created calibration database')
-    # ---------------------------------------------------------------------
-    # construct reset file
-    reset_abspath = str(os.path.join(asset_dir, reset_path, calibdbm.dbreset))
-    # get rows from reset file
-    reset_entries = pd.read_csv(reset_abspath, skipinitialspace=True)
-    # add rows from reset text file
-    calibdb.add_from_pandas(reset_entries)
     # -------------------------------------------------------------------------
     return calibdb
 
@@ -399,15 +392,6 @@ def create_telluric_database(params: ParamDict, pconst: Instrument,
                       uniques=tdb_cols.uniques)
     if verbose:
         WLOG(params, '', 'Created telluric database')
-    # ---------------------------------------------------------------------
-    # construct reset file
-    reset_abspath = str(os.path.join(asset_dir, reset_path, telludbm.dbreset))
-    # the rest file may not exist - this is okay for the telluric database
-    if os.path.exists(reset_abspath):
-        # get rows from reset file
-        reset_entries = pd.read_csv(reset_abspath, skipinitialspace=True)
-        # add rows from reset text file
-        telludb.add_from_pandas(reset_entries)
     # ---------------------------------------------------------------------
     return telludb
 

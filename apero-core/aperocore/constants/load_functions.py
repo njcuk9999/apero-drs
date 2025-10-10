@@ -251,6 +251,11 @@ def load_config(instruments: Dict[str, Any],
     # cache these params
     if cache and from_file:
         CONFIG_CACHE[instrument] = params.copy()
+    # -------------------------------------------------------------------------
+    # if we don't have inputs add it (just as its added elsewhere)
+    if 'INPUTS' not in params:
+        params.set('INPUTS', ParamDict(), source=func_name)
+    # -------------------------------------------------------------------------
     # return the parameter dictionary
     return params
 

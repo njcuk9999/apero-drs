@@ -755,37 +755,31 @@ def create_yamls(params: Any):
     # add calib database
     calibdb = dict()
     calibdb['NAME'] = params.get('CALIB_NAME', 'calib')
-    calibdb['RESET'] = params.get('CALIB_RESET', 'reset.calib.csv')
     calibdb['TABLE'] = params.get('CALIB_DBTABLE', 'NULL')
     database_dict['CALIB'] = calibdb
     # add tellu database
     telludb = dict()
     telludb['NAME'] = params.get('TELLU_NAME', 'tellu')
-    telludb['RESET'] = params.get('TELLU_RESET', 'reset.tellu.csv')
     telludb['TABLE'] = params.get('TELLU_DBTABLE', 'NULL')
     database_dict['TELLU'] = telludb
     # add index database
     findexdb = dict()
     findexdb['NAME'] = params.get('FINDEX_NAME', 'findex')
-    findexdb['RESET'] = params.get('FINDEX_RESET', 'NULL')
     findexdb['TABLE'] = params.get('FINDEX_DBTABLE', 'NULL')
     database_dict['FINDEX'] = findexdb
     # add log database
     logdb = dict()
     logdb['NAME'] = params.get('LOG_NAME', 'log')
-    logdb['RESET'] = params.get('LOG_RESET', 'NULL')
     logdb['TABLE'] = params.get('LOG_DBTABLE', 'NULL')
     database_dict['LOG'] = logdb
     # add object database
     astromdb = dict()
     astromdb['NAME'] = params.get('ASTROM_NAME', 'astrom')
-    astromdb['RESET'] = params.get('ASTROM_RESET', 'reset.astrom.csv')
     astromdb['TABLE'] = params.get('ASTROM_DBTABLE', 'NULL')
     database_dict['ASTROM'] = astromdb
     # add reject database
     rejectdb = dict()
     rejectdb['NAME'] = params.get('REJECT_NAME', 'reject')
-    rejectdb['RESET'] = params.get('REJECT_RESET', 'NULL')
     rejectdb['TABLE'] = params.get('REJECT_PROFILE', 'NULL')
     database_dict['REJECT'] = rejectdb
     # print writing
