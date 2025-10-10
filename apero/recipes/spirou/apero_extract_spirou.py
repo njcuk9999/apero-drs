@@ -336,15 +336,17 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
             # --------------------------------------------------------------
             # Calculate measured pixel to pixel scatter
             # --------------------------------------------------------------
-            eprops['MP2P_E2DS'] = extract.measure_p2p_scat(params,
-                                                           wprops['WAVEMAP'],
-                                                           eprops['E2DS'])
-            eprops['MP2P_E2DSFF'] = extract.measure_p2p_scat(params,
-                                                             wprops['WAVEMAP'],
-                                                             eprops['E2DSFF'])
-            # set the source
-            skeys = ['MP2P_E2DS', 'MP2P_E2DSFF']
-            eprops.set_sources(skeys, mainname)
+            if not quicklook:
+                mp2p_e2ds = extract.measure_p2p_scat(params, wprops['WAVEMAP'],
+                                                     eprops['E2DS'])
+                mp2p_e2dsff = extract.measure_p2p_scat(params, wprops['WAVEMAP'],
+                                                       eprops['E2DSFF'])
+
+                eprops['MP2P_E2DS'] = mp2p_e2ds
+                eprops['MP2P_E2DSFF'] = mp2p_e2dsff
+                # set the source
+                skeys = ['MP2P_E2DS', 'MP2P_E2DSFF']
+                eprops.set_sources(skeys, mainname)
             # --------------------------------------------------------------
             # Plots
             # --------------------------------------------------------------

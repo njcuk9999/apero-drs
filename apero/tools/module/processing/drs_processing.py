@@ -2472,6 +2472,17 @@ def gen_global_condition(params: ParamDict, findexdbm: FileIndexDatabase,
         list_of_obsdirs = findexdbm.database.unique('OBS_DIR',
                                                     condition=raw_condition)
     # ------------------------------------------------------------------
+    # deal with filename (limit condition to a single filename prefix)
+    if not drs_text.null_text(params['INPUTS']['FILENAME'],
+                              ['', 'None', 'Null']):
+        # get filename
+        filename = params['INPUTS']['FILENAME']
+        # remove extension if it exists
+        if filename.endswith('.fits'):
+            filename = filename[:-5]
+        # add to condition
+        condition += ' AND FILENAME LIKE "{0}%"'.format(filename)
+    # ------------------------------------------------------------------
     # Return global condition
     # ------------------------------------------------------------------
     # return the condition
