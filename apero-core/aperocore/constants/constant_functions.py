@@ -86,7 +86,8 @@ class Const:
                  parent: Union[str, None] = None,
                  output: bool = True, not_none: bool = False,
                  modes: str = '', length: int = None, cmd_arg: str = None,
-                 cmd_kwargs: Dict[str, Any] = None):
+                 cmd_kwargs: Dict[str, Any] = None,
+                 tex_arg: bool = False):
         """
         Construct the constant instance
 
@@ -186,6 +187,9 @@ class Const:
         self.cmd_arg = cmd_arg
         # set command line argparse kwargs
         self.cmd_kwargs = cmd_kwargs
+        # set whether this constant should be a latex argument
+        #    (for snapshot table generation)
+        self.tex_arg = tex_arg
 
     def __getstate__(self) -> dict:
         """
@@ -291,7 +295,7 @@ class Const:
                      parent=self.parent, output=self.output,
                      not_none=self.not_none, modes=self.modes,
                      length=self.length, cmd_arg=self.cmd_arg,
-                     cmd_kwargs=self.cmd_kwargs)
+                     cmd_kwargs=self.cmd_kwargs, tex_arg=self.tex_arg)
 
     def write_line(self, value: Any = None, fmt: str = 'ini') -> List[str]:
         """
@@ -453,7 +457,8 @@ class ConstantsDict:
                  output: bool = True,
                  not_none: bool = False,
                  modes: str = '', length: int = None,
-                 cmd_arg: str = None, cmd_kwargs: Dict[str, Any] = None):
+                 cmd_arg: str = None, cmd_kwargs: Dict[str, Any] = None,
+                 tex_arg: bool = False):
         """
         Add a constant instance to the dict
 
@@ -498,7 +503,7 @@ class ConstantsDict:
         constants = Const(name, value, dtype, dtypei, options, maximum, minimum,
                           source, unit, default, datatype, dataformat, group,
                           user, active, description, author, parent, output,
-                          not_none, modes, length, cmd_arg, cmd_kwargs)
+                          not_none, modes, length, cmd_arg, cmd_kwargs, tex_arg)
         # deal with no group
         if group is None:
             self.storage[name] = constants
@@ -534,7 +539,8 @@ class ConstantsDict:
             parent: Union[str, None] = None,
             output: bool = True, not_none: bool = False,
             modes: str = None, length: int = None,
-            cmd_arg: str = None, cmd_kwargs: Dict[str, Any] = None):
+            cmd_arg: str = None, cmd_kwargs: Dict[str, Any] = None,
+            tex_arg: bool = None):
         """
         Add a constant instance to the dict
 
@@ -662,6 +668,9 @@ class ConstantsDict:
         # update cmd_kwargs
         if cmd_kwargs is not None:
             self.storage[name].cmd_kwargs = cmd_kwargs
+        # update tex_arg
+        if tex_arg is not None:
+            self.storage[name].tex_arg = tex_arg
 
     def copy(self, source: str) -> 'ConstantsDict':
         # create new storage

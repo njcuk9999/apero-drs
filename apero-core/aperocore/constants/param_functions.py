@@ -959,7 +959,9 @@ class ParamDict(CaseInDict):
                        values: Union[list, None] = None,
                        sources: Union[list, None] = None,
                        descs: Union[list, None] = None,
-                       drsfitsfile: Any = None) -> Table:
+                       drsfitsfile: Any = None,
+                       include_zero_counts: bool = False,
+                       tex: bool = False) -> Table:
         """
         Takes a snapshot of the current configuration (for reproducibility)
 
@@ -978,6 +980,10 @@ class ParamDict(CaseInDict):
         :param drsfitsfile: if set is the drsfile that we assume will add to
                             names/kinds/values/sources/descs (header keys
                             added to constants)
+        :param include_zero_counts: bool, if True include keys that have
+                                    been set to zero (not used)
+        :param tex: bool, if True only return those keys that have the
+                    tex attribute set to True in the instance
 
         :return:
         """
@@ -1079,13 +1085,33 @@ class ParamDict(CaseInDict):
         # ---------------------------------------------------------------------
         # loop around parameter keys
         for key in self.data.keys():
+            # deal with tex mode - only keep those keys with tex = True
+            if tex:
+                # force include_zero_counts
+                include_zero_counts = True
+                # if key isn't in instances we continue
+                if key not in self.instances:
+                    continue
+                # skip if instance is None
+                if self.instances[key] is None:
+                    continue
+                # if key is in instances but tex is not True we continue
+                if not self.instances[key].tex_arg:
+                    continue
+            # -----------------------------------------------------------------
             # do not continue if we have not used this key (not in dict)
             if key not in self.used:
-                continue
+                if not include_zero_counts:
+                    continue
+                else:
+                    self.used[key] = 0
+            # -----------------------------------------------------------------
             # do not continue if we have not used this key (set to zero)
             # noinspection PyTypeChecker
-            if int(self.used[key]) < 1:
-                continue
+            if not include_zero_counts:
+                if int(self.used[key]) < 1:
+                    continue
+            # -----------------------------------------------------------------
             # add param_dict entry (or entries)
             tabledict = _add_param_dict_to_tabledict(tabledict, self.data,
                                                      key, self.instances,
