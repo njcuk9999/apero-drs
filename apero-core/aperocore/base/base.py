@@ -25,8 +25,11 @@ from pathlib import Path
 from typing import Any, Dict, Optional, Union
 
 from ruamel.yaml import YAML
-from ruamel.yaml.comments import CommentedMap
-from ruamel.yaml.resolver import Resolver
+from ruamel.yaml.comments import CommentedMap, CommentedSeq, CommentedSet
+from ruamel.yaml.scalarfloat import ScalarFloat
+from ruamel.yaml.scalarint import ScalarInt
+from ruamel.yaml.scalarbool import ScalarBoolean
+from ruamel.yaml.scalarstring import ScalarString
 
 import numpy as np
 import yaml
@@ -238,6 +241,34 @@ def load_install_yaml(required: bool = True) -> Union[dict, None]:
         return D_IPARAMS
 
 
+def to_plain_data(obj):
+    """Recursively convert ruamel.yaml data structures to plain Python types."""
+    # --- container types ---
+    if isinstance(obj, CommentedMap):
+        # stays as dict (or OrderedDict)
+        return {k: to_plain_data(v) for k, v in obj.items()}
+
+    elif isinstance(obj, CommentedSeq):
+        # stays as list
+        return [to_plain_data(v) for v in obj]
+
+    elif isinstance(obj, CommentedSet):
+        # YAML set syntax
+        return set(to_plain_data(k) for k in obj)
+    # --- scalar wrapper types ---
+    elif isinstance(obj, (ScalarString,)):
+        return str(obj)
+    elif isinstance(obj, (ScalarFloat,)):
+        return float(obj)
+    elif isinstance(obj, (ScalarInt,)):
+        return int(obj)
+    elif isinstance(obj, (ScalarBoolean,)):
+        return bool(obj)
+    # --- already a native Python type ---
+    else:
+        return obj
+
+
 def load_yaml(filename: str, default: Optional[Dict[str, Any]] = None) -> dict:
     """
     Load a yaml file as a dictionary
@@ -258,7 +289,7 @@ def load_yaml(filename: str, default: Optional[Dict[str, Any]] = None) -> dict:
             if key not in dictionary:
                 dictionary[key] = default[key]
     # return the dictionary
-    return dictionary
+    return to_plain_data(dictionary)
 
 
 def enable_scientific_floats(yaml: YAML) -> None:

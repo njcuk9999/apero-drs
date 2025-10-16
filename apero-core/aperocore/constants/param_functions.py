@@ -1154,6 +1154,31 @@ class ParamDict(CaseInDict):
         # return table
         return table
 
+    def out_tex_file(self) -> Table:
+        """
+        Get a "snapshot" latex table of the parameter dictionary
+
+        This is a version of the snapshot table but only with those keys
+        that have the tex attribute set to True in the instance
+
+        Some additional formatting is also done.
+
+        :return: astropy.table.Table: the tex table read to be saved in
+                 ascii.latex format
+        """
+        # get the keys that have the tex attribute
+        tsnapshot = self.snapshot_table(tex=True)
+        # only keep name and value
+        ts = tsnapshot['NAME', 'VALUE']
+        # Escape underscores in the columns
+        for col in ['NAME', 'VALUE']:
+            ts[col] = [s.replace('_', r'\_') for s in ts[col]]
+        # update column names
+        ts.rename_column('NAME', 'Parameter Name')
+        ts.rename_column('VALUE', 'Value')
+        # return the table ready for saving in latex format
+        return ts
+
     def get_path(self, path: str) -> Any:
         """
         Get the value at a given path (recursively search through sub dicts)
