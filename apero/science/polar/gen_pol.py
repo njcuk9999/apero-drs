@@ -1565,7 +1565,8 @@ def remove_continuum_polarization(params: ParamDict, props: ParamDict
     props['POL'] = pol
     props.append_source('POL', func_name)
     # Add ORDER_CONT_POL
-    props.set('ORDER_CONT_POL', value=order_cont_pol, source=func_name)
+    props['ORDER_CONT_POL'] = order_cont_pol
+    props.set_source('ORDER_CONT_POL', func_name)
     # -------------------------------------------------------------------------
     return props
 
