@@ -618,8 +618,8 @@ def add_ext_config_list(config_list: List[Union[ConstDict, KeywordDict]],
 # =============================================================================
 # Define starting point functions
 # =============================================================================
-def starting_point(params: ParamDict, imode_key: str,
-                   demo_module) -> ParamDict:
+def starting_point(params: ParamDict, imode_key: Union[str, List[str]],
+                   demo_dict: Dict[str, Dict[str, Any]]) -> ParamDict:
     """
     Modify the parameters by a specific starting point (i.e. a demo)
 
@@ -642,7 +642,7 @@ def starting_point(params: ParamDict, imode_key: str,
     # create storage for the demo download data
     demo_params = dict(ACTIVE=False, URL=None, DOWNLOAD=dict())
     # deal with no demos for this mode
-    if imode not in demo_module.DEMOS:
+    if imode not in demo_dict:
         # print that no demos are avaiable
         wmsg = (f'No demos available for {imode} '
                 f'-- starting from default values.')
@@ -652,7 +652,7 @@ def starting_point(params: ParamDict, imode_key: str,
         # return parameters
         return params
     # get the demos for this instrument
-    idemos = demo_module.DEMOS[imode]
+    idemos = demo_dict[imode]
     # display the possible starting points for this instrument mode
     counters = dict()
     # loop through demos
@@ -724,9 +724,16 @@ def _print_info(params: ParamDict, it: int, info_dict: Dict[str, str]):
         # already dealt with title
         if info_key in ['title', '__NAME__']:
             continue
+        # deal with printing values
+        if isinstance(info_dict[info_key], list):
+            str_value = ''
+            for ii in info_dict[info_key]:
+                str_value += '\n\t\t - ' + str(ii)
+        else:
+            str_value = str(info_dict[info_key])
         # print other info
         msg = '\t{0}: {1}'
-        margs = [info_key, info_dict[info_key]]
+        margs = [info_key, str_value]
         print(msg.format(*margs))
 
 
