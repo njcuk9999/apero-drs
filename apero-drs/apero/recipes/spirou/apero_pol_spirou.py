@@ -11,6 +11,8 @@ Created on 2019-11-25 at 16:44
 """
 from typing import Any, Dict, List, Optional, Tuple, Union
 
+import numpy as np
+
 from aperocore.base import base
 from aperocore.constants import param_functions
 from aperocore import drs_lang
@@ -160,6 +162,10 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
     # if we are removing polar continuum
     if remove_continuum:
         pprops = gen_pol.remove_continuum_polarization(params, pprops)
+    else:
+        # TODO: Eder needs to verify this is okay
+        pprops['ORDER_CONT_FLUX'] = np.full_like(pprops['POL'], np.nan)
+        pprops.set_source('ORDER_CONT_FLUX', mainname)
     # if we are
     if normalize_stokesi:
         pprops = gen_pol.normalize_stokes_i(params, pprops)
