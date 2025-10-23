@@ -164,11 +164,15 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
         pprops = gen_pol.remove_continuum_polarization(params, pprops)
     else:
         # TODO: Eder needs to verify this is okay
-        pprops['ORDER_CONT_FLUX'] = np.full_like(pprops['POL'], np.nan)
-        pprops.set_source('ORDER_CONT_FLUX', mainname)
+        pprops['ORDER_CONT_POL'] = np.full_like(pprops['POL'], np.nan)
+        pprops.set_source('ORDER_CONT_POL', mainname)
     # if we are
     if normalize_stokesi:
         pprops = gen_pol.normalize_stokes_i(params, pprops)
+    else:
+        # TODO: Eder needs to verify this is okay
+        pprops['ORDER_CONT_FLUX'] = np.full_like(pprops['POL'], np.nan)
+        pprops.set_source('ORDER_CONT_FLUX', mainname)
 
     # ----------------------------------------------------------------------
     # Apply sigma-clipping
