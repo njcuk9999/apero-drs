@@ -74,6 +74,8 @@ class Log:
         """
         # get the logger
         self.logger = logging.getLogger(base.__package__)
+        # stop propagation
+        self.logger.propagate = False
         # set the default value to one below between INFO and DEBUG level
         self.baselevel = logging.DEBUG
         # define the levels
