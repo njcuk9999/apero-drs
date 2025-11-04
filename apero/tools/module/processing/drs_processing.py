@@ -2473,15 +2473,13 @@ def gen_global_condition(params: ParamDict, findexdbm: FileIndexDatabase,
                                                     condition=raw_condition)
     # ------------------------------------------------------------------
     # deal with filename (limit condition to a single filename prefix)
-    if not drs_text.null_text(params['INPUTS']['FILENAME'],
-                              ['', 'None', 'Null']):
-        # get filename
-        filename = params['INPUTS']['FILENAME']
+    input_filename = params['INPUTS'].get('FILENAME', None)
+    if not drs_text.null_text(input_filename, ['', 'None', 'Null']):
         # remove extension if it exists
-        if filename.endswith('.fits'):
-            filename = filename[:-5]
+        if input_filename.endswith('.fits'):
+            input_filename = input_filename[:-5]
         # add to condition
-        condition += ' AND FILENAME LIKE "{0}%"'.format(filename)
+        condition += ' AND FILENAME LIKE "{0}%"'.format(input_filename)
     # ------------------------------------------------------------------
     # Return global condition
     # ------------------------------------------------------------------
