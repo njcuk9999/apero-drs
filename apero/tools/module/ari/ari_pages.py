@@ -105,7 +105,7 @@ class TableFile:
         title = f'{self.name} ({self.user})'
         table_page.add_title(title)
         # add page access
-        table_page.add_html(add_page_access(self, rel_root))
+        table_page.add_html(add_page_access(self.params, rel_root))
         # -----------------------------------------------------------------
         # Add basic text
         # construct text to add
