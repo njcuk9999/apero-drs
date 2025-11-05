@@ -97,13 +97,15 @@ class TableFile:
         return new
 
     def make_table(self, table: Union[Table, None]):
+        # set where this page is relative to the ari/home directory
+        rel_root = '../../../ari/home/'
         # make a markdown page for the table
         table_page = drs_markdown.MarkDownPage(self.ref)
         # add object table
         title = f'{self.name} ({self.user})'
         table_page.add_title(title)
         # add page access
-        table_page.add_html(add_page_access(self.params))
+        table_page.add_html(add_page_access(self, rel_root))
         # -----------------------------------------------------------------
         # Add basic text
         # construct text to add
