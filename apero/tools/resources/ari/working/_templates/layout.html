@@ -39,9 +39,14 @@
 <script>
   // Automatically compute site root based on current page
   function getRoot() {
-      const path = window.location.pathname.split("/");
-      path.pop(); // remove current file
-      return path.length === 0 ? "/" : path.join("/") + "/";
+        const pathname = window.location.pathname; // e.g., "/ari/nirps/index.html"
+        const ROOT_FOLDER = "apero-drs"; // or "/" if site root is root
+        const idx = pathname.indexOf(ROOT_FOLDER);
+        if (idx >= 0) {
+            return pathname.substring(0, idx + ROOT_FOLDER.length) + "/";
+        }
+        // fallback: root
+        return "/";
   }
   const ROOT = getRoot();
 
