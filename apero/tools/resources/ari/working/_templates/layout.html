@@ -33,32 +33,38 @@
 {% endblock %}
 
 {% block header %}
-<div class="pageheader">
 
-  <ul>
-    <li><a title="Home" href="https://apero.exoplanets.ca/">
-        <i class="fa fa-home fa-3x" aria-hidden="true"></i></a></li>
-    <li><a title="install" href="https://apero.exoplanets.ca/user/general/installation.html">
-        <i class="fa fa-cog fa-3x" aria-hidden="true"></i></a></li>
-    <li><a title="github" href="https://github.com/njcuk9999/apero-drs">
-        <i class="fa fa-git-square fa-3x" aria-hidden="true"></i></a></li>
-    <li><a title="download documentation" href="https://apero.exoplanets.ca/apero-docs.pdf">
-        <i class="fa fa-download fa-3x" aria-hidden="true"></i></a></li>
-    <li><a title="download paper" href="https://ui.adsabs.harvard.edu/abs/2022PASP..134k4509C">
-        <i class="fa fa-file-pdf-o fa-3x" aria-hidden="true"></i></a></li>
-    <li><a title="UdeM" href="https://apero.exoplanets.ca/main/misc/udem.html">
-        <i class="fa fa-university fa-3x" aria-hidden="true"></i></a></li>
-    <li><a title="ARI" href="https://apero.exoplanets.ca/ari/home/">
-        <img src="{{ pathto('_static/images/ari_icon.png', 1) }}" alt="ARI" style="height:48px; width:auto;">
-        </a></li>
-  </ul>
-    <div>
-    <a href="https://apero.exoplanets.ca/">
-      <img src="{{ pathto('_static/images/apero_logo.png', 1) }}" alt="APERO" />
-    </a>
-    <br>
-    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;A PipelinE to Reduce Observations
-    </div>
+<div id="pageheader-container"></div>
 
-</div>
+<script>
+  // Automatically compute site root based on current page
+  function getRoot() {
+      const path = window.location.pathname.split("/");
+      path.pop(); // remove current file
+      return path.length === 0 ? "/" : path.join("/") + "/";
+  }
+  const ROOT = getRoot();
+
+  // Load the header HTML
+  fetch(ROOT + "_static/pageheader.html")
+    .then(r => r.text())
+    .then(html => {
+        const container = document.getElementById("pageheader-container");
+        container.innerHTML = html;
+
+        // Fix links
+        container.querySelectorAll("a[data-href]").forEach(a => {
+            const path = a.getAttribute("data-href");
+            a.href = ROOT + path;
+        });
+
+        // Fix images
+        container.querySelectorAll("img[data-src]").forEach(img => {
+            const path = img.getAttribute("data-src");
+            img.src = ROOT + path;
+        });
+    });
+</script>
+
+
 {% endblock %}

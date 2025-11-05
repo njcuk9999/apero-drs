@@ -11,11 +11,15 @@
 <script src="_static/doctools.js"></script>
 <script src="_static/sphinx_highlight.js"></script>
 <script src="_static/bizstyle.js"></script>
-<link href="http://apero.exoplanets.ca/genindex.html" rel="index" title="Index"/>
-<link href="http://apero.exoplanets.ca/search.html" rel="search" title="Search"/>
-<link href="http://apero.exoplanets.ca/" rel="next" title="Home"/>
+<!-- Internal links -->
+<link data-href="genindex.html" rel="index" title="Index"/>
+<link data-href="search.html" rel="search" title="Search"/>
+<link data-href="" rel="next" title="Home"/>
+
+<!-- External links remain as-is -->
 <link href="https://fonts.googleapis.com/css?family=Open+Sans:300,400,700" rel="stylesheet" type="text/css"/>
-<link href="_static/images/fonta/css/font-awesome.min.css" rel="stylesheet"/>
+<link data-href="_static/images/fonta/css/font-awesome.min.css" rel="stylesheet"/>
+
 <meta content="width=device-width,initial-scale=1.0" name="viewport"/>
 <!--[if lt IE 9]>
     <script src="_static/css3-mediaqueries.js"></script>
@@ -32,43 +36,61 @@
 </head>
 <body>
 
-<div class="pageheader">
-  <ul>
-    <li><a title="Home" href="http://apero.exoplanets.ca/">
-        <i class="fa fa-home fa-3x" aria-hidden="true"></i></a></li>
-    <li><a title="install" href="http://apero.exoplanets.ca/user/general/installation.html">
-        <i class="fa fa-cog fa-3x" aria-hidden="true"></i></a></li>
-    <li><a title="github" href="https://github.com/njcuk9999/apero-drs">
-        <i class="fa fa-git-square fa-3x" aria-hidden="true"></i></a></li>
-    <li><a title="download documentation" href="http://apero.exoplanets.ca/apero-docs.pdf">
-        <i class="fa fa-download fa-3x" aria-hidden="true"></i></a></li>
-    <li><a title="download paper" href="https://ui.adsabs.harvard.edu/abs/2022PASP..134k4509C">
-        <i class="fa fa-file-pdf-o fa-3x" aria-hidden="true"></i></a></li>
-    <li><a title="UdeM" href="http://apero.exoplanets.ca/main/misc/udem.html">
-        <i class="fa fa-university fa-3x" aria-hidden="true"></i></a></li>
-    <li><a title="ARI" href="http://apero.exoplanets.ca/ari/home/">
-        <i class="fa fa-database fa-3x" aria-hidden="true"></i></a></li>
-  </ul>
-    <div>
-    <a href="http://apero.exoplanets.ca/">
-      <img src="http://apero.exoplanets.ca/_static/images/apero_logo.png" alt="APERO" />
-    </a>
-    <br>
-    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;A PipelinE to Reduce Observations
-    </div>
-</div>
+<div id="pageheader-container"></div>
+
+<script>
+  // Automatically compute site root based on current page
+  function getRoot() {
+      const path = window.location.pathname.split("/");
+      path.pop(); // remove current file
+      return path.length === 0 ? "/" : path.join("/") + "/";
+  }
+  const ROOT = getRoot();
+
+  // Load the header HTML
+  fetch(ROOT + "_static/pageheader.html")
+    .then(r => r.text())
+    .then(html => {
+        const container = document.getElementById("pageheader-container");
+        container.innerHTML = html;
+
+        // Fix links
+        container.querySelectorAll("a[data-href]").forEach(a => {
+            const path = a.getAttribute("data-href");
+            a.href = ROOT + path;
+        });
+
+        // Fix images
+        container.querySelectorAll("img[data-src]").forEach(img => {
+            const path = img.getAttribute("data-src");
+            img.src = ROOT + path;
+        });
+    });
+
+  // Fix any remaining links in the document
+  document.addEventListener("DOMContentLoaded", function() {
+    document.querySelectorAll("link[data-href]").forEach(link => {
+      const path = link.getAttribute("data-href");
+      link.href = ROOT + path;
+    });
+  });
+</script>
 
 
 
 <div aria-label="related navigation" class="related" role="navigation">
-<h3>Navigation</h3>
-<ul>
-<li class="right" style="margin-right: 10px">
-<a accesskey="I" href="http://apero.exoplanets.ca/genindex.html" title="General Index">index</a></li>
-<li class="right">
-<a accesskey="N" href="http://apero.exoplanets.ca" title="Home">next</a> |</li>
-<li class="nav-item nav-item-0"><a href="http://apero.exoplanets.ca/ari/home/">APERO Reduction Interface (ARI)</a></li>
-</ul>
+  <h3>Navigation</h3>
+  <ul>
+    <li class="right" style="margin-right: 10px">
+      <a accesskey="I" data-href="genindex.html" title="General Index">index</a>
+    </li>
+    <li class="right">
+      <a accesskey="N" data-href="" title="Home">next</a> |
+    </li>
+    <li class="nav-item nav-item-0">
+      <a data-href="ari/home/">APERO Reduction Interface (ARI)</a>
+    </li>
+  </ul>
 </div>
 
 <div class="document">
@@ -121,14 +143,12 @@
 
 <p>Please select a reduction:</p>
 
-
-
 <ul id="pagemenu">
-<li id="spirou"><a href='/ari/spirou/index.html'>spirou page</a></li>
-<li id="nirps"><a href='/ari/nirps/index.html'>nirps page</a></li>
-<li id="spiroulocal"><a href='/ari/internal/spirou/index.html'>spirou local page</a></li>
-<li id="nirpslocal"><a href='/ari/internal/nirps/index.html'>nirps local page</a></li>
-<li id="admin"><a href='admin.html'>admin page</a></li>
+<li id="spirou"><a  data-href='ari/spirou/index.html'>spirou page</a></li>
+<li id="nirps"><a data-href='ari/nirps/index.html'>nirps page</a></li>
+<li id="spiroulocal"><a data-href='ari/internal/spirou/index.html'>spirou local page</a></li>
+<li id="nirpslocal"><a data-href='ari/internal/nirps/index.html'>nirps local page</a></li>
+<li id="admin"><a data-href='admin.html'>admin page</a></li>
 </ul>
 <div id="notloggedin"></div>
 
@@ -158,7 +178,9 @@ This includes many more objects than those targets by any individual instrument,
     some that have never been observed by any supported telescope.
 
 <ul>
-    <li><a href="http://apero.exoplanets.ca/ari/nirps/finder/index.html">NIRPS+HARPS Finding charts</a></li>
+<li>
+  <a data-href="ari/nirps/finder/index.html">NIRPS+HARPS Finding charts</a>
+</li>
 </ul>
 <br>
 
@@ -175,12 +197,18 @@ This includes many more objects than those targets by any individual instrument,
 <div aria-label="related navigation" class="related" role="navigation">
 <h3>Navigation</h3>
 <ul>
-<li class="right" style="margin-right: 10px">
-<a href="http://apero.exoplanets.ca/genindex.html" title="General Index">index</a></li>
-<li class="right">
-<a href="http://apero.exoplanets.ca" title="Home">next</a> |</li>
-<li class="nav-item nav-item-0"><a href="#">APERO Reduction Interface 0.7.289 documentation</a> »</li>
-<li class="nav-item nav-item-this"><a href="">APERO Reduction Interface (ARI)</a></li>
+  <li class="right" style="margin-right: 10px">
+    <a data-href="genindex.html" title="General Index">index</a>
+  </li>
+  <li class="right">
+    <a data-href="" title="Home">next</a> |
+  </li>
+  <li class="nav-item nav-item-0">
+    <a href="#">APERO Reduction Interface 0.7.289 documentation</a> »
+  </li>
+  <li class="nav-item nav-item-this">
+    <a data-href="" title="APERO Reduction Interface (ARI)">APERO Reduction Interface (ARI)</a>
+  </li>
 </ul>
 </div>
 <div class="footer" role="contentinfo">
