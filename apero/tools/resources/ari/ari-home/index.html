@@ -72,13 +72,26 @@
         });
     });
 
-  // Fix any remaining links in the document
-  document.addEventListener("DOMContentLoaded", function() {
-    document.querySelectorAll("link[data-href]").forEach(link => {
-      const path = link.getAttribute("data-href");
-      link.href = ROOT + path;
+    document.addEventListener("DOMContentLoaded", function() {
+      // Fix every data-href link in the whole document
+      document.querySelectorAll("a[data-href]").forEach(a => {
+        const path = a.getAttribute("data-href");
+        a.href = ROOT + path;
+      });
+
+      // Fix every data-src image in the whole document
+      document.querySelectorAll("img[data-src]").forEach(img => {
+        const path = img.getAttribute("data-src");
+        img.src = ROOT + path;
+      });
+
+      // Fix all link[data-href] CSS references
+      document.querySelectorAll("link[data-href]").forEach(link => {
+        const path = link.getAttribute("data-href");
+        link.href = ROOT + path;
+      });
     });
-  });
+
 </script>
 
 
