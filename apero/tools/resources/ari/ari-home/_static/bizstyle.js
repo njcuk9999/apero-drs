@@ -10,17 +10,24 @@
 // :license: BSD, see LICENSE for details.
 //
 const initialiseBizStyle = () => {
-    if (navigator.userAgent.indexOf("iPhone") > 0 || navigator.userAgent.indexOf("Android") > 0) {
-        document.querySelector("li.nav-item-0 a").innerText = "Top"
+    if (navigator.userAgent.includes("iPhone") || navigator.userAgent.includes("Android")) {
+        document.querySelector("li.nav-item-0 a").innerText = "Top";
     }
-    const truncator = item => {if (item.textContent.length > 20) {
-        item.title = item.innerText
-        item.innerText = item.innerText.substr(0, 17) + "..."
-      }
-    }
-    document.querySelectorAll("div.related:first ul li:not(.right) a").slice(1).forEach(truncator);
-    document.querySelectorAll("div.related:last ul li:not(.right) a").slice(1).forEach(truncator);
-}
+
+    const truncator = item => {
+        if (item.textContent.length > 20) {
+            item.title = item.innerText;
+            item.innerText = item.innerText.substring(0, 17) + "...";
+        }
+    };
+
+    // Convert NodeList → Array and skip index 0:
+    [...document.querySelectorAll("div.related:first-of-type ul li:not(.right) a")]
+        .slice(1).forEach(truncator);
+
+    [...document.querySelectorAll("div.related:last-of-type ul li:not(.right) a")]
+        .slice(1).forEach(truncator);
+};
 
 window.addEventListener("resize",
   () => (document.querySelector("li.nav-item-0 a").innerText = (window.innerWidth <= 776) ? "Top" : "APERO Reduction Interface 0.7.289 documentation")
