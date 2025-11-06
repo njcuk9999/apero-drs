@@ -17,6 +17,7 @@
     <link href='https://fonts.googleapis.com/css?family=Open+Sans:300,400,700'
           rel='stylesheet' type='text/css' />
     <link rel="stylesheet" href="{{ pathto('_static/images/fonta/css/font-awesome.min.css', 1) }}">
+    <link data-href="_static/images/favicon.ico" rel="icon" type="image/x-icon">
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 
 {{ super() }}
@@ -69,6 +70,27 @@
             img.src = ROOT + path;
         });
     });
+
+    document.addEventListener("DOMContentLoaded", function() {
+      // Fix every data-href link in the whole document
+      document.querySelectorAll("a[data-href]").forEach(a => {
+        const path = a.getAttribute("data-href");
+        a.href = ROOT + path;
+      });
+
+      // Fix every data-src image in the whole document
+      document.querySelectorAll("img[data-src]").forEach(img => {
+        const path = img.getAttribute("data-src");
+        img.src = ROOT + path;
+      });
+
+      // Fix all link[data-href] CSS references
+      document.querySelectorAll("link[data-href]").forEach(link => {
+        const path = link.getAttribute("data-href");
+        link.href = ROOT + path;
+      });
+    });
+
 </script>
 
 
