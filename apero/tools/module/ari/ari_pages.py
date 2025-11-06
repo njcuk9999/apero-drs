@@ -338,7 +338,7 @@ def _add_obj_page(it: int, key: str, rdict: dict, params: ParamDict,
                   object_classes: Dict[str, AriObject]
                   ) -> Dict[str, Tuple[bool, str]]:
     # set where this page is relative to the ari/home directory
-    rel_root = '../../../../ari/home/'
+    rel_root = '../../../../../ari/home/'
     # get object
     object_class = object_classes[key]
     # get the object name for this row
@@ -1560,6 +1560,9 @@ def add_page_access(params: ParamDict, ari_home_path: str,
 
     :return: str, the html code to add
     """
+    # deal with ari_home_path ending with a /
+    if ari_home_path.endswith('/'):
+        ari_home_path = ari_home_path[:-1]
     # do not protect page if ARI_PROTECT is False
     if not params['ARI_PROTECT']:
         htmllines = []
