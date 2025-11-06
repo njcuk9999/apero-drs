@@ -2,15 +2,17 @@
 # Global settings
 # ------------------------------------------------------------------------------
 # set the inpath where you have copied files
-inpath: /data/spip/drs-data/common-data/static
+inpath: /scratch2/spip/drs-data/common-data/static/
 # set the mode (detector, telluric, wavelength, All)
 #    This can be overridden at run time with --mode
-mode: detector
+mode: All
 
-# ------------------------------------------------------------------------------
-# Engineering
-# ------------------------------------------------------------------------------
-detector:
+# -----------------------------------------------------------------------------
+# Files
+# -----------------------------------------------------------------------------
+# All files should be placed in the inpath directory
+# -----------------------------------------------------------------------------
+files:
   # DARKs of different e.g. 60s, 600s (saved in the inpath directory)
   # These exposure times should be representative of short and long
   # science exposures, there should be multiple of each specific DARK exptime
@@ -41,7 +43,43 @@ detector:
     - 187138f_LED015.fits
   # Engineering flat from the manufacturer - Only set if no LED files available
   #   (saved in the in_path directory)
+  #  REQUIRED FOR: detector (if no LED files)
   engineering_flat:
+
+  # DARK_FLAT (i.e. DARK in science fiber(s) and FLAT in reference fiber)
+  # REQUIRED FOR: static wavelength
+  raw_dark_flat_files:
+    - 183730f.fits
+    - 183731f.fits
+    - 183732f.fits
+    - 183733f.fits
+    - 183734f.fits
+  # FLAT_DARK (i.e. FLAT in science fiber(s) and DARK in reference fiber)
+  raw_flat_dark_files:
+    - 183735f.fits
+    - 183736f.fits
+    - 183737f.fits
+    - 183738f.fits
+    - 183739f.fits
+  # FLAT_FLAT (i.e. FLAT in science fiber(s) and FLAT in reference fiber)
+  raw_flat_files:
+    - 183740f.fits
+    - 183741f.fits
+    - 183742f.fits
+    - 183743f.fits
+    - 183744f.fits
+  # Input Hollow Cathode file (e.g. UNe, ThAr etc) both fibers (HC_HC)
+  #   note must be in the raw directory
+  # REQUIRED FOR: static wavelength
+  raw_hc_file: 183750c.fits
+  # Input Fabry Perot file both fibers (FP_FP)
+  # REQUIRED FOR: static wavelength
+  raw_fp_file: 183745a.fits
+
+# ------------------------------------------------------------------------------
+# Engineering
+# ------------------------------------------------------------------------------
+detector:
   # number of bins in each direction for large scale flat fielding
   flat_bin_size: 32
   # Fractional threshold for flat field bad pixels (relative deviation from 1)
@@ -59,7 +97,6 @@ detector:
   #     0.4-0.6 depending on the amount of scattered lights
   led_threshold: 0.5
 
-
 # ------------------------------------------------------------------------------
 # Wavelength
 # ------------------------------------------------------------------------------
@@ -71,18 +108,20 @@ wavelength:
   run_generate_night: True
   run_generate_wave_guess: True
 
-  # Input Hollow Cathode file (e.g. UNe, ThAr etc) both fibers (HC_HC)
-  #   note must be in the raw directory
-  raw_hc_file: HC_HC_file.fits
-  # Input Fabry Perot file both fibers (FP_FP)
-  raw_fp_file: FP_FP_file.fits
+  # Fiber to use for wavelength solution (of all fibers)
+  wave_fiber: AB
+  # remove processed static data
+  remove_processed: False
+
   # Input catalogue for the HC lines
   #   Must be in format
-  input_hc_catalogue:
+  input_hc_cat:
     # Input hollow cathode catalogue (saved in the inpath directory)
     #   Our defaut comes from Redman et al 2011: https://iopscience.iop.org/article/10.1088/0067-0049/195/2/24
     #   via Vizier: https://vizier.cds.unistra.fr/viz-bin/VizieR-3?-source=J/ApJS/195/24/table2
-    #   Note if downloading from Vizier - select FITS (binary) Table and set max rows to unlimited!
+    #   This should be a vizier reference OR a absolute path to a file
+    vizier-ref: J/ApJS/195/24/table2
+    # file name this catalogue should have on disk
     filename: redman_2011.fits
     # format to load in astropy.table.Table.read
     format: fits
@@ -99,6 +138,31 @@ wavelength:
     species_keep:
       - UI
       - UII
+    # Rough wavelength domain for the instrument (i.e. wavelength of first
+    # extracted pixel in bluest order and last pixel in reddest order) in nm
+    wave_domain:
+      - 955
+      - 2450
+    # window size for HC lines (in km/s) - keep only brightest line within this
+    # window
+    window_size: 50
+
+  # This is used mostly for debugging and forcing a previous wave solution
+  #   instead of generating a new one (do not use without good reason)
+  from_file:
+    # whether to force from file (if False we will generate a new solution and
+    #   not use the following parameters)
+    force: True
+    # the final wave solution file to use (if force is True)
+    # must exist in the inpath directory (otherwise we generate a new solution)
+    final_wave_sol: REF_WAVE_2400416c_AB.fits
+    # the final cavity length file to use (if force is True) v0.7 format
+    # must exist in the inpath directory (otherwise we generate a new solution)
+    final_fit_cavity: cavity_length_ll_fit.dat
+
+  # How many iterations to run to guess the wavelength solution
+  #   Minimum is 2, recommended is at least 3
+  number_iterations: 3
 
    # Initial guess for cavity length (in nm)
   cavity0: 23990000.0
@@ -122,6 +186,8 @@ wavelength:
   fp_peak_step_window: 5
   # Degree for polyfit in wave_guess/fp_pix
   fp_poly_deg: 5
+  # Number of sigma to blindy accept an order as valid
+  nsig_accept_fp: 15
   # Range for integer offset search
   fp_step_offs_range: 20
   # Step for integer offset search
@@ -133,15 +199,18 @@ wavelength:
     - -10
     - 10
   # Threshold for mini selection
-  fp_step_mad_thresold: 2.0
+  fp_step_mad_threshold: 2.0
   # Minimum number of valid points for fit
   fp_step_valid_min: 5
-  # Degree for Chebyshev fit
-  cheby_fit_deg: 5
+  # define the cavity refinement polyfit degree
+  cavity_refine_poly_deg: 3
+  # define the cavity refinement sigma for robust_polyfit
+  cavity_refine_sigma: 8
   # Degree for robust_polyfit on Chebyshev coeffs
   robust_polyfit_deg: 7
   # Sigma cut for robust_polyfit on Chebyshev coeffs
-  robust_polyfit_sigma: 5
+  robust_polyfit_sigma: 3
+
 
 # ------------------------------------------------------------------------------
 # Telluric

@@ -114,7 +114,6 @@ def __main__(recipe, params):
     if mode in ['wavelength', 'All']:
         static_wavelength.main(params, recipe, sparams)
 
-
     # --------------------------------------------------------------------------
     # Update remote files based on changes here (if user agrees)
     # --------------------------------------------------------------------------

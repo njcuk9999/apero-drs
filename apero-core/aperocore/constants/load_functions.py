@@ -560,12 +560,14 @@ def ask_for_missing_args(params: ParamDict,
             continue
         # get the parameter constant instance
         instance = params.instances[key]
+        description = params.instances[key].description
 
         # see if we have to ask the user for this value
         if instance.not_none:
             # loop until we get a valid response from the user
             while True:
-                question = '\nPlease enter the value for {0}'.format(key)
+                question = ('\nPlease enter the value for {0}'
+                            '\n\n{1}').format(key, description)
                 # -------------------------------------------------------------
                 # deal with dtype
                 if instance.dtype in ['bool', bool]:

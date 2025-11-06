@@ -422,6 +422,11 @@ CDict.add('HOTPIX_FILE', value=None, dtype=str, source=__NAME__,
           description='Defines the pp hot pixel file (located in '
                       'the data folder)')
 
+#   Defines the pp hot pixel file type
+CDict.add('HOTPIX_FILE_FMT', value='fits', dtype=str, source=__NAME__,
+          group=cgroup, options=['fits', 'csv'],
+          description='Defines the pp hot pixel file type (fits or csv)')
+
 #   Defines the pp amplifier bias model (located in the data folder)
 CDict.add('AMP_ERROR_MODEL', value=None, dtype=str,
           source=__NAME__, group=cgroup,

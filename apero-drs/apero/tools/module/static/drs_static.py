@@ -278,8 +278,15 @@ def proxy_processing(params: ParamDict, recipe, sparams: Dict[str, Any],
     raw_files['DARK_FLAT'] = sparams['files']['raw_dark_flat_files']
     raw_files['FLAT_DARK'] = sparams['files']['raw_flat_dark_files']
     raw_files['FLAT_FLAT'] = sparams['files']['raw_flat_files']
-    raw_files['HCONE_HCONE'] = [sparams['files']['raw_hc_file']]
-    raw_files['FP_FP'] = [sparams['files']['raw_fp_file']]
+
+    if isinstance(sparams['files']['raw_hc_file'], list):
+        raw_files['HCONE_HCONE'] = sparams['files']['raw_hc_file']
+    else:
+        raw_files['HCONE_HCONE'] = [sparams['files']['raw_hc_file']]
+    if isinstance(sparams['files']['raw_fp_file'], list):
+        raw_files['FP_FP'] = sparams['files']['raw_fp_file']
+    else:
+        raw_files['FP_FP'] = [sparams['files']['raw_fp_file']]
     # ------------------------------------------------------------------------
     # get the input directory from sparams
     input_dir = os.path.dirname(sparams['inpath'])
@@ -302,7 +309,7 @@ def proxy_processing(params: ParamDict, recipe, sparams: Dict[str, Any],
                 emsg = 'Raw {0} file not found: {1}'
                 eargs = [key, in_file]
                 raise AperoCodedException(params, None,
-                                          message=emsg.format(eargs),
+                                          message=emsg.format(*eargs),
                                           targs=eargs)
 
             # get the out file

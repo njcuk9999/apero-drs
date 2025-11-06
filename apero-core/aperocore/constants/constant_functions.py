@@ -1028,7 +1028,7 @@ class ConstantsDict:
         """
         comment = '#' * 77 + '\n' + name + '\n' + '#' * 77 + '\n'
         comment += f'    Version = {version}\n'
-        comment += f'    Date    = {date}\n\n'
+        comment += f'    Version Date    = {date}\n\n'
         if setup_program is not None:
             comment += (f'If using a different version it is recommended to \n'
                         f'run {setup_program} to generate a new yaml file.\n\n')
