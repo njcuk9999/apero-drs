@@ -19,11 +19,14 @@ from astropy.table import Table
 # Define variables
 # =============================================================================
 class MarkDownPage:
-    def __init__(self, page_ref):
+    def __init__(self, page_ref, initial_lines: List[str] = None):
         # store the page reference
         self.page_ref = page_ref
         # storage of lines for output file
         self.lines = []
+        # deal with lines required at the top to the page
+        if initial_lines is not None:
+            self.lines += initial_lines
         # add page ref to top of page
         self.add_reference(page_ref)
         # multi-line table flag
