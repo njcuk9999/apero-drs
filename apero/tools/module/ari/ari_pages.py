@@ -1352,8 +1352,10 @@ def make_profile_page(params: ParamDict, tables: List[TableFile]):
     profile_path = params['ARI_DIR']
     # construct the profile name
     profile_name = f'profile.rst'
+    # need an orphan clause at the top of the markdown
+    ilines = [':orphan:', '']
     # create a page
-    profile_page = drs_markdown.MarkDownPage(ari_user)
+    profile_page = drs_markdown.MarkDownPage(ari_user, initial_lines=ilines)
     # add title
     profile_page.add_title(ari_user)
     # add page access
