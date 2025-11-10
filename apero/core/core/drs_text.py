@@ -14,6 +14,7 @@ only from:
 - apero.lang.*
 - apero.core.core.drs_exceptions
 """
+import string
 import warnings
 from pathlib import Path
 from typing import Any, Union, List
@@ -536,6 +537,28 @@ def clean_strings(strings: Union[List[str], str]) -> Union[List[str], str]:
         for string in strings:
             outstrings.append(string.strip().upper())
         return outstrings
+
+
+def clean_ascii_text(text):
+    """
+    Return ASCII-only version of text (replacing newlines/tabs with spaces).
+    """
+    if not isinstance(text, str):
+        return text
+    # Replace newlines/tabs with space
+    text = text.replace('\n', ' ').replace('\t', ' ')
+    # Keep only printable ASCII characters
+    printable = set(string.printable)
+    return ''.join(ch for ch in text if ch in printable)
+
+
+def clean_fits_table_column(table, colname):
+    """
+    Clean a FITS table column in-place for ASCII-safe content.
+    """
+    if colname not in table.colnames:
+        raise ValueError(f"Column '{colname}' not found in table.")
+    table[colname] = [clean_ascii_text(val) for val in table[colname]]
 
 
 # =============================================================================

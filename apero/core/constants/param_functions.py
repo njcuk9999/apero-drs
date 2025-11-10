@@ -2301,6 +2301,13 @@ def _add_param_dict_to_tabledict(tabledict: dict,
             tabledict['SOURCE'].append(source)
         else:
             tabledict['SOURCE'].append('None')
+    # -------------------------------------------------------------------------
+    # fix the table and all string columns
+    for colname in tabledict.colnames:
+        # unicode or bytestring
+        if tabledict[colname].dtype.kind in ('U', 'S'):
+            drs_text.clean_fits_table_column(tabledict, colname)
+    # -------------------------------------------------------------------------
     # return table dictionary
     return tabledict
 
@@ -2359,6 +2366,8 @@ def _add_hdict(drsfitsfile: Any, names: Union[List[str], None] = None,
         descs.append(hdict.comments[key])
     # return the lists for insertion into table dict
     return names, kinds, values, sources, descs
+
+
 
 
 # =============================================================================
