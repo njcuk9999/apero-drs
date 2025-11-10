@@ -1219,8 +1219,10 @@ class ParamDict(CaseInDict):
         # ---------------------------------------------------------------------
         # convert dictionary to table
         table = Table()
-        for col in columns:
-            table[col] = np.array(tabledict[col], dtype=str)
+        for colname in columns:
+            table[colname] = np.array(tabledict[colname], dtype=str)
+            drs_text.clean_fits_table_column(table, colname)
+        # -------------------------------------------------------------------------
         # return table
         return table
 
@@ -2301,12 +2303,6 @@ def _add_param_dict_to_tabledict(tabledict: dict,
             tabledict['SOURCE'].append(source)
         else:
             tabledict['SOURCE'].append('None')
-    # -------------------------------------------------------------------------
-    # fix the table and all string columns
-    for colname in tabledict.colnames:
-        # unicode or bytestring
-        if tabledict[colname].dtype.kind in ('U', 'S'):
-            drs_text.clean_fits_table_column(tabledict, colname)
     # -------------------------------------------------------------------------
     # return table dictionary
     return tabledict
