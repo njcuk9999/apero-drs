@@ -165,7 +165,7 @@ data:
 setup:
   humantime: '2025-05-23 15:00:36.070'
   servers:
-  - http://apero.exoplanets.ca/assets/
+  - http://206.12.93.77/ari/data/apero/assets/
   tarfile: 1748012436_069969_assets.tar.gz
   unixtime: 1748012436.069969
   vdate: 2025-03-03

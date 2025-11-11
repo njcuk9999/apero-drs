@@ -381,7 +381,7 @@ CDict.add_group(cgroup, description='DRS.ASSETS_URLS: DRS ASSETS URLS')
 #   yaml file as well - this just controls where the developers upload it to)
 #   links must be publically accessible, separate links with a comma
 CDict.add('URLS',
-          value=['http://apero.exoplanets.ca/assets/'],
+          value=['http://206.12.93.77/ari/data/apero/assets/'],
           dtype=list, dtypei=str,
           source=__NAME__, group=cgroup,
           description=(' where the assets tar file can be '

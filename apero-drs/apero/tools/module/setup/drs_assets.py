@@ -284,8 +284,9 @@ def update_local_assets(params: ParamDict, tarfile: str = None):
             # check if tar file exists
             if not os.path.exists(tarfile):
                 # TODO: Add to language database
-                emsg = 'Cannot download assets tar file: {}'
-                eargs = [tarfile]
+                emsg = 'Cannot download assets tar file: {0}'
+                emsg += '\tTried servers: {1}'
+                eargs = [tarfile, servers]
                 raise AperoCodedException(params, message=emsg.format(*eargs),
                                           targs=eargs)
         else:
