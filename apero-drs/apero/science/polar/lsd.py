@@ -531,7 +531,7 @@ def prepare_polarimetry_data(params: ParamDict, props: ParamDict) -> ParamDict:
     # calculate outliers
     # TODO: Do we need this?
     # med_flux = mp.nanmedian(lsd_flux)
-    # mad = mp.median_absolute_deviation()
+    # mad = mp.inv_normal_fraction()
     # medsig_flux = mp.nanmedian(np.abs(lsd_flux - med_flux)) / mad
     # clean_outliers = lsd_flux < (med_flux + 3 * medsig_flux)
     # clean_outliers &= lsd_flux > (med_flux - 3 * medsig_flux)

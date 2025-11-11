@@ -1149,8 +1149,10 @@ class ParamDict(CaseInDict):
         # ---------------------------------------------------------------------
         # convert dictionary to table
         table = Table()
-        for col in columns:
-            table[col] = np.array(tabledict[col], dtype=str)
+        for colname in columns:
+            table[colname] = np.array(tabledict[colname], dtype=str)
+            drs_text.clean_fits_table_column(table, colname)
+        # ---------------------------------------------------------------------
         # return table
         return table
 

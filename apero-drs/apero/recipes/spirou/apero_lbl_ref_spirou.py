@@ -136,7 +136,7 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
         gen_lbl.add_log(params, lblrtn)
     # -------------------------------------------------------------------------
     # deal with bad symlinks
-    drs_path.remove_broken_symlinks(params, params['LBL_PATH'])
+    drs_path.remove_broken_symlinks(params, params['PATH.LBL'])
     # -------------------------------------------------------------------------
     # step 3: use apero get to copy files to lbl directory
     #          symlink blaze to calib

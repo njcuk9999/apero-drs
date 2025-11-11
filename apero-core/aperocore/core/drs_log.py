@@ -482,7 +482,7 @@ class ConsoleFormat(logging.Formatter):
             program = ''
         if code is None:
             code = ' '
-        # coounter changes how we display to the console
+        # counter changes how we display to the console
         if counter < 0:
             self.fmt = '%(message)s'
         elif counter == 0:
@@ -847,6 +847,8 @@ class Wlog:
             elif key == 'warning':
                 log.warning(**log_kwargs)
             elif key == 'error':
+                # we don't break errors into multiple lines so set counter to -1
+                log_kwargs['counter'] = -1
                 log.error(**log_kwargs)
             elif key == 'general':
                 log.general(**log_kwargs)

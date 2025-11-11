@@ -21,6 +21,7 @@ from pathlib import Path
 from typing import Any, Union, List, Optional, Type
 
 import numpy as np
+from astropy.table import Table
 
 from aperocore import drs_lang
 from aperocore.base import base
@@ -846,6 +847,28 @@ def string_type(value: str) -> Type:
     # -------------------------------------------------------------------------
     # return a string
     return str
+
+
+def clean_ascii_text(text: str) -> str:
+    """
+    Return ASCII-only version of text (replacing newlines/tabs with spaces).
+    """
+    if not isinstance(text, str):
+        return text
+    # Replace newlines/tabs with space
+    text = text.replace('\n', ' ').replace('\t', ' ')
+    # Keep only printable ASCII characters
+    printable = set(string.printable)
+    return ''.join(ch for ch in text if ch in printable)
+
+
+def clean_fits_table_column(table: Table, colname: str):
+    """
+    Clean a FITS table column in-place for ASCII-safe content.
+    """
+    if colname not in table.colnames:
+        raise ValueError(f"Column '{colname}' not found in table.")
+    table[colname] = [clean_ascii_text(val) for val in table[colname]]
 
 
 # =============================================================================

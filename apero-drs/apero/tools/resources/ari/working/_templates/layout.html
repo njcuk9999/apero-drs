@@ -16,8 +16,9 @@
 {% block extrahead %}
     <link href='https://fonts.googleapis.com/css?family=Open+Sans:300,400,700'
           rel='stylesheet' type='text/css' />
-    <link rel="stylesheet" href="_static/images/fonta/css/font-awesome.min.css">
-
+    <link rel="stylesheet" href="{{ pathto('_static/images/fonta/css/font-awesome.min.css', 1) }}">
+    <link data-href="_static/images/favicon.ico" rel="icon" type="image/x-icon">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 
 {{ super() }}
 {#- if not embedded #}
@@ -28,64 +29,69 @@
       .related { display: inline-block; }
       {% endif %}
     </style>
-    <script>
-      // intelligent scrolling of the sidebar content
-      $(window).scroll(function() {
-        var sb = $('.sphinxsidebarwrapper');
-        var win = $(window);
-        var sbh = sb.height();
-        var offset = $('.sphinxsidebar').position()['top'];
-        var wintop = win.scrollTop();
-        var winbot = wintop + win.innerHeight();
-        var curtop = sb.position()['top'];
-        var curbot = curtop + sbh;
-        // does sidebar fit in window?
-        if (sbh < win.innerHeight()) {
-          // yes: easy case -- always keep at the top
-          sb.css('top', $u.min([$u.max([0, wintop - offset - 10]),
-                                $(document).height() - sbh - 200]));
-        } else {
-          // no: only scroll if top/bottom edge of sidebar is at
-          // top/bottom edge of window
-          if (curtop > wintop && curbot > winbot) {
-            sb.css('top', $u.max([wintop - offset - 10, 0]));
-          } else if (curtop < wintop && curbot < winbot) {
-            sb.css('top', $u.min([winbot - sbh - offset - 20,
-                                  $(document).height() - sbh - 200]));
-          }
-        }
-      });
-    </script>
+
 {#- endif #}
 {% endblock %}
 
 {% block header %}
-<div class="pageheader">
 
-  <ul>
-    <li><a title="Home" href="http://apero.exoplanets.ca/">
-        <i class="fa fa-home fa-3x" aria-hidden="true"></i></a></li>
-    <li><a title="install" href="http://apero.exoplanets.ca/user/general/installation.html">
-        <i class="fa fa-cog fa-3x" aria-hidden="true"></i></a></li>
-    <li><a title="github" href="https://github.com/njcuk9999/apero-drs">
-        <i class="fa fa-git-square fa-3x" aria-hidden="true"></i></a></li>
-    <li><a title="download documentation" href="http://apero.exoplanets.ca/apero-docs.pdf">
-        <i class="fa fa-download fa-3x" aria-hidden="true"></i></a></li>
-    <li><a title="download paper" href="https://ui.adsabs.harvard.edu/abs/2022PASP..134k4509C">
-        <i class="fa fa-file-pdf-o fa-3x" aria-hidden="true"></i></a></li>
-    <li><a title="UdeM" href="http://apero.exoplanets.ca/main/misc/udem.html">
-        <i class="fa fa-university fa-3x" aria-hidden="true"></i></a></li>
-    <li><a title="ARI" href="http://apero.exoplanets.ca/ari/home/">
-        <img src="https://apero.exoplanets.ca/_static/images/ari_icon.png" alt="ARI" style="height:48px; width:auto;">
-        </a></li>
-  </ul>
-    <div>
-    <a href="http://apero.exoplanets.ca/">
-      <img src="http://apero.exoplanets.ca/_static/images/apero_logo.png" alt="APERO" />
-    </a>
-    <br>
-    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;A PipelinE to Reduce Observations
-    </div>
+<div id="pageheader-container"></div>
 
-</div>
+<script>
+  // Automatically compute site root based on current page
+  function getRoot() {
+        const pathname = window.location.pathname; // e.g., "/ari/nirps/index.html"
+        const ROOT_FOLDER = "apero-drs"; // or "/" if site root is root
+        const idx = pathname.indexOf(ROOT_FOLDER);
+        if (idx >= 0) {
+            return pathname.substring(0, idx + ROOT_FOLDER.length) + "/";
+        }
+        // fallback: root
+        return "/";
+  }
+  const ROOT = getRoot();
+
+  // Load the header HTML
+  fetch(ROOT + "_static/pageheader.html")
+    .then(r => r.text())
+    .then(html => {
+        const container = document.getElementById("pageheader-container");
+        container.innerHTML = html;
+
+        // Fix links
+        container.querySelectorAll("a[data-href]").forEach(a => {
+            const path = a.getAttribute("data-href");
+            a.href = ROOT + path;
+        });
+
+        // Fix images
+        container.querySelectorAll("img[data-src]").forEach(img => {
+            const path = img.getAttribute("data-src");
+            img.src = ROOT + path;
+        });
+    });
+
+    document.addEventListener("DOMContentLoaded", function() {
+      // Fix every data-href link in the whole document
+      document.querySelectorAll("a[data-href]").forEach(a => {
+        const path = a.getAttribute("data-href");
+        a.href = ROOT + path;
+      });
+
+      // Fix every data-src image in the whole document
+      document.querySelectorAll("img[data-src]").forEach(img => {
+        const path = img.getAttribute("data-src");
+        img.src = ROOT + path;
+      });
+
+      // Fix all link[data-href] CSS references
+      document.querySelectorAll("link[data-href]").forEach(link => {
+        const path = link.getAttribute("data-href");
+        link.href = ROOT + path;
+      });
+    });
+
+</script>
+
+
 {% endblock %}

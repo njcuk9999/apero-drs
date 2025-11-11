@@ -215,7 +215,7 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
     if has_skipped:
         if len(error_storage) > 0:
             # header banner (in red)
-            WLOG(params, '', params['LOG.HEADER'], colour='red')
+            WLOG(params, 'error', params['LOG.HEADER'], raise_exception=False)
             # combine error messages
             errormsg = ''
             # loop around error reports (from error_storage)

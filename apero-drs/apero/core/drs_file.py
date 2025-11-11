@@ -5225,6 +5225,10 @@ class DrsFitsFile(DrsInputFile):
             crunfile = params['INPUTS'].get('CRUNFILE', 'Not set')
         else:
             crunfile = 'Not set'
+        # still a change crunfile is None
+        if crunfile is None:
+            crunfile = 'Not set'
+        # finally set value in header
         self.add_hkey('KW_CRUNFILE', value=crunfile)
 
     def add_qckeys(self, qcparams: Union[QCParamList, None] = None):

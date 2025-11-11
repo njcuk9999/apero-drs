@@ -1655,7 +1655,7 @@ def normalize_stokes_i(params: ParamDict, props: ParamDict) -> ParamDict:
     props.append_source('STOKESIERR', func_name)
     # -------------------------------------------------------------------------
     # add order cont flux
-    props.set('ORDER_CONT_FLUX', order_cont_flux, source=func_name)
+    props.set('ORDER_CONT_FLUX', value=order_cont_flux, source=func_name)
     # -------------------------------------------------------------------------
     # return props
     return props
@@ -1740,7 +1740,7 @@ def clean_polarimetry_data(props: ParamDict, sigclip: bool = False,
             median_pol = mp.nanmedian(pol[order_num][mask])
             # calculate the median sigma
             meddiff = pol[order_num][mask] - median_pol
-            mad = mp.median_absolute_deviation()
+            mad = mp.inv_normal_fraction()
             medsig_pol = mp.nanmedian(np.abs(meddiff)) / mad
             # add this to mask
             mask &= pol[order_num] > (median_pol - (nsig * medsig_pol))

@@ -99,13 +99,15 @@ class TableFile:
         return new
 
     def make_table(self, table: Union[Table, None]):
+        # set where this page is relative to the ari/home directory
+        rel_root = '../../../ari/home/'
         # make a markdown page for the table
         table_page = drs_markdown.MarkDownPage(self.ref)
         # add object table
         title = f'{self.name} ({self.user})'
         table_page.add_title(title)
         # add page access
-        table_page.add_html(add_page_access(self.params))
+        table_page.add_html(add_page_access(self.params, rel_root))
         # -----------------------------------------------------------------
         # Add basic text
         # construct text to add
@@ -339,6 +341,8 @@ def make_obs_table(params: ParamDict, object_classes: Dict) -> TableFile:
 def _add_obj_page(it: int, key: str, rdict: dict, params: ParamDict,
                   object_classes: Dict[str, AriObject]
                   ) -> Dict[str, Tuple[bool, str]]:
+    # set where this page is relative to the ari/home directory
+    rel_root = '../../../../../ari/home/'
     # get object
     object_class = object_classes[key]
     # get the object name for this row
@@ -386,7 +390,7 @@ def _add_obj_page(it: int, key: str, rdict: dict, params: ParamDict,
         # add title
         object_page.add_title(f'{objname} ({ari_user})')
         # add page access
-        object_page.add_html(add_page_access(params))
+        object_page.add_html(add_page_access(params, rel_root))
         # ---------------------------------------------------------------------
         # Add basic text
         # construct text to add
@@ -1292,6 +1296,8 @@ def make_finder_page(params: ParamDict):
 # General functions
 # =============================================================================
 def make_index_page(params: ParamDict):
+    # set where this page is relative to the ari/home directory
+    rel_root = '../../ari/home/'
     # get ari user
     ari_user = params['TOOLS.ARI.USER']
     # get path to save index to (above ari_dir level)
@@ -1304,7 +1310,7 @@ def make_index_page(params: ParamDict):
     profile_files = [os.path.join(ari_user, 'profile.rst')]
     # -------------------------------------------------------------------------
     # add page access
-    index_page.add_html(add_page_access(params))
+    index_page.add_html(add_page_access(params, rel_root))
     # -------------------------------------------------------------------------
     # Add basic text
     # construct text to add
@@ -1341,18 +1347,22 @@ def make_index_page(params: ParamDict):
 
 
 def make_profile_page(params: ParamDict, tables: List[TableFile]):
+    # set where this page is relative to the ari/home directory
+    rel_root = '../../../ari/home/'
     # get ari user
     ari_user = params['TOOLS.ARI.USER']
     # get path to save
     profile_path = params['TOOLS.ARI.DIR']
     # construct the profile name
     profile_name = f'profile.rst'
+    # need an orphan clause at the top of the markdown
+    ilines = [':orphan:', '']
     # create a page
-    profile_page = drs_markdown.MarkDownPage(ari_user)
+    profile_page = drs_markdown.MarkDownPage(ari_user, initial_lines=ilines)
     # add title
     profile_page.add_title(ari_user)
     # add page access
-    profile_page.add_html(add_page_access(params))
+    profile_page.add_html(add_page_access(params, rel_root))
     # -----------------------------------------------------------------
     # Add basic text
     # construct text to add
@@ -1545,7 +1555,7 @@ def add_other_reductions(params: ParamDict):
     base.write_yaml(userlist, userlist_yaml)
 
 
-def add_page_access(params: ParamDict, 
+def add_page_access(params: ParamDict, ari_home_path: str,
                     group_name: Optional[str] = None) -> List[str]:
     """
     This locks the page to only be accessible by the group name
@@ -1555,6 +1565,9 @@ def add_page_access(params: ParamDict,
 
     :return: str, the html code to add
     """
+    # deal with ari_home_path ending with a /
+    if ari_home_path.endswith('/'):
+        ari_home_path = ari_home_path[:-1]
     # do not protect page if ARI.PROTECT is False
     if not params['TOOLS.ARI.PROTECT']:
         htmllines = []
@@ -1566,8 +1579,9 @@ def add_page_access(params: ParamDict,
         group_name = params['TOOLS.ARI.GROUP']
 
     htmllines = []
-    htmllines += ['<script src="/ari/home/login.js"></script>']
-    htmllines += [f'<script>pageAccess("{group_name}", "/ari/home/index.html")</script>']
+    htmllines += [f'<script src="{ari_home_path}/login.js"></script>']
+    htmllines += [f'<script>pageAccess("{group_name}", '
+                  f'"{ari_home_path}/index.html")</script>']
 
     return htmllines
 

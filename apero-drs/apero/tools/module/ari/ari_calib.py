@@ -115,6 +115,8 @@ def add_calib_page(params: ParamDict, recipe_table: ari_pages.TableFile):
 
     :return: None, writes calibration rst to disk
     """
+    # set where this page is relative to the ari/home directory
+    rel_root = '../../../ari/home/'
     # ---------------------------------------------------------------------
     # make a markdown page for the table
     calib_page = drs_markdown.MarkDownPage(recipe_table.ref)
@@ -122,7 +124,8 @@ def add_calib_page(params: ParamDict, recipe_table: ari_pages.TableFile):
     title = f'{recipe_table.name} ({recipe_table.user})'
     calib_page.add_title(title)
     # add page access
-    calib_page.add_html(ari_pages.add_page_access(recipe_table.params))
+    calib_page.add_html(ari_pages.add_page_access(recipe_table.params,
+                                                  rel_root))
     # -----------------------------------------------------------------
     # Add basic text
     # construct text to add
