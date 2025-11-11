@@ -524,10 +524,10 @@ class AperoDatabase:
         # ---------------------------------------------------------------------
         return rows
 
-    def set(self, columns: Optional[Union[str, List[str]]] = None,
-            values: Optional[Union[str, List[str]]] = None,
-            tablename: Optional[str] = None, condition: Optional[str] = None,
-            update_dict: Optional[UpdateDictReturn] = None):
+    def set_row(self, columns: Optional[Union[str, List[str]]] = None,
+                values: Optional[Union[str, List[str]]] = None,
+                tablename: Optional[str] = None, condition: Optional[str] = None,
+                update_dict: Optional[UpdateDictReturn] = None):
         """
         Changes the data in existing rows.
 
@@ -704,7 +704,112 @@ class AperoDatabase:
             #    no cases where we have unique columns and no HASH column
             else:
                 # if the row already exists, update it
-                self.set(update_dict=insert_dict, condition=None)
+                self.set_row(update_dict=insert_dict, condition=None)
+
+    def add_rows(self, insert_dicts: List[dict],
+                 tablename: Optional[str] = None):
+        """
+        Add multiple rows to a database table. Works across SQLAlchemy engines.
+        If duplicates exist, falls back to row-by-row insertion that can update
+        existing rows (using add_row).
+        """
+        if not insert_dicts:
+            return  # nothing to insert
+        # ---------------------------------------------------------------------
+        # Reflect table
+        metadata = sqlalchemy.MetaData()
+        metadata.reflect(bind=self.engine)
+        # ---------------------------------------------------------------------
+        if tablename is None:
+            tablename = self.tablename
+        sqltable = sqlalchemy.Table(tablename, metadata)
+        # ---------------------------------------------------------------------
+        # Unique columns (for hash, duplicate detection)
+        unique_cols = self._unique_cols(tablename)
+        # ---------------------------------------------------------------------
+        # Clean and normalize all rows
+        cleaned_rows = []
+        for insert_dict in insert_dicts:
+            row = dict(insert_dict)
+            # loop around rows
+            for key, value in row.items():
+                # deal with None and np.nan values
+                if value in [None, np.nan]:
+                    row[key] = sqlalchemy.null()
+                # deal with null string values
+                elif isinstance(value, str):
+                    if value.lower() in ['null', 'none', 'nan']:
+                        row[key] = sqlalchemy.null()
+            if unique_cols:
+                row = _hash_col(row, unique_cols)
+            cleaned_rows.append(row)
+
+        insert_query = sqlalchemy.insert(sqltable)
+        # ---------------------------------------------------------------------
+        # bulk insert with fallback for duplicates
+        try:
+            # Try bulk insert first
+            with self.engine.begin() as conn:
+                conn.execute(insert_query, cleaned_rows)
+        except IntegrityError:
+            # Fallback — handle duplicates via existing add_row (update)
+            for row in cleaned_rows:
+                self.add_row(insert_dict=row, tablename=tablename)
+
+    def set_rows(self,
+                 update_dicts: List[dict],
+                 tablename: Optional[str] = None):
+        """
+        Changes the data in multiple existing rows.
+
+        :param update_dicts: List of dictionaries, each defining columns to update.
+                             Each dict must contain either:
+                               - a unique key (used to identify the row), or
+                               - a 'condition' key giving an SQL WHERE clause.
+        :param tablename: Optional name of the table to update.
+        """
+        if not update_dicts:
+            return
+
+        # Define metadata and reflect table
+        metadata = sqlalchemy.MetaData()
+        metadata.reflect(bind=self.engine)
+        if tablename is None:
+            tablename = self.tablename
+        sqltable = sqlalchemy.Table(tablename, metadata)
+
+        # Get unique columns
+        unique_cols = self._unique_cols(tablename)
+
+        with self.engine.begin() as conn:
+            for update_dict in update_dicts:
+                # Make a shallow copy to avoid mutating the caller's data
+                row_update = dict(update_dict)
+
+                # Extract explicit condition if provided
+                condition = row_update.pop("condition", None)
+
+                # Handle NaN/None/null strings
+                for key, value in row_update.items():
+                    if value in [None, np.nan]:
+                        row_update[key] = sqlalchemy.null()
+                    elif isinstance(value, str):
+                        if value.lower() in ["null", "none", "nan"]:
+                            row_update[key] = sqlalchemy.null()
+
+                # Add hash column if needed
+                if unique_cols:
+                    row_update = _hash_col(row_update, unique_cols)
+                    # Only use hash condition if not explicitly provided
+                    if condition is None and UHASH_COL in row_update:
+                        condition = f'{UHASH_COL}="{row_update[UHASH_COL]}"'
+
+                # Build UPDATE query for this row
+                update_query = sqlalchemy.update(sqltable).values(row_update)
+                if condition is not None:
+                    update_query = update_query.where(sqlalchemy.text(condition))
+
+                conn.execute(update_query)
 
     def delete_rows(self, tablename: Optional[str] = None,
                     condition: Optional[str] = None):
@@ -1341,6 +1446,20 @@ class DatabaseManager:
 # =============================================================================
 # Working functions
 # =============================================================================
+def get_table_kind(table_name: str, dparams: Dict[str, Any] = None) -> str:
+    # load database yaml file
+    if dparams is None:
+        ddict = base.DPARAMS
+    else:
+        ddict = dict(dparams)
+    # loop around kinds and find table that matches
+    for kind in ddict:
+        if 'TABLE' in ddict[kind]:
+            if ddict[kind]['TABLE'] == table_name:
+                return kind.lower()
+    return 'unknown'
+
+
 def _hash_col(insert_dict: UpdateDictReturn,
               unique_cols: List[str],
               return_string: bool = False

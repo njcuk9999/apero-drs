@@ -23,6 +23,7 @@ from apero.tools.module.database import database_update
 from apero.tools.module.database import manage_databases
 from apero.tools.module.database import manage_db_gui
 from apero.base import base as apero_base
+from apero.core import drs_database
 
 # =============================================================================
 # Define variables
@@ -95,6 +96,14 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
     update = params['INPUTS']['UPDATE']
     reset = params['INPUTS']['RESET']
     dbkind = params['INPUTS']['DBKIND']
+
+    # deal with a push command (update all database pending entries)
+    if params['INPUTS']['PUSH']:
+        drs_database.db_push(params)
+        # ------------------------------------------------------------------
+        # End of main code
+        # ------------------------------------------------------------------
+        return locals()
     # deal with killing sleeping processes
     if params['INPUTS']['KILL']:
         # kill all user processes in the database that have been running for

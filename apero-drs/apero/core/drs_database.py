@@ -18,12 +18,14 @@ only from
 - apero.core.math.*
 - apero.io.drs_fits
 """
+import glob
 import os
 import shutil
 import time
 import warnings
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple, Type, Union
+from typing import Literal
 
 import numpy as np
 import pandas as pd
@@ -74,6 +76,8 @@ AperoCodedWarning = drs_log.AperoCodedWarning
 display_func = drs_misc.display_func
 # get WLOG
 TLOG = Printer
+# Get Logging function
+WLOG = drs_log.wlog
 # get drs header
 DrsHeader = drs_file.Header
 FitsHeader = drs_file.FitsHeader
@@ -113,7 +117,8 @@ GOOGLE_BASE_URL = ('https://docs.google.com/spreadsheets/d/{}/gviz/'
 # Object database
 # =============================================================================
 class AstrometricDatabase(DatabaseManager):
-    def __init__(self, params: ParamDict, pconst: Any = None,
+    def __init__(self, params: ParamDict, shortname: str,
+                 pconst: Any = None,
                  dparams: Optional[dict] = None):
         """
         Constructor of the Astrometric Database class
@@ -131,6 +136,8 @@ class AstrometricDatabase(DatabaseManager):
             pconst = load_functions.load_pconfig(select.INSTRUMENTS)
         # construct super class
         DatabaseManager.__init__(self, params, pconst)
+        # set input recipe shortname
+        self.shortname = shortname
         # set name
         self.name = 'astrom'
         self.kind = 'astrom'
@@ -291,7 +298,8 @@ class AstrometricDatabase(DatabaseManager):
         #   are in database)
         self.check_columns(insert_dict)
         # try to add a new row
-        self.database.add_row(insert_dict=insert_dict)
+        # self.database.add_row(insert_dict=insert_dict)
+        db_send(self.params, self.database.tablename, insert_dict)
 
     def count(self, condition: Union[str, None] = None) -> int:
         """
@@ -537,7 +545,8 @@ class CalibrationDatabase(DatabaseManager):
         self.check_columns(insert_dict)
         # ------------------------------------------------------------------
         # try to add a new row
-        self.database.add_row(insert_dict=insert_dict)
+        # self.database.add_row(insert_dict=insert_dict)
+        db_send(self.params, self.database.tablename, insert_dict)
         # update parameter table (if fits file)
         if isinstance(drsfile, DrsFitsFile):
             drsfile.update_param_table('CALIB_DB_ENTRY',
@@ -1006,7 +1015,8 @@ class TelluricDatabase(DatabaseManager):
         self.check_columns(insert_dict)
         # ------------------------------------------------------------------
         # try to add a new row
-        self.database.add_row(insert_dict=insert_dict)
+        # self.database.add_row(insert_dict=insert_dict)
+        db_send(self.params, self.database.tablename, insert_dict)
         # update parameter table (if fits file)
         if isinstance(drsfile, DrsFitsFile):
             drsfile.update_param_table('TELLU_DB_ENTRY',
@@ -1818,12 +1828,16 @@ class FileIndexDatabase(DatabaseManager):
         num_rows = self.database.count(condition=condition)
         # if we don't have an entry we add a row
         if num_rows == 0:
-            self.database.add_row(insert_dict=insert_dict)
+            # self.database.add_row(insert_dict=insert_dict)
+            db_send(self.params, self.database.tablename, insert_dict)
+
         else:
             # condition comes from uhash - so set to None here (to remember)
-            condition = None
+            # condition = None
             # update row in database
-            self.database.set(update_dict=insert_dict, condition=condition)
+            # self.database.set(update_dict=insert_dict, condition=condition)
+            db_send(self.params, self.database.tablename, insert_dict,
+                    mode='SET')
 
     def remove_entries(self, condition: str):
         """
@@ -2295,7 +2309,10 @@ class FileIndexDatabase(DatabaseManager):
                 else:
                     values.append('Null')
             # update this row (should only be one row based on condition)
-            self.database.set(columns, values=values, condition=condition)
+            # self.database.set_row(columns, values=values, condition=condition)
+            update_dict = dict(zip(columns, values))
+            db_send(self.params, self.database.tablename, update_dict,
+                    mode='SET', condition=condition)
 
     def _update_params(self, **kwargs) -> bool:
         """
@@ -2717,7 +2734,8 @@ class LogDatabase(DatabaseManager):
         #   are in database)
         self.check_columns(insert_dict)
         # add row to database
-        self.database.add_row(insert_dict=insert_dict)
+        # self.database.add_row(insert_dict=insert_dict)
+        db_send(self.params, self.database.tablename, insert_dict)
 
     def get_entries(self, columns: str = '*',
                     include_obs_dirs: Union[List[str], None] = None,
@@ -2935,7 +2953,8 @@ class RejectDatabase(DatabaseManager):
         #   are in database)
         self.check_columns(insert_dict)
         # add row to database
-        self.database.add_row(insert_dict=insert_dict)
+        # self.database.add_row(insert_dict=insert_dict)
+        db_send(self.params, self.database.tablename, insert_dict)
 
     def get_entries(self, columns: str = '*',
                     nentries: Union[int, None] = None,
@@ -3227,6 +3246,145 @@ class PandasLikeDatabase:
 # =============================================================================
 # Define other database functionality
 # =============================================================================
+def db_push(params: ParamDict, pid: Optional[str] = None):
+
+    # get the path to the database
+    db_pend = str(os.path.join(params['PATH.OTHER'], params['DB.PENDING_PATH']))
+    # get shortname from parameters
+    db_shortname = '*'
+    if 'INPUTS' in params:
+        db_shortname = params['INPUTS'].get('PUSH_SHORTNAME', '*')
+    # -------------------------------------------------------------------------
+    # check for pending path - if it doesn't exist we don't have anything to
+    # updated
+    if not os.path.exists(db_pend):
+        return
+    # -------------------------------------------------------------------------
+    # deal with no pid (get all pids)
+    if pid is None:
+        pid = '*'
+    # otherwise we get all pending files in the db_pend directory
+    pend_basefile = 'pid{0}_{1}_uid*.yaml'.format(pid, db_shortname)
+    pend_files = glob.glob(os.path.join(db_pend, pend_basefile))
+    # -------------------------------------------------------------------------
+    # deal with no pending files
+    if len(pend_files) == 0:
+        return
+    # -------------------------------------------------------------------------
+    # print progress
+    msg = 'Reading {0} pending database entrie(s)'
+    margs = [len(pend_files)]
+    WLOG(params, 'info', msg.format(*margs))
+    # loop around pending files and compile a dictionary of entriers to add
+    #  to each table
+    pend_add_dict = dict()
+    pend_set_dict = dict()
+    # loop around pending files
+    for pend_file in tqdm(pend_files):
+        # read yaml file
+        pdict = base.load_yaml(pend_file)
+        # get table name and entry
+        tablename = pdict['TABLE_NAME']
+        entry = pdict['ENTRY']
+        mode = pdict['MODE']
+        # deal with add mode
+        if mode == 'ADD':
+            # deal with table not in pend dict
+            if tablename not in pend_add_dict:
+                pend_add_dict[tablename] = []
+            # add entry to pend dict
+            pend_add_dict[tablename].append(entry)
+        # deal with set mode
+        else:
+            # deal with table not in pend dict
+            if tablename not in pend_set_dict:
+                pend_set_dict[tablename] = []
+            # add entry to pend dict
+            pend_set_dict[tablename].append(entry)
+    # -------------------------------------------------------------------------
+    # loop around add /set
+    for mode, pend_dict in zip(['ADD', 'SET'], [pend_add_dict, pend_set_dict]):
+        # print progress
+        msg = 'Pushing {0} pending {1} database entrie(s) to database'
+        margs = [len(pend_files), mode]
+        WLOG(params, 'info', msg.format(*margs))
+        # ---------------------------------------------------------------------
+        # loop around tables and add entries to database
+        for tablename in pend_dict:
+            # print progress
+            msg = '\t- Pushing {0} entries to table: {1}'
+            margs = [len(pend_dict[tablename]), tablename]
+            WLOG(params, '', msg.format(*margs))
+            # construct database manager
+            dbm = DatabaseManager(params)
+            dbm.name = tablename
+            dbm.kind = tablename
+            # set path
+            dbm.database_settings(kind=tablename)
+            # load database
+            dbm.load_db()
+            # add the rows in bulk
+            if mode == 'ADD':
+                dbm.database.add_rows(insert_dicts=pend_dict[tablename])
+            else:
+                dbm.database.set_rows(update_dicts=pend_dict[tablename])
+    # -------------------------------------------------------------------------
+    # print progress
+    msg = 'Removing {0} pending database entries'
+    margs = [len(pend_files)]
+    WLOG(params, 'info', msg.format(*margs))
+    # remove pending files
+    for pend_file in pend_files:
+        os.remove(pend_file)
+
+
+def db_send(params: ParamDict, tablename: str,
+            shortname: str, entry: Dict[str, Any],
+            mode: Literal['ADD', 'SET'] = 'ADD',
+            condition: Optional[str] = None):
+    """
+    Send an entry to the pending database list
+
+    :param params: ParamDict, parameter dictionary of constants
+    :param entry: Dict[str, Any], the entry to send to the database server
+
+    :return: None
+    """
+    # get the pid
+    pid = params.get('PID', None)
+    if pid is None:
+        # set up process id
+        pid, _ = drs_misc.assign_pid()
+    # -------------------------------------------------------------------------
+    # get unix time now
+    uid, _, _ = drs_misc.unix_char_code()
+    # -------------------------------------------------------------------------
+    # construct file path
+    db_pend = str(os.path.join(params['PATH.OTHER'], params['DB.PENDING_PATH']))
+    # -------------------------------------------------------------------------
+    # make sure path exists
+    if not os.path.exists(db_pend):
+        os.makedirs(db_pend, exist_ok=True)
+    # -------------------------------------------------------------------------
+    # get the table kind (look up table name)
+    tablekind = drs_db.get_table_kind(tablename)
+    # -------------------------------------------------------------------------
+    # construct filename
+    db_basename = 'pid{0}_{1}_uid{2}.yaml'.format(pid, shortname, str(uid))
+    db_filename = os.path.join(db_pend, db_basename)
+    # construct pending dict
+    pending_dict = dict()
+    pending_dict['TABLE_NAME'] = tablekind
+    pending_dict['MODE'] = mode
+    pending_dict['ENTRY'] = entry
+    # in set mode
+    if mode == 'SET':
+        if condition is not None:
+            pending_dict['ENTRY']['condition'] = condition
+    # push into yaml file
+    base.write_yaml(pending_dict, db_filename)
+
+
 def get_google_sheet(params: ParamDict, sheet_id: str, worksheet: int = 0,
                      cached: bool = True) -> Table:
     """

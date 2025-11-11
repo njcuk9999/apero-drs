@@ -105,7 +105,7 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
     # need to convert object to drs object name
     pconst = load_functions.load_pconfig(select.INSTRUMENTS)
     # load object database
-    objdbm = drs_database.AstrometricDatabase(params)
+    objdbm = drs_database.AstrometricDatabase(params, recipe.shortname)
     objdbm.load_db()
     # get clean / alias-safe version of object name
     objname, _ = objdbm.find_objname(pconst, objname)
@@ -114,9 +114,9 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
     # get the fiber type required
     fiber = params['INPUTS']['FIBER']
     # load the calibration and telluric databases
-    calibdbm = drs_database.CalibrationDatabase(params)
+    calibdbm = drs_database.CalibrationDatabase(params, recipe.shortname)
     calibdbm.load_db()
-    telludbm = drs_database.TelluricDatabase(params)
+    telludbm = drs_database.TelluricDatabase(params, recipe.shortname)
     telludbm.load_db()
     # ----------------------------------------------------------------------
     # get objects that match this object name

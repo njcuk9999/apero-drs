@@ -2074,11 +2074,13 @@ def gen_run_from_seq(params: ParamDict, sequence,
             else:
                 vdicts['used'][runname] = True
         # deal with run name not in params (means not selected)
-        if srecipe.shortname not in params['RUN_RECIPES']:
-            wargs = [srecipe.name, srecipe.shortname]
-            WLOG(params, '', textentry('40-503-00045', args=wargs),
-                 colour='yellow')
-            continue
+        #   only if recipe_type is "recipe"
+        if srecipe.recipe_type == 'recipe':
+            if srecipe.shortname not in params['RUN_RECIPES']:
+                wargs = [srecipe.name, srecipe.shortname]
+                WLOG(params, '', textentry('40-503-00045', args=wargs),
+                     colour='yellow')
+                continue
         # print progress
         wargs = [srecipe.name, srecipe.shortname]
         WLOG(params, '', textentry('40-503-00012', args=wargs))

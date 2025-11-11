@@ -105,7 +105,7 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
     # need to convert object to drs object name
     pconst = load_functions.load_pconfig(select.INSTRUMENTS)
     # load object database
-    objdbm = drs_database.AstrometricDatabase(params)
+    objdbm = drs_database.AstrometricDatabase(params, recipe.shortname)
     objdbm.load_db()
     # get clean / alias-safe version of object name
     objname, _ = objdbm.find_objname(pconst, objname)

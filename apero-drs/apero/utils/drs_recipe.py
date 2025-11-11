@@ -34,6 +34,7 @@ from apero.core import drs_file
 from apero.instruments import select
 from apero.base import base as apero_base
 
+
 # =============================================================================
 # Define variables
 # =============================================================================
@@ -1805,6 +1806,8 @@ class DrsRunSequence:
         # define the default run and skip parameters
         self.default_run = True
         self.default_skip = True
+        # set apero database recipe
+        self.apero_database = None
 
     def __getstate__(self) -> dict:
         """
@@ -1859,7 +1862,8 @@ class DrsRunSequence:
             rkwargs: Union[Dict[str, List[DrsInputFile]], None] = None,
             template_required: bool = False,
             recipe_kind: Union[str, None] = None,
-            calib_required: Optional[bool] = None):
+            calib_required: Optional[bool] = None,
+            db_push: bool = True):
         """
         Add a recipe to the sequence, can overwrite default recipe behaviour
         with the name (shortname), reference, fiber keys and add more specialised
@@ -1943,6 +1947,34 @@ class DrsRunSequence:
         add_set['args'] = rargs
         # add kwargs (optional arguments) to set
         add_set['kwargs'] = rkwargs
+        # append to adds
+        self.adds.append(add_set)
+        # add a database call to push entries after this recipe sequence
+        if db_push:
+            self.db_push()
+
+    def db_push(self):
+        """
+        Add a database push recipe to the end of the sequence
+
+        :return:
+        """
+        if self.apero_database is None:
+            return
+        # set up the add set dictionary
+        add_set = dict()
+        add_set['recipe'] = self.apero_database
+        add_set['name'] = 'DB-PUSH'
+        add_set['reference'] = True
+        add_set['fiber'] = None
+        add_set['arguments'] = dict(push=True)
+        add_set['filters'] = None
+        add_set['template_required'] = False
+        add_set['recipe_kind'] = None
+        add_set['calib_required'] = None
+        add_set['files'] = None
+        add_set['args'] = None
+        add_set['kwargs'] = None
         # append to adds
         self.adds.append(add_set)
 

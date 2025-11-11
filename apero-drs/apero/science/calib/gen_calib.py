@@ -320,7 +320,7 @@ class CalibFile:
 # =============================================================================
 # Define user functions
 # =============================================================================
-def check_files(params: ParamDict,
+def check_files(params: ParamDict, shortname: str,
                 infile: DrsFitsFile) -> Tuple[bool, List[List[str]]]:
     """
     Skip objnames and dprtypes based on whether:
@@ -349,7 +349,7 @@ def check_files(params: ParamDict,
     # clean (capitalize and remove white spaces)
     dprtype = drs_text.clean_strings(dprtype)
     # load object database
-    objdbm = drs_database.AstrometricDatabase(params)
+    objdbm = drs_database.AstrometricDatabase(params, recipe.shortname)
     objdbm.load_db()
     # get clean / alias-safe version of object name
     objname, _ = objdbm.find_objname(pconst, objname)

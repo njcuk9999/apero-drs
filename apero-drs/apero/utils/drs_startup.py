@@ -185,7 +185,7 @@ def __setup__(name: str = 'None', instrument: str = 'None',
             quiet = True
         del fkwargs['quiet']
     # set up process id
-    pid, htime = assign_pid()
+    pid, htime = drs_misc.assign_pid()
     # Clean WLOG
     WLOG.clean_log()
     # get filemod and recipe mod
@@ -618,6 +618,25 @@ def run(func: Any, recipe: DrsRecipe,
     return llmain, success
 
 
+def push_to_databases(params: ParamDict):
+    """
+    Push any pending database entries to the databases
+
+    :param params: ParamDict, the parameter dictionary containing constants
+    :return:
+    """
+    # if we are in parallel do not push to databases (this will be done
+    #   externally)
+    if 'INPUTS' in params:
+        in_parallel = params['INPUTS'].get('PARALLEL', False)
+        if in_parallel:
+            return
+    # get the pid
+    pid = params.get('PID', None)
+    # if we get to here push all pending database entries
+    drs_database.db_push(params, pid=pid)
+
+
 def end_all(params: ParamDict = None, success: bool = True,
             quiet: bool = False, recipename: str = '') -> None:
     """
@@ -713,6 +732,11 @@ def end_main(params: ParamDict, llmain: Union[Dict[str, Any], None],
     # -------------------------------------------------------------------------
     # log end message
     if end:
+        # ---------------------------------------------------------------------
+        # deal with pushing to the database
+        push_to_databases(params)
+        # ---------------------------------------------------------------------
+        # deal with printing the end message
         end_all(params, success, quiet=quiet)
         # ---------------------------------------------------------------------
         # deal with logging (if log exists in recipe)
@@ -2075,24 +2099,6 @@ def _update_input_params(params: ParamDict, args: Dict[str, Any]):
                 for parg in pargs:
                     # update params
                     pargs[parg].params = params.copy()
-
-
-def assign_pid() -> Tuple[str, str]:
-    """
-    Assign a process id based on the time now and return it and the
-    time now
-
-    :return: the process id and the human time at creation
-    :rtype: Tuple[str, str]
-    """
-    # set function name
-    # _ = display_func('assign_pid', __NAME__)
-    # get unix char code
-    unixtime, humantime, rval = drs_misc.unix_char_code()
-    # write pid
-    pid = 'PID-{0:020d}-{1}'.format(int(unixtime), rval)
-    # return pid and human time
-    return pid, humantime
 
 
 def find_recipe(name: str = 'None', instrument: str = 'None',

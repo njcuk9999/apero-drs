@@ -164,7 +164,8 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
 
         # ------------------------------------------------------------------
         # deal with skipping files defined by inputs OBJNAME and DPRTYPE
-        skip, skip_conditions = gen_calib.check_files(params, infile)
+        skip, skip_conditions = gen_calib.check_files(params, recipe.shortname,
+                                                      infile)
         if skip:
             if 'DPRTYPE' in skip_conditions[0]:
                 wargs = skip_conditions[1]

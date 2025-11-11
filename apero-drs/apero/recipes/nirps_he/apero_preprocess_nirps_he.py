@@ -124,7 +124,7 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
     # storage for output files
     output_names = []
     # get object database
-    objdbm = ObjectDatabase(params)
+    objdbm = ObjectDatabase(params, recipe.shortname)
     objdbm.load_db()
     # loop around number of files
     for it in range(num_files):
