@@ -205,7 +205,8 @@ class Spirou(instrument_mod.Instrument):
         # ------------------------------------------------------------------
         # Deal with cleaning object name
         # ------------------------------------------------------------------
-        header, hdict = clean_obj_name(params, self, header, hdict, filename=filename,
+        header, hdict = clean_obj_name(params, self, header, hdict,
+                                       filename=filename,
                                        check_aliases=check_aliases,
                                        objdbm=objdbm)
         # ------------------------------------------------------------------

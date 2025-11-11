@@ -133,9 +133,9 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
     # get the number of infiles
     num_files = len(infiles)
     # load the calibration and telluric databases
-    calibdbm = drs_database.CalibrationDatabase(params)
+    calibdbm = drs_database.CalibrationDatabase(params, recipe.shortname)
     calibdbm.load_db()
-    telludbm = drs_database.TelluricDatabase(params)
+    telludbm = drs_database.TelluricDatabase(params, recipe.shortname)
     telludbm.load_db()
     # ----------------------------------------------------------------------
     # Loop around input files
@@ -176,8 +176,10 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
         # ------------------------------------------------------------------
         objname = infile.get_hkey('KW_OBJNAME', dtype=str)
         # get black list
-        tellu_exclude_list = telluric.get_tellu_exclude_list(params)
-        tellu_include_list = telluric.get_tellu_include_list(params)
+        tellu_exclude_list = telluric.get_tellu_exclude_list(params,
+                                                             recipe.shortname)
+        tellu_include_list = telluric.get_tellu_include_list(params,
+                                                             recipe.shortname)
         # if objname in blacklist then skip
         if objname in tellu_exclude_list:
             # log that we are skipping
@@ -222,7 +224,8 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
         # ------------------------------------------------------------------
         # Get template file (if available)
         # ------------------------------------------------------------------
-        template_props = telluric.load_templates(params, header, objname, fiber)
+        template_props = telluric.load_templates(params, recipe,
+                                                 header, objname, fiber)
         # ------------------------------------------------------------------
         # Get barycentric corrections (BERV)
         # ------------------------------------------------------------------
@@ -281,7 +284,7 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
         # Normalize image by peak blaze
         # ------------------------------------------------------------------
         nargs = [image1, header, fiber]
-        image1, nprops = telluric.normalise_by_pblaze(params, *nargs)
+        image1, nprops = telluric.normalise_by_pblaze(params, recipe, *nargs)
 
         # ------------------------------------------------------------------
         # Calculate telluric absorption

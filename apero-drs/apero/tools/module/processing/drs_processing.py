@@ -475,7 +475,7 @@ def run_process(params: ParamDict, recipe: DrsRecipe,
     # generate run table (dictionary from reprocessing)
     runtable = generate_run_table(params, module, *gargs, **gkwargs)
     # Generate run list
-    rlist = generate_run_list(params, findexdbm, runtable, None)
+    rlist = generate_run_list(params, recipe, findexdbm, runtable, None)
     # Process run list
     outlist, has_errors, _ = process_run_list(params, rlist)
     # display errors
@@ -827,7 +827,7 @@ def reset_files(params):
                                              params['PATH.CALIB'])
         # reset directory using reset module
         if reset:
-            drs_reset.reset_calibdb(params, log=True)
+            drs_reset.reset_calibdb(params, recipe, log=True)
         # print that we are not resetting directory
         else:
             WLOG(params, '', textentry('40-502-00013', args=['Calibration']))
@@ -840,7 +840,7 @@ def reset_files(params):
                                              params['PATH.TELLU'])
         # reset directory using reset module
         if reset:
-            drs_reset.reset_telludb(params, log=True)
+            drs_reset.reset_telludb(params, recipe, log=True)
         # print that we are not resetting directory
         else:
             WLOG(params, '', textentry('40-502-00013', args=['Telluric']))
@@ -925,8 +925,8 @@ def update_index_db(params: ParamDict,
                                               findexdbm=findexdbm)
 
 
-def generate_run_list(params: ParamDict, findexdbm: FileIndexDatabase,
-                      runtable: Dict[int, str],
+def generate_run_list(params: ParamDict, recipe: DrsRecipe,
+                      findexdbm: FileIndexDatabase, runtable: Dict[int, str],
                       skiptable: Optional[Table]) -> List[Run]:
     """
     Generate a list of runs for use in apero_processing
@@ -982,7 +982,8 @@ def generate_run_list(params: ParamDict, findexdbm: FileIndexDatabase,
         if not drs_text.true_text(_recal_templates):
             recal_templates = False
             lckwargs = dict(all_objects=all_objects)
-            current_tstars = telluric.list_current_templates(params, **lckwargs)
+            current_tstars = telluric.list_current_templates(params, recipe,
+                                                             **lckwargs)
             # print statement that we have been told not to recalculate
             #   tempaltes and x many templates found
             if len(current_tstars) > 0:
@@ -3926,7 +3927,7 @@ def _get_filters(params: ParamDict, srecipe: DrsRecipe,
     # get pseudo constatns
     pconst = load_functions.load_pconfig(select.INSTRUMENTS)
     # need to load object database
-    objdbm = drs_database.AstrometricDatabase(params)
+    objdbm = drs_database.AstrometricDatabase(params, screipe.shortname)
     objdbm.load_db()
     # set up filter storage
     filters = dict()

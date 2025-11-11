@@ -700,7 +700,8 @@ def image_superimp(image: np.ndarray, coeffs: np.ndarray) -> np.ndarray:
     return newimage
 
 
-def get_coefficients(params: ParamDict, header: drs_file.Header,
+def get_coefficients(params: ParamDict, recipe: DrsRecipe,
+                     header: drs_file.Header,
                      fiber: str, database: Optional[CalibrationDatabase] = None,
                      merge: bool = False,
                      filename: Optional[str] = None) -> ParamDict:
@@ -734,13 +735,14 @@ def get_coefficients(params: ParamDict, header: drs_file.Header,
     key = locofile.get_dbkey()
     # load database
     if database is None:
-        calibdbm = CalibrationDatabase(params)
+        calibdbm = CalibrationDatabase(params, recipe.shortname)
         calibdbm.load_db()
     else:
         calibdbm = database
     # load loco file
     cfile = gen_calib.CalibFile()
-    cfile.load_calib_file(params, key, header, filename=filename,
+    cfile.load_calib_file(params, recipe.shortname, key,
+                          header, filename=filename,
                           userinputkey='LOCOFILE', database=calibdbm,
                           fiber=usefiber, return_filename=True)
     # get properties from calibration file

@@ -1473,7 +1473,7 @@ def get_wavesol_from_file(params: ParamDict, recipe, sparams: Dict[str, Any],
     # -------------------------------------------------------------------------
     # load the final wave solution
     wargs = [ref_fiber, wavefile, fp_hdr, None, False]
-    wout = wave_mod.get_wave_solution_from_wavefile(params, *wargs)
+    wout = wave_mod.get_wave_solution_from_wavefile(params, recipe, *wargs)
     wavefile, wavemap, wavepath, wavesource, wavetime = wout
     # -------------------------------------------------------------------------
     # extract keys from header

@@ -105,7 +105,7 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
     # set up plotting (no plotting before this)
     recipe.plot.set_location()
     # load the calibration database
-    calibdbm = drs_database.CalibrationDatabase(params)
+    calibdbm = drs_database.CalibrationDatabase(params, recipe.shortname)
     calibdbm.load_db()
     # ----------------------------------------------------------------------
     # Get all dark_fp files for directory

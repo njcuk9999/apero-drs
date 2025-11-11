@@ -84,15 +84,13 @@ def calib_check(params: ParamDict, recipe: DrsRecipe, tstars: List[str],
     calib_count = dict()
     calib_times = dict()
     bad_calib_nights = []
-    # get the recipe module for this instrument
-    recipemodule = recipe.recipemod
     # print progress
     if log:
         WLOG(params, 'info', params['LOG.HEADER'])
         WLOG(params, 'info', textentry('40-503-00047'))
         WLOG(params, 'info', params['LOG.HEADER'])
     # get calibration files grouped by recipe
-    cout = get_raw_seq_files(params, recipemodule, tstars, ostars,
+    cout = get_raw_seq_files(params, recipe, tstars, ostars,
                              sequence='calib_seq', log=log)
     calib_files, calib_recipes, calib_args = cout
     # loop around each night and check for all calibration files
@@ -231,7 +229,6 @@ def sci_tellu_check(params: ParamDict, recipe: DrsRecipe, tstars: List[str],
     engineering_nights = []
     sci_times = dict()
     # get the recipe module for this instrument
-    recipemodule = recipe.recipemod
     filemodule = recipe.filemod
     # get the generic raw file type
     generic_raw_file = filemodule.raw_file
@@ -244,11 +241,11 @@ def sci_tellu_check(params: ParamDict, recipe: DrsRecipe, tstars: List[str],
         WLOG(params, 'info', textentry('40-503-00050'))
         WLOG(params, 'info', params['LOG.HEADER'])
     # get telluric raw files
-    tout = get_raw_seq_files(params, recipemodule, tstars, ostars,
+    tout = get_raw_seq_files(params, recipe, tstars, ostars,
                              sequence='tellu_seq')
     tellu_files, tellu_recipes, tellu_args = tout
     # get science raw files
-    sout = get_raw_seq_files(params, recipemodule, tstars, ostars,
+    sout = get_raw_seq_files(params, recipe, tstars, ostars,
                              sequence='science_seq')
     sci_files, sci_recipes, sci_args = sout
     # -------------------------------------------------------------------------
@@ -495,7 +492,7 @@ RawSeqReturn = Tuple[Dict[str, Dict[str, List[DrsFitsFile]]],
                      Dict[str, DrsRecipe], Dict[str, Dict[str, DrsArgument]]]
 
 
-def get_raw_seq_files(params: ParamDict, recipemod,
+def get_raw_seq_files(params: ParamDict, recipe: DrsRecipe,
                       tstars: List[str], ostars: List[str],
                       sequence: str, log: bool = True) -> RawSeqReturn:
     """
@@ -531,12 +528,12 @@ def get_raw_seq_files(params: ParamDict, recipemod,
     if not drs_text.null_text(_recal_templates, ['', 'None']):
         if not drs_text.true_text(_recal_templates):
             recal_templates = False
-            curr_tstars = telluric.list_current_templates(params)
+            curr_tstars = telluric.list_current_templates(params, recipe)
     # need to make sure recal templates is set correctly
     params.set('RECAL_TEMPLATE_IF_EXISTS', recal_templates, source=func_name)
     # get the calibration sequence
-    if hasattr(recipemod, sequence):
-        seq = getattr(recipemod, sequence)
+    if hasattr(recipe.recipemod, sequence):
+        seq = getattr(recipe.recipemod, sequence)
     else:
         return dict(), dict(), dict()
     # generate sequence
@@ -666,7 +663,8 @@ def _get_rawfile(drsfile: DrsFitsFile):
 # =============================================================================
 # Define object checking functions
 # =============================================================================
-def obj_check(params: ParamDict, findexdbm: Optional[FileIndexDatabase] = None,
+def obj_check(params: ParamDict, shortname: str,
+              findexdbm: Optional[FileIndexDatabase] = None,
               log: bool = True) -> Table:
     """
     Check the index database for unique objects and display which of these
@@ -689,12 +687,12 @@ def obj_check(params: ParamDict, findexdbm: Optional[FileIndexDatabase] = None,
     # deal with not having index database
     if findexdbm is None:
         # construct the index database instance
-        findexdbm = FileIndexDatabase(params)
+        findexdbm = FileIndexDatabase(params, shortname)
         findexdbm.load_db()
     # ---------------------------------------------------------------------
     # Update the object database (recommended only for full reprocessing)
     # check that we have entries in the object database
-    manage_databases.object_db_populated(params)
+    manage_databases.object_db_populated(params, shortname)
     # update the database if required
     if params['UPDATE_OBJ_DATABASE']:
         # log progress
@@ -704,7 +702,7 @@ def obj_check(params: ParamDict, findexdbm: Optional[FileIndexDatabase] = None,
         manage_databases.update_object_database(params, log=False)
     # ---------------------------------------------------------------------
     # load the object database after updating
-    objdbm = ObjectDatabase(params)
+    objdbm = ObjectDatabase(params, shortname)
     objdbm.load_db()
     # ---------------------------------------------------------------------
     # Update the reject database (recommended only for full reprocessing)

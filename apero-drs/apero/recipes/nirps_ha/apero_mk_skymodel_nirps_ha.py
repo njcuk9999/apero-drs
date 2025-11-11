@@ -99,9 +99,9 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
     # get the filetype (this is overwritten from user inputs if defined)
     filetype = params['INPUTS']['FILETYPE']
     # load the calibration and telluric databases
-    calibdbm = drs_database.CalibrationDatabase(params)
+    calibdbm = drs_database.CalibrationDatabase(params, recipe.shortname)
     calibdbm.load_db()
-    telludbm = drs_database.TelluricDatabase(params)
+    telludbm = drs_database.TelluricDatabase(params, recipe.shortname)
     telludbm.load_db()
     # set plot location
     recipe.plot.set_location()

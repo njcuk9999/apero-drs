@@ -43,7 +43,6 @@ ParamDict = param_functions.ParamDict
 DrsFitsFile = drs_file.DrsFitsFile
 DrsRecipe = drs_recipe.DrsRecipe
 # get calibration database
-CalibDatabase = drs_database.CalibrationDatabase
 TelluDatabase = drs_database.TelluricDatabase
 FileIndexDatabase = drs_database.FileIndexDatabase
 # Get function string
@@ -84,7 +83,7 @@ LoadTelluFileReturn = Union[str,
                             Tuple[None, None, None]]
 
 
-def load_tellu_file(params: ParamDict, key: str,
+def load_tellu_file(params: ParamDict, shortname: str, key: str,
                     inheader: Union[drs_fits.Header, None] = None,
                     filename: Union[str, None] = None,
                     get_image: bool = True, get_header: bool = False,
@@ -186,7 +185,7 @@ def load_tellu_file(params: ParamDict, key: str,
         # check if we have the database
         if database is None:
             # construct a new database instance
-            database = TelluDatabase(params)
+            database = TelluDatabase(params, shortname)
             # load the database
             database.load_db()
         # load filename from database

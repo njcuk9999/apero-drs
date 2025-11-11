@@ -122,7 +122,7 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
     else:
         data_type = 'SCIENCE'
         # get teff for this object
-        teff = gen_lbl.find_teff(params, objname)
+        teff = gen_lbl.find_teff(params, recipe.shortname, objname)
     # -------------------------------------------------------------------------
     # try to import lbl (may not exist)
     try:

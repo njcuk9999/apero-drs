@@ -1225,7 +1225,7 @@ def add_recipe_tables(params: ParamDict, table: Table, machine_name: str):
 # =============================================================================
 def make_finder_page(params: ParamDict):
     # load object database
-    objdbm = drs_database.AstrometricDatabase(params)
+    objdbm = drs_database.AstrometricDatabase(params, shortname='ARI')
     objdbm.load_db()
     # get all objects
     object_table = objdbm.get_entries()

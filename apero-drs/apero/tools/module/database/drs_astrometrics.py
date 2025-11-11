@@ -1087,18 +1087,18 @@ def query_simbad(params: ParamDict, rawobjname: str,
     return astroobjs, reason
 
 
-def check_database(params: ParamDict):
+def check_database(params: ParamDict, shortname: str):
     # ---------------------------------------------------------------------
     # Update the object database (recommended only for full reprocessing)
     # check that we have entries in the object database
-    manage_databases.object_db_populated(params)
+    manage_databases.object_db_populated(params, shortname)
     # log progress
     WLOG(params, '', textentry('40-503-00039'))
     # update database
     manage_databases.update_object_database(params, log=False)
     # ---------------------------------------------------------------------
     # load the object database after updating
-    objdbm = ObjectDatabase(params)
+    objdbm = ObjectDatabase(params, shortname)
     objdbm.load_db()
     # ---------------------------------------------------------------------
     # print that we are getting the full table
@@ -1476,7 +1476,7 @@ def _check_crossmatch(params: ParamDict, bad_objs: Dict[str, List[str]],
     return bad_objs
 
 
-def query_database(params, rawobjnames: List[str],
+def query_database(params, shortname: str, rawobjnames: List[str],
                    overwrite: bool = False
                    ) -> Tuple[List[str], Dict[str, Tuple[str, str]]]:
     """
@@ -1502,7 +1502,7 @@ def query_database(params, rawobjnames: List[str],
     # ---------------------------------------------------------------------
     # Update the object database (recommended only for full reprocessing)
     # check that we have entries in the object database
-    manage_databases.object_db_populated(params)
+    manage_databases.object_db_populated(params, shortname)
     # log progress
     WLOG(params, '', textentry('40-503-00039'))
     # update database
@@ -1511,7 +1511,7 @@ def query_database(params, rawobjnames: List[str],
     # print progress
     WLOG(params, '', 'Searching local object database for object names...')
     # load the object database after updating
-    objdbm = ObjectDatabase(params)
+    objdbm = ObjectDatabase(params, shortname)
     objdbm.load_db()
     # storage for output - assume none are found
     unfound = []

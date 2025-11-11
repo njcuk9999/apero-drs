@@ -249,7 +249,8 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
         # ------------------------------------------------------------------
         if passed and params['INPUTS']['DATABASE']:
             # construct database instance
-            calibdbm = drs_database.CalibrationDatabase(params)
+            calibdbm = drs_database.CalibrationDatabase(params,
+                                                        recipe.shortname)
             # load database
             calibdbm.load_db()
             # add calibration files

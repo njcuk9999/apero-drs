@@ -389,7 +389,7 @@ def manage_leak_correction(params: ParamDict, recipe: DrsRecipe,
     # print progress
     WLOG(params, 'info', textentry('40-016-00033', args=[fiber, dprtype]))
     # correct for leak
-    e2ds, leakcorr, props = correct_ext_dark_fp(params, e2ds, ref_e2ds,
+    e2ds, leakcorr, props = correct_ext_dark_fp(params, recipe, e2ds, ref_e2ds,
                                                 inheader, fiber,
                                                 database=None)
     # add used parameters
@@ -410,7 +410,8 @@ def manage_leak_correction(params: ParamDict, recipe: DrsRecipe,
     return eprops
 
 
-def correct_ext_dark_fp(params: ParamDict, sciimage: np.ndarray,
+def correct_ext_dark_fp(params: ParamDict, recipe: DrsRecipe,
+                        sciimage: np.ndarray,
                         refimage: np.ndarray, header: drs_file.Header,
                         fiber: str,
                         database: Optional[CalibrationDatabase] = None,
@@ -486,12 +487,12 @@ def correct_ext_dark_fp(params: ParamDict, sciimage: np.ndarray,
     sci_fibers, ref_fiber = pconst.FIBER_KINDS()
     # ----------------------------------------------------------------------
     # get ref leak reference for file
-    lmout = get_leak_ref(params, header, ref_fiber, 'LEAKREF_E2DS',
-                         database=database)
+    lmout = get_leak_ref(params, recipe.shortname, header, ref_fiber, ''
+                         'LEAKREF_E2DS', database=database)
     rleakfile, rleakref, rleaktime = lmout
     # get leak reference for fiber
-    lmout = get_leak_ref(params, header, fiber, 'LEAKREF_E2DS',
-                         database=database)
+    lmout = get_leak_ref(params, recipe.shortname, header, fiber,
+                         'LEAKREF_E2DS', database=database)
     leakfile, leakref, leaktime = lmout
     # ----------------------------------------------------------------------
     # store the ratio of observe to reference
@@ -595,7 +596,8 @@ def correct_ext_dark_fp(params: ParamDict, sciimage: np.ndarray,
     return sciimage, ratio_leak, props
 
 
-def get_leak_ref(params: ParamDict, header: drs_file.Header, fiber: str,
+def get_leak_ref(params: ParamDict, recipe: DrsRecipe,
+                 header: drs_file.Header, fiber: str,
                  kind: str, filename: Optional[str] = None,
                  database: Optional[CalibrationDatabase] = None
                  ) -> Tuple[str, np.ndarray, float]:
@@ -620,7 +622,7 @@ def get_leak_ref(params: ParamDict, header: drs_file.Header, fiber: str,
     # ----------------------------------------------------------------------
     # load database
     if database is None:
-        calibdbm = drs_database.CalibrationDatabase(params)
+        calibdbm = drs_database.CalibrationDatabase(params, recipe.shortname)
         calibdbm.load_db()
     else:
         calibdbm = database
@@ -630,7 +632,7 @@ def get_leak_ref(params: ParamDict, header: drs_file.Header, fiber: str,
                    userinputkey='LEAKFILE', database=calibdbm)
 
     cfile = gen_calib.CalibFile()
-    cfile.load_calib_file(params, **ckwargs)
+    cfile.load_calib_file(params, recipe.shortname, **ckwargs)
     # get properties from calibration file
     leak = cfile.data
     leak_file = cfile.filename
@@ -804,7 +806,7 @@ def ref_fplines(params: ParamDict, recipe: DrsRecipe, e2dsfile: DrsFitsFile,
         return None
     # ----------------------------------------------------------------------
     # get reference hc lines and fp lines from calibDB
-    wout = wave.get_wavelines(params, fiber, infile=e2dsfile,
+    wout = wave.get_wavelines(params, recipe, fiber, infile=e2dsfile,
                               database=database)
     mhclines, mhclsource, mfplines, mfplsource = wout
     # deal with no fplines found

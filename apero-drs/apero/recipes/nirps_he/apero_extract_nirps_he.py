@@ -145,7 +145,7 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
         params['INPUTS']['WAVEFILE'] = params['DATA_DICT']['WAVEFILE']
     # ----------------------------------------------------------------------
     # load the calibration database
-    calibdbm = drs_database.CalibrationDatabase(params)
+    calibdbm = drs_database.CalibrationDatabase(params, recipe.shortname)
     calibdbm.load_db()
     # ----------------------------------------------------------------------
     # Loop around input files
@@ -193,7 +193,8 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
         # ------------------------------------------------------------------
         # Load shape components
         # ------------------------------------------------------------------
-        sprops = shape.get_shape_calibs(params, header, database=calibdbm)
+        sprops = shape.get_shape_calibs(params, recipe,
+                                        header, database=calibdbm)
 
         # ------------------------------------------------------------------
         # Correction of file
@@ -267,7 +268,8 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
                 wprops = ParamDict()
             # --------------------------------------------------------------
             # load the localisation properties for this fiber
-            lprops = localisation.get_coefficients(params, header, fiber=fiber,
+            lprops = localisation.get_coefficients(params, recipe,
+                                                   header, fiber=fiber,
                                                    merge=True,
                                                    database=calibdbm)
             # get the localisation center coefficients for this fiber
@@ -277,10 +279,11 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
                                                 sprops['SHAPEL'])
             # --------------------------------------------------------------
             # load the flat file for this fiber
-            fout = flat_blaze.get_flat(params, header, fiber, database=calibdbm)
+            fout = flat_blaze.get_flat(params, recipe, header, fiber,
+                                       database=calibdbm)
             # --------------------------------------------------------------
             # load the blaze file for this fiber
-            bout = flat_blaze.get_blaze(params, header, fiber,
+            bout = flat_blaze.get_blaze(params, recipe, header, fiber,
                                         database=calibdbm)
             # add blaze and flat to parameter dictionary
             fbprops = ParamDict()

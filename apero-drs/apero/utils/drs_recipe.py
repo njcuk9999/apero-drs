@@ -1273,7 +1273,7 @@ class DrsRecipe(object):
         # get parameters
         params = self.params
         # load object database
-        objdbm = drs_database.AstrometricDatabase(params)
+        objdbm = drs_database.AstrometricDatabase(params, self.shortname)
         objdbm.load_db()
         # load pseudo constants
         pconst = load_functions.load_pconfig(select.INSTRUMENTS)

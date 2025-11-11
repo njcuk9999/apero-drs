@@ -92,7 +92,7 @@ def add_file_reject(params: ParamDict, recipe: DrsRecipe, raw_identifier: str):
     # get the raw directory
     rawdir = params['PATH.RAW']
     # get astrometric database
-    objdbm = drs_database.AstrometricDatabase(params)
+    objdbm = drs_database.AstrometricDatabase(params, recipe.shortname)
     # load astrometric database
     objdbm.load_db()
     # ----------------------------------------------------------------------
@@ -370,7 +370,7 @@ def update_from_obsdir(params: ParamDict, recipe: DrsRecipe, obsdir: str) -> str
     # construct path to obsdir
     rawpath = os.path.join(rawdir, obsdir)
     # get the object database
-    objdbm = drs_database.AstrometricDatabase(params)
+    objdbm = drs_database.AstrometricDatabase(params, recipe.shortname)
     # load object database
     objdbm.load_db()
     # ----------------------------------------------------------------------

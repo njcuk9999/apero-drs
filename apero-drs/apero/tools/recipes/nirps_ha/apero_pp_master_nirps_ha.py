@@ -141,7 +141,7 @@ def __main__(recipe, params):
     # get the number of infiles
     num_files = len(infiles)
     # load the calibration database
-    calibdbm = drs_database.CalibrationDatabase(params)
+    calibdbm = drs_database.CalibrationDatabase(params, recipe.shortname)
     calibdbm.load_db()
     # ----------------------------------------------------------------------
     # Loop around input files
@@ -163,7 +163,8 @@ def __main__(recipe, params):
         # print progress
         WLOG(params, '', textentry('40-010-00014', args=[infile.name]))
         # make order mask
-        mask, props = preprocessing.nirps_order_mask(params, infile.get_data())
+        mask, props = preprocessing.nirps_order_mask(params, recipe,
+                                                     infile.get_data())
         # convert to integers
         mask = np.array(mask).astype(int)
         # ------------------------------------------------------------------

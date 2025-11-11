@@ -160,7 +160,7 @@ def __main__(recipe, params):
         reset = drs_reset.reset_confirmation(params, 'Calibration',
                                              params['PATH.CALIB'])
     if 'calib' in resets and reset:
-        drs_reset.reset_calibdb(params, log)
+        drs_reset.reset_calibdb(params, recipe, log)
     else:
         WLOG(params, '', '\tNot resetting CalibDB files.')
     # ----------------------------------------------------------------------
@@ -172,7 +172,7 @@ def __main__(recipe, params):
         reset = drs_reset.reset_confirmation(params, 'Telluric',
                                              params['PATH.TELLU'])
     if 'tellu' in resets and reset:
-        drs_reset.reset_telludb(params, log)
+        drs_reset.reset_telludb(params, recipe, log)
     else:
         WLOG(params, '', textentry('40-502-00013', args=['Telluric']))
     # ----------------------------------------------------------------------

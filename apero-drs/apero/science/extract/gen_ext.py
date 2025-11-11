@@ -95,7 +95,7 @@ def order_profiles(params, recipe, infile, fibertypes, sprops,
     # ----------------------------------------------------------------------
     # load database
     if database is None:
-        calibdbm = drs_database.CalibrationDatabase(params)
+        calibdbm = drs_database.CalibrationDatabase(params, recipe.shortname)
         calibdbm.load_db()
     else:
         calibdbm = database
@@ -244,7 +244,8 @@ def save_tmp_orderps_file(params: ParamDict, recipe: DrsRecipe,
         usefiber = pconst.FIBER_LOC_TYPES(fiber)
         # get the order profile filename
         cfile = gen_calib.CalibFile()
-        cfile.load_calib_file(params, key, header, filename=filename,
+        cfile.load_calib_file(params, recipe.shortname, key,
+                              header, filename=filename,
                               userinputkey='ORDERPFILE', database=calibdbm,
                               fiber=usefiber, return_filename=True)
         # get properties from calibration file
@@ -329,7 +330,7 @@ def ref_fplines(params, recipe, e2dsfile, wavemap, fiber, database=None,
         return None
     # ----------------------------------------------------------------------
     # get reference hc lines and fp lines from calibDB
-    wout = wave.get_wavelines(params, fiber, infile=e2dsfile,
+    wout = wave.get_wavelines(params, recipe, fiber, infile=e2dsfile,
                               database=database)
     mhclines, mhclsource, mfplines, mfplsource = wout
     # deal with no fplines found

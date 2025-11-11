@@ -244,7 +244,8 @@ def calculate_blaze_flat_sinc(params: ParamDict, e2ds_ini: np.ndarray,
     return e2ds_ini, flat, blaze, rms
 
 
-def get_flat(params: ParamDict, header: Union[drs_file.Header, None],
+def get_flat(params: ParamDict, recipe: DrsRecipe,
+             header: Union[drs_file.Header, None],
              fiber: str, filename: Optional[str] = None, quiet: bool = False,
              database: Optional[drs_database.CalibrationDatabase] = None
              ) -> Tuple[str, float, np.ndarray]:
@@ -271,14 +272,15 @@ def get_flat(params: ParamDict, header: Union[drs_file.Header, None],
     key = out_flat.get_dbkey()
     # load database
     if database is None:
-        calibdbm = drs_database.CalibrationDatabase(params)
+        calibdbm = drs_database.CalibrationDatabase(params, recipe.shortname)
         calibdbm.load_db()
     else:
         calibdbm = database
     # ------------------------------------------------------------------------
     # load flat file
     cfile = gen_calib.CalibFile()
-    cfile.load_calib_file(params, key, header, filename=filename,
+    cfile.load_calib_file(params, recipe.shortname,
+                          key, header, filename=filename,
                           userinputkey='FLATFILE', database=calibdbm,
                           fiber=fiber)
     # get properties from calibration file
@@ -293,7 +295,8 @@ def get_flat(params: ParamDict, header: Union[drs_file.Header, None],
     return flat_file, flat_time, flat
 
 
-def get_blaze(params: ParamDict, header: Union[drs_file.Header, None],
+def get_blaze(params: ParamDict, recipe: DrsRecipe,
+              header: Union[drs_file.Header, None],
               fiber: str, filename: Optional[str] = None,
               database: Optional[drs_database.CalibrationDatabase] = None
               ) -> Tuple[str, float, np.ndarray]:
@@ -320,14 +323,15 @@ def get_blaze(params: ParamDict, header: Union[drs_file.Header, None],
     key = out_blaze.get_dbkey()
     # load database
     if database is None:
-        calibdbm = drs_database.CalibrationDatabase(params)
+        calibdbm = drs_database.CalibrationDatabase(params, recipe.shortname)
         calibdbm.load_db()
     else:
         calibdbm = database
     # ------------------------------------------------------------------------
     # load blaze file
     cfile = gen_calib.CalibFile()
-    cfile.load_calib_file(params, key, header, filename=filename,
+    cfile.load_calib_file(params, recipe.shortname,
+                          key, header, filename=filename,
                           userinputkey='BLAZEFILE', database=calibdbm,
                           fiber=fiber)
     # get properties from calibration file

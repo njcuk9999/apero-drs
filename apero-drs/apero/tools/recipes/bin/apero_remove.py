@@ -185,8 +185,8 @@ def __main__(recipe, params):
 
     # ----------------------------------------------------------------------
     # remove files from database
-    db_entries = drs_reset.remove_files_from_databases(params, filetable2,
-                                                       condition2)
+    db_entries = drs_reset.remove_files_from_databases(params, recipe,
+                                                       filetable2, condition2)
 
     # ----------------------------------------------------------------------
     if params['INPUTS']['test']:

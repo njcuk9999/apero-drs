@@ -163,13 +163,14 @@ class Trigger:
         self.calib_script = 'None'
         self.science_script = 'None'
         # start index database
-        self.findexdbm = drs_database.FileIndexDatabase(params)
+        self.findexdbm = drs_database.FileIndexDatabase(params,
+                                                        recipe.shortname)
         self.findexdbm.load_db()
         # start log database
-        self.logdbm = drs_database.LogDatabase(params)
+        self.logdbm = drs_database.LogDatabase(params, recipe.shortname)
         self.logdbm.load_db()
         # start object database
-        self.objdbm = drs_database.AstrometricDatabase(params)
+        self.objdbm = drs_database.AstrometricDatabase(params, recipe.shortname)
         self.objdbm.load_db()
 
     def __call__(self):

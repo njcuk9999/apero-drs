@@ -952,7 +952,7 @@ def make_1d_template_cube(params, recipe, filenames, reffile, fiber, header,
     return props
 
 
-def list_current_templates(params: ParamDict,
+def list_current_templates(params: ParamDict, recipe: DrsRecipe,
                            telludb: Union[TelluricDatabase, None] = None,
                            all_objects: Union[List[str]] = None) -> np.array:
     """
@@ -968,7 +968,7 @@ def list_current_templates(params: ParamDict,
     """
     # deal with no telluric database set up
     if telludb is None:
-        telludb = TelluricDatabase(params)
+        telludb = TelluricDatabase(params, recipe.shortname)
     # load database (if not loaded)
     telludb.load_db()
     # get a list of all templates
@@ -1096,7 +1096,7 @@ def create_deconvolved_template(params: ParamDict, recipe: DrsRecipe,
     # -------------------------------------------------------------------------
     # get database if none
     if calibdbm is None:
-        calibdbm = CalibrationDatabase(params)
+        calibdbm = CalibrationDatabase(params, recipe.shortname)
         calibdbm.load_db()
     # -------------------------------------------------------------------------
     # keep track of valid pixels within template
@@ -1120,7 +1120,8 @@ def create_deconvolved_template(params: ParamDict, recipe: DrsRecipe,
     usefiber = params['CAL.WAVE.GEN.REF_FIBER']
     # load loco file
     cfile = gen_calib.CalibFile()
-    cfile.load_calib_file(params, key, header, database=calibdbm,
+    cfile.load_calib_file(params, recipe.shortname, key,
+                          header, database=calibdbm,
                           fiber=usefiber, return_filename=True)
     # get properties from calibration file
     res_e2ds_path = cfile.filename

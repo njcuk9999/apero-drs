@@ -35,6 +35,7 @@ from apero.tools.module.database import manage_databases
 from apero.tools.module.setup import drs_assets
 from apero.instruments import select
 from apero.base import base as apero_base
+from apero.utils import drs_recipe
 
 # =============================================================================
 # Define variables
@@ -60,6 +61,8 @@ TLOG = Printer
 textentry = drs_lang.textentry
 # debug mode (test)
 DEBUG = False
+# Recipe class
+DrsRecipe = drs_recipe.DrsRecipe
 
 
 # =============================================================================
@@ -329,7 +332,7 @@ def reset_reduced_folders(params: ParamDict, log: bool = True):
     logdb.remove_entries(condition=condition)
 
 
-def reset_calibdb(params: ParamDict, log: bool = True):
+def reset_calibdb(params: ParamDict, recipe: DrsRecipe, log: bool = True):
     """
     Wrapper for reset_dbdir - specifically for calibDB
 
@@ -355,7 +358,7 @@ def reset_calibdb(params: ParamDict, log: bool = True):
     # -------------------------------------------------------------------------
     # remove entries from calibration database
     # -------------------------------------------------------------------------
-    calibdb = drs_database.CalibrationDatabase(params)
+    calibdb = drs_database.CalibrationDatabase(params, recipe.shortname)
     # load index database
     calibdb.load_db()
     # set up condition
@@ -364,7 +367,7 @@ def reset_calibdb(params: ParamDict, log: bool = True):
     calibdb.remove_entries(condition=condition)
 
 
-def reset_telludb(params: ParamDict, log: bool = True):
+def reset_telludb(params: ParamDict, recipe: DrsRecipe, log: bool = True):
     """
     Wrapper for reset_dbdir - specifically for telluDB
 
@@ -390,7 +393,7 @@ def reset_telludb(params: ParamDict, log: bool = True):
     # -------------------------------------------------------------------------
     # remove entries from telluric database
     # -------------------------------------------------------------------------
-    telludb = drs_database.TelluricDatabase(params)
+    telludb = drs_database.TelluricDatabase(params, recipe.shortname)
     # load index database
     telludb.load_db()
     # set up condition
@@ -1083,7 +1086,8 @@ def remove_files_from_disk(params: ParamDict, filetable: Table) -> int:
     return filecount
 
 
-def remove_files_from_databases(params: ParamDict, filetable: Table,
+def remove_files_from_databases(params: ParamDict, recipe: DrsRecipe,
+                                filetable: Table,
                                 file_cond: str) -> Dict[str, int]:
     # get the test criteria
     test = params['INPUTS']['test']
@@ -1110,7 +1114,7 @@ def remove_files_from_databases(params: ParamDict, filetable: Table,
     # -------------------------------------------------------------------------
     # then deal with the calibration database --> remove entries with the
     # same filename)
-    calibdbm = drs_database.CalibrationDatabase(params)
+    calibdbm = drs_database.CalibrationDatabase(params, recipe.shortname)
     # load if required
     calibdbm.load_db()
     # log removal
@@ -1144,7 +1148,7 @@ def remove_files_from_databases(params: ParamDict, filetable: Table,
     # -------------------------------------------------------------------------
     # then deal with the telluric database --> remove entries with the
     # same filename)
-    telludbm = drs_database.TelluricDatabase(params)
+    telludbm = drs_database.TelluricDatabase(params, recipe.shortname)
     # load if required
     telludbm.load_db()
     # log removal

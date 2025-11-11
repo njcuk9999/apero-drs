@@ -1102,7 +1102,7 @@ def get_butterfly_maps(params: ParamDict, image0: np.ndarray,
 # =============================================================================
 # Define nirps detector functions
 # =============================================================================
-def nirps_correction(params: ParamDict, image: np.ndarray,
+def nirps_correction(params: ParamDict, recipe: DrsRecipe, image: np.ndarray,
                      header: drs_fits.Header,
                      create_mask: bool = True) -> np.ndarray:
     """
@@ -1189,7 +1189,7 @@ def nirps_correction(params: ParamDict, image: np.ndarray,
     else:
         # ---------------------------------------------------------------------
         # get the mask from the flat
-        ppmask, ppfile = get_pp_mask(params)
+        ppmask, ppfile = get_pp_mask(params, recipe)
         # set the the zero values to NaN
         image2[ppmask == 0] = np.nan
     # -------------------------------------------------------------------------
@@ -1320,7 +1320,7 @@ def nirps_correction(params: ParamDict, image: np.ndarray,
     return image
 
 
-def get_pp_mask(params: ParamDict,
+def get_pp_mask(params: ParamDict, recipe: DrsRecipe,
                 database: Union[CalibrationDatabase, None] = None
                 ) -> Tuple[np.ndarray, Union[Path, str]]:
     """
@@ -1340,7 +1340,7 @@ def get_pp_mask(params: ParamDict,
     # ---------------------------------------------------------------------
     # load database
     if database is None:
-        calibdbm = drs_database.CalibrationDatabase(params)
+        calibdbm = drs_database.CalibrationDatabase(params, recipe.shortname)
         calibdbm.load_db()
     else:
         calibdbm = database
@@ -1355,7 +1355,7 @@ def get_pp_mask(params: ParamDict,
     return mask, ppmaskfile
 
 
-def load_led_flat(params: ParamDict,
+def load_led_flat(params: ParamDict, recipe: DrsRecipe,
                   database: Union[CalibrationDatabase, None] = None
                   ) -> Tuple[np.ndarray, Union[Path, str]]:
     """
@@ -1376,7 +1376,7 @@ def load_led_flat(params: ParamDict,
     # ---------------------------------------------------------------------
     # load database
     if database is None:
-        calibdbm = drs_database.CalibrationDatabase(params)
+        calibdbm = drs_database.CalibrationDatabase(params, recipe.shortname)
         calibdbm.load_db()
     else:
         calibdbm = database
@@ -1446,7 +1446,8 @@ def med_amplifiers(image: np.ndarray, namps: int) -> np.ndarray:
     return image2
 
 
-def nirps_order_mask(params: ParamDict, mask_image: np.ndarray,
+def nirps_order_mask(params: ParamDict, recipe: DrsRecipe,
+                     mask_image: np.ndarray,
                      mask_header: drs_fits.Header
                      ) -> Tuple[np.ndarray, ParamDict]:
     """
@@ -1469,7 +1470,7 @@ def nirps_order_mask(params: ParamDict, mask_image: np.ndarray,
     # with warnings.catch_warnings(record=True):
     #     mask = image > nsig * sig_image
     # correct the image (as in preprocessing)
-    image2 = nirps_correction(params, image, mask_header)
+    image2 = nirps_correction(params, recipe, image, mask_header)
     # generate a better estimate of the mask (after correction)
     with warnings.catch_warnings(record=True):
         mask = np.array(image2 < 0)

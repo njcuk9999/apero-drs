@@ -442,7 +442,8 @@ class AstrometricDatabase(DatabaseManager):
 # Define specific file databases
 # =============================================================================
 class CalibrationDatabase(DatabaseManager):
-    def __init__(self, params: ParamDict, pconst: Any = None):
+    def __init__(self, params: ParamDict, shortname: str,
+                 pconst: Any = None):
         """
         Constructor of the Calibration Database class
 
@@ -457,6 +458,8 @@ class CalibrationDatabase(DatabaseManager):
             pconst = load_functions.load_pconfig(select.INSTRUMENTS)
         # construct super class
         DatabaseManager.__init__(self, params, pconst)
+        # set input recipe shortname
+        self.shortname = shortname
         # set name
         self.name = 'calibration'
         self.kind = 'calib'
@@ -880,7 +883,8 @@ class CalibrationDatabase(DatabaseManager):
 
 
 class TelluricDatabase(DatabaseManager):
-    def __init__(self, params: ParamDict, pconst: Any = None):
+    def __init__(self, params: ParamDict, shortname: str,
+                 pconst: Any = None):
         """
         Constructor of the Telluric Database class
 
@@ -895,6 +899,8 @@ class TelluricDatabase(DatabaseManager):
             pconst = load_functions.load_pconfig(select.INSTRUMENTS)
         # construct super class
         DatabaseManager.__init__(self, params, pconst)
+        # set input recipe shortname
+        self.shortname = shortname
         # set name
         self.name = 'telluric'
         self.kind = 'tellu'
@@ -1674,7 +1680,8 @@ def _get_time(params: ParamDict, dbname: str,
 # =============================================================================
 class FileIndexDatabase(DatabaseManager):
 
-    def __init__(self, params: ParamDict, pconst: Any = None):
+    def __init__(self, params: ParamDict, shortname: str,
+                 pconst: Any = None):
         """
         Constructor of the Index Database class
 
@@ -1689,6 +1696,8 @@ class FileIndexDatabase(DatabaseManager):
             pconst = load_functions.load_pconfig(select.INSTRUMENTS)
         # construct super class
         DatabaseManager.__init__(self, params, pconst)
+        # set input recipe shortname
+        self.shortname = shortname
         # set name
         self.name = 'findex'
         self.kind = 'findex'
@@ -2533,7 +2542,8 @@ def _get_files(params: ParamDict, path: Union[Path, str], block_kind: str,
 # Define Log database
 # =============================================================================
 class LogDatabase(DatabaseManager):
-    def __init__(self, params: ParamDict, pconst: Any = None):
+    def __init__(self, params: ParamDict, shortname: str,
+                 pconst: Any = None):
         """
         Constructor of the Log Database class
 
@@ -2548,6 +2558,8 @@ class LogDatabase(DatabaseManager):
             pconst = load_functions.load_pconfig(select.INSTRUMENTS)
         # construct super class
         DatabaseManager.__init__(self, params, pconst)
+        # set input recipe shortname
+        self.shortname = shortname
         # set name
         self.name = 'log'
         self.kind = 'log'
@@ -2899,7 +2911,8 @@ def _clean_error(errors: Union[str, None]) -> Union[str, None]:
 # Define reject database
 # =============================================================================
 class RejectDatabase(DatabaseManager):
-    def __init__(self, params: ParamDict, pconst: Any = None):
+    def __init__(self, params: ParamDict, shortname: str,
+                 pconst: Any = None):
         """
         Constructor of the Reject Database class
 
@@ -2914,6 +2927,8 @@ class RejectDatabase(DatabaseManager):
             pconst = load_functions.load_pconfig(select.INSTRUMENTS)
         # construct super class
         DatabaseManager.__init__(self, params, pconst)
+        # set input recipe shortname
+        self.shortname = shortname
         # set name
         self.name = 'reject'
         self.kind = 'reject'

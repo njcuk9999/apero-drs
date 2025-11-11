@@ -48,9 +48,11 @@ def drs_image_shape(params):
     return yhigh - ylow, xhigh - xlow
 
 
-def calc_central_localisation(params, fiber, header=None, filename=None):
+def calc_central_localisation(params, recipe, fiber, header=None,
+                              filename=None):
     # get the loco image and number of orders for this fiber
-    lprops = localisation.get_coefficients(params, header, filename=filename,
+    lprops = localisation.get_coefficients(params, recipe, header,
+                                           filename=filename,
                                            fiber=fiber, merge=True)
     # get the cut down image size
     xlow, xhigh = params['IMAGE.X_LOW'], params['IMAGE.X_HIGH']
@@ -119,6 +121,12 @@ def drs_to_pp(params, image, fill=0.0):
     return outmap
 
 
+class ProxyRecipe():
+    def __init__(self, params, shortname):
+        self.params = params
+        self.shortname = shortname
+
+
 def main():
     # TEST
     from astropy.io import fits
@@ -145,6 +153,7 @@ def main():
     nbo = 49
     fibers = ['A', 'B', 'C']
     params = load_functions.load_config(select.INSTRUMENTS)
+    recipe = ProxyRecipe(params, 'inverse')
     # recipe = drs_recipe.make_default_recipe(params, name='test')
     ishape = (nbypix, nbxpix)
     eshape = (nbo, nbxpix)
@@ -176,7 +185,7 @@ def main():
         locofile = locofiles[fiber]
         # calculate fiber centers
         print('\t Getting centers')
-        cents, wids = calc_central_localisation(params, fiber,
+        cents, wids = calc_central_localisation(params, recipe, fiber,
                                                 filename=locofile)
         # get straighted image for order map
         print('\t Getting order map')

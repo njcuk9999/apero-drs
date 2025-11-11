@@ -183,7 +183,7 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
         return locals()
     # -------------------------------------------------------------------------
     # get friend for this object name
-    friend = gen_lbl.find_friend(params, objname)
+    friend = gen_lbl.find_friend(params, recipe.shortname, objname)
     # setup object and template names
     object_science = str(objname)
     object_template = str(friend)

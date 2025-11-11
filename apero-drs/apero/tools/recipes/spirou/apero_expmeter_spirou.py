@@ -159,7 +159,7 @@ def __main__(recipe, params):
     # define file type
     filetype = 'WAVE_NIGHT'
     # load the calibration database
-    calibdbm = drs_database.CalibrationDatabase(params)
+    calibdbm = drs_database.CalibrationDatabase(params, recipe.shortname)
     calibdbm.load_db()
     # ----------------------------------------------------------------------
     # get all allowed fibers
@@ -274,7 +274,7 @@ def __main__(recipe, params):
         header = wave_infiles[fiber].get_header()
         # get the localisation parameters for this fiber
         WLOG(params, '', '\t Getting localisation for Fiber={0}'.format(fiber))
-        cents, wids = inverse.calc_central_localisation(params, fiber,
+        cents, wids = inverse.calc_central_localisation(params, recipe, fiber,
                                                         header=header)
         # add to storage
         centers[fiber] = cents

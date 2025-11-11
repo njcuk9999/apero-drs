@@ -73,7 +73,7 @@ NON_NULL_OBJ_COLS = ['OBJNAME', 'RA_DEG', 'DEC_DEG', 'PMRA', 'PMDE', 'EPOCH']
 # =============================================================================
 # Define object resolution functions
 # =============================================================================
-def resolve_target(params: ParamDict, pconst: Instrument,
+def resolve_target(params: ParamDict, pconst: Instrument, shortname: str,
                    objname: Union[str, None] = None,
                    database: Union[ObjectDatabase, None] = None,
                    header: Union[drs_fits.Header, None] = None
@@ -99,7 +99,7 @@ def resolve_target(params: ParamDict, pconst: Instrument,
     hdr_objname = params['KW_OBJNAME'][0]
     # load database
     if database is None:
-        database = ObjectDatabase(params)
+        database = ObjectDatabase(params, shortname)
         database.load_db()
     # -------------------------------------------------------------------------
     # deal with no objname and no header

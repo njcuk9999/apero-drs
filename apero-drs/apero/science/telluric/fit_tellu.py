@@ -843,7 +843,7 @@ def correct_other_science(params, recipe, fiber, infile, cprops, rawfiles,
     # Normalize image by peak blaze
     # ------------------------------------------------------------------
     # load the blaze file for this fiber
-    bout = flat_blaze.get_blaze(params, header, fiber)
+    bout = flat_blaze.get_blaze(params, recipe, header, fiber)
     blaze_file, blaze_time, blaze = bout
     # ------------------------------------------------------------------
     # Correct for sky

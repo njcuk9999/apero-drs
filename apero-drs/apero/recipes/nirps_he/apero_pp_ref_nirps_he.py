@@ -154,7 +154,7 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
     # get the number of infiles
     num_files = len(infiles)
     # load the calibration database
-    calibdbm = drs_database.CalibrationDatabase(params)
+    calibdbm = drs_database.CalibrationDatabase(params, recipe.shortname)
     calibdbm.load_db()
     # ----------------------------------------------------------------------
     # Loop around input files
@@ -179,7 +179,8 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
         # print progress
         WLOG(params, '', textentry('40-010-00014', args=[infile.name]))
         # make order mask
-        mask, props = preprocessing.nirps_order_mask(params, image, header)
+        mask, props = preprocessing.nirps_order_mask(params, recipe,
+                                                     image, header)
         # convert to integers
         mask = np.array(mask).astype(int)
         # ------------------------------------------------------------------

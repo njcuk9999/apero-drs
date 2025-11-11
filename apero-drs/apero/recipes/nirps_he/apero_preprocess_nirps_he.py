@@ -164,6 +164,7 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
         if infile.get_hkey('KW_DPRTYPE') in obj_dprtypes:
             # get object based on object name and gaia id
             infile.header = prep.resolve_target(params, pconst,
+                                                recipe.shortname,
                                                 header=infile.header,
                                                 database=objdbm)
             # set flag for passing qc
@@ -317,7 +318,7 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
         # print progress
         WLOG(params, '', 'Applying NIRPS detector corrections')
         # nirps correction for preprocessing (specific to NIRPS)
-        image = prep.nirps_correction(params, image, infile.header,
+        image = prep.nirps_correction(params, recipe, image, infile.header,
                                       create_mask=False)
         # get dprtypes we don't do sci capacitive coupling for
         nosci_capc = params['PP.NOSCI_CAPC_DPRTYPES']
@@ -364,7 +365,7 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
         # TODO: Add to language database
         WLOG(params, '', 'Performing LED flat')
         # load the LED flat from calibration database
-        led_flat, led_file = prep.load_led_flat(params)
+        led_flat, led_file = prep.load_led_flat(params, recipe)
         # divide image by LED flat
         image = image / led_flat
 

@@ -88,7 +88,7 @@ HeaderType = Union[drs_fits.Header, drs_fits.fits.Header, None]
 # =============================================================================
 # Define getting file functions
 # =============================================================================
-def get_waveref_filename(params: ParamDict, fiber: str,
+def get_waveref_filename(params: ParamDict, recipe: DrsRecipe, fiber: str,
                          database: Union[CalibDB, None] = None
                          ) -> Tuple[str, Union[DrsFitsFile, None]]:
     """
@@ -113,7 +113,7 @@ def get_waveref_filename(params: ParamDict, fiber: str,
     # ------------------------------------------------------------------------
     # load database
     if database is None:
-        calibdbm = CalibDB(params)
+        calibdbm = CalibDB(params, recipe.shortname)
         calibdbm.load_db()
     else:
         calibdbm = database
@@ -169,7 +169,8 @@ def get_waveref_filename(params: ParamDict, fiber: str,
 WaveReturn = Tuple[DrsFitsFile, Union[np.ndarray, None], str, str, float]
 
 
-def get_wave_solution_from_wavefile(params: ParamDict, usefiber: str,
+def get_wave_solution_from_wavefile(params: ParamDict, recipe: DrsRecipe,
+                                    usefiber: str,
                                     inwavefile: str, header: HeaderType,
                                     database: Union[CalibDB, None] = None,
                                     ref: bool = False) -> WaveReturn:
@@ -195,7 +196,8 @@ def get_wave_solution_from_wavefile(params: ParamDict, usefiber: str,
     # deal with reference = True
     if ref is True:
         # get reference path
-        inwavefile, out_wave = get_waveref_filename(params, fiber=usefiber,
+        inwavefile, out_wave = get_waveref_filename(params, recipe,
+                                                    fiber=usefiber,
                                                     database=database)
         # deal with out_wave from reference
         out_wave = out_wave
@@ -209,7 +211,7 @@ def get_wave_solution_from_wavefile(params: ParamDict, usefiber: str,
         # ---------------------------------------------------------------------
         if database is None:
             # load the calibration database
-            calibdbm = CalibDB(params)
+            calibdbm = CalibDB(params, recipe.shortname)
             calibdbm.load_db()
         else:
             calibdbm = database
@@ -221,7 +223,7 @@ def get_wave_solution_from_wavefile(params: ParamDict, usefiber: str,
                        return_filename=True, required=False)
         # load wave fp file
         cfile = gen_calib.CalibFile()
-        cfile.load_calib_file(params, **lkwargs)
+        cfile.load_calib_file(params, recipe.shortname, **lkwargs)
         # get filename and source from outputs
         inwavefile = cfile.filename
         source = cfile.source
@@ -231,7 +233,7 @@ def get_wave_solution_from_wavefile(params: ParamDict, usefiber: str,
         # if inwavefile is still None
         if not cfile.found:
             # get reference path
-            inwavefile, out_wave = get_waveref_filename(params,
+            inwavefile, out_wave = get_waveref_filename(params, recipe,
                                                         fiber=usefiber,
                                                         database=database)
             # deal with out_wave from reference
@@ -443,7 +445,7 @@ def get_wavesolution(params: ParamDict, recipe: DrsRecipe,
     # ------------------------------------------------------------------------
     if force:
         wargs = [usefiber, inwavefile, header, database, ref]
-        wout = get_wave_solution_from_wavefile(params, *wargs)
+        wout = get_wave_solution_from_wavefile(params, recipe, *wargs)
         wavefile, wavemap, wavepath, wavesource, wavetime = wout
     # ------------------------------------------------------------------------
     # Mode 2: using header or infile only i.e. from the input files header
@@ -654,7 +656,8 @@ def shift_wavesolution(wprops: ParamDict, dvshift: float) -> ParamDict:
     return wprops1
 
 
-def get_cavity_file(params: ParamDict, header: HeaderType = None,
+def get_cavity_file(params: ParamDict, recipe: DrsRecipe,
+                    header: HeaderType = None,
                     infile: Union[DrsFitsFile, None] = None,
                     database: Union[CalibDB, None] = None
                     ) -> Tuple[ParamDict, Union[np.array, None]]:
@@ -690,7 +693,7 @@ def get_cavity_file(params: ParamDict, header: HeaderType = None,
     # ---------------------------------------------------------------------
     if database is None:
         # load the calibration database
-        calibdbm = CalibDB(params)
+        calibdbm = CalibDB(params, recipe.shortname)
         calibdbm.load_db()
     else:
         calibdbm = database
@@ -701,7 +704,7 @@ def get_cavity_file(params: ParamDict, header: HeaderType = None,
                    get_header=True, inheader=header, required=True)
     # load wave fp file
     cfile = gen_calib.CalibFile()
-    cfile.load_calib_file(params, **lkwargs)
+    cfile.load_calib_file(params, recipe.shortname, **lkwargs)
     # deal with no cavity file
     if not cfile.found:
         return params, None
@@ -718,7 +721,7 @@ def get_cavity_file(params: ParamDict, header: HeaderType = None,
     return params, np.array(cimage)
 
 
-def get_wavelines(params: ParamDict, fiber: str,
+def get_wavelines(params: ParamDict, recipe, fiber: str,
                   header: HeaderType = None,
                   infile: Union[DrsFitsFile, None] = None,
                   database: Union[CalibDB, None] = None,
@@ -755,7 +758,7 @@ def get_wavelines(params: ParamDict, fiber: str,
     # ------------------------------------------------------------------------
     # load database
     if database is None:
-        calibdbm = CalibDB(params)
+        calibdbm = CalibDB(params, recipe.shortname)
         calibdbm.load_db()
     else:
         calibdbm = database
@@ -793,7 +796,7 @@ def get_wavelines(params: ParamDict, fiber: str,
                    inheader=header)
     # load the hc lines calib file
     cfile = gen_calib.CalibFile()
-    cfile.load_calib_file(params, key_hc, filename=hclinefile,
+    cfile.load_calib_file(params, recipe.shortname, key_hc, filename=hclinefile,
                           userinputkey='HCLINEFILE', **lkwargs)
     # get properties from calibration file
     hclinefile = cfile.filename
@@ -811,7 +814,7 @@ def get_wavelines(params: ParamDict, fiber: str,
     # ------------------------------------------------------------------------
     # load the fp lines calib file
     cfile = gen_calib.CalibFile()
-    cfile.load_calib_file(params, key_fp, filename=fplinefile,
+    cfile.load_calib_file(params, recipe.shortname, key_fp, filename=fplinefile,
                           userinputkey='FPLINEFILE', **lkwargs)
     # get properties from calibration file
     fplinefile = cfile.filename
@@ -2446,7 +2449,7 @@ def update_extract_files(params, recipe, extract_file, wprops, extname,
     # Need to re-calculate the s1d files
     # ----------------------------------------------------------------------
     # load the blaze file for this fiber
-    bout = flat_blaze.get_blaze(params, e2dsff_file.get_header(), fiber,
+    bout = flat_blaze.get_blaze(params, recipe, e2dsff_file.get_header(), fiber,
                                 database=calibdbm)
     blaze_file, blaze_time, blaze = bout
     # calculate s1d file

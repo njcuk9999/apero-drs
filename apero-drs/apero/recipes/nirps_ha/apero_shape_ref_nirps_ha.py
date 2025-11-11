@@ -131,7 +131,7 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
     # get the headers (should be the header of the first file in each)
     fpheader = fpfile.get_header()
     # load the calibration database
-    calibdbm = drs_database.CalibrationDatabase(params)
+    calibdbm = drs_database.CalibrationDatabase(params, recipe.shortname)
     calibdbm.load_db()
 
     # ----------------------------------------------------------------------
@@ -141,8 +141,8 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
     lprops_all = dict()
     # loop around fibers and get all individual fiber coefficients
     for _fiber in params['CAL.FIBER.INDIVIDUAL']:
-        lprops_all[_fiber] = localisation.get_coefficients(params, fpheader,
-                                                           _fiber,
+        lprops_all[_fiber] = localisation.get_coefficients(params, recipe,
+                                                           fpheader, _fiber,
                                                            database=calibdbm)
 
     # ------------------------------------------------------------------
@@ -187,7 +187,7 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
         fpkwargs = dict(header=fpfile.get_header(), filename=filename,
                         database=calibdbm)
         # read fpref file
-        reffp_file, ref_fp = shape.get_ref_fp(params, **fpkwargs)
+        reffp_file, ref_fp = shape.get_ref_fp(params, recipe, **fpkwargs)
         # read table
         fp_table = drs_table.read_table(params, reffp_file, fmt='fits')
     else:
@@ -219,7 +219,7 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
     # ----------------------------------------------------------------------
     # Calculate dy shape map
     # ----------------------------------------------------------------------
-    dymap = shape.calculate_dymap(params, ref_fp, fpheader)
+    dymap = shape.calculate_dymap(params, recipe, ref_fp, fpheader)
 
     # ----------------------------------------------------------------------
     # Need to straighten the dxmap

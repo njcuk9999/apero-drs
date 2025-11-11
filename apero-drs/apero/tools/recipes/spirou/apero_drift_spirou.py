@@ -141,7 +141,7 @@ def __main__(recipe, params):
     # get pseudo constants
     pconst = load_functions.load_pconfig(select.INSTRUMENTS)
     # load the calibration database
-    calibdbm = drs_database.CalibrationDatabase(params)
+    calibdbm = drs_database.CalibrationDatabase(params, recipe.shortname)
     calibdbm.load_db()
     # get the fibers
     sfibers, rfiber = pconst.FIBER_KINDS()
@@ -267,7 +267,7 @@ def __main__(recipe, params):
                                            nbpix=infile.data.shape[1])
             # -----------------------------------------------------------------
             # load the blaze file for this fiber
-            bout = flat_blaze.get_blaze(params, header, fiber)
+            bout = flat_blaze.get_blaze(params, recipe, header, fiber)
             blaze_file, blaze_time, blaze = bout
 
             # =================================================================

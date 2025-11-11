@@ -755,11 +755,11 @@ def correct_sky_with_ref(params: ParamDict, recipe: DrsRecipe,
     # -------------------------------------------------------------------------
     # deal with no calibration database
     if calibdbm is None:
-        calibdbm = CalibrationDatabase(params)
+        calibdbm = CalibrationDatabase(params, recipe.shortname)
         calibdbm.load_db()
     # deal with no telluric database
     if telludbm is None:
-        telludbm = TelluricDatabase(params)
+        telludbm = TelluricDatabase(params, recipe.shortname)
         telludbm.load_db()
     # -------------------------------------------------------------------------
     # load psuedo constants
@@ -779,7 +779,7 @@ def correct_sky_with_ref(params: ParamDict, recipe: DrsRecipe,
     image_calib = np.array(infile_calib.data)
     # -------------------------------------------------------------------------
     # load sky model from telluric database
-    sc_props = get_sky_model(params, infile.header, infile.fiber,
+    sc_props = get_sky_model(params, recipe, infile.header, infile.fiber,
                              telludbm)
     # extract properties from sky model (and deep copy)
     sky_wavemap = np.array(sc_props['SKY_WAVEMAP'])
@@ -932,11 +932,11 @@ def correct_sky_no_ref(params: ParamDict, recipe: DrsRecipe,
     # -------------------------------------------------------------------------
     # deal with no calibration database
     if calibdbm is None:
-        calibdbm = CalibrationDatabase(params)
+        calibdbm = CalibrationDatabase(params, recipe.shortname)
         calibdbm.load_db()
     # deal with no telluric database
     if telludbm is None:
-        telludbm = TelluricDatabase(params)
+        telludbm = TelluricDatabase(params, recipe.shortname)
         telludbm.load_db()
     # -------------------------------------------------------------------------
     # load psuedo constants
@@ -950,7 +950,7 @@ def correct_sky_no_ref(params: ParamDict, recipe: DrsRecipe,
     wavemap = np.array(wprops['WAVEMAP'])
     # -------------------------------------------------------------------------
     # load sky model from telluric database
-    sc_props = get_sky_model(params, infile.header, infile.fiber,
+    sc_props = get_sky_model(params, recipe, infile.header, infile.fiber,
                              telludbm)
     # extract properties from sky model (and deep copy)
     sky_wavemap = np.array(sc_props['SKY_WAVEMAP'])
@@ -1043,7 +1043,8 @@ def correct_sky_no_ref(params: ParamDict, recipe: DrsRecipe,
     return sc_props
 
 
-def get_sky_model(params: ParamDict, header: drs_fits.Header, fiber: str,
+def get_sky_model(params: ParamDict, recipe: DrsRecipe,
+                  header: drs_fits.Header, fiber: str,
                   database: Optional[drs_database.TelluricDatabase] = None
                   ) -> ParamDict:
     """
@@ -1067,7 +1068,7 @@ def get_sky_model(params: ParamDict, header: drs_fits.Header, fiber: str,
     # log status
     WLOG(params, '', textentry('40-019-00046', args=[sky_key]))
     # load tellu file, header and abspaths
-    sky_model = load_tellu_file(params, sky_key, header,
+    sky_model = load_tellu_file(params, recipe.shortname, sky_key, header,
                                 fiber=fiber, n_entries=1,
                                 get_image=False, database=database,
                                 return_filename=True)

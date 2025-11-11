@@ -241,12 +241,12 @@ def list_databases(params: ParamDict) -> Dict[str, DatabaseM]:
     databases = dict()
     pconst = load_functions.load_pconfig(select.INSTRUMENTS)
     # get databases from managers (later databases)
-    calibdbm = drs_database.CalibrationDatabase(params, pconst)
-    telludbm = drs_database.TelluricDatabase(params, pconst)
-    findexdbm = drs_database.FileIndexDatabase(params, pconst)
-    logdbm = drs_database.LogDatabase(params, pconst)
-    objectdbm = drs_database.AstrometricDatabase(params, pconst)
-    rejectdbm = drs_database.RejectDatabase(params, pconst)
+    calibdbm = drs_database.CalibrationDatabase(params, 'LIST', pconst)
+    telludbm = drs_database.TelluricDatabase(params, 'LIST', pconst)
+    findexdbm = drs_database.FileIndexDatabase(params, 'LIST', pconst)
+    logdbm = drs_database.LogDatabase(params, 'LIST', pconst)
+    objectdbm = drs_database.AstrometricDatabase(params, 'LIST', pconst)
+    rejectdbm = drs_database.RejectDatabase(params, 'LIST', pconst)
     # add to storage
     databases['calib'] = calibdbm
     databases['tellu'] = telludbm
@@ -529,12 +529,12 @@ def create_object_database(params: ParamDict, pconst: Instrument,
     return objectdb
 
 
-def object_db_populated(params: ParamDict) -> bool:
+def object_db_populated(params: ParamDict, shortname: str) -> bool:
     """
     Check that object database is populated
     """
     # need to load database
-    objdbm = drs_database.AstrometricDatabase(params)
+    objdbm = drs_database.AstrometricDatabase(params, shortname)
     objdbm.load_db()
     # count rows in database
     count = objdbm.database.count()

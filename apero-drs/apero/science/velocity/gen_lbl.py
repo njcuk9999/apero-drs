@@ -182,7 +182,7 @@ def run_apero_get(params: ParamDict):
                    test=testmode, since=since)
 
 
-def find_friend(params: ParamDict, objname: str) -> str:
+def find_friend(params: ParamDict, shortname: str, objname: str) -> str:
     """
     Find the friend for this object (currently defined by closest teff to
     a list of friends teffs)
@@ -199,14 +199,14 @@ def find_friend(params: ParamDict, objname: str) -> str:
     friend_names = np.array(list(friends.keys()))
     friend_teffs = np.array(list(friends.values()))
     # get the teff of this object
-    teff = find_teff(params, objname)
+    teff = find_teff(params, shortname, objname)
     # find the closest friend
     closest = np.abs(friend_teffs - teff).argmin()
     # return the friend name
     return friend_names[closest]
 
 
-def find_teff(params: ParamDict, objname: str) -> float:
+def find_teff(params: ParamDict, shortname: str, objname: str) -> float:
     """
     Get the Teff for this object from the astrometric database
 
@@ -216,7 +216,7 @@ def find_teff(params: ParamDict, objname: str) -> float:
     :return: float, the teff of this object in K
     """
     # get the astrometric database
-    astromdbm = drs_database.AstrometricDatabase(params)
+    astromdbm = drs_database.AstrometricDatabase(params, shortname)
     # get the teff from the database
     teff = astromdbm.get_entries('TEFF',
                                  condition='OBJNAME="{0}"'.format(objname),

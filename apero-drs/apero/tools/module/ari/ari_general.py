@@ -532,7 +532,7 @@ def _get_object_table(params: ParamDict) -> pd.DataFrame:
     WLOG(params, '', 'Loading objects from astrometric database')
     # -------------------------------------------------------------------------
     # get the astrometric database from apero
-    astrodbm = drs_database.AstrometricDatabase(params)
+    astrodbm = drs_database.AstrometricDatabase(params, shortname='ARI')
     astrodbm.load_db()
     # -------------------------------------------------------------------------
     # log that we are loading

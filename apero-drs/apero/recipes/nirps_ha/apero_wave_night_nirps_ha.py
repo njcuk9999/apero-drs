@@ -173,7 +173,7 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
     # get wave reference file (controller fiber)
     ref_fiber = params['CAL.WAVE.GEN.REF_FIBER']
     # load the calibration database
-    calibdbm = drs_database.CalibrationDatabase(params)
+    calibdbm = drs_database.CalibrationDatabase(params, recipe.shortname)
     calibdbm.load_db()
 
     # ----------------------------------------------------------------------
@@ -228,7 +228,7 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
         hcheader = hc_e2ds_file.get_header()
         # -----------------------------------------------------------------
         # load the blaze file for this fiber
-        bout = flat_blaze.get_blaze(params, hcheader, ref_fiber)
+        bout = flat_blaze.get_blaze(params, recipe, hcheader, ref_fiber)
         blaze_file, blaze_time, blaze = bout
 
         # =================================================================
@@ -237,12 +237,12 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
         # set the wprops to initial wave solution
         wprops = iwprops.copy()
         # get cavity solution from database
-        params, wprops['CAVITY'] = wave.get_cavity_file(params,
+        params, wprops['CAVITY'] = wave.get_cavity_file(params, recipe,
                                                         infile=fp_e2ds_file,
                                                         database=calibdbm)
         # -----------------------------------------------------------------
         # get reference hc lines and fp lines from calibDB
-        wout = wave.get_wavelines(params, ref_fiber, infile=hc_e2ds_file)
+        wout = wave.get_wavelines(params, recipe, ref_fiber, infile=hc_e2ds_file)
         mhclines, mhclsource, mfplines, mfplsource = wout
         # -----------------------------------------------------------------
         # generate the hc reference lines

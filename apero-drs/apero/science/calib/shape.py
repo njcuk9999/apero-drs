@@ -1172,7 +1172,7 @@ def calculate_dxmap(params, recipe, fpdata, lprops, fiber, **kwargs):
     return ref_dxmap, max_dxmap_std, max_dxmap_info, dxrms
 
 
-def calculate_dymap(params, fpimage, fpheader, **kwargs):
+def calculate_dymap(params, recipe, fpimage, fpheader, **kwargs):
     func_name = __NAME__ + '.calculate_dymap()'
     # get properties from property dictionaries
     fibers = pcheck(params, 'CAL.SHAPE.UFIBERS', 'fibers', kwargs, func_name)
@@ -1190,8 +1190,8 @@ def calculate_dymap(params, fpimage, fpheader, **kwargs):
         # log progress
         WLOG(params, '', textentry('40-014-00024', args=[fiber]))
         # get coefficients
-        lprops = localisation.get_coefficients(params, fpheader, fiber=fiber,
-                                               merge=True)
+        lprops = localisation.get_coefficients(params, recipe, fpheader,
+                                               fiber=fiber, merge=True)
         # update nbo
         nbo = lprops['NBO']
         # add to array
@@ -1238,7 +1238,7 @@ def calculate_dymap(params, fpimage, fpheader, **kwargs):
     return ref_dymap
 
 
-def get_ref_fp(params, header, filename=None, database=None):
+def get_ref_fp(params, recipe, header, filename=None, database=None):
     # get file definition
     out_fpref = drs_file.get_file_definition(params, 'REF_FP',
                                              block_kind='red')
@@ -1246,14 +1246,15 @@ def get_ref_fp(params, header, filename=None, database=None):
     key = out_fpref.dbkey
     # load database
     if database is None:
-        calibdbm = drs_database.CalibrationDatabase(params)
+        calibdbm = drs_database.CalibrationDatabase(params, recipe.shortname)
         calibdbm.load_db()
     else:
         calibdbm = database
     # ----------------------------------------------------------------------
     # load reference fp
     cfile = gen_calib.CalibFile()
-    cfile.load_calib_file(params, key, header, filename=filename,
+    cfile.load_calib_file(params, recipe.shortname, key,
+                          header, filename=filename,
                           userinputkey='FPREF', database=calibdbm)
     fpref, fpref_file = cfile.data, cfile.filename
     # ----------------------------------------------------------------------
@@ -1263,17 +1264,17 @@ def get_ref_fp(params, header, filename=None, database=None):
     return fpref_file, fpref
 
 
-def get_shape_calibs(params, header, database):
+def get_shape_calibs(params, recipe, header, database):
     # set function name
     func_name = __NAME__ + '.get_shape_calibs()'
     # get shape x
-    sout = get_shapex(params, header, database=database)
+    sout = get_shapex(params, recipe, header, database=database)
     shapexfile, shapextime, shapex = sout
     # get shape y
-    sout = get_shapey(params, header, database=database)
+    sout = get_shapey(params, recipe, header, database=database)
     shapeyfile, shapeytime, shapey = sout
     # get shape local
-    sout = get_shapelocal(params, header, database=database)
+    sout = get_shapelocal(params, recipe, header, database=database)
     shapelocalfile, shapelocaltime, shapelocal = sout
     # out to parameter dictionary
     sprops = ParamDict()
@@ -1295,7 +1296,7 @@ def get_shape_calibs(params, header, database):
     return sprops
 
 
-def get_shapex(params, header, filename=None, database=None):
+def get_shapex(params, recipe, header, filename=None, database=None):
     # get file definition
     out_shape_dxmap = drs_file.get_file_definition(params, 'SHAPE_X',
                                                    block_kind='red')
@@ -1303,14 +1304,15 @@ def get_shapex(params, header, filename=None, database=None):
     key = out_shape_dxmap.dbkey
     # load database
     if database is None:
-        calibdbm = drs_database.CalibrationDatabase(params)
+        calibdbm = drs_database.CalibrationDatabase(params, recipe.shortname)
         calibdbm.load_db()
     else:
         calibdbm = database
     # ----------------------------------------------------------------------
     # load shape x file
     cfile = gen_calib.CalibFile()
-    cfile.load_calib_file(params, key, header, filename=filename,
+    cfile.load_calib_file(params, recipe.shortname, key,
+                          header, filename=filename,
                           userinputkey='SHAPEX', database=calibdbm)
     # get properties from calibration file
     dxmap = cfile.data
@@ -1323,7 +1325,7 @@ def get_shapex(params, header, filename=None, database=None):
     return shapex_file, shapetime, dxmap
 
 
-def get_shapey(params, header, filename=None, database=None):
+def get_shapey(params, recipe, header, filename=None, database=None):
     # get file definition
     out_shape_dymap = drs_file.get_file_definition(params, 'SHAPE_Y',
                                                    block_kind='red')
@@ -1331,14 +1333,15 @@ def get_shapey(params, header, filename=None, database=None):
     key = out_shape_dymap.dbkey
     # load database
     if database is None:
-        calibdbm = drs_database.CalibrationDatabase(params)
+        calibdbm = drs_database.CalibrationDatabase(params, recipe.shortname)
         calibdbm.load_db()
     else:
         calibdbm = database
     # ----------------------------------------------------------------------
     # load shape y file
     cfile = gen_calib.CalibFile()
-    cfile.load_calib_file(params, key, header, filename=filename,
+    cfile.load_calib_file(params, recipe.shortname, key,
+                          header, filename=filename,
                           userinputkey='SHAPEY', database=calibdbm)
     # get properties from calibration file
     dymap = cfile.data
@@ -1351,7 +1354,7 @@ def get_shapey(params, header, filename=None, database=None):
     return shapey_file, shapetime, dymap
 
 
-def get_shapelocal(params, header, filename=None, database=None):
+def get_shapelocal(params, recipe, header, filename=None, database=None):
     # get file definition
     out_shape_local = drs_file.get_file_definition(params, 'SHAPEL',
                                                    block_kind='red')
@@ -1360,14 +1363,15 @@ def get_shapelocal(params, header, filename=None, database=None):
     # ----------------------------------------------------------------------
     # load database
     if database is None:
-        calibdbm = drs_database.CalibrationDatabase(params)
+        calibdbm = drs_database.CalibrationDatabase(params, recipe.shortname)
         calibdbm.load_db()
     else:
         calibdbm = database
     # ----------------------------------------------------------------------
     # load shape x file
     cfile = gen_calib.CalibFile()
-    cfile.load_calib_file(params, key, header, filename=filename,
+    cfile.load_calib_file(params, recipe.shortname, key,
+                          header, filename=filename,
                           userinputkey='SHAPEL', database=calibdbm)
     # get properties from calibration file
     shapel = cfile.data

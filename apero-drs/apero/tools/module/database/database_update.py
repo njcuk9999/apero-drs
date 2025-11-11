@@ -85,7 +85,7 @@ def update_database(params: ParamDict, recipe: DrsRecipe, dbkind: str):
 
         # deal with removal of entries
         if dbkind == 'calib':
-            remove = remove_db_entries(params, 'calibration')
+            remove = remove_db_entries(params, recipe, 'calibration')
             # we do not continue if we are removing entries
             if remove:
                 return
@@ -94,12 +94,12 @@ def update_database(params: ParamDict, recipe: DrsRecipe, dbkind: str):
         WLOG(params, 'info', textentry('40-006-00007', args=['calibration']),
              colour='magenta')
         WLOG(params, 'info', params['LOG.HEADER'], colour='magenta')
-        calib_tellu_update(params, pconst, 'calibration')
+        calib_tellu_update(params, recipe, pconst, 'calibration')
     # update telluric database
     if dbkind in ['tellu', 'all']:
         # deal with removal of entries
         if dbkind == 'tellu':
-            remove = remove_db_entries(params, 'telluric')
+            remove = remove_db_entries(params, recipe, 'telluric')
             # we do not continue if we are removing entries
             if remove:
                 return
@@ -107,7 +107,7 @@ def update_database(params: ParamDict, recipe: DrsRecipe, dbkind: str):
         WLOG(params, 'info', textentry('40-006-00007', args=['telluric']),
              colour='magenta')
         WLOG(params, 'info', params['LOG.HEADER'], colour='magenta')
-        calib_tellu_update(params, pconst, 'telluric')
+        calib_tellu_update(params, recipe, pconst, 'telluric')
     # update log and index database
     if dbkind in ['log', 'all']:
         WLOG(params, 'info', params['LOG.HEADER'], colour='magenta')
@@ -149,8 +149,8 @@ def reset_databases(params: ParamDict, dbkind):
     manage_databases.install_databases(params, dbkind=dbkind, verbose=True)
 
 
-def calib_tellu_update(params: ParamDict, pconst: Instrument,
-                       db_type: str):
+def calib_tellu_update(params: ParamDict, recipe: DrsRecipe,
+                       pconst: Instrument, db_type: str):
     """
     Update either the calibration or telluric database with files on disk
 
@@ -169,14 +169,14 @@ def calib_tellu_update(params: ParamDict, pconst: Instrument,
         name = 'calibration database'
         file_set_name = 'calib_file'
         # load the calibration database
-        dbmanager = drs_database.CalibrationDatabase(params)
+        dbmanager = drs_database.CalibrationDatabase(params, recipe.shortname)
         dbmanager.load_db()
     elif db_type == 'telluric':
         db_path = params['PATH.TELLU']
         name = 'telluric database'
         file_set_name = 'tellu_file'
         # load the telluric database
-        dbmanager = drs_database.TelluricDatabase(params)
+        dbmanager = drs_database.TelluricDatabase(params, recipe.shortname)
         dbmanager.load_db()
     else:
         raise AperoCodedException(params, '09-505-00001', targs=[db_type])
@@ -194,12 +194,12 @@ def calib_tellu_update(params: ParamDict, pconst: Instrument,
         # reset database
         manage_databases.create_calibration_database(params, pconst, db_list)
         # reload the calibration database
-        dbmanager = drs_database.CalibrationDatabase(params)
+        dbmanager = drs_database.CalibrationDatabase(params, recipe.shortname)
         dbmanager.load_db()
     elif db_type == 'telluric':
         manage_databases.create_telluric_database(params, pconst, db_list)
         # reload the telluric database
-        dbmanager = drs_database.TelluricDatabase(params)
+        dbmanager = drs_database.TelluricDatabase(params, recipe.shortname)
         dbmanager.load_db()
     # ----------------------------------------------------------------------
     # get all fits files in the cdb path
@@ -274,10 +274,10 @@ def index_update(params: ParamDict, recipe: DrsRecipe):
     block_kinds = drs_file.DrsPath.get_block_names(params=params,
                                                    block_filter='indexing')
     # get index database
-    findexdbm = drs_database.FileIndexDatabase(params)
+    findexdbm = drs_database.FileIndexDatabase(params, recipe.shortname)
     findexdbm.load_db()
     # get astrometric database
-    astromdb = drs_database.AstrometricDatabase(params)
+    astromdb = drs_database.AstrometricDatabase(params, recipe.shortname)
     astromdb.load_db()
     # loop around block kinds (with the indexing filter)
     for block_kind in block_kinds:
@@ -355,7 +355,8 @@ def log_update(params: ParamDict, pconst: Instrument):
             logdbm.add_entries(*logentries[lcode])
 
 
-def remove_db_entries(params: ParamDict, db_type: str) -> bool:
+def remove_db_entries(params: ParamDict, recipe: DrsRecipe,
+                      db_type: str) -> bool:
 
     # first check if we have the --since and --keys arguments in INPUTS
     # if we do then we need to remove entries from the database
@@ -379,10 +380,10 @@ def remove_db_entries(params: ParamDict, db_type: str) -> bool:
     # -------------------------------------------------------------------------
     # get database
     if db_type == 'calibration':
-        dbmanager = drs_database.CalibrationDatabase(params)
+        dbmanager = drs_database.CalibrationDatabase(params, recipe.shortname)
         path = params['PATH.CALIB']
     elif db_type == 'telluric':
-        dbmanager = drs_database.TelluricDatabase(params)
+        dbmanager = drs_database.TelluricDatabase(params, recipe.shortname)
         path = params['PATH.TELLU']
     else:
         # TODO: Add to language database

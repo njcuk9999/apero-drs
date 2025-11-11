@@ -121,7 +121,8 @@ class CalibFile:
         # store args for failure
         self.dtime_eargs = []
 
-    def load_calib_file(self, params: ParamDict, key: str,
+    def load_calib_file(self, params: ParamDict, shortname: str,
+                        key: str,
                         inheader: Union[drs_fits.Header, None] = None,
                         filename: Union[str, None] = None,
                         get_image: bool = True, get_header: bool = False,
@@ -222,7 +223,7 @@ class CalibFile:
             # check if we have the database
             if database is None:
                 # construct a new database instance
-                database = CalibDatabase(params)
+                database = CalibDatabase(params, shortname)
                 # load the database
                 database.load_db()
             # load filename from database
@@ -349,7 +350,7 @@ def check_files(params: ParamDict, shortname: str,
     # clean (capitalize and remove white spaces)
     dprtype = drs_text.clean_strings(dprtype)
     # load object database
-    objdbm = drs_database.AstrometricDatabase(params, recipe.shortname)
+    objdbm = drs_database.AstrometricDatabase(params, shortname)
     objdbm.load_db()
     # get clean / alias-safe version of object name
     objname, _ = objdbm.find_objname(pconst, objname)
@@ -490,7 +491,7 @@ def calibrate_ppfile(params: ParamDict, recipe: DrsRecipe,
     backkey = backinst.get_dbkey()
     # load database
     if database is None:
-        calibdbm = CalibDatabase(params)
+        calibdbm = CalibDatabase(params, recipe.shortname)
         calibdbm.load_db()
     else:
         calibdbm = database
@@ -529,7 +530,8 @@ def calibrate_ppfile(params: ParamDict, recipe: DrsRecipe,
     if correctdark:
         # load dark file
         cfile = CalibFile()
-        cfile.load_calib_file(params, darkkey, header, filename=darkfile,
+        cfile.load_calib_file(params, recipe.shortname,
+                              darkkey, header, filename=darkfile,
                               userinputkey='DARKFILE', database=calibdbm,
                               return_filename=True)
         # get properties from calibration file
@@ -576,7 +578,8 @@ def calibrate_ppfile(params: ParamDict, recipe: DrsRecipe,
     if correctbad:
         # load the bad pix file
         cfile = CalibFile()
-        cfile.load_calib_file(params, badkey, header, filename=badpixfile,
+        cfile.load_calib_file(params, recipe.shortname,
+                              badkey, header, filename=badpixfile,
                               userinputkey='BADPIXFILE', database=calibdbm,
                               return_filename=True)
         # get properties from calibration file
@@ -592,7 +595,8 @@ def calibrate_ppfile(params: ParamDict, recipe: DrsRecipe,
     # ----------------------------------------------------------------------
     # load background file from inputs/calibdb
     cfile = CalibFile()
-    cfile.load_calib_file(params, backkey, header, filename=backfile,
+    cfile.load_calib_file(params, recipe.shortname,
+                          backkey, header, filename=backfile,
                           userinputkey='BACKFILE', return_filename=True,
                           database=calibdbm)
     bkgrdfile, backtime = cfile.filename, cfile.mjdmid
@@ -623,7 +627,8 @@ def calibrate_ppfile(params: ParamDict, recipe: DrsRecipe,
         WLOG(params, '', textentry('40-014-00012'))
         # load the bad pix file
         cfile = CalibFile()
-        cfile.load_calib_file(params, badkey, header, filename=badpixfile,
+        cfile.load_calib_file(params, recipe.shortname,
+                              badkey, header, filename=badpixfile,
                               userinputkey='BADPIXFILE', database=calibdbm,
                               return_filename=True)
         # get properties from calibration file

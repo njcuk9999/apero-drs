@@ -109,11 +109,11 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
     clear = params['INPUTS']['CLEAR']
     # ---------------------------------------------------------------------
     # load the databases
-    findexdbm = drs_database.FileIndexDatabase(params)
+    findexdbm = drs_database.FileIndexDatabase(params, recipe.shortname)
     findexdbm.load_db()
-    calibdbm = drs_database.CalibrationDatabase(params)
+    calibdbm = drs_database.CalibrationDatabase(params, recipe.shortname)
     calibdbm.load_db()
-    telludbm = drs_database.TelluricDatabase(params)
+    telludbm = drs_database.TelluricDatabase(params, recipe.shortname)
     telludbm.load_db()
     # ---------------------------------------------------------------------
     # get directory name

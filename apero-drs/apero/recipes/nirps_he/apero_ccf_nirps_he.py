@@ -128,7 +128,7 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
     # get the number of infiles
     num_files = len(infiles)
     # load the calibration database
-    calibdbm = drs_database.CalibrationDatabase(params)
+    calibdbm = drs_database.CalibrationDatabase(params, recipe.shortname)
     calibdbm.load_db()
     # ----------------------------------------------------------------------
     # Loop around input files
@@ -191,7 +191,7 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
         # ------------------------------------------------------------------
         # Get blaze
         # ------------------------------------------------------------------
-        bout = flat_blaze.get_blaze(params, header, fiber)
+        bout = flat_blaze.get_blaze(params, recipe, header, fiber)
         blazefile, blazetime, blaze = bout
 
         # ------------------------------------------------------------------

@@ -211,13 +211,14 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
     # -------------------------------------------------------------------------
     # run basic filter
     if dbkind == 'calib':
-        indict, outdict = drs_get.calib_filter(params, filters,
+        indict, outdict = drs_get.calib_filter(params, recipe, filters,
                                                user_outdir, do_copy, do_symlink,
                                                tarfilename=tarfilename,
                                                since=since, latest=latest,
                                                sizelimit=sizelimit)
     elif dbkind == 'tellu':
-        indict, outdict = drs_get.tellu_filter(params, kw_objnames, filters,
+        indict, outdict = drs_get.tellu_filter(params, recipe,
+                                               kw_objnames, filters,
                                                user_outdir, do_copy, do_symlink,
                                                tarfilename=tarfilename,
                                                since=since, latest=latest,

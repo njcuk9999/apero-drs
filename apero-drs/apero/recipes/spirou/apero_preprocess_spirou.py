@@ -123,7 +123,7 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
     # storage for output files
     output_names = []
     # get object database
-    objdbm = ObjectDatabase(params)
+    objdbm = ObjectDatabase(params, recipe.shortname)
     objdbm.load_db()
     # loop around number of files
     for it in range(num_files):
@@ -163,6 +163,7 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
         if infile.get_hkey('KW_DPRTYPE') in obj_dprtypes:
             # get object based on object name and gaia id
             infile.header = prep.resolve_target(params, pconst,
+                                                recipe.shortname,
                                                 header=infile.header,
                                                 database=objdbm)
             # set flag for passing qc

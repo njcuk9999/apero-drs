@@ -124,7 +124,7 @@ def get_tellu_include_list(params: ParamDict,
     return whitelist
 
 
-def get_tellu_exclude_list(params: ParamDict,
+def get_tellu_exclude_list(params: ParamDict, shortname: str,
                            assets_dir: Union[str, None] = None,
                            tellu_dir: Union[str, None] = None,
                            tellu_exclude_file: Union[str, None] = None
@@ -133,7 +133,7 @@ def get_tellu_exclude_list(params: ParamDict,
     # get pseudo constants
     pconst = load_functions.load_pconfig(select.INSTRUMENTS)
     # get object database
-    objdbm = drs_database.AstrometricDatabase(params)
+    objdbm = drs_database.AstrometricDatabase(params, shortname)
     objdbm.load_db()
     # get parameters from params/kwargs
     assetdir = pcheck(params, 'PATH.ASSETS', 'assetsdir', func=func_name,
@@ -153,11 +153,11 @@ def get_tellu_exclude_list(params: ParamDict,
     return blacklist, blacklistfile
 
 
-def get_blaze_props(params, header, fiber) -> ParamDict:
+def get_blaze_props(params, recipe, header, fiber) -> ParamDict:
     # set function
     func_name = display_func('get_blaze_props', __NAME__)
     # load the blaze file for this fiber
-    bout = flat_blaze.get_blaze(params, header, fiber)
+    bout = flat_blaze.get_blaze(params, recipe, header, fiber)
     blaze_file, blaze_time, blaze = bout
     # ----------------------------------------------------------------------
     # parameter dictionary
@@ -172,7 +172,7 @@ def get_blaze_props(params, header, fiber) -> ParamDict:
     return nprops
 
 
-def normalise_by_pblaze(params, image, header, fiber, **kwargs):
+def normalise_by_pblaze(params, recipe, image, header, fiber, **kwargs):
     func_name = __NAME__ + '.normalise_by_pblaze()'
     # get properties from params/kwargs
     blaze_p = pcheck(params, 'OBJ.TELL.MAKE.BLAZE_PTILE', 'blaze_p', kwargs,
@@ -184,7 +184,7 @@ def normalise_by_pblaze(params, image, header, fiber, **kwargs):
     image1 = np.array(image)
     # ----------------------------------------------------------------------
     # load the blaze file for this fiber
-    bout = flat_blaze.get_blaze(params, header, fiber)
+    bout = flat_blaze.get_blaze(params, recipe, header, fiber)
     blaze_file, blaze_time, blaze = bout
     # copy blaze
     blaze_norm = np.array(blaze)
@@ -293,7 +293,7 @@ def get_non_tellu_objs(params: ParamDict, fiber, filetype=None,
     return obj_stars, obj_names
 
 
-def get_tellu_objs(params: ParamDict, key: str,
+def get_tellu_objs(params: ParamDict, recipe: DrsRecipe, key: str,
                    objnames: Union[List[str], str, None] = None,
                    database: Union[TelluDatabase, None] = None) -> List[str]:
     """
@@ -319,7 +319,7 @@ def get_tellu_objs(params: ParamDict, key: str,
     # ----------------------------------------------------------------------
     # deal with not having database
     if database is None:
-        database = TelluDatabase(params)
+        database = TelluDatabase(params, recipe.shortname)
         # load database
         database.load_db()
     # ----------------------------------------------------------------------
@@ -520,10 +520,10 @@ def tellu_preclean(params, recipe, infile, wprops, fiber, rawfiles, combine,
     # ----------------------------------------------------------------------
     # load database
     if calibdbm is None:
-        calibdbm = CalibDatabase(params)
+        calibdbm = CalibDatabase(params, recipe.shortname)
         calibdbm.load_db()
     if telludbm is None:
-        telludbm = TelluDatabase(params)
+        telludbm = TelluDatabase(params, recipe.shortname)
     # ----------------------------------------------------------------------
     # get image and header from infile
     header = infile.get_header()
@@ -549,7 +549,8 @@ def tellu_preclean(params, recipe, infile, wprops, fiber, rawfiles, combine,
     usefiber = params['CAL.WAVE.GEN.REF_FIBER']
     # load loco file
     cfile = gen_calib.CalibFile()
-    cfile.load_calib_file(params, key, header, database=calibdbm,
+    cfile.load_calib_file(params, recipe.shortname, key, header,
+                          database=calibdbm,
                           fiber=usefiber, return_filename=True)
     # get properties from calibration file
     res_e2ds_path = cfile.filename
@@ -1134,7 +1135,7 @@ def tellu_preclean(params, recipe, infile, wprops, fiber, rawfiles, combine,
     sky_cond2 = template_props['HAS_TEMPLATE']
     if sky_cond1 and sky_cond2:
         # load the blaze file for this fiber
-        _, _, blaze = flat_blaze.get_blaze(params, header, fiber)
+        _, _, blaze = flat_blaze.get_blaze(params, recipe, header, fiber)
         # make the forward model
         fmodel = template_props['TEMP_S2D'] * abso_e2ds * blaze
         ratio_fmodel = image_e2ds_ini / fmodel
@@ -2106,7 +2107,7 @@ def read_tellu_preclean(params, recipe, infile, fiber, database=None):
     # get key
     pclean_key = out_pclean.get_dbkey()
     # load tellu file, header and abspaths
-    pclean_filenames = load_tellu_file(params, pclean_key,
+    pclean_filenames = load_tellu_file(params, recipe.shortname, pclean_key,
                                        infile.get_header(),
                                        n_entries='*', get_image=False,
                                        required=False, fiber=fiber,
@@ -2243,7 +2244,7 @@ def read_tellu_preclean(params, recipe, infile, fiber, database=None):
 # =============================================================================
 # Database functions
 # =============================================================================
-def load_templates(params: ParamDict,
+def load_templates(params: ParamDict, recipe: DrsRecipe,
                    header: Union[drs_fits.Header, None] = None,
                    objname: Union[str, None] = None,
                    fiber: Union[str, None] = None,
@@ -2315,7 +2316,7 @@ def load_templates(params: ParamDict,
     # log status
     WLOG(params, '', textentry('40-019-00045', args=[temp_key]))
     # load tellu file, header and abspaths
-    temp_out = load_tellu_file(params, temp_key, header,
+    temp_out = load_tellu_file(params, recipe.shortname, temp_key, header,
                                filename=template_filename, n_entries=1,
                                required=False, fiber=fiber, objname=objname,
                                database=database, mode=None, get_header=True)
@@ -2350,7 +2351,8 @@ def load_templates(params: ParamDict,
     # get calibration key
     s1d_key = s1d_template.get_dbkey()
     # load tellu file, header and abspaths
-    temp_out = load_tellu_file(params, s1d_key, header, n_entries=1,
+    temp_out = load_tellu_file(params, recipe.shortname,
+                               s1d_key, header, n_entries=1,
                                required=False, fiber=fiber,
                                objname=objname,
                                database=database, mode=None,
@@ -2467,7 +2469,8 @@ def shift_template(params: ParamDict, recipe: DrsRecipe,
     return tprops
 
 
-def get_transmission_files(params, header, fiber, database=None):
+def get_transmission_files(params: ParamDict, recipe: DrsRecipe,
+                           header, fiber, database=None):
     # get file definition
     out_trans = drs_file.get_file_definition(params, 'TELLU_TRANS',
                                              block_kind='red', fiber=fiber)
@@ -2476,7 +2479,8 @@ def get_transmission_files(params, header, fiber, database=None):
     # log status
     WLOG(params, '', textentry('40-019-00046', args=[trans_key]))
     # load tellu file, header and abspaths
-    trans_filenames = load_tellu_file(params, trans_key, header, fiber=fiber,
+    trans_filenames = load_tellu_file(params, recipe.shortname,
+                                      trans_key, header, fiber=fiber,
                                       n_entries='*', get_image=False,
                                       database=database, return_filename=True)
     # storage for valid files/images/times
@@ -2485,7 +2489,8 @@ def get_transmission_files(params, header, fiber, database=None):
     return list(valid_filenames)
 
 
-def get_trans_model(params: ParamDict, header: drs_fits.Header, fiber: str,
+def get_trans_model(params: ParamDict, recipe: DrsRecipe,
+                    header: drs_fits.Header, fiber: str,
                     database: Optional[drs_database.TelluricDatabase] = None
                     ) -> ParamDict:
     # set function name
@@ -2498,8 +2503,8 @@ def get_trans_model(params: ParamDict, header: drs_fits.Header, fiber: str,
     # log status
     WLOG(params, '', textentry('40-019-00046', args=[trans_key]))
     # load tellu file, header and abspaths
-    trans_model = load_tellu_file(params, trans_key, header, fiber=fiber,
-                                  n_entries=1, get_image=False,
+    trans_model = load_tellu_file(params, recipe.shortname, trans_key, header,
+                                  fiber=fiber, n_entries=1, get_image=False,
                                   database=database, return_filename=True)
     # load extensions
     exts = drs_fits.readfits(params, trans_model, getdata=True,
@@ -2555,7 +2560,8 @@ def load_conv_tapas(params, recipe, header, refprops, fiber, database=None,
         # get key
         conv_key = out_tellu_conv.get_dbkey()
     # load tellu file
-    conv_paths = load_tellu_file(params, conv_key, header, n_entries='*',
+    conv_paths = load_tellu_file(params, recipe.shortname,
+                                 conv_key, header, n_entries='*',
                                  get_image=False, required=False,
                                  fiber=fiber, return_filename=True,
                                  database=database)
@@ -2642,7 +2648,8 @@ def load_tapas_spl(params, recipe, header, database=None):
     # get key
     conv_key = out_tellu_tapas.get_dbkey()
     # load tellu file
-    conv_paths = load_tellu_file(params, conv_key, n_entries='*',
+    conv_paths = load_tellu_file(params, recipe.shortname,
+                                 conv_key, n_entries='*',
                                  get_image=False, required=False,
                                  return_filename=True)
     # construct path to tapas file

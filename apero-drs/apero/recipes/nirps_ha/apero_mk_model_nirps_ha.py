@@ -104,7 +104,7 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
     else:
         fiber = params['OBJ.TELLU.TEMPLATE.FIBER_TYPE']
     # load the telluric database
-    telludbm = drs_database.TelluricDatabase(params)
+    telludbm = drs_database.TelluricDatabase(params, recipe.shortname)
     telludbm.load_db()
     # set up plotting (no plotting before this) -- must be after setting
     #   night name
@@ -116,7 +116,7 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
     # Load transmission files and header vectors
     # ------------------------------------------------------------------
     # load trans filenames
-    transfiles = telluric.get_trans_files(params, None, fiber,
+    transfiles = telluric.get_trans_files(params, recipe, None, fiber,
                                           database=telludbm)
     # get trans file type
     infiletype = drs_file.get_file_definition(params, 'TELLU_TRANS',

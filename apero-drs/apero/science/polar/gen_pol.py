@@ -316,7 +316,7 @@ def apero_load_data(params: ParamDict, recipe: DrsRecipe,
     # -------------------------------------------------------------------------
     # Load calibration database
     # -------------------------------------------------------------------------
-    calibdb = drs_database.CalibrationDatabase(params)
+    calibdb = drs_database.CalibrationDatabase(params, recipe.shortname)
     calibdb.load_db()
     # -------------------------------------------------------------------------
     # determine the number of this exposure
@@ -408,7 +408,7 @@ def apero_load_data(params: ParamDict, recipe: DrsRecipe,
             wavehdr = wave.get_waveheader(params, wprops)
             # -----------------------------------------------------------------
             # load the blaze file
-            bout = flat_blaze.get_blaze(params, expfile.header,
+            bout = flat_blaze.get_blaze(params, recipe, expfile.header,
                                         expfile.fiber, database=calibdb)
             blazefile, blazetime, blaze0 = bout
             # get the blaze header
@@ -498,7 +498,7 @@ def apero_load_data(params: ParamDict, recipe: DrsRecipe,
             polar_dict['INPUTS'][key_str] = infile.newcopy(params=params)
             # -----------------------------------------------------------------
             # load the blaze file
-            bout = flat_blaze.get_blaze(params, infile.header, fiber,
+            bout = flat_blaze.get_blaze(params, recipe, infile.header, fiber,
                                         database=calibdb)
             _, _, blaze = bout
             # get normalized blaze data

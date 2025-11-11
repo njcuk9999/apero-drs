@@ -125,7 +125,7 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
     # get the number of infiles
     num_files = len(infiles)
     # load the calibration database
-    calibdbm = drs_database.CalibrationDatabase(params)
+    calibdbm = drs_database.CalibrationDatabase(params, recipe.shortname)
     calibdbm.load_db()
     # ----------------------------------------------------------------------
     # Loop around input files
@@ -151,7 +151,8 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
         # Load reference fp, shape dxmap and dymap
         # ------------------------------------------------------------------
         fkwargs = dict(database=calibdbm)
-        reffp_file, reffp_image = shape.get_ref_fp(params, header, **fkwargs)
+        reffp_file, reffp_image = shape.get_ref_fp(params, recipe, header,
+                                                   **fkwargs)
         # get shape x and shape x mjdmid
         sout = shape.get_shapex(params, header, **fkwargs)
         dxmap_file, dxtime, dxmap = sout

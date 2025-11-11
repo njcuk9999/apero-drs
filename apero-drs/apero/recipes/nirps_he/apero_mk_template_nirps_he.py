@@ -114,9 +114,9 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
     # get the fiber type required
     fiber = params['INPUTS']['FIBER']
     # load the calibration and telluric databases
-    calibdbm = drs_database.CalibrationDatabase(params)
+    calibdbm = drs_database.CalibrationDatabase(params, recipe.shortname)
     calibdbm.load_db()
-    telludbm = drs_database.TelluricDatabase(params)
+    telludbm = drs_database.TelluricDatabase(params, recipe.shortname)
     telludbm.load_db()
     # ----------------------------------------------------------------------
     # get objects that match this object name
@@ -127,7 +127,7 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
                                                              KW_FIBER=fiber))
     else:
         # define the type of files we want to locate in the telluric database
-        object_filenames = telluric.get_tellu_objs(params, filetype,
+        object_filenames = telluric.get_tellu_objs(params, recipe, filetype,
                                                    objnames=[objname],
                                                    database=telludbm)
     # ----------------------------------------------------------------------
@@ -187,7 +187,7 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
     # Normalize image by peak blaze
     # ------------------------------------------------------------------
     nargs = [infile.get_data(copy=True), infile.get_header(), fiber]
-    _, nprops = telluric.normalise_by_pblaze(params, *nargs)
+    _, nprops = telluric.normalise_by_pblaze(params, recipe, *nargs)
     # ----------------------------------------------------------------------
     # Make data cubes
     # ----------------------------------------------------------------------

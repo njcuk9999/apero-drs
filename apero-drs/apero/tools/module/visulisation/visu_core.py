@@ -215,7 +215,7 @@ def get_calib(header: drs_fits.Header, key: str) -> Tuple[np.ndarray, str]:
                     2. the calibration file name
     """
     # get database
-    calibdbm = drs_database.CalibrationDatabase(PARAMS)
+    calibdbm = drs_database.CalibrationDatabase(PARAMS, 'VISU')
     calibdbm.load_db()
     # get calib file
     cout = calibdbm.get_calib_file(key=key, header=header, nentries=1)

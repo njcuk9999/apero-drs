@@ -107,7 +107,7 @@ def __main__(recipe, params):
     findexdbm = IndexDatabase(params)
     findexdbm.load_db()
     # construct object database
-    objdbm = ObjectDatabase(params)
+    objdbm = ObjectDatabase(params, recipe.shortname)
     objdbm.load_db()
     # force the parallel key to False here (should not be True before we
     #   run processing)
@@ -138,7 +138,7 @@ def __main__(recipe, params):
     # Object check
     # -------------------------------------------------------------------------
     if obj_check:
-        _ = drs_precheck.obj_check(params, findexdbm)
+        _ = drs_precheck.obj_check(params, recipe.shortname, findexdbm)
 
     # -------------------------------------------------------------------------
     # End of main code

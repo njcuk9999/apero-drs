@@ -172,7 +172,7 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
     # get wave reference file (controller fiber)
     ref_fiber = params['CAL.WAVE.GEN.REF_FIBER']
     # load the calibration database
-    calibdbm = drs_database.CalibrationDatabase(params)
+    calibdbm = drs_database.CalibrationDatabase(params, recipe.shortname)
     calibdbm.load_db()
 
     # ----------------------------------------------------------------------
@@ -227,7 +227,7 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
         hcheader = hc_e2ds_file.get_header()
         # ---------------------------------------------------------------------
         # load the blaze file for this fiber
-        bout = flat_blaze.get_blaze(params, hcheader, ref_fiber)
+        bout = flat_blaze.get_blaze(params, recipe, hcheader, ref_fiber)
         blaze_file, blaze_time, blaze = bout
 
         # =====================================================================

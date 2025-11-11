@@ -126,7 +126,7 @@ def __main__(recipe, params):
     # get the number of infiles
     num_files = len(infiles)
     # load the calibration database
-    calibdbm = drs_database.CalibrationDatabase(params)
+    calibdbm = drs_database.CalibrationDatabase(params, recipe.shortname)
     calibdbm.load_db()
 
     # ----------------------------------------------------------------------

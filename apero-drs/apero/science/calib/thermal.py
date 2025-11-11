@@ -192,7 +192,8 @@ def thermal_correction(params, recipe, header, props=None, eprops=None,
     # ----------------------------------------------------------------------
     # get thermal (only if in one of the correction lists)
     if fibertype in corrtype1:
-        tout = get_thermal(params, header, fiber=fiber, filename=thermal_file,
+        tout = get_thermal(params, recipe, header, fiber=fiber,
+                           filename=thermal_file,
                            kind='THERMALT_E2DS', database=database,
                            required=False)
         thermalfile, thermaltime, thermal = tout
@@ -202,13 +203,14 @@ def thermal_correction(params, recipe, header, props=None, eprops=None,
             wmsg = 'No telescope dark file found, trying a internal dark file'
             WLOG(params, 'warning', wmsg, sublevel=6)
             # get the internal dark e2ds
-            tout = get_thermal(params, header, fiber=fiber,
+            tout = get_thermal(params, recipe, header, fiber=fiber,
                                filename=thermal_file, kind='THERMALI_E2DS',
                                database=database)
             thermalfile, thermaltime, thermal = tout
     # ----------------------------------------------------------------------
     elif fibertype in corrtype2:
-        tout = get_thermal(params, header, fiber=fiber, filename=thermal_file,
+        tout = get_thermal(params, recipe, header, fiber=fiber,
+                           filename=thermal_file,
                            kind='THERMALI_E2DS', database=database)
         thermalfile, thermaltime, thermal = tout
     # ----------------------------------------------------------------------
@@ -270,7 +272,7 @@ def thermal_correction(params, recipe, header, props=None, eprops=None,
     return eprops
 
 
-def get_thermal(params, header, fiber, kind, filename=None,
+def get_thermal(params, recipe, header, fiber, kind, filename=None,
                 database=None, required: bool = True
                 ) -> Tuple[str, float, Union[np.ndarray, None]]:
     # get file definition
@@ -280,7 +282,7 @@ def get_thermal(params, header, fiber, kind, filename=None,
     # ----------------------------------------------------------------------
     # load database
     if database is None:
-        calibdbm = drs_database.CalibrationDatabase(params)
+        calibdbm = drs_database.CalibrationDatabase(params, recipe.shortname)
         calibdbm.load_db()
     else:
         calibdbm = database
@@ -290,7 +292,7 @@ def get_thermal(params, header, fiber, kind, filename=None,
                    inheader=header, database=calibdbm, fiber=fiber,
                    required=required)
     cfile = gen_calib.CalibFile()
-    cfile.load_calib_file(params, **ckwargs)
+    cfile.load_calib_file(params, recipe.shortname, **ckwargs)
     # deal with no file and not required
     if cfile.filename is None and not required:
         return 'None', np.nan, None
@@ -324,8 +326,8 @@ def tcorrect1(params: ParamDict, recipe: DrsRecipe,
     # deal with no thermal
     if thermal is None:
         # get thermal
-        tout = get_thermal(params, header, fiber=fiber, kind='THERMALT_E2DS',
-                           database=database)
+        tout = get_thermal(params, recipe, header, fiber=fiber,
+                           kind='THERMALT_E2DS', database=database)
         thermal_file, thermaltime, thermal = tout
     # ----------------------------------------------------------------------
     # if we have a flat we should apply it to the thermal
@@ -448,8 +450,8 @@ def tcorrect2(params: ParamDict, recipe: DrsRecipe,
     # deal with no thermal
     if thermal is None:
         # get thermal
-        tout = get_thermal(params, header, fiber=fiber, kind='THERMALI_E2DS',
-                           database=database)
+        tout = get_thermal(params, recipe, header, fiber=fiber,
+                           kind='THERMALI_E2DS', database=database)
         thermal_file, thermaltime, thermal = tout
     # ----------------------------------------------------------------------
     # if we have a flat we should apply it to the thermal

@@ -132,7 +132,7 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
     # get the number of infiles
     num_files = len(infiles)
     # load the calibration database
-    calibdbm = drs_database.CalibrationDatabase(params)
+    calibdbm = drs_database.CalibrationDatabase(params, recipe.shortname)
     calibdbm.load_db()
     # ----------------------------------------------------------------------
     # Loop around input files
@@ -156,7 +156,8 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
         # ------------------------------------------------------------------
         # Load shape components
         # ------------------------------------------------------------------
-        sprops = shape.get_shape_calibs(params, header, database=calibdbm)
+        sprops = shape.get_shape_calibs(params, recipe,
+                                        header, database=calibdbm)
 
         # ------------------------------------------------------------------
         # Correction of file
@@ -190,7 +191,8 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
             log2 = log1.add_level(params, 'fiber', fiber)
             # --------------------------------------------------------------
             # load the localisation properties for this fiber
-            lprops = localisation.get_coefficients(params, header, fiber=fiber,
+            lprops = localisation.get_coefficients(params, recipe,
+                                                   header, fiber=fiber,
                                                    merge=True,
                                                    database=calibdbm)
             # get the localisation center coefficients for this fiber

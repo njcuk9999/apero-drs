@@ -92,13 +92,15 @@ def __main__(recipe, params):
     # get the check parameter
     check = params['INPUTS']['CHECK']
     if check:
-        drs_astrometrics.check_database(params)
+        drs_astrometrics.check_database(params, recipe.shortname)
         return locals()
     # ----------------------------------------------------------------------
     # step 1: Is object in database?
     # ----------------------------------------------------------------------
     # query local object database
-    unfound_objs, found_objs = drs_astrometrics.query_database(params, rawobjs,
+    unfound_objs, found_objs = drs_astrometrics.query_database(params,
+                                                               recipe.shortname,
+                                                               rawobjs,
                                                                overwrite)
     # stop here if all objects found
     if len(found_objs) > 0:
