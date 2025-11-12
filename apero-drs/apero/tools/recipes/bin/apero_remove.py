@@ -165,13 +165,15 @@ def __main__(recipe, params):
     drs_reset.check_cwd(params)
     # ----------------------------------------------------------------------
     # get a list of files to remove (using the file index database)
-    filetable1, condition1 = drs_reset.get_filelist(params, obsdir, blocks,
+    filetable1, condition1 = drs_reset.get_filelist(params, recipe,
+                                                    obsdir, blocks,
                                                     fileprefix, filesuffix,
                                                     objnames)
     # if we are remove raw file entries from database we have to run this
     #  query again
     if params['INPUTS']['RAWDB']:
-        filetable2, condition2 = drs_reset.get_filelist(params, obsdir, blocks,
+        filetable2, condition2 = drs_reset.get_filelist(params, recipe,
+                                                        obsdir, blocks,
                                                         fileprefix, filesuffix,
                                                         objnames,
                                                         include_raw=True)

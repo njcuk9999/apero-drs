@@ -10,23 +10,24 @@ Created on 2025-04-23 at 12:15
 @author: cook
 """
 import os
-from typing import Any, Dict, List, Union
+from typing import Any, Dict, List
 
 import numpy as np
+from astropy.io import fits
 from astropy.table import Table
 from astropy.time import Time
-from astropy.io import fits
 
-from aperocore.constants import load_functions
-from apero.instruments import select
 from apero.base import base as apero_base
-from aperocore.constants import param_functions
-from apero.core import drs_database
-from aperocore.core import drs_log
-from apero.tools.module.documentation import drs_markdown
 from apero.base.base import TQDM as tqdm
+from apero.core import drs_database
+from apero.instruments import select
 from apero.tools.module.ari import ari_pages
 from apero.tools.module.ari import ari_plot
+from apero.tools.module.documentation import drs_markdown
+from apero.utils import drs_recipe
+from aperocore.constants import load_functions
+from aperocore.constants import param_functions
+from aperocore.core import drs_log
 
 # =============================================================================
 # Define variables
@@ -40,6 +41,7 @@ __date__ = apero_base.__date__
 __release__ = apero_base.__release__
 # Get ParamDict
 ParamDict = param_functions.ParamDict
+DrsRecipe = drs_recipe.DrsRecipe
 # Get Logging function
 WLOG = drs_log.wlog
 
@@ -106,7 +108,8 @@ REQ_FIBER = [False, True]
 # =============================================================================
 # Define functions
 # =============================================================================
-def add_calib_page(params: ParamDict, recipe_table: ari_pages.TableFile):
+def add_calib_page(params: ParamDict, recipe: DrsRecipe,
+                   recipe_table: ari_pages.TableFile):
     """
     Adds calibration page to ARI
 
@@ -142,7 +145,7 @@ def add_calib_page(params: ParamDict, recipe_table: ari_pages.TableFile):
     calib_page.add_newline()
     # -----------------------------------------------------------------
     # get calib properties
-    calib_props = get_calib_props(params)
+    calib_props = get_calib_props(params, recipe)
     # create plots
     calib_plots = create_plots(params, calib_props)
     # ------------------------------------------------------------------
@@ -239,7 +242,8 @@ def create_plots(params: ParamDict, calib_props: Dict[str, Dict[str, Any]]
 # =============================================================================
 # Define functions
 # =============================================================================
-def get_calib_props(params: ParamDict) -> Dict[str, Dict[str, Any]]:
+def get_calib_props(params: ParamDict, recipe: DrsRecipe
+                    ) -> Dict[str, Dict[str, Any]]:
     """
     Get calibration properties
 
@@ -260,7 +264,7 @@ def get_calib_props(params: ParamDict) -> Dict[str, Dict[str, Any]]:
     calib_data = get_prev_data(calib_key_file)
     # -------------------------------------------------------------------------
     # get a list of calibration files
-    calib_files = get_calib_files(params)
+    calib_files = get_calib_files(params, recipe)
     # -------------------------------------------------------------------------
     # populate calib data with new entries (read headers)
     calib_data = get_calib_hkeys(params, calib_data, calib_files)
@@ -332,7 +336,7 @@ def get_prev_data(calib_key_file: str) -> Dict[str, list]:
     return calib_data
 
 
-def get_calib_files(params: ParamDict) -> List[str]:
+def get_calib_files(params: ParamDict, recipe: DrsRecipe) -> List[str]:
     """
     From the file index database get a list of all calibration files
     given in REQ_CALS
@@ -347,7 +351,7 @@ def get_calib_files(params: ParamDict) -> List[str]:
     # storage for output
     calib_files = []
     # get and load the file index database
-    findexdb = drs_database.FileIndexDatabase(params)
+    findexdb = drs_database.FileIndexDatabase(params, recipe.shortname)
     findexdb.load_db()
     # get required calibration files
     for it, cal in enumerate(REQ_CALS):

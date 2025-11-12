@@ -464,7 +464,7 @@ def download_file(url: str, local_filename: str) -> bool:
         return False
 
 
-def assign_pid() -> Tuple[str, str]:
+def assign_pid(prefix='PID') -> Tuple[str, str]:
     """
     Assign a process id based on the time now and return it and the
     time now
@@ -477,7 +477,7 @@ def assign_pid() -> Tuple[str, str]:
     # get unix char code
     unixtime, humantime, rval = unix_char_code()
     # write pid
-    pid = 'PID-{0:020d}-{1}'.format(int(unixtime), rval)
+    pid = '{0}-{1:020d}-{2}'.format(prefix, int(unixtime), rval)
     # return pid and human time
     return pid, humantime
 

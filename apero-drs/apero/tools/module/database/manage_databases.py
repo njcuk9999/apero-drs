@@ -14,17 +14,18 @@ import numpy as np
 import pandas as pd
 from astropy.table import Table, vstack, MaskedColumn
 
-from aperocore.base import base
-from aperocore.core import drs_db
-from aperocore import drs_lang
-from aperocore.core import drs_text
-from aperocore.constants import param_functions
-from aperocore.constants import load_functions
-from apero.core import drs_database
-from aperocore.core import drs_log
-from apero.instruments.default import instrument as instrument_mod
-from apero.instruments import select
 from apero.base import base as apero_base
+from apero.core import drs_database
+from apero.instruments import select
+from apero.instruments.default import instrument as instrument_mod
+from apero.utils import drs_recipe
+from aperocore import drs_lang
+from aperocore.base import base
+from aperocore.constants import load_functions
+from aperocore.constants import param_functions
+from aperocore.core import drs_db
+from aperocore.core import drs_log
+from aperocore.core import drs_text
 
 # =============================================================================
 # Define variables
@@ -44,6 +45,7 @@ DatabaseM = drs_database.DatabaseManager
 # Get ParamDict
 ParamDict = param_functions.ParamDict
 Instrument = instrument_mod.Instrument
+DrsRecipe = drs_recipe.DrsRecipe
 # Get Logging function
 WLOG = drs_log.wlog
 # get exceptions
@@ -120,8 +122,8 @@ def kill(params: ParamDict, timeout: int = 60):
         return
 
 
-def export_database(params: ParamDict, database_name: str,
-                    outfilename: str):
+def export_database(params: ParamDict, recipe: DrsRecipe,
+                    database_name: str, outfilename: str):
     """
     Exports a given database "database_name" to "outfilename" (csv file)
 
@@ -134,7 +136,7 @@ def export_database(params: ParamDict, database_name: str,
     """
     # ----------------------------------------------------------------------
     # get database list
-    databases = list_databases(params)
+    databases = list_databases(params, recipe.shortname)
     # ----------------------------------------------------------------------
     # make sure database_name is lower case
     database_name = database_name.lower()
@@ -166,8 +168,8 @@ def export_database(params: ParamDict, database_name: str,
     df.to_csv(outfilename)
 
 
-def import_database(params: ParamDict, database_name: str,
-                    infilename: str,
+def import_database(params: ParamDict, recipe: DrsRecipe,
+                    database_name: str, infilename: str,
                     joinmode: Literal["fail", "replace", "append"] = 'replace'):
     """
     Imports a given csv file "infilename" to database "database_name"
@@ -184,7 +186,7 @@ def import_database(params: ParamDict, database_name: str,
     """
     # ----------------------------------------------------------------------
     # get database list
-    databases = list_databases(params)
+    databases = list_databases(params, recipe.shortname)
     # ----------------------------------------------------------------------
     # make sure database_name is lower case
     database_name = database_name.lower()
@@ -236,17 +238,18 @@ def import_database(params: ParamDict, database_name: str,
     db.database.add_from_pandas(df, if_exists=joinmode)
 
 
-def list_databases(params: ParamDict) -> Dict[str, DatabaseM]:
+def list_databases(params: ParamDict,
+                   shortname: str) -> Dict[str, DatabaseM]:
     # set up storage
     databases = dict()
     pconst = load_functions.load_pconfig(select.INSTRUMENTS)
     # get databases from managers (later databases)
-    calibdbm = drs_database.CalibrationDatabase(params, 'LIST', pconst)
-    telludbm = drs_database.TelluricDatabase(params, 'LIST', pconst)
-    findexdbm = drs_database.FileIndexDatabase(params, 'LIST', pconst)
-    logdbm = drs_database.LogDatabase(params, 'LIST', pconst)
-    objectdbm = drs_database.AstrometricDatabase(params, 'LIST', pconst)
-    rejectdbm = drs_database.RejectDatabase(params, 'LIST', pconst)
+    calibdbm = drs_database.CalibrationDatabase(params, shortname, pconst)
+    telludbm = drs_database.TelluricDatabase(params, shortname, pconst)
+    findexdbm = drs_database.FileIndexDatabase(params, shortname, pconst)
+    logdbm = drs_database.LogDatabase(params, shortname, pconst)
+    objectdbm = drs_database.AstrometricDatabase(params, shortname, pconst)
+    rejectdbm = drs_database.RejectDatabase(params, shortname, pconst)
     # add to storage
     databases['calib'] = calibdbm
     databases['tellu'] = telludbm
@@ -272,7 +275,7 @@ def install_databases(params: ParamDict, skip: Union[List[str], None] = None,
     else:
         runs = dbkind
     # get database paths
-    databases = list_databases(params)
+    databases = list_databases(params, 'MAN_DB')
     # load pseudo constants
     pconst = load_functions.load_pconfig(select.INSTRUMENTS)
     # -------------------------------------------------------------------------
@@ -657,7 +660,7 @@ def update_object_database(params: ParamDict, log: bool = True):
     # get pconst
     pconst = load_functions.load_pconfig(select.INSTRUMENTS)
     # get list of databases
-    databases = list_databases(params)
+    databases = list_databases(params, 'MAN_DB')
     # get the object database (combined with pending + user table)
     maintable = get_object_database(params, log=log)
     # -------------------------------------------------------------------------
@@ -689,6 +692,8 @@ def update_object_database(params: ParamDict, log: bool = True):
     # ---------------------------------------------------------------------
     # add rows from pandas dataframe
     objectdb.add_from_pandas(df, tablename=objectdb.tablename)
+    # ---------------------------------------------------------------------
+    drs_database.db_push(params)
 
 
 # =============================================================================
@@ -738,12 +743,12 @@ def create_reject_database(params: ParamDict, pconst: Instrument,
     return rejectdb
 
 
-def reject_db_populated(params: ParamDict) -> bool:
+def reject_db_populated(params: ParamDict, recipe: DrsRecipe) -> bool:
     """
     Check that reject database is populated
     """
     # need to load database
-    rejectdbm = drs_database.RejectDatabase(params)
+    rejectdbm = drs_database.RejectDatabase(params, recipe.shortname)
     rejectdbm.load_db()
     # count rows in database
     count = rejectdbm.database.count()
@@ -770,7 +775,7 @@ def update_reject_database(params: ParamDict, log: bool = True):
     # get pconst
     pconst = load_functions.load_pconfig(select.INSTRUMENTS)
     # get list of databases
-    databases = list_databases(params)
+    databases = list_databases(params, 'MAN_DB')
     # get the object database (combined with pending + user table)
     maintable = get_reject_database(params, log=log)
     # -------------------------------------------------------------------------

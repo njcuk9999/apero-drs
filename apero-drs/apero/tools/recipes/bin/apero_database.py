@@ -162,7 +162,7 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
     # only export if we exportdb is not None
     if not drs_text.null_text(database_name, null_text):
         # export database
-        manage_databases.export_database(params, database_name,
+        manage_databases.export_database(params, recipe, database_name,
                                          str(csvpath))
         # ------------------------------------------------------------------
         # End of main code

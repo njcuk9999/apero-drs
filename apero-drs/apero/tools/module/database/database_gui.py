@@ -601,7 +601,7 @@ if __name__ == "__main__":
     # get parameters
     _params = load_functions.load_config(select.INSTRUMENTS)
     # get databases
-    _dbs = manage_databases.list_databases(_params)
+    _dbs = manage_databases.list_databases(_params, 'DB_GUI')
     # push into database holder
     _databases = dict()
     for _key in _dbs:

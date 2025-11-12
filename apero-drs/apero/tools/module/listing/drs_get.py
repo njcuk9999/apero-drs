@@ -55,7 +55,7 @@ NULL_COLS = ['KW_RUN_ID', 'KW_PI_NAME']
 # =============================================================================
 # Define functions
 # =============================================================================
-def basic_filter(params: ParamDict, kw_objnames: List[str],
+def basic_filter(params: ParamDict, recipe: DrsRecipe, kw_objnames: List[str],
                  filters: Dict[str, List[str]], user_outdir: str,
                  do_copy: bool = True, do_symlink: bool = False,
                  tarfilename: Optional[str] = None,
@@ -98,15 +98,15 @@ def basic_filter(params: ParamDict, kw_objnames: List[str],
     # -------------------------------------------------------------------------
     # load "get" database
     WLOG(params, '', textentry('40-509-00001', args='file index'))
-    findexdb = drs_database.FileIndexDatabase(params, 'GET')
+    findexdb = drs_database.FileIndexDatabase(params, recipe.shortname)
     findexdb.load_db()
     # load object database
     WLOG(params, '', textentry('40-509-00001', args='astrometric'))
-    objdbm = drs_database.AstrometricDatabase(params, 'GET')
+    objdbm = drs_database.AstrometricDatabase(params, recipe.shortname)
     objdbm.load_db()
     # load log database
     WLOG(params, '', textentry('40-509-00001', args='log'))
-    logdbm = drs_database.LogDatabase(params)
+    logdbm = drs_database.LogDatabase(params, recipe.shortname)
     logdbm.load_db()
     # -------------------------------------------------------------------------
     # deal with tar file name
@@ -588,10 +588,10 @@ def remove_previous(outpath: str):
         os.remove(outpath)
 
 
-def all_objects(params):
+def all_objects(params: ParamDict, recipe: DrsRecipe):
     # load index database
     WLOG(params, '', textentry('40-509-00001', args='file index'))
-    findexdb = drs_database.FileIndexDatabase(params)
+    findexdb = drs_database.FileIndexDatabase(params, recipe.shortname)
     findexdb.load_db()
     # return all object names
     objs = findexdb.get_unique(column='KW_OBJNAME',

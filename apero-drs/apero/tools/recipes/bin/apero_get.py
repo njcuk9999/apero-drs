@@ -180,7 +180,7 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
     if drs_text.null_text(kw_objnames, ['None', '', 'Null']):
         kw_objnames = None
     elif '*' in kw_objnames:
-        kw_objnames = drs_get.all_objects(params)
+        kw_objnames = drs_get.all_objects(params, recipe)
     if drs_text.null_text(kw_dprtypes, ['None', '', 'Null', '*']):
         kw_dprtypes = None
     if drs_text.null_text(kw_outputs, ['None', '', 'Null', '*']):
@@ -225,7 +225,8 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
                                                nosubdir=nosubdir,
                                                sizelimit=sizelimit)
     else:
-        indict, outdict = drs_get.basic_filter(params, kw_objnames, filters,
+        indict, outdict = drs_get.basic_filter(params, recipe,
+                                               kw_objnames, filters,
                                                user_outdir, do_copy, do_symlink,
                                                tarfilename=tarfilename,
                                                since=since, latest=latest,

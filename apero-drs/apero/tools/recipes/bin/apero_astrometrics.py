@@ -105,7 +105,7 @@ def __main__(recipe, params):
     # stop here if all objects found
     if len(found_objs) > 0:
         # check that object doesn't currently have problems
-        drs_astrometrics.check_object(params, found_objs)
+        drs_astrometrics.check_object(params, recipe, found_objs)
     # if we have no unfound object stop here
     if len(unfound_objs) == 0:
         msg = 'All objects found in database'
@@ -142,8 +142,8 @@ def __main__(recipe, params):
             # get first object
             astro_obj = astro_objs[0]
             # ask user about object
-            astro_obj, add_to_list = drs_astrometrics.ask_user(params,
-                                                               astro_obj)
+            aout = drs_astrometrics.ask_user(params, recipe, astro_obj)
+            astro_obj, add_to_list = aout
             # finally add to list
             if add_to_list:
                 # append to add list
@@ -157,8 +157,8 @@ def __main__(recipe, params):
             # if astro_obj is not None we found it elsewhere
             if astro_obj is not None:
                 # ask user about object
-                astro_obj, add_to_list = drs_astrometrics.ask_user(params,
-                                                                   astro_obj)
+                aout = drs_astrometrics.ask_user(params, recipe, astro_obj)
+                astro_obj, add_to_list = aout
                 # finally add to list
                 if add_to_list:
                     # append to add list

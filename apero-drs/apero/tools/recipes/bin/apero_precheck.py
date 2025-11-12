@@ -31,8 +31,8 @@ __release__ = apero_base.__release__
 # Get Logging function
 WLOG = drs_log.wlog
 # Get index database
-IndexDatabase = drs_database.FileIndexDatabase
-ObjectDatabase = drs_database.AstrometricDatabase
+FileIndexDatabase = drs_database.FileIndexDatabase
+AstrometricDatabase = drs_database.AstrometricDatabase
 # get text entry instance
 textentry = drs_lang.textentry
 
@@ -104,10 +104,10 @@ def __main__(recipe, params):
     # find all files via index database (required for both checks)
     # -------------------------------------------------------------------------
     # construct the index database instance
-    findexdbm = IndexDatabase(params)
+    findexdbm = FileIndexDatabase(params, recipe.shortname)
     findexdbm.load_db()
     # construct object database
-    objdbm = ObjectDatabase(params, recipe.shortname)
+    objdbm = AstrometricDatabase(params, recipe.shortname)
     objdbm.load_db()
     # force the parallel key to False here (should not be True before we
     #   run processing)
@@ -138,7 +138,7 @@ def __main__(recipe, params):
     # Object check
     # -------------------------------------------------------------------------
     if obj_check:
-        _ = drs_precheck.obj_check(params, recipe.shortname, findexdbm)
+        _ = drs_precheck.obj_check(params, recipe, findexdbm)
 
     # -------------------------------------------------------------------------
     # End of main code

@@ -29,6 +29,7 @@ from apero.tools.module.ari import ari_core
 from apero.tools.module.ari import ari_pages
 from apero.tools.module.ari import ari_calib
 from apero.base import base as apero_base
+from apero.utils import drs_recipe
 
 # =============================================================================
 # Define variables
@@ -43,6 +44,7 @@ __release__ = apero_base.__release__
 # -----------------------------------------------------------------------------
 # Get ParamDict
 ParamDict = param_functions.ParamDict
+DrsRecipe = drs_recipe.DrsRecipe
 # Get Logging function
 WLOG = drs_log.wlog
 # get exceptions
@@ -324,14 +326,15 @@ def load_previous_objects(params: ParamDict) -> Dict[str, AriObject]:
     return obj_classes_sorted
 
 
-def find_new_objects(params: ParamDict, object_classes: Dict[str, AriObject]
+def find_new_objects(params: ParamDict, recipe: DrsRecipe,
+                     object_classes: Dict[str, AriObject]
                      ) -> Dict[str, AriObject]:
     # -------------------------------------------------------------------------
     # get the index database from file index database
-    indexdbm = drs_database.FileIndexDatabase(params)
+    indexdbm = drs_database.FileIndexDatabase(params, recipe.shortname)
     indexdbm.load_db()
     # get the log database
-    logdbm = drs_database.LogDatabase(params)
+    logdbm = drs_database.LogDatabase(params, recipe.shortname)
     logdbm.load_db()
     # -------------------------------------------------------------------------
     # log progress
@@ -385,13 +388,13 @@ def make_object_pages(params: ParamDict, object_classes: Dict[str, AriObject]
     return object_classes, object_table
 
 
-def make_recipe_pages(params: ParamDict) -> TableFile:
+def make_recipe_pages(params: ParamDict, recipe: DrsRecipe) -> TableFile:
     # ------------------------------------------------------------------
     # log progress
     WLOG(params, '', 'Compiling apero log table (this may take a while)')
     # ------------------------------------------------------------------
     # get the log database from apero
-    logdbm = drs_database.LogDatabase(params)
+    logdbm = drs_database.LogDatabase(params, recipe.shortname)
     logdbm.load_db()
     # get the log table using the LOG_COLUMNS
     log_table = logdbm.database.get(columns=','.join(ari_core.LOG_COLUMNS),
@@ -438,7 +441,7 @@ def make_recipe_pages(params: ParamDict) -> TableFile:
     return recipe_table
 
 
-def make_calib_page(params: ParamDict) -> TableFile:
+def make_calib_page(params: ParamDict, recipe: DrsRecipe) -> TableFile:
     """
     Make the calibration page
 
@@ -450,7 +453,7 @@ def make_calib_page(params: ParamDict) -> TableFile:
     # create a table file instance
     recipe_table = TableFile('calib page', params)
     # make the table page
-    ari_calib.add_calib_page(params, recipe_table)
+    ari_calib.add_calib_page(params, recipe, recipe_table)
     # return the full recipe table
     return recipe_table
 

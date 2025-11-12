@@ -124,7 +124,7 @@ def __main__(recipe, params):
         reset_dbs = drs_reset.reset_confirmation(params, 'All databases')
 
     if 'assets' in resets and reset:
-        drs_reset.reset_assets(params, reset_dbs=reset_dbs)
+        drs_reset.reset_assets(params, recipe, reset_dbs=reset_dbs)
     else:
         WLOG(params, '', textentry('40-502-00013', args=['Assets']))
     # ----------------------------------------------------------------------
@@ -136,7 +136,7 @@ def __main__(recipe, params):
         reset = drs_reset.reset_confirmation(params, 'Working',
                                              params['PATH.PP'])
     if 'tmp' in resets and reset:
-        drs_reset.reset_tmp_folders(params, log)
+        drs_reset.reset_tmp_folders(params, recipe, log)
     else:
         WLOG(params, '', textentry('40-502-00013', args=['Tmp']))
     # ----------------------------------------------------------------------
@@ -148,7 +148,7 @@ def __main__(recipe, params):
         reset = drs_reset.reset_confirmation(params, 'Reduced',
                                              params['PATH.RED'])
     if 'red' in resets and reset:
-        drs_reset.reset_reduced_folders(params, log)
+        drs_reset.reset_reduced_folders(params, recipe, log)
     else:
         WLOG(params, '', textentry('40-502-00013', args=['Reduced']))
     # ----------------------------------------------------------------------
@@ -222,7 +222,7 @@ def __main__(recipe, params):
         reset = drs_reset.reset_confirmation(params, 'LBL',
                                              params['PATH.LBL'])
     if 'lbl' in resets and reset:
-        drs_reset.reset_lbl_folders(params, log)
+        drs_reset.reset_lbl_folders(params, recipe, log)
     else:
         WLOG(params, '', textentry('40-502-00013', args=['LBL']))
     # ----------------------------------------------------------------------
@@ -234,7 +234,7 @@ def __main__(recipe, params):
         reset = drs_reset.reset_confirmation(params, 'Out',
                                              params['PATH.OUT'])
     if 'out' in resets and reset:
-        drs_reset.reset_out_folders(params, log)
+        drs_reset.reset_out_folders(params, recipe, log)
     else:
         WLOG(params, '', textentry('40-502-00013', args=['Out']))
     # ----------------------------------------------------------------------

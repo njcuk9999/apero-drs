@@ -82,14 +82,14 @@ speed_of_light = cc.c.to(uu.km / uu.s).value
 # =============================================================================
 # Define functions
 # =============================================================================
-def id_hot_star(params: ParamDict, objname: str) -> bool:
+def id_hot_star(params: ParamDict, recipe: DrsRecipe, objname: str) -> bool:
     # get all telluric stars
-    tstars = get_tellu_include_list(params)
+    tstars = get_tellu_include_list(params, recipe)
     # return whether objname is a hot-star
     return objname in tstars
 
 
-def get_tellu_include_list(params: ParamDict,
+def get_tellu_include_list(params: ParamDict, recipe: DrsRecipe,
                            assets_dir: Union[str, None] = None,
                            tellu_dir: Union[str, None] = None,
                            tellu_include_file: Union[str, None] = None,
@@ -99,7 +99,7 @@ def get_tellu_include_list(params: ParamDict,
     # get pseudo constants
     pconst = load_functions.load_pconfig(select.INSTRUMENTS)
     # get object database
-    objdbm = drs_database.AstrometricDatabase(params)
+    objdbm = drs_database.AstrometricDatabase(params, recipe.shortname)
     objdbm.load_db()
     # get parameters from params/kwargs
     assetdir = pcheck(params, 'PATH.ASSETS', 'assetsdir', func=func_name,
@@ -124,7 +124,7 @@ def get_tellu_include_list(params: ParamDict,
     return whitelist
 
 
-def get_tellu_exclude_list(params: ParamDict, shortname: str,
+def get_tellu_exclude_list(params: ParamDict, recipe: DrsRecipe,
                            assets_dir: Union[str, None] = None,
                            tellu_dir: Union[str, None] = None,
                            tellu_exclude_file: Union[str, None] = None
@@ -133,7 +133,7 @@ def get_tellu_exclude_list(params: ParamDict, shortname: str,
     # get pseudo constants
     pconst = load_functions.load_pconfig(select.INSTRUMENTS)
     # get object database
-    objdbm = drs_database.AstrometricDatabase(params, shortname)
+    objdbm = drs_database.AstrometricDatabase(params, recipe.shortname)
     objdbm.load_db()
     # get parameters from params/kwargs
     assetdir = pcheck(params, 'PATH.ASSETS', 'assetsdir', func=func_name,
@@ -226,7 +226,8 @@ def normalise_by_pblaze(params, recipe, image, header, fiber, **kwargs):
     return image1, nprops
 
 
-def get_non_tellu_objs(params: ParamDict, fiber, filetype=None,
+def get_non_tellu_objs(params: ParamDict, recipe: DrsRecipe,
+                       fiber, filetype=None,
                        dprtypes=None, robjnames: List[str] = None,
                        findexdbm: Union[FileIndexDatabase, None] = None):
     """
@@ -242,7 +243,7 @@ def get_non_tellu_objs(params: ParamDict, fiber, filetype=None,
     :return:
     """
     # get the telluric star names (we don't want to process these)
-    objnames = get_tellu_include_list(params)
+    objnames = get_tellu_include_list(params, recipe)
     objnames = list(objnames)
     # deal with filetype being string
     if isinstance(filetype, str):

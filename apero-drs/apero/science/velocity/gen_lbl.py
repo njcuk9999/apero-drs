@@ -255,7 +255,7 @@ def add_output(params: ParamDict, recipe: DrsRecipe,
     :return:
     """
     # get file index database
-    findexdbm = drs_database.FileIndexDatabase(params)
+    findexdbm = drs_database.FileIndexDatabase(params, recipe.shortname)
     # deal with wrong drsfile (drsfile.outclass must have lbl_file attribute)
     if not hasattr(drsfile.outclass, 'lbl_file'):
         # TODO: Add to language database

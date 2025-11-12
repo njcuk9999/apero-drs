@@ -1401,7 +1401,6 @@ recipes.append(apero_postprocess)
 # full seqeunce (reference + nights)
 # -----------------------------------------------------------------------------
 full_seq = drs_recipe.DrsRunSequence('full_seq', __INSTRUMENT__)
-full_seq.apero_database = rd.database_mgr
 # define schematic file and description file
 full_seq.schematic = 'full_seq.jpg'
 full_seq.description_file = None
@@ -1542,7 +1541,7 @@ full_seq.add(apero_postprocess, name='POSTALL', files=[files.pp_file],
 # limited sequence (reference + nights)
 # -----------------------------------------------------------------------------
 limited_seq = drs_recipe.DrsRunSequence('limited_seq', __INSTRUMENT__)
-limited_seq.apero_database = rd.database_mgr
+
 # define schematic file and description file
 limited_seq.schematic = 'limited_seq.jpg'
 limited_seq.description_file = None
@@ -1681,12 +1680,12 @@ limited_seq.add(apero_postprocess, name='SCIPOST', files=[files.pp_file],
 # pp sequence (for trigger)
 # -----------------------------------------------------------------------------
 pp_seq = drs_recipe.DrsRunSequence('pp_seq', __INSTRUMENT__)
-pp_seq.apero_database = rd.database_mgr
+
 pp_seq.add(apero_pp_ref, recipe_kind='pre-reference')
 pp_seq.add(apero_preprocess)
 
 pp_seq_opt = drs_recipe.DrsRunSequence('pp_seq_opt', __INSTRUMENT__)
-pp_seq_opt.apero_database = rd.database_mgr
+
 pp_seq_opt.add(apero_pp_ref, recipe_kind='pre-reference')
 pp_seq_opt.add(apero_preprocess, name='PP_CAL', recipe_kind='pre-cal',
                filters=dict(KW_RAW_DPRCATG='CALIB'))
@@ -1726,7 +1725,7 @@ pp_seq_opt.add(apero_preprocess, name='PP_EVERY',
 # reference sequence (for trigger)
 # -----------------------------------------------------------------------------
 ref_seq = drs_recipe.DrsRunSequence('ref_seq', __INSTRUMENT__)
-ref_seq.apero_database = rd.database_mgr
+
 # define schematic file and description file
 ref_seq.schematic = 'ref_seq.jpg'
 ref_seq.description_file = None
@@ -1754,7 +1753,7 @@ ref_seq.add(apero_wave_ref, ref=True,
 # calibration run (for trigger)
 # -----------------------------------------------------------------------------
 calib_seq = drs_recipe.DrsRunSequence('calib_seq', __INSTRUMENT__)
-calib_seq.apero_database = rd.database_mgr
+
 # define schematic file and description file
 calib_seq.schematic = 'calib_seq.jpg'
 calib_seq.description_file = None
@@ -1775,7 +1774,7 @@ calib_seq.add(apero_wave_night)
 # telluric sequence (for trigger)
 # -----------------------------------------------------------------------------
 tellu_seq = drs_recipe.DrsRunSequence('tellu_seq', __INSTRUMENT__)
-tellu_seq.apero_database = rd.database_mgr
+
 # define schematic file and description file
 tellu_seq.schematic = 'tellu_seq.jpg'
 tellu_seq.description_file = None
@@ -1829,7 +1828,7 @@ tellu_seq.add(apero_mk_template, name='MKTEMP2', recipe_kind='tellu-hotstar',
 # science sequence (for trigger)
 # -----------------------------------------------------------------------------
 science_seq = drs_recipe.DrsRunSequence('science_seq', __INSTRUMENT__)
-science_seq.apero_database = rd.database_mgr
+
 # define schematic file and description file
 science_seq.schematic = 'science_seq.jpg'
 science_seq.description_file = None
@@ -1911,7 +1910,7 @@ science_seq.add(apero_postprocess, files=[files.pp_file], name='SCIPOST',
 # science sequence (for trigger)
 # -----------------------------------------------------------------------------
 quick_seq = drs_recipe.DrsRunSequence('quick_seq', __INSTRUMENT__)
-quick_seq.apero_database = rd.database_mgr
+
 # extract science
 quick_seq.add(apero_extract, name='EXTQUICK', recipe_kind='extract-quick',
               files=files.science_pp,
@@ -1923,12 +1922,12 @@ quick_seq.add(apero_extract, name='EXTQUICK', recipe_kind='extract-quick',
 # blank sequence (for trigger)
 # -----------------------------------------------------------------------------
 blank_seq = drs_recipe.DrsRunSequence('blank_seq', __INSTRUMENT__)
-blank_seq.apero_database = rd.database_mgr
+
 # -----------------------------------------------------------------------------
 # engineering sequences
 # -----------------------------------------------------------------------------
 eng_seq = drs_recipe.DrsRunSequence('eng_seq', __INSTRUMENT__)
-eng_seq.apero_database = rd.database_mgr
+
 # extract sequences
 eng_seq.add(apero_extract, name='EXT_HC1HC1', files=[files.pp_hc1_hc1],
             recipe_kind='extract-hchc')
@@ -1961,7 +1960,7 @@ eng_seq.add(apero_extract, name='EXT_EVERY', files=[files.pp_file],
 # helios sequence
 # -----------------------------------------------------------------------------
 helios_seq = drs_recipe.DrsRunSequence('helios_seq', __INSTRUMENT__)
-helios_seq.apero_database = rd.database_mgr
+
 # pp sequences
 helios_seq.add(apero_preprocess, name='PP_SUN',
                files=[files.raw_sun_fp, files.raw_sun_dark],
@@ -1975,7 +1974,7 @@ helios_seq.add(apero_extract, name='EXT_SUN',
 # lbl sequences
 # -----------------------------------------------------------------------------
 lbl_seq = drs_recipe.DrsRunSequence('lbl_seq', __INSTRUMENT__)
-lbl_seq.apero_database = rd.database_mgr
+
 # lbl ref
 lbl_seq.add(apero_lbl_ref, name='LBLREF', recipe_kind='lbl-ref',
             arguments=dict(objnames='SCIENCE_TARGETS'))

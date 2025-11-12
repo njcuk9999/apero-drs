@@ -588,12 +588,12 @@ class AperoDatabase:
         if update_dict is not None:
             for key, value in update_dict.items():
                 if isinstance(value, sqlalchemy.Null):
-                    update_dict[key] = sqlalchemy.null()
+                    update_dict[key] = None
                 elif value in [None, np.nan]:
-                    update_dict[key] = sqlalchemy.null()
+                    update_dict[key] = None
                 elif isinstance(value, str):
                     if value.lower() in ['null', 'none', 'nan']:
-                        update_dict[key] = sqlalchemy.null()
+                        update_dict[key] = None
         # ---------------------------------------------------------------------
         # add the hash column
         if len(unique_cols) > 0:
@@ -677,10 +677,10 @@ class AperoDatabase:
         if insert_dict is not None:
             for key, value in insert_dict.items():
                 if value in [None, np.nan]:
-                    insert_dict[key] = sqlalchemy.null()
+                    insert_dict[key] = None
                 elif isinstance(value, str):
                     if value.lower() in ['null', 'none', 'nan']:
-                        insert_dict[key] = sqlalchemy.null()
+                        insert_dict[key] = None
         # ---------------------------------------------------------------------
         # add the hash column
         if len(unique_cols) > 0:
@@ -735,11 +735,11 @@ class AperoDatabase:
             for key, value in row.items():
                 # deal with None and np.nan values
                 if value in [None, np.nan]:
-                    row[key] = sqlalchemy.null()
+                    row[key] = None
                 # deal with null string values
                 elif isinstance(value, str):
                     if value.lower() in ['null', 'none', 'nan']:
-                        row[key] = sqlalchemy.null()
+                        row[key] = None
             if unique_cols:
                 row = _hash_col(row, unique_cols)
             cleaned_rows.append(row)
@@ -792,10 +792,10 @@ class AperoDatabase:
                 # Handle NaN/None/null strings
                 for key, value in row_update.items():
                     if value in [None, np.nan]:
-                        row_update[key] = sqlalchemy.null()
+                        row_update[key] = None
                     elif isinstance(value, str):
                         if value.lower() in ["null", "none", "nan"]:
-                            row_update[key] = sqlalchemy.null()
+                            row_update[key] = None
 
                 # Add hash column if needed
                 if unique_cols:

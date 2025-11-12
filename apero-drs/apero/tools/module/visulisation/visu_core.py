@@ -171,7 +171,7 @@ def get_file(block_kind: str,  obs_dir: str, identifier: str,
              ) -> Tuple[Union[np.ndarray, None], Union[str, None]]:
 
     # get database
-    findexdbm = drs_database.FileIndexDatabase(PARAMS)
+    findexdbm = drs_database.FileIndexDatabase(PARAMS, 'VISU')
     findexdbm.load_db()
     # find file in database
     condition = 'BLOCK_KIND="{0}" AND OBS_DIR="{1}" AND KW_IDENTIFIER="{2}"'
@@ -229,7 +229,7 @@ def get_calib(header: drs_fits.Header, key: str) -> Tuple[np.ndarray, str]:
 
 def get_obs_dirs() -> List[str]:
     # get database
-    findexdbm = drs_database.FileIndexDatabase(PARAMS)
+    findexdbm = drs_database.FileIndexDatabase(PARAMS, 'VISU')
     findexdbm.load_db()
     # return observation directories
     new_obs_dirs = findexdbm.get_unique('OBS_DIR', condition='BLOCK_KIND="raw"')
@@ -242,7 +242,7 @@ def get_obs_dirs() -> List[str]:
 
 def get_identifers(block_kind='red', obs_dir=None) -> List[str]:
     # get database
-    findexdbm = drs_database.FileIndexDatabase(PARAMS)
+    findexdbm = drs_database.FileIndexDatabase(PARAMS, 'VISU')
     findexdbm.load_db()
     # set up condition
     if obs_dir is None:

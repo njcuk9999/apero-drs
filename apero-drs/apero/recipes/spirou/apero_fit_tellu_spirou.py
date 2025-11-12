@@ -176,8 +176,7 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
         # ------------------------------------------------------------------
         objname = infile.get_hkey('KW_OBJNAME', dtype=str)
         # get black list
-        tellu_exclude_list = telluric.get_tellu_exclude_list(params,
-                                                             recipe.shortname)
+        tellu_exclude_list = telluric.get_tellu_exclude_list(params, recipe)
         # if objname in blacklist then skip
         if objname in tellu_exclude_list:
             # log that we are skipping

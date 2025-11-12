@@ -312,7 +312,8 @@ def enable_scientific_floats(yaml: YAML) -> None:
     )
 
 
-def write_yaml(dictionary: dict, filename: str):
+def write_yaml(dictionary: dict, filename: str,
+               width: float = None):
     """
     Write a yaml file from a dictionary
 
@@ -323,7 +324,7 @@ def write_yaml(dictionary: dict, filename: str):
     """
     # save file
     with open(filename, 'w') as yfile:
-        yaml.dump(dictionary, yfile)
+        yaml.dump(dictionary, yfile, width=width)
 
 
 def tqdm_module(use: bool = True):

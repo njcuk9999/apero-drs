@@ -299,7 +299,8 @@ class AstrometricDatabase(DatabaseManager):
         self.check_columns(insert_dict)
         # try to add a new row
         # self.database.add_row(insert_dict=insert_dict)
-        db_send(self.params, self.database.tablename, insert_dict)
+        db_send(self.params, self.database.tablename, self.shortname,
+                insert_dict)
 
     def count(self, condition: Union[str, None] = None) -> int:
         """
@@ -549,7 +550,8 @@ class CalibrationDatabase(DatabaseManager):
         # ------------------------------------------------------------------
         # try to add a new row
         # self.database.add_row(insert_dict=insert_dict)
-        db_send(self.params, self.database.tablename, insert_dict)
+        db_send(self.params, self.database.tablename, self.shortname,
+                insert_dict)
         # update parameter table (if fits file)
         if isinstance(drsfile, DrsFitsFile):
             drsfile.update_param_table('CALIB_DB_ENTRY',
@@ -1022,7 +1024,8 @@ class TelluricDatabase(DatabaseManager):
         # ------------------------------------------------------------------
         # try to add a new row
         # self.database.add_row(insert_dict=insert_dict)
-        db_send(self.params, self.database.tablename, insert_dict)
+        db_send(self.params, self.database.tablename, self.shortname,
+                insert_dict)
         # update parameter table (if fits file)
         if isinstance(drsfile, DrsFitsFile):
             drsfile.update_param_table('TELLU_DB_ENTRY',
@@ -1838,15 +1841,16 @@ class FileIndexDatabase(DatabaseManager):
         # if we don't have an entry we add a row
         if num_rows == 0:
             # self.database.add_row(insert_dict=insert_dict)
-            db_send(self.params, self.database.tablename, insert_dict)
+            db_send(self.params, self.database.tablename, self.shortname,
+                    insert_dict)
 
         else:
             # condition comes from uhash - so set to None here (to remember)
             # condition = None
             # update row in database
             # self.database.set(update_dict=insert_dict, condition=condition)
-            db_send(self.params, self.database.tablename, insert_dict,
-                    mode='SET')
+            db_send(self.params, self.database.tablename, self.shortname,
+                    insert_dict, mode='SET')
 
     def remove_entries(self, condition: str):
         """
@@ -2320,8 +2324,8 @@ class FileIndexDatabase(DatabaseManager):
             # update this row (should only be one row based on condition)
             # self.database.set_row(columns, values=values, condition=condition)
             update_dict = dict(zip(columns, values))
-            db_send(self.params, self.database.tablename, update_dict,
-                    mode='SET', condition=condition)
+            db_send(self.params, self.database.tablename, self.shortname,
+                    update_dict, mode='SET', condition=condition)
 
     def _update_params(self, **kwargs) -> bool:
         """
@@ -2747,7 +2751,8 @@ class LogDatabase(DatabaseManager):
         self.check_columns(insert_dict)
         # add row to database
         # self.database.add_row(insert_dict=insert_dict)
-        db_send(self.params, self.database.tablename, insert_dict)
+        db_send(self.params, self.database.tablename, self.shortname,
+                insert_dict)
 
     def get_entries(self, columns: str = '*',
                     include_obs_dirs: Union[List[str], None] = None,
@@ -2969,7 +2974,8 @@ class RejectDatabase(DatabaseManager):
         self.check_columns(insert_dict)
         # add row to database
         # self.database.add_row(insert_dict=insert_dict)
-        db_send(self.params, self.database.tablename, insert_dict)
+        db_send(self.params, self.database.tablename, self.shortname,
+                insert_dict)
 
     def get_entries(self, columns: str = '*',
                     nentries: Union[int, None] = None,
@@ -3265,10 +3271,14 @@ def db_push(params: ParamDict, pid: Optional[str] = None):
 
     # get the path to the database
     db_pend = str(os.path.join(params['PATH.OTHER'], params['DB.PENDING_PATH']))
+    # deal with apero group (add to db_pend)
+    if params.get('DRS.GROUP', None) is not None:
+        db_pend = os.path.join(db_pend, params['DRS.GROUP'])
+    # -------------------------------------------------------------------------
     # get shortname from parameters
     db_shortname = '*'
     if 'INPUTS' in params:
-        db_shortname = params['INPUTS'].get('PUSH_SHORTNAME', '*')
+        db_shortname = params['INPUTS'].get('PUSHNAME', '*')
     # -------------------------------------------------------------------------
     # check for pending path - if it doesn't exist we don't have anything to
     # updated
@@ -3279,7 +3289,7 @@ def db_push(params: ParamDict, pid: Optional[str] = None):
     if pid is None:
         pid = '*'
     # otherwise we get all pending files in the db_pend directory
-    pend_basefile = 'pid{0}_{1}_uid*.yaml'.format(pid, db_shortname)
+    pend_basefile = '{0}_{1}_UID*.yaml'.format(pid, db_shortname)
     pend_files = glob.glob(os.path.join(db_pend, pend_basefile))
     # -------------------------------------------------------------------------
     # deal with no pending files
@@ -3351,6 +3361,13 @@ def db_push(params: ParamDict, pid: Optional[str] = None):
     # remove pending files
     for pend_file in pend_files:
         os.remove(pend_file)
+    # -------------------------------------------------------------------------
+    # remove the directory if empty
+    if len(os.listdir(db_pend)) == 0:
+        try:
+            os.rmdir(db_pend)
+        except OSError:
+            pass
 
 
 def db_send(params: ParamDict, tablename: str,
@@ -3372,10 +3389,13 @@ def db_send(params: ParamDict, tablename: str,
         pid, _ = drs_misc.assign_pid()
     # -------------------------------------------------------------------------
     # get unix time now
-    uid, _, _ = drs_misc.unix_char_code()
+    uid, _ = drs_misc.assign_pid('UID')
     # -------------------------------------------------------------------------
     # construct file path
     db_pend = str(os.path.join(params['PATH.OTHER'], params['DB.PENDING_PATH']))
+    # deal with apero group (add to db_pend)
+    if params.get('DRS.GROUP', None) is not None:
+        db_pend = os.path.join(db_pend, params['DRS.GROUP'])
     # -------------------------------------------------------------------------
     # make sure path exists
     if not os.path.exists(db_pend):
@@ -3385,7 +3405,7 @@ def db_send(params: ParamDict, tablename: str,
     tablekind = drs_db.get_table_kind(tablename)
     # -------------------------------------------------------------------------
     # construct filename
-    db_basename = 'pid{0}_{1}_uid{2}.yaml'.format(pid, shortname, str(uid))
+    db_basename = '{0}_{1}_{2}.yaml'.format(pid, shortname, str(uid))
     db_filename = os.path.join(db_pend, db_basename)
     # construct pending dict
     pending_dict = dict()
@@ -3397,7 +3417,7 @@ def db_send(params: ParamDict, tablename: str,
         if condition is not None:
             pending_dict['ENTRY']['condition'] = condition
     # push into yaml file
-    base.write_yaml(pending_dict, db_filename)
+    base.write_yaml(pending_dict, db_filename, width=float('inf'))
 
 
 def get_google_sheet(params: ParamDict, sheet_id: str, worksheet: int = 0,

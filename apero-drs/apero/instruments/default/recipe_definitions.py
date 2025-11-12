@@ -202,6 +202,9 @@ database_mgr.recipe_type = 'nolog-tool'
 database_mgr.recipe_kind = 'admin'
 database_mgr.set_kwarg(name='--push', dtype='switch',
                        helpstr='Push pending database entries to the database')
+database_mgr.set_kwarg(name='--pushname', dtype=str, default='*',
+                       helpstr='Shortname of the pending database entries '
+                               'to push')
 database_mgr.set_kwarg(name='--kill', dtype='switch',
                        helpstr=textentry('DBMGR_KILLARG_HELP'))
 database_mgr.set_kwarg(name='--dbkind', dtype='options', default='all',

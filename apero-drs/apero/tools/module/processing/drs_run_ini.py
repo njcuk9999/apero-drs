@@ -470,7 +470,7 @@ class RunIniFile:
                                          Tuple[List[DrsRecipe],
                                                List[DrsSequence]]]:
         # construct the index database instance
-        findexdbm = FileIndexDatabase(self.params)
+        findexdbm = FileIndexDatabase(self.params, 'PROC')
         findexdbm.load_db()
         # get a list of object names with templates
         curr_tstars = []
@@ -591,7 +591,7 @@ class RunIniFile:
         for it, sequence in enumerate(self.cmd_sequences):
             runtable[it] = sequence.name
         # get index database
-        findexdbm = drs_database.FileIndexDatabase(sparams)
+        findexdbm = drs_database.FileIndexDatabase(sparams, 'RUNINI')
         # loop around sequences
         for sequence in sequencelist:
             # log progress

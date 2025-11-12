@@ -33,8 +33,8 @@ __release__ = apero_base.__release__
 # Get Logging function
 WLOG = drs_log.wlog
 # Get index database
-IndexDatabase = drs_database.FileIndexDatabase
-ObjectDatabase = drs_database.AstrometricDatabase
+FileIndexDatabase = drs_database.FileIndexDatabase
+AstrometricDatabase = drs_database.AstrometricDatabase
 # get text entry instance
 textentry = drs_lang.textentry
 
@@ -127,13 +127,13 @@ def __main__(recipe, params):
         if params['UPDATE_OBJ_DATABASE'] or not has_entries:
             manage_databases.update_object_database(params)
         # load the object database
-        objdbm = ObjectDatabase(params, recipe.shortname)
+        objdbm = AstrometricDatabase(params, recipe.shortname)
         objdbm.load_db()
         # ----------------------------------------------------------------------
         # Update the reject database (recommended only for full reprocessing)
         # ----------------------------------------------------------------------
         # check that we have entries in the object database
-        has_entries = manage_databases.reject_db_populated(params)
+        has_entries = manage_databases.reject_db_populated(params, recipe)
         # update the database if required
         if params['UPDATE_REJECT_DATABASE'] or not has_entries:
             manage_databases.update_reject_database(params)
@@ -141,7 +141,7 @@ def __main__(recipe, params):
         # find all files via index database
         # ---------------------------------------------------------------------
         # construct the index database instance
-        findexdbm = IndexDatabase(params)
+        findexdbm = FileIndexDatabase(params, recipe.shortname)
         findexdbm.load_db()
         # there are a few use cases where we want to skip updating the index
         #   database
@@ -155,14 +155,16 @@ def __main__(recipe, params):
             #    starts this is really important as we have disabled updating
             #    for parallel runs to make it more efficient
             drs_processing.update_index_db(params)
-
+        # ----------------------------------------------------------------------
         # fix the header data (object name, dprtype, mjdmid and
         #     trg_type etc)
         WLOG(params, '', textentry('40-503-00043'))
         findexdbm.update_header_fix(recipe, objdbm=objdbm)
-
+        # deal with pushing to the database
+        drs_database.db_push(params)
+        # ----------------------------------------------------------------------
         # find all previous runs
-        skiptable = drs_processing.generate_skip_table(params)
+        skiptable = drs_processing.generate_skip_table(params, recipe)
 
         # ----------------------------------------------------------------------
         # Generate run list

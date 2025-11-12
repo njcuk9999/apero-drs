@@ -136,7 +136,7 @@ def __main__(recipe: DrsRecipe, params: ParamDict):
     # print progress
     WLOG(params, 'info', 'Finding new object data')
     # find new data for objects
-    object_classes = ari.find_new_objects(params, object_classes)
+    object_classes = ari.find_new_objects(params, recipe, object_classes)
 
     # ----------------------------------------------------------------------
     # step 4: compile new data and write pages
@@ -149,9 +149,9 @@ def __main__(recipe: DrsRecipe, params: ParamDict):
     # make observation page
     night_table = ari.make_observation_page(params, object_classes)
     # make recipe pages
-    recipe_table = ari.make_recipe_pages(params)
+    recipe_table = ari.make_recipe_pages(params, recipe)
     # make calibration page
-    calib_table = ari.make_calib_page(params)
+    calib_table = ari.make_calib_page(params, recipe)
 
     # ----------------------------------------------------------------------
     # step 5: make top level pages and compile

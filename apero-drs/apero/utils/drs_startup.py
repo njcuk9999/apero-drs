@@ -296,7 +296,8 @@ def __setup__(name: str = 'None', instrument: str = 'None',
         TLOG(recipe.params, '', 'Loading Arguments. Please wait...')
         # -------------------------------------------------------------------------
         # load index database manager
-        findexdb = drs_database.FileIndexDatabase(recipe.params)
+        findexdb = drs_database.FileIndexDatabase(recipe.params,
+                                                  recipe.shortname)
         # interface between "recipe", "fkwargs" and command line (via argparse)
         recipe.recipe_setup(findexdb, fkwargs)
         # -------------------------------------------------------------------------
@@ -438,6 +439,10 @@ def __setup__(name: str = 'None', instrument: str = 'None',
         # recipe.log.set_lock_func(drs_lock.locker)
         # write recipe log
         recipe.log.write_logfile()
+    # -------------------------------------------------------------------------
+    # lets run the database push once to make sure everything is in sync
+    # at the start for this PID
+    push_to_databases(params)
     # -------------------------------------------------------------------------
     # return arguments
     return recipe, params
@@ -812,7 +817,7 @@ def index_files(params: ParamDict, recipe: DrsRecipe):
     :return: None, adds output files to file index
     """
     # load index database
-    findexdb = drs_database.FileIndexDatabase(params)
+    findexdb = drs_database.FileIndexDatabase(params, recipe.shortname)
     findexdb.load_db()
     # get pconstants
     pconst = load_functions.load_pconfig(select.INSTRUMENTS)
@@ -1037,6 +1042,10 @@ def group_name(params: ParamDict, suffix: str = 'group') -> str:
     args = [pid, recipename, suffix]
     # construct group name
     groupname = 'APEROG-{0}_{1}_{2}'.format(*args)
+    # ----------------------------------------------------------------------
+    # update params
+    params.set('DRS.GROUP', groupname, __NAME__ + '.group_name()')
+    # ----------------------------------------------------------------------
     # return group name
     return groupname
 

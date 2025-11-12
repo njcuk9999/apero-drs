@@ -289,11 +289,11 @@ class StatProperty:
 # =============================================================================
 # Define class worker functions
 # =============================================================================
-def get_log_entries(params: ParamDict,
+def get_log_entries(params: ParamDict, recipe: DrsRecipe,
                     mode: str) -> List[LogEntry]:
     # load log database
     WLOG(params, '', 'Obtaining full log database. Please wait...')
-    logdbm = drs_database.LogDatabase(params)
+    logdbm = drs_database.LogDatabase(params, recipe.shortname)
     logdbm.load_db()
 
     # get condition from arguments
@@ -306,7 +306,7 @@ def get_log_entries(params: ParamDict,
     # get the index database
     if mode == 'index':
         WLOG(params, '', 'Obtaining full index database. Please wait...')
-        findexdbm = drs_database.FileIndexDatabase(params)
+        findexdbm = drs_database.FileIndexDatabase(params, recipe.shortname)
         findexdbm.load_db()
         idataframe = findexdbm.get_entries('*')
     else:
@@ -377,7 +377,7 @@ def timing_stats(params: ParamDict, recipe: DrsRecipe) -> ParamDict:
         os.makedirs(report_dir)
     # -------------------------------------------------------------------------
     # get log entries
-    log_entries = get_log_entries(params, mode='timing')
+    log_entries = get_log_entries(params, recipe, mode='timing')
     # -------------------------------------------------------------------------
     # get stats
     stat_dict = get_timing_stats(log_entries)
@@ -516,7 +516,7 @@ def qc_stats(params: ParamDict, recipe: DrsRecipe) -> ParamDict:
     # print progress
     WLOG(params, 'info', 'Running timing code')
     # get log entries
-    log_entries = get_log_entries(params, mode='qc')
+    log_entries = get_log_entries(params, recipe, mode='qc')
     # get stats
     stat_dict, stat_crit, stat_qc = get_qc_stats(log_entries)
     # loop around recipe and print stats
@@ -1384,7 +1384,7 @@ def memory_stats(params: ParamDict, recipe: DrsRecipe):
     # ---------------------------------------------------------------------
     # get log database
     WLOG(params, '', 'Loading log database')
-    logdbm = drs_database.LogDatabase(params)
+    logdbm = drs_database.LogDatabase(params, recipe.shortname)
     # set up condition
     condition = 'RECIPE_TYPE LIKE "%recipe%" AND ENDED=1'
     columns = ('SHORTNAME, UNIXTIME, RAM_USAGE_START, RAM_USAGE_END, '
@@ -1670,7 +1670,7 @@ class FileStat:
             self.db_counts['db_' + self.names[it]] = count
 
 
-def file_index_stats(params: ParamDict) -> ParamDict:
+def file_index_stats(params: ParamDict, recipe: DrsRecipe) -> ParamDict:
     """
     Get statistics on the file index
 
@@ -1681,7 +1681,7 @@ def file_index_stats(params: ParamDict) -> ParamDict:
     # set function name
     func_name = __NAME__ + 'file_index_stats()'
     # load index database
-    findexdb = drs_database.FileIndexDatabase(params)
+    findexdb = drs_database.FileIndexDatabase(params, recipe.shortname)
     findexdb.load_db()
     # define data to count
     # noinspection PyListCreation

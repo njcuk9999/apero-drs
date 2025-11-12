@@ -200,7 +200,7 @@ def reset_confirmation(params: ParamDict, name: str,
         return False
 
 
-def reset_tmp_folders(params: ParamDict, log: bool = True):
+def reset_tmp_folders(params: ParamDict, recipe: DrsRecipe, log: bool = True):
     """
     Reset the "tmp" (preprocessed directories)
 
@@ -222,19 +222,19 @@ def reset_tmp_folders(params: ParamDict, log: bool = True):
     # remove entries from index database
     # -------------------------------------------------------------------------
     # get index database
-    findexdb = drs_database.FileIndexDatabase(params)
+    findexdb = drs_database.FileIndexDatabase(params, recipe.shortname)
     # load index database
     findexdb.load_db()
     # check that table is in database
     if not findexdb.database.has_table(findexdb.database.tablename):
         # get database paths
-        databases = manage_databases.list_databases(params)
+        databases = manage_databases.list_databases(params, recipe.shortname)
         # load pseudo constants
         pconst = load_functions.load_pconfig(select.INSTRUMENTS)
         # create index database
         manage_databases.create_fileindex_database(params, pconst, databases)
         # get index database
-        findexdb = drs_database.FileIndexDatabase(params)
+        findexdb = drs_database.FileIndexDatabase(params, recipe.shortname)
         # load index database
         findexdb.load_db()
     # set up condition
@@ -245,19 +245,19 @@ def reset_tmp_folders(params: ParamDict, log: bool = True):
     # remove entries from log database
     # -------------------------------------------------------------------------
     # get log database
-    logdb = drs_database.LogDatabase(params)
+    logdb = drs_database.LogDatabase(params, recipe.shortname)
     # load index database
     logdb.load_db()
     # check that table is in database
     if not logdb.database.has_table(logdb.database.tablename):
         # get database paths
-        databases = manage_databases.list_databases(params)
+        databases = manage_databases.list_databases(params, recipe.shortname)
         # load pseudo constants
         pconst = load_functions.load_pconfig(select.INSTRUMENTS)
         # create index database
         manage_databases.create_log_database(params, pconst, databases)
         # get log database
-        logdb = drs_database.LogDatabase(params)
+        logdb = drs_database.LogDatabase(params, recipe.shortname)
         # load index database
         logdb.load_db()
     # set up condition
@@ -266,7 +266,8 @@ def reset_tmp_folders(params: ParamDict, log: bool = True):
     logdb.remove_entries(condition=condition)
 
 
-def reset_reduced_folders(params: ParamDict, log: bool = True):
+def reset_reduced_folders(params: ParamDict, recipe: DrsRecipe,
+                          log: bool = True):
     """
     Resets the reduced directory
 
@@ -288,19 +289,19 @@ def reset_reduced_folders(params: ParamDict, log: bool = True):
     # remove entries from index database
     # -------------------------------------------------------------------------
     # get index database
-    indexdb = drs_database.FileIndexDatabase(params)
+    indexdb = drs_database.FileIndexDatabase(params, recipe.shortname)
     # load index database
     indexdb.load_db()
     # check that table is in database
     if not indexdb.database.has_table(indexdb.database.tablename):
         # get database paths
-        databases = manage_databases.list_databases(params)
+        databases = manage_databases.list_databases(params, recipe.shortname)
         # load pseudo constants
         pconst = load_functions.load_pconfig(select.INSTRUMENTS)
         # create index database
         manage_databases.create_fileindex_database(params, pconst, databases)
         # get index database
-        indexdb = drs_database.FileIndexDatabase(params)
+        indexdb = drs_database.FileIndexDatabase(params, recipe.shortname)
         # load index database
         indexdb.load_db()
     # set up condition
@@ -311,19 +312,19 @@ def reset_reduced_folders(params: ParamDict, log: bool = True):
     # remove entries from log database
     # -------------------------------------------------------------------------
     # get log database
-    logdb = drs_database.LogDatabase(params)
+    logdb = drs_database.LogDatabase(params, recipe.shortname)
     # load index database
     logdb.load_db()
     # check that table is in database
     if not logdb.database.has_table(logdb.database.tablename):
         # get database paths
-        databases = manage_databases.list_databases(params)
+        databases = manage_databases.list_databases(params, recipe.shortname)
         # load pseudo constants
         pconst = load_functions.load_pconfig(select.INSTRUMENTS)
         # create index database
         manage_databases.create_log_database(params, pconst, databases)
         # get log database
-        logdb = drs_database.LogDatabase(params)
+        logdb = drs_database.LogDatabase(params, recipe.shortname)
         # load index database
         logdb.load_db()
     # set up condition
@@ -342,7 +343,7 @@ def reset_calibdb(params: ParamDict, recipe: DrsRecipe, log: bool = True):
     :return: None - resets telluDB
     """
     # get database paths
-    databases = manage_databases.list_databases(params)
+    databases = manage_databases.list_databases(params, recipe.shortname)
     # load pseudo constants
     pconst = load_functions.load_pconfig(select.INSTRUMENTS)
     # name the database
@@ -377,7 +378,7 @@ def reset_telludb(params: ParamDict, recipe: DrsRecipe, log: bool = True):
     :return: None - resets telluDB
     """
     # get database paths
-    databases = manage_databases.list_databases(params)
+    databases = manage_databases.list_databases(params, recipe.shortname)
     # load pseudo constants
     pconst = load_functions.load_pconfig(select.INSTRUMENTS)
     # name the database
@@ -537,7 +538,7 @@ def reset_run(params: ParamDict, log: bool = True):
     reset_dbdir(params, name, run_dir, reset_path, log=log, empty_first=False)
 
 
-def reset_lbl_folders(params: ParamDict, log: bool = True):
+def reset_lbl_folders(params: ParamDict, recipe: DrsRecipe, log: bool = True):
     # log progress
     WLOG(params, '', textentry('40-502-00003', args=['lbl']))
     # remove files from reduced folder
@@ -551,19 +552,19 @@ def reset_lbl_folders(params: ParamDict, log: bool = True):
     # remove entries from index database
     # -------------------------------------------------------------------------
     # get index database
-    findexdb = drs_database.FileIndexDatabase(params)
+    findexdb = drs_database.FileIndexDatabase(params, recipe.shortname)
     # load index database
     findexdb.load_db()
     # check that table is in database
     if not findexdb.database.has_table(findexdb.database.tablename):
         # get database paths
-        databases = manage_databases.list_databases(params)
+        databases = manage_databases.list_databases(params, recipe.shortname)
         # load pseudo constants
         pconst = load_functions.load_pconfig(select.INSTRUMENTS)
         # create index database
         manage_databases.create_fileindex_database(params, pconst, databases)
         # get index database
-        indexdb = drs_database.FileIndexDatabase(params)
+        indexdb = drs_database.FileIndexDatabase(params, recipe.shortname)
         # load index database
         indexdb.load_db()
     # set up condition
@@ -574,19 +575,19 @@ def reset_lbl_folders(params: ParamDict, log: bool = True):
     # remove entries from log database
     # -------------------------------------------------------------------------
     # get log database
-    logdb = drs_database.LogDatabase(params)
+    logdb = drs_database.LogDatabase(params, recipe.shortname)
     # load index database
     logdb.load_db()
     # check that table is in database
     if not logdb.database.has_table(logdb.database.tablename):
         # get database paths
-        databases = manage_databases.list_databases(params)
+        databases = manage_databases.list_databases(params, recipe.shortname)
         # load pseudo constants
         pconst = load_functions.load_pconfig(select.INSTRUMENTS)
         # create index database
         manage_databases.create_log_database(params, pconst, databases)
         # get log database
-        logdb = drs_database.LogDatabase(params)
+        logdb = drs_database.LogDatabase(params, recipe.shortname)
         # load index database
         logdb.load_db()
     # set up condition
@@ -595,7 +596,7 @@ def reset_lbl_folders(params: ParamDict, log: bool = True):
     logdb.remove_entries(condition=condition)
 
 
-def reset_out_folders(params: ParamDict, log: bool = True):
+def reset_out_folders(params: ParamDict, recipe: DrsRecipe, log: bool = True):
     """
     Resets the reduced directory
 
@@ -617,19 +618,19 @@ def reset_out_folders(params: ParamDict, log: bool = True):
     # remove entries from index database
     # -------------------------------------------------------------------------
     # get index database
-    findexdb = drs_database.FileIndexDatabase(params)
+    findexdb = drs_database.FileIndexDatabase(params, recipe.shortname)
     # load index database
     findexdb.load_db()
     # check that table is in database
     if not findexdb.database.has_table(findexdb.database.tablename):
         # get database paths
-        databases = manage_databases.list_databases(params)
+        databases = manage_databases.list_databases(params, recipe.shortname)
         # load pseudo constants
         pconst = load_functions.load_pconfig(select.INSTRUMENTS)
         # create index database
         manage_databases.create_fileindex_database(params, pconst, databases)
         # get index database
-        findexdb = drs_database.FileIndexDatabase(params)
+        findexdb = drs_database.FileIndexDatabase(params, recipe.shortname)
         # load index database
         findexdb.load_db()
     # set up condition
@@ -640,19 +641,19 @@ def reset_out_folders(params: ParamDict, log: bool = True):
     # remove entries from log database
     # -------------------------------------------------------------------------
     # get log database
-    logdb = drs_database.LogDatabase(params)
+    logdb = drs_database.LogDatabase(params, recipe.shortname)
     # load index database
     logdb.load_db()
     # check that table is in database
     if not logdb.database.has_table(logdb.database.tablename):
         # get database paths
-        databases = manage_databases.list_databases(params)
+        databases = manage_databases.list_databases(params, recipe.shortname)
         # load pseudo constants
         pconst = load_functions.load_pconfig(select.INSTRUMENTS)
         # create index database
         manage_databases.create_log_database(params, pconst, databases)
         # get log database
-        logdb = drs_database.LogDatabase(params)
+        logdb = drs_database.LogDatabase(params, recipe.shortname)
         # load index database
         logdb.load_db()
     # set up condition
@@ -661,7 +662,8 @@ def reset_out_folders(params: ParamDict, log: bool = True):
     logdb.remove_entries(condition=condition)
 
 
-def reset_assets(params: ParamDict, log: bool = True, reset_dbs: bool = True):
+def reset_assets(params: ParamDict, recipe: DrsRecipe,
+                 log: bool = True, reset_dbs: bool = True):
     """
     Reset the Assets directory (including re-creating databases)
 
@@ -673,7 +675,7 @@ def reset_assets(params: ParamDict, log: bool = True, reset_dbs: bool = True):
     """
     name = 'assets'
     # get database paths
-    databases = manage_databases.list_databases(params)
+    databases = manage_databases.list_databases(params, recipe.shortname)
 
     # now check whether we need to download the assets
     update_assets = drs_assets.check_local_assets(params)
@@ -733,7 +735,8 @@ def reset_other_folder(params: ParamDict, log: bool = True):
         # get original path
         rel_old_path = reset_dict[path_name][0]
         # construct path (assuming it is relative
-        old_path = drs_path.get_relative_folder(apero_base.__PACKAGE__, rel_old_path)
+        old_path = drs_path.get_relative_folder(apero_base.__PACKAGE__,
+                                                rel_old_path)
         # construct new path
         new_path = str(os.path.join(other_path, reset_dict[path_name][1]))
         # try to copy the file
@@ -743,6 +746,15 @@ def reset_other_folder(params: ParamDict, log: bool = True):
             emsg = 'Error copying {0} to other directory {1}. \n\t {2}: {3}'
             eargs = [path_name, other_path, type(e), str(e)]
             WLOG(params, '', emsg.format(*eargs))
+    # remove these directories from the other directory
+    directories = [params['DB.PENDING_PATH']]
+    # loop around and remove
+    for directory in directories:
+        full_dir = os.path.join(other_path, directory)
+        remove_all(params, full_dir, log=log)
+        # make sure directory exists after removal
+        if not os.path.exists(full_dir):
+            os.makedirs(full_dir)
 
 
 def remove_all(params, path, log=True, skipfiles=None):
@@ -958,7 +970,7 @@ def remove_files(params, path, log=True, skipfiles=None):
 # =============================================================================
 # Define remove functions
 # =============================================================================
-def get_filelist(params: ParamDict,
+def get_filelist(params: ParamDict, recipe: DrsRecipe,
                  obsdir: Optional[Union[str, List[str]]] = None,
                  blocks: Optional[List[str]] = None,
                  fileprefix: Optional[str] = None,
@@ -978,7 +990,7 @@ def get_filelist(params: ParamDict,
     :return:
     """
     # get index database
-    indexdbm = drs_database.FileIndexDatabase(params)
+    indexdbm = drs_database.FileIndexDatabase(params, recipe.shortname)
     # load if required
     indexdbm.load_db()
     # -------------------------------------------------------------------------
@@ -1181,7 +1193,7 @@ def remove_files_from_databases(params: ParamDict, recipe: DrsRecipe,
         WLOG(params, '', '\tNo files removed.')
     # -------------------------------------------------------------------------
     # for the log database we remove entries with the same PIDs
-    logdbm = drs_database.LogDatabase(params)
+    logdbm = drs_database.LogDatabase(params, recipe.shortname)
     # load if required
     logdbm.load_db()
     # log removal
@@ -1215,7 +1227,7 @@ def remove_files_from_databases(params: ParamDict, recipe: DrsRecipe,
     # -------------------------------------------------------------------------
     # last deal with index database (easy --> remove entries with the same
     # condition we used to find files)
-    findexdb = drs_database.FileIndexDatabase(params)
+    findexdb = drs_database.FileIndexDatabase(params, recipe.shortname)
     # load index database
     findexdb.load_db()
     # log removal

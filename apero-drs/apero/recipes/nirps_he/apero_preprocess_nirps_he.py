@@ -140,7 +140,8 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
         # Check that file is not in bad list
         # ------------------------------------------------------------------
         # find out if file is flagged as bad
-        reject_file = prep.reject_infile(params, file_instance.get_header())
+        reject_file = prep.reject_infile(params, recipe,
+                                         file_instance.get_header())
         # deal with bad files
         if reject_file:
             WLOG(params, 'warning', textentry('10-503-00022'), sublevel=2)

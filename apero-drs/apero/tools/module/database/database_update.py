@@ -114,7 +114,7 @@ def update_database(params: ParamDict, recipe: DrsRecipe, dbkind: str):
         WLOG(params, 'info', textentry('40-006-00007', args=['log']),
              colour='magenta')
         WLOG(params, 'info', params['LOG.HEADER'], colour='magenta')
-        log_update(params, pconst)
+        log_update(params, recipe, pconst)
     # update index database
     if dbkind in ['findex', 'all']:
         WLOG(params, 'info', params['LOG.HEADER'], colour='magenta')
@@ -186,7 +186,7 @@ def calib_tellu_update(params: ParamDict, recipe: DrsRecipe,
         file_set_name = None
     # ----------------------------------------------------------------------
     # get a list of all database paths
-    db_list = manage_databases.list_databases(params)
+    db_list = manage_databases.list_databases(params, recipe.shortname)
     # backup database
     dbmanager.database.backup()
     # reset database
@@ -292,7 +292,7 @@ def index_update(params: ParamDict, recipe: DrsRecipe):
             findexdbm.update_header_fix(recipe=recipe, objdbm=astromdb)
 
 
-def log_update(params: ParamDict, pconst: Instrument):
+def log_update(params: ParamDict, recipe: DrsRecipe, pconst: Instrument):
     """
     Update log database using files on disk in block directories flagged as
     "logging" block kinds
@@ -305,7 +305,7 @@ def log_update(params: ParamDict, pconst: Instrument):
     # get all blocks
     blocks = drs_file.DrsPath.get_blocks(params)
     # get index database
-    logdbm = drs_database.LogDatabase(params)
+    logdbm = drs_database.LogDatabase(params, recipe.shortname)
     logdbm.load_db()
     # -------------------------------------------------------------------------
     # loop around blocks

@@ -383,7 +383,7 @@ def file_check(params: ParamDict, recipe: DrsRecipe,
     # deal with not having index database
     if findexdbm is None:
         # construct the index database instance
-        findexdbm = FileIndexDatabase(params)
+        findexdbm = FileIndexDatabase(params, recipe.shortname)
         findexdbm.load_db()
     # -------------------------------------------------------------------------
     # get odometer reject list (if required)
@@ -394,7 +394,7 @@ def file_check(params: ParamDict, recipe: DrsRecipe,
     odo_reject_list = []
     if not drs_text.null_text(_use_odo_reject, ['', 'None']):
         if drs_text.true_text(_use_odo_reject):
-            odo_reject_list = prep.get_file_reject_list(params)
+            odo_reject_list = prep.get_file_reject_list(params, recipe)
     # -------------------------------------------------------------------------
     # get the conditions based on params
     # -------------------------------------------------------------------------
@@ -663,7 +663,7 @@ def _get_rawfile(drsfile: DrsFitsFile):
 # =============================================================================
 # Define object checking functions
 # =============================================================================
-def obj_check(params: ParamDict, shortname: str,
+def obj_check(params: ParamDict, recipe: DrsRecipe,
               findexdbm: Optional[FileIndexDatabase] = None,
               log: bool = True) -> Table:
     """
@@ -687,12 +687,12 @@ def obj_check(params: ParamDict, shortname: str,
     # deal with not having index database
     if findexdbm is None:
         # construct the index database instance
-        findexdbm = FileIndexDatabase(params, shortname)
+        findexdbm = FileIndexDatabase(params, recipe.shortname)
         findexdbm.load_db()
     # ---------------------------------------------------------------------
     # Update the object database (recommended only for full reprocessing)
     # check that we have entries in the object database
-    manage_databases.object_db_populated(params, shortname)
+    manage_databases.object_db_populated(params, recipe.shortname)
     # update the database if required
     if params['UPDATE_OBJ_DATABASE']:
         # log progress
@@ -702,12 +702,12 @@ def obj_check(params: ParamDict, shortname: str,
         manage_databases.update_object_database(params, log=False)
     # ---------------------------------------------------------------------
     # load the object database after updating
-    objdbm = ObjectDatabase(params, shortname)
+    objdbm = ObjectDatabase(params, recipe.shortname)
     objdbm.load_db()
     # ---------------------------------------------------------------------
     # Update the reject database (recommended only for full reprocessing)
     # check that we have entries in the object database
-    has_entries = manage_databases.reject_db_populated(params)
+    has_entries = manage_databases.reject_db_populated(params, recipe)
     # update the database if required
     if params['UPDATE_REJECT_DATABASE'] or not has_entries:
         manage_databases.update_reject_database(params, log=log)

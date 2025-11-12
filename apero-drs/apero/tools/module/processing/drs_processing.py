@@ -116,7 +116,7 @@ class Run:
         self.priority = priority
         self.args = []
         self.recipename = ''
-        self.shortname = None
+        self.shortname = 'PROC-RUN'
         self.recipe = inrecipe
         self.reference = False
         self.recipemod = mod
@@ -431,7 +431,7 @@ class Run:
         # update dict with state
         self.__dict__.update(state)
         # reload excluded attributes
-        self.indexdb = FileIndexDatabase(self.params)
+        self.indexdb = FileIndexDatabase(self.params, self.shortname)
         # need to re-find and set recipe and recipe modd
         self.reload_recipe()
 
@@ -504,7 +504,7 @@ def combine_outlist(name, goutlist, outlist):
     return goutlist
 
 
-def generate_skip_table(params):
+def generate_skip_table(params: ParamDict, recipe: DrsRecipe):
     """
     Uses the log.fits files to generate a list of previous run recipes
     skips will occur when arguments are identical
@@ -515,7 +515,7 @@ def generate_skip_table(params):
     # log process
     WLOG(params, '', textentry('90-503-00017'))
     # load log database
-    logdbm = drs_database.LogDatabase(params)
+    logdbm = drs_database.LogDatabase(params, recipe.shortname)
     logdbm.load_db()
     # deal with white list for directories
     if drs_text.null_text(params['INCLUDE_OBS_DIRS'], ['', 'All', 'None']):
@@ -780,7 +780,7 @@ def write_to_file(params: ParamDict, outlist: Dict[int, dict]):
         fout.write('\n'.join(lines))
 
 
-def reset_files(params):
+def reset_files(params: ParamDict, recipe: DrsRecipe):
     """
     Resets based on reset parameters
 
@@ -801,7 +801,7 @@ def reset_files(params):
                                              params['PATH.PP'])
         # reset directory using reset module
         if reset:
-            drs_reset.reset_tmp_folders(params, log=True)
+            drs_reset.reset_tmp_folders(params, recipe, log=True)
         # print that we are not resetting directory
         else:
             WLOG(params, '', textentry('40-502-00013', args=['Tmp']))
@@ -908,7 +908,7 @@ def update_index_db(params: ParamDict,
     # deal with not having database currently
     if findexdbm is None:
         # construct the index database instance
-        findexdbm = FileIndexDatabase(params)
+        findexdbm = FileIndexDatabase(params, 'PROC')
         findexdbm.load_db()
     # this is really important as we have disabled updating for parallel
     #  runs to make it more efficient
@@ -923,6 +923,10 @@ def update_index_db(params: ParamDict,
                                               includelist=includelist,
                                               excludelist=excludelist,
                                               findexdbm=findexdbm)
+    # -------------------------------------------------------------------------
+    # We should update the database here
+    drs_database.db_push(params)
+
 
 
 def generate_run_list(params: ParamDict, recipe: DrsRecipe,
@@ -957,7 +961,7 @@ def generate_run_list(params: ParamDict, recipe: DrsRecipe,
     reject_list = np.array([])
     if not drs_text.null_text(_use_reject, ['', 'None']):
         if drs_text.true_text(_use_reject):
-            reject_list = prep.get_file_reject_list(params)
+            reject_list = prep.get_file_reject_list(params, recipe)
     # define the reference conditions (that affect all recipes)
     ref_condition, req_obs_dirs = gen_global_condition(params, findexdbm)
     # -------------------------------------------------------------------------
@@ -966,7 +970,8 @@ def generate_run_list(params: ParamDict, recipe: DrsRecipe,
     # get a list of all objects from the file index database
     all_objects = get_uobjs_from_findex(params, findexdbm, req_obs_dirs)
     # get all telluric stars
-    tstars = telluric.get_tellu_include_list(params, all_objects=all_objects)
+    tstars = telluric.get_tellu_include_list(params, recipe,
+                                             all_objects=all_objects)
     # get all other stars
     ostars = get_non_telluric_stars(params, all_objects, tstars)
     # -------------------------------------------------------------------------
@@ -1401,7 +1406,7 @@ def _linear_generate_id(params: ParamDict, it: int, run_key: str,
     # get recipe mod
     recipemod = pconst.RECIPEMOD()
     # get file index database
-    indexdb = drs_database.FileIndexDatabase(params)
+    indexdb = drs_database.FileIndexDatabase(params, 'PROC')
     indexdb.load_db()
     # get runid
     runid = '{0}{1:05d}'.format(run_key, keylist[it])
@@ -3927,7 +3932,7 @@ def _get_filters(params: ParamDict, srecipe: DrsRecipe,
     # get pseudo constatns
     pconst = load_functions.load_pconfig(select.INSTRUMENTS)
     # need to load object database
-    objdbm = drs_database.AstrometricDatabase(params, screipe.shortname)
+    objdbm = drs_database.AstrometricDatabase(params, srecipe.shortname)
     objdbm.load_db()
     # set up filter storage
     filters = dict()

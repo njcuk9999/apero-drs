@@ -113,7 +113,7 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
     # get hash col argument from inputs
     hash_col = inputs.get('HASH', False)
     # get databases
-    dbs = manage_databases.list_databases(params)
+    dbs = manage_databases.list_databases(params, recipe.shortname)
     # push into database holder
     databases = dict()
     for key in dbs:

@@ -22,26 +22,28 @@ import numpy as np
 import pandas as pd
 from astropy import units as uu
 from astropy.coordinates import SkyCoord
-from astropy.table import Row
 from astropy.io import fits
+from astropy.table import Row
 from astroquery.simbad import Simbad
 
-from aperocore.base import base
-from aperocore.constants import param_functions
-from aperocore.constants import load_functions
-from aperocore import drs_lang
-from aperocore.core import drs_base_classes, drs_text, drs_misc
+from apero.base import base as apero_base
 from apero.core import drs_database
-from aperocore.core import drs_log
-from apero.instruments.default import instrument as instrument_mod
-from apero.utils import drs_startup
-from apero.io import drs_fits
 from apero.core import drs_file
+from apero.instruments import select
+from apero.instruments.default import instrument as instrument_mod
+from apero.io import drs_fits
 from apero.science import preprocessing as prep
 from apero.tools.module.database import manage_databases
 from apero.tools.module.setup import drs_installation
-from apero.instruments import select
-from apero.base import base as apero_base
+from apero.utils import drs_recipe
+from apero.utils import drs_startup
+from aperocore import drs_lang
+from aperocore.base import base
+from aperocore.constants import load_functions
+from aperocore.constants import param_functions
+from aperocore.core import drs_base_classes, drs_text, drs_misc
+from aperocore.core import drs_log
+
 
 # =============================================================================
 # Define variables
@@ -59,6 +61,7 @@ Time = base.Time
 textentry = drs_lang.textentry
 # get the parmeter dictionary instance
 ParamDict = param_functions.ParamDict
+DrsRecipe = drs_recipe.DrsRecipe
 # Get Logging function
 WLOG = drs_log.wlog
 # get exceptions
@@ -67,7 +70,7 @@ AperoCodedException = drs_log.AperoCodedException
 display_func = drs_misc.display_func
 # get the databases
 FileIndexDatabase = drs_database.FileIndexDatabase
-ObjectDatabase = drs_database.AstrometricDatabase
+AstrometricDatabase = drs_database.AstrometricDatabase
 # simbad additional columns
 SIMBAD_COLUMNS = ['ids', 'pmra', 'pmdec', 'pm_bibcode', 'plx',
                   'plx_bibcode', 'rvz_radvel', 'rvz_bibcode',
@@ -1098,7 +1101,7 @@ def check_database(params: ParamDict, shortname: str):
     manage_databases.update_object_database(params, log=False)
     # ---------------------------------------------------------------------
     # load the object database after updating
-    objdbm = ObjectDatabase(params, shortname)
+    objdbm = AstrometricDatabase(params, shortname)
     objdbm.load_db()
     # ---------------------------------------------------------------------
     # print that we are getting the full table
@@ -1177,10 +1180,11 @@ def check_database(params: ParamDict, shortname: str):
     base.write_yaml(bad_objects, bad_object_file)
 
 
-def check_object(params: ParamDict, found_objs: Dict[str, Tuple[str, str]]):
+def check_object(params: ParamDict, recipe: DrsRecipe,
+                 found_objs: Dict[str, Tuple[str, str]]):
     # ---------------------------------------------------------------------
     # load the object database after updating
-    objdbm = ObjectDatabase(params)
+    objdbm = AstrometricDatabase(params, recipe.shortname)
     objdbm.load_db()
     # print that we are getting the full table
     WLOG(params, 'info', 'Accessing full local object database...')
@@ -1229,7 +1233,7 @@ def check_object(params: ParamDict, found_objs: Dict[str, Tuple[str, str]]):
         # based on these names find all files in the file index database
         #   that match these names
         # ---------------------------------------------------------------------
-        indexdbm = drs_database.FileIndexDatabase(params)
+        indexdbm = drs_database.FileIndexDatabase(params, recipe.shortname)
         # load the database
         indexdbm.load_db()
         # get all possible object names
@@ -1511,7 +1515,7 @@ def query_database(params, shortname: str, rawobjnames: List[str],
     # print progress
     WLOG(params, '', 'Searching local object database for object names...')
     # load the object database after updating
-    objdbm = ObjectDatabase(params, shortname)
+    objdbm = AstrometricDatabase(params, shortname)
     objdbm.load_db()
     # storage for output - assume none are found
     unfound = []
@@ -1560,7 +1564,8 @@ def query_database(params, shortname: str, rawobjnames: List[str],
     return unfound, found
 
 
-def ask_user(params: ParamDict, astro_obj: AstroObj) -> Tuple[AstroObj, bool]:
+def ask_user(params: ParamDict, recipe: DrsRecipe,
+             astro_obj: AstroObj) -> Tuple[AstroObj, bool]:
     """
     Ask the user if the data look good and get teff
     
@@ -1599,14 +1604,14 @@ def ask_user(params: ParamDict, astro_obj: AstroObj) -> Tuple[AstroObj, bool]:
     # deal with trying to update Teff automatically
     if add_to_list:
         # get index database
-        findexdbm = drs_database.FileIndexDatabase(params)
+        findexdbm = drs_database.FileIndexDatabase(params, recipe.shortname)
         # check for Teff (from files on disk with this objname/aliases)
         astro_obj.check_property(params, propname='TEFF', findexdbm=findexdbm)
     # ----------------------------------------------------------------
     # deal with trying to update vsini automatically
     if add_to_list:
         # get index database
-        findexdbm = drs_database.FileIndexDatabase(params)
+        findexdbm = drs_database.FileIndexDatabase(params, recipe.shortname)
         # check for vsini (from files on disk with this objname/aliases)
         astro_obj.check_property(params, propname='VSINI', findexdbm=findexdbm)
     # ----------------------------------------------------------------
@@ -1734,6 +1739,10 @@ def ask_for_aliases(params: ParamDict, astro_obj: AstroObj) -> AstroObj:
     if aliases_user.upper() not in ['NULL', 'NONE', '']:
         aliases0 += aliases_user.split(',')
         aliases0_source.append('USER')
+    # we need to add these user aliases to the full alias list
+    #  (this wasn't done yet because we want to distinguish SIMBAD aliases
+    #   from USER aliases)
+    astro_obj.aliases += '|'.join(aliases0)
     # find max length of alias for formatting
     max_alias_len = max([len(alias) for alias in aliases0])
     # loop around alias list
@@ -2001,9 +2010,9 @@ def update_astrometrics(params):
     WLOG(params, 'info', params['LOG.HEADER'])
 
 
-def update_teffs(params):
+def update_teffs(params: ParamDict, shortname: str):
     # get index database
-    findexdbm = drs_database.FileIndexDatabase(params)
+    findexdbm = drs_database.FileIndexDatabase(params, shortname)
     findexdbm.load_db()
     # load table
     table = manage_databases.get_object_database(params)
@@ -2240,7 +2249,7 @@ if __name__ == "__main__":
         update_astrometrics(_params)
     # deal with teff update
     elif '--update_teffs' in args:
-        update_teffs(_params)
+        update_teffs(_params, 'ASTROM')
 
 # =============================================================================
 # End of code

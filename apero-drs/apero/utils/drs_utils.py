@@ -89,7 +89,7 @@ class RecipeLog:
         if isinstance(database, LogDatabase):
             self.logdbm = database
         else:
-            self.logdbm = LogDatabase(params)
+            self.logdbm = LogDatabase(params, sname)
             self.logdbm.load_db()
         # get the recipe name
         self.name = str(name)
@@ -826,7 +826,7 @@ def update_index_db(params: ParamDict, block_kind: str,
     # -------------------------------------------------------------------------
     # load the index database
     if findexdbm is None:
-        findexdbm = FileIndexDatabase(params)
+        findexdbm = FileIndexDatabase(params, 'PROC')
     findexdbm.load_db()
     # -------------------------------------------------------------------------
     # check whether we are updating the index
@@ -860,6 +860,9 @@ def update_index_db(params: ParamDict, block_kind: str,
                              exclude_directories=exclude_dirs,
                              include_directories=include_dirs,
                              filename=filename, suffix=suffix)
+    # -------------------------------------------------------------------------
+    # update database entries
+    drs_database.db_push(params)
     # -------------------------------------------------------------------------
     # we need to reset some globally stored variables - these should be
     #   recalculated when used

@@ -10,8 +10,8 @@ Created on 2019-12-12 at 09:45
 @author: cook
 """
 import os
-from typing import Any, Tuple, Union
 import warnings
+from typing import Any, Tuple, Union
 
 import numpy as np
 import pandas as pd
@@ -19,19 +19,20 @@ from astropy import units as uu
 from astropy.coordinates import EarthLocation, AltAz, ICRS
 from astropy.coordinates import SkyCoord, Distance
 
-from aperocore.base import base
-from aperocore.constants import param_functions
-from aperocore.constants import load_functions
-from aperocore import drs_lang
-from aperocore import math as mp
-from aperocore.core import drs_misc
+from apero.base import base as apero_base
 from apero.core import drs_database
-from aperocore.core import drs_log
-from aperocore.core import drs_text
+from apero.instruments import select
 from apero.instruments.default import instrument as instrument_mod
 from apero.io import drs_fits
-from apero.instruments import select
-from apero.base import base as apero_base
+from apero.utils import drs_recipe
+from aperocore import drs_lang
+from aperocore import math as mp
+from aperocore.base import base
+from aperocore.constants import load_functions
+from aperocore.constants import param_functions
+from aperocore.core import drs_log
+from aperocore.core import drs_misc
+from aperocore.core import drs_text
 
 # =============================================================================
 # Define variables
@@ -58,7 +59,7 @@ ObjectDatabase = drs_database.AstrometricDatabase
 # get param dict
 ParamDict = param_functions.ParamDict
 Instrument = instrument_mod.Instrument
-
+DrsRecipe = drs_recipe.DrsRecipe
 # cache for google sheet
 GOOGLE_TABLES = dict()
 # define standard google base url
@@ -454,8 +455,8 @@ def get_obj_reject_list(params: ParamDict) -> np.ndarray:
         return np.array([])
 
 
-def reject_infile(params: ParamDict, header: drs_fits.Header,
-                  bad_kind: str = 'pp') -> bool:
+def reject_infile(params: ParamDict, recipe: DrsRecipe,
+                  header: drs_fits.Header, bad_kind: str = 'pp') -> bool:
     """
     Using params and the header identify whether this file should be rejected
     (uses a googlesheet of True and False along with a key from the header
@@ -506,7 +507,7 @@ def reject_infile(params: ParamDict, header: drs_fits.Header,
         return False
     # -------------------------------------------------------------------------
     # get reject database
-    rejectdbm = drs_database.RejectDatabase(params)
+    rejectdbm = drs_database.RejectDatabase(params, recipe.shortname)
     rejectdbm.load_db()
     # get reject table
     rtable = rejectdbm.get_entries('*')
@@ -529,7 +530,8 @@ def reject_infile(params: ParamDict, header: drs_fits.Header,
         return False
 
 
-def get_file_reject_list(params: ParamDict, column: str = 'PP') -> np.ndarray:
+def get_file_reject_list(params: ParamDict, recipe: DrsRecipe,
+                         column: str = 'PP') -> np.ndarray:
     """
     Query the googlesheet for rejection odometer codes and return
     an array of odometer codes to reject
@@ -543,7 +545,7 @@ def get_file_reject_list(params: ParamDict, column: str = 'PP') -> np.ndarray:
     # set function name
     func_name = display_func('get_reject_list', __NAME__)
     # get reject database
-    rejectdbm = drs_database.RejectDatabase(params)
+    rejectdbm = drs_database.RejectDatabase(params, recipe.shortname)
     rejectdbm.load_db()
     # get reject table
     rtable = rejectdbm.get_entries('*')

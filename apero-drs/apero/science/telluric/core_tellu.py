@@ -44,7 +44,6 @@ DrsFitsFile = drs_file.DrsFitsFile
 DrsRecipe = drs_recipe.DrsRecipe
 # get calibration database
 TelluDatabase = drs_database.TelluricDatabase
-FileIndexDatabase = drs_database.FileIndexDatabase
 # Get function string
 display_func = drs_misc.display_func
 # Get Logging function
