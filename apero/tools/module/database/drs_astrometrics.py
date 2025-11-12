@@ -1653,6 +1653,10 @@ def ask_for_aliases(params: ParamDict, astro_obj: AstroObj) -> AstroObj:
     if aliases_user.upper() not in ['NULL', 'NONE', '']:
         aliases0 += aliases_user.split(',')
         aliases0_source.append('USER')
+    # we need to add these user aliases to the full alias list
+    #  (this wasn't done yet because we want to distinguish SIMBAD aliases
+    #   from USER aliases)
+    astro_obj.aliases += '|'.join(aliases0)
     # find max length of alias for formatting
     max_alias_len = max([len(alias) for alias in aliases0])
     # loop around alias list
