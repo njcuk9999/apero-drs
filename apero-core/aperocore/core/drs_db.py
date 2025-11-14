@@ -755,6 +755,9 @@ class AperoDatabase:
             # Fallback — handle duplicates via existing add_row (update)
             for row in cleaned_rows:
                 self.add_row(insert_dict=row, tablename=tablename)
+        # make sure all rows are added an dpending connections closed
+        import time
+        time.sleep(5)
 
     def set_rows(self,
                  update_dicts: List[dict],
@@ -810,6 +813,9 @@ class AperoDatabase:
                     update_query = update_query.where(sqlalchemy.text(condition))
 
                 conn.execute(update_query)
+        # make sure all rows are added an dpending connections closed
+        import time
+        time.sleep(5)
 
     def delete_rows(self, tablename: Optional[str] = None,
                     condition: Optional[str] = None):

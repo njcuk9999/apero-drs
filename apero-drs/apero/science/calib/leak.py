@@ -487,11 +487,11 @@ def correct_ext_dark_fp(params: ParamDict, recipe: DrsRecipe,
     sci_fibers, ref_fiber = pconst.FIBER_KINDS()
     # ----------------------------------------------------------------------
     # get ref leak reference for file
-    lmout = get_leak_ref(params, recipe.shortname, header, ref_fiber, ''
+    lmout = get_leak_ref(params, recipe, header, ref_fiber, ''
                          'LEAKREF_E2DS', database=database)
     rleakfile, rleakref, rleaktime = lmout
     # get leak reference for fiber
-    lmout = get_leak_ref(params, recipe.shortname, header, fiber,
+    lmout = get_leak_ref(params, recipe, header, fiber,
                          'LEAKREF_E2DS', database=database)
     leakfile, leakref, leaktime = lmout
     # ----------------------------------------------------------------------

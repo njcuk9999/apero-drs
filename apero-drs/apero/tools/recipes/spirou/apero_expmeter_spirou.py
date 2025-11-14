@@ -255,8 +255,8 @@ def __main__(recipe, params):
     # get the x and y position images
     yimage, ximage = np.indices(ishape)
     # get shape files
-    _, _, shapex = shape.get_shapex(params, ref_header)
-    _, _, shapey = shape.get_shapey(params, ref_header)
+    _, _, shapex = shape.get_shapex(params, recipe, ref_header)
+    _, _, shapey = shape.get_shapey(params, recipe, ref_header)
     # transform the shapex map
     WLOG(params, '', 'Transforming shapex map')
     shapex2 = shape.ea_transform(params, shapex, dymap=-shapey)

@@ -157,27 +157,27 @@ class Header(fits.Header):
         """
         # set function
         # _ = display_func('__getitem__', __NAME__, self.classname)
-        # deal with key not being string
+        # tuple key handling (e.g. (key, id))
         if isinstance(key, tuple):
-            # assume it is a tuple (key, id) - therefore we check key[0]
+            # temp-key style assumed: startswith '@@@'
             if key[0].startswith('@@@'):
                 tmpkey = self.__get_temp_key(key[0])
-                value = self.__temp_items.__getitem__(tmpkey)
-                return self.__nan_check(value, dtype=float)
+                val = self.__temp_items.__getitem__(tmpkey)
+                return self.__nan_check(val, dtype=float)
             else:
-                value = super().__getitem__(key)
-                return self.__nan_check(value, dtype=float)
-        elif not isinstance(key, str):
-            value = super().__getitem__(key)
-            return self.__nan_check(value, dtype=float)
+                val = super(Header, self).__getitem__(key)
+                return self.__nan_check(val, dtype=float)
+        # non-string keys: delegate to base and nan-check
+        if not isinstance(key, str):
+            val = super(Header, self).__getitem__(key)
+            return self.__nan_check(val, dtype=float)
         # if key starts with @@@ get it from the temporary items storage
         if key.startswith('@@@'):
             value = self.__temp_items.__getitem__(self.__get_temp_key(key))
             return self.__nan_check(value, dtype=float)
-        # else get it from the normal storage location (in super)
-        else:
-            value = super().__getitem__(key)
-            return self.__nan_check(value, dtype=float)
+        # normal keyword: call base class explicitly
+        val = super(Header, self).__getitem__(key)
+        return self.__nan_check(val, dtype=float)
 
     def get(self, key: str, default: Any = None) -> Any:
         """

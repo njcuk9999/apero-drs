@@ -1014,7 +1014,8 @@ def end_plotting(params: ParamDict, recipe: Union[DrsRecipe, None]):
             plotter.close_plots()
 
 
-def group_name(params: ParamDict, suffix: str = 'group') -> str:
+def group_name(params: ParamDict, suffix: str = 'group',
+               update_params: bool = True) -> str:
     """
     Constructs the group name APEROG-{PID}_{RECIPE}_{SUFFIX}
 
@@ -1044,7 +1045,8 @@ def group_name(params: ParamDict, suffix: str = 'group') -> str:
     groupname = 'APEROG-{0}_{1}_{2}'.format(*args)
     # ----------------------------------------------------------------------
     # update params
-    params.set('DRS.GROUP', groupname, __NAME__ + '.group_name()')
+    if update_params:
+        params.set('DRS.GROUP', groupname, __NAME__ + '.group_name()')
     # ----------------------------------------------------------------------
     # return group name
     return groupname

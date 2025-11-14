@@ -153,10 +153,10 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
         reffp_file, reffp_image = shape.get_ref_fp(params, recipe, header,
                                                    **fkwargs)
         # get shape x and shape x mjdmid
-        sout = shape.get_shapex(params, header, **fkwargs)
+        sout = shape.get_shapex(params, recipe, header, **fkwargs)
         dxmap_file, dxtime, dxmap = sout
         # get shape y and shape y mjdmid
-        sout = shape.get_shapey(params, header, **fkwargs)
+        sout = shape.get_shapey(params, recipe, header, **fkwargs)
         dymap_file, dytime, dymap = sout
         # ----------------------------------------------------------------------
         # Get transform parameters (transform image onto fpref)

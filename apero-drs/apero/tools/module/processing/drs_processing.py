@@ -1214,7 +1214,7 @@ def display_errors(params, outlist):
             WLOG(params, '', '', colour='red')
             WLOG(params, '', params['LOG.HEADER'], colour='red')
             WLOG(params, 'error', textentry('40-503-00019', args=[key]),
-                 raise_exception=False, wrap=False, sublevel=8)
+                 raise_exception=False, wrap=False, no_timestamp=True)
             WLOG(params, 'error', '\t{0}'.format(outlist[key]['RUNSTRING']),
                  raise_exception=False, wrap=False, sublevel=8)
             WLOG(params, '', params['LOG.HEADER'], colour='red')
@@ -1226,7 +1226,8 @@ def display_errors(params, outlist):
                     strerror = '{1}'.format(*error)
                 else:
                     strerror = str(error)
-                WLOG(params, 'error', strerror, raise_exception=False)
+                WLOG(params, 'error', strerror, raise_exception=False,
+                     wrap=False, no_timestamp=True)
             WLOG(params, '', '', colour='red')
             # --------------------------------------------------------------
             # deal with list from out traceback
@@ -1240,7 +1241,8 @@ def display_errors(params, outlist):
                     strtback = '{1}'.format(*tback)
                 else:
                     strtback = str(tback)
-                WLOG(params, 'error', strtback, raise_exception=False)
+                WLOG(params, 'error', strtback, raise_exception=False,
+                     wrap=False, no_timestamp=True)
             WLOG(params, '', '', colour='red')
             # --------------------------------------------------------------
             WLOG(params, '', params['LOG.HEADER'], colour='red')

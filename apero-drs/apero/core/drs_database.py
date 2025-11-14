@@ -18,7 +18,7 @@ only from
 - apero.core.math.*
 - apero.io.drs_fits
 """
-import glob
+import fnmatch
 import os
 import shutil
 import time
@@ -34,24 +34,23 @@ from astropy.io.ascii.core import InconsistentTableError
 from astropy.table import Table
 from pandasql import sqldf
 
-from aperocore.base import base
-from aperocore.core import drs_db
-from aperocore.base import drs_base
-from aperocore.core.drs_db import DatabaseManager
-from aperocore.core.drs_base_classes import Printer
-from aperocore.constants import param_functions
-from aperocore.constants import load_functions
-
-from aperocore import drs_lang
-from aperocore.core import drs_exceptions
-from aperocore.core import drs_text
-from aperocore.core import drs_misc
-from apero.core import drs_file
-from aperocore.core import drs_log
-from apero.io import drs_fits
-from apero.io import drs_path
-from apero.instruments import select
 from apero.base import base as apero_base
+from apero.core import drs_file
+from apero.instruments import select
+from apero.io import drs_fits
+from apero.io import drs_lock
+from apero.io import drs_path
+from aperocore import drs_lang
+from aperocore.base import base
+from aperocore.base import drs_base
+from aperocore.constants import load_functions
+from aperocore.constants import param_functions
+from aperocore.core import drs_db
+from aperocore.core import drs_log
+from aperocore.core import drs_misc
+from aperocore.core import drs_text
+from aperocore.core.drs_base_classes import Printer
+from aperocore.core.drs_db import DatabaseManager
 
 # =============================================================================
 # Define variables
@@ -3267,12 +3266,23 @@ class PandasLikeDatabase:
 # =============================================================================
 # Define other database functionality
 # =============================================================================
-def db_push(params: ParamDict, pid: Optional[str] = None):
+def db_push(params: ParamDict, pid: Optional[str] = None,
+            groupname: Optional[str] = None):
+    """
+    Check and if it doesn't exist make the directory 'path'
+    (locking path as necessary)
 
+    :param params: ParamDict, parameter dictionary of constants
+    :param path: str, the path to check and make
+
+    :return: None
+    """
     # get the path to the database
     db_pend = str(os.path.join(params['PATH.OTHER'], params['DB.PENDING_PATH']))
     # deal with apero group (add to db_pend)
-    if params.get('DRS.GROUP', None) is not None:
+    if groupname is not None:
+        db_pend = os.path.join(db_pend, groupname)
+    elif params.get('DRS.GROUP', None) is not None:
         db_pend = os.path.join(db_pend, params['DRS.GROUP'])
     # -------------------------------------------------------------------------
     # get shortname from parameters
@@ -3280,100 +3290,146 @@ def db_push(params: ParamDict, pid: Optional[str] = None):
     if 'INPUTS' in params:
         db_shortname = params['INPUTS'].get('PUSHNAME', '*')
     # -------------------------------------------------------------------------
+    # deal with no pid (get all pids)
+    if pid is None:
+        pid = '*'
+    # -------------------------------------------------------------------------
     # check for pending path - if it doesn't exist we don't have anything to
     # updated
     if not os.path.exists(db_pend):
         return
     # -------------------------------------------------------------------------
-    # deal with no pid (get all pids)
-    if pid is None:
-        pid = '*'
-    # otherwise we get all pending files in the db_pend directory
-    pend_basefile = '{0}_{1}_UID*.yaml'.format(pid, db_shortname)
-    pend_files = glob.glob(os.path.join(db_pend, pend_basefile))
-    # -------------------------------------------------------------------------
-    # deal with no pending files
-    if len(pend_files) == 0:
-        return
-    # -------------------------------------------------------------------------
-    # print progress
-    msg = 'Reading {0} pending database entrie(s)'
-    margs = [len(pend_files)]
-    WLOG(params, 'info', msg.format(*margs))
-    # loop around pending files and compile a dictionary of entriers to add
-    #  to each table
-    pend_add_dict = dict()
-    pend_set_dict = dict()
-    # loop around pending files
-    for pend_file in tqdm(pend_files):
-        # read yaml file
-        pdict = base.load_yaml(pend_file)
-        # get table name and entry
-        tablename = pdict['TABLE_NAME']
-        entry = pdict['ENTRY']
-        mode = pdict['MODE']
-        # deal with add mode
-        if mode == 'ADD':
-            # deal with table not in pend dict
-            if tablename not in pend_add_dict:
-                pend_add_dict[tablename] = []
-            # add entry to pend dict
-            pend_add_dict[tablename].append(entry)
-        # deal with set mode
-        else:
-            # deal with table not in pend dict
-            if tablename not in pend_set_dict:
-                pend_set_dict[tablename] = []
-            # add entry to pend dict
-            pend_set_dict[tablename].append(entry)
-    # -------------------------------------------------------------------------
-    # loop around add /set
-    for mode, pend_dict in zip(['ADD', 'SET'], [pend_add_dict, pend_set_dict]):
-        # print progress
-        msg = 'Pushing {0} pending {1} database entrie(s) to database'
-        margs = [len(pend_files), mode]
-        WLOG(params, 'info', msg.format(*margs))
-        # ---------------------------------------------------------------------
-        # loop around tables and add entries to database
-        for tablename in pend_dict:
-            # print progress
-            msg = '\t- Pushing {0} entries to table: {1}'
-            margs = [len(pend_dict[tablename]), tablename]
-            WLOG(params, '', msg.format(*margs))
-            # construct database manager
-            dbm = DatabaseManager(params)
-            dbm.name = tablename
-            dbm.kind = tablename
-            # set path
-            dbm.database_settings(kind=tablename)
-            # load database
-            dbm.load_db()
-            # add the rows in bulk
-            if mode == 'ADD':
-                dbm.database.add_rows(insert_dicts=pend_dict[tablename])
-            else:
-                dbm.database.set_rows(update_dicts=pend_dict[tablename])
-    # -------------------------------------------------------------------------
-    # print progress
-    msg = 'Removing {0} pending database entries'
-    margs = [len(pend_files)]
-    WLOG(params, 'info', msg.format(*margs))
-    # remove pending files
-    for pend_file in pend_files:
-        os.remove(pend_file)
-    # -------------------------------------------------------------------------
-    # remove the directory if empty
+    # if there are no files in the pending directory we have nothing to do
     if len(os.listdir(db_pend)) == 0:
-        try:
-            os.rmdir(db_pend)
-        except OSError:
-            pass
+        return
+    # ----------------------------------------------------------------------
+    # lock file in db_pend
+    lockfilename = os.path.join(db_pend, 'db_push.lock')
+    # start counter
+    lcounter = 0
+    # wait for lock to disappear
+    while os.path.exists(lockfilename):
+        # every 30 seconds print a message
+        if lcounter % 30 == 0:
+            msg = 'Waiting for database push lock to clear... [{0}]'
+            WLOG(params, '', msg.format(lockfilename))
+        # increment counter
+        lcounter += 1
+        # wait for lock to disappear
+        time.sleep(1)
+    # -------------------------------------------------------------------------
+    # create lock file
+    with open(lockfilename, 'w') as lockfile:
+        lockfile.write(str(Time.now().iso))
+    # -------------------------------------------------------------------------
+    try:
+        # ----------------------------------------------------------------------
+        # otherwise we get all pending files in the db_pend directory
+        pend_basefile = '{0}_{1}_UID*.yaml'.format(pid, db_shortname)
+        pend_files = []
+        pend_directories = [db_pend]
+        # loop around directories recursively to find pending files
+        for _root, _dirs, _files in os.walk(db_pend):
+            # keep track of directories
+            for _dir in _dirs:
+                full_dir = os.path.join(_root, _dir)
+                if full_dir not in pend_directories:
+                    pend_directories.append(full_dir)
+            # find pending files
+            for file in _files:
+                if fnmatch.fnmatch(file, pend_basefile):
+                    full_path = os.path.join(_root, file)
+                    if full_path not in pend_files:
+                        pend_files.append(full_path)
+        # -------------------------------------------------------------------------
+        # deal with no pending files
+        if len(pend_files) == 0:
+            return
+        # -------------------------------------------------------------------------
+        # print progress
+        msg = 'Reading {0} pending database entrie(s) [{1}]'
+        margs = [len(pend_files), db_pend]
+        WLOG(params, 'info', msg.format(*margs))
+        # loop around pending files and compile a dictionary of entriers to add
+        #  to each table
+        pend_add_dict = dict()
+        pend_set_dict = dict()
+        # loop around pending files
+        for pend_file in tqdm(pend_files):
+            # read yaml file
+            pdict = base.load_yaml(pend_file)
+            # get table name and entry
+            tablename = pdict['TABLE_NAME']
+            entry = pdict['ENTRY']
+            mode = pdict['MODE']
+            # deal with add mode
+            if mode == 'ADD':
+                # deal with table not in pend dict
+                if tablename not in pend_add_dict:
+                    pend_add_dict[tablename] = []
+                # add entry to pend dict
+                pend_add_dict[tablename].append(entry)
+            # deal with set mode
+            else:
+                # deal with table not in pend dict
+                if tablename not in pend_set_dict:
+                    pend_set_dict[tablename] = []
+                # add entry to pend dict
+                pend_set_dict[tablename].append(entry)
+        # ---------------------------------------------------------------------
+        # loop around add /set
+        for mode, pend_dict in zip(['ADD', 'SET'], [pend_add_dict, pend_set_dict]):
+            # print progress
+            msg = 'Pushing {0} pending {1} database entrie(s) to database [{2}]'
+            margs = [len(pend_files), mode, db_pend]
+            WLOG(params, 'info', msg.format(*margs))
+            # -----------------------------------------------------------------
+            # loop around tables and add entries to database
+            for tablename in pend_dict:
+                # print progress
+                msg = '\t- Pushing {0} entries to table: {1}'
+                margs = [len(pend_dict[tablename]), tablename]
+                WLOG(params, '', msg.format(*margs))
+                # construct database manager
+                dbm = DatabaseManager(params)
+                dbm.name = tablename
+                dbm.kind = tablename
+                # set path
+                dbm.database_settings(kind=tablename)
+                # load database
+                dbm.load_db()
+                # add the rows in bulk
+                if mode == 'ADD':
+                    dbm.database.add_rows(insert_dicts=pend_dict[tablename])
+                else:
+                    dbm.database.set_rows(update_dicts=pend_dict[tablename])
+        # ---------------------------------------------------------------------
+        # print progress
+        msg = 'Removing {0} pending database entries [{1}]'
+        margs = [len(pend_files), db_pend]
+        WLOG(params, 'info', msg.format(*margs))
+        # remove pending files
+        for pend_file in pend_files:
+            os.remove(pend_file)
+        # ---------------------------------------------------------------------
+        # remove the directory if empty
+        for _dir in pend_directories:
+            if len(os.listdir(_dir)) == 0:
+                try:
+                    os.rmdir(db_pend)
+                except OSError:
+                    pass
+    finally:
+        # remove lock file
+        if os.path.exists(lockfilename):
+            os.remove(lockfilename)
 
 
 def db_send(params: ParamDict, tablename: str,
             shortname: str, entry: Dict[str, Any],
             mode: Literal['ADD', 'SET'] = 'ADD',
-            condition: Optional[str] = None):
+            condition: Optional[str] = None,
+            groupname: Optional[str] = None):
     """
     Send an entry to the pending database list
 
@@ -3394,7 +3450,9 @@ def db_send(params: ParamDict, tablename: str,
     # construct file path
     db_pend = str(os.path.join(params['PATH.OTHER'], params['DB.PENDING_PATH']))
     # deal with apero group (add to db_pend)
-    if params.get('DRS.GROUP', None) is not None:
+    if groupname is not None:
+        db_pend = os.path.join(db_pend, groupname)
+    elif params.get('DRS.GROUP', None) is not None:
         db_pend = os.path.join(db_pend, params['DRS.GROUP'])
     # -------------------------------------------------------------------------
     # make sure path exists

@@ -23,6 +23,7 @@ from apero.utils import drs_startup
 from apero.utils import drs_utils
 from apero.io import drs_image
 from apero.base import base as apero_base
+from apero.core import drs_database
 
 # =============================================================================
 # Define variables
@@ -221,11 +222,14 @@ def extract_files(params: ParamDict, recipe: DrsRecipe,
     #  point as we need to use these files later on - examples are
     #  the file that were combined
     drs_startup.index_files(params, recipe)
+    # push to database
+    drs_database.db_push(params)
     # ------------------------------------------------------------------
     # Get the output hc e2ds filename (and check if it exists)
     # ------------------------------------------------------------------
     # set up drs group (for logging)
-    groupname = drs_startup.group_name(params, suffix='extract')
+    groupname = drs_startup.group_name(params, suffix='extract',
+                                       update_params=False)
     # if we have a obs_dir then add this to the group name path
     if not drs_text.null_text(params['OBS_SUBDIR'], ['None', '', 'Null']):
         groupname = os.path.join(params['OBS_SUBDIR'], groupname)
@@ -425,6 +429,12 @@ def extract_files(params: ParamDict, recipe: DrsRecipe,
             raise AperoCodedException(params, '09-016-00003', targs=eargs)
         # copy file to dictionary
         outputs[fiber] = outfile.completecopy(outfile)
+    # ------------------------------------------------------------------
+    # re-workout group name (for database push) without subdir
+    groupname = drs_startup.group_name(params, suffix='extract',
+                                       update_params=False)
+    # send to database
+    drs_database.db_push(params, groupname=groupname)
     # return dictionary of outputs (one key for each fiber)
     return outputs
 
