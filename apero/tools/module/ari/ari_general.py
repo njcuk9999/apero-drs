@@ -323,6 +323,14 @@ def find_new_objects(params: ParamDict, object_classes: Dict[str, AriObject]
     # get the log database
     logdbm = drs_database.LogDatabase(params)
     logdbm.load_db()
+    # get reject database
+    rejectdbm = drs_database.RejectDatabase(params)
+    rejectdbm.load_db()
+    # get reject table
+    reject_table = rejectdbm.get_entries('*')
+    # clean identifier column
+    _reject_list = reject_table['IDENTIFIER']
+    reject_table['IDENTIFIER'] = drs_misc.clean_reject_list(_reject_list)
     # -------------------------------------------------------------------------
     # log progress
     WLOG(params, '', 'Compiling object files stats (this may take a while)')
@@ -338,6 +346,9 @@ def find_new_objects(params: ParamDict, object_classes: Dict[str, AriObject]
         obj_class = object_classes[objname]
         # add files stats
         obj_class.add_files_stats(indexdbm, logdbm)
+        # ---------------------------------------------------------------------
+        # add crossmatch with reject table
+        obj_class.add_reject_table(reject_table)
     # -------------------------------------------------------------------------
     # final step is to remove any objects that have no raw files
     new_object_classes = dict()
