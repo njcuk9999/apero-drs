@@ -485,12 +485,20 @@ CDict.add('TELLU_MATCH', dtype=str, source=__NAME__,
                        'time the key lower in the calibDB file '
                        'will be used'))
 
+#   Define whether to use batch database queries
+CDict.add('BATCH_QUERIES', dtype=bool, source=__NAME__,
+          value=True, group=cgroup,
+          description='Define whether to use batch database queries')
+
+
 #   Define the path (relative to PATHS.OTHER) where the pending database
 #   entries should be stored
 CDict.add('PENDING_PATH', dtype=str, source=__NAME__,
           value='db_pending', group=cgroup,
           description='Define the path (relative to PATHS.OTHER) where '
                       'the pending database entries should be stored')
+
+
 
 
 # =============================================================================

@@ -297,9 +297,11 @@ class AstrometricDatabase(DatabaseManager):
         #   are in database)
         self.check_columns(insert_dict)
         # try to add a new row
-        # self.database.add_row(insert_dict=insert_dict)
-        db_send(self.params, self.database.tablename, self.shortname,
-                insert_dict)
+        if not self.params['DB.BATCH_QUERIES']:
+            self.database.add_row(insert_dict=insert_dict)
+        else:
+            db_send(self.params, self.database.tablename, self.shortname,
+                    insert_dict)
 
     def count(self, condition: Union[str, None] = None) -> int:
         """
@@ -548,9 +550,11 @@ class CalibrationDatabase(DatabaseManager):
         self.check_columns(insert_dict)
         # ------------------------------------------------------------------
         # try to add a new row
-        # self.database.add_row(insert_dict=insert_dict)
-        db_send(self.params, self.database.tablename, self.shortname,
-                insert_dict)
+        if not self.params['DB.BATCH_QUERIES']:
+            self.database.add_row(insert_dict=insert_dict)
+        else:
+            db_send(self.params, self.database.tablename, self.shortname,
+                    insert_dict)
         # update parameter table (if fits file)
         if isinstance(drsfile, DrsFitsFile):
             drsfile.update_param_table('CALIB_DB_ENTRY',
@@ -1022,9 +1026,11 @@ class TelluricDatabase(DatabaseManager):
         self.check_columns(insert_dict)
         # ------------------------------------------------------------------
         # try to add a new row
-        # self.database.add_row(insert_dict=insert_dict)
-        db_send(self.params, self.database.tablename, self.shortname,
-                insert_dict)
+        if not self.params['DB.BATCH_QUERIES']:
+            self.database.add_row(insert_dict=insert_dict)
+        else:
+            db_send(self.params, self.database.tablename, self.shortname,
+                    insert_dict)
         # update parameter table (if fits file)
         if isinstance(drsfile, DrsFitsFile):
             drsfile.update_param_table('TELLU_DB_ENTRY',
@@ -1839,17 +1845,22 @@ class FileIndexDatabase(DatabaseManager):
         num_rows = self.database.count(condition=condition)
         # if we don't have an entry we add a row
         if num_rows == 0:
-            # self.database.add_row(insert_dict=insert_dict)
-            db_send(self.params, self.database.tablename, self.shortname,
-                    insert_dict)
+            if not self.params['DB.BATCH_QUERIES']:
+                self.database.add_row(insert_dict=insert_dict)
+            else:
+                db_send(self.params, self.database.tablename, self.shortname,
+                        insert_dict)
 
         else:
             # condition comes from uhash - so set to None here (to remember)
-            # condition = None
             # update row in database
-            # self.database.set(update_dict=insert_dict, condition=condition)
-            db_send(self.params, self.database.tablename, self.shortname,
-                    insert_dict, mode='SET')
+            if not self.params['DB.BATCH_QUERIES']:
+                condition = None
+                self.database.set_row(update_dict=insert_dict,
+                                      condition=condition)
+            else:
+                db_send(self.params, self.database.tablename, self.shortname,
+                        insert_dict, mode='SET')
 
     def remove_entries(self, condition: str):
         """
@@ -2321,10 +2332,13 @@ class FileIndexDatabase(DatabaseManager):
                 else:
                     values.append('Null')
             # update this row (should only be one row based on condition)
-            # self.database.set_row(columns, values=values, condition=condition)
-            update_dict = dict(zip(columns, values))
-            db_send(self.params, self.database.tablename, self.shortname,
-                    update_dict, mode='SET', condition=condition)
+            if not self.params['DB.BATCH_QUERIES']:
+                self.database.set_row(columns, values=values,
+                condition=condition)
+            else:
+                update_dict = dict(zip(columns, values))
+                db_send(self.params, self.database.tablename, self.shortname,
+                        update_dict, mode='SET', condition=condition)
 
     def _update_params(self, **kwargs) -> bool:
         """
@@ -2749,9 +2763,11 @@ class LogDatabase(DatabaseManager):
         #   are in database)
         self.check_columns(insert_dict)
         # add row to database
-        # self.database.add_row(insert_dict=insert_dict)
-        db_send(self.params, self.database.tablename, self.shortname,
-                insert_dict)
+        if not self.params['DB.BATCH_QUERIES']:
+            self.database.add_row(insert_dict=insert_dict)
+        else:
+            db_send(self.params, self.database.tablename, self.shortname,
+                    insert_dict)
 
     def get_entries(self, columns: str = '*',
                     include_obs_dirs: Union[List[str], None] = None,
@@ -2972,9 +2988,11 @@ class RejectDatabase(DatabaseManager):
         #   are in database)
         self.check_columns(insert_dict)
         # add row to database
-        # self.database.add_row(insert_dict=insert_dict)
-        db_send(self.params, self.database.tablename, self.shortname,
-                insert_dict)
+        if not self.params['DB.BATCH_QUERIES']:
+            self.database.add_row(insert_dict=insert_dict)
+        else:
+            db_send(self.params, self.database.tablename, self.shortname,
+                    insert_dict)
 
     def get_entries(self, columns: str = '*',
                     nentries: Union[int, None] = None,
