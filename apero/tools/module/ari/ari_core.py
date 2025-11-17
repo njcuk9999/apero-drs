@@ -84,6 +84,7 @@ OBJ_TO_YAML['spec_plot_path'] = 'SPEC_PLOT_PATH'
 OBJ_TO_YAML['spec_stats_table'] = 'SPEC_STATS_TABLE'
 OBJ_TO_YAML['spec_rlink_table'] = 'SPEC_RLINK_TABLE'
 OBJ_TO_YAML['spec_dwn_table'] = 'SPEC_DWN_TABLE'
+OBJ_TO_YAML['spec_reject_table'] = 'SPEC_REJECT_TABLE'
 OBJ_TO_YAML['lbl_combinations'] = 'LBL_COMBINATIONS'
 OBJ_TO_YAML['lbl_plot_path'] = 'LBL_PLOT_PATH'
 OBJ_TO_YAML['lbl_stats_table'] = 'LBL_STATS_TABLE'
@@ -566,6 +567,9 @@ class AriObject:
         # whether we need to update this
         self.update: bool = False
         # ---------------------------------------------------------------------
+        # reject table
+        self.reject_table = None
+        # ---------------------------------------------------------------------
         # yaml parameters
         # ---------------------------------------------------------------------
         # whether this object has been seen before
@@ -592,6 +596,7 @@ class AriObject:
         self.spec_stats_table: Optional[str] = None
         self.spec_rlink_table: Optional[str] = None
         self.spec_dwn_table: Optional[str] = None
+        self.spec_reject_table: Optional[str] = None
         # get lbl output parameters (for page integration)
         self.lbl_combinations = []
         self.lbl_plot_path = dict()
@@ -695,6 +700,38 @@ class AriObject:
             self.last_processed = np.max(all_last_processed)
         else:
             self.last_processed = None
+
+    def add_reject_table(self, reject_table: pd.DataFrame):
+
+
+
+        # Step 1: Get the list of raw files
+        raw_files = self.filetypes['raw'].files
+        # deal with no raw files --> return
+        if len(raw_files) == 0:
+            self.reject_table = None
+            return
+
+        # Step 2: Get list of identifiers from raw files
+        identifiers = []
+        for raw_file in raw_files:
+            # strip path
+            identifier = os.path.basename(raw_file)
+            # strip fits
+            if identifier.endswith('.fits'):
+                identifier = identifier[:-5]
+            identifiers.append(identifier)
+
+        # see if identifiers are in the reject table
+        mask = reject_table['IDENTIFIER'].isin(identifiers)
+        filtered_table = reject_table[mask]
+
+        if len(filtered_table) > 0:
+            self.reject_table = filtered_table
+        else:
+            # TODO: This will be self.reject_table = None after the test
+            # TODO: REMOVE this!!!
+            self.reject_table = reject_table.loc[np.arange(len(identifiers))]
 
     def populate_header_dict(self, params: ParamDict):
         """
@@ -818,9 +855,6 @@ class AriObject:
             # loop around filetypes and add them
             for key in yaml_dict['FileType']:
                 self.filetypes[key].load_dump(yaml_dict['FileType'][key])
-
-
-
 
     # -------------------------------------------------------------------------
     # Target functions
