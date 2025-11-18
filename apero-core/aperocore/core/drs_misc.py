@@ -655,6 +655,25 @@ def map_nested_attribute_dict(yaml_d, obj_d, attr_name, dict_types=(dict,)):
     return result
 
 
+# clean identifier column
+def clean_reject_list(_reject_list) -> List[str]:
+    # storage for return
+    reject_list = []
+    # clean reject list
+    for _reject_item in _reject_list:
+        # remove path
+        _reject_item = os.path.basename(_reject_item)
+        # remove .fits from reject item
+        if _reject_item.endswith('.fits'):
+            _reject_item = _reject_item[:-5]
+        # add to reject list
+        reject_list.append(_reject_item)
+
+    return reject_list
+
+
+
+
 # =============================================================================
 # Start of code
 # =============================================================================

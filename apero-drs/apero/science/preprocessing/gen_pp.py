@@ -560,16 +560,7 @@ def get_file_reject_list(params: ParamDict, recipe: DrsRecipe,
         # get the reject list
         _reject_list = np.array(rtable['IDENTIFIER'], dtype=str)[idmask]
         # storage for return
-        reject_list = []
-        # clean reject list
-        for _reject_item in _reject_list:
-            # remove path
-            _reject_item = os.path.basename(_reject_item)
-            # remove .fits from reject item
-            if _reject_item.endswith('.fits'):
-                _reject_item = _reject_item[:-4]
-            # add to reject list
-            reject_list.append(_reject_item)
+        reject_list = drs_misc.clean_reject_list(_reject_list)
         # return rejection list
         return np.array(reject_list)
 
