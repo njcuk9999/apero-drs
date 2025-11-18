@@ -703,8 +703,6 @@ class AriObject:
 
     def add_reject_table(self, reject_table: pd.DataFrame):
 
-
-
         # Step 1: Get the list of raw files
         raw_files = self.filetypes['raw'].files
         # deal with no raw files --> return
@@ -724,14 +722,14 @@ class AriObject:
 
         # see if identifiers are in the reject table
         mask = reject_table['IDENTIFIER'].isin(identifiers)
+        mask &= reject_table['USED'] == 1
         filtered_table = reject_table[mask]
-
+        # if we have some rejects make the table
         if len(filtered_table) > 0:
             self.reject_table = filtered_table
+        # otherwise we leave this blank - and no rejections
         else:
-            # TODO: This will be self.reject_table = None after the test
-            # TODO: REMOVE this!!!
-            self.reject_table = reject_table.loc[np.arange(len(identifiers))]
+            self.reject_table = None
 
     def populate_header_dict(self, params: ParamDict):
         """
@@ -960,6 +958,10 @@ class AriObject:
         spec_props['EXT_Y_LABEL'] = self.headers['ext']['EXT_Y']['label']
         spec_props['EXT_H_LABEL'] = self.headers['ext']['EXT_H']['label']
         spec_props['NUM_RAW_FILES'] = ftypes['raw'].num_passed
+        if self.reject_table is None:
+            spec_props['NUM_REJ_FILES'] = 0
+        else:
+            spec_props['NUM_REJ_FILES'] = len(self.reject_table)
         spec_props['NUM_PP_FILES'] = ftypes['pp'].num_passed
         spec_props['NUM_EXT_FILES'] = ftypes['ext'].num_passed
         spec_props['NUM_TCORR_FILES'] = ftypes['tcorr'].num_passed
@@ -1287,11 +1289,25 @@ class AriObject:
         download_table(down_files, down_descs, dwn_item_path, '',
                        obj_save_path, title='Spectrum Downloads')
         # -----------------------------------------------------------------
+        # construct the reject table
+        # -----------------------------------------------------------------
+        if self.reject_table is None:
+            reject_base_name = None
+        else:
+            # get the reject base name
+            reject_base_name = f'spec_reject_{self.objname}_{ari_user}.txt'
+            # get the reject table path
+            reject_item_path = os.path.join(obj_save_path, reject_base_name)
+            # compute the reject table
+            reject_table(self.reject_table, reject_item_path,
+                         title='Rejected Spectra')
+        # -----------------------------------------------------------------
         # update the paths
         self.spec_plot_path = plot_base_name
         self.spec_stats_table = stat_base_name
         self.spec_rlink_table = rlink_base_name
         self.spec_dwn_table = dwn_base_name
+        self.spec_reject_table = reject_base_name
 
     # -------------------------------------------------------------------------
     # LBL functions
@@ -2198,6 +2214,7 @@ def spec_stats_table(spec_props: Dict[str, Any], stat_path: str, title: str):
     from apero.core.math import estimate_sigma
     # get parameters from props
     num_raw = spec_props['NUM_RAW_FILES']
+    num_reject = spec_props['NUM_REJ_FILES']
     num_pp = spec_props['NUM_PP_FILES']
     num_ext = spec_props['NUM_EXT_FILES']
     num_tcorr = spec_props['NUM_TCORR_FILES']
@@ -2245,6 +2262,8 @@ def spec_stats_table(spec_props: Dict[str, Any], stat_path: str, title: str):
     # -------------------------------------------------------------------------
     stat_dict['Description'].append('Total number raw files')
     stat_dict['Value'].append(f'{num_raw}')
+    stat_dict['Description'].append('Number of rejected files')
+    stat_dict['Value'].append(f'{num_reject}')
     stat_dict['Description'].append('First raw files')
     stat_dict['Value'].append(f'{first_raw}')
     stat_dict['Description'].append('Last raw files')
@@ -3043,6 +3062,19 @@ def download_table(files: List[str], descriptions: List[str],
     down_table = Table(down_dict2)
     # write to file as csv file
     down_table.write(item_path, format='ascii.csv', overwrite=True)
+
+
+def reject_table(reject_table: pd.DataFrame, save_path: str, title: str):
+    # --------------------------------------------------------------------------
+    # convert to table
+    rej_table = Table()
+    rej_table[title] = reject_table['IDENTIFIER']
+    rej_table['PP'] = reject_table['PP']
+    rej_table['TEL'] = reject_table['TEL']
+    rej_table['RV'] = reject_table['RV']
+    rej_table['Reason'] = reject_table['COMMENT']
+    # write to file as csv file
+    rej_table.write(save_path, format='ascii.csv', overwrite=True)
 
 
 def do_rsync(params: ParamDict, mode: str, path_in: str, path_out: str,
