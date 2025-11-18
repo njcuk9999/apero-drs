@@ -667,6 +667,12 @@ def objpage_spectrum(params: ParamDict, page: Any, name: str, ref: str,
         # add the stats table
         page.add_csv_table('', object_instance.spec_dwn_table,
                            cssclass='csvtable2')
+    # ------------------------------------------------------------------
+    # add reject table
+    if object_instance.spec_reject_table is not None:
+        # add the stats table
+        page.add_csv_table('', object_instance.spec_reject_table,
+                           cssclass='csvtable2')
 
 
 def objpage_lbl(params: ParamDict, page: Any, name: str, ref: str,
