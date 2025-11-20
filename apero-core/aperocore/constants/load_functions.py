@@ -636,8 +636,13 @@ def starting_point(params: ParamDict, imode_key: Union[str, List[str]],
     # deal with instrument mode not set
     params = ask_for_missing_args(params, include_keys=[imode_key])
     # section start
-    msg = ('\nPlease choose a demo mode or press enter '
-           'to start from default values')
+    msg = ('\nPlease choose a demo mode to start from. '
+           '\n\nNote this can be used as a starting point for any other '
+           'observation. '
+           '\n\nEven if you do not '
+           'want to run the demo we suggest taking a look at the demo yaml, '
+           'copying the yaml configuration file and modifiying it yourself '
+           'instead of starting from default values or a a blank yaml.')
     drs_text.cprint(msg, 'g')
     # get user selected instrument mode
     imode = params[imode_key]
@@ -647,7 +652,9 @@ def starting_point(params: ParamDict, imode_key: Union[str, List[str]],
     if imode not in demo_dict:
         # print that no demos are avaiable
         wmsg = (f'No demos available for {imode} '
-                f'-- starting from default values.')
+                f'-- starting from default values. \n\n'
+                f'Warning we highly do not recommend this '
+                f'without assistance from the developers.')
         WLOG(params, 'warning', wmsg)
         # set demo params
         params.set('DEMO_PARAMS', demo_params, source=func_name)
