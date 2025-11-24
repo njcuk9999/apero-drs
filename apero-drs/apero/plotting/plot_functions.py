@@ -5528,6 +5528,10 @@ def plot_static_det_plot(plotter: Plotter, graph: Graph,
         frames[0].imshow(dark0[:, start:end], **pkwargs)
         frames[1].imshow(recon_amp, **pkwargs)
         frames[2].imshow(dark0[:, start:end] - recon_amp, **pkwargs)
+        # add titles
+        frames[0].set(title='Original dark amp {0}'.format(amp))
+        frames[1].set(title='Reconstructed amp {0}'.format(amp))
+        frames[2].set(title='Corrected dark amp {0}'.format(amp))
         # force a tight layout
         plt.tight_layout()
         # update filename (adding order_num to end)
