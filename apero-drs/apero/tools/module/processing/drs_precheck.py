@@ -15,7 +15,6 @@ import numpy as np
 from astropy.table import Table
 from tqdm import tqdm
 
-from aperocore.base import base
 from aperocore.constants import param_functions
 from aperocore.constants import load_functions
 from aperocore import drs_lang
@@ -32,6 +31,8 @@ from apero.tools.module.database import manage_databases
 from apero.tools.module.processing import drs_processing
 from apero.instruments import select
 from apero.base import base as apero_base
+from apero.utils import drs_utils
+
 
 # =============================================================================
 # Define variables
@@ -663,9 +664,34 @@ def _get_rawfile(drsfile: DrsFitsFile):
 # =============================================================================
 # Define object checking functions
 # =============================================================================
+def update_raw_findex_db(params: ParamDict, obsdir: str, findexdbm):
+    """
+    Update the raw file index database for a given observation directory
+
+    :param params: ParamDict, the parameter dictionary of constants
+    :param obsdir: str, the observation directory to update
+    :param findexdbm: file index database instance
+
+    :return: None, just update the file index database
+    """
+    # -------------------------------------------------------------------------
+    # deal with not having database currently
+    if findexdbm is None:
+        # construct the index database instance
+        findexdbm = FileIndexDatabase(params)
+        findexdbm.load_db()
+    # -------------------------------------------------------------------------
+    # log block update
+    WLOG(params, '', textentry('40-503-00044', args=['raw']))
+    # update index database for raw for the obsdir
+    _ = drs_utils.update_index_db(params, block_kind='raw',
+                                  includelist=[obsdir], excludelist=[],
+                                  findexdbm=findexdbm)
+
+
 def obj_check(params: ParamDict, recipe: DrsRecipe,
               findexdbm: Optional[FileIndexDatabase] = None,
-              log: bool = True) -> Table:
+              log: bool = True, obsdir: str = None) -> Table:
     """
     Check the index database for unique objects and display which of these
     are not in the object database currently (and not in the rejection list)
@@ -673,6 +699,8 @@ def obj_check(params: ParamDict, recipe: DrsRecipe,
     :param params: ParamDict, the parameter dictionary of constants
     :param findexdbm: IndexDatabase instance or None (will load index database)
     :param log: bool, if True prints messages to screen (default True)
+    :param obsdir: str or None, if not None update only this observation
+                   directory in the file index database
 
     :return: None, prints to screen
     """
@@ -689,6 +717,10 @@ def obj_check(params: ParamDict, recipe: DrsRecipe,
         # construct the index database instance
         findexdbm = FileIndexDatabase(params, recipe.shortname)
         findexdbm.load_db()
+    # -------------------------------------------------------------------------
+    # update the file index database
+    if obsdir is not None:
+        update_raw_findex_db(params, obsdir, findexdbm)
     # ---------------------------------------------------------------------
     # Update the object database (recommended only for full reprocessing)
     # check that we have entries in the object database
