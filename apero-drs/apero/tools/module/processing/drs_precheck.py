@@ -664,7 +664,8 @@ def _get_rawfile(drsfile: DrsFitsFile):
 # =============================================================================
 # Define object checking functions
 # =============================================================================
-def update_raw_findex_db(params: ParamDict, obsdir: str, findexdbm):
+def update_raw_findex_db(params: ParamDict, recipe: DrsRecipe,
+                         obsdir: str, findexdbm):
     """
     Update the raw file index database for a given observation directory
 
@@ -678,7 +679,7 @@ def update_raw_findex_db(params: ParamDict, obsdir: str, findexdbm):
     # deal with not having database currently
     if findexdbm is None:
         # construct the index database instance
-        findexdbm = FileIndexDatabase(params)
+        findexdbm = FileIndexDatabase(params, recipe.shortname)
         findexdbm.load_db()
     # -------------------------------------------------------------------------
     # log block update
@@ -720,7 +721,7 @@ def obj_check(params: ParamDict, recipe: DrsRecipe,
     # -------------------------------------------------------------------------
     # update the file index database
     if obsdir is not None:
-        update_raw_findex_db(params, obsdir, findexdbm)
+        update_raw_findex_db(params, recipe, obsdir, findexdbm)
     # ---------------------------------------------------------------------
     # Update the object database (recommended only for full reprocessing)
     # check that we have entries in the object database
