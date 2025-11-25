@@ -39,9 +39,11 @@ from apero.science.calib import flat_blaze
 from apero.science.calib import gen_calib
 from apero.instruments import select
 from apero.base import base as apero_base
-from apero.science.telluric.core_tellu import load_tellu_file, wave_to_wave
+from apero.science.telluric.core_tellu import load_tellu_file
 from apero.science.telluric import sky_corr
 from apero.science import extract
+from aperocore.science import wavecore
+
 
 # =============================================================================
 # Define variables
@@ -1353,7 +1355,7 @@ def clean_ohline_pca(params, recipe, image, wavemap, **kwargs):
         # get spectrum + 1000 (as OH PCAS use 0 as a flag)
         ohspec = ohpcas[:, :, ncomp] + 1000.0
         # shift the principle component from ohwave grid to input e2ds wave grid
-        ohpcshift = wave_to_wave(params, ohspec, ohwave, wavemap)
+        ohpcshift = wavecore.wave_to_wave(ohspec, ohwave, wavemap)
         # remove the + 1000 (so we still have the 0 flag)
         ohpcshift = ohpcshift - 1000.0
         # push into ribbons
@@ -2435,20 +2437,19 @@ def shift_template(params: ParamDict, recipe: DrsRecipe,
         wargs = [wavefile_ref, wavefile]
         WLOG(params, '', textentry('40-019-00021', args=wargs))
     # shift template e2ds
-    template_e2ds = wave_to_wave(params, tprops['TEMP_S2D'],
-                                 wavemap_ref / dvshift,
-                                 wavemap, reshape=True)
+    template_e2ds = wavecore.wave_to_wave(tprops['TEMP_S2D'],
+                                          wavemap_ref / dvshift,
+                                          wavemap, reshape=True)
     # push into 2D vector shape = 1 by len(s1d_table)
     tmp_wave = np.array([tprops['TEMP_S1D_TABLE']['wavelength']])
     tmp_s1d = np.array([tprops['TEMP_S1D_TABLE']['flux']])
     tmp_s1d_deconv = np.array([tprops['TEMP_S1D_TABLE']['deconv']])
     # shift template s1d
-    template_s1d = wave_to_wave(params, tmp_s1d,
-                                          tmp_wave / dvshift,
-                                          tmp_wave, reshape=False)
-    template_s1d_deconv = wave_to_wave(params, tmp_s1d_deconv,
-                                                 tmp_wave / dvshift,
-                                                 tmp_wave, reshape=False)
+    template_s1d = wavecore.wave_to_wave(tmp_s1d, tmp_wave / dvshift,
+                                         tmp_wave, reshape=False)
+    template_s1d_deconv = wavecore.wave_to_wave(tmp_s1d_deconv,
+                                                tmp_wave / dvshift,
+                                                tmp_wave, reshape=False)
     # debug plot - reconstructed spline (in loop)
     if image is not None:
         recipe.plot('FTELLU_RECON_SPLINE1', image=image, wavemap=wavemap,
