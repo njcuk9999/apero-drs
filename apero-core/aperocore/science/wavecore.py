@@ -31,7 +31,7 @@ from aperocore.base import physics
 # =============================================================================
 # Define variables
 # =============================================================================
-__NAME__ = 'aperocore.science.wavecore.py'
+__NAME__ = 'aperocore.science.wavecore'
 __INSTRUMENT__ = 'None'
 __PACKAGE__ = base.__PACKAGE__
 __version__ = base.__version__
@@ -55,7 +55,6 @@ def wave_to_wave(spectrum, wave1, wave2, reshape=False, splinek=5):
     Shifts a "spectrum" at a given wavelength solution (map), "wave1", to
     another wavelength solution (map) "wave2"
 
-    :param params: ParamDict, the parameter dictionary
     :param spectrum: numpy array (2D),  flux in the reference frame of the
                      file wave1
     :param wave1: numpy array (2D), initial wavelength grid
