@@ -29,6 +29,7 @@ from apero.science import preprocessing as prep
 from apero.science import telluric
 from apero.tools.module.database import manage_databases
 from apero.tools.module.processing import drs_processing
+from apero.core.utils import drs_utils
 
 # =============================================================================
 # Define variables
@@ -661,14 +662,42 @@ def _get_rawfile(drsfile: DrsFitsFile):
 # =============================================================================
 # Define object checking functions
 # =============================================================================
+def update_raw_findex_db(params: ParamDict, obsdir: str, findexdbm):
+    """
+    Update the raw file index database for a given observation directory
+
+    :param params: ParamDict, the parameter dictionary of constants
+    :param obsdir: str, the observation directory to update
+    :param findexdbm: file index database instance
+
+    :return: None, just update the file index database
+    """
+    # -------------------------------------------------------------------------
+    # deal with not having database currently
+    if findexdbm is None:
+        # construct the index database instance
+        findexdbm = FileIndexDatabase(params)
+        findexdbm.load_db()
+    # -------------------------------------------------------------------------
+    # log block update
+    WLOG(params, '', textentry('40-503-00044', args=['raw']))
+    # update index database for raw for the obsdir
+    _ = drs_utils.update_index_db(params, block_kind='raw',
+                                  includelist=[obsdir], excludelist=[],
+                                  findexdbm=findexdbm)
+
+
 def obj_check(params: ParamDict, findexdbm: Optional[FileIndexDatabase] = None,
-              log: bool = True) -> Table:
+              log: bool = True, obsdir: str = None) -> Table:
     """
     Check the index database for unique objects and display which of these
     are not in the object database currently (and not in the rejection list)
 
     :param params: ParamDict, the parameter dictionary of constants
     :param findexdbm: IndexDatabase instance or None (will load index database)
+    :param log: bool, if True prints messages to screen (default True)
+    :param obsdir: str or None, if not None update only this observation
+                   directory in the file index database
 
     :return: None, prints to screen
     """
@@ -677,7 +706,7 @@ def obj_check(params: ParamDict, findexdbm: Optional[FileIndexDatabase] = None,
         WLOG(params, 'info', params['DRS_HEADER'])
         WLOG(params, 'info', 'Checking current set of object names')
         WLOG(params, 'info', params['DRS_HEADER'])
-    # ---------------------------------------------------------------------
+    # -------------------------------------------------------------------------
     # get psuedo constants
     pconst = constants.pload()
     # deal with not having index database
@@ -685,7 +714,11 @@ def obj_check(params: ParamDict, findexdbm: Optional[FileIndexDatabase] = None,
         # construct the index database instance
         findexdbm = FileIndexDatabase(params)
         findexdbm.load_db()
-    # ---------------------------------------------------------------------
+    # -------------------------------------------------------------------------
+    # update the file index database
+    if obsdir is not None:
+        update_raw_findex_db(params, obsdir, findexdbm)
+    # -------------------------------------------------------------------------
     # Update the object database (recommended only for full reprocessing)
     # check that we have entries in the object database
     manage_databases.object_db_populated(params)
@@ -696,18 +729,18 @@ def obj_check(params: ParamDict, findexdbm: Optional[FileIndexDatabase] = None,
             WLOG(params, '', textentry('40-503-00039'))
         # update database
         manage_databases.update_object_database(params, log=False)
-    # ---------------------------------------------------------------------
+    # -------------------------------------------------------------------------
     # load the object database after updating
     objdbm = ObjectDatabase(params)
     objdbm.load_db()
-    # ---------------------------------------------------------------------
+    # -------------------------------------------------------------------------
     # Update the reject database (recommended only for full reprocessing)
     # check that we have entries in the object database
     has_entries = manage_databases.reject_db_populated(params)
     # update the database if required
     if params['UPDATE_REJECT_DATABASE'] or not has_entries:
         manage_databases.update_reject_database(params, log=log)
-    # ---------------------------------------------------------------------
+    # -------------------------------------------------------------------------
     # only find science / hot star objects
     sci_dprtypes = params.listp('PP_OBJ_DPRTYPES', dtype=str)
     subconditions = []
