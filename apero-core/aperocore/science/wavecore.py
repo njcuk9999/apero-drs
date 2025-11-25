@@ -76,7 +76,7 @@ def wave_to_wave(spectrum, wave1, wave2, reshape=False, splinek=5):
             emsg = ('Spectrum (shape = {0}) cannot be reshaped to match wave '
                     'solution (shape = {1}) \n\t Function = {2}')
             eargs = [spectrum.shape, wave2.shape, func_name]
-            raise AperoCodedException(None, message=emsg.format(*eargs))
+            raise AperoCodedException(None, None, message=emsg.format(*eargs))
     # if they are the same
     # noinspection PyTypeChecker
     if mp.nansum(wave1 != wave2) == 0:
