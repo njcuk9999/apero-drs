@@ -1,0 +1,87 @@
+# This file contains the Apero user groups and their members
+# used for access control and permissions
+
+# Format should be
+#    GROUP_NAME:
+#      SET_DIRECTORY_PERMISSIONS:
+#        - command1
+#        - command2
+#      SET_FILE_PERMISSIONS:
+#        - command1
+#        - command2
+#      USERS:
+#        - user1
+#        - user2
+#
+#  Where GROUP_NAME is {INSTRUMENT}.{PROJECT}.{LOCATION}
+
+# -------------------------------------------------------------------------
+# Admin groups
+# -------------------------------------------------------------------------
+ADMIN.UDEM_ASTRO:
+  SET_DIRECTORY_PERMISSIONS:
+    - chmod -R 775 {path}
+  SET_FILE_PERMISSIONS:
+    - chmod 775 {path}
+  USERS:
+    - nirps-admin
+    - nirps-client
+    - spirou-admin
+    - spirou-client
+    - cook
+
+ADMIN.ALLIANCE:
+  SET_DIRECTORY_PERMISSIONS:
+   - "setfacl -R -m u:{user}:rx {path}"
+   - "setfacl -d -m u:{user}:rx {path}"
+  SET_FILE_PERMISSIONS:
+   - "setfacl -m u:{user}:r {path}"
+  USERS:
+  - neilcook
+  - eartigau
+
+# -------------------------------------------------------------------------
+# NIRPS groups
+# -------------------------------------------------------------------------
+NIRPS.GTO.UDEM_ASTRO:
+  SET_DIRECTORY_PERMISSIONS:
+    - chmod -R 775 {path}
+  SET_FILE_PERMISSIONS:
+    - chmod 775 {path}
+  USERS:
+    - nirps-client
+    - cook
+
+NIRPS.GTO.ALLIANCE:
+  SET_DIRECTORY_PERMISSIONS:
+   - "setfacl -R -m u:{user}:rx {path}"
+   - "setfacl -d -m u:{user}:rx {path}"
+  SET_FILE_PERMISSIONS:
+   - "setfacl -m u:{user}:r {path}"
+  USERS:
+   - neilcook
+   - eartigau
+
+
+# -------------------------------------------------------------------------
+# NIRPS groups
+# -------------------------------------------------------------------------
+SPIROU.SLS.UDEM_ASTRO:
+  SET_DIRECTORY_PERMISSIONS:
+    - chmod -R 775 {path}
+  SET_FILE_PERMISSIONS:
+    - chmod 775 {path}
+  USERS:
+    - spirou-client
+    - cook
+
+SPIROU.SLS.ALLIANACE:
+  SET_DIRECTORY_PERMISSIONS:
+   - "setfacl -R -m u:{user}:rx {path}"
+   - "setfacl -d -m u:{user}:rx {path}"
+  SET_FILE_PERMISSIONS:
+   - "setfacl -m u:{user}:r {path}"
+  USERS:
+   - neilcook
+   - eartigau
+

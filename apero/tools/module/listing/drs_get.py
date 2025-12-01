@@ -88,6 +88,9 @@ def basic_filter(params: ParamDict, kw_objnames: List[str],
     pconst = constants.pload()
     # get whether to filter by passing qc
     filter_qc = not params['INPUTS']['failedqc']
+    # get the yamls for permissions
+    perm_yaml = params['INPUTS'].get('PERMISSION_YAML', None)
+    group_yaml = params['INPUTS'].get('GROUP_YAML', None)
     # -------------------------------------------------------------------------
     # load index database
     WLOG(params, '', textentry('40-509-00001', args='file index'))
@@ -168,8 +171,8 @@ def basic_filter(params: ParamDict, kw_objnames: List[str],
     # -------------------------------------------------------------------------
     # separate list for each object name
     # -------------------------------------------------------------------------
-    # storage of inpaths
-    database_inpaths = dict()
+    # storage of inpaths and run ids
+    db_entries = dict(OBJNAME=dict(), RUN_ID=dict())
     # loop around input object names
     for kw_objname in kw_objnames:
         # clean object name (as best we can)
@@ -196,9 +199,11 @@ def basic_filter(params: ParamDict, kw_objnames: List[str],
         if len(condition) == 0:
             condition = None
         # get inpaths
-        itable = findexdb.get_entries('ABSPATH, KW_PID', condition=condition)
+        itable = findexdb.get_entries('ABSPATH, KW_PID, KW_RUN_ID',
+                                      condition=condition)
         inpaths = np.array(itable['ABSPATH'])
         ipids = np.array(itable['KW_PID'])
+        run_ids = np.array(itable['KW_RUN_ID'])
         # ---------------------------------------------------------------------
         # need to filter by pid in log database
         # ---------------------------------------------------------------------
@@ -218,7 +223,8 @@ def basic_filter(params: ParamDict, kw_objnames: List[str],
         if len(inpaths[mask]) > 0:
             WLOG(params, '', textentry('40-509-00003', args=[len(inpaths)]))
             # keep files
-            database_inpaths[clean_obj_name] = inpaths[mask]
+            db_entries['OBJNAME'][clean_obj_name] = inpaths[mask]
+            db_entries['RUN_ID'][clean_obj_name] = run_ids[mask]
         else:
             WLOG(params, '', textentry('40-509-00004'))
         # write that we excluded some files
@@ -228,39 +234,14 @@ def basic_filter(params: ParamDict, kw_objnames: List[str],
     # Now get outpaths (if infile exists)
     # -------------------------------------------------------------------------
     # storage of inpaths/outpaths
-    all_inpaths = dict()
-    all_outpaths = dict()
-    # loop around objects with files
-    for objname in database_inpaths:
-        # output directory for objname
-        if nosubdir:
-            outdir = str(user_outdir)
-        else:
-            outdir = os.path.join(user_outdir, objname)
-        # print progress: Adding outpaths for KW_OBJNAME={0}
-        WLOG(params, '', textentry('40-509-00006', args=[objname]))
-        # add object name to storage
-        all_inpaths[objname] = []
-        all_outpaths[objname] = []
-        # loop around all files for this object
-        for filename in database_inpaths[objname]:
-            # if object exists
-            if os.path.exists(filename):
-                # get paths
-                inpath = filename
-                basename = os.path.basename(filename)
-                outpath = os.path.join(outdir, basename)
-                # add to storage
-                all_inpaths[objname].append(inpath)
-                all_outpaths[objname].append(outpath)
-        # make a directory for this object (if it doesn't exist)
-        if len(all_outpaths[objname]) != 0:
-            # print progress: Added {0} outpaths'
-            margs = [len(all_outpaths[objname])]
-            WLOG(params, '', textentry('40-509-00007', args=margs))
-            # create output directory if it doesn't exist
-            if not os.path.exists(outdir) and do_copy:
-                os.mkdir(outdir)
+    if perm_yaml is not None and group_yaml is not None:
+        gsout = get_perm_outpaths(params, nosubdir, db_entries,
+                                  user_outdir, do_copy, perm_yaml, group_yaml)
+    else:
+
+        gsout = get_standard_outpaths(params, nosubdir, db_entries,
+                                      user_outdir, do_copy)
+    all_inpaths, all_outpaths, all_permissions = gsout
     # -------------------------------------------------------------------------
     # deal with file limit
     # -------------------------------------------------------------------------
@@ -308,6 +289,167 @@ def basic_filter(params: ParamDict, kw_objnames: List[str],
     # -------------------------------------------------------------------------
     # Copy files
     # -------------------------------------------------------------------------
+    copy_files(params, all_inpaths, all_outpaths, do_symlink, do_copy,
+               all_permissions)
+
+
+
+# =============================================================================
+# Define helper functions
+# =============================================================================
+AllDict = Dict[str, List[str]]
+PermDict = Dict[str, List[Union[None, Dict[str, str]]]]
+
+def get_standard_outpaths(params, nosubdir: bool, db_entries,
+                          user_outdir, do_copy: bool = True
+                          ) -> Tuple[AllDict, AllDict, PermDict]:
+    # storage of inpaths/outpaths
+    all_inpaths = dict()
+    all_outpaths = dict()
+    all_permissions = dict()
+    # get just the in paths dictionary
+    db_inpaths = db_entries['OBJNAME']
+    # loop around objects with files
+    for objname in db_inpaths:
+        # output directory for objname
+        if nosubdir:
+            outdir = str(user_outdir)
+        else:
+            outdir = str(os.path.join(user_outdir, objname))
+        # print progress: Adding outpaths for KW_OBJNAME={0}
+        WLOG(params, '', textentry('40-509-00006', args=[objname]))
+        # add object name to storage
+        all_inpaths[objname] = []
+        all_outpaths[objname] = []
+        # loop around all files for this object
+        for filename in db_inpaths[objname]:
+            # if object exists
+            if os.path.exists(filename):
+                # get paths
+                inpath = filename
+                basename = os.path.basename(filename)
+                outpath = os.path.join(outdir, basename)
+                # add to storage
+                all_inpaths[objname].append(inpath)
+                all_outpaths[objname].append(outpath)
+                all_permissions[objname].append(None)
+        # make a directory for this object (if it doesn't exist)
+        if len(all_outpaths[objname]) != 0:
+            # print progress: Added {0} outpaths'
+            margs = [len(all_outpaths[objname])]
+            WLOG(params, '', textentry('40-509-00007', args=margs))
+            # create output directory if it doesn't exist
+            if not os.path.exists(outdir) and do_copy:
+                os.mkdir(outdir)
+
+    return all_inpaths, all_outpaths, all_permissions
+
+
+def get_perm_outpaths(params, nosubdir: bool, db_entries,
+                      user_outdir, do_copy: bool = True,
+                      perm_yaml: str = None, group_yaml: str = None
+                      ) -> Tuple[AllDict, AllDict, PermDict]:
+
+    # storage of inpaths/outpaths
+    all_inpaths = dict()
+    all_outpaths = dict()
+    all_permissions = dict()
+    # get in paths dictionary and run ids dictionary
+    db_inpaths = db_entries['OBJNAME']
+    db_runids = db_entries['RUN_ID']
+    # -------------------------------------------------------------------------
+    # load permission yaml
+    if not os.path.exists(perm_yaml):
+        eargs = [perm_yaml]
+        emsg = 'Permission YAML file {0} does not exist'
+        WLOG(params, 'error', emsg.format(*eargs))
+    perm_dict = base.load_yaml(perm_yaml)
+    # -------------------------------------------------------------------------
+    # load group yaml
+    if not os.path.exists(group_yaml):
+        eargs = [group_yaml]
+        emsg = 'Group YAML file {0} does not exist'
+        WLOG(params, 'error', emsg.format(*eargs))
+    group_dict = base.load_yaml(group_yaml)
+    # -------------------------------------------------------------------------
+    # user outdir needs to have an objects and a runid directory
+    obj_dir = os.path.join(user_outdir, 'objects')
+    runid_dir = os.path.join(user_outdir, 'runids')
+    # make the object sub-directory if it doesn't exist
+    if not os.path.exists(obj_dir) and do_copy:
+        os.mkdir(obj_dir)
+    # make the runid sub-directory if it doesn't exist
+    if not os.path.exists(runid_dir) and do_copy:
+        os.mkdir(runid_dir)
+    # -------------------------------------------------------------------------
+    # loop around objects with files
+    for objname in db_inpaths:
+
+        # output directory for objname
+        if nosubdir:
+            obj_outdir = str(obj_dir)
+        else:
+            obj_outdir = str(os.path.join(obj_dir, objname))
+
+        # print progress: Adding outpaths for KW_OBJNAME={0}
+        WLOG(params, '', textentry('40-509-00006', args=[objname]))
+        # add object name to storage
+        all_inpaths[objname] = []
+        all_outpaths[objname] = []
+        # loop around all files for this object
+        for f_it, filename in enumerate(db_inpaths[objname]):
+            # if object exists
+            if os.path.exists(filename):
+                # get file base name
+                basename = os.path.basename(filename)
+                # get paths
+                run_id_inpath = filename
+                # -------------------------------------------------------------
+                # manage run id files
+                # -------------------------------------------------------------
+                # get run id for this file
+                run_id = db_runids[objname][f_it]
+                # skip files we don't have permission to copy
+                if run_id not in perm_dict:
+                    continue
+                # out run id path is runid_dir/{RUNID}/basename
+                run_id_outdir = os.path.join(runid_dir, str(run_id))
+                # make run id directory if it doesn't exist
+                if not os.path.exists(run_id_outdir) and do_copy:
+                    os.mkdir(run_id_outdir)
+                    # run directory permission commands (if given)
+                    _ = permission_commands(params, run_id, perm_dict,
+                                            group_dict, ptype='dir',
+                                            run=True, path=run_id_outdir)
+
+                run_id_outpath = os.path.join(run_id_outdir, basename)
+                # add obj path to storage
+                all_inpaths[objname].append(run_id_inpath)
+                all_outpaths[objname].append(run_id_outpath)
+                all_permissions[objname].append([])
+                # -------------------------------------------------------------
+                # manage object files
+                # -------------------------------------------------------------
+                # get the outpath for the object file
+                obj_outpath = os.path.join(obj_outdir, basename)
+                # add obj path to storage
+                all_inpaths[objname].append(run_id_outpath)
+                all_outpaths[objname].append(obj_outpath)
+                # TODO: Test whether we need to add permissions per file
+                #       of if per directory is enough
+                # run directory permission commands (if given)
+                # cmds = permission_commands(params, run_id, perm_dict,
+                #                         group_dict, ptype='file',
+                #                         run=True, path=run_id_outdir)
+                all_permissions[objname].append(None)
+
+    # return in paths out paths and permissions
+    return all_inpaths, all_outpaths, all_permissions
+
+
+def copy_files(params, all_inpaths: AllDict,  all_outpaths: AllDict,
+               do_symlink: bool, do_copy: bool,
+               all_permissions: PermDict):
     for objname in all_inpaths:
         WLOG(params, '', '')
         WLOG(params, '', params['DRS_HEADER'])
@@ -320,8 +462,40 @@ def basic_filter(params: ParamDict, kw_objnames: List[str],
             inpath = all_inpaths[objname][row]
             outpath = all_outpaths[objname][row]
             # -----------------------------------------------------------------
-            # copy
-            if do_symlink and do_copy:
+            # copy via all permissions dictionary
+            # -----------------------------------------------------------------
+            if all_permissions[objname][row] is not None:
+                # get copy type and commands
+                ctype = all_permissions[objname][row]['CTYPE']
+                commands = all_permissions[objname][row]['COMMANDS']
+                # print string
+                copyargs = [row + 1, len(all_inpaths[objname]), ctype,
+                            outpath]
+                copystr = '[{0}/{1}] --> {2}[{3}]'.format(*copyargs)
+                # print copy string
+                WLOG(params, '', copystr, wrap=False)
+                # remove previous
+                remove_previous(outpath)
+                # run copy commands on files
+                # (usually a copy or symlink followed by some permission change)
+                try:
+                    if ctype == 'SYM':
+                        os.symlink(inpath, outpath)
+                    else:
+                        shutil.copy(inpath, outpath)
+                    # then run permission commands
+                    for command in commands:
+                        os.system(command)
+                except Exception as _:
+                    eargs = [ctype, inpath, outpath]
+                    emsg = 'Failed to run {0} commands on {1} to {2}'
+                    emsg += ' with commands: \n{2}'
+                    emsg = emsg.format(*eargs, '\n'.join(commands))
+                    WLOG(params, 'error', emsg.format(*eargs))
+            # -----------------------------------------------------------------
+            # copy via symbolic link
+            # -----------------------------------------------------------------
+            elif do_symlink and do_copy:
                 # print string
                 copyargs = [row + 1, len(all_inpaths[objname]), outpath]
                 copystr = '[{0}/{1}] --> SYM[{2}]'.format(*copyargs)
@@ -330,6 +504,9 @@ def basic_filter(params: ParamDict, kw_objnames: List[str],
                 # remove and symlink
                 remove_previous(outpath)
                 os.symlink(inpath, outpath)
+            # -----------------------------------------------------------------
+            # copy via shutil copy (full copy)
+            # -----------------------------------------------------------------
             elif do_copy:
                 # print string
                 copyargs = [row + 1, len(all_inpaths[objname]), outpath]
@@ -341,6 +518,68 @@ def basic_filter(params: ParamDict, kw_objnames: List[str],
                 shutil.copy(inpath, outpath)
 
     return all_inpaths, all_outpaths
+
+
+def permission_commands(params, run_id: str, perm_dict: dict,
+                        group_dict: dict, ptype: str = 'file',
+                        run: bool = False, path: str = '') -> List[str]:
+    """
+    Run permission commands on a file
+
+    :param params: ParamDict, the parameter dictionary of constants
+    :param commands: list of strings, the commands to run
+
+    :return:
+    """
+    # find run id in permission dictionary
+    if run_id not in perm_dict:
+        return []
+    # get the permissions for this run id
+    run_id_dict = perm_dict[run_id]
+    # -------------------------------------------------------------------------
+    # storage of users and their permissions
+    users = dict()
+    # deal with groups
+    for group in run_id_dict.get('GROUPS', []):
+
+        # TODO: Must test whether group is valid
+        #       This comes from input and from manual trigger etc
+
+        if group in group_dict:
+            for _user in group_dict[group].get('USERS', []):
+                # make sure we don't add a user twice
+                if _user not in users:
+                    # deal with directory
+                    if ptype == 'dir':
+                        users[_user] = group_dict[group].get('DIR_PERMISSIONS',
+                                                             None)
+                    else:
+                        users[_user] = group_dict[group].get('FILE_PERMISSIONS',
+                                                             None)
+    # -------------------------------------------------------------------------
+    # store commands to run
+    commands = []
+    # loop around users and run commands
+    for _user in users:
+        # get args
+        _kwargs = dict(user=_user, path=path)
+        command = users[_user].format(**_kwargs)
+        # skip if no command given
+        if command is None:
+            continue
+        # add to commands
+        commands.append(command)
+        # try to run command
+        if run:
+            try:
+                os.system(command)
+            except Exception as _:
+                eargs = [command]
+                emsg = 'Failed to run permission command: {0}'
+                WLOG(params, 'error', emsg.format(*eargs))
+    # -------------------------------------------------------------------------
+    # return commands
+    return commands
 
 
 def remove_previous(outpath: str):
