@@ -2,6 +2,73 @@ Changelog
 =========
 
 
+0.7.296 (2025-12-01)
+--------------------
+- [APERO] processing - change error to warning so user can be prompted
+  (on zero files) [Neil Cook]
+- [APERO + APERO CHECKS] Update raw findex database for a specific in
+  `obj_check` if obsdir given. [Neil Cook]
+- [ARI] Added reject table to object pages. [Neil Cook]
+- [ARI] Start adding reject table for each object [UNFINISHED] [Neil
+  Cook]
+- Fix handling of CRUNFILE to ensure it defaults to 'Not set' when None.
+  [Neil Cook]
+- Refactor table column processing to clean FITS table columns during
+  conversion. [Neil Cook]
+- Add functions to clean ASCII text and FITS table columns for ASCII-
+  safe content - to deal with fits.verify. [Neil Cook]
+- [ARI] Fix markdown to make profile page an orphan (should fix toctree
+  problems) [Neil Cook]
+- [ARI] Attempt to make all links relative to a unknown root directory.
+  [Neil Cook]
+- [ARI] Attempt to make all links relative to a unknown root directory.
+  [Neil Cook]
+- [ARI] Attempt to make all links relative to a unknown root directory.
+  [Neil Cook]
+- [ARI] Attempt to make all links relative to a unknown root directory.
+  [Neil Cook]
+- Merge branch 'v0.7.295-stable-test' into v0.7.295-ari-rel. [Neil Cook]
+- [APERO+ARI] Fix `drs_processing` to allow params['INPUTS']['FILENAME']
+  not to exist (this happens when called from ARI (not from
+  `apero_processing)` [Neil Cook]
+- [ARI] Attempt to make all links relative to a unknown root directory.
+  [Neil Cook]
+- [ARI] Attempt to make all links relative to a unknown root directory.
+  [Neil Cook]
+- [ARI] Attempt to make all links relative to a unknown root directory.
+  [Neil Cook]
+- [ARI] Attempt to make all links relative to a unknown root directory.
+  [Neil Cook]
+- [ARI] Attempt to make all links relative to a unknown root directory.
+  [Neil Cook]
+- [ARI] Attempt to make all links relative to a unknown root directory.
+  [Neil Cook]
+- [ARI] Attempt to make all links relative to a unknown root directory.
+  [Neil Cook]
+- [ARI] Attempt to make all links relative to a unknown root directory.
+  [Neil Cook]
+- [ARI] Attempt to make all links relative to a unknown root directory.
+  [Neil Cook]
+- [ARI] Fix problems with broken links and Uncaught errors in browser.
+  [Neil Cook]
+- Merge branch 'v0.7.295-live' into v0.7.295-stable-test. [Neil Cook]
+- [ARI] Fix problems with broken links and Uncaught errors in browser.
+  [Neil Cook]
+- Merge remote-tracking branch 'origin/v0.7.295-live' into
+  v0.7.295-live. [Neil Cook]
+- Fix ARI to not link to broken css and favicon [Needs testing] [Neil
+  Cook]
+- [APERO] Polar: Deal with not setting `ORDER_CONT_POL` (required later)
+  [Neil Cook]
+- [APERO] Polar: Deal with not setting `ORDER_CONT_FLUX` (required later)
+  [Neil Cook]
+- [APERO] Polar: Refactor `ORDER_CONT_POL` assignment to improve clarity
+  and consistency. [Neil Cook]
+- [APERO] Fix quick look mode for extraction and processing. [Neil Cook]
+- Update version to 0.7.295 and changelog for the latest changes. [Neil
+  Cook]
+
+
 0.7.295 (2025-10-06)
 --------------------
 - Add link to APERO requirements document in README.md. [Neil Cook]
