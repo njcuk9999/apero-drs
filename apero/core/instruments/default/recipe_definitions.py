@@ -318,6 +318,11 @@ get_files.set_kwarg(name='--pi_name', default='None', dtype=str,
                     helpstr='Only get files from a certain PI')
 get_files.set_kwarg(name='--runid', default='None', dtype=str,
                     helpstr='Only get files from certain run ids')
+get_files.set_kwarg(name='--permission_yaml', default='None', dtype=str,
+                    helpstr='Sort files based on permissions in this yaml '
+                            'file. Must also define --group_yaml.')
+get_files.set_kwarg(name='--group_yaml', default='None', dtype=str,
+                    helpstr='Group yaml file. For use with --permission_yaml.')
 # advanced options
 get_files.set_kwarg(name='--failedqc', default=False, dtype='switch',
                     helpstr=textentry('GET_FAILEDQC_HELP'))
