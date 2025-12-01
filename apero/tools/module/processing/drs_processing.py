@@ -1977,12 +1977,11 @@ def gen_run_from_seq(params: ParamDict, sequence, indexdb: FileIndexDatabase,
     # deal with empty database (after conditions)
     if idb_len == 0:
         eargs = [ref_condition, func_name]
-        WLOG(params, 'error', textentry('00-503-00018', args=eargs))
+        WLOG(params, 'warning', textentry('00-503-00018', args=eargs))
         # get response for how to continue (skip or exit)
         response = prompt()
         if not response:
             WLOG(params, 'error', 'User chose to exit')
-            raise SystemExit()
     # log that we are processing recipes
     if logmsg:
         WLOG(params, 'info', textentry('40-503-00037', args=[idb_len]))
@@ -2431,7 +2430,7 @@ def gen_global_condition(params: ParamDict, findexdbm: FileIndexDatabase,
             if response:
                 pass
             else:
-                WLOG(params, 'error', 'User chose to exit')
+                WLOG(params, 'warning', 'User chose to exit', sublevel=8)
                 raise SystemExit()
     # ------------------------------------------------------------------
     # Deal with reject list
