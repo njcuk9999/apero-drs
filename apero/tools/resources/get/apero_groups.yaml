@@ -3,6 +3,7 @@
 
 # Format should be
 #    GROUP_NAME:
+#      SERVER: server_name
 #      SET_DIRECTORY_PERMISSIONS:
 #        - command1
 #        - command2
@@ -13,15 +14,16 @@
 #        - user1
 #        - user2
 #
-#  Where GROUP_NAME is {INSTRUMENT}.{PROJECT}.{LOCATION}
+#  Where GROUP_NAME is {INSTRUMENT}.{PROJECT/GROUP}.{SERVER_NAME}
 
 # -------------------------------------------------------------------------
 # Admin groups
 # -------------------------------------------------------------------------
 ADMIN.UDEM_ASTRO:
-  SET_DIRECTORY_PERMISSIONS:
+  SERVER: udem_astro
+  DIRECTORY_PERMISSIONS:
     - chmod -R 775 {path}
-  SET_FILE_PERMISSIONS:
+  FILE_PERMISSIONS:
     - chmod 775 {path}
   USERS:
     - nirps-admin
@@ -31,10 +33,11 @@ ADMIN.UDEM_ASTRO:
     - cook
 
 ADMIN.ALLIANCE:
-  SET_DIRECTORY_PERMISSIONS:
+  SERVER: alliance
+  DIRECTORY_PERMISSIONS:
    - "setfacl -R -m u:{user}:rx {path}"
    - "setfacl -d -m u:{user}:rx {path}"
-  SET_FILE_PERMISSIONS:
+  FILE_PERMISSIONS:
    - "setfacl -m u:{user}:r {path}"
   USERS:
   - neilcook
@@ -44,19 +47,21 @@ ADMIN.ALLIANCE:
 # NIRPS groups
 # -------------------------------------------------------------------------
 NIRPS.GTO.UDEM_ASTRO:
-  SET_DIRECTORY_PERMISSIONS:
+  SERVER: udem_astro
+  DIRECTORY_PERMISSIONS:
     - chmod -R 775 {path}
-  SET_FILE_PERMISSIONS:
+  FILE_PERMISSIONS:
     - chmod 775 {path}
   USERS:
     - nirps-client
     - cook
 
 NIRPS.GTO.ALLIANCE:
-  SET_DIRECTORY_PERMISSIONS:
+  SERVER: alliance
+  DIRECTORY_PERMISSIONS:
    - "setfacl -R -m u:{user}:rx {path}"
    - "setfacl -d -m u:{user}:rx {path}"
-  SET_FILE_PERMISSIONS:
+  FILE_PERMISSIONS:
    - "setfacl -m u:{user}:r {path}"
   USERS:
    - neilcook
@@ -67,19 +72,21 @@ NIRPS.GTO.ALLIANCE:
 # NIRPS groups
 # -------------------------------------------------------------------------
 SPIROU.SLS.UDEM_ASTRO:
-  SET_DIRECTORY_PERMISSIONS:
+  SERVER: udem_astro
+  DIRECTORY_PERMISSIONS:
     - chmod -R 775 {path}
-  SET_FILE_PERMISSIONS:
+  FILE_PERMISSIONS:
     - chmod 775 {path}
   USERS:
     - spirou-client
     - cook
 
 SPIROU.SLS.ALLIANACE:
-  SET_DIRECTORY_PERMISSIONS:
+  SERVER: alliance
+  DIRECTORY_PERMISSIONS:
    - "setfacl -R -m u:{user}:rx {path}"
    - "setfacl -d -m u:{user}:rx {path}"
-  SET_FILE_PERMISSIONS:
+  FILE_PERMISSIONS:
    - "setfacl -m u:{user}:r {path}"
   USERS:
    - neilcook
