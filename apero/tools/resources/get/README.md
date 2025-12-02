@@ -8,19 +8,20 @@
 
  Format should be
 ```yaml
-  GROUP_NAME:
+GROUP_NAME:
+    SERVER: server_name
     SET_DIRECTORY_PERMISSIONS:
-      - command1
-      - command2
+        - command1
+        - command2
     SET_FILE_PERMISSIONS:
-      - command1
-      - command2
+        - command1
+        - command2
     USERS:
-      - user1
-      - user2
+        - user1
+        - user2
 ```
 
-Where GROUP_NAME is {INSTRUMENT}.{PROJECT}.{LOCATION}
+Where GROUP_NAME is {INSTRUMENT}.{PROJECT/GROUP}.{SERVER_NAME}
   
 
 Note that commands can only currently use arguments {user} and {path} 
@@ -32,21 +33,21 @@ This file links the RUN IDs to the Apero user groups/users for access control
 
 Each RUN ID can have groups and users assigned to it.
 
-GROUPS must be taken from apero_groups.yaml in form {INSTRUMENT}.{PROJECT}.{LOCATION}
+GROUPS must be taken from apero_groups.yaml in form {INSTRUMENT}.{PROJECT/GROUP}.{SERVER_NAME}
 
 USERS should be the username on the system this code is intended to be run on
 
 Format should be
 
 ```yaml
-  RUN ID NAME:
+RUN ID NAME:
     GROUPS:
-      - GROUP_NAME1
-      - GROUP_NAME2
+        - GROUP_NAME1
+        - GROUP_NAME2
     PI: "{PI NAME}"
     USERS: 
-      - user1
-      - user2
+        - user1
+        - user2
 ```
 
 

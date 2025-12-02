@@ -310,7 +310,6 @@ get_files.set_kwarg(name='--timekey', default='observed', dtype='options',
                     options=['processed', 'observed'],
                     helpstr='Whether to use the processed or observed time in'
                             ' the since and latest arguments (applies to both)')
-
 get_files.set_kwarg(name='--obsdir', default='None', dtype=str,
                     helpstr='Only get files from a certain observation '
                             'directory')
@@ -318,11 +317,18 @@ get_files.set_kwarg(name='--pi_name', default='None', dtype=str,
                     helpstr='Only get files from a certain PI')
 get_files.set_kwarg(name='--runid', default='None', dtype=str,
                     helpstr='Only get files from certain run ids')
+get_files.set_kwarg(name='--out_prefix', default='None', dtype=str,
+                     helpstr='All output files have this prefix added')
+get_files.set_kwarg(name='--out_suffix', default='None', dtype=str,
+                     helpstr='All output files have this suffix added')
 get_files.set_kwarg(name='--permission_yaml', default='None', dtype=str,
                     helpstr='Sort files based on permissions in this yaml '
                             'file. Must also define --group_yaml.')
 get_files.set_kwarg(name='--group_yaml', default='None', dtype=str,
                     helpstr='Group yaml file. For use with --permission_yaml.')
+get_files.set_kwarg(name='--group_server', default='None', dtype=str,
+                    helpstr='Group server to use with --group_yaml and '
+                            '--permission_yaml.')
 # advanced options
 get_files.set_kwarg(name='--failedqc', default=False, dtype='switch',
                     helpstr=textentry('GET_FAILEDQC_HELP'))

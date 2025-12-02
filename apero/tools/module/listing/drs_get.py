@@ -91,6 +91,13 @@ def basic_filter(params: ParamDict, kw_objnames: List[str],
     # get the yamls for permissions
     perm_yaml = params['INPUTS'].get('PERMISSION_YAML', None)
     group_yaml = params['INPUTS'].get('GROUP_YAML', None)
+    group_server = params['INPUTS'].get('GROUP_SERVER', None)
+    if perm_yaml in ['None', 'Null', '']:
+        perm_yaml = None
+    if group_yaml in ['None', 'Null', '']:
+        group_yaml = None
+    if group_server in ['None', 'Null', '']:
+        group_server = None
     # -------------------------------------------------------------------------
     # load index database
     WLOG(params, '', textentry('40-509-00001', args='file index'))
@@ -236,7 +243,8 @@ def basic_filter(params: ParamDict, kw_objnames: List[str],
     # storage of inpaths/outpaths
     if perm_yaml is not None and group_yaml is not None:
         gsout = get_perm_outpaths(params, nosubdir, db_entries,
-                                  user_outdir, do_copy, perm_yaml, group_yaml)
+                                  user_outdir, do_copy, perm_yaml, group_yaml,
+                                  group_server)
     else:
 
         gsout = get_standard_outpaths(params, nosubdir, db_entries,
@@ -291,6 +299,10 @@ def basic_filter(params: ParamDict, kw_objnames: List[str],
     # -------------------------------------------------------------------------
     copy_files(params, all_inpaths, all_outpaths, do_symlink, do_copy,
                all_permissions)
+    # -------------------------------------------------------------------------
+    # Return all in paths and out paths
+    # -------------------------------------------------------------------------
+    return all_inpaths, all_outpaths
 
 
 
@@ -299,6 +311,40 @@ def basic_filter(params: ParamDict, kw_objnames: List[str],
 # =============================================================================
 AllDict = Dict[str, List[str]]
 PermDict = Dict[str, List[Union[None, Dict[str, str]]]]
+
+
+def get_out_basename(params: ParamDict, infile: str) -> str:
+    """
+    Get the output base name for an input file based on prefix/suffix
+
+    :param params: str, the parameter dictionary of constants
+    :param infile: str, the input file name
+
+    :return: str, the output base name with prefix/suffix applied if given
+    """
+    # get the prefix and suffix from inputs
+    prefix = params['INPUTS'].get('OUT_PREFIX', None)
+    suffix = params['INPUTS'].get('OUT_SUFFIX', None)
+    # deal with null prefix/suffix
+    if drs_text.null_text(prefix, ['None', '', 'Null']):
+        prefix = None
+    if drs_text.null_text(suffix, ['None', '', 'Null']):
+        suffix = None
+    # deal with no prefix or suffix --> just return base name
+    if prefix is None and suffix is None:
+        return os.path.basename(infile)
+    # deal with only prefix (no suffix)
+    if suffix is None:
+        return prefix + os.path.basename(infile)
+    # deal with only suffix (no prefix)
+    elif prefix is None:
+        base, ext = os.path.splitext(os.path.basename(infile))
+        return base + suffix + ext
+    # deal with both prefix and suffix
+    else:
+        base, ext = os.path.splitext(os.path.basename(infile))
+        return prefix + base + suffix + ext
+
 
 def get_standard_outpaths(params, nosubdir: bool, db_entries,
                           user_outdir, do_copy: bool = True
@@ -327,7 +373,7 @@ def get_standard_outpaths(params, nosubdir: bool, db_entries,
             if os.path.exists(filename):
                 # get paths
                 inpath = filename
-                basename = os.path.basename(filename)
+                basename = get_out_basename(params, filename)
                 outpath = os.path.join(outdir, basename)
                 # add to storage
                 all_inpaths[objname].append(inpath)
@@ -347,7 +393,8 @@ def get_standard_outpaths(params, nosubdir: bool, db_entries,
 
 def get_perm_outpaths(params, nosubdir: bool, db_entries,
                       user_outdir, do_copy: bool = True,
-                      perm_yaml: str = None, group_yaml: str = None
+                      perm_yaml: str = None, group_yaml: str = None,
+                      group_server: str = None
                       ) -> Tuple[AllDict, AllDict, PermDict]:
 
     # storage of inpaths/outpaths
@@ -396,12 +443,13 @@ def get_perm_outpaths(params, nosubdir: bool, db_entries,
         # add object name to storage
         all_inpaths[objname] = []
         all_outpaths[objname] = []
+        all_permissions[objname] = []
         # loop around all files for this object
         for f_it, filename in enumerate(db_inpaths[objname]):
             # if object exists
             if os.path.exists(filename):
                 # get file base name
-                basename = os.path.basename(filename)
+                basename = get_out_basename(params, filename)
                 # get paths
                 run_id_inpath = filename
                 # -------------------------------------------------------------
@@ -417,31 +465,38 @@ def get_perm_outpaths(params, nosubdir: bool, db_entries,
                 # make run id directory if it doesn't exist
                 if not os.path.exists(run_id_outdir) and do_copy:
                     os.mkdir(run_id_outdir)
-                    # run directory permission commands (if given)
-                    _ = permission_commands(params, run_id, perm_dict,
-                                            group_dict, ptype='dir',
-                                            run=True, path=run_id_outdir)
+                # run directory permission commands (if given)
+                _ = permission_commands(params, run_id, perm_dict,
+                                        group_dict, group_server,
+                                        ptype='dir',
+                                        run=True, path=run_id_outdir)
 
                 run_id_outpath = os.path.join(run_id_outdir, basename)
                 # add obj path to storage
                 all_inpaths[objname].append(run_id_inpath)
                 all_outpaths[objname].append(run_id_outpath)
-                all_permissions[objname].append([])
+
+                # TODO: Test whether we need to add permissions per file
+                #       of if per directory is enough
+                # run directory permission commands (if given)
+                # cmds = permission_commands(params, run_id, perm_dict,
+                #                         group_dict, group_server,
+                #                         ptype='file',
+                #                         run=True, path=run_id_outdir)
+                cmds = []
+                all_permissions[objname].append(dict(CTYPE='CP', COMMANDS=cmds))
                 # -------------------------------------------------------------
                 # manage object files
                 # -------------------------------------------------------------
+                # make run id directory if it doesn't exist
+                if not os.path.exists(obj_outdir) and do_copy:
+                    os.mkdir(obj_outdir)
                 # get the outpath for the object file
                 obj_outpath = os.path.join(obj_outdir, basename)
                 # add obj path to storage
                 all_inpaths[objname].append(run_id_outpath)
                 all_outpaths[objname].append(obj_outpath)
-                # TODO: Test whether we need to add permissions per file
-                #       of if per directory is enough
-                # run directory permission commands (if given)
-                # cmds = permission_commands(params, run_id, perm_dict,
-                #                         group_dict, ptype='file',
-                #                         run=True, path=run_id_outdir)
-                all_permissions[objname].append(None)
+                all_permissions[objname].append(dict(CTYPE='SYM', COMMANDS=[]))
 
     # return in paths out paths and permissions
     return all_inpaths, all_outpaths, all_permissions
@@ -521,7 +576,8 @@ def copy_files(params, all_inpaths: AllDict,  all_outpaths: AllDict,
 
 
 def permission_commands(params, run_id: str, perm_dict: dict,
-                        group_dict: dict, ptype: str = 'file',
+                        group_dict: dict, group_server: str,
+                        ptype: str = 'file',
                         run: bool = False, path: str = '') -> List[str]:
     """
     Run permission commands on a file
@@ -541,21 +597,27 @@ def permission_commands(params, run_id: str, perm_dict: dict,
     users = dict()
     # deal with groups
     for group in run_id_dict.get('GROUPS', []):
-
-        # TODO: Must test whether group is valid
-        #       This comes from input and from manual trigger etc
-
+        # make sure the group exists in our group dictionary
         if group in group_dict:
-            for _user in group_dict[group].get('USERS', []):
+            _group_dict = group_dict[group]
+            # get group parameters
+            _group_users = _group_dict.get('USERS', [])
+            _group_server = _group_dict.get('SERVER', None)
+            _group_dir_perms = _group_dict.get('DIRECTORY_PERMISSIONS', None)
+            _group_file_perms = _group_dict.get('FILE_PERMISSIONS', None)
+            # if the group server is not the same as the current server skip
+            #  this group
+            if group_server != _group_server:
+                continue
+            # loop around users in this group
+            for _user in _group_users:
                 # make sure we don't add a user twice
                 if _user not in users:
                     # deal with directory
                     if ptype == 'dir':
-                        users[_user] = group_dict[group].get('DIR_PERMISSIONS',
-                                                             None)
+                        users[_user] = _group_dir_perms
                     else:
-                        users[_user] = group_dict[group].get('FILE_PERMISSIONS',
-                                                             None)
+                        users[_user] = _group_file_perms
     # -------------------------------------------------------------------------
     # store commands to run
     commands = []
@@ -563,14 +625,20 @@ def permission_commands(params, run_id: str, perm_dict: dict,
     for _user in users:
         # get args
         _kwargs = dict(user=_user, path=path)
-        command = users[_user].format(**_kwargs)
-        # skip if no command given
-        if command is None:
-            continue
-        # add to commands
-        commands.append(command)
-        # try to run command
-        if run:
+        # loop around commands
+        for user_cmd in users[_user]:
+            # skip if no command given
+            if user_cmd is None:
+                continue
+            # push arguments into command
+            command = user_cmd.format(**_kwargs)
+            # add to commands (if not already there)
+            if command not in commands:
+                commands.append(command)
+    # -------------------------------------------------------------------------
+    # try to run command
+    if run:
+        for command in commands:
             try:
                 os.system(command)
             except Exception as _:
