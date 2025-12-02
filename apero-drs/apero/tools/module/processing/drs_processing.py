@@ -2017,12 +2017,12 @@ def gen_run_from_seq(params: ParamDict, sequence,
     # deal with empty database (after conditions)
     if idb_len == 0:
         eargs = [ref_condition, func_name]
-        WLOG(params, 'error', '00-503-00018', targs=eargs, raise_exception=False)
+        WLOG(params, 'warning', '00-503-00018', targs=eargs, sublevel=8)
         # get response for how to continue (skip or exit)
         response = prompt()
         if not response:
             # TODO: Add to language database
-            WLOG(params, 'error', 'User chose to exit', raise_exception=False)
+            WLOG(params, 'warning', 'User chose to exit', sublevel=8)
             raise SystemExit()
 
     # log that we are processing recipes
