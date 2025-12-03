@@ -1,7 +1,7 @@
-# Define versionV
-VERSION: 0.8.105
+# Define version
+VERSION: 0.8.118
 # Define date of release
-DATE: 2025-03-03
+DATE: 2025-12-03
 # Define release type
 RELEASE: beta
 # Define authors
