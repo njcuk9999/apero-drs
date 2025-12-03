@@ -907,6 +907,9 @@ class Instrument:
         tellu_columns.add(name='AIRMASS', datatype=SHORT_FLOAT)
         tellu_columns.add(name='TAU_WATER',  datatype=SHORT_FLOAT)
         tellu_columns.add(name='TAU_OTHERS', datatype=SHORT_FLOAT)
+        tellu_columns.add(name='RUN_ID', datatype=sqlalchemy.String(80))
+        tellu_columns.add(name='BERV', datatype=LONG_FLOAT)
+        tellu_columns.add(name='BJD', datatype=LONG_FLOAT)
         tellu_columns.add(name='PID', is_index=True,
                           datatype=sqlalchemy.String(80))
         tellu_columns.add(name='PDATE', datatype=sqlalchemy.String(50))

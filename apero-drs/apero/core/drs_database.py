@@ -982,6 +982,12 @@ class TelluricDatabase(DatabaseManager):
         if tau_others is None:
             tau_others = _get_hkey(self.params, 'KW_TELLUP_EXPO_OTHERS', hdict,
                                    header, dtype=float)
+        # get run id from header
+        run_id = _get_hkey(self.params, 'KW_RUN_ID', hdict, header, dtype=str)
+        # get berv from header
+        berv = _get_hkey(self.params, 'KW_BERV', hdict, header, dtype=float)
+        # get bjd from header
+        bjd = _get_hkey(self.params, 'KW_BJD', hdict, header, dtype=float)
         # ------------------------------------------------------------------
         # deal with database input being set to False
         if 'DATABASE' in self.params['INPUTS']:
@@ -1017,6 +1023,9 @@ class TelluricDatabase(DatabaseManager):
         insert_dict['AIRMASS'] = airmass
         insert_dict['TAU_WATER'] = tau_water
         insert_dict['TAU_OTHERS'] = tau_others
+        insert_dict['RUN_ID'] = str(run_id)
+        insert_dict['BERV'] = float(berv)
+        insert_dict['BJD'] = float(bjd)
         insert_dict['PID'] = str(self.params['PID'])
         insert_dict['PDATE'] = str(self.params['DATE_NOW'])
         insert_dict['USED'] = 1

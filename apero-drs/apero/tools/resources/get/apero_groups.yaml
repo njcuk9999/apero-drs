@@ -1,0 +1,94 @@
+# This file contains the Apero user groups and their members
+# used for access control and permissions
+
+# Format should be
+#    GROUP_NAME:
+#      SERVER: server_name
+#      SET_DIRECTORY_PERMISSIONS:
+#        - command1
+#        - command2
+#      SET_FILE_PERMISSIONS:
+#        - command1
+#        - command2
+#      USERS:
+#        - user1
+#        - user2
+#
+#  Where GROUP_NAME is {INSTRUMENT}.{PROJECT/GROUP}.{SERVER_NAME}
+
+# -------------------------------------------------------------------------
+# Admin groups
+# -------------------------------------------------------------------------
+ADMIN.UDEM_ASTRO:
+  SERVER: udem_astro
+  DIRECTORY_PERMISSIONS:
+    - chmod -R 775 {path}
+  FILE_PERMISSIONS:
+    - chmod 775 {path}
+  USERS:
+    - nirps-admin
+    - nirps-client
+    - spirou-admin
+    - spirou-client
+    - cook
+
+ADMIN.ALLIANCE:
+  SERVER: alliance
+  DIRECTORY_PERMISSIONS:
+   - "setfacl -R -m u:{user}:rx {path}"
+   - "setfacl -d -m u:{user}:rx {path}"
+  FILE_PERMISSIONS:
+   - "setfacl -m u:{user}:r {path}"
+  USERS:
+  - neilcook
+  - eartigau
+
+# -------------------------------------------------------------------------
+# NIRPS groups
+# -------------------------------------------------------------------------
+NIRPS.GTO.UDEM_ASTRO:
+  SERVER: udem_astro
+  DIRECTORY_PERMISSIONS:
+    - chmod -R 775 {path}
+  FILE_PERMISSIONS:
+    - chmod 775 {path}
+  USERS:
+    - nirps-client
+    - cook
+
+NIRPS.GTO.ALLIANCE:
+  SERVER: alliance
+  DIRECTORY_PERMISSIONS:
+   - "setfacl -R -m u:{user}:rx {path}"
+   - "setfacl -d -m u:{user}:rx {path}"
+  FILE_PERMISSIONS:
+   - "setfacl -m u:{user}:r {path}"
+  USERS:
+   - neilcook
+   - eartigau
+
+
+# -------------------------------------------------------------------------
+# NIRPS groups
+# -------------------------------------------------------------------------
+SPIROU.SLS.UDEM_ASTRO:
+  SERVER: udem_astro
+  DIRECTORY_PERMISSIONS:
+    - chmod -R 775 {path}
+  FILE_PERMISSIONS:
+    - chmod 775 {path}
+  USERS:
+    - spirou-client
+    - cook
+
+SPIROU.SLS.ALLIANACE:
+  SERVER: alliance
+  DIRECTORY_PERMISSIONS:
+   - "setfacl -R -m u:{user}:rx {path}"
+   - "setfacl -d -m u:{user}:rx {path}"
+  FILE_PERMISSIONS:
+   - "setfacl -m u:{user}:r {path}"
+  USERS:
+   - neilcook
+   - eartigau
+
