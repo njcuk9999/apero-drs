@@ -210,6 +210,25 @@ raw_fp_lfc = drs_finput('RAW_FP_LFC',
                         description='Raw sci=FP calib=LFC file')
 raw_file.addset(raw_fp_lfc)
 
+raw_lfc_hcone = drs_finput('RAW_LFC_HCONE', filetype='.fits', suffix='',
+                        outclass=blank_ofile,
+                        hkeys=dict(KW_RAW_DPRTYPE='WAVE,LFC,UN1',
+                                   KW_RAW_DPRCATG='CALIB',
+                                   KW_INST_MODE=INSTRUMENT_MODE,
+                                   KW_INSTRUMENT=INSTRUMENT_NAME),
+                        description='Raw sci=LFC calib=HC1 file')
+raw_file.addset(raw_lfc_hcone)
+
+raw_hcone_lfc = drs_finput('RAW_HCONE_LFC',
+                        filetype='.fits', suffix='',
+                        outclass=blank_ofile,
+                        hkeys=dict(KW_RAW_DPRTYPE='WAVE,UN1,LFC',
+                                   KW_RAW_DPRCATG='CALIB',
+                                   KW_INST_MODE=INSTRUMENT_MODE,
+                                   KW_INSTRUMENT=INSTRUMENT_NAME),
+                        description='Raw sci=HC1 calib=LFC file')
+raw_file.addset(raw_hcone_lfc)
+
 # -----------------------------------------------------------------------------
 # raw LED LED file
 raw_led_led = drs_finput('RAW_LED_LED', filetype='.fits', suffix='',
@@ -760,6 +779,18 @@ pp_fp_lfc = drs_finput('FP_LFC', hkeys=dict(KW_DPRTYPE='FP_LFC'),
                        inext='.fits', outclass=general_ofile,
                        description='Preprocessed sci=FP calib=LFC file')
 pp_file.addset(pp_fp_lfc)
+
+pp_lfc_hcone = drs_finput('LFC_HCONE', hkeys=dict(KW_DPRTYPE='LFC_HCONE'),
+                       filetype='.fits', suffix='_pp', intype=raw_lfc_hcone,
+                       inext='.fits', outclass=general_ofile,
+                       description='Preprocessed sci=LFC calib=HC file')
+pp_file.addset(pp_lfc_hcone)
+
+pp_hcone_lfc = drs_finput('HCONE_LFC', hkeys=dict(KW_DPRTYPE='HCONE_LFC'),
+                       filetype='.fits', suffix='_pp', intype=raw_hcone_lfc,
+                       inext='.fits', outclass=general_ofile,
+                       description='Preprocessed sci=HC calib=LFC file')
+pp_file.addset(pp_hcone_lfc)
 
 # -----------------------------------------------------------------------------
 # LED LED file
