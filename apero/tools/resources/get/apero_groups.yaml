@@ -42,6 +42,7 @@ ADMIN.ALLIANCE:
   USERS:
   - neilcook
   - eartigau
+  - lmalo
 
 # -------------------------------------------------------------------------
 # NIRPS groups
@@ -66,7 +67,7 @@ NIRPS.GTO.ALLIANCE:
   USERS:
    - neilcook
    - eartigau
-
+   - lmalo
 
 # -------------------------------------------------------------------------
 # NIRPS groups
@@ -91,4 +92,4 @@ SPIROU.SLS.ALLIANACE:
   USERS:
    - neilcook
    - eartigau
-
+   - lmalo
