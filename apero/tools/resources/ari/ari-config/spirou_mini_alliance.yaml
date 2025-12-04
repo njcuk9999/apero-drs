@@ -37,8 +37,9 @@ settings:
   #    Must have ssh keys set up (no prompt for password given)
   ssh:
     directory: /home/sptitan/ari/apero-drs/ari/internal/
-    user: sptitan
-    host: 206.12.93.77
+    user:
+    host:
+    alias: ari2_vm
     options: ssh
   # protect the pages with a password
   protect: True
