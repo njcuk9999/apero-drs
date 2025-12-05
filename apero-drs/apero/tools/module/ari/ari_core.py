@@ -238,8 +238,8 @@ KNOWN_ERRORS_SHEET = ('https://docs.google.com/spreadsheets/d/15Gu_aY6h9Esw1uTF'
 # html and rsync variables
 # -----------------------------------------------------------------------------
 # define rsync commands
-RSYNC_CMD_IN = 'rsync -avuz -e "{SSH}" {USER}@{HOST}:{INPATH} {OUTPATH}'
-RSYNC_CMD_OUT = 'rsync -avuz -e "{SSH}" {INPATH} {USER}@{HOST}:{OUTPATH}'
+RSYNC_CMD_IN = 'rsync -avuz -e "{SSH}" {ALIAS}:{INPATH} {OUTPATH}'
+RSYNC_CMD_OUT = 'rsync -avuz -e "{SSH}" {INPATH} {ALIAS}:{OUTPATH}'
 # define the html col names for each table
 HTML_INCOL_NAMES = dict()
 HTML_INCOL_NAMES['OBJECT_TABLE'] = list(OBJTABLE_COLS.keys())
@@ -3112,8 +3112,12 @@ def do_rsync(params: ParamDict, mode: str, path_in: str, path_out: str,
     ssh_dict['SSH'] = params['TOOLS.ARI.SSH_COPY']['options']
     ssh_dict['USER'] = params['TOOLS.ARI.SSH_COPY']['user']
     ssh_dict['HOST'] = params['TOOLS.ARI.SSH_COPY']['host']
+    ssh_dict['ALIAS'] = params['ARI_SSH_COPY'].get('alias', None)
     ssh_dict['INPATH'] = path_in
     ssh_dict['OUTPATH'] = path_out
+    # deal with no alias (use user@host)
+    if ssh_dict['ALIAS'] is None:
+        ssh_dict['ALIAS'] = '{USER}@{HOST}'.format(**ssh_dict)
     # --------------------------------------------------------------------------
     # try to do the rsync
     try:
