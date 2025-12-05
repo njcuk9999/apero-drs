@@ -1,0 +1,8 @@
+# This document outlines where we got to with pushing v0.7 changes to v0.8
+
+# For use for Neil only
+
+Last update: 2025-05-12
+Last commit: 0e2e4378283b723b196b007d741da9be79ea8f60
+Last commit message: allow --skip=True and --skip
+
