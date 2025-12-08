@@ -216,6 +216,8 @@ class DrsRecipe(object):
         # parameters for summary documentation
         self.schematic = None
         self.description_file = None
+        # parameter for forcing no skipping
+        self.never_skip = False
         # binary flags
         self.flags = BinaryDict()
         for key in apero_base.DEFAULT_FLAGS:
@@ -1151,6 +1153,8 @@ class DrsRecipe(object):
         # parameters for summary documentation
         self.schematic = copy.deepcopy(recipe.schematic)
         self.description_file = copy.deepcopy(recipe.description_file)
+        # parameter for forcing no skipping
+        self.never_skip = copy.deepcopy(recipe.never_skip)
         # copy the binary flags
         self.flags = recipe.flags.copy()
         # define whether to not skip on qc failure (default is False)
