@@ -1418,6 +1418,7 @@ apero_lbl_ref.set_kwarg(name='--objnames', dtype=str, default='None',
                         helpstr='Name of the objects to copy, if None copies '
                                 'all objects available.')
 apero_lbl_ref.group_func = grouping.no_group
+apero_lbl_ref.never_skip = True
 apero_lbl_ref.group_column = None
 # add to recipe
 recipes.append(apero_lbl_ref)
@@ -1441,6 +1442,7 @@ apero_lbl_mask.set_outputs(LBL_MASK=files.lbl_mask_file,
 apero_lbl_mask.set_arg(name='objname', pos=0, dtype=str,
                        helpstr=textentry('MKTEMP_OBJNAME_HELP'))
 apero_lbl_mask.group_func = grouping.no_group
+apero_lbl_mask.never_skip = True
 apero_lbl_mask.group_column = None
 # add to recipe
 recipes.append(apero_lbl_mask)
@@ -1470,6 +1472,7 @@ apero_lbl_compute.set_kwarg(name='--total', dtype=int,
                             helpstr='Total number of iterations '
                                     '(for multiprocessing)')
 apero_lbl_compute.group_func = grouping.lbl_compute_group
+apero_lbl_compute.never_skip = True
 apero_lbl_compute.group_column = None
 # add to recipe
 recipes.append(apero_lbl_compute)
@@ -1497,6 +1500,7 @@ apero_lbl_compile.set_outputs(LBL_RDB=files.lbl_rdb_file,
 apero_lbl_compile.set_arg(name='objname', pos=0, dtype=str,
                           helpstr=textentry('MKTEMP_OBJNAME_HELP'))
 apero_lbl_compile.group_func = grouping.no_group
+apero_lbl_compile.never_skip = True
 apero_lbl_compile.group_column = None
 # add to recipe
 recipes.append(apero_lbl_compile)
