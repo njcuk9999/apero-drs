@@ -15,6 +15,7 @@ Created on 2019-08-06 at 11:57
 import itertools
 import os
 import time
+import sys
 import warnings
 from collections import OrderedDict
 from copy import deepcopy
@@ -27,7 +28,6 @@ from astropy.table import Table
 from aperocore.base import base
 from aperocore.constants import param_functions
 from aperocore.constants import load_functions
-from aperocore.constants import constant_functions
 from aperocore import drs_lang
 from aperocore.core.drs_base_classes import Printer
 from apero.core import drs_argument
@@ -2019,7 +2019,7 @@ def gen_run_from_seq(params: ParamDict, sequence,
         eargs = [ref_condition, func_name]
         WLOG(params, 'warning', '00-503-00018', targs=eargs, sublevel=8)
         # get response for how to continue (skip or exit)
-        response = prompt()
+        response = prompt(params)
         if not response:
             # TODO: Add to language database
             WLOG(params, 'warning', 'User chose to exit', sublevel=8)
@@ -2125,7 +2125,7 @@ def gen_run_from_seq(params: ParamDict, sequence,
                 WLOG(params, 'warning', textentry('10-503-00004', args=wargs),
                      sublevel=8)
                 # get response for how to continue (skip or exit)
-                response = prompt()
+                response = prompt(params)
                 if response:
                     continue
                 else:
@@ -2159,7 +2159,7 @@ def gen_run_from_seq(params: ParamDict, sequence,
             WLOG(params, 'warning', textentry('10-503-00003', args=wargs),
                  sublevel=8)
             # get response for how to continue (skip or exit)
-            response = prompt()
+            response = prompt(params)
             if response:
                 continue
             else:
@@ -2297,9 +2297,21 @@ def update_run_table(sequence, runtable, newruns, rlist=None):
     return outruntable, recipe_list
 
 
-def prompt():
+def prompt(params, message: str = None):
+
+    # deal with no message - use deafult message
+    if message is None:
+        msg = textentry('40-503-00022')
+    else:
+        msg = textentry(message)
+    # if in non-interactive mode then return True
+    if not sys.stdin.isatty():
+        emsg = ('Non-interactive mode - cannot ask "{0}"'
+               '\n\nExiting (see warning above)')
+        WLOG(params, 'warning', emsg.format(msg), sublevel=8)
+        return 0
     # prompt the user for response
-    uinput = input(textentry('40-503-00022'))
+    uinput = input(msg)
     # get the True/False responses
     true = textentry('40-503-00023')
     false = textentry('40-503-00024')
@@ -2401,7 +2413,7 @@ def gen_global_condition(params: ParamDict, findexdbm: FileIndexDatabase,
         if idb_len == 0:
             WLOG(params, 'warning', textentry('10-503-00016'), sublevel=8)
             # get response for how to continue (skip or exit)
-            response = prompt()
+            response = prompt(params)
             if response:
                 pass
             else:
@@ -2429,7 +2441,7 @@ def gen_global_condition(params: ParamDict, findexdbm: FileIndexDatabase,
         if idb_len == 0:
             WLOG(params, 'warning', textentry('10-503-00006'), sublevel=8)
             # get response for how to continue (skip or exit)
-            response = prompt()
+            response = prompt(params)
             if response:
                 pass
             else:
@@ -2458,7 +2470,7 @@ def gen_global_condition(params: ParamDict, findexdbm: FileIndexDatabase,
         if idb_len == 0:
             WLOG(params, 'warning', textentry('10-503-00007'), sublevel=8)
             # get response for how to continue (skip or exit)
-            response = prompt()
+            response = prompt(params)
             if response:
                 pass
             else:
@@ -2485,7 +2497,7 @@ def gen_global_condition(params: ParamDict, findexdbm: FileIndexDatabase,
         if idb_len == 0:
             WLOG(params, 'warning', textentry('10-503-00015'), sublevel=8)
             # get response for how to continue (skip or exit)
-            response = prompt()
+            response = prompt(params)
             if response:
                 pass
             else:
@@ -3887,9 +3899,10 @@ def _find_special_targets(params: ParamDict, pconst,
             question = ('\nMissing object = "{0}"'
                         '\nDo you wish to use object? [Y]es or [N]o:\t')
             # get user input
-            answer = input(question.format(missing_obj))
-
-            if 'Y' in answer.upper():
+            response = prompt(params, message=question.format(missing_obj))
+            # deal with response --> if True then add missing object to
+            # reject list
+            if response:
                 found_list.append(missing_obj)
             else:
                 stop_here = True
