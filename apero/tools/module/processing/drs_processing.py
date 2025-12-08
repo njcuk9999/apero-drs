@@ -1404,6 +1404,12 @@ def _linear_generate_id(params: ParamDict, it: int, run_key: str,
     # work out whether we need to skip recipe
     skip, reason = skip_run_object(params, run_object, skiptable,
                                    skip_storage, input_recipe)
+    # some recipes should not be skipped even if they meet skip criteria
+    if input_recipe.never_skip:
+        skip = False
+        msg = 'Run {0} not skipped as recipe set to never skip [{1}] '
+        margs = [runid, run_object.runstring]
+        WLOG(params, 'warning', msg.format(*margs))
     # deal with RECAL_TEMPLATES = True (don't skip if template required)
     if skip:
         if run_object.recipe.template_required and params['RECAL_TEMPLATES']:
