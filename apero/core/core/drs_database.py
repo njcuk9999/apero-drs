@@ -2547,7 +2547,8 @@ def _get_files(params: ParamDict, path: Union[Path, str], block_kind: str,
     if subdirs is None:
         # get all files in path
         # allfiles = list(path.rglob('*{0}'.format(suffix)))
-        allfiles = drs_path.recursive_path_glob(params, path, suffix=suffix)
+        allfiles = drs_path.recursive_path_glob(params, path, suffix=suffix,
+                                                job_msg=job_msg)
     # else we have subdirs
     else:
         allfiles = []
@@ -2559,7 +2560,8 @@ def _get_files(params: ParamDict, path: Union[Path, str], block_kind: str,
             # append to filenames
             # allfiles += list(Path(subdir).glob('*{0}'.format(suffix)))
             allfiles += drs_path.recursive_path_glob(params, subdir,
-                                                     suffix=suffix)
+                                                     suffix=suffix,
+                                                     job_msg=job_msg)
     # clear loading message
     if len(job_msg) == 0:
         TLOG(params, '', '')
