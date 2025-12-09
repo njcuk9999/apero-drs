@@ -2343,7 +2343,9 @@ class FileIndexDatabase(DatabaseManager):
         # disable tqdm
         if len(job_msg) > 0:
             _tqdm = base.tqdm_module(use=False)
-            WLOG(self.params, '', '\t\tPlease wait... ' + job_msg)
+            msg = '\t\tFixing {0} headers. Please wait... ' + job_msg
+            margs = [len(table)]
+            WLOG(self.params, '', msg.format(*margs))
         else:
             _tqdm = base.tqdm_module()
         # log how long this took
