@@ -8350,7 +8350,7 @@ def combine_hkey(values: List[Any], method: str, math: str) -> Any:
         return None
 
 
-def fix_header(params: ParamDict, recipe: Any,
+def fix_header(params: ParamDict,
                infile: Union[DrsFitsFile, None] = None,
                header: Union[Header, FitsHeader, None] = None,
                check_aliases: bool = False, objdbm: Any = None
@@ -8360,7 +8360,6 @@ def fix_header(params: ParamDict, recipe: Any,
     instrument and called here (function in pseudo_const.py is HEADER_FIXES)
 
     :param params: ParamDict, parameter dictionary of constants
-    :param recipe: DrsRecipe instance associated with calling this function
     :param infile: DrsFitsFile or None, the Drs file instance containing the
                    header to fix - if not set must have header set
     :param header: Header - if set fixes this header (if not set uses infile)
@@ -8392,9 +8391,8 @@ def fix_header(params: ParamDict, recipe: Any,
     pconst = constants.pload()
     # use pseudo constant to apply any header fixes required (specific to
     #   a specific instrument) and update the header
-    header, hdict = pconst.HEADER_FIXES(params=params, recipe=recipe,
-                                        header=header, hdict=hdict,
-                                        filename=filename,
+    header, hdict = pconst.HEADER_FIXES(params=params, header=header,
+                                        hdict=hdict, filename=filename,
                                         check_aliases=check_aliases,
                                         objdbm=objdbm)
     # if the input was an infile return the infile back

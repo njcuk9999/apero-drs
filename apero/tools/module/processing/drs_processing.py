@@ -904,24 +904,230 @@ def update_index_db(params: ParamDict,
     # get all block kinds
     block_kinds = drs_file.DrsPath.get_block_names(params=params,
                                                    block_filter='indexing')
-    # deal with not having database currently
-    if findexdbm is None:
-        # construct the index database instance
-        findexdbm = FileIndexDatabase(params)
-        findexdbm.load_db()
+    # -------------------------------------------------------------------------
+    # Get a list of all raw directories and account for include list and
+    # exclude list
+    raw_obs_dirs = get_raw_obs_dirs(params, includelist, excludelist)
+    # -------------------------------------------------------------------------
+    # get number of cores
+    cores = _get_cores(params)
     # this is really important as we have disabled updating for parallel
     #  runs to make it more efficient
     for block_kind in block_kinds:
         # deal with reindexing
         if block_kind not in ureindexlist:
             continue
-        # log block update
-        WLOG(params, '', textentry('40-503-00044', args=[block_kind]))
-        # update index database for block kind
-        findexdbm = drs_utils.update_index_db(params, block_kind=block_kind,
-                                              includelist=includelist,
-                                              excludelist=excludelist,
-                                              findexdbm=findexdbm)
+        # use pathos to multiprocess
+        if params['REPROCESS_MP_FINDEX'].lower() == 'pathos' and cores > 1:
+            _multi_process_findex_pathos(params, block_kind, raw_obs_dirs,
+                                         cores)
+        elif params['REPROCESS_MP_FINDEX'].lower() == 'pool' and cores > 1:
+            _multi_process_findex_pool(params, block_kind, raw_obs_dirs,
+                                         cores)
+        elif params['REPROCESS_MP_FINDEX'].lower() == 'process' and cores > 1:
+            _multi_process_findex_process(params, block_kind, raw_obs_dirs,
+                                         cores)
+        else:
+            _multi_findex(params, block_kind, raw_obs_dirs)
+
+
+def get_raw_obs_dirs(params, includelist: List[str] = None,
+                     excludelist: List[str] = None) -> List[str]:
+    """
+    Get a list of all raw observation directories accounting for include
+    and exclude lists
+
+    :param params: ParamDict, parameter dictionary of constants
+    :param includelist: list of strings, include only these directories
+    :param excludelist: list of strings, exclude these directories
+
+    :return: list of strings, the raw observation directories to use
+    """
+    # get raw data path
+    raw_path = params['DRS_DATA_RAW']
+    # list all directories in raw data path (may be sub-directories)
+    base_dirs = []
+    for root, dirs, files in os.walk(raw_path):
+        if not dirs:  # no sub-directories → leaf
+            # save the relative path from raw_path
+            rel_path = os.path.relpath(root, raw_path)
+            base_dirs.append(rel_path)
+    # -------------------------------------------------------------------------
+    # deal with white list and black list
+    # no include dirs
+    if drs_text.null_text(includelist, ['None', 'All', '']):
+        include_dirs = None
+    elif includelist in [['All'], ['None'], ['']]:
+        include_dirs = None
+    # else use include list dirs
+    else:
+        include_dirs = list(includelist)
+    # no exclude dirs
+    if drs_text.null_text(excludelist, ['None', 'All', '']):
+        exclude_dirs = None
+    elif excludelist in [['All'], ['None'], ['']]:
+        exclude_dirs = None
+    # else exclude dirs
+    else:
+        exclude_dirs = list(excludelist)
+    # -------------------------------------------------------------------------
+    # filter by include list
+    if include_dirs is not None and len(include_dirs) > 0:
+        filtered_dirs = []
+        for idir in include_dirs:
+            for bdir in base_dirs:
+                if idir in bdir:
+                    filtered_dirs.append(bdir)
+        base_dirs = list(np.unique(filtered_dirs))
+    # filter by exclude list
+    if exclude_dirs is not None and len(exclude_dirs) > 0:
+        filtered_dirs = []
+        for bdir in base_dirs:
+            exclude = False
+            for edir in exclude_dirs:
+                if edir in bdir:
+                    exclude = True
+            if not exclude:
+                filtered_dirs.append(bdir)
+        base_dirs = list(np.unique(filtered_dirs))
+    # return base directories
+    return base_dirs
+
+
+def update_header_fix(params):
+    # get include list
+    includelist = params.listp('INCLUDE_OBS_DIRS', dtype=str)
+    # get exclude list
+    excludelist = params.listp('EXCLUDE_OBS_DIRS', dtype=str)
+    # -------------------------------------------------------------------------
+    # Get a list of all raw directories and account for include list and
+    # exclude list
+    raw_obs_dirs = get_raw_obs_dirs(params, includelist, excludelist)
+    # -------------------------------------------------------------------------
+    # get number of cores
+    cores = _get_cores(params)
+    # -------------------------------------------------------------------------
+    # use pathos to multiprocess
+    if params['REPROCESS_MP_FINDEX'].lower() == 'pathos' and cores > 1:
+        _multi_process_headerfix_pathos(params, raw_obs_dirs, cores)
+    elif params['REPROCESS_MP_FINDEX'].lower() == 'pool' and cores > 1:
+        _multi_process_headerfix_pool(params, raw_obs_dirs, cores)
+    elif params['REPROCESS_MP_FINDEX'].lower() == 'process' and cores > 1:
+        _multi_process_headerfix_process(params, raw_obs_dirs, cores)
+    else:
+        _multi_headerfix(params, raw_obs_dirs)
+
+
+def _multi_headerfix(params, obs_dirs, job: int = None, total_jobs: int = None):
+    # start a message if job and total_jobs given
+    if (job is not None) and (total_jobs is not None):
+        job_msg = ' [{0}/{1}] '.format(job, total_jobs)
+    else:
+        job_msg = ''
+    # load the object database
+    objdbm = drs_database.AstrometricDatabase(params)
+    objdbm.load_db()
+    # construct the index database instance
+    findexdbm = drs_database.FileIndexDatabase(params)
+    findexdbm.load_db()
+    # fix the header data (object name, dprtype, mjdmid and
+    #     trg_type etc)
+    WLOG(params, '', textentry('40-503-00043') + job_msg)
+    findexdbm.update_header_fix(objdbm=objdbm, obs_dirs=obs_dirs,
+                                job_msg=job_msg)
+
+
+def _multi_process_headerfix_pathos(params: ParamDict,
+                                    raw_obs_dirs: List[str], cores: int):
+    """
+    Takes all raw directories, finds files and read headers via
+    pathos.Pool.map
+
+    :param params: ParamDict, parameter dictionary of constants
+    :param block_kind: str, the kind of block to look for
+    :param raw_obs_dirs: List of str, the raw observation directories to
+                         search for files
+    :param cores: int, the number of cores to use
+    """
+    # deal with Pool specific imports
+    from pathos.pools import ParallelPool as Pool
+    # set up the pool
+    pool = Pool(ncpus=cores, maxtasksperchild=1)
+    # list of params for each entry
+    params_per_process = []
+    # populate params for each sub group
+    for r_it, raw_obs_dir in enumerate(raw_obs_dirs):
+        args = [params, [raw_obs_dir], r_it + 1, len(raw_obs_dirs)]
+        params_per_process.append(args)
+    # transpose the params axis
+    params_per_process2 = list(zip(*params_per_process))
+    # start parallel jobs
+    pool.map(_multi_headerfix, *params_per_process2)
+
+
+def _multi_process_headerfix_pool(params: ParamDict,
+                                  raw_obs_dirs: List[str], cores: int):
+    """
+    Takes all raw directories, finds files and read headers via
+    multiprocessing.Pool.starmap
+
+    :param params: ParamDict, parameter dictionary of constants
+    :param block_kind: str, the kind of block to look for
+    :param raw_obs_dirs: List of str, the raw observation directories to
+                         search for files
+    :param cores: int, the number of cores to use
+    """
+    # deal with Pool specific imports
+    from multiprocessing import get_context
+
+    # list of params for each entry
+    params_per_process = []
+    # populate params for each sub group
+    for r_it, raw_obs_dir in enumerate(raw_obs_dirs):
+        args = [params, [raw_obs_dir], r_it + 1, len(raw_obs_dirs)]
+        params_per_process.append(args)
+    # start parallel jobs
+    with get_context('spawn').Pool(cores, maxtasksperchild=1) as pool:
+        pool.starmap(_multi_headerfix, params_per_process)
+
+
+def _multi_process_headerfix_process(params: ParamDict,
+                                     raw_obs_dirs: List[str], cores: int):
+    """
+    Takes all raw directories, finds files and read headers via
+    multiprocessing.Process
+
+    :param params: ParamDict, parameter dictionary of constants
+    :param block_kind: str, the kind of block to look for
+    :param raw_obs_dirs: List of str, the raw observation directories to
+                         search for files
+    :param cores: int, the number of cores to use
+    """
+    # import multiprocessing
+    from multiprocessing import Process
+
+    # split raw_obs_dirs into N=cores groups
+    cores = min(cores, len(raw_obs_dirs))
+    chunk_size = int(np.ceil(len(raw_obs_dirs) / cores))
+
+    grouped_raw_obs_dirs = [raw_obs_dirs[i:i + chunk_size]
+                            for i in range(0, len(raw_obs_dirs), chunk_size)]
+    # process storage
+    jobs = []
+    # loop around each run
+    for g_it, grouped_raw_obs_dir in enumerate(grouped_raw_obs_dirs):
+        # get the arguments for this group
+        args = [params, grouped_raw_obs_dir, g_it + 1,
+                len(grouped_raw_obs_dirs)]
+        # get parallel process
+        process = Process(target=_multi_headerfix, args=args)
+        process.start()
+        jobs.append(process)
+    # do not continue until finished
+    for pit, proc in enumerate(jobs):
+        # debug log: MULTIPROCESS - joining job {0}
+        WLOG(params, 'debug', textentry('90-503-00021', args=[pit]))
+        proc.join()
 
 
 def generate_run_list(params: ParamDict, findexdbm: FileIndexDatabase,
@@ -1076,7 +1282,6 @@ def process_verification(params: ParamDict, vdicts: Dict[str, dict]):
                 msg = '\t\t {0:30s} used (count = {1})'
                 margs = [shortname, count]
                 WLOG(params, '', msg.format(*margs))
-
 
 
 def process_run_list(params: ParamDict, runlist, group=None,
@@ -1798,9 +2003,7 @@ def _multi_process_gen_ids_process(params: ParamDict,
     :return: Dict, where each key is an id and the value is the DrsRecipe
     """
     # import multiprocessing
-    from multiprocessing import Process, Manager
-    # storage for the return dictionary
-    rdict = dict()
+    from multiprocessing import Process
     # loop around each run
     for groupkey in groupkeys:
         # process storage
@@ -1817,6 +2020,118 @@ def _multi_process_gen_ids_process(params: ParamDict,
             # debug log: MULTIPROCESS - joining job {0}
             WLOG(params, 'debug', textentry('90-503-00021', args=[pit]))
             proc.join()
+
+
+def _multi_findex(params: ParamDict, block_kind: str ,raw_obs_dirs: List[str],
+                  job: int = None, total_jobs: int = None):
+    # start a message if job and total_jobs given
+    if (job is not None) and (total_jobs is not None):
+        job_msg = ' [{0}/{1}] '.format(job, total_jobs)
+    else:
+        job_msg = ''
+    # construct the index database instance
+    findexdbm = FileIndexDatabase(params)
+    findexdbm.load_db()
+    # log block update
+    WLOG(params, '', textentry('40-503-00044', args=[block_kind]) + job_msg)
+    # update index database for block kind
+    drs_utils.update_index_db(params, block_kind=block_kind,
+                              includelist=raw_obs_dirs, findexdbm=findexdbm,
+                              job=job, total_jobs=total_jobs)
+
+
+def _multi_process_findex_pathos(params: ParamDict, block_kind:str,
+                                 raw_obs_dirs: List[str], cores: int):
+    """
+    Takes all raw directories, finds files and read headers via
+    pathos.Pool.map
+
+    :param params: ParamDict, parameter dictionary of constants
+    :param block_kind: str, the kind of block to look for
+    :param raw_obs_dirs: List of str, the raw observation directories to
+                         search for files
+    :param cores: int, the number of cores to use
+    """
+    # deal with Pool specific imports
+    from pathos.pools import ParallelPool as Pool
+    # set up the pool
+    pool = Pool(ncpus=cores, maxtasksperchild=1)
+    # list of params for each entry
+    params_per_process = []
+    # populate params for each sub group
+    for r_it, raw_obs_dir in enumerate(raw_obs_dirs):
+        args = [params, block_kind, [raw_obs_dir], r_it + 1, len(raw_obs_dirs)]
+        params_per_process.append(args)
+    # transpose the params axis
+    params_per_process2 = list(zip(*params_per_process))
+    # start parallel jobs
+    pool.map(_multi_findex, *params_per_process2)
+
+
+
+def _multi_process_findex_pool(params: ParamDict, block_kind:str,
+                               raw_obs_dirs: List[str], cores: int):
+    """
+    Takes all raw directories, finds files and read headers via
+    multiprocessing.Pool.starmap
+
+    :param params: ParamDict, parameter dictionary of constants
+    :param block_kind: str, the kind of block to look for
+    :param raw_obs_dirs: List of str, the raw observation directories to
+                         search for files
+    :param cores: int, the number of cores to use
+    """
+    # deal with Pool specific imports
+    from multiprocessing import get_context
+
+    # list of params for each entry
+    params_per_process = []
+    # populate params for each sub group
+    for r_it, raw_obs_dir in enumerate(raw_obs_dirs):
+        args = [params, block_kind, [raw_obs_dir], r_it + 1, len(raw_obs_dirs)]
+        params_per_process.append(args)
+    # start parallel jobs
+    with get_context('spawn').Pool(cores, maxtasksperchild=1) as pool:
+        pool.starmap(_multi_findex, params_per_process)
+
+
+def _multi_process_findex_process(params: ParamDict, block_kind:str,
+                                  raw_obs_dirs: List[str], cores: int):
+    """
+    Takes all raw directories, finds files and read headers via
+    multiprocessing.Process
+
+    :param params: ParamDict, parameter dictionary of constants
+    :param block_kind: str, the kind of block to look for
+    :param raw_obs_dirs: List of str, the raw observation directories to
+                         search for files
+    :param cores: int, the number of cores to use
+    """
+    # import multiprocessing
+    from multiprocessing import Process
+
+    # split raw_obs_dirs into N=cores groups
+    cores = min(cores, len(raw_obs_dirs))
+    chunk_size = int(np.ceil(len(raw_obs_dirs) / cores))
+
+    grouped_raw_obs_dirs = [raw_obs_dirs[i:i + chunk_size]
+                            for i in range(0, len(raw_obs_dirs), chunk_size)]
+    # process storage
+    jobs = []
+    # loop around each run
+    for g_it, grouped_raw_obs_dir in enumerate(grouped_raw_obs_dirs):
+        # get the arguments for this group
+        args = [params, block_kind, grouped_raw_obs_dir, g_it + 1,
+                len(grouped_raw_obs_dirs)]
+        # get parallel process
+        process = Process(target=_multi_findex, args=args)
+        process.start()
+        jobs.append(process)
+    # do not continue until finished
+    for pit, proc in enumerate(jobs):
+        # debug log: MULTIPROCESS - joining job {0}
+        WLOG(params, 'debug', textentry('90-503-00021', args=[pit]))
+        proc.join()
 
 
 def skip_run_object(params, runobj, skiptable, skip_storage, input_recipe):

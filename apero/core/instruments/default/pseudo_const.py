@@ -268,7 +268,7 @@ class DefaultPseudoConstants:
         # return keys
         return forbidden_keys
 
-    def HEADER_FIXES(self, params: Any, recipe: Any, header: Any,
+    def HEADER_FIXES(self, params: Any,  header: Any,
                      hdict: Any, filename: str, check_aliases: bool = False,
                      objdbm: Any = None):
         """
@@ -291,7 +291,7 @@ class DefaultPseudoConstants:
         # set function name
         # _ = display_func('HEADER_FIXES', __NAME__, self.class_name)
         # do nothing
-        _ = params, recipe, header, hdict, filename, check_aliases, objdbm
+        _ = params, header, hdict, filename, check_aliases, objdbm
         # raise implementation error
         self._not_implemented('HEADER_FIXES')
 
@@ -330,8 +330,7 @@ class DefaultPseudoConstants:
         # raise implementation error
         self._not_implemented('DRS_DPRTYPE')
 
-    def DRS_DPRTYPE(self, params: Any, recipe: Any, header: Any,
-                    filename: str):
+    def DRS_DPRTYPE(self, params: Any, header: Any, filename: str):
         """
         Get the dprtype for a specific header
 
@@ -346,7 +345,7 @@ class DefaultPseudoConstants:
                  or DARK_DARK)
         """
         # cannot get dprtye without instrument
-        _ = params, recipe, header, filename
+        _ = params, header, filename
         # raise implementation error
         self._not_implemented('DRS_DPRTYPE')
 
