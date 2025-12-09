@@ -5616,7 +5616,7 @@ REPROCESS_MP_TYPE_VAL = Const('REPROCESS_MP_TYPE_VAL', value=None, dtype=str,
 
 # Define whether to use multiprocess "pool" or "process" or use "linear"
 #     mode when reading raw headers for the file index
-REPROCESS_MP_FINDEX = Const('REPROCESS_MP_TYPE_VAL', value=None, dtype=str,
+REPROCESS_MP_FINDEX = Const('REPROCESS_MP_FINDEX', value=None, dtype=str,
                               source=__NAME__, group=cgroup,
                               user=True, active=True,
                               options=['linear', 'pool', 'process', 'pathos'],
