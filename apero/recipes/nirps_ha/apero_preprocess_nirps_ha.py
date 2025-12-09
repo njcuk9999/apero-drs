@@ -144,7 +144,7 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
         # Fix the header
         # ------------------------------------------------------------------
         # certain keys may not be in some spirou files
-        file_instance = drs_file.fix_header(params, recipe, file_instance)
+        file_instance = drs_file.fix_header(params, file_instance)
         # ------------------------------------------------------------------
         # identification of file drs type
         # ------------------------------------------------------------------

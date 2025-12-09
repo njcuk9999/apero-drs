@@ -250,7 +250,7 @@ class Trigger:
         # fix the header data (object name, dprtype, mjdmid and
         #     trg_type etc)
         WLOG(self.params, '', textentry('40-503-00043'))
-        self.findexdbm.update_header_fix(self.recipe, objdbm=self.objdbm)
+        self.findexdbm.update_header_fix(objdbm=self.objdbm)
         # ----------------------------------------------------------------------
         # step 3: get list of obs_dir
         # ----------------------------------------------------------------------

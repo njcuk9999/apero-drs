@@ -773,7 +773,7 @@ def create_led_flat(params: ParamDict, recipe: DrsRecipe, led_file: DrsFitsFile,
         # read file
         infile.read_file()
         # fix header
-        infile = drs_file.fix_header(params, recipe, infile)
+        infile = drs_file.fix_header(params, infile)
         # append to storage
         infiles.append(infile)
         rawfiles.append(infile.basename)

@@ -381,7 +381,8 @@ __all__ = [
     'REPROCESS_REJECT_SQL', 'REPROCESS_REMOVE_NGROUP', 'REPROCESS_OBJ_SCI_SQL',
     'SUMMARY_LATEX_PDF', 'EXPMETER_MIN_LAMBDA', 'EXPMETER_MAX_LAMBDA',
     'EXPMETER_TELLU_THRES', 'REPROCESS_PINAMECOL', 'DRIFT_DPRTYPES',
-    'DRIFT_DPR_FIBER_TYPE', 'REPROCESS_MP_TYPE', 'REPROCESS_MP_TYPE_VAL',
+    'DRIFT_DPR_FIBER_TYPE',
+    'REPROCESS_MP_TYPE', 'REPROCESS_MP_TYPE_VAL', 'REPROCESS_MP_FINDEX',
     'REPROCESS_REINDEX_BLOCKS', 'REPROCESS_OBJECT_TYPES',
     # ari constants
     'ARI_INSTRUMENT', 'ARI_USER', 'ARI_NCORES', 'ARI_WAVE_RANGES',
@@ -5605,6 +5606,17 @@ REPROCESS_MP_TYPE = Const('REPROCESS_MP_TYPE', value=None, dtype=str,
 # Define whether to use multiprocess "pool" or "process" or use "linear"
 #     mode when validating recipes
 REPROCESS_MP_TYPE_VAL = Const('REPROCESS_MP_TYPE_VAL', value=None, dtype=str,
+                              source=__NAME__, group=cgroup,
+                              user=True, active=True,
+                              options=['linear', 'pool', 'process', 'pathos'],
+                              description='Define whether to use multiprocess '
+                                          '"pool" or "process" or use "linear" '
+                                          'mode when validating recipes')
+
+
+# Define whether to use multiprocess "pool" or "process" or use "linear"
+#     mode when reading raw headers for the file index
+REPROCESS_MP_FINDEX = Const('REPROCESS_MP_TYPE_VAL', value=None, dtype=str,
                               source=__NAME__, group=cgroup,
                               user=True, active=True,
                               options=['linear', 'pool', 'process', 'pathos'],

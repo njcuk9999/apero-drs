@@ -2993,6 +2993,11 @@ REPROCESS_MP_TYPE.value = 'process'
 REPROCESS_MP_TYPE_VAL = REPROCESS_MP_TYPE_VAL.copy(__NAME__)
 REPROCESS_MP_TYPE_VAL.value = 'linear'
 
+# Define whether to use multiprocess "pool" or "process" or use "linear"
+#     mode when reading raw headers for the file index
+REPROCESS_MP_FINDEX = REPROCESS_MP_FINDEX.copy(__NAME__)
+REPROCESS_MP_FINDEX.value = 'process'
+
 # Key for use in run files
 REPROCESS_RUN_KEY = REPROCESS_RUN_KEY.copy(__NAME__)
 REPROCESS_RUN_KEY.value = 'ID'

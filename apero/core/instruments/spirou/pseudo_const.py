@@ -23,6 +23,7 @@ from apero.core.core import drs_text
 from apero.core.instruments.default import pseudo_const
 from apero.core.instruments.default.pseudo_const import get_sun_altitude
 
+
 # =============================================================================
 # Define variables
 # =============================================================================
@@ -242,7 +243,7 @@ class PseudoConstants(pseudo_const.DefaultPseudoConstants):
         # return keys
         return forbidden_keys
 
-    def HEADER_FIXES(self, params: ParamDict, recipe: Any, header: Any,
+    def HEADER_FIXES(self, params: ParamDict, header: Any,
                      hdict: Any, filename: str, check_aliases: bool = False,
                      objdbm: Any = None) -> Any:
         """
@@ -256,8 +257,6 @@ class PseudoConstants(pseudo_const.DefaultPseudoConstants):
                                     TRG_TYPE = ""
 
         :param params: ParamDict, the parameter dictionary of constants
-        :param recipe: DrsRecipe instance, the recipe instance the call came
-                       from
         :param header: drs_fits.Header or astropy.io.fits.Header - containing
                        key words, can be unset if hdict set
         :param hdict:  drs_fits.Header, alternate source for keys, can be
@@ -301,8 +300,7 @@ class PseudoConstants(pseudo_const.DefaultPseudoConstants):
         # ------------------------------------------------------------------
         # Deal with dprtype
         # ------------------------------------------------------------------
-        header, hdict = get_dprtype(params, recipe, header, hdict,
-                                    filename=filename)
+        header, hdict = get_dprtype(params, header, hdict, filename=filename)
         # ------------------------------------------------------------------
         # Deal with calibrations and sky KW_OBJNAME
         # ------------------------------------------------------------------
@@ -346,7 +344,7 @@ class PseudoConstants(pseudo_const.DefaultPseudoConstants):
         return constuct_objname(params, header, filename, check_aliases,
                                 objdbm)
 
-    def DRS_DPRTYPE(self, params: ParamDict, recipe: Any, header: Any,
+    def DRS_DPRTYPE(self, params: ParamDict, header: Any,
                     filename: Union[Path, str]) -> str:
         """
         Get the dprtype for a specific header
@@ -362,7 +360,7 @@ class PseudoConstants(pseudo_const.DefaultPseudoConstants):
                  or DARK_DARK)
         """
         # get correct header
-        dprtype, _, _ = construct_dprtype(recipe, params, filename, header)
+        dprtype, _, _ = construct_dprtype(params, filename, header)
         # return dprtype
         return dprtype
 
@@ -1449,21 +1447,21 @@ def get_drs_mode(params: ParamDict, header: Any, hdict: Any) -> Tuple[Any, Any]:
     return header, hdict
 
 
-def construct_dprtype(recipe: Any, params: ParamDict, filename: str,
+def construct_dprtype(params: ParamDict, filename: str,
                       header: Any) -> Tuple[str, str, Any]:
     """
     Construct the DPRTYPE from the header
 
-    :param recipe: DrsRecipe, the recipe instance
     :param params: ParamDict, the parameter dictionary of constants
     :param filename: str, the filename header came from (for exception)
     :param header: fits.Header, the header to get the DPRTYPE from
 
     :return: type, 1. the dprtype, 2. the outtype, 3. the drsfile instance
     """
+    from apero.core.instruments.spirou import file_definitions
     # get the drs files and raw_prefix
-    drsfiles = recipe.filemod.get().raw_file.fileset
-    raw_prefix = recipe.filemod.get().raw_prefix
+    drsfiles = file_definitions.raw_file.fileset
+    raw_prefix = file_definitions.raw_prefix
     # set up inname
     dprtype, outtype = 'Unknown', 'Unknown'
     drsfile = None
@@ -1489,13 +1487,12 @@ def construct_dprtype(recipe: Any, params: ParamDict, filename: str,
     return dprtype, outtype, drsfile
 
 
-def get_dprtype(params: ParamDict, recipe: Any, header: Any, hdict: Any,
+def get_dprtype(params: ParamDict, header: Any, hdict: Any,
                 filename: Union[None, str, Path] = None) -> Tuple[Any, Any]:
     """
     Get the DPRTYPE from the header
 
     :param params: ParamDict, the parameter dictionary of constants
-    :param recipe: DrsRecipe instance, the recipe call from
     :param header: drs_fits.Header or astropy.io.fits.Header, the header to
                    check for objname (if "objname" not set)
     :param hdict: drs_fits.Header the output header dictionary to update with
@@ -1520,8 +1517,7 @@ def get_dprtype(params: ParamDict, recipe: Any, header: Any, hdict: Any,
     if hdict is None:
         hdict = dict()
     # construct the dprtype and outtype from the header
-    dprtype, outtype, drsfile = construct_dprtype(recipe, params, filename,
-                                                  header)
+    dprtype, outtype, drsfile = construct_dprtype(params, filename, header)
     # update header with DPRTYPE
     header[kwdprtype] = (dprtype, kwdprcomment)
     hdict[kwdprtype] = (dprtype, kwdprcomment)

@@ -154,7 +154,7 @@ def __main__(recipe, params):
         # Fix the nirps header
         # ------------------------------------------------------------------
         # certain keys may not be in some spirou files
-        infile = drs_file.fix_header(params, recipe, infile)
+        infile = drs_file.fix_header(params, infile)
         # ------------------------------------------------------------------
         # print progress
         WLOG(params, '', textentry('40-010-00014', args=[infile.name]))
