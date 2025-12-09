@@ -990,6 +990,11 @@ def get_raw_obs_dirs(params, includelist: List[str] = None,
             if not exclude:
                 filtered_dirs.append(bdir)
         base_dirs = list(np.unique(filtered_dirs))
+    # -------------------------------------------------------------------------
+    # log how many raw directories found
+    msg = 'Found {0} raw observation directories to process'
+    margs = [len(base_dirs)]
+    WLOG(params, '', msg.format(*margs))
     # return base directories
     return base_dirs
 
