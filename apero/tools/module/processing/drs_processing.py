@@ -947,7 +947,7 @@ def get_raw_obs_dirs(params, includelist: List[str] = None,
     raw_path = params['DRS_DATA_RAW']
     # list all directories in raw data path (may be sub-directories)
     base_dirs = []
-    for root, dirs, files in os.walk(raw_path):
+    for root, dirs, files in os.walk(raw_path, followlinks=True):
         if not dirs:  # no sub-directories → leaf
             # save the relative path from raw_path
             rel_path = os.path.relpath(root, raw_path)
