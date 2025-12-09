@@ -564,9 +564,7 @@ def main():
     language = lang.language
     # ----------------------------------------------------------------------
     # deal with validation
-    cond = get_sys_arg('--skip')
-    cond |= get_sys_arg('--skip', 'switch')
-    cond |= get_sys_arg('--help', 'switch')
+    cond = get_sys_arg('--skip', 'switch') or get_sys_arg('--help', 'switch')
 
     if not cond:
         if get_sys_arg('--dev'):
