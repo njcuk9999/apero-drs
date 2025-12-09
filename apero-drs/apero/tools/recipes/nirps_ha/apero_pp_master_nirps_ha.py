@@ -158,13 +158,14 @@ def __main__(recipe, params):
         # Fix the nirps header
         # ------------------------------------------------------------------
         # certain keys may not be in some spirou files
-        infile = drs_file.fix_header(params, recipe, infile)
+        infile = drs_file.fix_header(params, infile)
         # ------------------------------------------------------------------
         # print progress
         WLOG(params, '', textentry('40-010-00014', args=[infile.name]))
         # make order mask
         mask, props = preprocessing.nirps_order_mask(params, recipe,
-                                                     infile.get_data())
+                                                     infile.get_data(),
+                                                     infile.get_header())
         # convert to integers
         mask = np.array(mask).astype(int)
         # ------------------------------------------------------------------

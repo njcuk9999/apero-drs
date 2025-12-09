@@ -120,7 +120,7 @@ def __main__(recipe: DrsRecipe, params: ParamDict):
         #    from updating the index database every time a new recipe
         #    starts this is really important as we have disabled updating
         #    for parallel runs to make it more efficient
-        drs_processing.update_index_db(params)
+        drs_processing.update_index_db(params, recipe.shortname)
 
     # ----------------------------------------------------------------------
     # step 2: previous data

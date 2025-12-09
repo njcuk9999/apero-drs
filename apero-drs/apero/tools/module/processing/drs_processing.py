@@ -477,7 +477,7 @@ def run_process(params: ParamDict, recipe: DrsRecipe,
     # Generate run list
     rlist = generate_run_list(params, recipe, findexdbm, runtable, None)
     # Process run list
-    outlist, has_errors, _ = process_run_list(params, rlist)
+    outlist, has_errors, _ = process_run_list(params, recipe.shortname, rlist)
     # display errors
     if has_errors:
         # terminate here
@@ -874,8 +874,7 @@ def reset_files(params: ParamDict, recipe: DrsRecipe):
             WLOG(params, '', textentry('40-502-00013', args=['Plot']))
 
 
-def update_index_db(params: ParamDict,
-                    findexdbm: Optional[FileIndexDatabase] = None):
+def update_index_db(params: ParamDict, shortname):
     """
     Update the index database
 
@@ -905,28 +904,126 @@ def update_index_db(params: ParamDict,
     # get all block kinds
     block_kinds = drs_file.DrsPath.get_block_names(params=params,
                                                    block_filter='indexing')
-    # deal with not having database currently
-    if findexdbm is None:
-        # construct the index database instance
-        findexdbm = FileIndexDatabase(params, 'PROC')
-        findexdbm.load_db()
+    # -------------------------------------------------------------------------
+    # Get a list of all raw directories and account for include list and
+    # exclude list
+    raw_obs_dirs = get_raw_obs_dirs(params, includelist, excludelist)
+    # -------------------------------------------------------------------------
+    # get number of cores
+    cores = _get_cores(params)
     # this is really important as we have disabled updating for parallel
     #  runs to make it more efficient
     for block_kind in block_kinds:
         # deal with reindexing
         if block_kind not in ureindexlist:
             continue
-        # log block update
-        WLOG(params, '', textentry('40-503-00044', args=[block_kind]))
-        # update index database for block kind
-        findexdbm = drs_utils.update_index_db(params, block_kind=block_kind,
-                                              includelist=includelist,
-                                              excludelist=excludelist,
-                                              findexdbm=findexdbm)
+        # use pathos to multiprocess
+        if params['REPROCESS_MP_FINDEX'].lower() == 'pathos' and cores > 1:
+            _multi_process_findex_pathos(params, block_kind, shortname,
+                                         raw_obs_dirs, cores)
+        elif params['REPROCESS_MP_FINDEX'].lower() == 'pool' and cores > 1:
+            _multi_process_findex_pool(params, block_kind, shortname,
+                                       raw_obs_dirs, cores)
+        elif params['REPROCESS_MP_FINDEX'].lower() == 'process' and cores > 1:
+            _multi_process_findex_process(params, block_kind, shortname,
+                                          raw_obs_dirs, cores)
+        else:
+            _linear_findex(params, block_kind, shortname, raw_obs_dirs)
     # -------------------------------------------------------------------------
     # We should update the database here
     drs_database.db_push(params)
 
+
+def get_raw_obs_dirs(params, includelist: List[str] = None,
+                     excludelist: List[str] = None) -> List[str]:
+    """
+    Get a list of all raw observation directories accounting for include
+    and exclude lists
+
+    :param params: ParamDict, parameter dictionary of constants
+    :param includelist: list of strings, include only these directories
+    :param excludelist: list of strings, exclude these directories
+
+    :return: list of strings, the raw observation directories to use
+    """
+    # get raw data path
+    raw_path = params['DRS_DATA_RAW']
+    # list all directories in raw data path (may be sub-directories)
+    base_dirs = []
+    for root, dirs, files in os.walk(raw_path, followlinks=True):
+        if not dirs:  # no sub-directories → leaf
+            # save the relative path from raw_path
+            rel_path = os.path.relpath(root, raw_path)
+            base_dirs.append(rel_path)
+    # -------------------------------------------------------------------------
+    # deal with white list and black list
+    # no include dirs
+    if drs_text.null_text(includelist, ['None', 'All', '']):
+        include_dirs = None
+    elif includelist in [['All'], ['None'], ['']]:
+        include_dirs = None
+    # else use include list dirs
+    else:
+        include_dirs = list(includelist)
+    # no exclude dirs
+    if drs_text.null_text(excludelist, ['None', 'All', '']):
+        exclude_dirs = None
+    elif excludelist in [['All'], ['None'], ['']]:
+        exclude_dirs = None
+    # else exclude dirs
+    else:
+        exclude_dirs = list(excludelist)
+    # -------------------------------------------------------------------------
+    # filter by include list
+    if include_dirs is not None and len(include_dirs) > 0:
+        filtered_dirs = []
+        for idir in include_dirs:
+            for bdir in base_dirs:
+                if idir in bdir:
+                    filtered_dirs.append(bdir)
+        base_dirs = list(np.unique(filtered_dirs))
+    # filter by exclude list
+    if exclude_dirs is not None and len(exclude_dirs) > 0:
+        filtered_dirs = []
+        for bdir in base_dirs:
+            exclude = False
+            for edir in exclude_dirs:
+                if edir in bdir:
+                    exclude = True
+            if not exclude:
+                filtered_dirs.append(bdir)
+        base_dirs = list(np.unique(filtered_dirs))
+    # -------------------------------------------------------------------------
+    # log how many raw directories found
+    msg = 'Found {0} raw observation directories to process'
+    margs = [len(base_dirs)]
+    WLOG(params, '', msg.format(*margs))
+    # return base directories
+    return base_dirs
+
+
+def update_header_fix(params, shortname):
+    # get include list
+    includelist = params.listp('INCLUDE_OBS_DIRS', dtype=str)
+    # get exclude list
+    excludelist = params.listp('EXCLUDE_OBS_DIRS', dtype=str)
+    # -------------------------------------------------------------------------
+    # Get a list of all raw directories and account for include list and
+    # exclude list
+    raw_obs_dirs = get_raw_obs_dirs(params, includelist, excludelist)
+    # -------------------------------------------------------------------------
+    # get number of cores
+    cores = _get_cores(params)
+    # -------------------------------------------------------------------------
+    # use pathos to multiprocess
+    if params['REPROCESS_MP_FINDEX'].lower() == 'pathos' and cores > 1:
+        _multi_process_headerfix_pathos(params, shortname, raw_obs_dirs, cores)
+    elif params['REPROCESS_MP_FINDEX'].lower() == 'pool' and cores > 1:
+        _multi_process_headerfix_pool(params, shortname, raw_obs_dirs, cores)
+    elif params['REPROCESS_MP_FINDEX'].lower() == 'process' and cores > 1:
+        _multi_process_headerfix_process(params, shortname, raw_obs_dirs, cores)
+    else:
+        _linear_headerfix(params, shortname, raw_obs_dirs)
 
 
 def generate_run_list(params: ParamDict, recipe: DrsRecipe,
@@ -1092,8 +1189,7 @@ def process_verification(params: ParamDict, vdicts: Dict[str, dict]):
                 WLOG(params, '', msg.format(*margs))
 
 
-def process_run_list(params: ParamDict, runlist, group=None,
-                     findexdbm: Optional[FileIndexDatabase] = None):
+def process_run_list(params: ParamDict, shortname, runlist, group=None):
     # start a timer
     process_start = time.time()
     # get number of cores
@@ -1115,22 +1211,22 @@ def process_run_list(params: ParamDict, runlist, group=None,
         # log process: Running with N cores
         WLOG(params, 'info', textentry('40-503-00017', args=[cores]))
         # run as multiple processes
-        rdict = _multi_process_pathos(params, runlist, cores=cores,
-                                      groupname=group, findexdbm=findexdbm)
+        rdict = _multi_process_pathos(params, shortname, runlist,
+                                      cores=cores, groupname=group)
     # use pool to continue parallelization
     elif params['TOOLS.REPROCESS.MP_TYPE'].lower() == 'pool':
         # log process: Running with N cores
         WLOG(params, 'info', textentry('40-503-00017', args=[cores]))
         # run as multiple processes
-        rdict = _multi_process_pool(params, runlist, cores=cores,
-                                    groupname=group, findexdbm=findexdbm)
+        rdict = _multi_process_pool(params, shortname, runlist, cores=cores,
+                                    groupname=group)
     # use Process to continue parallelization
     elif params['TOOLS.REPROCESS.MP_TYPE'].lower() == 'process':
         # log process: Running with N cores
         WLOG(params, 'info', textentry('40-503-00017', args=[cores]))
         # run as multiple processes
-        rdict = _multi_process_process(params, runlist, cores=cores,
-                                       groupname=group, findexdbm=findexdbm)
+        rdict = _multi_process_process(params, shortname, runlist, cores=cores,
+                                       groupname=group)
     else:
         # log process: Running with 1 core
         WLOG(params, 'info', textentry('40-503-00016'))
@@ -1380,127 +1476,6 @@ def generate_run_table(params, recipe, *args, **kwargs):
 # =============================================================================
 # Define "from id" functions
 # =============================================================================
-def _linear_generate_id(params: ParamDict, it: int, run_key: str,
-                        run_item: str, runlist: List[str], keylist: List[int],
-                        input_recipe: DrsRecipe, skiptable: Table,
-                        skip_storage: dict, cores: int = 1,
-                        runfile: str = None, debug: bool = False,
-                        return_run: bool = False):
-    """
-    Linear run of a single validation step
-
-    :param params:
-    :param it:
-    :param run_key:
-    :param run_item:
-    :param runlist:
-    :param keylist:
-    :param input_recipe:
-    :param indexdb:
-    :param recipemod:
-    :param skiptable:
-    :param skip_storage:
-    :param cores:
-    :return:
-    """
-    # get params
-    pconst = load_functions.load_pconfig(select.INSTRUMENTS)
-    # get recipe mod
-    recipemod = pconst.RECIPEMOD()
-    # get file index database
-    indexdb = drs_database.FileIndexDatabase(params, 'PROC')
-    indexdb.load_db()
-    # get runid
-    runid = '{0}{1:05d}'.format(run_key, keylist[it])
-    # deal with no return dict
-    return_dict = dict()
-    # log process: validating run
-    wargs = [runid, it + 1, len(runlist)]
-    # print out is too heavy for multiprocessing
-    if cores == 1:
-        WLOG(params, '', params['LOG.HEADER'])
-        WLOG(params, '', textentry('40-503-00004', args=wargs))
-        WLOG(params, '', params['LOG.HEADER'])
-        WLOG(params, '', textentry('40-503-00013', args=[run_item]))
-    # create run object
-    run_object = Run(params, indexdb, run_item, mod=recipemod,
-                     priority=keylist[it], inrecipe=input_recipe)
-    # deal with input recipe
-    if input_recipe is None:
-        input_recipe = run_object.recipe
-    # deal with skip
-    skip, reason = skip_run_object(params, run_object, skiptable,
-                                   skip_storage, input_recipe)
-    # some recipes should not be skipped even if they meet skip criteria
-    if input_recipe.never_skip:
-        skip = False
-        msg = 'Run {0} not skipped as recipe set to never skip [{1}] '
-        margs = [runid, run_object.runstring]
-        WLOG(params, 'warning', msg.format(*margs))
-    # deal with RECAL_TEMPLATES = True (don't skip if template required)
-    if skip:
-        # run condition is based on 1. template flagged as required
-        # 2. that user has flagged to recalculate template if it exists
-        run_cond = run_object.recipe.template_required
-        run_cond = run_cond and params['RECAL_TEMPLATE_IF_EXISTS']
-        # warn user that we wont skip target
-        if run_cond:
-            skip = False
-            msg = 'Run {0} not skipped as RECAL_TEMPLATE_IF_EXISTS=True [{1}] '
-            margs = [runid, run_object.runstring]
-            WLOG(params, '', msg.format(*margs))
-    # ---------------------------------------------------------------------
-    # deal with passing debug
-    if params['GLOBAL.DEBUG'] > 0:
-        dargs = [run_object.runstring, debug]
-        run_object.runstring = '{0} --debug={1}'.format(*dargs)
-    # ---------------------------------------------------------------------
-    # deal with passing reference argument
-    if input_recipe.reference:
-        dargs = [run_object.runstring, 'True']
-        run_object.runstring = '{0} --ref={1}'.format(*dargs)
-    # ---------------------------------------------------------------------
-    # add run file to argument
-    if not drs_text.null_text(runfile):
-        dargs = [run_object.runstring, runfile]
-        run_object.runstring = '{0} --crunfile={1}'.format(*dargs)
-    # ---------------------------------------------------------------------
-    # update run object (runstring should only be updated once here
-    #    otherwise we add arguments multiple times)
-    run_object.update(update_runstring=True)
-    # append to list
-    if not skip:
-        # log that we have validated run
-        if cores == 1:
-            wargs = [runid]
-            WLOG(params, '', textentry('40-503-00005', args=wargs))
-        else:
-            # TODO: Add to language database
-            msg = 'Run {0} validated [{1}]'
-            margs = [runid, run_object.runstring]
-            WLOG(params, '', msg.format(*margs))
-        # add to pickle files
-        if not return_run:
-            prefix = 'RunObject_{0}'.format(params['PID'])
-            drs_pickle.make_pickle(params, run_object, prefix=prefix,
-                                   suffix=it, log=True)
-        else:
-            return run_object
-    # else log that we are skipping
-    else:
-        # log that we have skipped run
-        wargs = [runid, reason]
-        if cores == 1:
-            WLOG(params, '', textentry('40-503-00006', args=wargs),
-                 colour='yellow')
-        else:
-            # TODO: Add to language database
-            msg = 'Run {0} skipped [{1}] {2}'
-            margs = [runid, run_object.runstring, reason]
-            WLOG(params, '', msg.format(*margs), colour='yellow')
-
-
-
 def generate_ids(params: ParamDict, indexdb: FileIndexDatabase,
                  runtable: Dict[int, str], skiptable: Table,
                  rlist: Optional[Dict[str, DrsRecipe]] = None,
@@ -1670,191 +1645,6 @@ def _group_gen_ids(inkeylist: List[int], inrecipelist: List[DrsRecipe],
             groups[urecipe].append(inkeylist[mask][groupnum == group])
     # return the groups
     return groups
-
-
-def _multi_generate_id(params: ParamDict, subgroup: np.ndarray,
-                       run_key: str, runlist: List[str], keylist: List[int],
-                       inrecipelist: List[DrsRecipe], skiptable: Table,
-                       cores: int):
-    """
-
-    :param params: ParamDict, parameter dictionary of constants
-    :param subgroup: numpy array, contains a list of id keys, these ids must
-                      be in keylist and correspond to the validations to be
-                      done on a single core, the length of groupkeys should be
-                      the number of cores given
-    :param run_key: str, the run key prefix i.e. {run_key}{key}
-                e.g. we get ID000001
-    :param runlist: list of str, the runstring for each id (length must match
-                    keylist)
-    :param keylist: list of int, the full list of ids (same length as runlist)
-    :param inrecipelist: list of DrsRecipe, one DrsRecipe class instance for
-                         each id in keylist
-    :param skiptable: astropy.Table, a table of recipes + cleaned runstrings,
-                      if recipe + runstring in this list we skip it.
-    :param return_dict: None or a dictionary manager to save the return
-                        dict to
-    :param cores: int, the number of cores to use
-
-    :return: dictionary, the return dict or a dictionary where each key is an
-             id and the value is the DrsRecipe
-    """
-    # get debug mode
-    debug = params['GLOBAL.DEBUG']
-    # get run file (if its given)
-    if 'RUNFILE' in params['INPUTS']:
-        runfile = params['INPUTS']['RUNFILE']
-    else:
-        runfile = None
-    # set up a skip storage (so we don't redo things we don't have to many
-    #  times)
-    skip_storage = dict()
-    # loop around keys
-    for it in subgroup:
-        # generate results for this iteration
-        _linear_generate_id(params=params, it=it, run_key=run_key,
-                            run_item=runlist[it], runlist=runlist,
-                            keylist=keylist, input_recipe=inrecipelist[it],
-                            skiptable=skiptable, skip_storage=skip_storage,
-                            cores=cores, runfile=runfile, debug=debug)
-
-
-def _multi_process_gen_ids_pathos(params: ParamDict,
-                                  groupkeys: List[np.ndarray],
-                                  run_key: str, runlist: List[str],
-                                  cores: int, keylist: List[int],
-                                  inrecipelist: List[DrsRecipe],
-                                  skiptable: Table):
-    """
-    Takes all the groups of run files and validates them using
-    pathos.Pool.map
-
-    :param params: ParamDict, parameter dictionary of constants
-    :param groupkeys: list of numpy arrays, each np.ndarray contains a list
-                      of id keys, these ids must be in keylist and correspond
-                      to the validations to be done on a single core, the
-                      length of groupkeys should be the number of cores
-                      given
-    :param run_key: str, the run key prefix i.e. {run_key}{key}
-                    e.g. we get ID000001
-    :param runlist: list of str, the runstring for each id (length must match
-                    keylist)
-    :param cores: int, the number of cores to use
-    :param keylist: list of int, the full list of ids (same length as runlist)
-    :param inrecipelist: list of DrsRecipe, one DrsRecipe class instance for
-                         each id in keylist
-    :param skiptable: astropy.Table, a table of recipes + cleaned runstrings,
-                      if recipe + runstring in this list we skip it.
-
-    :return: Dict, where each key is an id and the value is the DrsRecipe
-    """
-    # deal with Pool specific imports
-    from pathos.pools import ParallelPool as Pool
-    # set up the pool
-    pool = Pool(ncpus=cores, maxtasksperchild=1)
-    # list of params for each entry
-    params_per_process = []
-    # populate params for each sub group
-    for groupkey in groupkeys:
-        args = [params, groupkey, run_key, runlist, keylist,
-                inrecipelist, skiptable, None, cores]
-        params_per_process.append(args)
-    # transpose the params axis
-    params_per_process2 = list(zip(*params_per_process))
-    # start parallel jobs
-    pool.map(_multi_generate_id, *params_per_process2)
-
-
-def _multi_process_gen_ids_pool(params: ParamDict,
-                                groupkeys: List[np.ndarray],
-                                run_key: str, runlist: List[str],
-                                cores: int, keylist: List[int],
-                                inrecipelist: List[DrsRecipe],
-                                skiptable: Table):
-    """
-    Takes all the groups of run files and validates them using
-    multiprocessing.Pool.starmap
-
-    :param params: ParamDict, parameter dictionary of constants
-    :param groupkeys: list of numpy arrays, each np.ndarray contains a list
-                      of id keys, these ids must be in keylist and correspond
-                      to the validations to be done on a single core, the
-                      length of groupkeys should be the number of cores
-                      given
-    :param run_key: str, the run key prefix i.e. {run_key}{key}
-                    e.g. we get ID000001
-    :param runlist: list of str, the runstring for each id (length must match
-                    keylist)
-    :param cores: int, the number of cores to use
-    :param keylist: list of int, the full list of ids (same length as runlist)
-    :param inrecipelist: list of DrsRecipe, one DrsRecipe class instance for
-                         each id in keylist
-    :param skiptable: astropy.Table, a table of recipes + cleaned runstrings,
-                      if recipe + runstring in this list we skip it.
-
-    :return: Dict, where each key is an id and the value is the DrsRecipe
-    """
-    # deal with Pool specific imports
-    from multiprocessing import get_context
-    # list of params for each entry
-    params_per_process = []
-    # populate params for each sub group
-    for groupkey in groupkeys:
-        args = [params, groupkey, run_key, runlist, keylist,
-                inrecipelist, skiptable, None, cores]
-        params_per_process.append(args)
-    # start parallel jobs
-    with get_context('spawn').Pool(cores, maxtasksperchild=1) as pool:
-        pool.starmap(_multi_generate_id, params_per_process)
-
-
-def _multi_process_gen_ids_process(params: ParamDict,
-                                   groupkeys: List[np.ndarray],
-                                   run_key: str, runlist: List[str],
-                                   cores: int, keylist: List[int],
-                                   inrecipelist: List[DrsRecipe],
-                                   skiptable: Table):
-    """
-    Takes all the groups of run files and validates them using
-    multiprocessing.Process
-
-    :param params: ParamDict, parameter dictionary of constants
-    :param groupkeys: list of numpy arrays, each np.ndarray contains a list
-                      of id keys, these ids must be in keylist and correspond
-                      to the validations to be done on a single core, the
-                      length of groupkeys should be the number of cores
-                      given
-    :param run_key: str, the run key prefix i.e. {run_key}{key}
-                    e.g. we get ID000001
-    :param runlist: list of str, the runstring for each id (length must match
-                    keylist)
-    :param cores: int, the number of cores to use
-    :param keylist: list of int, the full list of ids (same length as runlist)
-    :param inrecipelist: list of DrsRecipe, one DrsRecipe class instance for
-                         each id in keylist
-    :param skiptable: astropy.Table, a table of recipes + cleaned runstrings,
-                      if recipe + runstring in this list we skip it.
-
-    :return: Dict, where each key is an id and the value is the DrsRecipe
-    """
-    # import multiprocessing
-    from multiprocessing import Process
-    # loop around each run
-    for groupkey in groupkeys:
-        # process storage
-        jobs = []
-        # get the arguments for this group
-        args = [params, groupkey, run_key, runlist, keylist,
-                inrecipelist, skiptable, cores]
-        # get parallel process
-        process = Process(target=_multi_generate_id, args=args)
-        process.start()
-        jobs.append(process)
-        # do not continue until finished
-        for pit, proc in enumerate(jobs):
-            # debug log: MULTIPROCESS - joining job {0}
-            WLOG(params, 'debug', textentry('90-503-00021', args=[pit]))
-            proc.join()
 
 
 def skip_run_object(params, runobj, skiptable, skip_storage, input_recipe):
@@ -2566,7 +2356,13 @@ def gen_global_condition(params: ParamDict, findexdbm: FileIndexDatabase,
 
 
 # =============================================================================
-# Define processing functions
+# Define multiprocessing of "recipe processing" functions
+#
+#  Normally this consists of:
+#      - a linear function
+#      - a multiprocessing using "process" function
+#      - a multiprocessing using "pool" function
+#      - a multiprocessing using "pathos" function
 # =============================================================================
 def _linear_process(params: ParamDict, runlist: List[Run],
                     number=0, cores=1, event=None,
@@ -2826,8 +2622,7 @@ def _linear_process(params: ParamDict, runlist: List[Run],
     return return_dict
 
 
-def _multi_process_process(params, runlist, cores, groupname=None,
-                           findexdbm: Optional[FileIndexDatabase] = None):
+def _multi_process_process(params, shortname, runlist, cores, groupname=None):
     # first try to group tasks
     grouplist, groupnames = _group_tasks1(runlist, cores)
     # import multiprocessing
@@ -2876,14 +2671,13 @@ def _multi_process_process(params, runlist, cores, groupname=None,
         #  runs to make it more efficient
         # do not update if we are running a test
         if not params['TEST_RUN']:
-            update_index_db(params, findexdbm=findexdbm)
+            update_index_db(params, shortname)
 
     # return return_dict
     return dict(return_dict)
 
 
-def _multi_process_pool(params, runlist, cores, groupname=None,
-                        findexdbm: Optional[FileIndexDatabase] = None):
+def _multi_process_pool(params, shortname, runlist, cores, groupname=None):
     # first try to group tasks (now just by recipe)
     grouplist, groupnames = _group_tasks2(runlist)
     # deal with Pool specific imports
@@ -2936,14 +2730,13 @@ def _multi_process_pool(params, runlist, cores, groupname=None,
         #  runs to make it more efficient
         # do not update if we are running a test
         if not params['TEST_RUN']:
-            update_index_db(params, findexdbm=findexdbm)
+            update_index_db(params, shortname)
 
     # return return_dict
     return dict(return_dict)
 
 
-def _multi_process_pathos(params, runlist, cores, groupname=None,
-                          findexdbm: Optional[FileIndexDatabase] = None):
+def _multi_process_pathos(params, shortname, runlist, cores, groupname=None):
     # first try to group tasks (now just by recipe)
     grouplist, groupnames = _group_tasks2(runlist)
     # set up the dictionary
@@ -2994,28 +2787,572 @@ def _multi_process_pathos(params, runlist, cores, groupname=None,
         #  runs to make it more efficient
         # do not update if we are running a test
         if not params['TEST_RUN']:
-            update_index_db(params, findexdbm=findexdbm)
+            update_index_db(params, shortname)
     # return return_dict
     return dict(return_dict)
 
 
-def close_all_plots():
+# =============================================================================
+# Define multiprocessing of "id generation" functions
+#
+#  Normally this consists of:
+#      - a linear function
+#      - a multiprocessing using "process" function
+#      - a multiprocessing using "pool" function
+#      - a multiprocessing using "pathos" function
+# =============================================================================
+def _linear_generate_id(params: ParamDict, it: int, run_key: str,
+                        run_item: str, runlist: List[str], keylist: List[int],
+                        input_recipe: DrsRecipe, skiptable: Table,
+                        skip_storage: dict, cores: int = 1,
+                        runfile: str = None, debug: bool = False,
+                        return_run: bool = False):
     """
-    Close all plots (by importing matplotlib)
+    Linear run of a single validation step
 
+    :param params:
+    :param it:
+    :param run_key:
+    :param run_item:
+    :param runlist:
+    :param keylist:
+    :param input_recipe:
+    :param indexdb:
+    :param recipemod:
+    :param skiptable:
+    :param skip_storage:
+    :param cores:
     :return:
     """
-    global PLT_MOD
-    if PLT_MOD is not None:
-        PLT_MOD.close('all')
-        return
+    # get params
+    pconst = load_functions.load_pconfig(select.INSTRUMENTS)
+    # get recipe mod
+    recipemod = pconst.RECIPEMOD()
+    # get file index database
+    indexdb = drs_database.FileIndexDatabase(params, 'PROC')
+    indexdb.load_db()
+    # get runid
+    runid = '{0}{1:05d}'.format(run_key, keylist[it])
+    # deal with no return dict
+    return_dict = dict()
+    # log process: validating run
+    wargs = [runid, it + 1, len(runlist)]
+    # print out is too heavy for multiprocessing
+    if cores == 1:
+        WLOG(params, '', params['LOG.HEADER'])
+        WLOG(params, '', textentry('40-503-00004', args=wargs))
+        WLOG(params, '', params['LOG.HEADER'])
+        WLOG(params, '', textentry('40-503-00013', args=[run_item]))
+    # create run object
+    run_object = Run(params, indexdb, run_item, mod=recipemod,
+                     priority=keylist[it], inrecipe=input_recipe)
+    # deal with input recipe
+    if input_recipe is None:
+        input_recipe = run_object.recipe
+    # deal with skip
+    skip, reason = skip_run_object(params, run_object, skiptable,
+                                   skip_storage, input_recipe)
+    # some recipes should not be skipped even if they meet skip criteria
+    if input_recipe.never_skip:
+        skip = False
+        msg = 'Run {0} not skipped as recipe set to never skip [{1}] '
+        margs = [runid, run_object.runstring]
+        WLOG(params, 'warning', msg.format(*margs))
+    # deal with RECAL_TEMPLATES = True (don't skip if template required)
+    if skip:
+        # run condition is based on 1. template flagged as required
+        # 2. that user has flagged to recalculate template if it exists
+        run_cond = run_object.recipe.template_required
+        run_cond = run_cond and params['RECAL_TEMPLATE_IF_EXISTS']
+        # warn user that we wont skip target
+        if run_cond:
+            skip = False
+            msg = 'Run {0} not skipped as RECAL_TEMPLATE_IF_EXISTS=True [{1}] '
+            margs = [runid, run_object.runstring]
+            WLOG(params, '', msg.format(*margs))
+    # ---------------------------------------------------------------------
+    # deal with passing debug
+    if params['GLOBAL.DEBUG'] > 0:
+        dargs = [run_object.runstring, debug]
+        run_object.runstring = '{0} --debug={1}'.format(*dargs)
+    # ---------------------------------------------------------------------
+    # deal with passing reference argument
+    if input_recipe.reference:
+        dargs = [run_object.runstring, 'True']
+        run_object.runstring = '{0} --ref={1}'.format(*dargs)
+    # ---------------------------------------------------------------------
+    # add run file to argument
+    if not drs_text.null_text(runfile):
+        dargs = [run_object.runstring, runfile]
+        run_object.runstring = '{0} --crunfile={1}'.format(*dargs)
+    # ---------------------------------------------------------------------
+    # update run object (runstring should only be updated once here
+    #    otherwise we add arguments multiple times)
+    run_object.update(update_runstring=True)
+    # append to list
+    if not skip:
+        # log that we have validated run
+        if cores == 1:
+            wargs = [runid]
+            WLOG(params, '', textentry('40-503-00005', args=wargs))
+        else:
+            # TODO: Add to language database
+            msg = 'Run {0} validated [{1}]'
+            margs = [runid, run_object.runstring]
+            WLOG(params, '', msg.format(*margs))
+        # add to pickle files
+        if not return_run:
+            prefix = 'RunObject_{0}'.format(params['PID'])
+            drs_pickle.make_pickle(params, run_object, prefix=prefix,
+                                   suffix=it, log=True)
+        else:
+            return run_object
+    # else log that we are skipping
     else:
-        from apero.plotting.plotter import import_matplotlib
-        out = import_matplotlib()
-        if out is not None:
-            plt = out[0]
-            plt.close('all')
-            PLT_MOD = plt
+        # log that we have skipped run
+        wargs = [runid, reason]
+        if cores == 1:
+            WLOG(params, '', textentry('40-503-00006', args=wargs),
+                 colour='yellow')
+        else:
+            # TODO: Add to language database
+            msg = 'Run {0} skipped [{1}] {2}'
+            margs = [runid, run_object.runstring, reason]
+            WLOG(params, '', msg.format(*margs), colour='yellow')
+
+
+def _multi_generate_id(params: ParamDict, subgroup: np.ndarray,
+                       run_key: str, runlist: List[str], keylist: List[int],
+                       inrecipelist: List[DrsRecipe], skiptable: Table,
+                       cores: int):
+    """
+
+    :param params: ParamDict, parameter dictionary of constants
+    :param subgroup: numpy array, contains a list of id keys, these ids must
+                      be in keylist and correspond to the validations to be
+                      done on a single core, the length of groupkeys should be
+                      the number of cores given
+    :param run_key: str, the run key prefix i.e. {run_key}{key}
+                e.g. we get ID000001
+    :param runlist: list of str, the runstring for each id (length must match
+                    keylist)
+    :param keylist: list of int, the full list of ids (same length as runlist)
+    :param inrecipelist: list of DrsRecipe, one DrsRecipe class instance for
+                         each id in keylist
+    :param skiptable: astropy.Table, a table of recipes + cleaned runstrings,
+                      if recipe + runstring in this list we skip it.
+    :param return_dict: None or a dictionary manager to save the return
+                        dict to
+    :param cores: int, the number of cores to use
+
+    :return: dictionary, the return dict or a dictionary where each key is an
+             id and the value is the DrsRecipe
+    """
+    # get debug mode
+    debug = params['GLOBAL.DEBUG']
+    # get run file (if its given)
+    if 'RUNFILE' in params['INPUTS']:
+        runfile = params['INPUTS']['RUNFILE']
+    else:
+        runfile = None
+    # set up a skip storage (so we don't redo things we don't have to many
+    #  times)
+    skip_storage = dict()
+    # loop around keys
+    for it in subgroup:
+        # generate results for this iteration
+        _linear_generate_id(params=params, it=it, run_key=run_key,
+                            run_item=runlist[it], runlist=runlist,
+                            keylist=keylist, input_recipe=inrecipelist[it],
+                            skiptable=skiptable, skip_storage=skip_storage,
+                            cores=cores, runfile=runfile, debug=debug)
+
+
+def _multi_process_gen_ids_pathos(params: ParamDict,
+                                  groupkeys: List[np.ndarray],
+                                  run_key: str, runlist: List[str],
+                                  cores: int, keylist: List[int],
+                                  inrecipelist: List[DrsRecipe],
+                                  skiptable: Table):
+    """
+    Takes all the groups of run files and validates them using
+    pathos.Pool.map
+
+    :param params: ParamDict, parameter dictionary of constants
+    :param groupkeys: list of numpy arrays, each np.ndarray contains a list
+                      of id keys, these ids must be in keylist and correspond
+                      to the validations to be done on a single core, the
+                      length of groupkeys should be the number of cores
+                      given
+    :param run_key: str, the run key prefix i.e. {run_key}{key}
+                    e.g. we get ID000001
+    :param runlist: list of str, the runstring for each id (length must match
+                    keylist)
+    :param cores: int, the number of cores to use
+    :param keylist: list of int, the full list of ids (same length as runlist)
+    :param inrecipelist: list of DrsRecipe, one DrsRecipe class instance for
+                         each id in keylist
+    :param skiptable: astropy.Table, a table of recipes + cleaned runstrings,
+                      if recipe + runstring in this list we skip it.
+
+    :return: Dict, where each key is an id and the value is the DrsRecipe
+    """
+    # deal with Pool specific imports
+    from pathos.pools import ParallelPool as Pool
+    # set up the pool
+    pool = Pool(ncpus=cores, maxtasksperchild=1)
+    # list of params for each entry
+    params_per_process = []
+    # populate params for each sub group
+    for groupkey in groupkeys:
+        args = [params, groupkey, run_key, runlist, keylist,
+                inrecipelist, skiptable, None, cores]
+        params_per_process.append(args)
+    # transpose the params axis
+    params_per_process2 = list(zip(*params_per_process))
+    # start parallel jobs
+    pool.map(_multi_generate_id, *params_per_process2)
+
+
+def _multi_process_gen_ids_pool(params: ParamDict,
+                                groupkeys: List[np.ndarray],
+                                run_key: str, runlist: List[str],
+                                cores: int, keylist: List[int],
+                                inrecipelist: List[DrsRecipe],
+                                skiptable: Table):
+    """
+    Takes all the groups of run files and validates them using
+    multiprocessing.Pool.starmap
+
+    :param params: ParamDict, parameter dictionary of constants
+    :param groupkeys: list of numpy arrays, each np.ndarray contains a list
+                      of id keys, these ids must be in keylist and correspond
+                      to the validations to be done on a single core, the
+                      length of groupkeys should be the number of cores
+                      given
+    :param run_key: str, the run key prefix i.e. {run_key}{key}
+                    e.g. we get ID000001
+    :param runlist: list of str, the runstring for each id (length must match
+                    keylist)
+    :param cores: int, the number of cores to use
+    :param keylist: list of int, the full list of ids (same length as runlist)
+    :param inrecipelist: list of DrsRecipe, one DrsRecipe class instance for
+                         each id in keylist
+    :param skiptable: astropy.Table, a table of recipes + cleaned runstrings,
+                      if recipe + runstring in this list we skip it.
+
+    :return: Dict, where each key is an id and the value is the DrsRecipe
+    """
+    # deal with Pool specific imports
+    from multiprocessing import get_context
+    # list of params for each entry
+    params_per_process = []
+    # populate params for each sub group
+    for groupkey in groupkeys:
+        args = [params, groupkey, run_key, runlist, keylist,
+                inrecipelist, skiptable, None, cores]
+        params_per_process.append(args)
+    # start parallel jobs
+    with get_context('spawn').Pool(cores, maxtasksperchild=1) as pool:
+        pool.starmap(_multi_generate_id, params_per_process)
+
+
+def _multi_process_gen_ids_process(params: ParamDict,
+                                   groupkeys: List[np.ndarray],
+                                   run_key: str, runlist: List[str],
+                                   cores: int, keylist: List[int],
+                                   inrecipelist: List[DrsRecipe],
+                                   skiptable: Table):
+    """
+    Takes all the groups of run files and validates them using
+    multiprocessing.Process
+
+    :param params: ParamDict, parameter dictionary of constants
+    :param groupkeys: list of numpy arrays, each np.ndarray contains a list
+                      of id keys, these ids must be in keylist and correspond
+                      to the validations to be done on a single core, the
+                      length of groupkeys should be the number of cores
+                      given
+    :param run_key: str, the run key prefix i.e. {run_key}{key}
+                    e.g. we get ID000001
+    :param runlist: list of str, the runstring for each id (length must match
+                    keylist)
+    :param cores: int, the number of cores to use
+    :param keylist: list of int, the full list of ids (same length as runlist)
+    :param inrecipelist: list of DrsRecipe, one DrsRecipe class instance for
+                         each id in keylist
+    :param skiptable: astropy.Table, a table of recipes + cleaned runstrings,
+                      if recipe + runstring in this list we skip it.
+
+    :return: Dict, where each key is an id and the value is the DrsRecipe
+    """
+    # import multiprocessing
+    from multiprocessing import Process
+    # loop around each run
+    for groupkey in groupkeys:
+        # process storage
+        jobs = []
+        # get the arguments for this group
+        args = [params, groupkey, run_key, runlist, keylist,
+                inrecipelist, skiptable, cores]
+        # get parallel process
+        process = Process(target=_multi_generate_id, args=args)
+        process.start()
+        jobs.append(process)
+        # do not continue until finished
+        for pit, proc in enumerate(jobs):
+            # debug log: MULTIPROCESS - joining job {0}
+            WLOG(params, 'debug', textentry('90-503-00021', args=[pit]))
+            proc.join()
+
+
+# =============================================================================
+# Define multiprocessing of "file indexing" functions
+#
+#  Normally this consists of:
+#      - a linear function
+#      - a multiprocessing using "process" function
+#      - a multiprocessing using "pool" function
+#      - a multiprocessing using "pathos" function
+# =============================================================================
+def _linear_findex(params: ParamDict, block_kind: str, shortname: str,
+                   raw_obs_dirs: List[str],
+                  job: int = None, total_jobs: int = None):
+    # start a message if job and total_jobs given
+    if (job is not None) and (total_jobs is not None):
+        job_msg = ' [{0}/{1}] '.format(job, total_jobs)
+    else:
+        job_msg = ''
+    # construct the index database instance
+    findexdbm = FileIndexDatabase(params, shortname)
+    findexdbm.load_db()
+    # log block update
+    WLOG(params, '', textentry('40-503-00044', args=[block_kind]) + job_msg)
+    # update index database for block kind
+    drs_utils.update_index_db(params, block_kind=block_kind,
+                              includelist=raw_obs_dirs, findexdbm=findexdbm,
+                              job=job, total_jobs=total_jobs)
+
+
+def _multi_process_findex_pathos(params: ParamDict, block_kind:str,
+                                 shortname: str,
+                                 raw_obs_dirs: List[str], cores: int):
+    """
+    Takes all raw directories, finds files and read headers via
+    pathos.Pool.map
+
+    :param params: ParamDict, parameter dictionary of constants
+    :param block_kind: str, the kind of block to look for
+    :param raw_obs_dirs: List of str, the raw observation directories to
+                         search for files
+    :param cores: int, the number of cores to use
+    """
+    # deal with Pool specific imports
+    from pathos.pools import ParallelPool as Pool
+    # set up the pool
+    pool = Pool(ncpus=cores, maxtasksperchild=1)
+    # list of params for each entry
+    params_per_process = []
+    # populate params for each sub group
+    for r_it, raw_obs_dir in enumerate(raw_obs_dirs):
+        args = [params, block_kind, shortname,
+                [raw_obs_dir], r_it + 1, len(raw_obs_dirs)]
+        params_per_process.append(args)
+    # transpose the params axis
+    params_per_process2 = list(zip(*params_per_process))
+    # start parallel jobs
+    pool.map(_linear_findex, *params_per_process2)
+
+
+
+def _multi_process_findex_pool(params: ParamDict, block_kind:str,
+                               shortname: str,
+                               raw_obs_dirs: List[str], cores: int):
+    """
+    Takes all raw directories, finds files and read headers via
+    multiprocessing.Pool.starmap
+
+    :param params: ParamDict, parameter dictionary of constants
+    :param block_kind: str, the kind of block to look for
+    :param raw_obs_dirs: List of str, the raw observation directories to
+                         search for files
+    :param cores: int, the number of cores to use
+    """
+    # deal with Pool specific imports
+    from multiprocessing import get_context
+
+    # list of params for each entry
+    params_per_process = []
+    # populate params for each sub group
+    for r_it, raw_obs_dir in enumerate(raw_obs_dirs):
+        args = [params, block_kind, shortname,
+                [raw_obs_dir], r_it + 1, len(raw_obs_dirs)]
+        params_per_process.append(args)
+    # start parallel jobs
+    with get_context('spawn').Pool(cores, maxtasksperchild=1) as pool:
+        pool.starmap(_linear_findex, params_per_process)
+
+
+def _multi_process_findex_process(params: ParamDict, block_kind:str,
+                                  shortname: str,
+                                  raw_obs_dirs: List[str], cores: int):
+    """
+    Takes all raw directories, finds files and read headers via
+    multiprocessing.Process
+
+    :param params: ParamDict, parameter dictionary of constants
+    :param block_kind: str, the kind of block to look for
+    :param raw_obs_dirs: List of str, the raw observation directories to
+                         search for files
+    :param cores: int, the number of cores to use
+    """
+    # import multiprocessing
+    from multiprocessing import Process
+
+    # split raw_obs_dirs into N=cores groups
+    cores = min(cores, len(raw_obs_dirs))
+    chunk_size = int(np.ceil(len(raw_obs_dirs) / cores))
+
+    grouped_raw_obs_dirs = [raw_obs_dirs[i:i + chunk_size]
+                            for i in range(0, len(raw_obs_dirs), chunk_size)]
+    # process storage
+    jobs = []
+    # loop around each run
+    for g_it, grouped_raw_obs_dir in enumerate(grouped_raw_obs_dirs):
+        # get the arguments for this group
+        args = [params, block_kind, shortname, grouped_raw_obs_dir, g_it + 1,
+                len(grouped_raw_obs_dirs)]
+        # get parallel process
+        process = Process(target=_linear_findex, args=args)
+        process.start()
+        jobs.append(process)
+    # do not continue until finished
+    for pit, proc in enumerate(jobs):
+        # debug log: MULTIPROCESS - joining job {0}
+        WLOG(params, 'debug', textentry('90-503-00021', args=[pit]))
+        proc.join()
+
+
+# =============================================================================
+# Define multiprocessing of "header fix" functions
+#
+#  Normally this consists of:
+#      - a linear function
+#      - a multiprocessing using "process" function
+#      - a multiprocessing using "pool" function
+#      - a multiprocessing using "pathos" function
+# =============================================================================
+def _linear_headerfix(params, obs_dirs, shortname,
+                     job: int = None, total_jobs: int = None):
+    # start a message if job and total_jobs given
+    if (job is not None) and (total_jobs is not None):
+        job_msg = ' [{0}/{1}] '.format(job, total_jobs)
+    else:
+        job_msg = ''
+    # load the object database
+    objdbm = drs_database.AstrometricDatabase(params, shortname)
+    objdbm.load_db()
+    # construct the index database instance
+    findexdbm = drs_database.FileIndexDatabase(params, shortname)
+    findexdbm.load_db()
+    # fix the header data (object name, dprtype, mjdmid and
+    #     trg_type etc)
+    WLOG(params, '', textentry('40-503-00043') + job_msg)
+    findexdbm.update_header_fix(objdbm=objdbm, obs_dirs=obs_dirs,
+                                job_msg=job_msg)
+
+
+def _multi_process_headerfix_pathos(params: ParamDict, shortname: str,
+                                    raw_obs_dirs: List[str], cores: int):
+    """
+    Takes all raw directories, finds files and read headers via
+    pathos.Pool.map
+
+    :param params: ParamDict, parameter dictionary of constants
+    :param block_kind: str, the kind of block to look for
+    :param raw_obs_dirs: List of str, the raw observation directories to
+                         search for files
+    :param cores: int, the number of cores to use
+    """
+    # deal with Pool specific imports
+    from pathos.pools import ParallelPool as Pool
+    # set up the pool
+    pool = Pool(ncpus=cores, maxtasksperchild=1)
+    # list of params for each entry
+    params_per_process = []
+    # populate params for each sub group
+    for r_it, raw_obs_dir in enumerate(raw_obs_dirs):
+        args = [params, [raw_obs_dir], r_it + 1, len(raw_obs_dirs)]
+        params_per_process.append(args)
+    # transpose the params axis
+    params_per_process2 = list(zip(*params_per_process))
+    # start parallel jobs
+    pool.map(_linear_headerfix, *params_per_process2)
+
+
+def _multi_process_headerfix_pool(params: ParamDict, shortname: str,
+                                  raw_obs_dirs: List[str], cores: int):
+    """
+    Takes all raw directories, finds files and read headers via
+    multiprocessing.Pool.starmap
+
+    :param params: ParamDict, parameter dictionary of constants
+    :param block_kind: str, the kind of block to look for
+    :param raw_obs_dirs: List of str, the raw observation directories to
+                         search for files
+    :param cores: int, the number of cores to use
+    """
+    # deal with Pool specific imports
+    from multiprocessing import get_context
+
+    # list of params for each entry
+    params_per_process = []
+    # populate params for each sub group
+    for r_it, raw_obs_dir in enumerate(raw_obs_dirs):
+        args = [params, [raw_obs_dir], r_it + 1, len(raw_obs_dirs)]
+        params_per_process.append(args)
+    # start parallel jobs
+    with get_context('spawn').Pool(cores, maxtasksperchild=1) as pool:
+        pool.starmap(_linear_headerfix, params_per_process)
+
+
+def _multi_process_headerfix_process(params: ParamDict, shortname: str,
+                                     raw_obs_dirs: List[str], cores: int):
+    """
+    Takes all raw directories, finds files and read headers via
+    multiprocessing.Process
+
+    :param params: ParamDict, parameter dictionary of constants
+    :param block_kind: str, the kind of block to look for
+    :param raw_obs_dirs: List of str, the raw observation directories to
+                         search for files
+    :param cores: int, the number of cores to use
+    """
+    # import multiprocessing
+    from multiprocessing import Process
+
+    # split raw_obs_dirs into N=cores groups
+    cores = min(cores, len(raw_obs_dirs))
+    chunk_size = int(np.ceil(len(raw_obs_dirs) / cores))
+
+    grouped_raw_obs_dirs = [raw_obs_dirs[i:i + chunk_size]
+                            for i in range(0, len(raw_obs_dirs), chunk_size)]
+    # process storage
+    jobs = []
+    # loop around each run
+    for g_it, grouped_raw_obs_dir in enumerate(grouped_raw_obs_dirs):
+        # get the arguments for this group
+        args = [params, grouped_raw_obs_dir, g_it + 1,
+                len(grouped_raw_obs_dirs)]
+        # get parallel process
+        process = Process(target=_linear_headerfix, args=args)
+        process.start()
+        jobs.append(process)
+    # do not continue until finished
+    for pit, proc in enumerate(jobs):
+        # debug log: MULTIPROCESS - joining job {0}
+        WLOG(params, 'debug', textentry('90-503-00021', args=[pit]))
+        proc.join()
 
 
 # =============================================================================
@@ -3761,6 +4098,109 @@ def vstack_cols(tablelist: List[Table]) -> Union[Table, None]:
 # =============================================================================
 # Define working functions
 # =============================================================================
+# TODO: Remove or replace with _group_tasks
+def _group_tasks1(runlist, cores):
+    # individual runs of the same recipe are independent of each other
+
+    # get all recipe names
+    recipenames = []
+    for it, run_item in enumerate(runlist):
+        recipenames.append(run_item.shortname)
+    # storage of groups
+    groups = dict()
+    names = dict()
+    group_number = 0
+    # loop around runlist
+    for it, run_item in enumerate(runlist):
+        # get recipe name
+        recipe = run_item.shortname
+        # if it is the first item must have a new group
+        if it == 0:
+            groups[group_number] = [run_item]
+        else:
+            cond1 = recipe == recipenames[it - 1]
+            cond2 = len(groups[group_number]) < cores
+
+            if cond1 and cond2:
+                groups[group_number].append(run_item)
+            else:
+                group_number += 1
+                groups[group_number] = [run_item]
+        # add the names
+        names[group_number] = recipe
+    # now we have the groups we can push into the core sub-groups
+    out_groups = []
+    out_names = []
+
+    # loop around the different reipce groups
+    for groupkey in groups:
+
+        out_group = []
+        group = groups[groupkey]
+        out_name = names[groupkey]
+
+        for it in range(cores):
+            sub_group = group[it::cores]
+            if len(sub_group) > 0:
+                out_group.append(sub_group)
+
+        out_groups.append(out_group)
+        out_names.append(out_name)
+    # return output groups
+    return out_groups, out_names
+
+
+# TODO: Remove or replace with _group_tasks
+def _group_tasks2(runlist):
+    # individual runs of the same recipe are independent of each other
+
+    # get all recipe names
+    recipenames = []
+    for it, run_item in enumerate(runlist):
+        recipenames.append(run_item.shortname)
+    # storage of groups
+    groups = dict()
+    names = dict()
+    group_number = 0
+    # loop around runlist
+    for it, run_item in enumerate(runlist):
+        # get recipe name
+        recipe = run_item.shortname
+        # if it is the first item must have a new group
+        if it == 0:
+            groups[group_number] = [run_item]
+        else:
+            if recipe == recipenames[it - 1]:
+                groups[group_number].append(run_item)
+            else:
+                group_number += 1
+                groups[group_number] = [run_item]
+        # add the names
+        names[group_number] = recipe
+
+    # return output groups
+    return groups, names
+
+
+def close_all_plots():
+    """
+    Close all plots (by importing matplotlib)
+
+    :return:
+    """
+    global PLT_MOD
+    if PLT_MOD is not None:
+        PLT_MOD.close('all')
+        return
+    else:
+        from apero.plotting.plotter import import_matplotlib
+        out = import_matplotlib()
+        if out is not None:
+            plt = out[0]
+            plt.close('all')
+            PLT_MOD = plt
+
+
 def get_uobjs_from_findex(params: ParamDict, indexdb: FileIndexDatabase,
                           req_obs_dirs: Optional[List[str]] = None
                           ) -> List[str]:
@@ -4293,90 +4733,6 @@ def _group_tasks(runlist, cores):
         out_names.append(out_name)
     # return output groups
     return out_groups, out_names
-
-
-# TODO: Remove or replace with _group_tasks
-def _group_tasks1(runlist, cores):
-    # individual runs of the same recipe are independent of each other
-
-    # get all recipe names
-    recipenames = []
-    for it, run_item in enumerate(runlist):
-        recipenames.append(run_item.shortname)
-    # storage of groups
-    groups = dict()
-    names = dict()
-    group_number = 0
-    # loop around runlist
-    for it, run_item in enumerate(runlist):
-        # get recipe name
-        recipe = run_item.shortname
-        # if it is the first item must have a new group
-        if it == 0:
-            groups[group_number] = [run_item]
-        else:
-            cond1 = recipe == recipenames[it - 1]
-            cond2 = len(groups[group_number]) < cores
-
-            if cond1 and cond2:
-                groups[group_number].append(run_item)
-            else:
-                group_number += 1
-                groups[group_number] = [run_item]
-        # add the names
-        names[group_number] = recipe
-    # now we have the groups we can push into the core sub-groups
-    out_groups = []
-    out_names = []
-
-    # loop around the different reipce groups
-    for groupkey in groups:
-
-        out_group = []
-        group = groups[groupkey]
-        out_name = names[groupkey]
-
-        for it in range(cores):
-            sub_group = group[it::cores]
-            if len(sub_group) > 0:
-                out_group.append(sub_group)
-
-        out_groups.append(out_group)
-        out_names.append(out_name)
-    # return output groups
-    return out_groups, out_names
-
-
-# TODO: Remove or replace with _group_tasks
-def _group_tasks2(runlist):
-    # individual runs of the same recipe are independent of each other
-
-    # get all recipe names
-    recipenames = []
-    for it, run_item in enumerate(runlist):
-        recipenames.append(run_item.shortname)
-    # storage of groups
-    groups = dict()
-    names = dict()
-    group_number = 0
-    # loop around runlist
-    for it, run_item in enumerate(runlist):
-        # get recipe name
-        recipe = run_item.shortname
-        # if it is the first item must have a new group
-        if it == 0:
-            groups[group_number] = [run_item]
-        else:
-            if recipe == recipenames[it - 1]:
-                groups[group_number].append(run_item)
-            else:
-                group_number += 1
-                groups[group_number] = [run_item]
-        # add the names
-        names[group_number] = recipe
-
-    # return output groups
-    return groups, names
 
 
 def _remove_engineering(params, indexdb, condition):

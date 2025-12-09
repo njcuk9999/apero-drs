@@ -289,7 +289,7 @@ def index_update(params: ParamDict, recipe: DrsRecipe):
         # update headers of raw files
         if block_kind == 'raw':
             # fix the headers
-            findexdbm.update_header_fix(recipe=recipe, objdbm=astromdb)
+            findexdbm.update_header_fix(objdbm=astromdb)
 
 
 def log_update(params: ParamDict, recipe: DrsRecipe, pconst: Instrument):

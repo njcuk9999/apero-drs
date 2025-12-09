@@ -500,7 +500,8 @@ def listfiles(rootdir) -> List[str]:
 def recursive_path_glob(params: ParamDict,
                         path: Union[Path, str],
                         prefix: Optional[str] = None,
-                        suffix: Optional[str] = None) -> List[Path]:
+                        suffix: Optional[str] = None,
+                        job_msg: str = '') -> List[Path]:
     """
     Recursively get all files from a directory with
     a specific prefix / suffix
@@ -511,10 +512,12 @@ def recursive_path_glob(params: ParamDict,
     check_suffix = suffix is not None
 
     # loading message
-    WLOG(params, '', 'Analying path: {0}'.format(path))
+    if len(job_msg) > 0:
+        WLOG(params, '', 'Analying path: {0}'.format(path))
     # use os walk to loop around files
     for root, dirs, files in os.walk(str(path)):
-        WLOG(params, '', 'Analying path: {0}'.format(root))
+        if len(job_msg) > 0:
+            WLOG(params, '', 'Analying path: {0}'.format(root))
         # get the root as a Pathlib instance
         root_instant = Path(root)
         # loop around all files
@@ -530,7 +533,8 @@ def recursive_path_glob(params: ParamDict,
             # if we get to here file is valid
             valid_files.append(root_instant.joinpath(filename))
     # clear message
-    WLOG(params, '', '')
+    if len(job_msg) > 0:
+        WLOG(params, '', '')
     # sort valid files
     valid_files = sorted(valid_files)
     # return valid files
