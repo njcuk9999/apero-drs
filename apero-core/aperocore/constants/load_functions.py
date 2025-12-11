@@ -647,7 +647,7 @@ def starting_point(params: ParamDict, imode_key: Union[str, List[str]],
     # get user selected instrument mode
     imode = params[imode_key]
     # create storage for the demo download data
-    demo_params = dict(ACTIVE=False, URL=None, DOWNLOAD=dict())
+    demo_params = dict(ACTIVE=False, URL=None, DOWNLOAD=dict(), ID=None)
     # deal with no demos for this mode
     if imode not in demo_dict:
         # print that no demos are avaiable
@@ -694,6 +694,7 @@ def starting_point(params: ParamDict, imode_key: Union[str, List[str]],
             demo_params['ACTIVE'] = True
             demo_params['URL'] = idemos[counters[userinput]].URL
             demo_params['DOWNLOAD'] = idemos[counters[userinput]].DOWNLOAD
+            demo_params['ID'] = idemos[counters[userinput]].INFO['id']
             # break out of the while loop here
             break
         else:
