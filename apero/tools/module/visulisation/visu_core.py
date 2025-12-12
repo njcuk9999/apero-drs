@@ -25,7 +25,7 @@ from apero.io import drs_fits
 # =============================================================================
 # Define variables
 # =============================================================================
-__NAME__ = 'database_update.py'
+__NAME__ = 'tools.visulisation.visu_core.py'
 __INSTRUMENT__ = 'None'
 __PACKAGE__ = base.__PACKAGE__
 __version__ = base.__version__

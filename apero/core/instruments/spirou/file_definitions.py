@@ -59,8 +59,6 @@ tellu_set_ofile = out.TelluSetOutFile()
 # =============================================================================
 # prefix for raw files
 raw_prefix = 'RAW_'
-# Must add to list of raw files!!
-raw_files = []
 # =============================================================================
 # generic raw file
 raw_file = drs_finput('DRS_RAW', filetype='.fits', suffix='',
@@ -1649,7 +1647,10 @@ red_file.addset(out_stokesi_s1dv)
 # LBL processed Files
 # =============================================================================
 lbl_fibers = ['AB']
-
+# generic out file
+lbl_file = drs_finput('DRS_OUTPUT', filetype='', suffix='',
+                      intype=red_file, instrument=__INSTRUMENT__,
+                      description='Generic LBL file')
 # lbl template file
 lbl_template_file = drs_input('LBL_TEMPLATE', path='templates',
                               filetype='.fits',
@@ -1658,6 +1659,7 @@ lbl_template_file = drs_input('LBL_TEMPLATE', path='templates',
                               outclass=lbl_ofile,
                               description='Telluric 1D template file',
                               required=False)
+lbl_file.addset(lbl_template_file)
 
 # lbl mask file
 lbl_mask_file = drs_input('LBL_MASK',
@@ -1665,6 +1667,7 @@ lbl_mask_file = drs_input('LBL_MASK',
                           basename='{obj}', datatype='table',
                           outclass=lbl_ofile,
                           description='Telluric mask file')
+lbl_file.addset(lbl_mask_file)
 
 # lbl fits files
 lbl_fits_file = drs_finput('LBL_FITS', filetype='.fits',
@@ -1673,6 +1676,7 @@ lbl_fits_file = drs_finput('LBL_FITS', filetype='.fits',
                            datatype='table',
                            outclass=lbl_ofile, instrument=__INSTRUMENT__,
                            description='LBL line list fits files')
+lbl_file.addset(lbl_fits_file)
 
 # lbl rdb file
 lbl_rdb_file = drs_input('LBL_RDB',
@@ -1680,6 +1684,7 @@ lbl_rdb_file = drs_input('LBL_RDB',
                          basename='lbl_{obj}_{temp}', datatype='table',
                          outclass=lbl_ofile,
                          description='LBL rdb file (RVs) in ascii-rdb format')
+lbl_file.addset(lbl_rdb_file)
 
 # lbl rdb fits file
 lbl_rdb_fits_file = drs_input('LBL_RDB_FITS',
@@ -1687,6 +1692,7 @@ lbl_rdb_fits_file = drs_input('LBL_RDB_FITS',
                               basename='lbl_{obj}_{temp}', datatype='table',
                               outclass=lbl_ofile,
                               description='LBL rdb file (RVs) in fits format')
+lbl_file.addset(lbl_rdb_fits_file)
 
 # lbl rdb2 file
 lbl_rdb2_file = drs_input('LBL_RDB2',
@@ -1694,6 +1700,7 @@ lbl_rdb2_file = drs_input('LBL_RDB2',
                          basename='lbl2_{obj}_{temp}', datatype='table',
                          outclass=lbl_ofile,
                          description='LBL binned per night rdb file (RVs)')
+lbl_file.addset(lbl_rdb2_file)
 
 # lbl drift file
 lbl_drift_file = drs_input('LBL_DRIFT',
@@ -1703,7 +1710,7 @@ lbl_drift_file = drs_input('LBL_DRIFT',
                            outclass=lbl_ofile,
                            description='LBL drift file (calculated from FPs)',
                            required=False)
-
+lbl_file.addset(lbl_drift_file)
 
 # lbl rdb file with drift
 lbl_rdb_drift_file = drs_input('LBL_RDB_DRIFT',
@@ -1713,7 +1720,7 @@ lbl_rdb_drift_file = drs_input('LBL_RDB_DRIFT',
                                outclass=lbl_ofile,
                                description='LBL Drift corrected rdb file',
                                required=False)
-
+lbl_file.addset(lbl_rdb_drift_file)
 
 # lbl rdb2 file with drift
 lbl_rdb2_drift_file = drs_input('LBL_RDB2_DRIFT',
@@ -1724,6 +1731,7 @@ lbl_rdb2_drift_file = drs_input('LBL_RDB2_DRIFT',
                                description='LBL Drift corrected binned '
                                            'rdb file',
                                required=False)
+lbl_file.addset(lbl_rdb2_drift_file)
 
 
 # =============================================================================

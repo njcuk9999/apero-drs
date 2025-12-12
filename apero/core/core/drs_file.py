@@ -6430,7 +6430,10 @@ class DrsOutFile(DrsInputFile):
                  exclude_keys: EXCLUDE_KEYS_TYPE = None,
                  instrument: Optional[str] = None,
                  description: Union[str, None] = None,
-                 inpath: Union[str, None] = None):
+                 inpath: Union[str, None] = None,
+                 filename: str = None,
+                 params: ParamDict = None,
+                 header: Union[drs_fits.Header, None] = None):
         """
         Drs class for post-processed output files
 
@@ -6456,7 +6459,8 @@ class DrsOutFile(DrsInputFile):
         # get super init
         DrsInputFile.__init__(self, name, filetype, suffix, outclass=outclass,
                               inext=inext, instrument=instrument, inpath=inpath,
-                              required=required)
+                              required=required, filename=filename,
+                              params=params)
         # store extensions
         self.extensions = dict()
         self.header_add = dict()
@@ -6471,6 +6475,9 @@ class DrsOutFile(DrsInputFile):
         self.infiles = []
         # store reduced files
         self.clear_files = []
+        # use to copy from DrsInputFile
+        self.header = header
+        self.hdict = None
 
     def summary(self, params: ParamDict,
                 pconst: Optional[PseudoConstants]) -> Dict[str, str]:
@@ -6772,8 +6779,65 @@ class DrsOutFile(DrsInputFile):
         new.instrument = deepcopy(self.instrument)
         # copy description
         new.description = deepcopy(self.description)
+        # copy params
+        new.params = deepcopy(self.params)
+        # copy header
+        new.header = deepcopy(self.header)
         # return new copy
         return new
+
+    def copyother(self, drsfile: 'DrsOutFile',
+                  name: str=None, filetype: str=None,
+                  suffix: Union[str, None] = None,
+                  outclass: OutFileTypes = None,
+                  inext=None, required: bool = True,
+                  exclude_keys: EXCLUDE_KEYS_TYPE = None,
+                  instrument: Optional[str] = None,
+                  description: Union[str, None] = None,
+                  inpath: Union[str, None] = None,
+                  filename: str = None,
+                  params: ParamDict = None,
+                  header: Union[drs_fits.Header, None] = None):
+        """
+        Copy most keys from drsfile (other arguments override attributes coming
+        from drfile (or self)
+        """
+        # set function name
+        # _ = display_func('copyother', __NAME__, self.class_name)
+        # copy this instances values (if not overwritten)
+        if name is None:
+            name = deepcopy(self.name)
+        if filetype is None:
+            filetype = deepcopy(self.filetype)
+        if suffix is None:
+            suffix = deepcopy(self.suffix)
+        if outclass is None:
+            if self.outclass is not None:
+                outclass = self.outclass.copy()
+            else:
+                outclass = None
+        if inext is None:
+            inext = deepcopy(drsfile.inext)
+        if required is None:
+            required = bool(drsfile.out_required)
+        if exclude_keys is None:
+            exclude_keys = deepcopy(drsfile.exclude_keys)
+        if instrument is None:
+            instrument = deepcopy(drsfile.instrument)
+        if description is None:
+            description = deepcopy(drsfile.description)
+        if inpath is None:
+            inpath = deepcopy(drsfile.inpath)
+        if filename is None:
+            filename = drsfile.filename
+        if params is None:
+            params = drsfile.params
+        if header is None:
+            header = deepcopy(drsfile.header)
+        # make new out file
+        return DrsOutFile(name, filetype, suffix, outclass, inext, required,
+                          exclude_keys, instrument, description,
+                          inpath, filename, params, header)
 
     def has_header(self) -> Tuple[np.ndarray, List[str]]:
         """
@@ -7607,6 +7671,43 @@ class DrsOutFile(DrsInputFile):
         for manual_key in manual_keys:
             self.output_dict[manual_key] = manual_keys[manual_key]
 
+    def check_file(self) -> Tuple[bool, Union[dict, str, None]]:
+        """
+        Check whether file exists (with suffix if required)
+
+        :param filename:
+        :return:
+        """
+        # deal with no input filename
+        filename = self.filename
+        basename = self.basename
+        # if out files have an extension this should identify them
+        if self.suffix is not None:
+            if not basename.endswith(self.suffix):
+                msg = '\tFilename {0} does not end with suffix {1}'
+                margs = [basename, self.suffix]
+                return False, msg.format(*margs)
+        return True, None
+
+    def read_header(self, ext: Union[int, None] = None, log: bool = True,
+                    copy: bool = False):
+        """
+        Required for some calls (but not used)
+        :return:
+        """
+        _ = ext, log, copy
+
+    def read_data(self, ext: Union[int, None] = None, log: bool = True,
+                  copy: bool = False,
+                  return_data: bool = False,
+                  extname: Union[str, None] = None
+                  ):
+        """
+        Required for some calls (but not used)
+        :return:
+        """
+        _ = ext, log, copy, return_data, extname
+
 
 # =============================================================================
 # User DrsFile functions
@@ -8411,7 +8512,8 @@ def id_drs_file(params: ParamDict,
                 drs_file_sets: Union[List[DrsFitsFile], DrsFitsFile],
                 filename: Union[List[str], str, None] = None,
                 nentries: Union[int, None] = None,
-                required: bool = True, use_input_file: bool = False
+                required: bool = True, use_input_file: bool = False,
+                load_data: bool = True
                 ) -> Tuple[bool, Union[DrsFitsFile, List[DrsFitsFile]]]:
     """
     Identify the drs file (or set of drs files) each with DrsFitsFile.name
@@ -8436,7 +8538,7 @@ def id_drs_file(params: ParamDict,
     :param required: bool, if True raises an error when filename/header combo
                      does not match a DrsFitsFile in any of the fileset(s)
     :param use_input_file: bool, if True set the data and header from the
-                           inpit file (i.e. the DrsFitsFile with the fileset)
+                           input file (i.e. the DrsFitsFile with the fileset)
     :return: tuple, 1. bool, whether file was found,
                     2. the DrsFitsFile matching (if entries=1) else all the
                        DrsFitsFile(s) matching i.e. List[DrsFitsFile]
@@ -8532,7 +8634,7 @@ def id_drs_file(params: ParamDict,
                     file_in.data = file_set.data
                     # copy over header
                     file_in.header = file_set.header
-                else:
+                elif load_data:
                     file_in.read_data()
                 # ----------------------------------------------------------
                 # append to list
