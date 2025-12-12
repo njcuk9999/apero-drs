@@ -154,12 +154,10 @@ def __main__(recipe, params):
             #    from updating the index database every time a new recipe
             #    starts this is really important as we have disabled updating
             #    for parallel runs to make it more efficient
-            drs_processing.update_index_db(params)
+            drs_processing.update_index_db(params, recipe.shortname)
         # ----------------------------------------------------------------------
-        # fix the header data (object name, dprtype, mjdmid and
-        #     trg_type etc)
-        WLOG(params, '', textentry('40-503-00043'))
-        findexdbm.update_header_fix(recipe, objdbm=objdbm)
+        # fix the header data (object name, dprtype, mjdmid and trg_type etc)
+        drs_processing.update_header_fix(params, recipe.shortname)
         # deal with pushing to the database
         drs_database.db_push(params)
         # ----------------------------------------------------------------------
@@ -179,8 +177,8 @@ def __main__(recipe, params):
         # ----------------------------------------------------------------------
         # Process run list
         # ----------------------------------------------------------------------
-        out = drs_processing.process_run_list(params, rlist, groupname,
-                                              findexdbm)
+        out = drs_processing.process_run_list(params, recipe.shortname,
+                                              rlist, groupname)
         outlist, has_errors, ptime = out
 
         # ----------------------------------------------------------------------

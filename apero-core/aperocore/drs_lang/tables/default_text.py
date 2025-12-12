@@ -5371,7 +5371,7 @@ langlist.add(item)
 # 10-002-00008 
 # =============================================================================
 item = langlist.create('10-002-00008', kind='warning_2-code')
-item.value['ENG'] = '\t\tFile no longer on disk – removing from file index database: {0}'
+item.value['ENG'] = '\t\tFile no longer on disk – removing from file index database: {0} {1}'
 item.arguments = 'None'
 item.comment = 'Warns that a file is no longer on disk and we are removing from the file index database'
 langlist.add(item)
@@ -5380,7 +5380,7 @@ langlist.add(item)
 # 10-002-00009 
 # =============================================================================
 item = langlist.create('10-002-00009', kind='warning_6-code')
-item.value['ENG'] = 'Skipping file {0}\n\tError{1}: {2}'
+item.value['ENG'] = 'Skipping file {0} {1}\n\tError{2}: {3}'
 item.arguments = 'None'
 item.comment = 'warns that we are skipping a file due to an error'
 langlist.add(item)
@@ -7216,7 +7216,7 @@ langlist.add(item)
 # 40-001-00032 
 # =============================================================================
 item = langlist.create('40-001-00032', kind='all-code')
-item.value['ENG'] = '\tReading headers of {0} files (to be updated)'
+item.value['ENG'] = '\tReading headers of {0} files (to be updated) {1}'
 item.arguments = 'None'
 item.comment = 'Prints that we are reading headers of N files'
 langlist.add(item)

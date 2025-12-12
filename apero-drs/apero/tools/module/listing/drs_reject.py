@@ -174,7 +174,7 @@ def add_file_reject(params: ParamDict, recipe: DrsRecipe, raw_identifier: str):
                 # get header
                 header = drs_fits.read_header(params, filename)
                 # fix the header (as we do in apero)
-                header, _ = pconst.HEADER_FIXES(params, recipe, header, dict(),
+                header, _ = pconst.HEADER_FIXES(params, header, dict(),
                                                 filename, True, objdbm)
                 # get dprtype
                 dprtype = header[params['KW_DPRTYPE'][0]]
@@ -400,7 +400,7 @@ def update_from_obsdir(params: ParamDict, recipe: DrsRecipe, obsdir: str) -> str
         # get header
         header = drs_fits.read_header(params, filename)
         # fix the header (as we do in apero)
-        header, _ = pconst.HEADER_FIXES(params, recipe, header, dict(),
+        header, _ = pconst.HEADER_FIXES(params, header, dict(),
                                         filename, True, objdbm)
         # get dprtype
         dprtype = header[params['KW_DPRTYPE'][0]]

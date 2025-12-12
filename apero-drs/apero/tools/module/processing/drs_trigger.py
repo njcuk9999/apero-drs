@@ -250,11 +250,11 @@ class Trigger:
         self.params.set('UPDATE_IDATABASE_NAMES', 'raw')
         self.params.set('INCLUDE_OBS_DIRS', 'None')
         self.params.set('EXCLUDE_OBS_DIRS', 'None')
-        drs_processing.update_index_db(self.params)
+        drs_processing.update_index_db(self.params, self.recipe.shortname)
         # fix the header data (object name, dprtype, mjdmid and
         #     trg_type etc)
         WLOG(self.params, '', textentry('40-503-00043'))
-        self.findexdbm.update_header_fix(self.recipe, objdbm=self.objdbm)
+        self.findexdbm.update_header_fix(objdbm=self.objdbm)
         # ----------------------------------------------------------------------
         # step 3: get list of obs_dir
         # ----------------------------------------------------------------------

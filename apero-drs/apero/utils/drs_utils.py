@@ -800,7 +800,8 @@ def update_index_db(params: ParamDict, block_kind: str,
                     excludelist: Union[List[str], None] = None,
                     filename: FileType = None,
                     suffix: str = '',
-                    findexdbm: Union[FileIndexDatabase, None] = None
+                    findexdbm: Union[FileIndexDatabase, None] = None,
+                    job: int = None, total_jobs: int = None
                     ) -> FileIndexDatabase:
     """
     Block function to update index database
@@ -823,6 +824,11 @@ def update_index_db(params: ParamDict, block_kind: str,
     :return: updated or loaded index database unless
              params['INPUTS']['PARALLEL'] is True
     """
+    # start a message if job and total_jobs given
+    if (job is not None) and (total_jobs is not None):
+        job_msg = ' [{0}/{1}] '.format(job, total_jobs)
+    else:
+        job_msg = ''
     # -------------------------------------------------------------------------
     # load the index database
     if findexdbm is None:
@@ -859,7 +865,8 @@ def update_index_db(params: ParamDict, block_kind: str,
     findexdbm.update_entries(block_kind=block_kind,
                              exclude_directories=exclude_dirs,
                              include_directories=include_dirs,
-                             filename=filename, suffix=suffix)
+                             filename=filename, suffix=suffix,
+                             job_msg=job_msg)
     # -------------------------------------------------------------------------
     # update database entries
     drs_database.db_push(params)

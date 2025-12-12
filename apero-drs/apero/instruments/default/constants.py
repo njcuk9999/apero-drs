@@ -5549,6 +5549,16 @@ CDict.add('MP_TYPE_VAL', value=None, dtype=str,
                       '"pool" or "process" or use "linear" '
                       'mode when validating recipes')
 
+# Define whether to use multiprocess "pool" or "process" or use "linear"
+#     mode when reading raw headers for the file index
+CDict.add('MP_FINDEX', value=None, dtype=str,
+          source=__NAME__, group=cgroup,
+          user=True, active=True,
+          options=['linear', 'pool', 'process', 'pathos'],
+          description='Define whether to use multiprocess '
+                      '"pool" or "process" or use "linear" '
+                      'mode when reading raw headers for the file index')
+
 # Key for use in run files
 CDict.add('RUN_KEY', value=None, dtype=str,
           source=__NAME__, group=cgroup,

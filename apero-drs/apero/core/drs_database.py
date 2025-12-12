@@ -2026,7 +2026,7 @@ class FileIndexDatabase(DatabaseManager):
                        include_directories: Union[List[str], None] = None,
                        exclude_directories: Union[List[str], None] = None,
                        filename: FileTypes = None, suffix: str = '',
-                       force_update: bool = False):
+                       force_update: bool = False, job_msg: str = ''):
         """
         Update the index database for files of 'kind', deal with including
         and excluding directories for files with 'suffix'
@@ -2070,7 +2070,7 @@ class FileIndexDatabase(DatabaseManager):
             # if we are not updating return here
             if not cond:
                 # print skipping: Skipping search (already run)
-                # WLOG(self.params, 'debug', textentry('40-001-00031'))
+                # WLOG(self.params, 'debug', textentry('40-001-00031') + job_msg)
                 return None
         # ---------------------------------------------------------------------
         # deal with no database loaded
@@ -2152,7 +2152,7 @@ class FileIndexDatabase(DatabaseManager):
                         rm_conditions_loop.append(rm_cond.format(*rm_args))
                         # print removing file: File no longer on disk -
                         #     removing from file index database: {0}
-                        wargs = [remove_file]
+                        wargs = [remove_file, job_msg]
                         AperoCodedWarning(self.params, '10-002-00008',
                                           targs=wargs)
                     # remove entries which no longer exist on disk
@@ -2170,7 +2170,8 @@ class FileIndexDatabase(DatabaseManager):
         # locate all files within path
         reqfiles = _get_files(self.params, block_inst.abspath, block_kind,
                               include_directories, exclude_directories,
-                              include_files, exclude_files, suffix, elast_mod)
+                              include_files, exclude_files, suffix, elast_mod,
+                              job_msg=job_msg)
         # ---------------------------------------------------------------------
         # get allowed header keys
         iheader_cols = self.pconst.FILEINDEX_HEADER_COLS()
@@ -2231,12 +2232,20 @@ class FileIndexDatabase(DatabaseManager):
             return
         # ---------------------------------------------------------------------
         # log: Reading headers of {0} files (to be updated)
-        margs = [len(reqfiles)]
+        margs = [len(reqfiles), job_msg]
         msg = textentry('40-001-00032', args=margs)
         drs_base.base_printer('40-001-00032', level='info', args=margs,
                               message=msg)
+        # disable tqdm
+        if len(job_msg) > 0:
+            _tqdm = base.tqdm_module(use=False)
+            WLOG(self.params, '', '\t\tPlease wait... ' + job_msg)
+        else:
+            _tqdm = base.tqdm_module()
+        # log how long this took
+        start_hread = time.time()
         # add required files to the database
-        for reqfile in tqdm(reqfiles):
+        for reqfile in _tqdm(reqfiles):
             # get a drs path for required file
             req_inst = drs_file.DrsPath(self.params, abspath=reqfile)
             # get header keys
@@ -2250,7 +2259,7 @@ class FileIndexDatabase(DatabaseManager):
                 except Exception as e:
                     # print error message as warning:
                     #       Skipping file {0}\n\tError {1}: {2}'
-                    wargs = [str(reqfile), type(e), str(e)]
+                    wargs = [str(reqfile), job_msg, type(e), str(e)]
                     AperoCodedWarning(self.params, '10-002-00009', targs=wargs)
                     continue
                 # loop around required keys
@@ -2262,8 +2271,16 @@ class FileIndexDatabase(DatabaseManager):
                         hkeys[rkey] = header[drs_key]
             # add to database
             self.add_entry(req_inst, block_kind, hkeys=hkeys)
+        # as we don't have tqdm - add a print out saying how long things took
+        if len(job_msg) > 0:
+            dur_hread = time.time() - start_hread
+            msg = '\tRead {0} headers in {1:.2f} s'
+            margs = [len(reqfiles), dur_hread]
+            WLOG(self.params, '', msg.format(*margs) + job_msg)
 
-    def update_header_fix(self, recipe: Any, objdbm: AstrometricDatabase):
+    def update_header_fix(self, objdbm: AstrometricDatabase,
+                          obs_dirs: Union[List[str], None] = None,
+                          job_msg: str = ''):
         """
         Update the index database with the header fixes for block_kind = raw
 
@@ -2289,13 +2306,31 @@ class FileIndexDatabase(DatabaseManager):
         # get columns
         columns = ['BLOCK_KIND', 'OBS_DIR', 'FILENAME', 'RAWFIX']
         columns += rkeys
+        # set up condition
+        condition = 'BLOCK_KIND="RAW"'
+        # add condition on observation directories
+        if obs_dirs is not None:
+            sub_cond = []
+            for obs_dir in obs_dirs:
+                sub_cond.append('OBS_DIR="{0}"'.format(obs_dir))
+            condition += ' AND (' + ' OR '.join(sub_cond) + ')'
         # get data for columns
-        table = self.get_entries(', '.join(columns), block_kind='raw')
+        table = self.get_entries(', '.join(columns), condition=condition)
         # if all rows have rawfix == 1 then just return now
         if np.sum(table['RAWFIX']) == len(table):
             return
+        # disable tqdm
+        if len(job_msg) > 0:
+            _tqdm = base.tqdm_module(use=False)
+            msg = '\t\tFixing {0} headers. Please wait... ' + job_msg
+            margs = [len(table)]
+            WLOG(self.params, '', msg.format(*margs))
+        else:
+            _tqdm = base.tqdm_module()
+        # log how long this took
+        start_hfix = time.time()
         # need to loop around each row
-        for row in tqdm(range(len(table))):
+        for row in _tqdm(range(len(table))):
             # do not re-fix is rawfix is 1
             if table['RAWFIX'].iloc[row] == 1:
                 continue
@@ -2321,7 +2356,7 @@ class FileIndexDatabase(DatabaseManager):
                     except Exception as _:
                         header[drs_key] = 'Null'
             # fix header (with new keys in)
-            header, _ = drs_file.fix_header(self.params, recipe, header=header,
+            header, _ = drs_file.fix_header(self.params, header=header,
                                             check_aliases=True, objdbm=objdbm)
             # condition is that full path is the same
             ctxt = 'BLOCK_KIND="{0}" AND OBS_DIR="{1}" AND FILENAME="{2}"'
@@ -2348,6 +2383,12 @@ class FileIndexDatabase(DatabaseManager):
                 update_dict = dict(zip(columns, values))
                 db_send(self.params, self.database.tablename, self.shortname,
                         update_dict, mode='SET', condition=condition)
+        # as we don't have tqdm - add a print out saying how long things took
+        if len(job_msg) > 0:
+            dur_hfix = time.time() - start_hfix
+            msg = '\tFixed {0} headers in {1:.2f} s'
+            margs = [len(table), dur_hfix]
+            WLOG(self.params, '', msg.format(*margs) + job_msg)
 
     def _update_params(self, **kwargs) -> bool:
         """
@@ -2405,7 +2446,8 @@ def _get_files(params: ParamDict, path: Union[Path, str], block_kind: str,
                incfiles: Union[List[Union[str, Path]], None] = None,
                excfiles: Union[List[Union[str, Path]], None] = None,
                suffix: str = '',
-               last_modified: Union[List[float], None] = None) -> List[Path]:
+               last_modified: Union[List[float], None] = None,
+               job_msg: str = '') -> List[Path]:
     """
     Get files in 'path'. If kind in ['raw' 'tmp' 'red'] then look through
     subdirectories including 'incdirs' directories and excluding 'excdirs'
@@ -2440,7 +2482,7 @@ def _get_files(params: ParamDict, path: Union[Path, str], block_kind: str,
     block_names = path_inst.blocks_with_obs_dirs()
     # -------------------------------------------------------------------------
     # print progress: Searching all directories'
-    msg = textentry('40-001-00033')
+    msg = textentry('40-001-00033') + job_msg
     drs_base.base_printer('40-001-00033', message=msg, level='')
     # get conditions (so we don't repeat them)
     incdircond = incdirs is not None
@@ -2466,14 +2508,16 @@ def _get_files(params: ParamDict, path: Union[Path, str], block_kind: str,
     if block_kind.lower() in block_names:
         # ---------------------------------------------------------------------
         # processing sub-directories
-        TLOG(params, '', 'Listing dir {0}...'.format(path))
+        if len(job_msg) == 0:
+            TLOG(params, '', 'Listing dir {0}...'.format(path))
         # get all sub directory path
         all_dirs = drs_path.listdirs(str(path))
         # loop around directories
         subdirs = []
         for item in all_dirs:
             # processing sub-directories
-            TLOG(params, '', 'Listing dir {0}...'.format(item))
+            if len(job_msg) == 0:
+                TLOG(params, '', 'Listing dir {0}...'.format(item))
             # skip directories not in included directories
             if incdircond:
                 if item not in incdirs1:
@@ -2485,7 +2529,8 @@ def _get_files(params: ParamDict, path: Union[Path, str], block_kind: str,
             # if we have reached here then append subdirs
             subdirs.append(item)
             # clear loading message
-        TLOG(params, '', '')
+        if len(job_msg) == 0:
+            TLOG(params, '', '')
     # else we do not use subdirs
     else:
         subdirs = None
@@ -2494,20 +2539,24 @@ def _get_files(params: ParamDict, path: Union[Path, str], block_kind: str,
     if subdirs is None:
         # get all files in path
         # allfiles = list(path.rglob('*{0}'.format(suffix)))
-        allfiles = drs_path.recursive_path_glob(params, path, suffix=suffix)
+        allfiles = drs_path.recursive_path_glob(params, path, suffix=suffix,
+                                                job_msg=job_msg)
     # else we have subdirs
     else:
         allfiles = []
         # loop around subdirs
         for subdir in subdirs:
             # processing sub-directories
-            TLOG(params, '', 'Analysing {0}...'.format(subdir))
+            if len(job_msg) == 0:
+                TLOG(params, '', 'Analysing {0}...'.format(subdir))
             # append to filenames
             # allfiles += list(Path(subdir).glob('*{0}'.format(suffix)))
             allfiles += drs_path.recursive_path_glob(params, subdir,
-                                                     suffix=suffix)
+                                                     suffix=suffix,
+                                                     job_msg=job_msg)
     # clear loading message
-    TLOG(params, '', '')
+    if len(job_msg) == 0:
+        TLOG(params, '', '')
     # -------------------------------------------------------------------------
     # store valid files
     valid_files = []
@@ -2533,7 +2582,8 @@ def _get_files(params: ParamDict, path: Union[Path, str], block_kind: str,
     # filter files
     for filename in allfiles:
         # processing sub-directories
-        TLOG(params, '', 'Check filter {0}...'.format(filename))
+        if len(job_msg) == 0:
+            TLOG(params, '', 'Check filter {0}...'.format(filename))
         # str filename
         strfilename = str(filename)
         # do not include directories
@@ -2559,7 +2609,8 @@ def _get_files(params: ParamDict, path: Union[Path, str], block_kind: str,
         # add file to valid file list
         valid_files.append(filename.absolute())
     # clear loading message
-    TLOG(params, '', '')
+    if len(job_msg) == 0:
+        TLOG(params, '', '')
     # return valid files
     return valid_files
 

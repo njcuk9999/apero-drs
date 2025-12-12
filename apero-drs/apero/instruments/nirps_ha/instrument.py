@@ -173,7 +173,7 @@ class NirpsHa(instrument_mod.Instrument):
     # =========================================================================
     # HEADER SETTINGS
     # =========================================================================
-    def HEADER_FIXES(self, params: ParamDict, recipe: Any, header: Any,
+    def HEADER_FIXES(self, params: ParamDict, header: Any,
                      hdict: Any, filename: str, check_aliases: bool = False,
                      objdbm: Any = None) -> Any:
         """
@@ -187,8 +187,6 @@ class NirpsHa(instrument_mod.Instrument):
                                     TRG_TYPE = ""
 
         :param params: ParamDict, the parameter dictionary of constants
-        :param recipe: DrsRecipe instance, the recipe instance the call came
-                       from
         :param header: drs_fits.Header or astropy.io.fits.Header - containing
                        key words, can be unset if hdict set
         :param hdict:  drs_fits.Header, alternate source for keys, can be
@@ -233,7 +231,7 @@ class NirpsHa(instrument_mod.Instrument):
         # ------------------------------------------------------------------
         # Deal with dprtype
         # ------------------------------------------------------------------
-        header, hdict = get_dprtype(params, recipe, header, hdict,
+        header, hdict = get_dprtype(params, self, header, hdict,
                                     filename=filename)
         # ------------------------------------------------------------------
         # Deal with calibrations and sky KW_OBJNAME
@@ -279,14 +277,12 @@ class NirpsHa(instrument_mod.Instrument):
         return constuct_objname(params, self, header, filename, check_aliases,
                                 objdbm)
 
-    def DRS_DPRTYPE(self, params: ParamDict, recipe: Any, header: Any,
+    def DRS_DPRTYPE(self, params: ParamDict, header: Any,
                     filename: Union[Path, str]) -> str:
         """
         Get the dprtype for a specific header
 
         :param params: ParamDict, the parameter dictionary of constants
-        :param recipe: DrsRecipe instance (used to get file mod) - used to
-                       get correct header keys to check dprtype
         :param header: fits.Header or drs_fits.Header - the header with
                        header keys to id file
         :param filename: str, the filename name header belongs to (for error
@@ -295,7 +291,7 @@ class NirpsHa(instrument_mod.Instrument):
                  or DARK_DARK)
         """
         # get correct header
-        dprtype, _, _ = construct_dprtype(recipe, params, filename, header)
+        dprtype, _, _ = construct_dprtype(params, self, filename, header)
         # return dprtype
         return dprtype
 
@@ -852,7 +848,7 @@ def constuct_objname(params: Union[ParamDict, None],
     return objectname
 
 
-def clean_obj_name(params: ParamDict, pconst: Any,
+def clean_obj_name(params: ParamDict, pconst: NirpsHa,
                    header: Any = None,
                    hdict: Any = None, filename: Union[None, str, Path] = None,
                    check_aliases: bool = False,
@@ -1087,13 +1083,12 @@ def get_drs_mode(params: ParamDict, header: Any, hdict: Any) -> Tuple[Any, Any]:
     return header, hdict
 
 
-def construct_dprtype(recipe: Any, params: ParamDict, filename: str,
+def construct_dprtype(params: ParamDict, pconst: NirpsHa, filename: str,
                       header: Any,
                       skip_validation: bool = False) -> Tuple[str, str, Any]:
     """
     Construct the DPRTYPE from the header
 
-    :param recipe: DrsRecipe, the recipe instance
     :param params: ParamDict, the parameter dictionary of constants
     :param filename: str, the filename header came from (for exception)
     :param header: fits.Header, the header to get the DPRTYPE from
@@ -1101,8 +1096,8 @@ def construct_dprtype(recipe: Any, params: ParamDict, filename: str,
     :return: type, 1. the dprtype, 2. the outtype, 3. the drsfile instance
     """
     # get the drs files and raw_prefix
-    drsfiles = recipe.filemod.raw_file.fileset
-    raw_prefix = recipe.filemod.raw_prefix
+    drsfiles = pconst.FILEMOD.raw_file.fileset
+    raw_prefix = pconst.FILEMOD.raw_prefix
     # set up inname
     dprtype, outtype = 'Unknown', 'Unknown'
     drsfile = None
@@ -1130,13 +1125,12 @@ def construct_dprtype(recipe: Any, params: ParamDict, filename: str,
     return dprtype, outtype, drsfile
 
 
-def get_dprtype(params: ParamDict, recipe: Any, header: Any, hdict: Any,
+def get_dprtype(params: ParamDict, pconst: NirpsHa, header: Any, hdict: Any,
                 filename: Union[None, str, Path] = None) -> Tuple[Any, Any]:
     """
     Get the DPRTYPE from the header
 
     :param params: ParamDict, the parameter dictionary of constants
-    :param recipe: DrsRecipe instance, the recipe call from
     :param header: drs_fits.Header or astropy.io.fits.Header, the header to
                    check for objname (if "objname" not set)
     :param hdict: drs_fits.Header the output header dictionary to update with
@@ -1161,7 +1155,7 @@ def get_dprtype(params: ParamDict, recipe: Any, header: Any, hdict: Any,
     if hdict is None:
         hdict = dict()
     # construct the dprtype and outtype from the header
-    dprtype, outtype, drsfile = construct_dprtype(recipe, params, filename,
+    dprtype, outtype, drsfile = construct_dprtype(params, pconst, filename,
                                                   header)
     # update header with DPRTYPE
     header[kwdprtype] = (dprtype, kwdprcomment)

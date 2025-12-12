@@ -2451,6 +2451,10 @@ CDict.set('MP_TYPE', value='process', source=__NAME__, group=cgroup)
 # "linear" mode when validating recipes
 CDict.set('MP_TYPE_VAL', value='linear', source=__NAME__, group=cgroup)
 
+# Define whether to use multiprocess "pool" or "process" or use "linear"
+#     mode when reading raw headers for the file index
+CDict.set('MP_FINDEX', value='process', source=__NAME__, group=cgroup)
+
 # Key for use in run files
 CDict.set('RUN_KEY', value='ID', source=__NAME__, group=cgroup)
 

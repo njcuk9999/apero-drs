@@ -4195,7 +4195,7 @@ def _fits_query(params: ParamDict, recipe: Any,
         # if we have a raw file we must update header
         if obs_dir.block_kind == 'raw':
             # fix header for raw files
-            header, _ = pconst.HEADER_FIXES(params, recipe, header, header,
+            header, _ = pconst.HEADER_FIXES(params, header, header,
                                             filename_it)
         # ---------------------------------------------------------------------
         # find file in possible file types

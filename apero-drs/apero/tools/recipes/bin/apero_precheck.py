@@ -121,11 +121,11 @@ def __main__(recipe, params):
     # there are a few use cases where we want to skip updating the index
     #   database
     if params['UPDATE_FILEINDEX_DATABASE']:
-        drs_processing.update_index_db(params)
+        drs_processing.update_index_db(params, recipe.shortname)
 
     # fix the header data (object name, dprtype, mjdmid and trg_type etc)
     WLOG(params, '', textentry('40-503-00043'))
-    findexdbm.update_header_fix(recipe, objdbm)
+    findexdbm.update_header_fix(objdbm)
     # -------------------------------------------------------------------------
     # File check
     #    1. check number of calibrations
