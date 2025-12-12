@@ -684,5 +684,17 @@ visulise.description = textentry('VISU_DESCRIPTION')
 visulise.recipe_type = 'tool'
 visulise.recipe_kind = 'user'
 visulise.set_kwarg(name='--mode', dtype='options', default='None',
-                   options=['e2ds'], helpstr=textentry('VISU_MODE_HELP'))
+                   options=['info', 'e2ds'],
+                   helpstr=textentry('VISU_MODE_HELP'))
+visulise.set_kwarg(name='--path', dtype=str, default='None',
+                   helpstr='Some modes require a path. '
+                           'For mode=info this is the path to the files to '
+                           'create info graphics for (recursive)')
+visulise.set_kwarg(name='--infosave', dtype='switch', default=False,
+                   helpstr='Saves to --infopath if set and --path/{path to '
+                           'file} if not set. If this is not set just'
+                           ' shows the plots')
+visulise.set_kwarg(name='--infopath', dtype=str, default='None',
+                   helpstr='Path to save info plots to (only for mode=info). '
+                           'If not set uses --path/{path to file}')
 visulise.description_file = None
