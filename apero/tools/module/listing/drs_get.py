@@ -367,6 +367,7 @@ def get_standard_outpaths(params, nosubdir: bool, db_entries,
         # add object name to storage
         all_inpaths[objname] = []
         all_outpaths[objname] = []
+        all_permissions[objname] = []
         # loop around all files for this object
         for filename in db_inpaths[objname]:
             # if object exists
