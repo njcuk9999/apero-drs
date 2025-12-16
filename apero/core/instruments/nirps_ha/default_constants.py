@@ -3079,5 +3079,20 @@ ARI_CAL_ORDERS = ARI_CAL_ORDERS.copy(__NAME__)
 ARI_CAL_ORDERS.value = '15, 60'
 
 # =============================================================================
+# INFO VISUALATION SETTINGS
+# =============================================================================
+# Minimum zoom 1 value for info visu plots
+INFO_VISU_Z1 = INFO_VISU_Z1.copy(__NAME__)
+INFO_VISU_Z1.value = '1082.0, 1085.0'
+
+# Minimum zoom 2 value for info visu plots
+INFO_VISU_Z2 = INFO_VISU_Z2.copy(__NAME__)
+INFO_VISU_Z2.value = '1575, 1580'
+
+# Minimum zoom 3 value for info visu plots
+INFO_VISU_Z3 = INFO_VISU_Z3.copy(__NAME__)
+INFO_VISU_Z3.value = '1666, 1668'
+
+# =============================================================================
 #  End of configuration file
 # =============================================================================

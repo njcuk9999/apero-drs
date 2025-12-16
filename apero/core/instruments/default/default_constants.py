@@ -390,6 +390,8 @@ __all__ = [
     'ARI_PROTECT', 'ARI_GROUP', 'ARI_RESET',
     'ARI_FILTER_OBJECTS', 'ARI_FILTER_OBJECTS_LIST', 'ARI_HEADER_PROPS',
     'ARI_FINDING_CHARTS', 'ARI_CAL_ORDERS', 'ARI_RESET_DICT',
+    # visualization constants
+    'INFO_VISU_Z1', 'INFO_VISU_Z2', 'INFO_VISU_Z3',
 ]
 
 # set name
@@ -5845,6 +5847,25 @@ ARI_RESET_DICT = Const('ARI_RESET_DICT', value=ari_reset_dict,
                        description='Define the ARI reset directory (relative '
                                    'paths to copy into the "other" directory '
                                    'on installation/reset)')
+
+
+# =============================================================================
+# INFO VISUALATION SETTINGS
+# =============================================================================
+# zoom 1 value for info visu plots
+INFO_VISU_Z1 = Const('INFO_VISU_Z1', value=None, dtype=str,
+                     source=__NAME__, group=cgroup,
+                     description='(Min, Max) zoom 1 value for info visu plots')
+
+# zoom 2 value for info visu plots
+INFO_VISU_Z2= Const('INFO_VISU_Z2', value=None, dtype=str,
+                         source=__NAME__, group=cgroup,
+                    description='(Min, Max) zoom 2 value for info visu plots')
+
+# zoom 3 value for info visu plots
+INFO_VISU_Z3= Const('INFO_VISU_Z3', value=None, dtype=str,
+                    source=__NAME__, group=cgroup,
+                    description='(Min, Max) zoom 3 value for info visu plots')
 
 # =============================================================================
 #  End of configuration file
