@@ -40,10 +40,10 @@ ParamDict = constants.ParamDict
 # list of known identities that can be plotted
 KNOWN_IDENTITIES = dict()
 KNOWN_IDENTITIES['DRS_POST_E'] = vip.plot_drs_post_e
-KNOWN_IDENTITIES['DRS_POST_S'] = None
-KNOWN_IDENTITIES['DRS_POST_T'] = None
-KNOWN_IDENTITIES['DRS_POST_V'] = None
-KNOWN_IDENTITIES['DRS_POST_P'] = None
+KNOWN_IDENTITIES['DRS_POST_S'] = vip.post_drs_post_s
+KNOWN_IDENTITIES['DRS_POST_T'] = vip.plot_drs_post_t
+KNOWN_IDENTITIES['DRS_POST_V'] = vip.post_drs_post_v
+KNOWN_IDENTITIES['DRS_POST_P'] = vip.plot_drs_post_p
 KNOWN_IDENTITIES['TELLU_TEMP_S1DW'] = None
 KNOWN_IDENTITIES['TELLU_TEMP_S1DV'] = None
 KNOWN_IDENTITIES['TELLU_TEMP'] = None
@@ -53,6 +53,9 @@ KNOWN_IDENTITIES['LBL_RDB'] = None
 KNOWN_IDENTITIES['LBL_RDB2'] = None
 KNOWN_IDENTITIES['LBL_RDB_DRIFT'] = None
 KNOWN_IDENTITIES['LBL_RDB2_DRIFT'] = None
+# cache for warnings (only show once per identity)
+UNKNOWN_IDENTITIES = []
+NO_FUNC_IDENTITIES = []
 
 
 # =============================================================================
@@ -234,14 +237,32 @@ def generate_info_plot(params: ParamDict, identity: str, filename: str):
 
     :return:
     """
+    global UNKNOWN_IDENTITIES
+    global NO_FUNC_IDENTITIES
+    # if identity is known generate plot
     if identity in KNOWN_IDENTITIES:
+        # log that we are generating info plot
+        WLOG(params, '',
+             f'Generating info plot for file: {filename}')
         # get plot function
         plot_func = KNOWN_IDENTITIES[identity]
         # if plot function is not defined then we return
         if plot_func is None:
+            if identity not in NO_FUNC_IDENTITIES:
+                WLOG(params, 'warning',
+                     f'No plot function for {identity}')
+                NO_FUNC_IDENTITIES.append(identity)
             return
         # otherwise call the plot function
         plot_func(params, filename)
+    # else
+    else:
+
+        if identity not in UNKNOWN_IDENTITIES:
+            WLOG(params, 'warning',
+                 f'Unknown identity: {identity}')
+            UNKNOWN_IDENTITIES.append(identity)
+        return
 
 
 # =============================================================================

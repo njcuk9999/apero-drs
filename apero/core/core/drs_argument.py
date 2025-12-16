@@ -282,6 +282,7 @@ class DrsArgumentParser(argparse.ArgumentParser):
                  false
         :raises: _sys.exit if -h or --help in sys.argv
         """
+
         # deal with help
         if '-h' in sys.argv:
             self.print_help()
@@ -291,6 +292,17 @@ class DrsArgumentParser(argparse.ArgumentParser):
             self.print_help()
             # quit after call
             self.exit()
+        # Sanity check
+        all_keys = list(self.recipe.args.keys()) + list(self.recipe.kwargs.keys())
+        for arg in all_keys:
+            if f'--{arg}' in self.recipe.specialargs:
+                func_name = display_func('_has_special', __NAME__)
+                # define error
+                emsg = ('Error recipe {0} has argument {1} which is both an '
+                        'arg/kwarg and special arg - not allowed'
+                        '\n\tFunction = {2}')
+                eargs = [arg, self.recipe.name, func_name]
+                WLOG(self.recipe.params, 'error', emsg.format(*eargs))
         # Generate list of special arguments that require us to skip other
         #   arguments
         skippable = []
@@ -304,7 +316,10 @@ class DrsArgumentParser(argparse.ArgumentParser):
         for skip in skippable:
             if self.args is not None:
                 for parg in self.args:
-                    if skip in parg:
+
+                    parg_name = parg.split('=')[0].split()[0]
+
+                    if parg_name == skip:
                         return True
         # if we have reached this point we do not have a special argument
         return False
