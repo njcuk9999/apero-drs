@@ -3396,6 +3396,10 @@ INFO_VISU_Z2.value = '1600, 1604'
 INFO_VISU_Z3 = INFO_VISU_Z3.copy(__NAME__)
 INFO_VISU_Z3.value = '2164, 2169'
 
+# Plot order for LBL etc in info plots
+INFO_VISU_EXT_ORDER = INFO_VISU_EXT_ORDER.copy(__NAME__)
+INFO_VISU_EXT_ORDER.value = 35
+
 # =============================================================================
 #  End of configuration file
 # =============================================================================

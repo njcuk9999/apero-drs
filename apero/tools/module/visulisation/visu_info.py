@@ -9,6 +9,7 @@ Created on 2025-12-12 at 11:52
 
 @author: cook
 """
+import glob
 import os
 from typing import Any, Dict, List, Optional, Tuple, Union
 
@@ -44,15 +45,15 @@ KNOWN_IDENTITIES['DRS_POST_S'] = vip.post_drs_post_s
 KNOWN_IDENTITIES['DRS_POST_T'] = vip.plot_drs_post_t
 KNOWN_IDENTITIES['DRS_POST_V'] = vip.post_drs_post_v
 KNOWN_IDENTITIES['DRS_POST_P'] = vip.plot_drs_post_p
-KNOWN_IDENTITIES['TELLU_TEMP_S1DW'] = None
-KNOWN_IDENTITIES['TELLU_TEMP_S1DV'] = None
-KNOWN_IDENTITIES['TELLU_TEMP'] = None
+KNOWN_IDENTITIES['TELLU_TEMP'] = vip.red_tellu_temp
+KNOWN_IDENTITIES['TELLU_TEMP_S1DW'] = vip.red_tellu_temp_s1dw
+KNOWN_IDENTITIES['TELLU_TEMP_S1DV'] = vip.red_tellu_temp_s1dv
 KNOWN_IDENTITIES['LBL_FITS'] = None
-KNOWN_IDENTITIES['LBL_RDB_FITS'] = None
-KNOWN_IDENTITIES['LBL_RDB'] = None
-KNOWN_IDENTITIES['LBL_RDB2'] = None
-KNOWN_IDENTITIES['LBL_RDB_DRIFT'] = None
-KNOWN_IDENTITIES['LBL_RDB2_DRIFT'] = None
+KNOWN_IDENTITIES['LBL_RDB_FITS'] = vip.lbl_rdb
+KNOWN_IDENTITIES['LBL_RDB'] = vip.lbl_rdb
+KNOWN_IDENTITIES['LBL_RDB2'] = vip.lbl_rdb
+KNOWN_IDENTITIES['LBL_RDB_DRIFT'] = vip.lbl_rdb
+KNOWN_IDENTITIES['LBL_RDB2_DRIFT'] = vip.lbl_rdb
 # cache for warnings (only show once per identity)
 UNKNOWN_IDENTITIES = []
 NO_FUNC_IDENTITIES = []
@@ -62,27 +63,73 @@ NO_FUNC_IDENTITIES = []
 # Define functions
 # =============================================================================
 def process_path(params: ParamDict, path: str):
-
+    # -------------------------------------------------------------------------
+    # deal with single file
+    if os.path.isfile(path):
+        return process_one_file(params, path)
+    # deal with wildcards in path
+    if '*' in path or '?' in path or '[' in path:
+        return process_wildcards(params, path)
+    # -------------------------------------------------------------------------
     # deal with path not existing
     if not os.path.exists(path):
         WLOG(params, 'error', f'Path does not exist: {path}')
         return
-    # -------------------------------------------------------------------------
-    # deal with single file
-    if os.path.isfile(path):
-        # identify file type
-        identity = identify_file(params, path)
-        # generate info plot
-        generate_info_plot(params, identity, path)
-        # return here
-        return
-    # -------------------------------------------------------------------------
     # deal with all other cases where path is not a directory
     if not os.path.isdir(path):
         emsg = 'Path is not a file or directory: {0}'
         eargs = [path]
         WLOG(params, 'error',  emsg.format(*eargs))
         return
+    # if we get to here process as a directory
+    return process_directory(params, path)
+
+
+def process_one_file(params: ParamDict, filename: str):
+    # identify file type
+    identity = identify_file(params, filename)
+    # give the identity of the file
+    msg = 'File: {0} identified as: {1}'
+    margs = [filename, identity]
+    WLOG(params, '',  msg.format(*margs))
+    # generate info plot
+    generate_info_plot(params, identity, filename)
+    # return here
+    return
+
+
+def process_wildcards(params: ParamDict, path: str):
+    # remove all " and ' characters from path
+    path = path.replace('"', '').replace("'", '')
+    # find all files matching wildcard
+    all_files = glob.glob(path, recursive=True)
+    # display the number of files found
+    msg = 'Found {0} files matching wildcard'
+    margs = [len(all_files)]
+    WLOG(params, 'info', msg.format(*margs))
+    valid_files, valid_identity = [], []
+    # loop around all files
+    for filename in all_files:
+        # identify file type
+        identity = identify_file(params, filename)
+        # if identity is valid then append to valid list
+        if identity is not None:
+            valid_files.append(filename)
+            valid_identity.append(identity)
+    # ---------------------------------------------------------------------
+    # display the number of valid files found
+    msg = 'Found {0} valid files'
+    margs = [len(valid_files)]
+    WLOG(params, 'info', msg.format(*margs))
+    # ---------------------------------------------------------------------
+    # loop around valid files and generate info plots
+    for identity, filename in zip(valid_identity, valid_files):
+        generate_info_plot(params, identity, filename)
+    # return here
+    return
+
+
+def process_directory(params: ParamDict, path: str):
     # -------------------------------------------------------------------------
     # print that we are searching directory
     msg = 'Searching directory for files: {0}'
@@ -98,7 +145,7 @@ def process_path(params: ParamDict, path: str):
     # display the number of files found
     msg = 'Found {0} files'
     margs = [len(all_files)]
-    WLOG(params, 'info',  msg.format(*margs))
+    WLOG(params, 'info', msg.format(*margs))
     # -------------------------------------------------------------------------
     valid_files, valid_identity = [], []
     # loop around all files
@@ -113,7 +160,7 @@ def process_path(params: ParamDict, path: str):
     # display the number of valid files found
     msg = 'Found {0} valid files'
     margs = [len(valid_files)]
-    WLOG(params, 'info',  msg.format(*margs))
+    WLOG(params, 'info', msg.format(*margs))
     # -------------------------------------------------------------------------
     # loop around valid files and generate info plots
     for identity, filename in zip(valid_identity, valid_files):
@@ -205,20 +252,18 @@ def identify_via_file_definition(params: ParamDict, filename: str) -> Optional[s
                 file_definitions.post_file]
     # most likely that if we are searching via suffix this list is flipped
     filesets = filesets[::-1]
-    # set identity to None to start with
-    identity = None
     # loop around file sets and try to identify file
     for fileset in filesets:
         found, drsfile = drs_file.id_drs_file(params, fileset, filename,
-                                              required=False, nentries=1)
+                                              required=False, nentries=1,
+                                              load_data=False)
         # if we found it great - break here and don't try any more
         if found:
             # update the name
-            identity = drsfile.name
-            break
-    # we only keep identities that can be plotted
-    if identity in KNOWN_IDENTITIES.keys():
-        return identity
+            identity = str(drsfile.name)
+            # we only keep identities that can be plotted
+            if identity in KNOWN_IDENTITIES.keys():
+                return identity
     else:
         return None
 
@@ -254,7 +299,7 @@ def generate_info_plot(params: ParamDict, identity: str, filename: str):
                 NO_FUNC_IDENTITIES.append(identity)
             return
         # otherwise call the plot function
-        plot_func(params, filename)
+        plot_func(params, filename, identity)
     # else
     else:
 
