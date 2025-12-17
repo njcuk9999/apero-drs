@@ -37,6 +37,7 @@ drs_input = drs_file.DrsInputFile
 drs_finput = drs_file.DrsFitsFile
 drs_ninput = drs_file.DrsNpyFile
 drs_oinput = drs_file.DrsOutFile
+drs_linput = drs_file.DrsLBLFile
 DrsFileGroup = drs_file.DrsFileGroup
 # define out file classes
 blank_ofile = out.BlankOutFile()
@@ -100,6 +101,15 @@ raw_night_sky_sky = drs_finput('RAW_NIGHT_SKY_SKY', filetype='.fits',
                              description='Raw sci=SKY calib=SKY file (night)')
 raw_file.addset(raw_night_sky_sky)
 
+raw_night_sky_sky = drs_finput('RAW_NIGHT_SKY_SKY', filetype='.fits',
+                             suffix='', inext='.fits', outclass=blank_ofile,
+                             hkeys=dict(KW_RAW_DPRTYPE='OBJECT,SKY',
+                                        KW_TARGET_TYPE='NIGHT-SKY',
+                                        KW_INST_MODE=INSTRUMENT_MODE,
+                                        KW_INSTRUMENT=INSTRUMENT_NAME),
+                             description='Raw sci=SKY calib=SKY file (night)')
+raw_file.addset(raw_night_sky_sky)
+
 
 raw_day_sky_sky = drs_finput('RAW_DAY_SKY_SKY', filetype='.fits',
                              suffix='', inext='.fits', outclass=blank_ofile,
@@ -108,7 +118,7 @@ raw_day_sky_sky = drs_finput('RAW_DAY_SKY_SKY', filetype='.fits',
                                         KW_INST_MODE=INSTRUMENT_MODE,
                                         KW_INSTRUMENT=INSTRUMENT_NAME),
                              description='Raw sci=SKY calib=SKY file (day)')
-raw_file.addset(raw_night_sky_sky)
+raw_file.addset(raw_day_sky_sky)
 
 # -----------------------------------------------------------------------------
 # raw flat files
@@ -681,6 +691,7 @@ pp_night_sky_sky = drs_finput('NIGHT_SKY_SKY', filetype='.fits',
                             hkeys=dict(KW_DPRTYPE='NIGHT_SKY_SKY'),
                             description='Preprocessed sci=SKY calib=SKY file')
 pp_file.addset(pp_night_sky_sky)
+
 pp_eff_sky_sky = drs_finput('EFF_SKY_SKY', filetype='.fits',
                             suffix='_pp', intype=raw_eff_sky_sky,
                             inext='.fits', outclass=general_ofile,
@@ -1980,74 +1991,83 @@ red_file.addset(out_ccf_fits)
 # LBL processed Files
 # =============================================================================
 lbl_fibers = ['A']
-
+# generic out file
+lbl_file = drs_linput('LBL_OUTPUT', filetype='', suffix='',
+                      intype=red_file, instrument=__INSTRUMENT__,
+                      description='Generic LBL file')
 # lbl template file
-lbl_template_file = drs_input('LBL_TEMPLATE', path='templates',
+lbl_template_file = drs_linput('LBL_TEMPLATE', path='templates',
                               filetype='.fits',
                               basename='Template_s1dv_{obj}_sc1d_v_file_A',
                               datatype='table',
                               outclass=lbl_ofile,
                               description='Telluric 1D template file',
                               required=False)
+lbl_file.addset(lbl_template_file)
 
 # lbl mask file
-lbl_mask_file = drs_input('LBL_MASK',
+lbl_mask_file = drs_linput('LBL_MASK',
                           filetype='.fits', path='masks',
                           basename='{obj}', datatype='table',
                           outclass=lbl_ofile,
                           description='Telluric mask file')
+lbl_file.addset(lbl_mask_file)
 
 # lbl fits files
-lbl_fits_file = drs_finput('LBL_FITS', filetype='.fits',
+lbl_fits_file = drs_linput('LBL_FITS', filetype='.fits',
                            path='lblrv/{obj}_{temp}/',
                            suffix='_{obj}_{temp}_lbl',
                            datatype='table',
                            outclass=lbl_ofile, instrument=__INSTRUMENT__,
                            description='LBL line list fits files')
+lbl_file.addset(lbl_fits_file)
 
 # lbl rdb file
-lbl_rdb_file = drs_input('LBL_RDB',
+lbl_rdb_file = drs_linput('LBL_RDB',
                          filetype='.rdb', path='lblrdb',
                          basename='lbl_{obj}_{temp}', datatype='table',
                          outclass=lbl_ofile,
                          description='LBL rdb file (RVs) in ascii-rdb format')
+lbl_file.addset(lbl_rdb_file)
 
 # lbl rdb fits file
-lbl_rdb_fits_file = drs_input('LBL_RDB_FITS',
+lbl_rdb_fits_file = drs_linput('LBL_RDB_FITS',
                               filetype='.fits', path='lblrdb',
                               basename='lbl_{obj}_{temp}', datatype='table',
                               outclass=lbl_ofile,
                               description='LBL rdb file (RVs) in fits format')
+lbl_file.addset(lbl_rdb_fits_file)
 
 # lbl rdb2 file
-lbl_rdb2_file = drs_input('LBL_RDB2',
+lbl_rdb2_file = drs_linput('LBL_RDB2',
                          filetype='.rdb', path='lblrdb',
                          basename='lbl2_{obj}_{temp}', datatype='table',
                          outclass=lbl_ofile,
                          description='LBL binned per night rdb file (RVs)')
+lbl_file.addset(lbl_rdb2_file)
 
 # lbl drift file
-lbl_drift_file = drs_input('LBL_DRIFT',
+lbl_drift_file = drs_linput('LBL_DRIFT',
                            filetype='.rdb', path='lblrdb',
                            basename='drift',
                            datatype='table',
                            outclass=lbl_ofile,
                            description='LBL drift file (calculated from FPs)',
                            required=False)
-
+lbl_file.addset(lbl_drift_file)
 
 # lbl rdb file with drift
-lbl_rdb_drift_file = drs_input('LBL_RDB_DRIFT',
+lbl_rdb_drift_file = drs_linput('LBL_RDB_DRIFT',
                                filetype='.rdb', path='lblrdb',
                                basename='lbl_{obj}_{temp}_drift',
                                datatype='table',
                                outclass=lbl_ofile,
                                description='LBL Drift corrected rdb file',
                                required=False)
-
+lbl_file.addset(lbl_rdb_drift_file)
 
 # lbl rdb2 file with drift
-lbl_rdb2_drift_file = drs_input('LBL_RDB2_DRIFT',
+lbl_rdb2_drift_file = drs_linput('LBL_RDB2_DRIFT',
                                filetype='.rdb', path='lblrdb',
                                basename='lbl2_{obj}_{temp}_drift',
                                datatype='table',
@@ -2055,6 +2075,7 @@ lbl_rdb2_drift_file = drs_input('LBL_RDB2_DRIFT',
                                description='LBL Drift corrected binned '
                                            'rdb file',
                                required=False)
+lbl_file.addset(lbl_rdb2_drift_file)
 
 # =============================================================================
 # Post processed Files

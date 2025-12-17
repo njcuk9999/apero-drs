@@ -40,6 +40,7 @@ drs_input = drs_file.DrsInputFile
 drs_finput = drs_file.DrsFitsFile
 drs_ninput = drs_file.DrsNpyFile
 drs_oinput = drs_file.DrsOutFile
+drs_linput = drs_file.DrsLBLFile
 DrsFileGroup = drs_file.DrsFileGroup
 # define out file classes
 blank_ofile = out.BlankOutFile()
@@ -1648,11 +1649,11 @@ red_file.addset(out_stokesi_s1dv)
 # =============================================================================
 lbl_fibers = ['AB']
 # generic out file
-lbl_file = drs_finput('DRS_OUTPUT', filetype='', suffix='',
+lbl_file = drs_linput('LBL_OUTPUT', filetype='', suffix='',
                       intype=red_file, instrument=__INSTRUMENT__,
                       description='Generic LBL file')
 # lbl template file
-lbl_template_file = drs_input('LBL_TEMPLATE', path='templates',
+lbl_template_file = drs_linput('LBL_TEMPLATE', path='templates',
                               filetype='.fits',
                               basename='Template_s1dv_{obj}_sc1d_v_file_AB',
                               datatype='table',
@@ -1662,7 +1663,7 @@ lbl_template_file = drs_input('LBL_TEMPLATE', path='templates',
 lbl_file.addset(lbl_template_file)
 
 # lbl mask file
-lbl_mask_file = drs_input('LBL_MASK',
+lbl_mask_file = drs_linput('LBL_MASK',
                           filetype='.fits', path='masks',
                           basename='{obj}', datatype='table',
                           outclass=lbl_ofile,
@@ -1670,7 +1671,7 @@ lbl_mask_file = drs_input('LBL_MASK',
 lbl_file.addset(lbl_mask_file)
 
 # lbl fits files
-lbl_fits_file = drs_finput('LBL_FITS', filetype='.fits',
+lbl_fits_file = drs_linput('LBL_FITS', filetype='.fits',
                            path='lblrv/{obj}_{temp}/',
                            suffix='_{obj}_{temp}_lbl',
                            datatype='table',
@@ -1679,7 +1680,7 @@ lbl_fits_file = drs_finput('LBL_FITS', filetype='.fits',
 lbl_file.addset(lbl_fits_file)
 
 # lbl rdb file
-lbl_rdb_file = drs_input('LBL_RDB',
+lbl_rdb_file = drs_linput('LBL_RDB',
                          filetype='.rdb', path='lblrdb',
                          basename='lbl_{obj}_{temp}', datatype='table',
                          outclass=lbl_ofile,
@@ -1687,7 +1688,7 @@ lbl_rdb_file = drs_input('LBL_RDB',
 lbl_file.addset(lbl_rdb_file)
 
 # lbl rdb fits file
-lbl_rdb_fits_file = drs_input('LBL_RDB_FITS',
+lbl_rdb_fits_file = drs_linput('LBL_RDB_FITS',
                               filetype='.fits', path='lblrdb',
                               basename='lbl_{obj}_{temp}', datatype='table',
                               outclass=lbl_ofile,
@@ -1695,7 +1696,7 @@ lbl_rdb_fits_file = drs_input('LBL_RDB_FITS',
 lbl_file.addset(lbl_rdb_fits_file)
 
 # lbl rdb2 file
-lbl_rdb2_file = drs_input('LBL_RDB2',
+lbl_rdb2_file = drs_linput('LBL_RDB2',
                          filetype='.rdb', path='lblrdb',
                          basename='lbl2_{obj}_{temp}', datatype='table',
                          outclass=lbl_ofile,
@@ -1703,7 +1704,7 @@ lbl_rdb2_file = drs_input('LBL_RDB2',
 lbl_file.addset(lbl_rdb2_file)
 
 # lbl drift file
-lbl_drift_file = drs_input('LBL_DRIFT',
+lbl_drift_file = drs_linput('LBL_DRIFT',
                            filetype='.rdb', path='lblrdb',
                            basename='drift',
                            datatype='table',
@@ -1713,7 +1714,7 @@ lbl_drift_file = drs_input('LBL_DRIFT',
 lbl_file.addset(lbl_drift_file)
 
 # lbl rdb file with drift
-lbl_rdb_drift_file = drs_input('LBL_RDB_DRIFT',
+lbl_rdb_drift_file = drs_linput('LBL_RDB_DRIFT',
                                filetype='.rdb', path='lblrdb',
                                basename='lbl_{obj}_{temp}_drift',
                                datatype='table',
@@ -1723,7 +1724,7 @@ lbl_rdb_drift_file = drs_input('LBL_RDB_DRIFT',
 lbl_file.addset(lbl_rdb_drift_file)
 
 # lbl rdb2 file with drift
-lbl_rdb2_drift_file = drs_input('LBL_RDB2_DRIFT',
+lbl_rdb2_drift_file = drs_linput('LBL_RDB2_DRIFT',
                                filetype='.rdb', path='lblrdb',
                                basename='lbl2_{obj}_{temp}_drift',
                                datatype='table',

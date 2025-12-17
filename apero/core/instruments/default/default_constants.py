@@ -392,6 +392,7 @@ __all__ = [
     'ARI_FINDING_CHARTS', 'ARI_CAL_ORDERS', 'ARI_RESET_DICT',
     # visualization constants
     'INFO_VISU_Z1', 'INFO_VISU_Z2', 'INFO_VISU_Z3',
+    'INFO_VISU_EXT_ORDER',
 ]
 
 # set name
@@ -5866,6 +5867,11 @@ INFO_VISU_Z2= Const('INFO_VISU_Z2', value=None, dtype=str,
 INFO_VISU_Z3= Const('INFO_VISU_Z3', value=None, dtype=str,
                     source=__NAME__, group=cgroup,
                     description='(Min, Max) zoom 3 value for info visu plots')
+
+# Plot order for LBL etc in info plots
+INFO_VISU_EXT_ORDER = Const('INFO_VISU_EXT_ORDER', value=None, dtype=int,
+                            source=__NAME__, group=cgroup,
+                            description='Plot order for LBL etc in info plots')
 
 # =============================================================================
 #  End of configuration file
