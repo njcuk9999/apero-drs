@@ -111,6 +111,7 @@ def run_apero_get(params: ParamDict):
     # --------------------------------------------------------------
     # run apero get for objects for lbl
     apero_get.main(objnames='*', dprtypes=lbl_dprtypes,
+                   block_kind='red',
                    outtypes=lbl_outtypes,
                    outpath=outpath_objects, fibers=lbl_scifibers,
                    symlinks=lbl_symlinks,
@@ -122,12 +123,14 @@ def run_apero_get(params: ParamDict):
     #                test=testmode, since=since)
     # run apero get for simultaneous FP
     apero_get.main(objnames='None', dprtypes=simfp_dprtypes,
+                   block_kind='red',
                    outtypes='EXT_E2DS_FF', nosubdir=True,
                    outpath=outpath_fp, fibers=lbl_calfibers,
                    symlinks=lbl_symlinks,
                    test=testmode, since=since)
     # run apero get for extracted FP_FP
     apero_get.main(objnames='None', dprtypes='FP_FP',
+                   block_kind='red',
                    outtypes='EXT_E2DS_FF',
                    outpath=outpath_fp, fibers=lbl_calfibers,
                    symlinks=lbl_symlinks, nosubdir=True,

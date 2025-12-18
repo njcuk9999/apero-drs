@@ -120,6 +120,7 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
     kw_dprtypes = inputs.listp('dprtypes', dtype=str, required=False)
     kw_outputs = inputs.listp('outtypes', dtype=str, required=False)
     kw_fibers = inputs.listp('fibers', dtype=str, required=False)
+    block_kind = inputs.get('BLOCK_KIND', None)
     since = inputs.get('SINCE', None)
     latest = inputs.get('LATEST', None)
     timekey = inputs.get('TIMEKEY', 'observed')
@@ -175,6 +176,8 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
         kw_pi_name = None
     if drs_text.null_text(kw_runids, ['None', '', 'Null', '*']):
         kw_runids = None
+    if drs_text.null_text(block_kind, ['None', '', 'Null', '*']):
+        block_kind = None
     # -------------------------------------------------------------------------
     # deal with some Kw_outputs not using fibers (fibers will be set to None)
     kw_fibers = drs_get.fiber_by_output(kw_fibers, kw_outputs)
@@ -187,6 +190,7 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
     filters['OBS_DIR'] = kw_obsdir
     filters['KW_PI_NAME'] = kw_pi_name
     filters['KW_RUN_ID'] = kw_runids
+    filters['BLOCK_KIND'] = block_kind
     # run basic filter
     indict, outdict = drs_get.basic_filter(params, kw_objnames, filters,
                                            user_outdir, do_copy, do_symlink,
