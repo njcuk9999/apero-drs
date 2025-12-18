@@ -7825,12 +7825,17 @@ class DrsLBLFile(DrsFitsFile):
         :return:
         """
         # replace {obj} and {temp} with * - we can't know these
-        if self.truebasename is not None:
-            pattern = self.truebasename.format(obj='*', temp='*') + self.filetype
+        if not drs_text.null_text(self.truebasename, ['None', 'Null', '']):
+            pattern = self.truebasename.format(obj='*', temp='*')
         elif self.suffix is not None:
-            pattern = '*' + self.suffix.format(obj='*', temp='*') + self.filetype
+            pattern = '*' + self.suffix.format(obj='*', temp='*')
         else:
             pattern = None
+        # skip patterns that match everything
+        if drs_text.pattern_is_too_generic(pattern, extension=self.filetype):
+            msg = '\tPattern={0} for file is too generic - all files will match'
+            margs = [pattern]
+            return False, msg.format(*margs)
         # get filename
         filename = self.filename
         # deal with no input filename
@@ -7840,7 +7845,7 @@ class DrsLBLFile(DrsFitsFile):
         basename = os.path.basename(filename)
         # if out files have an extension this should identify them
         if pattern is not None:
-            if not fnmatch.fnmatch(basename, pattern):
+            if not fnmatch.fnmatch(basename, pattern + self.filetype):
                 msg = '\tFilename {0} does not follow pattern {1}'
                 margs = [basename, pattern]
                 return False, msg.format(*margs)

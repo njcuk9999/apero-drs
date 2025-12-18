@@ -14,6 +14,7 @@ import warnings
 from typing import Any, Dict, List, Union
 
 import matplotlib.pyplot as plt
+from matplotlib.lines import Line2D
 import numpy as np
 from astropy.io import fits
 from astropy.table import Table
@@ -530,6 +531,48 @@ def plot_lbl_rdb_thumbnail(params: ParamDict, filename: str,
     plotend(params, filename, thumbnail=True)
 
 
+def lbl_trumpet_plot(frame, wavemap: np.ndarray, y: np.ndarray,
+                     ey: np.ndarray, mask: np.ndarray,
+                     mask_on_label: str, mask_off_label: str,
+                     on_color: str = 'blue', off_color: str = 'cyan',
+                     ylabel: str = None, low_percentile: float = 5.0,
+                     high_percentile: float = 95.0):
+    # plot the mask off (bad) points (faint)
+    frame.errorbar(wavemap[~mask], y[~mask], yerr=ey[~mask],
+                   marker='o', alpha=0.05, color=off_color,
+                   label=mask_off_label, ls='None')
+    # plot the mask on (good) points
+    frame.errorbar(wavemap[mask], y[mask], yerr=ey[mask],
+                   marker='o', alpha=0.5, color=on_color,
+                   label=mask_on_label, ls='None')
+    # set limits to 5 sigma away from median
+    median = np.nanmedian(y)
+    low, high = np.nanpercentile(y, [low_percentile, high_percentile])
+    frame.set(ylim=[low, high])
+    # plot the median line
+    frame.axhline(median, color='red', ls='--',
+                  label='Med: {0:.2f}'.format(median))
+    # set the background colour
+    frame.set_facecolor(COLORS['panel_bg'])
+    # set the grid
+    frame.grid(which='both', color='lightgray', ls='--')
+    # add labels and legend if required
+    if ylabel is not None:
+        frame.set_xlabel('Wavelength [nm]')
+        frame.set_ylabel(ylabel)
+        # --- LEGEND WITH OPAQUE PROXY ARTISTS ---
+        legend_handles = [
+            Line2D([], [], marker='o', color=off_color, linestyle='None',
+                   markersize=6, label=mask_off_label),
+            Line2D([], [], marker='o', color=on_color, linestyle='None',
+                   markersize=6, label=mask_on_label),
+            Line2D([], [], color='red', linestyle='--',
+                   label=f'Med: {median:.2f}')
+        ]
+
+        frame.legend(handles=legend_handles, loc=0)
+
+
 # =============================================================================
 # Define worker functions
 # =============================================================================
@@ -555,8 +598,6 @@ def wave_from_header(params: ParamDict, nbx: int,
     wavemap = wave_mod.get_wavemap_from_coeffs(wave_coeffs, nbo, nbx)
     # return the wavemap
     return wavemap
-
-
 
 
 # =============================================================================
@@ -825,6 +866,8 @@ def lbl_rdb(params: ParamDict, filename: str, identity: str = ''):
 
     # get the basename
     basename = os.path.basename(filename)
+    # header
+    header = None
     # ----------------------------------------------------------------------
     # deal with identity
     if identity == 'LBL_RDB':
@@ -857,6 +900,8 @@ def lbl_rdb(params: ParamDict, filename: str, identity: str = ''):
         objname_template = basename.removeprefix('lbl_').removesuffix('.fits')
         # load fits file
         rdb_table = Table.read(filename, format='fits', hdu='RDB')
+        # 
+        header = fits.getheader(filename, ext='RDB')
     else:
         raise ValueError('Unknown identity {0} in lbl_rdb plot function'
                          .format(identity))
@@ -865,7 +910,7 @@ def lbl_rdb(params: ParamDict, filename: str, identity: str = ''):
     lbl_props = get_lbl_rdb_props(params, rdb_table)
     # ----------------------------------------------------------------------
     # plot lbl rdb
-    plot_lbl_rdb(params, filename, None, lbl_props, objname_template)
+    plot_lbl_rdb(params, filename, header, lbl_props, objname_template)
     # plot lbl rdb thumbnail
     plot_lbl_rdb_thumbnail(params, filename, lbl_props)
 
@@ -890,7 +935,7 @@ def lbl_fits(params: ParamDict, filename: str, identity: str = ''):
     fig = plt.figure(figsize=(15, 15), dpi=300)
 
     gs = fig.add_gridspec(
-        nrows=2,
+        nrows=4,
         ncols=1,
     )
     frames = []
@@ -899,24 +944,50 @@ def lbl_fits(params: ParamDict, filename: str, identity: str = ''):
     draw_kv_table(frames[0], 'Target Information', target_dict)
     # CCF: 3 panels
     frames.append(fig.add_subplot(gs[1]))
-    # loop around frames to add background
-    for frame in frames:
-        frame.set_facecolor(COLORS['panel_bg'])
-
-
+    frames.append(fig.add_subplot(gs[2]))
+    frames.append(fig.add_subplot(gs[3]))
+    # get columns from fits table
     wavestart = np.array(fits_table['WAVE_START'])
     waveend = np.array(fits_table['WAVE_END'])
     wave = 0.5 * (wavestart + waveend)
-    dv = np.array(fits_table['dv'])
-
-    # TODO: Got to here
-
-    # plot the full lbl plot
-    frames[1].errorbar()
+    dv = np.array(fits_table['dv']) / 1000.0
+    sdv = np.array(fits_table['sdv']) / 1000.0
+    d2v = np.array(fits_table['d2v'])
+    sd2v = np.array(fits_table['sd2v'])
+    d3v = np.array(fits_table['d3v'])
+    sd3v = np.array(fits_table['sd3v'])
+    # calculate mask for points with sdv > 300 m/s
+    mask = sdv < (300 / 1000.0)
+    mask_on = '$\sigma$ < 300 m/s'
+    mask_off = '$\sigma$ > 300 m/s'
+    # plot three panels from lbl fits
+    lbl_trumpet_plot(frames[1], wave, dv, sdv, mask, mask_on, mask_off,
+                     on_color='#1f4e79', off_color='#6fa8dc',
+                     ylabel='dv [km/s]')
+    lbl_trumpet_plot(frames[2], wave, d2v, sd2v, mask, mask_on, mask_off,
+                     on_color='#b45f06', off_color='#f6b26b',
+                     ylabel='d2v')
+    lbl_trumpet_plot(frames[3], wave, d3v, sd3v, mask, mask_on, mask_off,
+                     on_color='#38761d', off_color='#93c47d',
+                     ylabel='d3v')
+    # set the title of the top frame
+    frames[1].set_title('LBL Velocities {0}'.format(objname_template))
     # save/show etc
     plotend(params, filename)
+    # ----------------------------------------------------------------------
+    # plot lbl fits thumbnail
+    # ----------------------------------------------------------------------
+    # set up figure
+    dpi = 100
+    fig = plt.figure(figsize=(256 / dpi, 256 / dpi), dpi=dpi)
+    frame = fig.add_subplot(1, 1, 1)
 
-
+    lbl_trumpet_plot(frame, wave, dv, sdv, mask, mask_on, mask_off,
+                     on_color='#1f4e79', off_color='#6fa8dc',
+                     low_percentile=1.0, high_percentile=99.0)
+    plt.tight_layout()
+    # save/show etc
+    plotend(params, filename, thumbnail=True)
 
 
 # =============================================================================
