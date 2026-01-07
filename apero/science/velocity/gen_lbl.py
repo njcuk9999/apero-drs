@@ -137,12 +137,14 @@ def run_apero_get(params: ParamDict):
                    test=testmode, since=since)
     # run apero get for calibs (wave + blaze) science fiber
     apero_get.main(objnames='None', outtypes='FF_BLAZE,WAVE_NIGHT',
+                   block_kind='red',
                    outpath=outpath_calib, fibers=lbl_scifibers,
                    symlinks=lbl_symlinks, nosubdir=True,
                    test=testmode, since=since)
     # run apero get for calibs (wave + blaze) science fiber
     apero_get.main(objnames='None',
                    outtypes='FF_BLAZE,WAVE_NIGHT',
+                   block_kind='red',
                    outpath=outpath_calib, fibers=lbl_calfibers,
                    symlinks=lbl_symlinks, nosubdir=True,
                    test=testmode, since=since)
