@@ -1655,7 +1655,7 @@ lbl_file = drs_linput('LBL_OUTPUT', filetype='', suffix='',
 # lbl template file
 lbl_template_file = drs_linput('LBL_TEMPLATE', path='templates',
                               filetype='.fits',
-                              basename='Template_s1dv_{obj}_sc1d_v_file_AB',
+                              basename='LBL_Template_{obj}_spirou',
                               datatype='table',
                               outclass=lbl_ofile,
                               description='Telluric 1D template file',
@@ -1665,7 +1665,7 @@ lbl_file.addset(lbl_template_file)
 # lbl mask file
 lbl_mask_file = drs_linput('LBL_MASK',
                           filetype='.fits', path='masks',
-                          basename='{obj}', datatype='table',
+                          basename='LBL_MASK_{obj}_spirou', datatype='table',
                           outclass=lbl_ofile,
                           description='Telluric mask file')
 lbl_file.addset(lbl_mask_file)
