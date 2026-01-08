@@ -111,7 +111,7 @@ def run_apero_get(params: ParamDict):
     # --------------------------------------------------------------
     # run apero get for objects for lbl
     apero_get.main(objnames='*', dprtypes=lbl_dprtypes,
-                   outtypes=lbl_outtypes,
+                   block_kind="red", outtypes=lbl_outtypes,
                    outpath=outpath_objects, fibers=lbl_scifibers,
                    symlinks=lbl_symlinks,
                    test=testmode, since=since)
@@ -122,24 +122,28 @@ def run_apero_get(params: ParamDict):
     #                test=testmode, since=since)
     # run apero get for simultaneous FP
     apero_get.main(objnames='None', dprtypes=simfp_dprtypes,
-                   outtypes='EXT_E2DS_FF', nosubdir=True,
+                   block_kind="red", outtypes='EXT_E2DS_FF',
+                   nosubdir=True,
                    outpath=outpath_fp, fibers=lbl_calfibers,
                    symlinks=lbl_symlinks,
                    test=testmode, since=since)
     # run apero get for extracted FP_FP
     apero_get.main(objnames='None', dprtypes='FP_FP',
-                   outtypes='EXT_E2DS_FF',
+                   block_kind="red", outtypes='EXT_E2DS_FF',
                    outpath=outpath_fp, fibers=lbl_calfibers,
                    symlinks=lbl_symlinks, nosubdir=True,
                    test=testmode, since=since)
     # run apero get for calibs (wave + blaze) science fiber
     apero_get.main(objnames='None', outtypes='FF_BLAZE,WAVE_NIGHT',
-                   outpath=outpath_calib, fibers=lbl_scifibers,
+                   block_kind='red',
+                   outpath=outpath_calib,
+                   fibers=lbl_scifibers,
                    symlinks=lbl_symlinks, nosubdir=True,
                    test=testmode, since=since)
     # run apero get for calibs (wave + blaze) science fiber
     apero_get.main(objnames='None',
                    outtypes='FF_BLAZE,WAVE_NIGHT',
+                   block_kind='red',
                    outpath=outpath_calib, fibers=lbl_calfibers,
                    symlinks=lbl_symlinks, nosubdir=True,
                    test=testmode, since=since)

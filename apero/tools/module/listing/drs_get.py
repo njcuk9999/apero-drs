@@ -118,6 +118,13 @@ def basic_filter(params: ParamDict, kw_objnames: List[str],
         # skip Nones
         if drs_text.null_text(filter_items, ['None', '', 'Null']):
             continue
+        # deal with strs --> push into lists
+        if isinstance(filter_items, str):
+            filter_items = [filter_items]
+        elif not isinstance(filter_items, list):
+            emsg = 'Filter {0}={1} must be a string or list'
+            eargs = [_filter, filter_items]
+            WLOG(params, 'error', emsg.format(*eargs))
         # loop around object names
         for item in filter_items:
             # skip Nones

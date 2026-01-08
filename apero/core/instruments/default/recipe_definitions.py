@@ -299,7 +299,9 @@ get_files.set_kwarg(name='--outtypes', dtype=str, default='None',
                     helpstr=textentry('GET_OUTTYPES_HELP'))
 get_files.set_kwarg(name='--fibers', dtype=str, default='None',
                     helpstr=textentry('GET_FIBERS_HELP'))
-
+get_files.set_kwarg(name='--block_kind', dtype=str, default='None',
+                    helpstr='The APERO file block this file belongs '
+                            'to e.g. raw, tmp, red, out, lbl')
 get_files.set_kwarg(name='--since', default='None', dtype=str,
                     helpstr='Only get files processed since a certain date '
                             'YYYY-MM-DD hh:mm:ss')
