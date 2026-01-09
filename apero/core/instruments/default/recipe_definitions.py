@@ -220,6 +220,12 @@ database_mgr.set_kwarg(name='--join', dtype='options', default='replace',
                        helpstr=textentry('DBMGR_JOIN_HELP'))
 database_mgr.set_kwarg(name='--delete', dtype='switch', default=False,
                        helpstr=textentry('DBMGR_DELETE_HELP'))
+database_mgr.set_kwarg(name='--cores', dtype=int, default=0,
+                       helpstr='Number of cores to use for parallel database '
+                               'updates (default is 0, which uses value from '
+                               'yaml file). Use with --update to enable parallel '
+                               'processing for calib, tellu, log, and index '
+                               'databases.')
 
 database_mgr.description_file = 'apero_database.rst'
 
