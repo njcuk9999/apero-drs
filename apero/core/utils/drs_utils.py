@@ -8,6 +8,7 @@ Created on 2020-10-2020-10-05 17:43
 @author: cook
 
 """
+import os
 from collections import OrderedDict
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple, Union
@@ -15,6 +16,7 @@ from typing import Any, Dict, List, Optional, Tuple, Union
 import numpy as np
 import pandas as pd
 
+from apero import lang
 from apero.base import base
 from apero.core import constants
 from apero.core.core import drs_base_classes as base_class
@@ -49,6 +51,8 @@ ParamDict = constants.ParamDict
 BinaryDict = base_class.BinaryDict
 # get exceptions
 DrsCodedException = drs_exceptions.DrsCodedException
+# Get the text types
+textentry = lang.textentry
 # get databases
 FileIndexDatabase = drs_database.FileIndexDatabase
 LogDatabase = drs_database.LogDatabase
@@ -995,6 +999,63 @@ def display_flag(params: ParamDict):
     for flag in flags:
         WLOG(params, '', '\t{0:20s}: {1}'.format(flag, flags[flag]))
 
+
+def get_cores(params):
+    # get number of cores on machine
+    cpus = os.cpu_count()
+    # get cores from inputs
+    if 'CORES' in params.get('INPUTS', []):
+        # get value from inputs
+        cores = params['INPUTS']['CORES']
+        # only update params if cores is not None
+        if not drs_text.null_text(cores, ['None', '']):
+            try:
+                cores = int(cores)
+            except ValueError as e:
+                eargs = [params['CORES'], type(e), e]
+                WLOG(params, 'error', textentry('00-503-00013', args=eargs))
+                cores = 1
+            except Exception as e:
+                eargs = [type(e), e]
+                WLOG(params, 'error', textentry('00-503-00014', args=eargs))
+                cores = 1
+            # update the value in params
+            params.set('CORES', value=cores, source='USER INPUT')
+
+    # get number of cores
+    if 'CORES' in params:
+        try:
+            cores = int(params['CORES'])
+        except ValueError as e:
+            eargs = [params['CORES'], type(e), e]
+            WLOG(params, 'error', textentry('00-503-00006', args=eargs))
+            cores = 1
+        except Exception as e:
+            eargs = [type(e), e]
+            WLOG(params, 'error', textentry('00-503-00007', args=eargs))
+            cores = 1
+    else:
+        cores = 1
+    # -------------------------------------------------------------------------
+    # if cores is negative use all but this many cores
+    if cores < 0:
+        if abs(cores) >= cpus:
+            cores = cpus - 1
+        else:
+            cores = cpus + cores
+    # if cores is zero use all but 1 core
+    elif cores == 0:
+        cores = cpus - 1
+    # -------------------------------------------------------------------------
+    # check that cores is valid
+    if cores < 1:
+        WLOG(params, 'error', textentry('00-503-00008', args=[cores]))
+    if cores >= cpus:
+        eargs = [cpus, cores]
+        WLOG(params, 'warning', textentry('00-503-00009', args=eargs),
+             sublevel=2)
+    # return number of cores
+    return cores
 
 # =============================================================================
 # Start of code

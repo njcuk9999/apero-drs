@@ -383,6 +383,7 @@ __all__ = [
     'EXPMETER_TELLU_THRES', 'REPROCESS_PINAMECOL', 'DRIFT_DPRTYPES',
     'DRIFT_DPR_FIBER_TYPE',
     'REPROCESS_MP_TYPE', 'REPROCESS_MP_TYPE_VAL', 'REPROCESS_MP_FINDEX',
+    'REPROCESS_MP_LOGDB', 'REPROCESS_MP_CALIB', 'REPROCESS_MP_INDEX',
     'REPROCESS_REINDEX_BLOCKS', 'REPROCESS_OBJECT_TYPES',
     # ari constants
     'ARI_INSTRUMENT', 'ARI_USER', 'ARI_NCORES', 'ARI_WAVE_RANGES',
@@ -5626,6 +5627,33 @@ REPROCESS_MP_FINDEX = Const('REPROCESS_MP_FINDEX', value=None, dtype=str,
                               description='Define whether to use multiprocess '
                                           '"pool" or "process" or use "linear" '
                                           'mode when validating recipes')
+
+# Define multiprocessing mode for log database update
+REPROCESS_MP_LOGDB = Const('REPROCESS_MP_LOGDB', value=None, dtype=str,
+                            source=__NAME__, group=cgroup,
+                            user=True, active=True,
+                            options=['linear', 'pool', 'process', 'pathos'],
+                            description='Define whether to use multiprocess '
+                                        '"pool" or "process" or use "linear" '
+                                        'mode when updating log database')
+
+# Define multiprocessing mode for calibration/telluric database update
+REPROCESS_MP_CALIB = Const('REPROCESS_MP_CALIB', value=None, dtype=str,
+                            source=__NAME__, group=cgroup,
+                            user=True, active=True,
+                            options=['linear', 'pool', 'process', 'pathos'],
+                            description='Define whether to use multiprocess '
+                                        '"pool" or "process" or use "linear" '
+                                        'mode when updating calib/tellu database')
+
+# Define multiprocessing mode for index database update
+REPROCESS_MP_INDEX = Const('REPROCESS_MP_INDEX', value=None, dtype=str,
+                            source=__NAME__, group=cgroup,
+                            user=True, active=True,
+                            options=['linear', 'pool', 'process', 'pathos'],
+                            description='Define whether to use multiprocess '
+                                        '"pool" or "process" or use "linear" '
+                                        'mode when updating index database')
 
 # Key for use in run files
 REPROCESS_RUN_KEY = Const('REPROCESS_RUN_KEY', value=None, dtype=str,
