@@ -3303,13 +3303,17 @@ REPROCESS_MP_TYPE_VAL.value = 'linear'
 REPROCESS_MP_FINDEX = REPROCESS_MP_FINDEX.copy(__NAME__)
 REPROCESS_MP_FINDEX.value = 'process'
 
-# Add matching instrument overrides for logdb, calib/tellu, and index
+# Define MP mode for LOGDB updates
 REPROCESS_MP_LOGDB = REPROCESS_MP_LOGDB.copy(__NAME__)
-REPROCESS_MP_LOGDB.value = REPROCESS_MP_FINDEX.value
+REPROCESS_MP_LOGDB.value = 'process'
+
+# Define MP mode for CALIB/TELLU updates
 REPROCESS_MP_CALIB = REPROCESS_MP_CALIB.copy(__NAME__)
-REPROCESS_MP_CALIB.value = REPROCESS_MP_FINDEX.value
+REPROCESS_MP_CALIB.value = 'process'
+
+# Define MP mode for INDEX updates
 REPROCESS_MP_INDEX = REPROCESS_MP_INDEX.copy(__NAME__)
-REPROCESS_MP_INDEX.value = REPROCESS_MP_FINDEX.value
+REPROCESS_MP_INDEX.value = 'process'
 
 # Key for use in run files
 REPROCESS_RUN_KEY = REPROCESS_RUN_KEY.copy(__NAME__)
