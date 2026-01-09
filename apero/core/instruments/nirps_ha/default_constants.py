@@ -1766,7 +1766,7 @@ WAVE_HC_MAX_DV_CAT_GUESS.value = 60000
 WAVE_HC_TFIT_DEG = WAVE_HC_TFIT_DEG.copy(__NAME__)
 WAVE_HC_TFIT_DEG.value = 2
 
-# Cut threshold for the triplet line fit [in km/s]
+# Cut threshold for the triplet line fit (in km/s)
 WAVE_HC_TFIT_CUT_THRES = WAVE_HC_TFIT_CUT_THRES.copy(__NAME__)
 WAVE_HC_TFIT_CUT_THRES.value = 1.0
 
@@ -2999,6 +2999,13 @@ REPROCESS_MP_TYPE_VAL.value = 'linear'
 #     mode when reading raw headers for the file index
 REPROCESS_MP_FINDEX = REPROCESS_MP_FINDEX.copy(__NAME__)
 REPROCESS_MP_FINDEX.value = 'process'
+# Add matching instrument overrides for logdb, calib/tellu, and index
+REPROCESS_MP_LOGDB = REPROCESS_MP_LOGDB.copy(__NAME__)
+REPROCESS_MP_LOGDB.value = REPROCESS_MP_FINDEX.value
+REPROCESS_MP_CALIB = REPROCESS_MP_CALIB.copy(__NAME__)
+REPROCESS_MP_CALIB.value = REPROCESS_MP_FINDEX.value
+REPROCESS_MP_INDEX = REPROCESS_MP_INDEX.copy(__NAME__)
+REPROCESS_MP_INDEX.value = REPROCESS_MP_FINDEX.value
 
 # Key for use in run files
 REPROCESS_RUN_KEY = REPROCESS_RUN_KEY.copy(__NAME__)

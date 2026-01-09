@@ -2997,6 +2997,13 @@ REPROCESS_MP_TYPE_VAL.value = 'linear'
 #     mode when reading raw headers for the file index
 REPROCESS_MP_FINDEX = REPROCESS_MP_FINDEX.copy(__NAME__)
 REPROCESS_MP_FINDEX.value = 'process'
+# Add matching instrument overrides for logdb, calib/tellu, and index
+REPROCESS_MP_LOGDB = REPROCESS_MP_LOGDB.copy(__NAME__)
+REPROCESS_MP_LOGDB.value = REPROCESS_MP_FINDEX.value
+REPROCESS_MP_CALIB = REPROCESS_MP_CALIB.copy(__NAME__)
+REPROCESS_MP_CALIB.value = REPROCESS_MP_FINDEX.value
+REPROCESS_MP_INDEX = REPROCESS_MP_INDEX.copy(__NAME__)
+REPROCESS_MP_INDEX.value = REPROCESS_MP_FINDEX.value
 
 # Key for use in run files
 REPROCESS_RUN_KEY = REPROCESS_RUN_KEY.copy(__NAME__)
