@@ -1007,7 +1007,7 @@ def _log_update(pconst: PseudoConstants,
     logcols = list(ldb_cols.names)
     # loop around log keys and add them to values
     logvalues = []
-    for logkey in logcols:
+    for l_it, logkey in enumerate(logcols):
         # construct keys
         key = 'rlog.{0}'.format(logkey)
         # get value
@@ -1016,6 +1016,9 @@ def _log_update(pconst: PseudoConstants,
         #     otherwise)
         if logkey == 'ENDED':
             logvalue = 1
+        # Need to convert boolean strings to int for database storage
+        if logvalue in ['True', 'False'] and ldb_cols.dtypes[l_it] is int:
+            logvalue = int(logvalue == 'True')
         # append value to values
         logvalues.append(logvalue)
     # generate unique log code
