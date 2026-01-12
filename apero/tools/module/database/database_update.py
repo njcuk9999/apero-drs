@@ -204,6 +204,11 @@ def calib_tellu_update(params: ParamDict, pconst: PseudoConstants,
     cores = drs_utils.get_cores(params)
     # use parallel processing if enabled and we have multiple cores
     mp_key = 'REPROCESS_MP_CALIB'
+    # log total file count and cores before processing (only if multiprocessing enabled)
+    if cores > 1:
+        total_files = len(db_files)
+        WLOG(params, 'info', 'Running {0} update in multiprocess mode '
+             'CORES={1} TOTAL_IT={2}'.format(db_type, cores, total_files))
     if params[mp_key].lower() == 'pathos' and cores > 1:
         _multi_process_calib_tellu_pathos(params, pconst, db_type, file_set_name,
                                           name, func_name, db_files, cores)
@@ -233,6 +238,11 @@ def index_update(params: ParamDict, recipe: DrsRecipe):
                                                    block_filter='indexing')
     # get number of cores
     cores = drs_utils.get_cores(params)
+    # log total blocks and cores before processing (only if multiprocessing enabled)
+    if cores > 1:
+        total_blocks = len(block_kinds)
+        WLOG(params, 'info', 'Running index update in multiprocess mode '
+             'CORES={0} TOTAL_IT={1}'.format(cores, total_blocks))
     # use parallel processing if enabled and we have multiple cores
     mp_key = 'REPROCESS_MP_INDEX'
     if params[mp_key].lower() == 'pathos' and cores > 1:
@@ -276,6 +286,11 @@ def log_update(params: ParamDict, pconst: PseudoConstants):
         files = list(Path(block.path).rglob('*.fits'))
         # get number of cores
         cores = drs_utils.get_cores(params)
+        # log total file count and cores before processing (only if multiprocessing enabled)
+        if cores > 1:
+            total_files = len(files)
+            WLOG(params, 'info', 'Running log update in multiprocess mode '
+                 'CORES={0} TOTAL_IT={1}'.format(cores, total_files))
         # use parallel processing if enabled and we have multiple cores
         if params['REPROCESS_MP_LOGDB'].lower() == 'pathos' and cores > 1:
             logentries, log_pids = _multi_process_logdb_pathos(params, pconst,

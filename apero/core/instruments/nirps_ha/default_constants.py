@@ -2999,15 +2999,12 @@ REPROCESS_MP_TYPE_VAL.value = 'linear'
 #     mode when reading raw headers for the file index
 REPROCESS_MP_FINDEX = REPROCESS_MP_FINDEX.copy(__NAME__)
 REPROCESS_MP_FINDEX.value = 'process'
-
 # Define MP mode for LOGDB updates
 REPROCESS_MP_LOGDB = REPROCESS_MP_LOGDB.copy(__NAME__)
 REPROCESS_MP_LOGDB.value = 'process'
-
 # Define MP mode for CALIB/TELLU updates
 REPROCESS_MP_CALIB = REPROCESS_MP_CALIB.copy(__NAME__)
 REPROCESS_MP_CALIB.value = 'process'
-
 # Define MP mode for INDEX updates
 REPROCESS_MP_INDEX = REPROCESS_MP_INDEX.copy(__NAME__)
 REPROCESS_MP_INDEX.value = 'process'
