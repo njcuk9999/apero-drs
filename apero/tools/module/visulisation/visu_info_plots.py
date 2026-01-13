@@ -85,7 +85,7 @@ def plotend(params: ParamDict, filename: str, thumbnail: bool = False):
     if not drs_text.null_text(params['INPUTS']['INFOPATH'], ['None', 'Null', '']):
         filepath = params['INPUTS']['INFOPATH']
     else:
-        filepath = os.path.dirname(params['INPUTS']['PATH'])
+        filepath = os.path.dirname(filename)
     # we don't want a file for the filepath we want its directory
     if os.path.isfile(filepath):
         filepath = os.path.dirname(filepath)
