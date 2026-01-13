@@ -2148,12 +2148,11 @@ def _add_recipe_params_to_table_dict(tabledict: dict, recipe: Any) -> dict:
     # deal with no log
     if recipe.log is None:
         return tabledict
-    if len(recipe.log.set) == 0:
-        instances = [recipe.log]
-    else:
-        instances = recipe.log.set
-    # loop
-    inst = instances[-1]
+    # -------------------------------------------------------------------------
+    # we need to recursively get parameters from the last log instance
+    inst = recipe.log
+    while len(inst.set) > 0:
+        inst = inst.set[-1]
     # -------------------------------------------------------------------------
     # get the param table
     out = inst.get_param_table()

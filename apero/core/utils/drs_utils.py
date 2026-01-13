@@ -218,8 +218,17 @@ class RecipeLog:
         """
         # set function name
         _ = drs_misc.display_func('__str__', __NAME__, self.class_name)
+        # get print args
+        pargs = [self.name, self.level, len(self.set)]
         # return string representation of RecipeLOg
-        return 'RecipeLog[{0}]'.format(self.name)
+        return 'RecipeLog[{0}][{1}][N={2}]'.format(*pargs)
+
+    def __repr__(self):
+        """
+        Representation of this class
+        :return:
+        """
+        return self.__str__()
 
     def copy(self, rlog: 'RecipeLog'):
         """
