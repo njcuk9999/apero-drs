@@ -739,7 +739,10 @@ visulise.set_kwarg(name='--path', dtype=str, default='None',
                            'create info graphics for (recursive)')
 visulise.set_kwarg(name='--infopath', dtype=str, default='None',
                    helpstr='Path to save info plots to (only for mode=info). '
-                           'If not set uses --path/{path to file}')
+                           'Note this will flatten any file structure under '
+                           '--path. If --infopath is not plots will save to '
+                           '--path/{path to file} '
+                           '(i.e. where the files are found).')
 visulise.description_file = None
 
 # -----------------------------------------------------------------------------
