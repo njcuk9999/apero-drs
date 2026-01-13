@@ -244,7 +244,7 @@ def index_update(params: ParamDict, recipe: DrsRecipe):
         WLOG(params, 'info', 'Running index update in multiprocess mode '
              'CORES={0} TOTAL_IT={1}'.format(cores, total_blocks))
     # use parallel processing if enabled and we have multiple cores
-    mp_key = 'REPROCESS_MP_INDEX'
+    mp_key = 'REPROCESS_MP_FINDEX'
     if params[mp_key].lower() == 'pathos' and cores > 1:
         _multi_process_index_pathos(params, block_kinds, cores)
     elif params[mp_key].lower() == 'pool' and cores > 1:
