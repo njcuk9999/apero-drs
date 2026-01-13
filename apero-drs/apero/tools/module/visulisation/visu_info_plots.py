@@ -90,6 +90,9 @@ def plotend(params: ParamDict, filename: str, thumbnail: bool = False):
         filepath = params['INPUTS']['INFOPATH']
     else:
         filepath = os.path.dirname(params['INPUTS']['PATH'])
+    # we don't want a file for the filepath we want its directory
+    if os.path.isfile(filepath):
+        filepath = os.path.dirname(filepath)
     # remove any extension
     basename = os.path.splitext(os.path.basename(filename))[0]
     # get full plot path
