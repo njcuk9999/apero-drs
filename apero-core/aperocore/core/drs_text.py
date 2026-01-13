@@ -15,6 +15,7 @@ only from:
 - apero.core.core.drs_exceptions
 """
 import os
+import re
 import string
 import warnings
 from pathlib import Path
@@ -869,6 +870,27 @@ def clean_fits_table_column(table: Table, colname: str):
     if colname not in table.colnames:
         raise ValueError(f"Column '{colname}' not found in table.")
     table[colname] = [clean_ascii_text(val) for val in table[colname]]
+
+
+def pattern_is_too_generic(pattern: str, extension: str = None) -> bool:
+    """
+    Test if a file pattern is too generic
+
+    :param pattern: str, the file pattern to test
+    :param extension: str or None, the extension to remove before testing
+
+    :return: bool, True if pattern is too generic else False
+    """
+    # Deal with extensions
+    if extension is not None and pattern.endswith(extension):
+        # Remove extension
+        stem = pattern[:-len(extension)]
+    else:
+        stem = pattern
+    # Remove all wildcards
+    stem = re.sub(r'[\*\?\[\]]', '', stem)
+    # Empty or only separators = too generic
+    return stem.strip('_-.') == ''
 
 
 # =============================================================================

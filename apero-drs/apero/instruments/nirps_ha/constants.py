@@ -1262,7 +1262,7 @@ CDict.set('MAX_DV_CATLL_GUESS', value=60000, source=__NAME__,
 # The fit degree between triplets
 CDict.set('TFIT_DEG', value=2, source=__NAME__, author='EA', group=cgroup)
 
-# Cut threshold for the triplet line fit [in km/s]
+# Cut threshold for the triplet line fit (in km/s)
 CDict.set('TFIT_CUT_THRES', value=1.0, source=__NAME__,
           author='EA', group=cgroup)
 
@@ -2458,6 +2458,12 @@ CDict.set('MP_TYPE_VAL', value='linear', source=__NAME__, group=cgroup)
 #     mode when reading raw headers for the file index
 CDict.set('MP_FINDEX', value='process', source=__NAME__, group=cgroup)
 
+# Define MP mode for LOGDB updates
+CDict.set('MP_LOGDB', value='process', source=__NAME__, group=cgroup)
+
+# Define MP mode for CALIB/TELLU updates
+CDict.set('MP_CALIB', value='process', source=__NAME__, group=cgroup)
+
 # Key for use in run files
 CDict.set('RUN_KEY', value='ID', source=__NAME__, group=cgroup)
 
@@ -2528,6 +2534,24 @@ cgroup = 'TOOLS.ARI'
 
 # Define the ARI orders for calib plot
 CDict.set('CAL_ORDERS', value=[15, 60], source=__NAME__, group=cgroup)
+
+# =============================================================================
+# INFO VISUALATION SETTINGS
+# =============================================================================
+cgroup = 'TOOLS.INFO_VISU'
+
+# Minimum zoom 1 value for info visu plots
+CDict.set('Z1', value=[1082.0, 1085.0], source=__NAME__, group=cgroup)
+
+# Minimum zoom 2 value for info visu plots
+CDict.set('Z2', value=[1575.0, 1580.0], source=__NAME__, group=cgroup)
+
+# Minimum zoom 3 value for info visu plots
+CDict.set('Z3', value=[1666.0, 1668.0], source=__NAME__, group=cgroup)
+
+# plot order for LBL etc in info plots
+CDict.set('EXT_ORDER', value=60, source=__NAME__, group=cgroup)
+
 
 # =============================================================================
 # End of configuration file

@@ -31,7 +31,7 @@ from apero.instruments import select
 # =============================================================================
 # Define variables
 # =============================================================================
-__NAME__ = 'database_update.py'
+__NAME__ = 'tools.visulisation.visu_core.py'
 __INSTRUMENT__ = 'None'
 __PACKAGE__ = apero_base.__PACKAGE__
 __version__ = apero_base.__version__

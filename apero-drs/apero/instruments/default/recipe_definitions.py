@@ -229,6 +229,12 @@ database_mgr.set_kwarg(name='--join', dtype='options', default='replace',
                        helpstr=textentry('DBMGR_JOIN_HELP'))
 database_mgr.set_kwarg(name='--delete', dtype='switch',
                        helpstr=textentry('DBMGR_DELETE_HELP'))
+database_mgr.set_kwarg(name='--cores', dtype=int, default=0,
+                       helpstr='Number of cores to use for parallel database '
+                               'updates (default is 0, which uses value from '
+                               'yaml file). Use with --update to enable parallel '
+                               'processing for calib, tellu, log, and index '
+                               'databases.')
 # TODO: Add to language database
 database_mgr.set_kwarg(name='--keys', dtype='List[str]', default='None',
                        helpstr='Keyname of entries to remove (used in '
@@ -333,6 +339,9 @@ get_files.set_kwarg(name='--outtypes', dtype='List[str]', default='None',
                     helpstr=textentry('GET_OUTTYPES_HELP'))
 get_files.set_kwarg(name='--fibers', dtype='List[str]', default='None',
                     helpstr=textentry('GET_FIBERS_HELP'))
+get_files.set_kwarg(name='--block_kind', dtype=str, default='None',
+                    helpstr='The APERO file block this file belongs '
+                            'to e.g. raw, tmp, red, out, lbl')
 get_files.set_kwarg(name='--keynames', dtype='List[str]', default='None',
                     helpstr='For dbkind=calib or dbkind=tellu this is required,'
                             ' and sets the type of calibration/telluric '
@@ -721,8 +730,16 @@ visulise.instrument = __INSTRUMENT__
 visulise.description = textentry('VISU_DESCRIPTION')
 visulise.recipe_type = 'tool'
 visulise.recipe_kind = 'user'
-visulise.set_kwarg(name='--mode', dtype='options', default='None',
-                   options=['e2ds'], helpstr=textentry('VISU_MODE_HELP'))
+visulise.set_kwarg(name='--mode', dtype='options', default='info',
+                   options=['info', 'e2ds'],
+                   helpstr=textentry('VISU_MODE_HELP'))
+visulise.set_kwarg(name='--path', dtype=str, default='None',
+                   helpstr='Some modes require a path. '
+                           'For mode=info this is the path to the files to '
+                           'create info graphics for (recursive)')
+visulise.set_kwarg(name='--infopath', dtype=str, default='None',
+                   helpstr='Path to save info plots to (only for mode=info). '
+                           'If not set uses --path/{path to file}')
 visulise.description_file = None
 
 # -----------------------------------------------------------------------------

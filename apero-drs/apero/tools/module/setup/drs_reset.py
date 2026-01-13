@@ -182,22 +182,24 @@ def reset_confirmation(params: ParamDict, name: str,
     if directory is not None:
         WLOG(params, '', '\t({0})'.format(directory), colour='yellow')
     # ----------------------------------------------------------------------
-    # line break
-    print('\n')
-    # user input
-    if sys.version_info.major < 3:
-        # noinspection PyUnresolvedReferences
-        uinput = raw_input(textentry('40-502-00002', args=name))
-    else:
-        uinput = input(textentry('40-502-00002', args=name))
-    # line break
-    print('\n')
-    # ----------------------------------------------------------------------
+    uinput = ''
     # deal with user input
+    while uinput.upper() not in ["YES", "NO"]:
+        # user input
+        uinput = input(textentry('40-502-00002', args=name))
+        # line break
+        print('\n')
+        # only allow "YES" or "NO"
+        if uinput.upper() not in ["YES", "NO"]:
+            print('Only "YES" or "NO" are valid responses')
+    # ----------------------------------------------------------------------
+    # deal with response
     if uinput.upper() == "YES":
         return True
-    else:
+    elif uinput.upper() == "NO":
         return False
+    else:
+        raise SystemExit('Only YES or NO are valid responses')
 
 
 def reset_tmp_folders(params: ParamDict, recipe: DrsRecipe, log: bool = True):

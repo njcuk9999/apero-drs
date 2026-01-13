@@ -221,75 +221,69 @@ def calib_tellu_update(params: ParamDict, recipe: DrsRecipe,
     # sort by time
     sortmask = np.argsort(db_times)
     db_files = np.array(db_files)[sortmask]
-    # ----------------------------------------------------------------------
-    # loop around all calib files and try to find the kinds
-    for it in tqdm(range(len(db_files))):
-        # ------------------------------------------------------------------
-        # get db_file
-        db_file = db_files[it]
-        # ------------------------------------------------------------------
-        # log progress
-        wargs = [it + 1, len(db_files), os.path.basename(db_file)]
-        WLOG(params, 'debug', textentry('40-505-00001', args=wargs))
-        # ------------------------------------------------------------------
-        if not hasattr(filemod, file_set_name):
-            eargs = [name, file_set_name, filemod, func_name]
-            raise AperoCodedException(params, '00-505-00001', targs=eargs)
-        else:
-            file_set = getattr(filemod, file_set_name)
-        # ------------------------------------------------------------------
-        # skip default reference files
-        if os.path.basename(db_file).startswith(REF_PREFIX):
-            # log skipping
-            wargs = [REF_PREFIX]
-            WLOG(params, 'debug', textentry('40-505-00003', args=wargs))
-            # skip
-            continue
-        # ------------------------------------------------------------------
-        # make a new copy of out_file
-        db_out_file = file_set.newcopy(params=params)
-        # ------------------------------------------------------------------
-        # try to find cdb_file
-        found, kind = drs_file.id_drs_file(params, db_out_file,
-                                           filename=db_file, nentries=1,
-                                           required=False)
-        # ------------------------------------------------------------------
-        # append to cdb_data
-        if found:
-            # log that we found file
-            WLOG(params, 'debug', textentry('40-505-00002', args=[kind]))
-            # --------------------------------------------------------------
-            # add the files back to the database
-            if db_type == 'calibration':
-                dbmanager.add_calib_file(kind, copy_files=False, verbose=False)
-            elif db_type == 'telluric':
-                dbmanager.add_tellu_file(kind, copy_files=False, verbose=False)
-        # ------------------------------------------------------------------
-        # delete file
-        del kind, db_out_file
+    # convert to list
+    db_files = list(db_files)
+    # get number of cores
+    cores = drs_utils.get_cores(params)
+    # use parallel processing if enabled and we have multiple cores
+    mp_key = params['TOOLS.REPROCESS.MP_CALIB'].lower()
+    # log total file count and cores before processing (only if multiprocessing enabled)
+    if cores > 1:
+        total_files = len(db_files)
+        WLOG(params, 'info', 'Running {0} update in multiprocess mode '
+             'CORES={1} TOTAL_IT={2}'.format(db_type, cores, total_files))
+    if mp_key == 'pathos' and cores > 1:
+        _multi_process_calib_tellu_pathos(params, recipe.shortname,
+                                          db_type, file_set_name,
+                                          name, func_name, db_files, cores)
+    elif mp_key == 'pool' and cores > 1:
+        _multi_process_calib_tellu_pool(params, recipe.shortname,
+                                        db_type, file_set_name,
+                                        name, func_name, db_files, cores)
+    elif mp_key == 'process' and cores > 1:
+        _multi_process_calib_tellu_process(params, recipe.shortname,
+                                           db_type, file_set_name,
+                                           name, func_name, db_files, cores)
+    else:
+        # serial processing
+        _calib_tellu_update_files(params, recipe.shortname,
+                                  db_type, file_set_name,
+                                  name, func_name, db_files)
 
 
 def index_update(params: ParamDict, recipe: DrsRecipe):
+    """
+    Update the file index database using multiprocessing if enabled
+
+    :param params: ParamDict, parameter dictionary of constants
+    :param recipe: DrsRecipe, the recipe instance
+
+    :return: None updates index database
+    """
     # get all block kinds
     block_kinds = drs_file.DrsPath.get_block_names(params=params,
                                                    block_filter='indexing')
-    # get index database
-    findexdbm = drs_database.FileIndexDatabase(params, recipe.shortname)
-    findexdbm.load_db()
-    # get astrometric database
-    astromdb = drs_database.AstrometricDatabase(params, recipe.shortname)
-    astromdb.load_db()
-    # loop around block kinds (with the indexing filter)
-    for block_kind in block_kinds:
-        # log block update
-        WLOG(params, '', textentry('40-503-00044', args=[block_kind]))
-        # update index database for block kind
-        findexdbm = drs_utils.update_index_db(params, block_kind=block_kind,
-                                              findexdbm=findexdbm)
-        # update headers of raw files
-        if block_kind == 'raw':
-            # fix the headers
-            findexdbm.update_header_fix(objdbm=astromdb)
+    # get number of cores
+    cores = drs_utils.get_cores(params)
+    # log total blocks and cores before processing (only if multiprocessing enabled)
+    if cores > 1:
+        total_blocks = len(block_kinds)
+        WLOG(params, 'info', 'Running index update in multiprocess mode '
+             'CORES={0} TOTAL_IT={1}'.format(cores, total_blocks))
+    # use parallel processing if enabled and we have multiple cores
+    mp_key = params['TOOLS.REPROCESS.MP_FINDEX'].lower()
+    if mp_key == 'pathos' and cores > 1:
+        _multi_process_index_pathos(params, recipe.shortname, block_kinds,
+                                    cores)
+    elif mp_key == 'pool' and cores > 1:
+        _multi_process_index_pool(params, recipe.shortname, block_kinds,
+                                  cores)
+    elif mp_key == 'process' and cores > 1:
+        _multi_process_index_process(params, recipe.shortname, block_kinds,
+                                     cores)
+    else:
+        # serial processing
+        _index_update_blocks(params, recipe.shortname, block_kinds)
 
 
 def log_update(params: ParamDict, recipe: DrsRecipe, pconst: Instrument):
@@ -320,28 +314,28 @@ def log_update(params: ParamDict, recipe: DrsRecipe, pconst: Instrument):
         # ---------------------------------------------------------------------
         # get all files
         files = list(Path(block.path).rglob('*.fits'))
-        # storage for unique logcodes
-        logentries, log_pids = dict(), []
-        # ---------------------------------------------------------------------
-        # loop around files
-        for filepath in tqdm(files):
-            # get string version
-            filename = str(filepath)
-            # get hdu names
-            with fits.open(filename) as hdus:
-                hdu_names = list(map(lambda x: x.name, hdus))
-            # deal with no param table - skip
-            if 'PARAM_TABLE' not in hdu_names:
-                continue
-            # load param table
-            ptable = drs_table.read_table(params, filename, fmt='fits',
-                                          hdu='PARAM_TABLE')
-            # get all log update entries (per file)
-            logdict, lcode, lpid = _log_update(pconst, ptable)
-            # add log dict as a log code (unique ones only)
-            logentries[lcode] = logdict
-            # append to pids
-            log_pids.append(lpid)
+        # get number of cores
+        cores = drs_utils.get_cores(params)
+        # log total file count and cores before processing (only if multiprocessing enabled)
+        if cores > 1:
+            total_files = len(files)
+            WLOG(params, 'info', 'Running log update in multiprocess mode '
+                 'CORES={0} TOTAL_IT={1}'.format(cores, total_files))
+        # get multiprocessing method
+        mp_logdb = params['TOOLS.REPROCESS.MP_LOGDB'].lower()
+        # use parallel processing if enabled and we have multiple cores
+        if mp_logdb == 'pathos' and cores > 1:
+            logentries, log_pids = _multi_process_logdb_pathos(params, files,
+                                                               cores)
+        elif mp_logdb == 'pool' and cores > 1:
+            logentries, log_pids = _multi_process_logdb_pool(params, files,
+                                                             cores)
+        elif mp_logdb == 'process' and cores > 1:
+            logentries, log_pids = _multi_process_logdb_process(params, files,
+                                                                cores)
+        else:
+            # serial processing
+            logentries, log_pids = _log_update_files(params, files)
         # ---------------------------------------------------------------------
         # loop around unique pids and remove them from log database (we are
         #    updating them now)
@@ -353,6 +347,723 @@ def log_update(params: ParamDict, recipe: DrsRecipe, pconst: Instrument):
         for lcode in logentries:
             # add this entry
             logdbm.add_entries(*logentries[lcode])
+
+
+# =============================================================================
+# Define worker functions
+# =============================================================================
+def _calib_tellu_update_files(params: ParamDict, shortname: str,
+                              db_type: str, file_set_name: str,
+                              name: str, func_name: str,
+                              db_files: List) -> None:
+    """
+    Process a list of database files serially and update the database
+
+    :param params: ParamDict, parameter dictionary of constants
+    :param pconst: PseudoConstants, pseudo constant object
+    :param db_type: str, either 'calibration' or 'telluric'
+    :param file_set_name: str, the file set name ('calib_file' or 'tellu_file')
+    :param name: str, display name ('calibration database' or 'telluric database')
+    :param func_name: str, function name for logging
+    :param db_files: List, list of database file paths to process
+
+    :return: None
+    """
+    # load instrument config
+    pconst = load_functions.load_pconfig(select.INSTRUMENTS)
+    # get the file mod for this instrument
+    filemod = pconst.FILEMOD()
+    # load the database
+    if db_type == 'calibration':
+        dbmanager = drs_database.CalibrationDatabase(params, shortname)
+    elif db_type == 'telluric':
+        dbmanager = drs_database.TelluricDatabase(params, shortname)
+    else:
+        return
+    dbmanager.load_db()
+    # loop around all database files and try to find the kinds
+    for it in tqdm(range(len(db_files))):
+        # get db_file
+        db_file = db_files[it]
+        # log progress
+        wargs = [it + 1, len(db_files), os.path.basename(db_file)]
+        WLOG(params, 'debug', textentry('40-505-00001', args=wargs))
+        # get file set
+        if not hasattr(filemod, file_set_name):
+            eargs = [name, file_set_name, filemod, func_name]
+            WLOG(params, 'error', textentry('00-505-00001', args=eargs))
+            file_set = None
+        else:
+            file_set = getattr(filemod, file_set_name)
+        # skip default reference files
+        if os.path.basename(db_file).startswith(REF_PREFIX):
+            # log skipping
+            wargs = [REF_PREFIX]
+            WLOG(params, 'debug', textentry('40-505-00003', args=wargs))
+            # skip
+            continue
+        # make a new copy of out_file
+        db_out_file = file_set.newcopy(params=params)
+        # try to find db_file
+        found, kind = drs_file.id_drs_file(params, db_out_file,
+                                           filename=db_file, nentries=1,
+                                           required=False)
+        # append to cdb_data
+        if found:
+            # log that we found file
+            WLOG(params, 'debug', textentry('40-505-00002', args=[kind]))
+            # add the files back to the database
+            if db_type == 'calibration':
+                dbmanager.add_calib_file(kind, copy_files=False, verbose=False)
+            elif db_type == 'telluric':
+                dbmanager.add_tellu_file(kind, copy_files=False, verbose=False)
+        # delete file
+        del kind, db_out_file
+
+
+def _calib_tellu_update_files_batch(params: ParamDict, shortname: str,
+                                    db_type: str, file_set_name: str,
+                                    name: str, func_name: str,
+                                    db_files: List, batch_idx: int = None,
+                                    total_batches: int = None) -> None:
+    """
+    Process a batch of database files and update the database
+
+    :param params: ParamDict, parameter dictionary of constants
+    :param pconst: PseudoConstants, pseudo constant object
+    :param db_type: str, either 'calibration' or 'telluric'
+    :param file_set_name: str, the file set name ('calib_file' or 'tellu_file')
+    :param name: str, display name ('calibration database' or 'telluric database')
+    :param func_name: str, function name for logging
+    :param db_files: List, list of database file paths to process
+    :param batch_idx: int, the batch index (for logging)
+    :param total_batches: int, the total number of batches (for logging)
+
+    :return: None
+    """
+    # load instrument config
+    pconst = load_functions.load_pconfig(select.INSTRUMENTS)
+    # get the file mod for this instrument
+    filemod = pconst.FILEMOD()
+    # load the database
+    if db_type == 'calibration':
+        dbmanager = drs_database.CalibrationDatabase(params, shortname)
+    elif db_type == 'telluric':
+        dbmanager = drs_database.TelluricDatabase(params, shortname)
+    else:
+        return
+    dbmanager.load_db()
+    # start a message if batch_idx and total_batches given
+    if (batch_idx is not None) and (total_batches is not None):
+        batch_msg = ' [{0}/{1}] '.format(batch_idx, total_batches)
+    else:
+        batch_msg = ''
+    # loop around all database files and try to find the kinds
+    for it in tqdm(range(len(db_files)), desc='Calib DB batch' + batch_msg):
+        # get db_file
+        db_file = db_files[it]
+        # log progress
+        wargs = [it + 1, len(db_files), os.path.basename(db_file)]
+        WLOG(params, 'debug', textentry('40-505-00001', args=wargs))
+        # get file set
+        if not hasattr(filemod.get(), file_set_name):
+            eargs = [name, file_set_name, filemod.get(), func_name]
+            WLOG(params, 'error', textentry('00-505-00001', args=eargs))
+            file_set = None
+        else:
+            file_set = getattr(filemod.get(), file_set_name)
+        # skip default reference files
+        if os.path.basename(db_file).startswith(REF_PREFIX):
+            # log skipping
+            wargs = [REF_PREFIX]
+            WLOG(params, 'debug', textentry('40-505-00003', args=wargs))
+            # skip
+            continue
+        # make a new copy of out_file
+        db_out_file = file_set.newcopy(params=params)
+        # try to find db_file
+        found, kind = drs_file.id_drs_file(params, db_out_file,
+                                           filename=db_file, nentries=1,
+                                           required=False)
+        # append to cdb_data
+        if found:
+            # log that we found file
+            WLOG(params, 'debug', textentry('40-505-00002', args=[kind]))
+            # add the files back to the database
+            if db_type == 'calibration':
+                dbmanager.add_calib_file(kind, copy_files=False, verbose=False)
+            elif db_type == 'telluric':
+                dbmanager.add_tellu_file(kind, copy_files=False, verbose=False)
+        # delete file
+        del kind, db_out_file
+
+
+def _multi_process_calib_tellu_pathos(params: ParamDict, shortname: str,
+                                      db_type: str, file_set_name: str,
+                                      name: str, func_name: str,
+                                      db_files: List, cores: int) -> None:
+    """
+    Process database files via pathos.Pool.map, batching into Ncores groups
+
+    :param params: ParamDict, parameter dictionary of constants
+    :param pconst: PseudoConstants, pseudo constant object
+    :param db_type: str, either 'calibration' or 'telluric'
+    :param file_set_name: str, the file set name
+    :param name: str, display name
+    :param func_name: str, function name for logging
+    :param db_files: List, list of database file paths
+    :param cores: int, the number of cores to use
+
+    :return: None
+    """
+    # deal with Pool specific imports
+    from pathos.pools import ParallelPool as Pool
+    # set up the pool
+    pool = Pool(ncpus=cores, maxtasksperchild=1)
+    # split files into N=cores groups
+    cores = min(cores, len(db_files))
+    chunk_size = int(np.ceil(len(db_files) / cores))
+    grouped_files = [db_files[i:i + chunk_size]
+                     for i in range(0, len(db_files), chunk_size)]
+    # list of params for each entry
+    params_per_process = []
+    # populate params for each sub group
+    for f_it, grouped_file in enumerate(grouped_files):
+        args = [params, shortname, db_type, file_set_name, name, func_name,
+                grouped_file, f_it + 1, len(grouped_files)]
+        params_per_process.append(args)
+    # transpose the params axis
+    params_per_process2 = list(zip(*params_per_process))
+    # start parallel jobs
+    pool.map(_calib_tellu_update_files_batch, *params_per_process2)
+    # close the pool
+    pool.close()
+    pool.join()
+
+
+def _multi_process_calib_tellu_pool(params: ParamDict, shortname: str,
+                                    db_type: str, file_set_name: str,
+                                    name: str, func_name: str,
+                                    db_files: List, cores: int) -> None:
+    """
+    Process database files via multiprocessing.Pool.starmap, batching into
+    Ncores groups
+
+    :param params: ParamDict, parameter dictionary of constants
+    :param pconst: PseudoConstants, pseudo constant object
+    :param db_type: str, either 'calibration' or 'telluric'
+    :param file_set_name: str, the file set name
+    :param name: str, display name
+    :param func_name: str, function name for logging
+    :param db_files: List, list of database file paths
+    :param cores: int, the number of cores to use
+
+    :return: None
+    """
+    # deal with Pool specific imports
+    from multiprocessing import get_context
+    # split files into N=cores groups
+    cores = min(cores, len(db_files))
+    chunk_size = int(np.ceil(len(db_files) / cores))
+    grouped_files = [db_files[i:i + chunk_size]
+                     for i in range(0, len(db_files), chunk_size)]
+    # list of params for each entry
+    params_per_process = []
+    # populate params for each sub group
+    for f_it, grouped_file in enumerate(grouped_files):
+        args = [params, shortname, db_type, file_set_name, name, func_name,
+                grouped_file, f_it + 1, len(grouped_files)]
+        params_per_process.append(args)
+    # start parallel jobs
+    with get_context('spawn').Pool(cores, maxtasksperchild=1) as pool:
+        pool.starmap(_calib_tellu_update_files_batch, params_per_process)
+
+
+def _multi_process_calib_tellu_process(params: ParamDict, shortname: str,
+                                       db_type: str, file_set_name: str,
+                                       name: str, func_name: str,
+                                       db_files: List, cores: int) -> None:
+    """
+    Process database files via multiprocessing.Process, batching into Ncores
+    groups
+
+    :param params: ParamDict, parameter dictionary of constants
+    :param pconst: PseudoConstants, pseudo constant object
+    :param db_type: str, either 'calibration' or 'telluric'
+    :param file_set_name: str, the file set name
+    :param name: str, display name
+    :param func_name: str, function name for logging
+    :param db_files: List, list of database file paths
+    :param cores: int, the number of cores to use
+
+    :return: None
+    """
+    # import multiprocessing
+    from multiprocessing import Process
+    # split files into N=cores groups
+    cores = min(cores, len(db_files))
+    chunk_size = int(np.ceil(len(db_files) / cores))
+    grouped_files = [db_files[i:i + chunk_size]
+                     for i in range(0, len(db_files), chunk_size)]
+    # process storage
+    jobs = []
+    # loop around each batch
+    for f_it, grouped_file in enumerate(grouped_files):
+        # get the arguments for this group
+        args = (params, shortname, db_type, file_set_name, name, func_name,
+                grouped_file, f_it + 1, len(grouped_files))
+        # create and start process
+        process = Process(target=_calib_tellu_update_files_batch, args=args)
+        process.start()
+        jobs.append(process)
+    # wait for all processes to complete
+    for job in jobs:
+        job.join()
+
+
+def _index_update_blocks(params: ParamDict, shortname: str,
+                         block_kinds: List) -> None:
+    """
+    Process a list of block kinds serially and update the index database
+
+    :param params: ParamDict, parameter dictionary of constants
+    :param block_kinds: List, list of block kind strings to process
+
+    :return: None
+    """
+    # get index database
+    findexdbm = drs_database.FileIndexDatabase(params, shortname)
+    findexdbm.load_db()
+    # get astrometric database
+    astromdb = drs_database.AstrometricDatabase(params, shortname)
+    astromdb.load_db()
+    # loop around block kinds (with the indexing filter)
+    for block_kind in block_kinds:
+        # log block update
+        WLOG(params, '', textentry('40-503-00044', args=[block_kind]))
+        # update index database for block kind
+        findexdbm = drs_utils.update_index_db(params, block_kind=block_kind,
+                                              findexdbm=findexdbm)
+        # update headers of raw files
+        if block_kind == 'raw':
+            # fix the headers
+            findexdbm.update_header_fix(objdbm=astromdb)
+
+
+def _index_update_blocks_batch(params: ParamDict, shortname: str,
+                               block_kinds: List, batch_idx: int = None,
+                               total_batches: int = None) -> None:
+    """
+    Process a batch of block kinds and update the index database
+
+    :param params: ParamDict, parameter dictionary of constants
+    :param block_kinds: List, list of block kind strings to process
+    :param batch_idx: int, the batch index (for logging)
+    :param total_batches: int, the total number of batches (for logging)
+
+    :return: None
+    """
+    # get index database
+    findexdbm = drs_database.FileIndexDatabase(params, shortname)
+    findexdbm.load_db()
+    # get astrometric database
+    astromdb = drs_database.AstrometricDatabase(params, shortname)
+    astromdb.load_db()
+    # start a message if batch_idx and total_batches given
+    if (batch_idx is not None) and (total_batches is not None):
+        batch_msg = ' [{0}/{1}] '.format(batch_idx, total_batches)
+    else:
+        batch_msg = ''
+    # loop around block kinds (with the indexing filter)
+    for block_kind in tqdm(block_kinds, desc='Index DB batch' + batch_msg):
+        # log block update
+        WLOG(params, '', textentry('40-503-00044', args=[block_kind]))
+        # update index database for block kind
+        findexdbm = drs_utils.update_index_db(params, block_kind=block_kind,
+                                              findexdbm=findexdbm)
+        # update headers of raw files
+        if block_kind == 'raw':
+            # fix the headers
+            findexdbm.update_header_fix(objdbm=astromdb)
+
+
+def _multi_process_index_pathos(params: ParamDict, shortname: str,
+                                block_kinds: List, cores: int) -> None:
+    """
+    Process block kinds via pathos.Pool.map, batching into Ncores groups
+
+    :param params: ParamDict, parameter dictionary of constants
+    :param block_kinds: List, list of block kind strings
+    :param cores: int, the number of cores to use
+
+    :return: None
+    """
+    # deal with Pool specific imports
+    from pathos.pools import ParallelPool as Pool
+    # set up the pool
+    pool = Pool(ncpus=cores, maxtasksperchild=1)
+    # split block_kinds into N=cores groups
+    cores = min(cores, len(block_kinds))
+    chunk_size = int(np.ceil(len(block_kinds) / cores))
+    grouped_kinds = [block_kinds[i:i + chunk_size]
+                     for i in range(0, len(block_kinds), chunk_size)]
+    # list of params for each entry
+    params_per_process = []
+    # populate params for each sub group
+    for k_it, grouped_kind in enumerate(grouped_kinds):
+        args = [params, shortname, grouped_kind, k_it + 1, len(grouped_kinds)]
+        params_per_process.append(args)
+    # transpose the params axis
+    params_per_process2 = list(zip(*params_per_process))
+    # start parallel jobs
+    pool.map(_index_update_blocks_batch, *params_per_process2)
+    # close the pool
+    pool.close()
+    pool.join()
+
+
+def _multi_process_index_pool(params: ParamDict, shortname: str,
+                              block_kinds: List, cores: int) -> None:
+    """
+    Process block kinds via multiprocessing.Pool.starmap, batching into
+    Ncores groups
+
+    :param params: ParamDict, parameter dictionary of constants
+    :param block_kinds: List, list of block kind strings
+    :param cores: int, the number of cores to use
+
+    :return: None
+    """
+    # deal with Pool specific imports
+    from multiprocessing import get_context
+    # split block_kinds into N=cores groups
+    cores = min(cores, len(block_kinds))
+    chunk_size = int(np.ceil(len(block_kinds) / cores))
+    grouped_kinds = [block_kinds[i:i + chunk_size]
+                     for i in range(0, len(block_kinds), chunk_size)]
+    # list of params for each entry
+    params_per_process = []
+    # populate params for each sub group
+    for k_it, grouped_kind in enumerate(grouped_kinds):
+        args = [params, shortname, grouped_kind, k_it + 1, len(grouped_kinds)]
+        params_per_process.append(args)
+    # start parallel jobs
+    with get_context('spawn').Pool(cores, maxtasksperchild=1) as pool:
+        pool.starmap(_index_update_blocks_batch, params_per_process)
+
+
+def _multi_process_index_process(params: ParamDict, shortname: str,
+                                 block_kinds: List, cores: int) -> None:
+    """
+    Process block kinds via multiprocessing.Process, batching into Ncores
+    groups
+
+    :param params: ParamDict, parameter dictionary of constants
+    :param block_kinds: List, list of block kind strings
+    :param cores: int, the number of cores to use
+
+    :return: None
+    """
+    # import multiprocessing
+    from multiprocessing import Process
+    # split block_kinds into N=cores groups
+    cores = min(cores, len(block_kinds))
+    chunk_size = int(np.ceil(len(block_kinds) / cores))
+    grouped_kinds = [block_kinds[i:i + chunk_size]
+                     for i in range(0, len(block_kinds), chunk_size)]
+    # process storage
+    jobs = []
+    # loop around each batch
+    for k_it, grouped_kind in enumerate(grouped_kinds):
+        # get the arguments for this group
+        args = (params, shortname, grouped_kind, k_it + 1, len(grouped_kinds))
+        # create and start process
+        process = Process(target=_index_update_blocks_batch, args=args)
+        process.start()
+        jobs.append(process)
+    # wait for all processes to complete
+    for job in jobs:
+        job.join()
+
+
+def _log_update_files(params: ParamDict, files: List) -> Tuple[dict, List]:
+    """
+    Process a list of files serially and extract log update entries
+
+    :param params: ParamDict, parameter dictionary of constants
+    :param pconst: PseudoConstants, pseudo constant object
+    :param files: List, list of file paths to process
+
+    :return: Tuple, 1. dict of logentries, 2. list of log_pids
+    """
+    # storage for unique logcodes
+    logentries, log_pids = dict(), []
+    # loop around files
+    for filepath in tqdm(files):
+        # get string version
+        filename = str(filepath)
+        # get hdu names
+        with fits.open(filename) as hdus:
+            hdu_names = list(map(lambda x: x.name, hdus))
+        # deal with no param table - skip
+        if 'PARAM_TABLE' not in hdu_names:
+            continue
+        # load param table
+        ptable = drs_table.read_table(params, filename, fmt='fits',
+                                      hdu='PARAM_TABLE')
+        # get all log update entries (per file)
+        logdict, lcode, lpid = _log_update(ptable)
+        # add log dict as a log code (unique ones only)
+        logentries[lcode] = logdict
+        # append to pids
+        log_pids.append(lpid)
+    # return results
+    return logentries, log_pids
+
+
+def _log_update_files_batch(params: ParamDict,
+                            files: List, batch_idx: int = None,
+                            total_batches: int = None) -> Tuple[dict, List]:
+    """
+    Process a batch of files and extract log update entries
+
+    :param params: ParamDict, parameter dictionary of constants
+    :param pconst: PseudoConstants, pseudo constant object
+    :param files: List, list of file paths to process
+    :param batch_idx: int, the batch index (for logging)
+    :param total_batches: int, the total number of batches (for logging)
+
+    :return: Tuple, 1. dict of logentries, 2. list of log_pids
+    """
+    # storage for unique logcodes
+    logentries, log_pids = dict(), []
+    # start a message if batch_idx and total_batches given
+    if (batch_idx is not None) and (total_batches is not None):
+        batch_msg = ' [{0}/{1}] '.format(batch_idx, total_batches)
+    else:
+        batch_msg = ''
+    # loop around files
+    for filepath in tqdm(files, desc='Log DB batch' + batch_msg):
+        # get string version
+        filename = str(filepath)
+        # get hdu names
+        with fits.open(filename) as hdus:
+            hdu_names = list(map(lambda x: x.name, hdus))
+        # deal with no param table - skip
+        if 'PARAM_TABLE' not in hdu_names:
+            continue
+        # load param table
+        ptable = drs_table.read_table(params, filename, fmt='fits',
+                                      hdu='PARAM_TABLE')
+        # get all log update entries (per file)
+        logdict, lcode, lpid = _log_update(ptable)
+        # add log dict as a log code (unique ones only)
+        logentries[lcode] = logdict
+        # append to pids
+        log_pids.append(lpid)
+    # return results
+    return logentries, log_pids
+
+
+def _multi_process_logdb_pathos(params: ParamDict,
+                                files: List, cores: int) -> Tuple[dict, List]:
+    """
+    Process files via pathos.Pool.map, batching files into Ncores groups
+
+    :param params: ParamDict, parameter dictionary of constants
+    :param pconst: PseudoConstants, pseudo constant object
+    :param files: List, list of file paths to process
+    :param cores: int, the number of cores to use
+
+    :return: Tuple, 1. dict of logentries, 2. list of log_pids
+    """
+    # deal with Pool specific imports
+    from pathos.pools import ParallelPool as Pool
+    # set up the pool
+    pool = Pool(ncpus=cores, maxtasksperchild=1)
+    # split files into N=cores groups
+    cores = min(cores, len(files))
+    chunk_size = int(np.ceil(len(files) / cores))
+    grouped_files = [files[i:i + chunk_size]
+                     for i in range(0, len(files), chunk_size)]
+    # list of params for each entry
+    params_per_process = []
+    # populate params for each sub group
+    for f_it, grouped_file in enumerate(grouped_files):
+        args = [params, grouped_file, f_it + 1, len(grouped_files)]
+        params_per_process.append(args)
+    # transpose the params axis
+    params_per_process2 = list(zip(*params_per_process))
+    # start parallel jobs
+    results = pool.map(_log_update_files_batch, *params_per_process2)
+    # close the pool
+    pool.close()
+    pool.join()
+    # merge results from all batches
+    logentries, log_pids = dict(), []
+    for batch_logentries, batch_log_pids in results:
+        logentries.update(batch_logentries)
+        log_pids.extend(batch_log_pids)
+    # return merged results
+    return logentries, log_pids
+
+
+def _multi_process_logdb_pool(params: ParamDict,
+                              files: List, cores: int) -> Tuple[dict, List]:
+    """
+    Process files via multiprocessing.Pool.starmap, batching files into Ncores
+    groups
+
+    :param params: ParamDict, parameter dictionary of constants
+    :param pconst: PseudoConstants, pseudo constant object
+    :param files: List, list of file paths to process
+    :param cores: int, the number of cores to use
+
+    :return: Tuple, 1. dict of logentries, 2. list of log_pids
+    """
+    # deal with Pool specific imports
+    from multiprocessing import get_context
+    # split files into N=cores groups
+    cores = min(cores, len(files))
+    chunk_size = int(np.ceil(len(files) / cores))
+    grouped_files = [files[i:i + chunk_size]
+                     for i in range(0, len(files), chunk_size)]
+    # list of params for each entry
+    params_per_process = []
+    # populate params for each sub group
+    for f_it, grouped_file in enumerate(grouped_files):
+        args = [params, grouped_file, f_it + 1, len(grouped_files)]
+        params_per_process.append(args)
+    # start parallel jobs
+    with get_context('spawn').Pool(cores, maxtasksperchild=1) as pool:
+        results = pool.starmap(_log_update_files_batch, params_per_process)
+    # merge results from all batches
+    logentries, log_pids = dict(), []
+    for batch_logentries, batch_log_pids in results:
+        logentries.update(batch_logentries)
+        log_pids.extend(batch_log_pids)
+    # return merged results
+    return logentries, log_pids
+
+
+def _multi_process_logdb_process(params: ParamDict,
+                                 files: List, cores: int) -> Tuple[dict, List]:
+    """
+    Process files via multiprocessing.Process, batching files into Ncores
+    groups
+
+    :param params: ParamDict, parameter dictionary of constants
+    :param pconst: PseudoConstants, pseudo constant object
+    :param files: List, list of file paths to process
+    :param cores: int, the number of cores to use
+
+    :return: Tuple, 1. dict of logentries, 2. list of log_pids
+    """
+    # import multiprocessing
+    from multiprocessing import Process, Manager
+    # split files into N=cores groups
+    cores = min(cores, len(files))
+    chunk_size = int(np.ceil(len(files) / cores))
+    grouped_files = [files[i:i + chunk_size]
+                     for i in range(0, len(files), chunk_size)]
+    # create a manager for shared data
+    manager = Manager()
+    results_list = manager.list()
+    # process storage
+    jobs = []
+    # loop around each batch
+    for f_it, grouped_file in enumerate(grouped_files):
+        # get the arguments for this group
+        args = (params, grouped_file, f_it + 1, len(grouped_files),
+                results_list)
+        # create and start process
+        process = Process(target=_log_update_files_batch_process,
+                          args=args)
+        process.start()
+        jobs.append(process)
+    # wait for all processes to complete
+    for job in jobs:
+        job.join()
+    # merge results from all batches
+    logentries, log_pids = dict(), []
+    for batch_logentries, batch_log_pids in results_list:
+        logentries.update(batch_logentries)
+        log_pids.extend(batch_log_pids)
+    # return merged results
+    return logentries, log_pids
+
+
+def _log_update_files_batch_process(params: ParamDict,
+                                    files: List, batch_idx: int,
+                                    total_batches: int,
+                                    results_list: List) -> None:
+    """
+    Process a batch of files for multiprocessing.Process and append results
+    to shared list
+
+    :param params: ParamDict, parameter dictionary of constants
+    :param pconst: PseudoConstants, pseudo constant object
+    :param files: List, list of file paths to process
+    :param batch_idx: int, the batch index
+    :param total_batches: int, the total number of batches
+    :param results_list: List, shared list to append results to
+
+    :return: None (appends to results_list)
+    """
+    # process the batch
+    logentries, log_pids = _log_update_files_batch(params, files,
+                                                   batch_idx, total_batches)
+    # append results to shared list
+    results_list.append((logentries, log_pids))
+
+
+def _log_update(ptable: Table) -> Tuple[List[Any], str, str]:
+    """
+    Get a log entry for individual file - may not be unique so must be filtered
+    for uniqueness using the lcode string (returned)
+
+    :param pconst: PseudoConst, pseudo constant object
+    :param ptable: Table,  the parameter snapshot table (usually last extension)
+
+    :return: Tuple, 1. list of log entry values, 2. str, the unique log code
+             to test for unique log entries (files may share same log entry),
+             3. str, the pid, unique pids should be remove before adding new
+             entries
+    """
+    # load instrument config
+    pconst = load_functions.load_pconfig(select.INSTRUMENTS)
+    # log entry mask
+    logmask = ptable['KIND'] == 'rlog'
+    # push into a dictionary (for easy access)
+    logdict = dict()
+    # loop around keys in ptable and convert to dictionary
+    for row, key in enumerate(ptable[logmask]['NAME']):
+        logdict[key] = ptable[logmask]['VALUE'][row]
+    # get log keys and types
+    ldb_cols = pconst.LOG_DB_COLUMNS()
+    logcols = list(ldb_cols.names)
+    # loop around log keys and add them to values
+    logvalues = []
+    for l_it, logkey in enumerate(logcols):
+        # construct keys
+        key = 'rlog.{0}'.format(logkey)
+        # get value
+        logvalue = logdict.get(key, 'NULL')
+        # by definition these must have ended (even if the ptable says
+        #     otherwise)
+        if logkey == 'ENDED':
+            logvalue = 1
+        # Need to convert boolean strings to int for database storage
+        if logvalue in ['True', 'False'] and ldb_cols.dtypes[l_it] is int:
+            logvalue = int(logvalue == 'True')
+        # append value to values
+        logvalues.append(logvalue)
+    # generate unique log code
+    largs = [logdict['rlog.PID'], logdict['rlog.LEVEL'],
+             logdict['rlog.SUBLEVEL']]
+    logcode = '{0} {1} {2}'.format(*largs)
+    # return the log values and the log code
+    return logvalues, logcode, logdict['rlog.PID']
 
 
 def remove_db_entries(params: ParamDict, recipe: DrsRecipe,
@@ -514,54 +1225,6 @@ def remove_db_entries(params: ParamDict, recipe: DrsRecipe,
     # -------------------------------------------------------------------------
     # if we get to here we return with a True (as we do not continue)
     return True
-
-
-# =============================================================================
-# Define worker functions
-# =============================================================================
-def _log_update(pconst: Instrument,
-                ptable: Table) -> Tuple[List[Any], str, str]:
-    """
-    Get a log entry for individual file - may not be unique so must be filtered
-    for uniqueness using the lcode string (returned)
-
-    :param pconst: PseudoConst, pseudo constant object
-    :param ptable: Table,  the parameter snapshot table (usually last extension)
-
-    :return: Tuple, 1. list of log entry values, 2. str, the unique log code
-             to test for unique log entries (files may share same log entry),
-             3. str, the pid, unique pids should be remove before adding new
-             entries
-    """
-    # log entry mask
-    logmask = ptable['KIND'] == 'rlog'
-    # push into a dictionary (for easy access)
-    logdict = dict()
-    # loop around keys in ptable and convert to dictionary
-    for row, key in enumerate(ptable[logmask]['NAME']):
-        logdict[key] = ptable[logmask]['VALUE'][row]
-    # get log keys and types
-    ldb_cols = pconst.LOG_DB_COLUMNS()
-    logcols = list(ldb_cols.names)
-    # loop around log keys and add them to values
-    logvalues = []
-    for logkey in logcols:
-        # construct keys
-        key = 'rlog.{0}'.format(logkey)
-        # get value
-        logvalue = logdict.get(key, 'NULL')
-        # by definition these must have ended (even if the ptable says
-        #     otherwise)
-        if logkey == 'ENDED':
-            logvalue = 1
-        # append value to values
-        logvalues.append(logvalue)
-    # generate unique log code
-    largs = [logdict['rlog.PID'], logdict['rlog.LEVEL'],
-             logdict['rlog.SUBLEVEL']]
-    logcode = '{0} {1} {2}'.format(*largs)
-    # return the log values and the log code
-    return logvalues, logcode, logdict['rlog.PID']
 
 
 # =============================================================================

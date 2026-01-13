@@ -11,13 +11,14 @@ Created on 2022-02-08
 """
 from typing import Any, Dict
 
-from aperocore.base import base
-from aperocore.constants import param_functions
-from aperocore.core import drs_log
+from apero.base import base as apero_base
+from apero.tools.module.visulisation import visu_core
+from apero.tools.module.visulisation import visu_info
 from apero.utils import drs_recipe
 from apero.utils import drs_startup
-from apero.tools.module.visulisation import visu_core
-from apero.base import base as apero_base
+from aperocore.constants import param_functions
+from aperocore.core import drs_log
+from aperocore.core import drs_text
 
 # =============================================================================
 # Define variables
@@ -84,9 +85,18 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
         WLOG(params, '', 'Must set --mode')
         return locals()
 
-    # get mode
     mode = params['INPUTS']['MODE']
-
+    # deal with cadc mode (creating ping files for a given set of files)
+    if mode == 'info':
+        # get path
+        path = params['INPUTS']['path']
+        if drs_text.null_text(path, ['None', 'Null', '']):
+            msg = 'Must set --path for --mode="info"'
+            WLOG(params, 'error', msg)
+        # run info graphics function
+        visu_info.process_path(params, path)
+        # stop after this
+        return locals()
     # deal with options
     if mode == 'e2ds':
         # create path for tmp py file

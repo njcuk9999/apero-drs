@@ -5559,6 +5559,24 @@ CDict.add('MP_FINDEX', value=None, dtype=str,
                       '"pool" or "process" or use "linear" '
                       'mode when reading raw headers for the file index')
 
+# Define multiprocessing mode for log database update
+CDict.add('MP_LOGDB', value=None, dtype=str,
+          source=__NAME__, group=cgroup,
+          user=True, active=True,
+          options=['linear', 'pool', 'process', 'pathos'],
+          description='Define whether to use multiprocess '
+                      '"pool" or "process" or use "linear" '
+                      'mode when updating log database')
+
+# Define multiprocessing mode for calibration/telluric database update
+CDict.add('MP_CALIB', value=None, dtype=str,
+          source=__NAME__, group=cgroup,
+          user=True, active=True,
+          options=['linear', 'pool', 'process', 'pathos'],
+          description='Define whether to use multiprocess '
+                      '"pool" or "process" or use "linear" '
+                      'mode when updating log database')
+
 # Key for use in run files
 CDict.add('RUN_KEY', value=None, dtype=str,
           source=__NAME__, group=cgroup,
@@ -5809,6 +5827,30 @@ CDict.add('SHORTEST_LONG_DARK_EXPTIME', value=600, dtype=float,
           source=__NAME__, group=cgroup,
           description='Define the shortest allowed longest exposure time '
                       'for the DARKs provided [in s]')
+
+# =============================================================================
+# INFO VISUALIZATION SETTINGS
+# =============================================================================
+cgroup = 'TOOLS.INFO_VISU'
+
+# zoom 1 value for info visu plots
+CDict.add('Z1', value=None, dtype=list, dtypei=float,
+          source=__NAME__, group=cgroup,
+          description='(Min, Max) zoom 1 value for info visu plots')
+
+# zoom 2 value for info visu plots
+CDict.add('Z2', value=None, dtype=list, dtypei=float,
+          source=__NAME__, group=cgroup,
+          description='(Min, Max) zoom 2 value for info visu plots')
+
+# zoom 3 value for info visu plots
+CDict.add('Z3', value=None, dtype=list, dtypei=float,
+          source=__NAME__, group=cgroup,
+          description='(Min, Max) zoom 3 value for info visu plots')
+
+# Plot order for LBL etc in info plots
+CDict.add('EXT_ORDER', value=None, dtype=int, source=__NAME__, group=cgroup,
+          description='Plot order for LBL etc in info plots')
 
 # =============================================================================
 #  End of configuration file

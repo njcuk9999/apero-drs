@@ -157,13 +157,16 @@ def run_apero_get(params: ParamDict):
     #                test=testmode, since=since)
     # run apero get for simultaneous FP
     apero_get.main(objnames=objnames, dprtypes=simfp_dprtypes,
+                   block_kind='red',
                    outtypes='EXT_E2DS_FF',
                    nosubdir=True,
                    outpath=outpath_fp, fibers=lbl_calfibers,
                    symlinks=False,
                    test=testmode, since=since)
     # run apero get for extracted FP_FP
+    # TODO: This is a problem if "red" is removed
     apero_get.main(objnames='None', dprtypes='FP_FP',
+                   block_kind='red',
                    outtypes='EXT_E2DS_FF',
                    outpath=outpath_fp, fibers=lbl_calfibers,
                    symlinks=lbl_symlinks, nosubdir=True,

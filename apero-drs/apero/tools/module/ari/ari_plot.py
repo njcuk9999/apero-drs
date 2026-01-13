@@ -265,9 +265,19 @@ def spec_plot(spec_props: Dict[str, Any], plot_path: str, plot_title: str):
 
 
 def lbl_plot(lbl_props: Dict[str, Any], plot_path: str,
-             plot_title: str) -> Dict[str, Any]:
+             plot_title: str, fig: Any = None,
+             frames: Any = None) -> Dict[str, Any]:
     # setup the figure
-    fig, frame = plt.subplots(3, 1, figsize=(12, 9), sharex='all')
+    if fig is None or frames is None:
+        fig, frames = plt.subplots(3, 1, figsize=(12, 9), sharex='all')
+        # set background color
+        frames[0].set_facecolor(PLOT_BACKGROUND_COLOR)
+        frames[1].set_facecolor(PLOT_BACKGROUND_COLOR)
+        frames[2].set_facecolor(PLOT_BACKGROUND_COLOR)
+        savefig = True
+    else:
+        savefig = False
+    # --------------------------------------------------------------------------
     # get parameters from props
     plot_date = lbl_props['plot_date']
     vrad = lbl_props['vrad']
@@ -288,24 +298,20 @@ def lbl_plot(lbl_props: Dict[str, Any], plot_path: str,
     for key in vrad_dict:
         vrad_dict[key] = vrad_dict[key][sort]
         svrad_dict[key] = svrad_dict[key][sort]
-    # set background color
-    frame[0].set_facecolor(PLOT_BACKGROUND_COLOR)
-    frame[1].set_facecolor(PLOT_BACKGROUND_COLOR)
-    frame[2].set_facecolor(PLOT_BACKGROUND_COLOR)
     # --------------------------------------------------------------------------
     # Top plot LBL RV
     # --------------------------------------------------------------------------
     # plot the points
-    frame[0].plot_date(plot_date[~reset_mask], vrad[~reset_mask], fmt='.',
+    frames[0].plot_date(plot_date[~reset_mask], vrad[~reset_mask], fmt='.',
                        alpha=0.5, color='green', ls='None')
-    frame[0].plot_date(plot_date[reset_mask], vrad[reset_mask], fmt='.',
+    frames[0].plot_date(plot_date[reset_mask], vrad[reset_mask], fmt='.',
                        alpha=0.5, color='purple', ls='None')
     # plot the error bars
-    frame[0].errorbar(plot_date[~reset_mask], vrad[~reset_mask],
+    frames[0].errorbar(plot_date[~reset_mask], vrad[~reset_mask],
                       yerr=svrad[~reset_mask],
                       marker='o', alpha=0.5, color='green', ls='None',
                       label='Good')
-    frame[0].errorbar(plot_date[reset_mask], vrad[reset_mask],
+    frames[0].errorbar(plot_date[reset_mask], vrad[reset_mask],
                       yerr=svrad[reset_mask],
                       marker='o', alpha=0.5, color='purple', ls='None',
                       label='Possibly bad (reset rv)')
@@ -331,7 +337,7 @@ def lbl_plot(lbl_props: Dict[str, Any], plot_path: str,
     # x_range = np.nanmax(plot_date) - np.nanmin(plot_date)
     for ix in range(len(xpoints)):
         bad_points.append(ix)
-        arrow = frame[0].annotate('',
+        arrow = frames[0].annotate('',
                                   xy=(xpoints[ix], ylim[0] + l_arrow),
                                   xytext=(xpoints[ix], ylim[0] - l_arrow * 2),
                                   xycoords='data', textcoords='data',
@@ -346,7 +352,7 @@ def lbl_plot(lbl_props: Dict[str, Any], plot_path: str,
     for ix in range(len(xpoints)):
         bad_points.append(ix)
 
-        arrow = frame[0].annotate('',
+        arrow = frames[0].annotate('',
                                   xy=(xpoints[ix], ylim[1] - l_arrow * 2),
                                   xytext=(xpoints[ix], ylim[1] + l_arrow),
                                   xycoords='data', textcoords='data',
@@ -357,13 +363,13 @@ def lbl_plot(lbl_props: Dict[str, Any], plot_path: str,
         #                head_length=0.25 * l_arrow, alpha=0.5, label='Outliers')
     # --------------------------------------------------------------------------
     # setting the plot
-    frame[0].set(ylim=ylim)
-    frame[0].set(title=plot_title)
-    frame[0].grid(which='both', color='lightgray', linestyle='--')
-    frame[0].set(ylabel='Velocity [m/s]')
+    frames[0].set(ylim=ylim)
+    frames[0].set(title=plot_title)
+    frames[0].grid(which='both', color='lightgray', linestyle='--')
+    frames[0].set(ylabel='Velocity [m/s]')
     # only keep one unique labels for legend
     handles, labels = [], []
-    raw_handles, raw_labels = frame[0].get_legend_handles_labels()
+    raw_handles, raw_labels = frames[0].get_legend_handles_labels()
     for it in range(len(raw_labels)):
         if raw_labels[it] not in labels:
             handles.append(raw_handles[it])
@@ -377,29 +383,29 @@ def lbl_plot(lbl_props: Dict[str, Any], plot_path: str,
         handles.append((arrow,))
         labels.append('Outliers')
         # add legend
-        frame[0].legend(handles, labels, loc=0, handler_map=handler_map)
+        frames[0].legend(handles, labels, loc=0, handler_map=handler_map)
     else:
-        frame[0].legend(handles, labels, loc=0)
+        frames[0].legend(handles, labels, loc=0)
     # --------------------------------------------------------------------------
     # Bottom plot SNR
     # --------------------------------------------------------------------------
     # simple plot of the SNR in a sample order. You need to
-    # update the relevant ketword for SPIRou
-    frame[1].plot_date(plot_date[~reset_mask], snr_h[~reset_mask], fmt='.',
+    # update the relevant keyword for SPIRou
+    frames[1].plot_date(plot_date[~reset_mask], snr_h[~reset_mask], fmt='.',
                        alpha=0.5, color='green', ls='None', label='Good')
-    frame[1].plot_date(plot_date[reset_mask], snr_h[reset_mask], fmt='.',
+    frames[1].plot_date(plot_date[reset_mask], snr_h[reset_mask], fmt='.',
                        alpha=0.5, color='purple', ls='None',
                        label='Possibly bad (reset rv)')
     # over plot the bad points from above
     if len(bad_points) > 0:
         bad_points = np.array(bad_points)
-        frame[1].plot_date(plot_date[bad_points], snr_h[bad_points], fmt='.',
+        frames[1].plot_date(plot_date[bad_points], snr_h[bad_points], fmt='.',
                            alpha=0.5, color='red', ls='None', label='Outliers')
     # add properties
-    frame[1].grid(which='both', color='lightgray', linestyle='--')
-    frame[1].set(ylabel=snr_h_label)
+    frames[1].grid(which='both', color='lightgray', linestyle='--')
+    frames[1].set(ylabel=snr_h_label)
     # add legend
-    frame[1].legend(loc=0)
+    frames[1].legend(loc=0)
     # --------------------------------------------------------------------------
     # frame 3: wavelength bin lbl rvs
     # --------------------------------------------------------------------------
@@ -425,7 +431,7 @@ def lbl_plot(lbl_props: Dict[str, Any], plot_path: str,
         # Get the color for the current wavelength
         color = cmap(norm(wavemap[ikey]))
         # Plot the RVs with error bars, using the calculated color
-        frame[2].errorbar(plot_date, vrad_dict[key], yerr=svrad_dict[key],
+        frames[2].errorbar(plot_date, vrad_dict[key], yerr=svrad_dict[key],
                           label=key.replace('vrad_', ''),
                           alpha=0.5, fmt='.', color=color)
         # deal with p5 and p95 for limits
@@ -436,20 +442,21 @@ def lbl_plot(lbl_props: Dict[str, Any], plot_path: str,
         if p95_key > p95:
             p95 = p95_key
     # Plot the overall 'vrad' with error bars as black dots
-    frame[2].errorbar(plot_date, vrad, yerr=svrad, fmt='k.', label='vrad')
+    frames[2].errorbar(plot_date, vrad, yerr=svrad, fmt='k.', label='vrad')
     # set the Date for all axis
-    frame[2].set(xlabel='Date')
-    frame[2].set(ylabel='RV [m/s]')
-    frame[2].grid(which='both', color='lightgray', linestyle='--')
-    frame[2].legend(ncol=5, fontsize='xx-small')
+    frames[2].set(xlabel='Date')
+    frames[2].set(ylabel='RV [m/s]')
+    frames[2].grid(which='both', color='lightgray', linestyle='--')
+    frames[2].legend(ncol=5, fontsize='xx-small')
     # zoom in on the median
-    frame[2].set(ylim=[p5 - (med - p5), p95 + (p95 - med)])
+    frames[2].set(ylim=[p5 - (med-p5), p95 + (p95-med)])
     # --------------------------------------------------------------------------
     plt.tight_layout()
     # --------------------------------------------------------------------------
     # save figure and close the plot
-    plt.savefig(plot_path)
-    plt.close()
+    if savefig:
+        plt.savefig(plot_path)
+        plt.close()
     # some parameters are required later save them in a dictionary
     lbl_props['low'] = low
     lbl_props['high'] = high

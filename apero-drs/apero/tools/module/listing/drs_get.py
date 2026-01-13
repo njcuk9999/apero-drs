@@ -135,6 +135,13 @@ def basic_filter(params: ParamDict, recipe: DrsRecipe, kw_objnames: List[str],
         # skip Nones
         if drs_text.null_text(filter_items, ['None', '', 'Null']):
             continue
+        # deal with strs --> push into lists
+        if isinstance(filter_items, str):
+            filter_items = [filter_items]
+        elif not isinstance(filter_items, list):
+            emsg = 'Filter {0}={1} must be a string or list'
+            eargs = [_filter, filter_items]
+            WLOG(params, 'error', emsg.format(*eargs))
         # loop around object names
         for item in filter_items:
             # skip Nones
@@ -660,6 +667,7 @@ def get_standard_outpaths(params, nosubdir: bool, db_entries,
         # add object name to storage
         all_inpaths[objname] = []
         all_outpaths[objname] = []
+        all_permissions[objname] = []
         # loop around all files for this object
         for filename in db_inpaths[objname]:
             # if object exists

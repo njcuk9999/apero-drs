@@ -910,7 +910,7 @@ def update_index_db(params: ParamDict, shortname):
     raw_obs_dirs = get_raw_obs_dirs(params, includelist, excludelist)
     # -------------------------------------------------------------------------
     # get number of cores
-    cores = _get_cores(params)
+    cores = drs_utils.get_cores(params)
     # this is really important as we have disabled updating for parallel
     #  runs to make it more efficient
     for block_kind in block_kinds:
@@ -1013,7 +1013,7 @@ def update_header_fix(params, shortname):
     raw_obs_dirs = get_raw_obs_dirs(params, includelist, excludelist)
     # -------------------------------------------------------------------------
     # get number of cores
-    cores = _get_cores(params)
+    cores = drs_utils.get_cores(params)
     # -------------------------------------------------------------------------
     # use pathos to multiprocess
     if params['REPROCESS_MP_FINDEX'].lower() == 'pathos' and cores > 1:
@@ -1193,7 +1193,7 @@ def process_run_list(params: ParamDict, shortname, runlist, group=None):
     # start a timer
     process_start = time.time()
     # get number of cores
-    cores = _get_cores(params)
+    cores = drs_utils.get_cores(params)
     # get parameters required for linear process
     stop_at_exception = params['STOP_AT_EXCEPTION']
     test_run = params['TEST_RUN']
@@ -1260,7 +1260,7 @@ def process_run_list(params: ParamDict, shortname, runlist, group=None):
 
 def display_timing(params, outlist, ptime):
     # get number of cores
-    cores = _get_cores(params)
+    cores = drs_utils.get_cores(params)
     # display the timings
     WLOG(params, '', '')
     WLOG(params, '', params['LOG.HEADER'])
@@ -1499,7 +1499,7 @@ def generate_ids(params: ParamDict, indexdb: FileIndexDatabase,
     # get keys from params
     run_key = pcheck(params, 'TOOLS.REPROCESS.RUN_KEY', func_name, override=run_key)
     # get number of cores
-    cores = _get_cores(params)
+    cores = drs_utils.get_cores(params)
     # should just need to sort these
     numbers = np.array(list(runtable.keys()))
     commands = np.array(list(runtable.values()))
@@ -3893,7 +3893,7 @@ def group_run_files2(params: ParamDict, recipe: DrsRecipe,
     :return:
     """
     # get number of cores
-    cores = _get_cores(params)
+    cores = drs_utils.get_cores(params)
     # get hard upper limit for number of files in a group
     if recipe.limit is not None:
         limit = recipe.limit
@@ -4619,60 +4619,6 @@ def _split_string_list(string: str, allow_whitespace: bool = True):
     # split based on white space (could be unwanted)
     else:
         return string.split(' ')
-
-
-def _get_cores(params):
-    # get number of cores on machine
-    cpus = os.cpu_count()
-    # get cores from inputs
-    if 'CORES' in params['INPUTS']:
-        # get value from inputs
-        cores = params['INPUTS']['CORES']
-        # only update params if cores is not None
-        if not drs_text.null_text(cores, ['None', '']):
-            try:
-                cores = int(cores)
-            except ValueError as e:
-                eargs = [params['CORES'], type(e), e]
-                raise AperoCodedException(params, '00-503-00013', targs=eargs)
-            except Exception as e:
-                eargs = [type(e), e]
-                raise AperoCodedException(params, '00-503-00014', targs=eargs)
-            # update the value in params
-            params.set('CORES', value=cores, source='USER INPUT')
-
-    # get number of cores
-    if 'CORES' in params:
-        try:
-            cores = int(params['CORES'])
-        except ValueError as e:
-            eargs = [params['CORES'], type(e), e]
-            raise AperoCodedException(params, '00-503-00006', targs=eargs)
-        except Exception as e:
-            eargs = [type(e), e]
-            raise AperoCodedException(params, '00-503-00007', targs=eargs)
-    else:
-        cores = 1
-    # -------------------------------------------------------------------------
-    # if cores is negative use all but this many cores
-    if cores < 0:
-        if abs(cores) >= cpus:
-            cores = cpus - 1
-        else:
-            cores = cpus + cores
-    # if cores is zero use all but 1 core
-    elif cores == 0:
-        cores = cpus - 1
-    # -------------------------------------------------------------------------
-    # check that cores is valid
-    if cores < 1:
-        raise AperoCodedException(params, '00-503-00008', targs=[cores])
-    if cores >= cpus:
-        eargs = [cpus, cores]
-        WLOG(params, 'warning', textentry('00-503-00009', args=eargs),
-             sublevel=2)
-    # return number of cores
-    return cores
 
 
 def _group_progress(params, g_it, grouplist, groupname):

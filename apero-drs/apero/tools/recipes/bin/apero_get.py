@@ -135,6 +135,7 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
     kw_dprtypes = inputs['dprtypes']
     kw_outputs = inputs['outtypes']
     kw_fibers = inputs['fibers']
+    block_kind = inputs.get('BLOCK_KIND', None)
     since = inputs.get('SINCE', None)
     latest = inputs.get('LATEST', None)
     timekey = inputs.get('TIMEKEY', 'observed')
@@ -193,6 +194,8 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
         kw_pi_name = None
     if drs_text.null_text(kw_runids, ['None', '', 'Null', '*']):
         kw_runids = None
+    if drs_text.null_text(block_kind, ['None', '', 'Null', '*']):
+        block_kind = None
     if drs_text.null_text(keyname, ['None', '', 'Null', '*']):
         keyname = None
     # -------------------------------------------------------------------------
@@ -208,6 +211,7 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
     filters['OBS_DIR'] = kw_obsdir
     filters['KW_PI_NAME'] = kw_pi_name
     filters['KW_RUN_ID'] = kw_runids
+    filters['BLOCK_KIND'] = block_kind
     # -------------------------------------------------------------------------
     # run basic filter
     if dbkind == 'calib':
