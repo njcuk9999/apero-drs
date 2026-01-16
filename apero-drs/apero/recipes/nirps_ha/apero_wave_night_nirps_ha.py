@@ -200,9 +200,6 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
         iwprops = wave.get_wavesolution(params, recipe, infile=hcfile,
                                         fiber=ref_fiber, ref=True,
                                         database=calibdbm)
-        # check that wave parameters are consistent with required number
-        #   of parameters (from constants)
-        iwprops = wave.check_wave_consistency(params, iwprops)
         # -----------------------------------------------------------------
         # extract the hc file and fp file
         # -----------------------------------------------------------------

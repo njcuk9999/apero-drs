@@ -580,33 +580,6 @@ def lbl_trumpet_plot(frame, wavemap: np.ndarray, y: np.ndarray,
 
 
 # =============================================================================
-# Define worker functions
-# =============================================================================
-def wave_from_header(params: ParamDict, nbx: int,
-                     header: fits.Header) -> np.ndarray:
-    # get the number of orders from the header
-    nbo = int(header[params['KW_WAVE_NBO'][0]])
-    # get the wave fit degree from the header
-    deg = int(header[params['KW_WAVE_DEG'][0]])
-    # get the header key that has the constants
-    drskey = params['KW_WAVECOEFFS'][0]
-    # create 2d list
-    wave_coeffs = np.zeros((nbo, deg + 1), dtype=float)
-    # loop around the 2D array
-    dim1, dim2 = wave_coeffs.shape
-    for it in range(dim1):
-        for jt in range(dim2):
-            # construct the key name
-            keyname = drs_file.test_for_formatting(drskey, it * dim2 + jt)
-            # set the value
-            wave_coeffs[it][jt] = float(header[keyname])
-    # get wavelength from header
-    wavemap = wave_mod.get_wavemap_from_coeffs(wave_coeffs, nbo, nbx)
-    # return the wavemap
-    return wavemap
-
-
-# =============================================================================
 # Define file type functions (one per file type)
 # =============================================================================
 def plot_drs_post_e(params: ParamDict, filename: str, identity: str = ''):
@@ -800,18 +773,22 @@ def red_tellu_temp(params: ParamDict, filename: str, identity: str = ''):
     objname = header.get(params['KW_OBJNAME'][0], 'Unknown')
     # get the data for this plot
     spectrum = fits.getdata(filename, extname='TELLU_TEMP')
+    spectrum_ravel = spectrum.ravel()
+    nbo, nbxpix = spectrum.shape
     # get wavelength from header
-    wave = wave_from_header(params, spectrum.shape[1], header)
+    xpos = np.arange(len(spectrum_ravel))
     # set up dataset
     dataset = dict()
     dataset['Template flux'] = {
-        'x': wave.ravel(),
-        'y': spectrum.ravel(),
+        'x': xpos,
+        'y': spectrum_ravel,
         'kwargs': {'color': 'black', 'alpha': 0.7}
     }
     # set zoom from parameters (just look at one order at the center)
-    zoom_params = ['TOOLS.INFO_VISU.Z1', 'TOOLS.INFO_VISU.Z2',
-                   'TOOLS.INFO_VISU.Z3']
+    orders = [5, nbo // 2, nbo - 5]
+    zoom_params = []
+    for ordernum in orders:
+        zoom_params.append([ordernum * nbxpix, (ordernum + 1) * nbxpix])
     # plot spectrum
     plot_spectrum(params, filename, dataset, header,
                   'APERO 2D Template {0}'.format(objname), zoom_params)

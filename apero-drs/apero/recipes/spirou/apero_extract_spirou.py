@@ -263,8 +263,7 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
                 # get the wave solution
                 wprops = wave.get_wavesolution(params, recipe, header,
                                                fiber=fiber, ref=mwave,
-                                               database=calibdbm,
-                                               nbpix=image.shape[1], log=log2)
+                                               database=calibdbm, log=log2)
             else:
                 wprops = ParamDict()
             # --------------------------------------------------------------

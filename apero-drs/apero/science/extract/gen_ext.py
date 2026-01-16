@@ -624,10 +624,6 @@ def create_order_table(lprops: ParamDict, wprops: ParamDict,
     for n_coeff in range(lprops['WID_COEFFS'].shape[1]):
         keyname = f'LOC_WID_COEFF_{n_coeff}'
         order_table[keyname] = lprops['WID_COEFFS'][:, n_coeff]
-    # wave parameters
-    for n_coeff in range(wprops['COEFFS'].shape[1]):
-        keyname = f'WAVE_COEFF_{n_coeff}'
-        order_table[keyname] = wprops['COEFFS'][:, n_coeff]
     # return the table
     return order_table
 

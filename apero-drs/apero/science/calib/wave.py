@@ -269,86 +269,12 @@ def get_wave_solution_from_wavefile(params: ParamDict, recipe: DrsRecipe,
     return wavefile, wavemap, wavepath, wavesource, wavetime
 
 
-def get_wave_solution_from_inheader(params: ParamDict, recipe: DrsRecipe,
-                                    infile: DrsFitsFile, header: HeaderType,
-                                    usefiber: str) -> WaveReturn:
-    # set function
-    func_name = display_func('get_wave_solution_from_inheader',
-                             __NAME__)
-    # ------------------------------------------------------------------------
-    # type 1: just from header
-    if infile is None:
-        # get keywords from params
-        outputkey = params['KW_OUTPUT'][0]
-        dprtypekey = params['KW_DPRTYPE'][0]
-        # first see if we are dealing with a reduced file
-        if outputkey in header:
-            # get filetype from header (KW_OUTPUT)
-            filetype = header[outputkey]
-            # set kind
-            kind = 'red'
-        # else we can't have a wavelength solution
-        else:
-            # get filetype from header (dprtype)
-            filetype = header[dprtypekey]
-            # log error
-            eargs = [outputkey, dprtypekey, filetype, func_name]
-            raise AperoCodedException(params, '00-017-00008', targs=eargs)
-        # get wave file instance
-        wavefile = drs_file.get_file_definition(params, filetype,
-                                                block_kind=kind, fiber=usefiber)
-        # set wave file properties (using header)
-        wavefile.recipe = recipe
-        wavefile.header = header
-        wavefile.filename = header[params['KW_WAVEFILE'][0]]
-        # if we have a wave time use it
-        if params['KW_WAVETIME'][0] in header:
-            wavetime = header[params['KW_WAVETIME'][0]]
-        else:
-            wavetime = header[params['KW_MID_OBS_TIME'][0]]
-        # get wave path
-        wavepath = header[params['KW_WAVEPATH'][0]]
-        # set the wave file data
-        nbo = header[params['KW_WAVE_NBO'][0]]
-        nbpix = params['IMAGE.X_HIGH'] - params['IMAGE.X_LOW']
-        wavefile.data = np.zeros((nbo, nbpix))
-        # set the source as header
-        wavesource = 'header'
-        # get wave map
-        wavemap = None
-    # ------------------------------------------------------------------------
-    # type 2: from infile DrsFitsFile
-    else:
-        wavefile = infile.completecopy(infile)
-        # set the file name to the wave file
-        wavefile.filename = wavefile.get_hkey('KW_WAVEFILE', dtype=str)
-        # get path
-        wavefile.path = wavefile.get_hkey('KW_WAVEPATH', dtype=str)
-        # if we have a wave time use it
-        if params['KW_WAVETIME'][0] in header:
-            wavetime = wavefile.get_hkey('KW_WAVETIME')
-        else:
-            wavetime = wavefile.get_hkey('KW_MID_OBS_TIME', dtype=float,
-                                         has_default=True, default=0.0)
-        # get wave path
-        wavepath = wavefile.get_hkey('KW_WAVEPATH', dtype=str)
-        # wave source is the infile
-        wavesource = 'infile'
-        # get wave map
-        wavemap = None
-
-    assert isinstance(wavefile, DrsFitsFile)
-    # ------------------------------------------------------------------------
-    return wavefile, wavemap, wavepath, wavesource, wavetime
-
-
 def get_wavesolution(params: ParamDict, recipe: DrsRecipe,
                      header: HeaderType = None,
                      infile: Union[DrsFitsFile, None] = None,
                      fiber: Union[str, None] = None,
                      ref: bool = False,
                      database: Union[CalibDB, None] = None,
-                     nbpix: Union[int, None] = None,
                      rlog: Union[RecipeLog, None] = None,
                      **kwargs) -> ParamDict:
     """
@@ -371,8 +297,6 @@ def get_wavesolution(params: ParamDict, recipe: DrsRecipe,
     :param ref: bool, if True forces use of the reference wavelength solution
     :param database: calib database or None, if set avoids reloading the
                      calibration database
-    :param nbpix: int or None, if in file is not set we require the size of each
-                  order in pixels
     :param kwargs: keyword arguments passed to function
     :param rlog: Recipe log or None, if defined recipe must have
                  FORCE_REFWAVE as one if its FLAGS
@@ -395,12 +319,6 @@ def get_wavesolution(params: ParamDict, recipe: DrsRecipe,
     # deal with wave file in the inputs
     if inwavefile is None and 'WAVEFILE' in inputs:
         inwavefile = inputs['WAVEFILE']
-    # if we have an in wave file we are forcing the solution
-    if not drs_text.null_text(inwavefile, ['Null', 'None', '']):
-        force = True
-    else:
-        force = pcheck(params, 'CAL.GEN.FORCE_WAVESOL', 'force',
-                       kwargs, func_name)
     # ------------------------------------------------------------------------
     # get pseudo constants
     pconst = load_functions.load_pconfig(select.INSTRUMENTS)
@@ -430,30 +348,11 @@ def get_wavesolution(params: ParamDict, recipe: DrsRecipe,
     # ------------------------------------------------------------------------
     # Get in wave file
     # ------------------------------------------------------------------------
-    # check whether we need to force from database
-    force = force or ref
-    if ref is False:
-        force = force or (params['KW_WAVE_NBO'][0] not in header)
-        force = force or (params['KW_WAVE_DEG'][0] not in header)
-        force = force or (params['KW_CDBWAVE'][0] not in header)
-        # deal with header having different fiber value that usefiber
-        if not force and (params['KW_FIBER'][0] in header):
-            if header[params['KW_FIBER'][0]] != usefiber:
-                force = True
-    # ------------------------------------------------------------------------
-    # Mode 1: forced from input filename or calibDB i.e. from a wave file
-    # ------------------------------------------------------------------------
-    if force:
-        wargs = [usefiber, inwavefile, header, database, ref]
-        wout = get_wave_solution_from_wavefile(params, recipe, *wargs)
-        wavefile, wavemap, wavepath, wavesource, wavetime = wout
-    # ------------------------------------------------------------------------
-    # Mode 2: using header or infile only i.e. from the input files header
-    # ------------------------------------------------------------------------
-    else:
-        wargs = [infile, header, usefiber]
-        wout = get_wave_solution_from_inheader(params, recipe, *wargs)
-        wavefile, wavemap, wavepath, wavesource, wavetime = wout
+    # get wave solution from input filename or calibDB i.e. from a wave file
+    wargs = [usefiber, inwavefile, header, database, ref]
+    wout = get_wave_solution_from_wavefile(params, recipe, *wargs)
+    wavefile, wavemap, wavepath, wavesource, wavetime = wout
+
     # ------------------------------------------------------------------------
     # Log progress
     # -------------------------------------------------------------------------
@@ -486,23 +385,6 @@ def get_wavesolution(params: ParamDict, recipe: DrsRecipe,
                                   required=False)
     wfp_step = wavefile.get_hkey('KW_WFP_STEP', dtype=float,
                                  required=False)
-    # extract cofficients from header
-    wave_coeffs = wavefile.get_hkey_2d('KW_WAVECOEFFS',
-                                       dim1=nbo, dim2=deg + 1)
-    # -------------------------------------------------------------------------
-    # if wavemap is unset create it from wave coefficients
-    if wavemap is None:
-        # get image dimensions
-        if infile is not None:
-            _, nbx = infile.get_data().shape
-        # if not we must have nbpix specified (cannot come from primary header)
-        elif nbpix is not None:
-            nbx = int(nbpix)
-        # otherwise we cannot make wavemap so log error
-        else:
-            raise AperoCodedException(params, '09-017-00008', targs=[func_name])
-        # get the wave map
-        wavemap = get_wavemap_from_coeffs(wave_coeffs, nbo, nbx)
     # -------------------------------------------------------------------------
     # deal with no target rv
     if wfp_target_rv is None:
@@ -522,7 +404,6 @@ def get_wavesolution(params: ParamDict, recipe: DrsRecipe,
     else:
         wprops['NBPIX'] = None
     wprops['DEG'] = deg
-    wprops['COEFFS'] = wave_coeffs
     wprops['WAVEMAP'] = wavemap
     wprops['WAVEINST'] = wavefile.completecopy(wavefile)
     wprops['WAVETIME'] = wavetime
@@ -556,7 +437,7 @@ def get_wavesolution(params: ParamDict, recipe: DrsRecipe,
             wprops[wfp_keys[wfpi]] = wfp_values[wfpi]
     # set the source
     keys = ['WAVEMAP', 'WAVEFILE', 'WAVEINIT', 'WAVESOURCE', 'WAVEPATH',
-            'NBO', 'DEG', 'WAVE_POLY_TYPE', 'COEFFS',
+            'NBO', 'DEG', 'WAVE_POLY_TYPE',
             'WAVETIME', 'WAVEINST', 'NBPIX',
             'CAVITY', 'CAVITY_DEG', 'CAVITY_PEDESTAL', 'MEAN_HC_VEL',
             'ERR_HC_VEL'] + wfp_keys
@@ -592,30 +473,6 @@ def get_waveheader(params: ParamDict, wprops: ParamDict
         return None
 
 
-def get_wavemap_from_coeffs(wave_coeffs: np.ndarray, nbo: int,
-                            nbx: int) -> np.ndarray:
-    """
-    Get the wave map from a wave matrix (set of coefficients per order)
-
-    :param wave_coeffs: np.ndarray (2D), the wave coefficients
-                        shape = (nbo x (fit degree + 1))
-    :param nbo: int, the number of orders
-    :param nbx: int, the number of pixels along the order direction (x)
-
-    :return: np.ndarray, 2D wave map, shape = (nbo x nbx)
-    """
-    # set up storage
-    wavemap = np.zeros((nbo, nbx))
-    xpixels = np.arange(nbx)
-    # loop aroun each order
-    for order_num in range(nbo):
-        # get this order coefficients
-        ocoeffs = wave_coeffs[order_num]
-        # calculate polynomial values and push into wavemap
-        wavemap[order_num] = mp.val_cheby(ocoeffs, xpixels, domain=[0, nbx])
-    return wavemap
-
-
 def shift_wavesolution(wprops: ParamDict, dvshift: float) -> ParamDict:
     """
     Apply a wavelength offset (dvshift) to a wave parameter dictionary
@@ -629,12 +486,6 @@ def shift_wavesolution(wprops: ParamDict, dvshift: float) -> ParamDict:
     # apply shift to the wave map
     wavemap1 = np.array(wprops['WAVEMAP']) * dvshift
     # -------------------------------------------------------------------------
-    # update wave coefficients
-    wavecoeffs1 = np.array(wprops['COEFFS'])
-    # each wave coefficient is just multiplied by the shift
-    for c_it in range(wavecoeffs1.shape[1]):
-        wavecoeffs1[:, c_it] *= dvshift
-    # -------------------------------------------------------------------------
     # new storage for wprops
     wprops1 = ParamDict()
     # -------------------------------------------------------------------------
@@ -642,7 +493,6 @@ def shift_wavesolution(wprops: ParamDict, dvshift: float) -> ParamDict:
     wprops1['WAVEFILE'] = str(wprops['WAVEFILE'])
     wprops1['WAVEINIT'] = str(wprops['WAVEINIT']) + '[SHIFTED]'
     wprops1['WAVESOURCE'] = 'SHIFT={0} km/s'.format(dvshift)
-    wprops1['COEFFS'] = wavecoeffs1
     wprops1['WAVEMAP'] = wavemap1
     # cannot copy this with deep copy
     wprops1['WAVEINST'] = wprops['WAVEINST']
@@ -831,60 +681,6 @@ def get_wavelines(params: ParamDict, recipe, fiber: str,
     # return the lines and sources
     return hclines, hcsource, fplines, fpsource
 
-
-def check_wave_consistency(params: ParamDict, props: ParamDict,
-                           num_coeffs: Union[int, None] = None) -> ParamDict:
-    """
-    Check the consistency of the wave solution (fit degree) and if incorrect
-    convert wave solution coefficients to this degree for use after this point
-
-    :param params: ParamDict, the parameter dictionary of constants
-    :param props: ParamDict, the parameter dictionary of wave data
-    :param num_coeffs: int or None, if set overrides params['CAL.WAVE.GEN.WAVESOL_FIT_DEG']
-
-    :return: ParamDict, the updated parameter dictionary of wave data
-    """
-    func_name = display_func('check_wave_consistency', __NAME__)
-    # get constants from params/kwargs
-    required_deg = pcheck(params, 'CAL.WAVE.GEN.WAVESOL_FIT_DEG', func=func_name,
-                          override=num_coeffs)
-    # get dimension from data
-    nbo, ncoeffs = props['COEFFS'].shape
-    # get the fit degree from dimensions
-    deg = ncoeffs - 1
-    # check dimensions
-    if required_deg == deg:
-        # log that fit degrees match
-        WLOG(params, '', textentry('40-017-00002', args=[deg]))
-    # if not correct remap coefficients
-    else:
-        # log that fit degrees don't match
-        wargs = [deg, required_deg]
-        WLOG(params, 'warning', textentry('10-017-00003', args=wargs),
-             sublevel=2)
-        # setup output storage
-        output_coeffs = np.zeros([nbo, required_deg + 1])
-        output_map = np.zeros_like(props['WAVEMAP'])
-        # define pixel array
-        xfit = np.arange(output_map.shape[1])
-        # loop around each order
-        for order_num in range(nbo):
-            # get the wave map for this order
-            yfit = mp.val_cheby(props['COEFFS'][order_num], xfit,
-                                domain=[0, output_map.shape[1]])
-            # get the new coefficients based on a fit to this wavemap
-            coeffs = mp.nanchebyfit(xfit, yfit, required_deg,
-                                    domain=[0, output_map.shape[1]])
-            # push into storage
-            output_coeffs[order_num] = coeffs
-            output_map[order_num] = yfit
-        # update props
-        props['WAVEMAP'] = output_map
-        props['COEFFS'] = output_coeffs
-        props['DEG'] = required_deg
-        props.set_sources(['WAVEMAP', 'COEFFS', 'DEG'], func_name)
-    # return props
-    return props
 
 
 # =============================================================================
@@ -2012,7 +1808,6 @@ def calc_wave_sol(params: ParamDict, recipe: DrsRecipe,
     # construct wave properties
     # -------------------------------------------------------------------------
     wprops = ParamDict()
-    wprops['COEFFS'] = wave_coeffs
     wprops['WAVEMAP'] = wave_map
     wprops['NBO'] = len(orders)
     wprops['DEG'] = wavesol_fit_degree
@@ -2024,7 +1819,7 @@ def calc_wave_sol(params: ParamDict, recipe: DrsRecipe,
     wprops['ERR_HC_VEL'] = err_hc_vel
     wprops['WAVE_POLY_TYPE'] = 'Chebyshev'
     # set source
-    keys = ['WAVEMAP', 'NBO', 'DEG', 'COEFFS', 'NBPIX', 'CAVITY', 'CAVITY_DEG',
+    keys = ['WAVEMAP', 'NBO', 'DEG', 'NBPIX', 'CAVITY', 'CAVITY_DEG',
             'CAVITY_PEDESTAL', 'MEAN_HC_VEL', 'ERR_HC_VEL', 'WAVE_POLY_TYPE']
     wprops.set_sources(keys, func_name)
     # return wave properties
@@ -2035,33 +1830,35 @@ def wprop_pixel_wave_shift(wprops: ParamDict, offset: float = 0.0,
                            scale: float = 1.0) -> ParamDict:
     """
     Shift a wave solution parameter dictionary by a given offset and scale
-    factor
+    factor. This shifts the pixel positions while keeping wavelength values.
 
-    :param wprops:
-    :param offset:
-    :param scale:
-    :return:
+    :param wprops: ParamDict, wave properties with WAVEMAP
+    :param offset: float, pixel offset to apply
+    :param scale: float, pixel scale factor to apply
+    :return: ParamDict, updated wave properties with shifted wavemap
     """
     # deal with no offset or scale
     if offset == 0.0 and scale == 1.0:
         return wprops
     # extract values out that we need to use
-    deg = wprops['DEG']
     nbo = wprops['NBO']
     nbpix = wprops['WAVEMAP'].shape[1]
-    coeffs = np.array(wprops['COEFFS'])
-    wavemap = np.array(wprops['WAVEMAP'])
-    # loop around each order
+    wavemap = np.array(wprops['WAVEMAP'], dtype=float)
+    # create shifted wavemap by interpolating at new pixel positions
+    # old pixel positions
+    xx = np.arange(nbpix, dtype=float)
+    # new pixel positions (shifted and scaled)
+    xx2 = (xx + offset) * scale
+    # loop around each order and interpolate
     for order_num in range(nbo):
-        xx = np.arange(nbpix)
-        wave = mp.val_cheby(coeffs[order_num], xx, domain=[0, nbpix])
-        xx2 = (xx + offset) * scale
-        fit2 = mp.fit_cheby(xx2, wave, deg, domain=[0, nbpix])
-        wavemap[order_num] = mp.val_cheby(fit2, xx, domain=[0, nbpix])
-        coeffs[order_num] = fit2
+        # get wavelengths for this order
+        wave_old = wavemap[order_num]
+        # interpolate wavelengths at new pixel positions
+        new_spline = mp.iuv_spline(xx, wave_old, k=1)
+        # use linear interpolation, NaN for out-of-bounds
+        wavemap[order_num] = new_spline(xx2)
     # create new wprops
     wprops1 = ParamDict()
-    wprops1['COEFFS'] = coeffs
     wprops1['WAVEMAP'] = wavemap
     # deep copy all other keys
     for key in wprops:
@@ -3294,20 +3091,6 @@ def write_wavesol(params: ParamDict, recipe: DrsRecipe, fiber: str,
     wprops['WFP_FILE'] = wavefile.basename
 
     # ------------------------------------------------------------------
-    # Make wave coefficient table
-    # ------------------------------------------------------------------
-    # get number of orders
-    nbo = wprops['COEFFS'].shape[0]
-    # add order column
-    wave_cols = ['ORDER']
-    wave_vals = [np.arange(nbo)]
-    # add coefficients columns
-    for w_it in range(wprops['COEFFS'].shape[1]):
-        wave_cols.append('COEFFS_{0}'.format(w_it))
-        wave_vals.append(wprops['COEFFS'][:, w_it])
-    wave_table = drs_table.make_table(columns=wave_cols,
-                                      values=wave_vals)
-    # ----------------------------------------------------------------------
     # copy original keys from fp file
     wavefile.copy_original_keys(fpfile)
     # add core values (that should be in all headers)
@@ -3354,9 +3137,9 @@ def write_wavesol(params: ParamDict, recipe: DrsRecipe, fiber: str,
     wargs = [fiber, wavefile.filename]
     WLOG(params, '', textentry('40-017-00037', args=wargs))
     # define multi lists
-    data_list = [wave_table]
-    datatype_list = ['table']
-    name_list = ['COEFF_TABLE']
+    data_list = []
+    datatype_list = []
+    name_list = []
     # snapshot of parameters
     if params['GLOBAL.PSNAPSHOT']:
         data_list += [params.snapshot_table(recipe, drsfitsfile=wavefile)]
@@ -3393,8 +3176,6 @@ def add_wave_keys(infile: DrsFitsFile, props: ParamDict) -> DrsFitsFile:
     infile.add_hkey('KW_WAVEPATH', value=props['WAVEPATH'])
     infile.add_hkey('KW_WAVE_NBO', value=props['NBO'])
     infile.add_hkey('KW_WAVE_DEG', value=props['DEG'])
-    infile.add_hkey_2d('KW_WAVECOEFFS', values=props['COEFFS'],
-                       dim1name='order', dim2name='coeffs')
     # add echelle order conversions
     infile.add_hkey_1d('KW_WAVE_ECHELLE', values=props['EORDERS'],
                        dim1name='order')
