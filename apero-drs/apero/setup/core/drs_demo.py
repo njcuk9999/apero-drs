@@ -225,16 +225,18 @@ def _load_file_list(params, selected_info, selected_key):
     file_list_name = selected_info.get('file')
     # Check if file list is defined
     if file_list_name is None:
-        emsg = f'Error: No file list defined for {selected_key}'
-        WLOG(params, 'error', emsg)
-        return None
+        emsg = 'Error: No file list defined for {0}'
+        eargs = [selected_key]
+        raise AperoCodedException(params, message=emsg.format(*eargs),
+                                  targs=eargs)
     # Construct full path to file list
     file_list_path = os.path.join(RES_PATH, file_list_name)
     # Check if file list file exists
     if not os.path.exists(file_list_path):
-        emsg = f'Error: File list not found at {file_list_path}'
-        WLOG(params, 'error', emsg)
-        return None
+        emsg = 'Error: File list not found at {0}'
+        eargs = [file_list_path]
+        raise AperoCodedException(params, message=emsg.format(*eargs),
+                                  targs=eargs)
     # Read file list from file
     with open(file_list_path, 'r') as f:
         file_paths = [line.strip() for line in f if line.strip()]
@@ -331,7 +333,7 @@ def _get_source_location(params, selected_info, missing_files, total_files):
                     raw_dir = user_input(question, dtype='PATH')
                     # Check if directory exists
                     if not os.path.exists(raw_dir):
-                        emsg = f'Error: Directory does not exist: {raw_dir}'
+                        emsg = f'Directory does not exist: {raw_dir}'
                         WLOG(params, 'warning', emsg)
                         continue
                     # Store directory path as string
@@ -354,7 +356,7 @@ def _get_source_location(params, selected_info, missing_files, total_files):
                 raw_dir = user_input(question, dtype='PATH')
                 # Check if directory exists
                 if not os.path.exists(raw_dir):
-                    emsg = f'Error: Directory does not exist: {raw_dir}'
+                    emsg = f'Directory does not exist: {raw_dir}'
                     WLOG(params, 'warning', emsg)
                     continue
                 # Store directory information
