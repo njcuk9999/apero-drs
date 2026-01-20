@@ -19,12 +19,13 @@ only from:
 from typing import Any, Dict, List, Literal, Optional, Union
 from decimal import Decimal
 
+import time
 import numpy as np
 import pandas as pd
 import sqlalchemy
 from astropy.table import Table as AstropyTable
 from sqlalchemy import Dialect
-from sqlalchemy.exc import IntegrityError
+from sqlalchemy.exc import IntegrityError, OperationalError
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy_utils import database_exists, create_database
 
@@ -55,6 +56,29 @@ DATABASE_NAMES = ['calib', 'tellu', 'findex', 'log', 'astrom', 'lang',
 SA_TEXT = sqlalchemy.text
 # set max string size
 MAX_STR_SIZE = 1024
+
+
+# =============================================================================
+# Define helper functions
+# =============================================================================
+def _retry_operation(func, max_retries: int = 5, retry_delay: float = 2):
+    """
+    Retry a database operation on OperationalError
+
+    :param func: callable, the function to execute
+    :param max_retries: int, maximum number of retry attempts
+    :param retry_delay: float, delay in seconds between retries
+    :return: result from func
+    :raises OperationalError: if all retry attempts fail
+    """
+    for attempt in range(max_retries):
+        try:
+            return func()
+        except OperationalError as e:
+            if attempt < max_retries - 1:
+                time.sleep(retry_delay)
+            else:
+                raise
 
 
 # =============================================================================
@@ -154,11 +178,14 @@ class AperoDatabase:
         # deal with no connect args
         if connect_args is None:
             connect_args = dict()
-        # define the engine to use
-        self.engine = sqlalchemy.create_engine(url, echo=verbose,
-                                               pool_pre_ping=True,
-                                               pool_recycle=1200,
-                                               connect_args=connect_args)
+        # define the engine to use with retry on OperationalError
+        def _create_engine():
+            return sqlalchemy.create_engine(url, echo=verbose,
+                                           pool_pre_ping=True,
+                                           pool_recycle=1200,
+                                           connect_args=connect_args)
+        self.engine = _retry_operation(_create_engine, max_retries=5,
+                                       retry_delay=2)
         # define the table name
         self.tablename = tablename
         # define backup path
@@ -190,10 +217,13 @@ class AperoDatabase:
         _ = __NAME__ + 'Database.__setstate__()'
         # update dict with state
         self.__dict__.update(state)
-        # re-create engine after pickle
-        self.engine = sqlalchemy.create_engine(self.url, echo=self.verbose,
-                                               pool_pre_ping=True,
-                                               pool_recycle=1200)
+        # re-create engine after pickle with retry on OperationalError
+        def _create_engine():
+            return sqlalchemy.create_engine(self.url, echo=self.verbose,
+                                           pool_pre_ping=True,
+                                           pool_recycle=1200)
+        self.engine = _retry_operation(_create_engine, max_retries=5,
+                                       retry_delay=2)
 
     def __str__(self):
         """
@@ -210,8 +240,10 @@ class AperoDatabase:
         return self.__str__()
 
     def add_database(self):
-        if not database_exists(self.engine.url):
-            create_database(self.engine.url)
+        def _check_and_create():
+            if not database_exists(self.engine.url):
+                create_database(self.engine.url)
+        _retry_operation(_check_and_create, max_retries=5, retry_delay=2)
 
     def add_table(self, tablename: str,
                   columns: List[sqlalchemy.Column],
@@ -274,18 +306,20 @@ class AperoDatabase:
             new_indexes = []
 
         # ----------------------------------------------------------------------
-        # check to see if table name exists in database
-        inspector = sqlalchemy.inspect(self.engine)
-        # remove current table if adding a table
-        if inspector.has_table(tablename):
-            self.delete_table(tablename)
-        # define the meta data
-        metadata = sqlalchemy.MetaData()
-        # create the table
-        _ = sqlalchemy.Table(tablename, metadata, *new_columns, *new_indexes,
-                             *new_uniques)
-        # create table
-        metadata.create_all(self.engine)
+        # check to see if table name exists in database and create with retry
+        def _create_table():
+            inspector = sqlalchemy.inspect(self.engine)
+            # remove current table if adding a table
+            if inspector.has_table(tablename):
+                self.delete_table(tablename)
+            # define the meta data
+            metadata = sqlalchemy.MetaData()
+            # create the table
+            _ = sqlalchemy.Table(tablename, metadata, *new_columns, *new_indexes,
+                                 *new_uniques)
+            # create table
+            metadata.create_all(self.engine)
+        _retry_operation(_create_table, max_retries=5, retry_delay=2)
 
     def get_tables(self):
         """
@@ -293,10 +327,12 @@ class AperoDatabase:
 
         :return:
         """
-        # get inspector
-        inspector = sqlalchemy.inspect(self.engine)
-        # get table names
-        return inspector.get_table_names()
+        # get inspector with retry
+        def _get_table_names():
+            inspector = sqlalchemy.inspect(self.engine)
+            # get table names
+            return inspector.get_table_names()
+        return _retry_operation(_get_table_names, max_retries=5, retry_delay=2)
 
     def has_table(self, tablename: str):
         """
@@ -306,10 +342,12 @@ class AperoDatabase:
 
         :return: bool, True if table exists, False otherwise
         """
-        # get inspector
-        inspector = sqlalchemy.inspect(self.engine)
-        # check if table exists
-        return inspector.has_table(tablename)
+        # check if table exists with retry
+        def _check_table_exists():
+            inspector = sqlalchemy.inspect(self.engine)
+            # check if table exists
+            return inspector.has_table(tablename)
+        return _retry_operation(_check_table_exists, max_retries=5, retry_delay=2)
 
     def count(self, tablename: Optional[str] = None,
               condition: Optional[str] = None) -> int:
@@ -330,29 +368,29 @@ class AperoDatabase:
         :return: int, the count
         """
         # define the meta data
-        metadata = sqlalchemy.MetaData()
-        metadata.reflect(bind=self.engine)
-        # get the table name
-        if tablename is None:
-            tablename = self.tablename
-        # create a table to fill
-        sqltable = sqlalchemy.Table(tablename, metadata)
-        # Create a session
-        session_obj = sessionmaker(bind=self.engine)
-        # ---------------------------------------------------------------------
-        with session_obj() as session:
-            # set up query
-            query = session.query(sqlalchemy.func.count())
-            # add the table to select from
-            query = query.select_from(sqltable)
-            # if we have a condition filter by it
-            if condition is not None:
-                query = query.filter(sqlalchemy.text(condition))
-            # get the count
-            count = query.scalar()
-        # ---------------------------------------------------------------------
-        # return the count
-        return count
+        def _execute_count():
+            metadata = sqlalchemy.MetaData()
+            metadata.reflect(bind=self.engine)
+            # get the table name
+            _tablename = tablename if tablename is not None else self.tablename
+            # create a table to fill
+            sqltable = sqlalchemy.Table(_tablename, metadata)
+            # Create a session
+            session_obj = sessionmaker(bind=self.engine)
+            # set up query with session
+            with session_obj() as session:
+                # set up query
+                query = session.query(sqlalchemy.func.count())
+                # add the table to select from
+                query = query.select_from(sqltable)
+                # if we have a condition filter by it
+                if condition is not None:
+                    query = query.filter(sqlalchemy.text(condition))
+                # get the count
+                count = query.scalar()
+            return count
+        # return the count with retry
+        return _retry_operation(_execute_count, max_retries=5, retry_delay=2)
 
     def unique(self, column: str, tablename: Optional[str] = None,
                condition: Optional[str] = None) -> np.ndarray:
@@ -376,29 +414,31 @@ class AperoDatabase:
         :return:
         """
         # define the meta data
-        metadata = sqlalchemy.MetaData()
-        metadata.reflect(bind=self.engine)
-        # get the table name
-        if tablename is None:
-            tablename = self.tablename
-        # create a table to fill
-        sqltable = sqlalchemy.Table(tablename, metadata)
-        # add the table to select from
-        query = sqltable.select().with_only_columns(getattr(sqltable.c, column))
-        # deal with where condition
-        if condition is not None:
-            query = query.where(sqlalchemy.text(condition))
-        # make sure we only get unique values
-        query = query.distinct()
-        # get the unique values
-        with self.engine.begin() as conn:
-            result = conn.execute(query).fetchall()
-        # flatten result
-        items = [item for sublist in result for item in sublist]
-        # remove None from items
-        items = [item for item in items if item is not None]
-        # return unique result
-        return np.array(list(set(items)))
+        def _execute_unique():
+            metadata = sqlalchemy.MetaData()
+            metadata.reflect(bind=self.engine)
+            # get the table name
+            _tablename = tablename if tablename is not None else self.tablename
+            # create a table to fill
+            sqltable = sqlalchemy.Table(_tablename, metadata)
+            # add the table to select from
+            query = sqltable.select().with_only_columns(getattr(sqltable.c, column))
+            # deal with where condition
+            if condition is not None:
+                query = query.where(sqlalchemy.text(condition))
+            # make sure we only get unique values
+            query = query.distinct()
+            # get the unique values
+            with self.engine.begin() as conn:
+                result = conn.execute(query).fetchall()
+            # flatten result
+            items = [item for sublist in result for item in sublist]
+            # remove None from items
+            items = [item for item in items if item is not None]
+            # return unique result
+            return np.array(list(set(items)))
+        # execute with retry
+        return _retry_operation(_execute_unique, max_retries=5, retry_delay=2)
 
     def get(self, columns: str, tablename: Optional[str] = None,
             condition: Optional[str] = None,
@@ -461,68 +501,63 @@ class AperoDatabase:
             db.get("name", sortBy="radius", maxRows=5)
         """
         # define the meta data
-        metadata = sqlalchemy.MetaData()
-        metadata.reflect(bind=self.engine)
-        # get the table name
-        if tablename is None:
-            tablename = self.tablename
-        # create a table to fill
-        sqltable = sqlalchemy.Table(tablename, metadata)
-        # create a query statement
-        if columns == '*':
-            query = sqltable.select()
-        else:
-            # get column instances matching our input columns
-            sqlcols = []
-            for col in columns.split(','):
-                col = col.strip()
-                sqlcols.append(getattr(sqltable.c, col))
-            # run query only with these columns
-            query = sqltable.select().with_only_columns(*sqlcols)
-        # ---------------------------------------------------------------------
-        # add condition
-        if condition is not None:
-            query = query.where(sqlalchemy.text(condition))
-        # ---------------------------------------------------------------------
-        # deal with descending
-        if sort_descending:
-            ordering = sqlalchemy.desc
-        else:
-            ordering = sqlalchemy.asc
-        # ---------------------------------------------------------------------
-        # deal with sort by
-        if sort_by is not None:
-            if isinstance(sort_by, list):
-                for column in sort_by:
-                    query = query.order_by(ordering(column))
+        def _execute_get():
+            metadata = sqlalchemy.MetaData()
+            metadata.reflect(bind=self.engine)
+            # get the table name
+            _tablename = tablename if tablename is not None else self.tablename
+            # create a table to fill
+            sqltable = sqlalchemy.Table(_tablename, metadata)
+            # create a query statement
+            if columns == '*':
+                query = sqltable.select()
             else:
-                query = query.order_by(ordering(sort_by))
-        # ---------------------------------------------------------------------
-        # deal with max rows
-        if max_rows is not None:
-            query = query.limit(max_rows)
-        # ---------------------------------------------------------------------
-        # add the group by statement
-        if groupby is not None:
-            query = query.group_by(groupby)
-        # ---------------------------------------------------------------------
-        # execute the query
-        with self.engine.begin() as conn:
-            result = conn.execute(query)
-            # annoying hack to avoid decimal types (cast to floats)
-            prows = _process_rows(result.fetchall())
-            # get the results as a list
-            if return_pandas:
-                rows = pd.DataFrame(prows, columns=result.keys())
-            elif return_table:
-                rows = pd.DataFrame(prows, columns=result.keys())
-                rows = AstropyTable.from_pandas(rows)
-            elif return_array:
-                rows = np.array(prows)
+                # get column instances matching our input columns
+                sqlcols = []
+                for col in columns.split(','):
+                    col = col.strip()
+                    sqlcols.append(getattr(sqltable.c, col))
+                # run query only with these columns
+                query = sqltable.select().with_only_columns(*sqlcols)
+            # add condition
+            if condition is not None:
+                query = query.where(sqlalchemy.text(condition))
+            # deal with descending
+            if sort_descending:
+                ordering = sqlalchemy.desc
             else:
-                rows = prows
-        # ---------------------------------------------------------------------
-        return rows
+                ordering = sqlalchemy.asc
+            # deal with sort by
+            if sort_by is not None:
+                if isinstance(sort_by, list):
+                    for column in sort_by:
+                        query = query.order_by(ordering(column))
+                else:
+                    query = query.order_by(ordering(sort_by))
+            # deal with max rows
+            if max_rows is not None:
+                query = query.limit(max_rows)
+            # add the group by statement
+            if groupby is not None:
+                query = query.group_by(groupby)
+            # execute the query
+            with self.engine.begin() as conn:
+                result = conn.execute(query)
+                # annoying hack to avoid decimal types (cast to floats)
+                prows = _process_rows(result.fetchall())
+                # get the results as a list
+                if return_pandas:
+                    rows = pd.DataFrame(prows, columns=result.keys())
+                elif return_table:
+                    rows = pd.DataFrame(prows, columns=result.keys())
+                    rows = AstropyTable.from_pandas(rows)
+                elif return_array:
+                    rows = np.array(prows)
+                else:
+                    rows = prows
+            return rows
+        # execute with retry
+        return _retry_operation(_execute_get, max_retries=5, retry_delay=2)
 
     def set_row(self, columns: Optional[Union[str, List[str]]] = None,
                 values: Optional[Union[str, List[str]]] = None,
