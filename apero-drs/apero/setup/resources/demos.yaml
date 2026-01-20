@@ -1,0 +1,16 @@
+spirou_minidata1:
+    name: spirou_minidata [2019]
+    url: None
+    file: spirou_minidata1.txt
+spirou_minidata2:
+    name: spirou_minidata [2020]
+    url: None
+    file: spirou_minidata2.txt
+nirps_he_minidata:
+    name: nirps_he_minidata
+    url: None
+    file: nirps_he_minidata.txt
+nirps_ha_minidata:
+    name: nirps_ha_minidata
+    url: None
+    file: None

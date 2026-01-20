@@ -34,7 +34,8 @@ from apero.science.calib import wave
 from apero.science.telluric import gen_tellu
 from apero.instruments import select
 from apero.base import base as apero_base
-from apero.science.telluric.core_tellu import load_tellu_file, wave_to_wave
+from apero.science.telluric.core_tellu import load_tellu_file
+from aperocore.science.wavecore import wave_to_wave
 
 
 # =============================================================================

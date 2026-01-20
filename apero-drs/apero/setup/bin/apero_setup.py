@@ -15,6 +15,7 @@ from aperocore.constants import param_functions
 
 from apero.setup.core import drs_setup
 from apero.setup.core import setup_constants
+from apero.setup.core import drs_demo
 
 # =============================================================================
 # Define variables
@@ -52,6 +53,9 @@ def main() -> ParamDict:
     # -------------------------------------------------------------------------
     # run setup
     drs_setup.run_setup(params, sargs)
+    # -------------------------------------------------------------------------
+    # give the user an option to start from a demo (e.g. mini data)
+    drs_demo.start_from_demo(params)
     # -------------------------------------------------------------------------
     # end splash
     drs_setup.end_all(params)

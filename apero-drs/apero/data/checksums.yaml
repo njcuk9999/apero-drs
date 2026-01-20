@@ -106,6 +106,11 @@ data:
   spirou/engineering/amplifier_bias_model_spirou.fits: 1832fa20dd1c523add43899cc33429d6
   spirou/engineering/detector_flat_full.fits: c42f7452d481a37b6d8003cc6abde5b8
   spirou/engineering/hotpix_pp.csv: 92e4f994b73ce2a55a74c8cb6ba0c6bc
+  spirou/engineering/static_dark_curr_spirou.fits: 88437db3107f843083f55408c2d81e5e
+  spirou/engineering/static_dark_spirou.fits: 0f2a6c023865f832470d9d12d3a38271
+  spirou/engineering/static_flat_spirou.fits: be7cc34ac31725515efafa21c2438084
+  spirou/engineering/static_hotpix_spirou.fits: d379bfbdf62b08b11545297e3d538d3e
+  spirou/engineering/static_led_spirou.fits: 4493bf9121eba311009b93220e8ce6ae
   spirou/lsd/lsd_order_mask.dat: a37ffe01ca7d69a99af033bd47e8ab96
   spirou/lsd/marcs_t2500g50_all: 61c32b829095bf8e0fb25aa45a4d68ac
   spirou/lsd/marcs_t2500g50_all.meta: 909ef03430c39c805495618208089d35
@@ -163,10 +168,10 @@ data:
   spirou/telluric/tellu_blacklist.txt: 611adccf40280cc2d2f0a6eb1319528a
   spirou/telluric/tellu_whitelist.txt: 275707c63a34519d925a3f49283a6ecf
 setup:
-  humantime: '2025-05-23 15:00:36.070'
+  humantime: '2026-01-20 14:56:53.607'
   servers:
   - http://206.12.93.77/ari/data/apero/assets/
-  tarfile: 1748012436_069969_assets.tar.gz
-  unixtime: 1748012436.069969
-  vdate: 2025-03-03
-  version: 0.8.105
+  tarfile: 1768921013_607334_assets.tar.gz
+  unixtime: 1768921013.607334
+  vdate: 2025-12-03
+  version: 0.8.118

@@ -295,6 +295,14 @@ SARGS['CLEAN_PROMPT'] = SetupArgument(name='CLEAN_PROMPT',
                                       ask=False,
                                       helpstr='Prompt user before cleaning')
 
+# Whether to ask the user if they want to start from demo
+SARGS['DISABLE_DEMO_PROMPT'] = SetupArgument(name='DISABLE_DEMO_PROMPT',
+                                             argname='--no-demo-prompt',
+                                             default_value=False, dtype='bool',
+                                             ask=False,
+                                             helpstr='Disable demo prompt '
+                                                     '(requires prompts)')
+
 # =============================================================================
 # Start of code
 # =============================================================================

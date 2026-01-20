@@ -755,32 +755,32 @@ def create_yamls(params: Any):
     # add calib database
     calibdb = dict()
     calibdb['NAME'] = params.get('CALIB_NAME', 'calib')
-    calibdb['TABLE'] = params.get('CALIB_DBTABLE', 'NULL')
+    calibdb['TABLE'] = params.get('CALIB_DBTABLE', 'calib_default')
     database_dict['CALIB'] = calibdb
     # add tellu database
     telludb = dict()
     telludb['NAME'] = params.get('TELLU_NAME', 'tellu')
-    telludb['TABLE'] = params.get('TELLU_DBTABLE', 'NULL')
+    telludb['TABLE'] = params.get('TELLU_DBTABLE', 'tellu_default')
     database_dict['TELLU'] = telludb
     # add index database
     findexdb = dict()
     findexdb['NAME'] = params.get('FINDEX_NAME', 'findex')
-    findexdb['TABLE'] = params.get('FINDEX_DBTABLE', 'NULL')
+    findexdb['TABLE'] = params.get('FINDEX_DBTABLE', 'findex_default')
     database_dict['FINDEX'] = findexdb
     # add log database
     logdb = dict()
     logdb['NAME'] = params.get('LOG_NAME', 'log')
-    logdb['TABLE'] = params.get('LOG_DBTABLE', 'NULL')
+    logdb['TABLE'] = params.get('LOG_DBTABLE', 'log_default')
     database_dict['LOG'] = logdb
     # add object database
     astromdb = dict()
     astromdb['NAME'] = params.get('ASTROM_NAME', 'astrom')
-    astromdb['TABLE'] = params.get('ASTROM_DBTABLE', 'NULL')
+    astromdb['TABLE'] = params.get('ASTROM_DBTABLE', 'astrom_default')
     database_dict['ASTROM'] = astromdb
     # add reject database
     rejectdb = dict()
     rejectdb['NAME'] = params.get('REJECT_NAME', 'reject')
-    rejectdb['TABLE'] = params.get('REJECT_PROFILE', 'NULL')
+    rejectdb['TABLE'] = params.get('REJECT_DBTABLE', 'reject_default')
     database_dict['REJECT'] = rejectdb
     # print writing
     msg = '\tWriting database.yaml: {0}'.format(database_path)

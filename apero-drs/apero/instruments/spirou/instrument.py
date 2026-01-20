@@ -1246,8 +1246,8 @@ def construct_dprtype(params: ParamDict, pconst: Spirou,
     :return: type, 1. the dprtype, 2. the outtype, 3. the drsfile instance
     """
     # get the drs files and raw_prefix
-    drsfiles = pconst.FILEMOD.raw_file.fileset
-    raw_prefix = pconst.FILEMOD.raw_prefix
+    drsfiles = pconst.FILEMOD().raw_file.fileset
+    raw_prefix = pconst.FILEMOD().raw_prefix
     # set up inname
     dprtype, outtype = 'Unknown', 'Unknown'
     drsfile = None

@@ -874,7 +874,7 @@ def reset_files(params: ParamDict, recipe: DrsRecipe):
             WLOG(params, '', textentry('40-502-00013', args=['Plot']))
 
 
-def update_index_db(params: ParamDict, shortname):
+def update_index_db(params: ParamDict, shortname: str):
     """
     Update the index database
 
@@ -911,6 +911,8 @@ def update_index_db(params: ParamDict, shortname):
     # -------------------------------------------------------------------------
     # get number of cores
     cores = drs_utils.get_cores(params)
+    # get multiprocessing mode
+    mp_mode = params['TOOLS.REPROCESS.MP_FINDEX'].lower()
     # this is really important as we have disabled updating for parallel
     #  runs to make it more efficient
     for block_kind in block_kinds:
@@ -918,13 +920,13 @@ def update_index_db(params: ParamDict, shortname):
         if block_kind not in ureindexlist:
             continue
         # use pathos to multiprocess
-        if params['REPROCESS_MP_FINDEX'].lower() == 'pathos' and cores > 1:
+        if mp_mode == 'pathos' and cores > 1:
             _multi_process_findex_pathos(params, block_kind, shortname,
                                          raw_obs_dirs, cores)
-        elif params['REPROCESS_MP_FINDEX'].lower() == 'pool' and cores > 1:
+        elif mp_mode == 'pool' and cores > 1:
             _multi_process_findex_pool(params, block_kind, shortname,
                                        raw_obs_dirs, cores)
-        elif params['REPROCESS_MP_FINDEX'].lower() == 'process' and cores > 1:
+        elif mp_mode == 'process' and cores > 1:
             _multi_process_findex_process(params, block_kind, shortname,
                                           raw_obs_dirs, cores)
         else:
@@ -947,7 +949,7 @@ def get_raw_obs_dirs(params, includelist: List[str] = None,
     :return: list of strings, the raw observation directories to use
     """
     # get raw data path
-    raw_path = params['DRS_DATA_RAW']
+    raw_path = params['PATH.RAW']
     # list all directories in raw data path (may be sub-directories)
     base_dirs = []
     for root, dirs, files in os.walk(raw_path, followlinks=True):
@@ -1004,9 +1006,9 @@ def get_raw_obs_dirs(params, includelist: List[str] = None,
 
 def update_header_fix(params, shortname):
     # get include list
-    includelist = params.listp('INCLUDE_OBS_DIRS', dtype=str)
+    includelist = params['INCLUDE_OBS_DIRS']
     # get exclude list
-    excludelist = params.listp('EXCLUDE_OBS_DIRS', dtype=str)
+    excludelist = params['EXCLUDE_OBS_DIRS']
     # -------------------------------------------------------------------------
     # Get a list of all raw directories and account for include list and
     # exclude list
@@ -1015,12 +1017,15 @@ def update_header_fix(params, shortname):
     # get number of cores
     cores = drs_utils.get_cores(params)
     # -------------------------------------------------------------------------
+    # get the multiprocessing mode
+    mp_mode = params['TOOLS.REPROCESS.MP_FINDEX'].lower()
+    # -------------------------------------------------------------------------
     # use pathos to multiprocess
-    if params['REPROCESS_MP_FINDEX'].lower() == 'pathos' and cores > 1:
+    if mp_mode == 'pathos' and cores > 1:
         _multi_process_headerfix_pathos(params, shortname, raw_obs_dirs, cores)
-    elif params['REPROCESS_MP_FINDEX'].lower() == 'pool' and cores > 1:
+    elif mp_mode == 'pool' and cores > 1:
         _multi_process_headerfix_pool(params, shortname, raw_obs_dirs, cores)
-    elif params['REPROCESS_MP_FINDEX'].lower() == 'process' and cores > 1:
+    elif mp_mode == 'process' and cores > 1:
         _multi_process_headerfix_process(params, shortname, raw_obs_dirs, cores)
     else:
         _linear_headerfix(params, shortname, raw_obs_dirs)

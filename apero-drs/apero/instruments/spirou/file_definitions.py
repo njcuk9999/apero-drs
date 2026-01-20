@@ -2347,7 +2347,7 @@ static_file.addset(static_hc_cat)
 # ------------------------------------------------------------------------------
 static_wave_ref = drs_finput('STATIC_WAVE_REF', filetype='.fits',
                              fibers=valid_efibers,
-                             prefix='static_wave_ref',
+                             prefix='static_spirou_wave_ref',
                              outclass=static_ofile,
                              description='Static wavelength solution file')
 ext1 = AperoImageModel('WAVE', shape=[49, 4088])
