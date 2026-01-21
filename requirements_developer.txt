@@ -23,7 +23,7 @@ scikit-image==0.19.3
 scipy==1.10.1
 tqdm==4.65.0
 yagmail==0.15.293
-lbl @ git+https://github.com/njcuk9999/lbl.git@apero_v7
+# lbl @ git+https://github.com/njcuk9999/lbl.git@apero_v7
 
 # pip: if using mysql
 mysql-connector-python==8.3.0
