@@ -100,6 +100,28 @@ def __main__(recipe: None, params: ParamDict) -> Dict[str, Any]:
     props['path'] = None
     props['chdir'] = False
     # ----------------------------------------------------------------------
+    # --mysql option
+    # ----------------------------------------------------------------------
+    if 'mysql' in params['INPUTS']:
+        if params['INPUTS']['mysql']:
+            # load database.yaml
+            dparams = base.DPARAMS
+
+            if dparams['USE_MYSQL']:
+                host = dparams['MYSQL']['HOST']
+                user = dparams['MYSQL']['USER']
+                passwd = dparams['MYSQL']['PASSWD']
+            else:
+                host = dparams['SQLITE3']['HOST']
+                user = dparams['SQLITE3']['USER']
+                passwd = dparams['SQLITE3']['PASSWD']
+
+            cmd = '>> mysql -h {0} -u {1} -p'
+            cmd += 'Pass = {2}'
+            print('MYSQL:\n\t' + cmd.format(host, user, passwd))
+            return locals()
+
+    # ----------------------------------------------------------------------
     # --setup option
     # ----------------------------------------------------------------------
     if 'setup' in params['INPUTS']:
