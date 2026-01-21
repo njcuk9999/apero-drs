@@ -405,6 +405,8 @@ go_recipe.set_kwarg(name='--all', dtype='switch',
                     helpstr='Display all relevant paths')
 go_recipe.set_kwarg(name='--setup', dtype='switch',
                     helpstr='Display DRS_UCONFIG path')
+go_recipe.set_kwarg(name='--mysql', dtype='switch', default=False,
+                    helpstr='Display MySQL parameters')
 # loop around block kinds and add arguments
 for block in path_definitions.BLOCKS:
     go_recipe.set_kwarg(name=f'--{block.argname}', dtype='switch',

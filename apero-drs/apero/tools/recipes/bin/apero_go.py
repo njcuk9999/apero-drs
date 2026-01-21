@@ -103,6 +103,21 @@ def __main__(recipe: None, params: ParamDict) -> Dict[str, Any]:
     props['path'] = None
     props['chdir'] = False
     # ----------------------------------------------------------------------
+    # --mysql option
+    # ----------------------------------------------------------------------
+    if 'mysql' in params['INPUTS']:
+        if params['INPUTS']['mysql']:
+            # load database.yaml
+            dparams = base.DPARAMS
+            host = dparams['HOST']
+            user = dparams['USER']
+            passwd = dparams['PASSWD']
+            cmd = '>> mysql -h {0} -u {1} -p'
+            cmd += 'Pass = {2}'
+            print('MYSQL:\n\t' + cmd.format(host, user, passwd))
+            return locals()
+
+    # ----------------------------------------------------------------------
     # --setup option
     # ----------------------------------------------------------------------
     if 'setup' in params['INPUTS']:

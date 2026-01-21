@@ -2499,7 +2499,9 @@ CDict.set('REJECT_SQL', value='FILENAME LIKE "{identifier}%.fits"',
           source=__NAME__, group=cgroup)
 
 # Define the extra SQL science object select criteria
-CDict.set('OBJ_SCI_SQL', value=' AND KW_OBSTYPE LIKE "OBJECT%"',
+CDict.set('OBJ_SCI_SQL',
+          value=(' AND (KW_OBSTYPE LIKE "OBJECT%" '
+                 'OR KW_OBSTYPE LIKE "TELLURIC%") '),
           source=__NAME__, group=cgroup)
 
 # =============================================================================
