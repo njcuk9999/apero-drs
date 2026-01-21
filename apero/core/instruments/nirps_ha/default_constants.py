@@ -3053,7 +3053,8 @@ REPROCESS_REJECT_SQL.value = 'FILENAME LIKE "{identifier}%.fits"'
 
 # Define the extra SQL science object select critera
 REPROCESS_OBJ_SCI_SQL = REPROCESS_OBJ_SCI_SQL.copy(__NAME__)
-REPROCESS_OBJ_SCI_SQL.value = ' AND KW_OBSTYPE LIKE "OBJECT%"'
+REPROCESS_OBJ_SCI_SQL.value = (' AND (KW_OBSTYPE LIKE "OBJECT%" '
+                               'OR KW_OBSTYPE LIKE "TELLURIC%") ')
 
 # Define whether we try to create a latex summary pdf
 #   (turn this off if you have any problems with latex/pdflatex)
