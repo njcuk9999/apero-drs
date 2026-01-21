@@ -7512,6 +7512,8 @@ class DrsOutFile(DrsInputFile):
         # finally add the number of extensions to the primary header
         nextend_comment = 'Number of standard extensions'
         header['NEXTEND'] = (len(self.extensions) - 1, nextend_comment)
+        # Update the KW_OUTPUT key to the DrsOutFile name
+        header[params['KW_OUTPUT'][0]] = str(self.name)
         # add header back to extensions
         self.extensions[0].header = header
 
