@@ -706,4 +706,6 @@ visulise.set_kwarg(name='--infopath', dtype=str, default='None',
                            '--path. If --infopath is not plots will save to '
                            '--path/{path to file} '
                            '(i.e. where the files are found).')
+visulise.set_kwarg(name='--test', dtype='switch', default=False,
+                   helpstr='Whether to run in test mode (not plots produced)')
 visulise.description_file = None

@@ -103,6 +103,11 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
 
     # deal with options
     if mode == 'e2ds':
+        # deal with test mode
+        if params['INPUTS'].get('TEST', False):
+            msg = 'Test mode activated: not running bokeh server'
+            WLOG(params, 'info', msg)
+            return locals()
         # create path for tmp py file
         path = visu_core.get_bokeh_plot_dir(params, 'e2ds_plot.py')
         # get bokeh plotter instance
@@ -111,6 +116,8 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
         bplt.create()
         # run bokeh server
         bplt.run()
+        # stop after this
+        return locals()
 
     # ----------------------------------------------------------------------
     # End of main code

@@ -299,7 +299,13 @@ def generate_info_plot(params: ParamDict, identity: str, filename: str):
                 NO_FUNC_IDENTITIES.append(identity)
             return
         # otherwise call the plot function
-        plot_func(params, filename, identity)
+        if params['INPUTS'].get('TEST', False):
+            WLOG(params, 'info',
+                 f'Test mode: would have generated plot for {filename} '
+                 f'using {str(plot_func)}')
+            return
+        else:
+            plot_func(params, filename, identity)
     # else
     else:
 
