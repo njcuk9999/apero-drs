@@ -6140,7 +6140,7 @@ class DrsOutFileExtension:
                  block_kind: Union[str, None] = None,
                  hkeys: Union[dict, None] = None,
                  link: Union[list, str, None] = None,
-                 hlink: Union[str, None] = None,
+                 hlink: Union[str, Dict[str, str], None] = None,
                  header_only: bool = False,
                  data_only: bool = False,
                  remove_drs_hkeys: bool = False,
@@ -6149,7 +6149,8 @@ class DrsOutFileExtension:
                  tag: Union[str, None] = None,
                  extname: Union[str, None] = None,
                  hdr_extname: Union[str, None] = None,
-                 datatype: Union[str, None] = None):
+                 datatype: Union[str, None] = None,
+                 override: bool = False):
         """
         Properties for an extension of a POST PROCESS file
 
@@ -6212,6 +6213,8 @@ class DrsOutFileExtension:
         self.table_kind = []
         self.table_clears = []
         self.table_clear_files = []
+        # key to override primary extension
+        self.override = override
 
     def summary(self, extkey: int
                 ) -> Tuple[List[str], List[str], List[str], List[str]]:
@@ -6389,6 +6392,8 @@ class DrsOutFileExtension:
         new.table_required = deepcopy(self.table_required)
         new.table_kind = deepcopy(self.table_kind)
         new.table_clears = deepcopy(self.table_clears)
+        # copy override
+        new.override = bool(self.override)
         # return new copy
         return new
 
@@ -6680,7 +6685,8 @@ class DrsOutFile(DrsInputFile):
                  inpath: Union[str, None] = None,
                  filename: str = None,
                  params: ParamDict = None,
-                 header: Union[drs_fits.Header, None] = None):
+                 header: Union[drs_fits.Header, None] = None,
+                 basename: str = None):
         """
         Drs class for post-processed output files
 
@@ -6707,9 +6713,9 @@ class DrsOutFile(DrsInputFile):
         DrsInputFile.__init__(self, name, filetype, suffix, outclass=outclass,
                               inext=inext, instrument=instrument, inpath=inpath,
                               required=required, filename=filename,
-                              params=params)
+                              params=params, basename=basename)
         # store extensions
-        self.extensions = dict()
+        self.extensions: Dict[int, DrsOutFileExtension] = dict()
         self.header_add = dict()
         # specific data
         self.out_filename = None
@@ -6845,7 +6851,7 @@ class DrsOutFile(DrsInputFile):
                 block_kind: Union[str, None] = None,
                 hkeys: Union[dict, None] = None,
                 link: Union[list, str, None] = None,
-                hlink: Union[str, None] = None,
+                hlink: Union[str, Dict[str, str], None] = None,
                 header_only: bool = False, data_only: bool = False,
                 remove_drs_hkeys: bool = False,
                 remove_std_hkeys: bool = True,
@@ -6853,7 +6859,8 @@ class DrsOutFile(DrsInputFile):
                 tag: Union[str, None] = None,
                 extname: Union[str, None] = None,
                 hdr_extname: Union[str, None] = None,
-                datatype: Union[str, None] = None):
+                datatype: Union[str, None] = None,
+                override: bool = False):
         """
         Add a fits extension
 
@@ -6907,7 +6914,7 @@ class DrsOutFile(DrsInputFile):
                                                    remove_std_hkeys,
                                                    clear_file, tag,
                                                    extname, hdr_extname,
-                                                   datatype)
+                                                   datatype, override)
 
     def add_column(self, extname: str, drsfile: DrsFitsFile,
                    incol: str, outcol: str, fiber: Union[str, None],
@@ -7030,6 +7037,8 @@ class DrsOutFile(DrsInputFile):
         new.params = deepcopy(self.params)
         # copy header
         new.header = deepcopy(self.header)
+        # copy filename
+        new.basename = deepcopy(self.basename)
         # return new copy
         return new
 
@@ -7223,7 +7232,14 @@ class DrsOutFile(DrsInputFile):
             hlink = ext.hlink
             # -----------------------------------------------------------------
             # check for calibration / telluric entry
-            if hlink.startswith('CALIB::'):
+            if isinstance(hlink, dict):
+                mode = 'file'
+                _conds = []
+                for _key in hlink:
+                    _conds.append(f'{_key} = "{hlink[_key]}"')
+                # dbkey become a condition of all hlink entries
+                dbkey = ' AND '.join(_conds)
+            elif hlink.startswith('CALIB::'):
                 mode, dbkey = 'calibration', hlink.split('CALIB::')[-1]
             elif hlink.startswith('TELLU::'):
                 mode, dbkey = 'telluric', hlink.split('TELLU::')[-1]
@@ -7275,6 +7291,45 @@ class DrsOutFile(DrsInputFile):
                 exttable['BLOCK_KIND'] = [None]
                 exttable['OBS_DIR'] = [None]
                 exttable['FILENAME'] = [tfilename]
+            # -----------------------------------------------------------------
+            # if in file mode we query the condition directory from hlink
+            # -----------------------------------------------------------------
+            elif mode == 'file':
+                # deal with obs dir not set
+                if 'OBS_DIR' not in params:
+                    # log message and return: OBS_DIR not set in params for
+                    #     extension {0} ({1}) \n\t link name={2}
+                    #     \n\t link file={3}\n\tFunction = {4}
+                    eargs = [pos, name, ext.link, linkext.filename, func_name]
+                    reason = ('Observation directory not set for extension '
+                              '{1} ({2} \n\t Link {3} ({4}) '
+                              '\n\t Link file: {5} \n\t Function: {6}')
+                    reason = Text(reason.format(*eargs))
+                    return False, reason
+                # constuct condition (starting with obs dir)
+                condition = 'OBS_DIR = "{0}"'.format(params['OBS_DIR'])
+                # add kind condition
+                condition += ' AND BLOCK_KIND="{0}"'.format(ext.block_kind)
+                # add condition from dbkind
+                condition += 'AND ' + dbkey
+                # add fiber condition (if present)
+                if ext.fiber is not None:
+                    condition += ' AND KW_FIBER="{0}"'.format(ext.fiber)
+                # get entries
+                exttable = ptable.get_index_entries('*', condition=condition)
+                # deal with no entries and not required
+                if len(exttable) == 0 and not required:
+                    # print warning: File not found for ext {0} ({1})'
+                    margs = [pos, name]
+                    reason = textentry('10-090-00003', args=margs)
+                    return False, reason
+                # deal with no entries and required
+                if len(exttable) == 0:
+                    # log and return: No entries for extension {0} ({1})
+                    #    \n\t condition = {2}
+                    eargs = [pos, name, condition, func_name]
+                    reason = textentry('00-090-00005', args=eargs)
+                    return False, reason
 
             # -----------------------------------------------------------------
             # if in science mode we query the index database (or ptable from
@@ -7408,6 +7463,13 @@ class DrsOutFile(DrsInputFile):
             # -----------------------------------------------------------------
             # finally update the loaded files
             has_hdr, valid_names = self.has_header()
+            # -----------------------------------------------------------------
+            # deal with an override of the primary
+            if ext.override:
+                self.extensions[0] = ext.copy()
+                self.extensions[0].filename = str(ext.filename)
+                self.extensions[0].header = ext.header.copy()
+
         # ---------------------------------------------------------------------
         # return that we linked successfully
         return True, None
@@ -7756,8 +7818,11 @@ class DrsOutFile(DrsInputFile):
         # add extensions
         description += ', '.join(names)
         # add to header
-        for line in textwrap.wrap(description, 71):
-            header.insert(hdrkey, ('COMMENT', line))
+        for line in textwrap.wrap(description, 70):
+            if hdrkey in header:
+                header.insert(hdrkey, ('COMMENT', line))
+            else:
+                header.append(('COMMENT', line))
         # finally add the number of extensions to the primary header
         nextend_comment = 'Number of standard extensions'
         header['NEXTEND'] = (len(self.extensions) - 1, nextend_comment)

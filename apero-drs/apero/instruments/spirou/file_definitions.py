@@ -1776,6 +1776,106 @@ wave_files = DrsFileGroup(name='WAVE_FILES',
                                  out_wave_default_ref])
 
 # -----------------------------------------------------------------------------
+# post processed calibration file
+# -----------------------------------------------------------------------------
+post_x_file = drs_oinput('DRS_POST_X', filetype='.fits', suffix='x.fits',
+                         outclass=post_ofile, inext='o', required=True,
+                         basename='pcalib_{obs_dir}',
+                         description='Post process calibration collection')
+
+# add extensions
+post_x_file.add_ext('PP', pp_file, pos=0, header_only=True, block_kind='tmp',
+                    hkeys=dict(KW_DPRTYPE=['OBJ_FP', 'OBJ_DARK', 'POLAR_FP',
+                                           'POLAR_DARK']),
+                    remove_drs_hkeys=True)
+post_x_file.add_ext('FP_FP_AB', out_ext_e2dsff, pos=1, fiber='AB',
+                    block_kind='red', link='PP',
+                    hlink=dict(KW_DPRTYPE='FP_FP', KW_OUTPUT='EXT_E2DS_FF'),
+                    clear_file=True, tag='FP_FP_AB',
+                    override=True)
+post_x_file.add_ext('FP_FP_A', out_ext_e2dsff, pos=2, fiber='A',
+                    block_kind='red', link='FP_FP_AB',
+                    hlink=dict(KW_DPRTYPE='FP_FP', KW_OUTPUT='EXT_E2DS_FF'),
+                    clear_file=True, tag='FP_FP_A')
+post_x_file.add_ext('FP_FP_B', out_ext_e2dsff, pos=3, fiber='B',
+                    block_kind='red', link='FP_FP_AB',
+                    hlink=dict(KW_DPRTYPE='FP_FP', KW_OUTPUT='EXT_E2DS_FF'),
+                    clear_file=True, tag='FP_FP_B')
+post_x_file.add_ext('FP_FP_C', out_ext_e2dsff, pos=4, fiber='C',
+                    block_kind='red', link='FP_FP_AB',
+                    hlink=dict(KW_DPRTYPE='FP_FP', KW_OUTPUT='EXT_E2DS_FF'),
+                    clear_file=True, tag='FP_FP_C')
+
+post_x_file.add_ext('HC_HC_AB', out_ext_e2dsff, pos=5, fiber='AB',
+                    block_kind='red', link='FP_FP_AB',
+                    hlink=dict(KW_DPRTYPE='HCONE_HCONE',
+                               KW_OUTPUT='EXT_E2DS_FF'),
+                    clear_file=True, tag='HC_HC_AB')
+post_x_file.add_ext('HC_HC_A', out_ext_e2dsff, pos=6, fiber='A',
+                    block_kind='red', link='FP_FP_AB',
+                    hlink=dict(KW_DPRTYPE='HCONE_HCONE',
+                               KW_OUTPUT='EXT_E2DS_FF'),
+                    clear_file=True, tag='HC_HC_A')
+post_x_file.add_ext('HC_HC_B', out_ext_e2dsff, pos=7, fiber='B',
+                    block_kind='red', link='FP_FP_AB',
+                    hlink=dict(KW_DPRTYPE='HCONE_HCONE',
+                               KW_OUTPUT='EXT_E2DS_FF'),
+                    clear_file=True, tag='HC_HC_B')
+post_x_file.add_ext('HC_HC_C', out_ext_e2dsff, pos=8, fiber='C',
+                    block_kind='red', link='FP_FP_AB',
+                    hlink=dict(KW_DPRTYPE='HCONE_HCONE',
+                               KW_OUTPUT='EXT_E2DS_FF'),
+                    clear_file=True, tag='HC_HC_C')
+
+post_x_file.add_ext('FLAT_AB', out_ext_e2dsff, pos=9, fiber='AB',
+                    block_kind='red', link='FP_FP_AB',
+                    hlink=dict(KW_DPRTYPE='FLAT_FLAT',
+                               KW_OUTPUT='FF_FLAT'),
+                    clear_file=True, tag='FLAT_AB')
+post_x_file.add_ext('FLAT_A', out_ext_e2dsff, pos=10, fiber='A',
+                    block_kind='red', link='FP_FP_AB',
+                    hlink=dict(KW_DPRTYPE='FLAT_FLAT',
+                               KW_OUTPUT='FF_FLAT'),
+                    clear_file=True, tag='FLAT_A')
+post_x_file.add_ext('FLAT_B', out_ext_e2dsff, pos=11, fiber='B',
+                    block_kind='red', link='FP_FP_AB',
+                    hlink=dict(KW_DPRTYPE='FLAT_FLAT',
+                               KW_OUTPUT='FF_FLAT'),
+                    clear_file=True, tag='HC_HC_B')
+post_x_file.add_ext('FLAT_C', out_ext_e2dsff, pos=12, fiber='C',
+                    block_kind='red', link='FP_FP_AB',
+                    hlink=dict(KW_DPRTYPE='FLAT_FLAT',
+                               KW_OUTPUT='FF_FLAT'),
+                    clear_file=True, tag='HC_HC_C')
+
+post_x_file.add_ext('WAVE_AB', wave_files, pos=13, fiber='AB', block_kind='red',
+                    link='FP_FP_AB', hlink='CALIB::WAVE', tag='WaveAB')
+post_x_file.add_ext('WAVE_A', wave_files, pos=14, fiber='A', block_kind='red',
+                    link='FP_FP_A', hlink='CALIB::WAVE', tag='WaveA')
+post_x_file.add_ext('WAVE_B', wave_files, pos=15, fiber='B', block_kind='red',
+                    link='FP_FP_B', hlink='CALIB::WAVE', tag='WaveB')
+post_x_file.add_ext('WAVE_C', wave_files, pos=16, fiber='C', block_kind='red',
+                    link='FP_FP_C', hlink='CALIB::WAVE', tag='WaveC')
+post_x_file.add_ext('BLAZE_AB', out_ff_blaze, pos=17, fiber='AB',
+                    block_kind='red', link='FP_FP_AB', hlink='CALIB::BLAZE',
+                    tag='BlazeAB')
+
+post_x_file.add_ext('BLAZE_A', out_ff_blaze, pos=18, fiber='A',
+                    block_kind='red', link='FP_FP_A', hlink='CALIB::BLAZE',
+                    tag='BlazeA')
+
+post_x_file.add_ext('BLAZE_B', out_ff_blaze, pos=19, fiber='B',
+                    block_kind='red', link='FP_FP_B', hlink='CALIB::BLAZE',
+                    tag='BlazeB')
+
+post_x_file.add_ext('BLAZE_C', out_ff_blaze, pos=20, fiber='C',
+                    block_kind='red', link='FP_FP_C', hlink='CALIB::BLAZE',
+                    tag='BlazeC')
+# add to post processed file set
+post_file.addset(post_x_file)
+
+
+# -----------------------------------------------------------------------------
 # post processed 2D extraction file
 # -----------------------------------------------------------------------------
 post_e_file = drs_oinput('DRS_POST_E', filetype='.fits', suffix='e.fits',

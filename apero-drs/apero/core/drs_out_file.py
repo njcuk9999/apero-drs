@@ -805,7 +805,10 @@ class PostOutFile(OutFile):
         # _ = display_func('post_file', __NAME__)
         # ---------------------------------------------------------------------
         # set filename to identifer and remove extension
-        filename = str(identifier).replace('.fits', '')
+        if drsfile.basename is not None:
+            filename = str(drsfile.basename).format(obs_dir=obs_dir)
+        else:
+            filename = str(identifier).replace(drsfile.filetype, '')
         # ---------------------------------------------------------------------
         # remove input suffix (extension) from identifier
         if drsfile.inext is not None:

@@ -140,7 +140,10 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
         # generate out file name
         outfile, outdir = outclass.construct(params, postfile, identifier,
                                              obs_dir)
-        # skip existing files
+        # skip existing files if postfile filename is set (and file found)
+        if postfile.basename is not None and os.path.exists(outfile):
+            continue
+        # skip existing files if skip is set (and file found)
         if skip and os.path.exists(outfile):
             continue
         # -----------------------------------------------------------------
@@ -159,7 +162,8 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
         filepostfile.out_dirname = outdir
         filepostfile.obs_dir = obs_dir
         # add extension 0 file properties
-        filepostfile.extensions[0].set_infile(params, filename=infile.filename)
+        filepostfile.extensions[0].set_infile(params,
+                                              filename=infile.filename)
         # load the extension 0 file
         filepostfile.extensions[0].load_infile(params)
         # check if we should skip due to exclude header keys
