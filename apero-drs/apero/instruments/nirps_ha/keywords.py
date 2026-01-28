@@ -961,10 +961,12 @@ KDict.set('KW_CAV_PEDESTAL', key='WCAV_PED', comment='Wave cavity pedestal',
           parent=None, group='wave')
 
 # define the mean hc velocity calculated
-KDict.set('KW_WAVE_MEANHC', key='WAVEMHC', comment='Wave mean hc velocity')
+KDict.set('KW_WAVE_MEANHC', key='WAV_VHC{0:01d}',
+          comment='Wave hc velocity intercept[0] slope[1]')
 
 # define the err on mean hc velocity calculated
-KDict.set('KW_WAVE_EMEANHC', key='WAVEEMHC', comment='Wave error mean hc velocity')
+KDict.set('KW_WAVE_EMEANHC', key='WAV_EVH{0:01d}',
+          comment='Wave hc error intercept[0] slope[1]')
 
 # -----------------------------------------------------------------------------
 # the fit degree for wave solution used

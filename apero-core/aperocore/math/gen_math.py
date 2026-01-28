@@ -1175,7 +1175,7 @@ def get_circular_mask(width: int):
 def polyfit_odd_ratio(xvector: np.ndarray, yvector: np.ndarray,
                       yerr: np.array,
                       degree: int, odd_ratio=1e-3, force_sigma=False,
-                      max_iteration=50):
+                      max_iteration=50) -> Tuple[np.ndarray, np.ndarray]:
     """
     A robust polyfit function that iteratively fits a polynomial to the
     data until the dispersion of values is accounted for by a weight vector.
@@ -1202,7 +1202,8 @@ def polyfit_odd_ratio(xvector: np.ndarray, yvector: np.ndarray,
     weight_prev = np.zeros_like(xvector)
     weight = np.ones_like(xvector)
     # Initialize the fit
-    fit = np.polyfit(xvector, yvector, degree)
+    fit, cov = np.polyfit(xvector, yvector, degree, cov=True)
+    fit_err = np.sqrt(np.diag(cov))
     # Set the maximum number of iterations and initialize the iteration counter
     ite = 0
     # loop until the maximum difference between the current and previous weights
@@ -1213,7 +1214,9 @@ def polyfit_odd_ratio(xvector: np.ndarray, yvector: np.ndarray,
         # Calculate the polynomial fit using the x- and y-values, and the
         # given degree, weighting the fit by the weights. Weights are computed
         # from the dispersion to the fit and the sigma
-        fit = np.polyfit(xvector, yvector, degree,  w=weight/yerr)
+        fit, cov = np.polyfit(xvector, yvector, degree,  w=weight/yerr,
+                              cov=True)
+        fit_err = np.sqrt(np.diag(cov))
         # Calculate the residuals of the polynomial fit by subtracting the
         guess = np.polyval(fit, xvector)
         diff = yvector - guess
@@ -1233,7 +1236,7 @@ def polyfit_odd_ratio(xvector: np.ndarray, yvector: np.ndarray,
         ite += 1
 
     # return the fit
-    return fit
+    return fit, fit_err
 
 
 # =============================================================================

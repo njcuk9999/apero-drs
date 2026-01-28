@@ -10242,7 +10242,7 @@ langlist.add(item)
 # 40-017-00057 
 # =============================================================================
 item = langlist.create('40-017-00057', kind='all-code')
-item.value['ENG'] = 'Iteration {0}: Mean HC position {1:6.2f}+-{2:.2f} m/s'
+item.value['ENG'] = 'Iteration {0}: HC position, Intercept {1:.3f}+-{2:.3f} m/s, Slope {3:.3f}+-{4:.3f} m/s/um'
 item.arguments = 'None'
 item.comment = 'print the current iteration for getting mean hc position'
 langlist.add(item)

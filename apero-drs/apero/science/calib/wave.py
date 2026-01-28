@@ -422,8 +422,8 @@ def get_wavesolution(params: ParamDict, recipe: DrsRecipe,
     wprops['CAVITY'] = cav_coeffs
     wprops['CAVITY_DEG'] = cavdeg
     wprops['CAVITY_PEDESTAL'] = cav_pedestal
-    wprops['MEAN_HC_VEL'] = wavefile.get_hkey('KW_WAVE_MEANHC', required=False)
-    wprops['ERR_HC_VEL'] = wavefile.get_hkey('KW_WAVE_EMEANHC', required=False)
+    wprops['SLOPE_HC_VEL'] = wavefile.get_hkey_1d('KW_WAVE_MEANHC', dim1=2)
+    wprops['ERR_HC_VEL'] = wavefile.get_hkey_1d('KW_WAVE_EMEANHC', dim1=2)
     # add the wfp keys
     wfp_keys = ['WFP_FILE', 'WFP_DRIFT', 'WFP_FWHM', 'WFP_CONTRAST', 'WFP_MASK',
                 'WFP_LINES', 'WFP_TARG_RV', 'WFP_WIDTH', 'WFP_STEP']
@@ -439,7 +439,7 @@ def get_wavesolution(params: ParamDict, recipe: DrsRecipe,
     keys = ['WAVEMAP', 'WAVEFILE', 'WAVEINIT', 'WAVESOURCE', 'WAVEPATH',
             'NBO', 'DEG', 'WAVE_POLY_TYPE',
             'WAVETIME', 'WAVEINST', 'NBPIX',
-            'CAVITY', 'CAVITY_DEG', 'CAVITY_PEDESTAL', 'MEAN_HC_VEL',
+            'CAVITY', 'CAVITY_DEG', 'CAVITY_PEDESTAL', 'SLOPE_HC_VEL',
             'ERR_HC_VEL'] + wfp_keys
     wprops.set_sources(keys, func_name)
     # -------------------------------------------------------------------------
@@ -1127,7 +1127,7 @@ def hc_wave_sol_offset(params: ParamDict, inwavemap: np.ndarray,
 def calc_wave_sol(params: ParamDict, recipe: DrsRecipe,
                   hclines: Table, fplines: Table, nbo: int,
                   nbxpix: int, fit_cavity: bool = True,
-                  fit_achromatic: bool = True,
+                  fit_full_cavity_pol: bool = True,
                   cavity_update: Union[np.ndarray, None] = None,
                   wavesol_fit_degree: Union[int, None] = None,
                   cavity_fit_degree: Union[int, None] = None,
@@ -1169,7 +1169,7 @@ def calc_wave_sol(params: ParamDict, recipe: DrsRecipe,
     :param nbo: int, the number of orders (from the e2ds image)
     :param nbxpix: int, the number of pixels in the along-order direction
     :param fit_cavity: bool, if True fits cavity width
-    :param fit_achromatic: bool, if True fits achromatic part of cavity
+    :param fit_full_cavity_pol: bool, if True fits achromatic part of cavity
     :param cavity_update: np.array or None - if sets the cavity file
     :param wavesol_fit_degree: int, the polynomial degree fit order for the
                                wave solution fit
@@ -1548,7 +1548,7 @@ def calc_wave_sol(params: ParamDict, recipe: DrsRecipe,
     #  3. We want to fit only the achromatic but don't provide a cavity.
     #     This is bad, we cannot change the achromatic term only if we don't
     #     have the chromatic terms. This produces and error
-    if not fit_achromatic and fit_cavity:
+    if fit_full_cavity_pol and fit_cavity:
         #  Scenario 1. This is a reference night AB, we do not want an achromatic
         #              fit and all  coefficients should be fitted
         # now we have valid numbering and best-guess WAVE_MEAS, we find the
@@ -1583,9 +1583,9 @@ def calc_wave_sol(params: ParamDict, recipe: DrsRecipe,
     # copy the cavity fit
     cavity0 = np.array(cavity)
     # store these values for use later
-    mean_hc_vel, err_hc_vel = np.nan, np.nan
-    # set the mean2error to infinite
-    mean2error = np.inf
+    slope_hc_vel, err_hc_vel = np.nan, np.nan
+    # set the number of sigma away from slope+intercept to infinite
+    slope_nsig = np.inf
     # set up diff_hc and hc sigma
     diff_hc = np.zeros_like(hcl_wave_meas)
     hcsigma = np.zeros_like(hcl_wave_meas)
@@ -1593,7 +1593,7 @@ def calc_wave_sol(params: ParamDict, recipe: DrsRecipe,
     # we change the achromatic cavity length term to force HC peaks to have a
     #    zero velocity error.
     count = 0
-    while mean2error > cavity_change_err_thres and count < 20:
+    while slope_nsig > cavity_change_err_thres and count < 20:
         # get the proper cavity length from the cavity polynomial
         for _ in range(cavity_fit_iterations2):
             # update wave ref based on the fit
@@ -1641,50 +1641,75 @@ def calc_wave_sol(params: ParamDict, recipe: DrsRecipe,
         # they decrease as 1/NSIG
         hcsigma = mp.estimate_sigma(diff_hc * hcl_nsig) / hcl_nsig
         # get smart mean of the velocity error
-        mean_hc_vel, err_hc_vel = mp.odd_ratio_mean(diff_hc, hcsigma,
-                                                    odd_ratio=odd_ratio)
+        hc_wave_ref_mean = np.nanmean(hcl_wave_ref)
+        hcl_wave_ref0 = hcl_wave_ref - hc_wave_ref_mean
+        slope_hc_vel, err_hc_vel = mp.polyfit_odd_ratio(hcl_wave_ref0, diff_hc,
+                                                        hcsigma, degree=1)
         # ---------------------------------------------------------------------
         # if we are allowed to change the achromatic cavity length, then
         #    we do it, else we just keep track of how much we would have
         #    changed it.
+        # ---------------------------------------------------------------------
         if not fit_cavity:
             pass
-        elif fit_achromatic:
-            # recalculate mean to error ratio
-            mean2error = np.abs(mean_hc_vel / err_hc_vel)
-            # update last coefficient of the cavity fit
-            cavity = np.array(cavity)
-            # must add the cavity pedestal back in to the first term
-            #     (before correcting by mean hc velocity)
-            tmp_cavity = cavity[0] + cavity_pedestal
-            # update the first term by mean_hc_vel
-            tmp_cavity = tmp_cavity * (1 + mean_hc_vel / speed_of_light_ms)
-            # now we can subtract the cavity pedestal off again
-            cavity[0] = tmp_cavity - cavity_pedestal
-        # else update the cavity
+        # if we are fitting the cavity we have two mode
         else:
-            # set mean2error to zero
-            mean2error = 0.0
+
             # set domain
             cdomain = [inst_wavestart, inst_waveend]
             # create a temporary value of cavity length at each wave point
             # tmp_cavity = np.polyval(cavity, fpl_wave_ref)
             tmp_cavity = mp.val_cheby(cavity, fpl_wave_ref, domain=cdomain)
             tmp_cavity = tmp_cavity + cavity_pedestal
-            # fit cavity length to find a correction
-            dv_cav = (1 + diff_hc / speed_of_light_ms)
-            cav_corr, _ = mp.robust_chebyfit(hcl_wave_meas, dv_cav,
-                                             cavity_fit_degree, nsig_cut,
-                                             domain=cdomain)
-            # update the cavity length at all points by the cavity correction
-            tmp_cavity *= mp.val_cheby(cav_corr, fpl_wave_ref, domain=cdomain)
+
+            # -----------------------------------------------------------------
+            # If we are not fitting the full cavity polynomial
+            # -----------------------------------------------------------------
+            # we measured the residual chromatic slope of HC expected vs HC
+            # measured using the current FP cavity. A residual term is derived
+            # (assuming a linear dependency with lambda). We compute the offset
+            # to the cavity that needs to be applied to minimize the HC
+            # expected/measured difference
+            if not fit_full_cavity_pol:
+                # number of sigma away in both slope and intercept
+                slope_nsig = np.sqrt(np.sum((slope_hc_vel / err_hc_vel) ** 2))
+                # get the slope as a vector
+                fit_hc_vel = np.polyval(slope_hc_vel,
+                                        fpl_wave_ref - hc_wave_ref_mean)
+                # calculate the fractional offset due to the hc slope
+                frac_offset_cav = 1 + fit_hc_vel / speed_of_light_ms
+                # update the cavity length at all points by the cavity
+                # correction
+                tmp_cavity = tmp_cavity * frac_offset_cav
+            # -----------------------------------------------------------------
+            # If we are fitting the full cavity polynomial
+            # -----------------------------------------------------------------
+            # we simply fit a polynomial to the residuals. This fit is done
+            # with a polynomial of order cavity_fit_degree. Contrary to the
+            # other case, we do not assume that higher polynomial terms
+            # (past 1st order) are constant in time.
+            else:
+                # if we are fully fitting we don't need to iterate
+                slope_nsig = 0.0
+                # fit cavity length to find a correction
+                dv_cav = (1 + diff_hc / speed_of_light_ms)
+                cav_corr, _ = mp.robust_chebyfit(hcl_wave_meas, dv_cav,
+                                                 cavity_fit_degree, nsig_cut,
+                                                 domain=cdomain)
+                # update the cavity length at all points by the cavity
+                # correction
+                tmp_cavity *= mp.val_cheby(cav_corr, fpl_wave_ref,
+                                           domain=cdomain)
+            # -----------------------------------------------------------------
+            # remove the pedestal again
             tmp_cavity = tmp_cavity - cavity_pedestal
             # fit cavity length again with this new correction
             cavity = mp.fit_cheby(fpl_wave_ref, tmp_cavity, cavity_fit_degree,
                                   domain=cdomain)
         # ---------------------------------------------------------------------
         # log message: Iteration {0}: Mean HC position {1:6.2f}+-{2:.2f} m/s'
-        margs = [count + 1, mean_hc_vel, err_hc_vel]
+        margs = [count + 1, slope_hc_vel[1], err_hc_vel[1],
+                 1000 * slope_hc_vel[0], 1000 * err_hc_vel[0]]
         WLOG(params, '', textentry('40-017-00057', margs))
         # increase the count
         count += 1
@@ -1694,8 +1719,17 @@ def calc_wave_sol(params: ParamDict, recipe: DrsRecipe,
                            domain=[inst_wavestart, inst_waveend])
     cavlen0 = mp.val_cheby(cavity0, fpl_wave_ref,
                            domain=[inst_wavestart, inst_waveend])
+    # work out the change in slope
+    cavdiff = cavlen1 - cavlen0
+    slope_change = np.polyval(fpl_wave_ref - hc_wave_ref_mean, cavdiff, 1)
+
     margs = [mp.nanmean(cavlen1) - mp.nanmean(cavlen0)]
     WLOG(params, '', textentry('40-017-00058', args=margs))
+
+    # TODO: Add to language database
+    msg = 'Change in cavity: Intercept {1:.2f} m/s, Slope {0:.2f} m/s/um'
+    margs = [slope_change[1], slope_change[0] * 1000]
+    WLOG(params, '', msg.format(*margs))
 
     # TODO: fp_peak_num_3, fp_wave_meas_3, fp_wave_ref3
     # -------------------------------------------------------------------------
@@ -1815,12 +1849,12 @@ def calc_wave_sol(params: ParamDict, recipe: DrsRecipe,
     wprops['CAVITY'] = cavity
     wprops['CAVITY_PEDESTAL'] = cavity_pedestal
     wprops['CAVITY_DEG'] = cavity_fit_degree
-    wprops['MEAN_HC_VEL'] = mean_hc_vel
+    wprops['SLOPE_HC_VEL'] = slope_hc_vel
     wprops['ERR_HC_VEL'] = err_hc_vel
     wprops['WAVE_POLY_TYPE'] = 'Chebyshev'
     # set source
     keys = ['WAVEMAP', 'NBO', 'DEG', 'NBPIX', 'CAVITY', 'CAVITY_DEG',
-            'CAVITY_PEDESTAL', 'MEAN_HC_VEL', 'ERR_HC_VEL', 'WAVE_POLY_TYPE']
+            'CAVITY_PEDESTAL', 'SLOPE_HC_VEL', 'ERR_HC_VEL', 'WAVE_POLY_TYPE']
     wprops.set_sources(keys, func_name)
     # return wave properties
     return wprops
@@ -1873,7 +1907,7 @@ def wprop_pixel_wave_shift(wprops: ParamDict, offset: float = 0.0,
 def process_fibers(params: ParamDict, recipe: DrsRecipe,
                    refprops: ParamDict, fp_outputs: Dict[str, DrsFitsFile],
                    hc_outputs: Dict[str, DrsFitsFile], fit_cavity: bool,
-                   fit_achromatic: bool) -> Dict[str, ParamDict]:
+                   fit_full_cavity_pol: bool) -> Dict[str, ParamDict]:
     """
     Process all fibers (skip for reference)
 
@@ -1946,7 +1980,7 @@ def process_fibers(params: ParamDict, recipe: DrsRecipe,
                                nbo=hc_e2ds_file.shape[0],
                                nbxpix=hc_e2ds_file.shape[1],
                                fit_cavity=fit_cavity,
-                               fit_achromatic=fit_achromatic,
+                               fit_full_cavity_pol=fit_full_cavity_pol,
                                cavity_update=cavity,
                                iteration='1 fiber {0}'.format(fiber))
         # ---------------------------------------------------------------------
@@ -3201,8 +3235,8 @@ def add_wave_keys(infile: DrsFitsFile, props: ParamDict) -> DrsFitsFile:
                        dim1name='coeffs')
     infile.add_hkey('KW_CAVITY_DEG', value=props['CAVITY_DEG'])
     infile.add_hkey('KW_CAV_PEDESTAL', value=props['CAVITY_PEDESTAL'])
-    infile.add_hkey('KW_WAVE_MEANHC', value=props['MEAN_HC_VEL'])
-    infile.add_hkey('KW_WAVE_EMEANHC', value=props['ERR_HC_VEL'])
+    infile.add_hkey_1d('KW_WAVE_MEANHC', values=props['SLOPE_HC_VEL'])
+    infile.add_hkey_1d('KW_WAVE_EMEANHC', values=props['ERR_HC_VEL'])
     infile.add_hkey('KW_WAVE_POLYT', value=props['WAVE_POLY_TYPE'])
     # return infile
     return infile

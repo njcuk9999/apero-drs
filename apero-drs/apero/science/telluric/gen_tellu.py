@@ -884,17 +884,17 @@ def tellu_preclean(params, recipe, infile, wprops, fiber, rawfiles, combine,
         running_sigma[running_sigma < min_sigma] = min_sigma
 
         # fitting the slope of residual amplitude of water
-        fit_water = mp.polyfit_odd_ratio(log_water[emask_water],
-                                         log_spec_tmp_lowpass[emask_water],
-                                         running_sigma[emask_water], 1)
+        fit_water, _ = mp.polyfit_odd_ratio(log_water[emask_water],
+                                            log_spec_tmp_lowpass[emask_water],
+                                             running_sigma[emask_water], 1)
         slope_water = fit_water[0]
         # append to storage
         slope_water_list.append(slope_water)
         expo_water_list.append(expo_water)
         # fitting the slope of the residual amplitude of others
-        fit_others = mp.polyfit_odd_ratio(log_others[emask_others],
-                                          log_spec_tmp_lowpass[emask_others],
-                                          running_sigma[emask_others], 1)
+        fit_others, _ = mp.polyfit_odd_ratio(log_others[emask_others],
+                                             log_spec_tmp_lowpass[emask_others],
+                                             running_sigma[emask_others], 1)
         slope_others = fit_others[0]
         # append to storage
         slope_others_list.append(slope_others)

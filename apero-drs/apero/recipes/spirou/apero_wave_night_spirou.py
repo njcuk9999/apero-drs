@@ -258,15 +258,15 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
         # Calculate the wave solution for reference fiber
         # reference fiber + reference wave setup
         # Random night (not reference), AB -> We only allow for changes in the
-        #     achromatic term, fit_cavity = True, fit_achromatic = True
+        #     achromatic term, fit_cavity = True, fit_full_cavity_pol = False
         fit_cavity = True
-        fit_achromatic = True
+        fit_full_cavity_pol = False
         # calculate wave solution
         wprops = wave.calc_wave_sol(params, recipe, hclines, fplines,
                                     nbo=hc_e2ds_file.shape[0],
                                     nbxpix=hc_e2ds_file.shape[1],
                                     fit_cavity=fit_cavity,
-                                    fit_achromatic=fit_achromatic,
+                                    fit_full_cavity_pol=fit_full_cavity_pol,
                                     cavity_update=wprops['CAVITY'],
                                     iteration=1)
 
@@ -311,14 +311,14 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
         # Random night, not AB -> We fit nothing and use the AB coefficient
         #    from that night (should be same as reference except for the
         #    achromatic term):
-        #    fit_achromatic = False, fig_cavity = False
+        #    fit_full_cavity_pol = False, fig_cavity = False
         fit_cavity = False
-        fit_achromatic = False
+        fit_full_cavity_pol = False
         # get solution for other fibers and save all in a list of param dicts
         #   one for each fiber
         wprops_all = wave.process_fibers(params, recipe, wprops, fp_outputs,
                                          hc_outputs, fit_cavity,
-                                         fit_achromatic)
+                                         fit_full_cavity_pol)
 
         # ==================================================================
         # FP CCF COMPUTATION - need all fibers done one-by-one

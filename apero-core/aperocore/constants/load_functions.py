@@ -658,6 +658,8 @@ def starting_point(params: ParamDict, imode_key: Union[str, List[str]],
         WLOG(params, 'warning', wmsg)
         # set demo params
         params.set('DEMO_PARAMS', demo_params, source=func_name)
+        # ask for all remaining missing parameters
+        params = ask_for_missing_args(params)
         # return parameters
         return params
     # get the demos for this instrument
