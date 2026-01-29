@@ -4503,7 +4503,8 @@ class DrsFitsFile(DrsInputFile):
                     dtype: Type = float, start: int = 0,
                     excludes: Union[None, List[str], str] = None,
                     includes: Union[None, List[str], str] = None,
-                    elogic: str = 'AND', ilogic: str = 'AND') -> np.ndarray:
+                    elogic: str = 'AND', ilogic: str = 'AND',
+                    required: bool = True) -> np.ndarray:
         """
         Read a set of header keys that were created from a 1D list
 
@@ -4562,9 +4563,12 @@ class DrsFitsFile(DrsInputFile):
                 # set the value
                 values.append(dtype(self.header[keyname]))
             except KeyError:
-                eargs = [keyname, dim1, self.basename, func_name]
-                self.__error__(textentry('09-000-00008', args=eargs))
-                values = None
+                if not required:
+                    values = []
+                else:
+                    eargs = [keyname, dim1, self.basename, func_name]
+                    self.__error__(textentry('09-000-00008', args=eargs))
+                    values = None
         # return values
         return np.array(values)
 

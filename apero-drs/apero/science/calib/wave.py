@@ -422,8 +422,10 @@ def get_wavesolution(params: ParamDict, recipe: DrsRecipe,
     wprops['CAVITY'] = cav_coeffs
     wprops['CAVITY_DEG'] = cavdeg
     wprops['CAVITY_PEDESTAL'] = cav_pedestal
-    wprops['SLOPE_HC_VEL'] = wavefile.get_hkey_1d('KW_WAVE_MEANHC', dim1=2)
-    wprops['ERR_HC_VEL'] = wavefile.get_hkey_1d('KW_WAVE_EMEANHC', dim1=2)
+    wprops['SLOPE_HC_VEL'] = wavefile.get_hkey_1d('KW_WAVE_MEANHC', dim1=2,
+                                                  required=False)
+    wprops['ERR_HC_VEL'] = wavefile.get_hkey_1d('KW_WAVE_EMEANHC', dim1=2,
+                                                required=False)
     # add the wfp keys
     wfp_keys = ['WFP_FILE', 'WFP_DRIFT', 'WFP_FWHM', 'WFP_CONTRAST', 'WFP_MASK',
                 'WFP_LINES', 'WFP_TARG_RV', 'WFP_WIDTH', 'WFP_STEP']
