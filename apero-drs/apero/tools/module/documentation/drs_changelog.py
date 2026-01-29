@@ -97,12 +97,14 @@ def git_remove_tag(version):
 
 def git_change_log(filename):
     """
-    requires pip install gitchangelog
+    Generate changelog using gitchangelog with commit dates
 
-    :param filename:
+    Since tags are now created with GIT_COMMITTER_DATE set to commit date,
+    gitchangelog will use the correct dates from the tag objects.
+
+    :param filename: output file for the changelog
     :return:
     """
-
     os.system('gitchangelog > {0}'.format(filename))
 
 

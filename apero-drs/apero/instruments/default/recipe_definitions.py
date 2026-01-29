@@ -186,8 +186,8 @@ changelog.instrument = __INSTRUMENT__
 changelog.description = textentry('CHANGELOG_DESCRIPTION')
 changelog.recipe_type = 'nolog-tool'
 changelog.recipe_kind = 'admin'
-changelog.set_arg(pos=0, name='preview', dtype='switch',
-                  helpstr=textentry('PREVIEW_HELP'))
+changelog.set_kwarg(name='--preview', dtype='switch',
+                    helpstr=textentry('PREVIEW_HELP'))
 changelog.description_file = 'apero_changelog.rst'
 
 # -----------------------------------------------------------------------------

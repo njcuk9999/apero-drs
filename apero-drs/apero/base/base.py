@@ -33,7 +33,7 @@ except ImportError:
 # Define variables
 # =============================================================================
 __PACKAGE__ = 'apero'
-__version__ = version(__name__)
+__version__ = version(__PACKAGE__)
 __PATH__ = Path(__file__).parent.parent
 __INSTRUMENT__ = 'None'
 # load the yaml file
