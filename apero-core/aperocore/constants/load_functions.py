@@ -11,8 +11,11 @@ Created on 2024-09-06 at 16:30
 """
 import argparse
 import os
+import shutil
 import time
 from typing import Any, Dict, List, Union
+from urllib.request import urlopen
+from urllib.error import URLError, HTTPError
 
 from aperocore import drs_lang
 from aperocore.base import base
@@ -796,9 +799,136 @@ def _load_info(params: ParamDict, demo_inst) -> ParamDict:
     return params
 
 
-def download_data(params: ParamDict):
+def _validate_url(url: str, params: ParamDict = None) -> bool:
     """
-    Download the data from a demo
+    Validate that a URL is accessible by attempting to open it
+
+    :param url: str, the URL to validate
+    :param params: ParamDict, the parameter dictionary for logging
+
+    :return: bool, True if URL is valid and accessible, False otherwise
+    """
+    try:
+        # attempt to open the URL with a timeout
+        response = urlopen(url, timeout=5)
+        response.close()
+        return True
+    except (HTTPError, URLError) as e:
+        # log warning if params provided
+        if params is not None:
+            msg = f'URL validation failed: {url}\nError: {str(e)}'
+            WLOG(params, 'warning', msg)
+        return False
+    except Exception as e:
+        # handle other exceptions
+        if params is not None:
+            msg = f'URL validation error: {url}\nError: {str(e)}'
+            WLOG(params, 'warning', msg)
+        return False
+
+def ask_about_download_data(params, url):
+    # set initial values
+    demolocal = None
+    demosymlink = False
+    # loop until we get valid input
+    while True:
+        # ask user what they want to do
+        prompt = ('\nHow would you like to handle demo data?\n'
+                  f'  [D]ownload from our URL ({url})\n'
+                  f'  [U]se a custom URL\n'
+                  f'  [L]ocal link (on disk)\n'
+                  f'  [S]kip downloading data\n')
+        userinput = str(input(prompt)).upper().strip()
+        # handle skip option
+        if userinput in ['S', 'SKIP']:
+            return
+        if userinput in ['U', 'USE']:
+            # ask user for custom url
+            while True:
+                prompt_url = ('\nProvide the URL to demo data '
+                              '(or [Q]uit): ')
+                user_url = str(input(prompt_url)).strip()
+                # handle quit option
+                if user_url.upper() in ['Q', 'QUIT']:
+                    return
+                # validate url format and accessibility
+                if (user_url.startswith('http://') or
+                        user_url.startswith('https://')):
+                    # test if URL is accessible
+                    if _validate_url(user_url, params):
+                        url = user_url
+                        msg = f'URL validated successfully: {url}'
+                        WLOG(params, 'info', msg)
+                        break
+                    else:
+                        msg = (
+                            f'URL is not accessible: {user_url}. '
+                            'Please try again.'
+                        )
+                        WLOG(params, 'warning', msg)
+                else:
+                    msg = (
+                        f'Invalid URL format: {user_url}. '
+                        'URL must start with http:// or https://. '
+                        'Please try again.'
+                    )
+                    WLOG(params, 'warning', msg)
+        # handle download option (from provided link)
+        elif userinput in ['D', 'DOWNLOAD']:
+            demolocal = None
+            break
+        # handle local link option
+        elif userinput in ['L', 'LOCAL']:
+            # ask user for local path
+            while True:
+                prompt_local = (
+                    '\nProvide the local path to demo data '
+                    '(or [Q]uit): '
+                )
+                user_path = (
+                    str(input(prompt_local)).strip()
+                )
+                # handle quit option
+                if user_path.upper() in ['Q', 'QUIT']:
+                    return
+                # validate path exists
+                if os.path.isdir(user_path):
+                    demolocal = user_path
+                    # ask user about symlinks
+                    symlink_prompt = (
+                        '\nUse symlinks? '
+                        '[Y]es (symlinks) or [N]o '
+                        '(hard copy): '
+                    )
+                    symlink_input = (
+                        str(input(symlink_prompt)).upper().strip()
+                    )
+                    if symlink_input in ['Y', 'YES']:
+                        demosymlink = True
+                    else:
+                        demosymlink = False
+                    break
+                else:
+                    msg = (
+                        f'Path does not exist: {user_path}. '
+                        'Please try again.'
+                    )
+                    WLOG(params, 'warning', msg)
+            break
+        else:
+            msg = (
+                'Invalid choice. Please select [D]ownload, '
+                '[L]ocal, or [S]kip.'
+            )
+            WLOG(params, 'warning', msg)
+    # return updated values
+    return url, demolocal, demosymlink
+
+
+def download_data(params: ParamDict, demolocal: str = None,
+                  demosymlink: bool = False):
+    """
+    Download the data from a demo or copy from a local repository
 
     Note you must have DEMO_PARAMS in params for this function to work
 
@@ -811,8 +941,13 @@ def download_data(params: ParamDict):
           - value = str: the parameter description the path to save locally
 
     :param params: ParamDict, the parameter dictionary of constants
+    :param demolocal: str or None, if not None path to local demo data
+                      repository to copy/symlink from instead of downloading
+    :param demosymlink: bool, if True and demolocal is not None, create
+                        symlinks instead of copying files
 
-    :return: None, downloads data from URL to local file(S)
+    :return: None, downloads data from URL to local file(S), copies from
+             local repository, or creates symlinks
     """
     # set function name
     func_name = display_func('download_data', __NAME__)
@@ -832,14 +967,18 @@ def download_data(params: ParamDict):
     if not active:
         return
     # -------------------------------------------------------------------------
-    # ask the user if they want to download demo data
-    userinput = str(input('\nDownload all demo data? [Y]es or [N]o\t'))
-    # any other response other than Y or YES is rejected
-    if not (userinput.upper().strip() in ['Y', 'YES']):
-        return
+    # ask the user how they want to handle demo data
+    if demolocal is None:
+        url, demolocal, demosymlink = ask_about_download_data(params, url)
     # -------------------------------------------------------------------------
     # print progress
-    WLOG(params, 'info', f'Downloading data. Please wait...')
+    if demolocal is None:
+        WLOG(params, 'info', f'Downloading data. Please wait...')
+    elif demosymlink:
+        msg = 'Creating symlinks to data from local repository...'
+        WLOG(params, 'info', msg)
+    else:
+        WLOG(params, 'info', f'Copying data from local repository...')
     # -------------------------------------------------------------------------
     # loop around downloadable parameters
     for parameter in download:
@@ -851,7 +990,8 @@ def download_data(params: ParamDict):
             continue
         # deal with value of DOWNLOAD[parameter] not in params
         if dparameter not in params:
-            WLOG(params, 'warning', f'Parameter "{dparameter} not defined')
+            msg = f'Parameter "{dparameter}" not defined'
+            WLOG(params, 'warning', msg)
             continue
         # deal with parameter being None
         if params[parameter] is None:
@@ -866,26 +1006,56 @@ def download_data(params: ParamDict):
             value = [value]
         # deal with bad parameter (should now be a list)
         if not isinstance(value, list):
-            WLOG(params, 'warning', f'Cannot get parameter: "{parameter}"')
+            msg = f'Cannot get parameter: "{parameter}"'
+            WLOG(params, 'warning', msg)
             continue
         # create path if it doesn't exist
         if not os.path.exists(params[dparameter]):
             os.makedirs(params[dparameter])
-        # loop around values and try to download
+        # loop around values and try to download or copy
         for value_it in value:
-            # get the url
-            purl = f'{url}/{value_it}'
             # construct the local file name
             localpath = str(os.path.join(params[dparameter], value_it))
-            # deal with files already existing -- don't re-download
+            # deal with files already existing -- don't re-download/copy
             if os.path.exists(localpath):
                 continue
-            # print progress
-            msg = '\tDownloading: {0}'
-            margs = [localpath]
-            WLOG(params, '', msg.format(*margs))
-            # try to get the data
-            drs_misc.download_file(purl, localpath)
+            # handle local copy vs remote download
+            if demolocal is not None:
+                # get the last directory component from the url
+                url_parts = url.rstrip('/').split('/')
+                last_dir = url_parts[-1]
+                # construct source path from local repository
+                src_path = str(os.path.join(demolocal, last_dir, value_it))
+                # check if source exists
+                if not os.path.exists(src_path):
+                    msg = (f'Local data not found at: {src_path}')
+                    WLOG(params, 'warning', msg)
+                    continue
+                # handle symlink vs copy
+                if demosymlink:
+                    # print progress
+                    msg = '\tSymlinking: {0}'
+                    margs = [localpath]
+                    WLOG(params, '', msg.format(*margs))
+                    # create symlink (works cross-platform)
+                    os.symlink(src_path, localpath)
+                else:
+                    # print progress
+                    msg = '\tCopying: {0}'
+                    margs = [localpath]
+                    WLOG(params, '', msg.format(*margs))
+                    # copy the file
+                    import shutil
+                    shutil.copy2(src_path, localpath)
+            else:
+                # get the url
+                purl = f'{url}/{value_it}'
+                # print progress
+                msg = '\tDownloading: {0}'
+                margs = [localpath]
+                WLOG(params, '', msg.format(*margs))
+                # try to get the data
+                drs_misc.download_file(purl, localpath)
 
 
 def _print_parameters(key: str, value: Any):

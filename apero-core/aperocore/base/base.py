@@ -35,10 +35,18 @@ import numpy as np
 import yaml
 from astropy.time import Time, TimeDelta
 
+from importlib.metadata import version
+
+try:
+    from aperocore._version import __date__
+except ImportError:
+    __date__ = ''
+
 # =============================================================================
 # Define variables
 # =============================================================================
 __PACKAGE__ = 'aperocore'
+__version__ = version(__name__)
 __PATH__ = Path(__file__).parent.parent
 __INSTRUMENT__ = 'None'
 # load the yaml file
@@ -48,9 +56,8 @@ __YAML__ = yaml.load(open(__PATH__.joinpath('info.yaml')),
 # =============================================================================
 # Get variables from info.yaml
 # =============================================================================
-__version__ = __YAML__['VERSION']
+
 __authors__ = __YAML__['AUTHORS']
-__date__ = __YAML__['DATE']
 __release__ = __YAML__['RELEASE']
 # do this once per drs import
 __now__ = Time.now()

@@ -33,21 +33,21 @@ SETUP_PATHS = [os.path.join('apero', 'setup', 'bin', 'apero_setup.py'),
 # =============================================================================
 # Define functions
 # =============================================================================
-def get_version() -> str:
-    """
-    Get the version from the version file
-    :return:
-    """
-    # try to open version file
-    try:
-        with open('apero/info.yaml', 'r') as vfile:
-            vtext = vfile.readlines()
-    except Exception as e:
-        print('Error: Could not read version file')
-        print('Error: {0}'.format(e))
-        sys.exit(1)
-    # return version
-    return vtext[1].split(':')[-1].strip()
+# def get_version() -> str:
+#     """
+#     Get the version from the version file
+#     :return:
+#     """
+#     # try to open version file
+#     try:
+#         with open('apero/info.yaml', 'r') as vfile:
+#             vtext = vfile.readlines()
+#     except Exception as e:
+#         print('Error: Could not read version file')
+#         print('Error: {0}'.format(e))
+#         sys.exit(1)
+#     # return version
+#     return vtext[1].split(':')[-1].strip()
 
 
 def load_scripts() -> list:
@@ -83,7 +83,7 @@ if __name__ == "__main__":
     # ----------------------------------------------------------------------
     setup(name='apero-drs',
           packages=find_packages(),
-          version=get_version(),
+          # version=get_version(),
           scripts=load_scripts(),
           include_package_data=True)
 

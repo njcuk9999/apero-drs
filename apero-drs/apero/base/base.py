@@ -22,10 +22,18 @@ import yaml
 
 from aperocore.base import base
 
+from importlib.metadata import version
+
+try:
+    from apero._version import __date__
+except ImportError:
+    __date__ = ''
+
 # =============================================================================
 # Define variables
 # =============================================================================
 __PACKAGE__ = 'apero'
+__version__ = version(__name__)
 __PATH__ = Path(__file__).parent.parent
 __INSTRUMENT__ = 'None'
 # load the yaml file
@@ -35,9 +43,7 @@ __YAML__ = yaml.load(open(__PATH__.joinpath('info.yaml')),
 # =============================================================================
 # Get variables from info.yaml
 # =============================================================================
-__version__ = __YAML__['DRS.VERSION']
 __authors__ = __YAML__['DRS.AUTHORS']
-__date__ = str(__YAML__['DRS.DATE'])
 __release__ = __YAML__['DRS.RELEASE']
 # do this once per drs import
 __now__ = base.Time.now()
