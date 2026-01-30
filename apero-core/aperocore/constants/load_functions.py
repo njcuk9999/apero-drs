@@ -45,6 +45,8 @@ textentry = drs_lang.textentry
 display_func = drs_misc.display_func
 # Get Logging function
 WLOG = drs_log.wlog
+# Demo filter fields - customize to add/remove filter criteria
+INFO_DICT_FILTERS = ['object', 'keywords']
 # -----------------------------------------------------------------------------
 # loaded cached versions
 CONFIG_CACHE = dict()
@@ -667,6 +669,8 @@ def starting_point(params: ParamDict, imode_key: Union[str, List[str]],
         return params
     # get the demos for this instrument
     idemos = demo_dict[imode]
+    # allow filtering by object and keywords
+    idemos = _filter_demo_choices(params, idemos)
     # display the possible starting points for this instrument mode
     counters = dict()
     # loop through demos
@@ -684,7 +688,8 @@ def starting_point(params: ParamDict, imode_key: Union[str, List[str]],
 
     # ask user to select mode
     while True:
-        userinput = str(input('\nEnter a number or press enter:\t'))
+        userinput = str(input('\nEnter a number to start from a demo '
+                              'or press enter (to not use a demo):\t'))
         # New line for clarity
         print()
         # clean user input
@@ -750,6 +755,178 @@ def _print_info(params: ParamDict, it: int, info_dict: Dict[str, str]):
         msg = '\t{0}: {1}'
         margs = [info_key, str_value]
         print(msg.format(*margs))
+
+
+def _parse_demo_filter(userinput: str) -> List[str]:
+    """
+    Parse user input into filter tokens.
+
+    :param userinput: str, user input string
+
+    :return: list of lowercase tokens
+    """
+    if userinput is None:
+        return []
+    raw = userinput.replace(',', ' ')
+    tokens = [t.strip().lower() for t in raw.split() if t.strip()]
+    return tokens
+
+
+def _normalize_demo_field(value: Any) -> List[str]:
+    """
+    Normalize a demo field to a list of lowercase strings.
+
+    :param value: Any, field value
+
+    :return: list of strings
+    """
+    if value is None:
+        return []
+    if isinstance(value, (list, tuple)):
+        items = value
+    else:
+        items = [value]
+    out = []
+    for item in items:
+        text = str(item).strip().lower()
+        if text:
+            out.append(text)
+    return out
+
+
+def _demo_matches_filter(info_dict: Dict[str, Any],
+                         tokens: List[str]) -> bool:
+    """
+    Check whether a demo matches the filter tokens using
+    INFO_DICT_FILTERS.
+
+    :param info_dict: Dict[str, Any], demo INFO dict
+    :param tokens: list of tokens to match
+
+    :return: bool, True if demo matches
+    """
+    if not tokens:
+        return True
+    # build haystack from available filter fields
+    haystack = []
+    for field in INFO_DICT_FILTERS:
+        if field in info_dict:
+            terms = _normalize_demo_field(info_dict[field])
+            haystack.extend(terms)
+    # if no filter fields found, demo doesn't match
+    if not haystack:
+        return False
+    # match all tokens
+    for token in tokens:
+        if not any(token in term for term in haystack):
+            return False
+    return True
+
+
+def _collect_filter_values(idemos: Dict[str, Any]) -> Dict[str, set]:
+    """
+    Collect all available filter values from demos.
+
+    :param idemos: dict of demos for the instrument mode
+
+    :return: dict mapping filter field to set of available values
+    """
+    filter_values = {field: set() for field in INFO_DICT_FILTERS}
+    for demo_mode in idemos:
+        demo_inst = idemos[demo_mode]
+        info_dict = demo_inst.INFO
+        for field in INFO_DICT_FILTERS:
+            if field in info_dict:
+                terms = _normalize_demo_field(info_dict[field])
+                filter_values[field].update(terms)
+    return filter_values
+
+
+def _should_skip_filtering(filter_values: Dict[str, set]) -> bool:
+    """
+    Determine if filtering should be skipped (only one choice).
+
+    Skip if:
+    - All fields have exactly one value, OR
+    - Only one unique value exists across all fields
+
+    :param filter_values: dict mapping filter field to set of values
+
+    :return: bool, True if filtering should be skipped
+    """
+    # count total unique values across all fields
+    all_values = set()
+    for field in INFO_DICT_FILTERS:
+        if field in filter_values:
+            all_values.update(filter_values[field])
+    # if only one total unique value, skip
+    if len(all_values) <= 1:
+        return True
+    # if all fields have exactly one value, skip
+    for field in INFO_DICT_FILTERS:
+        if field in filter_values:
+            if len(filter_values[field]) != 1:
+                return False
+    return True
+
+
+def _build_filter_prompt(filter_values: Dict[str, set]) -> str:
+    """
+    Build the filter prompt showing available values.
+    Only shows fields with multiple values.
+
+    :param filter_values: dict mapping filter field to set of values
+
+    :return: formatted prompt string
+    """
+    lines = ['\nFilter demos by:']
+    shown_count = 0
+    for field in INFO_DICT_FILTERS:
+        if field in filter_values and len(filter_values[field]) > 1:
+            values = ', '.join(sorted(filter_values[field]))
+            lines.append(f'  {field}: {values}')
+            shown_count += 1
+    lines.append('(enter to skip): ')
+    return '\n'.join(lines)
+
+
+def _filter_demo_choices(params: ParamDict,
+                         idemos: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    Filter demos by object/keywords without assuming fields exist.
+
+    :param params: ParamDict, parameter dictionary of constants
+    :param idemos: dict of demos for the instrument mode
+
+    :return: filtered demo dict
+    """
+    if not isinstance(idemos, dict) or len(idemos) == 0:
+        return idemos
+    # collect available filter values
+    filter_values = _collect_filter_values(idemos)
+    # skip filtering if only one choice
+    if _should_skip_filtering(filter_values):
+        return idemos
+    # build prompt with available values
+    prompt = _build_filter_prompt(filter_values)
+    while True:
+        userinput = str(input(prompt)).strip()
+        if userinput == '':
+            return idemos
+        tokens = _parse_demo_filter(userinput)
+        if not tokens:
+            return idemos
+        filtered = dict()
+        for demo_mode in idemos:
+            demo_inst = idemos[demo_mode]
+            info_dict = demo_inst.INFO
+            if _demo_matches_filter(info_dict, tokens):
+                filtered[demo_mode] = demo_inst
+        if len(filtered) > 0:
+            return filtered
+        msg = ('No demos match that filter. Try again or press enter '
+               'to skip.')
+        WLOG(params, 'warning', msg)
 
 
 def _load_info(params: ParamDict, demo_inst) -> ParamDict:

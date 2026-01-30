@@ -1591,6 +1591,8 @@ def calc_wave_sol(params: ParamDict, recipe: DrsRecipe,
     # set up diff_hc and hc sigma
     diff_hc = np.zeros_like(hcl_wave_meas)
     hcsigma = np.zeros_like(hcl_wave_meas)
+    # get the mean wavelength of the hc reference wave solution
+    hc_wave_ref_mean = np.nanmean(hcl_wave_ref)
     # -------------------------------------------------------------------------
     # we change the achromatic cavity length term to force HC peaks to have a
     #    zero velocity error.
@@ -1643,7 +1645,6 @@ def calc_wave_sol(params: ParamDict, recipe: DrsRecipe,
         # they decrease as 1/NSIG
         hcsigma = mp.estimate_sigma(diff_hc * hcl_nsig) / hcl_nsig
         # get smart mean of the velocity error
-        hc_wave_ref_mean = np.nanmean(hcl_wave_ref)
         hcl_wave_ref0 = hcl_wave_ref - hc_wave_ref_mean
         slope_hc_vel, err_hc_vel = mp.polyfit_odd_ratio(hcl_wave_ref0, diff_hc,
                                                         hcsigma, degree=1)
@@ -1723,7 +1724,7 @@ def calc_wave_sol(params: ParamDict, recipe: DrsRecipe,
                            domain=[inst_wavestart, inst_waveend])
     # work out the change in slope
     cavdiff = cavlen1 - cavlen0
-    slope_change = np.polyval(fpl_wave_ref - hc_wave_ref_mean, cavdiff, 1)
+    slope_change = np.polyval(fpl_wave_ref - hc_wave_ref_mean, cavdiff)
 
     margs = [mp.nanmean(cavlen1) - mp.nanmean(cavlen0)]
     WLOG(params, '', textentry('40-017-00058', args=margs))
