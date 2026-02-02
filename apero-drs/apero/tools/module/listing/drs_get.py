@@ -444,7 +444,7 @@ def calib_filter(params: ParamDict, recipe: DrsRecipe,
             # get return from get_calib_file
             infilenames, filetimes, _ = cout
             # deal with no files
-            if len(infilenames) == 0:
+            if infilenames is None or len(infilenames) == 0:
                 continue
             # make numpy arrays (so we can mask)
             infilenames = np.array(infilenames)

@@ -37,11 +37,10 @@ __YAML__ = yaml.load(open(__PATH__.joinpath('info.yaml')),
 # =============================================================================
 # Get variables from info.yaml
 # =============================================================================
-__version__ = __YAML__['DRS.VERSION']
+__version__ = base.__version__
+__date__ = base.__date__
 __authors__ = __YAML__['DRS.AUTHORS']
-__date__ = __YAML__['DRS.DATE']
 __release__ = __YAML__['DRS.RELEASE']
-
 INSTRUMENTS = __YAML__['DRS.INSTRUMENTS']
 # -----------------------------------------------------------------------------
 # get print colours

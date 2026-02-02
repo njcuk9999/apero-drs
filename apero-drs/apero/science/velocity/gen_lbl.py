@@ -11,6 +11,7 @@ Created on 2019-08-21 at 12:28
 """
 
 import os
+import shutil
 from typing import Any, Dict, List, Optional, Tuple, Union
 
 import numpy as np
@@ -28,6 +29,8 @@ from apero.io import drs_fits
 from apero.tools.recipes.bin import apero_get
 from apero.instruments import select
 from apero.base import base as apero_base
+from apero.science.calib import wave
+
 
 # =============================================================================
 # Define variables
@@ -173,16 +176,53 @@ def run_apero_get(params: ParamDict):
                    test=testmode, since=since)
     # run apero get for calibs (wave + blaze) science fiber
     apero_get.main(dbkind='calib',
-                   keynames='BLAZE,WAVE',
+                   keynames='BLAZE,WAVE,WAVESOL_REF,WAVESOL_DEFAULT',
                    outpath=outpath_calib, fibers=lbl_scifibers,
                    symlinks=lbl_symlinks, nosubdir=True,
                    test=testmode, since=since)
     # run apero get for calibs (wave + blaze) science fiber
     apero_get.main(dbkind='calib',
-                   keynames='BLAZE,WAVE',
+                   keynames='BLAZE,WAVE,WAVESOL_REF,WAVESOL_DEFAULT',
                    outpath=outpath_calib, fibers=lbl_calfibers,
                    symlinks=lbl_symlinks, nosubdir=True,
                    test=testmode, since=since)
+    # get the static wave solutions
+    apero_wave_static(params, [lbl_scifibers] + [lbl_calfibers],
+                      outpath_calib, symlinks=lbl_symlinks)
+
+
+def apero_wave_static(params: ParamDict, fibers: List[str],
+                      outpath: str, symlinks: bool = False):
+    """
+    Copy the APERO static wave files to the LBL directory
+
+    :param params: ParamDict, the parameter dictionary containing constants
+    :param fibers: list, the fibers to copy static files for
+    :param outpath: str, the output path to copy files to
+
+    :return: None, copies files to outpath
+    """
+    # get the static wave solutions
+    for fiber in fibers:
+        # get static wavelength filename
+        filename = wave.get_static_wavesol(params, fiber)
+        # print progress
+        msg = 'Copying static wave solution for fiber {0}: {1}'
+        margs = [fiber, filename]
+        WLOG(params, '', msg.format(*margs))
+        # deal with no file found
+        if not os.path.exists(filename):
+            emsg = 'Expected static wave solution does not exist: {0}'
+            eargs = [filename]
+            raise AperoCodedException(params, None, message=emsg.format(eargs),
+                                      targs=eargs)
+        # manually copy or symlink to outpath directory
+        destfile = os.path.join(outpath, os.path.basename(filename))
+        if not os.path.exists(destfile):
+            if symlinks:
+                os.symlink(filename, destfile)
+            else:
+                shutil.copy2(filename, destfile)
 
 
 def find_friend(params: ParamDict, shortname: str, objname: str) -> str:

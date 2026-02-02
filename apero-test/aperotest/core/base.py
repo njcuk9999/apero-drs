@@ -12,6 +12,11 @@ Created on 2024-10-29 at 09:35
 from pathlib import Path
 
 import yaml
+from importlib.metadata import version
+try:
+    from apero._version import __date__
+except ImportError:
+    __date__ = ''
 
 
 # =============================================================================
@@ -27,9 +32,8 @@ __YAML__ = yaml.load(open(__PATH__.joinpath('info.yaml')),
 # =============================================================================
 # Get variables from info.yaml
 # =============================================================================
-__version__ = __YAML__['DRS.VERSION']
+__version__ = version(__PACKAGE__)
 __authors__ = __YAML__['DRS.AUTHORS']
-__date__ = __YAML__['DRS.DATE']
 __release__ = __YAML__['DRS.RELEASE']
 
 # =============================================================================
