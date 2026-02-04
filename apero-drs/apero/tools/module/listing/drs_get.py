@@ -542,6 +542,8 @@ def tellu_filter(params: ParamDict,  recipe: DrsRecipe,
     db_entries = dict(OBJNAME=dict(), RUN_ID=dict())
     # loop around objects
     for objname in kw_objnames:
+        # clean object name (as best we can)
+        clean_obj_name, _ = objdbm.find_objname(pconst, objname)
         # storage for inpaths
         inpaths, run_ids = [], []
         # loop around keys
@@ -586,8 +588,8 @@ def tellu_filter(params: ParamDict,  recipe: DrsRecipe,
                 run_ids += _run_ids
         # ---------------------------------------------------------------------
         # keep files
-        db_entries['OBJNAME']['None'] = inpaths
-        db_entries['RUN_ID']['None'] = run_ids
+        db_entries['OBJNAME'][clean_obj_name] = inpaths
+        db_entries['RUN_ID'][clean_obj_name] = run_ids
 
     # -------------------------------------------------------------------------
     # Now get outpaths (if infile exists)

@@ -56,27 +56,52 @@ DATABASE_NAMES = ['calib', 'tellu', 'findex', 'log', 'astrom', 'lang',
 SA_TEXT = sqlalchemy.text
 # set max string size
 MAX_STR_SIZE = 1024
+# wait time for retry operations (in seconds)
+WAIT_TIME = 10
+# connection pool configuration
+POOL_SIZE = 5  # number of connections to maintain in pool
+MAX_OVERFLOW = 10  # max additional connections beyond pool_size
+POOL_TIMEOUT = 30  # seconds to wait for a connection from pool
+POOL_RECYCLE = 1200  # seconds before recycling connections (20 min)
 
 
 # =============================================================================
 # Define helper functions
 # =============================================================================
-def _retry_operation(func, max_retries: int = 5, retry_delay: float = 2):
+def _retry_operation(func, max_retries: int = 5, retry_delay: float = None):
     """
-    Retry a database operation on OperationalError
+    Retry a database operation on OperationalError or network errors
 
     :param func: callable, the function to execute
     :param max_retries: int, maximum number of retry attempts
-    :param retry_delay: float, delay in seconds between retries
+    :param retry_delay: float, delay in seconds between retries (defaults to WAIT_TIME)
     :return: result from func
-    :raises OperationalError: if all retry attempts fail
+    :raises: OperationalError or OSError if all retry attempts fail
     """
+    if retry_delay is None:
+        retry_delay = WAIT_TIME
+
     for attempt in range(max_retries):
         try:
             return func()
-        except OperationalError as e:
-            if attempt < max_retries - 1:
+        except (OperationalError, OSError) as e:
+            # Check if it's a connection/network error
+            error_msg = str(e).lower()
+            is_connection_error = any(phrase in error_msg for phrase in [
+                'name or service not known',
+                "can't connect",
+                'connection refused',
+                'no route to host',
+                'network is unreachable',
+                'connection reset',
+                'connection timed out'
+            ])
+
+            if is_connection_error and attempt < max_retries - 1:
                 time.sleep(retry_delay)
+            elif attempt < max_retries - 1:
+                # For other operational errors, use shorter delay
+                time.sleep(2)
             else:
                 raise
 
@@ -180,16 +205,25 @@ class AperoDatabase:
             connect_args = dict()
         # define the engine to use with retry on OperationalError
         def _create_engine():
-            return sqlalchemy.create_engine(url, echo=verbose,
-                                           pool_pre_ping=True,
-                                           pool_recycle=1200,
-                                           connect_args=connect_args)
-        self.engine = _retry_operation(_create_engine, max_retries=5,
-                                       retry_delay=2)
+            return sqlalchemy.create_engine(
+                url,
+                echo=verbose,
+                pool_pre_ping=True,           # validate connections before use
+                pool_recycle=POOL_RECYCLE,    # recycle connections periodically
+                pool_size=POOL_SIZE,          # maintain N connections in pool
+                max_overflow=MAX_OVERFLOW,    # allow temp connections beyond pool
+                pool_timeout=POOL_TIMEOUT,    # timeout waiting for connection
+                pool_reset_on_return='rollback',  # cleanup on connection return
+                connect_args=connect_args
+            )
+        self.engine = _retry_operation(_create_engine, max_retries=5)
         # define the table name
         self.tablename = tablename
         # define backup path
         self.backup_path = None
+        # metadata cache to avoid repeated reflection (improves performance)
+        self._metadata_cache = {}
+        self._metadata_cache_timestamp = {}
 
     def __getstate__(self) -> dict:
         """
@@ -197,7 +231,7 @@ class AperoDatabase:
         :return:
         """
         # what to exclude from state
-        exclude = ['engine']
+        exclude = ['engine', '_metadata_cache', '_metadata_cache_timestamp']
         # need a dictionary for pickle
         state = dict()
         for key, item in self.__dict__.items():
@@ -219,11 +253,20 @@ class AperoDatabase:
         self.__dict__.update(state)
         # re-create engine after pickle with retry on OperationalError
         def _create_engine():
-            return sqlalchemy.create_engine(self.url, echo=self.verbose,
-                                           pool_pre_ping=True,
-                                           pool_recycle=1200)
-        self.engine = _retry_operation(_create_engine, max_retries=5,
-                                       retry_delay=2)
+            return sqlalchemy.create_engine(
+                self.url,
+                echo=self.verbose,
+                pool_pre_ping=True,
+                pool_recycle=POOL_RECYCLE,
+                pool_size=POOL_SIZE,
+                max_overflow=MAX_OVERFLOW,
+                pool_timeout=POOL_TIMEOUT,
+                pool_reset_on_return='rollback'
+            )
+        self.engine = _retry_operation(_create_engine, max_retries=5)
+        # reinitialize metadata cache
+        self._metadata_cache = {}
+        self._metadata_cache_timestamp = {}
 
     def __str__(self):
         """
@@ -239,11 +282,63 @@ class AperoDatabase:
         """
         return self.__str__()
 
+    def _get_metadata(self, tablename: Optional[str] = None,
+                      force_refresh: bool = False) -> sqlalchemy.MetaData:
+        """
+        Get metadata for a table, using cache when possible to avoid
+        repeated database queries
+
+        :param tablename: str, the name of the table (None for all tables)
+        :param force_refresh: bool, if True, bypass cache and refresh from DB
+        :return: sqlalchemy.MetaData instance
+        """
+        cache_key = tablename if tablename is not None else '__all__'
+        current_time = time.time()
+
+        # Check if we have a cached version that's less than 5 minutes old
+        if (not force_refresh and
+            cache_key in self._metadata_cache and
+            cache_key in self._metadata_cache_timestamp and
+            (current_time - self._metadata_cache_timestamp[cache_key]) < 300):
+            return self._metadata_cache[cache_key]
+
+        # Refresh metadata from database
+        metadata = sqlalchemy.MetaData()
+        if tablename is not None:
+            # Reflect specific table only
+            _retry_operation(lambda: metadata.reflect(bind=self.engine,
+                                                     only=[tablename]))
+        else:
+            # Reflect all tables
+            _retry_operation(lambda: metadata.reflect(bind=self.engine))
+
+        # Cache the result
+        self._metadata_cache[cache_key] = metadata
+        self._metadata_cache_timestamp[cache_key] = current_time
+
+        return metadata
+
+    def clear_metadata_cache(self, tablename: Optional[str] = None):
+        """
+        Clear the metadata cache for a specific table or all tables
+
+        :param tablename: str, the name of the table (None to clear all)
+        """
+        if tablename is not None:
+            cache_key = tablename
+            if cache_key in self._metadata_cache:
+                del self._metadata_cache[cache_key]
+            if cache_key in self._metadata_cache_timestamp:
+                del self._metadata_cache_timestamp[cache_key]
+        else:
+            self._metadata_cache.clear()
+            self._metadata_cache_timestamp.clear()
+
     def add_database(self):
         def _check_and_create():
             if not database_exists(self.engine.url):
                 create_database(self.engine.url)
-        _retry_operation(_check_and_create, max_retries=5, retry_delay=2)
+        _retry_operation(_check_and_create, max_retries=5)
 
     def add_table(self, tablename: str,
                   columns: List[sqlalchemy.Column],
@@ -319,7 +414,7 @@ class AperoDatabase:
                                  *new_uniques)
             # create table
             metadata.create_all(self.engine)
-        _retry_operation(_create_table, max_retries=5, retry_delay=2)
+        _retry_operation(_create_table, max_retries=5)
 
     def get_tables(self):
         """
@@ -332,7 +427,7 @@ class AperoDatabase:
             inspector = sqlalchemy.inspect(self.engine)
             # get table names
             return inspector.get_table_names()
-        return _retry_operation(_get_table_names, max_retries=5, retry_delay=2)
+        return _retry_operation(_get_table_names, max_retries=5)
 
     def has_table(self, tablename: str):
         """
@@ -370,7 +465,7 @@ class AperoDatabase:
         # define the meta data
         def _execute_count():
             metadata = sqlalchemy.MetaData()
-            metadata.reflect(bind=self.engine)
+            _retry_operation(lambda: metadata.reflect(bind=self.engine))
             # get the table name
             _tablename = tablename if tablename is not None else self.tablename
             # create a table to fill
@@ -416,7 +511,7 @@ class AperoDatabase:
         # define the meta data
         def _execute_unique():
             metadata = sqlalchemy.MetaData()
-            metadata.reflect(bind=self.engine)
+            _retry_operation(lambda: metadata.reflect(bind=self.engine))
             # get the table name
             _tablename = tablename if tablename is not None else self.tablename
             # create a table to fill
@@ -503,7 +598,7 @@ class AperoDatabase:
         # define the meta data
         def _execute_get():
             metadata = sqlalchemy.MetaData()
-            metadata.reflect(bind=self.engine)
+            _retry_operation(lambda: metadata.reflect(bind=self.engine))
             # get the table name
             _tablename = tablename if tablename is not None else self.tablename
             # create a table to fill
@@ -593,59 +688,63 @@ class AperoDatabase:
             # Resets all mass and radius values to null
             db.set(['mass', 'radius'], [b'null', b'null'], None)
         """
-        # define the meta data
-        metadata = sqlalchemy.MetaData()
-        metadata.reflect(bind=self.engine)
-        # get the table name
-        if tablename is None:
-            tablename = self.tablename
-        # create a table to fill
-        sqltable = sqlalchemy.Table(tablename, metadata)
-        # ---------------------------------------------------------------------
-        # get a list of the unique columns
-        unique_cols = self._unique_cols(tablename)
-        # ---------------------------------------------------------------------
-        # create an update query statement
-        update_query = sqlalchemy.update(sqltable)
-        # ---------------------------------------------------------------------
-        # create a dictionary of the columns and values
-        if columns is None:
-            columns = list(update_dict.keys())
-        if columns == '*':
-            # noinspection PyUnresolvedReferences
-            columns = [col.name for col in sqltable.columns]
-        # ---------------------------------------------------------------------
-        # make the update dictionary
-        if update_dict is None and values is not None:
-            update_dict = {col: val for col, val in zip(columns, values)}
-        # ---------------------------------------------------------------------
-        # deal with NaN/None/Null values
-        if update_dict is not None:
-            for key, value in update_dict.items():
-                if isinstance(value, sqlalchemy.Null):
-                    update_dict[key] = None
-                elif value in [None, np.nan]:
-                    update_dict[key] = None
-                elif isinstance(value, str):
-                    if value.lower() in ['null', 'none', 'nan']:
-                        update_dict[key] = None
-        # ---------------------------------------------------------------------
-        # add the hash column
-        if len(unique_cols) > 0:
-            update_dict = _hash_col(update_dict, unique_cols)
-            # condition based on only on unique_col
-            condition = '{0}="{1}"'.format(UHASH_COL, update_dict[UHASH_COL])
-        # ---------------------------------------------------------------------
-        # add condition
-        if condition is not None:
-            update_query = update_query.where(sqlalchemy.text(condition))
-        # ---------------------------------------------------------------------
-        # add values to update
-        update_query = update_query.values(update_dict)
-        # ---------------------------------------------------------------------
-        # execute the query
-        with self.engine.begin() as conn:
-            conn.execute(update_query)
+        # define the meta data and execute with retry
+        def _execute_set_row():
+            metadata = sqlalchemy.MetaData()
+            metadata.reflect(bind=self.engine)
+            # get the table name
+            _tablename = tablename if tablename is not None else self.tablename
+            # create a table to fill
+            sqltable = sqlalchemy.Table(_tablename, metadata)
+            # ---------------------------------------------------------------------
+            # get a list of the unique columns
+            unique_cols = self._unique_cols(_tablename)
+            # ---------------------------------------------------------------------
+            # create an update query statement
+            update_query = sqlalchemy.update(sqltable)
+            # ---------------------------------------------------------------------
+            # create a dictionary of the columns and values
+            _columns = columns
+            if _columns is None:
+                _columns = list(update_dict.keys())
+            if _columns == '*':
+                # noinspection PyUnresolvedReferences
+                _columns = [col.name for col in sqltable.columns]
+            # ---------------------------------------------------------------------
+            # make the update dictionary
+            _update_dict = update_dict
+            if _update_dict is None and values is not None:
+                _update_dict = {col: val for col, val in zip(_columns, values)}
+            # ---------------------------------------------------------------------
+            # deal with NaN/None/Null values
+            if _update_dict is not None:
+                for key, value in _update_dict.items():
+                    if isinstance(value, sqlalchemy.Null):
+                        _update_dict[key] = None
+                    elif value in [None, np.nan]:
+                        _update_dict[key] = None
+                    elif isinstance(value, str):
+                        if value.lower() in ['null', 'none', 'nan']:
+                            _update_dict[key] = None
+            # ---------------------------------------------------------------------
+            # add the hash column
+            _condition = condition
+            if len(unique_cols) > 0:
+                _update_dict = _hash_col(_update_dict, unique_cols)
+                # condition based on only on unique_col
+                _condition = '{0}="{1}"'.format(UHASH_COL, _update_dict[UHASH_COL])
+            # ---------------------------------------------------------------------
+            # add condition
+            if _condition is not None:
+                update_query = update_query.where(sqlalchemy.text(_condition))
+            # ---------------------------------------------------------------------
+            # add values to update
+            update_query = update_query.values(_update_dict)
+            # ---------------------------------------------------------------------
+            # execute the query
+            with self.engine.begin() as conn:
+                conn.execute(update_query)
+        _retry_operation(_execute_set_row, max_retries=5)
 
     def add_row(self, values: Optional[List[object]] = None,
                 tablename: Optional[str] = None,
@@ -680,7 +779,7 @@ class AperoDatabase:
         """
         # define the meta data
         metadata = sqlalchemy.MetaData()
-        metadata.reflect(bind=self.engine)
+        _retry_operation(lambda: metadata.reflect(bind=self.engine))
         # get the table name
         if tablename is None:
             tablename = self.tablename
@@ -753,7 +852,7 @@ class AperoDatabase:
         # ---------------------------------------------------------------------
         # Reflect table
         metadata = sqlalchemy.MetaData()
-        metadata.reflect(bind=self.engine)
+        _retry_operation(lambda: metadata.reflect(bind=self.engine))
         # ---------------------------------------------------------------------
         if tablename is None:
             tablename = self.tablename
@@ -781,17 +880,18 @@ class AperoDatabase:
 
         insert_query = sqlalchemy.insert(sqltable)
         # ---------------------------------------------------------------------
-        # bulk insert with fallback for duplicates
-        try:
-            # Try bulk insert first
-            with self.engine.begin() as conn:
-                conn.execute(insert_query, cleaned_rows)
-        except IntegrityError:
-            # Fallback — handle duplicates via existing add_row (update)
-            for row in cleaned_rows:
-                self.add_row(insert_dict=row, tablename=tablename)
+        # bulk insert with fallback for duplicates (with retry)
+        def _execute_bulk_insert():
+            try:
+                # Try bulk insert first
+                with self.engine.begin() as conn:
+                    conn.execute(insert_query, cleaned_rows)
+            except IntegrityError:
+                # Fallback — handle duplicates via existing add_row (update)
+                for row in cleaned_rows:
+                    self.add_row(insert_dict=row, tablename=tablename)
+        _retry_operation(_execute_bulk_insert, max_retries=5)
         # make sure all rows are added an dpending connections closed
-        import time
         time.sleep(5)
 
     def set_rows(self,
@@ -811,7 +911,7 @@ class AperoDatabase:
 
         # Define metadata and reflect table
         metadata = sqlalchemy.MetaData()
-        metadata.reflect(bind=self.engine)
+        _retry_operation(lambda: metadata.reflect(bind=self.engine))
         if tablename is None:
             tablename = self.tablename
         sqltable = sqlalchemy.Table(tablename, metadata)
@@ -819,37 +919,38 @@ class AperoDatabase:
         # Get unique columns
         unique_cols = self._unique_cols(tablename)
 
-        with self.engine.begin() as conn:
-            for update_dict in update_dicts:
-                # Make a shallow copy to avoid mutating the caller's data
-                row_update = dict(update_dict)
+        def _execute_set_rows():
+            with self.engine.begin() as conn:
+                for update_dict in update_dicts:
+                    # Make a shallow copy to avoid mutating the caller's data
+                    row_update = dict(update_dict)
 
-                # Extract explicit condition if provided
-                condition = row_update.pop("condition", None)
+                    # Extract explicit condition if provided
+                    condition = row_update.pop("condition", None)
 
-                # Handle NaN/None/null strings
-                for key, value in row_update.items():
-                    if value in [None, np.nan]:
-                        row_update[key] = None
-                    elif isinstance(value, str):
-                        if value.lower() in ["null", "none", "nan"]:
+                    # Handle NaN/None/null strings
+                    for key, value in row_update.items():
+                        if value in [None, np.nan]:
                             row_update[key] = None
+                        elif isinstance(value, str):
+                            if value.lower() in ["null", "none", "nan"]:
+                                row_update[key] = None
 
-                # Add hash column if needed
-                if unique_cols:
-                    row_update = _hash_col(row_update, unique_cols)
-                    # Only use hash condition if not explicitly provided
-                    if condition is None and UHASH_COL in row_update:
-                        condition = f'{UHASH_COL}="{row_update[UHASH_COL]}"'
+                    # Add hash column if needed
+                    if unique_cols:
+                        row_update = _hash_col(row_update, unique_cols)
+                        # Only use hash condition if not explicitly provided
+                        if condition is None and UHASH_COL in row_update:
+                            condition = f'{UHASH_COL}="{row_update[UHASH_COL]}"'
 
-                # Build UPDATE query for this row
-                update_query = sqlalchemy.update(sqltable).values(row_update)
-                if condition is not None:
-                    update_query = update_query.where(sqlalchemy.text(condition))
+                    # Build UPDATE query for this row
+                    update_query = sqlalchemy.update(sqltable).values(row_update)
+                    if condition is not None:
+                        update_query = update_query.where(sqlalchemy.text(condition))
 
-                conn.execute(update_query)
+                    conn.execute(update_query)
+        _retry_operation(_execute_set_rows, max_retries=5)
         # make sure all rows are added an dpending connections closed
-        import time
         time.sleep(5)
 
     def delete_rows(self, tablename: Optional[str] = None,
@@ -869,7 +970,7 @@ class AperoDatabase:
         """
         # define the meta data
         metadata = sqlalchemy.MetaData()
-        metadata.reflect(bind=self.engine)
+        _retry_operation(lambda: metadata.reflect(bind=self.engine))
         # get the table name
         if tablename is None:
             tablename = self.tablename
@@ -883,9 +984,11 @@ class AperoDatabase:
         if condition is not None:
             delete_query = delete_query.where(sqlalchemy.text(condition))
         # ---------------------------------------------------------------------
-        # execute the query
-        with self.engine.begin() as conn:
-            conn.execute(delete_query)
+        # execute the query with retry
+        def _execute_delete():
+            with self.engine.begin() as conn:
+                conn.execute(delete_query)
+        _retry_operation(_execute_delete, max_retries=5)
 
     def delete_table(self, tablename: str):
         """
@@ -907,24 +1010,23 @@ class AperoDatabase:
                                       exceptionname='DatabaseError',
                                       exception=func_name)
         # ---------------------------------------------------------------------
-        # check to see if table name exists in database
-        inspector = sqlalchemy.inspect(self.engine)
-        # cannot delete if table does not exist
-        if not inspector.has_table(tablename):
-            return
-        # ---------------------------------------------------------------------
-        # define the meta data
-        metadata = sqlalchemy.MetaData()
-        metadata.reflect(bind=self.engine)
-        # get the table name
-        if tablename is None:
-            tablename = self.tablename
-        # create a table to fill
-        sqltable = sqlalchemy.Table(tablename, metadata)
-        # ---------------------------------------------------------------------
-        # execute the query
-        with self.engine.begin() as _:
-            sqltable.drop(self.engine)
+        # check to see if table name exists in database and delete with retry
+        def _delete_table():
+            inspector = sqlalchemy.inspect(self.engine)
+            # cannot delete if table does not exist
+            if not inspector.has_table(tablename):
+                return
+            # define the meta data
+            metadata = sqlalchemy.MetaData()
+            metadata.reflect(bind=self.engine)
+            # get the table name
+            _tablename = tablename if tablename is not None else self.tablename
+            # create a table to fill
+            sqltable = sqlalchemy.Table(_tablename, metadata)
+            # execute the query
+            with self.engine.begin() as _:
+                sqltable.drop(self.engine)
+        _retry_operation(_delete_table, max_retries=5)
 
     def rename_table(self, old_name: str, new_name: str):
         """
@@ -941,9 +1043,11 @@ class AperoDatabase:
         # noinspection SqlDialectInspection,SqlNoDataSourceInspection
         command = 'ALTER TABLE {} RENAME TO {}'.format(old_name, new_name)
         # ---------------------------------------------------------------------
-        # execute the query
-        with self.engine.begin() as conn:
-            conn.execute(sqlalchemy.text(command))
+        # execute the query with retry
+        def _execute_rename():
+            with self.engine.begin() as conn:
+                conn.execute(sqlalchemy.text(command))
+        _retry_operation(_execute_rename, max_retries=5)
         # ---------------------------------------------------------------------
         # if old_name is the current tablename then change it the new_name
         if old_name == self.tablename:
@@ -962,7 +1066,7 @@ class AperoDatabase:
         """
         # define the meta data
         metadata = sqlalchemy.MetaData()
-        metadata.reflect(bind=self.engine)
+        _retry_operation(lambda: metadata.reflect(bind=self.engine))
         # get the table name
         if tablename is None:
             tablename = self.tablename
@@ -1013,21 +1117,23 @@ class AperoDatabase:
         if len(unique_cols) > 0:
             dataframe = _hash_df(dataframe, unique_cols)
         # ---------------------------------------------------------------------
-        # try to add pandas dataframe to table
-        with self.engine.begin() as conn:
-            try:
-                dataframe.to_sql(tablename, conn, if_exists=if_exists,
-                                 index=index)
-            except Exception as e:
-                # log error: Pandas.to_sql
-                ecode = '00-002-00047'
-                emsg = drs_base.BETEXT[ecode]
-                eargs = [type(e), str(e), func_name, self.url, tablename,
-                         func_name]
-                # log base error
-                raise drs_base.base_error(ecode, emsg, 'error', args=eargs,
-                                          exceptionname='AperoDatabaseError',
-                                          exception=AperoDatabaseError)
+        # try to add pandas dataframe to table with retry
+        def _execute_add_from_pandas():
+            with self.engine.begin() as conn:
+                try:
+                    dataframe.to_sql(tablename, conn, if_exists=if_exists,
+                                     index=index)
+                except Exception as e:
+                    # log error: Pandas.to_sql
+                    ecode = '00-002-00047'
+                    emsg = drs_base.BETEXT[ecode]
+                    eargs = [type(e), str(e), func_name, self.url, tablename,
+                             func_name]
+                    # log base error
+                    raise drs_base.base_error(ecode, emsg, 'error', args=eargs,
+                                              exceptionname='AperoDatabaseError',
+                                              exception=AperoDatabaseError)
+        _retry_operation(_execute_add_from_pandas, max_retries=5)
 
     def backup(self):
         """
@@ -1065,7 +1171,7 @@ class AperoDatabase:
         self.delete_table(self.tablename)
         # define the meta data
         metadata = sqlalchemy.MetaData()
-        metadata.reflect(bind=self.engine)
+        _retry_operation(lambda: metadata.reflect(bind=self.engine))
         # create a new table like the original table
         old_table = sqlalchemy.Table(old_database.tablename, metadata,
                                      autoload=True)
@@ -1073,15 +1179,17 @@ class AperoDatabase:
         new_table.metadata = metadata
         # create table
         metadata.create_all(self.engine)
-        # copy data from old table to new table
-        with self.engine.begin() as conn:
-            conn.execute(new_table.insert().from_select('*', old_table.select()))
+        # copy data from old table to new table with retry
+        def _execute_copy():
+            with self.engine.begin() as conn:
+                conn.execute(new_table.insert().from_select('*', old_table.select()))
+        _retry_operation(_execute_copy, max_retries=5)
 
     def replace_paths(self, oldpath: str, newpath: str, colname: str):
         # TODO: Test this (from 0.7.289) - UNTESTED
         # define the meta data
         metadata = sqlalchemy.MetaData()
-        metadata.reflect(bind=self.engine)
+        _retry_operation(lambda: metadata.reflect(bind=self.engine))
         # create a new table like the original table
         table = sqlalchemy.Table(self.tablename, metadata, autoload=True)
         # set up the update dictionary
@@ -1090,9 +1198,11 @@ class AperoDatabase:
                           .corresponding_column.with_variant(newpath, type_=None))
         # create the update statement
         update_cmd = sqlalchemy.update(table).values(udict)
-        # execute the update
-        with self.engine.begin() as conn:
-            conn.execute(update_cmd.where(table.c[colname].like(f'{oldpath}%')))
+        # execute the update with retry
+        def _execute_replace_paths():
+            with self.engine.begin() as conn:
+                conn.execute(update_cmd.where(table.c[colname].like(f'{oldpath}%')))
+        _retry_operation(_execute_replace_paths, max_retries=5)
 
     # -------------------------------------------------------------------------
     # Private Methods
@@ -1109,10 +1219,11 @@ class AperoDatabase:
         func_name = '{0}.{1}.{2}()'.format(__NAME__, self.classname,
                                            '_infer_table_')
         # ---------------------------------------------------------------------
-        # use an inspector to get a list of table names
-        inspector = sqlalchemy.inspect(self.engine)
-        # get the table names
-        table_names = inspector.get_table_names()
+        # use an inspector to get a list of table names with retry
+        def _get_table_names():
+            inspector = sqlalchemy.inspect(self.engine)
+            return inspector.get_table_names()
+        table_names = _retry_operation(_get_table_names, max_retries=5)
         # ---------------------------------------------------------------------
         # if we have a tablename set the return this
         if self.tablename is not None:
@@ -1164,11 +1275,14 @@ class AperoDatabase:
         # get tablename
         if tablename is None:
             tablename = self._infer_table_()
-        # define an inspector
-        inspector = sqlalchemy.inspect(self.engine)
+        # define an inspector and get unique constraints with retry
+        def _get_unique_constraints():
+            inspector = sqlalchemy.inspect(self.engine)
+            return inspector.get_unique_constraints(tablename)
+        unique_constraints = _retry_operation(_get_unique_constraints, max_retries=5)
         # find all unique columns
         unique_cols = set()
-        for _entry in inspector.get_unique_constraints(tablename):
+        for _entry in unique_constraints:
             for _col in _entry['column_names']:
                 # do not have uhash column to unique columns
                 if _col == UHASH_COL:

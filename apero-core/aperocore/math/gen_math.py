@@ -1466,6 +1466,99 @@ def val_cheby(coeffs: np.ndarray, xvector: Union[np.ndarray, int, float],
     return yvector
 
 
+def covariance_vs_distance(xvector: np.ndarray, yvector: np.ndarray,
+                           distances: np.ndarray,
+                           dx_tol: float = None):
+    """
+    Compute covariance of y as a function of distance in x for non-uniformly
+    sampled data.
+
+    This computes an autocorrelation-like function by binning point pairs by
+    their x-distance separation and computing the covariance for each bin.
+
+    Parameters:
+    -----------
+    x : array-like
+        X coordinates (non-uniform sampling)
+    y : array-like
+        Y coordinates
+    xp : array-like
+        Grid of distances in x to compute covariance at
+    dx_tol : float, optional
+        Tolerance for distance matching. If None, uses half the median
+        spacing in xp
+
+    Returns:
+    --------
+    xp : array
+        Grid of distances (same as input)
+    cov_vals : array
+        Covariance values at each distance in xp
+    n_pairs : array
+        Number of point pairs in each distance bin
+    """
+    # copy arrays to avoid modifying inputs
+    xvector = np.asarray(xvector)
+    yvector = np.asarray(yvector)
+    distances = np.asarray(distances)
+
+    # Remove NaN values from x and y
+    valid = np.isfinite(xvector) & np.isfinite(yvector)
+    xvector = xvector[valid]
+    yvector = yvector[valid]
+
+    # Mean subtraction for covariance computation
+    y_mean = np.mean(yvector)
+    y_centered = yvector - y_mean
+
+    if dx_tol is None:
+        # Use half the median spacing as tolerance
+        dx_tol = np.median(np.diff(np.sort(distances))) / 2
+
+    # Maximum distance we care about - only compute pairs up to this distance
+    max_dist = np.max(distances) + dx_tol
+
+    # Sort by x coordinate for efficient distance cutoff
+    sort_idx = np.argsort(xvector)
+    x_sorted = xvector[sort_idx]
+    y_centered_sorted = y_centered[sort_idx]
+
+    cov_vals = np.zeros(len(distances))
+    n_pairs = np.zeros(len(distances), dtype=int)
+
+    # Loop with progress bar - only compute pairs up to max_dist
+    for it in range(len(x_sorted)):
+        # Find upper limit: where distance exceeds max_dist
+        j_end = np.searchsorted(x_sorted, x_sorted[it] + max_dist, side='right')
+        # start one pixel after i to avoid double counting
+        j_start = it + 1
+        # only proceed if there are points within max_dist
+        if j_start < j_end:
+            # Vectorized distance computation for nearby points only
+            dx = x_sorted[j_start:j_end] - x_sorted[it]
+            y_prod = y_centered_sorted[it] * y_centered_sorted[j_start:j_end]
+
+            # Find closest bin for each distance (vectorized)
+            bin_idx = np.argmin(np.abs(distances[:, np.newaxis] - dx), axis=0)
+
+            # Check which ones are within tolerance
+            within_tol = np.abs(distances[bin_idx] - dx) <= dx_tol
+
+            # Accumulate only those within tolerance
+            valid_bins = bin_idx[within_tol]
+            valid_prods = y_prod[within_tol]
+
+            np.add.at(cov_vals, valid_bins, valid_prods)
+            np.add.at(n_pairs, valid_bins, 1)
+
+    # Normalize by number of pairs
+    valid = n_pairs > 0
+    cov_vals[valid] /= n_pairs[valid]
+    cov_vals[~valid] = np.nan
+
+    return distances, cov_vals, n_pairs
+
+
 # =============================================================================
 # Start of code
 # =============================================================================

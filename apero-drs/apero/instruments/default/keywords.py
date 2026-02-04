@@ -1545,6 +1545,11 @@ KDict.add('KW_WFP_WIDTH', key='NULL', dtype=float, source=__NAME__,
 KDict.add('KW_WFP_STEP', key='NULL', dtype=float, source=__NAME__,
           description='Step for the wave FP file CCF')
 
+# Size of the slinky e-width used (calculated in wave_ref)
+KDict.add('KW_SLINKY_EW', key='NULL', dtype=float, source=__NAME__,
+          description=('Size of the slinky e-width used '
+                       '(calculated in wave_ref)'))
+
 # The sigdet used for FP file CCF
 KDict.add('KW_WFP_SIGDET', key='NULL', dtype=float, source=__NAME__,
           description='The sigdet used for FP file CCF')

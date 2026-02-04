@@ -22,6 +22,8 @@ calculate_polyvals = gen_math.calculate_polyvals
 
 centered_super_gauss = gauss.centered_super_gauss
 
+covariance_vs_distance = gen_math.covariance_vs_distance
+
 cal_med_abs_dev = gen_math.cal_med_abs_dev
 
 ea_airy_function = gen_math.ea_airy_function
@@ -53,6 +55,8 @@ gauss_beta_function = gauss.gauss_beta_function
 gauss_fit_s = gauss.gauss_fit_s
 
 gaussian_slope = gauss.gaussian_slope
+
+gauss_floor = gauss.gauss_floor
 
 get_magic_grid = gen_math.get_magic_grid
 

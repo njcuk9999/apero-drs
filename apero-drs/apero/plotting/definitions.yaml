@@ -360,6 +360,22 @@ SUM_WAVE_FIBER_COMP:
   figsize:
   - 16
   - 10
+WAVE_SLINKY_EW_COV:
+    kind: debug
+    func: plot_functions.plot_wave_slinky_ew_cov
+    dpi: 100
+    description: E-width fit for slinky calculation
+    figsize:
+    - 6.4
+    - 4.8
+WAVE_SLINKY_FIT:
+    kind: debug
+    func: plot_functions.plot_wave_slinky_fit
+    dpi: 100
+    description: Slink correction for wavelength solution
+    figsize:
+    - 6.4
+    - 4.8
 WAVE_HC_GUESS:
   kind: debug
   func: plot_functions.plot_wave_hc_guess

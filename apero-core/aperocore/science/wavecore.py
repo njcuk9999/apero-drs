@@ -114,6 +114,114 @@ def wave_to_wave(spectrum, wave1, wave2, reshape=False, splinek=5):
     return output_spectrum
 
 
+def slinky_ewidth(wavegrid: np.ndarray, velocity_shifts: np.ndarray
+                  ) -> Tuple[float, np.ndarray, Tuple[np.ndarray, np.ndarray]]:
+    """
+    Compute the e-width of the covariance of velocity shifts as a function of
+    wavelength distance
+
+    This tells us how correlated the velocity shifts are at different
+    wavelength separations
+
+    :param wavegrid: The wavelength grid in microns
+    :param velocity_shifts: The velocity shifts at each wavelength point in
+                            m/s
+
+    :return: tuple, 1. The e-width in km/s, the fit parameters and the
+             covariance vs distance data
+             2. popt: The fit parameters of the Gaussian
+             3. cov_dv: The covariance vs distance data (gridx, gridy)
+    """
+    func_name = f'{__NAME__}.slinky_ewidth()'
+    # define a grid for the covariance vs distance
+    space_cov_dv = np.linspace(0, 2, 100) ** 2
+    # mask out values that are too small (less than the smallest
+    # wavelength step)
+    too_small = np.nanmedian(np.diff(wavegrid)) > space_cov_dv
+    space_cov_dv = space_cov_dv[~too_small]
+    # compute covariance vs distance
+    cov_dv = mp.covariance_vs_distance(wavegrid, velocity_shifts, space_cov_dv)
+
+    # in pcov, we force the zero point to zero and center to zero, we only
+    # fit amplitude and sigma
+    # Fit Gaussian to measured covariance with constraint that sigma
+    # must be positive
+    try:
+        # noinspection PyTupleAssignmentBalance
+        popt, pcov = curve_fit(mp.gauss_floor,
+                               xdata=cov_dv[0], ydata=cov_dv[1],
+                               p0=[np.nanmax(cov_dv[1]), 1.0],
+                               bounds=([0, 0], [np.inf, np.inf]))
+    except RuntimeError:
+        emsg = ('Could not fit Gaussian to covariance data '
+                '\n\tFunction = {0}')
+        eargs = [func_name]
+        raise AperoCodedException(None, None, message=emsg.format(*eargs),
+                                  targs=eargs)
+
+    # Convert sigma to e-width (characteristic width of correlation)
+    ew_cov = popt[1] / np.sqrt(2)
+
+    # return e-width
+    return ew_cov, popt, cov_dv
+
+
+def slinky_fit(xvector: np.ndarray, yvector: np.ndarray, yerr: np.ndarray,
+               wslinky: float = 1e-1) -> Tuple[np.ndarray, np.ndarray]:
+    """
+    Project data points onto a regular grid using a Gaussian weight.
+
+    :param x: The x values for which we have data and errors
+    :param y: The y values for which we have data and errors
+    :param yerr: The error on y
+    :param wslinky: The e-width of the Gaussian kernel
+    :param xmin: The starting point of the grid
+    :param xmax: The end point of the grid
+    :param npts: The number of points in the grid
+    :return: The x and y values of the grid at which we have projected the data
+    """
+    # make sure we have no infinite values, nans and y uncertainties are
+    # all positive
+    valid = np.isfinite(xvector) & np.isfinite(yvector)
+    valid &= np.isfinite(yerr) & (yerr > 0)
+    # apply the valid mask
+    xvector = np.array(xvector)[valid]
+    yvector = np.array(yvector)[valid]
+    yerr = np.array(yerr)[valid]
+    # get the min and max of the x vector
+    xmin = np.min(xvector)
+    xmax = np.max(xvector)
+    # the caracterisic length is the FWHM/2.355, we want >3 points per FWHM
+    # so by using 2*wslinky, we have ~3.5 points per FWHM
+    npts = int( 2*(xmax - xmin) / wslinky )
+    # Create a grid of x values
+    grid_x = np.linspace(xmin, xmax, npts)
+    # Initialize weights and y values for the grid
+    weights = np.full(npts, 1e-12)
+    grid_y = np.zeros(npts)
+    # pre-compute ratios of the x grid and original x vector to e-width
+    xvbis = grid_x / wslinky
+    xbis = xvector / wslinky
+    # Loop over each data point
+    for it in range(len(xvector)):
+        # Calculate the distance between the grid points and the data point
+        dd = xvbis - xbis[it]
+        # only keep those within 10 e-widths
+        good = np.abs(dd) < 10
+        # mask the original distance
+        dd2 = dd[good]
+        # Calculate the weight of the data point
+        weight2 = np.exp(-0.5 * dd2 ** 2) / yerr[it] ** 2
+        # Add the weight to the grid weights
+        weights[good] += weight2
+        # Add the weighted y value to the grid y values
+        grid_y[good] += weight2 * yvector[it]
+    # Normalize the y values by the weights
+    grid_y /= weights
+    # return the grid x and y values
+    return grid_x, grid_y
+
+
 # =============================================================================
 # Start of code
 # =============================================================================

@@ -308,6 +308,19 @@ def gaussian_slope(x: np.ndarray, cen: float, ew: float, depth: float,
     return gauss * (1 - slope * xpix - curv * xpix ** 2) * amp
 
 
+def gauss_floor(x: np.ndarray, a: float, sigma: float):
+    """
+    Gaussian function with zero floor and centered at zero.
+
+    :param x: np.ndarray, the x values
+    :param a: float, the amplitude
+    :param sigma: float, the standard deviation
+
+    :return: the y values for given parameters across x
+    """
+    return a * np.exp(-0.5 * (x  / sigma) ** 2)
+
+
 def centered_super_gauss(x: np.ndarray, fwhm: float, amp: float,
                          expo: float) -> np.ndarray:
     """

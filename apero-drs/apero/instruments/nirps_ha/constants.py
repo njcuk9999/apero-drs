@@ -2293,6 +2293,12 @@ CDict.set('WAVE_WL_CAV', value=True, source=__NAME__, group=cgroup)
 # turn on the wave diff HC histograms plot
 CDict.set('WAVE_HC_DIFF_HIST', value=True, source=__NAME__, group=cgroup)
 
+# turn on the wave slinky e-width plot
+CDict.set('WAVE_SLINKY_EW_COV', value=True, source=__NAME__, group=cgroup)
+
+# turn on the wave slinky fit plot
+CDict.set('WAVE_SLINKY_FIT', value=True, source=__NAME__, group=cgroup)
+
 # turn on the wave lines hc/fp expected vs measured debug plot
 # (will plot once for hc once for fp)
 CDict.set('WAVEREF_EXPECTED', value=True, source=__NAME__, group=cgroup)

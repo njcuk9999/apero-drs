@@ -5124,6 +5124,16 @@ CDict.add('WAVE_HC_DIFF_HIST', value=False,
           active=False, group=cgroup,
           description='turn on the wave diff HC histograms plot')
 
+# turn on the wave slinky e-width plot
+CDict.add('WAVE_SLINKY_EW_COV', value=False, dtype=bool,
+          source=__NAME__, user=True, active=False, group=cgroup,
+          description='turn on the wave slinky e-width plot')
+
+# turn on the wave slinky fit plot
+CDict.add('WAVE_SLINKY_FIT', value=False, dtype=bool,
+          source=__NAME__, user=True, active=False, group=cgroup,
+          description='turn on the wave slinky fit plot')
+
 # TODO: WAVE plots need sorting
 
 # turn on the wave solution hc guess debug plot (in loop)

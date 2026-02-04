@@ -536,17 +536,78 @@ def legend_no_alpha(legend: Any):
     """
     Remove an transparency from the legend lines
     
-    :param legend: matplotlib legend instance
-     
+    :param legend: matplotlib legend instance (or similar)
+
     :return: None, updates legend instance
     """
-    for handle in legend.legendHandles:
-        if hasattr(handle, 'set_alpha'):
-            handle.set_alpha(1)
-        if hasattr(handle, '_legmarker'):
-            legmarker = getattr(handle, '_legmarker')
-            if hasattr(legmarker, 'set_alpha'):
-                legmarker.set_alpha(1)
+    # Guard: nothing to do
+    if legend is None:
+        return
+
+    # Try several ways to get legend handles in a robust way
+    handles = None
+    # Common attribute used in some matplotlib versions/examples
+    if hasattr(legend, 'legendHandles'):
+        try:
+            handles = legend.legendHandles
+        except Exception:
+            handles = None
+    # Alternative attribute name
+    if handles is None and hasattr(legend, 'legend_handles'):
+        try:
+            handles = legend.legend_handles
+        except Exception:
+            handles = None
+    # Try using public getter methods
+    if handles is None:
+        got = []
+        try:
+            if hasattr(legend, 'get_patches'):
+                got.extend(list(legend.get_patches()))
+        except Exception:
+            pass
+        try:
+            if hasattr(legend, 'get_lines'):
+                got.extend(list(legend.get_lines()))
+        except Exception:
+            pass
+        if got:
+            handles = got
+    # Fallback: inspect children and select those that look like artists
+    if handles is None:
+        try:
+            children = getattr(legend, 'get_children', lambda: [])()
+            handles = [c for c in children if hasattr(c, 'set_alpha')]
+        except Exception:
+            handles = None
+
+    # If still nothing, give up silently
+    if not handles:
+        return
+
+    # Ensure handles is iterable
+    if not isinstance(handles, (list, tuple)):
+        try:
+            handles = list(handles)
+        except Exception:
+            handles = [handles]
+
+    # Set alpha to fully opaque where possible
+    for handle in handles:
+        try:
+            if hasattr(handle, 'set_alpha'):
+                handle.set_alpha(1)
+        except Exception:
+            # ignore any artist that fails
+            pass
+        # Some legend handles have an associated marker stored in _legmarker
+        try:
+            if hasattr(handle, '_legmarker'):
+                legmarker = getattr(handle, '_legmarker')
+                if hasattr(legmarker, 'set_alpha'):
+                    legmarker.set_alpha(1)
+        except Exception:
+            pass
 
 
 def add_grid(frame: Any):
@@ -2295,8 +2356,10 @@ def plot_wave_fiber_comparison(plotter: Plotter, graph: Graph,
     # get number of orders and fibers
     nbo = reference['NBO']
     fibers = list(solutions.keys())
-    # get reference values
-    m_coeffs = reference['COEFFS']
+    # get the reference fit
+    m_wavegrid = reference['WAVEGRID']
+    nbxpix = reference['NBPIX']
+    xpix = np.arange(nbxpix)
     # ------------------------------------------------------------------
     # get order generator
     if order is None:
@@ -2308,6 +2371,8 @@ def plot_wave_fiber_comparison(plotter: Plotter, graph: Graph,
     # ------------------------------------------------------------------
     # loop around orders
     for order_num in order_gen:
+        # get the reference spline for this order
+        spline1 = mp.iuv_spline(xpix, m_wavegrid[order_num], k=3)
         # ------------------------------------------------------------------
         # set up plot
         fig, frames = graph.set_figure(plotter, nrows=1, ncols=len(fibers))
@@ -2318,17 +2383,16 @@ def plot_wave_fiber_comparison(plotter: Plotter, graph: Graph,
             r_waveref = rfpl['WAVE_REF']
             r_pixel = rfpl['PIXEL_MEAS']
             r_order = rfpl['ORDER']
-            r_coeffs = solutions[fiber]['COEFFS']
-            domain = [0, solutions[fiber]['NBPIX']]
+            r_wavegrid = solutions[fiber]['WAVEGRID']
+            # get the spline for this fiber
+            spline2 = mp.iuv_spline(xpix, r_wavegrid[order_num], k=3)
             # get the order mask
             good = (r_order == order_num) & np.isfinite(r_pixel)
             # get the x values for the graph
             xvals = r_waveref[good]
             # get the line fit values
-            fit1 = mp.val_cheby(m_coeffs[order_num], r_pixel[good],
-                                domain=domain)
-            fit2 = mp.val_cheby(r_coeffs[order_num], r_pixel[good],
-                                domain=domain)
+            fit1 = spline1(r_pixel[good])
+            fit2 = spline2(r_pixel[good])
             # get the y values
             y1vals = speed_of_light * (1 - r_waveref[good] / fit1)
             y2vals = speed_of_light * (1 - r_waveref[good] / fit2)
@@ -2349,6 +2413,98 @@ def plot_wave_fiber_comparison(plotter: Plotter, graph: Graph,
         # wrap up using plotter
         plotter.plotend(graph)
 
+
+def plot_wave_slinky_ew_cov(plotter: Plotter, graph: Graph,
+                            kwargs: Dict[str, Any]):
+
+    """
+    Graph: Wave solution fiber comparison plot
+
+    :param plotter: core.plotting.Plotter instance
+    :param graph: Graph instance
+    :param kwargs: keyword arguments to get plotting parameters from
+
+    :return: None, plots this plot
+    """
+    # ------------------------------------------------------------------
+    # start the plotting process
+    if not plotter.plotstart(graph):
+        return
+    # ------------------------------------------------------------------
+    # get the arguments from kwargs
+    gridx = kwargs['gridx']
+    gridy = kwargs['gridy']
+    coeffs = kwargs['coeffs']
+    ew_cov = kwargs['ew_cov']
+    fiber = kwargs['fiber']
+    # ------------------------------------------------------------------
+    # set up plot
+    fig, frame = graph.set_figure(plotter, nrows=1, ncols=1)
+    # Plot covariance and fitted Gaussian
+    frame.plot(gridx, gridy, '.', label='Covariance')
+    frame.plot(gridx, mp.gauss_floor(gridx, *coeffs), '-', label='Gaussian Fit')
+    frame.set_xlabel('Wavelength Distance (nm)')
+    frame.set_ylabel('Covariance of Delta V (m/s)^2')
+    frame.set_title('Covariance of Delta V vs Wavelength Distance. '
+                    'EW Scale Length = {0:.2f} Fiber {1}'
+                    ''.format(ew_cov, fiber))
+    frame.legend(loc=0)
+    # ------------------------------------------------------------------
+    # update filename (adding order_num to end)
+    suffix = 'fiber{0}'.format(fiber)
+    graph.set_filename(plotter.params, plotter.location, suffix=suffix)
+    # ------------------------------------------------------------------
+    # wrap up using plotter
+    plotter.plotend(graph)
+
+
+def plot_wave_slinky_fit(plotter: Plotter, graph: Graph,
+                         kwargs: Dict[str, Any]):
+    # ------------------------------------------------------------------
+    # start the plotting process
+    if not plotter.plotstart(graph):
+        return
+    # ------------------------------------------------------------------
+    # get the arguments from kwargs
+    wavegrid = kwargs['wavegrid']
+    dv = kwargs['dv']
+    orders = kwargs['orders']
+    slinky = kwargs['slinky']
+    fiber = kwargs['fiber']
+    # Fit splines to smoothed data for fine structure extraction
+    wave_spline = mp.iuv_spline(slinky[0], slinky[1], k=1, ext=0)
+    # Extract fine structure by subtracting smoothed component
+    dv_slinky = dv - wave_spline(wavegrid)
+    # ------------------------------------------------------------------
+    # set up plot
+    fig, frame = graph.set_figure(plotter, nrows=2, ncols=1,
+                                  sharex='all', sharey='all')
+    # Plot covariance and fitted Gaussian
+    for order_num in np.unique(orders):
+        # select just this order
+        sel = orders == order_num
+        # get colour based on order parity
+        if order_num % 2 == 0:
+            color = 'orange'
+        else:
+            color = 'purple'
+        # Panel 1: Original data with smoothing curves
+        frame[0].plot(wavegrid[sel], dv[sel], '.', color=color)
+        frame[0].plot(slinky[0], slinky[1], '-', color='grey', alpha=0.5)
+        # Panel 2: Fine structure from original data
+        frame[1].plot(wavegrid[sel], dv_slinky[sel], '.', color=color)
+    # ------------------------------------------------------------------
+    # set labels and titles
+    frame[0].set(ylabel='Delta V (m/s)',
+                 title='Delta V vs Wavelength. Fiber {0}'.format(fiber))
+    frame[1].set(xlabel='Wavelength [nm]', ylabel='Delta V - Slinky (m/s)')
+    # ------------------------------------------------------------------
+    # update filename (adding order_num to end)
+    suffix = 'fiber{0}'.format(fiber)
+    graph.set_filename(plotter.params, plotter.location, suffix=suffix)
+    # ------------------------------------------------------------------
+    # wrap up using plotter
+    plotter.plotend(graph)
 
 # =============================================================================
 # Define wave plotting functions

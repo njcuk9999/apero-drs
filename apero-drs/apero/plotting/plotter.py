@@ -181,7 +181,8 @@ class Plotter:
             self.recipe.log.set_plot_dir(self.params, self.location)
 
     def __call__(self, name: str, func: Union[Any, None] = None,
-                 fiber: Union[str, None] = None, **kwargs):
+                 fiber: Union[str, None] = None,
+                 _force: bool = False, **kwargs):
         """
         Function used to plot a specific graph (name needs to be defined in
         plot functions), keyword arguments are passed to plotting function
@@ -230,7 +231,9 @@ class Plotter:
         plot_obj = self._get_func(name)
         # ------------------------------------------------------------------
         # deal with debug plots (that should be skipped if PLOT_{NAME} is False)
-        if name in self.plot_switches:
+        if _force:
+            pass
+        elif name in self.plot_switches:
             # do not need to turn off/on summary plots
             if plot_obj.kind in ['summary', 'show']:
                 pass
@@ -242,16 +245,18 @@ class Plotter:
                 return 0
         # do not plot if we are in debug mode and plot = 0 or 1
         if plot_obj.kind == 'debug':
-            if self.plotoption in [0, 1]:
+            if self.plotoption in [0, 1] and not _force:
                 return 0
 
         # deal with show graphs
-        if plot_obj.kind == 'show':
+        if plot_obj.kind == 'show' or _force:
             self._get_matplotlib(force=True)
 
         # ------------------------------------------------------------------
         # must be in plot lists (unless recipe is not defined)
-        if self.recipe is None:
+        if _force:
+            pass
+        elif self.recipe is None:
             # log: plotting debug plot
             WLOG(self.params, '', textentry('40-100-00007', args=[name]))
         elif name in self.recipe.debug_plots:

@@ -1294,6 +1294,10 @@ KDict.set('KW_WFP_WIDTH', key='WFPWIDTH', comment='wave sol FP CCF width [km/s]'
 KDict.set('KW_WFP_STEP', key='WFPSTEP', comment='wave sol FP CCF step [km/s]',
           parent='CAL.WAVE.CCF.STEP', group='wave')
 
+# Size of the slinky e-width used (calculated in wave_ref)
+KDict.set('KW_SLINKY_EW', key='WSLKY_EW', comment='slinky e-width used',
+          parent=None, group='wave')
+
 # The sigdet used for FP file CCF
 KDict.set('KW_WFP_SIGDET', key='WFPCSDET', comment='wave sol FP CCF sigdet used',
           parent='CAL.WAVE.CCF.NOISE_SIGDET', group='wave')

@@ -6055,7 +6055,7 @@ langlist.add(item)
 # 10-019-00009 
 # =============================================================================
 item = langlist.create('10-019-00009', kind='warning_2-code')
-item.value['ENG'] = 'Object=\'{0}\' is not a vliad telluric (hot) star.'
+item.value['ENG'] = 'Object=\'{0}\' is not a valid telluric (hot) star.'
 item.arguments = 'None'
 item.comment = 'Means that object was not in telluric whitelist'
 langlist.add(item)

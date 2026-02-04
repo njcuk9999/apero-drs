@@ -44,6 +44,7 @@ from apero.science import velocity
 from apero.science.calib import flat_blaze
 from apero.science.calib import gen_calib
 from apero.instruments import select
+from aperocore.science import wavecore
 
 
 # =============================================================================
@@ -390,6 +391,8 @@ def get_wavesolution(params: ParamDict, recipe: DrsRecipe,
                                   required=False)
     wfp_step = wavefile.get_hkey('KW_WFP_STEP', dtype=float,
                                  required=False)
+    slinky_ew = wavefile.get_hkey('KW_SLINKY_EW', dtype=float,
+                                  has_default=True, default=np.nan)
     # -------------------------------------------------------------------------
     # deal with no target rv
     if wfp_target_rv is None:
@@ -431,11 +434,15 @@ def get_wavesolution(params: ParamDict, recipe: DrsRecipe,
                                                   required=False)
     wprops['ERR_HC_VEL'] = wavefile.get_hkey_1d('KW_WAVE_EMEANHC', dim1=2,
                                                 required=False)
+    # add slinky e-width
+    wprops['SLINKY_EW'] = slinky_ew
+    # -------------------------------------------------------------------------
     # add the wfp keys
     wfp_keys = ['WFP_FILE', 'WFP_DRIFT', 'WFP_FWHM', 'WFP_CONTRAST', 'WFP_MASK',
-                'WFP_LINES', 'WFP_TARG_RV', 'WFP_WIDTH', 'WFP_STEP']
+                'WFP_LINES', 'WFP_TARG_RV', 'WFP_WIDTH', 'WFP_STEP',
+                'SLINKY_EW']
     wfp_values = [wfp_file, wfp_drift, wfp_fwhm, wfp_contrast, wfp_mask,
-                  wfp_lines, wfp_target_rv, wfp_width, wfp_step]
+                  wfp_lines, wfp_target_rv, wfp_width, wfp_step, slinky_ew]
     # add keys accounting for 'None' and blanks
     for wfpi in range(len(wfp_keys)):
         if wfp_values[wfpi] == '' or wfp_values[wfpi] == 'None':
@@ -2012,6 +2019,16 @@ def process_fibers(params: ParamDict, recipe: DrsRecipe,
         skeys = ['HCLINES', 'FPLINES', 'WAVETIME', 'WAVEFILE']
         wprops.set_sources(skeys, func_name)
         # ---------------------------------------------------------------------
+        # Apply slinky correction
+        # ---------------------------------------------------------------------
+        # update wprops with ew slinky correction from ref fiber
+        wprops['SLINKY_EW'] = float(refprops['SLINKY_EW'])
+        wprops.set_source('SLINKY_EW', func_name)
+        # apply slinky correction
+        wprops = apply_slinky_correction(params, recipe, wprops,
+                                         hc_e2ds_file, fp_e2ds_file,
+                                         fiber, ref=False)
+        # ---------------------------------------------------------------------
         # append wave properties to solutions storage
         solutions[fiber] = wprops
     # ----------------------------------------------------------------------
@@ -2366,6 +2383,119 @@ def update_extract_files(params, recipe, extract_file, wprops, extname,
     recipe.add_output_file(s1dv_file)
     # return e2dsff file
     return e2dsff_file
+
+
+def apply_slinky_correction(params: ParamDict, recipe: DrsRecipe,
+                            wprops: ParamDict, hc_e2ds_file: DrsFitsFile,
+                            fp_e2ds_file: DrsFitsFile, fiber: str,
+                            ref: bool = False) -> ParamDict:
+    """
+    Apply slinky correction to wave solution
+
+    Steps are:
+    1. Calculate slinky fit to FP lines
+    2. Apply slinky correction to wavemap
+    3. Update HClines and FPlines accordingly
+    4. Monitor the improvement of the HC lines
+
+    If SLINKY_EW_COV is missing or ref=True then calculate the equivalent width
+    covariance matrix from the FP lines (before step 1)
+
+    :param params: ParamDict, parameter dictionary of constants
+    :param recipe: DrsRecipe instance, the recipe calling this function
+    :param wprops: ParamDict, wave properties to be updated
+    :param hc_e2ds_file: DrsFitsFile, the HC e2ds file
+    :param fp_e2ds_file: DrsFitsFile, the FP e2ds file
+    :param fiber: str, the fiber being processed
+    :param ref: bool, if True this is the reference fiber
+
+    :return: ParamDict, updated wave properties with slinky correction applied
+    """
+    # set function name
+    func_name = f'{__NAME__}.apply_slinky_correction()'
+    # print progress
+    msg = 'Running slinky correction for fiber: {0}'
+    margs = [fiber]
+    WLOG(params, 'info', msg.format(*margs))
+    # get out the relevant properties from wprops
+    wavemap = wprops['WAVEMAP']
+    hclines = wprops['HCLINES']
+    fplines = wprops['FPLINES']
+    ew_cov = wprops['SLINKY_EW']
+    # get the fp wave_ref and wave_meas
+    fp_wave_ref = np.array(fplines['WAVE_REF'])
+    fp_wave_meas = np.array(fplines['WAVE_MEAS'])
+    fp_order_num = np.array(fplines['ORDER'])
+    # -------------------------------------------------------------------------
+    # Calculate velocity shift: dv = (1 - wavelength_ref/wavelength_meas) * c
+    fp_ratio = np.array(fp_wave_ref) / np.array(fp_wave_meas)
+    fp_dv = (1 - fp_ratio) * speed_of_light_ms
+    # set the dv uncertainties to constant for now
+    fp_dv_err = np.repeat(10.0, len(fp_dv))
+    # -------------------------------------------------------------------------
+    # if reference we need to calculate how correlated the velocity shifts
+    # -------------------------------------------------------------------------
+    if ref or not np.isfinite(ew_cov):
+        # calculate the equivalent width covariance
+        ew_cov, popt, cov_dv = wavecore.slinky_ewidth(fp_wave_ref, fp_dv)
+        # plot the covariance
+        recipe.plot('WAVE_SLINKY_EW_COV', gridx=cov_dv[0], gridy=cov_dv[1],
+                    coeffs=popt, ew_cov=ew_cov, fiber=fiber)
+    # -------------------------------------------------------------------------
+    # Step 1: Calculate out slinky correction
+    # -------------------------------------------------------------------------
+    slinky = wavecore.slinky_fit(fp_wave_ref, fp_dv, yerr=fp_dv_err,
+                                 wslinky=ew_cov)
+    # plot the slinky fit
+    recipe.plot('WAVE_SLINKY_FIT', wavegrid=fp_wave_ref, dv=fp_dv,
+                orders=fp_order_num, slinky=slinky, fiber=fiber)
+    # -------------------------------------------------------------------------
+    # Step 2: Apply slinky correction to wavemap
+    # -------------------------------------------------------------------------
+    # take the spline of the slinky fit
+    wave_spline = mp.iuv_spline(slinky[0], slinky[1], k=2, ext=3)
+    # calculate the correction factor
+    wave_corr = (1 - wave_spline(wavemap) / speed_of_light_ms)
+    # apply the correction factor to the wavemap
+    wavemap1 = wavemap * wave_corr
+
+    # -------------------------------------------------------------------------
+    # Step 3: Update HClines and FPlines accordingly
+    # -------------------------------------------------------------------------
+    # generate the hc reference lines
+    hcargs = dict(e2dsfile=hc_e2ds_file, wavemap=wavemap1,
+                  iteration='slinky')
+    hclines1 = calc_wave_lines(params, recipe, **hcargs)
+    # generate the fp reference lines
+    fpargs = dict(e2dsfile=fp_e2ds_file, wavemap=wavemap1,
+                  cavity_poly=wprops['CAVITY'], iteration='slinky')
+    fplines1 = calc_wave_lines(params, recipe, **fpargs)
+
+    # -------------------------------------------------------------------------
+    # Step 4: Monitor the improvement of the FP lines
+    # -------------------------------------------------------------------------
+    fp_frac_before = (1 - fplines['WAVE_MEAS'] / fplines['WAVE_REF'])
+    fp_frac_after = (1 - fplines1['WAVE_MEAS'] / fplines1['WAVE_REF'])
+
+    fp_before = mp.robust_nanstd(fp_frac_before) * speed_of_light_ms
+    fp_after = mp.robust_nanstd(fp_frac_after) * speed_of_light_ms
+    # print improvement
+    msg = ('Slinky correction applied: FP RMS before: {0:.3f} m/s, '
+           'after: {1:.3f} m/s')
+    margs = [fp_before, fp_after]
+    WLOG(params, '', msg.format(*margs))
+    # -------------------------------------------------------------------------
+    # push back into wprops
+    wprops['WAVEMAP'] = wavemap1
+    wprops['HCLINES'] = hclines1
+    wprops['FPLINES'] = fplines1
+    wprops['SLINKY_EW'] = float(ew_cov)
+    # set sources
+    keys = ['WAVEMAP', 'HCLINES', 'FPLINES', 'SLINKY_EW']
+    wprops.set_sources(keys, func_name)
+    # -------------------------------------------------------------------------
+    # return wprops
+    return wprops
 
 
 def generate_resolution_map(params: ParamDict, recipe: DrsRecipe,
@@ -3246,6 +3376,8 @@ def add_wave_keys(infile: DrsFitsFile, props: ParamDict) -> DrsFitsFile:
     infile.add_hkey_1d('KW_WAVE_MEANHC', values=props['SLOPE_HC_VEL'])
     infile.add_hkey_1d('KW_WAVE_EMEANHC', values=props['ERR_HC_VEL'])
     infile.add_hkey('KW_WAVE_POLYT', value=props['WAVE_POLY_TYPE'])
+    # add the slinky key (if it exists)
+    infile.add_hkey('KW_SLINKY_EW', value=props.get('SLINKY_EW', np.nan))
     # return infile
     return infile
 

@@ -304,6 +304,17 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
         wprops.set_sources(skeys, mainname)
 
         # =================================================================
+        # Apply slinky correction
+        # =================================================================
+        # add the slinky equivalent parameters to wprops
+        wprops['SLINKY_EW'] = float(iwprops['SLINKY_EW'])
+        wprops.set_source('SLINKY_EW', mainname)
+        # apply slinky correction
+        wprops = wave.apply_slinky_correction(params, recipe, wprops,
+                                              hc_e2ds_file, fp_e2ds_file,
+                                              ref_fiber, ref=True)
+
+        # =================================================================
         # Calculate resolution map
         # =================================================================
         # log progress: Generating resolution map'
