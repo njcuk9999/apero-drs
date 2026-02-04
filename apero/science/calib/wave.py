@@ -1398,7 +1398,7 @@ def calc_wave_sol(params: ParamDict, recipe: DrsRecipe,
     inst_wavestart = pcheck(params, 'EXT_S1D_WAVESTART', func=func_name)
     inst_waveend = pcheck(params, 'EXT_S1D_WAVEEND', func=func_name)
     # -------------------------------------------------------------------------
-    # setup parameters
+    # setup parameters 
     # -------------------------------------------------------------------------
     # order list
     orders = np.arange(nbo)
