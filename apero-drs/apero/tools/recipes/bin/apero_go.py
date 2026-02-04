@@ -60,6 +60,9 @@ def get_args() -> Dict[str, Any]:
     # add the setup argument
     pargs, pkwargs = rd.go_recipe.proxy_keywordarg('setup')
     parser.add_argument(*pargs, **pkwargs)
+    # add the mysql argument
+    pargs, pkwargs = rd.go_recipe.proxy_keywordarg('mysql')
+    parser.add_argument(*pargs, **pkwargs)
     # loop around block kinds and add arguments
     for block in path_definitions.BLOCKS:
         # add argument

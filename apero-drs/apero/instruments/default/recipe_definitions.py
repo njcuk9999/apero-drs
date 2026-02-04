@@ -399,6 +399,7 @@ go_recipe.instrument = __INSTRUMENT__
 go_recipe.description = textentry('GO_DESCRIPTION')
 go_recipe.recipe_type = 'nolog-tool'
 go_recipe.recipe_kind = 'user'
+# IMPORTANT NOTE: These must be added to apero_go.py - it has a quick load
 go_recipe.set_kwarg(name='--data', dtype='switch',
                     helpstr=textentry('GO_DATA_HELP'))
 go_recipe.set_kwarg(name='--all', dtype='switch',

@@ -2357,7 +2357,7 @@ def plot_wave_fiber_comparison(plotter: Plotter, graph: Graph,
     nbo = reference['NBO']
     fibers = list(solutions.keys())
     # get the reference fit
-    m_wavegrid = reference['WAVEGRID']
+    m_wavegrid = reference['WAVEMAP']
     nbxpix = reference['NBPIX']
     xpix = np.arange(nbxpix)
     # ------------------------------------------------------------------
@@ -2383,7 +2383,7 @@ def plot_wave_fiber_comparison(plotter: Plotter, graph: Graph,
             r_waveref = rfpl['WAVE_REF']
             r_pixel = rfpl['PIXEL_MEAS']
             r_order = rfpl['ORDER']
-            r_wavegrid = solutions[fiber]['WAVEGRID']
+            r_wavegrid = solutions[fiber]['WAVEMAP']
             # get the spline for this fiber
             spline2 = mp.iuv_spline(xpix, r_wavegrid[order_num], k=3)
             # get the order mask
