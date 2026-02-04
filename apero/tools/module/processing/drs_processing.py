@@ -4056,6 +4056,8 @@ def get_non_telluric_stars(params: ParamDict, all_objects: List[str],
     :param tstars:
     :return:
     """
+    # set function name
+    func_name = f'{__NAME__}.get_non_telluric_stars()'
     # add to debug log
     WLOG(params, 'debug', textentry('90-503-00015'))
     # deal with no tstars
@@ -4073,6 +4075,12 @@ def get_non_telluric_stars(params: ParamDict, all_objects: List[str],
     other_objects = []
     # loop around all objects
     for objname in all_objects:
+        # this should happen and should flag a warning with the user
+        if not isinstance(objname, str):
+            wmsg = '{0}: Object name not string: {1}'
+            wargs = [func_name, objname]
+            WLOG(params, 'warning', wmsg.format(*wargs), sublevel=8)
+            continue
         # do not add telluric stars
         if objname not in tstars:
             other_objects.append(objname)
