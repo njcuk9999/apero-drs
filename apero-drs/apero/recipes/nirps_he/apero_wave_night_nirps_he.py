@@ -304,7 +304,7 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
         # Apply slinky correction
         # =================================================================
         # update wprops with ew slinky correction from ref fiber
-        wprops['SLINKY_EW_COV'] = float(iwprops['SLINKY_EW_COV'])
+        wprops['SLINKY_EW'] = float(iwprops['SLINKY_EW'])
         wprops.set_source('SLINK_EW_COV', mainname)
         # apply slinky correction
         wprops = wave.apply_slinky_correction(params, recipe, wprops,
