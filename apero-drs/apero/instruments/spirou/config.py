@@ -118,7 +118,7 @@ CDict.set('OTHER', value='/drs/spirou/data/other', source=__NAME__,
           author='NJC', group=cgroup)
 
 # Define the lbl directory
-CDict.set('LBL', value='/drs/spirou/data/lbl', source=__NAME__,
+CDict.set('LBL', value='/drs/spirou/data/lbldata', source=__NAME__,
           author='NJC', group=cgroup)
 
 # =============================================================================

@@ -158,7 +158,7 @@ CDict.add('OTHER', dtype='path', source=__NAME__,
 
 #   Define the LBL directory
 CDict.add('LBL', dtype='path', source=__NAME__, user=True,
-          active=True, group=cgroup, value='./apero-data/lbl',
+          active=True, group=cgroup, value='./apero-data/lbldata',
           description='Define the LBL directory')
 
 # =============================================================================
