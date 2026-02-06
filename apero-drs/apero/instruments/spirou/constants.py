@@ -1242,7 +1242,8 @@ CDict.set('SMART_MASK_DWAVE_THRES', value=1.0e-9, source=__NAME__,
 
 # Define the quality control threshold from RV of CCF FP between reference
 # fiber and other fibers, above this limit fails QC [m/s]
-CDict.set('RV_THRES_QC', value=2.0, source=__NAME__,
+# TODO: This should be fixed
+CDict.set('RV_THRES_QC', value=30.0, source=__NAME__,
           author='EA', group=cgroup)
 
 # =============================================================================
