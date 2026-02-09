@@ -28,6 +28,7 @@ from apero.utils import drs_recipe
 from aperocore.constants import load_functions
 from aperocore.constants import param_functions
 from aperocore.core import drs_log
+from aperocore.io import drs_io
 
 # =============================================================================
 # Define variables
@@ -308,7 +309,7 @@ def get_prev_data(calib_key_file: str) -> Dict[str, list]:
     # populate from disk if we have it
     if os.path.exists(calib_key_file):
         # read file from disk
-        calib_table = Table.read(calib_key_file)
+        calib_table = drs_io.no_mask_table(Table.read(calib_key_file))
         # make sure if we've added new header keys we unset calib_files
         # (and re-calculate)
         recalculate = False

@@ -13,6 +13,7 @@ from typing import Optional, List, Union
 
 import numpy as np
 from astropy.table import Table
+from aperocore.io import drs_io
 
 
 # =============================================================================
@@ -214,7 +215,7 @@ class MarkDownPage:
             # if we cannot load table don't add csv-table
             # noinspection PyBroadException
             try:
-                table = Table.read(abs_path, format='csv')
+                table = drs_io.no_mask_table(Table.read(abs_path, format='csv'))
                 # check length of table
                 if len(table) == 0:
                     table_has_rows = False

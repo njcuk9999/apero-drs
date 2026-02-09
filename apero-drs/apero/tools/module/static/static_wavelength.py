@@ -66,6 +66,7 @@ from apero.plotting import plot_functions
 from apero.science.calib import wave as wave_mod
 from apero.instruments import select
 from apero.utils import drs_data
+from aperocore.io import drs_io
 
 # =============================================================================
 # Define variables
@@ -365,7 +366,8 @@ def refine_cavity_fit(params: ParamDict, recipe, sparams: Dict[str, Any],
         known_orders.append(order_num)
         # ---------------------------------------------------------------------
         # read the csv file
-        wtbl = Table.read(wave_order_csvfile, format='ascii.csv')
+        wtbl = drs_io.no_mask_table(Table.read(wave_order_csvfile,
+                                               format='ascii.csv'))
         # get the mid-wavelength for this order
         mid_wavelengths.append(np.mean(wtbl['wavelength']))
         # load the pickle file
@@ -959,11 +961,12 @@ def get_hc_model(params: ParamDict, sparams: Dict[str, Any]) -> Table:
     # -------------------------------------------------------------------------
     # if we already have the file don't download again
     if os.path.exists(hc_model_file):
-        return Table.read(hc_model_file)
+        hc_table = drs_io.no_mask_table(Table.read(hc_model_file))
+        return hc_table
     # -------------------------------------------------------------------------
     # deal with vizier-ref being a file on disk
     if os.path.exists(vizier_ref):
-        table = Table.read(vizier_ref)
+        table = drs_io.no_mask_table(Table.read(vizier_ref))
     else:
         # No row limit: get all rows
         Vizier.ROW_LIMIT = -1

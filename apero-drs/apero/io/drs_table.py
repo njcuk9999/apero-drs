@@ -36,6 +36,7 @@ from aperocore import drs_lang
 from aperocore.core import drs_misc
 from aperocore.core import drs_text
 from apero.io import drs_lock
+from aperocore.io import drs_io
 from apero.base import base as apero_base
 
 # =============================================================================
@@ -131,7 +132,7 @@ def make_table(columns: List[str],
         # get value for this iteration
         val = values[c_it]
         # set columns
-        table[col] = val
+        table[col] = np.array(val)
         # if we have formats set format
         if formats[c_it] is not None:
             if drs_text.test_format(formats[c_it]):
@@ -356,7 +357,8 @@ def read_table(params: ParamDict, filename: str, fmt: str,
     # try to load file using astropy table
     try:
         with warnings.catch_warnings(record=True) as _:
-            table = Table.read(filename, format=fmt, **kwargs)
+            table = drs_io.no_mask_table(Table.read(filename,
+                                                    format=fmt, **kwargs))
     except Exception as e:
         eargs = [type(e), e, filename, func_name]
         raise AperoCodedException(params, '01-002-00012', targs=eargs)
@@ -464,7 +466,7 @@ def read_fits_table(params: ParamDict, filename: str,
     # read data
     try:
         with warnings.catch_warnings(record=True) as _:
-            astropy_table = Table.read(filename)
+            astropy_table = drs_io.no_mask_table(Table.read(filename))
     except OSError as e:
         # try to deal with missing card issue
         astropy_table = deal_with_missing_end_card(params, filename, e,

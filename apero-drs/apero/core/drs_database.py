@@ -38,9 +38,9 @@ from apero.base import base as apero_base
 from apero.core import drs_file
 from apero.instruments import select
 from apero.io import drs_fits
-from apero.io import drs_lock
 from apero.io import drs_path
 from aperocore import drs_lang
+from aperocore.io import drs_io
 from aperocore.base import base
 from aperocore.base import drs_base
 from aperocore.constants import load_functions
@@ -3594,7 +3594,8 @@ def get_google_sheet(params: ParamDict, sheet_id: str, worksheet: int = 0,
         while tries < 10:
             # try to open table
             try:
-                table = Table.read(rawdata.text, format='ascii')
+                table = drs_io.no_mask_table(Table.read(rawdata.text,
+                                                        format='ascii'))
                 break
             # if this fails try again (but with a limit
             except InconsistentTableError as _:

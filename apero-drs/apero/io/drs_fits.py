@@ -33,6 +33,7 @@ from astropy.table import Table
 
 from aperocore.base import base
 from aperocore import drs_lang
+from aperocore.io import drs_io
 from aperocore.core import drs_exceptions
 from aperocore.core import drs_misc
 from aperocore.constants import load_functions
@@ -778,12 +779,21 @@ def _read_fitstable(params: ParamDict, filename: Union[Path, str],
                 # double Table(Table.read is to make sure it is definitely
                 #   deep copied)
                 if ext is not None:
-                    data = Table(Table.read(filename, format='fits', hdu=ext))
+
+                    data = drs_io.no_mask_table(Table.read(filename,
+                                                           format='.fits',
+                                                           hdu=ext))
+
+                    data = drs_io.no_mask_table(Table.read(filename,
+                                                           format='fits',
+                                                           hdu=ext))
                 elif extname is not None:
-                    data = Table(Table.read(filename, format='fits',
-                                            hdu=extname))
+                    data = drs_io.no_mask_table(Table.read(filename,
+                                                           format='fits',
+                                                           hdu=extname))
                 else:
-                    data = Table(Table.read(filename, format='fits'))
+                    data = drs_io.no_mask_table(Table.read(filename,
+                                                           format='fits'))
         except Exception as e:
             string_trackback = traceback.format_exc()
             eargs = [filename, ext, type(e)]

@@ -32,6 +32,7 @@ from aperocore.constants import load_functions
 from aperocore.constants import param_functions
 from aperocore.core import drs_log
 from aperocore.core import drs_text
+from aperocore.io import drs_io
 
 # =============================================================================
 # Define variables
@@ -645,7 +646,7 @@ def post_drs_post_s(params: ParamDict, filename: str, identity: str = ''):
     # get the header
     header = fits.getheader(filename, extname='UniformVelocity'.format(fiber))
     # get the data for this plot
-    table = Table.read(filename, hdu='UniformVelocity')
+    table = drs_io.no_mask_table(Table.read(filename, hdu='UniformVelocity'))
     # get columns from table
     wave = np.array(table['Wave'])
     spectrum = np.array(table['Flux{0}'.format(fiber)])
@@ -722,7 +723,7 @@ def post_drs_post_v(params: ParamDict, filename: str, identity: str = ''):
     # number of orders from header
     n_orders = header[params['KW_CCF_NMAX'][0]]
     # get the data for this plot
-    table = Table.read(filename, hdu='CCF')
+    table = drs_io.no_mask_table(Table.read(filename, hdu='CCF'))
     # set up dataset
     ccf_props = dict()
     # push columns from table into ccf_props
@@ -804,7 +805,7 @@ def red_tellu_temp_s1dv(params: ParamDict, filename: str, identity: str = ''):
     # get the object name
     objname = header.get(params['KW_OBJNAME'][0], 'Unknown')
     # get table
-    table = Table.read(filename, hdu='TELLU_TEMP_S1DV')
+    table = drs_io.no_mask_table(Table.read(filename, hdu='TELLU_TEMP_S1DV'))
     # get the data for this plot
     wave = np.array(table['wavelength'])
     flux = np.array(table['flux'])
@@ -832,7 +833,7 @@ def red_tellu_temp_s1dw(params: ParamDict, filename: str, identity: str = ''):
     # get the object name
     objname = header.get(params['KW_OBJNAME'][0], 'Unknown')
     # get table
-    table = Table.read(filename, hdu='TELLU_TEMP_S1DW')
+    table = drs_io.no_mask_table(Table.read(filename, hdu='TELLU_TEMP_S1DW'))
     # get the data for this plot
     wave = np.array(table['wavelength'])
     flux = np.array(table['flux'])
@@ -864,32 +865,43 @@ def lbl_rdb(params: ParamDict, filename: str, identity: str = ''):
         # deal with identity
         objname_template = basename.removeprefix('lbl_').removesuffix('.rdb')
         # load rdb file
-        rdb_table = Table.read(filename, format='ascii.rdb', fast_reader=False)
+        rdb_table = drs_io.no_mask_table(Table.read(filename,
+                                                    format='ascii.rdb',
+                                                    fast_reader=False))
     elif identity == 'LBL_RDB2':
         # deal with identity
         objname_template = basename.removeprefix('lbl2_').removesuffix('.rdb')
         # load rdb file
-        rdb_table = Table.read(filename, format='ascii.rdb', fast_reader=False)
+        rdb_table = drs_io.no_mask_table(Table.read(filename,
+                                                    format='ascii.rdb',
+                                                    fast_reader=False))
     elif identity == 'LBL_DRIFT':
         # deal with identity
         objname_template = 'DRIFT'
         # load rdb file
-        rdb_table = Table.read(filename, format='ascii.rdb', fast_reader=False)
+        rdb_table = drs_io.no_mask_table(Table.read(filename,
+                                                    format='ascii.rdb',
+                                                    fast_reader=False))
     elif identity == 'LBL_RDB_DRIFT':
         # deal with identity
         objname_template = basename.removeprefix('lbl_').removesuffix('_drift.rdb')
         # load rdb file
-        rdb_table = Table.read(filename, format='ascii.rdb', fast_reader=False)
+        rdb_table = drs_io.no_mask_table(Table.read(filename,
+                                                    format='ascii.rdb',
+                                                    fast_reader=False))
     elif identity == 'LBL_RDB2_DRIFT':
         # deal with identity
         objname_template = basename.removeprefix('lbl2_').removesuffix('_drift.rdb')
         # load rdb file
-        rdb_table = Table.read(filename, format='ascii.rdb', fast_reader=False)
+        rdb_table = drs_io.no_mask_table(Table.read(filename,
+                                                    format='ascii.rdb',
+                                                    fast_reader=False))
     elif identity == 'LBL_RDB_FITS':
         # deal with identity
         objname_template = basename.removeprefix('lbl_').removesuffix('.fits')
         # load fits file
-        rdb_table = Table.read(filename, format='fits', hdu='RDB')
+        rdb_table = drs_io.no_mask_table(Table.read(filename, format='fits',
+                                                    hdu='RDB'))
         #
         header = fits.getheader(filename, ext='RDB')
     else:
@@ -912,7 +924,7 @@ def lbl_fits(params: ParamDict, filename: str, identity: str = ''):
     # get the header
     header = fits.getheader(filename)
     # load rdb table from fits
-    fits_table = Table.read(filename)
+    fits_table = drs_io.no_mask_table(Table.read(filename))
     # ----------------------------------------------------------------------
     # get fiber
     fiber = get_main_fiber()

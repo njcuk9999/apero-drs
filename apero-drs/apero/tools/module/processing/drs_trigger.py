@@ -28,6 +28,7 @@ from apero.utils import drs_startup
 from apero.tools.module.processing import drs_processing
 from apero.tools.recipes.bin import apero_processing
 from apero.base import base as apero_base
+from aperocore.io import drs_io
 
 # =============================================================================
 # Define variables
@@ -401,7 +402,7 @@ class Trigger:
         sdict = dict()
         # if we have a table on disk load it here
         if os.path.exists(self.triggr_table):
-            table = Table.read(self.triggr_table)
+            table = drs_io.no_mask_table(Table.read(self.triggr_table))
             # loop around obs dirs
             for pos, obs_dir in enumerate(table['OBS_DIR']):
                 done_calib = bool(table['DONE_CALIB'][pos])

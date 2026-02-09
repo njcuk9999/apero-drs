@@ -32,6 +32,7 @@ from apero.tools.module.documentation import drs_markdown
 from apero.tools.module.error import error_html
 from apero.base import base as apero_base
 from apero.base.base import TQDM as tqdm
+from aperocore.io import drs_io
 
 # =============================================================================
 # Define variables
@@ -281,8 +282,8 @@ def make_obs_table(params: ParamDict, object_classes: Dict) -> TableFile:
         if not os.path.exists(ts_tablepath):
             continue
         # load the table
-        ts_table = Table.read(ts_tablepath, format='ascii')
-
+        ts_table = drs_io.no_mask_table(Table.read(ts_tablepath,
+                                                   format='ascii'))
         # get the sections references
         object_section_ref = f'object_{ari_user}_objpage_{objname}'
         spectrum_section_ref = f'spectrum_{ari_user}_objpage_{objname}'

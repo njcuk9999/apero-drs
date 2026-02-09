@@ -30,6 +30,7 @@ from aperocore.constants import param_functions
 from aperocore import drs_lang
 from aperocore.core import drs_log
 from apero.base import base as apero_base
+from aperocore.io import drs_io
 
 # =============================================================================
 # Define variables
@@ -885,7 +886,8 @@ def debug_tcorr_map_plot(debug_props: Dict[str, Any], plot_path: str,
     # -------------------------------------------------------------------------
     # load the first file as reference
     try:
-        ref_table = Table.read(sc1d_files[0], 'SC1D_V_FILE')
+        ref_table = drs_io.no_mask_table(Table.read(sc1d_files[0],
+                                                    'SC1D_V_FILE'))
     except Exception as e:
         emsg = 'Cannot open ref_table: {0}\n\tFunc = {1}\n\t{2}:{3}'
         eargs = [sc1d_files[0], func_name, type(e), str(e)]
@@ -916,7 +918,8 @@ def debug_tcorr_map_plot(debug_props: Dict[str, Any], plot_path: str,
             continue
         # open the sc1d file
         try:
-            it_table = Table.read(sc1d_file, 'SC1D_V_FILE')
+            it_table = drs_io.no_mask_table(Table.read(sc1d_file,
+                                                       'SC1D_V_FILE'))
             # get the header
             it_hdr = fits.getheader(sc1d_file)
         except Exception as e:
@@ -965,7 +968,8 @@ def debug_tcorr_map_plot(debug_props: Dict[str, Any], plot_path: str,
     else:
         # get last s1d
         try:
-            tmp_table = Table.read(tmp_s1d[-1], 'TELLU_TEMP_S1DV')
+            tmp_table = drs_io.no_mask_table(Table.read(tmp_s1d[-1],
+                                                        'TELLU_TEMP_S1DV'))
         except Exception as e:
             emsg = 'Cannot open tmp_s1d[-1]: {0}\n\tFunc = {1}\n\t{2}:{3}'
             eargs = [tmp_s1d[-1], func_name, type(e), str(e)]

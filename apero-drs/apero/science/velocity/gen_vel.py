@@ -29,6 +29,7 @@ from apero.core import drs_file
 from aperocore.core import drs_log
 from apero.utils import drs_data
 from apero.io import drs_fits
+from aperocore.io import drs_io
 from apero.instruments import select
 from apero.base import base as apero_base
 
@@ -497,7 +498,8 @@ def get_ccf_teff_mask(params: ParamDict,
     # ---------------------------------------------------------------------
     # load teff masks file
     teff_mask_path = os.path.join(assetdir, relfolder, teff_masks_file)
-    teff_masks = Table.read(teff_mask_path, format=teff_masks_fmt)
+    teff_masks = drs_io.no_mask_table(Table.read(teff_mask_path,
+                                                 format=teff_masks_fmt))
     # ---------------------------------------------------------------------
     # find default
     if 'default' not in teff_masks['kind']:

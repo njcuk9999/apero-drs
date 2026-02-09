@@ -26,6 +26,7 @@ from aperocore.constants import param_functions
 from aperocore.core import drs_db
 from aperocore.core import drs_log
 from aperocore.core import drs_text
+from aperocore.io import drs_io
 
 # =============================================================================
 # Define variables
@@ -584,7 +585,7 @@ def get_object_database(params: ParamDict, log: bool = True) -> Table:
         mainpath = os.path.join(gsheet_url, main_id)
         pendpath = os.path.join(gsheet_url, pending_id)
         try:
-            maintable = Table.read(mainpath, format='csv')
+            maintable = drs_io.no_mask_table(Table.read(mainpath, format='csv'))
         except Exception as e:
             # error msg: if OBJ_LIST_GOOGLE_SHEET_URL is local directory
             #            main_id must be a valid csv file.
@@ -592,7 +593,7 @@ def get_object_database(params: ParamDict, log: bool = True) -> Table:
             raise AperoCodedException(params, '09-002-00005', targs=eargs)
         # noinspection PyBroadException
         try:
-            pendtable = Table.read(pendpath, format='csv')
+            pendtable = drs_io.no_mask_table(Table.read(pendpath, format='csv'))
         except Exception as _:
             pendtable = Table()
     else:
@@ -610,7 +611,8 @@ def get_object_database(params: ParamDict, log: bool = True) -> Table:
             userpath = os.path.join(user_url, user_id)
             # noinspection PyBroadException
             try:
-                usertable = Table.read(userpath, format='csv')
+                usertable = drs_io.no_mask_table(Table.read(userpath,
+                                                            format='csv'))
             except Exception as _:
                 usertable = Table()
         else:
@@ -837,7 +839,7 @@ def get_reject_database(params: ParamDict, log: bool = True) -> Table:
     if os.path.exists(gsheet_url):
         mainpath = os.path.join(gsheet_url, main_id)
         try:
-            maintable = Table.read(mainpath, format='csv')
+            maintable = drs_io.no_mask_table(Table.read(mainpath, format='csv'))
         except Exception as e:
             # error msg: if REJECT_LIST_GOOGLE_SHEET_URL is local directory
             #            main_id must be a valid csv file
