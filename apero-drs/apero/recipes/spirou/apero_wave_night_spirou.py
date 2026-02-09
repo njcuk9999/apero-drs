@@ -311,6 +311,9 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
         wprops['SLINKY_EW'] = float(iwprops['SLINKY_EW'])
         wprops.set_source('SLINKY_EW', mainname)
         # apply slinky correction
+        # TODO: Issue with
+        #       np.nanmedian((fplines['WAVE_MEAS']/fplines['WAVE_REF'] - 1)*speed_of_light_ms)
+        #       being too large (it should be sub-m/s)
         wprops = wave.apply_slinky_correction(params, recipe, wprops,
                                               hc_e2ds_file, fp_e2ds_file,
                                               ref_fiber, ref=False)
