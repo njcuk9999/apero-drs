@@ -15,7 +15,7 @@ Please see the documentation:
 3) [Installation](#3-installation)
 4) [To Do and Known Issues](#4-todo-and-currently-known-issues)
 5) [Using APERO](#5-using-apero)
-
+6) [Developer mode](#6-developer-mode)
 
 ## APERO module code diagram
 
@@ -95,3 +95,25 @@ Please see the documentation:
 - [LOCAL PDF] documentation/output/apero-docs.pdf 
 - [APERO requirements (dev)] https://www.overleaf.com/project/681502d99cb7fde13a598227
 
+## 6 Developer mode
+[Back to top](#apero---a-pipeline-to-reduce-observations)
+
+To install as a developer (and use tools) please follow these instructions
+
+```bash
+conda create --name apero-env-07
+conda activate apero-env-07
+
+git clone git@github.com:njcuk9999/apero-drs.git -b developer
+git clone git@github.com:njcuk9999/lbl.git -b apero_07
+
+cd apero-drs
+pip install -r requirements_developer.txt
+
+cd ../lbl
+pip install -U -e .
+```
+
+The follow the normal setup instructions for APERO (see documentation)
+
+This allows you to update lbl without uninstalling and reinstalling it. 
