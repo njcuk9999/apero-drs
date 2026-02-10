@@ -779,11 +779,6 @@ def _read_fitstable(params: ParamDict, filename: Union[Path, str],
                 # double Table(Table.read is to make sure it is definitely
                 #   deep copied)
                 if ext is not None:
-
-                    data = drs_io.no_mask_table(Table.read(filename,
-                                                           format='.fits',
-                                                           hdu=ext))
-
                     data = drs_io.no_mask_table(Table.read(filename,
                                                            format='fits',
                                                            hdu=ext))
