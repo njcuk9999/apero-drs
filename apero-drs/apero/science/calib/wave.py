@@ -750,6 +750,10 @@ def calc_wave_lines(params: ParamDict, recipe: DrsRecipe,
     # define the wavelength bounds of the instrument
     inst_wavestart = pcheck(params, 'CAL.EXT.S1D_WAVESTART', func=func_name)
     inst_waveend = pcheck(params, 'CAL.EXT.S1D_WAVEEND', func=func_name)
+    # Define the number of iterations required to converge on a cavity fit
+    #  (second time this is done)
+    cavity_fit_iterations2 = pcheck(params, 'CAL.WAVE.GEN.CAVITY_FIT_ITRS2',
+                                    func=func_name)
     # ------------------------------------------------------------------
     # get psuedo constants
     pconst = load_functions.load_pconfig(select.INSTRUMENTS, 
@@ -776,11 +780,11 @@ def calc_wave_lines(params: ParamDict, recipe: DrsRecipe,
         # print progress Running get ref lines for HC
         WLOG(params, 'info', textentry('40-017-00061', args=[str_itr]))
         # get lines
-        list_waves = hclines['WAVE_REF']
-        list_orders = hclines['ORDER']
-        list_pixels = hclines['PIXEL_REF']
-        list_wfit = hclines['WFIT']
-        peak_number = hclines['PEAK_NUMBER']
+        list_waves = np.array(hclines['WAVE_REF'])
+        list_orders = np.array(hclines['ORDER'])
+        list_pixels = np.array(hclines['PIXEL_REF'])
+        list_wfit = np.array(hclines['WFIT'])
+        peak_number = np.array(hclines['PEAK_NUMBER'])
     # ----------------------------------------------------------------------
     # get the lines for HC files from fplines input
     # ----------------------------------------------------------------------
@@ -788,11 +792,25 @@ def calc_wave_lines(params: ParamDict, recipe: DrsRecipe,
         # print progress Running get ref lines for HC
         WLOG(params, 'info', textentry('40-017-00062', args=[str_itr]))
         # get lines
-        list_waves = fplines['WAVE_REF']
-        list_orders = fplines['ORDER']
-        list_pixels = fplines['PIXEL_REF']
-        list_wfit = fplines['WFIT']
-        peak_number = fplines['PEAK_NUMBER']
+        list_waves = np.array(fplines['WAVE_REF'])
+        list_orders = np.array(fplines['ORDER'])
+        list_pixels = np.array(fplines['PIXEL_REF'])
+        list_wfit = np.array(fplines['WFIT'])
+        peak_number = np.array(fplines['PEAK_NUMBER'])
+        # ------------------------------------------------------------------
+        # we need to re-calculate the WAVE_REF as the cavity may have changed
+        # ------------------------------------------------------------------
+        # get the proper cavity length from the cavity polynomial
+        # update wave_ref now we have a good cavity length
+        for _ in range(cavity_fit_iterations2):
+            # update wave ref based on the fit
+            # expressed in cavity length, does not have a clean 'domain'
+            # leave as a polyfit
+            # fpl_wave_ref = np.polyval(cavity, fpl_wave_ref) / fpl_peak_num
+            vtmp = mp.val_cheby(cavity_poly, list_waves,
+                                domain=[inst_wavestart, inst_waveend])
+            list_waves = (vtmp + cavity_pedestal) / peak_number
+
     # ----------------------------------------------------------------------
     # get the lines for HC files
     # ----------------------------------------------------------------------
@@ -1689,10 +1707,10 @@ def calc_wave_sol(params: ParamDict, recipe: DrsRecipe,
                 # number of sigma away in both slope and intercept
                 slope_nsig = np.sqrt(np.sum((slope_hc_vel / err_hc_vel) ** 2))
                 # get the slope as a vector
-                fit_hc_vel = np.polyval(slope_hc_vel,
+                fit_fp_vel = np.polyval(slope_hc_vel,
                                         fpl_wave_ref - hc_wave_ref_mean)
                 # calculate the fractional offset due to the hc slope
-                frac_offset_cav = 1 + fit_hc_vel / speed_of_light_ms
+                frac_offset_cav = 1 + fit_fp_vel / speed_of_light_ms
                 # update the cavity length at all points by the cavity
                 # correction
                 tmp_cavity = tmp_cavity * frac_offset_cav
@@ -1736,17 +1754,18 @@ def calc_wave_sol(params: ParamDict, recipe: DrsRecipe,
                            domain=[inst_wavestart, inst_waveend])
     # work out the change in slope
     cavdiff = cavlen1 - cavlen0
-    slope_change = np.polyval(fpl_wave_ref - hc_wave_ref_mean, cavdiff)
+    cavdiff_velo = (cavdiff/cavity_pedestal)*speed_of_light_ms
+
+    slope_change = np.polyfit(fpl_wave_ref - hc_wave_ref_mean, cavdiff_velo, 1)
 
     margs = [mp.nanmean(cavlen1) - mp.nanmean(cavlen0)]
     WLOG(params, '', textentry('40-017-00058', args=margs))
 
     # TODO: Add to language database
-    msg = 'Change in cavity: Intercept {1:.2f} m/s, Slope {0:.2f} m/s/um'
+    msg = 'Change in cavity: Intercept {0:.2f} m/s, Slope {1:.2f} m/s/um'
     margs = [slope_change[1], slope_change[0] * 1000]
     WLOG(params, '', msg.format(*margs))
 
-    # TODO: fp_peak_num_3, fp_wave_meas_3, fp_wave_ref3
     # -------------------------------------------------------------------------
     # get the proper cavity length from the cavity polynomial
     # update wave_ref now we have a good cavity length
@@ -1845,14 +1864,14 @@ def calc_wave_sol(params: ParamDict, recipe: DrsRecipe,
                                            domain=[0, nbxpix])
     # -------------------------------------------------------------------------
     # update the fplines and hclines tables
-    fplines['WAVE_MEAS'] = fpl_wave_meas
-    fplines['PIXEL_MEAS'] = fpl_pix_meas
-    fplines['PEAK_NUMBER'] = fpl_peak_num
-    fplines['WAVE_REF'] = fpl_wave_ref
-    hclines['WAVE_MEAS'] = hcl_wave_meas
-    hclines['PIXEL_MEAS'] = hcl_pix_meas
-    hclines['WAVE_REF'] = hcl_wave_ref
-    hclines['NSIG'] = hcl_nsig
+    # fplines['WAVE_MEAS'] = fpl_wave_meas
+    # fplines['PIXEL_MEAS'] = fpl_pix_meas
+    # fplines['PEAK_NUMBER'] = fpl_peak_num
+    # fplines['WAVE_REF'] = fpl_wave_ref
+    # hclines['WAVE_MEAS'] = hcl_wave_meas
+    # hclines['PIXEL_MEAS'] = hcl_pix_meas
+    # hclines['WAVE_REF'] = hcl_wave_ref
+    # hclines['NSIG'] = hcl_nsig
     # -------------------------------------------------------------------------
     # construct wave properties
     # -------------------------------------------------------------------------
