@@ -705,6 +705,8 @@ def reset_assets(params: ParamDict, recipe: DrsRecipe,
                 relative_path='CORE')
     # if user wants to reset all databases we do this here
     if reset_dbs:
+        # first reset the db_pending directory
+        manage_databases.reset_db_pending(params)
         # create index databases
         manage_databases.create_fileindex_database(params, pconst, databases)
         # create log database

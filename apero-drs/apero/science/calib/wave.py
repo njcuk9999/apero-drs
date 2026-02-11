@@ -735,16 +735,20 @@ def calc_wave_lines(params: ParamDict, recipe: DrsRecipe,
     # cavity fit degree
     cfitdeg = pcheck(params, 'CAL.WAVE.FP.CAVFIT_DEG', func=func_name)
     # define the lowest N for fp peaks
-    fp_nlow = pcheck(params, 'CAL.WAVE.LL.REF_FP_NLOW', 'fp_nlow', func=func_name)
+    fp_nlow = pcheck(params, 'CAL.WAVE.LL.REF_FP_NLOW', 'fp_nlow',
+                     func=func_name)
     # define the highest N for fp peaks
-    fp_nhigh = pcheck(params, 'CAL.WAVE.LL.REF_FP_NHIGH', 'fp_nhigh', func=func_name)
+    fp_nhigh = pcheck(params, 'CAL.WAVE.LL.REF_FP_NHIGH', 'fp_nhigh',
+                      func=func_name)
     # define the number of iterations required to do the FP polynomial inversion
     fp_inv_itr = pcheck(params, 'CAL.WAVE.LL.REF_FP_POLYINV', 'fp_inv_itr',
                         func=func_name)
     # define the guess HC exponetial width [pixels]
-    guess_hc_ewid = pcheck(params, 'CAL.WAVE.LL.REF_HC_GUESS_EWID', func=func_name)
+    guess_hc_ewid = pcheck(params, 'CAL.WAVE.LL.REF_HC_GUESS_EWID',
+                           func=func_name)
     # define orders not to fit
-    remove_orders = pcheck(params, 'CAL.WAVE.GEN.REMOVE_ORDERS', func=func_name)
+    remove_orders = pcheck(params, 'CAL.WAVE.GEN.REMOVE_ORDERS',
+                           func=func_name)
     # define the bulk offset to be added to the cavity length
     cavity_pedestal = pcheck(params, 'CAL.WAVE.FP.DOPD0', func=func_name)
     # define the wavelength bounds of the instrument
@@ -800,6 +804,12 @@ def calc_wave_lines(params: ParamDict, recipe: DrsRecipe,
         # ------------------------------------------------------------------
         # we need to re-calculate the WAVE_REF as the cavity may have changed
         # ------------------------------------------------------------------
+        # we can only do this if we have a cavity polynomial
+        if cavity_poly is None:
+            emsg = ('Cannot re-calculate FP line WAVE_REF without a '
+                    'cavity polynomial. Please provide a cavity polynomial '
+                    'when supplying a previous fplines table.')
+            raise AperoCodedException(params, None, message=emsg)
         # get the proper cavity length from the cavity polynomial
         # update wave_ref now we have a good cavity length
         for _ in range(cavity_fit_iterations2):

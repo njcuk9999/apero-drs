@@ -396,7 +396,7 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
             # create fplines file for required fibers
             # --------------------------------------------------------------
             if not quicklook:
-                rargs = [e2dsfile, wprops['WAVEMAP'], fiber]
+                rargs = [e2dsfile, wprops['WAVEMAP'], fiber, wprops['CAVITY']]
                 rfpl = extract.ref_fplines(params, recipe, *rargs,
                                            database=calibdbm)
                 # write rfpl file

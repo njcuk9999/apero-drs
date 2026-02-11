@@ -294,8 +294,8 @@ def save_tmp_orderps_file(params: ParamDict, recipe: DrsRecipe,
     return orderp, orderpfilename, orderptime
 
 
-def ref_fplines(params, recipe, e2dsfile, wavemap, fiber, database=None,
-                **kwargs):
+def ref_fplines(params, recipe, e2dsfile, wavemap, fiber, cavity_poly,
+                database=None, **kwargs):
     # set up function name
     func_name = display_func('ref_fplines', __NAME__)
     # get constant from params
@@ -338,7 +338,8 @@ def ref_fplines(params, recipe, e2dsfile, wavemap, fiber, database=None,
         return None
     # ----------------------------------------------------------------------
     # generate the fp reference lines
-    fpargs = dict(e2dsfile=e2dsfile, wavemap=wavemap, fplines=mfplines)
+    fpargs = dict(e2dsfile=e2dsfile, wavemap=wavemap, fplines=mfplines,
+                  cavity_poly=cavity_poly)
     rfpl = wave.calc_wave_lines(params, recipe, **fpargs)
     # ----------------------------------------------------------------------
     # return fp lines for e2ds file

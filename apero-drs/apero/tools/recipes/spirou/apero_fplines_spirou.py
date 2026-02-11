@@ -146,7 +146,7 @@ def __main__(recipe, params):
         # --------------------------------------------------------------
         # create fplines file for required fibers
         # --------------------------------------------------------------
-        rargs = [e2dsfile, wprops['WAVEMAP'], fiber]
+        rargs = [e2dsfile, wprops['WAVEMAP'], fiber, wprops['CAVITY']]
         rfpl = extract.ref_fplines(params, recipe, *rargs,
                                    database=calibdbm)
         # write rfpl file

@@ -8,6 +8,7 @@ Created on 2020-08-2020-08-18 17:13
 @author: cook
 """
 import os
+import shutil
 from typing import Dict, List, Literal, Union
 
 import numpy as np
@@ -858,6 +859,31 @@ def get_reject_database(params: ParamDict, log: bool = True) -> Table:
 # =============================================================================
 # Define misc functions
 # =============================================================================
+def reset_db_pending(params):
+    """
+    Reset the pending object database - this is for testing purposes only
+
+    :param params: ParamDict, the parameter dictionary of constants
+
+    :return: None, updates local object database
+    """
+    # get the path to the database
+    db_pend = str(os.path.join(params['PATH.OTHER'], params['DB.PENDING_PATH']))
+    # remove everything
+    if os.path.exists(db_pend):
+        # walk around the directory and delete all files
+        for root, dirs, files in os.walk(db_pend):
+            for file in files:
+                print('Removing file: {0}'.format(os.path.join(root, file)))
+                os.remove(os.path.join(root, file))
+        # finally clean all sub-directories
+        shutil.rmtree(db_pend)
+    # re-create the directory if it doesn't exist
+    if not os.path.exists(db_pend):
+        # re-create this directory
+        os.makedirs(db_pend)
+
+
 def _force_column_dtypes(table: Table, coltype: Dict[str, type]) -> Table:
     """
     Force a table to have specific data types
