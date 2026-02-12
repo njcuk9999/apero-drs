@@ -2689,6 +2689,7 @@ def _multi_process_pool(params, shortname, runlist, cores, groupname=None):
     from multiprocessing import Manager
     from multiprocessing import get_context
     from multiprocessing import set_start_method
+    from functools import partial
     try:
         set_start_method("spawn")
     except RuntimeError:
@@ -2712,21 +2713,31 @@ def _multi_process_pool(params, shortname, runlist, cores, groupname=None):
             # log that we are skipping group
             WLOG(params, 'warning', textentry('10-000-00001'), sublevel=6)
             continue
-        # list of params for each entry
-        params_per_process = []
-        # populate params for each sub group
-        for r_it, runlist_group in enumerate(group):
-            args = [params, [runlist_group], r_it + 1,
-                    cores, event, groupname, None,
-                    stop_at_exception, test_run, g_it, groupnames[g_it]]
-            params_per_process.append(args)
-        # start parellel jobs
+        # create partial function with fixed common arguments
+        process_func = partial(_linear_process,
+                              params=params,
+                              cores=cores,
+                              event=event,
+                              group=group,
+                              return_dict=None,
+                              stop_at_exception=stop_at_exception,
+                              test_run=test_run,
+                              groupnum=g_it,
+                              groupname=groupnames[g_it])
+        # prepare argument tuples with only variable parameters
+        args_list = [(r_it + 1, [group[r_it]]) for r_it in range(len(group))]
+        # start parallel jobs with progress tracking
         with get_context('spawn').Pool(cores, maxtasksperchild=1) as pool:
-            results = pool.starmap(_linear_process, params_per_process)
+            results = list(tqdm(
+                pool.starmap(process_func, args_list),
+                total=len(args_list),
+                desc=f'Processing {groupnames[g_it]}'
+            ))
         # fudge back into return dictionary
-        for row in range(len(results)):
-            for key in results[row]:
-                return_dict[key] = results[row][key]
+        for result in results:
+            if result is not None:
+                for key in result:
+                    return_dict[key] = result[key]
         # ---------------------------------------------------------------------
         # update the index database (taking into account include/exclude lists)
         #    we have to loop around block kinds to prevent recipe from updating
@@ -2750,51 +2761,55 @@ def _multi_process_pathos(params, shortname, runlist, cores, groupname=None):
     stop_at_exception = params['STOP_AT_EXCEPTION']
     test_run = params['TEST_RUN']
     # deal with Pool specific imports
-    from pathos.pools import ParallelPool as Pool
-    # loop around groups
-    #   - each group is a unique recipe
-    for g_it, groupnum in enumerate(grouplist):
-        # get this groups values
-        group = grouplist[groupnum]
-        # log progress
-        _group_progress(params, g_it, grouplist, groupnames[groupnum])
-        # set up the pool
-        pool = Pool(cores, maxtasksperchild=1)
-        # # skip groups if event is set
-        # if event is not None and event.is_set():
-        #     # log that we are skipping group
-        #     WLOG(params, 'warning', textentry('10-000-00001'), sublevel=6)
-        #     continue
-        # list of params for each entry
-        params_per_process = []
-        # populate params for each sub group
-        for r_it, runlist_group in enumerate(group):
-            args = [params, [runlist_group], r_it + 1, cores, None, groupname,
-                    None, stop_at_exception, test_run, g_it, groupnames[g_it]]
-            params_per_process.append(args)
-        # transpose the params axis
-        params_per_process2 = list(zip(*params_per_process))
-        # start parellel jobs
-        results = pool.map(_linear_process, *params_per_process2)
-        # Casting the ppmap generator to a list forces each result to be
-        # evaluated.  When done immediately after the jobs are submitted,
-        # our program twiddles its thumbs while the work is finished.
-        results = list(results)
-        # fudge back into return dictionary
-        for row in range(len(results)):
-            for key in results[row]:
-                return_dict[key] = results[row][key]
-        # ---------------------------------------------------------------------
-        # update the index database (taking into account include/exclude lists)
-        #    we have to loop around block kinds to prevent recipe from updating
-        #    the index database every time a new recipe starts
-        # this is really important as we have disabled updating for parallel
-        #  runs to make it more efficient
-        # do not update if we are running a test
-        if not params['TEST_RUN']:
-            update_index_db(params, shortname)
-    # return return_dict
-    return dict(return_dict)
+    try:
+        from pathos.multiprocessing import ProcessPool
+        from functools import partial
+        # loop around groups
+        #   - each group is a unique recipe
+        for g_it, groupnum in enumerate(grouplist):
+            # get this groups values
+            group = grouplist[groupnum]
+            # log progress
+            _group_progress(params, g_it, grouplist, groupnames[groupnum])
+            # create partial function with fixed common arguments
+            process_func = partial(_linear_process,
+                                  params=params,
+                                  cores=cores,
+                                  event=None,
+                                  group=group,
+                                  return_dict=None,
+                                  stop_at_exception=stop_at_exception,
+                                  test_run=test_run,
+                                  groupnum=g_it,
+                                  groupname=groupnames[g_it])
+            # prepare argument tuples with only variable parameters
+            args_list = [(r_it + 1, [group[r_it]]) for r_it in range(len(group))]
+            # start parallel jobs with progress tracking
+            with ProcessPool(cores) as pool:
+                results = list(tqdm(
+                    pool.starmap(process_func, args_list),
+                    total=len(args_list),
+                    desc=f'Processing {groupnames[g_it]}'
+                ))
+            # fudge back into return dictionary
+            for result in results:
+                if result is not None:
+                    for key in result:
+                        return_dict[key] = result[key]
+            # -----------------------------------------------------------------
+            # update the index database (taking into account include/exclude lists)
+            #    we have to loop around block kinds to prevent recipe from updating
+            #    the index database every time a new recipe starts
+            # this is really important as we have disabled updating for parallel
+            #  runs to make it more efficient
+            # do not update if we are running a test
+            if not params['TEST_RUN']:
+                update_index_db(params, shortname)
+        # return return_dict
+        return dict(return_dict)
+    except ImportError:
+        # fallback to pool mode if pathos not available
+        return _multi_process_pool(params, shortname, runlist, cores, groupname)
 
 
 # =============================================================================
@@ -3002,21 +3017,22 @@ def _multi_process_gen_ids_pathos(params: ParamDict,
 
     :return: Dict, where each key is an id and the value is the DrsRecipe
     """
-    # deal with Pool specific imports
-    from pathos.pools import ParallelPool as Pool
-    # set up the pool
-    pool = Pool(ncpus=cores, maxtasksperchild=1)
-    # list of params for each entry
-    params_per_process = []
-    # populate params for each sub group
-    for groupkey in groupkeys:
-        args = [params, groupkey, run_key, runlist, keylist,
-                inrecipelist, skiptable, None, cores]
-        params_per_process.append(args)
-    # transpose the params axis
-    params_per_process2 = list(zip(*params_per_process))
-    # start parallel jobs
-    pool.map(_multi_generate_id, *params_per_process2)
+    try:
+        from pathos.multiprocessing import ProcessPool
+        from functools import partial
+        # create partial function with fixed common arguments
+        process_func = partial(_multi_generate_id,
+                              params=params, run_key=run_key, runlist=runlist,
+                              keylist=keylist, inrecipelist=inrecipelist,
+                              skiptable=skiptable, cores=cores)
+        # start parallel jobs
+        with ProcessPool(cores) as pool:
+            pool.map(process_func, groupkeys)
+    except ImportError:
+        # fallback to pool mode if pathos not available
+        return _multi_process_gen_ids_pool(params, groupkeys, run_key, runlist,
+                                          cores, keylist, inrecipelist,
+                                          skiptable)
 
 
 def _multi_process_gen_ids_pool(params: ParamDict,
@@ -3050,16 +3066,17 @@ def _multi_process_gen_ids_pool(params: ParamDict,
     """
     # deal with Pool specific imports
     from multiprocessing import get_context
-    # list of params for each entry
-    params_per_process = []
-    # populate params for each sub group
-    for groupkey in groupkeys:
-        args = [params, groupkey, run_key, runlist, keylist,
-                inrecipelist, skiptable, None, cores]
-        params_per_process.append(args)
+    from functools import partial
+    # create partial function with fixed common arguments
+    process_func = partial(_multi_generate_id,
+                          params=params, run_key=run_key, runlist=runlist,
+                          keylist=keylist, inrecipelist=inrecipelist,
+                          skiptable=skiptable, cores=cores)
+    # prepare argument tuples with only variable parameters
+    args_list = [[groupkey] for groupkey in groupkeys]
     # start parallel jobs
     with get_context('spawn').Pool(cores, maxtasksperchild=1) as pool:
-        pool.starmap(_multi_generate_id, params_per_process)
+        pool.starmap(process_func, args_list)
 
 
 def _multi_process_gen_ids_process(params: ParamDict,
@@ -3152,21 +3169,29 @@ def _multi_process_findex_pathos(params: ParamDict, block_kind:str,
                          search for files
     :param cores: int, the number of cores to use
     """
-    # deal with Pool specific imports
-    from pathos.pools import ParallelPool as Pool
-    # set up the pool
-    pool = Pool(ncpus=cores, maxtasksperchild=1)
-    # list of params for each entry
-    params_per_process = []
-    # populate params for each sub group
-    for r_it, raw_obs_dir in enumerate(raw_obs_dirs):
-        args = [params, block_kind, shortname,
-                [raw_obs_dir], r_it + 1, len(raw_obs_dirs)]
-        params_per_process.append(args)
-    # transpose the params axis
-    params_per_process2 = list(zip(*params_per_process))
-    # start parallel jobs
-    pool.map(_linear_findex, *params_per_process2)
+    try:
+        from pathos.multiprocessing import ProcessPool
+        from functools import partial
+        # split files into N=cores groups
+        cores = min(cores, len(raw_obs_dirs))
+        chunk_size = int(np.ceil(len(raw_obs_dirs) / cores))
+        grouped_raw_obs_dirs = [raw_obs_dirs[i:i + chunk_size]
+                                for i in range(0, len(raw_obs_dirs), chunk_size)]
+        # create partial function with fixed common arguments
+        total_jobs = len(grouped_raw_obs_dirs)
+        process_func = partial(_linear_findex,
+                              params=params, block_kind=block_kind, shortname=shortname,
+                              total_jobs=total_jobs)
+        # prepare argument tuples with only variable parameters
+        args_list = [[grouped_raw_obs_dirs[i], i + 1]
+                     for i in range(len(grouped_raw_obs_dirs))]
+        # start parallel jobs
+        with ProcessPool(cores) as pool:
+            pool.starmap(process_func, args_list)
+    except ImportError:
+        # fallback to pool mode if pathos not available
+        return _multi_process_findex_pool(params, block_kind, shortname,
+                                         raw_obs_dirs, cores)
 
 
 
@@ -3185,17 +3210,23 @@ def _multi_process_findex_pool(params: ParamDict, block_kind:str,
     """
     # deal with Pool specific imports
     from multiprocessing import get_context
-
-    # list of params for each entry
-    params_per_process = []
-    # populate params for each sub group
-    for r_it, raw_obs_dir in enumerate(raw_obs_dirs):
-        args = [params, block_kind, shortname,
-                [raw_obs_dir], r_it + 1, len(raw_obs_dirs)]
-        params_per_process.append(args)
+    from functools import partial
+    # split files into N=cores groups
+    cores = min(cores, len(raw_obs_dirs))
+    chunk_size = int(np.ceil(len(raw_obs_dirs) / cores))
+    grouped_raw_obs_dirs = [raw_obs_dirs[i:i + chunk_size]
+                            for i in range(0, len(raw_obs_dirs), chunk_size)]
+    # create partial function with fixed common arguments
+    total_jobs = len(grouped_raw_obs_dirs)
+    process_func = partial(_linear_findex,
+                          params=params, block_kind=block_kind, shortname=shortname,
+                          total_jobs=total_jobs)
+    # prepare argument tuples with only variable parameters
+    args_list = [[grouped_raw_obs_dirs[i], i + 1]
+                 for i in range(len(grouped_raw_obs_dirs))]
     # start parallel jobs
     with get_context('spawn').Pool(cores, maxtasksperchild=1) as pool:
-        pool.starmap(_linear_findex, params_per_process)
+        pool.starmap(process_func, args_list)
 
 
 def _multi_process_findex_process(params: ParamDict, block_kind:str,
@@ -3279,20 +3310,28 @@ def _multi_process_headerfix_pathos(params: ParamDict, shortname: str,
                          search for files
     :param cores: int, the number of cores to use
     """
-    # deal with Pool specific imports
-    from pathos.pools import ParallelPool as Pool
-    # set up the pool
-    pool = Pool(ncpus=cores, maxtasksperchild=1)
-    # list of params for each entry
-    params_per_process = []
-    # populate params for each sub group
-    for r_it, raw_obs_dir in enumerate(raw_obs_dirs):
-        args = [params, [raw_obs_dir], r_it + 1, len(raw_obs_dirs)]
-        params_per_process.append(args)
-    # transpose the params axis
-    params_per_process2 = list(zip(*params_per_process))
-    # start parallel jobs
-    pool.map(_linear_headerfix, *params_per_process2)
+    try:
+        from pathos.multiprocessing import ProcessPool
+        from functools import partial
+        # split files into N=cores groups
+        cores = min(cores, len(raw_obs_dirs))
+        chunk_size = int(np.ceil(len(raw_obs_dirs) / cores))
+        grouped_raw_obs_dirs = [raw_obs_dirs[i:i + chunk_size]
+                                for i in range(0, len(raw_obs_dirs), chunk_size)]
+        # create partial function with fixed common arguments
+        total_jobs = len(grouped_raw_obs_dirs)
+        process_func = partial(_linear_headerfix,
+                              params=params, shortname=shortname,
+                              total_jobs=total_jobs)
+        # prepare argument tuples with only variable parameters
+        args_list = [[grouped_raw_obs_dirs[i], i + 1]
+                     for i in range(len(grouped_raw_obs_dirs))]
+        # start parallel jobs
+        with ProcessPool(cores) as pool:
+            pool.starmap(process_func, args_list)
+    except ImportError:
+        # fallback to pool mode if pathos not available
+        return _multi_process_headerfix_pool(params, shortname, raw_obs_dirs, cores)
 
 
 def _multi_process_headerfix_pool(params: ParamDict, shortname: str,
@@ -3309,16 +3348,23 @@ def _multi_process_headerfix_pool(params: ParamDict, shortname: str,
     """
     # deal with Pool specific imports
     from multiprocessing import get_context
-
-    # list of params for each entry
-    params_per_process = []
-    # populate params for each sub group
-    for r_it, raw_obs_dir in enumerate(raw_obs_dirs):
-        args = [params, [raw_obs_dir], r_it + 1, len(raw_obs_dirs)]
-        params_per_process.append(args)
+    from functools import partial
+    # split files into N=cores groups
+    cores = min(cores, len(raw_obs_dirs))
+    chunk_size = int(np.ceil(len(raw_obs_dirs) / cores))
+    grouped_raw_obs_dirs = [raw_obs_dirs[i:i + chunk_size]
+                            for i in range(0, len(raw_obs_dirs), chunk_size)]
+    # create partial function with fixed common arguments
+    total_jobs = len(grouped_raw_obs_dirs)
+    process_func = partial(_linear_headerfix,
+                          params=params, shortname=shortname,
+                          total_jobs=total_jobs)
+    # prepare argument tuples with only variable parameters
+    args_list = [[grouped_raw_obs_dirs[i], i + 1]
+                 for i in range(len(grouped_raw_obs_dirs))]
     # start parallel jobs
     with get_context('spawn').Pool(cores, maxtasksperchild=1) as pool:
-        pool.starmap(_linear_headerfix, params_per_process)
+        pool.starmap(process_func, args_list)
 
 
 def _multi_process_headerfix_process(params: ParamDict, shortname: str,

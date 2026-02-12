@@ -516,29 +516,32 @@ def _multi_process_calib_tellu_pathos(params: ParamDict, shortname: str,
 
     :return: None
     """
-    # deal with Pool specific imports
-    from pathos.pools import ParallelPool as Pool
-    # set up the pool
-    pool = Pool(ncpus=cores, maxtasksperchild=1)
-    # split files into N=cores groups
-    cores = min(cores, len(db_files))
-    chunk_size = int(np.ceil(len(db_files) / cores))
-    grouped_files = [db_files[i:i + chunk_size]
-                     for i in range(0, len(db_files), chunk_size)]
-    # list of params for each entry
-    params_per_process = []
-    # populate params for each sub group
-    for f_it, grouped_file in enumerate(grouped_files):
-        args = [params, shortname, db_type, file_set_name, name, func_name,
-                grouped_file, f_it + 1, len(grouped_files)]
-        params_per_process.append(args)
-    # transpose the params axis
-    params_per_process2 = list(zip(*params_per_process))
-    # start parallel jobs
-    pool.map(_calib_tellu_update_files_batch, *params_per_process2)
-    # close the pool
-    pool.close()
-    pool.join()
+    try:
+        from pathos.multiprocessing import ProcessPool
+        from functools import partial
+        # split files into N=cores groups
+        cores = min(cores, len(db_files))
+        chunk_size = int(np.ceil(len(db_files) / cores))
+        grouped_files = [db_files[i:i + chunk_size]
+                         for i in range(0, len(db_files), chunk_size)]
+        # create partial function with fixed common arguments
+        total_batches = len(grouped_files)
+        process_func = partial(_calib_tellu_update_files_batch,
+                              params=params, shortname=shortname,
+                              db_type=db_type, file_set_name=file_set_name,
+                              name=name, func_name=func_name,
+                              total_batches=total_batches)
+        # prepare argument tuples with only variable parameters
+        args_list = [[grouped_files[i], i + 1]
+                     for i in range(len(grouped_files))]
+        # start parallel jobs
+        with ProcessPool(cores) as pool:
+            pool.starmap(process_func, args_list)
+    except ImportError:
+        # fallback to pool mode if pathos not available
+        return _multi_process_calib_tellu_pool(params, shortname, db_type,
+                                              file_set_name, name, func_name,
+                                              db_files, cores)
 
 
 def _multi_process_calib_tellu_pool(params: ParamDict, shortname: str,
@@ -562,21 +565,25 @@ def _multi_process_calib_tellu_pool(params: ParamDict, shortname: str,
     """
     # deal with Pool specific imports
     from multiprocessing import get_context
+    from functools import partial
     # split files into N=cores groups
     cores = min(cores, len(db_files))
     chunk_size = int(np.ceil(len(db_files) / cores))
     grouped_files = [db_files[i:i + chunk_size]
                      for i in range(0, len(db_files), chunk_size)]
-    # list of params for each entry
-    params_per_process = []
-    # populate params for each sub group
-    for f_it, grouped_file in enumerate(grouped_files):
-        args = [params, shortname, db_type, file_set_name, name, func_name,
-                grouped_file, f_it + 1, len(grouped_files)]
-        params_per_process.append(args)
+    # create partial function with fixed common arguments
+    total_batches = len(grouped_files)
+    process_func = partial(_calib_tellu_update_files_batch,
+                          params=params, shortname=shortname,
+                          db_type=db_type, file_set_name=file_set_name,
+                          name=name, func_name=func_name,
+                          total_batches=total_batches)
+    # prepare argument tuples with only variable parameters
+    args_list = [[grouped_files[i], i + 1]
+                 for i in range(len(grouped_files))]
     # start parallel jobs
     with get_context('spawn').Pool(cores, maxtasksperchild=1) as pool:
-        pool.starmap(_calib_tellu_update_files_batch, params_per_process)
+        pool.starmap(process_func, args_list)
 
 
 def _multi_process_calib_tellu_process(params: ParamDict, shortname: str,
@@ -698,28 +705,28 @@ def _multi_process_index_pathos(params: ParamDict, shortname: str,
 
     :return: None
     """
-    # deal with Pool specific imports
-    from pathos.pools import ParallelPool as Pool
-    # set up the pool
-    pool = Pool(ncpus=cores, maxtasksperchild=1)
-    # split block_kinds into N=cores groups
-    cores = min(cores, len(block_kinds))
-    chunk_size = int(np.ceil(len(block_kinds) / cores))
-    grouped_kinds = [block_kinds[i:i + chunk_size]
-                     for i in range(0, len(block_kinds), chunk_size)]
-    # list of params for each entry
-    params_per_process = []
-    # populate params for each sub group
-    for k_it, grouped_kind in enumerate(grouped_kinds):
-        args = [params, shortname, grouped_kind, k_it + 1, len(grouped_kinds)]
-        params_per_process.append(args)
-    # transpose the params axis
-    params_per_process2 = list(zip(*params_per_process))
-    # start parallel jobs
-    pool.map(_index_update_blocks_batch, *params_per_process2)
-    # close the pool
-    pool.close()
-    pool.join()
+    try:
+        from pathos.multiprocessing import ProcessPool
+        from functools import partial
+        # split block_kinds into N=cores groups
+        cores = min(cores, len(block_kinds))
+        chunk_size = int(np.ceil(len(block_kinds) / cores))
+        grouped_kinds = [block_kinds[i:i + chunk_size]
+                         for i in range(0, len(block_kinds), chunk_size)]
+        # create partial function with fixed common arguments
+        total_batches = len(grouped_kinds)
+        process_func = partial(_index_update_blocks_batch,
+                              params=params, shortname=shortname,
+                              total_batches=total_batches)
+        # prepare argument tuples with only variable parameters
+        args_list = [[grouped_kinds[i], i + 1]
+                     for i in range(len(grouped_kinds))]
+        # start parallel jobs
+        with ProcessPool(cores) as pool:
+            pool.starmap(process_func, args_list)
+    except ImportError:
+        # fallback to pool mode if pathos not available
+        return _multi_process_index_pool(params, shortname, block_kinds, cores)
 
 
 def _multi_process_index_pool(params: ParamDict, shortname: str,
@@ -736,20 +743,23 @@ def _multi_process_index_pool(params: ParamDict, shortname: str,
     """
     # deal with Pool specific imports
     from multiprocessing import get_context
+    from functools import partial
     # split block_kinds into N=cores groups
     cores = min(cores, len(block_kinds))
     chunk_size = int(np.ceil(len(block_kinds) / cores))
     grouped_kinds = [block_kinds[i:i + chunk_size]
                      for i in range(0, len(block_kinds), chunk_size)]
-    # list of params for each entry
-    params_per_process = []
-    # populate params for each sub group
-    for k_it, grouped_kind in enumerate(grouped_kinds):
-        args = [params, shortname, grouped_kind, k_it + 1, len(grouped_kinds)]
-        params_per_process.append(args)
+    # create partial function with fixed common arguments
+    total_batches = len(grouped_kinds)
+    process_func = partial(_index_update_blocks_batch,
+                          params=params, shortname=shortname,
+                          total_batches=total_batches)
+    # prepare argument tuples with only variable parameters
+    args_list = [[grouped_kinds[i], i + 1]
+                 for i in range(len(grouped_kinds))]
     # start parallel jobs
     with get_context('spawn').Pool(cores, maxtasksperchild=1) as pool:
-        pool.starmap(_index_update_blocks_batch, params_per_process)
+        pool.starmap(process_func, args_list)
 
 
 def _multi_process_index_process(params: ParamDict, shortname: str,
@@ -877,35 +887,34 @@ def _multi_process_logdb_pathos(params: ParamDict,
 
     :return: Tuple, 1. dict of logentries, 2. list of log_pids
     """
-    # deal with Pool specific imports
-    from pathos.pools import ParallelPool as Pool
-    # set up the pool
-    pool = Pool(ncpus=cores, maxtasksperchild=1)
-    # split files into N=cores groups
-    cores = min(cores, len(files))
-    chunk_size = int(np.ceil(len(files) / cores))
-    grouped_files = [files[i:i + chunk_size]
-                     for i in range(0, len(files), chunk_size)]
-    # list of params for each entry
-    params_per_process = []
-    # populate params for each sub group
-    for f_it, grouped_file in enumerate(grouped_files):
-        args = [params, grouped_file, f_it + 1, len(grouped_files)]
-        params_per_process.append(args)
-    # transpose the params axis
-    params_per_process2 = list(zip(*params_per_process))
-    # start parallel jobs
-    results = pool.map(_log_update_files_batch, *params_per_process2)
-    # close the pool
-    pool.close()
-    pool.join()
-    # merge results from all batches
-    logentries, log_pids = dict(), []
-    for batch_logentries, batch_log_pids in results:
-        logentries.update(batch_logentries)
-        log_pids.extend(batch_log_pids)
-    # return merged results
-    return logentries, log_pids
+    try:
+        from pathos.multiprocessing import ProcessPool
+        from functools import partial
+        # split files into N=cores groups
+        cores = min(cores, len(files))
+        chunk_size = int(np.ceil(len(files) / cores))
+        grouped_files = [files[i:i + chunk_size]
+                         for i in range(0, len(files), chunk_size)]
+        # create partial function with fixed common arguments
+        total_batches = len(grouped_files)
+        process_func = partial(_log_update_files_batch,
+                              params=params, total_batches=total_batches)
+        # prepare argument tuples with only variable parameters
+        args_list = [[grouped_files[i], i + 1]
+                     for i in range(len(grouped_files))]
+        # start parallel jobs
+        with ProcessPool(cores) as pool:
+            results = pool.starmap(process_func, args_list)
+        # merge results from all batches
+        logentries, log_pids = dict(), []
+        for batch_logentries, batch_log_pids in results:
+            logentries.update(batch_logentries)
+            log_pids.extend(batch_log_pids)
+        # return merged results
+        return logentries, log_pids
+    except ImportError:
+        # fallback to pool mode if pathos not available
+        return _multi_process_logdb_pool(params, files, cores)
 
 
 def _multi_process_logdb_pool(params: ParamDict,
@@ -923,20 +932,22 @@ def _multi_process_logdb_pool(params: ParamDict,
     """
     # deal with Pool specific imports
     from multiprocessing import get_context
+    from functools import partial
     # split files into N=cores groups
     cores = min(cores, len(files))
     chunk_size = int(np.ceil(len(files) / cores))
     grouped_files = [files[i:i + chunk_size]
                      for i in range(0, len(files), chunk_size)]
-    # list of params for each entry
-    params_per_process = []
-    # populate params for each sub group
-    for f_it, grouped_file in enumerate(grouped_files):
-        args = [params, grouped_file, f_it + 1, len(grouped_files)]
-        params_per_process.append(args)
+    # create partial function with fixed common arguments
+    total_batches = len(grouped_files)
+    process_func = partial(_log_update_files_batch,
+                          params=params, total_batches=total_batches)
+    # prepare argument tuples with only variable parameters
+    args_list = [[grouped_files[i], i + 1]
+                 for i in range(len(grouped_files))]
     # start parallel jobs
     with get_context('spawn').Pool(cores, maxtasksperchild=1) as pool:
-        results = pool.starmap(_log_update_files_batch, params_per_process)
+        results = pool.starmap(process_func, args_list)
     # merge results from all batches
     logentries, log_pids = dict(), []
     for batch_logentries, batch_log_pids in results:
