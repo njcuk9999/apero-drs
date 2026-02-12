@@ -9,21 +9,27 @@ Created on 2022-02-07
 
 @author: cook
 """
+import copy
+import fnmatch
 import os
 import shutil
 import tarfile
-from typing import Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 import numpy as np
+from astropy.io import fits
+from astropy.table import Table
 from astropy.time import Time
 
 from apero import lang
 from apero.base import base
 from apero.core import constants
+from apero.core.constants import path_definitions
 from apero.core.core import drs_database
 from apero.core.core import drs_log
 from apero.core.core import drs_text
 from apero.core.utils import drs_recipe
+from apero.core.utils import drs_utils
 
 # =============================================================================
 # Define variables
@@ -43,10 +49,12 @@ DrsRecipe = drs_recipe.DrsRecipe
 textentry = lang.textentry
 # ALLOWED NULL COLUMNS
 NULL_COLS = ['KW_RUN_ID', 'KW_PI_NAME']
+# get the tqdm module from base
+tqdm = base.TQDM
 
 
 # =============================================================================
-# Define functions
+# Define filter functions
 # =============================================================================
 def basic_filter(params: ParamDict, kw_objnames: List[str],
                  filters: Dict[str, List[str]], user_outdir: str,
@@ -212,16 +220,25 @@ def basic_filter(params: ParamDict, kw_objnames: List[str],
         # deal with no condition still (set condition to None)
         if len(condition) == 0:
             condition = None
+        # set columns to get
+        icolumns = ['ABSPATH', 'KW_PID', 'KW_RUN_ID']
         # get inpaths
-        itable = findexdb.get_entries('ABSPATH, KW_PID, KW_RUN_ID',
-                                      condition=condition)
+        if params['INPUTS'].get('NODB', False):
+            itable = get_disk_entries(params, icolumns, condition=condition)
+        else:
+            itable = findexdb.get_entries(','.join(icolumns),
+                                          condition=condition)
         inpaths = np.array(itable['ABSPATH'])
         ipids = np.array(itable['KW_PID'])
         run_ids = np.array(itable['KW_RUN_ID'])
         # ---------------------------------------------------------------------
         # need to filter by pid in log database
+        #    (or read from header in disk case)
         # ---------------------------------------------------------------------
-        if filter_qc:
+        if filter_qc and params['INPUTS'].get('NODB', False):
+            # mask is easy in this case as we have QCC_ALL in the header
+            mask = np.array(itable['KW_DRS_QC']).astype(bool)
+        elif filter_qc:
             # get all pids where passed_all_qc is PASSED_ALL_QC is True
             ltable = logdbm.get_entries('PID, PASSED_ALL_QC')
             # find all pids that are not zero (nulls, nans and 1s)
@@ -311,6 +328,416 @@ def basic_filter(params: ParamDict, kw_objnames: List[str],
     # -------------------------------------------------------------------------
     return all_inpaths, all_outpaths
 
+
+# =============================================================================
+# Define disk functions
+# =============================================================================
+def get_disk_entries(params: ParamDict, icolumns: List[str],
+                     condition: Optional[str] = None) -> Table:
+    """
+    Get entries from disk (instead of database)
+
+    :param ParamDict params: the parameter dictionary of constants
+    :param icolumns: list of strings, the columns to get (must be ABSPATH, KW_PID
+                     and KW_RUN_ID)
+    :param condition: str, the condition to apply (must be in the format of a
+                      SQL condition but without the WHERE)
+    :return: pandas dataframe, the entries that match the condition
+    """
+    # translate icolumns and conditions into required header keys
+    hkeys = dict()
+    # loop around columns and look for keys in params
+    for key in icolumns:
+        _key = key.strip()
+        # skip any key that doesn't start with KW_
+        if not _key.startswith('KW_'):
+            continue
+        # now look for keys in params and save the header key value
+        if _key in params:
+            hkeys[_key] = params[_key][0]
+    # loop around conditions and look for keys in params
+    for key in condition.split(' '):
+        _key = key.strip('()')
+        _key = _key.split('=')[0]
+        # skip any key that doesn't start with KW_
+        if not _key.startswith('KW_'):
+            continue
+        # now look for keys in params and save the header key value
+        if _key in params:
+            hkeys[_key] = params[_key][0]
+    # Add the QCC_ALL key - will be needed for qc filtering later
+    hkeys['KW_DRS_QC'] = params['KW_DRS_QC'][0]
+
+    # deal with non-header keys required
+    req_abspath =  'ABSPATH' in icolumns
+    req_filename = 'FILENAME' in icolumns
+    req_obsdir = 'OBS_DIR' in icolumns
+
+    # we must have the block kind to know where to look for files on disk
+    if params['INPUTS']['BLOCK_KIND'] in ['None', 'Null', None]:
+        emsg = 'BLOCK_KIND must be given in INPUT to use disk entries (--nodb)'
+        WLOG(params, 'error', emsg)
+        return Table()
+    # get the block
+    block_kind = params['INPUTS']['BLOCK_KIND']
+    # intial values for the block path and block names
+    block_path, block_names = None, []
+    # get the directory
+    for block in path_definitions.BLOCKS:
+        # construct this block
+        _block = block(params)
+        # append to block paths
+        block_names.append(block.name)
+        # update the path if found
+        if block.name == block_kind:
+            block_path = _block.path
+    # deal with no path
+    if block_path is None:
+        emsg = 'Block kind {0} is invalid. Must be {1}'
+        eargs = [block_kind, ','.join(block_names)]
+        WLOG(params, 'error', emsg.format(*eargs))
+
+    # get the suffix
+    if params['INPUTS']['NODB_WILDCARD'] in ['None', 'Null', '', None]:
+        file_wildcard = '*'
+    else:
+        file_wildcard = params['INPUTS']['NODB_WILDCARD']
+
+    # -------------------------------------------------------------------------
+    # Step 1: look for all files in the directory (or directories)
+    # -------------------------------------------------------------------------
+    files = _get_files_from_disk(block_path, file_wildcard)
+    # -------------------------------------------------------------------------
+    # Step 2: Read files from disk and read the header keys into
+    # -------------------------------------------------------------------------
+    records = _get_file_hkeys(params, files, hkeys, req_abspath, req_filename,
+                              req_obsdir, block_path)
+    # -------------------------------------------------------------------------
+    # Step 3: Convert records into pandas dataframe
+    # -------------------------------------------------------------------------
+    itable = _convert_records_to_table(records)
+    # return this itable
+    return itable
+
+
+def _get_files_from_disk(filepath: str, file_wildcard: str) -> List[str]:
+    """
+    Get all files from disk matching a wildcard
+
+    :param filepath: str, the file path to search
+    :param file_wildcard: str, the wildcard to use when searching for files
+
+    :return: list of strings, the files found on disk
+    """
+    # storage of valid files
+    valid_files = []
+    # use os to walk the directory and find files
+    for root, dirs, files in os.walk(filepath):
+        # loop around files
+        for filename in files:
+            if fnmatch.fnmatch(filename, file_wildcard):
+                valid_files.append(os.path.join(root, filename))
+    # return valid files
+    return valid_files
+
+
+
+def _get_file_hkeys(params, files: List[str], hkeys: Dict[str, str],
+                    req_abspath: bool, req_filename: bool,
+                    req_obsdir: bool, block_path: str) -> List[Dict[str, Any]]:
+    """
+    Get header keys for a list of files, with optional parallelization
+
+    :param params: ParamDict, the parameter dictionary of constants
+    :param files: list of strings, the files to read header keys from
+    :param hkeys: list of strings, the header keys to extract from each file
+    :param req_abspath: bool, whether to include absolute path in the output
+                        records
+    :param req_filename: bool, whether to include filename in the output records
+    :param req_obsdir: bool, whether to include observation directory in the
+                       output records
+    :param block_path: str, the base block path for calculating relative
+                       observation directory
+    :return:
+    """
+    # get the number of cores to use
+    cores = drs_utils.get_cores(params)
+    # get the multi-processing mode
+    mp_mode = params['INPUTS']['MP_MODE']
+
+    # print progress
+    msg = 'Getting header keys for {0} files using {1} cores'
+    margs = [len(files), cores]
+    WLOG(params, 'info', msg.format(*margs))
+
+    # use parallelization if requested and cores > 1
+    if mp_mode.lower() == 'pathos' and cores > 1:
+        records = _multi_process_get_hkeys_pathos(files, hkeys,
+                                                  req_abspath, req_filename,
+                                                  req_obsdir, block_path, cores)
+    elif mp_mode.lower() == 'pool' and cores > 1:
+        records = _multi_process_get_hkeys_pool(files, hkeys,
+                                                req_abspath, req_filename,
+                                                req_obsdir, block_path, cores)
+    elif mp_mode.lower() == 'process' and cores > 1:
+        records = _multi_process_get_hkeys_process(files, hkeys,
+                                                   req_abspath, req_filename,
+                                                   req_obsdir, block_path, cores)
+    else:
+        records = _get_file_hkeys_serial(files, hkeys, req_abspath,
+                                         req_filename, req_obsdir, block_path)
+    # return the records
+    return records
+
+
+def _convert_records_to_table(records: List[Dict[str, Any]]) -> Table:
+    """
+    Convert a list of records (dictionaries) into an astropy Table
+
+    :param records: list of dictionaries, each dictionary contains header keys
+                    and file information for a single file
+
+    :return: astropy Table, the table containing the header keys and file
+             information for all files
+    """
+    # convert list of dicts to astropy Table
+    if len(records) > 0:
+        itable = Table(rows=records)
+    else:
+        itable = Table()
+    return itable
+
+
+# =============================================================================
+# Define helper functions for parallel processing
+# =============================================================================
+def _get_single_file_hkeys(filename: str, hkeys: Dict[str, str],
+                           req_abspath: bool, req_filename: bool,
+                           req_obsdir: bool, block_path: str) -> Dict[str, Any]:
+    """
+    Process a single file and extract header keys and file information
+
+    :param filename: str, path to the file
+    :param hkeys: List[str], list of header keys to extract
+    :param req_abspath: bool, whether to include absolute path
+    :param req_filename: bool, whether to include filename
+    :param req_obsdir: bool, whether to include observation directory
+    :param block_path: str, base block path for relative path calculation
+
+    :return: Dict[str, Any], record containing file info and header keys
+    """
+    record = dict()
+    # try to read the header key from the file
+    hdr = fits.getheader(filename)
+
+    if req_abspath:
+        record['ABSPATH'] = os.path.abspath(filename)
+    if req_filename:
+        record['FILENAME'] = os.path.basename(filename)
+    if req_obsdir:
+        record['OBS_DIR'] = os.path.relpath(os.path.dirname(filename),
+                                            block_path)
+    # get the header keys for this file
+    for key in hkeys:
+        # get the header key to look for in the file
+        hkey = hkeys[key]
+        # save as record (using original key name for the record)
+        record[key] = copy.deepcopy(hdr.get(hkey, None))
+    # return the record
+    return record
+
+
+def _get_file_hkeys_serial(files: List[str], hkeys: Dict[str, str],
+                           req_abspath: bool, req_filename: bool,
+                           req_obsdir: bool, block_path: str) -> List[Dict[str, Any]]:
+    """
+    Process files serially to extract header keys
+
+    :param files: List[str], list of file paths
+    :param hkeys: List[str], list of header keys to extract
+    :param req_abspath: bool, whether to include absolute path
+    :param req_filename: bool, whether to include filename
+    :param req_obsdir: bool, whether to include observation directory
+    :param block_path: str, base block path for relative path calculation
+
+    :return: List[Dict[str, Any]], list of records
+    """
+    records = []
+    for filename in tqdm(files):
+        record = _get_single_file_hkeys(filename, hkeys, req_abspath,
+                                       req_filename, req_obsdir, block_path)
+        records.append(record)
+    return records
+
+
+def _multi_process_get_hkeys_process(files: List[str], hkeys: Dict[str, str],
+                                     req_abspath: bool, req_filename: bool,
+                                     req_obsdir: bool, block_path: str,
+                                     cores: int) -> List[Dict[str, Any]]:
+    """
+    Process files using multiprocessing.Process
+
+    :param files: List[str], list of file paths
+    :param hkeys: List[str], list of header keys to extract
+    :param req_abspath: bool, whether to include absolute path
+    :param req_filename: bool, whether to include filename
+    :param req_obsdir: bool, whether to include observation directory
+    :param block_path: str, base block path for relative path calculation
+    :param cores: int, number of cores to use
+
+    :return: List[Dict[str, Any]], list of records
+    """
+    from multiprocessing import Process, Manager, Queue
+
+    # split files into N=cores groups
+    cores = min(cores, len(files))
+    chunk_size = int(np.ceil(len(files) / cores))
+
+    grouped_files = [files[i:i + chunk_size]
+                     for i in range(0, len(files), chunk_size)]
+
+    # use manager to share results across processes
+    with Manager() as manager:
+        records_list = manager.list()
+        progress_queue = Queue()
+        jobs = []
+
+        # loop around each group
+        for g_it, grouped_file in enumerate(grouped_files):
+            args = [grouped_file, hkeys, req_abspath, req_filename,
+                   req_obsdir, block_path, records_list, progress_queue]
+            process = Process(target=_multi_get_hkeys_worker, args=args)
+            process.start()
+            jobs.append(process)
+
+        # track progress
+        pbar = tqdm(total=len(files), desc='Reading file headers')
+        processed = 0
+        while processed < len(files):
+            try:
+                progress_queue.get(timeout=0.1)
+                processed += 1
+                pbar.update(1)
+            except:
+                pass
+            # check if all processes are done
+            if all(not proc.is_alive() for proc in jobs):
+                # get any remaining progress updates
+                while not progress_queue.empty():
+                    progress_queue.get()
+                    processed += 1
+                    pbar.update(1)
+                break
+        pbar.close()
+
+        # wait for all processes to finish
+        for proc in jobs:
+            proc.join()
+
+        # convert manager list to regular list
+        records = list(records_list)
+
+    return records
+
+
+def _multi_process_get_hkeys_pool(files: List[str], hkeys: Dict[str, str],
+                                  req_abspath: bool, req_filename: bool,
+                                  req_obsdir: bool, block_path: str,
+                                  cores: int) -> List[Dict[str, Any]]:
+    """
+    Process files using multiprocessing.Pool
+
+    :param files: List[str], list of file paths
+    :param hkeys: List[str], list of header keys to extract
+    :param req_abspath: bool, whether to include absolute path
+    :param req_filename: bool, whether to include filename
+    :param req_obsdir: bool, whether to include observation directory
+    :param block_path: str, base block path for relative path calculation
+    :param cores: int, number of cores to use
+
+    :return: List[Dict[str, Any]], list of records
+    """
+    from multiprocessing import get_context
+    from functools import partial
+
+    # create partial function with fixed arguments
+    process_func = partial(_get_single_file_hkeys, hkeys=hkeys,
+                          req_abspath=req_abspath, req_filename=req_filename,
+                          req_obsdir=req_obsdir, block_path=block_path)
+
+    # use pool to process files with progress bar
+    with get_context('spawn').Pool(cores, maxtasksperchild=1) as pool:
+        records = list(tqdm(pool.imap_unordered(process_func, files),
+                           total=len(files), desc='Reading file headers'))
+
+    return records
+
+
+def _multi_process_get_hkeys_pathos(files: List[str], hkeys: Dict[str, str],
+                                    req_abspath: bool, req_filename: bool,
+                                    req_obsdir: bool, block_path: str,
+                                    cores: int) -> List[Dict[str, Any]]:
+    """
+    Process files using pathos multiprocessing
+
+    :param files: List[str], list of file paths
+    :param hkeys: List[str], list of header keys to extract
+    :param req_abspath: bool, whether to include absolute path
+    :param req_filename: bool, whether to include filename
+    :param req_obsdir: bool, whether to include observation directory
+    :param block_path: str, base block path for relative path calculation
+    :param cores: int, number of cores to use
+
+    :return: List[Dict[str, Any]], list of records
+    """
+    try:
+        from pathos.multiprocessing import ProcessPool
+        from functools import partial
+
+        # create partial function with fixed arguments
+        process_func = partial(_get_single_file_hkeys, hkeys=hkeys,
+                              req_abspath=req_abspath,
+                              req_filename=req_filename,
+                              req_obsdir=req_obsdir, block_path=block_path)
+
+        # use pathos pool to process files with progress bar
+        with ProcessPool(cores) as pool:
+            records = list(tqdm(pool.imap(process_func, files),
+                               total=len(files), desc='Reading file headers'))
+
+        return records
+    except ImportError:
+        # fallback to process mode if pathos not available
+        return _multi_process_get_hkeys_process(files, hkeys,
+                                                req_abspath, req_filename,
+                                                req_obsdir, block_path, cores)
+
+
+def _multi_get_hkeys_worker(files: List[str], hkeys: Dict[str, str],
+                            req_abspath: bool, req_filename: bool,
+                            req_obsdir: bool, block_path: str,
+                            records_list, progress_queue=None) -> None:
+    """
+    Worker function for multiprocessing.Process to process a batch of files
+
+    :param files: List[str], list of file paths to process
+    :param hkeys: List[str], list of header keys to extract
+    :param req_abspath: bool, whether to include absolute path
+    :param req_filename: bool, whether to include filename
+    :param req_obsdir: bool, whether to include observation directory
+    :param block_path: str, base block path for relative path calculation
+    :param records_list: multiprocessing.Manager.list, shared list for results
+    :param progress_queue: multiprocessing.Queue, optional queue for progress updates
+
+    :return: None
+    """
+    for filename in files:
+        record = _get_single_file_hkeys(filename, hkeys, req_abspath,
+                                       req_filename, req_obsdir, block_path)
+        records_list.append(record)
+        # send progress update if queue is available
+        if progress_queue is not None:
+            progress_queue.put(1)
 
 
 # =============================================================================
@@ -513,74 +940,247 @@ def get_perm_outpaths(params, nosubdir: bool, db_entries,
 def copy_files(params, all_inpaths: AllDict,  all_outpaths: AllDict,
                do_symlink: bool, do_copy: bool,
                all_permissions: PermDict):
+    # get the number of cores to use
+    cores = drs_utils.get_cores(params)
+    # get the multi-processing mode
+    mp_mode = params['INPUTS']['MP_MODE']
+
     for objname in all_inpaths:
         WLOG(params, '', '')
         WLOG(params, '', params['DRS_HEADER'])
         WLOG(params, '', textentry('40-509-00008', args=[objname]))
         WLOG(params, '', params['DRS_HEADER'])
         WLOG(params, '', '')
-        # loop around files
+
+        # prepare data for parallel processing
+        copy_tasks = []
         for row in range(len(all_inpaths[objname])):
-            # get in and out path
             inpath = all_inpaths[objname][row]
             outpath = all_outpaths[objname][row]
-            # -----------------------------------------------------------------
-            # copy via all permissions dictionary
-            # -----------------------------------------------------------------
-            if all_permissions[objname][row] is not None:
-                # get copy type and commands
-                ctype = all_permissions[objname][row]['CTYPE']
-                commands = all_permissions[objname][row]['COMMANDS']
-                # print string
-                copyargs = [row + 1, len(all_inpaths[objname]), ctype,
-                            outpath]
-                copystr = '[{0}/{1}] --> {2}[{3}]'.format(*copyargs)
-                # print copy string
-                WLOG(params, '', copystr, wrap=False)
-                # remove previous
-                remove_previous(outpath)
-                # run copy commands on files
-                # (usually a copy or symlink followed by some permission change)
-                try:
-                    if ctype == 'SYM':
-                        os.symlink(inpath, outpath)
-                    else:
-                        shutil.copy(inpath, outpath)
-                    # then run permission commands
-                    for command in commands:
-                        os.system(command)
-                except Exception as _:
-                    eargs = [ctype, inpath, outpath]
-                    emsg = 'Failed to run {0} commands on {1} to {2}'
-                    emsg += ' with commands: \n{2}'
-                    emsg = emsg.format(*eargs, '\n'.join(commands))
-                    WLOG(params, 'error', emsg.format(*eargs))
-            # -----------------------------------------------------------------
-            # copy via symbolic link
-            # -----------------------------------------------------------------
-            elif do_symlink and do_copy:
-                # print string
-                copyargs = [row + 1, len(all_inpaths[objname]), outpath]
-                copystr = '[{0}/{1}] --> SYM[{2}]'.format(*copyargs)
-                # print copy string
-                WLOG(params, '', copystr, wrap=False)
-                # remove and symlink
-                remove_previous(outpath)
-                os.symlink(inpath, outpath)
-            # -----------------------------------------------------------------
-            # copy via shutil copy (full copy)
-            # -----------------------------------------------------------------
-            elif do_copy:
-                # print string
-                copyargs = [row + 1, len(all_inpaths[objname]), outpath]
-                copystr = '[{0}/{1}] --> CP[{2}]'.format(*copyargs)
-                # print copy string
-                WLOG(params, '', copystr, wrap=False)
-                # remove and copy
-                remove_previous(outpath)
-                shutil.copy(inpath, outpath)
+            permission = all_permissions[objname][row]
+            total_files = len(all_inpaths[objname])
+            copy_tasks.append((row, inpath, outpath, permission, total_files,
+                             do_symlink, do_copy))
+
+        # use parallelization if requested and cores > 1
+        if mp_mode.lower() == 'pathos' and cores > 1:
+            _multi_process_copy_files_pathos(params, copy_tasks, cores)
+        elif mp_mode.lower() == 'pool' and cores > 1:
+            _multi_process_copy_files_pool(params, copy_tasks, cores)
+        elif mp_mode.lower() == 'process' and cores > 1:
+            _multi_process_copy_files_process(params, copy_tasks, cores)
+        else:
+            _copy_files_serial(params, copy_tasks)
 
     return all_inpaths, all_outpaths
+
+
+# =============================================================================
+# Define helper functions for parallel file copying
+# =============================================================================
+
+def _copy_single_file(params: ParamDict, task: tuple) -> None:
+    """
+    Copy or symlink a single file with optional permissions
+
+    :param params: ParamDict, parameter dictionary
+    :param task: tuple containing (row, inpath, outpath, permission,
+                 total_files, do_symlink, do_copy)
+
+    :return: None
+    """
+    row, inpath, outpath, permission, total_files, do_symlink, do_copy = task
+
+    # -----------------------------------------------------------------
+    # copy via all permissions dictionary
+    # -----------------------------------------------------------------
+    if permission is not None:
+        # get copy type and commands
+        ctype = permission['CTYPE']
+        commands = permission['COMMANDS']
+        # print string
+        copyargs = [row + 1, total_files, ctype, outpath]
+        copystr = '[{0}/{1}] --> {2}[{3}]'.format(*copyargs)
+        # print copy string
+        WLOG(params, '', copystr, wrap=False)
+        # remove previous
+        remove_previous(outpath)
+        # run copy commands on files
+        # (usually a copy or symlink followed by some permission change)
+        try:
+            if ctype == 'SYM':
+                os.symlink(inpath, outpath)
+            else:
+                shutil.copy(inpath, outpath)
+            # then run permission commands
+            for command in commands:
+                os.system(command)
+        except Exception as _:
+            eargs = [ctype, inpath, outpath]
+            emsg = 'Failed to run {0} commands on {1} to {2}'
+            emsg += ' with commands: \n{2}'
+            emsg = emsg.format(*eargs, '\n'.join(commands))
+            WLOG(params, 'error', emsg.format(*eargs))
+    # -----------------------------------------------------------------
+    # copy via symbolic link
+    # -----------------------------------------------------------------
+    elif do_symlink and do_copy:
+        # print string
+        copyargs = [row + 1, total_files, outpath]
+        copystr = '[{0}/{1}] --> SYM[{2}]'.format(*copyargs)
+        # print copy string
+        WLOG(params, '', copystr, wrap=False)
+        # remove and symlink
+        remove_previous(outpath)
+        os.symlink(inpath, outpath)
+    # -----------------------------------------------------------------
+    # copy via shutil copy (full copy)
+    # -----------------------------------------------------------------
+    elif do_copy:
+        # print string
+        copyargs = [row + 1, total_files, outpath]
+        copystr = '[{0}/{1}] --> CP[{2}]'.format(*copyargs)
+        # print copy string
+        WLOG(params, '', copystr, wrap=False)
+        # remove and copy
+        remove_previous(outpath)
+        shutil.copy(inpath, outpath)
+
+
+def _copy_files_serial(params: ParamDict, tasks: List[tuple]) -> None:
+    """
+    Copy files serially with progress bar
+
+    :param params: ParamDict, parameter dictionary
+    :param tasks: List of tuples, each containing copy task info
+
+    :return: None
+    """
+    for task in tqdm(tasks, desc='Copying files'):
+        _copy_single_file(params, task)
+
+
+def _multi_process_copy_files_process(params: ParamDict, tasks: List[tuple],
+                                      cores: int) -> None:
+    """
+    Copy files using multiprocessing.Process
+
+    :param params: ParamDict, parameter dictionary
+    :param tasks: List of tuples, each containing copy task info
+    :param cores: int, number of cores to use
+
+    :return: None
+    """
+    from multiprocessing import Process, Queue
+
+    # split tasks into N=cores groups
+    cores = min(cores, len(tasks))
+    chunk_size = int(np.ceil(len(tasks) / cores))
+
+    grouped_tasks = [tasks[i:i + chunk_size]
+                     for i in range(0, len(tasks), chunk_size)]
+
+    # create progress queue
+    progress_queue = Queue()
+    jobs = []
+
+    # loop around each group
+    for g_it, grouped_task in enumerate(grouped_tasks):
+        args = [params, grouped_task, progress_queue]
+        process = Process(target=_multi_copy_worker, args=args)
+        process.start()
+        jobs.append(process)
+
+    # track progress
+    pbar = tqdm(total=len(tasks), desc='Copying files')
+    processed = 0
+    while processed < len(tasks):
+        try:
+            progress_queue.get(timeout=0.1)
+            processed += 1
+            pbar.update(1)
+        except:
+            pass
+        # check if all processes are done
+        if all(not proc.is_alive() for proc in jobs):
+            # get any remaining progress updates
+            while not progress_queue.empty():
+                progress_queue.get()
+                processed += 1
+                pbar.update(1)
+            break
+    pbar.close()
+
+    # wait for all processes to finish
+    for proc in jobs:
+        proc.join()
+
+
+def _multi_process_copy_files_pool(params: ParamDict, tasks: List[tuple],
+                                   cores: int) -> None:
+    """
+    Copy files using multiprocessing.Pool
+
+    :param params: ParamDict, parameter dictionary
+    :param tasks: List of tuples, each containing copy task info
+    :param cores: int, number of cores to use
+
+    :return: None
+    """
+    from multiprocessing import get_context
+    from functools import partial
+
+    # create partial function with fixed params argument
+    copy_func = partial(_copy_single_file, params)
+
+    # use pool to process files with progress bar
+    with get_context('spawn').Pool(cores, maxtasksperchild=1) as pool:
+        list(tqdm(pool.imap_unordered(copy_func, tasks),
+                 total=len(tasks), desc='Copying files'))
+
+
+def _multi_process_copy_files_pathos(params: ParamDict, tasks: List[tuple],
+                                     cores: int) -> None:
+    """
+    Copy files using pathos multiprocessing
+
+    :param params: ParamDict, parameter dictionary
+    :param tasks: List of tuples, each containing copy task info
+    :param cores: int, number of cores to use
+
+    :return: None
+    """
+    try:
+        from pathos.multiprocessing import ProcessPool
+        from functools import partial
+
+        # create partial function with fixed params argument
+        copy_func = partial(_copy_single_file, params)
+
+        # use pathos pool to process files with progress bar
+        with ProcessPool(cores) as pool:
+            list(tqdm(pool.imap(copy_func, tasks),
+                     total=len(tasks), desc='Copying files'))
+    except ImportError:
+        # fallback to process mode if pathos not available
+        _multi_process_copy_files_process(params, tasks, cores)
+
+
+def _multi_copy_worker(params: ParamDict, tasks: List[tuple],
+                      progress_queue) -> None:
+    """
+    Worker function for multiprocessing.Process to copy a batch of files
+
+    :param params: ParamDict, parameter dictionary
+    :param tasks: List of tuples, each containing copy task info
+    :param progress_queue: multiprocessing.Queue, queue for progress updates
+
+    :return: None
+    """
+    for task in tasks:
+        _copy_single_file(params, task)
+        # send progress update
+        progress_queue.put(1)
 
 
 def permission_commands(params, run_id: str, perm_dict: dict,
