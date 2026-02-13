@@ -17,8 +17,8 @@ from bokeh.layouts import grid, row, column, Spacer
 from bokeh.models import ColumnDataSource, Slider, Button
 from bokeh.models import HoverTool, CheckboxButtonGroup
 from bokeh.models import Range1d, Dropdown, RangeSlider
-from bokeh.models.widgets import DataTable, TableColumn
-from bokeh.models.widgets import Div
+from bokeh.models import DataTable, TableColumn
+from bokeh.models import Div
 from bokeh.plotting import figure
 
 from apero.core import constants

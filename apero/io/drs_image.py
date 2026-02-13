@@ -20,7 +20,7 @@ import warnings
 from typing import List, Union, Tuple
 
 import numpy as np
-from scipy.ndimage.morphology import binary_erosion, binary_dilation
+from scipy.ndimage import binary_erosion, binary_dilation
 
 from apero import lang
 from apero.base import base
