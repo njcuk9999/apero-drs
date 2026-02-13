@@ -276,7 +276,8 @@ def import_database(params: ParamDict, database_name: str,
     # log
     WLOG(params, '', wmsg)
     # add pandas table to database
-    db.database.add_from_pandas(df, if_exists=joinmode, unique_cols=ucols)
+    db.database.add_from_pandas(df, if_exists=joinmode, unique_cols=ucols,
+                                table=db.database.tname)
 
 
 def list_databases(params: ParamDict) -> Dict[str, DatabaseM]:
@@ -402,7 +403,7 @@ def create_calibration_database(params: ParamDict, pconst: PseudoConst,
     # get rows from reset file
     reset_entries = pd.read_csv(reset_abspath, skipinitialspace=True)
     # add rows from reset text file
-    calibdb.add_from_pandas(reset_entries)
+    calibdb.add_from_pandas(reset_entries, table=calibdb.tname)
     # -------------------------------------------------------------------------
     return calibdb
 
@@ -459,7 +460,7 @@ def create_telluric_database(params: ParamDict, pconst: PseudoConst,
         # get rows from reset file
         reset_entries = pd.read_csv(reset_abspath, skipinitialspace=True)
         # add rows from reset text file
-        telludb.add_from_pandas(reset_entries)
+        telludb.add_from_pandas(reset_entries, table=telludb.tname)
     # ---------------------------------------------------------------------
     return telludb
 
@@ -751,7 +752,7 @@ def update_object_database(params: ParamDict, log: bool = True):
                        index_cols=cindexs)
     # ---------------------------------------------------------------------
     # add rows from pandas dataframe
-    objectdb.add_from_pandas(df, unique_cols=cuniques)
+    objectdb.add_from_pandas(df, unique_cols=cuniques, table=objectdb.tname)
 
 
 # =============================================================================
@@ -864,7 +865,7 @@ def update_reject_database(params: ParamDict, log: bool = True):
                        index_cols=cindexs)
     # ---------------------------------------------------------------------
     # add rows from pandas dataframe
-    rejectdb.add_from_pandas(df, unique_cols=cuniques)
+    rejectdb.add_from_pandas(df, unique_cols=cuniques, table=rejectdb.tname)
 
 
 def get_reject_database(params: ParamDict, log: bool = True) -> Table:
@@ -951,7 +952,7 @@ def create_lang_database(params: Union[None, ParamDict],
     # remove entries with KEYNAME == nan
     mask0 = np.array(reset_entries0['KEYNAME']).astype(str) == 'nan'
     # add rows from reset text file
-    langdb.add_from_pandas(reset_entries0[~mask0])
+    langdb.add_from_pandas(reset_entries0[~mask0], table=langdb.tname)
     # ---------------------------------------------------------------------
     # add rows from reset text file for instrument file
     # ---------------------------------------------------------------------

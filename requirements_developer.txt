@@ -12,7 +12,7 @@ gspread==5.12.4
 numba==0.61.0
 numexpr==2.10.2
 numpy==1.26.4
-pandas==2.2.3
+pandas==2.0.2
 pandastable==0.13.1
 pandasql==0.7.3
 Pillow==11.1.0
@@ -25,8 +25,8 @@ yagmail==0.15.293
 # lbl @ git+https://github.com/njcuk9999/lbl.git@apero_v7
 
 # pip: if using mysql
-mysql-connector-python==9.2.0
-SQLAlchemy==2.0.38
+mysql-connector-python==8.3.0
+SQLAlchemy==2.0.15
 
 # pip: developer only
 bokeh==3.6.3

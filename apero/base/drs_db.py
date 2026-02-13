@@ -1075,7 +1075,7 @@ class Database:
         # return astropy table
         return table
 
-    def add_from_pandas(self, df: pd.DataFrame, table: Optional[str] = None,
+    def add_from_pandas(self, df: pd.DataFrame, table: Optional[str],
                         if_exists: str = 'append', index: bool = False,
                         unique_cols: Optional[List[str]] = None):
         """
@@ -1533,7 +1533,7 @@ class SQLiteDatabase(Database):
         emsg = 'database locked for > {0} s'.format(MAXWAIT)
         raise sqlite3.OperationalError(emsg)
 
-    def add_from_pandas(self, df: pd.DataFrame, table: Optional[str] = None,
+    def add_from_pandas(self, df: pd.DataFrame, table: Optional[str],
                         if_exists: str = 'append', index: bool = False,
                         unique_cols: Optional[List[str]] = None):
         """
@@ -2289,7 +2289,7 @@ class MySQLDatabase(Database):
         # execute command
         self.execute(command, fetch=False)
 
-    def add_from_pandas(self, df: pd.DataFrame, table: Optional[str] = None,
+    def add_from_pandas(self, df: pd.DataFrame, table: Optional[str],
                         if_exists: str = 'append', index: bool = False,
                         unique_cols: Optional[List[str]] = None):
         """
