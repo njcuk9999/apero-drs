@@ -24,6 +24,8 @@ compute_ccf_science = gen_vel.compute_ccf_science
 
 fit_fp_peaks = gen_vel.fit_fp_peaks
 
+fwhm_fp_airy = gen_vel.fwhm_fp_airy
+
 measure_fp_peaks = gen_vel.measure_fp_peaks
 
 remove_telluric_domain = gen_vel.remove_telluric_domain

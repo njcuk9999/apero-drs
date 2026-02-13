@@ -303,6 +303,36 @@ def fit_fp_peaks(x, y, size, return_model=False):
         return p0, popt, pcov, warns
 
 
+def fwhm_fp_airy(popt: np.ndarray) -> float:
+    """
+    Calculate the FWHM of the FP peaks from the fit parameters
+
+    :param popt: numpy array (1D), the best fit parameters from the FP peak
+                 fitting
+    :param pcov: numpy array (2D), the covariance matrix from the FP peak
+                 fitting
+
+    :return: numpy array (1D), the FWHM of the FP peaks
+    """
+    # we find the fwhm of this function:
+    #     # calculate ea_airy_function
+    #     y = zp + amp * ((1 + np.cos(2 * np.pi * (x - x0) / w)) / 2.0) ** beta
+    #   done in mp.ea_airy_function
+    # get the parameters
+    amp, x0, w, beta, zp = popt
+
+    part1 = 2 * ((0.5 ** (1 / beta)) - 1)
+    # deal with out of bounds
+    if abs(part1) > 1:
+        return np.nan
+    # calculate the half width (inverse of beta)
+    half_width = w * np.arccos(part1) / (2 * np.pi)
+    # calculate the full width
+    full_width = 2 * half_width
+    # return the FWHM and error on the FWHM
+    return full_width
+
+
 def remove_wide_peaks(params: ParamDict, props: ParamDict,
                       cutwidth: float) -> ParamDict:
     """
