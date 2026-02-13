@@ -18,7 +18,8 @@ from typing import Any, Dict, List, Optional, Tuple, Union
 
 import numpy as np
 from astropy.io import fits
-from astropy.table import Table
+import pandas as pd
+from pandasql import sqldf
 from astropy.time import Time
 
 from aperocore.base import base
@@ -626,7 +627,7 @@ def tellu_filter(params: ParamDict,  recipe: DrsRecipe,
 # Define disk functions
 # =============================================================================
 def get_disk_entries(params: ParamDict, icolumns: List[str],
-                     condition: Optional[str] = None) -> Table:
+                     condition: Optional[str] = None) -> pd.DataFrame:
     """
     Get entries from disk (instead of database)
 
@@ -669,8 +670,7 @@ def get_disk_entries(params: ParamDict, icolumns: List[str],
     # we must have the block kind to know where to look for files on disk
     if params['INPUTS']['BLOCK_KIND'] in ['None', 'Null', None]:
         emsg = 'BLOCK_KIND must be given in INPUT to use disk entries (--nodb)'
-        WLOG(params, 'error', emsg)
-        return Table()
+        raise AperoCodedException(params, None, emsg)
     # get the block
     block_kind = params['INPUTS']['BLOCK_KIND']
     # intial values for the block path and block names
@@ -704,11 +704,11 @@ def get_disk_entries(params: ParamDict, icolumns: List[str],
     # Step 2: Read files from disk and read the header keys into
     # -------------------------------------------------------------------------
     records = _get_file_hkeys(params, files, hkeys, req_abspath, req_filename,
-                              req_obsdir, block_path)
+                              req_obsdir, block_kind, block_path)
     # -------------------------------------------------------------------------
-    # Step 3: Convert records into pandas dataframe
+    # Step 3: Convert records into pandas dataframe and apply condition filter
     # -------------------------------------------------------------------------
-    itable = _convert_records_to_table(records)
+    itable = _convert_records_to_dataframe(records, condition=condition)
     # return this itable
     return itable
 
@@ -940,7 +940,8 @@ def _copy_files_parallel(filepairs: List[Tuple[str, str]], do_symlink: bool,
 
 def _get_file_hkeys(params, files: List[str], hkeys: Dict[str, str],
                     req_abspath: bool, req_filename: bool,
-                    req_obsdir: bool, block_path: str) -> List[Dict[str, Any]]:
+                    req_obsdir: bool, block_kind: str,
+                    block_path: str) -> List[Dict[str, Any]]:
     """
     Get header keys for a list of files, with optional parallelization
 
@@ -969,46 +970,68 @@ def _get_file_hkeys(params, files: List[str], hkeys: Dict[str, str],
     if mp_mode.lower() == 'pathos' and cores > 1:
         records = _multi_process_get_hkeys_pathos(files, hkeys,
                                                   req_abspath, req_filename,
-                                                  req_obsdir, block_path, cores)
+                                                  req_obsdir, block_kind,
+                                                  block_path, cores)
     elif mp_mode.lower() == 'pool' and cores > 1:
         records = _multi_process_get_hkeys_pool(files, hkeys,
                                                 req_abspath, req_filename,
-                                                req_obsdir, block_path, cores)
+                                                req_obsdir, block_kind,
+                                                block_path, cores)
     elif mp_mode.lower() == 'process' and cores > 1:
         records = _multi_process_get_hkeys_process(files, hkeys,
                                                    req_abspath, req_filename,
-                                                   req_obsdir, block_path, cores)
+                                                   req_obsdir, block_kind,
+                                                   block_path, cores)
     else:
         records = _get_file_hkeys_serial(files, hkeys, req_abspath,
-                                         req_filename, req_obsdir, block_path)
+                                         req_filename, req_obsdir, block_kind,
+                                         block_path)
     # return the records
     return records
 
 
-def _convert_records_to_table(records: List[Dict[str, Any]]) -> Table:
+def _convert_records_to_dataframe(records: List[Dict[str, Any]],
+                                  condition: Optional[str] = None) -> pd.DataFrame:
     """
-    Convert a list of records (dictionaries) into an astropy Table
+    Convert a list of records (dictionaries) into a pandas DataFrame and
+    apply a SQL condition filter using pandasql
 
     :param records: list of dictionaries, each dictionary contains header keys
                     and file information for a single file
+    :param condition: str or None, SQL-like condition to filter the records
+                      (e.g., 'KW_OBJNAME="GL699" AND KW_OUTPUT="EXT_E2DS"')
 
-    :return: astropy Table, the table containing the header keys and file
-             information for all files
+    :return: pandas DataFrame, the filtered table containing the header keys
+             and file information
     """
-    # convert list of dicts to astropy Table
+    # convert list of dicts to pandas DataFrame
     if len(records) > 0:
-        itable = Table(rows=records)
-    else:
-        itable = Table()
-    return itable
+        df = pd.DataFrame(records)
 
+        # apply condition if provided using pandasql
+        if condition is not None and condition.strip():
+            try:
+                # Use pandasql to apply the SQL WHERE condition
+                query = f"SELECT * FROM df WHERE {condition}"
+                df = sqldf(query, locals())
+            except Exception as e:
+                # raise APERO error if condition is invalid
+                emsg = ('Invalid condition:\nWHERE "{0}". '
+                        '\n\t Available columns = {1}'
+                        '\n\tError: {1}')
+                eargs = [condition, ','.join(df.columns), str(e)]
+    else:
+        df = pd.DataFrame()
+
+    return df
 
 # =============================================================================
 # Define helper functions for parallel processing
 # =============================================================================
 def _get_single_file_hkeys(filename: str, hkeys: Dict[str, str],
                            req_abspath: bool, req_filename: bool,
-                           req_obsdir: bool, block_path: str) -> Dict[str, Any]:
+                           req_obsdir: bool, block_kind: str,
+                           block_path: str) -> Dict[str, Any]:
     """
     Process a single file and extract header keys and file information
 
@@ -1032,6 +1055,8 @@ def _get_single_file_hkeys(filename: str, hkeys: Dict[str, str],
     if req_obsdir:
         record['OBS_DIR'] = os.path.relpath(os.path.dirname(filename),
                                             block_path)
+    # always add block kind
+    record['BLOCK_KIND'] = block_kind
     # get the header keys for this file
     for key in hkeys:
         # get the header key to look for in the file
@@ -1044,7 +1069,8 @@ def _get_single_file_hkeys(filename: str, hkeys: Dict[str, str],
 
 def _get_file_hkeys_serial(files: List[str], hkeys: Dict[str, str],
                            req_abspath: bool, req_filename: bool,
-                           req_obsdir: bool, block_path: str) -> List[Dict[str, Any]]:
+                           req_obsdir: bool, block_kind: str,
+                           block_path: str) -> List[Dict[str, Any]]:
     """
     Process files serially to extract header keys
 
@@ -1060,14 +1086,16 @@ def _get_file_hkeys_serial(files: List[str], hkeys: Dict[str, str],
     records = []
     for filename in tqdm(files):
         record = _get_single_file_hkeys(filename, hkeys, req_abspath,
-                                       req_filename, req_obsdir, block_path)
+                                        req_filename, req_obsdir, block_kind,
+                                        block_path)
         records.append(record)
     return records
 
 
 def _multi_process_get_hkeys_process(files: List[str], hkeys: Dict[str, str],
                                      req_abspath: bool, req_filename: bool,
-                                     req_obsdir: bool, block_path: str,
+                                     req_obsdir: bool, block_kind: str,
+                                     block_path: str,
                                      cores: int) -> List[Dict[str, Any]]:
     """
     Process files using multiprocessing.Process
@@ -1100,7 +1128,8 @@ def _multi_process_get_hkeys_process(files: List[str], hkeys: Dict[str, str],
         # loop around each group
         for g_it, grouped_file in enumerate(grouped_files):
             args = [grouped_file, hkeys, req_abspath, req_filename,
-                   req_obsdir, block_path, records_list, progress_queue]
+                    req_obsdir, block_kind, block_path, records_list,
+                    progress_queue]
             process = Process(target=_multi_get_hkeys_worker, args=args)
             process.start()
             jobs.append(process)
@@ -1137,7 +1166,8 @@ def _multi_process_get_hkeys_process(files: List[str], hkeys: Dict[str, str],
 
 def _multi_process_get_hkeys_pool(files: List[str], hkeys: Dict[str, str],
                                   req_abspath: bool, req_filename: bool,
-                                  req_obsdir: bool, block_path: str,
+                                  req_obsdir: bool, block_kind: str,
+                                  block_path: str,
                                   cores: int) -> List[Dict[str, Any]]:
     """
     Process files using multiprocessing.Pool
@@ -1157,8 +1187,9 @@ def _multi_process_get_hkeys_pool(files: List[str], hkeys: Dict[str, str],
 
     # create partial function with fixed arguments
     process_func = partial(_get_single_file_hkeys, hkeys=hkeys,
-                          req_abspath=req_abspath, req_filename=req_filename,
-                          req_obsdir=req_obsdir, block_path=block_path)
+                           req_abspath=req_abspath, req_filename=req_filename,
+                           req_obsdir=req_obsdir, block_kind=block_kind,
+                           block_path=block_path)
 
     # use pool to process files with progress bar
     with get_context('spawn').Pool(cores, maxtasksperchild=1) as pool:
@@ -1170,7 +1201,8 @@ def _multi_process_get_hkeys_pool(files: List[str], hkeys: Dict[str, str],
 
 def _multi_process_get_hkeys_pathos(files: List[str], hkeys: Dict[str, str],
                                     req_abspath: bool, req_filename: bool,
-                                    req_obsdir: bool, block_path: str,
+                                    req_obsdir: bool, block_kind: str,
+                                    block_path: str,
                                     cores: int) -> List[Dict[str, Any]]:
     """
     Process files using pathos multiprocessing
@@ -1191,9 +1223,9 @@ def _multi_process_get_hkeys_pathos(files: List[str], hkeys: Dict[str, str],
 
         # create partial function with fixed arguments
         process_func = partial(_get_single_file_hkeys, hkeys=hkeys,
-                              req_abspath=req_abspath,
-                              req_filename=req_filename,
-                              req_obsdir=req_obsdir, block_path=block_path)
+                               req_abspath=req_abspath, req_filename=req_filename,
+                               req_obsdir=req_obsdir, block_kind=block_kind,
+                               block_path=block_path)
 
         # use pathos pool to process files with progress bar
         with ProcessPool(cores) as pool:
@@ -1204,13 +1236,13 @@ def _multi_process_get_hkeys_pathos(files: List[str], hkeys: Dict[str, str],
     except ImportError:
         # fallback to process mode if pathos not available
         return _multi_process_get_hkeys_process(files, hkeys,
-                                                req_abspath, req_filename,
-                                                req_obsdir, block_path, cores)
+                                                req_obsdir, block_kind,
+                                                block_path, cores)
 
 
 def _multi_get_hkeys_worker(files: List[str], hkeys: Dict[str, str],
                             req_abspath: bool, req_filename: bool,
-                            req_obsdir: bool, block_path: str,
+                            req_obsdir: bool, block_kind: str, block_path: str,
                             records_list, progress_queue=None) -> None:
     """
     Worker function for multiprocessing.Process to process a batch of files
@@ -1228,7 +1260,8 @@ def _multi_get_hkeys_worker(files: List[str], hkeys: Dict[str, str],
     """
     for filename in files:
         record = _get_single_file_hkeys(filename, hkeys, req_abspath,
-                                       req_filename, req_obsdir, block_path)
+                                        req_filename, req_obsdir, block_kind,
+                                        block_path)
         records_list.append(record)
         # send progress update if queue is available
         if progress_queue is not None:
