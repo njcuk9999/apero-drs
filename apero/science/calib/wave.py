@@ -1108,15 +1108,16 @@ def calc_wave_lines(params: ParamDict, recipe: DrsRecipe,
     # ----------------------------------------------------------------------
     # Fit the peaks
     # ----------------------------------------------------------------------
+    length = len(list_pixels)
     # set up storage
-    pixel_m = np.array(list_pixels)
-    wave_m = np.zeros_like(list_waves)
-    ewidth = np.zeros_like(list_pixels)
-    amp = np.zeros_like(list_pixels)
-    nsig = np.repeat(np.nan, len(list_pixels))
-    period_meas = np.full(list_pixels, np.nan)
-    shape_meas = np.full(list_pixels, np.nan)
-    offset_meas = np.full(list_pixels, np.nan)
+    pixel_m = np.full(length, np.nan)
+    wave_m = np.full(length, np.nan)
+    ewidth = np.full(length, np.nan)
+    amp = np.full(length, np.nan)
+    nsig = np.full(length, np.nan)
+    period_meas = np.full(length, np.nan)
+    shape_meas = np.full(length, np.nan)
+    offset_meas = np.full(length, np.nan)
     # ----------------------------------------------------------------------
     # TODO: this loop is super slow
     # loop around orders
@@ -1258,10 +1259,10 @@ def calc_wave_lines(params: ParamDict, recipe: DrsRecipe,
     columnnames = ['WAVE_REF', 'WAVE_MEAS', 'PIXEL_REF', 'PIXEL_MEAS',
                    'ORDER', 'WFIT', 'FWHM_MEAS', 'AMP_MEAS', 'NSIG',
                    'DIFF', 'PEAK_NUMBER', 'PERIOD_MEAS', 'SHAPE_MEAS',
-                   'OFFSET_MEAS']
+                   'OFFSET_MEAS', 'FLAG_NSIG_BAD']
     columnvalues = [list_waves, wave_m, list_pixels, pixel_m, list_orders,
                     list_wfit, ewidth, amp, nsig, diffpix, peak_number,
-                    period_meas, shape_meas, offset_meas]
+                    period_meas, shape_meas, offset_meas, bad]
     # make table
     table = drs_table.make_table(params, columnnames, columnvalues)
     # return table
