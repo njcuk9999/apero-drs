@@ -11,8 +11,7 @@ import warnings
 from typing import Dict, List, Optional, Tuple
 
 import numpy as np
-from scipy.ndimage import percentile_filter, binary_dilation
-from scipy.ndimage.filters import median_filter
+from scipy.ndimage import percentile_filter, binary_dilation, median_filter
 from skimage import measure
 
 from aperocore.base import base

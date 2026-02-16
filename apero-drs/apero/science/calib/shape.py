@@ -13,10 +13,9 @@ from typing import List, Optional, Tuple, Union
 
 import numpy as np
 from astropy.table import Table
-from scipy.ndimage import filters
-from scipy.ndimage import map_coordinates as mapc
+from scipy.ndimage import filters, map_coordinates as mapc
 from scipy.signal import convolve2d
-from scipy.stats import stats
+from scipy.stats import pearsonr
 
 from aperocore.base import base
 from aperocore.constants import param_functions
@@ -954,7 +953,7 @@ def calculate_dxmap(params, recipe, fpdata, lprops, fiber, **kwargs):
                     # calculate the peasron r coefficient
                     xff = ribbon_fp2[iw, :]
                     yff = np.roll(profile, ddx[jw])
-                    pearsonr_value = stats.pearsonr(xff, yff)[0]
+                    pearsonr_value = pearsonr(xff, yff)[0]
                     # push into cross-correlation storage
                     ccor[iw, jw] = pearsonr_value
                 # fit a gaussian to the cross-correlation peak

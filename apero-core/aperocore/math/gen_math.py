@@ -15,8 +15,7 @@ import numpy as np
 from astropy import constants as cc
 from astropy import units as uu
 from scipy.interpolate import InterpolatedUnivariateSpline
-from scipy.ndimage import median_filter, zoom
-from scipy.ndimage.morphology import binary_dilation
+from scipy.ndimage import median_filter, zoom, binary_dilation
 from scipy.optimize import curve_fit
 from scipy.special import erf, erfinv
 import statsmodels.api as statsmodels

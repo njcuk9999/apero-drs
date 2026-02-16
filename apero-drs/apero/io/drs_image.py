@@ -20,7 +20,7 @@ import warnings
 from typing import Any, Dict, List, Optional, Union, Tuple
 
 import numpy as np
-from scipy.ndimage.morphology import binary_erosion, binary_dilation
+from scipy.ndimage import binary_erosion, binary_dilation
 
 from aperocore.base import drs_base
 from aperocore.constants import param_functions
