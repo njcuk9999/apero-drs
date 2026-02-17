@@ -105,11 +105,11 @@ FWHM_PIXEL_LSF.value = 3.0
 
 # Define the point at which the detector saturates
 IMAGE_SATURATION = IMAGE_SATURATION.copy(__NAME__)
-IMAGE_SATURATION.value = 60000
+IMAGE_SATURATION.value = 30000
 
 # Define the frame time for an image
 IMAGE_FRAME_TIME = IMAGE_FRAME_TIME.copy(__NAME__)
-IMAGE_FRAME_TIME.value = 5.57192
+IMAGE_FRAME_TIME.value = 2.78596
 
 # =============================================================================
 # CALIBRATION: GENERAL SETTINGS
@@ -357,11 +357,15 @@ PP_DARK_MED_BINNUM.value = 32
 
 #   Defines the pp hot pixel file (located in the data folder)
 PP_HOTPIX_FILE = PP_HOTPIX_FILE.copy(__NAME__)
-PP_HOTPIX_FILE.value = 'hotpix_pp.csv'
+PP_HOTPIX_FILE.value = 'static_hotpix_ilocater.fits'
+
+# Define the pp hot pixel format
+PP_HOTPIX_FMT = PP_HOTPIX_FMT.copy(__NAME__)
+PP_HOTPIX_FMT.value = 'fits'
 
 #   Defines the pp amplifier bias model (located in the data folder)
 PP_AMP_ERROR_MODEL = PP_AMP_ERROR_MODEL.copy(__NAME__)
-PP_AMP_ERROR_MODEL.value = 'amplifier_bias_model_nirps.fits'
+PP_AMP_ERROR_MODEL.value = 'static_dark_curr_ilocater.fits'
 
 # Defines the pp led flat file (located in the data folder)
 PP_LED_FLAT_FILE = PP_LED_FLAT_FILE.copy(__NAME__)
@@ -590,7 +594,7 @@ DARK_REF_MIN_EXPTIME.value = 300
 # =============================================================================
 #   Defines the full detector flat file (located in the data folder)
 BADPIX_FULL_FLAT = BADPIX_FULL_FLAT.copy(__NAME__)
-BADPIX_FULL_FLAT.value = 'QE_2000nm.fits'
+BADPIX_FULL_FLAT.value = 'static_flat_ilocater.fits'
 
 #   Percentile to normalise to when normalising and median filtering
 #      image [percentage]

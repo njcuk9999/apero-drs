@@ -142,7 +142,7 @@ KW_RAW_DPRTYPE.set(key='DPRTYPE', comment='Observation type',
 
 # define the raw dpr category
 KW_RAW_DPRCATG = KW_RAW_DPRCATG.copy(__NAME__)
-KW_RAW_DPRCATG.set(key='NULL', comment='Observation category',
+KW_RAW_DPRCATG.set(key='OBSTYPE', comment='Observation category',
                    group='raw')
 
 # -----------------------------------------------------------------------------

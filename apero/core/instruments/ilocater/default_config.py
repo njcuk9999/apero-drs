@@ -26,15 +26,15 @@ INSTRUMENT.value = 'ILOCATER'
 
 # Defines the longitude West is negative
 OBS_LONG = OBS_LONG.copy(__NAME__)
-OBS_LONG.value = -70.731330408
+OBS_LONG.value = -83.01251404954607
 
 #  Defines the latitude North (deg)
 OBS_LAT = OBS_LAT.copy(__NAME__)
-OBS_LAT.value = -29.261165622
+OBS_LAT.value = 40.002922161799404
 
 #  Defines the telescopes altitude (m)
 OBS_ALT = OBS_ALT.copy(__NAME__)
-OBS_ALT.value = 2400
+OBS_ALT.value = 244.0
 
 #  Define the telescopes time zone (from pytz.all_timezones)
 OBS_TZ = OBS_TZ.copy(__NAME__)

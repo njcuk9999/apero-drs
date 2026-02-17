@@ -148,10 +148,10 @@ class PseudoConstants(pseudo_const.DefaultPseudoConstants):
         if self.filemod is not None:
             return self.filemod
         # set module name
-        module_name = 'apero.core.instruments.nirps_ha.file_definitions'
+        module_name = 'apero.core.instruments.ilocater.file_definitions'
         # try to import module
         try:
-            self.filemod = base_class.ImportModule('nirps_ha.file_definitions',
+            self.filemod = base_class.ImportModule('ilocater.file_definitions',
                                                    module_name)
             return self.filemod
         except Exception as e:
@@ -173,10 +173,10 @@ class PseudoConstants(pseudo_const.DefaultPseudoConstants):
         if self.recipemod is not None:
             return self.recipemod
         # set module name
-        module_name = 'apero.core.instruments.nirps_ha.recipe_definitions'
+        module_name = 'apero.core.instruments.ilocater.recipe_definitions'
         # try to import module
         try:
-            strmod = 'nirps_ha.recipe_definitions'
+            strmod = 'ilocater.recipe_definitions'
             self.recipemod = base_class.ImportModule(strmod, module_name)
             return self.recipemod
         except Exception as e:
@@ -248,7 +248,7 @@ class PseudoConstants(pseudo_const.DefaultPseudoConstants):
                      hdict: Any, filename: str, check_aliases: bool = False,
                      objdbm: Any = None) -> Any:
         """
-        For NIRPS_HA the following keys may or may not be present (older data
+        For ILOCATOR the following keys may or may not be present (older data
         may need these adding):
 
         KW_TARGET_TYPE:   if KW_OBSTYPE=="OBJECT"
@@ -275,6 +275,17 @@ class PseudoConstants(pseudo_const.DefaultPseudoConstants):
         if check_aliases and objdbm is None:
             emsg = 'check_aliases=True requires objdbm set. \n\tFunction = {0}'
             raise ValueError(emsg.format(func_name))
+
+
+        # TODO: Take this out when in the header
+        fudge_values = [2016.0, 0.0, 0.0]
+        fudge_keys = ['KW_OBJEQUIN', 'KW_OBJRA', 'KW_OBJDEC']
+        for f_it, fudge_key in enumerate(fudge_keys):
+            fhkey = params[fudge_key][0]
+            if fhkey not in header:
+                header[fudge_key] = (fudge_values[f_it], params[fudge_keys[2]])
+                hdict[fudge_key] = (fudge_values[f_it], params[fudge_keys[2]])
+
         # ------------------------------------------------------------------
         # Deal with cleaning object name
         # ------------------------------------------------------------------
@@ -480,7 +491,7 @@ class PseudoConstants(pseudo_const.DefaultPseudoConstants):
         """
         keys = ['KW_TARGET_TYPE', 'KW_OBJECTNAME', 'KW_OBSTYPE',
                 'KW_RAW_DPRTYPE', 'KW_RAW_DPRCATG', 'KW_INSTRUMENT',
-                'KW_INST_MODE', 'KW_DPRTYPE', 'KW_OUTPUT', 'KW_OBJECTNAME2']
+                'KW_DPRTYPE', 'KW_OUTPUT']
         return keys
 
     # =========================================================================
@@ -494,22 +505,7 @@ class PseudoConstants(pseudo_const.DefaultPseudoConstants):
         # set function name
         # _ = display_func('SPLASH', __NAME__, self.class_name)
         # set the logo
-        logo = ["                                                                                                    ",
-                "    %%,                *##*      *##(      *#####(/*,           (######(/,            *#&&&&,  ,    ",
-                "    **#%               /**/      /**/      /********/(&%        /********/(       /#/*******(&%     ",
-                "    ***/##             /***      /**/      /***,    ****&/      /***,    ****&*   ,(****     ,***,  ",
-                "    **,,,*##           /,,*      /,,*      /*,*       *,*(      /,,*,      *,*/   */,,/,            ",
-                "    *,,,*,,/&,         /,,*      /,,*      /*,*,      *,,*      /***,     ,****    ***#(            ",
-                "    ***/  ***/&,       /***      /***      /***,     /***(      /***,     /***(     ****#&(,        ",
-                "    /**/    ***(&      /**/      /***,     (/**#(#%%**///,      (///%##%#*////        */////(%(,    ",
-                "    (///      ///(%    (///      (///,     (//////////,         ((/((((((((,              */(((((   ",
-                "    ((((       ,(((((, ((((      ((((,     ((((,*(((*           ((((,                        ,###*  ",
-                "    ####         ,(##(((###     ,(###,     (###*  (##/          (###/                         (%%#/ ",
-                "    ####,          ,#%%%%%#     ,(%%%,     (%%%*   ,%%#*        #%%%/            ,#%%#        #%%#, ",
-                "    #%%%,             %%%%%     ,(%%%*     (%%%*     #%%/,      #%%%/             ,%%%/,    (%%%%*  ",
-                "    %%%%,               %%%,    ,(%%%*     (%%%*      (%%%*     #%%%/               (%%%%%%%%%%/*   ",
-                "                          (,       ,         ,           ,,,      ,,                   *(((/,       ",
-                "                                                                                                    "]
+        logo = ["iLocater"]
         return logo
 
     # =========================================================================
@@ -886,6 +882,7 @@ class PseudoConstants(pseudo_const.DefaultPseudoConstants):
         # spirou stores the equinox in decimal years
         key = params['KW_OBJEQUIN'][0]
         time_fmt = params.instances['KW_OBJEQUIN'].datatype
+
         # get value from header
         value = header[key]
         # get time
@@ -929,7 +926,6 @@ def constuct_objname(params: Union[ParamDict, None], header,
     # set function name
     func_name = display_func('constuct_objname', __NAME__)
     # get keys from params
-    kwrawobjname1 = params['KW_OBJECTNAME2'][0]
     kwrawobjname = params['KW_OBJECTNAME'][0]
     kwobjname = params['KW_OBJNAME'][0]
     # deal with output key already in header
@@ -938,9 +934,6 @@ def constuct_objname(params: Union[ParamDict, None], header,
             return header[kwobjname]
     # start raw object name as None
     rawobjname = None
-    # check target name
-    if kwrawobjname1 in header:
-        rawobjname = header[kwrawobjname1]
     # get raw object name
     if rawobjname is None and kwrawobjname not in header:
         eargs = [kwrawobjname, filename]
@@ -1015,35 +1008,14 @@ def get_trg_type(params: ParamDict, header: Any, hdict: Any,
     # _ = display_func('get_trg_type', __NAME__)
     # get keys from params
     kwobstype = params['KW_OBSTYPE'][0]
-    kwobjname = params['KW_OBJECTNAME'][0]
     kwtrgtype = params['KW_TARGET_TYPE'][0]
     kwtrgcomment = params['KW_TARGET_TYPE'][2]
-    kwnightobs = params['KW_NIGHT_OBS'][0]
     # get obstype
     if kwobstype not in header:
         eargs = [kwobstype, filename]
         raise drs_exceptions.DrsCodedException('01-001-00027', 'error',
                                                targs=eargs)
-    obstype = header[kwobstype]
-    obsname = header[kwobjname]
-    nightobs = header[kwnightobs]
-    # deal with setting value
-    cond1 = 'SKY' in obstype
-    cond2 = 'SKY' in obsname.upper()
-    cond3 = 'TELLURIC' not in obstype
-    cond4 = 'FLUX' not in obstype
-    cond5 = str(nightobs).upper() in ['T', '1', 'TRUE']
-
-    if cond1 and cond2 and cond3 and cond4 and cond5:
-        trg_type = 'NIGHT-SKY'
-    elif cond1 and cond2 and cond3 and cond4:
-        trg_type = 'SKY'
-    elif not cond1 or not cond2 or not cond3:
-        trg_type = 'TARGET'
-    elif 'STAR' in obstype:
-        trg_type = 'TARGET'
-    else:
-        trg_type = ''
+    trg_type = str(header[kwobstype])
     # update header
     header[kwtrgtype] = (trg_type, kwtrgcomment)
     hdict[kwtrgtype] = (trg_type, kwtrgcomment)
@@ -1186,7 +1158,7 @@ def get_drs_mode(params: ParamDict, header: Any, hdict: Any) -> Tuple[Any, Any]:
     # get drs mode header keyword store
     kw_drs_mode, _, kw_drs_mode_comment = params['KW_DRS_MODE']
     # get drs mode header keyword store
-    drs_mode = 'HA'
+    drs_mode = 'SPECTROSCOPY'
     # -------------------------------------------------------------------------
     # add header key
     header[kw_drs_mode] = (drs_mode, kw_drs_mode_comment)
@@ -1293,40 +1265,9 @@ def get_special_objname(params: ParamDict, header: Any,
 
     :return: the updated header/hdict
     """
-    # get parameters from params
-    kwdprtype = params['KW_DPRTYPE'][0]
-    kwobjname = params['KW_OBJNAME'][0]
-    kwcatg = params['KW_RAW_DPRCATG'][0]
-    kwtrgtype = params['KW_TARGET_TYPE'][0]
-    kwobjcomment = params['KW_OBJNAME'][2]
-    obj_dprtypes = params.listp('PP_OBJ_DPRTYPES', dtype=str)
-    # conditions
-    cond1 = header[kwdprtype] in obj_dprtypes
-    cond2 = header[kwtrgtype] == 'SKY'
-    cond3 = header[kwtrgtype] == 'NIGHT-SKY'
-    cond4 = header[kwcatg] == 'CALIB'
-    cond5 = header[kwcatg] == 'TEST'
-    # if nether conditions are met we have a science/telluric observation
-    #  don't update the date
-    if cond1 and not cond2:
-        return header, hdict
-    # if target type is sky make the object name sky
-    if cond2:
-        objname = 'SKY'
-    if cond3:
-        objname = 'NIGHT-SKY'
-    # otherwise we assume we have a calibration
-    elif cond4:
-        objname = 'CALIB'
-    elif cond5:
-        objname = 'TEST'
-    else:
-        objname = 'UNKNOWN'
-    #  update header / hdict
-    header[kwobjname] = (objname, kwobjcomment)
-    hdict[kwobjname] = (objname, kwobjcomment)
-    # return header and hdict
+    _ = params
     return header, hdict
+
 
 
 # =============================================================================
