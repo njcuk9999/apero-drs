@@ -25,8 +25,8 @@ __all__ = [
     'PP_OBJ_DPRTYPES', 'PP_BADLIST_SSID',
     'PP_BADLIST_SSWB', 'PP_BADLIST_DRS_HKEY', 'PP_BADLIST_SS_VALCOL',
     'PP_BADLIST_SS_MASKCOL', 'PP_HOTPIX_BOXSIZE', 'PP_CORRUPT_HOT_THRES',
-    'PP_NUM_DARK_AMP', 'PP_HOTPIX_FILE', 'PP_AMP_ERROR_MODEL',
-    'PP_LED_FLAT_FILE', 'PP_TOTAL_AMP_NUM',
+    'PP_NUM_DARK_AMP', 'PP_HOTPIX_FILE', 'PP_HOTPIX_FMT',
+    'PP_AMP_ERROR_MODEL', 'PP_LED_FLAT_FILE', 'PP_TOTAL_AMP_NUM',
     'PP_CORRUPT_MED_SIZE', 'PP_NUM_REF_TOP', 'PP_NUM_REF_BOTTOM',
     'PP_NUM_REF_LEFT', 'PP_NUM_REF_RIGHT',
     'PP_RMS_PERCENTILE', 'PP_LOWEST_RMS_PERCENTILE', 'PP_CORRUPT_SNR_HOTPIX',
@@ -969,6 +969,12 @@ PP_HOTPIX_FILE = Const('PP_HOTPIX_FILE', value=None, dtype=str, source=__NAME__,
                        group=cgroup,
                        description='Defines the pp hot pixel file (located in '
                                    'the data folder)')
+
+# Define the pp hot pixel format
+PP_HOTPIX_FMT = Const('PP_HOTPIX_FMT', value=None, dtype=str,
+                      source=__NAME__, group=cgroup,
+                      options=['csv', 'fits'],
+                      description='Define the pp hot pixel format')
 
 #   Defines the pp amplifier bias model (located in the data folder)
 PP_AMP_ERROR_MODEL = Const('PP_AMP_ERROR_MODEL', value=None, dtype=str,
