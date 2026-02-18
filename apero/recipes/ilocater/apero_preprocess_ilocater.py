@@ -176,7 +176,7 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
         # print progress
         WLOG(params, '', 'Loading RAMP [intercept,inttime,errslope]')
         # get data from file instance
-        datalist = infile.get_data(copy=True, extensions=[1, 2, 3])
+        datalist = infile.get_data(copy=True, extensions=[1, 2, 3, 4])
         # print progress
         WLOG(params, '', '\tLoaded {0}'.format(infile.filename))
         # get flux image from the data list
@@ -197,10 +197,16 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
             errslope = errslope / np.sqrt(inttime)
         # ------------------------------------------------------------------
         # any pixel with less than 2 reads has no ramp fitting - set to NaN
-        image[datalist[2] < 2] = np.nan
+        image[datalist[3] < 2] = np.nan
         # ------------------------------------------------------------------
         # add postmeter statistics
-        postmeter_props = prep.postermeter_stats(params, infile.filename, ext=4)
+        # postmeter_props = prep.postermeter_stats(params, infile.filename, ext=4)
+        # TODO: If iLocater has a posemeter we need to add this in here,
+        #       for now we just add NaNs
+        postmeter_props = ParamDict()
+        postmeter_props['PP_MJD_FLUX'] = np.nan
+        postmeter_props['PP_MED_FLUX_DIFF'] = np.nan
+        postmeter_props['PP_RMS_FLUX_DIFF'] = np.nan
         # ------------------------------------------------------------------
         # Get out file and check skip
         # ------------------------------------------------------------------

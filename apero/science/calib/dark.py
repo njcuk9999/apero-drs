@@ -288,7 +288,7 @@ def construct_dark_table(params: ParamDict, filenames: List[str],
         if mode == 'pp':
             dprtype = hdr.get(params['KW_DPRTYPE'][0])
         else:
-            dprtype = 'DARK_DARK'
+            dprtype = params['INPUTS']['FILETYPE']
         # append to lists
         dark_files.append(filenames[it])
         dark_time.append(float(acqtime))

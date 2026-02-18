@@ -122,7 +122,7 @@ raw_file.addset(raw_dark_dark)
 # raw flat files
 raw_dark_flat = drs_finput('RAW_DARK_FLAT', outclass=blank_ofile,
                            filetype='.fits', suffix='',
-                           hkeys=dict(KW_RAW_DPRTYPE='DARK_HALOGEN_DARK',
+                           hkeys=dict(KW_RAW_DPRTYPE='DARK_FLAT_DARK',
                                       KW_RAW_DPRCATG='CAL',
                                       KW_INSTRUMENT=INSTRUMENT_NAME),
                            description='Raw sci=DARK calib=FLAT file')
@@ -130,7 +130,7 @@ raw_file.addset(raw_dark_flat)
 
 raw_flat_dark = drs_finput('RAW_FLAT_DARK', outclass=blank_ofile,
                            filetype='.fits', suffix='',
-                           hkeys=dict(KW_RAW_DPRTYPE='HALOGEN_DARK_HALOGEN',
+                           hkeys=dict(KW_RAW_DPRTYPE='FLAT_DARK_FLAT',
                                       KW_RAW_DPRCATG='CAL',
                                       KW_INSTRUMENT=INSTRUMENT_NAME),
                            description='Raw sci=FLAT calib=DARK file')
@@ -138,7 +138,7 @@ raw_file.addset(raw_flat_dark)
 
 raw_flat_flat = drs_finput('RAW_FLAT_FLAT', outclass=blank_ofile,
                            filetype='.fits', suffix='',
-                           hkeys=dict(KW_RAW_DPRTYPE='HALOGEN_HALOGEN_HALOGEN',
+                           hkeys=dict(KW_RAW_DPRTYPE='FLAT_FLAT_FLAT',
                                       KW_RAW_DPRCATG='CAL',
                                       KW_INSTRUMENT=INSTRUMENT_NAME),
                            description='Raw sci=FLAT calib=FLAT file')
@@ -148,7 +148,7 @@ raw_file.addset(raw_flat_flat)
 # raw align files
 raw_dark_fp = drs_finput('RAW_DARK_FP', outclass=blank_ofile,
                          filetype='.fits', suffix='',
-                         hkeys=dict(KW_RAW_DPRTYPE='DARK_ETALON_DARK',
+                         hkeys=dict(KW_RAW_DPRTYPE='DARK_FP_DARK',
                                     KW_RAW_DPRCATG='CAL',
                                     KW_INSTRUMENT=INSTRUMENT_NAME),
                          description='Raw sci=DARK calib=FP file')
@@ -156,7 +156,7 @@ raw_file.addset(raw_dark_fp)
 
 raw_fp_dark = drs_finput('RAW_FP_DARK', outclass=blank_ofile,
                          filetype='.fits', suffix='',
-                         hkeys=dict(KW_RAW_DPRTYPE='ETALON_DARK_ETALON',
+                         hkeys=dict(KW_RAW_DPRTYPE='FP_DARK_FP',
                                     KW_RAW_DPRCATG='CAL',
                                     KW_INSTRUMENT=INSTRUMENT_NAME),
                          description='Raw sci=FP calib=DARK file')
@@ -164,7 +164,7 @@ raw_file.addset(raw_fp_dark)
 
 raw_fp_fp = drs_finput('RAW_FP_FP', outclass=blank_ofile,
                        filetype='.fits', suffix='',
-                       hkeys=dict(KW_RAW_DPRTYPE='ETALON_ETALON_ETALON',
+                       hkeys=dict(KW_RAW_DPRTYPE='FP_FP_FP',
                                   KW_RAW_DPRCATG='CAL',
                                   KW_INSTRUMENT=INSTRUMENT_NAME),
                        description='Raw sci=FP calib=FP file')
@@ -184,7 +184,7 @@ raw_file.addset(raw_lfc_lfc)
 # NIRPS-CHANGE: Not defined - this is a guess
 raw_lfc_fp = drs_finput('RAW_LFC_FP', filetype='.fits', suffix='',
                         outclass=blank_ofile,
-                        hkeys=dict(KW_RAW_DPRTYPE='LFC_ETALON_LFC',
+                        hkeys=dict(KW_RAW_DPRTYPE='LFC_FP_LFC',
                                    KW_RAW_DPRCATG='CAL',
                                    KW_INSTRUMENT=INSTRUMENT_NAME),
                         description='Raw sci=LFC calib=FP file')
@@ -194,24 +194,24 @@ raw_file.addset(raw_lfc_fp)
 raw_fp_lfc = drs_finput('RAW_FP_LFC',
                         filetype='.fits', suffix='',
                         outclass=blank_ofile,
-                        hkeys=dict(KW_RAW_DPRTYPE='ETALON_LFC_ETALON',
+                        hkeys=dict(KW_RAW_DPRTYPE='FP_LFC_FP',
                                    KW_RAW_DPRCATG='CAL',
                                    KW_INSTRUMENT=INSTRUMENT_NAME),
                         description='Raw sci=FP calib=LFC file')
 raw_file.addset(raw_fp_lfc)
 
-raw_lfc_hcone = drs_finput('RAW_LFC_HCONE', filetype='.fits', suffix='',
+raw_lfc_hcone = drs_finput('RAW_LFC_HC', filetype='.fits', suffix='',
                         outclass=blank_ofile,
-                        hkeys=dict(KW_RAW_DPRTYPE='LFC_UNe_LFC',
+                        hkeys=dict(KW_RAW_DPRTYPE='LFC_HC_LFC',
                                    KW_RAW_DPRCATG='CAL',
                                    KW_INSTRUMENT=INSTRUMENT_NAME),
                         description='Raw sci=LFC calib=HC1 file')
 raw_file.addset(raw_lfc_hcone)
 
-raw_hcone_lfc = drs_finput('RAW_HCONE_LFC',
+raw_hcone_lfc = drs_finput('RAW_HC_LFC',
                         filetype='.fits', suffix='',
                         outclass=blank_ofile,
-                        hkeys=dict(KW_RAW_DPRTYPE='UNe_LFC_UNe',
+                        hkeys=dict(KW_RAW_DPRTYPE='HC_LFC_HC',
                                    KW_RAW_DPRCATG='CAL',
                                    KW_INSTRUMENT=INSTRUMENT_NAME),
                         description='Raw sci=HC1 calib=LFC file')
@@ -244,9 +244,10 @@ raw_obj_dark = drs_finput('RAW_OBJ_DARK', outclass=blank_ofile,
                           description='Raw sci=OBJ calib=DARK file')
 raw_file.addset(raw_obj_dark)
 
-raw_obj_fp = drs_finput('RAW_OBJ_FP', outclass=blank_ofile, filetype='.fits',
+raw_obj_fp = drs_finput('RAW_OBJ_FP', outclass=blank_ofile,
+                        filetype='.fits',
                         suffix='', inext='.fits',
-                        hkeys=dict(KW_RAW_DPRTYPE='OBJECT_ETALON_OBJECT',
+                        hkeys=dict(KW_RAW_DPRTYPE='OBJECT_FP_OBJECT',
                                    KW_RAW_DPRCATG='SCI',
                                    KW_INSTRUMENT=INSTRUMENT_NAME),
                         description='Raw sci=OBJ calib=FP file')
@@ -254,7 +255,7 @@ raw_file.addset(raw_obj_fp)
 
 raw_obj_hc1 = drs_finput('RAW_OBJ_HCONE', outclass=blank_ofile,
                          filetype='.fits', suffix='', inext='.fits',
-                         hkeys=dict(KW_RAW_DPRTYPE='OBJECT_UNe_OBJECT',
+                         hkeys=dict(KW_RAW_DPRTYPE='OBJECT_HC_OBJECT',
                                     KW_RAW_DPRCATG='SCI',
                                     KW_INSTRUMENT=INSTRUMENT_NAME),
                          description='Raw sci=OBJ calib=Hollow Cathode file,'
@@ -279,7 +280,7 @@ raw_file.addset(raw_obj_hc1)
 
 raw_sun_fp = drs_finput('RAW_SUN_FP', outclass=blank_ofile,
                         filetype='.fits', suffix='', inext='.fits',
-                        hkeys=dict(KW_RAW_DPRTYPE='SUN_ETALON_SUN',
+                        hkeys=dict(KW_RAW_DPRTYPE='SUN_FP_SUN',
                                    KW_RAW_DPRCATG='SCI',
                                    KW_INSTRUMENT=INSTRUMENT_NAME),
                         description='Raw sci=SUN calib=FP file')
@@ -314,7 +315,7 @@ raw_file.addset(raw_tellu_sky)
 # raw comparison files (UN1)
 raw_dark_hc1 = drs_finput('RAW_DARK_HCONE', outclass=blank_ofile,
                           filetype='.fits', suffix='',
-                          hkeys=dict(KW_RAW_DPRTYPE='DARK_UNe_DARK',
+                          hkeys=dict(KW_RAW_DPRTYPE='DARK_HC_DARK',
                                      KW_RAW_DPRCATG='CAL',
                                      KW_INSTRUMENT=INSTRUMENT_NAME),
                           description='Raw sci=DARK calib=Hollow Cathode file,'
@@ -324,7 +325,7 @@ raw_file.addset(raw_dark_hc1)
 
 raw_fp_hc1 = drs_finput('RAW_FP_HCONE', outclass=blank_ofile,
                         filetype='.fits', suffix='',
-                        hkeys=dict(KW_RAW_DPRTYPE='ELATON_UNe_ELATON',
+                        hkeys=dict(KW_RAW_DPRTYPE='FP_HC_FP',
                                    KW_RAW_DPRCATG='CAL',
                                    KW_INSTRUMENT=INSTRUMENT_NAME),
                         description='Raw sci=FP calib=Hollow Cathode file,'
@@ -333,7 +334,7 @@ raw_file.addset(raw_fp_hc1)
 
 raw_hc1_fp = drs_finput('RAW_HCONE_FP', outclass=blank_ofile,
                         filetype='.fits', suffix='',
-                        hkeys=dict(KW_RAW_DPRTYPE='UNe_ELATON_UNe',
+                        hkeys=dict(KW_RAW_DPRTYPE='HC_FP_HC',
                                    KW_RAW_DPRCATG='CAL',
                                    KW_INSTRUMENT=INSTRUMENT_NAME),
                         description='Raw sci=Hollow Cathode calib=FP file,'
@@ -342,7 +343,7 @@ raw_file.addset(raw_hc1_fp)
 
 raw_hc1_hc1 = drs_finput('RAW_HCONE_HCONE', filetype='.fits', suffix='',
                          outclass=blank_ofile,
-                         hkeys=dict(KW_RAW_DPRTYPE='UNe_UNe_UNe',
+                         hkeys=dict(KW_RAW_DPRTYPE='HC_HC_HC',
                                     KW_RAW_DPRCATG='CAL',
                                     KW_INSTRUMENT=INSTRUMENT_NAME),
                          description='Raw sci=Hollow Cathode calib=Hollow '
@@ -351,7 +352,7 @@ raw_file.addset(raw_hc1_hc1)
 
 raw_hc1_dark = drs_finput('RAW_HCONE_DARK', filetype='.fits', suffix='',
                           outclass=blank_ofile,
-                          hkeys=dict(KW_RAW_DPRTYPE='UNe_DARK_UNe',
+                          hkeys=dict(KW_RAW_DPRTYPE='HC_DARK_HC',
                                      KW_RAW_DPRCATG='CAL',
                                      KW_INSTRUMENT=INSTRUMENT_NAME),
                           description='Raw sci=Hollow Cathode calib=DARK file,'
@@ -435,7 +436,7 @@ raw_file.addset(raw_hc1_dark)
 
 raw_hc1_lfc = drs_finput('RAW_HCONE_LFC', filetype='.fits', suffix='',
                          outclass=blank_ofile,
-                         hkeys=dict(KW_RAW_DPRTYPE='UNe_LFC_UNe',
+                         hkeys=dict(KW_RAW_DPRTYPE='HC_LFC_HC',
                                     KW_RAW_DPRCATG='CAL',
                                     KW_INSTRUMENT=INSTRUMENT_NAME),
                          description='Raw sci=Hollow Cathode calib=LFC '
@@ -647,10 +648,10 @@ pp_file = drs_finput('DRS_PP', filetype='.fits', suffix='_pp',
 #                           inext='.fits', outclass=general_ofile)
 # pp_file.addset(pp_dark_dark)
 
-pp_dark_dark = drs_finput('DARK_DARK_DARK', filetype='.fits',
+pp_dark_dark = drs_finput('DARK_DARK', filetype='.fits',
                           suffix='_pp', intype=raw_dark_dark,
                           inext='.fits', outclass=general_ofile,
-                          hkeys=dict(KW_DPRTYPE='DARK_DARK_DARK'),
+                          hkeys=dict(KW_DPRTYPE='DARK_DARK'),
                           description='Preprocessed sci=DARK calib=DARK file')
 pp_file.addset(pp_dark_dark)
 
@@ -757,13 +758,13 @@ pp_fp_lfc = drs_finput('FP_LFC', hkeys=dict(KW_DPRTYPE='FP_LFC'),
                        description='Preprocessed sci=FP calib=LFC file')
 pp_file.addset(pp_fp_lfc)
 
-pp_lfc_hcone = drs_finput('LFC_HCONE', hkeys=dict(KW_DPRTYPE='LFC_HCONE'),
+pp_lfc_hcone = drs_finput('LFC_HCONE', hkeys=dict(KW_DPRTYPE='LFC_HC'),
                        filetype='.fits', suffix='_pp', intype=raw_lfc_hcone,
                        inext='.fits', outclass=general_ofile,
                        description='Preprocessed sci=LFC calib=HC file')
 pp_file.addset(pp_lfc_hcone)
 
-pp_hcone_lfc = drs_finput('HCONE_LFC', hkeys=dict(KW_DPRTYPE='HCONE_LFC'),
+pp_hcone_lfc = drs_finput('HCONE_LFC', hkeys=dict(KW_DPRTYPE='HC_LFC'),
                        filetype='.fits', suffix='_pp', intype=raw_hcone_lfc,
                        inext='.fits', outclass=general_ofile,
                        description='Preprocessed sci=HC calib=LFC file')
@@ -786,19 +787,22 @@ pp_file.addset(pp_led_led)
 
 # -----------------------------------------------------------------------------
 #  object
-pp_obj_dark = drs_finput('OBJ_DARK', hkeys=dict(KW_DPRTYPE='OBJ_DARK'),
+pp_obj_dark = drs_finput('OBJ_DARK',
+                         hkeys=dict(KW_DPRTYPE='OBJ_DARK'),
                          filetype='.fits',
                          suffix='_pp', intype=raw_obj_dark,
                          inext='.fits', outclass=general_ofile,
                          description='Preprocessed sci=OBJ calib=DARK file')
 pp_file.addset(pp_obj_dark)
-pp_obj_fp = drs_finput('OBJ_FP', hkeys=dict(KW_DPRTYPE='OBJ_FP'),
+pp_obj_fp = drs_finput('OBJ_FP',
+                       hkeys=dict(KW_DPRTYPE='OBJ_FP'),
                        filetype='.fits',
                        suffix='_pp', intype=raw_obj_fp,
                        inext='.fits', outclass=general_ofile,
                        description='Preprocessed sci=OBJ calib=FP file')
 pp_file.addset(pp_obj_fp)
-pp_obj_hc1 = drs_finput('OBJ_HCONE', hkeys=dict(KW_DPRTYPE='OBJ_HCONE'),
+pp_obj_hc1 = drs_finput('OBJ_HCONE',
+                        hkeys=dict(KW_DPRTYPE='OBJ_HCONE'),
                         filetype='.fits',
                         suffix='_pp', intype=raw_obj_hc1,
                         inext='.fits', outclass=general_ofile,
@@ -841,7 +845,8 @@ pp_file.addset(pp_sun_dark)
 #                                         'calib=SKY')
 # pp_file.addset(pp_fluxstd_sky)
 
-pp_tellu_sky = drs_finput('TELLU_SKY', hkeys=dict(KW_DPRTYPE='TELLU_SKY'),
+pp_tellu_sky = drs_finput('TELLU_SKY',
+                          hkeys=dict(KW_DPRTYPE='TELLU_SKY'),
                           filetype='.fits',
                           suffix='_pp', intype=raw_tellu_sky,
                           inext='.fits', outclass=general_ofile,

@@ -37,6 +37,7 @@ __all__ = [
     'PP_BAD_EXPTIME_FRACTION', 'PP_DARK_DPRTYPES', 'PP_DARK_THRES',
     'PP_CORR_XTALK_AMP_FLUX', 'PP_COR_XTALK_AMP_DFLUX',
     'PP_COR_XTALK_AMP_D2FLUX', 'PP_NOSCI_CAPC_DPRTYPES',
+    'PP_REF_FILETYPE',
     # object database settings
     'GL_GAIA_COL_NAME', 'GL_OBJ_COL_NAME', 'GL_ALIAS_COL_NAME',
     'GL_RV_COL_NAME', 'GL_RVREF_COL_NAME', 'GL_TEFF_COL_NAME',
@@ -84,6 +85,7 @@ __all__ = [
     'IMAGE_Y_RED_HIGH', 'DARK_CUTLIMIT', 'QC_MAX_DARKLEVEL',
     'HISTO_BINS', 'HISTO_RANGE_LOW', 'HISTO_RANGE_HIGH',
     'USE_SKYDARK_CORRECTION', 'USE_SKYDARK_ONLY', 'ALLOWED_DARK_TYPES',
+    'DARK_REF_FILETYPE',
     'DARK_REF_MATCH_TIME', 'DARK_REF_MED_SIZE', 'DARK_REF_MAX_FILES',
     'DARK_REF_MIN_EXPTIME',
     # badpix constants
@@ -1158,6 +1160,12 @@ PP_NOSCI_CAPC_DPRTYPES = Const('PP_NOSCI_CAPC_DPRTYPES', value=None,
                                            'which we should not do the '
                                            'science capacitive coupling')
 
+# Define the default file type for pp_ref (used as --filtetype argument)
+PP_REF_FILETYPE = Const('PP_REF_FILETYPE', value=None, dtype=str,
+                        source=__NAME__, group=cgroup,
+                        description='Define the default file type for pp_ref '
+                                    '(used as --filtetype argument)')
+
 # =============================================================================
 # CALIBRATION: ASTROMETRIC DATABASE SETTINGS
 # =============================================================================
@@ -1289,6 +1297,12 @@ ALLOWED_DARK_TYPES = Const('ALLOWED_DARK_TYPES', value=None, dtype=str,
                                         'filetype but filetype must be one '
                                         'of theses (strings separated by '
                                         'commas)'))
+
+#    Define the file type to use by default in the dark reference code
+DARK_REF_FILETYPE = Const('DARK_REF_FILETYPE', value=None, dtype=str,
+                          source=__NAME__, group=cgroup,
+                          description=('Define the file type to use by '
+                                       'default in the dark reference code'))
 
 # Define the maximum time span to combine dark files over (in hours)
 DARK_REF_MATCH_TIME = Const('DARK_REF_MATCH_TIME', value=None,

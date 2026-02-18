@@ -53,6 +53,8 @@ nirps_correction = detector.nirps_correction
 
 nirps_order_mask = detector.nirps_order_mask
 
+ilocater_order_mask = detector.ilocater_order_mask
+
 quality_control1 = gen_pp.quality_control1
 
 quality_control2 = gen_pp.quality_control2

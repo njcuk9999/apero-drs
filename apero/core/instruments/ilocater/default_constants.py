@@ -53,7 +53,7 @@ CALIB_DB_FORCE_WAVESOL.value = False
 #     nrot = 7 -> flip top-bottom and rotate 90 deg clock-wise
 #     nrot >=8 -> performs a modulo 8 anyway
 RAW_TO_PP_ROTATION = RAW_TO_PP_ROTATION.copy(__NAME__)
-RAW_TO_PP_ROTATION.value = 5
+RAW_TO_PP_ROTATION.value = 0
 
 # Measured detector gain in all places that use gain
 EFFGAIN = EFFGAIN.copy(__NAME__)
@@ -78,7 +78,7 @@ INPUT_COMBINE_IMAGES.value = True
 
 # Defines whether to, by default, flip images that are inputted
 INPUT_FLIP_IMAGE = INPUT_FLIP_IMAGE.copy(__NAME__)
-INPUT_FLIP_IMAGE.value = True
+INPUT_FLIP_IMAGE.value = False
 
 # Defines whether to, by default, resize images that are inputted
 INPUT_RESIZE_IMAGE = INPUT_RESIZE_IMAGE.copy(__NAME__)
@@ -274,25 +274,37 @@ NIGHT_DEFINITION.author = base.AUTHORS['EA']
 #                    'FIBER_SET_NUM_FIBERS']
 
 #   Number of orders to skip at start of image
+FIBER_FIRST_ORDER_JUMP_AB = FIBER_FIRST_ORDER_JUMP_AB.copy(__NAME__)
 FIBER_FIRST_ORDER_JUMP_A = FIBER_FIRST_ORDER_JUMP_A.copy(__NAME__)
 FIBER_FIRST_ORDER_JUMP_B = FIBER_FIRST_ORDER_JUMP_B.copy(__NAME__)
+FIBER_FIRST_ORDER_JUMP_C = FIBER_FIRST_ORDER_JUMP_C.copy(__NAME__)
 # set values
+FIBER_FIRST_ORDER_JUMP_AB.value = 2
 FIBER_FIRST_ORDER_JUMP_A.value = 0
 FIBER_FIRST_ORDER_JUMP_B.value = 0
+FIBER_FIRST_ORDER_JUMP_C.value = 1
 
 #   Maximum number of order to use
+FIBER_MAX_NUM_ORDERS_AB = FIBER_MAX_NUM_ORDERS_AB.copy(__NAME__)
 FIBER_MAX_NUM_ORDERS_A = FIBER_MAX_NUM_ORDERS_A.copy(__NAME__)
 FIBER_MAX_NUM_ORDERS_B = FIBER_MAX_NUM_ORDERS_B.copy(__NAME__)
+FIBER_MAX_NUM_ORDERS_C = FIBER_MAX_NUM_ORDERS_C.copy(__NAME__)
 # set values
-FIBER_MAX_NUM_ORDERS_A.value = 75
-FIBER_MAX_NUM_ORDERS_B.value = 75
+FIBER_MAX_NUM_ORDERS_AB.value = 80
+FIBER_MAX_NUM_ORDERS_A.value = 40
+FIBER_MAX_NUM_ORDERS_B.value = 40
+FIBER_MAX_NUM_ORDERS_C.value = 40
 
 #   Number of fibers
+FIBER_SET_NUM_FIBERS_AB = FIBER_SET_NUM_FIBERS_AB.copy(__NAME__)
 FIBER_SET_NUM_FIBERS_A = FIBER_SET_NUM_FIBERS_A.copy(__NAME__)
 FIBER_SET_NUM_FIBERS_B = FIBER_SET_NUM_FIBERS_B.copy(__NAME__)
+FIBER_SET_NUM_FIBERS_C = FIBER_SET_NUM_FIBERS_C.copy(__NAME__)
 # set values
+FIBER_SET_NUM_FIBERS_AB.value = 2
 FIBER_SET_NUM_FIBERS_A.value = 1
 FIBER_SET_NUM_FIBERS_B.value = 1
+FIBER_SET_NUM_FIBERS_C.value = 1
 
 # =============================================================================
 # PRE-PROCESSSING SETTINGS
@@ -397,12 +409,14 @@ PP_LOWEST_RMS_PERCENTILE = PP_LOWEST_RMS_PERCENTILE.copy(__NAME__)
 PP_LOWEST_RMS_PERCENTILE.value = 10
 
 # Defines the snr hotpix threshold to define a corrupt file
+# TODO: Look at this value again
 PP_CORRUPT_SNR_HOTPIX = PP_CORRUPT_SNR_HOTPIX.copy(__NAME__)
-PP_CORRUPT_SNR_HOTPIX.value = 10
+PP_CORRUPT_SNR_HOTPIX.value = 1
 
 # Defines the RMS threshold to also catch corrupt files
+# TODO: Look at this value again
 PP_CORRUPT_RMS_THRES = PP_CORRUPT_RMS_THRES.copy(__NAME__)
-PP_CORRUPT_RMS_THRES.value = 0.3  # was 0.15
+PP_CORRUPT_RMS_THRES.value = 0.5  # was 0.15
 
 # super-pessimistic noise estimate. Includes uncorrected common noise
 PP_COSMIC_NOISE_ESTIMATE = PP_COSMIC_NOISE_ESTIMATE.copy(__NAME__)
@@ -430,7 +444,7 @@ SKIP_DONE_PP.value = False
 
 # Define dark dprtypes for threshold quality control check (PP_DARK_THRES)
 PP_DARK_DPRTYPES = PP_DARK_DPRTYPES.copy(__NAME__)
-PP_DARK_DPRTYPES.value = 'DARK_DARK'
+PP_DARK_DPRTYPES.value = 'DARK_DARK_DARK'
 
 # Define the threshold for a suitable DARK_DARK (above this will not be
 #    processed)
@@ -439,7 +453,7 @@ PP_DARK_THRES.value = 0.5
 
 # Define allowed preprocessing reference file types (PP DPRTYPE)
 ALLOWED_PPM_TYPES = ALLOWED_PPM_TYPES.copy(__NAME__)
-ALLOWED_PPM_TYPES.value = 'FLAT_FLAT'
+ALLOWED_PPM_TYPES.value = 'FLAT_FLAT_FLAT'
 
 # Define the allowed number of sigma for preprocessing reference mask
 PPM_MASK_NSIG = PPM_MASK_NSIG.copy(__NAME__)
@@ -475,7 +489,11 @@ PP_COR_XTALK_AMP_D2FLUX.author = base.AUTHORS['EA']
 # Define the partial APERO DPRTYPES which we should not do the science
 #    capacitive coupling
 PP_NOSCI_CAPC_DPRTYPES = PP_NOSCI_CAPC_DPRTYPES.copy(__NAME__)
-PP_NOSCI_CAPC_DPRTYPES.value = 'HCONE,HCTWO'
+PP_NOSCI_CAPC_DPRTYPES.value = 'UNe'
+
+# Define the default file type for pp_ref (used as --filtetype argument)
+PP_REF_FILETYPE = PP_REF_FILETYPE.copy(__NAME__)
+PP_REF_FILETYPE.value = 'FLAT_FLAT'
 
 # =============================================================================
 # CALIBRATION: ASTROMETRIC DATABASE SETTINGS
@@ -571,6 +589,10 @@ HISTO_RANGE_HIGH.value = 0.8
 #        be one of theses (strings separated by commas)
 ALLOWED_DARK_TYPES = ALLOWED_DARK_TYPES.copy(__NAME__)
 ALLOWED_DARK_TYPES.value = 'DARK_DARK'
+
+#    Define the file type to use by default in the dark reference code
+DARK_REF_FILETYPE = DARK_REF_FILETYPE.copy(__NAME__)
+DARK_REF_FILETYPE.value = 'DARK_DARK'
 
 #   Define the maximum time span to combine dark files over (in hours)
 DARK_REF_MATCH_TIME = DARK_REF_MATCH_TIME.copy(__NAME__)
@@ -691,9 +713,9 @@ LOC_BOX_PERCENTILE_HIGH.value = 95
 LOC_BOX_PERCENTILE_HIGH.author = base.AUTHORS['EA']
 
 # the size of the percentile filter - should be a bit bigger than the
-# inter-order gap
+# inter-order gap [pixels]
 LOC_PERCENTILE_FILTER_SIZE = LOC_PERCENTILE_FILTER_SIZE.copy(__NAME__)
-LOC_PERCENTILE_FILTER_SIZE.value = 100
+LOC_PERCENTILE_FILTER_SIZE.value = 200
 LOC_PERCENTILE_FILTER_SIZE.author = base.AUTHORS['EA']
 
 # the fiber dilation number of iterations this should only be used when
@@ -704,7 +726,7 @@ LOC_FIBER_DILATE_ITERATIONS.author = base.AUTHORS['EA']
 
 # the minimum area (number of pixels) that defines an order
 LOC_MIN_ORDER_AREA = LOC_MIN_ORDER_AREA.copy(__NAME__)
-LOC_MIN_ORDER_AREA.value = 500
+LOC_MIN_ORDER_AREA.value = 1000
 LOC_MIN_ORDER_AREA.author = base.AUTHORS['EA']
 
 # Order of polynomial to fit for widths
@@ -714,7 +736,7 @@ LOC_WIDTH_POLY_DEG.author = base.AUTHORS['EA']
 
 # Order of polynomial to fit for positions
 LOC_CENT_POLY_DEG = LOC_CENT_POLY_DEG.copy(__NAME__)
-LOC_CENT_POLY_DEG.value = 3
+LOC_CENT_POLY_DEG.value = 2
 LOC_CENT_POLY_DEG.author = base.AUTHORS['EA']
 
 # range width size (used to fit the width of the orders at certain points)
@@ -725,7 +747,7 @@ LOC_RANGE_WID_SUM.author = base.AUTHORS['EA']
 # define the minimum detector position where the centers of the orders should
 #   fall (across order direction)
 LOC_YDET_MIN = LOC_YDET_MIN.copy(__NAME__)
-LOC_YDET_MIN.value = 40
+LOC_YDET_MIN.value = 50
 LOC_YDET_MIN.author = base.AUTHORS['EA']
 
 # define the maximum detector position where the centers of the orders should
@@ -1239,11 +1261,11 @@ EXT_END_ORDER.value = None
 
 #   Half-zone extraction width left side (formally plage1)
 EXT_RANGE1 = EXT_RANGE1.copy(__NAME__)
-EXT_RANGE1.value = '{"A":4, "B":4}'
+EXT_RANGE1.value = '{"AB":18, "A":8, "B":8, "C": 8}'
 
 #   Half-zone extraction width right side (formally plage2)
 EXT_RANGE2 = EXT_RANGE2.copy(__NAME__)
-EXT_RANGE2.value = '{"A":4, "B":4}'
+EXT_RANGE2.value = '{"AB":18, "A":8, "B":8, "C": 8}'
 
 #   Define the orders to skip extraction on (will set all order values
 #      to NaN. If empty list no orders are skipped. Should be a string
@@ -1503,13 +1525,11 @@ WAVEREF_HC_GUESS_EWID.author = base.AUTHORS['EA']
 
 # Define the fiber offset (in pixels) away from reference fiber
 WAVE_FIBER_OFFSET_MOD = WAVE_FIBER_OFFSET_MOD.copy(__NAME__)
-WAVE_FIBER_OFFSET_MOD.value = '{"A":0.0, "B":0.0}'
-WAVE_FIBER_OFFSET_MOD.author = base.AUTHORS['EA']
+WAVE_FIBER_OFFSET_MOD.value = '{"A":0.0, "B":0.0, "C":0.0}'
 
 # Define the fiber scale factor from reference fiber
 WAVE_FIBER_SCALE_MOD = WAVE_FIBER_SCALE_MOD.copy(__NAME__)
-WAVE_FIBER_SCALE_MOD.value = '{"A":1.0, "B":1.0}'
-WAVE_FIBER_SCALE_MOD.author = base.AUTHORS['EA']
+WAVE_FIBER_SCALE_MOD.value = '{"A":1.0, "B":1.0, "C":1.0}'
 
 # =============================================================================
 # CALIBRATION: WAVE RESOLUTION MAP SETTINGS
@@ -1708,7 +1728,7 @@ WAVE_N_ORD_START.value = 0
 
 #  Defines order to which the solution is calculated (last order)
 WAVE_N_ORD_FINAL = WAVE_N_ORD_FINAL.copy(__NAME__)
-WAVE_N_ORD_FINAL.value = 75
+WAVE_N_ORD_FINAL.value = 40
 
 # =============================================================================
 # CALIBRATION: WAVE HC SETTINGS
@@ -1943,12 +1963,12 @@ WAVE_LITTROW_ORDER_INIT_2.value = 0
 
 #  Define the order to end the Littrow fit at for the HC wave solution
 WAVE_LITTROW_ORDER_FINAL_1 = WAVE_LITTROW_ORDER_FINAL_1.copy(__NAME__)
-WAVE_LITTROW_ORDER_FINAL_1.value = 75
+WAVE_LITTROW_ORDER_FINAL_1.value = 40
 
 #  Define the order to end the Littrow fit at for the FP wave solution
 # TODO: Note currently used
 WAVE_LITTROW_ORDER_FINAL_2 = WAVE_LITTROW_ORDER_FINAL_2.copy(__NAME__)
-WAVE_LITTROW_ORDER_FINAL_2.value = 75
+WAVE_LITTROW_ORDER_FINAL_2.value = 40
 
 #  Define orders to ignore in Littrow fit (should be a string list separated
 #      by commas

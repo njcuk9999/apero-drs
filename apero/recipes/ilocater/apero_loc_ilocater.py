@@ -54,8 +54,7 @@ pcheck = constants.PCheck(wlog=WLOG)
 #     2) fkwargs         (i.e. fkwargs=dict(arg1=arg1, arg2=arg2, **kwargs)
 #     3) config_main  outputs value   (i.e. None, pp, reduced)
 # Everything else is controlled from recipe_definition
-def main(obs_dir: Optional[str] = None, files: Optional[List[str]] = None,
-         **kwargs) -> Union[Dict[str, Any], Tuple[DrsRecipe, ParamDict]]:
+def main(obs_dir=None, files=None, **kwargs):
     """
     Main function for apero_loc
 
@@ -63,9 +62,13 @@ def main(obs_dir: Optional[str] = None, files: Optional[List[str]] = None,
     :param files: list of strings or string, the list of files to process
     :param kwargs: any additional keywords
 
+    :type obs_dir: str
+    :type files: list[str]
+
     :keyword debug: int, debug level (0 for None)
 
     :returns: dictionary of the local space
+    :rtype: dict
     """
     # assign function calls (must add positional)
     fkwargs = dict(obs_dir=obs_dir, files=files, **kwargs)
@@ -84,14 +87,13 @@ def main(obs_dir: Optional[str] = None, files: Optional[List[str]] = None,
     return drs_startup.end_main(params, llmain, recipe, success)
 
 
-def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
+def __main__(recipe, params):
     """
     Main code: should only call recipe and params (defined from main)
 
-    :param recipe: DrsRecipe, the recipe class using this function
-    :param params: ParamDict, the parameter dictionary of constants
-
-    :return: dictionary containing the local variables
+    :param recipe:
+    :param params:
+    :return:
     """
     # ----------------------------------------------------------------------
     # Main Code
@@ -119,8 +121,7 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
     # combine input images if required
     elif params['INPUT_COMBINE_IMAGES']:
         # get combined file
-        cond = drs_file.combine(params, recipe, infiles, math='median',
-                                same_type=False)
+        cond = drs_file.combine(params, recipe, infiles, math='median')
         infiles = [cond[0]]
         combine = True
     else:

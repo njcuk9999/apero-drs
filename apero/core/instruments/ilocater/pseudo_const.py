@@ -283,8 +283,8 @@ class PseudoConstants(pseudo_const.DefaultPseudoConstants):
         for f_it, fudge_key in enumerate(fudge_keys):
             fhkey = params[fudge_key][0]
             if fhkey not in header:
-                header[fudge_key] = (fudge_values[f_it], params[fudge_keys[2]])
-                hdict[fudge_key] = (fudge_values[f_it], params[fudge_keys[2]])
+                header[fhkey] = (fudge_values[f_it], params[fudge_key][2])
+                hdict[fhkey] = (fudge_values[f_it], params[fudge_key][2])
 
         # ------------------------------------------------------------------
         # Deal with cleaning object name
@@ -553,43 +553,55 @@ class PseudoConstants(pseudo_const.DefaultPseudoConstants):
 
         :return: list of strings, the fibers to find localisation for
         """
-        return fiber
+        if fiber in ['AB', 'A', 'B']:
+            return ['A', 'B']
+        else:
+            return ['C']
 
     def FIBER_DILATE(self, fiber: str) -> bool:
         """
         whether we are dilate the imagine due to fiber configuration this should
         only be used when we want a combined localisation solution
-        i.e. AB from A and B
-        for NIRPS this is False
+        i.e. find fiber AB (instead of A and B)
 
         :param fiber: str, the fiber name
         :return: bool, True if we should dilate, False otherwise
         """
-        _ = fiber
-        return False
+        if fiber in ['AB']:
+            return True
+        else:
+            return False
 
     def FIBER_DOUBLETS(self, fiber: str) -> bool:
         """
         whether we have orders coming in doublets (i.e. SPIROUs AB --> A + B)
 
-        Not used for NIRPS
-
         :param fiber: str, the fiber name
         :return: bool, True if we have fiber 'doublets', False otherwise
         """
-        _ = fiber
-        return False
+        if fiber in ['AB', 'A', 'B']:
+            return True
+        else:
+            return False
 
     def FIBER_DOUBLET_PARITY(self, fiber: str) -> Union[int, None]:
         """
-        Give the doublet fibers parity - all other fibers should not use this
-        function - not used for NIRPS
+        Give the doublt fibers parity - all other fibers should not use this
+        function
 
         :param fiber: str, the fiber name
         :return: int or None, either +/-1 (for fiber A/B) or None)
         """
-        _ = fiber
-        return None
+        # if fiber A we return -1
+        if fiber == 'A':
+            return -1
+        # for fiber B we return +1
+        elif fiber == 'B':
+            return 1
+        # all other fibers should return None - this should not ever be the
+        #   case and should break
+        else:
+            return None
 
     def FIBER_LOC_TYPES(self, fiber: str) -> str:
         """
@@ -603,10 +615,10 @@ class PseudoConstants(pseudo_const.DefaultPseudoConstants):
         # set function name
         # _ = display_func('FIBER_LOC_TYPES', __NAME__, self.class_name)
         # check fiber against list
-        if fiber in ['A']:
-            return 'A'
+        if fiber in ['AB', 'A', 'B']:
+            return 'AB'
         else:
-            return 'B'
+            return 'C'
 
     def FIBER_WAVE_TYPES(self, fiber: str) -> str:
         """
@@ -620,10 +632,10 @@ class PseudoConstants(pseudo_const.DefaultPseudoConstants):
         # set function name
         # _ = display_func('FIBER_WAVE_TYPES', __NAME__, self.class_name)
         # check fiber against list
-        if fiber in ['A']:
-            return 'A'
+        if fiber in ['AB', 'A', 'B']:
+            return 'AB'
         else:
-            return 'B'
+            return 'C'
 
     def FIBER_DPR_POS(self, dprtype: str, fiber: str) -> str:
         """
@@ -640,7 +652,7 @@ class PseudoConstants(pseudo_const.DefaultPseudoConstants):
         # split DPRTYPE
         dprtypes = dprtype.split('_')
         # check fiber type
-        if fiber in ['A']:
+        if fiber in ['AB', 'A', 'B']:
             return dprtypes[0]
         else:
             return dprtypes[1]
@@ -654,9 +666,9 @@ class PseudoConstants(pseudo_const.DefaultPseudoConstants):
         """
         # identify fiber type based on data type
         if dprtype == 'FLAT_DARK':
-            return 'A'
+            return 'AB'
         elif dprtype == 'DARK_FLAT':
-            return 'B'
+            return 'C'
         else:
             return None
 
@@ -664,8 +676,10 @@ class PseudoConstants(pseudo_const.DefaultPseudoConstants):
                             fiber: str) -> Tuple[np.ndarray, int]:
         """
         Extract the localisation coefficients based on how they are stored
-        for nirps we have either A or B of size 49
-        orders.
+        for spirou we have either AB,A,B of size 98 orders or C of size 49
+        orders. For AB we merge the A and B, for A and B we take alternating
+        orders, for C we take all. Note only have AB and C files also affects
+        FIBER_LOC_TYPES
 
         :param coeffs: the input localisation coefficients
         :param fiber: str, the fiber
@@ -674,11 +688,28 @@ class PseudoConstants(pseudo_const.DefaultPseudoConstants):
         """
         # set function name
         # _ = display_func('FIBER_LOC_COEFF_EXT', __NAME__, self.class_name)
-        # for A we take all of them (as there are only the A components)
-        if fiber == 'A':
-            acc = coeffs
-            nbo = coeffs.shape[0]
-        # for B we take all of them (as there are only the B components)
+        # for AB we need to merge the A and B components
+        if fiber == 'AB':
+            # get shape
+            nbo, ncoeff = coeffs.shape
+            # set up acc
+            acc = np.zeros([int(nbo // 2), ncoeff])
+            # get sum of 0 to step pixels
+            cosum = np.array(coeffs[0:nbo:2, :])
+            # add the sum of 1 to step
+            cosum = cosum + coeffs[1:nbo:2, :]
+            # overwrite values into coeffs array
+            acc[0:int(nbo // 2), :] = (1 / 2) * cosum
+            nbo = nbo // 2
+        # for A we only need the A components
+        elif fiber == 'A':
+            acc = coeffs[1::2]
+            nbo = coeffs.shape[0] // 2
+        # for B we only need the B components
+        elif fiber == 'B':
+            acc = coeffs[:-1:2]
+            nbo = coeffs.shape[0] // 2
+        # for C we take all of them (as there are only the C components)
         else:
             acc = coeffs
             nbo = coeffs.shape[0]
@@ -700,7 +731,7 @@ class PseudoConstants(pseudo_const.DefaultPseudoConstants):
         # set function name
         # _ = display_func('FIBER_DATA_TYPE', __NAME__, self.class_name)
         # check fiber type
-        if fiber in ['A']:
+        if fiber in ['AB', 'A', 'B']:
             return dprtype.split('_')[0]
         else:
             return dprtype.split('_')[1]
@@ -714,8 +745,8 @@ class PseudoConstants(pseudo_const.DefaultPseudoConstants):
         # set function name
         # _ = display_func('FIBER_CCF', __NAME__, self.class_name)
         # set the fibers and return
-        science = 'A'
-        reference = 'B'
+        science = 'AB'
+        reference = 'C'
         return science, reference
 
     def FIBER_KINDS(self) -> Tuple[List[str], str]:
@@ -728,9 +759,9 @@ class PseudoConstants(pseudo_const.DefaultPseudoConstants):
         # set function name
         # _ = display_func('FIBER_KINDS', __NAME__, self.class_name)
         # can be multiple science channels
-        science = ['A']
+        science = ['AB', 'A', 'B']
         # can only be one reference
-        reference = 'B'
+        reference = 'C'
         # return science and reference fiber(s)
         return science, reference
 
@@ -743,10 +774,10 @@ class PseudoConstants(pseudo_const.DefaultPseudoConstants):
         :param fiber:
         :return:
         """
-        if fiber == 'A':
-            return ['A']
+        if fiber == 'AB':
+            return ['A', 'B']
         else:
-            return ['B']
+            return ['C']
 
     def INDIVIDUAL_FIBERS(self) -> List[str]:
         """
@@ -757,32 +788,8 @@ class PseudoConstants(pseudo_const.DefaultPseudoConstants):
         # set function name
         # _ = display_func('INDIVIDUAL_FIBERS', __NAME__, self.class_name)
         # list the individual fiber names
-        return ['A', 'B']
+        return ['A', 'B', 'C']
 
-    # tellu fudge
-    def TAPAS_INST_CORR(self, mask_water: Table,
-                        mask_others: Table) -> Tuple[Table, Table]:
-        """
-        TAPAS comes from spirou we need to modify it here
-
-        :param mask_water: astropy table the water TAPAS mask table
-        :param mask_others: astropy table the others TAPAS mask table
-
-        :return: tuple, 1. the updated mask_water table, 2. the update
-                 mask_others table
-        """
-        # TODO: NIRPS ONLY remake files remove these lines
-        nirps_mask_water = (mask_water['ll_mask_s'] < 1350)
-        nirps_mask_water |= (mask_water['ll_mask_s'] > 1450)
-        nirps_mask_water &= mask_water['ll_mask_s'] < 1820
-        mask_water = mask_water[nirps_mask_water]
-
-        nirps_mask_others = (mask_others['ll_mask_s'] < 1350)
-        nirps_mask_others |= (mask_others['ll_mask_s'] > 1450)
-        nirps_mask_others &= mask_others['ll_mask_s'] < 1820
-        mask_others = mask_others[nirps_mask_others]
-
-        return mask_water, mask_others
 
     # photometric bands for SNR calculation
     def MEAS_SNR_PHOT_BANDS(self) -> Dict[str, List[float]]:
@@ -1140,7 +1147,7 @@ def get_header_time(params: ParamDict, header: Any,
 
 def get_drs_mode(params: ParamDict, header: Any, hdict: Any) -> Tuple[Any, Any]:
     """
-    Assign the drs mode to the drs (for nirps_ha this is HA)
+    Assign the drs mode to the drs
 
     :param params: ParamDict, parameter dictionary of constants
     :param header: drs_fits.Header or astropy.io.fits.Header, the header to
@@ -1178,7 +1185,7 @@ def construct_dprtype(params: ParamDict, filename: str, header: Any,
 
     :return: type, 1. the dprtype, 2. the outtype, 3. the drsfile instance
     """
-    from apero.core.instruments.nirps_ha import file_definitions
+    from apero.core.instruments.ilocater import file_definitions
     # get the drs files and raw_prefix
     drsfiles = file_definitions.raw_file.fileset
     raw_prefix = file_definitions.raw_prefix

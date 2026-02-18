@@ -70,7 +70,7 @@ KW_EXPREQ.set(key='EXPTIME', unit=uu.s,
 
 # define the observation type HEADER key
 KW_OBSTYPE = KW_OBSTYPE.copy(__NAME__)
-KW_OBSTYPE.set(key='DPRTYPE',
+KW_OBSTYPE.set(key='OBSTYPE',
                comment='Observation / Exposure type', group='raw')
 
 # define the science fiber type HEADER key
@@ -137,7 +137,7 @@ KW_INST_MODE.set(key='NULL', comment='Instrument mode used',
 
 # define the raw dprtype from the telescope
 KW_RAW_DPRTYPE = KW_RAW_DPRTYPE.copy(__NAME__)
-KW_RAW_DPRTYPE.set(key='DPRTYPE', comment='Observation type',
+KW_RAW_DPRTYPE.set(key='ILUTYPA', comment='Observation type',
                    group='raw')
 
 # define the raw dpr category

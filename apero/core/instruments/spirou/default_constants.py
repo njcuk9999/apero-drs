@@ -477,6 +477,10 @@ PP_COR_XTALK_AMP_D2FLUX.author = base.AUTHORS['EA']
 PP_NOSCI_CAPC_DPRTYPES = PP_NOSCI_CAPC_DPRTYPES.copy(__NAME__)
 PP_NOSCI_CAPC_DPRTYPES.value = 'HCONE,HCTWO'
 
+# Define the default file type for pp_ref (used as --filtetype argument)
+PP_REF_FILETYPE = PP_REF_FILETYPE.copy(__NAME__)
+PP_REF_FILETYPE.value = 'FLAT_FLAT'
+
 # =============================================================================
 # CALIBRATION: ASTROMETRIC DATABASE SETTINGS
 # =============================================================================
@@ -571,6 +575,10 @@ HISTO_RANGE_HIGH.value = 0.8
 #        be one of theses (strings separated by commas)
 ALLOWED_DARK_TYPES = ALLOWED_DARK_TYPES.copy(__NAME__)
 ALLOWED_DARK_TYPES.value = 'DARK_DARK_TEL, DARK_DARK_INT'
+
+#    Define the file type to use by default in the dark reference code
+DARK_REF_FILETYPE = DARK_REF_FILETYPE.copy(__NAME__)
+DARK_REF_FILETYPE.value = 'DARK_DARK'
 
 #   Define the maximum time span to combine dark files over (in hours)
 DARK_REF_MATCH_TIME = DARK_REF_MATCH_TIME.copy(__NAME__)

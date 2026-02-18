@@ -720,8 +720,10 @@ def create_led_flat(params: ParamDict, recipe: DrsRecipe, led_file: DrsFitsFile,
     dark_hkeys = dict(dark_file.required_header_keys)
     # remove INST_MODE filter
     # TODO: remove once we have LEDs for HA and HE
-    del led_hkeys['KW_INST_MODE']
-    del dark_hkeys['KW_INST_MODE']
+    if 'KW_INST_MODE' in led_hkeys:
+        del led_hkeys['KW_INST_MODE']
+    if 'KW_INST_MODE' in dark_hkeys:
+        del dark_hkeys['KW_INST_MODE']
     # get all files that match these raw file definitions
     raw_led_files = drs_utils.find_files(params, block_kind='raw',
                                          filters=led_hkeys)
@@ -1462,7 +1464,44 @@ def nirps_order_mask(params: ParamDict, mask_image: np.ndarray,
     image2 = nirps_correction(params, image, mask_header)
     # generate a better estimate of the mask (after correction)
     with warnings.catch_warnings(record=True):
-        mask = image2 < 0
+        mask = image2 <= 0
+    # set properties
+    props = ParamDict()
+    props['PPM_MASK_NSIG'] = 0
+    props.set_source('PPM_MASK_NSIG', func_name)
+    # return mask
+    return mask, props
+
+
+# TODO: Merge with nirps order mask at some point?
+def ilocater_order_mask(params: ParamDict, mask_image: np.ndarray,
+                       mask_header: drs_fits.Header
+                       ) -> Tuple[np.ndarray, ParamDict]:
+    """
+    Calculate the mask used for removing the orders (preprocessing correction)
+    for iLocater
+
+    :param params: ParamDict - the parameter dictionary of constants
+    :param mask_image: np.array, the image to be masked
+    :param mask_header: fits.Header, the header for the image to be masked
+
+    :return: tuple, 1. the mask for the image, 2. ParamDict - statistics from
+             mask building
+    """
+    # set function name
+    func_name = __NAME__ + '.nirps_order_mask()'
+    # normalise by the median
+    image = mask_image - mp.nanmedian(mask_image)
+    # find pixels that are more than nsig absolute deviations from the image
+    # median
+    # with warnings.catch_warnings(record=True):
+    #     mask = image > nsig * sig_image
+    # correct the image (as in preprocessing)
+    # image2 = nirps_correction(params, image, mask_header)
+    image2 = np.array(image)
+    # generate a better estimate of the mask (after correction)
+    with warnings.catch_warnings(record=True):
+        mask = image2 <= 0
     # set properties
     props = ParamDict()
     props['PPM_MASK_NSIG'] = 0

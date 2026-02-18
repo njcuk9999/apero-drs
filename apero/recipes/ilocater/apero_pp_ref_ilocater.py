@@ -174,7 +174,7 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
         # print progress
         WLOG(params, '', textentry('40-010-00014', args=[infile.name]))
         # make order mask
-        mask, props = preprocessing.nirps_order_mask(params, image, header)
+        mask, props = preprocessing.ilocater_order_mask(params, image, header)
         # convert to integers
         mask = np.array(mask).astype(int)
         # ------------------------------------------------------------------

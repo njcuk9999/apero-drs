@@ -521,8 +521,9 @@ def npy_fileclean(params: ParamDict, filenames: Union[List[str], None],
         outdir = ''
     # remove files
     for filename in filenames:
-        WLOG(params, '', 'Removing file: {0}'.format(filename))
-        os.remove(filename)
+        if os.path.exists(filename):
+            WLOG(params, '', 'Removing file: {0}'.format(filename))
+            os.remove(filename)
     # construct file dir
     filepath = os.path.join(outdir, subdir)
     # ----------------------------------------------------------------------
