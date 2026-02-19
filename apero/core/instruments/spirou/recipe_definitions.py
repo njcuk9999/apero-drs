@@ -341,6 +341,7 @@ apero_dark_ref.calib_required = True
 apero_dark_ref.set_outputs(DARK_REF_FILE=files.out_dark_ref)
 apero_dark_ref.set_kwarg(name='--filetype', dtype=str,
                          default='DARK_DARK_TEL, DARK_DARK_INT',
+                         default_ref='DARK_REF_FILETYPE',
                          helpstr=textentry('DARK_REF_FILETYPE'))
 apero_dark_ref.set_kwarg(**add_db)
 apero_dark_ref.set_kwarg(**plot)

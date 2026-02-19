@@ -578,7 +578,7 @@ ALLOWED_DARK_TYPES.value = 'DARK_DARK_TEL, DARK_DARK_INT'
 
 #    Define the file type to use by default in the dark reference code
 DARK_REF_FILETYPE = DARK_REF_FILETYPE.copy(__NAME__)
-DARK_REF_FILETYPE.value = 'DARK_DARK'
+DARK_REF_FILETYPE.value = 'DARK_DARK_TEL, DARK_DARK_INT'
 
 #   Define the maximum time span to combine dark files over (in hours)
 DARK_REF_MATCH_TIME = DARK_REF_MATCH_TIME.copy(__NAME__)
