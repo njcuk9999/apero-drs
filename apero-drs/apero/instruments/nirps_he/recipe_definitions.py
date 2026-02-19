@@ -203,7 +203,7 @@ apero_pp_ref.set_outputs(PP_REF=files.out_pp_ref,
                          PP_LED_FLAT=files.out_pp_led_flat)
 apero_pp_ref.set_arg(pos=0, **obs_dir)
 apero_pp_ref.set_kwarg(name='--filetype', dtype='List[str]',
-                       default=['FLAT_FLAT'],
+                       default_ref='PP.REF_FILETYPE',
                        helpstr=textentry('PP_REF_FILETYPE_HELP'))
 apero_pp_ref.group_func = grouping.no_group
 apero_pp_ref.group_column = None
@@ -337,7 +337,7 @@ apero_dark_ref.recipe_kind = 'calib-reference'
 apero_dark_ref.calib_required = True
 apero_dark_ref.set_outputs(DARK_REF_FILE=files.out_dark_ref)
 apero_dark_ref.set_kwarg(name='--filetype', dtype='List[str]',
-                         default=['DARK_DARK'],
+                         default_ref='CAL.DARK.REF_FILETYPE',
                          helpstr=textentry('DARK_REF_FILETYPE'))
 apero_dark_ref.set_kwarg(**add_db)
 apero_dark_ref.set_kwarg(**plot)

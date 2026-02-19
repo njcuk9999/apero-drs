@@ -1,0 +1,234 @@
+# ------------------------------------------------------------------------------
+# Global settings
+# ------------------------------------------------------------------------------
+# set the inpath where you have copied files
+inpath: /scratch2/ilocater/drs-data/common/static/
+# set the mode (detector, telluric, wavelength, All)
+#    This can be overridden at run time with --mode
+mode: detector
+
+# -----------------------------------------------------------------------------
+# Files
+# -----------------------------------------------------------------------------
+# All files should be placed in the inpath directory
+# -----------------------------------------------------------------------------
+files:
+  # DARKs of different e.g. 60s, 600s (saved in the inpath directory)
+  # These exposure times should be representative of short and long
+  # science exposures, there should be multiple of each specific DARK exptime
+  # exceptionally we can use just one set of exposure times (but they should
+  # be long darks ~>600s
+  # REQUIRED FOR: static detector, static wavelength
+  raw_dark_files:
+    - iLocater_lab_20260204_0001_hxrgproc.fits
+    - iLocater_lab_20260217_0002_hxrgproc.fits
+    - iLocater_lab_20260217_0003_hxrgproc.fits
+    - iLocater_lab_20260217_0004_hxrgproc.fits
+    - iLocater_lab_20260217_0005_hxrgproc.fits
+    - iLocater_lab_20260217_0006_hxrgproc.fits
+    - iLocater_lab_20260217_0007_hxrgproc.fits
+
+  # LED in all fibers, good SNR, not saturated (saved in the inpath directory)
+  #  files should be dominated by systematics i.e. SNR ~ 300 when combined
+  # REQUIRED FOR: detector (or provide engineering flat)
+  raw_led_files:
+    - iLocater_lab_20251204_0019_hxrgproc.fits
+    - iLocater_lab_20251204_0019_hxrgproc.fits
+    - iLocater_lab_20251204_0019_hxrgproc.fits
+  
+  # Engineering flat from the manufacturer - Only set if no LED files available
+  #   (saved in the in_path directory)
+  #  REQUIRED FOR: detector (if no LED files)
+  engineering_flat:
+
+  # DARK_FLAT (i.e. DARK in science fiber(s) and FLAT in reference fiber)
+  # REQUIRED FOR: static wavelength
+  raw_dark_flat_files:
+    - iLocater_lab_20260202_0018_hxrgproc.fits
+    - iLocater_lab_20260202_0019_hxrgproc.fits
+    - iLocater_lab_20260202_0020_hxrgproc.fits
+
+  # FLAT_DARK (i.e. FLAT in science fiber(s) and DARK in reference fiber)
+  raw_flat_dark_files:
+    - iLocater_lab_20260202_0021_hxrgproc.fits
+    - iLocater_lab_20260202_0022_hxrgproc.fits
+    - iLocater_lab_20260202_0023_hxrgproc.fits
+
+  # FLAT_FLAT (i.e. FLAT in science fiber(s) and FLAT in reference fiber)
+  raw_flat_files:
+    - cooldown13_composite_flat_hxrg.fits
+  # Input Hollow Cathode file (e.g. UNe, ThAr etc) both fibers (HC_HC)
+  #   note must be in the raw directory
+  # REQUIRED FOR: static wavelength
+  raw_hc_file: iLocater_lab_20260204_0013_hxrgproc.fits
+  # Input Fabry Perot file both fibers (FP_FP)
+  # REQUIRED FOR: static wavelength
+  raw_fp_file: iLocater_lab_20260204_0018_hxrgproc.fits
+
+# ------------------------------------------------------------------------------
+# Engineering
+# ------------------------------------------------------------------------------
+detector:
+  # number of bins in each direction for large scale flat fielding
+  flat_bin_size: 32
+  # Fractional threshold for flat field bad pixels (relative deviation from 1)
+  frac_flat_bad: 0.2
+  # Threshold (in e-/s) for dark current to consider a pixel "hot"
+  dark_threshold: 1
+  # Threshold for setting pixels to NaN in the LED image prior to
+  #     high-passing. This is used to flag areas that are masked in SPIRou and
+  #     SPIP data and future instruments that have a part of the detector that
+  #     are not illuminated when arriving from the pupil. For  instruments
+  #     that do not have a focal-plane mask (e.g., NIRPS), you set to zero
+  #     to simply only accept pixels that are light-sensitive. The default
+  #     is 0 and adjusted for instruments with masks. This is expressed in
+  #     fraction of the median flux. Reasonable values would be between
+  #     0.4-0.6 depending on the amount of scattered lights
+  led_threshold: 0.2
+
+# ------------------------------------------------------------------------------
+# Wavelength
+# ------------------------------------------------------------------------------
+# For cavity_length_ll_fit and ref_wave
+wavelength:
+  # Switches to turn on/off certain steps (these must be run in order at
+  #    least once if not running all at once)
+  run_generate_hc_catalogue: True
+  run_generate_night: True
+  run_generate_wave_guess: True
+
+  # Fiber to use for wavelength solution (of all fibers)
+  wave_fiber: AB
+  # remove processed static data
+  remove_processed: False
+
+  # Input catalogue for the HC lines
+  #   Must be in format
+  input_hc_cat:
+    # Input hollow cathode catalogue (saved in the inpath directory)
+    #   Our defaut comes from Redman et al 2011: https://iopscience.iop.org/article/10.1088/0067-0049/195/2/24
+    #   via Vizier: https://vizier.cds.unistra.fr/viz-bin/VizieR-3?-source=J/ApJS/195/24/table2
+    #   This should be a vizier reference OR a absolute path to a file
+    vizier-ref: J/ApJS/195/24/table2
+    # file name this catalogue should have on disk
+    filename: redman_2011.fits
+    # format to load in astropy.table.Table.read
+    format: fits
+    # Wavelength column
+    wave_col: lambda
+    # Wavelength units
+    wave_units: nm
+    # Some realitive measure of flux
+    flux_col: RFlux
+    # Some identification of species (if file has only one unique species set
+    #    to None)
+    species_col: Ion
+    # Species values to accept into our line list (i.e. those present in the HC)
+    species_keep:
+      - UI
+      - UII
+    # Rough wavelength domain for the instrument (i.e. wavelength of first 
+    # extracted pixel in bluest order and last pixel in reddest order) in nm
+    wave_domain:
+      - 955
+      - 2450
+    # window size for HC lines (in km/s) - keep only brightest line within this
+    # window
+    window_size: 50
+
+  # This is used mostly for debugging and forcing a previous wave solution
+  #   instead of generating a new one (do not use without good reason)
+  from_file:
+    # whether to force from file (if False we will generate a new solution and
+    #   not use the following parameters)
+    force: True
+    # the final wave solution file to use (if force is True)
+    # must exist in the inpath directory (otherwise we generate a new solution)
+    final_wave_sol: REF_WAVE_2400416c_AB.fits
+    # the final cavity length file to use (if force is True) v0.7 format
+    # must exist in the inpath directory (otherwise we generate a new solution)
+    final_fit_cavity: cavity_length_ll_fit.dat
+
+  # How many iterations to run to guess the wavelength solution
+  #   Minimum is 2, recommended is at least 3
+  number_iterations: 3
+
+   # Initial guess for cavity length (in nm)
+  cavity0: 23990000.0
+  # First to last orders (nm)
+  wave_domain:
+    - 955
+    - 2450
+  # Fractional range for approximate wavelength
+  wave_approx: 0.2
+  # Number of lines to use per order
+  n_lines: 50
+  # Degree for robust_polyfit of FP peak step
+  fp_peak_step_poly_deg: 1
+  # Degree for robust_polyfit of FP peak count
+  fp_peak_poly_deg: 3
+  # Percentile for FP peak amplitude threshold
+  fp_peak_keep_percentile: 90
+  # Factor for FP peak amplitude threshold
+  fp_peak_keep_factor: 0.3
+  # Step for polyfit in wave_guess/fp_pix
+  fp_peak_step_window: 5
+  # Degree for polyfit in wave_guess/fp_pix
+  fp_poly_deg: 5
+  # Number of sigma to blindy accept an order as valid
+  nsig_accept_fp: 15
+  # Range for integer offset search
+  fp_step_offs_range: 20
+  # Step for integer offset search
+  fp_step_offs_step: 1
+  # Number of bins for histogram in mini
+  fp_step_mad_bins: 40
+  # Range for histogram in mini
+  fp_step_mad_range:
+    - -10
+    - 10
+  # Threshold for mini selection
+  fp_step_mad_threshold: 2.0
+  # Minimum number of valid points for fit
+  fp_step_valid_min: 5
+  # define the cavity refinement polyfit degree
+  cavity_refine_poly_deg: 3
+  # define the cavity refinement sigma for robust_polyfit
+  cavity_refine_sigma: 8
+  # Degree for robust_polyfit on Chebyshev coeffs
+  robust_polyfit_deg: 7
+  # Sigma cut for robust_polyfit on Chebyshev coeffs
+  robust_polyfit_sigma: 3
+
+
+# ------------------------------------------------------------------------------
+# Telluric
+# ------------------------------------------------------------------------------
+excess_emissivity:
+
+tapas_all_sp:
+
+tellu_blacklist:
+
+tellu_whitelist:
+
+# ------------------------------------------------------------------------------
+# CCF
+# ------------------------------------------------------------------------------
+ccf_obj_mask:
+
+teff_masks:
+
+# ------------------------------------------------------------------------------
+# Database
+# ------------------------------------------------------------------------------
+reset_astrom:
+
+reset_calib:
+
+reset_tellu:
+
+# ------------------------------------------------------------------------------
+# Runs
+# ------------------------------------------------------------------------------
+reset_runs:

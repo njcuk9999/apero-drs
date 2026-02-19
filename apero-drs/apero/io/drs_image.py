@@ -520,9 +520,10 @@ def npy_fileclean(filenames: Union[List[str], None],
         outdir = ''
     # remove files
     for filename in filenames:
-        msg = 'Removing file: {0}'.format(filename)
-        drs_base.base_printer('None', message=msg, level='')
-        os.remove(filename)
+        if os.path.exists(filename):
+            msg = 'Removing file: {0}'.format(filename)
+            drs_base.base_printer('None', message=msg, level='')
+            os.remove(filename)
     # construct file dir
     filepath = os.path.join(outdir, subdir)
     # ----------------------------------------------------------------------

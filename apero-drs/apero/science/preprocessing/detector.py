@@ -724,9 +724,10 @@ def create_led_flat(params: ParamDict, recipe: DrsRecipe, led_file: DrsFitsFile,
     led_hkeys = dict(led_file.required_header_keys)
     dark_hkeys = dict(dark_file.required_header_keys)
     # remove INST_MODE filter
-    # TODO: remove once we have LEDs for HA and HE
-    del led_hkeys['KW_INST_MODE']
-    del dark_hkeys['KW_INST_MODE']
+    if 'KW_INST_MODE' in led_hkeys:
+        del led_hkeys['KW_INST_MODE']
+    if 'KW_INST_MODE' in dark_hkeys:
+        del dark_hkeys['KW_INST_MODE']
     # get all files that match these raw file definitions
     raw_led_files = drs_utils.find_files(params, block_kind='raw',
                                          filters=led_hkeys)
@@ -1473,7 +1474,7 @@ def nirps_order_mask(params: ParamDict, recipe: DrsRecipe,
     image2 = nirps_correction(params, recipe, image, mask_header)
     # generate a better estimate of the mask (after correction)
     with warnings.catch_warnings(record=True):
-        mask = np.array(image2 < 0)
+        mask = np.array(image2 <= 0)
     # set properties
     props = ParamDict()
     props['PP.PPM_MASK_NSIG'] = 0

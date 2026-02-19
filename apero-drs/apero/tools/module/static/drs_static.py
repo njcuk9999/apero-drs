@@ -21,7 +21,7 @@ from typing import Any, Dict, List, Union
 import numpy as np
 from astropy.table import Table
 
-from aperocore import base
+from aperocore.base import base
 from aperocore.constants import param_functions
 from aperocore.core import drs_log
 from aperocore.core import drs_text

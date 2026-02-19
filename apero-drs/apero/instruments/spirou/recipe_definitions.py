@@ -345,7 +345,7 @@ apero_dark_ref.recipe_kind = 'calib-reference'
 apero_dark_ref.calib_required = True
 apero_dark_ref.set_outputs(DARK_REF_FILE=files.out_dark_ref)
 apero_dark_ref.set_kwarg(name='--filetype', dtype='List[str]',
-                         default=['DARK_DARK_TEL', 'DARK_DARK_INT'],
+                         default_ref='CAL.DARK.REF_FILETYPE',
                          helpstr=textentry('DARK_REF_FILETYPE'))
 apero_dark_ref.set_kwarg(**add_db)
 apero_dark_ref.set_kwarg(**plot)

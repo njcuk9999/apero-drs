@@ -188,6 +188,9 @@ CDict.set('DARK_MED_BINNUM', value=32, source=__NAME__, group=cgroup)
 # Defines the pp hot pixel file (located in the data folder)
 CDict.set('HOTPIX_FILE', value='hotpix_pp.csv', source=__NAME__, group=cgroup)
 
+#   Defines the pp hot pixel file type
+CDict.set('HOTPIX_FILE_FMT', value='csv', source=__NAME__, group=cgroup)
+
 # Defines the pp amplifier bias model (located in the data folder)
 CDict.set('AMP_ERROR_MODEL', value='amplifier_bias_model_spirou.fits',
           source=__NAME__, group=cgroup)
@@ -266,7 +269,11 @@ CDict.set('CX_AMP_D2FLUX', value=-6.523985e-04, source=__NAME__,
 
 # Define the partial APERO DPRTYPES which we should not do the science
 # capacitive coupling
-CDict.set('NOSCI_CAPC_DPRTYPES', value=['HCONE', 'HCTWO'], source=__NAME__, group=cgroup)
+CDict.set('NOSCI_CAPC_DPRTYPES', value=['HCONE', 'HCTWO'], source=__NAME__,
+          group=cgroup)
+
+# Define the default file type for pp_ref (used as --filtetype argument)
+CDict.set('REF_FILETYPE', value='FLAT_FLAT', source=__NAME__, group=cgroup)
 
 # =============================================================================
 # CALIBRATION: DARK SETTINGS
@@ -307,6 +314,11 @@ CDict.set('HISTO_RANGE_HIGH', value=0.8, source=__NAME__, group=cgroup)
 # Define the allowed DPRTYPES for finding files for DARK_REF
 CDict.set('ALLOWED_TYPES', value=['DARK_DARK_TEL', 'DARK_DARK_INT'],
           source=__NAME__, group=cgroup)
+
+# Define the file type to use by default in the dark reference code
+CDict.add('REF_FILETYPE', value=['DARK_DARK_TEL', 'DARK_DARK_INT'],
+          source=__NAME__, group=cgroup)
+
 # Define the maximum time span to combine dark files over (in hours)
 CDict.set('REF_MTIME', value=2, source=__NAME__, group=cgroup)
 # Median filter size for dark reference

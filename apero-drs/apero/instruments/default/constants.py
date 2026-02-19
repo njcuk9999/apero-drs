@@ -612,6 +612,11 @@ CDict.add('NOSCI_CAPC_DPRTYPES', value=None,
                       'which we should not do the '
                       'science capacitive coupling')
 
+# Define the default file type for pp_ref (used as --filtetype argument)
+CDict.add('REF_FILETYPE', value=None, dtype=str,
+          source=__NAME__, group=cgroup,
+          description='Define the default file type for pp_ref '
+                      '(used as --filtetype argument)')
 
 # =============================================================================
 # CALIBRATION: DARK SETTINGS
@@ -712,6 +717,14 @@ CDict.add('ALLOWED_TYPES', value=None,
                        'only find those types define by '
                        'filetype but filetype must be one '
                        'of theses'))
+
+# Define the file type to use by default in the dark reference code
+# Must be a list even if only one given
+CDict.add('REF_FILETYPE', value=None, dtype=list, dtypei=str, source=__NAME__,
+          group=cgroup,
+          description=('Define the file types to use by default in the '
+                       'dark reference code. '
+                       'Must be a list even if only one given.'))
 
 # Define the maximum time span to combine dark files over (in hours)
 CDict.add('REF_MTIME', value=None,
