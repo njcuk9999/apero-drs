@@ -500,6 +500,8 @@ def calibrate_ppfile(params: ParamDict, recipe: DrsRecipe,
     saturate = pconst.SATURATION(params, infile.get_header())
     frmtime = pconst.FRAME_TIME(params, infile.get_header())
     nfiles = infile.numfiles
+    apply_upper_bound = params['CAL_APPLY_UPPER_BOUND']
+    apply_lower_bound = params['CAL_APPLY_LOWER_BOUND']
     # log that we are calibrating a file
     WLOG(params, 'info', textentry('40-014-00038', args=[infile.filename]))
 
@@ -511,8 +513,14 @@ def calibrate_ppfile(params: ParamDict, recipe: DrsRecipe,
     # Upper bound is the saturation/frame time (we express things as slope).
     # A pixel with a value greater than can be recorded by the array is
     # nonphysical. The lower bound is set at -10 * readout noise.
-    upperlim = saturate / frmtime
-    lowerlim = -10 * (sigdet * gain) / frmtime
+    if apply_upper_bound:
+        upperlim = saturate / frmtime
+    else:
+        upperlim = np.inf
+    if apply_lower_bound:
+        lowerlim = -10 * (sigdet * gain) / frmtime
+    else:
+        lowerlim = -np.inf
     with warnings.catch_warnings(record=True) as _:
         mask = (image > upperlim) | (image < lowerlim)
     image[mask] = np.nan

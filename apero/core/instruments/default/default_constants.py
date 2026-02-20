@@ -44,11 +44,12 @@ __all__ = [
     'GL_TEFFREF_COL_NAME', 'GL_R_ODO_COL', 'GL_R_PP_COL', 'GL_R_RV_COL',
     # image constants
     'FIBER_TYPES', 'IMAGE_X_FULL', 'IMAGE_Y_FULL',
-    'INPUT_COMBINE_IMAGES', 'INPUT_FLIP_IMAGE', 'INPUT_RESIZE_IMAGE',
-    'IMAGE_X_LOW', 'IMAGE_X_HIGH',
+    'INPUT_COMBINE_IMAGES', 'INPUT_FLIP_IMAGE', 'INPUT_FLIP_HOW',
+    'INPUT_RESIZE_IMAGE', 'IMAGE_X_LOW', 'IMAGE_X_HIGH',
     'IMAGE_Y_LOW', 'IMAGE_Y_HIGH', 'IMAGE_X_LOW', 'IMAGE_X_HIGH',
     'IMAGE_Y_LOW', 'IMAGE_Y_HIGH', 'IMAGE_X_BLUE_LOW',
-    'IMAGE_PIXEL_SIZE', 'FWHM_PIXEL_LSF', 'IMAGE_SATURATION',
+    'IMAGE_PIXEL_SIZE', 'CAL_APPLY_UPPER_BOUND', 'CAL_APPLY_LOWER_BOUND',
+    'FWHM_PIXEL_LSF', 'IMAGE_SATURATION',
     'IMAGE_FRAME_TIME', 'ALL_POLAR_RHOMB_POS',
     # general calib constants
     'COMBINE_METRIC_THRESHOLD1', 'CAVITY_1M_FILE', 'CAVITY_LL_FILE',
@@ -507,6 +508,13 @@ INPUT_FLIP_IMAGE = Const('INPUT_FLIP_IMAGE', dtype=bool, value=True,
                          description=('Defines whether to, by default, '
                                       'flip images that are inputted'))
 
+# Defines how to flip the image
+INPUT_FLIP_HOW = Const('INPUT_FLIP_HOW', dtype=str, value=None,
+                       options=['None', 'x', 'y', 'both'],
+                       source=__NAME__, group=cgroup,
+                       description=('Defines whether to, by default, '
+                                    'flip images that are inputted'))
+
 # Defines whether to, by default, resize images that are inputted
 INPUT_RESIZE_IMAGE = Const('INPUT_RESIZE_IMAGE', dtype=bool, value=True,
                            source=__NAME__, group=cgroup,
@@ -531,6 +539,23 @@ IMAGE_PIXEL_SIZE = Const('IMAGE_PIXEL_SIZE', value=None, dtype=float,
                          description=('Define the pixel size in km/s / pix '
                                       'also used for the median sampling '
                                       'size in tellu correction'))
+# Define whether we apply an upper bound when calibrating pp images
+# This sets values above saturate / frmtime
+CAL_APPLY_UPPER_BOUND = Const('CAL_APPLY_UPPER_BOUND', value=True, dtype=bool,
+                              source=__NAME__, group=cgroup,
+                              description=('Define whether we apply an upper '
+                                           'bound when calibrating pp images. '
+                                           'This sets values above '
+                                           'saturate / frmtime'))
+
+# Define whether we apply a lower bound when calibrating pp images
+# This sets values below  -10 * (sigdet * gain) / frmtime to nans
+CAL_APPLY_LOWER_BOUND = Const('CAL_APPLY_LOWER_BOUND', value=True,
+                                dtype=bool, source=__NAME__, group=cgroup,
+                                description=('Define whether we apply a lower '
+                                             'bound when calibrating pp images. '
+                                             'This sets values below  -10 * '
+                                             '(sigdet * gain) / frmtime to nans'))
 
 # Define mean line width expressed in pix
 FWHM_PIXEL_LSF = Const('FWHM_PIXEL_LSF', value=None, dtype=float,
@@ -626,12 +651,22 @@ CAVITY_LL_FILE = Const('CAVITY_LL_FILE', value=None, dtype=str, source=__NAME__,
                        description=('Define the coefficients of the fit of '
                                     'wavelength vs d'))
 
-# define the check FP percentile level
+# Assuming that the FPs peaks cover a certain fraction of the frame
+# (5% in SPIRou+NIRPS, 1% in ILocater), we check that the 1-FP_coverage is
+# far higher (defined as N times the readout noise in reference pixels;
+# variable name X) than the median of frame.
 CALIB_CHECK_FP_PERCENTILE = Const('CALIB_CHECK_FP_PERCENTILE', value=None,
                                   dtype=int, minimum=0, source=__NAME__,
                                   group=cgroup,
-                                  description=('define the check FP percentile '
-                                               'level'))
+                                  description='Assuming that the FPs peaks '
+                                              'cover a certain fraction of the '
+                                              'frame (5% in SPIRou+NIRPS, '
+                                              '1% in ILocater), we check that '
+                                              'the 1-FP_coverage is far higher '
+                                              '(defined as N times the readout '
+                                              'noise in reference pixels; '
+                                              'variable name X) than the '
+                                              'median of frame.')
 
 # define the check FP threshold qc parameter
 CALIB_CHECK_FP_THRES = Const('CALIB_CHECK_FP_THRES', value=None,

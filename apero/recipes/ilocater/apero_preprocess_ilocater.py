@@ -186,7 +186,7 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
         # get frame time
         frame_time = pconst.FRAME_TIME(params, None)
         # get the pixel exposure time from the data list
-        inttime = datalist[2] * frame_time
+        inttime = datalist[3] * frame_time
         # get error on slope from the data list
         readout_noise = infile.get_hkey('KW_RDNOISE', dtype=float)
         # error on slope needs to be worked out
@@ -317,10 +317,11 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
         # correct image
         # ------------------------------------------------------------------
         # print progress
-        WLOG(params, '', 'Applying NIRPS detector corrections')
+        WLOG(params, '', 'Applying iLocater detector corrections')
         # nirps correction for preprocessing (specific to NIRPS)
-        image = prep.nirps_correction(params, image, infile.header,
-                                      create_mask=False)
+        # TODO: Fix this later (basically no preprocessing)
+        # image = prep.nirps_correction(params, image, infile.header,
+        #                               create_mask=False)
         # get dprtypes we don't do sci capacitive coupling for
         nosci_capc = params.listp('PP_NOSCI_CAPC_DPRTYPES', dtype=str)
         sci_capc_corr = True

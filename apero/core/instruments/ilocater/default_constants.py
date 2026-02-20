@@ -69,7 +69,7 @@ IMAGE_Y_FULL.value = 4096
 
 # Define the fibers
 FIBER_TYPES = FIBER_TYPES.copy(__NAME__)
-FIBER_TYPES.value = 'A, B'
+FIBER_TYPES.value = 'A, B, C'
 
 # Defines whether to by default combine images that are inputted at the same
 #   time
@@ -79,6 +79,10 @@ INPUT_COMBINE_IMAGES.value = True
 # Defines whether to, by default, flip images that are inputted
 INPUT_FLIP_IMAGE = INPUT_FLIP_IMAGE.copy(__NAME__)
 INPUT_FLIP_IMAGE.value = False
+
+# Defines how to flip the image
+INPUT_FLIP_HOW = INPUT_FLIP_HOW.copy(__NAME__)
+INPUT_FLIP_HOW.value = 'None'
 
 # Defines whether to, by default, resize images that are inputted
 INPUT_RESIZE_IMAGE = INPUT_RESIZE_IMAGE.copy(__NAME__)
@@ -98,6 +102,16 @@ IMAGE_Y_HIGH.value = 4092
 #    also used for the median sampling size in tellu correction
 IMAGE_PIXEL_SIZE = IMAGE_PIXEL_SIZE.copy(__NAME__)
 IMAGE_PIXEL_SIZE.value = 1.00
+
+# Define whether we apply an upper bound when calibrating pp images
+# This sets values above saturate / frmtime
+CAL_APPLY_UPPER_BOUND = CAL_APPLY_UPPER_BOUND.copy(__NAME__)
+CAL_APPLY_UPPER_BOUND.value = True
+
+# Define whether we apply a lower bound when calibrating pp images
+# This sets values below  -10 * (sigdet * gain) / frmtime to nans
+CAL_APPLY_LOWER_BOUND = CAL_APPLY_LOWER_BOUND.copy(__NAME__)
+CAL_APPLY_LOWER_BOUND.value = False
 
 # Define mean line width expressed in pix
 FWHM_PIXEL_LSF = FWHM_PIXEL_LSF.copy(__NAME__)
@@ -124,8 +138,9 @@ DO_CALIB_DTIME_CHECK.value = True
 
 # Define the maximum time (in days) that a calibration can be separated from
 #   an observation in order to use it
+# TODO: Change this back to 7 days!
 MAX_CALIB_DTIME = MAX_CALIB_DTIME.copy(__NAME__)
-MAX_CALIB_DTIME.value = 7.0
+MAX_CALIB_DTIME.value = 60.0
 
 # define whether the user wants to bin the calibration times to a specific
 #   day fraction (i.e. midnight, midday) using CALIB_DB_DAYFRAC
@@ -154,9 +169,12 @@ CAVITY_1M_FILE.value = 'cavity_length_m_fit.dat'
 CAVITY_LL_FILE = CAVITY_LL_FILE.copy(__NAME__)
 CAVITY_LL_FILE.value = 'cavity_length_ll_fit.dat'
 
-# define the check FP percentile level
+# Assuming that the FPs peaks cover a certain fraction of the frame
+# (5% in SPIRou+NIRPS, 1% in ILocater), we check that the 1-FP_coverage is
+# far higher (defined as N times the readout noise in reference pixels;
+# variable name X) than the median of frame.
 CALIB_CHECK_FP_PERCENTILE = CALIB_CHECK_FP_PERCENTILE.copy(__NAME__)
-CALIB_CHECK_FP_PERCENTILE.value = 95
+CALIB_CHECK_FP_PERCENTILE.value = 99
 
 # define the check FP threshold qc parameter
 CALIB_CHECK_FP_THRES = CALIB_CHECK_FP_THRES.copy(__NAME__)
@@ -444,7 +462,7 @@ SKIP_DONE_PP.value = False
 
 # Define dark dprtypes for threshold quality control check (PP_DARK_THRES)
 PP_DARK_DPRTYPES = PP_DARK_DPRTYPES.copy(__NAME__)
-PP_DARK_DPRTYPES.value = 'DARK_DARK_DARK'
+PP_DARK_DPRTYPES.value = 'DARK_DARK'
 
 # Define the threshold for a suitable DARK_DARK (above this will not be
 #    processed)
@@ -453,7 +471,7 @@ PP_DARK_THRES.value = 0.5
 
 # Define allowed preprocessing reference file types (PP DPRTYPE)
 ALLOWED_PPM_TYPES = ALLOWED_PPM_TYPES.copy(__NAME__)
-ALLOWED_PPM_TYPES.value = 'FLAT_FLAT_FLAT'
+ALLOWED_PPM_TYPES.value = 'FLAT_FLAT'
 
 # Define the allowed number of sigma for preprocessing reference mask
 PPM_MASK_NSIG = PPM_MASK_NSIG.copy(__NAME__)
@@ -956,7 +974,7 @@ SHAPE_NUM_ITERATIONS.value = 4
 
 # The order to use on the shape plot
 SHAPE_PLOT_SELECTED_ORDER = SHAPE_PLOT_SELECTED_ORDER.copy(__NAME__)
-SHAPE_PLOT_SELECTED_ORDER.value = 64
+SHAPE_PLOT_SELECTED_ORDER.value = 30
 
 # The fit order to fit to the slope of the shape of the fibers
 SHAPE_FIT_SLOPE_DEG = SHAPE_FIT_SLOPE_DEG.copy(__NAME__)
@@ -1146,7 +1164,7 @@ FF_BLAZE_SINC_MED_SIZE.value = 50
 #   Define the orders not to plot on the RMS plot should be a string
 #       containing a list of integers
 FF_RMS_SKIP_ORDERS = FF_RMS_SKIP_ORDERS.copy(__NAME__)
-FF_RMS_SKIP_ORDERS.value = '[0, 22, 23, 24, 25, 48]'
+FF_RMS_SKIP_ORDERS.value = ''
 
 #   Maximum allowed RMS of flat field
 # TODO: This needs to be changed back original value 0.10
@@ -1194,8 +1212,9 @@ LEAKREF_EXTRACT_TYPE = LEAKREF_EXTRACT_TYPE.copy(__NAME__)
 LEAKREF_EXTRACT_TYPE.value = 'E2DSFF'
 
 # Define whether we want to correct leakage by default
+# TODO: This should be True
 CORRECT_LEAKAGE = CORRECT_LEAKAGE.copy(__NAME__)
-CORRECT_LEAKAGE.value = True
+CORRECT_LEAKAGE.value = False
 
 # Define DPRTYPE in reference fiber to do correction
 LEAKAGE_REF_TYPES = LEAKAGE_REF_TYPES.copy(__NAME__)
@@ -1261,11 +1280,11 @@ EXT_END_ORDER.value = None
 
 #   Half-zone extraction width left side (formally plage1)
 EXT_RANGE1 = EXT_RANGE1.copy(__NAME__)
-EXT_RANGE1.value = '{"AB":18, "A":8, "B":8, "C": 8}'
+EXT_RANGE1.value = '{"AB":25, "A":5, "B":5, "C": 5}'
 
 #   Half-zone extraction width right side (formally plage2)
 EXT_RANGE2 = EXT_RANGE2.copy(__NAME__)
-EXT_RANGE2.value = '{"AB":18, "A":8, "B":8, "C": 8}'
+EXT_RANGE2.value = '{"AB":25, "A":5, "B":5, "C": 5}'
 
 #   Define the orders to skip extraction on (will set all order values
 #      to NaN. If empty list no orders are skipped. Should be a string
@@ -1452,7 +1471,7 @@ WAVE_HC_VEL_ODD_RATIO.author = base.AUTHORS['EA']
 
 # Define orders that we cannot fit HC or FP lines to (list of strings)
 WAVE_REMOVE_ORDERS = WAVE_REMOVE_ORDERS.copy(__NAME__)
-WAVE_REMOVE_ORDERS.value = '44, 45'
+WAVE_REMOVE_ORDERS.value = ''
 
 # Define the number of iterations required to do the final fplines
 #   wave solution
@@ -2274,7 +2293,7 @@ TELLUP_WATER_BOUNDS.value = '0.1, 20'
 
 # set the plot order for the finite resolution plot (somewhere aroun 1.45 um)
 TELLU_FINITE_RES_ORDER = TELLU_FINITE_RES_ORDER.copy(__NAME__)
-TELLU_FINITE_RES_ORDER.value = 49
+TELLU_FINITE_RES_ORDER.value = 40
 TELLU_FINITE_RES_ORDER.author = base.AUTHORS['NJC']
 
 # =============================================================================
@@ -2311,7 +2330,7 @@ MKTELLU_PLOT_ORDER_NUMS.value = '19, 26, 35'
 #   Define the order to use for SNR check when accepting tellu files
 #      to the telluDB
 MKTELLU_QC_SNR_ORDER = MKTELLU_QC_SNR_ORDER.copy(__NAME__)
-MKTELLU_QC_SNR_ORDER.value = 64
+MKTELLU_QC_SNR_ORDER.value = 30
 
 # Defines the minimum allowed value for the recovered water vapor optical
 #    depth (should not be able 1)
@@ -2354,7 +2373,7 @@ TELLU_TRANS_MODEL_SIG.author = base.AUTHORS['EA']
 #   Define the order to use for SNR check when accepting tellu files
 #      to the telluDB
 FTELLU_QC_SNR_ORDER = FTELLU_QC_SNR_ORDER.copy(__NAME__)
-FTELLU_QC_SNR_ORDER.value = 64
+FTELLU_QC_SNR_ORDER.value = 30
 
 #  Define the minimum SNR for order "QC_TELLU_SNR_ORDER" that will be
 #      accepted to the telluDB
@@ -2441,7 +2460,7 @@ MKTEMPLATE_FILESOURCE.value = 'telludb'
 
 # the order to use for signal to noise cut requirement
 MKTEMPLATE_SNR_ORDER = MKTEMPLATE_SNR_ORDER.copy(__NAME__)
-MKTEMPLATE_SNR_ORDER.value = 59
+MKTEMPLATE_SNR_ORDER.value = 30
 
 # The number of iterations to filter low frequency noise before medianing
 #   the template "big cube" to the final template spectrum
@@ -3107,7 +3126,7 @@ DRIFT_DPR_FIBER_TYPE.value = 'FP'
 
 # Define the ARI orders for calib plot
 ARI_CAL_ORDERS = ARI_CAL_ORDERS.copy(__NAME__)
-ARI_CAL_ORDERS.value = '15, 60'
+ARI_CAL_ORDERS.value = '10, 30'
 
 # =============================================================================
 # INFO VISUALATION SETTINGS
@@ -3126,7 +3145,7 @@ INFO_VISU_Z3.value = '1666, 1668'
 
 # Plot order for LBL etc in info plots
 INFO_VISU_EXT_ORDER = INFO_VISU_EXT_ORDER.copy(__NAME__)
-INFO_VISU_EXT_ORDER.value = 60
+INFO_VISU_EXT_ORDER.value = 30
 
 # =============================================================================
 #  End of configuration file

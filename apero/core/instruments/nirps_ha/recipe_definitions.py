@@ -70,10 +70,10 @@ dodark = dict(name='--darkcorr', dtype='bool', default=True,
 # -----------------------------------------------------------------------------
 fiber = dict(name='--fiber', dtype='options', default='ALL',
              helpstr=textentry('EXTFIBER_HELP'),
-             options=['ALL'] + sci_fibers + cal_fibers,
-             default_ref='INPUT_FLIP_IMAGE')
+             options=['ALL'] + sci_fibers + cal_fibers)
 # -----------------------------------------------------------------------------
-flipimage = dict(name='--flipimage', dtype='options', default='both',
+flipimage = dict(name='--flipimage', dtype='options',
+                 default='both',
                  helpstr=textentry('FLIPIMAGE_HELP'),
                  options=['None', 'x', 'y', 'both'])
 # -----------------------------------------------------------------------------

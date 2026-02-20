@@ -77,6 +77,10 @@ INPUT_COMBINE_IMAGES.value = True
 INPUT_FLIP_IMAGE = INPUT_FLIP_IMAGE.copy(__NAME__)
 INPUT_FLIP_IMAGE.value = True
 
+# Defines how to flip the image
+INPUT_FLIP_HOW = INPUT_FLIP_HOW.copy(__NAME__)
+INPUT_FLIP_HOW.value = 'both'
+
 # Defines whether to, by default, resize images that are inputted
 INPUT_RESIZE_IMAGE = INPUT_RESIZE_IMAGE.copy(__NAME__)
 INPUT_RESIZE_IMAGE.value = True
@@ -95,6 +99,16 @@ IMAGE_Y_HIGH.value = 3350
 #    also used for the median sampling size in tellu correction
 IMAGE_PIXEL_SIZE = IMAGE_PIXEL_SIZE.copy(__NAME__)
 IMAGE_PIXEL_SIZE.value = 2.28
+
+# Define whether we apply an upper bound when calibrating pp images
+# This sets values above saturate / frmtime
+CAL_APPLY_UPPER_BOUND = CAL_APPLY_UPPER_BOUND.copy(__NAME__)
+CAL_APPLY_UPPER_BOUND.value = True
+
+# Define whether we apply a lower bound when calibrating pp images
+# This sets values below  -10 * (sigdet * gain) / frmtime to nans
+CAL_APPLY_LOWER_BOUND = CAL_APPLY_LOWER_BOUND.copy(__NAME__)
+CAL_APPLY_LOWER_BOUND.value = True
 
 # Define mean line width expressed in pix
 FWHM_PIXEL_LSF = FWHM_PIXEL_LSF.copy(__NAME__)
@@ -147,7 +161,10 @@ CAVITY_1M_FILE.value = 'cavity_length_m_fit.dat'
 CAVITY_LL_FILE = CAVITY_LL_FILE.copy(__NAME__)
 CAVITY_LL_FILE.value = 'cavity_length_ll_fit.dat'
 
-# define the check FP percentile level
+# Assuming that the FPs peaks cover a certain fraction of the frame
+# (5% in SPIRou+NIRPS, 1% in ILocater), we check that the 1-FP_coverage is
+# far higher (defined as N times the readout noise in reference pixels;
+# variable name X) than the median of frame.
 CALIB_CHECK_FP_PERCENTILE = CALIB_CHECK_FP_PERCENTILE.copy(__NAME__)
 CALIB_CHECK_FP_PERCENTILE.value = 95
 

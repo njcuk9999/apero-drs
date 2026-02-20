@@ -1488,10 +1488,21 @@ def ilocater_order_mask(params: ParamDict, mask_image: np.ndarray,
     :return: tuple, 1. the mask for the image, 2. ParamDict - statistics from
              mask building
     """
+
     # set function name
     func_name = __NAME__ + '.nirps_order_mask()'
+    # number of amplifiers in total
+    namps = params['PP_TOTAL_AMP_NUM']
+    # shape of the image
+    nbypix, nbxpix = mask_image.shape
+
+    image = np.array(mask_image)
     # normalise by the median
-    image = mask_image - mp.nanmedian(mask_image)
+    for iamp in range(namps):
+        pix1 = (nbxpix // namps) * iamp
+        pix2 = (nbxpix // namps) * (iamp + 1)
+        image[:, pix1:pix2] -= np.nanmedian(image[:, pix1:pix2])
+
     # find pixels that are more than nsig absolute deviations from the image
     # median
     # with warnings.catch_warnings(record=True):
@@ -1502,6 +1513,11 @@ def ilocater_order_mask(params: ParamDict, mask_image: np.ndarray,
     # generate a better estimate of the mask (after correction)
     with warnings.catch_warnings(record=True):
         mask = image2 <= 0
+    # don't mask side pixels
+    mask[:4] = True
+    mask[-4:] = True
+    mask[:, :4] = True
+    mask[:, -4:] = True
     # set properties
     props = ParamDict()
     props['PPM_MASK_NSIG'] = 0

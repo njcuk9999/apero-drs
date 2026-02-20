@@ -43,9 +43,9 @@ plot = rd.plot
 # define fiber types
 ref_fiber = 'A'
 cal_fiber = 'B'
-sci_fibers = ['A']
+sci_fibers = ['A', 'B']
 ref_fibers = ['A']
-cal_fibers = ['B']
+cal_fibers = ['C']
 
 # =============================================================================
 # Option definitions
@@ -70,8 +70,7 @@ dodark = dict(name='--darkcorr', dtype='bool', default=True,
 # -----------------------------------------------------------------------------
 fiber = dict(name='--fiber', dtype='options', default='ALL',
              helpstr=textentry('EXTFIBER_HELP'),
-             options=['ALL'] + sci_fibers + cal_fibers,
-             default_ref='INPUT_FLIP_IMAGE')
+             options=['ALL'] + sci_fibers + cal_fibers)
 # -----------------------------------------------------------------------------
 flipimage = dict(name='--flipimage', dtype='options', default='both',
                  helpstr=textentry('FLIPIMAGE_HELP'),

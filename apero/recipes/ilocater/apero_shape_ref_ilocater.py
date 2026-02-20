@@ -216,14 +216,17 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
     #                          well separated
     # ----------------------------------------------------------------------
     # calculate the dx map for fiber A
-    cargs_a = [ref_fp, dict(A=lprops_all[sci_fibers[0]])]
-    dout = shape.calculate_dxmap(params, recipe, *cargs_a, fiber=sci_fibers[0])
-    dxmap_a, max_dxmap_std_a, max_dxmap_info_a, dxrms_a = dout
-    # calculate the dx map for fiber B
-    cargs_b = [ref_fp, dict(A=lprops_all[ref_fiber])]
-    dout = shape.calculate_dxmap(params, recipe, *cargs_b, fiber=ref_fiber)
-    dxmap_b, max_dxmap_std_b, max_dxmap_info_b, dxrms_b = dout
-    dxmap = dxmap_a + dxmap_b
+    dxmap = np.zeros_like(ref_fp)
+    # loop around fibers and get all individual fiber dxmaps and sum them
+    for _fiber in pconst.INDIVIDUAL_FIBERS():
+        # get the lprops for this fiber
+        _lprops_fiber = pconst.FIBER_LOC_PROPS(_fiber, lprops_all)
+        # calculate dxmap for this fiber
+        cargs_a = [ref_fp, dict(A=_lprops_fiber)]
+        dout = shape.calculate_dxmap(params, recipe, *cargs_a, fiber=_fiber)
+        dxmap_fiber = dout[0]
+        # sum fiber
+        dxmap += dxmap_fiber
 
     # ----------------------------------------------------------------------
     # Calculate dy shape map

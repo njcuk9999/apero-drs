@@ -759,7 +759,7 @@ class PseudoConstants(pseudo_const.DefaultPseudoConstants):
         # set function name
         # _ = display_func('FIBER_KINDS', __NAME__, self.class_name)
         # can be multiple science channels
-        science = ['AB', 'A', 'B']
+        science = ['A', 'B']
         # can only be one reference
         reference = 'C'
         # return science and reference fiber(s)
