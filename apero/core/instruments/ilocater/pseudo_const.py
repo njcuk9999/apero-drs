@@ -616,6 +616,7 @@ class PseudoConstants(pseudo_const.DefaultPseudoConstants):
         # _ = display_func('FIBER_LOC_TYPES', __NAME__, self.class_name)
         # check fiber against list
         if fiber in ['AB', 'A', 'B']:
+            # TODO: update to "A"
             return 'AB'
         else:
             return 'C'
@@ -633,7 +634,7 @@ class PseudoConstants(pseudo_const.DefaultPseudoConstants):
         # _ = display_func('FIBER_WAVE_TYPES', __NAME__, self.class_name)
         # check fiber against list
         if fiber in ['AB', 'A', 'B']:
-            return 'AB'
+            return 'A'
         else:
             return 'C'
 

@@ -286,6 +286,14 @@ raw_sun_fp = drs_finput('RAW_SUN_FP', outclass=blank_ofile,
                         description='Raw sci=SUN calib=FP file')
 raw_file.addset(raw_sun_fp)
 
+raw_sun_hc = drs_finput('RAW_SUN_HC', outclass=blank_ofile,
+                        filetype='.fits', suffix='', inext='.fits',
+                        hkeys=dict(KW_RAW_DPRTYPE='SUN_HC_SUN',
+                                   KW_RAW_DPRCATG='SCI',
+                                   KW_INSTRUMENT=INSTRUMENT_NAME),
+                        description='Raw sci=SUN calib=FP file')
+raw_file.addset(raw_sun_hc)
+
 raw_sun_dark = drs_finput('RAW_SUN_DARK', outclass=blank_ofile,
                           filetype='.fits', suffix='', inext='.fits',
                           hkeys=dict(KW_RAW_DPRTYPE='SUN_DARK_SUN',
@@ -830,6 +838,13 @@ pp_sun_fp = drs_finput('SUN_FP', hkeys=dict(KW_DPRTYPE='SUN_FP'),
                        description='Preprocessed sci=SUN calib=FP')
 pp_file.addset(pp_sun_fp)
 
+pp_sun_hc = drs_finput('SUN_HC', hkeys=dict(KW_DPRTYPE='SUN_HC'),
+                       filetype='.fits',
+                       suffix='_pp', intype=raw_sun_hc,
+                       inext='.fits', outclass=general_ofile,
+                       description='Preprocessed sci=SUN calib=HC')
+pp_file.addset(pp_sun_hc)
+
 pp_sun_dark = drs_finput('SUN_DARK', hkeys=dict(KW_DPRTYPE='SUN_DARK'),
                          filetype='.fits',
                          suffix='_pp', intype=raw_sun_dark,
@@ -855,8 +870,10 @@ pp_tellu_sky = drs_finput('TELLU_SKY',
 pp_file.addset(pp_tellu_sky)
 
 # define all science observations
-science_pp = [pp_obj_dark, pp_obj_fp, pp_tellu_sky]
-science_dprtypes = ['OBJ_DARK', 'OBJ_FP', 'TELLU_SKY']
+science_pp = [pp_obj_dark, pp_obj_fp, pp_tellu_sky, pp_sun_dark, pp_sun_hc,
+              pp_sun_fp]
+science_dprtypes = ['OBJ_DARK', 'OBJ_FP', 'TELLU_SKY', 'SUN_DARK', 'SUN_HC',
+                    'SUN_FP']
 
 # -----------------------------------------------------------------------------
 #  comparison (UN1)

@@ -387,7 +387,7 @@ PP_DARK_MED_BINNUM.value = 32
 
 #   Defines the pp hot pixel file (located in the data folder)
 PP_HOTPIX_FILE = PP_HOTPIX_FILE.copy(__NAME__)
-PP_HOTPIX_FILE.value = 'static_hotpix_ilocater.fits.gz'
+PP_HOTPIX_FILE.value = 'static_hotpix_ilocater.fits'
 
 # Define the pp hot pixel format
 PP_HOTPIX_FMT = PP_HOTPIX_FMT.copy(__NAME__)
@@ -1323,15 +1323,15 @@ EXT_S1D_WAVESTART.value = 965
 
 # Define the end s1d wavelength (in nm)
 EXT_S1D_WAVEEND = EXT_S1D_WAVEEND.copy(__NAME__)
-EXT_S1D_WAVEEND.value = 1950
+EXT_S1D_WAVEEND.value = 1320
 
 #  Define the s1d spectral bin for S1D spectra (nm) when uniform in wavelength
 EXT_S1D_BIN_UWAVE = EXT_S1D_BIN_UWAVE.copy(__NAME__)
-EXT_S1D_BIN_UWAVE.value = 0.005
+EXT_S1D_BIN_UWAVE.value = 0.002
 
 #  Define the s1d spectral bin for S1D spectra (km/s) when uniform in velocity
 EXT_S1D_BIN_UVELO = EXT_S1D_BIN_UVELO.copy(__NAME__)
-EXT_S1D_BIN_UVELO.value = 0.5
+EXT_S1D_BIN_UVELO.value = 0.25
 
 #  Define the s1d smoothing kernel for the transition between orders in pixels
 EXT_S1D_EDGE_SMOOTH_SIZE = EXT_S1D_EDGE_SMOOTH_SIZE.copy(__NAME__)
@@ -1376,12 +1376,12 @@ EXTRACT_PLOT_ORDER.value = 4
 # Define the wavelength lower bounds for s1d plots
 #     (must be a string list of floats) defines the lower wavelength in nm
 EXTRACT_S1D_PLOT_ZOOM1 = EXTRACT_S1D_PLOT_ZOOM1.copy(__NAME__)
-EXTRACT_S1D_PLOT_ZOOM1.value = '990, 1100, 1200, 1250, 1700'
+EXTRACT_S1D_PLOT_ZOOM1.value = '990, 1100, 1200, 1250, 1300'
 
 # Define the wavelength upper bounds for s1d plots
 #     (must be a string list of floats) defines the upper wavelength in nm
 EXTRACT_S1D_PLOT_ZOOM2 = EXTRACT_S1D_PLOT_ZOOM2.copy(__NAME__)
-EXTRACT_S1D_PLOT_ZOOM2.value = '1050, 1200, 1210, 1300, 1800'
+EXTRACT_S1D_PLOT_ZOOM2.value = '1050, 1150, 1210, 1260, 1320'
 
 
 # =============================================================================
@@ -1394,7 +1394,7 @@ WAVE_REF_FIBER.author = base.AUTHORS['NJC']
 
 # Define the initial value of FP effective cavity width 2xd in nm
 WAVE_GUESS_CAVITY_WIDTH = WAVE_GUESS_CAVITY_WIDTH.copy(__NAME__)
-WAVE_GUESS_CAVITY_WIDTH.value = 2.4e7
+WAVE_GUESS_CAVITY_WIDTH.value = 3.06e7
 WAVE_GUESS_CAVITY_WIDTH.author = base.AUTHORS['EA']
 
 # Define the wave solution polynomial fit degree
@@ -1481,7 +1481,7 @@ WAVE_FWAVESOL_ITRS.author = base.AUTHORS['EA']
 
 # define the wave fiber comparison plot order number
 WAVE_FIBER_COMP_PLOT_ORD = WAVE_FIBER_COMP_PLOT_ORD.copy(__NAME__)
-WAVE_FIBER_COMP_PLOT_ORD.value = 53
+WAVE_FIBER_COMP_PLOT_ORD.value = 30
 WAVE_FIBER_COMP_PLOT_ORD.author = base.AUTHORS['NJC']
 
 # =============================================================================
@@ -1509,7 +1509,7 @@ WAVEREF_HC_BOXSIZE.author = base.AUTHORS['EA']
 
 # get valid hc dprtypes (string list separated by commas)
 WAVEREF_HC_FIBTYPES = WAVEREF_HC_FIBTYPES.copy(__NAME__)
-WAVEREF_HC_FIBTYPES.value = 'HCONE, HCTWO'
+WAVEREF_HC_FIBTYPES.value = 'HCONE'
 WAVEREF_HC_FIBTYPES.author = base.AUTHORS['NJC']
 
 # get valid fp dprtypes (string list separated by commas)
@@ -1524,12 +1524,12 @@ WAVEREF_FITDEG.author = base.AUTHORS['EA']
 
 # define the lowest N for fp peaks
 WAVEREF_FP_NLOW = WAVEREF_FP_NLOW.copy(__NAME__)
-WAVEREF_FP_NLOW.value = 7500
+WAVEREF_FP_NLOW.value = 10000
 WAVEREF_FP_NLOW.author = base.AUTHORS['EA']
 
 # define the highest N for fp peaks
 WAVEREF_FP_NHIGH = WAVEREF_FP_NHIGH.copy(__NAME__)
-WAVEREF_FP_NHIGH.value = 30000
+WAVEREF_FP_NHIGH.value = 16000
 WAVEREF_FP_NHIGH.author = base.AUTHORS['EA']
 
 # define the number of iterations required to do the FP polynomial inversion
@@ -1544,7 +1544,7 @@ WAVEREF_HC_GUESS_EWID.author = base.AUTHORS['EA']
 
 # Define the fiber offset (in pixels) away from reference fiber
 WAVE_FIBER_OFFSET_MOD = WAVE_FIBER_OFFSET_MOD.copy(__NAME__)
-WAVE_FIBER_OFFSET_MOD.value = '{"A":0.0, "B":0.0, "C":0.0}'
+WAVE_FIBER_OFFSET_MOD.value = '{"A":0.0, "B":95.0, "C":48.0}'
 
 # Define the fiber scale factor from reference fiber
 WAVE_FIBER_SCALE_MOD = WAVE_FIBER_SCALE_MOD.copy(__NAME__)
@@ -1660,21 +1660,21 @@ WAVE_CCF_SMART_MASK_WIDTH.value = 1.0
 
 # define the minimum wavelength for the smart mask [nm]
 WAVE_CCF_SMART_MASK_MINLAM = WAVE_CCF_SMART_MASK_MINLAM.copy(__NAME__)
-WAVE_CCF_SMART_MASK_MINLAM.value = 950
+WAVE_CCF_SMART_MASK_MINLAM.value = 965
 
 # define the maximum wavelength for the smart mask [nm]
 WAVE_CCF_SMART_MASK_MAXLAM = WAVE_CCF_SMART_MASK_MAXLAM.copy(__NAME__)
-WAVE_CCF_SMART_MASK_MAXLAM.value = 2500
+WAVE_CCF_SMART_MASK_MAXLAM.value = 1320
 
 # define a trial minimum FP N value (should be lower than true
 #     minimum FP N value)
 WAVE_CCF_SMART_MASK_TRIAL_NMIN = WAVE_CCF_SMART_MASK_TRIAL_NMIN.copy(__NAME__)
-WAVE_CCF_SMART_MASK_TRIAL_NMIN.value = 9000
+WAVE_CCF_SMART_MASK_TRIAL_NMIN.value = 10000
 
 # define a trial maximum FP N value (should be higher than true
 #     maximum FP N value)
 WAVE_CCF_SMART_MASK_TRIAL_NMAX = WAVE_CCF_SMART_MASK_TRIAL_NMAX.copy(__NAME__)
-WAVE_CCF_SMART_MASK_TRIAL_NMAX.value = 27000
+WAVE_CCF_SMART_MASK_TRIAL_NMAX.value = 14000
 
 # define the converges parameter for dwave in smart mask generation
 WAVE_CCF_SMART_MASK_DWAVE_THRES = WAVE_CCF_SMART_MASK_DWAVE_THRES.copy(__NAME__)
@@ -1739,7 +1739,7 @@ WAVE_PIXEL_SHIFT_SLOPE.value = 0.0  # 4.22131253e-04
 
 #  Defines echelle number of first extracted order
 WAVE_T_ORDER_START = WAVE_T_ORDER_START.copy(__NAME__)
-WAVE_T_ORDER_START.value = 147
+WAVE_T_ORDER_START.value = 152
 
 #  Defines order from which the solution is calculated (first order)
 WAVE_N_ORD_START = WAVE_N_ORD_START.copy(__NAME__)
@@ -2039,7 +2039,7 @@ WAVE_MODE_FP.value = 1
 #   2xd = 24.5 mm = 24.5e6 nm  for SPIRou
 WAVE_FP_DOPD0 = WAVE_FP_DOPD0.copy(__NAME__)
 # TODO: For NIRPS d = 12mm not 12.25 --> 2.4e7
-WAVE_FP_DOPD0.value = 2.4e7
+WAVE_FP_DOPD0.value = 3.06e7
 
 #  Define the polynomial fit degree between FP line numbers and the
 #      measured cavity width for each line
