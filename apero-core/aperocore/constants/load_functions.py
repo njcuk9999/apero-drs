@@ -678,9 +678,9 @@ def starting_point(params: ParamDict, imode_key: Union[str, List[str]],
         # get the demo class
         demo_inst = idemos[demo_mode]
         # get the info dictionary
-        info_dict = demo_inst.INFO
+        info_dict = demo_inst.get_info()
         # push the name of the demo for debugging purposes
-        info_dict['__NAME__'] = demo_inst.__NAME__
+        info_dict['__NAME__'] = demo_inst.classname
         # display info for mode
         _print_info(params, it + 1, info_dict)
         # add to counter
@@ -702,9 +702,9 @@ def starting_point(params: ParamDict, imode_key: Union[str, List[str]],
             params = _load_info(params, idemos[counters[userinput]])
             # update the demo_params
             demo_params['ACTIVE'] = True
-            demo_params['URL'] = idemos[counters[userinput]].URL
-            demo_params['DOWNLOAD'] = idemos[counters[userinput]].DOWNLOAD
-            demo_params['ID'] = idemos[counters[userinput]].INFO['id']
+            demo_params['URL'] = idemos[counters[userinput]].url
+            demo_params['DOWNLOAD'] = idemos[counters[userinput]].download
+            demo_params['ID'] = idemos[counters[userinput]].get_prop('id')
             # break out of the while loop here
             break
         else:
@@ -732,7 +732,7 @@ def _print_info(params: ParamDict, it: int, info_dict: Dict[str, str]):
     drs_text.cprint('\n' + '*' * 70, 'b')
     # deal with no title in info (required)
     if 'title' not in info_dict:
-        emsg = 'Demo {0} INFO does not have a title'
+        emsg = 'Demo {0} does not have a title (accessed via {0}.get_info())'
         eargs = [info_dict['__NAME__']]
         raise AperoCodedException(params, None, message=emsg.format(*eargs))
     # add title text
@@ -834,7 +834,7 @@ def _collect_filter_values(idemos: Dict[str, Any]) -> Dict[str, set]:
     filter_values = {field: set() for field in INFO_DICT_FILTERS}
     for demo_mode in idemos:
         demo_inst = idemos[demo_mode]
-        info_dict = demo_inst.INFO
+        info_dict = demo_inst.get_info()
         for field in INFO_DICT_FILTERS:
             if field in info_dict:
                 terms = _normalize_demo_field(info_dict[field])
@@ -919,7 +919,7 @@ def _filter_demo_choices(params: ParamDict,
         filtered = dict()
         for demo_mode in idemos:
             demo_inst = idemos[demo_mode]
-            info_dict = demo_inst.INFO
+            info_dict = demo_inst.get_info()
             if _demo_matches_filter(info_dict, tokens):
                 filtered[demo_mode] = demo_inst
         if len(filtered) > 0:
@@ -939,9 +939,17 @@ def _load_info(params: ParamDict, demo_inst) -> ParamDict:
     :return: The updated parameter dictionary
     """
     # get the cdict
-    cdict = demo_inst.Cdict
+    cdict = demo_inst.cdict
+    # -------------------------------------------------------------------------
+    # load the red steps
+    for step in demo_inst.redsteps:
+        # we only process steps that the user wants
+        if step in demo_inst.flavours:
+            for substep in demo_inst.redsteps[step]:
+                substep()
+    # -------------------------------------------------------------------------
     # get the title
-    title = demo_inst.INFO['title']
+    title = demo_inst.get_prop('title')
     # print overriding
     msg = 'Starting from DEMO: "{0}"'
     margs = [title]
@@ -970,7 +978,7 @@ def _load_info(params: ParamDict, demo_inst) -> ParamDict:
                 # print the value we are starting with
                 _print_parameters(key, new_value)
                 # set the value
-                params.set(key, new_value, source=demo_inst.__NAME__,
+                params.set(key, new_value, source=demo_inst.classname,
                            instance=params.instances[key])
     # return parameters
     return params
