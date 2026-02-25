@@ -840,8 +840,10 @@ apero_wave_ref.set_debug_plots('WAVE_WL_CAV', 'WAVE_FIBER_COMPARISON',
                                'WAVEREF_EXPECTED', 'EXTRACT_S1D',
                                'EXTRACT_S1D_WEIGHT', 'WAVE_RESMAP',
                                'CCF_PHOTON_UNCERT',
-                               'CCF_RV_FIT', 'CCF_RV_FIT_LOOP')
-apero_wave_ref.set_summary_plots('SUM_WAVE_FIBER_COMP', 'SUM_CCF_RV_FIT')
+                               'CCF_RV_FIT', 'CCF_RV_FIT_LOOP',
+                               'CCF_PHOTON_UNCERT')
+apero_wave_ref.set_summary_plots('SUM_WAVE_FIBER_COMP', 'SUM_CCF_RV_FIT',
+                                 'SUM_CCF_PHOTON_UNCERT')
 apero_wave_ref.set_arg(pos=0, **obs_dir)
 apero_wave_ref.set_kwarg(name='--hcfiles', dtype='files',
                          files=[files.pp_hc1_hc1],
@@ -923,7 +925,8 @@ apero_wave_night.set_debug_plots('WAVE_WL_CAV', 'WAVE_FIBER_COMPARISON',
                                  'EXTRACT_S1D_WEIGHT', 'WAVE_RESMAP',
                                  'CCF_PHOTON_UNCERT',
                                  'CCF_RV_FIT', 'CCF_RV_FIT_LOOP')
-apero_wave_night.set_summary_plots('SUM_WAVE_FIBER_COMP', 'SUM_CCF_RV_FIT')
+apero_wave_night.set_summary_plots('SUM_WAVE_FIBER_COMP', 'SUM_CCF_RV_FIT',
+                                 'SUM_CCF_PHOTON_UNCERT')
 apero_wave_night.set_arg(pos=0, **obs_dir)
 apero_wave_night.set_kwarg(name='--hcfiles', dtype='files',
                            files=[files.pp_hc1_hc1],
