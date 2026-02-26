@@ -120,7 +120,7 @@ def get_tellu_include_list(params: ParamDict, recipe: DrsRecipe,
 
     # deal with all objects filter
     if all_objects is not None:
-        mask = np.in1d(whitelist, all_objects)
+        mask = np.isin(whitelist, all_objects)
         whitelist = list(np.array(whitelist)[mask])
     # return the whitelist
     return whitelist

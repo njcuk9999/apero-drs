@@ -3,8 +3,7 @@ requires = [
     "setuptools",
     "setuptools_scm[toml]>=3.4",
     "wheel",
-    "radvel",
-    "numpy"]
+    "numpy==2.4.2"]
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -16,46 +15,48 @@ authors = [
 description = 'APERO is a pipeline designed to reduce astrophysical observations (specifically from echelle spectrographs). It is the offical pipeline for SPIRou and is also used for NIRPS.'
 readme = {file = "README.md", content-type = "text/markdown"}
 license = {file = 'LICENSE'}
-requires-python = "==3.11.*"
+requires-python = ">=3.12,<3.13"
 dependencies = [
-    "astropy==7.0.1",
+    "astropy==7.2.0",
     "ipython==8.32.0",
     "ipdb==0.13.13",
-    "Bottleneck==1.4.2",
-    "duckdb==1.2.0",
-    "GitPython==3.1.44",
-    "numba==0.63.1",
-    "numexpr==2.10.2",
-    "numpy==2.3.0",
-    "pandas==2.2.3",
-    "pandastable==0.13.1",
+    "Bottleneck==1.6.0",
+    "duckdb==1.4.4",
+    "GitPython==3.1.46",
+    "numba==0.64.0",
+    "numexpr==2.14.1",
+    "numpy==2.4.2",
+    "pandas==3.0.1",
+    "pandastable==0.14.0",
     "pandasql==0.7.3",
-    "psutil==7.0.0",
-    "PyYAML==6.0.2",
-    "PyMySQL==1.1.1",
-    "ruamel.yaml==0.18.10",
-    "scipy==1.15.2",
-    "SQLAlchemy==2.0.38",
-    "sqlalchemy_utils==0.41.2",
-    "statsmodels==0.14.4",
-    "tqdm==4.67.1",
+    "psutil==7.2.2",
+    "PyYAML==6.0.3",
+    "PyMySQL==1.1.2",
+    "pytz==2025.2",
+    "ruamel.yaml==0.19.1",
+    "scipy==1.17.1",
+    "SQLAlchemy==2.0.47",
+    "sqlalchemy_utils==0.42.1",
+    "statsmodels==0.14.6",
+    "tqdm==4.67.3",
     "wget==3.2",
     "yagmail==0.15.293",
     # apero-drs requirements
-    "astroquery==0.4.9.post1",
+    "astroquery==0.4.11",
     "astroplan==0.10.1",
     "barycorrpy==0.4.4",
-    "bokeh==3.6.3",
+    "beautifulsoup4==4.12.3",
+    "bokeh==3.8.2",
     "gitchangelog==3.0.4",
     "gspread-pandas==3.3.0",
     "gspread==5.12.4",
-    "matplotlib==3.10.1",
-    "Pillow==11.1.0",
-    "scikit-image==0.25.2",
-    "Sphinx==8.2.1",
+    "matplotlib==3.10.8",
+    "Pillow==12.1.1",
+    "scikit-image==0.26.0",
+    "Sphinx==9.1.0",
     "sphinx-toolbox==3.9.0",
-    "ttkthemes==3.2.2",
-    "xlrd==2.0.1"
+    "ttkthemes==3.3.0",
+    "xlrd==2.0.2"
 ]
 
 

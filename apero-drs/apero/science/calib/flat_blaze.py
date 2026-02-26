@@ -386,7 +386,7 @@ def flux_edge_trace(params: ParamDict, recipe: DrsRecipe,
     flux_left = med[:, 0]
     flux_right = med[:, -1]
     # set ignore orders to nans
-    cut_mask = np.in1d(np.arange(norders), ignore_orders)
+    cut_mask = np.isin(np.arange(norders), ignore_orders)
     # set these orders to NaN
     flux_left[cut_mask] = np.nan
     flux_right[cut_mask] = np.nan
@@ -469,7 +469,7 @@ def flat_blaze_qc(params: ParamDict, recipe: DrsRecipe,
     # get mask for removing certain values
     remove_orders = params['CAL.FLAT.RMS_SKIP_ORDERS']
     remove_orders = np.array(remove_orders)
-    remove_mask = np.in1d(np.arange(len(eprops['RMS'])), remove_orders)
+    remove_mask = np.isin(np.arange(len(eprops['RMS'])), remove_orders)
     # apply max and calculate the maximum of the rms values
     max_rms = mp.nanmax(eprops['RMS'][~remove_mask])
     # apply the quality control based on the maximum rms

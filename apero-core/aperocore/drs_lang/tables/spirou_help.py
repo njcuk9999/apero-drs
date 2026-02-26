@@ -335,7 +335,7 @@ langlist.add(item)
 # =============================================================================
 item = langlist.create('HC_E2DS_FILES_HELP', kind='HELP')
 item.value['ENG'] = 'Currently allowed type:\n\tDRS_EOUT = EXT_E2DS_AB (HCONE_HCONE) or EXT_E2DS_A (HCONE_HCONE)\n\tor EXT_E2DS_B (HCONE_HCONE) or EXT_E2DS_C (HCONE_HCONE)'
-item.value['FR'] = 'Type actuellement autorisé: \ n \ tDRS_EOUT = EXT_E2DS_AB (HCONE_HCONE) ou EXT_E2DS_A (HCONE_HCONE) \ n \ tor EXT_E2DS_B (HCONE_HCONE) ou EXT_E2DS_C (HCONE_HCONE) '
+item.value['FR'] = 'Type actuellement autorisé:\n\tDRS_EOUT = EXT_E2DS_AB (HCONE_HCONE) ou EXT_E2DS_A (HCONE_HCONE)\n\tor EXT_E2DS_B (HCONE_HCONE) ou EXT_E2DS_C (HCONE_HCONE)'
 item.arguments = 'None'
 item.comment = ''
 langlist.add(item)

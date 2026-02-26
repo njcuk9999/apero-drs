@@ -1,7 +1,7 @@
 # requirements for apero-core,apero-drs,lbl,pogos,sossisse,scarvs,sorbet,tsovore
 # requires-python = "==3.11.*"
 
-# radvel                        # must be installed before this if dependency # Current version: 1.4.11
+radvel                        # Current version: 1.4.11
 juliet                          # must be first (but after radvel) # Current version: 2.2.7
 jwst                            # Current version: 1.17.1
 

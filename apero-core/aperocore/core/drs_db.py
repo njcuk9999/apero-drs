@@ -25,7 +25,7 @@ import pandas as pd
 import sqlalchemy
 from astropy.table import Table as AstropyTable
 from sqlalchemy import Dialect
-from sqlalchemy.exc import IntegrityError, OperationalError
+from sqlalchemy.exc import IntegrityError, OperationalError, NoSuchTableError
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy_utils import database_exists, create_database
 
@@ -304,13 +304,19 @@ class AperoDatabase:
 
         # Refresh metadata from database
         metadata = sqlalchemy.MetaData()
-        if tablename is not None:
-            # Reflect specific table only
-            _retry_operation(lambda: metadata.reflect(bind=self.engine,
-                                                     only=[tablename]))
-        else:
-            # Reflect all tables
-            _retry_operation(lambda: metadata.reflect(bind=self.engine))
+        try:
+            if tablename is not None:
+                # Reflect specific table only
+                # Use only=[tablename] to avoid reflecting all tables
+                _retry_operation(lambda: metadata.reflect(bind=self.engine,
+                                                         only=[tablename]))
+            else:
+                # Reflect all tables
+                _retry_operation(lambda: metadata.reflect(bind=self.engine))
+        except NoSuchTableError:
+            # If table doesn't exist, just return empty metadata
+            # This allows operations to fail gracefully at the point of use
+            pass
 
         # Cache the result
         self._metadata_cache[cache_key] = metadata
@@ -464,10 +470,10 @@ class AperoDatabase:
         """
         # define the meta data
         def _execute_count():
-            metadata = sqlalchemy.MetaData()
-            _retry_operation(lambda: metadata.reflect(bind=self.engine))
             # get the table name
             _tablename = tablename if tablename is not None else self.tablename
+            # get metadata for only this specific table
+            metadata = self._get_metadata(tablename=_tablename)
             # create a table to fill
             sqltable = sqlalchemy.Table(_tablename, metadata)
             # Create a session
@@ -510,10 +516,10 @@ class AperoDatabase:
         """
         # define the meta data
         def _execute_unique():
-            metadata = sqlalchemy.MetaData()
-            _retry_operation(lambda: metadata.reflect(bind=self.engine))
             # get the table name
             _tablename = tablename if tablename is not None else self.tablename
+            # get metadata for only this specific table
+            metadata = self._get_metadata(tablename=_tablename)
             # create a table to fill
             sqltable = sqlalchemy.Table(_tablename, metadata)
             # add the table to select from
@@ -597,10 +603,10 @@ class AperoDatabase:
         """
         # define the meta data
         def _execute_get():
-            metadata = sqlalchemy.MetaData()
-            _retry_operation(lambda: metadata.reflect(bind=self.engine))
             # get the table name
             _tablename = tablename if tablename is not None else self.tablename
+            # get metadata for only this specific table
+            metadata = self._get_metadata(tablename=_tablename)
             # create a table to fill
             sqltable = sqlalchemy.Table(_tablename, metadata)
             # create a query statement
@@ -690,10 +696,10 @@ class AperoDatabase:
         """
         # define the meta data and execute with retry
         def _execute_set_row():
-            metadata = sqlalchemy.MetaData()
-            metadata.reflect(bind=self.engine)
             # get the table name
             _tablename = tablename if tablename is not None else self.tablename
+            # get metadata for only this specific table
+            metadata = self._get_metadata(tablename=_tablename)
             # create a table to fill
             sqltable = sqlalchemy.Table(_tablename, metadata)
             # ---------------------------------------------------------------------
@@ -778,11 +784,11 @@ class AperoDatabase:
             db.set(['mass', 'radius'], [b'null', b'null'], None)
         """
         # define the meta data
-        metadata = sqlalchemy.MetaData()
-        _retry_operation(lambda: metadata.reflect(bind=self.engine))
         # get the table name
         if tablename is None:
             tablename = self.tablename
+        # get metadata for only this specific table
+        metadata = self._get_metadata(tablename=tablename)
         # create a table to fill
         sqltable = sqlalchemy.Table(tablename, metadata)
         # ---------------------------------------------------------------------
@@ -850,12 +856,12 @@ class AperoDatabase:
         if not insert_dicts:
             return  # nothing to insert
         # ---------------------------------------------------------------------
-        # Reflect table
-        metadata = sqlalchemy.MetaData()
-        _retry_operation(lambda: metadata.reflect(bind=self.engine))
-        # ---------------------------------------------------------------------
+        # Get table name first
         if tablename is None:
             tablename = self.tablename
+        # Reflect table
+        metadata = self._get_metadata(tablename=tablename)
+        # ---------------------------------------------------------------------
         sqltable = sqlalchemy.Table(tablename, metadata)
         # ---------------------------------------------------------------------
         # Unique columns (for hash, duplicate detection)
@@ -909,11 +915,11 @@ class AperoDatabase:
         if not update_dicts:
             return
 
-        # Define metadata and reflect table
-        metadata = sqlalchemy.MetaData()
-        _retry_operation(lambda: metadata.reflect(bind=self.engine))
+        # Get table name
         if tablename is None:
             tablename = self.tablename
+        # Define metadata and reflect table
+        metadata = self._get_metadata(tablename=tablename)
         sqltable = sqlalchemy.Table(tablename, metadata)
 
         # Get unique columns
@@ -930,11 +936,19 @@ class AperoDatabase:
 
                     # Handle NaN/None/null strings
                     for key, value in row_update.items():
-                        if value in [None, np.nan]:
-                            row_update[key] = None
-                        elif isinstance(value, str):
-                            if value.lower() in ["null", "none", "nan"]:
+                        # Check for NaN values using pandas isna (works reliably with NumPy 2.x)
+                        # Handles np.nan, float('nan'), None, pd.NA, etc.
+                        try:
+                            if pd.isna(value):
                                 row_update[key] = None
+                            elif isinstance(value, str):
+                                if value.lower() in ["null", "none", "nan"]:
+                                    row_update[key] = None
+                        except (TypeError, ValueError):
+                            # pd.isna can raise TypeError for some types
+                            if isinstance(value, str):
+                                if value.lower() in ["null", "none", "nan"]:
+                                    row_update[key] = None
 
                     # Add hash column if needed
                     if unique_cols:
@@ -969,11 +983,11 @@ class AperoDatabase:
         :return: None removes row(s) from table
         """
         # define the meta data
-        metadata = sqlalchemy.MetaData()
-        _retry_operation(lambda: metadata.reflect(bind=self.engine))
         # get the table name
         if tablename is None:
             tablename = self.tablename
+        # get metadata for only this specific table
+        metadata = self._get_metadata(tablename=tablename)
         # create a table to fill
         sqltable = sqlalchemy.Table(tablename, metadata)
         # ---------------------------------------------------------------------
@@ -1017,8 +1031,8 @@ class AperoDatabase:
             if not inspector.has_table(tablename):
                 return
             # define the meta data
-            metadata = sqlalchemy.MetaData()
-            metadata.reflect(bind=self.engine)
+            # get metadata for only this specific table
+            metadata = self._get_metadata(tablename=tablename)
             # get the table name
             _tablename = tablename if tablename is not None else self.tablename
             # create a table to fill
@@ -1065,11 +1079,11 @@ class AperoDatabase:
         :return: list of strings, the column names
         """
         # define the meta data
-        metadata = sqlalchemy.MetaData()
-        _retry_operation(lambda: metadata.reflect(bind=self.engine))
         # get the table name
         if tablename is None:
             tablename = self.tablename
+        # get metadata for only this specific table
+        metadata = self._get_metadata(tablename=tablename)
         # create a table to fill
         sqltable = sqlalchemy.Table(tablename, metadata)
         # ---------------------------------------------------------------------
@@ -1170,8 +1184,8 @@ class AperoDatabase:
         # remove the current new table
         self.delete_table(self.tablename)
         # define the meta data
-        metadata = sqlalchemy.MetaData()
-        _retry_operation(lambda: metadata.reflect(bind=self.engine))
+        # get metadata for only the old table
+        metadata = self._get_metadata(tablename=old_database.tablename)
         # create a new table like the original table
         old_table = sqlalchemy.Table(old_database.tablename, metadata,
                                      autoload=True)
@@ -1188,13 +1202,13 @@ class AperoDatabase:
     def replace_paths(self, oldpath: str, newpath: str, colname: str):
         # TODO: Test this (from 0.7.289) - UNTESTED
         # define the meta data
-        metadata = sqlalchemy.MetaData()
-        _retry_operation(lambda: metadata.reflect(bind=self.engine))
+        # get metadata for only this specific table
+        metadata = self._get_metadata(tablename=self.tablename)
         # create a new table like the original table
         table = sqlalchemy.Table(self.tablename, metadata, autoload=True)
         # set up the update dictionary
         udict = dict()
-        udict[colname] = (sqlalchemy.update(table.c[colname], None)
+        udict[colname] = (sqlalchemy.update(table.c[colname])
                           .corresponding_column.with_variant(newpath, type_=None))
         # create the update statement
         update_cmd = sqlalchemy.update(table).values(udict)

@@ -1279,7 +1279,7 @@ class Instrument:
             # push into clean_reject_names
             clean_reject_names.append(reject_name)
         # ---------------------------------------------------------------------
-        reject_mask = np.in1d(np.array(clean_reject_names),
+        reject_mask = np.isin(np.array(clean_reject_names),
                               np.array(clean_reject_list))
         # return the reject mask
         return reject_mask, clean_reject_list

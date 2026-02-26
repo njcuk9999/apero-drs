@@ -635,7 +635,7 @@ def get_object_database(params: ParamDict, log: bool = True) -> Table:
                 # recent (lowest in list)
                 _table = _drop_duplicates(_table, gl_objcol)
                 # create a mask of valies not in the main table
-                pmask = ~np.in1d(_table[gl_objcol], maintable[gl_objcol])
+                pmask = ~np.isin(_table[gl_objcol], maintable[gl_objcol])
                 # add new columns to main table
                 maintable = vstack([maintable, _table[pmask]])
     # return the main table

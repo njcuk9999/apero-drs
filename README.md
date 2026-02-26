@@ -26,25 +26,25 @@ Using the Github Action [Repo Visualizer](https://github.com/githubocto/repo-vis
 ##  1 Latest version
 [Back to top](#apero---a-pipeline-to-reduce-observations)
 
-- main (long term stable) V0.7.288 (2024-01-30)
+- main (long term stable) V0.7.294 (2025-05-26)
     ```
     This is the version currently recommended for all general use. It may not
     contain the most up-to-date features until long term support and stability can
     be verified.
     ```
-- developer (tested) V0.7.288 (2024-01-30)
+- developer (tested) V0.7.295 (2025-12-30)
     ```
     Note the developer version should have been tested and semi-stable but not
     ready for full sets of processing and defintely not for release for
     non-developers or for data put on archives. Some changes may not be
     in this version that are in the working version.
     ```
-- stable-test (tested) V0.7.288 (2024-01-30)
+- stable-test (tested) V0.7.295 (2025-12-30)
     ```
     Notrmally up-to-date with the live version has been or is currently
     being tested for stability
     ```
-- live (untested) V0.8.001 (2024-02-12) V0.7.289 (2024-01-30)
+- live (untested) V0.8.121 (2026-02-26) V0.7.297 (2026-02-26)
     ```
     Note the live version will be the most up-to-date version but has not been
     tested for stability - use at own risk.
@@ -201,8 +201,10 @@ Please see the documentation:
 For dev mode (editable install of both apero-core and sossisse please run the following:
 
 ```bash
+conda create --name apero-env-08 python=3.12
+conda activate apero-env-08
 
-git clone git@github.com:njcuk9999/apero-drs.git -b v0.8.003
+git clone git@github.com:njcuk9999/apero-drs.git
 git clone git@github.com:njcuk9999/lbl.git
 
 pip install -U -e ./apero-drs/apero-core -e ./lbl -e ./apero-drs/apero-drs[dev]

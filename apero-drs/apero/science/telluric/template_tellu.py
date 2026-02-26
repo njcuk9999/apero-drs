@@ -978,7 +978,7 @@ def list_current_templates(params: ParamDict, recipe: DrsRecipe,
     uobjnames = np.array(list(set(objnames)))
     # deal with all objects filter
     if all_objects is not None:
-        mask = np.in1d(uobjnames, all_objects)
+        mask = np.isin(uobjnames, all_objects)
         uobjnames = list(np.array(uobjnames)[mask])
     # return the unique set of object names
     return uobjnames
@@ -1033,7 +1033,7 @@ def calculate_berv_coverage(params: ParamDict, recipe: Union[DrsRecipe, None],
     # calculate coverage
     coverage = 1 - anticoverage
     # calculate berv coverage (integral of coverage) in km/s
-    berv_cov = float(np.trapz(coverage, velo_range))
+    berv_cov = float(np.trapezoid(coverage, velo_range))
     # log coverage
     if log:
         WLOG(params, 'info', textentry('40-019-00051', args=[berv_cov]))

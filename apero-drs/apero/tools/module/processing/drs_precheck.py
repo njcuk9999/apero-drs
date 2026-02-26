@@ -316,8 +316,8 @@ def sci_tellu_check(params: ParamDict, recipe: DrsRecipe, tstars: List[str],
         rtable = findexdbm.get_entries('KW_OBJNAME, KW_OUTPUT,KW_MID_OBS_TIME',
                                        obs_dir=uobsdir, block_kind='raw')
         # mask telluric stars
-        tellu_mask = np.in1d(rtable['KW_OBJNAME'], tstars)
-        sci_mask = np.in1d(rtable['KW_OBJNAME'], ostars)
+        tellu_mask = np.isin(rtable['KW_OBJNAME'], tstars)
+        sci_mask = np.isin(rtable['KW_OBJNAME'], ostars)
         # loop around telluric file types
         for drsfile in tfiles:
             # mask drsfile for tellu stars
@@ -454,7 +454,7 @@ def file_check(params: ParamDict, recipe: DrsRecipe,
         # get the mean time for this observation directory
         mean_time_it = mean_times[obs_dir == all_obs_dir][0]
         # mask out other bad nights (shouldn't include these)
-        obs_mask = ~(np.in1d(all_obs_dir, bad_calib_nights))
+        obs_mask = ~(np.isin(all_obs_dir, bad_calib_nights))
         # find all other obs dirs with in MAX_CALIB_DTIME of this night
         diff = abs(mean_times[obs_mask] - mean_time_it)[1:]
         # check whether there is another night within given time frame

@@ -996,7 +996,7 @@ def uniform_time_list(times: Union[List[float], np.ndarray], number: int
         # remove smallest delta time
         times2 = np.delete(times2, np.argmin(dt1))
     # create a mask of positions of times in times2
-    mask = np.array(np.in1d(times, times2))
+    mask = np.array(np.isin(times, times2))
     # return the mask
     return mask
 
