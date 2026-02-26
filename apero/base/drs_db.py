@@ -1101,15 +1101,6 @@ class Database:
         emsg = 'Please abstract method with SQLiteDatabase or MySQLDatabase'
         NotImplemented(emsg)
 
-    def _to_pandas(self, command: str) -> Any:
-        """
-        Use pandas to get sql command
-        :param command:
-        :return:
-        """
-        emsg = 'Please abstract method with SQLiteDatabase or MySQLDatabase'
-        NotImplemented(emsg)
-
     def duplicate(self, old_database: Union['Database']):
         """
         Duplicate the database from another database
@@ -1560,6 +1551,8 @@ class SQLiteDatabase(Database):
         func_name = __NAME__ + '.SQLiteDatabase.add_from_pandas()'
         # infer table name
         table = self._infer_table_(table)
+        # Clean NaN values from dataframe - convert to None for database
+        df = _clean_nans(df)
         # deal with empty unique column list
         if unique_cols is not None and len(unique_cols) == 0:
             unique_cols = None
@@ -1597,33 +1590,6 @@ class SQLiteDatabase(Database):
             raise drs_base.base_error(ecode, emsg, 'error', args=eargs,
                                       exceptionname='DatabaseError',
                                       exception=DatabaseError)
-
-    def _to_pandas(self, command: str) -> pd.DataFrame:
-        """
-        Use pandas to get sql command
-        :param command:
-        :return:
-        """
-        # set function name
-        func_name = __NAME__ + '.SQLiteDatabase._to_pandas()'
-        # try to read sql using pandas
-        # noinspection PyBroadException
-        try:
-            conargs = dict(func=func_name, kind='_READ_SQL:sqlite3')
-            with closing(self.connection(**conargs)) as tmpconn:
-                df = pd.read_sql(command, tmpconn)
-                tmpconn.close()
-        except Exception as _:
-            # log error: Could not read SQL command as pandas table
-            ecode = '00-002-00048'
-            emsg = drs_base.BETEXT[ecode]
-            eargs = [command, self.path, func_name]
-            # log base error
-            raise drs_base.base_error(ecode, emsg, 'error', args=eargs,
-                                      exceptionname='DatabaseError',
-                                      exception=DatabaseError)
-        # return dataframe
-        return df
 
     def table_info(self, table: Optional[str] = None
                    ) -> Tuple[List[str], List[str]]:
@@ -1818,7 +1784,7 @@ class MySQLDatabase(Database):
         _ = path
         # set function name
         func_name = '{0}.{1}.{2}()'.format(__NAME__, self.classname,
-                                           '__init__()')
+                                           '__init__')
         # set path
         aperohome = os.path.join(os.path.expanduser('~'), '.apero')
         if not os.path.exists(aperohome):
@@ -2316,6 +2282,8 @@ class MySQLDatabase(Database):
         func_name = __NAME__ + '.Database.add_from_pandas()'
         # infer table name
         table = self._infer_table_(table)
+        # Clean NaN values from dataframe - convert to None for database
+        df = _clean_nans(df)
         # deal with empty unique column list
         if unique_cols is not None and len(unique_cols) == 0:
             unique_cols = None
@@ -2671,6 +2639,24 @@ def _proxy_table(tablename: str) -> str:
         return tablename.lower()
     else:
         return tablename.lower() + '_db'
+
+
+def _clean_nans(df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Replace NaN values with None in a pandas dataframe.
+    MySQL/MariaDB does not accept NaN values - they must be NULL (None in Python).
+
+    This function replaces all NaN values in the dataframe with None, which will be
+    converted to NULL when inserted into the database.
+
+    :param df: pandas dataframe to clean
+    :return: dataframe with NaN values replaced by None
+    """
+    # Create a copy to avoid modifying the original
+    df = df.copy()
+    # Replace all NaN values with None
+    df = df.where(pd.notna(df), None)
+    return df
 
 
 def _hash_df(df: pd.DataFrame, unique_cols: List[str]) -> pd.DataFrame:

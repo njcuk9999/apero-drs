@@ -247,7 +247,7 @@ def basic_filter(params: ParamDict, kw_objnames: List[str],
             # get a unique list of pids that do not fail QC
             lpids = list(set(ltable[lmask]['PID']))
             # mask out any files that fail qc
-            mask = np.in1d(ipids, lpids)
+            mask = np.isin(ipids, lpids)
         else:
             mask = np.ones(len(inpaths), dtype=bool)
         # ---------------------------------------------------------------------
