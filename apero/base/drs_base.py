@@ -439,7 +439,7 @@ def base_null_text(variable: Any, nulls: Union[None, List[str]] = None) -> bool:
     if isinstance(variable, str):
         if nulls is not None:
             for null in nulls:
-                if variable.upper() == null.upper():
+                if variable.strip().upper() == null.upper():
                     return True
     # else in all other cases return False
     return False
