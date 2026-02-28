@@ -72,10 +72,9 @@ fiber = dict(name='--fiber', dtype='options', default='ALL',
              helpstr=textentry('EXTFIBER_HELP'),
              options=['ALL'] + sci_fibers + cal_fibers)
 # -----------------------------------------------------------------------------
-flipimage = dict(name='--flipimage', dtype='options',
-                 default='both',
+flipimage = dict(name='--flipimage', dtype=bool,
                  helpstr=textentry('FLIPIMAGE_HELP'),
-                 options=['None', 'x', 'y', 'both'])
+                 default_ref='IMAGE.FLIP_INPUT')
 # -----------------------------------------------------------------------------
 fluxunits = dict(name='--fluxunits', dtype='options', default='e-',
                  helpstr=textentry('FLUXUNITS_HELP'), options=['ADU/s', 'e-'])

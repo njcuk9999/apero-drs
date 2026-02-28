@@ -70,12 +70,11 @@ dodark = dict(name='--darkcorr', dtype='bool', default=True,
 # -----------------------------------------------------------------------------
 fiber = dict(name='--fiber', dtype='options', default='ALL',
              helpstr=textentry('EXTFIBER_HELP'),
-             options=['ALL'] + sci_fibers + cal_fibers,
-             default_ref='INPUT_FLIP_IMAGE')
+             options=['ALL'] + sci_fibers + cal_fibers)
 # -----------------------------------------------------------------------------
-flipimage = dict(name='--flipimage', dtype='options', default='both',
+flipimage = dict(name='--flipimage', dtype=bool,
                  helpstr=textentry('FLIPIMAGE_HELP'),
-                 options=['None', 'x', 'y', 'both'])
+                 default_ref='IMAGE.FLIP_INPUT')
 # -----------------------------------------------------------------------------
 fluxunits = dict(name='--fluxunits', dtype='options', default='e-',
                  helpstr=textentry('FLUXUNITS_HELP'), options=['ADU/s', 'e-'])
@@ -340,7 +339,6 @@ apero_dark_ref.recipe_kind = 'calib-reference'
 apero_dark_ref.calib_required = True
 apero_dark_ref.set_outputs(DARK_REF_FILE=files.out_dark_ref)
 apero_dark_ref.set_kwarg(name='--filetype', dtype=str,
-                         default='DARK_DARK_TEL, DARK_DARK_INT',
                          default_ref='DARK_REF_FILETYPE',
                          helpstr=textentry('DARK_REF_FILETYPE'))
 apero_dark_ref.set_kwarg(**add_db)

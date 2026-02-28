@@ -636,15 +636,21 @@ def dark_write_files(params: ParamDict, recipe: DrsRecipe, dprtype: str,
 
     :return: DrsFitsFile, the output dark calibration fits file class
     """
-    # define outfile
-    if dprtype == 'DARK_DARK_INT':
-        outfile = recipe.outputs['DARK_INT_FILE'].newcopy(params=params)
-    elif dprtype == 'DARK_DARK_TEL':
-        outfile = recipe.outputs['DARK_TEL_FIEL'].newcopy(params=params)
-    elif dprtype == 'DARK_DARK_SKY':
-        outfile = recipe.outputs['DARK_SKY_FILE'].newcopy(params=params)
-    else:
-        outfile = None
+    # set outfile to None
+    outfile, doutputs = None, []
+    # identify the file type and define the output file instance
+    for _output in recipe.outputs:
+        doutputs.append(f'{_output}: DPRTYPE={_output.infile.name}')
+        if _output.infile.name == dprtype:
+             outfile = recipe.outputs[_output].newcopy(params=params)
+
+    # deal with outfile still being None (should not happen)
+    if outfile is None:
+        emsg = 'Output file type {0} not found in recipe outputs'
+        emsg += ' Available DPRTYPES are: {1}'
+        eargs = [dprtype, ','.join(doutputs)]
+        raise WLOG(params, 'error', emsg.format(*eargs))
+    # ------------------------------------------------------------------
     # construct the filename from file instance
     outfile.construct_filename(infile=infile)
     # ------------------------------------------------------------------
