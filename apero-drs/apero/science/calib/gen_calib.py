@@ -557,7 +557,7 @@ def calibrate_ppfile(params: ParamDict, recipe: DrsRecipe,
     # flip image
     # ----------------------------------------------------------------------
     if flip:
-        image2 = drs_image.flip_image(image1)
+        image2 = drs_image.flip_image(params, image1)
     else:
         image2 = np.array(image1)
     # ----------------------------------------------------------------------

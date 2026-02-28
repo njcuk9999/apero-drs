@@ -194,9 +194,9 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
         # ------------------------------------------------------------------
         if params['IMAGE.FLIP_INPUT']:
             # flip flat
-            flat_image1 = drs_image.flip_image(flat_image)
+            flat_image1 = drs_image.flip_image(params, flat_image)
             # flip bad pixel map
-            bad_pixel_map1 = drs_image.flip_image(bad_pixel_map)
+            bad_pixel_map1 = drs_image.flip_image(params, bad_pixel_map)
         else:
             flat_image1, bad_pixel_map1 = flat_image, bad_pixel_map
 
