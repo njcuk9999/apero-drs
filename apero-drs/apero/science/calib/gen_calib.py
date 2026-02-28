@@ -507,6 +507,8 @@ def calibrate_ppfile(params: ParamDict, recipe: DrsRecipe,
     saturate = pconst.SATURATION(params, infile.get_header())
     frmtime = pconst.FRAME_TIME(params, infile.get_header())
     nfiles = infile.numfiles
+    apply_upper_bound = params['IMAGE.APPLY_UPPER_BOUND']
+    apply_lower_bound = params['IMAGE.APPLY_LOWER_BOUND']
     # log that we are calibrating a file
     WLOG(params, 'info', textentry('40-014-00038', args=[infile.filename]))
 
@@ -517,9 +519,18 @@ def calibrate_ppfile(params: ParamDict, recipe: DrsRecipe,
     # physics of the IR array, and if they are not, we set them to NaN.
     # Upper bound is the saturation/frame time (we express things as slope).
     # A pixel with a value greater than can be recorded by the array is
-    # nonphysical. The lower bound is set at -10 * readout noise.
-    upperlim = saturate / frmtime
-    lowerlim = -10 * (sigdet * gain) / frmtime
+    # nonphysical. The lower bound is set at -10 * readout noise
+    # get upper bound
+    if apply_upper_bound:
+        upperlim = saturate / frmtime
+    else:
+        upperlim = np.inf
+    # get lower bound
+    if apply_lower_bound:
+        lowerlim = -10 * (sigdet * gain) / frmtime
+    else:
+        lowerlim = -np.inf
+    # create a mask
     with warnings.catch_warnings(record=True) as _:
         mask = (image > upperlim) | (image < lowerlim)
     image[mask] = np.nan

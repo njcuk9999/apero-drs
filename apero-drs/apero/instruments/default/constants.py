@@ -119,10 +119,16 @@ CDict.add('COMBINE_INPUT', dtype=bool, value=True,
                       'same time')
 
 # Defines whether to, by default, flip images that are inputted
-CDict.add('FLIP_INPUT', dtype=str, value='both',
-          options=['None', 'x', 'y', 'both'],
+CDict.add('FLIP_INPUT', dtype=bool, value=True,
           source=__NAME__, group=cgroup,
           description=('Defines whether to, by default, '
+                       'flip images that are inputted'))
+
+# Defines how to flip the image
+CDict.add('FLIP_METHOD', dtype=str, value=None,
+          options=['None', 'x', 'y', 'both'],
+          source=__NAME__, group=cgroup,
+          description=('Defines default method to '
                        'flip images that are inputted'))
 
 # Defines whether to, by default, resize images that are inputted
@@ -149,6 +155,22 @@ CDict.add('PIXEL_SIZE', value=None, dtype=float,
           description=('Define the pixel size in km/s / pix '
                        'also used for the median sampling '
                        'size in tellu correction'))
+
+# Define whether we apply an upper bound when calibrating pp images
+# This sets values above saturate / frmtime
+CDict.add('APPLY_UPPER_BOUND', value=True, dtype=bool,
+          source=__NAME__, group=cgroup,
+          description=('Define whether we apply an upper bound when '
+                       'calibrating pp images. This sets values above '
+                       'saturate / frmtime'))
+
+# Define whether we apply a lower bound when calibrating pp images
+# This sets values below  -10 * (sigdet * gain) / frmtime to nans
+CDict.add('APPLY_LOWER_BOUND', value=True, dtype=bool,
+          source=__NAME__, group=cgroup,
+          description=('Define whether we apply a lower bound when '
+                       'calibrating pp images. This sets values below '
+                       '-10 * (sigdet * gain) / frmtime to nans'))
 
 # Define mean line width expressed in pix
 CDict.add('FWHM_PIXEL_LSF', value=None, dtype=float,
@@ -294,12 +316,18 @@ CDict.add('CMETRIC1_TYPES', value=None,
           description=('Define the DPRTYPES allowed for '
                        'the combine metric 1 comparison'))
 
-# define the check FP percentile level
+# Assuming that the FPs peaks cover a certain fraction of the frame
+# (5% in SPIRou+NIRPS, 1% in ILocater), we check that the 1-FP_coverage is
+# far higher (defined as N times the readout noise in reference pixels;
+# variable name X) than the median of frame.
 CDict.add('CHECKFP_PERCENTILE', value=None,
           dtype=int, minimum=0, source=__NAME__,
           group=cgroup,
-          description=('define the check FP percentile '
-                       'level'))
+          description='Assuming that the FPs peaks cover a certain fraction '
+                      'of the frame (5% in SPIRou+NIRPS, 1% in ILocater), '
+                      'we check that the 1-FP_coverage is far higher '
+                      '(defined as N times the readout noise in reference '
+                      'pixels; variable name X) than the median of frame.')
 
 # define the check FP threshold qc parameter
 CDict.add('CHECK_FP_THRES', value=None,

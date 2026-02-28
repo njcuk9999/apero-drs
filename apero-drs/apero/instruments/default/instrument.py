@@ -706,6 +706,33 @@ class Instrument:
         # raise not implemented yet error
         raise NotImplementedError(NOT_IMPLEMENTED.format(__NAME__, func_name))
 
+    def FIBER_LOC_PROPS(self, fiber: str, lprops_all: dict):
+        # get the cent coefficients
+        _ccoeffs = lprops_all[fiber]['CENT_COEFFS']
+        fccoeffs, nbo = self.FIBER_LOC_COEFF_EXT(_ccoeffs, fiber)
+        # get the wid coefficients
+        _wcoeffs = lprops_all[fiber]['WID_COEFFS']
+        fwcoeffs, _ = self.FIBER_LOC_COEFF_EXT(_wcoeffs, fiber)
+        # get the ycent positions
+        _ycent = lprops_all[fiber]['YCENT']
+        fycent, _ = self.FIBER_LOC_COEFF_EXT(_ycent, fiber)
+        # set the localisation properties
+        lprops = dict()
+        lprops['LOCOFILE'] = str(lprops_all[fiber]['LOCOFILE'])
+        lprops['LOCOTIME'] = float(lprops_all[fiber]['LOCOTIME'])
+        lprops['LOCOOBJECT'] = lprops_all[fiber]['LOCOOBJECT']
+        lprops['CENT_COEFFS'] = fccoeffs
+        lprops['WID_COEFFS'] = fwcoeffs
+        lprops['YCENT'] = fycent
+        lprops['NBO'] = int(nbo)
+        lprops['NBXPIX'] = int(lprops_all[fiber]['NBXPIX'])
+        lprops['DEG_C'] = int(lprops_all[fiber]['DEG_C'])
+        lprops['DEG_W'] = int(lprops_all[fiber]['DEG_W'])
+        lprops['MERGED'] = lprops_all[fiber]['MERGED'] != nbo
+        lprops['NSET'] = int(lprops_all[fiber]['NSET'])
+        lprops['LOC_POLY_TYPE'] = str(lprops_all[fiber]['LOC_POLY_TYPE'])
+        return lprops
+
     def FIBER_LOC_COEFF_EXT(self, coeffs: np.ndarray, fiber: str):
         """
         Extract the localisation coefficients based on how they are stored

@@ -1351,8 +1351,20 @@ def calc_wave_sol(params: ParamDict, recipe: DrsRecipe,
         # fp peaks afterward
         xfit1 = ordfp_pix_meas[1:]
         yfit1 = ordfp_pix_meas[1:] - ordfp_pix_meas[:-1]
+
+        # get the step before and after each FP peak (except the first and last)
+        step_before = np.roll(ordfp_pix_meas, -1) - ordfp_pix_meas
+        step_after = ordfp_pix_meas - np.roll(ordfp_pix_meas, 1)
+        # calculate the change in step for each peak
+        step_change = (step_after / step_before)[1:]
+        # good peaks should have a step change close to 1
+        # (we allow 5% variation). This is used to mask out bad peaks
+        # before fitting the step as a function of pixel position
+        good_peaks = (step_change > 0.95) & (step_change < 1.05)
+
         # fit the step between FP lines
-        fit_step, _ = mp.robust_chebyfit(xfit1, yfit1, wavesol_fit_degree,
+        fit_step, _ = mp.robust_chebyfit(xfit1[good_peaks], yfit1[good_peaks],
+                                         wavesol_fit_degree,
                                          nsig_cut, domain=[0, nbxpix])
         # ---------------------------------------------------------------------
         # counting steps backward
@@ -1369,6 +1381,12 @@ def calc_wave_sol(params: ParamDict, recipe: DrsRecipe,
                                 domain=[0, nbxpix])
 
             dnum = diff / np.mean(dfit)
+
+            if np.abs(dnum - np.round(dnum)) > 0.1:
+                # TODO: Add to language database
+                wmsg = 'Order {0}: FP peaks inconsistent with regular spacing'
+                wargs = [order_num]
+                WLOG(params, 'warning', wmsg.format(*wargs))
             # dnum is always very close to an integer value, we round it
             # we subtract the steps, FP peaks go in decreasing number
             rdnum = np.round(dnum)

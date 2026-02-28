@@ -62,7 +62,10 @@ CDict.set('FIBER_TYPES', value=['A', 'B'], source=__NAME__, group=cgroup)
 CDict.set('COMBINE_INPUT', value=True, source=__NAME__, group=cgroup)
 
 # Defines whether to, by default, flip images that are inputted
-CDict.set('FLIP_INPUT', value='both', source=__NAME__, group=cgroup)
+CDict.set('FLIP_INPUT', value=True, source=__NAME__, group=cgroup)
+
+# Defines how to flip the image
+CDict.set('FLIP_METHOD', value='both', source=__NAME__, group=cgroup)
 
 # Defines whether to, by default, resize images that are inputted
 CDict.set('RESIZE_IMAGE', value=True, source=__NAME__, group=cgroup)
@@ -76,6 +79,14 @@ CDict.set('Y_HIGH', value=4092, source=__NAME__, group=cgroup)
 # Define the pixel size in km/s / pix
 # also used for the median sampling size in tellu correction
 CDict.set('PIXEL_SIZE', value=1.00, source=__NAME__, group=cgroup)
+
+# Define whether we apply an upper bound when calibrating pp images
+# This sets values above saturate / frmtime
+CDict.add('APPLY_UPPER_BOUND', value=True, source=__NAME__, group=cgroup)
+
+# Define whether we apply a lower bound when calibrating pp images
+# This sets values below  -10 * (sigdet * gain) / frmtime to nans
+CDict.add('APPLY_LOWER_BOUND', value=True, source=__NAME__, group=cgroup)
 
 # Define mean line width expressed in pix
 CDict.set('FWHM_PIXEL_LSF', value=3.0, source=__NAME__, group=cgroup)
@@ -117,7 +128,10 @@ CDict.set('CMETRIC1_TYPES',
           value=['DARK_FLAT', 'FLAT_FLAT', 'FLAT_DARK', 'FP_FP', 'DARK_FP'],
           source=__NAME__, group=cgroup)
 
-# Define the check FP percentile level
+# Assuming that the FPs peaks cover a certain fraction of the frame
+# (5% in SPIRou+NIRPS, 1% in ILocater), we check that the 1-FP_coverage is
+# far higher (defined as N times the readout noise in reference pixels;
+# variable name X) than the median of frame.
 CDict.set('CHECKFP_PERCENTILE', value=95, source=__NAME__, group=cgroup)
 
 # Define the check FP threshold qc parameter

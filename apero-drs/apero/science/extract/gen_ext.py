@@ -257,7 +257,7 @@ def save_tmp_orderps_file(params: ParamDict, recipe: DrsRecipe,
         # straighten orders
         orderp = shape.ea_transform(params, orderp, sprops['SHAPEL'],
                                     dxmap=sprops['SHAPEX'],
-                                    dymap=sprops['SHAPEY'], )
+                                    dymap=sprops['SHAPEY'])
         # copy full header from order profile
         orderpsfile.copy_header(header=orderhdr)
         # add core values (that should be in all headers)

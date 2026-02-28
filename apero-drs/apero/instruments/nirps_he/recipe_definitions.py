@@ -74,9 +74,8 @@ fiber = dict(name='--fiber', dtype='options', default='ALL',
              helpstr=textentry('EXTFIBER_HELP'),
              options=['ALL'] + sci_fibers + cal_fibers)
 # -----------------------------------------------------------------------------
-flipimage = dict(name='--flipimage', dtype='options',
+flipimage = dict(name='--flipimage', dtype=bool,
                  helpstr=textentry('FLIPIMAGE_HELP'),
-                 options=['None', 'x', 'y', 'both'],
                  default_ref='IMAGE.FLIP_INPUT')
 # -----------------------------------------------------------------------------
 fluxunits = dict(name='--fluxunits', dtype='options', default='e-',
@@ -859,7 +858,8 @@ apero_wave_night.set_debug_plots('WAVE_WL_CAV', 'WAVE_FIBER_COMPARISON',
                                  'WAVE_SLINKY_EW_COV', 'WAVE_SLINKY_FIT',
                                  'CCF_PHOTON_UNCERT',
                                  'CCF_RV_FIT', 'CCF_RV_FIT_LOOP')
-apero_wave_night.set_summary_plots('SUM_WAVE_FIBER_COMP', 'SUM_CCF_RV_FIT')
+apero_wave_night.set_summary_plots('SUM_WAVE_FIBER_COMP', 'SUM_CCF_RV_FIT',
+                                   'SUM_CCF_PHOTON_UNCERT')
 apero_wave_night.set_arg(pos=0, **obs_dir)
 apero_wave_night.set_kwarg(name='--hcfiles', dtype='files',
                            files=[files.pp_hc1_hc1],
