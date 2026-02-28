@@ -101,7 +101,7 @@ Please see the documentation:
 To install as a developer (and use tools) please follow these instructions
 
 ```bash
-conda create --name apero-env-07
+conda create --name apero-env-07 python=3.12
 conda activate apero-env-07
 
 git clone git@github.com:njcuk9999/apero-drs.git -b developer

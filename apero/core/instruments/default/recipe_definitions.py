@@ -296,6 +296,10 @@ get_files.set_kwarg(name='--tar', default=False, dtype='switch',
 get_files.set_kwarg(name='--tarfile', default='None', dtype=str,
                     helpstr='The name of the tar file to create. Must also '
                             'provide the --tar argument')
+get_files.set_kwarg(name='--cores', default=1, dtype=int,
+                    helpstr='How many cores to use for certain steps '
+                            '(will multiprocess when possible)',
+                    minimum=1)
 # file filters
 get_files.set_kwarg(name='--objnames', dtype=str, default='None',
                     helpstr=textentry('GET_OBJNAME_HELP'))
@@ -348,6 +352,16 @@ get_files.set_kwarg(name='--test', default=False, dtype='switch',
 get_files.set_kwarg(name='--sizelimit', default=0, dtype=int,
                     helpstr='Limit the size of output tarfile (in GB)')
 
+get_files.set_kwarg(name='--nodb', default=False, dtype='switch',
+                    helpstr='Use filesystem to search for files [very slow] '
+                            'usually just for debugging')
+get_files.set_kwarg(name='--nodb_wildcard', default='*', dtype=str,
+                    helpstr='When --nodb is used use --nodb_wildcard to only '
+                            'target specific files')
+get_files.set_kwarg(name='--mp_mode', default='process', dtype=str,
+                    options=['pathos', 'pool', 'process', 'linear'],
+                    helpstr='The multiprocessing mode to use when using '
+                            '--cores')
 get_files.description_file = 'apero_get.rst'
 
 # -----------------------------------------------------------------------------

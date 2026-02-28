@@ -100,7 +100,7 @@ Prerequisites
 
 APERO is coded using `python 3 <https://www.python.org/download/releases/3.0/>`_
 
-Currently we recommend python 3.9 (however 3.7 and 3.8 are supported).
+Currently we use python 3.12.
 
 Please do not use python 2 with APERO.
 

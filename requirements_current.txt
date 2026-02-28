@@ -1,29 +1,30 @@
-# python 3.9
+# python 3.12
 # pip
-astropy==5.3
-astroquery==0.4.6
+astropy==7.2.0
+astroquery==0.4.11
 barycorrpy==0.4.4
-Bottleneck==1.3.7
-duckdb==0.9
-matplotlib==3.7.1
-GitPython==3.1.41
-gspread-pandas==3.2.2
+Bottleneck==1.6.0
+duckdb==1.4.4
+matplotlib==3.10.8
+GitPython==3.1.46
+gspread-pandas==3.3.0
 gspread==5.12.4
-numba==0.57.0
-numexpr==2.8.4
-numpy==1.24.3
-pandas==2.2.3
-pandastable==0.13.1
+numba==0.64.0
+numexpr==2.14.1
+numpy==2.4.2
+pandas==3.0.1
+pandastable==0.14.0
 pandasql==0.7.3
-Pillow==10.2.0
-psutil==5.9.4
-PyYAML==6.0
-scikit-image==0.19.3
-scipy==1.10.1
-tqdm==4.65.0
+Pillow==12.1.1
+psutil==7.2.2
+pytz==2025.2
+PyYAML==6.0.3
+scikit-image==0.26.0
+scipy==1.17.1
+tqdm==4.67.3
 yagmail==0.15.293
-lbl @ git+https://github.com/njcuk9999/lbl.git@apero_v7
+lbl @ git+https://github.com/njcuk9999/lbl.git
 
 # pip: if using mysql
 mysql-connector-python==8.3.0
-SQLAlchemy==2.0.15
+SQLAlchemy==2.0.47

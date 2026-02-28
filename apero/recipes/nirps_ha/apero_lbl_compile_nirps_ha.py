@@ -43,6 +43,8 @@ DrsRecipe = drs_recipe.DrsRecipe
 ParamDict = constants.ParamDict
 # Get the text types
 textentry = lang.textentry
+# Get the tqdm module
+tqdm = base.TQDM
 
 
 # =============================================================================
@@ -133,21 +135,19 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
     # -------------------------------------------------------------------------
     # setup object and template names
     object_science = str(objname)
-    object_template = str(objname)
+    object_comparison = str(objname)
     # run lbl compute for self
     try:
         # print progress
         msg = 'Running LBL compile for {0}_{1}'
-        margs = [object_science, object_template]
+        margs = [object_science, object_comparison]
         WLOG(params, 'info', msg.format(*margs))
         # run compute
         lblself = lbl_compile.main(object_science=object_science,
-                                   object_template=object_template,
+                                   object_comparison=object_comparison,
                                    data_type=data_type, **kwargs)
         # log messages from lbl
-        WLOG(params, 'info', 'Adding LBL log to apero log')
-        for msg in TQDM(lblself.get('logmsg', [])):
-            WLOG(params, '', msg, logonly=True)
+        gen_lbl.add_log(params, lblself)
         # ---------------------------------------------------------------------
         # get lbl compile input files
         lblrv_files = np.sort(lblself['lblrv_files'])
@@ -164,10 +164,10 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
                                drsfile=recipe.outputs[drsfile],
                                inprefix=object_science,
                                objname=object_science,
-                               tempname=object_template)
+                               tempname=object_comparison)
     except Exception as e:
         emsg = 'LBL Compile Exception [{0}_{1}] {2}: {3}'
-        eargs = [object_science, object_template, type(e), str(e)]
+        eargs = [object_science, object_comparison, type(e), str(e)]
         errors.append(emsg.format(*eargs))
     # -------------------------------------------------------------------------
     # stop here if we do not have a science frame
@@ -185,16 +185,16 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
     friend = gen_lbl.find_friend(params, objname)
     # setup object and template names
     object_science = str(objname)
-    object_template = str(friend)
+    object_comparison = str(friend)
     # run lbl compile for friend
     try:
         # print progress
         msg = 'Running LBL compile for {0}_{1}'
-        margs = [object_science, object_template]
+        margs = [object_science, object_comparison]
         WLOG(params, 'info', msg.format(*margs))
         # run compute
         lblfriend = lbl_compile.main(object_science=object_science,
-                                     object_template=object_template,
+                                     object_comparison=object_comparison,
                                      data_type=data_type, **kwargs)
         # log messages from lbl
         gen_lbl.add_log(params, lblfriend)
@@ -214,10 +214,10 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
                                drsfile=recipe.outputs[drsfile],
                                inprefix=object_science,
                                objname=object_science,
-                               tempname=object_template)
+                               tempname=object_comparison)
     except Exception as e:
         emsg = 'LBL Compile Exception [{0}_{1}] {2}: {3}'
-        eargs = [object_science, object_template, type(e), str(e)]
+        eargs = [object_science, object_comparison, type(e), str(e)]
         errors.append(emsg.format(*eargs))
     # --------------------------------------------------------------
     # Quality control

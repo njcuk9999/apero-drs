@@ -1108,12 +1108,16 @@ def calc_wave_lines(params: ParamDict, recipe: DrsRecipe,
     # ----------------------------------------------------------------------
     # Fit the peaks
     # ----------------------------------------------------------------------
+    length = len(list_pixels)
     # set up storage
-    pixel_m = np.array(list_pixels)
-    wave_m = np.zeros_like(list_waves)
-    ewidth = np.zeros_like(list_pixels)
-    amp = np.zeros_like(list_pixels)
-    nsig = np.repeat(np.nan, len(list_pixels))
+    pixel_m = np.full(length, np.nan)
+    wave_m = np.full(length, np.nan)
+    ewidth = np.full(length, np.nan)
+    amp = np.full(length, np.nan)
+    nsig = np.full(length, np.nan)
+    period_meas = np.full(length, np.nan)
+    shape_meas = np.full(length, np.nan)
+    offset_meas = np.full(length, np.nan)
     # ----------------------------------------------------------------------
     # TODO: this loop is super slow
     # loop around orders
@@ -1200,8 +1204,14 @@ def calc_wave_lines(params: ParamDict, recipe: DrsRecipe,
                         wcoeffs = np.polyfit([midpoint, midpoint + 1],
                                              owave[[midpoint, midpoint + 1]], 1)
                         wave_m[good[it]] = np.polyval(wcoeffs, popt[1])
-                        ewidth[good[it]] = popt[2]
                         nsig[good[it]] = np.abs(popt[0]) / rms
+                        if fibtype not in hcfibtypes:
+                            ewidth[good[it]] = velocity.fwhm_fp_airy(popt)
+                            period_meas[good[it]] = popt[2]
+                            shape_meas[good[it]] = popt[3]
+                            offset_meas[good[it]] = popt[4]
+                        else:
+                            ewidth[good[it]] = popt[2]
                         # line is valid
                         valid_lines += 1
                 # ignore any bad lines
@@ -1247,10 +1257,12 @@ def calc_wave_lines(params: ParamDict, recipe: DrsRecipe,
     # Create table to store them in
     # ----------------------------------------------------------------------
     columnnames = ['WAVE_REF', 'WAVE_MEAS', 'PIXEL_REF', 'PIXEL_MEAS',
-                   'ORDER', 'WFIT', 'EWIDTH_MEAS', 'AMP_MEAS', 'NSIG',
-                   'DIFF', 'PEAK_NUMBER']
+                   'ORDER', 'WFIT', 'FWHM_MEAS', 'AMP_MEAS', 'NSIG',
+                   'DIFF', 'PEAK_NUMBER', 'PERIOD_MEAS', 'SHAPE_MEAS',
+                   'OFFSET_MEAS', 'FLAG_NSIG_BAD']
     columnvalues = [list_waves, wave_m, list_pixels, pixel_m, list_orders,
-                    list_wfit, ewidth, amp, nsig, diffpix, peak_number]
+                    list_wfit, ewidth, amp, nsig, diffpix, peak_number,
+                    period_meas, shape_meas, offset_meas, bad]
     # make table
     table = drs_table.make_table(params, columnnames, columnvalues)
     # return table
