@@ -74,7 +74,7 @@ fiber = dict(name='--fiber', dtype='options', default='ALL',
 # -----------------------------------------------------------------------------
 flipimage = dict(name='--flipimage', dtype='bool',
                  helpstr=textentry('FLIPIMAGE_HELP'),
-                 default_ref='IMAGE.FLIP_INPUT')
+                 default_ref='INPUT_FLIP_IMAGE')
 # -----------------------------------------------------------------------------
 fluxunits = dict(name='--fluxunits', dtype='options', default='e-',
                  helpstr=textentry('FLUXUNITS_HELP'), options=['ADU/s', 'e-'])
