@@ -163,23 +163,45 @@ def resize(image: np.ndarray,
     return newimage
 
 
-def flip_image(image: np.ndarray, fliprows: bool = True,
-               flipcols: bool = True) -> np.ndarray:
+def flip_image(params: ParamDict, image: np.ndarray,
+               flip_kind: str = None) -> np.ndarray:
     """
     Flips the image in the x and/or the y direction
 
+    :param params: ParamDict, the constants parameter dictionary
     :param image: numpy array (2D), the image
-    :param fliprows: bool, if True reverses row order (axis = 0)
-    :param flipcols: bool, if True reverses column order (axis = 1)
+    :param flipimage: str, if "None" does nothing, if "both" flips both
+                      dimensions, if "x" flips x dimension, if "y"
+                      flips y dimension
 
     :return newimage: numpy array (2D), the flipped image
     """
     # set function name
     func_name = display_func('flip_image', __NAME__)
+
+    if flip_kind is None:
+        flip_kind = params['IMAGE.FLIP_METHOD']
+
+    if flip_kind == 'None':
+        fliprows, flipcols = False, False
+    elif flip_kind == 'both':
+        fliprows, flipcols = True, True
+    elif flip_kind == 'x':
+        fliprows, flipcols = False, True
+    elif flip_kind == 'y':
+        fliprows, flipcols = True, False
+    else:
+        # TODO: Add to language database
+        emsg = 'flip_kind="{0}" is invalid must be: {1}'
+        eargs = [flip_kind, '"None", "both", "x", "y"']
+        raise AperoCodedException(params, None, message=emsg.format(*eargs),
+                                  targs=eargs)
+
     # raise error if image is not 2D
     if len(image.shape) < 2:
         eargs = [image.shape, func_name]
-        raise AperoCodedException(None, '09-002-00001', targs=eargs)
+        raise AperoCodedException(params, '09-002-00001', targs=eargs)
+
     # flip both dimensions
     if fliprows and flipcols:
         return image[::-1, ::-1]

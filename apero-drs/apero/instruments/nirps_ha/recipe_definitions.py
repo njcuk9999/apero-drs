@@ -75,7 +75,7 @@ fiber = dict(name='--fiber', dtype='options', default='ALL',
              helpstr=textentry('EXTFIBER_HELP'),
              options=['ALL'] + sci_fibers + cal_fibers)
 # -----------------------------------------------------------------------------
-flipimage = dict(name='--flipimage', dtype=bool,
+flipimage = dict(name='--flipimage', dtype='bool',
                  helpstr=textentry('FLIPIMAGE_HELP'),
                  default_ref='IMAGE.FLIP_INPUT')
 # -----------------------------------------------------------------------------
