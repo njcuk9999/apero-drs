@@ -1038,7 +1038,7 @@ def loc_quality_control(params: ParamDict, lprops: ParamDict
     if negative_diff:
         # add failed message to fail message list
         fargs = [' ']
-        fail_msg.append(textentry('40-013-00027', *fargs))
+        fail_msg.append(textentry('40-013-00027', args=fargs))
         qc_pass.append(0)
     else:
         qc_pass.append(1)

@@ -80,6 +80,10 @@ INPUT_COMBINE_IMAGES.value = True
 INPUT_FLIP_IMAGE = INPUT_FLIP_IMAGE.copy(__NAME__)
 INPUT_FLIP_IMAGE.value = True
 
+# Defines how to flip the image
+INPUT_FLIP_HOW = INPUT_FLIP_HOW.copy(__NAME__)
+INPUT_FLIP_HOW.value = 'both'
+
 # Defines whether to, by default, resize images that are inputted
 INPUT_RESIZE_IMAGE = INPUT_RESIZE_IMAGE.copy(__NAME__)
 INPUT_RESIZE_IMAGE.value = True
@@ -98,6 +102,16 @@ IMAGE_Y_HIGH.value = 4092
 #    also used for the median sampling size in tellu correction
 IMAGE_PIXEL_SIZE = IMAGE_PIXEL_SIZE.copy(__NAME__)
 IMAGE_PIXEL_SIZE.value = 1.00
+
+# Define whether we apply an upper bound when calibrating pp images
+# This sets values above saturate / frmtime
+CAL_APPLY_UPPER_BOUND = CAL_APPLY_UPPER_BOUND.copy(__NAME__)
+CAL_APPLY_UPPER_BOUND.value = True
+
+# Define whether we apply a lower bound when calibrating pp images
+# This sets values below  -10 * (sigdet * gain) / frmtime to nans
+CAL_APPLY_LOWER_BOUND = CAL_APPLY_LOWER_BOUND.copy(__NAME__)
+CAL_APPLY_LOWER_BOUND.value = True
 
 # Define mean line width expressed in pix
 FWHM_PIXEL_LSF = FWHM_PIXEL_LSF.copy(__NAME__)
@@ -154,7 +168,10 @@ CAVITY_1M_FILE.value = 'cavity_length_m_fit.dat'
 CAVITY_LL_FILE = CAVITY_LL_FILE.copy(__NAME__)
 CAVITY_LL_FILE.value = 'cavity_length_ll_fit.dat'
 
-# define the check FP percentile level
+# Assuming that the FPs peaks cover a certain fraction of the frame
+# (5% in SPIRou+NIRPS, 1% in ILocater), we check that the 1-FP_coverage is
+# far higher (defined as N times the readout noise in reference pixels;
+# variable name X) than the median of frame.
 CALIB_CHECK_FP_PERCENTILE = CALIB_CHECK_FP_PERCENTILE.copy(__NAME__)
 CALIB_CHECK_FP_PERCENTILE.value = 95
 
@@ -330,6 +347,10 @@ PP_BADLIST_SS_MASKCOL.author = base.AUTHORS['NJC']
 PP_HOTPIX_BOXSIZE = PP_HOTPIX_BOXSIZE.copy(__NAME__)
 PP_HOTPIX_BOXSIZE.value = 5
 
+# Define the pp hot pixel format
+PP_HOTPIX_FMT = PP_HOTPIX_FMT.copy(__NAME__)
+PP_HOTPIX_FMT.value = 'csv'
+
 # Defines the size around badpixels that is considered part of the bad pixel
 PP_CORRUPT_MED_SIZE = PP_CORRUPT_MED_SIZE.copy(__NAME__)
 PP_CORRUPT_MED_SIZE.value = 2
@@ -473,6 +494,10 @@ PP_COR_XTALK_AMP_D2FLUX.author = base.AUTHORS['EA']
 PP_NOSCI_CAPC_DPRTYPES = PP_NOSCI_CAPC_DPRTYPES.copy(__NAME__)
 PP_NOSCI_CAPC_DPRTYPES.value = 'HCONE,HCTWO'
 
+# Define the default file type for pp_ref (used as --filtetype argument)
+PP_REF_FILETYPE = PP_REF_FILETYPE.copy(__NAME__)
+PP_REF_FILETYPE.value = 'FLAT_FLAT'
+
 # =============================================================================
 # CALIBRATION: ASTROMETRIC DATABASE SETTINGS
 # =============================================================================
@@ -567,6 +592,10 @@ HISTO_RANGE_HIGH.value = 0.8
 #        be one of theses (strings separated by commas)
 ALLOWED_DARK_TYPES = ALLOWED_DARK_TYPES.copy(__NAME__)
 ALLOWED_DARK_TYPES.value = 'DARK_DARK'
+
+#    Define the file type to use by default in the dark reference code
+DARK_REF_FILETYPE = DARK_REF_FILETYPE.copy(__NAME__)
+DARK_REF_FILETYPE.value = 'DARK_DARK'
 
 #   Define the maximum time span to combine dark files over (in hours)
 DARK_REF_MATCH_TIME = DARK_REF_MATCH_TIME.copy(__NAME__)

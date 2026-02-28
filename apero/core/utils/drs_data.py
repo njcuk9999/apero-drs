@@ -323,7 +323,7 @@ def load_hotpix(params: ParamDict,
                 eng_dir: Union[str, None] = None,
                 filename: Union[str, None] = None,
                 func: Union[str, None] = None,
-                fmt: str = 'csv', datastart: int = 1,
+                fmt: str = None, datastart: int = 1,
                 return_filename: bool = False) -> Union[str, Table]:
     """
     Load the preprocessing hotpix image
@@ -355,12 +355,14 @@ def load_hotpix(params: ParamDict,
                        override=eng_dir)
     filename = pcheck(params, 'PP_HOTPIX_FILE', func=func_name,
                       override=filename)
+    hotpix_fmt = pcheck(params, 'PP_HOTPIX_FMT', func=func_name,
+                        override=fmt)
     # deal with return_filename
     absfilename = os.path.join(assetdir, relfolder, filename)
     if return_filename:
         return absfilename
     # return table
-    table = load_table_file(params, absfilename, fmt=fmt,
+    table = load_table_file(params, absfilename, fmt=hotpix_fmt,
                             datastart=datastart, func_name=func_name)
 
     WLOG(params, '', textentry('40-010-00011', args=absfilename))
