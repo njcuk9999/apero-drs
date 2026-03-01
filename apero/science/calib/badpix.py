@@ -102,7 +102,9 @@ def normalise_median_flat(params: ParamDict, image: np.ndarray,
 
     # create storage for median-filtered flat image
     image_med = np.zeros_like(image)
-
+    # must be forced to a native-ordered copy of the image for the median
+    # filter to work properly
+    image = np.array(image, dtype=np.float64)
     # loop around x axis
     for i_it in range(image.shape[1]):
         # x-spatial filtering and insert filtering into image_med array
@@ -205,6 +207,9 @@ def locate_bad_pixels(params: ParamDict, fimage: np.ndarray,
         eargs = [fimage.shape, dimage.shape, func_name]
         WLOG(params, 'error', textentry('09-012-00002', args=eargs))
     # -------------------------------------------------------------------------
+    # must be forced to a native-ordered copy of the image for the median
+    # filter to work properly
+    dimage = np.array(dimage, dtype=np.float64)
     # as there may be a small level of scattered light and thermal
     # background in the dark  we subtract the running median to look
     # only for isolate hot pixels
