@@ -63,7 +63,7 @@ CDict.set('FIBER_TYPES', value=['AB', 'A', 'B', 'C'], source=__NAME__,
 CDict.set('COMBINE_INPUT', value=True, source=__NAME__, group=cgroup)
 
 # Defines whether to, by default, flip images that are inputted
-CDict.set('FLIP_INPUT', value='both', source=__NAME__, group=cgroup)
+CDict.set('FLIP_INPUT', value=True, source=__NAME__, group=cgroup)
 
 # Defines how to flip the image
 CDict.set('FLIP_METHOD', value='both', source=__NAME__, group=cgroup)

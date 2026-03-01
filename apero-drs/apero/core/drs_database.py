@@ -3488,8 +3488,8 @@ def db_push(params: ParamDict, pid: Optional[str] = None,
         WLOG(params, 'info', msg.format(*margs))
         # remove pending files
         for pend_file in pend_files:
-            os.remove(pend_file)
-        # ---------------------------------------------------------------------
+            db_remove(params, pend_file, file_kind='pending')
+        # -- -------------------------------------------------------------------
         # remove the directory if empty
         for _dir in pend_directories:
             if len(os.listdir(_dir)) == 0:
@@ -3498,9 +3498,35 @@ def db_push(params: ParamDict, pid: Optional[str] = None,
                 except OSError:
                     pass
     finally:
-        # remove lock file
-        if os.path.exists(lockfilename):
-            os.remove(lockfilename)
+        db_remove(params, lockfilename, file_kind='lock')
+
+
+def db_remove(params: ParamDict, filename: str, max_tries: int = 10,
+              wait: int = 2, file_kind: str = 'pending'):
+    """
+    Remove a file (pending or lock) in a safe way (i.e. with retries and
+    waiting)
+    """
+    counter = 0
+    error = None
+    # keep trying to remove file until it is removed or we have tried
+    # too many times
+    while os.path.exists(filename) and counter < max_tries:
+        try:
+            os.remove(filename)
+            return
+        except Exception as e:
+            counter += 1
+            error = e
+            time.sleep(wait)
+            continue
+    # log an error if we have one
+    if counter >= max_tries:
+        # log error: Could not remove file
+        emsg = 'Error: Could not remove {0} file: {1}\n\t{2}: {3}'
+        eargs = [file_kind, filename, type(error), str(error)]
+        raise AperoCodedException(params, None, message=emsg.format(*eargs),
+                                  targs=eargs)
 
 
 def db_send(params: ParamDict, tablename: str,
