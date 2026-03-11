@@ -56,7 +56,7 @@ USER_ENV = 'DRS_UCONFIG'
 # switch for no db in args
 NO_DB = False
 # Define instruments (last one should be 'None')
-INSTRUMENTS = ['SPIROU', 'NIRPS_HA', 'NIRPS_HE', 'None']
+INSTRUMENTS = ['SPIROU', 'NIRPS_HA', 'NIRPS_HE', 'SPIP', 'None']
 # -----------------------------------------------------------------------------
 # constants/parameter settings
 # -----------------------------------------------------------------------------

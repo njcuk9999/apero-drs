@@ -18,7 +18,7 @@ from apero.tools.module.processing import drs_run_ini
 # =============================================================================
 # Define variables
 # =============================================================================
-__NAME__ = 'instruments.runfiles_spirou.ini.py'
+__NAME__ = 'instruments.runfiles_spirou.py'
 __INSTRUMENT__ = 'SPIROU'
 __PACKAGE__ = base.__PACKAGE__
 __version__ = base.__version__
