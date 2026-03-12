@@ -129,10 +129,17 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
             eargs = [filetype, recipe.name, mainname]
             WLOG(params, 'error', textentry('09-010-00001', args=eargs))
         # ------------------------------------------------------------------
+        # get the reference start and end date
+        start_date = params['REF_FIND_START_DATE']
+        end_date = params['REF_FIND_END_DATE']
+        find_time_col = params['REF_FIND_TIME_COL']
         # get all "filetype" filenames
         files = drs_utils.find_files(params, block_kind='raw',
                                      filters=dict(KW_DPRTYPE=filetype,
-                                                  OBS_DIR=params['OBS_DIR']))
+                                                  OBS_DIR=params['OBS_DIR']),
+                                     start_date=start_date,
+                                     end_date=end_date,
+                                     time_column=find_time_col)
         # create infiles
         for filename in files:
             infile = rawfile.newcopy(filename=filename, params=params)
@@ -226,9 +233,14 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
     # get raw file definitions
     raw_led_file = file_definitions.raw_led_led
     raw_dark_file = file_definitions.raw_dark_dark
+    # get the reference start and end date
+    start_date = params['REF_FIND_START_DATE']
+    end_date = params['REF_FIND_END_DATE']
+    find_time_col = params['REF_FIND_TIME_COL']
     # create the led flat
     led_outfile = preprocessing.create_led_flat(params, recipe, raw_led_file,
-                                                raw_dark_file)
+                                                raw_dark_file, start_date,
+                                                end_date, find_time_col)
     # ------------------------------------------------------------------
     # add LED flat to calibration database
     # ------------------------------------------------------------------

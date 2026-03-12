@@ -124,6 +124,26 @@ IMAGE_SATURATION.value = 60000
 IMAGE_FRAME_TIME = IMAGE_FRAME_TIME.copy(__NAME__)
 IMAGE_FRAME_TIME.value = 5.57192
 
+# Define the time column (in the database) to use for filtering reference
+# files by
+REF_FIND_TIME_COL = REF_FIND_TIME_COL.copy(__NAME__)
+REF_FIND_TIME_COL.value = 'KW_ACQTIME'
+REF_FIND_TIME_COL.author = base.AUTHORS['NJC']
+
+# Define the start date for reference calibrations (date format must match
+# that in REF_FIND_TIME_COL). This is used as the first date allowed for
+# reference files (i.e. any file before this date will be ignored)
+REF_FIND_START_DATE = REF_FIND_START_DATE.copy(__NAME__)
+REF_FIND_START_DATE.value = 59890 # 2022-11-07
+REF_FIND_START_DATE.author = base.AUTHORS['NJC']
+
+# Define the end date for reference calibrations (date format must match that in
+# REF_FIND_TIME_COL). This is used as the last date allowed for reference files
+# (i.e. any file after this date will be ignored)
+REF_FIND_END_DATE = REF_FIND_END_DATE.copy(__NAME__)
+REF_FIND_END_DATE.value = 'None'
+REF_FIND_END_DATE.author = base.AUTHORS['NJC']
+
 # =============================================================================
 # CALIBRATION: GENERAL SETTINGS
 # =============================================================================

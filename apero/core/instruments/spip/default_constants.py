@@ -118,6 +118,26 @@ FWHM_PIXEL_LSF.value = 2.1
 ALL_POLAR_RHOMB_POS = ALL_POLAR_RHOMB_POS.copy(__NAME__)
 ALL_POLAR_RHOMB_POS.value = 'P2, P4, P14, P16'
 
+# Define the time column (in the database) to use for filtering reference
+# files by
+REF_FIND_TIME_COL = REF_FIND_TIME_COL.copy(__NAME__)
+REF_FIND_TIME_COL.value = 'KW_ACQTIME'
+REF_FIND_TIME_COL.author = base.AUTHORS['NJC']
+
+# Define the start date for reference calibrations (date format must match
+# that in REF_FIND_TIME_COL). This is used as the first date allowed for
+# reference files (i.e. any file before this date will be ignored)
+REF_FIND_START_DATE = REF_FIND_START_DATE.copy(__NAME__)
+REF_FIND_START_DATE.value = 61041 # 2026-01-01
+REF_FIND_START_DATE.author = base.AUTHORS['NJC']
+
+# Define the end date for reference calibrations (date format must match that in
+# REF_FIND_TIME_COL). This is used as the last date allowed for reference files
+# (i.e. any file after this date will be ignored)
+REF_FIND_END_DATE = REF_FIND_END_DATE.copy(__NAME__)
+REF_FIND_END_DATE.value = 'None'
+REF_FIND_END_DATE.author = base.AUTHORS['NJC']
+
 # =============================================================================
 # CALIBRATION: GENERAL SETTINGS
 # =============================================================================

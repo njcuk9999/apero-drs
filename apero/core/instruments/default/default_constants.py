@@ -51,6 +51,7 @@ __all__ = [
     'IMAGE_PIXEL_SIZE', 'CAL_APPLY_UPPER_BOUND', 'CAL_APPLY_LOWER_BOUND',
     'FWHM_PIXEL_LSF', 'IMAGE_SATURATION',
     'IMAGE_FRAME_TIME', 'ALL_POLAR_RHOMB_POS',
+    'REF_FIND_TIME_COL', 'REF_FIND_START_DATE', 'REF_FIND_END_DATE',
     # general calib constants
     'COMBINE_METRIC_THRESHOLD1', 'CAVITY_1M_FILE', 'CAVITY_LL_FILE',
     'SIMBAD_TAP_URL',
@@ -577,6 +578,40 @@ IMAGE_FRAME_TIME = Const('IMAGE_FRAME_TIME', value=None, dtype=float,
 ALL_POLAR_RHOMB_POS = Const('ALL_POLAR_RHOMB_POS', value=None, dtype=str,
                             source=__NAME__, group=cgroup,
                             description='Define all polar rhomb positions')
+
+# Define the time column (in the database) to use for filtering reference
+# files by (start date and end date format must match this)
+REF_FIND_TIME_COL = Const('REF_FIND_TIME_COL', value=None, dtype=str,
+                          source=__NAME__, group=cgroup, active=True, user=True,
+                          description='Define the time column (in the database)'
+                                      ' to use for filtering reference files '
+                                      'by (start date and end date format must '
+                                      'match this)')
+
+# Define the start date for reference calibrations (date format must match
+# that in REF_FIND_TIME_COL). This is used as the first date allowed for
+# reference files (i.e. any file before this date will be ignored)
+REF_FIND_START_DATE = Const('REF_FIND_START_DATE', value=None, dtype=str,
+                            source=__NAME__, group=cgroup, active=True, user=True,
+                            description='Define the start date for reference '
+                                        'calibrations (date format must match'
+                                        'that in REF_FIND_TIME_COL). '
+                                        'This is used as the first date '
+                                        'allowed for reference files (i.e. '
+                                        'any file before this date will be '
+                                        'ignored)')
+
+# Define the end date for reference calibrations (date format must match that in
+# REF_FIND_TIME_COL). This is used as the last date allowed for reference files
+# (i.e. any file after this date will be ignored)
+REF_FIND_END_DATE = Const('REF_FIND_END_DATE', value=None, dtype=str,
+                          source=__NAME__, group=cgroup, active=True, user=True,
+                          description='Define the end date for reference '
+                                      'calibrations (date format must match '
+                                      'that in REF_FIND_TIME_COL). This is '
+                                      'used as the last date allowed for '
+                                      'reference files ')
+
 
 # =============================================================================
 # CALIBRATION: GENERAL SETTINGS
