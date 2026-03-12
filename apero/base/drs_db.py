@@ -2432,8 +2432,9 @@ class MySQLDatabase(Database):
                     conn.close()
                     # log error: {0}: {1} \n\t Command: {2} \n\t Function: {3}
                     ecode = '00-002-00040'
+                    ecmd = f'Table={table} Path={self.path} {command}'
                     emsg = drs_base.BETEXT[ecode]
-                    eargs = [type(e), str(e), self.path, table, func_name]
+                    eargs = [type(e), str(e), ecmd, func_name]
                     # log base error
                     raise drs_base.base_error(ecode, emsg, 'error', args=eargs,
                                               exceptionname='DatabaseError',
