@@ -53,9 +53,8 @@ def get_runfiles(params: ParamDict) -> List[RunIniFile]:
     blank_run_spip = RunIniFile(params, 'SPIP', 'blank_run')
     blank_run_spip.append_sequence('blank_seq')
     run_files.append(blank_run_spip)
-    # mini run 1
-    mini_run1_spip = RunIniFile(params, 'SPIP', 'mini_run1')
-    mini_run1_spip.rkey('REF_OBS_DIR', '2019-04-20')
+    # mini run
+    mini_run1_spip = RunIniFile(params, 'SPIP', 'mini_run')
     mini_run1_spip.rkey('SCIENCE_TARGETS', 'Gl699')
     mini_run1_spip.append_sequence('limited_seq')
     # do not skip any steps of the lbl
@@ -64,15 +63,6 @@ def get_runfiles(params: ParamDict) -> List[RunIniFile]:
     mini_run1_spip.modify('SKIP_LBLCOMPUTE_SCI', False)
     mini_run1_spip.modify('SKIP_LBLCOMPILE_SCI', False)
     run_files.append(mini_run1_spip)
-    # mini run 2
-    mini_run2_spip = RunIniFile(params, 'SPIP', 'mini_run2')
-    mini_run2_spip.rkey('SCIENCE_TARGETS', 'Gl699')
-    mini_run2_spip.append_sequence('limited_seq')
-    mini_run2_spip.modify('SKIP_LBLREF', False)
-    mini_run2_spip.modify('SKIP_LBLMASK_SCI', False)
-    mini_run2_spip.modify('SKIP_LBLCOMPUTE_SCI', False)
-    mini_run2_spip.modify('SKIP_LBLCOMPILE_SCI', False)
-    run_files.append(mini_run2_spip)
     # quick run
     quick_run_spip = RunIniFile(params, 'SPIP', 'quick_run')
     quick_run_spip.append_sequence('pp_seq_opt')
