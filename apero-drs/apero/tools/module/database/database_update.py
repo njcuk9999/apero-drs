@@ -343,6 +343,10 @@ def log_update(params: ParamDict, recipe: DrsRecipe, pconst: Instrument):
             # remove pids
             logdbm.remove_pids(pid)
         # ---------------------------------------------------------------------
+        # print progress
+        # TODO: Add to lanagugage database
+        msg = 'Merging entries into log database.'
+        WLOG(params, 'info', msg)
         # add unique entries to log database
         for lcode in logentries:
             # add this entry
