@@ -26,19 +26,19 @@ INSTRUMENT.value = 'SPIP'
 
 # Defines the longitude West is negative
 OBS_LONG = OBS_LONG.copy(__NAME__)
-OBS_LONG.value = -155.468876
+OBS_LONG.value = 0.140748
 
 #  Defines the latitude North (deg)
 OBS_LAT = OBS_LAT.copy(__NAME__)
-OBS_LAT.value = 19.825252
+OBS_LAT.value = 42.937368
 
 #  Defines the telescope altitude (m)
 OBS_ALT = OBS_ALT.copy(__NAME__)
-OBS_ALT.value = 4204
+OBS_ALT.value = 2869.4
 
 #  Define the telescopes time zone (from pytz.all_timezones)
 OBS_TZ = OBS_TZ.copy(__NAME__)
-OBS_TZ.value = 'US/Hawaii'
+OBS_TZ.value = 'Europe/Paris'
 
 # -----------------------------------------------------------------------------
 # global settings

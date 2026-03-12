@@ -412,11 +412,15 @@ PP_DARK_MED_BINNUM.value = 32
 
 #   Defines the pp hot pixel file (located in the data folder)
 PP_HOTPIX_FILE = PP_HOTPIX_FILE.copy(__NAME__)
-PP_HOTPIX_FILE.value = 'hotpix_pp.csv'
+PP_HOTPIX_FILE.value = 'static_hotpix_spirou.fits'
+
+# Define the pp hot pixel format
+PP_HOTPIX_FMT = PP_HOTPIX_FMT.copy(__NAME__)
+PP_HOTPIX_FMT.value = 'fits'
 
 #   Defines the pp amplifier bias model (located in the data folder)
 PP_AMP_ERROR_MODEL = PP_AMP_ERROR_MODEL.copy(__NAME__)
-PP_AMP_ERROR_MODEL.value = 'amplifier_bias_model_spip.fits'
+PP_AMP_ERROR_MODEL.value = 'static_dark_curr_spirou.fits'
 
 # Defines the pp led flat file (located in the data folder)
 PP_LED_FLAT_FILE = PP_LED_FLAT_FILE.copy(__NAME__)
@@ -639,7 +643,7 @@ DARK_REF_MIN_EXPTIME.value = 10
 # =============================================================================
 #   Defines the full detector flat file (located in the data folder)
 BADPIX_FULL_FLAT = BADPIX_FULL_FLAT.copy(__NAME__)
-BADPIX_FULL_FLAT.value = 'detector_flat_full.fits'
+BADPIX_FULL_FLAT.value = 'static_flat_spirou.fits'
 
 #   Percentile to normalise to when normalising and median filtering
 #      image [percentage]
@@ -738,8 +742,8 @@ LOC_BOX_PERCENTILE_HIGH.author = base.AUTHORS['EA']
 # the size of the percentile filter - should be a bit bigger than the
 # inter-order gap
 LOC_PERCENTILE_FILTER_SIZE = LOC_PERCENTILE_FILTER_SIZE.copy(__NAME__)
-LOC_PERCENTILE_FILTER_SIZE.value = 100
-LOC_PERCENTILE_FILTER_SIZE.author = base.AUTHORS['EA']
+LOC_PERCENTILE_FILTER_SIZE.value = 70
+LOC_PERCENTILE_FILTER_SIZE.author = base.AUTHORS['ACG']
 
 # the fiber dilation number of iterations this should only be used when
 #     we want a combined localisation solution i.e. AB from A and B
@@ -771,13 +775,13 @@ LOC_RANGE_WID_SUM.author = base.AUTHORS['EA']
 #   fall (across order direction)
 LOC_YDET_MIN = LOC_YDET_MIN.copy(__NAME__)
 LOC_YDET_MIN.value = 65
-LOC_YDET_MIN.author = base.AUTHORS['EA']
+LOC_YDET_MIN.author = base.AUTHORS['ACG']
 
 # define the maximum detector position where the centers of the orders should
 #   fall (across order direction)
 LOC_YDET_MAX = LOC_YDET_MAX.copy(__NAME__)
 LOC_YDET_MAX.value = 3050
-LOC_YDET_MAX.author = base.AUTHORS['EA']
+LOC_YDET_MAX.author = base.AUTHORS['ACG']
 
 # define the number of width samples to use in localisation
 LOC_NUM_WID_SAMPLES = LOC_NUM_WID_SAMPLES.copy(__NAME__)
@@ -935,7 +939,8 @@ FP_REF_PERCENT_THRES.value = 90.0
 #  Define the largest standard deviation allowed for the shift in
 #     x or y when doing the shape reference fp linear transform
 SHAPE_QC_LTRANS_RES_THRES = SHAPE_QC_LTRANS_RES_THRES.copy(__NAME__)
-SHAPE_QC_LTRANS_RES_THRES.value = 0.1
+SHAPE_QC_LTRANS_RES_THRES.value = 0.3
+SHAPE_QC_LTRANS_RES_THRES.author = base.AUTHORS['ACG']
 
 # define the maximum number of files to use in the shape reference
 SHAPE_REF_MAX_FILES = SHAPE_REF_MAX_FILES.copy(__NAME__)
@@ -943,11 +948,13 @@ SHAPE_REF_MAX_FILES.value = 100
 
 #  Define the percentile which defines a true FP peak [0-100]
 SHAPE_REF_VALIDFP_PERCENTILE = SHAPE_REF_VALIDFP_PERCENTILE.copy(__NAME__)
-SHAPE_REF_VALIDFP_PERCENTILE.value = 80
+SHAPE_REF_VALIDFP_PERCENTILE.value = 75
+SHAPE_REF_VALIDFP_PERCENTILE.author = base.AUTHORS['ACG']
 
 #  Define the fractional flux an FP much have compared to its neighbours
 SHAPE_REF_VALIDFP_THRESHOLD = SHAPE_REF_VALIDFP_THRESHOLD.copy(__NAME__)
 SHAPE_REF_VALIDFP_THRESHOLD.value = 1.5
+SHAPE_REF_VALIDFP_THRESHOLD.author = base.AUTHORS['ACG']
 
 #  Define the number of iterations used to get the linear transform params
 SHAPE_REF_LINTRANS_NITER = SHAPE_REF_LINTRANS_NITER.copy(__NAME__)
@@ -972,7 +979,8 @@ SHAPE_REF_FIBER.value = 'AB'
 
 #  Define the shape reference dx rms quality control criteria (per order)
 SHAPE_REF_DX_RMS_QC = SHAPE_REF_DX_RMS_QC.copy(__NAME__)
-SHAPE_REF_DX_RMS_QC.value = 0.3
+SHAPE_REF_DX_RMS_QC.value = 0.32
+SHAPE_REF_DX_RMS_QC.author = base.AUTHORS['ACG']
 
 # The number of iterations to run the shape finding out to
 SHAPE_NUM_ITERATIONS = SHAPE_NUM_ITERATIONS.copy(__NAME__)
@@ -1118,7 +1126,8 @@ SHAPEOFFSET_ABSDEV_THRESHOLD.value = 0.2
 # define the names of the unique fibers (i.e. not AB) for use in
 #     getting the localisation coefficients for dymap
 SHAPE_UNIQUE_FIBERS = SHAPE_UNIQUE_FIBERS.copy(__NAME__)
-SHAPE_UNIQUE_FIBERS.value = 'A, B, C'
+SHAPE_UNIQUE_FIBERS.value = 'C, A, B'
+SHAPE_UNIQUE_FIBERS.author = base.AUTHORS['ACG']
 
 #  Define first zoom plot for shape local zoom debug plot
 #     should be a string list (xmin, xmax, ymin, ymax)
@@ -1170,7 +1179,8 @@ FF_BLAZE_SINC_MED_SIZE.value = 25
 #   Define the orders not to plot on the RMS plot should be a string
 #       containing a list of integers
 FF_RMS_SKIP_ORDERS = FF_RMS_SKIP_ORDERS.copy(__NAME__)
-FF_RMS_SKIP_ORDERS.value = '[0, 22, 23, 24, 25, 48]'
+FF_RMS_SKIP_ORDERS.value = '[0, 47, 48]'
+FF_RMS_SKIP_ORDERS.author = base.AUTHORS['ACG']
 
 #   Maximum allowed RMS of flat field
 QC_FF_MAX_RMS = QC_FF_MAX_RMS.copy(__NAME__)
@@ -1285,10 +1295,12 @@ EXT_END_ORDER.value = None
 #   Half-zone extraction width left side (formally plage1)
 EXT_RANGE1 = EXT_RANGE1.copy(__NAME__)
 EXT_RANGE1.value = '{"AB":18, "A":8, "B":8, "C": 8}'
+EXT_RANGE1.author = base.AUTHORS['ACG']
 
 #   Half-zone extraction width right side (formally plage2)
 EXT_RANGE2 = EXT_RANGE2.copy(__NAME__)
 EXT_RANGE2.value = '{"AB":18, "A":8, "B":8, "C": 8}'
+EXT_RANGE2.author = base.AUTHORS['ACG']
 
 #   Define the orders to skip extraction on (will set all order values
 #      to NaN. If empty list no orders are skipped. Should be a string
@@ -1429,11 +1441,13 @@ THERMAL_FILTER_WID.value = 101
 
 # define thermal red limit (in nm)
 THERMAL_RED_LIMIT = THERMAL_RED_LIMIT.copy(__NAME__)
-THERMAL_RED_LIMIT.value = 2500
+THERMAL_RED_LIMIT.value = 2400
+THERMAL_RED_LIMIT.author = base.AUTHORS['ACG']
 
 # define thermal blue limit (in nm)
 THERMAL_BLUE_LIMIT = THERMAL_BLUE_LIMIT.copy(__NAME__)
-THERMAL_BLUE_LIMIT.value = 2450
+THERMAL_BLUE_LIMIT.value = 2360
+THERMAL_BLUE_LIMIT.author = base.AUTHORS['ACG']
 
 # maximum tapas transmission to be considered completely opaque for the
 # purpose of background determination in order 49.
@@ -2111,8 +2125,8 @@ WAVE_MODE_FP.value = 1
 #   2xd = 24.5 mm = 24.5e6 nm  for SPIRou
 WAVE_FP_DOPD0 = WAVE_FP_DOPD0.copy(__NAME__)
 # WAVE_FP_DOPD0.value = 2.44962434814043e7  # 2.44999e7  # 2.45e7
-WAVE_FP_DOPD0.value = 24498000
-WAVE_FP_DOPD0.author = base.AUTHORS['EA']
+WAVE_FP_DOPD0.value = 24000000
+WAVE_FP_DOPD0.author = base.AUTHORS['ACG']
 
 #  Define the polynomial fit degree between FP line numbers and the
 #      measured cavity width for each line

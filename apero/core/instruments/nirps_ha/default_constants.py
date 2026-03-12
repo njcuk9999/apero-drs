@@ -367,10 +367,6 @@ PP_BADLIST_SS_MASKCOL.author = base.AUTHORS['NJC']
 PP_HOTPIX_BOXSIZE = PP_HOTPIX_BOXSIZE.copy(__NAME__)
 PP_HOTPIX_BOXSIZE.value = 5
 
-# Define the pp hot pixel format
-PP_HOTPIX_FMT = PP_HOTPIX_FMT.copy(__NAME__)
-PP_HOTPIX_FMT.value = 'csv'
-
 # Defines the size around badpixels that is considered part of the bad pixel
 PP_CORRUPT_MED_SIZE = PP_CORRUPT_MED_SIZE.copy(__NAME__)
 PP_CORRUPT_MED_SIZE.value = 2
@@ -399,6 +395,10 @@ PP_DARK_MED_BINNUM.value = 32
 #   Defines the pp hot pixel file (located in the data folder)
 PP_HOTPIX_FILE = PP_HOTPIX_FILE.copy(__NAME__)
 PP_HOTPIX_FILE.value = 'hotpix_pp.csv'
+
+# Define the pp hot pixel format
+PP_HOTPIX_FMT = PP_HOTPIX_FMT.copy(__NAME__)
+PP_HOTPIX_FMT.value = 'csv'
 
 #   Defines the pp amplifier bias model (located in the data folder)
 PP_AMP_ERROR_MODEL = PP_AMP_ERROR_MODEL.copy(__NAME__)

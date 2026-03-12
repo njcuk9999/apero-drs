@@ -48,6 +48,7 @@ AUTHORS['NJC'] = 'Neil James Cook'
 AUTHORS['EA'] = 'Etienne Artigau'
 AUTHORS['EM'] = 'Eder Martioli'
 AUTHORS['MH'] = 'Melissa Hobson'
+AUTHORS['ACG'] = 'Andres Carmona-Gonzalez'
 
 # Define yaml files
 INSTALL_YAML = 'install.yaml'
