@@ -194,6 +194,41 @@ CDict.add('POLAR_RHOMB_POS', value=None,
           source=__NAME__, group=cgroup,
           description='Define all polar rhomb positions')
 
+
+# =========================================================================
+# GENERAL REFERENCE FILE SETTINGS
+# =========================================================================
+cgroup = 'REF'
+CDict.add_group(cgroup, description='REF: GENERAL REF FILE SETTINGS')
+
+# Define the time column (in the database) to use for filtering reference
+# files by (start date and end date format must match this)
+CDict.add('FIND_TIMECOL', value=None, dtype=str, active=True, user=True,
+          source=__NAME__, group=cgroup,
+          description='Define the time column (in the database) to use for '
+                      'filtering reference files by (start date and end date '
+                      'format must match this)')
+
+# Define the start date for reference calibrations (date format must match
+# that in REF.FIND_TIMECOL). This is used as the first date allowed for
+# reference files (i.e. any file before this date will be ignored)
+CDict.add('FIND_STARTDATE', value=None, dtype=str, active=True,
+          user=True, source=__NAME__, group=cgroup,
+          description='Define the start date for reference calibrations '
+                      '(date format must match that in REF.FIND_TIMECOL). '
+                      'This is used as the first date allowed for reference '
+                      'files (i.e. any file before this date will be ignored)')
+
+# Define the end date for reference calibrations (date format must match that in
+# REF_FIND_TIME_COL). This is used as the last date allowed for reference files
+# (i.e. any file after this date will be ignored)
+CDict.add('FIND_ENDDATE', value=None, dtype=str, active=True,
+          user=True, source=__NAME__, group=cgroup,
+          description='Define the end date for reference calibrations '
+                      '(date format must match that in REF.FIND_TIMECOL). '
+                      'This is used as the last date allowed for reference '
+                      'files (i.e. any file after this date will be ignored)')
+
 # =========================================================================
 # HEADER SETTINGS
 # =========================================================================

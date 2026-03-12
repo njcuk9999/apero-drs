@@ -165,9 +165,16 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
             emsg += '\n\t - "{0}"'.format(allowedtype)
         raise AperoCodedException(params, '01-001-00020',
                                   targs=[filetype, mainname], message=emsg)
+    # get the reference start and end date
+    start_date = params['REF.FIND_STARTDATE']
+    end_date = params['REF.FIND_ENDDATE']
+    find_time_col = params['REF.FIND_TIMECOL']
     # get all "filetype" filenames
     filenames = drs_utils.find_files(params, block_kind='tmp',
-                                     filters=dict(KW_DPRTYPE=filetype))
+                                     filters=dict(KW_DPRTYPE=filetype),
+                                     start_date=start_date,
+                                     end_date=end_date,
+                                     time_column=find_time_col)
     # convert to numpy array
     filenames = np.array(filenames)
 

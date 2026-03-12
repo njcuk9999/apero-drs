@@ -20,6 +20,7 @@ from typing import Any, Dict, List, Literal, Optional, Union
 from decimal import Decimal
 
 import time
+import random
 import numpy as np
 import pandas as pd
 import sqlalchemy
@@ -68,23 +69,64 @@ POOL_RECYCLE = 1200  # seconds before recycling connections (20 min)
 # =============================================================================
 # Define helper functions
 # =============================================================================
-def _retry_operation(func, max_retries: int = 5, retry_delay: float = None):
+def _is_transient_table_error(exception: Exception) -> bool:
     """
-    Retry a database operation on OperationalError or network errors
+    Detect transient table-missing errors (MySQL errno 1146).
+    
+    These are rare race conditions where MySQL briefly reports a table
+    doesn't exist despite it actually existing and the same query working
+    before/after.
+    
+    :param exception: Exception instance
+    :return: bool, True if this is a transient table error
+    """
+    error_str = str(exception).lower()
+    
+    # Check for MySQL errno 1146 (table doesn't exist)
+    # Pattern: (1146): Table 'db.table' doesn't exist
+    if '1146' in str(exception) or 'no such table' in error_str:
+        return True
+    
+    # Check for sqlalchemy NoSuchTableError
+    if exception.__class__.__name__ == 'NoSuchTableError':
+        return True
+    
+    return False
 
+
+def _retry_operation(func, max_retries: int = 5, retry_delay: float = None,
+                     retry_transient_table_errors: bool = True):
+    """
+    Retry a database operation with bounded exponential backoff.
+    
+    Handles:
+    1. Connection/network errors (existing behavior)
+    2. Transient table-missing errors (errno 1146 / NoSuchTableError)
+       - Only if retry_transient_table_errors=True
+    
+    Backoff strategy for transient table errors:
+    - Base delay: 0.05s, exponential growth with cap at 1.0s, random jitter
+    - Connection errors use original fixed delays
+    
     :param func: callable, the function to execute
-    :param max_retries: int, maximum number of retry attempts
-    :param retry_delay: float, delay in seconds between retries (defaults to WAIT_TIME)
+    :param max_retries: int, maximum number of retry attempts (default: 5)
+    :param retry_delay: float, delay in seconds for connection errors
+                        (defaults to WAIT_TIME)
+    :param retry_transient_table_errors: bool, retry on transient table errors
     :return: result from func
-    :raises: OperationalError or OSError if all retry attempts fail
+    :raises: Last exception encountered if all retry attempts fail
     """
     if retry_delay is None:
         retry_delay = WAIT_TIME
 
+    last_exception = None
+    
     for attempt in range(max_retries):
         try:
             return func()
         except (OperationalError, OSError) as e:
+            last_exception = e
+            
             # Check if it's a connection/network error
             error_msg = str(e).lower()
             is_connection_error = any(phrase in error_msg for phrase in [
@@ -103,6 +145,27 @@ def _retry_operation(func, max_retries: int = 5, retry_delay: float = None):
                 # For other operational errors, use shorter delay
                 time.sleep(2)
             else:
+                raise
+                
+        except Exception as e:
+            last_exception = e
+            
+            # Check if this is a transient table error we should retry
+            if (retry_transient_table_errors and 
+                _is_transient_table_error(e) and 
+                attempt < max_retries - 1):
+                
+                # Exponential backoff with jitter for transient table errors
+                # Base: 0.05s, grows exponentially, capped at 1.0s
+                base_delay = 0.05
+                exponential_delay = min(base_delay * (2 ** attempt), 1.0)
+                # Add small random jitter (0-20% of delay)
+                jitter = random.uniform(0, exponential_delay * 0.2)
+                sleep_time = exponential_delay + jitter
+                
+                time.sleep(sleep_time)
+            else:
+                # For non-transient errors or final attempt, fail fast
                 raise
 
 
@@ -302,21 +365,32 @@ class AperoDatabase:
             (current_time - self._metadata_cache_timestamp[cache_key]) < 300):
             return self._metadata_cache[cache_key]
 
-        # Refresh metadata from database
-        metadata = sqlalchemy.MetaData()
-        try:
+        # Refresh metadata from database with retry on transient errors
+        def _reflect_metadata():
+            metadata = sqlalchemy.MetaData()
             if tablename is not None:
                 # Reflect specific table only
                 # Use only=[tablename] to avoid reflecting all tables
-                _retry_operation(lambda: metadata.reflect(bind=self.engine,
-                                                         only=[tablename]))
+                metadata.reflect(bind=self.engine, only=[tablename])
             else:
                 # Reflect all tables
-                _retry_operation(lambda: metadata.reflect(bind=self.engine))
-        except NoSuchTableError:
-            # If table doesn't exist, just return empty metadata
-            # This allows operations to fail gracefully at the point of use
-            pass
+                metadata.reflect(bind=self.engine)
+            return metadata
+        
+        # Try to reflect with retries on transient table errors
+        # Use max 7 retries for metadata reflection (slightly higher than
+        # normal operations since this is a critical path)
+        try:
+            metadata = _retry_operation(_reflect_metadata, max_retries=7,
+                                       retry_transient_table_errors=True)
+        except NoSuchTableError as e:
+            # If table definitively doesn't exist after retries,
+            # just return empty metadata (allows operations to fail gracefully
+            # at point of use rather than during metadata fetch)
+            metadata = sqlalchemy.MetaData()
+        except Exception as e:
+            # For any other exception during metadata reflection, fail fast
+            raise
 
         # Cache the result
         self._metadata_cache[cache_key] = metadata

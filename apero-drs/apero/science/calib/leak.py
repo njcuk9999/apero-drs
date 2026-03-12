@@ -118,10 +118,17 @@ def get_dark_fps(params: ParamDict, recipe: DrsRecipe,
             eargs = [filetype, recipe.name, func_name]
             raise AperoCodedException(params, '09-010-00001', targs=eargs)
         # ------------------------------------------------------------------
+        # get the reference start and end date
+        start_date = params['REF.FIND_STARTDATE']
+        end_date = params['REF.FIND_ENDDATE']
+        find_time_col = params['REF.FIND_TIMECOL']
         # get all "filetype" filenames
         files = drs_utils.find_files(params, block_kind='tmp',
                                      filters=dict(KW_DPRTYPE=filetype,
-                                                  OBS_DIR=params['OBS_DIR']))
+                                                  OBS_DIR=params['OBS_DIR']),
+                                     start_date=start_date,
+                                     end_date=end_date,
+                                     time_column=find_time_col)
         # ------------------------------------------------------------------
         # loop through all files and get time from headers
         times = []

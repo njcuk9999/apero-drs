@@ -96,6 +96,28 @@ CDict.set('FWHM_PIXEL_LSF', value=2.1, source=__NAME__, group=cgroup)
 CDict.set('POLAR_RHOMB_POS', value=['P2', 'P4', 'P14', 'P16'],
           source=__NAME__, group=cgroup)
 
+# =========================================================================
+# GENERAL REFERENCE FILE SETTINGS
+# =========================================================================
+cgroup = 'REF'
+
+# Define the time column (in the database) to use for filtering reference
+# files by (start date and end date format must match this)
+CDict.set('FIND_TIMECOL', value='KW_ACQTIME',
+          source=__NAME__, group=cgroup, author=base.AUTHORS['NJC'])
+
+# Define the start date for reference calibrations (date format must match
+# that in REF.FIND_TIMECOL). This is used as the first date allowed for
+# reference files (i.e. any file before this date will be ignored)
+CDict.add('FIND_STARTDATE', value=58362, # 2018-09-01
+          source=__NAME__, group=cgroup, author=base.AUTHORS['NJC'])
+
+# Define the end date for reference calibrations (date format must match that in
+# REF_FIND_TIME_COL). This is used as the last date allowed for reference files
+# (i.e. any file after this date will be ignored)
+CDict.add('FIND_ENDDATE', value='None',
+          source=__NAME__, group=cgroup, author=base.AUTHORS['NJC'])
+
 # =============================================================================
 # CALIBRATION: GENERAL SETTINGS
 # =============================================================================

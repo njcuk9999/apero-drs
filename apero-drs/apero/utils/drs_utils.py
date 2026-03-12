@@ -899,7 +899,9 @@ def update_index_db(params: ParamDict, block_kind: str,
 
 def find_files(params: ParamDict, block_kind: str, filters: Dict[str, str],
                columns='ABSPATH',
-               findexdbm: Union[FileIndexDatabase, None] = None
+               findexdbm: Union[FileIndexDatabase, None] = None,
+               start_date: float = None, end_date: float = None,
+               time_column: str = 'KW_ACQTIME'
                ) -> Union[np.ndarray, pd.DataFrame]:
     """
     Find a type of files from the file index database using a set of filters
@@ -914,6 +916,12 @@ def find_files(params: ParamDict, block_kind: str, filters: Dict[str, str],
                     if returned otherwise a pandas dataframe is returned
     :param findexdbm: FileIndexDatabase class or None, pass a current
                       file index database class (otherwise reloaded)
+    :param start_date: float, start date for filtering files by
+                      [same date format as time_column], None skips this
+    :param end_date: float, end date for filtering files by
+                      [same date format as time_column], None skip this
+    :param time_column: str, the column to use for time filtering (must be a
+                        column in the database and must be a float time format)
 
     :return: if one column a numpy 1D array is returned, otherwise a pandas
              dataframe is returned with all the requested columns
@@ -931,7 +939,8 @@ def find_files(params: ParamDict, block_kind: str, filters: Dict[str, str],
     colnames = findexdbm.database.colnames('*')
     # get file list using filters
     condition = 'BLOCK_KIND="{0}"'.format(block_kind)
-    # loop around filters
+    # -------------------------------------------------------------------------
+    # loop around filters and add to condition
     for fkey in filters:
         if fkey in colnames:
             _filters = filters[fkey]
@@ -947,6 +956,13 @@ def find_files(params: ParamDict, block_kind: str, filters: Dict[str, str],
                 subconditions.append('{0}="{1}"'.format(fkey, _filter))
             # add subconditions to condition
             condition += ' AND ({0})'.format(' OR '.join(subconditions))
+    # -------------------------------------------------------------------------
+    # deal with start time
+    if not drs_text.null_text(start_date, ['', 'Null', 'None', None]):
+        condition += f' AND {time_column} >={start_date}'
+    if not drs_text.null_text(end_date, ['', 'Null', 'None', None]):
+        condition += f' AND {time_column} <={end_date}'
+    # -------------------------------------------------------------------------
     # get columns for this condition
     if columns == 'ABSPATH':
         
