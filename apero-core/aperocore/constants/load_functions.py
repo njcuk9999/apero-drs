@@ -11,7 +11,7 @@ Created on 2024-09-06 at 16:30
 """
 import argparse
 import os
-import shutil
+import copy
 import time
 from typing import Any, Dict, List, Union
 from urllib.request import urlopen
@@ -328,13 +328,42 @@ def load_from_yaml(files: List[str], params: ParamDict = None) -> ParamDict:
         flat_dict = _to_flat_dict(yaml_dict)
         # load all parameter instances into params
         instances = params.instances
-        # for sources we copy the structure of yaml_dict
-        sources = params.sources
+        # for sources we copy the structure of yaml_dict but update to
+        # match filename (for those values that have a value
+        sources = update_sources(params, flat_dict, filename)
         # load into params (make sure we definitely check the values)
         params = load_into_params(flat_dict, sources, instances, params,
                                   check=True)
     # return updated parameters
     return params
+
+
+def update_sources(params: ParamDict, flat_dict: Dict[str, Any],
+                   filename: str) -> Dict[str, Any]:
+    """
+    Update the source list with the basename of the yaml file used but only
+    for those with non-None values
+
+    :param params: ParamDict, the parameter dictionary which has the starting
+                   .source source dict
+    :param flat_dict: dict, the dictionary to update the source dict with
+    :param filename: str, the file path of the yaml file
+
+    :return: Dict[str, Any], the updated source list
+             (starts from params.sources)
+    """
+    # get the basenaem
+    basename = os.path.basename(filename)
+    # for sources we copy the structure of yaml_dict
+    # we deep copy this as we don't want to change all parameter sources
+    # only those that are accepted in load_into_params
+    sources = copy.deepcopy(params.sources)
+    # update sources for those in flat_dict that aren't None
+    for key in flat_dict:
+        if flat_dict[key] is not None:
+            sources[key] = basename
+    # return these sources to be used
+    return sources
 
 
 def load_from_cmd_args(params: ParamDict, cmd_kwargs: Dict[str, Any],
