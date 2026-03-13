@@ -1,2 +1,77 @@
-{% extends "cards.html" %}
+{% extends "general/cards.html" %}
 {% block title %}APERO RI – Home{% endblock %}
+
+{% block content %}
+<div class="ari-page-header">
+    <h1><i class="{{ page_icon }}"></i> {{ page_label }}</h1>
+</div>
+
+{% if logged_in %}
+<p class="ari-welcome-message">
+    Welcome, <strong>{{ username }}</strong>.
+    {% if last_login %}
+    Last login: {{ last_login[:19] | replace('T', ' ') }} UTC.
+    {% endif %}
+</p>
+{% endif %}
+
+<div class="ari-home-hero">
+    <div class="ari-home-hero__body">
+        <p class="ari-home-hero__text">APERO is a pipeline designed to reduce astrophysical observations (specifically from echelle spectrographs). This is the APERO reduction interface where you can view documentation, install and with permission access some of our reductions.</p>
+
+        <div class="ari-home-hero__columns">
+            {% if instruments %}
+            <div class="ari-home-hero__col">
+                <h4><i class="fa-solid fa-satellite-dish"></i> Supported Instruments</h4>
+                <ul>
+                    {% for inst in instruments %}
+                    <li>
+                        {% if inst.homepage %}
+                        <a href="{{ inst.homepage }}" target="_blank" rel="noopener">{{ inst.name }}</a>
+                        {% else %}
+                        {{ inst.name }}
+                        {% endif %}
+                    </li>
+                    {% endfor %}
+                </ul>
+            </div>
+            {% endif %}
+
+            {% if publications %}
+            <div class="ari-home-hero__col">
+                <h4><i class="fa-solid fa-book-open"></i> Publications</h4>
+                <ul>
+                    {% for pub in publications %}
+                    <li>
+                        {% if pub.url %}
+                        <a href="{{ pub.url }}" target="_blank" rel="noopener">{{ pub.title }}</a>
+                        {% else %}
+                        {{ pub.title }}
+                        {% endif %}
+                    </li>
+                    {% endfor %}
+                </ul>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    <p class="ari-home-hero__updated">Last updated March 2026</p>
+</div>
+
+{% if cards %}
+<h3 class="ari-home-section-heading"><i class="fa-solid fa-compass"></i> Site Content</h3>
+<div class="ari-cards">
+    {% for card in cards %}
+    <a href="{{ card.url }}" class="ari-card">
+        <div class="ari-card__icon">
+            <i class="{{ card.icon }}"></i>
+        </div>
+        <span class="ari-card__label">{{ card.label }}</span>
+    </a>
+    {% endfor %}
+</div>
+{% else %}
+<p style="color: var(--ari-text-muted);">No sections available with your
+current permissions.</p>
+{% endif %}
+{% endblock %}

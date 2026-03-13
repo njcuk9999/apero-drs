@@ -1,4 +1,15 @@
 /* APERO RI – Minimal JavaScript */
+var ARI = ARI || {};
+
+/**
+ * Switch documentation version – updates ?v= param and reloads.
+ */
+ARI.switchVersion = function (versionId) {
+    var url = new URL(window.location.href);
+    url.searchParams.set('v', versionId);
+    window.location.href = url.toString();
+};
+
 document.addEventListener('DOMContentLoaded', function () {
 
     var hamburger = document.getElementById('ari-hamburger');

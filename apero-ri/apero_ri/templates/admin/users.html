@@ -1,0 +1,97 @@
+{% extends "general/sidebar_base.html" %}
+{% block title %}APERO RI – User Management{% endblock %}
+
+{% block doc_content %}
+<div class="ari-page-header">
+    <h1><i class="{{ page_icon }}"></i> {{ page_label }}</h1>
+</div>
+
+<!-- Search bar -->
+<div class="ari-user-search">
+    <div class="ari-user-search__input-wrap">
+        <i class="fa-solid fa-magnifying-glass ari-user-search__icon"></i>
+        <input type="text" id="user-search" class="ari-user-search__input"
+               placeholder="Filter users..."
+               autocomplete="off">
+    </div>
+    <div id="search-status" class="ari-user-search__status"></div>
+</div>
+
+<!-- Search results -->
+<div id="user-results" class="ari-user-results"></div>
+
+<!-- User detail panel (shown when a user is selected) -->
+<div id="user-detail" class="ari-user-detail" style="display:none;">
+    <div class="ari-user-detail__header">
+        <div class="ari-user-detail__avatar">
+            <i class="fa-solid fa-user"></i>
+        </div>
+        <div class="ari-user-detail__info">
+            <h2 id="detail-username"></h2>
+            <span id="detail-groups-summary" class="ari-user-detail__groups-summary"></span>
+        </div>
+        <button id="btn-close-detail" class="ari-user-detail__close" title="Close">
+            <i class="fa-solid fa-xmark"></i>
+        </button>
+    </div>
+
+    <!-- Groups section -->
+    <div class="ari-user-detail__section">
+        <h3><i class="fa-solid fa-users-gear"></i> Groups</h3>
+        <div id="detail-groups" class="ari-toggle-cards"></div>
+        <div id="groups-no-perm" class="ari-user-detail__no-perm" style="display:none;">
+            <i class="fa-solid fa-lock"></i> You do not have permission to manage any groups.
+        </div>
+    </div>
+
+    <!-- Instruments section -->
+    <div class="ari-user-detail__section">
+        <h3><i class="fa-solid fa-satellite-dish"></i> Instruments</h3>
+        <div id="detail-instruments" class="ari-toggle-cards"></div>
+        <div id="instruments-no-perm" class="ari-user-detail__no-perm" style="display:none;">
+            <i class="fa-solid fa-lock"></i> You do not have permission to manage instruments for this user.
+        </div>
+    </div>
+
+    <!-- Danger zone -->
+    <div class="ari-user-detail__section ari-user-detail__danger" id="danger-zone" style="display:none;">
+        <h3><i class="fa-solid fa-triangle-exclamation"></i> Danger Zone</h3>
+        <p>Permanently remove this user account.</p>
+        <button id="btn-delete-user" class="ari-btn ari-btn--danger">
+            <i class="fa-solid fa-trash"></i> Delete User
+        </button>
+    </div>
+</div>
+
+<!-- Delete confirmation modal -->
+<div id="delete-modal" class="ari-modal-backdrop" style="display:none;">
+    <div class="ari-modal">
+        <div class="ari-modal__header">
+            <i class="fa-solid fa-triangle-exclamation"></i> Confirm Deletion
+        </div>
+        <div class="ari-modal__body">
+            Are you sure you want to delete user <strong id="delete-modal-user"></strong>?
+            This action cannot be undone.
+        </div>
+        <div class="ari-modal__footer">
+            <button id="btn-cancel-delete" class="ari-btn ari-btn--secondary">Cancel</button>
+            <button id="btn-confirm-delete" class="ari-btn ari-btn--danger">Delete</button>
+        </div>
+    </div>
+</div>
+
+<!-- Toast notification -->
+<div id="toast" class="ari-toast" style="display:none;"></div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+window.ARI_ADMIN = {
+    searchUrl: {{ url_for('api_user_search')|tojson }},
+    updateGroupsUrl: {{ url_for('api_user_update_groups')|tojson }},
+    updateInstrumentsUrl: {{ url_for('api_user_update_instruments')|tojson }},
+    deleteUrl: {{ url_for('api_user_delete')|tojson }}
+};
+</script>
+<script src="{{ url_for('static', filename='js/admin_users.js') }}"></script>
+{% endblock %}

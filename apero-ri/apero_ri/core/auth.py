@@ -8,6 +8,7 @@ password hashing via the cryptography package, and Flask session login.
 """
 import os
 import base64
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Dict, List, Optional, Set
 
@@ -24,6 +25,7 @@ from apero_ri.core.permissions import (resolve_user_permissions, load_groups,
 ARI_DIR = Path.home() / '.ari'
 ADMIN_DIR = ARI_DIR / 'admin'
 USERS_FILE = ADMIN_DIR / 'users.yaml'
+SCI_GROUPS_DIR = ADMIN_DIR
 
 # PBKDF2 parameters
 HASH_ALGORITHM = hashes.SHA256()
@@ -131,9 +133,15 @@ def authenticate(username: str, password: str) -> Optional[dict]:
     user = users[username]
     if not verify_password(password, user.get('password', '')):
         return None
+    # Record previous last_login before updating
+    prev_login = user.get('last_login')
+    # Update last_login timestamp
+    user['last_login'] = datetime.now(timezone.utc).isoformat()
+    save_users(users)
     return {
         'username': username,
         'groups': user.get('groups', []),
+        'last_login': prev_login,
     }
 
 
@@ -146,7 +154,70 @@ def get_user_info(username: str) -> Optional[dict]:
     return {
         'username': username,
         'groups': user.get('groups', []),
+        'instruments': user.get('instruments', []),
+        'last_login': user.get('last_login'),
     }
+
+
+def search_users(query: str) -> List[dict]:
+    """Search users by username substring (case-insensitive, min 3 chars)."""
+    if len(query) < 3:
+        return []
+    users = load_users()
+    query_lower = query.lower()
+    results = []
+    for username, data in users.items():
+        if query_lower in username.lower():
+            results.append({
+                'username': username,
+                'groups': data.get('groups', []),
+                'instruments': data.get('instruments', []),
+            })
+    return results
+
+
+def list_all_users() -> List[dict]:
+    """Return all users as a list of dicts."""
+    users = load_users()
+    return [
+        {
+            'username': username,
+            'groups': data.get('groups', []),
+            'instruments': data.get('instruments', []),
+        }
+        for username, data in users.items()
+    ]
+
+
+def update_user_groups(username: str, groups: List[str]) -> bool:
+    """Update a user's groups list. Returns True on success."""
+    users = load_users()
+    if username not in users:
+        return False
+    users[username]['groups'] = groups
+    save_users(users)
+    return True
+
+
+def update_user_instruments(username: str,
+                            instruments: List[str]) -> bool:
+    """Update a user's instruments list. Returns True on success."""
+    users = load_users()
+    if username not in users:
+        return False
+    users[username]['instruments'] = instruments
+    save_users(users)
+    return True
+
+
+def delete_user(username: str) -> bool:
+    """Delete a user. Returns True on success."""
+    users = load_users()
+    if username not in users:
+        return False
+    del users[username]
+    save_users(users)
+    return True
 
 
 def get_effective_user(session: dict) -> Optional[dict]:
@@ -186,3 +257,169 @@ def get_public_permissions() -> Set[str]:
     """Get permissions for unauthenticated (public) users."""
     groups = load_groups()
     return resolve_user_permissions(['public'], groups)
+
+
+# =============================================================================
+# APERO profile management
+# =============================================================================
+APERO_PROFILES_FILE = ADMIN_DIR / 'apero_profiles.yaml'
+
+
+def load_apero_profiles() -> dict:
+    """Load APERO profiles from apero_profiles.yaml."""
+    ensure_ari_directory()
+    if not APERO_PROFILES_FILE.exists():
+        APERO_PROFILES_FILE.write_text('')
+    with open(APERO_PROFILES_FILE, 'r') as f:
+        data = yaml.safe_load(f)
+    return data if data else {}
+
+
+def save_apero_profiles(profiles: dict) -> None:
+    """Save APERO profiles to apero_profiles.yaml."""
+    ensure_ari_directory()
+    with open(APERO_PROFILES_FILE, 'w') as f:
+        yaml.dump(profiles, f, default_flow_style=False)
+
+
+def validate_path_exists(path_str: str) -> dict:
+    """Check whether a directory exists on disk.
+
+    Returns dict with 'valid' and 'exists'.
+    """
+    p = Path(path_str)
+    exists = p.is_dir()
+    return {'valid': exists, 'exists': exists}
+
+
+def validate_database_connection(mode: str, host: str, username: str,
+                                 password: str, db_name: str) -> dict:
+    """Try to connect to a database using the given credentials.
+
+    Returns dict with 'valid' bool and 'error' string.
+    """
+    if mode != 'mysql+pymysql':
+        return {'valid': False, 'error': f'Unsupported mode: {mode}'}
+
+    try:
+        import pymysql
+    except ImportError:
+        return {'valid': False, 'error': 'pymysql is not installed'}
+
+    # Parse host:port
+    db_host = host
+    db_port = 3306
+    if ':' in host:
+        parts = host.rsplit(':', 1)
+        db_host = parts[0]
+        try:
+            db_port = int(parts[1])
+        except ValueError:
+            return {'valid': False, 'error': f'Invalid port: {parts[1]}'}
+
+    try:
+        conn = pymysql.connect(
+            host=db_host,
+            port=db_port,
+            user=username,
+            password=password,
+            database=db_name,
+            connect_timeout=10,
+        )
+        conn.close()
+        return {'valid': True, 'error': ''}
+    except pymysql.err.OperationalError as e:
+        return {'valid': False, 'error': str(e)}
+    except Exception as e:
+        return {'valid': False, 'error': str(e)}
+
+
+# =============================================================================
+# Science group management
+# =============================================================================
+def _sci_groups_file(instrument: str) -> Path:
+    """Return the path to the science groups YAML for an instrument."""
+    safe = instrument.lower().replace(' ', '_')
+    return SCI_GROUPS_DIR / f'{safe}_science_groups.yaml'
+
+
+def load_science_groups(instrument: str) -> Dict[str, dict]:
+    """Load science groups for an instrument. Creates file if missing."""
+    path = _sci_groups_file(instrument)
+    ensure_ari_directory()
+    if not path.exists():
+        path.write_text('')
+    with open(path, 'r') as f:
+        data = yaml.safe_load(f)
+    return data if data else {}
+
+
+def save_science_groups(instrument: str,
+                        groups: Dict[str, dict]) -> None:
+    """Save science groups for an instrument."""
+    ensure_ari_directory()
+    path = _sci_groups_file(instrument)
+    with open(path, 'w') as f:
+        yaml.dump(groups, f, default_flow_style=False)
+
+
+def get_users_for_instrument(instrument: str) -> List[str]:
+    """Get all usernames that have this instrument in their profile."""
+    users = load_users()
+    result = []
+    for username, data in users.items():
+        if instrument in data.get('instruments', []):
+            result.append(username)
+    return sorted(result)
+
+
+def get_accessible_profiles(user_info: Optional[dict],
+                            ari_groups: Dict[str, dict]) -> List[dict]:
+    """Get APERO profiles accessible to a user.
+
+    Access rules:
+    1. User's instruments must include the profile's instrument.
+       If the user has no instruments assigned, all instruments match.
+    2. If a profile has groups assigned, the user must belong to (or
+       inherit) at least one of those groups.
+    3. Profiles with an empty groups list are visible to anyone who
+       has ``view.reduction_interface`` permission.
+    """
+    from apero_ri.core.permissions import get_inherited_groups
+
+    profiles_data = load_apero_profiles()
+    if not profiles_data:
+        return []
+
+    if user_info:
+        user_instruments = set(user_info.get('instruments', []))
+        user_groups = set(user_info.get('groups', []))
+        all_user_groups = set(user_groups)
+        for grp in list(user_groups):
+            all_user_groups |= get_inherited_groups(grp, ari_groups)
+    else:
+        user_instruments = set()
+        all_user_groups = {'public'}
+
+    accessible = []
+    for instrument, instr_profiles in profiles_data.items():
+        if not isinstance(instr_profiles, dict):
+            continue
+        # If user has explicit instruments, filter to those
+        if user_instruments and instrument not in user_instruments:
+            continue
+        for profile_id, profile_data in instr_profiles.items():
+            if not isinstance(profile_data, dict):
+                continue
+            profile_groups = set(profile_data.get('groups', []))
+            if profile_groups and not all_user_groups & profile_groups:
+                continue
+            accessible.append({
+                'instrument': instrument,
+                'profile_id': profile_id,
+                'data': dict(profile_data),
+            })
+
+    accessible.sort(key=lambda x: (x['instrument'],
+                                   x['data'].get('DISPLAY_ORDER', 999)))
+    return accessible

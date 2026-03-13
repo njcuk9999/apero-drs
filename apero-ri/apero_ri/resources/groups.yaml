@@ -1,15 +1,31 @@
+# Permission groups and their permissions. 
+# Groups can be nested, meaning that if a user is in group A, and group A 
+# is in group B, then the user is also in group B and inherits all of 
+# its permissions.
+#
+# Current permissions categories:
+# - manange    // normally acess to a management page or a user/group
+#                  within a page
+# - login_as   // to allow logging in as another user in a specific group
+# - view       // to allow viewing a specific page or section of the app
+# - edit       // to allow editing a specific page or section of the app
+
 # ==============================================================================
 # Admin group
 # ==============================================================================
 admin:
   permissions:
-    - add.instrument
-    - add.apero_profile
-    - add.admin
-    - add.admin.instrument
-    - edit.doc
+    # can they manage apero profiles
+    - manage.apero_profile
+    # which groups can they manage
+    - manage.group.moderator
+    - manage.group.developer
+    # which groups can they login as
     - login_as.moderator
     - login_as.developer
+    # which documentation pages can they edit?
+    - edit.doc.overview
+    - edit.doc.install
   groups:
     - moderator
     - developer
@@ -19,15 +35,19 @@ admin:
 # ==============================================================================
 moderator:
   permissions:
-    - add.general
-    - add.general.instrument
-    - add.monitor
-    - add.monitor.instrument
-    - add.general.sci_group
-    - add.sci_group
+    # can they manage science groups
+    - manage.sci_group
+    # can they view the admin section
     - view.admin
+    # which groups can they manage
+    - manage.group.monitor
+    - manage.group.general
+    - manage.group.public
+    # which groups can they login as
     - login_as.monitor
     - login_as.general
+    - login_as.public
+
   groups:
     - monitor
 
@@ -36,6 +56,7 @@ moderator:
 # ==============================================================================
 developer:
   permissions:
+    # which documentation pages can they edit?
     - edit.doc.instrument
   groups:
     - monitor
@@ -45,16 +66,18 @@ developer:
 # ==============================================================================
 monitor:
   permissions:
+    # can they view the monitoring section
     - view.monitor
   groups:
     - general
 
 # ==============================================================================
-# User group - access to database and documentation
+# User group - access to reduction interface and documentation
 # ==============================================================================
 general:
   permissions:
-    - view.database
+    # can they view the reduction interface
+    - view.reduction_interface
   groups:
     - public
 
@@ -63,7 +86,9 @@ general:
 # ==============================================================================
 public:
   permissions:
+    # can they view the home page
     - view.home
+    # can they view documentation
     - view.doc
   groups:
     - None

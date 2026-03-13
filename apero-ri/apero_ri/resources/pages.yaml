@@ -7,6 +7,7 @@ home:
   view-permission: view.home
   icon: fa-solid fa-house
   quick-nav: True
+  full-nav: False
 
 home.docs:
   label: Documentation
@@ -14,13 +15,15 @@ home.docs:
   view-permission: view.doc
   icon: fa-brands fa-readme
   quick-nav: True
+  full-nav: True
 
-home.database:
-  label: Database
+home.reduction_interface:
+  label: Reduction Interface
   parent: home
-  view-permission: view.database
+  view-permission: view.reduction_interface
   icon: fa-solid fa-database
   quick-nav: True
+  full-nav: True
 
 home.monitor:
   label: Monitor
@@ -28,6 +31,7 @@ home.monitor:
   view-permission: view.monitor
   icon: fa-solid fa-chart-line
   quick-nav: True
+  full-nav: True
 
 home.admin:
   label: Admin
@@ -35,6 +39,7 @@ home.admin:
   view-permission: view.admin
   icon: fa-solid fa-user-shield
   quick-nav: True
+  full-nav: True
 
 home.user:
   label: User Management
@@ -42,21 +47,24 @@ home.user:
   view-permission: view.home
   icon: fa-solid fa-user
   quick-nav: True
-
+  full-nav: True
+  
 home.login:
   label: Login
   parent: home
   view-permission: view.home
   icon: fa-solid fa-right-to-bracket
   quick-nav: True
-
+  full-nav: False
+  
 home.logout:
   label: Logout
   parent: home
   view-permission: view.home
   icon: fa-solid fa-right-from-bracket
   quick-nav: True
-
+  full-nav: False
+  
 # ==============================================================================
 # APERO RI: Documentation Pages
 # ==============================================================================
@@ -66,19 +74,91 @@ home.docs.overview:
   view-permission: view.doc
   icon: fa-solid fa-eye
   quick-nav: False
-
+  full-nav: False
+  
 home.docs.install:
   label: Installation
   parent: home.docs
   view-permission: view.doc
   icon: fa-solid fa-download
   quick-nav: True
+  full-nav: False
+  
 
 # ==============================================================================
-# APERO RI: Database Pages
+# APERO RI: Reduction Interface Pages
 # ==============================================================================
+"home.reduction_interface.{apero_profile}":
+  label: "{apero profile}"
+  parent: home.reduction_interface
+  view-permission: "view.{apero profile}"
+  icon: fa-solid fa-laptop-code
+  quick-nav: False
+  full-nav: True
 
+"home.reduction_interface.{apero_profile}.object_table":
+  label: "{apero profile}: Astrophysical Object Table"
+  parent: "home.reduction_interface.{apero_profile}"
+  view-permission: "view.{apero profile}"
+  icon: fa-solid fa-star
+  quick-nav: False
+  full-nav: False
+
+"home.reduction_interface.{apero_profile}.obs_table":
+  label: "{apero profile}: Observation Table"
+  parent: "home.reduction_interface.{apero_profile}"
+  view-permission: "view.{apero profile}"
+  icon: fa-solid fa-binoculars
+  quick-nav: False
+  full-nav: False
+
+"home.reduction_interface.{apero_profile}.query_db":
+  label: "{apero profile}: Database query"
+  parent: "home.reduction_interface.{apero_profile}"
+  view-permission: "view.{apero profile}"
+  icon: fa-solid fa-server
+  quick-nav: False
+  full-nav: False
+
+"home.reduction_interface.{apero_profile}.qc_graphs":
+  label: "{apero profile}: Quality control graphs"
+  parent: "home.reduction_interface.{apero_profile}"
+  view-permission: "view.{apero profile}"
+  icon: fa-solid fa-chart-line
+  quick-nav: False
+  full-nav: False
 
 # ==============================================================================
 # APERO RI: Admin Pages
 # ==============================================================================
+home.admin.users:
+  label: User Management
+  parent: home.admin
+  view-permission: view.admin
+  icon: fa-solid fa-users
+  quick-nav: False
+  full-nav: False
+
+home.admin.login_as:
+  label: Login As
+  parent: home.admin
+  view-permission: login_as.moderator
+  icon: fa-solid fa-user-secret
+  quick-nav: False
+  full-nav: False
+
+home.admin.science_groups:
+  label: Manage Science Groups
+  parent: home.admin
+  view-permission: manage.sci_group
+  icon: fa-solid fa-users-gear
+  quick-nav: False
+  full-nav: False
+
+home.admin.apero_profiles:
+  label: Manage APERO Profiles
+  parent: home.admin
+  view-permission: manage.apero_profile
+  icon: fa-solid fa-sliders
+  quick-nav: False
+  full-nav: False

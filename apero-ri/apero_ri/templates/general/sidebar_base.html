@@ -1,0 +1,78 @@
+{% extends "general/base.html" %}
+{% block body_class %}ari-has-sidebar{% endblock %}
+
+{% block content %}
+<div class="ari-doc-layout">
+    <!-- ================================================================ -->
+    <!-- Sidebar                                                          -->
+    <!-- ================================================================ -->
+    <aside class="ari-sidebar" id="ari-sidebar">
+        <!-- Version selector — only shown for doc pages -->
+        {% if doc_versions is defined and doc_versions|length > 0 %}
+        <div class="ari-sidebar__section">
+            <div class="ari-sidebar__version">
+                <label for="sidebar-version">
+                    <i class="fa-solid fa-code-branch"></i> Version
+                </label>
+                <select id="sidebar-version" class="ari-sidebar__version-select"
+                        onchange="ARI.switchVersion(this.value)">
+                    {% for v in doc_versions %}
+                    <option value="{{ v.id }}"
+                            {% if current_version is defined and v.id == current_version %}selected{% endif %}>
+                        {{ v.name }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Edit button — only for editable doc leaf pages -->
+        {% if can_edit is defined and can_edit and doc_ref is defined and current_version is defined %}
+        <div class="ari-sidebar__section">
+            <a href="{{ url_for('doc_edit', page_ref=doc_ref) }}?v={{ current_version }}"
+               class="ari-sidebar__edit-btn">
+                <i class="fa-solid fa-pen-to-square"></i> Edit this page
+            </a>
+        </div>
+        {% endif %}
+
+        <!-- Navigation tree -->
+        {% if sidebar_tree is defined %}
+        <div class="ari-sidebar__section">
+            <a href="{{ sidebar_url }}" class="ari-sidebar__heading">
+                <i class="{{ sidebar_icon }}"></i> {{ sidebar_label }}
+            </a>
+            <nav class="ari-sidebar__nav" aria-label="Section navigation">
+                {% for item in sidebar_tree %}
+                <a href="{{ item.url }}{% if current_version is defined %}?v={{ current_version }}{% endif %}"
+                   class="ari-sidebar__link{% if item.active %} ari-sidebar__link--active{% endif %}"
+                   style="padding-left: {{ 0.75 + item.depth * 1.0 }}rem;">
+                    <i class="{{ item.icon }}"></i>
+                    <span>{{ item.label }}</span>
+                </a>
+                {% endfor %}
+            </nav>
+        </div>
+        {% endif %}
+    </aside>
+
+    <!-- ================================================================ -->
+    <!-- Main content area                                                -->
+    <!-- ================================================================ -->
+    <div class="ari-doc-main">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+        {% for category, message in messages %}
+        <div class="ari-flash ari-flash--{{ category }}">
+            <i class="fa-solid fa-circle-info"></i>
+            {{ message }}
+        </div>
+        {% endfor %}
+        {% endif %}
+        {% endwith %}
+
+        {% block doc_content %}{% endblock %}
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,40 @@
+{% extends "general/sidebar_base.html" %}
+{% block title %}APERO RI – {{ profile.profile_id }}{% endblock %}
+
+{% block doc_content %}
+<div class="ari-page-header">
+    <h1><i class="fa-solid fa-laptop-code"></i> {{ profile.profile_id }}</h1>
+</div>
+
+<div class="ari-db-profile-info">
+    <div class="ari-db-profile-badge"
+         style="--card-bg: {{ profile_color.bg }};
+                --card-text: {{ profile_color.text }};
+                --card-border: {{ profile_color.border }};">
+        <span class="ari-db-card__instrument">{{ profile.instrument }}</span>
+    </div>
+
+    <table class="ari-db-profile-table">
+        <tr>
+            <th><i class="fa-solid fa-folder-open"></i> DRS_UCONFIG</th>
+            <td>{{ profile.data.DRS_UCONFIG }}</td>
+        </tr>
+        {% if profile.data.apero_version %}
+        <tr>
+            <th><i class="fa-solid fa-code-branch"></i> APERO Version</th>
+            <td>{{ profile.data.apero_version }}</td>
+        </tr>
+        {% endif %}
+        {% if profile.data.reduction_server %}
+        <tr>
+            <th><i class="fa-solid fa-server"></i> Reduction Server</th>
+            <td>{{ profile.data.reduction_server }}</td>
+        </tr>
+        {% endif %}
+    </table>
+</div>
+
+<p style="color: var(--ari-text-muted); margin-top: 2rem;">
+    <i class="fa-solid fa-wrench"></i> Profile interface coming soon.
+</p>
+{% endblock %}

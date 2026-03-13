@@ -59,6 +59,7 @@ dependencies = [
     # apero-ri requirements
     "Flask>=3.1,<4",
     "cryptography>=44.0,<45",
+    "Markdown>=3.6,<4",
 ]
 
 

@@ -1,0 +1,268 @@
+{% extends "general/sidebar_base.html" %}
+{% block title %}APERO RI – Manage APERO Profiles{% endblock %}
+
+{% block doc_content %}
+<div class="ari-page-header">
+    <h1><i class="{{ page_icon }}"></i> {{ page_label }}</h1>
+</div>
+
+<!-- Instrument tabs -->
+<div id="instrument-tabs" class="ari-sg-tabs"></div>
+
+<!-- Main workspace (hidden until instrument selected) -->
+<div id="ap-workspace" class="ari-ap-workspace" style="display:none;">
+
+    <!-- Current profiles section -->
+    <div class="ari-sg-section">
+        <div class="ari-sg-section__header">
+            <h3><i class="fa-solid fa-layer-group"></i> Current APERO Profiles</h3>
+            <div style="display:flex;align-items:center;gap:0.5rem;">
+                <span id="profile-count" class="ari-sg-count">0</span>
+                <button id="btn-add-profile" class="ari-btn ari-btn--primary ari-btn--sm">
+                    <i class="fa-solid fa-plus"></i> Add Profile
+                </button>
+            </div>
+        </div>
+        <div class="ari-ap-legend">
+            <span class="ari-ap-legend__item ari-ap-legend__item--valid">
+                <i class="fa-solid fa-circle-check"></i> Valid profile
+            </span>
+            <span class="ari-ap-legend__item ari-ap-legend__item--invalid">
+                <i class="fa-solid fa-circle-xmark"></i> Invalid path or missing files
+            </span>
+        </div>
+        <div id="profile-list" class="ari-ap-profile-list">
+            <div class="ari-sg-empty-small">No profiles yet</div>
+        </div>
+    </div>
+
+    <!-- Add / Edit profile section (hidden by default) -->
+    <div id="form-section" class="ari-sg-section" style="display:none;">
+        <div class="ari-sg-section__header">
+            <h3 id="form-title"><i class="fa-solid fa-plus"></i> Add Profile</h3>
+            <button id="btn-cancel-edit" class="ari-btn ari-btn--secondary ari-btn--sm">Cancel</button>
+        </div>
+        <div class="ari-ap-form">
+
+            <!-- Profile identity -->
+            <h4 class="ari-ap-form__heading"><i class="fa-solid fa-tag"></i> Profile Identity</h4>
+            <div class="ari-ap-form__field">
+                <label for="profile-name">Profile Name <span class="ari-required">*</span></label>
+                <input type="text" id="profile-name" class="ari-ap-input"
+                       placeholder="e.g. default_v08" autocomplete="off">
+            </div>
+            <div class="ari-ap-form__row">
+                <div class="ari-ap-form__field">
+                    <label for="profile-version">APERO Version <span class="ari-required">*</span></label>
+                    <input type="text" id="profile-version" class="ari-ap-input"
+                           placeholder="e.g. 0.8.012" autocomplete="off">
+                </div>
+                <div class="ari-ap-form__field">
+                    <label for="profile-server">Reduction Server <span class="ari-required">*</span></label>
+                    <input type="text" id="profile-server" class="ari-ap-input"
+                           placeholder="e.g. maestria.astro.umontreal.ca" autocomplete="off">
+                </div>
+            </div>
+
+            <!-- Database settings -->
+            <h4 class="ari-ap-form__heading"><i class="fa-solid fa-database"></i> Database Settings</h4>
+            <div class="ari-ap-form__row">
+                <div class="ari-ap-form__field">
+                    <label for="profile-db-mode">DATABASE_MODE <span class="ari-required">*</span></label>
+                    <select id="profile-db-mode" class="ari-ap-input">
+                        <option value="mysql+pymysql">mysql+pymysql</option>
+                    </select>
+                </div>
+                <div class="ari-ap-form__field">
+                    <label for="profile-db-host">DATABASE_HOST <span class="ari-required">*</span></label>
+                    <input type="text" id="profile-db-host" class="ari-ap-input"
+                           placeholder="e.g. rali:3306" autocomplete="off">
+                </div>
+            </div>
+            <div class="ari-ap-form__row">
+                <div class="ari-ap-form__field">
+                    <label for="profile-db-user">DATABASE_USERNAME <span class="ari-required">*</span></label>
+                    <input type="text" id="profile-db-user" class="ari-ap-input"
+                           placeholder="e.g. spirou" autocomplete="off">
+                </div>
+                <div class="ari-ap-form__field">
+                    <label for="profile-db-pass">DATABASE_PASSWORD <span class="ari-required">*</span></label>
+                    <input type="password" id="profile-db-pass" class="ari-ap-input"
+                           placeholder="••••••••" autocomplete="off">
+                </div>
+            </div>
+            <div class="ari-ap-form__field">
+                <label for="profile-db-name">DATABASE_NAME <span class="ari-required">*</span></label>
+                <input type="text" id="profile-db-name" class="ari-ap-input"
+                       placeholder="e.g. spirou_db" autocomplete="off">
+            </div>
+            <div class="ari-ap-form__field">
+                <button id="btn-test-db" class="ari-btn ari-btn--secondary ari-btn--sm">
+                    <i class="fa-solid fa-plug"></i> Test Connection
+                </button>
+                <div id="db-test-result" class="ari-ap-validation" style="display:none;"></div>
+            </div>
+
+            <!-- Table names -->
+            <h4 class="ari-ap-form__heading"><i class="fa-solid fa-table"></i> Table Names</h4>
+            <div class="ari-ap-form__row">
+                <div class="ari-ap-form__field">
+                    <label for="profile-tbl-astrom">ASTROM_TABLENAME <span class="ari-required">*</span></label>
+                    <input type="text" id="profile-tbl-astrom" class="ari-ap-input"
+                           placeholder="e.g. astrom" autocomplete="off">
+                </div>
+                <div class="ari-ap-form__field">
+                    <label for="profile-tbl-calib">CALIB_TABLENAME <span class="ari-required">*</span></label>
+                    <input type="text" id="profile-tbl-calib" class="ari-ap-input"
+                           placeholder="e.g. calib" autocomplete="off">
+                </div>
+            </div>
+            <div class="ari-ap-form__row">
+                <div class="ari-ap-form__field">
+                    <label for="profile-tbl-findex">FINDEX_TABLENAME <span class="ari-required">*</span></label>
+                    <input type="text" id="profile-tbl-findex" class="ari-ap-input"
+                           placeholder="e.g. findex" autocomplete="off">
+                </div>
+                <div class="ari-ap-form__field">
+                    <label for="profile-tbl-log">LOG_TABLENAME <span class="ari-required">*</span></label>
+                    <input type="text" id="profile-tbl-log" class="ari-ap-input"
+                           placeholder="e.g. log" autocomplete="off">
+                </div>
+            </div>
+            <div class="ari-ap-form__row">
+                <div class="ari-ap-form__field">
+                    <label for="profile-tbl-tellu">TELLU_TABLENAME <span class="ari-required">*</span></label>
+                    <input type="text" id="profile-tbl-tellu" class="ari-ap-input"
+                           placeholder="e.g. tellu" autocomplete="off">
+                </div>
+                <div class="ari-ap-form__field">
+                    <label for="profile-tbl-reject">REJECT_TABLENAME <span class="ari-required">*</span></label>
+                    <input type="text" id="profile-tbl-reject" class="ari-ap-input"
+                           placeholder="e.g. reject" autocomplete="off">
+                </div>
+            </div>
+
+            <!-- Data paths -->
+            <h4 class="ari-ap-form__heading"><i class="fa-solid fa-folder-tree"></i> Data Paths</h4>
+            {% set path_fields = [
+                ('profile-path-raw',   'PATH.RAW',   'formally DRS_DATA_RAW'),
+                ('profile-path-pp',    'PATH.PP',    'formally DRS_DATA_WORKING'),
+                ('profile-path-red',   'PATH.RED',   'formally DRS_DATA_RED'),
+                ('profile-path-calib', 'PATH.CALIB', 'formally DRS_CALIB_DB'),
+                ('profile-path-tellu', 'PATH.TELLU', 'formally DRS_TELLU_DB'),
+                ('profile-path-log',   'PATH.LOG',   'formally DRS_DATA_MSG'),
+                ('profile-path-lbl',   'PATH.LBL',   'formally LBL_PATH'),
+            ] %}
+            {% for field_id, label, hint in path_fields %}
+            <div class="ari-ap-form__field">
+                <label for="{{ field_id }}">{{ label }} <span class="ari-required">*</span>
+                    <span class="ari-ap-form__hint">{{ hint }}</span>
+                </label>
+                <div class="ari-ap-path-row">
+                    <input type="text" id="{{ field_id }}" class="ari-ap-input ari-ap-input--path"
+                           placeholder="/path/to/directory/" autocomplete="off">
+                    <button class="ari-btn ari-btn--secondary ari-btn--sm btn-browse-path"
+                            data-target="{{ field_id }}" title="Browse server directories">
+                        <i class="fa-solid fa-folder-open"></i>
+                    </button>
+                </div>
+                <div id="{{ field_id }}-validation" class="ari-ap-validation" style="display:none;"></div>
+            </div>
+            {% endfor %}
+
+            <div class="ari-ap-form__actions">
+                <button id="btn-save-profile" class="ari-btn ari-btn--primary">
+                    <i class="fa-solid fa-floppy-disk"></i> Save &amp; Close
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Groups section (shown when editing a profile) -->
+    <div id="groups-section" class="ari-sg-section" style="display:none;">
+        <div class="ari-sg-section__header">
+            <h3 id="groups-title"><i class="fa-solid fa-users-gear"></i> Profile Groups</h3>
+        </div>
+        <div class="ari-ap-form" style="padding-top:0.5rem;">
+            <p class="ari-ap-groups-hint">Select which groups can access this profile. Groups greyed out are inherited from a higher-level group.</p>
+            <div id="profile-groups" class="ari-toggle-cards"></div>
+            <div id="groups-no-perm" class="ari-user-detail__no-perm" style="display:none;">
+                <i class="fa-solid fa-lock"></i> You do not have permission to manage any groups.
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Empty state -->
+<div id="ap-empty" class="ari-sg-empty" style="display:none;">
+    <i class="fa-solid fa-circle-info"></i>
+    No instruments configured.
+</div>
+
+<!-- File browser modal -->
+<div id="browse-modal" class="ari-modal-backdrop" style="display:none;">
+    <div class="ari-modal ari-modal--wide">
+        <div class="ari-modal__header">
+            <i class="fa-solid fa-folder-open"></i> Browse Server Directory
+        </div>
+        <div class="ari-modal__body">
+            <div class="ari-ap-browser">
+                <div class="ari-ap-browser__path">
+                    <label>Current path:</label>
+                    <input type="text" id="browse-path-input" class="ari-ap-input"
+                           value="/" autocomplete="off">
+                    <button id="btn-browse-go" class="ari-btn ari-btn--secondary ari-btn--sm">Go</button>
+                </div>
+                <div id="browse-status" class="ari-ap-browser__status" style="display:none;"></div>
+                <div id="browse-list" class="ari-ap-browser__list"></div>
+            </div>
+        </div>
+        <div class="ari-modal__footer">
+            <button id="btn-browse-cancel" class="ari-btn ari-btn--secondary">Cancel</button>
+            <button id="btn-browse-select" class="ari-btn ari-btn--primary" disabled>
+                <i class="fa-solid fa-check"></i> Select This Directory
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Delete confirmation modal -->
+<div id="delete-modal" class="ari-modal-backdrop" style="display:none;">
+    <div class="ari-modal">
+        <div class="ari-modal__header">
+            <i class="fa-solid fa-triangle-exclamation"></i> Confirm Deletion
+        </div>
+        <div class="ari-modal__body">
+            Delete profile <strong id="delete-modal-name"></strong>?
+            This action cannot be undone.
+        </div>
+        <div class="ari-modal__footer">
+            <button id="btn-cancel-delete" class="ari-btn ari-btn--secondary">Cancel</button>
+            <button id="btn-confirm-delete" class="ari-btn ari-btn--danger">Delete</button>
+        </div>
+    </div>
+</div>
+
+<!-- Toast notification -->
+<div id="toast" class="ari-toast" style="display:none;"></div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+window.ARI_APERO_PROFILES = {
+    listUrl: {{ url_for('api_apero_profiles_list')|tojson }},
+    saveUrl: {{ url_for('api_apero_profiles_save')|tojson }},
+    deleteUrl: {{ url_for('api_apero_profiles_delete')|tojson }},
+    reorderUrl: {{ url_for('api_apero_profiles_reorder')|tojson }},
+    validateUrl: {{ url_for('api_apero_profiles_validate')|tojson }},
+    browseUrl: {{ url_for('api_apero_profiles_browse')|tojson }},
+    updateGroupsUrl: {{ url_for('api_apero_profiles_update_groups')|tojson }},
+    testDbUrl: {{ url_for('api_apero_profiles_test_db')|tojson }},
+    instruments: {{ instruments|tojson }},
+    allGroups: {{ all_groups|tojson }},
+    canManageGroups: {{ can_manage_groups|tojson }},
+    inheritedMap: {{ inherited_map|tojson }}
+};
+</script>
+<script src="{{ url_for('static', filename='js/admin_apero_profiles.js') }}"></script>
+{% endblock %}

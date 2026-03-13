@@ -16,7 +16,7 @@
 
     {% block extra_head %}{% endblock %}
 </head>
-<body>
+<body class="{% block body_class %}{% endblock %}">
     <!-- ================================================================== -->
     <!-- Header                                                             -->
     <!-- ================================================================== -->
@@ -69,6 +69,36 @@
             <span>{{ page.label }}</span>
         </a>
         {% endfor %}
+
+        <!-- Sidebar doc nav items (injected on doc pages) -->
+        {% if sidebar_tree is defined and sidebar_tree %}
+        <div class="ari-mobile-menu__divider"></div>
+        <div class="ari-mobile-menu__heading">
+            <i class="{{ sidebar_icon }}"></i> {{ sidebar_label }}
+        </div>
+        {% if doc_versions is defined and doc_versions|length > 1 %}
+        <div class="ari-mobile-menu__version">
+            <select id="mobile-version" class="ari-sidebar__version-select"
+                    onchange="ARI.switchVersion(this.value)">
+                {% for v in doc_versions %}
+                <option value="{{ v.id }}"
+                        {% if current_version is defined and v.id == current_version %}selected{% endif %}>
+                    {{ v.name }}
+                </option>
+                {% endfor %}
+            </select>
+        </div>
+        {% endif %}
+        {% for item in sidebar_tree %}
+        <a href="{{ item.url }}{% if current_version is defined %}?v={{ current_version }}{% endif %}"
+           class="ari-mobile-menu__link{% if item.active %} ari-mobile-menu__link--active{% endif %}"
+           style="padding-left: {{ 0.75 + item.depth * 1.0 }}rem;">
+            <i class="{{ item.icon }}"></i>
+            <span>{{ item.label }}</span>
+        </a>
+        {% endfor %}
+        {% endif %}
+
         <div class="ari-mobile-menu__divider"></div>
         {% if logged_in %}
         <a href="{{ url_for('logout') }}" class="ari-mobile-menu__link">
@@ -87,7 +117,6 @@
     <!-- Main content                                                       -->
     <!-- ================================================================== -->
     <main class="ari-main">
-        <!-- Flash messages -->
         {% with messages = get_flashed_messages(with_categories=true) %}
         {% if messages %}
         {% for category, message in messages %}

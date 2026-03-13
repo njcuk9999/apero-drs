@@ -18,6 +18,7 @@ RESOURCES_DIR = Path(__file__).parent.parent / 'resources'
 TEMPLATE_DIR = Path(__file__).parent.parent / 'templates'
 GROUPS_FILE = RESOURCES_DIR / 'groups.yaml'
 PAGES_FILE = RESOURCES_DIR / 'pages.yaml'
+PARAMS_FILE = RESOURCES_DIR / 'parameters.yaml'
 
 
 # =============================================================================
@@ -33,6 +34,12 @@ def load_pages() -> Dict[str, dict]:
     """Load page definitions from pages.yaml."""
     with open(PAGES_FILE, 'r') as f:
         return yaml.safe_load(f)
+
+
+def load_parameters() -> Dict[str, dict]:
+    """Load parameter definitions from parameters.yaml."""
+    with open(PARAMS_FILE, 'r') as f:
+        return yaml.safe_load(f) or {}
 
 
 def resolve_group_permissions(group_name: str,
@@ -65,6 +72,24 @@ def resolve_user_permissions(user_groups: List[str],
     for group_name in user_groups:
         permissions |= resolve_group_permissions(group_name, groups)
     return permissions
+
+
+def get_inherited_groups(group_name: str,
+                         groups: Dict[str, dict],
+                         _visited: Optional[Set[str]] = None
+                         ) -> Set[str]:
+    """Get all groups inherited (encompassed) by a group, excluding itself."""
+    if _visited is None:
+        _visited = set()
+    if group_name in _visited or group_name not in groups:
+        return set()
+    _visited.add(group_name)
+    result = set()
+    for sub in groups[group_name].get('groups', []):
+        if sub and sub != 'None' and sub in groups:
+            result.add(sub)
+            result |= get_inherited_groups(sub, groups, _visited)
+    return result
 
 
 def get_children(page_id: str, pages: Dict[str, dict]) -> List[str]:
@@ -118,7 +143,7 @@ def page_id_to_template(page_id: str, pages: Dict[str, dict]) -> str:
             return f'{parent_name}/{name}/index.html'
         else:
             return f'{parent_name}/{name}.html'
-    return 'coming_soon.html'
+    return 'general/coming_soon.html'
 
 
 def page_id_to_endpoint(page_id: str) -> str:
@@ -188,3 +213,66 @@ def get_visible_cards(parent_id: str,
             'has_children': is_parent_page(child_id, pages),
         })
     return cards
+
+
+def find_full_nav_root(page_id: str, pages: Dict[str, dict]) -> Optional[str]:
+    """Walk up from page_id to find the nearest ancestor with full-nav: True.
+
+    Returns the page_id of that ancestor, or None.
+    """
+    current = page_id
+    while current:
+        page_def = pages.get(current)
+        if not page_def:
+            return None
+        if page_def.get('full-nav', False):
+            return current
+        parent = page_def.get('parent')
+        if parent and parent != 'None':
+            current = parent
+        else:
+            return None
+    return None
+
+
+def get_sidebar_tree(root_id: str,
+                     user_permissions: Set[str],
+                     pages: Dict[str, dict],
+                     active_page_id: str) -> List[dict]:
+    """Build a flat sidebar tree for all descendants of root_id.
+
+    Returns list of dicts: {id, label, icon, url, depth, active, expanded}
+    Only pages the user has permission for are included.
+    """
+    result = []
+
+    def _walk(parent_id: str, depth: int):
+        children = get_children(parent_id, pages)
+        for child_id in children:
+            child_def = pages[child_id]
+            view_perm = child_def.get('view-permission', '')
+            if view_perm not in user_permissions:
+                continue
+            # Skip special pages
+            if child_id in ('home.login', 'home.logout', 'home.user'):
+                continue
+            is_active = (child_id == active_page_id)
+            # Expanded if this page is active or is an ancestor of active
+            is_expanded = (is_active
+                           or active_page_id.startswith(child_id + '.'))
+            result.append({
+                'id': child_id,
+                'label': child_def.get('label', ''),
+                'icon': child_def.get('icon', ''),
+                'url': page_id_to_url(child_id),
+                'depth': depth,
+                'active': is_active,
+                'expanded': is_expanded,
+                'has_children': is_parent_page(child_id, pages),
+            })
+            # Only recurse into expanded subtrees
+            if is_expanded and is_parent_page(child_id, pages):
+                _walk(child_id, depth + 1)
+
+    _walk(root_id, 0)
+    return result

@@ -50,3 +50,9 @@ parser.add_argument(
 )
 args = parser.parse_args()
 ```
+
+===================================================
+
+Okay lets start with some basic content.
+
+For the home.docs we are going to use markdown to fill out the sections - the main view of every page (after the header) should be the page shown in documentation/ari/{page reference} if the user (via group) has the "edit.doc.{page reference}" permission then they should see an edit button. This edit button leads to a new page where left is an edit window and right is a preview. There should be a tool bar with basic markdown (bold, link, table, quote etc) and the editer should be able to "insert an image" which uploads to documentation/ari/static/images/ with a date tag and the page it was uploaded to.

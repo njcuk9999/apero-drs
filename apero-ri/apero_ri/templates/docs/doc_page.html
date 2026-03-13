@@ -1,0 +1,29 @@
+{% extends "docs/doc_base.html" %}
+{% block title %}APERO RI – {{ page_label }}{% endblock %}
+
+{% block extra_head %}
+<link rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github.min.css"
+      crossorigin="anonymous" referrerpolicy="no-referrer" />
+{% endblock %}
+
+{% block doc_content %}
+<div class="ari-page-header">
+    <h1><i class="{{ page_icon }}"></i> {{ page_label }}</h1>
+</div>
+
+<!-- Rendered documentation content -->
+<article class="ari-doc-content">
+    {{ doc_html|safe }}
+</article>
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"
+        crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<script>
+document.querySelectorAll('.ari-doc-content pre code').forEach(function(el) {
+    hljs.highlightElement(el);
+});
+</script>
+{% endblock %}
