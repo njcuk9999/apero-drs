@@ -1,0 +1,69 @@
+# ==============================================================================
+# Admin group
+# ==============================================================================
+admin:
+  permissions:
+    - add.instrument
+    - add.apero_profile
+    - add.admin
+    - add.admin.instrument
+    - edit.doc
+    - login_as.moderator
+    - login_as.developer
+  groups:
+    - moderator
+    - developer
+
+# ==============================================================================
+# Moderator group - manager level access to add/change users
+# ==============================================================================
+moderator:
+  permissions:
+    - add.general
+    - add.general.instrument
+    - add.monitor
+    - add.monitor.instrument
+    - add.general.sci_group
+    - add.sci_group
+    - view.admin
+    - login_as.monitor
+    - login_as.general
+  groups:
+    - monitor
+
+# ==============================================================================
+# Developer group - access to edit documentation and instrument information
+# ==============================================================================
+developer:
+  permissions:
+    - edit.doc.instrument
+  groups:
+    - monitor
+
+# ==============================================================================
+# Monitor group - access to monitoring tools
+# ==============================================================================
+monitor:
+  permissions:
+    - view.monitor
+  groups:
+    - general
+
+# ==============================================================================
+# User group - access to database and documentation
+# ==============================================================================
+general:
+  permissions:
+    - view.database
+  groups:
+    - public
+
+# ==============================================================================
+# Public group - no login required, just access to view documentation
+# ==============================================================================
+public:
+  permissions:
+    - view.home
+    - view.doc
+  groups:
+    - None

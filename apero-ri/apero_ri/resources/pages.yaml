@@ -1,0 +1,84 @@
+# ==============================================================================
+# APERO RI: Top Level Page Definitions
+# ==============================================================================
+home:
+  label: Home
+  parent: None
+  view-permission: view.home
+  icon: fa-solid fa-house
+  quick-nav: True
+
+home.docs:
+  label: Documentation
+  parent: home
+  view-permission: view.doc
+  icon: fa-brands fa-readme
+  quick-nav: True
+
+home.database:
+  label: Database
+  parent: home
+  view-permission: view.database
+  icon: fa-solid fa-database
+  quick-nav: True
+
+home.monitor:
+  label: Monitor
+  parent: home
+  view-permission: view.monitor
+  icon: fa-solid fa-chart-line
+  quick-nav: True
+
+home.admin:
+  label: Admin
+  parent: home
+  view-permission: view.admin
+  icon: fa-solid fa-user-shield
+  quick-nav: True
+
+home.user:
+  label: User Management
+  parent: home
+  view-permission: view.home
+  icon: fa-solid fa-user
+  quick-nav: True
+
+home.login:
+  label: Login
+  parent: home
+  view-permission: view.home
+  icon: fa-solid fa-right-to-bracket
+  quick-nav: True
+
+home.logout:
+  label: Logout
+  parent: home
+  view-permission: view.home
+  icon: fa-solid fa-right-from-bracket
+  quick-nav: True
+
+# ==============================================================================
+# APERO RI: Documentation Pages
+# ==============================================================================
+home.docs.overview:
+  label: Overview
+  parent: home.docs
+  view-permission: view.doc
+  icon: fa-solid fa-eye
+  quick-nav: False
+
+home.docs.install:
+  label: Installation
+  parent: home.docs
+  view-permission: view.doc
+  icon: fa-solid fa-download
+  quick-nav: True
+
+# ==============================================================================
+# APERO RI: Database Pages
+# ==============================================================================
+
+
+# ==============================================================================
+# APERO RI: Admin Pages
+# ==============================================================================

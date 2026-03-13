@@ -1,0 +1,566 @@
+/* ==========================================================================
+   APERO RI – Main Stylesheet
+   Color palette from https://apero.exoplanets.ca/
+   ========================================================================== */
+
+:root {
+    /* Primary brand colors */
+    --ari-primary: #336699;
+    --ari-primary-dark: #0A507A;
+    --ari-primary-light: #82A0BE;
+
+    /* Header */
+    --ari-header-bg: #000000;
+    --ari-header-text: #FFFFFF;
+    --ari-header-link: #F9F9F0;
+
+    /* Accents */
+    --ari-accent: #E4A15A;
+    --ari-accent-dark: #CA7900;
+
+    /* Neutrals */
+    --ari-bg: #F5F6F8;
+    --ari-card-bg: #FFFFFF;
+    --ari-text: #1a1a1a;
+    --ari-text-muted: #666666;
+    --ari-border: #dee2e6;
+
+    /* Alerts */
+    --ari-success: #7EBEA5;
+    --ari-warning: #F8B862;
+    --ari-danger: #B7282E;
+    --ari-info: #2491CF;
+
+    /* Sizing */
+    --ari-header-height: 56px;
+    --ari-sidebar-width: 260px;
+    --ari-border-radius: 8px;
+}
+
+/* ==========================================================================
+   Reset & base
+   ========================================================================== */
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+}
+
+html {
+    font-size: 16px;
+    scroll-behavior: smooth;
+}
+
+body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+                 "Helvetica Neue", Arial, sans-serif;
+    background: var(--ari-bg);
+    color: var(--ari-text);
+    line-height: 1.6;
+}
+
+a {
+    color: var(--ari-primary);
+    text-decoration: none;
+    transition: color 0.15s;
+}
+
+a:hover {
+    color: var(--ari-primary-dark);
+}
+
+/* ==========================================================================
+   Header / Navbar
+   ========================================================================== */
+.ari-header {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 1000;
+    height: var(--ari-header-height);
+    background: var(--ari-header-bg);
+    display: flex;
+    align-items: center;
+    padding: 0 1rem;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.ari-header__logo {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: var(--ari-header-text);
+    font-weight: 700;
+    font-size: 1.25rem;
+    text-decoration: none;
+    flex-shrink: 0;
+}
+
+.ari-header__logo img {
+    height: 36px;
+    width: auto;
+}
+
+.ari-header__spacer {
+    flex: 1;
+}
+
+/* Desktop quick-nav */
+.ari-nav {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.ari-nav__link {
+    color: var(--ari-header-link);
+    padding: 0.5rem;
+    border-radius: var(--ari-border-radius);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.15s, color 0.15s;
+}
+
+.ari-nav__link:hover,
+.ari-nav__link--active {
+    background: var(--ari-primary);
+    color: #fff;
+}
+
+.ari-nav__link i {
+    font-size: 1.1rem;
+}
+
+/* Hamburger button (always visible) */
+.ari-hamburger {
+    background: none;
+    border: none;
+    color: var(--ari-header-text);
+    font-size: 1.5rem;
+    cursor: pointer;
+    padding: 0.25rem;
+    margin-left: 0.5rem;
+}
+
+/* ==========================================================================
+   Mobile menu overlay
+   ========================================================================== */
+.ari-mobile-menu {
+    display: none;
+    position: fixed;
+    top: var(--ari-header-height);
+    right: 0;
+    bottom: 0;
+    width: var(--ari-sidebar-width);
+    max-width: 80vw;
+    background: var(--ari-card-bg);
+    box-shadow: -4px 0 16px rgba(0, 0, 0, 0.15);
+    z-index: 999;
+    padding: 1rem;
+    overflow-y: auto;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.ari-mobile-menu.open {
+    display: flex;
+}
+
+.ari-mobile-menu__link {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.6rem 0.75rem;
+    color: var(--ari-text);
+    border-radius: var(--ari-border-radius);
+    transition: background 0.15s;
+}
+
+.ari-mobile-menu__link:hover {
+    background: var(--ari-bg);
+    color: var(--ari-primary);
+}
+
+.ari-mobile-menu__divider {
+    height: 1px;
+    background: var(--ari-border);
+    margin: 0.5rem 0;
+}
+
+/* Mobile overlay backdrop */
+.ari-backdrop {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.3);
+    z-index: 998;
+}
+
+.ari-backdrop.open {
+    display: block;
+}
+
+/* ==========================================================================
+   Main content
+   ========================================================================== */
+.ari-main {
+    margin-top: var(--ari-header-height);
+    padding: 2rem 1.5rem;
+    max-width: 1200px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+/* Page header */
+.ari-page-header {
+    margin-bottom: 2rem;
+}
+
+.ari-page-header h1 {
+    font-size: 1.75rem;
+    color: var(--ari-primary);
+    margin: 0 0 0.25rem 0;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.ari-page-header h1 i {
+    font-size: 1.5rem;
+    color: var(--ari-primary-light);
+}
+
+.ari-breadcrumb {
+    font-size: 0.85rem;
+    color: var(--ari-text-muted);
+    margin-bottom: 0.5rem;
+}
+
+.ari-breadcrumb a {
+    color: var(--ari-text-muted);
+}
+
+.ari-breadcrumb a:hover {
+    color: var(--ari-primary);
+}
+
+/* ==========================================================================
+   Cards grid
+   ========================================================================== */
+.ari-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 1.25rem;
+}
+
+.ari-card {
+    background: var(--ari-card-bg);
+    border: 1px solid var(--ari-border);
+    border-radius: var(--ari-border-radius);
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    transition: transform 0.15s, box-shadow 0.15s, border-color 0.15s;
+    text-decoration: none;
+    color: var(--ari-text);
+    cursor: pointer;
+}
+
+.ari-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
+    border-color: var(--ari-primary-light);
+    color: var(--ari-text);
+}
+
+.ari-card__icon {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    background: var(--ari-bg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 1rem;
+    transition: background 0.15s;
+}
+
+.ari-card:hover .ari-card__icon {
+    background: var(--ari-primary);
+}
+
+.ari-card__icon i {
+    font-size: 1.5rem;
+    color: var(--ari-primary);
+    transition: color 0.15s;
+}
+
+.ari-card:hover .ari-card__icon i {
+    color: #fff;
+}
+
+.ari-card__label {
+    font-weight: 600;
+    font-size: 1.05rem;
+}
+
+/* ==========================================================================
+   Flash messages
+   ========================================================================== */
+.ari-flash {
+    padding: 0.75rem 1rem;
+    margin-bottom: 1rem;
+    border-radius: var(--ari-border-radius);
+    font-size: 0.9rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.ari-flash--success {
+    background: #e8f5e9;
+    color: #1b5e20;
+    border: 1px solid #a5d6a7;
+}
+
+.ari-flash--danger {
+    background: #fce4ec;
+    color: #b71c1c;
+    border: 1px solid #ef9a9a;
+}
+
+.ari-flash--warning {
+    background: #fff3e0;
+    color: #e65100;
+    border: 1px solid #ffcc80;
+}
+
+.ari-flash--info {
+    background: #e3f2fd;
+    color: #0d47a1;
+    border: 1px solid #90caf9;
+}
+
+/* ==========================================================================
+   Login form
+   ========================================================================== */
+.ari-login-box {
+    max-width: 400px;
+    margin: 2rem auto;
+    background: var(--ari-card-bg);
+    border: 1px solid var(--ari-border);
+    border-radius: var(--ari-border-radius);
+    padding: 2rem;
+}
+
+.ari-login-box h2 {
+    color: var(--ari-primary);
+    margin: 0 0 1.5rem 0;
+    text-align: center;
+    font-size: 1.4rem;
+}
+
+.ari-form-group {
+    margin-bottom: 1rem;
+}
+
+.ari-form-group label {
+    display: block;
+    font-weight: 600;
+    margin-bottom: 0.3rem;
+    font-size: 0.9rem;
+    color: var(--ari-text);
+}
+
+.ari-form-group input {
+    width: 100%;
+    padding: 0.6rem 0.75rem;
+    border: 1px solid var(--ari-border);
+    border-radius: 6px;
+    font-size: 0.95rem;
+    transition: border-color 0.15s;
+    background: #fff;
+}
+
+.ari-form-group input:focus {
+    outline: none;
+    border-color: var(--ari-primary);
+    box-shadow: 0 0 0 3px rgba(51, 102, 153, 0.15);
+}
+
+.ari-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.4rem;
+    padding: 0.6rem 1.25rem;
+    border: none;
+    border-radius: 6px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.15s, transform 0.1s;
+    text-decoration: none;
+}
+
+.ari-btn:active {
+    transform: scale(0.98);
+}
+
+.ari-btn--primary {
+    background: var(--ari-primary);
+    color: #fff;
+}
+
+.ari-btn--primary:hover {
+    background: var(--ari-primary-dark);
+    color: #fff;
+}
+
+.ari-btn--danger {
+    background: var(--ari-danger);
+    color: #fff;
+}
+
+.ari-btn--danger:hover {
+    background: #8b1e22;
+    color: #fff;
+}
+
+.ari-btn--block {
+    width: 100%;
+}
+
+.ari-form-check label {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 0.9rem;
+    cursor: pointer;
+    color: var(--ari-text);
+}
+
+.ari-form-check input[type="checkbox"] {
+    width: 1rem;
+    height: 1rem;
+    accent-color: var(--ari-primary);
+    cursor: pointer;
+}
+
+/* ==========================================================================
+   Coming soon placeholder
+   ========================================================================== */
+.ari-coming-soon {
+    text-align: center;
+    padding: 4rem 1rem;
+    color: var(--ari-text-muted);
+}
+
+.ari-coming-soon i {
+    font-size: 3rem;
+    color: var(--ari-primary-light);
+    margin-bottom: 1rem;
+    display: block;
+}
+
+.ari-coming-soon h2 {
+    margin: 0 0 0.5rem 0;
+    color: var(--ari-primary);
+}
+
+/* ==========================================================================
+   User info bar (logged in state on login page)
+   ========================================================================== */
+.ari-user-info {
+    text-align: center;
+    padding: 1rem;
+}
+
+.ari-user-info__avatar {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    background: var(--ari-primary);
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin: 0 auto 1rem auto;
+    text-transform: uppercase;
+}
+
+.ari-user-info__name {
+    font-weight: 600;
+    font-size: 1.1rem;
+    margin-bottom: 0.25rem;
+}
+
+.ari-user-info__groups {
+    font-size: 0.85rem;
+    color: var(--ari-text-muted);
+    margin-bottom: 1rem;
+}
+
+.ari-user-info__impersonating {
+    font-size: 0.85rem;
+    color: var(--ari-accent-dark);
+    margin-bottom: 1rem;
+}
+
+/* ==========================================================================
+   Footer
+   ========================================================================== */
+.ari-footer {
+    text-align: center;
+    padding: 2rem 1rem;
+    color: var(--ari-text-muted);
+    font-size: 0.8rem;
+    border-top: 1px solid var(--ari-border);
+    margin-top: 3rem;
+}
+
+.ari-footer a {
+    color: var(--ari-primary);
+}
+
+/* ==========================================================================
+   Responsive
+   ========================================================================== */
+@media (max-width: 768px) {
+    .ari-nav {
+        display: none;
+    }
+
+    .ari-main {
+        padding: 1.25rem 1rem;
+    }
+
+    .ari-cards {
+        grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+        gap: 0.75rem;
+    }
+
+    .ari-card {
+        padding: 1rem;
+    }
+
+    .ari-card__icon {
+        width: 48px;
+        height: 48px;
+    }
+
+    .ari-card__icon i {
+        font-size: 1.2rem;
+    }
+
+    .ari-page-header h1 {
+        font-size: 1.35rem;
+    }
+}

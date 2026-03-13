@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block title %}APERO RI – Cards{% endblock %}
+
+{# Reusable cards layout for any parent page #}
+{% block content %}
+<div class="ari-page-header">
+    <h1><i class="{{ page_icon }}"></i> {{ page_label }}</h1>
+</div>
+
+{% if cards %}
+<div class="ari-cards">
+    {% for card in cards %}
+    <a href="{{ card.url }}" class="ari-card">
+        <div class="ari-card__icon">
+            <i class="{{ card.icon }}"></i>
+        </div>
+        <span class="ari-card__label">{{ card.label }}</span>
+    </a>
+    {% endfor %}
+</div>
+{% else %}
+<p style="color: var(--ari-text-muted);">No sections available with your
+current permissions.</p>
+{% endif %}
+{% endblock %}

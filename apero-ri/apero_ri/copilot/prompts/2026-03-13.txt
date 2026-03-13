@@ -1,0 +1,52 @@
+Okay I want to create a webserver using Flask. I want the user to run apero_ri_run.py however in apero_ri_run.py I don't want any proper code (barebones toplevel)
+
+i.e. no more than what is in apero_ri_run.py now
+
+What I want for the flask app is a class that inherits from Flask (called ARIApp), so that everything passes through as methods to the AriApp properly.
+
+You'll see I've defined a barebones structure in "apero_ri" directory with readmes in the main directories - I want to be quite strict about the directory structure.
+
+Most importantly you should see resources/groups.yaml and resources/pages.yaml these should never be edited by flask and this is where I want which group users will be in to be defined and which permissions those groups will have, I also have a pages.yaml which is where we will add page definitions and the permissions that control which group can see these.
+
+Note groups can inherit groups (thats why each group has a "groups" section)
+
+you'll see also that pages define a parent (this is "where the page will live") with a parent being the page that will have the "card" to this sub-page on - any page that is a "parent" (i..e they have children) will have a "cards" section at the top of the page (and probably only that as these "parents" link to sub-pages or sub-sub-pages etc).
+
+You'll also note I've defined a icon (from fontawesome.com) please make sure these pages when generating "cards" have these icons or in the quick-nav menu. As thats a good point - there is also a true false for whether the page should be displayed in the quick-nav (again defiend dynmically from pages.yaml)
+
+You'll notice also a login /log out "page" this will need to be handled differently as it should display the log-in when a user is not logged in and a logout if the user is logged in. So obviosuly we need a login mechanism! For now we can create ~/.ari directory on the local machine (but make it os independent) - we'll worry about setting this path in the setup later. But I would like the ~/.ari directory to have a admin sub-directory witth "users.yaml", users.yaml will have a list of users in form:
+user1:
+password:
+groups:
+the passwords should be encrypted using the python "cryptography" package. For now create an account "neil" with password "1234" for testing and they should be a member of the "admin" group. I'll also need a way to "log in as" a specific user (based on the permission "login_as.{group}") if you look in groups.yaml you'll see some groups have a log_as.{group} as a permission - these will be able to go to the admin page and login as a user of that group (to test permissions etc) although we don't need to put in the functionality to login as yet I would like you to code this into the login system so it can be added without changing the login system too much
+
+Oh obviously as you build stuff please add dependencies to pyproject.toml and please use apero-drs/pyproject.toml as the required package for all packages that are in apero-drs (i..e I need the requirements to be the same between apero-drs and apero-ri) but of course you can add new packages that don't break apero-drs requirements.
+
+As for style I would like a modern interface that will work well on browsers and cell phones (and everything inbetween). You can use the colour scheme from https://apero.exoplanets.ca/
+
+Note also that the flask html templates should go into tempaltes/ but I'd like these organised by "parent" sub-directories (in pages.yaml) you'll notice I added some sub-directory to templates to get started
+
+My idea is that we'd have the logo in the top left, a header bar and a quick-nav panel in the top right (though on cell phones this could become a hamburger menu).
+
+As I stated earlier for the first render parent pages should create "cards" that allow the user to navigate to the lower levels, users should not see these cards if they do not have the permissions. Don't worry about the other permissions yet (i.e. the add and edit permissions) lets just get the "view" ones working with the correct groups.
+
+For now other than the "cards" for "parents" keep the pages empty with a simple "coming soon" so we can test the first functionality.
+
+==============================================================================
+
+
+Can we add getting arguments in tha ARIApp constructor?
+
+i.e.: something add a "get_arguments" function like this (that is called in the __init__ function of ARIApp)
+```
+parser = argparse.ArgumentParser(description='APERO reduction interface')
+parser.add_argument('--data-dir', type=str, help='Override data directory (default: ~/.ourlilnest)')
+parser.add_argument('--port', type=int, default=6666, help='Port to run the server on (default: 6666)')
+parser.add_argument(
+    '--host',
+    type=str,
+    default='auto',
+    help='Host binding (default: auto; prefers :: for localhost, falls back to 0.0.0.0)',
+)
+args = parser.parse_args()
+```
