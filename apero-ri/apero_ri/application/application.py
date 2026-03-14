@@ -289,6 +289,12 @@ class ARIApp(Flask):
                           'ri_profile',
                           self._ri_profile_view)
 
+        # Reduction interface profile health-check API
+        self.add_url_rule('/api/ri/profile-health',
+                          'api_ri_profile_health',
+                          self._api_ri_profile_health,
+                          methods=['POST'])
+
     # -----------------------------------------------------------------
     # View factories
     # -----------------------------------------------------------------
@@ -560,6 +566,38 @@ class ARIApp(Flask):
         color = colors.get(profile['instrument'],
                            self._INSTRUMENT_PALETTE[0])
 
+        # Sub-page section cards
+        section_cards = [
+            {
+                'key': 'object_table',
+                'label': 'Astrophysical Object Table',
+                'icon': 'fa-solid fa-star',
+                'description': 'Browse and search astrophysical objects '
+                               'in this reduction profile.',
+            },
+            {
+                'key': 'obs_table',
+                'label': 'Observation Table',
+                'icon': 'fa-solid fa-binoculars',
+                'description': 'View night-by-night observations '
+                               'and their reduction status.',
+            },
+            {
+                'key': 'query_db',
+                'label': 'Database Query',
+                'icon': 'fa-solid fa-terminal',
+                'description': 'Run custom queries against the '
+                               'reduction database tables.',
+            },
+            {
+                'key': 'qc_graphs',
+                'label': 'Quality Control Graphs',
+                'icon': 'fa-solid fa-chart-line',
+                'description': 'Interactive plots of quality control '
+                               'metrics over time.',
+            },
+        ]
+
         context = {
             'page_id': page_id,
             'page_label': profile_id,
@@ -567,6 +605,8 @@ class ARIApp(Flask):
             'is_parent': False,
             'profile': profile,
             'profile_color': color,
+            'section_cards': section_cards,
+            'health_url': '/api/ri/profile-health',
             # Sidebar
             'sidebar_root': 'home.reduction_interface',
             'sidebar_label': 'Reduction Interface',
@@ -590,7 +630,64 @@ class ARIApp(Flask):
             })
         context['sidebar_tree'] = sidebar_tree
 
-        return render_template('reduction_interface/profile.html', **context)
+        return render_template('reduction_interface/profile.html',
+                               **context)
+
+    def _api_ri_profile_health(self):
+        """Run database and path health checks for a profile."""
+        user_info = get_effective_user(session)
+        if not user_info:
+            return jsonify(success=False, error='Unauthorized'), 401
+
+        data = request.get_json()
+        if not data:
+            return jsonify(success=False, error='Missing data'), 400
+
+        profile_id = data.get('profile_id', '').strip()
+        if not profile_id:
+            return jsonify(success=False, error='Missing profile_id'), 400
+
+        # Verify user has access to this profile
+        accessible = get_accessible_profiles(user_info, self.ari_groups)
+        profile = None
+        for prof in accessible:
+            if prof['profile_id'] == profile_id:
+                profile = prof
+                break
+        if not profile:
+            return jsonify(success=False, error='Access denied'), 403
+
+        cfg = profile['data']
+
+        # -- Database check --
+        db_result = validate_database_connection(
+            cfg.get('DATABASE_MODE', ''),
+            cfg.get('DATABASE_HOST', ''),
+            cfg.get('DATABASE_USERNAME', ''),
+            cfg.get('DATABASE_PASSWORD', ''),
+            cfg.get('DATABASE_NAME', ''),
+        )
+
+        # -- Path checks --
+        path_keys = [
+            'PATH_RAW', 'PATH_PP', 'PATH_RED', 'PATH_CALIB',
+            'PATH_TELLU', 'PATH_LOG', 'PATH_LBL',
+        ]
+        path_results = {}
+        all_paths_ok = True
+        for key in path_keys:
+            val = cfg.get(key, '')
+            exists = bool(val) and Path(val).is_dir()
+            path_results[key] = exists
+            if not exists:
+                all_paths_ok = False
+
+        return jsonify(
+            success=True,
+            database={'ok': db_result['valid'],
+                      'error': db_result.get('error', '')},
+            paths={'ok': all_paths_ok, 'details': path_results},
+        )
 
     # -----------------------------------------------------------------
     # Login / Logout views

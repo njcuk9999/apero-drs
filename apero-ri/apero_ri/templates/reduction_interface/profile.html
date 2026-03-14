@@ -6,35 +6,76 @@
     <h1><i class="fa-solid fa-laptop-code"></i> {{ profile.profile_id }}</h1>
 </div>
 
-<div class="ari-db-profile-info">
-    <div class="ari-db-profile-badge"
+{# ── Summary banner ──────────────────────────────────────────── #}
+<div class="ari-rp-summary">
+
+    <div class="ari-rp-summary__badge"
          style="--card-bg: {{ profile_color.bg }};
                 --card-text: {{ profile_color.text }};
                 --card-border: {{ profile_color.border }};">
         <span class="ari-db-card__instrument">{{ profile.instrument }}</span>
     </div>
 
-    <table class="ari-db-profile-table">
-        <tr>
-            <th><i class="fa-solid fa-folder-open"></i> DRS_UCONFIG</th>
-            <td>{{ profile.data.DRS_UCONFIG }}</td>
-        </tr>
+    <div class="ari-rp-summary__meta">
         {% if profile.data.apero_version %}
-        <tr>
-            <th><i class="fa-solid fa-code-branch"></i> APERO Version</th>
-            <td>{{ profile.data.apero_version }}</td>
-        </tr>
+        <span class="ari-rp-summary__item">
+            <i class="fa-solid fa-code-branch"></i>
+            v{{ profile.data.apero_version }}
+        </span>
         {% endif %}
         {% if profile.data.reduction_server %}
-        <tr>
-            <th><i class="fa-solid fa-server"></i> Reduction Server</th>
-            <td>{{ profile.data.reduction_server }}</td>
-        </tr>
+        <span class="ari-rp-summary__item">
+            <i class="fa-solid fa-server"></i>
+            {{ profile.data.reduction_server }}
+        </span>
         {% endif %}
-    </table>
+    </div>
+
+    {# ── Health indicators ── #}
+    <div class="ari-rp-summary__health">
+        <span id="health-db" class="ari-rp-health ari-rp-health--pending"
+              title="Database connection">
+            <i class="fa-solid fa-spinner fa-spin"></i>
+            <span class="ari-rp-health__label">Database</span>
+        </span>
+        <span id="health-paths" class="ari-rp-health ari-rp-health--pending"
+              title="Data paths">
+            <i class="fa-solid fa-spinner fa-spin"></i>
+            <span class="ari-rp-health__label">Paths</span>
+        </span>
+    </div>
 </div>
 
-<p style="color: var(--ari-text-muted); margin-top: 2rem;">
-    <i class="fa-solid fa-wrench"></i> Profile interface coming soon.
+{# ── Section cards ───────────────────────────────────────────── #}
+<div class="ari-rp-sections">
+{% for card in section_cards %}
+    <div class="ari-rp-section-card ari-rp-section-card--disabled"
+         data-key="{{ card.key }}">
+        <div class="ari-rp-section-card__icon">
+            <i class="{{ card.icon }}"></i>
+        </div>
+        <div class="ari-rp-section-card__body">
+            <h3>{{ card.label }}</h3>
+            <p>{{ card.description }}</p>
+        </div>
+        <div class="ari-rp-section-card__arrow">
+            <i class="fa-solid fa-arrow-right"></i>
+        </div>
+    </div>
+{% endfor %}
+</div>
+
+<p class="ari-rp-note">
+    <i class="fa-solid fa-circle-info"></i>
+    These sections will become active once their functionality is implemented.
 </p>
+
+{# ── Config for JS ───────────────────────────────────────────── #}
+<script>
+window.ARI_PROFILE_PAGE = {
+    healthUrl: {{ health_url | tojson }},
+    profileId: {{ profile.profile_id | tojson }},
+};
+</script>
+<script src="{{ url_for('static', filename='js/ri_profile.js') }}" defer></script>
 {% endblock %}
