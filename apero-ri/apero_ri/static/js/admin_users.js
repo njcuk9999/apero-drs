@@ -3,402 +3,74 @@
     'use strict';
 
     var CONFIG = window.ARI_ADMIN;
-    var searchInput = document.getElementById('user-search');
-    var searchStatus = document.getElementById('search-status');
-    var resultsContainer = document.getElementById('user-results');
-    var detailPanel = document.getElementById('user-detail');
-    var detailUsername = document.getElementById('detail-username');
+
+    // Group precedence for colour coding (highest to lowest)
+    var GROUP_PRECEDENCE = ['admin', 'moderator', 'developer', 'monitor', 'general', 'public'];
+
+    // =========================================================================
+    // DOM refs
+    // =========================================================================
+    var tabNew            = document.getElementById('um-tab-new');
+    var tabCurrent        = document.getElementById('um-tab-current');
+    var panelNew          = document.getElementById('um-new');
+    var panelCurrent      = document.getElementById('um-current');
+    var newBanner         = document.getElementById('um-new-banner');
+    var newCountEl        = document.getElementById('um-new-count');
+    var newBadge          = document.getElementById('um-new-badge');
+    var currentBadge      = document.getElementById('um-current-badge');
+    var newResults        = document.getElementById('um-new-results');
+    var newEmpty          = document.getElementById('um-new-empty');
+    var searchInput       = document.getElementById('user-search');
+    var searchStatus      = document.getElementById('search-status');
+    var currentResults    = document.getElementById('um-current-results');
+    var groupFilterWrap   = document.getElementById('um-group-filter');
+    var detailPanel       = document.getElementById('user-detail');
+    var detailAvatar      = document.getElementById('detail-avatar');
+    var detailUsername    = document.getElementById('detail-username');
     var detailGroupsSummary = document.getElementById('detail-groups-summary');
-    var groupsContainer = document.getElementById('detail-groups');
-    var groupsNoPerm = document.getElementById('groups-no-perm');
+    var groupsContainer   = document.getElementById('detail-groups');
+    var groupsNoPerm      = document.getElementById('groups-no-perm');
     var instrumentsContainer = document.getElementById('detail-instruments');
     var instrumentsNoPerm = document.getElementById('instruments-no-perm');
-    var dangerZone = document.getElementById('danger-zone');
-    var deleteModal = document.getElementById('delete-modal');
-    var deleteModalUser = document.getElementById('delete-modal-user');
-    var btnDeleteUser = document.getElementById('btn-delete-user');
-    var btnCloseDetail = document.getElementById('btn-close-detail');
-    var btnCancelDelete = document.getElementById('btn-cancel-delete');
-    var btnConfirmDelete = document.getElementById('btn-confirm-delete');
+    var dangerZone        = document.getElementById('danger-zone');
+    var deleteModal       = document.getElementById('delete-modal');
+    var deleteModalUser   = document.getElementById('delete-modal-user');
+    var btnDeleteUser     = document.getElementById('btn-delete-user');
+    var btnCloseDetail    = document.getElementById('btn-close-detail');
+    var btnCancelDelete   = document.getElementById('btn-cancel-delete');
+    var btnConfirmDelete  = document.getElementById('btn-confirm-delete');
 
+    // =========================================================================
     // State
-    var searchMeta = {};
-    var allUsers = [];
-    var selectedUser = null;
+    // =========================================================================
+    var searchMeta        = {};
+    var allUsers          = [];
+    var newMembers        = [];
+    var currentMembers    = [];
+    var selectedUser      = null;
+    var openedAsNewMember = false;
+    var activeGroupFilter = null;   // null = show all
 
-    // =====================================================================
-    // Load all users on init
-    // =====================================================================
-    function loadAll() {
-        searchStatus.textContent = 'Loading users...';
-        fetch(CONFIG.searchUrl)
-            .then(function (r) { return r.json(); })
-            .then(function (data) {
-                if (!data.success) {
-                    searchStatus.textContent = 'Error: ' + (data.error || 'Unknown');
-                    return;
-                }
-                searchMeta = data;
-                allUsers = data.users;
-                renderFiltered();
-            })
-            .catch(function () {
-                searchStatus.textContent = 'Failed to load users.';
-            });
+    // =========================================================================
+    // Utility
+    // =========================================================================
+    function isNewMember(user) {
+        var g = user.groups || [];
+        return g.length === 0 || (g.length === 1 && g[0] === 'public');
     }
 
-    // =====================================================================
-    // Filter (local, instant)
-    // =====================================================================
-    searchInput.addEventListener('input', function () {
-        renderFiltered();
-    });
-
-    function renderFiltered() {
-        var q = searchInput.value.trim().toLowerCase();
-        var filtered = allUsers;
-        if (q) {
-            filtered = allUsers.filter(function (u) {
-                return u.username.toLowerCase().indexOf(q) !== -1;
-            });
+    function getHighestGroup(user) {
+        var groups = new Set(user.groups || []);
+        for (var i = 0; i < GROUP_PRECEDENCE.length; i++) {
+            if (groups.has(GROUP_PRECEDENCE[i])) return GROUP_PRECEDENCE[i];
         }
-        renderResults(filtered);
+        return 'public';
     }
 
-    function renderResults(users) {
-        resultsContainer.innerHTML = '';
-        if (users.length === 0) {
-            searchStatus.textContent = 'No users found.';
-            return;
-        }
-        searchStatus.textContent = users.length + ' user(s) found.';
-
-        users.forEach(function (user) {
-            var card = document.createElement('div');
-            card.className = 'ari-user-result-card';
-            card.innerHTML =
-                '<div class="ari-user-result-card__avatar"><i class="fa-solid fa-user"></i></div>' +
-                '<div class="ari-user-result-card__info">' +
-                '<div class="ari-user-result-card__name">' + escapeHtml(user.username) + '</div>' +
-                '<div class="ari-user-result-card__groups">' + escapeHtml(user.groups.join(', ') || 'No groups') + '</div>' +
-                '</div>';
-            card.addEventListener('click', function () {
-                openDetail(user);
-            });
-            resultsContainer.appendChild(card);
-        });
-    }
-
-    // =====================================================================
-    // Detail panel
-    // =====================================================================
-    btnCloseDetail.addEventListener('click', closeDetail);
-
-    function openDetail(user) {
-        selectedUser = user;
-        detailPanel.style.display = '';
-        detailUsername.textContent = user.username;
-        detailGroupsSummary.textContent = user.groups.join(', ') || 'No groups';
-
-        renderGroups(user);
-        renderInstruments(user);
-        renderDangerZone(user);
-
-        // Scroll into view
-        detailPanel.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }
-
-    function closeDetail() {
-        detailPanel.style.display = 'none';
-        selectedUser = null;
-    }
-
-    // =====================================================================
-    // Groups toggle cards
-    // =====================================================================
-    function renderGroups(user) {
-        groupsContainer.innerHTML = '';
-        var allGroups = searchMeta.all_groups || [];
-        var canAdd = new Set(searchMeta.can_add_groups || []);
-        var inheritedMap = searchMeta.inherited_map || {};
-        var userGroups = new Set(user.groups || []);
-
-        if (canAdd.size === 0) {
-            groupsNoPerm.style.display = '';
-            return;
-        }
-        groupsNoPerm.style.display = 'none';
-
-        // Compute encompassed groups: groups that are inherited by any
-        // currently-enabled higher group
-        var encompassed = computeEncompassed(userGroups, inheritedMap);
-
-        allGroups.forEach(function (group) {
-            var isEnabled = userGroups.has(group);
-            var canManage = canAdd.has(group);
-            var isEncompassed = encompassed.has(group) && !userGroups.has(group);
-            var isEncompassedEnabled = encompassed.has(group) && userGroups.has(group);
-
-            var card = document.createElement('span');
-            var stateClass, iconHtml, tooltip;
-
-            if (!canManage) {
-                // No permission — locked
-                stateClass = 'ari-toggle-card--locked';
-                iconHtml = isEnabled
-                    ? '<i class="fa-solid fa-check ari-toggle-card__icon"></i>'
-                    : '<i class="fa-solid fa-xmark ari-toggle-card__icon"></i>';
-                tooltip = 'You do not have permission to manage group: ' + group;
-            } else if (isEncompassedEnabled) {
-                // Encompassed by a higher group and enabled — grey it out
-                stateClass = 'ari-toggle-card--encompassed';
-                iconHtml = '<i class="fa-solid fa-check ari-toggle-card__icon"></i>';
-                tooltip = 'Already encompassed by a higher-level group';
-            } else if (isEncompassed) {
-                // Encompassed by a higher group but not directly enabled
-                stateClass = 'ari-toggle-card--encompassed';
-                iconHtml = '<i class="fa-solid fa-minus ari-toggle-card__icon"></i>';
-                tooltip = 'Already included via a higher-level group';
-            } else if (isEnabled) {
-                stateClass = 'ari-toggle-card--enabled';
-                iconHtml = '<i class="fa-solid fa-check ari-toggle-card__icon"></i>';
-                tooltip = 'Click to disable';
-            } else {
-                stateClass = 'ari-toggle-card--disabled';
-                iconHtml = '<i class="fa-solid fa-xmark ari-toggle-card__icon"></i>';
-                tooltip = 'Click to enable';
-            }
-
-            card.className = 'ari-toggle-card ' + stateClass;
-            card.innerHTML = iconHtml + ' ' + escapeHtml(group);
-            card.title = tooltip;
-            card.setAttribute('data-group', group);
-
-            if (canManage && !isEncompassed && !isEncompassedEnabled) {
-                card.addEventListener('click', function () {
-                    toggleGroup(user, group);
-                });
-            }
-
-            groupsContainer.appendChild(card);
-        });
-    }
-
-    function computeEncompassed(enabledGroups, inheritedMap) {
-        var encompassed = new Set();
-        enabledGroups.forEach(function (g) {
-            var inherited = inheritedMap[g] || [];
-            inherited.forEach(function (sub) {
-                encompassed.add(sub);
-            });
-        });
-        return encompassed;
-    }
-
-    function toggleGroup(user, group) {
-        var groups = user.groups.slice();
-        var idx = groups.indexOf(group);
-        if (idx >= 0) {
-            groups.splice(idx, 1);
-        } else {
-            groups.push(group);
-        }
-
-        fetch(CONFIG.updateGroupsUrl, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ username: user.username, groups: groups })
-        })
-            .then(function (r) { return r.json(); })
-            .then(function (data) {
-                if (data.success) {
-                    user.groups = groups;
-                    detailGroupsSummary.textContent = groups.join(', ') || 'No groups';
-                    renderGroups(user);
-                    updateResultCard(user);
-                    showToast('Groups updated', 'success');
-                } else {
-                    showToast('Error: ' + (data.error || 'Failed'), 'error');
-                }
-            })
-            .catch(function () {
-                showToast('Network error', 'error');
-            });
-    }
-
-    // =====================================================================
-    // Instruments toggle cards
-    // =====================================================================
-    function renderInstruments(user) {
-        instrumentsContainer.innerHTML = '';
-        var allInstruments = searchMeta.all_instruments || [];
-        var canAddInstrument = searchMeta.can_add_instrument;
-        var editorUsername = searchMeta.editor_username;
-        var editorInstruments = new Set(searchMeta.editor_instruments || []);
-        var userInstruments = new Set(user.instruments || []);
-
-        // Can manage if: has manage instrument permission, OR target is self
-        var canManageForUser = canAddInstrument || (user.username === editorUsername);
-
-        if (!canManageForUser) {
-            instrumentsNoPerm.style.display = '';
-            instrumentsContainer.innerHTML = '';
-            // Still show instruments as locked cards
-            allInstruments.forEach(function (inst) {
-                var isEnabled = userInstruments.has(inst);
-                var card = document.createElement('span');
-                card.className = 'ari-toggle-card ari-toggle-card--locked';
-                card.innerHTML = (isEnabled
-                    ? '<i class="fa-solid fa-check ari-toggle-card__icon"></i>'
-                    : '<i class="fa-solid fa-xmark ari-toggle-card__icon"></i>') +
-                    ' ' + escapeHtml(inst);
-                card.title = 'You do not have permission to manage instruments for this user';
-                instrumentsContainer.appendChild(card);
-            });
-            return;
-        }
-        instrumentsNoPerm.style.display = 'none';
-
-        // If not global manage instrument perm, only show editor's own instruments
-        var visibleInstruments = canAddInstrument
-            ? allInstruments
-            : allInstruments.filter(function (inst) {
-                return editorInstruments.has(inst);
-            });
-
-        visibleInstruments.forEach(function (inst) {
-            var isEnabled = userInstruments.has(inst);
-            var card = document.createElement('span');
-
-            if (isEnabled) {
-                card.className = 'ari-toggle-card ari-toggle-card--enabled';
-                card.innerHTML = '<i class="fa-solid fa-check ari-toggle-card__icon"></i> ' +
-                    escapeHtml(inst);
-                card.title = 'Click to disable';
-            } else {
-                card.className = 'ari-toggle-card ari-toggle-card--disabled';
-                card.innerHTML = '<i class="fa-solid fa-xmark ari-toggle-card__icon"></i> ' +
-                    escapeHtml(inst);
-                card.title = 'Click to enable';
-            }
-
-            card.addEventListener('click', function () {
-                toggleInstrument(user, inst);
-            });
-            instrumentsContainer.appendChild(card);
-        });
-    }
-
-    function toggleInstrument(user, instrument) {
-        var instruments = (user.instruments || []).slice();
-        var idx = instruments.indexOf(instrument);
-        if (idx >= 0) {
-            instruments.splice(idx, 1);
-        } else {
-            instruments.push(instrument);
-        }
-
-        fetch(CONFIG.updateInstrumentsUrl, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ username: user.username, instruments: instruments })
-        })
-            .then(function (r) { return r.json(); })
-            .then(function (data) {
-                if (data.success) {
-                    user.instruments = instruments;
-                    renderInstruments(user);
-                    showToast('Instruments updated', 'success');
-                } else {
-                    showToast('Error: ' + (data.error || 'Failed'), 'error');
-                }
-            })
-            .catch(function () {
-                showToast('Network error', 'error');
-            });
-    }
-
-    // =====================================================================
-    // Danger zone / deletion
-    // =====================================================================
-    function renderDangerZone(user) {
-        // Show danger zone only if editor can delete this user
-        var canAdd = new Set(searchMeta.can_add_groups || []);
-        var userGroups = user.groups || [];
-        var editorUsername = searchMeta.editor_username;
-
-        // Cannot delete yourself
-        if (user.username === editorUsername) {
-            dangerZone.style.display = 'none';
-            return;
-        }
-
-        // Must have manage.group.{group} for ALL of the user's groups
-        var canDelete = userGroups.length > 0 && userGroups.every(function (g) {
-            return canAdd.has(g);
-        });
-
-        dangerZone.style.display = canDelete ? '' : 'none';
-    }
-
-    btnDeleteUser.addEventListener('click', function () {
-        if (!selectedUser) return;
-        deleteModalUser.textContent = selectedUser.username;
-        deleteModal.style.display = '';
-    });
-
-    btnCancelDelete.addEventListener('click', function () {
-        deleteModal.style.display = 'none';
-    });
-
-    deleteModal.addEventListener('click', function (e) {
-        if (e.target === deleteModal) {
-            deleteModal.style.display = 'none';
-        }
-    });
-
-    btnConfirmDelete.addEventListener('click', function () {
-        if (!selectedUser) return;
-        var username = selectedUser.username;
-
-        fetch(CONFIG.deleteUrl, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ username: username })
-        })
-            .then(function (r) { return r.json(); })
-            .then(function (data) {
-                deleteModal.style.display = 'none';
-                if (data.success) {
-                    showToast('User "' + username + '" deleted', 'success');
-                    closeDetail();
-                    // Reload all users to refresh list
-                    loadAll();
-                } else {
-                    showToast('Error: ' + (data.error || 'Failed'), 'error');
-                }
-            })
-            .catch(function () {
-                deleteModal.style.display = 'none';
-                showToast('Network error', 'error');
-            });
-    });
-
-    // =====================================================================
-    // Helpers
-    // =====================================================================
-    function updateResultCard(user) {
-        // Update the groups text on the result card
-        var cards = resultsContainer.querySelectorAll('.ari-user-result-card');
-        cards.forEach(function (card) {
-            var nameEl = card.querySelector('.ari-user-result-card__name');
-            if (nameEl && nameEl.textContent === user.username) {
-                var groupsEl = card.querySelector('.ari-user-result-card__groups');
-                if (groupsEl) {
-                    groupsEl.textContent = user.groups.join(', ') || 'No groups';
-                }
-            }
-        });
+    function escapeHtml(str) {
+        var d = document.createElement('div');
+        d.appendChild(document.createTextNode(String(str)));
+        return d.innerHTML;
     }
 
     function showToast(message, type) {
@@ -413,14 +85,516 @@
         }, 3000);
     }
 
-    function escapeHtml(str) {
-        var div = document.createElement('div');
-        div.appendChild(document.createTextNode(str));
-        return div.innerHTML;
+    // =========================================================================
+    // Tab switching
+    // =========================================================================
+    function activateTab(name) {
+        if (name === 'new') {
+            tabNew.classList.add('ari-sg-tab--active');
+            tabNew.setAttribute('aria-selected', 'true');
+            tabCurrent.classList.remove('ari-sg-tab--active');
+            tabCurrent.setAttribute('aria-selected', 'false');
+            panelNew.style.display = '';
+            panelCurrent.style.display = 'none';
+        } else {
+            tabCurrent.classList.add('ari-sg-tab--active');
+            tabCurrent.setAttribute('aria-selected', 'true');
+            tabNew.classList.remove('ari-sg-tab--active');
+            tabNew.setAttribute('aria-selected', 'false');
+            panelCurrent.style.display = '';
+            panelNew.style.display = 'none';
+        }
+        closeDetail();
     }
 
-    // =====================================================================
-    // Init – load all users
-    // =====================================================================
+    tabNew.addEventListener('click', function () { activateTab('new'); });
+    tabCurrent.addEventListener('click', function () { activateTab('current'); });
+
+    // =========================================================================
+    // Load data
+    // =========================================================================
+    function loadAll() {
+        searchStatus.textContent = 'Loading…';
+        fetch(CONFIG.searchUrl)
+            .then(function (r) { return r.json(); })
+            .then(function (data) {
+                if (!data.success) {
+                    searchStatus.textContent = 'Error: ' + (data.error || 'Unknown');
+                    return;
+                }
+                searchMeta = data;
+                allUsers = data.users;
+                rebuildUserLists();
+                renderGroupFilterPills();
+            })
+            .catch(function () {
+                searchStatus.textContent = 'Failed to load users.';
+            });
+    }
+
+    function rebuildUserLists() {
+        newMembers     = allUsers.filter(isNewMember);
+        currentMembers = allUsers.filter(function (u) { return !isNewMember(u); });
+        if (currentBadge) currentBadge.textContent = currentMembers.length;
+        renderNewMembersTab();
+        renderCurrentMembersFiltered();
+    }
+
+    // =========================================================================
+    // New Members tab
+    // =========================================================================
+    function renderNewMembersTab() {
+        var count = newMembers.length;
+        newBadge.textContent = count;
+        newBadge.classList.toggle('ari-um-badge--zero', count === 0);
+
+        if (count > 0) {
+            newCountEl.textContent = count;
+            newBanner.style.display = '';
+            newResults.style.display = '';
+            newEmpty.style.display = 'none';
+        } else {
+            newBanner.style.display = 'none';
+            newResults.style.display = 'none';
+            newEmpty.style.display = '';
+        }
+
+        newResults.innerHTML = '';
+        newMembers.forEach(function (user) {
+            newResults.appendChild(buildUserCard(user, true));
+        });
+    }
+
+    // =========================================================================
+    // Current Members tab
+    // =========================================================================
+    function renderGroupFilterPills() {
+        groupFilterWrap.innerHTML = '';
+        var allGroups = searchMeta.all_groups || [];
+
+        var allPill = document.createElement('button');
+        allPill.type = 'button';
+        allPill.className = 'ari-um-filter-pill' +
+            (activeGroupFilter === null ? ' ari-um-filter-pill--active' : '');
+        allPill.textContent = 'All';
+        allPill.addEventListener('click', function () {
+            activeGroupFilter = null;
+            renderGroupFilterPills();
+            renderCurrentMembersFiltered();
+        });
+        groupFilterWrap.appendChild(allPill);
+
+        allGroups.forEach(function (group) {
+            var pill = document.createElement('button');
+            pill.type = 'button';
+            var isActive = (activeGroupFilter === group);
+            pill.className = 'ari-um-filter-pill ari-um-filter-pill--' + group +
+                (isActive ? ' ari-um-filter-pill--active' : '');
+            pill.textContent = group;
+            pill.addEventListener('click', function () {
+                activeGroupFilter = (activeGroupFilter === group) ? null : group;
+                renderGroupFilterPills();
+                renderCurrentMembersFiltered();
+            });
+            groupFilterWrap.appendChild(pill);
+        });
+    }
+
+    searchInput.addEventListener('input', renderCurrentMembersFiltered);
+
+    function renderCurrentMembersFiltered() {
+        var q = searchInput.value.trim().toLowerCase();
+        var filtered = currentMembers;
+
+        if (q) {
+            filtered = filtered.filter(function (u) {
+                return u.username.toLowerCase().indexOf(q) !== -1 ||
+                    ((u.first_names || '') + ' ' + (u.last_name || '')).toLowerCase().indexOf(q) !== -1;
+            });
+        }
+
+        if (activeGroupFilter !== null) {
+            filtered = filtered.filter(function (u) {
+                return (u.groups || []).indexOf(activeGroupFilter) !== -1;
+            });
+        }
+
+        searchStatus.textContent = filtered.length + ' member(s) found.';
+        currentResults.innerHTML = '';
+        filtered.forEach(function (user) {
+            currentResults.appendChild(buildUserCard(user, false));
+        });
+    }
+
+    // =========================================================================
+    // User card builder
+    // =========================================================================
+    function buildUserCard(user, isNew) {
+        var card = document.createElement('div');
+        var highest = getHighestGroup(user);
+        card.className = 'ari-user-result-card ari-user-result-card--' + highest;
+
+        var avatar = document.createElement('div');
+        avatar.className = 'ari-user-result-card__avatar';
+        avatar.innerHTML = '<i class="fa-solid fa-user"></i>';
+        card.appendChild(avatar);
+
+        var info = document.createElement('div');
+        info.className = 'ari-user-result-card__info';
+
+        var nameLine = document.createElement('div');
+        nameLine.className = 'ari-user-result-card__name';
+        nameLine.textContent = user.username;
+        if (user.first_names || user.last_name) {
+            var nameDetail = document.createElement('span');
+            nameDetail.className = 'ari-user-result-card__fullname';
+            nameDetail.textContent = ' (' +
+                [user.first_names, user.last_name].filter(Boolean).join(' ') + ')';
+            nameLine.appendChild(nameDetail);
+        }
+        info.appendChild(nameLine);
+
+        var groupLine = document.createElement('div');
+        groupLine.className = 'ari-user-result-card__groups';
+        groupLine.textContent = isNew
+            ? 'Awaiting assignment'
+            : ((user.groups || []).join(', ') || 'No groups');
+        info.appendChild(groupLine);
+
+        card.appendChild(info);
+
+        if (isNew) {
+            var badge = document.createElement('span');
+            badge.className = 'ari-um-new-pill';
+            badge.textContent = 'New';
+            card.appendChild(badge);
+        }
+
+        card.addEventListener('click', function () { openDetail(user, isNew); });
+        return card;
+    }
+
+    // =========================================================================
+    // Detail panel
+    // =========================================================================
+    btnCloseDetail.addEventListener('click', function () {
+        if (openedAsNewMember && selectedUser && isNewMember(selectedUser)) {
+            if (!confirm(
+                'This user (' + selectedUser.username + ') has not been assigned ' +
+                'groups or instruments yet. Close the panel anyway?'
+            )) {
+                return;
+            }
+        }
+        closeDetail();
+    });
+
+    // Warn on page leave if a new-member panel is open and unchanged
+    window.addEventListener('beforeunload', function (e) {
+        if (openedAsNewMember && selectedUser && isNewMember(selectedUser)) {
+            e.preventDefault();
+            e.returnValue = '';
+        }
+    });
+
+    function openDetail(user, fromNewTab) {
+        selectedUser      = user;
+        openedAsNewMember = !!fromNewTab;
+
+        // Avatar colour matches card colour
+        var highest = getHighestGroup(user);
+        detailAvatar.className = 'ari-user-detail__avatar ari-user-detail__avatar--' + highest;
+
+        var displayName = user.username;
+        if (user.first_names || user.last_name) {
+            displayName += ' — ' + [user.first_names, user.last_name].filter(Boolean).join(' ');
+        }
+        detailUsername.textContent = displayName;
+        detailGroupsSummary.textContent = (user.groups || []).join(', ') || 'No groups assigned';
+
+        renderGroups(user);
+        renderInstruments(user);
+        renderDangerZone(user);
+
+        detailPanel.style.display = '';
+        detailPanel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+
+    function closeDetail() {
+        detailPanel.style.display = 'none';
+        selectedUser      = null;
+        openedAsNewMember = false;
+    }
+
+    // =========================================================================
+    // Groups
+    // =========================================================================
+    function renderGroups(user) {
+        groupsContainer.innerHTML = '';
+        var allGroups    = searchMeta.all_groups || [];
+        var canAdd       = new Set(searchMeta.can_add_groups || []);
+        var inheritedMap = searchMeta.inherited_map || {};
+        var userGroups   = new Set(user.groups || []);
+        var editorIsAdmin = !!searchMeta.editor_is_admin;
+        var targetIsAdmin = userGroups.has('admin');
+
+        if (targetIsAdmin) {
+            groupsNoPerm.style.display = '';
+            allGroups.forEach(function (group) {
+                var card = document.createElement('span');
+                card.className = 'ari-toggle-card ari-toggle-card--locked';
+                card.innerHTML = (userGroups.has(group)
+                    ? '<i class="fa-solid fa-check ari-toggle-card__icon"></i>'
+                    : '<i class="fa-solid fa-xmark ari-toggle-card__icon"></i>') +
+                    ' ' + escapeHtml(group);
+                card.title = 'Admin accounts cannot be edited from this page';
+                groupsContainer.appendChild(card);
+            });
+            return;
+        }
+
+        if (canAdd.size === 0 && !editorIsAdmin) {
+            groupsNoPerm.style.display = '';
+            return;
+        }
+        groupsNoPerm.style.display = 'none';
+
+        var encompassed = computeEncompassed(userGroups, inheritedMap);
+
+        allGroups.forEach(function (group) {
+            var isEnabled          = userGroups.has(group);
+            var canManage          = canAdd.has(group) || (editorIsAdmin && group !== 'admin');
+            var isEncompassed      = encompassed.has(group) && !isEnabled;
+            var isEncompassedOn    = encompassed.has(group) && isEnabled;
+
+            var card = document.createElement('span');
+            var stateClass, iconHtml, tooltip;
+
+            if (group === 'admin') {
+                stateClass = isEnabled
+                    ? 'ari-toggle-card--locked'
+                    : 'ari-toggle-card--disabled';
+                iconHtml   = isEnabled
+                    ? '<i class="fa-solid fa-check ari-toggle-card__icon"></i>'
+                    : '<i class="fa-solid fa-xmark ari-toggle-card__icon"></i>';
+                tooltip = isEnabled
+                    ? 'Admin group cannot be edited from this page'
+                    : 'Admin group cannot be assigned from this page';
+            } else if (!canManage) {
+                stateClass = 'ari-toggle-card--locked';
+                iconHtml   = isEnabled
+                    ? '<i class="fa-solid fa-check ari-toggle-card__icon"></i>'
+                    : '<i class="fa-solid fa-xmark ari-toggle-card__icon"></i>';
+                tooltip = 'No permission to manage group: ' + group;
+            } else if (isEncompassedOn) {
+                stateClass = 'ari-toggle-card--encompassed';
+                iconHtml   = '<i class="fa-solid fa-check ari-toggle-card__icon"></i>';
+                tooltip = 'Already encompassed by a higher-level group';
+            } else if (isEncompassed) {
+                stateClass = 'ari-toggle-card--encompassed';
+                iconHtml   = '<i class="fa-solid fa-minus ari-toggle-card__icon"></i>';
+                tooltip = 'Already included via a higher-level group';
+            } else if (isEnabled) {
+                stateClass = 'ari-toggle-card--enabled';
+                iconHtml   = '<i class="fa-solid fa-check ari-toggle-card__icon"></i>';
+                tooltip = 'Click to remove';
+            } else {
+                stateClass = 'ari-toggle-card--disabled';
+                iconHtml   = '<i class="fa-solid fa-xmark ari-toggle-card__icon"></i>';
+                tooltip = 'Click to add';
+            }
+
+            card.className = 'ari-toggle-card ' + stateClass;
+            card.innerHTML = iconHtml + ' ' + escapeHtml(group);
+            card.title     = tooltip;
+
+            if (canManage && !isEncompassed && !isEncompassedOn) {
+                card.addEventListener('click', function () { toggleGroup(user, group); });
+            }
+            groupsContainer.appendChild(card);
+        });
+    }
+
+    function computeEncompassed(enabledGroups, inheritedMap) {
+        var enc = new Set();
+        enabledGroups.forEach(function (g) {
+            (inheritedMap[g] || []).forEach(function (sub) { enc.add(sub); });
+        });
+        return enc;
+    }
+
+    function toggleGroup(user, group) {
+        var groups = (user.groups || []).slice();
+        var idx = groups.indexOf(group);
+        if (idx >= 0) groups.splice(idx, 1); else groups.push(group);
+
+        fetch(CONFIG.updateGroupsUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username: user.username, groups: groups })
+        })
+        .then(function (r) { return r.json(); })
+        .then(function (data) {
+            if (!data.success) {
+                showToast('Error: ' + (data.error || 'Failed'), 'error');
+                return;
+            }
+            var wasNew = isNewMember(user);
+            user.groups = groups;
+            var isNowNew = isNewMember(user);
+
+            // Summary and detail panel
+            detailGroupsSummary.textContent = groups.join(', ') || 'No groups assigned';
+            renderGroups(user);
+
+            // If graduated from new-member, clear flag and rebuild lists
+            if (wasNew && !isNowNew) {
+                openedAsNewMember = false;
+            }
+            rebuildUserLists();
+            showToast('Groups updated', 'success');
+        })
+        .catch(function () { showToast('Network error', 'error'); });
+    }
+
+    // =========================================================================
+    // Instruments
+    // =========================================================================
+    function renderInstruments(user) {
+        instrumentsContainer.innerHTML = '';
+        var allInstruments   = searchMeta.all_instruments || [];
+        var canAddInstrument = searchMeta.can_add_instrument;
+        var canAddInstrumentGroups = new Set(searchMeta.can_add_instrument_groups || []);
+        var editorUsername   = searchMeta.editor_username;
+        var editorIsAdmin    = !!searchMeta.editor_is_admin;
+        var editorInstruments = new Set(searchMeta.editor_instruments || []);
+        var userInstruments  = new Set(user.instruments || []);
+        var userGroups       = new Set(user.groups || []);
+        var targetIsAdmin = (user.groups || []).indexOf('admin') !== -1;
+
+        var canManageTargetGroups = true;
+        userGroups.forEach(function (group) {
+            if (!canAddInstrumentGroups.has(group)) {
+                canManageTargetGroups = false;
+            }
+        });
+
+        var canManage = !targetIsAdmin &&
+            (canAddInstrument || editorIsAdmin || canManageTargetGroups ||
+                (user.username === editorUsername));
+
+        if (!canManage) {
+            instrumentsNoPerm.style.display = '';
+            allInstruments.forEach(function (inst) {
+                var card = document.createElement('span');
+                card.className = 'ari-toggle-card ari-toggle-card--locked';
+                card.innerHTML = (userInstruments.has(inst)
+                    ? '<i class="fa-solid fa-check ari-toggle-card__icon"></i>'
+                    : '<i class="fa-solid fa-xmark ari-toggle-card__icon"></i>') +
+                    ' ' + escapeHtml(inst);
+                card.title = 'No permission to manage instruments for this user';
+                instrumentsContainer.appendChild(card);
+            });
+            return;
+        }
+        instrumentsNoPerm.style.display = 'none';
+
+        var visible = (canAddInstrument || editorIsAdmin || canManageTargetGroups)
+            ? allInstruments
+            : allInstruments.filter(function (i) { return editorInstruments.has(i); });
+
+        visible.forEach(function (inst) {
+            var isEnabled = userInstruments.has(inst);
+            var card = document.createElement('span');
+            card.className = 'ari-toggle-card ' +
+                (isEnabled ? 'ari-toggle-card--enabled' : 'ari-toggle-card--disabled');
+            card.innerHTML = (isEnabled
+                ? '<i class="fa-solid fa-check ari-toggle-card__icon"></i>'
+                : '<i class="fa-solid fa-xmark ari-toggle-card__icon"></i>') +
+                ' ' + escapeHtml(inst);
+            card.title = isEnabled ? 'Click to remove' : 'Click to add';
+            card.addEventListener('click', function () { toggleInstrument(user, inst); });
+            instrumentsContainer.appendChild(card);
+        });
+    }
+
+    function toggleInstrument(user, instrument) {
+        var instruments = (user.instruments || []).slice();
+        var idx = instruments.indexOf(instrument);
+        if (idx >= 0) instruments.splice(idx, 1); else instruments.push(instrument);
+
+        fetch(CONFIG.updateInstrumentsUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username: user.username, instruments: instruments })
+        })
+        .then(function (r) { return r.json(); })
+        .then(function (data) {
+            if (!data.success) {
+                showToast('Error: ' + (data.error || 'Failed'), 'error');
+                return;
+            }
+            user.instruments = instruments;
+            renderInstruments(user);
+            showToast('Instruments updated', 'success');
+        })
+        .catch(function () { showToast('Network error', 'error'); });
+    }
+
+    // =========================================================================
+    // Danger zone / delete
+    // =========================================================================
+    function renderDangerZone(user) {
+        var canAdd  = new Set(searchMeta.can_add_groups || []);
+        var groups  = user.groups || [];
+        if (user.username === searchMeta.editor_username) {
+            dangerZone.style.display = 'none';
+            return;
+        }
+        var canDelete = groups.length > 0 && groups.every(function (g) { return canAdd.has(g); });
+        dangerZone.style.display = canDelete ? '' : 'none';
+    }
+
+    btnDeleteUser.addEventListener('click', function () {
+        if (!selectedUser) return;
+        deleteModalUser.textContent = selectedUser.username;
+        deleteModal.style.display = '';
+    });
+
+    btnCancelDelete.addEventListener('click', function () { deleteModal.style.display = 'none'; });
+
+    deleteModal.addEventListener('click', function (e) {
+        if (e.target === deleteModal) deleteModal.style.display = 'none';
+    });
+
+    btnConfirmDelete.addEventListener('click', function () {
+        if (!selectedUser) return;
+        var username = selectedUser.username;
+        fetch(CONFIG.deleteUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username: username })
+        })
+        .then(function (r) { return r.json(); })
+        .then(function (data) {
+            deleteModal.style.display = 'none';
+            if (data.success) {
+                showToast('User "' + username + '" deleted', 'success');
+                closeDetail();
+                allUsers = allUsers.filter(function (u) { return u.username !== username; });
+                rebuildUserLists();
+            } else {
+                showToast('Error: ' + (data.error || 'Failed'), 'error');
+            }
+        })
+        .catch(function () {
+            deleteModal.style.display = 'none';
+            showToast('Network error', 'error');
+        });
+    });
+
+    // =========================================================================
+    // Init
+    // =========================================================================
     loadAll();
 })();

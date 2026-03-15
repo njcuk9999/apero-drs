@@ -1,0 +1,99 @@
+{% extends "general/sidebar_base.html" %}
+{% block title %}APERO RI – {{ page_label }}{% endblock %}
+
+{% block doc_content %}
+<div class="ari-page-header">
+    <h1><i class="{{ page_icon }}"></i> {{ page_label }}</h1>
+    <p class="ari-page-subtitle">
+        Manage instrument-level calendar events that are visible to all users of an instrument.
+    </p>
+</div>
+
+{% if instruments %}
+<div class="ari-ud-toolbar">
+    <select id="admin-cal-instr" class="ari-ud-select" style="min-width:180px;">
+        {% for instr in instruments %}
+        <option value="{{ instr }}">{{ instr }}</option>
+        {% endfor %}
+    </select>
+    {% if can_manage %}
+    <button class="ari-btn ari-btn--primary ari-btn--sm" id="admin-cal-add-btn">
+        <i class="fa-solid fa-plus"></i> New Event
+    </button>
+    {% endif %}
+    <div class="ari-cal-nav">
+        <button class="ari-btn ari-btn--secondary ari-btn--sm" id="admin-cal-prev"><i class="fa-solid fa-chevron-left"></i></button>
+        <span id="admin-cal-month-label" class="ari-cal-month-label"></span>
+        <button class="ari-btn ari-btn--secondary ari-btn--sm" id="admin-cal-next"><i class="fa-solid fa-chevron-right"></i></button>
+        <button class="ari-btn ari-btn--secondary ari-btn--sm" id="admin-cal-today">Today</button>
+    </div>
+</div>
+
+<div id="admin-cal-grid" class="ari-cal-grid"></div>
+
+{% if can_manage %}
+<!-- Event modal -->
+<div id="admin-cal-modal" class="ari-ud-modal" style="display:none;">
+    <div class="ari-ud-modal-box">
+        <h3 id="admin-cal-modal-title">New Instrument Event</h3>
+        <div class="ari-form-group">
+            <label>Title</label>
+            <input type="text" id="admin-cal-modal-event-title" placeholder="Event title">
+        </div>
+        <div class="ari-form-group">
+            <label>Date</label>
+            <input type="date" id="admin-cal-modal-date">
+        </div>
+        <div class="ari-form-group">
+            <label>Time (optional)</label>
+            <input type="time" id="admin-cal-modal-time">
+        </div>
+        <div class="ari-form-group">
+            <label>Recurrence</label>
+            <select id="admin-cal-modal-recurrence">
+                <option value="none">None</option>
+                <option value="daily">Daily</option>
+                <option value="weekly">Weekly</option>
+                <option value="monthly">Monthly</option>
+                <option value="yearly">Yearly</option>
+            </select>
+        </div>
+        <div class="ari-form-group">
+            <label>Status</label>
+            <select id="admin-cal-modal-status">
+                <option value="confirmed">Confirmed</option>
+                <option value="tentative">Tentative</option>
+            </select>
+        </div>
+        <div class="ari-form-group">
+            <label>Colour</label>
+            <input type="color" id="admin-cal-modal-color" value="#7b5ea7">
+        </div>
+        <div class="ari-ud-modal-actions">
+            <button class="ari-btn ari-btn--primary" id="admin-cal-modal-save">Save</button>
+            <button class="ari-btn ari-btn--danger" id="admin-cal-modal-delete" style="display:none;">Delete</button>
+            <button class="ari-btn ari-btn--secondary" id="admin-cal-modal-cancel">Cancel</button>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+{% else %}
+<div class="ari-ud-empty">
+    <i class="fa-solid fa-calendar-xmark"></i>
+    <p>No instruments are assigned to your account.</p>
+</div>
+{% endif %}
+
+<div id="admin-cal-toast" class="ari-toast" style="display:none;"></div>
+
+<script>
+window.ARI_ADMIN_CAL = {
+    listUrl: {{ url_for('api_admin_calendar_list')|tojson }},
+    saveUrl: {{ url_for('api_admin_calendar_save')|tojson }},
+    deleteUrl: {{ url_for('api_admin_calendar_delete')|tojson }},
+    canManage: {{ can_manage|tojson }},
+};
+</script>
+<script src="{{ url_for('static', filename='js/admin_calendar.js') }}"></script>
+{% endblock %}

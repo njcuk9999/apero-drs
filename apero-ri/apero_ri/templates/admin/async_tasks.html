@@ -1,0 +1,382 @@
+{% extends "general/sidebar_base.html" %}
+{% block title %}APERO RI – Async Tasks{% endblock %}
+
+{% block extra_head %}
+<!-- marked.js for client-side markdown rendering (served locally) -->
+<script src="{{ url_for('static', filename='js/marked.min.js') }}"></script>
+{% endblock %}
+
+{% block doc_content %}
+<div class="ari-page-header">
+    <h1><i class="{{ page_icon }}"></i> {{ page_label }}</h1>
+</div>
+
+<!-- ====================================================================== -->
+<!-- Instrument tabs (+ Queue tab)                                           -->
+<!-- ====================================================================== -->
+<div id="at-tabs" class="ari-sg-tabs"></div>
+
+<!-- ====================================================================== -->
+<!-- Instrument workspace                                                    -->
+<!-- ====================================================================== -->
+<div id="at-instrument-workspace" style="display:none;">
+
+    <!-- Toolbar -->
+    <div class="at-toolbar">
+        <button id="btn-run-all" class="ari-btn ari-btn--primary">
+            <i class="fa-solid fa-play"></i> Run All
+        </button>
+        <button id="btn-add-task" class="ari-btn ari-btn--secondary">
+            <i class="fa-solid fa-plus"></i> Add Task
+        </button>
+        <span id="at-running-badge" class="at-running-badge" style="display:none;">
+            <i class="fa-solid fa-circle-notch fa-spin"></i> Running…
+        </span>
+    </div>
+
+    <!-- Two-column task lists -->
+    <div class="at-lists-row">
+
+        <!-- Active tasks -->
+        <div class="ari-sg-section">
+            <div class="ari-sg-section__header">
+                <h3><i class="fa-solid fa-toggle-on"></i> Active Tasks</h3>
+                <span id="active-count" class="ari-sg-count">0</span>
+            </div>
+            <div id="active-task-list" class="at-task-list">
+                <div class="ari-sg-empty-small">No active tasks</div>
+            </div>
+        </div>
+
+        <!-- Inactive tasks -->
+        <div class="ari-sg-section">
+            <div class="ari-sg-section__header">
+                <h3><i class="fa-solid fa-toggle-off"></i> Inactive Tasks</h3>
+                <span id="inactive-count" class="ari-sg-count">0</span>
+            </div>
+            <div id="inactive-task-list" class="at-task-list">
+                <div class="ari-sg-empty-small">No inactive tasks</div>
+            </div>
+        </div>
+
+    </div><!-- /at-lists-row -->
+
+    <!-- Full-width detail area -->
+    <div id="at-detail-area">
+
+        <!-- Empty state -->
+        <div id="at-detail-empty" class="at-detail-empty">
+            <i class="fa-solid fa-arrow-up"></i>
+            <span>Select a task above to view details</span>
+        </div>
+
+        <!-- Detail sections (hidden until a task is selected) -->
+        <div id="at-detail" style="display:none;">
+
+            <!-- ── Section 1: Summary ── -->
+            <div class="at-section-card">
+                <div class="at-section-card__header">
+                    <div class="at-detail__name-area">
+                        <span class="at-detail__name" id="det-name"></span>
+                        <span class="at-status-badge" id="det-status-badge"></span>
+                    </div>
+                    <div class="at-detail__btns">
+                        <button id="det-btn-toggle"
+                                class="ari-btn ari-btn--sm ari-btn--secondary"
+                                title="Toggle active / inactive">
+                            <i class="fa-solid fa-toggle-on"></i>
+                        </button>
+                        <button id="det-btn-edit"
+                                class="ari-btn ari-btn--sm ari-btn--secondary"
+                                title="Edit task">
+                            <i class="fa-solid fa-pen"></i>
+                        </button>
+                        <button id="det-btn-delete"
+                                class="ari-btn ari-btn--sm ari-btn--danger"
+                                title="Delete task">
+                            <i class="fa-solid fa-trash"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="at-section-card__body at-summary-grid">
+                    <div class="at-sg-item">
+                        <span class="at-detail__label">Task key</span>
+                        <span id="det-task-key" class="at-detail__value--code"></span>
+                    </div>
+                    <div class="at-sg-item">
+                        <span class="at-detail__label">Frequency</span>
+                        <span id="det-frequency"></span>
+                    </div>
+                    <div class="at-sg-item at-sg-item--wide">
+                        <span class="at-detail__label">Description</span>
+                        <span id="det-description"></span>
+                    </div>
+                    <div class="at-sg-item">
+                        <span class="at-detail__label">Last run</span>
+                        <span id="det-last-run"></span>
+                    </div>
+                    <div class="at-sg-item">
+                        <span class="at-detail__label">Times run</span>
+                        <span id="det-run-count">0</span>
+                    </div>
+                    <!-- Progress bar (shown while running or queued) -->
+                    <div id="det-progress-row" class="at-sg-item at-sg-item--wide" style="display:none;">
+                        <span class="at-detail__label">Progress</span>
+                        <div class="at-progress-wrap">
+                            <div class="at-progress-bar">
+                                <div id="det-progress-fill" class="at-progress-bar__fill" style="width:0%;"></div>
+                            </div>
+                            <span id="det-progress-pct" class="at-progress-pct">0%</span>
+                        </div>
+                    </div>
+                    <div class="at-sg-item at-run-row">
+                        <button id="det-btn-run-now" class="ari-btn ari-btn--primary">
+                            <i class="fa-solid fa-play"></i> Run Now
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ── Section 2: Info ── -->
+            <div class="at-section-card" id="det-info-section">
+                <div class="at-section-card__header">
+                    <i class="fa-solid fa-circle-info"></i> Info
+                </div>
+                <div class="at-section-card__body">
+                    <div id="det-info" class="at-info-md" style="display:none;"></div>
+                    <div id="det-info-empty" class="at-muted-hint">No info yet — run the task to generate output.</div>
+                </div>
+            </div>
+
+            <!-- ── Section 3: Error (hidden when no error) ── -->
+            <div class="at-section-card at-section-card--error" id="det-error-section" style="display:none;">
+                <div class="at-section-card__header">
+                    <i class="fa-solid fa-circle-xmark"></i> Error
+                </div>
+                <div class="at-section-card__body">
+                    <pre id="det-error" class="at-error-pre"></pre>
+                </div>
+            </div>
+
+            <!-- ── Section 4: Output Files ── -->
+            <div class="at-section-card" id="det-files-section" style="display:none;">
+                <div class="at-section-card__header">
+                    <i class="fa-solid fa-file-code"></i> Output Files
+                </div>
+                <div class="at-section-card__body">
+                    <ul id="det-output-files" class="at-file-list"></ul>
+                    <div class="at-muted-hint">Preview shows the first 50 lines only.</div>
+                </div>
+            </div>
+
+        </div><!-- /at-detail -->
+    </div><!-- /at-detail-area -->
+</div><!-- /at-instrument-workspace -->
+
+<!-- ====================================================================== -->
+<!-- Queue tab workspace                                                     -->
+<!-- ====================================================================== -->
+<div id="at-queue-workspace" style="display:none;">
+    <div class="ari-sg-section">
+        <div class="ari-sg-section__header">
+            <h3><i class="fa-solid fa-layer-group"></i> Current Queue</h3>
+            <button id="btn-stop-all" class="ari-btn ari-btn--danger ari-btn--sm">
+                <i class="fa-solid fa-stop"></i> Clear Queue
+            </button>
+        </div>
+
+        <!-- Running task summary -->
+        <div id="queue-running" class="at-queue-running" style="display:none;">
+            <div class="at-queue-running__header">
+                <i class="fa-solid fa-circle-notch fa-spin"></i>
+                <strong>Running:</strong>
+                <span id="queue-running-name"></span>
+                <span id="queue-running-instrument" class="at-queue-instrument"></span>
+            </div>
+            <div class="at-progress-wrap">
+                <div class="at-progress-bar">
+                    <div id="queue-progress-fill"
+                         class="at-progress-bar__fill"
+                         style="width:0%;"></div>
+                </div>
+                <span id="queue-progress-pct" class="at-progress-pct">0%</span>
+            </div>
+            <div id="queue-running-info" class="at-info-md at-queue-info"></div>
+        </div>
+
+        <!-- Pending list -->
+        <div id="queue-pending-list" class="at-queue-list">
+            <div class="ari-sg-empty-small">Queue is empty</div>
+        </div>
+    </div>
+</div>
+
+<!-- ====================================================================== -->
+<!-- No instruments configured                                               -->
+<!-- ====================================================================== -->
+<div id="at-no-instruments" class="ari-sg-empty" style="display:none;">
+    <i class="fa-solid fa-circle-info"></i> No instruments configured.
+</div>
+
+<!-- ====================================================================== -->
+<!-- Add / Edit modal                                                        -->
+<!-- ====================================================================== -->
+<div id="at-edit-modal" class="ari-modal-backdrop" style="display:none;">
+    <div class="ari-modal">
+        <div class="ari-modal__header">
+            <h3 id="edit-modal-title"><i class="fa-solid fa-plus"></i> Add Task</h3>
+            <button class="ari-modal__close" id="btn-edit-modal-close">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+        <div class="ari-modal__body">
+            <div class="ari-ap-form__field">
+                <label for="edit-task-key">Task <span class="ari-required">*</span></label>
+                <select id="edit-task-key" class="ari-ap-input">
+                    <option value="">— select a task —</option>
+                </select>
+            </div>
+            <div class="ari-ap-form__field" id="edit-task-info-row" style="display:none;">
+                <div class="at-task-class-info">
+                    <span class="at-detail__label">Name:</span>
+                    <span id="edit-task-name"></span>
+                </div>
+                <div class="at-task-class-info">
+                    <span class="at-detail__label">Description:</span>
+                    <span id="edit-task-desc"></span>
+                </div>
+            </div>
+            <div class="ari-ap-form__field">
+                <label for="edit-frequency">Frequency (hours) <span class="ari-required">*</span></label>
+                <input type="number" id="edit-frequency" class="ari-ap-input"
+                       placeholder="e.g. 24" min="0.5" step="0.5" value="24">
+            </div>
+            <div id="edit-backup-fields" style="display:none;">
+                <div class="ari-ap-form__field">
+                    <label for="edit-daily-copies">Daily copies to keep</label>
+                    <input type="number" id="edit-daily-copies" class="ari-ap-input"
+                           min="0" step="1" value="7">
+                </div>
+                <div class="ari-ap-form__field">
+                    <label for="edit-weekly-copies">Weekly copies to keep</label>
+                    <input type="number" id="edit-weekly-copies" class="ari-ap-input"
+                           min="0" step="1" value="4">
+                </div>
+            </div>
+            <div class="ari-ap-form__field" id="edit-run-count-row" style="display:none;">
+                <label for="edit-run-count">Times run</label>
+                <input type="number" id="edit-run-count" class="ari-ap-input" value="0" readonly>
+            </div>
+            <div class="ari-ap-form__field">
+                <label>
+                    <input type="checkbox" id="edit-active" checked>
+                    Active (will be included in Run All)
+                </label>
+            </div>
+        </div>
+        <div class="ari-modal__footer">
+            <button id="btn-edit-cancel" class="ari-btn ari-btn--secondary">Cancel</button>
+            <button id="btn-edit-save" class="ari-btn ari-btn--primary">
+                <i class="fa-solid fa-floppy-disk"></i> Save
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- ====================================================================== -->
+<!-- Delete confirm modal                                                    -->
+<!-- ====================================================================== -->
+<div id="at-delete-modal" class="ari-modal-backdrop" style="display:none;">
+    <div class="ari-modal ari-modal--sm">
+        <div class="ari-modal__header">
+            <h3><i class="fa-solid fa-trash"></i> Delete Task</h3>
+        </div>
+        <div class="ari-modal__body">
+            <p>Delete task <strong id="delete-modal-name"></strong>? This cannot be undone.</p>
+        </div>
+        <div class="ari-modal__footer">
+            <button id="btn-delete-cancel" class="ari-btn ari-btn--secondary">Cancel</button>
+            <button id="btn-delete-confirm" class="ari-btn ari-btn--danger">
+                <i class="fa-solid fa-trash"></i> Delete
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- ====================================================================== -->
+<!-- Run All confirm modal (when queue is not empty)                         -->
+<!-- ====================================================================== -->
+<div id="at-runall-modal" class="ari-modal-backdrop" style="display:none;">
+    <div class="ari-modal ari-modal--sm">
+        <div class="ari-modal__header">
+            <h3><i class="fa-solid fa-play"></i> Run All</h3>
+        </div>
+        <div class="ari-modal__body">
+            <p>There are tasks currently in the queue or running.</p>
+            <p>How would you like to proceed?</p>
+        </div>
+        <div class="ari-modal__footer" style="flex-direction:column;gap:0.5rem;">
+            <button id="btn-runall-replace" class="ari-btn ari-btn--danger" style="width:100%;">
+                <i class="fa-solid fa-stop"></i> Stop current tasks &amp; run these
+            </button>
+            <button id="btn-runall-add" class="ari-btn ari-btn--primary" style="width:100%;">
+                <i class="fa-solid fa-layer-group"></i> Add to current queue
+            </button>
+            <button id="btn-runall-cancel" class="ari-btn ari-btn--secondary" style="width:100%;">
+                Cancel
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- ====================================================================== -->
+<!-- Toast notification                                                      -->
+<!-- ====================================================================== -->
+<div id="at-toast" class="ari-toast" style="display:none;"></div>
+
+<!-- ====================================================================== -->
+<!-- File table viewer modal                                                 -->
+<!-- ====================================================================== -->
+<div id="at-file-modal" class="ari-modal-backdrop" style="display:none;">
+    <div class="ari-modal ari-modal--wide">
+        <div class="ari-modal__header">
+            <i class="fa-solid fa-file-lines"></i>&nbsp;<span id="file-modal-title">File Preview</span>
+            <button class="ari-modal__close" id="btn-file-modal-close">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+        <div class="ari-modal__body" style="padding:0;">
+            <div id="file-modal-content" class="at-file-preview-wrap">
+                <div class="ari-sg-loading" style="padding:1.5rem;">Loading…</div>
+            </div>
+        </div>
+        <div class="ari-modal__footer">
+            <button id="btn-file-modal-ok" class="ari-btn ari-btn--secondary">Close</button>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+window.ARI_ASYNC_TASKS = {
+    instruments: {{ instruments | tojson }},
+    urls: {
+        list:     '/api/admin/async-tasks/list',
+        taskList: '/api/admin/async-tasks/task-list',
+        save:     '/api/admin/async-tasks/save',
+        delete:   '/api/admin/async-tasks/delete',
+        reorder:  '/api/admin/async-tasks/reorder',
+        toggle:   '/api/admin/async-tasks/toggle',
+        runNow:   '/api/admin/async-tasks/run-now',
+        runAll:   '/api/admin/async-tasks/run-all',
+        stop:     '/api/admin/async-tasks/stop',
+        status:   '/api/admin/async-tasks/status',
+        readFile: '/api/admin/async-tasks/read-file',
+        downloadFile: '/api/admin/async-tasks/download-file',
+    }
+};
+</script>
+<script src="{{ url_for('static', filename='js/admin_async_tasks.js') }}"></script>
+{% endblock %}

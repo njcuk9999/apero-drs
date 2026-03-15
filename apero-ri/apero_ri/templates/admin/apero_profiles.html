@@ -6,6 +6,14 @@
     <h1><i class="{{ page_icon }}"></i> {{ page_label }}</h1>
 </div>
 
+<div id="apero-status-box" class="ari-ap-status ari-ap-status--info">
+    <div class="ari-ap-status__headline" id="apero-status-headline">
+        <i class="fa-solid fa-circle-info"></i>
+        Select an instrument to check APERO profile status.
+    </div>
+    <ul id="apero-status-details" class="ari-ap-status__details" style="display:none;"></ul>
+</div>
+
 <!-- Instrument tabs -->
 <div id="instrument-tabs" class="ari-sg-tabs"></div>
 
@@ -25,10 +33,10 @@
         </div>
         <div class="ari-ap-legend">
             <span class="ari-ap-legend__item ari-ap-legend__item--valid">
-                <i class="fa-solid fa-circle-check"></i> Valid profile
+                <i class="fa-solid fa-circle-check"></i> Ready
             </span>
             <span class="ari-ap-legend__item ari-ap-legend__item--invalid">
-                <i class="fa-solid fa-circle-xmark"></i> Invalid path or missing files
+                <i class="fa-solid fa-circle-xmark"></i> Needs attention
             </span>
         </div>
         <div id="profile-list" class="ari-ap-profile-list">
@@ -66,6 +74,7 @@
 
             <!-- Database settings -->
             <h4 class="ari-ap-form__heading"><i class="fa-solid fa-database"></i> Database Settings</h4>
+            <div id="db-section" class="ari-ap-step">
             <div class="ari-ap-form__row">
                 <div class="ari-ap-form__field">
                     <label for="profile-db-mode">DATABASE_MODE <span class="ari-required">*</span></label>
@@ -103,8 +112,14 @@
                 <div id="db-test-result" class="ari-ap-validation" style="display:none;"></div>
             </div>
 
+            <div class="ari-ap-step-status" id="db-step-status">
+                <i class="fa-solid fa-circle-info"></i> Database test is required before continuing.
+            </div>
+            </div>
+
             <!-- Table names -->
             <h4 class="ari-ap-form__heading"><i class="fa-solid fa-table"></i> Table Names</h4>
+            <div id="tables-section" class="ari-ap-step ari-ap-step--locked">
             <div class="ari-ap-form__row">
                 <div class="ari-ap-form__field">
                     <label for="profile-tbl-astrom">ASTROM_TABLENAME <span class="ari-required">*</span></label>
@@ -141,9 +156,46 @@
                            placeholder="e.g. reject" autocomplete="off">
                 </div>
             </div>
+            <div class="ari-ap-form__field">
+                <button id="btn-test-tables" class="ari-btn ari-btn--secondary ari-btn--sm" disabled>
+                    <i class="fa-solid fa-vial-circle-check"></i> Test Table Names
+                </button>
+                <div id="tables-test-result" class="ari-ap-validation" style="display:none;"></div>
+            </div>
+            <div class="ari-ap-step-status" id="tables-step-status">
+                <i class="fa-solid fa-lock"></i> Complete and test database settings first.
+            </div>
+            </div>
+
+            <!-- Science settings -->
+            <h4 class="ari-ap-form__heading"><i class="fa-solid fa-flask-vial"></i> Science Settings</h4>
+            <div id="science-section" class="ari-ap-step ari-ap-step--locked">
+            <div class="ari-ap-form__row">
+                <div class="ari-ap-form__field">
+                    <label for="profile-science-fiber">SCIENCE_FIBER <span class="ari-required">*</span>
+                        <span class="ari-ap-form__hint">Options loaded from FINDEX.KW_FIBER</span>
+                    </label>
+                    <select id="profile-science-fiber" class="ari-ap-input" disabled>
+                        <option value="">Run table test first...</option>
+                    </select>
+                </div>
+            </div>
+            <div class="ari-ap-form__field">
+                <label>SCIENCE_TYPES <span class="ari-required">*</span>
+                    <span class="ari-ap-form__hint">Select one or more cards from FINDEX.KW_DPRTYPE</span>
+                </label>
+                <div id="science-types-cards" class="ari-dpr-cards ari-dpr-cards--disabled"></div>
+                <input type="hidden" id="profile-science-types" value="">
+                <div id="science-types-hint" class="ari-ap-form__hint">No DPRTYPE options loaded yet.</div>
+            </div>
+            <div class="ari-ap-step-status" id="science-step-status">
+                <i class="fa-solid fa-lock"></i> Complete and test table names first.
+            </div>
+            </div>
 
             <!-- Data paths -->
             <h4 class="ari-ap-form__heading"><i class="fa-solid fa-folder-tree"></i> Data Paths</h4>
+            <div id="paths-section" class="ari-ap-step ari-ap-step--locked">
             {% set path_fields = [
                 ('profile-path-raw',   'PATH.RAW',   'formally DRS_DATA_RAW'),
                 ('profile-path-pp',    'PATH.PP',    'formally DRS_DATA_WORKING'),
@@ -169,9 +221,13 @@
                 <div id="{{ field_id }}-validation" class="ari-ap-validation" style="display:none;"></div>
             </div>
             {% endfor %}
+            <div class="ari-ap-step-status" id="paths-step-status">
+                <i class="fa-solid fa-lock"></i> Complete science settings first.
+            </div>
+            </div>
 
             <div class="ari-ap-form__actions">
-                <button id="btn-save-profile" class="ari-btn ari-btn--primary">
+                <button id="btn-save-profile" class="ari-btn ari-btn--primary" disabled>
                     <i class="fa-solid fa-floppy-disk"></i> Save &amp; Close
                 </button>
             </div>
@@ -258,6 +314,7 @@ window.ARI_APERO_PROFILES = {
     browseUrl: {{ url_for('api_apero_profiles_browse')|tojson }},
     updateGroupsUrl: {{ url_for('api_apero_profiles_update_groups')|tojson }},
     testDbUrl: {{ url_for('api_apero_profiles_test_db')|tojson }},
+    testTablesUrl: {{ url_for('api_apero_profiles_test_tables')|tojson }},
     instruments: {{ instruments|tojson }},
     allGroups: {{ all_groups|tojson }},
     canManageGroups: {{ can_manage_groups|tojson }},

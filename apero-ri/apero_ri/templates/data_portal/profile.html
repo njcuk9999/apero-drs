@@ -46,9 +46,31 @@
     </div>
 </div>
 
+<p class="ari-ap-groups-hint">
+    Please contact the admin via
+    <a href="{{ url_for('home_user_portal_support') }}">User Portal / Support</a>
+    if you think you are missing access.
+</p>
+
 {# ── Section cards ───────────────────────────────────────────── #}
 <div class="ari-rp-sections">
 {% for card in section_cards %}
+    {% if card.url is defined and card.url %}
+    <a href="{{ card.url }}"
+       class="ari-rp-section-card ari-rp-section-card--active"
+       data-key="{{ card.key }}">
+        <div class="ari-rp-section-card__icon">
+            <i class="{{ card.icon }}"></i>
+        </div>
+        <div class="ari-rp-section-card__body">
+            <h3>{{ card.label }}</h3>
+            <p>{{ card.description }}</p>
+        </div>
+        <div class="ari-rp-section-card__arrow">
+            <i class="fa-solid fa-arrow-right"></i>
+        </div>
+    </a>
+    {% else %}
     <div class="ari-rp-section-card ari-rp-section-card--disabled"
          data-key="{{ card.key }}">
         <div class="ari-rp-section-card__icon">
@@ -62,6 +84,7 @@
             <i class="fa-solid fa-arrow-right"></i>
         </div>
     </div>
+    {% endif %}
 {% endfor %}
 </div>
 

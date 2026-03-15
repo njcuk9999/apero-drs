@@ -6,24 +6,59 @@
     <h1><i class="{{ page_icon }}"></i> {{ page_label }}</h1>
 </div>
 
-<!-- Search bar -->
-<div class="ari-user-search">
-    <div class="ari-user-search__input-wrap">
-        <i class="fa-solid fa-magnifying-glass ari-user-search__icon"></i>
-        <input type="text" id="user-search" class="ari-user-search__input"
-               placeholder="Filter users..."
-               autocomplete="off">
-    </div>
-    <div id="search-status" class="ari-user-search__status"></div>
+<!-- =====================================================================
+     Tab bar
+     ===================================================================== -->
+<div class="ari-sg-tabs" role="tablist" aria-label="User management sections">
+    <button id="um-tab-new" class="ari-sg-tab ari-sg-tab--active" role="tab"
+            aria-selected="true" aria-controls="um-new">
+        <i class="fa-solid fa-user-plus"></i> New Members
+        <span class="ari-um-badge" id="um-new-badge">0</span>
+    </button>
+    <button id="um-tab-current" class="ari-sg-tab" role="tab"
+            aria-selected="false" aria-controls="um-current">
+        <i class="fa-solid fa-users"></i> Current Members
+        <span class="ari-um-badge ari-um-badge--current" id="um-current-badge">0</span>
+    </button>
 </div>
 
-<!-- Search results -->
-<div id="user-results" class="ari-user-results"></div>
+<!-- =====================================================================
+     New Members panel
+     ===================================================================== -->
+<div id="um-new" class="ari-um-panel" role="tabpanel">
+    <div id="um-new-banner" class="ari-um-new-banner" style="display:none;">
+        <i class="fa-solid fa-triangle-exclamation"></i>
+        Warning: <strong><span id="um-new-count">0</span> user(s)</strong>
+        have registered and are awaiting instrument and group assignment.
+    </div>
+    <div id="um-new-results" class="ari-user-results"></div>
+    <div id="um-new-empty" class="ari-sg-empty" style="display:none;">
+        <i class="fa-solid fa-circle-check"></i> No new members waiting.
+    </div>
+</div>
 
-<!-- User detail panel (shown when a user is selected) -->
+<!-- =====================================================================
+     Current Members panel
+     ===================================================================== -->
+<div id="um-current" class="ari-um-panel" role="tabpanel" style="display:none;">
+    <div class="ari-user-search">
+        <div class="ari-user-search__input-wrap">
+            <i class="fa-solid fa-magnifying-glass ari-user-search__icon"></i>
+            <input type="text" id="user-search" class="ari-user-search__input"
+                   placeholder="Filter by username…" autocomplete="off">
+        </div>
+    </div>
+    <div id="um-group-filter" class="ari-um-filter-pills"></div>
+    <div id="search-status" class="ari-user-search__status"></div>
+    <div id="um-current-results" class="ari-user-results"></div>
+</div>
+
+<!-- =====================================================================
+     Shared: User detail panel
+     ===================================================================== -->
 <div id="user-detail" class="ari-user-detail" style="display:none;">
     <div class="ari-user-detail__header">
-        <div class="ari-user-detail__avatar">
+        <div class="ari-user-detail__avatar" id="detail-avatar">
             <i class="fa-solid fa-user"></i>
         </div>
         <div class="ari-user-detail__info">

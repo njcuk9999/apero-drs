@@ -33,10 +33,18 @@
         { key: 'REJECT_TABLENAME',  id: 'profile-tbl-reject' },
     ];
 
+    var scienceFiberInput  = document.getElementById('profile-science-fiber');
+    var scienceTypesInput  = document.getElementById('profile-science-types');
+    var scienceTypesCards  = document.getElementById('science-types-cards');
+    var scienceTypesHint   = document.getElementById('science-types-hint');
+
     /* -- DOM refs -------------------------------------------------------- */
     var tabsContainer = document.getElementById('instrument-tabs');
     var workspace = document.getElementById('ap-workspace');
     var emptyState = document.getElementById('ap-empty');
+    var statusBox = document.getElementById('apero-status-box');
+    var statusHeadline = document.getElementById('apero-status-headline');
+    var statusDetails = document.getElementById('apero-status-details');
 
     var profileList = document.getElementById('profile-list');
     var profileCount = document.getElementById('profile-count');
@@ -53,6 +61,17 @@
     var formSection = document.getElementById('form-section');
     var btnTestDb = document.getElementById('btn-test-db');
     var dbTestResult = document.getElementById('db-test-result');
+    var btnTestTables = document.getElementById('btn-test-tables');
+    var tablesTestResult = document.getElementById('tables-test-result');
+
+    var tablesSection = document.getElementById('tables-section');
+    var scienceSection = document.getElementById('science-section');
+    var pathsSection = document.getElementById('paths-section');
+    var dbSection = document.getElementById('db-section');
+    var dbStepStatus = document.getElementById('db-step-status');
+    var tablesStepStatus = document.getElementById('tables-step-status');
+    var scienceStepStatus = document.getElementById('science-step-status');
+    var pathsStepStatus = document.getElementById('paths-step-status');
 
     var groupsSection = document.getElementById('groups-section');
     var groupsTitle = document.getElementById('groups-title');
@@ -101,6 +120,18 @@
     var browseTargetId = null;   // id of the input field being browsed for
     var lastBrowsePaths = {};    // remember last browsed path per field id
     var formDirty = false;       // track unsaved changes
+    var dbTestPassed = false;
+    var tablesTestPassed = false;
+    var availableFibers = [];
+    var availableDprtypes = [];
+    var selectedDprtypes = [];
+    var draftGroups = [];
+    var sectionCollapsePrefs = {
+        db: null,
+        tables: null,
+        science: null,
+        paths: null,
+    };
 
     /* -- Toast ----------------------------------------------------------- */
     function showToast(msg, type) {
@@ -172,14 +203,57 @@
                 if (!data.success) {
                     profileList.innerHTML = '<div class="ari-sg-error">' +
                         escapeHtml(data.error || 'Error') + '</div>';
+                    updateStatusBox({
+                        level: 'error',
+                        headline: 'Could not load profile status for this instrument.',
+                        details: [String(data.error || 'Unknown error')],
+                    });
                     return;
                 }
                 profiles = data.profiles || [];
+                updateStatusBox(data.status || null);
                 renderProfiles();
             })
             .catch(function () {
                 profileList.innerHTML = '<div class="ari-sg-error">Failed to load</div>';
+                updateStatusBox({
+                    level: 'error',
+                    headline: 'Could not load profile status for this instrument.',
+                    details: ['Network error while loading profiles.'],
+                });
             });
+    }
+
+    function updateStatusBox(status) {
+        if (!statusBox || !statusHeadline || !statusDetails) return;
+
+        var level = (status && status.level) ? String(status.level) : 'info';
+        var headline = (status && status.headline)
+            ? String(status.headline)
+            : 'Select an instrument to check APERO profile status.';
+        var details = (status && Array.isArray(status.details)) ? status.details : [];
+
+        var icon = 'fa-circle-info';
+        if (level === 'ok') icon = 'fa-circle-check';
+        else if (level === 'warning') icon = 'fa-triangle-exclamation';
+        else if (level === 'error') icon = 'fa-circle-xmark';
+
+        statusBox.classList.remove('ari-ap-status--info', 'ari-ap-status--ok',
+            'ari-ap-status--warning', 'ari-ap-status--error');
+        statusBox.classList.add('ari-ap-status--' +
+            (level === 'ok' || level === 'warning' || level === 'error' ? level : 'info'));
+
+        statusHeadline.innerHTML = '<i class="fa-solid ' + icon + '"></i> ' + escapeHtml(headline);
+
+        if (details.length) {
+            statusDetails.style.display = '';
+            statusDetails.innerHTML = details.map(function (d) {
+                return '<li>' + escapeHtml(String(d)) + '</li>';
+            }).join('');
+        } else {
+            statusDetails.style.display = 'none';
+            statusDetails.innerHTML = '';
+        }
     }
 
     /* -- Render profile cards -------------------------------------------- */
@@ -207,11 +281,11 @@
 
             var statusText = '';
             if (isOk) {
-                statusText = 'Valid profile';
+                statusText = 'Ready';
             } else if (!hasGroups) {
-                statusText = 'No groups assigned';
+                statusText = 'Needs group assignment';
             } else {
-                statusText = 'Some paths do not exist';
+                statusText = 'Needs path checks';
             }
 
             var metaParts = [];
@@ -310,6 +384,16 @@
     function resetForm() {
         editingProfile = null;
         formDirty = false;
+        dbTestPassed = false;
+        tablesTestPassed = false;
+        sectionCollapsePrefs.db = null;
+        sectionCollapsePrefs.tables = null;
+        sectionCollapsePrefs.science = null;
+        sectionCollapsePrefs.paths = null;
+        availableFibers = [];
+        availableDprtypes = [];
+        selectedDprtypes = [];
+        draftGroups = [];
         profileNameInput.value = '';
         profileNameInput.disabled = false;
         profileVersionInput.value = '';
@@ -322,11 +406,18 @@
             var vdiv = document.getElementById(f.id + '-validation');
             if (vdiv) vdiv.style.display = 'none';
         });
+        scienceFiberInput.innerHTML = '<option value="">Run table test first...</option>';
+        scienceFiberInput.value = '';
+        scienceTypesInput.value = '';
+        renderDprtypeCards();
         dbTestResult.style.display = 'none';
+        tablesTestResult.style.display = 'none';
         formTitle.innerHTML = '<i class="fa-solid fa-plus"></i> Add Profile';
         formSection.style.display = 'none';
         groupsSection.style.display = 'none';
         groupsContainer.innerHTML = '';
+        groupsNoPerm.style.display = 'none';
+        updateWorkflowState();
     }
 
     function enterEditMode(profile) {
@@ -343,16 +434,29 @@
         TABLE_FIELDS.forEach(function (f) {
             tableInputs[f.id].value = profile[f.key] || '';
         });
+        selectedDprtypes = Array.isArray(profile.SCIENCE_TYPES)
+            ? profile.SCIENCE_TYPES.slice()
+            : (profile.SCIENCE_TYPES ? String(profile.SCIENCE_TYPES).split(',').map(function (s) { return s.trim(); }).filter(Boolean) : []);
+        scienceTypesInput.value = selectedDprtypes.join(', ');
+        scienceFiberInput.innerHTML = '<option value="">Run table test first...</option>';
+        scienceFiberInput.value = '';
+        availableFibers = [];
+        availableDprtypes = [];
+        dbTestPassed = false;
+        tablesTestPassed = false;
+        renderDprtypeCards();
         PATH_FIELDS.forEach(function (f) {
             pathInputs[f.id].value = profile[f.key] || '';
             validatePathField(f.id, profile[f.key] || '');
         });
         dbTestResult.style.display = 'none';
+        tablesTestResult.style.display = 'none';
         formTitle.innerHTML = '<i class="fa-solid fa-pen"></i> Edit Profile: ' +
             escapeHtml(profile.name);
         formSection.style.display = '';
         formTitle.scrollIntoView({ behavior: 'smooth', block: 'start' });
         renderProfileGroups(profile);
+        updateWorkflowState();
     }
 
     /* -- Path validation (directory exists) ------------------------------ */
@@ -390,6 +494,194 @@
         el.innerHTML = '<i class="fa-solid ' + icon + '"></i> ' + escapeHtml(message);
     }
 
+    function isTableFieldsComplete() {
+        for (var i = 0; i < TABLE_FIELDS.length; i++) {
+            if (!tableInputs[TABLE_FIELDS[i].id].value.trim()) return false;
+        }
+        return true;
+    }
+
+    function lockSection(sectionEl, locked) {
+        if (!sectionEl) return;
+        sectionEl.classList.toggle('ari-ap-step--locked', locked);
+        sectionEl.querySelectorAll('input, select, button, textarea').forEach(function (el) {
+            if (el.id === 'btn-test-tables') return;
+            if (el.id === 'profile-science-types') return;
+            if (el.id === 'btn-save-profile') return;
+            if (el.classList.contains('ari-dpr-card')) return;
+            if (locked) {
+                if (!el.hasAttribute('data-was-disabled')) {
+                    el.setAttribute('data-was-disabled', el.disabled ? '1' : '0');
+                }
+                el.disabled = true;
+            } else {
+                var was = el.getAttribute('data-was-disabled');
+                if (was !== '1') el.disabled = false;
+                el.removeAttribute('data-was-disabled');
+            }
+        });
+    }
+
+    function setSectionCollapsed(sectionEl, statusEl, key, autoCollapsed) {
+        if (!sectionEl || !statusEl) return;
+        var pref = sectionCollapsePrefs[key];
+        var collapsed = (pref === null) ? !!autoCollapsed : !!pref;
+        sectionEl.classList.toggle('ari-ap-step--collapsed', collapsed);
+        statusEl.classList.add('ari-ap-step-status--toggle');
+        statusEl.title = collapsed ? 'Click to expand section' : 'Click to collapse section';
+        statusEl.setAttribute('aria-expanded', collapsed ? 'false' : 'true');
+    }
+
+    function installSectionToggle(statusEl, key) {
+        if (!statusEl || statusEl.dataset.toggleInstalled === '1') return;
+        statusEl.dataset.toggleInstalled = '1';
+        statusEl.addEventListener('click', function () {
+            var pref = sectionCollapsePrefs[key];
+            var currentlyCollapsed = pref === null
+                ? statusEl.getAttribute('aria-expanded') === 'false'
+                : !!pref;
+            sectionCollapsePrefs[key] = !currentlyCollapsed;
+            updateWorkflowState();
+        });
+    }
+
+    function renderDprtypeCards() {
+        scienceTypesCards.innerHTML = '';
+        if (!availableDprtypes.length) {
+            scienceTypesCards.classList.add('ari-dpr-cards--disabled');
+            scienceTypesHint.textContent = 'No DPRTYPE options loaded yet.';
+            return;
+        }
+        scienceTypesCards.classList.remove('ari-dpr-cards--disabled');
+        availableDprtypes.forEach(function (dpr) {
+            var btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = 'ari-dpr-card';
+            var selected = selectedDprtypes.indexOf(dpr) >= 0;
+            btn.classList.add(selected ? 'ari-dpr-card--selected' : 'ari-dpr-card--unselected');
+            btn.textContent = dpr;
+            btn.addEventListener('click', function () {
+                if (scienceTypesCards.classList.contains('ari-dpr-cards--disabled')) return;
+                var idx = selectedDprtypes.indexOf(dpr);
+                if (idx >= 0) selectedDprtypes.splice(idx, 1);
+                else selectedDprtypes.push(dpr);
+                scienceTypesInput.value = selectedDprtypes.join(', ');
+                renderDprtypeCards();
+                updateWorkflowState();
+                markDirty();
+            });
+            scienceTypesCards.appendChild(btn);
+        });
+        scienceTypesInput.value = selectedDprtypes.join(', ');
+        if (!selectedDprtypes.length) {
+            scienceTypesHint.textContent = 'Select at least one SCIENCE_TYPE.';
+        } else {
+            scienceTypesHint.textContent = selectedDprtypes.length + ' SCIENCE_TYPE(s) selected.';
+        }
+    }
+
+    function populateScienceOptions(fibers, dprtypes) {
+        availableFibers = fibers || [];
+        availableDprtypes = dprtypes || [];
+
+        var currentFiber = scienceFiberInput.value;
+        scienceFiberInput.innerHTML = '';
+        var ph = document.createElement('option');
+        ph.value = '';
+        ph.textContent = availableFibers.length ? 'Select fiber...' : 'No fibers found';
+        scienceFiberInput.appendChild(ph);
+        availableFibers.forEach(function (f) {
+            var opt = document.createElement('option');
+            opt.value = f;
+            opt.textContent = f;
+            scienceFiberInput.appendChild(opt);
+        });
+        if (currentFiber && availableFibers.indexOf(currentFiber) >= 0) {
+            scienceFiberInput.value = currentFiber;
+        } else {
+            scienceFiberInput.value = '';
+        }
+
+        selectedDprtypes = selectedDprtypes.filter(function (d) {
+            return availableDprtypes.indexOf(d) >= 0;
+        });
+        renderDprtypeCards();
+    }
+
+    function updateWorkflowState() {
+        var dbFieldsFilled = dbInputs['profile-db-host'].value.trim()
+            && dbInputs['profile-db-user'].value.trim()
+            && dbInputs['profile-db-name'].value.trim();
+
+        installSectionToggle(tablesStepStatus, 'tables');
+        installSectionToggle(scienceStepStatus, 'science');
+        installSectionToggle(pathsStepStatus, 'paths');
+        installSectionToggle(dbStepStatus, 'db');
+
+        btnTestDb.disabled = !dbFieldsFilled;
+        lockSection(tablesSection, !dbTestPassed);
+
+        var tableFieldsFilled = isTableFieldsComplete();
+        btnTestTables.disabled = !(dbTestPassed && tableFieldsFilled);
+
+        lockSection(scienceSection, !tablesTestPassed);
+        var scienceComplete = !!scienceFiberInput.value.trim() && selectedDprtypes.length > 0;
+        lockSection(pathsSection, !(tablesTestPassed && scienceComplete));
+        scienceTypesCards.classList.toggle(
+            'ari-dpr-cards--disabled',
+            (!tablesTestPassed) || !availableDprtypes.length
+        );
+
+        if (!dbTestPassed) {
+            dbStepStatus.innerHTML = '<i class="fa-solid fa-circle-info"></i> Database test is required before continuing.';
+            tablesStepStatus.innerHTML = '<i class="fa-solid fa-lock"></i> Complete and test database settings first.';
+        } else {
+            dbStepStatus.innerHTML = '<i class="fa-solid fa-circle-check"></i> Database test passed.';
+            tablesStepStatus.innerHTML = '<i class="fa-solid fa-circle-info"></i> Fill all table names, then run table test.';
+        }
+
+        if (!tablesTestPassed) {
+            scienceStepStatus.innerHTML = '<i class="fa-solid fa-lock"></i> Complete and test table names first.';
+            pathsStepStatus.innerHTML = '<i class="fa-solid fa-lock"></i> Complete science settings first.';
+        } else if (!scienceComplete) {
+            scienceStepStatus.innerHTML = '<i class="fa-solid fa-circle-check"></i> Table names validated.';
+            pathsStepStatus.innerHTML = '<i class="fa-solid fa-circle-info"></i> Choose one fiber and at least one science type.';
+        } else {
+            scienceStepStatus.innerHTML = '<i class="fa-solid fa-circle-check"></i> Science settings complete.';
+            pathsStepStatus.innerHTML = '<i class="fa-solid fa-circle-check"></i> You can now define paths and save.';
+        }
+
+        var allPathsFilled = true;
+        PATH_FIELDS.forEach(function (f) {
+            if (!pathInputs[f.id].value.trim()) allPathsFilled = false;
+        });
+
+        var tablesDone = !!tablesTestPassed;
+        var scienceDone = !!(tablesTestPassed && scienceComplete);
+        var pathsDone = !!(scienceDone && allPathsFilled);
+
+        if (!tablesDone) sectionCollapsePrefs.tables = null;
+        if (!scienceDone) sectionCollapsePrefs.science = null;
+        if (!pathsDone) sectionCollapsePrefs.paths = null;
+        if (!dbTestPassed) sectionCollapsePrefs.db = null;
+
+        setSectionCollapsed(dbSection, dbStepStatus, 'db', !!dbTestPassed);
+        setSectionCollapsed(tablesSection, tablesStepStatus, 'tables', tablesDone);
+        setSectionCollapsed(scienceSection, scienceStepStatus, 'science', scienceDone);
+        setSectionCollapsed(pathsSection, pathsStepStatus, 'paths', pathsDone);
+
+        var groupsOk = false;
+        if (editingProfile) {
+            var current = profiles.find(function (p) { return p.name === editingProfile; });
+            groupsOk = !!(current && current.groups && current.groups.length > 0);
+        } else {
+            groupsOk = draftGroups.length > 0;
+        }
+
+        btnSaveProfile.disabled = !(dbTestPassed && tablesTestPassed
+            && scienceComplete && allPathsFilled && groupsOk);
+    }
+
     /* -- Test database connection ---------------------------------------- */
     function testDbConnection() {
         var mode = profileDbMode.value;
@@ -422,14 +714,76 @@
             btnTestDb.innerHTML = '<i class="fa-solid fa-plug"></i> Test Connection';
             if (data.valid) {
                 showFieldValidation(dbTestResult, true, 'Connection successful');
+                dbTestPassed = true;
             } else {
                 showFieldValidation(dbTestResult, false, data.error || 'Connection failed');
+                dbTestPassed = false;
             }
+            // DB changes invalidate downstream tests
+            if (!dbTestPassed) {
+                tablesTestPassed = false;
+            }
+            updateWorkflowState();
         })
         .catch(function () {
             btnTestDb.disabled = false;
             btnTestDb.innerHTML = '<i class="fa-solid fa-plug"></i> Test Connection';
             showFieldValidation(dbTestResult, false, 'Request failed');
+            dbTestPassed = false;
+            tablesTestPassed = false;
+            updateWorkflowState();
+        });
+    }
+
+    function testTableNames() {
+        if (!dbTestPassed) {
+            showFieldValidation(tablesTestResult, false,
+                'Database test must pass before table tests');
+            return;
+        }
+
+        var payload = {
+            DATABASE_MODE: profileDbMode.value,
+            DATABASE_HOST: dbInputs['profile-db-host'].value.trim(),
+            DATABASE_USERNAME: dbInputs['profile-db-user'].value.trim(),
+            DATABASE_PASSWORD: dbInputs['profile-db-pass'].value,
+            DATABASE_NAME: dbInputs['profile-db-name'].value.trim()
+        };
+        TABLE_FIELDS.forEach(function (f) {
+            payload[f.key] = tableInputs[f.id].value.trim();
+        });
+
+        btnTestTables.disabled = true;
+        btnTestTables.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Testing...';
+        fetch(cfg.testTablesUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        })
+        .then(function (r) { return r.json(); })
+        .then(function (data) {
+            btnTestTables.innerHTML =
+                '<i class="fa-solid fa-vial-circle-check"></i> Test Table Names';
+            if (data.valid) {
+                tablesTestPassed = true;
+                showFieldValidation(tablesTestResult, true,
+                    'Table checks passed. Fiber/DPRTYPE options loaded.');
+                populateScienceOptions(data.fibers || [], data.dprtypes || []);
+            } else {
+                tablesTestPassed = false;
+                showFieldValidation(tablesTestResult, false,
+                    data.error || 'Table checks failed');
+                populateScienceOptions([], []);
+            }
+            updateWorkflowState();
+        })
+        .catch(function () {
+            btnTestTables.innerHTML =
+                '<i class="fa-solid fa-vial-circle-check"></i> Test Table Names';
+            tablesTestPassed = false;
+            showFieldValidation(tablesTestResult, false, 'Request failed');
+            populateScienceOptions([], []);
+            updateWorkflowState();
         });
     }
 
@@ -450,6 +804,14 @@
         TABLE_FIELDS.forEach(function (f) {
             payload[f.key] = tableInputs[f.id].value.trim();
         });
+        payload.SCIENCE_FIBER = scienceFiberInput.value.trim();
+        payload.SCIENCE_TYPES = selectedDprtypes.slice();
+        if (editingProfile) {
+            var prof = profiles.find(function (p) { return p.name === editingProfile; });
+            payload.groups = (prof && Array.isArray(prof.groups)) ? prof.groups.slice() : [];
+        } else {
+            payload.groups = draftGroups.slice();
+        }
         PATH_FIELDS.forEach(function (f) {
             payload[f.key] = pathInputs[f.id].value.trim();
         });
@@ -470,6 +832,26 @@
                 return null;
             }
         }
+        if (!dbTestPassed) {
+            showToast('Database test is required before save', 'error');
+            return null;
+        }
+        if (!tablesTestPassed) {
+            showToast('Table name test is required before save', 'error');
+            return null;
+        }
+        if (!payload.SCIENCE_FIBER) {
+            showToast('SCIENCE_FIBER is required', 'error');
+            return null;
+        }
+        if (!payload.SCIENCE_TYPES || payload.SCIENCE_TYPES.length === 0) {
+            showToast('SCIENCE_TYPES is required', 'error');
+            return null;
+        }
+        if (!payload.groups || payload.groups.length === 0) {
+            showToast('At least one group must be selected', 'error');
+            return null;
+        }
         for (var j = 0; j < TABLE_FIELDS.length; j++) {
             if (!payload[TABLE_FIELDS[j].key]) {
                 showToast(TABLE_FIELDS[j].key + ' is required', 'error');
@@ -489,15 +871,6 @@
     function saveProfile() {
         var payload = validateRequired();
         if (!payload) return;
-
-        // Check groups for existing profile
-        if (editingProfile) {
-            var current = profiles.find(function (p) { return p.name === editingProfile; });
-            if (current && (!current.groups || current.groups.length === 0)) {
-                showToast('At least one group must be assigned before saving', 'error');
-                return;
-            }
-        }
 
         btnSaveProfile.disabled = true;
         fetch(cfg.saveUrl, {
@@ -756,6 +1129,7 @@
                 profile.groups = groups;
                 renderProfileGroups(profile);
                 renderProfiles();
+                updateWorkflowState();
                 showToast('Groups updated', 'success');
             } else {
                 showToast(data.error || 'Update failed', 'error');
@@ -764,18 +1138,98 @@
         .catch(function () { showToast('Network error', 'error'); });
     }
 
+    function renderDraftGroups() {
+        groupsContainer.innerHTML = '';
+        var allGroups = cfg.allGroups || [];
+        var canManage = new Set(cfg.canManageGroups || []);
+
+        groupsSection.style.display = '';
+        groupsTitle.innerHTML = '<i class="fa-solid fa-users-gear"></i> Profile Groups';
+
+        if (canManage.size === 0) {
+            groupsNoPerm.style.display = '';
+            return;
+        }
+        groupsNoPerm.style.display = 'none';
+
+        allGroups.forEach(function (group) {
+            if (!canManage.has(group)) return;
+            var selected = draftGroups.indexOf(group) >= 0;
+            var card = document.createElement('span');
+            card.className = 'ari-toggle-card ' +
+                (selected ? 'ari-toggle-card--enabled' : 'ari-toggle-card--disabled');
+            card.innerHTML = '<i class="fa-solid ' +
+                (selected ? 'fa-check' : 'fa-xmark') +
+                ' ari-toggle-card__icon"></i> ' + escapeHtml(group);
+            card.title = selected ? 'Click to remove' : 'Click to add';
+            card.addEventListener('click', function () {
+                var idx = draftGroups.indexOf(group);
+                if (idx >= 0) draftGroups.splice(idx, 1);
+                else draftGroups.push(group);
+                markDirty();
+                renderDraftGroups();
+                updateWorkflowState();
+            });
+            groupsContainer.appendChild(card);
+        });
+    }
+
     /* -- Event listeners ------------------------------------------------- */
     [profileNameInput, profileVersionInput, profileServerInput].forEach(function (el) {
-        el.addEventListener('input', markDirty);
+        el.addEventListener('input', function () {
+            markDirty();
+            updateWorkflowState();
+        });
     });
-    DB_TEXT_FIELDS.forEach(function (f) { dbInputs[f.id].addEventListener('input', markDirty); });
-    TABLE_FIELDS.forEach(function (f) { tableInputs[f.id].addEventListener('input', markDirty); });
-    profileDbMode.addEventListener('change', markDirty);
+    DB_TEXT_FIELDS.forEach(function (f) {
+        dbInputs[f.id].addEventListener('input', function () {
+            markDirty();
+            dbTestPassed = false;
+            tablesTestPassed = false;
+            availableFibers = [];
+            availableDprtypes = [];
+            selectedDprtypes = [];
+            populateScienceOptions([], []);
+            dbTestResult.style.display = 'none';
+            tablesTestResult.style.display = 'none';
+            updateWorkflowState();
+        });
+    });
+    TABLE_FIELDS.forEach(function (f) {
+        tableInputs[f.id].addEventListener('input', function () {
+            markDirty();
+            tablesTestPassed = false;
+            availableFibers = [];
+            availableDprtypes = [];
+            selectedDprtypes = [];
+            populateScienceOptions([], []);
+            tablesTestResult.style.display = 'none';
+            updateWorkflowState();
+        });
+    });
+    profileDbMode.addEventListener('change', function () {
+        markDirty();
+        dbTestPassed = false;
+        tablesTestPassed = false;
+        availableFibers = [];
+        availableDprtypes = [];
+        selectedDprtypes = [];
+        populateScienceOptions([], []);
+        dbTestResult.style.display = 'none';
+        tablesTestResult.style.display = 'none';
+        updateWorkflowState();
+    });
+
+    scienceFiberInput.addEventListener('change', function () {
+        markDirty();
+        updateWorkflowState();
+    });
 
     PATH_FIELDS.forEach(function (f) {
         pathInputs[f.id].addEventListener('input', function () {
             markDirty();
             validatePathField(f.id, pathInputs[f.id].value.trim());
+            updateWorkflowState();
         });
     });
 
@@ -795,10 +1249,12 @@
         if (!guardUnsaved()) return;
         resetForm();
         formSection.style.display = '';
+        renderDraftGroups();
         profileNameInput.focus();
     });
 
     btnTestDb.addEventListener('click', testDbConnection);
+    btnTestTables.addEventListener('click', testTableNames);
 
     btnBrowseCancel.addEventListener('click', closeBrowseModal);
     btnBrowseSelect.addEventListener('click', selectBrowsePath);
@@ -828,4 +1284,5 @@
 
     /* -- Init ------------------------------------------------------------ */
     renderTabs();
+    updateWorkflowState();
 })();

@@ -6,6 +6,6 @@ Organised into sub-directories
 
 - home
 - docs 
-- reduction_interface
+- data_portal
 - monitor
 - admin

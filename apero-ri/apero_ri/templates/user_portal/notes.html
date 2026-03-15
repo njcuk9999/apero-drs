@@ -1,0 +1,82 @@
+{% extends "general/sidebar_base.html" %}
+{% block title %}APERO RI – {{ page_label }}{% endblock %}
+
+{% block doc_content %}
+<div class="ari-page-header">
+    <h1><i class="{{ page_icon }}"></i> {{ page_label }}</h1>
+    <p class="ari-page-subtitle">Markdown notes, organised by section and colour.</p>
+</div>
+
+<div class="ari-ud-toolbar">
+    <button class="ari-btn ari-btn--primary ari-btn--sm" id="notes-new-btn">
+        <i class="fa-solid fa-plus"></i> New Note
+    </button>
+    <input type="text" id="notes-search" class="ari-ud-search" placeholder="Search notes…">
+</div>
+
+<div class="ari-notes-layout">
+    <!-- Left: note list -->
+    <div id="notes-list" class="ari-notes-list">
+        <p class="ari-ud-loading">Loading notes…</p>
+    </div>
+
+    <!-- Right: note editor / viewer -->
+    <div id="notes-editor" class="ari-notes-editor" style="display:none;">
+        <div class="ari-notes-editor-header">
+            <input type="text" id="notes-title" class="ari-notes-title-input" placeholder="Note title">
+            <div class="ari-notes-editor-meta">
+                <input type="text" id="notes-section" placeholder="Section" class="ari-ud-select" style="width:140px;">
+                <input type="color" id="notes-color" title="Note colour" value="#ffd966">
+            </div>
+        </div>
+        <div class="ari-notes-toolbar" id="notes-md-toolbar" role="toolbar" aria-label="Markdown formatting">
+            <button class="ari-btn ari-btn--secondary ari-btn--xs js-md" data-cmd="h1" title="Heading 1">H1</button>
+            <button class="ari-btn ari-btn--secondary ari-btn--xs js-md" data-cmd="h2" title="Heading 2">H2</button>
+            <button class="ari-btn ari-btn--secondary ari-btn--xs js-md" data-cmd="h3" title="Heading 3">H3</button>
+            <button class="ari-btn ari-btn--secondary ari-btn--xs js-md" data-cmd="bold" title="Bold"><i class="fa-solid fa-bold"></i></button>
+            <button class="ari-btn ari-btn--secondary ari-btn--xs js-md" data-cmd="italic" title="Italic"><i class="fa-solid fa-italic"></i></button>
+            <button class="ari-btn ari-btn--secondary ari-btn--xs js-md" data-cmd="strike" title="Strikethrough"><i class="fa-solid fa-strikethrough"></i></button>
+            <button class="ari-btn ari-btn--secondary ari-btn--xs js-md" data-cmd="code" title="Inline code"><i class="fa-solid fa-code"></i></button>
+            <button class="ari-btn ari-btn--secondary ari-btn--xs js-md" data-cmd="quote" title="Block quote"><i class="fa-solid fa-quote-left"></i></button>
+            <button class="ari-btn ari-btn--secondary ari-btn--xs js-md" data-cmd="ul" title="Bulleted list"><i class="fa-solid fa-list-ul"></i></button>
+            <button class="ari-btn ari-btn--secondary ari-btn--xs js-md" data-cmd="ol" title="Numbered list"><i class="fa-solid fa-list-ol"></i></button>
+            <button class="ari-btn ari-btn--secondary ari-btn--xs js-md" data-cmd="task" title="Task list"><i class="fa-solid fa-list-check"></i></button>
+            <button class="ari-btn ari-btn--secondary ari-btn--xs js-md" data-cmd="link" title="Link"><i class="fa-solid fa-link"></i></button>
+            <button class="ari-btn ari-btn--secondary ari-btn--xs js-md" data-cmd="image" title="Image"><i class="fa-solid fa-image"></i></button>
+            <button class="ari-btn ari-btn--secondary ari-btn--xs js-md" data-cmd="table" title="Table"><i class="fa-solid fa-table"></i></button>
+            <button class="ari-btn ari-btn--secondary ari-btn--xs js-md" data-cmd="hr" title="Horizontal line"><i class="fa-solid fa-grip-lines"></i></button>
+        </div>
+        <div class="ari-notes-editor-body">
+            <textarea id="notes-content" class="ari-notes-textarea" placeholder="Write your note in Markdown…"></textarea>
+            <div id="notes-preview" class="ari-notes-preview ari-md-content"></div>
+        </div>
+        <div class="ari-notes-editor-footer">
+            <button class="ari-btn ari-btn--primary ari-btn--sm" id="notes-save-btn">
+                <i class="fa-solid fa-floppy-disk"></i> Save
+            </button>
+            <button class="ari-btn ari-btn--secondary ari-btn--sm" id="notes-save-new-btn">
+                <i class="fa-solid fa-copy"></i> Save As New
+            </button>
+            <button class="ari-btn ari-btn--secondary ari-btn--sm" id="notes-preview-btn">
+                <i class="fa-solid fa-pencil"></i> Edit Markdown
+            </button>
+            <button class="ari-btn ari-btn--danger ari-btn--sm" id="notes-delete-btn" style="margin-left:auto;">
+                <i class="fa-solid fa-trash"></i> Delete
+            </button>
+        </div>
+    </div>
+</div>
+
+<div id="notes-toast" class="ari-toast" style="display:none;"></div>
+
+<script>
+window.ARI_NOTES = {
+    listUrl: {{ url_for('api_user_notes_list')|tojson }},
+    getUrl: {{ url_for('api_user_notes_get')|tojson }},
+    saveUrl: {{ url_for('api_user_notes_save')|tojson }},
+    deleteUrl: {{ url_for('api_user_notes_delete')|tojson }},
+    renderUrl: {{ url_for('api_user_notes_render')|tojson }},
+};
+</script>
+<script src="{{ url_for('static', filename='js/user_notes.js') }}"></script>
+{% endblock %}

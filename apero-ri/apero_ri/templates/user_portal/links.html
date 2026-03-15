@@ -1,0 +1,88 @@
+{% extends "general/sidebar_base.html" %}
+{% block title %}APERO RI – {{ page_label }}{% endblock %}
+
+{% block doc_content %}
+<div class="ari-page-header">
+    <h1><i class="{{ page_icon }}"></i> {{ page_label }}</h1>
+    <p class="ari-page-subtitle">Your personal bookmarks, organised by section.</p>
+</div>
+
+<div class="ari-ud-toolbar">
+    <button class="ari-btn ari-btn--primary ari-btn--sm" id="links-add-section-btn">
+        <i class="fa-solid fa-folder-plus"></i> New Section
+    </button>
+    <button class="ari-btn ari-btn--secondary ari-btn--sm" id="links-add-link-btn">
+        <i class="fa-solid fa-plus"></i> Add Link
+    </button>
+    {% if instruments %}
+    <select id="links-instr-select" class="ari-ud-select">
+        <option value="__all__" selected>— All links (personal + instruments) —</option>
+        <option value="">— Personal links only —</option>
+        {% for instr in instruments %}
+        <option value="{{ instr }}">{{ instr }} (include instrument links)</option>
+        {% endfor %}
+    </select>
+    {% endif %}
+</div>
+
+<div id="links-container" class="ari-ud-empty">
+    <i class="fa-solid fa-link"></i>
+    <p>No links yet. Add a section to get started.</p>
+</div>
+
+<!-- Add/edit link modal -->
+<div id="links-modal" class="ari-ud-modal" style="display:none;">
+    <div class="ari-ud-modal-box">
+        <h3 id="links-modal-title">Add Link</h3>
+        <div class="ari-form-group">
+            <label>Section</label>
+            <select id="links-modal-section"></select>
+        </div>
+        <div class="ari-form-group">
+            <label>Name</label>
+            <input type="text" id="links-modal-name" placeholder="Link name">
+        </div>
+        <div class="ari-form-group">
+            <label>URL</label>
+            <input type="url" id="links-modal-url" placeholder="https://...">
+        </div>
+        <div class="ari-form-group">
+            <label>Description (optional)</label>
+            <input type="text" id="links-modal-desc" placeholder="Short description">
+        </div>
+        <div class="ari-ud-modal-actions">
+            <button class="ari-btn ari-btn--primary" id="links-modal-save">Save</button>
+            <button class="ari-btn ari-btn--secondary" id="links-modal-cancel">Cancel</button>
+        </div>
+    </div>
+</div>
+
+<!-- Add section modal -->
+<div id="links-section-modal" class="ari-ud-modal" style="display:none;">
+    <div class="ari-ud-modal-box">
+        <h3>New Section</h3>
+        <div class="ari-form-group">
+            <label>Section Name</label>
+            <input type="text" id="links-section-name" placeholder="e.g. Research, Tools...">
+        </div>
+        <div class="ari-ud-modal-actions">
+            <button class="ari-btn ari-btn--primary" id="links-section-save">Create</button>
+            <button class="ari-btn ari-btn--secondary" id="links-section-cancel">Cancel</button>
+        </div>
+    </div>
+</div>
+
+<div id="links-toast" class="ari-toast" style="display:none;"></div>
+
+<script>
+window.ARI_LINKS = {
+    getUrl: {{ url_for('api_user_links_get')|tojson }},
+    addUrl: {{ url_for('api_user_links_add')|tojson }},
+    updateUrl: {{ url_for('api_user_links_update')|tojson }},
+    removeUrl: {{ url_for('api_user_links_remove')|tojson }},
+    addSectionUrl: {{ url_for('api_user_links_add_section')|tojson }},
+    removeSectionUrl: {{ url_for('api_user_links_remove_section')|tojson }},
+};
+</script>
+<script src="{{ url_for('static', filename='js/user_links.js') }}"></script>
+{% endblock %}

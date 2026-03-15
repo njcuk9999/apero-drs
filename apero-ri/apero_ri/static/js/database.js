@@ -1,5 +1,5 @@
 /**
- * ARI Reduction Interface — instrument filter for profile cards.
+ * ARI Data Portal — instrument filter for profile cards.
  */
 (function () {
     'use strict';

@@ -1,5 +1,5 @@
 /* =========================================================================
-   Reduction Interface – Profile health check
+   Data Portal – Profile health check
    ========================================================================= */
 (function () {
     'use strict';

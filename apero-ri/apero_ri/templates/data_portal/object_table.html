@@ -1,0 +1,144 @@
+{% extends "general/sidebar_base.html" %}
+{% block title %}APERO RI – {{ profile.profile_id }}: Object Table{% endblock %}
+
+{# Full-width layout for wide tables #}
+{% block body_class %}ari-has-sidebar ari-ot-page{% endblock %}
+
+{% block doc_content %}
+<div class="ari-page-header">
+    <h1>
+        <i class="{{ page_icon }}"></i>
+        <a href="{{ url_for('ri_profile', profile_id=profile.profile_id) }}"
+           class="ot-breadcrumb-link">{{ profile.profile_id }}</a>
+        <span class="ot-breadcrumb-sep">/</span>
+        Astrophysical Object Table
+    </h1>
+</div>
+
+<div class="ot-access-note">
+    <i class="fa-solid fa-circle-info"></i>
+    <span>
+        If a target is missing, review your current permissions in
+        <a href="{{ url_for('home_user_portal_data_access') }}">User Portal / Data Access</a>.
+        Counts shown in this table represent totals aggregated per object name;
+        they are not restricted to your specific run-ID visibility and may exceed
+        the subset of files you can individually access.
+    </span>
+</div>
+
+{# ── Meta / status bar ─────────────────────────────────────────── #}
+<div class="ot-meta-bar">
+    <span id="ot-last-updated" class="ot-meta-bar__item">
+        <i class="fa-solid fa-clock"></i> Loading&hellip;
+    </span>
+    <span id="ot-row-summary" class="ot-meta-bar__item ot-meta-bar__item--muted"></span>
+</div>
+
+{# ── Toolbar ───────────────────────────────────────────────────── #}
+<div class="ot-toolbar">
+    <div class="ot-toolbar__left">
+        <div class="ot-col-panel-wrap">
+            <button id="ot-btn-columns" class="ari-btn ari-btn--sm ari-btn--secondary"
+                    title="Show / hide columns">
+                <i class="fa-solid fa-table-columns"></i> Columns
+            </button>
+            {# Column toggle dropdown #}
+            <div id="ot-col-panel" class="ot-col-panel" style="display:none;">
+                <div class="ot-col-panel__hdr">
+                    <span><i class="fa-solid fa-table-columns"></i> Toggle Columns</span>
+                    <button id="ot-col-close" class="ot-col-panel__close"
+                            title="Close"><i class="fa-solid fa-xmark"></i></button>
+                </div>
+                <div id="ot-col-toggles" class="ot-col-panel__body">
+                    {# Filled by JS #}
+                </div>
+                <div class="ot-col-panel__footer">
+                    <button id="ot-col-all" class="ari-btn ari-btn--sm ari-btn--secondary">
+                        Show all
+                    </button>
+                    <button id="ot-col-none" class="ari-btn ari-btn--sm ari-btn--secondary">
+                        Hide all
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <button id="ot-btn-clear-filters" class="ari-btn ari-btn--sm ari-btn--secondary"
+                title="Clear all column filters">
+            <i class="fa-solid fa-filter-circle-xmark"></i> Clear Filters
+        </button>
+    </div>
+
+    <div class="ot-toolbar__right">
+        <label class="ot-perpage-label">
+            Rows per page
+            <select id="ot-perpage" class="ot-perpage-select">
+                <option value="25">25</option>
+                <option value="50" selected>50</option>
+                <option value="100">100</option>
+                <option value="250">250</option>
+                <option value="0">All</option>
+            </select>
+        </label>
+    </div>
+</div>
+
+{# ── Top horizontal scroll mirror ─────────────────────────────── #}
+<div id="ot-scroll-top" class="ot-scroll-top">
+    <div id="ot-scroll-sizer" class="ot-scroll-sizer"></div>
+</div>
+
+{# ── Table container ───────────────────────────────────────────── #}
+<div id="ot-table-wrap" class="ot-table-wrap">
+    <table id="ot-table" class="ot-table">
+        <thead>
+            <tr id="ot-header-row" class="ot-header-row"></tr>
+            <tr id="ot-filter-row" class="ot-filter-row"></tr>
+        </thead>
+        <tbody id="ot-tbody">
+            <tr><td class="ot-loading" colspan="20">
+                <i class="fa-solid fa-spinner fa-spin"></i> Loading data&hellip;
+            </td></tr>
+        </tbody>
+    </table>
+</div>
+
+{# ── Pagination bar ────────────────────────────────────────────── #}
+<div id="ot-pagination" class="ot-pagination">
+    <div id="ot-page-info" class="ot-page-info"></div>
+    <div class="ot-page-controls">
+        <button id="ot-btn-first" class="ari-btn ari-btn--sm ari-btn--secondary"
+                title="First page" disabled>
+            <i class="fa-solid fa-angles-left"></i>
+        </button>
+        <button id="ot-btn-prev" class="ari-btn ari-btn--sm ari-btn--secondary"
+                title="Previous page" disabled>
+            <i class="fa-solid fa-angle-left"></i>
+        </button>
+        <span class="ot-page-num">
+            Page&nbsp;<input id="ot-page-input" class="ot-page-input"
+                             type="number" min="1" value="1"
+                             title="Jump to page">
+            &nbsp;of&nbsp;<span id="ot-page-total">1</span>
+        </span>
+        <button id="ot-btn-next" class="ari-btn ari-btn--sm ari-btn--secondary"
+                title="Next page" disabled>
+            <i class="fa-solid fa-angle-right"></i>
+        </button>
+        <button id="ot-btn-last" class="ari-btn ari-btn--sm ari-btn--secondary"
+                title="Last page" disabled>
+            <i class="fa-solid fa-angles-right"></i>
+        </button>
+    </div>
+</div>
+
+{# ── JS config ─────────────────────────────────────────────────── #}
+<script>
+window.ARI_OBJ_TABLE = {
+    apiUrl:    {{ api_url | tojson }},
+    profileId: {{ profile.profile_id | tojson }},
+    instrument: {{ profile.instrument | tojson }},
+};
+</script>
+<script src="{{ url_for('static', filename='js/object_table.js') }}" defer></script>
+{% endblock %}

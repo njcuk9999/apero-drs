@@ -11,8 +11,11 @@ import os
 import re
 import secrets
 import socket
-from datetime import timedelta
+import smtplib
+from datetime import timedelta, datetime, timezone
+from email.message import EmailMessage
 from pathlib import Path
+from typing import Optional, List
 
 from flask import (Flask, render_template, redirect, url_for,
                    request, session, flash, jsonify,
@@ -29,14 +32,20 @@ from apero_ri.core.permissions import (
 from apero_ri.core.auth import (
     ensure_default_user, authenticate, get_effective_user,
     get_public_permissions, get_user_info,
+    hash_password, verify_password,
     search_users, list_all_users, update_user_groups,
     update_user_instruments,
-    delete_user, load_users,
+    delete_user, load_users, save_users,
     load_science_groups, save_science_groups, get_users_for_instrument,
     load_apero_profiles, save_apero_profiles,
     validate_path_exists, validate_database_connection,
     get_accessible_profiles,
+    load_async_tasks, save_async_tasks,
 )
+from apero_ri.core import task_runner
+from apero_ri.tasks import apero_async
+from apero_ri.core import user_data as ud
+from apero_ri.core import email_backend as eb
 from apero_ri.core.docs import (
     get_versions, get_default_version, get_doc_content,
     save_doc_content, save_uploaded_image, DOC_IMAGES,
@@ -179,8 +188,132 @@ class ARIApp(Flask):
         # Login route (special)
         self.add_url_rule('/login', 'login', self._login_view,
                           methods=['GET', 'POST'])
+        self.add_url_rule('/register', 'register', self._register_view,
+                  methods=['GET'])
         # Logout route (special)
         self.add_url_rule('/logout', 'logout', self._logout_view)
+
+        # Registration and account APIs
+        self.add_url_rule('/api/auth/register/start',
+                  'api_auth_register_start',
+                  self._api_auth_register_start,
+                  methods=['POST'])
+        self.add_url_rule('/api/auth/register/verify',
+                  'api_auth_register_verify',
+                  self._api_auth_register_verify,
+                  methods=['POST'])
+        self.add_url_rule('/api/user/account/get',
+                  'api_user_account_get',
+                  self._api_user_account_get)
+        self.add_url_rule('/api/user/account/update',
+                  'api_user_account_update',
+                  self._api_user_account_update,
+                  methods=['POST'])
+        self.add_url_rule('/api/user/account/request-primary-email',
+                  'api_user_account_request_primary_email',
+                  self._api_user_account_request_primary_email,
+                  methods=['POST'])
+        self.add_url_rule('/api/user/account/confirm-primary-email',
+                  'api_user_account_confirm_primary_email',
+                  self._api_user_account_confirm_primary_email,
+                  methods=['POST'])
+        self.add_url_rule('/api/user/pins/list',
+              'api_user_pins_list',
+              self._api_user_pins_list)
+        self.add_url_rule('/api/user/pins/toggle',
+              'api_user_pins_toggle',
+              self._api_user_pins_toggle,
+              methods=['POST'])
+        self.add_url_rule('/api/user/pins/remove',
+              'api_user_pins_remove',
+              self._api_user_pins_remove,
+              methods=['POST'])
+
+        # User links API routes
+        self.add_url_rule('/api/user/links/get', 'api_user_links_get',
+                  self._api_user_links_get)
+        self.add_url_rule('/api/user/links/add', 'api_user_links_add',
+                  self._api_user_links_add, methods=['POST'])
+        self.add_url_rule('/api/user/links/update', 'api_user_links_update',
+                  self._api_user_links_update, methods=['POST'])
+        self.add_url_rule('/api/user/links/remove', 'api_user_links_remove',
+                  self._api_user_links_remove, methods=['POST'])
+        self.add_url_rule('/api/user/links/add-section',
+                  'api_user_links_add_section',
+                  self._api_user_links_add_section, methods=['POST'])
+        self.add_url_rule('/api/user/links/remove-section',
+                  'api_user_links_remove_section',
+                  self._api_user_links_remove_section, methods=['POST'])
+
+        # User notes API routes
+        self.add_url_rule('/api/user/notes/list', 'api_user_notes_list',
+                  self._api_user_notes_list)
+        self.add_url_rule('/api/user/notes/get', 'api_user_notes_get',
+                  self._api_user_notes_get)
+        self.add_url_rule('/api/user/notes/save', 'api_user_notes_save',
+                  self._api_user_notes_save, methods=['POST'])
+        self.add_url_rule('/api/user/notes/delete', 'api_user_notes_delete',
+                  self._api_user_notes_delete, methods=['POST'])
+        self.add_url_rule('/api/user/notes/render', 'api_user_notes_render',
+                  self._api_user_notes_render, methods=['POST'])
+
+        # User calendar API routes
+        self.add_url_rule('/api/user/calendar/list', 'api_user_calendar_list',
+                  self._api_user_calendar_list)
+        self.add_url_rule('/api/user/calendar/save', 'api_user_calendar_save',
+                  self._api_user_calendar_save, methods=['POST'])
+        self.add_url_rule('/api/user/calendar/delete',
+                  'api_user_calendar_delete',
+                  self._api_user_calendar_delete, methods=['POST'])
+
+        # User todo API routes
+        self.add_url_rule('/api/user/todo/list', 'api_user_todo_list',
+                  self._api_user_todo_list)
+        self.add_url_rule('/api/user/todo/save', 'api_user_todo_save',
+                  self._api_user_todo_save, methods=['POST'])
+        self.add_url_rule('/api/user/todo/toggle', 'api_user_todo_toggle',
+                  self._api_user_todo_toggle, methods=['POST'])
+        self.add_url_rule('/api/user/todo/delete', 'api_user_todo_delete',
+                  self._api_user_todo_delete, methods=['POST'])
+        self.add_url_rule('/api/user/todo/reorder', 'api_user_todo_reorder',
+                  self._api_user_todo_reorder, methods=['POST'])
+
+        # Admin calendar API routes
+        self.add_url_rule('/api/admin/calendar/list',
+                  'api_admin_calendar_list',
+                  self._api_admin_calendar_list)
+        self.add_url_rule('/api/admin/calendar/save',
+                  'api_admin_calendar_save',
+                  self._api_admin_calendar_save, methods=['POST'])
+        self.add_url_rule('/api/admin/calendar/delete',
+                  'api_admin_calendar_delete',
+                  self._api_admin_calendar_delete, methods=['POST'])
+
+        # Admin links API routes
+        self.add_url_rule('/api/admin/links/get', 'api_admin_links_get',
+                  self._api_admin_links_get)
+        self.add_url_rule('/api/admin/links/add', 'api_admin_links_add',
+                  self._api_admin_links_add, methods=['POST'])
+        self.add_url_rule('/api/admin/links/update', 'api_admin_links_update',
+                          self._api_admin_links_update, methods=['POST'])
+        self.add_url_rule('/api/admin/links/remove', 'api_admin_links_remove',
+                          self._api_admin_links_remove, methods=['POST'])
+        self.add_url_rule('/api/admin/links/add-section',
+                          'api_admin_links_add_section',
+                          self._api_admin_links_add_section, methods=['POST'])
+        self.add_url_rule('/api/admin/links/remove-section',
+                          'api_admin_links_remove_section',
+                          self._api_admin_links_remove_section,
+                          methods=['POST'])
+
+        # Admin email API routes
+        self.add_url_rule('/api/admin/email/test', 'api_admin_email_test',
+                          self._api_admin_email_test)
+        self.add_url_rule('/api/admin/email/save', 'api_admin_email_save',
+                          self._api_admin_email_save, methods=['POST'])
+        self.add_url_rule('/api/admin/email/send-test',
+                          'api_admin_email_send_test',
+                          self._api_admin_email_send_test, methods=['POST'])
 
         # Documentation routes (edit, save, upload, images)
         self.add_url_rule('/docs/<page_ref>/edit', 'doc_edit',
@@ -271,6 +404,55 @@ class ARIApp(Flask):
                           'api_apero_profiles_test_db',
                           self._api_apero_profiles_test_db,
                           methods=['POST'])
+        self.add_url_rule('/api/admin/apero-profiles/test-tables',
+                  'api_apero_profiles_test_tables',
+                  self._api_apero_profiles_test_tables,
+                  methods=['POST'])
+
+        # Async tasks API routes
+        self.add_url_rule('/api/admin/async-tasks/list',
+                          'api_async_tasks_list',
+                          self._api_async_tasks_list)
+        self.add_url_rule('/api/admin/async-tasks/task-list',
+                          'api_async_tasks_task_list',
+                          self._api_async_tasks_task_list)
+        self.add_url_rule('/api/admin/async-tasks/save',
+                          'api_async_tasks_save',
+                          self._api_async_tasks_save,
+                          methods=['POST'])
+        self.add_url_rule('/api/admin/async-tasks/delete',
+                          'api_async_tasks_delete',
+                          self._api_async_tasks_delete,
+                          methods=['POST'])
+        self.add_url_rule('/api/admin/async-tasks/reorder',
+                          'api_async_tasks_reorder',
+                          self._api_async_tasks_reorder,
+                          methods=['POST'])
+        self.add_url_rule('/api/admin/async-tasks/toggle',
+                          'api_async_tasks_toggle',
+                          self._api_async_tasks_toggle,
+                          methods=['POST'])
+        self.add_url_rule('/api/admin/async-tasks/run-now',
+                          'api_async_tasks_run_now',
+                          self._api_async_tasks_run_now,
+                          methods=['POST'])
+        self.add_url_rule('/api/admin/async-tasks/run-all',
+                          'api_async_tasks_run_all',
+                          self._api_async_tasks_run_all,
+                          methods=['POST'])
+        self.add_url_rule('/api/admin/async-tasks/stop',
+                          'api_async_tasks_stop',
+                          self._api_async_tasks_stop,
+                          methods=['POST'])
+        self.add_url_rule('/api/admin/async-tasks/status',
+                          'api_async_tasks_status',
+                          self._api_async_tasks_status)
+        self.add_url_rule('/api/admin/async-tasks/read-file',
+                          'api_async_tasks_read_file',
+                          self._api_async_tasks_read_file)
+        self.add_url_rule('/api/admin/async-tasks/download-file',
+                  'api_async_tasks_download_file',
+                  self._api_async_tasks_download_file)
 
         # Register every page from pages.yaml
         for page_id, page_def in self.ari_pages.items():
@@ -284,16 +466,30 @@ class ARIApp(Flask):
                 self._make_page_view(page_id),
             )
 
-        # Dynamic reduction interface profile sub-pages
-        self.add_url_rule('/reduction_interface/<profile_id>',
+        # Dynamic data portal profile sub-pages
+        self.add_url_rule('/data_portal/<profile_id>',
                           'ri_profile',
                           self._ri_profile_view)
 
-        # Reduction interface profile health-check API
+        # Data portal profile health-check API
         self.add_url_rule('/api/ri/profile-health',
                           'api_ri_profile_health',
                           self._api_ri_profile_health,
                           methods=['POST'])
+
+        # Object table sub-page + data API
+        self.add_url_rule('/data_portal/<profile_id>/object-table',
+                          'ri_object_table',
+                          self._ri_object_table_view)
+        self.add_url_rule('/api/data-portal/object-table',
+                          'api_object_table',
+                          self._api_object_table)
+        self.add_url_rule('/data_portal/<profile_id>/observation-table',
+                  'ri_observation_table',
+                  self._ri_obs_table_view)
+        self.add_url_rule('/api/data-portal/obs-table',
+                  'api_obs_table',
+                  self._api_obs_table)
 
     # -----------------------------------------------------------------
     # View factories
@@ -350,6 +546,11 @@ class ARIApp(Flask):
 
             if view_perm not in perms:
                 flash('You do not have permission to view this page.',
+                      'warning')
+                return redirect(url_for('login'))
+
+            if page_id.startswith('home.user_portal') and not user_info:
+                flash('You must be logged in to access user portal pages.',
                       'warning')
                 return redirect(url_for('login'))
 
@@ -426,6 +627,12 @@ class ARIApp(Flask):
                     i for i in all_instr if i in user_instr
                 ]
 
+            # Async tasks page: inject instruments
+            if page_id == 'home.admin.async_tasks' and user_info:
+                params = load_parameters()
+                all_instr = params.get('instruments', {}).get('value', [])
+                context['instruments'] = all_instr
+
             # APERO profiles page: inject instruments + groups meta
             if page_id == 'home.admin.apero_profiles' and user_info:
                 params = load_parameters()
@@ -445,10 +652,54 @@ class ARIApp(Flask):
                 context['can_manage_groups'] = can_manage
                 context['inherited_map'] = inherited_map
 
-            # Reduction interface: inject accessible profiles
-            if page_id == 'home.reduction_interface':
+            # Data portal: inject accessible profiles
+            if page_id == 'home.data_portal':
                 db_ctx = self._build_ri_context(user_info)
                 context.update(db_ctx)
+                
+            # User portal data access summary
+            if page_id == 'home.user_portal.data_access' and user_info:
+                context.update(self._build_user_data_access_context(user_info))
+
+            # User portal support contacts
+            if page_id == 'home.user_portal.support' and user_info:
+                context.update(self._build_user_support_context(user_info))
+
+            # User portal links
+            if page_id == 'home.user_portal.links' and user_info:
+                context.update(self._build_user_links_context(user_info))
+
+            # User portal notes
+            if page_id == 'home.user_portal.notes' and user_info:
+                context['notes'] = ud.load_notes(user_info['username'])
+
+            # User portal calendar
+            if page_id == 'home.user_portal.calendar' and user_info:
+                context.update(self._build_user_calendar_context(user_info))
+
+            # User portal todo
+            if page_id == 'home.user_portal.todo' and user_info:
+                context['todo_items'] = ud.list_todo_items(
+                    user_info['username'])
+
+            # Admin calendar
+            if page_id == 'home.admin.calendar' and user_info:
+                context.update(
+                    self._build_admin_instrument_context(user_info, perms))
+
+            # Admin links
+            if page_id == 'home.admin.links' and user_info:
+                context.update(
+                    self._build_admin_instrument_context(user_info, perms))
+
+            # Admin email settings
+            if page_id == 'home.admin.email':
+                context.update(self._build_admin_email_context(perms))
+
+            # Admin index: inject card health status
+            if page_id == 'home.admin':
+                context['card_health'] = self._build_admin_card_health(
+                    user_info, perms)
 
             return render_template(template, **context)
 
@@ -457,7 +708,7 @@ class ARIApp(Flask):
         return view_func
 
     # -----------------------------------------------------------------
-    # Reduction interface helpers
+    # Data portal helpers
     # -----------------------------------------------------------------
     # Consistent colour palette for instrument identification
     _INSTRUMENT_PALETTE = [
@@ -479,8 +730,48 @@ class ARIApp(Flask):
         return {inst: palette[i % len(palette)]
                 for i, inst in enumerate(all_instr)}
 
+    @staticmethod
+    def _get_instrument_run_ids(instrument):
+        """Return sorted list of all unique run_ids from object table JSONs."""
+        import json as _json
+        from apero_ri.core.auth import ARI_DIR
+        tasks_dir = ARI_DIR / 'tasks' / instrument
+        run_ids = set()
+        if tasks_dir.exists():
+            for jf in tasks_dir.glob('object_table_*.json'):
+                try:
+                    with open(jf, encoding='utf-8') as f:
+                        data = _json.load(f)
+                    for row in data.get('rows', []):
+                        raw = str(row.get('RUN_ID', '') or '')
+                        for rid in raw.split(','):
+                            rid = rid.strip()
+                            if rid:
+                                run_ids.add(rid)
+                except Exception:
+                    pass
+        return sorted(run_ids)
+
+    def _get_user_accessible_run_ids(self, user_info, instrument):
+        """Return set of run_ids the user may see for this instrument.
+
+        Users only see run_ids from science groups where they are listed.
+        An empty set means they should see no rows.
+        """
+        if user_info is None:
+            return set()
+        username = user_info.get('username', '')
+        groups = load_science_groups(instrument)
+        accessible = set()
+        for group_data in groups.values():
+            if username in group_data.get('users', []):
+                for rid in group_data.get('run_ids', []):
+                    if rid:
+                        accessible.add(str(rid).strip())
+        return accessible
+
     def _build_ri_context(self, user_info):
-        """Build template context for the reduction interface page."""
+        """Build template context for the data portal page."""
         params = load_parameters()
         all_instruments = params.get('instruments', {}).get('value', [])
         colors = self._instrument_colors()
@@ -503,7 +794,7 @@ class ARIApp(Flask):
             profile_cards.append({
                 'instrument': prof['instrument'],
                 'profile_id': prof['profile_id'],
-                'url': f'/reduction_interface/{prof["profile_id"]}',
+                'url': f'/data_portal/{prof["profile_id"]}',
                 'color': color,
                 'apero_version': prof['data'].get('apero_version', ''),
                 'reduction_server': prof['data'].get(
@@ -517,10 +808,10 @@ class ARIApp(Flask):
         sidebar_tree = []
         for prof in accessible:
             sidebar_tree.append({
-                'id': f'home.reduction_interface.{prof["profile_id"]}',
+                'id': f'home.data_portal.{prof["profile_id"]}',
                 'label': prof['profile_id'],
                 'icon': 'fa-solid fa-laptop-code',
-                'url': f'/reduction_interface/{prof["profile_id"]}',
+                'url': f'/data_portal/{prof["profile_id"]}',
                 'depth': 0,
                 'active': False,
                 'expanded': False,
@@ -535,8 +826,264 @@ class ARIApp(Flask):
             'sidebar_tree': sidebar_tree,
         }
 
+    def _build_user_data_access_context(self, user_info):
+        """Build summary of user's data access by instrument."""
+        params = load_parameters()
+        all_instr = params.get('instruments', {}).get('value', [])
+        user_instr = set(user_info.get('instruments', []))
+        if user_instr:
+            instruments = [i for i in all_instr if i in user_instr]
+        else:
+            instruments = list(all_instr)
+
+        username = user_info.get('username', '')
+        accessible_profiles = get_accessible_profiles(user_info, self.ari_groups)
+        profiles_by_inst = {}
+        for prof in accessible_profiles:
+            profiles_by_inst.setdefault(prof['instrument'], []).append(
+                prof['profile_id']
+            )
+        for inst in profiles_by_inst:
+            profiles_by_inst[inst] = sorted(profiles_by_inst[inst])
+
+        access_rows = []
+        for inst in instruments:
+            groups = load_science_groups(inst)
+            member_groups = []
+            run_ids = set()
+            for gname, gdata in groups.items():
+                if username in gdata.get('users', []):
+                    member_groups.append(gname)
+                    for rid in gdata.get('run_ids', []):
+                        rid_s = str(rid).strip()
+                        if rid_s:
+                            run_ids.add(rid_s)
+
+            access_rows.append({
+                'instrument': inst,
+                'profiles': profiles_by_inst.get(inst, []),
+                'science_groups': sorted(member_groups),
+                'run_ids': sorted(run_ids),
+            })
+
+        return {
+            'data_access': access_rows,
+        }
+
+    def _build_user_support_context(self, user_info):
+        """Build support contact lists grouped by instrument and role."""
+        params = load_parameters()
+        all_instr = params.get('instruments', {}).get('value', [])
+        user_instr = set(user_info.get('instruments', []))
+        if user_instr:
+            instruments = [i for i in all_instr if i in user_instr]
+        else:
+            instruments = list(all_instr)
+
+        users = load_users()
+        role_order = ['admin', 'moderator', 'developer', 'monitor']
+        role_to_key = {
+            'admin': 'admins',
+            'moderator': 'moderators',
+            'developer': 'developers',
+            'monitor': 'monitors',
+        }
+
+        support_rows = []
+        for inst in instruments:
+            grouped = {
+                'admins': [],
+                'moderators': [],
+                'developers': [],
+                'monitors': [],
+            }
+
+            for username, user_data in users.items():
+                # Instrument scope: explicit instrument assignment or
+                # no assignment (treated as global support user).
+                u_instr = user_data.get('instruments', [])
+                if u_instr and inst not in u_instr:
+                    continue
+
+                direct_groups = set(user_data.get('groups', []))
+                all_groups = set(direct_groups)
+                for group_name in list(direct_groups):
+                    all_groups |= get_inherited_groups(group_name,
+                                                       self.ari_groups)
+
+                role_name = None
+                for candidate in role_order:
+                    if candidate in all_groups:
+                        role_name = candidate
+                        break
+                if role_name is None:
+                    continue
+
+                first_names = str(user_data.get('first_names', '')).strip()
+                last_name = str(user_data.get('last_name', '')).strip()
+                full_name = f'{first_names} {last_name}'.strip()
+                if not full_name:
+                    full_name = username
+
+                grouped[role_to_key[role_name]].append({
+                    'username': username,
+                    'full_name': full_name,
+                    'email': str(user_data.get('primary_email', '')).strip(),
+                })
+
+            for key in grouped:
+                grouped[key].sort(key=lambda item: item['username'].lower())
+
+            support_rows.append({
+                'instrument': inst,
+                **grouped,
+            })
+
+        return {
+            'support_by_instrument': support_rows,
+            'support_email': eb.get_support_email(),
+        }
+
+    def _build_user_links_context(self, user_info):
+        """Build context for user links page."""
+        username = user_info['username']
+        params = load_parameters()
+        all_instr = params.get('instruments', {}).get('value', [])
+        user_instr = user_info.get('instruments', [])
+        instruments = [i for i in all_instr if i in user_instr] or list(all_instr)
+        links_data = ud.load_links(username)
+        instr_links = {
+            i: ud.load_instrument_links(i) for i in instruments
+        }
+        return {
+            'links_data': links_data,
+            'instr_links': instr_links,
+            'instruments': instruments,
+        }
+
+    def _build_user_calendar_context(self, user_info):
+        """Build context for user calendar page."""
+        username = user_info['username']
+        params = load_parameters()
+        all_instr = params.get('instruments', {}).get('value', [])
+        user_instr = user_info.get('instruments', [])
+        instruments = [i for i in all_instr if i in user_instr] or list(all_instr)
+        events = ud.list_events(username)
+        instr_events = {}
+        for i in instruments:
+            instr_events[i] = ud.load_instrument_calendar(i).get('events', [])
+        return {
+            'events': events,
+            'instr_events': instr_events,
+            'instruments': instruments,
+        }
+
+    def _build_admin_instrument_context(self, user_info, perms):
+        """Build instruments context for admin calendar/links pages."""
+        params = load_parameters()
+        all_instr = params.get('instruments', {}).get('value', [])
+        user_instr = user_info.get('instruments', [])
+        instruments = [i for i in all_instr if i in user_instr] or list(all_instr)
+        can_manage = ('manage.admin.calendar' in perms
+                      or 'manage.admin.links' in perms)
+        return {
+            'instruments': instruments,
+            'can_manage': can_manage,
+        }
+
+    def _build_admin_email_context(self, perms):
+        """Build context for the admin email settings page."""
+        import json as _json
+        cfg = eb.load_email_config()
+        providers = eb.PROVIDER_DEFAULTS
+        current_provider = cfg.get('provider', 'log')
+        # Ensure current is valid
+        if current_provider not in providers:
+            current_provider = 'log'
+        return {
+            'email_cfg': cfg,
+            'providers': providers,
+            'providers_json': _json.dumps(providers),
+            'current_provider': current_provider,
+            'can_manage': 'manage.admin.email' in perms,
+        }
+
+    def _build_admin_card_health(self, user_info, perms) -> dict:
+        """
+        Return a dict keyed by admin card page_id with health dicts.
+        Each health dict has: status ('ok'|'warning'|'error'), message.
+        Only checks cards the user can see.
+        """
+        health = {}
+
+        # ── User Management: warn if any user has only 'public' group  ───
+        if 'view.admin' in perms:
+            try:
+                all_users = load_users()
+                unreviewed = sum(
+                    1 for _u, ud_data in all_users.items()
+                    if set(ud_data.get('groups', [])) <= {'public'}
+                )
+                if unreviewed:
+                    health['home.admin.users'] = {
+                        'status': 'warning',
+                        'message': f'{unreviewed} user(s) with only "public" access – may need group assignment.',
+                    }
+                else:
+                    health['home.admin.users'] = {'status': 'ok', 'message': ''}
+            except Exception:
+                pass
+
+        # ── Email: error if enabled but connection fails ──────────────────
+        if 'view.admin' in perms:
+            try:
+                email_cfg = eb.load_email_config()
+                if not email_cfg.get('enabled', False):
+                    health['home.admin.email'] = {
+                        'status': 'warning',
+                        'message': 'Email delivery is not enabled. Verification codes go to log file.',
+                    }
+                else:
+                    test = eb.test_email_connection(email_cfg)
+                    if test['ok']:
+                        health['home.admin.email'] = {'status': 'ok', 'message': ''}
+                    else:
+                        health['home.admin.email'] = {
+                            'status': 'error',
+                            'message': f'SMTP connection failed: {test["error"]}',
+                        }
+            except Exception:
+                pass
+
+        # ── APERO Profiles: error if any profile has DB/path failures ────
+        if 'manage.apero_profile' in perms:
+            try:
+                profiles = load_apero_profiles()
+                profile_errors = []
+                for name, cfg in profiles.items():
+                    db = validate_database_connection(
+                        cfg.get('DATABASE_MODE', ''),
+                        cfg.get('DATABASE_HOST', ''),
+                        cfg.get('DATABASE_USERNAME', ''),
+                        cfg.get('DATABASE_PASSWORD', ''),
+                        cfg.get('DATABASE_NAME', ''),
+                    )
+                    if not db.get('valid', False):
+                        profile_errors.append(name)
+                if profile_errors:
+                    health['home.admin.apero_profiles'] = {
+                        'status': 'error',
+                        'message': f'{len(profile_errors)} profile(s) with DB issues: {", ".join(profile_errors[:3])}{"…" if len(profile_errors) > 3 else ""}',
+                    }
+                else:
+                    health['home.admin.apero_profiles'] = {'status': 'ok', 'message': ''}
+            except Exception:
+                pass
+
+        return health
+
     def _ri_profile_view(self, profile_id):
-        """View function for dynamic reduction interface profile sub-pages."""
+        """View function for dynamic data portal profile sub-pages."""
         user_info = get_effective_user(session)
         if user_info:
             perms = resolve_user_permissions(
@@ -545,7 +1092,7 @@ class ARIApp(Flask):
         else:
             perms = get_public_permissions()
 
-        if 'view.reduction_interface' not in perms:
+        if 'view.data_portal' not in perms:
             flash('You do not have permission to view this page.',
                   'warning')
             return redirect(url_for('login'))
@@ -559,9 +1106,9 @@ class ARIApp(Flask):
 
         if not profile:
             flash('Profile not found or access denied.', 'warning')
-            return redirect(url_for('home_reduction_interface'))
+            return redirect(url_for('home_data_portal'))
 
-        page_id = f'home.reduction_interface.{profile_id}'
+        page_id = f'home.data_portal.{profile_id}'
         colors = self._instrument_colors()
         color = colors.get(profile['instrument'],
                            self._INSTRUMENT_PALETTE[0])
@@ -572,6 +1119,7 @@ class ARIApp(Flask):
                 'key': 'object_table',
                 'label': 'Astrophysical Object Table',
                 'icon': 'fa-solid fa-star',
+                'url': f'/data_portal/{profile_id}/object-table',
                 'description': 'Browse and search astrophysical objects '
                                'in this reduction profile.',
             },
@@ -579,6 +1127,7 @@ class ARIApp(Flask):
                 'key': 'obs_table',
                 'label': 'Observation Table',
                 'icon': 'fa-solid fa-binoculars',
+                'url': f'/data_portal/{profile_id}/observation-table',
                 'description': 'View night-by-night observations '
                                'and their reduction status.',
             },
@@ -608,21 +1157,21 @@ class ARIApp(Flask):
             'section_cards': section_cards,
             'health_url': '/api/ri/profile-health',
             # Sidebar
-            'sidebar_root': 'home.reduction_interface',
-            'sidebar_label': 'Reduction Interface',
+            'sidebar_root': 'home.data_portal',
+            'sidebar_label': 'Data Portal',
             'sidebar_icon': 'fa-solid fa-database',
-            'sidebar_url': '/reduction_interface',
+            'sidebar_url': '/data_portal',
         }
 
         # Build sidebar tree with current page highlighted
         sidebar_tree = []
         for prof in accessible:
-            pid = f'home.reduction_interface.{prof["profile_id"]}'
+            pid = f'home.data_portal.{prof["profile_id"]}'
             sidebar_tree.append({
                 'id': pid,
                 'label': prof['profile_id'],
                 'icon': 'fa-solid fa-laptop-code',
-                'url': f'/reduction_interface/{prof["profile_id"]}',
+                'url': f'/data_portal/{prof["profile_id"]}',
                 'depth': 0,
                 'active': pid == page_id,
                 'expanded': False,
@@ -630,7 +1179,7 @@ class ARIApp(Flask):
             })
         context['sidebar_tree'] = sidebar_tree
 
-        return render_template('reduction_interface/profile.html',
+        return render_template('data_portal/profile.html',
                                **context)
 
     def _api_ri_profile_health(self):
@@ -726,6 +1275,455 @@ class ARIApp(Flask):
         session.clear()
         flash('You have been logged out.', 'info')
         return redirect(url_for('home'))
+
+    def _register_view(self):
+        """Render self-registration page."""
+        return render_template('home/register.html',
+                               page_label='Register',
+                               page_icon='fa-solid fa-user-plus')
+
+    @staticmethod
+    def _send_verification_email(recipient_email: str,
+                                 code: str,
+                                 purpose: str) -> Optional[str]:
+        """Send verification code email via configured email backend.
+
+        Returns None on success, error string on failure.
+        Configuration is read from {ARI_DIR}/admin/email.yaml.
+        Falls back to log mode (writes to email_log.txt) when unconfigured.
+        """
+        return eb.send_verification_email(recipient_email, code, purpose)
+
+    @staticmethod
+    def _is_valid_username(username: str) -> bool:
+        """Validate lowercase username format."""
+        return bool(re.match(r'^[a-z][a-z0-9._-]{2,63}$', username))
+
+    # -----------------------------------------------------------------
+    # Registration & account APIs
+    # -----------------------------------------------------------------
+    def _api_auth_register_start(self):
+        """Start user registration by sending a 6-digit verification code."""
+        data = request.get_json()
+        if not data:
+            return jsonify(success=False, error='Missing data'), 400
+
+        username = str(data.get('username', '')).strip()
+        first_names = str(data.get('first_names', '')).strip()
+        last_name = str(data.get('last_name', '')).strip()
+        password = str(data.get('password', ''))
+        password_confirm = str(data.get('password_confirm', ''))
+
+        emails_raw = data.get('emails', [])
+        institutions_raw = data.get('institutions', [])
+        if isinstance(emails_raw, str):
+            emails_raw = [emails_raw]
+        if isinstance(institutions_raw, str):
+            institutions_raw = [institutions_raw]
+
+        emails = [str(e).strip() for e in emails_raw if str(e).strip()]
+        institutions = [str(i).strip() for i in institutions_raw if str(i).strip()]
+
+        if not self._is_valid_username(username):
+            return jsonify(success=False,
+                           error='Username must be lowercase and 3+ chars.'), 400
+        if not first_names or not last_name:
+            return jsonify(success=False,
+                           error='First name(s) and last name are required.'), 400
+        if not emails:
+            return jsonify(success=False,
+                           error='At least one email is required.'), 400
+        if not institutions:
+            return jsonify(success=False,
+                           error='At least one institution is required.'), 400
+        if password != password_confirm:
+            return jsonify(success=False,
+                           error='Passwords do not match.'), 400
+        if len(password) < 8:
+            return jsonify(success=False,
+                           error='Password must be at least 8 characters.'), 400
+
+        users = load_users()
+        if username in users:
+            return jsonify(success=False,
+                           error='Username already exists.'), 409
+
+        code = f'{secrets.randbelow(1_000_000):06d}'
+        expires_at = (datetime.now(timezone.utc) + timedelta(minutes=15)).isoformat()
+
+        err = self._send_verification_email(emails[0], code, 'registration')
+        if err:
+            return jsonify(success=False,
+                           error=f'Failed to send verification email: {err}'), 500
+
+        session['pending_registration'] = {
+            'username': username,
+            'first_names': first_names,
+            'last_name': last_name,
+            'emails': emails,
+            'primary_email': emails[0],
+            'institutions': institutions,
+            'primary_institution': institutions[0],
+            'password_hash': hash_password(password),
+            'code': code,
+            'expires_at': expires_at,
+        }
+        return jsonify(success=True)
+
+    def _api_auth_register_verify(self):
+        """Verify registration code and create user account."""
+        data = request.get_json()
+        if not data:
+            return jsonify(success=False, error='Missing data'), 400
+
+        pending = session.get('pending_registration')
+        if not pending:
+            return jsonify(success=False,
+                           error='No pending registration found.'), 400
+
+        code = str(data.get('code', '')).strip()
+        if code != str(pending.get('code', '')):
+            return jsonify(success=False,
+                           error='Invalid verification code.'), 400
+
+        exp = pending.get('expires_at')
+        if not exp or datetime.now(timezone.utc) > datetime.fromisoformat(exp):
+            session.pop('pending_registration', None)
+            return jsonify(success=False,
+                           error='Verification code expired. Start again.'), 400
+
+        username = pending['username']
+        users = load_users()
+        if username in users:
+            session.pop('pending_registration', None)
+            return jsonify(success=False,
+                           error='Username already exists.'), 409
+
+        users[username] = {
+            'password': pending['password_hash'],
+            'groups': ['public'],
+            'instruments': [],
+            'first_names': pending['first_names'],
+            'last_name': pending['last_name'],
+            'emails': pending['emails'],
+            'primary_email': pending['primary_email'],
+            'email_verified': True,
+            'institutions': pending['institutions'],
+            'primary_institution': pending['primary_institution'],
+            'created_at': datetime.now(timezone.utc).isoformat(),
+            'last_login': None,
+        }
+        save_users(users)
+
+        session.pop('pending_registration', None)
+        session['user'] = username
+        session['last_login'] = None
+        session.pop('login_as', None)
+        return jsonify(success=True)
+
+    def _require_user(self):
+        """Require a logged in effective user."""
+        user_info = get_effective_user(session)
+        if not user_info:
+            return None
+        return user_info
+
+    def _api_user_account_get(self):
+        """Get current user's account profile."""
+        user_info = self._require_user()
+        if not user_info:
+            return jsonify(success=False, error='Unauthorized'), 401
+
+        username = user_info['username']
+        users = load_users()
+        user = users.get(username, {})
+        return jsonify(success=True,
+                       account={
+                           'username': username,
+                           'first_names': user.get('first_names', ''),
+                           'last_name': user.get('last_name', ''),
+                           'emails': user.get('emails', []),
+                           'primary_email': user.get('primary_email', ''),
+                           'email_verified': bool(user.get('email_verified', False)),
+                           'institutions': user.get('institutions', []),
+                           'primary_institution': user.get('primary_institution', ''),
+                       })
+
+    def _api_user_account_update(self):
+        """Update account fields except primary email change verification."""
+        user_info = self._require_user()
+        if not user_info:
+            return jsonify(success=False, error='Unauthorized'), 401
+
+        data = request.get_json()
+        if not data:
+            return jsonify(success=False, error='Missing data'), 400
+
+        username = user_info['username']
+        users = load_users()
+        if username not in users:
+            return jsonify(success=False, error='User not found'), 404
+        user = users[username]
+
+        first_names = str(data.get('first_names', '')).strip()
+        last_name = str(data.get('last_name', '')).strip()
+        emails_raw = data.get('emails', [])
+        institutions_raw = data.get('institutions', [])
+        primary_institution = str(data.get('primary_institution', '')).strip()
+
+        if isinstance(emails_raw, str):
+            emails_raw = [emails_raw]
+        if isinstance(institutions_raw, str):
+            institutions_raw = [institutions_raw]
+
+        emails = [str(e).strip() for e in emails_raw if str(e).strip()]
+        institutions = [str(i).strip() for i in institutions_raw if str(i).strip()]
+
+        if not first_names or not last_name:
+            return jsonify(success=False,
+                           error='First name(s) and last name are required.'), 400
+        if not emails:
+            return jsonify(success=False,
+                           error='At least one email is required.'), 400
+        if not institutions:
+            return jsonify(success=False,
+                           error='At least one institution is required.'), 400
+        if not primary_institution:
+            return jsonify(success=False,
+                           error='Primary institution is required.'), 400
+        if primary_institution not in institutions:
+            return jsonify(success=False,
+                           error='Primary institution must be in institutions list.'), 400
+
+        # Keep existing primary email unless explicitly changed via verify flow
+        primary_email = user.get('primary_email', emails[0])
+        if primary_email not in emails:
+            emails.insert(0, primary_email)
+
+        user['first_names'] = first_names
+        user['last_name'] = last_name
+        user['emails'] = emails
+        user['institutions'] = institutions
+        user['primary_institution'] = primary_institution
+
+        current_password = str(data.get('current_password', ''))
+        new_password = str(data.get('new_password', ''))
+        confirm_password = str(data.get('confirm_password', ''))
+        if current_password or new_password or confirm_password:
+            if not (current_password and new_password and confirm_password):
+                return jsonify(success=False,
+                               error='Fill all password fields to change password.'), 400
+            if not verify_password(current_password, user.get('password', '')):
+                return jsonify(success=False,
+                               error='Current password is incorrect.'), 400
+            if new_password != confirm_password:
+                return jsonify(success=False,
+                               error='New passwords do not match.'), 400
+            if len(new_password) < 8:
+                return jsonify(success=False,
+                               error='New password must be at least 8 characters.'), 400
+            user['password'] = hash_password(new_password)
+
+        users[username] = user
+        save_users(users)
+        return jsonify(success=True)
+
+    def _api_user_account_request_primary_email(self):
+        """Request primary email change by sending verification code."""
+        user_info = self._require_user()
+        if not user_info:
+            return jsonify(success=False, error='Unauthorized'), 401
+
+        data = request.get_json()
+        if not data:
+            return jsonify(success=False, error='Missing data'), 400
+        new_email = str(data.get('new_primary_email', '')).strip()
+        if not new_email:
+            return jsonify(success=False,
+                           error='New primary email is required.'), 400
+
+        code = f'{secrets.randbelow(1_000_000):06d}'
+        expires_at = (datetime.now(timezone.utc) + timedelta(minutes=15)).isoformat()
+        err = self._send_verification_email(new_email, code, 'primary-email-change')
+        if err:
+            return jsonify(success=False,
+                           error=f'Failed to send verification email: {err}'), 500
+
+        session['pending_primary_email_change'] = {
+            'username': user_info['username'],
+            'new_primary_email': new_email,
+            'code': code,
+            'expires_at': expires_at,
+        }
+        return jsonify(success=True)
+
+    def _api_user_account_confirm_primary_email(self):
+        """Confirm primary email change with verification code."""
+        user_info = self._require_user()
+        if not user_info:
+            return jsonify(success=False, error='Unauthorized'), 401
+
+        data = request.get_json()
+        if not data:
+            return jsonify(success=False, error='Missing data'), 400
+
+        pending = session.get('pending_primary_email_change')
+        if not pending or pending.get('username') != user_info['username']:
+            return jsonify(success=False,
+                           error='No pending primary email change.'), 400
+
+        code = str(data.get('code', '')).strip()
+        if code != str(pending.get('code', '')):
+            return jsonify(success=False,
+                           error='Invalid verification code.'), 400
+
+        exp = pending.get('expires_at')
+        if not exp or datetime.now(timezone.utc) > datetime.fromisoformat(exp):
+            session.pop('pending_primary_email_change', None)
+            return jsonify(success=False,
+                           error='Verification code expired. Request a new one.'), 400
+
+        username = user_info['username']
+        users = load_users()
+        user = users.get(username)
+        if not user:
+            session.pop('pending_primary_email_change', None)
+            return jsonify(success=False, error='User not found'), 404
+
+        new_email = pending['new_primary_email']
+        emails = user.get('emails', []) or []
+        if new_email not in emails:
+            emails.insert(0, new_email)
+        user['emails'] = emails
+        user['primary_email'] = new_email
+        user['email_verified'] = True
+        users[username] = user
+        save_users(users)
+
+        session.pop('pending_primary_email_change', None)
+        return jsonify(success=True)
+
+    @staticmethod
+    def _normalize_pinned_pages(value) -> List[dict]:
+        """Normalize persisted pinned pages into a clean list of dicts."""
+        if not isinstance(value, list):
+            return []
+
+        normalized = []
+        seen_ids = set()
+        for item in value:
+            if not isinstance(item, dict):
+                continue
+            page_id = str(item.get('page_id', '')).strip()
+            label = str(item.get('label', '')).strip()
+            url = str(item.get('url', '')).strip()
+            icon = str(item.get('icon', '')).strip()
+            pinned_at = str(item.get('pinned_at', '')).strip()
+
+            if not page_id or not label or not url or not url.startswith('/'):
+                continue
+            if page_id in seen_ids:
+                continue
+
+            seen_ids.add(page_id)
+            normalized.append({
+                'page_id': page_id,
+                'label': label,
+                'url': url,
+                'icon': icon or 'fa-solid fa-thumbtack',
+                'pinned_at': pinned_at,
+            })
+
+        return normalized
+
+    def _api_user_pins_list(self):
+        """List pinned pages for the current user."""
+        user_info = self._require_user()
+        if not user_info:
+            return jsonify(success=False, error='Unauthorized'), 401
+
+        username = user_info['username']
+        users = load_users()
+        user = users.get(username, {})
+        pins = self._normalize_pinned_pages(user.get('pinned_pages', []))
+        return jsonify(success=True, pins=pins)
+
+    def _api_user_pins_toggle(self):
+        """Toggle pin state for a page for the current user."""
+        user_info = self._require_user()
+        if not user_info:
+            return jsonify(success=False, error='Unauthorized'), 401
+
+        data = request.get_json()
+        if not data:
+            return jsonify(success=False, error='Missing data'), 400
+
+        page_id = str(data.get('page_id', '')).strip()
+        label = str(data.get('label', '')).strip()
+        url = str(data.get('url', '')).strip()
+        icon = str(data.get('icon', '')).strip() or 'fa-solid fa-thumbtack'
+        if not page_id or not label or not url or not url.startswith('/'):
+            return jsonify(success=False,
+                           error='page_id, label, and relative url are required.'), 400
+        if page_id in ('home.login', 'home.logout'):
+            return jsonify(success=False,
+                           error='This page cannot be pinned.'), 400
+
+        username = user_info['username']
+        users = load_users()
+        user = users.get(username)
+        if not user:
+            return jsonify(success=False, error='User not found'), 404
+
+        pins = self._normalize_pinned_pages(user.get('pinned_pages', []))
+        existing = {pin['page_id']: pin for pin in pins}
+        now_iso = datetime.now(timezone.utc).isoformat()
+
+        if page_id in existing:
+            pins = [pin for pin in pins if pin['page_id'] != page_id]
+            pinned = False
+        else:
+            pins.append({
+                'page_id': page_id,
+                'label': label,
+                'url': url,
+                'icon': icon,
+                'pinned_at': now_iso,
+            })
+            pinned = True
+
+        user['pinned_pages'] = pins
+        users[username] = user
+        save_users(users)
+        return jsonify(success=True, pinned=pinned, pins=pins)
+
+    def _api_user_pins_remove(self):
+        """Remove a pin from the current user's pinned pages list."""
+        user_info = self._require_user()
+        if not user_info:
+            return jsonify(success=False, error='Unauthorized'), 401
+
+        data = request.get_json()
+        if not data:
+            return jsonify(success=False, error='Missing data'), 400
+
+        page_id = str(data.get('page_id', '')).strip()
+        if not page_id:
+            return jsonify(success=False, error='page_id is required.'), 400
+
+        username = user_info['username']
+        users = load_users()
+        user = users.get(username)
+        if not user:
+            return jsonify(success=False, error='User not found'), 404
+
+        pins = self._normalize_pinned_pages(user.get('pinned_pages', []))
+        pins = [pin for pin in pins if pin['page_id'] != page_id]
+
+        user['pinned_pages'] = pins
+        users[username] = user
+        save_users(users)
+        return jsonify(success=True, pins=pins)
 
     # -----------------------------------------------------------------
     # Documentation views
@@ -830,6 +1828,330 @@ class ARIApp(Flask):
     def _doc_image_view(filename: str):
         """Serve uploaded documentation images."""
         return send_from_directory(str(DOC_IMAGES), filename)
+
+    # -----------------------------------------------------------------
+    # Object table sub-page + API
+    # -----------------------------------------------------------------
+    def _ri_object_table_view(self, profile_id):
+        """Serve the astrophysical object table page for a profile."""
+        user_info = get_effective_user(session)
+        if user_info:
+            perms = resolve_user_permissions(
+                user_info['groups'], self.ari_groups
+            )
+        else:
+            perms = get_public_permissions()
+
+        if 'view.data_portal' not in perms:
+            flash('You do not have permission to view this page.',
+                  'warning')
+            return redirect(url_for('login'))
+
+        accessible = get_accessible_profiles(user_info, self.ari_groups)
+        profile = None
+        for prof in accessible:
+            if prof['profile_id'] == profile_id:
+                profile = prof
+                break
+
+        if not profile:
+            flash('Profile not found or access denied.', 'warning')
+            return redirect(url_for('home_data_portal'))
+
+        page_id = f'home.data_portal.{profile_id}.object_table'
+        colors = self._instrument_colors()
+        color = colors.get(profile['instrument'],
+                           self._INSTRUMENT_PALETTE[0])
+
+        # Build sidebar: all profiles, with sub-items under the current one
+        sidebar_tree = []
+        for prof in accessible:
+            pid = f'home.data_portal.{prof["profile_id"]}'
+            is_current = prof['profile_id'] == profile_id
+            sidebar_tree.append({
+                'id': pid,
+                'label': prof['profile_id'],
+                'icon': 'fa-solid fa-laptop-code',
+                'url': f'/data_portal/{prof["profile_id"]}',
+                'depth': 0,
+                'active': False,
+            })
+            if is_current:
+                sidebar_tree.append({
+                    'id': page_id,
+                    'label': 'Object Table',
+                    'icon': 'fa-solid fa-star',
+                    'url': f'/data_portal/{prof["profile_id"]}/object-table',
+                    'depth': 1,
+                    'active': True,
+                })
+
+        context = {
+            'page_id': page_id,
+            'page_label': f'{profile_id}: Object Table',
+            'page_icon': 'fa-solid fa-star',
+            'is_parent': False,
+            'profile': profile,
+            'profile_color': color,
+            'api_url': '/api/data-portal/object-table',
+            'sidebar_root': 'home.data_portal',
+            'sidebar_label': 'Data Portal',
+            'sidebar_icon': 'fa-solid fa-database',
+            'sidebar_url': '/data_portal',
+            'sidebar_tree': sidebar_tree,
+        }
+        return render_template('data_portal/object_table.html', **context)
+
+    def _api_object_table(self):
+        """Return object table rows for a profile, filtered by science group."""
+        import json as _json
+        from apero_ri.core.auth import ARI_DIR
+
+        user_info = get_effective_user(session)
+        if user_info:
+            perms = resolve_user_permissions(
+                user_info['groups'], self.ari_groups
+            )
+        else:
+            perms = get_public_permissions()
+
+        if 'view.data_portal' not in perms:
+            return jsonify(success=False, error='Unauthorized'), 401
+
+        profile_id = request.args.get('profile_id', '').strip()
+        if not profile_id:
+            return jsonify(success=False, error='Missing profile_id'), 400
+
+        accessible = get_accessible_profiles(user_info, self.ari_groups)
+        profile = None
+        for prof in accessible:
+            if prof['profile_id'] == profile_id:
+                profile = prof
+                break
+        if not profile:
+            return jsonify(success=False, error='Profile not found'), 404
+
+        instrument = profile['instrument']
+
+        # Determine which run_ids the user may see
+        accessible_run_ids = self._get_user_accessible_run_ids(
+            user_info, instrument
+        )
+
+        # Locate the JSON file
+        tasks_dir = ARI_DIR / 'tasks' / instrument
+        json_path = tasks_dir / f'object_table_{profile_id}.json'
+
+        if not json_path.exists():
+            return jsonify(
+                success=True,
+                rows=[],
+                columns=[],
+                generated_at=None,
+                total_rows=0,
+                message='No object table data found. '
+                        'Run the object table task first.',
+            )
+
+        try:
+            with open(json_path, encoding='utf-8') as f:
+                data = _json.load(f)
+        except Exception as exc:
+            return jsonify(
+                success=False, error=f'Failed to load data: {exc}'
+            ), 500
+
+        all_rows = data.get('rows', [])
+        generated_at = (data.get('generated_at')
+                        or data.get('metadata', {}).get('GENERATED_AT'))
+
+        # Filter rows based on accessible run_ids
+        filtered = []
+        for row in all_rows:
+            raw = str(row.get('RUN_ID', '') or '')
+            row_rids = {r.strip() for r in raw.split(',') if r.strip()}
+            if row_rids & accessible_run_ids:
+                filtered.append(row)
+
+        # Build column list (exclude RUN_ID)
+        skip = {'RUN_ID'}
+        columns = [c for c in (all_rows[0].keys() if all_rows else [])
+                   if c not in skip]
+
+        # Strip skipped columns from each row
+        clean_rows = [
+            {k: v for k, v in row.items() if k not in skip}
+            for row in filtered
+        ]
+
+        return jsonify(
+            success=True,
+            rows=clean_rows,
+            columns=columns,
+            generated_at=generated_at,
+            total_rows=len(all_rows),
+        )
+
+    def _ri_obs_table_view(self, profile_id):
+        """Serve the observation table page for a profile."""
+        user_info = get_effective_user(session)
+        if user_info:
+            perms = resolve_user_permissions(
+                user_info['groups'], self.ari_groups
+            )
+        else:
+            perms = get_public_permissions()
+
+        if 'view.data_portal' not in perms:
+            flash('You do not have permission to view this page.',
+                  'warning')
+            return redirect(url_for('login'))
+
+        accessible = get_accessible_profiles(user_info, self.ari_groups)
+        profile = None
+        for prof in accessible:
+            if prof['profile_id'] == profile_id:
+                profile = prof
+                break
+
+        if not profile:
+            flash('Profile not found or access denied.', 'warning')
+            return redirect(url_for('home_data_portal'))
+
+        page_id = f'home.data_portal.{profile_id}.obs_table'
+        colors = self._instrument_colors()
+        color = colors.get(profile['instrument'],
+                           self._INSTRUMENT_PALETTE[0])
+
+        sidebar_tree = []
+        for prof in accessible:
+            pid = f'home.data_portal.{prof["profile_id"]}'
+            is_current = prof['profile_id'] == profile_id
+            sidebar_tree.append({
+                'id': pid,
+                'label': prof['profile_id'],
+                'icon': 'fa-solid fa-laptop-code',
+                'url': f'/data_portal/{prof["profile_id"]}',
+                'depth': 0,
+                'active': False,
+            })
+            if is_current:
+                sidebar_tree.append({
+                    'id': f'home.data_portal.{prof["profile_id"]}.object_table',
+                    'label': 'Object Table',
+                    'icon': 'fa-solid fa-star',
+                    'url': f'/data_portal/{prof["profile_id"]}/object-table',
+                    'depth': 1,
+                    'active': False,
+                })
+                sidebar_tree.append({
+                    'id': page_id,
+                    'label': 'Observation Table',
+                    'icon': 'fa-solid fa-binoculars',
+                    'url': f'/data_portal/{prof["profile_id"]}/observation-table',
+                    'depth': 1,
+                    'active': True,
+                })
+
+        context = {
+            'page_id': page_id,
+            'page_label': f'{profile_id}: Observation Table',
+            'page_icon': 'fa-solid fa-binoculars',
+            'is_parent': False,
+            'profile': profile,
+            'profile_color': color,
+            'api_url': '/api/data-portal/obs-table',
+            'sidebar_root': 'home.data_portal',
+            'sidebar_label': 'Data Portal',
+            'sidebar_icon': 'fa-solid fa-database',
+            'sidebar_url': '/data_portal',
+            'sidebar_tree': sidebar_tree,
+        }
+        return render_template('data_portal/obs_table.html', **context)
+
+    def _api_obs_table(self):
+        """Return observation table rows for a profile, filtered by science group."""
+        import json as _json
+        from apero_ri.core.auth import ARI_DIR
+
+        user_info = get_effective_user(session)
+        if user_info:
+            perms = resolve_user_permissions(
+                user_info['groups'], self.ari_groups
+            )
+        else:
+            perms = get_public_permissions()
+
+        if 'view.data_portal' not in perms:
+            return jsonify(success=False, error='Unauthorized'), 401
+
+        profile_id = request.args.get('profile_id', '').strip()
+        if not profile_id:
+            return jsonify(success=False, error='Missing profile_id'), 400
+
+        accessible = get_accessible_profiles(user_info, self.ari_groups)
+        profile = None
+        for prof in accessible:
+            if prof['profile_id'] == profile_id:
+                profile = prof
+                break
+        if not profile:
+            return jsonify(success=False, error='Profile not found'), 404
+
+        instrument = profile['instrument']
+        accessible_run_ids = self._get_user_accessible_run_ids(
+            user_info, instrument
+        )
+
+        tasks_dir = ARI_DIR / 'tasks' / instrument
+        json_path = tasks_dir / f'observation_table_{profile_id}.json'
+
+        if not json_path.exists():
+            return jsonify(
+                success=True,
+                rows=[],
+                columns=[],
+                generated_at=None,
+                total_rows=0,
+                message='No observation table data found. '
+                        'Run the observation table task first.',
+            )
+
+        try:
+            with open(json_path, encoding='utf-8') as f:
+                data = _json.load(f)
+        except Exception as exc:
+            return jsonify(
+                success=False, error=f'Failed to load data: {exc}'
+            ), 500
+
+        all_rows = data.get('rows', [])
+        generated_at = (data.get('generated_at')
+                        or data.get('metadata', {}).get('GENERATED_AT'))
+
+        filtered = []
+        for row in all_rows:
+            raw = str(row.get('RUN_ID', '') or '')
+            row_rids = {r.strip() for r in raw.split(',') if r.strip()}
+            if row_rids & accessible_run_ids:
+                filtered.append(row)
+
+        skip = {'RUN_ID'}
+        columns = [c for c in (all_rows[0].keys() if all_rows else [])
+                   if c not in skip]
+
+        clean_rows = [
+            {k: v for k, v in row.items() if k not in skip}
+            for row in filtered
+        ]
+
+        return jsonify(
+            success=True,
+            rows=clean_rows,
+            columns=columns,
+            generated_at=generated_at,
+            total_rows=len(all_rows),
+        )
 
     # -----------------------------------------------------------------
     # Admin user management API
@@ -1123,8 +2445,8 @@ class ARIApp(Flask):
         groups = load_science_groups(instrument)
         group_names = sorted(groups.keys())
 
-        # Also get available run ids and users for this instrument
-        run_ids = ['1111', '2222', '3333']  # Proxy for now
+        # Derive available run_ids from all object table JSONs for instrument
+        run_ids = self._get_instrument_run_ids(instrument)
         available_users = get_users_for_instrument(instrument)
 
         return jsonify(
@@ -1285,6 +2607,7 @@ class ARIApp(Flask):
             'DATABASE_PASSWORD', 'DATABASE_NAME',
             'ASTROM_TABLENAME', 'CALIB_TABLENAME', 'FINDEX_TABLENAME',
             'LOG_TABLENAME', 'TELLU_TABLENAME', 'REJECT_TABLENAME',
+            'SCIENCE_FIBER',
         ]
         _PATH_KEYS = [
             'PATH_RAW', 'PATH_PP', 'PATH_RED', 'PATH_CALIB',
@@ -1304,6 +2627,8 @@ class ARIApp(Flask):
             # Copy DB fields
             for k in _DB_KEYS:
                 entry[k] = cfg.get(k, '')
+            # SCIENCE_TYPES is a list
+            entry['SCIENCE_TYPES'] = cfg.get('SCIENCE_TYPES', [])
             # Copy path fields with exists check
             all_paths_ok = True
             for k in _PATH_KEYS:
@@ -1350,6 +2675,7 @@ class ARIApp(Flask):
             'DATABASE_PASSWORD', 'DATABASE_NAME',
             'ASTROM_TABLENAME', 'CALIB_TABLENAME', 'FINDEX_TABLENAME',
             'LOG_TABLENAME', 'TELLU_TABLENAME', 'REJECT_TABLENAME',
+            'SCIENCE_FIBER',
         ]
         _PATH_KEYS = [
             'PATH_RAW', 'PATH_PP', 'PATH_RED', 'PATH_CALIB',
@@ -1380,6 +2706,16 @@ class ARIApp(Flask):
                 ), 400
             values[k] = val
 
+        # SCIENCE_TYPES: accepted as a list or comma-separated string
+        science_types_raw = data.get('SCIENCE_TYPES', [])
+        if isinstance(science_types_raw, str):
+            science_types = [t.strip() for t in science_types_raw.split(',') if t.strip()]
+        else:
+            science_types = [str(t).strip() for t in science_types_raw if str(t).strip()]
+        if not science_types:
+            return jsonify(success=False, error='SCIENCE_TYPES is required'), 400
+        values['SCIENCE_TYPES'] = science_types
+
         # Validate DATABASE_MODE
         if values['DATABASE_MODE'] not in ('mysql+pymysql',):
             return jsonify(
@@ -1400,17 +2736,21 @@ class ARIApp(Flask):
             )
             order = max_order + 1
 
-        # Preserve existing groups when editing
-        existing_groups = []
+        # Groups are required and can be provided on save.
         if name in inst_profiles:
             existing_groups = inst_profiles[name].get('groups', [])
+        else:
+            existing_groups = []
+        new_groups = data.get('groups', existing_groups)
+        if not isinstance(new_groups, list):
+            return jsonify(success=False,
+                           error='groups must be a list'), 400
+        new_groups = [str(g).strip() for g in new_groups if str(g).strip()]
+        if not new_groups:
+            return jsonify(success=False,
+                           error='At least one group is required'), 400
 
-        # Require at least one group
-        if not existing_groups and name not in inst_profiles:
-            # New profile – groups will be set after first save via cards
-            pass
-
-        profile_data = {'DISPLAY_ORDER': order, 'groups': existing_groups}
+        profile_data = {'DISPLAY_ORDER': order, 'groups': new_groups}
         profile_data.update(values)
         inst_profiles[name] = profile_data
         save_apero_profiles(all_profiles)
@@ -1578,6 +2918,1017 @@ class ARIApp(Flask):
             mode, host, username, password, db_name
         )
         return jsonify(success=True, **result)
+
+    def _api_apero_profiles_test_tables(self):
+        """Test table names and fetch available fibers / DPRTYPE options."""
+        user_info, perms = self._require_apero_profile_perm()
+        if not user_info:
+            return jsonify(success=False, error='Unauthorized'), 401
+
+        data = request.get_json()
+        if not data:
+            return jsonify(success=False, error='Missing data'), 400
+
+        mode = data.get('DATABASE_MODE', '').strip()
+        host = data.get('DATABASE_HOST', '').strip()
+        username = data.get('DATABASE_USERNAME', '').strip()
+        password = data.get('DATABASE_PASSWORD', '')
+        db_name = data.get('DATABASE_NAME', '').strip()
+
+        table_keys = [
+            'ASTROM_TABLENAME', 'CALIB_TABLENAME', 'FINDEX_TABLENAME',
+            'LOG_TABLENAME', 'TELLU_TABLENAME', 'REJECT_TABLENAME',
+        ]
+
+        if not all([mode, host, username, db_name]):
+            return jsonify(success=False,
+                           error='All database fields are required'), 400
+
+        tables = {}
+        for key in table_keys:
+            val = str(data.get(key, '')).strip()
+            if not val:
+                return jsonify(success=False,
+                               error=f'{key} is required'), 400
+            if not re.match(r'^[A-Za-z0-9_\.]+$', val):
+                return jsonify(success=False,
+                               error=f'Invalid table name: {key}'), 400
+            tables[key] = val
+
+        def qtable(name):
+            # Quote db/table identifiers defensively while preserving schema.table
+            return '.'.join(f'`{part}`' for part in name.split('.'))
+
+        db_params = {
+            'DATABASE_MODE': mode,
+            'DATABASE_HOST': host,
+            'DATABASE_USER': username,
+            'DATABASE_PASSWORD': password,
+            'DATABASE_NAME': db_name,
+        }
+
+        try:
+            # Check each required table is queryable
+            for key in table_keys:
+                query = f'SELECT 1 AS ok FROM {qtable(tables[key])} LIMIT 1'
+                apero_async.database_query(db_params, query)
+
+            # Populate science options from FINDEX
+            findex = qtable(tables['FINDEX_TABLENAME'])
+            # Fetch unique values only; keep SQL lightweight for large FINDEX.
+            fiber_rows = apero_async.database_query(
+                db_params,
+                f"""
+                SELECT KW_FIBER AS value
+                FROM {findex}
+                WHERE KW_FIBER IS NOT NULL
+                  AND KW_FIBER <> ''
+                GROUP BY KW_FIBER
+                """,
+            )
+            dpr_rows = apero_async.database_query(
+                db_params,
+                f"""
+                SELECT KW_DPRTYPE AS value
+                FROM {findex}
+                WHERE KW_DPRTYPE IS NOT NULL
+                  AND KW_DPRTYPE <> ''
+                GROUP BY KW_DPRTYPE
+                """,
+            )
+
+            fibers = sorted({
+                str(r.get('value')).strip() for r in fiber_rows
+                if str(r.get('value', '')).strip()
+            })
+            dprtypes = sorted({
+                str(r.get('value')).strip() for r in dpr_rows
+                if str(r.get('value', '')).strip()
+            })
+
+            return jsonify(success=True,
+                           valid=True,
+                           fibers=fibers,
+                           dprtypes=dprtypes)
+        except Exception as exc:
+            return jsonify(success=True,
+                           valid=False,
+                           error=str(exc),
+                           fibers=[],
+                           dprtypes=[])
+
+    # -----------------------------------------------------------------
+    # Async tasks API
+    # -----------------------------------------------------------------
+    def _require_async_tasks_perm(self):
+        """Check manage.apero_profile permission for async task management."""
+        user_info = get_effective_user(session)
+        if not user_info:
+            return None, None
+        perms = resolve_user_permissions(
+            user_info['groups'], self.ari_groups
+        )
+        if 'manage.apero_profile' not in perms:
+            return None, None
+        return user_info, perms
+
+    def _api_async_tasks_list(self):
+        """List async task configs for an instrument, merged with runtime state."""
+        user_info, perms = self._require_async_tasks_perm()
+        if not user_info:
+            return jsonify(success=False, error='Unauthorized'), 401
+
+        instrument = request.args.get('instrument', '').strip()
+        if not instrument:
+            return jsonify(success=False, error='No instrument'), 400
+
+        all_tasks = load_async_tasks()
+        inst_tasks = all_tasks.get(instrument, [])
+
+        result = []
+        for tc in inst_tasks:
+            entry = dict(tc)
+            tid = tc.get('id', '')
+            rt = task_runner.get_task_status(tid) if tid else {'found': False}
+            if not rt.get('found'):
+                rt = {
+                    'found': False,
+                    'status': tc.get('last_status', 'not_started'),
+                    'progress': 0,
+                    'info': tc.get('info', ''),
+                    'last_run': tc.get('last_run', 'Never'),
+                    'output_files': tc.get('output_files', []),
+                    'is_current': False,
+                    'is_queued': False,
+                    'error': tc.get('error', ''),
+                    'run_count': tc.get('run_count', 0),
+                }
+            entry['runtime'] = rt
+            result.append(entry)
+
+        queue_status = task_runner.get_status()
+        return jsonify(success=True, tasks=result, queue=queue_status)
+
+    def _api_async_tasks_task_list(self):
+        """Return available task classes from apero_ri.tasks.TASK_LIST."""
+        user_info, perms = self._require_async_tasks_perm()
+        if not user_info:
+            return jsonify(success=False, error='Unauthorized'), 401
+
+        from apero_ri import tasks as task_module
+        opts = []
+        for key, cls in task_module.TASK_LIST.items():
+            inst = cls()
+            opts.append({
+                'key': key,
+                'name': inst.name,
+                'description': inst.description,
+            })
+        return jsonify(success=True, tasks=opts)
+
+    def _api_async_tasks_save(self):
+        """Create or update an async task configuration."""
+        user_info, perms = self._require_async_tasks_perm()
+        if not user_info:
+            return jsonify(success=False, error='Unauthorized'), 401
+
+        data = request.get_json()
+        if not data:
+            return jsonify(success=False, error='Missing data'), 400
+
+        instrument = data.get('instrument', '').strip()
+        task_key = data.get('task_key', '').strip()
+        frequency = float(data.get('frequency', 24))
+        task_id = str(data.get('id', '')).strip()
+        active = bool(data.get('active', True))
+        daily_copies = int(data.get('daily_copies', 0) or 0)
+        weekly_copies = int(data.get('weekly_copies', 0) or 0)
+
+        if not instrument or not task_key:
+            return jsonify(success=False, error='Missing fields'), 400
+        if frequency <= 0:
+            return jsonify(success=False, error='Frequency must be > 0'), 400
+        if daily_copies < 0 or weekly_copies < 0:
+            return jsonify(success=False,
+                           error='Backup copy counts must be non-negative'), 400
+        if (task_key == 'ARI_LOCAL_DATA_BACKUP'
+                and daily_copies + weekly_copies <= 0):
+            return jsonify(success=False,
+                           error='Backup task needs at least one retained daily or weekly copy'), 400
+
+        from apero_ri import tasks as task_module
+        if task_key not in task_module.TASK_LIST:
+            return jsonify(success=False, error='Invalid task key'), 400
+
+        all_tasks = load_async_tasks()
+        inst_tasks = all_tasks.get(instrument, [])
+
+        if task_id:
+            found = False
+            for t in inst_tasks:
+                if t.get('id') == task_id:
+                    t['task_key'] = task_key
+                    t['frequency'] = frequency
+                    t['active'] = active
+                    t['daily_copies'] = daily_copies
+                    t['weekly_copies'] = weekly_copies
+                    found = True
+                    break
+            if not found:
+                return jsonify(success=False, error='Task not found'), 404
+        else:
+            import uuid
+            task_id = str(uuid.uuid4())
+            inst_tasks.append({
+                'id': task_id,
+                'task_key': task_key,
+                'frequency': frequency,
+                'active': active,
+                'daily_copies': daily_copies,
+                'weekly_copies': weekly_copies,
+                'order': len(inst_tasks) + 1,
+            })
+
+        all_tasks[instrument] = inst_tasks
+        save_async_tasks(all_tasks)
+        return jsonify(success=True, id=task_id)
+
+    def _api_async_tasks_delete(self):
+        """Delete an async task configuration."""
+        user_info, perms = self._require_async_tasks_perm()
+        if not user_info:
+            return jsonify(success=False, error='Unauthorized'), 401
+
+        data = request.get_json()
+        if not data:
+            return jsonify(success=False, error='Missing data'), 400
+
+        instrument = data.get('instrument', '').strip()
+        task_id = data.get('id', '').strip()
+        if not instrument or not task_id:
+            return jsonify(success=False, error='Missing fields'), 400
+
+        all_tasks = load_async_tasks()
+        inst_tasks = all_tasks.get(instrument, [])
+        new_tasks = [t for t in inst_tasks if t.get('id') != task_id]
+        if len(new_tasks) == len(inst_tasks):
+            return jsonify(success=False, error='Task not found'), 404
+
+        all_tasks[instrument] = new_tasks
+        save_async_tasks(all_tasks)
+        task_runner.clear_instance(task_id)
+        return jsonify(success=True)
+
+    def _api_async_tasks_reorder(self):
+        """Update task order after a drag-reorder."""
+        user_info, perms = self._require_async_tasks_perm()
+        if not user_info:
+            return jsonify(success=False, error='Unauthorized'), 401
+
+        data = request.get_json()
+        if not data:
+            return jsonify(success=False, error='Missing data'), 400
+
+        instrument = data.get('instrument', '').strip()
+        order_list = data.get('order', [])
+        if not instrument:
+            return jsonify(success=False, error='Missing instrument'), 400
+
+        all_tasks = load_async_tasks()
+        inst_tasks = all_tasks.get(instrument, [])
+        task_map = {t.get('id'): t for t in inst_tasks}
+        ordered_ids = set(order_list)
+
+        reordered = []
+        for idx, tid in enumerate(order_list, start=1):
+            if tid in task_map:
+                task_map[tid]['order'] = idx
+                reordered.append(task_map[tid])
+        # Append tasks not mentioned in order_list
+        for t in inst_tasks:
+            if t.get('id') not in ordered_ids:
+                reordered.append(t)
+
+        all_tasks[instrument] = reordered
+        save_async_tasks(all_tasks)
+        return jsonify(success=True)
+
+    def _api_async_tasks_toggle(self):
+        """Toggle a task's active/inactive state."""
+        user_info, perms = self._require_async_tasks_perm()
+        if not user_info:
+            return jsonify(success=False, error='Unauthorized'), 401
+
+        data = request.get_json()
+        if not data:
+            return jsonify(success=False, error='Missing data'), 400
+
+        instrument = data.get('instrument', '').strip()
+        task_id = data.get('id', '').strip()
+        if not instrument or not task_id:
+            return jsonify(success=False, error='Missing fields'), 400
+
+        all_tasks = load_async_tasks()
+        for t in all_tasks.get(instrument, []):
+            if t.get('id') == task_id:
+                t['active'] = not t.get('active', True)
+                save_async_tasks(all_tasks)
+                return jsonify(success=True, active=t['active'])
+
+        return jsonify(success=False, error='Task not found'), 404
+
+    def _api_async_tasks_run_now(self):
+        """Enqueue a single task to run immediately (prepend to queue)."""
+        user_info, perms = self._require_async_tasks_perm()
+        if not user_info:
+            return jsonify(success=False, error='Unauthorized'), 401
+
+        data = request.get_json()
+        if not data:
+            return jsonify(success=False, error='Missing data'), 400
+
+        instrument = data.get('instrument', '').strip()
+        task_id = data.get('id', '').strip()
+        local_data_dir = (data.get('local_data_dir', '') or
+                          str(Path.home() / '.ari'))
+        if not instrument or not task_id:
+            return jsonify(success=False, error='Missing fields'), 400
+
+        all_tasks = load_async_tasks()
+        task_cfg = next(
+            (t for t in all_tasks.get(instrument, [])
+             if t.get('id') == task_id),
+            None
+        )
+        if not task_cfg:
+            return jsonify(success=False, error='Task not found'), 404
+
+        from apero_ri import tasks as task_module
+        task_key = task_cfg.get('task_key', '')
+        task_cls = task_module.TASK_LIST.get(task_key)
+        if not task_cls:
+            return jsonify(success=False, error='Unknown task class'), 400
+
+        all_profiles = load_apero_profiles()
+        run_params = task_runner.build_run_params(
+            instrument, local_data_dir, all_profiles, task_cfg
+        )
+        task_runner.enqueue(
+            instrument, task_id, task_cls(), run_params, prepend=True
+        )
+        return jsonify(success=True)
+
+    def _api_async_tasks_run_all(self):
+        """Enqueue all active tasks for an instrument.
+
+        ``action`` may be ``'add'`` (append to existing queue) or
+        ``'replace'`` (clear queue first).
+        """
+        user_info, perms = self._require_async_tasks_perm()
+        if not user_info:
+            return jsonify(success=False, error='Unauthorized'), 401
+
+        data = request.get_json()
+        if not data:
+            return jsonify(success=False, error='Missing data'), 400
+
+        instrument = data.get('instrument', '').strip()
+        action = data.get('action', 'add')  # 'add' | 'replace'
+        local_data_dir = (data.get('local_data_dir', '') or
+                          str(Path.home() / '.ari'))
+        if not instrument:
+            return jsonify(success=False, error='Missing instrument'), 400
+
+        if action == 'replace':
+            task_runner.stop_and_clear()
+
+        all_tasks = load_async_tasks()
+        inst_tasks = sorted(
+            all_tasks.get(instrument, []),
+            key=lambda t: t.get('order', 999)
+        )
+
+        from apero_ri import tasks as task_module
+        all_profiles = load_apero_profiles()
+
+        added = []
+        for task_cfg in inst_tasks:
+            if not task_cfg.get('active', True):
+                continue
+            task_key = task_cfg.get('task_key', '')
+            task_cls = task_module.TASK_LIST.get(task_key)
+            if not task_cls:
+                continue
+            tid = task_cfg.get('id', '')
+            if not tid:
+                continue
+            run_params = task_runner.build_run_params(
+                instrument, local_data_dir, all_profiles, task_cfg
+            )
+            task_runner.enqueue(instrument, tid, task_cls(), run_params)
+            added.append(tid)
+
+        return jsonify(success=True, added=added)
+
+    def _api_async_tasks_stop(self):
+        """Clear the pending queue (does not interrupt the running task)."""
+        user_info, perms = self._require_async_tasks_perm()
+        if not user_info:
+            return jsonify(success=False, error='Unauthorized'), 401
+        task_runner.stop_and_clear()
+        return jsonify(success=True)
+
+    def _api_async_tasks_status(self):
+        """Poll runtime status for a set of task ids and the full queue."""
+        user_info, perms = self._require_async_tasks_perm()
+        if not user_info:
+            return jsonify(success=False, error='Unauthorized'), 401
+
+        ids_param = request.args.get('ids', '').strip()
+        task_ids = [i for i in ids_param.split(',') if i.strip()]
+
+        # Build a map from task_id -> yaml config for fallback after restart
+        all_tasks = load_async_tasks()
+        task_cfg_map: dict = {}
+        for _inst, tc_list in all_tasks.items():
+            for tc in tc_list:
+                _tid = tc.get('id', '')
+                if _tid:
+                    task_cfg_map[_tid] = tc
+
+        statuses: dict = {}
+        for tid in task_ids:
+            rt = task_runner.get_task_status(tid)
+            if not rt.get('found'):
+                tc = task_cfg_map.get(tid, {})
+                rt = {
+                    'found': False,
+                    'status': tc.get('last_status', 'not_started'),
+                    'progress': 0,
+                    'info': tc.get('info', ''),
+                    'last_run': tc.get('last_run', 'Never'),
+                    'output_files': tc.get('output_files', []),
+                    'is_current': False,
+                    'is_queued': False,
+                    'error': tc.get('error', ''),
+                    'run_count': tc.get('run_count', 0),
+                }
+            statuses[tid] = rt
+        queue_status = task_runner.get_status()
+        return jsonify(success=True, statuses=statuses, queue=queue_status)
+
+    def _validate_async_task_file_path(self, path: str):
+        """Validate and resolve an async task output file path."""
+        if not path:
+            return None, (jsonify(success=False, error='No path'), 400)
+        if not os.path.isabs(path):
+            return None, (jsonify(success=False, error='Must be an absolute path'), 400)
+
+        resolved = Path(path).resolve()
+        try:
+            resolved.relative_to(Path.home().resolve())
+        except ValueError:
+            return None, (jsonify(success=False,
+                                  error='Path outside allowed directory'), 403)
+
+        if not resolved.is_file():
+            return None, (jsonify(success=False, error='File not found'), 404)
+        return resolved, None
+
+    def _api_async_tasks_read_file(self):
+        """Return a preview of the first lines of an async task output file."""
+        user_info, perms = self._require_async_tasks_perm()
+        if not user_info:
+            return jsonify(success=False, error='Unauthorized'), 401
+
+        path = request.args.get('path', '').strip()
+        preview_lines = max(int(request.args.get('lines', 50) or 50), 1)
+        resolved, error_response = self._validate_async_task_file_path(path)
+        if error_response is not None:
+            return error_response
+        if resolved is None:
+            return jsonify(success=False, error='Invalid path'), 400
+        try:
+            raw = resolved.read_bytes()
+            suffixes = {suffix.lower() for suffix in resolved.suffixes}
+            if suffixes.intersection({'.gz', '.zip', '.fits', '.tar'}) or b'\x00' in raw[:4096]:
+                return jsonify(success=True,
+                               preview='Binary file preview is not available. Use Download instead.',
+                               truncated=False,
+                               line_count=0,
+                               preview_lines=preview_lines,
+                               is_binary=True,
+                               path=str(resolved))
+
+            text = raw.decode('utf-8', errors='replace')
+            all_lines = text.splitlines()
+            preview = '\n'.join(all_lines[:preview_lines])
+            return jsonify(success=True,
+                           preview=preview,
+                           truncated=len(all_lines) > preview_lines,
+                           line_count=len(all_lines),
+                           preview_lines=preview_lines,
+                           is_binary=False,
+                           path=str(resolved))
+        except Exception as exc:
+            return jsonify(success=False, error=str(exc)), 500
+
+    def _api_async_tasks_download_file(self):
+        """Download an async task output file."""
+        user_info, perms = self._require_async_tasks_perm()
+        if not user_info:
+            return jsonify(success=False, error='Unauthorized'), 401
+
+        path = request.args.get('path', '').strip()
+        resolved, error_response = self._validate_async_task_file_path(path)
+        if error_response is not None:
+            return error_response
+        if resolved is None:
+            return jsonify(success=False, error='Invalid path'), 400
+
+        return send_from_directory(str(resolved.parent),
+                                   resolved.name,
+                                   as_attachment=True)
+
+    # -----------------------------------------------------------------
+    # User links API
+    # -----------------------------------------------------------------
+    def _api_user_links_get(self):
+        user_info = self._require_user()
+        if not user_info:
+            return jsonify(success=False, error='Unauthorized'), 401
+        username = user_info['username']
+        instrument = request.args.get('instrument', '').strip()
+        if instrument:
+            data = ud.get_merged_links(username, instrument)
+        else:
+            data = ud.load_links(username)
+        return jsonify(success=True, data=data)
+
+    def _api_user_links_add(self):
+        user_info = self._require_user()
+        if not user_info:
+            return jsonify(success=False, error='Unauthorized'), 401
+        body = request.get_json() or {}
+        section = str(body.get('section', '')).strip()
+        name = str(body.get('name', '')).strip()
+        url = str(body.get('url', '')).strip()
+        if not section or not name or not url:
+            return jsonify(success=False, error='section, name and url required'), 400
+        data = ud.add_link(user_info['username'], section, name, url,
+                           str(body.get('type', '')),
+                           str(body.get('description', '')))
+        return jsonify(success=True, data=data)
+
+    def _api_user_links_update(self):
+        user_info = self._require_user()
+        if not user_info:
+            return jsonify(success=False, error='Unauthorized'), 401
+        body = request.get_json() or {}
+        section = str(body.get('section', '')).strip()
+        name = str(body.get('name', '')).strip()
+        new_name = str(body.get('new_name', name)).strip()
+        url = str(body.get('url', '')).strip()
+        if not section or not name or not url:
+            return jsonify(success=False, error='section, name and url required'), 400
+        data = ud.update_link(user_info['username'], section, name, new_name,
+                              url, str(body.get('type', '')),
+                              str(body.get('description', '')))
+        return jsonify(success=True, data=data)
+
+    def _api_user_links_remove(self):
+        user_info = self._require_user()
+        if not user_info:
+            return jsonify(success=False, error='Unauthorized'), 401
+        body = request.get_json() or {}
+        section = str(body.get('section', '')).strip()
+        name = str(body.get('name', '')).strip()
+        if not section or not name:
+            return jsonify(success=False, error='section and name required'), 400
+        data = ud.remove_link(user_info['username'], section, name)
+        return jsonify(success=True, data=data)
+
+    def _api_user_links_add_section(self):
+        user_info = self._require_user()
+        if not user_info:
+            return jsonify(success=False, error='Unauthorized'), 401
+        body = request.get_json() or {}
+        section = str(body.get('section', '')).strip()
+        if not section:
+            return jsonify(success=False, error='section required'), 400
+        data = ud.add_link_section(user_info['username'], section)
+        return jsonify(success=True, data=data)
+
+    def _api_user_links_remove_section(self):
+        user_info = self._require_user()
+        if not user_info:
+            return jsonify(success=False, error='Unauthorized'), 401
+        body = request.get_json() or {}
+        section = str(body.get('section', '')).strip()
+        if not section:
+            return jsonify(success=False, error='section required'), 400
+        data = ud.remove_link_section(user_info['username'], section)
+        return jsonify(success=True, data=data)
+
+    # -----------------------------------------------------------------
+    # User notes API
+    # -----------------------------------------------------------------
+    def _api_user_notes_list(self):
+        user_info = self._require_user()
+        if not user_info:
+            return jsonify(success=False, error='Unauthorized'), 401
+        notes = ud.load_notes(user_info['username'])
+        # Strip content for list view (send metadata only)
+        slim = [{k: v for k, v in n.items() if k != 'content'}
+                for n in notes]
+        return jsonify(success=True, notes=slim)
+
+    def _api_user_notes_get(self):
+        user_info = self._require_user()
+        if not user_info:
+            return jsonify(success=False, error='Unauthorized'), 401
+        note_id = request.args.get('id', '').strip()
+        if not note_id:
+            return jsonify(success=False, error='id required'), 400
+        note = ud.get_note(user_info['username'], note_id)
+        if note is None:
+            return jsonify(success=False, error='Not found'), 404
+        return jsonify(success=True, note=note)
+
+    def _api_user_notes_save(self):
+        user_info = self._require_user()
+        if not user_info:
+            return jsonify(success=False, error='Unauthorized'), 401
+        body = request.get_json() or {}
+        note = {
+            'id': str(body.get('id', '')).strip(),
+            'title': str(body.get('title', 'Untitled')).strip(),
+            'color': str(body.get('color', '#ffd966')).strip(),
+            'section': str(body.get('section', '')).strip(),
+            'created': str(body.get('created', '')).strip(),
+            'content': str(body.get('content', '')),
+        }
+        saved = ud.save_note(user_info['username'], note)
+        return jsonify(success=True, note=saved)
+
+    def _api_user_notes_delete(self):
+        user_info = self._require_user()
+        if not user_info:
+            return jsonify(success=False, error='Unauthorized'), 401
+        body = request.get_json() or {}
+        note_id = str(body.get('id', '')).strip()
+        if not note_id:
+            return jsonify(success=False, error='id required'), 400
+        ok = ud.delete_note(user_info['username'], note_id)
+        return jsonify(success=True, deleted=ok)
+
+    def _api_user_notes_render(self):
+        user_info = self._require_user()
+        if not user_info:
+            return jsonify(success=False, error='Unauthorized'), 401
+        body = request.get_json() or {}
+        content = str(body.get('content', ''))
+        html = ud.render_note_html(content)
+        return jsonify(success=True, html=html)
+
+    # -----------------------------------------------------------------
+    # User calendar API
+    # -----------------------------------------------------------------
+    def _api_user_calendar_list(self):
+        user_info = self._require_user()
+        if not user_info:
+            return jsonify(success=False, error='Unauthorized'), 401
+        instrument = request.args.get('instrument', '').strip()
+        if instrument:
+            events = ud.get_merged_calendar(user_info['username'], instrument)
+        else:
+            events = ud.list_events(user_info['username'])
+        return jsonify(success=True, events=events)
+
+    def _api_user_calendar_save(self):
+        user_info = self._require_user()
+        if not user_info:
+            return jsonify(success=False, error='Unauthorized'), 401
+        body = request.get_json() or {}
+        event = {
+            'id': str(body.get('id', '')).strip(),
+            'title': str(body.get('title', '')).strip(),
+            'date': str(body.get('date', '')).strip(),
+            'time': str(body.get('time', '')).strip(),
+            'color': str(body.get('color', '#4a90d9')).strip(),
+            'category': str(body.get('category', 'personal')).strip(),
+            'recurrence': str(body.get('recurrence', 'none')).strip(),
+            'status': str(body.get('status', 'confirmed')).strip(),
+        }
+        if not event['title'] or not event['date']:
+            return jsonify(success=False, error='title and date required'), 400
+        saved = ud.save_event(user_info['username'], event)
+        return jsonify(success=True, event=saved)
+
+    def _api_user_calendar_delete(self):
+        user_info = self._require_user()
+        if not user_info:
+            return jsonify(success=False, error='Unauthorized'), 401
+        body = request.get_json() or {}
+        event_id = str(body.get('id', '')).strip()
+        if not event_id:
+            return jsonify(success=False, error='id required'), 400
+        ok = ud.delete_event(user_info['username'], event_id)
+        return jsonify(success=True, deleted=ok)
+
+    # -----------------------------------------------------------------
+    # User todo API
+    # -----------------------------------------------------------------
+    def _api_user_todo_list(self):
+        user_info = self._require_user()
+        if not user_info:
+            return jsonify(success=False, error='Unauthorized'), 401
+        items = ud.list_todo_items(user_info['username'])
+        return jsonify(success=True, items=items)
+
+    def _api_user_todo_save(self):
+        user_info = self._require_user()
+        if not user_info:
+            return jsonify(success=False, error='Unauthorized'), 401
+        body = request.get_json() or {}
+        item = {
+            'id': str(body.get('id', '')).strip(),
+            'title': str(body.get('title', '')).strip(),
+            'done': bool(body.get('done', False)),
+            'created': str(body.get('created', '')).strip(),
+            'priority': str(body.get('priority', 'normal')).strip(),
+        }
+        if not item['title']:
+            return jsonify(success=False, error='title required'), 400
+        saved = ud.save_todo_item(user_info['username'], item)
+        return jsonify(success=True, item=saved)
+
+    def _api_user_todo_toggle(self):
+        user_info = self._require_user()
+        if not user_info:
+            return jsonify(success=False, error='Unauthorized'), 401
+        body = request.get_json() or {}
+        item_id = str(body.get('id', '')).strip()
+        if not item_id:
+            return jsonify(success=False, error='id required'), 400
+        item = ud.toggle_todo(user_info['username'], item_id)
+        if item is None:
+            return jsonify(success=False, error='Not found'), 404
+        return jsonify(success=True, item=item)
+
+    def _api_user_todo_delete(self):
+        user_info = self._require_user()
+        if not user_info:
+            return jsonify(success=False, error='Unauthorized'), 401
+        body = request.get_json() or {}
+        item_id = str(body.get('id', '')).strip()
+        if not item_id:
+            return jsonify(success=False, error='id required'), 400
+        ok = ud.delete_todo_item(user_info['username'], item_id)
+        return jsonify(success=True, deleted=ok)
+
+    def _api_user_todo_reorder(self):
+        user_info = self._require_user()
+        if not user_info:
+            return jsonify(success=False, error='Unauthorized'), 401
+        body = request.get_json() or {}
+        ordered_ids = body.get('ids', [])
+        if not isinstance(ordered_ids, list):
+            return jsonify(success=False, error='ids must be a list'), 400
+        ordered_ids = [str(i) for i in ordered_ids]
+        items = ud.reorder_todo_items(user_info['username'], ordered_ids)
+        return jsonify(success=True, items=items)
+
+    # -----------------------------------------------------------------
+    # Admin calendar API
+    # -----------------------------------------------------------------
+    def _require_admin_calendar_perm(self):
+        user_info = get_effective_user(session)
+        if not user_info:
+            return None, None
+        perms = resolve_user_permissions(user_info['groups'], self.ari_groups)
+        if 'view.admin.calendar' not in perms:
+            return None, None
+        return user_info, perms
+
+    def _api_admin_calendar_list(self):
+        user_info, perms = self._require_admin_calendar_perm()
+        if not user_info:
+            return jsonify(success=False, error='Unauthorized'), 401
+        instrument = request.args.get('instrument', '').strip()
+        if not instrument:
+            return jsonify(success=False, error='instrument required'), 400
+        events = ud.load_instrument_calendar(instrument).get('events', [])
+        return jsonify(success=True, events=events)
+
+    def _api_admin_calendar_save(self):
+        user_info, perms = self._require_admin_calendar_perm()
+        if not user_info:
+            return jsonify(success=False, error='Unauthorized'), 401
+        if 'manage.admin.calendar' not in (perms or set()):
+            return jsonify(success=False, error='Insufficient permissions'), 403
+        body = request.get_json() or {}
+        instrument = str(body.get('instrument', '')).strip()
+        if not instrument:
+            return jsonify(success=False, error='instrument required'), 400
+        event = {
+            'id': str(body.get('id', '')).strip(),
+            'title': str(body.get('title', '')).strip(),
+            'date': str(body.get('date', '')).strip(),
+            'time': str(body.get('time', '')).strip(),
+            'color': str(body.get('color', '#7b5ea7')).strip(),
+            'category': 'instrument',
+            'recurrence': str(body.get('recurrence', 'none')).strip(),
+            'status': str(body.get('status', 'confirmed')).strip(),
+        }
+        if not event['title'] or not event['date']:
+            return jsonify(success=False, error='title and date required'), 400
+        saved = ud.save_instrument_event(instrument, event)
+        return jsonify(success=True, event=saved)
+
+    def _api_admin_calendar_delete(self):
+        user_info, perms = self._require_admin_calendar_perm()
+        if not user_info:
+            return jsonify(success=False, error='Unauthorized'), 401
+        if 'manage.admin.calendar' not in (perms or set()):
+            return jsonify(success=False, error='Insufficient permissions'), 403
+        body = request.get_json() or {}
+        instrument = str(body.get('instrument', '')).strip()
+        event_id = str(body.get('id', '')).strip()
+        if not instrument or not event_id:
+            return jsonify(success=False, error='instrument and id required'), 400
+        ok = ud.delete_instrument_event(instrument, event_id)
+        return jsonify(success=True, deleted=ok)
+
+    # -----------------------------------------------------------------
+    # Admin links API
+    # -----------------------------------------------------------------
+    def _require_admin_links_perm(self):
+        user_info = get_effective_user(session)
+        if not user_info:
+            return None, None
+        perms = resolve_user_permissions(user_info['groups'], self.ari_groups)
+        if 'view.admin.links' not in perms:
+            return None, None
+        return user_info, perms
+
+    def _api_admin_links_get(self):
+        user_info, perms = self._require_admin_links_perm()
+        if not user_info:
+            return jsonify(success=False, error='Unauthorized'), 401
+        instrument = request.args.get('instrument', '').strip()
+        if not instrument:
+            return jsonify(success=False, error='instrument required'), 400
+        data = ud.load_instrument_links(instrument)
+        return jsonify(success=True, data=data)
+
+    def _api_admin_links_add(self):
+        user_info, perms = self._require_admin_links_perm()
+        if not user_info:
+            return jsonify(success=False, error='Unauthorized'), 401
+        if 'manage.admin.links' not in (perms or set()):
+            return jsonify(success=False, error='Insufficient permissions'), 403
+        body = request.get_json() or {}
+        instrument = str(body.get('instrument', '')).strip()
+        section = str(body.get('section', '')).strip()
+        name = str(body.get('name', '')).strip()
+        url = str(body.get('url', '')).strip()
+        if not instrument or not section or not name or not url:
+            return jsonify(success=False,
+                           error='instrument, section, name and url required'), 400
+        data = ud.add_instrument_link(instrument, section, name, url,
+                                      str(body.get('type', '')),
+                                      str(body.get('description', '')))
+        return jsonify(success=True, data=data)
+
+    def _api_admin_links_update(self):
+        user_info, perms = self._require_admin_links_perm()
+        if not user_info:
+            return jsonify(success=False, error='Unauthorized'), 401
+        if 'manage.admin.links' not in (perms or set()):
+            return jsonify(success=False, error='Insufficient permissions'), 403
+        body = request.get_json() or {}
+        instrument = str(body.get('instrument', '')).strip()
+        section = str(body.get('section', '')).strip()
+        name = str(body.get('name', '')).strip()
+        new_name = str(body.get('new_name', name)).strip()
+        url = str(body.get('url', '')).strip()
+        if not instrument or not section or not name or not url:
+            return jsonify(success=False,
+                           error='instrument, section, name and url required'), 400
+        data = ud.update_instrument_link(instrument, section, name, new_name,
+                                         url, str(body.get('type', '')),
+                                         str(body.get('description', '')))
+        return jsonify(success=True, data=data)
+
+    def _api_admin_links_remove(self):
+        user_info, perms = self._require_admin_links_perm()
+        if not user_info:
+            return jsonify(success=False, error='Unauthorized'), 401
+        if 'manage.admin.links' not in (perms or set()):
+            return jsonify(success=False, error='Insufficient permissions'), 403
+        body = request.get_json() or {}
+        instrument = str(body.get('instrument', '')).strip()
+        section = str(body.get('section', '')).strip()
+        name = str(body.get('name', '')).strip()
+        if not instrument or not section or not name:
+            return jsonify(success=False,
+                           error='instrument, section and name required'), 400
+        data = ud.remove_instrument_link(instrument, section, name)
+        return jsonify(success=True, data=data)
+
+    def _api_admin_links_add_section(self):
+        user_info, perms = self._require_admin_links_perm()
+        if not user_info:
+            return jsonify(success=False, error='Unauthorized'), 401
+        if 'manage.admin.links' not in (perms or set()):
+            return jsonify(success=False, error='Insufficient permissions'), 403
+        body = request.get_json() or {}
+        instrument = str(body.get('instrument', '')).strip()
+        section = str(body.get('section', '')).strip()
+        if not instrument or not section:
+            return jsonify(success=False,
+                           error='instrument and section required'), 400
+        data = ud.add_instrument_link_section(instrument, section)
+        return jsonify(success=True, data=data)
+
+    def _api_admin_links_remove_section(self):
+        user_info, perms = self._require_admin_links_perm()
+        if not user_info:
+            return jsonify(success=False, error='Unauthorized'), 401
+        if 'manage.admin.links' not in (perms or set()):
+            return jsonify(success=False, error='Insufficient permissions'), 403
+        body = request.get_json() or {}
+        instrument = str(body.get('instrument', '')).strip()
+        section = str(body.get('section', '')).strip()
+        if not instrument or not section:
+            return jsonify(success=False,
+                           error='instrument and section required'), 400
+        data = ud.remove_instrument_link_section(instrument, section)
+        return jsonify(success=True, data=data)
+
+    # -----------------------------------------------------------------
+    # Admin email API
+    # -----------------------------------------------------------------
+    def _require_admin_email_perm(self):
+        user_info = get_effective_user(session)
+        if not user_info:
+            return None, None
+        perms = resolve_user_permissions(user_info['groups'], self.ari_groups)
+        return user_info, perms
+
+    def _api_admin_email_test(self):
+        user_info, perms = self._require_admin_email_perm()
+        if not user_info:
+            return jsonify(ok=False, error='Unauthorized'), 401
+        if 'view.admin' not in (perms or set()):
+            return jsonify(ok=False, error='Insufficient permissions'), 403
+        cfg = eb.load_email_config()
+        provider = cfg.get('provider', 'log')
+        if provider == 'log' or not cfg.get('enabled', False):
+            return jsonify(ok=True, detail='Log mode — no SMTP connection needed.')
+        result = eb.test_email_connection(cfg)
+        return jsonify(ok=result['ok'], error=result.get('error', ''), detail='')
+
+    def _api_admin_email_save(self):
+        user_info, perms = self._require_admin_email_perm()
+        if not user_info:
+            return jsonify(success=False, error='Unauthorized'), 401
+        if 'manage.admin.email' not in (perms or set()):
+            return jsonify(success=False, error='Insufficient permissions'), 403
+        body = request.get_json() or {}
+        allowed = {'provider', 'enabled', 'from_address', 'smtp_host',
+                   'smtp_port', 'smtp_ssl', 'smtp_tls', 'smtp_user', 'smtp_password'}
+        cfg = {k: v for k, v in body.items() if k in allowed}
+        # Preserve existing encoded password if no plaintext was sent
+        if 'smtp_password' not in cfg:
+            existing = eb.load_email_config()
+            if existing.get('smtp_password_enc'):
+                cfg['smtp_password_enc'] = existing['smtp_password_enc']
+        eb.save_email_config(cfg)
+        return jsonify(success=True)
+
+    def _api_admin_email_send_test(self):
+        user_info, perms = self._require_admin_email_perm()
+        if not user_info:
+            return jsonify(success=False, error='Unauthorized'), 401
+        if 'manage.admin.email' not in (perms or set()):
+            return jsonify(success=False, error='Insufficient permissions'), 403
+        body = request.get_json() or {}
+        to = str(body.get('to', '')).strip()
+        if not to:
+            return jsonify(success=False, error='Recipient address required.'), 400
+        err = eb.send_email(
+            to,
+            'APERO RI — test email',
+            'This is a test email from APERO RI.\n\nIf you received this, email delivery is working correctly.'
+        )
+        if err:
+            return jsonify(success=False, error=err)
+        return jsonify(success=True)
+
+
+    # -----------------------------------------------------------------
 
     # -----------------------------------------------------------------
     # Run override

@@ -20,6 +20,9 @@ admin:
     # which groups can they manage
     - manage.group.moderator
     - manage.group.developer
+    # which instruments can they manage
+    - manage.instrument.moderator
+    - manage.instrument.developer
     # which groups can they login as
     - login_as.moderator
     - login_as.developer
@@ -43,11 +46,20 @@ moderator:
     - manage.group.monitor
     - manage.group.general
     - manage.group.public
+    # which instruments can they manage
+    - manage.instrument.monitor
+    - manage.instrument.general
     # which groups can they login as
     - login_as.monitor
     - login_as.general
     - login_as.public
-
+    # can they view/manage instrument calendar and links
+    - view.admin.calendar
+    - manage.admin.calendar
+    - view.admin.links
+    - manage.admin.links
+    # can they manage email settings
+    - manage.admin.email
   groups:
     - monitor
 
@@ -58,6 +70,13 @@ developer:
   permissions:
     # which documentation pages can they edit?
     - edit.doc.instrument
+    # can they view/manage instrument calendar and links
+    - view.admin.calendar
+    - manage.admin.calendar
+    - view.admin.links
+    - manage.admin.links
+    # can they manage email settings
+    - manage.admin.email
   groups:
     - monitor
 
@@ -66,18 +85,18 @@ developer:
 # ==============================================================================
 monitor:
   permissions:
-    # can they view the monitoring section
-    - view.monitor
+    # can they view the monitor portal
+    - view.monitor_portal
   groups:
     - general
 
 # ==============================================================================
-# User group - access to reduction interface and documentation
+# User group - access to data portal and documentation
 # ==============================================================================
 general:
   permissions:
-    # can they view the reduction interface
-    - view.reduction_interface
+    # can they view the data portal
+    - view.data_portal
   groups:
     - public
 

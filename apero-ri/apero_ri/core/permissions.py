@@ -203,7 +203,7 @@ def get_visible_cards(parent_id: str,
         if child_id == 'home.login' and logged_in:
             continue
         # Show user card only when logged in
-        if child_id == 'home.user' and not logged_in:
+        if child_id == 'home.user_portal' and not logged_in:
             continue
         cards.append({
             'id': child_id,
@@ -254,7 +254,7 @@ def get_sidebar_tree(root_id: str,
             if view_perm not in user_permissions:
                 continue
             # Skip special pages
-            if child_id in ('home.login', 'home.logout', 'home.user'):
+            if child_id in ('home.login', 'home.logout', 'home.user_portal'):
                 continue
             is_active = (child_id == active_page_id)
             # Expanded if this page is active or is an ancestor of active

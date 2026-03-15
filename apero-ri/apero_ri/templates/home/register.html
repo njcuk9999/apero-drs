@@ -1,0 +1,81 @@
+{% extends "general/base.html" %}
+{% block title %}APERO RI – Register{% endblock %}
+
+{% block content %}
+<div class="ari-page-header">
+    <h1><i class="{{ page_icon }}"></i> {{ page_label }}</h1>
+</div>
+
+<div class="ari-login-box" id="register-step-1">
+    <h2><i class="fa-solid fa-user-plus"></i> Create Account</h2>
+    <div class="ari-form-group">
+        <label for="reg-username">Username (lowercase)</label>
+        <input type="text" id="reg-username" placeholder="first.last" autocomplete="username">
+        <small style="color:var(--ari-text-muted);">Suggested format: first.last</small>
+    </div>
+    <div class="ari-form-group">
+        <label for="reg-first-names">First name(s)</label>
+        <input type="text" id="reg-first-names" autocomplete="given-name">
+    </div>
+    <div class="ari-form-group">
+        <label for="reg-last-name">Last name</label>
+        <input type="text" id="reg-last-name" autocomplete="family-name">
+    </div>
+
+    <div class="ari-form-group">
+        <label>Emails (first is primary)</label>
+        <div id="reg-emails"></div>
+        <button type="button" id="reg-add-email" class="ari-btn ari-btn--secondary ari-btn--sm">
+            <i class="fa-solid fa-plus"></i> Add Email
+        </button>
+    </div>
+
+    <div class="ari-form-group">
+        <label>Institutions (first is primary)</label>
+        <div id="reg-institutions"></div>
+        <button type="button" id="reg-add-inst" class="ari-btn ari-btn--secondary ari-btn--sm">
+            <i class="fa-solid fa-plus"></i> Add Institution
+        </button>
+    </div>
+
+    <div class="ari-form-group">
+        <label for="reg-password">Password</label>
+        <input type="password" id="reg-password" autocomplete="new-password">
+    </div>
+    <div class="ari-form-group">
+        <label for="reg-password2">Re-enter Password</label>
+        <input type="password" id="reg-password2" autocomplete="new-password">
+    </div>
+
+    <button id="reg-submit" class="ari-btn ari-btn--primary ari-btn--block">
+        <i class="fa-solid fa-paper-plane"></i> Submit & Send Verification Code
+    </button>
+    <a href="{{ url_for('login') }}" class="ari-btn ari-btn--secondary ari-btn--block"
+       style="margin-top:0.55rem; text-align:center; text-decoration:none;">
+        <i class="fa-solid fa-right-to-bracket"></i> Back to Login
+    </a>
+</div>
+
+<div class="ari-login-box" id="register-step-2" style="display:none;">
+    <h2><i class="fa-solid fa-shield-check"></i> Verify Email</h2>
+    <p>Enter the 6-digit code sent to your primary email address.</p>
+    <div class="ari-form-group">
+        <label for="reg-code">Verification Code</label>
+        <input type="text" id="reg-code" maxlength="6" inputmode="numeric" pattern="[0-9]*">
+    </div>
+    <button id="reg-verify" class="ari-btn ari-btn--primary ari-btn--block">
+        <i class="fa-solid fa-check"></i> Verify & Create Account
+    </button>
+</div>
+
+<div id="reg-toast" class="ari-toast" style="display:none;"></div>
+
+<script>
+window.ARI_REGISTER = {
+    startUrl: {{ url_for('api_auth_register_start')|tojson }},
+    verifyUrl: {{ url_for('api_auth_register_verify')|tojson }},
+    homeUrl: {{ url_for('home')|tojson }}
+};
+</script>
+<script src="{{ url_for('static', filename='js/register.js') }}"></script>
+{% endblock %}

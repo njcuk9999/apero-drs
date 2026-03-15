@@ -172,6 +172,8 @@ def search_users(query: str) -> List[dict]:
                 'username': username,
                 'groups': data.get('groups', []),
                 'instruments': data.get('instruments', []),
+                'first_names': data.get('first_names', ''),
+                'last_name': data.get('last_name', ''),
             })
     return results
 
@@ -184,6 +186,8 @@ def list_all_users() -> List[dict]:
             'username': username,
             'groups': data.get('groups', []),
             'instruments': data.get('instruments', []),
+            'first_names': data.get('first_names', ''),
+            'last_name': data.get('last_name', ''),
         }
         for username, data in users.items()
     ]
@@ -265,6 +269,35 @@ def get_public_permissions() -> Set[str]:
 APERO_PROFILES_FILE = ADMIN_DIR / 'apero_profiles.yaml'
 
 
+# =============================================================================
+# Async tasks configuration
+# =============================================================================
+ASYNC_TASKS_FILE = ADMIN_DIR / 'async_tasks.yaml'
+
+
+def load_async_tasks() -> dict:
+    """Load async task configurations from async_tasks.yaml.
+
+    Returns dict: {instrument: [task_cfg_dict, ...]}
+    """
+    ensure_ari_directory()
+    if not ASYNC_TASKS_FILE.exists():
+        ASYNC_TASKS_FILE.write_text('')
+    with open(ASYNC_TASKS_FILE, 'r') as f:
+        data = yaml.safe_load(f)
+    return data if data else {}
+
+
+def save_async_tasks(tasks: dict) -> None:
+    """Save async task configurations to async_tasks.yaml."""
+    ensure_ari_directory()
+    with open(ASYNC_TASKS_FILE, 'w') as f:
+        yaml.dump(tasks, f, default_flow_style=False)
+
+
+# =============================================================================
+# APERO profile management
+# =============================================================================
 def load_apero_profiles() -> dict:
     """Load APERO profiles from apero_profiles.yaml."""
     ensure_ari_directory()
@@ -383,7 +416,7 @@ def get_accessible_profiles(user_info: Optional[dict],
     2. If a profile has groups assigned, the user must belong to (or
        inherit) at least one of those groups.
     3. Profiles with an empty groups list are visible to anyone who
-       has ``view.reduction_interface`` permission.
+       has ``view.data_portal`` permission.
     """
     from apero_ri.core.permissions import get_inherited_groups
 

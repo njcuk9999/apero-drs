@@ -17,18 +17,18 @@ home.docs:
   quick-nav: True
   full-nav: True
 
-home.reduction_interface:
-  label: Reduction Interface
+home.data_portal:
+  label: Data Portal
   parent: home
-  view-permission: view.reduction_interface
+  view-permission: view.data_portal
   icon: fa-solid fa-database
   quick-nav: True
   full-nav: True
 
-home.monitor:
-  label: Monitor
+home.monitor_portal:
+  label: Monitor Portal
   parent: home
-  view-permission: view.monitor
+  view-permission: view.monitor_portal
   icon: fa-solid fa-chart-line
   quick-nav: True
   full-nav: True
@@ -41,14 +41,14 @@ home.admin:
   quick-nav: True
   full-nav: True
 
-home.user:
-  label: User Management
+home.user_portal:
+  label: User Portal
   parent: home
   view-permission: view.home
   icon: fa-solid fa-user
   quick-nav: True
   full-nav: True
-  
+
 home.login:
   label: Login
   parent: home
@@ -84,47 +84,113 @@ home.docs.install:
   quick-nav: True
   full-nav: False
   
-
 # ==============================================================================
-# APERO RI: Reduction Interface Pages
+# APERO RI: Data Portal Pages
 # ==============================================================================
-"home.reduction_interface.{apero_profile}":
+"home.data_portal.{apero_profile}":
   label: "{apero profile}"
-  parent: home.reduction_interface
+  parent: home.data_portal
   view-permission: "view.{apero profile}"
   icon: fa-solid fa-laptop-code
   quick-nav: False
   full-nav: True
 
-"home.reduction_interface.{apero_profile}.object_table":
+"home.data_portal.{apero_profile}.object_table":
   label: "{apero profile}: Astrophysical Object Table"
-  parent: "home.reduction_interface.{apero_profile}"
+  parent: "home.data_portal.{apero_profile}"
   view-permission: "view.{apero profile}"
   icon: fa-solid fa-star
   quick-nav: False
   full-nav: False
 
-"home.reduction_interface.{apero_profile}.obs_table":
+"home.data_portal.{apero_profile}.obs_table":
   label: "{apero profile}: Observation Table"
-  parent: "home.reduction_interface.{apero_profile}"
+  parent: "home.data_portal.{apero_profile}"
   view-permission: "view.{apero profile}"
   icon: fa-solid fa-binoculars
   quick-nav: False
   full-nav: False
 
-"home.reduction_interface.{apero_profile}.query_db":
+"home.data_portal.{apero_profile}.query_db":
   label: "{apero profile}: Database query"
-  parent: "home.reduction_interface.{apero_profile}"
+  parent: "home.data_portal.{apero_profile}"
   view-permission: "view.{apero profile}"
   icon: fa-solid fa-server
   quick-nav: False
   full-nav: False
 
-"home.reduction_interface.{apero_profile}.qc_graphs":
+"home.data_portal.{apero_profile}.qc_graphs":
   label: "{apero profile}: Quality control graphs"
-  parent: "home.reduction_interface.{apero_profile}"
+  parent: "home.data_portal.{apero_profile}"
   view-permission: "view.{apero profile}"
   icon: fa-solid fa-chart-line
+  quick-nav: False
+  full-nav: False
+
+# ==============================================================================
+# APERO RI: User portal pages
+# ==============================================================================
+home.user_portal.account:
+  label: Account
+  parent: home.user_portal
+  view-permission: view.home
+  icon: fa-solid fa-id-card
+  quick-nav: False
+  full-nav: False
+
+home.user_portal.data_access:
+  label: Data Access
+  parent: home.user_portal
+  view-permission: view.home
+  icon: fa-solid fa-key
+  quick-nav: False
+  full-nav: False
+
+home.user_portal.pinned_pages:
+  label: Pinned Pages
+  parent: home.user_portal
+  view-permission: view.home
+  icon: fa-solid fa-thumbtack
+  quick-nav: False
+  full-nav: False
+
+home.user_portal.support:
+  label: Support
+  parent: home.user_portal
+  view-permission: view.home
+  icon: fa-solid fa-life-ring
+  quick-nav: False
+  full-nav: False
+
+home.user_portal.links:
+  label: My Links
+  parent: home.user_portal
+  view-permission: view.home
+  icon: fa-solid fa-link
+  quick-nav: False
+  full-nav: False
+
+home.user_portal.notes:
+  label: My Notes
+  parent: home.user_portal
+  view-permission: view.home
+  icon: fa-solid fa-note-sticky
+  quick-nav: False
+  full-nav: False
+
+home.user_portal.calendar:
+  label: My Calendar
+  parent: home.user_portal
+  view-permission: view.home
+  icon: fa-solid fa-calendar-days
+  quick-nav: False
+  full-nav: False
+
+home.user_portal.todo:
+  label: Quick TODO
+  parent: home.user_portal
+  view-permission: view.home
+  icon: fa-solid fa-list-check
   quick-nav: False
   full-nav: False
 
@@ -160,5 +226,37 @@ home.admin.apero_profiles:
   parent: home.admin
   view-permission: manage.apero_profile
   icon: fa-solid fa-sliders
+  quick-nav: False
+  full-nav: False
+
+home.admin.async_tasks:
+  label: Async Tasks
+  parent: home.admin
+  view-permission: manage.apero_profile
+  icon: fa-solid fa-list-check
+  quick-nav: False
+  full-nav: False
+
+home.admin.calendar:
+  label: Instrument Calendar
+  parent: home.admin
+  view-permission: view.admin.calendar
+  icon: fa-solid fa-calendar-week
+  quick-nav: False
+  full-nav: False
+
+home.admin.links:
+  label: Instrument Links
+  parent: home.admin
+  view-permission: view.admin.links
+  icon: fa-solid fa-bookmark
+  quick-nav: False
+  full-nav: False
+
+home.admin.email:
+  label: Email Settings
+  parent: home.admin
+  view-permission: view.admin
+  icon: fa-solid fa-envelope-open-text
   quick-nav: False
   full-nav: False

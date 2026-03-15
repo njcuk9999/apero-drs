@@ -135,14 +135,23 @@
     <!-- Footer                                                             -->
     <!-- ================================================================== -->
     <footer class="ari-footer">
-        APERO Reduction Interface &mdash;
+        APERO Data Portal &mdash;
         <a href="https://apero.exoplanets.ca" target="_blank" rel="noopener">
             apero.exoplanets.ca
         </a>
     </footer>
 
     <!-- ARI JavaScript -->
+    <script>
+        window.ARI_PAGE_META = {
+            loggedIn: {{ logged_in | tojson }},
+            pageId: {% if page_id is defined %}{{ page_id | tojson }}{% else %}null{% endif %},
+            pageLabel: {% if page_label is defined %}{{ page_label | tojson }}{% else %}null{% endif %},
+            pageIcon: {% if page_icon is defined %}{{ page_icon | tojson }}{% else %}null{% endif %}
+        };
+    </script>
     <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/page_pins.js') }}"></script>
     {% block extra_scripts %}{% endblock %}
 </body>
 </html>

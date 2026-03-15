@@ -1,0 +1,99 @@
+{% extends "general/sidebar_base.html" %}
+{% block title %}APERO RI – Data Access{% endblock %}
+
+{% block doc_content %}
+<div class="ari-up-shell">
+<div class="ari-page-header">
+    <h1><i class="fa-solid fa-key"></i> Data Access</h1>
+</div>
+
+<p class="ari-ap-groups-hint ari-up-hint">
+    This page summarizes your current data visibility by instrument, APERO profile,
+    science-group membership, and run IDs.
+    If anything looks missing, please contact the admin via
+    <a href="{{ url_for('home_user_portal_support') }}">User Portal / Support</a>.
+</p>
+
+{% if data_access and data_access|length > 0 %}
+<div class="ari-sg-tabs" id="up-data-tabs" role="tablist" aria-label="Instruments">
+    {% for item in data_access %}
+    <button class="ari-sg-tab ari-up-tab{% if loop.first %} ari-sg-tab--active{% endif %}"
+            type="button"
+            role="tab"
+            data-tab-target="up-data-{{ loop.index0 }}"
+            aria-selected="{{ 'true' if loop.first else 'false' }}">
+        {{ item.instrument }}
+    </button>
+    {% endfor %}
+</div>
+
+{% for item in data_access %}
+<section id="up-data-{{ loop.index0 }}"
+         class="ari-up-panel{% if not loop.first %} ari-up-panel--hidden{% endif %}"
+         role="tabpanel">
+    <div class="ari-sg-workspace ari-up-workspace">
+        <div class="ari-sg-section">
+            <div class="ari-sg-section__header">
+                <h3><i class="fa-solid fa-satellite-dish"></i> {{ item.instrument }}: Accessible APERO Profiles</h3>
+            </div>
+            <div class="ari-up-section-body">
+                {% if item.profiles %}
+                <div class="ari-up-token-grid">
+                    {% for p in item.profiles %}
+                    <span class="ari-toggle-card ari-toggle-card--enabled" style="cursor:default;">{{ p }}</span>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="ari-sg-empty-small">No accessible profiles.</div>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="ari-sg-section">
+            <div class="ari-sg-section__header">
+                <h3><i class="fa-solid fa-layer-group"></i> Science Groups You Belong To</h3>
+            </div>
+            <div class="ari-up-section-body">
+                {% if item.science_groups %}
+                <div class="ari-up-token-grid">
+                    {% for g in item.science_groups %}
+                    <span class="ari-toggle-card ari-toggle-card--encompassed" style="cursor:default;">{{ g }}</span>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="ari-sg-empty-small">No science-group memberships for this instrument.</div>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="ari-sg-section">
+            <div class="ari-sg-section__header">
+                <h3><i class="fa-solid fa-hashtag"></i> Run IDs You Can Access</h3>
+            </div>
+            <div class="ari-up-section-body ari-up-section-body--scroll">
+                {% if item.run_ids %}
+                <div class="ari-up-token-grid">
+                    {% for rid in item.run_ids %}
+                    <span class="ari-toggle-card ari-toggle-card--disabled ari-up-run-id">{{ rid }}</span>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="ari-sg-empty-small">No run IDs currently assigned to your science groups.</div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</section>
+{% endfor %}
+{% else %}
+<div class="ari-sg-empty">
+    <i class="fa-solid fa-circle-info"></i>
+    No instrument access has been assigned yet.
+</div>
+{% endif %}
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="{{ url_for('static', filename='js/user_portal_tabs.js') }}"></script>
+{% endblock %}

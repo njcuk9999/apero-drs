@@ -1,0 +1,129 @@
+{% extends "general/sidebar_base.html" %}
+{% block title %}APERO RI – {{ page_label }}{% endblock %}
+
+{% block doc_content %}
+<div class="ari-page-header">
+    <h1><i class="{{ page_icon }}"></i> {{ page_label }}</h1>
+    <p class="ari-page-subtitle">Projects, tags, status lanes, and task details in one place.</p>
+</div>
+
+<div class="ari-todo-toolbar">
+    <div class="ari-todo-toolbar__filters">
+        <select id="todo-filter-project" class="ari-ud-select">
+            <option value="">All Projects</option>
+        </select>
+        <select id="todo-filter-tag" class="ari-ud-select">
+            <option value="">All Tags</option>
+        </select>
+        <button class="ari-btn ari-btn--secondary ari-btn--sm" id="todo-manage-projects-btn">Manage Projects</button>
+        <button class="ari-btn ari-btn--secondary ari-btn--sm" id="todo-manage-tags-btn">Manage Tags</button>
+    </div>
+    <div class="ari-todo-toolbar__add">
+        <input type="text" id="todo-new-title" class="ari-ud-search" placeholder="New task title" />
+        <button class="ari-btn ari-btn--primary ari-btn--sm" id="todo-add-btn">
+            <i class="fa-solid fa-plus"></i> Add
+        </button>
+        <button class="ari-btn ari-btn--secondary ari-btn--sm" id="todo-add-progress-btn">Add In Progress</button>
+    </div>
+</div>
+
+<div class="ari-todo-stats" id="todo-stats"></div>
+
+<div id="todo-sections" class="ari-todo-sections">
+    <p class="ari-ud-loading">Loading…</p>
+</div>
+
+<div id="todo-toast" class="ari-toast" style="display:none;"></div>
+
+<div id="todo-task-modal" class="ari-ud-modal" style="display:none;">
+    <div class="ari-ud-modal-box ari-todo-modal-box">
+        <h3 id="todo-task-modal-title">Task</h3>
+        <div class="ari-form-group">
+            <label>Title</label>
+            <input type="text" id="todo-modal-title" placeholder="Task title">
+        </div>
+        <div class="ari-todo-modal-grid">
+            <div class="ari-form-group">
+                <label>Status</label>
+                <select id="todo-modal-status">
+                    <option value="todo">To Do</option>
+                    <option value="in-progress">In Progress</option>
+                    <option value="blocked">Blocked</option>
+                    <option value="done">Done</option>
+                </select>
+            </div>
+            <div class="ari-form-group">
+                <label>Size</label>
+                <select id="todo-modal-size">
+                    <option value="xs">XS</option>
+                    <option value="sm">SM</option>
+                    <option value="md">MD</option>
+                    <option value="lg">LG</option>
+                    <option value="xl">XL</option>
+                </select>
+            </div>
+            <div class="ari-form-group">
+                <label>Priority</label>
+                <input type="number" id="todo-modal-priority" value="0" step="1">
+            </div>
+        </div>
+        <div class="ari-todo-modal-grid">
+            <div class="ari-form-group">
+                <label>Projects</label>
+                <select id="todo-modal-projects" multiple size="4"></select>
+            </div>
+            <div class="ari-form-group">
+                <label>Tags</label>
+                <select id="todo-modal-tags" multiple size="4"></select>
+            </div>
+        </div>
+        <div class="ari-ud-modal-actions">
+            <button class="ari-btn ari-btn--primary" id="todo-modal-save">Save</button>
+            <button class="ari-btn ari-btn--secondary" id="todo-modal-cancel">Cancel</button>
+        </div>
+    </div>
+</div>
+
+<div id="todo-details-modal" class="ari-ud-modal" style="display:none;">
+    <div class="ari-ud-modal-box ari-todo-modal-box">
+        <h3 id="todo-details-title">Task Details</h3>
+        <div class="ari-form-group">
+            <label>Link (optional)</label>
+            <input type="url" id="todo-details-link" placeholder="https://...">
+        </div>
+        <div class="ari-form-group">
+            <label>Comments / Description</label>
+            <textarea id="todo-details-comments" rows="10" placeholder="Notes, details, and reference info"></textarea>
+        </div>
+        <div class="ari-ud-modal-actions">
+            <button class="ari-btn ari-btn--primary" id="todo-details-save">Save</button>
+            <button class="ari-btn ari-btn--secondary" id="todo-details-cancel">Cancel</button>
+        </div>
+    </div>
+</div>
+
+<div id="todo-manage-modal" class="ari-ud-modal" style="display:none;">
+    <div class="ari-ud-modal-box ari-todo-modal-box">
+        <h3 id="todo-manage-title">Manage</h3>
+        <div class="ari-todo-manage-row">
+            <input type="text" id="todo-manage-input" placeholder="Add new value">
+            <button class="ari-btn ari-btn--primary" id="todo-manage-add">Add</button>
+        </div>
+        <div id="todo-manage-list" class="ari-todo-manage-list"></div>
+        <div class="ari-ud-modal-actions">
+            <button class="ari-btn ari-btn--secondary" id="todo-manage-close">Close</button>
+        </div>
+    </div>
+</div>
+
+<script>
+window.ARI_TODO = {
+    listUrl: {{ url_for('api_user_todo_list')|tojson }},
+    saveUrl: {{ url_for('api_user_todo_save')|tojson }},
+    toggleUrl: {{ url_for('api_user_todo_toggle')|tojson }},
+    deleteUrl: {{ url_for('api_user_todo_delete')|tojson }},
+    reorderUrl: {{ url_for('api_user_todo_reorder')|tojson }},
+};
+</script>
+<script src="{{ url_for('static', filename='js/user_todo.js') }}"></script>
+{% endblock %}

@@ -1,0 +1,151 @@
+{% extends "general/sidebar_base.html" %}
+{% block title %}APERO RI – Support{% endblock %}
+
+{% block doc_content %}
+<div class="ari-up-shell">
+<div class="ari-page-header">
+    <h1><i class="fa-solid fa-life-ring"></i> Support</h1>
+</div>
+
+<p class="ari-ap-groups-hint ari-up-hint">
+    If you think you are missing access, contact a support person for the relevant instrument.
+</p>
+
+{% if support_email %}
+<div class="ari-ae-support-email-notice">
+    <i class="fa-solid fa-envelope"></i>
+    You can also email the team directly at
+    <a href="mailto:{{ support_email }}">{{ support_email }}</a>.
+    We recommend contacting people directly where possible.
+</div>
+{% endif %}
+
+{% if support_by_instrument and support_by_instrument|length > 0 %}
+<div class="ari-sg-tabs" role="tablist" aria-label="Support by instrument">
+    {% for item in support_by_instrument %}
+    <button class="ari-sg-tab ari-up-tab{% if loop.first %} ari-sg-tab--active{% endif %}"
+            type="button"
+            role="tab"
+            data-tab-target="up-support-{{ loop.index0 }}"
+            aria-selected="{{ 'true' if loop.first else 'false' }}">
+        {{ item.instrument }}
+    </button>
+    {% endfor %}
+</div>
+
+{% for item in support_by_instrument %}
+<section id="up-support-{{ loop.index0 }}"
+         class="ari-up-panel{% if not loop.first %} ari-up-panel--hidden{% endif %}"
+         {% if not loop.first %}style="display:none;" hidden{% endif %}
+         role="tabpanel">
+    <div class="ari-sg-workspace ari-up-workspace">
+        <div class="ari-sg-section">
+            <div class="ari-sg-section__header">
+                <h3><i class="fa-solid fa-user-shield"></i> Admins</h3>
+            </div>
+            <div class="ari-up-section-body">
+                {% if item.admins %}
+                <ul class="ari-up-contact-list">
+                    {% for person in item.admins %}
+                    <li class="ari-up-contact-item">
+                        <span class="ari-up-contact-main">{{ person.username }} - {{ person.full_name }}</span>
+                        {% if person.email %}
+                        <a href="mailto:{{ person.email }}" class="ari-up-contact-email">{{ person.email }}</a>
+                        {% else %}
+                        <span class="ari-up-contact-email ari-up-contact-email--missing">No primary email set</span>
+                        {% endif %}
+                    </li>
+                    {% endfor %}
+                </ul>
+                {% else %}
+                <div class="ari-sg-empty-small">No admins listed for this instrument.</div>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="ari-sg-section">
+            <div class="ari-sg-section__header">
+                <h3><i class="fa-solid fa-user-gear"></i> Moderators</h3>
+            </div>
+            <div class="ari-up-section-body">
+                {% if item.moderators %}
+                <ul class="ari-up-contact-list">
+                    {% for person in item.moderators %}
+                    <li class="ari-up-contact-item">
+                        <span class="ari-up-contact-main">{{ person.username }} - {{ person.full_name }}</span>
+                        {% if person.email %}
+                        <a href="mailto:{{ person.email }}" class="ari-up-contact-email">{{ person.email }}</a>
+                        {% else %}
+                        <span class="ari-up-contact-email ari-up-contact-email--missing">No primary email set</span>
+                        {% endif %}
+                    </li>
+                    {% endfor %}
+                </ul>
+                {% else %}
+                <div class="ari-sg-empty-small">No moderators listed for this instrument.</div>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="ari-sg-section">
+            <div class="ari-sg-section__header">
+                <h3><i class="fa-solid fa-code"></i> Developers</h3>
+            </div>
+            <div class="ari-up-section-body">
+                {% if item.developers %}
+                <ul class="ari-up-contact-list">
+                    {% for person in item.developers %}
+                    <li class="ari-up-contact-item">
+                        <span class="ari-up-contact-main">{{ person.username }} - {{ person.full_name }}</span>
+                        {% if person.email %}
+                        <a href="mailto:{{ person.email }}" class="ari-up-contact-email">{{ person.email }}</a>
+                        {% else %}
+                        <span class="ari-up-contact-email ari-up-contact-email--missing">No primary email set</span>
+                        {% endif %}
+                    </li>
+                    {% endfor %}
+                </ul>
+                {% else %}
+                <div class="ari-sg-empty-small">No developers listed for this instrument.</div>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="ari-sg-section">
+            <div class="ari-sg-section__header">
+                <h3><i class="fa-solid fa-chart-line"></i> Monitors</h3>
+            </div>
+            <div class="ari-up-section-body">
+                {% if item.monitors %}
+                <ul class="ari-up-contact-list">
+                    {% for person in item.monitors %}
+                    <li class="ari-up-contact-item">
+                        <span class="ari-up-contact-main">{{ person.username }} - {{ person.full_name }}</span>
+                        {% if person.email %}
+                        <a href="mailto:{{ person.email }}" class="ari-up-contact-email">{{ person.email }}</a>
+                        {% else %}
+                        <span class="ari-up-contact-email ari-up-contact-email--missing">No primary email set</span>
+                        {% endif %}
+                    </li>
+                    {% endfor %}
+                </ul>
+                {% else %}
+                <div class="ari-sg-empty-small">No monitors listed for this instrument.</div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</section>
+{% endfor %}
+{% else %}
+<div class="ari-sg-empty">
+    <i class="fa-solid fa-circle-info"></i>
+    No instrument support contacts are available for your account.
+</div>
+{% endif %}
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="{{ url_for('static', filename='js/user_portal_tabs.js') }}"></script>
+{% endblock %}
