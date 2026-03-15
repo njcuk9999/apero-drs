@@ -6,16 +6,25 @@
     <h1><i class="{{ page_icon }}"></i> {{ page_label }}</h1>
 </div>
 
-<div id="apero-status-box" class="ari-ap-status ari-ap-status--info">
-    <div class="ari-ap-status__headline" id="apero-status-headline">
+<div id="apero-global-status-box" class="ari-ap-status ari-ap-status--info">
+    <div class="ari-ap-status__headline" id="apero-global-status-headline">
         <i class="fa-solid fa-circle-info"></i>
-        Select an instrument to check APERO profile status.
+        Checking APERO profile readiness across all instruments.
     </div>
-    <ul id="apero-status-details" class="ari-ap-status__details" style="display:none;"></ul>
+    <button id="apero-global-status-toggle" class="ari-ap-status__toggle" style="display:none;" type="button"></button>
+    <ul id="apero-global-status-details" class="ari-ap-status__details" style="display:none;"></ul>
 </div>
 
 <!-- Instrument tabs -->
 <div id="instrument-tabs" class="ari-sg-tabs"></div>
+
+<div id="apero-instrument-status-box" class="ari-ap-status ari-ap-status--info">
+    <div class="ari-ap-status__headline" id="apero-instrument-status-headline">
+        <i class="fa-solid fa-circle-info"></i>
+        Select an instrument to check APERO profile status.
+    </div>
+    <ul id="apero-instrument-status-details" class="ari-ap-status__details" style="display:none;"></ul>
+</div>
 
 <!-- Main workspace (hidden until instrument selected) -->
 <div id="ap-workspace" class="ari-ap-workspace" style="display:none;">
@@ -307,6 +316,7 @@
 <script>
 window.ARI_APERO_PROFILES = {
     listUrl: {{ url_for('api_apero_profiles_list')|tojson }},
+    statusOverviewUrl: {{ url_for('api_apero_profiles_overview')|tojson }},
     saveUrl: {{ url_for('api_apero_profiles_save')|tojson }},
     deleteUrl: {{ url_for('api_apero_profiles_delete')|tojson }},
     reorderUrl: {{ url_for('api_apero_profiles_reorder')|tojson }},

@@ -42,9 +42,13 @@
     var tabsContainer = document.getElementById('instrument-tabs');
     var workspace = document.getElementById('ap-workspace');
     var emptyState = document.getElementById('ap-empty');
-    var statusBox = document.getElementById('apero-status-box');
-    var statusHeadline = document.getElementById('apero-status-headline');
-    var statusDetails = document.getElementById('apero-status-details');
+    var globalStatusBox = document.getElementById('apero-global-status-box');
+    var globalStatusHeadline = document.getElementById('apero-global-status-headline');
+    var globalStatusDetails = document.getElementById('apero-global-status-details');
+    var globalStatusToggle = document.getElementById('apero-global-status-toggle');
+    var instrumentStatusBox = document.getElementById('apero-instrument-status-box');
+    var instrumentStatusHeadline = document.getElementById('apero-instrument-status-headline');
+    var instrumentStatusDetails = document.getElementById('apero-instrument-status-details');
 
     var profileList = document.getElementById('profile-list');
     var profileCount = document.getElementById('profile-count');
@@ -126,6 +130,8 @@
     var availableDprtypes = [];
     var selectedDprtypes = [];
     var draftGroups = [];
+    var globalStatusLastSignature = '';
+    var globalStatusCollapsed = true;
     var sectionCollapsePrefs = {
         db: null,
         tables: null,
@@ -157,6 +163,7 @@
     /* -- Instrument tabs ------------------------------------------------- */
     function renderTabs() {
         var instruments = cfg.instruments || [];
+        loadGlobalStatus();
         if (instruments.length === 0) {
             emptyState.style.display = 'block';
             workspace.style.display = 'none';
@@ -203,57 +210,145 @@
                 if (!data.success) {
                     profileList.innerHTML = '<div class="ari-sg-error">' +
                         escapeHtml(data.error || 'Error') + '</div>';
-                    updateStatusBox({
+                    updateInstrumentStatusBox({
                         level: 'error',
                         headline: 'Could not load profile status for this instrument.',
                         details: [String(data.error || 'Unknown error')],
                     });
+                    loadGlobalStatus();
                     return;
                 }
                 profiles = data.profiles || [];
-                updateStatusBox(data.status || null);
+                updateInstrumentStatusBox(data.status || null);
                 renderProfiles();
+                loadGlobalStatus();
             })
             .catch(function () {
                 profileList.innerHTML = '<div class="ari-sg-error">Failed to load</div>';
-                updateStatusBox({
+                updateInstrumentStatusBox({
                     level: 'error',
                     headline: 'Could not load profile status for this instrument.',
                     details: ['Network error while loading profiles.'],
                 });
+                loadGlobalStatus();
             });
     }
 
-    function updateStatusBox(status) {
-        if (!statusBox || !statusHeadline || !statusDetails) return;
+    function updateStatusBox(status, box, headlineEl, detailsEl, fallbackHeadline, options) {
+        if (!box || !headlineEl || !detailsEl) return;
+        options = options || {};
 
         var level = (status && status.level) ? String(status.level) : 'info';
         var headline = (status && status.headline)
             ? String(status.headline)
-            : 'Select an instrument to check APERO profile status.';
+            : fallbackHeadline;
         var details = (status && Array.isArray(status.details)) ? status.details : [];
+        var toggleEl = options.toggleEl || null;
+        var collapseThreshold = options.collapseThreshold || 6;
+        var collapsible = !!options.collapsible && details.length > collapseThreshold;
+        var collapsed = !!options.collapsed;
 
         var icon = 'fa-circle-info';
         if (level === 'ok') icon = 'fa-circle-check';
         else if (level === 'warning') icon = 'fa-triangle-exclamation';
         else if (level === 'error') icon = 'fa-circle-xmark';
 
-        statusBox.classList.remove('ari-ap-status--info', 'ari-ap-status--ok',
+        box.classList.remove('ari-ap-status--info', 'ari-ap-status--ok',
             'ari-ap-status--warning', 'ari-ap-status--error');
-        statusBox.classList.add('ari-ap-status--' +
+        box.classList.add('ari-ap-status--' +
             (level === 'ok' || level === 'warning' || level === 'error' ? level : 'info'));
 
-        statusHeadline.innerHTML = '<i class="fa-solid ' + icon + '"></i> ' + escapeHtml(headline);
+        headlineEl.innerHTML = '<i class="fa-solid ' + icon + '"></i> ' + escapeHtml(headline);
 
-        if (details.length) {
-            statusDetails.style.display = '';
-            statusDetails.innerHTML = details.map(function (d) {
+        if (toggleEl) {
+            if (collapsible) {
+                toggleEl.style.display = '';
+                toggleEl.textContent = collapsed
+                    ? 'Show issue breakdown (' + details.length + ')'
+                    : 'Hide issue breakdown';
+                toggleEl.setAttribute('aria-expanded', collapsed ? 'false' : 'true');
+            } else {
+                toggleEl.style.display = 'none';
+                toggleEl.textContent = '';
+                toggleEl.setAttribute('aria-expanded', 'false');
+            }
+        }
+
+        if (details.length && !(collapsible && collapsed)) {
+            detailsEl.style.display = '';
+            detailsEl.innerHTML = details.map(function (d) {
                 return '<li>' + escapeHtml(String(d)) + '</li>';
             }).join('');
         } else {
-            statusDetails.style.display = 'none';
-            statusDetails.innerHTML = '';
+            detailsEl.style.display = 'none';
+            detailsEl.innerHTML = '';
         }
+    }
+
+    function updateInstrumentStatusBox(status) {
+        updateStatusBox(
+            status,
+            instrumentStatusBox,
+            instrumentStatusHeadline,
+            instrumentStatusDetails,
+            'Select an instrument to check APERO profile status.'
+        );
+    }
+
+    function updateGlobalStatusBox(status) {
+        var details = (status && Array.isArray(status.details)) ? status.details : [];
+        var signature = JSON.stringify({
+            level: (status && status.level) ? String(status.level) : 'info',
+            details: details,
+        });
+        if (signature !== globalStatusLastSignature) {
+            globalStatusLastSignature = signature;
+            globalStatusCollapsed = true;
+        }
+
+        updateStatusBox(
+            status,
+            globalStatusBox,
+            globalStatusHeadline,
+            globalStatusDetails,
+            'Checking APERO profile readiness across all instruments.',
+            {
+                collapsible: true,
+                collapsed: globalStatusCollapsed,
+                toggleEl: globalStatusToggle,
+                collapseThreshold: 5,
+            }
+        );
+    }
+
+    function loadGlobalStatus() {
+        fetch(cfg.statusOverviewUrl)
+            .then(function (r) { return r.json(); })
+            .then(function (data) {
+                if (!data.success) {
+                    updateGlobalStatusBox({
+                        level: 'error',
+                        headline: 'Could not load all-profiles status.',
+                        details: [String(data.error || 'Unknown error')],
+                    });
+                    return;
+                }
+                updateGlobalStatusBox(data.status || null);
+            })
+            .catch(function () {
+                updateGlobalStatusBox({
+                    level: 'error',
+                    headline: 'Could not load all-profiles status.',
+                    details: ['Network error while loading status.'],
+                });
+            });
+    }
+
+    if (globalStatusToggle) {
+        globalStatusToggle.addEventListener('click', function () {
+            globalStatusCollapsed = !globalStatusCollapsed;
+            loadGlobalStatus();
+        });
     }
 
     /* -- Render profile cards -------------------------------------------- */

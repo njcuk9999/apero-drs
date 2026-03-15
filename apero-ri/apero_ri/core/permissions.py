@@ -169,6 +169,8 @@ def get_nav_pages(user_permissions: Set[str],
     for pid, pdef in pages.items():
         if not pdef.get('quick-nav', False):
             continue
+        if pdef.get('no-nav', False):
+            continue
         view_perm = pdef.get('view-permission', '')
         if view_perm not in user_permissions:
             continue
@@ -193,6 +195,8 @@ def get_visible_cards(parent_id: str,
     cards = []
     for child_id in children:
         child_def = pages[child_id]
+        if child_def.get('no-nav', False):
+            continue
         view_perm = child_def.get('view-permission', '')
         if view_perm not in user_permissions:
             continue
@@ -250,6 +254,8 @@ def get_sidebar_tree(root_id: str,
         children = get_children(parent_id, pages)
         for child_id in children:
             child_def = pages[child_id]
+            if child_def.get('no-nav', False):
+                continue
             view_perm = child_def.get('view-permission', '')
             if view_perm not in user_permissions:
                 continue

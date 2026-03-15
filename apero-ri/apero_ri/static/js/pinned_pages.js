@@ -1,18 +1,5 @@
 /* Pinned pages management page */
 (function () {
-    function pinIconSvg(withSlash) {
-        var slash = withSlash
-            ? '<line x1="3" y1="13" x2="13" y2="3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"></line>'
-            : '';
-        return '' +
-            '<svg viewBox="0 0 16 16" aria-hidden="true" focusable="false">' +
-            '<circle cx="8" cy="3.2" r="2.2" fill="currentColor"></circle>' +
-            '<path d="M5.6 6.2h4.8l-1.4 3.2h-2z" fill="currentColor"></path>' +
-            '<rect x="7.3" y="9" width="1.4" height="5.2" rx="0.7" fill="currentColor"></rect>' +
-            slash +
-            '</svg>';
-    }
-
     async function fetchPins() {
         var response = await fetch('/api/user/pins/list');
         var payload = await response.json();
@@ -31,6 +18,19 @@
         var payload = await response.json();
         if (!payload.success) {
             throw new Error(payload.error || 'Failed to remove pinned page');
+        }
+        return payload.pins || [];
+    }
+
+    async function reorderPins(ids) {
+        var response = await fetch('/api/user/pins/reorder', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ ids: ids })
+        });
+        var payload = await response.json();
+        if (!payload.success) {
+            throw new Error(payload.error || 'Failed to reorder pinned pages');
         }
         return payload.pins || [];
     }
@@ -57,6 +57,18 @@
             row.className = 'ari-pinned-row';
             row.setAttribute('data-page-id', pageId);
 
+            var dragHandle = document.createElement('button');
+            dragHandle.type = 'button';
+            dragHandle.className = 'ari-pinned-row__drag js-pin-drag';
+            dragHandle.setAttribute('title', 'Drag to reorder');
+            dragHandle.setAttribute('aria-label', 'Drag to reorder ' + label);
+            dragHandle.setAttribute('draggable', 'true');
+
+            var dragIcon = document.createElement('i');
+            dragIcon.className = 'fa-solid fa-grip-vertical';
+            dragIcon.setAttribute('aria-hidden', 'true');
+            dragHandle.appendChild(dragIcon);
+
             var link = document.createElement('a');
             link.className = 'ari-pinned-row__link';
             link.href = url;
@@ -75,25 +87,77 @@
             button.type = 'button';
             button.className = 'ari-pinned-row__unpin js-unpin';
             button.setAttribute('data-page-id', pageId);
-            button.setAttribute('title', 'Unpin');
-            button.setAttribute('aria-label', 'Unpin ' + label);
+            button.setAttribute('title', 'Remove pin');
+            button.setAttribute('aria-label', 'Remove pin for ' + label);
 
-            var buttonIcon = document.createElement('span');
-            buttonIcon.className = 'ari-pin-icon';
+            var buttonIcon = document.createElement('i');
+            buttonIcon.className = 'fa-solid fa-xmark';
             buttonIcon.setAttribute('aria-hidden', 'true');
-            buttonIcon.innerHTML = pinIconSvg(true);
             button.appendChild(buttonIcon);
 
+            row.appendChild(dragHandle);
             row.appendChild(link);
             row.appendChild(button);
             container.appendChild(row);
         });
     }
 
+    function getRenderedOrder(container) {
+        return Array.prototype.map.call(
+            container.querySelectorAll('.ari-pinned-row[data-page-id]'),
+            function (row) {
+                return row.getAttribute('data-page-id') || '';
+            }
+        ).filter(function (value) { return !!value; });
+    }
+
+    function getDragAfterRow(container, y) {
+        var rows = container.querySelectorAll('.ari-pinned-row:not(.is-dragging)');
+        var best = { offset: Number.NEGATIVE_INFINITY, element: null };
+        Array.prototype.forEach.call(rows, function (row) {
+            var rect = row.getBoundingClientRect();
+            var offset = y - rect.top - rect.height / 2;
+            if (offset < 0 && offset > best.offset) {
+                best = { offset: offset, element: row };
+            }
+        });
+        return best.element;
+    }
+
     document.addEventListener('DOMContentLoaded', async function () {
         var container = document.getElementById('pinned-pages-list');
         if (!container) {
             return;
+        }
+
+        var dragState = {
+            active: false,
+            startOrderKey: ''
+        };
+
+        var savingOrder = false;
+
+        async function persistOrderIfChanged() {
+            var currentOrder = getRenderedOrder(container);
+            var key = currentOrder.join('|');
+            if (!currentOrder.length || key === dragState.startOrderKey) {
+                return;
+            }
+            if (savingOrder) {
+                return;
+            }
+
+            savingOrder = true;
+            container.classList.add('is-saving');
+            try {
+                var pins = await reorderPins(currentOrder);
+                renderPins(container, pins);
+            } catch (err) {
+                window.alert(err.message || 'Could not save pin order.');
+            } finally {
+                savingOrder = false;
+                container.classList.remove('is-saving');
+            }
         }
 
         try {
@@ -106,6 +170,65 @@
                 '</p>';
             return;
         }
+
+        container.addEventListener('dragstart', function (event) {
+            var handle = event.target.closest('.js-pin-drag');
+            if (!handle) {
+                return;
+            }
+            var row = handle.closest('.ari-pinned-row');
+            if (!row) {
+                return;
+            }
+
+            dragState.active = true;
+            dragState.startOrderKey = getRenderedOrder(container).join('|');
+            row.classList.add('is-dragging');
+
+            if (event.dataTransfer) {
+                event.dataTransfer.effectAllowed = 'move';
+                event.dataTransfer.setData('text/plain', row.getAttribute('data-page-id') || '');
+            }
+        });
+
+        container.addEventListener('dragover', function (event) {
+            if (!dragState.active) {
+                return;
+            }
+            event.preventDefault();
+
+            var dragging = container.querySelector('.ari-pinned-row.is-dragging');
+            if (!dragging) {
+                return;
+            }
+
+            var afterRow = getDragAfterRow(container, event.clientY);
+            if (!afterRow) {
+                container.appendChild(dragging);
+                return;
+            }
+            if (afterRow !== dragging) {
+                container.insertBefore(dragging, afterRow);
+            }
+        });
+
+        container.addEventListener('drop', function (event) {
+            if (dragState.active) {
+                event.preventDefault();
+            }
+        });
+
+        container.addEventListener('dragend', function (event) {
+            var row = event.target.closest('.ari-pinned-row');
+            if (row) {
+                row.classList.remove('is-dragging');
+            }
+            if (!dragState.active) {
+                return;
+            }
+            dragState.active = false;
+            persistOrderIfChanged();
+        });
 
         container.addEventListener('click', async function (event) {
             var button = event.target.closest('.js-unpin');

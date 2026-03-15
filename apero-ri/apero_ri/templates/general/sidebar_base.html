@@ -45,12 +45,20 @@
             </a>
             <nav class="ari-sidebar__nav" aria-label="Section navigation">
                 {% for item in sidebar_tree %}
+                {% if item.url and not (item.disabled if item.disabled is defined else false) %}
                 <a href="{{ item.url }}{% if current_version is defined %}?v={{ current_version }}{% endif %}"
                    class="ari-sidebar__link{% if item.active %} ari-sidebar__link--active{% endif %}"
                    style="padding-left: {{ 0.75 + item.depth * 1.0 }}rem;">
                     <i class="{{ item.icon }}"></i>
                     <span>{{ item.label }}</span>
                 </a>
+                {% else %}
+                <span class="ari-sidebar__link ari-sidebar__link--disabled"
+                      style="padding-left: {{ 0.75 + item.depth * 1.0 }}rem;">
+                    <i class="{{ item.icon }}"></i>
+                    <span>{{ item.label }}</span>
+                </span>
+                {% endif %}
                 {% endfor %}
             </nav>
         </div>

@@ -234,11 +234,13 @@
         var status = rt.found ? rt.status : 'not_started';
         var isRunning = (status === 'in_progress');
         var isQueued  = rt.is_queued;
+        var hasError = (status === 'failed') || !!String(rt.error || '').trim();
 
         var card = document.createElement('div');
         card.className = 'at-task-card' +
             (task.id === selectedTaskId ? ' at-task-card--selected' : '') +
-            (task.active === false ? ' at-task-card--inactive' : '');
+            (task.active === false ? ' at-task-card--inactive' : '') +
+            (hasError ? ' at-task-card--error' : '');
         card.dataset.id = task.id;
 
         var grip = draggable
@@ -253,16 +255,22 @@
               Math.round((rt.progress || 0) * 100) + '%;"></div></div>'
             : '';
 
-        var queuedTag = isQueued
-            ? '<span class="at-tag at-tag--queued">queued</span>'
-            : (isRunning ? '<span class="at-tag at-tag--running">running</span>' : '');
+        var tags = '';
+        if (isQueued) {
+            tags += '<span class="at-tag at-tag--queued">queued</span>';
+        } else if (isRunning) {
+            tags += '<span class="at-tag at-tag--running">running</span>';
+        }
+        if (hasError) {
+            tags += '<span class="at-tag at-tag--error">ERROR</span>';
+        }
 
         card.innerHTML =
             grip + statusDot +
             '<div class="at-task-card__body">' +
                 '<span class="at-task-card__name">' + esc(task.name || task.task_key) + '</span>' +
                 '<span class="at-task-card__freq">' + (task.frequency ? esc(task.frequency) + ' hrs' : '') + '</span>' +
-                queuedTag +
+                tags +
             '</div>' +
             progressHtml;
 
@@ -464,14 +472,52 @@
                     if (d.truncated) {
                         html += '<span>Preview truncated from ' + esc(String(d.line_count || 0)) + ' lines</span>';
                     }
+                    if (d.is_json && d.json_table) {
+                        html += '<span>JSON table rows: ' + esc(String(d.json_table.row_count || 0)) + '</span>';
+                        if (d.json_table.truncated) {
+                            html += '<span>Table limited to first ' + esc(String((d.json_table.rows || []).length)) + ' rows</span>';
+                        }
+                    }
                 }
                 html += '</div>';
-                html += '<pre class="at-file-preview">' + esc(d.preview || '') + '</pre>';
+
+                if (d.is_json && d.json_table) {
+                    html += renderJsonPreviewTable(d.json_table);
+                } else {
+                    html += '<pre class="at-file-preview">' + esc(d.preview || '') + '</pre>';
+                }
                 fileModalContent.innerHTML = html;
             })
             .catch(function () {
                 fileModalContent.innerHTML = '<div class="ari-sg-error" style="padding:1rem;">Request failed</div>';
             });
+    }
+
+    function renderJsonPreviewTable(table) {
+        var columns = Array.isArray(table.columns) ? table.columns : [];
+        var rows = Array.isArray(table.rows) ? table.rows : [];
+
+        if (!columns.length || !rows.length) {
+            return '<pre class="at-file-preview">(JSON has no tabular rows to display)</pre>';
+        }
+
+        var html = '<div class="at-file-preview-wrap"><table class="at-file-table"><thead><tr>';
+        columns.forEach(function (col) {
+            html += '<th>' + esc(String(col)) + '</th>';
+        });
+        html += '</tr></thead><tbody>';
+
+        rows.forEach(function (row) {
+            html += '<tr>';
+            columns.forEach(function (col) {
+                var value = row && row[col] !== undefined ? row[col] : '';
+                html += '<td>' + esc(String(value)) + '</td>';
+            });
+            html += '</tr>';
+        });
+
+        html += '</tbody></table></div>';
+        return html;
     }
 
     function downloadFile(path) {
@@ -633,7 +679,7 @@
         editFrequency.value = task ? (task.frequency || 24) : 24;
         editDailyCopies.value = task ? (task.daily_copies || 0) : 7;
         editWeeklyCopies.value = task ? (task.weekly_copies || 0) : 4;
-        editRunCount.value = task && task.runtime ? (task.runtime.run_count || 0) : 0;
+        editRunCount.textContent = task && task.runtime ? (task.runtime.run_count || 0) : 0;
         editActive.checked = task ? (task.active !== false) : true;
         onTaskKeyChange();
         editModal.style.display = '';

@@ -28,6 +28,9 @@ _errors: Dict[str, str] = {}
 
 _lock = threading.Lock()
 _worker_thread: Optional[threading.Thread] = None
+_scheduler_thread: Optional[threading.Thread] = None
+_scheduler_local_data_dir = str(Path.home() / '.ari')
+_scheduler_poll_seconds = 30.0
 
 
 # =============================================================================
@@ -101,6 +104,142 @@ def _ensure_worker() -> None:
             target=_run_worker, daemon=True, name='ari-task-worker'
         )
         _worker_thread.start()
+
+
+def _parse_last_run(value: Any) -> Optional[datetime]:
+    """Parse a stored last-run timestamp."""
+    if not value or value == 'Never':
+        return None
+    try:
+        parsed = datetime.fromisoformat(str(value))
+    except (TypeError, ValueError):
+        return None
+    if parsed.tzinfo is None:
+        parsed = parsed.replace(tzinfo=timezone.utc)
+    return parsed.astimezone(timezone.utc)
+
+
+def _coerce_run_count(value: Any) -> int:
+    """Normalize a stored run-count value."""
+    try:
+        return max(0, int(value or 0))
+    except (TypeError, ValueError):
+        return 0
+
+
+def hydrate_runtime_state(instance: Any, task_cfg: Optional[dict] = None) -> Any:
+    """Copy persisted runtime fields onto a new task instance."""
+    cfg = task_cfg or {}
+    instance.last_run = cfg.get('last_run', getattr(instance, 'last_run', 'Never'))
+    instance.run_count = _coerce_run_count(
+        cfg.get('run_count', getattr(instance, 'run_count', 0))
+    )
+    instance.info = cfg.get('info', getattr(instance, 'info', ''))
+    instance.output_files = list(
+        cfg.get('output_files', getattr(instance, 'output_files', [])) or []
+    )
+    return instance
+
+
+def _task_is_busy(task_id: str) -> bool:
+    """Return True if a task is already queued or running."""
+    with _lock:
+        if _current is not None and _current[1] == task_id:
+            return True
+        return any(queued_id == task_id for _, queued_id in _queue)
+
+
+def _task_is_due(task_cfg: dict, now: datetime) -> bool:
+    """Return True if a task should be enqueued by the scheduler."""
+    if not task_cfg.get('active', True):
+        return False
+
+    task_id = str(task_cfg.get('id', '') or '').strip()
+    if not task_id or _task_is_busy(task_id):
+        return False
+
+    try:
+        frequency_hours = float(task_cfg.get('frequency', 0) or 0)
+    except (TypeError, ValueError):
+        return False
+    if frequency_hours <= 0:
+        return False
+
+    last_run = _parse_last_run(task_cfg.get('last_run'))
+    if last_run is None:
+        return True
+
+    elapsed_seconds = (now - last_run).total_seconds()
+    return elapsed_seconds >= frequency_hours * 3600.0
+
+
+def _scheduler_poll(local_data_dir: str) -> None:
+    """Queue any active tasks whose frequency window has elapsed."""
+    try:
+        import fcntl
+    except ImportError:
+        fcntl = None
+
+    lock_handle = None
+    try:
+        if fcntl is not None:
+            lock_path = Path(local_data_dir) / 'admin' / 'async_tasks.scheduler.lock'
+            lock_path.parent.mkdir(parents=True, exist_ok=True)
+            lock_handle = lock_path.open('a+')
+            try:
+                fcntl.flock(lock_handle.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
+            except OSError:
+                return
+
+        from apero_ri import tasks as task_module
+        from apero_ri.core.auth import load_apero_profiles, load_async_tasks
+
+        all_tasks = load_async_tasks()
+        all_profiles = load_apero_profiles()
+        now = datetime.now(timezone.utc)
+
+        for instrument, task_list in all_tasks.items():
+            ordered_tasks = sorted(task_list, key=lambda task: task.get('order', 999))
+            for task_cfg in ordered_tasks:
+                if not _task_is_due(task_cfg, now):
+                    continue
+                task_key = str(task_cfg.get('task_key', '') or '').strip()
+                task_id = str(task_cfg.get('id', '') or '').strip()
+                task_cls = task_module.TASK_LIST.get(task_key)
+                if not task_cls or not task_id:
+                    continue
+                instance = hydrate_runtime_state(task_cls(), task_cfg)
+                run_params = build_run_params(
+                    instrument, local_data_dir, all_profiles, task_cfg
+                )
+                enqueue(instrument, task_id, instance, run_params)
+    except Exception:
+        pass
+    finally:
+        if lock_handle is not None:
+            lock_handle.close()
+
+
+def _run_scheduler() -> None:
+    """Daemon scheduler that enqueues due tasks based on frequency."""
+    while True:
+        _ensure_worker()
+        _scheduler_poll(_scheduler_local_data_dir)
+        time.sleep(_scheduler_poll_seconds)
+
+
+def start_background_services(local_data_dir: Optional[str] = None) -> None:
+    """Start the queue worker and periodic scheduler threads."""
+    global _scheduler_thread, _scheduler_local_data_dir
+    if local_data_dir:
+        _scheduler_local_data_dir = str(local_data_dir)
+
+    _ensure_worker()
+    if _scheduler_thread is None or not _scheduler_thread.is_alive():
+        _scheduler_thread = threading.Thread(
+            target=_run_scheduler, daemon=True, name='ari-task-scheduler'
+        )
+        _scheduler_thread.start()
 
 
 # =============================================================================

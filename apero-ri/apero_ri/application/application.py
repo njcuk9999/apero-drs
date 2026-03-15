@@ -7,6 +7,7 @@ ARIApp inherits from Flask and wires up all routes, authentication,
 and permission handling from groups.yaml / pages.yaml.
 """
 import argparse
+import json
 import os
 import re
 import secrets
@@ -74,6 +75,7 @@ class ARIApp(Flask):
         )
         # Parse command-line arguments
         self.args = self._get_arguments()
+        ud.set_ari_dir(self.args.data_dir or str(Path.home() / '.ari'))
         # Secret key for sessions
         self.secret_key = self._load_or_create_secret()
         # Load YAML definitions (read-only)
@@ -92,6 +94,9 @@ class ARIApp(Flask):
         # Register context processors and routes
         self._register_context_processors()
         self._register_routes()
+        task_runner.start_background_services(
+            self.args.data_dir or str(Path.home() / '.ari')
+        )
 
     # -----------------------------------------------------------------
     # Argument parsing
@@ -228,6 +233,10 @@ class ARIApp(Flask):
               'api_user_pins_remove',
               self._api_user_pins_remove,
               methods=['POST'])
+        self.add_url_rule('/api/user/pins/reorder',
+              'api_user_pins_reorder',
+              self._api_user_pins_reorder,
+              methods=['POST'])
 
         # User links API routes
         self.add_url_rule('/api/user/links/get', 'api_user_links_get',
@@ -295,115 +304,118 @@ class ARIApp(Flask):
         self.add_url_rule('/api/admin/links/add', 'api_admin_links_add',
                   self._api_admin_links_add, methods=['POST'])
         self.add_url_rule('/api/admin/links/update', 'api_admin_links_update',
-                          self._api_admin_links_update, methods=['POST'])
+                  self._api_admin_links_update, methods=['POST'])
         self.add_url_rule('/api/admin/links/remove', 'api_admin_links_remove',
-                          self._api_admin_links_remove, methods=['POST'])
+                  self._api_admin_links_remove, methods=['POST'])
         self.add_url_rule('/api/admin/links/add-section',
-                          'api_admin_links_add_section',
-                          self._api_admin_links_add_section, methods=['POST'])
+                  'api_admin_links_add_section',
+                  self._api_admin_links_add_section, methods=['POST'])
         self.add_url_rule('/api/admin/links/remove-section',
-                          'api_admin_links_remove_section',
-                          self._api_admin_links_remove_section,
-                          methods=['POST'])
+                  'api_admin_links_remove_section',
+                  self._api_admin_links_remove_section,
+                  methods=['POST'])
 
         # Admin email API routes
         self.add_url_rule('/api/admin/email/test', 'api_admin_email_test',
-                          self._api_admin_email_test)
+                  self._api_admin_email_test)
         self.add_url_rule('/api/admin/email/save', 'api_admin_email_save',
-                          self._api_admin_email_save, methods=['POST'])
+                  self._api_admin_email_save, methods=['POST'])
         self.add_url_rule('/api/admin/email/send-test',
-                          'api_admin_email_send_test',
-                          self._api_admin_email_send_test, methods=['POST'])
+                  'api_admin_email_send_test',
+                  self._api_admin_email_send_test, methods=['POST'])
 
         # Documentation routes (edit, save, upload, images)
         self.add_url_rule('/docs/<page_ref>/edit', 'doc_edit',
-                          self._doc_edit_view)
+                  self._doc_edit_view)
         self.add_url_rule('/docs/<page_ref>/save', 'doc_save',
-                          self._doc_save_view, methods=['POST'])
+                  self._doc_save_view, methods=['POST'])
         self.add_url_rule('/docs/upload-image', 'doc_upload_image',
-                          self._doc_upload_image, methods=['POST'])
+                  self._doc_upload_image, methods=['POST'])
         self.add_url_rule('/doc-images/<filename>', 'doc_image',
-                          self._doc_image_view)
+                  self._doc_image_view)
 
         # Admin user management API routes
         self.add_url_rule('/api/admin/users/search', 'api_user_search',
-                          self._api_user_search)
+                  self._api_user_search)
         self.add_url_rule('/api/admin/users/update-groups',
-                          'api_user_update_groups',
-                          self._api_user_update_groups,
-                          methods=['POST'])
+                  'api_user_update_groups',
+                  self._api_user_update_groups,
+                  methods=['POST'])
         self.add_url_rule('/api/admin/users/update-instruments',
-                          'api_user_update_instruments',
-                          self._api_user_update_instruments,
-                          methods=['POST'])
+                  'api_user_update_instruments',
+                  self._api_user_update_instruments,
+                  methods=['POST'])
         self.add_url_rule('/api/admin/users/delete',
-                          'api_user_delete',
-                          self._api_user_delete,
-                          methods=['POST'])
+                  'api_user_delete',
+                  self._api_user_delete,
+                  methods=['POST'])
 
         # Admin login-as API routes
         self.add_url_rule('/api/admin/login-as/search',
-                          'api_login_as_search',
-                          self._api_login_as_search)
+                  'api_login_as_search',
+                  self._api_login_as_search)
         self.add_url_rule('/api/admin/login-as/set',
-                          'api_login_as_set',
-                          self._api_login_as_set,
-                          methods=['POST'])
+                  'api_login_as_set',
+                  self._api_login_as_set,
+                  methods=['POST'])
         self.add_url_rule('/api/admin/login-as/clear',
-                          'api_login_as_clear',
-                          self._api_login_as_clear,
-                          methods=['POST'])
+                  'api_login_as_clear',
+                  self._api_login_as_clear,
+                  methods=['POST'])
 
         # Admin science groups API routes
         self.add_url_rule('/api/admin/sci-groups/list',
-                          'api_sci_groups_list',
-                          self._api_sci_groups_list)
+                  'api_sci_groups_list',
+                  self._api_sci_groups_list)
         self.add_url_rule('/api/admin/sci-groups/get',
-                          'api_sci_groups_get',
-                          self._api_sci_groups_get)
+                  'api_sci_groups_get',
+                  self._api_sci_groups_get)
         self.add_url_rule('/api/admin/sci-groups/save',
-                          'api_sci_groups_save',
-                          self._api_sci_groups_save,
-                          methods=['POST'])
+                  'api_sci_groups_save',
+                  self._api_sci_groups_save,
+                  methods=['POST'])
         self.add_url_rule('/api/admin/sci-groups/create',
-                          'api_sci_groups_create',
-                          self._api_sci_groups_create,
-                          methods=['POST'])
+                  'api_sci_groups_create',
+                  self._api_sci_groups_create,
+                  methods=['POST'])
         self.add_url_rule('/api/admin/sci-groups/delete',
-                          'api_sci_groups_delete',
-                          self._api_sci_groups_delete,
-                          methods=['POST'])
+                  'api_sci_groups_delete',
+                  self._api_sci_groups_delete,
+                  methods=['POST'])
 
         # Admin APERO profiles API routes
         self.add_url_rule('/api/admin/apero-profiles/list',
-                          'api_apero_profiles_list',
-                          self._api_apero_profiles_list)
+                  'api_apero_profiles_list',
+                  self._api_apero_profiles_list)
+        self.add_url_rule('/api/admin/apero-profiles/overview-status',
+              'api_apero_profiles_overview',
+              self._api_apero_profiles_overview)
         self.add_url_rule('/api/admin/apero-profiles/save',
-                          'api_apero_profiles_save',
-                          self._api_apero_profiles_save,
-                          methods=['POST'])
+                  'api_apero_profiles_save',
+                  self._api_apero_profiles_save,
+                  methods=['POST'])
         self.add_url_rule('/api/admin/apero-profiles/delete',
-                          'api_apero_profiles_delete',
-                          self._api_apero_profiles_delete,
-                          methods=['POST'])
+                  'api_apero_profiles_delete',
+                  self._api_apero_profiles_delete,
+                  methods=['POST'])
         self.add_url_rule('/api/admin/apero-profiles/reorder',
-                          'api_apero_profiles_reorder',
-                          self._api_apero_profiles_reorder,
-                          methods=['POST'])
+                  'api_apero_profiles_reorder',
+                  self._api_apero_profiles_reorder,
+                  methods=['POST'])
         self.add_url_rule('/api/admin/apero-profiles/validate-path',
-                          'api_apero_profiles_validate',
-                          self._api_apero_profiles_validate)
+                  'api_apero_profiles_validate',
+                  self._api_apero_profiles_validate)
         self.add_url_rule('/api/admin/apero-profiles/browse',
-                          'api_apero_profiles_browse',
-                          self._api_apero_profiles_browse)
+                  'api_apero_profiles_browse',
+                  self._api_apero_profiles_browse)
         self.add_url_rule('/api/admin/apero-profiles/update-groups',
-                          'api_apero_profiles_update_groups',
-                          self._api_apero_profiles_update_groups,
-                          methods=['POST'])
+                  'api_apero_profiles_update_groups',
+                  self._api_apero_profiles_update_groups,
+                  methods=['POST'])
         self.add_url_rule('/api/admin/apero-profiles/test-db',
-                          'api_apero_profiles_test_db',
-                          self._api_apero_profiles_test_db,
-                          methods=['POST'])
+                  'api_apero_profiles_test_db',
+                  self._api_apero_profiles_test_db,
+                  methods=['POST'])
         self.add_url_rule('/api/admin/apero-profiles/test-tables',
                   'api_apero_profiles_test_tables',
                   self._api_apero_profiles_test_tables,
@@ -411,45 +423,45 @@ class ARIApp(Flask):
 
         # Async tasks API routes
         self.add_url_rule('/api/admin/async-tasks/list',
-                          'api_async_tasks_list',
-                          self._api_async_tasks_list)
+                  'api_async_tasks_list',
+                  self._api_async_tasks_list)
         self.add_url_rule('/api/admin/async-tasks/task-list',
-                          'api_async_tasks_task_list',
-                          self._api_async_tasks_task_list)
+                  'api_async_tasks_task_list',
+                  self._api_async_tasks_task_list)
         self.add_url_rule('/api/admin/async-tasks/save',
-                          'api_async_tasks_save',
-                          self._api_async_tasks_save,
-                          methods=['POST'])
+                  'api_async_tasks_save',
+                  self._api_async_tasks_save,
+                  methods=['POST'])
         self.add_url_rule('/api/admin/async-tasks/delete',
-                          'api_async_tasks_delete',
-                          self._api_async_tasks_delete,
-                          methods=['POST'])
+                  'api_async_tasks_delete',
+                  self._api_async_tasks_delete,
+                  methods=['POST'])
         self.add_url_rule('/api/admin/async-tasks/reorder',
-                          'api_async_tasks_reorder',
-                          self._api_async_tasks_reorder,
-                          methods=['POST'])
+                  'api_async_tasks_reorder',
+                  self._api_async_tasks_reorder,
+                  methods=['POST'])
         self.add_url_rule('/api/admin/async-tasks/toggle',
-                          'api_async_tasks_toggle',
-                          self._api_async_tasks_toggle,
-                          methods=['POST'])
+                  'api_async_tasks_toggle',
+                  self._api_async_tasks_toggle,
+                  methods=['POST'])
         self.add_url_rule('/api/admin/async-tasks/run-now',
-                          'api_async_tasks_run_now',
-                          self._api_async_tasks_run_now,
-                          methods=['POST'])
+                  'api_async_tasks_run_now',
+                  self._api_async_tasks_run_now,
+                  methods=['POST'])
         self.add_url_rule('/api/admin/async-tasks/run-all',
-                          'api_async_tasks_run_all',
-                          self._api_async_tasks_run_all,
-                          methods=['POST'])
+                  'api_async_tasks_run_all',
+                  self._api_async_tasks_run_all,
+                  methods=['POST'])
         self.add_url_rule('/api/admin/async-tasks/stop',
-                          'api_async_tasks_stop',
-                          self._api_async_tasks_stop,
-                          methods=['POST'])
+                  'api_async_tasks_stop',
+                  self._api_async_tasks_stop,
+                  methods=['POST'])
         self.add_url_rule('/api/admin/async-tasks/status',
-                          'api_async_tasks_status',
-                          self._api_async_tasks_status)
+                  'api_async_tasks_status',
+                  self._api_async_tasks_status)
         self.add_url_rule('/api/admin/async-tasks/read-file',
-                          'api_async_tasks_read_file',
-                          self._api_async_tasks_read_file)
+                  'api_async_tasks_read_file',
+                  self._api_async_tasks_read_file)
         self.add_url_rule('/api/admin/async-tasks/download-file',
                   'api_async_tasks_download_file',
                   self._api_async_tasks_download_file)
@@ -487,6 +499,9 @@ class ARIApp(Flask):
         self.add_url_rule('/data_portal/<profile_id>/observation-table',
                   'ri_observation_table',
                   self._ri_obs_table_view)
+        self.add_url_rule('/data_portal/<profile_id>/<path:objname>',
+              'ri_object_page',
+              self._ri_object_page_view)
         self.add_url_rule('/api/data-portal/obs-table',
                   'api_obs_table',
                   self._api_obs_table)
@@ -899,10 +914,13 @@ class ARIApp(Flask):
             }
 
             for username, user_data in users.items():
-                # Instrument scope: explicit instrument assignment or
-                # no assignment (treated as global support user).
+                # Strict instrument scoping: only show support contacts
+                # explicitly assigned to this instrument.
                 u_instr = user_data.get('instruments', [])
-                if u_instr and inst not in u_instr:
+                if isinstance(u_instr, str):
+                    u_instr = [u_instr]
+                u_instr = [str(val).strip() for val in (u_instr or []) if str(val).strip()]
+                if inst not in u_instr:
                     continue
 
                 direct_groups = set(user_data.get('groups', []))
@@ -1058,29 +1076,149 @@ class ARIApp(Flask):
         # ── APERO Profiles: error if any profile has DB/path failures ────
         if 'manage.apero_profile' in perms:
             try:
-                profiles = load_apero_profiles()
-                profile_errors = []
-                for name, cfg in profiles.items():
-                    db = validate_database_connection(
-                        cfg.get('DATABASE_MODE', ''),
-                        cfg.get('DATABASE_HOST', ''),
-                        cfg.get('DATABASE_USERNAME', ''),
-                        cfg.get('DATABASE_PASSWORD', ''),
-                        cfg.get('DATABASE_NAME', ''),
-                    )
-                    if not db.get('valid', False):
-                        profile_errors.append(name)
+                overview = self._build_apero_profiles_overview_status()
+                profile_errors = overview.get('issues', [])
                 if profile_errors:
                     health['home.admin.apero_profiles'] = {
                         'status': 'error',
-                        'message': f'{len(profile_errors)} profile(s) with DB issues: {", ".join(profile_errors[:3])}{"…" if len(profile_errors) > 3 else ""}',
+                        'message': (
+                            f'Some APERO profiles need attention. '
+                            f'{"; ".join(profile_errors[:3])}'
+                            f'{"; ..." if len(profile_errors) > 3 else ""}'
+                        ),
                     }
                 else:
                     health['home.admin.apero_profiles'] = {'status': 'ok', 'message': ''}
             except Exception:
                 pass
 
+        # ── Async Tasks: error if any active task has failed/errors ─────
+        if 'manage.apero_profile' in perms:
+            try:
+                all_tasks = load_async_tasks()
+                failed_tasks = []
+
+                for instrument, task_list in all_tasks.items():
+                    if not isinstance(task_list, list):
+                        continue
+                    for task_cfg in task_list:
+                        if not isinstance(task_cfg, dict):
+                            continue
+                        if task_cfg.get('active', True) is False:
+                            continue
+
+                        task_id = str(task_cfg.get('id', '') or '').strip()
+                        runtime = (
+                            task_runner.get_task_status(task_id)
+                            if task_id else {'found': False}
+                        )
+
+                        if runtime.get('found'):
+                            status = str(runtime.get('status', '') or '')
+                            error = str(runtime.get('error', '') or '').strip()
+                        else:
+                            status = str(task_cfg.get('last_status', '') or '')
+                            error = str(task_cfg.get('error', '') or '').strip()
+
+                        if status == 'failed' or error:
+                            label = str(task_cfg.get('task_key', task_id) or task_id)
+                            failed_tasks.append(f'{instrument}:{label}')
+
+                if failed_tasks:
+                    health['home.admin.async_tasks'] = {
+                        'status': 'error',
+                        'message': (
+                            f'{len(failed_tasks)} active task(s) in error: '
+                            f'{", ".join(failed_tasks[:3])}'
+                            f'{" ..." if len(failed_tasks) > 3 else ""}'
+                        ),
+                    }
+                else:
+                    health['home.admin.async_tasks'] = {'status': 'ok', 'message': ''}
+            except Exception:
+                pass
+
         return health
+
+    def _build_apero_profiles_overview_status(self) -> dict:
+        """Build all-instruments APERO profile readiness and issue details."""
+        profiles_by_instrument = load_apero_profiles()
+        path_keys = [
+            'PATH_RAW', 'PATH_PP', 'PATH_RED', 'PATH_CALIB',
+            'PATH_TELLU', 'PATH_LOG', 'PATH_LBL',
+        ]
+
+        issues = []
+        total_profiles = 0
+        per_instrument = {}
+
+        for instrument, inst_profiles in profiles_by_instrument.items():
+            if not isinstance(inst_profiles, dict):
+                continue
+
+            inst_issues = []
+            inst_total = 0
+            for name, cfg in inst_profiles.items():
+                if not isinstance(cfg, dict):
+                    continue
+                total_profiles += 1
+                inst_total += 1
+
+                reason_parts = []
+
+                db = validate_database_connection(
+                    cfg.get('DATABASE_MODE', ''),
+                    cfg.get('DATABASE_HOST', ''),
+                    cfg.get('DATABASE_USERNAME', ''),
+                    cfg.get('DATABASE_PASSWORD', ''),
+                    cfg.get('DATABASE_NAME', ''),
+                )
+                if not db.get('valid', False):
+                    db_error = str(db.get('error', '') or 'connection failed').strip()
+                    reason_parts.append(f'Database error: {db_error}')
+
+                invalid_paths = []
+                for key in path_keys:
+                    path_val = str(cfg.get(key, '')).strip()
+                    if not path_val or not Path(path_val).is_dir():
+                        invalid_paths.append(key)
+                if invalid_paths:
+                    reason_parts.append(
+                        'Invalid paths: ' + ', '.join(invalid_paths)
+                    )
+
+                if reason_parts:
+                    line = (
+                        f'Instrument {instrument} profile {name}: '
+                        f'{" | ".join(reason_parts)}'
+                    )
+                    issues.append(line)
+                    inst_issues.append(line)
+
+            per_instrument[instrument] = {
+                'total_profiles': inst_total,
+                'issues': inst_issues,
+            }
+
+        if issues:
+            status = {
+                'level': 'error',
+                'headline': 'Some APERO profiles need attention.',
+                'details': issues,
+            }
+        else:
+            status = {
+                'level': 'ok',
+                'headline': 'All profiles across instruments ready.',
+                'details': [],
+            }
+
+        return {
+            'status': status,
+            'issues': issues,
+            'total_profiles': total_profiles,
+            'per_instrument': per_instrument,
+        }
 
     def _ri_profile_view(self, profile_id):
         """View function for dynamic data portal profile sub-pages."""
@@ -1167,6 +1305,7 @@ class ARIApp(Flask):
         sidebar_tree = []
         for prof in accessible:
             pid = f'home.data_portal.{prof["profile_id"]}'
+            is_current = prof['profile_id'] == profile_id
             sidebar_tree.append({
                 'id': pid,
                 'label': prof['profile_id'],
@@ -1174,9 +1313,44 @@ class ARIApp(Flask):
                 'url': f'/data_portal/{prof["profile_id"]}',
                 'depth': 0,
                 'active': pid == page_id,
-                'expanded': False,
-                'has_children': False,
+                'expanded': is_current,
+                'has_children': True,
             })
+            if is_current:
+                sidebar_tree.append({
+                    'id': f'home.data_portal.{prof["profile_id"]}.object_table',
+                    'label': 'Astrophysical Object Table',
+                    'icon': 'fa-solid fa-star',
+                    'url': f'/data_portal/{prof["profile_id"]}/object-table',
+                    'depth': 1,
+                    'active': False,
+                })
+                sidebar_tree.append({
+                    'id': f'home.data_portal.{prof["profile_id"]}.obs_table',
+                    'label': 'Observation Table',
+                    'icon': 'fa-solid fa-binoculars',
+                    'url': f'/data_portal/{prof["profile_id"]}/observation-table',
+                    'depth': 1,
+                    'active': False,
+                })
+                sidebar_tree.append({
+                    'id': f'home.data_portal.{prof["profile_id"]}.query_db',
+                    'label': 'Database Query',
+                    'icon': 'fa-solid fa-server',
+                    'url': '',
+                    'depth': 1,
+                    'active': False,
+                    'disabled': True,
+                })
+                sidebar_tree.append({
+                    'id': f'home.data_portal.{prof["profile_id"]}.qc_graphs',
+                    'label': 'Quality Control Graphs',
+                    'icon': 'fa-solid fa-chart-line',
+                    'url': '',
+                    'depth': 1,
+                    'active': False,
+                    'disabled': True,
+                })
         context['sidebar_tree'] = sidebar_tree
 
         return render_template('data_portal/profile.html',
@@ -1643,10 +1817,41 @@ class ARIApp(Flask):
             return jsonify(success=False, error='Unauthorized'), 401
 
         username = user_info['username']
+        pins = self._load_user_pins(username)
+        return jsonify(success=True, pins=pins)
+
+    def _load_user_pins(self, username: str) -> List[dict]:
+        """Load pins from per-user pins.yaml and migrate legacy users.yaml pins."""
+        pins_data = ud.load_pins(username)
+        file_pins = self._normalize_pinned_pages(pins_data.get('pins', []))
+
         users = load_users()
         user = users.get(username, {})
-        pins = self._normalize_pinned_pages(user.get('pinned_pages', []))
-        return jsonify(success=True, pins=pins)
+        legacy_pins = self._normalize_pinned_pages(user.get('pinned_pages', []))
+
+        pins = file_pins or legacy_pins
+        if pins != file_pins:
+            ud.save_pins(username, {'pins': pins})
+
+        # Keep legacy field synchronized for backward compatibility.
+        if user and legacy_pins != pins:
+            user['pinned_pages'] = pins
+            users[username] = user
+            save_users(users)
+
+        return pins
+
+    def _save_user_pins(self, username: str, pins: List[dict]) -> None:
+        """Persist pins to per-user pins.yaml and mirror into legacy users.yaml."""
+        pins = self._normalize_pinned_pages(pins)
+        ud.save_pins(username, {'pins': pins})
+
+        users = load_users()
+        user = users.get(username)
+        if user is not None:
+            user['pinned_pages'] = pins
+            users[username] = user
+            save_users(users)
 
     def _api_user_pins_toggle(self):
         """Toggle pin state for a page for the current user."""
@@ -1670,12 +1875,7 @@ class ARIApp(Flask):
                            error='This page cannot be pinned.'), 400
 
         username = user_info['username']
-        users = load_users()
-        user = users.get(username)
-        if not user:
-            return jsonify(success=False, error='User not found'), 404
-
-        pins = self._normalize_pinned_pages(user.get('pinned_pages', []))
+        pins = self._load_user_pins(username)
         existing = {pin['page_id']: pin for pin in pins}
         now_iso = datetime.now(timezone.utc).isoformat()
 
@@ -1692,9 +1892,7 @@ class ARIApp(Flask):
             })
             pinned = True
 
-        user['pinned_pages'] = pins
-        users[username] = user
-        save_users(users)
+        self._save_user_pins(username, pins)
         return jsonify(success=True, pinned=pinned, pins=pins)
 
     def _api_user_pins_remove(self):
@@ -1712,17 +1910,30 @@ class ARIApp(Flask):
             return jsonify(success=False, error='page_id is required.'), 400
 
         username = user_info['username']
-        users = load_users()
-        user = users.get(username)
-        if not user:
-            return jsonify(success=False, error='User not found'), 404
-
-        pins = self._normalize_pinned_pages(user.get('pinned_pages', []))
+        pins = self._load_user_pins(username)
         pins = [pin for pin in pins if pin['page_id'] != page_id]
 
-        user['pinned_pages'] = pins
-        users[username] = user
-        save_users(users)
+        self._save_user_pins(username, pins)
+        return jsonify(success=True, pins=pins)
+
+    def _api_user_pins_reorder(self):
+        """Persist a user-specified order for pinned pages."""
+        user_info = self._require_user()
+        if not user_info:
+            return jsonify(success=False, error='Unauthorized'), 401
+
+        body = request.get_json() or {}
+        ordered_ids = body.get('ids', [])
+        if not isinstance(ordered_ids, list):
+            return jsonify(success=False, error='ids must be a list'), 400
+        ordered_ids = [str(i).strip() for i in ordered_ids if str(i).strip()]
+
+        username = user_info['username']
+        # Ensure pins.yaml exists and is migrated from any legacy field first.
+        self._load_user_pins(username)
+        pins = ud.reorder_pins(username, ordered_ids)
+        pins = self._normalize_pinned_pages(pins)
+        self._save_user_pins(username, pins)
         return jsonify(success=True, pins=pins)
 
     # -----------------------------------------------------------------
@@ -1878,12 +2089,38 @@ class ARIApp(Flask):
             })
             if is_current:
                 sidebar_tree.append({
-                    'id': page_id,
-                    'label': 'Object Table',
+                    'id': f'home.data_portal.{prof["profile_id"]}.object_table',
+                    'label': 'Astrophysical Object Table',
                     'icon': 'fa-solid fa-star',
                     'url': f'/data_portal/{prof["profile_id"]}/object-table',
                     'depth': 1,
                     'active': True,
+                })
+                sidebar_tree.append({
+                    'id': f'home.data_portal.{prof["profile_id"]}.obs_table',
+                    'label': 'Observation Table',
+                    'icon': 'fa-solid fa-binoculars',
+                    'url': f'/data_portal/{prof["profile_id"]}/observation-table',
+                    'depth': 1,
+                    'active': False,
+                })
+                sidebar_tree.append({
+                    'id': f'home.data_portal.{prof["profile_id"]}.query_db',
+                    'label': 'Database Query',
+                    'icon': 'fa-solid fa-server',
+                    'url': '',
+                    'depth': 1,
+                    'active': False,
+                    'disabled': True,
+                })
+                sidebar_tree.append({
+                    'id': f'home.data_portal.{prof["profile_id"]}.qc_graphs',
+                    'label': 'Quality Control Graphs',
+                    'icon': 'fa-solid fa-chart-line',
+                    'url': '',
+                    'depth': 1,
+                    'active': False,
+                    'disabled': True,
                 })
 
         context = {
@@ -2038,7 +2275,7 @@ class ARIApp(Flask):
             if is_current:
                 sidebar_tree.append({
                     'id': f'home.data_portal.{prof["profile_id"]}.object_table',
-                    'label': 'Object Table',
+                    'label': 'Astrophysical Object Table',
                     'icon': 'fa-solid fa-star',
                     'url': f'/data_portal/{prof["profile_id"]}/object-table',
                     'depth': 1,
@@ -2051,6 +2288,24 @@ class ARIApp(Flask):
                     'url': f'/data_portal/{prof["profile_id"]}/observation-table',
                     'depth': 1,
                     'active': True,
+                })
+                sidebar_tree.append({
+                    'id': f'home.data_portal.{prof["profile_id"]}.query_db',
+                    'label': 'Database Query',
+                    'icon': 'fa-solid fa-server',
+                    'url': '',
+                    'depth': 1,
+                    'active': False,
+                    'disabled': True,
+                })
+                sidebar_tree.append({
+                    'id': f'home.data_portal.{prof["profile_id"]}.qc_graphs',
+                    'label': 'Quality Control Graphs',
+                    'icon': 'fa-solid fa-chart-line',
+                    'url': '',
+                    'depth': 1,
+                    'active': False,
+                    'disabled': True,
                 })
 
         context = {
@@ -2069,10 +2324,106 @@ class ARIApp(Flask):
         }
         return render_template('data_portal/obs_table.html', **context)
 
+    def _ri_object_page_view(self, profile_id, objname):
+        """Serve placeholder page for a specific object within a profile."""
+        user_info = get_effective_user(session)
+        if user_info:
+            perms = resolve_user_permissions(
+                user_info['groups'], self.ari_groups
+            )
+        else:
+            perms = get_public_permissions()
+
+        if 'view.data_portal' not in perms:
+            flash('You do not have permission to view this page.',
+                  'warning')
+            return redirect(url_for('login'))
+
+        accessible = get_accessible_profiles(user_info, self.ari_groups)
+        profile = None
+        for prof in accessible:
+            if prof['profile_id'] == profile_id:
+                profile = prof
+                break
+
+        if not profile:
+            flash('Profile not found or access denied.', 'warning')
+            return redirect(url_for('home_data_portal'))
+
+        page_tpl_id = 'home.data_portal.{apero_profile}.{objname}'
+        page_tpl = self._page_templates.get(page_tpl_id, {})
+        label_tpl = str(page_tpl.get('label', '{apero profile}: {objname}'))
+        page_label = (
+            label_tpl
+            .replace('{apero profile}', profile_id)
+            .replace('{objname}', objname)
+        )
+        page_icon = page_tpl.get('icon', 'fa-solid fa-star')
+
+        page_id = f'home.data_portal.{profile_id}.{objname}'
+
+        colors = self._instrument_colors()
+        color = colors.get(profile['instrument'],
+                           self._INSTRUMENT_PALETTE[0])
+
+        sidebar_tree = []
+        for prof in accessible:
+            pid = f'home.data_portal.{prof["profile_id"]}'
+            is_current = prof['profile_id'] == profile_id
+            sidebar_tree.append({
+                'id': pid,
+                'label': prof['profile_id'],
+                'icon': 'fa-solid fa-laptop-code',
+                'url': f'/data_portal/{prof["profile_id"]}',
+                'depth': 0,
+                'active': False,
+            })
+            if is_current:
+                sidebar_tree.append({
+                    'id': f'home.data_portal.{prof["profile_id"]}.object_table',
+                    'label': 'Astrophysical Object Table',
+                    'icon': 'fa-solid fa-star',
+                    'url': f'/data_portal/{prof["profile_id"]}/object-table',
+                    'depth': 1,
+                    'active': False,
+                })
+                sidebar_tree.append({
+                    'id': f'home.data_portal.{prof["profile_id"]}.obs_table',
+                    'label': 'Observation Table',
+                    'icon': 'fa-solid fa-binoculars',
+                    'url': f'/data_portal/{prof["profile_id"]}/observation-table',
+                    'depth': 1,
+                    'active': False,
+                })
+                sidebar_tree.append({
+                    'id': page_id,
+                    'label': objname,
+                    'icon': page_icon,
+                    'url': f'/data_portal/{prof["profile_id"]}/{objname}',
+                    'depth': 1,
+                    'active': True,
+                })
+
+        context = {
+            'page_id': page_id,
+            'page_label': page_label,
+            'page_icon': page_icon,
+            'is_parent': False,
+            'profile': profile,
+            'profile_color': color,
+            'objname': objname,
+            'sidebar_root': 'home.data_portal',
+            'sidebar_label': 'Data Portal',
+            'sidebar_icon': 'fa-solid fa-database',
+            'sidebar_url': '/data_portal',
+            'sidebar_tree': sidebar_tree,
+        }
+        return render_template('data_portal/object_page.html', **context)
+
     def _api_obs_table(self):
         """Return observation table rows for a profile, filtered by science group."""
         import json as _json
-        from apero_ri.core.auth import ARI_DIR
+        base_dir = Path(self.args.data_dir or str(Path.home() / '.ari'))
 
         user_info = get_effective_user(session)
         if user_info:
@@ -2103,8 +2454,14 @@ class ARIApp(Flask):
             user_info, instrument
         )
 
-        tasks_dir = ARI_DIR / 'tasks' / instrument
-        json_path = tasks_dir / f'observation_table_{profile_id}.json'
+        tasks_dir = base_dir / 'tasks' / instrument
+        json_path = tasks_dir / f'obs_table_{profile_id}.json'
+
+        # Backward compatibility for older task outputs.
+        if not json_path.exists():
+            legacy_path = tasks_dir / f'observation_table_{profile_id}.json'
+            if legacy_path.exists():
+                json_path = legacy_path
 
         if not json_path.exists():
             return jsonify(
@@ -2131,12 +2488,18 @@ class ARIApp(Flask):
 
         filtered = []
         for row in all_rows:
-            raw = str(row.get('RUN_ID', '') or '')
+            raw = str(
+                row.get('RUN_ID', '')
+                or row.get('run_id', '')
+                or row.get('ALL_RUN_IDS', '')
+                or row.get('all_run_ids', '')
+                or ''
+            )
             row_rids = {r.strip() for r in raw.split(',') if r.strip()}
             if row_rids & accessible_run_ids:
                 filtered.append(row)
 
-        skip = {'RUN_ID'}
+        skip = {'RUN_ID', 'run_id', 'ALL_RUN_IDS', 'all_run_ids'}
         columns = [c for c in (all_rows[0].keys() if all_rows else [])
                    if c not in skip]
 
@@ -2176,6 +2539,7 @@ class ARIApp(Flask):
         user_info, perms = self._require_admin_user()
         if not user_info:
             return jsonify(success=False, error='Unauthorized'), 401
+        perms = perms or set()
 
         query = request.args.get('q', '').strip()
         if query:
@@ -2185,8 +2549,12 @@ class ARIApp(Flask):
 
         # Build group metadata for the editing user
         all_groups = list(self.ari_groups.keys())
+        editor_is_admin = 'admin' in (user_info.get('groups', []) or [])
         # Which groups can the editor manage?
         can_add = {g for g in all_groups if f'manage.group.{g}' in perms}
+        # Admin users can manage all non-admin groups from this UI.
+        if editor_is_admin:
+            can_add |= {g for g in all_groups if g != 'admin'}
         # For each group, what groups does it encompass?
         inherited_map = {}
         for g in all_groups:
@@ -2201,7 +2569,14 @@ class ARIApp(Flask):
         editor_full = get_user_info(user_info['username'])
         editor_instruments = (editor_full.get('instruments', [])
                               if editor_full else [])
-        can_add_instrument = 'add.instrument' in perms
+        can_manage_instrument_groups = {
+            g for g in all_groups if f'manage.instrument.{g}' in perms
+        }
+        can_add_instrument = (
+            ('add.instrument' in perms)
+            or bool(can_manage_instrument_groups)
+            or editor_is_admin
+        )
 
         return jsonify(
             success=True,
@@ -2212,7 +2587,9 @@ class ARIApp(Flask):
             all_instruments=all_instruments,
             editor_instruments=editor_instruments,
             can_add_instrument=can_add_instrument,
+            can_add_instrument_groups=sorted(can_manage_instrument_groups),
             editor_username=user_info['username'],
+            editor_is_admin=editor_is_admin,
         )
 
     def _api_user_update_groups(self):
@@ -2220,6 +2597,7 @@ class ARIApp(Flask):
         user_info, perms = self._require_admin_user()
         if not user_info:
             return jsonify(success=False, error='Unauthorized'), 401
+        perms = perms or set()
 
         data = request.get_json()
         if not data or 'username' not in data or 'groups' not in data:
@@ -2234,10 +2612,27 @@ class ARIApp(Flask):
         if not target_info:
             return jsonify(success=False, error='User not found'), 404
 
-        old_groups = set(target_info.get('groups', []))
+        editor_is_admin = 'admin' in (user_info.get('groups', []) or [])
+        target_groups = set(target_info.get('groups', []))
+
+        # Never allow edits to admin accounts from this endpoint.
+        if 'admin' in target_groups:
+            return jsonify(
+                success=False,
+                error='Cannot modify admin accounts'
+            ), 403
+
+        # Never allow assigning admin via the users UI.
+        if 'admin' in set(new_groups):
+            return jsonify(
+                success=False,
+                error='Cannot assign admin group from this page'
+            ), 403
+
+        old_groups = target_groups
         changed = (set(new_groups) - old_groups) | (old_groups - set(new_groups))
         for g in changed:
-            if f'manage.group.{g}' not in perms:
+            if f'manage.group.{g}' not in perms and not editor_is_admin:
                 return jsonify(
                     success=False,
                     error=f'No permission to manage group: {g}'
@@ -2252,6 +2647,7 @@ class ARIApp(Flask):
         user_info, perms = self._require_admin_user()
         if not user_info:
             return jsonify(success=False, error='Unauthorized'), 401
+        perms = perms or set()
 
         data = request.get_json()
         if not data or 'username' not in data or 'instruments' not in data:
@@ -2260,13 +2656,38 @@ class ARIApp(Flask):
         target = data['username']
         new_instruments = data['instruments']
 
-        # Must have add.instrument permission OR only editing own instruments
-        if 'add.instrument' not in perms:
-            if target != user_info['username']:
+        target_info = get_user_info(target)
+        if not target_info:
+            return jsonify(success=False, error='User not found'), 404
+
+        editor_is_admin = 'admin' in (user_info.get('groups', []) or [])
+        target_groups = set(target_info.get('groups', []))
+
+        # Never allow edits to admin accounts from this endpoint.
+        if 'admin' in target_groups:
+            return jsonify(
+                success=False,
+                error='Cannot modify admin accounts'
+            ), 403
+
+        # Non-admin editors may always edit their own instruments.
+        if target != user_info['username'] and not editor_is_admin:
+            can_manage_any = 'add.instrument' in perms
+            missing = [
+                g for g in target_groups
+                if f'manage.instrument.{g}' not in perms
+            ]
+            if not can_manage_any and missing:
                 return jsonify(
                     success=False,
-                    error='No permission to manage instruments'
+                    error=(
+                        'No permission to manage instruments for user groups: '
+                        + ', '.join(sorted(missing))
+                    )
                 ), 403
+
+        if not isinstance(new_instruments, list):
+            return jsonify(success=False, error='instruments must be a list'), 400
 
         # Validate instruments against the allowed list
         params = load_parameters()
@@ -2287,6 +2708,7 @@ class ARIApp(Flask):
         user_info, perms = self._require_admin_user()
         if not user_info:
             return jsonify(success=False, error='Unauthorized'), 401
+        perms = perms or set()
 
         data = request.get_json()
         if not data or 'username' not in data:
@@ -2616,6 +3038,7 @@ class ARIApp(Flask):
 
         # Build list with validation status, sorted by DISPLAY_ORDER
         profiles = []
+        profile_errors = []
         for name, cfg in inst_profiles.items():
             entry = {
                 'name': name,
@@ -2642,9 +3065,68 @@ class ARIApp(Flask):
                     entry[k + '_exists'] = False
                     all_paths_ok = False
             entry['all_paths_ok'] = all_paths_ok
+
+            # DB check used by admin home red-cross logic (db/path only)
+            db_check = validate_database_connection(
+                cfg.get('DATABASE_MODE', ''),
+                cfg.get('DATABASE_HOST', ''),
+                cfg.get('DATABASE_USERNAME', ''),
+                cfg.get('DATABASE_PASSWORD', ''),
+                cfg.get('DATABASE_NAME', ''),
+            )
+            db_ok = bool(db_check.get('valid', False))
+            db_error = str(db_check.get('error', '')).strip()
+            entry['db_ok'] = db_ok
+            entry['db_error'] = db_error
+
+            reasons = []
+            if not db_ok:
+                reasons.append(f'db: {db_error or "connection failed"}')
+            if not all_paths_ok:
+                reasons.append('paths: missing or invalid directory')
+            entry['status_reasons'] = reasons
+            if reasons:
+                profile_errors.append(
+                    f"Instrument {instrument} profile {name}: {'; '.join(reasons)}"
+                )
+
             profiles.append(entry)
+
         profiles.sort(key=lambda p: p['DISPLAY_ORDER'])
-        return jsonify(success=True, profiles=profiles)
+
+        if not profiles:
+            status = {
+                'level': 'warning',
+                'headline': 'No APERO profiles configured for this instrument.',
+                'details': [],
+            }
+        elif profile_errors:
+            status = {
+                'level': 'error',
+                'headline': f'{len(profile_errors)} profile(s) need attention.',
+                'details': profile_errors,
+            }
+        else:
+            status = {
+                'level': 'ok',
+                'headline': 'Everything ready for this instrument.',
+                'details': [],
+            }
+
+        return jsonify(success=True, profiles=profiles, status=status)
+
+    def _api_apero_profiles_overview(self):
+        """Return all-instruments APERO profile readiness summary."""
+        user_info, perms = self._require_apero_profile_perm()
+        if not user_info:
+            return jsonify(success=False, error='Unauthorized'), 401
+
+        overview = self._build_apero_profiles_overview_status()
+        return jsonify(
+            success=True,
+            status=overview.get('status', {}),
+            total_profiles=overview.get('total_profiles', 0),
+        )
 
     def _api_apero_profiles_save(self):
         """Create or update an APERO profile."""
@@ -2865,6 +3347,7 @@ class ARIApp(Flask):
         user_info, perms = self._require_apero_profile_perm()
         if not user_info:
             return jsonify(success=False, error='Unauthorized'), 401
+        perms = perms or set()
 
         data = request.get_json()
         if not data:
@@ -2975,14 +3458,15 @@ class ARIApp(Flask):
 
             # Populate science options from FINDEX
             findex = qtable(tables['FINDEX_TABLENAME'])
-            # Fetch unique values only; keep SQL lightweight for large FINDEX.
+            # Fetch unique science options only; avoid ORDER BY and TRIM in SQL
+            # to keep this lightweight on large FINDEX tables.
             fiber_rows = apero_async.database_query(
                 db_params,
                 f"""
                 SELECT KW_FIBER AS value
                 FROM {findex}
                 WHERE KW_FIBER IS NOT NULL
-                  AND KW_FIBER <> ''
+                    AND KW_FIBER <> ''
                 GROUP BY KW_FIBER
                 """,
             )
@@ -2992,7 +3476,7 @@ class ARIApp(Flask):
                 SELECT KW_DPRTYPE AS value
                 FROM {findex}
                 WHERE KW_DPRTYPE IS NOT NULL
-                  AND KW_DPRTYPE <> ''
+                    AND KW_DPRTYPE <> ''
                 GROUP BY KW_DPRTYPE
                 """,
             )
@@ -3273,8 +3757,9 @@ class ARIApp(Flask):
         run_params = task_runner.build_run_params(
             instrument, local_data_dir, all_profiles, task_cfg
         )
+        instance = task_runner.hydrate_runtime_state(task_cls(), task_cfg)
         task_runner.enqueue(
-            instrument, task_id, task_cls(), run_params, prepend=True
+            instrument, task_id, instance, run_params, prepend=True
         )
         return jsonify(success=True)
 
@@ -3325,7 +3810,8 @@ class ARIApp(Flask):
             run_params = task_runner.build_run_params(
                 instrument, local_data_dir, all_profiles, task_cfg
             )
-            task_runner.enqueue(instrument, tid, task_cls(), run_params)
+            instance = task_runner.hydrate_runtime_state(task_cls(), task_cfg)
+            task_runner.enqueue(instrument, tid, instance, run_params)
             added.append(tid)
 
         return jsonify(success=True, added=added)
@@ -3418,20 +3904,98 @@ class ARIApp(Flask):
                                line_count=0,
                                preview_lines=preview_lines,
                                is_binary=True,
+                               is_json=False,
+                               json_table=None,
                                path=str(resolved))
 
             text = raw.decode('utf-8', errors='replace')
             all_lines = text.splitlines()
             preview = '\n'.join(all_lines[:preview_lines])
+
+            json_table = None
+            if resolved.suffix.lower() == '.json':
+                try:
+                    parsed = json.loads(text)
+                    json_table = self._build_json_preview_table(parsed)
+                except Exception:
+                    json_table = None
+
             return jsonify(success=True,
                            preview=preview,
                            truncated=len(all_lines) > preview_lines,
                            line_count=len(all_lines),
                            preview_lines=preview_lines,
                            is_binary=False,
+                           is_json=json_table is not None,
+                           json_table=json_table,
                            path=str(resolved))
         except Exception as exc:
             return jsonify(success=False, error=str(exc)), 500
+
+    @staticmethod
+    def _build_json_preview_table(data, max_rows: int = 200) -> dict:
+        """Convert JSON data into a compact table payload for UI rendering."""
+
+        def _cell(value) -> str:
+            if value is None:
+                return ''
+            if isinstance(value, (dict, list)):
+                return json.dumps(value, ensure_ascii=False)
+            return str(value)
+
+        if isinstance(data, list):
+            if all(isinstance(item, dict) for item in data):
+                columns = []
+                seen = set()
+                for item in data:
+                    for key in item.keys():
+                        skey = str(key)
+                        if skey not in seen:
+                            seen.add(skey)
+                            columns.append(skey)
+
+                rows = []
+                for item in data[:max_rows]:
+                    row = {}
+                    for col in columns:
+                        row[col] = _cell(item.get(col, ''))
+                    rows.append(row)
+
+                return {
+                    'columns': columns,
+                    'rows': rows,
+                    'row_count': len(data),
+                    'truncated': len(data) > max_rows,
+                }
+
+            rows = []
+            for index, value in enumerate(data[:max_rows], start=1):
+                rows.append({'index': str(index), 'value': _cell(value)})
+            return {
+                'columns': ['index', 'value'],
+                'rows': rows,
+                'row_count': len(data),
+                'truncated': len(data) > max_rows,
+            }
+
+        if isinstance(data, dict):
+            items = list(data.items())
+            rows = []
+            for key, value in items[:max_rows]:
+                rows.append({'key': str(key), 'value': _cell(value)})
+            return {
+                'columns': ['key', 'value'],
+                'rows': rows,
+                'row_count': len(items),
+                'truncated': len(items) > max_rows,
+            }
+
+        return {
+            'columns': ['value'],
+            'rows': [{'value': _cell(data)}],
+            'row_count': 1,
+            'truncated': False,
+        }
 
     def _api_async_tasks_download_file(self):
         """Download an async task output file."""
@@ -3459,7 +4023,27 @@ class ARIApp(Flask):
             return jsonify(success=False, error='Unauthorized'), 401
         username = user_info['username']
         instrument = request.args.get('instrument', '').strip()
-        if instrument:
+        if instrument == '__all__':
+            params = load_parameters()
+            all_instr = params.get('instruments', {}).get('value', [])
+            user_instr = user_info.get('instruments', [])
+            instruments = [i for i in all_instr if i in user_instr] or list(all_instr)
+
+            data = ud.load_links(username)
+            merged = {
+                'sections': list(data.get('sections', [])),
+                'types': dict(data.get('types', {})),
+                'links': {s: dict(v) for s, v in data.get('links', {}).items()},
+                'instrument_sections': [],
+            }
+            for inst in instruments:
+                inst_data = ud.load_instrument_links(inst)
+                for section in inst_data.get('sections', []):
+                    tag = f'[{inst}] {section}'
+                    merged['instrument_sections'].append(tag)
+                    merged['links'][tag] = dict(inst_data.get('links', {}).get(section, {}))
+            data = merged
+        elif instrument:
             data = ud.get_merged_links(username, instrument)
         else:
             data = ud.load_links(username)
@@ -3538,7 +4122,6 @@ class ARIApp(Flask):
         if not user_info:
             return jsonify(success=False, error='Unauthorized'), 401
         notes = ud.load_notes(user_info['username'])
-        # Strip content for list view (send metadata only)
         slim = [{k: v for k, v in n.items() if k != 'content'}
                 for n in notes]
         return jsonify(success=True, notes=slim)
@@ -3599,7 +4182,21 @@ class ARIApp(Flask):
         if not user_info:
             return jsonify(success=False, error='Unauthorized'), 401
         instrument = request.args.get('instrument', '').strip()
-        if instrument:
+        if instrument == '__all__':
+            params = load_parameters()
+            all_instr = params.get('instruments', {}).get('value', [])
+            user_instr = user_info.get('instruments', [])
+            instruments = [i for i in all_instr if i in user_instr] or list(all_instr)
+
+            events = list(ud.list_events(user_info['username']))
+            for inst in instruments:
+                inst_events = ud.load_instrument_calendar(inst).get('events', [])
+                for ev in inst_events:
+                    tagged = dict(ev)
+                    tagged['_source'] = inst
+                    tagged['category'] = 'instrument'
+                    events.append(tagged)
+        elif instrument:
             events = ud.get_merged_calendar(user_info['username'], instrument)
         else:
             events = ud.list_events(user_info['username'])
@@ -3644,7 +4241,8 @@ class ARIApp(Flask):
         if not user_info:
             return jsonify(success=False, error='Unauthorized'), 401
         items = ud.list_todo_items(user_info['username'])
-        return jsonify(success=True, items=items)
+        metadata = ud.get_todo_metadata(user_info['username'])
+        return jsonify(success=True, items=items, metadata=metadata)
 
     def _api_user_todo_save(self):
         user_info = self._require_user()
@@ -3654,9 +4252,16 @@ class ARIApp(Flask):
         item = {
             'id': str(body.get('id', '')).strip(),
             'title': str(body.get('title', '')).strip(),
-            'done': bool(body.get('done', False)),
+            'status': str(body.get('status', '')).strip(),
+            'size': str(body.get('size', 'md')).strip(),
+            'priority': body.get('priority', 0),
+            'date_added': str(body.get('date_added', '')).strip(),
             'created': str(body.get('created', '')).strip(),
-            'priority': str(body.get('priority', 'normal')).strip(),
+            'projects': body.get('projects', []),
+            'tags': body.get('tags', []),
+            'comments': str(body.get('comments', '') or ''),
+            'link_url': str(body.get('link_url', '') or '').strip(),
+            'done': bool(body.get('done', False)),
         }
         if not item['title']:
             return jsonify(success=False, error='title required'), 400
@@ -3692,6 +4297,18 @@ class ARIApp(Flask):
         if not user_info:
             return jsonify(success=False, error='Unauthorized'), 401
         body = request.get_json() or {}
+
+        if str(body.get('action', '')).strip() == 'metadata':
+            kind = str(body.get('kind', '')).strip()
+            op = str(body.get('op', '')).strip()
+            value = str(body.get('value', '')).strip()
+            if kind not in {'projects', 'tags'}:
+                return jsonify(success=False, error='kind must be projects or tags'), 400
+            if op not in {'add', 'remove'}:
+                return jsonify(success=False, error='op must be add or remove'), 400
+            metadata = ud.manage_todo_metadata(user_info['username'], kind, op, value)
+            return jsonify(success=True, metadata=metadata)
+
         ordered_ids = body.get('ids', [])
         if not isinstance(ordered_ids, list):
             return jsonify(success=False, error='ids must be a list'), 400
@@ -3900,7 +4517,6 @@ class ARIApp(Flask):
         allowed = {'provider', 'enabled', 'from_address', 'smtp_host',
                    'smtp_port', 'smtp_ssl', 'smtp_tls', 'smtp_user', 'smtp_password'}
         cfg = {k: v for k, v in body.items() if k in allowed}
-        # Preserve existing encoded password if no plaintext was sent
         if 'smtp_password' not in cfg:
             existing = eb.load_email_config()
             if existing.get('smtp_password_enc'):
@@ -3926,9 +4542,6 @@ class ARIApp(Flask):
         if err:
             return jsonify(success=False, error=err)
         return jsonify(success=True)
-
-
-    # -----------------------------------------------------------------
 
     # -----------------------------------------------------------------
     # Run override

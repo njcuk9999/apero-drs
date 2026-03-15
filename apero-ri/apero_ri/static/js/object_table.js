@@ -302,15 +302,13 @@
                 if (val === null || val === undefined || val === '') {
                     td.innerHTML = '<span class="ot-null">\u2014</span>';
                 } else if (col === 'OBJNAME') {
-                    // Placeholder hyperlink — will become a real route later
                     var a = document.createElement('a');
-                    a.href      = '#';
+                    a.href      = '/data_portal/'
+                        + encodeURIComponent(cfg.profileId)
+                        + '/' + encodeURIComponent(String(val));
                     a.className = 'ot-obj-link';
                     a.textContent = String(val);
-                    a.title = 'Object detail (coming soon)';
-                    a.addEventListener('click', function (e) {
-                        e.preventDefault();
-                    });
+                    a.title = 'Open object page';
                     td.appendChild(a);
                 } else {
                     td.textContent = String(val);

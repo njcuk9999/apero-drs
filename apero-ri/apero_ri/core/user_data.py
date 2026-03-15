@@ -45,6 +45,15 @@ USERS_DIR = ARI_DIR / 'users'
 INSTRUMENTS_DIR = ARI_DIR / 'admin' / 'instruments'
 
 
+def set_ari_dir(path: Optional[str]) -> None:
+    """Configure storage root (e.g. --data-dir) for user/admin data files."""
+    global ARI_DIR, USERS_DIR, INSTRUMENTS_DIR
+    base = Path(path).expanduser() if path else (Path.home() / '.ari')
+    ARI_DIR = base
+    USERS_DIR = ARI_DIR / 'users'
+    INSTRUMENTS_DIR = ARI_DIR / 'admin' / 'instruments'
+
+
 def get_user_dir(username: str) -> Path:
     """Return (and create if necessary) the per-user data directory."""
     d = USERS_DIR / username
@@ -268,6 +277,66 @@ def get_merged_links(username: str, instrument: str) -> Dict:
         result['instrument_sections'].append(tag)
         result['links'][tag] = dict(instr_data['links'].get(section, {}))
     return result
+
+
+# =============================================================================
+# Pins
+# =============================================================================
+_PINS_DEFAULT: Dict = {'pins': []}
+
+
+def _pins_path(username: str) -> Path:
+    return get_user_dir(username) / 'pins.yaml'
+
+
+def load_pins(username: str) -> Dict:
+    data = _load_yaml(_pins_path(username), dict(_PINS_DEFAULT))
+    if isinstance(data, list):
+        data = {'pins': data}
+    if not isinstance(data, dict):
+        data = dict(_PINS_DEFAULT)
+    pins = data.get('pins', [])
+    if not isinstance(pins, list):
+        pins = []
+    data['pins'] = pins
+    return data
+
+
+def save_pins(username: str, data: Dict) -> None:
+    payload = data if isinstance(data, dict) else dict(_PINS_DEFAULT)
+    pins = payload.get('pins', [])
+    if not isinstance(pins, list):
+        pins = []
+    payload = {'pins': pins}
+    _save_yaml(_pins_path(username), payload)
+
+
+def list_pins(username: str) -> List[Dict]:
+    return load_pins(username).get('pins', [])
+
+
+def reorder_pins(username: str, ordered_ids: List[str]) -> List[Dict]:
+    data = load_pins(username)
+    pins = data.get('pins', [])
+    id_map = {}
+    for pin in pins:
+        if isinstance(pin, dict):
+            pin_id = str(pin.get('page_id', '')).strip()
+            if pin_id:
+                id_map[pin_id] = pin
+
+    reordered = [id_map[i] for i in ordered_ids if i in id_map]
+    seen = set(ordered_ids)
+    for pin in pins:
+        if not isinstance(pin, dict):
+            continue
+        pin_id = str(pin.get('page_id', '')).strip()
+        if pin_id and pin_id not in seen:
+            reordered.append(pin)
+
+    data['pins'] = reordered
+    save_pins(username, data)
+    return reordered
 
 
 # =============================================================================

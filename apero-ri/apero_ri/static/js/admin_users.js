@@ -177,6 +177,7 @@
         allPill.className = 'ari-um-filter-pill' +
             (activeGroupFilter === null ? ' ari-um-filter-pill--active' : '');
         allPill.textContent = 'All';
+        allPill.setAttribute('aria-pressed', activeGroupFilter === null ? 'true' : 'false');
         allPill.addEventListener('click', function () {
             activeGroupFilter = null;
             renderGroupFilterPills();
@@ -191,6 +192,7 @@
             pill.className = 'ari-um-filter-pill ari-um-filter-pill--' + group +
                 (isActive ? ' ari-um-filter-pill--active' : '');
             pill.textContent = group;
+            pill.setAttribute('aria-pressed', isActive ? 'true' : 'false');
             pill.addEventListener('click', function () {
                 activeGroupFilter = (activeGroupFilter === group) ? null : group;
                 renderGroupFilterPills();
