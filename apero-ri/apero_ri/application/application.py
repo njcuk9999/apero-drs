@@ -2142,7 +2142,7 @@ class ARIApp(Flask):
     def _api_object_table(self):
         """Return object table rows for a profile, filtered by science group."""
         import json as _json
-        from apero_ri.core.auth import ARI_DIR
+        base_dir = Path(self.args.data_dir or str(Path.home() / '.ari'))
 
         user_info = get_effective_user(session)
         if user_info:
@@ -2176,7 +2176,7 @@ class ARIApp(Flask):
         )
 
         # Locate the JSON file
-        tasks_dir = ARI_DIR / 'tasks' / instrument
+        tasks_dir = base_dir / 'tasks' / instrument
         json_path = tasks_dir / f'object_table_{profile_id}.json'
 
         if not json_path.exists():
@@ -2198,9 +2198,15 @@ class ARIApp(Flask):
                 success=False, error=f'Failed to load data: {exc}'
             ), 500
 
+        metadata = data.get('metadata', {})
+        if not isinstance(metadata, dict):
+            metadata = {}
         all_rows = data.get('rows', [])
         generated_at = (data.get('generated_at')
-                        or data.get('metadata', {}).get('GENERATED_AT'))
+                        or metadata.get('GENERATED_AT'))
+        raw_column_meta = metadata.get('COLUMN_META', {})
+        if not isinstance(raw_column_meta, dict):
+            raw_column_meta = {}
 
         # Filter rows based on accessible run_ids
         filtered = []
@@ -2211,9 +2217,23 @@ class ARIApp(Flask):
                 filtered.append(row)
 
         # Build column list (exclude RUN_ID)
-        skip = {'RUN_ID'}
+        skip = {'RUN_ID', 'run_id', 'ALL_RUN_IDS', 'all_run_ids'}
         columns = [c for c in (all_rows[0].keys() if all_rows else [])
                    if c not in skip]
+
+        column_meta = {
+            col: dict(meta)
+            for col, meta in raw_column_meta.items()
+            if col not in skip and isinstance(meta, dict)
+        }
+        if 'OBJNAME' in columns and 'OBJNAME' not in column_meta:
+            column_meta['OBJNAME'] = {
+                'sortable': True,
+                'filterable': True,
+                'removable': False,
+                'default': True,
+                'type': 'string',
+            }
 
         # Strip skipped columns from each row
         clean_rows = [
@@ -2225,6 +2245,7 @@ class ARIApp(Flask):
             success=True,
             rows=clean_rows,
             columns=columns,
+            column_meta=column_meta,
             generated_at=generated_at,
             total_rows=len(all_rows),
         )
@@ -2482,9 +2503,15 @@ class ARIApp(Flask):
                 success=False, error=f'Failed to load data: {exc}'
             ), 500
 
+        metadata = data.get('metadata', {})
+        if not isinstance(metadata, dict):
+            metadata = {}
         all_rows = data.get('rows', [])
         generated_at = (data.get('generated_at')
-                        or data.get('metadata', {}).get('GENERATED_AT'))
+                        or metadata.get('GENERATED_AT'))
+        raw_column_meta = metadata.get('COLUMN_META', {})
+        if not isinstance(raw_column_meta, dict):
+            raw_column_meta = {}
 
         filtered = []
         for row in all_rows:
@@ -2503,6 +2530,28 @@ class ARIApp(Flask):
         columns = [c for c in (all_rows[0].keys() if all_rows else [])
                    if c not in skip]
 
+        column_meta = {
+            col: dict(meta)
+            for col, meta in raw_column_meta.items()
+            if col not in skip and isinstance(meta, dict)
+        }
+        if 'NIGHT' in columns and 'NIGHT' not in column_meta:
+            column_meta['NIGHT'] = {
+                'sortable': True,
+                'filterable': True,
+                'removable': False,
+                'default': True,
+                'type': 'night',
+            }
+        if 'OBJNAME' in columns and 'OBJNAME' not in column_meta:
+            column_meta['OBJNAME'] = {
+                'sortable': True,
+                'filterable': True,
+                'removable': False,
+                'default': True,
+                'type': 'string',
+            }
+
         clean_rows = [
             {k: v for k, v in row.items() if k not in skip}
             for row in filtered
@@ -2512,6 +2561,7 @@ class ARIApp(Flask):
             success=True,
             rows=clean_rows,
             columns=columns,
+            column_meta=column_meta,
             generated_at=generated_at,
             total_rows=len(all_rows),
         )

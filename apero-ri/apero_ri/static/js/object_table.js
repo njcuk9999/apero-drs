@@ -16,6 +16,7 @@
     var sortCol      = null;     // currently sorted column (null = unsorted)
     var sortDir      = 1;        // 1 = asc, -1 = desc
     var colFilters   = {};       // col -> filter string
+    var columnMeta   = {};       // col -> {sortable, filterable, removable, default, type}
     var currentPage  = 1;
     var perPage      = 50;       // 0 = show all
 
@@ -69,6 +70,104 @@
         }
     }
 
+    function normalizeColumnMeta(rawMeta) {
+        var out = {};
+        if (!rawMeta || typeof rawMeta !== 'object') {
+            return out;
+        }
+        Object.keys(rawMeta).forEach(function (key) {
+            var meta = rawMeta[key] || {};
+            out[key] = {
+                sortable: meta.sortable !== false,
+                filterable: meta.filterable !== false,
+                removable: meta.removable !== false,
+                default: meta.default !== false,
+                type: meta.type ? String(meta.type).toLowerCase() : 'string',
+            };
+        });
+        return out;
+    }
+
+    function getColumnMeta(col) {
+        return columnMeta[col] || {};
+    }
+
+    function isColumnSortable(col) {
+        var meta = getColumnMeta(col);
+        return meta.sortable !== false;
+    }
+
+    function isColumnFilterable(col) {
+        var meta = getColumnMeta(col);
+        return meta.filterable !== false;
+    }
+
+    function isColumnRemovable(col) {
+        // Keep the object identifier always visible.
+        if (col === 'OBJNAME') return false;
+        var meta = getColumnMeta(col);
+        return meta.removable !== false;
+    }
+
+    function isColumnDefaultVisible(col) {
+        var meta = getColumnMeta(col);
+        return meta.default !== false;
+    }
+
+    function parseStrictNumber(value) {
+        var raw = String(value === null || value === undefined ? '' : value).trim();
+        if (!raw || !/^-?\d+(\.\d+)?$/.test(raw)) {
+            return null;
+        }
+        var num = Number(raw);
+        return isNaN(num) ? null : num;
+    }
+
+    function parseNightDate(value) {
+        var raw = String(value === null || value === undefined ? '' : value).trim();
+        if (!raw) return null;
+        if (/^\d{4}-\d{2}-\d{2}$/.test(raw)) {
+            return Date.parse(raw + 'T00:00:00Z');
+        }
+        if (/^\d{8}$/.test(raw)) {
+            var y = raw.slice(0, 4);
+            var m = raw.slice(4, 6);
+            var d = raw.slice(6, 8);
+            return Date.parse(y + '-' + m + '-' + d + 'T00:00:00Z');
+        }
+        var parsed = Date.parse(raw);
+        return isNaN(parsed) ? null : parsed;
+    }
+
+    function normalizeForSort(col, value) {
+        var meta = getColumnMeta(col);
+        var type = String(meta.type || '').toLowerCase();
+
+        if (type === 'date' || type === 'datetime' || type === 'night') {
+            var ts = parseNightDate(value);
+            if (ts !== null) {
+                return { kind: 'number', value: ts };
+            }
+        }
+
+        if (type === 'number' || type === 'int' || type === 'float') {
+            var forcedNum = parseStrictNumber(value);
+            if (forcedNum !== null) {
+                return { kind: 'number', value: forcedNum };
+            }
+        }
+
+        var autoNum = parseStrictNumber(value);
+        if (autoNum !== null) {
+            return { kind: 'number', value: autoNum };
+        }
+
+        return {
+            kind: 'string',
+            value: String(value === null || value === undefined ? '' : value).toLowerCase(),
+        };
+    }
+
     /* -----------------------------------------------------------------------
        Load data from API
     ----------------------------------------------------------------------- */
@@ -88,6 +187,16 @@
 
                 allRows  = data.rows    || [];
                 columns  = data.columns || [];
+                columnMeta = normalizeColumnMeta(data.column_meta || {});
+
+                // Initialize per-column visibility from metadata defaults.
+                hiddenCols = {};
+                columns.forEach(function (col) {
+                    hiddenCols[col] = !isColumnDefaultVisible(col);
+                    if (!isColumnRemovable(col)) {
+                        hiddenCols[col] = false;
+                    }
+                });
 
                 // Metadata
                 if (data.generated_at) {
@@ -122,19 +231,23 @@
         // Populate column toggle panel
         colToggles.innerHTML = '';
         columns.forEach(function (col) {
+            if (!isColumnRemovable(col)) {
+                hiddenCols[col] = false;
+            }
+
             var label = document.createElement('label');
             label.className = 'ot-col-toggle';
 
             var cb = document.createElement('input');
             cb.type    = 'checkbox';
-            cb.checked = (col === 'OBJNAME') ? true : !hiddenCols[col];
+            cb.checked = !hiddenCols[col];
             cb.dataset.col = col;
-            if (col === 'OBJNAME') {
+            if (!isColumnRemovable(col)) {
                 cb.disabled = true;
                 hiddenCols[col] = false;
             }
             cb.addEventListener('change', function () {
-                if (col === 'OBJNAME') {
+                if (!isColumnRemovable(col)) {
                     this.checked = true;
                     hiddenCols[col] = false;
                     return;
@@ -164,13 +277,20 @@
             th.className  = 'ot-th';
             th.dataset.col = col;
 
+            var sortable = isColumnSortable(col);
+            if (!sortable) {
+                th.classList.add('ot-th--nonsortable');
+            }
+
             var lbl = document.createElement('span');
             lbl.className   = 'ot-th__label';
             lbl.textContent = col;
 
             var icn = document.createElement('span');
             icn.className = 'ot-th__sort-icon';
-            if (col === sortCol) {
+            if (!sortable) {
+                icn.innerHTML = '<i class="fa-solid fa-minus ot-sort-idle"></i>';
+            } else if (col === sortCol) {
                 icn.innerHTML = sortDir === 1
                     ? '<i class="fa-solid fa-sort-up"></i>'
                     : '<i class="fa-solid fa-sort-down"></i>';
@@ -182,6 +302,9 @@
             th.appendChild(lbl);
             th.appendChild(icn);
             th.addEventListener('click', function () {
+                if (!isColumnSortable(col)) {
+                    return;
+                }
                 if (sortCol === col) {
                     sortDir = -sortDir;
                 } else {
@@ -197,21 +320,21 @@
             /* --- filter input --- */
             var ftd = document.createElement('th');
             ftd.className = 'ot-filter-cell';
-
-            var inp = document.createElement('input');
-            inp.type        = 'text';
-            inp.className   = 'ot-filter-input';
-            inp.placeholder = '\u2315';    // search icon character
-            inp.value       = colFilters[col] || '';
-            inp.dataset.col = col;
-            inp.title       = 'Filter ' + col;
-            inp.addEventListener('input', function () {
-                colFilters[col] = this.value;
-                currentPage = 1;
-                applyFilterSort();
-            });
-
-            ftd.appendChild(inp);
+            if (isColumnFilterable(col)) {
+                var inp = document.createElement('input');
+                inp.type        = 'text';
+                inp.className   = 'ot-filter-input';
+                inp.placeholder = '\u2315';
+                inp.value       = colFilters[col] || '';
+                inp.dataset.col = col;
+                inp.title       = 'Filter ' + col;
+                inp.addEventListener('input', function () {
+                    colFilters[col] = this.value;
+                    currentPage = 1;
+                    applyFilterSort();
+                });
+                ftd.appendChild(inp);
+            }
             filterRow.appendChild(ftd);
         });
 
@@ -224,6 +347,9 @@
     function applyFilterSort() {
         filteredRows = allRows.filter(function (row) {
             for (var col in colFilters) {
+                if (!isColumnFilterable(col)) {
+                    continue;
+                }
                 var fv = colFilters[col];
                 if (!fv) continue;
                 var cell = (row[col] === null || row[col] === undefined)
@@ -235,23 +361,29 @@
             return true;
         });
 
-        if (sortCol) {
+        if (sortCol && isColumnSortable(sortCol)) {
             filteredRows.sort(function (a, b) {
                 var av = (a[sortCol] === null || a[sortCol] === undefined)
                     ? '' : a[sortCol];
                 var bv = (b[sortCol] === null || b[sortCol] === undefined)
                     ? '' : b[sortCol];
-                var na = parseFloat(av);
-                var nb = parseFloat(bv);
-                if (!isNaN(na) && !isNaN(nb)) {
-                    return sortDir * (na - nb);
+
+                var va = normalizeForSort(sortCol, av);
+                var vb = normalizeForSort(sortCol, bv);
+
+                if (va.kind === 'number' && vb.kind === 'number') {
+                    return sortDir * (va.value - vb.value);
                 }
-                var sa = String(av).toLowerCase();
-                var sb = String(bv).toLowerCase();
+
+                var sa = String(va.value);
+                var sb = String(vb.value);
                 if (sa < sb) return -sortDir;
                 if (sa > sb) return  sortDir;
                 return 0;
             });
+        } else if (sortCol && !isColumnSortable(sortCol)) {
+            sortCol = null;
+            sortDir = 1;
         }
 
         updatePagination();
@@ -440,20 +572,22 @@
     });
     colAll.addEventListener('click', function () {
         hiddenCols = {};
-        colToggles.querySelectorAll('input[type=checkbox]').forEach(
-            function (cb) { cb.checked = true; }
-        );
+        columns.forEach(function (col) {
+            hiddenCols[col] = false;
+        });
+        colToggles.querySelectorAll('input[type=checkbox]').forEach(function (cb) {
+            cb.checked = true;
+        });
         renderHeaders();
         renderPage();
     });
     colNone.addEventListener('click', function () {
-        // Always keep OBJNAME visible
         columns.forEach(function (col) {
-            hiddenCols[col] = (col !== 'OBJNAME');
+            hiddenCols[col] = isColumnRemovable(col);
         });
-        colToggles.querySelectorAll('input[type=checkbox]').forEach(
-            function (cb) { cb.checked = (cb.dataset.col === 'OBJNAME'); }
-        );
+        colToggles.querySelectorAll('input[type=checkbox]').forEach(function (cb) {
+            cb.checked = !hiddenCols[cb.dataset.col];
+        });
         renderHeaders();
         renderPage();
     });

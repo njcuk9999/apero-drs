@@ -191,6 +191,38 @@ class AperoObservationTableTask(apero_async.AperoAsyncTask):
             metadata['GENERATED_AT'] = time_now
             metadata['QUERY_TIME'] = time.time() - start
             metadata['APERO_PROFILE'] = apero_profile
+            metadata['COLUMN_META'] = {
+                'NIGHT': {'sortable': True, 
+                          'filterable': True, 
+                          'removable': False, 
+                          'default': True,
+                          'type': 'night'},
+                'OBJNAME': {'sortable': True, 
+                            'filterable': True, 
+                            'removable': False, 
+                            'default': True,
+                            'type': 'string'},
+                'RUN_ID': {'sortable': False, 
+                           'filterable': False, 
+                           'removable': False, 
+                           'default': False,
+                           'type': 'string'},
+                'raw files': {'sortable': False, 
+                              'filterable': True, 
+                              'removable': True, 
+                              'default': True,
+                              'type': 'number'},
+                'ext files': {'sortable': False, 
+                              'filterable': True, 
+                              'removable': True,
+                              'default': True,
+                              'type': 'number'},
+                'tcorr files': {'sortable': False, 
+                                'filterable': True, 
+                                'removable': True, 
+                                'default': True,
+                                'type': 'number'},
+            }
             # construct filename
             instrument = params.get('INSTRUMENT', 'unknown')
             local_dir = (Path(params.get('LOCAL_DATA_DIR', str(ARI_DIR)))

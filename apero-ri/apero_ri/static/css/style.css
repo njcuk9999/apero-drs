@@ -4359,6 +4359,12 @@ body.ari-ot-page .ari-doc-main {
 .ot-th:hover { background: var(--ari-primary-hover, #c5cae9); }
 .ot-th--asc,
 .ot-th--desc { background: var(--ari-primary-hover, #c5cae9); }
+.ot-th--nonsortable {
+    cursor: default;
+}
+.ot-th--nonsortable:hover {
+    background: var(--ari-primary-light, #e8eaf6);
+}
 
 .ot-th__label { margin-right: 0.35rem; }
 .ot-th__sort-icon { font-size: 0.75rem; opacity: 0.7; }
