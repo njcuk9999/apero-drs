@@ -7,6 +7,25 @@
     <!-- Sidebar                                                          -->
     <!-- ================================================================ -->
     <aside class="ari-sidebar" id="ari-sidebar">
+        <!-- Pinned pages -->
+        {% if sidebar_tree is defined %}
+        <div class="ari-sidebar__section ari-sidebar__section--pins">
+            <div class="ari-sidebar__pins" aria-label="Pinned pages">
+                {% for item in sidebar_tree %}
+                {% if item.pinned|default(false) %}
+                {% if item.url and not (item.disabled|default(false)) %}
+                <a href="{{ item.url }}{% if current_version is defined %}?v={{ current_version }}{% endif %}"
+                   class="ari-sidebar__heading ari-sidebar__heading--pin{% if item.active %} ari-sidebar__heading--pin-active{% endif %}">
+                    <i class="{{ item.icon }}"></i>
+                    <span>{{ item.label }}</span>
+                </a>
+                {% endif %}
+                {% endif %}
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
         <!-- Version selector — only shown for doc pages -->
         {% if doc_versions is defined and doc_versions|length > 0 %}
         <div class="ari-sidebar__section">
@@ -45,7 +64,8 @@
             </a>
             <nav class="ari-sidebar__nav" aria-label="Section navigation">
                 {% for item in sidebar_tree %}
-                {% if item.url and not (item.disabled if item.disabled is defined else false) %}
+                {% if not item.pinned|default(false) %}
+                {% if item.url and not (item.disabled|default(false)) %}
                 <a href="{{ item.url }}{% if current_version is defined %}?v={{ current_version }}{% endif %}"
                    class="ari-sidebar__link{% if item.active %} ari-sidebar__link--active{% endif %}"
                    style="padding-left: {{ 0.75 + item.depth * 1.0 }}rem;">
@@ -58,6 +78,7 @@
                     <i class="{{ item.icon }}"></i>
                     <span>{{ item.label }}</span>
                 </span>
+                {% endif %}
                 {% endif %}
                 {% endfor %}
             </nav>

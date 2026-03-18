@@ -334,7 +334,7 @@ async function aeSave(evt) {
     msg.className = 'ari-ae-save-msg';
 
     try {
-        const res = await fetch('/api/admin/email/save', {
+        const res = await fetch('/api/admin_portal/email/save', {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
             body: JSON.stringify(payload),
@@ -371,7 +371,7 @@ async function aeTestConnection() {
     card.className = 'ari-ae-status-card ari-ae-status-card--checking';
 
     try {
-        const res  = await fetch('/api/admin/email/test');
+        const res  = await fetch('/api/admin_portal/email/test');
         const data = await res.json();
         if (data.ok) {
             icon.innerHTML  = '<i class="fa-solid fa-circle-check"></i>';
@@ -402,7 +402,7 @@ async function aeSendTestEmail() {
     msg.className = 'ari-ae-save-msg';
 
     try {
-        const res  = await fetch('/api/admin/email/send-test', {
+        const res  = await fetch('/api/admin_portal/email/send-test', {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
             body: JSON.stringify({to}),

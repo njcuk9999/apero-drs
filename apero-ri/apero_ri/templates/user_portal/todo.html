@@ -4,11 +4,11 @@
 {% block doc_content %}
 <div class="ari-page-header">
     <h1><i class="{{ page_icon }}"></i> {{ page_label }}</h1>
-    <p class="ari-page-subtitle">Projects, tags, status lanes, and task details in one place.</p>
+    <p class="ari-page-subtitle">Table-style quick todo with project/tag management popups.</p>
 </div>
 
-<div class="ari-todo-toolbar">
-    <div class="ari-todo-toolbar__filters">
+<div class="ari-qt-toolbar">
+    <div class="ari-qt-toolbar__filters">
         <select id="todo-filter-project" class="ari-ud-select">
             <option value="">All Projects</option>
         </select>
@@ -18,7 +18,7 @@
         <button class="ari-btn ari-btn--secondary ari-btn--sm" id="todo-manage-projects-btn">Manage Projects</button>
         <button class="ari-btn ari-btn--secondary ari-btn--sm" id="todo-manage-tags-btn">Manage Tags</button>
     </div>
-    <div class="ari-todo-toolbar__add">
+    <div class="ari-qt-toolbar__add">
         <input type="text" id="todo-new-title" class="ari-ud-search" placeholder="New task title" />
         <button class="ari-btn ari-btn--primary ari-btn--sm" id="todo-add-btn">
             <i class="fa-solid fa-plus"></i> Add
@@ -27,22 +27,22 @@
     </div>
 </div>
 
-<div class="ari-todo-stats" id="todo-stats"></div>
+<div class="ari-qt-stats" id="todo-stats"></div>
 
-<div id="todo-sections" class="ari-todo-sections">
+<div id="todo-sections" class="ari-qt-sections">
     <p class="ari-ud-loading">Loading…</p>
 </div>
 
 <div id="todo-toast" class="ari-toast" style="display:none;"></div>
 
 <div id="todo-task-modal" class="ari-ud-modal" style="display:none;">
-    <div class="ari-ud-modal-box ari-todo-modal-box">
+    <div class="ari-ud-modal-box ari-qt-modal-box">
         <h3 id="todo-task-modal-title">Task</h3>
         <div class="ari-form-group">
             <label>Title</label>
             <input type="text" id="todo-modal-title" placeholder="Task title">
         </div>
-        <div class="ari-todo-modal-grid">
+        <div class="ari-qt-modal-grid">
             <div class="ari-form-group">
                 <label>Status</label>
                 <select id="todo-modal-status">
@@ -67,7 +67,7 @@
                 <input type="number" id="todo-modal-priority" value="0" step="1">
             </div>
         </div>
-        <div class="ari-todo-modal-grid">
+        <div class="ari-qt-modal-grid ari-qt-modal-grid--two">
             <div class="ari-form-group">
                 <label>Projects</label>
                 <select id="todo-modal-projects" multiple size="4"></select>
@@ -85,7 +85,7 @@
 </div>
 
 <div id="todo-details-modal" class="ari-ud-modal" style="display:none;">
-    <div class="ari-ud-modal-box ari-todo-modal-box">
+    <div class="ari-ud-modal-box ari-qt-modal-box">
         <h3 id="todo-details-title">Task Details</h3>
         <div class="ari-form-group">
             <label>Link (optional)</label>
@@ -103,13 +103,13 @@
 </div>
 
 <div id="todo-manage-modal" class="ari-ud-modal" style="display:none;">
-    <div class="ari-ud-modal-box ari-todo-modal-box">
+    <div class="ari-ud-modal-box ari-qt-modal-box">
         <h3 id="todo-manage-title">Manage</h3>
-        <div class="ari-todo-manage-row">
+        <div class="ari-qt-manage-row">
             <input type="text" id="todo-manage-input" placeholder="Add new value">
             <button class="ari-btn ari-btn--primary" id="todo-manage-add">Add</button>
         </div>
-        <div id="todo-manage-list" class="ari-todo-manage-list"></div>
+        <div id="todo-manage-list" class="ari-qt-manage-list"></div>
         <div class="ari-ud-modal-actions">
             <button class="ari-btn ari-btn--secondary" id="todo-manage-close">Close</button>
         </div>

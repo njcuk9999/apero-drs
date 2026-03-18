@@ -1,0 +1,9 @@
+Can you do a comprehensive structure report of the ARI Flask app: where pages are defined, how routes are registered in application.py, how the navigation/sidebar works, and specifically how home and reduction_interface are wired?
+
+========================================
+
+Please include the route patterns for reduction_interface and the dynamic profile pages, the permission flow, and exactly how get_accessible_profiles() works.
+
+========================================
+
+Show the relevant template and context wiring for reduction_interface index/profile pages and summarize the steps needed to add a new page cleanly.

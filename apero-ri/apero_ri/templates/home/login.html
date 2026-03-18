@@ -40,7 +40,9 @@
         <div class="ari-form-group">
             <label for="username">Username</label>
             <input type="text" id="username" name="username"
-                   autocomplete="username" required autofocus>
+                   value="{{ last_username|default('') }}"
+                   autocomplete="username" autocapitalize="none"
+                   spellcheck="false" required autofocus>
         </div>
         <div class="ari-form-group">
             <label for="password">Password</label>
@@ -49,7 +51,7 @@
         </div>
         <div class="ari-form-group ari-form-check">
             <label>
-                <input type="checkbox" name="remember" value="1">
+                <input type="checkbox" name="remember" value="1" checked>
                 <span>Remember me</span>
             </label>
         </div>
@@ -57,6 +59,11 @@
             <i class="fa-solid fa-right-to-bracket"></i>
             Login
         </button>
+        <a href="{{ url_for('forgot_password') }}"
+           style="display:block; margin-top:0.55rem; text-align:center; text-decoration:none; color:var(--ari-primary);">
+            <i class="fa-solid fa-key"></i>
+            Forgot password?
+        </a>
         <a href="{{ url_for('register') }}" class="ari-btn ari-btn--secondary ari-btn--block"
            style="margin-top:0.55rem; text-align:center; text-decoration:none;">
             <i class="fa-solid fa-user-plus"></i>

@@ -60,6 +60,8 @@ moderator:
     - manage.admin.links
     # can they manage email settings
     - manage.admin.email
+    # can they manage APERO database access rules
+    - manage.admin.user_db_access
   groups:
     - monitor
 
@@ -77,6 +79,8 @@ developer:
     - manage.admin.links
     # can they manage email settings
     - manage.admin.email
+    # can they manage APERO database access rules
+    - manage.admin.user_db_access
   groups:
     - monitor
 

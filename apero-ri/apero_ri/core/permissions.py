@@ -42,6 +42,37 @@ def load_parameters() -> Dict[str, dict]:
         return yaml.safe_load(f) or {}
 
 
+def _side_nav_value(page_def: Dict[str, object], key: str):
+    """Return nested side-nav value with legacy fallback."""
+    side_nav = page_def.get('side-nav', {})
+    if isinstance(side_nav, dict) and key in side_nav:
+        return side_nav.get(key)
+
+    # Backward compatibility for old pages.yaml keys.
+    if key == 'top-level':
+        return page_def.get('full-nav', False)
+    if key == 'show':
+        return not page_def.get('no-nav', False)
+    if key == 'pinned':
+        return False
+    return None
+
+
+def is_side_nav_top_level(page_def: Dict[str, object]) -> bool:
+    """Whether this page is a top-level root for a sidebar tree."""
+    return bool(_side_nav_value(page_def, 'top-level'))
+
+
+def is_side_nav_shown(page_def: Dict[str, object]) -> bool:
+    """Whether this page should appear in side nav/card trees."""
+    return bool(_side_nav_value(page_def, 'show'))
+
+
+def is_side_nav_pinned(page_def: Dict[str, object]) -> bool:
+    """Whether this page should always be pinned in sidebars."""
+    return bool(_side_nav_value(page_def, 'pinned'))
+
+
 def resolve_group_permissions(group_name: str,
                               groups: Dict[str, dict],
                               _visited: Optional[Set[str]] = None
@@ -129,20 +160,23 @@ def page_id_to_template(page_id: str, pages: Dict[str, dict]) -> str:
 
     if len(parts) == 2:
         name = parts[1]
+        # Keep template folder compatibility after nav-id rename.
+        template_name = 'admin' if name == 'admin_portal' else name
         # Use the subdirectory template if the directory exists,
         # even when no children are defined in pages.yaml yet
-        subdir_template = TEMPLATE_DIR / name / 'index.html'
+        subdir_template = TEMPLATE_DIR / template_name / 'index.html'
         if has_children or subdir_template.exists():
-            return f'{name}/index.html'
+            return f'{template_name}/index.html'
         else:
-            return f'home/{name}.html'
+            return f'home/{template_name}.html'
     elif len(parts) >= 3:
         parent_name = parts[1]
+        template_parent = 'admin' if parent_name == 'admin_portal' else parent_name
         name = parts[-1]
         if has_children:
-            return f'{parent_name}/{name}/index.html'
+            return f'{template_parent}/{name}/index.html'
         else:
-            return f'{parent_name}/{name}.html'
+            return f'{template_parent}/{name}.html'
     return 'general/coming_soon.html'
 
 
@@ -169,7 +203,7 @@ def get_nav_pages(user_permissions: Set[str],
     for pid, pdef in pages.items():
         if not pdef.get('quick-nav', False):
             continue
-        if pdef.get('no-nav', False):
+        if not is_side_nav_shown(pdef):
             continue
         view_perm = pdef.get('view-permission', '')
         if view_perm not in user_permissions:
@@ -195,7 +229,7 @@ def get_visible_cards(parent_id: str,
     cards = []
     for child_id in children:
         child_def = pages[child_id]
-        if child_def.get('no-nav', False):
+        if not is_side_nav_shown(child_def):
             continue
         view_perm = child_def.get('view-permission', '')
         if view_perm not in user_permissions:
@@ -220,7 +254,7 @@ def get_visible_cards(parent_id: str,
 
 
 def find_full_nav_root(page_id: str, pages: Dict[str, dict]) -> Optional[str]:
-    """Walk up from page_id to find the nearest ancestor with full-nav: True.
+    """Walk up from page_id to find nearest ancestor with side-nav top-level.
 
     Returns the page_id of that ancestor, or None.
     """
@@ -229,7 +263,7 @@ def find_full_nav_root(page_id: str, pages: Dict[str, dict]) -> Optional[str]:
         page_def = pages.get(current)
         if not page_def:
             return None
-        if page_def.get('full-nav', False):
+        if is_side_nav_top_level(page_def):
             return current
         parent = page_def.get('parent')
         if parent and parent != 'None':
@@ -254,7 +288,7 @@ def get_sidebar_tree(root_id: str,
         children = get_children(parent_id, pages)
         for child_id in children:
             child_def = pages[child_id]
-            if child_def.get('no-nav', False):
+            if not is_side_nav_shown(child_def):
                 continue
             view_perm = child_def.get('view-permission', '')
             if view_perm not in user_permissions:
@@ -282,3 +316,45 @@ def get_sidebar_tree(root_id: str,
 
     _walk(root_id, 0)
     return result
+
+
+def get_pinned_sidebar_items(user_permissions: Set[str],
+                             pages: Dict[str, dict],
+                             active_page_id: str = '',
+                             logged_in: bool = False,
+                             username: str = '') -> List[dict]:
+    """Get side-nav pinned items to render above section-specific trees."""
+    items = []
+    for pid, pdef in pages.items():
+        if not is_side_nav_pinned(pdef):
+            continue
+        if not is_side_nav_shown(pdef):
+            continue
+        view_perm = pdef.get('view-permission', '')
+        if view_perm not in user_permissions:
+            continue
+
+        # Auth-state specific pinned pages.
+        if pid == 'home.login' and logged_in:
+            continue
+        if pid == 'home.logout' and not logged_in:
+            continue
+
+        label = str(pdef.get('label', ''))
+        if '{username}' in label:
+            label = label.replace('{username}', username)
+
+        items.append({
+            'id': pid,
+            'label': label,
+            'icon': pdef.get('icon', ''),
+            'url': page_id_to_url(pid),
+            'depth': 0,
+            'active': (pid == active_page_id),
+            'expanded': False,
+            'has_children': False,
+            'pinned': True,
+        })
+
+    # Preserve insertion order from pages.yaml.
+    return items

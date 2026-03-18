@@ -33,6 +33,21 @@ _scheduler_local_data_dir = str(Path.home() / '.ari')
 _scheduler_poll_seconds = 30.0
 
 
+def _dedupe_strings(values: Any) -> List[str]:
+    """Return stable-order unique string values."""
+    if not isinstance(values, list):
+        return []
+    out: List[str] = []
+    seen = set()
+    for item in values:
+        sval = str(item).strip()
+        if not sval or sval in seen:
+            continue
+        seen.add(sval)
+        out.append(sval)
+    return out
+
+
 # =============================================================================
 # Worker
 # =============================================================================
@@ -60,6 +75,8 @@ def _run_worker() -> None:
         instance.status = 'in_progress'
         try:
             run_params = getattr(instance, '_run_params', {})
+            # Treat task output files as this-run artifacts.
+            instance.output_files = []
             instance.run_job(run_params)
             instance.status = 'completed'
         except Exception:
@@ -87,7 +104,9 @@ def _persist_runtime_state(instrument: str, task_id: str,
                 tc['last_run'] = getattr(instance, 'last_run', 'Never')
                 tc['run_count'] = getattr(instance, 'run_count', 0)
                 tc['info'] = getattr(instance, 'info', '')
-                tc['output_files'] = list(getattr(instance, 'output_files', []))
+                tc['output_files'] = _dedupe_strings(
+                    getattr(instance, 'output_files', [])
+                )
                 tc['error'] = error
                 tc['last_status'] = getattr(instance, 'status', 'failed')
                 break
@@ -135,7 +154,7 @@ def hydrate_runtime_state(instance: Any, task_cfg: Optional[dict] = None) -> Any
         cfg.get('run_count', getattr(instance, 'run_count', 0))
     )
     instance.info = cfg.get('info', getattr(instance, 'info', ''))
-    instance.output_files = list(
+    instance.output_files = _dedupe_strings(
         cfg.get('output_files', getattr(instance, 'output_files', [])) or []
     )
     return instance

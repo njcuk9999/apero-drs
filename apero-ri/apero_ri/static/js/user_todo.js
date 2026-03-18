@@ -129,7 +129,7 @@ function _renderStats() {
         ['In Progress', items.filter(i => i.status === 'in-progress').length],
         ['Blocked', items.filter(i => i.status === 'blocked').length]
     ].map(([label, value]) => (
-        `<div class="ari-todo-stat"><div class="ari-todo-stat__value">${value}</div><div class="ari-todo-stat__label">${label}</div></div>`
+        `<div class="ari-qt-stat"><div class="ari-qt-stat__value">${value}</div><div class="ari-qt-stat__label">${label}</div></div>`
     )).join('');
 }
 
@@ -155,16 +155,16 @@ function _renderSections() {
         const list = grouped[status] || [];
         const collapsed = _collapsed.has(status);
         return `
-            <section class="ari-todo-section ${collapsed ? 'is-collapsed' : ''}" data-status="${status}">
-                <header class="ari-todo-section__head js-todo-section-head" data-status="${status}">
+            <section class="ari-qt-section ${collapsed ? 'is-collapsed' : ''}" data-status="${status}">
+                <header class="ari-qt-section__head js-todo-section-head" data-status="${status}">
                     <div>
                         <i class="${_STATUS_ICONS[status]}"></i>
                         <strong>${_STATUS_LABELS[status]}</strong>
                     </div>
-                    <span class="ari-todo-section__count">${list.length}</span>
+                    <span class="ari-qt-section__count">${list.length}</span>
                 </header>
-                <div class="ari-todo-section__body" style="display:${collapsed ? 'none' : 'block'};">
-                    ${list.length ? list.map(_renderRow).join('') : '<p class="ari-ud-empty-inline">No tasks in this section.</p>'}
+                <div class="ari-qt-section__body" style="display:${collapsed ? 'none' : 'block'};">
+                    ${list.length ? _renderTable(list) : '<p class="ari-ud-empty-inline">No tasks in this section.</p>'}
                 </div>
             </section>
         `;
@@ -184,30 +184,54 @@ function _renderSections() {
     _renderStats();
 }
 
+function _renderTable(list) {
+    return `
+        <div class="ari-qt-table-wrap">
+            <table class="ari-qt-table">
+                <thead>
+                    <tr>
+                        <th>Title</th>
+                        <th>Projects</th>
+                        <th>Tags</th>
+                        <th>Size</th>
+                        <th>Priority</th>
+                        <th>Date</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${list.map(_renderRow).join('')}
+                </tbody>
+            </table>
+        </div>
+    `;
+}
+
 function _renderRow(item) {
-    const titleHtml = item.link_url
+    const title = item.link_url
         ? `<a href="${_esc(item.link_url)}" target="_blank" rel="noopener noreferrer">${_esc(item.title)}</a>`
         : `<a href="#" data-id="${_esc(item.id)}" class="js-open-details">${_esc(item.title)}</a>`;
     return `
-        <article class="ari-todo-row" data-id="${_esc(item.id)}">
-            <div class="ari-todo-row__title">
-                ${titleHtml}
-                <button class="ari-todo-row__meta js-open-details" data-id="${_esc(item.id)}" title="Edit comments/link">${item.comments ? '💬' : '✏️'}</button>
-            </div>
-            <div class="ari-todo-row__chips">${_esc((item.projects || []).join(', '))}</div>
-            <div class="ari-todo-row__chips">${_esc((item.tags || []).join(', '))}</div>
-            <div class="ari-todo-row__size">${_esc(item.size.toUpperCase())}</div>
-            <div class="ari-todo-row__priority">${_esc(String(item.priority))}</div>
-            <div class="ari-todo-row__date">${_esc(item.date_added || '')}</div>
-            <div class="ari-todo-row__actions">
+        <tr data-id="${_esc(item.id)}">
+            <td>${title} <button class="ari-qt-meta-btn js-open-details" data-id="${_esc(item.id)}" title="Comments / link">${item.comments ? '💬' : '✏️'}</button></td>
+            <td>${_esc((item.projects || []).join(', '))}</td>
+            <td>${_esc((item.tags || []).join(', '))}</td>
+            <td><span class="ari-qt-size ari-qt-size--${_esc(item.size)}">${_esc(item.size.toUpperCase())}</span></td>
+            <td>${_esc(String(item.priority))}</td>
+            <td>${_esc(item.date_added || '')}</td>
+            <td class="ari-qt-actions">
                 <button class="ari-btn ari-btn--secondary ari-btn--xs js-edit" data-id="${_esc(item.id)}">Edit</button>
-                <button class="ari-btn ari-btn--secondary ari-btn--xs js-move" data-id="${_esc(item.id)}" data-status="todo">ToDo</button>
-                <button class="ari-btn ari-btn--secondary ari-btn--xs js-move" data-id="${_esc(item.id)}" data-status="in-progress">InProg</button>
-                <button class="ari-btn ari-btn--secondary ari-btn--xs js-move" data-id="${_esc(item.id)}" data-status="blocked">Blocked</button>
-                <button class="ari-btn ari-btn--secondary ari-btn--xs js-move" data-id="${_esc(item.id)}" data-status="done">Done</button>
+                <button class="ari-btn ari-btn--secondary ari-btn--xs js-duplicate" data-id="${_esc(item.id)}">Copy</button>
+                <select class="ari-qt-move js-move-select" data-id="${_esc(item.id)}">
+                    <option value="">Move…</option>
+                    <option value="todo">To Do</option>
+                    <option value="in-progress">In Progress</option>
+                    <option value="blocked">Blocked</option>
+                    <option value="done">Done</option>
+                </select>
                 <button class="ari-btn ari-btn--danger ari-btn--xs js-delete" data-id="${_esc(item.id)}">Delete</button>
-            </div>
-        </article>
+            </td>
+        </tr>
     `;
 }
 
@@ -234,13 +258,28 @@ function _bindRowActions(container) {
         });
     });
 
-    container.querySelectorAll('.js-move').forEach(btn => {
+    container.querySelectorAll('.js-move-select').forEach(sel => {
+        sel.addEventListener('change', async () => {
+            const id = sel.dataset.id || '';
+            const status = sel.value || '';
+            if (!_STATUS_ORDER.includes(status)) return;
+            const item = _items.find(i => i.id === id);
+            if (!item) return;
+            await _saveItem({ ...item, status, done: status === 'done' });
+            sel.value = '';
+        });
+    });
+
+    container.querySelectorAll('.js-duplicate').forEach(btn => {
         btn.addEventListener('click', async () => {
             const id = btn.dataset.id || '';
-            const status = btn.dataset.status || '';
             const item = _items.find(i => i.id === id);
-            if (!item || !_STATUS_ORDER.includes(status)) return;
-            await _saveItem({ ...item, status, done: status === 'done' });
+            if (!item) return;
+            await _saveItem({
+                ...item,
+                id: '',
+                title: `${item.title} (copy)`,
+            });
         });
     });
 
@@ -319,8 +358,8 @@ function _renderManageList() {
     const values = (_manageKind === 'projects' ? _metadata.projects : _metadata.tags) || [];
     list.innerHTML = values.map(v => {
         const locked = v === 'Unknown';
-        return `<div class="ari-todo-manage-item"><span>${_esc(v)}</span>${locked
-            ? '<span class="ari-todo-manage-locked">Required</span>'
+        return `<div class="ari-qt-manage-item"><span>${_esc(v)}</span>${locked
+            ? '<span class="ari-qt-manage-locked">Required</span>'
             : `<button class="ari-btn ari-btn--danger ari-btn--xs js-remove-meta" data-value="${_esc(v)}">Remove</button>`}</div>`;
     }).join('');
     list.querySelectorAll('.js-remove-meta').forEach(btn => {

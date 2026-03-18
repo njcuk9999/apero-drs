@@ -28,9 +28,10 @@ from apero_ri.core.permissions import (
     get_children, is_parent_page, page_id_to_url,
     page_id_to_template, page_id_to_endpoint,
     get_nav_pages, get_visible_cards,
-    find_full_nav_root, get_sidebar_tree,
+    find_full_nav_root, get_sidebar_tree, get_pinned_sidebar_items,
 )
 from apero_ri.core.auth import (
+    set_ari_dir as auth_set_ari_dir,
     ensure_default_user, authenticate, get_effective_user,
     get_public_permissions, get_user_info,
     hash_password, verify_password,
@@ -39,6 +40,8 @@ from apero_ri.core.auth import (
     delete_user, load_users, save_users,
     load_science_groups, save_science_groups, get_users_for_instrument,
     load_apero_profiles, save_apero_profiles,
+    load_db_access, save_db_access,
+    load_admin_health_config, save_admin_health_config,
     validate_path_exists, validate_database_connection,
     get_accessible_profiles,
     load_async_tasks, save_async_tasks,
@@ -75,7 +78,12 @@ class ARIApp(Flask):
         )
         # Parse command-line arguments
         self.args = self._get_arguments()
+        os.environ['ARI_DIR'] = str(
+            Path(self.args.data_dir).expanduser()
+            if self.args.data_dir else (Path.home() / '.ari')
+        )
         ud.set_ari_dir(self.args.data_dir or str(Path.home() / '.ari'))
+        auth_set_ari_dir(self.args.data_dir or str(Path.home() / '.ari'))
         # Secret key for sessions
         self.secret_key = self._load_or_create_secret()
         # Load YAML definitions (read-only)
@@ -89,8 +97,17 @@ class ARIApp(Flask):
                 self._page_templates[pid] = self.ari_pages.pop(pid)
         # Ensure default admin user exists
         ensure_default_user()
+        # In-memory throttle state for forgot-password requests
+        self._forgot_pw_rate_limit = {}
+        self._forgot_pw_max_attempts = 3
+        self._forgot_pw_base_wait = 30
+        self._forgot_pw_max_wait = 600
         # Configure session lifetime for "remember me"
         self.config['PERMANENT_SESSION_LIFETIME'] = timedelta(days=30)
+        self.config['SESSION_COOKIE_NAME'] = 'apero_ri'
+        self.config['SESSION_COOKIE_HTTPONLY'] = True
+        self.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
+        self.config['SESSION_REFRESH_EACH_REQUEST'] = True
         # Register context processors and routes
         self._register_context_processors()
         self._register_routes()
@@ -164,11 +181,15 @@ class ARIApp(Flask):
                 )
                 logged_in = True
                 username = user_info['username']
+                first_names = str(user_info.get('first_names', '')).strip()
+                welcome_name = (first_names.split()[0]
+                                if first_names else username)
                 login_as = session.get('login_as')
             else:
                 perms = get_public_permissions()
                 logged_in = False
                 username = None
+                welcome_name = None
                 login_as = None
 
             nav_pages = get_nav_pages(perms, self.ari_pages)
@@ -177,6 +198,7 @@ class ARIApp(Flask):
             return {
                 'logged_in': logged_in,
                 'username': username,
+                'welcome_name': welcome_name,
                 'login_as_user': login_as,
                 'last_login': session.get('last_login'),
                 'user_permissions': perms,
@@ -193,6 +215,14 @@ class ARIApp(Flask):
         # Login route (special)
         self.add_url_rule('/login', 'login', self._login_view,
                           methods=['GET', 'POST'])
+        self.add_url_rule('/forgot-password',
+                  'forgot_password',
+                  self._forgot_password_view,
+                  methods=['GET', 'POST'])
+        self.add_url_rule('/reset-password/<token>',
+                  'reset_password',
+                  self._reset_password_view,
+                  methods=['GET', 'POST'])
         self.add_url_rule('/register', 'register', self._register_view,
                   methods=['GET'])
         # Logout route (special)
@@ -288,41 +318,51 @@ class ARIApp(Flask):
                   self._api_user_todo_reorder, methods=['POST'])
 
         # Admin calendar API routes
-        self.add_url_rule('/api/admin/calendar/list',
+        self.add_url_rule('/api/admin_portal/calendar/list',
                   'api_admin_calendar_list',
                   self._api_admin_calendar_list)
-        self.add_url_rule('/api/admin/calendar/save',
+        self.add_url_rule('/api/admin_portal/calendar/save',
                   'api_admin_calendar_save',
                   self._api_admin_calendar_save, methods=['POST'])
-        self.add_url_rule('/api/admin/calendar/delete',
+        self.add_url_rule('/api/admin_portal/calendar/delete',
                   'api_admin_calendar_delete',
                   self._api_admin_calendar_delete, methods=['POST'])
 
         # Admin links API routes
-        self.add_url_rule('/api/admin/links/get', 'api_admin_links_get',
+        self.add_url_rule('/api/admin_portal/links/get', 'api_admin_links_get',
                   self._api_admin_links_get)
-        self.add_url_rule('/api/admin/links/add', 'api_admin_links_add',
+        self.add_url_rule('/api/admin_portal/links/add', 'api_admin_links_add',
                   self._api_admin_links_add, methods=['POST'])
-        self.add_url_rule('/api/admin/links/update', 'api_admin_links_update',
+        self.add_url_rule('/api/admin_portal/links/update', 'api_admin_links_update',
                   self._api_admin_links_update, methods=['POST'])
-        self.add_url_rule('/api/admin/links/remove', 'api_admin_links_remove',
+        self.add_url_rule('/api/admin_portal/links/remove', 'api_admin_links_remove',
                   self._api_admin_links_remove, methods=['POST'])
-        self.add_url_rule('/api/admin/links/add-section',
+        self.add_url_rule('/api/admin_portal/links/add-section',
                   'api_admin_links_add_section',
                   self._api_admin_links_add_section, methods=['POST'])
-        self.add_url_rule('/api/admin/links/remove-section',
+        self.add_url_rule('/api/admin_portal/links/remove-section',
                   'api_admin_links_remove_section',
                   self._api_admin_links_remove_section,
                   methods=['POST'])
 
         # Admin email API routes
-        self.add_url_rule('/api/admin/email/test', 'api_admin_email_test',
+        self.add_url_rule('/api/admin_portal/email/test', 'api_admin_email_test',
                   self._api_admin_email_test)
-        self.add_url_rule('/api/admin/email/save', 'api_admin_email_save',
+        self.add_url_rule('/api/admin_portal/email/save', 'api_admin_email_save',
                   self._api_admin_email_save, methods=['POST'])
-        self.add_url_rule('/api/admin/email/send-test',
+        self.add_url_rule('/api/admin_portal/email/send-test',
                   'api_admin_email_send_test',
                   self._api_admin_email_send_test, methods=['POST'])
+        self.add_url_rule('/api/admin_portal/health/update',
+              'api_admin_health_update',
+              self._api_admin_health_update, methods=['POST'])
+        self.add_url_rule('/api/admin_portal/health/config',
+              'api_admin_health_config_get',
+              self._api_admin_health_config_get)
+        self.add_url_rule('/api/admin_portal/health/config',
+              'api_admin_health_config_save',
+              self._api_admin_health_config_save,
+              methods=['POST'])
 
         # Documentation routes (edit, save, upload, images)
         self.add_url_rule('/docs/<page_ref>/edit', 'doc_edit',
@@ -335,134 +375,146 @@ class ARIApp(Flask):
                   self._doc_image_view)
 
         # Admin user management API routes
-        self.add_url_rule('/api/admin/users/search', 'api_user_search',
+        self.add_url_rule('/api/admin_portal/users/search', 'api_user_search',
                   self._api_user_search)
-        self.add_url_rule('/api/admin/users/update-groups',
+        self.add_url_rule('/api/admin_portal/users/update-groups',
                   'api_user_update_groups',
                   self._api_user_update_groups,
                   methods=['POST'])
-        self.add_url_rule('/api/admin/users/update-instruments',
+        self.add_url_rule('/api/admin_portal/users/update-instruments',
                   'api_user_update_instruments',
                   self._api_user_update_instruments,
                   methods=['POST'])
-        self.add_url_rule('/api/admin/users/delete',
+        self.add_url_rule('/api/admin_portal/users/delete',
                   'api_user_delete',
                   self._api_user_delete,
                   methods=['POST'])
 
         # Admin login-as API routes
-        self.add_url_rule('/api/admin/login-as/search',
+        self.add_url_rule('/api/admin_portal/login-as/search',
                   'api_login_as_search',
                   self._api_login_as_search)
-        self.add_url_rule('/api/admin/login-as/set',
+        self.add_url_rule('/api/admin_portal/login-as/set',
                   'api_login_as_set',
                   self._api_login_as_set,
                   methods=['POST'])
-        self.add_url_rule('/api/admin/login-as/clear',
+        self.add_url_rule('/api/admin_portal/login-as/clear',
                   'api_login_as_clear',
                   self._api_login_as_clear,
                   methods=['POST'])
 
         # Admin science groups API routes
-        self.add_url_rule('/api/admin/sci-groups/list',
+        self.add_url_rule('/api/admin_portal/sci-groups/list',
                   'api_sci_groups_list',
                   self._api_sci_groups_list)
-        self.add_url_rule('/api/admin/sci-groups/get',
+        self.add_url_rule('/api/admin_portal/sci-groups/get',
                   'api_sci_groups_get',
                   self._api_sci_groups_get)
-        self.add_url_rule('/api/admin/sci-groups/save',
+        self.add_url_rule('/api/admin_portal/sci-groups/save',
                   'api_sci_groups_save',
                   self._api_sci_groups_save,
                   methods=['POST'])
-        self.add_url_rule('/api/admin/sci-groups/create',
+        self.add_url_rule('/api/admin_portal/sci-groups/create',
                   'api_sci_groups_create',
                   self._api_sci_groups_create,
                   methods=['POST'])
-        self.add_url_rule('/api/admin/sci-groups/delete',
+        self.add_url_rule('/api/admin_portal/sci-groups/delete',
                   'api_sci_groups_delete',
                   self._api_sci_groups_delete,
                   methods=['POST'])
 
         # Admin APERO profiles API routes
-        self.add_url_rule('/api/admin/apero-profiles/list',
+        self.add_url_rule('/api/admin_portal/apero-profiles/list',
                   'api_apero_profiles_list',
                   self._api_apero_profiles_list)
-        self.add_url_rule('/api/admin/apero-profiles/overview-status',
+        self.add_url_rule('/api/admin_portal/apero-profiles/overview-status',
               'api_apero_profiles_overview',
               self._api_apero_profiles_overview)
-        self.add_url_rule('/api/admin/apero-profiles/save',
+        self.add_url_rule('/api/admin_portal/apero-profiles/save',
                   'api_apero_profiles_save',
                   self._api_apero_profiles_save,
                   methods=['POST'])
-        self.add_url_rule('/api/admin/apero-profiles/delete',
+        self.add_url_rule('/api/admin_portal/apero-profiles/delete',
                   'api_apero_profiles_delete',
                   self._api_apero_profiles_delete,
                   methods=['POST'])
-        self.add_url_rule('/api/admin/apero-profiles/reorder',
+        self.add_url_rule('/api/admin_portal/apero-profiles/reorder',
                   'api_apero_profiles_reorder',
                   self._api_apero_profiles_reorder,
                   methods=['POST'])
-        self.add_url_rule('/api/admin/apero-profiles/validate-path',
+        self.add_url_rule('/api/admin_portal/apero-profiles/validate-path',
                   'api_apero_profiles_validate',
                   self._api_apero_profiles_validate)
-        self.add_url_rule('/api/admin/apero-profiles/browse',
+        self.add_url_rule('/api/admin_portal/apero-profiles/browse',
                   'api_apero_profiles_browse',
                   self._api_apero_profiles_browse)
-        self.add_url_rule('/api/admin/apero-profiles/update-groups',
+        self.add_url_rule('/api/admin_portal/apero-profiles/update-groups',
                   'api_apero_profiles_update_groups',
                   self._api_apero_profiles_update_groups,
                   methods=['POST'])
-        self.add_url_rule('/api/admin/apero-profiles/test-db',
+        self.add_url_rule('/api/admin_portal/apero-profiles/test-db',
                   'api_apero_profiles_test_db',
                   self._api_apero_profiles_test_db,
                   methods=['POST'])
-        self.add_url_rule('/api/admin/apero-profiles/test-tables',
+        self.add_url_rule('/api/admin_portal/apero-profiles/test-tables',
                   'api_apero_profiles_test_tables',
                   self._api_apero_profiles_test_tables,
                   methods=['POST'])
 
+        # Admin user DB access API routes
+        self.add_url_rule('/api/admin_portal/user-db-access/profiles',
+              'api_user_db_access_profiles',
+              self._api_user_db_access_profiles)
+        self.add_url_rule('/api/admin_portal/user-db-access/details',
+              'api_user_db_access_details',
+              self._api_user_db_access_details)
+        self.add_url_rule('/api/admin_portal/user-db-access/save',
+              'api_user_db_access_save',
+              self._api_user_db_access_save,
+              methods=['POST'])
+
         # Async tasks API routes
-        self.add_url_rule('/api/admin/async-tasks/list',
+        self.add_url_rule('/api/admin_portal/async-tasks/list',
                   'api_async_tasks_list',
                   self._api_async_tasks_list)
-        self.add_url_rule('/api/admin/async-tasks/task-list',
+        self.add_url_rule('/api/admin_portal/async-tasks/task-list',
                   'api_async_tasks_task_list',
                   self._api_async_tasks_task_list)
-        self.add_url_rule('/api/admin/async-tasks/save',
+        self.add_url_rule('/api/admin_portal/async-tasks/save',
                   'api_async_tasks_save',
                   self._api_async_tasks_save,
                   methods=['POST'])
-        self.add_url_rule('/api/admin/async-tasks/delete',
+        self.add_url_rule('/api/admin_portal/async-tasks/delete',
                   'api_async_tasks_delete',
                   self._api_async_tasks_delete,
                   methods=['POST'])
-        self.add_url_rule('/api/admin/async-tasks/reorder',
+        self.add_url_rule('/api/admin_portal/async-tasks/reorder',
                   'api_async_tasks_reorder',
                   self._api_async_tasks_reorder,
                   methods=['POST'])
-        self.add_url_rule('/api/admin/async-tasks/toggle',
+        self.add_url_rule('/api/admin_portal/async-tasks/toggle',
                   'api_async_tasks_toggle',
                   self._api_async_tasks_toggle,
                   methods=['POST'])
-        self.add_url_rule('/api/admin/async-tasks/run-now',
+        self.add_url_rule('/api/admin_portal/async-tasks/run-now',
                   'api_async_tasks_run_now',
                   self._api_async_tasks_run_now,
                   methods=['POST'])
-        self.add_url_rule('/api/admin/async-tasks/run-all',
+        self.add_url_rule('/api/admin_portal/async-tasks/run-all',
                   'api_async_tasks_run_all',
                   self._api_async_tasks_run_all,
                   methods=['POST'])
-        self.add_url_rule('/api/admin/async-tasks/stop',
+        self.add_url_rule('/api/admin_portal/async-tasks/stop',
                   'api_async_tasks_stop',
                   self._api_async_tasks_stop,
                   methods=['POST'])
-        self.add_url_rule('/api/admin/async-tasks/status',
+        self.add_url_rule('/api/admin_portal/async-tasks/status',
                   'api_async_tasks_status',
                   self._api_async_tasks_status)
-        self.add_url_rule('/api/admin/async-tasks/read-file',
+        self.add_url_rule('/api/admin_portal/async-tasks/read-file',
                   'api_async_tasks_read_file',
                   self._api_async_tasks_read_file)
-        self.add_url_rule('/api/admin/async-tasks/download-file',
+        self.add_url_rule('/api/admin_portal/async-tasks/download-file',
                   'api_async_tasks_download_file',
                   self._api_async_tasks_download_file)
 
@@ -522,15 +574,30 @@ class ARIApp(Flask):
         """Check if a page is under the docs section."""
         return page_id.startswith('home.docs')
 
-    def _build_sidebar_context(self, page_id: str, perms):
-        """Build sidebar context dict for pages with full-nav."""
+    def _build_sidebar_context(self, page_id: str, perms, user_info=None):
+        """Build sidebar context dict for pages with side-nav top-level."""
         nav_root = find_full_nav_root(page_id, self.ari_pages)
         if not nav_root:
             return {}
         root_def = self.ari_pages[nav_root]
-        sidebar_tree = get_sidebar_tree(
+        section_tree = get_sidebar_tree(
             nav_root, perms, self.ari_pages, page_id
         )
+        pinned_tree = get_pinned_sidebar_items(
+            perms,
+            self.ari_pages,
+            page_id,
+            logged_in=(user_info is not None),
+            username=(user_info or {}).get('username', ''),
+        )
+        seen = set()
+        sidebar_tree = []
+        for item in pinned_tree + section_tree:
+            item_id = item.get('id', '')
+            if item_id in seen:
+                continue
+            seen.add(item_id)
+            sidebar_tree.append(item)
         return {
             'sidebar_root': nav_root,
             'sidebar_label': root_def.get('label', ''),
@@ -538,6 +605,60 @@ class ARIApp(Flask):
             'sidebar_url': page_id_to_url(nav_root),
             'sidebar_tree': sidebar_tree,
         }
+
+    def _build_home_sidebar_context(self, perms, user_info=None):
+        """Build sidebar context for the home page using pinned entries."""
+        sidebar_tree = get_pinned_sidebar_items(
+            perms,
+            self.ari_pages,
+            'home',
+            logged_in=(user_info is not None),
+            username=(user_info or {}).get('username', ''),
+        )
+        if not sidebar_tree:
+            return {}
+        return {
+            'sidebar_root': 'home',
+            'sidebar_label': 'Home',
+            'sidebar_icon': 'fa-solid fa-house',
+            'sidebar_url': '/',
+            'sidebar_tree': sidebar_tree,
+        }
+
+    def _build_home_page_context(self, user_info, perms) -> dict:
+        """Build the full context payload used by the home page."""
+        context = {
+            'page_id': 'home',
+            'page_label': 'Home',
+            'page_icon': 'fa-solid fa-house',
+            'is_parent': True,
+        }
+        context.update(self._build_home_sidebar_context(perms, user_info))
+
+        params = load_parameters()
+        all_instr = params.get('instruments', {}).get('value', [])
+        instr_info = []
+        for inst in all_instr:
+            info = params.get(inst.lower(), {})
+            instr_info.append({
+                'name': inst,
+                'homepage': info.get('homepage', ''),
+            })
+        context['instruments'] = instr_info
+
+        pubs = params.get('publications', {})
+        pub_list = []
+        for _key, pub in pubs.items():
+            pub_list.append({
+                'title': pub.get('title', ''),
+                'url': pub.get('paper-url', ''),
+            })
+        context['publications'] = pub_list
+        context['cards'] = get_visible_cards(
+            'home', perms, self.ari_pages,
+            logged_in=(user_info is not None),
+        )
+        return context
 
     def _make_page_view(self, page_id: str):
         """Create a view function for a page defined in pages.yaml."""
@@ -576,10 +697,11 @@ class ARIApp(Flask):
                 'is_parent': is_parent,
             }
 
-            # Sidebar context for full-nav sections
+            # Sidebar context for side-nav top-level sections
             nav_root = find_full_nav_root(page_id, self.ari_pages)
             if nav_root:
-                context.update(self._build_sidebar_context(page_id, perms))
+                context.update(self._build_sidebar_context(page_id, perms,
+                                                          user_info))
                 # Version info only for documentation pages
                 if self._is_doc_page(page_id):
                     version = request.args.get('v')
@@ -613,27 +735,10 @@ class ARIApp(Flask):
 
             # Home page: inject instruments + publications
             if page_id == 'home':
-                params = load_parameters()
-                all_instr = params.get('instruments', {}).get('value', [])
-                instr_info = []
-                for inst in all_instr:
-                    info = params.get(inst.lower(), {})
-                    instr_info.append({
-                        'name': inst,
-                        'homepage': info.get('homepage', ''),
-                    })
-                context['instruments'] = instr_info
-                pubs = params.get('publications', {})
-                pub_list = []
-                for _key, pub in pubs.items():
-                    pub_list.append({
-                        'title': pub.get('title', ''),
-                        'url': pub.get('paper-url', ''),
-                    })
-                context['publications'] = pub_list
+                context.update(self._build_home_page_context(user_info, perms))
 
             # Science groups page: inject user's instruments
-            if page_id == 'home.admin.science_groups' and user_info:
+            if page_id == 'home.admin_portal.science_groups' and user_info:
                 params = load_parameters()
                 all_instr = params.get('instruments', {}).get('value', [])
                 user_instr = user_info.get('instruments', [])
@@ -643,13 +748,13 @@ class ARIApp(Flask):
                 ]
 
             # Async tasks page: inject instruments
-            if page_id == 'home.admin.async_tasks' and user_info:
+            if page_id == 'home.admin_portal.async_tasks' and user_info:
                 params = load_parameters()
                 all_instr = params.get('instruments', {}).get('value', [])
                 context['instruments'] = all_instr
 
             # APERO profiles page: inject instruments + groups meta
-            if page_id == 'home.admin.apero_profiles' and user_info:
+            if page_id == 'home.admin_portal.apero_profiles' and user_info:
                 params = load_parameters()
                 all_instr = params.get('instruments', {}).get('value', [])
                 context['instruments'] = all_instr
@@ -667,9 +772,21 @@ class ARIApp(Flask):
                 context['can_manage_groups'] = can_manage
                 context['inherited_map'] = inherited_map
 
+            # User DB access page: inject current health summary
+            if page_id == 'home.admin_portal.user_db_access' and user_info:
+                health = self._build_admin_card_health(user_info, perms)
+                context['user_db_access_health'] = health.get(
+                    'home.admin_portal.user_db_access',
+                    {
+                        'status': 'info',
+                        'message': ('Configure group and column access to '
+                                    'APERO database tables by profile.'),
+                    },
+                )
+
             # Data portal: inject accessible profiles
             if page_id == 'home.data_portal':
-                db_ctx = self._build_ri_context(user_info)
+                db_ctx = self._build_ri_context(user_info, perms)
                 context.update(db_ctx)
                 
             # User portal data access summary
@@ -698,23 +815,43 @@ class ARIApp(Flask):
                     user_info['username'])
 
             # Admin calendar
-            if page_id == 'home.admin.calendar' and user_info:
+            if page_id == 'home.admin_portal.calendar' and user_info:
                 context.update(
                     self._build_admin_instrument_context(user_info, perms))
 
             # Admin links
-            if page_id == 'home.admin.links' and user_info:
+            if page_id == 'home.admin_portal.links' and user_info:
                 context.update(
                     self._build_admin_instrument_context(user_info, perms))
 
             # Admin email settings
-            if page_id == 'home.admin.email':
+            if page_id == 'home.admin_portal.email':
                 context.update(self._build_admin_email_context(perms))
 
             # Admin index: inject card health status
-            if page_id == 'home.admin':
-                context['card_health'] = self._build_admin_card_health(
-                    user_info, perms)
+            if page_id == 'home.admin_portal':
+                health = self._build_admin_card_health(user_info, perms)
+                context['card_health'] = health
+
+            # Admin health page: detailed health rows + refresh metadata
+            if page_id == 'home.admin_portal.health_status':
+                health = self._build_admin_card_health(user_info, perms)
+                health_cfg = load_admin_health_config()
+                context['admin_health_rows'] = self._build_admin_health_rows(
+                    health
+                )
+                context['admin_health_meta'] = {
+                    'updated_at': datetime.now(timezone.utc).strftime(
+                        '%Y-%m-%d %H:%M:%S'
+                    ),
+                    'in_progress': False,
+                    'refresh_url': url_for('api_admin_health_update'),
+                }
+                context['admin_health_config'] = health_cfg
+                context['admin_health_config_urls'] = {
+                    'get': url_for('api_admin_health_config_get'),
+                    'save': url_for('api_admin_health_config_save'),
+                }
 
             return render_template(template, **context)
 
@@ -785,7 +922,129 @@ class ARIApp(Flask):
                         accessible.add(str(rid).strip())
         return accessible
 
-    def _build_ri_context(self, user_info):
+    def _page_template_meta(self, template_id: str, **tokens) -> dict:
+        """Resolve label/icon from a dynamic page template in pages.yaml."""
+        template = self._page_templates.get(template_id, {})
+        label = str(template.get('label', ''))
+        for key, value in tokens.items():
+            value_str = str(value)
+            label = label.replace(f'{{{key}}}', value_str)
+            label = label.replace(f'{{{key.replace("_", " ")}}}', value_str)
+        return {
+            'label': label,
+            'icon': template.get('icon', ''),
+        }
+
+    def _build_data_portal_sidebar_tree(self,
+                                        accessible_profiles: list,
+                                        active_page_id: str,
+                                        user_permissions,
+                                        user_info=None,
+                                        current_profile_id: Optional[str] = None,
+                                        objname: Optional[str] = None,
+                                        include_children: bool = True) -> list:
+        """Build data portal sidebar tree from pages.yaml templates."""
+        sidebar_tree = []
+        pinned_tree = get_pinned_sidebar_items(
+            user_permissions,
+            self.ari_pages,
+            active_page_id,
+            logged_in=(user_info is not None),
+            username=(user_info or {}).get('username', ''),
+        )
+        sidebar_tree.extend(pinned_tree)
+        for prof in accessible_profiles:
+            profile_id = prof['profile_id']
+            page_id = f'home.data_portal.{profile_id}'
+            profile_meta = self._page_template_meta(
+                'home.data_portal.{apero_profile}',
+                apero_profile=profile_id,
+            )
+            is_current = (profile_id == current_profile_id)
+            sidebar_tree.append({
+                'id': page_id,
+                'label': profile_meta.get('label') or profile_id,
+                'icon': profile_meta.get('icon') or 'fa-solid fa-laptop-code',
+                'url': f'/data_portal/{profile_id}',
+                'depth': 0,
+                'active': active_page_id == page_id,
+                'expanded': is_current,
+                'has_children': include_children,
+            })
+
+            if not include_children or not is_current:
+                continue
+
+            child_items = [
+                (
+                    'object_table',
+                    'home.data_portal.{apero_profile}.object_table',
+                    f'/data_portal/{profile_id}/object-table',
+                    False,
+                ),
+                (
+                    'obs_table',
+                    'home.data_portal.{apero_profile}.obs_table',
+                    f'/data_portal/{profile_id}/observation-table',
+                    False,
+                ),
+                (
+                    'query_db',
+                    'home.data_portal.{apero_profile}.query_db',
+                    '',
+                    True,
+                ),
+                (
+                    'qc_graphs',
+                    'home.data_portal.{apero_profile}.qc_graphs',
+                    '',
+                    True,
+                ),
+            ]
+
+            for suffix, tpl_id, child_url, disabled in child_items:
+                child_id = f'{page_id}.{suffix}'
+                child_meta = self._page_template_meta(
+                    tpl_id,
+                    apero_profile=profile_id,
+                )
+                sidebar_tree.append({
+                    'id': child_id,
+                    'label': child_meta.get('label') or suffix,
+                    'icon': child_meta.get('icon', ''),
+                    'url': child_url,
+                    'depth': 1,
+                    'active': active_page_id == child_id,
+                    'disabled': disabled,
+                })
+
+            if objname:
+                obj_id = f'{page_id}.{objname}'
+                obj_meta = self._page_template_meta(
+                    'home.data_portal.{apero_profile}.{objname}',
+                    apero_profile=profile_id,
+                    objname=objname,
+                )
+                sidebar_tree.append({
+                    'id': obj_id,
+                    'label': objname,
+                    'icon': obj_meta.get('icon') or 'fa-solid fa-star',
+                    'url': f'/data_portal/{profile_id}/{objname}',
+                    'depth': 1,
+                    'active': active_page_id == obj_id,
+                })
+
+        seen = set()
+        deduped_tree = []
+        for item in sidebar_tree:
+            item_id = item.get('id', '')
+            if item_id in seen:
+                continue
+            seen.add(item_id)
+            deduped_tree.append(item)
+        return deduped_tree
+
+    def _build_ri_context(self, user_info, user_permissions):
         """Build template context for the data portal page."""
         params = load_parameters()
         all_instruments = params.get('instruments', {}).get('value', [])
@@ -819,19 +1078,14 @@ class ARIApp(Flask):
         instruments_with = {p['instrument'] for p in accessible}
         no_profile = [i for i in shown if i not in instruments_with]
 
-        # Custom sidebar listing accessible profiles
-        sidebar_tree = []
-        for prof in accessible:
-            sidebar_tree.append({
-                'id': f'home.data_portal.{prof["profile_id"]}',
-                'label': prof['profile_id'],
-                'icon': 'fa-solid fa-laptop-code',
-                'url': f'/data_portal/{prof["profile_id"]}',
-                'depth': 0,
-                'active': False,
-                'expanded': False,
-                'has_children': False,
-            })
+        # Sidebar listing all accessible APERO profiles from pages templates
+        sidebar_tree = self._build_data_portal_sidebar_tree(
+            accessible_profiles=accessible,
+            active_page_id='home.data_portal',
+            user_permissions=user_permissions,
+            user_info=user_info,
+            include_children=False,
+        )
 
         return {
             'profile_cards': profile_cards,
@@ -1043,12 +1297,12 @@ class ARIApp(Flask):
                     if set(ud_data.get('groups', [])) <= {'public'}
                 )
                 if unreviewed:
-                    health['home.admin.users'] = {
+                    health['home.admin_portal.users'] = {
                         'status': 'warning',
                         'message': f'{unreviewed} user(s) with only "public" access – may need group assignment.',
                     }
                 else:
-                    health['home.admin.users'] = {'status': 'ok', 'message': ''}
+                    health['home.admin_portal.users'] = {'status': 'ok', 'message': ''}
             except Exception:
                 pass
 
@@ -1057,16 +1311,16 @@ class ARIApp(Flask):
             try:
                 email_cfg = eb.load_email_config()
                 if not email_cfg.get('enabled', False):
-                    health['home.admin.email'] = {
+                    health['home.admin_portal.email'] = {
                         'status': 'warning',
                         'message': 'Email delivery is not enabled. Verification codes go to log file.',
                     }
                 else:
                     test = eb.test_email_connection(email_cfg)
                     if test['ok']:
-                        health['home.admin.email'] = {'status': 'ok', 'message': ''}
+                        health['home.admin_portal.email'] = {'status': 'ok', 'message': ''}
                     else:
-                        health['home.admin.email'] = {
+                        health['home.admin_portal.email'] = {
                             'status': 'error',
                             'message': f'SMTP connection failed: {test["error"]}',
                         }
@@ -1079,7 +1333,7 @@ class ARIApp(Flask):
                 overview = self._build_apero_profiles_overview_status()
                 profile_errors = overview.get('issues', [])
                 if profile_errors:
-                    health['home.admin.apero_profiles'] = {
+                    health['home.admin_portal.apero_profiles'] = {
                         'status': 'error',
                         'message': (
                             f'Some APERO profiles need attention. '
@@ -1088,7 +1342,7 @@ class ARIApp(Flask):
                         ),
                     }
                 else:
-                    health['home.admin.apero_profiles'] = {'status': 'ok', 'message': ''}
+                    health['home.admin_portal.apero_profiles'] = {'status': 'ok', 'message': ''}
             except Exception:
                 pass
 
@@ -1125,7 +1379,7 @@ class ARIApp(Flask):
                             failed_tasks.append(f'{instrument}:{label}')
 
                 if failed_tasks:
-                    health['home.admin.async_tasks'] = {
+                    health['home.admin_portal.async_tasks'] = {
                         'status': 'error',
                         'message': (
                             f'{len(failed_tasks)} active task(s) in error: '
@@ -1134,11 +1388,224 @@ class ARIApp(Flask):
                         ),
                     }
                 else:
-                    health['home.admin.async_tasks'] = {'status': 'ok', 'message': ''}
+                    health['home.admin_portal.async_tasks'] = {'status': 'ok', 'message': ''}
             except Exception:
                 pass
 
+        # ── Science Groups: warn if users are unassigned to any group ───
+        if 'manage.sci_group' in perms:
+            try:
+                params = load_parameters()
+                all_instr = params.get('instruments', {}).get('value', [])
+                user_instr = set((user_info or {}).get('instruments', []))
+                instruments = [i for i in all_instr if i in user_instr] or list(all_instr)
+
+                total_users = set()
+                assigned_users = set()
+                for inst in instruments:
+                    inst_users = set(get_users_for_instrument(inst))
+                    total_users |= inst_users
+                    groups = load_science_groups(inst)
+                    if not isinstance(groups, dict):
+                        continue
+                    for entry in groups.values():
+                        if not isinstance(entry, dict):
+                            continue
+                        for username in entry.get('users', []):
+                            uname = str(username).strip()
+                            if uname:
+                                assigned_users.add(uname)
+
+                if not total_users:
+                    health['home.admin_portal.science_groups'] = {
+                        'status': 'warning',
+                        'message': 'No users are currently assigned to managed instruments.',
+                    }
+                else:
+                    unassigned = sorted(total_users - assigned_users)
+                    if unassigned:
+                        health['home.admin_portal.science_groups'] = {
+                            'status': 'warning',
+                            'message': f'{len(unassigned)} users are not assigned to any science group.',
+                        }
+                    else:
+                        health['home.admin_portal.science_groups'] = {
+                            'status': 'ok',
+                            'message': f'All {len(total_users)} users are assigned to at least one science group.',
+                        }
+            except Exception as exc:
+                health['home.admin_portal.science_groups'] = {
+                    'status': 'error',
+                    'message': f'Science group health check failed: {exc}',
+                }
+
+        # ── User DB Access: warn if profile table access is incomplete ──
+        if 'manage.admin.user_db_access' in perms:
+            try:
+                profiles = get_accessible_profiles(user_info, self.ari_groups)
+                db_access = load_db_access()
+                table_key_map = self._db_access_table_keys()
+
+                checked = 0
+                warnings = 0
+                for prof in profiles:
+                    instrument = str(prof.get('instrument', '')).strip()
+                    profile_id = str(prof.get('profile_id', '')).strip()
+                    cfg = prof.get('data', {}) if isinstance(prof.get('data'), dict) else {}
+                    if not instrument or not profile_id:
+                        continue
+
+                    table_names = [
+                        label for label, key in table_key_map.items()
+                        if str(cfg.get(key, '')).strip()
+                    ]
+                    if not table_names:
+                        continue
+
+                    checked += 1
+                    prof_entry = (((db_access.get(instrument, {})
+                                   if isinstance(db_access.get(instrument, {}), dict)
+                                   else {}).get(profile_id, {}))
+                                  if instrument and profile_id else {})
+
+                    if self._profile_db_access_health(prof_entry, table_names) != 'ok':
+                        warnings += 1
+
+                if checked == 0:
+                    health['home.admin_portal.user_db_access'] = {
+                        'status': 'warning',
+                        'message': ('No APERO profiles with configured table names '
+                                    'were found for DB-access checks.'),
+                    }
+                elif warnings:
+                    health['home.admin_portal.user_db_access'] = {
+                        'status': 'warning',
+                        'message': (
+                            f'{warnings} of {checked} profile(s) have incomplete '
+                            'DB table access rules.'
+                        ),
+                    }
+                else:
+                    health['home.admin_portal.user_db_access'] = {
+                        'status': 'ok',
+                        'message': f'All {checked} profile(s) have complete DB table access rules.',
+                    }
+            except Exception as exc:
+                health['home.admin_portal.user_db_access'] = {
+                    'status': 'error',
+                    'message': f'User DB access health check failed: {exc}',
+                }
+
         return health
+
+    def _build_admin_health_rows(self, health: dict) -> list:
+        """Build ordered health rows for the Admin Portal health panel."""
+        checks = {
+            'home.admin_portal.users': {
+                'ok': 'All users have at least one non-public group assignment.',
+                'warning': 'Some users still only have public access and should be reviewed.',
+                'error': 'User assignment checks failed.',
+            },
+            'home.admin_portal.science_groups': {
+                'ok': 'All users are assigned to at least one science group.',
+                'warning': 'At least one user is not assigned to any science group.',
+                'error': 'Science-group assignment checks failed.',
+            },
+            'home.admin_portal.email': {
+                'ok': 'Email delivery is enabled and SMTP connectivity check succeeds.',
+                'warning': 'Email delivery is disabled or running in non-email mode.',
+                'error': 'SMTP connectivity failed.',
+            },
+            'home.admin_portal.apero_profiles': {
+                'ok': 'All APERO profiles pass database and path checks.',
+                'warning': 'Some APERO profile checks need attention.',
+                'error': 'One or more APERO profiles failed validation checks.',
+            },
+            'home.admin_portal.user_db_access': {
+                'ok': 'All APERO profiles have complete DB table access rules.',
+                'warning': 'At least one APERO profile has incomplete DB table access rules.',
+                'error': 'DB-access health checks failed.',
+            },
+            'home.admin_portal.async_tasks': {
+                'ok': 'No active async tasks are in failed/error state.',
+                'warning': 'Some async task checks are inconclusive.',
+                'error': 'One or more active async tasks are in failed/error state.',
+            },
+        }
+
+        rows = []
+        for pid in get_children('home.admin_portal', self.ari_pages):
+            status_data = health.get(pid)
+            if not isinstance(status_data, dict):
+                continue
+            status = str(status_data.get('status', 'warning')).strip() or 'warning'
+            if status not in {'ok', 'warning', 'error'}:
+                status = 'warning'
+            msg = str(status_data.get('message', '')).strip()
+
+            rules = checks.get(pid, {})
+            rule_msg = str(rules.get(status, '')).strip()
+            page_def = self.ari_pages.get(pid, {})
+            page_label = str(page_def.get('label', pid)).strip()
+
+            rows.append({
+                'page_id': pid,
+                'label': page_label,
+                'url': page_id_to_url(pid),
+                'status': status,
+                'message': msg or rule_msg,
+                'rule_message': rule_msg,
+            })
+
+        return rows
+
+    def _api_admin_health_update(self):
+        """Refresh admin card health and return latest status payload."""
+        user_info = get_effective_user(session)
+        if not user_info:
+            return jsonify(success=False, error='Unauthorized'), 401
+
+        perms = resolve_user_permissions(user_info['groups'], self.ari_groups)
+        if 'view.admin' not in perms:
+            return jsonify(success=False, error='Forbidden'), 403
+
+        health = self._build_admin_card_health(user_info, perms)
+        updated_at = datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S')
+        return jsonify(success=True, updated_at=updated_at, health=health)
+
+    def _api_admin_health_config_get(self):
+        """Return persisted health-status UI config."""
+        user_info = get_effective_user(session)
+        if not user_info:
+            return jsonify(success=False, error='Unauthorized'), 401
+        perms = resolve_user_permissions(user_info['groups'], self.ari_groups)
+        if 'view.admin' not in perms:
+            return jsonify(success=False, error='Forbidden'), 403
+
+        cfg = load_admin_health_config()
+        return jsonify(success=True, config=cfg)
+
+    def _api_admin_health_config_save(self):
+        """Persist health-status UI config."""
+        user_info = get_effective_user(session)
+        if not user_info:
+            return jsonify(success=False, error='Unauthorized'), 401
+        perms = resolve_user_permissions(user_info['groups'], self.ari_groups)
+        if 'view.admin' not in perms:
+            return jsonify(success=False, error='Forbidden'), 403
+
+        data = request.get_json() or {}
+        refresh_frequency = str(
+            data.get('refresh_frequency', 'manual')
+        ).strip().lower()
+        if refresh_frequency not in {'manual', '5m', '15m', '1h'}:
+            return jsonify(success=False, error='Invalid refresh_frequency'), 400
+
+        save_admin_health_config({'refresh_frequency': refresh_frequency})
+        return jsonify(
+            success=True,
+            config={'refresh_frequency': refresh_frequency},
+        )
 
     def _build_apero_profiles_overview_status(self) -> dict:
         """Build all-instruments APERO profile readiness and issue details."""
@@ -1302,55 +1769,13 @@ class ARIApp(Flask):
         }
 
         # Build sidebar tree with current page highlighted
-        sidebar_tree = []
-        for prof in accessible:
-            pid = f'home.data_portal.{prof["profile_id"]}'
-            is_current = prof['profile_id'] == profile_id
-            sidebar_tree.append({
-                'id': pid,
-                'label': prof['profile_id'],
-                'icon': 'fa-solid fa-laptop-code',
-                'url': f'/data_portal/{prof["profile_id"]}',
-                'depth': 0,
-                'active': pid == page_id,
-                'expanded': is_current,
-                'has_children': True,
-            })
-            if is_current:
-                sidebar_tree.append({
-                    'id': f'home.data_portal.{prof["profile_id"]}.object_table',
-                    'label': 'Astrophysical Object Table',
-                    'icon': 'fa-solid fa-star',
-                    'url': f'/data_portal/{prof["profile_id"]}/object-table',
-                    'depth': 1,
-                    'active': False,
-                })
-                sidebar_tree.append({
-                    'id': f'home.data_portal.{prof["profile_id"]}.obs_table',
-                    'label': 'Observation Table',
-                    'icon': 'fa-solid fa-binoculars',
-                    'url': f'/data_portal/{prof["profile_id"]}/observation-table',
-                    'depth': 1,
-                    'active': False,
-                })
-                sidebar_tree.append({
-                    'id': f'home.data_portal.{prof["profile_id"]}.query_db',
-                    'label': 'Database Query',
-                    'icon': 'fa-solid fa-server',
-                    'url': '',
-                    'depth': 1,
-                    'active': False,
-                    'disabled': True,
-                })
-                sidebar_tree.append({
-                    'id': f'home.data_portal.{prof["profile_id"]}.qc_graphs',
-                    'label': 'Quality Control Graphs',
-                    'icon': 'fa-solid fa-chart-line',
-                    'url': '',
-                    'depth': 1,
-                    'active': False,
-                    'disabled': True,
-                })
+        sidebar_tree = self._build_data_portal_sidebar_tree(
+            accessible_profiles=accessible,
+            active_page_id=page_id,
+            user_permissions=perms,
+            user_info=user_info,
+            current_profile_id=profile_id,
+        )
         context['sidebar_tree'] = sidebar_tree
 
         return render_template('data_portal/profile.html',
@@ -1416,39 +1841,285 @@ class ARIApp(Flask):
     # Login / Logout views
     # -----------------------------------------------------------------
     def _login_view(self):
-        """Handle login page: show form or process login."""
+        """Handle login via a modal rendered on top of the home page."""
+        username_value = str(session.get('last_username', '') or '')
+        user_info = get_effective_user(session)
+        if user_info:
+            return redirect(url_for('home'))
+
+        perms = get_public_permissions()
         if request.method == 'POST':
             username = request.form.get('username', '').strip()
             password = request.form.get('password', '')
+            username_value = username
+            session['last_username'] = username
 
             user = authenticate(username, password)
             if user:
                 session['user'] = user['username']
                 session['last_login'] = user.get('last_login')
                 session.pop('login_as', None)
-                # Handle "remember me"
-                if request.form.get('remember'):
-                    session.permanent = True
-                else:
-                    session.permanent = False
+                session['last_username'] = user['username']
+                # Default to persistent login unless user opts out.
+                session.permanent = request.form.get('remember', '1') == '1'
                 flash(f'Welcome, {user["username"]}!', 'success')
                 return redirect(url_for('home'))
             else:
                 flash('Invalid username or password.', 'danger')
 
-        # If already logged in, show the logged-in state
-        logged_in = get_effective_user(session) is not None
-        return render_template('home/login.html',
-                               page_label='Login' if not logged_in
-                               else 'Account',
-                               page_icon='fa-solid fa-right-to-bracket',
-                               logged_in_state=logged_in)
+        context = self._build_home_page_context(None, perms)
+        context.update({
+            'login_modal_open': True,
+            'last_username': username_value,
+        })
+        return render_template('home/index.html', **context)
 
     def _logout_view(self):
         """Clear session and redirect to home."""
         session.clear()
         flash('You have been logged out.', 'info')
         return redirect(url_for('home'))
+
+    @staticmethod
+    def _get_primary_contact_email(user: dict) -> str:
+        """Return best email address to use for account notifications."""
+        primary = str(user.get('primary_email', '')).strip()
+        if primary:
+            return primary
+        emails = user.get('emails', [])
+        if isinstance(emails, list):
+            for email in emails:
+                val = str(email).strip()
+                if val:
+                    return val
+        return ''
+
+    @staticmethod
+    def _parse_iso_datetime(value: str) -> Optional[datetime]:
+        """Parse an ISO datetime string safely."""
+        try:
+            dt = datetime.fromisoformat(str(value))
+        except Exception:
+            return None
+        if dt.tzinfo is None:
+            return dt.replace(tzinfo=timezone.utc)
+        return dt
+
+    def _cleanup_expired_reset_tokens(self, users: dict) -> bool:
+        """Remove expired password-reset tokens. Returns True if modified."""
+        now = datetime.now(timezone.utc)
+        changed = False
+        for user in users.values():
+            reset_data = user.get('password_reset')
+            if not isinstance(reset_data, dict):
+                continue
+            exp = self._parse_iso_datetime(reset_data.get('expires_at', ''))
+            if exp is None or now > exp:
+                user.pop('password_reset', None)
+                changed = True
+        return changed
+
+    def _find_reset_user(self, token: str, users: dict) -> Optional[str]:
+        """Find username matching a valid reset token."""
+        if not token:
+            return None
+        for username, user in users.items():
+            reset_data = user.get('password_reset')
+            if not isinstance(reset_data, dict):
+                continue
+            token_hash = str(reset_data.get('token_hash', '')).strip()
+            if token_hash and verify_password(token, token_hash):
+                return username
+        return None
+
+    @staticmethod
+    def _get_request_ip() -> str:
+        """Get client IP, preferring X-Forwarded-For when present."""
+        xff = str(request.headers.get('X-Forwarded-For', '')).strip()
+        if xff:
+            return xff.split(',')[0].strip() or 'unknown'
+        return str(request.remote_addr or 'unknown').strip() or 'unknown'
+
+    def _prune_forgot_pw_rate_limit(self, now_ts: float) -> None:
+        """Drop old throttle records to keep in-memory state small."""
+        stale_after = 3600.0
+        to_delete = []
+        for ip, state in self._forgot_pw_rate_limit.items():
+            last_seen = float(state.get('last_seen', 0.0) or 0.0)
+            blocked_until = float(state.get('blocked_until', 0.0) or 0.0)
+            if now_ts > blocked_until and (now_ts - last_seen) > stale_after:
+                to_delete.append(ip)
+        for ip in to_delete:
+            self._forgot_pw_rate_limit.pop(ip, None)
+
+    def _register_forgot_pw_attempt(self, ip: str) -> Optional[int]:
+        """Record forgot-password attempt and return wait seconds if blocked."""
+        now_ts = datetime.now(timezone.utc).timestamp()
+        self._prune_forgot_pw_rate_limit(now_ts)
+
+        state = self._forgot_pw_rate_limit.get(ip, {
+            'attempts': 0,
+            'penalty': 0,
+            'blocked_until': 0.0,
+            'last_seen': 0.0,
+        })
+
+        blocked_until = float(state.get('blocked_until', 0.0) or 0.0)
+        if now_ts < blocked_until:
+            remaining = int(blocked_until - now_ts + 0.999)
+            state['last_seen'] = now_ts
+            self._forgot_pw_rate_limit[ip] = state
+            return max(1, remaining)
+
+        # Decay penalties after idle time.
+        last_seen = float(state.get('last_seen', 0.0) or 0.0)
+        if last_seen and (now_ts - last_seen) > 600.0:
+            state['attempts'] = 0
+            state['penalty'] = 0
+
+        state['attempts'] = int(state.get('attempts', 0) or 0) + 1
+        state['last_seen'] = now_ts
+
+        if state['attempts'] > self._forgot_pw_max_attempts:
+            penalty = int(state.get('penalty', 0) or 0) + 1
+            wait_seconds = min(
+                self._forgot_pw_base_wait * (2 ** (penalty - 1)),
+                self._forgot_pw_max_wait,
+            )
+            state['penalty'] = penalty
+            state['attempts'] = 0
+            state['blocked_until'] = now_ts + float(wait_seconds)
+            self._forgot_pw_rate_limit[ip] = state
+            return int(wait_seconds)
+
+        state['blocked_until'] = 0.0
+        self._forgot_pw_rate_limit[ip] = state
+        return None
+
+    def _forgot_password_view(self):
+        """Request a password reset email without revealing account existence."""
+        if request.method == 'POST':
+            ip = self._get_request_ip()
+            wait_seconds = self._register_forgot_pw_attempt(ip)
+            if wait_seconds is not None:
+                flash(
+                    'Too many password reset attempts from this IP. '
+                    f'Please wait {wait_seconds}s before trying again.',
+                    'warning',
+                )
+                return redirect(url_for('forgot_password'))
+
+            identifier = str(request.form.get('identifier', '')).strip()
+            generic_msg = ('If an account matches that username/email, '
+                           'a reset link has been sent.')
+
+            users = load_users()
+            changed = self._cleanup_expired_reset_tokens(users)
+            identifier_l = identifier.lower()
+
+            matched_username = None
+            recipient_email = ''
+
+            if identifier:
+                for username, user in users.items():
+                    if username.lower() == identifier_l:
+                        matched_username = username
+                        recipient_email = self._get_primary_contact_email(user)
+                        break
+
+                if matched_username is None:
+                    for username, user in users.items():
+                        emails = user.get('emails', [])
+                        if not isinstance(emails, list):
+                            emails = []
+                        primary = str(user.get('primary_email', '')).strip()
+                        candidates = [e for e in emails if str(e).strip()]
+                        if primary:
+                            candidates.append(primary)
+                        if any(str(e).strip().lower() == identifier_l
+                               for e in candidates):
+                            matched_username = username
+                            recipient_email = (primary
+                                               or self._get_primary_contact_email(user))
+                            break
+
+            if matched_username and recipient_email:
+                token = secrets.token_urlsafe(32)
+                expires_at = (
+                    datetime.now(timezone.utc) + timedelta(minutes=30)
+                ).isoformat()
+                users[matched_username]['password_reset'] = {
+                    'token_hash': hash_password(token),
+                    'expires_at': expires_at,
+                    'requested_at': datetime.now(timezone.utc).isoformat(),
+                }
+                changed = True
+
+                reset_link = url_for('reset_password', token=token,
+                                     _external=True)
+                subject = 'APERO RI password reset request'
+                body = (
+                    'A request was received to reset your APERO RI password.\n\n'
+                    f'Use this link to set a new password (valid for 30 minutes):\n{reset_link}\n\n'
+                    'If you did not request this, you can ignore this email.'
+                )
+                err = eb.send_email(recipient_email, subject, body)
+                if err:
+                    # Do not reveal account status in UI; keep server-side trace.
+                    print(f'Password reset email failed for {matched_username}: {err}')
+
+            if changed:
+                save_users(users)
+
+            flash(generic_msg, 'info')
+            return redirect(url_for('forgot_password'))
+
+        return render_template('home/forgot_password.html',
+                               page_label='Forgot Password',
+                               page_icon='fa-solid fa-key')
+
+    def _reset_password_view(self, token: str):
+        """Validate token and allow user to set a new password."""
+        users = load_users()
+        changed = self._cleanup_expired_reset_tokens(users)
+        username = self._find_reset_user(token, users)
+
+        if request.method == 'POST':
+            if not username:
+                if changed:
+                    save_users(users)
+                flash('This reset link is invalid or has expired.', 'danger')
+                return redirect(url_for('forgot_password'))
+
+            new_password = str(request.form.get('new_password', ''))
+            confirm_password = str(request.form.get('confirm_password', ''))
+
+            if new_password != confirm_password:
+                flash('Passwords do not match.', 'danger')
+                return render_template('home/reset_password.html',
+                                       page_label='Reset Password',
+                                       page_icon='fa-solid fa-lock',
+                                       token_valid=True)
+            if len(new_password) < 8:
+                flash('Password must be at least 8 characters.', 'danger')
+                return render_template('home/reset_password.html',
+                                       page_label='Reset Password',
+                                       page_icon='fa-solid fa-lock',
+                                       token_valid=True)
+
+            users[username]['password'] = hash_password(new_password)
+            users[username].pop('password_reset', None)
+            save_users(users)
+            flash('Your password has been reset. You can now log in.', 'success')
+            return redirect(url_for('login'))
+
+        if changed:
+            save_users(users)
+
+        return render_template('home/reset_password.html',
+                               page_label='Reset Password',
+                               page_icon='fa-solid fa-lock',
+                               token_valid=(username is not None))
 
     def _register_view(self):
         """Render self-registration page."""
@@ -1471,7 +2142,7 @@ class ARIApp(Flask):
     @staticmethod
     def _is_valid_username(username: str) -> bool:
         """Validate lowercase username format."""
-        return bool(re.match(r'^[a-z][a-z0-9._-]{2,63}$', username))
+        return bool(re.match(r'^[a-z][a-z0-9_]{2,63}$', username))
 
     # -----------------------------------------------------------------
     # Registration & account APIs
@@ -1500,7 +2171,8 @@ class ARIApp(Flask):
 
         if not self._is_valid_username(username):
             return jsonify(success=False,
-                           error='Username must be lowercase and 3+ chars.'), 400
+                           error=('Username must be 3+ chars, lowercase, and use '
+                                  'only letters, numbers, or underscore (_).')), 400
         if not first_names or not last_name:
             return jsonify(success=False,
                            error='First name(s) and last name are required.'), 400
@@ -1984,7 +2656,7 @@ class ARIApp(Flask):
             'version_name': version_name,
         }
         # Sidebar for editor too
-        context.update(self._build_sidebar_context(page_id, perms))
+        context.update(self._build_sidebar_context(page_id, perms, user_info))
         context['doc_versions'] = get_versions()
         context['current_version'] = current_ver
 
@@ -2074,54 +2746,13 @@ class ARIApp(Flask):
         color = colors.get(profile['instrument'],
                            self._INSTRUMENT_PALETTE[0])
 
-        # Build sidebar: all profiles, with sub-items under the current one
-        sidebar_tree = []
-        for prof in accessible:
-            pid = f'home.data_portal.{prof["profile_id"]}'
-            is_current = prof['profile_id'] == profile_id
-            sidebar_tree.append({
-                'id': pid,
-                'label': prof['profile_id'],
-                'icon': 'fa-solid fa-laptop-code',
-                'url': f'/data_portal/{prof["profile_id"]}',
-                'depth': 0,
-                'active': False,
-            })
-            if is_current:
-                sidebar_tree.append({
-                    'id': f'home.data_portal.{prof["profile_id"]}.object_table',
-                    'label': 'Astrophysical Object Table',
-                    'icon': 'fa-solid fa-star',
-                    'url': f'/data_portal/{prof["profile_id"]}/object-table',
-                    'depth': 1,
-                    'active': True,
-                })
-                sidebar_tree.append({
-                    'id': f'home.data_portal.{prof["profile_id"]}.obs_table',
-                    'label': 'Observation Table',
-                    'icon': 'fa-solid fa-binoculars',
-                    'url': f'/data_portal/{prof["profile_id"]}/observation-table',
-                    'depth': 1,
-                    'active': False,
-                })
-                sidebar_tree.append({
-                    'id': f'home.data_portal.{prof["profile_id"]}.query_db',
-                    'label': 'Database Query',
-                    'icon': 'fa-solid fa-server',
-                    'url': '',
-                    'depth': 1,
-                    'active': False,
-                    'disabled': True,
-                })
-                sidebar_tree.append({
-                    'id': f'home.data_portal.{prof["profile_id"]}.qc_graphs',
-                    'label': 'Quality Control Graphs',
-                    'icon': 'fa-solid fa-chart-line',
-                    'url': '',
-                    'depth': 1,
-                    'active': False,
-                    'disabled': True,
-                })
+        sidebar_tree = self._build_data_portal_sidebar_tree(
+            accessible_profiles=accessible,
+            active_page_id=page_id,
+            user_permissions=perms,
+            user_info=user_info,
+            current_profile_id=profile_id,
+        )
 
         context = {
             'page_id': page_id,
@@ -2281,53 +2912,13 @@ class ARIApp(Flask):
         color = colors.get(profile['instrument'],
                            self._INSTRUMENT_PALETTE[0])
 
-        sidebar_tree = []
-        for prof in accessible:
-            pid = f'home.data_portal.{prof["profile_id"]}'
-            is_current = prof['profile_id'] == profile_id
-            sidebar_tree.append({
-                'id': pid,
-                'label': prof['profile_id'],
-                'icon': 'fa-solid fa-laptop-code',
-                'url': f'/data_portal/{prof["profile_id"]}',
-                'depth': 0,
-                'active': False,
-            })
-            if is_current:
-                sidebar_tree.append({
-                    'id': f'home.data_portal.{prof["profile_id"]}.object_table',
-                    'label': 'Astrophysical Object Table',
-                    'icon': 'fa-solid fa-star',
-                    'url': f'/data_portal/{prof["profile_id"]}/object-table',
-                    'depth': 1,
-                    'active': False,
-                })
-                sidebar_tree.append({
-                    'id': page_id,
-                    'label': 'Observation Table',
-                    'icon': 'fa-solid fa-binoculars',
-                    'url': f'/data_portal/{prof["profile_id"]}/observation-table',
-                    'depth': 1,
-                    'active': True,
-                })
-                sidebar_tree.append({
-                    'id': f'home.data_portal.{prof["profile_id"]}.query_db',
-                    'label': 'Database Query',
-                    'icon': 'fa-solid fa-server',
-                    'url': '',
-                    'depth': 1,
-                    'active': False,
-                    'disabled': True,
-                })
-                sidebar_tree.append({
-                    'id': f'home.data_portal.{prof["profile_id"]}.qc_graphs',
-                    'label': 'Quality Control Graphs',
-                    'icon': 'fa-solid fa-chart-line',
-                    'url': '',
-                    'depth': 1,
-                    'active': False,
-                    'disabled': True,
-                })
+        sidebar_tree = self._build_data_portal_sidebar_tree(
+            accessible_profiles=accessible,
+            active_page_id=page_id,
+            user_permissions=perms,
+            user_info=user_info,
+            current_profile_id=profile_id,
+        )
 
         context = {
             'page_id': page_id,
@@ -2387,43 +2978,14 @@ class ARIApp(Flask):
         color = colors.get(profile['instrument'],
                            self._INSTRUMENT_PALETTE[0])
 
-        sidebar_tree = []
-        for prof in accessible:
-            pid = f'home.data_portal.{prof["profile_id"]}'
-            is_current = prof['profile_id'] == profile_id
-            sidebar_tree.append({
-                'id': pid,
-                'label': prof['profile_id'],
-                'icon': 'fa-solid fa-laptop-code',
-                'url': f'/data_portal/{prof["profile_id"]}',
-                'depth': 0,
-                'active': False,
-            })
-            if is_current:
-                sidebar_tree.append({
-                    'id': f'home.data_portal.{prof["profile_id"]}.object_table',
-                    'label': 'Astrophysical Object Table',
-                    'icon': 'fa-solid fa-star',
-                    'url': f'/data_portal/{prof["profile_id"]}/object-table',
-                    'depth': 1,
-                    'active': False,
-                })
-                sidebar_tree.append({
-                    'id': f'home.data_portal.{prof["profile_id"]}.obs_table',
-                    'label': 'Observation Table',
-                    'icon': 'fa-solid fa-binoculars',
-                    'url': f'/data_portal/{prof["profile_id"]}/observation-table',
-                    'depth': 1,
-                    'active': False,
-                })
-                sidebar_tree.append({
-                    'id': page_id,
-                    'label': objname,
-                    'icon': page_icon,
-                    'url': f'/data_portal/{prof["profile_id"]}/{objname}',
-                    'depth': 1,
-                    'active': True,
-                })
+        sidebar_tree = self._build_data_portal_sidebar_tree(
+            accessible_profiles=accessible,
+            active_page_id=page_id,
+            user_permissions=perms,
+            user_info=user_info,
+            current_profile_id=profile_id,
+            objname=objname,
+        )
 
         context = {
             'page_id': page_id,
@@ -2921,11 +3483,39 @@ class ARIApp(Flask):
         run_ids = self._get_instrument_run_ids(instrument)
         available_users = get_users_for_instrument(instrument)
 
+        assigned_users = set()
+        for group_entry in groups.values():
+            if not isinstance(group_entry, dict):
+                continue
+            for username in group_entry.get('users', []):
+                uname = str(username).strip()
+                if uname:
+                    assigned_users.add(uname)
+
+        available_set = set(available_users)
+        missing_users = sorted(available_set - assigned_users)
+        if available_users and not missing_users:
+            health_status = 'ok'
+            health_message = (
+                f'All {len(available_users)} users are assigned '
+                f'to at least one science group.'
+            )
+        else:
+            health_status = 'warning'
+            health_message = (
+                f'{len(missing_users)} users are not assigned '
+                f'to any science group.'
+            )
+
         return jsonify(
             success=True,
             groups=group_names,
             run_ids=run_ids,
             available_users=available_users,
+            health_status=health_status,
+            health_message=health_message,
+            total_users=len(available_users),
+            missing_users=len(missing_users),
         )
 
     def _api_sci_groups_get(self):
@@ -3054,6 +3644,364 @@ class ARIApp(Flask):
         if 'manage.apero_profile' not in perms:
             return None, None
         return user_info, perms
+
+    def _require_user_db_access_perm(self):
+        """Check for manage.admin.user_db_access permission."""
+        user_info = get_effective_user(session)
+        if not user_info:
+            return None, None
+        perms = resolve_user_permissions(
+            user_info['groups'], self.ari_groups
+        )
+        if 'manage.admin.user_db_access' not in perms:
+            return None, None
+        return user_info, perms
+
+    @staticmethod
+    def _db_access_table_keys() -> dict:
+        """Map UI table labels to APERO profile table-name keys."""
+        return {
+            'ASTROM': 'ASTROM_TABLENAME',
+            'CALIB': 'CALIB_TABLENAME',
+            'FINDEX': 'FINDEX_TABLENAME',
+            'LOG': 'LOG_TABLENAME',
+            'TELLU': 'TELLU_TABLENAME',
+            'REJECT': 'REJECT_TABLENAME',
+        }
+
+    def _editable_groups_for_editor(self, user_info, perms):
+        """Return groups this editor may grant DB table access to."""
+        all_groups = list(self.ari_groups.keys())
+        editor_groups = set(user_info.get('groups', []))
+        if 'admin' in editor_groups:
+            return sorted(all_groups)
+
+        allowed = {g for g in all_groups if f'manage.group.{g}' in perms}
+        expanded = set(allowed)
+        for g in list(allowed):
+            expanded |= set(get_inherited_groups(g, self.ari_groups))
+        return sorted(expanded)
+
+    def _find_accessible_profile(self, user_info, profile_id: str,
+                                 instrument: str = ''):
+        """Find one profile in the editor's accessible profile set."""
+        for profile in get_accessible_profiles(user_info, self.ari_groups):
+            if profile.get('profile_id') != profile_id:
+                continue
+            if instrument and profile.get('instrument') != instrument:
+                continue
+            return profile
+        return None
+
+    @staticmethod
+    def _q_ident(name: str) -> str:
+        """Quote SQL identifier path safely (schema/table)."""
+        return '.'.join(f'`{part}`' for part in name.split('.'))
+
+    def _fetch_table_columns(self, profile_cfg: dict, table_name: str):
+        """Fetch ordered column names from a profile DB/table."""
+        mode = str(profile_cfg.get('DATABASE_MODE', '')).strip()
+        host = str(profile_cfg.get('DATABASE_HOST', '')).strip()
+        username = str(profile_cfg.get('DATABASE_USERNAME', '')).strip()
+        password = str(profile_cfg.get('DATABASE_PASSWORD', '') or '')
+        db_name = str(profile_cfg.get('DATABASE_NAME', '')).strip()
+
+        if not all([mode, host, username, db_name, table_name]):
+            raise ValueError('Missing DB connection or table configuration.')
+
+        db_params = {
+            'DATABASE_MODE': mode,
+            'DATABASE_HOST': host,
+            'DATABASE_USER': username,
+            'DATABASE_PASSWORD': password,
+            'DATABASE_NAME': db_name,
+        }
+
+        if '.' in table_name:
+            schema_name, table_only = table_name.split('.', 1)
+        else:
+            schema_name, table_only = db_name, table_name
+
+        if not re.match(r'^[A-Za-z0-9_]+$', schema_name):
+            raise ValueError(f'Invalid schema name: {schema_name}')
+        if not re.match(r'^[A-Za-z0-9_]+$', table_only):
+            raise ValueError(f'Invalid table name: {table_only}')
+
+        apero_async.database_query(
+            db_params,
+            f'SELECT 1 AS ok FROM {self._q_ident(table_name)} LIMIT 1'
+        )
+
+        rows = apero_async.database_query(
+            db_params,
+            (
+                'SELECT COLUMN_NAME AS col '
+                'FROM information_schema.COLUMNS '
+                f"WHERE TABLE_SCHEMA = '{schema_name}' "
+                f"AND TABLE_NAME = '{table_only}' "
+                'ORDER BY ORDINAL_POSITION'
+            ),
+        )
+
+        out = []
+        for row in rows:
+            if not isinstance(row, dict):
+                continue
+            col = str(row.get('col', '')).strip()
+            if col:
+                out.append(col)
+        return out
+
+    def _profile_db_access_health(self, entry: dict, table_names: list) -> str:
+        """Return health status for one profile DB-access config."""
+        groups_map = entry.get('groups', {}) if isinstance(entry, dict) else {}
+        columns_map = entry.get('columns', {}) if isinstance(entry, dict) else {}
+        if not table_names:
+            return 'warning'
+        for table in table_names:
+            if not isinstance(groups_map.get(table, []), list) or not groups_map.get(table, []):
+                return 'warning'
+            if not isinstance(columns_map.get(table, []), list) or not columns_map.get(table, []):
+                return 'warning'
+        return 'ok'
+
+    def _api_user_db_access_profiles(self):
+        """List editor-accessible APERO profiles for DB access management."""
+        user_info, perms = self._require_user_db_access_perm()
+        if not user_info:
+            return jsonify(success=False, error='Unauthorized'), 401
+
+        profiles = get_accessible_profiles(user_info, self.ari_groups)
+        db_access = load_db_access()
+        table_key_map = self._db_access_table_keys()
+
+        out = []
+        for prof in profiles:
+            instrument = str(prof.get('instrument', '')).strip()
+            profile_id = str(prof.get('profile_id', '')).strip()
+            cfg = prof.get('data', {}) if isinstance(prof.get('data'), dict) else {}
+
+            table_names = []
+            for label, key in table_key_map.items():
+                if str(cfg.get(key, '')).strip():
+                    table_names.append(label)
+
+            prof_entry = (((db_access.get(instrument, {})
+                           if isinstance(db_access.get(instrument, {}), dict)
+                           else {}).get(profile_id, {}))
+                          if instrument and profile_id else {})
+
+            out.append({
+                'instrument': instrument,
+                'profile_id': profile_id,
+                'has_tables': bool(table_names),
+                'health': self._profile_db_access_health(prof_entry, table_names),
+            })
+
+        out.sort(key=lambda r: (r['instrument'], r['profile_id']))
+        return jsonify(success=True, profiles=out)
+
+    def _api_user_db_access_details(self):
+        """Get group toggles and DB columns for one selected profile."""
+        user_info, perms = self._require_user_db_access_perm()
+        if not user_info:
+            return jsonify(success=False, error='Unauthorized'), 401
+
+        profile_id = request.args.get('profile_id', '').strip()
+        instrument = request.args.get('instrument', '').strip()
+        if not profile_id or not instrument:
+            return jsonify(success=False, error='Missing profile selection'), 400
+
+        profile = self._find_accessible_profile(user_info, profile_id, instrument)
+        if not profile:
+            return jsonify(success=False, error='Profile not found or access denied'), 404
+
+        editable_groups = self._editable_groups_for_editor(user_info, perms)
+        all_groups = list(self.ari_groups.keys())
+        cfg = profile.get('data', {}) if isinstance(profile.get('data'), dict) else {}
+
+        db_access = load_db_access()
+        saved_entry = (((db_access.get(instrument, {})
+                        if isinstance(db_access.get(instrument, {}), dict)
+                        else {}).get(profile_id, {}))
+                       if instrument and profile_id else {})
+        saved_groups = saved_entry.get('groups', {}) if isinstance(saved_entry, dict) else {}
+        saved_columns = saved_entry.get('columns', {}) if isinstance(saved_entry, dict) else {}
+
+        sections = []
+        for label, key in self._db_access_table_keys().items():
+            table_name = str(cfg.get(key, '')).strip()
+            if not table_name:
+                continue
+
+            selected_groups = saved_groups.get(label, [])
+            if not isinstance(selected_groups, list):
+                selected_groups = []
+            selected_groups = [str(g).strip() for g in selected_groups if str(g).strip()]
+
+            groups_ui = []
+            for group_name in all_groups:
+                groups_ui.append({
+                    'name': group_name,
+                    'selected': group_name in selected_groups,
+                    'editable': group_name in editable_groups,
+                })
+
+            columns_error = ''
+            columns_all = []
+            try:
+                columns_all = self._fetch_table_columns(cfg, table_name)
+            except Exception as exc:
+                columns_error = str(exc)
+
+            selected_cols = saved_columns.get(label, [])
+            if not isinstance(selected_cols, list):
+                selected_cols = []
+            selected_cols = [str(c).strip() for c in selected_cols if str(c).strip()]
+
+            if not selected_cols and columns_all:
+                selected_cols = list(columns_all)
+
+            columns_ui = []
+            selected_set = set(selected_cols)
+            for col in columns_all:
+                columns_ui.append({
+                    'name': col,
+                    'selected': col in selected_set,
+                })
+
+            sections.append({
+                'table': label,
+                'table_name': table_name,
+                'groups': groups_ui,
+                'columns': columns_ui,
+                'columns_error': columns_error,
+            })
+
+        return jsonify(
+            success=True,
+            instrument=instrument,
+            profile_id=profile_id,
+            sections=sections,
+            editable_groups=editable_groups,
+        )
+
+    def _api_user_db_access_save(self):
+        """Persist group/column access for one profile into db_access.yaml."""
+        user_info, perms = self._require_user_db_access_perm()
+        if not user_info:
+            return jsonify(success=False, error='Unauthorized'), 401
+
+        data = request.get_json()
+        if not data:
+            return jsonify(success=False, error='Missing data'), 400
+
+        instrument = str(data.get('instrument', '')).strip()
+        profile_id = str(data.get('profile_id', '')).strip()
+        groups_map = data.get('groups', {})
+        columns_map = data.get('columns', {})
+
+        if not instrument or not profile_id:
+            return jsonify(success=False, error='Missing profile selection'), 400
+        if not isinstance(groups_map, dict) or not isinstance(columns_map, dict):
+            return jsonify(success=False, error='Invalid groups/columns payload'), 400
+
+        profile = self._find_accessible_profile(user_info, profile_id, instrument)
+        if not profile:
+            return jsonify(success=False, error='Profile not found or access denied'), 404
+
+        editable_groups = set(self._editable_groups_for_editor(user_info, perms))
+
+        cfg = profile.get('data', {}) if isinstance(profile.get('data'), dict) else {}
+        valid_tables = {
+            label for label, key in self._db_access_table_keys().items()
+            if str(cfg.get(key, '')).strip()
+        }
+
+        db_access = load_db_access()
+        existing_entry = (((db_access.get(instrument, {})
+                           if isinstance(db_access.get(instrument, {}), dict)
+                           else {}).get(profile_id, {}))
+                          if instrument and profile_id else {})
+        existing_groups_map = (existing_entry.get('groups', {})
+                               if isinstance(existing_entry, dict) else {})
+
+        cleaned_groups = {}
+        for table, raw_groups in groups_map.items():
+            if table not in valid_tables:
+                continue
+            if not isinstance(raw_groups, list):
+                return jsonify(success=False,
+                               error=f'groups[{table}] must be a list'), 400
+
+            existing_for_table = existing_groups_map.get(table, [])
+            if not isinstance(existing_for_table, list):
+                existing_for_table = []
+            existing_for_table = [str(g).strip() for g in existing_for_table
+                                  if str(g).strip()]
+
+            preserved_noneditable = [
+                g for g in existing_for_table if g not in editable_groups
+            ]
+            vals = list(preserved_noneditable)
+            for g in raw_groups:
+                gname = str(g).strip()
+                if not gname:
+                    continue
+                if gname not in self.ari_groups:
+                    continue
+                if gname not in editable_groups and gname not in existing_for_table:
+                    return jsonify(success=False,
+                                   error=f'No permission to assign group: {gname}'), 403
+                if gname not in vals:
+                    vals.append(gname)
+            cleaned_groups[table] = vals
+
+        cleaned_cols = {}
+        table_columns = {}
+        for label, key in self._db_access_table_keys().items():
+            if label not in valid_tables:
+                continue
+            table_name = str(cfg.get(key, '')).strip()
+            try:
+                table_columns[label] = self._fetch_table_columns(cfg, table_name)
+            except Exception as exc:
+                return jsonify(
+                    success=False,
+                    error=f'Unable to validate columns for {label}: {exc}',
+                ), 400
+
+        for table, raw_cols in columns_map.items():
+            if table not in valid_tables:
+                continue
+            if not isinstance(raw_cols, list):
+                return jsonify(success=False,
+                               error=f'columns[{table}] must be a list'), 400
+            allowed_cols = set(table_columns.get(table, []))
+            cols = []
+            for col in raw_cols:
+                cname = str(col).strip()
+                if cname and cname not in allowed_cols:
+                    return jsonify(success=False,
+                                   error=f'Invalid column for {table}: {cname}'), 400
+                if cname and cname not in cols:
+                    cols.append(cname)
+            cleaned_cols[table] = cols
+
+        for table in valid_tables:
+            cleaned_groups.setdefault(table, [])
+            cleaned_cols.setdefault(table, [])
+
+        if instrument not in db_access or not isinstance(db_access.get(instrument), dict):
+            db_access[instrument] = {}
+        db_access[instrument][profile_id] = {
+            'groups': cleaned_groups,
+            'columns': cleaned_cols,
+            'updated_at': datetime.now(timezone.utc).isoformat(),
+        }
+        save_db_access(db_access)
+
+        return jsonify(success=True)
 
     def _api_apero_profiles_list(self):
         """List APERO profiles for an instrument."""
@@ -4172,8 +5120,13 @@ class ARIApp(Flask):
         if not user_info:
             return jsonify(success=False, error='Unauthorized'), 401
         notes = ud.load_notes(user_info['username'])
-        slim = [{k: v for k, v in n.items() if k != 'content'}
-                for n in notes]
+        slim = []
+        for note in notes:
+            entry = {k: v for k, v in note.items() if k != 'content'}
+            content = str(note.get('content', ''))
+            preview = ' '.join(content.split())[:180]
+            entry['content_preview'] = preview
+            slim.append(entry)
         return jsonify(success=True, notes=slim)
 
     def _api_user_notes_get(self):

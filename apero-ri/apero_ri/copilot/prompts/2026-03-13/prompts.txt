@@ -32,13 +32,12 @@ As I stated earlier for the first render parent pages should create "cards" that
 
 For now other than the "cards" for "parents" keep the pages empty with a simple "coming soon" so we can test the first functionality.
 
-==============================================================================
-
+========================================
 
 Can we add getting arguments in tha ARIApp constructor?
 
 i.e.: something add a "get_arguments" function like this (that is called in the __init__ function of ARIApp)
-```
+
 parser = argparse.ArgumentParser(description='APERO reduction interface')
 parser.add_argument('--data-dir', type=str, help='Override data directory (default: ~/.ourlilnest)')
 parser.add_argument('--port', type=int, default=6666, help='Port to run the server on (default: 6666)')
@@ -49,9 +48,8 @@ parser.add_argument(
     help='Host binding (default: auto; prefers :: for localhost, falls back to 0.0.0.0)',
 )
 args = parser.parse_args()
-```
 
-===================================================
+========================================
 
 Okay lets start with some basic content.
 

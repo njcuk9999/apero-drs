@@ -1,0 +1,182 @@
+{% extends "general/sidebar_base.html" %}
+{% block title %}APERO RI - Health Status{% endblock %}
+
+{% block doc_content %}
+{% set _admin_meta = admin_health_meta if admin_health_meta is defined else {
+    'updated_at': 'not yet updated',
+    'in_progress': false,
+    'refresh_url': '/api/admin_portal/health/update'
+} %}
+
+<div class="ari-page-header">
+    <h1><i class="{{ page_icon }}"></i> {{ page_label }}</h1>
+    <div style="margin-top:0.65rem; display:flex; align-items:center; gap:0.6rem; flex-wrap:wrap;">
+        <span id="admin-health-updated-label" style="color: var(--ari-text-muted); font-size:0.9rem;">
+            Health status last updated: {{ _admin_meta.updated_at }} UTC
+        </span>
+        <button id="admin-health-refresh-btn" class="ari-btn ari-btn--secondary ari-btn--sm"
+                data-refresh-url="{{ _admin_meta.refresh_url }}"
+                {% if _admin_meta.in_progress %}disabled{% endif %}>
+            <i class="fa-solid fa-rotate"></i>
+            Update Now
+        </button>
+        <span id="admin-health-refresh-spinner"
+              style="display:{% if _admin_meta.in_progress %}inline-flex{% else %}none{% endif %}; align-items:center; gap:0.35rem; color: var(--ari-text-muted); font-size:0.85rem;">
+            <i class="fa-solid fa-spinner fa-spin"></i>
+            Updating...
+        </span>
+    </div>
+    <div style="margin-top:0.55rem; display:flex; align-items:center; gap:0.55rem; flex-wrap:wrap;">
+        <label for="admin-health-frequency" style="font-weight:600; font-size:0.9rem; color:var(--ari-text-muted);">
+            Refresh Frequency
+        </label>
+        <select id="admin-health-frequency" class="ari-ap-input" style="max-width:180px;">
+            <option value="manual" {% if admin_health_config and admin_health_config.refresh_frequency == 'manual' %}selected{% endif %}>Manual</option>
+            <option value="5m" {% if admin_health_config and admin_health_config.refresh_frequency == '5m' %}selected{% endif %}>Every 5 minutes</option>
+            <option value="15m" {% if admin_health_config and admin_health_config.refresh_frequency == '15m' %}selected{% endif %}>Every 15 minutes</option>
+            <option value="1h" {% if admin_health_config and admin_health_config.refresh_frequency == '1h' %}selected{% endif %}>Every 1 hour</option>
+        </select>
+        <button id="admin-health-frequency-save" class="ari-btn ari-btn--secondary ari-btn--sm" type="button">
+            <i class="fa-solid fa-floppy-disk"></i>
+            Save Frequency
+        </button>
+        <span id="admin-health-frequency-msg" style="color:var(--ari-text-muted); font-size:0.85rem;"></span>
+    </div>
+</div>
+
+<div class="ari-sg-section" style="margin-bottom:1rem;">
+    <div class="ari-sg-section__header">
+        <h3><i class="fa-solid fa-heart-pulse"></i> Admin Health Checks</h3>
+    </div>
+    <div style="display:grid; gap:0.55rem;">
+        {% if admin_health_rows is defined and admin_health_rows %}
+        {% for row in admin_health_rows %}
+        <a href="{{ row.url }}"
+           style="text-decoration:none; color:inherit; border:1px solid #e0e5ef; border-radius:0.7rem; padding:0.6rem 0.75rem; display:block;">
+            <div style="display:flex; align-items:flex-start; gap:0.55rem;">
+                <span style="margin-top:0.08rem;">
+                    {% if row.status == 'ok' %}
+                    <i class="fa-solid fa-circle-check" style="color:#1f8a44;"></i>
+                    {% elif row.status == 'warning' %}
+                    <i class="fa-solid fa-triangle-exclamation" style="color:#c67a00;"></i>
+                    {% else %}
+                    <i class="fa-solid fa-circle-xmark" style="color:#c52828;"></i>
+                    {% endif %}
+                </span>
+                <div style="min-width:0;">
+                    <div style="font-weight:700;">{{ row.label }}</div>
+                    {% if row.message %}
+                    <div style="font-size:0.88rem; color:var(--ari-text-muted);">{{ row.message }}</div>
+                    {% endif %}
+                    {% if row.rule_message and row.rule_message != row.message %}
+                    <div style="font-size:0.82rem; color:var(--ari-text-muted); margin-top:0.15rem;">
+                        Green condition: {{ row.rule_message }}
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </a>
+        {% endfor %}
+        {% else %}
+        <div class="ari-sg-empty-small">No health checks are currently available for your permissions.</div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+(function () {
+    const btn = document.getElementById('admin-health-refresh-btn');
+    const spinner = document.getElementById('admin-health-refresh-spinner');
+    const label = document.getElementById('admin-health-updated-label');
+    const freqSel = document.getElementById('admin-health-frequency');
+    const freqSave = document.getElementById('admin-health-frequency-save');
+    const freqMsg = document.getElementById('admin-health-frequency-msg');
+    const cfgUrls = {{ admin_health_config_urls|tojson }};
+    let autoTimer = null;
+    if (!btn) return;
+
+    async function triggerRefresh() {
+        const url = btn.dataset.refreshUrl;
+        if (!url) return;
+        btn.disabled = true;
+        if (spinner) spinner.style.display = 'inline-flex';
+        try {
+            const res = await fetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' }
+            });
+            const data = await res.json();
+            if (res.ok && data.success) {
+                if (label && data.updated_at) {
+                    label.textContent = 'Health status last updated: ' + data.updated_at + ' UTC';
+                }
+                window.location.reload();
+                return true;
+            }
+            alert(data.error || 'Failed to update admin health.');
+        } catch (err) {
+            alert('Failed to update admin health.');
+        } finally {
+            btn.disabled = false;
+            if (spinner) spinner.style.display = 'none';
+        }
+        return false;
+    }
+
+    function intervalMsFor(value) {
+        if (value === '5m') return 5 * 60 * 1000;
+        if (value === '15m') return 15 * 60 * 1000;
+        if (value === '1h') return 60 * 60 * 1000;
+        return 0;
+    }
+
+    function applyAutoRefresh(value) {
+        if (autoTimer) {
+            clearInterval(autoTimer);
+            autoTimer = null;
+        }
+        const ms = intervalMsFor(value);
+        if (!ms) {
+            if (freqMsg) freqMsg.textContent = 'Auto refresh disabled.';
+            return;
+        }
+        autoTimer = setInterval(function () {
+            triggerRefresh();
+        }, ms);
+        if (freqMsg) freqMsg.textContent = 'Auto refresh active (' + value + ').';
+    }
+
+    btn.addEventListener('click', async function () {
+        await triggerRefresh();
+    });
+
+    if (freqSave && freqSel) {
+        freqSave.addEventListener('click', async function () {
+            freqSave.disabled = true;
+            try {
+                const res = await fetch(cfgUrls.save, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ refresh_frequency: freqSel.value }),
+                });
+                const data = await res.json();
+                if (res.ok && data.success) {
+                    applyAutoRefresh(freqSel.value);
+                    if (freqMsg) freqMsg.textContent = 'Refresh frequency saved.';
+                } else {
+                    if (freqMsg) freqMsg.textContent = data.error || 'Failed to save refresh frequency.';
+                }
+            } catch (err) {
+                if (freqMsg) freqMsg.textContent = 'Failed to save refresh frequency.';
+            } finally {
+                freqSave.disabled = false;
+            }
+        });
+
+        applyAutoRefresh(freqSel.value);
+    }
+})();
+</script>
+{% endblock %}

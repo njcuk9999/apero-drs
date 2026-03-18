@@ -88,10 +88,13 @@
 {% endfor %}
 </div>
 
+{% if section_cards | selectattr('url', 'undefined') | list or
+      section_cards | rejectattr('url', 'defined') | list %}
 <p class="ari-rp-note">
     <i class="fa-solid fa-circle-info"></i>
-    These sections will become active once their functionality is implemented.
+    Some sections are not yet available.
 </p>
+{% endif %}
 
 {# ── Config for JS ───────────────────────────────────────────── #}
 <script>

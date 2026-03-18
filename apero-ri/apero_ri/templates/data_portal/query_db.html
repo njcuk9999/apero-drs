@@ -1,0 +1,203 @@
+{% extends "general/sidebar_base.html" %}
+{% block title %}APERO RI – {{ profile.profile_id }}: Database Query{% endblock %}
+
+{% block body_class %}ari-has-sidebar ari-qdb-page{% endblock %}
+
+{% block doc_content %}
+<div class="ari-page-header">
+    <h1>
+        <i class="{{ page_icon }}"></i>
+        <a href="{{ url_for('ri_profile', profile_id=profile.profile_id) }}"
+           class="ot-breadcrumb-link">{{ profile.profile_id }}</a>
+        <span class="ot-breadcrumb-sep">/</span>
+        Database Query
+    </h1>
+</div>
+
+<div class="ot-access-note">
+    <i class="fa-solid fa-shield-halved"></i>
+    <span>
+        This is a <strong>read-only</strong> query explorer.
+        You can only see tables and columns your groups have been granted access to,
+        and FINDEX rows are automatically filtered to your science-group run&nbsp;IDs.
+        No data can be modified through this interface.
+        Review your permissions in
+        <a href="{{ url_for('home_user_portal_data_access') }}">User Portal / Data Access</a>.
+    </span>
+</div>
+
+{# ── Main layout: builder left, results right ─────────────────── #}
+<div class="qdb-layout">
+
+    {# ── LEFT: Query builder panel ──────────────────────────────── #}
+    <aside class="qdb-builder" id="qdb-builder">
+
+        {# Loading / no-access state #}
+        <div id="qdb-schema-loading" class="qdb-section">
+            <i class="fa-solid fa-spinner fa-spin"></i> Loading schema&hellip;
+        </div>
+        <div id="qdb-no-access" class="qdb-section qdb-no-access" style="display:none;">
+            <i class="fa-solid fa-lock"></i>
+            No database tables are accessible with your current permissions
+            for this profile. Contact an admin to request access.
+        </div>
+
+        {# ── Tables & Columns ────────────────────────── #}
+        <div id="qdb-tables-section" class="qdb-section" style="display:none;">
+            <div class="qdb-section__hdr">
+                <i class="fa-solid fa-table"></i> Tables &amp; Columns
+            </div>
+            <div id="qdb-tables-body" class="qdb-tables-body"></div>
+        </div>
+
+        {# ── Joins ───────────────────────────────────── #}
+        <div id="qdb-joins-section" class="qdb-section qdb-joins-section"
+             style="display:none;">
+            <div class="qdb-section__hdr">
+                <i class="fa-solid fa-link"></i> Joins
+                <button class="qdb-add-btn" id="qdb-add-join" title="Add join">
+                    <i class="fa-solid fa-plus"></i>
+                </button>
+            </div>
+            <div id="qdb-joins-body"></div>
+        </div>
+
+        {# ── Filters ─────────────────────────────────── #}
+        <div id="qdb-filters-section" class="qdb-section" style="display:none;">
+            <div class="qdb-section__hdr">
+                <i class="fa-solid fa-filter"></i> Filters
+                <button class="qdb-add-btn" id="qdb-add-filter" title="Add filter">
+                    <i class="fa-solid fa-plus"></i>
+                </button>
+            </div>
+            <div id="qdb-filters-body"></div>
+        </div>
+
+        {# ── Sort &amp; Limit ─────────────────────────── #}
+        <div id="qdb-sort-section" class="qdb-section" style="display:none;">
+            <div class="qdb-section__hdr">
+                <i class="fa-solid fa-sort"></i> Sort &amp; Limit
+            </div>
+            <div class="qdb-sort-body">
+                <div class="qdb-sort-row">
+                    <label class="qdb-sort-label">Order by</label>
+                    <select id="qdb-sort-col" class="qdb-select qdb-select--wide">
+                        <option value="">— none —</option>
+                    </select>
+                    <select id="qdb-sort-dir" class="qdb-select">
+                        <option value="ASC">ASC</option>
+                        <option value="DESC">DESC</option>
+                    </select>
+                </div>
+                <div class="qdb-sort-row">
+                    <label class="qdb-sort-label">Max rows</label>
+                    <select id="qdb-limit" class="qdb-select">
+                        <option value="100">100</option>
+                        <option value="250">250</option>
+                        <option value="500" selected>500</option>
+                        <option value="1000">1000</option>
+                        <option value="2000">2000</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        {# ── Run button ──────────────────────────────── #}
+        <div id="qdb-run-section" class="qdb-section qdb-run-section"
+             style="display:none;">
+            <button id="qdb-run-btn" class="ari-btn ari-btn--primary qdb-run-btn">
+                <i class="fa-solid fa-play"></i> Run Query
+            </button>
+        </div>
+
+    </aside>
+
+    {# ── RIGHT: Results area ─────────────────────────────────────── #}
+    <div class="qdb-results" id="qdb-results">
+
+        {# SQL Preview #}
+        <details class="qdb-sql-preview" id="qdb-sql-details">
+            <summary class="qdb-sql-summary">
+                <i class="fa-solid fa-code"></i> SQL Preview
+                <span class="qdb-sql-badge" id="qdb-sql-badge"></span>
+            </summary>
+            <pre id="qdb-sql-pre" class="qdb-sql-pre">—</pre>
+        </details>
+
+        {# Status bar #}
+        <div class="qdb-results-meta" id="qdb-results-meta" style="display:none;">
+            <span id="qdb-results-count" class="qdb-results-count"></span>
+            <span id="qdb-results-time" class="qdb-results-muted"></span>
+            <button id="qdb-export-csv" class="ari-btn ari-btn--sm ari-btn--secondary"
+                    style="display:none;" title="Export visible rows as CSV">
+                <i class="fa-solid fa-file-csv"></i> Export CSV
+            </button>
+        </div>
+
+        {# Table #}
+        <div id="qdb-table-wrap" class="ot-table-wrap" style="display:none;">
+            <table id="qdb-table" class="ot-table">
+                <thead>
+                    <tr id="qdb-header-row" class="ot-header-row"></tr>
+                </thead>
+                <tbody id="qdb-tbody">
+                </tbody>
+            </table>
+        </div>
+
+        {# Pagination #}
+        <div id="qdb-pagination" class="ot-pagination" style="display:none;">
+            <div id="qdb-page-info" class="ot-page-info"></div>
+            <div class="ot-page-controls">
+                <button id="qdb-btn-first" class="ari-btn ari-btn--sm ari-btn--secondary"
+                        title="First page" disabled>
+                    <i class="fa-solid fa-angles-left"></i>
+                </button>
+                <button id="qdb-btn-prev" class="ari-btn ari-btn--sm ari-btn--secondary"
+                        title="Previous page" disabled>
+                    <i class="fa-solid fa-angle-left"></i>
+                </button>
+                <span class="ot-page-num">
+                    Page&nbsp;<input id="qdb-page-input" class="ot-page-input"
+                                     type="number" min="1" value="1">&nbsp;of&nbsp;<span
+                    id="qdb-page-total">1</span>
+                </span>
+                <button id="qdb-btn-next" class="ari-btn ari-btn--sm ari-btn--secondary"
+                        title="Next page" disabled>
+                    <i class="fa-solid fa-angle-right"></i>
+                </button>
+                <button id="qdb-btn-last" class="ari-btn ari-btn--sm ari-btn--secondary"
+                        title="Last page" disabled>
+                    <i class="fa-solid fa-angles-right"></i>
+                </button>
+            </div>
+        </div>
+
+        {# Idle / empty state #}
+        <div id="qdb-idle" class="qdb-idle">
+            <i class="fa-solid fa-database qdb-idle__icon"></i>
+            <p>Select tables and columns, then click <strong>Run Query</strong>.</p>
+        </div>
+
+        {# Error state #}
+        <div id="qdb-error" class="qdb-error" style="display:none;">
+            <i class="fa-solid fa-triangle-exclamation"></i>
+            <span id="qdb-error-msg"></span>
+        </div>
+
+    </div>{# end .qdb-results #}
+
+</div>{# end .qdb-layout #}
+{% endblock %}
+
+
+{% block extra_scripts %}
+<script>
+window.QDB_CONFIG = {
+    profileId:    {{ profile.profile_id | tojson }},
+    schemaApiUrl: {{ schema_api_url | tojson }},
+    runApiUrl:    {{ run_api_url | tojson }},
+};
+</script>
+<script src="{{ url_for('static', filename='js/data_query_db.js') }}"></script>
+{% endblock %}

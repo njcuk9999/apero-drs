@@ -1,0 +1,90 @@
+{% extends "general/sidebar_base.html" %}
+{% block title %}APERO RI - User Database Access{% endblock %}
+
+{% block doc_content %}
+<div class="ari-page-header">
+    <h1><i class="{{ page_icon }}"></i> {{ page_label }}</h1>
+</div>
+
+{% set _udba_health = user_db_access_health if user_db_access_health is defined else {
+    'status': 'info',
+    'message': 'Configure group and column access to APERO database tables by profile.'
+} %}
+{% set _udba_status_raw = _udba_health['status'] if _udba_health is mapping and 'status' in _udba_health else 'info' %}
+{% set _udba_status = _udba_status_raw if _udba_status_raw in ['ok', 'warning', 'error'] else 'info' %}
+{% set _udba_message = _udba_health['message'] if _udba_health is mapping and 'message' in _udba_health else 'Configure group and column access to APERO database tables by profile.' %}
+<div id="udba-status" class="ari-ap-status ari-ap-status--{{ _udba_status }}">
+    <div id="udba-status-headline" class="ari-ap-status__headline">
+        {% if _udba_status == 'ok' %}
+        <i class="fa-solid fa-circle-check"></i>
+        User DB access rules look healthy.
+        {% elif _udba_status == 'warning' %}
+        <i class="fa-solid fa-triangle-exclamation"></i>
+        User DB access rules need attention.
+        {% elif _udba_status == 'error' %}
+        <i class="fa-solid fa-circle-xmark"></i>
+        User DB access health check failed.
+        {% else %}
+        <i class="fa-solid fa-circle-info"></i>
+        Configure group and column access to APERO database tables by profile.
+        {% endif %}
+    </div>
+    <ul id="udba-status-details" class="ari-ap-status__details" style="display:{% if _udba_message %}block{% else %}none{% endif %};">
+        {% if _udba_message %}
+        <li>{{ _udba_message }}</li>
+        {% endif %}
+    </ul>
+</div>
+
+<div class="ari-sg-section">
+    <div class="ari-sg-section__header">
+        <h3><i class="fa-solid fa-id-card-clip"></i> Profile</h3>
+        <div style="display:flex; gap:0.5rem; align-items:center;">
+            <button id="udba-refresh" class="ari-btn ari-btn--secondary ari-btn--sm" type="button">
+                <i class="fa-solid fa-rotate"></i> Refresh
+            </button>
+        </div>
+    </div>
+
+    <div class="ari-ap-form" style="padding-top:0.5rem;">
+        <div class="ari-ap-form__field">
+            <label for="udba-profile-select">Select APERO profile</label>
+            <select id="udba-profile-select" class="ari-ap-input"></select>
+        </div>
+        <div id="udba-profile-health" class="ari-ap-validation" style="display:none;"></div>
+    </div>
+</div>
+
+<div id="udba-workspace" class="ari-sg-section" style="display:none;">
+    <div class="ari-sg-section__header">
+        <h3><i class="fa-solid fa-table-columns"></i> Table Access Rules</h3>
+        <button id="udba-save" class="ari-btn ari-btn--primary" type="button">
+            <span id="udba-save-label"><i class="fa-solid fa-floppy-disk"></i> Save</span>
+            <span id="udba-save-spinner" style="display:none;"><i class="fa-solid fa-spinner fa-spin"></i> Saving...</span>
+        </button>
+    </div>
+    <div id="udba-sections" class="udba-sections"></div>
+</div>
+
+<div id="udba-empty" class="ari-sg-empty" style="display:none;">
+    <i class="fa-solid fa-circle-info"></i>
+    No APERO profiles are available for your current permissions.
+</div>
+
+<div id="udba-toast" class="ari-toast" style="display:none;"></div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+window.ARI_ADMIN_USER_DB_ACCESS = {
+    profilesUrl: {{ url_for('api_user_db_access_profiles')|tojson }},
+    detailsUrl: {{ url_for('api_user_db_access_details')|tojson }},
+    saveUrl: {{ url_for('api_user_db_access_save')|tojson }},
+    initialHealth: {
+        status: {{ (_udba_status|default('info', true)|string)|tojson }},
+        message: {{ (_udba_message|default('Configure group and column access to APERO database tables by profile.', true)|string)|tojson }}
+    }
+};
+</script>
+<script src="{{ url_for('static', filename='js/admin_user_db_access.js') }}"></script>
+{% endblock %}

@@ -8,6 +8,8 @@
 
     /* -- DOM refs -------------------------------------------------------- */
     var tabsContainer = document.getElementById('instrument-tabs');
+    var sgHealth = document.getElementById('sg-health');
+    var sgHealthHeadline = document.getElementById('sg-health-headline');
     var workspace = document.getElementById('sg-workspace');
     var emptyState = document.getElementById('sg-empty');
     var actionsBar = document.getElementById('sg-actions');
@@ -62,6 +64,19 @@
     var selectedUsers = [];
 
     var LAZY_BATCH = 80;
+
+    function setScienceHealth(status, message) {
+        if (!sgHealth || !sgHealthHeadline) return;
+        sgHealth.className = 'ari-ap-status ari-ap-status--' +
+            (status === 'ok' ? 'ok' : 'warning');
+        if (status === 'ok') {
+            sgHealthHeadline.innerHTML =
+                '<i class="fa-solid fa-circle-check"></i> ' + escapeHtml(message || 'All users are assigned.');
+            return;
+        }
+        sgHealthHeadline.innerHTML =
+            '<i class="fa-solid fa-triangle-exclamation"></i> ' + escapeHtml(message || 'Some users are missing science-group assignments.');
+    }
 
     /* -- Toast ----------------------------------------------------------- */
     function showToast(msg, type) {
@@ -144,6 +159,7 @@
                 allGroups = data.groups || [];
                 allRunIds = data.run_ids || [];
                 allUsers = data.available_users || [];
+                setScienceHealth(data.health_status || 'warning', data.health_message || '');
                 renderGroupList('');
             })
             .catch(function () {

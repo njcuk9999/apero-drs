@@ -1,0 +1,70 @@
+{% extends "setup/base.html" %}
+{% block title %}APERO RI Setup – Email{% endblock %}
+
+{% block content %}
+<div class="ari-login-box">
+    <h2><i class="fa-solid fa-envelope"></i> Email Delivery</h2>
+    <p>Configure the sender used for password resets, account verification, and setup messages.</p>
+
+    <form method="POST" action="{{ url_for('setup_email') }}">
+        <div class="ari-form-group">
+            <label for="provider">Provider</label>
+            <select id="provider" name="provider">
+                {% for provider_key, provider in provider_defaults.items() %}
+                <option value="{{ provider_key }}" {% if email_cfg.provider == provider_key %}selected{% endif %}>
+                    {{ provider.label }}
+                </option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="ari-form-group">
+            <label for="from_address">From address</label>
+            <input type="email" id="from_address" name="from_address"
+                   value="{{ email_cfg.from_address or '' }}"
+                   placeholder="apero.drs@gmail.com">
+        </div>
+
+        <div class="ari-form-group">
+            <label for="smtp_user">SMTP username</label>
+            <input type="text" id="smtp_user" name="smtp_user"
+                   value="{{ email_cfg.smtp_user or '' }}"
+                   placeholder="apero.drs@gmail.com">
+        </div>
+
+        <div class="ari-form-group">
+            <label for="smtp_password">SMTP password</label>
+            <input type="password" id="smtp_password" name="smtp_password"
+                   placeholder="Leave blank to keep the saved password">
+        </div>
+
+        <div class="ari-form-group">
+            <label for="smtp_host">SMTP host</label>
+            <input type="text" id="smtp_host" name="smtp_host"
+                   value="{{ email_cfg.smtp_host or '' }}"
+                   placeholder="smtp.gmail.com">
+        </div>
+
+        <div class="ari-form-group">
+            <label for="smtp_port">SMTP port</label>
+            <input type="number" id="smtp_port" name="smtp_port"
+                   value="{{ email_cfg.smtp_port or 587 }}">
+        </div>
+
+        <div class="ari-form-group">
+            <label><input type="checkbox" name="smtp_ssl" {% if email_cfg.smtp_ssl %}checked{% endif %}> Use SSL</label>
+            <label><input type="checkbox" name="smtp_tls" {% if email_cfg.smtp_tls %}checked{% endif %}> Use STARTTLS</label>
+        </div>
+
+        <button type="submit" class="ari-btn ari-btn--primary ari-btn--block">
+            <i class="fa-solid fa-check"></i> Save Email Settings
+        </button>
+    </form>
+</div>
+
+<div class="ari-login-box" style="margin-top:1rem;">
+    <h2><i class="fa-solid fa-circle-info"></i> Notes</h2>
+    <p>If you choose <strong>log</strong> mode, APERO RI will write verification codes to <strong>{{ local_data_dir }}/admin/email_log.txt</strong> instead of sending them.</p>
+    <p>For Gmail, use an app password rather than your normal account password.</p>
+</div>
+{% endblock %}

@@ -1,0 +1,30 @@
+{% extends "setup/base.html" %}
+{% block title %}APERO RI Setup – Complete{% endblock %}
+
+{% block content %}
+<div class="ari-login-box">
+    <h2><i class="fa-solid fa-flag-checkered"></i> Setup Complete</h2>
+    {% if setup_state.completed %}
+    <p>APERO RI is ready to start.</p>
+    <div class="ari-form-group">
+        <label>Initial admin</label>
+        <input type="text" value="{{ setup_state.admin_username }}" readonly>
+    </div>
+    <div class="ari-form-group">
+        <label>Email sender</label>
+        <input type="text" value="{{ email_cfg.from_address or email_cfg.smtp_user or 'log mode' }}" readonly>
+    </div>
+    <div class="ari-form-group">
+        <label>Next step</label>
+        <input type="text" value="Run apero_ri_run" readonly>
+    </div>
+    {% else %}
+    <p>Setup is not complete yet. Finish the earlier steps first.</p>
+    {% endif %}
+</div>
+
+<div class="ari-login-box" style="margin-top:1rem;">
+    <h2><i class="fa-solid fa-list-check"></i> What Was Verified</h2>
+    <p>The local data directory is writable, email settings were saved, and the initial admin account was verified before activation.</p>
+</div>
+{% endblock %}

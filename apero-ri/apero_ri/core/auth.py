@@ -26,6 +26,7 @@ ARI_DIR = Path.home() / '.ari'
 ADMIN_DIR = ARI_DIR / 'admin'
 USERS_FILE = ADMIN_DIR / 'users.yaml'
 SCI_GROUPS_DIR = ADMIN_DIR
+ADMIN_HEALTH_CONFIG_FILE = ADMIN_DIR / 'health_status.yaml'
 
 # PBKDF2 parameters
 HASH_ALGORITHM = hashes.SHA256()
@@ -37,6 +38,22 @@ SALT_LENGTH = 16
 DEFAULT_USER = 'neil'
 DEFAULT_PASSWORD = '1234'
 DEFAULT_GROUPS = ['admin']
+
+
+def set_ari_dir(path: Optional[str]) -> None:
+    """Configure storage root for auth-managed files."""
+    global ARI_DIR, ADMIN_DIR, USERS_FILE, SCI_GROUPS_DIR
+    global APERO_PROFILES_FILE, DB_ACCESS_FILE, ASYNC_TASKS_FILE
+    global ADMIN_HEALTH_CONFIG_FILE
+    base = Path(path).expanduser() if path else (Path.home() / '.ari')
+    ARI_DIR = base
+    ADMIN_DIR = ARI_DIR / 'admin'
+    USERS_FILE = ADMIN_DIR / 'users.yaml'
+    SCI_GROUPS_DIR = ADMIN_DIR
+    APERO_PROFILES_FILE = ADMIN_DIR / 'apero_profiles.yaml'
+    DB_ACCESS_FILE = ADMIN_DIR / 'db_access.yaml'
+    ASYNC_TASKS_FILE = ADMIN_DIR / 'async_tasks.yaml'
+    ADMIN_HEALTH_CONFIG_FILE = ADMIN_DIR / 'health_status.yaml'
 
 
 # =============================================================================
@@ -95,7 +112,7 @@ def load_users() -> Dict[str, dict]:
     """Load users from users.yaml."""
     if not USERS_FILE.exists():
         return {}
-    with open(USERS_FILE, 'r') as f:
+    with open(USERS_FILE, 'r', encoding='utf-8') as f:
         data = yaml.safe_load(f)
     return data if data else {}
 
@@ -103,7 +120,7 @@ def load_users() -> Dict[str, dict]:
 def save_users(users: Dict[str, dict]) -> None:
     """Save users to users.yaml."""
     ensure_ari_directory()
-    with open(USERS_FILE, 'w') as f:
+    with open(USERS_FILE, 'w', encoding='utf-8') as f:
         yaml.dump(users, f, default_flow_style=False)
 
 
@@ -121,6 +138,9 @@ def create_user(username: str, password: str,
 def ensure_default_user() -> None:
     """Ensure the default admin user exists."""
     users = load_users()
+    for user_data in users.values():
+        if isinstance(user_data, dict) and 'admin' in user_data.get('groups', []):
+            return
     if DEFAULT_USER not in users:
         create_user(DEFAULT_USER, DEFAULT_PASSWORD, DEFAULT_GROUPS)
 
@@ -153,6 +173,7 @@ def get_user_info(username: str) -> Optional[dict]:
     user = users[username]
     return {
         'username': username,
+        'first_names': user.get('first_names', ''),
         'groups': user.get('groups', []),
         'instruments': user.get('instruments', []),
         'last_login': user.get('last_login'),
@@ -267,12 +288,52 @@ def get_public_permissions() -> Set[str]:
 # APERO profile management
 # =============================================================================
 APERO_PROFILES_FILE = ADMIN_DIR / 'apero_profiles.yaml'
+DB_ACCESS_FILE = ADMIN_DIR / 'db_access.yaml'
 
 
 # =============================================================================
 # Async tasks configuration
 # =============================================================================
 ASYNC_TASKS_FILE = ADMIN_DIR / 'async_tasks.yaml'
+
+# =============================================================================
+# Admin health status configuration
+# =============================================================================
+_ALLOWED_HEALTH_REFRESH = {'manual', '5m', '15m', '1h'}
+
+
+def load_admin_health_config() -> dict:
+    """Load admin health-status settings from health_status.yaml."""
+    ensure_ari_directory()
+    if not ADMIN_HEALTH_CONFIG_FILE.exists():
+        default = {'refresh_frequency': 'manual'}
+        with open(ADMIN_HEALTH_CONFIG_FILE, 'w', encoding='utf-8') as f:
+            yaml.dump(default, f, default_flow_style=False)
+        return default
+
+    with open(ADMIN_HEALTH_CONFIG_FILE, 'r', encoding='utf-8') as f:
+        data = yaml.safe_load(f)
+    if not isinstance(data, dict):
+        data = {}
+
+    freq = str(data.get('refresh_frequency', 'manual')).strip().lower()
+    if freq not in _ALLOWED_HEALTH_REFRESH:
+        freq = 'manual'
+    return {'refresh_frequency': freq}
+
+
+def save_admin_health_config(config: dict) -> None:
+    """Save admin health-status settings to health_status.yaml."""
+    ensure_ari_directory()
+    freq = str(config.get('refresh_frequency', 'manual')).strip().lower()
+    if freq not in _ALLOWED_HEALTH_REFRESH:
+        freq = 'manual'
+    payload = {
+        'refresh_frequency': freq,
+        'updated_at': datetime.now(timezone.utc).isoformat(),
+    }
+    with open(ADMIN_HEALTH_CONFIG_FILE, 'w', encoding='utf-8') as f:
+        yaml.dump(payload, f, default_flow_style=False)
 
 
 def load_async_tasks() -> dict:
@@ -313,6 +374,23 @@ def save_apero_profiles(profiles: dict) -> None:
     ensure_ari_directory()
     with open(APERO_PROFILES_FILE, 'w') as f:
         yaml.dump(profiles, f, default_flow_style=False)
+
+
+def load_db_access() -> dict:
+    """Load DB access configuration from db_access.yaml."""
+    ensure_ari_directory()
+    if not DB_ACCESS_FILE.exists():
+        DB_ACCESS_FILE.write_text('')
+    with open(DB_ACCESS_FILE, 'r') as f:
+        data = yaml.safe_load(f)
+    return data if data else {}
+
+
+def save_db_access(data: dict) -> None:
+    """Save DB access configuration to db_access.yaml."""
+    ensure_ari_directory()
+    with open(DB_ACCESS_FILE, 'w') as f:
+        yaml.dump(data, f, default_flow_style=False)
 
 
 def validate_path_exists(path_str: str) -> dict:

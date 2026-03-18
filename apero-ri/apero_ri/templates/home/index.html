@@ -1,14 +1,14 @@
-{% extends "general/cards.html" %}
+{% extends "general/sidebar_base.html" %}
 {% block title %}APERO RI – Home{% endblock %}
 
-{% block content %}
+{% block doc_content %}
 <div class="ari-page-header">
     <h1><i class="{{ page_icon }}"></i> {{ page_label }}</h1>
 </div>
 
 {% if logged_in %}
 <p class="ari-welcome-message">
-    Welcome, <strong>{{ username }}</strong>.
+    Welcome, <strong>{{ welcome_name }}</strong>.
     {% if last_login %}
     Last login: {{ last_login[:19] | replace('T', ' ') }} UTC.
     {% endif %}
@@ -73,5 +73,57 @@
 {% else %}
 <p style="color: var(--ari-text-muted);">No sections available with your
 current permissions.</p>
+{% endif %}
+
+{% if login_modal_open|default(false) and not logged_in %}
+<div class="ari-modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="ari-login-modal-title">
+    <div class="ari-modal ari-modal--login">
+        <div class="ari-modal__header" id="ari-login-modal-title">
+            <i class="fa-solid fa-right-to-bracket"></i> Login
+        </div>
+        <div class="ari-modal__body">
+            <div class="ari-login-box ari-login-box--modal">
+                <h2><i class="fa-solid fa-right-to-bracket"></i> Sign In</h2>
+                <form method="POST" action="{{ url_for('login') }}">
+                    <div class="ari-form-group">
+                        <label for="username">Username</label>
+                        <input type="text" id="username" name="username"
+                               value="{{ last_username|default('') }}"
+                               autocomplete="username" autocapitalize="none"
+                               spellcheck="false" required autofocus>
+                    </div>
+                    <div class="ari-form-group">
+                        <label for="password">Password</label>
+                        <input type="password" id="password" name="password"
+                               autocomplete="current-password" required>
+                    </div>
+                    <div class="ari-form-group ari-form-check">
+                        <label>
+                            <input type="checkbox" name="remember" value="1" checked>
+                            <span>Remember me</span>
+                        </label>
+                    </div>
+                    <button type="submit" class="ari-btn ari-btn--primary ari-btn--block">
+                        <i class="fa-solid fa-right-to-bracket"></i>
+                        Login
+                    </button>
+                    <a href="{{ url_for('forgot_password') }}"
+                       style="display:block; margin-top:0.55rem; text-align:center; text-decoration:none; color:var(--ari-primary);">
+                        <i class="fa-solid fa-key"></i>
+                        Forgot password?
+                    </a>
+                    <a href="{{ url_for('register') }}" class="ari-btn ari-btn--secondary ari-btn--block"
+                       style="margin-top:0.55rem; text-align:center; text-decoration:none;">
+                        <i class="fa-solid fa-user-plus"></i>
+                        Register New Account
+                    </a>
+                </form>
+            </div>
+        </div>
+        <div class="ari-modal__footer">
+            <a href="{{ url_for('home') }}" class="ari-btn ari-btn--secondary">Close</a>
+        </div>
+    </div>
+</div>
 {% endif %}
 {% endblock %}

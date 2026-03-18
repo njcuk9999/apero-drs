@@ -2,143 +2,156 @@
 'use strict';
 
 let _linksData = { sections: [], links: {}, instrument_sections: [] };
-let _editTarget = null;  // {section, name} when editing existing link
+let _editing = null;
 
 async function _api(url, method = 'GET', body = null) {
     const opts = { method, headers: { 'Content-Type': 'application/json' } };
     if (body) opts.body = JSON.stringify(body);
-    const r = await fetch(url, opts);
-    return r.json();
+    return (await fetch(url, opts)).json();
+}
+
+function _esc(s) {
+    return String(s)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
 }
 
 function _toast(msg, ok = true) {
     const el = document.getElementById('links-toast');
+    if (!el) return;
     el.textContent = msg;
     el.className = `ari-toast ari-toast--${ok ? 'success' : 'error'}`;
     el.style.display = 'block';
     setTimeout(() => { el.style.display = 'none'; }, 3000);
 }
 
+function _renderSectionsManager() {
+    const list = document.getElementById('sections-list');
+    if (!list) return;
+    const sections = _linksData.sections || [];
+    list.innerHTML = sections.map(section => `
+        <div class="ari-oln-manage-item">
+            <span>${_esc(section)}</span>
+            <button class="ari-btn ari-btn--danger ari-btn--xs js-delete-section" data-section="${_esc(section)}">Delete</button>
+        </div>
+    `).join('');
+
+    list.querySelectorAll('.js-delete-section').forEach(btn => {
+        btn.addEventListener('click', async () => {
+            const section = btn.dataset.section || '';
+            if (!section) return;
+            if (!confirm(`Delete section "${section}" and all its links?`)) return;
+            const r = await _api(ARI_LINKS.removeSectionUrl, 'POST', { section });
+            if (!r.success) {
+                _toast(r.error || 'Failed to delete section', false);
+                return;
+            }
+            _linksData = r.data || _linksData;
+            _renderLinks();
+            _renderSectionsManager();
+            _toast('Section deleted.');
+        });
+    });
+}
+
 function _renderLinks() {
     const container = document.getElementById('links-container');
-    const allSections = _linksData.sections || [];
+    const sectionSel = document.getElementById('link-section');
+    if (!container || !sectionSel) return;
+
+    const sections = _linksData.sections || [];
     const instrSections = _linksData.instrument_sections || [];
-    if (allSections.length === 0 && instrSections.length === 0) {
-        container.className = 'ari-ud-empty';
+    const hasAny = sections.length || instrSections.length;
+    sectionSel.innerHTML = sections.map(s => `<option value="${_esc(s)}">${_esc(s)}</option>`).join('');
+
+    if (!hasAny) {
+        container.className = 'ari-oln-sections ari-ud-empty';
         container.innerHTML = '<i class="fa-solid fa-link"></i><p>No links yet. Add a section to get started.</p>';
         return;
     }
-    container.className = '';
+
+    container.className = 'ari-oln-sections';
     let html = '';
-    for (const section of allSections) {
+    for (const section of sections) {
         const links = (_linksData.links || {})[section] || {};
-        html += `<div class="ari-links-section" data-section="${_esc(section)}">
-            <div class="ari-links-section-header">
-                <span class="ari-links-section-title"><i class="fa-solid fa-folder-open"></i> ${_esc(section)}</span>
-                <div class="ari-links-section-actions">
-                    <button class="ari-btn ari-btn--secondary ari-btn--xs js-add-to-section" data-section="${_esc(section)}" title="Add link to this section"><i class="fa-solid fa-plus"></i></button>
-                    <button class="ari-btn ari-btn--danger ari-btn--xs js-remove-section" data-section="${_esc(section)}" title="Delete section"><i class="fa-solid fa-trash"></i></button>
-                </div>
-            </div>
-            <div class="ari-links-list">`;
+        html += `
+        <section class="ari-oln-link-section">
+            <h3>${_esc(section)}</h3>
+            <div class="ari-oln-link-grid">
+        `;
         for (const [name, link] of Object.entries(links)) {
-            html += `<div class="ari-link-row">
-                <a class="ari-link-href" href="${_esc(link.url)}" target="_blank" rel="noopener noreferrer">
-                    <i class="fa-solid fa-arrow-up-right-from-square"></i>
-                    <span class="ari-link-name">${_esc(name)}</span>
-                    ${link.description ? `<span class="ari-link-desc">${_esc(link.description)}</span>` : ''}
-                </a>
-                <div class="ari-link-actions">
-                    <button class="ari-btn ari-btn--secondary ari-btn--xs js-edit-link" data-section="${_esc(section)}" data-name="${_esc(name)}" title="Edit link"><i class="fa-solid fa-pencil"></i></button>
-                    <button class="ari-btn ari-btn--danger ari-btn--xs js-remove-link" data-section="${_esc(section)}" data-name="${_esc(name)}" title="Remove link"><i class="fa-solid fa-xmark"></i></button>
+            html += `
+            <article class="ari-oln-link-card">
+                <h4><a href="${_esc(link.url)}" target="_blank" rel="noopener noreferrer">${_esc(name)}</a></h4>
+                ${link.description ? `<p>${_esc(link.description)}</p>` : '<p class="is-empty">No description</p>'}
+                <div class="ari-oln-link-actions">
+                    <button class="ari-btn ari-btn--secondary ari-btn--xs js-edit-link" data-section="${_esc(section)}" data-name="${_esc(name)}">Edit</button>
+                    <button class="ari-btn ari-btn--danger ari-btn--xs js-delete-link" data-section="${_esc(section)}" data-name="${_esc(name)}">Delete</button>
                 </div>
-            </div>`;
+            </article>
+            `;
         }
-        if (Object.keys(links).length === 0) {
-            html += '<p class="ari-links-empty-section">No links in this section yet.</p>';
+        if (!Object.keys(links).length) {
+            html += '<p class="ari-ud-empty-inline">No links in this section yet.</p>';
         }
-        html += `</div></div>`;
+        html += '</div></section>';
     }
-    // Instrument / read-only sections
+
     for (const section of instrSections) {
         const links = (_linksData.links || {})[section] || {};
-        html += `<div class="ari-links-section ari-links-section--readonly" data-section="${_esc(section)}">
-            <div class="ari-links-section-header">
-                <span class="ari-links-section-title"><i class="fa-solid fa-satellite-dish"></i> ${_esc(section)} <span class="ari-links-readonly-badge">read-only</span></span>
-            </div>
-            <div class="ari-links-list">`;
+        html += `
+        <section class="ari-oln-link-section ari-oln-link-section--readonly">
+            <h3>${_esc(section)} <span class="ari-links-readonly-badge">read-only</span></h3>
+            <div class="ari-oln-link-grid">
+        `;
         for (const [name, link] of Object.entries(links)) {
-            html += `<div class="ari-link-row">
-                <a class="ari-link-href" href="${_esc(link.url)}" target="_blank" rel="noopener noreferrer">
-                    <i class="fa-solid fa-arrow-up-right-from-square"></i>
-                    <span class="ari-link-name">${_esc(name)}</span>
-                    ${link.description ? `<span class="ari-link-desc">${_esc(link.description)}</span>` : ''}
-                </a>
-            </div>`;
+            html += `
+            <article class="ari-oln-link-card">
+                <h4><a href="${_esc(link.url)}" target="_blank" rel="noopener noreferrer">${_esc(name)}</a></h4>
+                ${link.description ? `<p>${_esc(link.description)}</p>` : '<p class="is-empty">No description</p>'}
+            </article>
+            `;
         }
-        if (Object.keys(links).length === 0) {
-            html += '<p class="ari-links-empty-section">No links yet.</p>';
+        if (!Object.keys(links).length) {
+            html += '<p class="ari-ud-empty-inline">No instrument links in this section.</p>';
         }
-        html += `</div></div>`;
+        html += '</div></section>';
     }
+
     container.innerHTML = html;
-    _bindSectionActions();
-}
 
-function _esc(s) {
-    return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
-}
-
-function _populateSectionSelect() {
-    const sel = document.getElementById('links-modal-section');
-    sel.innerHTML = (_linksData.sections || []).map(s =>
-        `<option value="${_esc(s)}">${_esc(s)}</option>`
-    ).join('');
-}
-
-function _bindSectionActions() {
-    document.querySelectorAll('.js-add-to-section').forEach(btn => {
-        btn.addEventListener('click', () => {
-            _editTarget = null;
-            _populateSectionSelect();
-            document.getElementById('links-modal-section').value = btn.dataset.section;
-            document.getElementById('links-modal-name').value = '';
-            document.getElementById('links-modal-url').value = '';
-            document.getElementById('links-modal-desc').value = '';
-            document.getElementById('links-modal-title').textContent = 'Add Link';
-            document.getElementById('links-modal').style.display = 'flex';
-        });
-    });
-    document.querySelectorAll('.js-edit-link').forEach(btn => {
-        btn.addEventListener('click', () => {
-            const { section, name } = btn.dataset;
-            const link = ((_linksData.links || {})[section] || {})[name] || {};
-            _editTarget = { section, name };
-            _populateSectionSelect();
-            document.getElementById('links-modal-section').value = section;
-            document.getElementById('links-modal-name').value = name;
-            document.getElementById('links-modal-url').value = link.url || '';
-            document.getElementById('links-modal-desc').value = link.description || '';
-            document.getElementById('links-modal-title').textContent = 'Edit Link';
-            document.getElementById('links-modal').style.display = 'flex';
-        });
-    });
-    document.querySelectorAll('.js-remove-link').forEach(btn => {
+    container.querySelectorAll('.js-delete-link').forEach(btn => {
         btn.addEventListener('click', async () => {
-            const { section, name } = btn.dataset;
-            if (!confirm(`Remove link "${name}" from "${section}"?`)) return;
+            const section = btn.dataset.section || '';
+            const name = btn.dataset.name || '';
+            if (!section || !name) return;
+            if (!confirm(`Delete link "${name}"?`)) return;
             const r = await _api(ARI_LINKS.removeUrl, 'POST', { section, name });
-            if (r.success) { _linksData = r.data; _renderLinks(); _toast('Link removed.'); }
-            else _toast(r.error || 'Error', false);
+            if (!r.success) {
+                _toast(r.error || 'Failed to delete link', false);
+                return;
+            }
+            _linksData = r.data || _linksData;
+            _renderLinks();
+            _toast('Link deleted.');
         });
     });
-    document.querySelectorAll('.js-remove-section').forEach(btn => {
-        btn.addEventListener('click', async () => {
-            const { section } = btn.dataset;
-            if (!confirm(`Delete section "${section}" and all its links?`)) return;
-            const r = await _api(ARI_LINKS.removeSectionUrl, 'POST', { section });
-            if (r.success) { _linksData = r.data; _renderLinks(); _toast('Section deleted.'); }
-            else _toast(r.error || 'Error', false);
+
+    container.querySelectorAll('.js-edit-link').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const section = btn.dataset.section || '';
+            const name = btn.dataset.name || '';
+            const link = ((_linksData.links || {})[section] || {})[name] || {};
+            _editing = { section, name };
+            document.getElementById('link-section').value = section;
+            document.getElementById('link-name').value = name;
+            document.getElementById('link-url').value = link.url || '';
+            document.getElementById('link-desc').value = link.description || '';
+            document.getElementById('add-link-container').style.display = 'block';
+            document.getElementById('toggle-add-link-btn').innerHTML = '<i class="fa-solid fa-minus"></i> Hide Form';
+            document.getElementById('link-name').focus();
         });
     });
 }
@@ -147,8 +160,13 @@ async function _loadLinks() {
     const instr = (document.getElementById('links-instr-select') || {}).value || '';
     const url = instr ? `${ARI_LINKS.getUrl}?instrument=${encodeURIComponent(instr)}` : ARI_LINKS.getUrl;
     const r = await _api(url);
-    if (r.success) { _linksData = r.data; _renderLinks(); }
-    else _toast(r.error || 'Failed to load links', false);
+    if (!r.success) {
+        _toast(r.error || 'Failed to load links', false);
+        return;
+    }
+    _linksData = r.data || _linksData;
+    _renderLinks();
+    _renderSectionsManager();
 }
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -157,72 +175,88 @@ document.addEventListener('DOMContentLoaded', () => {
     const instrSel = document.getElementById('links-instr-select');
     if (instrSel) instrSel.addEventListener('change', _loadLinks);
 
-    document.getElementById('links-add-section-btn').addEventListener('click', () => {
-        document.getElementById('links-section-name').value = '';
-        document.getElementById('links-section-modal').style.display = 'flex';
+    document.getElementById('toggle-add-link-btn').addEventListener('click', () => {
+        const panel = document.getElementById('add-link-container');
+        const btn = document.getElementById('toggle-add-link-btn');
+        const open = panel.style.display === 'none';
+        panel.style.display = open ? 'block' : 'none';
+        btn.innerHTML = open
+            ? '<i class="fa-solid fa-minus"></i> Hide Form'
+            : '<i class="fa-solid fa-plus"></i> Add Link';
+        if (!open) {
+            _editing = null;
+            document.getElementById('add-link-form').reset();
+        }
     });
 
-    document.getElementById('links-add-link-btn').addEventListener('click', () => {
-        if ((_linksData.sections || []).length === 0) {
-            _toast('Create a section first.', false);
+    document.getElementById('manage-sections-btn').addEventListener('click', () => {
+        _renderSectionsManager();
+        document.getElementById('sections-modal').style.display = 'flex';
+    });
+
+    document.getElementById('close-sections-modal').addEventListener('click', () => {
+        document.getElementById('sections-modal').style.display = 'none';
+    });
+
+    document.getElementById('sections-modal').addEventListener('click', e => {
+        if (e.target.id === 'sections-modal') e.target.style.display = 'none';
+    });
+
+    document.getElementById('add-section-btn').addEventListener('click', async () => {
+        const section = (document.getElementById('new-section-name').value || '').trim();
+        if (!section) {
+            _toast('Section name is required.', false);
             return;
         }
-        _editTarget = null;
-        _populateSectionSelect();
-        document.getElementById('links-modal-name').value = '';
-        document.getElementById('links-modal-url').value = '';
-        document.getElementById('links-modal-desc').value = '';
-        document.getElementById('links-modal-title').textContent = 'Add Link';
-        document.getElementById('links-modal').style.display = 'flex';
+        const r = await _api(ARI_LINKS.addSectionUrl, 'POST', { section });
+        if (!r.success) {
+            _toast(r.error || 'Failed to add section', false);
+            return;
+        }
+        document.getElementById('new-section-name').value = '';
+        _linksData = r.data || _linksData;
+        _renderLinks();
+        _renderSectionsManager();
+        _toast('Section added.');
     });
 
-    document.getElementById('links-modal-cancel').addEventListener('click', () => {
-        document.getElementById('links-modal').style.display = 'none';
-    });
+    document.getElementById('add-link-form').addEventListener('submit', async e => {
+        e.preventDefault();
+        const section = (document.getElementById('link-section').value || '').trim();
+        const name = (document.getElementById('link-name').value || '').trim();
+        const url = (document.getElementById('link-url').value || '').trim();
+        const description = (document.getElementById('link-desc').value || '').trim();
+        if (!section || !name || !url) {
+            _toast('Section, name and URL are required.', false);
+            return;
+        }
 
-    document.getElementById('links-modal-save').addEventListener('click', async () => {
-        const section = document.getElementById('links-modal-section').value.trim();
-        const name = document.getElementById('links-modal-name').value.trim();
-        const url = document.getElementById('links-modal-url').value.trim();
-        const description = document.getElementById('links-modal-desc').value.trim();
-        if (!section || !name || !url) { _toast('Section, name, and URL are required.', false); return; }
         let r;
-        if (_editTarget) {
+        if (_editing) {
             r = await _api(ARI_LINKS.updateUrl, 'POST', {
-                section: _editTarget.section, name: _editTarget.name,
-                new_name: name, url, description,
+                section: _editing.section,
+                name: _editing.name,
+                new_name: name,
+                url,
+                description,
             });
         } else {
-            r = await _api(ARI_LINKS.addUrl, 'POST', { section, name, url, description });
+            r = await _api(ARI_LINKS.addUrl, 'POST', {
+                section,
+                name,
+                url,
+                description,
+            });
         }
-        if (r.success) {
-            _linksData = r.data;
-            _renderLinks();
-            document.getElementById('links-modal').style.display = 'none';
-            _toast(_editTarget ? 'Link updated.' : 'Link added.');
-        } else { _toast(r.error || 'Error', false); }
-    });
+        if (!r.success) {
+            _toast(r.error || 'Failed to save link', false);
+            return;
+        }
 
-    document.getElementById('links-section-cancel').addEventListener('click', () => {
-        document.getElementById('links-section-modal').style.display = 'none';
-    });
-
-    document.getElementById('links-section-save').addEventListener('click', async () => {
-        const section = document.getElementById('links-section-name').value.trim();
-        if (!section) { _toast('Section name is required.', false); return; }
-        const r = await _api(ARI_LINKS.addSectionUrl, 'POST', { section });
-        if (r.success) {
-            _linksData = r.data;
-            _renderLinks();
-            document.getElementById('links-section-modal').style.display = 'none';
-            _toast('Section created.');
-        } else { _toast(r.error || 'Error', false); }
-    });
-
-    // Close modals on backdrop click
-    ['links-modal', 'links-section-modal'].forEach(id => {
-        document.getElementById(id).addEventListener('click', e => {
-            if (e.target.id === id) e.target.style.display = 'none';
-        });
+        _linksData = r.data || _linksData;
+        _editing = null;
+        document.getElementById('add-link-form').reset();
+        _renderLinks();
+        _toast('Link saved.');
     });
 });

@@ -1,14 +1,27 @@
 # ==============================================================================
 # APERO RI: Top Level Page Definitions
 # ==============================================================================
+# Key legend per page:
+#   label: Display name for cards/nav
+#   parent: Parent page ID (or None for root)
+#   view-permission: Permission required to view page
+#   icon: FontAwesome icon class
+#   quick-nav: Show in top quick nav menu
+#   side-nav:
+#     pinned: Always show in sidebars (if user has permission)
+#     top-level: Acts as side-nav root for descendants
+#     show: Include page in sidebars/cards
+#   label can include {username} for auth-aware pinned items
 home:
   label: Home
   parent: None
   view-permission: view.home
   icon: fa-solid fa-house
   quick-nav: True
-  full-nav: False
-  no-nav: False
+  side-nav:
+    pinned: False
+    top-level: False
+    show: True
 
 home.docs:
   label: Documentation
@@ -16,8 +29,10 @@ home.docs:
   view-permission: view.doc
   icon: fa-brands fa-readme
   quick-nav: True
-  full-nav: True
-  no-nav: False
+  side-nav:
+    pinned: True
+    top-level: True
+    show: True
 
 home.data_portal:
   label: Data Portal
@@ -25,8 +40,10 @@ home.data_portal:
   view-permission: view.data_portal
   icon: fa-solid fa-database
   quick-nav: True
-  full-nav: True
-  no-nav: False
+  side-nav:
+    pinned: True
+    top-level: True
+    show: True
 
 home.monitor_portal:
   label: Monitor Portal
@@ -34,17 +51,21 @@ home.monitor_portal:
   view-permission: view.monitor_portal
   icon: fa-solid fa-chart-line
   quick-nav: True
-  full-nav: True
-  no-nav: False
+  side-nav:
+    pinned: True
+    top-level: True
+    show: True
 
-home.admin:
-  label: Admin
+home.admin_portal:
+  label: Admin Portal
   parent: home
   view-permission: view.admin
   icon: fa-solid fa-user-shield
   quick-nav: True
-  full-nav: True
-  no-nav: False
+  side-nav:
+    pinned: True
+    top-level: True
+    show: True
 
 home.user_portal:
   label: User Portal
@@ -52,8 +73,10 @@ home.user_portal:
   view-permission: view.home
   icon: fa-solid fa-user
   quick-nav: True
-  full-nav: True
-  no-nav: False
+  side-nav:
+    pinned: True
+    top-level: True
+    show: True
 
 home.login:
   label: Login
@@ -61,17 +84,21 @@ home.login:
   view-permission: view.home
   icon: fa-solid fa-right-to-bracket
   quick-nav: True
-  full-nav: False
-  no-nav: False
+  side-nav:
+    pinned: False
+    top-level: False
+    show: True
   
 home.logout:
-  label: Logout
+  label: "Logout ({username})"
   parent: home
   view-permission: view.home
   icon: fa-solid fa-right-from-bracket
   quick-nav: True
-  full-nav: False
-  no-nav: False
+  side-nav:
+    pinned: True
+    top-level: False
+    show: True
   
 # ==============================================================================
 # APERO RI: Documentation Pages
@@ -82,8 +109,10 @@ home.docs.overview:
   view-permission: view.doc
   icon: fa-solid fa-eye
   quick-nav: False
-  full-nav: False
-  no-nav: False
+  side-nav:
+    pinned: False
+    top-level: False
+    show: True
   
 home.docs.install:
   label: Installation
@@ -91,8 +120,10 @@ home.docs.install:
   view-permission: view.doc
   icon: fa-solid fa-download
   quick-nav: True
-  full-nav: False
-  no-nav: False
+  side-nav:
+    pinned: False
+    top-level: False
+    show: True
   
 # ==============================================================================
 # APERO RI: Data Portal Pages
@@ -103,54 +134,66 @@ home.docs.install:
   view-permission: "view.{apero profile}"
   icon: fa-solid fa-laptop-code
   quick-nav: False
-  full-nav: True
-  no-nav: False
+  side-nav:
+    pinned: False
+    top-level: True
+    show: True
 
 "home.data_portal.{apero_profile}.object_table":
-  label: "{apero profile}: Astrophysical Object Table"
+  label: "Astrophysical Object Table"
   parent: "home.data_portal.{apero_profile}"
   view-permission: "view.{apero profile}"
   icon: fa-solid fa-star
   quick-nav: False
-  full-nav: False
-  no-nav: False
+  side-nav:
+    pinned: False
+    top-level: False
+    show: True
 
 "home.data_portal.{apero_profile}.obs_table":
-  label: "{apero profile}: Observation Table"
+  label: "Observation Table"
   parent: "home.data_portal.{apero_profile}"
   view-permission: "view.{apero profile}"
   icon: fa-solid fa-binoculars
   quick-nav: False
-  full-nav: False
-  no-nav: False
+  side-nav:
+    pinned: False
+    top-level: False
+    show: True
 
 "home.data_portal.{apero_profile}.query_db":
-  label: "{apero profile}: Database query"
+  label: "Database Query"
   parent: "home.data_portal.{apero_profile}"
   view-permission: "view.{apero profile}"
   icon: fa-solid fa-server
   quick-nav: False
-  full-nav: False
-  no-nav: False
+  side-nav:
+    pinned: False
+    top-level: False
+    show: True
 
 "home.data_portal.{apero_profile}.qc_graphs":
-  label: "{apero profile}: Quality control graphs"
+  label: "Quality Control Graphs"
   parent: "home.data_portal.{apero_profile}"
   view-permission: "view.{apero profile}"
   icon: fa-solid fa-chart-line
   quick-nav: False
-  full-nav: False
-  no-nav: False
+  side-nav:
+    pinned: False
+    top-level: False
+    show: True
 
 
 "home.data_portal.{apero_profile}.{objname}":
-  label: "{apero profile}: {objname}"
+  label: "{objname}"
   parent: "home.data_portal.{apero_profile}"
   view-permission: "view.{apero profile}"
   icon: fa-solid fa-star
   quick-nav: False
-  full-nav: False
-  no-nav: True
+  side-nav:
+    pinned: False
+    top-level: False
+    show: False
 
 # ==============================================================================
 # APERO RI: User portal pages
@@ -161,8 +204,10 @@ home.user_portal.account:
   view-permission: view.home
   icon: fa-solid fa-id-card
   quick-nav: False
-  full-nav: False
-  no-nav: False
+  side-nav:
+    pinned: False
+    top-level: False
+    show: True
 
 home.user_portal.data_access:
   label: Data Access
@@ -170,8 +215,10 @@ home.user_portal.data_access:
   view-permission: view.home
   icon: fa-solid fa-key
   quick-nav: False
-  full-nav: False
-  no-nav: False
+  side-nav:
+    pinned: False
+    top-level: False
+    show: True
 
 home.user_portal.pinned_pages:
   label: Pinned Pages
@@ -179,8 +226,10 @@ home.user_portal.pinned_pages:
   view-permission: view.home
   icon: fa-solid fa-thumbtack
   quick-nav: False
-  full-nav: False
-  no-nav: False
+  side-nav:
+    pinned: False
+    top-level: False
+    show: True
 
 home.user_portal.support:
   label: Support
@@ -188,8 +237,10 @@ home.user_portal.support:
   view-permission: view.home
   icon: fa-solid fa-life-ring
   quick-nav: False
-  full-nav: False
-  no-nav: False
+  side-nav:
+    pinned: False
+    top-level: False
+    show: True
 
 home.user_portal.links:
   label: My Links
@@ -197,8 +248,10 @@ home.user_portal.links:
   view-permission: view.home
   icon: fa-solid fa-link
   quick-nav: False
-  full-nav: False
-  no-nav: False
+  side-nav:
+    pinned: False
+    top-level: False
+    show: True
 
 home.user_portal.notes:
   label: My Notes
@@ -206,8 +259,10 @@ home.user_portal.notes:
   view-permission: view.home
   icon: fa-solid fa-note-sticky
   quick-nav: False
-  full-nav: False
-  no-nav: False
+  side-nav:
+    pinned: False
+    top-level: False
+    show: True
 
 home.user_portal.calendar:
   label: My Calendar
@@ -215,8 +270,10 @@ home.user_portal.calendar:
   view-permission: view.home
   icon: fa-solid fa-calendar-days
   quick-nav: False
-  full-nav: False
-  no-nav: False
+  side-nav:
+    pinned: False
+    top-level: False
+    show: True
 
 home.user_portal.todo:
   label: Quick TODO
@@ -224,80 +281,120 @@ home.user_portal.todo:
   view-permission: view.home
   icon: fa-solid fa-list-check
   quick-nav: False
-  full-nav: False
-  no-nav: False
+  side-nav:
+    pinned: False
+    top-level: False
+    show: True
 
 # ==============================================================================
-# APERO RI: Admin Pages
+# APERO RI: Admin Portal Pages
 # ==============================================================================
-home.admin.users:
+home.admin_portal.users:
   label: User Management
-  parent: home.admin
+  parent: home.admin_portal
   view-permission: view.admin
   icon: fa-solid fa-users
   quick-nav: False
-  full-nav: False
-  no-nav: False
+  side-nav:
+    pinned: False
+    top-level: False
+    show: True
 
-home.admin.login_as:
+home.admin_portal.login_as:
   label: Login As
-  parent: home.admin
+  parent: home.admin_portal
   view-permission: login_as.moderator
   icon: fa-solid fa-user-secret
   quick-nav: False
-  full-nav: False
-  no-nav: False
+  side-nav:
+    pinned: False
+    top-level: False
+    show: True
 
-home.admin.science_groups:
+home.admin_portal.science_groups:
   label: Manage Science Groups
-  parent: home.admin
+  parent: home.admin_portal
   view-permission: manage.sci_group
   icon: fa-solid fa-users-gear
   quick-nav: False
-  full-nav: False
-  no-nav: False
+  side-nav:
+    pinned: False
+    top-level: False
+    show: True
 
-home.admin.apero_profiles:
+home.admin_portal.apero_profiles:
   label: Manage APERO Profiles
-  parent: home.admin
+  parent: home.admin_portal
   view-permission: manage.apero_profile
   icon: fa-solid fa-sliders
   quick-nav: False
-  full-nav: False
-  no-nav: False
+  side-nav:
+    pinned: False
+    top-level: False
+    show: True
 
-home.admin.async_tasks:
+home.admin_portal.user_db_access:
+  label: User Database Access
+  parent: home.admin_portal
+  view-permission: manage.admin.user_db_access
+  icon: fa-solid fa-table-columns
+  quick-nav: False
+  side-nav:
+    pinned: False
+    top-level: False
+    show: True
+
+home.admin_portal.health_status:
+  label: Health Status
+  parent: home.admin_portal
+  view-permission: view.admin
+  icon: fa-solid fa-heart-pulse
+  quick-nav: False
+  side-nav:
+    pinned: False
+    top-level: False
+    show: True
+
+home.admin_portal.async_tasks:
   label: Async Tasks
-  parent: home.admin
+  parent: home.admin_portal
   view-permission: manage.apero_profile
   icon: fa-solid fa-list-check
   quick-nav: False
-  full-nav: False
-  no-nav: False
+  side-nav:
+    pinned: False
+    top-level: False
+    show: True
 
-home.admin.calendar:
+home.admin_portal.calendar:
   label: Instrument Calendar
-  parent: home.admin
+  parent: home.admin_portal
   view-permission: view.admin.calendar
   icon: fa-solid fa-calendar-week
   quick-nav: False
-  full-nav: False
-  no-nav: False
+  side-nav:
+    pinned: False
+    top-level: False
+    show: True
 
-home.admin.links:
+home.admin_portal.links:
   label: Instrument Links
-  parent: home.admin
+  parent: home.admin_portal
   view-permission: view.admin.links
   icon: fa-solid fa-bookmark
   quick-nav: False
-  full-nav: False
-  no-nav: False
+  side-nav:
+    pinned: False
+    top-level: False
+    show: True
 
-home.admin.email:
+home.admin_portal.email:
   label: Email Settings
-  parent: home.admin
+  parent: home.admin_portal
   view-permission: view.admin
   icon: fa-solid fa-envelope-open-text
   quick-nav: False
-  full-nav: False
-  no-nav: False
+  side-nav:
+    pinned: False
+    top-level: False
+    show: True

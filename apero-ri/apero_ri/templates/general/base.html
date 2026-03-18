@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}APERO RI{% endblock %}</title>
+    <link rel="icon" href="{{ url_for('static', filename='images/favicon.ico') }}" type="image/x-icon">
 
     <!-- Font Awesome (free CDN) -->
     <link rel="stylesheet"
@@ -63,16 +64,20 @@
     <!-- Mobile menu -->
     <div class="ari-backdrop" id="ari-backdrop"></div>
     <aside class="ari-mobile-menu" id="ari-mobile-menu">
-        {% for page in nav_pages %}
-        <a href="{{ page.url }}" class="ari-mobile-menu__link">
-            <i class="{{ page.icon }}"></i>
-            <span>{{ page.label }}</span>
+        {% if sidebar_tree is defined and sidebar_tree %}
+        <!-- Mirror the current sidebar tree only -->
+        {% for item in sidebar_tree %}
+        {% if item.pinned|default(false) %}
+        {% if item.url and not (item.disabled|default(false)) %}
+        <a href="{{ item.url }}{% if current_version is defined %}?v={{ current_version }}{% endif %}"
+           class="ari-mobile-menu__pin{% if item.active %} ari-mobile-menu__pin--active{% endif %}">
+            <i class="{{ item.icon }}"></i>
+            <span>{{ item.label }}</span>
         </a>
+        {% endif %}
+        {% endif %}
         {% endfor %}
 
-        <!-- Sidebar doc nav items (injected on doc pages) -->
-        {% if sidebar_tree is defined and sidebar_tree %}
-        <div class="ari-mobile-menu__divider"></div>
         <div class="ari-mobile-menu__heading">
             <i class="{{ sidebar_icon }}"></i> {{ sidebar_label }}
         </div>
@@ -90,14 +95,31 @@
         </div>
         {% endif %}
         {% for item in sidebar_tree %}
+                {% if not item.pinned|default(false) %}
+                {% if item.url and not (item.disabled|default(false)) %}
         <a href="{{ item.url }}{% if current_version is defined %}?v={{ current_version }}{% endif %}"
            class="ari-mobile-menu__link{% if item.active %} ari-mobile-menu__link--active{% endif %}"
            style="padding-left: {{ 0.75 + item.depth * 1.0 }}rem;">
             <i class="{{ item.icon }}"></i>
             <span>{{ item.label }}</span>
         </a>
-        {% endfor %}
+                {% else %}
+                <span class="ari-mobile-menu__link"
+                            style="padding-left: {{ 0.75 + item.depth * 1.0 }}rem; opacity: 0.55; pointer-events: none;">
+                        <i class="{{ item.icon }}"></i>
+                        <span>{{ item.label }}</span>
+                </span>
+                {% endif %}
         {% endif %}
+        {% endfor %}
+
+        {% else %}
+        {% for page in nav_pages %}
+        <a href="{{ page.url }}" class="ari-mobile-menu__link">
+            <i class="{{ page.icon }}"></i>
+            <span>{{ page.label }}</span>
+        </a>
+        {% endfor %}
 
         <div class="ari-mobile-menu__divider"></div>
         {% if logged_in %}
@@ -111,12 +133,14 @@
             <span>Login</span>
         </a>
         {% endif %}
+        {% endif %}
     </aside>
 
     <!-- ================================================================== -->
     <!-- Main content                                                       -->
     <!-- ================================================================== -->
     <main class="ari-main">
+        {% if sidebar_tree is not defined %}
         {% with messages = get_flashed_messages(with_categories=true) %}
         {% if messages %}
         {% for category, message in messages %}
@@ -127,6 +151,7 @@
         {% endfor %}
         {% endif %}
         {% endwith %}
+        {% endif %}
 
         {% block content %}{% endblock %}
     </main>
