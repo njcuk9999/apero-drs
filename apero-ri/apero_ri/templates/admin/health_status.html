@@ -51,8 +51,7 @@
     <div style="display:grid; gap:0.55rem;">
         {% if admin_health_rows is defined and admin_health_rows %}
         {% for row in admin_health_rows %}
-        <a href="{{ row.url }}"
-           style="text-decoration:none; color:inherit; border:1px solid #e0e5ef; border-radius:0.7rem; padding:0.6rem 0.75rem; display:block;">
+        <div style="border:1px solid #e0e5ef; border-radius:0.7rem; padding:0.6rem 0.75rem; display:block;">
             <div style="display:flex; align-items:flex-start; gap:0.55rem;">
                 <span style="margin-top:0.08rem;">
                     {% if row.status == 'ok' %}
@@ -64,9 +63,25 @@
                     {% endif %}
                 </span>
                 <div style="min-width:0;">
-                    <div style="font-weight:700;">{{ row.label }}</div>
+                    <div style="font-weight:700;">
+                        <a href="{{ row.url }}" style="color:inherit; text-decoration:none;">
+                            {{ row.label }}
+                        </a>
+                    </div>
                     {% if row.message %}
                     <div style="font-size:0.88rem; color:var(--ari-text-muted);">{{ row.message }}</div>
+                    {% endif %}
+                    {% if row.details %}
+                    <details style="margin-top:0.35rem;">
+                        <summary style="font-size:0.82rem; color:var(--ari-text-muted); cursor:pointer;">
+                            Show warning details ({{ row.details|length }})
+                        </summary>
+                        <ul style="margin:0.3rem 0 0 1.1rem; font-size:0.82rem; color:var(--ari-text-muted); line-height:1.45;">
+                            {% for item in row.details %}
+                            <li>{{ item }}</li>
+                            {% endfor %}
+                        </ul>
+                    </details>
                     {% endif %}
                     {% if row.rule_message and row.rule_message != row.message %}
                     <div style="font-size:0.82rem; color:var(--ari-text-muted); margin-top:0.15rem;">
@@ -75,7 +90,7 @@
                     {% endif %}
                 </div>
             </div>
-        </a>
+        </div>
         {% endfor %}
         {% else %}
         <div class="ari-sg-empty-small">No health checks are currently available for your permissions.</div>
@@ -93,7 +108,11 @@
     const freqSel = document.getElementById('admin-health-frequency');
     const freqSave = document.getElementById('admin-health-frequency-save');
     const freqMsg = document.getElementById('admin-health-frequency-msg');
-    const cfgUrls = {{ admin_health_config_urls|tojson }};
+    const cfgUrls = {{ (
+        admin_health_config_urls
+        if admin_health_config_urls is defined
+        else {'get': '/api/admin/health/config', 'save': '/api/admin/health/config'}
+    )|tojson }};
     let autoTimer = null;
     if (!btn) return;
 

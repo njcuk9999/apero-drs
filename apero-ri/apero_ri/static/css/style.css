@@ -4793,17 +4793,22 @@ body.ari-ot-page .ari-doc-main {
    Data Portal — Database Query Explorer  (qdb-)
    ========================================================================== */
 
-/* Page layout: builder sidebar + results pane */
-.ari-qdb-page .qdb-layout {
-    display: grid;
-    grid-template-columns: 320px 1fr;
-    gap: 1rem;
-    align-items: start;
+/* Let query-db use the available doc area on large screens. */
+body.ari-qdb-page .ari-doc-main {
+    max-width: none;
 }
-@media (max-width: 900px) {
-    .ari-qdb-page .qdb-layout {
-        grid-template-columns: 1fr;
-    }
+
+body.ari-qdb-page .qdb-layout {
+    width: calc(100vw - var(--ari-sidebar-width, 260px) - 5rem);
+    max-width: none;
+}
+
+/* Page layout: stacked controls + run + full-width results */
+.ari-qdb-page .qdb-layout {
+    display: flex;
+    flex-direction: column;
+    gap: 0.9rem;
+    min-width: 0;
 }
 
 /* ----- Builder panel ----- */
@@ -4818,6 +4823,7 @@ body.ari-ot-page .ari-doc-main {
     border: 1px solid var(--ari-border, #ddd);
     border-radius: 6px;
     overflow: hidden;
+    width: 100%;
 }
 
 .qdb-section__hdr {
@@ -4832,6 +4838,26 @@ body.ari-ot-page .ari-doc-main {
     color: var(--ari-text-muted, #666);
     background: var(--ari-row-alt, #f7f7f7);
     border-bottom: 1px solid var(--ari-border, #ddd);
+}
+
+.qdb-collapsible > .qdb-section__hdr {
+    cursor: pointer;
+    user-select: none;
+    list-style: none;
+}
+
+.qdb-collapsible > .qdb-section__hdr::-webkit-details-marker {
+    display: none;
+}
+
+.qdb-collapsible > .qdb-section__hdr::before {
+    content: '▶';
+    font-size: 0.7rem;
+    transition: transform 0.15s;
+}
+
+.qdb-collapsible[open] > .qdb-section__hdr::before {
+    transform: rotate(90deg);
 }
 
 .qdb-section__hdr i {
@@ -4858,6 +4884,39 @@ body.ari-ot-page .ari-doc-main {
     display: flex;
     gap: 0.5rem;
     align-items: flex-start;
+}
+
+#qdb-schema-loading,
+#qdb-no-access {
+    flex: 0 0 auto;
+}
+
+#qdb-tables-section {
+    min-width: 0;
+}
+
+#qdb-joins-section,
+#qdb-filters-section,
+#qdb-sort-section {
+    min-width: 0;
+}
+
+#qdb-run-section {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+#qdb-tables-body,
+#qdb-joins-body,
+#qdb-filters-body {
+    max-height: 18rem;
+    overflow: auto;
+}
+
+#qdb-sort-section .qdb-sort-body {
+    max-height: 18.4rem;
+    overflow: auto;
 }
 
 /* ----- Table cards ----- */
@@ -5005,6 +5064,26 @@ body.ari-ot-page .ari-doc-main {
 }
 .qdb-remove-btn:hover { background: rgba(192, 57, 43, 0.1); }
 
+.qdb-empty-add {
+    width: 100%;
+    border: none;
+    background: none;
+    color: var(--ari-text-muted, #666);
+    padding: 0.6rem 0.75rem;
+    text-align: left;
+    font-size: 0.84rem;
+    cursor: pointer;
+}
+
+.qdb-empty-add i {
+    margin-right: 0.35rem;
+}
+
+.qdb-empty-add:hover {
+    background: var(--ari-row-alt, #f7f7f7);
+    color: var(--ari-text, #333);
+}
+
 /* ----- Sort & Limit ----- */
 .qdb-sort-body { padding: 0.5rem 0.75rem; }
 .qdb-sort-row {
@@ -5084,11 +5163,32 @@ details[open] .qdb-sql-summary::before { transform: rotate(90deg); }
 .qdb-results-meta {
     display: flex;
     align-items: center;
+    flex-wrap: wrap;
     gap: 0.75rem;
     font-size: 0.85rem;
 }
 .qdb-results-count { font-weight: 600; color: var(--ari-text, #333); }
 .qdb-results-muted { color: var(--ari-text-muted, #888); }
+
+#qdb-export-csv {
+    margin-left: auto;
+}
+
+/* Query-db top horizontal scroll mirror (when table overflows). */
+.qdb-scroll-top {
+    overflow-x: auto;
+    overflow-y: hidden;
+    height: 12px;
+    margin-bottom: 0;
+    border: 1px solid var(--ari-border, #ddd);
+    border-bottom: none;
+    border-radius: 4px 4px 0 0;
+    background: var(--ari-bg, #f5f5f5);
+}
+
+.qdb-scroll-sizer {
+    height: 1px;
+}
 
 /* Idle / empty state */
 .qdb-idle {
@@ -5117,5 +5217,31 @@ details[open] .qdb-sql-summary::before { transform: rotate(90deg); }
     border-radius: 6px;
     color: var(--ari-danger, #c0392b);
     font-size: 0.88rem;
+}
+
+@media (max-width: 1100px) {
+    #qdb-tables-body,
+    #qdb-joins-body,
+    #qdb-filters-body,
+    #qdb-sort-section .qdb-sort-body {
+        max-height: 14rem;
+    }
+}
+
+@media (max-width: 760px) {
+    body.ari-qdb-page .qdb-layout {
+        width: 100%;
+    }
+
+    #qdb-tables-body,
+    #qdb-joins-body,
+    #qdb-filters-body,
+    #qdb-sort-section .qdb-sort-body {
+        max-height: none;
+    }
+
+    #qdb-export-csv {
+        margin-left: 0;
+    }
 }
 

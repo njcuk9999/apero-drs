@@ -26,12 +26,9 @@
     </span>
 </div>
 
-{# ── Main layout: builder left, results right ─────────────────── #}
+{# ── Main layout: stacked controls, then run, then SQL/results ─────────── #}
 <div class="qdb-layout">
-
-    {# ── LEFT: Query builder panel ──────────────────────────────── #}
-    <aside class="qdb-builder" id="qdb-builder">
-
+    <div class="qdb-builder" id="qdb-builder">
         {# Loading / no-access state #}
         <div id="qdb-schema-loading" class="qdb-section">
             <i class="fa-solid fa-spinner fa-spin"></i> Loading schema&hellip;
@@ -43,41 +40,41 @@
         </div>
 
         {# ── Tables & Columns ────────────────────────── #}
-        <div id="qdb-tables-section" class="qdb-section" style="display:none;">
-            <div class="qdb-section__hdr">
+        <details id="qdb-tables-section" class="qdb-section qdb-collapsible" style="display:none;">
+            <summary class="qdb-section__hdr">
                 <i class="fa-solid fa-table"></i> Tables &amp; Columns
-            </div>
+            </summary>
             <div id="qdb-tables-body" class="qdb-tables-body"></div>
-        </div>
+        </details>
 
         {# ── Joins ───────────────────────────────────── #}
-        <div id="qdb-joins-section" class="qdb-section qdb-joins-section"
-             style="display:none;">
-            <div class="qdb-section__hdr">
+        <details id="qdb-joins-section" class="qdb-section qdb-collapsible qdb-joins-section"
+                 style="display:none;">
+            <summary class="qdb-section__hdr">
                 <i class="fa-solid fa-link"></i> Joins
-                <button class="qdb-add-btn" id="qdb-add-join" title="Add join">
+                <button class="qdb-add-btn" id="qdb-add-join" title="Add join" type="button">
                     <i class="fa-solid fa-plus"></i>
                 </button>
-            </div>
+            </summary>
             <div id="qdb-joins-body"></div>
-        </div>
+        </details>
 
         {# ── Filters ─────────────────────────────────── #}
-        <div id="qdb-filters-section" class="qdb-section" style="display:none;">
-            <div class="qdb-section__hdr">
+        <details id="qdb-filters-section" class="qdb-section qdb-collapsible" style="display:none;">
+            <summary class="qdb-section__hdr">
                 <i class="fa-solid fa-filter"></i> Filters
-                <button class="qdb-add-btn" id="qdb-add-filter" title="Add filter">
+                <button class="qdb-add-btn" id="qdb-add-filter" title="Add filter" type="button">
                     <i class="fa-solid fa-plus"></i>
                 </button>
-            </div>
+            </summary>
             <div id="qdb-filters-body"></div>
-        </div>
+        </details>
 
         {# ── Sort &amp; Limit ─────────────────────────── #}
-        <div id="qdb-sort-section" class="qdb-section" style="display:none;">
-            <div class="qdb-section__hdr">
+        <details id="qdb-sort-section" class="qdb-section qdb-collapsible" style="display:none;">
+            <summary class="qdb-section__hdr">
                 <i class="fa-solid fa-sort"></i> Sort &amp; Limit
-            </div>
+            </summary>
             <div class="qdb-sort-body">
                 <div class="qdb-sort-row">
                     <label class="qdb-sort-label">Order by</label>
@@ -100,7 +97,33 @@
                     </select>
                 </div>
             </div>
+        </details>
+
+        {# ── Presets ──────────────────────────────── #}
+        {% if query_presets %}
+        <div id="qdb-presets-section" class="qdb-section" style="display:none;">
+            <div class="qdb-section__hdr">
+                <i class="fa-solid fa-wand-magic-sparkles"></i> Presets
+            </div>
+            <div class="qdb-sort-body">
+                <div class="qdb-sort-row">
+                    <label class="qdb-sort-label" for="qdb-preset-select">Preset</label>
+                    <select id="qdb-preset-select" class="qdb-select qdb-select--wide">
+                        <option value="">— choose a preset —</option>
+                    </select>
+                </div>
+                <div class="qdb-sort-row">
+                    <button id="qdb-apply-preset" class="ari-btn ari-btn--sm ari-btn--secondary"
+                            type="button">
+                        <i class="fa-solid fa-bolt"></i> Apply preset
+                    </button>
+                    <span class="qdb-results-muted" style="font-size:0.8rem;">
+                        Sets tables/columns/filters/sort/limit — edit before running.
+                    </span>
+                </div>
+            </div>
         </div>
+        {% endif %}
 
         {# ── Run button ──────────────────────────────── #}
         <div id="qdb-run-section" class="qdb-section qdb-run-section"
@@ -109,10 +132,9 @@
                 <i class="fa-solid fa-play"></i> Run Query
             </button>
         </div>
+    </div>
 
-    </aside>
-
-    {# ── RIGHT: Results area ─────────────────────────────────────── #}
+    {# ── Full-width results area ───────────────────────────────────── #}
     <div class="qdb-results" id="qdb-results">
 
         {# SQL Preview #}
@@ -132,6 +154,11 @@
                     style="display:none;" title="Export visible rows as CSV">
                 <i class="fa-solid fa-file-csv"></i> Export CSV
             </button>
+        </div>
+
+        {# Top horizontal scroll mirror (shown when table overflows) #}
+        <div id="qdb-scroll-top" class="qdb-scroll-top" style="display:none;">
+            <div id="qdb-scroll-sizer" class="qdb-scroll-sizer"></div>
         </div>
 
         {# Table #}
@@ -186,7 +213,6 @@
         </div>
 
     </div>{# end .qdb-results #}
-
 </div>{# end .qdb-layout #}
 {% endblock %}
 
@@ -197,6 +223,7 @@ window.QDB_CONFIG = {
     profileId:    {{ profile.profile_id | tojson }},
     schemaApiUrl: {{ schema_api_url | tojson }},
     runApiUrl:    {{ run_api_url | tojson }},
+    presets:      {{ query_presets | tojson }},
 };
 </script>
 <script src="{{ url_for('static', filename='js/data_query_db.js') }}"></script>

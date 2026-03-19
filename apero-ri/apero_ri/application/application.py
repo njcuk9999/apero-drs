@@ -13,6 +13,9 @@ import re
 import secrets
 import socket
 import smtplib
+import threading
+import time
+import yaml
 from datetime import timedelta, datetime, timezone
 from email.message import EmailMessage
 from pathlib import Path
@@ -102,6 +105,10 @@ class ARIApp(Flask):
         self._forgot_pw_max_attempts = 3
         self._forgot_pw_base_wait = 30
         self._forgot_pw_max_wait = 600
+        # Cached admin health checks (expensive DB/SMTP checks)
+        self._admin_health_cache = {}
+        self._admin_health_cache_ttl = timedelta(hours=1)
+        self._admin_health_cache_lock = threading.Lock()
         # Configure session lifetime for "remember me"
         self.config['PERMANENT_SESSION_LIFETIME'] = timedelta(days=30)
         self.config['SESSION_COOKIE_NAME'] = 'apero_ri'
@@ -111,6 +118,7 @@ class ARIApp(Flask):
         # Register context processors and routes
         self._register_context_processors()
         self._register_routes()
+        self._start_admin_health_refresher()
         task_runner.start_background_services(
             self.args.data_dir or str(Path.home() / '.ari')
         )
@@ -318,51 +326,51 @@ class ARIApp(Flask):
                   self._api_user_todo_reorder, methods=['POST'])
 
         # Admin calendar API routes
-        self.add_url_rule('/api/admin_portal/calendar/list',
+        self.add_url_rule('/api/admin/calendar/list',
                   'api_admin_calendar_list',
                   self._api_admin_calendar_list)
-        self.add_url_rule('/api/admin_portal/calendar/save',
+        self.add_url_rule('/api/admin/calendar/save',
                   'api_admin_calendar_save',
                   self._api_admin_calendar_save, methods=['POST'])
-        self.add_url_rule('/api/admin_portal/calendar/delete',
+        self.add_url_rule('/api/admin/calendar/delete',
                   'api_admin_calendar_delete',
                   self._api_admin_calendar_delete, methods=['POST'])
 
         # Admin links API routes
-        self.add_url_rule('/api/admin_portal/links/get', 'api_admin_links_get',
+        self.add_url_rule('/api/admin/links/get', 'api_admin_links_get',
                   self._api_admin_links_get)
-        self.add_url_rule('/api/admin_portal/links/add', 'api_admin_links_add',
+        self.add_url_rule('/api/admin/links/add', 'api_admin_links_add',
                   self._api_admin_links_add, methods=['POST'])
-        self.add_url_rule('/api/admin_portal/links/update', 'api_admin_links_update',
+        self.add_url_rule('/api/admin/links/update', 'api_admin_links_update',
                   self._api_admin_links_update, methods=['POST'])
-        self.add_url_rule('/api/admin_portal/links/remove', 'api_admin_links_remove',
+        self.add_url_rule('/api/admin/links/remove', 'api_admin_links_remove',
                   self._api_admin_links_remove, methods=['POST'])
-        self.add_url_rule('/api/admin_portal/links/add-section',
+        self.add_url_rule('/api/admin/links/add-section',
                   'api_admin_links_add_section',
                   self._api_admin_links_add_section, methods=['POST'])
-        self.add_url_rule('/api/admin_portal/links/remove-section',
+        self.add_url_rule('/api/admin/links/remove-section',
                   'api_admin_links_remove_section',
                   self._api_admin_links_remove_section,
                   methods=['POST'])
 
         # Admin email API routes
-        self.add_url_rule('/api/admin_portal/email/test', 'api_admin_email_test',
+        self.add_url_rule('/api/admin/email/test', 'api_admin_email_test',
                   self._api_admin_email_test)
-        self.add_url_rule('/api/admin_portal/email/save', 'api_admin_email_save',
+        self.add_url_rule('/api/admin/email/save', 'api_admin_email_save',
                   self._api_admin_email_save, methods=['POST'])
-        self.add_url_rule('/api/admin_portal/email/send-test',
+        self.add_url_rule('/api/admin/email/send-test',
                   'api_admin_email_send_test',
                   self._api_admin_email_send_test, methods=['POST'])
-        self.add_url_rule('/api/admin_portal/health/update',
+        self.add_url_rule('/api/admin/health/update',
               'api_admin_health_update',
               self._api_admin_health_update, methods=['POST'])
-        self.add_url_rule('/api/admin_portal/health/config',
-              'api_admin_health_config_get',
-              self._api_admin_health_config_get)
-        self.add_url_rule('/api/admin_portal/health/config',
-              'api_admin_health_config_save',
-              self._api_admin_health_config_save,
-              methods=['POST'])
+        self.add_url_rule('/api/admin/health/config',
+            'api_admin_health_config_get',
+            self._api_admin_health_config_get)
+        self.add_url_rule('/api/admin/health/config',
+            'api_admin_health_config_save',
+            self._api_admin_health_config_save,
+            methods=['POST'])
 
         # Documentation routes (edit, save, upload, images)
         self.add_url_rule('/docs/<page_ref>/edit', 'doc_edit',
@@ -375,146 +383,146 @@ class ARIApp(Flask):
                   self._doc_image_view)
 
         # Admin user management API routes
-        self.add_url_rule('/api/admin_portal/users/search', 'api_user_search',
+        self.add_url_rule('/api/admin/users/search', 'api_user_search',
                   self._api_user_search)
-        self.add_url_rule('/api/admin_portal/users/update-groups',
+        self.add_url_rule('/api/admin/users/update-groups',
                   'api_user_update_groups',
                   self._api_user_update_groups,
                   methods=['POST'])
-        self.add_url_rule('/api/admin_portal/users/update-instruments',
+        self.add_url_rule('/api/admin/users/update-instruments',
                   'api_user_update_instruments',
                   self._api_user_update_instruments,
                   methods=['POST'])
-        self.add_url_rule('/api/admin_portal/users/delete',
+        self.add_url_rule('/api/admin/users/delete',
                   'api_user_delete',
                   self._api_user_delete,
                   methods=['POST'])
 
         # Admin login-as API routes
-        self.add_url_rule('/api/admin_portal/login-as/search',
+        self.add_url_rule('/api/admin/login-as/search',
                   'api_login_as_search',
                   self._api_login_as_search)
-        self.add_url_rule('/api/admin_portal/login-as/set',
+        self.add_url_rule('/api/admin/login-as/set',
                   'api_login_as_set',
                   self._api_login_as_set,
                   methods=['POST'])
-        self.add_url_rule('/api/admin_portal/login-as/clear',
+        self.add_url_rule('/api/admin/login-as/clear',
                   'api_login_as_clear',
                   self._api_login_as_clear,
                   methods=['POST'])
 
         # Admin science groups API routes
-        self.add_url_rule('/api/admin_portal/sci-groups/list',
+        self.add_url_rule('/api/admin/sci-groups/list',
                   'api_sci_groups_list',
                   self._api_sci_groups_list)
-        self.add_url_rule('/api/admin_portal/sci-groups/get',
+        self.add_url_rule('/api/admin/sci-groups/get',
                   'api_sci_groups_get',
                   self._api_sci_groups_get)
-        self.add_url_rule('/api/admin_portal/sci-groups/save',
+        self.add_url_rule('/api/admin/sci-groups/save',
                   'api_sci_groups_save',
                   self._api_sci_groups_save,
                   methods=['POST'])
-        self.add_url_rule('/api/admin_portal/sci-groups/create',
+        self.add_url_rule('/api/admin/sci-groups/create',
                   'api_sci_groups_create',
                   self._api_sci_groups_create,
                   methods=['POST'])
-        self.add_url_rule('/api/admin_portal/sci-groups/delete',
+        self.add_url_rule('/api/admin/sci-groups/delete',
                   'api_sci_groups_delete',
                   self._api_sci_groups_delete,
                   methods=['POST'])
 
         # Admin APERO profiles API routes
-        self.add_url_rule('/api/admin_portal/apero-profiles/list',
+        self.add_url_rule('/api/admin/apero-profiles/list',
                   'api_apero_profiles_list',
                   self._api_apero_profiles_list)
-        self.add_url_rule('/api/admin_portal/apero-profiles/overview-status',
+        self.add_url_rule('/api/admin/apero-profiles/overview-status',
               'api_apero_profiles_overview',
               self._api_apero_profiles_overview)
-        self.add_url_rule('/api/admin_portal/apero-profiles/save',
+        self.add_url_rule('/api/admin/apero-profiles/save',
                   'api_apero_profiles_save',
                   self._api_apero_profiles_save,
                   methods=['POST'])
-        self.add_url_rule('/api/admin_portal/apero-profiles/delete',
+        self.add_url_rule('/api/admin/apero-profiles/delete',
                   'api_apero_profiles_delete',
                   self._api_apero_profiles_delete,
                   methods=['POST'])
-        self.add_url_rule('/api/admin_portal/apero-profiles/reorder',
+        self.add_url_rule('/api/admin/apero-profiles/reorder',
                   'api_apero_profiles_reorder',
                   self._api_apero_profiles_reorder,
                   methods=['POST'])
-        self.add_url_rule('/api/admin_portal/apero-profiles/validate-path',
+        self.add_url_rule('/api/admin/apero-profiles/validate-path',
                   'api_apero_profiles_validate',
                   self._api_apero_profiles_validate)
-        self.add_url_rule('/api/admin_portal/apero-profiles/browse',
+        self.add_url_rule('/api/admin/apero-profiles/browse',
                   'api_apero_profiles_browse',
                   self._api_apero_profiles_browse)
-        self.add_url_rule('/api/admin_portal/apero-profiles/update-groups',
+        self.add_url_rule('/api/admin/apero-profiles/update-groups',
                   'api_apero_profiles_update_groups',
                   self._api_apero_profiles_update_groups,
                   methods=['POST'])
-        self.add_url_rule('/api/admin_portal/apero-profiles/test-db',
+        self.add_url_rule('/api/admin/apero-profiles/test-db',
                   'api_apero_profiles_test_db',
                   self._api_apero_profiles_test_db,
                   methods=['POST'])
-        self.add_url_rule('/api/admin_portal/apero-profiles/test-tables',
+        self.add_url_rule('/api/admin/apero-profiles/test-tables',
                   'api_apero_profiles_test_tables',
                   self._api_apero_profiles_test_tables,
                   methods=['POST'])
 
         # Admin user DB access API routes
-        self.add_url_rule('/api/admin_portal/user-db-access/profiles',
+        self.add_url_rule('/api/admin/user-db-access/profiles',
               'api_user_db_access_profiles',
               self._api_user_db_access_profiles)
-        self.add_url_rule('/api/admin_portal/user-db-access/details',
+        self.add_url_rule('/api/admin/user-db-access/details',
               'api_user_db_access_details',
               self._api_user_db_access_details)
-        self.add_url_rule('/api/admin_portal/user-db-access/save',
+        self.add_url_rule('/api/admin/user-db-access/save',
               'api_user_db_access_save',
               self._api_user_db_access_save,
               methods=['POST'])
 
         # Async tasks API routes
-        self.add_url_rule('/api/admin_portal/async-tasks/list',
+        self.add_url_rule('/api/admin/async-tasks/list',
                   'api_async_tasks_list',
                   self._api_async_tasks_list)
-        self.add_url_rule('/api/admin_portal/async-tasks/task-list',
+        self.add_url_rule('/api/admin/async-tasks/task-list',
                   'api_async_tasks_task_list',
                   self._api_async_tasks_task_list)
-        self.add_url_rule('/api/admin_portal/async-tasks/save',
+        self.add_url_rule('/api/admin/async-tasks/save',
                   'api_async_tasks_save',
                   self._api_async_tasks_save,
                   methods=['POST'])
-        self.add_url_rule('/api/admin_portal/async-tasks/delete',
+        self.add_url_rule('/api/admin/async-tasks/delete',
                   'api_async_tasks_delete',
                   self._api_async_tasks_delete,
                   methods=['POST'])
-        self.add_url_rule('/api/admin_portal/async-tasks/reorder',
+        self.add_url_rule('/api/admin/async-tasks/reorder',
                   'api_async_tasks_reorder',
                   self._api_async_tasks_reorder,
                   methods=['POST'])
-        self.add_url_rule('/api/admin_portal/async-tasks/toggle',
+        self.add_url_rule('/api/admin/async-tasks/toggle',
                   'api_async_tasks_toggle',
                   self._api_async_tasks_toggle,
                   methods=['POST'])
-        self.add_url_rule('/api/admin_portal/async-tasks/run-now',
+        self.add_url_rule('/api/admin/async-tasks/run-now',
                   'api_async_tasks_run_now',
                   self._api_async_tasks_run_now,
                   methods=['POST'])
-        self.add_url_rule('/api/admin_portal/async-tasks/run-all',
+        self.add_url_rule('/api/admin/async-tasks/run-all',
                   'api_async_tasks_run_all',
                   self._api_async_tasks_run_all,
                   methods=['POST'])
-        self.add_url_rule('/api/admin_portal/async-tasks/stop',
+        self.add_url_rule('/api/admin/async-tasks/stop',
                   'api_async_tasks_stop',
                   self._api_async_tasks_stop,
                   methods=['POST'])
-        self.add_url_rule('/api/admin_portal/async-tasks/status',
+        self.add_url_rule('/api/admin/async-tasks/status',
                   'api_async_tasks_status',
                   self._api_async_tasks_status)
-        self.add_url_rule('/api/admin_portal/async-tasks/read-file',
+        self.add_url_rule('/api/admin/async-tasks/read-file',
                   'api_async_tasks_read_file',
                   self._api_async_tasks_read_file)
-        self.add_url_rule('/api/admin_portal/async-tasks/download-file',
+        self.add_url_rule('/api/admin/async-tasks/download-file',
                   'api_async_tasks_download_file',
                   self._api_async_tasks_download_file)
 
@@ -551,6 +559,16 @@ class ARIApp(Flask):
         self.add_url_rule('/data_portal/<profile_id>/observation-table',
                   'ri_observation_table',
                   self._ri_obs_table_view)
+        self.add_url_rule('/data_portal/<profile_id>/query-db',
+                  'ri_query_db',
+                  self._ri_query_db_view)
+        self.add_url_rule('/api/data-portal/query-db/schema',
+                  'api_query_db_schema',
+                  self._api_query_db_schema)
+        self.add_url_rule('/api/data-portal/query-db/run',
+                  'api_query_db_run',
+                  self._api_query_db_run,
+                  methods=['POST'])
         self.add_url_rule('/data_portal/<profile_id>/<path:objname>',
               'ri_object_page',
               self._ri_object_page_view)
@@ -774,7 +792,12 @@ class ARIApp(Flask):
 
             # User DB access page: inject current health summary
             if page_id == 'home.admin_portal.user_db_access' and user_info:
-                health = self._build_admin_card_health(user_info, perms)
+                health, _, _ = self._get_admin_health(
+                    user_info=user_info,
+                    perms=perms,
+                    force=False,
+                    allow_async_refresh=True,
+                )
                 context['user_db_access_health'] = health.get(
                     'home.admin_portal.user_db_access',
                     {
@@ -828,26 +851,25 @@ class ARIApp(Flask):
             if page_id == 'home.admin_portal.email':
                 context.update(self._build_admin_email_context(perms))
 
-            # Admin index: inject card health status
-            if page_id == 'home.admin_portal':
-                health = self._build_admin_card_health(user_info, perms)
-                context['card_health'] = health
-
-            # Admin health page: detailed health rows + refresh metadata
-            if page_id == 'home.admin_portal.health_status':
-                health = self._build_admin_card_health(user_info, perms)
-                health_cfg = load_admin_health_config()
+            # Admin index and health-status page: inject health context
+            if page_id in {'home.admin_portal', 'home.admin_portal.health_status'}:
+                health, updated_at, in_progress = self._get_admin_health(
+                    user_info=user_info,
+                    perms=perms,
+                    force=False,
+                    allow_async_refresh=True,
+                )
+                if page_id == 'home.admin_portal':
+                    context['card_health'] = health
                 context['admin_health_rows'] = self._build_admin_health_rows(
                     health
                 )
                 context['admin_health_meta'] = {
-                    'updated_at': datetime.now(timezone.utc).strftime(
-                        '%Y-%m-%d %H:%M:%S'
-                    ),
-                    'in_progress': False,
+                    'updated_at': self._format_utc_datetime(updated_at),
+                    'in_progress': in_progress,
                     'refresh_url': url_for('api_admin_health_update'),
                 }
-                context['admin_health_config'] = health_cfg
+                context['admin_health_config'] = load_admin_health_config()
                 context['admin_health_config_urls'] = {
                     'get': url_for('api_admin_health_config_get'),
                     'save': url_for('api_admin_health_config_save'),
@@ -991,8 +1013,8 @@ class ARIApp(Flask):
                 (
                     'query_db',
                     'home.data_portal.{apero_profile}.query_db',
-                    '',
-                    True,
+                    f'/data_portal/{profile_id}/query-db',
+                    False,
                 ),
                 (
                     'qc_graphs',
@@ -1280,7 +1302,190 @@ class ARIApp(Flask):
             'can_manage': 'manage.admin.email' in perms,
         }
 
-    def _build_admin_card_health(self, user_info, perms) -> dict:
+    @staticmethod
+    def _format_utc_datetime(dt: Optional[datetime]) -> str:
+        """Format UTC datetime for display."""
+        if dt is None:
+            return 'Never'
+        return dt.astimezone(timezone.utc).strftime('%Y-%m-%d %H:%M:%S')
+
+    @staticmethod
+    def _admin_health_cache_key(perms) -> str:
+        """Stable key for admin-health cache entries."""
+        return '|'.join(sorted(perms))
+
+    def _start_admin_health_refresher(self) -> None:
+        """Start background hourly refresh for existing admin-health cache."""
+        thread = threading.Thread(
+            target=self._admin_health_refresher_loop,
+            daemon=True,
+            name='admin-health-refresher',
+        )
+        thread.start()
+
+    def _admin_health_refresher_loop(self) -> None:
+        """Refresh all cached admin-health snapshots every hour."""
+        while True:
+            time.sleep(3600)
+            with self._admin_health_cache_lock:
+                work_items = [
+                    (key, set(entry.get('perms', [])))
+                    for key, entry in self._admin_health_cache.items()
+                ]
+            for key, perms in work_items:
+                self._refresh_admin_health_entry(key, None, perms)
+
+    def _refresh_admin_health_entry(self, cache_key: str,
+                                    user_info,
+                                    perms) -> None:
+        """Refresh one admin-health cache entry synchronously."""
+        health = self._build_admin_card_health_uncached(user_info, perms)
+        with self._admin_health_cache_lock:
+            self._admin_health_cache[cache_key] = {
+                'health': health,
+                'updated_at': datetime.now(timezone.utc),
+                'in_progress': False,
+                'perms': sorted(perms),
+            }
+
+    def _spawn_admin_health_refresh(self, cache_key: str,
+                                    user_info,
+                                    perms) -> None:
+        """Spawn async refresh if one is not already in progress."""
+        with self._admin_health_cache_lock:
+            entry = self._admin_health_cache.get(cache_key, {})
+            if entry.get('in_progress', False):
+                return
+            self._admin_health_cache[cache_key] = {
+                'health': entry.get('health', {}),
+                'updated_at': entry.get('updated_at'),
+                'in_progress': True,
+                'perms': sorted(perms),
+            }
+
+        def _runner():
+            try:
+                self._refresh_admin_health_entry(cache_key, user_info, perms)
+            except Exception:
+                with self._admin_health_cache_lock:
+                    existing = self._admin_health_cache.get(cache_key, {})
+                    existing['in_progress'] = False
+                    self._admin_health_cache[cache_key] = existing
+
+        threading.Thread(
+            target=_runner,
+            daemon=True,
+            name='admin-health-refresh-now',
+        ).start()
+
+    def _get_admin_health(self, user_info, perms,
+                          force: bool = False,
+                          allow_async_refresh: bool = True):
+        """Return cached admin-health with optional async/sync refresh."""
+        cache_key = self._admin_health_cache_key(perms)
+        now = datetime.now(timezone.utc)
+
+        with self._admin_health_cache_lock:
+            entry = self._admin_health_cache.get(cache_key)
+
+        if force:
+            self._refresh_admin_health_entry(cache_key, user_info, perms)
+            with self._admin_health_cache_lock:
+                refreshed = self._admin_health_cache.get(cache_key, {})
+            return (
+                refreshed.get('health', {}),
+                refreshed.get('updated_at'),
+                refreshed.get('in_progress', False),
+            )
+
+        if entry:
+            updated_at = entry.get('updated_at')
+            fresh = (updated_at is not None
+                     and (now - updated_at) <= self._admin_health_cache_ttl)
+            if fresh:
+                return (
+                    entry.get('health', {}),
+                    updated_at,
+                    entry.get('in_progress', False),
+                )
+
+            # stale entry
+            if allow_async_refresh:
+                self._spawn_admin_health_refresh(cache_key, user_info, perms)
+                with self._admin_health_cache_lock:
+                    stale = self._admin_health_cache.get(cache_key, {})
+                return (
+                    stale.get('health', {}),
+                    stale.get('updated_at'),
+                    stale.get('in_progress', False),
+                )
+
+            self._refresh_admin_health_entry(cache_key, user_info, perms)
+            with self._admin_health_cache_lock:
+                refreshed = self._admin_health_cache.get(cache_key, {})
+            return (
+                refreshed.get('health', {}),
+                refreshed.get('updated_at'),
+                refreshed.get('in_progress', False),
+            )
+
+        # no cache entry yet
+        if allow_async_refresh:
+            with self._admin_health_cache_lock:
+                self._admin_health_cache[cache_key] = {
+                    'health': {},
+                    'updated_at': None,
+                    'in_progress': False,
+                    'perms': sorted(perms),
+                }
+            self._spawn_admin_health_refresh(cache_key, user_info, perms)
+            with self._admin_health_cache_lock:
+                pending = self._admin_health_cache.get(cache_key, {})
+            return (
+                pending.get('health', {}),
+                pending.get('updated_at'),
+                pending.get('in_progress', False),
+            )
+
+        self._refresh_admin_health_entry(cache_key, user_info, perms)
+        with self._admin_health_cache_lock:
+            refreshed = self._admin_health_cache.get(cache_key, {})
+        return (
+            refreshed.get('health', {}),
+            refreshed.get('updated_at'),
+            refreshed.get('in_progress', False),
+        )
+
+    def _refresh_admin_health_after_change(self, user_info=None, perms=None) -> None:
+        """Refresh admin-health cache after successful admin mutations.
+
+        Best effort only: this must never break the primary API action.
+        """
+        try:
+            if user_info is None:
+                user_info = get_effective_user(session)
+            if not user_info:
+                return
+
+            if perms is None:
+                perms = resolve_user_permissions(
+                    user_info.get('groups', []),
+                    self.ari_groups,
+                )
+            perms = perms or set()
+            if 'view.admin' not in perms:
+                return
+
+            self._get_admin_health(
+                user_info=user_info,
+                perms=perms,
+                force=True,
+                allow_async_refresh=False,
+            )
+        except Exception:
+            return
+
+    def _build_admin_card_health_uncached(self, user_info, perms) -> dict:
         """
         Return a dict keyed by admin card page_id with health dicts.
         Each health dict has: status ('ok'|'warning'|'error'), message.
@@ -1392,7 +1597,7 @@ class ARIApp(Flask):
             except Exception:
                 pass
 
-        # ── Science Groups: warn if users are unassigned to any group ───
+        # ── Science Groups: warn on assignment/configuration gaps ───────
         if 'manage.sci_group' in perms:
             try:
                 params = load_parameters()
@@ -1402,36 +1607,101 @@ class ARIApp(Flask):
 
                 total_users = set()
                 assigned_users = set()
+                total_run_ids = set()
+                assigned_run_ids = set()
+                groups_without_users = []
+                groups_without_run_ids = []
                 for inst in instruments:
                     inst_users = set(get_users_for_instrument(inst))
                     total_users |= inst_users
+                    inst_run_ids = {
+                        str(rid).strip() for rid in self._get_instrument_run_ids(inst)
+                        if str(rid).strip()
+                    }
+                    total_run_ids |= inst_run_ids
+
                     groups = load_science_groups(inst)
                     if not isinstance(groups, dict):
                         continue
-                    for entry in groups.values():
+
+                    for gname, entry in groups.items():
                         if not isinstance(entry, dict):
                             continue
+
+                        group_users = []
                         for username in entry.get('users', []):
                             uname = str(username).strip()
                             if uname:
+                                group_users.append(uname)
                                 assigned_users.add(uname)
 
-                if not total_users:
+                        group_run_ids = []
+                        for run_id in entry.get('run_ids', []):
+                            rid = str(run_id).strip()
+                            if rid:
+                                group_run_ids.append(rid)
+                                assigned_run_ids.add(rid)
+
+                        if not group_users:
+                            groups_without_users.append(f'{inst}:{gname}')
+                        if not group_run_ids:
+                            groups_without_run_ids.append(f'{inst}:{gname}')
+
+                unassigned_users = sorted(total_users - assigned_users)
+                unassigned_run_ids = sorted(total_run_ids - assigned_run_ids)
+
+                issue_parts = []
+                details = []
+
+                if unassigned_users:
+                    issue_parts.append(
+                        f'{len(unassigned_users)} user(s) not assigned to any science group'
+                    )
+                    details.extend([f'user: {u}' for u in unassigned_users])
+
+                if groups_without_users:
+                    issue_parts.append(
+                        f'{len(groups_without_users)} science group(s) without users'
+                    )
+                    details.extend([
+                        f'group-without-users: {name}' for name in groups_without_users
+                    ])
+
+                if groups_without_run_ids:
+                    issue_parts.append(
+                        f'{len(groups_without_run_ids)} science group(s) without run IDs'
+                    )
+                    details.extend([
+                        f'group-without-run-ids: {name}'
+                        for name in groups_without_run_ids
+                    ])
+
+                if unassigned_run_ids:
+                    issue_parts.append(
+                        f'{len(unassigned_run_ids)} run ID(s) not assigned to any science group'
+                    )
+                    details.extend([f'run_id: {rid}' for rid in unassigned_run_ids])
+
+                if issue_parts:
                     health['home.admin_portal.science_groups'] = {
                         'status': 'warning',
-                        'message': 'No users are currently assigned to managed instruments.',
+                        'message': '; '.join(issue_parts) + '.',
+                        'details': details,
                     }
                 else:
-                    unassigned = sorted(total_users - assigned_users)
-                    if unassigned:
+                    if not total_users:
                         health['home.admin_portal.science_groups'] = {
                             'status': 'warning',
-                            'message': f'{len(unassigned)} users are not assigned to any science group.',
+                            'message': 'No users are currently assigned to managed instruments.',
                         }
                     else:
                         health['home.admin_portal.science_groups'] = {
                             'status': 'ok',
-                            'message': f'All {len(total_users)} users are assigned to at least one science group.',
+                            'message': (
+                                f'All {len(total_users)} users and '
+                                f'{len(total_run_ids)} run ID(s) are assigned to at least one '
+                                'science group, and all groups have users/run IDs.'
+                            ),
                         }
             except Exception as exc:
                 health['home.admin_portal.science_groups'] = {
@@ -1542,6 +1812,10 @@ class ARIApp(Flask):
             if status not in {'ok', 'warning', 'error'}:
                 status = 'warning'
             msg = str(status_data.get('message', '')).strip()
+            details = status_data.get('details', [])
+            if not isinstance(details, list):
+                details = []
+            details = [str(item).strip() for item in details if str(item).strip()]
 
             rules = checks.get(pid, {})
             rule_msg = str(rules.get(status, '')).strip()
@@ -1555,12 +1829,13 @@ class ARIApp(Flask):
                 'status': status,
                 'message': msg or rule_msg,
                 'rule_message': rule_msg,
+                'details': details,
             })
 
         return rows
 
     def _api_admin_health_update(self):
-        """Refresh admin card health and return latest status payload."""
+        """Force-refresh cached admin health and return updated metadata."""
         user_info = get_effective_user(session)
         if not user_info:
             return jsonify(success=False, error='Unauthorized'), 401
@@ -1569,15 +1844,24 @@ class ARIApp(Flask):
         if 'view.admin' not in perms:
             return jsonify(success=False, error='Forbidden'), 403
 
-        health = self._build_admin_card_health(user_info, perms)
-        updated_at = datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S')
-        return jsonify(success=True, updated_at=updated_at, health=health)
+        health, updated_at, _ = self._get_admin_health(
+            user_info=user_info,
+            perms=perms,
+            force=True,
+            allow_async_refresh=False,
+        )
+        return jsonify(
+            success=True,
+            updated_at=self._format_utc_datetime(updated_at),
+            health=health,
+        )
 
     def _api_admin_health_config_get(self):
         """Return persisted health-status UI config."""
         user_info = get_effective_user(session)
         if not user_info:
             return jsonify(success=False, error='Unauthorized'), 401
+
         perms = resolve_user_permissions(user_info['groups'], self.ari_groups)
         if 'view.admin' not in perms:
             return jsonify(success=False, error='Forbidden'), 403
@@ -1590,6 +1874,7 @@ class ARIApp(Flask):
         user_info = get_effective_user(session)
         if not user_info:
             return jsonify(success=False, error='Unauthorized'), 401
+
         perms = resolve_user_permissions(user_info['groups'], self.ari_groups)
         if 'view.admin' not in perms:
             return jsonify(success=False, error='Forbidden'), 403
@@ -1740,6 +2025,7 @@ class ARIApp(Flask):
                 'key': 'query_db',
                 'label': 'Database Query',
                 'icon': 'fa-solid fa-terminal',
+                'url': f'/data_portal/{profile_id}/query-db',
                 'description': 'Run custom queries against the '
                                'reduction database tables.',
             },
@@ -3129,6 +3415,568 @@ class ARIApp(Flask):
         )
 
     # -----------------------------------------------------------------
+    # Data portal — database query explorer
+    # -----------------------------------------------------------------
+    def _get_user_table_access(self, user_info, profile):
+        """Return tables the user may query for this profile.
+
+        Checks db_access.yaml groups vs user's groups.
+        Returns dict: { 'FINDEX': {'table_name': '...', 'columns': [...]}, ... }
+        Columns list is the intersection of db_access.yaml columns and actual
+        table columns defined in the profile config.
+        """
+        if user_info is None:
+            return {}
+
+        instrument = str(profile.get('instrument', '')).strip()
+        profile_id = str(profile.get('profile_id', '')).strip()
+        cfg = profile.get('data', {}) if isinstance(profile.get('data'), dict) else {}
+        user_groups = set(user_info.get('groups', []) or [])
+
+        db_access = load_db_access()
+        entry = (((db_access.get(instrument, {})
+                   if isinstance(db_access.get(instrument, {}), dict)
+                   else {}).get(profile_id, {}))
+                 if instrument and profile_id else {})
+        if not isinstance(entry, dict):
+            entry = {}
+
+        table_key_map = self._db_access_table_keys()
+        result = {}
+
+        for label, key in table_key_map.items():
+            table_name = str(cfg.get(key, '')).strip()
+            if not table_name:
+                continue
+
+            # Check user group access for this table label
+            allowed_groups = entry.get('groups', {}).get(label, [])
+            if not isinstance(allowed_groups, list):
+                allowed_groups = []
+            if not user_groups & set(allowed_groups):
+                continue  # user not in any allowed group for this table
+
+            # Columns from db_access config
+            allowed_cols = entry.get('columns', {}).get(label, [])
+            if not isinstance(allowed_cols, list):
+                allowed_cols = []
+            allowed_cols = [str(c).strip() for c in allowed_cols if str(c).strip()]
+
+            if not allowed_cols:
+                continue  # no columns configured
+
+            result[label] = {
+                'table_name': table_name,
+                'columns': allowed_cols,
+            }
+
+        return result
+
+    def _execute_db_query(self, profile_cfg, query, query_params=None):
+        """Execute a parameterized SELECT query against the profile's database.
+
+        Uses SQLAlchemy's expanding bindparams for IN-clause list values.
+        Only SELECT statements are accepted (validated by caller).
+        """
+        from urllib.parse import quote_plus
+        from sqlalchemy import create_engine, text, bindparam
+
+        mode = str(profile_cfg.get('DATABASE_MODE', '')).strip()
+        host = str(profile_cfg.get('DATABASE_HOST', '')).strip()
+        username = str(profile_cfg.get('DATABASE_USERNAME', '')).strip()
+        password = str(profile_cfg.get('DATABASE_PASSWORD', '') or '')
+        db_name = str(profile_cfg.get('DATABASE_NAME', '')).strip()
+
+        if not all([mode, host, username, db_name]):
+            raise ValueError('Missing database connection configuration.')
+
+        db_url = (
+            f'{mode}://{quote_plus(username)}:{quote_plus(password)}'
+            f'@{host}/{db_name}'
+        )
+        engine = create_engine(db_url, future=True)
+
+        try:
+            params = dict(query_params or {})
+            stmt = text(query)
+            # Apply expanding bindparams for list values (IN clauses)
+            for key, val in params.items():
+                if isinstance(val, (list, tuple)):
+                    stmt = stmt.bindparams(bindparam(key, expanding=True))
+            with engine.begin() as conn:
+                result = conn.execute(stmt, params)
+                if result.returns_rows:
+                    return [dict(row) for row in result.mappings().all()]
+                return []
+        finally:
+            engine.dispose()
+
+    @staticmethod
+    def _build_safe_select_query(table_access, query_spec, run_ids):
+        """Build a safe parameterized SELECT from a structured query spec.
+
+        All table/column identifiers are validated against the whitelist in
+        table_access.  Only the operators in ALLOWED_OPS are accepted for
+        filters.  WHERE values are always passed as bound parameters.
+
+        :param table_access: dict from _get_user_table_access()
+        :param query_spec: structured dict (see _api_query_db_run for schema)
+        :param run_ids: set of str run-ids the user may see
+        :returns: (sql_str, params_dict)
+        :raises ValueError: on any invalid / disallowed input
+        """
+        ALLOWED_OPS = frozenset({'=', '!=', '<', '>', '<=', '>=',
+                                  'LIKE', 'NOT LIKE'})
+        ALLOWED_NULL_OPS = frozenset({'IS NULL', 'IS NOT NULL'})
+        ALLOWED_JOIN_TYPES = frozenset({'INNER', 'LEFT', 'RIGHT'})
+        ALLOWED_SORT_DIRS = frozenset({'ASC', 'DESC'})
+
+        def q_id(name):
+            """Backtick-quote a single identifier (no dots allowed)."""
+            if not re.match(r'^[A-Za-z0-9_]+$', name):
+                raise ValueError(f'Invalid identifier: {name!r}')
+            return f'`{name}`'
+
+        tables_spec = query_spec.get('tables', [])
+        joins_spec = query_spec.get('joins', [])
+        filters_spec = query_spec.get('filters', [])
+        order_by_spec = query_spec.get('order_by')
+        limit = int(query_spec.get('limit', 500))
+        limit = min(max(1, limit), 2000)
+
+        if not tables_spec:
+            raise ValueError('No tables specified.')
+
+        # Gather validated table info
+        table_names = {}   # label -> actual_table_name
+        table_cols = {}    # label -> set of allowed columns
+        select_parts = []
+        col_labels = []    # returned to caller for result header
+
+        for tspec in tables_spec:
+            label = str(tspec.get('label', '')).strip().upper()
+            if label not in table_access:
+                raise ValueError(f'Table {label!r} is not accessible.')
+            allowed = table_access[label]['columns']
+            tname = table_access[label]['table_name']
+            if not re.match(r'^[A-Za-z0-9_.]+$', tname):
+                raise ValueError(f'Invalid table name: {tname!r}')
+            table_names[label] = tname
+            table_cols[label] = set(allowed)
+
+            cols = tspec.get('columns') or list(allowed)
+            for col in cols:
+                col = str(col).strip()
+                if col not in table_cols[label]:
+                    raise ValueError(
+                        f'Column {col!r} is not accessible for {label}.')
+                alias = f'{label}__{col}'
+                select_parts.append(
+                    f'`_t_{label}`.{q_id(col)} AS {q_id(alias)}'
+                )
+                col_labels.append(alias)
+
+        if not select_parts:
+            raise ValueError('No columns selected.')
+
+        # FROM clause: first table
+        first_label = str(tables_spec[0].get('label', '')).strip().upper()
+        first_tname = table_names[first_label]
+        from_clause = f'`{first_tname}` AS `_t_{first_label}`'
+
+        # JOIN clauses
+        join_clauses = []
+        for jspec in joins_spec:
+            left = str(jspec.get('left_label', '')).strip().upper()
+            right = str(jspec.get('right_label', '')).strip().upper()
+            left_col = str(jspec.get('left_col', '')).strip()
+            right_col = str(jspec.get('right_col', '')).strip()
+            jtype = str(jspec.get('type', 'LEFT')).strip().upper()
+
+            if left not in table_names or right not in table_names:
+                raise ValueError('Join references an inaccessible table.')
+            if jtype not in ALLOWED_JOIN_TYPES:
+                raise ValueError(f'Invalid join type: {jtype!r}')
+            if left_col not in table_cols[left]:
+                raise ValueError(
+                    f'Join column {left_col!r} not accessible for {left}.')
+            if right_col not in table_cols[right]:
+                raise ValueError(
+                    f'Join column {right_col!r} not accessible for {right}.')
+
+            right_tname = table_names[right]
+            join_clauses.append(
+                f'{jtype} JOIN `{right_tname}` AS `_t_{right}` '
+                f'ON `_t_{left}`.{q_id(left_col)} = `_t_{right}`.{q_id(right_col)}'
+            )
+
+        # WHERE clause
+        where_parts = []
+        params = {}
+        param_idx = 0
+
+        # Always filter FINDEX by user's accessible run_ids
+        if 'FINDEX' in table_names:
+            if not run_ids:
+                return 'SELECT 1 WHERE 1=0', {}, []
+            params['_run_ids'] = sorted(run_ids)
+            where_parts.append(
+                f'`_t_FINDEX`.`KW_RUN_ID` IN :_run_ids'
+            )
+
+        # User-supplied filters
+        for fspec in filters_spec:
+            tlabel = str(fspec.get('table_label', '')).strip().upper()
+            col = str(fspec.get('column', '')).strip()
+            op_raw = str(fspec.get('op', '')).strip().upper()
+
+            if tlabel not in table_names:
+                raise ValueError(
+                    f'Filter references an inaccessible table: {tlabel!r}')
+            if col not in table_cols[tlabel]:
+                raise ValueError(
+                    f'Filter column {col!r} not accessible for {tlabel}.')
+
+            col_ref = f'`_t_{tlabel}`.{q_id(col)}'
+
+            if op_raw in ALLOWED_NULL_OPS:
+                where_parts.append(f'{col_ref} {op_raw}')
+            elif op_raw in ALLOWED_OPS:
+                pname = f'p{param_idx}'
+                param_idx += 1
+                where_parts.append(f'{col_ref} {op_raw} :{pname}')
+                params[pname] = fspec.get('value', '')
+            else:
+                raise ValueError(f'Invalid filter operator: {op_raw!r}')
+
+        # ORDER BY
+        order_clause = ''
+        if order_by_spec and isinstance(order_by_spec, dict):
+            ob_label = str(order_by_spec.get('table_label', '')).strip().upper()
+            ob_col = str(order_by_spec.get('column', '')).strip()
+            ob_dir = str(order_by_spec.get('direction', 'ASC')).strip().upper()
+            if ob_label in table_names and ob_col:
+                if ob_col not in table_cols[ob_label]:
+                    raise ValueError(
+                        f'Order column {ob_col!r} not accessible for {ob_label}.')
+                if ob_dir not in ALLOWED_SORT_DIRS:
+                    ob_dir = 'ASC'
+                order_clause = (
+                    f'ORDER BY `_t_{ob_label}`.{q_id(ob_col)} {ob_dir}'
+                )
+
+        # Build final SQL
+        sql = f'SELECT {", ".join(select_parts)}\nFROM {from_clause}'
+        for jc in join_clauses:
+            sql += f'\n{jc}'
+        if where_parts:
+            sql += f'\nWHERE {" AND ".join(where_parts)}'
+        if order_clause:
+            sql += f'\n{order_clause}'
+        sql += f'\nLIMIT {limit}'
+
+        return sql, params, col_labels
+
+    def _ri_query_db_view(self, profile_id):
+        """Serve the database query explorer page for a profile."""
+        user_info = get_effective_user(session)
+        if user_info:
+            perms = resolve_user_permissions(
+                user_info['groups'], self.ari_groups
+            )
+        else:
+            perms = get_public_permissions()
+
+        if 'view.data_portal' not in perms:
+            flash('You do not have permission to view this page.',
+                  'warning')
+            return redirect(url_for('login'))
+
+        accessible = get_accessible_profiles(user_info, self.ari_groups)
+        profile = None
+        for prof in accessible:
+            if prof['profile_id'] == profile_id:
+                profile = prof
+                break
+
+        if not profile:
+            flash('Profile not found or access denied.', 'warning')
+            return redirect(url_for('home_data_portal'))
+
+        page_id = f'home.data_portal.{profile_id}.query_db'
+        colors = self._instrument_colors()
+        color = colors.get(profile['instrument'],
+                           self._INSTRUMENT_PALETTE[0])
+
+        sidebar_tree = self._build_data_portal_sidebar_tree(
+            accessible_profiles=accessible,
+            active_page_id=page_id,
+            user_permissions=perms,
+            user_info=user_info,
+            current_profile_id=profile_id,
+        )
+
+        query_presets = self._load_query_db_presets(profile)
+
+        context = {
+            'page_id': page_id,
+            'page_label': f'{profile_id}: Database Query',
+            'page_icon': 'fa-solid fa-terminal',
+            'is_parent': False,
+            'profile': profile,
+            'profile_color': color,
+            'schema_api_url': '/api/data-portal/query-db/schema',
+            'run_api_url': '/api/data-portal/query-db/run',
+            'sidebar_root': 'home.data_portal',
+            'sidebar_label': 'Data Portal',
+            'sidebar_icon': 'fa-solid fa-database',
+            'sidebar_url': '/data_portal',
+            'sidebar_tree': sidebar_tree,
+            'query_presets': query_presets,
+        }
+        return render_template('data_portal/query_db.html', **context)
+
+    def _load_query_db_presets(self, profile):
+        """Load query-db presets and replace table placeholders.
+
+        Supported placeholders include both {LABEL} and
+        {LABEL_TABLENAME}, where LABEL is one of the db-access table labels
+        (e.g. FINDEX, ASTROM, CALIB).
+        """
+        cfg = profile.get('data', {}) if isinstance(profile.get('data'), dict) else {}
+        table_names = {}
+        for label, key in self._db_access_table_keys().items():
+            tname = str(cfg.get(key, '')).strip()
+            if tname:
+                table_names[label] = tname
+
+        constants = {}
+        for key, value in cfg.items():
+            skey = str(key).strip()
+            if not skey:
+                continue
+            if value is None:
+                constants[skey] = ''
+            else:
+                constants[skey] = str(value)
+
+        preset_path = PACKAGE_DIR / 'resources' / 'db_presets.yaml'
+        if not preset_path.exists():
+            return []
+
+        try:
+            with preset_path.open('r', encoding='utf-8') as f:
+                raw = yaml.safe_load(f) or {}
+        except Exception:
+            return []
+
+        presets = []
+
+        def _replace_placeholders(sql):
+            if not isinstance(sql, str):
+                return ''
+            out = sql
+            for key, value in constants.items():
+                out = out.replace(f'{{{key}}}', value)
+            for label, tname in table_names.items():
+                out = out.replace(f'{{{label}}}', tname)
+                out = out.replace(f'{{{label}_TABLENAME}}', tname)
+            return out.strip()
+
+        if isinstance(raw, dict):
+            iterator = raw.items()
+        elif isinstance(raw, list):
+            iterator = []
+            for idx, entry in enumerate(raw):
+                if isinstance(entry, dict):
+                    name = (entry.get('name') or entry.get('label')
+                            or entry.get('title') or f'Preset {idx + 1}')
+                    iterator.append((name, entry))
+        else:
+            iterator = []
+
+        for name, entry in iterator:
+            query = ''
+            if isinstance(entry, str):
+                query = entry
+            elif isinstance(entry, dict):
+                query = entry.get('query') or entry.get('sql') or ''
+
+            query = _replace_placeholders(query)
+            if not query:
+                continue
+
+            presets.append({
+                'name': str(name),
+                'query': query,
+            })
+
+        return presets
+
+    def _api_query_db_schema(self):
+        """Return allowed tables and columns for a profile+user combination."""
+        user_info = get_effective_user(session)
+        if user_info:
+            perms = resolve_user_permissions(
+                user_info['groups'], self.ari_groups
+            )
+        else:
+            perms = get_public_permissions()
+
+        if 'view.data_portal' not in perms:
+            return jsonify(success=False, error='Unauthorized'), 401
+
+        profile_id = request.args.get('profile_id', '').strip()
+        if not profile_id:
+            return jsonify(success=False, error='Missing profile_id'), 400
+
+        accessible = get_accessible_profiles(user_info, self.ari_groups)
+        profile = None
+        for prof in accessible:
+            if prof['profile_id'] == profile_id:
+                profile = prof
+                break
+        if not profile:
+            return jsonify(success=False, error='Profile not found'), 404
+
+        table_access = self._get_user_table_access(user_info, profile)
+
+        tables_out = []
+        for label, info in table_access.items():
+            tables_out.append({
+                'label': label,
+                'table_name': info['table_name'],
+                'columns': info['columns'],
+                'has_run_id_filter': label == 'FINDEX',
+            })
+        # Stable order
+        tables_out.sort(key=lambda t: t['label'])
+
+        return jsonify(success=True, tables=tables_out)
+
+    def _api_query_db_run(self):
+        """Execute a structured, user-driven SELECT query safely.
+
+        Expected JSON body::
+            {
+                "profile_id": "spirou_xxs_08_cook_home",
+                "tables": [
+                    {"label": "FINDEX", "columns": ["OBS_DIR", "KW_OBJNAME"]}
+                ],
+                "joins": [
+                    {
+                        "left_label": "FINDEX", "left_col": "KW_OBJNAME",
+                        "right_label": "ASTROM", "right_col": "OBJNAME",
+                        "type": "LEFT"
+                    }
+                ],
+                "filters": [
+                    {"table_label": "FINDEX", "column": "KW_DPRTYPE",
+                     "op": "=", "value": "OBJ_DARK"}
+                ],
+                "order_by": {"table_label": "FINDEX", "column": "KW_DATE_OBS",
+                             "direction": "DESC"},
+                "limit": 500
+            }
+
+        All identifiers are validated against the user's access whitelist.
+        Run-ID filtering is automatically applied to the FINDEX table.
+        Only SELECT behaviour is possible through this API by design.
+        """
+        user_info = get_effective_user(session)
+        if user_info:
+            perms = resolve_user_permissions(
+                user_info['groups'], self.ari_groups
+            )
+        else:
+            perms = get_public_permissions()
+
+        if 'view.data_portal' not in perms:
+            return jsonify(success=False, error='Unauthorized'), 401
+
+        body = request.get_json(silent=True) or {}
+        profile_id = str(body.get('profile_id', '')).strip()
+        if not profile_id:
+            return jsonify(success=False, error='Missing profile_id'), 400
+
+        accessible = get_accessible_profiles(user_info, self.ari_groups)
+        profile = None
+        for prof in accessible:
+            if prof['profile_id'] == profile_id:
+                profile = prof
+                break
+        if not profile:
+            return jsonify(success=False, error='Profile not found'), 404
+
+        instrument = profile['instrument']
+        cfg = profile.get('data', {}) if isinstance(profile.get('data'), dict) else {}
+
+        # Determine which run_ids the user may see
+        run_ids = self._get_user_accessible_run_ids(user_info, instrument)
+
+        # Determine which tables/columns the user may access
+        table_access = self._get_user_table_access(user_info, profile)
+        if not table_access:
+            return jsonify(
+                success=False,
+                error='No database tables are accessible with your current '
+                      'permissions for this profile.',
+            ), 403
+
+        try:
+            sql, params, col_labels = self._build_safe_select_query(
+                table_access=table_access,
+                query_spec=body,
+                run_ids=run_ids,
+            )
+        except ValueError as exc:
+            return jsonify(success=False, error=str(exc)), 400
+
+        # Produce a redacted SQL preview (replace run_ids list with count)
+        nrids = len(run_ids)
+        sql_preview = sql.replace(
+            ':_run_ids',
+            f'(/* {nrids} run ID{"s" if nrids != 1 else ""} */)',
+        )
+        # Replace filter param placeholders with the actual values
+        params_preview = {k: v for k, v in params.items()
+                          if k != '_run_ids'}
+        for key, val in params_preview.items():
+            sql_preview = sql_preview.replace(f':{key}', repr(str(val)))
+
+        try:
+            rows = self._execute_db_query(cfg, sql, params)
+        except Exception as exc:
+            return jsonify(
+                success=False,
+                error=f'Query failed: {exc}',
+                sql_preview=sql_preview,
+            ), 500
+
+        # Strip the internal alias prefix from column names for display
+        clean_rows = []
+        for row in rows:
+            clean_rows.append({
+                k.split('__', 1)[-1]: v for k, v in row.items()
+            })
+
+        # Return both original (label__col) keys and stripped keys
+        display_columns = [c.split('__', 1)[-1] for c in col_labels]
+        table_for_col = {
+            c.split('__', 1)[-1]: c.split('__', 1)[0]
+            for c in col_labels
+        }
+
+        return jsonify(
+            success=True,
+            rows=clean_rows,
+            columns=display_columns,
+            table_for_col=table_for_col,
+            total_rows=len(rows),
+            sql_preview=sql_preview,
+        )
+
+    # -----------------------------------------------------------------
     # Admin user management API
     # -----------------------------------------------------------------
     def _require_admin_user(self):
@@ -3252,6 +4100,7 @@ class ARIApp(Flask):
 
         if not update_user_groups(target, new_groups):
             return jsonify(success=False, error='Update failed'), 500
+        self._refresh_admin_health_after_change(user_info, perms)
         return jsonify(success=True)
 
     def _api_user_update_instruments(self):
@@ -3313,6 +4162,7 @@ class ARIApp(Flask):
 
         if not update_user_instruments(target, new_instruments):
             return jsonify(success=False, error='Update failed'), 500
+        self._refresh_admin_health_after_change(user_info, perms)
         return jsonify(success=True)
 
     def _api_user_delete(self):
@@ -3347,6 +4197,7 @@ class ARIApp(Flask):
 
         if not delete_user(target):
             return jsonify(success=False, error='Delete failed'), 500
+        self._refresh_admin_health_after_change(user_info, perms)
         return jsonify(success=True)
 
     # -----------------------------------------------------------------
@@ -3484,27 +4335,76 @@ class ARIApp(Flask):
         available_users = get_users_for_instrument(instrument)
 
         assigned_users = set()
-        for group_entry in groups.values():
+        assigned_run_ids = set()
+        groups_without_users = []
+        groups_without_run_ids = []
+        for gname, group_entry in groups.items():
             if not isinstance(group_entry, dict):
                 continue
+
+            group_users = []
             for username in group_entry.get('users', []):
                 uname = str(username).strip()
                 if uname:
+                    group_users.append(uname)
                     assigned_users.add(uname)
 
-        available_set = set(available_users)
+            group_run_ids = []
+            for run_id in group_entry.get('run_ids', []):
+                rid = str(run_id).strip()
+                if rid:
+                    group_run_ids.append(rid)
+                    assigned_run_ids.add(rid)
+
+            if not group_users:
+                groups_without_users.append(str(gname))
+            if not group_run_ids:
+                groups_without_run_ids.append(str(gname))
+
+        available_set = {str(u).strip() for u in available_users if str(u).strip()}
+        available_run_id_set = {str(rid).strip() for rid in run_ids if str(rid).strip()}
         missing_users = sorted(available_set - assigned_users)
-        if available_users and not missing_users:
+        missing_run_ids = sorted(available_run_id_set - assigned_run_ids)
+
+        health_issues = []
+        health_details = []
+        if missing_users:
+            health_issues.append(
+                f'{len(missing_users)} user(s) not assigned to any science group'
+            )
+            health_details.extend([f'user: {u}' for u in missing_users])
+
+        if groups_without_users:
+            health_issues.append(
+                f'{len(groups_without_users)} science group(s) without users'
+            )
+            health_details.extend([
+                f'group-without-users: {name}' for name in sorted(groups_without_users)
+            ])
+
+        if groups_without_run_ids:
+            health_issues.append(
+                f'{len(groups_without_run_ids)} science group(s) without run IDs'
+            )
+            health_details.extend([
+                f'group-without-run-ids: {name}'
+                for name in sorted(groups_without_run_ids)
+            ])
+
+        if missing_run_ids:
+            health_issues.append(
+                f'{len(missing_run_ids)} run ID(s) not assigned to any science group'
+            )
+            health_details.extend([f'run_id: {rid}' for rid in missing_run_ids])
+
+        if health_issues:
+            health_status = 'warning'
+            health_message = '; '.join(health_issues) + '.'
+        else:
             health_status = 'ok'
             health_message = (
-                f'All {len(available_users)} users are assigned '
-                f'to at least one science group.'
-            )
-        else:
-            health_status = 'warning'
-            health_message = (
-                f'{len(missing_users)} users are not assigned '
-                f'to any science group.'
+                f'All {len(available_users)} users and {len(run_ids)} run ID(s) '
+                f'are assigned to at least one science group.'
             )
 
         return jsonify(
@@ -3516,6 +4416,12 @@ class ARIApp(Flask):
             health_message=health_message,
             total_users=len(available_users),
             missing_users=len(missing_users),
+            missing_user_list=missing_users,
+            missing_run_ids=len(missing_run_ids),
+            missing_run_id_list=missing_run_ids,
+            groups_without_users=sorted(groups_without_users),
+            groups_without_run_ids=sorted(groups_without_run_ids),
+            health_details=health_details,
         )
 
     def _api_sci_groups_get(self):
@@ -3569,6 +4475,7 @@ class ARIApp(Flask):
             'users': users,
         }
         save_science_groups(instrument, groups)
+        self._refresh_admin_health_after_change(user_info, perms)
         return jsonify(success=True)
 
     def _api_sci_groups_create(self):
@@ -3602,6 +4509,7 @@ class ARIApp(Flask):
 
         groups[name] = {'run_ids': [], 'users': []}
         save_science_groups(instrument, groups)
+        self._refresh_admin_health_after_change(user_info, perms)
         return jsonify(success=True)
 
     def _api_sci_groups_delete(self):
@@ -3628,6 +4536,7 @@ class ARIApp(Flask):
 
         del groups[name]
         save_science_groups(instrument, groups)
+        self._refresh_admin_health_after_change(user_info, perms)
         return jsonify(success=True)
 
     # -----------------------------------------------------------------
@@ -3673,7 +4582,8 @@ class ARIApp(Flask):
         """Return groups this editor may grant DB table access to."""
         all_groups = list(self.ari_groups.keys())
         editor_groups = set(user_info.get('groups', []))
-        if 'admin' in editor_groups:
+        editor_is_admin = 'admin' in editor_groups
+        if editor_is_admin:
             return sorted(all_groups)
 
         allowed = {g for g in all_groups if f'manage.group.{g}' in perms}
@@ -3727,6 +4637,7 @@ class ARIApp(Flask):
         if not re.match(r'^[A-Za-z0-9_]+$', table_only):
             raise ValueError(f'Invalid table name: {table_only}')
 
+        # Probe table existence/read access.
         apero_async.database_query(
             db_params,
             f'SELECT 1 AS ok FROM {self._q_ident(table_name)} LIMIT 1'
@@ -3742,7 +4653,6 @@ class ARIApp(Flask):
                 'ORDER BY ORDINAL_POSITION'
             ),
         )
-
         out = []
         for row in rows:
             if not isinstance(row, dict):
@@ -3988,6 +4898,7 @@ class ARIApp(Flask):
                     cols.append(cname)
             cleaned_cols[table] = cols
 
+        # Ensure all valid tables exist in saved structure.
         for table in valid_tables:
             cleaned_groups.setdefault(table, [])
             cleaned_cols.setdefault(table, [])
@@ -4001,6 +4912,7 @@ class ARIApp(Flask):
         }
         save_db_access(db_access)
 
+        self._refresh_admin_health_after_change(user_info, perms)
         return jsonify(success=True)
 
     def _api_apero_profiles_list(self):
@@ -4234,6 +5146,7 @@ class ARIApp(Flask):
         profile_data.update(values)
         inst_profiles[name] = profile_data
         save_apero_profiles(all_profiles)
+        self._refresh_admin_health_after_change(user_info, perms)
         return jsonify(success=True)
 
     def _api_apero_profiles_delete(self):
@@ -4261,6 +5174,7 @@ class ARIApp(Flask):
         del inst_profiles[name]
         all_profiles[instrument] = inst_profiles
         save_apero_profiles(all_profiles)
+        self._refresh_admin_health_after_change(user_info, perms)
         return jsonify(success=True)
 
     def _api_apero_profiles_reorder(self):
@@ -4373,6 +5287,7 @@ class ARIApp(Flask):
 
         inst_profiles[name]['groups'] = new_groups
         save_apero_profiles(all_profiles)
+        self._refresh_admin_health_after_change(user_info, perms)
         return jsonify(success=True)
 
     def _api_apero_profiles_test_db(self):
@@ -4633,6 +5548,7 @@ class ARIApp(Flask):
 
         all_tasks[instrument] = inst_tasks
         save_async_tasks(all_tasks)
+        self._refresh_admin_health_after_change(user_info, perms)
         return jsonify(success=True, id=task_id)
 
     def _api_async_tasks_delete(self):
@@ -4659,6 +5575,7 @@ class ARIApp(Flask):
         all_tasks[instrument] = new_tasks
         save_async_tasks(all_tasks)
         task_runner.clear_instance(task_id)
+        self._refresh_admin_health_after_change(user_info, perms)
         return jsonify(success=True)
 
     def _api_async_tasks_reorder(self):
@@ -4715,6 +5632,7 @@ class ARIApp(Flask):
             if t.get('id') == task_id:
                 t['active'] = not t.get('active', True)
                 save_async_tasks(all_tasks)
+                self._refresh_admin_health_after_change(user_info, perms)
                 return jsonify(success=True, active=t['active'])
 
         return jsonify(success=False, error='Task not found'), 404
@@ -5525,6 +6443,7 @@ class ARIApp(Flask):
             if existing.get('smtp_password_enc'):
                 cfg['smtp_password_enc'] = existing['smtp_password_enc']
         eb.save_email_config(cfg)
+        self._refresh_admin_health_after_change(user_info, perms)
         return jsonify(success=True)
 
     def _api_admin_email_send_test(self):

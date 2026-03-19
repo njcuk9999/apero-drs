@@ -10,6 +10,7 @@
     var tabsContainer = document.getElementById('instrument-tabs');
     var sgHealth = document.getElementById('sg-health');
     var sgHealthHeadline = document.getElementById('sg-health-headline');
+    var sgHealthDetails = document.getElementById('sg-health-details');
     var workspace = document.getElementById('sg-workspace');
     var emptyState = document.getElementById('sg-empty');
     var actionsBar = document.getElementById('sg-actions');
@@ -65,10 +66,15 @@
 
     var LAZY_BATCH = 80;
 
-    function setScienceHealth(status, message) {
+    function setScienceHealth(status, message, healthDetails) {
         if (!sgHealth || !sgHealthHeadline) return;
         sgHealth.className = 'ari-ap-status ari-ap-status--' +
             (status === 'ok' ? 'ok' : 'warning');
+
+        if (sgHealthDetails) {
+            sgHealthDetails.innerHTML = '';
+        }
+
         if (status === 'ok') {
             sgHealthHeadline.innerHTML =
                 '<i class="fa-solid fa-circle-check"></i> ' + escapeHtml(message || 'All users are assigned.');
@@ -76,6 +82,23 @@
         }
         sgHealthHeadline.innerHTML =
             '<i class="fa-solid fa-triangle-exclamation"></i> ' + escapeHtml(message || 'Some users are missing science-group assignments.');
+
+        if (sgHealthDetails && Array.isArray(healthDetails) && healthDetails.length) {
+            var escapedDetails = healthDetails.map(function (item) {
+                return escapeHtml(String(item));
+            });
+            sgHealthDetails.innerHTML =
+                '<details>' +
+                '<summary style="cursor:pointer; font-size:0.86rem;">' +
+                'Show warning details (' + escapedDetails.length + ')' +
+                '</summary>' +
+                '<ul style="margin:0.3rem 0 0 1.1rem; font-size:0.85rem; line-height:1.45;">' +
+                escapedDetails.map(function (item) {
+                    return '<li>' + item + '</li>';
+                }).join('') +
+                '</ul>' +
+                '</details>';
+        }
     }
 
     /* -- Toast ----------------------------------------------------------- */
@@ -159,11 +182,40 @@
                 allGroups = data.groups || [];
                 allRunIds = data.run_ids || [];
                 allUsers = data.available_users || [];
-                setScienceHealth(data.health_status || 'warning', data.health_message || '');
+                setScienceHealth(
+                    data.health_status || 'warning',
+                    data.health_message || '',
+                    data.health_details || []
+                );
                 renderGroupList('');
             })
             .catch(function () {
                 groupList.innerHTML = '<div class="ari-sg-error">Failed to load</div>';
+            });
+    }
+
+    function refreshScienceHealthBanner() {
+        if (!currentInstrument) return;
+        fetch(cfg.listUrl + '?instrument=' + encodeURIComponent(currentInstrument))
+            .then(function (r) { return r.json(); })
+            .then(function (data) {
+                if (!data.success) return;
+                allGroups = data.groups || [];
+                allRunIds = data.run_ids || [];
+                allUsers = data.available_users || [];
+                setScienceHealth(
+                    data.health_status || 'warning',
+                    data.health_message || '',
+                    data.health_details || []
+                );
+                renderGroupList(groupFilter.value || '');
+                if (currentGroup) {
+                    refreshTransfer('runid');
+                    refreshTransfer('user');
+                }
+            })
+            .catch(function () {
+                /* Keep existing banner state on transient errors. */
             });
     }
 
@@ -480,6 +532,7 @@
             btnSave.disabled = false;
             if (data.success) {
                 showToast('Saved "' + currentGroup + '"', 'success');
+                refreshScienceHealthBanner();
             } else {
                 showToast(data.error || 'Save failed', 'error');
             }

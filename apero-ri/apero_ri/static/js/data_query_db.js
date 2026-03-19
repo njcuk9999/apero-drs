@@ -15,6 +15,7 @@
     var profileId = cfg.profileId || '';
     var schemaApiUrl = cfg.schemaApiUrl || '/api/data-portal/query-db/schema';
     var runApiUrl = cfg.runApiUrl || '/api/data-portal/query-db/run';
+    var presets = Array.isArray(cfg.presets) ? cfg.presets : [];
 
     /** Full schema returned by /schema API: [{label, table_name, columns, has_run_id_filter}] */
     var schema = [];
@@ -29,6 +30,9 @@
     /** Pagination state */
     var currentPage = 1;
     var rowsPerPage = 50;
+
+    /** Top horizontal scroll mirror state */
+    var _scrollSync = false;
 
     /* ------------------------------------------------------------------ */
     /* DOM helpers                                                          */
@@ -82,10 +86,13 @@
                 }
                 schema = data.tables;
                 renderTablesSection();
+                renderFilters();
+                updateJoinsSection();
                 show('qdb-tables-section');
                 show('qdb-filters-section');
                 show('qdb-sort-section');
                 show('qdb-run-section');
+                initPresetsSection();
             })
             .catch(function () {
                 hide('qdb-schema-loading');
@@ -119,8 +126,11 @@
                 } else {
                     delete selectedTables[label];
                 }
+                pruneInvalidJoins();
+                pruneInvalidFilters();
                 renderTablesSection();
                 updateJoinsSection();
+                renderFilters();
                 updateSortOptions();
                 updateJoinTableOptions();
             });
@@ -151,6 +161,10 @@
                 allBtn.addEventListener('click', function () {
                     selectedTables[label].columns = tbl.columns.slice();
                     renderTablesSection();
+                    pruneInvalidJoins();
+                    pruneInvalidFilters();
+                    updateJoinsSection();
+                    renderFilters();
                     updateSortOptions();
                 });
 
@@ -160,6 +174,10 @@
                 noneBtn.addEventListener('click', function () {
                     selectedTables[label].columns = [];
                     renderTablesSection();
+                    pruneInvalidJoins();
+                    pruneInvalidFilters();
+                    updateJoinsSection();
+                    renderFilters();
                     updateSortOptions();
                 });
 
@@ -184,6 +202,10 @@
                             var idx = cols.indexOf(col);
                             if (idx > -1) cols.splice(idx, 1);
                         }
+                        pruneInvalidJoins();
+                        pruneInvalidFilters();
+                        renderFilters();
+                        updateJoinsSection();
                         updateSortOptions();
                     });
                     var span = makeEl('span', '', col);
@@ -206,6 +228,7 @@
         var numSelected = Object.keys(selectedTables).length;
         var sec = el('qdb-joins-section');
         if (numSelected >= 2) {
+            pruneInvalidJoins();
             show(sec);
         } else {
             hide(sec);
@@ -222,6 +245,29 @@
     function colsForTable(label) {
         var tbl = schema.find(function (t) { return t.label === label; });
         return tbl ? tbl.columns : [];
+    }
+
+    function pruneInvalidJoins() {
+        var tableSet = new Set(availableTableLabels());
+        joins = joins.filter(function (j) {
+            if (!tableSet.has(j.left_label) || !tableSet.has(j.right_label)) {
+                return false;
+            }
+            var leftCols = (selectedTables[j.left_label] || {}).columns || [];
+            var rightCols = (selectedTables[j.right_label] || {}).columns || [];
+            return leftCols.indexOf(j.left_col) > -1
+                && rightCols.indexOf(j.right_col) > -1;
+        });
+    }
+
+    function pruneInvalidFilters() {
+        var tableSet = new Set(availableTableLabels());
+        filters = filters.filter(function (f) {
+            if (!tableSet.has(f.table_label)) return false;
+            var tbl = schema.find(function (t) { return t.label === f.table_label; });
+            var cols = tbl ? tbl.columns : [];
+            return cols.indexOf(f.column) > -1;
+        });
     }
 
     function renderJoins() {
@@ -318,6 +364,30 @@
     function renderFilters() {
         var body = el('qdb-filters-body');
         body.innerHTML = '';
+
+        if (!filters.length) {
+            var empty = makeEl(
+                'button',
+                'qdb-empty-add',
+                '<i class="fa-solid fa-plus"></i> Click to add filter'
+            );
+            empty.type = 'button';
+            empty.addEventListener('click', function () {
+                var labels = availableTableLabels();
+                if (!labels.length) return;
+                var firstCols = (selectedTables[labels[0]] || {}).columns || [];
+                filters.push({
+                    table_label: labels[0],
+                    column: firstCols[0] || '',
+                    op: '=',
+                    value: '',
+                });
+                renderFilters();
+            });
+            body.appendChild(empty);
+            return;
+        }
+
         filters.forEach(function (f, idx) {
             body.appendChild(makeFilterRow(f, idx));
         });
@@ -327,7 +397,8 @@
         var tables = availableTableLabels();
         var opts = [{ value: '', label: '— col —' }];
         tables.forEach(function (label) {
-            var cols = (selectedTables[label] || {}).columns || [];
+            var tbl = schema.find(function (t) { return t.label === label; });
+            var cols = tbl ? tbl.columns : [];
             cols.forEach(function (col) {
                 opts.push({ value: label + '.' + col, label: label + '.' + col });
             });
@@ -422,6 +493,270 @@
                 sel.appendChild(opt);
             });
         });
+    }
+
+    /* ------------------------------------------------------------------ */
+    /* Presets                                                             */
+    /* ------------------------------------------------------------------ */
+    function initPresetsSection() {
+        var section = el('qdb-presets-section');
+        var sel = el('qdb-preset-select');
+        if (!section || !sel || !presets.length) return;
+
+        show(section);
+        while (sel.options.length > 1) sel.remove(1);
+
+        presets.forEach(function (preset, idx) {
+            var opt = document.createElement('option');
+            opt.value = String(idx);
+            opt.textContent = preset.name || ('Preset ' + (idx + 1));
+            sel.appendChild(opt);
+        });
+    }
+
+    function stripSqlIdentifier(raw) {
+        return String(raw || '')
+            .replace(/^[`\"']+|[`\"']+$/g, '')
+            .trim();
+    }
+
+    function splitSqlCommaList(text) {
+        var out = [];
+        var cur = '';
+        var depth = 0;
+        var quote = '';
+        for (var i = 0; i < text.length; i++) {
+            var ch = text[i];
+            if (quote) {
+                cur += ch;
+                if (ch === quote) quote = '';
+                continue;
+            }
+            if (ch === '\'' || ch === '"') {
+                quote = ch;
+                cur += ch;
+                continue;
+            }
+            if (ch === '(') {
+                depth++;
+                cur += ch;
+                continue;
+            }
+            if (ch === ')') {
+                depth = Math.max(0, depth - 1);
+                cur += ch;
+                continue;
+            }
+            if (ch === ',' && depth === 0) {
+                if (cur.trim()) out.push(cur.trim());
+                cur = '';
+                continue;
+            }
+            cur += ch;
+        }
+        if (cur.trim()) out.push(cur.trim());
+        return out;
+    }
+
+    function parsePresetFilterCondition(cond, label, allowedCols) {
+        var raw = String(cond || '').trim();
+        if (!raw) return null;
+
+        var mNull = raw.match(/^(.+?)\s+(IS\s+NOT\s+NULL|IS\s+NULL)$/i);
+        if (mNull) {
+            var colNull = stripSqlIdentifier(mNull[1].split('.').pop());
+            var opNull = mNull[2].toUpperCase().replace(/\s+/g, ' ');
+            if (allowedCols.indexOf(colNull) > -1) {
+                return {
+                    table_label: label,
+                    column: colNull,
+                    op: opNull,
+                    value: '',
+                };
+            }
+            return null;
+        }
+
+        var mCmp = raw.match(/^(.+?)\s*(NOT\s+LIKE|LIKE|!=|<=|>=|=|<|>)\s*(.+)$/i);
+        if (!mCmp) return null;
+
+        var col = stripSqlIdentifier(mCmp[1].split('.').pop());
+        var op = mCmp[2].toUpperCase().replace(/\s+/g, ' ');
+        var val = String(mCmp[3] || '').trim();
+        val = val.replace(/^['\"]|['\"]$/g, '');
+
+        if (allowedCols.indexOf(col) === -1) return null;
+        return {
+            table_label: label,
+            column: col,
+            op: op,
+            value: val,
+        };
+    }
+
+    function parsePresetSqlToSpec(sql) {
+        var text = String(sql || '').trim().replace(/;\s*$/, '');
+        if (!text) return null;
+
+        var m = text.match(
+            /^\s*SELECT\s+([\s\S]+?)\s+FROM\s+([^\s]+(?:\s+[^\s]+)?)\s*(?:WHERE\s+([\s\S]*?))?\s*(?:ORDER\s+BY\s+([\s\S]*?))?\s*(?:LIMIT\s+(\d+))?\s*$/i
+        );
+        if (!m) return null;
+
+        var selectText = m[1] || '';
+        var fromText = m[2] || '';
+        var whereText = m[3] || '';
+        var orderText = m[4] || '';
+        var limitText = m[5] || '';
+
+        var fromParts = fromText.trim().split(/\s+/);
+        var tableName = stripSqlIdentifier(fromParts[0]);
+
+        var tbl = schema.find(function (t) {
+            return String(t.table_name || '').toLowerCase() === tableName.toLowerCase();
+        });
+        if (!tbl) return null;
+
+        var label = tbl.label;
+        var allowedCols = (tbl.columns || []).slice();
+        var selectedCols = [];
+
+        splitSqlCommaList(selectText).forEach(function (exprRaw) {
+            var expr = String(exprRaw || '').trim();
+            if (!expr) return;
+
+            if (expr === '*') {
+                selectedCols = allowedCols.slice();
+                return;
+            }
+
+            var src = expr;
+            var asMatch = expr.match(/^(.+?)\s+AS\s+.+$/i);
+            if (asMatch) src = asMatch[1];
+            else {
+                var parts = expr.split(/\s+/);
+                if (parts.length > 1) src = parts[0];
+            }
+
+            var col = stripSqlIdentifier(src.split('.').pop());
+            if (allowedCols.indexOf(col) > -1 && selectedCols.indexOf(col) === -1) {
+                selectedCols.push(col);
+            }
+        });
+
+        if (!selectedCols.length) {
+            selectedCols = allowedCols.slice();
+        }
+
+        var parsedFilters = [];
+        if (whereText) {
+            whereText.split(/\s+AND\s+/i).forEach(function (part) {
+                var parsed = parsePresetFilterCondition(part, label, allowedCols);
+                if (parsed) parsedFilters.push(parsed);
+            });
+        }
+
+        var orderBy = null;
+        if (orderText) {
+            var firstOrder = splitSqlCommaList(orderText)[0] || '';
+            var om = String(firstOrder).trim().match(/^(.+?)(?:\s+(ASC|DESC))?$/i);
+            if (om) {
+                var orderCol = stripSqlIdentifier(String(om[1] || '').split('.').pop());
+                if (selectedCols.indexOf(orderCol) > -1) {
+                    orderBy = {
+                        table_label: label,
+                        column: orderCol,
+                        direction: (om[2] || 'ASC').toUpperCase(),
+                    };
+                }
+            }
+        }
+
+        var limit = limitText ? parseInt(limitText, 10) : 500;
+        if (isNaN(limit)) limit = 500;
+
+        return {
+            tables: [{ label: label, columns: selectedCols }],
+            joins: [],
+            filters: parsedFilters,
+            order_by: orderBy,
+            limit: limit,
+        };
+    }
+
+    function applyQuerySpecToBuilder(spec) {
+        var nextTables = {};
+        (spec.tables || []).forEach(function (t) {
+            if (!t || !t.label) return;
+            var sTable = schema.find(function (st) { return st.label === t.label; });
+            if (!sTable) return;
+            var allowed = new Set(sTable.columns || []);
+            var cols = (t.columns || []).filter(function (c) { return allowed.has(c); });
+            if (!cols.length) cols = (sTable.columns || []).slice();
+            nextTables[t.label] = { columns: cols };
+        });
+
+        selectedTables = nextTables;
+        joins = Array.isArray(spec.joins) ? spec.joins.slice() : [];
+        filters = Array.isArray(spec.filters) ? spec.filters.slice() : [];
+
+        pruneInvalidJoins();
+        pruneInvalidFilters();
+
+        renderTablesSection();
+        updateJoinsSection();
+        renderFilters();
+        updateSortOptions();
+
+        var sortColSel = el('qdb-sort-col');
+        var sortDirSel = el('qdb-sort-dir');
+        if (sortColSel) {
+            if (spec.order_by && spec.order_by.table_label && spec.order_by.column) {
+                sortColSel.value = spec.order_by.table_label + '.' + spec.order_by.column;
+            } else {
+                sortColSel.value = '';
+            }
+        }
+        if (sortDirSel && spec.order_by && spec.order_by.direction) {
+            sortDirSel.value = String(spec.order_by.direction).toUpperCase() === 'DESC'
+                ? 'DESC' : 'ASC';
+        }
+
+        var limitSel = el('qdb-limit');
+        if (limitSel) {
+            var wanted = String(spec.limit || 500);
+            var hasOption = false;
+            for (var i = 0; i < limitSel.options.length; i++) {
+                if (limitSel.options[i].value === wanted) {
+                    hasOption = true;
+                    break;
+                }
+            }
+            if (!hasOption) {
+                var opt = document.createElement('option');
+                opt.value = wanted;
+                opt.textContent = wanted;
+                limitSel.appendChild(opt);
+            }
+            limitSel.value = wanted;
+        }
+    }
+
+    function applySelectedPreset() {
+        var sel = el('qdb-preset-select');
+        if (!sel || sel.value === '') return;
+
+        var idx = parseInt(sel.value, 10);
+        if (isNaN(idx) || !presets[idx]) return;
+
+        var sql = presets[idx].query || '';
+        var spec = parsePresetSqlToSpec(sql);
+        if (!spec) {
+            showError('Could not parse selected preset.');
+            return;
+        }
+
+        applyQuerySpecToBuilder(spec);
     }
 
     /* ------------------------------------------------------------------ */
@@ -583,6 +918,7 @@
                 '<p>No rows returned.</p>';
             show('qdb-idle');
             hide('qdb-table-wrap');
+            hide('qdb-scroll-top');
             hide('qdb-pagination');
             show('qdb-results-meta');
             el('qdb-results-count').textContent = '0 rows';
@@ -613,8 +949,10 @@
         show('qdb-export-csv');
 
         hide('qdb-idle');
+        show('qdb-scroll-top');
         show('qdb-table-wrap');
         show('qdb-pagination');
+        syncScrollMirror();
     }
 
     function renderPage(columns, rows) {
@@ -652,6 +990,28 @@
         el('qdb-btn-prev').disabled = currentPage <= 1;
         el('qdb-btn-next').disabled = currentPage >= totalPages;
         el('qdb-btn-last').disabled = currentPage >= totalPages;
+
+        syncScrollMirror();
+    }
+
+    function syncScrollMirror() {
+        var scrollTopEl = el('qdb-scroll-top');
+        var scrollSizer = el('qdb-scroll-sizer');
+        var tableWrap = el('qdb-table-wrap');
+        var tableEl = el('qdb-table');
+        if (!scrollTopEl || !scrollSizer || !tableWrap || !tableEl) return;
+
+        var scrollWidth = tableEl.scrollWidth || 0;
+        var clientWidth = tableWrap.clientWidth || 0;
+        scrollSizer.style.width = scrollWidth + 'px';
+
+        if (scrollWidth > clientWidth + 1) {
+            show(scrollTopEl);
+            scrollTopEl.scrollLeft = tableWrap.scrollLeft;
+        } else {
+            hide(scrollTopEl);
+            scrollTopEl.scrollLeft = 0;
+        }
     }
 
     /* ------------------------------------------------------------------ */
@@ -702,6 +1062,26 @@
     /* Event wiring                                                         */
     /* ------------------------------------------------------------------ */
     function wireEvents() {
+        var scrollTopEl = el('qdb-scroll-top');
+        var tableWrap = el('qdb-table-wrap');
+
+        if (scrollTopEl && tableWrap) {
+            scrollTopEl.addEventListener('scroll', function () {
+                if (_scrollSync) return;
+                _scrollSync = true;
+                tableWrap.scrollLeft = scrollTopEl.scrollLeft;
+                _scrollSync = false;
+            });
+
+            tableWrap.addEventListener('scroll', function () {
+                if (_scrollSync) return;
+                _scrollSync = true;
+                scrollTopEl.scrollLeft = tableWrap.scrollLeft;
+                _scrollSync = false;
+                syncScrollMirror();
+            });
+        }
+
         // Run query
         var runBtn = el('qdb-run-btn');
         if (runBtn) runBtn.addEventListener('click', runQuery);
@@ -709,9 +1089,15 @@
         // Add join
         var addJoinBtn = el('qdb-add-join');
         if (addJoinBtn) {
-            addJoinBtn.addEventListener('click', function () {
+            addJoinBtn.addEventListener('click', function (ev) {
+                ev.preventDefault();
+                ev.stopPropagation();
                 var tables = availableTableLabels();
                 if (tables.length < 2) return;
+                var joinsSection = el('qdb-joins-section');
+                if (joinsSection && joinsSection.tagName === 'DETAILS') {
+                    joinsSection.open = true;
+                }
                 joins.push({
                     type: 'LEFT',
                     left_label: tables[0],
@@ -726,9 +1112,15 @@
         // Add filter
         var addFilterBtn = el('qdb-add-filter');
         if (addFilterBtn) {
-            addFilterBtn.addEventListener('click', function () {
+            addFilterBtn.addEventListener('click', function (ev) {
+                ev.preventDefault();
+                ev.stopPropagation();
                 var labels = availableTableLabels();
                 if (!labels.length) return;
+                var filtersSection = el('qdb-filters-section');
+                if (filtersSection && filtersSection.tagName === 'DETAILS') {
+                    filtersSection.open = true;
+                }
                 var firstCols = (selectedTables[labels[0]] || {}).columns || [];
                 filters.push({
                     table_label: labels[0],
@@ -737,6 +1129,14 @@
                     value: '',
                 });
                 renderFilters();
+            });
+        }
+
+        // Apply preset
+        var applyPresetBtn = el('qdb-apply-preset');
+        if (applyPresetBtn) {
+            applyPresetBtn.addEventListener('click', function () {
+                applySelectedPreset();
             });
         }
 
@@ -785,6 +1185,7 @@
     /* ------------------------------------------------------------------ */
     function init() {
         wireEvents();
+        window.addEventListener('resize', syncScrollMirror);
         if (profileId) {
             loadSchema();
         } else {
