@@ -105,7 +105,7 @@ conda create --name apero-env-07 python=3.12
 conda activate apero-env-07
 
 git clone git@github.com:njcuk9999/apero-drs.git -b developer
-git clone git@github.com:njcuk9999/lbl.git -b apero_07
+git clone git@github.com:njcuk9999/lbl.git -b developer
 
 cd apero-drs
 pip install -r requirements_developer.txt
