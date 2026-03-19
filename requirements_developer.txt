@@ -9,9 +9,10 @@ matplotlib==3.10.8
 GitPython==3.1.46
 gspread-pandas==3.3.0
 gspread==5.12.4
-numba==0.64.0
+llvmlite==0.45.1
+numba==0.62.1
 numexpr==2.14.1
-numpy==2.4.2
+numpy==2.3.4
 pandas==3.0.1
 pandastable==0.14.0
 pandasql==0.7.3
