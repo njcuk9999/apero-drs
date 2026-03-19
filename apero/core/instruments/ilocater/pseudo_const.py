@@ -950,6 +950,12 @@ def constuct_objname(params: Union[ParamDict, None], header,
     elif rawobjname is None:
         rawobjname = header[kwrawobjname]
     # -------------------------------------------------------------------------
+    # deal with a none or None here (ilocater only)
+    if drs_text.null_text(rawobjname, NULL_TEXT):
+        rawobjname = 'Null'
+    elif not isinstance(rawobjname, str):
+        rawobjname = 'Null'
+    # -------------------------------------------------------------------------
     if check_aliases and objdbm is not None:
         # get local version of pconst
         pconst = PseudoConstants()
