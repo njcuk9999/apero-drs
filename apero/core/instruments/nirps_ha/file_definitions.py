@@ -1954,7 +1954,7 @@ lbl_fibers = ['A']
 # lbl template file
 lbl_template_file = drs_input('LBL_TEMPLATE', path='templates',
                               filetype='.fits',
-                              basename='Template_s1dv_{obj}_sc1d_v_file_A',
+                              basename='LBL_Template_{obj}_nirps_he',
                               datatype='table',
                               outclass=lbl_ofile,
                               description='Telluric 1D template file',
@@ -1963,7 +1963,7 @@ lbl_template_file = drs_input('LBL_TEMPLATE', path='templates',
 # lbl mask file
 lbl_mask_file = drs_input('LBL_MASK',
                           filetype='.fits', path='masks',
-                          basename='{obj}', datatype='table',
+                          basename='LBL_MASK_{obj}_nirps_he', datatype='table',
                           outclass=lbl_ofile,
                           description='Telluric mask file')
 
