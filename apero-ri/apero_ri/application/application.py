@@ -15,6 +15,7 @@ import socket
 import smtplib
 import threading
 import time
+import traceback
 import uuid
 import yaml
 from datetime import timedelta, datetime, timezone
@@ -520,6 +521,10 @@ class ARIApp(Flask):
                   'api_async_tasks_stop',
                   self._api_async_tasks_stop,
                   methods=['POST'])
+        self.add_url_rule('/api/admin/async-tasks/clear-history',
+              'api_async_tasks_clear_history',
+              self._api_async_tasks_clear_history,
+              methods=['POST'])
         self.add_url_rule('/api/admin/async-tasks/status',
                   'api_async_tasks_status',
                   self._api_async_tasks_status)
@@ -5516,6 +5521,7 @@ class ARIApp(Flask):
     def _merge_async_task_catalog(self, instrument: str, all_tasks: dict):
         """Merge persisted task overrides with the task catalog defaults."""
         from apero_ri import tasks as task_module
+        import_errors = getattr(task_module, 'IMPORT_ERRORS', {}) or {}
 
         stored_tasks = all_tasks.get(instrument, [])
         if not isinstance(stored_tasks, list):
@@ -5576,6 +5582,16 @@ class ARIApp(Flask):
                 if field in task_cfg:
                     merged_cfg[field] = task_cfg.get(field)
 
+            import_error = str(import_errors.get(task_key, '')).strip()
+            if import_error:
+                merged_cfg['last_status'] = 'failed'
+                merged_cfg['error'] = import_error
+                merged_cfg['info'] = (
+                    '## Task Import Error\n\n'
+                    f'**Task key**: `{task_key}`\n\n'
+                    f'```\n{import_error}\n```\n'
+                )
+
             merged.append(merged_cfg)
 
         original = all_tasks.get(instrument, [])
@@ -5612,6 +5628,7 @@ class ARIApp(Flask):
                     'info': tc.get('info', ''),
                     'last_run': tc.get('last_run', 'Never'),
                     'output_files': tc.get('output_files', []),
+                    'run_params': tc.get('last_run_params', {}),
                     'is_current': False,
                     'is_queued': False,
                     'error': tc.get('error', ''),
@@ -5650,6 +5667,7 @@ class ARIApp(Flask):
                     'info': tc.get('info', ''),
                     'last_run': tc.get('last_run', 'Never'),
                     'output_files': tc.get('output_files', []),
+                    'run_params': tc.get('last_run_params', {}),
                     'is_current': False,
                     'is_queued': False,
                     'error': tc.get('error', ''),
@@ -5669,15 +5687,26 @@ class ARIApp(Flask):
         if not user_info:
             return jsonify(success=False, error='Unauthorized'), 401
 
-        from apero_ri import tasks as task_module
+        try:
+            from apero_ri import tasks as task_module
+        except Exception:
+            return jsonify(success=False,
+                           error=f'Failed to import task catalog:\n{traceback.format_exc()}'), 200
         opts = []
         for key, cls in task_module.TASK_LIST.items():
-            inst = cls()
-            task_type = task_module.TYPE.get(key, 'INSTRUMENT')
+            try:
+                inst = cls()
+                task_type = task_module.TYPE.get(key, 'INSTRUMENT')
+                name = inst.name
+                description = inst.description
+            except Exception:
+                task_type = task_module.TYPE.get(key, 'INSTRUMENT')
+                name = f'{key} (Init Error)'
+                description = traceback.format_exc()
             opts.append({
                 'key': key,
-                'name': inst.name,
-                'description': inst.description,
+                'name': name,
+                'description': description,
                 'type': task_type,
             })
         return jsonify(success=True, tasks=opts)
@@ -5866,7 +5895,14 @@ class ARIApp(Flask):
         run_params = task_runner.build_run_params(
             instrument, local_data_dir, all_profiles, task_cfg
         )
-        instance = task_runner.hydrate_runtime_state(task_cls(), task_cfg)
+        try:
+            instance = task_runner.hydrate_runtime_state(task_cls(), task_cfg)
+        except Exception:
+            task_cfg['last_status'] = 'failed'
+            task_cfg['error'] = traceback.format_exc()
+            all_tasks[instrument] = inst_tasks
+            save_async_tasks(all_tasks)
+            return jsonify(success=False, error='Task initialization failed; see task error panel.'), 500
         task_runner.enqueue(
             instrument, task_id, instance, run_params, prepend=True
         )
@@ -5925,9 +5961,21 @@ class ARIApp(Flask):
             run_params = task_runner.build_run_params(
                 instrument, local_data_dir, all_profiles, task_cfg
             )
-            instance = task_runner.hydrate_runtime_state(task_cls(), task_cfg)
+            try:
+                instance = task_runner.hydrate_runtime_state(task_cls(), task_cfg)
+            except Exception:
+                task_cfg['last_status'] = 'failed'
+                task_cfg['error'] = traceback.format_exc()
+                blocked.append({
+                    'id': task_cfg.get('id', ''),
+                    'reason': 'Task initialization failed; see task error panel.',
+                })
+                continue
             task_runner.enqueue(instrument, tid, instance, run_params)
             added.append(tid)
+
+        all_tasks[instrument] = inst_tasks
+        save_async_tasks(all_tasks)
 
         return jsonify(success=True, added=added, blocked=blocked)
 
@@ -5940,6 +5988,17 @@ class ARIApp(Flask):
         instrument = str(data.get('instrument', '') or '').strip() or None
         result = task_runner.stop_all_with_cooldown(instrument=instrument)
         return jsonify(success=True, **result)
+
+    def _api_async_tasks_clear_history(self):
+        """Clear recent async task history entries."""
+        user_info, perms = self._require_async_tasks_perm()
+        if not user_info:
+            return jsonify(success=False, error='Unauthorized'), 401
+
+        result = task_runner.clear_recent_history()
+        if result.get('success'):
+            return jsonify(success=True, removed=int(result.get('removed', 0) or 0))
+        return jsonify(success=False, error=result.get('error', 'Failed to clear history')), 500
 
     def _api_async_tasks_status(self):
         """Poll runtime status for a set of task ids and the full queue."""
@@ -5981,6 +6040,7 @@ class ARIApp(Flask):
                     'info': tc.get('info', ''),
                     'last_run': tc.get('last_run', 'Never'),
                     'output_files': tc.get('output_files', []),
+                    'run_params': tc.get('last_run_params', {}),
                     'is_current': False,
                     'is_queued': False,
                     'error': tc.get('error', ''),

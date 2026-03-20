@@ -1,68 +1,96 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-from apero_ri.tasks import apero_backup
-from apero_ri.tasks import apero_object_table
-from apero_ri.tasks import apero_observation_table
+"""Task registry with resilient imports.
+
+A task module import failure should never crash Flask. Failed imports are
+captured in IMPORT_ERRORS and the task key is backed by a placeholder task
+class that reports the import problem in the task error panel.
+"""
+
+import traceback
+from importlib import import_module
+from typing import Any, Dict, Optional
+
+from apero_ri.tasks import apero_async
+
+
+IMPORT_ERRORS: Dict[str, str] = {}
+
+
+def _failed_task_class(task_key: str, module_name: str):
+    """Build a placeholder task class when module import fails."""
+
+    class _FailedImportTask(apero_async.AperoAsyncTask):
+        def __init__(self, status='pending'):
+            super().__init__(
+                f'{task_key} (Import Error)',
+                f'Task unavailable: failed to import {module_name}',
+                status,
+            )
+
+        def run_job(self, params: Dict[str, Any]):
+            message = IMPORT_ERRORS.get(task_key, 'Unknown task import error.')
+            self.info = (
+                '## Task Import Error\n\n'
+                f'**Task key**: `{task_key}`  \n'
+                f'**Module**: `{module_name}`\n\n'
+                f'```\n{message}\n```\n'
+            )
+            raise RuntimeError(message)
+
+    return _FailedImportTask
+
+
+def _register_task(task_key: str,
+                   module_name: str,
+                   class_name: str,
+                   task_type_fallback: str = 'INSTRUMENT') -> Dict[str, Any]:
+    """Import one task module safely and return normalized task metadata."""
+    try:
+        module = import_module(f'apero_ri.tasks.{module_name}')
+        task_cls = getattr(module, class_name)
+        return {
+            'task_cls': task_cls,
+            'param_list': list(getattr(module, 'PARAM_LIST', [])),
+            'ap_list': list(getattr(module, 'APERO_PROFILE_PARAM_LIST', [])),
+            'frequency': float(getattr(module, 'DEFAULT_FREQUENCY', 24.0)),
+            'enabled': bool(getattr(module, 'DEFAULT_ENABLED', False)),
+            'task_type': str(getattr(module, 'TASK_TYPE', task_type_fallback)),
+        }
+    except Exception:
+        IMPORT_ERRORS[task_key] = traceback.format_exc()
+        return {
+            'task_cls': _failed_task_class(task_key, module_name),
+            'param_list': ['LOCAL_DATA_DIR', 'INSTRUMENT', 'TASK_CONFIG'],
+            'ap_list': [],
+            'frequency': 24.0,
+            'enabled': False,
+            'task_type': task_type_fallback,
+        }
+
 
 # =============================================================================
 # TASK LIST
 # =============================================================================
-# This is a list of tasks (apero_async.AperoAsyncTask children) 
-# that are available in APERO RI. 
-# The key is the name of the task and the value is the class of the task.
-TASK_LIST = dict()
-TASK_LIST['ARI_LOCAL_DATA_BACKUP'] = apero_backup.AperoLocalDataBackupTask
-TASK_LIST['APERO_OBJECT_TABLE'] = apero_object_table.AperoObjectTableTask
-TASK_LIST['APERO_OBS_TABLE'] = apero_observation_table.AperoObservationTableTask
+TASK_LIST: Dict[str, Any] = {}
+P_LIST: Dict[str, Any] = {}
+AP_LIST: Dict[str, Any] = {}
+FREQ: Dict[str, Any] = {}
+ENABLED: Dict[str, Any] = {}
+TYPE: Dict[str, Any] = {}
 
-# =============================================================================
-# TASK PARAMETER LIST
-# =============================================================================
-# This is a list of parameters that are required for each task.
-# This keys should match TASK_LIST (None means no parameters required)
-P_LIST = dict()
-P_LIST['ARI_LOCAL_DATA_BACKUP'] = apero_backup.PARAM_LIST
-P_LIST['APERO_OBJECT_TABLE'] = apero_object_table.PARAM_LIST
-P_LIST['APERO_OBS_TABLE'] = apero_observation_table.PARAM_LIST
+_TASK_DEFS = [
+    ('ARI_LOCAL_DATA_BACKUP', 'apero_backup', 'AperoLocalDataBackupTask', 'GLOBAL'),
+    ('APERO_OBJECT_TABLE', 'apero_object_table', 'AperoObjectTableTask', 'INSTRUMENT'),
+    ('APERO_OBS_TABLE', 'apero_observation_table', 'AperoObservationTableTask', 'INSTRUMENT'),
+    ('APERO_OBJECT_QUERY', 'apero_object_query', 'AperoObjectQueryTask', 'INSTRUMENT'),
+]
 
-# =============================================================================
-# TASK APERO_PROFILE PARAMETER LIST
-# =============================================================================
-# This is a list of parameters that are required for each apero profile.
-# If this is not None there needs to be APERO_PROFILES 
-# and APERO_PROFILE_NAMES defined in P_LIST
-# This keys should match TASK_LIST (None means no parameters required)
-AP_LIST = dict()
-AP_LIST['ARI_LOCAL_DATA_BACKUP'] = apero_backup.APERO_PROFILE_PARAM_LIST
-AP_LIST['APERO_OBJECT_TABLE'] = apero_object_table.APERO_PROFILE_PARAM_LIST
-AP_LIST['APERO_OBS_TABLE'] = apero_observation_table.APERO_PROFILE_PARAM_LIST
-
-# =============================================================================
-# TASK DEFAULT FREQUENCY
-# =============================================================================
-# This is the default frequency (in hours) for each task. This is used in the admin portal to set the default frequency for each task.
-# This keys should match TASK_LIST (None means no default frequency)
-FREQ = dict()
-FREQ['ARI_LOCAL_DATA_BACKUP'] = apero_backup.DEFAULT_FREQUENCY
-FREQ['APERO_OBJECT_TABLE'] = apero_object_table.DEFAULT_FREQUENCY
-FREQ['APERO_OBS_TABLE'] = apero_observation_table.DEFAULT_FREQUENCY
-
-# =============================================================================
-# TASK DEFAULT ENABLED
-# =============================================================================
-# This is whether the task is enabled by default in the admin portal. This is used in the admin portal to set the default enabled status for each task.
-# This keys should match TASK_LIST (None means no default enabled status)
-ENABLED = dict()
-ENABLED['ARI_LOCAL_DATA_BACKUP'] = apero_backup.DEFAULT_ENABLED
-ENABLED['APERO_OBJECT_TABLE'] = apero_object_table.DEFAULT_ENABLED
-ENABLED['APERO_OBS_TABLE'] = apero_observation_table.DEFAULT_ENABLED
-
-# =============================================================================
-# TASK TYPE
-# =============================================================================
-# This is the type of task (INSTRUMENT, GLOBAL). This is used in the admin portal to group tasks by type.
-# This keys should match TASK_LIST (None means no task type)
-TYPE = dict()
-TYPE['ARI_LOCAL_DATA_BACKUP'] = apero_backup.TASK_TYPE
-TYPE['APERO_OBJECT_TABLE'] = apero_object_table.TASK_TYPE
-TYPE['APERO_OBS_TABLE'] = apero_observation_table.TASK_TYPE
+for _task_key, _module_name, _class_name, _fallback_type in _TASK_DEFS:
+    _entry = _register_task(_task_key, _module_name, _class_name, _fallback_type)
+    TASK_LIST[_task_key] = _entry['task_cls']
+    P_LIST[_task_key] = _entry['param_list']
+    AP_LIST[_task_key] = _entry['ap_list']
+    FREQ[_task_key] = _entry['frequency']
+    ENABLED[_task_key] = _entry['enabled']
+    TYPE[_task_key] = _entry['task_type']

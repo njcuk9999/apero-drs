@@ -66,6 +66,31 @@ def _dedupe_strings(values: Any) -> List[str]:
     return out
 
 
+def _sanitize_run_params(value: Any) -> Any:
+    """Return a JSON-safe copy of run params with secrets redacted."""
+    sensitive_tokens = ['password', 'passwd', 'secret', 'token', 'api_key']
+
+    if isinstance(value, dict):
+        out: Dict[str, Any] = {}
+        for key, item in value.items():
+            key_str = str(key)
+            key_lower = key_str.lower()
+            if any(token in key_lower for token in sensitive_tokens):
+                out[key_str] = '***REDACTED***'
+            else:
+                out[key_str] = _sanitize_run_params(item)
+        return out
+    if isinstance(value, list):
+        return [_sanitize_run_params(item) for item in value]
+    if isinstance(value, tuple):
+        return [_sanitize_run_params(item) for item in value]
+    if isinstance(value, Path):
+        return str(value)
+    if isinstance(value, (str, int, float, bool)) or value is None:
+        return value
+    return str(value)
+
+
 def _history_file_path() -> Path:
     """Return the history file path under local data dir."""
     return Path(_scheduler_local_data_dir) / _history_relpath
@@ -73,7 +98,8 @@ def _history_file_path() -> Path:
 
 def _append_history_entry(instrument: str, task_id: str,
                           task_name: str, status: str,
-                          details: str = '') -> None:
+                          details: str = '',
+                          duration_seconds: Optional[float] = None) -> None:
     """Append one history entry to async history file as JSON line."""
     try:
         path = _history_file_path()
@@ -86,20 +112,22 @@ def _append_history_entry(instrument: str, task_id: str,
             'status': str(status or ''),
             'details': str(details or ''),
         }
+        if duration_seconds is not None:
+            payload['duration_seconds'] = round(float(duration_seconds), 3)
         with path.open('a', encoding='utf-8') as handle:
             handle.write(json.dumps(payload, ensure_ascii=False) + '\n')
     except Exception:
         pass
 
 
-def get_recent_history(limit: int = 50) -> List[Dict[str, str]]:
+def get_recent_history(limit: int = 50) -> List[Dict[str, Any]]:
     """Return newest async history entries from async_history.txt."""
     try:
         path = _history_file_path()
         if not path.exists() or limit <= 0:
             return []
         lines = path.read_text(encoding='utf-8', errors='replace').splitlines()
-        out: List[Dict[str, str]] = []
+        out: List[Dict[str, Any]] = []
         for line in reversed(lines):
             if not line.strip():
                 continue
@@ -112,6 +140,7 @@ def get_recent_history(limit: int = 50) -> List[Dict[str, str]]:
                     'task_name': str(row.get('task_name', '') or row.get('task_id', '')),
                     'status': str(row.get('status', '')),
                     'details': str(row.get('details', '')),
+                    'duration_seconds': row.get('duration_seconds'),
                 })
             except Exception:
                 continue
@@ -120,6 +149,23 @@ def get_recent_history(limit: int = 50) -> List[Dict[str, str]]:
         return out
     except Exception:
         return []
+
+
+def clear_recent_history() -> Dict[str, Any]:
+    """Clear async history entries from async_history.txt."""
+    try:
+        path = _history_file_path()
+        removed = 0
+        if path.exists():
+            try:
+                removed = len(path.read_text(encoding='utf-8', errors='replace').splitlines())
+            except Exception:
+                removed = 0
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text('', encoding='utf-8')
+        return {'success': True, 'removed': removed}
+    except Exception as exc:
+        return {'success': False, 'error': str(exc)}
 
 
 # =============================================================================
@@ -147,6 +193,7 @@ def _run_worker() -> None:
             continue
 
         instance.status = 'in_progress'
+        start_time = time.perf_counter()
         try:
             run_params = getattr(instance, '_run_params', {})
             # Treat task output files as this-run artifacts.
@@ -158,6 +205,7 @@ def _run_worker() -> None:
             with _lock:
                 _errors[task_id] = traceback.format_exc()
         finally:
+            duration_seconds = max(0.0, time.perf_counter() - start_time)
             instance.run_count = getattr(instance, 'run_count', 0) + 1
             instance.last_run = datetime.now(timezone.utc).isoformat()
             _append_history_entry(
@@ -166,6 +214,7 @@ def _run_worker() -> None:
                 getattr(instance, 'name', task_id),
                 getattr(instance, 'status', ''),
                 '' if getattr(instance, 'status', '') != 'failed' else _errors.get(task_id, ''),
+                duration_seconds=duration_seconds,
             )
             _persist_runtime_state(_inst, task_id, instance)
             with _lock:
@@ -187,6 +236,9 @@ def _persist_runtime_state(instrument: str, task_id: str,
                 tc['info'] = getattr(instance, 'info', '')
                 tc['output_files'] = _dedupe_strings(
                     getattr(instance, 'output_files', [])
+                )
+                tc['last_run_params'] = _sanitize_run_params(
+                    getattr(instance, '_run_params', {})
                 )
                 tc['error'] = error
                 tc['last_status'] = getattr(instance, 'status', 'failed')
@@ -345,6 +397,7 @@ def _scheduler_poll(local_data_dir: str) -> None:
         from apero_ri import tasks as task_module
         from apero_ri.core.auth import load_apero_profiles, load_async_tasks, save_async_tasks
         import uuid as uuid_module
+        import_errors = getattr(task_module, 'IMPORT_ERRORS', {}) or {}
 
         all_tasks = load_async_tasks()
         all_profiles = load_apero_profiles()
@@ -416,6 +469,16 @@ def _scheduler_poll(local_data_dir: str) -> None:
                     if field in task_cfg:
                         merged_cfg[field] = task_cfg.get(field)
 
+                import_error = str(import_errors.get(task_key, '')).strip()
+                if import_error:
+                    merged_cfg['last_status'] = 'failed'
+                    merged_cfg['error'] = import_error
+                    merged_cfg['info'] = (
+                        '## Task Import Error\n\n'
+                        f'**Task key**: `{task_key}`\n\n'
+                        f'```\n{import_error}\n```\n'
+                    )
+
                 merged.append(merged_cfg)
 
             if merged != stored_tasks:
@@ -428,10 +491,18 @@ def _scheduler_poll(local_data_dir: str) -> None:
                     continue
                 task_key = str(task_cfg.get('task_key', '') or '').strip()
                 task_id = str(task_cfg.get('id', '') or '').strip()
+                if str(import_errors.get(task_key, '')).strip():
+                    continue
                 task_cls = task_module.TASK_LIST.get(task_key)
                 if not task_cls or not task_id:
                     continue
-                instance = hydrate_runtime_state(task_cls(), task_cfg)
+                try:
+                    instance = hydrate_runtime_state(task_cls(), task_cfg)
+                except Exception:
+                    task_cfg['last_status'] = 'failed'
+                    task_cfg['error'] = traceback.format_exc()
+                    changed = True
+                    continue
                 run_params = build_run_params(
                     instrument, local_data_dir, all_profiles, task_cfg
                 )
@@ -482,9 +553,11 @@ def build_run_params(instrument: str, local_data_dir: str,
     profiles = all_profiles.get(instrument, {})
     mapped: Dict[str, dict] = {}
     for pname, pcfg in profiles.items():
-        p = dict(pcfg)
+        p = dict(pcfg) if isinstance(pcfg, dict) else {}
         if 'DATABASE_USERNAME' in p and 'DATABASE_USER' not in p:
             p['DATABASE_USER'] = p['DATABASE_USERNAME']
+        # Ensure task code receives the instrument in each APERO profile payload.
+        p['INSTRUMENT'] = instrument
         mapped[pname] = p
     from pathlib import Path as _Path
     global _scheduler_local_data_dir
@@ -662,6 +735,7 @@ def get_task_status(task_id: str) -> dict:
         'info': instance.info,
         'last_run': getattr(instance, 'last_run', 'Never'),
         'output_files': getattr(instance, 'output_files', []),
+        'run_params': _sanitize_run_params(getattr(instance, '_run_params', {})),
         'run_count': getattr(instance, 'run_count', 0),
         'is_current': is_current,
         'is_queued': is_queued,

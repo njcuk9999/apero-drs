@@ -5,9 +5,10 @@ APERO RI: Async task management
 
 """
 import time
+import shutil
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Dict
+from typing import Any, Dict, Optional
 
 from apero_ri.tasks import apero_async
 
@@ -37,6 +38,7 @@ APERO_PROFILE_PARAM_LIST.append('TELLU_TABLENAME')
 APERO_PROFILE_PARAM_LIST.append('REJECT_TABLENAME')
 APERO_PROFILE_PARAM_LIST.append('SCIENCE_FIBER')
 APERO_PROFILE_PARAM_LIST.append('SCIENCE_TYPES')
+APERO_PROFILE_PARAM_LIST.append('INSTRUMENT')
 # Set the default frequency for this task (in hours)
 DEFAULT_FREQUENCY = 1.0
 # Set whether this task is enabled by default in the admin portal
@@ -113,8 +115,7 @@ class AperoObjectQueryTask(apero_async.AperoAsyncTask):
                 db_params['DATABASE_USER'] = db_params['DATABASE_USERNAME']
             # -----------------------------------------------------------------
             # define the object name query
-            obj_query = "SELECT DISTINCT KW_OBJNAME FROM {FINDEX_TABLENAME}"
-            obj_query = obj_query.format(FINDEX_TABLENAME=aparams['FINDEX_TABLENAME'])
+            obj_query = construct_obj_query(aparams)
             # first lets get a list of objects from the astrometric database
             start = time.time()
             objlist = apero_async.database_query(db_params, obj_query)
@@ -123,32 +124,44 @@ class AperoObjectQueryTask(apero_async.AperoAsyncTask):
             self.info += f'for APERO profile: {apero_profile}\n'
             self.info += f'Object query time: {time.time() - start:.2f} seconds\n'
             # ----------------------------------------------------------------
+            # clear out and lock the object directory
+            local_objdir = (Path(aparams.get('LOCAL_DATA_DIR', str(ARI_DIR)))
+                            / 'tasks'  / aparams['INSTRUMENT'] 
+                            / apero_profile_names[a_it] / 'objects')
+            with _acquire_directory_lock(local_objdir):
+                _clear_directory_contents(local_objdir)
+            # ----------------------------------------------------------------
             # storage of timings per object
             timing_per_obj = []
             # storage of output file names
             output_files = []
             # -----------------------------------------------------------------
-            for o_it, objname in enumerate(objlist):
-                # start time
-                start = time.time()
+            for o_it, obj_entry in enumerate(objlist):
+                # get object name from entries
+                objname = obj_entry['KW_OBJNAME']
                 # update the progress (combination of apero_profile + object)
                 part1 = (o_it + 1) / len(objlist)
                 part2 = (a_it + 1) / len(apero_profile_names)
                 self.progress = part1 * part2
 
                 # -------------------------------------------------------------
-                # Step 2: Query the databases for the object and get all 
+                # Step 1: Query the databases for the object and get all 
                 #         information
                 # -------------------------------------------------------------
                 # returns an object table (on row per parameter)
                 # return a file table (one row per observation)
-                obj_ftables = object_query_db(aparams, objname)
+                outputs = object_query_db(aparams, objname,
+                                          apero_profile_names[a_it])
                 
                 # -------------------------------------------------------------
                 # Step 2: Get header keys for all files for this object
                 # -------------------------------------------------------------
                 # returns a header table (one row per observation)
-                # obj_htable = object_query_headers(obj_ftable)
+                # obj_htable = object_query_headers(outputs)
+                
+                # -------------------------------------------------------------
+                # combine the timings from all queries for this object
+                timing_per_obj.append(sum(outputs['timings'].values()))
 
 
             # -----------------------------------------------------------------
@@ -196,6 +209,7 @@ class AperoObjectQueryTask(apero_async.AperoAsyncTask):
         - SCIENCE_FIBER: str, the name of the science fiber, e.g. 'A' or 'B'
         - SCIENCE_TYPES: list of str, the list of DPRTYPEs to include in 
                             the object table, e.g. 'POLAR_FP', 'OBJ_SKY' etc
+        - INSTRUEMNT: str, the name of the instrument, e.g. 'SPIROU'
         
         :param params: A dictionary of parameters needed to run the job. 
         This should include database connection parameters and any other 
@@ -222,9 +236,7 @@ class AperoObjectQueryTask(apero_async.AperoAsyncTask):
                 db_params['DATABASE_USER'] = db_params['DATABASE_USERNAME']
             # -----------------------------------------------------------------
             # define the object name query
-            obj_query = "SELECT DISTINCT KW_OBJNAME FROM {FINDEX_TABLENAME}"
-            obj_query = obj_query.format(FINDEX_TABLENAME=aparams['FINDEX_TABLENAME'])
-            
+            obj_query = construct_obj_query(aparams)
             print(f'Object name query for APERO profile: {apero_profile}\n')
             print(obj_query)
             print('\n\n')
@@ -245,18 +257,36 @@ class AperoObjectQueryTask(apero_async.AperoAsyncTask):
                 self.progress = part1 * part2
 
                 # -------------------------------------------------------------
-                # Step 2: Query the databases for the object and get all 
+                # Step 1: Query the databases for the object and get all 
                 #         information
                 # -------------------------------------------------------------
                 # returns an object table (on row per parameter)
                 # return a file table (one row per observation)
-                obj_ftables = object_query_db(aparams, objname, 
-                                              return_query=True)
+                outputs = object_query_db(aparams, objname,
+                                          apero_profile_names[a_it], 
+                                          return_query=True)
+                
+                
+                
                 
 
-def file_col_query(aparams, rparams, objname, fkind, block_kind: str,
-                   fiber: str = None, scitype: str = None, 
-                   output:  str = None, return_query: bool = False):
+def construct_obj_query(aparams):
+    scitypes = ','.join([f'"{t}"' for t in aparams['SCIENCE_TYPES']])
+    oparams = dict(FINDEX_TABLENAME=aparams['FINDEX_TABLENAME'],
+                   SCIENCE_TYPES=scitypes)
+    
+    obj_query = ('SELECT DISTINCT KW_OBJNAME FROM {FINDEX_TABLENAME} '
+                 ' WHERE BLOCK_KIND="raw" AND '
+                 'KW_DPRTYPE IN ({SCIENCE_TYPES})')
+    obj_query = obj_query.format(**oparams)
+    return obj_query
+
+
+def file_col_query(rparams, objname, block_kind: str,
+                   fiber: Optional[str] = None, scitype: Optional[str] = None, 
+                   output: Optional[str] = None, 
+                   timing_per_obj: Optional[list] = None) -> str:
+    objname_safe = objname.replace("'", "''")
     # deal with optional conditions
     condition = [f"fdb.BLOCK_KIND = '{block_kind}'"]
     if fiber is not None:
@@ -266,12 +296,18 @@ def file_col_query(aparams, rparams, objname, fkind, block_kind: str,
         condition.append(f"fdb.KW_DPRTYPE IN ({scitype_list})")
     if output is not None:
         condition.append(f"fdb.KW_OUTPUT = '{output}'")
+    # deal with no timing per obj list
+    if timing_per_obj is None:
+        timing_per_obj = []
     # construct the query
     query = """
     SELECT
         fdb.BLOCK_KIND AS BLOCK_KIND,
         fdb.OBS_DIR AS OBS_DIR,
         fdb.FILENAME AS FILENAME,
+        fdb.KW_DPRTYPE AS KW_DPRTYPE,
+        fdb.KW_OUTPUT AS KW_OUTPUT,
+        fdb.KW_FIBER AS KW_FIBER,
         fdb.KW_RUN_ID AS KW_RUN_ID,
         fdb.KW_PI_NAME AS KW_PI_NAME,
         FROM_UNIXTIME((fdb.KW_MID_OBS_TIME - 40587) * 86400) AS MID_OBS_TIME,
@@ -284,38 +320,47 @@ def file_col_query(aparams, rparams, objname, fkind, block_kind: str,
     WHERE fdb.KW_OBJNAME = '{OBJNAME}' AND {CONDITION}
     """
     # construct the formatted query
-    rquery =  query.format(OBJNAME=objname, CONDITION=' AND '.join(condition),
+    rquery =  query.format(OBJNAME=objname_safe, CONDITION=' AND '.join(condition),
                            **rparams)
     # deal with just returning the query for testing
-    if return_query:
-        return rquery
-    # Map DATABASE_USERNAME -> DATABASE_USER for database_query
+    return rquery
+
+ 
+def file_col_cmd(aparams, rquery, apero_profile_name, 
+                 objname, fkind, outputs):
+        # Map DATABASE_USERNAME -> DATABASE_USER for database_query
     db_params = dict(aparams)
     if 'DATABASE_USERNAME' in db_params and 'DATABASE_USER' not in db_params:
         db_params['DATABASE_USER'] = db_params['DATABASE_USERNAME']
     start = time.time()
     results = apero_async.database_query(db_params, rquery)
+    end = time.time()
+    # ---------------------------------------------------------------------
+    # 
     # ---------------------------------------------------------------------
     # time now
     time_now = datetime.now(timezone.utc).isoformat()
     metadata = dict()
     metadata['GENERATED_AT'] = time_now
-    metadata['QUERY_TIME'] = time.time() - start
-    metadata['APERO_PROFILE'] = apero_profile
-    # construct filename
-    instrument = params.get('INSTRUMENT', 'unknown')
-    local_dir = (Path(params.get('LOCAL_DATA_DIR', str(ARI_DIR)))
-                / 'tasks'  / instrument / apero_profile_name / 'objects')
-    basename = f'ftable_{fkind}_{objname}.json'
-    filename =  local_dir / basename
-    # save results to JSON file for use in the UI
-    apero_async.save_results(filename, results, metadata)
+    metadata['QUERY_TIME'] = end - start
+    metadata['APERO_PROFILE'] = apero_profile_name
+    
+    # only save if there are results
+    if isinstance(results, list) and len(results) > 0:        
+        # construct filename
+        instrument = aparams.get('INSTRUMENT', 'unknown')
+        local_dir = (Path(aparams.get('LOCAL_DATA_DIR', str(ARI_DIR)))
+                    / 'tasks'  / instrument / apero_profile_name / 'objects')
+        basename = f'ftable_{fkind}_{objname}.json'
+        filename = local_dir / basename
+        # save results to JSON file for use in the UI
+        apero_async.save_results(filename, results, metadata)
     # store timing for this object
-    timing_per_obj.append(metadata['QUERY_TIME'])
-    # -------------------------------------------------------------------------
-    # return the json results
-    return results
- 
+    outputs['timings'][fkind] = metadata['QUERY_TIME']
+    outputs['results'][fkind] = results
+
+    return outputs
+
 
 def check_required(aparams) -> Dict[str, Any]:
     required_params = [
@@ -339,86 +384,132 @@ def check_required(aparams) -> Dict[str, Any]:
     # return the required parameters
     return rparams
 
-def sub_commands(rparams):
+   
 
-    # get parameters only needed for sub-commands
-    fiber = f'"{rparams["SCIENCE_FIBER"]}"'
-    scitypes = ','.join([f'"{t}"' for t in rparams['SCIENCE_TYPES']])
-    return rparams
-    
-
-def object_query_db(aparams, objname, return_query: bool = False):
+def object_query_db(aparams, objname, apero_profile_name, 
+                    return_query: bool = False) -> dict[str, Any]:
+    if not objname:
+        raise ValueError('Object name is empty or invalid.')
     
     # check that all required parameters are present
     rparams = check_required(aparams)
-    # specific sub-commands to add to rparams (shorthand)
-    rparams = sub_commands(rparams)
     
     
     # get parameters only needed for sub-commands
-    fiber = f'"{rparams["SCIENCE_FIBER"]}"'
-    scitypes = ','.join([f'"{t}"' for t in rparams['SCIENCE_TYPES']])
+    fiber = rparams['SCIENCE_FIBER']
+    scitypes = rparams['SCIENCE_TYPES']
     # storage of queries
     queries = dict()
     # raw file table
-    raw_results = file_col_query(aparams, rparams, objname,
-                                 fkind='raw', block_kind='raw',
-                                 scitype=scitypes, return_query=return_query)
+    raw_results = file_col_query(rparams, objname,
+                                 block_kind='raw', scitype=scitypes)
     queries['raw'] = raw_results
     # pp file table
-    pp_results = file_col_query(aparams, rparams, objname,
-                                fkind='pp', block_kind='tmp',
-                                scitype=scitypes, return_query=return_query)
+    pp_results = file_col_query(rparams, objname, block_kind='tmp',
+                                scitype=scitypes)
     queries['pp'] = pp_results
     # red file table
-    red_results = file_col_query(aparams, rparams, objname,
-                                 fkind='red', block_kind='red',
+    red_results = file_col_query(rparams, objname, block_kind='red',
                                  scitype=scitypes, output='EXT_E2DS_FF',
-                                 fiber=fiber, return_query=return_query)
+                                 fiber=fiber)
     queries['red'] = red_results
     # tcorr file table
-    tcorr_results = file_col_query(aparams, rparams, objname,
-                                   fkind='tcorr', block_kind='red',
+    tcorr_results = file_col_query(rparams, objname, block_kind='red',
                                    scitype=scitypes, output='TELLU_OBJ',
-                                   fiber=fiber, return_query=return_query)
+                                   fiber=fiber)
     queries['tcorr'] = tcorr_results
     # ccf file table
-    ccf_results = file_col_query(aparams, rparams, objname,
-                                 fkind='ccf', block_kind='red',
+    ccf_results = file_col_query(rparams, objname, block_kind='red',
                                  scitype=scitypes, output='CCF_RV',
-                                 fiber=fiber, return_query=return_query)
+                                 fiber=fiber)
     queries['ccf'] = ccf_results
     # e.fits file table
-    efits_results = file_col_query(aparams, rparams, objname,
-                                   fkind='efits', block_kind='out',
+    efits_results = file_col_query(rparams, objname, block_kind='out',
                                    scitype=scitypes, output='DRS_POST_E',
-                                   fiber=fiber, return_query=return_query)
+                                   fiber=fiber)
     queries['efits'] = efits_results
     # t.fits file table
-    tfits_results = file_col_query(aparams, rparams, objname,
-                                   fkind='tfits', block_kind='out',
+    tfits_results = file_col_query(rparams, objname, block_kind='out',
                                    scitype=scitypes, output='DRS_POST_T',
-                                   fiber=fiber, return_query=return_query)
+                                   fiber=fiber)
     queries['tfits'] = tfits_results
 
     # lbl fits file table
-    lbl_results = file_col_query(aparams, rparams, objname,
-                                 fkind='lbl', block_kind='lbl',
-                                 output='LBL_FITS',
-                                 return_query=return_query)
+    lbl_results = file_col_query(rparams, objname, block_kind='lbl',
+                                 scitype=scitypes, output='LBL_FITS')
     queries['lbl'] = lbl_results
 
-
+    # storage for timing for database queries
+    outputs = dict()
+    outputs['queries'] = queries
+    outputs['timings'] = dict()
+    outputs['results'] = dict()
+    # deal with returning just the queries (we print them)
     if return_query:
         for key, query in queries.items():
             print(f'Query for {key}:\n\n{query}\n\n\n\n')
+    # deal with running the queries and saving the results
+    else:
+        # loop around queries and execute them, storing the results in files 
+        # for the UI to use
+        for key, query in queries.items():
+            try:
+                outputs = file_col_cmd(aparams, query, 
+                                       apero_profile_name,
+                                       objname=objname, fkind=key, 
+                                       outputs=outputs)
+            except Exception as e:
+                # inject a print out of the query for debugging
+                emg = f'{key} query: \n{query}\n\nError: {str(e)}'
+                raise RuntimeError(emg)
+            
+    return outputs
 
 
 def object_query_headers(obj_ftable):
     pass
 
 
+def _acquire_directory_lock(directory: Path):
+    """Acquire an exclusive lock for a directory using a sidecar lock file."""
+    import fcntl
 
+    directory = Path(directory)
+    directory.mkdir(parents=True, exist_ok=True)
+    lock_path = directory / '.objects.lock'
+    lock_handle = lock_path.open('a+')
+    # Blocking lock: waits until another process releases the lock.
+    fcntl.flock(lock_handle.fileno(), fcntl.LOCK_EX)
+
+    class _DirectoryLock:
+        def __enter__(self):
+            return lock_handle
+
+        def __exit__(self, exc_type, exc, tb):
+            try:
+                fcntl.flock(lock_handle.fileno(), fcntl.LOCK_UN)
+            finally:
+                lock_handle.close()
+
+    return _DirectoryLock()
+
+
+def _clear_directory_contents(directory: Path) -> None:
+    """Delete all children in a directory while preserving the directory itself."""
+    directory = Path(directory)
+    directory.mkdir(parents=True, exist_ok=True)
+    for entry in directory.iterdir():
+        if entry.name == '.objects.lock':
+            continue
+        if entry.is_dir():
+            shutil.rmtree(entry, ignore_errors=False)
+        else:
+            entry.unlink()
+
+
+# =============================================================================
+# Start of main code
+# =============================================================================
 if __name__ == '__main__':
     # prompt for database password
     import getpass
@@ -428,23 +519,28 @@ if __name__ == '__main__':
     test_params = {
         'LOCAL_DATA_DIR': str(ARI_DIR),
         'INSTRUMENT': 'spirou',
-        'APERO_PROFILE_NAMES': ['default'],
+        'APERO_PROFILE_NAMES': ['spirou_xxs_08_cook_home'],
         'APERO_PROFILES': {
-            'default': {
+            'spirou_xxs_08_cook_home': {
                 'DATABASE_MODE': 'mysql+pymysql',
-                'DATABASE_HOST': 'cosmos.astro.umontreal.ca',
-                'DATABASE_USER': 'spirou',
-                'DATABASE_PASSWORD': f'{db_password}!',
+                'DATABASE_HOST': 'localhost',
+                'DATABASE_USER': 'cook',
+                'DATABASE_PASSWORD': f'{db_password}',
                 'DATABASE_NAME': 'spirou',
-                'ASTROM_TABLENAME': 'astrom_spirou_offline_db',
-                'CALIB_TABLENAME': 'calib_spirou_offline_db',
-                'FINDEX_TABLENAME': 'findex_spirou_offline_db',
-                'LOG_TABLENAME': 'log_spirou_offline_db',
-                'TELLU_TABLENAME': 'tellu_spirou_offline_db',
-                'REJECT_TABLENAME': 'reject_spirou_offline_db',
+                'ASTROM_TABLENAME': 'astrom_spirou_xxs_08_db',
+                'CALIB_TABLENAME': 'calib_spirou_xxs_08_db',
+                'FINDEX_TABLENAME': 'findex_spirou_xxs_08_db',
+                'LOG_TABLENAME': 'log_spirou_xxs_08_db',
+                'TELLU_TABLENAME': 'tellu_spirou_xxs_08_db',
+                'REJECT_TABLENAME': 'reject_spirou_xxs_08_db',
                 'SCIENCE_FIBER': 'AB',
-                'SCIENCE_TYPES': ['POLAR_FP', 'POLAR_DARK', 'OBJ_DARK', 'OBJ_FP']
+                'SCIENCE_TYPES': ['POLAR_FP', 'POLAR_DARK', 'OBJ_DARK', 'OBJ_FP'],
+                'INSTRUMENT': 'SPIROU'
             }
         }
     }
-    task.test_query(test_params, objnames='GL699')
+    # task.test_query(test_params, objnames='GL699')
+    task.run_job(test_params)
+# =============================================================================
+# End of main code
+# =============================================================================

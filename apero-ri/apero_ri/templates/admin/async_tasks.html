@@ -167,9 +167,21 @@
             <!-- ── Section 2: Info ── -->
             <div class="at-section-card" id="det-info-section">
                 <div class="at-section-card__header">
-                    <i class="fa-solid fa-circle-info"></i> Info
+                    <span><i class="fa-solid fa-circle-info"></i> Info</span>
+                    <button id="det-btn-toggle-info"
+                            class="ari-btn ari-btn--sm ari-btn--secondary"
+                            title="Collapse/Expand info"
+                            style="margin-left:0.5rem;">
+                        <i class="fa-solid fa-chevron-up"></i>
+                    </button>
+                    <button id="det-btn-copy-info"
+                            class="ari-btn ari-btn--sm ari-btn--secondary"
+                            title="Copy info to clipboard"
+                            style="margin-left:auto;">
+                        <i class="fa-solid fa-copy"></i> Copy
+                    </button>
                 </div>
-                <div class="at-section-card__body">
+                <div id="det-info-body" class="at-section-card__body">
                     <div id="det-info" class="at-info-md" style="display:none;"></div>
                     <div id="det-info-empty" class="at-muted-hint">No info yet — run the task to generate output.</div>
                 </div>
@@ -178,14 +190,45 @@
             <!-- ── Section 3: Error (hidden when no error) ── -->
             <div class="at-section-card at-section-card--error" id="det-error-section" style="display:none;">
                 <div class="at-section-card__header">
-                    <i class="fa-solid fa-circle-xmark"></i> Error
+                    <span><i class="fa-solid fa-circle-xmark"></i> Error</span>
+                    <button id="det-btn-toggle-error"
+                            class="ari-btn ari-btn--sm ari-btn--secondary"
+                            title="Collapse/Expand error"
+                            style="margin-left:0.5rem;">
+                        <i class="fa-solid fa-chevron-up"></i>
+                    </button>
+                    <button id="det-btn-copy-error"
+                            class="ari-btn ari-btn--sm ari-btn--secondary"
+                            title="Copy error to clipboard"
+                            style="margin-left:auto;">
+                        <i class="fa-solid fa-copy"></i> Copy
+                    </button>
                 </div>
-                <div class="at-section-card__body">
+                <div id="det-error-body" class="at-section-card__body">
                     <pre id="det-error" class="at-error-pre"></pre>
                 </div>
             </div>
 
-            <!-- ── Section 4: Output Files ── -->
+            <!-- ── Section 4: Params (hidden when unavailable) ── -->
+            <div class="at-section-card" id="det-params-section" style="display:none;">
+                <div class="at-section-card__header">
+                    <span><i class="fa-solid fa-sliders"></i> Params</span>
+                    <button id="det-btn-toggle-params"
+                            class="ari-btn ari-btn--sm ari-btn--secondary"
+                            title="Collapse/Expand params"
+                            style="margin-left:auto;">
+                        <i class="fa-solid fa-chevron-up"></i>
+                    </button>
+                </div>
+                <div id="det-params-body" class="at-section-card__body">
+                    <div class="at-detail__label">Task Params</div>
+                    <pre id="det-task-params" class="at-error-pre" style="margin-bottom:1rem;"></pre>
+                    <div class="at-detail__label">Input Params (TASK_CONFIG)</div>
+                    <pre id="det-input-params" class="at-error-pre"></pre>
+                </div>
+            </div>
+
+            <!-- ── Section 5: Output Files ── -->
             <div class="at-section-card" id="det-files-section" style="display:none;">
                 <div class="at-section-card__header">
                     <i class="fa-solid fa-file-code"></i> Output Files
@@ -238,7 +281,12 @@
 
         <div class="ari-sg-section__header" style="margin-top:1rem;">
             <h3><i class="fa-solid fa-clock-rotate-left"></i> Recent History</h3>
-            <span class="ari-sg-count">50</span>
+            <div style="display:flex;align-items:center;gap:0.5rem;">
+                <span class="ari-sg-count">50</span>
+                <button id="btn-clear-history" class="ari-btn ari-btn--secondary ari-btn--sm">
+                    <i class="fa-solid fa-trash-can"></i> Clear Recent History
+                </button>
+            </div>
         </div>
         <div id="queue-history-list" class="at-queue-list">
             <div class="ari-sg-empty-small">No recent history yet</div>
@@ -408,6 +456,7 @@ window.ARI_ASYNC_TASKS = {
         runNow:   '{{ url_for("api_async_tasks_run_now") }}',
         runAll:   '{{ url_for("api_async_tasks_run_all") }}',
         stop:     '{{ url_for("api_async_tasks_stop") }}',
+        clearHistory: '{{ url_for("api_async_tasks_clear_history") }}',
         status:   '{{ url_for("api_async_tasks_status") }}',
         readFile: '{{ url_for("api_async_tasks_read_file") }}',
         downloadFile: '{{ url_for("api_async_tasks_download_file") }}',

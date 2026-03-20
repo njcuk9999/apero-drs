@@ -20,6 +20,9 @@
     var editingTaskId = null;   // null = add, string = edit
     var pendingDeleteId = null;
     var pollTimer = null;
+    var POLL_FAST_MS = 1000;
+    var POLL_SLOW_MS = 5000;
+    var pollIntervalMs = POLL_SLOW_MS;
     var dragSrcId = null;
 
     /* -----------------------------------------------------------------------
@@ -55,10 +58,21 @@
     var detRunCount     = document.getElementById('det-run-count');
     // Section cards
     var detInfoSection  = document.getElementById('det-info-section');
+    var detInfoBody     = document.getElementById('det-info-body');
     var detInfoEl       = document.getElementById('det-info');
     var detInfoEmpty    = document.getElementById('det-info-empty');
+    var detBtnToggleInfo= document.getElementById('det-btn-toggle-info');
+    var detBtnCopyInfo  = document.getElementById('det-btn-copy-info');
     var detErrorSection = document.getElementById('det-error-section');
+    var detErrorBody    = document.getElementById('det-error-body');
     var detError        = document.getElementById('det-error');
+    var detBtnToggleError = document.getElementById('det-btn-toggle-error');
+    var detBtnCopyError = document.getElementById('det-btn-copy-error');
+    var detParamsSection = document.getElementById('det-params-section');
+    var detParamsBody    = document.getElementById('det-params-body');
+    var detTaskParams    = document.getElementById('det-task-params');
+    var detInputParams   = document.getElementById('det-input-params');
+    var detBtnToggleParams = document.getElementById('det-btn-toggle-params');
     var detFilesSection = document.getElementById('det-files-section');
     var detOutputFiles  = document.getElementById('det-output-files');
 
@@ -69,6 +83,7 @@
 
     // Queue tab
     var btnStopAll          = document.getElementById('btn-stop-all');
+    var btnClearHistory     = document.getElementById('btn-clear-history');
     var queueRunning        = document.getElementById('queue-running');
     var queueRunningName    = document.getElementById('queue-running-name');
     var queueRunningInstr   = document.getElementById('queue-running-instrument');
@@ -116,6 +131,8 @@
     var btnFileModalOk  = document.getElementById('btn-file-modal-ok');
 
     var BACKUP_TASK_KEY = 'ARI_LOCAL_DATA_BACKUP';
+    var currentInfoText = '';
+    var currentErrorText = '';
 
     var toast = document.getElementById('at-toast');
 
@@ -132,6 +149,7 @@
         bindQueue();
         bindRunAll();
         bindFileModal();
+        bindSectionToggles();
 
         if (instruments.length === 0) {
             noInstrEl.style.display = '';
@@ -465,6 +483,7 @@
 
         // Info section
         if (rt.info) {
+            currentInfoText = String(rt.info);
             detInfoEl.style.display = '';
             detInfoEmpty.style.display = 'none';
             if (window.marked) {
@@ -473,16 +492,39 @@
                 detInfoEl.innerHTML = '<pre>' + esc(rt.info) + '</pre>';
             }
         } else {
+            currentInfoText = '';
             detInfoEl.style.display = 'none';
             detInfoEmpty.style.display = '';
         }
 
         // Error section
         if (rt.error) {
+            currentErrorText = String(rt.error);
             detErrorSection.style.display = '';
             detError.textContent = rt.error;
         } else {
+            currentErrorText = '';
             detErrorSection.style.display = 'none';
+        }
+
+        // Params section
+        var runParams = (rt.run_params && typeof rt.run_params === 'object') ? rt.run_params : {};
+        var taskConfig = (runParams.TASK_CONFIG && typeof runParams.TASK_CONFIG === 'object')
+            ? runParams.TASK_CONFIG
+            : {};
+        var taskParams = {};
+        Object.keys(runParams).forEach(function (key) {
+            if (key === 'TASK_CONFIG') return;
+            taskParams[key] = runParams[key];
+        });
+        if (Object.keys(taskParams).length || Object.keys(taskConfig).length) {
+            detParamsSection.style.display = '';
+            detTaskParams.textContent = formatJson(taskParams);
+            detInputParams.textContent = formatJson(taskConfig);
+        } else {
+            detParamsSection.style.display = 'none';
+            detTaskParams.textContent = '{}';
+            detInputParams.textContent = '{}';
         }
 
         // Files section
@@ -512,6 +554,32 @@
             });
         } else {
             detFilesSection.style.display = 'none';
+        }
+    }
+
+    function bindSectionToggles() {
+        bindSectionToggle(detBtnToggleInfo, detInfoBody);
+        bindSectionToggle(detBtnToggleError, detErrorBody);
+        bindSectionToggle(detBtnToggleParams, detParamsBody);
+    }
+
+    function bindSectionToggle(button, body) {
+        if (!button || !body) return;
+        button.addEventListener('click', function () {
+            var isHidden = body.style.display === 'none';
+            body.style.display = isHidden ? '' : 'none';
+            var icon = button.querySelector('i');
+            if (icon) {
+                icon.className = 'fa-solid ' + (isHidden ? 'fa-chevron-up' : 'fa-chevron-down');
+            }
+        });
+    }
+
+    function formatJson(value) {
+        try {
+            return JSON.stringify(value || {}, null, 2);
+        } catch (_err) {
+            return String(value || '{}');
         }
     }
 
@@ -661,6 +729,26 @@
             }
         });
     });
+
+    if (detBtnCopyInfo) {
+        detBtnCopyInfo.addEventListener('click', function () {
+            if (!currentInfoText) {
+                showToast('No info to copy.', 'error');
+                return;
+            }
+            copyToClipboard(currentInfoText, 'Info copied to clipboard.');
+        });
+    }
+
+    if (detBtnCopyError) {
+        detBtnCopyError.addEventListener('click', function () {
+            if (!currentErrorText) {
+                showToast('No error to copy.', 'error');
+                return;
+            }
+            copyToClipboard(currentErrorText, 'Error copied to clipboard.');
+        });
+    }
 
     /* -----------------------------------------------------------------------
        Run All
@@ -883,13 +971,30 @@
                     }
                 });
         });
+
+        if (btnClearHistory) {
+            btnClearHistory.addEventListener('click', function () {
+                if (!confirm('Clear recent async task history? This cannot be undone.')) return;
+                fetch(urls.clearHistory, { method: 'POST' })
+                    .then(function (r) { return r.json(); })
+                    .then(function (d) {
+                        if (d.success) {
+                            showToast('Recent history cleared.', 'success');
+                            refreshQueueView();
+                        } else {
+                            showToast('Clear history failed: ' + (d.error || 'Unknown error'), 'error');
+                        }
+                    });
+            });
+        }
     }
 
     function refreshQueueView() {
-        fetch(urls.status)
+        return fetch(urls.status)
             .then(function (r) { return r.json(); })
             .then(function (d) {
                 if (!d.success) return;
+                updatePollCadence(d.queue);
                 renderQueuePanel(d.queue, d.statuses || {});
             });
     }
@@ -948,8 +1053,13 @@
         queueHistoryList.innerHTML = history.map(function (item) {
             var ts = item.timestamp || '';
             var stamp = ts ? ts.replace('T', ' ').replace('Z', ' UTC') : '';
+            var duration = Number(item.duration_seconds);
+            var durationText = Number.isFinite(duration)
+                ? (' (' + duration.toFixed(2) + 's)')
+                : '';
             var line = '[' + (item.status || 'unknown') + '] ' +
-                (item.instrument || '') + ' - ' + (item.task_name || item.task_id || '');
+                (item.instrument || '') + ' - ' + (item.task_name || item.task_id || '') +
+                durationText;
             return '<div class="at-queue-item">' +
                 '<span class="at-queue-item__inst">' + esc(stamp) + '</span>' +
                 '<span class="at-queue-item__id">' + esc(line) + '</span>' +
@@ -970,26 +1080,46 @@
     ----------------------------------------------------------------------- */
     function startPoll() {
         stopPoll();
-        pollTimer = setInterval(pollStatus, 2000);
+        pollIntervalMs = POLL_SLOW_MS;
+        scheduleNextPoll(pollIntervalMs);
     }
 
     function stopPoll() {
-        if (pollTimer) { clearInterval(pollTimer); pollTimer = null; }
+        if (pollTimer) { clearTimeout(pollTimer); pollTimer = null; }
+    }
+
+    function scheduleNextPoll(delayMs) {
+        stopPoll();
+        pollTimer = setTimeout(pollStatus, Math.max(250, Number(delayMs) || POLL_SLOW_MS));
+    }
+
+    function updatePollCadence(queue) {
+        var busy = !!(queue && (queue.queue_length > 0 || queue.current));
+        pollIntervalMs = busy ? POLL_FAST_MS : POLL_SLOW_MS;
     }
 
     function pollStatus() {
         if (currentInstrument === null) {
             // queue tab
-            refreshQueueView();
+            refreshQueueView()
+                .catch(function () {})
+                .finally(function () {
+                    scheduleNextPoll(pollIntervalMs);
+                });
             return;
         }
-        if (!allTasks.length) return;
+        if (!allTasks.length) {
+            pollIntervalMs = POLL_SLOW_MS;
+            scheduleNextPoll(pollIntervalMs);
+            return;
+        }
 
         var ids = allTasks.map(function (t) { return t.id; }).filter(Boolean).join(',');
         fetch(urls.status + '?ids=' + encodeURIComponent(ids))
             .then(function (r) { return r.json(); })
             .then(function (d) {
                 if (!d.success) return;
+                updatePollCadence(d.queue);
                 // Merge runtime statuses back into allTasks
                 allTasks.forEach(function (t) {
                     if (d.statuses[t.id]) t.runtime = d.statuses[t.id];
@@ -997,6 +1127,12 @@
                 renderTaskLists();
                 updateRunningBadge(d.queue);
                 if (selectedTaskId) updateDetailRuntime();
+            })
+            .catch(function () {
+                pollIntervalMs = POLL_SLOW_MS;
+            })
+            .finally(function () {
+                scheduleNextPoll(pollIntervalMs);
             });
     }
 
@@ -1020,6 +1156,45 @@
             .replace(/</g, '&lt;')
             .replace(/>/g, '&gt;')
             .replace(/"/g, '&quot;');
+    }
+
+    function copyToClipboard(text, okMessage) {
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(text)
+                .then(function () { showToast(okMessage || 'Copied to clipboard.', 'success'); })
+                .catch(function () {
+                    if (_copyWithExecCommand(text)) {
+                        showToast(okMessage || 'Copied to clipboard.', 'success');
+                    } else {
+                        showToast('Copy failed.', 'error');
+                    }
+                });
+            return;
+        }
+        if (_copyWithExecCommand(text)) {
+            showToast(okMessage || 'Copied to clipboard.', 'success');
+        } else {
+            showToast('Copy failed.', 'error');
+        }
+    }
+
+    function _copyWithExecCommand(text) {
+        var ta = document.createElement('textarea');
+        ta.value = text;
+        ta.setAttribute('readonly', '');
+        ta.style.position = 'fixed';
+        ta.style.left = '-9999px';
+        document.body.appendChild(ta);
+        ta.select();
+        ta.setSelectionRange(0, ta.value.length);
+        var ok = false;
+        try {
+            ok = document.execCommand('copy');
+        } catch (_err) {
+            ok = false;
+        }
+        document.body.removeChild(ta);
+        return ok;
     }
 
     var toastTimer = null;
