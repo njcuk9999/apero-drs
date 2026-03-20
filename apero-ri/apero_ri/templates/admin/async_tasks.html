@@ -4,6 +4,29 @@
 {% block extra_head %}
 <!-- marked.js for client-side markdown rendering (served locally) -->
 <script src="{{ url_for('static', filename='js/marked.min.js') }}"></script>
+<style>
+.at-instrument-picker {
+    margin: 0.75rem 0 1rem 0;
+}
+.at-instrument-picker__cards {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+.at-instrument-card {
+    border: 1px solid var(--ari-line, #d6d9de);
+    background: var(--ari-panel, #ffffff);
+    color: inherit;
+    border-radius: 0.5rem;
+    padding: 0.5rem 0.8rem;
+    cursor: pointer;
+    font-weight: 600;
+}
+.at-instrument-card--active {
+    border-color: var(--ari-primary, #0b66c3);
+    box-shadow: inset 0 0 0 1px var(--ari-primary, #0b66c3);
+}
+</style>
 {% endblock %}
 
 {% block doc_content %}
@@ -12,9 +35,16 @@
 </div>
 
 <!-- ====================================================================== -->
-<!-- Instrument tabs (+ Queue tab)                                           -->
+<!-- Top-level tabs                                                          -->
 <!-- ====================================================================== -->
 <div id="at-tabs" class="ari-sg-tabs"></div>
+
+<div id="at-instrument-picker" class="at-instrument-picker" style="display:none;">
+    <div class="ari-sg-section__header" style="padding:0 0 0.5rem 0;">
+        <h3><i class="fa-solid fa-satellite-dish"></i> Instruments</h3>
+    </div>
+    <div id="at-instrument-cards" class="at-instrument-picker__cards"></div>
+</div>
 
 <!-- ====================================================================== -->
 <!-- Instrument workspace                                                    -->
@@ -25,9 +55,6 @@
     <div class="at-toolbar">
         <button id="btn-run-all" class="ari-btn ari-btn--primary">
             <i class="fa-solid fa-play"></i> Run All
-        </button>
-        <button id="btn-add-task" class="ari-btn ari-btn--secondary">
-            <i class="fa-solid fa-plus"></i> Add Task
         </button>
         <span id="at-running-badge" class="at-running-badge" style="display:none;">
             <i class="fa-solid fa-circle-notch fa-spin"></i> Running…
@@ -208,6 +235,14 @@
         <div id="queue-pending-list" class="at-queue-list">
             <div class="ari-sg-empty-small">Queue is empty</div>
         </div>
+
+        <div class="ari-sg-section__header" style="margin-top:1rem;">
+            <h3><i class="fa-solid fa-clock-rotate-left"></i> Recent History</h3>
+            <span class="ari-sg-count">50</span>
+        </div>
+        <div id="queue-history-list" class="at-queue-list">
+            <div class="ari-sg-empty-small">No recent history yet</div>
+        </div>
     </div>
 </div>
 
@@ -363,18 +398,19 @@
 window.ARI_ASYNC_TASKS = {
     instruments: {{ instruments | tojson }},
     urls: {
-        list:     '/api/admin_portal/async-tasks/list',
-        taskList: '/api/admin_portal/async-tasks/task-list',
-        save:     '/api/admin_portal/async-tasks/save',
-        delete:   '/api/admin_portal/async-tasks/delete',
-        reorder:  '/api/admin_portal/async-tasks/reorder',
-        toggle:   '/api/admin_portal/async-tasks/toggle',
-        runNow:   '/api/admin_portal/async-tasks/run-now',
-        runAll:   '/api/admin_portal/async-tasks/run-all',
-        stop:     '/api/admin_portal/async-tasks/stop',
-        status:   '/api/admin_portal/async-tasks/status',
-        readFile: '/api/admin_portal/async-tasks/read-file',
-        downloadFile: '/api/admin_portal/async-tasks/download-file',
+        globalList: '{{ url_for("api_async_tasks_global_list") }}',
+        list:     '{{ url_for("api_async_tasks_list") }}',
+        taskList: '{{ url_for("api_async_tasks_task_list") }}',
+        save:     '{{ url_for("api_async_tasks_save") }}',
+        delete:   '{{ url_for("api_async_tasks_delete") }}',
+        reorder:  '{{ url_for("api_async_tasks_reorder") }}',
+        toggle:   '{{ url_for("api_async_tasks_toggle") }}',
+        runNow:   '{{ url_for("api_async_tasks_run_now") }}',
+        runAll:   '{{ url_for("api_async_tasks_run_all") }}',
+        stop:     '{{ url_for("api_async_tasks_stop") }}',
+        status:   '{{ url_for("api_async_tasks_status") }}',
+        readFile: '{{ url_for("api_async_tasks_read_file") }}',
+        downloadFile: '{{ url_for("api_async_tasks_download_file") }}',
     }
 };
 </script>

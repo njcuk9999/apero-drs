@@ -15,6 +15,7 @@ import socket
 import smtplib
 import threading
 import time
+import uuid
 import yaml
 from datetime import timedelta, datetime, timezone
 from email.message import EmailMessage
@@ -485,6 +486,9 @@ class ARIApp(Flask):
         self.add_url_rule('/api/admin/async-tasks/list',
                   'api_async_tasks_list',
                   self._api_async_tasks_list)
+        self.add_url_rule('/api/admin/async-tasks/global-list',
+                  'api_async_tasks_global_list',
+                  self._api_async_tasks_global_list)
         self.add_url_rule('/api/admin/async-tasks/task-list',
                   'api_async_tasks_task_list',
                   self._api_async_tasks_task_list)
@@ -768,8 +772,14 @@ class ARIApp(Flask):
             # Async tasks page: inject instruments
             if page_id == 'home.admin_portal.async_tasks' and user_info:
                 params = load_parameters()
-                all_instr = params.get('instruments', {}).get('value', [])
-                context['instruments'] = all_instr
+                instruments_entry = params.get('instruments', {})
+                if isinstance(instruments_entry, dict):
+                    all_instr = instruments_entry.get('value', [])
+                elif isinstance(instruments_entry, list):
+                    all_instr = instruments_entry
+                else:
+                    all_instr = []
+                context['instruments'] = all_instr if isinstance(all_instr, list) else []
 
             # APERO profiles page: inject instruments + groups meta
             if page_id == 'home.admin_portal.apero_profiles' and user_info:
@@ -912,6 +922,20 @@ class ARIApp(Flask):
         tasks_dir = ARI_DIR / 'tasks' / instrument
         run_ids = set()
         if tasks_dir.exists():
+            # New layout: tasks/<instrument>/<apero_profile>/object_table.json
+            for jf in tasks_dir.glob('*/object_table.json'):
+                try:
+                    with open(jf, encoding='utf-8') as f:
+                        data = _json.load(f)
+                    for row in data.get('rows', []):
+                        raw = str(row.get('RUN_ID', '') or '')
+                        for rid in raw.split(','):
+                            rid = rid.strip()
+                            if rid:
+                                run_ids.add(rid)
+                except Exception:
+                    pass
+            # Legacy layout: tasks/<instrument>/object_table_<profile>.json
             for jf in tasks_dir.glob('object_table_*.json'):
                 try:
                     with open(jf, encoding='utf-8') as f:
@@ -3094,7 +3118,14 @@ class ARIApp(Flask):
 
         # Locate the JSON file
         tasks_dir = base_dir / 'tasks' / instrument
-        json_path = tasks_dir / f'object_table_{profile_id}.json'
+        # New layout: tasks/<instrument>/<profile>/object_table.json
+        json_path = tasks_dir / profile_id / 'object_table.json'
+
+        # Legacy layout fallback: tasks/<instrument>/object_table_<profile>.json
+        if not json_path.exists():
+            legacy_path = tasks_dir / f'object_table_{profile_id}.json'
+            if legacy_path.exists():
+                json_path = legacy_path
 
         if not json_path.exists():
             return jsonify(
@@ -3125,6 +3156,11 @@ class ARIApp(Flask):
         if not isinstance(raw_column_meta, dict):
             raw_column_meta = {}
 
+        hidden_by_meta = {
+            col for col, meta in raw_column_meta.items()
+            if isinstance(meta, dict) and bool(meta.get('hidden', False))
+        }
+
         # Filter rows based on accessible run_ids
         filtered = []
         for row in all_rows:
@@ -3136,12 +3172,12 @@ class ARIApp(Flask):
         # Build column list (exclude RUN_ID)
         skip = {'RUN_ID', 'run_id', 'ALL_RUN_IDS', 'all_run_ids'}
         columns = [c for c in (all_rows[0].keys() if all_rows else [])
-                   if c not in skip]
+                   if c not in skip and c not in hidden_by_meta]
 
         column_meta = {
             col: dict(meta)
             for col, meta in raw_column_meta.items()
-            if col not in skip and isinstance(meta, dict)
+            if col not in skip and col not in hidden_by_meta and isinstance(meta, dict)
         }
         if 'OBJNAME' in columns and 'OBJNAME' not in column_meta:
             column_meta['OBJNAME'] = {
@@ -3154,7 +3190,8 @@ class ARIApp(Flask):
 
         # Strip skipped columns from each row
         clean_rows = [
-            {k: v for k, v in row.items() if k not in skip}
+            {k: v for k, v in row.items()
+             if k not in skip and k not in hidden_by_meta}
             for row in filtered
         ]
 
@@ -3324,13 +3361,17 @@ class ARIApp(Flask):
         )
 
         tasks_dir = base_dir / 'tasks' / instrument
-        json_path = tasks_dir / f'obs_table_{profile_id}.json'
+        # New layout: tasks/<instrument>/<profile>/obs_table.json
+        json_path = tasks_dir / profile_id / 'obs_table.json'
 
         # Backward compatibility for older task outputs.
         if not json_path.exists():
-            legacy_path = tasks_dir / f'observation_table_{profile_id}.json'
-            if legacy_path.exists():
-                json_path = legacy_path
+            legacy_path1 = tasks_dir / f'obs_table_{profile_id}.json'
+            legacy_path2 = tasks_dir / f'observation_table_{profile_id}.json'
+            if legacy_path1.exists():
+                json_path = legacy_path1
+            elif legacy_path2.exists():
+                json_path = legacy_path2
 
         if not json_path.exists():
             return jsonify(
@@ -5429,6 +5470,119 @@ class ARIApp(Flask):
             return None, None
         return user_info, perms
 
+    @staticmethod
+    def _coerce_task_frequency(value, default: float = 24.0) -> float:
+        """Normalize a task frequency value in hours."""
+        try:
+            freq = float(value)
+            if freq > 0:
+                return freq
+        except (TypeError, ValueError):
+            pass
+        return float(default)
+
+    @staticmethod
+    def _coerce_task_enabled(value, default: bool = False) -> bool:
+        """Normalize a task enabled flag."""
+        if isinstance(value, bool):
+            return value
+        if value is None:
+            return default
+        if isinstance(value, str):
+            sval = value.strip().lower()
+            if sval in ['true', '1', 'yes', 'on']:
+                return True
+            if sval in ['false', '0', 'no', 'off', '']:
+                return False
+        return bool(value)
+
+    @staticmethod
+    def _is_global_scope(instrument: str) -> bool:
+        """Return True if this task scope is the shared global scope."""
+        return str(instrument).strip() == '__GLOBAL__'
+
+    def _task_keys_for_scope(self, instrument: str) -> list:
+        """Return task keys allowed in a given scope from tasks.TYPE."""
+        from apero_ri import tasks as task_module
+
+        want_type = 'GLOBAL' if self._is_global_scope(instrument) else 'INSTRUMENT'
+        keys = []
+        for task_key in task_module.TASK_LIST.keys():
+            ttype = str(task_module.TYPE.get(task_key, 'INSTRUMENT')).strip().upper()
+            if ttype == want_type:
+                keys.append(task_key)
+        return keys
+
+    def _merge_async_task_catalog(self, instrument: str, all_tasks: dict):
+        """Merge persisted task overrides with the task catalog defaults."""
+        from apero_ri import tasks as task_module
+
+        stored_tasks = all_tasks.get(instrument, [])
+        if not isinstance(stored_tasks, list):
+            stored_tasks = []
+
+        by_key = {}
+        for task_cfg in stored_tasks:
+            if not isinstance(task_cfg, dict):
+                continue
+            key = str(task_cfg.get('task_key', '')).strip()
+            if key and key not in by_key:
+                by_key[key] = task_cfg
+
+        merged = []
+        task_keys = self._task_keys_for_scope(instrument)
+        for idx, task_key in enumerate(task_keys, start=1):
+            task_cfg = dict(by_key.get(task_key, {}))
+            task_id = str(task_cfg.get('id', '')).strip()
+            if not task_id:
+                task_id = str(uuid.uuid5(
+                    uuid.NAMESPACE_URL,
+                    f'ari-async-task:{instrument}:{task_key}'
+                ))
+
+            default_freq = self._coerce_task_frequency(
+                task_module.FREQ.get(task_key, 24.0), 24.0
+            )
+            default_enabled = self._coerce_task_enabled(
+                task_module.ENABLED.get(task_key, False), False
+            )
+
+            merged_cfg = {
+                'id': task_id,
+                'task_key': task_key,
+                'frequency': self._coerce_task_frequency(
+                    task_cfg.get('frequency', default_freq), default_freq
+                ),
+                'active': self._coerce_task_enabled(
+                    task_cfg.get('active', default_enabled), default_enabled
+                ),
+                'order': idx,
+            }
+
+            if task_key == 'ARI_LOCAL_DATA_BACKUP':
+                try:
+                    daily_copies = int(task_cfg.get('daily_copies', 7) or 0)
+                except (TypeError, ValueError):
+                    daily_copies = 7
+                try:
+                    weekly_copies = int(task_cfg.get('weekly_copies', 4) or 0)
+                except (TypeError, ValueError):
+                    weekly_copies = 4
+                merged_cfg['daily_copies'] = max(0, daily_copies)
+                merged_cfg['weekly_copies'] = max(0, weekly_copies)
+
+            for field in ['last_run', 'run_count', 'info', 'output_files',
+                          'error', 'last_status', 'cooldown_until']:
+                if field in task_cfg:
+                    merged_cfg[field] = task_cfg.get(field)
+
+            merged.append(merged_cfg)
+
+        original = all_tasks.get(instrument, [])
+        changed = original != merged
+        all_tasks[instrument] = merged
+        return merged, changed
+
     def _api_async_tasks_list(self):
         """List async task configs for an instrument, merged with runtime state."""
         user_info, perms = self._require_async_tasks_perm()
@@ -5439,8 +5593,11 @@ class ARIApp(Flask):
         if not instrument:
             return jsonify(success=False, error='No instrument'), 400
 
+        from apero_ri import tasks as task_module
         all_tasks = load_async_tasks()
-        inst_tasks = all_tasks.get(instrument, [])
+        inst_tasks, changed = self._merge_async_task_catalog(instrument, all_tasks)
+        if changed:
+            save_async_tasks(all_tasks)
 
         result = []
         for tc in inst_tasks:
@@ -5461,6 +5618,46 @@ class ARIApp(Flask):
                     'run_count': tc.get('run_count', 0),
                 }
             entry['runtime'] = rt
+            task_key = entry.get('task_key', '')
+            entry['task_type'] = task_module.TYPE.get(task_key, 'INSTRUMENT')
+            result.append(entry)
+
+        queue_status = task_runner.get_status()
+        return jsonify(success=True, tasks=result, queue=queue_status)
+
+    def _api_async_tasks_global_list(self):
+        """Load global tasks from the task registry defaults and overrides."""
+        user_info, perms = self._require_async_tasks_perm()
+        if not user_info:
+            return jsonify(success=False, error='Unauthorized'), 401
+
+        all_tasks = load_async_tasks()
+        global_scope = '__GLOBAL__'
+        global_tasks, changed = self._merge_async_task_catalog(global_scope, all_tasks)
+        if changed:
+            save_async_tasks(all_tasks)
+
+        result = []
+        for tc in global_tasks:
+            entry = dict(tc)
+            tid = tc.get('id', '')
+            rt = task_runner.get_task_status(tid) if tid else {'found': False}
+            if not rt.get('found'):
+                rt = {
+                    'found': False,
+                    'status': tc.get('last_status', 'not_started'),
+                    'progress': 0,
+                    'info': tc.get('info', ''),
+                    'last_run': tc.get('last_run', 'Never'),
+                    'output_files': tc.get('output_files', []),
+                    'is_current': False,
+                    'is_queued': False,
+                    'error': tc.get('error', ''),
+                    'run_count': tc.get('run_count', 0),
+                }
+            entry['runtime'] = rt
+            entry['task_type'] = 'GLOBAL'
+            entry['instrument'] = global_scope
             result.append(entry)
 
         queue_status = task_runner.get_status()
@@ -5476,15 +5673,17 @@ class ARIApp(Flask):
         opts = []
         for key, cls in task_module.TASK_LIST.items():
             inst = cls()
+            task_type = task_module.TYPE.get(key, 'INSTRUMENT')
             opts.append({
                 'key': key,
                 'name': inst.name,
                 'description': inst.description,
+                'type': task_type,
             })
         return jsonify(success=True, tasks=opts)
 
     def _api_async_tasks_save(self):
-        """Create or update an async task configuration."""
+        """Update an async task configuration from the fixed task catalog."""
         user_info, perms = self._require_async_tasks_perm()
         if not user_info:
             return jsonify(success=False, error='Unauthorized'), 401
@@ -5501,50 +5700,37 @@ class ARIApp(Flask):
         daily_copies = int(data.get('daily_copies', 0) or 0)
         weekly_copies = int(data.get('weekly_copies', 0) or 0)
 
-        if not instrument or not task_key:
+        if not instrument or not task_id:
             return jsonify(success=False, error='Missing fields'), 400
         if frequency <= 0:
             return jsonify(success=False, error='Frequency must be > 0'), 400
         if daily_copies < 0 or weekly_copies < 0:
             return jsonify(success=False,
                            error='Backup copy counts must be non-negative'), 400
-        if (task_key == 'ARI_LOCAL_DATA_BACKUP'
-                and daily_copies + weekly_copies <= 0):
-            return jsonify(success=False,
-                           error='Backup task needs at least one retained daily or weekly copy'), 400
-
-        from apero_ri import tasks as task_module
-        if task_key not in task_module.TASK_LIST:
-            return jsonify(success=False, error='Invalid task key'), 400
 
         all_tasks = load_async_tasks()
-        inst_tasks = all_tasks.get(instrument, [])
+        inst_tasks, _ = self._merge_async_task_catalog(instrument, all_tasks)
 
-        if task_id:
-            found = False
-            for t in inst_tasks:
-                if t.get('id') == task_id:
-                    t['task_key'] = task_key
-                    t['frequency'] = frequency
-                    t['active'] = active
-                    t['daily_copies'] = daily_copies
-                    t['weekly_copies'] = weekly_copies
-                    found = True
-                    break
-            if not found:
-                return jsonify(success=False, error='Task not found'), 404
-        else:
-            import uuid
-            task_id = str(uuid.uuid4())
-            inst_tasks.append({
-                'id': task_id,
-                'task_key': task_key,
-                'frequency': frequency,
-                'active': active,
-                'daily_copies': daily_copies,
-                'weekly_copies': weekly_copies,
-                'order': len(inst_tasks) + 1,
-            })
+        found = False
+        for t in inst_tasks:
+            if t.get('id') != task_id:
+                continue
+
+            task_key = t.get('task_key', '')
+            if task_key == 'ARI_LOCAL_DATA_BACKUP' and daily_copies + weekly_copies <= 0:
+                return jsonify(success=False,
+                               error='Backup task needs at least one retained daily or weekly copy'), 400
+
+            t['frequency'] = frequency
+            t['active'] = active
+            if task_key == 'ARI_LOCAL_DATA_BACKUP':
+                t['daily_copies'] = daily_copies
+                t['weekly_copies'] = weekly_copies
+            found = True
+            break
+
+        if not found:
+            return jsonify(success=False, error='Task not found'), 404
 
         all_tasks[instrument] = inst_tasks
         save_async_tasks(all_tasks)
@@ -5628,9 +5814,11 @@ class ARIApp(Flask):
             return jsonify(success=False, error='Missing fields'), 400
 
         all_tasks = load_async_tasks()
-        for t in all_tasks.get(instrument, []):
+        inst_tasks, _ = self._merge_async_task_catalog(instrument, all_tasks)
+        for t in inst_tasks:
             if t.get('id') == task_id:
                 t['active'] = not t.get('active', True)
+                all_tasks[instrument] = inst_tasks
                 save_async_tasks(all_tasks)
                 self._refresh_admin_health_after_change(user_info, perms)
                 return jsonify(success=True, active=t['active'])
@@ -5655,13 +5843,18 @@ class ARIApp(Flask):
             return jsonify(success=False, error='Missing fields'), 400
 
         all_tasks = load_async_tasks()
+        inst_tasks, _ = self._merge_async_task_catalog(instrument, all_tasks)
         task_cfg = next(
-            (t for t in all_tasks.get(instrument, [])
+            (t for t in inst_tasks
              if t.get('id') == task_id),
             None
         )
         if not task_cfg:
             return jsonify(success=False, error='Task not found'), 404
+
+        allowed, reason = task_runner.can_enqueue_now(task_cfg)
+        if not allowed:
+            return jsonify(success=False, error=reason), 409
 
         from apero_ri import tasks as task_module
         task_key = task_cfg.get('task_key', '')
@@ -5704,8 +5897,9 @@ class ARIApp(Flask):
             task_runner.stop_and_clear()
 
         all_tasks = load_async_tasks()
+        inst_tasks, _ = self._merge_async_task_catalog(instrument, all_tasks)
         inst_tasks = sorted(
-            all_tasks.get(instrument, []),
+            inst_tasks,
             key=lambda t: t.get('order', 999)
         )
 
@@ -5713,8 +5907,13 @@ class ARIApp(Flask):
         all_profiles = load_apero_profiles()
 
         added = []
+        blocked = []
         for task_cfg in inst_tasks:
             if not task_cfg.get('active', True):
+                continue
+            allowed, reason = task_runner.can_enqueue_now(task_cfg)
+            if not allowed:
+                blocked.append({'id': task_cfg.get('id', ''), 'reason': reason})
                 continue
             task_key = task_cfg.get('task_key', '')
             task_cls = task_module.TASK_LIST.get(task_key)
@@ -5730,15 +5929,17 @@ class ARIApp(Flask):
             task_runner.enqueue(instrument, tid, instance, run_params)
             added.append(tid)
 
-        return jsonify(success=True, added=added)
+        return jsonify(success=True, added=added, blocked=blocked)
 
     def _api_async_tasks_stop(self):
-        """Clear the pending queue (does not interrupt the running task)."""
+        """Stop queued tasks and apply cooldown before any next attempt."""
         user_info, perms = self._require_async_tasks_perm()
         if not user_info:
             return jsonify(success=False, error='Unauthorized'), 401
-        task_runner.stop_and_clear()
-        return jsonify(success=True)
+        data = request.get_json(silent=True) or {}
+        instrument = str(data.get('instrument', '') or '').strip() or None
+        result = task_runner.stop_all_with_cooldown(instrument=instrument)
+        return jsonify(success=True, **result)
 
     def _api_async_tasks_status(self):
         """Poll runtime status for a set of task ids and the full queue."""
@@ -5748,6 +5949,16 @@ class ARIApp(Flask):
 
         ids_param = request.args.get('ids', '').strip()
         task_ids = [i for i in ids_param.split(',') if i.strip()]
+        if not task_ids:
+            queue_status = task_runner.get_status()
+            current_info = queue_status.get('current_info') or {}
+            current_id = str(current_info.get('task_id', '')).strip()
+            queue_ids = [
+                str(item.get('task_id', '')).strip()
+                for item in (queue_status.get('queue_info') or [])
+                if isinstance(item, dict)
+            ]
+            task_ids = [tid for tid in [current_id] + queue_ids if tid]
 
         # Build a map from task_id -> yaml config for fallback after restart
         all_tasks = load_async_tasks()
@@ -5859,30 +6070,44 @@ class ARIApp(Flask):
                 return json.dumps(value, ensure_ascii=False)
             return str(value)
 
-        if isinstance(data, list):
-            if all(isinstance(item, dict) for item in data):
-                columns = []
-                seen = set()
-                for item in data:
+        def _rows_to_table(rows_data: list, columns_hint=None, row_count_hint=None) -> dict:
+            columns = []
+            seen = set()
+            if isinstance(columns_hint, list):
+                for col in columns_hint:
+                    scol = str(col)
+                    if scol not in seen:
+                        seen.add(scol)
+                        columns.append(scol)
+            for item in rows_data:
+                if isinstance(item, dict):
                     for key in item.keys():
                         skey = str(key)
                         if skey not in seen:
                             seen.add(skey)
                             columns.append(skey)
 
-                rows = []
-                for item in data[:max_rows]:
-                    row = {}
-                    for col in columns:
-                        row[col] = _cell(item.get(col, ''))
-                    rows.append(row)
+            rows = []
+            for item in rows_data[:max_rows]:
+                if isinstance(item, dict):
+                    row = {col: _cell(item.get(col, '')) for col in columns}
+                else:
+                    row = {'value': _cell(item)}
+                rows.append(row)
 
-                return {
-                    'columns': columns,
-                    'rows': rows,
-                    'row_count': len(data),
-                    'truncated': len(data) > max_rows,
-                }
+            row_count = row_count_hint if isinstance(row_count_hint, int) else len(rows_data)
+            if row_count < len(rows_data):
+                row_count = len(rows_data)
+            return {
+                'columns': columns if columns else ['value'],
+                'rows': rows,
+                'row_count': row_count,
+                'truncated': len(rows_data) > max_rows,
+            }
+
+        if isinstance(data, list):
+            if all(isinstance(item, dict) for item in data):
+                return _rows_to_table(data)
 
             rows = []
             for index, value in enumerate(data[:max_rows], start=1):
@@ -5895,6 +6120,12 @@ class ARIApp(Flask):
             }
 
         if isinstance(data, dict):
+            rows_payload = data.get('rows')
+            if isinstance(rows_payload, list):
+                return _rows_to_table(rows_payload,
+                                      columns_hint=data.get('columns'),
+                                      row_count_hint=data.get('row_count'))
+
             items = list(data.items())
             rows = []
             for key, value in items[:max_rows]:

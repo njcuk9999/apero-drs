@@ -10,7 +10,8 @@ lock protecting _queue, _current, _instances and _errors.
 import threading
 import traceback
 import time
-from datetime import datetime, timezone
+import json
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
@@ -31,6 +32,23 @@ _worker_thread: Optional[threading.Thread] = None
 _scheduler_thread: Optional[threading.Thread] = None
 _scheduler_local_data_dir = str(Path.home() / '.ari')
 _scheduler_poll_seconds = 30.0
+_history_relpath = Path('admin') / 'async_history.txt'
+
+
+def _is_global_scope(instrument: str) -> bool:
+    """Return True if this scope key represents global async tasks."""
+    return str(instrument).strip() == '__GLOBAL__'
+
+
+def _task_keys_for_scope(task_module: Any, instrument: str) -> List[str]:
+    """Return task keys allowed in this scope from tasks.TYPE."""
+    want_type = 'GLOBAL' if _is_global_scope(instrument) else 'INSTRUMENT'
+    keys: List[str] = []
+    for task_key in task_module.TASK_LIST.keys():
+        ttype = str(task_module.TYPE.get(task_key, 'INSTRUMENT')).strip().upper()
+        if ttype == want_type:
+            keys.append(task_key)
+    return keys
 
 
 def _dedupe_strings(values: Any) -> List[str]:
@@ -46,6 +64,62 @@ def _dedupe_strings(values: Any) -> List[str]:
         seen.add(sval)
         out.append(sval)
     return out
+
+
+def _history_file_path() -> Path:
+    """Return the history file path under local data dir."""
+    return Path(_scheduler_local_data_dir) / _history_relpath
+
+
+def _append_history_entry(instrument: str, task_id: str,
+                          task_name: str, status: str,
+                          details: str = '') -> None:
+    """Append one history entry to async history file as JSON line."""
+    try:
+        path = _history_file_path()
+        path.parent.mkdir(parents=True, exist_ok=True)
+        payload = {
+            'timestamp': datetime.now(timezone.utc).isoformat(),
+            'instrument': str(instrument or ''),
+            'task_id': str(task_id or ''),
+            'task_name': str(task_name or task_id or ''),
+            'status': str(status or ''),
+            'details': str(details or ''),
+        }
+        with path.open('a', encoding='utf-8') as handle:
+            handle.write(json.dumps(payload, ensure_ascii=False) + '\n')
+    except Exception:
+        pass
+
+
+def get_recent_history(limit: int = 50) -> List[Dict[str, str]]:
+    """Return newest async history entries from async_history.txt."""
+    try:
+        path = _history_file_path()
+        if not path.exists() or limit <= 0:
+            return []
+        lines = path.read_text(encoding='utf-8', errors='replace').splitlines()
+        out: List[Dict[str, str]] = []
+        for line in reversed(lines):
+            if not line.strip():
+                continue
+            try:
+                row = json.loads(line)
+                out.append({
+                    'timestamp': str(row.get('timestamp', '')),
+                    'instrument': str(row.get('instrument', '')),
+                    'task_id': str(row.get('task_id', '')),
+                    'task_name': str(row.get('task_name', '') or row.get('task_id', '')),
+                    'status': str(row.get('status', '')),
+                    'details': str(row.get('details', '')),
+                })
+            except Exception:
+                continue
+            if len(out) >= limit:
+                break
+        return out
+    except Exception:
+        return []
 
 
 # =============================================================================
@@ -86,6 +160,13 @@ def _run_worker() -> None:
         finally:
             instance.run_count = getattr(instance, 'run_count', 0) + 1
             instance.last_run = datetime.now(timezone.utc).isoformat()
+            _append_history_entry(
+                _inst,
+                task_id,
+                getattr(instance, 'name', task_id),
+                getattr(instance, 'status', ''),
+                '' if getattr(instance, 'status', '') != 'failed' else _errors.get(task_id, ''),
+            )
             _persist_runtime_state(_inst, task_id, instance)
             with _lock:
                 _current = None
@@ -173,6 +254,10 @@ def _task_is_due(task_cfg: dict, now: datetime) -> bool:
     if not task_cfg.get('active', True):
         return False
 
+    cooldown_until = _parse_last_run(task_cfg.get('cooldown_until'))
+    if cooldown_until is not None and now < cooldown_until:
+        return False
+
     task_id = str(task_cfg.get('id', '') or '').strip()
     if not task_id or _task_is_busy(task_id):
         return False
@@ -190,6 +275,53 @@ def _task_is_due(task_cfg: dict, now: datetime) -> bool:
 
     elapsed_seconds = (now - last_run).total_seconds()
     return elapsed_seconds >= frequency_hours * 3600.0
+
+
+def _normalize_task_frequency(value, default: float = 24.0) -> float:
+    """Normalize a task frequency value in hours."""
+    try:
+        freq = float(value)
+        if freq > 0:
+            return freq
+    except (TypeError, ValueError):
+        pass
+    return float(default)
+
+
+def _normalize_task_enabled(value, default: bool = False) -> bool:
+    """Normalize a task enabled flag."""
+    if isinstance(value, bool):
+        return value
+    if value is None:
+        return default
+    if isinstance(value, str):
+        sval = value.strip().lower()
+        if sval in ['true', '1', 'yes', 'on']:
+            return True
+        if sval in ['false', '0', 'no', 'off', '']:
+            return False
+    return bool(value)
+
+
+def can_enqueue_now(task_cfg: dict, now: Optional[datetime] = None) -> Tuple[bool, str]:
+    """Return whether a task may be manually enqueued right now."""
+    now_utc = now or datetime.now(timezone.utc)
+
+    if not task_cfg.get('active', True):
+        return False, 'Task is inactive.'
+
+    task_id = str(task_cfg.get('id', '') or '').strip()
+    if not task_id:
+        return False, 'Task id is missing.'
+
+    if _task_is_busy(task_id):
+        return False, 'Task is already queued or running.'
+
+    cooldown_until = _parse_last_run(task_cfg.get('cooldown_until'))
+    if cooldown_until is not None and now_utc < cooldown_until:
+        return False, f'Task is in cooldown until {cooldown_until.isoformat()}.'
+
+    return True, ''
 
 
 def _scheduler_poll(local_data_dir: str) -> None:
@@ -211,14 +343,86 @@ def _scheduler_poll(local_data_dir: str) -> None:
                 return
 
         from apero_ri import tasks as task_module
-        from apero_ri.core.auth import load_apero_profiles, load_async_tasks
+        from apero_ri.core.auth import load_apero_profiles, load_async_tasks, save_async_tasks
+        import uuid as uuid_module
 
         all_tasks = load_async_tasks()
         all_profiles = load_apero_profiles()
         now = datetime.now(timezone.utc)
+        changed = False
+
+        if '__GLOBAL__' not in all_tasks:
+            all_tasks['__GLOBAL__'] = []
+            changed = True
 
         for instrument, task_list in all_tasks.items():
-            ordered_tasks = sorted(task_list, key=lambda task: task.get('order', 999))
+            if not isinstance(task_list, list):
+                continue
+
+            stored_tasks = task_list
+            by_key = {}
+            for task_cfg in stored_tasks:
+                if not isinstance(task_cfg, dict):
+                    continue
+                key = str(task_cfg.get('task_key', '')).strip()
+                if key and key not in by_key:
+                    by_key[key] = task_cfg
+
+            merged = []
+            task_keys = _task_keys_for_scope(task_module, instrument)
+            for idx, task_key in enumerate(task_keys, start=1):
+                task_cfg = dict(by_key.get(task_key, {}))
+                task_id = str(task_cfg.get('id', '')).strip()
+                if not task_id:
+                    task_id = str(uuid_module.uuid5(
+                        uuid_module.NAMESPACE_URL,
+                        f'ari-async-task:{instrument}:{task_key}'
+                    ))
+                    changed = True
+
+                default_freq = _normalize_task_frequency(
+                    task_module.FREQ.get(task_key, 24.0), 24.0
+                )
+                default_enabled = _normalize_task_enabled(
+                    task_module.ENABLED.get(task_key, False), False
+                )
+
+                merged_cfg = {
+                    'id': task_id,
+                    'task_key': task_key,
+                    'frequency': _normalize_task_frequency(
+                        task_cfg.get('frequency', default_freq), default_freq
+                    ),
+                    'active': _normalize_task_enabled(
+                        task_cfg.get('active', default_enabled), default_enabled
+                    ),
+                    'order': idx,
+                }
+
+                if task_key == 'ARI_LOCAL_DATA_BACKUP':
+                    try:
+                        daily_copies = int(task_cfg.get('daily_copies', 7) or 0)
+                    except (TypeError, ValueError):
+                        daily_copies = 7
+                    try:
+                        weekly_copies = int(task_cfg.get('weekly_copies', 4) or 0)
+                    except (TypeError, ValueError):
+                        weekly_copies = 4
+                    merged_cfg['daily_copies'] = max(0, daily_copies)
+                    merged_cfg['weekly_copies'] = max(0, weekly_copies)
+
+                for field in ['last_run', 'run_count', 'info', 'output_files',
+                              'error', 'last_status']:
+                    if field in task_cfg:
+                        merged_cfg[field] = task_cfg.get(field)
+
+                merged.append(merged_cfg)
+
+            if merged != stored_tasks:
+                all_tasks[instrument] = merged
+                changed = True
+
+            ordered_tasks = sorted(merged, key=lambda task: task.get('order', 999))
             for task_cfg in ordered_tasks:
                 if not _task_is_due(task_cfg, now):
                     continue
@@ -232,6 +436,9 @@ def _scheduler_poll(local_data_dir: str) -> None:
                     instrument, local_data_dir, all_profiles, task_cfg
                 )
                 enqueue(instrument, task_id, instance, run_params)
+
+        if changed:
+            save_async_tasks(all_tasks)
     except Exception:
         pass
     finally:
@@ -280,7 +487,9 @@ def build_run_params(instrument: str, local_data_dir: str,
             p['DATABASE_USER'] = p['DATABASE_USERNAME']
         mapped[pname] = p
     from pathlib import Path as _Path
+    global _scheduler_local_data_dir
     safe_dir = local_data_dir or str(_Path.home() / '.ari')
+    _scheduler_local_data_dir = safe_dir
     return {
         'LOCAL_DATA_DIR': safe_dir,
         'INSTRUMENT': instrument,
@@ -322,6 +531,79 @@ def stop_and_clear() -> None:
         _queue.clear()
 
 
+def stop_all_with_cooldown(instrument: Optional[str] = None) -> Dict[str, Any]:
+    """Stop queued tasks and apply per-task cooldown windows.
+
+    Cooldown is set to ``now + frequency`` for each selected task. Running tasks
+    are not interrupted, but subsequent enqueue attempts are blocked until the
+    cooldown expires.
+    """
+    from apero_ri.core.auth import load_async_tasks, save_async_tasks
+
+    now = datetime.now(timezone.utc)
+    all_tasks = load_async_tasks()
+
+    instruments: List[str]
+    if instrument:
+        instruments = [instrument] if instrument in all_tasks else []
+    else:
+        instruments = list(all_tasks.keys())
+
+    with _lock:
+        if instrument:
+            keep = []
+            for queued_instrument, queued_task_id in _queue:
+                if queued_instrument == instrument:
+                    inst = _instances.get(queued_task_id)
+                    if inst is not None:
+                        inst.status = 'cancelled'
+                        _append_history_entry(
+                            queued_instrument,
+                            queued_task_id,
+                            getattr(inst, 'name', queued_task_id),
+                            'cancelled',
+                            'Cancelled from queue stop action.',
+                        )
+                else:
+                    keep.append((queued_instrument, queued_task_id))
+            _queue[:] = keep
+        else:
+            for _i, tid in _queue:
+                inst = _instances.get(tid)
+                if inst is not None:
+                    inst.status = 'cancelled'
+                    _append_history_entry(
+                        _i,
+                        tid,
+                        getattr(inst, 'name', tid),
+                        'cancelled',
+                        'Cancelled from queue stop action.',
+                    )
+            _queue.clear()
+
+    updated = 0
+    for inst_key in instruments:
+        task_list = all_tasks.get(inst_key, [])
+        if not isinstance(task_list, list):
+            continue
+        for task_cfg in task_list:
+            if not isinstance(task_cfg, dict):
+                continue
+            freq = _normalize_task_frequency(task_cfg.get('frequency', 24.0), 24.0)
+            cooldown_until = now + timedelta(hours=freq)
+            task_cfg['cooldown_until'] = cooldown_until.isoformat()
+            task_cfg['last_run'] = now.isoformat()
+            task_cfg['last_status'] = 'cancelled'
+            updated += 1
+
+    save_async_tasks(all_tasks)
+    return {
+        'instrument': instrument or 'ALL',
+        'updated_tasks': updated,
+        'cooldown_set_at': now.isoformat(),
+    }
+
+
 def clear_instance(task_id: str) -> None:
     """Remove a task instance and its error record from memory."""
     with _lock:
@@ -334,10 +616,32 @@ def clear_instance(task_id: str) -> None:
 def get_status() -> dict:
     """Return current queue and running-task information."""
     with _lock:
+        current_info = None
+        if _current is not None:
+            curr_instrument, curr_task_id = _current
+            curr_inst = _instances.get(curr_task_id)
+            current_info = {
+                'instrument': curr_instrument,
+                'task_id': curr_task_id,
+                'task_name': getattr(curr_inst, 'name', curr_task_id) if curr_inst else curr_task_id,
+            }
+
+        queue_info = []
+        for q_instrument, q_task_id in _queue:
+            q_inst = _instances.get(q_task_id)
+            queue_info.append({
+                'instrument': q_instrument,
+                'task_id': q_task_id,
+                'task_name': getattr(q_inst, 'name', q_task_id) if q_inst else q_task_id,
+            })
+
         return {
             'current': _current,
+            'current_info': current_info,
             'queue': list(_queue),
+            'queue_info': queue_info,
             'queue_length': len(_queue),
+            'recent_history': get_recent_history(limit=50),
         }
 
 

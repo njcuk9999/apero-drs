@@ -90,8 +90,7 @@ class AperoObjectTableTask(apero_async.AperoAsyncTask):
         This should include database connection parameters and any other 
         necessary information.
         """
-        # empty the info
-        self.info = ''
+        
         # get apero profiles:
         apero_profile_names = params['APERO_PROFILE_NAMES']
         apero_profiles = params['APERO_PROFILES']
@@ -135,8 +134,8 @@ class AperoObjectTableTask(apero_async.AperoAsyncTask):
             # construct filename
             instrument = params.get('INSTRUMENT', 'unknown')
             local_dir = (Path(params.get('LOCAL_DATA_DIR', str(ARI_DIR)))
-                         / 'tasks' / instrument / apero_profile)
-            basename = 'object_table.json'
+                         / 'tasks' / instrument)
+            basename = f'object_table_{apero_profile}.json'
             filename =  local_dir / basename
             # save results to JSON file for use in the UI
             apero_async.save_results(filename, results, metadata)
@@ -240,37 +239,163 @@ def check_required(aparams) -> Dict[str, Any]:
     return rparams
 
 
+def file_cols(fdb: str, ldb: str, fkind: str, 
+              block_kind: Optional[str] = None,
+              output: Optional[str] = None, 
+              fiber: Optional[str] = None, 
+              scitypes: Optional[str] = None,
+              count_method: str = 'SUM'):
+    # sub-sub condition on qc
+    failed_qc = f'COALESCE({ldb}.PASSED_ALL_QC, 0) = 0 THEN 1 ELSE 0'
+    passed_qc = f'{ldb}.PASSED_ALL_QC = 1 THEN 1 ELSE 0'
+    # get general condition
+    conditions = [f'{fdb}.BLOCK_KIND = "{block_kind}"']
+    
+    if scitypes is not None:
+        conditions.append(f'{fdb}.KW_DPRTYPE IN ({scitypes})')
+    if output is not None:
+        conditions.append(f'{fdb}.KW_OUTPUT = "{output}"')
+    if fiber is not None:
+        conditions.append(f'{fdb}.KW_FIBER = {fiber}')
+    
+    if count_method == 'SUM':
+        count_func = 'SUM(CASE WHEN {0} END) AS {1}'
+    elif count_method == 'COUNT':
+        count_func = 'COUNT(DISTINCT CASE WHEN {0} END) AS {1}'
+    else:
+        raise ValueError(f'Invalid count method: {count_method}')
+    
+    # get the sums we require
+    files = count_func.format(' AND '.join(conditions) + ' THEN 1 ELSE 0', 
+                              f'{fkind}_files')
+    files_qcp = count_func.format(' AND '.join(conditions + [passed_qc]), 
+                                  f'{fkind}_files_qcp')
+    files_qcf = count_func.format(' AND '.join(conditions + [failed_qc]),
+                                  f'{fkind}_files_qcf')
+    # get the human readiable dates (first observered, last observed,
+    #  last modified)
+    first_file = first_obs(f'{fdb}.KW_MID_OBS_TIME', 
+                           f'{fkind}_first_obs', conditions) 
+    last_file = last_obs(f'{fdb}.KW_MID_OBS_TIME',
+                           f'{fkind}_latest_obs', conditions)
+    last_mod = last_modified(f'{fdb}.LAST_MODIFIED', 
+                             f'{fkind}_last_modified', conditions)
+    
+    return files, files_qcp, files_qcf, first_file, last_file, last_mod
+
+
+def last_obs(col_in: str, col_out: str, 
+             conditions: Optional[List[str]] = None):
+    # latest MJD MIS OBS TIME 
+    # (via conversion from MJD --> unix --> human)
+    if conditions is None:
+        max_otime = f'MAX({col_in})' 
+    else:
+        max_otime = (f'MAX(CASE WHEN {" AND ".join(conditions)}'
+                    f' THEN {col_in} END)')
+    latest_obs = (f'FROM_UNIXTIME(({max_otime} - 40587) * 86400)'
+                  f' AS {col_out}')
+    return latest_obs
+
+
+def first_obs(col_in: str, col_out: str, 
+              conditions: Optional[List[str]] = None):
+    # first MJD MIS OBS TIME 
+    # (via conversion from MJD --> unix --> human)
+    if conditions is None:
+        min_otime = f'MIN({col_in})'
+    else:
+        min_otime = (f'MIN(CASE WHEN {" AND ".join(conditions)}'
+                     f' THEN {col_in} END)')
+    first_obs = (f'FROM_UNIXTIME(({min_otime} - 40587) * 86400)'
+                 f' AS {col_out}')
+    return first_obs
+
+
+def last_modified(col_in: str, col_out: str, 
+                  conditions: Optional[List[str]] = None):
+    # last modified time for any file for this object 
+    # (via conversion from unix --> human)
+    if conditions is None:
+        max_mtime = f'MAX({col_in})'
+    else:
+        max_mtime = f'MAX(CASE WHEN {" AND ".join(conditions)} THEN {col_in} END)'
+    latest_mod = (f'FROM_UNIXTIME({max_mtime}) AS {col_out}')
+    return latest_mod
+            
+ 
 def group_concat(col_in: str, col_out: str):
     # group concat for a column (e.g. to get all unique dprtypes or run_ids)
     return f'GROUP_CONCAT(DISTINCT {col_in} SEPARATOR ", ") AS {col_out}'
 
             
 def sub_commands(rparams):
-    # Build simple aggregation queries for the core columns
-    all_dprtypes = 'GROUP_CONCAT(DISTINCT fdb.KW_DPRTYPE SEPARATOR ", ")'
-    all_run_ids = 'GROUP_CONCAT(DISTINCT fdb.KW_RUN_ID SEPARATOR ", ")'  
-    all_pi_names = 'GROUP_CONCAT(DISTINCT fdb.KW_PI_NAME SEPARATOR ", ")'  
+    # ---------------------------------------------------------------------
+    # get parameters only needed for sub-commands
+    fiber = f'"{rparams["SCIENCE_FIBER"]}"'
+    scitypes = ','.join([f'"{t}"' for t in rparams['SCIENCE_TYPES']])
+    # --------------------------------------------------------------------- 
+    # get all unique dprtypes for the object
+    all_dprtypes = group_concat('fdb.KW_DPRTYPE', 'ALL_DPRTYPES')
+    # get all unique run_ids for the object (for filtering in the UI)
+    all_run_ids = group_concat('fdb.KW_RUN_ID', 'ALL_RUN_IDS')  
+    # get all unique pi names for the object
+    all_pi_names = group_concat('fdb.KW_PI_NAME', 'ALL_PI_NAMES')  
+    # get files cols for raw
+    raw_files = ('SUM(CASE WHEN fdb.BLOCK_KIND = "raw" '
+                 'THEN 1 ELSE 0 END) AS raw_files')
+    # get file cols for tmp
+    pp_fcols = file_cols('fdb', 'ldb', fkind='pp', block_kind='tmp',
+                         output=None, fiber=None, scitypes=scitypes)
+    # get file cols for red files (EXT_E2DS_FF)
+    red_fcols = file_cols('fdb', 'ldb', fkind='red', block_kind='red',
+                          output='EXT_E2DS_FF', fiber=fiber, scitypes=scitypes)
+    # get file cols for tcorr (TELLU_OBJ)
+    tcorr_fcols = file_cols('fdb', 'ldb', fkind='tcorr', block_kind='red',
+                          output='TELLU_OBJ', fiber=fiber, scitypes=scitypes)
+    # get file cols for ccf files
+    ccf_fcols = file_cols('fdb', 'ldb', fkind='ccf', block_kind='red',
+                          output='CCF_OBJ', fiber=fiber, scitypes=scitypes,
+                          count_method='COUNT')
+    # get file cols for e.fits files (DRS_POST_E)
+    e_fcols = file_cols('fdb', 'ldb', fkind='e', block_kind='out',
+                       output='DRS_POST_E', fiber=fiber, scitypes=scitypes)
+    # get file cols for t.fits files (DRS_POST_T)
+    t_fcols = file_cols('fdb', 'ldb', fkind='t', block_kind='out',
+                       output='DRS_POST_T', fiber=fiber, scitypes=scitypes)
+    # get file cols for lbl.fits files (LBL_FITS)
+    lbl_files = ('SUM(CASE WHEN fdb.BLOCK_KIND = "lbl" AND '
+                 'fdb.KW_OUTPUT = "LBL_FITS" '
+                 'THEN 1 ELSE 0 END) AS lbl_files')
+    # get last time of any file
+    latest_obs = last_obs('fdb.KW_MID_OBS_TIME', 'latest_obs')
+    # get the last modified time of any file
+    latest_mod = last_modified('fdb.LAST_MODIFIED', 'last_modified')
     
-    # Get last observation and modification times
-    latest_obs = 'FROM_UNIXTIME((MAX(fdb.KW_MID_OBS_TIME) - 40587) * 86400)'
-    latest_mod = 'FROM_UNIXTIME(MAX(fdb.LAST_MODIFIED))'
-    
-    # Build science type list for WHERE clause
-    scitype_list = ', '.join([f"'{t}'" for t in rparams['SCIENCE_TYPES']])
-    
-    # Push into rparams
+    # push sub-commands into rparams
     rparams['ALL_DPRTYPES'] = all_dprtypes
     rparams['ALL_RUN_IDS'] = all_run_ids
     rparams['ALL_PI_NAMES'] = all_pi_names
+    rparams['RAW_FILES'] = raw_files
+    # loop around a file col types
+    fkeys = ['PP', 'RED', 'TCORR', 'CCF', 'E', 'T']
+    fcols = [pp_fcols, red_fcols, tcorr_fcols, ccf_fcols, e_fcols, t_fcols]
+    for key, fcol in zip(fkeys, fcols):
+        rparams[f'{key}_FILES'] = fcol[0]
+        rparams[f'{key}_FILES_QCP'] = fcol[1]
+        rparams[f'{key}_FILES_QCF'] = fcol[2]
+        rparams[f'{key}_FILES_FIRST'] = fcol[3]
+        rparams[f'{key}_FILES_LAST'] = fcol[4]
+        rparams[f'{key}_FILES_MOD'] = fcol[5]
+    rparams['LBL_FILES'] = lbl_files
     rparams['LATEST_OBS'] = latest_obs
     rparams['LAST_MODIFIED'] = latest_mod
-    rparams['SCIENCE_TYPE_LIST'] = scitype_list
-    
+    # return the updated rparams
     return rparams
 
 
 def construct_query(rparams):
-    # Simple, lean query for object table
+    # construct the SQL query
     query = """
     SELECT
         findex.KW_OBJNAME AS OBJNAME,
@@ -291,27 +416,107 @@ def construct_query(rparams):
         astrom.PLX_SOURCE AS `Plx source`,
         astrom.RV AS `RV [km/s]`,
         astrom.RV_SOURCE AS `RV source`,
-        findex.DPRTYPE AS DPRTYPE,
-        findex.RUN_ID AS RUN_ID,
-        findex.PI_NAMES AS PI_NAMES,
-        findex.`last obs` AS `last obs`,
-        findex.`last modified` AS `last modified`
+        findex.ALL_DPRTYPES AS DPRTYPE,
+        findex.ALL_RUN_IDS AS RUN_ID,
+        findex.ALL_PI_NAMES AS PI_NAMES,
+        findex.raw_files AS `raw files`,
+        findex.pp_files AS `pp files`,
+        findex.pp_files_qcp AS `pp files [passed QC]`,
+        findex.pp_files_qcf AS `pp files [failed QC]`,
+        findex.pp_first_obs AS `pp files [first obs]`,
+        findex.pp_latest_obs AS `pp files [latest obs]`,
+        findex.pp_last_modified AS `pp files [last modified]`,
+        findex.red_files AS `red files`,
+        findex.red_files_qcp AS `red files [passed QC]`,
+        findex.red_files_qcf AS `red files [failed QC]`,
+        findex.red_first_obs AS `red files [first obs]`,
+        findex.red_latest_obs AS `red files [latest obs]`,
+        findex.red_last_modified AS `red files [last modified]`,
+        findex.tcorr_files AS `tcorr files`,
+        findex.tcorr_files_qcp AS `tcorr files [passed QC]`,
+        findex.tcorr_files_qcf AS `tcorr files [failed QC]`,
+        findex.tcorr_first_obs AS `tcorr files [first obs]`,
+        findex.tcorr_latest_obs AS `tcorr files [latest obs]`,
+        findex.tcorr_last_modified AS `tcorr files [last modified]`,
+        findex.ccf_files AS `ccf files`,
+        findex.ccf_files_qcp AS `ccf files [passed QC]`,
+        findex.ccf_files_qcf AS `ccf files [failed QC]`,
+        findex.ccf_first_obs AS `ccf files [first obs]`,
+        findex.ccf_latest_obs AS `ccf files [latest obs]`,
+        findex.ccf_last_modified AS `ccf files [last modified]`,
+        findex.e_files AS `e.fits`,
+        findex.e_files_qcp AS `e.fits [passed QC]`,
+        findex.e_files_qcf AS `e.fits [failed QC]`,
+        findex.e_first_obs AS `e.fits [first obs]`,
+        findex.e_latest_obs AS `e.fits [latest obs]`,
+        findex.e_last_modified AS `e.fits [last modified]`,
+        findex.t_files AS `t.fits`,
+        findex.t_files_qcp AS `t.fits [passed QC]`,
+        findex.t_files_qcf AS `t.fits [failed QC]`,
+        findex.t_first_obs AS `t.fits [first obs]`,
+        findex.t_latest_obs AS `t.fits [latest obs]`,
+        findex.t_last_modified AS `t.fits [last modified]`,
+        findex.lbl_files AS `LBL`,
+        findex.latest_obs AS `last obs`,
+        findex.last_modified AS `last modified`
     FROM (
-        SELECT
-            fdb.KW_OBJNAME,
-            {ALL_DPRTYPES} AS DPRTYPE,
-            {ALL_RUN_IDS} AS RUN_ID,
-            {ALL_PI_NAMES} AS PI_NAMES,
-            {LATEST_OBS} AS `last obs`,
-            {LAST_MODIFIED} AS `last modified`
+        SELECT 
+            KW_OBJNAME,
+            {ALL_DPRTYPES}, 
+            {ALL_RUN_IDS}, 
+            {ALL_PI_NAMES},
+            {RAW_FILES},
+            {PP_FILES}, 
+            {PP_FILES_QCP}, 
+            {PP_FILES_QCF}, 
+            {PP_FILES_FIRST}, 
+            {PP_FILES_LAST}, 
+            {PP_FILES_MOD},
+            {RED_FILES}, 
+            {RED_FILES_QCP}, 
+            {RED_FILES_QCF},
+            {RED_FILES_FIRST},
+            {RED_FILES_LAST},
+            {RED_FILES_MOD},
+            {TCORR_FILES}, 
+            {TCORR_FILES_QCP}, 
+            {TCORR_FILES_QCF},
+            {TCORR_FILES_FIRST}, 
+            {TCORR_FILES_LAST},
+            {TCORR_FILES_MOD},
+            {CCF_FILES}, 
+            {CCF_FILES_QCP}, 
+            {CCF_FILES_QCF},
+            {CCF_FILES_FIRST}, 
+            {CCF_FILES_LAST}, 
+            {CCF_FILES_MOD},
+            {E_FILES}, 
+            {E_FILES_QCP}, 
+            {E_FILES_QCF},
+            {E_FILES_FIRST}, 
+            {E_FILES_LAST}, 
+            {E_FILES_MOD},
+            {T_FILES}, 
+            {T_FILES_QCP}, 
+            {T_FILES_QCF},
+            {T_FILES_FIRST},
+            {T_FILES_LAST}, 
+            {T_FILES_MOD},
+            {LBL_FILES},
+            {LATEST_OBS}, 
+            {LAST_MODIFIED}
         FROM {FINDEX_TABLENAME} fdb
-        WHERE fdb.BLOCK_KIND IN ('raw', 'tmp', 'red', 'out', 'lbl')
-        GROUP BY fdb.KW_OBJNAME
+        JOIN log_spirou_offline_db ldb
+            ON fdb.KW_PID = ldb.PID
+        GROUP BY KW_OBJNAME
     ) AS findex
     JOIN {ASTROM_TABLENAME} astrom 
         ON findex.KW_OBJNAME = astrom.OBJNAME;
     """
-    return query.format(**rparams)
+    # ---------------------------------------------------------------------
+    # format the query with rparams
+    rquery = query.format(**rparams)
+    return rquery
 
 
 def meta_columns():
@@ -360,6 +565,41 @@ def meta_columns():
                            coltype='string',
                            hidden=False)
     # --------------------------------------------------------------------------
+    # raw files    
+    cols['raw files'] = dict(sortable=False,
+                             filterable=False,
+                             removable=True,
+                             default=True,
+                             coltype='number',
+                             hidden=False)
+    # --------------------------------------------------------------------------
+    # the f cols (pp, red, tcorr, ccf, e.fits, t.fits) and their sub-cols
+    # (files, files_qcp, files_qcf, 
+    #  files_first_obs, files_latest_obs, files_last_modified)
+    fcols = ['pp', 'red', 'tcorr', 'ccf', 'e.fits', 't.fits']
+    fscols = ['{} files', '{} files [passed QC]', '{} files [failed QC]',
+              '{} files [first obs]', '{} files [latest obs]', 
+              '{} files [last modified]']
+    fscoltypes = ['number', 'number', 'number', 'date', 'date', 'date']
+    fsdefaults = [True, False, False, False, False, False]
+    for fcol in fcols:
+        for fscol, fscoltype, fsdefault in zip(fscols, fscoltypes, fsdefaults):
+            colname = fscol.format(fcol)
+            cols[colname] = dict(sortable=False,
+                                 filterable=False,
+                                 removable=True,
+                                 default=fsdefault,
+                                 coltype=fscoltype,
+                                 hidden=False)
+    # --------------------------------------------------------------------------
+    # lbl files
+    cols['LBL'] = dict(sortable=False,
+                       filterable=False,
+                       removable=True,
+                       default=True,
+                       coltype='number',
+                       hidden=False)
+    # --------------------------------------------------------------------------
     # date cols
     date_colnames = ['latest obs', 'last modified']
     for colname in date_colnames:
@@ -376,7 +616,7 @@ def meta_columns():
                    'PMRA source', 'PMDE source', 'Plx source', 'RV source',
                    'ALL_DPRTYPES', 'ALL_RUN_IDS']
     hcoltypes = ['string', 'string', 'string', 'string', 'string', 'string', 
-                 'string', 'string', 'string', 'string', 'string']
+                 'string', 'string', 'string', 'string', 'string', ]
     for colname, coltype in zip(hidden_cols, hcoltypes):
         cols[colname] = dict(sortable=False,
                              filterable=False,
@@ -393,9 +633,6 @@ def meta_columns():
 # Start of main code
 # =============================================================================
 if __name__ == '__main__':
-    # prompt for database password
-    import getpass
-    db_password = getpass.getpass('Enter database password: ')
     # create an instance of the task and run it with test parameters
     task = AperoObjectTableTask()
     test_params = {
@@ -407,7 +644,7 @@ if __name__ == '__main__':
                 'DATABASE_MODE': 'mysql+pymysql',
                 'DATABASE_HOST': 'cosmos.astro.umontreal.ca',
                 'DATABASE_USER': 'spirou',
-                'DATABASE_PASSWORD': f'{db_password}!',
+                'DATABASE_PASSWORD': 'Covid19!',
                 'DATABASE_NAME': 'spirou',
                 'ASTROM_TABLENAME': 'astrom_spirou_offline_db',
                 'CALIB_TABLENAME': 'calib_spirou_offline_db',

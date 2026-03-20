@@ -7,11 +7,13 @@
     var cfg = window.ARI_ASYNC_TASKS;
     var instruments = cfg.instruments || [];
     var urls = cfg.urls;
+    var GLOBAL_SCOPE = '__GLOBAL__';
 
     /* -----------------------------------------------------------------------
        State
     ----------------------------------------------------------------------- */
     var currentInstrument = null;
+    var currentView = 'instruments';
     var allTasks = [];          // task configs for currentInstrument
     var taskClasses = [];       // available task classes from server
     var selectedTaskId = null;
@@ -24,12 +26,13 @@
        DOM refs
     ----------------------------------------------------------------------- */
     var tabsEl          = document.getElementById('at-tabs');
+    var instrumentPicker = document.getElementById('at-instrument-picker');
+    var instrumentCards = document.getElementById('at-instrument-cards');
     var instrWs         = document.getElementById('at-instrument-workspace');
     var queueWs         = document.getElementById('at-queue-workspace');
     var noInstrEl       = document.getElementById('at-no-instruments');
 
     var btnRunAll       = document.getElementById('btn-run-all');
-    var btnAddTask      = document.getElementById('btn-add-task');
     var runningBadge    = document.getElementById('at-running-badge');
 
     var activeList      = document.getElementById('active-task-list');
@@ -73,6 +76,7 @@
     var queueProgressPct    = document.getElementById('queue-progress-pct');
     var queueRunningInfo    = document.getElementById('queue-running-info');
     var queuePendingList    = document.getElementById('queue-pending-list');
+    var queueHistoryList    = document.getElementById('queue-history-list');
 
     // Edit modal
     var editModal       = document.getElementById('at-edit-modal');
@@ -120,20 +124,19 @@
     ----------------------------------------------------------------------- */
     function init() {
         renderTabs();
+        renderInstrumentCards();
         loadTaskClasses();
         bindEditModal();
         bindDeleteModal();
         bindRunAllModal();
         bindQueue();
         bindRunAll();
-        bindAddTask();
         bindFileModal();
 
         if (instruments.length === 0) {
             noInstrEl.style.display = '';
         } else {
-            // Activate the first instrument tab
-            selectTab(instruments[0]);
+            selectTab('instruments');
         }
     }
 
@@ -142,22 +145,44 @@
     ----------------------------------------------------------------------- */
     function renderTabs() {
         tabsEl.innerHTML = '';
-        instruments.forEach(function (inst) {
+        [
+            { value: 'global', label: '<i class="fa-solid fa-globe"></i> Global' },
+            { value: 'instruments', label: '<i class="fa-solid fa-satellite-dish"></i> Instruments' },
+            { value: 'queue', label: '<i class="fa-solid fa-layer-group"></i> Queue' },
+        ].forEach(function (tabDef) {
             var btn = document.createElement('button');
             btn.className = 'ari-sg-tab';
-            btn.textContent = inst;
-            btn.dataset.value = inst;
-            btn.addEventListener('click', function () { selectTab(inst); });
+            btn.innerHTML = tabDef.label;
+            btn.dataset.value = tabDef.value;
+            btn.addEventListener('click', function () { selectTab(tabDef.value); });
             tabsEl.appendChild(btn);
         });
+    }
 
-        // Queue tab
-        var qBtn = document.createElement('button');
-        qBtn.className = 'ari-sg-tab';
-        qBtn.innerHTML = '<i class="fa-solid fa-layer-group"></i> Queue';
-        qBtn.dataset.value = '__queue__';
-        qBtn.addEventListener('click', function () { selectTab('__queue__'); });
-        tabsEl.appendChild(qBtn);
+    function renderInstrumentCards() {
+        if (!instrumentCards) return;
+        instrumentCards.innerHTML = '';
+        instruments.forEach(function (inst) {
+            var btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = 'at-instrument-card';
+            btn.textContent = inst;
+            btn.dataset.instrument = inst;
+            btn.addEventListener('click', function () {
+                currentInstrument = inst;
+                highlightInstrumentCard();
+                loadTasks();
+            });
+            instrumentCards.appendChild(btn);
+        });
+        highlightInstrumentCard();
+    }
+
+    function highlightInstrumentCard() {
+        if (!instrumentCards) return;
+        Array.from(instrumentCards.querySelectorAll('.at-instrument-card')).forEach(function (btn) {
+            btn.classList.toggle('at-instrument-card--active', btn.dataset.instrument === currentInstrument);
+        });
     }
 
     function selectTab(value) {
@@ -167,9 +192,11 @@
         });
 
         stopPoll();
+        currentView = value;
 
-        if (value === '__queue__') {
+        if (value === 'queue') {
             currentInstrument = null;
+            if (instrumentPicker) instrumentPicker.style.display = 'none';
             instrWs.style.display = 'none';
             queueWs.style.display = '';
             noInstrEl.style.display = 'none';
@@ -178,12 +205,29 @@
             return;
         }
 
-        currentInstrument = value;
         queueWs.style.display = 'none';
-        noInstrEl.style.display = 'none';
         instrWs.style.display = '';
+        noInstrEl.style.display = 'none';
         selectedTaskId = null;
         showDetail(null);
+
+        if (value === 'global') {
+            currentInstrument = GLOBAL_SCOPE;
+            if (instrumentPicker) instrumentPicker.style.display = 'none';
+            btnRunAll.innerHTML = '<i class="fa-solid fa-play"></i> Run All Global';
+            loadGlobalTasks();
+            startPoll();
+            return;
+        }
+
+        if (instrumentPicker) instrumentPicker.style.display = '';
+        if (!currentInstrument || currentInstrument === GLOBAL_SCOPE) {
+            currentInstrument = instruments[0] || null;
+        }
+        highlightInstrumentCard();
+        btnRunAll.innerHTML = '<i class="fa-solid fa-play"></i> Run All';
+        queueWs.style.display = 'none';
+        noInstrEl.style.display = 'none';
         loadTasks();
         startPoll();
     }
@@ -192,7 +236,7 @@
        Task list
     ----------------------------------------------------------------------- */
     function loadTasks() {
-        if (!currentInstrument) return;
+        if (!currentInstrument || currentInstrument === GLOBAL_SCOPE) return;
         fetch(urls.list + '?instrument=' + encodeURIComponent(currentInstrument))
             .then(function (r) { return r.json(); })
             .then(function (data) {
@@ -206,14 +250,37 @@
             });
     }
 
+    function loadGlobalTasks() {
+        fetch(urls.globalList)
+            .then(function (r) { return r.json(); })
+            .then(function (data) {
+                if (!data.success) { showToast('Failed to load global tasks: ' + data.error, 'error'); return; }
+                allTasks = data.tasks || [];
+                renderTaskLists();
+                updateRunningBadge(data.queue);
+                if (selectedTaskId) {
+                    updateDetailRuntime();
+                }
+            });
+    }
+
+    function refreshCurrentTasks() {
+        if (currentInstrument === GLOBAL_SCOPE) {
+            loadGlobalTasks();
+            return;
+        }
+        loadTasks();
+    }
+
     function renderTaskLists() {
         var active   = allTasks.filter(function (t) { return t.active !== false; });
         var inactive = allTasks.filter(function (t) { return t.active === false; });
+        var draggable = (currentInstrument !== GLOBAL_SCOPE);
 
         activeCount.textContent   = active.length;
         inactiveCount.textContent = inactive.length;
 
-        renderList(activeList, active, true);
+        renderList(activeList, active, draggable);
         renderList(inactiveList, inactive, false);
     }
 
@@ -238,6 +305,7 @@
 
         var card = document.createElement('div');
         card.className = 'at-task-card' +
+            (task.active !== false ? ' at-task-card--active' : '') +
             (task.id === selectedTaskId ? ' at-task-card--selected' : '') +
             (task.active === false ? ' at-task-card--inactive' : '') +
             (hasError ? ' at-task-card--error' : '');
@@ -494,8 +562,21 @@
     }
 
     function renderJsonPreviewTable(table) {
-        var columns = Array.isArray(table.columns) ? table.columns : [];
+        var columns = Array.isArray(table.columns) ? table.columns.slice() : [];
         var rows = Array.isArray(table.rows) ? table.rows : [];
+
+        if (!columns.length && rows.length) {
+            var seen = {};
+            rows.forEach(function (row) {
+                if (!row || typeof row !== 'object' || Array.isArray(row)) return;
+                Object.keys(row).forEach(function (key) {
+                    if (!seen[key]) {
+                        seen[key] = true;
+                        columns.push(key);
+                    }
+                });
+            });
+        }
 
         if (!columns.length || !rows.length) {
             return '<pre class="at-file-preview">(JSON has no tabular rows to display)</pre>';
@@ -539,7 +620,7 @@
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ instrument: currentInstrument, id: selectedTaskId }),
         }).then(function (r) { return r.json(); }).then(function (d) {
-            if (d.success) { loadTasks(); } else { showToast('Toggle failed: ' + d.error, 'error'); }
+            if (d.success) { refreshCurrentTasks(); } else { showToast('Toggle failed: ' + d.error, 'error'); }
         });
     });
 
@@ -574,7 +655,7 @@
         }).then(function (r) { return r.json(); }).then(function (d) {
             if (d.success) {
                 showToast('Task queued for immediate execution.', 'success');
-                loadTasks();
+                refreshCurrentTasks();
             } else {
                 showToast('Run failed: ' + d.error, 'error');
             }
@@ -615,7 +696,7 @@
         }).then(function (r) { return r.json(); }).then(function (d) {
             if (d.success) {
                 showToast('Added ' + (d.added || []).length + ' task(s) to queue.', 'success');
-                loadTasks();
+                refreshCurrentTasks();
             } else {
                 showToast('Run All failed: ' + d.error, 'error');
             }
@@ -633,15 +714,6 @@
         });
         btnRunAllCancel.addEventListener('click', function () {
             runAllModal.style.display = 'none';
-        });
-    }
-
-    /* -----------------------------------------------------------------------
-       Add Task
-    ----------------------------------------------------------------------- */
-    function bindAddTask() {
-        btnAddTask.addEventListener('click', function () {
-            openEditModal(null);
         });
     }
 
@@ -670,17 +742,18 @@
     }
 
     function openEditModal(task) {
-        editingTaskId = task ? task.id : null;
-        editModalTitle.innerHTML = task
-            ? '<i class="fa-solid fa-pen"></i> Edit Task'
-            : '<i class="fa-solid fa-plus"></i> Add Task';
+        if (!task) return;
 
-        editTaskKey.value = task ? (task.task_key || '') : '';
-        editFrequency.value = task ? (task.frequency || 24) : 24;
-        editDailyCopies.value = task ? (task.daily_copies || 0) : 7;
-        editWeeklyCopies.value = task ? (task.weekly_copies || 0) : 4;
-        editRunCount.textContent = task && task.runtime ? (task.runtime.run_count || 0) : 0;
-        editActive.checked = task ? (task.active !== false) : true;
+        editingTaskId = task.id;
+        editModalTitle.innerHTML = '<i class="fa-solid fa-pen"></i> Edit Task';
+
+        editTaskKey.value = task.task_key || '';
+        editTaskKey.disabled = true;
+        editFrequency.value = task.frequency || 24;
+        editDailyCopies.value = task.daily_copies || 0;
+        editWeeklyCopies.value = task.weekly_copies || 0;
+        editRunCount.textContent = task.runtime ? (task.runtime.run_count || 0) : 0;
+        editActive.checked = task.active !== false;
         onTaskKeyChange();
         editModal.style.display = '';
     }
@@ -714,6 +787,7 @@
 
     function closeEditModal() {
         editModal.style.display = 'none';
+        editTaskKey.disabled = false;
         editingTaskId = null;
     }
 
@@ -722,7 +796,7 @@
         var frequency = parseFloat(editFrequency.value);
         var dailyCopies = parseInt(editDailyCopies.value, 10) || 0;
         var weeklyCopies = parseInt(editWeeklyCopies.value, 10) || 0;
-        if (!taskKey) { showToast('Please select a task.', 'error'); return; }
+        if (!taskKey) { showToast('Missing task key.', 'error'); return; }
         if (isNaN(frequency) || frequency <= 0) { showToast('Frequency must be a positive number of hours.', 'error'); return; }
         if (dailyCopies < 0 || weeklyCopies < 0) { showToast('Backup copy counts must be non-negative.', 'error'); return; }
         if (taskKey === BACKUP_TASK_KEY && dailyCopies + weeklyCopies <= 0) {
@@ -738,7 +812,7 @@
             weekly_copies: weeklyCopies,
             active: editActive.checked,
         };
-        if (editingTaskId) payload.id = editingTaskId;
+        payload.id = editingTaskId;
 
         fetch(urls.save, {
             method: 'POST',
@@ -748,7 +822,7 @@
             if (d.success) {
                 closeEditModal();
                 showToast('Task saved.', 'success');
-                loadTasks();
+                refreshCurrentTasks();
             } else {
                 showToast('Save failed: ' + d.error, 'error');
             }
@@ -778,7 +852,7 @@
                         showDetail(null);
                     }
                     pendingDeleteId = null;
-                    loadTasks();
+                    refreshCurrentTasks();
                 } else {
                     showToast('Delete failed: ' + d.error, 'error');
                 }
@@ -826,11 +900,13 @@
         var pending = queue.queue || [];
 
         if (current) {
-            var tid = current[1];
-            var inst = current[0];
+            var currentInfo = queue.current_info || {};
+            var tid = currentInfo.task_id || current[1];
+            var inst = currentInfo.instrument || current[0];
+            var tname = currentInfo.task_name || tid;
             var st = statuses[tid] || {};
             queueRunning.style.display = '';
-            queueRunningName.textContent = tid;
+            queueRunningName.textContent = tname;
             queueRunningInstr.textContent = inst;
             var pct = Math.round((st.progress || 0) * 100);
             queueProgressFill.style.width = pct + '%';
@@ -847,13 +923,38 @@
         if (pending.length === 0) {
             queuePendingList.innerHTML = '<div class="ari-sg-empty-small">Queue is empty</div>';
         } else {
-            queuePendingList.innerHTML = pending.map(function (entry) {
+            var pendingInfo = Array.isArray(queue.queue_info) ? queue.queue_info : [];
+            queuePendingList.innerHTML = pending.map(function (entry, idx) {
+                var info = pendingInfo[idx] || {};
+                var instrument = info.instrument || entry[0] || '';
+                var taskName = info.task_name || info.task_id || entry[1] || '';
+                var taskId = info.task_id || entry[1] || '';
                 return '<div class="at-queue-item">' +
-                    '<span class="at-queue-item__inst">' + esc(entry[0]) + '</span>' +
-                    '<span class="at-queue-item__id">' + esc(entry[1]) + '</span>' +
+                    '<span class="at-queue-item__inst">' + esc(instrument) + '</span>' +
+                    '<span class="at-queue-item__id">' + esc(taskName) + '</span>' +
+                    (taskId && taskId !== taskName
+                        ? '<span class="at-queue-item__id" style="opacity:0.7;">' + esc(taskId) + '</span>'
+                        : '') +
                     '</div>';
             }).join('');
         }
+
+        var history = Array.isArray(queue.recent_history) ? queue.recent_history : [];
+        if (!queueHistoryList) return;
+        if (!history.length) {
+            queueHistoryList.innerHTML = '<div class="ari-sg-empty-small">No recent history yet</div>';
+            return;
+        }
+        queueHistoryList.innerHTML = history.map(function (item) {
+            var ts = item.timestamp || '';
+            var stamp = ts ? ts.replace('T', ' ').replace('Z', ' UTC') : '';
+            var line = '[' + (item.status || 'unknown') + '] ' +
+                (item.instrument || '') + ' - ' + (item.task_name || item.task_id || '');
+            return '<div class="at-queue-item">' +
+                '<span class="at-queue-item__inst">' + esc(stamp) + '</span>' +
+                '<span class="at-queue-item__id">' + esc(line) + '</span>' +
+                '</div>';
+        }).join('');
     }
 
     /* -----------------------------------------------------------------------

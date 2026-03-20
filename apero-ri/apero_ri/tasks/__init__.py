@@ -36,3 +36,33 @@ AP_LIST = dict()
 AP_LIST['ARI_LOCAL_DATA_BACKUP'] = apero_backup.APERO_PROFILE_PARAM_LIST
 AP_LIST['APERO_OBJECT_TABLE'] = apero_object_table.APERO_PROFILE_PARAM_LIST
 AP_LIST['APERO_OBS_TABLE'] = apero_observation_table.APERO_PROFILE_PARAM_LIST
+
+# =============================================================================
+# TASK DEFAULT FREQUENCY
+# =============================================================================
+# This is the default frequency (in hours) for each task. This is used in the admin portal to set the default frequency for each task.
+# This keys should match TASK_LIST (None means no default frequency)
+FREQ = dict()
+FREQ['ARI_LOCAL_DATA_BACKUP'] = apero_backup.DEFAULT_FREQUENCY
+FREQ['APERO_OBJECT_TABLE'] = apero_object_table.DEFAULT_FREQUENCY
+FREQ['APERO_OBS_TABLE'] = apero_observation_table.DEFAULT_FREQUENCY
+
+# =============================================================================
+# TASK DEFAULT ENABLED
+# =============================================================================
+# This is whether the task is enabled by default in the admin portal. This is used in the admin portal to set the default enabled status for each task.
+# This keys should match TASK_LIST (None means no default enabled status)
+ENABLED = dict()
+ENABLED['ARI_LOCAL_DATA_BACKUP'] = apero_backup.DEFAULT_ENABLED
+ENABLED['APERO_OBJECT_TABLE'] = apero_object_table.DEFAULT_ENABLED
+ENABLED['APERO_OBS_TABLE'] = apero_observation_table.DEFAULT_ENABLED
+
+# =============================================================================
+# TASK TYPE
+# =============================================================================
+# This is the type of task (INSTRUMENT, GLOBAL). This is used in the admin portal to group tasks by type.
+# This keys should match TASK_LIST (None means no task type)
+TYPE = dict()
+TYPE['ARI_LOCAL_DATA_BACKUP'] = apero_backup.TASK_TYPE
+TYPE['APERO_OBJECT_TABLE'] = apero_object_table.TASK_TYPE
+TYPE['APERO_OBS_TABLE'] = apero_observation_table.TASK_TYPE

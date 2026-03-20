@@ -82,6 +82,7 @@
                 filterable: meta.filterable !== false,
                 removable: meta.removable !== false,
                 default: meta.default !== false,
+                hidden: meta.hidden === true,
                 type: meta.type ? String(meta.type).toLowerCase() : 'string',
             };
         });
@@ -112,6 +113,11 @@
     function isColumnDefaultVisible(col) {
         var meta = getColumnMeta(col);
         return meta.default !== false;
+    }
+
+    function isColumnForcedHidden(col) {
+        var meta = getColumnMeta(col);
+        return meta.hidden === true;
     }
 
     function parseStrictNumber(value) {
@@ -188,6 +194,20 @@
                 allRows  = data.rows    || [];
                 columns  = data.columns || [];
                 columnMeta = normalizeColumnMeta(data.column_meta || {});
+
+                // Enforce hard exclusion for metadata-hidden columns.
+                columns = columns.filter(function (col) {
+                    return !isColumnForcedHidden(col);
+                });
+                allRows = allRows.map(function (row) {
+                    var clean = {};
+                    Object.keys(row || {}).forEach(function (k) {
+                        if (!isColumnForcedHidden(k)) {
+                            clean[k] = row[k];
+                        }
+                    });
+                    return clean;
+                });
 
                 // Initialize per-column visibility from metadata defaults.
                 hiddenCols = {};
