@@ -29,6 +29,7 @@
     var runidCount = document.getElementById('runid-count');
     var runidAvailCount = document.getElementById('runid-avail-count');
     var runidAddedCount = document.getElementById('runid-added-count');
+    var btnAddAllRunIds = document.getElementById('btn-add-all-runids');
 
     var userSection = document.getElementById('user-section');
     var userAvailFilter = document.getElementById('user-avail-filter');
@@ -38,6 +39,7 @@
     var userCount = document.getElementById('user-count');
     var userAvailCount = document.getElementById('user-avail-count');
     var userAddedCount = document.getElementById('user-added-count');
+    var btnAddAllUsers = document.getElementById('btn-add-all-users');
 
     var btnSave = document.getElementById('btn-save-group');
     var btnDelete = document.getElementById('btn-delete-group');
@@ -495,6 +497,40 @@
         autoSave();
     }
 
+    function addAllSelections(type) {
+        if (!currentGroup) {
+            showToast('Select a group first', 'warning');
+            return;
+        }
+
+        var allItems = (type === 'runid') ? allRunIds.slice() : allUsers.slice();
+        var selected = (type === 'runid') ? selectedRunIds.slice() : selectedUsers.slice();
+        var toAdd = allItems.filter(function (it) {
+            return selected.indexOf(it) === -1;
+        });
+
+        if (toAdd.length === 0) {
+            showToast('Nothing to add', 'info');
+            return;
+        }
+
+        var label = (type === 'runid') ? 'run IDs' : 'users';
+        var ok = window.confirm(
+            'Add all available ' + label + ' (' + toAdd.length + ') to group "' +
+            currentGroup + '"?'
+        );
+        if (!ok) return;
+
+        if (type === 'runid') {
+            selectedRunIds = allItems.slice();
+        } else {
+            selectedUsers = allItems.slice();
+        }
+
+        refreshTransfer(type);
+        saveGroup();
+    }
+
     /* -- Auto-save (debounced) ------------------------------------------- */
     var _autoSaveTimer = null;
     function autoSave() {
@@ -661,6 +697,12 @@
     btnAddGroup.addEventListener('click', openCreateModal);
     btnSave.addEventListener('click', saveGroup);
     btnDelete.addEventListener('click', openDeleteModal);
+    btnAddAllRunIds.addEventListener('click', function () {
+        addAllSelections('runid');
+    });
+    btnAddAllUsers.addEventListener('click', function () {
+        addAllSelections('user');
+    });
 
     btnCancelCreate.addEventListener('click', closeCreateModal);
     btnConfirmCreate.addEventListener('click', doCreate);

@@ -2146,7 +2146,7 @@ a:hover {
 .ari-user-result-card:hover {
     transform: translateY(-2px);
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-    border-color: var(--ari-primary-light);
+    filter: saturate(1.03);
 }
 
 .ari-user-result-card__avatar {

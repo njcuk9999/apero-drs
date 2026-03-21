@@ -4,8 +4,8 @@
 
     var CONFIG = window.ARI_ADMIN;
 
-    // Group precedence for colour coding (highest to lowest)
-    var GROUP_PRECEDENCE = ['admin', 'moderator', 'developer', 'monitor', 'general', 'public'];
+    // Fallback precedence (used only if API metadata is unavailable)
+    var GROUP_PRECEDENCE_FALLBACK = ['admin', 'moderator', 'developer', 'monitor', 'general', 'public'];
 
     // =========================================================================
     // DOM refs
@@ -59,12 +59,37 @@
         return g.length === 0 || (g.length === 1 && g[0] === 'public');
     }
 
+    function getGroupOrder() {
+        var ordered = (searchMeta && Array.isArray(searchMeta.all_groups) && searchMeta.all_groups.length)
+            ? searchMeta.all_groups.slice()
+            : GROUP_PRECEDENCE_FALLBACK.slice();
+        if (ordered.indexOf('public') === -1) {
+            ordered.push('public');
+        }
+        return ordered;
+    }
+
     function getHighestGroup(user) {
         var groups = new Set(user.groups || []);
-        for (var i = 0; i < GROUP_PRECEDENCE.length; i++) {
-            if (groups.has(GROUP_PRECEDENCE[i])) return GROUP_PRECEDENCE[i];
+        var precedence = getGroupOrder();
+        for (var i = 0; i < precedence.length; i++) {
+            if (groups.has(precedence[i])) return precedence[i];
         }
         return 'public';
+    }
+
+    function getGroupStyle(groupName) {
+        var precedence = getGroupOrder();
+        var idx = precedence.indexOf(groupName);
+        if (idx < 0) idx = precedence.length - 1;
+        var hue = (210 + idx * 37) % 360;
+
+        return {
+            cardBg: 'hsl(' + hue + ', 72%, 95%)',
+            cardBorder: 'hsl(' + hue + ', 42%, 72%)',
+            avatarBg: 'hsl(' + hue + ', 52%, 44%)',
+            avatarFg: '#ffffff'
+        };
     }
 
     function escapeHtml(str) {
@@ -234,10 +259,16 @@
     function buildUserCard(user, isNew) {
         var card = document.createElement('div');
         var highest = getHighestGroup(user);
-        card.className = 'ari-user-result-card ari-user-result-card--' + highest;
+        var groupStyle = getGroupStyle(highest);
+        card.className = 'ari-user-result-card';
+        card.dataset.group = highest;
+        card.style.background = groupStyle.cardBg;
+        card.style.borderColor = groupStyle.cardBorder;
 
         var avatar = document.createElement('div');
         avatar.className = 'ari-user-result-card__avatar';
+        avatar.style.background = groupStyle.avatarBg;
+        avatar.style.color = groupStyle.avatarFg;
         avatar.innerHTML = '<i class="fa-solid fa-user"></i>';
         card.appendChild(avatar);
 
@@ -305,7 +336,11 @@
 
         // Avatar colour matches card colour
         var highest = getHighestGroup(user);
-        detailAvatar.className = 'ari-user-detail__avatar ari-user-detail__avatar--' + highest;
+        var groupStyle = getGroupStyle(highest);
+        detailAvatar.className = 'ari-user-detail__avatar';
+        detailAvatar.dataset.group = highest;
+        detailAvatar.style.background = groupStyle.avatarBg;
+        detailAvatar.style.color = groupStyle.avatarFg;
 
         var displayName = user.username;
         if (user.first_names || user.last_name) {
