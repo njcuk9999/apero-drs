@@ -145,6 +145,14 @@ def page_id_to_url(page_id: str) -> str:
     return '/' + '/'.join(parts[1:])
 
 
+def _resolved_page_url(page_id: str, page_def: Dict[str, object]) -> str:
+    """Resolve URL for a page, allowing external links in pages.yaml."""
+    ext_url = str(page_def.get('external-url', '') or '').strip()
+    if ext_url:
+        return ext_url
+    return page_id_to_url(page_id)
+
+
 def page_id_to_template(page_id: str, pages: Dict[str, dict]) -> str:
     """Convert a page ID to its template path."""
     # Special cases
@@ -215,7 +223,7 @@ def get_nav_pages(user_permissions: Set[str],
             'id': pid,
             'label': pdef['label'],
             'icon': pdef.get('icon', ''),
-            'url': page_id_to_url(pid),
+            'url': _resolved_page_url(pid, pdef),
         })
     return nav_pages
 
@@ -247,7 +255,7 @@ def get_visible_cards(parent_id: str,
             'id': child_id,
             'label': child_def['label'],
             'icon': child_def.get('icon', ''),
-            'url': page_id_to_url(child_id),
+            'url': _resolved_page_url(child_id, child_def),
             'has_children': is_parent_page(child_id, pages),
         })
     return cards
@@ -304,7 +312,7 @@ def get_sidebar_tree(root_id: str,
                 'id': child_id,
                 'label': child_def.get('label', ''),
                 'icon': child_def.get('icon', ''),
-                'url': page_id_to_url(child_id),
+                'url': _resolved_page_url(child_id, child_def),
                 'depth': depth,
                 'active': is_active,
                 'expanded': is_expanded,
@@ -348,7 +356,7 @@ def get_pinned_sidebar_items(user_permissions: Set[str],
             'id': pid,
             'label': label,
             'icon': pdef.get('icon', ''),
-            'url': page_id_to_url(pid),
+            'url': _resolved_page_url(pid, pdef),
             'depth': 0,
             'active': (pid == active_page_id),
             'expanded': False,

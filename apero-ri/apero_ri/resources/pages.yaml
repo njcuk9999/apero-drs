@@ -78,6 +78,18 @@ home.user_portal:
     top-level: True
     show: True
 
+home.github:
+  label: GitHub
+  parent: home
+  view-permission: view.home
+  icon: fa-brands fa-github
+  quick-nav: True
+  external-url: https://github.com/njcuk9999/apero-drs
+  side-nav:
+    pinned: False
+    top-level: False
+    show: True
+
 home.login:
   label: Login
   parent: home

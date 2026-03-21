@@ -540,6 +540,9 @@ class ARIApp(Flask):
             # Skip login/logout - already registered
             if page_id in ('home.login', 'home.logout'):
                 continue
+            # External links are nav/cards only and do not map to Flask routes.
+            if str(page_def.get('external-url', '') or '').strip():
+                continue
             url = page_id_to_url(page_id)
             endpoint = page_id_to_endpoint(page_id)
             self.add_url_rule(
