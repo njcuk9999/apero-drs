@@ -178,28 +178,25 @@
 
             <!-- Science settings -->
             <h4 class="ari-ap-form__heading"><i class="fa-solid fa-flask-vial"></i> Science Settings</h4>
-            <div id="science-section" class="ari-ap-step ari-ap-step--locked">
-            <div class="ari-ap-form__row">
-                <div class="ari-ap-form__field">
-                    <label for="profile-science-fiber">SCIENCE_FIBER <span class="ari-required">*</span>
-                        <span class="ari-ap-form__hint">Options loaded from FINDEX.KW_FIBER</span>
-                    </label>
-                    <select id="profile-science-fiber" class="ari-ap-input" disabled>
-                        <option value="">Run table test first...</option>
-                    </select>
-                </div>
-            </div>
+            <div id="science-section" class="ari-ap-step">
             <div class="ari-ap-form__field">
-                <label>SCIENCE_TYPES <span class="ari-required">*</span>
-                    <span class="ari-ap-form__hint">Select one or more cards from FINDEX.KW_DPRTYPE</span>
+                <label for="profile-instrument-profile">Instrument Profile <span class="ari-required">*</span>
+                    <span class="ari-ap-form__hint">Select a preset — science fiber and types are loaded automatically</span>
                 </label>
-                <div id="science-types-cards" class="ari-dpr-cards ari-dpr-cards--disabled"></div>
-                <input type="hidden" id="profile-science-types" value="">
-                <div id="science-types-hint" class="ari-ap-form__hint">No DPRTYPE options loaded yet.</div>
+                <select id="profile-instrument-profile" class="ari-ap-input">
+                    <option value="">Select profile...</option>
+                </select>
             </div>
-            <div class="ari-ap-step-status" id="science-step-status">
-                <i class="fa-solid fa-lock"></i> Complete and test table names first.
+            <div id="sci-params-btn-row" class="ari-ap-form__field" style="display:none;">
+                <button id="btn-show-sci-params" class="ari-btn ari-btn--secondary ari-btn--sm" type="button">
+                    <i class="fa-solid fa-magnifying-glass"></i> Show Parameters
+                </button>
             </div>
+            <div id="sci-params-panel" class="ari-ap-params-panel" style="display:none;">
+                <nav id="sci-params-breadcrumb" class="at-px-breadcrumb"></nav>
+                <div id="sci-params-explorer" class="at-px-explorer"></div>
+            </div>
+            <div class="ari-ap-step-status" id="science-step-status"></div>
             </div>
 
             <!-- Data paths -->
@@ -328,7 +325,8 @@ window.ARI_APERO_PROFILES = {
     instruments: {{ instruments|tojson }},
     allGroups: {{ all_groups|tojson }},
     canManageGroups: {{ can_manage_groups|tojson }},
-    inheritedMap: {{ inherited_map|tojson }}
+    inheritedMap: {{ inherited_map|tojson }},
+    sciProfileData: {{ sci_profiles|tojson }}
 };
 </script>
 <script src="{{ url_for('static', filename='js/admin_apero_profiles.js') }}"></script>

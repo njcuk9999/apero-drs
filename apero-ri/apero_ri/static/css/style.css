@@ -3289,6 +3289,28 @@ select.ari-ap-input {
     opacity: 1;
 }
 
+/* Science read-only preview (instrument profile) */
+.ari-ap-sci-preview {
+    background: #f0f4ff;
+    border: 1px solid #c5d0ee;
+    border-radius: 5px;
+    padding: 0.4rem 0.65rem;
+    font-size: 0.9rem;
+    color: #2c3e6b;
+    min-height: 2.2rem;
+    line-height: 1.5;
+    word-break: break-word;
+}
+
+/* Instrument profile params panel */
+.ari-ap-params-panel {
+    border: 1px solid #c5d0ee;
+    border-radius: 6px;
+    margin-top: 0.5rem;
+    overflow: hidden;
+    background: #fafbff;
+}
+
 /* Validation message */
 .ari-ap-validation {
     font-size: 0.8rem;
@@ -4174,6 +4196,75 @@ select.ari-ap-input {
     overflow-y: auto;
     line-height: 1.5;
 }
+
+/* ── Params file-explorer ─────────────────────────────────────────────── */
+.at-px-breadcrumb {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.1rem;
+    font-size: 0.8rem;
+    margin-bottom: 0.55rem;
+    padding: 0.25rem 0.45rem;
+    background: #f0f2f8;
+    border-radius: 4px;
+    border: 1px solid #d8dce8;
+}
+.at-px-crumb--link {
+    color: #3f51b5;
+    cursor: pointer;
+    font-weight: 600;
+    padding: 0 0.15rem;
+    border-radius: 3px;
+}
+.at-px-crumb--link:hover { text-decoration: underline; background: #e3e7f5; }
+.at-px-crumb--active { color: #444; font-weight: 600; padding: 0 0.15rem; }
+.at-px-sep { color: #999; }
+
+.at-px-explorer { font-size: 0.85rem; }
+
+/* directory list (mixed primitive + complex) */
+.at-px-dir-list { display: flex; flex-direction: column; gap: 2px; }
+.at-px-row {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    padding: 0.28rem 0.55rem;
+    border-radius: 4px;
+    border: 1px solid transparent;
+}
+.at-px-row--folder {
+    cursor: pointer;
+    border-color: #d5dbe8;
+    background: #f5f7fd;
+    user-select: none;
+}
+.at-px-row--folder:hover { background: #e4eafc; border-color: #a0acd8; }
+.at-px-row--leaf { background: transparent; }
+.at-px-tree-toggle { transition: background 120ms ease, border-color 120ms ease; }
+.at-px-row__icon { color: #7986cb; width: 1rem; text-align: center; flex-shrink: 0; }
+.at-px-row--leaf .at-px-row__icon { color: #b0bec5; }
+.at-px-row__key { font-weight: 600; color: #2c3e6b; flex-shrink: 0; }
+.at-px-row__val { color: #555; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.at-px-row__val--hint { color: #8e99b5; font-style: italic; }
+.at-px-row__chevron { color: #9aa5c4; margin-left: auto; flex-shrink: 0; }
+
+/* all-primitive key-value table */
+.at-px-kv-list { display: flex; flex-direction: column; gap: 2px; }
+.at-px-kv-row {
+    display: grid;
+    grid-template-columns: minmax(130px, 28%) 1fr;
+    gap: 0.5rem;
+    padding: 0.2rem 0.55rem;
+    border-radius: 3px;
+}
+.at-px-kv-row:nth-child(odd)  { background: #f5f7fd; }
+.at-px-kv-row:nth-child(even) { background: #fff; }
+.at-px-kv-row--single { grid-template-columns: 1fr; }
+.at-px-kv-key { font-weight: 600; color: #2c3e6b; }
+.at-px-kv-val { color: #444; word-break: break-all; }
+
+.at-px-empty { color: #aaa; font-style: italic; padding: 0.4rem 0.55rem; }
 
 /* Markdown info */
 .at-info-md {

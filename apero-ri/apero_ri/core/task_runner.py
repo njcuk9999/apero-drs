@@ -11,6 +11,7 @@ import threading
 import traceback
 import time
 import json
+import yaml
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
@@ -33,6 +34,7 @@ _scheduler_thread: Optional[threading.Thread] = None
 _scheduler_local_data_dir = str(Path.home() / '.ari')
 _scheduler_poll_seconds = 30.0
 _history_relpath = Path('admin') / 'async_history.txt'
+_aprofile_preset_cache: Dict[str, dict] = {}
 
 
 def _is_global_scope(instrument: str) -> bool:
@@ -88,6 +90,28 @@ def _sanitize_run_params(value: Any) -> Any:
         return str(value)
     if isinstance(value, (str, int, float, bool)) or value is None:
         return value
+
+
+    def _load_aprofile_preset(profile_file: str) -> dict:
+        """Load one APERO instrument profile YAML from resources/aprofile_instruments."""
+        if not profile_file:
+            return {}
+        if profile_file in _aprofile_preset_cache:
+            return dict(_aprofile_preset_cache[profile_file])
+        resources_dir = Path(__file__).resolve().parents[1] / 'resources' / 'aprofile_instruments'
+        path = resources_dir / profile_file
+        if not path.is_file():
+            _aprofile_preset_cache[profile_file] = {}
+            return {}
+        try:
+            with path.open('r', encoding='utf-8') as f:
+                data = yaml.safe_load(f) or {}
+            if not isinstance(data, dict):
+                data = {}
+        except Exception:
+            data = {}
+        _aprofile_preset_cache[profile_file] = data
+        return dict(data)
     return str(value)
 
 
@@ -552,10 +576,98 @@ def build_run_params(instrument: str, local_data_dir: str,
     """
     profiles = all_profiles.get(instrument, {})
     mapped: Dict[str, dict] = {}
+    db_keys = [
+        'DATABASE_MODE', 'DATABASE_HOST', 'DATABASE_USER',
+        'DATABASE_USERNAME', 'DATABASE_PASSWORD', 'DATABASE_NAME',
+        'ASTROM_TABLENAME', 'CALIB_TABLENAME', 'FINDEX_TABLENAME',
+        'LOG_TABLENAME', 'TELLU_TABLENAME', 'REJECT_TABLENAME',
+    ]
+    path_keys = [
+        'PATH_RAW', 'PATH_PP', 'PATH_RED', 'PATH_CALIB',
+        'PATH_TELLU', 'PATH_LOG', 'PATH_LBL',
+    ]
     for pname, pcfg in profiles.items():
         p = dict(pcfg) if isinstance(pcfg, dict) else {}
+
+        # Merge preset YAML referenced by APERO_INSTRUMENT_PROFILE so task
+        # payloads include sections like headers/plot/general.
+        preset_name = str(p.get('APERO_INSTRUMENT_PROFILE', '') or '').strip()
+        preset_data = _load_aprofile_preset(preset_name)
+        if preset_data:
+            if 'headers' in preset_data and 'headers' not in p:
+                p['headers'] = preset_data.get('headers', {})
+            # Presets use 'plot'; task payload expects 'plots'.
+            if 'plots' not in p:
+                if isinstance(preset_data.get('plots'), dict):
+                    p['plots'] = preset_data.get('plots', {})
+                elif isinstance(preset_data.get('plot'), dict):
+                    p['plots'] = preset_data.get('plot', {})
+            preset_general = preset_data.get('general', {})
+            if isinstance(preset_general, dict):
+                general_from_preset = {}
+                for gkey, gval in preset_general.items():
+                    if gkey in ('instrument', 'science_fiber', 'science_types'):
+                        continue
+                    general_from_preset[gkey] = gval
+                # Normalize preset lowercase keys to task uppercase keys.
+                if 'SCIENCE_FIBER' in preset_general:
+                    general_from_preset['SCIENCE_FIBER'] = preset_general.get('SCIENCE_FIBER')
+                elif 'science_fiber' in preset_general:
+                    general_from_preset['SCIENCE_FIBER'] = preset_general.get('science_fiber')
+                if 'SCIENCE_TYPES' in preset_general:
+                    general_from_preset['SCIENCE_TYPES'] = preset_general.get('SCIENCE_TYPES')
+                elif 'science_types' in preset_general:
+                    general_from_preset['SCIENCE_TYPES'] = preset_general.get('science_types')
+                if 'INSTRUMENT' in preset_general:
+                    general_from_preset['INSTRUMENT'] = preset_general.get('INSTRUMENT')
+                elif 'instrument' in preset_general:
+                    general_from_preset['INSTRUMENT'] = preset_general.get('instrument')
+                if not isinstance(p.get('general'), dict):
+                    p['general'] = {}
+                for gkey, gval in general_from_preset.items():
+                    if gkey not in p['general']:
+                        p['general'][gkey] = gval
+
+        database = p.get('database', {})
+        if not isinstance(database, dict):
+            database = {}
+        for key in db_keys:
+            if key not in database and p.get(key):
+                database[key] = p.get(key)
+        if 'DATABASE_USER' not in database and database.get('DATABASE_USERNAME'):
+            database['DATABASE_USER'] = database.get('DATABASE_USERNAME')
+        if 'DATABASE_USERNAME' not in database and database.get('DATABASE_USER'):
+            database['DATABASE_USERNAME'] = database.get('DATABASE_USER')
+        p['database'] = database
+
+        paths = p.get('paths', {})
+        if not isinstance(paths, dict):
+            paths = {}
+        for key in path_keys:
+            if key not in paths and p.get(key):
+                paths[key] = p.get(key)
+        p['paths'] = paths
+
+        # Keep flat keys available in run-time payload for legacy code paths.
+        for key in db_keys:
+            if key not in p and database.get(key):
+                p[key] = database.get(key)
+        for key in path_keys:
+            if key not in p and paths.get(key):
+                p[key] = paths.get(key)
+
         if 'DATABASE_USERNAME' in p and 'DATABASE_USER' not in p:
             p['DATABASE_USER'] = p['DATABASE_USERNAME']
+        # Preserve legacy flat keys while also providing nested general.
+        general = p.get('general', {})
+        if not isinstance(general, dict):
+            general = {}
+        if 'SCIENCE_FIBER' not in general and p.get('SCIENCE_FIBER'):
+            general['SCIENCE_FIBER'] = p.get('SCIENCE_FIBER')
+        if 'SCIENCE_TYPES' not in general and p.get('SCIENCE_TYPES'):
+            general['SCIENCE_TYPES'] = p.get('SCIENCE_TYPES')
+        general['INSTRUMENT'] = instrument
+        p['general'] = general
         # Ensure task code receives the instrument in each APERO profile payload.
         p['INSTRUMENT'] = instrument
         mapped[pname] = p

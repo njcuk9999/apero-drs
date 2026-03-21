@@ -33,10 +33,12 @@
         { key: 'REJECT_TABLENAME',  id: 'profile-tbl-reject' },
     ];
 
-    var scienceFiberInput  = document.getElementById('profile-science-fiber');
-    var scienceTypesInput  = document.getElementById('profile-science-types');
-    var scienceTypesCards  = document.getElementById('science-types-cards');
-    var scienceTypesHint   = document.getElementById('science-types-hint');
+    var aprofileSelect      = document.getElementById('profile-instrument-profile');
+    var sciParamsBtnRow     = document.getElementById('sci-params-btn-row');
+    var btnShowSciParams = document.getElementById('btn-show-sci-params');
+    var sciParamsPanel   = document.getElementById('sci-params-panel');
+    var sciParamsBreadcrumb = document.getElementById('sci-params-breadcrumb');
+    var sciParamsExplorer   = document.getElementById('sci-params-explorer');
 
     /* -- DOM refs -------------------------------------------------------- */
     var tabsContainer = document.getElementById('instrument-tabs');
@@ -126,9 +128,6 @@
     var formDirty = false;       // track unsaved changes
     var dbTestPassed = false;
     var tablesTestPassed = false;
-    var availableFibers = [];
-    var availableDprtypes = [];
-    var selectedDprtypes = [];
     var draftGroups = [];
     var globalStatusLastSignature = '';
     var globalStatusCollapsed = true;
@@ -138,6 +137,8 @@
         science: null,
         paths: null,
     };
+    var sciParamsData = null;    // full YAML data for selected instrument profile
+    var sciParamsExpanded = new Set();
 
     /* -- Toast ----------------------------------------------------------- */
     function showToast(msg, type) {
@@ -485,9 +486,6 @@
         sectionCollapsePrefs.tables = null;
         sectionCollapsePrefs.science = null;
         sectionCollapsePrefs.paths = null;
-        availableFibers = [];
-        availableDprtypes = [];
-        selectedDprtypes = [];
         draftGroups = [];
         profileNameInput.value = '';
         profileNameInput.disabled = false;
@@ -501,10 +499,11 @@
             var vdiv = document.getElementById(f.id + '-validation');
             if (vdiv) vdiv.style.display = 'none';
         });
-        scienceFiberInput.innerHTML = '<option value="">Run table test first...</option>';
-        scienceFiberInput.value = '';
-        scienceTypesInput.value = '';
-        renderDprtypeCards();
+        if (aprofileSelect) aprofileSelect.value = '';
+        if (sciParamsBtnRow) sciParamsBtnRow.style.display = 'none';
+        if (sciParamsPanel) sciParamsPanel.style.display = 'none';
+        sciParamsData = null;
+        sciParamsExpanded = new Set();
         dbTestResult.style.display = 'none';
         tablesTestResult.style.display = 'none';
         formTitle.innerHTML = '<i class="fa-solid fa-plus"></i> Add Profile';
@@ -529,17 +528,15 @@
         TABLE_FIELDS.forEach(function (f) {
             tableInputs[f.id].value = profile[f.key] || '';
         });
-        selectedDprtypes = Array.isArray(profile.SCIENCE_TYPES)
-            ? profile.SCIENCE_TYPES.slice()
-            : (profile.SCIENCE_TYPES ? String(profile.SCIENCE_TYPES).split(',').map(function (s) { return s.trim(); }).filter(Boolean) : []);
-        scienceTypesInput.value = selectedDprtypes.join(', ');
-        scienceFiberInput.innerHTML = '<option value="">Run table test first...</option>';
-        scienceFiberInput.value = '';
-        availableFibers = [];
-        availableDprtypes = [];
-        dbTestPassed = false;
-        tablesTestPassed = false;
-        renderDprtypeCards();
+        // Restore instrument profile file selection
+        if (aprofileSelect) {
+            aprofileSelect.value = profile.APERO_INSTRUMENT_PROFILE || '';
+        }
+        updateSciPreview();
+        // Treat existing saved profile as already tested; tests will be
+        // reset automatically if the user edits DB or table-name fields.
+        dbTestPassed = true;
+        tablesTestPassed = true;
         PATH_FIELDS.forEach(function (f) {
             pathInputs[f.id].value = profile[f.key] || '';
             validatePathField(f.id, profile[f.key] || '');
@@ -640,67 +637,148 @@
         });
     }
 
-    function renderDprtypeCards() {
-        scienceTypesCards.innerHTML = '';
-        if (!availableDprtypes.length) {
-            scienceTypesCards.classList.add('ari-dpr-cards--disabled');
-            scienceTypesHint.textContent = 'No DPRTYPE options loaded yet.';
-            return;
-        }
-        scienceTypesCards.classList.remove('ari-dpr-cards--disabled');
-        availableDprtypes.forEach(function (dpr) {
-            var btn = document.createElement('button');
-            btn.type = 'button';
-            btn.className = 'ari-dpr-card';
-            var selected = selectedDprtypes.indexOf(dpr) >= 0;
-            btn.classList.add(selected ? 'ari-dpr-card--selected' : 'ari-dpr-card--unselected');
-            btn.textContent = dpr;
-            btn.addEventListener('click', function () {
-                if (scienceTypesCards.classList.contains('ari-dpr-cards--disabled')) return;
-                var idx = selectedDprtypes.indexOf(dpr);
-                if (idx >= 0) selectedDprtypes.splice(idx, 1);
-                else selectedDprtypes.push(dpr);
-                scienceTypesInput.value = selectedDprtypes.join(', ');
-                renderDprtypeCards();
-                updateWorkflowState();
-                markDirty();
-            });
-            scienceTypesCards.appendChild(btn);
+    /* -- Populate instrument profile dropdown --------------------------- */
+    function populateInstrumentProfileSelect() {
+        if (!aprofileSelect) return;
+        var data = cfg.sciProfileData || {};
+        var keys = Object.keys(data).sort();
+        aprofileSelect.innerHTML = '<option value="">Select profile...</option>';
+        keys.forEach(function (k) {
+            var opt = document.createElement('option');
+            opt.value = k;
+            opt.textContent = k.replace(/\.yaml$/i, '');
+            aprofileSelect.appendChild(opt);
         });
-        scienceTypesInput.value = selectedDprtypes.join(', ');
-        if (!selectedDprtypes.length) {
-            scienceTypesHint.textContent = 'Select at least one SCIENCE_TYPE.';
-        } else {
-            scienceTypesHint.textContent = selectedDprtypes.length + ' SCIENCE_TYPE(s) selected.';
-        }
     }
 
-    function populateScienceOptions(fibers, dprtypes) {
-        availableFibers = fibers || [];
-        availableDprtypes = dprtypes || [];
+    /* -- Display instrument profile params button ----------------------- */
+    function updateSciPreview() {
+        var key = aprofileSelect ? aprofileSelect.value : '';
+        var data = (cfg.sciProfileData || {})[key];
+        if (!key || !data) {
+            if (sciParamsBtnRow) sciParamsBtnRow.style.display = 'none';
+            if (sciParamsPanel) sciParamsPanel.style.display = 'none';
+            sciParamsData = null;
+            sciParamsExpanded = new Set();
+            return;
+        }
+        // Prepare params data (hide panel on profile switch)
+        sciParamsData = data.params || null;
+        sciParamsExpanded = new Set();
+        if (sciParamsPanel) sciParamsPanel.style.display = 'none';
+        if (btnShowSciParams) btnShowSciParams.innerHTML = '<i class="fa-solid fa-magnifying-glass"></i> Show Parameters';
+        if (sciParamsBtnRow) sciParamsBtnRow.style.display = sciParamsData ? '' : 'none';
+    }
 
-        var currentFiber = scienceFiberInput.value;
-        scienceFiberInput.innerHTML = '';
-        var ph = document.createElement('option');
-        ph.value = '';
-        ph.textContent = availableFibers.length ? 'Select fiber...' : 'No fibers found';
-        scienceFiberInput.appendChild(ph);
-        availableFibers.forEach(function (f) {
-            var opt = document.createElement('option');
-            opt.value = f;
-            opt.textContent = f;
-            scienceFiberInput.appendChild(opt);
-        });
-        if (currentFiber && availableFibers.indexOf(currentFiber) >= 0) {
-            scienceFiberInput.value = currentFiber;
-        } else {
-            scienceFiberInput.value = '';
+    /* -- Instrument profile params navigator ----------------------------- */
+    function apEscHtml(str) {
+        var d = document.createElement('div');
+        d.appendChild(document.createTextNode(String(str)));
+        return d.innerHTML;
+    }
+
+    function apPxIsPrimitive(val) {
+        return val === null || typeof val !== 'object';
+    }
+
+    function apPxLabel(val) {
+        if (val === null) { return 'null'; }
+        if (typeof val === 'boolean') { return val ? 'true' : 'false'; }
+        return String(val);
+    }
+
+    // Short (≤5 items) array or dict whose values are all primitive → show inline
+    function apPxIsShortSimple(val) {
+        if (apPxIsPrimitive(val)) return true;
+        var items = Array.isArray(val) ? val : Object.values(val);
+        return items.length <= 5 && items.every(apPxIsPrimitive);
+    }
+
+    function apPxInlineFormat(val) {
+        if (Array.isArray(val)) {
+            return '[ ' + val.map(apPxLabel).join(', ') + ' ]';
+        }
+        return '{ ' + Object.keys(val).map(function (k) {
+            return k + ': ' + apPxLabel(val[k]);
+        }).join(', ') + ' }';
+    }
+
+    function apPxNodeId(path) {
+        return path.join('::');
+    }
+
+    function apPxRows(node, path, depth) {
+        if (node === undefined || node === null) {
+            return '<div class="at-px-empty">No data</div>';
+        }
+        if (apPxIsPrimitive(node)) {
+            return '<div class="at-px-row at-px-row--leaf" style="padding-left:'
+                + (0.55 + depth * 1.1) + 'rem;">'
+                + '<span class="at-px-row__icon"><i class="fa-solid fa-tag"></i></span>'
+                + '<span class="at-px-row__key">value</span>'
+                + '<span class="at-px-row__val">' + apEscHtml(apPxLabel(node)) + '</span>'
+                + '</div>';
+        }
+        var entries = Array.isArray(node)
+            ? node.map(function (v, i) { return [String(i), v]; })
+            : Object.keys(node).map(function (k) { return [k, node[k]]; });
+        if (entries.length === 0) {
+            return '<div class="at-px-empty" style="padding-left:'
+                + (0.55 + depth * 1.1) + 'rem;">(empty)</div>';
         }
 
-        selectedDprtypes = selectedDprtypes.filter(function (d) {
-            return availableDprtypes.indexOf(d) >= 0;
+        var html = '';
+        entries.forEach(function (e) {
+            var k = e[0], v = e[1];
+            if (apPxIsShortSimple(v)) {
+                var display = apPxIsPrimitive(v) ? apPxLabel(v) : apPxInlineFormat(v);
+                html += '<div class="at-px-row at-px-row--leaf" style="padding-left:'
+                    + (0.55 + depth * 1.1) + 'rem;">'
+                    + '<span class="at-px-row__icon"><i class="fa-solid fa-tag"></i></span>'
+                    + '<span class="at-px-row__key">' + apEscHtml(k) + '</span>'
+                    + '<span class="at-px-row__val">' + apEscHtml(display) + '</span>'
+                    + '</div>';
+            } else {
+                var childPath = path.concat([k]);
+                var id = apPxNodeId(childPath);
+                var expanded = sciParamsExpanded.has(id);
+                var hint = Array.isArray(v)
+                    ? ('[ ' + v.length + ' ]')
+                    : ('{ ' + Object.keys(v).length + ' }');
+                html += '<div class="at-px-row at-px-row--folder at-px-tree-toggle" data-node="'
+                    + apEscHtml(id) + '" style="padding-left:' + (0.55 + depth * 1.1) + 'rem;">'
+                    + '<span class="at-px-row__icon"><i class="fa-solid fa-'
+                    + (expanded ? 'folder-open' : 'folder') + '"></i></span>'
+                    + '<span class="at-px-row__key">' + apEscHtml(k) + '</span>'
+                    + '<span class="at-px-row__val at-px-row__val--hint">' + hint + '</span>'
+                    + '<span class="at-px-row__chevron"><i class="fa-solid fa-chevron-'
+                    + (expanded ? 'down' : 'right') + '"></i></span>'
+                    + '</div>';
+                if (expanded) {
+                    html += apPxRows(v, childPath, depth + 1);
+                }
+            }
         });
-        renderDprtypeCards();
+        return html;
+    }
+
+    function renderSciParamsExplorer() {
+        if (!sciParamsExplorer) return;
+        if (sciParamsBreadcrumb) {
+            sciParamsBreadcrumb.innerHTML = '<span class="at-px-crumb at-px-crumb--active">Parameters Tree</span>';
+        }
+        sciParamsExplorer.innerHTML = apPxRows(sciParamsData, [], 0);
+        sciParamsExplorer.querySelectorAll('.at-px-tree-toggle').forEach(function (el) {
+            el.addEventListener('click', function () {
+                var id = el.getAttribute('data-node') || '';
+                if (sciParamsExpanded.has(id)) {
+                    sciParamsExpanded.delete(id);
+                } else {
+                    sciParamsExpanded.add(id);
+                }
+                renderSciParamsExplorer();
+            });
+        });
     }
 
     function updateWorkflowState() {
@@ -719,13 +797,11 @@
         var tableFieldsFilled = isTableFieldsComplete();
         btnTestTables.disabled = !(dbTestPassed && tableFieldsFilled);
 
-        lockSection(scienceSection, !tablesTestPassed);
-        var scienceComplete = !!scienceFiberInput.value.trim() && selectedDprtypes.length > 0;
-        lockSection(pathsSection, !(tablesTestPassed && scienceComplete));
-        scienceTypesCards.classList.toggle(
-            'ari-dpr-cards--disabled',
-            (!tablesTestPassed) || !availableDprtypes.length
-        );
+        // Science section is always unlocked (uses local profile file, not DB)
+        lockSection(scienceSection, false);
+        var selectedSciProfile = aprofileSelect ? aprofileSelect.value.trim() : '';
+        var scienceComplete = !!selectedSciProfile;
+        lockSection(pathsSection, !scienceComplete);
 
         if (!dbTestPassed) {
             dbStepStatus.innerHTML = '<i class="fa-solid fa-circle-info"></i> Database test is required before continuing.';
@@ -735,12 +811,9 @@
             tablesStepStatus.innerHTML = '<i class="fa-solid fa-circle-info"></i> Fill all table names, then run table test.';
         }
 
-        if (!tablesTestPassed) {
-            scienceStepStatus.innerHTML = '<i class="fa-solid fa-lock"></i> Complete and test table names first.';
+        if (!scienceComplete) {
+            scienceStepStatus.innerHTML = '<i class="fa-solid fa-circle-info"></i> Select an instrument profile.';
             pathsStepStatus.innerHTML = '<i class="fa-solid fa-lock"></i> Complete science settings first.';
-        } else if (!scienceComplete) {
-            scienceStepStatus.innerHTML = '<i class="fa-solid fa-circle-check"></i> Table names validated.';
-            pathsStepStatus.innerHTML = '<i class="fa-solid fa-circle-info"></i> Choose one fiber and at least one science type.';
         } else {
             scienceStepStatus.innerHTML = '<i class="fa-solid fa-circle-check"></i> Science settings complete.';
             pathsStepStatus.innerHTML = '<i class="fa-solid fa-circle-check"></i> You can now define paths and save.';
@@ -752,7 +825,7 @@
         });
 
         var tablesDone = !!tablesTestPassed;
-        var scienceDone = !!(tablesTestPassed && scienceComplete);
+        var scienceDone = !!scienceComplete;
         var pathsDone = !!(scienceDone && allPathsFilled);
 
         if (!tablesDone) sectionCollapsePrefs.tables = null;
@@ -861,14 +934,11 @@
                 '<i class="fa-solid fa-vial-circle-check"></i> Test Table Names';
             if (data.valid) {
                 tablesTestPassed = true;
-                showFieldValidation(tablesTestResult, true,
-                    'Table checks passed. Fiber/DPRTYPE options loaded.');
-                populateScienceOptions(data.fibers || [], data.dprtypes || []);
+                showFieldValidation(tablesTestResult, true, 'Table checks passed.');
             } else {
                 tablesTestPassed = false;
                 showFieldValidation(tablesTestResult, false,
                     data.error || 'Table checks failed');
-                populateScienceOptions([], []);
             }
             updateWorkflowState();
         })
@@ -877,7 +947,6 @@
                 '<i class="fa-solid fa-vial-circle-check"></i> Test Table Names';
             tablesTestPassed = false;
             showFieldValidation(tablesTestResult, false, 'Request failed');
-            populateScienceOptions([], []);
             updateWorkflowState();
         });
     }
@@ -899,8 +968,13 @@
         TABLE_FIELDS.forEach(function (f) {
             payload[f.key] = tableInputs[f.id].value.trim();
         });
-        payload.SCIENCE_FIBER = scienceFiberInput.value.trim();
-        payload.SCIENCE_TYPES = selectedDprtypes.slice();
+        // Science fields come from the selected instrument profile file
+        var sciKey = aprofileSelect ? aprofileSelect.value.trim() : '';
+        var sciData = (cfg.sciProfileData || {})[sciKey] || {};
+        payload.APERO_INSTRUMENT_PROFILE = sciKey;
+        payload.SCIENCE_FIBER = sciData.science_fiber || '';
+        payload.SCIENCE_TYPES = Array.isArray(sciData.science_types)
+            ? sciData.science_types.slice() : [];
         if (editingProfile) {
             var prof = profiles.find(function (p) { return p.name === editingProfile; });
             payload.groups = (prof && Array.isArray(prof.groups)) ? prof.groups.slice() : [];
@@ -935,12 +1009,16 @@
             showToast('Table name test is required before save', 'error');
             return null;
         }
+        if (!payload.APERO_INSTRUMENT_PROFILE) {
+            showToast('Instrument profile selection is required', 'error');
+            return null;
+        }
         if (!payload.SCIENCE_FIBER) {
-            showToast('SCIENCE_FIBER is required', 'error');
+            showToast('SCIENCE_FIBER not found in selected instrument profile', 'error');
             return null;
         }
         if (!payload.SCIENCE_TYPES || payload.SCIENCE_TYPES.length === 0) {
-            showToast('SCIENCE_TYPES is required', 'error');
+            showToast('SCIENCE_TYPES not found in selected instrument profile', 'error');
             return null;
         }
         if (!payload.groups || payload.groups.length === 0) {
@@ -1281,10 +1359,6 @@
             markDirty();
             dbTestPassed = false;
             tablesTestPassed = false;
-            availableFibers = [];
-            availableDprtypes = [];
-            selectedDprtypes = [];
-            populateScienceOptions([], []);
             dbTestResult.style.display = 'none';
             tablesTestResult.style.display = 'none';
             updateWorkflowState();
@@ -1294,10 +1368,6 @@
         tableInputs[f.id].addEventListener('input', function () {
             markDirty();
             tablesTestPassed = false;
-            availableFibers = [];
-            availableDprtypes = [];
-            selectedDprtypes = [];
-            populateScienceOptions([], []);
             tablesTestResult.style.display = 'none';
             updateWorkflowState();
         });
@@ -1306,19 +1376,32 @@
         markDirty();
         dbTestPassed = false;
         tablesTestPassed = false;
-        availableFibers = [];
-        availableDprtypes = [];
-        selectedDprtypes = [];
-        populateScienceOptions([], []);
         dbTestResult.style.display = 'none';
         tablesTestResult.style.display = 'none';
         updateWorkflowState();
     });
 
-    scienceFiberInput.addEventListener('change', function () {
-        markDirty();
-        updateWorkflowState();
-    });
+    if (aprofileSelect) {
+        aprofileSelect.addEventListener('change', function () {
+            markDirty();
+            updateSciPreview();
+            updateWorkflowState();
+        });
+    }
+
+    if (btnShowSciParams) {
+        btnShowSciParams.addEventListener('click', function () {
+            var visible = sciParamsPanel && sciParamsPanel.style.display !== 'none';
+            if (visible) {
+                sciParamsPanel.style.display = 'none';
+                btnShowSciParams.innerHTML = '<i class="fa-solid fa-magnifying-glass"></i> Show Parameters';
+            } else {
+                renderSciParamsExplorer();
+                if (sciParamsPanel) sciParamsPanel.style.display = '';
+                btnShowSciParams.innerHTML = '<i class="fa-solid fa-eye-slash"></i> Hide Parameters';
+            }
+        });
+    }
 
     PATH_FIELDS.forEach(function (f) {
         pathInputs[f.id].addEventListener('input', function () {
@@ -1378,6 +1461,7 @@
     });
 
     /* -- Init ------------------------------------------------------------ */
+    populateInstrumentProfileSelect();
     renderTabs();
     updateWorkflowState();
 })();

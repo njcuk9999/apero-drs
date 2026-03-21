@@ -24,19 +24,11 @@ PARAM_LIST.append('APERO_PROFILES')
 PARAM_LIST.append('APERO_PROFILE_NAMES')
 # list of apero profile parameters needed for this task (for checking in run_job)
 APERO_PROFILE_PARAM_LIST = []
-APERO_PROFILE_PARAM_LIST.append('DATABASE_MODE')
-APERO_PROFILE_PARAM_LIST.append('DATABASE_HOST')
-APERO_PROFILE_PARAM_LIST.append('DATABASE_USER')
-APERO_PROFILE_PARAM_LIST.append('DATABASE_PASSWORD')
-APERO_PROFILE_PARAM_LIST.append('DATABASE_NAME')
-APERO_PROFILE_PARAM_LIST.append('ASTROM_TABLENAME')
-APERO_PROFILE_PARAM_LIST.append('CALIB_TABLENAME')
-APERO_PROFILE_PARAM_LIST.append('FINDEX_TABLENAME')
-APERO_PROFILE_PARAM_LIST.append('LOG_TABLENAME')
-APERO_PROFILE_PARAM_LIST.append('TELLU_TABLENAME')
-APERO_PROFILE_PARAM_LIST.append('REJECT_TABLENAME')
-APERO_PROFILE_PARAM_LIST.append('SCIENCE_FIBER')
-APERO_PROFILE_PARAM_LIST.append('SCIENCE_TYPES')
+APERO_PROFILE_PARAM_LIST.append('database')
+APERO_PROFILE_PARAM_LIST.append('paths')
+APERO_PROFILE_PARAM_LIST.append('headers')
+APERO_PROFILE_PARAM_LIST.append('plots')
+APERO_PROFILE_PARAM_LIST.append('general')
 # Set the default frequency for this task (in hours)
 DEFAULT_FREQUENCY = 6.0
 # Set whether this task is enabled by default in the admin portal
@@ -118,10 +110,7 @@ class AperoObjectTableTask(apero_async.AperoAsyncTask):
             rquery = construct_query(rparams)
             # ---------------------------------------------------------------------
             # run the query and get results
-            # Map DATABASE_USERNAME -> DATABASE_USER for database_query
-            db_params = dict(aparams)
-            if 'DATABASE_USERNAME' in db_params and 'DATABASE_USER' not in db_params:
-                db_params['DATABASE_USER'] = db_params['DATABASE_USERNAME']
+            db_params = apero_async.get_db_params(aparams)
             start = time.time()
             results = apero_async.database_query(db_params, rquery)
             # ---------------------------------------------------------------------
@@ -133,7 +122,7 @@ class AperoObjectTableTask(apero_async.AperoAsyncTask):
             metadata['APERO_PROFILE'] = apero_profile
             metadata['COLUMN_META'] = meta_columns()
             # construct filename
-            instrument = params.get('INSTRUMENT', 'unknown')
+            instrument = aparams.get('general', {}).get('INSTRUMENT', 'unknown')
             local_dir = (Path(params.get('LOCAL_DATA_DIR', str(ARI_DIR)))
                          / 'tasks' / instrument / apero_profile)
             basename = 'object_table.json'
@@ -225,17 +214,25 @@ def check_required(aparams) -> Dict[str, Any]:
         'LOG_TABLENAME',
         'TELLU_TABLENAME',
         'REJECT_TABLENAME',
-        'SCIENCE_FIBER',
-        'SCIENCE_TYPES',
     ]
     # Check and cut down parameters needed for query
     rparams = dict()
-    # loop around parmaeters
+    # Prefer nested database config and flatten required keys for SQL templates.
+    db_cfg = aparams.get('database', {})
+    if not isinstance(db_cfg, dict):
+        db_cfg = {}
+    # loop around parameters
     for param in required_params:
-        if param not in aparams:
-            raise ValueError(f'Missing required parameter: {param}')
-        else:
-            rparams[param] = aparams[param]
+        value = db_cfg.get(param, aparams.get(param))
+        if value in (None, ''):
+            raise ValueError(f'Missing required parameter: database.{param}')
+        rparams[param] = value
+    # extract science params from the 'general' sub-dict and flatten into rparams
+    general = aparams.get('general', {})
+    for key in ('SCIENCE_FIBER', 'SCIENCE_TYPES'):
+        if key not in general:
+            raise ValueError(f'Missing required parameter: general.{key}')
+        rparams[key] = general[key]
     # return the required parameters
     return rparams
 
@@ -393,34 +390,29 @@ def meta_columns():
 # Start of main code
 # =============================================================================
 if __name__ == '__main__':
-    # prompt for database password
-    import getpass
-    db_password = getpass.getpass('Enter database password: ')
-    # create an instance of the task and run it with test parameters
+    from apero_ri.core.auth import load_apero_profiles
+    # -- Configure which profile to test with --
+    _TEST_INSTRUMENT = 'SPIROU'
+    _TEST_PROFILE = 'spirou_xxs_08_cook_home'
+
+    # Load profiles from ~/.ari/admin/apero_profiles.yaml
+    _all_profiles = load_apero_profiles()
+    _inst_profiles = _all_profiles.get(_TEST_INSTRUMENT, {})
+    if _TEST_PROFILE not in _inst_profiles:
+        raise RuntimeError(
+            f'Profile "{_TEST_PROFILE}" not found under instrument '
+            f'"{_TEST_INSTRUMENT}" in apero_profiles.yaml'
+        )
+    _profile = _inst_profiles[_TEST_PROFILE]
+
     task = AperoObjectTableTask()
-    test_params = {
+    run_params = {
         'LOCAL_DATA_DIR': str(ARI_DIR),
-        'INSTRUMENT': 'spirou',
-        'APERO_PROFILE_NAMES': ['default'],
-        'APERO_PROFILES': {
-            'default': {
-                'DATABASE_MODE': 'mysql+pymysql',
-                'DATABASE_HOST': 'cosmos.astro.umontreal.ca',
-                'DATABASE_USER': 'spirou',
-                'DATABASE_PASSWORD': f'{db_password}!',
-                'DATABASE_NAME': 'spirou',
-                'ASTROM_TABLENAME': 'astrom_spirou_offline_db',
-                'CALIB_TABLENAME': 'calib_spirou_offline_db',
-                'FINDEX_TABLENAME': 'findex_spirou_offline_db',
-                'LOG_TABLENAME': 'log_spirou_offline_db',
-                'TELLU_TABLENAME': 'tellu_spirou_offline_db',
-                'REJECT_TABLENAME': 'reject_spirou_offline_db',
-                'SCIENCE_FIBER': 'AB',
-                'SCIENCE_TYPES': ['POLAR_FP', 'POLAR_DARK', 'OBJ_DARK', 'OBJ_FP']
-            }
-        }
+        'INSTRUMENT': _TEST_INSTRUMENT.lower(),
+        'APERO_PROFILE_NAMES': [_TEST_PROFILE],
+        'APERO_PROFILES': {_TEST_PROFILE: _profile},
     }
-    task.test_query(test_params)
+    task.test_query(run_params)
 # =============================================================================
 # End of main code
 # =============================================================================

@@ -68,11 +68,11 @@
     var detError        = document.getElementById('det-error');
     var detBtnToggleError = document.getElementById('det-btn-toggle-error');
     var detBtnCopyError = document.getElementById('det-btn-copy-error');
-    var detParamsSection = document.getElementById('det-params-section');
-    var detParamsBody    = document.getElementById('det-params-body');
-    var detTaskParams    = document.getElementById('det-task-params');
-    var detInputParams   = document.getElementById('det-input-params');
-    var detBtnToggleParams = document.getElementById('det-btn-toggle-params');
+    var detParamsSection      = document.getElementById('det-params-section');
+    var detParamsBody         = document.getElementById('det-params-body');
+    var detParamsBreadcrumb   = document.getElementById('det-params-breadcrumb');
+    var detParamsExplorer     = document.getElementById('det-params-explorer');
+    var detBtnToggleParams    = document.getElementById('det-btn-toggle-params');
     var detFilesSection = document.getElementById('det-files-section');
     var detOutputFiles  = document.getElementById('det-output-files');
 
@@ -133,6 +133,9 @@
     var BACKUP_TASK_KEY = 'ARI_LOCAL_DATA_BACKUP';
     var currentInfoText = '';
     var currentErrorText = '';
+    var currentParamsData = null;   // { 'Task Params': {...}, 'Input Params': {...} }
+    var currentParamsExpanded = new Set();
+    var currentParamsOwnerTaskId = null;
 
     var toast = document.getElementById('at-toast');
 
@@ -519,12 +522,19 @@
         });
         if (Object.keys(taskParams).length || Object.keys(taskConfig).length) {
             detParamsSection.style.display = '';
-            detTaskParams.textContent = formatJson(taskParams);
-            detInputParams.textContent = formatJson(taskConfig);
+            currentParamsData = {};
+            if (Object.keys(taskParams).length) { currentParamsData['Task Params'] = taskParams; }
+            if (Object.keys(taskConfig).length)  { currentParamsData['Input Params'] = taskConfig; }
+            if (currentParamsOwnerTaskId !== selectedTaskId) {
+                currentParamsExpanded = new Set(['Task Params', 'Input Params']);
+                currentParamsOwnerTaskId = selectedTaskId;
+            }
+            renderParamsExplorer();
         } else {
             detParamsSection.style.display = 'none';
-            detTaskParams.textContent = '{}';
-            detInputParams.textContent = '{}';
+            currentParamsData = null;
+            currentParamsExpanded = new Set();
+            currentParamsOwnerTaskId = null;
         }
 
         // Files section
@@ -584,8 +594,113 @@
     }
 
     /* -----------------------------------------------------------------------
-       File viewer
+       Params tree-explorer
     ----------------------------------------------------------------------- */
+
+    function pxIsPrimitive(val) {
+        return val === null || typeof val !== 'object';
+    }
+
+    function pxLabel(val) {
+        if (val === null) { return 'null'; }
+        if (typeof val === 'boolean') { return val ? 'true' : 'false'; }
+        return String(val);
+    }
+
+    // Short (≤5 items) array or dict whose values are all primitive → show inline
+    function pxIsShortSimple(val) {
+        if (pxIsPrimitive(val)) return true;
+        var items = Array.isArray(val) ? val : Object.values(val);
+        return items.length <= 5 && items.every(pxIsPrimitive);
+    }
+
+    function pxInlineFormat(val) {
+        if (Array.isArray(val)) {
+            return '[ ' + val.map(pxLabel).join(', ') + ' ]';
+        }
+        return '{ ' + Object.keys(val).map(function (k) {
+            return k + ': ' + pxLabel(val[k]);
+        }).join(', ') + ' }';
+    }
+
+    function pxNodeId(path) {
+        return path.join('::');
+    }
+
+    function pxRows(node, path, depth) {
+        if (node === undefined || node === null) {
+            return '<div class="at-px-empty">No data</div>';
+        }
+        if (pxIsPrimitive(node)) {
+            return '<div class="at-px-row at-px-row--leaf" style="padding-left:'
+                + (0.55 + depth * 1.1) + 'rem;">'
+                + '<span class="at-px-row__icon"><i class="fa-solid fa-tag"></i></span>'
+                + '<span class="at-px-row__key">value</span>'
+                + '<span class="at-px-row__val">' + esc(pxLabel(node)) + '</span>'
+                + '</div>';
+        }
+
+        var entries = Array.isArray(node)
+            ? node.map(function (v, i) { return [String(i), v]; })
+            : Object.keys(node).map(function (k) { return [k, node[k]]; });
+        if (entries.length === 0) {
+            return '<div class="at-px-empty" style="padding-left:'
+                + (0.55 + depth * 1.1) + 'rem;">(empty)</div>';
+        }
+
+        var html = '';
+        entries.forEach(function (e) {
+            var k = e[0], v = e[1];
+            if (pxIsShortSimple(v)) {
+                var display = pxIsPrimitive(v) ? pxLabel(v) : pxInlineFormat(v);
+                html += '<div class="at-px-row at-px-row--leaf" style="padding-left:'
+                    + (0.55 + depth * 1.1) + 'rem;">'
+                    + '<span class="at-px-row__icon"><i class="fa-solid fa-tag"></i></span>'
+                    + '<span class="at-px-row__key">' + esc(k) + '</span>'
+                    + '<span class="at-px-row__val">' + esc(display) + '</span>'
+                    + '</div>';
+            } else {
+                var childPath = path.concat([k]);
+                var id = pxNodeId(childPath);
+                var expanded = currentParamsExpanded.has(id);
+                var hint = Array.isArray(v)
+                    ? ('[ ' + v.length + ' ]')
+                    : ('{ ' + Object.keys(v).length + ' }');
+                html += '<div class="at-px-row at-px-row--folder at-px-tree-toggle" data-node="'
+                    + esc(id) + '" style="padding-left:' + (0.55 + depth * 1.1) + 'rem;">'
+                    + '<span class="at-px-row__icon"><i class="fa-solid fa-'
+                    + (expanded ? 'folder-open' : 'folder') + '"></i></span>'
+                    + '<span class="at-px-row__key">' + esc(k) + '</span>'
+                    + '<span class="at-px-row__val at-px-row__val--hint">' + hint + '</span>'
+                    + '<span class="at-px-row__chevron"><i class="fa-solid fa-chevron-'
+                    + (expanded ? 'down' : 'right') + '"></i></span>'
+                    + '</div>';
+                if (expanded) {
+                    html += pxRows(v, childPath, depth + 1);
+                }
+            }
+        });
+        return html;
+    }
+
+    function renderParamsExplorer() {
+        if (detParamsBreadcrumb) {
+            detParamsBreadcrumb.innerHTML = '<span class="at-px-crumb at-px-crumb--active">Parameters Tree</span>';
+        }
+        detParamsExplorer.innerHTML = pxRows(currentParamsData, [], 0);
+        detParamsExplorer.querySelectorAll('.at-px-tree-toggle').forEach(function (el) {
+            el.addEventListener('click', function () {
+                var id = el.getAttribute('data-node') || '';
+                if (currentParamsExpanded.has(id)) {
+                    currentParamsExpanded.delete(id);
+                } else {
+                    currentParamsExpanded.add(id);
+                }
+                renderParamsExplorer();
+            });
+        });
+    }
+
     function previewFile(path) {
         var fname = path.split('/').pop();
         fileModalTitle.textContent = fname + ' preview';

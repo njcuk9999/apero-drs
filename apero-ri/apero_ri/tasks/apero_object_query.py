@@ -25,26 +25,26 @@ PARAM_LIST.append('APERO_PROFILES')
 PARAM_LIST.append('APERO_PROFILE_NAMES')
 # list of apero profile parameters needed for this task (for checking in run_job)
 APERO_PROFILE_PARAM_LIST = []
-APERO_PROFILE_PARAM_LIST.append('DATABASE_MODE')
-APERO_PROFILE_PARAM_LIST.append('DATABASE_HOST')
-APERO_PROFILE_PARAM_LIST.append('DATABASE_USER')
-APERO_PROFILE_PARAM_LIST.append('DATABASE_PASSWORD')
-APERO_PROFILE_PARAM_LIST.append('DATABASE_NAME')
-APERO_PROFILE_PARAM_LIST.append('ASTROM_TABLENAME')
-APERO_PROFILE_PARAM_LIST.append('CALIB_TABLENAME')
-APERO_PROFILE_PARAM_LIST.append('FINDEX_TABLENAME')
-APERO_PROFILE_PARAM_LIST.append('LOG_TABLENAME')
-APERO_PROFILE_PARAM_LIST.append('TELLU_TABLENAME')
-APERO_PROFILE_PARAM_LIST.append('REJECT_TABLENAME')
-APERO_PROFILE_PARAM_LIST.append('SCIENCE_FIBER')
-APERO_PROFILE_PARAM_LIST.append('SCIENCE_TYPES')
-APERO_PROFILE_PARAM_LIST.append('INSTRUMENT')
+APERO_PROFILE_PARAM_LIST.append('database')
+APERO_PROFILE_PARAM_LIST.append('paths')
+APERO_PROFILE_PARAM_LIST.append('headers')
+APERO_PROFILE_PARAM_LIST.append('plots')
+APERO_PROFILE_PARAM_LIST.append('general')
 # Set the default frequency for this task (in hours)
 DEFAULT_FREQUENCY = 6.0
 # Set whether this task is enabled by default in the admin portal
 DEFAULT_ENABLED = True
 # Set the type of task (INSTRUMENT, GLOBAL)
 TASK_TYPE = 'INSTRUMENT'
+# Set the block kind to path
+BLOCK_KIND = dict()
+BLOCK_KIND['raw'] = 'PATH.RAW'
+BLOCK_KIND['tmp'] = 'PATH.PP'
+BLOCK_KIND['calib'] = 'PATH.CALIB'
+BLOCK_KIND['red'] = 'PATH.RED'
+BLOCK_KIND['tellu'] = 'PATH.TELLU'
+BLOCK_KIND['out'] = 'PATH.OUT'
+BLOCK_KIND['lbl'] ='PATH.LBL'
 
 
 # =============================================================================
@@ -108,15 +108,11 @@ class AperoObjectQueryTask(apero_async.AperoAsyncTask):
             # -----------------------------------------------------------------
             # get parameters for this apero profile
             aparams = apero_profiles[apero_profile]
-             # -----------------------------------------------------------------
-            # Map DATABASE_USERNAME -> DATABASE_USER for database_query
-            db_params = dict(aparams)
-            if 'DATABASE_USERNAME' in db_params and 'DATABASE_USER' not in db_params:
-                db_params['DATABASE_USER'] = db_params['DATABASE_USERNAME']
             # -----------------------------------------------------------------
             # define the object name query
-            obj_query = construct_obj_query(aparams)
+            obj_query = _construct_obj_query(aparams)
             # first lets get a list of objects from the astrometric database
+            db_params = apero_async.get_db_params(aparams)
             start = time.time()
             objlist = apero_async.database_query(db_params, obj_query)
             # get the number of objects
@@ -126,7 +122,7 @@ class AperoObjectQueryTask(apero_async.AperoAsyncTask):
             # ----------------------------------------------------------------
             # clear out and lock the object directory
             local_objdir = (Path(aparams.get('LOCAL_DATA_DIR', str(ARI_DIR)))
-                            / 'tasks'  / aparams['INSTRUMENT'] 
+                            / 'tasks'  / aparams.get('general', {}).get('INSTRUMENT', 'unknown')
                             / apero_profile_names[a_it] / 'objects')
             with _acquire_directory_lock(local_objdir):
                 _clear_directory_contents(local_objdir)
@@ -157,7 +153,7 @@ class AperoObjectQueryTask(apero_async.AperoAsyncTask):
                 # Step 2: Get header keys for all files for this object
                 # -------------------------------------------------------------
                 # returns a header table (one row per observation)
-                # obj_htable = object_query_headers(outputs)
+                object_query_headers(aparams, outputs)
                 
                 # -------------------------------------------------------------
                 # combine the timings from all queries for this object
@@ -236,7 +232,7 @@ class AperoObjectQueryTask(apero_async.AperoAsyncTask):
                 db_params['DATABASE_USER'] = db_params['DATABASE_USERNAME']
             # -----------------------------------------------------------------
             # define the object name query
-            obj_query = construct_obj_query(aparams)
+            obj_query = _construct_obj_query(aparams)
             print(f'Object name query for APERO profile: {apero_profile}\n')
             print(obj_query)
             print('\n\n')
@@ -266,13 +262,146 @@ class AperoObjectQueryTask(apero_async.AperoAsyncTask):
                                           apero_profile_names[a_it], 
                                           return_query=True)
                 
-                
-                
-                
 
-def construct_obj_query(aparams):
-    scitypes = ','.join([f'"{t}"' for t in aparams['SCIENCE_TYPES']])
-    oparams = dict(FINDEX_TABLENAME=aparams['FINDEX_TABLENAME'],
+
+# =============================================================================
+# Define main functions (used in run_job)
+# =============================================================================               
+def object_query_db(aparams, objname, apero_profile_name, 
+                    return_query: bool = False) -> dict[str, Any]:
+    if not objname:
+        raise ValueError('Object name is empty or invalid.')
+    
+    # check that all required parameters are present
+    rparams = _check_required(aparams)
+    
+    # get parameters only needed for sub-commands
+    fiber = rparams['SCIENCE_FIBER']
+    scitypes = rparams['SCIENCE_TYPES']
+    # storage of queries
+    queries = dict()
+    # raw file table
+    raw_results = _file_col_query(rparams, objname,
+                                 block_kind='raw', scitype=scitypes)
+    queries['raw'] = raw_results
+    # pp file table
+    pp_results = _file_col_query(rparams, objname, block_kind='tmp',
+                                scitype=scitypes)
+    queries['pp'] = pp_results
+    # red file table
+    ext_results = _file_col_query(rparams, objname, block_kind='red',
+                                 scitype=scitypes, output='EXT_E2DS_FF',
+                                 fiber=fiber)
+    queries['ext'] = ext_results
+    # tcorr file table
+    tcorr_results = _file_col_query(rparams, objname, block_kind='red',
+                                   scitype=scitypes, output='TELLU_OBJ',
+                                   fiber=fiber)
+    queries['tcorr'] = tcorr_results
+    # ccf file table
+    ccf_results = _file_col_query(rparams, objname, block_kind='red',
+                                 scitype=scitypes, output='CCF_RV',
+                                 fiber=fiber)
+    queries['ccf'] = ccf_results
+    # e.fits file table
+    efits_results = _file_col_query(rparams, objname, block_kind='out',
+                                   output='DRS_POST_E')
+    queries['efits'] = efits_results
+    # t.fits file table
+    tfits_results = _file_col_query(rparams, objname, block_kind='out',
+                                   output='DRS_POST_T')
+    queries['tfits'] = tfits_results
+
+    # lbl fits file table
+    lbl_results = _file_col_query(rparams, objname, block_kind='lbl',
+                                 scitype=scitypes, output='LBL_FITS')
+    queries['lbl'] = lbl_results
+
+    # storage for timing for database queries
+    outputs = dict()
+    outputs['queries'] = queries
+    outputs['timings'] = dict()
+    outputs['results'] = dict()
+    # deal with returning just the queries (we print them)
+    if return_query:
+        for key, query in queries.items():
+            print(f'Query for {key}:\n\n{query}\n\n\n\n')
+    # deal with running the queries and saving the results
+    else:
+        # loop around queries and execute them, storing the results in files 
+        # for the UI to use
+        for key, query in queries.items():
+            try:
+                outputs = _file_col_cmd(aparams, query, 
+                                        apero_profile_name,
+                                        objname=objname, fkind=key, 
+                                        outputs=outputs)
+            except Exception as e:
+                # inject a print out of the query for debugging
+                emg = f'{key} query: \n{query}\n\nError: {str(e)}'
+                raise RuntimeError(emg)
+            
+    return outputs
+
+
+def object_query_headers(aparams, outputs):
+    
+    print('Here')
+    # get results
+    results = outputs['results']
+
+    # output table
+    header_list = dict()
+
+    for fkind in results:
+        # get entries for this fkind
+        entries = results[fkind]
+        # get the hkeys for this fkind
+        hkeys = aparams['headers'].get(fkind, None)
+        # deal with no header keys
+        if hkeys is None or len(hkeys) == 0:
+            continue
+        # loop around each entry
+        for entry in entries:
+            # get identifier
+            identifier = entry['IDENTIFIER']
+            # deal with first time we see this object
+            if identifier not in header_list:
+                header_list[identifier] = dict()
+            # -----------------------------------------------------------------
+            # convert block kind to a path
+            block_kind = aparams['paths'][BLOCK_KIND[entry['BLOCK_KIND']]]
+            # construct filename from keys
+            abspath = Path(block_kind) / entry['OBS_DIR'] / entry['FILENAME']
+            # -----------------------------------------------------------------
+            # check if path exists - if it doesn't fill with None
+            if not abspath.exists():
+                header_list[identifier] = _fill_dict_null(hkeys)
+                continue
+            # -----------------------------------------------------------------
+
+    
+    pass
+
+                
+# =============================================================================
+# Define helper functions
+# ============================================================================= 
+def _construct_obj_query(aparams):
+    general = aparams.get('general', {})
+    if not isinstance(general, dict):
+        general = {}
+    database = aparams.get('database', {})
+    if not isinstance(database, dict):
+        database = {}
+    science_types = general.get('SCIENCE_TYPES', aparams.get('SCIENCE_TYPES', []))
+    if not isinstance(science_types, list):
+        science_types = [science_types]
+    scitypes = ','.join([f'"{t}"' for t in science_types])
+    findex_table = database.get('FINDEX_TABLENAME', aparams.get('FINDEX_TABLENAME', ''))
+    if not findex_table:
+        raise ValueError('Missing required parameter: database.FINDEX_TABLENAME')
+    oparams = dict(FINDEX_TABLENAME=findex_table,
                    SCIENCE_TYPES=scitypes)
     
     obj_query = ('SELECT DISTINCT KW_OBJNAME FROM {FINDEX_TABLENAME} '
@@ -282,10 +411,9 @@ def construct_obj_query(aparams):
     return obj_query
 
 
-def file_col_query(rparams, objname, block_kind: str,
+def _file_col_query(rparams, objname, block_kind: str,
                    fiber: Optional[str] = None, scitype: Optional[str] = None, 
-                   output: Optional[str] = None, 
-                   timing_per_obj: Optional[list] = None) -> str:
+                   output: Optional[str] = None) -> str:
     objname_safe = objname.replace("'", "''")
     # deal with optional conditions
     condition = [f"fdb.BLOCK_KIND = '{block_kind}'"]
@@ -296,15 +424,13 @@ def file_col_query(rparams, objname, block_kind: str,
         condition.append(f"fdb.KW_DPRTYPE IN ({scitype_list})")
     if output is not None:
         condition.append(f"fdb.KW_OUTPUT = '{output}'")
-    # deal with no timing per obj list
-    if timing_per_obj is None:
-        timing_per_obj = []
     # construct the query
     query = """
     SELECT
         fdb.BLOCK_KIND AS BLOCK_KIND,
         fdb.OBS_DIR AS OBS_DIR,
         fdb.FILENAME AS FILENAME,
+        fdb.KW_IDENTIFIER AS IDENTIFIER,
         fdb.KW_DPRTYPE AS KW_DPRTYPE,
         fdb.KW_OUTPUT AS KW_OUTPUT,
         fdb.KW_FIBER AS KW_FIBER,
@@ -330,17 +456,12 @@ def file_col_query(rparams, objname, block_kind: str,
     return rquery
 
  
-def file_col_cmd(aparams, rquery, apero_profile_name, 
+def _file_col_cmd(aparams, rquery, apero_profile_name, 
                  objname, fkind, outputs):
-        # Map DATABASE_USERNAME -> DATABASE_USER for database_query
-    db_params = dict(aparams)
-    if 'DATABASE_USERNAME' in db_params and 'DATABASE_USER' not in db_params:
-        db_params['DATABASE_USER'] = db_params['DATABASE_USERNAME']
+    db_params = apero_async.get_db_params(aparams)
     start = time.time()
     results = apero_async.database_query(db_params, rquery)
     end = time.time()
-    # ---------------------------------------------------------------------
-    # 
     # ---------------------------------------------------------------------
     # time now
     time_now = datetime.now(timezone.utc).isoformat()
@@ -366,7 +487,7 @@ def file_col_cmd(aparams, rquery, apero_profile_name,
     return outputs
 
 
-def check_required(aparams) -> Dict[str, Any]:
+def _check_required(aparams) -> Dict[str, Any]:
     required_params = [
         'ASTROM_TABLENAME',
         'CALIB_TABLENAME',
@@ -374,102 +495,27 @@ def check_required(aparams) -> Dict[str, Any]:
         'LOG_TABLENAME',
         'TELLU_TABLENAME',
         'REJECT_TABLENAME',
-        'SCIENCE_FIBER',
-        'SCIENCE_TYPES',
     ]
     # Check and cut down parameters needed for query
     rparams = dict()
-    # loop around parmaeters
+    # Prefer nested database config and flatten required keys for SQL templates.
+    db_cfg = aparams.get('database', {})
+    if not isinstance(db_cfg, dict):
+        db_cfg = {}
+    # loop around parameters
     for param in required_params:
-        if param not in aparams:
-            raise ValueError(f'Missing required parameter: {param}')
-        else:
-            rparams[param] = aparams[param]
+        value = db_cfg.get(param, aparams.get(param))
+        if value in (None, ''):
+            raise ValueError(f'Missing required parameter: database.{param}')
+        rparams[param] = value
+    # extract science params from the 'general' sub-dict and flatten into rparams
+    general = aparams.get('general', {})
+    for key in ('SCIENCE_FIBER', 'SCIENCE_TYPES'):
+        if key not in general:
+            raise ValueError(f'Missing required parameter: general.{key}')
+        rparams[key] = general[key]
     # return the required parameters
     return rparams
-
-   
-
-def object_query_db(aparams, objname, apero_profile_name, 
-                    return_query: bool = False) -> dict[str, Any]:
-    if not objname:
-        raise ValueError('Object name is empty or invalid.')
-    
-    # check that all required parameters are present
-    rparams = check_required(aparams)
-    
-    
-    # get parameters only needed for sub-commands
-    fiber = rparams['SCIENCE_FIBER']
-    scitypes = rparams['SCIENCE_TYPES']
-    # storage of queries
-    queries = dict()
-    # raw file table
-    raw_results = file_col_query(rparams, objname,
-                                 block_kind='raw', scitype=scitypes)
-    queries['raw'] = raw_results
-    # pp file table
-    pp_results = file_col_query(rparams, objname, block_kind='tmp',
-                                scitype=scitypes)
-    queries['pp'] = pp_results
-    # red file table
-    red_results = file_col_query(rparams, objname, block_kind='red',
-                                 scitype=scitypes, output='EXT_E2DS_FF',
-                                 fiber=fiber)
-    queries['red'] = red_results
-    # tcorr file table
-    tcorr_results = file_col_query(rparams, objname, block_kind='red',
-                                   scitype=scitypes, output='TELLU_OBJ',
-                                   fiber=fiber)
-    queries['tcorr'] = tcorr_results
-    # ccf file table
-    ccf_results = file_col_query(rparams, objname, block_kind='red',
-                                 scitype=scitypes, output='CCF_RV',
-                                 fiber=fiber)
-    queries['ccf'] = ccf_results
-    # e.fits file table
-    efits_results = file_col_query(rparams, objname, block_kind='out',
-                                   output='DRS_POST_E')
-    queries['efits'] = efits_results
-    # t.fits file table
-    tfits_results = file_col_query(rparams, objname, block_kind='out',
-                                   output='DRS_POST_T')
-    queries['tfits'] = tfits_results
-
-    # lbl fits file table
-    lbl_results = file_col_query(rparams, objname, block_kind='lbl',
-                                 scitype=scitypes, output='LBL_FITS')
-    queries['lbl'] = lbl_results
-
-    # storage for timing for database queries
-    outputs = dict()
-    outputs['queries'] = queries
-    outputs['timings'] = dict()
-    outputs['results'] = dict()
-    # deal with returning just the queries (we print them)
-    if return_query:
-        for key, query in queries.items():
-            print(f'Query for {key}:\n\n{query}\n\n\n\n')
-    # deal with running the queries and saving the results
-    else:
-        # loop around queries and execute them, storing the results in files 
-        # for the UI to use
-        for key, query in queries.items():
-            try:
-                outputs = file_col_cmd(aparams, query, 
-                                       apero_profile_name,
-                                       objname=objname, fkind=key, 
-                                       outputs=outputs)
-            except Exception as e:
-                # inject a print out of the query for debugging
-                emg = f'{key} query: \n{query}\n\nError: {str(e)}'
-                raise RuntimeError(emg)
-            
-    return outputs
-
-
-def object_query_headers(obj_ftable):
-    pass
 
 
 def _acquire_directory_lock(directory: Path):
@@ -509,40 +555,43 @@ def _clear_directory_contents(directory: Path) -> None:
             entry.unlink()
 
 
+def _fill_dict_null(mykeys, mydict: Optional[dict] = None):
+    # deal with no input dictionary
+    if mydict is None:
+        mydict = dict()
+    # loop around keys and fill with nulls
+    for key in mykeys:
+        mydict[key] = None
+    return mydict
+
 # =============================================================================
 # Start of main code
 # =============================================================================
 if __name__ == '__main__':
-    # prompt for database password
-    import getpass
-    db_password = getpass.getpass('Enter database password: ')
-    # create an instance of the task and run it with test parameters
+    from apero_ri.core.auth import load_apero_profiles
+    # -- Configure which profile to test with --
+    _TEST_INSTRUMENT = 'SPIROU'
+    _TEST_PROFILE = 'spirou_xxs_08_cook_home'
+
+    # Load profiles from ~/.ari/admin/apero_profiles.yaml
+    _all_profiles = load_apero_profiles()
+    _inst_profiles = _all_profiles.get(_TEST_INSTRUMENT, {})
+    if _TEST_PROFILE not in _inst_profiles:
+        raise RuntimeError(
+            f'Profile "{_TEST_PROFILE}" not found under instrument '
+            f'"{_TEST_INSTRUMENT}" in apero_profiles.yaml'
+        )
+    _profile = _inst_profiles[_TEST_PROFILE]
+
     task = AperoObjectQueryTask()
-    test_params = {
+    run_params = {
         'LOCAL_DATA_DIR': str(ARI_DIR),
-        'INSTRUMENT': 'spirou',
-        'APERO_PROFILE_NAMES': ['spirou_xxs_08_cook_home'],
-        'APERO_PROFILES': {
-            'spirou_xxs_08_cook_home': {
-                'DATABASE_MODE': 'mysql+pymysql',
-                'DATABASE_HOST': 'localhost',
-                'DATABASE_USER': 'cook',
-                'DATABASE_PASSWORD': f'{db_password}',
-                'DATABASE_NAME': 'spirou',
-                'ASTROM_TABLENAME': 'astrom_spirou_xxs_08_db',
-                'CALIB_TABLENAME': 'calib_spirou_xxs_08_db',
-                'FINDEX_TABLENAME': 'findex_spirou_xxs_08_db',
-                'LOG_TABLENAME': 'log_spirou_xxs_08_db',
-                'TELLU_TABLENAME': 'tellu_spirou_xxs_08_db',
-                'REJECT_TABLENAME': 'reject_spirou_xxs_08_db',
-                'SCIENCE_FIBER': 'AB',
-                'SCIENCE_TYPES': ['POLAR_FP', 'POLAR_DARK', 'OBJ_DARK', 'OBJ_FP'],
-                'INSTRUMENT': 'SPIROU'
-            }
-        }
+        'INSTRUMENT': _TEST_INSTRUMENT.lower(),
+        'APERO_PROFILE_NAMES': [_TEST_PROFILE],
+        'APERO_PROFILES': {_TEST_PROFILE: _profile},
     }
-    # task.test_query(test_params, objnames='GL699')
-    task.run_job(test_params)
+    # task.test_query(run_params, objnames='GL699')
+    task.run_job(run_params)
 # =============================================================================
 # End of main code
 # =============================================================================

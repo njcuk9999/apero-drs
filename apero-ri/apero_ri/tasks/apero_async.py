@@ -109,7 +109,21 @@ def database_query(params: Dict[str, Any], query: str):
     finally:
         engine.dispose()
         
-        
+
+def get_db_params(aparams: Dict[str, Any]):
+    db_cfg = aparams.get('database', {})
+    if not isinstance(db_cfg, dict):
+        db_cfg = {}
+    db_params = dict(db_cfg)
+    for _k in ('DATABASE_MODE', 'DATABASE_HOST', 'DATABASE_PASSWORD',
+               'DATABASE_NAME', 'DATABASE_USER', 'DATABASE_USERNAME'):
+        if _k not in db_params and aparams.get(_k):
+            db_params[_k] = aparams.get(_k)
+    if 'DATABASE_USERNAME' in db_params and 'DATABASE_USER' not in db_params:
+        db_params['DATABASE_USER'] = db_params['DATABASE_USERNAME']
+    return db_params
+
+
 def save_results(filename: Path, results: Any, 
                  metadata: Optional[Dict[str, Any]] = None):
     """

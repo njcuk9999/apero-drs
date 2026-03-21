@@ -1,0 +1,275 @@
+general:
+  # instrument
+  instrument: NIRPS_HE
+  # spectral bands to show in the UI
+  bands:
+    - Y
+    - H
+plot:
+  # Spectrum wavelength ranges in nm
+  SpecWave:
+    limit0:
+      - 985
+      - 1810
+    limit1:
+      - 1082
+      - 1085
+    limit2:
+      - 1575
+      - 1580
+    limit3:
+      - 1666
+      - 1668
+  # Wavelength range of interest for debug telluric correction map
+  TcorrMapWave:
+    - 1716
+    - 1726
+headers:
+  pp:
+    PP_MJDMID:
+      key: MJDMID
+      label: MJD
+      dtype: float
+      timefmt: mjd
+    PP_PROC:
+      key: DRSPDATE
+      label: Process Date
+      dtype: str
+      timefmt: iso
+    PP_VERSION:
+      key: PVERSION
+      label: APERO PP Version
+      dtype: str
+    PP_OBNAME:
+      key: HIERARCH ESO OBS NAME
+      label: OB Name
+      dtype: str
+    PP_PI_NAME:
+      key: HIERARCH ESO OBS PI-COI NAME
+      label: OB Name
+      dtype: str
+    PP_PROG_ID:
+      key: HIERARCH ESO OBS PROG ID
+      label: Program ID
+      dtype: str
+  ext:
+    EXT_MJDMID:
+      key: MJDMID
+      label: MJD
+      dtype: float
+      timefmt: mjd
+    EXT_PROC:
+      key: DRSPDATE
+      label: Process Date
+      dtype: str
+      timefmt: iso
+    EXT_Y:
+      key: EXTSN015
+      label: 'SNR[Order 15 (#134 1.08$\mu$m)]'
+      dtype: float
+    EXT_H:
+      key: EXTSN060
+      label: 'SNR[Order 60 (#89 1.63$\mu$m)]'
+      dtype: float
+    EXT_DPRTYPE:
+      key: DPRTYPE
+      label: 'DPR TYPE'
+      dtype: str
+    EXT_BERV:
+      key: BERV
+      label: BERV
+      unit: km/s
+      dtype: float
+    EXT_BJD:
+      key: BJD
+      label: BJD
+      dtype: float
+    EXT_QCC_ALL:
+      key: QCC_ALL
+      label: QCC ALL
+      dtype: int
+    EXT_SEEING:
+      key: HIERARCH ESO TEL AMBI FWHM START
+      label: Seeing at start
+      dtype: float
+      fallback: Null
+    EXT_AIRMASS:
+      key: HIERARCH ESO TEL AIRM START
+      label: Airmass at start
+      dtype: float
+      fallback: Null
+    EXT_EXPTIME:
+        key: EXPTIME
+        label: Exposure Time
+        dtype: float
+    EXT_VERSION:
+      key: VERSION
+      label: APERO Version
+      dtype: str
+    EXT_PDATE:
+      key: DRSPDATE
+      label: APERO Processed date
+      dtype: str
+    EXT_SHAPE_DX:
+      key: SHAPE_DX
+      label: Shape DX
+      dtype: float
+    EXT_SHAPE_DY:
+      key: SHAPE_DY
+      label: Shape DY
+      dtype: float
+    EXT_SHAPE_A:
+      key: SHAPE_A
+      label: Shape A
+      dtype: float
+    EXT_SHAPE_B:
+      key: SHAPE_B
+      label: Shape B
+      dtype: float
+    EXT_SHAPE_C:
+      key: SHAPE_C
+      label: Shape C
+      dtype: float
+    EXT_SHAPE_D:
+      key: SHAPE_D
+      label: Shape D
+      dtype: float
+    EXT_WFPDRIFT:
+      key: WFPDRIFT
+      label: Wavesol abs CCF FP drift [km/s]
+      dtype: float
+    EXT_WCAV000:
+      key: WCAV000
+      label: Wave cavity c0
+      dtype: float
+    EXT_EXTSMAX:
+      key: EXTSMAX
+      label: Max saturation level
+      dtype: float
+    EXT_EFFRON:
+      key: EFFRON
+      label: Measured eff readout noise before extraction
+      dtype: float
+    EXT_CDTDARK:
+      key: CDTDARK
+      label: DARK file
+      dtype: float
+    EXT_CDTBAD:
+      key: CDTBAD
+      label: BADPIX file
+      dtype: float
+    EXT_CDTBACK:
+      key: CDTBACK
+      label: BACKGROUND file
+      dtype: float
+    EXT_CDTORDP:
+      key: CDTORDP
+      label: ORDER_PROFILE file
+      dtype: float
+    EXT_CDTLOCO:
+      key: CDTLOCO
+      label: LOCO file
+      dtype: float
+    EXT_CDTSHAPL:
+      key: CDTSHAPL
+      label: Local shape file
+      dtype: float
+    EXT_CDTSHAPX:
+      key: CDTSHAPX
+      label: Shape X file
+      dtype: float
+    EXT_CDTSHAPY:
+      key: CDTSHAPY
+      label: Shape Y file
+      dtype: float
+    EXT_CDTFLAT:
+      key: CDTFLAT
+      label: FLAT file
+      dtype: float
+    EXT_CDTBLAZE:
+      key: CDTBLAZE
+      label: BLAZE file
+      dtype: float
+    EXT_CDTWAVE:
+      key: CDTWAVE
+      label: Wave file
+      dtype: float
+    EXT_WAVETIME:
+      key: WAVETIME
+      label: Wave sol
+      dtype: float
+  tcorr:
+    TCORR_MJDMID:
+      key: MJDMID
+      label: MJD
+      dtype: float
+      timefmt: mjd
+    TCORR_BERV:
+      key: BERV
+      label: BERV
+      unit: km/s
+      dtype: float
+    TCORR_BJD:
+      key: BJD
+      label: BJD
+      dtype: float
+    TCORR_QCC_ALL:
+      key: QCC_ALL
+      label: QCC ALL
+      dtype: int
+    TCORR_H:
+      key: EXTSN060
+      label: 'SNR[Order 60 (#89 1.63$\mu$m)]'
+      dtype: float
+    TCORR_PROC:
+      key: DRSPDATE
+      label: Process Date
+      dtype: str
+      timefmt: iso
+    TCORR_VERSION:
+      key: VERSION
+      label: APERO Version
+      dtype: str
+  ccf:
+    CCF_MASK:
+      key: CCFMASK
+      label: CCF Mask
+      dtype: str
+    CCF_MJDMID:
+      key: MJDMID
+      label: CCF MJD
+      dtype: float
+      timefmt: mjd
+    CCF_PROC:
+      key: DRSPDATE
+      label: Process Date
+      dtype: str
+      timefmt: iso
+    CCF_DV:
+      key: RV_CORR
+      label: CCF RV
+      unit: km/s
+      dtype: float
+    CCF_SDV:
+      key: DVRMS_CC
+      label: CCF RV Error
+      unit: m/s
+      dtype: float
+    CCF_FWHM:
+      key: CCFMFWHM
+      label: CCF FWHM
+      unit: km/s
+      dtype: float
+    CCF_VERSION:
+      key: VERSION
+      label: APERO Version
+      dtype: str
+  lbl:
+    EXT_H:
+      key: EXTSN060
+      label: 'SNR[Order 60 (#89 1.63$\mu$m)]'
+      dtype: float
+    LBL_VERSION:
+      key: LBL_VERS
+      label: LBL Version
+      dtype: str

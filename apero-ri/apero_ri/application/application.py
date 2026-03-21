@@ -21,7 +21,7 @@ import yaml
 from datetime import timedelta, datetime, timezone
 from email.message import EmailMessage
 from pathlib import Path
-from typing import Optional, List
+from typing import Any, Optional, List
 
 from flask import (Flask, render_template, redirect, url_for,
                    request, session, flash, jsonify,
@@ -810,6 +810,27 @@ class ARIApp(Flask):
                 context['all_groups'] = all_groups
                 context['can_manage_groups'] = can_manage
                 context['inherited_map'] = inherited_map
+                # Load instrument profile presets from aprofile_instruments/
+                _sci_profiles = {}
+                _sci_dir = PACKAGE_DIR / 'resources' / 'aprofile_instruments'
+                if _sci_dir.is_dir():
+                    for _yf in sorted(_sci_dir.glob('*.yaml')):
+                        try:
+                            with open(_yf, encoding='utf-8') as _f:
+                                _yd = yaml.safe_load(_f) or {}
+                            _gen = _yd.get('general', {})
+                            _sf = str(_gen.get('science_fiber', '')).strip()
+                            _st = _gen.get('science_types', [])
+                            if not isinstance(_st, list):
+                                _st = [str(_st)] if _st else []
+                            _sci_profiles[_yf.name] = {
+                                'science_fiber': _sf,
+                                'science_types': _st,
+                                'params': _yd,
+                            }
+                        except Exception:
+                            pass
+                context['sci_profiles'] = _sci_profiles
 
             # User DB access page: inject current health summary
             if page_id == 'home.admin_portal.user_db_access' and user_info:
@@ -1954,11 +1975,11 @@ class ARIApp(Flask):
                 reason_parts = []
 
                 db = validate_database_connection(
-                    cfg.get('DATABASE_MODE', ''),
-                    cfg.get('DATABASE_HOST', ''),
-                    cfg.get('DATABASE_USERNAME', ''),
-                    cfg.get('DATABASE_PASSWORD', ''),
-                    cfg.get('DATABASE_NAME', ''),
+                    self._profile_get_db(cfg, 'DATABASE_MODE', ''),
+                    self._profile_get_db(cfg, 'DATABASE_HOST', ''),
+                    self._profile_get_db(cfg, 'DATABASE_USERNAME', ''),
+                    self._profile_get_db(cfg, 'DATABASE_PASSWORD', ''),
+                    self._profile_get_db(cfg, 'DATABASE_NAME', ''),
                 )
                 if not db.get('valid', False):
                     db_error = str(db.get('error', '') or 'connection failed').strip()
@@ -1966,13 +1987,16 @@ class ARIApp(Flask):
 
                 invalid_paths = []
                 for key in path_keys:
-                    path_val = str(cfg.get(key, '')).strip()
+                    path_val = str(self._profile_get_path(cfg, key, '')).strip()
                     if not path_val or not Path(path_val).is_dir():
                         invalid_paths.append(key)
                 if invalid_paths:
                     reason_parts.append(
                         'Invalid paths: ' + ', '.join(invalid_paths)
                     )
+
+                if not str(cfg.get('APERO_INSTRUMENT_PROFILE', '')).strip():
+                    reason_parts.append('No instrument profile selected')
 
                 if reason_parts:
                     line = (
@@ -2130,11 +2154,11 @@ class ARIApp(Flask):
 
         # -- Database check --
         db_result = validate_database_connection(
-            cfg.get('DATABASE_MODE', ''),
-            cfg.get('DATABASE_HOST', ''),
-            cfg.get('DATABASE_USERNAME', ''),
-            cfg.get('DATABASE_PASSWORD', ''),
-            cfg.get('DATABASE_NAME', ''),
+            self._profile_get_db(cfg, 'DATABASE_MODE', ''),
+            self._profile_get_db(cfg, 'DATABASE_HOST', ''),
+            self._profile_get_db(cfg, 'DATABASE_USERNAME', ''),
+            self._profile_get_db(cfg, 'DATABASE_PASSWORD', ''),
+            self._profile_get_db(cfg, 'DATABASE_NAME', ''),
         )
 
         # -- Path checks --
@@ -2145,7 +2169,7 @@ class ARIApp(Flask):
         path_results = {}
         all_paths_ok = True
         for key in path_keys:
-            val = cfg.get(key, '')
+            val = self._profile_get_path(cfg, key, '')
             exists = bool(val) and Path(val).is_dir()
             path_results[key] = exists
             if not exists:
@@ -3950,11 +3974,14 @@ class ARIApp(Flask):
         from urllib.parse import quote_plus
         from sqlalchemy import create_engine, text, bindparam
 
-        mode = str(profile_cfg.get('DATABASE_MODE', '')).strip()
-        host = str(profile_cfg.get('DATABASE_HOST', '')).strip()
-        username = str(profile_cfg.get('DATABASE_USERNAME', '')).strip()
-        password = str(profile_cfg.get('DATABASE_PASSWORD', '') or '')
-        db_name = str(profile_cfg.get('DATABASE_NAME', '')).strip()
+        db_cfg = profile_cfg.get('database', {}) if isinstance(profile_cfg, dict) else {}
+        if not isinstance(db_cfg, dict):
+            db_cfg = {}
+        mode = str(db_cfg.get('DATABASE_MODE', profile_cfg.get('DATABASE_MODE', ''))).strip()
+        host = str(db_cfg.get('DATABASE_HOST', profile_cfg.get('DATABASE_HOST', ''))).strip()
+        username = str(db_cfg.get('DATABASE_USERNAME', profile_cfg.get('DATABASE_USERNAME', ''))).strip()
+        password = str(db_cfg.get('DATABASE_PASSWORD', profile_cfg.get('DATABASE_PASSWORD', '')) or '')
+        db_name = str(db_cfg.get('DATABASE_NAME', profile_cfg.get('DATABASE_NAME', ''))).strip()
 
         if not all([mode, host, username, db_name]):
             raise ValueError('Missing database connection configuration.')
@@ -4215,7 +4242,7 @@ class ARIApp(Flask):
         cfg = profile.get('data', {}) if isinstance(profile.get('data'), dict) else {}
         table_names = {}
         for label, key in self._db_access_table_keys().items():
-            tname = str(cfg.get(key, '')).strip()
+            tname = str(self._profile_get_db(cfg, key, '')).strip()
             if tname:
                 table_names[label] = tname
 
@@ -4228,6 +4255,20 @@ class ARIApp(Flask):
                 constants[skey] = ''
             else:
                 constants[skey] = str(value)
+        for section_name in ('database', 'paths', 'general'):
+            section = cfg.get(section_name, {})
+            if not isinstance(section, dict):
+                continue
+            for key, value in section.items():
+                skey = str(key).strip()
+                if not skey or skey in constants:
+                    continue
+                if value is None:
+                    constants[skey] = ''
+                elif isinstance(value, list):
+                    constants[skey] = ','.join(str(v) for v in value)
+                else:
+                    constants[skey] = str(value)
 
         preset_path = PACKAGE_DIR / 'resources' / 'db_presets.yaml'
         if not preset_path.exists():
@@ -5077,13 +5118,55 @@ class ARIApp(Flask):
         """Quote SQL identifier path safely (schema/table)."""
         return '.'.join(f'`{part}`' for part in name.split('.'))
 
+    @staticmethod
+    def _profile_get_db(cfg: dict, key: str, default: Any = '') -> Any:
+        """Get a DB key from nested ``database`` with flat fallback."""
+        db_cfg = cfg.get('database', {}) if isinstance(cfg, dict) else {}
+        if not isinstance(db_cfg, dict):
+            db_cfg = {}
+        if key in db_cfg:
+            value = db_cfg.get(key)
+            return default if value is None else value
+        if isinstance(cfg, dict):
+            value = cfg.get(key, default)
+            return default if value is None else value
+        return default
+
+    @staticmethod
+    def _profile_get_path(cfg: dict, key: str, default: Any = '') -> Any:
+        """Get a path key from nested ``paths`` with flat fallback."""
+        paths_cfg = cfg.get('paths', {}) if isinstance(cfg, dict) else {}
+        if not isinstance(paths_cfg, dict):
+            paths_cfg = {}
+        if key in paths_cfg:
+            value = paths_cfg.get(key)
+            return default if value is None else value
+        if isinstance(cfg, dict):
+            value = cfg.get(key, default)
+            return default if value is None else value
+        return default
+
+    @staticmethod
+    def _profile_get_general(cfg: dict, key: str, default: Any = '') -> Any:
+        """Get a general key from nested ``general`` with flat fallback."""
+        general_cfg = cfg.get('general', {}) if isinstance(cfg, dict) else {}
+        if not isinstance(general_cfg, dict):
+            general_cfg = {}
+        if key in general_cfg:
+            value = general_cfg.get(key)
+            return default if value is None else value
+        if isinstance(cfg, dict):
+            value = cfg.get(key, default)
+            return default if value is None else value
+        return default
+
     def _fetch_table_columns(self, profile_cfg: dict, table_name: str):
         """Fetch ordered column names from a profile DB/table."""
-        mode = str(profile_cfg.get('DATABASE_MODE', '')).strip()
-        host = str(profile_cfg.get('DATABASE_HOST', '')).strip()
-        username = str(profile_cfg.get('DATABASE_USERNAME', '')).strip()
-        password = str(profile_cfg.get('DATABASE_PASSWORD', '') or '')
-        db_name = str(profile_cfg.get('DATABASE_NAME', '')).strip()
+        mode = str(self._profile_get_db(profile_cfg, 'DATABASE_MODE', '')).strip()
+        host = str(self._profile_get_db(profile_cfg, 'DATABASE_HOST', '')).strip()
+        username = str(self._profile_get_db(profile_cfg, 'DATABASE_USERNAME', '')).strip()
+        password = str(self._profile_get_db(profile_cfg, 'DATABASE_PASSWORD', '') or '')
+        db_name = str(self._profile_get_db(profile_cfg, 'DATABASE_NAME', '')).strip()
 
         if not all([mode, host, username, db_name, table_name]):
             raise ValueError('Missing DB connection or table configuration.')
@@ -5162,7 +5245,7 @@ class ARIApp(Flask):
 
             table_names = []
             for label, key in table_key_map.items():
-                if str(cfg.get(key, '')).strip():
+                if str(self._profile_get_db(cfg, key, '')).strip():
                     table_names.append(label)
 
             prof_entry = (((db_access.get(instrument, {})
@@ -5209,7 +5292,7 @@ class ARIApp(Flask):
 
         sections = []
         for label, key in self._db_access_table_keys().items():
-            table_name = str(cfg.get(key, '')).strip()
+            table_name = str(self._profile_get_db(cfg, key, '')).strip()
             if not table_name:
                 continue
 
@@ -5402,13 +5485,12 @@ class ARIApp(Flask):
         all_profiles = load_apero_profiles()
         inst_profiles = all_profiles.get(instrument, {})
 
-        # Keys stored per profile
+        # Keys stored per profile (served flat to UI for compatibility)
         _DB_KEYS = [
             'DATABASE_MODE', 'DATABASE_HOST', 'DATABASE_USERNAME',
             'DATABASE_PASSWORD', 'DATABASE_NAME',
             'ASTROM_TABLENAME', 'CALIB_TABLENAME', 'FINDEX_TABLENAME',
             'LOG_TABLENAME', 'TELLU_TABLENAME', 'REJECT_TABLENAME',
-            'SCIENCE_FIBER',
         ]
         _PATH_KEYS = [
             'PATH_RAW', 'PATH_PP', 'PATH_RED', 'PATH_CALIB',
@@ -5428,13 +5510,15 @@ class ARIApp(Flask):
             }
             # Copy DB fields
             for k in _DB_KEYS:
-                entry[k] = cfg.get(k, '')
+                entry[k] = self._profile_get_db(cfg, k, '')
+            entry['SCIENCE_FIBER'] = self._profile_get_general(cfg, 'SCIENCE_FIBER', '')
             # SCIENCE_TYPES is a list
-            entry['SCIENCE_TYPES'] = cfg.get('SCIENCE_TYPES', [])
+            entry['SCIENCE_TYPES'] = self._profile_get_general(cfg, 'SCIENCE_TYPES', [])
+            entry['APERO_INSTRUMENT_PROFILE'] = cfg.get('APERO_INSTRUMENT_PROFILE', '')
             # Copy path fields with exists check
             all_paths_ok = True
             for k in _PATH_KEYS:
-                val = cfg.get(k, '')
+                val = self._profile_get_path(cfg, k, '')
                 entry[k] = val
                 if val:
                     entry[k + '_exists'] = Path(val).is_dir()
@@ -5447,11 +5531,11 @@ class ARIApp(Flask):
 
             # DB check used by admin home red-cross logic (db/path only)
             db_check = validate_database_connection(
-                cfg.get('DATABASE_MODE', ''),
-                cfg.get('DATABASE_HOST', ''),
-                cfg.get('DATABASE_USERNAME', ''),
-                cfg.get('DATABASE_PASSWORD', ''),
-                cfg.get('DATABASE_NAME', ''),
+                self._profile_get_db(cfg, 'DATABASE_MODE', ''),
+                self._profile_get_db(cfg, 'DATABASE_HOST', ''),
+                self._profile_get_db(cfg, 'DATABASE_USERNAME', ''),
+                self._profile_get_db(cfg, 'DATABASE_PASSWORD', ''),
+                self._profile_get_db(cfg, 'DATABASE_NAME', ''),
             )
             db_ok = bool(db_check.get('valid', False))
             db_error = str(db_check.get('error', '')).strip()
@@ -5530,21 +5614,24 @@ class ARIApp(Flask):
             ), 400
 
         # Collect all required fields
-        _TEXT_KEYS = [
-            'apero_version', 'reduction_server',
+        _META_KEYS = ['apero_version', 'reduction_server']
+        _DB_KEYS = [
             'DATABASE_MODE', 'DATABASE_HOST', 'DATABASE_USERNAME',
             'DATABASE_PASSWORD', 'DATABASE_NAME',
             'ASTROM_TABLENAME', 'CALIB_TABLENAME', 'FINDEX_TABLENAME',
             'LOG_TABLENAME', 'TELLU_TABLENAME', 'REJECT_TABLENAME',
-            'SCIENCE_FIBER',
         ]
+        # Store instrument profile file reference (optional, no validation)
+        _apero_instrument_profile = str(
+            data.get('APERO_INSTRUMENT_PROFILE', '') or ''
+        ).strip()
         _PATH_KEYS = [
             'PATH_RAW', 'PATH_PP', 'PATH_RED', 'PATH_CALIB',
             'PATH_TELLU', 'PATH_LOG', 'PATH_LBL',
         ]
 
         values = {}
-        for k in _TEXT_KEYS:
+        for k in _META_KEYS:
             val = data.get(k, '').strip()
             if not val:
                 return jsonify(
@@ -5553,6 +5640,21 @@ class ARIApp(Flask):
                 ), 400
             values[k] = val
 
+        db_values = {}
+        for k in _DB_KEYS:
+            val = data.get(k, '').strip()
+            if not val:
+                return jsonify(
+                    success=False,
+                    error=f'{k} is required'
+                ), 400
+            db_values[k] = val
+
+        science_fiber = str(data.get('SCIENCE_FIBER', '')).strip()
+        if not science_fiber:
+            return jsonify(success=False, error='SCIENCE_FIBER is required'), 400
+
+        path_values = {}
         for k in _PATH_KEYS:
             val = data.get(k, '').strip()
             if not val:
@@ -5565,7 +5667,7 @@ class ARIApp(Flask):
                     success=False,
                     error=f'{k} must be an absolute path'
                 ), 400
-            values[k] = val
+            path_values[k] = val
 
         # SCIENCE_TYPES: accepted as a list or comma-separated string
         science_types_raw = data.get('SCIENCE_TYPES', [])
@@ -5575,10 +5677,9 @@ class ARIApp(Flask):
             science_types = [str(t).strip() for t in science_types_raw if str(t).strip()]
         if not science_types:
             return jsonify(success=False, error='SCIENCE_TYPES is required'), 400
-        values['SCIENCE_TYPES'] = science_types
 
         # Validate DATABASE_MODE
-        if values['DATABASE_MODE'] not in ('mysql+pymysql',):
+        if db_values['DATABASE_MODE'] not in ('mysql+pymysql',):
             return jsonify(
                 success=False,
                 error='Unsupported DATABASE_MODE'
@@ -5613,6 +5714,64 @@ class ARIApp(Flask):
 
         profile_data = {'DISPLAY_ORDER': order, 'groups': new_groups}
         profile_data.update(values)
+        profile_data['database'] = dict(db_values)
+        profile_data['paths'] = dict(path_values)
+        profile_data['general'] = {
+            'INSTRUMENT': instrument,
+            'SCIENCE_FIBER': science_fiber,
+            'SCIENCE_TYPES': science_types,
+        }
+        if _apero_instrument_profile:
+            profile_data['APERO_INSTRUMENT_PROFILE'] = _apero_instrument_profile
+            # Materialize selected APERO instrument profile content so it is
+            # persisted directly in apero_profiles.yaml.
+            preset_path = (PACKAGE_DIR / 'resources' / 'aprofile_instruments'
+                           / _apero_instrument_profile)
+            if preset_path.is_file():
+                try:
+                    with preset_path.open('r', encoding='utf-8') as f:
+                        preset_data = yaml.safe_load(f) or {}
+                except Exception as _err:
+                    return jsonify(success=False,
+                                   error=f'Failed to load instrument profile: {_err}'), 400
+                if isinstance(preset_data, dict):
+                    if isinstance(preset_data.get('headers'), dict):
+                        profile_data['headers'] = dict(preset_data.get('headers', {}))
+                    # Presets can use either "plot" or "plots".
+                    if isinstance(preset_data.get('plots'), dict):
+                        profile_data['plots'] = dict(preset_data.get('plots', {}))
+                    elif isinstance(preset_data.get('plot'), dict):
+                        profile_data['plots'] = dict(preset_data.get('plot', {}))
+
+                    preset_general = preset_data.get('general', {})
+                    if isinstance(preset_general, dict):
+                        merged_general = {}
+                        # Keep non-science fields from preset general (e.g. bands),
+                        # but normalize science keys to canonical uppercase form only.
+                        for gkey, gval in preset_general.items():
+                            if gkey in ('instrument', 'science_fiber', 'science_types'):
+                                continue
+                            merged_general[gkey] = gval
+                        if 'SCIENCE_FIBER' in preset_general:
+                            merged_general['SCIENCE_FIBER'] = preset_general.get('SCIENCE_FIBER')
+                        elif 'science_fiber' in preset_general:
+                            merged_general['SCIENCE_FIBER'] = preset_general.get('science_fiber')
+                        if 'SCIENCE_TYPES' in preset_general:
+                            merged_general['SCIENCE_TYPES'] = preset_general.get('SCIENCE_TYPES')
+                        elif 'science_types' in preset_general:
+                            merged_general['SCIENCE_TYPES'] = preset_general.get('science_types')
+                        if 'INSTRUMENT' in preset_general:
+                            merged_general['INSTRUMENT'] = preset_general.get('INSTRUMENT')
+                        elif 'instrument' in preset_general:
+                            merged_general['INSTRUMENT'] = preset_general.get('instrument')
+                        # Preserve user-selected science values as source of truth.
+                        merged_general['INSTRUMENT'] = instrument
+                        merged_general['SCIENCE_FIBER'] = science_fiber
+                        merged_general['SCIENCE_TYPES'] = science_types
+                        profile_data['general'] = merged_general
+            else:
+                return jsonify(success=False,
+                               error=f'Instrument profile file not found: {_apero_instrument_profile}'), 400
         inst_profiles[name] = profile_data
         save_apero_profiles(all_profiles)
         self._refresh_admin_health_after_change(user_info, perms)
