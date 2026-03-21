@@ -581,6 +581,9 @@ class ARIApp(Flask):
         self.add_url_rule('/data_portal/<profile_id>/<path:objname>',
               'ri_object_page',
               self._ri_object_page_view)
+        self.add_url_rule('/api/data-portal/object-page',
+                'api_object_page',
+                self._api_object_page)
         self.add_url_rule('/api/data-portal/obs-table',
                   'api_obs_table',
                   self._api_obs_table)
@@ -3200,6 +3203,93 @@ class ARIApp(Flask):
             for row in filtered
         ]
 
+        # ── File-count columns (parallel ftable reads) ────────────────────
+        import concurrent.futures as _futures
+
+        _FKIND_COLS = [
+            ('raw',   'raw files'),
+            ('pp',    'pp files'),
+            ('red',   'red files'),
+            ('tcorr', 'tcorr files'),
+            ('ccf',   'ccf files'),
+            ('efits', 'e.fits files'),
+            ('tfits', 't.fits files'),
+            ('lbl',   'lbl files'),
+        ]
+
+        _objects_dir = tasks_dir / profile_id / 'objects'
+
+        def _read_ftable(objname, fkind):
+            """Return (N, M): N = user-accessible rows, M = total rows."""
+            _path = _objects_dir / f'ftable_{fkind}_{objname}.json'
+            try:
+                with open(_path, encoding='utf-8') as _fh:
+                    _d = _json.load(_fh)
+                _rows = _d.get('rows') or []
+                _m = len(_rows)
+                _n = sum(
+                    1 for _r in _rows
+                    if str(_r.get('KW_RUN_ID', '') or '') in accessible_run_ids
+                )
+                return _n, _m
+            except FileNotFoundError:
+                return None, None
+            except Exception:
+                return None, None
+
+        # Build full task list: every (objname, fkind) pair
+        _ftable_tasks = [
+            (row.get('OBJNAME', ''), fkind)
+            for row in clean_rows
+            for fkind, _ in _FKIND_COLS
+            if row.get('OBJNAME', '')
+        ]
+
+        # Read all files in parallel
+        _ftable_results = {}  # (objname, fkind) -> (N, M)
+        if _ftable_tasks:
+            with _futures.ThreadPoolExecutor(
+                max_workers=min(32, len(_ftable_tasks))
+            ) as _pool:
+                _fmap = {
+                    _pool.submit(_read_ftable, _obj, _fki): (_obj, _fki)
+                    for _obj, _fki in _ftable_tasks
+                }
+                for _fut in _futures.as_completed(_fmap):
+                    _obj, _fki = _fmap[_fut]
+                    try:
+                        _n_res, _m_res = _fut.result()
+                    except Exception:
+                        _n_res, _m_res = None, None
+                    _ftable_results[(_obj, _fki)] = (_n_res, _m_res)
+
+        # Attach counts to rows
+        for row in clean_rows:
+            _objname = row.get('OBJNAME', '')
+            for _fkind, _colname in _FKIND_COLS:
+                _n_val, _m_val = _ftable_results.get(
+                    (_objname, _fkind), (None, None)
+                )
+                row[_colname] = (
+                    None if _n_val is None else f'{_n_val} ({_m_val})'
+                )
+
+        # Extend columns and column_meta with the new file-count columns
+        _fcount_cols = [_colname for _, _colname in _FKIND_COLS]
+        columns = list(columns) + _fcount_cols
+        column_meta.update({
+            _colname: {
+                'sortable': True,
+                'filterable': True,
+                'removable': True,
+                'default': True,
+                'hidden': False,
+                'type': 'count',
+            }
+            for _, _colname in _FKIND_COLS
+        })
+        # ── End file-count columns ────────────────────────────────────────
+
         return jsonify(
             success=True,
             rows=clean_rows,
@@ -3323,6 +3413,7 @@ class ARIApp(Flask):
             'profile': profile,
             'profile_color': color,
             'objname': objname,
+            'api_url': '/api/data-portal/object-page',
             'sidebar_root': 'home.data_portal',
             'sidebar_label': 'Data Portal',
             'sidebar_icon': 'fa-solid fa-database',
@@ -3330,6 +3421,335 @@ class ARIApp(Flask):
             'sidebar_tree': sidebar_tree,
         }
         return render_template('data_portal/object_page.html', **context)
+
+    def _api_object_page(self):
+        """Return object-page data for a profile/object, filtered by science group."""
+        import json as _json
+
+        base_dir = Path(self.args.data_dir or str(Path.home() / '.ari'))
+
+        user_info = get_effective_user(session)
+        if user_info:
+            perms = resolve_user_permissions(
+                user_info['groups'], self.ari_groups
+            )
+        else:
+            perms = get_public_permissions()
+
+        if 'view.data_portal' not in perms:
+            return jsonify(success=False, error='Unauthorized'), 401
+
+        profile_id = request.args.get('profile_id', '').strip()
+        objname = request.args.get('objname', '').strip()
+        if not profile_id or not objname:
+            return jsonify(
+                success=False,
+                error='Missing profile_id or objname',
+            ), 400
+
+        accessible = get_accessible_profiles(user_info, self.ari_groups)
+        profile = None
+        for prof in accessible:
+            if prof['profile_id'] == profile_id:
+                profile = prof
+                break
+        if not profile:
+            return jsonify(success=False, error='Profile not found'), 404
+
+        instrument = profile['instrument']
+        accessible_run_ids = self._get_user_accessible_run_ids(
+            user_info, instrument
+        )
+
+        tasks_dir = base_dir / 'tasks' / instrument
+        profile_dir = tasks_dir / profile_id
+        object_table_path = profile_dir / 'object_table.json'
+
+        if not object_table_path.exists():
+            legacy_path = tasks_dir / f'object_table_{profile_id}.json'
+            if legacy_path.exists():
+                object_table_path = legacy_path
+
+        if not object_table_path.exists():
+            return jsonify(
+                success=False,
+                error='No object table data found for this profile.',
+            ), 404
+
+        try:
+            with open(object_table_path, encoding='utf-8') as _fh:
+                object_table = _json.load(_fh)
+        except Exception as exc:
+            return jsonify(
+                success=False,
+                error=f'Failed to load object table: {exc}',
+            ), 500
+
+        all_rows = object_table.get('rows', [])
+
+        def _row_accessible(row):
+            raw = str(row.get('RUN_ID', '') or '')
+            row_rids = {r.strip() for r in raw.split(',') if r.strip()}
+            return bool(row_rids & accessible_run_ids)
+
+        obj_row = None
+        for row in all_rows:
+            name = str(row.get('OBJNAME', '') or '')
+            if name.lower() == objname.lower() and _row_accessible(row):
+                obj_row = row
+                break
+
+        if obj_row is None:
+            return jsonify(
+                success=False,
+                error='Object not found or not accessible for this user.',
+            ), 404
+
+        def _first_present(row, keys):
+            for key in keys:
+                if key in row and row.get(key) not in (None, ''):
+                    return row.get(key)
+            return None
+
+        def _fmt(value):
+            return '[PLACEHOLDER]' if value in (None, '') else value
+
+        objects_dir = profile_dir / 'objects'
+        fkind_map = {
+            'raw': 'raw',
+            'pp': 'pp',
+            'red': 'red',
+            'tcorr': 'tcorr',
+            'ccf': 'ccf',
+            'lbl': 'lbl',
+        }
+        ftable_data = {}
+        for fkind, stem in fkind_map.items():
+            fpath = objects_dir / f'ftable_{stem}_{obj_row.get("OBJNAME", objname)}.json'
+            all_kind_rows = []
+            if fpath.exists():
+                try:
+                    with open(fpath, encoding='utf-8') as _fh:
+                        _data = _json.load(_fh)
+                    all_kind_rows = _data.get('rows') or []
+                except Exception:
+                    all_kind_rows = []
+            acc_kind_rows = [
+                r for r in all_kind_rows
+                if str(r.get('KW_RUN_ID', '') or '') in accessible_run_ids
+            ]
+            ftable_data[fkind] = {
+                'all': all_kind_rows,
+                'accessible': acc_kind_rows,
+            }
+
+        def _fmt_count(n_accessible, n_total):
+            return f'{n_accessible} ({n_total})'
+
+        def _qc_counts(rows):
+            total = len(rows)
+            passed = sum(1 for r in rows if int(r.get('PASSED_ALL_QC') or 0) == 1)
+            return {
+                'total': total,
+                'passed': passed,
+                'failed': max(0, total - passed),
+            }
+
+        def _min_time(rows, key):
+            vals = [str(r.get(key)) for r in rows if r.get(key)]
+            return min(vals) if vals else None
+
+        def _max_time(rows, key):
+            vals = [str(r.get(key)) for r in rows if r.get(key)]
+            return max(vals) if vals else None
+
+        raw_rows = ftable_data['raw']['accessible']
+        pp_rows = ftable_data['pp']['accessible']
+        red_rows = ftable_data['red']['accessible']
+        tcorr_rows = ftable_data['tcorr']['accessible']
+        ccf_rows = ftable_data['ccf']['accessible']
+        lbl_rows = ftable_data['lbl']['accessible']
+
+        raw_rows_all = ftable_data['raw']['all']
+        pp_rows_all = ftable_data['pp']['all']
+        red_rows_all = ftable_data['red']['all']
+        tcorr_rows_all = ftable_data['tcorr']['all']
+        ccf_rows_all = ftable_data['ccf']['all']
+        lbl_rows_all = ftable_data['lbl']['all']
+
+        target_info = {
+            'object_name': _fmt(obj_row.get('OBJNAME')),
+            'ra_deg': _fmt(_first_present(obj_row, ['RA [Deg]', 'RA_DEG'])),
+            'ra_source': _fmt(_first_present(obj_row, ['RA source', 'RA_SOURCE'])),
+            'dec_deg': _fmt(_first_present(obj_row, ['Dec [Deg]', 'DEC_DEG'])),
+            'dec_source': _fmt(_first_present(obj_row, ['Dec source', 'DEC_SOURCE'])),
+            'finder_chart': '[PLACEHOLDER]',
+            'teff_k': _fmt(_first_present(obj_row, ['Teff [K]', 'TEFF'])),
+            'teff_source': _fmt(_first_present(obj_row, ['Teff source', 'TEFF_SOURCE'])),
+            'spectral_type': _fmt(_first_present(obj_row, ['SpT', 'SPECTRAL_TYPE'])),
+            'spectral_type_source': _fmt(_first_present(obj_row, ['SpT source', 'SPT_SOURCE'])),
+            'pmra': _fmt(_first_present(obj_row, ['PMRA [mas/yr]', 'PMRA'])),
+            'pmdec': _fmt(_first_present(obj_row, ['PMDE [mas/yr]', 'PMDEC [mas/yr]', 'PMDEC'])),
+            'parallax': _fmt(_first_present(obj_row, ['Plx [mas]', 'PLX'])),
+            'radial_velocity': _fmt(_first_present(obj_row, ['RV [km/s]', 'RV'])),
+            'radial_velocity_source': _fmt(_first_present(obj_row, ['RV source', 'RV_SOURCE'])),
+            'aliases': _fmt(_first_present(obj_row, ['ALIASES', 'ALIASES_STR'])),
+            'object_names_in_headers': '[PLACEHOLDER]',
+            'ob_names_in_headers': '[PLACEHOLDER]',
+            'pi_names_in_headers': '[PLACEHOLDER]',
+            'project_run_names_in_headers': '[PLACEHOLDER]',
+        }
+
+        raw_stats = _qc_counts(raw_rows)
+        pp_stats = _qc_counts(pp_rows)
+        ext_stats = _qc_counts(red_rows)
+        tcorr_stats = _qc_counts(tcorr_rows)
+        ccf_stats = _qc_counts(ccf_rows)
+        lbl_stats = _qc_counts(lbl_rows)
+
+        raw_stats_all = _qc_counts(raw_rows_all)
+        pp_stats_all = _qc_counts(pp_rows_all)
+        ext_stats_all = _qc_counts(red_rows_all)
+        tcorr_stats_all = _qc_counts(tcorr_rows_all)
+        ccf_stats_all = _qc_counts(ccf_rows_all)
+        lbl_stats_all = _qc_counts(lbl_rows_all)
+
+        spectrum_info = {
+            'dprtypes': _fmt(_first_present(obj_row, ['DPRTYPE', 'ALL_DPRTYPES'])),
+            'raw_total': _fmt_count(raw_stats['total'], raw_stats_all['total']),
+            'raw_rejected': _fmt_count(raw_stats['failed'], raw_stats_all['failed']),
+            'raw_first_mid': _fmt(_min_time(raw_rows, 'MID_OBS_TIME')),
+            'raw_last_mid': _fmt(_max_time(raw_rows, 'MID_OBS_TIME')),
+            'pp_total': _fmt_count(pp_stats['total'], pp_stats_all['total']),
+            'pp_passed': _fmt_count(pp_stats['passed'], pp_stats_all['passed']),
+            'pp_failed': _fmt_count(pp_stats['failed'], pp_stats_all['failed']),
+            'pp_first_mid': _fmt(_min_time(pp_rows, 'MID_OBS_TIME')),
+            'pp_last_mid': _fmt(_max_time(pp_rows, 'MID_OBS_TIME')),
+            'pp_last_processed': _fmt(_max_time(pp_rows, 'LAST_MODIFIED')),
+            'pp_version': '[PLACEHOLDER]',
+            'ext_total': _fmt_count(ext_stats['total'], ext_stats_all['total']),
+            'ext_passed': _fmt_count(ext_stats['passed'], ext_stats_all['passed']),
+            'ext_failed': _fmt_count(ext_stats['failed'], ext_stats_all['failed']),
+            'ext_first_mid': _fmt(_min_time(red_rows, 'MID_OBS_TIME')),
+            'ext_last_mid': _fmt(_max_time(red_rows, 'MID_OBS_TIME')),
+            'ext_last_processed': _fmt(_max_time(red_rows, 'LAST_MODIFIED')),
+            'ext_version': '[PLACEHOLDER]',
+            'tcorr_total': _fmt_count(tcorr_stats['total'], tcorr_stats_all['total']),
+            'tcorr_passed': _fmt_count(tcorr_stats['passed'], tcorr_stats_all['passed']),
+            'tcorr_failed': _fmt_count(tcorr_stats['failed'], tcorr_stats_all['failed']),
+            'tcorr_first_mid': _fmt(_min_time(tcorr_rows, 'MID_OBS_TIME')),
+            'tcorr_last_mid': _fmt(_max_time(tcorr_rows, 'MID_OBS_TIME')),
+            'tcorr_last_processed': _fmt(_max_time(tcorr_rows, 'LAST_MODIFIED')),
+            'tcorr_version': '[PLACEHOLDER]',
+            'median_snr_y': '[PLACEHOLDER]',
+            'median_snr_h': '[PLACEHOLDER]',
+        }
+
+        lbl_info = {
+            'rv_uncertainty_percentiles': '[PLACEHOLDER]',
+            'rv_abs_dev_percentiles': '[PLACEHOLDER]',
+            'measurement_count': _fmt_count(lbl_stats['total'], lbl_stats_all['total']),
+            'spurious_low_points': '[PLACEHOLDER]',
+            'spurious_high_points': '[PLACEHOLDER]',
+            'n_nights': len({str(r.get('OBS_DIR')) for r in lbl_rows if r.get('OBS_DIR')}),
+            'n_reset_rv_points': '[PLACEHOLDER]',
+            'systemic_velocity': '[PLACEHOLDER]',
+            'valid_velocity_domain': '[PLACEHOLDER]',
+            'lbl_version': '[PLACEHOLDER]',
+        }
+
+        ccf_info = {
+            'mask_used': '[PLACEHOLDER]',
+            'systemic_velocity': '[PLACEHOLDER]',
+            'fwhm': '[PLACEHOLDER]',
+            'total_files': _fmt_count(ccf_stats['total'], ccf_stats_all['total']),
+            'passed_qc': _fmt_count(ccf_stats['passed'], ccf_stats_all['passed']),
+            'failed_qc': _fmt_count(ccf_stats['failed'], ccf_stats_all['failed']),
+            'first_mid': _fmt(_min_time(ccf_rows, 'MID_OBS_TIME')),
+            'last_mid': _fmt(_max_time(ccf_rows, 'MID_OBS_TIME')),
+            'last_processed': _fmt(_max_time(ccf_rows, 'LAST_MODIFIED')),
+            'ccf_version': '[PLACEHOLDER]',
+        }
+
+        # Build night-level rows from ext/red and tcorr file tables.
+        nights = {}
+        for row in red_rows_all:
+            nkey = str(row.get('OBS_DIR') or '')
+            if not nkey:
+                continue
+            entry = nights.setdefault(nkey, {
+                'obs_dir': nkey,
+                'ext_rows_all': [],
+                'ext_rows': [],
+                'tcorr_rows_all': [],
+                'tcorr_rows': [],
+            })
+            entry['ext_rows_all'].append(row)
+            if str(row.get('KW_RUN_ID', '') or '') in accessible_run_ids:
+                entry['ext_rows'].append(row)
+        for row in tcorr_rows_all:
+            nkey = str(row.get('OBS_DIR') or '')
+            if not nkey:
+                continue
+            entry = nights.setdefault(nkey, {
+                'obs_dir': nkey,
+                'ext_rows_all': [],
+                'ext_rows': [],
+                'tcorr_rows_all': [],
+                'tcorr_rows': [],
+            })
+            entry['tcorr_rows_all'].append(row)
+            if str(row.get('KW_RUN_ID', '') or '') in accessible_run_ids:
+                entry['tcorr_rows'].append(row)
+
+        time_series = []
+        for nkey in sorted(nights.keys()):
+            nentry = nights[nkey]
+            ext_n_all = nentry['ext_rows_all']
+            ext_n = nentry['ext_rows']
+            tc_n_all = nentry['tcorr_rows_all']
+            tc_n = nentry['tcorr_rows']
+            all_n = ext_n + tc_n
+            dprtypes = sorted({
+                str(r.get('KW_DPRTYPE'))
+                for r in all_n if r.get('KW_DPRTYPE')
+            })
+            time_series.append({
+                'obs_dir': nkey,
+                'first_obs_mid': _fmt(_min_time(all_n, 'MID_OBS_TIME')),
+                'last_obs_mid': _fmt(_max_time(all_n, 'MID_OBS_TIME')),
+                'num_ext': _fmt_count(len(ext_n), len(ext_n_all)),
+                'num_tcorr': _fmt_count(len(tc_n), len(tc_n_all)),
+                'seeing': '[PLACEHOLDER]',
+                'airmass': '[PLACEHOLDER]',
+                'mean_exptime': '[PLACEHOLDER]',
+                'total_exptime': '[PLACEHOLDER]',
+                'snr_order_15': '[PLACEHOLDER]',
+                'snr_order_60': '[PLACEHOLDER]',
+                'dprtypes': ', '.join(dprtypes) if dprtypes else '[PLACEHOLDER]',
+                'ext_files_label': f'{_fmt_count(len(ext_n), len(ext_n_all))} [download]',
+                'tcorr_files_label': f'{_fmt_count(len(tc_n), len(tc_n_all))} [download]',
+                'request_ext_files': 'Extracted 2D files',
+                'request_tcorr_files': 'Telluric corrected 2D files',
+            })
+
+        return jsonify(
+            success=True,
+            object_name=obj_row.get('OBJNAME', objname),
+            profile_id=profile_id,
+            generated_at=object_table.get('generated_at'),
+            sections={
+                'target_info': target_info,
+                'spectrum': spectrum_info,
+                'lbl': lbl_info,
+                'ccf': ccf_info,
+                'time_series': time_series,
+                'debug': {
+                    'status': 'coming_soon',
+                    'message': 'Coming soon',
+                },
+            },
+        )
 
     def _api_obs_table(self):
         """Return observation table rows for a profile, filtered by science group."""

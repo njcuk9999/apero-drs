@@ -22,7 +22,7 @@ APERO_PROFILE_PARAM_LIST: List[str] = []
 # Maximum allowed size for one backup archive input (bytes)
 BACKUP_MAX_SIZE = 1024 ** 3
 # Set the default frequency for this task (in hours)
-DEFAULT_FREQUENCY = 24.0
+DEFAULT_FREQUENCY = 6.0
 # Set whether this task is enabled by default in the admin portal
 DEFAULT_ENABLED = True
 # Set the type of task (INSTRUMENT, GLOBAL)

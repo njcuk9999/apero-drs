@@ -40,7 +40,7 @@ APERO_PROFILE_PARAM_LIST.append('SCIENCE_FIBER')
 APERO_PROFILE_PARAM_LIST.append('SCIENCE_TYPES')
 APERO_PROFILE_PARAM_LIST.append('INSTRUMENT')
 # Set the default frequency for this task (in hours)
-DEFAULT_FREQUENCY = 1.0
+DEFAULT_FREQUENCY = 6.0
 # Set whether this task is enabled by default in the admin portal
 DEFAULT_ENABLED = True
 # Set the type of task (INSTRUMENT, GLOBAL)
@@ -315,7 +315,11 @@ def file_col_query(rparams, objname, block_kind: str,
         fdb.KW_PID AS PID,
         ldb.PASSED_ALL_QC AS PASSED_ALL_QC
     FROM {FINDEX_TABLENAME} fdb
-    LEFT JOIN {LOG_TABLENAME} ldb
+    LEFT JOIN (
+        SELECT PID, MAX(PASSED_ALL_QC) AS PASSED_ALL_QC
+        FROM {LOG_TABLENAME}
+        GROUP BY PID
+    ) ldb
             ON fdb.KW_PID = ldb.PID
     WHERE fdb.KW_OBJNAME = '{OBJNAME}' AND {CONDITION}
     """
@@ -425,13 +429,11 @@ def object_query_db(aparams, objname, apero_profile_name,
     queries['ccf'] = ccf_results
     # e.fits file table
     efits_results = file_col_query(rparams, objname, block_kind='out',
-                                   scitype=scitypes, output='DRS_POST_E',
-                                   fiber=fiber)
+                                   output='DRS_POST_E')
     queries['efits'] = efits_results
     # t.fits file table
     tfits_results = file_col_query(rparams, objname, block_kind='out',
-                                   scitype=scitypes, output='DRS_POST_T',
-                                   fiber=fiber)
+                                   output='DRS_POST_T')
     queries['tfits'] = tfits_results
 
     # lbl fits file table

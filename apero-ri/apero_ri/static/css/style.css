@@ -3890,8 +3890,8 @@ select.ari-ap-input {
 }
 
 .at-task-card--active {
-    border-color: #8cc7a0;
-    background: #ecf8ef;
+    border-color: #8fc3ea;
+    background: #eaf4ff;
 }
 
 .at-task-card:hover {
@@ -3900,9 +3900,9 @@ select.ari-ap-input {
 }
 
 .at-task-card--selected {
-    border-color: #e0892f;
-    background: #ffe6c8;
-    box-shadow: 0 0 0 2px rgba(224, 137, 47, 0.18);
+    border-color: #1f5f97;
+    background: #d9ecff;
+    box-shadow: 0 0 0 2px rgba(31, 95, 151, 0.22);
 }
 
 .at-task-card--inactive {
@@ -3912,8 +3912,8 @@ select.ari-ap-input {
 }
 
 .at-task-card--error {
-    border-color: rgba(198, 40, 40, 0.45);
-    background: linear-gradient(180deg, #fff8f8 0%, #ffffff 100%);
+    border-color: rgba(224, 137, 47, 0.6);
+    background: linear-gradient(180deg, #fff6ea 0%, #ffffff 100%);
 }
 
 .at-task-card--dragging {
@@ -3986,7 +3986,7 @@ select.ari-ap-input {
 
 .at-tag--running { background: var(--ari-primary-light, #e8eaf6); color: var(--ari-primary, #3f51b5); }
 .at-tag--queued  { background: #fff3e0; color: #e65100; }
-.at-tag--error   { background: #ffebee; color: #c62828; }
+.at-tag--error   { background: #fff3e0; color: #9c4f04; }
 
 /* Mini progress bar inside task cards */
 .at-card-progress {
@@ -4091,7 +4091,8 @@ select.ari-ap-input {
 }
 
 .at-detail__error {
-    background: rgba(244, 67, 54, 0.05);
+    background: rgba(224, 137, 47, 0.10);
+    border: 1px solid rgba(224, 137, 47, 0.35);
     border-radius: 4px;
     padding: 0.5rem;
 }
@@ -4115,7 +4116,7 @@ select.ari-ap-input {
 
 .at-status-badge--running   { background: var(--ari-primary-light, #e8eaf6); color: var(--ari-primary, #3f51b5); }
 .at-status-badge--ok        { background: #e8f5e9; color: #2e7d32; }
-.at-status-badge--error     { background: #ffebee; color: #c62828; }
+.at-status-badge--error     { background: #fff3e0; color: #9c4f04; }
 .at-status-badge--queued    { background: #fff3e0; color: #e65100; }
 .at-status-badge--cancelled { background: #f5f5f5; color: #757575; }
 
@@ -4318,13 +4319,17 @@ body.ari-sg-page .ari-doc-main {
 .at-section-card {
     border: 1px solid var(--ari-border);
     border-radius: var(--ari-border-radius);
-    background: #fff8ed;
+    background: #f1fbf1;
     margin-bottom: 0.85rem;
     overflow: hidden;
 }
 
 .at-section-card--error {
-    border-color: var(--ari-danger, #f44336);
+    border-color: #e0892f;
+}
+
+.at-section-card--warning {
+    border-color: #e0892f;
 }
 
 .at-section-card__header {
@@ -4332,21 +4337,27 @@ body.ari-sg-page .ari-doc-main {
     align-items: center;
     gap: 0.6rem;
     padding: 0.6rem 1rem;
-    background: #ffefda;
-    border-bottom: 1px solid #efcfa2;
+    background: #e7f6e7;
+    border-bottom: 1px solid #c6e5c6;
     font-weight: 600;
     font-size: 0.88rem;
 }
 
 .at-section-card--error .at-section-card__header {
-    color: var(--ari-danger, #f44336);
-    background: #fff5f5;
-    border-color: rgba(244,67,54,0.2);
+    color: #9c4f04;
+    background: #fff2e2;
+    border-color: rgba(224, 137, 47, 0.35);
+}
+
+.at-section-card--warning .at-section-card__header {
+    color: #9c4f04;
+    background: #fff2e2;
+    border-color: rgba(224, 137, 47, 0.35);
 }
 
 .at-section-card__body {
     padding: 0.85rem 1rem;
-    background: #fff6e8;
+    background: #f6fff6;
 }
 
 /* Summary grid inside the first section card */
@@ -4485,8 +4496,8 @@ body.ari-ot-page .ari-doc-main {
     background: var(--ari-card-bg, #fff);
     color: var(--ari-text, #333);
     font-size: 0.86rem;
-    line-height: 1.45;
-    margin-bottom: 0.8rem;
+    line-height: 1.6;
+    margin-bottom: 1.5rem;
 }
 
 .ot-access-note i {
@@ -4744,6 +4755,10 @@ body.ari-ot-page .ari-doc-main {
 
 .ot-null { color: var(--ari-text-muted, #aaa); }
 
+/* File-count cells: N (M) */
+.ot-count-full  { color: var(--ari-success, #2e7d32); font-variant-numeric: tabular-nums; }
+.ot-count-partial { color: var(--ari-warning-text, #e65100); font-variant-numeric: tabular-nums; }
+
 .ot-loading,
 .ot-empty,
 .ot-error {
@@ -4767,6 +4782,205 @@ body.ari-ot-page .ari-doc-main {
 }
 
 .ot-page-info { color: var(--ari-text-muted, #666); }
+
+/* ==========================================================================
+   Object page tabs and section layout
+   ========================================================================== */
+.op-page .ari-doc-main {
+    max-width: none;
+}
+
+#op-content {
+    width: calc(100vw - var(--ari-sidebar-width, 260px) - 5rem);
+    max-width: none;
+}
+
+.op-meta-bar {
+    margin: 0.4rem 0 0.9rem;
+}
+
+.op-tabs {
+    margin-bottom: 1rem;
+}
+
+.ot-loading-block,
+.ot-error-block {
+    border: 1px solid var(--ari-border, #ddd);
+    border-radius: 8px;
+    padding: 1rem;
+    margin-bottom: 1rem;
+    background: #eaf4ff;
+    color: var(--ari-text-muted, #666);
+}
+
+.ot-error-block {
+    background: #fff2e2;
+    border-color: #e0892f;
+    color: #9c4f04;
+}
+
+.op-kv-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1px;
+}
+
+.op-kv-item {
+    display: grid;
+    grid-template-columns: minmax(180px, 280px) 1fr;
+    column-gap: 0.95rem;
+    align-items: start;
+    width: 100%;
+    padding: 0.55rem 0.65rem;
+    border: 1px solid rgba(0, 0, 0, 0.05);
+    border-radius: 6px;
+    background: #fff9db;
+}
+
+/* Checker-like yellow/orange alternation */
+.op-kv-item:nth-child(4n+2),
+.op-kv-item:nth-child(4n+3) {
+    background: #ffeed8;
+}
+
+.op-kv-label {
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: var(--ari-text-muted, #5f6a5f);
+    margin-bottom: 0;
+    padding-top: 0.1rem;
+}
+
+.op-kv-value {
+    font-size: 0.92rem;
+    color: var(--ari-text, #2f3d2f);
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+}
+
+.op-kv-value--long {
+    max-height: 10.5rem;
+    overflow-y: auto;
+}
+
+.op-kv-value--placeholder {
+    color: var(--ari-text-muted, #8c8c8c);
+    font-style: italic;
+}
+
+.op-kv-value--no-scroll {
+    max-height: none;
+}
+
+.op-list-filter {
+    width: 100%;
+    border: 1px solid #c9d7eb;
+    border-radius: 6px;
+    padding: 0.35rem 0.5rem;
+    background: #f4f9ff;
+    margin-bottom: 0.45rem;
+    font-size: 0.84rem;
+}
+
+.op-list-values {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.3rem;
+    max-height: 9rem;
+    overflow-y: auto;
+}
+
+@media (min-width: 1200px) {
+    .op-kv-item--aliases .op-kv-value {
+        max-height: none;
+    }
+
+    .op-kv-item--aliases .op-list-values {
+        max-height: none;
+        overflow-y: visible;
+    }
+}
+
+.op-list-chip {
+    display: inline-block;
+    padding: 0.16rem 0.45rem;
+    border-radius: 999px;
+    border: 1px solid rgba(31, 95, 151, 0.2);
+    background: #eef5ff;
+    font-size: 0.78rem;
+    color: #1f5f97;
+}
+
+/* Object page section cards use light-blue box with alternating warm cards */
+.op-page .at-section-card {
+    background: #eaf4ff;
+    border-color: #c9dff7;
+}
+
+.op-page .at-section-card__header {
+    background: #dceeff;
+    border-bottom-color: #c2dbf5;
+}
+
+.op-page .at-section-card__body {
+    background: #eff7ff;
+}
+
+.op-page .at-section-card__body .op-kv-item:nth-child(odd) {
+    background: #fff9db;
+}
+
+.op-page .at-section-card__body .op-kv-item:nth-child(even) {
+    background: #ffeed8;
+}
+
+/* Time-series table: cleaner styling with alternating yellow/orange rows */
+#op-time-series-table {
+    width: 100%;
+    table-layout: auto;
+    border-collapse: separate;
+    border-spacing: 0;
+}
+
+#op-time-series-table thead th {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    background: #dceeff;
+    border-bottom: 1px solid #c2dbf5;
+    font-size: 0.93rem;
+    white-space: nowrap;
+}
+
+#op-time-series-table tbody td {
+    font-size: 0.93rem;
+    vertical-align: top;
+}
+
+#op-time-series-table tbody tr:nth-child(odd) td {
+    background: #fff9db;
+}
+
+#op-time-series-table tbody tr:nth-child(even) td {
+    background: #ffeed8;
+}
+
+#op-time-series-table .op-ts-count {
+    font-variant-numeric: tabular-nums;
+    font-weight: 600;
+    color: #1f5f97;
+}
+
+@media (max-width: 900px) {
+    #op-content {
+        width: 100%;
+    }
+
+    .op-kv-item {
+        grid-template-columns: 1fr;
+        row-gap: 0.28rem;
+    }
+}
 
 .ot-page-controls {
     display: flex;

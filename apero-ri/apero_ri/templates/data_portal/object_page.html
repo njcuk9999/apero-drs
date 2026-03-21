@@ -1,7 +1,7 @@
 {% extends "general/sidebar_base.html" %}
 {% block title %}APERO RI – {{ page_label }}{% endblock %}
 
-{% block body_class %}ari-has-sidebar{% endblock %}
+{% block body_class %}ari-has-sidebar op-page{% endblock %}
 
 {% block doc_content %}
 <div class="ari-page-header">
@@ -10,14 +10,176 @@
         {{ page_label }}
     </h1>
     <p class="ari-page-subtitle">
-        Placeholder page for object <strong>{{ objname }}</strong> in profile
+        Object details for <strong>{{ objname }}</strong> in profile
         <strong>{{ profile.profile_id }}</strong>.
     </p>
 </div>
 
-<div class="ari-coming-soon">
-    <i class="fa-solid fa-wrench"></i>
-    <h2>Object Page Coming Soon</h2>
-    <p>This object-level page is ready for future content.</p>
+<div class="op-meta-bar">
+    <span id="op-last-updated" class="ot-meta-bar__item">
+        <i class="fa-solid fa-clock"></i> Loading&hellip;
+    </span>
 </div>
+
+<div class="ari-sg-tabs op-tabs" id="op-tabs">
+    <button class="ari-sg-tab ari-sg-tab--active" data-tab="target_info">
+        <i class="fa-solid fa-bullseye"></i> Target Info
+    </button>
+    <button class="ari-sg-tab" data-tab="spectrum">
+        <i class="fa-solid fa-wave-square"></i> Spectrum
+    </button>
+    <button class="ari-sg-tab" data-tab="lbl">
+        <i class="fa-solid fa-chart-line"></i> LBL
+    </button>
+    <button class="ari-sg-tab" data-tab="ccf">
+        <i class="fa-solid fa-sliders"></i> CCF
+    </button>
+    <button class="ari-sg-tab" data-tab="time_series">
+        <i class="fa-solid fa-calendar-days"></i> Time Series
+    </button>
+    <button class="ari-sg-tab" data-tab="debug">
+        <i class="fa-solid fa-bug"></i> Debug
+    </button>
+</div>
+
+<div id="op-content">
+    <div id="op-loading" class="ot-loading-block">
+        <i class="fa-solid fa-spinner fa-spin"></i> Loading object data&hellip;
+    </div>
+    <div id="op-error" class="ot-error-block" style="display:none;"></div>
+
+    <section id="op-tab-target_info" class="op-tab-panel">
+        <div class="at-section-card">
+            <div class="at-section-card__header">
+                <span><i class="fa-solid fa-bullseye"></i> Target Information</span>
+                <button id="op-download-target-csv"
+                        class="ari-btn ari-btn--sm ari-btn--secondary"
+                        title="Download target information as CSV"
+                        style="margin-left:auto;">
+                    <i class="fa-solid fa-download"></i> CSV
+                </button>
+            </div>
+            <div class="at-section-card__body">
+                <div id="op-target-grid" class="op-kv-grid"></div>
+            </div>
+        </div>
+    </section>
+
+    <section id="op-tab-spectrum" class="op-tab-panel" style="display:none;">
+        <div class="at-section-card">
+            <div class="at-section-card__header">
+                <span><i class="fa-solid fa-wave-square"></i> Spectrum Information</span>
+                <button id="op-download-spectrum-csv"
+                        class="ari-btn ari-btn--sm ari-btn--secondary"
+                        title="Download spectrum information as CSV"
+                        style="margin-left:auto;">
+                    <i class="fa-solid fa-download"></i> CSV
+                </button>
+            </div>
+            <div class="at-section-card__body">
+                <div id="op-spectrum-grid" class="op-kv-grid"></div>
+            </div>
+        </div>
+    </section>
+
+    <section id="op-tab-lbl" class="op-tab-panel" style="display:none;">
+        <div class="at-section-card">
+            <div class="at-section-card__header">
+                <span><i class="fa-solid fa-chart-line"></i> LBL Stats</span>
+                <button id="op-download-lbl-csv"
+                        class="ari-btn ari-btn--sm ari-btn--secondary"
+                        title="Download LBL statistics as CSV"
+                        style="margin-left:auto;">
+                    <i class="fa-solid fa-download"></i> CSV
+                </button>
+            </div>
+            <div class="at-section-card__body">
+                <div id="op-lbl-grid" class="op-kv-grid"></div>
+            </div>
+        </div>
+    </section>
+
+    <section id="op-tab-ccf" class="op-tab-panel" style="display:none;">
+        <div class="at-section-card">
+            <div class="at-section-card__header">
+                <span><i class="fa-solid fa-sliders"></i> CCF Stats</span>
+                <button id="op-download-ccf-csv"
+                        class="ari-btn ari-btn--sm ari-btn--secondary"
+                        title="Download CCF statistics as CSV"
+                        style="margin-left:auto;">
+                    <i class="fa-solid fa-download"></i> CSV
+                </button>
+            </div>
+            <div class="at-section-card__body">
+                <div id="op-ccf-grid" class="op-kv-grid"></div>
+            </div>
+        </div>
+    </section>
+
+    <section id="op-tab-time_series" class="op-tab-panel" style="display:none;">
+        <div class="at-section-card">
+            <div class="at-section-card__header">
+                <span><i class="fa-solid fa-calendar-days"></i> Time Series</span>
+                <button id="op-download-time-series-csv"
+                        class="ari-btn ari-btn--sm ari-btn--secondary"
+                        title="Download time-series table as CSV"
+                        style="margin-left:auto;">
+                    <i class="fa-solid fa-download"></i> CSV
+                </button>
+            </div>
+            <div class="at-section-card__body">
+                <div class="ot-table-wrap">
+                    <table class="ot-table" id="op-time-series-table">
+                        <thead>
+                            <tr>
+                                <th>Obs Dir</th>
+                                <th>First obs mid</th>
+                                <th>Last obs mid</th>
+                                <th>Number of ext</th>
+                                <th>Number of tcorr</th>
+                                <th>Seeing</th>
+                                <th>Airmass</th>
+                                <th>Mean Exptime</th>
+                                <th>Total Exptime</th>
+                                <th>SNR[Order 15]</th>
+                                <th>SNR[Order 60]</th>
+                                <th>DPRTYPEs</th>
+                            </tr>
+                        </thead>
+                        <tbody id="op-time-series-tbody">
+                            <tr><td colspan="12" class="ot-empty">No rows</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="op-tab-debug" class="op-tab-panel" style="display:none;">
+        <div class="at-section-card at-section-card--warning">
+            <div class="at-section-card__header">
+                <span><i class="fa-solid fa-bug"></i> Debug</span>
+                <button id="op-download-debug-csv"
+                        class="ari-btn ari-btn--sm ari-btn--secondary"
+                        title="Download debug section as CSV"
+                        style="margin-left:auto;">
+                    <i class="fa-solid fa-download"></i> CSV
+                </button>
+            </div>
+            <div class="at-section-card__body">
+                <div class="at-muted-hint" id="op-debug-message">Coming soon</div>
+            </div>
+        </div>
+    </section>
+</div>
+
+<script>
+window.ARI_OBJECT_PAGE = {
+    apiUrl: {{ api_url | tojson }},
+    profileId: {{ profile.profile_id | tojson }},
+    instrument: {{ profile.instrument | tojson }},
+    objname: {{ objname | tojson }}
+};
+</script>
+<script src="{{ url_for('static', filename='js/object_page.js') }}" defer></script>
 {% endblock %}

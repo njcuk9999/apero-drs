@@ -149,6 +149,17 @@
         var meta = getColumnMeta(col);
         var type = String(meta.type || '').toLowerCase();
 
+        if (type === 'count') {
+            // "N (M)" — sort by N (user-accessible count)
+            var cm = /^\s*(\d+)/.exec(
+                String(value === null || value === undefined ? '' : value)
+            );
+            return {
+                kind: 'number',
+                value: cm ? parseInt(cm[1], 10) : -1,
+            };
+        }
+
         if (type === 'date' || type === 'datetime' || type === 'night') {
             var ts = parseNightDate(value);
             if (ts !== null) {
@@ -462,6 +473,20 @@
                     a.textContent = String(val);
                     a.title = 'Open object page';
                     td.appendChild(a);
+                } else if (getColumnMeta(col).type === 'count') {
+                    var parts = /^(\d+)\s*\((\d+)\)$/.exec(String(val).trim());
+                    if (parts) {
+                        var nAcc = parseInt(parts[1], 10);
+                        var nTot = parseInt(parts[2], 10);
+                        td.innerHTML = nAcc < nTot
+                            ? '<span class="ot-count-partial" title="'
+                                + nAcc + ' accessible out of ' + nTot + ' total">'  
+                                + escHtml(val) + '</span>'
+                            : '<span class="ot-count-full" title="All '
+                                + nTot + ' files accessible">' + escHtml(val) + '</span>';
+                    } else {
+                        td.textContent = String(val);
+                    }
                 } else {
                     td.textContent = String(val);
                 }

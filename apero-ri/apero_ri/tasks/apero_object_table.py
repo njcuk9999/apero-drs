@@ -38,7 +38,7 @@ APERO_PROFILE_PARAM_LIST.append('REJECT_TABLENAME')
 APERO_PROFILE_PARAM_LIST.append('SCIENCE_FIBER')
 APERO_PROFILE_PARAM_LIST.append('SCIENCE_TYPES')
 # Set the default frequency for this task (in hours)
-DEFAULT_FREQUENCY = 1.0
+DEFAULT_FREQUENCY = 6.0
 # Set whether this task is enabled by default in the admin portal
 DEFAULT_ENABLED = True
 # Set the type of task (INSTRUMENT, GLOBAL)
