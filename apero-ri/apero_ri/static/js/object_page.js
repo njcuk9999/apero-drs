@@ -13,18 +13,28 @@
 
     var targetGrid = document.getElementById('op-target-grid');
     var spectrumGrid = document.getElementById('op-spectrum-grid');
-    var lblGrid = document.getElementById('op-lbl-grid');
+    var finderChartEl = document.getElementById('op-finder-chart');
+    var lblSections = document.getElementById('op-lbl-sections');
     var ccfGrid = document.getElementById('op-ccf-grid');
     var tsBody = document.getElementById('op-time-series-tbody');
+    var allSectionsHost = document.getElementById('op-all-sections');
+    var allPinnedReorder = document.getElementById('op-all-pinned-reorder');
     var debugMessageEl = document.getElementById('op-debug-message');
     var targetCsvBtn = document.getElementById('op-download-target-csv');
     var spectrumCsvBtn = document.getElementById('op-download-spectrum-csv');
-    var lblCsvBtn = document.getElementById('op-download-lbl-csv');
+    var lblCsvBtn = null;  // LBL CSV buttons are created dynamically per flavor
     var ccfCsvBtn = document.getElementById('op-download-ccf-csv');
     var tsCsvBtn = document.getElementById('op-download-time-series-csv');
     var debugCsvBtn = document.getElementById('op-download-debug-csv');
+    var tsSnrYHead = document.getElementById('op-ts-head-snr-y');
+    var tsSnrHHead = document.getElementById('op-ts-head-snr-h');
 
     var apiPayload = null;
+    var dynamicLabels = {};
+    var sectionPinned = [];
+    var sectionSearch = {};
+    var sectionTitleMap = {};
+    var tabOrderMap = {};
 
     function escHtml(str) {
         var d = document.createElement('div');
@@ -41,6 +51,29 @@
         }
     }
 
+    function getLabel(path, fallback) {
+        if (!dynamicLabels || typeof dynamicLabels !== 'object') {
+            return fallback;
+        }
+        var node = dynamicLabels;
+        var parts = String(path || '').split('.');
+        for (var i = 0; i < parts.length; i += 1) {
+            var p = parts[i];
+            if (!p || typeof node !== 'object' || !(p in node)) {
+                return fallback;
+            }
+            node = node[p];
+        }
+        var sval = String(node === null || node === undefined ? '' : node).trim();
+        return sval || fallback;
+    }
+
+    function valOrDash(value) {
+        if (value === null || value === undefined) return '--';
+        var s = String(value).trim();
+        return s === '' ? '--' : s;
+    }
+
     function showError(msg) {
         loadingEl.style.display = 'none';
         errorEl.style.display = '';
@@ -54,6 +87,9 @@
         document.querySelectorAll('.op-tab-panel').forEach(function (panel) {
             panel.style.display = (panel.id === 'op-tab-' + tabKey) ? '' : 'none';
         });
+        applySectionFilter(tabKey);
+        // Notify lazy-loading tab modules (e.g. file_browser.js)
+        document.dispatchEvent(new CustomEvent('ARI_TAB_ACTIVATED', {detail: {tabKey: tabKey}}));
     }
 
     function bindTabs() {
@@ -65,9 +101,449 @@
         });
     }
 
+    function sanitizeSectionToken(value) {
+        return String(value === null || value === undefined ? '' : value)
+            .toLowerCase()
+            .replace(/[^a-z0-9_.-]+/g, '_')
+            .replace(/^_+|_+$/g, '') || 'section';
+    }
+
+    function getPanelLabel(tabKey) {
+        var btn = document.querySelector('#op-tabs .ari-sg-tab[data-tab="' + tabKey + '"]');
+        if (!btn) return tabKey;
+        return String(btn.textContent || tabKey).replace(/\s+/g, ' ').trim();
+    }
+
+    function refreshTabOrderMap() {
+        tabOrderMap = {};
+        var idx = 0;
+        document.querySelectorAll('#op-tabs .ari-sg-tab').forEach(function (btn) {
+            var key = String(btn.getAttribute('data-tab') || '').trim();
+            if (!key || key === 'all') return;
+            tabOrderMap[key] = idx;
+            idx += 1;
+        });
+    }
+
+    function tabRank(tabKey) {
+        if (Object.prototype.hasOwnProperty.call(tabOrderMap, tabKey)) {
+            return tabOrderMap[tabKey];
+        }
+        return 999999;
+    }
+
+    function getSectionTitle(cardEl) {
+        if (!cardEl) return '';
+        var span = cardEl.querySelector('.at-section-card__header span');
+        return String(span ? span.textContent : cardEl.textContent || '')
+            .replace(/\s+/g, ' ')
+            .trim();
+    }
+
+    function sectionPinnedRank(sectionId) {
+        var i = sectionPinned.indexOf(sectionId);
+        return i < 0 ? 999999 : i;
+    }
+
+    function isSectionPinned(sectionId) {
+        return sectionPinned.indexOf(sectionId) !== -1;
+    }
+
+    function setSectionCollapsed(cardEl, collapsed) {
+        if (!cardEl) return;
+        var body = cardEl.querySelector('.at-section-card__body');
+        cardEl.classList.toggle('op-section--collapsed', !!collapsed);
+        if (body) {
+            body.style.display = collapsed ? 'none' : '';
+        }
+        var toggleBtn = cardEl.querySelector('.op-section-btn--toggle');
+        if (toggleBtn) {
+            toggleBtn.setAttribute('aria-expanded', collapsed ? 'false' : 'true');
+            toggleBtn.innerHTML = collapsed
+                ? '<i class="fa-solid fa-chevron-down"></i>'
+                : '<i class="fa-solid fa-chevron-up"></i>';
+            toggleBtn.title = collapsed ? 'Expand section' : 'Collapse section';
+        }
+    }
+
+    function updatePinnedButtons() {
+        document.querySelectorAll('.op-section-btn--pin').forEach(function (btn) {
+            var sid = btn.getAttribute('data-op-pin-id') || '';
+            var pinned = isSectionPinned(sid);
+            btn.classList.toggle('op-section-btn--active', pinned);
+            btn.title = pinned ? 'Unpin section' : 'Pin section to top';
+            btn.innerHTML = pinned
+                ? '<i class="fa-solid fa-thumbtack"></i>'
+                : '<i class="fa-regular fa-thumbtack"></i>';
+        });
+    }
+
+    function ensureSectionHeaderControls(cardEl, sectionId, isAllClone) {
+        if (!cardEl || !sectionId) return;
+        var header = cardEl.querySelector('.at-section-card__header');
+        if (!header) return;
+
+        var existing = header.querySelector('.op-section-controls');
+        if (existing) {
+            return;
+        }
+
+        var controls = document.createElement('div');
+        controls.className = 'op-section-controls';
+
+        var pinBtn = document.createElement('button');
+        pinBtn.type = 'button';
+        pinBtn.className = 'op-section-btn op-section-btn--pin';
+        pinBtn.setAttribute('data-op-pin-id', sectionId);
+        pinBtn.addEventListener('click', function () {
+            toggleSectionPinned(sectionId);
+        });
+
+        var toggleBtn = document.createElement('button');
+        toggleBtn.type = 'button';
+        toggleBtn.className = 'op-section-btn op-section-btn--toggle';
+        toggleBtn.addEventListener('click', function () {
+            var isCollapsed = cardEl.classList.contains('op-section--collapsed');
+            setSectionCollapsed(cardEl, !isCollapsed);
+        });
+
+        controls.appendChild(pinBtn);
+        controls.appendChild(toggleBtn);
+        header.appendChild(controls);
+
+        if (!header.hasAttribute('data-op-click-toggle')) {
+            header.setAttribute('data-op-click-toggle', '1');
+            header.addEventListener('click', function (ev) {
+                var target = ev.target;
+                if (!target) return;
+                if (target.closest('.op-section-controls')) return;
+                if (target.closest('button, a, input, select, textarea, label')) return;
+                var isCollapsed = cardEl.classList.contains('op-section--collapsed');
+                setSectionCollapsed(cardEl, !isCollapsed);
+            });
+        }
+
+        if (isAllClone) {
+            cardEl.classList.add('op-all-section-card');
+        }
+    }
+
+    function ensurePanelSearchInput(panel, tabKey) {
+        if (!panel || !tabKey || tabKey === 'all') return;
+        if (panel.querySelector('.op-section-search')) return;
+
+        var wrap = document.createElement('div');
+        wrap.className = 'op-section-search';
+        var input = document.createElement('input');
+        input.type = 'text';
+        input.className = 'op-section-search__input';
+        input.placeholder = 'Filter sections in this tab...';
+        input.value = sectionSearch[tabKey] || '';
+        input.addEventListener('input', function () {
+            sectionSearch[tabKey] = input.value || '';
+            applySectionFilter(tabKey);
+        });
+        wrap.appendChild(input);
+        panel.insertBefore(wrap, panel.firstChild);
+    }
+
+    function ensureAllSearchInput() {
+        if (!allSectionsHost) return;
+        var allPanel = document.getElementById('op-tab-all');
+        if (!allPanel) return;
+        if (allPanel.querySelector('.op-section-search')) return;
+
+        var wrap = document.createElement('div');
+        wrap.className = 'op-section-search';
+        var input = document.createElement('input');
+        input.type = 'text';
+        input.className = 'op-section-search__input';
+        input.placeholder = 'Filter all sections...';
+        input.value = sectionSearch.all || '';
+        input.addEventListener('input', function () {
+            sectionSearch.all = input.value || '';
+            applySectionFilter('all');
+        });
+        wrap.appendChild(input);
+
+        var hostParent = allSectionsHost.parentElement;
+        if (hostParent) {
+            hostParent.insertBefore(wrap, allSectionsHost);
+        }
+    }
+
+    function collectSectionCards() {
+        var cards = [];
+        document.querySelectorAll('.op-tab-panel').forEach(function (panel) {
+            var panelId = panel.id || '';
+            if (panelId === 'op-tab-all') return;
+            var tabKey = panelId.replace(/^op-tab-/, '');
+            ensurePanelSearchInput(panel, tabKey);
+
+            panel.querySelectorAll('.at-section-card').forEach(function (card, idx) {
+                var rawSid = card.getAttribute('data-op-section-id') || '';
+                if (!rawSid) {
+                    rawSid = tabKey + '.section_' + (idx + 1);
+                }
+                var sid = sanitizeSectionToken(rawSid);
+                card.setAttribute('data-op-section-id', sid);
+                if (!card.getAttribute('data-op-order')) {
+                    card.setAttribute('data-op-order', String(idx));
+                }
+                ensureSectionHeaderControls(card, sid, false);
+                cards.push({
+                    id: sid,
+                    tabKey: tabKey,
+                    card: card,
+                    host: card.parentElement,
+                    order: parseInt(card.getAttribute('data-op-order') || '0', 10),
+                    title: getSectionTitle(card),
+                });
+            });
+        });
+        return cards;
+    }
+
+    function orderSections(cards) {
+        var hostMap = new Map();
+        cards.forEach(function (meta) {
+            var host = meta.host;
+            if (!host) return;
+            if (!hostMap.has(host)) hostMap.set(host, []);
+            hostMap.get(host).push(meta);
+        });
+
+        hostMap.forEach(function (items, host) {
+            items.sort(function (a, b) {
+                var ap = sectionPinnedRank(a.id);
+                var bp = sectionPinnedRank(b.id);
+                if (ap !== bp) return ap - bp;
+                return a.order - b.order;
+            });
+            items.forEach(function (meta) {
+                host.appendChild(meta.card);
+            });
+        });
+    }
+
+    function applyDefaultCollapse(cards) {
+        var perTab = {};
+        cards.forEach(function (meta) {
+            perTab[meta.tabKey] = (perTab[meta.tabKey] || 0) + 1;
+        });
+        cards.forEach(function (meta) {
+            var hasMultiple = (perTab[meta.tabKey] || 0) > 1;
+            var shouldCollapse = hasMultiple && !isSectionPinned(meta.id);
+            setSectionCollapsed(meta.card, shouldCollapse);
+        });
+    }
+
+    function stripElementIds(root) {
+        if (!root || root.nodeType !== 1) return;
+        root.removeAttribute('id');
+        Array.prototype.forEach.call(root.children || [], function (child) {
+            stripElementIds(child);
+        });
+    }
+
+    function rebuildAllSections(cards) {
+        if (!allSectionsHost) return;
+        ensureAllSearchInput();
+        allSectionsHost.innerHTML = '';
+
+        var ordered = cards.slice().sort(function (a, b) {
+            var ap = sectionPinnedRank(a.id);
+            var bp = sectionPinnedRank(b.id);
+            if (ap !== bp) return ap - bp;
+            var at = tabRank(a.tabKey);
+            var bt = tabRank(b.tabKey);
+            if (at !== bt) return at - bt;
+            return a.order - b.order;
+        });
+
+        ordered.forEach(function (meta) {
+            var card = document.createElement('div');
+            card.className = 'at-section-card op-all-section-card';
+            card.setAttribute('data-op-origin-id', meta.id);
+
+            var head = document.createElement('div');
+            head.className = 'at-section-card__header';
+            var span = document.createElement('span');
+            span.innerHTML = '<i class="fa-solid fa-layer-group"></i> '
+                + escHtml(meta.title || meta.id)
+                + ' <span class="op-all-section-tab">(' + escHtml(getPanelLabel(meta.tabKey)) + ')</span>';
+            head.appendChild(span);
+            card.appendChild(head);
+
+            var body = meta.card.querySelector('.at-section-card__body');
+            var cloneBody = body ? body.cloneNode(true) : document.createElement('div');
+            cloneBody.classList.add('at-section-card__body');
+            stripElementIds(cloneBody);
+            card.appendChild(cloneBody);
+
+            ensureSectionHeaderControls(card, meta.id, true);
+            setSectionCollapsed(card, true);
+            allSectionsHost.appendChild(card);
+        });
+    }
+
+    function savePinnedOrder(newOrder) {
+        var url = cfg.objectSectionApiReorder;
+        if (!url) return Promise.resolve();
+        return fetch(url, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ids: newOrder}),
+        })
+            .then(function (r) { return r.json(); })
+            .then(function (data) {
+                if (!data || !data.success) return;
+                var payload = data.object_section || {};
+                sectionPinned = Array.isArray(payload.pinned) ? payload.pinned : [];
+                refreshSectionsUi();
+            })
+            .catch(function () {});
+    }
+
+    function renderPinnedReorder(cards) {
+        if (!allPinnedReorder) return;
+        if (!sectionPinned.length) {
+            allPinnedReorder.style.display = 'none';
+            allPinnedReorder.innerHTML = '';
+            return;
+        }
+
+        sectionTitleMap = {};
+        cards.forEach(function (c) {
+            if (!sectionTitleMap[c.id]) {
+                sectionTitleMap[c.id] = c.title || c.id;
+            }
+        });
+
+        var html = '<div class="op-pin-reorder__title">'
+            + '<i class="fa-solid fa-arrows-up-down-left-right"></i> '
+            + 'Pinned order (drag to reorder):'
+            + '</div>'
+            + '<div class="op-pin-reorder__list"></div>';
+        allPinnedReorder.innerHTML = html;
+        allPinnedReorder.style.display = '';
+
+        var list = allPinnedReorder.querySelector('.op-pin-reorder__list');
+        if (!list) return;
+
+        sectionPinned.forEach(function (sid) {
+            var chip = document.createElement('div');
+            chip.className = 'op-pin-chip';
+            chip.setAttribute('data-op-pin-id', sid);
+            chip.setAttribute('draggable', 'true');
+            chip.innerHTML = '<span class="op-pin-chip__handle">\u2630</span>'
+                + '<span>' + escHtml(sectionTitleMap[sid] || sid) + '</span>';
+            list.appendChild(chip);
+        });
+
+        var dragId = '';
+        list.querySelectorAll('.op-pin-chip').forEach(function (chip) {
+            chip.addEventListener('dragstart', function () {
+                dragId = chip.getAttribute('data-op-pin-id') || '';
+                chip.classList.add('op-pin-chip--dragging');
+            });
+            chip.addEventListener('dragend', function () {
+                chip.classList.remove('op-pin-chip--dragging');
+            });
+            chip.addEventListener('dragover', function (ev) {
+                ev.preventDefault();
+            });
+            chip.addEventListener('drop', function (ev) {
+                ev.preventDefault();
+                var targetId = chip.getAttribute('data-op-pin-id') || '';
+                if (!dragId || !targetId || dragId === targetId) return;
+
+                var order = sectionPinned.slice();
+                var from = order.indexOf(dragId);
+                var to = order.indexOf(targetId);
+                if (from < 0 || to < 0) return;
+                order.splice(from, 1);
+                order.splice(to, 0, dragId);
+                savePinnedOrder(order);
+            });
+        });
+    }
+
+    function applySectionFilter(tabKey) {
+        var query = String(sectionSearch[tabKey] || '').trim().toLowerCase();
+        if (tabKey === 'all') {
+            if (!allSectionsHost) return;
+            allSectionsHost.querySelectorAll('.at-section-card[data-op-origin-id]').forEach(function (card) {
+                var sid = card.getAttribute('data-op-origin-id') || '';
+                var txt = (card.textContent || '').toLowerCase();
+                var show = !query || txt.indexOf(query) !== -1 || sid.indexOf(query) !== -1;
+                card.style.display = show ? '' : 'none';
+            });
+            return;
+        }
+
+        var panel = document.getElementById('op-tab-' + tabKey);
+        if (!panel) return;
+        panel.querySelectorAll('.at-section-card[data-op-section-id]').forEach(function (card) {
+            var sid = card.getAttribute('data-op-section-id') || '';
+            var txt = (getSectionTitle(card) || '').toLowerCase();
+            var show = !query || txt.indexOf(query) !== -1 || sid.indexOf(query) !== -1;
+            card.style.display = show ? '' : 'none';
+        });
+    }
+
+    function refreshSectionsUi() {
+        var cards = collectSectionCards();
+        orderSections(cards);
+        applyDefaultCollapse(cards);
+        rebuildAllSections(cards);
+        renderPinnedReorder(cards);
+        updatePinnedButtons();
+
+        var tabKeys = {};
+        cards.forEach(function (c) { tabKeys[c.tabKey] = true; });
+        Object.keys(tabKeys).forEach(function (tabKey) {
+            applySectionFilter(tabKey);
+        });
+        applySectionFilter('all');
+    }
+
+    function toggleSectionPinned(sectionId) {
+        var url = cfg.objectSectionApiToggle;
+        if (!url) return;
+        fetch(url, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({section_id: sectionId}),
+        })
+            .then(function (r) { return r.json(); })
+            .then(function (data) {
+                if (!data || !data.success) return;
+                var payload = data.object_section || {};
+                sectionPinned = Array.isArray(payload.pinned) ? payload.pinned : [];
+                refreshSectionsUi();
+            })
+            .catch(function () {});
+    }
+
+    function loadSectionPrefs() {
+        var url = cfg.objectSectionApiGet;
+        if (!url) {
+            return Promise.resolve();
+        }
+        return fetch(url)
+            .then(function (r) { return r.json(); })
+            .then(function (data) {
+                if (!data || !data.success) return;
+                var payload = data.object_section || {};
+                sectionPinned = Array.isArray(payload.pinned) ? payload.pinned : [];
+            })
+            .catch(function () {});
+    }
+
     function parseList(value) {
-        var raw = String(value === null || value === undefined ? '' : value);
-        if (!raw || raw.indexOf('[PLACEHOLDER]') !== -1) {
+        var raw = String(value === null || value === undefined ? '' : value).trim();
+        if (!raw || raw === '--') {
             return [];
         }
         return raw
@@ -80,7 +556,7 @@
         var entries = parseList(value);
         if (!entries.length) {
             return '<div class="op-kv-value op-kv-value--placeholder">'
-                + escHtml(placeholderText || '[PLACEHOLDER]') + '</div>';
+                + escHtml(placeholderText || '--') + '</div>';
         }
 
         var inputId = 'op-filter-' + Math.random().toString(36).slice(2);
@@ -120,8 +596,10 @@
 
         rows.forEach(function (row) {
             var label = row.label || row[0];
-            var value = row.value || row[1];
+            var value = Object.prototype.hasOwnProperty.call(row, 'value')
+                ? row.value : row[1];
             var filterable = !!row.filterable;
+            var displayValue = valOrDash(value);
 
             var item = document.createElement('div');
             item.className = 'op-kv-item';
@@ -135,17 +613,17 @@
 
             var val = document.createElement('div');
             val.className = 'op-kv-value';
-            if (String(value).length > 180) {
+            if (displayValue.length > 180) {
                 val.classList.add('op-kv-value--long');
             }
             if (filterable) {
                 val.classList.add('op-kv-value--no-scroll');
-                val.innerHTML = renderFilterableList(value, '[PLACEHOLDER]');
+                val.innerHTML = renderFilterableList(displayValue, '--');
             } else {
-                val.innerHTML = escHtml(value);
+                val.innerHTML = escHtml(displayValue);
             }
 
-            if (!filterable && String(value).indexOf('[PLACEHOLDER]') !== -1) {
+            if (!filterable && displayValue === '--') {
                 val.classList.add('op-kv-value--placeholder');
             }
 
@@ -159,88 +637,174 @@
 
     function renderTarget(target) {
         var rows = [
-            ['Target Name', target.object_name || '[PLACEHOLDER]'],
-            ['RA', String(target.ra_deg || '[PLACEHOLDER]') + ' [deg] (' + String(target.ra_source || '[PLACEHOLDER]') + ')'],
-            ['Dec', String(target.dec_deg || '[PLACEHOLDER]') + ' [deg] (' + String(target.dec_source || '[PLACEHOLDER]') + ')'],
-            ['Finder chart', target.finder_chart || '[PLACEHOLDER]'],
-            ['Teff', String(target.teff_k || '[PLACEHOLDER]') + ' [K] (' + String(target.teff_source || '[PLACEHOLDER]') + ')'],
-            ['Spectral Type', String(target.spectral_type || '[PLACEHOLDER]') + ' (' + String(target.spectral_type_source || '[PLACEHOLDER]') + ')'],
-            ['Proper Motion (RA)', String(target.pmra || '[PLACEHOLDER]') + ' [mas/yr]'],
-            ['Proper Motion (Dec)', String(target.pmdec || '[PLACEHOLDER]') + ' [mas/yr]'],
-            ['Parallax', String(target.parallax || '[PLACEHOLDER]') + ' [mas]'],
-            ['Radial Velocity', String(target.radial_velocity || '[PLACEHOLDER]') + ' [km/s] (' + String(target.radial_velocity_source || '[PLACEHOLDER]') + ')'],
-            { label: 'Aliases', value: target.aliases || '[PLACEHOLDER]', filterable: true },
-            { label: 'OBJECT name(s) in headers', value: target.object_names_in_headers || '[PLACEHOLDER]', filterable: true },
-            { label: 'OB Name(s) in headers', value: target.ob_names_in_headers || '[PLACEHOLDER]', filterable: true },
-            { label: 'PI name(s) in headers', value: target.pi_names_in_headers || '[PLACEHOLDER]', filterable: true },
-            { label: 'Project/Run name(s) in headers', value: target.project_run_names_in_headers || '[PLACEHOLDER]', filterable: true }
+            ['Target Name', target.object_name],
+            ['RA', valOrDash(target.ra_deg) + ' [deg] (' + valOrDash(target.ra_source) + ')'],
+            ['Dec', valOrDash(target.dec_deg) + ' [deg] (' + valOrDash(target.dec_source) + ')'],
+            ['Teff', valOrDash(target.teff_k) + ' [K] (' + valOrDash(target.teff_source) + ')'],
+            ['Spectral Type', valOrDash(target.spectral_type) + ' (' + valOrDash(target.spectral_type_source) + ')'],
+            ['Proper Motion (RA)', valOrDash(target.pmra) + ' [mas/yr]'],
+            ['Proper Motion (Dec)', valOrDash(target.pmdec) + ' [mas/yr]'],
+            ['Parallax', valOrDash(target.parallax) + ' [mas]'],
+            ['Radial Velocity', valOrDash(target.radial_velocity) + ' [km/s] (' + valOrDash(target.radial_velocity_source) + ')'],
+            { label: 'Aliases', value: target.aliases, filterable: true },
+            { label: 'OBJECT name(s) in headers', value: target.object_names_in_headers, filterable: true },
+            { label: getLabel('target_info.ob_names_in_headers', 'OB Name(s) in headers'), value: target.ob_names_in_headers, filterable: true },
+            { label: getLabel('target_info.pi_names_in_headers', 'PI name(s) in header'), value: target.pi_names_in_headers, filterable: true },
+            { label: 'Project/Run name(s) in headers', value: target.project_run_names_in_headers, filterable: true }
         ];
 
         renderKvGrid(targetGrid, rows);
+
+        if (finderChartEl) {
+            var finder = valOrDash(target.finder_chart);
+            var finderLc = String(finder).toLowerCase();
+            if (finder === '--') {
+                finderChartEl.innerHTML = '<span class="at-muted-hint">No finder chart available.</span>';
+            } else if (finderLc.indexOf('http://') === 0 || finderLc.indexOf('https://') === 0) {
+                finderChartEl.innerHTML = '<a href="' + escHtml(finder)
+                    + '" target="_blank" rel="noopener">'
+                    + '<i class="fa-solid fa-arrow-up-right-from-square"></i> Open finder chart'
+                    + '</a>';
+            } else {
+                finderChartEl.innerHTML = escHtml(finder);
+            }
+        }
     }
 
     function renderSpectrum(spec) {
         var rows = [
-            ['DPRTYPES', spec.dprtypes || '[PLACEHOLDER]'],
-            ['Total number raw files', spec.raw_total || '[PLACEHOLDER]'],
-            ['Number of rejected files', spec.raw_rejected || '[PLACEHOLDER]'],
-            ['First raw files', spec.raw_first_mid || '[PLACEHOLDER]'],
-            ['Last raw files', spec.raw_last_mid || '[PLACEHOLDER]'],
-            ['Total number PP files', spec.pp_total || '[PLACEHOLDER]'],
-            ['Number PP files passed QC', spec.pp_passed || '[PLACEHOLDER]'],
-            ['Number PP files failed QC', spec.pp_failed || '[PLACEHOLDER]'],
-            ['First pp file [Mid exposure]', spec.pp_first_mid || '[PLACEHOLDER]'],
-            ['Last pp file [Mid exposure]', spec.pp_last_mid || '[PLACEHOLDER]'],
-            ['Last processed [pp]', spec.pp_last_processed || '[PLACEHOLDER]'],
-            ['Version [pp]', spec.pp_version || '[PLACEHOLDER]'],
-            ['Total number ext files', spec.ext_total || '[PLACEHOLDER]'],
-            ['Number ext files passed QC', spec.ext_passed || '[PLACEHOLDER]'],
-            ['Number ext files failed QC', spec.ext_failed || '[PLACEHOLDER]'],
-            ['First ext file [Mid exposure]', spec.ext_first_mid || '[PLACEHOLDER]'],
-            ['Last ext file [Mid exposure]', spec.ext_last_mid || '[PLACEHOLDER]'],
-            ['Last processed [ext]', spec.ext_last_processed || '[PLACEHOLDER]'],
-            ['Version [ext]', spec.ext_version || '[PLACEHOLDER]'],
-            ['Total number tcorr files', spec.tcorr_total || '[PLACEHOLDER]'],
-            ['Number tcorr files passed QC', spec.tcorr_passed || '[PLACEHOLDER]'],
-            ['Number tcorr files failed QC', spec.tcorr_failed || '[PLACEHOLDER]'],
-            ['First tcorr file [Mid exposure]', spec.tcorr_first_mid || '[PLACEHOLDER]'],
-            ['Last tcorr file [Mid exposure]', spec.tcorr_last_mid || '[PLACEHOLDER]'],
-            ['Last processed [tcorr]', spec.tcorr_last_processed || '[PLACEHOLDER]'],
-            ['Version [tcorr]', spec.tcorr_version || '[PLACEHOLDER]'],
-            ['Median SNR Y', spec.median_snr_y || '[PLACEHOLDER]'],
-            ['Median SNR H', spec.median_snr_h || '[PLACEHOLDER]']
+            ['DPRTYPES', spec.dprtypes],
+            ['Total number raw files', spec.raw_total],
+            ['Number of rejected files', spec.raw_rejected],
+            ['First raw files', spec.raw_first_mid],
+            ['Last raw files', spec.raw_last_mid],
+            ['Total number PP files', spec.pp_total],
+            ['Number PP files passed QC', spec.pp_passed],
+            ['Number PP files failed QC', spec.pp_failed],
+            ['First pp file [Mid exposure]', spec.pp_first_mid],
+            ['Last pp file [Mid exposure]', spec.pp_last_mid],
+            ['Last processed [pp]', spec.pp_last_processed],
+            [getLabel('spectrum.pp_version', 'Version [pp]'), spec.pp_version],
+            ['Total number ext files', spec.ext_total],
+            ['Number ext files passed QC', spec.ext_passed],
+            ['Number ext files failed QC', spec.ext_failed],
+            ['First ext file [Mid exposure]', spec.ext_first_mid],
+            ['Last ext file [Mid exposure]', spec.ext_last_mid],
+            ['Last processed [ext]', spec.ext_last_processed],
+            [getLabel('spectrum.ext_version', 'Version [ext]'), spec.ext_version],
+            ['Total number tcorr files', spec.tcorr_total],
+            ['Number tcorr files passed QC', spec.tcorr_passed],
+            ['Number tcorr files failed QC', spec.tcorr_failed],
+            ['First tcorr file [Mid exposure]', spec.tcorr_first_mid],
+            ['Last tcorr file [Mid exposure]', spec.tcorr_last_mid],
+            ['Last processed [tcorr]', spec.tcorr_last_processed],
+            ['Version [tcorr]', spec.tcorr_version],
+            ['Median SNR Y', spec.median_snr_y],
+            ['Median SNR H', spec.median_snr_h]
         ];
         renderKvGrid(spectrumGrid, rows);
     }
 
-    function renderLbl(lbl) {
-        var rows = [
-            ['RV Uncertainty lbl.rdb (25, 50, 75 percentile)', lbl.rv_uncertainty_percentiles || '[PLACEHOLDER]'],
-            ['RV Absolute Deviation lbl.rdb (25, 50, 75 percentile)', lbl.rv_abs_dev_percentiles || '[PLACEHOLDER]'],
-            ['Number of lbl.rdb Measurements', lbl.measurement_count || '[PLACEHOLDER]'],
-            ['Number of lbl.rdb Spurious Low Points', lbl.spurious_low_points || '[PLACEHOLDER]'],
-            ['Number of lbl.rdb Spurious High Points', lbl.spurious_high_points || '[PLACEHOLDER]'],
-            ['Number of Nights', lbl.n_nights || '[PLACEHOLDER]'],
-            ['Number of Reset RV Points', lbl.n_reset_rv_points || '[PLACEHOLDER]'],
-            ['Systemic Velocity', lbl.systemic_velocity || '[PLACEHOLDER]'],
-            ['Velocity Domain considered valid', lbl.valid_velocity_domain || '[PLACEHOLDER]'],
-            ['LBL Version', lbl.lbl_version || '[PLACEHOLDER]']
+    function _makeLblFlavorRows(flavor) {
+        return [
+            ['RV Uncertainty lbl.rdb (25, 50, 75 percentile)', flavor.rv_uncertainty_percentiles],
+            ['RV Absolute Deviation lbl.rdb (25, 50, 75 percentile)', flavor.rv_abs_dev_percentiles],
+            ['Number of lbl.rdb Measurements', flavor.measurement_count],
+            ['Number of lbl.rdb Spurious Low Points', flavor.spurious_low_points],
+            ['Number of lbl.rdb Spurious High Points', flavor.spurious_high_points],
+            ['Number of Nights', flavor.n_nights],
+            ['Number of Reset RV Points', flavor.n_reset_rv_points],
+            ['Systemic Velocity', flavor.systemic_velocity],
+            ['Velocity Domain considered valid', flavor.valid_velocity_domain],
+            ['LBL Version', flavor.lbl_version]
         ];
-        renderKvGrid(lblGrid, rows);
+    }
+
+    function renderLbl(lbl) {
+        if (!lblSections) return;
+        lblSections.innerHTML = '';
+
+        var flavors = Array.isArray(lbl.flavors) ? lbl.flavors : [];
+
+        // If no per-flavor data, fall back to summary card
+        if (flavors.length === 0) {
+            var fallbackCard = document.createElement('div');
+            fallbackCard.className = 'at-section-card';
+            fallbackCard.setAttribute('data-op-section-id', 'lbl.stats');
+            fallbackCard.innerHTML =
+                '<div class="at-section-card__header">' +
+                '<span><i class="fa-solid fa-chart-line"></i> LBL Stats</span>' +
+                '</div>' +
+                '<div class="at-section-card__body"><div class="op-kv-grid"></div></div>';
+            var grid = fallbackCard.querySelector('.op-kv-grid');
+            renderKvGrid(grid, _makeLblFlavorRows(lbl));
+            lblSections.appendChild(fallbackCard);
+            return;
+        }
+
+        // One card per science+comparison flavor
+        flavors.forEach(function (flavor, idx) {
+            var flavorId = escHtml(flavor.flavor_id || flavor.rdb_filename || ('Flavor ' + (idx + 1)));
+            var csvBtnId = 'op-download-lbl-csv-' + idx;
+            var gridId = 'op-lbl-grid-' + idx;
+            var sidToken = sanitizeSectionToken(flavor.flavor_id || flavor.rdb_filename || ('flavor_' + (idx + 1)));
+
+            var card = document.createElement('div');
+            card.className = 'at-section-card';
+            card.setAttribute('data-op-section-id', 'lbl.stats.' + sidToken);
+            card.innerHTML =
+                '<div class="at-section-card__header">' +
+                '<span><i class="fa-solid fa-chart-line"></i> LBL Stats &mdash; ' + flavorId + '</span>' +
+                '<button id="' + csvBtnId + '" class="ari-btn ari-btn--sm ari-btn--secondary" ' +
+                    'title="Download LBL statistics as CSV" style="margin-left:auto;">' +
+                    '<i class="fa-solid fa-download"></i> CSV' +
+                '</button>' +
+                '</div>' +
+                '<div class="at-section-card__body"><div id="' + gridId + '" class="op-kv-grid"></div></div>';
+
+            var grid = card.querySelector('#' + gridId);
+            renderKvGrid(grid, _makeLblFlavorRows(flavor));
+
+            // CSV download for this flavor
+            var csvBtn = card.querySelector('#' + csvBtnId);
+            if (csvBtn) {
+                (function (f) {
+                    csvBtn.addEventListener('click', function () {
+                        var rows = [['Field', 'Value']].concat(_makeLblFlavorRows(f));
+                        downloadCsv('lbl_stats_' + (f.flavor_id || 'flavor') + '.csv', rows);
+                    });
+                }(flavor));
+            }
+
+            lblSections.appendChild(card);
+
+            var velCard = document.createElement('div');
+            velCard.className = 'at-section-card';
+            velCard.setAttribute('data-op-section-id', 'lbl.velocity.' + sidToken);
+            velCard.innerHTML =
+                '<div class="at-section-card__header">'
+                + '<span><i class="fa-solid fa-chart-line"></i> LBL Velocity Plot -- '
+                + flavorId + '</span>'
+                + '</div>'
+                + '<div class="at-section-card__body">'
+                + '<div class="at-muted-hint">Coming soon</div>'
+                + '</div>';
+            lblSections.appendChild(velCard);
+        });
     }
 
     function renderCcf(ccf) {
         var rows = [
-            ['Mask used', ccf.mask_used || '[PLACEHOLDER]'],
-            ['CCF systemic velocity', ccf.systemic_velocity || '[PLACEHOLDER]'],
-            ['CCF FWHM', ccf.fwhm || '[PLACEHOLDER]'],
-            ['Number of CCF files Total', ccf.total_files || '[PLACEHOLDER]'],
-            ['Number of CCF passed QC', ccf.passed_qc || '[PLACEHOLDER]'],
-            ['Number CCF files failed QC', ccf.failed_qc || '[PLACEHOLDER]'],
-            ['First ccf file [Mid exposure]', ccf.first_mid || '[PLACEHOLDER]'],
-            ['Last ccf file [Mid exposure]', ccf.last_mid || '[PLACEHOLDER]'],
-            ['Last processed [ccf]', ccf.last_processed || '[PLACEHOLDER]'],
-            ['Version [ccf]', ccf.ccf_version || '[PLACEHOLDER]']
+            ['Mask used', ccf.mask_used],
+            ['CCF systemic velocity', ccf.systemic_velocity],
+            ['CCF FWHM', ccf.fwhm],
+            ['Number of CCF files Total', ccf.total_files],
+            ['Number of CCF passed QC', ccf.passed_qc],
+            ['Number CCF files failed QC', ccf.failed_qc],
+            ['First ccf file [Mid exposure]', ccf.first_mid],
+            ['Last ccf file [Mid exposure]', ccf.last_mid],
+            ['Last processed [ccf]', ccf.last_processed],
+            [getLabel('ccf.ccf_version', 'Version [ccf]'), ccf.ccf_version]
         ];
         renderKvGrid(ccfGrid, rows);
     }
@@ -254,34 +818,79 @@
             return;
         }
 
+        // Wire up "add all ext/tcorr" header buttons
+        var addAllExtBtn   = document.getElementById('op-ts-add-all-ext');
+        var addAllTcorrBtn = document.getElementById('op-ts-add-all-tcorr');
+        if (addAllExtBtn) {
+            addAllExtBtn.addEventListener('click', function () {
+                if (window.ARI_FB_ADD_FROM_FTABLE) {
+                    rows.forEach(function (r) {
+                        if (r.obs_dir) window.ARI_FB_ADD_FROM_FTABLE(r.obs_dir, 'ext');
+                    });
+                }
+            });
+        }
+        if (addAllTcorrBtn) {
+            addAllTcorrBtn.addEventListener('click', function () {
+                if (window.ARI_FB_ADD_FROM_FTABLE) {
+                    rows.forEach(function (r) {
+                        if (r.obs_dir) window.ARI_FB_ADD_FROM_FTABLE(r.obs_dir, 'tcorr');
+                    });
+                }
+            });
+        }
+
         var frag = document.createDocumentFragment();
         rows.forEach(function (r) {
             var tr = document.createElement('tr');
             tr.className = 'op-ts-row';
-            var cols = [
-                r.obs_dir,
-                r.first_obs_mid,
-                r.last_obs_mid,
-                r.num_ext,
-                r.num_tcorr,
-                r.seeing,
-                r.airmass,
-                r.mean_exptime,
-                r.total_exptime,
-                r.snr_order_15,
-                r.snr_order_60,
-                r.dprtypes
+
+            var colDefs = [
+                {val: r.obs_dir},
+                {val: r.first_obs_mid},
+                {val: r.last_obs_mid},
+                {val: r.num_ext,   basketFkind: 'ext'},
+                {val: r.num_tcorr, basketFkind: 'tcorr'},
+                {val: r.seeing},
+                {val: r.airmass},
+                {val: r.mean_exptime},
+                {val: r.total_exptime},
+                {val: r.snr_order_15},
+                {val: r.snr_order_60},
+                {val: r.dprtypes}
             ];
-            cols.forEach(function (c) {
+
+            colDefs.forEach(function (cd) {
                 var td = document.createElement('td');
-                var isMissing = (c === null || c === undefined || c === '');
-                var v = isMissing ? '\u2014' : String(c);
+                var isMissing = (cd.val === null || cd.val === undefined || cd.val === '');
+                var v = isMissing ? '--' : String(cd.val);
                 if (/^\d+\s*\(\d+\)/.test(v)) {
                     td.className = 'op-ts-count';
                 }
-                td.textContent = v;
+                if (cd.basketFkind && r.obs_dir) {
+                    var wrap = document.createElement('span');
+                    wrap.className = 'op-ts-count-wrap';
+                    wrap.textContent = v;
+                    var bkBtn = document.createElement('button');
+                    bkBtn.className = 'op-ts-basket-btn';
+                    bkBtn.title = 'Add ' + cd.basketFkind + ' files from this night to basket';
+                    bkBtn.innerHTML = '<i class="fa-solid fa-basket-shopping"></i>';
+                    (function (obsDir, fkind) {
+                        bkBtn.addEventListener('click', function (e) {
+                            e.stopPropagation();
+                            if (window.ARI_FB_ADD_FROM_FTABLE) {
+                                window.ARI_FB_ADD_FROM_FTABLE(obsDir, fkind);
+                            }
+                        });
+                    }(r.obs_dir, cd.basketFkind));
+                    td.appendChild(wrap);
+                    td.appendChild(bkBtn);
+                } else {
+                    td.textContent = v;
+                }
                 tr.appendChild(td);
             });
+
             frag.appendChild(tr);
         });
         tsBody.appendChild(frag);
@@ -389,8 +998,44 @@
                 }
 
                 apiPayload = data;
+                dynamicLabels = data.labels || {};
                 loadingEl.style.display = 'none';
                 errorEl.style.display = 'none';
+
+                // Refresh basket counter badge
+                if (typeof window.ARI_BASKET_CFG !== 'undefined' && window.ARI_BASKET_CFG.summaryApiUrl) {
+                    fetch(window.ARI_BASKET_CFG.summaryApiUrl)
+                        .then(function (r) { return r.json(); })
+                        .then(function (bd) {
+                            if (!bd.success) return;
+                            var cnt = bd.accessible_files || 0;
+                            var badge = document.getElementById('op-basket-count');
+                            if (badge) badge.textContent = cnt > 0 ? String(cnt) : '';
+                            var dlCount = document.getElementById('op-dl-count');
+                            if (dlCount) dlCount.textContent = String(cnt);
+                            var dlSize = document.getElementById('op-dl-size');
+                            if (dlSize) {
+                                var bytes = bd.total_size_bytes || 0;
+                                dlSize.textContent = bytes >= 1073741824
+                                    ? (bytes / 1073741824).toFixed(1) + ' GB'
+                                    : bytes >= 1048576
+                                    ? (bytes / 1048576).toFixed(1) + ' MB'
+                                    : bytes + ' B';
+                            }
+                            var dlLink = document.getElementById('op-dl-basket-link');
+                            if (dlLink && window.ARI_BASKET_CFG.basketPageUrl) {
+                                dlLink.href = window.ARI_BASKET_CFG.basketPageUrl;
+                            }
+                        })
+                        .catch(function () {});
+                }
+
+                if (tsSnrYHead) {
+                    tsSnrYHead.textContent = getLabel('time_series.snr_order_15', 'SNR[Order 15]');
+                }
+                if (tsSnrHHead) {
+                    tsSnrHHead.textContent = getLabel('time_series.snr_order_60', 'SNR[Order 60]');
+                }
 
                 updatedEl.innerHTML = '<i class="fa-solid fa-clock"></i> Last updated: '
                     + escHtml(formatDate(data.generated_at));
@@ -402,6 +1047,7 @@
                 renderCcf(s.ccf || {});
                 renderTimeSeries(s.time_series || []);
                 debugMessageEl.textContent = (s.debug && s.debug.message) ? s.debug.message : 'Coming soon';
+                refreshSectionsUi();
             })
             .catch(function (err) {
                 showError('Network error: ' + String(err));
@@ -409,6 +1055,7 @@
     }
 
     function init() {
+        refreshTabOrderMap();
         bindTabs();
         activateTab('target_info');
         if (targetCsvBtn) {
@@ -417,9 +1064,7 @@
         if (spectrumCsvBtn) {
             spectrumCsvBtn.addEventListener('click', downloadSpectrumCsv);
         }
-        if (lblCsvBtn) {
-            lblCsvBtn.addEventListener('click', downloadLblCsv);
-        }
+        // LBL CSV buttons are wired per-flavor inside renderLbl()
         if (ccfCsvBtn) {
             ccfCsvBtn.addEventListener('click', downloadCcfCsv);
         }
@@ -429,7 +1074,10 @@
         if (debugCsvBtn) {
             debugCsvBtn.addEventListener('click', downloadDebugCsv);
         }
-        loadData();
+        loadSectionPrefs().finally(function () {
+            refreshSectionsUi();
+            loadData();
+        });
     }
 
     init();

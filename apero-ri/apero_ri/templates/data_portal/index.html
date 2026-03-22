@@ -11,6 +11,29 @@
     <p class="ari-page-subtitle">Please choose an APERO reduction to start from.</p>
 </div>
 
+{# ── How-to banner ───────────────────────────────────────────── #}
+<details class="ot-howto" id="howto-data-portal" open>
+    <summary class="ot-howto__title">
+        <i class="fa-solid fa-circle-info"></i>
+        <span class="ot-howto__label-open">How to use the data portal</span>
+        <span class="ot-howto__label-closed">Info</span>
+        <i class="fa-solid fa-chevron-down ot-howto__chevron"></i>
+    </summary>
+    <div class="ot-howto__body">
+        <ol class="ot-howto__steps">
+            <li>
+                <span><strong>Choose a profile:</strong> Each card below represents an APERO reduction profile (instrument + run configuration). Click a card to open its data portal.</span>
+            </li>
+            <li>
+                <span><strong>Filter by instrument:</strong> Use the instrument buttons above the cards to show only profiles for a specific instrument (e.g. SPIROU, NIRPS).</span>
+            </li>
+            <li>
+                <span><strong>Explore the data:</strong> Inside each profile you have access to the Object Table, Observation Table, Database Query, QC Graphs, and Download Basket.</span>
+            </li>
+        </ol>
+    </div>
+</details>
+
 {# ────── Instrument filter bar ────── #}
 {% if shown_instruments is defined and shown_instruments|length > 0 %}
 <div class="ari-db-filter">

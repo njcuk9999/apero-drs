@@ -177,6 +177,27 @@
     </script>
     <script src="{{ url_for('static', filename='js/app.js') }}"></script>
     <script src="{{ url_for('static', filename='js/page_pins.js') }}"></script>
+    <script>
+    /* ── How-to banner: persist open/closed state in localStorage ── */
+    (function () {
+        function initHowto() {
+            document.querySelectorAll('details.ot-howto[id]').forEach(function (el) {
+                var key = 'ari-howto-' + el.id;
+                var saved = localStorage.getItem(key);
+                /* Default is open (null = never saved). Only close if explicitly saved as '0'. */
+                if (saved === '0') el.removeAttribute('open');
+                el.addEventListener('toggle', function () {
+                    localStorage.setItem(key, el.open ? '1' : '0');
+                });
+            });
+        }
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initHowto);
+        } else {
+            initHowto();
+        }
+    }());
+    </script>
     {% block extra_scripts %}{% endblock %}
 </body>
 </html>

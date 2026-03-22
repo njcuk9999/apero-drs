@@ -13,6 +13,10 @@ general:
   bands:
     - Y
     - H
+  # has polarimetry
+  has_polarimetry: true
+  # query-db preset file (relative to resources/aprofile_qdb_presets/)
+  db-query-preset-file: spirou_v8.txt
 plot:
   # Spectrum wavelength ranges in nm
   SpecWave:
@@ -47,11 +51,11 @@ headers:
       timefmt: iso
     PP_VERSION:
       key: PVERSION
-      label: APERO PP Version
+      label: Version [pp]
       dtype: str
     PP_PI_NAME:
       key: PI_NAME
-      label: OB Name
+      label: PI name(s) in header
       dtype: str
     PP_PROG_ID:
       key: RUNID
@@ -107,7 +111,7 @@ headers:
         dtype: float
     EXT_VERSION:
       key: VERSION
-      label: APERO Version
+      label: Version [ext]
       dtype: str
     EXT_PDATE:
       key: DRSPDATE
@@ -265,7 +269,7 @@ headers:
       dtype: float
     CCF_VERSION:
       key: VERSION
-      label: APERO Version
+      label: Version [ccf]
       dtype: str
   lbl:
     EXT_H:

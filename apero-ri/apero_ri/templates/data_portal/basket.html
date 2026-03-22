@@ -1,0 +1,282 @@
+{% extends "general/sidebar_base.html" %}
+{% block title %}APERO RI – {{ profile.profile_id }}: Download Basket{% endblock %}
+
+{% block body_class %}ari-has-sidebar ari-ot-page{% endblock %}
+
+{% block doc_content %}
+<div class="ari-page-header">
+    <h1>
+        <i class="fa-solid fa-basket-shopping"></i>
+        <a href="{{ url_for('ri_profile', profile_id=profile.profile_id) }}"
+           class="ot-breadcrumb-link">{{ profile.profile_id }}</a>
+        <span class="ot-breadcrumb-sep">/</span>
+        Download Basket
+    </h1>
+</div>
+
+{# ── How-to banner ─────────────────────────────────────────── #}
+<details class="ot-howto" id="howto-basket" open>
+    <summary class="ot-howto__title">
+        <i class="fa-solid fa-circle-info"></i>
+        <span class="ot-howto__label-open">How to add files</span>
+        <span class="ot-howto__label-closed">Info</span>
+        <i class="fa-solid fa-chevron-down ot-howto__chevron"></i>
+    </summary>
+    <div class="ot-howto__body">
+        <ol class="ot-howto__steps">
+            <li>
+                <span>Open the
+                    <a href="{{ url_for('ri_object_table', profile_id=profile.profile_id) }}"
+                       class="bk-howto__link">
+                        Astrophysical&nbsp;Object&nbsp;Table
+                        <i class="fa-solid fa-arrow-up-right-from-square"></i>
+                    </a>
+                    for <strong>{{ profile.profile_id }}</strong> and click on any object name.
+                </span>
+            </li>
+            <li>
+                <span>On the object page, select the
+                    <strong><i class="fa-solid fa-folder-open"></i> File Browser</strong> tab.
+                </span>
+            </li>
+            <li>
+                <span>Use the
+                    <strong><i class="fa-solid fa-basket-shopping"></i></strong>
+                    basket icons next to individual files, or the
+                    <strong>Add all</strong> buttons, to add files to this basket.
+                </span>
+            </li>
+            <li>
+                <span>Return here, choose a format, then hit
+                    <strong><i class="fa-solid fa-gear"></i> Compile &amp; Download</strong>.
+                </span>
+            </li>
+        </ol>
+        <div class="ot-howto__notes">
+            <strong><i class="fa-solid fa-circle-exclamation"></i> Notes</strong>
+            <ul>
+                <li>If a target is missing, review your current permissions in
+                    <a href="{{ url_for('home_user_portal_data_access') }}">User Portal / Data Access</a>.</li>
+            </ul>
+        </div>
+    </div>
+</details>
+
+{# ── Summary banner ─────────────────────────────────────────── #}
+<div class="bk-summary" id="bk-summary">
+    <div class="bk-summary__item">
+        <i class="fa-solid fa-layer-group"></i>
+        <span id="bk-total-count">0</span> files in basket
+    </div>
+    <div class="bk-summary__item">
+        <i class="fa-solid fa-hard-drive"></i>
+        Total size: <span id="bk-total-size">--</span>
+    </div>
+    <div class="bk-summary__item bk-summary__item--warn" id="bk-missing-warn" style="display:none;">
+        <i class="fa-solid fa-triangle-exclamation"></i>
+        <span id="bk-missing-count">0</span> files not found on disk
+    </div>
+</div>
+
+{# ── Toolbar ─────────────────────────────────────────────────── #}
+<div class="ot-toolbar bk-toolbar">
+    <div class="ot-toolbar__left">
+        <div class="bk-btn-group">
+            <button id="bk-btn-remove-selected"
+                    class="ari-btn ari-btn--sm ari-btn--danger"
+                    title="Remove selected rows from basket" disabled>
+                <i class="fa-solid fa-trash-can"></i> Remove selected
+            </button>
+            <button id="bk-btn-clear-all"
+                    class="ari-btn ari-btn--sm ari-btn--secondary"
+                    title="Remove all files from basket">
+                <i class="fa-solid fa-broom"></i> Clear all
+            </button>
+        </div>
+        <div class="bk-toolbar-sep"></div>
+        <div class="bk-groupby-wrap">
+            <label for="bk-groupby" class="bk-groupby-label">
+                <i class="fa-solid fa-layer-group"></i> Group&nbsp;by
+            </label>
+            <select id="bk-groupby" class="bk-select">
+                <option value="">— none —</option>
+            </select>
+        </div>
+        <div class="bk-toolbar-sep"></div>
+        <button id="bk-btn-clear-filters"
+                class="ari-btn ari-btn--sm ari-btn--secondary"
+                title="Clear column filters">
+            <i class="fa-solid fa-filter-circle-xmark"></i> Clear filters
+        </button>
+    </div>
+    <div class="ot-toolbar__right">
+        <label class="ot-perpage-label">
+            Rows&nbsp;per&nbsp;page
+            <select id="bk-perpage" class="bk-select">
+                <option value="25">25</option>
+                <option value="50" selected>50</option>
+                <option value="100">100</option>
+                <option value="0">All</option>
+            </select>
+        </label>
+    </div>
+</div>
+
+{# ── Table ───────────────────────────────────────────────────── #}
+<div id="bk-table-wrap" class="ot-table-wrap">
+    <table id="bk-table" class="ot-table">
+        <thead>
+            <tr id="bk-header-row"></tr>
+            <tr id="bk-filter-row"></tr>
+        </thead>
+        <tbody id="bk-tbody">
+            <tr><td class="ot-loading" colspan="14">
+                <i class="fa-solid fa-spinner fa-spin"></i> Loading&hellip;
+            </td></tr>
+        </tbody>
+    </table>
+</div>
+
+{# ── Pagination ───────────────────────────────────────────────── #}
+<div id="bk-pagination" class="ot-pagination">
+    <div id="bk-page-info" class="ot-page-info"></div>
+    <div class="ot-page-controls">
+        <button id="bk-btn-first" class="ari-btn ari-btn--sm ari-btn--secondary"
+                title="First page" disabled>
+            <i class="fa-solid fa-angles-left"></i>
+        </button>
+        <button id="bk-btn-prev" class="ari-btn ari-btn--sm ari-btn--secondary"
+                title="Previous page" disabled>
+            <i class="fa-solid fa-angle-left"></i>
+        </button>
+        <span class="ot-page-num">
+            Page&nbsp;<input id="bk-page-input" class="ot-page-input"
+                             type="number" min="1" value="1">
+            &nbsp;of&nbsp;<span id="bk-page-total">1</span>
+        </span>
+        <button id="bk-btn-next" class="ari-btn ari-btn--sm ari-btn--secondary"
+                title="Next page" disabled>
+            <i class="fa-solid fa-angle-right"></i>
+        </button>
+        <button id="bk-btn-last" class="ari-btn ari-btn--sm ari-btn--secondary"
+                title="Last page" disabled>
+            <i class="fa-solid fa-angles-right"></i>
+        </button>
+    </div>
+</div>
+
+{# ── Download section ────────────────────────────────────────── #}
+<div class="at-section-card bk-download-section" id="bk-download-section">
+    <div class="at-section-card__header">
+        <span><i class="fa-solid fa-download"></i> Download</span>
+    </div>
+    <div class="at-section-card__body">
+        {# Size warning #}
+        <div id="bk-dl-size-note" class="bk-dl-size-note" style="display:none;"></div>
+
+        {# Format + options #}
+        <div class="bk-dl-options">
+            <div class="bk-dl-options__row">
+                <span class="bk-dl-option-label">Format:</span>
+                <div class="bk-fmt-group">
+                    <label class="bk-fmt-btn">
+                        <input type="radio" name="bk-fmt" value="zip" checked>
+                        <span><i class="fa-solid fa-file-zipper"></i> ZIP</span>
+                    </label>
+                    <label class="bk-fmt-btn">
+                        <input type="radio" name="bk-fmt" value="tar.gz">
+                        <span><i class="fa-solid fa-file-archive"></i> tar.gz</span>
+                    </label>
+                </div>
+            </div>
+            <div class="bk-dl-options__row" id="bk-chunk-row">
+                <label class="bk-dl-option-label" for="bk-chunk-size">
+                    Split into chunks of (GB):
+                </label>
+                <input type="number" id="bk-chunk-size" class="bk-chunk-input"
+                       min="0.1" step="0.5" placeholder="e.g. 5"
+                       title="Leave empty for a single file">
+                <span class="bk-dl-hint">Leave empty for a single download file.</span>
+            </div>
+            <div class="bk-dl-options__row bk-dl-options__row--large" id="bk-email-row"
+                 style="display:none;">
+                <div class="bk-email-note">
+                    <i class="fa-solid fa-circle-info"></i>
+                    This download is large (&gt; 1 GB). You can compile it in the
+                    background and receive an email when ready.
+                </div>
+                <label class="bk-radio-label">
+                    <input type="radio" name="bk-dl-mode" value="now" checked>
+                    Download now (wait for compilation)
+                </label>
+                <label class="bk-radio-label">
+                    <input type="radio" name="bk-dl-mode" value="email">
+                    Compile and email me when ready
+                </label>
+            </div>
+        </div>
+        <div class="bk-dl-btns">
+            <button id="bk-btn-compile" class="ari-btn ari-btn--primary"
+                    title="Start compilation">
+                <i class="fa-solid fa-gear"></i> Compile &amp; Download
+            </button>
+        </div>
+    </div>
+</div>
+
+{# ── Active / Recent jobs ─────────────────────────────────────── #}
+<div class="at-section-card" id="bk-jobs-section">
+    <div class="at-section-card__header">
+        <span><i class="fa-solid fa-list-check"></i> Recent compilations</span>
+        <button id="bk-btn-clear-jobs" class="ari-btn ari-btn--sm ari-btn--danger"
+                style="margin-left:auto; margin-right:0.4rem;" title="Remove all completed/failed jobs">
+            <i class="fa-solid fa-trash-can"></i> Remove all
+        </button>
+        <button id="bk-btn-refresh-jobs" class="ari-btn ari-btn--sm ari-btn--secondary"
+                title="Refresh job list">
+            <i class="fa-solid fa-arrows-rotate"></i> Refresh
+        </button>
+    </div>
+    <div class="at-section-card__body">
+        <div id="bk-jobs-usage" class="at-muted-hint" style="margin-bottom:0.65rem;"></div>
+        <div id="bk-jobs-list">
+            <p class="at-muted-hint">No recent jobs.</p>
+        </div>
+    </div>
+</div>
+
+{# ── Compilation progress overlay ─────────────────────────────── #}
+<div id="bk-compile-overlay" class="bk-overlay" style="display:none;"
+     aria-live="assertive">
+    <div class="bk-overlay__box">
+        <div class="bk-overlay__spinner">
+            <i class="fa-solid fa-gear fa-spin fa-2x"></i>
+        </div>
+        <p class="bk-overlay__msg" id="bk-overlay-msg">
+            Compiling your download&hellip; please wait.
+        </p>
+        <p class="bk-overlay__hint" id="bk-overlay-hint"></p>
+        <button id="bk-overlay-dismiss" class="ari-btn ari-btn--sm ari-btn--secondary"
+                style="display:none;">
+            Dismiss
+        </button>
+    </div>
+</div>
+
+<script>
+window.ARI_BASKET = {
+    profileId:       {{ profile.profile_id | tojson }},
+    basketApiUrl:    '/api/data-portal/basket',
+    summaryApiUrl:   '/api/data-portal/basket/summary',
+    clearApiUrl:     '/api/data-portal/basket/clear',
+    removeApiUrl:    '/api/data-portal/basket/remove',
+    compileApiUrl:   '/api/data-portal/basket/compile',
+    statusApiUrl:    '/api/data-portal/basket/compile-status',
+    downloadBaseUrl: '/api/data-portal/basket/download',
+    jobsApiUrl:      '/api/data-portal/basket/jobs',
+    jobsRemoveApiUrl:'/api/data-portal/basket/jobs/remove',
+    jobsClearApiUrl: '/api/data-portal/basket/jobs/clear',
+};
+</script>
+<script src="{{ url_for('static', filename='js/basket.js') }}" defer></script>
+{% endblock %}

@@ -185,6 +185,54 @@
         };
     }
 
+    function shouldUseDropdownFilter(col) {
+        var meta = getColumnMeta(col);
+        var type = String(meta.type || '').toLowerCase();
+        var cname = String(col || '').toLowerCase();
+
+        if (type === 'number' || type === 'int' || type === 'float'
+            || type === 'date' || type === 'datetime' || type === 'night') {
+            return false;
+        }
+
+        if (/(date|time|timestamp|night|mjd|jd|unix|obs_time)/.test(cname)) {
+            return false;
+        }
+
+        var nonBlank = allRows.map(function (r) {
+            return r[col];
+        }).filter(function (v) {
+            return v !== null && v !== undefined && String(v).trim() !== '';
+        });
+
+        if (!nonBlank.length) {
+            return true;
+        }
+
+        var allNumeric = nonBlank.every(function (v) {
+            return parseStrictNumber(v) !== null;
+        });
+        if (allNumeric) {
+            return false;
+        }
+
+        var allCountLike = nonBlank.every(function (v) {
+            return /^\s*\d+\s*\(\s*\d+\s*\)\s*$/.test(String(v));
+        });
+        if (allCountLike) {
+            return false;
+        }
+
+        var allDateLike = nonBlank.every(function (v) {
+            return parseNightDate(v) !== null;
+        });
+        if (allDateLike) {
+            return false;
+        }
+
+        return true;
+    }
+
     /* -----------------------------------------------------------------------
        Load data from API
     ----------------------------------------------------------------------- */
@@ -352,19 +400,48 @@
             var ftd = document.createElement('th');
             ftd.className = 'ot-filter-cell';
             if (isColumnFilterable(col)) {
-                var inp = document.createElement('input');
-                inp.type        = 'text';
-                inp.className   = 'ot-filter-input';
-                inp.placeholder = '\u2315';
-                inp.value       = colFilters[col] || '';
-                inp.dataset.col = col;
-                inp.title       = 'Filter ' + col;
-                inp.addEventListener('input', function () {
-                    colFilters[col] = this.value;
-                    currentPage = 1;
-                    applyFilterSort();
-                });
-                ftd.appendChild(inp);
+                var otUniqueVals = allRows.length
+                    ? Array.from(new Set(allRows.map(function (r) {
+                        return r[col] == null ? '' : String(r[col]);
+                    }))).sort()
+                    : [];
+                if (allRows.length > 0 && otUniqueVals.length <= 20
+                    && shouldUseDropdownFilter(col)) {
+                    var sel = document.createElement('select');
+                    sel.className = 'ot-filter-select';
+                    sel.dataset.col = col;
+                    sel.title = 'Filter ' + col;
+                    var optAll = document.createElement('option');
+                    optAll.value = ''; optAll.textContent = '— all —';
+                    sel.appendChild(optAll);
+                    otUniqueVals.forEach(function (v) {
+                        var opt = document.createElement('option');
+                        opt.value = v.toLowerCase();
+                        opt.textContent = v === '' ? '(blank)' : v;
+                        if ((colFilters[col] || '').toLowerCase() === v.toLowerCase()) opt.selected = true;
+                        sel.appendChild(opt);
+                    });
+                    sel.addEventListener('change', function () {
+                        colFilters[col] = sel.value;
+                        currentPage = 1;
+                        applyFilterSort();
+                    });
+                    ftd.appendChild(sel);
+                } else {
+                    var inp = document.createElement('input');
+                    inp.type        = 'text';
+                    inp.className   = 'ot-filter-input';
+                    inp.placeholder = '\u2315';
+                    inp.value       = colFilters[col] || '';
+                    inp.dataset.col = col;
+                    inp.title       = 'Filter ' + col;
+                    inp.addEventListener('input', function () {
+                        colFilters[col] = this.value;
+                        currentPage = 1;
+                        applyFilterSort();
+                    });
+                    ftd.appendChild(inp);
+                }
             }
             filterRow.appendChild(ftd);
         });

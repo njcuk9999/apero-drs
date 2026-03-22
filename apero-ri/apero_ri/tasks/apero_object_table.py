@@ -99,6 +99,23 @@ class AperoObjectTableTask(apero_async.AperoAsyncTask):
             # -----------------------------------------------------------------
             # get parameters for this apero profile
             aparams = apero_profiles[apero_profile]
+            instrument = str(params.get('INSTRUMENT')
+                             or aparams.get('general', {}).get('INSTRUMENT')
+                             or 'unknown')
+            db_updates = {}
+            try:
+                should_skip, db_updates, skip_reason = (
+                    apero_async.should_skip_profile_query(aparams)
+                )
+            except Exception as exc:
+                should_skip = False
+                skip_reason = f'Database update-time check unavailable: {exc}'
+            if should_skip:
+                self.info += (
+                    f'\n## Object Table for APERO Profile: {apero_profile}\n\n'
+                    f'- Skipped query run. {skip_reason}\n'
+                )
+                continue
         
             # check that all required parameters are present
             rparams = check_required(aparams)
@@ -129,6 +146,16 @@ class AperoObjectTableTask(apero_async.AperoAsyncTask):
             filename =  local_dir / basename
             # save results to JSON file for use in the UI
             apero_async.save_results(filename, results, metadata)
+            if db_updates:
+                try:
+                    apero_async.save_profile_db_table_updates(
+                        instrument, apero_profile, db_updates
+                    )
+                except Exception as exc:
+                    self.info += (
+                        f'\n- Warning: failed to persist database-update '
+                        f'fingerprint for {apero_profile}: {exc}\n'
+                    )
             # ---------------------------------------------------------------------
             # update the info markdown with meta data
             self.info += f"""

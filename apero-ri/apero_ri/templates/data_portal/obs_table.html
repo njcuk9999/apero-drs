@@ -14,16 +14,41 @@
     </h1>
 </div>
 
-<div class="ot-access-note">
-    <i class="fa-solid fa-circle-info"></i>
-    <span>
-        If a target is missing, review your current permissions in
-        <a href="{{ url_for('home_user_portal_data_access') }}">User Portal / Data Access</a>.
-        Counts shown in this table represent totals aggregated per object name;
-        they are not restricted to your specific run-ID visibility and may exceed
-        the subset of files you can individually access.
-    </span>
-</div>
+{# ── How-to banner ─────────────────────────────────────────── #}
+<details class="ot-howto" id="howto-obs-table" open>
+    <summary class="ot-howto__title">
+        <i class="fa-solid fa-circle-info"></i>
+        <span class="ot-howto__label-open">How to use this table</span>
+        <span class="ot-howto__label-closed">Info</span>
+        <i class="fa-solid fa-chevron-down ot-howto__chevron"></i>
+    </summary>
+    <div class="ot-howto__body">
+        <ol class="ot-howto__steps">
+            <li>
+                <span><strong>Filter columns:</strong> Click on the input fields below each column header to filter by text or values. Search for specific observation records or narrow results by date, instrument, or data type.</span>
+            </li>
+            <li>
+                <span><strong>Show or hide columns:</strong> Click the <strong><i class="fa-solid fa-table-columns"></i> Columns</strong> button to customize which columns are visible in the table.</span>
+            </li>
+            <li>
+                <span><strong>Review aggregated counts:</strong> This table shows observation-level summaries aggregated per object name. Note that file counts may include observations not accessible to you depending on your run-ID permissions.</span>
+            </li>
+            <li>
+                <span><strong>Access detailed object data:</strong> For detailed file-level access and downloads, use the Astrophysical Object Table to select individual objects and browse their files by clicking on an object name.</span>
+            </li>
+        </ol>
+        <div class="ot-howto__notes">
+            <strong><i class="fa-solid fa-circle-exclamation"></i> Notes</strong>
+            <ul>
+                <li>If a target is missing, review your current permissions in
+                    <a href="{{ url_for('home_user_portal_data_access') }}">User Portal / Data Access</a>.</li>
+                <li>Counts shown in this table represent totals aggregated per object name;
+                    they are not restricted to your specific run-ID visibility and may exceed
+                    the subset of files you can individually access.</li>
+            </ul>
+        </div>
+    </div>
+</details>
 
 <div class="ot-meta-bar">
     <span id="ot-last-updated" class="ot-meta-bar__item">

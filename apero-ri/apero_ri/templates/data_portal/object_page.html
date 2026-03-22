@@ -22,6 +22,9 @@
 </div>
 
 <div class="ari-sg-tabs op-tabs" id="op-tabs">
+    <button class="ari-sg-tab" data-tab="all">
+        <i class="fa-solid fa-table-cells-large"></i> All
+    </button>
     <button class="ari-sg-tab ari-sg-tab--active" data-tab="target_info">
         <i class="fa-solid fa-bullseye"></i> Target Info
     </button>
@@ -37,8 +40,15 @@
     <button class="ari-sg-tab" data-tab="time_series">
         <i class="fa-solid fa-calendar-days"></i> Time Series
     </button>
+    <button class="ari-sg-tab" data-tab="file_browser">
+        <i class="fa-solid fa-folder-open"></i> File Browser
+    </button>
     <button class="ari-sg-tab" data-tab="debug">
         <i class="fa-solid fa-bug"></i> Debug
+    </button>
+    <button class="ari-sg-tab" data-tab="download">
+        <i class="fa-solid fa-basket-shopping"></i> Download
+        <span id="op-basket-count" class="op-basket-badge"></span>
     </button>
 </div>
 
@@ -48,8 +58,23 @@
     </div>
     <div id="op-error" class="ot-error-block" style="display:none;"></div>
 
-    <section id="op-tab-target_info" class="op-tab-panel">
+    <section id="op-tab-all" class="op-tab-panel" style="display:none;">
         <div class="at-section-card">
+            <div class="at-section-card__header">
+                <span><i class="fa-solid fa-table-cells-large"></i> All Sections</span>
+            </div>
+            <div class="at-section-card__body">
+                <div class="at-muted-hint" style="margin-bottom:0.8em;">
+                    Search and browse all sections in one place.
+                </div>
+                <div id="op-all-pinned-reorder" class="op-pin-reorder" style="display:none;"></div>
+                <div id="op-all-sections"></div>
+            </div>
+        </div>
+    </section>
+
+    <section id="op-tab-target_info" class="op-tab-panel">
+        <div class="at-section-card" data-op-section-id="target.info">
             <div class="at-section-card__header">
                 <span><i class="fa-solid fa-bullseye"></i> Target Information</span>
                 <button id="op-download-target-csv"
@@ -63,10 +88,18 @@
                 <div id="op-target-grid" class="op-kv-grid"></div>
             </div>
         </div>
+        <div class="at-section-card" data-op-section-id="target.finder_chart">
+            <div class="at-section-card__header">
+                <span><i class="fa-solid fa-image"></i> Finder Chart</span>
+            </div>
+            <div class="at-section-card__body">
+                <div id="op-finder-chart" class="at-muted-hint">Coming soon</div>
+            </div>
+        </div>
     </section>
 
     <section id="op-tab-spectrum" class="op-tab-panel" style="display:none;">
-        <div class="at-section-card">
+        <div class="at-section-card" data-op-section-id="spectrum.info">
             <div class="at-section-card__header">
                 <span><i class="fa-solid fa-wave-square"></i> Spectrum Information</span>
                 <button id="op-download-spectrum-csv"
@@ -80,27 +113,40 @@
                 <div id="op-spectrum-grid" class="op-kv-grid"></div>
             </div>
         </div>
-    </section>
-
-    <section id="op-tab-lbl" class="op-tab-panel" style="display:none;">
-        <div class="at-section-card">
+        <div class="at-section-card" data-op-section-id="spectrum.snr_plot">
             <div class="at-section-card__header">
-                <span><i class="fa-solid fa-chart-line"></i> LBL Stats</span>
-                <button id="op-download-lbl-csv"
-                        class="ari-btn ari-btn--sm ari-btn--secondary"
-                        title="Download LBL statistics as CSV"
-                        style="margin-left:auto;">
-                    <i class="fa-solid fa-download"></i> CSV
-                </button>
+                <span><i class="fa-solid fa-chart-line"></i> Signal to Noise Ratio Plot</span>
             </div>
             <div class="at-section-card__body">
-                <div id="op-lbl-grid" class="op-kv-grid"></div>
+                <div class="at-muted-hint">Coming soon</div>
+            </div>
+        </div>
+        <div class="at-section-card" data-op-section-id="spectrum.berv_coverage_plot">
+            <div class="at-section-card__header">
+                <span><i class="fa-solid fa-chart-area"></i> BERV Coverage Plot</span>
+            </div>
+            <div class="at-section-card__body">
+                <div class="at-muted-hint">Coming soon</div>
+            </div>
+        </div>
+        <div class="at-section-card" data-op-section-id="spectrum.telluric_corrected_plot">
+            <div class="at-section-card__header">
+                <span><i class="fa-solid fa-chart-column"></i> Telluric Corrected Plot</span>
+            </div>
+            <div class="at-section-card__body">
+                <div class="at-muted-hint">Coming soon</div>
             </div>
         </div>
     </section>
 
+    <section id="op-tab-lbl" class="op-tab-panel" style="display:none;">
+        <div id="op-lbl-sections">
+            {# JavaScript populates one .at-section-card per LBL flavor #}
+        </div>
+    </section>
+
     <section id="op-tab-ccf" class="op-tab-panel" style="display:none;">
-        <div class="at-section-card">
+        <div class="at-section-card" data-op-section-id="ccf.stats">
             <div class="at-section-card__header">
                 <span><i class="fa-solid fa-sliders"></i> CCF Stats</span>
                 <button id="op-download-ccf-csv"
@@ -114,10 +160,18 @@
                 <div id="op-ccf-grid" class="op-kv-grid"></div>
             </div>
         </div>
+        <div class="at-section-card" data-op-section-id="ccf.plot">
+            <div class="at-section-card__header">
+                <span><i class="fa-solid fa-chart-line"></i> CCF Plot</span>
+            </div>
+            <div class="at-section-card__body">
+                <div class="at-muted-hint">Coming soon</div>
+            </div>
+        </div>
     </section>
 
     <section id="op-tab-time_series" class="op-tab-panel" style="display:none;">
-        <div class="at-section-card">
+        <div class="at-section-card" data-op-section-id="time_series.table">
             <div class="at-section-card__header">
                 <span><i class="fa-solid fa-calendar-days"></i> Time Series</span>
                 <button id="op-download-time-series-csv"
@@ -135,14 +189,14 @@
                                 <th>Obs Dir</th>
                                 <th>First obs mid</th>
                                 <th>Last obs mid</th>
-                                <th>Number of ext</th>
-                                <th>Number of tcorr</th>
+                                <th>Number of ext <button id="op-ts-add-all-ext" class="ari-btn ari-btn--xs ari-btn--primary op-ts-basket-all" title="Add all ext files to basket"><i class="fa-solid fa-basket-shopping"></i></button></th>
+                                <th>Number of tcorr <button id="op-ts-add-all-tcorr" class="ari-btn ari-btn--xs ari-btn--primary op-ts-basket-all" title="Add all tcorr files to basket"><i class="fa-solid fa-basket-shopping"></i></button></th>
                                 <th>Seeing</th>
                                 <th>Airmass</th>
                                 <th>Mean Exptime</th>
                                 <th>Total Exptime</th>
-                                <th>SNR[Order 15]</th>
-                                <th>SNR[Order 60]</th>
+                                <th id="op-ts-head-snr-y">SNR[Order 15]</th>
+                                <th id="op-ts-head-snr-h">SNR[Order 60]</th>
                                 <th>DPRTYPEs</th>
                             </tr>
                         </thead>
@@ -155,8 +209,144 @@
         </div>
     </section>
 
+    {# ──── File Browser tab ──────────────────────────────────────── #}
+    <section id="op-tab-file_browser" class="op-tab-panel" style="display:none;">
+        <div class="at-section-card" data-op-section-id="file_browser.table">
+            <div class="at-section-card__header">
+                <span><i class="fa-solid fa-folder-open"></i> File Browser</span>
+            </div>
+            <div id="fb-container" class="at-section-card__body">
+
+                {# Query stats #}
+                <div class="fb-stats" aria-live="polite">
+                    <div class="fb-stat-box">
+                        <div class="fb-stat-box__label">Visible Files</div>
+                        <div id="fb-stat-files" class="fb-stat-box__value">--</div>
+                        <div id="fb-stat-files-sub" class="fb-stat-box__sub">before access: --</div>
+                    </div>
+                    <div class="fb-stat-box">
+                        <div class="fb-stat-box__label">Query Time</div>
+                        <div id="fb-stat-query" class="fb-stat-box__value">--</div>
+                        <div class="fb-stat-box__sub">server response</div>
+                    </div>
+                </div>
+
+                {# Preset buttons #}
+                <div class="fb-presets">
+                    <span class="fb-presets__label">Presets:</span>
+                    <button class="ari-btn ari-btn--sm ari-btn--secondary fb-preset-btn fb-preset-btn--active"
+                            data-preset="default">All processed (out, QC&ge;1)</button>
+                    <button class="ari-btn ari-btn--sm ari-btn--secondary fb-preset-btn"
+                        data-preset="none">No preset</button>
+                    <button class="ari-btn ari-btn--sm ari-btn--secondary fb-preset-btn"
+                            data-preset="ext2d">Extracted 2D spectra</button>
+                    <button class="ari-btn ari-btn--sm ari-btn--secondary fb-preset-btn"
+                            data-preset="tcorr2d">Telluric corrected 2D spectra</button>
+                    <button class="ari-btn ari-btn--sm ari-btn--secondary fb-preset-btn"
+                            data-preset="tcorr1d">Telluric corrected 1D spectra</button>
+                    {% if profile.data.general.get('has_polarimetry', True) %}
+                    <button class="ari-btn ari-btn--sm ari-btn--secondary fb-preset-btn"
+                            data-preset="polar">Polar spectra</button>
+                    {% endif %}
+                    <button class="ari-btn ari-btn--sm ari-btn--secondary fb-preset-btn"
+                            data-preset="ccfrv">CCF RV</button>
+                    <button class="ari-btn ari-btn--sm ari-btn--secondary fb-preset-btn"
+                            data-preset="rdb">rdb</button>
+                </div>
+
+                {# Toolbar #}
+                <div class="ot-toolbar fb-toolbar">
+                    <div class="ot-toolbar__left">
+                        <button id="fb-btn-add-to-basket"
+                                class="ari-btn ari-btn--sm ari-btn--primary"
+                                title="Add selected files to basket" disabled>
+                            <i class="fa-solid fa-basket-shopping"></i> Add to basket
+                        </button>
+                        <button id="fb-btn-add-all-visible"
+                                class="ari-btn ari-btn--sm ari-btn--secondary"
+                                title="Add all visible files to basket">
+                            <i class="fa-solid fa-plus"></i> Add all visible
+                        </button>
+                        <button id="fb-btn-clear-selection"
+                                class="ari-btn ari-btn--sm ari-btn--secondary"
+                                title="Clear current selection">
+                            <i class="fa-solid fa-xmark"></i> Clear selection
+                        </button>
+                        <div class="bk-groupby-wrap">
+                            <label for="fb-groupby" class="bk-groupby-label">
+                                <i class="fa-solid fa-object-group"></i> Group by:
+                            </label>
+                            <select id="fb-groupby" class="bk-groupby-select">
+                                <option value="">— none —</option>
+                            </select>
+                        </div>
+                        <button id="fb-btn-clear-filters"
+                                class="ari-btn ari-btn--sm ari-btn--secondary"
+                                title="Clear column filters">
+                            <i class="fa-solid fa-filter-circle-xmark"></i> Clear Filters
+                        </button>
+                    </div>
+                    <div class="ot-toolbar__right">
+                        <label class="ot-perpage-label">
+                            Rows per page
+                            <select id="fb-perpage" class="ot-perpage-select">
+                                <option value="25">25</option>
+                                <option value="50" selected>50</option>
+                                <option value="100">100</option>
+                                <option value="0">All</option>
+                            </select>
+                        </label>
+                    </div>
+                </div>
+
+                {# Loading / error #}
+                <div id="fb-loading" class="ot-loading-block" style="display:none;">
+                    <i class="fa-solid fa-spinner fa-spin"></i> Loading files&hellip;
+                </div>
+                <div id="fb-error" class="ot-error-block" style="display:none;"></div>
+
+                {# Table #}
+                <div id="fb-table-wrap" class="ot-table-wrap" style="display:none;">
+                    <table class="ot-table" id="fb-table">
+                        <thead>
+                            <tr id="fb-header-row"></tr>
+                            <tr id="fb-filter-row"></tr>
+                        </thead>
+                        <tbody id="fb-tbody">
+                            <tr><td colspan="12" class="ot-empty">Click a preset or wait for data.</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                {# Pagination #}
+                <div id="fb-pagination" class="ot-pagination">
+                    <div id="fb-page-info" class="ot-page-info"></div>
+                    <div class="ot-page-controls">
+                        <button id="fb-btn-first" class="ari-btn ari-btn--sm ari-btn--secondary" disabled>
+                            <i class="fa-solid fa-angles-left"></i>
+                        </button>
+                        <button id="fb-btn-prev" class="ari-btn ari-btn--sm ari-btn--secondary" disabled>
+                            <i class="fa-solid fa-angle-left"></i>
+                        </button>
+                        <span class="ot-page-num">
+                            Page&nbsp;<input id="fb-page-input" class="ot-page-input" type="number" min="1" value="1">
+                            &nbsp;of&nbsp;<span id="fb-page-total">1</span>
+                        </span>
+                        <button id="fb-btn-next" class="ari-btn ari-btn--sm ari-btn--secondary" disabled>
+                            <i class="fa-solid fa-angle-right"></i>
+                        </button>
+                        <button id="fb-btn-last" class="ari-btn ari-btn--sm ari-btn--secondary" disabled>
+                            <i class="fa-solid fa-angles-right"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    {# ──── Debug tab ─────────────────────────────────────────────── #}
     <section id="op-tab-debug" class="op-tab-panel" style="display:none;">
-        <div class="at-section-card at-section-card--warning">
+        <div class="at-section-card at-section-card--warning" data-op-section-id="debug.info">
             <div class="at-section-card__header">
                 <span><i class="fa-solid fa-bug"></i> Debug</span>
                 <button id="op-download-debug-csv"
@@ -171,6 +361,37 @@
             </div>
         </div>
     </section>
+
+    {# ──── Download (basket) tab ──────────────────────────────────── #}
+    <section id="op-tab-download" class="op-tab-panel" style="display:none;">
+        <div class="at-section-card" data-op-section-id="download.basket">
+            <div class="at-section-card__header">
+                <span><i class="fa-solid fa-basket-shopping"></i> Download Basket</span>
+            </div>
+            <div class="at-section-card__body">
+                <div class="bk-summary" id="op-dl-summary">
+                    <div class="bk-summary__item">
+                        <i class="fa-solid fa-layer-group"></i>
+                        <span id="op-dl-count">—</span> files in basket
+                    </div>
+                    <div class="bk-summary__item">
+                        <i class="fa-solid fa-hard-drive"></i>
+                        Total size: <span id="op-dl-size">—</span>
+                    </div>
+                </div>
+                <p style="margin-top:1.2em;">
+                    <a id="op-dl-basket-link" href="#" class="ari-btn ari-btn--primary">
+                        <i class="fa-solid fa-arrow-right"></i> Open Download Basket
+                    </a>
+                </p>
+                <p class="at-muted-hint" style="margin-top:.8em;">
+                    Use the <strong>File Browser</strong> tab to add files to your basket,
+                    or click the basket icons in the <strong>Time Series</strong> tab
+                    to add all files from a night at once.
+                </p>
+            </div>
+        </div>
+    </section>
 </div>
 
 <script>
@@ -178,8 +399,22 @@ window.ARI_OBJECT_PAGE = {
     apiUrl: {{ api_url | tojson }},
     profileId: {{ profile.profile_id | tojson }},
     instrument: {{ profile.instrument | tojson }},
-    objname: {{ objname | tojson }}
+    objname: {{ objname | tojson }},
+    hasPolarimetry: {{ (profile.data.general.get('has_polarimetry', True) | string).lower() | tojson }},
+    objectSectionApiGet: '/api/user/object-sections/get',
+    objectSectionApiToggle: '/api/user/object-sections/toggle',
+    objectSectionApiReorder: '/api/user/object-sections/reorder'
+};
+window.ARI_BASKET_CFG = {
+    addApiUrl: '/api/data-portal/basket/add',
+    removeApiUrl: '/api/data-portal/basket/remove',
+    clearApiUrl: '/api/data-portal/basket/clear',
+    summaryApiUrl: '/api/data-portal/basket/summary',
+    fileBrowserApiUrl: '/api/data-portal/file-browser',
+    addFromFtableApiUrl: '/api/data-portal/basket/add-from-ftable',
+    basketPageUrl: '/data_portal/{{ profile.profile_id }}/basket'
 };
 </script>
 <script src="{{ url_for('static', filename='js/object_page.js') }}" defer></script>
+<script src="{{ url_for('static', filename='js/file_browser.js') }}" defer></script>
 {% endblock %}

@@ -14,17 +14,47 @@
     </h1>
 </div>
 
-<div class="ot-access-note">
-    <i class="fa-solid fa-shield-halved"></i>
-    <span>
-        This is a <strong>read-only</strong> query explorer.
-        You can only see tables and columns your groups have been granted access to,
-        and FINDEX rows are automatically filtered to your science-group run&nbsp;IDs.
-        No data can be modified through this interface.
-        Review your permissions in
-        <a href="{{ url_for('home_user_portal_data_access') }}">User Portal / Data Access</a>.
-    </span>
-</div>
+{# ── How-to banner ─────────────────────────────────────────── #}
+<details class="ot-howto" id="howto-query-db" open>
+    <summary class="ot-howto__title">
+        <i class="fa-solid fa-circle-info"></i>
+        <span class="ot-howto__label-open">How to use the database query tool</span>
+        <span class="ot-howto__label-closed">Info</span>
+        <i class="fa-solid fa-chevron-down ot-howto__chevron"></i>
+    </summary>
+    <div class="ot-howto__body">
+        <ol class="ot-howto__steps">
+            <li>
+                <span><strong>Select your data:</strong> Expand <strong><i class="fa-solid fa-table"></i> Tables &amp; Columns</strong> and choose the table you want to query. Check the columns you need from that table.</span>
+            </li>
+            <li>
+                <span><strong>Join multiple tables (optional):</strong> Use <strong><i class="fa-solid fa-link"></i> Joins</strong> to combine data from multiple tables based on relationships.</span>
+            </li>
+            <li>
+                <span><strong>Filter your results:</strong> Expand <strong><i class="fa-solid fa-filter"></i> Filters</strong> to narrow down results by date, value, or other criteria. Your science-group run IDs are automatically applied.</span>
+            </li>
+            <li>
+                <span><strong>Order and limit:</strong> Use <strong><i class="fa-solid fa-sort"></i> Sort &amp; Limit</strong> to order results and specify the maximum number of rows to return.</span>
+            </li>
+            <li>
+                <span><strong>Run the query:</strong> Click <strong><i class="fa-solid fa-play"></i> Run Query</strong> to execute. Preview the SQL in the <strong><i class="fa-solid fa-code"></i> SQL Preview</strong> section above the results.</span>
+            </li>
+            <li>
+                <span><strong>Export results:</strong> Once you have results, click <strong><i class="fa-solid fa-file-csv"></i> Export CSV</strong> to download the data for further analysis.</span>
+            </li>
+        </ol>
+        <div class="ot-howto__notes">
+            <strong><i class="fa-solid fa-shield-halved"></i> Access &amp; Permissions</strong>
+            <ul>
+                <li>This is a <strong>read-only</strong> query explorer — no data can be modified through this interface.</li>
+                <li>You can only see tables and columns your groups have been granted access to,
+                    and FINDEX rows are automatically filtered to your science-group run&nbsp;IDs.</li>
+                <li>Review your permissions in
+                    <a href="{{ url_for('home_user_portal_data_access') }}">User Portal / Data Access</a>.</li>
+            </ul>
+        </div>
+    </div>
+</details>
 
 {# ── Main layout: stacked controls, then run, then SQL/results ─────────── #}
 <div class="qdb-layout">

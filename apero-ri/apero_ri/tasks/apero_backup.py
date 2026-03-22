@@ -21,6 +21,8 @@ PARAM_LIST = ['LOCAL_DATA_DIR', 'INSTRUMENT', 'TASK_CONFIG']
 APERO_PROFILE_PARAM_LIST: List[str] = []
 # Maximum allowed size for one backup archive input (bytes)
 BACKUP_MAX_SIZE = 1024 ** 3
+# Top-level directories in LOCAL_DATA_DIR to exclude from backups by default.
+DEFAULT_EXCLUDE_DIRS = ('backups', 'tasks', 'download', 'downloads')
 # Set the default frequency for this task (in hours)
 DEFAULT_FREQUENCY = 6.0
 # Set whether this task is enabled by default in the admin portal
@@ -49,7 +51,21 @@ class AperoLocalDataBackupTask(apero_async.AperoAsyncTask):
 
         self._validate_source_dir(local_data_dir)
 
-        estimated_size = self._estimate_archive_input_size(local_data_dir)
+        daily_copies = max(int(task_cfg.get('daily_copies', 7) or 0), 0)
+        weekly_copies = max(int(task_cfg.get('weekly_copies', 4) or 0), 0)
+        raw_excludes = task_cfg.get('exclude_dirs', list(DEFAULT_EXCLUDE_DIRS))
+        if not isinstance(raw_excludes, list):
+            raw_excludes = list(DEFAULT_EXCLUDE_DIRS)
+        exclude_dirs = []
+        for value in raw_excludes:
+            name = Path(str(value)).name.strip()
+            if not name:
+                continue
+            if name not in exclude_dirs:
+                exclude_dirs.append(name)
+
+        estimated_size = self._estimate_archive_input_size(local_data_dir,
+                                                           exclude_dirs)
         if estimated_size > BACKUP_MAX_SIZE:
             warning_msg = (
                 'Backup skipped: estimated archive input size '
@@ -61,8 +77,6 @@ class AperoLocalDataBackupTask(apero_async.AperoAsyncTask):
             self.progress = 1.0
             raise ValueError(warning_msg)
 
-        daily_copies = max(int(task_cfg.get('daily_copies', 7) or 0), 0)
-        weekly_copies = max(int(task_cfg.get('weekly_copies', 4) or 0), 0)
         if daily_copies == 0 and weekly_copies == 0:
             raise ValueError('At least one retained daily or weekly copy is required.')
 
@@ -88,12 +102,15 @@ class AperoLocalDataBackupTask(apero_async.AperoAsyncTask):
             f'**Source**: `{local_data_dir}`  \n'
             f'**Generated at**: {generated_at}  \n'
             f'**Daily copies**: {daily_copies}  \n'
-            f'**Weekly copies**: {weekly_copies}\n'
+            f'**Weekly copies**: {weekly_copies}  \n'
+            f'**Excluded dirs**: {", ".join(exclude_dirs) if exclude_dirs else "(none)"}\n'
         )
 
         if daily_copies > 0:
             daily_path = daily_dir / f'{local_data_dir.name}_{day_tag}.tar.gz'
-            daily_action = self._create_or_replace_archive(local_data_dir, daily_path)
+            daily_action = self._create_or_replace_archive(
+                local_data_dir, daily_path, exclude_dirs
+            )
             if daily_action == 'created':
                 self.info += f'\n### Daily backup\nCreated `{daily_path.name}`\n'
             else:
@@ -104,7 +121,9 @@ class AperoLocalDataBackupTask(apero_async.AperoAsyncTask):
 
         if weekly_copies > 0:
             weekly_path = weekly_dir / f'{local_data_dir.name}_{week_tag}.tar.gz'
-            weekly_action = self._create_or_replace_archive(local_data_dir, weekly_path)
+            weekly_action = self._create_or_replace_archive(
+                local_data_dir, weekly_path, exclude_dirs
+            )
             if weekly_action == 'created':
                 self.info += f'\n### Weekly backup\nCreated `{weekly_path.name}`\n'
             else:
@@ -163,16 +182,21 @@ class AperoLocalDataBackupTask(apero_async.AperoAsyncTask):
             )
 
     @staticmethod
-    def _create_or_replace_archive(source_dir: Path, destination: Path) -> str:
+    def _create_or_replace_archive(source_dir: Path, destination: Path,
+                                   exclude_dirs: List[str]) -> str:
         if not destination.exists():
-            AperoLocalDataBackupTask._create_archive(source_dir, destination)
+            AperoLocalDataBackupTask._create_archive(
+                source_dir, destination, exclude_dirs
+            )
             return 'created'
 
         old_path = destination.with_name(destination.name + '.old')
         old_path.unlink(missing_ok=True)
         destination.replace(old_path)
         try:
-            AperoLocalDataBackupTask._create_archive(source_dir, destination)
+            AperoLocalDataBackupTask._create_archive(
+                source_dir, destination, exclude_dirs
+            )
         except Exception:
             destination.unlink(missing_ok=True)
             if old_path.exists():
@@ -182,29 +206,39 @@ class AperoLocalDataBackupTask(apero_async.AperoAsyncTask):
         return 'replaced'
 
     @staticmethod
-    def _create_archive(source_dir: Path, destination: Path) -> None:
+    def _create_archive(source_dir: Path, destination: Path,
+                        exclude_dirs: List[str]) -> None:
         destination.parent.mkdir(parents=True, exist_ok=True)
         with tarfile.open(destination, 'w:gz') as handle:
-            for file_path in AperoLocalDataBackupTask._iter_source_files(source_dir):
+            for file_path in AperoLocalDataBackupTask._iter_source_files(
+                source_dir, exclude_dirs
+            ):
                 rel_path = file_path.relative_to(source_dir)
                 arcname = Path(source_dir.name) / rel_path
                 handle.add(file_path, arcname=str(arcname))
 
     @staticmethod
-    def _iter_source_files(source_dir: Path):
-        backups_dir = source_dir / 'backups'
+    def _iter_source_files(source_dir: Path,
+                           exclude_dirs: List[str]):
+        excluded = set(exclude_dirs)
         for root, dirs, files in os.walk(source_dir):
             root_path = Path(root)
-            if root_path == backups_dir or backups_dir in root_path.parents:
+            rel_parts = root_path.relative_to(source_dir).parts
+            if rel_parts and rel_parts[0] in excluded:
                 dirs[:] = []
                 continue
+
+            dirs[:] = [name for name in dirs if name not in excluded]
             for file_name in files:
                 yield root_path / file_name
 
     @staticmethod
-    def _estimate_archive_input_size(source_dir: Path) -> int:
+    def _estimate_archive_input_size(source_dir: Path,
+                                     exclude_dirs: List[str]) -> int:
         total = 0
-        for file_path in AperoLocalDataBackupTask._iter_source_files(source_dir):
+        for file_path in AperoLocalDataBackupTask._iter_source_files(
+            source_dir, exclude_dirs
+        ):
             try:
                 total += file_path.stat().st_size
             except OSError:

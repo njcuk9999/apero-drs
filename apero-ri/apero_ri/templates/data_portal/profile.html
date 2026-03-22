@@ -46,12 +46,42 @@
     </div>
 </div>
 
-<p class="ari-ap-groups-hint">
-    Please contact the admin via
-    <a href="{{ url_for('home_user_portal_support') }}">User Portal / Support</a>
-    if you think you are missing access.
-</p>
-
+{# ── How-to banner ───────────────────────────────────────────── #}
+<details class="ot-howto" id="howto-profile" open>
+    <summary class="ot-howto__title">
+        <i class="fa-solid fa-circle-info"></i>
+        <span class="ot-howto__label-open">How to use this page</span>
+        <span class="ot-howto__label-closed">Info</span>
+        <i class="fa-solid fa-chevron-down ot-howto__chevron"></i>
+    </summary>
+    <div class="ot-howto__body">
+        <ol class="ot-howto__steps">
+            <li>
+                <span><strong>Choose a section:</strong> Click any card below to open that data view for this reduction profile.</span>
+            </li>
+            <li>
+                <span><strong>Object Table:</strong> Browse and filter all astrophysical targets, navigate to individual object pages, and add files to your download basket.</span>
+            </li>
+            <li>
+                <span><strong>Observation Table:</strong> View observation-level summaries aggregated per object name across all run IDs.</span>
+            </li>
+            <li>
+                <span><strong>Database Query:</strong> Run custom read-only SQL queries against the reduced data tables accessible to your groups.</span>
+            </li>
+            <li>
+                <span><strong>Download Basket:</strong> Review and download files you have selected across your browsing sessions.</span>
+            </li>
+        </ol>
+        <div class="ot-howto__notes">
+            <strong><i class="fa-solid fa-circle-exclamation"></i> Notes</strong>
+            <ul>
+                <li>Please contact the admin via
+                    <a href="{{ url_for('home_user_portal_support') }}">User Portal / Support</a>
+                    if you think you are missing access.</li>
+            </ul>
+        </div>
+    </div>
+</details>
 {# ── Section cards ───────────────────────────────────────────── #}
 <div class="ari-rp-sections">
 {% for card in section_cards %}

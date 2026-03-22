@@ -15,15 +15,40 @@
     </h1>
 </div>
 
-<div class="ot-access-note">
-    <i class="fa-solid fa-circle-info"></i>
-    <span>
-        If a target is missing, review your current permissions in
-        <a href="{{ url_for('home_user_portal_data_access') }}">User Portal / Data Access</a>.<br>
-        File counts show <strong>N&nbsp;(M)</strong> where N is the number of files
-        accessible to you and M is the total across all run IDs.
-    </span>
-</div>
+{# ── How-to banner ─────────────────────────────────────────── #}
+<details class="ot-howto" id="howto-object-table" open>
+    <summary class="ot-howto__title">
+        <i class="fa-solid fa-circle-info"></i>
+        <span class="ot-howto__label-open">How to use this table</span>
+        <span class="ot-howto__label-closed">Info</span>
+        <i class="fa-solid fa-chevron-down ot-howto__chevron"></i>
+    </summary>
+    <div class="ot-howto__body">
+        <ol class="ot-howto__steps">
+            <li>
+                <span><strong>Filter columns:</strong> Click on the input fields below each column header to filter by text or values. Use these to find specific objects or narrow down your results.</span>
+            </li>
+            <li>
+                <span><strong>Show or hide columns:</strong> Click the <strong><i class="fa-solid fa-table-columns"></i> Columns</strong> button to customize which columns are visible in the table.</span>
+            </li>
+            <li>
+                <span><strong>Navigate to object page:</strong> Click on any <strong>object name</strong> to view detailed information about that object, including its spectrum data and file browser.</span>
+            </li>
+            <li>
+                <span><strong>Add files to download basket:</strong> On the object page, select the <strong><i class="fa-solid fa-folder-open"></i> File Browser</strong> tab, then use the basket icons to add files to your download basket.</span>
+            </li>
+        </ol>
+        <div class="ot-howto__notes">
+            <strong><i class="fa-solid fa-circle-exclamation"></i> Notes</strong>
+            <ul>
+                <li>If a target is missing, review your current permissions in
+                    <a href="{{ url_for('home_user_portal_data_access') }}">User Portal / Data Access</a>.</li>
+                <li>File counts show <strong>N&nbsp;(M)</strong> where N is the number of files
+                    accessible to you and M is the total across all run IDs.</li>
+            </ul>
+        </div>
+    </div>
+</details>
 
 {# ── Meta / status bar ─────────────────────────────────────────── #}
 <div class="ot-meta-bar">

@@ -10,6 +10,9 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, Optional
 
+from astropy.io import fits
+
+from apero_ri.base.base import BLOCK_KIND
 from apero_ri.tasks import apero_async
 
 # =============================================================================
@@ -36,15 +39,7 @@ DEFAULT_FREQUENCY = 6.0
 DEFAULT_ENABLED = True
 # Set the type of task (INSTRUMENT, GLOBAL)
 TASK_TYPE = 'INSTRUMENT'
-# Set the block kind to path
-BLOCK_KIND = dict()
-BLOCK_KIND['raw'] = 'PATH.RAW'
-BLOCK_KIND['tmp'] = 'PATH.PP'
-BLOCK_KIND['calib'] = 'PATH.CALIB'
-BLOCK_KIND['red'] = 'PATH.RED'
-BLOCK_KIND['tellu'] = 'PATH.TELLU'
-BLOCK_KIND['out'] = 'PATH.OUT'
-BLOCK_KIND['lbl'] ='PATH.LBL'
+# BLOCK_KIND is imported from apero_ri.base.base (shared with basket_funcs)
 
 
 # =============================================================================
@@ -108,6 +103,23 @@ class AperoObjectQueryTask(apero_async.AperoAsyncTask):
             # -----------------------------------------------------------------
             # get parameters for this apero profile
             aparams = apero_profiles[apero_profile]
+            instrument = str(params.get('INSTRUMENT')
+                             or aparams.get('general', {}).get('INSTRUMENT')
+                             or 'unknown')
+            db_updates = {}
+            try:
+                should_skip, db_updates, skip_reason = (
+                    apero_async.should_skip_profile_query(aparams)
+                )
+            except Exception as exc:
+                should_skip = False
+                skip_reason = f'Database update-time check unavailable: {exc}'
+            if should_skip:
+                self.info += (
+                    f'\n## Object Query for APERO Profile: {apero_profile}\n\n'
+                    f'- Skipped query run. {skip_reason}\n'
+                )
+                continue
             # -----------------------------------------------------------------
             # define the object name query
             obj_query = _construct_obj_query(aparams)
@@ -153,7 +165,8 @@ class AperoObjectQueryTask(apero_async.AperoAsyncTask):
                 # Step 2: Get header keys for all files for this object
                 # -------------------------------------------------------------
                 # returns a header table (one row per observation)
-                object_query_headers(aparams, outputs)
+                object_query_headers(aparams, objname,
+                                     apero_profile_names[a_it], outputs)
                 
                 # -------------------------------------------------------------
                 # combine the timings from all queries for this object
@@ -174,6 +187,16 @@ class AperoObjectQueryTask(apero_async.AperoAsyncTask):
             # -----------------------------------------------------------------
             # add to the output files for this task
             self.output_files += output_files
+            if db_updates:
+                try:
+                    apero_async.save_profile_db_table_updates(
+                        instrument, apero_profile, db_updates
+                    )
+                except Exception as exc:
+                    self.info += (
+                        f'\n- Warning: failed to persist database-update '
+                        f'fingerprint for {apero_profile}: {exc}\n'
+                    )
             # update the last run time
             self.last_run = datetime.now(timezone.utc).isoformat()
     
@@ -280,6 +303,9 @@ def object_query_db(aparams, objname, apero_profile_name,
     scitypes = rparams['SCIENCE_TYPES']
     # storage of queries
     queries = dict()
+    # all files
+    all_results = _file_col_query(rparams, objname)
+    queries['all'] = all_results
     # raw file table
     raw_results = _file_col_query(rparams, objname,
                                  block_kind='raw', scitype=scitypes)
@@ -317,6 +343,11 @@ def object_query_db(aparams, objname, apero_profile_name,
                                  scitype=scitypes, output='LBL_FITS')
     queries['lbl'] = lbl_results
 
+    # lbl rdb file table (one row per science+comparison pair)
+    lbl_rdb_results = _file_col_query(rparams, objname, block_kind='lbl',
+                                     scitype=None, output='LBL_RDB')
+    queries['lbl_rdb'] = lbl_rdb_results
+
     # storage for timing for database queries
     outputs = dict()
     outputs['queries'] = queries
@@ -344,15 +375,16 @@ def object_query_db(aparams, objname, apero_profile_name,
     return outputs
 
 
-def object_query_headers(aparams, outputs):
-    
-    print('Here')
+def object_query_headers(aparams, objname, apero_profile_name,
+                         outputs):
+
     # get results
     results = outputs['results']
-
     # output table
-    header_list = dict()
-
+    header_dict = dict()
+    # start time
+    start = time.time()
+    # loop around file kinds
     for fkind in results:
         # get entries for this fkind
         entries = results[fkind]
@@ -365,23 +397,59 @@ def object_query_headers(aparams, outputs):
         for entry in entries:
             # get identifier
             identifier = entry['IDENTIFIER']
+            # get block kind
+            block_kind = BLOCK_KIND.get(entry['BLOCK_KIND'], None)
+            # deal with no block kind defined
+            if block_kind is None:
+                continue
             # deal with first time we see this object
-            if identifier not in header_list:
-                header_list[identifier] = dict()
+            if identifier not in header_dict:
+                header_dict[identifier] = dict(IDENTIFIER=identifier)
             # -----------------------------------------------------------------
             # convert block kind to a path
-            block_kind = aparams['paths'][BLOCK_KIND[entry['BLOCK_KIND']]]
+            block_kind = aparams['paths'][block_kind]
             # construct filename from keys
             abspath = Path(block_kind) / entry['OBS_DIR'] / entry['FILENAME']
             # -----------------------------------------------------------------
             # check if path exists - if it doesn't fill with None
             if not abspath.exists():
-                header_list[identifier] = _fill_dict_null(hkeys)
+                header_dict[identifier] = _fill_dict_null(hkeys)
                 continue
             # -----------------------------------------------------------------
-
-    
-    pass
+            # check if file is fits file
+            if abspath.suffix != '.fits':
+                header_dict[identifier] = _fill_dict_null(hkeys)
+                continue
+            # otherwise we open the file
+            hdr = fits.getheader(abspath)
+            # loop around header key and load into header list
+            for hkey in hkeys:
+                _hvalue = _get_hdr_key(hdr, hkey, hkeys[hkey])
+                header_dict[identifier][hkey] = _hvalue
+    # end time
+    end = time.time()
+    # ---------------------------------------------------------------------
+    # convert header dict to a list of dictionaries (one list entry for
+    # each identifier)
+    header_list = []
+    for key in header_dict:
+        header_list.append(header_dict[key])
+    # ---------------------------------------------------------------------
+    # time now
+    time_now = datetime.now(timezone.utc).isoformat()
+    metadata = dict()
+    metadata['GENERATED_AT'] = time_now
+    metadata['QUERY_TIME'] = end - start
+    metadata['APERO_PROFILE'] = apero_profile_name
+    # ---------------------------------------------------------------------
+    # construct filename
+    instrument = aparams.get('INSTRUMENT', 'unknown')
+    local_dir = (Path(aparams.get('LOCAL_DATA_DIR', str(ARI_DIR)))
+                 / 'tasks' / instrument / apero_profile_name / 'objects')
+    basename = f'htable_{objname}.json'
+    filename = local_dir / basename
+    # save results to JSON file for use in the UI
+    apero_async.save_results(filename, header_list, metadata)
 
                 
 # =============================================================================
@@ -411,12 +479,42 @@ def _construct_obj_query(aparams):
     return obj_query
 
 
-def _file_col_query(rparams, objname, block_kind: str,
+def _get_hdr_key(hdr: fits.Header, keyname: str,
+                 hkey: Dict[str, Any]):
+    header_key = hkey.get('key', 'Unknown')
+    dtype = hkey.get('dtype', 'str')
+    # try to open and type cast header key
+    try:
+        # deal with header key existing
+        if header_key in hdr:
+            raw_value = hdr[header_key]
+            # deal with types
+            if dtype == 'float':
+                value = float(raw_value)
+            elif dtype == 'int':
+                value = int(raw_value)
+            elif dtype == 'bool':
+                value = bool(raw_value)
+            else:
+                value = str(raw_value)
+        else:
+            value = None
+    except Exception as e:
+        emsg = (f'Missing required parameter {keyname}: {header_key}'
+                f'\n\tError {type(e)}: {e}')
+        raise ValueError(emsg)
+    # return values
+    return value
+
+
+def _file_col_query(rparams, objname, block_kind: Optional[str] = None,
                    fiber: Optional[str] = None, scitype: Optional[str] = None, 
                    output: Optional[str] = None) -> str:
     objname_safe = objname.replace("'", "''")
     # deal with optional conditions
-    condition = [f"fdb.BLOCK_KIND = '{block_kind}'"]
+    condition = []
+    if block_kind is not None:
+        condition.append(f"fdb.BLOCK_KIND = '{block_kind}'")
     if fiber is not None:
         condition.append(f"fdb.KW_FIBER = '{fiber}'")
     if scitype is not None:
@@ -447,10 +545,14 @@ def _file_col_query(rparams, objname, block_kind: str,
         GROUP BY PID
     ) ldb
             ON fdb.KW_PID = ldb.PID
-    WHERE fdb.KW_OBJNAME = '{OBJNAME}' AND {CONDITION}
+    WHERE fdb.KW_OBJNAME = '{OBJNAME}' {CONDITION}
     """
     # construct the formatted query
-    rquery =  query.format(OBJNAME=objname_safe, CONDITION=' AND '.join(condition),
+    if len(condition) > 0:
+        condition = ' AND ' + ' AND '.join(condition)
+    else:
+        condition = ''
+    rquery =  query.format(OBJNAME=objname_safe, CONDITION=condition,
                            **rparams)
     # deal with just returning the query for testing
     return rquery

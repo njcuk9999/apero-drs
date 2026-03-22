@@ -340,6 +340,63 @@ def reorder_pins(username: str, ordered_ids: List[str]) -> List[Dict]:
 
 
 # =============================================================================
+# Object page section preferences
+# =============================================================================
+_OBJECT_SECTION_DEFAULT: Dict = {'pinned': []}
+
+
+def _object_section_path(username: str) -> Path:
+    return get_user_dir(username) / 'object_section.yaml'
+
+
+def load_object_section(username: str) -> Dict:
+    data = _load_yaml(_object_section_path(username), dict(_OBJECT_SECTION_DEFAULT))
+    if not isinstance(data, dict):
+        data = dict(_OBJECT_SECTION_DEFAULT)
+    pinned = data.get('pinned', [])
+    if not isinstance(pinned, list):
+        pinned = []
+    data['pinned'] = [str(x).strip() for x in pinned if str(x).strip()]
+    return data
+
+
+def save_object_section(username: str, data: Dict) -> None:
+    payload = data if isinstance(data, dict) else dict(_OBJECT_SECTION_DEFAULT)
+    pinned = payload.get('pinned', [])
+    if not isinstance(pinned, list):
+        pinned = []
+    payload = {'pinned': [str(x).strip() for x in pinned if str(x).strip()]}
+    _save_yaml(_object_section_path(username), payload)
+
+
+def list_object_section_pins(username: str) -> List[str]:
+    return load_object_section(username).get('pinned', [])
+
+
+def reorder_object_section_pins(username: str, ordered_ids: List[str]) -> List[str]:
+    data = load_object_section(username)
+    pins = data.get('pinned', [])
+    pin_set = set(pins)
+
+    reordered = []
+    seen = set()
+    for item in ordered_ids:
+        sid = str(item).strip()
+        if not sid or sid in seen or sid not in pin_set:
+            continue
+        reordered.append(sid)
+        seen.add(sid)
+
+    for sid in pins:
+        if sid not in seen:
+            reordered.append(sid)
+
+    data['pinned'] = reordered
+    save_object_section(username, data)
+    return reordered
+
+
+# =============================================================================
 # Notes
 # =============================================================================
 _FM_SEP = '---'

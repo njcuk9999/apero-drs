@@ -969,8 +969,9 @@
         var end = Math.min(start + rowsPerPage, total);
         var pageRows = rows.slice(start, end);
 
-        pageRows.forEach(function (row) {
+        pageRows.forEach(function (row, idx) {
             var tr = document.createElement('tr');
+            tr.className = 'qdb-row ' + ((start + idx) % 2 === 0 ? 'qdb-row--odd' : 'qdb-row--even');
             columns.forEach(function (col) {
                 var td = makeEl('td', 'ot-td');
                 var val = row[col];

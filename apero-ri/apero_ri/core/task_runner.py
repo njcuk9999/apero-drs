@@ -90,29 +90,29 @@ def _sanitize_run_params(value: Any) -> Any:
         return str(value)
     if isinstance(value, (str, int, float, bool)) or value is None:
         return value
-
-
-    def _load_aprofile_preset(profile_file: str) -> dict:
-        """Load one APERO instrument profile YAML from resources/aprofile_instruments."""
-        if not profile_file:
-            return {}
-        if profile_file in _aprofile_preset_cache:
-            return dict(_aprofile_preset_cache[profile_file])
-        resources_dir = Path(__file__).resolve().parents[1] / 'resources' / 'aprofile_instruments'
-        path = resources_dir / profile_file
-        if not path.is_file():
-            _aprofile_preset_cache[profile_file] = {}
-            return {}
-        try:
-            with path.open('r', encoding='utf-8') as f:
-                data = yaml.safe_load(f) or {}
-            if not isinstance(data, dict):
-                data = {}
-        except Exception:
-            data = {}
-        _aprofile_preset_cache[profile_file] = data
-        return dict(data)
     return str(value)
+
+
+def _load_aprofile_preset(profile_file: str) -> dict:
+    """Load one APERO instrument profile YAML from resources/aprofile_instruments."""
+    if not profile_file:
+        return {}
+    if profile_file in _aprofile_preset_cache:
+        return dict(_aprofile_preset_cache[profile_file])
+    resources_dir = Path(__file__).resolve().parents[1] / 'resources' / 'aprofile_instruments'
+    path = resources_dir / profile_file
+    if not path.is_file():
+        _aprofile_preset_cache[profile_file] = {}
+        return {}
+    try:
+        with path.open('r', encoding='utf-8') as f:
+            data = yaml.safe_load(f) or {}
+        if not isinstance(data, dict):
+            data = {}
+    except Exception:
+        data = {}
+    _aprofile_preset_cache[profile_file] = data
+    return dict(data)
 
 
 def _history_file_path() -> Path:
@@ -584,7 +584,7 @@ def build_run_params(instrument: str, local_data_dir: str,
     ]
     path_keys = [
         'PATH_RAW', 'PATH_PP', 'PATH_RED', 'PATH_CALIB',
-        'PATH_TELLU', 'PATH_LOG', 'PATH_LBL',
+        'PATH_OUT', 'PATH_TELLU', 'PATH_LOG', 'PATH_LBL',
     ]
     for pname, pcfg in profiles.items():
         p = dict(pcfg) if isinstance(pcfg, dict) else {}

@@ -25,7 +25,7 @@ from typing import Any, Optional, List
 
 from flask import (Flask, render_template, redirect, url_for,
                    request, session, flash, jsonify,
-                   send_from_directory)
+                   send_from_directory, send_file)
 
 from apero_ri.core.permissions import (
     load_groups, load_pages, load_parameters,
@@ -59,6 +59,8 @@ from apero_ri.core.docs import (
     get_versions, get_default_version, get_doc_content,
     save_doc_content, save_uploaded_image, DOC_IMAGES,
 )
+from apero_ri.core.object_funcs import build_object_page_stats
+from apero_ri.core import basket_funcs as bk
 
 # =============================================================================
 # Define variables
@@ -276,6 +278,17 @@ class ARIApp(Flask):
         self.add_url_rule('/api/user/pins/reorder',
               'api_user_pins_reorder',
               self._api_user_pins_reorder,
+              methods=['POST'])
+        self.add_url_rule('/api/user/object-sections/get',
+              'api_user_object_sections_get',
+              self._api_user_object_sections_get)
+        self.add_url_rule('/api/user/object-sections/toggle',
+              'api_user_object_sections_toggle',
+              self._api_user_object_sections_toggle,
+              methods=['POST'])
+        self.add_url_rule('/api/user/object-sections/reorder',
+              'api_user_object_sections_reorder',
+              self._api_user_object_sections_reorder,
               methods=['POST'])
 
         # User links API routes
@@ -581,6 +594,58 @@ class ARIApp(Flask):
                   'api_query_db_run',
                   self._api_query_db_run,
                   methods=['POST'])
+        # Download basket page + APIs (must be before /<path:objname> catch-all)
+        self.add_url_rule('/data_portal/<profile_id>/basket',
+                          'ri_basket',
+                          self._ri_basket_view)
+        self.add_url_rule('/api/data-portal/basket',
+                          'api_basket_get',
+                          self._api_basket_get)
+        self.add_url_rule('/api/data-portal/basket/summary',
+                          'api_basket_summary',
+                          self._api_basket_summary)
+        self.add_url_rule('/api/data-portal/basket/add',
+                          'api_basket_add',
+                          self._api_basket_add,
+                          methods=['POST'])
+        self.add_url_rule('/api/data-portal/basket/remove',
+                          'api_basket_remove',
+                          self._api_basket_remove,
+                          methods=['POST'])
+        self.add_url_rule('/api/data-portal/basket/clear',
+                          'api_basket_clear',
+                          self._api_basket_clear,
+                          methods=['POST'])
+        self.add_url_rule('/api/data-portal/basket/compile',
+                          'api_basket_compile',
+                          self._api_basket_compile,
+                          methods=['POST'])
+        self.add_url_rule('/api/data-portal/basket/compile-status/<job_id>',
+                          'api_basket_compile_status',
+                          self._api_basket_compile_status)
+        self.add_url_rule(
+            '/api/data-portal/basket/download/<job_id>/<int:chunk_idx>',
+            'api_basket_download',
+            self._api_basket_download)
+        self.add_url_rule('/api/data-portal/basket/jobs',
+                          'api_basket_jobs',
+                          self._api_basket_jobs)
+        self.add_url_rule('/api/data-portal/basket/jobs/remove',
+                  'api_basket_jobs_remove',
+                  self._api_basket_jobs_remove,
+                  methods=['POST'])
+        self.add_url_rule('/api/data-portal/basket/jobs/clear',
+                  'api_basket_jobs_clear',
+                  self._api_basket_jobs_clear,
+                  methods=['POST'])
+        self.add_url_rule('/api/data-portal/basket/add-from-ftable',
+                          'api_basket_add_from_ftable',
+                          self._api_basket_add_from_ftable,
+                          methods=['POST'])
+        self.add_url_rule('/api/data-portal/file-browser',
+                          'api_file_browser',
+                          self._api_file_browser)
+
         self.add_url_rule('/data_portal/<profile_id>/<path:objname>',
               'ri_object_page',
               self._ri_object_page_view)
@@ -1053,32 +1118,26 @@ class ARIApp(Flask):
             if not include_children or not is_current:
                 continue
 
-            child_items = [
-                (
-                    'object_table',
-                    'home.data_portal.{apero_profile}.object_table',
-                    f'/data_portal/{profile_id}/object-table',
-                    False,
-                ),
-                (
-                    'obs_table',
-                    'home.data_portal.{apero_profile}.obs_table',
-                    f'/data_portal/{profile_id}/observation-table',
-                    False,
-                ),
-                (
-                    'query_db',
-                    'home.data_portal.{apero_profile}.query_db',
-                    f'/data_portal/{profile_id}/query-db',
-                    False,
-                ),
-                (
-                    'qc_graphs',
-                    'home.data_portal.{apero_profile}.qc_graphs',
-                    '',
-                    True,
-                ),
-            ]
+            # Build child items in pages.yaml definition order so that
+            # reordering pages.yaml automatically updates the sidebar.
+            _child_url_map = {
+                'object_table': (f'/data_portal/{profile_id}/object-table', False),
+                'obs_table':    (f'/data_portal/{profile_id}/observation-table', False),
+                'query_db':     (f'/data_portal/{profile_id}/query-db', False),
+                'qc_graphs':    ('', True),
+                'basket':       (f'/data_portal/{profile_id}/basket', False),
+            }
+            child_items = []
+            for tpl_key, tpl_def in self._page_templates.items():
+                if not isinstance(tpl_def, dict):
+                    continue
+                if tpl_def.get('parent') != 'home.data_portal.{apero_profile}':
+                    continue
+                suffix = tpl_key.split('.')[-1]
+                if '{' in suffix:  # skip {objname} template entries
+                    continue
+                child_url, disabled = _child_url_map.get(suffix, ('', False))
+                child_items.append((suffix, tpl_key, child_url, disabled))
 
             for suffix, tpl_id, child_url, disabled in child_items:
                 child_id = f'{page_id}.{suffix}'
@@ -1783,7 +1842,7 @@ class ARIApp(Flask):
 
                     table_names = [
                         label for label, key in table_key_map.items()
-                        if str(cfg.get(key, '')).strip()
+                        if str(self._profile_get_db(cfg, key, '')).strip()
                     ]
                     if not table_names:
                         continue
@@ -1953,7 +2012,7 @@ class ARIApp(Flask):
         profiles_by_instrument = load_apero_profiles()
         path_keys = [
             'PATH_RAW', 'PATH_PP', 'PATH_RED', 'PATH_CALIB',
-            'PATH_TELLU', 'PATH_LOG', 'PATH_LBL',
+            'PATH_OUT', 'PATH_TELLU', 'PATH_LOG', 'PATH_LBL',
         ]
 
         issues = []
@@ -2062,40 +2121,44 @@ class ARIApp(Flask):
         color = colors.get(profile['instrument'],
                            self._INSTRUMENT_PALETTE[0])
 
-        # Sub-page section cards
-        section_cards = [
-            {
-                'key': 'object_table',
-                'label': 'Astrophysical Object Table',
-                'icon': 'fa-solid fa-star',
-                'url': f'/data_portal/{profile_id}/object-table',
-                'description': 'Browse and search astrophysical objects '
-                               'in this reduction profile.',
-            },
-            {
-                'key': 'obs_table',
-                'label': 'Observation Table',
-                'icon': 'fa-solid fa-binoculars',
-                'url': f'/data_portal/{profile_id}/observation-table',
-                'description': 'View night-by-night observations '
-                               'and their reduction status.',
-            },
-            {
-                'key': 'query_db',
-                'label': 'Database Query',
-                'icon': 'fa-solid fa-terminal',
-                'url': f'/data_portal/{profile_id}/query-db',
-                'description': 'Run custom queries against the '
-                               'reduction database tables.',
-            },
-            {
-                'key': 'qc_graphs',
-                'label': 'Quality Control Graphs',
-                'icon': 'fa-solid fa-chart-line',
-                'description': 'Interactive plots of quality control '
-                               'metrics over time.',
-            },
-        ]
+        # Build section cards in pages.yaml definition order so that
+        # reordering pages.yaml automatically updates the profile page.
+        _card_url_map = {
+            'object_table': f'/data_portal/{profile_id}/object-table',
+            'obs_table':    f'/data_portal/{profile_id}/observation-table',
+            'query_db':     f'/data_portal/{profile_id}/query-db',
+            'qc_graphs':    '',
+            'basket':       f'/data_portal/{profile_id}/basket',
+        }
+        _card_desc_map = {
+            'object_table': 'Browse and search astrophysical objects '
+                            'in this reduction profile.',
+            'obs_table':    'View night-by-night observations '
+                            'and their reduction status.',
+            'query_db':     'Run custom queries against the '
+                            'reduction database tables.',
+            'qc_graphs':    'Interactive plots of quality control '
+                            'metrics over time.',
+            'basket':       'Collect and download files from this '
+                            'reduction profile.',
+        }
+        section_cards = []
+        for tpl_key, tpl_def in self._page_templates.items():
+            if not isinstance(tpl_def, dict):
+                continue
+            if tpl_def.get('parent') != 'home.data_portal.{apero_profile}':
+                continue
+            suffix = tpl_key.split('.')[-1]
+            if '{' in suffix:  # skip {objname} template entries
+                continue
+            card = {
+                'key':         suffix,
+                'label':       tpl_def.get('label', suffix),
+                'icon':        tpl_def.get('icon', ''),
+                'url':         _card_url_map.get(suffix, ''),
+                'description': _card_desc_map.get(suffix, ''),
+            }
+            section_cards.append(card)
 
         context = {
             'page_id': page_id,
@@ -2164,7 +2227,7 @@ class ARIApp(Flask):
         # -- Path checks --
         path_keys = [
             'PATH_RAW', 'PATH_PP', 'PATH_RED', 'PATH_CALIB',
-            'PATH_TELLU', 'PATH_LOG', 'PATH_LBL',
+            'PATH_OUT', 'PATH_TELLU', 'PATH_LOG', 'PATH_LBL',
         ]
         path_results = {}
         all_paths_ok = True
@@ -2827,6 +2890,25 @@ class ARIApp(Flask):
 
         return normalized
 
+    @staticmethod
+    def _normalize_object_section_pins(value) -> List[str]:
+        """Normalize object section ids used for per-user pinned section order."""
+        if not isinstance(value, list):
+            return []
+        normalized = []
+        seen = set()
+        for item in value:
+            sid = str(item).strip()
+            if not sid:
+                continue
+            if not re.match(r'^[a-zA-Z0-9_.\-]+$', sid):
+                continue
+            if sid in seen:
+                continue
+            seen.add(sid)
+            normalized.append(sid)
+        return normalized
+
     def _api_user_pins_list(self):
         """List pinned pages for the current user."""
         user_info = self._require_user()
@@ -2867,6 +2949,50 @@ class ARIApp(Flask):
         user = users.get(username)
         if user is not None:
             user['pinned_pages'] = pins
+            users[username] = user
+            save_users(users)
+
+    def _load_user_object_section_pins(self, username: str) -> List[str]:
+        """Load per-user object section pin order and migrate legacy users.yaml."""
+        file_pins = self._normalize_object_section_pins(
+            ud.list_object_section_pins(username)
+        )
+
+        users = load_users()
+        user = users.get(username, {})
+        legacy = user.get('object_section', {}) if isinstance(user, dict) else {}
+        legacy_pins = self._normalize_object_section_pins(
+            legacy.get('pinned', []) if isinstance(legacy, dict) else []
+        )
+
+        pins = file_pins or legacy_pins
+        if pins != file_pins:
+            ud.save_object_section(username, {'pinned': pins})
+
+        if user and legacy_pins != pins:
+            section_cfg = user.get('object_section', {})
+            if not isinstance(section_cfg, dict):
+                section_cfg = {}
+            section_cfg['pinned'] = pins
+            user['object_section'] = section_cfg
+            users[username] = user
+            save_users(users)
+
+        return pins
+
+    def _save_user_object_section_pins(self, username: str, pins: List[str]) -> None:
+        """Persist object section pin order to file and legacy users.yaml field."""
+        pins = self._normalize_object_section_pins(pins)
+        ud.save_object_section(username, {'pinned': pins})
+
+        users = load_users()
+        user = users.get(username)
+        if user is not None:
+            section_cfg = user.get('object_section', {})
+            if not isinstance(section_cfg, dict):
+                section_cfg = {}
+            section_cfg['pinned'] = pins
+            user['object_section'] = section_cfg
             users[username] = user
             save_users(users)
 
@@ -2952,6 +3078,62 @@ class ARIApp(Flask):
         pins = self._normalize_pinned_pages(pins)
         self._save_user_pins(username, pins)
         return jsonify(success=True, pins=pins)
+
+    def _api_user_object_sections_get(self):
+        """Get global object page section pin order for current user."""
+        user_info = self._require_user()
+        if not user_info:
+            return jsonify(success=False, error='Unauthorized'), 401
+        username = user_info['username']
+        pinned = self._load_user_object_section_pins(username)
+        return jsonify(success=True, object_section={'pinned': pinned})
+
+    def _api_user_object_sections_toggle(self):
+        """Toggle a section id in the global object page pinned list."""
+        user_info = self._require_user()
+        if not user_info:
+            return jsonify(success=False, error='Unauthorized'), 401
+
+        body = request.get_json() or {}
+        section_id = str(body.get('section_id', '')).strip()
+        if not section_id:
+            return jsonify(success=False, error='section_id is required'), 400
+        section_id = self._normalize_object_section_pins([section_id])
+        if not section_id:
+            return jsonify(success=False, error='Invalid section_id'), 400
+        section_id = section_id[0]
+
+        username = user_info['username']
+        pinned = self._load_user_object_section_pins(username)
+        if section_id in pinned:
+            pinned = [sid for sid in pinned if sid != section_id]
+            is_pinned = False
+        else:
+            pinned.append(section_id)
+            is_pinned = True
+        self._save_user_object_section_pins(username, pinned)
+        return jsonify(success=True,
+                       pinned=is_pinned,
+                       object_section={'pinned': pinned})
+
+    def _api_user_object_sections_reorder(self):
+        """Save explicit order for globally pinned object sections."""
+        user_info = self._require_user()
+        if not user_info:
+            return jsonify(success=False, error='Unauthorized'), 401
+
+        body = request.get_json() or {}
+        ids = body.get('ids', [])
+        if not isinstance(ids, list):
+            return jsonify(success=False, error='ids must be a list'), 400
+        ids = self._normalize_object_section_pins(ids)
+
+        username = user_info['username']
+        self._load_user_object_section_pins(username)
+        pinned = ud.reorder_object_section_pins(username, ids)
+        pinned = self._normalize_object_section_pins(pinned)
+        self._save_user_object_section_pins(username, pinned)
+        return jsonify(success=True, object_section={'pinned': pinned})
 
     # -----------------------------------------------------------------
     # Documentation views
@@ -3236,7 +3418,7 @@ class ARIApp(Flask):
         _FKIND_COLS = [
             ('raw',   'raw files'),
             ('pp',    'pp files'),
-            ('red',   'red files'),
+            ('ext',   'ext files'),
             ('tcorr', 'tcorr files'),
             ('ccf',   'ccf files'),
             ('efits', 'e.fits files'),
@@ -3532,250 +3714,569 @@ class ARIApp(Flask):
                 error='Object not found or not accessible for this user.',
             ), 404
 
-        def _first_present(row, keys):
-            for key in keys:
-                if key in row and row.get(key) not in (None, ''):
-                    return row.get(key)
-            return None
+        profile_data = profile.get('data') if isinstance(profile, dict) else {}
+        if not isinstance(profile_data, dict):
+            profile_data = {}
+        instrument_profile_file = str(
+            profile_data.get('APERO_INSTRUMENT_PROFILE', '')
+            or profile_data.get('apero_instrument_profile', '')
+            or ''
+        ).strip()
 
-        def _fmt(value):
-            return '[PLACEHOLDER]' if value in (None, '') else value
+        path_lbl = str(
+            self._profile_get_path(profile_data, 'PATH_LBL', '') or ''
+        ).strip()
 
-        objects_dir = profile_dir / 'objects'
-        fkind_map = {
-            'raw': 'raw',
-            'pp': 'pp',
-            'red': 'red',
-            'tcorr': 'tcorr',
-            'ccf': 'ccf',
-            'lbl': 'lbl',
-        }
-        ftable_data = {}
-        for fkind, stem in fkind_map.items():
-            fpath = objects_dir / f'ftable_{stem}_{obj_row.get("OBJNAME", objname)}.json'
-            all_kind_rows = []
-            if fpath.exists():
-                try:
-                    with open(fpath, encoding='utf-8') as _fh:
-                        _data = _json.load(_fh)
-                    all_kind_rows = _data.get('rows') or []
-                except Exception:
-                    all_kind_rows = []
-            acc_kind_rows = [
-                r for r in all_kind_rows
-                if str(r.get('KW_RUN_ID', '') or '') in accessible_run_ids
-            ]
-            ftable_data[fkind] = {
-                'all': all_kind_rows,
-                'accessible': acc_kind_rows,
-            }
-
-        def _fmt_count(n_accessible, n_total):
-            return f'{n_accessible} ({n_total})'
-
-        def _qc_counts(rows):
-            total = len(rows)
-            passed = sum(1 for r in rows if int(r.get('PASSED_ALL_QC') or 0) == 1)
-            return {
-                'total': total,
-                'passed': passed,
-                'failed': max(0, total - passed),
-            }
-
-        def _min_time(rows, key):
-            vals = [str(r.get(key)) for r in rows if r.get(key)]
-            return min(vals) if vals else None
-
-        def _max_time(rows, key):
-            vals = [str(r.get(key)) for r in rows if r.get(key)]
-            return max(vals) if vals else None
-
-        raw_rows = ftable_data['raw']['accessible']
-        pp_rows = ftable_data['pp']['accessible']
-        red_rows = ftable_data['red']['accessible']
-        tcorr_rows = ftable_data['tcorr']['accessible']
-        ccf_rows = ftable_data['ccf']['accessible']
-        lbl_rows = ftable_data['lbl']['accessible']
-
-        raw_rows_all = ftable_data['raw']['all']
-        pp_rows_all = ftable_data['pp']['all']
-        red_rows_all = ftable_data['red']['all']
-        tcorr_rows_all = ftable_data['tcorr']['all']
-        ccf_rows_all = ftable_data['ccf']['all']
-        lbl_rows_all = ftable_data['lbl']['all']
-
-        target_info = {
-            'object_name': _fmt(obj_row.get('OBJNAME')),
-            'ra_deg': _fmt(_first_present(obj_row, ['RA [Deg]', 'RA_DEG'])),
-            'ra_source': _fmt(_first_present(obj_row, ['RA source', 'RA_SOURCE'])),
-            'dec_deg': _fmt(_first_present(obj_row, ['Dec [Deg]', 'DEC_DEG'])),
-            'dec_source': _fmt(_first_present(obj_row, ['Dec source', 'DEC_SOURCE'])),
-            'finder_chart': '[PLACEHOLDER]',
-            'teff_k': _fmt(_first_present(obj_row, ['Teff [K]', 'TEFF'])),
-            'teff_source': _fmt(_first_present(obj_row, ['Teff source', 'TEFF_SOURCE'])),
-            'spectral_type': _fmt(_first_present(obj_row, ['SpT', 'SPECTRAL_TYPE'])),
-            'spectral_type_source': _fmt(_first_present(obj_row, ['SpT source', 'SPT_SOURCE'])),
-            'pmra': _fmt(_first_present(obj_row, ['PMRA [mas/yr]', 'PMRA'])),
-            'pmdec': _fmt(_first_present(obj_row, ['PMDE [mas/yr]', 'PMDEC [mas/yr]', 'PMDEC'])),
-            'parallax': _fmt(_first_present(obj_row, ['Plx [mas]', 'PLX'])),
-            'radial_velocity': _fmt(_first_present(obj_row, ['RV [km/s]', 'RV'])),
-            'radial_velocity_source': _fmt(_first_present(obj_row, ['RV source', 'RV_SOURCE'])),
-            'aliases': _fmt(_first_present(obj_row, ['ALIASES', 'ALIASES_STR'])),
-            'object_names_in_headers': '[PLACEHOLDER]',
-            'ob_names_in_headers': '[PLACEHOLDER]',
-            'pi_names_in_headers': '[PLACEHOLDER]',
-            'project_run_names_in_headers': '[PLACEHOLDER]',
-        }
-
-        raw_stats = _qc_counts(raw_rows)
-        pp_stats = _qc_counts(pp_rows)
-        ext_stats = _qc_counts(red_rows)
-        tcorr_stats = _qc_counts(tcorr_rows)
-        ccf_stats = _qc_counts(ccf_rows)
-        lbl_stats = _qc_counts(lbl_rows)
-
-        raw_stats_all = _qc_counts(raw_rows_all)
-        pp_stats_all = _qc_counts(pp_rows_all)
-        ext_stats_all = _qc_counts(red_rows_all)
-        tcorr_stats_all = _qc_counts(tcorr_rows_all)
-        ccf_stats_all = _qc_counts(ccf_rows_all)
-        lbl_stats_all = _qc_counts(lbl_rows_all)
-
-        spectrum_info = {
-            'dprtypes': _fmt(_first_present(obj_row, ['DPRTYPE', 'ALL_DPRTYPES'])),
-            'raw_total': _fmt_count(raw_stats['total'], raw_stats_all['total']),
-            'raw_rejected': _fmt_count(raw_stats['failed'], raw_stats_all['failed']),
-            'raw_first_mid': _fmt(_min_time(raw_rows, 'MID_OBS_TIME')),
-            'raw_last_mid': _fmt(_max_time(raw_rows, 'MID_OBS_TIME')),
-            'pp_total': _fmt_count(pp_stats['total'], pp_stats_all['total']),
-            'pp_passed': _fmt_count(pp_stats['passed'], pp_stats_all['passed']),
-            'pp_failed': _fmt_count(pp_stats['failed'], pp_stats_all['failed']),
-            'pp_first_mid': _fmt(_min_time(pp_rows, 'MID_OBS_TIME')),
-            'pp_last_mid': _fmt(_max_time(pp_rows, 'MID_OBS_TIME')),
-            'pp_last_processed': _fmt(_max_time(pp_rows, 'LAST_MODIFIED')),
-            'pp_version': '[PLACEHOLDER]',
-            'ext_total': _fmt_count(ext_stats['total'], ext_stats_all['total']),
-            'ext_passed': _fmt_count(ext_stats['passed'], ext_stats_all['passed']),
-            'ext_failed': _fmt_count(ext_stats['failed'], ext_stats_all['failed']),
-            'ext_first_mid': _fmt(_min_time(red_rows, 'MID_OBS_TIME')),
-            'ext_last_mid': _fmt(_max_time(red_rows, 'MID_OBS_TIME')),
-            'ext_last_processed': _fmt(_max_time(red_rows, 'LAST_MODIFIED')),
-            'ext_version': '[PLACEHOLDER]',
-            'tcorr_total': _fmt_count(tcorr_stats['total'], tcorr_stats_all['total']),
-            'tcorr_passed': _fmt_count(tcorr_stats['passed'], tcorr_stats_all['passed']),
-            'tcorr_failed': _fmt_count(tcorr_stats['failed'], tcorr_stats_all['failed']),
-            'tcorr_first_mid': _fmt(_min_time(tcorr_rows, 'MID_OBS_TIME')),
-            'tcorr_last_mid': _fmt(_max_time(tcorr_rows, 'MID_OBS_TIME')),
-            'tcorr_last_processed': _fmt(_max_time(tcorr_rows, 'LAST_MODIFIED')),
-            'tcorr_version': '[PLACEHOLDER]',
-            'median_snr_y': '[PLACEHOLDER]',
-            'median_snr_h': '[PLACEHOLDER]',
-        }
-
-        lbl_info = {
-            'rv_uncertainty_percentiles': '[PLACEHOLDER]',
-            'rv_abs_dev_percentiles': '[PLACEHOLDER]',
-            'measurement_count': _fmt_count(lbl_stats['total'], lbl_stats_all['total']),
-            'spurious_low_points': '[PLACEHOLDER]',
-            'spurious_high_points': '[PLACEHOLDER]',
-            'n_nights': len({str(r.get('OBS_DIR')) for r in lbl_rows if r.get('OBS_DIR')}),
-            'n_reset_rv_points': '[PLACEHOLDER]',
-            'systemic_velocity': '[PLACEHOLDER]',
-            'valid_velocity_domain': '[PLACEHOLDER]',
-            'lbl_version': '[PLACEHOLDER]',
-        }
-
-        ccf_info = {
-            'mask_used': '[PLACEHOLDER]',
-            'systemic_velocity': '[PLACEHOLDER]',
-            'fwhm': '[PLACEHOLDER]',
-            'total_files': _fmt_count(ccf_stats['total'], ccf_stats_all['total']),
-            'passed_qc': _fmt_count(ccf_stats['passed'], ccf_stats_all['passed']),
-            'failed_qc': _fmt_count(ccf_stats['failed'], ccf_stats_all['failed']),
-            'first_mid': _fmt(_min_time(ccf_rows, 'MID_OBS_TIME')),
-            'last_mid': _fmt(_max_time(ccf_rows, 'MID_OBS_TIME')),
-            'last_processed': _fmt(_max_time(ccf_rows, 'LAST_MODIFIED')),
-            'ccf_version': '[PLACEHOLDER]',
-        }
-
-        # Build night-level rows from ext/red and tcorr file tables.
-        nights = {}
-        for row in red_rows_all:
-            nkey = str(row.get('OBS_DIR') or '')
-            if not nkey:
-                continue
-            entry = nights.setdefault(nkey, {
-                'obs_dir': nkey,
-                'ext_rows_all': [],
-                'ext_rows': [],
-                'tcorr_rows_all': [],
-                'tcorr_rows': [],
-            })
-            entry['ext_rows_all'].append(row)
-            if str(row.get('KW_RUN_ID', '') or '') in accessible_run_ids:
-                entry['ext_rows'].append(row)
-        for row in tcorr_rows_all:
-            nkey = str(row.get('OBS_DIR') or '')
-            if not nkey:
-                continue
-            entry = nights.setdefault(nkey, {
-                'obs_dir': nkey,
-                'ext_rows_all': [],
-                'ext_rows': [],
-                'tcorr_rows_all': [],
-                'tcorr_rows': [],
-            })
-            entry['tcorr_rows_all'].append(row)
-            if str(row.get('KW_RUN_ID', '') or '') in accessible_run_ids:
-                entry['tcorr_rows'].append(row)
-
-        time_series = []
-        for nkey in sorted(nights.keys()):
-            nentry = nights[nkey]
-            ext_n_all = nentry['ext_rows_all']
-            ext_n = nentry['ext_rows']
-            tc_n_all = nentry['tcorr_rows_all']
-            tc_n = nentry['tcorr_rows']
-            all_n = ext_n + tc_n
-            dprtypes = sorted({
-                str(r.get('KW_DPRTYPE'))
-                for r in all_n if r.get('KW_DPRTYPE')
-            })
-            time_series.append({
-                'obs_dir': nkey,
-                'first_obs_mid': _fmt(_min_time(all_n, 'MID_OBS_TIME')),
-                'last_obs_mid': _fmt(_max_time(all_n, 'MID_OBS_TIME')),
-                'num_ext': _fmt_count(len(ext_n), len(ext_n_all)),
-                'num_tcorr': _fmt_count(len(tc_n), len(tc_n_all)),
-                'seeing': '[PLACEHOLDER]',
-                'airmass': '[PLACEHOLDER]',
-                'mean_exptime': '[PLACEHOLDER]',
-                'total_exptime': '[PLACEHOLDER]',
-                'snr_order_15': '[PLACEHOLDER]',
-                'snr_order_60': '[PLACEHOLDER]',
-                'dprtypes': ', '.join(dprtypes) if dprtypes else '[PLACEHOLDER]',
-                'ext_files_label': f'{_fmt_count(len(ext_n), len(ext_n_all))} [download]',
-                'tcorr_files_label': f'{_fmt_count(len(tc_n), len(tc_n_all))} [download]',
-                'request_ext_files': 'Extracted 2D files',
-                'request_tcorr_files': 'Telluric corrected 2D files',
-            })
+        sections = build_object_page_stats(
+            base_dir=base_dir,
+            instrument=instrument,
+            profile_id=profile_id,
+            obj_row=obj_row,
+            objname=objname,
+            accessible_run_ids=accessible_run_ids,
+            instrument_profile_file=instrument_profile_file,
+            path_lbl=path_lbl,
+        )
+        labels = sections.pop('labels', {})
 
         return jsonify(
             success=True,
             object_name=obj_row.get('OBJNAME', objname),
             profile_id=profile_id,
             generated_at=object_table.get('generated_at'),
-            sections={
-                'target_info': target_info,
-                'spectrum': spectrum_info,
-                'lbl': lbl_info,
-                'ccf': ccf_info,
-                'time_series': time_series,
-                'debug': {
-                    'status': 'coming_soon',
-                    'message': 'Coming soon',
-                },
-            },
+            sections=sections,
+            labels=labels,
+        )
+
+    # -----------------------------------------------------------------
+    # Download basket helpers
+    # -----------------------------------------------------------------
+
+    def _basket_access_check(self):
+        """
+        Shared access-check helper for all basket routes.
+        Returns (user_info, None) on success, (None, error_response) on failure.
+        """
+        user_info = get_effective_user(session)
+        if user_info:
+            perms = resolve_user_permissions(
+                user_info['groups'], self.ari_groups
+            )
+        else:
+            perms = get_public_permissions()
+        if 'view.data_portal' not in perms:
+            return None, (jsonify(success=False, error='Unauthorized'), 401)
+        if not user_info:
+            return None, (jsonify(success=False, error='Login required'), 401)
+        return user_info, None
+
+    def _build_profile_cfgs(self, user_info) -> dict:
+        """
+        Return {profile_id: profile_data} for all profiles accessible to the user.
+        Used to resolve file paths during basket compilation.
+        """
+        accessible = get_accessible_profiles(user_info, self.ari_groups)
+        return {p['profile_id']: p.get('data', {}) for p in accessible}
+
+    def _all_accessible_run_ids(self, user_info) -> set:
+        """Return the union of run_ids across all instruments the user can see."""
+        accessible = get_accessible_profiles(user_info, self.ari_groups)
+        all_run_ids: set = set()
+        for prof in accessible:
+            instrument = prof.get('instrument', '')
+            if instrument:
+                all_run_ids |= self._get_user_accessible_run_ids(
+                    user_info, instrument
+                )
+        return all_run_ids
+
+    # -----------------------------------------------------------------
+    # Basket: page view
+    # -----------------------------------------------------------------
+
+    def _ri_basket_view(self, profile_id):
+        """Serve the download basket page for a profile."""
+        user_info = get_effective_user(session)
+        if user_info:
+            perms = resolve_user_permissions(
+                user_info['groups'], self.ari_groups
+            )
+        else:
+            perms = get_public_permissions()
+
+        if 'view.data_portal' not in perms:
+            flash('You do not have permission to view this page.', 'warning')
+            return redirect(url_for('login'))
+
+        accessible = get_accessible_profiles(user_info, self.ari_groups)
+        profile = None
+        for prof in accessible:
+            if prof['profile_id'] == profile_id:
+                profile = prof
+                break
+
+        if not profile:
+            flash('Profile not found or access denied.', 'warning')
+            return redirect(url_for('home_data_portal'))
+
+        page_id = f'home.data_portal.{profile_id}.basket'
+        colors = self._instrument_colors()
+        color = colors.get(profile['instrument'], self._INSTRUMENT_PALETTE[0])
+
+        sidebar_tree = self._build_data_portal_sidebar_tree(
+            accessible_profiles=accessible,
+            active_page_id=page_id,
+            user_permissions=perms,
+            user_info=user_info,
+            current_profile_id=profile_id,
+        )
+
+        context = {
+            'page_id': page_id,
+            'page_label': f'{profile_id}: Download Basket',
+            'page_icon': 'fa-solid fa-basket-shopping',
+            'is_parent': False,
+            'profile': profile,
+            'profile_color': color,
+            'sidebar_root': 'home.data_portal',
+            'sidebar_label': 'Data Portal',
+            'sidebar_icon': 'fa-solid fa-database',
+            'sidebar_url': '/data_portal',
+            'sidebar_tree': sidebar_tree,
+        }
+        return render_template('data_portal/basket.html', **context)
+
+    # -----------------------------------------------------------------
+    # Basket: API – get basket contents
+    # -----------------------------------------------------------------
+
+    def _api_basket_get(self):
+        """Return the user's basket entries (filtered to accessible run_ids)."""
+        user_info, err = self._basket_access_check()
+        if err:
+            return err
+
+        username = user_info['username']
+        profile_id = request.args.get('profile_id', '').strip()
+        accessible_run_ids = self._all_accessible_run_ids(user_info)
+
+        entries = bk.load_basket(username)
+        # Security: only return entries the user still has access to
+        entries = [
+            e for e in entries
+            if str(e.get('kw_run_id', '') or '').strip() in accessible_run_ids
+        ]
+        if profile_id:
+            entries = [e for e in entries if e.get('profile_id') == profile_id]
+
+        profile_cfgs = self._build_profile_cfgs(user_info)
+        summary = bk.basket_summary(username, profile_cfgs, accessible_run_ids)
+
+        return jsonify(success=True, entries=entries, summary=summary,
+                       total=len(entries))
+
+    # -----------------------------------------------------------------
+    # Basket: API – summary (file counts + sizes)
+    # -----------------------------------------------------------------
+
+    def _api_basket_summary(self):
+        """Return basket summary: total files, size, missing files."""
+        user_info, err = self._basket_access_check()
+        if err:
+            return err
+
+        username = user_info['username']
+        accessible_run_ids = self._all_accessible_run_ids(user_info)
+        profile_cfgs = self._build_profile_cfgs(user_info)
+        bk.cleanup_expired_downloads(username)
+        summary = bk.basket_summary(username, profile_cfgs, accessible_run_ids)
+        return jsonify(success=True, **summary)
+
+    # -----------------------------------------------------------------
+    # Basket: API – add entries
+    # -----------------------------------------------------------------
+
+    def _api_basket_add(self):
+        """Add file entries to the basket (POST JSON {entries: [...]})."""
+        user_info, err = self._basket_access_check()
+        if err:
+            return err
+
+        data = request.get_json(silent=True) or {}
+        new_entries = data.get('entries', [])
+        if not isinstance(new_entries, list):
+            return jsonify(success=False, error='entries must be a list'), 400
+
+        username = user_info['username']
+        accessible_run_ids = self._all_accessible_run_ids(user_info)
+        added = bk.add_to_basket(username, new_entries, accessible_run_ids)
+        basket = bk.load_basket(username)
+        skipped = len(new_entries) - added
+        return jsonify(success=True, added=added, skipped=skipped,
+                       basket_count=len(basket))
+
+    # -----------------------------------------------------------------
+    # Basket: API – remove entries
+    # -----------------------------------------------------------------
+
+    def _api_basket_remove(self):
+        """Remove entries from the basket (POST JSON {ids: [...]})."""
+        user_info, err = self._basket_access_check()
+        if err:
+            return err
+
+        data = request.get_json(silent=True) or {}
+        ids = data.get('ids', [])
+        if not isinstance(ids, list):
+            return jsonify(success=False, error='ids must be a list'), 400
+
+        username = user_info['username']
+        removed = bk.remove_from_basket(username, ids)
+        return jsonify(success=True, removed=removed)
+
+    # -----------------------------------------------------------------
+    # Basket: API – clear
+    # -----------------------------------------------------------------
+
+    def _api_basket_clear(self):
+        """Clear basket (POST JSON {profile_id?: ...})."""
+        user_info, err = self._basket_access_check()
+        if err:
+            return err
+
+        data = request.get_json(silent=True) or {}
+        profile_id = data.get('profile_id') or None
+        username = user_info['username']
+        removed = bk.clear_basket(username, profile_id)
+        return jsonify(success=True, removed=removed)
+
+    # -----------------------------------------------------------------
+    # Basket: API – compile download
+    # -----------------------------------------------------------------
+
+    def _api_basket_compile(self):
+        """
+        Start background download compilation.
+        POST JSON {fmt, chunk_size_gb, email_on_done, profile_id?}
+        """
+        user_info, err = self._basket_access_check()
+        if err:
+            return err
+
+        data = request.get_json(silent=True) or {}
+        fmt = str(data.get('fmt', 'zip') or 'zip')
+        chunk_size_gb = data.get('chunk_size_gb')
+        if chunk_size_gb is not None:
+            try:
+                chunk_size_gb = float(chunk_size_gb)
+            except (TypeError, ValueError):
+                chunk_size_gb = None
+        email_on_done = bool(data.get('email_on_done', False))
+        profile_id = data.get('profile_id') or None
+
+        username = user_info['username']
+        accessible_run_ids = self._all_accessible_run_ids(user_info)
+        profile_cfgs = self._build_profile_cfgs(user_info)
+
+        # Hard limit: no new compilations once stored downloads exceed 5 GB.
+        usage = bk.get_downloads_usage(username)
+        quota_bytes = bk.get_downloads_storage_limit_bytes()
+        if usage.get('total_bytes', 0) >= quota_bytes:
+            return jsonify(
+                success=False,
+                error=('Download storage limit reached (5 GB). '
+                       'Please remove old compilations in Recent compilations.'),
+                quota_reached=True,
+                download_usage=usage,
+                download_limit_bytes=quota_bytes,
+            ), 400
+
+        entries = bk.load_basket(username)
+        if profile_id:
+            entries = [e for e in entries if e.get('profile_id') == profile_id]
+        if not entries:
+            return jsonify(success=False, error='Basket is empty'), 400
+
+        # Resolve sender email for notification
+        user_email = ''
+        if email_on_done:
+            user_email = self._get_primary_contact_email(user_info)
+
+        bk.cleanup_expired_downloads(username)
+        job_id = bk.create_download_job(
+            username=username,
+            entries=entries,
+            profile_cfgs=profile_cfgs,
+            accessible_run_ids=accessible_run_ids,
+            fmt=fmt,
+            chunk_size_gb=chunk_size_gb,
+            email_on_done=email_on_done,
+            user_email=user_email,
+            profile_id=profile_id or '',
+        )
+        return jsonify(success=True, job_id=job_id)
+
+    # -----------------------------------------------------------------
+    # Basket: API – compilation status
+    # -----------------------------------------------------------------
+
+    def _api_basket_compile_status(self, job_id):
+        """Get the status of a compilation job."""
+        user_info, err = self._basket_access_check()
+        if err:
+            return err
+
+        username = user_info['username']
+        meta = bk.get_job_status(username, job_id)
+        if meta is None:
+            return jsonify(success=False, error='Job not found'), 404
+        # Strip internal file paths from response for security
+        safe_meta = {k: v for k, v in meta.items() if k != 'chunks'}
+        safe_chunks = []
+        for chunk in meta.get('chunks', []):
+            safe_chunks.append({
+                'index': chunk.get('index'),
+                'filename': chunk.get('filename'),
+                'size_bytes': chunk.get('size_bytes'),
+                'file_count': chunk.get('file_count'),
+            })
+        safe_meta['chunks'] = safe_chunks
+        return jsonify(success=True, job=safe_meta)
+
+    # -----------------------------------------------------------------
+    # Basket: API – download compiled file
+    # -----------------------------------------------------------------
+
+    def _api_basket_download(self, job_id, chunk_idx):
+        """Serve a compiled archive chunk for download."""
+        user_info, err = self._basket_access_check()
+        if err:
+            return err
+
+        username = user_info['username']
+        path = bk.get_job_chunk_path(username, job_id, chunk_idx)
+        if path is None:
+            return jsonify(success=False, error='File not found or not ready'), 404
+
+        return send_file(
+            str(path),
+            as_attachment=True,
+            download_name=path.name,
+        )
+
+    # -----------------------------------------------------------------
+    # Basket: API – recent jobs
+    # -----------------------------------------------------------------
+
+    def _api_basket_jobs(self):
+        """Return recent compilation jobs for the user."""
+        user_info, err = self._basket_access_check()
+        if err:
+            return err
+
+        username = user_info['username']
+        bk.cleanup_expired_downloads(username)
+        jobs = bk.list_recent_jobs(username, limit=10)
+        usage = bk.get_downloads_usage(username)
+        limit_bytes = bk.get_downloads_storage_limit_bytes()
+
+        # Strip internal paths from job metadata for security
+        safe_jobs = []
+        for job in jobs:
+            sj = {k: v for k, v in job.items() if k != 'chunks'}
+            safe_chunks = []
+            for chunk in job.get('chunks', []):
+                safe_chunks.append({
+                    'index': chunk.get('index'),
+                    'filename': chunk.get('filename'),
+                    'size_bytes': chunk.get('size_bytes'),
+                    'file_count': chunk.get('file_count'),
+                })
+            sj['chunks'] = safe_chunks
+            safe_jobs.append(sj)
+
+        return jsonify(success=True,
+                       jobs=safe_jobs,
+                       download_usage=usage,
+                       download_limit_bytes=limit_bytes,
+                       quota_reached=(usage.get('total_bytes', 0) >= limit_bytes))
+
+    def _api_basket_jobs_remove(self):
+        """Remove one completed/failed compilation job for the user."""
+        user_info, err = self._basket_access_check()
+        if err:
+            return err
+
+        data = request.get_json(silent=True) or {}
+        job_id = str(data.get('job_id', '') or '').strip()
+        if not job_id:
+            return jsonify(success=False, error='job_id is required'), 400
+
+        username = user_info['username']
+        result = bk.remove_download_job(username, job_id)
+        if not result.get('success'):
+            return jsonify(success=False,
+                           error=result.get('error', 'Could not remove job')), 400
+        usage = bk.get_downloads_usage(username)
+        limit_bytes = bk.get_downloads_storage_limit_bytes()
+        return jsonify(success=True,
+                       removed=result.get('removed', 0),
+                       download_usage=usage,
+                       download_limit_bytes=limit_bytes,
+                       quota_reached=(usage.get('total_bytes', 0) >= limit_bytes))
+
+    def _api_basket_jobs_clear(self):
+        """Remove all completed/failed compilation jobs for the user."""
+        user_info, err = self._basket_access_check()
+        if err:
+            return err
+
+        username = user_info['username']
+        result = bk.clear_download_jobs(username)
+        usage = bk.get_downloads_usage(username)
+        limit_bytes = bk.get_downloads_storage_limit_bytes()
+        return jsonify(success=True,
+                       removed=result.get('removed', 0),
+                       skipped=result.get('skipped', 0),
+                       download_usage=usage,
+                       download_limit_bytes=limit_bytes,
+                       quota_reached=(usage.get('total_bytes', 0) >= limit_bytes))
+
+    # -----------------------------------------------------------------
+    # Basket: API – add from ftable by obs_dir + fkind
+    # -----------------------------------------------------------------
+
+    def _api_basket_add_from_ftable(self):
+        """
+        Add accessible files for a specific obs_dir + fkind to the basket.
+        POST with query params: profile_id, objname, obs_dir, fkind
+        """
+        user_info, err = self._basket_access_check()
+        if err:
+            return err
+
+        profile_id = request.args.get('profile_id', '').strip()
+        objname = request.args.get('objname', '').strip()
+        obs_dir = request.args.get('obs_dir', '').strip()
+        fkind = request.args.get('fkind', 'ext').strip()
+
+        if not profile_id or not objname:
+            return jsonify(success=False, error='Missing profile_id or objname'), 400
+
+        accessible = get_accessible_profiles(user_info, self.ari_groups)
+        profile = None
+        for prof in accessible:
+            if prof['profile_id'] == profile_id:
+                profile = prof
+                break
+        if not profile:
+            return jsonify(success=False, error='Profile not found'), 404
+
+        instrument = profile['instrument']
+        accessible_run_ids = self._get_user_accessible_run_ids(
+            user_info, instrument
+        )
+
+        base_dir = Path(self.args.data_dir or str(Path.home() / '.ari'))
+        rows, _, _ = bk.load_ftable_rows(
+            base_dir, instrument, profile_id, objname, fkind
+        )
+        # filter by access and by obs_dir
+        rows = bk.filter_accessible_rows(rows, accessible_run_ids)
+        if obs_dir:
+            rows = [r for r in rows if str(r.get('OBS_DIR', '') or '') == obs_dir]
+
+        entries = [
+            {
+                'profile_id': profile_id,
+                'instrument': instrument,
+                'objname': objname,
+                'block_kind': r.get('BLOCK_KIND', ''),
+                'obs_dir': r.get('OBS_DIR', ''),
+                'filename': r.get('FILENAME', ''),
+                'kw_output': r.get('KW_OUTPUT', ''),
+                'kw_run_id': r.get('KW_RUN_ID', ''),
+                'kw_dprtype': r.get('KW_DPRTYPE', ''),
+                'kw_fiber': r.get('KW_FIBER', ''),
+                'kw_pi_name': r.get('KW_PI_NAME', ''),
+                'mid_obs_time': r.get('MID_OBS_TIME', ''),
+                'passed_all_qc': r.get('PASSED_ALL_QC'),
+                'identifier': r.get('IDENTIFIER', ''),
+            }
+            for r in rows
+        ]
+
+        username = user_info['username']
+        added = bk.add_to_basket(username, entries, accessible_run_ids)
+        basket = bk.load_basket(username)
+        return jsonify(success=True, added=added, basket_count=len(basket))
+
+    # -----------------------------------------------------------------
+    # File browser API
+    # -----------------------------------------------------------------
+
+    def _api_file_browser(self):
+        """
+        Return ftable_all rows for an object, filtered to accessible run_ids
+        and optionally by a preset.
+        GET ?profile_id=&objname=&preset=default
+        """
+        import time as _time
+        t_start = _time.time()
+
+        user_info = get_effective_user(session)
+        if user_info:
+            perms = resolve_user_permissions(
+                user_info['groups'], self.ari_groups
+            )
+        else:
+            perms = get_public_permissions()
+
+        if 'view.data_portal' not in perms:
+            return jsonify(success=False, error='Unauthorized'), 401
+
+        profile_id = request.args.get('profile_id', '').strip()
+        objname = request.args.get('objname', '').strip()
+        preset = request.args.get('preset', 'default').strip() or 'default'
+
+        if not profile_id or not objname:
+            return jsonify(success=False, error='Missing profile_id or objname'), 400
+
+        accessible = get_accessible_profiles(user_info, self.ari_groups)
+        profile = None
+        for prof in accessible:
+            if prof['profile_id'] == profile_id:
+                profile = prof
+                break
+        if not profile:
+            return jsonify(success=False, error='Profile not found'), 404
+
+        instrument = profile['instrument']
+        accessible_run_ids = self._get_user_accessible_run_ids(
+            user_info, instrument
+        )
+
+        base_dir = Path(self.args.data_dir or str(Path.home() / '.ari'))
+        all_rows, _, generated_at = bk.load_ftable_rows(
+            base_dir, instrument, profile_id, objname, 'all'
+        )
+        total_m = len(all_rows)
+
+        # Access filter (security gate)
+        accessible_rows = bk.filter_accessible_rows(all_rows, accessible_run_ids)
+
+        # Preset filter
+        filtered = bk.apply_preset_filter(accessible_rows, preset)
+
+        query_time = _time.time() - t_start
+        return jsonify(
+            success=True,
+            rows=filtered,
+            total=total_m,
+            accessible=len(accessible_rows),
+            preset=preset,
+            generated_at=generated_at,
+            query_time=round(query_time, 3),
         )
 
     def _api_obs_table(self):
@@ -3938,7 +4439,7 @@ class ARIApp(Flask):
         result = {}
 
         for label, key in table_key_map.items():
-            table_name = str(cfg.get(key, '')).strip()
+            table_name = str(self._profile_get_db(cfg, key, '')).strip()
             if not table_name:
                 continue
 
@@ -4235,6 +4736,21 @@ class ARIApp(Flask):
     def _load_query_db_presets(self, profile):
         """Load query-db presets and replace table placeholders.
 
+        Presets are loaded from a per-instrument text file referenced by
+        ``general.db-query-preset-file`` in the instrument profile YAML.
+        The text file lives under ``resources/aprofile_qdb_presets/``.
+        If that key is absent or the file is missing, fall back to the
+        global ``resources/db_presets.yaml``.
+
+        Text file format::
+
+            ================
+            Preset name here
+            ================
+            SELECT ...
+            FROM {FINDEX_TABLENAME}
+            WHERE ...
+
         Supported placeholders include both {LABEL} and
         {LABEL_TABLENAME}, where LABEL is one of the db-access table labels
         (e.g. FINDEX, ASTROM, CALIB).
@@ -4270,6 +4786,33 @@ class ARIApp(Flask):
                 else:
                     constants[skey] = str(value)
 
+        def _replace_placeholders(sql):
+            if not isinstance(sql, str):
+                return ''
+            out = sql
+            for key, value in constants.items():
+                out = out.replace(f'{{{key}}}', value)
+            for label, tname in table_names.items():
+                out = out.replace(f'{{{label}}}', tname)
+                out = out.replace(f'{{{label}_TABLENAME}}', tname)
+            return out.strip()
+
+        # ── Try per-instrument text preset file ──────────────────────────
+        general_cfg = cfg.get('general', {})
+        preset_filename = (
+            general_cfg.get('db-query-preset-file', '').strip()
+            if isinstance(general_cfg, dict) else ''
+        )
+        if preset_filename:
+            text_path = (PACKAGE_DIR / 'resources'
+                         / 'aprofile_qdb_presets' / preset_filename)
+            if text_path.exists():
+                return self._parse_text_presets(
+                    text_path.read_text(encoding='utf-8'),
+                    _replace_placeholders,
+                )
+
+        # ── Fall back to global YAML preset file ─────────────────────────
         preset_path = PACKAGE_DIR / 'resources' / 'db_presets.yaml'
         if not preset_path.exists():
             return []
@@ -4281,17 +4824,6 @@ class ARIApp(Flask):
             return []
 
         presets = []
-
-        def _replace_placeholders(sql):
-            if not isinstance(sql, str):
-                return ''
-            out = sql
-            for key, value in constants.items():
-                out = out.replace(f'{{{key}}}', value)
-            for label, tname in table_names.items():
-                out = out.replace(f'{{{label}}}', tname)
-                out = out.replace(f'{{{label}_TABLENAME}}', tname)
-            return out.strip()
 
         if isinstance(raw, dict):
             iterator = raw.items()
@@ -4321,6 +4853,50 @@ class ARIApp(Flask):
                 'query': query,
             })
 
+        return presets
+
+    @staticmethod
+    def _parse_text_presets(text, replace_fn):
+        """Parse a ``================`` -delimited preset text file.
+
+        Each preset block has the form::
+
+            ================
+            Preset name
+            ================
+            SELECT ...
+
+        Returns a list of ``{'name': str, 'query': str}`` dicts.
+        """
+        _DELIM = re.compile(r'^={4,}\s*$')
+        presets = []
+        lines = text.splitlines()
+        i = 0
+        while i < len(lines):
+            # Seek the first delimiter line
+            if not _DELIM.match(lines[i]):
+                i += 1
+                continue
+            i += 1  # skip first delimiter
+            # Collect name lines until next delimiter
+            name_lines = []
+            while i < len(lines) and not _DELIM.match(lines[i]):
+                name_lines.append(lines[i])
+                i += 1
+            name = ' '.join(ln.strip() for ln in name_lines if ln.strip())
+            if not name or i >= len(lines):
+                continue
+            i += 1  # skip second delimiter
+            # Collect SQL lines until next delimiter or EOF
+            sql_lines = []
+            while i < len(lines) and not _DELIM.match(lines[i]):
+                sql_lines.append(lines[i])
+                i += 1
+            # Preserve multi-line SQL; strip each line but keep structure
+            sql = '\n'.join(ln.rstrip() for ln in sql_lines).strip()
+            sql = replace_fn(sql)
+            if name and sql:
+                presets.append({'name': name, 'query': sql})
         return presets
 
     def _api_query_db_schema(self):
@@ -5377,7 +5953,7 @@ class ARIApp(Flask):
         cfg = profile.get('data', {}) if isinstance(profile.get('data'), dict) else {}
         valid_tables = {
             label for label, key in self._db_access_table_keys().items()
-            if str(cfg.get(key, '')).strip()
+            if str(self._profile_get_db(cfg, key, '')).strip()
         }
 
         db_access = load_db_access()
@@ -5424,7 +6000,7 @@ class ARIApp(Flask):
         for label, key in self._db_access_table_keys().items():
             if label not in valid_tables:
                 continue
-            table_name = str(cfg.get(key, '')).strip()
+            table_name = str(self._profile_get_db(cfg, key, '')).strip()
             try:
                 table_columns[label] = self._fetch_table_columns(cfg, table_name)
             except Exception as exc:
@@ -5494,7 +6070,7 @@ class ARIApp(Flask):
         ]
         _PATH_KEYS = [
             'PATH_RAW', 'PATH_PP', 'PATH_RED', 'PATH_CALIB',
-            'PATH_TELLU', 'PATH_LOG', 'PATH_LBL',
+            'PATH_OUT', 'PATH_TELLU', 'PATH_LOG', 'PATH_LBL',
         ]
 
         # Build list with validation status, sorted by DISPLAY_ORDER
@@ -5627,7 +6203,7 @@ class ARIApp(Flask):
         ).strip()
         _PATH_KEYS = [
             'PATH_RAW', 'PATH_PP', 'PATH_RED', 'PATH_CALIB',
-            'PATH_TELLU', 'PATH_LOG', 'PATH_LBL',
+            'PATH_OUT', 'PATH_TELLU', 'PATH_LOG', 'PATH_LBL',
         ]
 
         values = {}

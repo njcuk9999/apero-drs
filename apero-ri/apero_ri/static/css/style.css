@@ -4428,8 +4428,8 @@ body.ari-sg-page .ari-doc-main {
     align-items: center;
     gap: 0.6rem;
     padding: 0.6rem 1rem;
-    background: #e7f6e7;
-    border-bottom: 1px solid #c6e5c6;
+    background: var(--ari-primary-light, #e8eaf6);
+    border-bottom: 1px solid var(--ari-border, #c5c9e0);
     font-weight: 600;
     font-size: 0.88rem;
 }
@@ -4448,7 +4448,7 @@ body.ari-sg-page .ari-doc-main {
 
 .at-section-card__body {
     padding: 0.85rem 1rem;
-    background: #f6fff6;
+    background: #f3f5ff;
 }
 
 /* Summary grid inside the first section card */
@@ -4605,6 +4605,119 @@ body.ari-ot-page .ari-doc-main {
 .ot-access-note a:hover {
     text-decoration: underline;
 }
+
+/* ── How-to banner (collapsible <details>) ── */
+.ot-howto {
+    background: linear-gradient(135deg,
+        rgba(63, 81, 181, 0.05) 0%,
+        rgba(255, 152, 0, 0.06) 100%);
+    border: 1px solid var(--ari-border, #ddd);
+    border-left: 4px solid var(--ari-primary, #3f51b5);
+    border-radius: 8px;
+    padding: 0.75rem 1.25rem 0.9rem;
+    margin-bottom: 1.1rem;
+}
+
+/* summary acts as the clickable toggle header */
+summary.ot-howto__title {
+    font-size: 0.88rem;
+    font-weight: 700;
+    color: var(--ari-primary, #3f51b5);
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+    margin-bottom: 0;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    cursor: pointer;
+    user-select: none;
+    list-style: none;    /* hide default browser triangle */
+}
+summary.ot-howto__title::-webkit-details-marker { display: none; }
+summary.ot-howto__title::marker              { display: none; }
+
+.ot-howto__label-closed { display: none; }
+details.ot-howto:not([open]) .ot-howto__label-open { display: none; }
+details.ot-howto:not([open]) .ot-howto__label-closed { display: inline; }
+
+.ot-howto__chevron {
+    margin-left: auto;
+    font-size: 0.78rem;
+    flex-shrink: 0;
+    transition: transform 0.2s ease;
+}
+details.ot-howto[open] .ot-howto__chevron {
+    transform: rotate(180deg);
+}
+
+.ot-howto__body {
+    padding-top: 0.65rem;
+}
+
+.ot-howto__steps {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    counter-reset: ot-step;
+    display: flex;
+    flex-direction: column;
+    gap: 0.45rem;
+}
+
+.ot-howto__steps li {
+    display: flex;
+    align-items: baseline;
+    gap: 0.55rem;
+    font-size: 0.87rem;
+    color: var(--ari-text, #333);
+    counter-increment: ot-step;
+}
+
+.ot-howto__steps li::before {
+    content: counter(ot-step);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.35rem;
+    height: 1.35rem;
+    min-width: 1.35rem;
+    border-radius: 50%;
+    background: var(--ari-primary, #3f51b5);
+    color: #fff;
+    font-size: 0.72rem;
+    font-weight: 700;
+    line-height: 1;
+    flex-shrink: 0;
+}
+
+/* Notes sub-section inside the howto body */
+.ot-howto__notes {
+    margin-top: 0.7rem;
+    padding-top: 0.6rem;
+    border-top: 1px solid rgba(63, 81, 181, 0.15);
+    font-size: 0.87rem;
+    color: var(--ari-text, #333);
+}
+.ot-howto__notes strong {
+    display: block;
+    margin-bottom: 0.3rem;
+    color: var(--ari-primary, #3f51b5);
+    font-size: 0.85rem;
+    letter-spacing: 0.01em;
+}
+.ot-howto__notes ul {
+    margin: 0;
+    padding-left: 1.2rem;
+}
+.ot-howto__notes li {
+    margin-bottom: 0.25rem;
+}
+
+/* ── Query DB table – alternating warm rows ── */
+.qdb-row--odd  td { background: #fffde7; }
+.qdb-row--even td { background: #fff8e1; }
+.qdb-row--odd:hover  td,
+.qdb-row--even:hover td { background: rgba(255, 152, 0, 0.12); }
 
 /* ── Meta bar ── */
 .ot-meta-bar {
@@ -4817,12 +4930,36 @@ body.ari-ot-page .ari-doc-main {
     box-shadow: 0 0 0 2px rgba(63,81,181,0.15);
 }
 
+.ot-filter-select {
+    display: block;
+    width: 100%;
+    min-width: 0;
+    padding: 0.2rem 0.3rem;
+    border: 1px solid var(--ari-border, #ccc);
+    border-radius: 3px;
+    font-size: 0.8rem;
+    background: var(--ari-card-bg, #fff);
+    color: var(--ari-text-muted, #7a7a7a);
+    box-sizing: border-box;
+    cursor: pointer;
+}
+
+.ot-filter-select:focus {
+    outline: none;
+    border-color: var(--ari-primary, #3f51b5);
+    box-shadow: 0 0 0 2px rgba(63,81,181,0.15);
+}
+
+.ot-row:nth-child(odd) td {
+    background: #fffde7;
+}
+
 .ot-row:nth-child(even) td {
-    background: rgba(0,0,0,0.025);
+    background: #ffeed8;
 }
 
 .ot-row:hover td {
-    background: rgba(63,81,181,0.06);
+    background: rgba(255, 152, 0, 0.16);
 }
 
 .ot-cell {
@@ -4860,6 +4997,219 @@ body.ari-ot-page .ari-doc-main {
 }
 
 .ot-error { color: var(--ari-danger, #c62828); }
+
+/* ==========================================================================
+   Download Basket – how-to banner
+   ========================================================================== */
+
+.bk-howto {
+    background: linear-gradient(135deg,
+        rgba(63, 81, 181, 0.05) 0%,
+        rgba(255, 152, 0, 0.06) 100%);
+    border: 1px solid var(--ari-border, #ddd);
+    border-left: 4px solid var(--ari-primary, #3f51b5);
+    border-radius: 8px;
+    padding: 1rem 1.25rem 0.9rem;
+    margin-bottom: 1.1rem;
+}
+
+.bk-howto__title {
+    font-size: 0.88rem;
+    font-weight: 700;
+    color: var(--ari-primary, #3f51b5);
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+    margin-bottom: 0.65rem;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+}
+
+.bk-howto__steps {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    counter-reset: bk-step;
+    display: flex;
+    flex-direction: column;
+    gap: 0.45rem;
+}
+
+.bk-howto__steps li {
+    display: flex;
+    align-items: baseline;
+    gap: 0.55rem;
+    font-size: 0.87rem;
+    color: var(--ari-text, #333);
+    counter-increment: bk-step;
+}
+
+.bk-howto__steps li::before {
+    content: counter(bk-step);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.35rem;
+    height: 1.35rem;
+    min-width: 1.35rem;
+    border-radius: 50%;
+    background: var(--ari-primary, #3f51b5);
+    color: #fff;
+    font-size: 0.72rem;
+    font-weight: 700;
+    line-height: 1;
+    flex-shrink: 0;
+}
+
+.bk-howto__step-icon {
+    display: none; /* icons are embedded inline in text */
+}
+
+.bk-howto__link {
+    color: var(--ari-primary, #3f51b5);
+    font-weight: 600;
+    text-decoration: none;
+    border-bottom: 1px dashed currentColor;
+    padding-bottom: 1px;
+    transition: color 0.15s, border-color 0.15s;
+}
+
+.bk-howto__link:hover {
+    color: var(--ari-primary-dark, #283593);
+    border-bottom-style: solid;
+}
+
+.bk-howto__link .fa-arrow-up-right-from-square {
+    font-size: 0.72em;
+    margin-left: 0.2em;
+    vertical-align: 0.1em;
+    opacity: 0.7;
+}
+
+/* ==========================================================================
+   Download Basket – table & toolbar overrides
+   ========================================================================== */
+
+/* Alternating warm rows: odd = light yellow, even = light amber-orange */
+.bk-row--odd  td { background: #fffde7; }
+.bk-row--even td { background: #fff8e1; }
+.bk-row--odd:hover  td,
+.bk-row--even:hover td { background: rgba(255, 152, 0, 0.12); }
+
+/* Row-number column */
+.bk-th-rownum,
+.bk-cell-rownum {
+    width: 2.8rem;
+    min-width: 2.8rem;
+    text-align: right;
+    color: var(--ari-text-muted, #999);
+    font-size: 0.78rem;
+    font-variant-numeric: tabular-nums;
+    user-select: none;
+}
+
+/* Checkbox column — same background as regular ot-th headers */
+.bk-th-check {
+    width: 2rem;
+    min-width: 2rem;
+    text-align: center;
+    background: var(--ari-primary-light, #e8eaf6);
+    color: var(--ari-text, #222);
+    padding: 0.45rem 0.75rem;
+    font-weight: 600;
+    border-right: 1px solid var(--ari-border, #c5c9e0);
+    border-bottom: 2px solid var(--ari-border, #c5c9e0);
+}
+
+.bk-cell-check {
+    width: 2rem;
+    min-width: 2rem;
+    text-align: center;
+}
+
+/* Toolbar modernisation */
+.bk-toolbar { padding: 0.5rem 0; }
+
+.bk-btn-group {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.bk-toolbar-sep {
+    width: 1px;
+    height: 1.4rem;
+    background: var(--ari-border, #ddd);
+    margin: 0 0.25rem;
+    flex-shrink: 0;
+}
+
+.bk-groupby-wrap {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+}
+
+.bk-groupby-label {
+    font-size: 0.82rem;
+    color: var(--ari-text-muted, #666);
+    white-space: nowrap;
+}
+
+/* Shared modern select */
+.bk-select {
+    padding: 0.28rem 0.6rem;
+    border: 1px solid var(--ari-border, #ccc);
+    border-radius: 6px;
+    font-size: 0.84rem;
+    background: var(--ari-card-bg, #fff);
+    color: var(--ari-text, #333);
+    cursor: pointer;
+    transition: border-color 0.15s;
+}
+.bk-select:focus {
+    outline: none;
+    border-color: var(--ari-primary, #3f51b5);
+    box-shadow: 0 0 0 2px rgba(63,81,181,0.15);
+}
+
+/* Format selector pill-buttons */
+.bk-fmt-group {
+    display: flex;
+    border-radius: 6px;
+    overflow: hidden;
+    border: 1px solid var(--ari-border, #ccc);
+}
+
+.bk-fmt-btn {
+    cursor: pointer;
+    line-height: 1;
+}
+
+.bk-fmt-btn input[type="radio"] { display: none; }
+
+.bk-fmt-btn span {
+    display: block;
+    padding: 0.3rem 0.75rem;
+    font-size: 0.84rem;
+    font-weight: 500;
+    color: var(--ari-text, #333);
+    background: var(--ari-card-bg, #fff);
+    border-right: 1px solid var(--ari-border, #ccc);
+    transition: background 0.15s, color 0.15s;
+    white-space: nowrap;
+}
+
+.bk-fmt-btn:last-child span { border-right: none; }
+
+.bk-fmt-btn input[type="radio"]:checked + span {
+    background: var(--ari-primary, #3f51b5);
+    color: #fff;
+}
+
+.bk-fmt-btn span:hover {
+    background: var(--ari-primary-light, #e8eaf6);
+}
 
 /* ── Pagination ── */
 .ot-pagination {
@@ -5060,6 +5410,337 @@ body.ari-ot-page .ari-doc-main {
     font-variant-numeric: tabular-nums;
     font-weight: 600;
     color: #1f5f97;
+}
+
+#op-time-series-table .op-ts-count-wrap {
+    display: inline-block;
+    padding-right: 0.55rem;
+}
+
+#op-time-series-table .op-ts-basket-btn {
+    appearance: none;
+    -webkit-appearance: none;
+    border: none;
+    background: transparent;
+    color: #2b6da6;
+    padding: 0.12rem 0.28rem;
+    margin-left: 0.2rem;
+    border-radius: 4px;
+    line-height: 1;
+    cursor: pointer;
+}
+
+#op-time-series-table .op-ts-basket-btn:hover {
+    color: #124d7d;
+    background: rgba(18, 77, 125, 0.08);
+}
+
+#op-time-series-table .op-ts-basket-btn:focus {
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(18, 77, 125, 0.22);
+}
+
+#op-time-series-table .op-ts-basket-all {
+    appearance: none;
+    -webkit-appearance: none;
+    border: none;
+    background: transparent;
+    color: #2b6da6;
+    padding: 0.06rem 0.26rem;
+    margin-left: 0.28rem;
+    border-radius: 4px;
+    line-height: 1;
+    cursor: pointer;
+}
+
+#op-time-series-table .op-ts-basket-all:hover {
+    color: #124d7d;
+    background: rgba(18, 77, 125, 0.08);
+}
+
+#op-time-series-table .op-ts-basket-all:focus {
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(18, 77, 125, 0.22);
+}
+
+.op-section-search {
+    margin: 0 0 0.8rem 0;
+}
+
+.op-section-search__input {
+    width: 100%;
+    max-width: 460px;
+    padding: 0.45rem 0.6rem;
+    border: 1px solid #c9d9ea;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    background: #ffffff;
+    color: #2b3a44;
+}
+
+.op-section-search__input:focus {
+    outline: none;
+    border-color: #5e8fbe;
+    box-shadow: 0 0 0 2px rgba(94, 143, 190, 0.18);
+}
+
+.op-section-controls {
+    margin-left: auto;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.32rem;
+}
+
+.op-section-btn {
+    border: 1px solid #bfd2e4;
+    background: #f2f8ff;
+    color: #2b5f8a;
+    border-radius: 4px;
+    padding: 0.2rem 0.4rem;
+    line-height: 1;
+    cursor: pointer;
+}
+
+.op-section-btn:hover {
+    background: #e8f2fc;
+    color: #1b4e78;
+}
+
+.op-section-btn--active {
+    background: #d9ecff;
+    border-color: #8bb8df;
+    color: #1d5a90;
+}
+
+.op-section--collapsed .at-section-card__body {
+    display: none;
+}
+
+.op-all-section-tab {
+    color: #6f8293;
+    font-size: 0.84rem;
+    font-weight: 500;
+}
+
+.op-all-section-card {
+    margin-bottom: 0.9rem;
+}
+
+.op-pin-reorder {
+    margin: 0 0 0.85rem 0;
+    padding: 0.55rem 0.7rem;
+    border: 1px solid #d8e6f3;
+    border-radius: 8px;
+    background: #f9fcff;
+}
+
+.op-pin-reorder__title {
+    font-size: 0.82rem;
+    color: #5a6e7f;
+    margin-bottom: 0.4rem;
+    font-weight: 600;
+}
+
+.op-pin-reorder__list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem;
+}
+
+.op-pin-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.26rem 0.5rem;
+    border: 1px solid #bfd2e4;
+    border-radius: 999px;
+    background: #eef6ff;
+    color: #2b5f8a;
+    cursor: grab;
+    user-select: none;
+    font-size: 0.8rem;
+}
+
+.op-pin-chip--dragging {
+    opacity: 0.45;
+}
+
+.op-pin-chip__handle {
+    opacity: 0.7;
+}
+
+/* ==========================================================================
+   Object page - File Browser visual refresh
+   ========================================================================== */
+
+#op-tab-file_browser .fb-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 0.55rem;
+    margin: 0 0 0.75rem 0;
+}
+
+#op-tab-file_browser .fb-stat-box {
+    border: 1px solid #cbdceb;
+    border-radius: 10px;
+    background: linear-gradient(180deg, #f5fbff 0%, #ffffff 100%);
+    padding: 0.5rem 0.65rem;
+    box-shadow: 0 1px 2px rgba(31, 60, 91, 0.08);
+}
+
+#op-tab-file_browser .fb-stat-box__label {
+    font-size: 0.74rem;
+    letter-spacing: 0.02em;
+    color: #557189;
+    text-transform: uppercase;
+    font-weight: 700;
+}
+
+#op-tab-file_browser .fb-stat-box__value {
+    margin-top: 0.08rem;
+    font-size: 1.25rem;
+    line-height: 1.15;
+    font-weight: 800;
+    color: #1d3f5f;
+}
+
+#op-tab-file_browser .fb-stat-box__sub {
+    margin-top: 0.14rem;
+    font-size: 0.78rem;
+    color: #6a8195;
+}
+
+#op-tab-file_browser .fb-presets {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.45rem;
+    margin: 0 0 0.75rem 0;
+    padding: 0.5rem 0.65rem;
+    border: 1px solid #d7c7ec;
+    border-radius: 8px;
+    background: linear-gradient(180deg, #f7f1ff 0%, #fdf9ff 100%);
+}
+
+#op-tab-file_browser .fb-presets__label {
+    font-size: 0.82rem;
+    color: #6b5488;
+    font-weight: 700;
+    margin-right: 0.2rem;
+}
+
+#op-tab-file_browser .fb-preset-btn {
+    border: 1px solid #c7addf;
+    background: #efe3fb;
+    color: #5a3c7e;
+    border-radius: 999px;
+    padding: 0.3rem 0.7rem;
+    transition: background 0.15s, border-color 0.15s, color 0.15s, box-shadow 0.15s;
+}
+
+#op-tab-file_browser .fb-preset-btn:hover {
+    background: #e6d6f8;
+    border-color: #ae88d2;
+    color: #4a2b71;
+}
+
+#op-tab-file_browser .fb-preset-btn.fb-preset-btn--active {
+    background: #7f52ab;
+    border-color: #683b94;
+    color: #ffffff;
+    box-shadow: 0 2px 8px rgba(79, 44, 119, 0.24);
+}
+
+#op-tab-file_browser .fb-toolbar {
+    margin-top: 0.15rem;
+    padding: 0.6rem 0;
+}
+
+#op-tab-file_browser .fb-toolbar .ot-toolbar__left,
+#op-tab-file_browser .fb-toolbar .ot-toolbar__right {
+    gap: 0.5rem;
+}
+
+#op-tab-file_browser .fb-toolbar .ari-btn {
+    border-radius: 8px;
+    padding: 0.34rem 0.72rem;
+    border-width: 1px;
+}
+
+#op-tab-file_browser .fb-toolbar .ari-btn--secondary {
+    border-color: #bfd6ef;
+    background: #e9f4ff;
+    color: #24537d;
+}
+
+#op-tab-file_browser .fb-toolbar .ari-btn--secondary:hover {
+    border-color: #8cb6df;
+    background: #d9ebff;
+    color: #153f66;
+}
+
+#op-tab-file_browser .fb-toolbar .ari-btn--primary,
+#op-tab-file_browser .fb-add-btn {
+    border-color: #2f7ab6;
+    background: #4092d1;
+    color: #ffffff;
+}
+
+#op-tab-file_browser .fb-toolbar .ari-btn--primary:hover,
+#op-tab-file_browser .fb-add-btn:hover {
+    border-color: #1f679f;
+    background: #2f82c1;
+}
+
+#op-tab-file_browser .bk-groupby-wrap {
+    padding: 0.18rem 0.45rem;
+    border: 1px solid #d7e5f2;
+    border-radius: 7px;
+    background: #f7fbff;
+}
+
+#op-tab-file_browser .bk-groupby-label {
+    color: #58728a;
+}
+
+#op-tab-file_browser .bk-groupby-select,
+#op-tab-file_browser .ot-perpage-select {
+    border: 1px solid #bfd1e2;
+    border-radius: 6px;
+    background: #ffffff;
+    color: #38556f;
+    padding: 0.24rem 0.5rem;
+}
+
+/* Keep checkbox column visually integrated with table header/filter bar */
+#op-tab-file_browser #fb-header-row .bk-th-check,
+#op-tab-file_browser #fb-filter-row .bk-th-check {
+    width: 2rem;
+    min-width: 2rem;
+    text-align: center;
+    padding-left: 0.2rem;
+    padding-right: 0.2rem;
+}
+
+#op-tab-file_browser #fb-tbody .bk-cell-check {
+    width: 2rem;
+    min-width: 2rem;
+    text-align: center;
+    padding-left: 0.2rem;
+    padding-right: 0.2rem;
+}
+
+#op-tab-file_browser #fb-tbody .bk-row--odd td {
+    background: #fffde7;
+}
+
+#op-tab-file_browser #fb-tbody .bk-row--even td {
+    background: #ffeed8;
+}
+
+#op-tab-file_browser #fb-tbody .bk-row--odd:hover td,
+#op-tab-file_browser #fb-tbody .bk-row--even:hover td {
+    background: rgba(255, 152, 0, 0.16);
 }
 
 @media (max-width: 900px) {

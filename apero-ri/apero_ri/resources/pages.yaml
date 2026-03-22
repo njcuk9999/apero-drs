@@ -152,7 +152,7 @@ home.docs.install:
     show: True
 
 "home.data_portal.{apero_profile}.object_table":
-  label: "Astrophysical Object Table"
+  label: "Object Table"
   parent: "home.data_portal.{apero_profile}"
   view-permission: "view.{apero profile}"
   icon: fa-solid fa-star
@@ -184,6 +184,18 @@ home.docs.install:
     top-level: False
     show: True
 
+"home.data_portal.{apero_profile}.basket":
+  label: "Download Basket"
+  parent: "home.data_portal.{apero_profile}"
+  view-permission: "view.{apero profile}"
+  icon: fa-solid fa-basket-shopping
+  quick-nav: False
+  side-nav:
+    pinned: False
+    top-level: False
+    show: True
+
+
 "home.data_portal.{apero_profile}.qc_graphs":
   label: "Quality Control Graphs"
   parent: "home.data_portal.{apero_profile}"
@@ -194,7 +206,6 @@ home.docs.install:
     pinned: False
     top-level: False
     show: True
-
 
 "home.data_portal.{apero_profile}.{objname}":
   label: "{objname}"

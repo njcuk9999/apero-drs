@@ -11,6 +11,7 @@
         { key: 'PATH_RAW',   id: 'profile-path-raw' },
         { key: 'PATH_PP',    id: 'profile-path-pp' },
         { key: 'PATH_RED',   id: 'profile-path-red' },
+        { key: 'PATH_OUT',   id: 'profile-path-out' },
         { key: 'PATH_CALIB', id: 'profile-path-calib' },
         { key: 'PATH_TELLU', id: 'profile-path-tellu' },
         { key: 'PATH_LOG',   id: 'profile-path-log' },
