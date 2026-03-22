@@ -40,12 +40,94 @@ _DOWNLOAD_STORAGE_LIMIT_BYTES = 5 * 1024 ** 3
 # Path helpers
 # =============================================================================
 
+_share_tokens_lock = threading.Lock()
+
+
 def set_ari_dir(path: Path) -> None:
     """Re-point module-level path globals (mirrors auth.set_ari_dir)."""
     global ARI_DIR, USERS_DIR, DOWNLOADS_DIR
     ARI_DIR = Path(path)
     USERS_DIR = ARI_DIR / 'users'
     DOWNLOADS_DIR = ARI_DIR / 'download'
+
+
+def _share_tokens_path() -> Path:
+    return ARI_DIR / 'share_tokens.json'
+
+
+def _load_share_tokens() -> Dict[str, Any]:
+    path = _share_tokens_path()
+    if not path.exists():
+        return {}
+    try:
+        with open(path, encoding='utf-8') as fh:
+            return json.load(fh)
+    except Exception:
+        return {}
+
+
+def _save_share_tokens(tokens: Dict[str, Any]) -> None:
+    path = _share_tokens_path()
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with open(path, 'w', encoding='utf-8') as fh:
+        json.dump(tokens, fh, indent=2)
+
+
+def create_share_token(username: str, job_id: str) -> str:
+    """Create or return the existing share token for a job."""
+    safe_id = _safe_job_id(job_id)
+    if safe_id is None:
+        raise ValueError('Invalid job id')
+    meta = _load_job_meta(username, safe_id)
+    if meta is None:
+        raise ValueError('Job not found')
+    if meta.get('status') != 'done':
+        raise ValueError('Job is not yet complete')
+    with _share_tokens_lock:
+        tokens = _load_share_tokens()
+        existing = str(meta.get('share_token', '') or '')
+        if existing and existing in tokens:
+            return existing
+        token = str(uuid.uuid4())
+        tokens[token] = {
+            'username': username,
+            'job_id': safe_id,
+            'created_at': datetime.now(timezone.utc).isoformat(),
+        }
+        meta['share_token'] = token
+        _save_share_tokens(tokens)
+        _save_job_meta(username, safe_id, meta)
+    return token
+
+
+def get_share_job(token: str) -> Optional[Dict[str, Any]]:
+    """Return {'username', 'job_id', 'meta'} for a valid non-expired share token."""
+    if not token or not re.match(r'^[0-9a-f-]{36}$', str(token)):
+        return None
+    tokens = _load_share_tokens()
+    entry = tokens.get(str(token))
+    if not entry:
+        return None
+    username = str(entry.get('username', '') or '')
+    job_id = str(entry.get('job_id', '') or '')
+    if not username or not job_id:
+        return None
+    meta = _load_job_meta(username, job_id)
+    if meta is None:
+        return None
+    # Check whether the job itself has expired
+    created_str = meta.get('created_at', '')
+    if created_str:
+        try:
+            created_at = datetime.fromisoformat(str(created_str))
+            if created_at.tzinfo is None:
+                created_at = created_at.replace(tzinfo=timezone.utc)
+            cutoff = datetime.now(timezone.utc) - timedelta(hours=_DOWNLOAD_EXPIRY_HOURS)
+            if created_at < cutoff:
+                return None
+        except Exception:
+            pass
+    return {'username': username, 'job_id': job_id, 'meta': meta}
 
 
 # =============================================================================
@@ -294,7 +376,7 @@ def create_download_job(username: str,
     chunk_size_gb: if set, split output into ~chunk_size_gb GB chunks.
     profile_id: used to generate a descriptive archive filename.
     """
-    fmt = fmt if fmt in ('zip', 'tar.gz') else 'zip'
+    fmt = fmt if fmt in ('zip', 'tar.gz', 'native') else 'zip'
     job_id = str(uuid.uuid4())
     meta: Dict[str, Any] = {
         'job_id': job_id,
@@ -518,53 +600,70 @@ def _compile_job(username: str,
         safe_profile = re.sub(r'[^\w.-]', '_', str(profile_id or 'all'))
         base_name = f'download_{safe_profile}_{ts_str}'
 
-        # Split into chunks if requested
-        if chunk_size_gb and file_pairs:
-            chunk_bytes = int(chunk_size_gb * 1024 ** 3)
-            chunks_files: List[List] = []
-            cur_chunk: List = []
-            cur_size = 0
-            for p, arc in file_pairs:
-                sz = p.stat().st_size
-                if cur_chunk and cur_size + sz > chunk_bytes:
-                    chunks_files.append(cur_chunk)
-                    cur_chunk = [(p, arc)]
-                    cur_size = sz
-                else:
-                    cur_chunk.append((p, arc))
-                    cur_size += sz
-            if cur_chunk:
-                chunks_files.append(cur_chunk)
-        else:
-            chunks_files = [file_pairs]
-
-        # Build archive(s)
-        chunk_metas = []
-        multi = len(chunks_files) > 1
-        for c_idx, chunk in enumerate(chunks_files):
-            if fmt == 'tar.gz':
-                out_name = (f'{base_name}_part{c_idx + 1}.tar.gz' if multi
-                            else f'{base_name}.tar.gz')
-                out_path = job_dir / out_name
-                with tarfile.open(str(out_path), 'w:gz') as tf:
-                    for src, arc in chunk:
-                        tf.add(str(src), arcname=arc)
-            else:
-                out_name = (f'{base_name}_part{c_idx + 1}.zip' if multi
-                            else f'{base_name}.zip')
-                out_path = job_dir / out_name
-                with zipfile.ZipFile(str(out_path), 'w',
-                                     zipfile.ZIP_DEFLATED,
-                                     allowZip64=True) as zf:
-                    for src, arc in chunk:
-                        zf.write(str(src), arcname=arc)
-            chunk_metas.append({
-                'index': c_idx,
+        # Native format: copy file as-is (only valid for exactly one file)
+        if fmt == 'native' and len(file_pairs) == 1:
+            src, _arc = file_pairs[0]
+            out_name = src.name
+            out_path = job_dir / out_name
+            shutil.copy2(str(src), str(out_path))
+            chunk_metas = [{
+                'index': 0,
                 'path': str(out_path),
                 'filename': out_name,
                 'size_bytes': out_path.stat().st_size if out_path.exists() else 0,
-                'file_count': len(chunk),
-            })
+                'file_count': 1,
+            }]
+        else:
+            # Archive format (zip / tar.gz); fall back to zip for native+multi
+            actual_fmt = fmt if fmt in ('zip', 'tar.gz') else 'zip'
+
+            # Split into chunks if requested
+            if chunk_size_gb and file_pairs:
+                chunk_bytes = int(chunk_size_gb * 1024 ** 3)
+                chunks_files: List[List] = []
+                cur_chunk: List = []
+                cur_size = 0
+                for p, arc in file_pairs:
+                    sz = p.stat().st_size
+                    if cur_chunk and cur_size + sz > chunk_bytes:
+                        chunks_files.append(cur_chunk)
+                        cur_chunk = [(p, arc)]
+                        cur_size = sz
+                    else:
+                        cur_chunk.append((p, arc))
+                        cur_size += sz
+                if cur_chunk:
+                    chunks_files.append(cur_chunk)
+            else:
+                chunks_files = [file_pairs]
+
+            # Build archive(s)
+            chunk_metas = []
+            multi = len(chunks_files) > 1
+            for c_idx, chunk in enumerate(chunks_files):
+                if actual_fmt == 'tar.gz':
+                    out_name = (f'{base_name}_part{c_idx + 1}.tar.gz' if multi
+                                else f'{base_name}.tar.gz')
+                    out_path = job_dir / out_name
+                    with tarfile.open(str(out_path), 'w:gz') as tf:
+                        for src, arc in chunk:
+                            tf.add(str(src), arcname=arc)
+                else:
+                    out_name = (f'{base_name}_part{c_idx + 1}.zip' if multi
+                                else f'{base_name}.zip')
+                    out_path = job_dir / out_name
+                    with zipfile.ZipFile(str(out_path), 'w',
+                                         zipfile.ZIP_DEFLATED,
+                                         allowZip64=True) as zf:
+                        for src, arc in chunk:
+                            zf.write(str(src), arcname=arc)
+                chunk_metas.append({
+                    'index': c_idx,
+                    'path': str(out_path),
+                    'filename': out_name,
+                    'size_bytes': out_path.stat().st_size if out_path.exists() else 0,
+                    'file_count': len(chunk),
+                })
 
         meta['chunks'] = chunk_metas
         meta['status'] = 'done'
@@ -741,6 +840,7 @@ def cleanup_expired_downloads(username: str) -> int:
         return 0
     cutoff = datetime.now(timezone.utc) - timedelta(hours=_DOWNLOAD_EXPIRY_HOURS)
     removed = 0
+    removed_job_ids: List[str] = []
     for job_dir in jobs_dir.iterdir():
         if not job_dir.is_dir():
             continue
@@ -756,7 +856,19 @@ def cleanup_expired_downloads(username: str) -> int:
                 created_at = created_at.replace(tzinfo=timezone.utc)
             if created_at < cutoff:
                 shutil.rmtree(str(job_dir), ignore_errors=True)
+                removed_job_ids.append(job_dir.name)
                 removed += 1
         except Exception:
             pass
+    # Prune stale share tokens for removed jobs
+    if removed_job_ids:
+        with _share_tokens_lock:
+            tokens = _load_share_tokens()
+            cleaned = {
+                tok: entry for tok, entry in tokens.items()
+                if not (entry.get('username') == username
+                        and entry.get('job_id') in removed_job_ids)
+            }
+            if len(cleaned) != len(tokens):
+                _save_share_tokens(cleaned)
     return removed

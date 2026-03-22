@@ -8,6 +8,7 @@ password hashing via the cryptography package, and Flask session login.
 """
 import os
 import base64
+from copy import deepcopy
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Dict, List, Optional, Set
@@ -376,6 +377,89 @@ def save_apero_profiles(profiles: dict) -> None:
         yaml.dump(profiles, f, default_flow_style=False)
 
 
+def _apero_instrument_profile_path(filename: str) -> Path:
+    """Return path under resources/aprofile_instruments for a profile file."""
+    pkg_dir = Path(__file__).resolve().parents[1]
+    safe_name = Path(str(filename or '')).name
+    return pkg_dir / 'resources' / 'aprofile_instruments' / safe_name
+
+
+def _load_apero_instrument_profile(filename: str) -> Dict:
+    """Load one instrument profile YAML from resources/aprofile_instruments."""
+    path = _apero_instrument_profile_path(filename)
+    if not path.is_file():
+        return {}
+    try:
+        with path.open('r', encoding='utf-8') as f:
+            data = yaml.safe_load(f) or {}
+    except Exception:
+        return {}
+    return data if isinstance(data, dict) else {}
+
+
+def _hydrate_profile_data(profile_data: dict, instrument: str) -> dict:
+    """Hydrate runtime profile data from APERO_INSTRUMENT_PROFILE reference.
+
+    This keeps resource instrument YAML as the source of truth for sections
+    like headers/plots/general extras (e.g. has_polarimetry,
+    db-query-preset-file) while preserving user-managed values such as
+    DB/path settings and science selections.
+    """
+    out = deepcopy(profile_data) if isinstance(profile_data, dict) else {}
+    ref_name = str(
+        out.get('APERO_INSTRUMENT_PROFILE', '')
+        or out.get('apero_instrument_profile', '')
+        or ''
+    ).strip()
+    if not ref_name:
+        return out
+
+    preset = _load_apero_instrument_profile(ref_name)
+    if not preset:
+        return out
+
+    # headers: always from instrument resource profile
+    if isinstance(preset.get('headers'), dict):
+        out['headers'] = deepcopy(preset.get('headers', {}))
+
+    # plots: accept either "plots" or "plot" in resource file
+    if isinstance(preset.get('plots'), dict):
+        out['plots'] = deepcopy(preset.get('plots', {}))
+    elif isinstance(preset.get('plot'), dict):
+        out['plots'] = deepcopy(preset.get('plot', {}))
+
+    # general: start from resource defaults, then force canonical science keys
+    # from saved profile to preserve admin/user selections.
+    preset_general = preset.get('general', {})
+    saved_general = out.get('general', {}) if isinstance(out.get('general'), dict) else {}
+    if isinstance(preset_general, dict):
+        merged_general = deepcopy(preset_general)
+
+        sci_fiber = (
+            saved_general.get('SCIENCE_FIBER')
+            or saved_general.get('science_fiber')
+            or ''
+        )
+        sci_types = (
+            saved_general.get('SCIENCE_TYPES')
+            or saved_general.get('science_types')
+            or []
+        )
+        if isinstance(sci_types, str):
+            sci_types = [v.strip() for v in sci_types.split(',') if v.strip()]
+        elif not isinstance(sci_types, list):
+            sci_types = []
+
+        merged_general['INSTRUMENT'] = instrument
+        if sci_fiber:
+            merged_general['SCIENCE_FIBER'] = sci_fiber
+        if sci_types:
+            merged_general['SCIENCE_TYPES'] = sci_types
+        out['general'] = merged_general
+
+    return out
+
+
 def load_db_access() -> dict:
     """Load DB access configuration from db_access.yaml."""
     ensure_ari_directory()
@@ -525,10 +609,11 @@ def get_accessible_profiles(user_info: Optional[dict],
             profile_groups = set(profile_data.get('groups', []))
             if profile_groups and not all_user_groups & profile_groups:
                 continue
+            hydrated_data = _hydrate_profile_data(profile_data, instrument)
             accessible.append({
                 'instrument': instrument,
                 'profile_id': profile_id,
-                'data': dict(profile_data),
+                'data': hydrated_data,
             })
 
     accessible.sort(key=lambda x: (x['instrument'],

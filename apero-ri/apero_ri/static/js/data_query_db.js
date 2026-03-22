@@ -15,6 +15,8 @@
     var profileId = cfg.profileId || '';
     var schemaApiUrl = cfg.schemaApiUrl || '/api/data-portal/query-db/schema';
     var runApiUrl = cfg.runApiUrl || '/api/data-portal/query-db/run';
+    var basketAddApiUrl = cfg.basketAddApiUrl || '/api/data-portal/basket/add';
+    var basketSummaryApiUrl = cfg.basketSummaryApiUrl || '/api/data-portal/basket/summary';
     var presets = Array.isArray(cfg.presets) ? cfg.presets : [];
 
     /** Full schema returned by /schema API: [{label, table_name, columns, has_run_id_filter}] */
@@ -30,6 +32,12 @@
     /** Pagination state */
     var currentPage = 1;
     var rowsPerPage = 50;
+    /** Current result columns */
+    var resultColumns = [];
+    /** Selected result row indices (global indices in resultRows) */
+    var selectedRowIdxs = new Set();
+    /** Addable row indices currently visible on page */
+    var visibleAddableIdxs = [];
 
     /** Top horizontal scroll mirror state */
     var _scrollSync = false;
@@ -54,6 +62,18 @@
         if (cls) e.className = cls;
         if (html !== undefined) e.innerHTML = html;
         return e;
+    }
+
+    function formatBytes(num) {
+        var n = Number(num || 0);
+        if (!isFinite(n) || n <= 0) return '0 B';
+        var units = ['B', 'KB', 'MB', 'GB', 'TB'];
+        var i = 0;
+        while (n >= 1024 && i < units.length - 1) {
+            n /= 1024;
+            i++;
+        }
+        return n.toFixed(i === 0 ? 0 : 1) + ' ' + units[i];
     }
 
     function makeSelect(options, value, cls) {
@@ -879,6 +899,7 @@
 
                 resultRows = data.rows || [];
                 renderResults(data.columns || [], resultRows, elapsed);
+                refreshBasketSummary();
             })
             .catch(function (err) {
                 if (btn) {
@@ -912,6 +933,10 @@
     }
 
     function renderResults(columns, rows, elapsed) {
+        resultColumns = Array.isArray(columns) ? columns.slice() : [];
+        selectedRowIdxs.clear();
+        visibleAddableIdxs = [];
+
         if (!rows.length) {
             el('qdb-idle').innerHTML =
                 '<i class="fa-solid fa-inbox qdb-idle__icon"></i>' +
@@ -924,16 +949,36 @@
             el('qdb-results-count').textContent = '0 rows';
             el('qdb-results-time').textContent = 'in ' + elapsed + 's';
             hide('qdb-export-csv');
+            updateBasketActionState();
             return;
         }
 
         // Build header
         var hdr = el('qdb-header-row');
         hdr.innerHTML = '';
+
+        var thSel = makeEl('th', 'ot-th qdb-th-check');
+        var cbAll = document.createElement('input');
+        cbAll.type = 'checkbox';
+        cbAll.id = 'qdb-select-all';
+        cbAll.title = 'Select all visible rows';
+        cbAll.addEventListener('change', function () {
+            var checked = !!this.checked;
+            visibleAddableIdxs.forEach(function (idx) {
+                if (checked) selectedRowIdxs.add(idx);
+                else selectedRowIdxs.delete(idx);
+            });
+            renderPage(resultColumns, resultRows);
+            updateBasketActionState();
+        });
+        thSel.appendChild(cbAll);
+        hdr.appendChild(thSel);
+
         columns.forEach(function (col) {
             var th = makeEl('th', 'ot-th');
             th.textContent = formatColHeader(col, columns);
             th.title = col;
+            th.dataset.colKey = col;
             hdr.appendChild(th);
         });
 
@@ -953,11 +998,59 @@
         show('qdb-table-wrap');
         show('qdb-pagination');
         syncScrollMirror();
+        updateBasketActionState();
+    }
+
+    function rowValueBySuffix(row, wanted) {
+        var want = String(wanted || '').toUpperCase();
+        if (!want || !row || typeof row !== 'object') return '';
+        var keys = Object.keys(row);
+        for (var i = 0; i < keys.length; i++) {
+            var key = keys[i];
+            var up = String(key).toUpperCase();
+            if (up === want || up.endsWith('__' + want)) {
+                var val = row[key];
+                return val !== null && val !== undefined ? val : '';
+            }
+        }
+        return '';
+    }
+
+    function buildBasketEntryFromRow(row) {
+        var blockKind = String(rowValueBySuffix(row, 'BLOCK_KIND') || '').trim();
+        var obsDir = String(rowValueBySuffix(row, 'OBS_DIR') || '').trim();
+        var filename = String(rowValueBySuffix(row, 'FILENAME') || '').trim();
+        var runId = String(rowValueBySuffix(row, 'KW_RUN_ID') || '').trim();
+
+        if (!blockKind || !obsDir || !filename || !runId) return null;
+
+        return {
+            profile_id: profileId,
+            instrument: '',
+            objname: String(rowValueBySuffix(row, 'KW_OBJNAME')
+                || rowValueBySuffix(row, 'OBJNAME') || '').trim(),
+            block_kind: blockKind,
+            obs_dir: obsDir,
+            filename: filename,
+            kw_output: String(rowValueBySuffix(row, 'KW_OUTPUT') || '').trim(),
+            kw_run_id: runId,
+            kw_dprtype: String(rowValueBySuffix(row, 'KW_DPRTYPE') || '').trim(),
+            kw_fiber: String(rowValueBySuffix(row, 'KW_FIBER') || '').trim(),
+            kw_pi_name: String(rowValueBySuffix(row, 'KW_PI_NAME') || '').trim(),
+            mid_obs_time: String(rowValueBySuffix(row, 'MID_OBS_TIME') || '').trim(),
+            passed_all_qc: rowValueBySuffix(row, 'PASSED_ALL_QC'),
+            identifier: String(rowValueBySuffix(row, 'IDENTIFIER') || '').trim(),
+        };
+    }
+
+    function canAddRowToBasket(row) {
+        return !!buildBasketEntryFromRow(row);
     }
 
     function renderPage(columns, rows) {
         var tbody = el('qdb-tbody');
         tbody.innerHTML = '';
+        visibleAddableIdxs = [];
 
         var total = rows.length;
         var totalPages = Math.ceil(total / rowsPerPage);
@@ -970,8 +1063,32 @@
         var pageRows = rows.slice(start, end);
 
         pageRows.forEach(function (row, idx) {
+            var globalIdx = start + idx;
             var tr = document.createElement('tr');
             tr.className = 'qdb-row ' + ((start + idx) % 2 === 0 ? 'qdb-row--odd' : 'qdb-row--even');
+
+            var tdSel = makeEl('td', 'ot-td bk-cell-check');
+            var cb = document.createElement('input');
+            cb.type = 'checkbox';
+            cb.className = 'qdb-row-check';
+            cb.dataset.idx = String(globalIdx);
+            cb.checked = selectedRowIdxs.has(globalIdx);
+            var addable = canAddRowToBasket(row);
+            if (!addable) {
+                cb.disabled = true;
+                cb.title = 'Requires BLOCK_KIND, OBS_DIR, FILENAME, and KW_RUN_ID in query result.';
+            } else {
+                visibleAddableIdxs.push(globalIdx);
+            }
+            cb.addEventListener('change', function () {
+                if (cb.checked) selectedRowIdxs.add(globalIdx);
+                else selectedRowIdxs.delete(globalIdx);
+                updateBasketActionState();
+                updateSelectAllCheckbox();
+            });
+            tdSel.appendChild(cb);
+            tr.appendChild(tdSel);
+
             columns.forEach(function (col) {
                 var td = makeEl('td', 'ot-td');
                 var val = row[col];
@@ -980,6 +1097,9 @@
             });
             tbody.appendChild(tr);
         });
+
+        updateSelectAllCheckbox();
+        updateBasketActionState();
 
         // Update pagination controls
         el('qdb-page-input').value = currentPage;
@@ -993,6 +1113,108 @@
         el('qdb-btn-last').disabled = currentPage >= totalPages;
 
         syncScrollMirror();
+    }
+
+    function updateSelectAllCheckbox() {
+        var cbAll = el('qdb-select-all');
+        if (!cbAll) return;
+        if (!visibleAddableIdxs.length) {
+            cbAll.checked = false;
+            cbAll.indeterminate = false;
+            cbAll.disabled = true;
+            return;
+        }
+        cbAll.disabled = false;
+        var selectedVisible = visibleAddableIdxs.filter(function (idx) {
+            return selectedRowIdxs.has(idx);
+        }).length;
+        cbAll.checked = selectedVisible === visibleAddableIdxs.length;
+        cbAll.indeterminate = selectedVisible > 0 && selectedVisible < visibleAddableIdxs.length;
+    }
+
+    function updateBasketActionState() {
+        var selectedCount = selectedRowIdxs.size;
+        var btnSelected = el('qdb-btn-add-selected');
+        var btnVisible = el('qdb-btn-add-visible');
+        var btnClear = el('qdb-btn-clear-selection');
+
+        if (btnSelected) {
+            btnSelected.disabled = selectedCount === 0;
+            btnSelected.innerHTML = '<i class="fa-solid fa-basket-shopping"></i> Add to basket'
+                + (selectedCount ? ' (' + selectedCount + ')' : '');
+        }
+        if (btnVisible) {
+            btnVisible.disabled = visibleAddableIdxs.length === 0;
+            btnVisible.innerHTML = '<i class="fa-solid fa-layer-group"></i> Add all visible'
+                + (visibleAddableIdxs.length ? ' (' + visibleAddableIdxs.length + ')' : '');
+        }
+        if (btnClear) {
+            btnClear.disabled = selectedCount === 0;
+        }
+    }
+
+    function refreshBasketSummary() {
+        fetch(basketSummaryApiUrl)
+            .then(function (r) { return r.json(); })
+            .then(function (data) {
+                if (!data || !data.success) return;
+                var countEl = el('qdb-basket-count');
+                var sizeEl = el('qdb-basket-size');
+                var n = Number(data.accessible_files || 0);
+                if (countEl) {
+                    countEl.textContent = n + ' file' + (n !== 1 ? 's' : '');
+                }
+                if (sizeEl) {
+                    sizeEl.textContent = 'Total size: ' + formatBytes(data.total_size_bytes || 0);
+                }
+            })
+            .catch(function () {});
+    }
+
+    function addRowsToBasketByIndices(indices) {
+        if (!indices || !indices.length) return;
+
+        var seen = new Set();
+        var entries = [];
+        var skippedMissing = 0;
+
+        indices.forEach(function (idx) {
+            var i = Number(idx);
+            if (!isFinite(i) || i < 0 || i >= resultRows.length || seen.has(i)) return;
+            seen.add(i);
+            var entry = buildBasketEntryFromRow(resultRows[i]);
+            if (!entry) {
+                skippedMissing++;
+                return;
+            }
+            entries.push(entry);
+        });
+
+        if (!entries.length) {
+            alert('No selectable rows found. Include BLOCK_KIND, OBS_DIR, FILENAME, and KW_RUN_ID in your query output.');
+            return;
+        }
+
+        fetch(basketAddApiUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ entries: entries }),
+        })
+            .then(function (r) { return r.json(); })
+            .then(function (data) {
+                if (!data || !data.success) {
+                    alert('Failed to add rows to basket: ' + ((data && data.error) || 'unknown'));
+                    return;
+                }
+                refreshBasketSummary();
+                var msg = (data.added || 0) + ' file(s) added to basket';
+                var skipped = Number(data.skipped || 0) + skippedMissing;
+                if (skipped > 0) msg += ' (' + skipped + ' skipped)';
+                alert(msg + '.');
+            })
+            .catch(function (err) {
+                alert('Request failed: ' + String(err));
+            });
     }
 
     function syncScrollMirror() {
@@ -1087,6 +1309,31 @@
         var runBtn = el('qdb-run-btn');
         if (runBtn) runBtn.addEventListener('click', runQuery);
 
+        var addSelectedBtn = el('qdb-btn-add-selected');
+        if (addSelectedBtn) {
+            addSelectedBtn.addEventListener('click', function () {
+                addRowsToBasketByIndices(Array.from(selectedRowIdxs));
+            });
+        }
+
+        var addVisibleBtn = el('qdb-btn-add-visible');
+        if (addVisibleBtn) {
+            addVisibleBtn.addEventListener('click', function () {
+                if (!visibleAddableIdxs.length) return;
+                if (!confirm('Add ' + visibleAddableIdxs.length + ' visible row(s) to basket?')) return;
+                addRowsToBasketByIndices(visibleAddableIdxs.slice());
+            });
+        }
+
+        var clearSelBtn = el('qdb-btn-clear-selection');
+        if (clearSelBtn) {
+            clearSelBtn.addEventListener('click', function () {
+                selectedRowIdxs.clear();
+                renderPage(resultColumns, resultRows);
+                updateBasketActionState();
+            });
+        }
+
         // Add join
         var addJoinBtn = el('qdb-add-join');
         if (addJoinBtn) {
@@ -1174,11 +1421,7 @@
     }
 
     function currentColumns() {
-        var ths = el('qdb-header-row').querySelectorAll('th');
-        var cols = [];
-        // Use title attribute which stores the raw TABLE__col key
-        ths.forEach(function (th) { cols.push(th.title || th.textContent); });
-        return cols;
+        return resultColumns.slice();
     }
 
     /* ------------------------------------------------------------------ */
@@ -1187,6 +1430,8 @@
     function init() {
         wireEvents();
         window.addEventListener('resize', syncScrollMirror);
+        refreshBasketSummary();
+        updateBasketActionState();
         if (profileId) {
             loadSchema();
         } else {

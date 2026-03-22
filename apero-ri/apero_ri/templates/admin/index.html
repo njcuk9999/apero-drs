@@ -1,2 +1,92 @@
 {% extends "general/sidebar_cards.html" %}
 {% block title %}APERO RI – Admin Portal{% endblock %}
+
+{% block pre_cards %}
+{% set _meta_updated  = admin_health_meta.updated_at   if admin_health_meta is defined else 'not yet updated' %}
+{% set _meta_running  = admin_health_meta.in_progress  if admin_health_meta is defined else false %}
+{% set _meta_url      = admin_health_meta.refresh_url  if admin_health_meta is defined else '/api/admin/health/update' %}
+<div style="margin-bottom:0.9rem; display:flex; align-items:center; gap:0.6rem; flex-wrap:wrap;">
+    <span id="admin-health-updated-label" style="color: var(--ari-text-muted); font-size:0.9rem;">
+        {% if _meta_running %}
+        <i class="fa-solid fa-spinner fa-spin" style="margin-right:0.3rem;"></i>Health status updating&hellip;
+        {% else %}
+        Health status last updated: {{ _meta_updated }} UTC
+        {% endif %}
+    </span>
+    <button id="admin-health-refresh-btn" class="ari-btn ari-btn--secondary ari-btn--sm"
+            data-refresh-url="{{ _meta_url }}"
+            {% if _meta_running %}disabled{% endif %}>
+        <i class="fa-solid fa-rotate"></i>
+        Update Now
+    </button>
+    <span id="admin-health-refresh-spinner"
+          style="display:none; align-items:center; gap:0.35rem; color: var(--ari-text-muted); font-size:0.85rem;">
+        <i class="fa-solid fa-spinner fa-spin"></i>
+        Updating&hellip;
+    </span>
+    <a href="{{ url_for('home_admin_portal_health_status') }}" class="ari-btn ari-btn--ghost ari-btn--sm" style="margin-left:auto;">
+        <i class="fa-solid fa-heart-pulse"></i>
+        Full health report
+    </a>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+(function () {
+    const btn = document.getElementById('admin-health-refresh-btn');
+    const spinner = document.getElementById('admin-health-refresh-spinner');
+    const label = document.getElementById('admin-health-updated-label');
+    if (!btn) return;
+
+    const wasRunning = {{ (admin_health_meta.in_progress if admin_health_meta is defined else false)|tojson }};
+    const refreshUrl = {{ (admin_health_meta.refresh_url if admin_health_meta is defined else '/api/admin/health/update')|tojson }};
+
+    async function doRefresh() {
+        btn.disabled = true;
+        if (spinner) spinner.style.display = 'inline-flex';
+        label.innerHTML = '<i class="fa-solid fa-spinner fa-spin" style="margin-right:0.3rem;"></i>Health status updating&hellip;';
+        try {
+            const res = await fetch(refreshUrl, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' }
+            });
+            const data = await res.json();
+            if (res.ok && data.success) {
+                window.location.reload();
+                return true;
+            }
+            alert(data.error || 'Failed to update admin health.');
+        } catch (err) {
+            alert('Failed to update admin health.');
+        }
+        btn.disabled = false;
+        if (spinner) spinner.style.display = 'none';
+        return false;
+    }
+
+    btn.addEventListener('click', doRefresh);
+
+    // If a health refresh was already in progress when the page loaded,
+    // keep polling until it finishes then reload to show fresh results.
+    if (wasRunning) {
+        (function poll() {
+            setTimeout(async function () {
+                try {
+                    const res = await fetch(refreshUrl, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' }
+                    });
+                    const data = await res.json();
+                    if (res.ok && data.success) {
+                        window.location.reload();
+                        return;
+                    }
+                } catch (_) {}
+                poll();
+            }, 3000);
+        }());
+    }
+}());
+</script>
+{% endblock %}

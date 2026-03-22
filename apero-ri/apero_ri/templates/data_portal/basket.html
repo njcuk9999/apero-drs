@@ -187,6 +187,10 @@
                         <input type="radio" name="bk-fmt" value="tar.gz">
                         <span><i class="fa-solid fa-file-archive"></i> tar.gz</span>
                     </label>
+                    <label class="bk-fmt-btn" id="bk-fmt-native-label" style="display:none;">
+                        <input type="radio" name="bk-fmt" value="native">
+                        <span><i class="fa-solid fa-file"></i> Native (single file)</span>
+                    </label>
                 </div>
             </div>
             <div class="bk-dl-options__row" id="bk-chunk-row">
@@ -228,6 +232,10 @@
 <div class="at-section-card" id="bk-jobs-section">
     <div class="at-section-card__header">
         <span><i class="fa-solid fa-list-check"></i> Recent compilations</span>
+        <span class="bk-jobs-expiry-hint">
+            <i class="fa-solid fa-clock"></i>
+            Compiled files are automatically deleted after 24 hours.
+        </span>
         <button id="bk-btn-clear-jobs" class="ari-btn ari-btn--sm ari-btn--danger"
                 style="margin-left:auto; margin-right:0.4rem;" title="Remove all completed/failed jobs">
             <i class="fa-solid fa-trash-can"></i> Remove all
@@ -241,6 +249,47 @@
         <div id="bk-jobs-usage" class="at-muted-hint" style="margin-bottom:0.65rem;"></div>
         <div id="bk-jobs-list">
             <p class="at-muted-hint">No recent jobs.</p>
+        </div>
+    </div>
+</div>
+
+{# ── Share modal ────────────────────────────────────────────── #}
+<div id="bk-share-modal" class="bk-modal" style="display:none;" role="dialog"
+     aria-modal="true" aria-labelledby="bk-share-modal-title">
+    <div class="bk-modal__backdrop"></div>
+    <div class="bk-modal__box">
+        <div class="bk-modal__header">
+            <span id="bk-share-modal-title">
+                <i class="fa-solid fa-share-nodes"></i> Share download
+            </span>
+            <button class="bk-modal__close" id="bk-share-close" type="button"
+                    aria-label="Close">&times;</button>
+        </div>
+        <div class="bk-modal__body">
+            <p class="bk-share-note">
+                <i class="fa-solid fa-circle-exclamation"></i>
+                This link will be <strong>public</strong> and will not require a login.
+                Please only share with those who should have access to the data.
+                This link will expire when the compilation does (within 24 hours).
+            </p>
+            <div class="bk-share-link-row">
+                <input id="bk-share-link-input" class="bk-share-link-input"
+                       type="text" readonly value="">
+                <button id="bk-share-copy-btn" class="ari-btn ari-btn--sm ari-btn--secondary"
+                        type="button" title="Copy link to clipboard">
+                    <i class="fa-solid fa-copy"></i> Copy
+                </button>
+            </div>
+            <div class="bk-share-divider">— or send via email —</div>
+            <div class="bk-share-email-row">
+                <input id="bk-share-email-input" class="bk-share-email-input"
+                       type="email" placeholder="Recipient email address">
+                <button id="bk-share-email-btn" class="ari-btn ari-btn--sm ari-btn--primary"
+                        type="button">
+                    <i class="fa-solid fa-paper-plane"></i> Send
+                </button>
+            </div>
+            <p id="bk-share-email-status" class="bk-share-email-status"></p>
         </div>
     </div>
 </div>
@@ -265,17 +314,19 @@
 
 <script>
 window.ARI_BASKET = {
-    profileId:       {{ profile.profile_id | tojson }},
-    basketApiUrl:    '/api/data-portal/basket',
-    summaryApiUrl:   '/api/data-portal/basket/summary',
-    clearApiUrl:     '/api/data-portal/basket/clear',
-    removeApiUrl:    '/api/data-portal/basket/remove',
-    compileApiUrl:   '/api/data-portal/basket/compile',
-    statusApiUrl:    '/api/data-portal/basket/compile-status',
-    downloadBaseUrl: '/api/data-portal/basket/download',
-    jobsApiUrl:      '/api/data-portal/basket/jobs',
-    jobsRemoveApiUrl:'/api/data-portal/basket/jobs/remove',
-    jobsClearApiUrl: '/api/data-portal/basket/jobs/clear',
+    profileId:            {{ profile.profile_id | tojson }},
+    basketApiUrl:         '/api/data-portal/basket',
+    summaryApiUrl:        '/api/data-portal/basket/summary',
+    clearApiUrl:          '/api/data-portal/basket/clear',
+    removeApiUrl:         '/api/data-portal/basket/remove',
+    compileApiUrl:        '/api/data-portal/basket/compile',
+    statusApiUrl:         '/api/data-portal/basket/compile-status',
+    downloadBaseUrl:      '/api/data-portal/basket/download',
+    jobsApiUrl:           '/api/data-portal/basket/jobs',
+    jobsRemoveApiUrl:     '/api/data-portal/basket/jobs/remove',
+    jobsClearApiUrl:      '/api/data-portal/basket/jobs/clear',
+    shareTokenApiUrl:     '/api/data-portal/basket/share-token',
+    shareEmailApiUrl:     '/api/data-portal/basket/share-email',
 };
 </script>
 <script src="{{ url_for('static', filename='js/basket.js') }}" defer></script>

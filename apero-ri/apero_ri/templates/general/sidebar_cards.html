@@ -7,6 +7,8 @@
     <h1><i class="{{ page_icon }}"></i> {{ page_label }}</h1>
 </div>
 
+{% block pre_cards %}{% endblock %}
+
 {% if cards %}
 <div class="ari-cards">
     {% for card in cards %}

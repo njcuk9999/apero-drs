@@ -15,15 +15,22 @@
         <select id="todo-filter-tag" class="ari-ud-select">
             <option value="">All Tags</option>
         </select>
-        <button class="ari-btn ari-btn--secondary ari-btn--sm" id="todo-manage-projects-btn">Manage Projects</button>
-        <button class="ari-btn ari-btn--secondary ari-btn--sm" id="todo-manage-tags-btn">Manage Tags</button>
+        <button class="ari-btn ari-btn--secondary ari-btn--sm" id="todo-manage-projects-btn">
+            <i class="fa-solid fa-folder"></i> Projects
+        </button>
+        <button class="ari-btn ari-btn--secondary ari-btn--sm" id="todo-manage-tags-btn">
+            <i class="fa-solid fa-tag"></i> Tags
+        </button>
     </div>
     <div class="ari-qt-toolbar__add">
-        <input type="text" id="todo-new-title" class="ari-ud-search" placeholder="New task title" />
+        <input type="text" id="todo-new-title" class="ari-ud-search" placeholder="New task title…" autocomplete="off" />
+        <select id="todo-new-status" class="ari-ud-select">
+            <option value="todo">To Do</option>
+            <option value="in-progress">In Progress</option>
+        </select>
         <button class="ari-btn ari-btn--primary ari-btn--sm" id="todo-add-btn">
             <i class="fa-solid fa-plus"></i> Add
         </button>
-        <button class="ari-btn ari-btn--secondary ari-btn--sm" id="todo-add-progress-btn">Add In Progress</button>
     </div>
 </div>
 

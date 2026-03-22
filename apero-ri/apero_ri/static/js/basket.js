@@ -72,6 +72,8 @@
     var btnLast            = document.getElementById('bk-btn-last');
     var dlSizeNote         = document.getElementById('bk-dl-size-note');
     var emailRow           = document.getElementById('bk-email-row');
+    var chunkRow           = document.getElementById('bk-chunk-row');
+    var fmtNativeLabel     = document.getElementById('bk-fmt-native-label');
     var btnCompile         = document.getElementById('bk-btn-compile');
     var btnRefreshJobs     = document.getElementById('bk-btn-refresh-jobs');
     var btnClearJobs       = document.getElementById('bk-btn-clear-jobs');
@@ -81,9 +83,17 @@
     var overlayMsg         = document.getElementById('bk-overlay-msg');
     var overlayHint        = document.getElementById('bk-overlay-hint');
     var overlayDismiss     = document.getElementById('bk-overlay-dismiss');
+    var shareModal         = document.getElementById('bk-share-modal');
+    var shareClose         = document.getElementById('bk-share-close');
+    var shareLinkInput     = document.getElementById('bk-share-link-input');
+    var shareCopyBtn       = document.getElementById('bk-share-copy-btn');
+    var shareEmailInput    = document.getElementById('bk-share-email-input');
+    var shareEmailBtn      = document.getElementById('bk-share-email-btn');
+    var shareEmailStatus   = document.getElementById('bk-share-email-status');
     var downloadsOverQuota = false;
     var downloadUsageBytes = 0;
     var downloadLimitBytes = 0;
+    var shareCurrentJobId  = null;
 
     /* -----------------------------------------------------------------------
        Helpers
@@ -208,6 +218,24 @@
                 dlSizeNote.style.display = 'none';
             }
         }
+        updateFormatOptions(summary.accessible_files || 0, summary.total_size_bytes || 0);
+    }
+
+    function updateFormatOptions(fileCount, totalBytes) {
+        var oneFile = fileCount === 1;
+        var underGb = totalBytes < 1024 * 1024 * 1024;
+        // Show native option only for a single file
+        if (fmtNativeLabel) fmtNativeLabel.style.display = oneFile ? '' : 'none';
+        // If native was selected but now we have multiple files, revert to zip
+        if (!oneFile) {
+            document.querySelectorAll('input[name="bk-fmt"]').forEach(function (r) {
+                if (r.value === 'native' && r.checked) {
+                    document.querySelector('input[name="bk-fmt"][value="zip"]').checked = true;
+                }
+            });
+        }
+        // Hide chunk split if single file or total < 1 GB
+        if (chunkRow) chunkRow.style.display = (oneFile || underGb) ? 'none' : '';
     }
 
     /* -----------------------------------------------------------------------
@@ -877,17 +905,37 @@
             return;
         }
         var html = '<table class="bk-jobs-table"><thead><tr>'
-            + '<th>Created</th><th>Status</th><th>Files</th>'
+            + '<th>Created</th><th>Expires</th><th>Status</th><th>Files</th>'
             + '<th>Size</th><th>Format</th><th>Downloads</th>'
             + '</tr></thead><tbody>';
         jobs.forEach(function (job) {
+            // Compute expiry from created_at + 24h
+            var expiresStr = '<span class="at-muted-hint">&mdash;</span>';
+            if (job.created_at) {
+                try {
+                    var created = new Date(job.created_at);
+                    var expires = new Date(created.getTime() + 24 * 60 * 60 * 1000);
+                    var now = new Date();
+                    var diffMs = expires - now;
+                    if (diffMs <= 0) {
+                        expiresStr = '<span style="color:#dc2626">Expired</span>';
+                    } else {
+                        var diffH = Math.floor(diffMs / 3600000);
+                        var diffM = Math.floor((diffMs % 3600000) / 60000);
+                        expiresStr = escHtml(expires.toLocaleString())
+                            + ' <span class="at-muted-hint">(in '
+                            + diffH + 'h ' + diffM + 'm)</span>';
+                    }
+                } catch (e) {}
+            }
             html += '<tr>';
             html += '<td>' + escHtml(formatDate(job.created_at)) + '</td>';
+            html += '<td>' + expiresStr + '</td>';
             html += '<td>' + statusBadge(job.status) + '</td>';
             html += '<td>' + escHtml(job.accessible_count || 0) + '</td>';
             html += '<td>' + escHtml(formatBytes(job.total_size_bytes || 0)) + '</td>';
             html += '<td>' + escHtml(job.fmt || '--') + '</td>';
-            html += '<td>';
+            html += '<td class="bk-jobs-actions">';
             if (job.status === 'done') {
                 (job.chunks || []).forEach(function (chunk) {
                     html += '<a class="ari-btn ari-btn--sm ari-btn--primary bk-dl-link" '
@@ -898,6 +946,11 @@
                         + ' (' + escHtml(formatBytes(chunk.size_bytes)) + ')'
                         + '</a> ';
                 });
+                html += '<button class="ari-btn ari-btn--sm ari-btn--secondary bk-job-share" '
+                    + 'data-job-id="' + escHtml(job.job_id || '') + '" '
+                    + 'title="Share this download">'
+                    + '<i class="fa-solid fa-share-nodes"></i> Share'
+                    + '</button> ';
                 html += '<button class="ari-btn ari-btn--sm ari-btn--danger bk-job-remove" '
                     + 'data-job-id="' + escHtml(job.job_id || '') + '" '
                     + 'title="Remove this compilation">'
@@ -920,6 +973,90 @@
     }
 
     /* -----------------------------------------------------------------------
+       Share modal
+    ----------------------------------------------------------------------- */
+    function openShareModal(jobId) {
+        shareCurrentJobId = jobId;
+        if (shareLinkInput) shareLinkInput.value = '';
+        if (shareEmailInput) shareEmailInput.value = '';
+        if (shareEmailStatus) { shareEmailStatus.textContent = ''; shareEmailStatus.className = 'bk-share-email-status'; }
+        if (shareModal) shareModal.style.display = '';
+        // Fetch (or create) token
+        fetch(cfg.shareTokenApiUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ job_id: jobId }),
+        })
+            .then(function (r) { return r.json(); })
+            .then(function (data) {
+                if (data.success && shareLinkInput) {
+                    shareLinkInput.value = data.share_url || '';
+                } else {
+                    if (shareLinkInput) shareLinkInput.value = 'Error: ' + (data.error || 'unknown');
+                }
+            })
+            .catch(function (err) {
+                if (shareLinkInput) shareLinkInput.value = 'Error: ' + String(err);
+            });
+    }
+
+    function closeShareModal() {
+        if (shareModal) shareModal.style.display = 'none';
+        shareCurrentJobId = null;
+    }
+
+    function copyShareLink() {
+        if (!shareLinkInput || !shareLinkInput.value) return;
+        navigator.clipboard.writeText(shareLinkInput.value).then(function () {
+            if (shareCopyBtn) {
+                var orig = shareCopyBtn.innerHTML;
+                shareCopyBtn.innerHTML = '<i class="fa-solid fa-check"></i> Copied!';
+                setTimeout(function () { shareCopyBtn.innerHTML = orig; }, 1800);
+            }
+        }).catch(function () {
+            // Fallback for older browsers
+            shareLinkInput.select();
+            document.execCommand('copy');
+        });
+    }
+
+    function sendShareEmail() {
+        var recipient = shareEmailInput ? shareEmailInput.value.trim() : '';
+        if (!recipient) { alert('Please enter a recipient email address.'); return; }
+        if (!shareCurrentJobId) return;
+        if (shareEmailBtn) shareEmailBtn.disabled = true;
+        if (shareEmailStatus) { shareEmailStatus.textContent = 'Sending\u2026'; shareEmailStatus.className = 'bk-share-email-status bk-share-email-status--sending'; }
+        fetch(cfg.shareEmailApiUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ job_id: shareCurrentJobId, recipient_email: recipient }),
+        })
+            .then(function (r) { return r.json(); })
+            .then(function (data) {
+                if (shareEmailBtn) shareEmailBtn.disabled = false;
+                if (data.success) {
+                    if (shareEmailStatus) {
+                        shareEmailStatus.textContent = 'Email sent to ' + recipient + '.';
+                        shareEmailStatus.className = 'bk-share-email-status bk-share-email-status--ok';
+                    }
+                    if (shareEmailInput) shareEmailInput.value = '';
+                } else {
+                    if (shareEmailStatus) {
+                        shareEmailStatus.textContent = 'Failed: ' + (data.error || 'unknown error');
+                        shareEmailStatus.className = 'bk-share-email-status bk-share-email-status--err';
+                    }
+                }
+            })
+            .catch(function (err) {
+                if (shareEmailBtn) shareEmailBtn.disabled = false;
+                if (shareEmailStatus) {
+                    shareEmailStatus.textContent = 'Request failed: ' + String(err);
+                    shareEmailStatus.className = 'bk-share-email-status bk-share-email-status--err';
+                }
+            });
+    }
+
+    /* -----------------------------------------------------------------------
        Event bindings
     ----------------------------------------------------------------------- */
     if (btnRemoveSelected) btnRemoveSelected.addEventListener('click', removeSelected);
@@ -930,10 +1067,17 @@
     if (overlayDismiss)    overlayDismiss.addEventListener('click', hideOverlay);
     if (jobsList) {
         jobsList.addEventListener('click', function (ev) {
-            var btn = ev.target.closest('.bk-job-remove');
-            if (!btn) return;
-            removeJob(btn.getAttribute('data-job-id') || '');
+            var removeBtn = ev.target.closest('.bk-job-remove');
+            if (removeBtn) { removeJob(removeBtn.getAttribute('data-job-id') || ''); return; }
+            var shareBtn = ev.target.closest('.bk-job-share');
+            if (shareBtn) { openShareModal(shareBtn.getAttribute('data-job-id') || ''); }
         });
+    }
+    if (shareClose)    shareClose.addEventListener('click', closeShareModal);
+    if (shareCopyBtn)  shareCopyBtn.addEventListener('click', copyShareLink);
+    if (shareEmailBtn) shareEmailBtn.addEventListener('click', sendShareEmail);
+    if (shareModal) {
+        shareModal.querySelector('.bk-modal__backdrop').addEventListener('click', closeShareModal);
     }
 
     if (groupbySelect) {

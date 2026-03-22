@@ -158,9 +158,45 @@
         {# ── Run button ──────────────────────────────── #}
         <div id="qdb-run-section" class="qdb-section qdb-run-section"
              style="display:none;">
-            <button id="qdb-run-btn" class="ari-btn ari-btn--primary qdb-run-btn">
-                <i class="fa-solid fa-play"></i> Run Query
-            </button>
+            <div class="qdb-run-grid">
+                <div class="qdb-run-grid__left">
+                    <button id="qdb-run-btn" class="ari-btn ari-btn--primary qdb-run-btn">
+                        <i class="fa-solid fa-play"></i> Run Query
+                    </button>
+                </div>
+                <div class="qdb-run-grid__spacer" aria-hidden="true"></div>
+                <div class="qdb-run-grid__right qdb-basket-panel">
+                    <div class="qdb-basket-panel__hdr">
+                        <i class="fa-solid fa-basket-shopping"></i>
+                        Download Basket
+                    </div>
+                    <div class="qdb-basket-panel__meta">
+                        <span id="qdb-basket-count">0 files</span>
+                        <span id="qdb-basket-size">Total size: --</span>
+                    </div>
+                    <div class="qdb-basket-panel__actions">
+                        <button id="qdb-btn-add-selected" class="ari-btn ari-btn--sm ari-btn--primary"
+                                type="button" disabled>
+                            <i class="fa-solid fa-basket-shopping"></i> Add to basket
+                        </button>
+                        <button id="qdb-btn-add-visible" class="ari-btn ari-btn--sm ari-btn--secondary"
+                                type="button" disabled>
+                            <i class="fa-solid fa-layer-group"></i> Add all visible
+                        </button>
+                        <button id="qdb-btn-clear-selection" class="ari-btn ari-btn--sm ari-btn--secondary"
+                                type="button" disabled>
+                            <i class="fa-solid fa-eraser"></i> Clear selection
+                        </button>
+                        <a id="qdb-basket-link" class="ari-btn ari-btn--sm ari-btn--secondary"
+                           href="{{ url_for('ri_basket', profile_id=profile.profile_id) }}">
+                            <i class="fa-solid fa-arrow-up-right-from-square"></i> Open basket
+                        </a>
+                    </div>
+                    <div class="qdb-basket-panel__hint">
+                        Select rows in the results table and add them to your basket.
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -253,6 +289,8 @@ window.QDB_CONFIG = {
     profileId:    {{ profile.profile_id | tojson }},
     schemaApiUrl: {{ schema_api_url | tojson }},
     runApiUrl:    {{ run_api_url | tojson }},
+    basketAddApiUrl: '/api/data-portal/basket/add',
+    basketSummaryApiUrl: '/api/data-portal/basket/summary',
     presets:      {{ query_presets | tojson }},
 };
 </script>

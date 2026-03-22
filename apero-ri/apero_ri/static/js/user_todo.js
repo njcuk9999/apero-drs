@@ -138,11 +138,6 @@ function _renderSections() {
     if (!container) return;
 
     const visible = _filteredItems();
-    if (!visible.length) {
-        container.innerHTML = '<p class="ari-ud-empty-inline">No tasks found.</p>';
-        _renderStats();
-        return;
-    }
 
     const grouped = {};
     _STATUS_ORDER.forEach(status => {
@@ -151,11 +146,12 @@ function _renderSections() {
             .sort((a, b) => _itemPriority(b) - _itemPriority(a));
     });
 
+    // Always render all 4 sections, even when empty
     container.innerHTML = _STATUS_ORDER.map(status => {
         const list = grouped[status] || [];
         const collapsed = _collapsed.has(status);
         return `
-            <section class="ari-qt-section ${collapsed ? 'is-collapsed' : ''}" data-status="${status}">
+            <section class="ari-qt-section" data-status="${status}">
                 <header class="ari-qt-section__head js-todo-section-head" data-status="${status}">
                     <div>
                         <i class="${_STATUS_ICONS[status]}"></i>
@@ -213,15 +209,15 @@ function _renderRow(item) {
         : `<a href="#" data-id="${_esc(item.id)}" class="js-open-details">${_esc(item.title)}</a>`;
     return `
         <tr data-id="${_esc(item.id)}">
-            <td>${title} <button class="ari-qt-meta-btn js-open-details" data-id="${_esc(item.id)}" title="Comments / link">${item.comments ? '💬' : '✏️'}</button></td>
+            <td>${title} <button class="ari-qt-meta-btn js-open-details" data-id="${_esc(item.id)}" title="Comments / link">${item.comments ? '💬' : '📝'}</button></td>
             <td>${_esc((item.projects || []).join(', '))}</td>
             <td>${_esc((item.tags || []).join(', '))}</td>
             <td><span class="ari-qt-size ari-qt-size--${_esc(item.size)}">${_esc(item.size.toUpperCase())}</span></td>
             <td>${_esc(String(item.priority))}</td>
             <td>${_esc(item.date_added || '')}</td>
             <td class="ari-qt-actions">
-                <button class="ari-btn ari-btn--secondary ari-btn--xs js-edit" data-id="${_esc(item.id)}">Edit</button>
-                <button class="ari-btn ari-btn--secondary ari-btn--xs js-duplicate" data-id="${_esc(item.id)}">Copy</button>
+                <button class="ari-qt-action-icon js-edit" data-id="${_esc(item.id)}" title="Edit"><i class="fa-solid fa-pen"></i></button>
+                <button class="ari-qt-action-icon js-duplicate" data-id="${_esc(item.id)}" title="Duplicate"><i class="fa-solid fa-copy"></i></button>
                 <select class="ari-qt-move js-move-select" data-id="${_esc(item.id)}">
                     <option value="">Move…</option>
                     <option value="todo">To Do</option>
@@ -229,7 +225,7 @@ function _renderRow(item) {
                     <option value="blocked">Blocked</option>
                     <option value="done">Done</option>
                 </select>
-                <button class="ari-btn ari-btn--danger ari-btn--xs js-delete" data-id="${_esc(item.id)}">Delete</button>
+                <button class="ari-qt-action-icon ari-qt-action-icon--danger js-delete" data-id="${_esc(item.id)}" title="Delete"><i class="fa-solid fa-trash"></i></button>
             </td>
         </tr>
     `;
@@ -433,38 +429,33 @@ async function _loadItems() {
     else _toast(r.error || 'Failed to load', false);
 }
 
-async function _addItem(defaultStatus) {
-    const titleEl = document.getElementById('todo-new-title');
-    const title = titleEl.value.trim();
+async function _addItem() {
+    const titleEl    = document.getElementById('todo-new-title');
+    const statusEl   = document.getElementById('todo-new-status');
+    const title      = (titleEl.value || '').trim();
+    const status     = (statusEl && statusEl.value) || 'todo';
     if (!title) {
+        // Open modal pre-filled
         _openTaskModal('');
-        document.getElementById('todo-modal-status').value = defaultStatus || 'todo';
+        document.getElementById('todo-modal-status').value = status;
         return;
     }
     const ok = await _saveItem({
-        id: '',
-        title,
-        status: defaultStatus || 'todo',
-        size: 'md',
-        priority: 0,
-        projects: ['Unknown'],
-        tags: ['Unknown'],
-        comments: '',
-        link_url: ''
+        id: '', title, status,
+        size: 'md', priority: 0,
+        projects: ['Unknown'], tags: ['Unknown'],
+        comments: '', link_url: ''
     });
-    if (ok) {
-        titleEl.value = '';
-    }
+    if (ok) { titleEl.value = ''; }
 }
 
 document.addEventListener('DOMContentLoaded', () => {
     _loadCollapsed();
     _loadItems();
 
-    document.getElementById('todo-add-btn').addEventListener('click', () => _addItem('todo'));
-    document.getElementById('todo-add-progress-btn').addEventListener('click', () => _addItem('in-progress'));
+    document.getElementById('todo-add-btn').addEventListener('click', () => _addItem());
     document.getElementById('todo-new-title').addEventListener('keydown', e => {
-        if (e.key === 'Enter') _addItem('todo');
+        if (e.key === 'Enter') _addItem();
     });
 
     document.getElementById('todo-filter-project').addEventListener('change', e => {

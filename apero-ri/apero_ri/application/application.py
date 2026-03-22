@@ -642,6 +642,20 @@ class ARIApp(Flask):
                           'api_basket_add_from_ftable',
                           self._api_basket_add_from_ftable,
                           methods=['POST'])
+        self.add_url_rule('/api/data-portal/basket/share-token',
+                          'api_basket_share_token',
+                          self._api_basket_share_token,
+                          methods=['POST'])
+        self.add_url_rule('/api/data-portal/basket/share-email',
+                          'api_basket_share_email',
+                          self._api_basket_share_email,
+                          methods=['POST'])
+        self.add_url_rule('/share/<token>',
+                          'share_landing',
+                          self._share_landing)
+        self.add_url_rule('/share/<token>/file/<int:chunk_idx>',
+                          'share_download',
+                          self._share_download)
         self.add_url_rule('/api/data-portal/file-browser',
                           'api_file_browser',
                           self._api_file_browser)
@@ -4143,6 +4157,154 @@ class ARIApp(Flask):
                        quota_reached=(usage.get('total_bytes', 0) >= limit_bytes))
 
     # -----------------------------------------------------------------
+    # Basket: API – create/retrieve share token for a completed job
+    # -----------------------------------------------------------------
+
+    def _api_basket_share_token(self):
+        """Return (or create) a public share token for a completed job."""
+        user_info, err = self._basket_access_check()
+        if err:
+            return err
+        data = request.get_json(silent=True) or {}
+        job_id = str(data.get('job_id', '') or '').strip()
+        if not job_id:
+            return jsonify(success=False, error='job_id required'), 400
+        username = user_info['username']
+        try:
+            token = bk.create_share_token(username, job_id)
+        except ValueError as exc:
+            return jsonify(success=False, error=str(exc)), 400
+        share_url = request.host_url.rstrip('/') + url_for('share_landing', token=token)
+        return jsonify(success=True, token=token, share_url=share_url)
+
+    # -----------------------------------------------------------------
+    # Basket: API – send share email
+    # -----------------------------------------------------------------
+
+    def _api_basket_share_email(self):
+        """Email a share link for a completed job to a recipient."""
+        user_info, err = self._basket_access_check()
+        if err:
+            return err
+        data = request.get_json(silent=True) or {}
+        job_id = str(data.get('job_id', '') or '').strip()
+        recipient = str(data.get('recipient_email', '') or '').strip()
+        if not job_id or not recipient:
+            return jsonify(
+                success=False,
+                error='job_id and recipient_email are required',
+            ), 400
+        if not re.match(r'^[^@\s]+@[^@\s]+\.[^@\s]+$', recipient):
+            return jsonify(success=False, error='Invalid recipient email address'), 400
+
+        username = user_info['username']
+        # Load full user record to get last_name + email
+        from apero_ri.core.auth import load_users as _load_users
+        all_users = _load_users()
+        ud = all_users.get(username, {})
+        first_names = str(ud.get('first_names', '') or user_info.get('first_names', '') or '').strip()
+        last_name = str(ud.get('last_name', '') or '').strip()
+        sender_email = self._get_primary_contact_email({
+            'primary_email': ud.get('primary_email', ''),
+            'emails': ud.get('emails', []),
+        })
+
+        try:
+            token = bk.create_share_token(username, job_id)
+        except ValueError as exc:
+            return jsonify(success=False, error=str(exc)), 400
+
+        meta = bk.get_job_status(username, job_id)
+        if not meta:
+            return jsonify(success=False, error='Job not found'), 404
+
+        created_str = meta.get('created_at', '')
+        try:
+            created_at = datetime.fromisoformat(str(created_str))
+            if created_at.tzinfo is None:
+                created_at = created_at.replace(tzinfo=timezone.utc)
+            expires_at = created_at + timedelta(hours=24)
+            expires_str = expires_at.strftime('%Y-%m-%d %H:%M:%S UTC')
+        except Exception:
+            expires_str = 'within 24 hours'
+
+        share_url = request.host_url.rstrip('/') + url_for('share_landing', token=token)
+        sender_full = f'{first_names} {last_name}'.strip() or username
+        sender_display = (
+            f'{sender_full} (email address: {sender_email})'
+            if sender_email else sender_full
+        )
+        subject = 'APERO RI: Shared download link'
+        body = (
+            f'User {sender_display} has sent you a link to an APERO RI '
+            f'download that will expire at {expires_str}.\n\n'
+            f'Download link (no login required):\n{share_url}\n'
+        )
+        try:
+            from apero_ri.core import email_backend as eb
+            eb.send_email(recipient, subject, body)
+            return jsonify(success=True)
+        except Exception as exc:
+            return jsonify(success=False, error=f'Failed to send email: {exc}'), 500
+
+    # -----------------------------------------------------------------
+    # Basket: Public share landing page (no login required)
+    # -----------------------------------------------------------------
+
+    def _share_landing(self, token):
+        """Public page for a shared download – no authentication required."""
+        share_info = bk.get_share_job(str(token or ''))
+        if share_info is None:
+            return render_template('data_portal/share_expired.html'), 404
+
+        meta = share_info['meta']
+        chunks = meta.get('chunks', [])
+        safe_chunks = []
+        for chunk in chunks:
+            safe_chunks.append({
+                'index': chunk.get('index', 0),
+                'filename': chunk.get('filename', ''),
+                'size_bytes': chunk.get('size_bytes', 0),
+                'file_count': chunk.get('file_count', 0),
+                'download_url': url_for('share_download', token=token,
+                                        chunk_idx=chunk.get('index', 0)),
+            })
+
+        expires_str = None
+        try:
+            created_at = datetime.fromisoformat(str(meta.get('created_at', '')))
+            if created_at.tzinfo is None:
+                created_at = created_at.replace(tzinfo=timezone.utc)
+            expires_at = created_at + timedelta(hours=24)
+            expires_str = expires_at.strftime('%Y-%m-%d %H:%M:%S UTC')
+        except Exception:
+            pass
+
+        return render_template(
+            'data_portal/share_landing.html',
+            chunks=safe_chunks,
+            meta=meta,
+            expires_at=expires_str,
+            token=token,
+        )
+
+    # -----------------------------------------------------------------
+    # Basket: Public share chunk download (no login required)
+    # -----------------------------------------------------------------
+
+    def _share_download(self, token, chunk_idx):
+        """Direct file download for a shared job chunk – no auth required."""
+        share_info = bk.get_share_job(str(token or ''))
+        if share_info is None:
+            return jsonify(success=False, error='Link expired or not found'), 404
+        path = bk.get_job_chunk_path(share_info['username'],
+                                     share_info['job_id'],
+                                     chunk_idx)
+        if path is None:
+            return jsonify(success=False, error='File not found'), 404
+        return send_file(str(path), as_attachment=True, download_name=path.name)
+
+    # -----------------------------------------------------------------
     # Basket: API – add from ftable by obs_dir + fkind
     # -----------------------------------------------------------------
 
@@ -4573,6 +4735,20 @@ class ARIApp(Flask):
                 )
                 col_labels.append(alias)
 
+        # Basket integration: whenever FINDEX is in the query, always
+        # inject the four basket-key columns as hidden extras (not in
+        # col_labels so they are absent from the display table, but
+        # present in every result row so the JS can enable checkboxes).
+        _BASKET_KEY_COLS = ['KW_RUN_ID', 'BLOCK_KIND', 'OBS_DIR', 'FILENAME']
+        if 'FINDEX' in table_cols:
+            for _bk_col in _BASKET_KEY_COLS:
+                _bk_alias = f'FINDEX__{_bk_col}'
+                if _bk_alias not in col_labels and _bk_col in table_cols['FINDEX']:
+                    select_parts.append(
+                        f'`_t_FINDEX`.{q_id(_bk_col)} AS {q_id(_bk_alias)}'
+                    )
+                    # Intentionally NOT added to col_labels
+
         if not select_parts:
             raise ValueError('No columns selected.')
 
@@ -4799,10 +4975,23 @@ class ARIApp(Flask):
 
         # ── Try per-instrument text preset file ──────────────────────────
         general_cfg = cfg.get('general', {})
-        preset_filename = (
-            general_cfg.get('db-query-preset-file', '').strip()
-            if isinstance(general_cfg, dict) else ''
-        )
+        preset_filename = ''
+        if isinstance(general_cfg, dict):
+            # Accept both separator styles for backward compatibility.
+            preset_filename = str(
+                general_cfg.get('db-query-preset-file')
+                or general_cfg.get('db-query-preset_file')
+                or general_cfg.get('db_query_preset_file')
+                or ''
+            ).strip()
+
+        # Existing saved profiles may not yet include the new key in their
+        # embedded data; in that case derive the filename from profile_id.
+        if not preset_filename:
+            guessed = str(profile.get('profile_id', '')).strip()
+            if guessed:
+                preset_filename = f'{guessed}.txt'
+
         if preset_filename:
             text_path = (PACKAGE_DIR / 'resources'
                          / 'aprofile_qdb_presets' / preset_filename)
@@ -6299,53 +6488,10 @@ class ARIApp(Flask):
         }
         if _apero_instrument_profile:
             profile_data['APERO_INSTRUMENT_PROFILE'] = _apero_instrument_profile
-            # Materialize selected APERO instrument profile content so it is
-            # persisted directly in apero_profiles.yaml.
+            # Validate selected APERO instrument profile exists.
             preset_path = (PACKAGE_DIR / 'resources' / 'aprofile_instruments'
                            / _apero_instrument_profile)
-            if preset_path.is_file():
-                try:
-                    with preset_path.open('r', encoding='utf-8') as f:
-                        preset_data = yaml.safe_load(f) or {}
-                except Exception as _err:
-                    return jsonify(success=False,
-                                   error=f'Failed to load instrument profile: {_err}'), 400
-                if isinstance(preset_data, dict):
-                    if isinstance(preset_data.get('headers'), dict):
-                        profile_data['headers'] = dict(preset_data.get('headers', {}))
-                    # Presets can use either "plot" or "plots".
-                    if isinstance(preset_data.get('plots'), dict):
-                        profile_data['plots'] = dict(preset_data.get('plots', {}))
-                    elif isinstance(preset_data.get('plot'), dict):
-                        profile_data['plots'] = dict(preset_data.get('plot', {}))
-
-                    preset_general = preset_data.get('general', {})
-                    if isinstance(preset_general, dict):
-                        merged_general = {}
-                        # Keep non-science fields from preset general (e.g. bands),
-                        # but normalize science keys to canonical uppercase form only.
-                        for gkey, gval in preset_general.items():
-                            if gkey in ('instrument', 'science_fiber', 'science_types'):
-                                continue
-                            merged_general[gkey] = gval
-                        if 'SCIENCE_FIBER' in preset_general:
-                            merged_general['SCIENCE_FIBER'] = preset_general.get('SCIENCE_FIBER')
-                        elif 'science_fiber' in preset_general:
-                            merged_general['SCIENCE_FIBER'] = preset_general.get('science_fiber')
-                        if 'SCIENCE_TYPES' in preset_general:
-                            merged_general['SCIENCE_TYPES'] = preset_general.get('SCIENCE_TYPES')
-                        elif 'science_types' in preset_general:
-                            merged_general['SCIENCE_TYPES'] = preset_general.get('science_types')
-                        if 'INSTRUMENT' in preset_general:
-                            merged_general['INSTRUMENT'] = preset_general.get('INSTRUMENT')
-                        elif 'instrument' in preset_general:
-                            merged_general['INSTRUMENT'] = preset_general.get('instrument')
-                        # Preserve user-selected science values as source of truth.
-                        merged_general['INSTRUMENT'] = instrument
-                        merged_general['SCIENCE_FIBER'] = science_fiber
-                        merged_general['SCIENCE_TYPES'] = science_types
-                        profile_data['general'] = merged_general
-            else:
+            if not preset_path.is_file():
                 return jsonify(success=False,
                                error=f'Instrument profile file not found: {_apero_instrument_profile}'), 400
         inst_profiles[name] = profile_data

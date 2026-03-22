@@ -1,27 +1,30 @@
 ================
-Raw files (first 100)
+Raw files GL699 (first 100)
 ================
 SELECT BLOCK_KIND, OBS_DIR, FILENAME, KW_OBJNAME AS OBJNAME
 FROM {FINDEX_TABLENAME}
-WHERE BLOCK_KIND = "raw"
+WHERE BLOCK_KIND = "raw" 
+  AND KW_OBJNAME = "GL699"
 LIMIT 100
 
 ================
-Reduced E2DS-FF files (first 100)
+Reduced E2DS-FF files  GL699 (first 100)
 ================
 SELECT BLOCK_KIND, OBS_DIR, FILENAME, KW_OBJNAME AS OBJNAME
 FROM {FINDEX_TABLENAME}
 WHERE BLOCK_KIND = "red"
   AND KW_OUTPUT = "EXT_E2DS_FF"
   AND KW_FIBER = "{SCIENCE_FIBER}"
+  AND KW_OBJNAME = "GL699"
 LIMIT 100
 
 ================
-Telluric-corrected files (first 100)
+Telluric-corrected files  GL699 (first 100)
 ================
 SELECT BLOCK_KIND, OBS_DIR, FILENAME, KW_OBJNAME AS OBJNAME
 FROM {FINDEX_TABLENAME}
 WHERE BLOCK_KIND = "red"
   AND KW_OUTPUT = "TELLU_OBJ"
   AND KW_FIBER = "{SCIENCE_FIBER}"
+  AND KW_OBJNAME = "GL699"
 LIMIT 100

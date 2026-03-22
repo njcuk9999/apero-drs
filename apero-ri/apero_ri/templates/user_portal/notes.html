@@ -4,8 +4,101 @@
 {% block doc_content %}
 <div class="ari-page-header">
     <h1><i class="{{ page_icon }}"></i> {{ page_label }}</h1>
-    <p class="ari-page-subtitle">Our Lil Nest style notes with grid/list views and modal editor.</p>
 </div>
+
+<!-- Two-pane layout -->
+<div class="ari-np-layout">
+    <!-- Left sidebar: note list -->
+    <aside class="ari-np-sidebar">
+        <div class="ari-np-sidebar-header">
+            <input type="text" id="np-search" class="ari-np-search" placeholder="Search notes…" autocomplete="off">
+            <button class="ari-btn ari-btn--primary ari-btn--sm" id="np-new-btn" title="New note">
+                <i class="fa-solid fa-plus"></i>
+            </button>
+        </div>
+        <div class="ari-np-list" id="np-list">
+            <p class="ari-np-empty"><i class="fa-solid fa-spinner fa-spin"></i></p>
+        </div>
+    </aside>
+
+    <!-- Right content pane -->
+    <div class="ari-np-content" id="np-content">
+        <!-- Empty state -->
+        <div class="ari-np-content-empty" id="np-empty-state">
+            <i class="fa-solid fa-note-sticky"></i>
+            <span>Select a note or create one</span>
+        </div>
+
+        <!-- View mode (hidden until note selected) -->
+        <div class="ari-np-view" id="np-view" style="display:none;">
+            <div class="ari-np-view-header">
+                <span class="ari-np-view-title" id="np-view-title">Untitled</span>
+                <button class="ari-btn ari-btn--secondary ari-btn--sm" id="np-edit-btn">
+                    <i class="fa-solid fa-pencil"></i> Edit
+                </button>
+                <button class="ari-btn ari-btn--danger ari-btn--sm" id="np-view-delete-btn">
+                    <i class="fa-solid fa-trash"></i>
+                </button>
+            </div>
+            <div class="ari-np-view-body ari-md-content" id="np-view-body"></div>
+        </div>
+
+        <!-- Edit mode (hidden until editing) -->
+        <div class="ari-np-editor" id="np-editor" style="display:none;">
+            <div class="ari-np-editor-header">
+                <input type="text" id="np-title-input" class="ari-np-editor-title-input" placeholder="Note title…">
+            </div>
+            <!-- Markdown toolbar -->
+            <div class="ari-np-md-toolbar" id="np-md-toolbar">
+                <button class="ari-btn ari-btn--secondary ari-btn--xs js-np-md" data-cmd="h1" title="H1">H1</button>
+                <button class="ari-btn ari-btn--secondary ari-btn--xs js-np-md" data-cmd="h2" title="H2">H2</button>
+                <button class="ari-btn ari-btn--secondary ari-btn--xs js-np-md" data-cmd="h3" title="H3">H3</button>
+                <button class="ari-btn ari-btn--secondary ari-btn--xs js-np-md" data-cmd="bold" title="Bold"><i class="fa-solid fa-bold"></i></button>
+                <button class="ari-btn ari-btn--secondary ari-btn--xs js-np-md" data-cmd="italic" title="Italic"><i class="fa-solid fa-italic"></i></button>
+                <button class="ari-btn ari-btn--secondary ari-btn--xs js-np-md" data-cmd="code" title="Code"><i class="fa-solid fa-code"></i></button>
+                <button class="ari-btn ari-btn--secondary ari-btn--xs js-np-md" data-cmd="quote" title="Quote"><i class="fa-solid fa-quote-left"></i></button>
+                <button class="ari-btn ari-btn--secondary ari-btn--xs js-np-md" data-cmd="ul" title="List"><i class="fa-solid fa-list-ul"></i></button>
+                <button class="ari-btn ari-btn--secondary ari-btn--xs js-np-md" data-cmd="ol" title="Numbered list"><i class="fa-solid fa-list-ol"></i></button>
+                <button class="ari-btn ari-btn--secondary ari-btn--xs js-np-md" data-cmd="task" title="Task list"><i class="fa-solid fa-list-check"></i></button>
+                <button class="ari-btn ari-btn--secondary ari-btn--xs js-np-md" data-cmd="link" title="Link"><i class="fa-solid fa-link"></i></button>
+                <button class="ari-btn ari-btn--secondary ari-btn--xs js-np-md" data-cmd="hr" title="Horizontal line"><i class="fa-solid fa-grip-lines"></i></button>
+            </div>
+            <div class="ari-np-editor-panes">
+                <textarea id="np-textarea" class="ari-np-textarea" placeholder="Write in Markdown…"></textarea>
+                <div id="np-preview" class="ari-np-preview ari-md-content"></div>
+            </div>
+            <div class="ari-np-editor-footer">
+                <button class="ari-btn ari-btn--primary ari-btn--sm" id="np-save-close-btn">
+                    <i class="fa-solid fa-floppy-disk"></i> Save &amp; Close
+                </button>
+                <button class="ari-btn ari-btn--secondary ari-btn--sm" id="np-save-btn">
+                    <i class="fa-solid fa-floppy-disk"></i> Save
+                </button>
+                <button class="ari-btn ari-btn--secondary ari-btn--sm" id="np-close-btn">
+                    Close
+                </button>
+                <button class="ari-btn ari-btn--danger ari-btn--sm" id="np-delete-btn" style="margin-left:auto;">
+                    <i class="fa-solid fa-trash"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="np-toast" class="ari-toast" style="display:none;"></div>
+
+<script>
+window.ARI_NOTES = {
+    listUrl:   {{ url_for('api_user_notes_list')|tojson }},
+    getUrl:    {{ url_for('api_user_notes_get')|tojson }},
+    saveUrl:   {{ url_for('api_user_notes_save')|tojson }},
+    deleteUrl: {{ url_for('api_user_notes_delete')|tojson }},
+    renderUrl: {{ url_for('api_user_notes_render')|tojson }},
+};
+</script>
+<script src="{{ url_for('static', filename='js/user_notes.js') }}"></script>
+{% endblock %}
+
 
 <div class="ari-oln-notes-topbar">
     <div id="notes-view-toggle" class="ari-oln-view-toggle">
