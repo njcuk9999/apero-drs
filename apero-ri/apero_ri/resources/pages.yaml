@@ -421,3 +421,14 @@ home.admin_portal.email:
     pinned: False
     top-level: False
     show: True
+
+home.admin_portal.backup_settings:
+  label: Backup Settings
+  parent: home.admin_portal
+  view-permission: view.admin
+  icon: fa-solid fa-cloud-arrow-up
+  quick-nav: False
+  side-nav:
+    pinned: False
+    top-level: False
+    show: True

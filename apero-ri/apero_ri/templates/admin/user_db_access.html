@@ -58,11 +58,33 @@
 <div id="udba-workspace" class="ari-sg-section" style="display:none;">
     <div class="ari-sg-section__header">
         <h3><i class="fa-solid fa-table-columns"></i> Table Access Rules</h3>
-        <button id="udba-save" class="ari-btn ari-btn--primary" type="button">
-            <span id="udba-save-label"><i class="fa-solid fa-floppy-disk"></i> Save</span>
-            <span id="udba-save-spinner" style="display:none;"><i class="fa-solid fa-spinner fa-spin"></i> Saving...</span>
-        </button>
+        <div style="display:flex; gap:0.5rem; align-items:center;">
+            <button id="udba-run-check" class="ari-btn ari-btn--secondary ari-btn--sm" type="button">
+                <span id="udba-check-label"><i class="fa-solid fa-heart-pulse"></i> Run check</span>
+                <span id="udba-check-spinner" style="display:none;"><i class="fa-solid fa-spinner fa-spin"></i> Checking...</span>
+            </button>
+            <button id="udba-save" class="ari-btn ari-btn--primary" type="button">
+                <span id="udba-save-label"><i class="fa-solid fa-floppy-disk"></i> Save</span>
+                <span id="udba-save-spinner" style="display:none;"><i class="fa-solid fa-spinner fa-spin"></i> Saving...</span>
+            </button>
+        </div>
     </div>
+
+    {% set _udba_report = user_db_access_health_report if user_db_access_health_report is defined else {
+        'status': _udba_status,
+        'message': _udba_message,
+        'checked_profiles': 0,
+        'warning_profiles': 0,
+        'profiles': []
+    } %}
+    <div id="udba-check-panel" class="ari-ap-status ari-ap-status--{{ _udba_report.get('status', 'info') }}" style="margin-bottom:1rem;">
+        <div id="udba-check-headline" class="ari-ap-status__headline">
+            <i class="fa-solid fa-heart-pulse"></i>
+            User DB Access health diagnostics
+        </div>
+        <ul id="udba-check-details" class="ari-ap-status__details"></ul>
+    </div>
+
     <div id="udba-sections" class="udba-sections"></div>
 </div>
 
@@ -79,11 +101,13 @@
 window.ARI_ADMIN_USER_DB_ACCESS = {
     profilesUrl: {{ url_for('api_user_db_access_profiles')|tojson }},
     detailsUrl: {{ url_for('api_user_db_access_details')|tojson }},
+    healthUrl: {{ url_for('api_user_db_access_health_check')|tojson }},
     saveUrl: {{ url_for('api_user_db_access_save')|tojson }},
     initialHealth: {
         status: {{ (_udba_status|default('info', true)|string)|tojson }},
         message: {{ (_udba_message|default('Configure group and column access to APERO database tables by profile.', true)|string)|tojson }}
-    }
+    },
+    initialHealthReport: {{ _udba_report|tojson }}
 };
 </script>
 <script src="{{ url_for('static', filename='js/admin_user_db_access.js') }}"></script>

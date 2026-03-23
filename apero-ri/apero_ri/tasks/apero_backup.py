@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import Any, Dict, List
 
 from apero_ri.tasks import apero_async
+from apero_ri.core import backup_backend as bb
 
 
 # =============================================================================
@@ -165,6 +166,50 @@ class AperoLocalDataBackupTask(apero_async.AperoAsyncTask):
             self.info += '\n### Pruned copies\n'
             for path in pruned_daily + pruned_weekly:
                 self.info += f'- `{path.name}`\n'
+
+        local_inventory = bb.list_local_backups(local_data_dir=local_data_dir)
+        local_count = int(local_inventory.get('total_count', 0) or 0)
+        local_size = int(local_inventory.get('total_bytes', 0) or 0)
+        self.info += (
+            '\n### Local backup status\n'
+            f'- Files: {local_count}\n'
+            f'- Size: {bb.format_bytes(local_size)}\n'
+        )
+
+        sync_result = bb.sync_local_backups_to_cloud(local_data_dir=local_data_dir)
+        provider = str(sync_result.get('provider', 'local_only'))
+        if not sync_result.get('configured', False):
+            warning_msg = str(sync_result.get('warning', 'Cloud backup is not configured.'))
+            self.info += (
+                '\n### Cloud mirror status\n'
+                f'**WARNING**: {warning_msg}\n'
+                f'- Provider: `{provider}`\n'
+            )
+        elif not sync_result.get('ok', False):
+            warning_msg = str(sync_result.get('warning', 'Cloud mirror failed.'))
+            self.info += (
+                '\n### Cloud mirror status\n'
+                f'**WARNING**: {warning_msg}\n'
+                f'- Provider: `{provider}`\n'
+                f'- Uploaded: {int(sync_result.get("uploaded", 0) or 0)}\n'
+                f'- Updated: {int(sync_result.get("updated", 0) or 0)}\n'
+                f'- Deleted: {int(sync_result.get("deleted", 0) or 0)}\n'
+            )
+        else:
+            query_ms = sync_result.get('query_ms', None)
+            cloud_bytes = int(sync_result.get('cloud_total_bytes', 0) or 0)
+            cloud_count = int(sync_result.get('cloud_total_count', 0) or 0)
+            self.info += (
+                '\n### Cloud mirror status\n'
+                f'- Provider: `{provider}`\n'
+                f'- Uploaded: {int(sync_result.get("uploaded", 0) or 0)}\n'
+                f'- Updated: {int(sync_result.get("updated", 0) or 0)}\n'
+                f'- Deleted: {int(sync_result.get("deleted", 0) or 0)}\n'
+                f'- Cloud files: {cloud_count}\n'
+                f'- Cloud size: {bb.format_bytes(cloud_bytes)}\n'
+                f'- Query time: {query_ms if query_ms is not None else "n/a"} ms\n'
+            )
+
         self.last_run = generated_at
         self.progress = 1.0
 

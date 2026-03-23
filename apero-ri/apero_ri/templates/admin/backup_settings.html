@@ -1,0 +1,499 @@
+{% extends "general/sidebar_base.html" %}
+{% block title %}APERO RI – Backup Settings{% endblock %}
+
+{% block doc_content %}
+<div class="ari-up-shell">
+<div class="ari-page-header">
+    <h1><i class="fa-solid fa-cloud-arrow-up"></i> Backup Settings</h1>
+</div>
+
+{% if not can_manage %}
+<div class="ari-ae-readonly-notice">
+    <i class="fa-solid fa-circle-info"></i>
+    You have view-only access to backup settings.
+</div>
+{% endif %}
+
+<div class="ari-ae-status-card" id="abStatusCard">
+    <div class="ari-ae-status-icon" id="abStatusIcon">
+        <i class="fa-solid fa-spinner fa-spin"></i>
+    </div>
+    <div class="ari-ae-status-body">
+        <span class="ari-ae-status-title" id="abStatusTitle">Checking cloud backup connection...</span>
+        <span class="ari-ae-status-detail" id="abStatusDetail"></span>
+    </div>
+    <button class="ari-btn ari-btn--secondary ari-btn--sm ari-ae-status-action" id="abBtnTest"
+            onclick="abTestConnection()">
+        <i class="fa-solid fa-plug-circle-check"></i> Test connection
+    </button>
+</div>
+
+<div class="ari-ab-tabs" role="tablist" aria-label="Backup tabs">
+    <button id="abTabSetup" class="ari-ab-tab ari-ab-tab--active" role="tab"
+            aria-selected="true" onclick="abSelectTab('setup')">
+        <i class="fa-solid fa-sliders"></i> Setup
+    </button>
+    <button id="abTabBackups" class="ari-ab-tab" role="tab"
+            aria-selected="false" onclick="abSelectTab('backups')">
+        <i class="fa-solid fa-database"></i> Backups
+    </button>
+</div>
+
+<div id="abPanelSetup" class="ari-ab-panel">
+    <div class="ari-ae-section">
+        <h2 class="ari-ae-section-title">
+            <i class="fa-solid fa-cloud"></i> Cloud provider
+        </h2>
+
+        <div class="ari-ae-provider-grid" id="abProviderGrid">
+            {% for key, prov in providers.items() %}
+            <button type="button"
+                    class="ari-ae-provider-btn{% if key == current_provider %} ari-ae-provider-btn--active{% endif %}"
+                    data-provider="{{ key }}"
+                    onclick="abSelectProvider('{{ key }}')"
+                    {% if not can_manage %}disabled{% endif %}>
+                {% if key == 'gdrive_service_account' %}<i class="fa-brands fa-google-drive"></i>
+                {% elif key == 's3' %}<i class="fa-brands fa-aws"></i>
+                {% else %}<i class="fa-solid fa-hard-drive"></i>{% endif %}
+                {{ prov.label }}
+            </button>
+            {% endfor %}
+        </div>
+    </div>
+
+    <div class="ari-ae-section" id="abWalkthroughSection">
+        <h2 class="ari-ae-section-title">
+            <i class="fa-solid fa-circle-question"></i> Setup guide
+            <a id="abHelpUrl" href="#" target="_blank" rel="noopener" class="ari-ae-help-link" style="display:none;">
+                Official documentation <i class="fa-solid fa-arrow-up-right-from-square fa-xs"></i>
+            </a>
+        </h2>
+        <ol class="ari-ae-steps" id="abStepsList"></ol>
+    </div>
+
+    <div class="ari-ae-section">
+        <h2 class="ari-ae-section-title">
+            <i class="fa-solid fa-key"></i> Credentials &amp; connection
+        </h2>
+
+        <form id="abForm" class="ari-ae-form" onsubmit="abSave(event)">
+            <div class="ari-ae-field ari-ae-field--inline">
+                <label class="ari-ae-label" for="abEnabled">Enable cloud mirror</label>
+                <label class="ari-ae-switch">
+                    <input type="checkbox" id="abEnabled" name="enabled"
+                           {% if backup_cfg.get('enabled') %}checked{% endif %}
+                           {% if not can_manage %}disabled{% endif %}>
+                    <span class="ari-ae-switch-track"></span>
+                </label>
+            </div>
+
+            <div id="abGdriveFields">
+                <div class="ari-ae-field">
+                    <label class="ari-ae-label" for="abGdriveKeyFile">
+                        Service account JSON file
+                        <span class="ari-ae-hint">Absolute path on the server (readable by APERO RI process).</span>
+                    </label>
+                    <input type="text" id="abGdriveKeyFile" name="gdrive_service_account_file"
+                           class="ari-ae-input" placeholder="/secure/path/service-account.json"
+                           value="{{ backup_cfg.get('gdrive_service_account_file', '') }}"
+                           {% if not can_manage %}readonly{% endif %}>
+                </div>
+                <div class="ari-ae-field">
+                    <label class="ari-ae-label" for="abGdriveFolderId">
+                        Google Drive folder ID
+                        <span class="ari-ae-hint">Share that folder with the service account email before testing.</span>
+                    </label>
+                    <input type="text" id="abGdriveFolderId" name="gdrive_folder_id"
+                           class="ari-ae-input" placeholder="1AbCdEf..."
+                           value="{{ backup_cfg.get('gdrive_folder_id', '') }}"
+                           {% if not can_manage %}readonly{% endif %}>
+                </div>
+            </div>
+
+            <div id="abS3Fields" style="display:none;">
+                <div class="ari-ae-field">
+                    <label class="ari-ae-label" for="abS3Bucket">S3 bucket</label>
+                    <input type="text" id="abS3Bucket" name="s3_bucket" class="ari-ae-input"
+                           value="{{ backup_cfg.get('s3_bucket', '') }}"
+                           {% if not can_manage %}readonly{% endif %}>
+                </div>
+                <div class="ari-ae-field ari-ae-field--row">
+                    <div class="ari-ae-subfield">
+                        <label class="ari-ae-label" for="abS3Prefix">Prefix</label>
+                        <input type="text" id="abS3Prefix" name="s3_prefix" class="ari-ae-input"
+                               value="{{ backup_cfg.get('s3_prefix', 'apero/backups') }}"
+                               {% if not can_manage %}readonly{% endif %}>
+                    </div>
+                    <div class="ari-ae-subfield">
+                        <label class="ari-ae-label" for="abS3Region">Region</label>
+                        <input type="text" id="abS3Region" name="s3_region" class="ari-ae-input"
+                               value="{{ backup_cfg.get('s3_region', '') }}"
+                               {% if not can_manage %}readonly{% endif %}>
+                    </div>
+                </div>
+                <div class="ari-ae-field">
+                    <label class="ari-ae-label" for="abS3Endpoint">
+                        Custom endpoint URL (optional)
+                        <span class="ari-ae-hint">Leave blank for AWS S3. Set this for S3-compatible storage.</span>
+                    </label>
+                    <input type="text" id="abS3Endpoint" name="s3_endpoint_url" class="ari-ae-input"
+                           value="{{ backup_cfg.get('s3_endpoint_url', '') }}"
+                           {% if not can_manage %}readonly{% endif %}>
+                </div>
+                <div class="ari-ae-field ari-ae-field--row">
+                    <div class="ari-ae-subfield">
+                        <label class="ari-ae-label" for="abS3Key">Access key ID</label>
+                        <input type="text" id="abS3Key" name="s3_access_key_id" class="ari-ae-input"
+                               value="{{ backup_cfg.get('s3_access_key_id', '') }}"
+                               {% if not can_manage %}readonly{% endif %}>
+                    </div>
+                    <div class="ari-ae-subfield">
+                        <label class="ari-ae-label" for="abS3Secret">
+                            Secret access key
+                            <span class="ari-ae-hint">Leave blank to keep the existing secret.</span>
+                        </label>
+                        <input type="password" id="abS3Secret" name="s3_secret_access_key" class="ari-ae-input"
+                               placeholder="Leave blank to keep current"
+                               {% if not can_manage %}readonly{% endif %}>
+                    </div>
+                </div>
+            </div>
+
+            {% if can_manage %}
+            <div class="ari-ae-form-actions">
+                <button type="submit" class="ari-btn ari-btn--primary" id="abBtnSave">
+                    <i class="fa-solid fa-floppy-disk"></i> Save settings
+                </button>
+                <button type="button" class="ari-btn ari-btn--secondary" id="abBtnSync" onclick="abRunSync()">
+                    <i class="fa-solid fa-arrows-rotate"></i> Sync now
+                </button>
+                <span class="ari-ae-save-msg" id="abSaveMsg"></span>
+            </div>
+            {% endif %}
+        </form>
+    </div>
+</div>
+
+<div id="abPanelBackups" class="ari-ab-panel ari-up-panel--hidden">
+    <div class="ari-ae-section">
+        <h2 class="ari-ae-section-title">
+            <i class="fa-solid fa-box-archive"></i> Backup inventory
+        </h2>
+
+        <div class="ari-ab-toolbar">
+            <button class="ari-btn ari-btn--secondary ari-btn--sm" onclick="abLoadInventory()">
+                <i class="fa-solid fa-rotate"></i> Refresh
+            </button>
+            {% if can_manage %}
+            <button class="ari-btn ari-btn--ghost ari-btn--sm" onclick="abDeleteAll('daily', 'both')">
+                Delete all daily (local + cloud)
+            </button>
+            <button class="ari-btn ari-btn--ghost ari-btn--sm" onclick="abDeleteAll('weekly', 'both')">
+                Delete all weekly (local + cloud)
+            </button>
+            <button class="ari-btn ari-btn--ghost ari-btn--sm" onclick="abDeleteAll('all', 'both')">
+                Delete all backups (local + cloud)
+            </button>
+            {% endif %}
+            <span class="ari-ae-save-msg" id="abInventoryMsg"></span>
+        </div>
+
+        <div class="ari-ab-summary" id="abSummary"></div>
+
+        <div class="ari-ab-table-wrap">
+            <table class="ari-ab-table" id="abTable">
+                <thead>
+                    <tr>
+                        <th>Period</th>
+                        <th>Backup file</th>
+                        <th>Local</th>
+                        <th>Cloud</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="abTableBody"></tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+const AB_PROVIDERS = {{ providers_json | safe }};
+const AB_CAN_MANAGE = {{ can_manage | tojson }};
+const AB_CFG = {{ backup_cfg | tojson }};
+const AB_INVENTORY = {{ backup_inventory | tojson }};
+
+let abCurrentProvider = AB_CFG.provider || '{{ current_provider }}' || 'gdrive_service_account';
+
+function abSetMsg(id, text, ok = true) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.textContent = text || '';
+    el.classList.remove('ari-ae-save-msg--ok', 'ari-ae-save-msg--err');
+    if (!text) return;
+    el.classList.add(ok ? 'ari-ae-save-msg--ok' : 'ari-ae-save-msg--err');
+}
+
+function abSelectTab(tab) {
+    const setupActive = (tab === 'setup');
+    document.getElementById('abTabSetup').classList.toggle('ari-ab-tab--active', setupActive);
+    document.getElementById('abTabBackups').classList.toggle('ari-ab-tab--active', !setupActive);
+    document.getElementById('abTabSetup').setAttribute('aria-selected', setupActive ? 'true' : 'false');
+    document.getElementById('abTabBackups').setAttribute('aria-selected', setupActive ? 'false' : 'true');
+    document.getElementById('abPanelSetup').classList.toggle('ari-up-panel--hidden', !setupActive);
+    document.getElementById('abPanelBackups').classList.toggle('ari-up-panel--hidden', setupActive);
+}
+
+function abSelectProvider(key) {
+    abCurrentProvider = key;
+    document.querySelectorAll('#abProviderGrid .ari-ae-provider-btn').forEach(btn => {
+        btn.classList.toggle('ari-ae-provider-btn--active', btn.dataset.provider === key);
+    });
+
+    document.getElementById('abGdriveFields').style.display = (key === 'gdrive_service_account') ? '' : 'none';
+    document.getElementById('abS3Fields').style.display = (key === 's3') ? '' : 'none';
+
+    const prov = AB_PROVIDERS[key] || {};
+    const steps = Array.isArray(prov.help_steps) ? prov.help_steps : [];
+    const list = document.getElementById('abStepsList');
+    list.innerHTML = steps.map(step => `<li>${step}</li>`).join('');
+
+    const help = document.getElementById('abHelpUrl');
+    if (prov.help_url) {
+        help.href = prov.help_url;
+        help.style.display = '';
+    } else {
+        help.href = '#';
+        help.style.display = 'none';
+    }
+}
+
+function abRenderStatus(ok, detail, error) {
+    const card = document.getElementById('abStatusCard');
+    const icon = document.getElementById('abStatusIcon');
+    const title = document.getElementById('abStatusTitle');
+    const text = document.getElementById('abStatusDetail');
+    card.classList.remove('ari-ae-status-card--checking', 'ari-ae-status-card--ok', 'ari-ae-status-card--error');
+
+    if (ok) {
+        card.classList.add('ari-ae-status-card--ok');
+        icon.innerHTML = '<i class="fa-solid fa-circle-check"></i>';
+        title.textContent = 'Cloud backup connection is healthy';
+        text.textContent = detail || '';
+    } else {
+        card.classList.add('ari-ae-status-card--error');
+        icon.innerHTML = '<i class="fa-solid fa-circle-xmark"></i>';
+        title.textContent = 'Cloud backup connection failed';
+        text.textContent = error || 'Unknown error';
+    }
+}
+
+async function abTestConnection() {
+    const card = document.getElementById('abStatusCard');
+    card.classList.remove('ari-ae-status-card--ok', 'ari-ae-status-card--error');
+    card.classList.add('ari-ae-status-card--checking');
+    document.getElementById('abStatusIcon').innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
+    document.getElementById('abStatusTitle').textContent = 'Checking cloud backup connection...';
+    document.getElementById('abStatusDetail').textContent = '';
+
+    try {
+        const res = await fetch('/api/admin/backups/test');
+        const data = await res.json();
+        if (!res.ok) {
+            abRenderStatus(false, '', data.error || 'Request failed.');
+            return;
+        }
+        const query = (data.query_ms || data.query_ms === 0) ? `Query time: ${data.query_ms} ms.` : '';
+        abRenderStatus(!!data.ok, `${data.detail || ''} ${query}`.trim(), data.error || '');
+    } catch (_) {
+        abRenderStatus(false, '', 'Could not reach backup test endpoint.');
+    }
+}
+
+function abCollectPayload() {
+    return {
+        provider: abCurrentProvider,
+        enabled: !!document.getElementById('abEnabled').checked,
+        gdrive_service_account_file: document.getElementById('abGdriveKeyFile').value.trim(),
+        gdrive_folder_id: document.getElementById('abGdriveFolderId').value.trim(),
+        s3_bucket: document.getElementById('abS3Bucket').value.trim(),
+        s3_prefix: document.getElementById('abS3Prefix').value.trim(),
+        s3_region: document.getElementById('abS3Region').value.trim(),
+        s3_endpoint_url: document.getElementById('abS3Endpoint').value.trim(),
+        s3_access_key_id: document.getElementById('abS3Key').value.trim(),
+        s3_secret_access_key: document.getElementById('abS3Secret').value,
+    };
+}
+
+async function abSave(event) {
+    event.preventDefault();
+    if (!AB_CAN_MANAGE) return;
+    abSetMsg('abSaveMsg', 'Saving...', true);
+
+    try {
+        const res = await fetch('/api/admin/backups/save', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(abCollectPayload()),
+        });
+        const data = await res.json();
+        if (!res.ok || !data.success) {
+            abSetMsg('abSaveMsg', data.error || 'Save failed.', false);
+            return;
+        }
+        document.getElementById('abS3Secret').value = '';
+        abSetMsg('abSaveMsg', 'Settings saved.', true);
+        await abTestConnection();
+        await abLoadInventory();
+    } catch (_) {
+        abSetMsg('abSaveMsg', 'Save failed.', false);
+    }
+}
+
+async function abRunSync() {
+    if (!AB_CAN_MANAGE) return;
+    abSetMsg('abSaveMsg', 'Running sync...', true);
+    try {
+        const res = await fetch('/api/admin/backups/sync', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({}),
+        });
+        const data = await res.json();
+        if (!res.ok || !data.success) {
+            abSetMsg('abSaveMsg', data.error || 'Sync failed.', false);
+            return;
+        }
+        const row = data.data || {};
+        if (row.ok) {
+            abSetMsg('abSaveMsg', `Sync complete. Uploaded ${row.uploaded}, updated ${row.updated}, deleted ${row.deleted}.`, true);
+        } else {
+            abSetMsg('abSaveMsg', row.warning || 'Sync finished with warnings.', false);
+        }
+        await abLoadInventory();
+    } catch (_) {
+        abSetMsg('abSaveMsg', 'Sync failed.', false);
+    }
+}
+
+function abFormatBytes(size) {
+    const units = ['B', 'KB', 'MB', 'GB', 'TB'];
+    let val = Number(size || 0);
+    let idx = 0;
+    while (val >= 1024 && idx < units.length - 1) {
+        val /= 1024;
+        idx += 1;
+    }
+    return `${val.toFixed(2)} ${units[idx]}`;
+}
+
+function abRenderInventory(data) {
+    const summary = document.getElementById('abSummary');
+    const rows = Array.isArray(data.rows) ? data.rows : [];
+    const cloudExtra = data.cloud_ok
+        ? `Cloud: ${data.cloud_total_count} file(s), ${abFormatBytes(data.cloud_total_bytes)}${(data.query_ms || data.query_ms === 0) ? `, query ${data.query_ms} ms` : ''}`
+        : `Cloud: unavailable (${data.cloud_error || 'not configured'})`;
+    summary.innerHTML = `
+        <span><strong>Local:</strong> ${data.local_total_count} file(s), ${abFormatBytes(data.local_total_bytes)}</span>
+        <span><strong>Cloud provider:</strong> ${data.provider || 'n/a'}</span>
+        <span>${cloudExtra}</span>
+    `;
+
+    const tbody = document.getElementById('abTableBody');
+    if (!rows.length) {
+        tbody.innerHTML = '<tr><td colspan="5" class="ari-ab-empty">No backups found.</td></tr>';
+        return;
+    }
+
+    tbody.innerHTML = rows.map(row => {
+        const localText = row.local_exists ? abFormatBytes(row.local_size_bytes) : '-';
+        const cloudText = row.cloud_exists ? abFormatBytes(row.cloud_size_bytes) : '-';
+        const delLocal = AB_CAN_MANAGE && row.local_exists
+            ? `<button class="ari-btn ari-btn--ghost ari-btn--sm" onclick="abDeleteOne('${row.relative_path}', 'local')">Delete local</button>`
+            : '';
+        const delCloud = AB_CAN_MANAGE && row.cloud_exists
+            ? `<button class="ari-btn ari-btn--ghost ari-btn--sm" onclick="abDeleteOne('${row.relative_path}', 'cloud')">Delete cloud</button>`
+            : '';
+        const delBoth = AB_CAN_MANAGE && (row.local_exists || row.cloud_exists)
+            ? `<button class="ari-btn ari-btn--secondary ari-btn--sm" onclick="abDeleteOne('${row.relative_path}', 'both')">Delete both</button>`
+            : '';
+
+        return `
+            <tr>
+                <td>${row.period}</td>
+                <td><span class="ari-ab-file">${row.name}</span></td>
+                <td>${localText}</td>
+                <td>${cloudText}</td>
+                <td class="ari-ab-actions">${delLocal}${delCloud}${delBoth}</td>
+            </tr>
+        `;
+    }).join('');
+}
+
+async function abLoadInventory() {
+    abSetMsg('abInventoryMsg', 'Refreshing...', true);
+    try {
+        const res = await fetch('/api/admin/backups/list');
+        const data = await res.json();
+        if (!res.ok || !data.success) {
+            abSetMsg('abInventoryMsg', data.error || 'Could not load backups.', false);
+            return;
+        }
+        abRenderInventory(data.data || {});
+        abSetMsg('abInventoryMsg', 'Updated.', true);
+    } catch (_) {
+        abSetMsg('abInventoryMsg', 'Could not load backups.', false);
+    }
+}
+
+async function abDeleteOne(relativePath, target) {
+    if (!AB_CAN_MANAGE) return;
+    if (!confirm(`Delete ${relativePath} from ${target}?`)) return;
+    try {
+        const res = await fetch('/api/admin/backups/delete', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ relative_path: relativePath, target }),
+        });
+        const data = await res.json();
+        if (!res.ok || !data.success) {
+            abSetMsg('abInventoryMsg', data.error || 'Delete failed.', false);
+            return;
+        }
+        await abLoadInventory();
+    } catch (_) {
+        abSetMsg('abInventoryMsg', 'Delete failed.', false);
+    }
+}
+
+async function abDeleteAll(period, target) {
+    if (!AB_CAN_MANAGE) return;
+    if (!confirm(`Delete ${period} backups from ${target}?`)) return;
+    try {
+        const res = await fetch('/api/admin/backups/delete-all', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ period, target }),
+        });
+        const data = await res.json();
+        if (!res.ok || !data.success) {
+            abSetMsg('abInventoryMsg', data.error || 'Delete-all failed.', false);
+            return;
+        }
+        await abLoadInventory();
+    } catch (_) {
+        abSetMsg('abInventoryMsg', 'Delete-all failed.', false);
+    }
+}
+
+(function initBackupPage() {
+    abSelectProvider(abCurrentProvider);
+    abRenderInventory(AB_INVENTORY || {});
+    abTestConnection();
+}());
+</script>
+{% endblock %}

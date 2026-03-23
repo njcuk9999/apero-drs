@@ -15,11 +15,26 @@
   const saveBtn = document.getElementById('udba-save');
   const saveLabel = document.getElementById('udba-save-label');
   const saveSpinner = document.getElementById('udba-save-spinner');
+  const runCheckBtn = document.getElementById('udba-run-check');
+  const checkLabel = document.getElementById('udba-check-label');
+  const checkSpinner = document.getElementById('udba-check-spinner');
+  const checkPanel = document.getElementById('udba-check-panel');
+  const checkDetails = document.getElementById('udba-check-details');
   const toast = document.getElementById('udba-toast');
 
   let profiles = [];
   let currentProfile = null;
   let currentSections = [];
+  let healthReport = (cfg && cfg.initialHealthReport && typeof cfg.initialHealthReport === 'object')
+    ? cfg.initialHealthReport
+    : null;
+
+  function escapeHtml(value) {
+    return String(value || '')
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;');
+  }
 
   function updateTopStatus(level, headline, detailLines) {
     if (!statusBox || !statusHeadline || !statusDetails) return;
@@ -56,6 +71,21 @@
   }
 
   function applyOverallProfileHealth() {
+    if (healthReport && healthReport.status) {
+      updateTopStatus(
+        String(healthReport.status || 'info'),
+        String(healthReport.status || '') === 'ok'
+          ? 'User DB access rules look healthy.'
+          : (String(healthReport.status || '') === 'warning'
+            ? 'User DB access rules need attention.'
+            : (String(healthReport.status || '') === 'error'
+              ? 'User DB access health check failed.'
+              : 'Configure group and column access to APERO database tables by profile.')),
+        [String(healthReport.message || '').trim()].filter((x) => x)
+      );
+      return;
+    }
+
     if (!profiles.length) {
       updateTopStatus(
         'info',
@@ -121,6 +151,80 @@
     saveBtn.disabled = !!saving;
     saveLabel.style.display = saving ? 'none' : '';
     saveSpinner.style.display = saving ? '' : 'none';
+  }
+
+  function setChecking(checking) {
+    if (!runCheckBtn || !checkLabel || !checkSpinner) return;
+    runCheckBtn.disabled = !!checking;
+    checkLabel.style.display = checking ? 'none' : '';
+    checkSpinner.style.display = checking ? '' : 'none';
+  }
+
+  function renderHealthDiagnostics(report, selectedRow) {
+    if (!checkPanel || !checkDetails) return;
+    const rep = report || {};
+    const status = ['ok', 'warning', 'error'].includes(String(rep.status || ''))
+      ? String(rep.status)
+      : 'info';
+
+    checkPanel.classList.remove('ari-ap-status--info', 'ari-ap-status--ok', 'ari-ap-status--warning', 'ari-ap-status--error');
+    checkPanel.classList.add('ari-ap-status--' + status);
+
+    const lines = [];
+    if (rep.message) lines.push(String(rep.message));
+
+    const checked = Number(rep.checked_profiles || 0);
+    const warnings = Number(rep.warning_profiles || 0);
+    lines.push('Profiles checked: ' + checked + '. Profiles with warnings: ' + warnings + '.');
+
+    if (selectedRow && selectedRow.instrument && selectedRow.profile_id) {
+      const profLabel = selectedRow.instrument + ' / ' + selectedRow.profile_id;
+      lines.push('Selected profile (' + profLabel + '): ' + String(selectedRow.message || 'No details.'));
+    }
+
+    const profileWarnings = Array.isArray(rep.profiles)
+      ? rep.profiles.filter((row) => row && row.status === 'warning')
+      : [];
+    for (const row of profileWarnings.slice(0, 6)) {
+      const label = String(row.instrument || '') + ' / ' + String(row.profile_id || '');
+      lines.push(label + ': ' + String(row.message || 'incomplete rules'));
+    }
+    if (profileWarnings.length > 6) {
+      lines.push('... and ' + (profileWarnings.length - 6) + ' more profile warning(s).');
+    }
+
+    checkDetails.innerHTML = lines.map((line) => '<li>' + escapeHtml(line) + '</li>').join('');
+  }
+
+  function currentProfileQuery() {
+    if (!currentProfile) return '';
+    return new URLSearchParams({
+      instrument: String(currentProfile.instrument || ''),
+      profile_id: String(currentProfile.profile_id || '')
+    }).toString();
+  }
+
+  function runHealthCheck() {
+    if (!cfg.healthUrl) return Promise.resolve();
+    const qs = currentProfileQuery();
+    const url = qs ? (cfg.healthUrl + '?' + qs) : cfg.healthUrl;
+
+    setChecking(true);
+    return apiGet(url)
+      .then((res) => {
+        healthReport = res.report || healthReport;
+        const selected = res.selected || null;
+        if (healthReport) {
+          applyOverallProfileHealth();
+          renderHealthDiagnostics(healthReport, selected);
+        }
+      })
+      .catch((err) => {
+        showToast(err.message || 'Failed to run health check', 'error');
+      })
+      .finally(() => {
+        setChecking(false);
+      });
   }
 
   function apiGet(url) {
@@ -370,6 +474,12 @@
         currentSections = Array.isArray(res.sections) ? res.sections : [];
         renderSections();
         workspace.style.display = '';
+        if (healthReport && Array.isArray(healthReport.profiles)) {
+          const selected = healthReport.profiles.find((row) =>
+            row && row.instrument === instrument && row.profile_id === profile_id
+          ) || null;
+          renderHealthDiagnostics(healthReport, selected);
+        }
       })
       .catch((err) => {
         workspace.style.display = 'none';
@@ -389,6 +499,7 @@
         renderProfileOptions();
         applyHealth(null);
         applyOverallProfileHealth();
+        return runHealthCheck();
       })
       .catch((err) => {
         profiles = [];
@@ -428,6 +539,7 @@
         currentProfile = profiles.find((p) => p.instrument === currentProfile.instrument && p.profile_id === currentProfile.profile_id) || currentProfile;
         applyHealth(currentProfile);
         applyOverallProfileHealth();
+        return runHealthCheck();
       })
       .catch((err) => {
         showToast(err.message || 'Failed to save', 'error');
@@ -461,6 +573,7 @@
       .udba-card--column-on { background: #0f4fa2; color: #fff; border-color: #0d4389; }
       .udba-card--column-off { background: #edf2fa; color: #455b84; border-color: #c9d4ea; }
       .udba-card--disabled { opacity: 0.45; cursor: not-allowed; }
+      #udba-check-panel .ari-ap-status__details { margin-top: 0.4rem; }
       #udba-profile-select.udba-select--ok {
         border-color: #17803d;
         background: #ecfdf3;
@@ -497,9 +610,13 @@
         initialMsg ? [initialMsg] : []
       );
     }
+    if (healthReport) {
+      renderHealthDiagnostics(healthReport, null);
+    }
     loadProfiles();
     profileSelect.addEventListener('change', onProfileChange);
     refreshBtn.addEventListener('click', loadProfiles);
+    if (runCheckBtn) runCheckBtn.addEventListener('click', runHealthCheck);
     saveBtn.addEventListener('click', saveCurrent);
   }
 

@@ -61,6 +61,10 @@ dependencies = [
     "Flask>=3.1,<4",
     "cryptography>=44.0,<45",
     "Markdown>=3.6,<4",
+    "boto3>=1.39,<2",
+    "google-api-python-client>=2.178,<3",
+    "google-auth>=2.40,<3",
+    "google-auth-httplib2>=0.2,<1",
 ]
 
 

@@ -858,6 +858,102 @@ a:hover {
     }
 }
 
+/* ========================================================================
+   Admin backup settings
+   ======================================================================== */
+.ari-ab-tabs {
+    display: inline-flex;
+    border: 1px solid var(--ari-border, #dbe2ef);
+    border-radius: 10px;
+    background: #f8fafc;
+    margin: 0 0 1rem;
+    overflow: hidden;
+}
+
+.ari-ab-tab {
+    border: 0;
+    background: transparent;
+    color: #475569;
+    padding: 0.62rem 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.42rem;
+}
+
+.ari-ab-tab:hover {
+    background: #eef2ff;
+    color: var(--ari-primary, #3f51b5);
+}
+
+.ari-ab-tab--active {
+    background: #e0e7ff;
+    color: var(--ari-primary, #3f51b5);
+}
+
+.ari-ab-toolbar {
+    display: flex;
+    align-items: center;
+    gap: 0.55rem;
+    flex-wrap: wrap;
+    margin-bottom: 0.8rem;
+}
+
+.ari-ab-summary {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.9rem;
+    margin-bottom: 0.8rem;
+    color: #334155;
+    font-size: 0.9rem;
+}
+
+.ari-ab-table-wrap {
+    border: 1px solid var(--ari-border, #dbe2ef);
+    border-radius: 10px;
+    overflow: auto;
+}
+
+.ari-ab-table {
+    width: 100%;
+    border-collapse: collapse;
+    min-width: 680px;
+}
+
+.ari-ab-table th,
+.ari-ab-table td {
+    padding: 0.62rem 0.72rem;
+    border-bottom: 1px solid #edf2f7;
+    text-align: left;
+    vertical-align: middle;
+}
+
+.ari-ab-table thead th {
+    font-size: 0.82rem;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    color: #64748b;
+    background: #f8fafc;
+}
+
+.ari-ab-empty {
+    color: #64748b;
+    text-align: center;
+    font-style: italic;
+}
+
+.ari-ab-file {
+    font-family: monospace;
+    font-size: 0.88rem;
+}
+
+.ari-ab-actions {
+    display: flex;
+    gap: 0.4rem;
+    flex-wrap: wrap;
+}
+
 @media (max-width: 900px) {
     .ari-up-contact-item {
         flex-direction: column;

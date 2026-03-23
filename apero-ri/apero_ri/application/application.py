@@ -55,6 +55,7 @@ from apero_ri.core import task_runner
 from apero_ri.tasks import apero_async
 from apero_ri.core import user_data as ud
 from apero_ri.core import email_backend as eb
+from apero_ri.core import backup_backend as bb
 from apero_ri.core.docs import (
     get_versions, get_default_version, get_doc_content,
     save_doc_content, save_uploaded_image, DOC_IMAGES,
@@ -376,6 +377,24 @@ class ARIApp(Flask):
         self.add_url_rule('/api/admin/email/send-test',
                   'api_admin_email_send_test',
                   self._api_admin_email_send_test, methods=['POST'])
+        self.add_url_rule('/api/admin/backups/test',
+                  'api_admin_backups_test',
+                  self._api_admin_backups_test)
+        self.add_url_rule('/api/admin/backups/save',
+                  'api_admin_backups_save',
+                  self._api_admin_backups_save, methods=['POST'])
+        self.add_url_rule('/api/admin/backups/list',
+                  'api_admin_backups_list',
+                  self._api_admin_backups_list)
+        self.add_url_rule('/api/admin/backups/delete',
+                  'api_admin_backups_delete',
+                  self._api_admin_backups_delete, methods=['POST'])
+        self.add_url_rule('/api/admin/backups/delete-all',
+                  'api_admin_backups_delete_all',
+                  self._api_admin_backups_delete_all, methods=['POST'])
+        self.add_url_rule('/api/admin/backups/sync',
+                  'api_admin_backups_sync',
+                  self._api_admin_backups_sync, methods=['POST'])
         self.add_url_rule('/api/admin/health/update',
               'api_admin_health_update',
               self._api_admin_health_update, methods=['POST'])
@@ -491,6 +510,9 @@ class ARIApp(Flask):
         self.add_url_rule('/api/admin/user-db-access/details',
               'api_user_db_access_details',
               self._api_user_db_access_details)
+        self.add_url_rule('/api/admin/user-db-access/health-check',
+              'api_user_db_access_health_check',
+              self._api_user_db_access_health_check)
         self.add_url_rule('/api/admin/user-db-access/save',
               'api_user_db_access_save',
               self._api_user_db_access_save,
@@ -927,6 +949,18 @@ class ARIApp(Flask):
                                     'APERO database tables by profile.'),
                     },
                 )
+                try:
+                    context['user_db_access_health_report'] = (
+                        self._build_user_db_access_health_report(user_info)
+                    )
+                except Exception:
+                    context['user_db_access_health_report'] = {
+                        'status': 'error',
+                        'message': 'User DB access health check failed.',
+                        'checked_profiles': 0,
+                        'warning_profiles': 0,
+                        'profiles': [],
+                    }
 
             # Data portal: inject accessible profiles
             if page_id == 'home.data_portal':
@@ -971,6 +1005,10 @@ class ARIApp(Flask):
             # Admin email settings
             if page_id == 'home.admin_portal.email':
                 context.update(self._build_admin_email_context(perms))
+
+            # Admin cloud backup settings
+            if page_id == 'home.admin_portal.backup_settings':
+                context.update(self._build_admin_backup_context(perms))
 
             # Admin index and health-status page: inject health context
             if page_id in {'home.admin_portal', 'home.admin_portal.health_status'}:
@@ -1432,6 +1470,39 @@ class ARIApp(Flask):
         }
 
     @staticmethod
+    def _resolve_local_data_dir() -> Path:
+        """Resolve configured LOCAL_DATA_DIR, falling back to ARI_DIR."""
+        params = load_parameters() or {}
+        local_data = params.get('LOCAL_DATA_DIR', '')
+        if isinstance(local_data, dict):
+            local_data = local_data.get('value', '')
+        local_data = str(local_data or '').strip()
+        if local_data:
+            return Path(local_data).expanduser().resolve()
+        return Path(os.environ.get('ARI_DIR', str(Path.home() / '.ari'))).expanduser().resolve()
+
+    def _build_admin_backup_context(self, perms):
+        """Build context for admin backup settings page."""
+        import json as _json
+        cfg = bb.load_backup_config()
+        providers = bb.PROVIDER_DEFAULTS
+        current_provider = str(cfg.get('provider', 'gdrive_service_account')).strip()
+        if current_provider not in providers:
+            current_provider = 'gdrive_service_account'
+
+        local_data_dir = self._resolve_local_data_dir()
+        inventory = bb.backup_inventory(local_data_dir=local_data_dir, cfg=cfg)
+
+        return {
+            'backup_cfg': cfg,
+            'providers': providers,
+            'providers_json': _json.dumps(providers),
+            'current_provider': current_provider,
+            'can_manage': 'manage.admin.backup' in perms,
+            'backup_inventory': inventory,
+        }
+
+    @staticmethod
     def _format_utc_datetime(dt: Optional[datetime]) -> str:
         """Format UTC datetime for display."""
         if dt is None:
@@ -1661,6 +1732,28 @@ class ARIApp(Flask):
             except Exception:
                 pass
 
+        # ── Backup Settings: warn if cloud mirror disabled, error if broken ─
+        if 'view.admin' in perms:
+            try:
+                backup_cfg = bb.load_backup_config()
+                if (not backup_cfg.get('enabled', False)
+                        or backup_cfg.get('provider', 'local_only') == 'local_only'):
+                    health['home.admin_portal.backup_settings'] = {
+                        'status': 'warning',
+                        'message': 'Cloud backup mirror is not enabled (local backups only).',
+                    }
+                else:
+                    test = bb.test_backup_connection(backup_cfg)
+                    if test.get('ok', False):
+                        health['home.admin_portal.backup_settings'] = {'status': 'ok', 'message': ''}
+                    else:
+                        health['home.admin_portal.backup_settings'] = {
+                            'status': 'error',
+                            'message': f'Cloud backup test failed: {test.get("error", "unknown error")}',
+                        }
+            except Exception:
+                pass
+
         # ── APERO Profiles: error if any profile has DB/path failures ────
         if 'manage.apero_profile' in perms:
             try:
@@ -1841,54 +1934,11 @@ class ARIApp(Flask):
         # ── User DB Access: warn if profile table access is incomplete ──
         if 'manage.admin.user_db_access' in perms:
             try:
-                profiles = get_accessible_profiles(user_info, self.ari_groups)
-                db_access = load_db_access()
-                table_key_map = self._db_access_table_keys()
-
-                checked = 0
-                warnings = 0
-                for prof in profiles:
-                    instrument = str(prof.get('instrument', '')).strip()
-                    profile_id = str(prof.get('profile_id', '')).strip()
-                    cfg = prof.get('data', {}) if isinstance(prof.get('data'), dict) else {}
-                    if not instrument or not profile_id:
-                        continue
-
-                    table_names = [
-                        label for label, key in table_key_map.items()
-                        if str(self._profile_get_db(cfg, key, '')).strip()
-                    ]
-                    if not table_names:
-                        continue
-
-                    checked += 1
-                    prof_entry = (((db_access.get(instrument, {})
-                                   if isinstance(db_access.get(instrument, {}), dict)
-                                   else {}).get(profile_id, {}))
-                                  if instrument and profile_id else {})
-
-                    if self._profile_db_access_health(prof_entry, table_names) != 'ok':
-                        warnings += 1
-
-                if checked == 0:
-                    health['home.admin_portal.user_db_access'] = {
-                        'status': 'warning',
-                        'message': ('No APERO profiles with configured table names '
-                                    'were found for DB-access checks.'),
-                    }
-                elif warnings:
-                    health['home.admin_portal.user_db_access'] = {
-                        'status': 'warning',
-                        'message': (
-                            f'{warnings} of {checked} profile(s) have incomplete '
-                            'DB table access rules.'
-                        ),
-                    }
-                else:
-                    health['home.admin_portal.user_db_access'] = {
-                        'status': 'ok',
-                        'message': f'All {checked} profile(s) have complete DB table access rules.',
-                    }
+                report = self._build_user_db_access_health_report(user_info)
+                health['home.admin_portal.user_db_access'] = {
+                    'status': report.get('status', 'warning'),
+                    'message': str(report.get('message', '')).strip(),
+                }
             except Exception as exc:
                 health['home.admin_portal.user_db_access'] = {
                     'status': 'error',
@@ -5992,6 +6042,101 @@ class ARIApp(Flask):
                 return 'warning'
         return 'ok'
 
+    def _build_user_db_access_health_report(self, user_info: dict) -> dict:
+        """Build detailed health report for User DB Access rules."""
+        profiles = get_accessible_profiles(user_info, self.ari_groups)
+        db_access = load_db_access()
+        table_key_map = self._db_access_table_keys()
+
+        checked = 0
+        warnings = 0
+        profile_rows = []
+
+        for prof in profiles:
+            instrument = str(prof.get('instrument', '')).strip()
+            profile_id = str(prof.get('profile_id', '')).strip()
+            cfg = prof.get('data', {}) if isinstance(prof.get('data'), dict) else {}
+
+            if not instrument or not profile_id:
+                continue
+
+            table_names = [
+                label for label, key in table_key_map.items()
+                if str(self._profile_get_db(cfg, key, '')).strip()
+            ]
+            if not table_names:
+                profile_rows.append({
+                    'instrument': instrument,
+                    'profile_id': profile_id,
+                    'has_tables': False,
+                    'status': 'info',
+                    'message': 'No configured APERO DB table names for this profile.',
+                    'missing_groups': [],
+                    'missing_columns': [],
+                })
+                continue
+
+            checked += 1
+            prof_entry = (((db_access.get(instrument, {})
+                           if isinstance(db_access.get(instrument, {}), dict)
+                           else {}).get(profile_id, {}))
+                          if instrument and profile_id else {})
+            groups_map = prof_entry.get('groups', {}) if isinstance(prof_entry, dict) else {}
+            columns_map = prof_entry.get('columns', {}) if isinstance(prof_entry, dict) else {}
+
+            missing_groups = []
+            missing_columns = []
+            for table in table_names:
+                if not isinstance(groups_map.get(table, []), list) or not groups_map.get(table, []):
+                    missing_groups.append(table)
+                if not isinstance(columns_map.get(table, []), list) or not columns_map.get(table, []):
+                    missing_columns.append(table)
+
+            is_warning = bool(missing_groups or missing_columns)
+            if is_warning:
+                warnings += 1
+                parts = []
+                if missing_groups:
+                    parts.append(f'missing groups: {", ".join(missing_groups)}')
+                if missing_columns:
+                    parts.append(f'missing columns: {", ".join(missing_columns)}')
+                message = '; '.join(parts)
+                status = 'warning'
+            else:
+                status = 'ok'
+                message = f'All {len(table_names)} table rule(s) are configured.'
+
+            profile_rows.append({
+                'instrument': instrument,
+                'profile_id': profile_id,
+                'has_tables': True,
+                'status': status,
+                'message': message,
+                'missing_groups': missing_groups,
+                'missing_columns': missing_columns,
+            })
+
+        if checked == 0:
+            status = 'warning'
+            message = ('No APERO profiles with configured table names '
+                       'were found for DB-access checks.')
+        elif warnings:
+            status = 'warning'
+            message = f'{warnings} of {checked} profile(s) have incomplete DB table access rules.'
+        else:
+            status = 'ok'
+            message = f'All {checked} profile(s) have complete DB table access rules.'
+
+        profile_rows.sort(key=lambda row: (row.get('instrument', ''), row.get('profile_id', '')))
+        return {
+            'status': status,
+            'message': message,
+            'checked_profiles': checked,
+            'warning_profiles': warnings,
+            'profiles': profile_rows,
+            'generated_at': datetime.now(timezone.utc).isoformat(),
+        }
+
     def _api_user_db_access_profiles(self):
         """List editor-accessible APERO profiles for DB access management."""
         user_info, perms = self._require_user_db_access_perm()
@@ -6112,6 +6257,29 @@ class ARIApp(Flask):
             sections=sections,
             editable_groups=editable_groups,
         )
+
+    def _api_user_db_access_health_check(self):
+        """Run User DB Access health check and return detailed diagnostics."""
+        user_info, perms = self._require_user_db_access_perm()
+        if not user_info:
+            return jsonify(success=False, error='Unauthorized'), 401
+
+        try:
+            report = self._build_user_db_access_health_report(user_info)
+            instrument = request.args.get('instrument', '').strip()
+            profile_id = request.args.get('profile_id', '').strip()
+            selected = None
+            if instrument and profile_id:
+                for row in report.get('profiles', []):
+                    if (str(row.get('instrument', '')).strip() == instrument
+                            and str(row.get('profile_id', '')).strip() == profile_id):
+                        selected = row
+                        break
+
+            return jsonify(success=True, report=report, selected=selected)
+        except Exception as exc:
+            return jsonify(success=False,
+                           error=f'User DB access health check failed: {exc}'), 500
 
     def _api_user_db_access_save(self):
         """Persist group/column access for one profile into db_access.yaml."""
@@ -8059,6 +8227,142 @@ class ARIApp(Flask):
         if err:
             return jsonify(success=False, error=err)
         return jsonify(success=True)
+
+    # -----------------------------------------------------------------
+    # Admin backup API
+    # -----------------------------------------------------------------
+    def _require_admin_backup_perm(self):
+        user_info = get_effective_user(session)
+        if not user_info:
+            return None, None
+        perms = resolve_user_permissions(user_info['groups'], self.ari_groups)
+        return user_info, perms
+
+    def _api_admin_backups_test(self):
+        user_info, perms = self._require_admin_backup_perm()
+        if not user_info:
+            return jsonify(ok=False, error='Unauthorized'), 401
+        if 'view.admin' not in (perms or set()):
+            return jsonify(ok=False, error='Insufficient permissions'), 403
+
+        result = bb.test_backup_connection(bb.load_backup_config())
+        return jsonify(result)
+
+    def _api_admin_backups_save(self):
+        user_info, perms = self._require_admin_backup_perm()
+        if not user_info:
+            return jsonify(success=False, error='Unauthorized'), 401
+        if 'manage.admin.backup' not in (perms or set()):
+            return jsonify(success=False, error='Insufficient permissions'), 403
+
+        body = request.get_json() or {}
+        allowed = {
+            'enabled', 'provider',
+            'gdrive_service_account_file', 'gdrive_folder_id',
+            's3_bucket', 's3_prefix', 's3_region', 's3_endpoint_url',
+            's3_access_key_id', 's3_secret_access_key',
+        }
+
+        existing = bb.load_backup_config()
+        cfg = dict(existing)
+        for key in allowed:
+            if key in body:
+                cfg[key] = body.get(key)
+
+        if 'enabled' in body:
+            enabled_val = body.get('enabled')
+            if isinstance(enabled_val, bool):
+                cfg['enabled'] = enabled_val
+            else:
+                cfg['enabled'] = str(enabled_val).strip().lower() in {
+                    '1', 'true', 'yes', 'on'
+                }
+
+        if 's3_secret_access_key' not in body and existing.get('s3_secret_access_key_enc'):
+            cfg['s3_secret_access_key_enc'] = existing.get('s3_secret_access_key_enc', '')
+
+        bb.save_backup_config(cfg)
+        self._refresh_admin_health_after_change(user_info, perms)
+        return jsonify(success=True)
+
+    def _api_admin_backups_list(self):
+        user_info, perms = self._require_admin_backup_perm()
+        if not user_info:
+            return jsonify(success=False, error='Unauthorized'), 401
+        if 'view.admin' not in (perms or set()):
+            return jsonify(success=False, error='Insufficient permissions'), 403
+
+        cfg = bb.load_backup_config()
+        local_data_dir = self._resolve_local_data_dir()
+        inventory = bb.backup_inventory(local_data_dir=local_data_dir, cfg=cfg)
+        return jsonify(success=True, data=inventory)
+
+    def _api_admin_backups_delete(self):
+        user_info, perms = self._require_admin_backup_perm()
+        if not user_info:
+            return jsonify(success=False, error='Unauthorized'), 401
+        if 'manage.admin.backup' not in (perms or set()):
+            return jsonify(success=False, error='Insufficient permissions'), 403
+
+        body = request.get_json() or {}
+        rel = str(body.get('relative_path', '')).strip()
+        target = str(body.get('target', 'both')).strip().lower()
+        if target not in {'local', 'cloud', 'both'}:
+            return jsonify(success=False, error='Invalid target'), 400
+        if not rel:
+            return jsonify(success=False, error='relative_path is required'), 400
+
+        try:
+            cfg = bb.load_backup_config()
+            local_data_dir = self._resolve_local_data_dir()
+            result = bb.delete_backup(rel, target=target,
+                                      local_data_dir=local_data_dir,
+                                      cfg=cfg)
+            self._refresh_admin_health_after_change(user_info, perms)
+            return jsonify(success=True, data=result)
+        except Exception as exc:
+            return jsonify(success=False, error=str(exc)), 400
+
+    def _api_admin_backups_delete_all(self):
+        user_info, perms = self._require_admin_backup_perm()
+        if not user_info:
+            return jsonify(success=False, error='Unauthorized'), 401
+        if 'manage.admin.backup' not in (perms or set()):
+            return jsonify(success=False, error='Insufficient permissions'), 403
+
+        body = request.get_json() or {}
+        period = str(body.get('period', 'all')).strip().lower()
+        target = str(body.get('target', 'both')).strip().lower()
+        if period not in {'daily', 'weekly', 'all'}:
+            return jsonify(success=False, error='Invalid period'), 400
+        if target not in {'local', 'cloud', 'both'}:
+            return jsonify(success=False, error='Invalid target'), 400
+
+        try:
+            cfg = bb.load_backup_config()
+            local_data_dir = self._resolve_local_data_dir()
+            result = bb.delete_all_backups(period=period,
+                                           target=target,
+                                           local_data_dir=local_data_dir,
+                                           cfg=cfg)
+            self._refresh_admin_health_after_change(user_info, perms)
+            return jsonify(success=True, data=result)
+        except Exception as exc:
+            return jsonify(success=False, error=str(exc)), 400
+
+    def _api_admin_backups_sync(self):
+        user_info, perms = self._require_admin_backup_perm()
+        if not user_info:
+            return jsonify(success=False, error='Unauthorized'), 401
+        if 'manage.admin.backup' not in (perms or set()):
+            return jsonify(success=False, error='Insufficient permissions'), 403
+
+        cfg = bb.load_backup_config()
+        local_data_dir = self._resolve_local_data_dir()
+        result = bb.sync_local_backups_to_cloud(local_data_dir=local_data_dir,
+                                                cfg=cfg)
+        self._refresh_admin_health_after_change(user_info, perms)
+        return jsonify(success=True, data=result)
 
     # -----------------------------------------------------------------
     # Run override
