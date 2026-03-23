@@ -1,4 +1,5 @@
 {% extends "general/sidebar_base.html" %}
+{% block body_class %}ari-has-sidebar ari-up-wide-page{% endblock %}
 {% block title %}APERO RI – {{ page_label }}{% endblock %}
 
 {% block doc_content %}
@@ -92,102 +93,6 @@ window.ARI_NOTES = {
     listUrl:   {{ url_for('api_user_notes_list')|tojson }},
     getUrl:    {{ url_for('api_user_notes_get')|tojson }},
     saveUrl:   {{ url_for('api_user_notes_save')|tojson }},
-    deleteUrl: {{ url_for('api_user_notes_delete')|tojson }},
-    renderUrl: {{ url_for('api_user_notes_render')|tojson }},
-};
-</script>
-<script src="{{ url_for('static', filename='js/user_notes.js') }}"></script>
-{% endblock %}
-
-
-<div class="ari-oln-notes-topbar">
-    <div id="notes-view-toggle" class="ari-oln-view-toggle">
-        <button id="notes-grid-btn" class="ari-oln-view-btn ari-oln-view-btn--active" title="Grid view">🪟</button>
-        <button id="notes-list-btn" class="ari-oln-view-btn" title="List view">☰</button>
-    </div>
-    <button class="ari-btn ari-btn--primary ari-btn--sm" id="notes-new-btn">
-        <i class="fa-solid fa-plus"></i> New Note
-    </button>
-    <input type="text" id="notes-search" class="ari-ud-search" placeholder="Search notes…">
-</div>
-
-<div id="notes-grid" class="ari-oln-notes-grid">
-    <p class="ari-ud-loading">Loading notes…</p>
-</div>
-
-<div id="notes-list" class="ari-oln-notes-list" style="display:none;"></div>
-
-<div id="notes-modal" class="ari-ud-modal" style="display:none;">
-    <div class="ari-ud-modal-box ari-oln-notes-modal-box">
-        <h3 id="notes-modal-title">Add Note</h3>
-        <input type="hidden" id="notes-id" value="">
-
-        <div class="ari-form-group">
-            <label for="notes-title">Title</label>
-            <input type="text" id="notes-title" placeholder="Note title">
-        </div>
-
-        <div class="ari-oln-notes-modal-meta">
-            <div class="ari-form-group">
-                <label for="notes-section">Section</label>
-                <input type="text" id="notes-section" placeholder="Section">
-            </div>
-            <div class="ari-form-group">
-                <label for="notes-color">Color</label>
-                <input type="color" id="notes-color" title="Note colour" value="#fef3c7">
-            </div>
-        </div>
-
-        <div class="ari-notes-toolbar" id="notes-md-toolbar" role="toolbar" aria-label="Markdown formatting">
-            <button class="ari-btn ari-btn--secondary ari-btn--xs js-md" data-cmd="h1" title="Heading 1">H1</button>
-            <button class="ari-btn ari-btn--secondary ari-btn--xs js-md" data-cmd="h2" title="Heading 2">H2</button>
-            <button class="ari-btn ari-btn--secondary ari-btn--xs js-md" data-cmd="h3" title="Heading 3">H3</button>
-            <button class="ari-btn ari-btn--secondary ari-btn--xs js-md" data-cmd="bold" title="Bold"><i class="fa-solid fa-bold"></i></button>
-            <button class="ari-btn ari-btn--secondary ari-btn--xs js-md" data-cmd="italic" title="Italic"><i class="fa-solid fa-italic"></i></button>
-            <button class="ari-btn ari-btn--secondary ari-btn--xs js-md" data-cmd="strike" title="Strikethrough"><i class="fa-solid fa-strikethrough"></i></button>
-            <button class="ari-btn ari-btn--secondary ari-btn--xs js-md" data-cmd="code" title="Inline code"><i class="fa-solid fa-code"></i></button>
-            <button class="ari-btn ari-btn--secondary ari-btn--xs js-md" data-cmd="quote" title="Block quote"><i class="fa-solid fa-quote-left"></i></button>
-            <button class="ari-btn ari-btn--secondary ari-btn--xs js-md" data-cmd="ul" title="Bulleted list"><i class="fa-solid fa-list-ul"></i></button>
-            <button class="ari-btn ari-btn--secondary ari-btn--xs js-md" data-cmd="ol" title="Numbered list"><i class="fa-solid fa-list-ol"></i></button>
-            <button class="ari-btn ari-btn--secondary ari-btn--xs js-md" data-cmd="task" title="Task list"><i class="fa-solid fa-list-check"></i></button>
-            <button class="ari-btn ari-btn--secondary ari-btn--xs js-md" data-cmd="link" title="Link"><i class="fa-solid fa-link"></i></button>
-            <button class="ari-btn ari-btn--secondary ari-btn--xs js-md" data-cmd="image" title="Image"><i class="fa-solid fa-image"></i></button>
-            <button class="ari-btn ari-btn--secondary ari-btn--xs js-md" data-cmd="table" title="Table"><i class="fa-solid fa-table"></i></button>
-            <button class="ari-btn ari-btn--secondary ari-btn--xs js-md" data-cmd="hr" title="Horizontal line"><i class="fa-solid fa-grip-lines"></i></button>
-        </div>
-
-        <div class="ari-oln-notes-editor-body">
-            <textarea id="notes-content" class="ari-notes-textarea" placeholder="Write your note in Markdown…"></textarea>
-            <div id="notes-preview" class="ari-notes-preview ari-md-content ari-oln-note-preview"></div>
-        </div>
-
-        <div class="ari-notes-editor-footer">
-            <button class="ari-btn ari-btn--primary ari-btn--sm" id="notes-save-btn">
-                <i class="fa-solid fa-floppy-disk"></i> Save
-            </button>
-            <button class="ari-btn ari-btn--secondary ari-btn--sm" id="notes-save-new-btn">
-                <i class="fa-solid fa-copy"></i> Save As New
-            </button>
-            <button class="ari-btn ari-btn--secondary ari-btn--sm" id="notes-preview-btn">
-                <i class="fa-solid fa-pencil"></i> Edit Markdown
-            </button>
-            <button class="ari-btn ari-btn--danger ari-btn--sm" id="notes-delete-btn" style="margin-left:auto;">
-                <i class="fa-solid fa-trash"></i> Delete
-            </button>
-            <button class="ari-btn ari-btn--secondary ari-btn--sm" id="notes-cancel-btn">
-                Cancel
-            </button>
-        </div>
-    </div>
-</div>
-
-<div id="notes-toast" class="ari-toast" style="display:none;"></div>
-
-<script>
-window.ARI_NOTES = {
-    listUrl: {{ url_for('api_user_notes_list')|tojson }},
-    getUrl: {{ url_for('api_user_notes_get')|tojson }},
-    saveUrl: {{ url_for('api_user_notes_save')|tojson }},
     deleteUrl: {{ url_for('api_user_notes_delete')|tojson }},
     renderUrl: {{ url_for('api_user_notes_render')|tojson }},
 };

@@ -26,7 +26,7 @@
         <span class="ari-ae-status-detail" id="aeStatusDetail"></span>
     </div>
     {% if can_manage %}
-    <button class="btn btn-sm btn-outline-secondary ms-auto" id="aeBtnTest"
+    <button class="ari-btn ari-btn--secondary ari-btn--sm ari-ae-status-action" id="aeBtnTest"
             onclick="aeTestConnection()">
         <i class="fa-solid fa-plug-circle-check"></i> Test connection
     </button>
@@ -65,7 +65,7 @@
 <div class="ari-ae-section" id="aeWalkthroughSection" style="display:none;">
     <h2 class="ari-ae-section-title">
         <i class="fa-solid fa-circle-question"></i> Setup guide
-        <a id="aeHelpUrl" href="#" target="_blank" rel="noopener" class="ari-ae-help-link ms-2">
+        <a id="aeHelpUrl" href="#" target="_blank" rel="noopener" class="ari-ae-help-link">
             Official documentation <i class="fa-solid fa-arrow-up-right-from-square fa-xs"></i>
         </a>
     </h2>
@@ -193,7 +193,7 @@
 
         {% if can_manage %}
         <div class="ari-ae-form-actions">
-            <button type="submit" class="btn btn-primary" id="aeBtnSave">
+            <button type="submit" class="ari-btn ari-btn--primary" id="aeBtnSave">
                 <i class="fa-solid fa-floppy-disk"></i> Save settings
             </button>
             <span class="ari-ae-save-msg" id="aeSaveMsg"></span>
@@ -216,7 +216,7 @@
     <div class="ari-ae-test-row">
         <input type="email" id="aeTestRecipient" class="ari-ae-input"
                placeholder="recipient@example.com" style="max-width:320px;">
-        <button class="btn btn-outline-primary" onclick="aeSendTestEmail()">
+        <button class="ari-btn ari-btn--secondary" onclick="aeSendTestEmail()">
             <i class="fa-solid fa-envelope"></i> Send test
         </button>
         <span class="ari-ae-save-msg" id="aeTestMsg"></span>

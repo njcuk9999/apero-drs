@@ -1,4 +1,5 @@
 {% extends "general/sidebar_base.html" %}
+{% block body_class %}ari-has-sidebar ari-up-wide-page{% endblock %}
 {% block title %}APERO RI – {{ page_label }}{% endblock %}
 
 {% block doc_content %}
@@ -28,7 +29,34 @@
     </div>
 </div>
 
-<div id="cal-grid" class="ari-cal-grid"></div>
+<div class="ari-cal-layout">
+    <div class="ari-cal-main-panel">
+        <div id="cal-grid" class="ari-cal-grid"></div>
+    </div>
+    <aside class="ari-cal-side-panel">
+        <div class="ari-cal-side-panel__header">
+            <div>
+                <h3 class="ari-cal-side-panel__title">Events This Month</h3>
+                <div class="ari-cal-side-panel__subtitle" id="cal-list-subtitle"></div>
+            </div>
+            <label class="ari-cal-list-per-page-label" for="cal-list-per-page">
+                Show
+                <select id="cal-list-per-page" class="ari-ud-select ari-cal-list-per-page">
+                    <option value="5">5</option>
+                    <option value="8" selected>8</option>
+                    <option value="12">12</option>
+                    <option value="20">20</option>
+                </select>
+            </label>
+        </div>
+        <div id="cal-event-list" class="ari-cal-event-list"></div>
+        <div class="ari-cal-list-pager">
+            <button class="ari-btn ari-btn--secondary ari-btn--sm" id="cal-list-prev">Prev</button>
+            <span id="cal-list-page-info" class="ari-cal-list-page-info">Page 1 of 1</span>
+            <button class="ari-btn ari-btn--secondary ari-btn--sm" id="cal-list-next">Next</button>
+        </div>
+    </aside>
+</div>
 
 <!-- Event modal -->
 <div id="cal-modal" class="ari-ud-modal" style="display:none;">
@@ -75,7 +103,7 @@
         </div>
         <div class="ari-form-group">
             <label>Colour</label>
-            <input type="color" id="cal-modal-color" value="#4a90d9">
+            <input type="color" id="cal-modal-color" class="ari-cal-color-input" value="#4a90d9">
         </div>
         <div class="ari-ud-modal-actions">
             <button class="ari-btn ari-btn--primary" id="cal-modal-save">Save</button>

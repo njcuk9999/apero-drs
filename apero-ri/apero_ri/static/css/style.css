@@ -494,6 +494,370 @@ a:hover {
     font-style: italic;
 }
 
+/* ========================================================================
+   Admin email settings
+   ======================================================================== */
+.ari-ae-readonly-notice {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+    padding: 0.75rem 0.9rem;
+    border: 1px solid #bfdbfe;
+    border-radius: 10px;
+    background: #eff6ff;
+    color: #1d4ed8;
+}
+
+.ari-ae-section,
+.ari-ae-status-card {
+    border: 1px solid var(--ari-border, #dde2ee);
+    border-radius: 12px;
+    background: #fff;
+    box-shadow: 0 4px 16px rgba(15, 23, 42, 0.04);
+    margin-bottom: 1rem;
+}
+
+.ari-ae-status-card {
+    display: flex;
+    align-items: center;
+    gap: 0.9rem;
+    padding: 1rem 1.1rem;
+}
+
+.ari-ae-status-icon {
+    width: 2.5rem;
+    height: 2.5rem;
+    border-radius: 999px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 auto;
+    font-size: 1.15rem;
+    background: #eef2ff;
+    color: #3f51b5;
+}
+
+.ari-ae-status-body {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+    min-width: 0;
+    flex: 1 1 auto;
+}
+
+.ari-ae-status-title {
+    font-weight: 700;
+    color: #1f2937;
+}
+
+.ari-ae-status-detail {
+    color: var(--ari-text-muted, #6b7280);
+    font-size: 0.88rem;
+    line-height: 1.4;
+}
+
+.ari-ae-status-action {
+    margin-left: auto;
+}
+
+.ari-ae-status-card--checking .ari-ae-status-icon {
+    background: #eef2ff;
+    color: #4338ca;
+}
+
+.ari-ae-status-card--ok .ari-ae-status-icon {
+    background: #ecfdf5;
+    color: #059669;
+}
+
+.ari-ae-status-card--error .ari-ae-status-icon {
+    background: #fef2f2;
+    color: #dc2626;
+}
+
+.ari-ae-section {
+    padding: 1.1rem 1.2rem 1.2rem;
+}
+
+.ari-ae-section-title {
+    margin: 0 0 0.95rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    color: var(--ari-primary, #3f51b5);
+    font-size: 1.02rem;
+}
+
+.ari-ae-help-link {
+    margin-left: auto;
+    font-size: 0.83rem;
+    font-weight: 600;
+    color: var(--ari-primary, #3f51b5);
+    text-decoration: none;
+}
+
+.ari-ae-help-link:hover {
+    text-decoration: underline;
+}
+
+.ari-ae-provider-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 0.65rem;
+}
+
+.ari-ae-provider-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.55rem;
+    padding: 0.85rem 0.9rem;
+    border: 1px solid var(--ari-border, #d7dceb);
+    border-radius: 10px;
+    background: #f8fafc;
+    color: #334155;
+    font-weight: 600;
+    cursor: pointer;
+    transition: border-color 0.12s, background 0.12s, transform 0.12s;
+}
+
+.ari-ae-provider-btn:hover:not(:disabled) {
+    background: #eef2ff;
+    border-color: #a5b4fc;
+    transform: translateY(-1px);
+}
+
+.ari-ae-provider-btn:disabled {
+    cursor: not-allowed;
+    opacity: 0.7;
+}
+
+.ari-ae-provider-btn--active {
+    background: #eef2ff;
+    border-color: var(--ari-primary, #3f51b5);
+    color: var(--ari-primary, #3f51b5);
+    box-shadow: inset 0 0 0 1px rgba(63, 81, 181, 0.12);
+}
+
+.ari-ae-steps {
+    margin: 0;
+    padding-left: 1.3rem;
+    color: #475569;
+    line-height: 1.55;
+}
+
+.ari-ae-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.ari-ae-field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.38rem;
+}
+
+.ari-ae-field--inline {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding-bottom: 0.35rem;
+    border-bottom: 1px solid #eef2f7;
+}
+
+.ari-ae-field--row {
+    display: grid;
+    grid-template-columns: 180px 1fr;
+    gap: 0.9rem;
+    align-items: start;
+}
+
+.ari-ae-subfield {
+    display: flex;
+    flex-direction: column;
+    gap: 0.38rem;
+}
+
+.ari-ae-label {
+    font-weight: 700;
+    color: #1f2937;
+    display: flex;
+    flex-direction: column;
+    gap: 0.18rem;
+}
+
+.ari-ae-hint {
+    font-size: 0.83rem;
+    font-weight: 400;
+    color: var(--ari-text-muted, #6b7280);
+    line-height: 1.45;
+}
+
+.ari-ae-input,
+.ari-ae-readonly-value {
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.ari-ae-input {
+    border: 1px solid var(--ari-border, #d0d7e6);
+    border-radius: 8px;
+    padding: 0.62rem 0.75rem;
+    font-size: 0.92rem;
+    background: #fff;
+    color: #1f2937;
+}
+
+.ari-ae-input:focus {
+    outline: none;
+    border-color: var(--ari-primary, #3f51b5);
+    box-shadow: 0 0 0 3px rgba(63, 81, 181, 0.12);
+}
+
+.ari-ae-input[readonly] {
+    background: #f8fafc;
+    color: #475569;
+}
+
+.ari-ae-input--short {
+    max-width: 120px;
+}
+
+.ari-ae-checks {
+    display: flex;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+    padding-top: 0.2rem;
+}
+
+.ari-ae-check {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 0.9rem;
+    color: #334155;
+}
+
+.ari-ae-pw-row {
+    display: flex;
+    align-items: stretch;
+    gap: 0.45rem;
+}
+
+.ari-ae-pw-toggle {
+    flex: 0 0 auto;
+    border: 1px solid var(--ari-border, #d0d7e6);
+    border-radius: 8px;
+    background: #fff;
+    color: #64748b;
+    padding: 0 0.8rem;
+    cursor: pointer;
+}
+
+.ari-ae-pw-toggle:hover {
+    background: #f8fafc;
+}
+
+.ari-ae-pw-set {
+    color: #059669;
+}
+
+.ari-ae-pw-missing {
+    color: #d97706;
+}
+
+.ari-ae-readonly-value {
+    margin: 0;
+    padding: 0.68rem 0.8rem;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    background: #f8fafc;
+    color: #475569;
+}
+
+.ari-ae-form-actions,
+.ari-ae-test-row {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    flex-wrap: wrap;
+}
+
+.ari-ae-save-msg {
+    font-size: 0.88rem;
+    color: var(--ari-text-muted, #6b7280);
+}
+
+.ari-ae-save-msg--ok {
+    color: #059669;
+}
+
+.ari-ae-save-msg--err {
+    color: #dc2626;
+}
+
+.ari-ae-switch {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+}
+
+.ari-ae-switch input {
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+}
+
+.ari-ae-switch-track {
+    width: 46px;
+    height: 26px;
+    border-radius: 999px;
+    background: #cbd5e1;
+    position: relative;
+    transition: background 0.15s;
+}
+
+.ari-ae-switch-track::after {
+    content: '';
+    position: absolute;
+    top: 3px;
+    left: 3px;
+    width: 20px;
+    height: 20px;
+    border-radius: 999px;
+    background: #fff;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.18);
+    transition: transform 0.15s;
+}
+
+.ari-ae-switch input:checked + .ari-ae-switch-track {
+    background: var(--ari-primary, #3f51b5);
+}
+
+.ari-ae-switch input:checked + .ari-ae-switch-track::after {
+    transform: translateX(20px);
+}
+
+@media (max-width: 860px) {
+    .ari-ae-status-card {
+        align-items: flex-start;
+        flex-wrap: wrap;
+    }
+
+    .ari-ae-status-action,
+    .ari-ae-help-link {
+        margin-left: 0;
+    }
+
+    .ari-ae-field--row {
+        grid-template-columns: 1fr;
+    }
+}
+
 @media (max-width: 900px) {
     .ari-up-contact-item {
         flex-direction: column;
@@ -511,6 +875,17 @@ a:hover {
 .ari-fullwidth .ari-footer,
 .ari-has-sidebar .ari-footer {
     margin-top: 0;
+}
+
+body.ari-up-wide-page .ari-doc-main {
+    max-width: none;
+    width: min(1400px, calc(100vw - var(--ari-sidebar-width) - 3rem));
+}
+
+@media (max-width: 900px) {
+    body.ari-up-wide-page .ari-doc-main {
+        width: auto;
+    }
 }
 
 /* Page header */
@@ -5285,6 +5660,16 @@ details.ot-howto[open] .ot-howto__chevron {
     gap: 0.4rem;
     align-items: flex-start;
 }
+.bk-share-note i {
+    flex: 0 0 auto;
+    margin-top: 0.1rem;
+}
+.bk-share-note__text {
+    display: block;
+    flex: 1 1 auto;
+    min-width: 0;
+    line-height: 1.5;
+}
 .bk-share-link-row {
     display: flex;
     gap: 0.4rem;
@@ -6571,6 +6956,183 @@ details[open] .qdb-sql-summary::before { transform: rotate(90deg); }
     margin-top: 0.5rem;
 }
 
+.ari-cal-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 2fr) minmax(300px, 360px);
+    gap: 1rem;
+    align-items: stretch;
+}
+
+.ari-cal-main-panel,
+.ari-cal-side-panel {
+    border: 1px solid var(--ari-border, #dde2ee);
+    border-radius: 12px;
+    background: #fff;
+    box-shadow: 0 4px 16px rgba(15, 23, 42, 0.04);
+}
+
+.ari-cal-main-panel {
+    padding: 0.85rem 0.95rem 0.95rem;
+}
+
+.ari-cal-side-panel {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    overflow: hidden;
+}
+
+.ari-cal-side-panel__header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 0.7rem;
+    padding: 0.85rem 0.95rem 0.7rem;
+    border-bottom: 1px solid var(--ari-border, #e5e7eb);
+}
+
+.ari-cal-side-panel__title {
+    margin: 0;
+    font-size: 1rem;
+    color: var(--ari-primary, #3f51b5);
+}
+
+.ari-cal-side-panel__subtitle {
+    margin-top: 0.15rem;
+    font-size: 0.8rem;
+    color: var(--ari-text-muted, #6b7280);
+}
+
+.ari-cal-list-per-page-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    font-size: 0.8rem;
+    color: var(--ari-text-muted, #6b7280);
+    white-space: nowrap;
+}
+
+.ari-cal-list-per-page {
+    min-width: 72px;
+    padding: 0.3rem 0.45rem;
+}
+
+.ari-cal-event-list {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    padding: 0.85rem 0.95rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.65rem;
+}
+
+.ari-cal-event-card {
+    border: 1px solid var(--ari-border, #e5e7eb);
+    border-radius: 10px;
+    padding: 0.75rem 0.8rem;
+    background: #fbfdff;
+}
+
+.ari-cal-event-card__head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 0.6rem;
+}
+
+.ari-cal-event-card__title {
+    font-weight: 700;
+    color: #1f2937;
+}
+
+.ari-cal-event-card__when {
+    font-size: 0.8rem;
+    color: #475569;
+    white-space: nowrap;
+}
+
+.ari-cal-event-card__meta {
+    margin-top: 0.35rem;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    flex-wrap: wrap;
+    font-size: 0.76rem;
+    color: var(--ari-text-muted, #6b7280);
+}
+
+.ari-cal-event-card__badge {
+    display: inline-flex;
+    align-items: center;
+    border-radius: 999px;
+    padding: 0.12rem 0.45rem;
+    background: #eef2ff;
+    color: #4338ca;
+    font-weight: 600;
+}
+
+.ari-cal-event-card__actions {
+    margin-top: 0.6rem;
+    display: flex;
+    gap: 0.45rem;
+    flex-wrap: wrap;
+}
+
+.ari-cal-list-pager {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    padding: 0.75rem 0.95rem 0.85rem;
+    border-top: 1px solid var(--ari-border, #e5e7eb);
+}
+
+.ari-cal-list-page-info {
+    font-size: 0.82rem;
+    color: var(--ari-text-muted, #6b7280);
+}
+
+.ari-cal-empty-list {
+    color: var(--ari-text-muted, #6b7280);
+    font-size: 0.9rem;
+    text-align: center;
+    padding: 1.2rem 0.4rem;
+}
+
+.ari-cal-color-input {
+    width: 76px;
+    height: 2.4rem;
+    padding: 0.18rem;
+    border: 1px solid var(--ari-border, #d0d7e6);
+    border-radius: 8px;
+    background: #fff;
+}
+
+.ari-cal-color-input::-webkit-color-swatch-wrapper {
+    padding: 0;
+}
+
+.ari-cal-color-input::-webkit-color-swatch {
+    border: none;
+    border-radius: 6px;
+}
+
+#cal-toast,
+#np-toast,
+#todo-toast {
+    top: auto;
+    left: auto;
+    right: 1.25rem;
+    bottom: 1.25rem;
+    transform: none;
+    padding: 0.6rem 1rem;
+    font-size: 0.88rem;
+    max-width: min(360px, calc(100vw - 2rem));
+    text-align: left;
+    z-index: 2000;
+}
+
 .ari-cal-weekdays {
     display: grid;
     grid-template-columns: repeat(7, 1fr);
@@ -6670,23 +7232,15 @@ details[open] .qdb-sql-summary::before { transform: rotate(90deg); }
     padding-left: 3px;
 }
 
-/* calendar toast */
-.ari-toast {
-    position: fixed;
-    bottom: 1.5rem;
-    right: 1.5rem;
-    padding: 0.6rem 1.1rem;
-    border-radius: 8px;
-    font-size: 0.88rem;
-    z-index: 2000;
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
-    color: #fff;
-}
-
-.ari-toast--success { background: #16a34a; }
-.ari-toast--error   { background: #dc2626; }
-
 @media (max-width: 680px) {
+    .ari-cal-layout {
+        grid-template-columns: 1fr;
+    }
+
+    .ari-cal-side-panel {
+        min-height: 0;
+    }
+
     .ari-cal-days { gap: 2px; }
     .ari-cal-cell { min-height: 60px; padding: 0.2rem; }
     .ari-cal-event { display: none; }

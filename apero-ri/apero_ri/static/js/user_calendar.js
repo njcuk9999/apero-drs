@@ -5,6 +5,8 @@ let _events = [];
 let _year = new Date().getFullYear();
 let _month = new Date().getMonth(); // 0-based
 let _editId = null;
+let _listPage = 1;
+let _listPerPage = 8;
 
 const _MONTH_NAMES = ['January','February','March','April','May','June',
                       'July','August','September','October','November','December'];
@@ -26,6 +28,93 @@ function _toast(msg, ok = true) {
 
 function _esc(s) {
     return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function _sortEvents(a, b) {
+    const aKey = `${a.date || ''}T${a.time || '00:00'}`;
+    const bKey = `${b.date || ''}T${b.time || '00:00'}`;
+    if (aKey < bKey) return -1;
+    if (aKey > bKey) return 1;
+    return String(a.title || '').localeCompare(String(b.title || ''));
+}
+
+function _formatEventWhen(ev) {
+    if (!ev.date) return '';
+    const date = new Date(`${ev.date}T${ev.time || '00:00'}`);
+    const dateStr = date.toLocaleDateString(undefined, {
+        weekday: 'short', month: 'short', day: 'numeric'
+    });
+    return ev.time ? `${dateStr}, ${ev.time}` : dateStr;
+}
+
+function _renderEventList(expanded) {
+    const listEl = document.getElementById('cal-event-list');
+    const subEl = document.getElementById('cal-list-subtitle');
+    const infoEl = document.getElementById('cal-list-page-info');
+    const prevBtn = document.getElementById('cal-list-prev');
+    const nextBtn = document.getElementById('cal-list-next');
+    if (!listEl || !subEl || !infoEl || !prevBtn || !nextBtn) return;
+
+    const events = expanded.slice().sort(_sortEvents);
+    subEl.textContent = `${events.length} event${events.length === 1 ? '' : 's'} in ${_MONTH_NAMES[_month]} ${_year}`;
+
+    const totalPages = Math.max(1, Math.ceil(events.length / _listPerPage));
+    _listPage = Math.min(Math.max(1, _listPage), totalPages);
+    const start = (_listPage - 1) * _listPerPage;
+    const pageEvents = events.slice(start, start + _listPerPage);
+
+    if (!pageEvents.length) {
+        listEl.innerHTML = '<div class="ari-cal-empty-list">No events in this month.</div>';
+    } else {
+        listEl.innerHTML = pageEvents.map(ev => `
+            <article class="ari-cal-event-card" data-id="${_esc(ev.id)}">
+                <div class="ari-cal-event-card__head">
+                    <div class="ari-cal-event-card__title">${_esc(ev.title || 'Untitled')}</div>
+                    <div class="ari-cal-event-card__when">${_esc(_formatEventWhen(ev))}</div>
+                </div>
+                <div class="ari-cal-event-card__meta">
+                    <span class="ari-cal-event-card__badge">${_esc(ev.category || 'event')}</span>
+                    ${ev._recurring ? '<span>Recurring</span>' : ''}
+                    ${ev._source ? '<span>Instrument event</span>' : ''}
+                </div>
+                <div class="ari-cal-event-card__actions">
+                    ${ev._source ? '' : `
+                        <button class="ari-btn ari-btn--secondary ari-btn--sm js-cal-list-edit" data-id="${_esc(ev.id)}">
+                            <i class="fa-solid fa-pen"></i> Edit
+                        </button>
+                        <button class="ari-btn ari-btn--danger ari-btn--sm js-cal-list-delete" data-id="${_esc(ev.id)}">
+                            <i class="fa-solid fa-trash"></i> Delete
+                        </button>`}
+                </div>
+            </article>
+        `).join('');
+    }
+
+    infoEl.textContent = `Page ${_listPage} of ${totalPages}`;
+    prevBtn.disabled = _listPage <= 1;
+    nextBtn.disabled = _listPage >= totalPages;
+
+    listEl.querySelectorAll('.js-cal-list-edit').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const ev = _events.find(item => item.id === btn.dataset.id);
+            if (ev) _openModal(ev);
+        });
+    });
+
+    listEl.querySelectorAll('.js-cal-list-delete').forEach(btn => {
+        btn.addEventListener('click', async () => {
+            const id = btn.dataset.id || '';
+            if (!id || !confirm('Delete this event?')) return;
+            const r = await _api(ARI_CALENDAR.deleteUrl, 'POST', { id });
+            if (r.success) {
+                _events = _events.filter(e => e.id !== id);
+                _renderMonth();
+                _toast('Event deleted.');
+            } else {
+                _toast(r.error || 'Error', false);
+            }
+        });
+    });
 }
 
 /** Expand recurring events within a given year/month */
@@ -124,6 +213,8 @@ function _renderMonth() {
             _openModal(null, el.dataset.date);
         });
     });
+
+    _renderEventList(expanded);
 }
 
 function _openModal(event, defaultDate = '') {
@@ -148,7 +239,7 @@ async function _loadEvents() {
         ? `${ARI_CALENDAR.listUrl}?instrument=${encodeURIComponent(instr)}`
         : ARI_CALENDAR.listUrl;
     const r = await _api(url);
-    if (r.success) { _events = r.events || []; _renderMonth(); }
+    if (r.success) { _events = r.events || []; _listPage = 1; _renderMonth(); }
     else _toast(r.error || 'Failed to load events', false);
 }
 
@@ -159,14 +250,27 @@ document.addEventListener('DOMContentLoaded', () => {
     if (instrSel) instrSel.addEventListener('change', _loadEvents);
 
     document.getElementById('cal-prev').addEventListener('click', () => {
-        _month--; if (_month < 0) { _month = 11; _year--; } _renderMonth();
+        _month--; if (_month < 0) { _month = 11; _year--; } _listPage = 1; _renderMonth();
     });
     document.getElementById('cal-next').addEventListener('click', () => {
-        _month++; if (_month > 11) { _month = 0; _year++; } _renderMonth();
+        _month++; if (_month > 11) { _month = 0; _year++; } _listPage = 1; _renderMonth();
     });
     document.getElementById('cal-today').addEventListener('click', () => {
         _year = new Date().getFullYear();
         _month = new Date().getMonth();
+        _listPage = 1;
+        _renderMonth();
+    });
+    document.getElementById('cal-list-per-page').addEventListener('change', e => {
+        _listPerPage = Math.max(1, parseInt(e.target.value || '8', 10));
+        _listPage = 1;
+        _renderMonth();
+    });
+    document.getElementById('cal-list-prev').addEventListener('click', () => {
+        if (_listPage > 1) { _listPage -= 1; _renderMonth(); }
+    });
+    document.getElementById('cal-list-next').addEventListener('click', () => {
+        _listPage += 1;
         _renderMonth();
     });
     document.getElementById('cal-add-btn').addEventListener('click', () => _openModal(null));
