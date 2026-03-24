@@ -145,7 +145,9 @@ def _load_instrument_profile(instrument_profile_file: str) -> Dict[str, Any]:
 
 def _header_label(profile_data: Dict[str, Any], section: str, key: str,
                   default: str) -> str:
-    headers = profile_data.get('headers', {}) if isinstance(profile_data, dict) else {}
+    headers = {}
+    if isinstance(profile_data, dict):
+        headers = profile_data.get('sci-headers', profile_data.get('headers', {}))
     if not isinstance(headers, dict):
         return default
     sec = headers.get(section, {}) if isinstance(headers.get(section, {}), dict) else {}
@@ -157,7 +159,9 @@ def _header_label(profile_data: Dict[str, Any], section: str, key: str,
 def _header_key(profile_data: Dict[str, Any], section: str, key: str,
                 default: str) -> str:
     """Return the FITS header *keyword* (not label) from the instrument profile."""
-    headers = profile_data.get('headers', {}) if isinstance(profile_data, dict) else {}
+    headers = {}
+    if isinstance(profile_data, dict):
+        headers = profile_data.get('sci-headers', profile_data.get('headers', {}))
     if not isinstance(headers, dict):
         return default
     sec = headers.get(section, {}) if isinstance(headers.get(section, {}), dict) else {}

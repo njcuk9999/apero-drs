@@ -20,9 +20,13 @@
 
     var DB_TEXT_FIELDS = [
         { key: 'DATABASE_HOST',     id: 'profile-db-host' },
+        { key: 'DATABASE_PORT',     id: 'profile-db-port' },
         { key: 'DATABASE_USERNAME', id: 'profile-db-user' },
         { key: 'DATABASE_PASSWORD', id: 'profile-db-pass' },
         { key: 'DATABASE_NAME',     id: 'profile-db-name' },
+        { key: 'DATABASE_SSH_CONFIG_HOST', id: 'profile-db-ssh-host' },
+        { key: 'DATABASE_SSH_LOCAL_PORT',  id: 'profile-db-ssh-local-port' },
+        { key: 'DATABASE_SSH_REMOTE_PORT', id: 'profile-db-ssh-remote-port' },
     ];
 
     var TABLE_FIELDS = [
@@ -61,6 +65,8 @@
     var profileVersionInput = document.getElementById('profile-version');
     var profileServerInput = document.getElementById('profile-server');
     var profileDbMode = document.getElementById('profile-db-mode');
+    var profileDbUseSsh = document.getElementById('profile-db-use-ssh');
+    var dbSshTunnelFields = document.getElementById('db-ssh-tunnel-fields');
 
     var btnSaveProfile = document.getElementById('btn-save-profile');
     var btnCancelEdit = document.getElementById('btn-cancel-edit');
@@ -493,7 +499,9 @@
         profileVersionInput.value = '';
         profileServerInput.value = '';
         profileDbMode.value = 'mysql+pymysql';
+        if (profileDbUseSsh) profileDbUseSsh.checked = false;
         DB_TEXT_FIELDS.forEach(function (f) { dbInputs[f.id].value = ''; });
+        dbInputs['profile-db-ssh-remote-port'].value = '3306';
         TABLE_FIELDS.forEach(function (f) { tableInputs[f.id].value = ''; });
         PATH_FIELDS.forEach(function (f) {
             pathInputs[f.id].value = '';
@@ -512,6 +520,7 @@
         groupsSection.style.display = 'none';
         groupsContainer.innerHTML = '';
         groupsNoPerm.style.display = 'none';
+        syncTunnelVisibility();
         updateWorkflowState();
     }
 
@@ -523,9 +532,19 @@
         profileVersionInput.value = profile.apero_version || '';
         profileServerInput.value = profile.reduction_server || '';
         profileDbMode.value = profile.DATABASE_MODE || 'mysql+pymysql';
+        if (profileDbUseSsh) {
+            profileDbUseSsh.checked = isTruthy(profile.DATABASE_USE_SSH_TUNNEL);
+        }
+        var dbHostParts = splitDbHostPort(profile.DATABASE_HOST || '', profile.DATABASE_PORT || '');
+        dbInputs['profile-db-host'].value = dbHostParts.host;
+        dbInputs['profile-db-port'].value = dbHostParts.port;
         DB_TEXT_FIELDS.forEach(function (f) {
+            if (f.key === 'DATABASE_HOST' || f.key === 'DATABASE_PORT') return;
             dbInputs[f.id].value = profile[f.key] || '';
         });
+        if (!dbInputs['profile-db-ssh-remote-port'].value.trim()) {
+            dbInputs['profile-db-ssh-remote-port'].value = '3306';
+        }
         TABLE_FIELDS.forEach(function (f) {
             tableInputs[f.id].value = profile[f.key] || '';
         });
@@ -549,6 +568,7 @@
         formSection.style.display = '';
         formTitle.scrollIntoView({ behavior: 'smooth', block: 'start' });
         renderProfileGroups(profile);
+        syncTunnelVisibility();
         updateWorkflowState();
     }
 
@@ -585,6 +605,65 @@
             (valid ? ' ari-ap-validation--valid' : ' ari-ap-validation--invalid');
         var icon = valid ? 'fa-circle-check' : 'fa-circle-xmark';
         el.innerHTML = '<i class="fa-solid ' + icon + '"></i> ' + escapeHtml(message);
+    }
+
+    function isTruthy(value) {
+        if (typeof value === 'boolean') return value;
+        if (value === null || value === undefined) return false;
+        return ['1', 'true', 'yes', 'on'].indexOf(String(value).trim().toLowerCase()) >= 0;
+    }
+
+    function splitDbHostPort(host, port) {
+        var hostValue = String(host || '').trim();
+        var portValue = String(port || '').trim();
+        if (!portValue && hostValue && hostValue.indexOf(':') >= 0) {
+            var match = hostValue.match(/^(.*):(\d+)$/);
+            if (match && match[1]) {
+                hostValue = match[1].trim();
+                portValue = match[2].trim();
+            }
+        }
+        return { host: hostValue, port: portValue };
+    }
+
+    function isDbTunnelEnabled() {
+        return !!(profileDbUseSsh && profileDbUseSsh.checked);
+    }
+
+    function syncTunnelVisibility() {
+        if (dbSshTunnelFields) {
+            dbSshTunnelFields.style.display = isDbTunnelEnabled() ? '' : 'none';
+        }
+        if (isDbTunnelEnabled() && !dbInputs['profile-db-ssh-remote-port'].value.trim()) {
+            dbInputs['profile-db-ssh-remote-port'].value = '3306';
+        }
+    }
+
+    function resetDbAndTableTests() {
+        dbTestPassed = false;
+        tablesTestPassed = false;
+        dbTestResult.style.display = 'none';
+        tablesTestResult.style.display = 'none';
+    }
+
+    function buildDbPayload() {
+        var dbPort = dbInputs['profile-db-port'].value.trim();
+        var tunnelLocalPort = dbInputs['profile-db-ssh-local-port'].value.trim();
+        if (!dbPort && isDbTunnelEnabled()) {
+            dbPort = tunnelLocalPort;
+        }
+        return {
+            DATABASE_MODE: profileDbMode.value,
+            DATABASE_HOST: dbInputs['profile-db-host'].value.trim(),
+            DATABASE_PORT: dbPort,
+            DATABASE_USERNAME: dbInputs['profile-db-user'].value.trim(),
+            DATABASE_PASSWORD: dbInputs['profile-db-pass'].value,
+            DATABASE_NAME: dbInputs['profile-db-name'].value.trim(),
+            DATABASE_USE_SSH_TUNNEL: isDbTunnelEnabled(),
+            DATABASE_SSH_CONFIG_HOST: dbInputs['profile-db-ssh-host'].value.trim(),
+            DATABASE_SSH_LOCAL_PORT: dbInputs['profile-db-ssh-local-port'].value.trim(),
+            DATABASE_SSH_REMOTE_PORT: dbInputs['profile-db-ssh-remote-port'].value.trim(),
+        };
     }
 
     function isTableFieldsComplete() {
@@ -783,9 +862,15 @@
     }
 
     function updateWorkflowState() {
+        syncTunnelVisibility();
         var dbFieldsFilled = dbInputs['profile-db-host'].value.trim()
             && dbInputs['profile-db-user'].value.trim()
             && dbInputs['profile-db-name'].value.trim();
+        if (isDbTunnelEnabled()) {
+            dbFieldsFilled = dbFieldsFilled
+                && dbInputs['profile-db-ssh-host'].value.trim()
+                && dbInputs['profile-db-ssh-local-port'].value.trim();
+        }
 
         installSectionToggle(tablesStepStatus, 'tables');
         installSectionToggle(scienceStepStatus, 'science');
@@ -853,14 +938,19 @@
 
     /* -- Test database connection ---------------------------------------- */
     function testDbConnection() {
-        var mode = profileDbMode.value;
-        var host = dbInputs['profile-db-host'].value.trim();
-        var user = dbInputs['profile-db-user'].value.trim();
-        var pass = dbInputs['profile-db-pass'].value;
-        var name = dbInputs['profile-db-name'].value.trim();
+        var payload = buildDbPayload();
+        var host = payload.DATABASE_HOST;
+        var user = payload.DATABASE_USERNAME;
+        var name = payload.DATABASE_NAME;
 
         if (!host || !user || !name) {
             showFieldValidation(dbTestResult, false, 'Fill in all database fields first');
+            return;
+        }
+        if (payload.DATABASE_USE_SSH_TUNNEL
+            && (!payload.DATABASE_SSH_CONFIG_HOST || !payload.DATABASE_SSH_LOCAL_PORT)) {
+            showFieldValidation(dbTestResult, false,
+                'SSH config host and local port are required for tunnel mode');
             return;
         }
 
@@ -869,13 +959,7 @@
         fetch(cfg.testDbUrl, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                DATABASE_MODE: mode,
-                DATABASE_HOST: host,
-                DATABASE_USERNAME: user,
-                DATABASE_PASSWORD: pass,
-                DATABASE_NAME: name
-            })
+            body: JSON.stringify(payload)
         })
         .then(function (r) { return r.json(); })
         .then(function (data) {
@@ -911,13 +995,7 @@
             return;
         }
 
-        var payload = {
-            DATABASE_MODE: profileDbMode.value,
-            DATABASE_HOST: dbInputs['profile-db-host'].value.trim(),
-            DATABASE_USERNAME: dbInputs['profile-db-user'].value.trim(),
-            DATABASE_PASSWORD: dbInputs['profile-db-pass'].value,
-            DATABASE_NAME: dbInputs['profile-db-name'].value.trim()
-        };
+        var payload = buildDbPayload();
         TABLE_FIELDS.forEach(function (f) {
             payload[f.key] = tableInputs[f.id].value.trim();
         });
@@ -959,8 +1037,11 @@
             name: profileNameInput.value.trim(),
             apero_version: profileVersionInput.value.trim(),
             reduction_server: profileServerInput.value.trim(),
-            DATABASE_MODE: profileDbMode.value,
         };
+        var dbPayload = buildDbPayload();
+        Object.keys(dbPayload).forEach(function (key) {
+            payload[key] = dbPayload[key];
+        });
         DB_TEXT_FIELDS.forEach(function (f) {
             payload[f.key] = dbInputs[f.id].value.trim();
         });
@@ -1000,6 +1081,15 @@
             if (!payload[dbReq[i]]) {
                 showToast(dbReq[i] + ' is required', 'error');
                 return null;
+            }
+        }
+        if (payload.DATABASE_USE_SSH_TUNNEL) {
+            var tunnelReq = ['DATABASE_SSH_CONFIG_HOST', 'DATABASE_SSH_LOCAL_PORT'];
+            for (var t = 0; t < tunnelReq.length; t++) {
+                if (!payload[tunnelReq[t]]) {
+                    showToast(tunnelReq[t] + ' is required in tunnel mode', 'error');
+                    return null;
+                }
             }
         }
         if (!dbTestPassed) {
@@ -1358,10 +1448,7 @@
     DB_TEXT_FIELDS.forEach(function (f) {
         dbInputs[f.id].addEventListener('input', function () {
             markDirty();
-            dbTestPassed = false;
-            tablesTestPassed = false;
-            dbTestResult.style.display = 'none';
-            tablesTestResult.style.display = 'none';
+            resetDbAndTableTests();
             updateWorkflowState();
         });
     });
@@ -1375,12 +1462,19 @@
     });
     profileDbMode.addEventListener('change', function () {
         markDirty();
-        dbTestPassed = false;
-        tablesTestPassed = false;
-        dbTestResult.style.display = 'none';
-        tablesTestResult.style.display = 'none';
+        resetDbAndTableTests();
         updateWorkflowState();
     });
+    if (profileDbUseSsh) {
+        profileDbUseSsh.addEventListener('change', function () {
+            markDirty();
+            resetDbAndTableTests();
+            if (isDbTunnelEnabled() && !dbInputs['profile-db-ssh-remote-port'].value.trim()) {
+                dbInputs['profile-db-ssh-remote-port'].value = '3306';
+            }
+            updateWorkflowState();
+        });
+    }
 
     if (aprofileSelect) {
         aprofileSelect.addEventListener('change', function () {

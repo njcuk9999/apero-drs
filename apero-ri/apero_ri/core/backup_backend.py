@@ -7,6 +7,7 @@ The backend supports unattended backup mirroring with setup-once credentials.
 from __future__ import annotations
 
 import base64
+import json
 import os
 import time
 from datetime import datetime, timezone
@@ -15,17 +16,21 @@ from typing import Any, Dict, List, Optional, Tuple
 
 import yaml
 
+from apero_ri.core import secret_store as ss
+
 # Provider metadata used by the admin UI.
 PROVIDER_DEFAULTS: Dict[str, Dict[str, Any]] = {
-    'gdrive_service_account': {
-        'label': 'Google Drive (Service Account)',
+    'gdrive_oauth': {
+        'label': 'Google Drive (OAuth user consent)',
         'help_url': 'https://developers.google.com/drive/api/guides/about-sdk',
         'help_steps': [
             'Create a Google Cloud project and enable the Google Drive API.',
-            'Create a service account and download its JSON key file to this server.',
-            'Create a Drive folder for backups and share it with the service account email.',
+            'Create OAuth client credentials and download the client secret JSON file.',
+            'Upload the OAuth client JSON below and save settings.',
+            'Click Connect Google account and complete the consent flow.',
+            'Create or choose a Drive folder for backups from your account.',
             'Copy the Drive folder ID from the URL and paste it below.',
-            'Run Test connection, then Save settings.',
+            'Run Test connection and Test backup.',
         ],
     },
     's3': {
@@ -53,10 +58,82 @@ SECRET_FIELDS = {
     's3_secret_access_key': 's3_secret_access_key_enc',
 }
 
+MANAGED_SECRET_PATHS = {
+    'gdrive_oauth_client_secret_file': 'gdrive_oauth_client_secret.json',
+    'gdrive_oauth_token_file': 'gdrive_oauth_token.json',
+    's3_credentials_file': 's3_credentials.json',
+}
+
 
 def _get_backup_config_path() -> Path:
     ari_dir = os.environ.get('ARI_DIR', os.path.expanduser('~/.ari'))
     return Path(ari_dir) / 'admin' / 'backup.yaml'
+
+
+def _get_s3_secret_access_key_path() -> Path:
+    return ss.resolve_secret_file('s3_secret_access_key.txt')
+
+
+def _write_secret_text(path: Path, value: str) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(value, encoding='utf-8')
+    ss.protect_path(path, 0o600)
+
+
+def _maybe_migrate_managed_secret_path(field_name: str,
+                                       path_value: str,
+                                       allow_blank: bool = False) -> str:
+    value = str(path_value or '').strip()
+    ari_dir = ss.get_ari_dir()
+    target_name = MANAGED_SECRET_PATHS[field_name]
+    legacy_candidates: List[Path] = []
+
+    if field_name == 'gdrive_oauth_token_file':
+        legacy_candidates.append(ari_dir / 'admin' / 'gdrive_oauth_token.json')
+    elif field_name == 'gdrive_oauth_client_secret_file':
+        legacy_candidates.append(ari_dir / 'admin' / 'gdrive_oauth_client_secret.json')
+    elif field_name == 's3_credentials_file':
+        legacy_candidates.append(ari_dir / 'admin' / 's3_credentials.json')
+
+    backups_dir = ari_dir / 'backups'
+    if value:
+        current = Path(value).expanduser().resolve()
+        if current.parent == backups_dir and current.suffix.lower() == '.json':
+            legacy_candidates.append(current)
+            return str(ss.resolve_secret_file(target_name, legacy_candidates))
+        if field_name == 'gdrive_oauth_token_file' and current == (ari_dir / 'admin' / 'gdrive_oauth_token.json'):
+            legacy_candidates.append(current)
+            return str(ss.resolve_secret_file(target_name, legacy_candidates))
+        return str(current)
+
+    if allow_blank:
+        managed = ss.resolve_secret_file(target_name, legacy_candidates)
+        return str(managed) if managed.exists() else ''
+    return str(ss.resolve_secret_file(target_name, legacy_candidates))
+
+
+def _migrate_backup_secret_config(cfg: Dict[str, Any]) -> Dict[str, Any]:
+    cfg['gdrive_oauth_token_file'] = _maybe_migrate_managed_secret_path(
+        'gdrive_oauth_token_file',
+        str(cfg.get('gdrive_oauth_token_file', '') or ''),
+        allow_blank=False,
+    )
+    cfg['gdrive_oauth_client_secret_file'] = _maybe_migrate_managed_secret_path(
+        'gdrive_oauth_client_secret_file',
+        str(cfg.get('gdrive_oauth_client_secret_file', '') or ''),
+        allow_blank=True,
+    )
+    cfg['s3_credentials_file'] = _maybe_migrate_managed_secret_path(
+        's3_credentials_file',
+        str(cfg.get('s3_credentials_file', '') or ''),
+        allow_blank=True,
+    )
+
+    legacy_secret = _decode_secret(str(cfg.get('s3_secret_access_key_enc', '') or '')).strip()
+    secret_path = _get_s3_secret_access_key_path()
+    if legacy_secret and not secret_path.exists():
+        _write_secret_text(secret_path, legacy_secret)
+    return cfg
 
 
 def _encode_secret(value: str) -> str:
@@ -73,14 +150,16 @@ def _decode_secret(value: str) -> str:
 def _default_config() -> Dict[str, Any]:
     return {
         'enabled': False,
-        'provider': 'gdrive_service_account',
-        'gdrive_service_account_file': '',
+        'provider': 'gdrive_oauth',
+        'gdrive_oauth_client_secret_file': '',
+        'gdrive_oauth_token_file': '',
         'gdrive_folder_id': '',
         's3_bucket': '',
         's3_prefix': 'apero/backups',
         's3_region': '',
         's3_endpoint_url': '',
         's3_access_key_id': '',
+        's3_credentials_file': '',
         's3_secret_access_key_enc': '',
     }
 
@@ -100,9 +179,19 @@ def load_backup_config() -> Dict[str, Any]:
     except Exception:
         return cfg
 
-    provider = str(cfg.get('provider', 'gdrive_service_account')).strip()
+    # Legacy migration from service-account provider to OAuth provider.
+    if str(cfg.get('provider', '')).strip() == 'gdrive_service_account':
+        cfg['provider'] = 'gdrive_oauth'
+    if (not str(cfg.get('gdrive_oauth_client_secret_file', '')).strip()
+            and str(cfg.get('gdrive_service_account_file', '')).strip()):
+        cfg['gdrive_oauth_client_secret_file'] = str(
+            cfg.get('gdrive_service_account_file', '')
+        ).strip()
+
+    provider = str(cfg.get('provider', 'gdrive_oauth')).strip()
     if provider not in PROVIDER_DEFAULTS:
-        cfg['provider'] = 'gdrive_service_account'
+        cfg['provider'] = 'gdrive_oauth'
+    cfg = _migrate_backup_secret_config(cfg)
     return cfg
 
 
@@ -113,9 +202,20 @@ def save_backup_config(cfg: Dict[str, Any]) -> None:
 
     out_cfg = _default_config()
     out_cfg.update(cfg)
+    out_cfg = _migrate_backup_secret_config(out_cfg)
 
     for plain_field, enc_field in SECRET_FIELDS.items():
         plain_value = out_cfg.pop(plain_field, None)
+        if plain_field == 's3_secret_access_key':
+            secret_path = _get_s3_secret_access_key_path()
+            if plain_value is not None:
+                text = str(plain_value).strip()
+                if text:
+                    _write_secret_text(secret_path, text)
+                else:
+                    secret_path.unlink(missing_ok=True)
+            out_cfg.pop(enc_field, None)
+            continue
         if plain_value is not None:
             text = str(plain_value).strip()
             if text:
@@ -128,6 +228,13 @@ def save_backup_config(cfg: Dict[str, Any]) -> None:
 
 def get_secret(cfg: Dict[str, Any], field_name: str) -> str:
     """Return decoded secret from config if available."""
+    if field_name == 's3_secret_access_key':
+        secret_path = _get_s3_secret_access_key_path()
+        if secret_path.exists():
+            try:
+                return secret_path.read_text(encoding='utf-8').strip()
+            except Exception:
+                return ''
     enc_field = SECRET_FIELDS.get(field_name)
     if not enc_field:
         return ''
@@ -153,51 +260,150 @@ def _is_cloud_enabled(cfg: Dict[str, Any]) -> bool:
     if not bool(cfg.get('enabled', False)):
         return False
     provider = str(cfg.get('provider', 'local_only')).strip()
-    return provider in {'gdrive_service_account', 's3'}
+    return provider in {'gdrive_oauth', 's3'}
+
+
+def get_gdrive_oauth_token_path(cfg: Dict[str, Any]) -> Path:
+    """Return configured OAuth token file path, with secret-dir fallback."""
+    token_path = str(cfg.get('gdrive_oauth_token_file', '') or '').strip()
+    if token_path:
+        return Path(token_path).expanduser().resolve()
+    ari_dir = ss.get_ari_dir()
+    return ss.resolve_secret_file(
+        'gdrive_oauth_token.json',
+        legacy_paths=[ari_dir / 'admin' / 'gdrive_oauth_token.json'],
+    )
+
+
+def save_gdrive_oauth_token(cfg: Dict[str, Any], token_dict: Dict[str, Any]) -> Path:
+    """Persist Google OAuth user token JSON and return its full path."""
+    token_path = get_gdrive_oauth_token_path(cfg)
+    token_path.parent.mkdir(parents=True, exist_ok=True)
+    with open(token_path, 'w', encoding='utf-8') as handle:
+        json.dump(token_dict, handle, indent=2)
+    return token_path
+
+
+def has_gdrive_oauth_token(cfg: Dict[str, Any]) -> bool:
+    """Whether Google OAuth token exists on disk."""
+    return get_gdrive_oauth_token_path(cfg).exists()
+
+
+def validate_gdrive_oauth_client_secret_payload(payload: Any) -> Tuple[bool, str]:
+    """Validate that a Google OAuth client JSON payload is usable for web/app flow."""
+    if not isinstance(payload, dict):
+        return False, 'Google OAuth client secret file must contain a JSON object.'
+
+    if 'web' in payload:
+        section_name = 'web'
+    elif 'installed' in payload:
+        section_name = 'installed'
+    else:
+        return False, (
+            'Google OAuth client secret JSON must contain a top-level "web" or '
+            '"installed" section. Upload an OAuth client JSON, not a service-account key.'
+        )
+
+    section = payload.get(section_name, {})
+    if not isinstance(section, dict):
+        return False, f'Google OAuth client secret file has an invalid "{section_name}" section.'
+
+    required_keys = ['client_id', 'client_secret', 'auth_uri', 'token_uri']
+    missing = [key for key in required_keys if not str(section.get(key, '')).strip()]
+    if missing:
+        return False, (
+            'Google OAuth client secret JSON is missing required fields: '
+            + ', '.join(missing)
+        )
+
+    redirect_uris = section.get('redirect_uris', [])
+    if section_name == 'web' and (not isinstance(redirect_uris, list) or not redirect_uris):
+        return False, (
+            'Google OAuth web client JSON must include at least one redirect URI. '
+            'Add the APERO RI callback URL in Google Cloud Console and download the JSON again.'
+        )
+
+    return True, ''
+
+
+def validate_gdrive_oauth_client_secret_file(path_value: str) -> Tuple[bool, str]:
+    """Validate that a Google OAuth client JSON file is usable for web/app flow."""
+    path = Path(str(path_value or '').strip()).expanduser()
+    if not str(path_value or '').strip():
+        return False, 'Google OAuth client secret JSON file is required.'
+    if not path.exists() or not path.is_file():
+        return False, f'Google OAuth client secret file does not exist: {path}'
+
+    try:
+        with open(path, 'r', encoding='utf-8') as handle:
+            payload = json.load(handle)
+    except Exception:
+        return False, f'Google OAuth client secret file is not valid JSON: {path}'
+
+    return validate_gdrive_oauth_client_secret_payload(payload)
 
 
 def _provider_requirements_ok(cfg: Dict[str, Any]) -> Tuple[bool, str]:
     provider = str(cfg.get('provider', 'local_only')).strip()
-    if provider == 'gdrive_service_account':
-        key_file = Path(str(cfg.get('gdrive_service_account_file', '')).strip()).expanduser()
+    if provider == 'gdrive_oauth':
+        client_secret_file = Path(
+            str(cfg.get('gdrive_oauth_client_secret_file', '')).strip()
+        ).expanduser()
         folder_id = str(cfg.get('gdrive_folder_id', '')).strip()
-        if not key_file:
-            return False, 'Google service account JSON file is required.'
-        if not key_file.exists():
-            return False, f'Google service account file does not exist: {key_file}'
+        oauth_ok, oauth_err = validate_gdrive_oauth_client_secret_file(str(client_secret_file))
+        if not oauth_ok:
+            return False, oauth_err
         if not folder_id:
             return False, 'Google Drive folder ID is required.'
+        if not has_gdrive_oauth_token(cfg):
+            return False, 'Google account not connected. Use Connect Google account in backup settings.'
         return True, ''
 
     if provider == 's3':
         bucket = str(cfg.get('s3_bucket', '')).strip()
-        access_key = str(cfg.get('s3_access_key_id', '')).strip()
-        secret_key = get_secret(cfg, 's3_secret_access_key')
+        access_key, secret_key = _resolve_s3_credentials(cfg)
         if not bucket:
             return False, 'S3 bucket is required.'
         if not access_key:
-            return False, 'S3 access key ID is required.'
+            return False, 'S3 access key ID is required (or provide it in an S3 credentials JSON file).'
         if not secret_key:
-            return False, 'S3 secret access key is required.'
+            return False, 'S3 secret access key is required (or provide it in an S3 credentials JSON file).'
         return True, ''
 
     return False, 'No cloud provider configured.'
 
 
+GDRIVE_OAUTH_SCOPES = ['https://www.googleapis.com/auth/drive']
+
+
 def _build_google_drive_service(cfg: Dict[str, Any]):
     try:
-        from google.oauth2 import service_account
+        from google.auth.transport.requests import Request
+        from google.oauth2.credentials import Credentials
         from googleapiclient.discovery import build
     except Exception as exc:
         raise RuntimeError(
-            'Google Drive dependencies are missing. Install google-auth and google-api-python-client.'
+            'Google Drive dependencies are missing. Install google-auth, google-auth-oauthlib, and google-api-python-client.'
         ) from exc
 
-    key_file = Path(str(cfg.get('gdrive_service_account_file', '')).strip()).expanduser()
-    scopes = ['https://www.googleapis.com/auth/drive']
-    credentials = service_account.Credentials.from_service_account_file(
-        str(key_file), scopes=scopes
-    )
+    token_path = get_gdrive_oauth_token_path(cfg)
+    if not token_path.exists():
+        raise RuntimeError('Google OAuth token file not found. Connect Google account first.')
+
+    try:
+        with open(token_path, 'r', encoding='utf-8') as handle:
+            token_data = json.load(handle)
+    except Exception as exc:
+        raise RuntimeError(f'Could not read Google OAuth token file: {token_path}') from exc
+
+    credentials = Credentials.from_authorized_user_info(token_data, GDRIVE_OAUTH_SCOPES)
+    if not credentials.valid:
+        if credentials.expired and credentials.refresh_token:
+            credentials.refresh(Request())
+            save_gdrive_oauth_token(cfg, json.loads(credentials.to_json()))
+        else:
+            raise RuntimeError('Google OAuth token is invalid or expired; reconnect Google account.')
+
     return build('drive', 'v3', credentials=credentials,
                  cache_discovery=False)
 
@@ -269,6 +475,16 @@ def _gdrive_list_period(service, period_folder_id: str,
     return out
 
 
+def _gdrive_validate_shared_drive_target(service, folder_id: str) -> Dict[str, Any]:
+    """Validate that target folder is accessible."""
+    meta = service.files().get(
+        fileId=folder_id,
+        fields='id,name,mimeType,driveId',
+        supportsAllDrives=True,
+    ).execute()
+    return meta
+
+
 def _gdrive_upload_file(service, parent_id: str, file_path: Path,
                         existing_id: Optional[str] = None) -> None:
     try:
@@ -305,9 +521,10 @@ def _build_s3_client(cfg: Dict[str, Any]):
     except Exception as exc:
         raise RuntimeError('boto3 is required for S3 backups.') from exc
 
+    access_key_id, secret_access_key = _resolve_s3_credentials(cfg)
     kwargs = {
-        'aws_access_key_id': str(cfg.get('s3_access_key_id', '')).strip(),
-        'aws_secret_access_key': get_secret(cfg, 's3_secret_access_key'),
+        'aws_access_key_id': access_key_id,
+        'aws_secret_access_key': secret_access_key,
     }
     region = str(cfg.get('s3_region', '')).strip()
     endpoint = str(cfg.get('s3_endpoint_url', '')).strip()
@@ -316,6 +533,57 @@ def _build_s3_client(cfg: Dict[str, Any]):
     if endpoint:
         kwargs['endpoint_url'] = endpoint
     return boto3.client('s3', **kwargs)
+
+
+def _resolve_s3_credentials(cfg: Dict[str, Any]) -> Tuple[str, str]:
+    """Resolve S3 credentials from explicit fields or optional JSON file."""
+    access_key = str(cfg.get('s3_access_key_id', '')).strip()
+    secret_key = get_secret(cfg, 's3_secret_access_key').strip()
+    if access_key and secret_key:
+        return access_key, secret_key
+
+    file_access, file_secret = _read_s3_credentials_file(
+        str(cfg.get('s3_credentials_file', '')).strip()
+    )
+    if not access_key:
+        access_key = file_access
+    if not secret_key:
+        secret_key = file_secret
+    return access_key, secret_key
+
+
+def _read_s3_credentials_file(path_value: str) -> Tuple[str, str]:
+    """Read access/secret keys from a JSON credentials file if present."""
+    if not path_value:
+        return '', ''
+
+    path = Path(path_value).expanduser()
+    if not path.exists() or not path.is_file():
+        return '', ''
+
+    try:
+        with open(path, 'r', encoding='utf-8') as handle:
+            payload = json.load(handle)
+    except Exception:
+        return '', ''
+
+    if not isinstance(payload, dict):
+        return '', ''
+
+    root_access = str(payload.get('aws_access_key_id', '') or payload.get('AccessKeyId', '')).strip()
+    root_secret = str(payload.get('aws_secret_access_key', '') or payload.get('SecretAccessKey', '')).strip()
+
+    creds = payload.get('Credentials', {})
+    if isinstance(creds, dict):
+        cred_access = str(creds.get('AccessKeyId', '')).strip()
+        cred_secret = str(creds.get('SecretAccessKey', '')).strip()
+    else:
+        cred_access = ''
+        cred_secret = ''
+
+    access_key = root_access or cred_access
+    secret_key = root_secret or cred_secret
+    return access_key, secret_key
 
 
 def _s3_list_period(client, bucket: str, prefix: str,
@@ -376,14 +644,10 @@ def test_backup_connection(cfg: Optional[Dict[str, Any]] = None) -> Dict[str, An
 
     start = time.perf_counter()
     try:
-        if provider == 'gdrive_service_account':
+        if provider == 'gdrive_oauth':
             service = _build_google_drive_service(cfg)
             folder_id = str(cfg.get('gdrive_folder_id', '')).strip()
-            service.files().get(
-                fileId=folder_id,
-                fields='id,name,mimeType',
-                supportsAllDrives=True,
-            ).execute()
+            _gdrive_validate_shared_drive_target(service, folder_id)
 
         elif provider == 's3':
             client = _build_s3_client(cfg)
@@ -410,6 +674,102 @@ def test_backup_connection(cfg: Optional[Dict[str, Any]] = None) -> Dict[str, An
     except Exception as exc:
         elapsed_ms = int((time.perf_counter() - start) * 1000)
         return {'ok': False, 'error': str(exc), 'detail': '', 'query_ms': elapsed_ms}
+
+
+def test_backup_roundtrip(cfg: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+    """Run a backup probe by writing, validating, and deleting one test object."""
+    if cfg is None:
+        cfg = load_backup_config()
+
+    provider = str(cfg.get('provider', 'local_only')).strip()
+    if provider == 'local_only' or not bool(cfg.get('enabled', False)):
+        return {
+            'ok': False,
+            'error': 'Cloud mirror is disabled. Enable it before running backup probe.',
+            'detail': '',
+            'query_ms': None,
+        }
+
+    req_ok, req_err = _provider_requirements_ok(cfg)
+    if not req_ok:
+        return {'ok': False, 'error': req_err, 'detail': '', 'query_ms': None}
+
+    probe_name = f'ari_backup_probe_{datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")}.json'
+    probe_payload = ('{"probe":"apero-ri","ts":"'
+                     + datetime.now(timezone.utc).isoformat()
+                     + '","ok":true}\n').encode('utf-8')
+
+    start = time.perf_counter()
+    try:
+        if provider == 'gdrive_oauth':
+            service = _build_google_drive_service(cfg)
+            root_id = str(cfg.get('gdrive_folder_id', '')).strip()
+            _gdrive_validate_shared_drive_target(service, root_id)
+            daily_id = _gdrive_find_child_folder(service, root_id, 'daily', create_if_missing=True)
+            if not daily_id:
+                raise RuntimeError('Could not create/find daily folder in Google Drive.')
+
+            try:
+                from googleapiclient.http import MediaInMemoryUpload
+            except Exception as exc:
+                raise RuntimeError(
+                    'Google Drive dependencies are missing. Install google-api-python-client.'
+                ) from exc
+
+            media = MediaInMemoryUpload(probe_payload, mimetype='application/json', resumable=False)
+            created = service.files().create(
+                body={'name': probe_name, 'parents': [daily_id]},
+                media_body=media,
+                fields='id,size',
+                supportsAllDrives=True,
+            ).execute()
+            probe_id = str(created.get('id', '')).strip()
+            if not probe_id:
+                raise RuntimeError('Probe upload to Google Drive did not return a file ID.')
+
+            # Verify probe object is queryable immediately.
+            service.files().get(
+                fileId=probe_id,
+                fields='id,size,name',
+                supportsAllDrives=True,
+            ).execute()
+
+            service.files().delete(fileId=probe_id, supportsAllDrives=True).execute()
+
+        elif provider == 's3':
+            client = _build_s3_client(cfg)
+            bucket = str(cfg.get('s3_bucket', '')).strip()
+            prefix = _normalize_s3_prefix(str(cfg.get('s3_prefix', '')))
+            probe_key = f'{prefix}daily/{probe_name}'
+
+            client.put_object(Bucket=bucket, Key=probe_key, Body=probe_payload,
+                              ContentType='application/json')
+            client.head_object(Bucket=bucket, Key=probe_key)
+            client.delete_object(Bucket=bucket, Key=probe_key)
+
+        else:
+            return {
+                'ok': False,
+                'error': f'Unsupported provider: {provider}',
+                'detail': '',
+                'query_ms': None,
+            }
+
+        elapsed_ms = int((time.perf_counter() - start) * 1000)
+        return {
+            'ok': True,
+            'error': '',
+            'detail': 'Backup probe succeeded (write/read/delete).',
+            'query_ms': elapsed_ms,
+        }
+    except Exception as exc:
+        elapsed_ms = int((time.perf_counter() - start) * 1000)
+        return {
+            'ok': False,
+            'error': str(exc),
+            'detail': '',
+            'query_ms': elapsed_ms,
+        }
 
 
 def _local_backup_root(local_data_dir: Optional[Path]) -> Path:
@@ -493,7 +853,7 @@ def list_cloud_backups(cfg: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
     try:
         all_rows: Dict[str, Dict[str, Any]] = {}
 
-        if provider == 'gdrive_service_account':
+        if provider == 'gdrive_oauth':
             service = _build_google_drive_service(cfg)
             root_id = str(cfg.get('gdrive_folder_id', '')).strip()
             daily_id = _gdrive_find_child_folder(service, root_id, 'daily', create_if_missing=False)
@@ -621,7 +981,7 @@ def sync_local_backups_to_cloud(local_data_dir: Optional[Path] = None,
     try:
         remote_before = _remote_map(cfg)
 
-        if provider == 'gdrive_service_account':
+        if provider == 'gdrive_oauth':
             service = _build_google_drive_service(cfg)
             root_id = str(cfg.get('gdrive_folder_id', '')).strip()
             period_folder_ids = {
@@ -755,7 +1115,7 @@ def delete_backup(relative_path: str,
 
     if target in {'cloud', 'both'} and _is_cloud_enabled(cfg):
         provider = str(cfg.get('provider', 'local_only')).strip()
-        if provider == 'gdrive_service_account':
+        if provider == 'gdrive_oauth':
             service = _build_google_drive_service(cfg)
             root_id = str(cfg.get('gdrive_folder_id', '')).strip()
             period_id = _gdrive_find_child_folder(service, root_id, period,
@@ -883,3 +1243,143 @@ def backup_inventory(local_data_dir: Optional[Path] = None,
         'cloud_total_count': int(cloud.get('total_count', 0) or 0),
         'local_backup_root': local.get('backup_root', ''),
     }
+
+
+def download_cloud_backup(relative_path: str,
+                         local_data_dir: Optional[Path] = None,
+                         cfg: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+    """Download a specific cloud backup to local."""
+    if cfg is None:
+        cfg = load_backup_config()
+
+    if local_data_dir is None:
+        local_data_dir = _resolve_local_data_dir()
+
+    provider = str(cfg.get('provider', 'local_only')).strip()
+    if not _is_cloud_enabled(cfg):
+        return {'ok': False, 'error': 'Cloud backup is not enabled.'}
+
+    req_ok, req_err = _provider_requirements_ok(cfg)
+    if not req_ok:
+        return {'ok': False, 'error': req_err}
+
+    backup_root = Path(local_data_dir) / 'backups'
+    local_path = backup_root / relative_path
+
+    if local_path.exists():
+        return {'ok': False, 'error': f'Local backup already exists: {relative_path}'}
+
+    local_path.parent.mkdir(parents=True, exist_ok=True)
+
+    try:
+        if provider == 'gdrive_oauth':
+            service = _build_google_drive_service(cfg)
+            root_id = str(cfg.get('gdrive_folder_id', '')).strip()
+            
+            # Navigate to the file in GDrive using the relative path
+            parts = Path(relative_path).parts
+            current_id = root_id
+            for part in parts[:-1]:
+                current_id = _gdrive_find_child_folder(service, current_id, part)
+                if not current_id:
+                    return {'ok': False, 'error': f'Cloud path not found: {relative_path}'}
+            
+            file_name = Path(relative_path).name
+            # Find the file in the final directory
+            query = f"'{current_id}' in parents and name='{file_name}' and trashed=false"
+            results = service.files().list(q=query, spaces='drive', fields='files(id, name)').execute()
+            files = results.get('files', [])
+            
+            if not files:
+                return {'ok': False, 'error': f'Cloud backup not found: {relative_path}'}
+
+            cloud_file_id = files[0]['id']
+            
+            # Download the file
+            request = service.files().get_media(fileId=cloud_file_id)
+            with open(local_path, 'wb') as h:
+                import io
+                from googleapiclient.http import MediaIoBaseDownload
+                fh = io.BytesIO()
+                downloader = MediaIoBaseDownload(fh, request)
+                done = False
+                while not done:
+                    status, done = downloader.next_chunk()
+                fh.seek(0)
+                h.write(fh.read())
+            
+            return {'ok': True, 'path': str(local_path)}
+
+        elif provider == 's3':
+            s3_client = _build_s3_client(cfg)
+            bucket = str(cfg.get('s3_bucket', '')).strip()
+            prefix = str(cfg.get('s3_prefix', 'apero/backups')).strip()
+            key = f'{prefix}/{relative_path}'
+
+            s3_client.download_file(bucket, key, str(local_path))
+            return {'ok': True, 'path': str(local_path)}
+
+        return {'ok': False, 'error': f'Unsupported provider: {provider}'}
+
+    except Exception as e:
+        if local_path.exists():
+            try:
+                local_path.unlink()
+            except Exception:
+                pass
+        return {'ok': False, 'error': f'Download failed: {str(e)}'}
+
+
+def sync_cloud_backups_to_local(local_data_dir: Optional[Path] = None,
+                                cfg: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+    """Download all cloud backups that don't exist locally."""
+    if cfg is None:
+        cfg = load_backup_config()
+
+    if local_data_dir is None:
+        local_data_dir = _resolve_local_data_dir()
+
+    provider = str(cfg.get('provider', 'local_only')).strip()
+    if not _is_cloud_enabled(cfg):
+        return {'ok': False, 'downloaded': 0, 'error': 'Cloud backup is not enabled.'}
+
+    req_ok, req_err = _provider_requirements_ok(cfg)
+    if not req_ok:
+        return {'ok': False, 'downloaded': 0, 'error': req_err}
+
+    local_backups = list_local_backups(local_data_dir)
+    local_map = set()
+    for row in local_backups.get('daily', []) + local_backups.get('weekly', []):
+        rel = str(row.get('relative_path', ''))
+        if rel:
+            local_map.add(rel)
+
+    cloud_backups = list_cloud_backups(cfg)
+    cloud_files = []
+    for row in cloud_backups.get('daily', []) + cloud_backups.get('weekly', []):
+        rel = str(row.get('relative_path', ''))
+        if rel and rel not in local_map:
+            cloud_files.append(rel)
+
+    if not cloud_files:
+        return {'ok': True, 'downloaded': 0, 'message': 'All cloud backups are already downloaded.'}
+
+    downloaded = 0
+    errors = []
+
+    for rel_path in cloud_files:
+        result = download_cloud_backup(rel_path, local_data_dir, cfg)
+        if result.get('ok'):
+            downloaded += 1
+        else:
+            errors.append(result.get('error', 'Unknown error'))
+
+    if errors:
+        return {
+            'ok': False,
+            'downloaded': downloaded,
+            'error': f'Downloaded {downloaded}/{len(cloud_files)} backups. Errors: {"; ".join(errors[:3])}',
+        }
+
+    return {'ok': True, 'downloaded': downloaded, 'message': f'Downloaded {downloaded} backup(s).'}
+

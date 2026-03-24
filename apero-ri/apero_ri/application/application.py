@@ -18,6 +18,7 @@ import time
 import traceback
 import uuid
 import yaml
+from werkzeug.utils import secure_filename
 from datetime import timedelta, datetime, timezone
 from email.message import EmailMessage
 from pathlib import Path
@@ -56,6 +57,8 @@ from apero_ri.tasks import apero_async
 from apero_ri.core import user_data as ud
 from apero_ri.core import email_backend as eb
 from apero_ri.core import backup_backend as bb
+from apero_ri.core import sshfs_backend as sb
+from apero_ri.core import secret_store as ss
 from apero_ri.core.docs import (
     get_versions, get_default_version, get_doc_content,
     save_doc_content, save_uploaded_image, DOC_IMAGES,
@@ -170,15 +173,18 @@ class ARIApp(Flask):
     # -----------------------------------------------------------------
     @staticmethod
     def _load_or_create_secret() -> str:
-        """Load or create a persistent secret key in ~/.ari."""
-        secret_file = Path.home() / '.ari' / 'secret.key'
+        """Load or create a persistent secret key in ARI_DIR/secret."""
+        ari_dir = ss.get_ari_dir()
+        secret_file = ss.resolve_secret_file(
+            'secret.key',
+            legacy_paths=[ari_dir / 'secret.key', Path.home() / '.ari' / 'secret.key'],
+        )
         secret_file.parent.mkdir(parents=True, exist_ok=True)
         if secret_file.exists():
             return secret_file.read_text().strip()
         key = secrets.token_hex(32)
-        secret_file.write_text(key)
-        # restrict permissions to owner only
-        os.chmod(secret_file, 0o600)
+        secret_file.write_text(key, encoding='utf-8')
+        ss.protect_path(secret_file, 0o600)
         return key
 
     # -----------------------------------------------------------------
@@ -380,9 +386,21 @@ class ARIApp(Flask):
         self.add_url_rule('/api/admin/backups/test',
                   'api_admin_backups_test',
                   self._api_admin_backups_test)
+        self.add_url_rule('/api/admin/backups/oauth/start',
+                  'api_admin_backups_oauth_start',
+                  self._api_admin_backups_oauth_start)
+        self.add_url_rule('/api/admin/backups/oauth/callback',
+                  'api_admin_backups_oauth_callback',
+                  self._api_admin_backups_oauth_callback)
+        self.add_url_rule('/api/admin/backups/test-backup',
+                  'api_admin_backups_test_backup',
+                  self._api_admin_backups_test_backup, methods=['POST'])
         self.add_url_rule('/api/admin/backups/save',
                   'api_admin_backups_save',
                   self._api_admin_backups_save, methods=['POST'])
+        self.add_url_rule('/api/admin/backups/upload-json',
+              'api_admin_backups_upload_json',
+              self._api_admin_backups_upload_json, methods=['POST'])
         self.add_url_rule('/api/admin/backups/list',
                   'api_admin_backups_list',
                   self._api_admin_backups_list)
@@ -395,6 +413,44 @@ class ARIApp(Flask):
         self.add_url_rule('/api/admin/backups/sync',
                   'api_admin_backups_sync',
                   self._api_admin_backups_sync, methods=['POST'])
+        self.add_url_rule('/api/admin/backups/download',
+                  'api_admin_backups_download',
+                  self._api_admin_backups_download, methods=['POST'])
+        self.add_url_rule('/api/admin/backups/sync-from-cloud',
+                  'api_admin_backups_sync_from_cloud',
+                  self._api_admin_backups_sync_from_cloud, methods=['POST'])
+        # SSHFS management routes
+        self.add_url_rule('/api/admin/sshfs/keys/list',
+                  'api_admin_sshfs_keys_list',
+                  self._api_admin_sshfs_keys_list)
+        self.add_url_rule('/api/admin/sshfs/keys/add',
+                  'api_admin_sshfs_keys_add',
+                  self._api_admin_sshfs_keys_add, methods=['POST'])
+        self.add_url_rule('/api/admin/sshfs/keys/delete/<key_name>',
+                  'api_admin_sshfs_keys_delete',
+                  self._api_admin_sshfs_keys_delete, methods=['POST'])
+        self.add_url_rule('/api/admin/sshfs/mounts/add',
+                  'api_admin_sshfs_mounts_add',
+                  self._api_admin_sshfs_mounts_add, methods=['POST'])
+        self.add_url_rule('/api/admin/sshfs/mounts/update/<mount_name>',
+              'api_admin_sshfs_mounts_update',
+              self._api_admin_sshfs_mounts_update, methods=['POST'])
+        self.add_url_rule('/api/admin/sshfs/mounts/test-connection',
+              'api_admin_sshfs_mounts_test_connection',
+              self._api_admin_sshfs_mounts_test_connection,
+              methods=['POST'])
+        self.add_url_rule('/api/admin/sshfs/mounts/delete/<mount_name>',
+                  'api_admin_sshfs_mounts_delete',
+                  self._api_admin_sshfs_mounts_delete, methods=['POST'])
+        self.add_url_rule('/api/admin/sshfs/mounts/mount/<mount_name>',
+                  'api_admin_sshfs_mounts_mount',
+                  self._api_admin_sshfs_mounts_mount, methods=['POST'])
+        self.add_url_rule('/api/admin/sshfs/mounts/unmount/<mount_name>',
+                  'api_admin_sshfs_mounts_unmount',
+                  self._api_admin_sshfs_mounts_unmount, methods=['POST'])
+        self.add_url_rule('/api/admin/sshfs/mounts/status',
+                  'api_admin_sshfs_mounts_status',
+                  self._api_admin_sshfs_mounts_status)
         self.add_url_rule('/api/admin/health/update',
               'api_admin_health_update',
               self._api_admin_health_update, methods=['POST'])
@@ -1010,6 +1066,10 @@ class ARIApp(Flask):
             if page_id == 'home.admin_portal.backup_settings':
                 context.update(self._build_admin_backup_context(perms))
 
+            # Admin SSHFS management
+            if page_id == 'home.admin_portal.sshfs_management':
+                context.update(self._build_admin_sshfs_context(perms))
+
             # Admin index and health-status page: inject health context
             if page_id in {'home.admin_portal', 'home.admin_portal.health_status'}:
                 health, updated_at, in_progress = self._get_admin_health(
@@ -1486,9 +1546,9 @@ class ARIApp(Flask):
         import json as _json
         cfg = bb.load_backup_config()
         providers = bb.PROVIDER_DEFAULTS
-        current_provider = str(cfg.get('provider', 'gdrive_service_account')).strip()
+        current_provider = str(cfg.get('provider', 'gdrive_oauth')).strip()
         if current_provider not in providers:
-            current_provider = 'gdrive_service_account'
+            current_provider = 'gdrive_oauth'
 
         local_data_dir = self._resolve_local_data_dir()
         inventory = bb.backup_inventory(local_data_dir=local_data_dir, cfg=cfg)
@@ -1500,6 +1560,18 @@ class ARIApp(Flask):
             'current_provider': current_provider,
             'can_manage': 'manage.admin.backup' in perms,
             'backup_inventory': inventory,
+        }
+
+    def _build_admin_sshfs_context(self, perms):
+        """Build context for admin SSHFS management page."""
+        import json as _json
+        mounts_status = sb.get_mounts_status()
+        ssh_keys = sb.list_ssh_keys()
+        
+        return {
+            'can_manage': 'manage.admin.sshfs' in perms or 'view.admin' in perms,
+            'mounts_data': mounts_status.get('mounts', []),
+            'ssh_keys_data': ssh_keys.get('keys', []),
         }
 
     @staticmethod
@@ -1754,6 +1826,14 @@ class ARIApp(Flask):
             except Exception:
                 pass
 
+        # ── SSHFS Management: check mount status ───────────────────────
+        if 'view.admin' in perms:
+            try:
+                health_check = sb.health_check()
+                health['home.admin_portal.sshfs_management'] = health_check
+            except Exception:
+                pass
+
         # ── APERO Profiles: error if any profile has DB/path failures ────
         if 'manage.apero_profile' in perms:
             try:
@@ -1980,6 +2060,16 @@ class ARIApp(Flask):
                 'warning': 'Some async task checks are inconclusive.',
                 'error': 'One or more active async tasks are in failed/error state.',
             },
+            'home.admin_portal.backup_settings': {
+                'ok': 'Cloud backup is properly configured and connection check succeeds.',
+                'warning': 'Cloud backup mirror is not enabled (local backups only).',
+                'error': 'Cloud backup test failed.',
+            },
+            'home.admin_portal.sshfs_management': {
+                'ok': 'All configured SSHFS mounts are mounted and accessible.',
+                'warning': 'Some SSHFS mounts are not currently mounted, or no mounts are configured.',
+                'error': 'One or more SSHFS mounts have connection issues.',
+            },
         }
 
         rows = []
@@ -2097,13 +2187,7 @@ class ARIApp(Flask):
 
                 reason_parts = []
 
-                db = validate_database_connection(
-                    self._profile_get_db(cfg, 'DATABASE_MODE', ''),
-                    self._profile_get_db(cfg, 'DATABASE_HOST', ''),
-                    self._profile_get_db(cfg, 'DATABASE_USERNAME', ''),
-                    self._profile_get_db(cfg, 'DATABASE_PASSWORD', ''),
-                    self._profile_get_db(cfg, 'DATABASE_NAME', ''),
-                )
+                db = self._validate_profile_database(cfg)
                 if not db.get('valid', False):
                     db_error = str(db.get('error', '') or 'connection failed').strip()
                     reason_parts.append(f'Database error: {db_error}')
@@ -2280,13 +2364,7 @@ class ARIApp(Flask):
         cfg = profile['data']
 
         # -- Database check --
-        db_result = validate_database_connection(
-            self._profile_get_db(cfg, 'DATABASE_MODE', ''),
-            self._profile_get_db(cfg, 'DATABASE_HOST', ''),
-            self._profile_get_db(cfg, 'DATABASE_USERNAME', ''),
-            self._profile_get_db(cfg, 'DATABASE_PASSWORD', ''),
-            self._profile_get_db(cfg, 'DATABASE_NAME', ''),
-        )
+        db_result = self._validate_profile_database(cfg)
 
         # -- Path checks --
         path_keys = [
@@ -4687,21 +4765,20 @@ class ARIApp(Flask):
         from urllib.parse import quote_plus
         from sqlalchemy import create_engine, text, bindparam
 
-        db_cfg = profile_cfg.get('database', {}) if isinstance(profile_cfg, dict) else {}
-        if not isinstance(db_cfg, dict):
-            db_cfg = {}
-        mode = str(db_cfg.get('DATABASE_MODE', profile_cfg.get('DATABASE_MODE', ''))).strip()
-        host = str(db_cfg.get('DATABASE_HOST', profile_cfg.get('DATABASE_HOST', ''))).strip()
-        username = str(db_cfg.get('DATABASE_USERNAME', profile_cfg.get('DATABASE_USERNAME', ''))).strip()
-        password = str(db_cfg.get('DATABASE_PASSWORD', profile_cfg.get('DATABASE_PASSWORD', '')) or '')
-        db_name = str(db_cfg.get('DATABASE_NAME', profile_cfg.get('DATABASE_NAME', ''))).strip()
+        db_params = self._profile_db_params(profile_cfg)
+        mode = str(db_params.get('DATABASE_MODE', '')).strip()
+        username = str(db_params.get('DATABASE_USERNAME', '')).strip()
+        password = str(db_params.get('DATABASE_PASSWORD', '') or '')
+        db_name = str(db_params.get('DATABASE_NAME', '')).strip()
 
-        if not all([mode, host, username, db_name]):
+        if not all([mode, username, db_name]):
             raise ValueError('Missing database connection configuration.')
+
+        host, port = apero_async._resolve_database_endpoint(db_params)
 
         db_url = (
             f'{mode}://{quote_plus(username)}:{quote_plus(password)}'
-            f'@{host}/{db_name}'
+            f'@{host}:{port}/{db_name}'
         )
         engine = create_engine(db_url, future=True)
 
@@ -5975,24 +6052,53 @@ class ARIApp(Flask):
             return default if value is None else value
         return default
 
+    def _profile_db_params(self, profile_cfg: dict) -> dict:
+        """Build runtime DB params for one APERO profile."""
+        username = str(
+            self._profile_get_db(profile_cfg, 'DATABASE_USERNAME', '')
+            or self._profile_get_db(profile_cfg, 'DATABASE_USER', '')
+        ).strip()
+        return {
+            'DATABASE_MODE': str(self._profile_get_db(profile_cfg, 'DATABASE_MODE', '')).strip(),
+            'DATABASE_HOST': str(self._profile_get_db(profile_cfg, 'DATABASE_HOST', '')).strip(),
+            'DATABASE_PORT': str(self._profile_get_db(profile_cfg, 'DATABASE_PORT', '')).strip(),
+            'DATABASE_USER': username,
+            'DATABASE_USERNAME': username,
+            'DATABASE_PASSWORD': str(self._profile_get_db(profile_cfg, 'DATABASE_PASSWORD', '') or ''),
+            'DATABASE_NAME': str(self._profile_get_db(profile_cfg, 'DATABASE_NAME', '')).strip(),
+            'DATABASE_USE_SSH_TUNNEL': self._profile_get_db(profile_cfg, 'DATABASE_USE_SSH_TUNNEL', False),
+            'DATABASE_SSH_CONFIG_HOST': str(self._profile_get_db(profile_cfg, 'DATABASE_SSH_CONFIG_HOST', '')).strip(),
+            'DATABASE_SSH_LOCAL_PORT': str(self._profile_get_db(profile_cfg, 'DATABASE_SSH_LOCAL_PORT', '')).strip(),
+            'DATABASE_SSH_REMOTE_PORT': str(self._profile_get_db(profile_cfg, 'DATABASE_SSH_REMOTE_PORT', '')).strip(),
+            'LOCAL_DATA_DIR': str(self._resolve_local_data_dir()),
+        }
+
+    def _validate_profile_database(self, profile_cfg: dict) -> dict:
+        """Validate one profile DB config using the shared runtime path."""
+        return validate_database_connection(
+            self._profile_get_db(profile_cfg, 'DATABASE_MODE', ''),
+            self._profile_get_db(profile_cfg, 'DATABASE_HOST', ''),
+            self._profile_get_db(profile_cfg, 'DATABASE_USERNAME', ''),
+            self._profile_get_db(profile_cfg, 'DATABASE_PASSWORD', ''),
+            self._profile_get_db(profile_cfg, 'DATABASE_NAME', ''),
+            port=self._profile_get_db(profile_cfg, 'DATABASE_PORT', ''),
+            use_ssh_tunnel=self._profile_get_db(profile_cfg, 'DATABASE_USE_SSH_TUNNEL', False),
+            ssh_config_host=self._profile_get_db(profile_cfg, 'DATABASE_SSH_CONFIG_HOST', ''),
+            ssh_local_port=self._profile_get_db(profile_cfg, 'DATABASE_SSH_LOCAL_PORT', ''),
+            ssh_remote_port=self._profile_get_db(profile_cfg, 'DATABASE_SSH_REMOTE_PORT', ''),
+            local_data_dir=str(self._resolve_local_data_dir()),
+        )
+
     def _fetch_table_columns(self, profile_cfg: dict, table_name: str):
         """Fetch ordered column names from a profile DB/table."""
-        mode = str(self._profile_get_db(profile_cfg, 'DATABASE_MODE', '')).strip()
-        host = str(self._profile_get_db(profile_cfg, 'DATABASE_HOST', '')).strip()
-        username = str(self._profile_get_db(profile_cfg, 'DATABASE_USERNAME', '')).strip()
-        password = str(self._profile_get_db(profile_cfg, 'DATABASE_PASSWORD', '') or '')
-        db_name = str(self._profile_get_db(profile_cfg, 'DATABASE_NAME', '')).strip()
+        db_params = self._profile_db_params(profile_cfg)
+        mode = str(db_params.get('DATABASE_MODE', '')).strip()
+        host = str(db_params.get('DATABASE_HOST', '')).strip()
+        username = str(db_params.get('DATABASE_USERNAME', '')).strip()
+        db_name = str(db_params.get('DATABASE_NAME', '')).strip()
 
         if not all([mode, host, username, db_name, table_name]):
             raise ValueError('Missing DB connection or table configuration.')
-
-        db_params = {
-            'DATABASE_MODE': mode,
-            'DATABASE_HOST': host,
-            'DATABASE_USER': username,
-            'DATABASE_PASSWORD': password,
-            'DATABASE_NAME': db_name,
-        }
 
         if '.' in table_name:
             schema_name, table_only = table_name.split('.', 1)
@@ -6415,13 +6521,15 @@ class ARIApp(Flask):
         if instrument not in valid:
             return jsonify(success=False, error='Invalid instrument'), 400
 
-        all_profiles = load_apero_profiles()
+        all_profiles = load_apero_profiles(hydrate=False)
         inst_profiles = all_profiles.get(instrument, {})
 
         # Keys stored per profile (served flat to UI for compatibility)
         _DB_KEYS = [
-            'DATABASE_MODE', 'DATABASE_HOST', 'DATABASE_USERNAME',
-            'DATABASE_PASSWORD', 'DATABASE_NAME',
+            'DATABASE_MODE', 'DATABASE_HOST', 'DATABASE_PORT',
+            'DATABASE_USERNAME', 'DATABASE_PASSWORD', 'DATABASE_NAME',
+            'DATABASE_USE_SSH_TUNNEL', 'DATABASE_SSH_CONFIG_HOST',
+            'DATABASE_SSH_LOCAL_PORT', 'DATABASE_SSH_REMOTE_PORT',
             'ASTROM_TABLENAME', 'CALIB_TABLENAME', 'FINDEX_TABLENAME',
             'LOG_TABLENAME', 'TELLU_TABLENAME', 'REJECT_TABLENAME',
         ]
@@ -6463,13 +6571,7 @@ class ARIApp(Flask):
             entry['all_paths_ok'] = all_paths_ok
 
             # DB check used by admin home red-cross logic (db/path only)
-            db_check = validate_database_connection(
-                self._profile_get_db(cfg, 'DATABASE_MODE', ''),
-                self._profile_get_db(cfg, 'DATABASE_HOST', ''),
-                self._profile_get_db(cfg, 'DATABASE_USERNAME', ''),
-                self._profile_get_db(cfg, 'DATABASE_PASSWORD', ''),
-                self._profile_get_db(cfg, 'DATABASE_NAME', ''),
-            )
+            db_check = self._validate_profile_database(cfg)
             db_ok = bool(db_check.get('valid', False))
             db_error = str(db_check.get('error', '')).strip()
             entry['db_ok'] = db_ok
@@ -6548,11 +6650,15 @@ class ARIApp(Flask):
 
         # Collect all required fields
         _META_KEYS = ['apero_version', 'reduction_server']
-        _DB_KEYS = [
+        _DB_REQUIRED_KEYS = [
             'DATABASE_MODE', 'DATABASE_HOST', 'DATABASE_USERNAME',
-            'DATABASE_PASSWORD', 'DATABASE_NAME',
-            'ASTROM_TABLENAME', 'CALIB_TABLENAME', 'FINDEX_TABLENAME',
-            'LOG_TABLENAME', 'TELLU_TABLENAME', 'REJECT_TABLENAME',
+            'DATABASE_NAME', 'ASTROM_TABLENAME', 'CALIB_TABLENAME',
+            'FINDEX_TABLENAME', 'LOG_TABLENAME', 'TELLU_TABLENAME',
+            'REJECT_TABLENAME',
+        ]
+        _DB_OPTIONAL_KEYS = [
+            'DATABASE_PASSWORD', 'DATABASE_PORT', 'DATABASE_SSH_CONFIG_HOST',
+            'DATABASE_SSH_LOCAL_PORT', 'DATABASE_SSH_REMOTE_PORT',
         ]
         # Store instrument profile file reference (optional, no validation)
         _apero_instrument_profile = str(
@@ -6574,7 +6680,7 @@ class ARIApp(Flask):
             values[k] = val
 
         db_values = {}
-        for k in _DB_KEYS:
+        for k in _DB_REQUIRED_KEYS:
             val = data.get(k, '').strip()
             if not val:
                 return jsonify(
@@ -6582,6 +6688,36 @@ class ARIApp(Flask):
                     error=f'{k} is required'
                 ), 400
             db_values[k] = val
+        db_values['DATABASE_PASSWORD'] = data.get('DATABASE_PASSWORD', '')
+        for k in _DB_OPTIONAL_KEYS:
+            if k == 'DATABASE_PASSWORD':
+                continue
+            db_values[k] = str(data.get(k, '') or '').strip()
+
+        use_ssh_tunnel = data.get('DATABASE_USE_SSH_TUNNEL', False)
+        if isinstance(use_ssh_tunnel, str):
+            use_ssh_tunnel = use_ssh_tunnel.strip().lower() in [
+                '1', 'true', 'yes', 'on'
+            ]
+        else:
+            use_ssh_tunnel = bool(use_ssh_tunnel)
+        db_values['DATABASE_USE_SSH_TUNNEL'] = use_ssh_tunnel
+
+        if use_ssh_tunnel:
+            if not db_values['DATABASE_SSH_CONFIG_HOST']:
+                return jsonify(
+                    success=False,
+                    error='DATABASE_SSH_CONFIG_HOST is required when SSH tunneling is enabled'
+                ), 400
+            if not db_values['DATABASE_SSH_LOCAL_PORT']:
+                return jsonify(
+                    success=False,
+                    error='DATABASE_SSH_LOCAL_PORT is required when SSH tunneling is enabled'
+                ), 400
+            if not db_values['DATABASE_SSH_REMOTE_PORT']:
+                db_values['DATABASE_SSH_REMOTE_PORT'] = '3306'
+        elif not db_values['DATABASE_SSH_REMOTE_PORT']:
+            db_values['DATABASE_SSH_REMOTE_PORT'] = '3306'
 
         science_fiber = str(data.get('SCIENCE_FIBER', '')).strip()
         if not science_fiber:
@@ -6618,7 +6754,7 @@ class ARIApp(Flask):
                 error='Unsupported DATABASE_MODE'
             ), 400
 
-        all_profiles = load_apero_profiles()
+        all_profiles = load_apero_profiles(hydrate=False)
         inst_profiles = all_profiles.setdefault(instrument, {})
 
         # Preserve display_order if editing, else assign next
@@ -6682,7 +6818,7 @@ class ARIApp(Flask):
         if not instrument or not name:
             return jsonify(success=False, error='Missing fields'), 400
 
-        all_profiles = load_apero_profiles()
+        all_profiles = load_apero_profiles(hydrate=False)
         inst_profiles = all_profiles.get(instrument, {})
         if name not in inst_profiles:
             return jsonify(
@@ -6710,7 +6846,7 @@ class ARIApp(Flask):
         if not instrument or not order_list:
             return jsonify(success=False, error='Missing fields'), 400
 
-        all_profiles = load_apero_profiles()
+        all_profiles = load_apero_profiles(hydrate=False)
         inst_profiles = all_profiles.get(instrument, {})
 
         for idx, name in enumerate(order_list, start=1):
@@ -6789,7 +6925,7 @@ class ARIApp(Flask):
         if not instrument or not name:
             return jsonify(success=False, error='Missing fields'), 400
 
-        all_profiles = load_apero_profiles()
+        all_profiles = load_apero_profiles(hydrate=False)
         inst_profiles = all_profiles.get(instrument, {})
         if name not in inst_profiles:
             return jsonify(success=False, error='Profile not found'), 404
@@ -6820,16 +6956,27 @@ class ARIApp(Flask):
 
         mode = data.get('DATABASE_MODE', '').strip()
         host = data.get('DATABASE_HOST', '').strip()
+        port = str(data.get('DATABASE_PORT', '') or '').strip()
         username = data.get('DATABASE_USERNAME', '').strip()
         password = data.get('DATABASE_PASSWORD', '')
         db_name = data.get('DATABASE_NAME', '').strip()
+        use_ssh_tunnel = data.get('DATABASE_USE_SSH_TUNNEL', False)
+        ssh_config_host = str(data.get('DATABASE_SSH_CONFIG_HOST', '') or '').strip()
+        ssh_local_port = str(data.get('DATABASE_SSH_LOCAL_PORT', '') or '').strip()
+        ssh_remote_port = str(data.get('DATABASE_SSH_REMOTE_PORT', '') or '').strip()
 
         if not all([mode, host, username, db_name]):
             return jsonify(success=False,
                            error='All database fields are required'), 400
 
         result = validate_database_connection(
-            mode, host, username, password, db_name
+            mode, host, username, password, db_name,
+            port=port,
+            use_ssh_tunnel=use_ssh_tunnel,
+            ssh_config_host=ssh_config_host,
+            ssh_local_port=ssh_local_port,
+            ssh_remote_port=ssh_remote_port,
+            local_data_dir=str(self._resolve_local_data_dir()),
         )
         return jsonify(success=True, **result)
 
@@ -6845,9 +6992,14 @@ class ARIApp(Flask):
 
         mode = data.get('DATABASE_MODE', '').strip()
         host = data.get('DATABASE_HOST', '').strip()
+        port = str(data.get('DATABASE_PORT', '') or '').strip()
         username = data.get('DATABASE_USERNAME', '').strip()
         password = data.get('DATABASE_PASSWORD', '')
         db_name = data.get('DATABASE_NAME', '').strip()
+        use_ssh_tunnel = data.get('DATABASE_USE_SSH_TUNNEL', False)
+        ssh_config_host = str(data.get('DATABASE_SSH_CONFIG_HOST', '') or '').strip()
+        ssh_local_port = str(data.get('DATABASE_SSH_LOCAL_PORT', '') or '').strip()
+        ssh_remote_port = str(data.get('DATABASE_SSH_REMOTE_PORT', '') or '').strip()
 
         table_keys = [
             'ASTROM_TABLENAME', 'CALIB_TABLENAME', 'FINDEX_TABLENAME',
@@ -6876,9 +7028,15 @@ class ARIApp(Flask):
         db_params = {
             'DATABASE_MODE': mode,
             'DATABASE_HOST': host,
+            'DATABASE_PORT': port,
             'DATABASE_USER': username,
             'DATABASE_PASSWORD': password,
             'DATABASE_NAME': db_name,
+            'DATABASE_USE_SSH_TUNNEL': use_ssh_tunnel,
+            'DATABASE_SSH_CONFIG_HOST': ssh_config_host,
+            'DATABASE_SSH_LOCAL_PORT': ssh_local_port,
+            'DATABASE_SSH_REMOTE_PORT': ssh_remote_port,
+            'LOCAL_DATA_DIR': str(self._resolve_local_data_dir()),
         }
 
         try:
@@ -7338,6 +7496,7 @@ class ARIApp(Flask):
 
         instrument = data.get('instrument', '').strip()
         task_id = data.get('id', '').strip()
+        force_run = bool(data.get('force_run', False))
         local_data_dir = (data.get('local_data_dir', '') or
                           str(Path.home() / '.ari'))
         if not instrument or not task_id:
@@ -7364,8 +7523,11 @@ class ARIApp(Flask):
             return jsonify(success=False, error='Unknown task class'), 400
 
         all_profiles = load_apero_profiles()
+        run_task_cfg = dict(task_cfg)
+        if force_run:
+            run_task_cfg['force_run'] = True
         run_params = task_runner.build_run_params(
-            instrument, local_data_dir, all_profiles, task_cfg
+            instrument, local_data_dir, all_profiles, run_task_cfg
         )
         try:
             instance = task_runner.hydrate_runtime_state(task_cls(), task_cfg)
@@ -8248,6 +8410,142 @@ class ARIApp(Flask):
         result = bb.test_backup_connection(bb.load_backup_config())
         return jsonify(result)
 
+    def _api_admin_backups_oauth_start(self):
+        user_info, perms = self._require_admin_backup_perm()
+        if not user_info:
+            return jsonify(ok=False, error='Unauthorized'), 401
+        if 'manage.admin.backup' not in (perms or set()):
+            return jsonify(ok=False, error='Insufficient permissions'), 403
+
+        cfg = bb.load_backup_config()
+        client_secret_path = Path(str(cfg.get('gdrive_oauth_client_secret_file', '')).strip()).expanduser()
+        if not client_secret_path.exists():
+            return jsonify(ok=False, error='Google OAuth client secret file is missing. Upload and save it first.'), 400
+
+        try:
+            from google_auth_oauthlib.flow import Flow
+        except Exception:
+            return jsonify(ok=False,
+                           error=('Google OAuth dependency missing. '
+                                  'Install google-auth-oauthlib.')), 500
+
+        redirect_uri = url_for('api_admin_backups_oauth_callback', _external=True)
+        flow = Flow.from_client_secrets_file(
+            str(client_secret_path),
+            scopes=bb.GDRIVE_OAUTH_SCOPES,
+            redirect_uri=redirect_uri,
+        )
+        auth_url, state = flow.authorization_url(
+            access_type='offline',
+            include_granted_scopes='true',
+            prompt='consent',
+        )
+        session['ab_google_oauth_state'] = state
+        session['ab_google_oauth_code_verifier'] = str(flow.code_verifier or '')
+        return redirect(auth_url)
+
+    def _api_admin_backups_oauth_callback(self):
+        user_info, perms = self._require_admin_backup_perm()
+        if not user_info:
+            return 'Unauthorized', 401
+        if 'manage.admin.backup' not in (perms or set()):
+            return 'Insufficient permissions', 403
+
+        cfg = bb.load_backup_config()
+        client_secret_path = Path(str(cfg.get('gdrive_oauth_client_secret_file', '')).strip()).expanduser()
+        if not client_secret_path.exists():
+            return 'Google OAuth client secret file not found.', 400
+
+        if request.args.get('error'):
+            err = str(request.args.get('error', '')).strip()
+            return (
+                '<html><body><h3>Google OAuth failed</h3>'
+                f'<p>{err}</p><script>setTimeout(function(){{window.close();}}, 1500);</script>'
+                '</body></html>'
+            )
+
+        expected_state = str(session.get('ab_google_oauth_state', '') or '').strip()
+        expected_code_verifier = str(session.get('ab_google_oauth_code_verifier', '') or '').strip()
+        got_state = str(request.args.get('state', '') or '').strip()
+        if not expected_state or expected_state != got_state:
+            return 'Google OAuth state mismatch. Please retry connect.', 400
+        if not expected_code_verifier:
+            return 'Google OAuth verifier missing in session. Please retry connect.', 400
+
+        try:
+            from google_auth_oauthlib.flow import Flow
+        except Exception:
+            return 'google-auth-oauthlib is not installed.', 500
+
+        redirect_uri = url_for('api_admin_backups_oauth_callback', _external=True)
+        flow = Flow.from_client_secrets_file(
+            str(client_secret_path),
+            scopes=bb.GDRIVE_OAUTH_SCOPES,
+            state=expected_state,
+            redirect_uri=redirect_uri,
+            code_verifier=expected_code_verifier,
+        )
+
+        # OAuthlib requires HTTPS unless localhost or explicit insecure override is enabled.
+        host_name = str(request.host or '').split(':', 1)[0].strip().lower()
+        is_local_host = host_name in {'localhost', '127.0.0.1', '::1'}
+        allow_insecure = str(os.environ.get('ARI_ALLOW_INSECURE_OAUTH', '')).strip().lower() in {
+            '1', 'true', 'yes', 'on'
+        }
+        using_https = bool(request.is_secure)
+
+        if (not using_https) and (not is_local_host) and (not allow_insecure):
+            return (
+                '<html><body><h3>Google OAuth requires HTTPS</h3>'
+                '<p>This callback was reached over HTTP. Use an HTTPS URL for APERO RI, '
+                'or (for trusted private testing only) set ARI_ALLOW_INSECURE_OAUTH=1 '
+                'before starting the server.</p>'
+                '<script>setTimeout(function(){window.close();}, 3000);</script>'
+                '</body></html>'
+            ), 400
+
+        old_insecure = os.environ.get('OAUTHLIB_INSECURE_TRANSPORT')
+        try:
+            if (not using_https) and (is_local_host or allow_insecure):
+                os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = '1'
+            flow.fetch_token(authorization_response=request.url)
+        except Exception as exc:
+            msg = str(exc) or 'OAuth token exchange failed.'
+            return (
+                '<html><body><h3>Google OAuth failed</h3>'
+                f'<p>{msg}</p><script>setTimeout(function(){{window.close();}}, 2500);</script>'
+                '</body></html>'
+            ), 400
+        finally:
+            if old_insecure is None:
+                os.environ.pop('OAUTHLIB_INSECURE_TRANSPORT', None)
+            else:
+                os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = old_insecure
+
+        token_path = bb.save_gdrive_oauth_token(cfg, json.loads(flow.credentials.to_json()))
+        cfg['gdrive_oauth_token_file'] = str(token_path)
+        bb.save_backup_config(cfg)
+        self._refresh_admin_health_after_change(user_info, perms)
+        session.pop('ab_google_oauth_state', None)
+        session.pop('ab_google_oauth_code_verifier', None)
+
+        return (
+            '<html><body><h3>Google account connected</h3>'
+            '<p>You can close this window.</p>'
+            '<script>setTimeout(function(){window.close();}, 1200);</script>'
+            '</body></html>'
+        )
+
+    def _api_admin_backups_test_backup(self):
+        user_info, perms = self._require_admin_backup_perm()
+        if not user_info:
+            return jsonify(ok=False, error='Unauthorized'), 401
+        if 'manage.admin.backup' not in (perms or set()):
+            return jsonify(ok=False, error='Insufficient permissions'), 403
+
+        result = bb.test_backup_roundtrip(bb.load_backup_config())
+        return jsonify(result)
+
     def _api_admin_backups_save(self):
         user_info, perms = self._require_admin_backup_perm()
         if not user_info:
@@ -8258,9 +8556,11 @@ class ARIApp(Flask):
         body = request.get_json() or {}
         allowed = {
             'enabled', 'provider',
-            'gdrive_service_account_file', 'gdrive_folder_id',
+            'gdrive_oauth_client_secret_file', 'gdrive_oauth_token_file',
+            'gdrive_folder_id',
             's3_bucket', 's3_prefix', 's3_region', 's3_endpoint_url',
             's3_access_key_id', 's3_secret_access_key',
+            's3_credentials_file',
         }
 
         existing = bb.load_backup_config()
@@ -8284,6 +8584,56 @@ class ARIApp(Flask):
         bb.save_backup_config(cfg)
         self._refresh_admin_health_after_change(user_info, perms)
         return jsonify(success=True)
+
+    def _api_admin_backups_upload_json(self):
+        user_info, perms = self._require_admin_backup_perm()
+        if not user_info:
+            return jsonify(success=False, error='Unauthorized'), 401
+        if 'manage.admin.backup' not in (perms or set()):
+            return jsonify(success=False, error='Insufficient permissions'), 403
+
+        target_field = str(request.form.get('target_field', '')).strip()
+        allowed_targets = {'gdrive_oauth_client_secret_file', 's3_credentials_file'}
+        if target_field not in allowed_targets:
+            return jsonify(success=False, error='Invalid target field.'), 400
+
+        if 'file' not in request.files:
+            return jsonify(success=False, error='No file provided.'), 400
+
+        uploaded = request.files['file']
+        if not uploaded or not uploaded.filename:
+            return jsonify(success=False, error='Empty filename.'), 400
+
+        filename = secure_filename(uploaded.filename)
+        if not filename.lower().endswith('.json'):
+            return jsonify(success=False, error='Only .json files are accepted.'), 400
+
+        payload = uploaded.read()
+        if not payload:
+            return jsonify(success=False, error='Uploaded file is empty.'), 400
+        if len(payload) > 5 * 1024 * 1024:
+            return jsonify(success=False, error='JSON file is too large (max 5 MB).'), 400
+
+        try:
+            # Ensure uploaded content is valid JSON before storing it.
+            json.loads(payload.decode('utf-8'))
+        except Exception:
+            return jsonify(success=False, error='Uploaded file is not valid UTF-8 JSON.'), 400
+
+        upload_targets = {
+            'gdrive_oauth_client_secret_file': 'gdrive_oauth_client_secret.json',
+            's3_credentials_file': 's3_credentials.json',
+        }
+        final_path = ss.get_secret_path(upload_targets[target_field])
+
+        with open(final_path, 'wb') as handle:
+            handle.write(payload)
+
+        ss.protect_path(final_path, 0o600)
+
+        return jsonify(success=True,
+                       stored_file=final_path.name,
+                       stored_path=str(final_path))
 
     def _api_admin_backups_list(self):
         user_info, perms = self._require_admin_backup_perm()
@@ -8363,6 +8713,222 @@ class ARIApp(Flask):
                                                 cfg=cfg)
         self._refresh_admin_health_after_change(user_info, perms)
         return jsonify(success=True, data=result)
+
+    def _api_admin_backups_download(self):
+        user_info, perms = self._require_admin_backup_perm()
+        if not user_info:
+            return jsonify(success=False, error='Unauthorized'), 401
+        if 'manage.admin.backup' not in (perms or set()):
+            return jsonify(success=False, error='Insufficient permissions'), 403
+
+        body = request.get_json() or {}
+        relative_path = str(body.get('relative_path', '')).strip()
+        if not relative_path:
+            return jsonify(success=False, error='relative_path is required.'), 400
+
+        cfg = bb.load_backup_config()
+        local_data_dir = self._resolve_local_data_dir()
+        result = bb.download_cloud_backup(relative_path, local_data_dir=local_data_dir, cfg=cfg)
+        
+        self._refresh_admin_health_after_change(user_info, perms)
+        return jsonify(success=result.get('ok', False), 
+                      path=result.get('path'),
+                      error=result.get('error'))
+
+    def _api_admin_backups_sync_from_cloud(self):
+        user_info, perms = self._require_admin_backup_perm()
+        if not user_info:
+            return jsonify(success=False, error='Unauthorized'), 401
+        if 'manage.admin.backup' not in (perms or set()):
+            return jsonify(success=False, error='Insufficient permissions'), 403
+
+        cfg = bb.load_backup_config()
+        local_data_dir = self._resolve_local_data_dir()
+        result = bb.sync_cloud_backups_to_local(local_data_dir=local_data_dir, cfg=cfg)
+        
+        self._refresh_admin_health_after_change(user_info, perms)
+        return jsonify(success=result.get('ok', False),
+                      downloaded=result.get('downloaded', 0),
+                      error=result.get('error'))
+
+    # -----------------------------------------------------------------
+    # SSHFS Management API handlers
+    # -----------------------------------------------------------------
+    def _api_admin_sshfs_keys_list(self):
+        """List available SSH keys."""
+        user_info = get_effective_user(session)
+        if not user_info:
+            return jsonify(ok=False, error='Unauthorized'), 401
+        
+        perms = resolve_user_permissions(user_info['groups'], self.ari_groups)
+        if 'view.admin' not in perms:
+            return jsonify(ok=False, error='Forbidden'), 403
+        
+        result = sb.list_ssh_keys()
+        return jsonify(**result)
+
+    def _api_admin_sshfs_keys_add(self):
+        """Add a new SSH key."""
+        user_info = get_effective_user(session)
+        if not user_info:
+            return jsonify(ok=False, error='Unauthorized'), 401
+        
+        perms = resolve_user_permissions(user_info['groups'], self.ari_groups)
+        if 'view.admin' not in perms:
+            return jsonify(ok=False, error='Forbidden'), 403
+        
+        data = request.get_json() or {}
+        key_name = data.get('key_name', '').strip()
+        key_content = data.get('key_content', '').strip()
+        
+        result = sb.add_ssh_key(key_name, key_content)
+        return jsonify(**result)
+
+    def _api_admin_sshfs_keys_delete(self, key_name):
+        """Delete an SSH key."""
+        user_info = get_effective_user(session)
+        if not user_info:
+            return jsonify(ok=False, error='Unauthorized'), 401
+        
+        perms = resolve_user_permissions(user_info['groups'], self.ari_groups)
+        if 'view.admin' not in perms:
+            return jsonify(ok=False, error='Forbidden'), 403
+        
+        result = sb.delete_ssh_key(key_name)
+        return jsonify(**result)
+
+    def _api_admin_sshfs_mounts_add(self):
+        """Add a new SSHFS mount."""
+        user_info = get_effective_user(session)
+        if not user_info:
+            return jsonify(ok=False, error='Unauthorized'), 401
+        
+        perms = resolve_user_permissions(user_info['groups'], self.ari_groups)
+        if 'view.admin' not in perms:
+            return jsonify(ok=False, error='Forbidden'), 403
+        
+        data = request.get_json() or {}
+        mount_config = {
+            'connection_mode': data.get('connection_mode', 'direct').strip(),
+            'ssh_config_host': data.get('ssh_config_host', '').strip(),
+            'name': data.get('name', '').strip(),
+            'remote_host': data.get('remote_host', '').strip(),
+            'remote_path': data.get('remote_path', '').strip(),
+            'local_mount': data.get('local_mount', '').strip(),
+            'ssh_key': data.get('ssh_key', '').strip(),
+            'remote_user': data.get('remote_user', '').strip() or 'root',
+        }
+        
+        result = sb.add_mount(mount_config)
+        if result['ok']:
+            self._refresh_admin_health_after_change(user_info, perms)
+        return jsonify(**result)
+
+    def _api_admin_sshfs_mounts_test_connection(self):
+        """Test SSH authentication/path before saving a mount."""
+        user_info = get_effective_user(session)
+        if not user_info:
+            return jsonify(ok=False, error='Unauthorized'), 401
+
+        perms = resolve_user_permissions(user_info['groups'], self.ari_groups)
+        if 'view.admin' not in perms:
+            return jsonify(ok=False, error='Forbidden'), 403
+
+        data = request.get_json() or {}
+        result = sb.test_ssh_connection(
+            connection_mode=data.get('connection_mode', 'direct'),
+            remote_host=data.get('remote_host', ''),
+            remote_user=data.get('remote_user', ''),
+            ssh_config_host=data.get('ssh_config_host', ''),
+            remote_path=data.get('remote_path', ''),
+            ssh_key_name=data.get('ssh_key', ''),
+        )
+        return jsonify(**result)
+
+    def _api_admin_sshfs_mounts_update(self, mount_name):
+        """Update an existing SSHFS mount."""
+        user_info = get_effective_user(session)
+        if not user_info:
+            return jsonify(ok=False, error='Unauthorized'), 401
+
+        perms = resolve_user_permissions(user_info['groups'], self.ari_groups)
+        if 'view.admin' not in perms:
+            return jsonify(ok=False, error='Forbidden'), 403
+
+        data = request.get_json() or {}
+        mount_config = {
+            'connection_mode': data.get('connection_mode', 'direct').strip(),
+            'ssh_config_host': data.get('ssh_config_host', '').strip(),
+            'name': data.get('name', '').strip(),
+            'remote_host': data.get('remote_host', '').strip(),
+            'remote_path': data.get('remote_path', '').strip(),
+            'local_mount': data.get('local_mount', '').strip(),
+            'ssh_key': data.get('ssh_key', '').strip(),
+            'remote_user': data.get('remote_user', '').strip() or 'root',
+        }
+
+        result = sb.update_mount(mount_name, mount_config)
+        if result.get('ok'):
+            self._refresh_admin_health_after_change(user_info, perms)
+        return jsonify(**result)
+
+    def _api_admin_sshfs_mounts_delete(self, mount_name):
+        """Delete an SSHFS mount."""
+        user_info = get_effective_user(session)
+        if not user_info:
+            return jsonify(ok=False, error='Unauthorized'), 401
+        
+        perms = resolve_user_permissions(user_info['groups'], self.ari_groups)
+        if 'view.admin' not in perms:
+            return jsonify(ok=False, error='Forbidden'), 403
+        
+        result = sb.delete_mount(mount_name)
+        if result['ok']:
+            self._refresh_admin_health_after_change(user_info, perms)
+        return jsonify(**result)
+
+    def _api_admin_sshfs_mounts_mount(self, mount_name):
+        """Mount an SSHFS volume."""
+        user_info = get_effective_user(session)
+        if not user_info:
+            return jsonify(ok=False, error='Unauthorized'), 401
+        
+        perms = resolve_user_permissions(user_info['groups'], self.ari_groups)
+        if 'view.admin' not in perms:
+            return jsonify(ok=False, error='Forbidden'), 403
+        
+        result = sb.mount_sshfs(mount_name)
+        if result['ok']:
+            self._refresh_admin_health_after_change(user_info, perms)
+        return jsonify(**result)
+
+    def _api_admin_sshfs_mounts_unmount(self, mount_name):
+        """Unmount an SSHFS volume."""
+        user_info = get_effective_user(session)
+        if not user_info:
+            return jsonify(ok=False, error='Unauthorized'), 401
+        
+        perms = resolve_user_permissions(user_info['groups'], self.ari_groups)
+        if 'view.admin' not in perms:
+            return jsonify(ok=False, error='Forbidden'), 403
+        
+        result = sb.unmount_sshfs(mount_name)
+        if result['ok']:
+            self._refresh_admin_health_after_change(user_info, perms)
+        return jsonify(**result)
+
+    def _api_admin_sshfs_mounts_status(self):
+        """Get status of all SSHFS mounts."""
+        user_info = get_effective_user(session)
+        if not user_info:
+            return jsonify(ok=False, error='Unauthorized'), 401
+        
+        perms = resolve_user_permissions(user_info['groups'], self.ari_groups)
+        if 'view.admin' not in perms:
+            return jsonify(ok=False, error='Forbidden'), 403
+        
+        result = sb.get_mounts_status()
+        return jsonify(**result)
 
     # -----------------------------------------------------------------
     # Run override

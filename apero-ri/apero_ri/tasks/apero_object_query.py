@@ -26,13 +26,8 @@ PARAM_LIST.append('LOCAL_DATA_DIR')
 PARAM_LIST.append('INSTRUMENT')
 PARAM_LIST.append('APERO_PROFILES')
 PARAM_LIST.append('APERO_PROFILE_NAMES')
-# list of apero profile parameters needed for this task (for checking in run_job)
+# Profile params are hydrated dynamically from APERO profiles + instrument preset.
 APERO_PROFILE_PARAM_LIST = []
-APERO_PROFILE_PARAM_LIST.append('database')
-APERO_PROFILE_PARAM_LIST.append('paths')
-APERO_PROFILE_PARAM_LIST.append('headers')
-APERO_PROFILE_PARAM_LIST.append('plots')
-APERO_PROFILE_PARAM_LIST.append('general')
 # Set the default frequency for this task (in hours)
 DEFAULT_FREQUENCY = 6.0
 # Set whether this task is enabled by default in the admin portal
@@ -92,6 +87,8 @@ class AperoObjectQueryTask(apero_async.AperoAsyncTask):
         # get apero profiles:
         apero_profile_names = params['APERO_PROFILE_NAMES']
         apero_profiles = params['APERO_PROFILES']
+        task_config = params.get('TASK_CONFIG', {})
+        force_run = bool(task_config.get('force_run', False))
         # Check if there are any profiles configured
         if not apero_profile_names:
             self.info = 'No APERO profiles configured.'
@@ -109,7 +106,9 @@ class AperoObjectQueryTask(apero_async.AperoAsyncTask):
             db_updates = {}
             try:
                 should_skip, db_updates, skip_reason = (
-                    apero_async.should_skip_profile_query(aparams)
+                    apero_async.should_skip_profile_query(
+                        aparams, force_run=force_run
+                    )
                 )
             except Exception as exc:
                 should_skip = False
@@ -143,6 +142,9 @@ class AperoObjectQueryTask(apero_async.AperoAsyncTask):
             timing_per_obj = []
             # storage of output file names
             output_files = []
+            # if there are no objects fill storage
+            outputs = []
+            htime = 0
             # -----------------------------------------------------------------
             for o_it, obj_entry in enumerate(objlist):
                 # get object name from entries
@@ -165,8 +167,8 @@ class AperoObjectQueryTask(apero_async.AperoAsyncTask):
                 # Step 2: Get header keys for all files for this object
                 # -------------------------------------------------------------
                 # returns a header table (one row per observation)
-                object_query_headers(aparams, objname,
-                                     apero_profile_names[a_it], outputs)
+                htime = object_query_headers(aparams, objname,
+                                             apero_profile_names[a_it], outputs)
                 
                 # -------------------------------------------------------------
                 # combine the timings from all queries for this object
@@ -183,6 +185,9 @@ class AperoObjectQueryTask(apero_async.AperoAsyncTask):
             - Queried {len(timing_per_obj)} objects
             - Average query time per object: {ave_query_time:.2f} seconds 
             - Total query time: {sum(timing_per_obj):.2f} seconds
+            
+            - Read {len(outputs)} headers
+            - Total time to read headers: {htime}
             """
             # -----------------------------------------------------------------
             # add to the output files for this task
@@ -389,7 +394,10 @@ def object_query_headers(aparams, objname, apero_profile_name,
         # get entries for this fkind
         entries = results[fkind]
         # get the hkeys for this fkind
-        hkeys = aparams['headers'].get(fkind, None)
+        hcfg = aparams.get('sci-headers', aparams.get('headers', {}))
+        if not isinstance(hcfg, dict):
+            hcfg = {}
+        hkeys = hcfg.get(fkind, None)
         # deal with no header keys
         if hkeys is None or len(hkeys) == 0:
             continue
@@ -413,18 +421,18 @@ def object_query_headers(aparams, objname, apero_profile_name,
             # -----------------------------------------------------------------
             # check if path exists - if it doesn't fill with None
             if not abspath.exists():
-                header_dict[identifier] = _fill_dict_null(hkeys)
+                header_dict[identifier] = apero_async.fill_dict_null(hkeys)
                 continue
             # -----------------------------------------------------------------
             # check if file is fits file
             if abspath.suffix != '.fits':
-                header_dict[identifier] = _fill_dict_null(hkeys)
+                header_dict[identifier] = apero_async.fill_dict_null(hkeys)
                 continue
             # otherwise we open the file
             hdr = fits.getheader(abspath)
             # loop around header key and load into header list
             for hkey in hkeys:
-                _hvalue = _get_hdr_key(hdr, hkey, hkeys[hkey])
+                _hvalue = apero_async.get_hdr_key(hdr, hkey, hkeys[hkey])
                 header_dict[identifier][hkey] = _hvalue
     # end time
     end = time.time()
@@ -450,6 +458,8 @@ def object_query_headers(aparams, objname, apero_profile_name,
     filename = local_dir / basename
     # save results to JSON file for use in the UI
     apero_async.save_results(filename, header_list, metadata)
+
+    return metadata['QUERY_TIME']
 
                 
 # =============================================================================
@@ -477,34 +487,6 @@ def _construct_obj_query(aparams):
                  'KW_DPRTYPE IN ({SCIENCE_TYPES})')
     obj_query = obj_query.format(**oparams)
     return obj_query
-
-
-def _get_hdr_key(hdr: fits.Header, keyname: str,
-                 hkey: Dict[str, Any]):
-    header_key = hkey.get('key', 'Unknown')
-    dtype = hkey.get('dtype', 'str')
-    # try to open and type cast header key
-    try:
-        # deal with header key existing
-        if header_key in hdr:
-            raw_value = hdr[header_key]
-            # deal with types
-            if dtype == 'float':
-                value = float(raw_value)
-            elif dtype == 'int':
-                value = int(raw_value)
-            elif dtype == 'bool':
-                value = bool(raw_value)
-            else:
-                value = str(raw_value)
-        else:
-            value = None
-    except Exception as e:
-        emsg = (f'Missing required parameter {keyname}: {header_key}'
-                f'\n\tError {type(e)}: {e}')
-        raise ValueError(emsg)
-    # return values
-    return value
 
 
 def _file_col_query(rparams, objname, block_kind: Optional[str] = None,
@@ -657,14 +639,7 @@ def _clear_directory_contents(directory: Path) -> None:
             entry.unlink()
 
 
-def _fill_dict_null(mykeys, mydict: Optional[dict] = None):
-    # deal with no input dictionary
-    if mydict is None:
-        mydict = dict()
-    # loop around keys and fill with nulls
-    for key in mykeys:
-        mydict[key] = None
-    return mydict
+
 
 # =============================================================================
 # Start of main code

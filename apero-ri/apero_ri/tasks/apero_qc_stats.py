@@ -7,9 +7,12 @@ APERO RI: Async task management
 import time
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Dict
+from typing import Any, Dict, List, Tuple
+
+from astropy.io import fits
 
 from apero_ri.tasks import apero_async
+from apero_ri.base.base import BLOCK_KIND
 
 # =============================================================================
 # Define variables
@@ -35,14 +38,13 @@ TASK_TYPE = 'INSTRUMENT'
 # =============================================================================
 # Define global classes
 # =============================================================================
-class AperoObservationTableTask(apero_async.AperoAsyncTask):
+class AperoQCStats(apero_async.AperoAsyncTask):
     """Class representing an asynchronous task in APERO RI."""
     def __init__(self, status='pending'):
         name = 'APERO Observation Table Task'
         description = ('Generate the observation table for the '
                        'APERO reduction interface for each apero profile.')
         super().__init__(name, description, status)
-        
 
     def run_job(self, params: Dict[str, Any]):
         """
@@ -111,39 +113,41 @@ class AperoObservationTableTask(apero_async.AperoAsyncTask):
                 skip_reason = f'Database update-time check unavailable: {exc}'
             if should_skip:
                 self.info += (
-                    f'\n## Observation Table for APERO Profile: {apero_profile}\n\n'
+                    f'\n## APERO query stats for APERO Profile: {apero_profile}\n\n'
                     f'- Skipped query run. {skip_reason}\n'
                 )
                 continue
-            # check that all required parameters are present
-            rparams = check_required(aparams)
-            # ---------------------------------------------------------------------
-            # specific sub-commands to add to rparams (shorthand)
-            # ---------------------------------------------------------------------
-            rparams = sub_commands(rparams)
-            # ----------------------------------------------------------------------
-            rquery = construct_query(rparams)
-            # ---------------------------------------------------------------------
-            # run the query and get results
-            db_params = apero_async.get_db_params(aparams)
-            start = time.time()
-            results = apero_async.database_query(db_params, rquery)
-            # ---------------------------------------------------------------------
+            # -----------------------------------------------------------------
+            # step 1: get calibration files from database
+            cfiles, qtime, qnum = get_calib_file(aparams)
+
+            # step 2: read headers and get variables required
+            cresults, htime, hnum = read_calib_headers(aparams, cfiles)
+            # -----------------------------------------------------------------
             # time now
             time_now = datetime.now(timezone.utc).isoformat()
             metadata = dict()
             metadata['GENERATED_AT'] = time_now
-            metadata['QUERY_TIME'] = time.time() - start
+            metadata['QUERY_TIME'] = qtime
+            metadata['N_QUERIES'] = qnum
+            metadata['HEADER_READ_TIME'] = htime
+            metadata['N_HEADERS'] = hnum
             metadata['APERO_PROFILE'] = apero_profile
-            metadata['COLUMN_META'] = meta_columns()
             # construct filename
-            instrument = aparams.get('general', {}).get('INSTRUMENT', 'unknown')
-            local_dir = (Path(params.get('LOCAL_DATA_DIR', str(ARI_DIR)))
-                         / 'tasks' / instrument / apero_profile)
-            basename = 'obs_table.json'
-            filename =  local_dir / basename
-            # save results to JSON file for use in the UI
-            apero_async.save_results(filename, results, metadata)
+            for output in cresults:
+                instrument = aparams.get('general', {}).get('INSTRUMENT', 'unknown')
+                local_dir = (Path(params.get('LOCAL_DATA_DIR', str(ARI_DIR)))
+                             / 'tasks' / instrument / apero_profile)
+                basename = f'qc_stats_{output}.json'
+                filename =  local_dir / basename
+                # get result
+                result = cresults[output]
+                # save results to JSON file for use in the UI
+                apero_async.save_results(filename, result, metadata)
+                # -------------------------------------------------------------
+                # add to the output files for this task
+                self.output_files.append(str(filename))
+            # -----------------------------------------------------------------
             if db_updates:
                 try:
                     apero_async.save_profile_db_table_updates(
@@ -154,18 +158,21 @@ class AperoObservationTableTask(apero_async.AperoAsyncTask):
                         f'\n- Warning: failed to persist database-update '
                         f'fingerprint for {apero_profile}: {exc}\n'
                     )
-            # ---------------------------------------------------------------------
+            # -----------------------------------------------------------------
             # update the info markdown with meta data
             self.info += f"""
             ## Object Table for APERO Profile: {apero_profile}
             
             **Generated at**: {metadata['GENERATED_AT']}  
             **Query time**: {metadata['QUERY_TIME']:.2f} seconds
+            **Number of queries**: {metadata['N_QUERIES']}
+            
+            **Header read time**: {metadata['HEADER_READ_TIME']:.2f} seconds
+            **Number of read headers**: {metadata['N_HEADERS']} 
+            
             **APERO Profile**: {metadata['APERO_PROFILE']}
             """
-            # ---------------------------------------------------------------------
-            # add to the output files for this task
-            self.output_files.append(str(filename))
+
             # update the last run time
             self.last_run = time_now
     
@@ -218,166 +225,128 @@ class AperoObservationTableTask(apero_async.AperoAsyncTask):
             # -----------------------------------------------------------------
             # get parameters for this apero profile
             aparams = apero_profiles[apero_profile]
-        
-            # check that all required parameters are present
-            rparams = check_required(aparams)
-            # ---------------------------------------------------------------------
-            # specific sub-commands to add to rparams (shorthand)
-            # ---------------------------------------------------------------------
-            rparams = sub_commands(rparams)
-            # ----------------------------------------------------------------------
-            rquery = construct_query(rparams)  
-            # ----------------------------------------------------------------------
-            print(rquery.format(**rparams)) 
-            
-
-def check_required(aparams: Dict[str, Any]) -> Dict[str, Any]:
-    required_params = [
-        'ASTROM_TABLENAME',
-        'CALIB_TABLENAME',
-        'FINDEX_TABLENAME',
-        'LOG_TABLENAME',
-        'TELLU_TABLENAME',
-        'REJECT_TABLENAME',
-    ]
-    # Check and cut down parameters needed for query
-    rparams = dict()
-    # Prefer nested database config and flatten required keys for SQL templates.
-    db_cfg = aparams.get('database', {})
-    if not isinstance(db_cfg, dict):
-        db_cfg = {}
-    # loop around parameters
-    for param in required_params:
-        value = db_cfg.get(param, aparams.get(param))
-        if value in (None, ''):
-            raise ValueError(f'Missing required parameter: database.{param}')
-        rparams[param] = value
-    # extract science params from the 'general' sub-dict and flatten into rparams
-    general = aparams.get('general', {})
-    for key in ('SCIENCE_FIBER', 'SCIENCE_TYPES'):
-        if key not in general:
-            raise ValueError(f'Missing required parameter: general.{key}')
-        rparams[key] = general[key]
-    return rparams
+            # step 1: get calibration files from database
+            cquery, _, _ = get_calib_file(aparams, return_query=True)
+            # print the query
+            print('='*50)
+            print(apero_profile_names[a_it])
+            print('='*50)
+            for output in cquery:
+                print(f'Query for KW_OUTPUT={output}')
+                print(cquery[output])
 
 
-def sub_commands(rparams):
-    # ---------------------------------------------------------------------
-    # get parameters only needed for sub-commands
-    fiber = f'\"{rparams["SCIENCE_FIBER"]}\"'
-    scitypes = ','.join([f'"{t}"' for t in rparams['SCIENCE_TYPES']])
-    # ---------------------------------------------------------------------
-    # specific sub-commands to add to rparams (shorthand)
-    # ---------------------------------------------------------------------
-    # get all unique run_ids for the object (for filtering in the UI)
-    all_run_ids = ('GROUP_CONCAT(DISTINCT KW_RUN_ID SEPARATOR ", ")'
-                f' AS ALL_RUN_IDS')
-    # sum all files in raw
-    raw_files = ('SUM(BLOCK_KIND = "raw"'
-                f' AND KW_DPRTYPE IN ({scitypes}))'
-                f' AS raw_files')
-    # sum all files in red with output EXT_E2DS_FF (science fiber)
-    red_files = ('SUM(BLOCK_KIND = "red"'
-                f' AND KW_OUTPUT = "EXT_E2DS_FF"'
-                f' AND KW_FIBER = {fiber}'
-                f' AND KW_DPRTYPE IN ({scitypes}))'
-                f' AS red_files')
-    # sum all files in red with output TELLU_OBJ
-    tcorr_files = ('SUM(BLOCK_KIND = "red"'
-                f' AND KW_OUTPUT = "TELLU_OBJ"'
-                f' AND KW_FIBER = {fiber}'
-                f' AND KW_DPRTYPE IN ({scitypes}))'
-                f' AS tcorr_files')
-    # push sub-commands into rparams
-    rparams['ALL_RUN_IDS'] = all_run_ids
-    rparams['RAW_FILES'] = raw_files
-    rparams['RED_FILES'] = red_files
-    rparams['TCORR_FILES'] = tcorr_files
-    # return the updated rparams
-    return rparams
-
-
-def construct_query(rparams):
-    # construct the SQL query
+# =============================================================================
+# Define helper functions
+# =============================================================================
+def get_calib_file(aparams: Dict[str, Any], return_query=False
+                   ) -> Tuple[Dict[str, List[Path]], float, int]:
+    # get the hkeys for this fkind
+    hcfg = aparams.get('calib-headers', {})
+    # Construct queries
     query = """
     SELECT
-        findex.OBS_DIR AS NIGHT,
-        findex.KW_OBJNAME AS OBJNAME,
-        findex.ALL_RUN_IDS AS RUN_ID,
-        findex.raw_files AS `raw files`,
-        findex.red_files AS `ext files`,
-        findex.tcorr_files AS `tcorr files`
-    FROM (
-        SELECT
-            OBS_DIR,
-            KW_OBJNAME,
-            {ALL_RUN_IDS},
-            {RAW_FILES},
-            {RED_FILES},
-            {TCORR_FILES}
-        FROM {FINDEX_TABLENAME}
-
-        GROUP BY OBS_DIR, KW_OBJNAME
-        HAVING raw_files > 0
-    ) AS findex
-    JOIN {ASTROM_TABLENAME} astrom
-        ON findex.KW_OBJNAME = astrom.OBJNAME
-    ORDER BY findex.OBS_DIR DESC;
+        BLOCK_KIND,
+        OBS_DIR,
+        FILENAME,
+        KW_OUTPUT
+    FROM {FINDEX_TABLENAME}
+    WHERE KW_OUTPUT = '{OUTPUT}'
     """
-    # ---------------------------------------------------------------------
-    # format the query with rparams
-    rquery = query.format(**rparams)
-    return rquery
+    # get the database parameters
+    db_params = apero_async.get_db_params(aparams)
+    # storage dictionary to return
+    storage = dict()
+    # storage for the query times
+    times = []
+    # get the findex database
+    findex = aparams['database']['FINDEX_TABLENAME']
+    # loop around
+    for output in hcfg:
+        # generate the query
+        rquery = query.format(OUTPUT=output, FINDEX_TABLENAME=findex)
+        # if we only want the query stop here
+        if return_query:
+            storage[output] = rquery
+            continue
+        # otherwise query the database
+        start = time.time()
+        results = apero_async.database_query(db_params, rquery)
+        # add to the timings
+        times.append(time.time() - start)
+        # storage list for this outputs absolute paths
+        storage[output] = []
+        # we want the filenames
+        for entry in results:
+            # get block kind
+            block_kind = BLOCK_KIND.get(entry['BLOCK_KIND'], None)
+            # deal with no block kind defined
+            if block_kind is None:
+                continue
+            # convert block kind to a path
+            block_kind = aparams['paths'][block_kind]
+            # construct filename from keys
+            abspath = Path(block_kind) / entry['OBS_DIR'] / entry['FILENAME']
+            # push into storage
+            storage[output].append(abspath)
+
+    # work out the total query time
+    total_query_time = sum(times)
+    total_queries = len(times)
+    # return the storage and total query time
+    return storage, total_query_time, total_queries
 
 
-def meta_columns():
-    cols = dict()
-    # Night
-    cols['NIGHT'] = dict()
-    cols['NIGHT']['sortable'] = True
-    cols['NIGHT']['filterable'] = True
-    cols['NIGHT']['removable'] = False
-    cols['NIGHT']['default'] = True
-    cols['NIGHT']['type'] = 'night'
-    # Object name
-    cols['OBJNAME'] = dict()
-    cols['OBJNAME']['sortable'] = True
-    cols['OBJNAME']['filterable'] = True
-    cols['OBJNAME']['removable'] = False
-    cols['OBJNAME']['default'] = True
-    cols['OBJNAME']['type'] = 'string'
-    # RUN_ID
-    cols['RUN_ID'] = dict()
-    cols['RUN_ID']['sortable'] = False
-    cols['RUN_ID']['filterable'] = False
-    cols['RUN_ID']['removable'] = False
-    cols['RUN_ID']['default'] = False
-    cols['RUN_ID']['type'] = 'string'
-    # raw files
-    cols['raw files'] = dict()
-    cols['raw files']['sortable'] = False
-    cols['raw files']['filterable'] = True
-    cols['raw files']['removable'] = True
-    cols['raw files']['default'] = True
-    cols['raw files']['type'] = 'number'
-    # ext files
-    cols['ext files'] = dict()
-    cols['ext files']['sortable'] = False
-    cols['ext files']['filterable'] = True
-    cols['ext files']['removable'] = True
-    cols['ext files']['default'] = True
-    cols['ext files']['type'] = 'number'
-    # tcorr files
-    cols['tcorr files'] = dict()
-    cols['tcorr files']['sortable'] = False
-    cols['tcorr files']['filterable'] = True
-    cols['tcorr files']['removable'] = True
-    cols['tcorr files']['default'] = True
-    cols['tcorr files']['type'] = 'number'
-    # -------------------------------------------------------------------------
-    # return the column meta data
-    return cols
 
+def read_calib_headers(aparams: Dict[str, Any],
+                       cfiles: Dict[str, List[Path]]
+                       ) -> Tuple[Dict[str, List[dict]], float, int]:
+
+    # get the hkeys for this fkind
+    hcfg = aparams.get('calib-headers', {})
+
+    # output table
+    header_dict = dict()
+    times = []
+    # now we read the cfiles
+    for output in cfiles:
+        # get files
+        files = cfiles[output]
+        # deal with no files
+        if len(files) == 0:
+            continue
+        # get the required header keys
+        hkeys = hcfg.get(output, {})
+        # storage for this output
+        header_dict[output] = []
+        # start a timer
+        start = time.time()
+        # loop around files
+        for abspath in files:
+            # check if path exists - if it doesn't fill with None
+            if not abspath.exists():
+                header_dict[output].append(apero_async.fill_dict_null(hkeys))
+                continue
+            # check if file is fits file
+            if abspath.suffix != '.fits':
+                header_dict[output].append(apero_async.fill_dict_null(hkeys))
+                continue
+            #
+            fdict = dict()
+            # otherwise we open the file
+            hdr = fits.getheader(abspath)
+            # loop around header key and load into header list
+            for hkey in hkeys:
+                fdict[hkey] = apero_async.get_hdr_key(hdr, hkey, hkeys[hkey])
+            # push into header_dict
+            header_dict[output].append(fdict)
+        # append read timer
+        times.append(time.time() - start)
+    # work out the total query time
+    total_read_time = sum(times)
+    total_reads = len(times)
+
+    return header_dict, total_read_time, total_reads
 
 # =============================================================================
 # Start of main code
@@ -398,7 +367,7 @@ if __name__ == '__main__':
         )
     _profile = _inst_profiles[_TEST_PROFILE]
 
-    task = AperoObservationTableTask()
+    task = AperoQCStats()
     run_params = {
         'LOCAL_DATA_DIR': str(ARI_DIR),
         'INSTRUMENT': _TEST_INSTRUMENT.lower(),

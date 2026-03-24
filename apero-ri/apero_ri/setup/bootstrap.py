@@ -143,6 +143,7 @@ def ensure_directory_layout(local_data_dir: Path) -> None:
         base / 'admin',
         base / 'admin' / 'instruments',
         base / 'backups',
+        base / 'secret',
         base / 'tasks',
         base / 'users',
     ]

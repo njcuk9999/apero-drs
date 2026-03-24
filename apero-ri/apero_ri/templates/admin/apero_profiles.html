@@ -94,7 +94,42 @@
                 <div class="ari-ap-form__field">
                     <label for="profile-db-host">DATABASE_HOST <span class="ari-required">*</span></label>
                     <input type="text" id="profile-db-host" class="ari-ap-input"
-                           placeholder="e.g. rali:3306" autocomplete="off">
+                           placeholder="e.g. localhost or rali" autocomplete="off">
+                </div>
+            </div>
+            <div class="ari-ap-form__row">
+                <div class="ari-ap-form__field">
+                    <label for="profile-db-port">DATABASE_PORT</label>
+                    <input type="text" id="profile-db-port" class="ari-ap-input"
+                           placeholder="e.g. 3306" autocomplete="off">
+                </div>
+                <div class="ari-ap-form__field">
+                    <label for="profile-db-use-ssh">Connection Routing</label>
+                    <label class="ari-ap-checkbox" for="profile-db-use-ssh">
+                        <input type="checkbox" id="profile-db-use-ssh">
+                        <span>Connect to database via ~/.ssh/config host</span>
+                    </label>
+                </div>
+            </div>
+            <div id="db-ssh-tunnel-fields" style="display:none;">
+                <div class="ari-ap-form__row">
+                    <div class="ari-ap-form__field">
+                        <label for="profile-db-ssh-host">SSH Config Host <span class="ari-required">*</span>
+                            <span class="ari-ap-form__hint">Host alias from ~/.ssh/config</span>
+                        </label>
+                        <input type="text" id="profile-db-ssh-host" class="ari-ap-input"
+                               placeholder="e.g. my-db-tunnel" autocomplete="off">
+                    </div>
+                    <div class="ari-ap-form__field">
+                        <label for="profile-db-ssh-local-port">Local Port <span class="ari-required">*</span></label>
+                        <input type="text" id="profile-db-ssh-local-port" class="ari-ap-input"
+                               placeholder="e.g. 3307" autocomplete="off">
+                    </div>
+                </div>
+                <div class="ari-ap-form__field">
+                    <label for="profile-db-ssh-remote-port">Remote Port</label>
+                    <input type="text" id="profile-db-ssh-remote-port" class="ari-ap-input"
+                           placeholder="3306" autocomplete="off" value="3306">
                 </div>
             </div>
             <div class="ari-ap-form__row">

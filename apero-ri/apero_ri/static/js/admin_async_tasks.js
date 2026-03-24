@@ -80,6 +80,7 @@
     var detBtnEdit      = document.getElementById('det-btn-edit');
     var detBtnDelete    = document.getElementById('det-btn-delete');
     var detBtnRunNow    = document.getElementById('det-btn-run-now');
+    var detBtnForceRun  = document.getElementById('det-btn-force-run');
 
     // Queue tab
     var btnStopAll          = document.getElementById('btn-stop-all');
@@ -823,7 +824,7 @@
         deleteModal.style.display = '';
     });
 
-    detBtnRunNow.addEventListener('click', function () {
+    function queueSelectedTask(forceRun) {
         if (!selectedTaskId) return;
         var localDir = (window.location.search.match(/local_data_dir=([^&]+)/) || [])[1]
                     || window.ARI_LOCAL_DATA_DIR || '';
@@ -834,16 +835,29 @@
                 instrument: currentInstrument,
                 id: selectedTaskId,
                 local_data_dir: localDir,
+                force_run: !!forceRun,
             }),
         }).then(function (r) { return r.json(); }).then(function (d) {
             if (d.success) {
-                showToast('Task queued for immediate execution.', 'success');
+                showToast(forceRun
+                    ? 'Task force-queued for immediate execution.'
+                    : 'Task queued for immediate execution.', 'success');
                 refreshCurrentTasks();
             } else {
                 showToast('Run failed: ' + d.error, 'error');
             }
         });
+    }
+
+    detBtnRunNow.addEventListener('click', function () {
+        queueSelectedTask(false);
     });
+
+    if (detBtnForceRun) {
+        detBtnForceRun.addEventListener('click', function () {
+            queueSelectedTask(true);
+        });
+    }
 
     if (detBtnCopyInfo) {
         detBtnCopyInfo.addEventListener('click', function () {

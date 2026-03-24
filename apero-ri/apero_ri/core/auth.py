@@ -11,7 +11,7 @@ import base64
 from copy import deepcopy
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Dict, List, Optional, Set
+from typing import Any, Dict, List, Optional, Set
 
 import yaml
 from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
@@ -360,14 +360,36 @@ def save_async_tasks(tasks: dict) -> None:
 # =============================================================================
 # APERO profile management
 # =============================================================================
-def load_apero_profiles() -> dict:
-    """Load APERO profiles from apero_profiles.yaml."""
+def load_apero_profiles(hydrate: bool = True) -> dict:
+    """Load APERO profiles from apero_profiles.yaml.
+
+    Args:
+        hydrate: When True, merge APERO_INSTRUMENT_PROFILE defaults into each
+            profile payload for runtime use. When False, return raw file
+            content (useful before mutating/saving profiles).
+    """
     ensure_ari_directory()
     if not APERO_PROFILES_FILE.exists():
         APERO_PROFILES_FILE.write_text('')
     with open(APERO_PROFILES_FILE, 'r') as f:
         data = yaml.safe_load(f)
-    return data if data else {}
+    profiles = data if data else {}
+    if not hydrate:
+        return profiles
+    if not isinstance(profiles, dict):
+        return {}
+
+    hydrated: Dict[str, dict] = {}
+    for instrument, instr_profiles in profiles.items():
+        if not isinstance(instr_profiles, dict):
+            continue
+        hprofiles: Dict[str, dict] = {}
+        for profile_id, profile_data in instr_profiles.items():
+            if not isinstance(profile_data, dict):
+                continue
+            hprofiles[profile_id] = _hydrate_profile_data(profile_data, instrument)
+        hydrated[instrument] = hprofiles
+    return hydrated
 
 
 def save_apero_profiles(profiles: dict) -> None:
@@ -397,11 +419,25 @@ def _load_apero_instrument_profile(filename: str) -> Dict:
     return data if isinstance(data, dict) else {}
 
 
+def _merge_missing_profile(dst: Dict, src: Dict) -> Dict:
+    """Recursively merge missing keys from src into dst."""
+    if not isinstance(dst, dict) or not isinstance(src, dict):
+        return dst
+    for key, src_val in src.items():
+        if key not in dst:
+            dst[key] = deepcopy(src_val)
+            continue
+        dst_val = dst.get(key)
+        if isinstance(dst_val, dict) and isinstance(src_val, dict):
+            _merge_missing_profile(dst_val, src_val)
+    return dst
+
+
 def _hydrate_profile_data(profile_data: dict, instrument: str) -> dict:
     """Hydrate runtime profile data from APERO_INSTRUMENT_PROFILE reference.
 
     This keeps resource instrument YAML as the source of truth for sections
-    like headers/plots/general extras (e.g. has_polarimetry,
+    like sci-headers/plots/general extras (e.g. has_polarimetry,
     db-query-preset-file) while preserving user-managed values such as
     DB/path settings and science selections.
     """
@@ -418,15 +454,28 @@ def _hydrate_profile_data(profile_data: dict, instrument: str) -> dict:
     if not preset:
         return out
 
-    # headers: always from instrument resource profile
-    if isinstance(preset.get('headers'), dict):
-        out['headers'] = deepcopy(preset.get('headers', {}))
+    # Keep all preset keys available (forward compatible with new fields).
+    _merge_missing_profile(out, preset)
+    out['APERO_INSTRUMENT_PROFILE_DATA'] = deepcopy(preset)
+
+    # sci-headers: always from instrument resource profile
+    if isinstance(preset.get('sci-headers'), dict):
+        out['sci-headers'] = deepcopy(preset.get('sci-headers', {}))
+    elif isinstance(preset.get('headers'), dict):
+        # Backward compatibility for legacy preset files.
+        out['sci-headers'] = deepcopy(preset.get('headers', {}))
+
+    # calib-headers: always from instrument resource profile when available.
+    if isinstance(preset.get('calib-headers'), dict):
+        out['calib-headers'] = deepcopy(preset.get('calib-headers', {}))
 
     # plots: accept either "plots" or "plot" in resource file
     if isinstance(preset.get('plots'), dict):
         out['plots'] = deepcopy(preset.get('plots', {}))
     elif isinstance(preset.get('plot'), dict):
         out['plots'] = deepcopy(preset.get('plot', {}))
+    if isinstance(out.get('plots'), dict):
+        out['plot'] = deepcopy(out.get('plots', {}))
 
     # general: start from resource defaults, then force canonical science keys
     # from saved profile to preserve admin/user selections.
@@ -488,43 +537,36 @@ def validate_path_exists(path_str: str) -> dict:
 
 
 def validate_database_connection(mode: str, host: str, username: str,
-                                 password: str, db_name: str) -> dict:
+                                 password: str, db_name: str,
+                                 port: str = '',
+                                 use_ssh_tunnel: Any = False,
+                                 ssh_config_host: str = '',
+                                 ssh_local_port: str = '',
+                                 ssh_remote_port: str = '',
+                                 local_data_dir: Optional[str] = None) -> dict:
     """Try to connect to a database using the given credentials.
 
     Returns dict with 'valid' bool and 'error' string.
     """
-    if mode != 'mysql+pymysql':
-        return {'valid': False, 'error': f'Unsupported mode: {mode}'}
-
     try:
-        import pymysql
-    except ImportError:
-        return {'valid': False, 'error': 'pymysql is not installed'}
+        from apero_ri.tasks import apero_async
 
-    # Parse host:port
-    db_host = host
-    db_port = 3306
-    if ':' in host:
-        parts = host.rsplit(':', 1)
-        db_host = parts[0]
-        try:
-            db_port = int(parts[1])
-        except ValueError:
-            return {'valid': False, 'error': f'Invalid port: {parts[1]}'}
-
-    try:
-        conn = pymysql.connect(
-            host=db_host,
-            port=db_port,
-            user=username,
-            password=password,
-            database=db_name,
-            connect_timeout=10,
-        )
-        conn.close()
+        db_params = {
+            'DATABASE_MODE': mode,
+            'DATABASE_HOST': host,
+            'DATABASE_PORT': port,
+            'DATABASE_USER': username,
+            'DATABASE_PASSWORD': password,
+            'DATABASE_NAME': db_name,
+            'DATABASE_USE_SSH_TUNNEL': use_ssh_tunnel,
+            'DATABASE_SSH_CONFIG_HOST': ssh_config_host,
+            'DATABASE_SSH_LOCAL_PORT': ssh_local_port,
+            'DATABASE_SSH_REMOTE_PORT': ssh_remote_port,
+        }
+        if local_data_dir:
+            db_params['LOCAL_DATA_DIR'] = str(local_data_dir)
+        apero_async.database_query(db_params, 'SELECT 1 AS ok')
         return {'valid': True, 'error': ''}
-    except pymysql.err.OperationalError as e:
-        return {'valid': False, 'error': str(e)}
     except Exception as e:
         return {'valid': False, 'error': str(e)}
 
@@ -582,7 +624,7 @@ def get_accessible_profiles(user_info: Optional[dict],
     """
     from apero_ri.core.permissions import get_inherited_groups
 
-    profiles_data = load_apero_profiles()
+    profiles_data = load_apero_profiles(hydrate=False)
     if not profiles_data:
         return []
 

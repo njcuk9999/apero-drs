@@ -107,7 +107,17 @@ window.ARI_ADMIN_USER_DB_ACCESS = {
         status: {{ (_udba_status|default('info', true)|string)|tojson }},
         message: {{ (_udba_message|default('Configure group and column access to APERO database tables by profile.', true)|string)|tojson }}
     },
-    initialHealthReport: {{ _udba_report|tojson }}
+    initialHealthReport: {{ (
+        user_db_access_health_report
+        if user_db_access_health_report is defined
+        else {
+            'status': (_udba_status|default('info', true)|string),
+            'message': (_udba_message|default('Configure group and column access to APERO database tables by profile.', true)|string),
+            'checked_profiles': 0,
+            'warning_profiles': 0,
+            'profiles': []
+        }
+    )|tojson }}
 };
 </script>
 <script src="{{ url_for('static', filename='js/admin_user_db_access.js') }}"></script>

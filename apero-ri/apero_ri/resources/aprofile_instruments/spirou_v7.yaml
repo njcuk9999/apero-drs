@@ -37,7 +37,7 @@ plot:
     - 1716
     - 1726
 # Header keys
-headers:
+sci-headers:
   pp:
     PP_MJDMID:
       key: MJDMID
@@ -280,3 +280,52 @@ headers:
       key: LBL_VERS
       label: LBL Version
       dtype: str
+calib-headers:
+  SHAPEL:
+    KW_MID_OBS_TIME:
+      key: MJDMID
+      label: mid exposure time [MJD]
+      dtype: float
+      timefmt: mjd
+    KW_SHAPE_DX:
+      key: SHAPE_DX
+      label: Shape dx
+      dtype: float
+    KW_SHAPE_DY:
+      key: SHAPE_DY
+      label: Shape dy
+      dtype: float
+    KW_SHAPE_A:
+      key: SHAPE_A
+      label: Shape A
+      dtype: float
+    KW_SHAPE_B:
+      key: SHAPE_B
+      label: Shape B
+      dtype: float
+    KW_SHAPE_A:
+      key: SHAPE_C
+      label: Shape C
+      dtype: float
+    KW_SHAPE_D:
+      key: SHAPE_D
+      label: Shape D
+      dtype: float
+  WAVE_NIGHT:
+    KW_MID_OBS_TIME:
+      key: MJDMID
+      label: mid exposure time [MJD]
+      dtype: float
+      timefmt: mjd
+    KW_EXT_NBO:
+      key: EXT_NBO
+      label: Number of extracted orders
+      dtype: int
+    KW_WFP_DRIFT:
+      key: WFPDRIFT
+      label: Wavesol abs CCF FP drift [km/s]
+      dtype: float
+    KW_CAVITY_WIDTH:
+      key: WCAV000
+      label: Wave cavity [intercept]
+      dtype: float

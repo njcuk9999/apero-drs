@@ -27,6 +27,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional, Set
 
 from apero_ri.base.base import BLOCK_KIND
+from apero_ri.core import secret_store as ss
 
 ARI_DIR = Path.home() / '.ari'
 USERS_DIR = ARI_DIR / 'users'
@@ -52,7 +53,11 @@ def set_ari_dir(path: Path) -> None:
 
 
 def _share_tokens_path() -> Path:
-    return ARI_DIR / 'share_tokens.json'
+    env_ari_dir = Path(os.environ.get('ARI_DIR', str(ARI_DIR))).expanduser().resolve()
+    return ss.resolve_secret_file(
+        'share_tokens.json',
+        legacy_paths=[env_ari_dir / 'share_tokens.json', ARI_DIR / 'share_tokens.json'],
+    )
 
 
 def _load_share_tokens() -> Dict[str, Any]:
@@ -71,6 +76,7 @@ def _save_share_tokens(tokens: Dict[str, Any]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     with open(path, 'w', encoding='utf-8') as fh:
         json.dump(tokens, fh, indent=2)
+    ss.protect_path(path, 0o600)
 
 
 def create_share_token(username: str, job_id: str) -> str:

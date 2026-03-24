@@ -84,6 +84,7 @@ _TASK_DEFS = [
     ('APERO_OBJECT_TABLE', 'apero_object_table', 'AperoObjectTableTask', 'INSTRUMENT'),
     ('APERO_OBS_TABLE', 'apero_observation_table', 'AperoObservationTableTask', 'INSTRUMENT'),
     ('APERO_OBJECT_QUERY', 'apero_object_query', 'AperoObjectQueryTask', 'INSTRUMENT'),
+    ('APERO_QC_STATIS', 'apero_qc_stats', 'AperoQCStats', 'INSTRUMENT'),
 ]
 
 for _task_key, _module_name, _class_name, _fallback_type in _TASK_DEFS:

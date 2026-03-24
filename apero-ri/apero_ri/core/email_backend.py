@@ -15,8 +15,7 @@ smtp_port: 465
 smtp_ssl: true           # true = SMTP_SSL (port 465), false = STARTTLS or plain
 smtp_tls: false          # true = STARTTLS (port 587), ignored when smtp_ssl true
 smtp_user: you@gmail.com
-# smtp_password is stored obfuscated; use save_email_config() to write it.
-smtp_password_enc: ""    # base64-encoded password (simple reversible encoding)
+# smtp_password is stored in {ARI_DIR}/secret/smtp_password.enc via save_email_config().
 
 Supported providers and their defaults
 ---------------------------------------
@@ -38,6 +37,8 @@ from pathlib import Path
 from typing import Optional
 
 import yaml
+
+from apero_ri.core import secret_store as ss
 
 # Email provider defaults
 PROVIDER_DEFAULTS = {
@@ -143,31 +144,48 @@ def _get_email_config_path() -> Path:
     return Path(ari_dir) / 'admin' / 'email.yaml'
 
 
+def _get_email_password_path() -> Path:
+    return ss.resolve_secret_file('smtp_password.enc')
+
+
 def load_email_config() -> dict:
     """Load email configuration from disk. Returns defaults if missing."""
     path = _get_email_config_path()
+    cfg = {}
     if path.exists():
         try:
             with open(path, 'r') as f:
                 cfg = yaml.safe_load(f) or {}
-            return cfg
         except Exception:
-            return {}
-    return {}
+            cfg = {}
+
+    password_path = _get_email_password_path()
+    if str(cfg.get('smtp_password_enc', '')).strip() and not password_path.exists():
+        password_path.write_text(str(cfg.get('smtp_password_enc', '')).strip(), encoding='utf-8')
+        ss.protect_path(password_path, 0o600)
+    if password_path.exists():
+        cfg['smtp_password_enc'] = '__stored__'
+    return cfg
 
 
 def save_email_config(cfg: dict) -> None:
     """Persist email config. Passwords are base64-encoded before saving."""
     path = _get_email_config_path()
     path.parent.mkdir(parents=True, exist_ok=True)
+    password_path = _get_email_password_path()
 
     # Encode password if provided as plain text (not already encoded)
     raw_pw = cfg.pop('smtp_password', None)
     if raw_pw is not None:
         provider = str(cfg.get('provider', '')).strip().lower()
-        cfg['smtp_password_enc'] = _encode_password(
-            _normalize_smtp_password(str(raw_pw), provider)
-        )
+        normalized = _normalize_smtp_password(str(raw_pw), provider)
+        if normalized:
+            password_path.write_text(_encode_password(normalized), encoding='utf-8')
+            ss.protect_path(password_path, 0o600)
+        else:
+            password_path.unlink(missing_ok=True)
+
+    cfg.pop('smtp_password_enc', None)
 
     with open(path, 'w') as f:
         yaml.safe_dump(cfg, f, default_flow_style=False, allow_unicode=True)
@@ -203,6 +221,14 @@ def _normalize_smtp_password(password: str, provider: str = '') -> str:
 def get_smtp_password(cfg: dict) -> str:
     """Extract SMTP password from config (decodes if encoded)."""
     provider = str(cfg.get('provider', '')).strip().lower()
+    password_path = _get_email_password_path()
+    if password_path.exists():
+        try:
+            encoded = password_path.read_text(encoding='utf-8').strip()
+        except Exception:
+            encoded = ''
+        if encoded:
+            return _normalize_smtp_password(_decode_password(encoded), provider)
     if 'smtp_password_enc' in cfg and cfg['smtp_password_enc']:
         return _normalize_smtp_password(_decode_password(cfg['smtp_password_enc']),
                                         provider)

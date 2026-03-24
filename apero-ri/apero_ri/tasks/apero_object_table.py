@@ -22,13 +22,8 @@ PARAM_LIST.append('LOCAL_DATA_DIR')
 PARAM_LIST.append('INSTRUMENT')
 PARAM_LIST.append('APERO_PROFILES')
 PARAM_LIST.append('APERO_PROFILE_NAMES')
-# list of apero profile parameters needed for this task (for checking in run_job)
+# Profile params are hydrated dynamically from APERO profiles + instrument preset.
 APERO_PROFILE_PARAM_LIST = []
-APERO_PROFILE_PARAM_LIST.append('database')
-APERO_PROFILE_PARAM_LIST.append('paths')
-APERO_PROFILE_PARAM_LIST.append('headers')
-APERO_PROFILE_PARAM_LIST.append('plots')
-APERO_PROFILE_PARAM_LIST.append('general')
 # Set the default frequency for this task (in hours)
 DEFAULT_FREQUENCY = 6.0
 # Set whether this task is enabled by default in the admin portal
@@ -87,6 +82,8 @@ class AperoObjectTableTask(apero_async.AperoAsyncTask):
         # get apero profiles:
         apero_profile_names = params['APERO_PROFILE_NAMES']
         apero_profiles = params['APERO_PROFILES']
+        task_config = params.get('TASK_CONFIG', {})
+        force_run = bool(task_config.get('force_run', False))
         
         # Check if there are any profiles configured
         if not apero_profile_names:
@@ -105,7 +102,9 @@ class AperoObjectTableTask(apero_async.AperoAsyncTask):
             db_updates = {}
             try:
                 should_skip, db_updates, skip_reason = (
-                    apero_async.should_skip_profile_query(aparams)
+                    apero_async.should_skip_profile_query(
+                        aparams, force_run=force_run
+                    )
                 )
             except Exception as exc:
                 should_skip = False
