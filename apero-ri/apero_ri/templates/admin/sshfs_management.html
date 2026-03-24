@@ -1,0 +1,880 @@
+{% extends "general/sidebar_base.html" %}
+{% block title %}APERO RI - SSHFS Management{% endblock %}
+{% block body_class %}ari-has-sidebar ari-up-wide-page ari-sshfs-page{% endblock %}
+
+{% block extra_head %}
+<style>
+body.ari-sshfs-page .ari-doc-main {
+    max-width: none;
+    width: auto;
+}
+
+.sm-shell .ari-page-header {
+    margin-bottom: 1rem;
+}
+
+.sm-shell .ari-ae-section,
+.sm-shell .ari-ae-status-card {
+    margin-bottom: 0.75rem;
+}
+
+.sm-shell .ari-ae-section {
+    padding: 0.95rem 1rem;
+}
+
+.sm-shell .ari-ae-section-title {
+    margin-bottom: 0.7rem;
+}
+
+.sm-shell ol > li {
+    margin-bottom: 0.75rem;
+}
+</style>
+{% endblock %}
+
+{% block doc_content %}
+<div class="ari-up-shell sm-shell">
+<div class="ari-page-header">
+    <h1><i class="fa-solid fa-hard-drive"></i> SSHFS Management</h1>
+</div>
+
+{% if not can_manage %}
+<div class="ari-ae-readonly-notice">
+    <i class="fa-solid fa-circle-info"></i>
+    You have view-only access to SSHFS management.
+</div>
+{% endif %}
+
+<div class="ari-ae-status-card" id="smStatusCard">
+    <div class="ari-ae-status-icon" id="smStatusIcon">
+        <i class="fa-solid fa-spinner fa-spin"></i>
+    </div>
+    <div class="ari-ae-status-body">
+        <span class="ari-ae-status-title" id="smStatusTitle">Checking SSHFS mounts...</span>
+        <span class="ari-ae-status-detail" id="smStatusDetail"></span>
+    </div>
+    <button class="ari-btn ari-btn--secondary ari-btn--sm ari-ae-status-action" id="smBtnRefresh" onclick="smRefreshStatus()">
+        <i class="fa-solid fa-rotate"></i> Refresh
+    </button>
+</div>
+
+<div id="smMsg" class="ari-ae-save-msg" style="display:none;"></div>
+
+<div class="ari-ab-tabs" role="tablist" aria-label="SSHFS tabs">
+    <button id="smTabPreSetup" class="ari-ab-tab ari-ab-tab--active" role="tab" aria-selected="true" onclick="smSelectTab('pre_setup')">
+        <i class="fa-solid fa-route"></i> Pre-setup
+    </button>
+    <button id="smTabSetup" class="ari-ab-tab" role="tab" aria-selected="false" onclick="smSelectTab('setup')">
+        <i class="fa-solid fa-sliders"></i> Setup
+    </button>
+    <button id="smTabKeys" class="ari-ab-tab" role="tab" aria-selected="false" onclick="smSelectTab('keys')">
+        <i class="fa-solid fa-key"></i> SSH Keys
+    </button>
+    <button id="smTabStatus" class="ari-ab-tab" role="tab" aria-selected="false" onclick="smSelectTab('status')">
+        <i class="fa-solid fa-heart-pulse"></i> Mount Status
+    </button>
+</div>
+
+<div id="smPanelPreSetup" class="ari-ab-panel">
+    <div class="ari-ae-section">
+        <h2 class="ari-ae-section-title">
+            <i class="fa-solid fa-book-open"></i> Terminology
+        </h2>
+        <div class="ari-ae-callout" style="background:#f7fbff; border-left:4px solid #0b6fcc; padding:12px; margin-bottom:12px;">
+            <p style="margin:0; font-size:0.92em; line-height:1.55; color:#2b2b2b;">
+                <strong>Client</strong>: this machine (where APERO RI runs).<br>
+                <strong>Server</strong>: the remote machine you want to access.<br>
+                SSHFS mounts a server directory so it appears as a local folder on the client.
+            </p>
+        </div>
+    </div>
+
+    <div class="ari-ae-section">
+        <h2 class="ari-ae-section-title">
+            <i class="fa-solid fa-list-ol"></i> Step-by-step Guide
+        </h2>
+        <ol style="margin:0; padding-left:1.25rem; line-height:1.65; color:#2b2b2b;">
+            <li>
+                <strong>On the client, generate an SSH key pair</strong> (Linux/macOS):
+                <div style="margin-top:8px; margin-bottom:6px;">
+                    <button type="button" class="ari-btn ari-btn--secondary ari-btn--sm" onclick="smCopyCommand('smCmdClientKeygen')">
+                        <i class="fa-solid fa-copy"></i> Copy commands
+                    </button>
+                </div>
+                <pre id="smCmdClientKeygen" style="margin:0; background:#f5f5f5; padding:10px; border-radius:4px; overflow-x:auto; font-size:0.86em;">ssh-keygen -t ed25519 -f ~/.ssh/id_ed25519_ari_sshfs -N ""
+cat ~/.ssh/id_ed25519_ari_sshfs.pub</pre>
+            </li>
+            <li>
+                <strong>On the server, add the public key to authorized_keys</strong>:
+                <div style="margin-top:8px; margin-bottom:6px;">
+                    <button type="button" class="ari-btn ari-btn--secondary ari-btn--sm" onclick="smCopyCommand('smCmdServerAuthKeys')">
+                        <i class="fa-solid fa-copy"></i> Copy commands
+                    </button>
+                </div>
+                <pre id="smCmdServerAuthKeys" style="margin:0; background:#f5f5f5; padding:10px; border-radius:4px; overflow-x:auto; font-size:0.86em;">mkdir -p ~/.ssh
+chmod 700 ~/.ssh
+echo "ssh-ed25519 AAAA..." >> ~/.ssh/authorized_keys
+chmod 600 ~/.ssh/authorized_keys</pre>
+            </li>
+            <li>
+                <strong>In the <a href="#" onclick="smSelectTab('keys'); return false;">SSH Keys</a> tab, add your private key</strong>
+                so this app can authenticate to the server.
+                <div style="margin-top:8px; margin-bottom:6px;">
+                    <button type="button" class="ari-btn ari-btn--secondary ari-btn--sm" onclick="smCopyCommand('smCmdShowPrivateKey')">
+                        <i class="fa-solid fa-copy"></i> Copy command
+                    </button>
+                </div>
+                <pre id="smCmdShowPrivateKey" style="margin:0; background:#f5f5f5; padding:10px; border-radius:4px; overflow-x:auto; font-size:0.86em;">cat ~/.ssh/id_ed25519_ari_sshfs</pre>
+            </li>
+            <li>
+                <strong>In <a href="#" onclick="smSelectTab('setup'); return false;">Setup</a>, choose either direct host/user or an SSH config host alias, then click Test SSH connection.</strong>
+                This checks authentication and verifies the remote path is reachable.
+            </li>
+            <li>
+                <strong>After test passes, click Add Mount.</strong>
+                Then use Mount Status to mount/unmount and monitor health.
+            </li>
+        </ol>
+    </div>
+
+    <div class="ari-ae-section">
+        <h2 class="ari-ae-section-title">
+            <i class="fa-solid fa-server"></i> Server-side Checklist
+        </h2>
+        <ul style="margin:0; padding-left:1.25rem; line-height:1.6; color:#2b2b2b;">
+            <li>SSH daemon is running on the server.</li>
+            <li>The target directory exists and is readable by the SSH user.</li>
+            <li>The server allows SSH access from this client.</li>
+            <li>Permissions are correct on ~/.ssh and ~/.ssh/authorized_keys.</li>
+        </ul>
+    </div>
+</div>
+
+<div id="smPanelSetup" class="ari-ab-panel" style="display:none;">
+    <div class="ari-ae-section">
+        <h2 class="ari-ae-section-title" id="smSetupTitle">
+            <i class="fa-solid fa-plug-circle-check"></i> Configure and Validate
+        </h2>
+
+        <div class="ari-ae-callout" style="background:#fff9ef; border-left:4px solid #d08a00; padding:10px; margin-bottom:12px;">
+            <span style="font-size:0.92em; color:#3a2b00;">
+                Fill fields, run <strong>Test SSH connection</strong>, then save with <strong>Add Mount</strong>.
+            </span>
+        </div>
+
+        <div class="ari-ae-field">
+            <label class="ari-ae-label">Mount name</label>
+            <input type="text" id="smMountName" class="ari-ae-input" placeholder="e.g., lab-backups" style="max-width:420px;">
+            <span class="ari-ae-hint">Friendly label shown in Mount Status.</span>
+        </div>
+
+        <div class="ari-ae-field">
+            <label class="ari-ae-label">Connection method</label>
+            <div style="display:flex; gap:10px; flex-wrap:wrap;">
+                <label style="display:inline-flex; align-items:center; gap:6px;">
+                    <input type="radio" name="smConnectionMode" value="direct" checked onchange="smUpdateConnectionMode()">
+                    Remote user + remote host
+                </label>
+                <label style="display:inline-flex; align-items:center; gap:6px;">
+                    <input type="radio" name="smConnectionMode" value="ssh_config_host" onchange="smUpdateConnectionMode()">
+                    Use ~/.ssh/config host
+                </label>
+            </div>
+            <span class="ari-ae-hint">Choose direct connection by default, or use an SSH config host alias if the server requires a tunnel/jump host.</span>
+        </div>
+
+        <div id="smDirectConnectionFields" style="display:grid; grid-template-columns:repeat(auto-fit, minmax(280px, 1fr)); gap:12px;">
+            <div class="ari-ae-field">
+                <label class="ari-ae-label">Remote user</label>
+                <input type="text" id="smRemoteUser" class="ari-ae-input" placeholder="e.g., apero" value="root">
+                <span class="ari-ae-hint">User account on the server.</span>
+            </div>
+            <div class="ari-ae-field">
+                <label class="ari-ae-label">Remote host</label>
+                <input type="text" id="smRemoteHost" class="ari-ae-input" placeholder="e.g., 192.168.1.50 or data.example.org">
+                <span class="ari-ae-hint">Hostname or IP of the server.</span>
+            </div>
+        </div>
+
+        <div id="smConfigHostField" class="ari-ae-field" style="display:none;">
+            <label class="ari-ae-label">SSH config host</label>
+            <input type="text" id="smSshConfigHost" class="ari-ae-input" placeholder="e.g., my-tunnel-host" style="max-width:420px;">
+            <span class="ari-ae-hint">Host alias defined in ~/.ssh/config on this machine, including any ProxyJump or tunnel settings.</span>
+        </div>
+
+        <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(280px, 1fr)); gap:12px;">
+            <div class="ari-ae-field">
+                <label class="ari-ae-label">Remote path</label>
+                <input type="text" id="smRemotePath" class="ari-ae-input" placeholder="e.g., /mnt/data">
+                <span class="ari-ae-hint">Directory on the server to mount.</span>
+            </div>
+            <div class="ari-ae-field">
+                <label class="ari-ae-label">Local mount point</label>
+                <input type="text" id="smLocalMount" class="ari-ae-input" placeholder="e.g., /mnt/remote-data">
+                <span class="ari-ae-hint">The exact directory path on the client where the remote folder will appear once mounted. Use an empty directory for this, or a new directory path that SSHFS can create.</span>
+            </div>
+        </div>
+
+        <div class="ari-ae-field">
+            <label class="ari-ae-label">SSH key</label>
+            <select id="smSshKey" class="ari-ae-input" style="max-width:420px;">
+                <option value="">-- Select an SSH key --</option>
+            </select>
+            <span class="ari-ae-hint">Choose a key from the SSH Keys tab.</span>
+        </div>
+
+        <div style="display:flex; gap:10px; flex-wrap:wrap; margin-top:8px;">
+            {% if can_manage %}
+            <button type="button" class="ari-btn ari-btn--secondary" onclick="smTestConnection()">
+                <i class="fa-solid fa-network-wired"></i> Test SSH connection
+            </button>
+            <button type="button" class="ari-btn ari-btn--primary" id="smSaveMountBtn" onclick="smAddMount()">
+                <i class="fa-solid fa-plus"></i> Add Mount
+            </button>
+            <button type="button" class="ari-btn ari-btn--secondary" id="smCancelEditBtn" onclick="smClearForm()" style="display:none;">
+                <i class="fa-solid fa-xmark"></i> Cancel edit
+            </button>
+            {% else %}
+            <p style="color:#999; font-size:0.9em;">You need admin permissions to add/test mounts.</p>
+            {% endif %}
+        </div>
+
+        <div id="smTestResult" style="margin-top:10px; font-size:0.9em; color:#555;"></div>
+    </div>
+</div>
+
+<div id="smPanelKeys" class="ari-ab-panel" style="display:none;">
+    <div class="ari-ae-section">
+        <h2 class="ari-ae-section-title">
+            <i class="fa-solid fa-list"></i> Stored SSH Keys
+        </h2>
+
+        <div class="ari-ab-table-wrap">
+            <table class="ari-ab-table" id="smKeysTable">
+                <thead>
+                    <tr>
+                        <th>Key name</th>
+                        <th>Size (bytes)</th>
+                        <th>Added/Modified</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="smKeysTableBody"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="ari-ae-section">
+        <h2 class="ari-ae-section-title">
+            <i class="fa-solid fa-plus-circle"></i> Add SSH Key
+        </h2>
+
+        <div class="ari-ae-field">
+            <label class="ari-ae-label">Key name</label>
+            <input type="text" id="smNewKeyName" class="ari-ae-input" placeholder="e.g., sshfs-lab-key" style="max-width: 420px;">
+            <span class="ari-ae-hint">Use letters, numbers, underscores, and hyphens only.</span>
+        </div>
+
+        <div class="ari-ae-field">
+            <label class="ari-ae-label">Private key content</label>
+            <textarea id="smNewKeyContent" class="ari-ae-input" placeholder="Paste your private key here" style="min-height: 220px; font-family: monospace; font-size: 0.85em;"></textarea>
+            <span class="ari-ae-hint">Paste private key content (for example from ~/.ssh/id_ed25519_ari_sshfs).</span>
+        </div>
+
+        <div class="ari-ae-field">
+            {% if can_manage %}
+            <button type="button" class="ari-btn ari-btn--primary" onclick="smAddKey()">
+                <i class="fa-solid fa-key"></i> Add Key
+            </button>
+            {% else %}
+            <p style="color:#999; font-size:0.9em;">You need admin permissions to add SSH keys.</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<div id="smPanelStatus" class="ari-ab-panel" style="display:none;">
+    <div class="ari-ae-section">
+        <h2 class="ari-ae-section-title">
+            <i class="fa-solid fa-heartbeat"></i> Mount Health and Control
+        </h2>
+        <div id="smMountsList" style="display:grid; gap:12px;"></div>
+    </div>
+</div>
+
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+const SM_CAN_MANAGE = {{ can_manage | tojson }};
+let smLastTestKey = '';
+let smLastTestOk = false;
+let smEditingMountName = '';
+let smMountsCache = [];
+
+function smSetMsg(text, ok = true) {
+    const el = document.getElementById('smMsg');
+    if (!el) return;
+    el.textContent = text || '';
+    el.classList.remove('ari-ae-save-msg--ok', 'ari-ae-save-msg--err');
+    if (!text) {
+        el.style.display = 'none';
+        return;
+    }
+    el.classList.add(ok ? 'ari-ae-save-msg--ok' : 'ari-ae-save-msg--err');
+    el.style.display = 'block';
+}
+
+async function smCopyCommand(elementId) {
+    const el = document.getElementById(elementId);
+    if (!el) {
+        smSetMsg('Command block not found.', false);
+        return;
+    }
+
+    const text = (el.textContent || '').trim();
+    if (!text) {
+        smSetMsg('Nothing to copy.', false);
+        return;
+    }
+
+    try {
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+            await navigator.clipboard.writeText(text);
+            smSetMsg('Commands copied to clipboard.', true);
+            return;
+        }
+    } catch (_) {
+        // Fallback below
+    }
+
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    ta.setAttribute('readonly', 'readonly');
+    ta.style.position = 'fixed';
+    ta.style.left = '-9999px';
+    document.body.appendChild(ta);
+    ta.select();
+
+    try {
+        const ok = document.execCommand('copy');
+        smSetMsg(ok ? 'Commands copied to clipboard.' : 'Failed to copy commands.', ok);
+    } catch (_) {
+        smSetMsg('Failed to copy commands.', false);
+    } finally {
+        document.body.removeChild(ta);
+    }
+}
+
+function smCandidate() {
+    const connectionModeEl = document.querySelector('input[name="smConnectionMode"]:checked');
+    return {
+        connection_mode: connectionModeEl ? connectionModeEl.value : 'direct',
+        name: (document.getElementById('smMountName').value || '').trim(),
+        remote_user: (document.getElementById('smRemoteUser').value || '').trim() || 'root',
+        remote_host: (document.getElementById('smRemoteHost').value || '').trim(),
+        ssh_config_host: (document.getElementById('smSshConfigHost').value || '').trim(),
+        remote_path: (document.getElementById('smRemotePath').value || '').trim(),
+        local_mount: (document.getElementById('smLocalMount').value || '').trim(),
+        ssh_key: (document.getElementById('smSshKey').value || '').trim(),
+    };
+}
+
+function smCandidateKey(obj) {
+    return JSON.stringify({
+        connection_mode: obj.connection_mode,
+        remote_user: obj.remote_user,
+        remote_host: obj.remote_host,
+        ssh_config_host: obj.ssh_config_host,
+        remote_path: obj.remote_path,
+        local_mount: obj.local_mount,
+        ssh_key: obj.ssh_key,
+    });
+}
+
+function smUpdateConnectionMode() {
+    const mode = (document.querySelector('input[name="smConnectionMode"]:checked') || {}).value || 'direct';
+    const directFields = document.getElementById('smDirectConnectionFields');
+    const configField = document.getElementById('smConfigHostField');
+    if (directFields) directFields.style.display = mode === 'direct' ? 'grid' : 'none';
+    if (configField) configField.style.display = mode === 'ssh_config_host' ? '' : 'none';
+    smResetConnectionValidation();
+}
+
+function smResetConnectionValidation() {
+    smLastTestOk = false;
+    smLastTestKey = '';
+    const result = document.getElementById('smTestResult');
+    if (result) result.textContent = '';
+}
+
+function smSetEditMode(mountName = '') {
+    smEditingMountName = mountName || '';
+    const title = document.getElementById('smSetupTitle');
+    const saveBtn = document.getElementById('smSaveMountBtn');
+    const cancelBtn = document.getElementById('smCancelEditBtn');
+    if (title) {
+        title.innerHTML = smEditingMountName
+            ? '<i class="fa-solid fa-pen-to-square"></i> Edit and Validate'
+            : '<i class="fa-solid fa-plug-circle-check"></i> Configure and Validate';
+    }
+    if (saveBtn) {
+        saveBtn.innerHTML = smEditingMountName
+            ? '<i class="fa-solid fa-floppy-disk"></i> Save changes'
+            : '<i class="fa-solid fa-plus"></i> Add Mount';
+    }
+    if (cancelBtn) {
+        cancelBtn.style.display = smEditingMountName ? '' : 'none';
+    }
+}
+
+function smClearForm() {
+    document.getElementById('smMountName').value = '';
+    document.getElementById('smRemoteHost').value = '';
+    document.getElementById('smRemotePath').value = '';
+    document.getElementById('smLocalMount').value = '';
+    document.getElementById('smSshKey').value = '';
+    document.getElementById('smRemoteUser').value = 'root';
+    const configHost = document.getElementById('smSshConfigHost');
+    if (configHost) configHost.value = '';
+    const directRadio = document.querySelector('input[name="smConnectionMode"][value="direct"]');
+    if (directRadio) directRadio.checked = true;
+    smUpdateConnectionMode();
+    smResetConnectionValidation();
+    smSetEditMode('');
+}
+
+function smApplyMountToForm(mount) {
+    if (!mount) return;
+    smSelectTab('setup');
+    document.getElementById('smMountName').value = mount.name || '';
+    document.getElementById('smRemoteHost').value = mount.remote_host || '';
+    document.getElementById('smRemotePath').value = mount.remote_path || '';
+    document.getElementById('smLocalMount').value = mount.local_mount || '';
+    document.getElementById('smSshKey').value = mount.ssh_key || '';
+    document.getElementById('smRemoteUser').value = mount.remote_user || 'root';
+    const configHost = document.getElementById('smSshConfigHost');
+    if (configHost) configHost.value = mount.ssh_config_host || '';
+    const mode = mount.connection_mode || 'direct';
+    const radio = document.querySelector(`input[name="smConnectionMode"][value="${mode}"]`);
+    if (radio) radio.checked = true;
+    smUpdateConnectionMode();
+    smSetEditMode(mount.name || '');
+}
+
+async function smStartEditMount(index) {
+    const mount = smMountsCache[index];
+    if (!mount) return;
+
+    const isMounted = !!(mount.status && mount.status.mounted);
+    if (isMounted) {
+        const confirmed = confirm(
+            `"${mount.name}" is currently mounted. It must be unmounted before editing.\n\n` +
+            'Click OK to unmount it automatically and open the edit form, or Cancel to leave it mounted.'
+        );
+        if (!confirmed) {
+            smSetMsg('Edit cancelled. The mount was left mounted.', false);
+            return;
+        }
+
+        smSetMsg(`Unmounting ${mount.name} before editing...`, true);
+        try {
+            const res = await fetch(`/api/admin/sshfs/mounts/unmount/${encodeURIComponent(mount.name)}`, {
+                method: 'POST'
+            });
+            const data = await res.json();
+            if (!data.ok) {
+                smSetMsg(data.error || 'Failed to unmount before editing.', false);
+                return;
+            }
+        } catch (err) {
+            smSetMsg('Error unmounting before editing: ' + err.message, false);
+            return;
+        }
+    }
+
+    smApplyMountToForm(mount);
+    smSetMsg(
+        isMounted
+            ? 'Mount unmounted. Editing mount. Re-test the connection before saving changes.'
+            : 'Editing mount. Re-test the connection before saving changes.',
+        true
+    );
+}
+
+function smSelectTab(tab) {
+    const tabs = ['pre_setup', 'setup', 'keys', 'status'];
+    tabs.forEach(t => {
+        const key = t.split('_').map(x => x.charAt(0).toUpperCase() + x.slice(1)).join('');
+        const btn = document.getElementById(`smTab${key}`);
+        const panel = document.getElementById(`smPanel${key}`);
+        const isActive = (t === tab);
+        if (btn) {
+            btn.classList.toggle('ari-ab-tab--active', isActive);
+            btn.setAttribute('aria-selected', isActive ? 'true' : 'false');
+        }
+        if (panel) panel.style.display = isActive ? '' : 'none';
+    });
+
+    if (tab === 'keys') smLoadKeys();
+    if (tab === 'status') smLoadMountsStatus();
+}
+
+async function smLoadKeys() {
+    try {
+        const res = await fetch('/api/admin/sshfs/keys/list');
+        const data = await res.json();
+        if (!data.ok) {
+            smSetMsg(data.error || 'Failed to load keys.', false);
+            return;
+        }
+
+        const keys = data.keys || [];
+        const tbody = document.getElementById('smKeysTableBody');
+        tbody.innerHTML = '';
+
+        if (!keys.length) {
+            tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; color:#999;">No SSH keys configured yet.</td></tr>';
+        } else {
+            for (const key of keys) {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td><code style="font-size:0.9em;">${key.name}</code></td>
+                    <td>${key.size}</td>
+                    <td style="font-size:0.9em; color:#666;">${new Date(key.mtime).toLocaleString()}</td>
+                    <td>
+                        ${SM_CAN_MANAGE ? `<button class="ari-btn ari-btn--sm ari-btn--danger" onclick="smDeleteKey('${key.name}')"><i class="fa-solid fa-trash"></i> Delete</button>` : '-'}
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            }
+        }
+
+        smPopulateKeySelect(keys);
+    } catch (err) {
+        smSetMsg('Error loading keys: ' + err.message, false);
+    }
+}
+
+function smPopulateKeySelect(keys) {
+    const select = document.getElementById('smSshKey');
+    if (!select) return;
+    const current = select.value;
+
+    select.innerHTML = '<option value="">-- Select an SSH key --</option>';
+    for (const key of keys) {
+        const opt = document.createElement('option');
+        opt.value = key.name;
+        opt.textContent = key.name;
+        select.appendChild(opt);
+    }
+
+    if (current) select.value = current;
+}
+
+async function smLoadMountDropdown() {
+    try {
+        const res = await fetch('/api/admin/sshfs/keys/list');
+        const data = await res.json();
+        if (data.ok) smPopulateKeySelect(data.keys || []);
+    } catch (_) {
+        // no-op
+    }
+}
+
+async function smAddKey() {
+    if (!SM_CAN_MANAGE) return;
+    const name = (document.getElementById('smNewKeyName').value || '').trim();
+    const content = (document.getElementById('smNewKeyContent').value || '').trim();
+
+    if (!name || !content) {
+        smSetMsg('Key name and content are required.', false);
+        return;
+    }
+
+    smSetMsg('Adding SSH key...', true);
+    try {
+        const res = await fetch('/api/admin/sshfs/keys/add', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ key_name: name, key_content: content }),
+        });
+        const data = await res.json();
+
+        if (!data.ok) {
+            smSetMsg(data.error || 'Failed to add key.', false);
+            return;
+        }
+
+        document.getElementById('smNewKeyName').value = '';
+        document.getElementById('smNewKeyContent').value = '';
+        smSetMsg(data.message || 'SSH key added.', true);
+        smLoadKeys();
+        smResetConnectionValidation();
+    } catch (err) {
+        smSetMsg('Error adding key: ' + err.message, false);
+    }
+}
+
+async function smDeleteKey(keyName) {
+    if (!SM_CAN_MANAGE) return;
+    if (!confirm(`Delete SSH key "${keyName}"?`)) return;
+
+    smSetMsg('Deleting SSH key...', true);
+    try {
+        const res = await fetch(`/api/admin/sshfs/keys/delete/${encodeURIComponent(keyName)}`, { method: 'POST' });
+        const data = await res.json();
+
+        if (!data.ok) {
+            smSetMsg(data.error || 'Failed to delete key.', false);
+            return;
+        }
+
+        smSetMsg(data.message || 'SSH key deleted.', true);
+        smLoadKeys();
+        smResetConnectionValidation();
+    } catch (err) {
+        smSetMsg('Error deleting key: ' + err.message, false);
+    }
+}
+
+async function smTestConnection() {
+    if (!SM_CAN_MANAGE) return;
+    const c = smCandidate();
+    const hasConnectionTarget = c.connection_mode === 'ssh_config_host'
+        ? !!c.ssh_config_host
+        : !!c.remote_host;
+
+    if (!hasConnectionTarget || !c.remote_path || !c.ssh_key) {
+        smSetMsg(
+            c.connection_mode === 'ssh_config_host'
+                ? 'SSH config host, remote path, and SSH key are required to test the connection.'
+                : 'Remote host, remote path, and SSH key are required to test the connection.',
+            false
+        );
+        return;
+    }
+
+    const result = document.getElementById('smTestResult');
+    if (result) result.textContent = 'Testing SSH connection...';
+
+    try {
+        const res = await fetch('/api/admin/sshfs/mounts/test-connection', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(c),
+        });
+        const data = await res.json();
+
+        if (!data.ok) {
+            smLastTestOk = false;
+            smLastTestKey = '';
+            if (result) result.innerHTML = `<span style="color:#b33939;">${data.error || 'Connection test failed.'}</span>`;
+            smSetMsg(data.error || 'Connection test failed.', false);
+            return;
+        }
+
+        smLastTestOk = true;
+        smLastTestKey = smCandidateKey(c);
+        const sample = data.sample_entry ? ` Sample remote entry: <code>${data.sample_entry}</code>.` : '';
+        if (result) result.innerHTML = `<span style="color:#1f8a44;">${data.message || 'Connection test succeeded.'}${sample}</span>`;
+        smSetMsg('SSH connection test passed. You can now add the mount.', true);
+    } catch (err) {
+        smLastTestOk = false;
+        smLastTestKey = '';
+        if (result) result.innerHTML = `<span style="color:#b33939;">${err.message}</span>`;
+        smSetMsg('Connection test failed: ' + err.message, false);
+    }
+}
+
+async function smAddMount() {
+    if (!SM_CAN_MANAGE) return;
+    const c = smCandidate();
+    const hasConnectionTarget = c.connection_mode === 'ssh_config_host'
+        ? !!c.ssh_config_host
+        : !!c.remote_host;
+
+    if (!c.name || !hasConnectionTarget || !c.remote_path || !c.local_mount || !c.ssh_key) {
+        smSetMsg(
+            c.connection_mode === 'ssh_config_host'
+                ? 'Mount name, SSH config host, remote path, local mount point, and SSH key are required.'
+                : 'Mount name, remote host, remote path, local mount point, and SSH key are required.',
+            false
+        );
+        return;
+    }
+
+    const keyNow = smCandidateKey(c);
+    if (!smLastTestOk || smLastTestKey !== keyNow) {
+        smSetMsg('Please run Test SSH connection successfully before adding this mount.', false);
+        return;
+    }
+
+    smSetMsg(smEditingMountName ? 'Saving mount changes...' : 'Adding mount...', true);
+    try {
+        const endpoint = smEditingMountName
+            ? `/api/admin/sshfs/mounts/update/${encodeURIComponent(smEditingMountName)}`
+            : '/api/admin/sshfs/mounts/add';
+        const res = await fetch(endpoint, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(c),
+        });
+        const data = await res.json();
+
+        if (!data.ok) {
+            smSetMsg(data.error || 'Failed to add mount.', false);
+            return;
+        }
+
+        smSetMsg(data.message || (smEditingMountName ? 'Mount updated.' : 'Mount added.'), true);
+        smClearForm();
+        smLoadMountsStatus();
+    } catch (err) {
+        smSetMsg((smEditingMountName ? 'Error saving mount: ' : 'Error adding mount: ') + err.message, false);
+    }
+}
+
+async function smLoadMountsStatus() {
+    try {
+        const res = await fetch('/api/admin/sshfs/mounts/status');
+        const data = await res.json();
+
+        if (!data.ok) {
+            smSetMsg(data.error || 'Failed to load mount status.', false);
+            return;
+        }
+
+        const mounts = data.mounts || [];
+        smMountsCache = mounts;
+        const container = document.getElementById('smMountsList');
+        container.innerHTML = '';
+
+        if (!mounts.length) {
+            container.innerHTML = '<div style="text-align:center; color:#999; padding:40px;">No SSHFS mounts configured.</div>';
+            return;
+        }
+
+        mounts.forEach((mount, index) => {
+            const status = mount.status || {};
+            const isMounted = !!status.mounted;
+            const statusIcon = isMounted
+                ? '<i class="fa-solid fa-circle-check" style="color:#1f8a44;"></i>'
+                : '<i class="fa-solid fa-circle-xmark" style="color:#999;"></i>';
+
+            const card = document.createElement('div');
+            card.style.cssText = 'border:1px solid #ddd; border-radius:0.6rem; padding:12px; display:grid; gap:8px;';
+            card.innerHTML = `
+                <div style="display:flex; align-items:center; gap:8px; font-weight:700;">
+                    ${statusIcon}
+                    <span>${mount.name}</span>
+                    <span style="font-weight:500; color:#666;">(${isMounted ? 'Mounted' : 'Not mounted'})</span>
+                </div>
+                <div style="font-size:0.9em; color:#555; line-height:1.45;">
+                    <div><strong>Connection:</strong> ${mount.connection_mode === 'ssh_config_host' ? 'SSH config host' : 'Remote user + remote host'}</div>
+                    <div><strong>Target:</strong> ${mount.display_target}:${mount.remote_path}</div>
+                    <div><strong>Local:</strong> ${mount.local_mount}</div>
+                    ${status.file_count !== undefined ? `<div><strong>Directory entries:</strong> ${status.file_count}</div>` : ''}
+                    ${status.warning ? `<div style="color:#c67a00;"><i class="fa-solid fa-triangle-exclamation"></i> ${status.warning}</div>` : ''}
+                </div>
+                <div style="display:flex; gap:8px; flex-wrap:wrap;">
+                    ${SM_CAN_MANAGE ? `
+                        <button class="ari-btn ari-btn--sm ari-btn--secondary" onclick="smStartEditMount(${index})"><i class="fa-solid fa-pen-to-square"></i> Edit</button>
+                        ${!isMounted
+                            ? `<button class="ari-btn ari-btn--sm ari-btn--primary" onclick="smMountVolume('${mount.name}')"><i class="fa-solid fa-arrow-up-from-bracket"></i> Mount</button>`
+                            : `<button class="ari-btn ari-btn--sm ari-btn--secondary" onclick="smUnmountVolume('${mount.name}')"><i class="fa-solid fa-arrow-down-to-bracket"></i> Unmount</button>`}
+                        <button class="ari-btn ari-btn--sm ari-btn--secondary" onclick="smRefreshMountStatus('${mount.name}')"><i class="fa-solid fa-rotate"></i> Refresh</button>
+                        <button class="ari-btn ari-btn--sm ari-btn--danger" onclick="smDeleteMount('${mount.name}')"><i class="fa-solid fa-trash"></i> Delete</button>
+                    ` : '-'}
+                </div>
+            `;
+            container.appendChild(card);
+        });
+    } catch (err) {
+        smSetMsg('Error loading mount status: ' + err.message, false);
+    }
+}
+
+async function smMountVolume(mountName) {
+    if (!SM_CAN_MANAGE) return;
+    smSetMsg(`Mounting ${mountName}...`, true);
+    try {
+        const res = await fetch(`/api/admin/sshfs/mounts/mount/${encodeURIComponent(mountName)}`, { method: 'POST' });
+        const data = await res.json();
+        if (!data.ok) {
+            smSetMsg(data.error || 'Failed to mount.', false);
+            return;
+        }
+        smSetMsg(data.message || 'Mounted.', true);
+        smLoadMountsStatus();
+    } catch (err) {
+        smSetMsg('Error mounting: ' + err.message, false);
+    }
+}
+
+async function smUnmountVolume(mountName) {
+    if (!SM_CAN_MANAGE) return;
+    smSetMsg(`Unmounting ${mountName}...`, true);
+    try {
+        const res = await fetch(`/api/admin/sshfs/mounts/unmount/${encodeURIComponent(mountName)}`, { method: 'POST' });
+        const data = await res.json();
+        if (!data.ok) {
+            smSetMsg(data.error || 'Failed to unmount.', false);
+            return;
+        }
+        smSetMsg(data.message || 'Unmounted.', true);
+        smLoadMountsStatus();
+    } catch (err) {
+        smSetMsg('Error unmounting: ' + err.message, false);
+    }
+}
+
+async function smDeleteMount(mountName) {
+    if (!SM_CAN_MANAGE) return;
+    if (!confirm(`Delete mount "${mountName}"?`)) return;
+
+    smSetMsg(`Deleting ${mountName}...`, true);
+    try {
+        const res = await fetch(`/api/admin/sshfs/mounts/delete/${encodeURIComponent(mountName)}`, { method: 'POST' });
+        const data = await res.json();
+        if (!data.ok) {
+            smSetMsg(data.error || 'Failed to delete mount.', false);
+            return;
+        }
+        smSetMsg(data.message || 'Mount deleted.', true);
+        smLoadMountsStatus();
+    } catch (err) {
+        smSetMsg('Error deleting mount: ' + err.message, false);
+    }
+}
+
+async function smRefreshMountStatus(_) {
+    smLoadMountsStatus();
+}
+
+async function smRefreshStatus() {
+    smSetMsg('Refreshing SSHFS status...', true);
+    await smLoadMountsStatus();
+
+    const icon = document.getElementById('smStatusIcon');
+    const title = document.getElementById('smStatusTitle');
+    const detail = document.getElementById('smStatusDetail');
+    if (icon) icon.innerHTML = '<i class="fa-solid fa-circle-check" style="color:#1f8a44;"></i>';
+    if (title) title.textContent = 'SSHFS management ready';
+    if (detail) detail.textContent = 'Use Pre-setup first, then Setup to test and save mounts.';
+}
+
+document.addEventListener('DOMContentLoaded', function () {
+    smLoadMountDropdown();
+    smRefreshStatus();
+    smUpdateConnectionMode();
+
+    ['smMountName', 'smRemoteUser', 'smRemoteHost', 'smSshConfigHost', 'smRemotePath', 'smLocalMount', 'smSshKey'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.addEventListener('input', smResetConnectionValidation);
+        if (el && el.tagName === 'SELECT') el.addEventListener('change', smResetConnectionValidation);
+    });
+});
+</script>
+{% endblock %}
