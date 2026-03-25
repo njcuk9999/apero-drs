@@ -3288,17 +3288,29 @@ def write_wavesol(params: ParamDict, recipe: DrsRecipe, fiber: str,
     wprops['WFP_FILE'] = wavefile.basename
 
     # ------------------------------------------------------------------
-    # Make wave coefficient table
+    # Make wave table
     # ------------------------------------------------------------------
     # get number of orders
     nbo = wprops['COEFFS'].shape[0]
     # add order column
-    wave_cols = ['ORDER']
-    wave_vals = [np.arange(nbo)]
+    wave_cols = ['ORDER', 'ECHELLE_ORDER']
+    wave_vals = [np.arange(nbo), wprops['EORDERS']]
+
+    # add wave centers
+    cent_x = wprops['WAVEMAP'].shape[1] // 2
+    wave_cols.append('WAVE_CENT_X')
+    wave_vals.append(wprops['WAVEMAP'][:, cent_x])
+    # add min wave and max wave
+    wave_cols.append('WAVE_MIN')
+    wave_vals.append(np.nanmin(wprops['WAVEMAP'], axis=1))
+    wave_cols.append('WAVE_MAX')
+    wave_vals.append(np.nanmax(wprops['WAVEMAP'], axis=1))
+
     # add coefficients columns
     for w_it in range(wprops['COEFFS'].shape[1]):
-        wave_cols.append('COEFFS_{0}'.format(w_it))
+        wave_cols.append('WAVE_COEFFS_{0}'.format(w_it))
         wave_vals.append(wprops['COEFFS'][:, w_it])
+    # convert to table
     wave_table = drs_table.make_table(params, columns=wave_cols,
                                       values=wave_vals)
     # ----------------------------------------------------------------------
@@ -3340,7 +3352,7 @@ def write_wavesol(params: ParamDict, recipe: DrsRecipe, fiber: str,
     # define multi lists
     data_list = [wave_table]
     datatype_list = ['table']
-    name_list = ['COEFF_TABLE']
+    name_list = ['WAVE_TABLE']
     # snapshot of parameters
     if params['PARAMETER_SNAPSHOT']:
         data_list += [params.snapshot_table(recipe, drsfitsfile=wavefile)]

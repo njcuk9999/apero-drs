@@ -446,6 +446,17 @@ KW_MID_OBSTIME_METHOD.set(key='MJDMIDMD',
                           comment='Mid Observation time calc method',
                           group='ppraw')
 
+# Define the raw file release date
+KW_IRELDATE = KW_IRELDATE.copy(__NAME__)
+KW_IRELDATE.set(key='MJDMID', comment='queue release date', group='mjd')
+
+# Define the APERO Public Release date (YYYY-MM-DD) this may be different
+#  from raw file header's release date
+KW_ARELDATE = KW_ARELDATE.copy(__NAME__)
+KW_ARELDATE.set(key='ARELDATE',
+                comment='APERO determined public release date',
+                group='ppraw')
+
 # -----------------------------------------------------------------------------
 # Define DRS input keywords
 # -----------------------------------------------------------------------------

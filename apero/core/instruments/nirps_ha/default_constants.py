@@ -145,6 +145,12 @@ REF_FIND_END_DATE = REF_FIND_END_DATE.copy(__NAME__)
 REF_FIND_END_DATE.value = 'None'
 REF_FIND_END_DATE.author = base.AUTHORS['NJC']
 
+# Define the time delta (in years) to add to the KW_IRELDATE key by default
+#   if there is no other way to determine the public release date (can be zero)
+APERO_RELDATE_DELTA = APERO_RELDATE_DELTA.copy(__NAME__)
+APERO_RELDATE_DELTA.value = 5.0
+APERO_RELDATE_DELTA.author = base.AUTHORS['NJC']
+
 # =============================================================================
 # CALIBRATION: GENERAL SETTINGS
 # =============================================================================
