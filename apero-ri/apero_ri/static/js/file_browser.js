@@ -814,8 +814,22 @@
                     return;
                 }
                 if (titleEl && data.title) { titleEl.textContent = data.title; }
-                if (divEl) { divEl.innerHTML = ''; }
-                Bokeh.embed.embed_item(data.plot, 'fn-plot-div');
+                if (!divEl) return;
+                // Inject the Bokeh components() HTML (div + script).
+                // Using components avoids the embed_item reference error
+                // that can occur in long-running server processes.
+                divEl.innerHTML = data.div || '';
+                if (data.script) {
+                    var tmp = document.createElement('div');
+                    tmp.innerHTML = data.script;
+                    var scriptSrc = tmp.querySelector('script');
+                    if (scriptSrc) {
+                        var s = document.createElement('script');
+                        s.type = scriptSrc.type || 'text/javascript';
+                        s.textContent = scriptSrc.textContent;
+                        divEl.appendChild(s);
+                    }
+                }
                 setTimeout(function () {
                     window.dispatchEvent(new Event('resize'));
                 }, 150);

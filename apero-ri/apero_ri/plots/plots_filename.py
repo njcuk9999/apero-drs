@@ -33,7 +33,7 @@ import numpy as np
 
 from apero_ri.base import base
 from apero_ri.plots.plot_general import mjd_to_datetime
-from apero_ri.plots.plot_general import plot_to_json_item
+from apero_ri.plots.plot_general import plot_to_components
 
 # =============================================================================
 # Define variables
@@ -49,7 +49,7 @@ __release__ = base.__release__
 _MAX_PTS: int = 30_000
 
 # Background colour shared with the rest of the UI
-_BG_COLOUR: str = '#fffef0'
+_BG_COLOUR: str = '#f5f0d0'
 
 # ---------------------------------------------------------------------------
 # Output types that have a plot defined in this module.
@@ -165,7 +165,6 @@ def _build_2d_spectrum_plot(
     filepath: Path,
     kw_fiber: str,
     title: str,
-    target_id: str,
 ) -> Dict[str, Any]:
     """
     Build a Bokeh plot for a 2D extracted spectrum FITS file
@@ -232,9 +231,7 @@ def _build_2d_spectrum_plot(
              legend_label='Normalised flux')
     fig.legend.location = 'top_right'
     fig.legend.click_policy = 'hide'
-    result_plot = plot_to_json_item(fig, target_id)
-    return {'has_plot': True, 'plot': result_plot, 'title': title,
-            'message': ''}
+    return {'has_plot': True, 'fig': fig, 'title': title, 'message': ''}
 
 
 # =============================================================================
@@ -243,7 +240,6 @@ def _build_2d_spectrum_plot(
 def _build_s1d_spectrum_plot(
     filepath: Path,
     kw_fiber: str,
-    target_id: str,
 ) -> Dict[str, Any]:
     """
     Build a Bokeh plot for a 1D S1D spectrum FITS file (DRS_POST_S).
@@ -300,9 +296,7 @@ def _build_s1d_spectrum_plot(
                  legend_label='Telluric corrected 1D')
     fig.legend.location = 'top_right'
     fig.legend.click_policy = 'hide'
-    result_plot = plot_to_json_item(fig, target_id)
-    return {'has_plot': True, 'plot': result_plot, 'title': title,
-            'message': ''}
+    return {'has_plot': True, 'fig': fig, 'title': title, 'message': ''}
 
 
 # =============================================================================
@@ -311,7 +305,6 @@ def _build_s1d_spectrum_plot(
 def _build_polar_plot(
     filepath: Path,
     kw_fiber: str,
-    target_id: str,
 ) -> Dict[str, Any]:
     """
     Build a Bokeh plot for a polarimetry FITS file (DRS_POST_P).
@@ -369,9 +362,7 @@ def _build_polar_plot(
     if fig.legend:
         fig.legend.location = 'top_right'
         fig.legend.click_policy = 'hide'
-    result_plot = plot_to_json_item(fig, target_id)
-    return {'has_plot': True, 'plot': result_plot, 'title': title,
-            'message': ''}
+    return {'has_plot': True, 'fig': fig, 'title': title, 'message': ''}
 
 
 # =============================================================================
@@ -379,7 +370,6 @@ def _build_polar_plot(
 # =============================================================================
 def _build_ccf_plot(
     filepath: Path,
-    target_id: str,
 ) -> Dict[str, Any]:
     """
     Build a Bokeh plot for a CCF FITS file (DRS_POST_V).
@@ -472,9 +462,7 @@ def _build_ccf_plot(
     if fig.legend:
         fig.legend.location = 'top_right'
         fig.legend.click_policy = 'hide'
-    result_plot = plot_to_json_item(fig, target_id)
-    return {'has_plot': True, 'plot': result_plot, 'title': title,
-            'message': ''}
+    return {'has_plot': True, 'fig': fig, 'title': title, 'message': ''}
 
 
 # =============================================================================
@@ -482,7 +470,6 @@ def _build_ccf_plot(
 # =============================================================================
 def _build_tellu_temp_2d_plot(
     filepath: Path,
-    target_id: str,
 ) -> Dict[str, Any]:
     """
     Build a Bokeh plot for a 2D telluric template FITS file
@@ -533,9 +520,7 @@ def _build_tellu_temp_2d_plot(
     fig.grid.grid_line_dash = 'dashed'
     if fig.legend:
         fig.legend.location = 'top_right'
-    result_plot = plot_to_json_item(fig, target_id)
-    return {'has_plot': True, 'plot': result_plot, 'title': title,
-            'message': ''}
+    return {'has_plot': True, 'fig': fig, 'title': title, 'message': ''}
 
 
 # =============================================================================
@@ -545,7 +530,6 @@ def _build_tellu_s1d_plot(
     filepath: Path,
     hdu_name: str,
     title: str,
-    target_id: str,
 ) -> Dict[str, Any]:
     """
     Build a Bokeh plot for a 1D telluric template FITS table
@@ -587,9 +571,7 @@ def _build_tellu_s1d_plot(
              legend_label='Template flux')
     if fig.legend:
         fig.legend.location = 'top_right'
-    result_plot = plot_to_json_item(fig, target_id)
-    return {'has_plot': True, 'plot': result_plot, 'title': title,
-            'message': ''}
+    return {'has_plot': True, 'fig': fig, 'title': title, 'message': ''}
 
 
 # =============================================================================
@@ -598,7 +580,6 @@ def _build_tellu_s1d_plot(
 def _build_lbl_rdb_plot(
     filepath: Path,
     kw_output: str,
-    target_id: str,
 ) -> Dict[str, Any]:
     """
     Build a Bokeh RV vs time plot for an LBL RDB file.
@@ -726,9 +707,7 @@ def _build_lbl_rdb_plot(
     if fig.legend:
         fig.legend.location = 'top_right'
         fig.legend.click_policy = 'hide'
-    result_plot = plot_to_json_item(fig, target_id)
-    return {'has_plot': True, 'plot': result_plot, 'title': title,
-            'message': ''}
+    return {'has_plot': True, 'fig': fig, 'title': title, 'message': ''}
 
 
 # =============================================================================
@@ -845,7 +824,6 @@ def _lbl_trumpet_panel(
 
 def _build_lbl_fits_plot(
     filepath: Path,
-    target_id: str,
 ) -> Dict[str, Any]:
     """
     Build a three-panel Bokeh trumpet plot for an LBL FITS file
@@ -898,9 +876,7 @@ def _build_lbl_fits_plot(
     )
     from bokeh.layouts import column as bk_column
     layout = bk_column([fig1, fig2, fig3])
-    result_plot = plot_to_json_item(layout, target_id)
-    return {'has_plot': True, 'plot': result_plot, 'title': title,
-            'message': ''}
+    return {'has_plot': True, 'fig': layout, 'title': title, 'message': ''}
 
 
 # =============================================================================
@@ -910,16 +886,19 @@ def build_filename_plot_json(
     filepath: Path,
     kw_output: str,
     kw_fiber: str = 'AB',
-    target_id: str = 'fn-plot-div',
 ) -> Dict[str, Any]:
     """
-    Build a Bokeh JSON plot for the given file, dispatching to the
+    Build a Bokeh plot for the given file, dispatching to the
     appropriate builder based on *kw_output*.
+
+    Returns a dict with ``script`` and ``div`` HTML strings for
+    direct injection (Bokeh components approach), avoiding the
+    json_item / embed_item path that can produce stale model
+    references in long-running server processes.
 
     :param filepath: Path, absolute path to the file on disk
     :param kw_output: str, APERO output type keyword (e.g. 'DRS_POST_E')
     :param kw_fiber: str, fiber suffix for FITS extension names
-    :param target_id: str, HTML element id for Bokeh embed
 
     :return: standard result dict (see module docstring)
     :rtype: dict
@@ -936,48 +915,59 @@ def build_filename_plot_json(
 
     try:
         if kw_output == 'DRS_POST_E':
-            return _build_2d_spectrum_plot(
+            result = _build_2d_spectrum_plot(
                 filepath, kw_fiber,
-                'APERO Extracted Spectrum', target_id,
+                'APERO Extracted Spectrum',
             )
         elif kw_output == 'DRS_POST_T':
-            return _build_2d_spectrum_plot(
+            result = _build_2d_spectrum_plot(
                 filepath, kw_fiber,
                 'APERO Normalised Spectrum (telluric corrected)',
-                target_id,
             )
         elif kw_output == 'DRS_POST_S':
-            return _build_s1d_spectrum_plot(
-                filepath, kw_fiber, target_id
+            result = _build_s1d_spectrum_plot(
+                filepath, kw_fiber,
             )
         elif kw_output == 'DRS_POST_P':
-            return _build_polar_plot(filepath, kw_fiber, target_id)
+            result = _build_polar_plot(filepath, kw_fiber)
         elif kw_output == 'DRS_POST_V':
-            return _build_ccf_plot(filepath, target_id)
+            result = _build_ccf_plot(filepath)
         elif kw_output == 'TELLU_TEMP':
-            return _build_tellu_temp_2d_plot(filepath, target_id)
+            result = _build_tellu_temp_2d_plot(filepath)
         elif kw_output == 'TELLU_TEMP_S1DV':
-            return _build_tellu_s1d_plot(
+            result = _build_tellu_s1d_plot(
                 filepath, 'TELLU_TEMP_S1DV',
-                'APERO 1D Telluric Template [v]', target_id,
+                'APERO 1D Telluric Template [v]',
             )
         elif kw_output == 'TELLU_TEMP_S1DW':
-            return _build_tellu_s1d_plot(
+            result = _build_tellu_s1d_plot(
                 filepath, 'TELLU_TEMP_S1DW',
-                'APERO 1D Telluric Template [w]', target_id,
+                'APERO 1D Telluric Template [w]',
             )
         elif kw_output in ('LBL_RDB', 'LBL_RDB2', 'LBL_DRIFT',
                            'LBL_RDB_DRIFT', 'LBL_RDB2_DRIFT',
                            'LBL_RDB_FITS'):
-            return _build_lbl_rdb_plot(filepath, kw_output, target_id)
+            result = _build_lbl_rdb_plot(filepath, kw_output)
         elif kw_output == 'LBL_FITS':
-            return _build_lbl_fits_plot(filepath, target_id)
+            result = _build_lbl_fits_plot(filepath)
         else:
             return _no_plot(
                 f'No handler for output type: {kw_output}'
             )
     except Exception as exc:
         return _no_plot(f'Plot build error: {exc}')
+
+    if not result.get('has_plot'):
+        return result
+
+    script, div = plot_to_components(result['fig'])
+    return {
+        'has_plot': True,
+        'script': script,
+        'div': div,
+        'title': result.get('title', ''),
+        'message': '',
+    }
 
 
 # =============================================================================

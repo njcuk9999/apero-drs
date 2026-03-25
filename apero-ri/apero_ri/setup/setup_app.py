@@ -35,7 +35,8 @@ USERNAME_RE = re.compile(r'^[a-z][a-z0-9_]{2,63}$')
 class SetupApp(Flask):
     """Flask app for first-run setup."""
 
-    def __init__(self, local_data_dir: Path, **kwargs):
+    def __init__(self, local_data_dir: Path, test_mode: bool = False,
+                 **kwargs):
         super().__init__(
             __name__,
             template_folder=str(TEMPLATE_DIR),
@@ -43,6 +44,7 @@ class SetupApp(Flask):
             **kwargs,
         )
         self.local_data_dir = Path(local_data_dir).expanduser()
+        self.test_mode = test_mode
         self.secret_key = secrets.token_hex(32)
         self.config['SESSION_COOKIE_NAME'] = 'apero_ri_setup'
         self.config['SESSION_COOKIE_HTTPONLY'] = True
@@ -158,6 +160,11 @@ class SetupApp(Flask):
                                        page_title='Setup Email',
                                        email_cfg=cfg)
 
+            if self.test_mode:
+                flash('[TEST MODE] Email config validated but NOT saved.',
+                      'success')
+                return redirect(url_for('setup_admin'))
+
             eb.save_email_config(dict(cfg))
             test_result = eb.test_email_connection(eb.load_email_config())
             if not test_result.get('ok', False):
@@ -241,6 +248,11 @@ class SetupApp(Flask):
                     'created_at': created_at,
                     'last_login': last_login,
                 }
+                if self.test_mode:
+                    session.pop('setup_pending_admin', None)
+                    flash('[TEST MODE] Admin account validated but NOT saved.',
+                          'success')
+                    return redirect(url_for('setup_complete'))
                 auth.save_users(users)
                 save_setup_state(self.local_data_dir, username,
                                  email_configured=True)
@@ -404,9 +416,10 @@ class SetupApp(Flask):
 # =============================================================================
 # Define functions
 # =============================================================================
-def create_setup_app(local_data_dir: Path) -> SetupApp:
+def create_setup_app(local_data_dir: Path,
+                     test_mode: bool = False) -> SetupApp:
     """Factory for the first-run setup app."""
-    return SetupApp(local_data_dir)
+    return SetupApp(local_data_dir, test_mode=test_mode)
 
 
 # =============================================================================

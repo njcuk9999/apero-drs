@@ -37,6 +37,80 @@
     var tabOrderMap = {};
     var vsysMs = null;
 
+    /* ------------------------------------------------------------------
+       Deferred Bokeh embedding  (components-based)
+       The server returns {script, div} from Bokeh components().
+       When the container is visible we inject immediately; when hidden
+       (e.g. inactive tab) we store the payload and inject later so the
+       plot gets a proper width on first render.
+    ------------------------------------------------------------------ */
+    var pendingPlotEmbeds = {};   // { divId: { script, div } }
+    var embeddedPlots     = {};   // divId -> true once injected
+
+    function isElementVisible(el) {
+        if (!el) return false;
+        var node = el;
+        while (node && node !== document.body) {
+            if (node.style && node.style.display === 'none') return false;
+            node = node.parentElement;
+        }
+        return true;
+    }
+
+    /** Inject Bokeh components() HTML into a container div. */
+    function injectPlot(divId, scriptHtml, divHtml) {
+        var container = document.getElementById(divId);
+        if (!container) return;
+        container.innerHTML = divHtml || '';
+        if (scriptHtml) {
+            var tmp = document.createElement('div');
+            tmp.innerHTML = scriptHtml;
+            var scriptSrc = tmp.querySelector('script');
+            if (scriptSrc) {
+                var s = document.createElement('script');
+                s.type = scriptSrc.type || 'text/javascript';
+                s.textContent = scriptSrc.textContent;
+                container.appendChild(s);
+            }
+        }
+        embeddedPlots[divId] = true;
+    }
+
+    function embedOrDefer(divId, payload, noPlotMsg, loadingId) {
+        var lid = loadingId || divId.replace(/-div$/, '-loading');
+        var loadingEl = document.getElementById(lid);
+        var divEl = document.getElementById(divId);
+        if (loadingEl) loadingEl.style.display = 'none';
+
+        if (!payload || !payload.has_plot) {
+            if (divEl) {
+                divEl.innerHTML = '<div class="at-muted-hint">'
+                    + escHtml(payload && payload.message ? payload.message : noPlotMsg)
+                    + '</div>';
+            }
+            return;
+        }
+        if (!payload.script && !payload.div) return;
+
+        if (divEl && isElementVisible(divEl)) {
+            injectPlot(divId, payload.script, payload.div);
+        } else {
+            pendingPlotEmbeds[divId] = { script: payload.script, div: payload.div };
+        }
+    }
+
+    function flushPendingEmbeds() {
+        var ids = Object.keys(pendingPlotEmbeds);
+        for (var i = 0; i < ids.length; i++) {
+            var divId = ids[i];
+            var divEl = document.getElementById(divId);
+            if (divEl && isElementVisible(divEl) && !embeddedPlots[divId]) {
+                injectPlot(divId, pendingPlotEmbeds[divId].script, pendingPlotEmbeds[divId].div);
+                delete pendingPlotEmbeds[divId];
+            }
+        }
+    }
+
     function escHtml(str) {
         var d = document.createElement('div');
         d.appendChild(document.createTextNode(String(str)));
@@ -113,11 +187,12 @@
         applySectionFilter(tabKey);
         // Notify lazy-loading tab modules (e.g. file_browser.js)
         document.dispatchEvent(new CustomEvent('ARI_TAB_ACTIVATED', {detail: {tabKey: tabKey}}));
-        // Trigger resize so Bokeh stretch_width plots in now-visible panels
-        // re-measure their container and render at the correct width.
+        // Flush deferred Bokeh embeds for now-visible containers, then
+        // fire resize so existing stretch_width plots re-measure.
         setTimeout(function () {
+            flushPendingEmbeds();
             window.dispatchEvent(new Event('resize'));
-        }, 50);
+        }, 60);
     }
 
     function bindTabs() {
@@ -192,6 +267,13 @@
                 : '<i class="fa-solid fa-chevron-up"></i>';
             toggleBtn.title = collapsed ? 'Expand section' : 'Collapse section';
         }
+        // When expanding a section, flush any deferred Bokeh plots inside it
+        if (!collapsed) {
+            setTimeout(function () {
+                flushPendingEmbeds();
+                window.dispatchEvent(new Event('resize'));
+            }, 60);
+        }
     }
 
     function updatePinnedButtons() {
@@ -219,7 +301,19 @@
         var controls = document.createElement('div');
         controls.className = 'op-section-controls';
 
-        // Move existing "open in new window" link into the controls group
+        // Move existing CSV download button into the controls group
+        var csvBtn = header.querySelector('button.ari-btn');
+        if (csvBtn) {
+            csvBtn.style.marginLeft = '';
+            csvBtn.classList.remove('ari-btn--sm');
+            csvBtn.classList.remove('ari-btn--secondary');
+            csvBtn.classList.remove('ari-btn');
+            csvBtn.classList.add('op-section-btn');
+            csvBtn.classList.add('op-section-btn--csv');
+            controls.appendChild(csvBtn);
+        }
+
+        // Move existing "maximize plot" link into the controls group
         var maxBtn = header.querySelector('.op-plot-max-btn');
         if (maxBtn) {
             maxBtn.style.marginLeft = '';
@@ -234,6 +328,8 @@
         pinBtn.type = 'button';
         pinBtn.className = 'op-section-btn op-section-btn--pin';
         pinBtn.setAttribute('data-op-pin-id', sectionId);
+        pinBtn.innerHTML = '<i class="fa-regular fa-thumbtack"></i>';
+        pinBtn.title = 'Pin section to top';
         pinBtn.addEventListener('click', function () {
             toggleSectionPinned(sectionId);
         });
@@ -398,14 +494,44 @@
             var card = document.createElement('div');
             card.className = 'at-section-card op-all-section-card';
             card.setAttribute('data-op-origin-id', meta.id);
+            card.setAttribute('data-op-section-id', meta.id);
 
-            var head = document.createElement('div');
-            head.className = 'at-section-card__header';
-            var span = document.createElement('span');
-            span.innerHTML = '<i class="fa-solid fa-layer-group"></i> '
-                + escHtml(meta.title || meta.id)
-                + ' <span class="op-all-section-tab">(' + escHtml(getPanelLabel(meta.tabKey)) + ')</span>';
-            head.appendChild(span);
+            // Clone original header so all-tab sections match individual tabs
+            var origHeader = meta.card.querySelector('.at-section-card__header');
+            var head;
+            if (origHeader) {
+                head = origHeader.cloneNode(true);
+                // Extract CSV and max buttons from stale controls before removing
+                var staleControls = head.querySelector('.op-section-controls');
+                if (staleControls) {
+                    var csvClone = staleControls.querySelector('.op-section-btn--csv');
+                    var maxClone = staleControls.querySelector('.op-plot-max-btn');
+                    // Re-add them as direct children of the header so
+                    // ensureSectionHeaderControls can pick them up again
+                    if (csvClone) {
+                        csvClone.classList.add('ari-btn');
+                        head.appendChild(csvClone);
+                    }
+                    if (maxClone) {
+                        maxClone.classList.add('op-plot-max-btn');
+                        head.appendChild(maxClone);
+                    }
+                    staleControls.remove();
+                }
+                // Append tab badge to the title span
+                var titleSpan = head.querySelector('span');
+                if (titleSpan) {
+                    titleSpan.innerHTML += ' <span class="op-all-section-tab">('
+                        + escHtml(getPanelLabel(meta.tabKey)) + ')</span>';
+                }
+                stripElementIds(head);
+            } else {
+                head = document.createElement('div');
+                head.className = 'at-section-card__header';
+                var span = document.createElement('span');
+                span.textContent = meta.title || meta.id;
+                head.appendChild(span);
+            }
             card.appendChild(head);
 
             var body = meta.card.querySelector('.at-section-card__body');
@@ -414,10 +540,52 @@
             stripElementIds(cloneBody);
             card.appendChild(cloneBody);
 
+            // ensureSectionHeaderControls will re-create controls with fresh
+            // event handlers (CSV, maximize, pin, toggle buttons)
             ensureSectionHeaderControls(card, meta.id, true);
+            // Re-wire CSV button click handler on the cloned card
+            wireAllTabCsvButton(card, meta.id);
+
             setSectionCollapsed(card, true);
             allSectionsHost.appendChild(card);
         });
+    }
+
+    /** Wire CSV download handler on a cloned all-tab card by section ID. */
+    function wireAllTabCsvButton(cardEl, sectionId) {
+        var btn = cardEl.querySelector('.op-section-btn--csv');
+        if (!btn) return;
+        var handler = csvHandlerForSection(sectionId);
+        if (handler) {
+            btn.addEventListener('click', handler);
+        } else {
+            // No handler for this section – remove the orphan button
+            btn.remove();
+        }
+    }
+
+    function csvHandlerForSection(sectionId) {
+        if (sectionId === 'target.info') return downloadTargetCsv;
+        if (sectionId === 'spectrum.info') return downloadSpectrumCsv;
+        if (sectionId === 'ccf.stats') return downloadCcfCsv;
+        if (sectionId === 'time_series.table') return downloadTimeSeriesCsv;
+        if (sectionId === 'debug.info') return downloadDebugCsv;
+        // LBL per-flavor CSV buttons have their handlers attached during
+        // renderLbl(); the cloned button won't have one, but we can look
+        // up the original button's handler by re-using the section ID.
+        if (sectionId.indexOf('lbl.stats.') === 0) return downloadLblFlavorCsv(sectionId);
+        return null;
+    }
+
+    /** Build a handler that downloads the LBL CSV for a given flavor section. */
+    function downloadLblFlavorCsv(sectionId) {
+        return function () {
+            // Find the original card and click its CSV button
+            var orig = document.querySelector(
+                '.op-tab-panel:not(#op-tab-all) .at-section-card[data-op-section-id="' + sectionId + '"] .op-section-btn--csv'
+            );
+            if (orig) orig.click();
+        };
     }
 
     function savePinnedOrder(newOrder) {
@@ -1023,105 +1191,27 @@
     }
 
     function renderSnrPlot(payload) {
-        var loadingEl = document.getElementById('op-snr-plot-loading');
-        var divEl = document.getElementById('op-snr-plot-div');
-        if (loadingEl) loadingEl.style.display = 'none';
-        if (!payload || !payload.has_plot) {
-            if (divEl) {
-                divEl.innerHTML = '<div class="at-muted-hint">'
-                    + escHtml(payload && payload.message ? payload.message : 'No SNR data available.')
-                    + '</div>';
-            }
-            return;
-        }
-        if (divEl && payload.item && typeof Bokeh !== 'undefined') {
-            Bokeh.embed.embed_item(payload.item, 'op-snr-plot-div');
-        }
+        embedOrDefer('op-snr-plot-div', payload, 'No SNR data available.');
     }
 
     function renderBervPlot(payload) {
-        var loadingEl = document.getElementById('op-berv-plot-loading');
-        var divEl = document.getElementById('op-berv-plot-div');
-        if (loadingEl) loadingEl.style.display = 'none';
-        if (!payload || !payload.has_plot) {
-            if (divEl) {
-                divEl.innerHTML = '<div class="at-muted-hint">'
-                    + escHtml(payload && payload.message ? payload.message : 'No BERV data available.')
-                    + '</div>';
-            }
-            return;
-        }
-        if (divEl && payload.item && typeof Bokeh !== 'undefined') {
-            Bokeh.embed.embed_item(payload.item, 'op-berv-plot-div');
-        }
+        embedOrDefer('op-berv-plot-div', payload, 'No BERV data available.');
     }
 
     function renderSpecPlot(payload) {
-        var loadingEl = document.getElementById('op-spec-plot-loading');
-        var divEl = document.getElementById('op-spec-plot-div');
-        if (loadingEl) loadingEl.style.display = 'none';
-        if (!payload || !payload.has_plot) {
-            if (divEl) {
-                divEl.innerHTML = '<div class="at-muted-hint">'
-                    + escHtml(payload && payload.message ? payload.message : 'No spectrum data available.')
-                    + '</div>';
-            }
-            return;
-        }
-        if (divEl && payload.item && typeof Bokeh !== 'undefined') {
-            Bokeh.embed.embed_item(payload.item, 'op-spec-plot-div');
-        }
+        embedOrDefer('op-spec-plot-div', payload, 'No spectrum data available.');
     }
 
     function renderCcfPlot(payload) {
-        var loadingEl = document.getElementById('op-ccf-plot-loading');
-        var divEl = document.getElementById('op-ccf-plot-div');
-        if (loadingEl) loadingEl.style.display = 'none';
-        if (!payload || !payload.has_plot) {
-            if (divEl) {
-                divEl.innerHTML = '<div class="at-muted-hint">'
-                    + escHtml(payload && payload.message ? payload.message : 'No CCF data available.')
-                    + '</div>';
-            }
-            return;
-        }
-        if (divEl && payload.item && typeof Bokeh !== 'undefined') {
-            Bokeh.embed.embed_item(payload.item, 'op-ccf-plot-div');
-        }
+        embedOrDefer('op-ccf-plot-div', payload, 'No CCF data available.');
     }
 
     function renderTsSnrPlot(payload) {
-        var loadingEl = document.getElementById('op-ts-snr-plot-loading');
-        var divEl = document.getElementById('op-ts-snr-plot-div');
-        if (loadingEl) loadingEl.style.display = 'none';
-        if (!payload || !payload.has_plot) {
-            if (divEl) {
-                divEl.innerHTML = '<div class="at-muted-hint">'
-                    + escHtml(payload && payload.message ? payload.message : 'No per-night SNR data available.')
-                    + '</div>';
-            }
-            return;
-        }
-        if (divEl && payload.item && typeof Bokeh !== 'undefined') {
-            Bokeh.embed.embed_item(payload.item, 'op-ts-snr-plot-div');
-        }
+        embedOrDefer('op-ts-snr-plot-div', payload, 'No per-night SNR data available.');
     }
 
     function renderTsAirmassPlot(payload) {
-        var loadingEl = document.getElementById('op-ts-airmass-plot-loading');
-        var divEl = document.getElementById('op-ts-airmass-plot-div');
-        if (loadingEl) loadingEl.style.display = 'none';
-        if (!payload || !payload.has_plot) {
-            if (divEl) {
-                divEl.innerHTML = '<div class="at-muted-hint">'
-                    + escHtml(payload && payload.message ? payload.message : 'No per-night airmass data available.')
-                    + '</div>';
-            }
-            return;
-        }
-        if (divEl && payload.item && typeof Bokeh !== 'undefined') {
-            Bokeh.embed.embed_item(payload.item, 'op-ts-airmass-plot-div');
-        }
+        embedOrDefer('op-ts-airmass-plot-div', payload, 'No per-night airmass data available.');
     }
 
     function loadLblPlots() {
@@ -1138,17 +1228,9 @@
                     var m = rdb_filename.match(/^lbl_(.+)\.rdb$/i);
                     var flavor_id = m ? m[1] : rdb_filename;
                     var sidToken = sanitizeSectionToken(flavor_id);
-                    var loadingEl = document.getElementById('op-lbl-vel-loading-' + sidToken);
-                    var divEl = document.getElementById('op-lbl-vel-plot-' + sidToken);
-                    if (loadingEl) loadingEl.style.display = 'none';
-                    if (!payload.has_plot) {
-                        if (divEl) divEl.innerHTML = '<div class="at-muted-hint">'
-                            + escHtml(payload.message || 'No LBL data available.') + '</div>';
-                        return;
-                    }
-                    if (divEl && payload.item && typeof Bokeh !== 'undefined') {
-                        Bokeh.embed.embed_item(payload.item, 'op-lbl-vel-plot-' + sidToken);
-                    }
+                    var divId = 'op-lbl-vel-plot-' + sidToken;
+                    var loadId = 'op-lbl-vel-loading-' + sidToken;
+                    embedOrDefer(divId, payload, 'No LBL data available.', loadId);
                 });
             })
             .catch(function () {});

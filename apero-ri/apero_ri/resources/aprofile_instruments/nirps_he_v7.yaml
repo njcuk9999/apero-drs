@@ -74,11 +74,11 @@ sci-headers:
       timefmt: iso
     EXT_Y:
       key: EXTSN015
-      label: 'SNR[Order 15 (#134 1.08$\mu$m)]'
+      label: 'SNR[Order 15 (#134 1.08μm)]'
       dtype: float
     EXT_H:
       key: EXTSN060
-      label: 'SNR[Order 60 (#89 1.63$\mu$m)]'
+      label: 'SNR[Order 60 (#89 1.63μm)]'
       dtype: float
     EXT_DPRTYPE:
       key: DPRTYPE
@@ -228,7 +228,7 @@ sci-headers:
       dtype: int
     TCORR_H:
       key: EXTSN060
-      label: 'SNR[Order 60 (#89 1.63$\mu$m)]'
+      label: 'SNR[Order 60 (#89 1.63μm)]'
       dtype: float
     TCORR_PROC:
       key: DRSPDATE
@@ -276,7 +276,7 @@ sci-headers:
   lbl:
     EXT_H:
       key: EXTSN060
-      label: 'SNR[Order 60 (#89 1.63$\mu$m)]'
+      label: 'SNR[Order 60 (#89 1.63μm)]'
       dtype: float
     LBL_VERSION:
       key: LBL_VERS

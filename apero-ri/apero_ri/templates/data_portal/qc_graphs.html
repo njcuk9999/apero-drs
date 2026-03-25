@@ -146,9 +146,7 @@ body.ari-qc-page .ari-doc-main {
                 <div class="qc-plot-card">
                     <a class="qc-plot-max"
                        href="{{ url_for('ri_qc_graphs_max', profile_id=profile.profile_id, section='shape', metric_key=metric.metric_key, view_key='full') }}"
-                       target="_blank"
-                       rel="noopener"
-                       title="Open full-series plot in a new window">
+                       title="Maximize full-series plot">
                         <i class="fa-solid fa-up-right-and-down-left-from-center"></i>
                     </a>
                     {{ metric.full_div | safe }}
@@ -156,9 +154,7 @@ body.ari-qc-page .ari-doc-main {
                 <div class="qc-plot-card">
                     <a class="qc-plot-max"
                        href="{{ url_for('ri_qc_graphs_max', profile_id=profile.profile_id, section='shape', metric_key=metric.metric_key, view_key='zoom') }}"
-                       target="_blank"
-                       rel="noopener"
-                       title="Open 6-month plot in a new window">
+                       title="Maximize 6-month plot">
                         <i class="fa-solid fa-up-right-and-down-left-from-center"></i>
                     </a>
                     {{ metric.zoom_div | safe }}
@@ -208,9 +204,7 @@ body.ari-qc-page .ari-doc-main {
                 <div class="qc-plot-card">
                     <a class="qc-plot-max"
                        href="{{ url_for('ri_qc_graphs_max', profile_id=profile.profile_id, section='wave', metric_key=metric.metric_key, view_key='full') }}"
-                       target="_blank"
-                       rel="noopener"
-                       title="Open full-series plot in a new window">
+                       title="Maximize full-series plot">
                         <i class="fa-solid fa-up-right-and-down-left-from-center"></i>
                     </a>
                     {{ metric.full_div | safe }}
@@ -218,9 +212,7 @@ body.ari-qc-page .ari-doc-main {
                 <div class="qc-plot-card">
                     <a class="qc-plot-max"
                        href="{{ url_for('ri_qc_graphs_max', profile_id=profile.profile_id, section='wave', metric_key=metric.metric_key, view_key='zoom') }}"
-                       target="_blank"
-                       rel="noopener"
-                       title="Open 6-month plot in a new window">
+                       title="Maximize 6-month plot">
                         <i class="fa-solid fa-up-right-and-down-left-from-center"></i>
                     </a>
                     {{ metric.zoom_div | safe }}

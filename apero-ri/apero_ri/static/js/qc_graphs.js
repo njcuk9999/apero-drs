@@ -185,25 +185,13 @@
     }
 
     function bindPlotMaximize() {
-        document.querySelectorAll('a.qc-plot-max').forEach(function (link, idx) {
+        /* Navigate in the same window; "Close and return" uses history.back() */
+        document.querySelectorAll('a.qc-plot-max').forEach(function (link) {
             link.addEventListener('click', function (event) {
                 event.preventDefault();
                 event.stopPropagation();
                 var href = link.getAttribute('href') || '';
-                if (!href) return;
-                var name = 'qcPlotMax_' + String(idx);
-                var features = [
-                    'width=1400',
-                    'height=900',
-                    'resizable=yes',
-                    'scrollbars=yes'
-                ].join(',');
-                var win = window.open(href, name, features);
-                if (win) {
-                    win.focus();
-                } else {
-                    window.location.href = href;
-                }
+                if (href) window.location.href = href;
             });
         });
     }

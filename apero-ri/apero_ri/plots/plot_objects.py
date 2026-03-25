@@ -33,13 +33,12 @@ from typing import Any, Dict, List, Optional, Tuple
 
 import numpy as np
 from astropy.time import Time
-from bokeh.models import ColumnDataSource, HoverTool, Span
+from bokeh.models import ColumnDataSource, CrosshairTool, HoverTool, Span
 
 from apero_ri.base import base
 from apero_ri.plots.plot_general import make_time_figure
 from apero_ri.plots.plot_general import mjd_to_datetime
 from apero_ri.plots.plot_general import plot_to_components
-from apero_ri.plots.plot_general import plot_to_json_item
 from apero_ri.plots.plot_general import sci_header_label
 
 # =============================================================================
@@ -444,9 +443,11 @@ def build_snr_plot_json(
             'message': 'No SNR data found in htable.',
         }
     fig = _make_snr_figure(h_pts, y_pts, label_h, label_y)
+    script, div = plot_to_components(fig)
     return {
         'has_plot': True,
-        'item': plot_to_json_item(fig, target_id),
+        'script': script,
+        'div': div,
         'message': '',
     }
 
@@ -492,9 +493,11 @@ def build_berv_plot_json(
         passed, ext_fail, tcorr_fail,
         curve_x, curve_y, vsys_ms, y_label,
     )
+    script, div = plot_to_components(fig)
     return {
         'has_plot': True,
-        'item': plot_to_json_item(fig, target_id),
+        'script': script,
+        'div': div,
         'message': '',
     }
 
@@ -790,7 +793,7 @@ def _make_spec_band_figure(
         active_scroll='wheel_zoom',
         height=height,
         sizing_mode='stretch_width',
-        background_fill_color='#fffef0',
+        background_fill_color='#f5f0d0',
     )
     mask = (wave >= xlim[0]) & (wave <= xlim[1])
     w_m = wave[mask]
@@ -898,15 +901,15 @@ def _build_spec_layout(
     )
     fig_z1 = _make_spec_band_figure(
         wave, ext_flux, tcorr_flux, limit1,
-        f'Y band [{limit1[0]}\u2013{limit1[1]} nm]', height=220,
+        f'Zoom in {limit1[0]}\u2013{limit1[1]} nm', height=220,
     )
     fig_z2 = _make_spec_band_figure(
         wave, ext_flux, tcorr_flux, limit2,
-        f'J band [{limit2[0]}\u2013{limit2[1]} nm]', height=220,
+        f'Zoom in {limit2[0]}\u2013{limit2[1]} nm', height=220,
     )
     fig_z3 = _make_spec_band_figure(
         wave, ext_flux, tcorr_flux, limit3,
-        f'H band [{limit3[0]}\u2013{limit3[1]} nm]', height=220,
+        f'Zoom in {limit3[0]}\u2013{limit3[1]} nm', height=220,
     )
     layout = bk_column([
         fig_full,
@@ -948,9 +951,11 @@ def build_spec_plot_json(
     )
     if layout is None:
         return {'has_plot': False, 'message': msg}
+    script, div = plot_to_components(layout)
     return {
         'has_plot': True,
-        'item': plot_to_json_item(layout, target_id),
+        'script': script,
+        'div': div,
         'message': '',
     }
 
@@ -1141,6 +1146,14 @@ def _make_ccf_rv_figure(
     from bokeh.models import Whisker
 
     fig = make_time_figure('CCF Radial Velocity vs Time', height=height)
+    fig.add_tools(HoverTool(
+        tooltips=[
+            ('Date (UTC)', '@x{%F %T}'),
+            ('RV', '@y{0.000} m/s'),
+        ],
+        formatters={'@x': 'datetime'},
+        mode='mouse',
+    ))
     pp = np.nanpercentile(dv_ms, [10, 90])
     diff = float(pp[1] - pp[0])
     if diff < 1e-6:
@@ -1233,8 +1246,13 @@ def _make_ccf_profile_figure(
         active_scroll='wheel_zoom',
         height=height,
         sizing_mode='stretch_width',
-        background_fill_color='#fffef0',
+        background_fill_color='#f5f0d0',
     )
+    fig.add_tools(HoverTool(
+        tooltips=[('RV', '$x{0.000} km/s'), ('CCF', '$y{0.000000}')],
+        mode='mouse',
+    ))
+    fig.add_tools(CrosshairTool(dimensions='both'))
     # -------------------------------------------------------------------------
     src_2 = ColumnDataSource(dict(
         x=rv_m,
@@ -1254,6 +1272,11 @@ def _make_ccf_profile_figure(
         base='x', upper='upper', lower='lower', source=src_1,
         fill_color='red', fill_alpha=0.4, line_color=None,
     ))
+    # legend proxy patches for bands
+    fig.patch([], [], fill_color='orange', fill_alpha=0.4,
+              line_color=None, legend_label='2σ band')
+    fig.patch([], [], fill_color='red', fill_alpha=0.4,
+              line_color=None, legend_label='1σ band')
     fig.line(rv_m, med_ccf[limmask], line_color='black',
              line_width=1.5, legend_label='Median CCF')
     if has_fit:
@@ -1310,8 +1333,13 @@ def _make_ccf_residuals_figure(
         active_scroll='wheel_zoom',
         height=height,
         sizing_mode='stretch_width',
-        background_fill_color='#fffef0',
+        background_fill_color='#f5f0d0',
     )
+    fig.add_tools(HoverTool(
+        tooltips=[('RV', '$x{0.000} km/s'), ('Residual', '$y{0.000000}')],
+        mode='mouse',
+    ))
+    fig.add_tools(CrosshairTool(dimensions='both'))
     # -------------------------------------------------------------------------
     if has_fit:
         f_m = fit[limmask]
@@ -1333,6 +1361,11 @@ def _make_ccf_residuals_figure(
             base='x', upper='upper', lower='lower', source=src_1,
             fill_color='red', fill_alpha=0.4,
         ))
+        # legend proxy patches for bands
+        fig.patch([], [], fill_color='orange', fill_alpha=0.4,
+                  line_color=None, legend_label='2σ band')
+        fig.patch([], [], fill_color='red', fill_alpha=0.4,
+                  line_color=None, legend_label='1σ band')
         fig.line(rv_m, med_ccf[limmask] - f_m, line_color='black',
                  line_width=1.2, legend_label='Median residual')
         fig.legend.location = 'top_right'
@@ -1392,13 +1425,20 @@ def _make_ccf_spread_figure(
         active_scroll='wheel_zoom',
         height=height,
         sizing_mode='stretch_width',
-        background_fill_color='#fffef0',
+        background_fill_color='#f5f0d0',
     )
+    fig.add_tools(HoverTool(
+        tooltips=[('RV', '$x{0.000} km/s'), ('Spread', '$y{0.000000}')],
+        mode='mouse',
+    ))
+    fig.add_tools(CrosshairTool(dimensions='both'))
     # -------------------------------------------------------------------------
+    spread_2sig_upper = y2_2sig[limmask] - med_m
+    spread_2sig_lower = y1_2sig[limmask] - med_m
     src_2 = ColumnDataSource(dict(
         x=rv_m,
-        upper=y2_2sig[limmask] - med_m,
-        lower=y1_2sig[limmask] - med_m,
+        upper=spread_2sig_upper,
+        lower=spread_2sig_lower,
     ))
     src_1 = ColumnDataSource(dict(
         x=rv_m,
@@ -1413,8 +1453,19 @@ def _make_ccf_spread_figure(
         base='x', upper='upper', lower='lower', source=src_1,
         fill_color='red', fill_alpha=0.4, line_color=None,
     ))
+    # legend proxy patches for bands
+    fig.patch([], [], fill_color='orange', fill_alpha=0.4,
+              line_color=None, legend_label='2σ band')
+    fig.patch([], [], fill_color='red', fill_alpha=0.4,
+              line_color=None, legend_label='1σ band')
     fig.line(rv_m, np.zeros(len(rv_m)), line_color='black',
              line_width=1.2, legend_label='Median (zero)')
+    # initial zoom to 2 sigma range
+    y_max_2sig = float(np.nanmax(np.abs(np.concatenate(
+        [spread_2sig_upper, spread_2sig_lower]))))
+    if y_max_2sig > 0:
+        fig.y_range.start = -1.1 * y_max_2sig
+        fig.y_range.end = 1.1 * y_max_2sig
     fig.legend.location = 'top_right'
     fig.grid.grid_line_color = 'lightgray'
     fig.grid.grid_line_dash = 'dashed'
@@ -1472,7 +1523,8 @@ def _build_ccf_layout(
         y1_1sig, y2_1sig, y1_2sig, y2_2sig,
         xlim, has_fit,
     )
-    layout = bk_column([fig_rv, fig_prof, fig_res, fig_spread])
+    layout = bk_column([fig_rv, fig_prof, fig_res, fig_spread],
+                       sizing_mode='stretch_width')
     return layout, ''
 
 
@@ -1502,9 +1554,11 @@ def build_ccf_plot_json(
     layout, msg = _build_ccf_layout(htable_rows, ftable_ccf_rows, paths)
     if layout is None:
         return {'has_plot': False, 'message': msg}
+    script, div = plot_to_components(layout)
     return {
         'has_plot': True,
-        'item': plot_to_json_item(layout, target_id),
+        'script': script,
+        'div': div,
         'message': '',
     }
 
@@ -1653,6 +1707,14 @@ def _make_lbl_rv_figure(
     fig = make_time_figure(
         f'LBL Radial Velocity \u2014 {flavor_id}', height=height
     )
+    fig.add_tools(HoverTool(
+        tooltips=[
+            ('Date (UTC)', '@x{%F %T}'),
+            ('RV', '@y{0.000} m/s'),
+        ],
+        formatters={'@x': 'datetime'},
+        mode='mouse',
+    ))
     dts_ms = np.array([dt.timestamp() * 1000.0 for dt in datetimes])
     good = ~reset_mask
     # -------------------------------------------------------------------------
@@ -1729,6 +1791,14 @@ def _make_lbl_snr_figure(
     :rtype: bokeh.plotting.figure
     """
     fig = make_time_figure(f'{snr_label} vs Time', height=height)
+    fig.add_tools(HoverTool(
+        tooltips=[
+            ('Date (UTC)', '@x{%F %T}'),
+            ('SNR', '@y{0.00}'),
+        ],
+        formatters={'@x': 'datetime'},
+        mode='mouse',
+    ))
     dts_ms = np.array([dt.timestamp() * 1000.0 for dt in datetimes])
     bad_set = set(bad_idxs)
     bad_mask = np.array(
@@ -1764,6 +1834,7 @@ def _make_lbl_wave_figure(
     wave_vrad_dict: Dict[str, np.ndarray],
     wave_svrad_dict: Dict[str, np.ndarray],
     wavemap: List[float],
+    flavor_id: str = '',
     height: int = 280,
 ) -> Any:
     """
@@ -1784,8 +1855,10 @@ def _make_lbl_wave_figure(
     from bokeh.models import DatetimeTickFormatter
     from bokeh.plotting import figure as bk_figure
 
+    from bokeh.models import Whisker
+
     fig = bk_figure(
-        title='LBL Wave-binned RVs vs Time',
+        title=f'LBL Wave RV vs Time \u2014 {flavor_id}' if flavor_id else 'LBL Wave RV vs Time',
         x_axis_type='datetime',
         x_axis_label='Date',
         y_axis_label='RV [m/s]',
@@ -1793,8 +1866,17 @@ def _make_lbl_wave_figure(
         active_scroll='wheel_zoom',
         height=height,
         sizing_mode='stretch_width',
-        background_fill_color='#fffef0',
+        background_fill_color='#f5f0d0',
     )
+    fig.add_tools(HoverTool(
+        tooltips=[
+            ('Date (UTC)', '@x{%F %T}'),
+            ('RV', '@y{0.000} m/s'),
+        ],
+        formatters={'@x': 'datetime'},
+        mode='mouse',
+    ))
+    fig.add_tools(CrosshairTool(dimensions='both'))
     fig.xaxis.formatter = DatetimeTickFormatter(
         days='%Y-%m-%d', months='%Y-%m', years='%Y',
     )
@@ -1821,10 +1903,39 @@ def _make_lbl_wave_figure(
         if med_svrad > 0 and med_svrad_key < med_svrad * 0.01:
             continue
         color = _lbl_wave_colour(wave_nm, wave_min, wave_max)
-        fig.line(dts_ms, vrad_key, line_color=color,
-                 line_width=1.0, alpha=0.5)
-    fig.line(dts_ms, vrad, line_color='black', line_width=1.5,
-             alpha=0.9, legend_label='Overall vrad')
+        label = f'{int(wave_nm)} nm'
+        src_w = ColumnDataSource(dict(
+            x=dts_ms, y=vrad_key,
+            upper=vrad_key + svrad_key,
+            lower=vrad_key - svrad_key,
+        ))
+        fig.scatter('x', 'y', source=src_w, size=4, color=color,
+                    alpha=0.6, marker='circle', legend_label=label)
+        fig.add_layout(Whisker(
+            source=src_w, base='x', upper='upper', lower='lower',
+            line_color=color, line_alpha=0.3,
+        ))
+    # overall vrad as black points
+    src_ov = ColumnDataSource(dict(
+        x=dts_ms, y=vrad,
+        upper=vrad + svrad,
+        lower=vrad - svrad,
+    ))
+    fig.scatter('x', 'y', source=src_ov, size=5, color='black',
+                alpha=0.8, marker='circle', legend_label='Overall vrad')
+    fig.add_layout(Whisker(
+        source=src_ov, base='x', upper='upper', lower='lower',
+        line_color='black', line_alpha=0.4,
+    ))
+    # -------------------------------------------------------------------------
+    # initial zoom around overall vrad (outlier rejection)
+    pp = np.nanpercentile(vrad, [5, 95])
+    diff = float(pp[1] - pp[0])
+    if diff < 1.0:
+        diff = max(abs(float(np.nanmean(vrad))) * 0.01, 10.0)
+    central = float(np.nanmean(pp))
+    fig.y_range.start = central - 2.0 * diff
+    fig.y_range.end = central + 2.0 * diff
     # -------------------------------------------------------------------------
     fig.legend.location = 'top_right'
     fig.legend.click_policy = 'hide'
@@ -1923,9 +2034,10 @@ def _build_lbl_layout(
     )
     fig_wave = _make_lbl_wave_figure(
         dts_s, vrad_s, svrad_s, wave_vrad_dict, wave_svrad_dict,
-        wavemap,
+        wavemap, flavor_id=flavor_id,
     )
-    return bk_column([fig_rv, fig_snr, fig_wave])
+    return bk_column([fig_rv, fig_snr, fig_wave],
+                     sizing_mode='stretch_width')
 
 
 # =============================================================================
@@ -1969,9 +2081,11 @@ def build_lbl_plots_json(
                     'message': 'No valid date rows in RDB file.',
                 }
                 continue
+            script, div = plot_to_components(layout)
             results[filename] = {
                 'has_plot': True,
-                'item': plot_to_json_item(layout, target_id),
+                'script': script,
+                'div': div,
                 'message': '',
             }
         except Exception as exc:
@@ -2118,7 +2232,7 @@ def _make_ts_snr_figure(
         active_scroll='wheel_zoom',
         height=height,
         sizing_mode='stretch_width',
-        background_fill_color='#fffef0',
+        background_fill_color='#f5f0d0',
     )
     hover = HoverTool(
         tooltips=[('Obs Dir', '@x'), ('SNR', '@y{0.0}')],
@@ -2179,7 +2293,7 @@ def _make_ts_airmass_figure(
         active_scroll='wheel_zoom',
         height=height,
         sizing_mode='stretch_width',
-        background_fill_color='#fffef0',
+        background_fill_color='#f5f0d0',
     )
     hover = HoverTool(
         tooltips=[('Obs Dir', '@x'), ('Airmass', '@y{0.000}')],
@@ -2229,9 +2343,11 @@ def build_ts_snr_plot_json(
     fig = _make_ts_snr_figure(obs_data, label_h, label_y)
     if fig is None:
         return {'has_plot': False, 'message': 'No per-night SNR data.'}
+    script, div = plot_to_components(fig)
     return {
         'has_plot': True,
-        'item': plot_to_json_item(fig, target_id),
+        'script': script,
+        'div': div,
         'message': '',
     }
 
@@ -2305,9 +2421,11 @@ def build_ts_airmass_plot_json(
             'has_plot': False,
             'message': 'No airmass values in range 0\u20132.',
         }
+    script, div = plot_to_components(fig)
     return {
         'has_plot': True,
-        'item': plot_to_json_item(fig, target_id),
+        'script': script,
+        'div': div,
         'message': '',
     }
 

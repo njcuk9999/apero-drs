@@ -19,10 +19,15 @@
         margin: 0;
         padding: 0;
         width: 100%;
-        min-height: 100%;
+        height: 100vh;
+        overflow: hidden;
         background: var(--op-bg);
         color: var(--op-text);
         font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+    }
+    body {
+        display: flex;
+        flex-direction: column;
     }
     .op-max-header {
         display: flex;
@@ -33,8 +38,7 @@
         height: 56px;
         border-bottom: 1px solid #333;
         background: #000;
-        position: sticky;
-        top: 0;
+        flex-shrink: 0;
         z-index: 10;
     }
     .op-max-logo {
@@ -90,17 +94,34 @@
         color: #4dabf7;
     }
     .op-max-main {
+        flex: 1;
         padding: 0.9rem;
+        display: flex;
+        flex-direction: column;
+        min-height: 0;
+        overflow: hidden;
     }
     .op-max-plot {
+        flex: 1;
         border: 1px solid var(--op-border);
         border-radius: 0.5rem;
         background: #fff;
         padding: 0.4rem;
         width: 100%;
+        min-height: 0;
+        display: flex;
+        flex-direction: column;
     }
-    .op-max-plot .bk-root {
+    .op-max-plot .bk-root,
+    .op-max-plot [data-root-id] {
         width: 100% !important;
+        flex: 1;
+        min-height: 0;
+    }
+    .op-max-plot .bk-root > div,
+    .op-max-plot [data-root-id] > div {
+        width: 100% !important;
+        height: 100% !important;
     }
     .op-max-empty {
         border: 1px dashed var(--op-border);
@@ -124,7 +145,7 @@
             <span class="op-max-title">{{ profile.profile_id }}: {{ objname }} &mdash; {{ display_name }}</span>
         </div>
         <button class="op-max-close" type="button" onclick="closeAndReturn()">
-            &larr; Close and return
+            &larr; Back
         </button>
     </header>
 
@@ -139,12 +160,28 @@
 
     <script>
     function closeAndReturn() {
-        if (window.opener && !window.opener.closed) {
-            window.close();
-            return;
+        if (history.length > 1) {
+            history.back();
+        } else {
+            window.location.href = {{ return_url | tojson }};
         }
-        window.location.href = {{ return_url | tojson }};
     }
+    /* Switch Bokeh plots to stretch_both so they fill the viewport.
+       Bokeh's components() inline script may finish after 'load', so
+       we poll until at least one document root is available.         */
+    (function applyStretchBoth() {
+        if (typeof Bokeh !== 'undefined' && Bokeh.documents && Bokeh.documents.length > 0) {
+            for (var d = 0; d < Bokeh.documents.length; d++) {
+                var roots = Bokeh.documents[d].roots();
+                for (var r = 0; r < roots.length; r++) {
+                    roots[r].sizing_mode = 'stretch_both';
+                }
+            }
+            window.dispatchEvent(new Event('resize'));
+        } else {
+            setTimeout(applyStretchBoth, 100);
+        }
+    })();
     </script>
 </body>
 </html>

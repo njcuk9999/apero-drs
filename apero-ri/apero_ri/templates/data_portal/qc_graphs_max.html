@@ -19,10 +19,15 @@
         margin: 0;
         padding: 0;
         width: 100%;
-        min-height: 100%;
+        height: 100vh;
+        overflow: hidden;
         background: var(--qc-bg);
         color: var(--qc-text);
         font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+    }
+    body {
+        display: flex;
+        flex-direction: column;
     }
     .qc-max-header {
         display: flex;
@@ -32,8 +37,7 @@
         padding: 0.8rem 1rem;
         border-bottom: 1px solid var(--qc-border);
         background: #fff;
-        position: sticky;
-        top: 0;
+        flex-shrink: 0;
         z-index: 10;
     }
     .qc-max-title {
@@ -61,17 +65,34 @@
         color: var(--qc-primary);
     }
     .qc-max-main {
+        flex: 1;
         padding: 0.9rem;
+        display: flex;
+        flex-direction: column;
+        min-height: 0;
+        overflow: hidden;
     }
     .qc-max-plot {
+        flex: 1;
         border: 1px solid var(--qc-border);
         border-radius: 0.5rem;
         background: #fff;
         padding: 0.4rem;
         width: 100%;
+        min-height: 0;
+        display: flex;
+        flex-direction: column;
     }
-    .qc-max-plot .bk-root {
+    .qc-max-plot .bk-root,
+    .qc-max-plot [data-root-id] {
         width: 100% !important;
+        flex: 1;
+        min-height: 0;
+    }
+    .qc-max-plot .bk-root > div,
+    .qc-max-plot [data-root-id] > div {
+        width: 100% !important;
+        height: 100% !important;
     }
     .qc-max-empty {
         border: 1px dashed var(--qc-border);
@@ -88,7 +109,7 @@
             <h1 class="qc-max-title">{{ profile.profile_id }}: {{ plot_payload.display_name }} ({{ plot_payload.view_name }})</h1>
             <p class="qc-max-sub">{{ plot_payload.label }}</p>
         </div>
-        <button class="qc-max-close" type="button" onclick="closeAndReturn()">Close and return</button>
+        <button class="qc-max-close" type="button" onclick="closeAndReturn()">&larr; Back</button>
     </header>
 
     <main class="qc-max-main">
@@ -102,12 +123,28 @@
 
     <script>
     function closeAndReturn() {
-        if (window.opener && !window.opener.closed) {
-            window.close();
-            return;
+        if (history.length > 1) {
+            history.back();
+        } else {
+            window.location.href = {{ return_url | tojson }};
         }
-        window.location.href = {{ return_url | tojson }};
     }
+    /* Switch Bokeh plots to stretch_both so they fill the viewport.
+       Bokeh's components() inline script may finish after 'load', so
+       we poll until at least one document root is available.         */
+    (function applyStretchBoth() {
+        if (typeof Bokeh !== 'undefined' && Bokeh.documents && Bokeh.documents.length > 0) {
+            for (var d = 0; d < Bokeh.documents.length; d++) {
+                var roots = Bokeh.documents[d].roots();
+                for (var r = 0; r < roots.length; r++) {
+                    roots[r].sizing_mode = 'stretch_both';
+                }
+            }
+            window.dispatchEvent(new Event('resize'));
+        } else {
+            setTimeout(applyStretchBoth, 100);
+        }
+    })();
     </script>
 </body>
 </html>

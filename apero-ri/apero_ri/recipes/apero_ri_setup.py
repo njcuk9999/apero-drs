@@ -50,6 +50,10 @@ def _get_arguments() -> argparse.Namespace:
         '--force', action='store_true',
         help='Run setup even if setup_state.yaml already marks the install complete',
     )
+    parser.add_argument(
+        '--test', action='store_true',
+        help='Dry-run mode: run the full setup wizard without writing any files',
+    )
     return parser.parse_args()
 
 
@@ -68,23 +72,31 @@ def _prompt_for_data_dir(default_dir: Path) -> Path:
 def main():
     """Entry point for apero_ri_setup."""
     args = _get_arguments()
+    test_mode = args.test
     default_dir = resolve_local_data_dir(args.data_dir)
     local_data_dir = Path(args.data_dir).expanduser() if args.data_dir else _prompt_for_data_dir(default_dir)
 
-    ensure_directory_layout(local_data_dir)
-    save_bootstrap_config(str(local_data_dir))
+    if test_mode:
+        print('[TEST MODE] No files will be written to disk.')
+        print(f'[TEST MODE] Would create directory layout under {local_data_dir}')
+        print(f'[TEST MODE] Would save bootstrap config for {local_data_dir}')
+    else:
+        ensure_directory_layout(local_data_dir)
+        save_bootstrap_config(str(local_data_dir))
     os.environ['ARI_DIR'] = str(local_data_dir)
     ud.set_ari_dir(str(local_data_dir))
     auth.set_ari_dir(str(local_data_dir))
 
-    if is_setup_complete(local_data_dir) and not args.force:
+    if is_setup_complete(local_data_dir) and not args.force and not test_mode:
         print(f'Setup already completed for {local_data_dir}.')
         print('Run `apero_ri_run` to start the application, or re-run with --force.')
         return
 
-    app = create_setup_app(local_data_dir)
+    app = create_setup_app(local_data_dir, test_mode=test_mode)
     setup_url = f'http://{args.host}:{args.port}/'
     print('APERO RI setup initialized.')
+    if test_mode:
+        print('[TEST MODE] Setup wizard running in dry-run mode.')
     print(f'Local data directory: {local_data_dir}')
     print(f'Open {setup_url} to continue setup.')
     if not args.no_browser:
