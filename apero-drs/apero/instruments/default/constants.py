@@ -46,6 +46,14 @@ CDict.add('DATA_ENGINEERING', value=None, dtype=str,
           source=__NAME__, group=cgroup,
           description='Define the data engineering path')
 
+# Define the time delta (in years) to add to the KW_IRELDATE key by default
+#   if there is no other way to determine the public release date (can be zero)
+CDict.add('ARELDATE_DELTA', value=None, dtype=float,
+          source=__NAME__, group=cgroup,  minimum=0.0, maximum=20.0,
+          description='Define the time delta (in years) to add to the '
+                      'KW_IRELDATE key by default if there is no other way to '
+                      'determine the public release date (can be zero)')
+
 # =============================================================================
 # COMMON IMAGE SETTINGS
 # =============================================================================

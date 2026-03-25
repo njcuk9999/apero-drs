@@ -462,6 +462,17 @@ KDict.add('KW_MID_OBSTIME_METHOD', key='NULL', dtype=str,
           description=('Define the method by which the '
                        'MJD was calculated'))
 
+# Define the raw file release date
+KDict.add('KW_IRELDATE', key='NULL', dtype=str, source=__NAME__,
+          description='Define the raw file release date')
+
+# Define the APERO Public Release date (YYYY-MM-DD) this may be different
+#  from raw file header's release date
+KDict.add('KW_ARELDATE', key='NULL', dtype=str, source=__NAME__,
+          description='Define the APERO Public Release date '
+                      '(YYYY-MM-DD) this may be different from '
+                      'raw file headers release date')
+
 # -----------------------------------------------------------------------------
 # Define DRS input keywords
 # -----------------------------------------------------------------------------

@@ -429,6 +429,11 @@ KDict.set('KW_MID_OBSTIME_METHOD', key='MJDMIDMD',
           comment='Mid Observation time calc method',
           group='ppraw')
 
+# Define the APERO Public Release date (YYYY-MM-DD) this may be different
+#  from raw file header's release date
+KDict.set('KW_ARELDATE', key='ARELDATE',
+          comment='APERO determined public release date', group='ppraw')
+
 # -----------------------------------------------------------------------------
 # Define DRS input keywords
 # -----------------------------------------------------------------------------
