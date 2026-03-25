@@ -777,8 +777,14 @@ def _log_update_files(params: ParamDict, pconst: PseudoConstants,
                                       hdu='PARAM_TABLE')
         # get all log update entries (per file)
         logdict, lcode, lpid = _log_update(pconst, ptable)
-        # add log dict as a log code (unique ones only)
-        logentries[lcode] = logdict
+        # merge duplicate lcodes (same PID/LEVEL/SUBLEVEL) rather than
+        # silently overwriting – products from the same run can differ in
+        # QC fields such as PASSED_ALL_QC
+        if lcode in logentries:
+            logentries[lcode] = _merge_log_entries(pconst, logentries[lcode],
+                                                   logdict)
+        else:
+            logentries[lcode] = logdict
         # append to pids
         log_pids.append(lpid)
     # return results
@@ -821,8 +827,14 @@ def _log_update_files_batch(params: ParamDict, pconst: PseudoConstants,
                                       hdu='PARAM_TABLE')
         # get all log update entries (per file)
         logdict, lcode, lpid = _log_update(pconst, ptable)
-        # add log dict as a log code (unique ones only)
-        logentries[lcode] = logdict
+        # merge duplicate lcodes (same PID/LEVEL/SUBLEVEL) rather than
+        # silently overwriting – products from the same run can differ in
+        # QC fields such as PASSED_ALL_QC
+        if lcode in logentries:
+            logentries[lcode] = _merge_log_entries(pconst, logentries[lcode],
+                                                   logdict)
+        else:
+            logentries[lcode] = logdict
         # append to pids
         log_pids.append(lpid)
     # return results
@@ -863,10 +875,19 @@ def _multi_process_logdb_pathos(params: ParamDict, pconst: PseudoConstants,
     # close the pool
     pool.close()
     pool.join()
-    # merge results from all batches
+    # merge results from all batches – use _merge_log_entries so that
+    # entries with the same PID/LEVEL/SUBLEVEL across batches are combined
+    # correctly (e.g. PASSED_ALL_QC takes the logical AND) rather than
+    # silently overwritten
     logentries, log_pids = dict(), []
     for batch_logentries, batch_log_pids in results:
-        logentries.update(batch_logentries)
+        for lcode, entry in batch_logentries.items():
+            if lcode in logentries:
+                logentries[lcode] = _merge_log_entries(pconst,
+                                                       logentries[lcode],
+                                                       entry)
+            else:
+                logentries[lcode] = entry
         log_pids.extend(batch_log_pids)
     # return merged results
     return logentries, log_pids
@@ -901,10 +922,19 @@ def _multi_process_logdb_pool(params: ParamDict, pconst: PseudoConstants,
     # start parallel jobs
     with get_context('spawn').Pool(cores, maxtasksperchild=1) as pool:
         results = pool.starmap(_log_update_files_batch, params_per_process)
-    # merge results from all batches
+    # merge results from all batches – use _merge_log_entries so that
+    # entries with the same PID/LEVEL/SUBLEVEL across batches are combined
+    # correctly (e.g. PASSED_ALL_QC takes the logical AND) rather than
+    # silently overwritten
     logentries, log_pids = dict(), []
     for batch_logentries, batch_log_pids in results:
-        logentries.update(batch_logentries)
+        for lcode, entry in batch_logentries.items():
+            if lcode in logentries:
+                logentries[lcode] = _merge_log_entries(pconst,
+                                                       logentries[lcode],
+                                                       entry)
+            else:
+                logentries[lcode] = entry
         log_pids.extend(batch_log_pids)
     # return merged results
     return logentries, log_pids
@@ -948,10 +978,19 @@ def _multi_process_logdb_process(params: ParamDict, pconst: PseudoConstants,
     # wait for all processes to complete
     for job in jobs:
         job.join()
-    # merge results from all batches
+    # merge results from all batches – use _merge_log_entries so that
+    # entries with the same PID/LEVEL/SUBLEVEL across batches are combined
+    # correctly (e.g. PASSED_ALL_QC takes the logical AND) rather than
+    # silently overwritten
     logentries, log_pids = dict(), []
     for batch_logentries, batch_log_pids in results_list:
-        logentries.update(batch_logentries)
+        for lcode, entry in batch_logentries.items():
+            if lcode in logentries:
+                logentries[lcode] = _merge_log_entries(pconst,
+                                                       logentries[lcode],
+                                                       entry)
+            else:
+                logentries[lcode] = entry
         log_pids.extend(batch_log_pids)
     # return merged results
     return logentries, log_pids
@@ -979,6 +1018,98 @@ def _log_update_files_batch_process(params: ParamDict, pconst: PseudoConstants,
                                                    batch_idx, total_batches)
     # append results to shared list
     results_list.append((logentries, log_pids))
+
+
+def _merge_log_entries(pconst: PseudoConstants,
+                       existing: List[Any],
+                       new: List[Any]) -> List[Any]:
+    """
+    Merge two log entry value-lists that share the same PID/LEVEL/SUBLEVEL
+    (i.e. the same logcode) but may differ in QC-related fields.
+
+    Multiple output files produced by a single recipe run carry identical
+    PARAM_TABLEs except that fields such as PASSED_ALL_QC / QC_* can vary
+    per-product.  Silently overwriting the first entry with the last one
+    (the previous behaviour) is wrong — the merge rules below preserve the
+    most conservative / most informative state:
+
+      * PASSED_ALL_QC  – logical AND (min): one failure marks the whole run
+      * QC_STRING / QC_NAMES / QC_VALUES / QC_LOGIC / QC_PASS
+                       – if the new entry failed while the existing one passed,
+                         adopt the new entry's strings so the failure is
+                         visible; if both failed, concatenate with ' | '
+      * ERRORMSGS      – concatenate distinct messages with ' | '
+      * all other cols – keep the value from the first (existing) entry
+
+    :param pconst: PseudoConst, pseudo constant object
+    :param existing: List, log entry values already stored for this logcode
+    :param new: List, log entry values from the current file
+
+    :return: List, merged log entry values
+    """
+    ldb_cols = pconst.LOG_DB_COLUMNS()
+    logcols = list(ldb_cols.names)
+
+    # start with the existing entry as the base
+    merged = list(existing)
+
+    # columns whose strings should be combined when QC differs
+    qc_str_fields = {'QC_STRING', 'QC_NAMES', 'QC_VALUES', 'QC_LOGIC',
+                     'QC_PASS'}
+
+    # ------------------------------------------------------------------
+    # locate PASSED_ALL_QC index — if absent we cannot merge meaningfully
+    # ------------------------------------------------------------------
+    if 'PASSED_ALL_QC' not in logcols:
+        return merged
+    qc_idx = logcols.index('PASSED_ALL_QC')
+
+    def _to_int(val: Any, default: int = 0) -> int:
+        try:
+            return int(val)
+        except (ValueError, TypeError):
+            return default
+
+    existing_passed = _to_int(existing[qc_idx], default=1)
+    new_passed = _to_int(new[qc_idx], default=1)
+
+    # logical AND: one failure is enough to mark the whole run as failed
+    merged[qc_idx] = min(existing_passed, new_passed)
+
+    # ------------------------------------------------------------------
+    # QC string fields
+    # ------------------------------------------------------------------
+    for field in qc_str_fields:
+        if field not in logcols:
+            continue
+        idx = logcols.index(field)
+        ev = str(existing[idx]) if existing[idx] not in ('NULL', None, '') else ''
+        nv = str(new[idx]) if new[idx] not in ('NULL', None, '') else ''
+
+        if new_passed == 0 and existing_passed == 1:
+            # new entry failed, existing passed → use new strings so the
+            # failure reason is recorded
+            merged[idx] = new[idx]
+        elif new_passed == 0 and existing_passed == 0:
+            # both failed → concatenate distinct strings
+            if ev and nv and ev != nv:
+                merged[idx] = ev + ' | ' + nv
+            elif nv:
+                merged[idx] = new[idx]
+        # else new_passed == 1: existing info is already correct or failing,
+        # keep merged (= existing) value unchanged
+
+    # ------------------------------------------------------------------
+    # ERRORMSGS – always concatenate distinct messages
+    # ------------------------------------------------------------------
+    if 'ERRORMSGS' in logcols:
+        err_idx = logcols.index('ERRORMSGS')
+        ev = str(existing[err_idx]) if existing[err_idx] not in ('NULL', None, '') else ''
+        nv = str(new[err_idx]) if new[err_idx] not in ('NULL', None, '') else ''
+        if nv and nv not in ev:
+            merged[err_idx] = (ev + ' | ' + nv).strip(' | ') if ev else nv
+
+    return merged
 
 
 def _log_update(pconst: PseudoConstants,
