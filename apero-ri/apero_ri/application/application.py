@@ -28,30 +28,50 @@ from flask import (Flask, render_template, redirect, url_for,
                    request, session, flash, jsonify,
                    send_from_directory, send_file)
 
-from apero_ri.core.permissions import (
-    load_groups, load_pages, load_parameters,
-    resolve_user_permissions, get_inherited_groups,
-    get_children, is_parent_page, page_id_to_url,
-    page_id_to_template, page_id_to_endpoint,
-    get_nav_pages, get_visible_cards,
-    find_full_nav_root, get_sidebar_tree, get_pinned_sidebar_items,
-)
-from apero_ri.core.auth import (
-    set_ari_dir as auth_set_ari_dir,
-    ensure_default_user, authenticate, get_effective_user,
-    get_public_permissions, get_user_info,
-    hash_password, verify_password,
-    search_users, list_all_users, update_user_groups,
-    update_user_instruments,
-    delete_user, load_users, save_users,
-    load_science_groups, save_science_groups, get_users_for_instrument,
-    load_apero_profiles, save_apero_profiles,
-    load_db_access, save_db_access,
-    load_admin_health_config, save_admin_health_config,
-    validate_path_exists, validate_database_connection,
-    get_accessible_profiles,
-    load_async_tasks, save_async_tasks,
-)
+from apero_ri.core.permissions import load_groups
+from apero_ri.core.permissions import load_pages
+from apero_ri.core.permissions import load_parameters
+from apero_ri.core.permissions import resolve_user_permissions
+from apero_ri.core.permissions import get_inherited_groups
+from apero_ri.core.permissions import get_children
+from apero_ri.core.permissions import is_parent_page
+from apero_ri.core.permissions import page_id_to_url
+from apero_ri.core.permissions import page_id_to_template
+from apero_ri.core.permissions import page_id_to_endpoint
+from apero_ri.core.permissions import get_nav_pages
+from apero_ri.core.permissions import get_visible_cards
+from apero_ri.core.permissions import find_full_nav_root
+from apero_ri.core.permissions import get_sidebar_tree
+from apero_ri.core.permissions import get_pinned_sidebar_items
+from apero_ri.core.auth import set_ari_dir as auth_set_ari_dir
+from apero_ri.core.auth import ensure_default_user
+from apero_ri.core.auth import authenticate
+from apero_ri.core.auth import get_effective_user
+from apero_ri.core.auth import get_public_permissions
+from apero_ri.core.auth import get_user_info
+from apero_ri.core.auth import hash_password
+from apero_ri.core.auth import verify_password
+from apero_ri.core.auth import search_users
+from apero_ri.core.auth import list_all_users
+from apero_ri.core.auth import update_user_groups
+from apero_ri.core.auth import update_user_instruments
+from apero_ri.core.auth import delete_user
+from apero_ri.core.auth import load_users
+from apero_ri.core.auth import save_users
+from apero_ri.core.auth import load_science_groups
+from apero_ri.core.auth import save_science_groups
+from apero_ri.core.auth import get_users_for_instrument
+from apero_ri.core.auth import load_apero_profiles
+from apero_ri.core.auth import save_apero_profiles
+from apero_ri.core.auth import load_db_access
+from apero_ri.core.auth import save_db_access
+from apero_ri.core.auth import load_admin_health_config
+from apero_ri.core.auth import save_admin_health_config
+from apero_ri.core.auth import validate_path_exists
+from apero_ri.core.auth import validate_database_connection
+from apero_ri.core.auth import get_accessible_profiles
+from apero_ri.core.auth import load_async_tasks
+from apero_ri.core.auth import save_async_tasks
 from apero_ri.core import task_runner
 from apero_ri.tasks import apero_async
 from apero_ri.core import user_data as ud
@@ -59,16 +79,23 @@ from apero_ri.core import email_backend as eb
 from apero_ri.core import backup_backend as bb
 from apero_ri.core import sshfs_backend as sb
 from apero_ri.core import secret_store as ss
-from apero_ri.core.docs import (
-    get_versions, get_default_version, get_doc_content,
-    save_doc_content, save_uploaded_image, DOC_IMAGES,
-)
-from apero_ri.core.object_funcs import build_object_page_stats
+from apero_ri.core.docs import get_versions
+from apero_ri.core.docs import get_default_version
+from apero_ri.core.docs import get_doc_content
+from apero_ri.core.docs import save_doc_content
+from apero_ri.core.docs import save_uploaded_image
+from apero_ri.core.docs import DOC_IMAGES
+from apero_ri.core.object_funcs import (build_object_page_stats,
+                                         load_object_ftable_rows,
+                                         load_object_htable_rows,
+                                         load_object_preset,
+                                         load_object_table_row)
 from apero_ri.core import basket_funcs as bk
 
 # =============================================================================
 # Define variables
 # =============================================================================
+__NAME__ = 'apero_ri.application.application'
 PACKAGE_DIR = Path(__file__).parent.parent
 TEMPLATE_DIR = PACKAGE_DIR / 'templates'
 STATIC_DIR = PACKAGE_DIR / 'static'
@@ -177,7 +204,8 @@ class ARIApp(Flask):
         ari_dir = ss.get_ari_dir()
         secret_file = ss.resolve_secret_file(
             'secret.key',
-            legacy_paths=[ari_dir / 'secret.key', Path.home() / '.ari' / 'secret.key'],
+            legacy_paths=[ari_dir / 'secret.key',
+                         Path.home() / '.ari' / 'secret.key'],
         )
         secret_file.parent.mkdir(parents=True, exist_ok=True)
         if secret_file.exists():
@@ -451,6 +479,27 @@ class ARIApp(Flask):
         self.add_url_rule('/api/admin/sshfs/mounts/status',
                   'api_admin_sshfs_mounts_status',
                   self._api_admin_sshfs_mounts_status)
+        # Interactive SSH terminal routes
+        self.add_url_rule('/api/admin/sshfs/interactive/start-test',
+                  'api_admin_sshfs_interactive_start_test',
+                  self._api_admin_sshfs_interactive_start_test,
+                  methods=['POST'])
+        self.add_url_rule('/api/admin/sshfs/interactive/start-mount',
+                  'api_admin_sshfs_interactive_start_mount',
+                  self._api_admin_sshfs_interactive_start_mount,
+                  methods=['POST'])
+        self.add_url_rule('/api/admin/sshfs/interactive/poll',
+                  'api_admin_sshfs_interactive_poll',
+                  self._api_admin_sshfs_interactive_poll,
+                  methods=['POST'])
+        self.add_url_rule('/api/admin/sshfs/interactive/send',
+                  'api_admin_sshfs_interactive_send',
+                  self._api_admin_sshfs_interactive_send,
+                  methods=['POST'])
+        self.add_url_rule('/api/admin/sshfs/interactive/close',
+                  'api_admin_sshfs_interactive_close',
+                  self._api_admin_sshfs_interactive_close,
+                  methods=['POST'])
         self.add_url_rule('/api/admin/health/update',
               'api_admin_health_update',
               self._api_admin_health_update, methods=['POST'])
@@ -665,6 +714,14 @@ class ARIApp(Flask):
         self.add_url_rule('/data_portal/<profile_id>/query-db',
                   'ri_query_db',
                   self._ri_query_db_view)
+        self.add_url_rule('/data_portal/<profile_id>/qc-graphs',
+              'ri_qc_graphs',
+              self._ri_qc_graphs_view)
+        self.add_url_rule(
+            '/data_portal/<profile_id>/qc-graphs/max'
+            '/<section>/<metric_key>/<view_key>',
+              'ri_qc_graphs_max',
+              self._ri_qc_graphs_max_view)
         self.add_url_rule('/api/data-portal/query-db/schema',
                   'api_query_db_schema',
                   self._api_query_db_schema)
@@ -738,12 +795,25 @@ class ARIApp(Flask):
                           'api_file_browser',
                           self._api_file_browser)
 
+        self.add_url_rule(
+            '/data_portal/<profile_id>/object-plot-max/<objname>/<plot_key>',
+                          'ri_object_plot_max',
+                          self._ri_object_plot_max_view)
         self.add_url_rule('/data_portal/<profile_id>/<path:objname>',
               'ri_object_page',
               self._ri_object_page_view)
         self.add_url_rule('/api/data-portal/object-page',
                 'api_object_page',
                 self._api_object_page)
+        self.add_url_rule('/api/data-portal/object-plots',
+                          'api_object_plots',
+                          self._api_object_plots)
+        self.add_url_rule('/api/data-portal/object-lbl-plots',
+                          'api_object_lbl_plots',
+                          self._api_object_lbl_plots)
+        self.add_url_rule('/api/data-portal/filename-plot',
+                          'api_filename_plot',
+                          self._api_filename_plot)
         self.add_url_rule('/api/data-portal/obs-table',
                   'api_obs_table',
                   self._api_obs_table)
@@ -947,7 +1017,9 @@ class ARIApp(Flask):
                     all_instr = instruments_entry
                 else:
                     all_instr = []
-                context['instruments'] = all_instr if isinstance(all_instr, list) else []
+                context['instruments'] = (all_instr
+                                           if isinstance(all_instr, list)
+                                           else [])
 
             # APERO profiles page: inject instruments + groups meta
             if page_id == 'home.admin_portal.apero_profiles' and user_info:
@@ -1071,7 +1143,8 @@ class ARIApp(Flask):
                 context.update(self._build_admin_sshfs_context(perms))
 
             # Admin index and health-status page: inject health context
-            if page_id in {'home.admin_portal', 'home.admin_portal.health_status'}:
+            if page_id in {'home.admin_portal',
+                          'home.admin_portal.health_status'}:
                 health, updated_at, in_progress = self._get_admin_health(
                     user_info=user_info,
                     perms=perms,
@@ -1236,7 +1309,7 @@ class ARIApp(Flask):
                 'object_table': (f'/data_portal/{profile_id}/object-table', False),
                 'obs_table':    (f'/data_portal/{profile_id}/observation-table', False),
                 'query_db':     (f'/data_portal/{profile_id}/query-db', False),
-                'qc_graphs':    ('', True),
+                'qc_graphs':    (f'/data_portal/{profile_id}/qc-graphs', False),
                 'basket':       (f'/data_portal/{profile_id}/basket', False),
             }
             child_items = []
@@ -1355,7 +1428,9 @@ class ARIApp(Flask):
             instruments = list(all_instr)
 
         username = user_info.get('username', '')
-        accessible_profiles = get_accessible_profiles(user_info, self.ari_groups)
+        accessible_profiles = get_accessible_profiles(
+            user_info,
+            self.ari_groups)
         profiles_by_inst = {}
         for prof in accessible_profiles:
             profiles_by_inst.setdefault(prof['instrument'], []).append(
@@ -1422,7 +1497,9 @@ class ARIApp(Flask):
                 u_instr = user_data.get('instruments', [])
                 if isinstance(u_instr, str):
                     u_instr = [u_instr]
-                u_instr = [str(val).strip() for val in (u_instr or []) if str(val).strip()]
+                u_instr = [str(val).strip()
+                    for val in (u_instr or [])
+                    if str(val).strip()]
                 if inst not in u_instr:
                     continue
 
@@ -1471,7 +1548,9 @@ class ARIApp(Flask):
         params = load_parameters()
         all_instr = params.get('instruments', {}).get('value', [])
         user_instr = user_info.get('instruments', [])
-        instruments = [i for i in all_instr if i in user_instr] or list(all_instr)
+        instruments = (
+            [i for i in all_instr if i in user_instr]
+            or list(all_instr))
         links_data = ud.load_links(username)
         instr_links = {
             i: ud.load_instrument_links(i) for i in instruments
@@ -1488,7 +1567,9 @@ class ARIApp(Flask):
         params = load_parameters()
         all_instr = params.get('instruments', {}).get('value', [])
         user_instr = user_info.get('instruments', [])
-        instruments = [i for i in all_instr if i in user_instr] or list(all_instr)
+        instruments = (
+            [i for i in all_instr if i in user_instr]
+            or list(all_instr))
         events = ud.list_events(username)
         instr_events = {}
         for i in instruments:
@@ -1504,7 +1585,9 @@ class ARIApp(Flask):
         params = load_parameters()
         all_instr = params.get('instruments', {}).get('value', [])
         user_instr = user_info.get('instruments', [])
-        instruments = [i for i in all_instr if i in user_instr] or list(all_instr)
+        instruments = (
+            [i for i in all_instr if i in user_instr]
+            or list(all_instr))
         can_manage = ('manage.admin.calendar' in perms
                       or 'manage.admin.links' in perms)
         return {
@@ -1539,7 +1622,10 @@ class ARIApp(Flask):
         local_data = str(local_data or '').strip()
         if local_data:
             return Path(local_data).expanduser().resolve()
-        return Path(os.environ.get('ARI_DIR', str(Path.home() / '.ari'))).expanduser().resolve()
+        return Path(
+            os.environ.get('ARI_DIR',
+                         str(Path.home() / '.ari'))
+        ).expanduser().resolve()
 
     def _build_admin_backup_context(self, perms):
         """Build context for admin backup settings page."""
@@ -1728,7 +1814,9 @@ class ARIApp(Flask):
             refreshed.get('in_progress', False),
         )
 
-    def _refresh_admin_health_after_change(self, user_info=None, perms=None) -> None:
+    def _refresh_admin_health_after_change(self,
+                                           user_info=None,
+                                           perms=None) -> None:
         """Refresh admin-health cache after successful admin mutations.
 
         Best effort only: this must never break the primary API action.
@@ -1779,7 +1867,8 @@ class ARIApp(Flask):
                         'message': f'{unreviewed} user(s) with only "public" access – may need group assignment.',
                     }
                 else:
-                    health['home.admin_portal.users'] = {'status': 'ok', 'message': ''}
+                    health['home.admin_portal.users'] = {
+                        'status': 'ok', 'message': ''}
             except Exception:
                 pass
 
@@ -1795,7 +1884,8 @@ class ARIApp(Flask):
                 else:
                     test = eb.test_email_connection(email_cfg)
                     if test['ok']:
-                        health['home.admin_portal.email'] = {'status': 'ok', 'message': ''}
+                        health['home.admin_portal.email'] = {
+                            'status': 'ok', 'message': ''}
                     else:
                         health['home.admin_portal.email'] = {
                             'status': 'error',
@@ -1809,7 +1899,8 @@ class ARIApp(Flask):
             try:
                 backup_cfg = bb.load_backup_config()
                 if (not backup_cfg.get('enabled', False)
-                        or backup_cfg.get('provider', 'local_only') == 'local_only'):
+                        or backup_cfg.get('provider', 'local_only')
+                    == 'local_only'):
                     health['home.admin_portal.backup_settings'] = {
                         'status': 'warning',
                         'message': 'Cloud backup mirror is not enabled (local backups only).',
@@ -1817,7 +1908,8 @@ class ARIApp(Flask):
                 else:
                     test = bb.test_backup_connection(backup_cfg)
                     if test.get('ok', False):
-                        health['home.admin_portal.backup_settings'] = {'status': 'ok', 'message': ''}
+                        health['home.admin_portal.backup_settings'] = {
+                            'status': 'ok', 'message': ''}
                     else:
                         health['home.admin_portal.backup_settings'] = {
                             'status': 'error',
@@ -1849,7 +1941,8 @@ class ARIApp(Flask):
                         ),
                     }
                 else:
-                    health['home.admin_portal.apero_profiles'] = {'status': 'ok', 'message': ''}
+                    health['home.admin_portal.apero_profiles'] = {
+                        'status': 'ok', 'message': ''}
             except Exception:
                 pass
 
@@ -1879,10 +1972,13 @@ class ARIApp(Flask):
                             error = str(runtime.get('error', '') or '').strip()
                         else:
                             status = str(task_cfg.get('last_status', '') or '')
-                            error = str(task_cfg.get('error', '') or '').strip()
+                            error = (str(task_cfg.get('error', '') or '')
+                                     .strip())
 
                         if status == 'failed' or error:
-                            label = str(task_cfg.get('task_key', task_id) or task_id)
+                            label = str(
+                                task_cfg.get('task_key', task_id)
+                                or task_id)
                             failed_tasks.append(f'{instrument}:{label}')
 
                 if failed_tasks:
@@ -1895,7 +1991,8 @@ class ARIApp(Flask):
                         ),
                     }
                 else:
-                    health['home.admin_portal.async_tasks'] = {'status': 'ok', 'message': ''}
+                    health['home.admin_portal.async_tasks'] = {
+                        'status': 'ok', 'message': ''}
             except Exception:
                 pass
 
@@ -1905,7 +2002,9 @@ class ARIApp(Flask):
                 params = load_parameters()
                 all_instr = params.get('instruments', {}).get('value', [])
                 user_instr = set((user_info or {}).get('instruments', []))
-                instruments = [i for i in all_instr if i in user_instr] or list(all_instr)
+                instruments = (
+                    [i for i in all_instr if i in user_instr]
+                    or list(all_instr))
 
                 total_users = set()
                 assigned_users = set()
@@ -1917,7 +2016,8 @@ class ARIApp(Flask):
                     inst_users = set(get_users_for_instrument(inst))
                     total_users |= inst_users
                     inst_run_ids = {
-                        str(rid).strip() for rid in self._get_instrument_run_ids(inst)
+                        str(rid).strip()
+                        for rid in self._get_instrument_run_ids(inst)
                         if str(rid).strip()
                     }
                     total_run_ids |= inst_run_ids
@@ -1982,7 +2082,8 @@ class ARIApp(Flask):
                     issue_parts.append(
                         f'{len(unassigned_run_ids)} run ID(s) not assigned to any science group'
                     )
-                    details.extend([f'run_id: {rid}' for rid in unassigned_run_ids])
+                    details.extend(
+                        [f'run_id: {rid}' for rid in unassigned_run_ids])
 
                 if issue_parts:
                     health['home.admin_portal.science_groups'] = {
@@ -2077,14 +2178,17 @@ class ARIApp(Flask):
             status_data = health.get(pid)
             if not isinstance(status_data, dict):
                 continue
-            status = str(status_data.get('status', 'warning')).strip() or 'warning'
+            status = (str(status_data.get('status', 'warning')).strip()
+                      or 'warning')
             if status not in {'ok', 'warning', 'error'}:
                 status = 'warning'
             msg = str(status_data.get('message', '')).strip()
             details = status_data.get('details', [])
             if not isinstance(details, list):
                 details = []
-            details = [str(item).strip() for item in details if str(item).strip()]
+            details = [str(item).strip()
+                for item in details
+                if str(item).strip()]
 
             rules = checks.get(pid, {})
             rule_msg = str(rules.get(status, '')).strip()
@@ -2189,12 +2293,14 @@ class ARIApp(Flask):
 
                 db = self._validate_profile_database(cfg)
                 if not db.get('valid', False):
-                    db_error = str(db.get('error', '') or 'connection failed').strip()
+                    db_error = str(
+                        db.get('error', '') or 'connection failed').strip()
                     reason_parts.append(f'Database error: {db_error}')
 
                 invalid_paths = []
                 for key in path_keys:
-                    path_val = str(self._profile_get_path(cfg, key, '')).strip()
+                    path_val = str(
+                        self._profile_get_path(cfg, key, '')).strip()
                     if not path_val or not Path(path_val).is_dir():
                         invalid_paths.append(key)
                 if invalid_paths:
@@ -2275,20 +2381,21 @@ class ARIApp(Flask):
             'object_table': f'/data_portal/{profile_id}/object-table',
             'obs_table':    f'/data_portal/{profile_id}/observation-table',
             'query_db':     f'/data_portal/{profile_id}/query-db',
-            'qc_graphs':    '',
+            'qc_graphs':    f'/data_portal/{profile_id}/qc-graphs',
             'basket':       f'/data_portal/{profile_id}/basket',
         }
         _card_desc_map = {
-            'object_table': 'Browse and search astrophysical objects '
-                            'in this reduction profile.',
-            'obs_table':    'View night-by-night observations '
-                            'and their reduction status.',
-            'query_db':     'Run custom queries against the '
-                            'reduction database tables.',
-            'qc_graphs':    'Interactive plots of quality control '
-                            'metrics over time.',
-            'basket':       'Collect and download files from this '
-                            'reduction profile.',
+            'object_table':     'Browse and search astrophysical objects '
+                                'in this reduction profile.',
+            'obs_table':        'View night-by-night observations '
+                                'and their reduction status.',
+            'query_db':         'Run custom queries against the '
+                                'reduction database tables.',
+            'qc_graphs':        'Interactive plots of quality control '
+                                'metrics over time.',
+            'basket':           'Collect and download files from this '
+                                'reduction profile.',
+            'last_object_page': 'No object page opened yet for this profile.',
         }
         section_cards = []
         for tpl_key, tpl_def in self._page_templates.items():
@@ -2590,7 +2697,8 @@ class ARIApp(Flask):
                                for e in candidates):
                             matched_username = username
                             recipient_email = (primary
-                                               or self._get_primary_contact_email(user))
+                                               or self._get_primary_contact_email(
+                                                   user))
                             break
 
             if matched_username and recipient_email:
@@ -2615,7 +2723,8 @@ class ARIApp(Flask):
                 )
                 err = eb.send_email(recipient_email, subject, body)
                 if err:
-                    # Do not reveal account status in UI; keep server-side trace.
+                    # Do not reveal account status in UI; keep server-side
+                    # trace.
                     print(f'Password reset email failed for {matched_username}: {err}')
 
             if changed:
@@ -2717,7 +2826,9 @@ class ARIApp(Flask):
             institutions_raw = [institutions_raw]
 
         emails = [str(e).strip() for e in emails_raw if str(e).strip()]
-        institutions = [str(i).strip() for i in institutions_raw if str(i).strip()]
+        institutions = [str(i).strip()
+            for i in institutions_raw
+            if str(i).strip()]
 
         if not self._is_valid_username(username):
             return jsonify(success=False,
@@ -2745,7 +2856,9 @@ class ARIApp(Flask):
                            error='Username already exists.'), 409
 
         code = f'{secrets.randbelow(1_000_000):06d}'
-        expires_at = (datetime.now(timezone.utc) + timedelta(minutes=15)).isoformat()
+        expires_at = (
+            (datetime.now(timezone.utc) + timedelta(minutes=15))
+        ).isoformat()
 
         err = self._send_verification_email(emails[0], code, 'registration')
         if err:
@@ -2873,7 +2986,9 @@ class ARIApp(Flask):
             institutions_raw = [institutions_raw]
 
         emails = [str(e).strip() for e in emails_raw if str(e).strip()]
-        institutions = [str(i).strip() for i in institutions_raw if str(i).strip()]
+        institutions = [str(i).strip()
+            for i in institutions_raw
+            if str(i).strip()]
 
         if not first_names or not last_name:
             return jsonify(success=False,
@@ -2939,8 +3054,11 @@ class ARIApp(Flask):
                            error='New primary email is required.'), 400
 
         code = f'{secrets.randbelow(1_000_000):06d}'
-        expires_at = (datetime.now(timezone.utc) + timedelta(minutes=15)).isoformat()
-        err = self._send_verification_email(new_email, code, 'primary-email-change')
+        expires_at = (
+            (datetime.now(timezone.utc) + timedelta(minutes=15))
+        ).isoformat()
+        err = self._send_verification_email(
+            new_email, code, 'primary-email-change')
         if err:
             return jsonify(success=False,
                            error=f'Failed to send verification email: {err}'), 500
@@ -3068,7 +3186,8 @@ class ARIApp(Flask):
 
         users = load_users()
         user = users.get(username, {})
-        legacy_pins = self._normalize_pinned_pages(user.get('pinned_pages', []))
+        legacy_pins = self._normalize_pinned_pages(
+            user.get('pinned_pages', []))
 
         pins = file_pins or legacy_pins
         if pins != file_pins:
@@ -3102,7 +3221,9 @@ class ARIApp(Flask):
 
         users = load_users()
         user = users.get(username, {})
-        legacy = user.get('object_section', {}) if isinstance(user, dict) else {}
+        legacy = (user.get('object_section', {})
+                  if isinstance(user, dict)
+                  else {})
         legacy_pins = self._normalize_object_section_pins(
             legacy.get('pinned', []) if isinstance(legacy, dict) else []
         )
@@ -3122,7 +3243,9 @@ class ARIApp(Flask):
 
         return pins
 
-    def _save_user_object_section_pins(self, username: str, pins: List[str]) -> None:
+    def _save_user_object_section_pins(self,
+                                       username: str,
+                                       pins: List[str]) -> None:
         """Persist object section pin order to file and legacy users.yaml field."""
         pins = self._normalize_object_section_pins(pins)
         ud.save_object_section(username, {'pinned': pins})
@@ -3536,7 +3659,9 @@ class ARIApp(Flask):
         column_meta = {
             col: dict(meta)
             for col, meta in raw_column_meta.items()
-            if col not in skip and col not in hidden_by_meta and isinstance(meta, dict)
+            if (col not in skip
+                    and col not in hidden_by_meta
+                    and isinstance(meta, dict))
         }
         if 'OBJNAME' in columns and 'OBJNAME' not in column_meta:
             column_meta['OBJNAME'] = {
@@ -3890,6 +4015,352 @@ class ARIApp(Flask):
             labels=labels,
         )
 
+    def _api_object_plots(self):
+        """Return Bokeh JSON plot payloads (SNR, BERV, spec, CCF) for the object page."""
+        user_info = get_effective_user(session)
+        if user_info:
+            perms = resolve_user_permissions(
+                user_info['groups'], self.ari_groups
+            )
+        else:
+            perms = get_public_permissions()
+
+        if 'view.data_portal' not in perms:
+            return jsonify(success=False, error='Unauthorized'), 401
+
+        profile_id = request.args.get('profile_id', '').strip()
+        objname = request.args.get('objname', '').strip()
+        if not profile_id or not objname:
+            return jsonify(
+                success=False,
+                error='Missing profile_id or objname',
+            ), 400
+
+        vsys_ms = None
+        vsys_ms_str = request.args.get('vsys_ms', '').strip()
+        if vsys_ms_str:
+            try:
+                vsys_ms = float(vsys_ms_str)
+            except ValueError:
+                pass
+
+        accessible = get_accessible_profiles(user_info, self.ari_groups)
+        profile = next(
+            (p for p in accessible if p['profile_id'] == profile_id), None
+        )
+        if not profile:
+            return jsonify(success=False, error='Profile not found'), 404
+
+        instrument = profile['instrument']
+        profile_data = profile.get('data') or {}
+        instrument_profile_file = str(
+            profile_data.get('APERO_INSTRUMENT_PROFILE', '')
+            or profile_data.get('apero_instrument_profile', '')
+            or ''
+        ).strip()
+
+        base_dir = Path(self.args.data_dir or str(Path.home() / '.ari'))
+        objects_dir = base_dir / 'tasks' / instrument / profile_id / 'objects'
+
+        htable_rows = load_object_htable_rows(objects_dir, objname)
+        preset = load_object_preset(instrument_profile_file)
+        obj_props = load_object_table_row(objects_dir, objname)
+
+        # Build path dict for file resolution
+        path_red = str(
+            self._profile_get_path(profile_data, 'PATH_RED', '') or '')
+        path_lbl = str(
+            self._profile_get_path(profile_data, 'PATH_LBL', '') or '')
+        paths = {'PATH_RED': path_red, 'PATH_LBL': path_lbl}
+
+        from apero_ri.plots.plot_objects import build_snr_plot_json
+        from apero_ri.plots.plot_objects import build_berv_plot_json
+        from apero_ri.plots.plot_objects import build_spec_plot_json
+        from apero_ri.plots.plot_objects import build_ccf_plot_json
+        from apero_ri.plots.plot_objects import build_ts_snr_plot_json
+        from apero_ri.plots.plot_objects import build_ts_airmass_plot_json
+
+        _no_plot = {'has_plot': False, 'message': 'Plot build failed'}
+
+        try:
+            snr = build_snr_plot_json(htable_rows, preset)
+        except Exception:
+            snr = _no_plot
+        try:
+            berv = build_berv_plot_json(htable_rows, vsys_ms, preset,
+                                        obj_props=obj_props)
+        except Exception:
+            berv = _no_plot
+
+        ftable_ext_rows = load_object_ftable_rows(objects_dir, objname, 'ext')
+        ftable_tcorr_rows = load_object_ftable_rows(
+            objects_dir, objname, 'tcorr')
+        ftable_ccf_rows = load_object_ftable_rows(objects_dir, objname, 'ccf')
+
+        try:
+            spec = build_spec_plot_json(htable_rows, ftable_ext_rows,
+                                        ftable_tcorr_rows, paths, preset)
+        except Exception:
+            spec = _no_plot
+        try:
+            ccf = build_ccf_plot_json(htable_rows, ftable_ccf_rows,
+                                      paths, preset)
+        except Exception:
+            ccf = _no_plot
+        try:
+            ts_snr = build_ts_snr_plot_json(htable_rows, ftable_ext_rows,
+                                            preset)
+        except Exception:
+            ts_snr = _no_plot
+        try:
+            ts_airmass = build_ts_airmass_plot_json(htable_rows,
+                                                    ftable_ext_rows, preset)
+        except Exception:
+            ts_airmass = _no_plot
+
+        return jsonify(success=True, snr=snr, berv=berv, spec=spec, ccf=ccf,
+                       ts_snr=ts_snr, ts_airmass=ts_airmass)
+
+    def _api_object_lbl_plots(self):
+        """Return Bokeh JSON plot payloads for all LBL flavors of an object."""
+        user_info = get_effective_user(session)
+        if user_info:
+            perms = resolve_user_permissions(
+                user_info['groups'], self.ari_groups
+            )
+        else:
+            perms = get_public_permissions()
+
+        if 'view.data_portal' not in perms:
+            return jsonify(success=False, error='Unauthorized'), 401
+
+        profile_id = request.args.get('profile_id', '').strip()
+        objname = request.args.get('objname', '').strip()
+        if not profile_id or not objname:
+            return jsonify(
+                success=False,
+                error='Missing profile_id or objname',
+            ), 400
+
+        accessible = get_accessible_profiles(user_info, self.ari_groups)
+        profile = next(
+            (p for p in accessible if p['profile_id'] == profile_id), None
+        )
+        if not profile:
+            return jsonify(success=False, error='Profile not found'), 404
+
+        instrument = profile['instrument']
+        profile_data = profile.get('data') or {}
+        instrument_profile_file = str(
+            profile_data.get('APERO_INSTRUMENT_PROFILE', '')
+            or profile_data.get('apero_instrument_profile', '')
+            or ''
+        ).strip()
+
+        base_dir = Path(self.args.data_dir or str(Path.home() / '.ari'))
+        objects_dir = base_dir / 'tasks' / instrument / profile_id / 'objects'
+
+        preset = load_object_preset(instrument_profile_file)
+        path_lbl = str(
+            self._profile_get_path(profile_data, 'PATH_LBL', '') or '')
+
+        ftable_lbl_rdb_rows = load_object_ftable_rows(
+            objects_dir, objname, 'lbl_rdb'
+        )
+
+        from apero_ri.plots.plot_objects import build_lbl_plots_json
+        try:
+            plots = build_lbl_plots_json(ftable_lbl_rdb_rows, path_lbl, preset)
+        except Exception:
+            plots = {}
+
+        return jsonify(success=True, plots=plots)
+
+    def _api_filename_plot(self):
+        """Return a Bokeh JSON plot for a single file (filename-click feature)."""
+        from apero_ri.base.base import BLOCK_KIND as _BLOCK_KIND_MAP
+        from apero_ri.plots.plots_filename import build_filename_plot_json
+
+        user_info = get_effective_user(session)
+        if user_info:
+            perms = resolve_user_permissions(
+                user_info['groups'], self.ari_groups
+            )
+        else:
+            perms = get_public_permissions()
+
+        if 'view.data_portal' not in perms:
+            return jsonify(success=False, error='Unauthorized'), 401
+
+        profile_id = request.args.get('profile_id', '').strip()
+        block_kind = request.args.get('block_kind', '').strip().lower()
+        obs_dir = request.args.get('obs_dir', '').strip()
+        filename = request.args.get('filename', '').strip()
+        kw_output = request.args.get('kw_output', '').strip()
+        kw_fiber = (request.args.get('kw_fiber', '').strip() or 'AB')
+
+        if not all([profile_id, block_kind, filename, kw_output]):
+            return jsonify(success=False, error='Missing required params'), 400
+
+        accessible = get_accessible_profiles(user_info, self.ari_groups)
+        profile = next(
+            (p for p in accessible if p['profile_id'] == profile_id), None
+        )
+        if not profile:
+            return jsonify(success=False, error='Profile not found'), 404
+
+        path_key = _BLOCK_KIND_MAP.get(block_kind)
+        if not path_key:
+            return jsonify(
+                success=False,
+                error=f'Unknown block_kind: {block_kind}',
+            ), 400
+
+        profile_data = profile.get('data') or {}
+        base_path_str = str(
+            self._profile_get_path(profile_data, path_key, '') or ''
+        ).strip()
+        if not base_path_str:
+            return jsonify(
+                success=False,
+                error=f'No path configured for {path_key}',
+            ), 400
+
+        try:
+            base_path = Path(base_path_str).resolve()
+            obs_part = Path(obs_dir.strip('/')) if obs_dir else Path('')
+            filepath = (base_path / obs_part / filename).resolve()
+            # security: ensure we stay inside the declared base path
+            filepath.relative_to(base_path)
+        except (ValueError, OSError) as exc:
+            return jsonify(success=False, error=f'Path error: {exc}'), 400
+
+        if not filepath.is_file():
+            return jsonify(
+                success=False,
+                has_plot=False,
+                message=f'File not found: {filename}',
+            ), 404
+
+        try:
+            result = build_filename_plot_json(filepath, kw_output, kw_fiber)
+        except Exception:
+            result = {'has_plot': False, 'message': 'Plot build failed'}
+        return jsonify(success=True, **result)
+
+    def _ri_object_plot_max_view(self, profile_id, objname, plot_key):
+        """Serve a standalone maximized object plot page (SNR, BERV, spec, or CCF)."""
+        user_info = get_effective_user(session)
+        if user_info:
+            perms = resolve_user_permissions(
+                user_info['groups'], self.ari_groups
+            )
+        else:
+            perms = get_public_permissions()
+
+        if 'view.data_portal' not in perms:
+            flash('You do not have permission to view this page.', 'warning')
+            return redirect(url_for('login'))
+
+        accessible = get_accessible_profiles(user_info, self.ari_groups)
+        profile = next(
+            (p for p in accessible if p['profile_id'] == profile_id), None
+        )
+        if not profile:
+            flash('Profile not found or access denied.', 'warning')
+            return redirect(url_for('home_data_portal'))
+
+        vsys_ms = None
+        vsys_ms_str = request.args.get('vsys_ms', '').strip()
+        if vsys_ms_str:
+            try:
+                vsys_ms = float(vsys_ms_str)
+            except ValueError:
+                pass
+
+        instrument = profile['instrument']
+        profile_data = profile.get('data') or {}
+        instrument_profile_file = str(
+            profile_data.get('APERO_INSTRUMENT_PROFILE', '')
+            or profile_data.get('apero_instrument_profile', '')
+            or ''
+        ).strip()
+
+        base_dir = Path(self.args.data_dir or str(Path.home() / '.ari'))
+        objects_dir = base_dir / 'tasks' / instrument / profile_id / 'objects'
+
+        htable_rows = load_object_htable_rows(objects_dir, objname)
+        preset = load_object_preset(instrument_profile_file)
+        obj_props = load_object_table_row(objects_dir, objname)
+
+        from apero_ri.plots.plot_objects import build_snr_plot_components
+        from apero_ri.plots.plot_objects import build_berv_plot_components
+        from apero_ri.plots.plot_objects import build_spec_plot_components
+        from apero_ri.plots.plot_objects import build_ccf_plot_components
+        from apero_ri.plots.plot_objects import build_ts_snr_plot_components
+        from apero_ri.plots.plot_objects import build_ts_airmass_plot_components
+
+        safe_key = str(plot_key or '').strip().lower()
+        if safe_key == 'snr':
+            plot_payload = build_snr_plot_components(htable_rows, preset)
+            display_name = 'SNR vs Time'
+        elif safe_key == 'berv':
+            plot_payload = build_berv_plot_components(
+                htable_rows, vsys_ms, preset,
+                                                      obj_props=obj_props)
+            display_name = 'BERV Coverage'
+        elif safe_key == 'spec':
+            path_red = str(
+            self._profile_get_path(profile_data, 'PATH_RED', '') or '')
+            paths = {'PATH_RED': path_red}
+            ftable_ext_rows = load_object_ftable_rows(
+                objects_dir, objname, 'ext')
+            ftable_tcorr_rows = load_object_ftable_rows(
+            objects_dir, objname, 'tcorr')
+            plot_payload = build_spec_plot_components(
+                htable_rows, ftable_ext_rows, ftable_tcorr_rows, paths, preset)
+            display_name = 'Median Spectrum'
+        elif safe_key == 'ccf':
+            path_red = str(
+            self._profile_get_path(profile_data, 'PATH_RED', '') or '')
+            paths = {'PATH_RED': path_red}
+            ftable_ccf_rows = load_object_ftable_rows(
+                objects_dir, objname, 'ccf')
+            plot_payload = build_ccf_plot_components(
+                htable_rows, ftable_ccf_rows, paths, preset)
+            display_name = 'CCF Analysis'
+        elif safe_key == 'ts_snr':
+            ftable_ext_rows = load_object_ftable_rows(
+                objects_dir, objname, 'ext')
+            plot_payload = build_ts_snr_plot_components(
+                htable_rows, ftable_ext_rows, preset)
+            display_name = 'SNR per Night'
+        elif safe_key == 'ts_airmass':
+            ftable_ext_rows = load_object_ftable_rows(
+                objects_dir, objname, 'ext')
+            plot_payload = build_ts_airmass_plot_components(
+                htable_rows, ftable_ext_rows, preset)
+            display_name = 'Airmass per Night'
+        else:
+            plot_payload = {'has_plot': False, 'script': '', 'div': '',
+                            'message': f'Unknown plot key: {plot_key}'}
+            display_name = str(plot_key)
+
+        return_url = url_for(
+            'ri_object_page',
+            profile_id=profile_id,
+            objname=objname,
+        )
+        context = {
+            'profile': profile,
+            'objname': objname,
+            'plot_key': safe_key,
+            'display_name': display_name,
+            'plot_payload': plot_payload,
+            'return_url': return_url,
+        }
+        return render_template('data_portal/object_plot_max.html', **context)
+
     # -----------------------------------------------------------------
     # Download basket helpers
     # -----------------------------------------------------------------
@@ -4241,7 +4712,8 @@ class ARIApp(Flask):
                        jobs=safe_jobs,
                        download_usage=usage,
                        download_limit_bytes=limit_bytes,
-                       quota_reached=(usage.get('total_bytes', 0) >= limit_bytes))
+                       quota_reached=(
+                           usage.get('total_bytes', 0) >= limit_bytes))
 
     def _api_basket_jobs_remove(self):
         """Remove one completed/failed compilation job for the user."""
@@ -4258,14 +4730,16 @@ class ARIApp(Flask):
         result = bk.remove_download_job(username, job_id)
         if not result.get('success'):
             return jsonify(success=False,
-                           error=result.get('error', 'Could not remove job')), 400
+                           error=result.get(
+                               'error', 'Could not remove job')), 400
         usage = bk.get_downloads_usage(username)
         limit_bytes = bk.get_downloads_storage_limit_bytes()
         return jsonify(success=True,
                        removed=result.get('removed', 0),
                        download_usage=usage,
                        download_limit_bytes=limit_bytes,
-                       quota_reached=(usage.get('total_bytes', 0) >= limit_bytes))
+                       quota_reached=(
+                           usage.get('total_bytes', 0) >= limit_bytes))
 
     def _api_basket_jobs_clear(self):
         """Remove all completed/failed compilation jobs for the user."""
@@ -4282,7 +4756,8 @@ class ARIApp(Flask):
                        skipped=result.get('skipped', 0),
                        download_usage=usage,
                        download_limit_bytes=limit_bytes,
-                       quota_reached=(usage.get('total_bytes', 0) >= limit_bytes))
+                       quota_reached=(
+                           usage.get('total_bytes', 0) >= limit_bytes))
 
     # -----------------------------------------------------------------
     # Basket: API – create/retrieve share token for a completed job
@@ -4302,7 +4777,8 @@ class ARIApp(Flask):
             token = bk.create_share_token(username, job_id)
         except ValueError as exc:
             return jsonify(success=False, error=str(exc)), 400
-        share_url = request.host_url.rstrip('/') + url_for('share_landing', token=token)
+        share_url = (request.host_url.rstrip('/')
+                     + url_for('share_landing', token=token))
         return jsonify(success=True, token=token, share_url=share_url)
 
     # -----------------------------------------------------------------
@@ -4330,7 +4806,9 @@ class ARIApp(Flask):
         from apero_ri.core.auth import load_users as _load_users
         all_users = _load_users()
         ud = all_users.get(username, {})
-        first_names = str(ud.get('first_names', '') or user_info.get('first_names', '') or '').strip()
+        first_names = str(
+            ud.get('first_names', '')
+            or user_info.get('first_names', '') or '').strip()
         last_name = str(ud.get('last_name', '') or '').strip()
         sender_email = self._get_primary_contact_email({
             'primary_email': ud.get('primary_email', ''),
@@ -4356,7 +4834,8 @@ class ARIApp(Flask):
         except Exception:
             expires_str = 'within 24 hours'
 
-        share_url = request.host_url.rstrip('/') + url_for('share_landing', token=token)
+        share_url = (request.host_url.rstrip('/')
+                     + url_for('share_landing', token=token))
         sender_full = f'{first_names} {last_name}'.strip() or username
         sender_display = (
             f'{sender_full} (email address: {sender_email})'
@@ -4400,7 +4879,8 @@ class ARIApp(Flask):
 
         expires_str = None
         try:
-            created_at = datetime.fromisoformat(str(meta.get('created_at', '')))
+            created_at = datetime.fromisoformat(
+                str(meta.get('created_at', '')))
             if created_at.tzinfo is None:
                 created_at = created_at.replace(tzinfo=timezone.utc)
             expires_at = created_at + timedelta(hours=24)
@@ -4430,7 +4910,8 @@ class ARIApp(Flask):
                                      chunk_idx)
         if path is None:
             return jsonify(success=False, error='File not found'), 404
-        return send_file(str(path), as_attachment=True, download_name=path.name)
+        return send_file(
+            str(path), as_attachment=True, download_name=path.name)
 
     # -----------------------------------------------------------------
     # Basket: API – add from ftable by obs_dir + fkind
@@ -4474,7 +4955,9 @@ class ARIApp(Flask):
         # filter by access and by obs_dir
         rows = bk.filter_accessible_rows(rows, accessible_run_ids)
         if obs_dir:
-            rows = [r for r in rows if str(r.get('OBS_DIR', '') or '') == obs_dir]
+            rows = [r
+                for r in rows
+                if str(r.get('OBS_DIR', '') or '') == obs_dir]
 
         entries = [
             {
@@ -4553,7 +5036,9 @@ class ARIApp(Flask):
         total_m = len(all_rows)
 
         # Access filter (security gate)
-        accessible_rows = bk.filter_accessible_rows(all_rows, accessible_run_ids)
+        accessible_rows = bk.filter_accessible_rows(
+            all_rows,
+            accessible_run_ids)
 
         # Preset filter
         filtered = bk.apply_preset_filter(accessible_rows, preset)
@@ -4714,7 +5199,9 @@ class ARIApp(Flask):
 
         instrument = str(profile.get('instrument', '')).strip()
         profile_id = str(profile.get('profile_id', '')).strip()
-        cfg = profile.get('data', {}) if isinstance(profile.get('data'), dict) else {}
+        cfg = (profile.get('data', {})
+               if isinstance(profile.get('data'), dict)
+               else {})
         user_groups = set(user_info.get('groups', []) or [])
 
         db_access = load_db_access()
@@ -4744,7 +5231,9 @@ class ARIApp(Flask):
             allowed_cols = entry.get('columns', {}).get(label, [])
             if not isinstance(allowed_cols, list):
                 allowed_cols = []
-            allowed_cols = [str(c).strip() for c in allowed_cols if str(c).strip()]
+            allowed_cols = [str(c).strip()
+                for c in allowed_cols
+                if str(c).strip()]
 
             if not allowed_cols:
                 continue  # no columns configured
@@ -4870,7 +5359,8 @@ class ARIApp(Flask):
         if 'FINDEX' in table_cols:
             for _bk_col in _BASKET_KEY_COLS:
                 _bk_alias = f'FINDEX__{_bk_col}'
-                if _bk_alias not in col_labels and _bk_col in table_cols['FINDEX']:
+                if (_bk_alias not in col_labels
+                        and _bk_col in table_cols['FINDEX']):
                     select_parts.append(
                         f'`_t_FINDEX`.{q_id(_bk_col)} AS {q_id(_bk_alias)}'
                     )
@@ -4952,7 +5442,8 @@ class ARIApp(Flask):
         # ORDER BY
         order_clause = ''
         if order_by_spec and isinstance(order_by_spec, dict):
-            ob_label = str(order_by_spec.get('table_label', '')).strip().upper()
+            ob_label = str(
+                order_by_spec.get('table_label', '')).strip().upper()
             ob_col = str(order_by_spec.get('column', '')).strip()
             ob_dir = str(order_by_spec.get('direction', 'ASC')).strip().upper()
             if ob_label in table_names and ob_col:
@@ -5036,6 +5527,114 @@ class ARIApp(Flask):
         }
         return render_template('data_portal/query_db.html', **context)
 
+    def _ri_qc_graphs_view(self, profile_id):
+        """Serve interactive quality-control graphs for a profile."""
+        user_info = get_effective_user(session)
+        if user_info:
+            perms = resolve_user_permissions(
+                user_info['groups'], self.ari_groups
+            )
+        else:
+            perms = get_public_permissions()
+
+        if 'view.data_portal' not in perms:
+            flash('You do not have permission to view this page.',
+                  'warning')
+            return redirect(url_for('login'))
+
+        accessible = get_accessible_profiles(user_info, self.ari_groups)
+        profile = None
+        for prof in accessible:
+            if prof['profile_id'] == profile_id:
+                profile = prof
+                break
+
+        if not profile:
+            flash('Profile not found or access denied.', 'warning')
+            return redirect(url_for('home_data_portal'))
+
+        page_id = f'home.data_portal.{profile_id}.qc_graphs'
+        colors = self._instrument_colors()
+        color = colors.get(profile['instrument'],
+                           self._INSTRUMENT_PALETTE[0])
+
+        sidebar_tree = self._build_data_portal_sidebar_tree(
+            accessible_profiles=accessible,
+            active_page_id=page_id,
+            user_permissions=perms,
+            user_info=user_info,
+            current_profile_id=profile_id,
+        )
+
+        from apero_ri.plots.plots_qc import build_qc_plot_payload
+
+        base_dir = Path(self.args.data_dir or str(Path.home() / '.ari'))
+        qc_payload = build_qc_plot_payload(base_dir=base_dir, profile=profile)
+
+        context = {
+            'page_id': page_id,
+            'page_label': f'{profile_id}: Quality Control Graphs',
+            'page_icon': 'fa-solid fa-chart-line',
+            'is_parent': False,
+            'profile': profile,
+            'profile_color': color,
+            'qc_payload': qc_payload,
+            'sidebar_root': 'home.data_portal',
+            'sidebar_label': 'Data Portal',
+            'sidebar_icon': 'fa-solid fa-database',
+            'sidebar_url': '/data_portal',
+            'sidebar_tree': sidebar_tree,
+        }
+        return render_template('data_portal/qc_graphs.html', **context)
+
+    def _ri_qc_graphs_max_view(self,
+                               profile_id,
+                               section,
+                               metric_key,
+                               view_key):
+        """Serve a standalone maximized QC plot page."""
+        user_info = get_effective_user(session)
+        if user_info:
+            perms = resolve_user_permissions(
+                user_info['groups'], self.ari_groups
+            )
+        else:
+            perms = get_public_permissions()
+
+        if 'view.data_portal' not in perms:
+            flash('You do not have permission to view this page.',
+                  'warning')
+            return redirect(url_for('login'))
+
+        accessible = get_accessible_profiles(user_info, self.ari_groups)
+        profile = None
+        for prof in accessible:
+            if prof['profile_id'] == profile_id:
+                profile = prof
+                break
+
+        if not profile:
+            flash('Profile not found or access denied.', 'warning')
+            return redirect(url_for('home_data_portal'))
+
+        from apero_ri.plots.plots_qc import build_qc_single_plot_payload
+
+        base_dir = Path(self.args.data_dir or str(Path.home() / '.ari'))
+        plot_payload = build_qc_single_plot_payload(
+            base_dir=base_dir,
+            profile=profile,
+            section=section,
+            metric_key=metric_key,
+            view_key=view_key,
+        )
+
+        context = {
+            'profile': profile,
+            'plot_payload': plot_payload,
+            'return_url': url_for('ri_qc_graphs', profile_id=profile_id),
+        }
+        return render_template('data_portal/qc_graphs_max.html', **context)
+
     def _load_query_db_presets(self, profile):
         """Load query-db presets and replace table placeholders.
 
@@ -5058,7 +5657,9 @@ class ARIApp(Flask):
         {LABEL_TABLENAME}, where LABEL is one of the db-access table labels
         (e.g. FINDEX, ASTROM, CALIB).
         """
-        cfg = profile.get('data', {}) if isinstance(profile.get('data'), dict) else {}
+        cfg = (profile.get('data', {})
+               if isinstance(profile.get('data'), dict)
+               else {})
         table_names = {}
         for label, key in self._db_access_table_keys().items():
             tname = str(self._profile_get_db(cfg, key, '')).strip()
@@ -5311,7 +5912,9 @@ class ARIApp(Flask):
             return jsonify(success=False, error='Profile not found'), 404
 
         instrument = profile['instrument']
-        cfg = profile.get('data', {}) if isinstance(profile.get('data'), dict) else {}
+        cfg = (profile.get('data', {})
+               if isinstance(profile.get('data'), dict)
+               else {})
 
         # Determine which run_ids the user may see
         run_ids = self._get_user_accessible_run_ids(user_info, instrument)
@@ -5492,7 +6095,8 @@ class ARIApp(Flask):
             ), 403
 
         old_groups = target_groups
-        changed = (set(new_groups) - old_groups) | (old_groups - set(new_groups))
+        changed = ((set(new_groups) - old_groups)
+                   | (old_groups - set(new_groups)))
         for g in changed:
             if f'manage.group.{g}' not in perms and not editor_is_admin:
                 return jsonify(
@@ -5763,8 +6367,12 @@ class ARIApp(Flask):
             if not group_run_ids:
                 groups_without_run_ids.append(str(gname))
 
-        available_set = {str(u).strip() for u in available_users if str(u).strip()}
-        available_run_id_set = {str(rid).strip() for rid in run_ids if str(rid).strip()}
+        available_set = {str(u).strip()
+                        for u in available_users
+                        if str(u).strip()}
+        available_run_id_set = {str(rid).strip()
+                             for rid in run_ids
+                             if str(rid).strip()}
         missing_users = sorted(available_set - assigned_users)
         missing_run_ids = sorted(available_run_id_set - assigned_run_ids)
 
@@ -5797,7 +6405,8 @@ class ARIApp(Flask):
             health_issues.append(
                 f'{len(missing_run_ids)} run ID(s) not assigned to any science group'
             )
-            health_details.extend([f'run_id: {rid}' for rid in missing_run_ids])
+            health_details.extend(
+                [f'run_id: {rid}' for rid in missing_run_ids])
 
         if health_issues:
             health_status = 'warning'
@@ -6082,10 +6691,14 @@ class ARIApp(Flask):
             self._profile_get_db(profile_cfg, 'DATABASE_PASSWORD', ''),
             self._profile_get_db(profile_cfg, 'DATABASE_NAME', ''),
             port=self._profile_get_db(profile_cfg, 'DATABASE_PORT', ''),
-            use_ssh_tunnel=self._profile_get_db(profile_cfg, 'DATABASE_USE_SSH_TUNNEL', False),
-            ssh_config_host=self._profile_get_db(profile_cfg, 'DATABASE_SSH_CONFIG_HOST', ''),
-            ssh_local_port=self._profile_get_db(profile_cfg, 'DATABASE_SSH_LOCAL_PORT', ''),
-            ssh_remote_port=self._profile_get_db(profile_cfg, 'DATABASE_SSH_REMOTE_PORT', ''),
+            use_ssh_tunnel=self._profile_get_db(
+                profile_cfg, 'DATABASE_USE_SSH_TUNNEL', False),
+            ssh_config_host=self._profile_get_db(
+                profile_cfg, 'DATABASE_SSH_CONFIG_HOST', ''),
+            ssh_local_port=self._profile_get_db(
+                profile_cfg, 'DATABASE_SSH_LOCAL_PORT', ''),
+            ssh_remote_port=self._profile_get_db(
+                profile_cfg, 'DATABASE_SSH_REMOTE_PORT', ''),
             local_data_dir=str(self._resolve_local_data_dir()),
         )
 
@@ -6138,13 +6751,17 @@ class ARIApp(Flask):
     def _profile_db_access_health(self, entry: dict, table_names: list) -> str:
         """Return health status for one profile DB-access config."""
         groups_map = entry.get('groups', {}) if isinstance(entry, dict) else {}
-        columns_map = entry.get('columns', {}) if isinstance(entry, dict) else {}
+        columns_map = (entry.get('columns', {})
+                      if isinstance(entry, dict)
+                      else {})
         if not table_names:
             return 'warning'
         for table in table_names:
-            if not isinstance(groups_map.get(table, []), list) or not groups_map.get(table, []):
+            glist = groups_map.get(table, [])
+            if not isinstance(glist, list) or not glist:
                 return 'warning'
-            if not isinstance(columns_map.get(table, []), list) or not columns_map.get(table, []):
+            clist = columns_map.get(table, [])
+            if not isinstance(clist, list) or not clist:
                 return 'warning'
         return 'ok'
 
@@ -6161,7 +6778,9 @@ class ARIApp(Flask):
         for prof in profiles:
             instrument = str(prof.get('instrument', '')).strip()
             profile_id = str(prof.get('profile_id', '')).strip()
-            cfg = prof.get('data', {}) if isinstance(prof.get('data'), dict) else {}
+            cfg = (prof.get('data', {})
+                   if isinstance(prof.get('data'), dict)
+                   else {})
 
             if not instrument or not profile_id:
                 continue
@@ -6187,15 +6806,21 @@ class ARIApp(Flask):
                            if isinstance(db_access.get(instrument, {}), dict)
                            else {}).get(profile_id, {}))
                           if instrument and profile_id else {})
-            groups_map = prof_entry.get('groups', {}) if isinstance(prof_entry, dict) else {}
-            columns_map = prof_entry.get('columns', {}) if isinstance(prof_entry, dict) else {}
+            groups_map = (prof_entry.get('groups', {})
+                          if isinstance(prof_entry, dict)
+                          else {})
+            columns_map = (prof_entry.get('columns', {})
+                           if isinstance(prof_entry, dict)
+                           else {})
 
             missing_groups = []
             missing_columns = []
             for table in table_names:
-                if not isinstance(groups_map.get(table, []), list) or not groups_map.get(table, []):
+                glist = groups_map.get(table, [])
+                if not isinstance(glist, list) or not glist:
                     missing_groups.append(table)
-                if not isinstance(columns_map.get(table, []), list) or not columns_map.get(table, []):
+                clist = columns_map.get(table, [])
+                if not isinstance(clist, list) or not clist:
                     missing_columns.append(table)
 
             is_warning = bool(missing_groups or missing_columns)
@@ -6233,7 +6858,9 @@ class ARIApp(Flask):
             status = 'ok'
             message = f'All {checked} profile(s) have complete DB table access rules.'
 
-        profile_rows.sort(key=lambda row: (row.get('instrument', ''), row.get('profile_id', '')))
+        profile_rows.sort(
+            key=lambda row: (row.get('instrument', ''),
+                             row.get('profile_id', '')))
         return {
             'status': status,
             'message': message,
@@ -6257,7 +6884,9 @@ class ARIApp(Flask):
         for prof in profiles:
             instrument = str(prof.get('instrument', '')).strip()
             profile_id = str(prof.get('profile_id', '')).strip()
-            cfg = prof.get('data', {}) if isinstance(prof.get('data'), dict) else {}
+            cfg = (prof.get('data', {})
+                   if isinstance(prof.get('data'), dict)
+                   else {})
 
             table_names = []
             for label, key in table_key_map.items():
@@ -6290,21 +6919,30 @@ class ARIApp(Flask):
         if not profile_id or not instrument:
             return jsonify(success=False, error='Missing profile selection'), 400
 
-        profile = self._find_accessible_profile(user_info, profile_id, instrument)
+        profile = self._find_accessible_profile(
+            user_info,
+            profile_id,
+            instrument)
         if not profile:
             return jsonify(success=False, error='Profile not found or access denied'), 404
 
         editable_groups = self._editable_groups_for_editor(user_info, perms)
         all_groups = list(self.ari_groups.keys())
-        cfg = profile.get('data', {}) if isinstance(profile.get('data'), dict) else {}
+        cfg = (profile.get('data', {})
+               if isinstance(profile.get('data'), dict)
+               else {})
 
         db_access = load_db_access()
         saved_entry = (((db_access.get(instrument, {})
                         if isinstance(db_access.get(instrument, {}), dict)
                         else {}).get(profile_id, {}))
                        if instrument and profile_id else {})
-        saved_groups = saved_entry.get('groups', {}) if isinstance(saved_entry, dict) else {}
-        saved_columns = saved_entry.get('columns', {}) if isinstance(saved_entry, dict) else {}
+        saved_groups = (saved_entry.get('groups', {})
+                       if isinstance(saved_entry, dict)
+                       else {})
+        saved_columns = (saved_entry.get('columns', {})
+                        if isinstance(saved_entry, dict)
+                        else {})
 
         sections = []
         for label, key in self._db_access_table_keys().items():
@@ -6315,7 +6953,9 @@ class ARIApp(Flask):
             selected_groups = saved_groups.get(label, [])
             if not isinstance(selected_groups, list):
                 selected_groups = []
-            selected_groups = [str(g).strip() for g in selected_groups if str(g).strip()]
+            selected_groups = [str(g).strip()
+                for g in selected_groups
+                if str(g).strip()]
 
             groups_ui = []
             for group_name in all_groups:
@@ -6335,7 +6975,9 @@ class ARIApp(Flask):
             selected_cols = saved_columns.get(label, [])
             if not isinstance(selected_cols, list):
                 selected_cols = []
-            selected_cols = [str(c).strip() for c in selected_cols if str(c).strip()]
+            selected_cols = [str(c).strip()
+                for c in selected_cols
+                if str(c).strip()]
 
             if not selected_cols and columns_all:
                 selected_cols = list(columns_all)
@@ -6378,7 +7020,8 @@ class ARIApp(Flask):
             if instrument and profile_id:
                 for row in report.get('profiles', []):
                     if (str(row.get('instrument', '')).strip() == instrument
-                            and str(row.get('profile_id', '')).strip() == profile_id):
+                            and (str(row.get('profile_id', '')).strip()
+                                 == profile_id)):
                         selected = row
                         break
 
@@ -6404,16 +7047,24 @@ class ARIApp(Flask):
 
         if not instrument or not profile_id:
             return jsonify(success=False, error='Missing profile selection'), 400
-        if not isinstance(groups_map, dict) or not isinstance(columns_map, dict):
+        if (not isinstance(groups_map, dict)
+                or not isinstance(columns_map, dict)):
             return jsonify(success=False, error='Invalid groups/columns payload'), 400
 
-        profile = self._find_accessible_profile(user_info, profile_id, instrument)
+        profile = self._find_accessible_profile(
+            user_info,
+            profile_id,
+            instrument)
         if not profile:
             return jsonify(success=False, error='Profile not found or access denied'), 404
 
-        editable_groups = set(self._editable_groups_for_editor(user_info, perms))
+        editable_groups = set(
+            self._editable_groups_for_editor(user_info,
+            perms))
 
-        cfg = profile.get('data', {}) if isinstance(profile.get('data'), dict) else {}
+        cfg = (profile.get('data', {})
+               if isinstance(profile.get('data'), dict)
+               else {})
         valid_tables = {
             label for label, key in self._db_access_table_keys().items()
             if str(self._profile_get_db(cfg, key, '')).strip()
@@ -6451,7 +7102,8 @@ class ARIApp(Flask):
                     continue
                 if gname not in self.ari_groups:
                     continue
-                if gname not in editable_groups and gname not in existing_for_table:
+                if (gname not in editable_groups
+                        and gname not in existing_for_table):
                     return jsonify(success=False,
                                    error=f'No permission to assign group: {gname}'), 403
                 if gname not in vals:
@@ -6465,7 +7117,8 @@ class ARIApp(Flask):
                 continue
             table_name = str(self._profile_get_db(cfg, key, '')).strip()
             try:
-                table_columns[label] = self._fetch_table_columns(cfg, table_name)
+                table_columns[label] = self._fetch_table_columns(
+                    cfg, table_name)
             except Exception as exc:
                 return jsonify(
                     success=False,
@@ -6494,7 +7147,8 @@ class ARIApp(Flask):
             cleaned_groups.setdefault(table, [])
             cleaned_cols.setdefault(table, [])
 
-        if instrument not in db_access or not isinstance(db_access.get(instrument), dict):
+        inst_access = db_access.get(instrument)
+        if instrument not in db_access or not isinstance(inst_access, dict):
             db_access[instrument] = {}
         db_access[instrument][profile_id] = {
             'groups': cleaned_groups,
@@ -6552,10 +7206,13 @@ class ARIApp(Flask):
             # Copy DB fields
             for k in _DB_KEYS:
                 entry[k] = self._profile_get_db(cfg, k, '')
-            entry['SCIENCE_FIBER'] = self._profile_get_general(cfg, 'SCIENCE_FIBER', '')
+            entry['SCIENCE_FIBER'] = self._profile_get_general(
+                cfg, 'SCIENCE_FIBER', '')
             # SCIENCE_TYPES is a list
-            entry['SCIENCE_TYPES'] = self._profile_get_general(cfg, 'SCIENCE_TYPES', [])
-            entry['APERO_INSTRUMENT_PROFILE'] = cfg.get('APERO_INSTRUMENT_PROFILE', '')
+            entry['SCIENCE_TYPES'] = self._profile_get_general(
+                cfg, 'SCIENCE_TYPES', [])
+            entry['APERO_INSTRUMENT_PROFILE'] = cfg.get(
+                'APERO_INSTRUMENT_PROFILE', '')
             # Copy path fields with exists check
             all_paths_ok = True
             for k in _PATH_KEYS:
@@ -6741,9 +7398,13 @@ class ARIApp(Flask):
         # SCIENCE_TYPES: accepted as a list or comma-separated string
         science_types_raw = data.get('SCIENCE_TYPES', [])
         if isinstance(science_types_raw, str):
-            science_types = [t.strip() for t in science_types_raw.split(',') if t.strip()]
+            science_types = [t.strip()
+                for t in science_types_raw.split(',')
+                if t.strip()]
         else:
-            science_types = [str(t).strip() for t in science_types_raw if str(t).strip()]
+            science_types = [str(t).strip()
+                for t in science_types_raw
+                if str(t).strip()]
         if not science_types:
             return jsonify(success=False, error='SCIENCE_TYPES is required'), 400
 
@@ -6791,7 +7452,8 @@ class ARIApp(Flask):
             'SCIENCE_TYPES': science_types,
         }
         if _apero_instrument_profile:
-            profile_data['APERO_INSTRUMENT_PROFILE'] = _apero_instrument_profile
+            profile_data['APERO_INSTRUMENT_PROFILE'] = (
+                _apero_instrument_profile)
             # Validate selected APERO instrument profile exists.
             preset_path = (PACKAGE_DIR / 'resources' / 'aprofile_instruments'
                            / _apero_instrument_profile)
@@ -6931,7 +7593,8 @@ class ARIApp(Flask):
             return jsonify(success=False, error='Profile not found'), 404
 
         old_groups = set(inst_profiles[name].get('groups', []))
-        changed = (set(new_groups) - old_groups) | (old_groups - set(new_groups))
+        changed = ((set(new_groups) - old_groups)
+                   | (old_groups - set(new_groups)))
         for g in changed:
             if f'manage.group.{g}' not in perms:
                 return jsonify(
@@ -6961,9 +7624,12 @@ class ARIApp(Flask):
         password = data.get('DATABASE_PASSWORD', '')
         db_name = data.get('DATABASE_NAME', '').strip()
         use_ssh_tunnel = data.get('DATABASE_USE_SSH_TUNNEL', False)
-        ssh_config_host = str(data.get('DATABASE_SSH_CONFIG_HOST', '') or '').strip()
-        ssh_local_port = str(data.get('DATABASE_SSH_LOCAL_PORT', '') or '').strip()
-        ssh_remote_port = str(data.get('DATABASE_SSH_REMOTE_PORT', '') or '').strip()
+        ssh_config_host = str(
+            data.get('DATABASE_SSH_CONFIG_HOST', '') or '').strip()
+        ssh_local_port = str(
+            data.get('DATABASE_SSH_LOCAL_PORT', '') or '').strip()
+        ssh_remote_port = str(
+            data.get('DATABASE_SSH_REMOTE_PORT', '') or '').strip()
 
         if not all([mode, host, username, db_name]):
             return jsonify(success=False,
@@ -6997,9 +7663,12 @@ class ARIApp(Flask):
         password = data.get('DATABASE_PASSWORD', '')
         db_name = data.get('DATABASE_NAME', '').strip()
         use_ssh_tunnel = data.get('DATABASE_USE_SSH_TUNNEL', False)
-        ssh_config_host = str(data.get('DATABASE_SSH_CONFIG_HOST', '') or '').strip()
-        ssh_local_port = str(data.get('DATABASE_SSH_LOCAL_PORT', '') or '').strip()
-        ssh_remote_port = str(data.get('DATABASE_SSH_REMOTE_PORT', '') or '').strip()
+        ssh_config_host = str(
+            data.get('DATABASE_SSH_CONFIG_HOST', '') or '').strip()
+        ssh_local_port = str(
+            data.get('DATABASE_SSH_LOCAL_PORT', '') or '').strip()
+        ssh_remote_port = str(
+            data.get('DATABASE_SSH_REMOTE_PORT', '') or '').strip()
 
         table_keys = [
             'ASTROM_TABLENAME', 'CALIB_TABLENAME', 'FINDEX_TABLENAME',
@@ -7140,10 +7809,13 @@ class ARIApp(Flask):
         """Return task keys allowed in a given scope from tasks.TYPE."""
         from apero_ri import tasks as task_module
 
-        want_type = 'GLOBAL' if self._is_global_scope(instrument) else 'INSTRUMENT'
+        want_type = ('GLOBAL'
+                    if self._is_global_scope(instrument)
+                    else 'INSTRUMENT')
         keys = []
         for task_key in task_module.TASK_LIST.keys():
-            ttype = str(task_module.TYPE.get(task_key, 'INSTRUMENT')).strip().upper()
+            ttype = str(
+                task_module.TYPE.get(task_key, 'INSTRUMENT')).strip().upper()
             if ttype == want_type:
                 keys.append(task_key)
         return keys
@@ -7241,7 +7913,8 @@ class ARIApp(Flask):
 
         from apero_ri import tasks as task_module
         all_tasks = load_async_tasks()
-        inst_tasks, changed = self._merge_async_task_catalog(instrument, all_tasks)
+        inst_tasks, changed = self._merge_async_task_catalog(
+            instrument, all_tasks)
         if changed:
             save_async_tasks(all_tasks)
 
@@ -7280,7 +7953,8 @@ class ARIApp(Flask):
 
         all_tasks = load_async_tasks()
         global_scope = '__GLOBAL__'
-        global_tasks, changed = self._merge_async_task_catalog(global_scope, all_tasks)
+        global_tasks, changed = self._merge_async_task_catalog(
+            global_scope, all_tasks)
         if changed:
             save_async_tasks(all_tasks)
 
@@ -7376,7 +8050,8 @@ class ARIApp(Flask):
                 continue
 
             task_key = t.get('task_key', '')
-            if task_key == 'ARI_LOCAL_DATA_BACKUP' and daily_copies + weekly_copies <= 0:
+            if (task_key == 'ARI_LOCAL_DATA_BACKUP'
+                    and daily_copies + weekly_copies <= 0):
                 return jsonify(success=False,
                                error='Backup task needs at least one retained daily or weekly copy'), 400
 
@@ -7583,7 +8258,8 @@ class ARIApp(Flask):
                 continue
             allowed, reason = task_runner.can_enqueue_now(task_cfg)
             if not allowed:
-                blocked.append({'id': task_cfg.get('id', ''), 'reason': reason})
+                blocked.append({'id': task_cfg.get('id', ''),
+                               'reason': reason})
                 continue
             task_key = task_cfg.get('task_key', '')
             task_cls = task_module.TASK_LIST.get(task_key)
@@ -7596,7 +8272,9 @@ class ARIApp(Flask):
                 instrument, local_data_dir, all_profiles, task_cfg
             )
             try:
-                instance = task_runner.hydrate_runtime_state(task_cls(), task_cfg)
+                instance = task_runner.hydrate_runtime_state(
+                    task_cls(),
+                    task_cfg)
             except Exception:
                 task_cfg['last_status'] = 'failed'
                 task_cfg['error'] = traceback.format_exc()
@@ -7631,8 +8309,12 @@ class ARIApp(Flask):
 
         result = task_runner.clear_recent_history()
         if result.get('success'):
-            return jsonify(success=True, removed=int(result.get('removed', 0) or 0))
-        return jsonify(success=False, error=result.get('error', 'Failed to clear history')), 500
+            return jsonify(
+                success=True,
+                removed=int(result.get('removed', 0) or 0))
+        return jsonify(
+            success=False,
+            error=result.get('error', 'Failed to clear history')), 500
 
     def _api_async_tasks_status(self):
         """Poll runtime status for a set of task ids and the full queue."""
@@ -7689,7 +8371,8 @@ class ARIApp(Flask):
         if not path:
             return None, (jsonify(success=False, error='No path'), 400)
         if not os.path.isabs(path):
-            return None, (jsonify(success=False, error='Must be an absolute path'), 400)
+            return None, (jsonify(
+                success=False, error='Must be an absolute path'), 400)
 
         resolved = Path(path).resolve()
         try:
@@ -7718,7 +8401,8 @@ class ARIApp(Flask):
         try:
             raw = resolved.read_bytes()
             suffixes = {suffix.lower() for suffix in resolved.suffixes}
-            if suffixes.intersection({'.gz', '.zip', '.fits', '.tar'}) or b'\x00' in raw[:4096]:
+            if (suffixes.intersection({'.gz', '.zip', '.fits', '.tar'})
+                    or b'\x00' in raw[:4096]):
                 return jsonify(success=True,
                                preview='Binary file preview is not available. Use Download instead.',
                                truncated=False,
@@ -7764,7 +8448,9 @@ class ARIApp(Flask):
                 return json.dumps(value, ensure_ascii=False)
             return str(value)
 
-        def _rows_to_table(rows_data: list, columns_hint=None, row_count_hint=None) -> dict:
+        def _rows_to_table(rows_data: list,
+                           columns_hint=None,
+                           row_count_hint=None) -> dict:
             columns = []
             seen = set()
             if isinstance(columns_hint, list):
@@ -7789,7 +8475,9 @@ class ARIApp(Flask):
                     row = {'value': _cell(item)}
                 rows.append(row)
 
-            row_count = row_count_hint if isinstance(row_count_hint, int) else len(rows_data)
+            row_count = (row_count_hint
+                          if isinstance(row_count_hint, int)
+                          else len(rows_data))
             if row_count < len(rows_data):
                 row_count = len(rows_data)
             return {
@@ -7868,7 +8556,9 @@ class ARIApp(Flask):
             params = load_parameters()
             all_instr = params.get('instruments', {}).get('value', [])
             user_instr = user_info.get('instruments', [])
-            instruments = [i for i in all_instr if i in user_instr] or list(all_instr)
+            instruments = (
+                [i for i in all_instr if i in user_instr]
+                or list(all_instr))
 
             data = ud.load_links(username)
             merged = {
@@ -7882,7 +8572,8 @@ class ARIApp(Flask):
                 for section in inst_data.get('sections', []):
                     tag = f'[{inst}] {section}'
                     merged['instrument_sections'].append(tag)
-                    merged['links'][tag] = dict(inst_data.get('links', {}).get(section, {}))
+                    merged['links'][tag] = dict(
+                        inst_data.get('links', {}).get(section, {}))
             data = merged
         elif instrument:
             data = ud.get_merged_links(username, instrument)
@@ -8032,11 +8723,14 @@ class ARIApp(Flask):
             params = load_parameters()
             all_instr = params.get('instruments', {}).get('value', [])
             user_instr = user_info.get('instruments', [])
-            instruments = [i for i in all_instr if i in user_instr] or list(all_instr)
+            instruments = (
+                [i for i in all_instr if i in user_instr]
+                or list(all_instr))
 
             events = list(ud.list_events(user_info['username']))
             for inst in instruments:
-                inst_events = ud.load_instrument_calendar(inst).get('events', [])
+                inst_events = ud.load_instrument_calendar(inst).get(
+                    'events', [])
                 for ev in inst_events:
                     tagged = dict(ev)
                     tagged['_source'] = inst
@@ -8152,7 +8846,8 @@ class ARIApp(Flask):
                 return jsonify(success=False, error='kind must be projects or tags'), 400
             if op not in {'add', 'remove'}:
                 return jsonify(success=False, error='op must be add or remove'), 400
-            metadata = ud.manage_todo_metadata(user_info['username'], kind, op, value)
+            metadata = ud.manage_todo_metadata(
+                user_info['username'], kind, op, value)
             return jsonify(success=True, metadata=metadata)
 
         ordered_ids = body.get('ids', [])
@@ -8351,7 +9046,8 @@ class ARIApp(Flask):
         if provider == 'log' or not cfg.get('enabled', False):
             return jsonify(ok=True, detail='Log mode — no SMTP connection needed.')
         result = eb.test_email_connection(cfg)
-        return jsonify(ok=result['ok'], error=result.get('error', ''), detail='')
+        return jsonify(ok=result['ok'],
+                       error=result.get('error', ''), detail='')
 
     def _api_admin_email_save(self):
         user_info, perms = self._require_admin_email_perm()
@@ -8418,7 +9114,9 @@ class ARIApp(Flask):
             return jsonify(ok=False, error='Insufficient permissions'), 403
 
         cfg = bb.load_backup_config()
-        client_secret_path = Path(str(cfg.get('gdrive_oauth_client_secret_file', '')).strip()).expanduser()
+        client_secret_path = Path(
+            str(cfg.get('gdrive_oauth_client_secret_file', '')).strip()
+        ).expanduser()
         if not client_secret_path.exists():
             return jsonify(ok=False, error='Google OAuth client secret file is missing. Upload and save it first.'), 400
 
@@ -8429,7 +9127,8 @@ class ARIApp(Flask):
                            error=('Google OAuth dependency missing. '
                                   'Install google-auth-oauthlib.')), 500
 
-        redirect_uri = url_for('api_admin_backups_oauth_callback', _external=True)
+        redirect_uri = url_for(
+            'api_admin_backups_oauth_callback', _external=True)
         flow = Flow.from_client_secrets_file(
             str(client_secret_path),
             scopes=bb.GDRIVE_OAUTH_SCOPES,
@@ -8441,7 +9140,8 @@ class ARIApp(Flask):
             prompt='consent',
         )
         session['ab_google_oauth_state'] = state
-        session['ab_google_oauth_code_verifier'] = str(flow.code_verifier or '')
+        session['ab_google_oauth_code_verifier'] = str(
+            flow.code_verifier or '')
         return redirect(auth_url)
 
     def _api_admin_backups_oauth_callback(self):
@@ -8452,7 +9152,9 @@ class ARIApp(Flask):
             return 'Insufficient permissions', 403
 
         cfg = bb.load_backup_config()
-        client_secret_path = Path(str(cfg.get('gdrive_oauth_client_secret_file', '')).strip()).expanduser()
+        client_secret_path = Path(
+            str(cfg.get('gdrive_oauth_client_secret_file', '')).strip()
+        ).expanduser()
         if not client_secret_path.exists():
             return 'Google OAuth client secret file not found.', 400
 
@@ -8464,8 +9166,11 @@ class ARIApp(Flask):
                 '</body></html>'
             )
 
-        expected_state = str(session.get('ab_google_oauth_state', '') or '').strip()
-        expected_code_verifier = str(session.get('ab_google_oauth_code_verifier', '') or '').strip()
+        expected_state = str(
+            session.get('ab_google_oauth_state', '') or '').strip()
+        expected_code_verifier = str(
+            session.get('ab_google_oauth_code_verifier', '')
+            or '').strip()
         got_state = str(request.args.get('state', '') or '').strip()
         if not expected_state or expected_state != got_state:
             return 'Google OAuth state mismatch. Please retry connect.', 400
@@ -8477,7 +9182,8 @@ class ARIApp(Flask):
         except Exception:
             return 'google-auth-oauthlib is not installed.', 500
 
-        redirect_uri = url_for('api_admin_backups_oauth_callback', _external=True)
+        redirect_uri = url_for(
+            'api_admin_backups_oauth_callback', _external=True)
         flow = Flow.from_client_secrets_file(
             str(client_secret_path),
             scopes=bb.GDRIVE_OAUTH_SCOPES,
@@ -8486,12 +9192,16 @@ class ARIApp(Flask):
             code_verifier=expected_code_verifier,
         )
 
-        # OAuthlib requires HTTPS unless localhost or explicit insecure override is enabled.
-        host_name = str(request.host or '').split(':', 1)[0].strip().lower()
-        is_local_host = host_name in {'localhost', '127.0.0.1', '::1'}
-        allow_insecure = str(os.environ.get('ARI_ALLOW_INSECURE_OAUTH', '')).strip().lower() in {
-            '1', 'true', 'yes', 'on'
-        }
+        # OAuthlib requires HTTPS unless localhost or explicit insecure
+        # override is enabled.
+        host_name = (str(request.host or '')
+                     .split(':', 1)[0].strip().lower())
+        is_local_host = host_name in {'localhost', '127.0.0.1',
+                               '::1'}
+        allow_insecure = str(
+            os.environ.get(
+                'ARI_ALLOW_INSECURE_OAUTH', '')
+        ).strip().lower() in {'1', 'true', 'yes', 'on'}
         using_https = bool(request.is_secure)
 
         if (not using_https) and (not is_local_host) and (not allow_insecure):
@@ -8522,7 +9232,9 @@ class ARIApp(Flask):
             else:
                 os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = old_insecure
 
-        token_path = bb.save_gdrive_oauth_token(cfg, json.loads(flow.credentials.to_json()))
+        token_path = bb.save_gdrive_oauth_token(
+            cfg,
+            json.loads(flow.credentials.to_json()))
         cfg['gdrive_oauth_token_file'] = str(token_path)
         bb.save_backup_config(cfg)
         self._refresh_admin_health_after_change(user_info, perms)
@@ -8578,8 +9290,10 @@ class ARIApp(Flask):
                     '1', 'true', 'yes', 'on'
                 }
 
-        if 's3_secret_access_key' not in body and existing.get('s3_secret_access_key_enc'):
-            cfg['s3_secret_access_key_enc'] = existing.get('s3_secret_access_key_enc', '')
+        if ('s3_secret_access_key' not in body
+                and existing.get('s3_secret_access_key_enc')):
+            cfg['s3_secret_access_key_enc'] = existing.get(
+                's3_secret_access_key_enc', '')
 
         bb.save_backup_config(cfg)
         self._refresh_admin_health_after_change(user_info, perms)
@@ -8593,7 +9307,8 @@ class ARIApp(Flask):
             return jsonify(success=False, error='Insufficient permissions'), 403
 
         target_field = str(request.form.get('target_field', '')).strip()
-        allowed_targets = {'gdrive_oauth_client_secret_file', 's3_credentials_file'}
+        allowed_targets = {'gdrive_oauth_client_secret_file',
+                          's3_credentials_file'}
         if target_field not in allowed_targets:
             return jsonify(success=False, error='Invalid target field.'), 400
 
@@ -8728,7 +9443,10 @@ class ARIApp(Flask):
 
         cfg = bb.load_backup_config()
         local_data_dir = self._resolve_local_data_dir()
-        result = bb.download_cloud_backup(relative_path, local_data_dir=local_data_dir, cfg=cfg)
+        result = bb.download_cloud_backup(
+            relative_path,
+            local_data_dir=local_data_dir,
+            cfg=cfg)
         
         self._refresh_admin_health_after_change(user_info, perms)
         return jsonify(success=result.get('ok', False), 
@@ -8744,7 +9462,9 @@ class ARIApp(Flask):
 
         cfg = bb.load_backup_config()
         local_data_dir = self._resolve_local_data_dir()
-        result = bb.sync_cloud_backups_to_local(local_data_dir=local_data_dir, cfg=cfg)
+        result = bb.sync_cloud_backups_to_local(
+            local_data_dir=local_data_dir,
+            cfg=cfg)
         
         self._refresh_admin_health_after_change(user_info, perms)
         return jsonify(success=result.get('ok', False),
@@ -8931,6 +9651,133 @@ class ARIApp(Flask):
         return jsonify(**result)
 
     # -----------------------------------------------------------------
+    # Interactive SSH terminal handlers
+    # -----------------------------------------------------------------
+    def _api_admin_sshfs_interactive_start_test(self):
+        """Start an interactive SSH test session with PTY."""
+        user_info = get_effective_user(session)
+        if not user_info:
+            return jsonify(ok=False, error='Unauthorized'), 401
+        perms = resolve_user_permissions(
+            user_info['groups'], self.ari_groups
+        )
+        if 'view.admin' not in perms:
+            return jsonify(ok=False, error='Forbidden'), 403
+
+        from apero_ri.core.sshfs_interactive import start_interactive_test
+
+        body = request.get_json(silent=True) or {}
+        result = start_interactive_test(
+            connection_mode=body.get('connection_mode', 'direct'),
+            remote_host=body.get('remote_host', ''),
+            remote_user=body.get('remote_user', ''),
+            ssh_config_host=body.get('ssh_config_host', ''),
+            remote_path=body.get('remote_path', ''),
+            ssh_key_name=body.get('ssh_key', ''),
+        )
+        return jsonify(**result)
+
+    def _api_admin_sshfs_interactive_start_mount(self):
+        """Start an interactive SSHFS mount session with PTY."""
+        user_info = get_effective_user(session)
+        if not user_info:
+            return jsonify(ok=False, error='Unauthorized'), 401
+        perms = resolve_user_permissions(
+            user_info['groups'], self.ari_groups
+        )
+        if 'view.admin' not in perms:
+            return jsonify(ok=False, error='Forbidden'), 403
+
+        from apero_ri.core.sshfs_interactive import start_interactive_mount
+
+        body = request.get_json(silent=True) or {}
+        mount_name = str(body.get('mount_name', '')).strip()
+        if not mount_name:
+            return jsonify(ok=False, error='mount_name required'), 400
+        result = start_interactive_mount(mount_name)
+        return jsonify(**result)
+
+    def _api_admin_sshfs_interactive_poll(self):
+        """Poll output from an interactive SSH/SSHFS session."""
+        user_info = get_effective_user(session)
+        if not user_info:
+            return jsonify(ok=False, error='Unauthorized'), 401
+        perms = resolve_user_permissions(
+            user_info['groups'], self.ari_groups
+        )
+        if 'view.admin' not in perms:
+            return jsonify(ok=False, error='Forbidden'), 403
+
+        from apero_ri.core.sshfs_interactive import poll_session
+
+        body = request.get_json(silent=True) or {}
+        token = str(body.get('token', '')).strip()
+        if not token:
+            return jsonify(ok=False, error='token required'), 400
+        result = poll_session(token)
+        return jsonify(**result)
+
+    def _api_admin_sshfs_interactive_send(self):
+        """Send input to an interactive SSH/SSHFS session."""
+        user_info = get_effective_user(session)
+        if not user_info:
+            return jsonify(ok=False, error='Unauthorized'), 401
+        perms = resolve_user_permissions(
+            user_info['groups'], self.ari_groups
+        )
+        if 'view.admin' not in perms:
+            return jsonify(ok=False, error='Forbidden'), 403
+
+        from apero_ri.core.sshfs_interactive import send_input
+
+        body = request.get_json(silent=True) or {}
+        token = str(body.get('token', '')).strip()
+        data = str(body.get('data', ''))
+        if not token:
+            return jsonify(ok=False, error='token required'), 400
+        result = send_input(token, data)
+        return jsonify(**result)
+
+    def _api_admin_sshfs_interactive_close(self):
+        """Close and clean up an interactive SSH/SSHFS session."""
+        user_info = get_effective_user(session)
+        if not user_info:
+            return jsonify(ok=False, error='Unauthorized'), 401
+        perms = resolve_user_permissions(
+            user_info['groups'], self.ari_groups
+        )
+        if 'view.admin' not in perms:
+            return jsonify(ok=False, error='Forbidden'), 403
+
+        from apero_ri.core.sshfs_interactive import close_session
+
+        body = request.get_json(silent=True) or {}
+        token = str(body.get('token', '')).strip()
+        if not token:
+            return jsonify(ok=False, error='token required'), 400
+
+        result = close_session(token)
+
+        # If this was a mount session, check if the mount actually
+        # succeeded and update the config accordingly.
+        mount_name = str(body.get('mount_name', '')).strip()
+        if mount_name:
+            from apero_ri.core.sshfs_interactive import (
+                finalise_interactive_mount,
+            )
+            mount_status = sb.check_mount_status(mount_name)
+            if mount_status.get('mounted'):
+                finalise_interactive_mount(mount_name)
+                self._refresh_admin_health_after_change(
+                    user_info, perms,
+                )
+                result['mount_ok'] = True
+            else:
+                result['mount_ok'] = False
+
+        return jsonify(**result)
+
+    # -----------------------------------------------------------------
     # Run override
     # -----------------------------------------------------------------
     def run(self, host=None, port=None, debug=True, **kwargs):
@@ -8943,3 +9790,14 @@ class ARIApp(Flask):
         if port is None:
             port = self.args.port
         super().run(host=host, port=port, debug=debug, **kwargs)
+
+
+# =============================================================================
+# Start of code
+# =============================================================================
+if __name__ == '__main__':
+    print('Hello World!')
+
+# =============================================================================
+# End of code
+# =============================================================================

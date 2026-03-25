@@ -7704,3 +7704,77 @@ details[open] .qdb-sql-summary::before { transform: rotate(90deg); }
     border-color: #fca5a5;
 }
 
+/* =========================================================================
+   Filename-click plot modal (file browser)
+   ========================================================================= */
+.fn-modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.55);
+    z-index: 1100;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+}
+.fn-modal-box {
+    background: var(--ari-card-bg, #fff);
+    border-radius: var(--ari-border-radius, 8px);
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.25);
+    width: 94vw;
+    max-width: 1100px;
+    max-height: 90vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+.fn-modal-header {
+    padding: 0.75rem 1.1rem;
+    border-bottom: 1px solid var(--ari-border, #dde2f0);
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+.fn-modal-title {
+    flex: 1;
+    font-size: 0.92rem;
+    font-weight: 600;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    color: var(--ari-text, #1a1a2e);
+}
+.fn-modal-close {
+    flex-shrink: 0;
+}
+.fn-modal-body {
+    flex: 1;
+    overflow: auto;
+    padding: 0.75rem;
+    min-height: 200px;
+}
+.fn-modal-body #fn-plot-div {
+    width: 100%;
+}
+.fn-modal-error {
+    color: var(--ari-danger, #c0392b);
+    font-size: 0.9rem;
+    padding: 0.5rem;
+}
+/* subtle plot icon in file browser FILENAME column */
+.fb-plot-icon-btn {
+    background: none;
+    border: none;
+    padding: 0 0 0 0.4em;
+    margin: 0;
+    cursor: pointer;
+    color: var(--ari-primary, #3f51b5);
+    font-size: 0.82em;
+    vertical-align: baseline;
+    line-height: 1;
+    opacity: 0.55;
+    transition: opacity 0.15s;
+}
+.fb-plot-icon-btn:hover {
+    opacity: 1;
+}

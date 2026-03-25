@@ -1,9 +1,9 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-APERO RI: Async task management
+APERO RI: Async task infrastructure.
 
-Rules: Cannot import from apero_ri
+Note: no imports from apero_ri (prevents circular imports).
 """
 import json
 import os
@@ -20,6 +20,7 @@ from astropy.io import fits
 # =============================================================================
 # Define variables
 # =============================================================================
+__NAME__ = 'apero_ri.tasks.apero_async'
 DB_UPDATE_TABLE_KEYS = (
     'ASTROM_TABLENAME',
     'CALIB_TABLENAME',
@@ -32,7 +33,7 @@ DB_UPDATE_TABLE_KEYS = (
 
 
 # =============================================================================
-# Define global classes
+# Define classes
 # =============================================================================
 class AperoAsyncTask:
     """Class representing an asynchronous task in APERO RI."""
@@ -71,9 +72,9 @@ class AperoAsyncTask:
         raise NotImplementedError('Subclasses must implement the '
                                   'run_job method.')
 
- 
+
 # =============================================================================
-# Define common functions
+# Define functions
 # =============================================================================
 def database_query(params: Dict[str, Any], query: str):
     """
@@ -181,9 +182,9 @@ def get_hdr_key(hdr: fits.Header, keyname: str,
     return value
 
 
-# =============================================================================
+# -------------------------------------------------------------------------
 # Define private functions
-# =============================================================================
+# -------------------------------------------------------------------------
 def _coerce_bool(value: Any) -> bool:
     """Return a predictable boolean for mixed config sources."""
     if isinstance(value, bool):
@@ -338,11 +339,14 @@ def _ensure_ssh_tunnel(params: Dict[str, Any]) -> Tuple[str, int]:
         timeout=15,
     )
     if result.returncode != 0:
-        err = (result.stderr or result.stdout or 'Unknown SSH tunnel error').strip()
+        err = (
+            result.stderr or result.stdout or 'Unknown SSH tunnel error'
+        ).strip()
         raise RuntimeError(f'Failed to start SSH tunnel via {ssh_host}: {err}')
 
     for _ in range(10):
-        if _check_existing_tunnel(control_path, ssh_host) or _is_local_port_open(local_port):
+        if (_check_existing_tunnel(control_path, ssh_host)
+                or _is_local_port_open(local_port)):
             meta_path.write_text(
                 json.dumps({
                     'ssh_host': ssh_host,
@@ -365,7 +369,8 @@ def _resolve_database_endpoint(params: Dict[str, Any]) -> Tuple[str, int]:
     """Resolve the effective DB host/port, starting an SSH tunnel if needed."""
     if _coerce_bool(params.get('DATABASE_USE_SSH_TUNNEL')):
         return _ensure_ssh_tunnel(params)
-    return _split_host_port(params.get('DATABASE_HOST'), params.get('DATABASE_PORT'))
+    return _split_host_port(
+        params.get('DATABASE_HOST'), params.get('DATABASE_PORT'))
 
 
 def _sql_quote(value: Any) -> str:
@@ -471,7 +476,8 @@ def save_profile_db_table_updates(instrument: str,
             if str(candidate).lower() == instrument_key.lower():
                 instrument_key = str(candidate)
                 break
-    if instrument_key not in profiles or not isinstance(profiles[instrument_key], dict):
+    if (instrument_key not in profiles
+            or not isinstance(profiles[instrument_key], dict)):
         profiles[instrument_key] = {}
 
     profile_key = str(profile_name)
@@ -480,7 +486,9 @@ def save_profile_db_table_updates(instrument: str,
             if str(candidate).lower() == profile_key.lower():
                 profile_key = str(candidate)
                 break
-    if profile_key not in profiles[instrument_key] or not isinstance(profiles[instrument_key][profile_key], dict):
+    if (profile_key not in profiles[instrument_key]
+            or not isinstance(
+                profiles[instrument_key][profile_key], dict)):
         profiles[instrument_key][profile_key] = {}
 
     profiles[instrument_key][profile_key]['database-update'] = dict(updates)
@@ -520,3 +528,13 @@ def save_results(filename: Path, results: Any,
     with path.open('w', encoding='utf-8') as fobj:
         json.dump(payload, fobj, ensure_ascii=False, indent=2,
                   default=_json_default)
+
+# =============================================================================
+# Start of code
+# =============================================================================
+if __name__ == '__main__':
+    print('Hello World!')
+
+# =============================================================================
+# End of code
+# =============================================================================

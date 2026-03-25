@@ -1,0 +1,150 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{{ profile.profile_id }} – {{ objname }}: {{ display_name }}</title>
+    <link rel="stylesheet" href="https://cdn.bokeh.org/bokeh/release/bokeh-3.8.2.min.css" type="text/css">
+    <script src="https://cdn.bokeh.org/bokeh/release/bokeh-3.8.2.min.js"></script>
+    <style>
+    :root {
+        --op-border: #d6d9de;
+        --op-text: #1f2933;
+        --op-muted: #5f6b78;
+        --op-bg: #f4f7fb;
+        --op-primary: #0b66c3;
+    }
+    * { box-sizing: border-box; }
+    html, body {
+        margin: 0;
+        padding: 0;
+        width: 100%;
+        min-height: 100%;
+        background: var(--op-bg);
+        color: var(--op-text);
+        font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+    }
+    .op-max-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+        padding: 0 1rem;
+        height: 56px;
+        border-bottom: 1px solid #333;
+        background: #000;
+        position: sticky;
+        top: 0;
+        z-index: 10;
+    }
+    .op-max-logo {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        flex-shrink: 0;
+    }
+    .op-max-logo img {
+        height: 34px;
+        width: auto;
+    }
+    .op-max-logo-text {
+        color: #fff;
+        font-weight: 700;
+        font-size: 1.05rem;
+        white-space: nowrap;
+    }
+    .op-max-info {
+        flex: 1;
+        min-width: 0;
+        padding: 0 1rem;
+    }
+    .op-max-title {
+        color: #e8eaed;
+        font-size: 0.88rem;
+        font-weight: 600;
+        margin: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        display: block;
+    }
+    .op-max-sub {
+        margin: 0.15rem 0 0 0;
+        font-size: 0.78rem;
+        color: #aab4bf;
+    }
+    .op-max-close {
+        border: 1px solid #555;
+        background: transparent;
+        color: #e8eaed;
+        border-radius: 0.4rem;
+        padding: 0.4rem 0.75rem;
+        font-size: 0.86rem;
+        font-weight: 600;
+        cursor: pointer;
+        white-space: nowrap;
+        flex-shrink: 0;
+    }
+    .op-max-close:hover {
+        border-color: #4dabf7;
+        color: #4dabf7;
+    }
+    .op-max-main {
+        padding: 0.9rem;
+    }
+    .op-max-plot {
+        border: 1px solid var(--op-border);
+        border-radius: 0.5rem;
+        background: #fff;
+        padding: 0.4rem;
+        width: 100%;
+    }
+    .op-max-plot .bk-root {
+        width: 100% !important;
+    }
+    .op-max-empty {
+        border: 1px dashed var(--op-border);
+        border-radius: 0.5rem;
+        background: #fff;
+        color: var(--op-muted);
+        padding: 2rem;
+        text-align: center;
+        font-size: 0.95rem;
+    }
+    </style>
+</head>
+<body>
+    <header class="op-max-header">
+        <div class="op-max-logo">
+            <img src="{{ url_for('static', filename='images/apero_logo.png') }}"
+                 alt="APERO" onerror="this.style.display='none'">
+            <span class="op-max-logo-text">Reduction Interface</span>
+        </div>
+        <div class="op-max-info">
+            <span class="op-max-title">{{ profile.profile_id }}: {{ objname }} &mdash; {{ display_name }}</span>
+        </div>
+        <button class="op-max-close" type="button" onclick="closeAndReturn()">
+            &larr; Close and return
+        </button>
+    </header>
+
+    <main class="op-max-main">
+        {% if plot_payload.has_plot %}
+        <div class="op-max-plot">{{ plot_payload.div | safe }}</div>
+        {{ plot_payload.script | safe }}
+        {% else %}
+        <div class="op-max-empty">{{ plot_payload.message or 'No data available for this plot.' }}</div>
+        {% endif %}
+    </main>
+
+    <script>
+    function closeAndReturn() {
+        if (window.opener && !window.opener.closed) {
+            window.close();
+            return;
+        }
+        window.location.href = {{ return_url | tojson }};
+    }
+    </script>
+</body>
+</html>

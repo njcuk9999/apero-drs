@@ -8,7 +8,8 @@ import os
 import sys
 import argparse
 
-from apero_ri.setup.bootstrap import resolve_local_data_dir, can_start_main_app
+from apero_ri.setup.bootstrap import resolve_local_data_dir
+from apero_ri.setup.bootstrap import can_start_main_app
 
 # =============================================================================
 # Define variables

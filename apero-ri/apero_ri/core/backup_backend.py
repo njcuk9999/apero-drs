@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
 """APERO RI: cloud backup backend helpers.
 
 Configuration is stored in {ARI_DIR}/admin/backup.yaml.
@@ -18,6 +20,11 @@ import yaml
 
 from apero_ri.core import secret_store as ss
 
+
+# =============================================================================
+# Define variables
+# =============================================================================
+__NAME__ = 'apero_ri.core.backup_backend'
 # Provider metadata used by the admin UI.
 PROVIDER_DEFAULTS: Dict[str, Dict[str, Any]] = {
     'gdrive_oauth': {
@@ -65,6 +72,9 @@ MANAGED_SECRET_PATHS = {
 }
 
 
+# =============================================================================
+# Define functions
+# =============================================================================
 def _get_backup_config_path() -> Path:
     ari_dir = os.environ.get('ARI_DIR', os.path.expanduser('~/.ari'))
     return Path(ari_dir) / 'admin' / 'backup.yaml'
@@ -91,7 +101,8 @@ def _maybe_migrate_managed_secret_path(field_name: str,
     if field_name == 'gdrive_oauth_token_file':
         legacy_candidates.append(ari_dir / 'admin' / 'gdrive_oauth_token.json')
     elif field_name == 'gdrive_oauth_client_secret_file':
-        legacy_candidates.append(ari_dir / 'admin' / 'gdrive_oauth_client_secret.json')
+        legacy_candidates.append(
+            ari_dir / 'admin' / 'gdrive_oauth_client_secret.json')
     elif field_name == 's3_credentials_file':
         legacy_candidates.append(ari_dir / 'admin' / 's3_credentials.json')
 
@@ -101,7 +112,9 @@ def _maybe_migrate_managed_secret_path(field_name: str,
         if current.parent == backups_dir and current.suffix.lower() == '.json':
             legacy_candidates.append(current)
             return str(ss.resolve_secret_file(target_name, legacy_candidates))
-        if field_name == 'gdrive_oauth_token_file' and current == (ari_dir / 'admin' / 'gdrive_oauth_token.json'):
+        if (field_name == 'gdrive_oauth_token_file'
+                and current == (ari_dir / 'admin'
+                                / 'gdrive_oauth_token.json')):
             legacy_candidates.append(current)
             return str(ss.resolve_secret_file(target_name, legacy_candidates))
         return str(current)
@@ -118,10 +131,12 @@ def _migrate_backup_secret_config(cfg: Dict[str, Any]) -> Dict[str, Any]:
         str(cfg.get('gdrive_oauth_token_file', '') or ''),
         allow_blank=False,
     )
-    cfg['gdrive_oauth_client_secret_file'] = _maybe_migrate_managed_secret_path(
-        'gdrive_oauth_client_secret_file',
-        str(cfg.get('gdrive_oauth_client_secret_file', '') or ''),
-        allow_blank=True,
+    cfg['gdrive_oauth_client_secret_file'] = (
+        _maybe_migrate_managed_secret_path(
+            'gdrive_oauth_client_secret_file',
+            str(cfg.get('gdrive_oauth_client_secret_file', '') or ''),
+            allow_blank=True,
+        )
     )
     cfg['s3_credentials_file'] = _maybe_migrate_managed_secret_path(
         's3_credentials_file',
@@ -129,7 +144,8 @@ def _migrate_backup_secret_config(cfg: Dict[str, Any]) -> Dict[str, Any]:
         allow_blank=True,
     )
 
-    legacy_secret = _decode_secret(str(cfg.get('s3_secret_access_key_enc', '') or '')).strip()
+    legacy_secret = _decode_secret(
+        str(cfg.get('s3_secret_access_key_enc', '') or '')).strip()
     secret_path = _get_s3_secret_access_key_path()
     if legacy_secret and not secret_path.exists():
         _write_secret_text(secret_path, legacy_secret)
@@ -275,7 +291,8 @@ def get_gdrive_oauth_token_path(cfg: Dict[str, Any]) -> Path:
     )
 
 
-def save_gdrive_oauth_token(cfg: Dict[str, Any], token_dict: Dict[str, Any]) -> Path:
+def save_gdrive_oauth_token(cfg: Dict[str, Any],
+                            token_dict: Dict[str, Any]) -> Path:
     """Persist Google OAuth user token JSON and return its full path."""
     token_path = get_gdrive_oauth_token_path(cfg)
     token_path.parent.mkdir(parents=True, exist_ok=True)
@@ -289,7 +306,8 @@ def has_gdrive_oauth_token(cfg: Dict[str, Any]) -> bool:
     return get_gdrive_oauth_token_path(cfg).exists()
 
 
-def validate_gdrive_oauth_client_secret_payload(payload: Any) -> Tuple[bool, str]:
+def validate_gdrive_oauth_client_secret_payload(
+        payload: Any) -> Tuple[bool, str]:
     """Validate that a Google OAuth client JSON payload is usable for web/app flow."""
     if not isinstance(payload, dict):
         return False, 'Google OAuth client secret file must contain a JSON object.'
@@ -309,7 +327,8 @@ def validate_gdrive_oauth_client_secret_payload(payload: Any) -> Tuple[bool, str
         return False, f'Google OAuth client secret file has an invalid "{section_name}" section.'
 
     required_keys = ['client_id', 'client_secret', 'auth_uri', 'token_uri']
-    missing = [key for key in required_keys if not str(section.get(key, '')).strip()]
+    missing = [key for key in required_keys
+               if not str(section.get(key, '')).strip()]
     if missing:
         return False, (
             'Google OAuth client secret JSON is missing required fields: '
@@ -317,7 +336,8 @@ def validate_gdrive_oauth_client_secret_payload(payload: Any) -> Tuple[bool, str
         )
 
     redirect_uris = section.get('redirect_uris', [])
-    if section_name == 'web' and (not isinstance(redirect_uris, list) or not redirect_uris):
+    if section_name == 'web' and (
+            not isinstance(redirect_uris, list) or not redirect_uris):
         return False, (
             'Google OAuth web client JSON must include at least one redirect URI. '
             'Add the APERO RI callback URL in Google Cloud Console and download the JSON again.'
@@ -326,7 +346,8 @@ def validate_gdrive_oauth_client_secret_payload(payload: Any) -> Tuple[bool, str
     return True, ''
 
 
-def validate_gdrive_oauth_client_secret_file(path_value: str) -> Tuple[bool, str]:
+def validate_gdrive_oauth_client_secret_file(
+        path_value: str) -> Tuple[bool, str]:
     """Validate that a Google OAuth client JSON file is usable for web/app flow."""
     path = Path(str(path_value or '').strip()).expanduser()
     if not str(path_value or '').strip():
@@ -350,7 +371,8 @@ def _provider_requirements_ok(cfg: Dict[str, Any]) -> Tuple[bool, str]:
             str(cfg.get('gdrive_oauth_client_secret_file', '')).strip()
         ).expanduser()
         folder_id = str(cfg.get('gdrive_folder_id', '')).strip()
-        oauth_ok, oauth_err = validate_gdrive_oauth_client_secret_file(str(client_secret_file))
+        oauth_ok, oauth_err = validate_gdrive_oauth_client_secret_file(
+            str(client_secret_file))
         if not oauth_ok:
             return False, oauth_err
         if not folder_id:
@@ -396,7 +418,8 @@ def _build_google_drive_service(cfg: Dict[str, Any]):
     except Exception as exc:
         raise RuntimeError(f'Could not read Google OAuth token file: {token_path}') from exc
 
-    credentials = Credentials.from_authorized_user_info(token_data, GDRIVE_OAUTH_SCOPES)
+    credentials = Credentials.from_authorized_user_info(
+        token_data, GDRIVE_OAUTH_SCOPES)
     if not credentials.valid:
         if credentials.expired and credentials.refresh_token:
             credentials.refresh(Request())
@@ -410,7 +433,8 @@ def _build_google_drive_service(cfg: Dict[str, Any]):
 
 def _gdrive_find_child_folder(service, parent_id: str,
                               name: str,
-                              create_if_missing: bool = False) -> Optional[str]:
+                              create_if_missing: bool = False
+                              ) -> Optional[str]:
     query = (
         "mimeType='application/vnd.google-apps.folder' and trashed=false "
         f"and name='{name}' and '{parent_id}' in parents"
@@ -475,7 +499,8 @@ def _gdrive_list_period(service, period_folder_id: str,
     return out
 
 
-def _gdrive_validate_shared_drive_target(service, folder_id: str) -> Dict[str, Any]:
+def _gdrive_validate_shared_drive_target(
+        service, folder_id: str) -> Dict[str, Any]:
     """Validate that target folder is accessible."""
     meta = service.files().get(
         fileId=folder_id,
@@ -494,7 +519,8 @@ def _gdrive_upload_file(service, parent_id: str, file_path: Path,
             'Google Drive dependencies are missing. Install google-api-python-client.'
         ) from exc
 
-    media = MediaFileUpload(str(file_path), mimetype='application/gzip', resumable=False)
+    media = MediaFileUpload(
+        str(file_path), mimetype='application/gzip', resumable=False)
     if existing_id:
         service.files().update(
             fileId=existing_id,
@@ -570,8 +596,12 @@ def _read_s3_credentials_file(path_value: str) -> Tuple[str, str]:
     if not isinstance(payload, dict):
         return '', ''
 
-    root_access = str(payload.get('aws_access_key_id', '') or payload.get('AccessKeyId', '')).strip()
-    root_secret = str(payload.get('aws_secret_access_key', '') or payload.get('SecretAccessKey', '')).strip()
+    root_access = str(
+        payload.get('aws_access_key_id', '')
+        or payload.get('AccessKeyId', '')).strip()
+    root_secret = str(
+        payload.get('aws_secret_access_key', '')
+        or payload.get('SecretAccessKey', '')).strip()
 
     creds = payload.get('Credentials', {})
     if isinstance(creds, dict):
@@ -624,7 +654,8 @@ def _s3_list_period(client, bucket: str, prefix: str,
     return out
 
 
-def test_backup_connection(cfg: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+def test_backup_connection(
+        cfg: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
     """Test configured cloud backup connection."""
     if cfg is None:
         cfg = load_backup_config()
@@ -673,10 +704,12 @@ def test_backup_connection(cfg: Optional[Dict[str, Any]] = None) -> Dict[str, An
         }
     except Exception as exc:
         elapsed_ms = int((time.perf_counter() - start) * 1000)
-        return {'ok': False, 'error': str(exc), 'detail': '', 'query_ms': elapsed_ms}
+        return {'ok': False, 'error': str(exc),
+                'detail': '', 'query_ms': elapsed_ms}
 
 
-def test_backup_roundtrip(cfg: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+def test_backup_roundtrip(
+        cfg: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
     """Run a backup probe by writing, validating, and deleting one test object."""
     if cfg is None:
         cfg = load_backup_config()
@@ -705,7 +738,8 @@ def test_backup_roundtrip(cfg: Optional[Dict[str, Any]] = None) -> Dict[str, Any
             service = _build_google_drive_service(cfg)
             root_id = str(cfg.get('gdrive_folder_id', '')).strip()
             _gdrive_validate_shared_drive_target(service, root_id)
-            daily_id = _gdrive_find_child_folder(service, root_id, 'daily', create_if_missing=True)
+            daily_id = _gdrive_find_child_folder(
+                service, root_id, 'daily', create_if_missing=True)
             if not daily_id:
                 raise RuntimeError('Could not create/find daily folder in Google Drive.')
 
@@ -716,7 +750,8 @@ def test_backup_roundtrip(cfg: Optional[Dict[str, Any]] = None) -> Dict[str, Any
                     'Google Drive dependencies are missing. Install google-api-python-client.'
                 ) from exc
 
-            media = MediaInMemoryUpload(probe_payload, mimetype='application/json', resumable=False)
+            media = MediaInMemoryUpload(
+                probe_payload, mimetype='application/json', resumable=False)
             created = service.files().create(
                 body={'name': probe_name, 'parents': [daily_id]},
                 media_body=media,
@@ -734,7 +769,8 @@ def test_backup_roundtrip(cfg: Optional[Dict[str, Any]] = None) -> Dict[str, Any
                 supportsAllDrives=True,
             ).execute()
 
-            service.files().delete(fileId=probe_id, supportsAllDrives=True).execute()
+            service.files().delete(
+                fileId=probe_id, supportsAllDrives=True).execute()
 
         elif provider == 's3':
             client = _build_s3_client(cfg)
@@ -779,7 +815,8 @@ def _local_backup_root(local_data_dir: Optional[Path]) -> Path:
     return (Path(local_data_dir).expanduser().resolve() / 'backups')
 
 
-def list_local_backups(local_data_dir: Optional[Path] = None) -> Dict[str, Any]:
+def list_local_backups(
+        local_data_dir: Optional[Path] = None) -> Dict[str, Any]:
     """List local daily/weekly backups."""
     backup_root = _local_backup_root(local_data_dir)
     daily_dir = backup_root / 'daily'
@@ -799,7 +836,8 @@ def list_local_backups(local_data_dir: Optional[Path] = None) -> Dict[str, Any]:
                 'period': period,
                 'relative_path': f'{period}/{path.name}',
                 'size_bytes': int(st.st_size),
-                'mtime': datetime.fromtimestamp(st.st_mtime, tz=timezone.utc).isoformat(),
+                'mtime': datetime.fromtimestamp(
+                    st.st_mtime, tz=timezone.utc).isoformat(),
             })
         return rows
 
@@ -856,12 +894,16 @@ def list_cloud_backups(cfg: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
         if provider == 'gdrive_oauth':
             service = _build_google_drive_service(cfg)
             root_id = str(cfg.get('gdrive_folder_id', '')).strip()
-            daily_id = _gdrive_find_child_folder(service, root_id, 'daily', create_if_missing=False)
-            weekly_id = _gdrive_find_child_folder(service, root_id, 'weekly', create_if_missing=False)
+            daily_id = _gdrive_find_child_folder(
+                service, root_id, 'daily', create_if_missing=False)
+            weekly_id = _gdrive_find_child_folder(
+                service, root_id, 'weekly', create_if_missing=False)
             if daily_id:
-                all_rows.update(_gdrive_list_period(service, daily_id, 'daily'))
+                all_rows.update(
+                    _gdrive_list_period(service, daily_id, 'daily'))
             if weekly_id:
-                all_rows.update(_gdrive_list_period(service, weekly_id, 'weekly'))
+                all_rows.update(
+                    _gdrive_list_period(service, weekly_id, 'weekly'))
 
         elif provider == 's3':
             client = _build_s3_client(cfg)
@@ -917,7 +959,8 @@ def list_cloud_backups(cfg: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
 def _remote_map(cfg: Dict[str, Any]) -> Dict[str, Dict[str, Any]]:
     cloud = list_cloud_backups(cfg)
     if not cloud.get('ok', False):
-        raise RuntimeError(str(cloud.get('error', 'Could not list cloud backups.')))
+        raise RuntimeError(
+        str(cloud.get('error', 'Could not list cloud backups.')))
     out: Dict[str, Dict[str, Any]] = {}
     for row in cloud.get('daily', []) + cloud.get('weekly', []):
         out[str(row.get('relative_path', ''))] = dict(row)
@@ -925,7 +968,8 @@ def _remote_map(cfg: Dict[str, Any]) -> Dict[str, Dict[str, Any]]:
 
 
 def sync_local_backups_to_cloud(local_data_dir: Optional[Path] = None,
-                                cfg: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+                                cfg: Optional[Dict[str, Any]] = None
+                                ) -> Dict[str, Any]:
     """Mirror local daily/weekly backup archives to configured cloud provider."""
     if cfg is None:
         cfg = load_backup_config()
@@ -985,8 +1029,10 @@ def sync_local_backups_to_cloud(local_data_dir: Optional[Path] = None,
             service = _build_google_drive_service(cfg)
             root_id = str(cfg.get('gdrive_folder_id', '')).strip()
             period_folder_ids = {
-                'daily': _gdrive_find_child_folder(service, root_id, 'daily', create_if_missing=True),
-                'weekly': _gdrive_find_child_folder(service, root_id, 'weekly', create_if_missing=True),
+                'daily': _gdrive_find_child_folder(
+                    service, root_id, 'daily', create_if_missing=True),
+                'weekly': _gdrive_find_child_folder(
+                    service, root_id, 'weekly', create_if_missing=True),
             }
 
             for rel, local_row in local_map.items():
@@ -995,10 +1041,16 @@ def sync_local_backups_to_cloud(local_data_dir: Optional[Path] = None,
                 if not parent_id:
                     continue
                 remote_row = remote_before.get(rel)
-                remote_id = str(remote_row.get('provider_id', '')) if remote_row else None
-                if remote_row and int(remote_row.get('size_bytes', 0) or 0) == local_row['size_bytes']:
+                remote_id = (
+                    str(remote_row.get('provider_id', ''))
+                    if remote_row else None)
+                if remote_row and (
+                        int(remote_row.get('size_bytes', 0) or 0)
+                        == local_row['size_bytes']):
                     continue
-                _gdrive_upload_file(service, parent_id, local_row['path'], existing_id=remote_id)
+                _gdrive_upload_file(
+                    service, parent_id,
+                    local_row['path'], existing_id=remote_id)
                 if remote_row:
                     updated += 1
                 else:
@@ -1021,7 +1073,9 @@ def sync_local_backups_to_cloud(local_data_dir: Optional[Path] = None,
             for rel, local_row in local_map.items():
                 remote_row = remote_before.get(rel)
                 key = f'{prefix}{rel}'
-                if remote_row and int(remote_row.get('size_bytes', 0) or 0) == local_row['size_bytes']:
+                if remote_row and (
+                        int(remote_row.get('size_bytes', 0) or 0)
+                        == local_row['size_bytes']):
                     continue
                 client.upload_file(str(local_row['path']), bucket, key)
                 if remote_row:
@@ -1171,7 +1225,8 @@ def delete_all_backups(period: str = 'all',
     if target in {'cloud', 'both'} and _is_cloud_enabled(cfg):
         cloud_rows = list_cloud_backups(cfg)
         if cloud_rows.get('ok', False):
-            for row in cloud_rows.get('daily', []) + cloud_rows.get('weekly', []):
+            for row in (cloud_rows.get('daily', [])
+                        + cloud_rows.get('weekly', [])):
                 rel = str(row.get('relative_path', ''))
                 if not rel:
                     continue
@@ -1231,7 +1286,8 @@ def backup_inventory(local_data_dir: Optional[Path] = None,
         })
 
     return {
-        'provider': cloud.get('provider', str(cfg.get('provider', 'local_only'))),
+        'provider': cloud.get(
+            'provider', str(cfg.get('provider', 'local_only'))),
         'cloud_configured': cloud.get('configured', False),
         'cloud_ok': cloud.get('ok', False),
         'cloud_error': cloud.get('error', ''),
@@ -1247,7 +1303,8 @@ def backup_inventory(local_data_dir: Optional[Path] = None,
 
 def download_cloud_backup(relative_path: str,
                          local_data_dir: Optional[Path] = None,
-                         cfg: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+                         cfg: Optional[Dict[str, Any]] = None
+                         ) -> Dict[str, Any]:
     """Download a specific cloud backup to local."""
     if cfg is None:
         cfg = load_backup_config()
@@ -1280,14 +1337,17 @@ def download_cloud_backup(relative_path: str,
             parts = Path(relative_path).parts
             current_id = root_id
             for part in parts[:-1]:
-                current_id = _gdrive_find_child_folder(service, current_id, part)
+                current_id = _gdrive_find_child_folder(
+                    service, current_id, part)
                 if not current_id:
                     return {'ok': False, 'error': f'Cloud path not found: {relative_path}'}
             
             file_name = Path(relative_path).name
             # Find the file in the final directory
             query = f"'{current_id}' in parents and name='{file_name}' and trashed=false"
-            results = service.files().list(q=query, spaces='drive', fields='files(id, name)').execute()
+            results = service.files().list(
+                q=query, spaces='drive',
+                fields='files(id, name)').execute()
             files = results.get('files', [])
             
             if not files:
@@ -1331,7 +1391,8 @@ def download_cloud_backup(relative_path: str,
 
 
 def sync_cloud_backups_to_local(local_data_dir: Optional[Path] = None,
-                                cfg: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+                                cfg: Optional[Dict[str, Any]] = None
+                                ) -> Dict[str, Any]:
     """Download all cloud backups that don't exist locally."""
     if cfg is None:
         cfg = load_backup_config()
@@ -1341,7 +1402,8 @@ def sync_cloud_backups_to_local(local_data_dir: Optional[Path] = None,
 
     provider = str(cfg.get('provider', 'local_only')).strip()
     if not _is_cloud_enabled(cfg):
-        return {'ok': False, 'downloaded': 0, 'error': 'Cloud backup is not enabled.'}
+        return {'ok': False, 'downloaded': 0,
+                'error': 'Cloud backup is not enabled.'}
 
     req_ok, req_err = _provider_requirements_ok(cfg)
     if not req_ok:
@@ -1349,14 +1411,16 @@ def sync_cloud_backups_to_local(local_data_dir: Optional[Path] = None,
 
     local_backups = list_local_backups(local_data_dir)
     local_map = set()
-    for row in local_backups.get('daily', []) + local_backups.get('weekly', []):
+    for row in (local_backups.get('daily', [])
+                + local_backups.get('weekly', [])):
         rel = str(row.get('relative_path', ''))
         if rel:
             local_map.add(rel)
 
     cloud_backups = list_cloud_backups(cfg)
     cloud_files = []
-    for row in cloud_backups.get('daily', []) + cloud_backups.get('weekly', []):
+    for row in (cloud_backups.get('daily', [])
+                + cloud_backups.get('weekly', [])):
         rel = str(row.get('relative_path', ''))
         if rel and rel not in local_map:
             cloud_files.append(rel)
@@ -1383,3 +1447,14 @@ def sync_cloud_backups_to_local(local_data_dir: Optional[Path] = None,
 
     return {'ok': True, 'downloaded': downloaded, 'message': f'Downloaded {downloaded} backup(s).'}
 
+
+
+# =============================================================================
+# Start of code
+# =============================================================================
+if __name__ == '__main__':
+    print('Hello World!')
+
+# =============================================================================
+# End of code
+# =============================================================================

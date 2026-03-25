@@ -35,6 +35,7 @@
     var sectionSearch = {};
     var sectionTitleMap = {};
     var tabOrderMap = {};
+    var vsysMs = null;
 
     function escHtml(str) {
         var d = document.createElement('div');
@@ -80,6 +81,28 @@
         errorEl.textContent = msg || 'Failed to load object page data.';
     }
 
+    function persistLastObjectPage() {
+        var profileId = String(cfg.profileId || '').trim();
+        var objname = String(cfg.objname || '').trim();
+        if (!profileId || !objname) {
+            return;
+        }
+        var storageKey = 'ari.dp:last-object-page:' + profileId;
+        var path = String(window.location.pathname || '').trim();
+        var query = String(window.location.search || '');
+        var payload = {
+            profileId: profileId,
+            objname: objname,
+            url: path + query,
+            updatedAt: new Date().toISOString()
+        };
+        try {
+            localStorage.setItem(storageKey, JSON.stringify(payload));
+        } catch (_err) {
+            // Ignore storage failures.
+        }
+    }
+
     function activateTab(tabKey) {
         document.querySelectorAll('#op-tabs .ari-sg-tab').forEach(function (btn) {
             btn.classList.toggle('ari-sg-tab--active', btn.dataset.tab === tabKey);
@@ -90,6 +113,11 @@
         applySectionFilter(tabKey);
         // Notify lazy-loading tab modules (e.g. file_browser.js)
         document.dispatchEvent(new CustomEvent('ARI_TAB_ACTIVATED', {detail: {tabKey: tabKey}}));
+        // Trigger resize so Bokeh stretch_width plots in now-visible panels
+        // re-measure their container and render at the correct width.
+        setTimeout(function () {
+            window.dispatchEvent(new Event('resize'));
+        }, 50);
     }
 
     function bindTabs() {
@@ -190,6 +218,17 @@
 
         var controls = document.createElement('div');
         controls.className = 'op-section-controls';
+
+        // Move existing "open in new window" link into the controls group
+        var maxBtn = header.querySelector('.op-plot-max-btn');
+        if (maxBtn) {
+            maxBtn.style.marginLeft = '';
+            maxBtn.classList.remove('ari-btn--sm');
+            maxBtn.classList.remove('ari-btn--secondary');
+            maxBtn.classList.remove('ari-btn');
+            maxBtn.classList.add('op-section-btn');
+            controls.appendChild(maxBtn);
+        }
 
         var pinBtn = document.createElement('button');
         pinBtn.type = 'button';
@@ -327,14 +366,8 @@
     }
 
     function applyDefaultCollapse(cards) {
-        var perTab = {};
         cards.forEach(function (meta) {
-            perTab[meta.tabKey] = (perTab[meta.tabKey] || 0) + 1;
-        });
-        cards.forEach(function (meta) {
-            var hasMultiple = (perTab[meta.tabKey] || 0) > 1;
-            var shouldCollapse = hasMultiple && !isSectionPinned(meta.id);
-            setSectionCollapsed(meta.card, shouldCollapse);
+            setSectionCollapsed(meta.card, false);
         });
     }
 
@@ -781,13 +814,18 @@
             var velCard = document.createElement('div');
             velCard.className = 'at-section-card';
             velCard.setAttribute('data-op-section-id', 'lbl.velocity.' + sidToken);
+            var velLoadingId = 'op-lbl-vel-loading-' + sidToken;
+            var velPlotDivId = 'op-lbl-vel-plot-' + sidToken;
             velCard.innerHTML =
                 '<div class="at-section-card__header">'
                 + '<span><i class="fa-solid fa-chart-line"></i> LBL Velocity Plot -- '
                 + flavorId + '</span>'
                 + '</div>'
                 + '<div class="at-section-card__body">'
-                + '<div class="at-muted-hint">Coming soon</div>'
+                + '<div id="' + velLoadingId + '" class="at-muted-hint">'
+                + '<i class="fa-solid fa-spinner fa-spin"></i> Loading plot&hellip;'
+                + '</div>'
+                + '<div id="' + velPlotDivId + '"></div>'
                 + '</div>';
             lblSections.appendChild(velCard);
         });
@@ -984,6 +1022,203 @@
         );
     }
 
+    function renderSnrPlot(payload) {
+        var loadingEl = document.getElementById('op-snr-plot-loading');
+        var divEl = document.getElementById('op-snr-plot-div');
+        if (loadingEl) loadingEl.style.display = 'none';
+        if (!payload || !payload.has_plot) {
+            if (divEl) {
+                divEl.innerHTML = '<div class="at-muted-hint">'
+                    + escHtml(payload && payload.message ? payload.message : 'No SNR data available.')
+                    + '</div>';
+            }
+            return;
+        }
+        if (divEl && payload.item && typeof Bokeh !== 'undefined') {
+            Bokeh.embed.embed_item(payload.item, 'op-snr-plot-div');
+        }
+    }
+
+    function renderBervPlot(payload) {
+        var loadingEl = document.getElementById('op-berv-plot-loading');
+        var divEl = document.getElementById('op-berv-plot-div');
+        if (loadingEl) loadingEl.style.display = 'none';
+        if (!payload || !payload.has_plot) {
+            if (divEl) {
+                divEl.innerHTML = '<div class="at-muted-hint">'
+                    + escHtml(payload && payload.message ? payload.message : 'No BERV data available.')
+                    + '</div>';
+            }
+            return;
+        }
+        if (divEl && payload.item && typeof Bokeh !== 'undefined') {
+            Bokeh.embed.embed_item(payload.item, 'op-berv-plot-div');
+        }
+    }
+
+    function renderSpecPlot(payload) {
+        var loadingEl = document.getElementById('op-spec-plot-loading');
+        var divEl = document.getElementById('op-spec-plot-div');
+        if (loadingEl) loadingEl.style.display = 'none';
+        if (!payload || !payload.has_plot) {
+            if (divEl) {
+                divEl.innerHTML = '<div class="at-muted-hint">'
+                    + escHtml(payload && payload.message ? payload.message : 'No spectrum data available.')
+                    + '</div>';
+            }
+            return;
+        }
+        if (divEl && payload.item && typeof Bokeh !== 'undefined') {
+            Bokeh.embed.embed_item(payload.item, 'op-spec-plot-div');
+        }
+    }
+
+    function renderCcfPlot(payload) {
+        var loadingEl = document.getElementById('op-ccf-plot-loading');
+        var divEl = document.getElementById('op-ccf-plot-div');
+        if (loadingEl) loadingEl.style.display = 'none';
+        if (!payload || !payload.has_plot) {
+            if (divEl) {
+                divEl.innerHTML = '<div class="at-muted-hint">'
+                    + escHtml(payload && payload.message ? payload.message : 'No CCF data available.')
+                    + '</div>';
+            }
+            return;
+        }
+        if (divEl && payload.item && typeof Bokeh !== 'undefined') {
+            Bokeh.embed.embed_item(payload.item, 'op-ccf-plot-div');
+        }
+    }
+
+    function renderTsSnrPlot(payload) {
+        var loadingEl = document.getElementById('op-ts-snr-plot-loading');
+        var divEl = document.getElementById('op-ts-snr-plot-div');
+        if (loadingEl) loadingEl.style.display = 'none';
+        if (!payload || !payload.has_plot) {
+            if (divEl) {
+                divEl.innerHTML = '<div class="at-muted-hint">'
+                    + escHtml(payload && payload.message ? payload.message : 'No per-night SNR data available.')
+                    + '</div>';
+            }
+            return;
+        }
+        if (divEl && payload.item && typeof Bokeh !== 'undefined') {
+            Bokeh.embed.embed_item(payload.item, 'op-ts-snr-plot-div');
+        }
+    }
+
+    function renderTsAirmassPlot(payload) {
+        var loadingEl = document.getElementById('op-ts-airmass-plot-loading');
+        var divEl = document.getElementById('op-ts-airmass-plot-div');
+        if (loadingEl) loadingEl.style.display = 'none';
+        if (!payload || !payload.has_plot) {
+            if (divEl) {
+                divEl.innerHTML = '<div class="at-muted-hint">'
+                    + escHtml(payload && payload.message ? payload.message : 'No per-night airmass data available.')
+                    + '</div>';
+            }
+            return;
+        }
+        if (divEl && payload.item && typeof Bokeh !== 'undefined') {
+            Bokeh.embed.embed_item(payload.item, 'op-ts-airmass-plot-div');
+        }
+    }
+
+    function loadLblPlots() {
+        var url = cfg.objectLblPlotsApiUrl;
+        if (!url) return;
+        var params = '?profile_id=' + encodeURIComponent(cfg.profileId)
+            + '&objname=' + encodeURIComponent(cfg.objname);
+        fetch(url + params)
+            .then(function (r) { return r.json(); })
+            .then(function (data) {
+                if (!data || !data.success || !data.plots) return;
+                Object.keys(data.plots).forEach(function (rdb_filename) {
+                    var payload = data.plots[rdb_filename];
+                    var m = rdb_filename.match(/^lbl_(.+)\.rdb$/i);
+                    var flavor_id = m ? m[1] : rdb_filename;
+                    var sidToken = sanitizeSectionToken(flavor_id);
+                    var loadingEl = document.getElementById('op-lbl-vel-loading-' + sidToken);
+                    var divEl = document.getElementById('op-lbl-vel-plot-' + sidToken);
+                    if (loadingEl) loadingEl.style.display = 'none';
+                    if (!payload.has_plot) {
+                        if (divEl) divEl.innerHTML = '<div class="at-muted-hint">'
+                            + escHtml(payload.message || 'No LBL data available.') + '</div>';
+                        return;
+                    }
+                    if (divEl && payload.item && typeof Bokeh !== 'undefined') {
+                        Bokeh.embed.embed_item(payload.item, 'op-lbl-vel-plot-' + sidToken);
+                    }
+                });
+            })
+            .catch(function () {});
+    }
+
+    function updatePlotMaxLinks() {
+        // Append vsys_ms to maximize link hrefs so the standalone page can use it
+        if (vsysMs === null || vsysMs === undefined) return;
+        var snrLink = document.getElementById('op-snr-plot-max-link');
+        var bervLink = document.getElementById('op-berv-plot-max-link');
+        var specLink = document.getElementById('op-spec-plot-max-link');
+        var ccfLink = document.getElementById('op-ccf-plot-max-link');
+        var suffix = '?vsys_ms=' + encodeURIComponent(String(vsysMs));
+        if (snrLink) {
+            var snrBase = cfg.snrMaxUrl || snrLink.getAttribute('href') || '';
+            snrLink.href = snrBase.split('?')[0] + suffix;
+        }
+        if (bervLink) {
+            var bervBase = cfg.bervMaxUrl || bervLink.getAttribute('href') || '';
+            bervLink.href = bervBase.split('?')[0] + suffix;
+        }
+        if (specLink) {
+            var specBase = cfg.specMaxUrl || specLink.getAttribute('href') || '';
+            specLink.href = specBase.split('?')[0] + suffix;
+        }
+        if (ccfLink) {
+            var ccfBase = cfg.ccfMaxUrl || ccfLink.getAttribute('href') || '';
+            ccfLink.href = ccfBase.split('?')[0] + suffix;
+        }
+    }
+
+    function loadObjectPlots() {
+        var url = cfg.objectPlotsApiUrl;
+        if (!url) return;
+
+        var params = '?profile_id=' + encodeURIComponent(cfg.profileId)
+            + '&objname=' + encodeURIComponent(cfg.objname);
+        if (vsysMs !== null && vsysMs !== undefined) {
+            params += '&vsys_ms=' + encodeURIComponent(String(vsysMs));
+        }
+
+        fetch(url + params)
+            .then(function (r) { return r.json(); })
+            .then(function (data) {
+                if (!data || !data.success) return;
+                renderSnrPlot(data.snr || null);
+                renderBervPlot(data.berv || null);
+                renderSpecPlot(data.spec || null);
+                renderCcfPlot(data.ccf || null);
+                renderTsSnrPlot(data.ts_snr || null);
+                renderTsAirmassPlot(data.ts_airmass || null);
+                refreshSectionsUi();
+            })
+            .catch(function () {
+                // Silently hide loading spinners on error
+                var snrLoading = document.getElementById('op-snr-plot-loading');
+                var bervLoading = document.getElementById('op-berv-plot-loading');
+                var specLoading = document.getElementById('op-spec-plot-loading');
+                var ccfLoading = document.getElementById('op-ccf-plot-loading');
+                var tsSnrLoading = document.getElementById('op-ts-snr-plot-loading');
+                var tsAirmassLoading = document.getElementById('op-ts-airmass-plot-loading');
+                if (snrLoading) snrLoading.innerHTML = '<span class="at-muted-hint">Plot unavailable.</span>';
+                if (bervLoading) bervLoading.innerHTML = '<span class="at-muted-hint">Plot unavailable.</span>';
+                if (specLoading) specLoading.innerHTML = '<span class="at-muted-hint">Plot unavailable.</span>';
+                if (ccfLoading) ccfLoading.innerHTML = '<span class="at-muted-hint">Plot unavailable.</span>';
+                if (tsSnrLoading) tsSnrLoading.innerHTML = '<span class="at-muted-hint">Plot unavailable.</span>';
+                if (tsAirmassLoading) tsAirmassLoading.innerHTML = '<span class="at-muted-hint">Plot unavailable.</span>';
+            });
+    }
+
     function loadData() {
         var url = cfg.apiUrl
             + '?profile_id=' + encodeURIComponent(cfg.profileId)
@@ -1041,6 +1276,11 @@
                     + escHtml(formatDate(data.generated_at));
 
                 var s = data.sections || {};
+                // Extract systemic velocity (m/s) for BERV plot computation
+                if (s.lbl && s.lbl.vsys_ms !== null && s.lbl.vsys_ms !== undefined) {
+                    vsysMs = s.lbl.vsys_ms;
+                }
+                updatePlotMaxLinks();
                 renderTarget(s.target_info || {});
                 renderSpectrum(s.spectrum || {});
                 renderLbl(s.lbl || {});
@@ -1048,6 +1288,9 @@
                 renderTimeSeries(s.time_series || []);
                 debugMessageEl.textContent = (s.debug && s.debug.message) ? s.debug.message : 'Coming soon';
                 refreshSectionsUi();
+                // Load plots after main data is ready
+                loadObjectPlots();
+                loadLblPlots();
             })
             .catch(function (err) {
                 showError('Network error: ' + String(err));
@@ -1055,6 +1298,7 @@
     }
 
     function init() {
+        persistLastObjectPage();
         refreshTabOrderMap();
         bindTabs();
         activateTab('target_info');

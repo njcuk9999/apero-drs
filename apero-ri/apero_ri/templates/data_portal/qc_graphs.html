@@ -1,0 +1,248 @@
+{% extends "general/sidebar_base.html" %}
+{% block title %}APERO RI – {{ profile.profile_id }}: Quality Control Graphs{% endblock %}
+
+{% block body_class %}ari-has-sidebar ari-qc-page{% endblock %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="https://cdn.bokeh.org/bokeh/release/bokeh-3.8.2.min.css" type="text/css" />
+<style>
+body.ari-qc-page .ari-doc-main {
+    max-width: none;
+    width: auto;
+}
+.qc-filter-row {
+    display: flex;
+    gap: 0.6rem;
+    align-items: center;
+    margin: 0.75rem 0 1rem 0;
+}
+.qc-filter-input {
+    flex: 1;
+    max-width: 26rem;
+    border: 1px solid var(--ari-line, #d6d9de);
+    border-radius: 0.45rem;
+    padding: 0.45rem 0.65rem;
+    background: #fff;
+}
+.qc-section-card { margin-bottom: 1rem; }
+.qc-metric-tabs {
+    display: flex;
+    gap: 0.45rem;
+    flex-wrap: wrap;
+    margin-bottom: 0.8rem;
+}
+.qc-metric-tab {
+    border: 1px solid var(--ari-line, #d6d9de);
+    background: #fff;
+    border-radius: 0.35rem;
+    padding: 0.3rem 0.65rem;
+    cursor: pointer;
+    font-size: 0.88rem;
+}
+.qc-metric-tab--active {
+    border-color: var(--ari-primary, #0b66c3);
+    box-shadow: inset 0 0 0 1px var(--ari-primary, #0b66c3);
+    font-weight: 700;
+}
+.qc-metric-pane { display: none; }
+.qc-metric-pane--active { display: block; }
+.qc-plot-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.75rem;
+}
+.qc-plot-card {
+    position: relative;
+    border: 1px solid var(--ari-line, #d6d9de);
+    border-radius: 0.45rem;
+    padding: 0.25rem;
+    background: #fff;
+    overflow: hidden;
+}
+.qc-plot-max {
+    position: absolute;
+    top: 0.35rem;
+    right: 0.35rem;
+    z-index: 5;
+    border: 1px solid var(--ari-line, #d6d9de);
+    background: #fff;
+    color: var(--ari-text, #212b36);
+    border-radius: 0.35rem;
+    width: 1.9rem;
+    height: 1.9rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none;
+}
+.qc-plot-max:hover {
+    border-color: var(--ari-primary, #0b66c3);
+    color: var(--ari-primary, #0b66c3);
+}
+.qc-plot-card .bk-root {
+    width: 100% !important;
+}
+.qc-plot-empty {
+    border: 1px dashed var(--ari-line, #d6d9de);
+    border-radius: 0.45rem;
+    padding: 1rem;
+    color: var(--ari-text-muted, #59616d);
+    background: #fafbfd;
+}
+@media (max-width: 1000px) {
+    .qc-plot-grid { grid-template-columns: 1fr; }
+}
+</style>
+{% endblock %}
+
+{% block doc_content %}
+<div class="ari-page-header">
+    <h1>
+        <i class="{{ page_icon }}"></i>
+        <a href="{{ url_for('ri_profile', profile_id=profile.profile_id) }}"
+           class="ot-breadcrumb-link">{{ profile.profile_id }}</a>
+        <span class="ot-breadcrumb-sep">/</span>
+        Quality Control Graphs
+    </h1>
+</div>
+
+<div class="qc-filter-row">
+    <label for="qc-section-filter"><i class="fa-solid fa-filter"></i> Section Filter</label>
+    <input id="qc-section-filter" class="qc-filter-input" type="text"
+           placeholder="Filter sections...">
+</div>
+
+<div class="at-section-card qc-section-card" data-qc-section="shape quality control" data-qc-section-id="shape_quality_control">
+    <div class="at-section-card__header">
+        <span><i class="fa-solid fa-ruler-combined"></i> Shape Quality Control</span>
+        <div class="op-section-controls">
+            <button class="op-section-btn op-section-btn--pin"
+                    type="button"
+                    data-qc-pin-id="shape_quality_control"
+                    title="Pin section to top"></button>
+            <button class="op-section-btn op-section-btn--toggle qc-section-toggle"
+                    type="button"
+                    title="Collapse section" aria-expanded="true">
+                <i class="fa-solid fa-chevron-up"></i>
+            </button>
+        </div>
+    </div>
+    <div class="at-section-card__body">
+        <div class="qc-metric-tabs" data-qc-tabs="shape">
+            {% for metric in qc_payload.shape_plots %}
+            <button class="qc-metric-tab{% if loop.first %} qc-metric-tab--active{% endif %}"
+                    data-qc-target="shape-{{ loop.index0 }}">{{ metric.display_name }}</button>
+            {% endfor %}
+        </div>
+
+        {% for metric in qc_payload.shape_plots %}
+        <div class="qc-metric-pane{% if loop.first %} qc-metric-pane--active{% endif %}"
+             data-qc-pane="shape-{{ loop.index0 }}">
+            <div class="at-muted-hint" style="margin-bottom:0.5rem;">
+                <strong>{{ metric.label }}</strong>
+            </div>
+            {% if metric.has_plot %}
+            <div class="qc-plot-grid">
+                <div class="qc-plot-card">
+                    <a class="qc-plot-max"
+                       href="{{ url_for('ri_qc_graphs_max', profile_id=profile.profile_id, section='shape', metric_key=metric.metric_key, view_key='full') }}"
+                       target="_blank"
+                       rel="noopener"
+                       title="Open full-series plot in a new window">
+                        <i class="fa-solid fa-up-right-and-down-left-from-center"></i>
+                    </a>
+                    {{ metric.full_div | safe }}
+                </div>
+                <div class="qc-plot-card">
+                    <a class="qc-plot-max"
+                       href="{{ url_for('ri_qc_graphs_max', profile_id=profile.profile_id, section='shape', metric_key=metric.metric_key, view_key='zoom') }}"
+                       target="_blank"
+                       rel="noopener"
+                       title="Open 6-month plot in a new window">
+                        <i class="fa-solid fa-up-right-and-down-left-from-center"></i>
+                    </a>
+                    {{ metric.zoom_div | safe }}
+                </div>
+            </div>
+            {{ metric.full_script | safe }}
+            {{ metric.zoom_script | safe }}
+            {% else %}
+            <div class="qc-plot-empty">{{ metric.message }}</div>
+            {% endif %}
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<div class="at-section-card qc-section-card" data-qc-section="wave solution quality control" data-qc-section-id="wave_solution_quality_control">
+    <div class="at-section-card__header">
+        <span><i class="fa-solid fa-wave-square"></i> Wave Solution Quality Control</span>
+        <div class="op-section-controls">
+            <button class="op-section-btn op-section-btn--pin"
+                    type="button"
+                    data-qc-pin-id="wave_solution_quality_control"
+                    title="Pin section to top"></button>
+            <button class="op-section-btn op-section-btn--toggle qc-section-toggle"
+                    type="button"
+                    title="Collapse section" aria-expanded="true">
+                <i class="fa-solid fa-chevron-up"></i>
+            </button>
+        </div>
+    </div>
+    <div class="at-section-card__body">
+        <div class="qc-metric-tabs" data-qc-tabs="wave">
+            {% for metric in qc_payload.wave_plots %}
+            <button class="qc-metric-tab{% if loop.first %} qc-metric-tab--active{% endif %}"
+                    data-qc-target="wave-{{ loop.index0 }}">{{ metric.display_name }}</button>
+            {% endfor %}
+        </div>
+
+        {% for metric in qc_payload.wave_plots %}
+        <div class="qc-metric-pane{% if loop.first %} qc-metric-pane--active{% endif %}"
+             data-qc-pane="wave-{{ loop.index0 }}">
+            <div class="at-muted-hint" style="margin-bottom:0.5rem;">
+                <strong>{{ metric.label }}</strong>
+            </div>
+            {% if metric.has_plot %}
+            <div class="qc-plot-grid">
+                <div class="qc-plot-card">
+                    <a class="qc-plot-max"
+                       href="{{ url_for('ri_qc_graphs_max', profile_id=profile.profile_id, section='wave', metric_key=metric.metric_key, view_key='full') }}"
+                       target="_blank"
+                       rel="noopener"
+                       title="Open full-series plot in a new window">
+                        <i class="fa-solid fa-up-right-and-down-left-from-center"></i>
+                    </a>
+                    {{ metric.full_div | safe }}
+                </div>
+                <div class="qc-plot-card">
+                    <a class="qc-plot-max"
+                       href="{{ url_for('ri_qc_graphs_max', profile_id=profile.profile_id, section='wave', metric_key=metric.metric_key, view_key='zoom') }}"
+                       target="_blank"
+                       rel="noopener"
+                       title="Open 6-month plot in a new window">
+                        <i class="fa-solid fa-up-right-and-down-left-from-center"></i>
+                    </a>
+                    {{ metric.zoom_div | safe }}
+                </div>
+            </div>
+            {{ metric.full_script | safe }}
+            {{ metric.zoom_script | safe }}
+            {% else %}
+            <div class="qc-plot-empty">{{ metric.message }}</div>
+            {% endif %}
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="https://cdn.bokeh.org/bokeh/release/bokeh-3.8.2.min.js"></script>
+<script>
+window.ARI_QC_PAGE = {
+    profileId: {{ profile.profile_id | tojson }}
+};
+</script>
+<script src="{{ url_for('static', filename='js/qc_graphs.js') }}" defer></script>
+{% endblock %}

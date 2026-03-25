@@ -17,12 +17,14 @@ import yaml
 from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 from cryptography.hazmat.primitives import hashes
 
-from apero_ri.core.permissions import (resolve_user_permissions, load_groups,
-                                       load_pages)
+from apero_ri.core.permissions import resolve_user_permissions
+from apero_ri.core.permissions import load_groups
+from apero_ri.core.permissions import load_pages
 
 # =============================================================================
 # Define variables
 # =============================================================================
+__NAME__ = 'apero_ri.core.auth'
 ARI_DIR = Path.home() / '.ari'
 ADMIN_DIR = ARI_DIR / 'admin'
 USERS_FILE = ADMIN_DIR / 'users.yaml'
@@ -41,6 +43,9 @@ DEFAULT_PASSWORD = '1234'
 DEFAULT_GROUPS = ['admin']
 
 
+# =============================================================================
+# Define functions
+# =============================================================================
 def set_ari_dir(path: Optional[str]) -> None:
     """Configure storage root for auth-managed files."""
     global ARI_DIR, ADMIN_DIR, USERS_FILE, SCI_GROUPS_DIR
@@ -140,7 +145,8 @@ def ensure_default_user() -> None:
     """Ensure the default admin user exists."""
     users = load_users()
     for user_data in users.values():
-        if isinstance(user_data, dict) and 'admin' in user_data.get('groups', []):
+        if (isinstance(user_data, dict)
+                and 'admin' in user_data.get('groups', [])):
             return
     if DEFAULT_USER not in users:
         create_user(DEFAULT_USER, DEFAULT_PASSWORD, DEFAULT_GROUPS)
@@ -387,7 +393,8 @@ def load_apero_profiles(hydrate: bool = True) -> dict:
         for profile_id, profile_data in instr_profiles.items():
             if not isinstance(profile_data, dict):
                 continue
-            hprofiles[profile_id] = _hydrate_profile_data(profile_data, instrument)
+            hprofiles[profile_id] = _hydrate_profile_data(
+                profile_data, instrument)
         hydrated[instrument] = hprofiles
     return hydrated
 
@@ -480,7 +487,10 @@ def _hydrate_profile_data(profile_data: dict, instrument: str) -> dict:
     # general: start from resource defaults, then force canonical science keys
     # from saved profile to preserve admin/user selections.
     preset_general = preset.get('general', {})
-    saved_general = out.get('general', {}) if isinstance(out.get('general'), dict) else {}
+    saved_general = (
+        out.get('general', {})
+        if isinstance(out.get('general'), dict) else {}
+    )
     if isinstance(preset_general, dict):
         merged_general = deepcopy(preset_general)
 
@@ -661,3 +671,14 @@ def get_accessible_profiles(user_info: Optional[dict],
     accessible.sort(key=lambda x: (x['instrument'],
                                    x['data'].get('DISPLAY_ORDER', 999)))
     return accessible
+
+
+# =============================================================================
+# Start of code
+# =============================================================================
+if __name__ == '__main__':
+    print('Hello World!')
+
+# =============================================================================
+# End of code
+# =============================================================================

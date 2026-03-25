@@ -14,6 +14,7 @@ from apero_ri.tasks import apero_async
 # =============================================================================
 # Define variables
 # =============================================================================
+__NAME__ = 'apero_ri.tasks.apero_observation_table'
 ARI_DIR = Path.home() / '.ari'
 
 # list of parameters needed for this task (for checking in run_job)
@@ -22,7 +23,8 @@ PARAM_LIST.append('LOCAL_DATA_DIR')
 PARAM_LIST.append('INSTRUMENT')
 PARAM_LIST.append('APERO_PROFILES')
 PARAM_LIST.append('APERO_PROFILE_NAMES')
-# Profile params are hydrated dynamically from APERO profiles + instrument preset.
+# Profile params are hydrated dynamically from APERO profiles + instrument
+# preset.
 APERO_PROFILE_PARAM_LIST = []
 # Set the default frequency for this task (in hours)
 DEFAULT_FREQUENCY = 6.0
@@ -33,7 +35,7 @@ TASK_TYPE = 'INSTRUMENT'
 
 
 # =============================================================================
-# Define global classes
+# Define classes
 # =============================================================================
 class AperoObservationTableTask(apero_async.AperoAsyncTask):
     """Class representing an asynchronous task in APERO RI."""
@@ -63,9 +65,12 @@ class AperoObservationTableTask(apero_async.AperoAsyncTask):
         - DATABASE_USER: str, the database user, e.g. root
         - DATABASE_PASSWORD: str, the database password, e.g. password
         - DATABASE_NAME: str, the database name to connect to
-        - ASTROM_TABLENAME: str, the name of the table containing astrometric data
-        - CALIB_TABLENAME: str, the name of the table containing calibration data
-        - FINDEX_TABLENAME: str, the name of the table containing file index data
+        - ASTROM_TABLENAME: str, the name of the table containing astrometric
+          data
+        - CALIB_TABLENAME: str, the name of the table containing calibration
+          data
+        - FINDEX_TABLENAME: str, the name of the table containing file index
+          data
         - LOG_TABLENAME: str, the name of the table containing log data
         - TELLU_TABLENAME: str, the name of the table containing telluric data
         - REJECT_TABLENAME: str, the name of the table containing rejected data
@@ -117,18 +122,18 @@ class AperoObservationTableTask(apero_async.AperoAsyncTask):
                 continue
             # check that all required parameters are present
             rparams = check_required(aparams)
-            # ---------------------------------------------------------------------
+            # -----------------------------------------------------------------
             # specific sub-commands to add to rparams (shorthand)
-            # ---------------------------------------------------------------------
+            # -----------------------------------------------------------------
             rparams = sub_commands(rparams)
-            # ----------------------------------------------------------------------
+            # -----------------------------------------------------------------
             rquery = construct_query(rparams)
-            # ---------------------------------------------------------------------
+            # -----------------------------------------------------------------
             # run the query and get results
             db_params = apero_async.get_db_params(aparams)
             start = time.time()
             results = apero_async.database_query(db_params, rquery)
-            # ---------------------------------------------------------------------
+            # -----------------------------------------------------------------
             # time now
             time_now = datetime.now(timezone.utc).isoformat()
             metadata = dict()
@@ -137,7 +142,9 @@ class AperoObservationTableTask(apero_async.AperoAsyncTask):
             metadata['APERO_PROFILE'] = apero_profile
             metadata['COLUMN_META'] = meta_columns()
             # construct filename
-            instrument = aparams.get('general', {}).get('INSTRUMENT', 'unknown')
+            instrument = (
+                aparams.get('general', {}).get('INSTRUMENT', 'unknown')
+            )
             local_dir = (Path(params.get('LOCAL_DATA_DIR', str(ARI_DIR)))
                          / 'tasks' / instrument / apero_profile)
             basename = 'obs_table.json'
@@ -154,7 +161,7 @@ class AperoObservationTableTask(apero_async.AperoAsyncTask):
                         f'\n- Warning: failed to persist database-update '
                         f'fingerprint for {apero_profile}: {exc}\n'
                     )
-            # ---------------------------------------------------------------------
+            # -----------------------------------------------------------------
             # update the info markdown with meta data
             self.info += f"""
             ## Object Table for APERO Profile: {apero_profile}
@@ -163,7 +170,7 @@ class AperoObservationTableTask(apero_async.AperoAsyncTask):
             **Query time**: {metadata['QUERY_TIME']:.2f} seconds
             **APERO Profile**: {metadata['APERO_PROFILE']}
             """
-            # ---------------------------------------------------------------------
+            # -----------------------------------------------------------------
             # add to the output files for this task
             self.output_files.append(str(filename))
             # update the last run time
@@ -188,9 +195,12 @@ class AperoObservationTableTask(apero_async.AperoAsyncTask):
         - DATABASE_USER: str, the database user, e.g. root
         - DATABASE_PASSWORD: str, the database password, e.g. password
         - DATABASE_NAME: str, the database name to connect to
-        - ASTROM_TABLENAME: str, the name of the table containing astrometric data
-        - CALIB_TABLENAME: str, the name of the table containing calibration data
-        - FINDEX_TABLENAME: str, the name of the table containing file index data
+        - ASTROM_TABLENAME: str, the name of the table containing astrometric
+          data
+        - CALIB_TABLENAME: str, the name of the table containing calibration
+          data
+        - FINDEX_TABLENAME: str, the name of the table containing file index
+          data
         - LOG_TABLENAME: str, the name of the table containing log data
         - TELLU_TABLENAME: str, the name of the table containing telluric data
         - REJECT_TABLENAME: str, the name of the table containing rejected data
@@ -221,16 +231,19 @@ class AperoObservationTableTask(apero_async.AperoAsyncTask):
         
             # check that all required parameters are present
             rparams = check_required(aparams)
-            # ---------------------------------------------------------------------
+            # -----------------------------------------------------------------
             # specific sub-commands to add to rparams (shorthand)
-            # ---------------------------------------------------------------------
+            # -----------------------------------------------------------------
             rparams = sub_commands(rparams)
-            # ----------------------------------------------------------------------
+            # -----------------------------------------------------------------
             rquery = construct_query(rparams)  
-            # ----------------------------------------------------------------------
+            # -----------------------------------------------------------------
             print(rquery.format(**rparams)) 
             
 
+# =============================================================================
+# Define functions
+# =============================================================================
 def check_required(aparams: Dict[str, Any]) -> Dict[str, Any]:
     required_params = [
         'ASTROM_TABLENAME',
@@ -242,7 +255,8 @@ def check_required(aparams: Dict[str, Any]) -> Dict[str, Any]:
     ]
     # Check and cut down parameters needed for query
     rparams = dict()
-    # Prefer nested database config and flatten required keys for SQL templates.
+    # Prefer nested database config and flatten required keys for SQL
+    # templates.
     db_cfg = aparams.get('database', {})
     if not isinstance(db_cfg, dict):
         db_cfg = {}
@@ -252,7 +266,8 @@ def check_required(aparams: Dict[str, Any]) -> Dict[str, Any]:
         if value in (None, ''):
             raise ValueError(f'Missing required parameter: database.{param}')
         rparams[param] = value
-    # extract science params from the 'general' sub-dict and flatten into rparams
+    # extract science params from the 'general' sub-dict and flatten into
+    # rparams
     general = aparams.get('general', {})
     for key in ('SCIENCE_FIBER', 'SCIENCE_TYPES'):
         if key not in general:
@@ -406,3 +421,13 @@ if __name__ == '__main__':
         'APERO_PROFILES': {_TEST_PROFILE: _profile},
     }
     task.test_query(run_params)
+
+# =============================================================================
+# Start of code
+# =============================================================================
+if __name__ == '__main__':
+    print('Hello World!')
+
+# =============================================================================
+# End of code
+# =============================================================================

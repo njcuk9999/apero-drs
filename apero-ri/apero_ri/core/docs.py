@@ -7,12 +7,16 @@ Reads and writes markdown files from the version-first layout::
 
     documentation/ari/
     ├── versions.yaml
-    ├── {version}/{page_id}.md        (e.g. home.docs.install.md)
+    ├── {version}/{page_id}.md  (e.g. home.docs.install.md)
     └── static/images/
 
 Version applies globally to all doc pages (like ReadTheDocs).
 Filenames match the page_id from pages.yaml.
 """
+
+# =============================================================================
+# Imports
+# =============================================================================
 import os
 import re
 from datetime import datetime
@@ -25,6 +29,7 @@ import yaml
 # =============================================================================
 # Define variables
 # =============================================================================
+__NAME__ = 'apero_ri.core.docs'
 # The documentation root: documentation/ari/ in the repo
 REPO_ROOT = Path(__file__).parent.parent.parent.parent
 DOC_ROOT = REPO_ROOT / 'documentation' / 'ari'
@@ -52,7 +57,6 @@ MD_EXTENSION_CONFIGS = {
     },
 }
 
-
 # =============================================================================
 # Define functions
 # =============================================================================
@@ -77,12 +81,18 @@ def get_default_version() -> Optional[str]:
 def get_doc_content(page_id: str,
                     version: Optional[str] = None
                     ) -> Tuple[str, str, Optional[str]]:
-    """Get markdown content for a doc page.
+    """
+    Get markdown content for a doc page.
 
     Layout: documentation/ari/{version}/{page_id}.md
 
     If version is None, uses the default (first) version.
-    Returns: (raw_markdown, rendered_html, version_id)
+
+    :param page_id: str, page identifier matching the markdown filename
+    :param version: str or None, documentation version to look up
+
+    :return: tuple of (raw_markdown, rendered_html, version_id)
+    :rtype: tuple
     """
     if not version:
         version = get_default_version()
@@ -139,6 +149,22 @@ def save_uploaded_image(page_ref: str, filename: str,
 
 
 def ensure_doc_dir(page_ref: str) -> None:
-    """Ensure a documentation directory exists for a page reference."""
+    """
+    Ensure a documentation directory exists for a page reference.
+
+    :param page_ref: str, page reference string used as directory name
+
+    :return: None
+    """
     page_dir = DOC_ROOT / page_ref
     page_dir.mkdir(parents=True, exist_ok=True)
+
+# =============================================================================
+# Start of code
+# =============================================================================
+if __name__ == '__main__':
+    print('Hello World!')
+
+# =============================================================================
+# End of code
+# =============================================================================

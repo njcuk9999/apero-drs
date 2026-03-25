@@ -13,8 +13,14 @@ from flask import (Flask, flash, redirect, render_template, request, session,
 
 from apero_ri.core import auth
 from apero_ri.core import email_backend as eb
-from apero_ri.setup.bootstrap import (is_setup_complete, load_setup_state,
-                                      save_setup_state)
+from apero_ri.setup.bootstrap import is_setup_complete
+from apero_ri.setup.bootstrap import load_setup_state
+from apero_ri.setup.bootstrap import save_setup_state
+
+# =============================================================================
+# Define variables
+# =============================================================================
+__NAME__ = 'apero_ri.setup.setup_app'
 
 PACKAGE_DIR = Path(__file__).resolve().parent.parent
 TEMPLATE_DIR = PACKAGE_DIR / 'templates'
@@ -23,6 +29,9 @@ STATIC_DIR = PACKAGE_DIR / 'static'
 USERNAME_RE = re.compile(r'^[a-z][a-z0-9_]{2,63}$')
 
 
+# =============================================================================
+# Define classes
+# =============================================================================
 class SetupApp(Flask):
     """Flask app for first-run setup."""
 
@@ -88,7 +97,9 @@ class SetupApp(Flask):
         provider = str(form_data.get('provider', 'gmail')).strip().lower()
         defaults = eb.PROVIDER_DEFAULTS.get(provider,
                                             eb.PROVIDER_DEFAULTS['custom'])
-        port_text = str(form_data.get('smtp_port', defaults.get('smtp_port', 587))).strip()
+        port_text = str(
+            form_data.get('smtp_port', defaults.get('smtp_port', 587))
+        ).strip()
         try:
             smtp_port = int(port_text or defaults.get('smtp_port', 587))
         except ValueError:
@@ -97,7 +108,8 @@ class SetupApp(Flask):
             'enabled': True,
             'provider': provider,
             'from_address': str(form_data.get('from_address', '')).strip(),
-            'smtp_host': str(form_data.get('smtp_host', '')).strip() or defaults.get('smtp_host', ''),
+            'smtp_host': (str(form_data.get('smtp_host', '')).strip()
+                          or defaults.get('smtp_host', '')),
             'smtp_port': smtp_port,
             'smtp_ssl': bool(form_data.get('smtp_ssl')),
             'smtp_tls': bool(form_data.get('smtp_tls')),
@@ -115,7 +127,8 @@ class SetupApp(Flask):
             cfg['smtp_password'] = raw_password
         else:
             existing_cfg = eb.load_email_config()
-            existing_pw = str(existing_cfg.get('smtp_password_enc', '')).strip()
+            existing_pw = str(
+                existing_cfg.get('smtp_password_enc', '')).strip()
             if existing_pw:
                 cfg['smtp_password_enc'] = existing_pw
         return cfg
@@ -133,7 +146,8 @@ class SetupApp(Flask):
         if request.method == 'POST':
             cfg = self._build_email_config(request.form)
             provider = str(cfg.get('provider', '')).strip().lower()
-            if not str(cfg.get('from_address', '')).strip() and provider != 'log':
+            if (not str(cfg.get('from_address', '')).strip()
+                and provider != 'log'):
                 flash('From address is required.', 'error')
                 return render_template('setup/email.html',
                                        page_title='Setup Email',
@@ -188,16 +202,20 @@ class SetupApp(Flask):
                     flash('No pending verification request. Start again.',
                           'error')
                     return redirect(url_for('setup_admin'))
-                entered_code = str(request.form.get('verification_code', '')).strip()
+                entered_code = str(
+                    request.form.get('verification_code', '')).strip()
                 if entered_code != str(pending.get('code', '')):
                     flash('Invalid verification code.', 'error')
                     return render_template('setup/admin.html',
                                            page_title='Create Initial Admin',
                                            form_data=pending,
                                            pending_verification=True,
-                                           existing_user=bool(pending.get('existing_user')))
+                                           existing_user=bool(
+                                               pending.get('existing_user')))
                 expires_at = str(pending.get('expires_at', '')).strip()
-                if not expires_at or datetime.now(timezone.utc) > datetime.fromisoformat(expires_at):
+                if (not expires_at
+                        or datetime.now(timezone.utc)
+                        > datetime.fromisoformat(expires_at)):
                     session.pop('setup_pending_admin', None)
                     flash('Verification code expired. Request a new one.',
                           'error')
@@ -205,7 +223,8 @@ class SetupApp(Flask):
 
                 username = pending['username']
                 existing_user = users.get(username, {})
-                created_at = existing_user.get('created_at', datetime.now(timezone.utc).isoformat())
+                created_at = existing_user.get(
+                    'created_at', datetime.now(timezone.utc).isoformat())
                 last_login = existing_user.get('last_login')
                 instruments = existing_user.get('instruments', [])
                 users[username] = {
@@ -233,8 +252,10 @@ class SetupApp(Flask):
             username = str(request.form.get('username', '')).strip()
             first_names = str(request.form.get('first_names', '')).strip()
             last_name = str(request.form.get('last_name', '')).strip()
-            emails = self._split_list(str(request.form.get('emails', '')).strip())
-            institutions = self._split_list(str(request.form.get('institutions', '')).strip())
+            emails = self._split_list(
+                str(request.form.get('emails', '')).strip())
+            institutions = self._split_list(
+                str(request.form.get('institutions', '')).strip())
             password = str(request.form.get('password', ''))
             password_confirm = str(request.form.get('password_confirm', ''))
             existing_user = users.get(username, {})
@@ -294,7 +315,8 @@ class SetupApp(Flask):
                                            existing_user=bool(existing_user))
                 password_hash = auth.hash_password(password)
             else:
-                existing_password = str(existing_user.get('password', '')).strip()
+                existing_password = str(
+                    existing_user.get('password', '')).strip()
                 if not existing_password:
                     flash('Provide a password for a new admin account.', 'error')
                     return render_template('setup/admin.html',
@@ -325,7 +347,9 @@ class SetupApp(Flask):
                 'primary_institution': institutions[0],
                 'password_hash': password_hash,
                 'code': code,
-                'expires_at': (datetime.now(timezone.utc) + timedelta(minutes=15)).isoformat(),
+                'expires_at': (
+                    datetime.now(timezone.utc) + timedelta(minutes=15)
+                ).isoformat(),
                 'existing_user': bool(existing_user),
             }
             session['setup_pending_admin'] = pending
@@ -354,8 +378,12 @@ class SetupApp(Flask):
                 'username': 'njcuk9999',
                 'first_names': preferred.get('first_names', ''),
                 'last_name': preferred.get('last_name', ''),
-                'emails': ', '.join(preferred.get('emails', []) or [preferred.get('primary_email', '')]),
-                'institutions': ', '.join(preferred.get('institutions', []) or [preferred.get('primary_institution', '')]),
+                'emails': ', '.join(
+                    preferred.get('emails', [])
+                    or [preferred.get('primary_email', '')]),
+                'institutions': ', '.join(
+                    preferred.get('institutions', [])
+                    or [preferred.get('primary_institution', '')]),
             }
             existing_user = True
         return render_template('setup/admin.html',
@@ -373,6 +401,20 @@ class SetupApp(Flask):
                                email_cfg=email_cfg)
 
 
+# =============================================================================
+# Define functions
+# =============================================================================
 def create_setup_app(local_data_dir: Path) -> SetupApp:
     """Factory for the first-run setup app."""
     return SetupApp(local_data_dir)
+
+
+# =============================================================================
+# Start of code
+# =============================================================================
+if __name__ == '__main__':
+    print('Hello World!')
+
+# =============================================================================
+# End of code
+# =============================================================================

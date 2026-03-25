@@ -11,10 +11,10 @@ from pathlib import Path
 
 from apero_ri.core import auth
 from apero_ri.core import user_data as ud
-from apero_ri.setup.bootstrap import (ensure_directory_layout,
-                                      is_setup_complete,
-                                      resolve_local_data_dir,
-                                      save_bootstrap_config)
+from apero_ri.setup.bootstrap import ensure_directory_layout
+from apero_ri.setup.bootstrap import is_setup_complete
+from apero_ri.setup.bootstrap import resolve_local_data_dir
+from apero_ri.setup.bootstrap import save_bootstrap_config
 from apero_ri.setup.setup_app import create_setup_app
 
 

@@ -1,11 +1,25 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
 """Helpers for storing sensitive runtime files outside normal backups."""
 
+# =============================================================================
+# Imports
+# =============================================================================
 from __future__ import annotations
 
 import os
 import shutil
 from pathlib import Path
 from typing import Iterable
+
+# =============================================================================
+# Define variables
+# =============================================================================
+__NAME__ = 'apero_ri.core.secret_store'
+
+# =============================================================================
+# Define functions
+# =============================================================================
 
 
 def get_ari_dir() -> Path:
@@ -57,7 +71,16 @@ def _unique_paths(paths: Iterable[Path]) -> list[Path]:
 def resolve_secret_file(name: str,
                         legacy_paths: Iterable[Path] = (),
                         mode: int = 0o600) -> Path:
-    """Return a managed secret file path, moving any legacy file into place."""
+    """
+    Return a managed secret file path, moving any legacy file in place.
+
+    :param name: str, filename in the secret directory
+    :param legacy_paths: iterable of Path, legacy locations to migrate from
+    :param mode: int, permission mode to apply to the target file
+
+    :return: Path to the managed secret file
+    :rtype: Path
+    """
     target = get_secret_path(name)
     if target.exists():
         return protect_path(target, mode)
@@ -77,6 +100,16 @@ def resolve_secret_file(name: str,
         return protect_path(target, mode)
 
     return target
+
+# =============================================================================
+# Start of code
+# =============================================================================
+if __name__ == '__main__':
+    print('Hello World!')
+
+# =============================================================================
+# End of code
+# =============================================================================
 
 
 def resolve_secret_subdir(name: str,

@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
 """
 APERO RI: Email backend module.
 
@@ -160,8 +162,10 @@ def load_email_config() -> dict:
             cfg = {}
 
     password_path = _get_email_password_path()
-    if str(cfg.get('smtp_password_enc', '')).strip() and not password_path.exists():
-        password_path.write_text(str(cfg.get('smtp_password_enc', '')).strip(), encoding='utf-8')
+    if (str(cfg.get('smtp_password_enc', '')).strip()
+            and not password_path.exists()):
+        password_path.write_text(
+            str(cfg.get('smtp_password_enc', '')).strip(), encoding='utf-8')
         ss.protect_path(password_path, 0o600)
     if password_path.exists():
         cfg['smtp_password_enc'] = '__stored__'
@@ -180,7 +184,8 @@ def save_email_config(cfg: dict) -> None:
         provider = str(cfg.get('provider', '')).strip().lower()
         normalized = _normalize_smtp_password(str(raw_pw), provider)
         if normalized:
-            password_path.write_text(_encode_password(normalized), encoding='utf-8')
+            password_path.write_text(
+                _encode_password(normalized), encoding='utf-8')
             ss.protect_path(password_path, 0o600)
         else:
             password_path.unlink(missing_ok=True)
@@ -228,10 +233,11 @@ def get_smtp_password(cfg: dict) -> str:
         except Exception:
             encoded = ''
         if encoded:
-            return _normalize_smtp_password(_decode_password(encoded), provider)
+            return _normalize_smtp_password(
+                _decode_password(encoded), provider)
     if 'smtp_password_enc' in cfg and cfg['smtp_password_enc']:
-        return _normalize_smtp_password(_decode_password(cfg['smtp_password_enc']),
-                                        provider)
+        return _normalize_smtp_password(
+            _decode_password(cfg['smtp_password_enc']), provider)
     return ''
 
 
@@ -304,7 +310,8 @@ def send_email(to_address: str,
     port = int(cfg.get('smtp_port', 587))
     use_ssl = bool(cfg.get('smtp_ssl', False))
     use_tls = bool(cfg.get('smtp_tls', False))
-    from_addr = str(cfg.get('from_address', '')).strip() or str(cfg.get('smtp_user', '')).strip()
+    from_addr = (str(cfg.get('from_address', '')).strip()
+                 or str(cfg.get('smtp_user', '')).strip())
     user = str(cfg.get('smtp_user', '')).strip()
     password = get_smtp_password(cfg)
 
@@ -369,7 +376,24 @@ def _log_fallback(to_address: str, subject: str, body: str) -> Optional[str]:
 
 
 def get_support_email(cfg: Optional[dict] = None) -> str:
-    """Return the configured support/from email address, or empty string."""
+    """
+    Return the configured support/from email address, or empty string.
+
+    :param cfg: dict or None, pre-loaded email config (loads if None)
+
+    :return: str, configured from email address
+    :rtype: str
+    """
     if cfg is None:
         cfg = load_email_config()
     return str(cfg.get('from_address', '')).strip()
+
+# =============================================================================
+# Start of code
+# =============================================================================
+if __name__ == '__main__':
+    print('Hello World!')
+
+# =============================================================================
+# End of code
+# =============================================================================

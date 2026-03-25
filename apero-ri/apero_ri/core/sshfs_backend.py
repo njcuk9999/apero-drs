@@ -1,22 +1,40 @@
-"""APERO RI: SSHFS mount management backend.
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+"""
+APERO RI: SSHFS mount management backend.
 
 Configuration is stored in {ARI_DIR}/admin/sshfs.yaml.
 SSH keys are stored in {ARI_DIR}/secret/ssh_keys/{key_name}.key.
 Mount status is checked via subprocess commands.
 """
 
+# =============================================================================
+# Imports
+# =============================================================================
 from __future__ import annotations
 
 import os
-import subprocess
+import re
 import shlex
+import subprocess
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict
-import re
 
 import yaml
 
+# =============================================================================
+# Define variables
+# =============================================================================
+__NAME__ = 'apero_ri.core.sshfs_backend'
+
+# =============================================================================
+# Define functions
+# =============================================================================
+
+# -------------------------------------------------------------------------
+# Define private helpers
+# -------------------------------------------------------------------------
 
 def _normalize_connection_mode(value: str) -> str:
     mode = str(value or 'direct').strip().lower()
@@ -25,15 +43,19 @@ def _normalize_connection_mode(value: str) -> str:
 
 def _resolve_connection_target(mount_config: Dict[str, Any]) -> Dict[str, str]:
     """Resolve connection target details for direct or ssh-config modes."""
-    mode = _normalize_connection_mode(mount_config.get('connection_mode', 'direct'))
+    mode = _normalize_connection_mode(
+        mount_config.get('connection_mode', 'direct'))
     remote_path = str(mount_config.get('remote_path') or '').strip()
 
     if mode == 'ssh_config_host':
-        ssh_config_host = str(mount_config.get('ssh_config_host') or '').strip()
+        ssh_config_host = str(
+            mount_config.get('ssh_config_host') or '').strip()
         return {
             'mode': mode,
             'ssh_target': ssh_config_host,
-            'sshfs_target': f'{ssh_config_host}:{remote_path}' if ssh_config_host and remote_path else '',
+            'sshfs_target': (
+                f'{ssh_config_host}:{remote_path}'
+                if ssh_config_host and remote_path else ''),
             'display_target': ssh_config_host,
         }
 
@@ -43,7 +65,9 @@ def _resolve_connection_target(mount_config: Dict[str, Any]) -> Dict[str, str]:
     return {
         'mode': mode,
         'ssh_target': ssh_target,
-        'sshfs_target': f'{ssh_target}:{remote_path}' if ssh_target and remote_path else '',
+        'sshfs_target': (
+            f'{ssh_target}:{remote_path}'
+            if ssh_target and remote_path else ''),
         'display_target': ssh_target,
     }
 
@@ -96,6 +120,9 @@ def _default_config() -> Dict[str, Any]:
     }
 
 
+# -------------------------------------------------------------------------
+# Define public config I/O functions
+# -------------------------------------------------------------------------
 def load_sshfs_config() -> Dict[str, Any]:
     """Load SSHFS config from disk and merge with defaults."""
     cfg = _default_config()
@@ -131,6 +158,9 @@ def save_sshfs_config(cfg: Dict[str, Any]) -> Dict[str, Any]:
         return {'ok': False, 'error': f'Failed to save config: {str(e)}'}
 
 
+# -------------------------------------------------------------------------
+# Define SSH key management functions
+# -------------------------------------------------------------------------
 def list_ssh_keys() -> Dict[str, Any]:
     """List available SSH keys stored in the system."""
     try:
@@ -146,7 +176,8 @@ def list_ssh_keys() -> Dict[str, Any]:
                         'name': key_name,
                         'path': str(key_file),
                         'size': stat.st_size,
-                        'mtime': datetime.fromtimestamp(stat.st_mtime, tz=timezone.utc).isoformat(),
+                        'mtime': datetime.fromtimestamp(
+                            stat.st_mtime, tz=timezone.utc).isoformat(),
                     })
                 except Exception:
                     pass
@@ -193,6 +224,9 @@ def delete_ssh_key(key_name: str) -> Dict[str, Any]:
         return {'ok': False, 'error': f'Failed to delete SSH key: {str(e)}'}
 
 
+# -------------------------------------------------------------------------
+# Define mount management functions
+# -------------------------------------------------------------------------
 def add_mount(mount_config: Dict[str, Any]) -> Dict[str, Any]:
     """Add a new SSHFS mount configuration."""
     connection_mode = _normalize_connection_mode(
@@ -207,19 +241,22 @@ def add_mount(mount_config: Dict[str, Any]) -> Dict[str, Any]:
 
     if connection_mode == 'ssh_config_host':
         if not mount_config.get('ssh_config_host'):
-            return {'ok': False, 'error': 'Missing required field: ssh_config_host'}
+            return {'ok': False,
+                    'error': 'Missing required field: ssh_config_host'}
         mount_config['remote_user'] = ''
         mount_config['remote_host'] = ''
     else:
         if not mount_config.get('remote_host'):
-            return {'ok': False, 'error': 'Missing required field: remote_host'}
+            return {'ok': False,
+                    'error': 'Missing required field: remote_host'}
         mount_config['ssh_config_host'] = ''
 
     try:
         cfg = load_sshfs_config()
         
         # Check if mount name already exists
-        existing = [m for m in cfg.get('mounts', []) if m.get('name') == mount_config['name']]
+        existing = [m for m in cfg.get('mounts', [])
+                    if m.get('name') == mount_config['name']]
         if existing:
             return {'ok': False, 'error': f'Mount "{mount_config["name"]}" already exists.'}
         
@@ -245,7 +282,9 @@ def delete_mount(mount_name: str) -> Dict[str, Any]:
     """Delete an SSHFS mount configuration."""
     try:
         cfg = load_sshfs_config()
-        mount = next((m for m in cfg.get('mounts', []) if m.get('name') == mount_name), None)
+        mount = next(
+            (m for m in cfg.get('mounts', [])
+             if m.get('name') == mount_name), None)
         
         if not mount:
             return {'ok': False, 'error': f'Mount "{mount_name}" not found.'}
@@ -256,7 +295,8 @@ def delete_mount(mount_name: str) -> Dict[str, Any]:
             if not unmount_result['ok']:
                 return {'ok': False, 'error': f'Cannot delete mounted volume. Unmount first: {unmount_result["error"]}'}
         
-        cfg['mounts'] = [m for m in cfg['mounts'] if m.get('name') != mount_name]
+        cfg['mounts'] = [m for m in cfg['mounts']
+                         if m.get('name') != mount_name]
         result = save_sshfs_config(cfg)
         
         if result['ok']:
@@ -266,7 +306,8 @@ def delete_mount(mount_name: str) -> Dict[str, Any]:
         return {'ok': False, 'error': f'Failed to delete mount: {str(e)}'}
 
 
-def update_mount(original_name: str, mount_config: Dict[str, Any]) -> Dict[str, Any]:
+def update_mount(original_name: str,
+                 mount_config: Dict[str, Any]) -> Dict[str, Any]:
     """Update an existing SSHFS mount configuration."""
     original_name = str(original_name or '').strip()
     if not original_name:
@@ -284,12 +325,14 @@ def update_mount(original_name: str, mount_config: Dict[str, Any]) -> Dict[str, 
 
     if connection_mode == 'ssh_config_host':
         if not mount_config.get('ssh_config_host'):
-            return {'ok': False, 'error': 'Missing required field: ssh_config_host'}
+            return {'ok': False,
+                    'error': 'Missing required field: ssh_config_host'}
         mount_config['remote_user'] = ''
         mount_config['remote_host'] = ''
     else:
         if not mount_config.get('remote_host'):
-            return {'ok': False, 'error': 'Missing required field: remote_host'}
+            return {'ok': False,
+                    'error': 'Missing required field: remote_host'}
         mount_config['ssh_config_host'] = ''
 
     if not str(mount_config['remote_path']).startswith('/'):
@@ -305,7 +348,8 @@ def update_mount(original_name: str, mount_config: Dict[str, Any]) -> Dict[str, 
 
         existing = mounts[index]
         if existing.get('status') == 'mounted':
-            return {'ok': False, 'error': 'Unmount this mount before editing it.'}
+            return {'ok': False,
+                    'error': 'Unmount this mount before editing it.'}
 
         new_name = str(mount_config.get('name') or '').strip()
         for i, mount in enumerate(mounts):
@@ -330,7 +374,9 @@ def mount_sshfs(mount_name: str) -> Dict[str, Any]:
     """Mount an SSHFS volume."""
     try:
         cfg = load_sshfs_config()
-        mount = next((m for m in cfg.get('mounts', []) if m.get('name') == mount_name), None)
+        mount = next(
+            (m for m in cfg.get('mounts', [])
+             if m.get('name') == mount_name), None)
         
         if not mount:
             return {'ok': False, 'error': f'Mount "{mount_name}" not found.'}
@@ -366,7 +412,8 @@ def mount_sshfs(mount_name: str) -> Dict[str, Any]:
             str(local_mount),
         ]
         
-        result = subprocess.run(cmd, capture_output=True, text=True, timeout=10)
+        result = subprocess.run(
+            cmd, capture_output=True, text=True, timeout=10)
         
         if result.returncode != 0:
             error = result.stderr or result.stdout or 'Unknown error'
@@ -388,7 +435,9 @@ def unmount_sshfs(mount_name: str) -> Dict[str, Any]:
     """Unmount an SSHFS volume."""
     try:
         cfg = load_sshfs_config()
-        mount = next((m for m in cfg.get('mounts', []) if m.get('name') == mount_name), None)
+        mount = next(
+            (m for m in cfg.get('mounts', [])
+             if m.get('name') == mount_name), None)
         
         if not mount:
             return {'ok': False, 'error': f'Mount "{mount_name}" not found.'}
@@ -399,11 +448,15 @@ def unmount_sshfs(mount_name: str) -> Dict[str, Any]:
         local_mount = mount.get('local_mount')
         
         # Try umount
-        result = subprocess.run(['umount', local_mount], capture_output=True, text=True, timeout=10)
+        result = subprocess.run(
+            ['umount', local_mount],
+            capture_output=True, text=True, timeout=10)
         
         if result.returncode != 0:
             # Try force unmount
-            result = subprocess.run(['umount', '-l', local_mount], capture_output=True, text=True, timeout=10)
+            result = subprocess.run(
+                ['umount', '-l', local_mount],
+                capture_output=True, text=True, timeout=10)
             if result.returncode != 0:
                 error = result.stderr or result.stdout or 'Unknown error'
                 return {'ok': False, 'error': f'Failed to unmount: {error}'}
@@ -420,11 +473,16 @@ def unmount_sshfs(mount_name: str) -> Dict[str, Any]:
         return {'ok': False, 'error': f'Failed to unmount: {str(e)}'}
 
 
+# -------------------------------------------------------------------------
+# Define status and health functions
+# -------------------------------------------------------------------------
 def check_mount_status(mount_name: str) -> Dict[str, Any]:
     """Check the status of an SSHFS mount."""
     try:
         cfg = load_sshfs_config()
-        mount = next((m for m in cfg.get('mounts', []) if m.get('name') == mount_name), None)
+        mount = next(
+            (m for m in cfg.get('mounts', [])
+             if m.get('name') == mount_name), None)
         
         if not mount:
             return {'ok': False, 'error': f'Mount "{mount_name}" not found.', 'status': 'unknown'}
@@ -464,7 +522,8 @@ def check_mount_status(mount_name: str) -> Dict[str, Any]:
         
         return status_data
     except subprocess.TimeoutExpired:
-        return {'ok': False, 'error': 'Status check timed out.', 'status': 'unknown'}
+        return {'ok': False, 'error': 'Status check timed out.',
+                'status': 'unknown'}
     except Exception as e:
         return {'ok': False, 'error': f'Failed to check status: {str(e)}', 'status': 'unknown'}
 
@@ -480,7 +539,8 @@ def get_mounts_status() -> Dict[str, Any]:
             target_info = _resolve_connection_target(mount)
             mounts.append({
                 'name': mount.get('name'),
-                'connection_mode': _normalize_connection_mode(mount.get('connection_mode', 'direct')),
+                'connection_mode': _normalize_connection_mode(
+                    mount.get('connection_mode', 'direct')),
                 'ssh_config_host': mount.get('ssh_config_host', ''),
                 'remote_host': mount.get('remote_host'),
                 'remote_path': mount.get('remote_path'),
@@ -519,10 +579,12 @@ def test_ssh_connection(
         }
 
     if connection_mode == 'ssh_config_host' and not ssh_config_host:
-        return {'ok': False, 'error': 'SSH config host is required for connection test.'}
+        return {'ok': False,
+                'error': 'SSH config host is required for connection test.'}
 
     if connection_mode == 'direct' and not remote_host:
-        return {'ok': False, 'error': 'Remote host is required for connection test.'}
+        return {'ok': False,
+                'error': 'Remote host is required for connection test.'}
 
     key_path = _get_ssh_keys_dir() / f'{ssh_key_name}.key'
     if not key_path.exists():
@@ -587,7 +649,12 @@ def test_ssh_connection(
 
 
 def health_check() -> Dict[str, Any]:
-    """Check health of all SSHFS mounts."""
+    """
+    Check health of all SSHFS mounts.
+
+    :return: dict with status, message
+    :rtype: dict
+    """
     try:
         cfg = load_sshfs_config()
         mounts = cfg.get('mounts', [])
@@ -600,8 +667,10 @@ def health_check() -> Dict[str, Any]:
             return {'status': 'error', 'message': f'Failed to check mount status: {status_data["error"]}'}
         
         all_mounts = status_data.get('mounts', [])
-        mounted_count = sum(1 for m in all_mounts if m['status'].get('mounted'))
-        failed_count = sum(1 for m in all_mounts if m['status'].get('ok') == False)
+        mounted_count = sum(
+            1 for m in all_mounts if m['status'].get('mounted'))
+        failed_count = sum(
+            1 for m in all_mounts if m['status'].get('ok') == False)
         
         if failed_count > 0:
             return {
@@ -618,4 +687,15 @@ def health_check() -> Dict[str, Any]:
             'message': f'{unmounted} of {len(all_mounts)} SSHFS mounts are not currently mounted.',
         }
     except Exception as e:
-        return {'status': 'error', 'message': f'SSHFS health check failed: {str(e)}'}
+        return {'status': 'error',
+                'message': f'SSHFS health check failed: {str(e)}'}
+
+# =============================================================================
+# Start of code
+# =============================================================================
+if __name__ == '__main__':
+    print('Hello World!')
+
+# =============================================================================
+# End of code
+# =============================================================================

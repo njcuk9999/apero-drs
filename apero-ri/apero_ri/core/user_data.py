@@ -29,6 +29,11 @@ from typing import Any, Dict, List, Optional
 
 import yaml
 
+
+# =============================================================================
+# Define variables
+# =============================================================================
+__NAME__ = 'apero_ri.core.user_data'
 # Optional markdown support – gracefully degrade if not installed
 try:
     import markdown as _md_lib
@@ -45,6 +50,9 @@ USERS_DIR = ARI_DIR / 'users'
 INSTRUMENTS_DIR = ARI_DIR / 'admin' / 'instruments'
 
 
+# =============================================================================
+# Define functions
+# =============================================================================
 def set_ari_dir(path: Optional[str]) -> None:
     """Configure storage root (e.g. --data-dir) for user/admin data files."""
     global ARI_DIR, USERS_DIR, INSTRUMENTS_DIR
@@ -262,7 +270,9 @@ def remove_instrument_link_section(instrument: str, section: str) -> Dict:
 
 
 def get_merged_links(username: str, instrument: str) -> Dict:
-    """Return user links with instrument links appended as read-only section."""
+    """
+    Return user links with instrument links appended as read-only section.
+    """
     user_data = load_links(username)
     instr_data = load_instrument_links(instrument)
     # Deep-copy so we don't mutate stored data
@@ -350,7 +360,8 @@ def _object_section_path(username: str) -> Path:
 
 
 def load_object_section(username: str) -> Dict:
-    data = _load_yaml(_object_section_path(username), dict(_OBJECT_SECTION_DEFAULT))
+    data = _load_yaml(
+        _object_section_path(username), dict(_OBJECT_SECTION_DEFAULT))
     if not isinstance(data, dict):
         data = dict(_OBJECT_SECTION_DEFAULT)
     pinned = data.get('pinned', [])
@@ -373,7 +384,8 @@ def list_object_section_pins(username: str) -> List[str]:
     return load_object_section(username).get('pinned', [])
 
 
-def reorder_object_section_pins(username: str, ordered_ids: List[str]) -> List[str]:
+def reorder_object_section_pins(username: str,
+                                ordered_ids: List[str]) -> List[str]:
     data = load_object_section(username)
     pins = data.get('pinned', [])
     pin_set = set(pins)
@@ -768,14 +780,16 @@ def save_todo_item(username: str, item: Dict) -> Dict:
         if it.get('id') == normalized['id']:
             # Preserve immutable creation metadata unless explicitly provided.
             normalized['created'] = it.get('created', normalized['created'])
-            normalized['date_added'] = it.get('date_added', normalized['date_added'])
+            normalized['date_added'] = it.get(
+                'date_added', normalized['date_added'])
             items[i] = normalized
             break
     else:
         items.append(normalized)
 
-    data['projects'] = sorted(set(_normalize_todo_labels(data.get('projects', [])))
-                              | set(normalized.get('projects', [])))
+    data['projects'] = sorted(
+        set(_normalize_todo_labels(data.get('projects', [])))
+        | set(normalized.get('projects', [])))
     data['tags'] = sorted(set(_normalize_todo_labels(data.get('tags', [])))
                           | set(normalized.get('tags', [])))
     save_todo(username, data)
@@ -817,3 +831,14 @@ def reorder_todo_items(username: str, ordered_ids: List[str]) -> List[Dict]:
     data['items'] = reordered
     save_todo(username, data)
     return reordered
+
+
+# =============================================================================
+# Start of code
+# =============================================================================
+if __name__ == '__main__':
+    print('Hello World!')
+
+# =============================================================================
+# End of code
+# =============================================================================

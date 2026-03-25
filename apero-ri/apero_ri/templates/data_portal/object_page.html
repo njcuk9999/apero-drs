@@ -1,6 +1,10 @@
 {% extends "general/sidebar_base.html" %}
 {% block title %}APERO RI – {{ page_label }}{% endblock %}
 
+{% block extra_head %}
+<link rel="stylesheet" href="https://cdn.bokeh.org/bokeh/release/bokeh-3.8.2.min.css" type="text/css">
+{% endblock %}
+
 {% block body_class %}ari-has-sidebar op-page{% endblock %}
 
 {% block doc_content %}
@@ -116,25 +120,64 @@
         <div class="at-section-card" data-op-section-id="spectrum.snr_plot">
             <div class="at-section-card__header">
                 <span><i class="fa-solid fa-chart-line"></i> Signal to Noise Ratio Plot</span>
+                <a id="op-snr-plot-max-link"
+                   href="/data_portal/{{ profile.profile_id }}/object-plot-max/{{ objname }}/snr"
+                   class="ari-btn ari-btn--sm ari-btn--secondary op-plot-max-btn"
+                   target="_blank"
+                   rel="noopener"
+                   title="Open in new window"
+                   style="margin-left:auto;">
+                    <i class="fa-solid fa-expand"></i>
+                </a>
             </div>
             <div class="at-section-card__body">
-                <div class="at-muted-hint">Coming soon</div>
+                <div id="op-snr-plot-wrap">
+                    <div id="op-snr-plot-loading" class="at-muted-hint">
+                        <i class="fa-solid fa-spinner fa-spin"></i> Loading plot&hellip;
+                    </div>
+                    <div id="op-snr-plot-div"></div>
+                </div>
             </div>
         </div>
         <div class="at-section-card" data-op-section-id="spectrum.berv_coverage_plot">
             <div class="at-section-card__header">
                 <span><i class="fa-solid fa-chart-area"></i> BERV Coverage Plot</span>
+                <a id="op-berv-plot-max-link"
+                   href="/data_portal/{{ profile.profile_id }}/object-plot-max/{{ objname }}/berv"
+                   class="ari-btn ari-btn--sm ari-btn--secondary op-plot-max-btn"
+                   target="_blank"
+                   rel="noopener"
+                   title="Open in new window"
+                   style="margin-left:auto;">
+                    <i class="fa-solid fa-expand"></i>
+                </a>
             </div>
             <div class="at-section-card__body">
-                <div class="at-muted-hint">Coming soon</div>
+                <div id="op-berv-plot-wrap">
+                    <div id="op-berv-plot-loading" class="at-muted-hint">
+                        <i class="fa-solid fa-spinner fa-spin"></i> Loading plot&hellip;
+                    </div>
+                    <div id="op-berv-plot-div"></div>
+                </div>
             </div>
         </div>
         <div class="at-section-card" data-op-section-id="spectrum.telluric_corrected_plot">
             <div class="at-section-card__header">
-                <span><i class="fa-solid fa-chart-column"></i> Telluric Corrected Plot</span>
+                <span><i class="fa-solid fa-chart-column"></i> Median Spectrum Plot</span>
+                <a id="op-spec-plot-max-link"
+                   href="{{ url_for('ri_object_plot_max', profile_id=profile.profile_id, objname=objname, plot_key='spec') }}"
+                   class="ari-btn ari-btn--sm ari-btn--secondary op-plot-max-btn"
+                   target="_blank" rel="noopener" title="Open in new window" style="margin-left:auto;">
+                    <i class="fa-solid fa-expand"></i>
+                </a>
             </div>
             <div class="at-section-card__body">
-                <div class="at-muted-hint">Coming soon</div>
+                <div id="op-spec-plot-wrap">
+                    <div id="op-spec-plot-loading" class="at-muted-hint">
+                        <i class="fa-solid fa-spinner fa-spin"></i> Loading plot&hellip;
+                    </div>
+                    <div id="op-spec-plot-div"></div>
+                </div>
             </div>
         </div>
     </section>
@@ -163,9 +206,20 @@
         <div class="at-section-card" data-op-section-id="ccf.plot">
             <div class="at-section-card__header">
                 <span><i class="fa-solid fa-chart-line"></i> CCF Plot</span>
+                <a id="op-ccf-plot-max-link"
+                   href="{{ url_for('ri_object_plot_max', profile_id=profile.profile_id, objname=objname, plot_key='ccf') }}"
+                   class="ari-btn ari-btn--sm ari-btn--secondary op-plot-max-btn"
+                   target="_blank" rel="noopener" title="Open in new window" style="margin-left:auto;">
+                    <i class="fa-solid fa-expand"></i>
+                </a>
             </div>
             <div class="at-section-card__body">
-                <div class="at-muted-hint">Coming soon</div>
+                <div id="op-ccf-plot-wrap">
+                    <div id="op-ccf-plot-loading" class="at-muted-hint">
+                        <i class="fa-solid fa-spinner fa-spin"></i> Loading plot&hellip;
+                    </div>
+                    <div id="op-ccf-plot-div"></div>
+                </div>
             </div>
         </div>
     </section>
@@ -204,6 +258,48 @@
                             <tr><td colspan="12" class="ot-empty">No rows</td></tr>
                         </tbody>
                     </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="at-section-card" data-op-section-id="time_series.snr_plot">
+            <div class="at-section-card__header">
+                <span><i class="fa-solid fa-chart-line"></i> SNR per Night</span>
+                <a id="op-ts-snr-plot-max-link"
+                   href="{{ url_for('ri_object_plot_max', profile_id=profile.profile_id, objname=objname, plot_key='ts_snr') }}"
+                   class="ari-btn ari-btn--sm ari-btn--secondary op-plot-max-btn"
+                   target="_blank" rel="noopener" title="Open full screen"
+                   style="margin-left:auto;">
+                    <i class="fa-solid fa-expand"></i>
+                </a>
+            </div>
+            <div class="at-section-card__body">
+                <div id="op-ts-snr-plot-wrap">
+                    <div id="op-ts-snr-plot-loading" class="at-muted-hint">
+                        <i class="fa-solid fa-spinner fa-spin"></i> Loading plot&hellip;
+                    </div>
+                    <div id="op-ts-snr-plot-div"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="at-section-card" data-op-section-id="time_series.airmass_plot">
+            <div class="at-section-card__header">
+                <span><i class="fa-solid fa-cloud-sun"></i> Airmass per Night</span>
+                <a id="op-ts-airmass-plot-max-link"
+                   href="{{ url_for('ri_object_plot_max', profile_id=profile.profile_id, objname=objname, plot_key='ts_airmass') }}"
+                   class="ari-btn ari-btn--sm ari-btn--secondary op-plot-max-btn"
+                   target="_blank" rel="noopener" title="Open full screen"
+                   style="margin-left:auto;">
+                    <i class="fa-solid fa-expand"></i>
+                </a>
+            </div>
+            <div class="at-section-card__body">
+                <div id="op-ts-airmass-plot-wrap">
+                    <div id="op-ts-airmass-plot-loading" class="at-muted-hint">
+                        <i class="fa-solid fa-spinner fa-spin"></i> Loading plot&hellip;
+                    </div>
+                    <div id="op-ts-airmass-plot-div"></div>
                 </div>
             </div>
         </div>
@@ -397,13 +493,20 @@
 <script>
 window.ARI_OBJECT_PAGE = {
     apiUrl: {{ api_url | tojson }},
+    objectPlotsApiUrl: '/api/data-portal/object-plots',
+    objectLblPlotsApiUrl: '/api/data-portal/object-lbl-plots',
+    snrMaxUrl: {{ url_for('ri_object_plot_max', profile_id=profile.profile_id, objname=objname, plot_key='snr') | tojson }},
+    bervMaxUrl: {{ url_for('ri_object_plot_max', profile_id=profile.profile_id, objname=objname, plot_key='berv') | tojson }},
+    specMaxUrl: {{ url_for('ri_object_plot_max', profile_id=profile.profile_id, objname=objname, plot_key='spec') | tojson }},
+    ccfMaxUrl: {{ url_for('ri_object_plot_max', profile_id=profile.profile_id, objname=objname, plot_key='ccf') | tojson }},
     profileId: {{ profile.profile_id | tojson }},
     instrument: {{ profile.instrument | tojson }},
     objname: {{ objname | tojson }},
     hasPolarimetry: {{ (profile.data.general.get('has_polarimetry', True) | string).lower() | tojson }},
     objectSectionApiGet: '/api/user/object-sections/get',
     objectSectionApiToggle: '/api/user/object-sections/toggle',
-    objectSectionApiReorder: '/api/user/object-sections/reorder'
+    objectSectionApiReorder: '/api/user/object-sections/reorder',
+    filenamePlotApiUrl: '/api/data-portal/filename-plot'
 };
 window.ARI_BASKET_CFG = {
     addApiUrl: '/api/data-portal/basket/add',
@@ -415,6 +518,49 @@ window.ARI_BASKET_CFG = {
     basketPageUrl: '/data_portal/{{ profile.profile_id }}/basket'
 };
 </script>
+<script src="https://cdn.bokeh.org/bokeh/release/bokeh-3.8.2.min.js"></script>
 <script src="{{ url_for('static', filename='js/object_page.js') }}" defer></script>
 <script src="{{ url_for('static', filename='js/file_browser.js') }}" defer></script>
+
+<!-- ──── Filename-click plot modal ──────────────────────────────────────── -->
+<div id="fn-plot-modal" class="fn-modal-overlay" style="display:none;" role="dialog" aria-modal="true" aria-labelledby="fn-plot-title">
+    <div class="fn-modal-box">
+        <div class="fn-modal-header">
+            <span id="fn-plot-title" class="fn-modal-title"></span>
+            <button id="fn-plot-close" class="ari-btn ari-btn--sm ari-btn--secondary fn-modal-close" title="Close">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+        <div class="fn-modal-body">
+            <div id="fn-plot-loading" class="at-muted-hint">
+                <i class="fa-solid fa-spinner fa-spin"></i> Building plot&hellip;
+            </div>
+            <div id="fn-plot-error" class="fn-modal-error" style="display:none;"></div>
+            <div id="fn-plot-div"></div>
+        </div>
+    </div>
+</div>
+<script>
+(function () {
+    'use strict';
+    var modal = document.getElementById('fn-plot-modal');
+    var closeBtn = document.getElementById('fn-plot-close');
+    if (closeBtn) {
+        closeBtn.addEventListener('click', function () {
+            if (modal) { modal.style.display = 'none'; }
+        });
+    }
+    if (modal) {
+        modal.addEventListener('click', function (e) {
+            if (e.target === modal) { modal.style.display = 'none'; }
+        });
+        document.addEventListener('keydown', function (e) {
+            if (e.key === 'Escape' && modal.style.display !== 'none') {
+                modal.style.display = 'none';
+            }
+        });
+    }
+}());
+</script>
+
 {% endblock %}

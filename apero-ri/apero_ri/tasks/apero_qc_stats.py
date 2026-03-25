@@ -17,6 +17,7 @@ from apero_ri.base.base import BLOCK_KIND
 # =============================================================================
 # Define variables
 # =============================================================================
+__NAME__ = 'apero_ri.tasks.apero_qc_stats'
 ARI_DIR = Path.home() / '.ari'
 
 # list of parameters needed for this task (for checking in run_job)
@@ -25,7 +26,8 @@ PARAM_LIST.append('LOCAL_DATA_DIR')
 PARAM_LIST.append('INSTRUMENT')
 PARAM_LIST.append('APERO_PROFILES')
 PARAM_LIST.append('APERO_PROFILE_NAMES')
-# Profile params are hydrated dynamically from APERO profiles + instrument preset.
+# Profile params are hydrated dynamically from APERO profiles + instrument
+# preset.
 APERO_PROFILE_PARAM_LIST = []
 # Set the default frequency for this task (in hours)
 DEFAULT_FREQUENCY = 6.0
@@ -36,7 +38,7 @@ TASK_TYPE = 'INSTRUMENT'
 
 
 # =============================================================================
-# Define global classes
+# Define classes
 # =============================================================================
 class AperoQCStats(apero_async.AperoAsyncTask):
     """Class representing an asynchronous task in APERO RI."""
@@ -65,9 +67,12 @@ class AperoQCStats(apero_async.AperoAsyncTask):
         - DATABASE_USER: str, the database user, e.g. root
         - DATABASE_PASSWORD: str, the database password, e.g. password
         - DATABASE_NAME: str, the database name to connect to
-        - ASTROM_TABLENAME: str, the name of the table containing astrometric data
-        - CALIB_TABLENAME: str, the name of the table containing calibration data
-        - FINDEX_TABLENAME: str, the name of the table containing file index data
+        - ASTROM_TABLENAME: str, the name of the table containing astrometric
+          data
+        - CALIB_TABLENAME: str, the name of the table containing calibration
+          data
+        - FINDEX_TABLENAME: str, the name of the table containing file index
+          data
         - LOG_TABLENAME: str, the name of the table containing log data
         - TELLU_TABLENAME: str, the name of the table containing telluric data
         - REJECT_TABLENAME: str, the name of the table containing rejected data
@@ -135,7 +140,9 @@ class AperoQCStats(apero_async.AperoAsyncTask):
             metadata['APERO_PROFILE'] = apero_profile
             # construct filename
             for output in cresults:
-                instrument = aparams.get('general', {}).get('INSTRUMENT', 'unknown')
+                instrument = (
+                    aparams.get('general', {}).get('INSTRUMENT', 'unknown')
+                )
                 local_dir = (Path(params.get('LOCAL_DATA_DIR', str(ARI_DIR)))
                              / 'tasks' / instrument / apero_profile)
                 basename = f'qc_stats_{output}.json'
@@ -195,9 +202,12 @@ class AperoQCStats(apero_async.AperoAsyncTask):
         - DATABASE_USER: str, the database user, e.g. root
         - DATABASE_PASSWORD: str, the database password, e.g. password
         - DATABASE_NAME: str, the database name to connect to
-        - ASTROM_TABLENAME: str, the name of the table containing astrometric data
-        - CALIB_TABLENAME: str, the name of the table containing calibration data
-        - FINDEX_TABLENAME: str, the name of the table containing file index data
+        - ASTROM_TABLENAME: str, the name of the table containing astrometric
+          data
+        - CALIB_TABLENAME: str, the name of the table containing calibration
+          data
+        - FINDEX_TABLENAME: str, the name of the table containing file index
+          data
         - LOG_TABLENAME: str, the name of the table containing log data
         - TELLU_TABLENAME: str, the name of the table containing telluric data
         - REJECT_TABLENAME: str, the name of the table containing rejected data
@@ -236,8 +246,12 @@ class AperoQCStats(apero_async.AperoAsyncTask):
                 print(cquery[output])
 
 
-# =============================================================================
+# -------------------------------------------------------------------------
 # Define helper functions
+# -------------------------------------------------------------------------
+
+# =============================================================================
+# Define functions
 # =============================================================================
 def get_calib_file(aparams: Dict[str, Any], return_query=False
                    ) -> Tuple[Dict[str, List[Path]], float, int]:
@@ -375,3 +389,13 @@ if __name__ == '__main__':
         'APERO_PROFILES': {_TEST_PROFILE: _profile},
     }
     task.test_query(run_params)
+
+# =============================================================================
+# Start of code
+# =============================================================================
+if __name__ == '__main__':
+    print('Hello World!')
+
+# =============================================================================
+# End of code
+# =============================================================================

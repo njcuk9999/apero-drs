@@ -207,6 +207,17 @@ home.docs.install:
     top-level: False
     show: True
 
+"home.data_portal.{apero_profile}.last_object_page":
+  label: "Last Object Page"
+  parent: "home.data_portal.{apero_profile}"
+  view-permission: "view.{apero profile}"
+  icon: fa-solid fa-clock-rotate-left
+  quick-nav: False
+  side-nav:
+    pinned: False
+    top-level: False
+    show: True
+
 "home.data_portal.{apero_profile}.{objname}":
   label: "{objname}"
   parent: "home.data_portal.{apero_profile}"

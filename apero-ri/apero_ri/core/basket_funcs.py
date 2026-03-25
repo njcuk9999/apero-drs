@@ -29,6 +29,11 @@ from typing import Any, Dict, List, Optional, Set
 from apero_ri.base.base import BLOCK_KIND
 from apero_ri.core import secret_store as ss
 
+
+# =============================================================================
+# Define variables
+# =============================================================================
+__NAME__ = 'apero_ri.core.basket_funcs'
 ARI_DIR = Path.home() / '.ari'
 USERS_DIR = ARI_DIR / 'users'
 DOWNLOADS_DIR = ARI_DIR / 'download'
@@ -44,6 +49,9 @@ _DOWNLOAD_STORAGE_LIMIT_BYTES = 5 * 1024 ** 3
 _share_tokens_lock = threading.Lock()
 
 
+# =============================================================================
+# Define functions
+# =============================================================================
 def set_ari_dir(path: Path) -> None:
     """Re-point module-level path globals (mirrors auth.set_ari_dir)."""
     global ARI_DIR, USERS_DIR, DOWNLOADS_DIR
@@ -53,10 +61,14 @@ def set_ari_dir(path: Path) -> None:
 
 
 def _share_tokens_path() -> Path:
-    env_ari_dir = Path(os.environ.get('ARI_DIR', str(ARI_DIR))).expanduser().resolve()
+    env_ari_dir = (
+        Path(os.environ.get('ARI_DIR', str(ARI_DIR)))
+        .expanduser().resolve()
+    )
     return ss.resolve_secret_file(
         'share_tokens.json',
-        legacy_paths=[env_ari_dir / 'share_tokens.json', ARI_DIR / 'share_tokens.json'],
+        legacy_paths=[env_ari_dir / 'share_tokens.json',
+                      ARI_DIR / 'share_tokens.json'],
     )
 
 
@@ -107,7 +119,9 @@ def create_share_token(username: str, job_id: str) -> str:
 
 
 def get_share_job(token: str) -> Optional[Dict[str, Any]]:
-    """Return {'username', 'job_id', 'meta'} for a valid non-expired share token."""
+    """
+    Return {'username', 'job_id', 'meta'} for a valid non-expired share token.
+    """
     if not token or not re.match(r'^[0-9a-f-]{36}$', str(token)):
         return None
     tokens = _load_share_tokens()
@@ -128,7 +142,8 @@ def get_share_job(token: str) -> Optional[Dict[str, Any]]:
             created_at = datetime.fromisoformat(str(created_str))
             if created_at.tzinfo is None:
                 created_at = created_at.replace(tzinfo=timezone.utc)
-            cutoff = datetime.now(timezone.utc) - timedelta(hours=_DOWNLOAD_EXPIRY_HOURS)
+            cutoff = (datetime.now(timezone.utc)
+                      - timedelta(hours=_DOWNLOAD_EXPIRY_HOURS))
             if created_at < cutoff:
                 return None
         except Exception:
@@ -424,7 +439,9 @@ def get_job_status(username: str, job_id: str) -> Optional[Dict[str, Any]]:
 
 def get_job_chunk_path(username: str, job_id: str,
                        chunk_idx: int) -> Optional[Path]:
-    """Return Path to a compiled chunk file if the job is done and it exists."""
+    """
+    Return Path to a compiled chunk file if the job is done and it exists.
+    """
     safe_id = _safe_job_id(job_id)
     if safe_id is None:
         return None
@@ -599,7 +616,8 @@ def _compile_job(username: str,
             _save_job_meta(username, job_id, meta)
             return
 
-        # Build descriptive base filename: download_{profile}_{YYYY}_{MM}_{DD}_{HH}_{MM}_{SS.cc}
+        # Build descriptive base filename:
+        # download_{profile}_{YYYY}_{MM}_{DD}_{HH}_{MM}_{SS.cc}
         ts = datetime.now(timezone.utc)
         ts_str = (ts.strftime('%Y_%m_%d_%H_%M_')
                   + f'{ts.second:02d}.{ts.microsecond // 10000:02d}')
@@ -616,7 +634,9 @@ def _compile_job(username: str,
                 'index': 0,
                 'path': str(out_path),
                 'filename': out_name,
-                'size_bytes': out_path.stat().st_size if out_path.exists() else 0,
+                'size_bytes': (
+                    out_path.stat().st_size if out_path.exists() else 0
+                ),
                 'file_count': 1,
             }]
         else:
@@ -667,7 +687,9 @@ def _compile_job(username: str,
                     'index': c_idx,
                     'path': str(out_path),
                     'filename': out_name,
-                    'size_bytes': out_path.stat().st_size if out_path.exists() else 0,
+                    'size_bytes': (
+                        out_path.stat().st_size if out_path.exists() else 0
+                    ),
                     'file_count': len(chunk),
                 })
 
@@ -734,14 +756,16 @@ def load_ftable_rows(base_dir: Path,
         rows = data.get('rows', [])
         metadata = data.get('metadata', {})
         generated_at = (data.get('generated_at')
-                        or (metadata.get('GENERATED_AT') if isinstance(metadata, dict) else None))
+                        or (metadata.get('GENERATED_AT')
+                            if isinstance(metadata, dict) else None))
         return rows, metadata, generated_at
     except Exception:
         return [], {}, None
 
 
 def filter_accessible_rows(rows: List[Dict[str, Any]],
-                            accessible_run_ids: Set[str]) -> List[Dict[str, Any]]:
+                           accessible_run_ids: Set[str]
+                           ) -> List[Dict[str, Any]]:
     """Return only rows whose KW_RUN_ID is in accessible_run_ids."""
     return [
         r for r in rows
@@ -840,11 +864,14 @@ def group_rows(rows: List[Dict[str, Any]],
 # =============================================================================
 
 def cleanup_expired_downloads(username: str) -> int:
-    """Delete job directories older than _DOWNLOAD_EXPIRY_HOURS. Returns count."""
+    """
+    Delete job directories older than _DOWNLOAD_EXPIRY_HOURS. Returns count.
+    """
     jobs_dir = _jobs_dir(username)
     if not jobs_dir.exists():
         return 0
-    cutoff = datetime.now(timezone.utc) - timedelta(hours=_DOWNLOAD_EXPIRY_HOURS)
+    cutoff = (datetime.now(timezone.utc)
+              - timedelta(hours=_DOWNLOAD_EXPIRY_HOURS))
     removed = 0
     removed_job_ids: List[str] = []
     for job_dir in jobs_dir.iterdir():
@@ -878,3 +905,14 @@ def cleanup_expired_downloads(username: str) -> int:
             if len(cleaned) != len(tokens):
                 _save_share_tokens(cleaned)
     return removed
+
+
+# =============================================================================
+# Start of code
+# =============================================================================
+if __name__ == '__main__':
+    print('Hello World!')
+
+# =============================================================================
+# End of code
+# =============================================================================

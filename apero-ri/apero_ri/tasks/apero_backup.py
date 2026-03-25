@@ -14,6 +14,7 @@ from apero_ri.core import backup_backend as bb
 # =============================================================================
 # Define variables
 # =============================================================================
+__NAME__ = 'apero_ri.tasks.apero_backup'
 # Set AIR local data directory
 ARI_DIR = Path.home() / '.ari'
 # Set the list of parameters required for this task
@@ -59,7 +60,8 @@ class AperoLocalDataBackupTask(apero_async.AperoAsyncTask):
         raw_excludes = task_cfg.get('exclude_dirs', list(DEFAULT_EXCLUDE_DIRS))
         if not isinstance(raw_excludes, list):
             raw_excludes = list(DEFAULT_EXCLUDE_DIRS)
-        raw_exclude_paths = task_cfg.get('exclude_paths', list(DEFAULT_EXCLUDE_PATHS))
+        raw_exclude_paths = task_cfg.get(
+            'exclude_paths', list(DEFAULT_EXCLUDE_PATHS))
         if not isinstance(raw_exclude_paths, list):
             raw_exclude_paths = list(DEFAULT_EXCLUDE_PATHS)
         exclude_dirs = []
@@ -107,7 +109,8 @@ class AperoLocalDataBackupTask(apero_async.AperoAsyncTask):
         archive_files: List[Path] = []
         archive_actions: Dict[Path, str] = {}
 
-        # Reset info to empty string so this run's content doesn't accumulate with prior runs
+        # Reset info to empty string so this run's content doesn't accumulate
+        # with prior runs
         self.info = ''
         self.info = (
             f'## Local Data Backup\n\n'
@@ -172,7 +175,10 @@ class AperoLocalDataBackupTask(apero_async.AperoAsyncTask):
             },
         )
 
-        self.output_files = [str(manifest_path)] + [str(path) for path in archive_files]
+        self.output_files = (
+            [str(manifest_path)]
+            + [str(path) for path in archive_files]
+        )
         self.info += f'\n### Manifest\nSaved `{manifest_path.name}`\n'
         if pruned_daily or pruned_weekly:
             self.info += '\n### Pruned copies\n'
@@ -188,10 +194,12 @@ class AperoLocalDataBackupTask(apero_async.AperoAsyncTask):
             f'- Size: {bb.format_bytes(local_size)}\n'
         )
 
-        sync_result = bb.sync_local_backups_to_cloud(local_data_dir=local_data_dir)
+        sync_result = bb.sync_local_backups_to_cloud(
+            local_data_dir=local_data_dir)
         provider = str(sync_result.get('provider', 'local_only'))
         if not sync_result.get('configured', False):
-            warning_msg = str(sync_result.get('warning', 'Cloud backup is not configured.'))
+            warning_msg = str(sync_result.get(
+                'warning', 'Cloud backup is not configured.'))
             self.info += (
                 '\n### Cloud mirror status\n'
                 f'**WARNING**: {warning_msg}\n'
@@ -231,7 +239,10 @@ class AperoLocalDataBackupTask(apero_async.AperoAsyncTask):
             raise ValueError(f'Unsafe backup source directory: {source_dir}')
 
         required_children = ['admin', 'tasks', 'users']
-        missing = [name for name in required_children if not (source_dir / name).exists()]
+        missing = [
+            name for name in required_children
+            if not (source_dir / name).exists()
+        ]
         if missing:
             raise ValueError(
                 'LOCAL_DATA_DIR does not look like an ARI data directory '
@@ -352,3 +363,13 @@ class AperoLocalDataBackupTask(apero_async.AperoAsyncTask):
             old_path.unlink(missing_ok=True)
             removed.append(old_path)
         return removed
+
+# =============================================================================
+# Start of code
+# =============================================================================
+if __name__ == '__main__':
+    print('Hello World!')
+
+# =============================================================================
+# End of code
+# =============================================================================

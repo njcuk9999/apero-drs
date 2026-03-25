@@ -27,6 +27,14 @@
     var fbPerPage      = 50;
     var fbLoaded       = false;
 
+    /* Output types that have a Bokeh plot defined in plots_filename.py */
+    var FB_PLOTABLE_OUTPUTS = new Set([
+        'DRS_POST_E', 'DRS_POST_T', 'DRS_POST_S', 'DRS_POST_P', 'DRS_POST_V',
+        'TELLU_TEMP', 'TELLU_TEMP_S1DV', 'TELLU_TEMP_S1DW',
+        'LBL_RDB', 'LBL_RDB2', 'LBL_DRIFT', 'LBL_RDB_DRIFT',
+        'LBL_RDB2_DRIFT', 'LBL_RDB_FITS', 'LBL_FITS',
+    ]);
+
     /* -----------------------------------------------------------------------
        Columns for the file browser table
     ----------------------------------------------------------------------- */
@@ -461,7 +469,18 @@
         FB_COLUMNS.forEach(function (col) {
             var td = document.createElement('td');
             var v = r[col.key];
-            if (col.key === 'MID_OBS_TIME') {
+            if (col.key === 'FILENAME' && FB_PLOTABLE_OUTPUTS.has(r.KW_OUTPUT || '')) {
+                var link = document.createElement('a');
+                link.href = '#';
+                link.className = 'fb-fn-plot-link';
+                link.textContent = valOrDash(v);
+                link.title = 'Click to view plot';
+                link.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    openFilenamePlot(r);
+                });
+                td.appendChild(link);
+            } else if (col.key === 'MID_OBS_TIME') {
                 td.textContent = formatDate(v);
             } else if (col.key === 'PASSED_ALL_QC') {
                 td.textContent = v == null ? '--' : (parseInt(v) === 1 ? '\u2713' : '\u2717');
@@ -757,6 +776,59 @@
        Init (bind controls; actual data loads when tab is first visited)
     ----------------------------------------------------------------------- */
     bindPresets();
+    /* -----------------------------------------------------------------------
+       Filename-click plot modal
+    ----------------------------------------------------------------------- */
+    function openFilenamePlot(r) {
+        var modal     = document.getElementById('fn-plot-modal');
+        var titleEl   = document.getElementById('fn-plot-title');
+        var divEl     = document.getElementById('fn-plot-div');
+        var loadingEl = document.getElementById('fn-plot-loading');
+        var errorEl   = document.getElementById('fn-plot-error');
+        if (!modal) return;
+
+        // Reset state
+        if (divEl)     { divEl.innerHTML = ''; }
+        if (errorEl)   { errorEl.textContent = ''; errorEl.style.display = 'none'; }
+        if (loadingEl) { loadingEl.style.display = ''; }
+        if (titleEl)   { titleEl.textContent = r.FILENAME || ''; }
+        modal.style.display = 'flex';
+
+        var url = '/api/data-portal/filename-plot'
+            + '?profile_id=' + encodeURIComponent(pageCfg.profileId || '')
+            + '&block_kind=' + encodeURIComponent(r.BLOCK_KIND || '')
+            + '&obs_dir='    + encodeURIComponent(r.OBS_DIR    || '')
+            + '&filename='   + encodeURIComponent(r.FILENAME   || '')
+            + '&kw_output='  + encodeURIComponent(r.KW_OUTPUT  || '')
+            + '&kw_fiber='   + encodeURIComponent(r.KW_FIBER   || 'AB');
+
+        fetch(url)
+            .then(function (resp) { return resp.json(); })
+            .then(function (data) {
+                if (loadingEl) { loadingEl.style.display = 'none'; }
+                if (!data.success || !data.has_plot) {
+                    if (errorEl) {
+                        errorEl.textContent = data.message || data.error || 'No plot available.';
+                        errorEl.style.display = '';
+                    }
+                    return;
+                }
+                if (titleEl && data.title) { titleEl.textContent = data.title; }
+                if (divEl) { divEl.innerHTML = ''; }
+                Bokeh.embed.embed_item(data.plot, 'fn-plot-div');
+                setTimeout(function () {
+                    window.dispatchEvent(new Event('resize'));
+                }, 150);
+            })
+            .catch(function (err) {
+                if (loadingEl) { loadingEl.style.display = 'none'; }
+                if (errorEl) {
+                    errorEl.textContent = 'Request failed: ' + String(err);
+                    errorEl.style.display = '';
+                }
+            });
+    }
+
     bindControls();
 
     // Also populate group-by dropdown options

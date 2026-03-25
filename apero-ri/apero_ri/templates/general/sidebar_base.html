@@ -68,12 +68,14 @@
                 {% if item.url and not (item.disabled|default(false)) %}
                 <a href="{{ item.url }}{% if current_version is defined %}?v={{ current_version }}{% endif %}"
                    class="ari-sidebar__link{% if item.active %} ari-sidebar__link--active{% endif %}"
+                   data-page-id="{{ item.id }}"
                    style="padding-left: {{ 0.75 + item.depth * 1.0 }}rem;">
                     <i class="{{ item.icon }}"></i>
                     <span>{{ item.label }}</span>
                 </a>
                 {% else %}
                 <span class="ari-sidebar__link ari-sidebar__link--disabled"
+                      data-page-id="{{ item.id }}"
                       style="padding-left: {{ 0.75 + item.depth * 1.0 }}rem;">
                     <i class="{{ item.icon }}"></i>
                     <span>{{ item.label }}</span>
@@ -91,6 +93,44 @@
     <!-- ================================================================ -->
     <div class="ari-doc-main">
         {% with messages = get_flashed_messages(with_categories=true) %}
+{% block extra_scripts %}{{ super() }}
+<script>
+(function () {
+    'use strict';
+    // Upgrade last-object-page sidebar items from localStorage
+    var lastObjEls = document.querySelectorAll('[data-page-id$=".last_object_page"]');
+    lastObjEls.forEach(function (el) {
+        var pageId = el.getAttribute('data-page-id') || '';
+        var profileId = pageId
+            .replace(/^\.?home\.data_portal\./, '')
+            .replace(/\.last_object_page$/, '');
+        if (!profileId) return;
+        var storageKey = 'ari.dp:last-object-page:' + profileId;
+        var raw, entry;
+        try { raw = localStorage.getItem(storageKey); } catch (_) { return; }
+        if (!raw) return;
+        try { entry = JSON.parse(raw); } catch (_) { return; }
+        if (!entry || !entry.url || !entry.objname) return;
+        // Hide "last viewed" when we're already on that object page
+        var _cfg = window.ARI_OBJECT_PAGE;
+        if (_cfg && _cfg.profileId === profileId
+                && _cfg.objname === entry.objname) return;
+        var a = document.createElement('a');
+        a.className = (el.className || '')
+            .replace('ari-sidebar__link--disabled', '').trim();
+        a.setAttribute('data-page-id', pageId);
+        a.setAttribute('href', entry.url);
+        if (el.getAttribute('style')) {
+            a.setAttribute('style', el.getAttribute('style'));
+        }
+        a.innerHTML = el.innerHTML;
+        var labelSpan = a.querySelector('span');
+        if (labelSpan) labelSpan.textContent = entry.objname;
+        el.parentNode.replaceChild(a, el);
+    });
+}());
+</script>
+{% endblock %}
         {% if messages %}
         {% for category, message in messages %}
         <div class="ari-flash ari-flash--{{ category }}">

@@ -17,6 +17,11 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
+
+# =============================================================================
+# Define variables
+# =============================================================================
+__NAME__ = 'apero_ri.core.task_runner'
 # =============================================================================
 # Module-level state
 # =============================================================================
@@ -38,6 +43,9 @@ _history_relpath = Path('admin') / 'async_history.txt'
 _aprofile_preset_cache: Dict[str, dict] = {}
 
 
+# =============================================================================
+# Define functions
+# =============================================================================
 def _is_global_scope(instrument: str) -> bool:
     """Return True if this scope key represents global async tasks."""
     return str(instrument).strip() == '__GLOBAL__'
@@ -48,7 +56,10 @@ def _task_keys_for_scope(task_module: Any, instrument: str) -> List[str]:
     want_type = 'GLOBAL' if _is_global_scope(instrument) else 'INSTRUMENT'
     keys: List[str] = []
     for task_key in task_module.TASK_LIST.keys():
-        ttype = str(task_module.TYPE.get(task_key, 'INSTRUMENT')).strip().upper()
+        ttype = (
+            str(task_module.TYPE.get(task_key, 'INSTRUMENT'))
+            .strip().upper()
+        )
         if ttype == want_type:
             keys.append(task_key)
     return keys
@@ -95,12 +106,17 @@ def _sanitize_run_params(value: Any) -> Any:
 
 
 def _load_aprofile_preset(profile_file: str) -> dict:
-    """Load one APERO instrument profile YAML from resources/aprofile_instruments."""
+    """
+    Load one APERO instrument profile YAML from resources/aprofile_instruments.
+    """
     if not profile_file:
         return {}
     if profile_file in _aprofile_preset_cache:
         return dict(_aprofile_preset_cache[profile_file])
-    resources_dir = Path(__file__).resolve().parents[1] / 'resources' / 'aprofile_instruments'
+    resources_dir = (
+        Path(__file__).resolve().parents[1]
+        / 'resources' / 'aprofile_instruments'
+    )
     path = resources_dir / profile_file
     if not path.is_file():
         _aprofile_preset_cache[profile_file] = {}
@@ -186,7 +202,9 @@ def get_recent_history(limit: int = 50) -> List[Dict[str, Any]]:
                     'timestamp': str(row.get('timestamp', '')),
                     'instrument': str(row.get('instrument', '')),
                     'task_id': str(row.get('task_id', '')),
-                    'task_name': str(row.get('task_name', '') or row.get('task_id', '')),
+                    'task_name': str(
+                        row.get('task_name', '') or row.get('task_id', '')
+                    ),
                     'status': str(row.get('status', '')),
                     'details': str(row.get('details', '')),
                     'duration_seconds': row.get('duration_seconds'),
@@ -207,7 +225,10 @@ def clear_recent_history() -> Dict[str, Any]:
         removed = 0
         if path.exists():
             try:
-                removed = len(path.read_text(encoding='utf-8', errors='replace').splitlines())
+                removed = len(
+                    path.read_text(encoding='utf-8', errors='replace')
+                    .splitlines()
+                )
             except Exception:
                 removed = 0
         path.parent.mkdir(parents=True, exist_ok=True)
@@ -262,7 +283,8 @@ def _run_worker() -> None:
                 task_id,
                 getattr(instance, 'name', task_id),
                 getattr(instance, 'status', ''),
-                '' if getattr(instance, 'status', '') != 'failed' else _errors.get(task_id, ''),
+                ('' if getattr(instance, 'status', '') != 'failed'
+                 else _errors.get(task_id, '')),
                 duration_seconds=duration_seconds,
             )
             _persist_runtime_state(_inst, task_id, instance)
@@ -328,10 +350,12 @@ def _coerce_run_count(value: Any) -> int:
         return 0
 
 
-def hydrate_runtime_state(instance: Any, task_cfg: Optional[dict] = None) -> Any:
+def hydrate_runtime_state(instance: Any,
+                          task_cfg: Optional[dict] = None) -> Any:
     """Copy persisted runtime fields onto a new task instance."""
     cfg = task_cfg or {}
-    instance.last_run = cfg.get('last_run', getattr(instance, 'last_run', 'Never'))
+    instance.last_run = cfg.get(
+        'last_run', getattr(instance, 'last_run', 'Never'))
     instance.run_count = _coerce_run_count(
         cfg.get('run_count', getattr(instance, 'run_count', 0))
     )
@@ -404,7 +428,8 @@ def _normalize_task_enabled(value, default: bool = False) -> bool:
     return bool(value)
 
 
-def can_enqueue_now(task_cfg: dict, now: Optional[datetime] = None) -> Tuple[bool, str]:
+def can_enqueue_now(task_cfg: dict,
+                    now: Optional[datetime] = None) -> Tuple[bool, str]:
     """Return whether a task may be manually enqueued right now."""
     now_utc = now or datetime.now(timezone.utc)
 
@@ -435,16 +460,22 @@ def _scheduler_poll(local_data_dir: str) -> None:
     lock_handle = None
     try:
         if fcntl is not None:
-            lock_path = Path(local_data_dir) / 'admin' / 'async_tasks.scheduler.lock'
+            lock_path = (
+                Path(local_data_dir) / 'admin'
+                / 'async_tasks.scheduler.lock'
+            )
             lock_path.parent.mkdir(parents=True, exist_ok=True)
             lock_handle = lock_path.open('a+')
             try:
-                fcntl.flock(lock_handle.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
+                fcntl.flock(
+                    lock_handle.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB
+                )
             except OSError:
                 return
 
         from apero_ri import tasks as task_module
-        from apero_ri.core.auth import load_apero_profiles, load_async_tasks, save_async_tasks
+        from apero_ri.core.auth import (
+            load_apero_profiles, load_async_tasks, save_async_tasks)
         import uuid as uuid_module
         import_errors = getattr(task_module, 'IMPORT_ERRORS', {}) or {}
 
@@ -496,18 +527,21 @@ def _scheduler_poll(local_data_dir: str) -> None:
                         task_cfg.get('frequency', default_freq), default_freq
                     ),
                     'active': _normalize_task_enabled(
-                        task_cfg.get('active', default_enabled), default_enabled
+                        task_cfg.get('active', default_enabled),
+                        default_enabled
                     ),
                     'order': idx,
                 }
 
                 if task_key == 'ARI_LOCAL_DATA_BACKUP':
                     try:
-                        daily_copies = int(task_cfg.get('daily_copies', 7) or 0)
+                        daily_copies = int(
+                            task_cfg.get('daily_copies', 7) or 0)
                     except (TypeError, ValueError):
                         daily_copies = 7
                     try:
-                        weekly_copies = int(task_cfg.get('weekly_copies', 4) or 0)
+                        weekly_copies = int(
+                            task_cfg.get('weekly_copies', 4) or 0)
                     except (TypeError, ValueError):
                         weekly_copies = 4
                     merged_cfg['daily_copies'] = max(0, daily_copies)
@@ -534,7 +568,8 @@ def _scheduler_poll(local_data_dir: str) -> None:
                 all_tasks[instrument] = merged
                 changed = True
 
-            ordered_tasks = sorted(merged, key=lambda task: task.get('order', 999))
+            ordered_tasks = sorted(
+                merged, key=lambda task: task.get('order', 999))
             for task_cfg in ordered_tasks:
                 if not _task_is_due(task_cfg, now):
                     continue
@@ -642,9 +677,11 @@ def build_run_params(instrument: str, local_data_dir: str,
         for key in db_keys:
             if key not in database and p.get(key):
                 database[key] = p.get(key)
-        if 'DATABASE_USER' not in database and database.get('DATABASE_USERNAME'):
+        if ('DATABASE_USER' not in database
+                and database.get('DATABASE_USERNAME')):
             database['DATABASE_USER'] = database.get('DATABASE_USERNAME')
-        if 'DATABASE_USERNAME' not in database and database.get('DATABASE_USER'):
+        if ('DATABASE_USERNAME' not in database
+                and database.get('DATABASE_USER')):
             database['DATABASE_USERNAME'] = database.get('DATABASE_USER')
         p['database'] = database
 
@@ -683,7 +720,8 @@ def build_run_params(instrument: str, local_data_dir: str,
             general['SCIENCE_TYPES'] = p.get('SCIENCE_TYPES')
         general['INSTRUMENT'] = instrument
         p['general'] = general
-        # Ensure task code receives the instrument in each APERO profile payload.
+        # Ensure task code receives the instrument in each APERO profile
+        # payload.
         p['INSTRUMENT'] = instrument
         mapped[pname] = p
     from pathlib import Path as _Path
@@ -789,7 +827,8 @@ def stop_all_with_cooldown(instrument: Optional[str] = None) -> Dict[str, Any]:
         for task_cfg in task_list:
             if not isinstance(task_cfg, dict):
                 continue
-            freq = _normalize_task_frequency(task_cfg.get('frequency', 24.0), 24.0)
+            freq = _normalize_task_frequency(
+                task_cfg.get('frequency', 24.0), 24.0)
             cooldown_until = now + timedelta(hours=freq)
             task_cfg['cooldown_until'] = cooldown_until.isoformat()
             task_cfg['last_run'] = now.isoformat()
@@ -823,7 +862,10 @@ def get_status() -> dict:
             current_info = {
                 'instrument': curr_instrument,
                 'task_id': curr_task_id,
-                'task_name': getattr(curr_inst, 'name', curr_task_id) if curr_inst else curr_task_id,
+                'task_name': (
+                    getattr(curr_inst, 'name', curr_task_id)
+                    if curr_inst else curr_task_id
+                ),
             }
 
         queue_info = []
@@ -832,7 +874,10 @@ def get_status() -> dict:
             queue_info.append({
                 'instrument': q_instrument,
                 'task_id': q_task_id,
-                'task_name': getattr(q_inst, 'name', q_task_id) if q_inst else q_task_id,
+                'task_name': (
+                    getattr(q_inst, 'name', q_task_id)
+                    if q_inst else q_task_id
+                ),
             })
 
         return {
@@ -862,9 +907,21 @@ def get_task_status(task_id: str) -> dict:
         'info': instance.info,
         'last_run': getattr(instance, 'last_run', 'Never'),
         'output_files': getattr(instance, 'output_files', []),
-        'run_params': _sanitize_run_params(getattr(instance, '_run_params', {})),
+        'run_params': _sanitize_run_params(
+            getattr(instance, '_run_params', {})),
         'run_count': getattr(instance, 'run_count', 0),
         'is_current': is_current,
         'is_queued': is_queued,
         'error': error,
     }
+
+
+# =============================================================================
+# Start of code
+# =============================================================================
+if __name__ == '__main__':
+    print('Hello World!')
+
+# =============================================================================
+# End of code
+# =============================================================================

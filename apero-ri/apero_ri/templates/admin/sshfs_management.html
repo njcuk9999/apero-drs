@@ -226,7 +226,10 @@ chmod 600 ~/.ssh/authorized_keys</pre>
         <div style="display:flex; gap:10px; flex-wrap:wrap; margin-top:8px;">
             {% if can_manage %}
             <button type="button" class="ari-btn ari-btn--secondary" onclick="smTestConnection()">
-                <i class="fa-solid fa-network-wired"></i> Test SSH connection
+                <i class="fa-solid fa-network-wired"></i> Test SSH (key only)
+            </button>
+            <button type="button" class="ari-btn ari-btn--secondary" onclick="smInteractiveTest()" title="Opens an interactive terminal for password/2FA authentication">
+                <i class="fa-solid fa-terminal"></i> Test SSH (interactive)
             </button>
             <button type="button" class="ari-btn ari-btn--primary" id="smSaveMountBtn" onclick="smAddMount()">
                 <i class="fa-solid fa-plus"></i> Add Mount
@@ -303,6 +306,31 @@ chmod 600 ~/.ssh/authorized_keys</pre>
 </div>
 
 </div>
+
+{# ── Interactive SSH terminal modal ── #}
+<div id="smTermOverlay" style="display:none; position:fixed; inset:0; z-index:9000; background:rgba(0,0,0,0.55); align-items:center; justify-content:center;">
+    <div style="background:#1e1e2e; border-radius:10px; width:min(720px,92vw); max-height:85vh; display:flex; flex-direction:column; box-shadow:0 8px 32px rgba(0,0,0,0.5);">
+        <div style="display:flex; align-items:center; justify-content:space-between; padding:10px 16px; border-bottom:1px solid #333; flex-shrink:0;">
+            <span id="smTermTitle" style="color:#e0e0e0; font-weight:700; font-size:0.92em;">
+                <i class="fa-solid fa-terminal"></i> Interactive SSH Session
+            </span>
+            <button id="smTermCloseBtn" type="button" class="ari-btn ari-btn--sm ari-btn--secondary" style="border-color:#555; color:#ccc;" title="Close session">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+        <pre id="smTermOutput" style="flex:1 1 auto; overflow-y:auto; margin:0; padding:12px 14px; font-family:'Cascadia Mono','Fira Code','Consolas',monospace; font-size:0.82em; line-height:1.55; color:#d4d4d4; background:#1e1e2e; min-height:180px; max-height:55vh; white-space:pre-wrap; word-break:break-all;"></pre>
+        <div style="display:flex; gap:8px; padding:10px 14px; border-top:1px solid #333; flex-shrink:0; align-items:center;">
+            <input id="smTermInput" type="text" autocomplete="off" spellcheck="false"
+                   placeholder="Type response here and press Enter..."
+                   style="flex:1; background:#2a2a3a; border:1px solid #444; border-radius:4px; color:#e0e0e0; padding:6px 10px; font-family:inherit; font-size:0.88em;">
+            <button id="smTermSendBtn" type="button" class="ari-btn ari-btn--sm ari-btn--primary" title="Send">
+                <i class="fa-solid fa-paper-plane"></i>
+            </button>
+        </div>
+        <div id="smTermStatus" style="padding:6px 14px; font-size:0.8em; color:#888; border-top:1px solid #292929; flex-shrink:0;"></div>
+    </div>
+</div>
+
 {% endblock %}
 
 {% block extra_scripts %}
@@ -759,9 +787,13 @@ async function smLoadMountsStatus() {
         mounts.forEach((mount, index) => {
             const status = mount.status || {};
             const isMounted = !!status.mounted;
-            const statusIcon = isMounted
+            const isStale = !!status.auth_stale;
+            const statusIcon = isStale
+                ? '<i class="fa-solid fa-circle-exclamation" style="color:#c67a00;"></i>'
+                : isMounted
                 ? '<i class="fa-solid fa-circle-check" style="color:#1f8a44;"></i>'
                 : '<i class="fa-solid fa-circle-xmark" style="color:#999;"></i>';
+            const statusLabel = isStale ? 'Mounted (stale)' : isMounted ? 'Mounted' : 'Not mounted';
 
             const card = document.createElement('div');
             card.style.cssText = 'border:1px solid #ddd; border-radius:0.6rem; padding:12px; display:grid; gap:8px;';
@@ -769,20 +801,25 @@ async function smLoadMountsStatus() {
                 <div style="display:flex; align-items:center; gap:8px; font-weight:700;">
                     ${statusIcon}
                     <span>${mount.name}</span>
-                    <span style="font-weight:500; color:#666;">(${isMounted ? 'Mounted' : 'Not mounted'})</span>
+                    <span style="font-weight:500; color:#666;">(${statusLabel})</span>
                 </div>
                 <div style="font-size:0.9em; color:#555; line-height:1.45;">
                     <div><strong>Connection:</strong> ${mount.connection_mode === 'ssh_config_host' ? 'SSH config host' : 'Remote user + remote host'}</div>
                     <div><strong>Target:</strong> ${mount.display_target}:${mount.remote_path}</div>
                     <div><strong>Local:</strong> ${mount.local_mount}</div>
                     ${status.file_count !== undefined ? `<div><strong>Directory entries:</strong> ${status.file_count}</div>` : ''}
-                    ${status.warning ? `<div style="color:#c67a00;"><i class="fa-solid fa-triangle-exclamation"></i> ${status.warning}</div>` : ''}
+                    ${isStale ? `<div style="color:#c67a00; font-weight:600;"><i class="fa-solid fa-triangle-exclamation"></i> Mount appears stale &mdash; authentication may have expired. Unmount and use interactive mount to re-authenticate.</div>` : ''}
+                    ${(!isStale && status.warning) ? `<div style="color:#c67a00;"><i class="fa-solid fa-triangle-exclamation"></i> ${status.warning}</div>` : ''}
                 </div>
                 <div style="display:flex; gap:8px; flex-wrap:wrap;">
                     ${SM_CAN_MANAGE ? `
                         <button class="ari-btn ari-btn--sm ari-btn--secondary" onclick="smStartEditMount(${index})"><i class="fa-solid fa-pen-to-square"></i> Edit</button>
-                        ${!isMounted
-                            ? `<button class="ari-btn ari-btn--sm ari-btn--primary" onclick="smMountVolume('${mount.name}')"><i class="fa-solid fa-arrow-up-from-bracket"></i> Mount</button>`
+                        ${isStale
+                            ? `<button class="ari-btn ari-btn--sm ari-btn--secondary" onclick="smUnmountVolume('${mount.name}')"><i class="fa-solid fa-arrow-down-to-bracket"></i> Unmount</button>
+                               <button class="ari-btn ari-btn--sm ari-btn--primary" onclick="smUnmountAndReauth('${mount.name}')" title="Unmount stale mount and open interactive session to re-authenticate"><i class="fa-solid fa-terminal"></i> Re-authenticate</button>`
+                            : !isMounted
+                            ? `<button class="ari-btn ari-btn--sm ari-btn--primary" onclick="smMountVolume('${mount.name}')"><i class="fa-solid fa-arrow-up-from-bracket"></i> Mount (key only)</button>
+                               <button class="ari-btn ari-btn--sm ari-btn--secondary" onclick="smInteractiveMount('${mount.name}')" title="Use for password/2FA authentication"><i class="fa-solid fa-terminal"></i> Mount (interactive)</button>`
                             : `<button class="ari-btn ari-btn--sm ari-btn--secondary" onclick="smUnmountVolume('${mount.name}')"><i class="fa-solid fa-arrow-down-to-bracket"></i> Unmount</button>`}
                         <button class="ari-btn ari-btn--sm ari-btn--secondary" onclick="smRefreshMountStatus('${mount.name}')"><i class="fa-solid fa-rotate"></i> Refresh</button>
                         <button class="ari-btn ari-btn--sm ari-btn--danger" onclick="smDeleteMount('${mount.name}')"><i class="fa-solid fa-trash"></i> Delete</button>
@@ -865,6 +902,213 @@ async function smRefreshStatus() {
     if (detail) detail.textContent = 'Use Pre-setup first, then Setup to test and save mounts.';
 }
 
+/* ===========================================================================
+   Interactive SSH Terminal
+   =========================================================================== */
+let smTermToken = null;
+let smTermPollTimer = null;
+let smTermMountName = '';   // set when doing an interactive mount
+
+function smTermOpen(title) {
+    const overlay = document.getElementById('smTermOverlay');
+    const output = document.getElementById('smTermOutput');
+    const input = document.getElementById('smTermInput');
+    const status = document.getElementById('smTermStatus');
+    const titleEl = document.getElementById('smTermTitle');
+    if (overlay) overlay.style.display = 'flex';
+    if (output) output.textContent = '';
+    if (input) { input.value = ''; input.disabled = false; }
+    if (status) status.textContent = 'Connecting...';
+    if (titleEl) titleEl.innerHTML = '<i class="fa-solid fa-terminal"></i> ' + (title || 'Interactive SSH Session');
+    smTermMountName = '';
+}
+
+function smTermClose() {
+    if (smTermPollTimer) { clearInterval(smTermPollTimer); smTermPollTimer = null; }
+    const overlay = document.getElementById('smTermOverlay');
+    if (overlay) overlay.style.display = 'none';
+
+    if (smTermToken) {
+        const body = { token: smTermToken };
+        if (smTermMountName) body.mount_name = smTermMountName;
+        fetch('/api/admin/sshfs/interactive/close', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(body),
+        }).then(r => r.json()).then(data => {
+            if (smTermMountName) {
+                if (data.mount_ok) {
+                    smSetMsg(`Mount "${smTermMountName}" is now mounted.`, true);
+                } else {
+                    smSetMsg(`Interactive session closed. Mount "${smTermMountName}" does not appear to be mounted — you may need to try again.`, false);
+                }
+                smLoadMountsStatus();
+            }
+        }).catch(() => {});
+        smTermToken = null;
+    }
+    smTermMountName = '';
+}
+
+function smTermAppend(text) {
+    const output = document.getElementById('smTermOutput');
+    if (!output || !text) return;
+    output.textContent += text;
+    output.scrollTop = output.scrollHeight;
+}
+
+function smTermStartPolling() {
+    if (smTermPollTimer) clearInterval(smTermPollTimer);
+    smTermPollTimer = setInterval(async () => {
+        if (!smTermToken) return;
+        try {
+            const res = await fetch('/api/admin/sshfs/interactive/poll', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ token: smTermToken }),
+            });
+            const data = await res.json();
+            if (!data.ok) {
+                smTermAppend('\n[Session expired or closed]\n');
+                clearInterval(smTermPollTimer);
+                smTermPollTimer = null;
+                const status = document.getElementById('smTermStatus');
+                if (status) status.textContent = 'Session ended.';
+                const input = document.getElementById('smTermInput');
+                if (input) input.disabled = true;
+                return;
+            }
+            if (data.output) smTermAppend(data.output);
+            if (data.finished) {
+                clearInterval(smTermPollTimer);
+                smTermPollTimer = null;
+                const code = data.exit_code;
+                const status = document.getElementById('smTermStatus');
+                const input = document.getElementById('smTermInput');
+                if (input) input.disabled = true;
+
+                if (smTermMountName) {
+                    // For mount sessions: sshfs -f stays running,
+                    // so "finished" means the mount dropped.
+                    if (status) status.textContent = 'SSHFS process exited (exit code ' + code + '). Close this terminal to check mount status.';
+                } else {
+                    // For test sessions
+                    const ok = code === 0;
+                    smTermAppend('\n[Session ended with exit code ' + code + ']\n');
+                    if (status) status.textContent = ok ? 'Test succeeded (exit code 0).' : 'Test finished (exit code ' + code + ').';
+                    if (ok) {
+                        smLastTestOk = true;
+                        smLastTestKey = smCandidateKey(smCandidate());
+                        smSetMsg('Interactive test passed. You can now add the mount.', true);
+                    }
+                }
+            }
+        } catch (_) {
+            // Network error — keep polling
+        }
+    }, 500);
+}
+
+async function smTermSendInput() {
+    const input = document.getElementById('smTermInput');
+    if (!input || !smTermToken) return;
+    const text = input.value;
+    input.value = '';
+    // Send with newline appended (Enter key)
+    try {
+        await fetch('/api/admin/sshfs/interactive/send', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ token: smTermToken, data: text + '\n' }),
+        });
+    } catch (_) {
+        smTermAppend('\n[Failed to send input]\n');
+    }
+}
+
+async function smUnmountAndReauth(mountName) {
+    if (!SM_CAN_MANAGE) return;
+    smSetMsg(`Unmounting stale mount "${mountName}" before re-authentication...`, true);
+    try {
+        const res = await fetch(`/api/admin/sshfs/mounts/unmount/${encodeURIComponent(mountName)}`, {
+            method: 'POST',
+        });
+        const data = await res.json();
+        if (!data.ok) {
+            smSetMsg(`Failed to unmount "${mountName}": ${data.error || 'unknown error'}. Try unmounting manually first.`, false);
+            return;
+        }
+        smSetMsg(`Unmounted "${mountName}". Starting interactive re-authentication...`, true);
+        await smInteractiveMount(mountName);
+    } catch (err) {
+        smSetMsg('Error during re-authentication: ' + err.message, false);
+    }
+}
+
+async function smInteractiveTest() {
+    if (!SM_CAN_MANAGE) return;
+    const c = smCandidate();
+    const hasTarget = c.connection_mode === 'ssh_config_host' ? !!c.ssh_config_host : !!c.remote_host;
+    if (!hasTarget || !c.ssh_key) {
+        smSetMsg('Connection target and SSH key are required for the interactive test.', false);
+        return;
+    }
+
+    smResetConnectionValidation();
+    smTermOpen('Interactive SSH Test');
+
+    try {
+        const res = await fetch('/api/admin/sshfs/interactive/start-test', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(c),
+        });
+        const data = await res.json();
+        if (!data.ok) {
+            smTermAppend('[Error] ' + (data.error || 'Failed to start session.') + '\n');
+            const status = document.getElementById('smTermStatus');
+            if (status) status.textContent = 'Failed to start.';
+            return;
+        }
+        smTermToken = data.token;
+        const status = document.getElementById('smTermStatus');
+        if (status) status.textContent = 'Session active — respond to any prompts below.';
+        smTermStartPolling();
+    } catch (err) {
+        smTermAppend('[Error] ' + err.message + '\n');
+    }
+}
+
+async function smInteractiveMount(mountName) {
+    if (!SM_CAN_MANAGE) return;
+    smTermOpen('Interactive Mount: ' + mountName);
+    smTermMountName = mountName;
+
+    try {
+        const res = await fetch('/api/admin/sshfs/interactive/start-mount', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ mount_name: mountName }),
+        });
+        const data = await res.json();
+        if (!data.ok) {
+            smTermAppend('[Error] ' + (data.error || 'Failed to start mount session.') + '\n');
+            const status = document.getElementById('smTermStatus');
+            if (status) status.textContent = 'Failed to start.';
+            return;
+        }
+        smTermToken = data.token;
+        const status = document.getElementById('smTermStatus');
+        if (status) status.textContent = 'Session active — respond to any prompts. Once mounted, close this terminal.';
+        smTermAppend('Starting SSHFS mount for "' + mountName + '"...\n');
+        smTermAppend('Respond to any password/2FA prompts below.\n');
+        smTermAppend('Once the mount is running, close this terminal to finalize.\n\n');
+        smTermStartPolling();
+    } catch (err) {
+        smTermAppend('[Error] ' + err.message + '\n');
+    }
+}
+
 document.addEventListener('DOMContentLoaded', function () {
     smLoadMountDropdown();
     smRefreshStatus();
@@ -874,6 +1118,43 @@ document.addEventListener('DOMContentLoaded', function () {
         const el = document.getElementById(id);
         if (el) el.addEventListener('input', smResetConnectionValidation);
         if (el && el.tagName === 'SELECT') el.addEventListener('change', smResetConnectionValidation);
+    });
+
+    // Terminal close button
+    const closeBtn = document.getElementById('smTermCloseBtn');
+    if (closeBtn) closeBtn.addEventListener('click', smTermClose);
+
+    // Terminal overlay click-outside-to-close
+    const overlay = document.getElementById('smTermOverlay');
+    if (overlay) {
+        overlay.addEventListener('click', function (e) {
+            if (e.target === overlay) smTermClose();
+        });
+    }
+
+    // Terminal input Enter key
+    const termInput = document.getElementById('smTermInput');
+    if (termInput) {
+        termInput.addEventListener('keydown', function (e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                smTermSendInput();
+            }
+        });
+    }
+
+    // Terminal send button
+    const sendBtn = document.getElementById('smTermSendBtn');
+    if (sendBtn) sendBtn.addEventListener('click', smTermSendInput);
+
+    // Escape to close terminal
+    document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape') {
+            const overlay = document.getElementById('smTermOverlay');
+            if (overlay && overlay.style.display !== 'none') {
+                smTermClose();
+            }
+        }
     });
 });
 </script>

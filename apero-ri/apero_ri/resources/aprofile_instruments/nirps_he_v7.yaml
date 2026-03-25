@@ -9,6 +9,11 @@ general:
   has_polarimetry: false
   # query-db preset file (relative to resources/aprofile_qdb_presets/)
   db-query-preset-file: nirps_he_v7.txt
+observatory:
+  # ESO 3.6m, La Silla, Chile
+  lat: -29.2562
+  lon: -70.7342
+  alt: 2400
 plot:
   # Spectrum wavelength ranges in nm
   SpecWave:
@@ -300,7 +305,7 @@ calib-headers:
       key: SHAPE_B
       label: Shape B
       dtype: float
-    KW_SHAPE_A:
+    KW_SHAPE_C:
       key: SHAPE_C
       label: Shape C
       dtype: float

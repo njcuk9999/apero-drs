@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{{ profile.profile_id }} - {{ plot_payload.display_name }} ({{ plot_payload.view_name }})</title>
+    <link rel="stylesheet" href="https://cdn.bokeh.org/bokeh/release/bokeh-3.8.2.min.css" type="text/css">
+    <script src="https://cdn.bokeh.org/bokeh/release/bokeh-3.8.2.min.js"></script>
+    <style>
+    :root {
+        --qc-border: #d6d9de;
+        --qc-text: #1f2933;
+        --qc-muted: #5f6b78;
+        --qc-bg: #f4f7fb;
+        --qc-primary: #0b66c3;
+    }
+    * { box-sizing: border-box; }
+    html, body {
+        margin: 0;
+        padding: 0;
+        width: 100%;
+        min-height: 100%;
+        background: var(--qc-bg);
+        color: var(--qc-text);
+        font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+    }
+    .qc-max-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+        padding: 0.8rem 1rem;
+        border-bottom: 1px solid var(--qc-border);
+        background: #fff;
+        position: sticky;
+        top: 0;
+        z-index: 10;
+    }
+    .qc-max-title {
+        margin: 0;
+        font-size: 1rem;
+        font-weight: 700;
+    }
+    .qc-max-sub {
+        margin: 0.2rem 0 0 0;
+        font-size: 0.86rem;
+        color: var(--qc-muted);
+    }
+    .qc-max-close {
+        border: 1px solid var(--qc-border);
+        background: #fff;
+        color: var(--qc-text);
+        border-radius: 0.4rem;
+        padding: 0.4rem 0.7rem;
+        font-size: 0.86rem;
+        font-weight: 600;
+        cursor: pointer;
+    }
+    .qc-max-close:hover {
+        border-color: var(--qc-primary);
+        color: var(--qc-primary);
+    }
+    .qc-max-main {
+        padding: 0.9rem;
+    }
+    .qc-max-plot {
+        border: 1px solid var(--qc-border);
+        border-radius: 0.5rem;
+        background: #fff;
+        padding: 0.4rem;
+        width: 100%;
+    }
+    .qc-max-plot .bk-root {
+        width: 100% !important;
+    }
+    .qc-max-empty {
+        border: 1px dashed var(--qc-border);
+        border-radius: 0.5rem;
+        background: #fff;
+        color: var(--qc-muted);
+        padding: 1rem;
+    }
+    </style>
+</head>
+<body>
+    <header class="qc-max-header">
+        <div>
+            <h1 class="qc-max-title">{{ profile.profile_id }}: {{ plot_payload.display_name }} ({{ plot_payload.view_name }})</h1>
+            <p class="qc-max-sub">{{ plot_payload.label }}</p>
+        </div>
+        <button class="qc-max-close" type="button" onclick="closeAndReturn()">Close and return</button>
+    </header>
+
+    <main class="qc-max-main">
+        {% if plot_payload.has_plot %}
+        <div class="qc-max-plot">{{ plot_payload.plot_div | safe }}</div>
+        {{ plot_payload.plot_script | safe }}
+        {% else %}
+        <div class="qc-max-empty">{{ plot_payload.message }}</div>
+        {% endif %}
+    </main>
+
+    <script>
+    function closeAndReturn() {
+        if (window.opener && !window.opener.closed) {
+            window.close();
+            return;
+        }
+        window.location.href = {{ return_url | tojson }};
+    }
+    </script>
+</body>
+</html>
