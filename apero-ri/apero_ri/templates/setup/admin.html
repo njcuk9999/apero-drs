@@ -2,6 +2,15 @@
 {% block title %}APERO RI Setup – Initial Admin{% endblock %}
 
 {% block content %}
+<div class="setup-notes">
+    <h3><i class="fa-solid fa-circle-info"></i> Notes</h3>
+    <ul>
+        <li>This account will have full administrator privileges &mdash; it can manage all users, instruments, and system settings.</li>
+        <li>A 6-digit verification code will be sent to the primary email address to confirm delivery is working.</li>
+        <li>Additional users will self-register after initial setup; you can promote them to admin later.</li>
+    </ul>
+</div>
+
 <div class="ari-login-box">
     <h2><i class="fa-solid fa-user-shield"></i> Initial Admin Account</h2>
     <p>Create the verified administrator who will manage the installation.</p>
@@ -43,7 +52,7 @@
         <div class="ari-form-group">
             <label for="password">Password</label>
             <input type="password" id="password" name="password"
-                   placeholder="Leave blank to keep existing password">
+                   placeholder="{% if existing_user %}Leave blank to keep existing{% else %}Minimum 8 characters{% endif %}">
         </div>
         <div class="ari-form-group">
             <label for="password_confirm">Confirm password</label>
@@ -58,16 +67,17 @@
 {% if pending_verification %}
 <div class="ari-login-box" style="margin-top:1rem;">
     <h2><i class="fa-solid fa-shield-check"></i> Verify Email</h2>
-    <p>Enter the 6-digit code sent to {{ form_data.primary_email or form_data.emails }}.</p>
+    <p>Enter the 6-digit code sent to <strong>{{ form_data.primary_email or form_data.emails }}</strong>.</p>
     <form method="POST" action="{{ url_for('setup_admin') }}">
         <input type="hidden" name="action" value="verify_code">
         <div class="ari-form-group">
             <label for="verification_code">Verification code</label>
             <input type="text" id="verification_code" name="verification_code"
-                   maxlength="6" inputmode="numeric" pattern="[0-9]*" required>
+                   maxlength="6" inputmode="numeric" pattern="[0-9]*" required
+                   style="font-size:1.3rem; letter-spacing:0.3rem; text-align:center;">
         </div>
         <button type="submit" class="ari-btn ari-btn--primary ari-btn--block">
-            <i class="fa-solid fa-check"></i> Verify and Complete Setup
+            <i class="fa-solid fa-check"></i> Verify &amp; Complete Setup
         </button>
     </form>
 </div>

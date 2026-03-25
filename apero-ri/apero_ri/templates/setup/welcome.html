@@ -1,0 +1,78 @@
+{% extends "setup/base.html" %}
+{% block title %}APERO RI Setup – Welcome{% endblock %}
+
+{% block content %}
+<div class="setup-notes">
+    <h3><i class="fa-solid fa-telescope"></i> What is APERO RI?</h3>
+    <p>
+        The <strong>APERO Reduction Interface</strong> (APERO RI) is a web-based front-end
+        for the <em>A PipelinE to Reduce Observations</em> (APERO) data reduction system.
+        It provides tools for browsing observations, inspecting reduced data products,
+        viewing quality-control plots, and managing reduction tasks for
+        high-resolution spectrographs such as SPIRou, NIRPS, and others.
+    </p>
+</div>
+
+<div class="setup-notes">
+    <h3><i class="fa-solid fa-list-ol"></i> Setup Steps</h3>
+    <p>This wizard will walk you through the essential first-run configuration, in order:</p>
+    <table style="width:100%; border-collapse:collapse; font-size:0.95rem; margin-top:0.5rem;">
+        <thead>
+            <tr style="border-bottom:2px solid var(--ari-border); text-align:left;">
+                <th style="padding:0.5rem 0.6rem; width:2.5rem;">Step</th>
+                <th style="padding:0.5rem 0.6rem;">What</th>
+                <th style="padding:0.5rem 0.6rem;">Why</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr style="border-bottom:1px solid var(--ari-border);">
+                <td style="padding:0.5rem 0.6rem; font-weight:700; color:var(--ari-primary);">1</td>
+                <td style="padding:0.5rem 0.6rem;">
+                    <i class="fa-solid fa-folder-open"></i> Local data directory
+                </td>
+                <td style="padding:0.5rem 0.6rem;">
+                    Already done &mdash; you chose <code>{{ local_data_dir }}</code> on the command line.
+                    This is where all configuration, user data, and caches are stored.
+                </td>
+            </tr>
+            <tr style="border-bottom:1px solid var(--ari-border);">
+                <td style="padding:0.5rem 0.6rem; font-weight:700; color:var(--ari-primary);">2</td>
+                <td style="padding:0.5rem 0.6rem;">
+                    <i class="fa-solid fa-envelope"></i> Email delivery
+                </td>
+                <td style="padding:0.5rem 0.6rem;">
+                    Set up SMTP so APERO RI can send password-reset and account-verification emails.
+                    Required before creating the admin account (to verify their email address).
+                </td>
+            </tr>
+            <tr style="border-bottom:1px solid var(--ari-border);">
+                <td style="padding:0.5rem 0.6rem; font-weight:700; color:var(--ari-primary);">3</td>
+                <td style="padding:0.5rem 0.6rem;">
+                    <i class="fa-solid fa-user-shield"></i> Admin account
+                </td>
+                <td style="padding:0.5rem 0.6rem;">
+                    Create the first administrator who will manage users, configure instruments,
+                    and control access to the reduction database.
+                </td>
+            </tr>
+            <tr>
+                <td style="padding:0.5rem 0.6rem; font-weight:700; color:var(--ari-primary);">4</td>
+                <td style="padding:0.5rem 0.6rem;">
+                    <i class="fa-solid fa-flag-checkered"></i> Complete
+                </td>
+                <td style="padding:0.5rem 0.6rem;">
+                    Review what was configured and see the recommended next steps
+                    to run in the Admin portal (APERO profiles, science groups, backups, etc.).
+                </td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+
+<div style="text-align:center; margin-top:1.5rem;">
+    <a href="{{ url_for('setup_email') }}" class="ari-btn ari-btn--primary"
+       style="font-size:1.05rem; padding:0.7rem 2.5rem;">
+        <i class="fa-solid fa-arrow-right"></i> Begin Setup
+    </a>
+</div>
+{% endblock %}

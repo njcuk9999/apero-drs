@@ -23,8 +23,60 @@
     {% endif %}
 </div>
 
-<div class="ari-login-box" style="margin-top:1rem;">
-    <h2><i class="fa-solid fa-list-check"></i> What Was Verified</h2>
-    <p>The local data directory is writable, email settings were saved, and the initial admin account was verified before activation.</p>
+<div style="max-width:100%; margin:1rem 0 0 0; background:var(--ari-card-bg); border:1px solid var(--ari-border); border-radius:var(--ari-border-radius); padding:1.5rem 2rem;">
+    <h2 style="color:var(--ari-primary); margin:0 0 0.75rem 0; font-size:1.2rem;">
+        <i class="fa-solid fa-list-check"></i> What Was Verified
+    </h2>
+    <ul style="margin:0 0 1rem 0; padding-left:1.5rem; line-height:1.8;">
+        <li><i class="fa-solid fa-check" style="color:green;"></i> Local data directory is writable</li>
+        <li><i class="fa-solid fa-check" style="color:green;"></i> Email delivery configured and tested</li>
+        <li><i class="fa-solid fa-check" style="color:green;"></i> Initial admin account created and email verified</li>
+    </ul>
+
+    <h2 style="color:var(--ari-primary); margin:1rem 0 0.75rem 0; font-size:1.2rem;">
+        <i class="fa-solid fa-arrow-right"></i> Recommended Next Steps
+    </h2>
+    <p style="margin:0 0 0.5rem 0;">After starting the main application with <code>apero_ri_run</code>, open the <strong>Admin</strong> portal to configure:</p>
+    <table style="width:100%; border-collapse:collapse; font-size:0.95rem;">
+        <thead>
+            <tr style="border-bottom:2px solid var(--ari-border); text-align:left;">
+                <th style="padding:0.4rem 0.6rem;">Step</th>
+                <th style="padding:0.4rem 0.6rem;">Section</th>
+                <th style="padding:0.4rem 0.6rem;">Purpose</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr style="border-bottom:1px solid var(--ari-border);">
+                <td style="padding:0.4rem 0.6rem; font-weight:600; color:var(--ari-primary);">1</td>
+                <td style="padding:0.4rem 0.6rem;"><i class="fa-solid fa-database"></i> APERO Profiles</td>
+                <td style="padding:0.4rem 0.6rem;">Connect to your APERO database(s) and set data paths for each instrument</td>
+            </tr>
+            <tr style="border-bottom:1px solid var(--ari-border);">
+                <td style="padding:0.4rem 0.6rem; font-weight:600; color:var(--ari-primary);">2</td>
+                <td style="padding:0.4rem 0.6rem;"><i class="fa-solid fa-users-gear"></i> Science Groups</td>
+                <td style="padding:0.4rem 0.6rem;">Create run ID groupings and assign users to each instrument</td>
+            </tr>
+            <tr style="border-bottom:1px solid var(--ari-border);">
+                <td style="padding:0.4rem 0.6rem; font-weight:600; color:var(--ari-primary);">3</td>
+                <td style="padding:0.4rem 0.6rem;"><i class="fa-solid fa-shield-halved"></i> User DB Access</td>
+                <td style="padding:0.4rem 0.6rem;">Set per-group permissions for database queries</td>
+            </tr>
+            <tr style="border-bottom:1px solid var(--ari-border);">
+                <td style="padding:0.4rem 0.6rem; color:var(--ari-text-muted);">4</td>
+                <td style="padding:0.4rem 0.6rem;"><i class="fa-solid fa-cloud-arrow-up"></i> Backup Settings</td>
+                <td style="padding:0.4rem 0.6rem;">Optional — configure Google Drive or S3 backups</td>
+            </tr>
+            <tr style="border-bottom:1px solid var(--ari-border);">
+                <td style="padding:0.4rem 0.6rem; color:var(--ari-text-muted);">5</td>
+                <td style="padding:0.4rem 0.6rem;"><i class="fa-solid fa-hard-drive"></i> SSHFS Mounts</td>
+                <td style="padding:0.4rem 0.6rem;">Optional — mount remote data directories over SSH</td>
+            </tr>
+            <tr>
+                <td style="padding:0.4rem 0.6rem; color:var(--ari-text-muted);">6</td>
+                <td style="padding:0.4rem 0.6rem;"><i class="fa-solid fa-clock-rotate-left"></i> Async Tasks</td>
+                <td style="padding:0.4rem 0.6rem;">Optional — schedule recurring background reductions</td>
+            </tr>
+        </tbody>
+    </table>
 </div>
 {% endblock %}

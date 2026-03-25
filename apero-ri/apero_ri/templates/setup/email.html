@@ -2,6 +2,15 @@
 {% block title %}APERO RI Setup – Email{% endblock %}
 
 {% block content %}
+<div class="setup-notes">
+    <h3><i class="fa-solid fa-circle-info"></i> Notes</h3>
+    <ul>
+        <li>If you choose <strong>log</strong> mode, APERO RI will write verification codes to <code>{{ local_data_dir }}/admin/email_log.txt</code> instead of sending them. This is useful for development / testing.</li>
+        <li>For <strong>Gmail</strong>, use an <a href="https://support.google.com/accounts/answer/185833" target="_blank" rel="noopener">app password</a> rather than your normal account password.</li>
+        <li>For <strong>Outlook / Office 365</strong>, you may also need an app password if your organisation uses MFA.</li>
+    </ul>
+</div>
+
 <div class="ari-login-box">
     <h2><i class="fa-solid fa-envelope"></i> Email Delivery</h2>
     <p>Configure the sender used for password resets, account verification, and setup messages.</p>
@@ -33,7 +42,7 @@
         </div>
 
         <div class="ari-form-group">
-            <label for="smtp_password">SMTP password</label>
+            <label for="smtp_password">SMTP password / app password</label>
             <input type="password" id="smtp_password" name="smtp_password"
                    placeholder="Leave blank to keep the saved password">
         </div>
@@ -57,14 +66,8 @@
         </div>
 
         <button type="submit" class="ari-btn ari-btn--primary ari-btn--block">
-            <i class="fa-solid fa-check"></i> Save Email Settings
+            <i class="fa-solid fa-check"></i> Save &amp; Continue
         </button>
     </form>
-</div>
-
-<div class="ari-login-box" style="margin-top:1rem;">
-    <h2><i class="fa-solid fa-circle-info"></i> Notes</h2>
-    <p>If you choose <strong>log</strong> mode, APERO RI will write verification codes to <strong>{{ local_data_dir }}/admin/email_log.txt</strong> instead of sending them.</p>
-    <p>For Gmail, use an app password rather than your normal account password.</p>
 </div>
 {% endblock %}
