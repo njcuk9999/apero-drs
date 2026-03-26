@@ -47,12 +47,35 @@ CDict.add('DATA_ENGINEERING', value=None, dtype=str,
           description='Define the data engineering path')
 
 # Define the time delta (in years) to add to the KW_IRELDATE key by default
+#   for raw files
 #   if there is no other way to determine the public release date (can be zero)
-CDict.add('ARELDATE_DELTA', value=None, dtype=float,
+CDict.add('AREL_RDELTA', value=None, dtype=float,
           source=__NAME__, group=cgroup,  minimum=0.0, maximum=20.0,
           description='Define the time delta (in years) to add to the '
-                      'KW_IRELDATE key by default if there is no other way to '
-                      'determine the public release date (can be zero)')
+                      'KW_IRELDATE key by default for raw files if there is '
+                      'no other way to determine the public release '
+                      'date (can be zero)')
+
+# Define the time delta (in years) to add to the KW_IRELDATE key by default
+#   for APERO files
+#   if there is no other way to determine the public release date (can be zero)
+CDict.add('AREL_ADELTA', value=None, dtype=float,
+          source=__NAME__, group=cgroup,  minimum=0.0, maximum=20.0,
+          description='Define the time delta (in years) to add to the '
+                      'KW_IRELDATE key by default for APERO files if there is '
+                      'no other way to determine the public release '
+                      'date (can be zero)')
+
+# Define the time delta (in years) to add to the KW_IRELDATE key by default
+#   for LBL files
+#   if there is no other way to determine the public release date (can be zero)
+CDict.add('AREL_LDELTA', value=None, dtype=float,
+          source=__NAME__, group=cgroup,  minimum=0.0, maximum=20.0,
+          description='Define the time delta (in years) to add to the '
+                      'KW_IRELDATE key by default for LBL files if there is '
+                      'no other way to determine the public release '
+                      'date (can be zero)')
+
 
 # =============================================================================
 # COMMON IMAGE SETTINGS

@@ -30,8 +30,19 @@ cgroup = 'DATA'
 CDict.set('DATA_ENGINEERING', value='engineering/', source=__NAME__,
           group=cgroup)
 # Define the time delta (in years) to add to the KW_IRELDATE key by default
+#   for raw files
 #   if there is no other way to determine the public release date (can be zero)
-CDict.set('ARELDATE_DELTA', value=0.0, source=__NAME__, group=cgroup)
+CDict.set('AREL_RDELTA', value=0.0, source=__NAME__, group=cgroup)
+
+# Define the time delta (in years) to add to the KW_IRELDATE key by default
+#   for APERO files
+#   if there is no other way to determine the public release date (can be zero)
+CDict.set('AREL_ADELTA', value=0.0, source=__NAME__, group=cgroup)
+
+# Define the time delta (in years) to add to the KW_IRELDATE key by default
+#   for LBL files
+#   if there is no other way to determine the public release date (can be zero)
+CDict.set('AREL_LDELTA', value=1.0, source=__NAME__, group=cgroup)
 
 # =============================================================================
 # COMMON IMAGE SETTINGS
