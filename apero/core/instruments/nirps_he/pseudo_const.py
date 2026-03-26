@@ -1384,7 +1384,7 @@ def set_apero_reldate(params: ParamDict, header: Any,
     kw_areldate_comment = params['KW_ARELDATE'][2]
     kw_areldate_datatype = params.instances['KW_ARELDATE'].datatype
     # get the time delta from APERO
-    tdelta = params['APERO_RELDATE_DELTA']
+    tdelta = params['AREL_RDELTA']
     # get the default time to add to instrument release date
     time_delta = TimeDelta(tdelta * uu.year)
     # get and convert ireldate
