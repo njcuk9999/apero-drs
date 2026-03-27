@@ -125,7 +125,7 @@
         }
         a.innerHTML = el.innerHTML;
         var labelSpan = a.querySelector('span');
-        if (labelSpan) labelSpan.textContent = entry.objname;
+        if (labelSpan) labelSpan.textContent = 'Last Object: ' + entry.objname;
         el.parentNode.replaceChild(a, el);
     });
 }());

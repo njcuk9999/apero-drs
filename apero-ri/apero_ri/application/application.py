@@ -91,6 +91,8 @@ from apero_ri.core.object_funcs import (build_object_page_stats,
                                          load_object_preset,
                                          load_object_table_row)
 from apero_ri.core import basket_funcs as bk
+from apero_ri.core import download_tracker as dt
+from apero_ri.core import api_tokens as at
 
 # =============================================================================
 # Define variables
@@ -122,6 +124,8 @@ class ARIApp(Flask):
         )
         ud.set_ari_dir(self.args.data_dir or str(Path.home() / '.ari'))
         auth_set_ari_dir(self.args.data_dir or str(Path.home() / '.ari'))
+        dt.set_ari_dir(Path(self.args.data_dir).expanduser()
+                       if self.args.data_dir else Path.home() / '.ari')
         # Secret key for sessions
         self.secret_key = self._load_or_create_secret()
         # Load YAML definitions (read-only)
@@ -144,6 +148,11 @@ class ARIApp(Flask):
         self._admin_health_cache = {}
         self._admin_health_cache_ttl = timedelta(hours=1)
         self._admin_health_cache_lock = threading.Lock()
+        self._admin_health_cache_file = (
+            Path(self.args.data_dir or str(Path.home() / '.ari'))
+            / 'admin' / 'health_cache.json'
+        )
+        self._load_health_cache_from_disk()
         # Configure session lifetime for "remember me"
         self.config['PERMANENT_SESSION_LIFETIME'] = timedelta(days=30)
         self.config['SESSION_COOKIE_NAME'] = 'apero_ri'
@@ -354,6 +363,12 @@ class ARIApp(Flask):
         self.add_url_rule('/api/user/notes/render', 'api_user_notes_render',
                   self._api_user_notes_render, methods=['POST'])
 
+        # User preferences API routes
+        self.add_url_rule('/api/user/prefs/get', 'api_user_prefs_get',
+                  self._api_user_prefs_get)
+        self.add_url_rule('/api/user/prefs/save', 'api_user_prefs_save',
+                  self._api_user_prefs_save, methods=['POST'])
+
         # User calendar API routes
         self.add_url_rule('/api/user/calendar/list', 'api_user_calendar_list',
                   self._api_user_calendar_list)
@@ -510,6 +525,30 @@ class ARIApp(Flask):
             'api_admin_health_config_save',
             self._api_admin_health_config_save,
             methods=['POST'])
+
+        # Plot cache admin routes
+        self.add_url_rule('/api/admin/cache/save',
+            'api_admin_cache_save',
+            self._api_admin_cache_save, methods=['POST'])
+        self.add_url_rule('/api/admin/cache/purge',
+            'api_admin_cache_purge',
+            self._api_admin_cache_purge, methods=['POST'])
+
+        # Download management admin routes
+        self.add_url_rule('/api/admin/dm/save-settings',
+            'api_admin_dm_save_settings',
+            self._api_admin_dm_save_settings, methods=['POST'])
+        self.add_url_rule('/api/admin/dm/reset-user',
+            'api_admin_dm_reset_user',
+            self._api_admin_dm_reset_user, methods=['POST'])
+
+        # User API token routes
+        self.add_url_rule('/api/user/token/generate',
+            'api_user_token_generate',
+            self._api_user_token_generate, methods=['POST'])
+        self.add_url_rule('/api/user/token/revoke',
+            'api_user_token_revoke',
+            self._api_user_token_revoke, methods=['POST'])
 
         # Documentation routes (edit, save, upload, images)
         self.add_url_rule('/docs/<page_ref>/edit', 'doc_edit',
@@ -702,6 +741,9 @@ class ARIApp(Flask):
                           methods=['POST'])
 
         # Object table sub-page + data API
+        self.add_url_rule('/api/data-portal/profiles',
+                          'api_profiles_list',
+                          self._api_profiles_list)
         self.add_url_rule('/data_portal/<profile_id>/object-table',
                           'ri_object_table',
                           self._ri_object_table_view)
@@ -811,6 +853,12 @@ class ARIApp(Flask):
         self.add_url_rule('/api/data-portal/object-lbl-plots',
                           'api_object_lbl_plots',
                           self._api_object_lbl_plots)
+        self.add_url_rule('/api/data-portal/finder-chart',
+                          'api_finder_chart',
+                          self._api_finder_chart)
+        self.add_url_rule('/api/data-portal/debug-plots',
+                          'api_debug_plots',
+                          self._api_debug_plots)
         self.add_url_rule('/api/data-portal/filename-plot',
                           'api_filename_plot',
                           self._api_filename_plot)
@@ -1120,6 +1168,11 @@ class ARIApp(Flask):
                 context['todo_items'] = ud.list_todo_items(
                     user_info['username'])
 
+            # User portal API access
+            if page_id == 'home.user_portal.api_access' and user_info:
+                context.update(
+                    self._build_user_api_access_context(user_info))
+
             # Admin calendar
             if page_id == 'home.admin_portal.calendar' and user_info:
                 context.update(
@@ -1141,6 +1194,15 @@ class ARIApp(Flask):
             # Admin SSHFS management
             if page_id == 'home.admin_portal.sshfs_management':
                 context.update(self._build_admin_sshfs_context(perms))
+
+            # Admin plot cache
+            if page_id == 'home.admin_portal.cache_settings':
+                context.update(self._build_admin_cache_context(perms))
+
+            # Admin download management
+            if page_id == 'home.admin_portal.download_management':
+                context.update(
+                    self._build_admin_download_mgmt_context(perms))
 
             # Admin index and health-status page: inject health context
             if page_id in {'home.admin_portal',
@@ -1349,7 +1411,7 @@ class ARIApp(Flask):
                 )
                 sidebar_tree.append({
                     'id': obj_id,
-                    'label': objname,
+                    'label': f'Object Page: {objname}',
                     'icon': obj_meta.get('icon') or 'fa-solid fa-star',
                     'url': f'/data_portal/{profile_id}/{objname}',
                     'depth': 1,
@@ -1561,6 +1623,44 @@ class ARIApp(Flask):
             'instruments': instruments,
         }
 
+    def _build_user_api_access_context(self, user_info):
+        """Build context for user API access page."""
+        username = user_info['username']
+        api_usage = dt.get_user_usage(username, 'api')
+        basket_usage = dt.get_user_usage(username, 'basket')
+        token_info = at.get_user_token_info(username)
+
+        def _fmt_ts(raw):
+            """Format an ISO timestamp to a compact, human-friendly form."""
+            if not raw:
+                return 'Never'
+            try:
+                from datetime import datetime as _dt, timezone as _tz
+                ts = _dt.fromisoformat(raw)
+                return ts.strftime('%d %b %Y, %H:%M UTC')
+            except Exception:
+                return str(raw)[:19]
+
+        return {
+            'token_info': token_info,
+            'api_usage': {
+                'total_bytes': api_usage.get('total_bytes', 0),
+                'total_files': api_usage.get('total_files', 0),
+                'total_size_fmt': dt.format_bytes(
+                    api_usage.get('total_bytes', 0)),
+                'last_download': _fmt_ts(
+                    api_usage.get('last_download_at', '')),
+            },
+            'basket_usage': {
+                'total_bytes': basket_usage.get('total_bytes', 0),
+                'total_files': basket_usage.get('total_files', 0),
+                'total_size_fmt': dt.format_bytes(
+                    basket_usage.get('total_bytes', 0)),
+                'last_download': _fmt_ts(
+                    basket_usage.get('last_download_at', '')),
+            },
+        }
+
     def _build_user_calendar_context(self, user_info):
         """Build context for user calendar page."""
         username = user_info['username']
@@ -1574,10 +1674,12 @@ class ARIApp(Flask):
         instr_events = {}
         for i in instruments:
             instr_events[i] = ud.load_instrument_calendar(i).get('events', [])
+        user_tz = ud.get_user_timezone(username)
         return {
             'events': events,
             'instr_events': instr_events,
             'instruments': instruments,
+            'user_timezone': user_tz,
         }
 
     def _build_admin_instrument_context(self, user_info, perms):
@@ -1660,6 +1762,188 @@ class ARIApp(Flask):
             'ssh_keys_data': ssh_keys.get('keys', []),
         }
 
+    def _build_admin_cache_context(self, perms):
+        """Build context for admin plot-cache settings page."""
+        from apero_ri.core.plot_cache import (
+            load_cache_config, cache_inventory, CACHE_SECTIONS,
+        )
+        data_dir = self._resolve_local_data_dir()
+        cfg = load_cache_config(data_dir)
+        inv = cache_inventory(data_dir)
+        return {
+            'can_manage': 'view.admin' in perms,
+            'cache_cfg': cfg,
+            'cache_inventory': inv,
+            'cache_sections': CACHE_SECTIONS,
+        }
+
+    def _api_admin_cache_save(self):
+        """Save cache settings (enable/disable, directory)."""
+        user_info = get_effective_user(session)
+        if user_info:
+            perms = resolve_user_permissions(
+                user_info['groups'], self.ari_groups)
+        else:
+            perms = get_public_permissions()
+        if 'view.admin' not in perms:
+            return jsonify(success=False, error='Unauthorized'), 401
+        from apero_ri.core.plot_cache import (
+            load_cache_config, save_cache_config,
+        )
+        data_dir = self._resolve_local_data_dir()
+        body = request.get_json(silent=True) or {}
+        cfg = load_cache_config(data_dir)
+        if 'enabled' in body:
+            cfg['enabled'] = bool(body['enabled'])
+        if 'cache_dir' in body:
+            cfg['cache_dir'] = str(body['cache_dir']).strip()
+        save_cache_config(cfg, data_dir)
+        return jsonify(success=True)
+
+    def _api_admin_cache_purge(self):
+        """Purge cached data (all or per-profile)."""
+        user_info = get_effective_user(session)
+        if user_info:
+            perms = resolve_user_permissions(
+                user_info['groups'], self.ari_groups)
+        else:
+            perms = get_public_permissions()
+        if 'view.admin' not in perms:
+            return jsonify(success=False, error='Unauthorized'), 401
+        from apero_ri.core.plot_cache import (
+            resolve_cache_root, invalidate_all, invalidate_profile,
+            load_cache_config,
+        )
+        data_dir = self._resolve_local_data_dir()
+        cfg = load_cache_config(data_dir)
+        cache_root = resolve_cache_root(data_dir, cfg)
+        body = request.get_json(silent=True) or {}
+        scope = str(body.get('scope', 'all')).strip()
+        if scope == 'section':
+            instrument = str(body.get('instrument', '')).strip()
+            profile_id = str(body.get('profile_id', '')).strip()
+            section = str(body.get('section', '')).strip()
+            if not instrument or not profile_id or not section:
+                return jsonify(success=False,
+                               error='Missing instrument, profile_id, or section'), 400
+            removed = invalidate_profile(cache_root, instrument, profile_id,
+                                         sections=[section])
+        elif scope == 'profile':
+            instrument = str(body.get('instrument', '')).strip()
+            profile_id = str(body.get('profile_id', '')).strip()
+            if not instrument or not profile_id:
+                return jsonify(success=False,
+                               error='Missing instrument or profile_id'), 400
+            removed = invalidate_profile(cache_root, instrument, profile_id)
+        else:
+            removed = invalidate_all(cache_root)
+        return jsonify(success=True, removed=removed)
+
+    def _build_admin_download_mgmt_context(self, perms):
+        """Build context for admin download-management page."""
+        settings = dt.load_settings()
+        api_usage = dt.list_all_usage('api')
+        basket_usage = dt.list_all_usage('basket')
+        for row in api_usage:
+            row['total_size_fmt'] = dt.format_bytes(row['total_bytes'])
+            row['last_download_fmt'] = (row['last_download_at'] or 'Never')
+        for row in basket_usage:
+            row['total_size_fmt'] = dt.format_bytes(row['total_bytes'])
+            row['last_download_fmt'] = (row['last_download_at'] or 'Never')
+        api_total_bytes = sum(r['total_bytes'] for r in api_usage)
+        basket_total_bytes = sum(r['total_bytes'] for r in basket_usage)
+        return {
+            'can_manage': 'view.admin' in perms,
+            'settings': settings,
+            'api_usage': api_usage,
+            'basket_usage': basket_usage,
+            'api_total_size': dt.format_bytes(api_total_bytes),
+            'api_total_files': sum(r['total_files'] for r in api_usage),
+            'basket_total_size': dt.format_bytes(basket_total_bytes),
+            'basket_total_files': sum(r['total_files'] for r in basket_usage),
+        }
+
+    def _api_admin_dm_save_settings(self):
+        """Save download management settings."""
+        user_info = get_effective_user(session)
+        if user_info:
+            perms = resolve_user_permissions(
+                user_info['groups'], self.ari_groups)
+        else:
+            perms = get_public_permissions()
+        if 'view.admin' not in perms:
+            return jsonify(success=False, error='Unauthorized'), 401
+        body = request.get_json(silent=True) or {}
+        updates = {}
+        for key in ('api_rate_limit_seconds',
+                    'basket_rate_limit_seconds',
+                    'basket_max_archive_gb'):
+            if key in body:
+                updates[key] = float(body[key])
+        dt.save_settings(updates)
+        return jsonify(success=True)
+
+    def _api_admin_dm_reset_user(self):
+        """Reset download counters for a user."""
+        user_info = get_effective_user(session)
+        if user_info:
+            perms = resolve_user_permissions(
+                user_info['groups'], self.ari_groups)
+        else:
+            perms = get_public_permissions()
+        if 'view.admin' not in perms:
+            return jsonify(success=False, error='Unauthorized'), 401
+        body = request.get_json(silent=True) or {}
+        username = str(body.get('username', '')).strip()
+        category = str(body.get('category', '')).strip()
+        if not username or category not in ('api', 'basket'):
+            return jsonify(success=False, error='Invalid parameters'), 400
+        dt.reset_user_usage(username, category)
+        return jsonify(success=True)
+
+    # -----------------------------------------------------------------
+    # Token-based API auth helper
+    # -----------------------------------------------------------------
+    @staticmethod
+    def _get_api_user() -> Optional[dict]:
+        """Return user info from Bearer token or session (in that order).
+
+        Checks the ``Authorization: Bearer <token>`` header first.
+        Falls back to the normal session-based ``get_effective_user``.
+        """
+        auth_header = request.headers.get('Authorization', '')
+        if auth_header.startswith('Bearer '):
+            token = auth_header[7:].strip()
+            username = at.validate_token(token)
+            if username:
+                info = get_user_info(username)
+                if info:
+                    return info
+            # Invalid token → do NOT fall back to session
+            return None
+        return get_effective_user(session)
+
+    # -----------------------------------------------------------------
+    # User API token endpoints
+    # -----------------------------------------------------------------
+    def _api_user_token_generate(self):
+        """Generate a new API token for the logged-in user."""
+        user_info = get_effective_user(session)
+        if not user_info:
+            return jsonify(success=False, error='Not logged in'), 401
+        body = request.get_json(silent=True) or {}
+        label = str(body.get('label', '')).strip()[:100]
+        token = at.generate_token(user_info['username'], label)
+        return jsonify(success=True, token=token)
+
+    def _api_user_token_revoke(self):
+        """Revoke the API token for the logged-in user."""
+        user_info = get_effective_user(session)
+        if not user_info:
+            return jsonify(success=False, error='Not logged in'), 401
+        removed = at.revoke_token(user_info['username'])
+        return jsonify(success=True, removed=removed)
+
     @staticmethod
     def _format_utc_datetime(dt: Optional[datetime]) -> str:
         """Format UTC datetime for display."""
@@ -1672,8 +1956,72 @@ class ARIApp(Flask):
         """Stable key for admin-health cache entries."""
         return '|'.join(sorted(perms))
 
+    def _load_health_cache_from_disk(self) -> None:
+        """Populate in-memory admin health cache from the persisted disk file."""
+        try:
+            if not self._admin_health_cache_file.exists():
+                return
+            with open(self._admin_health_cache_file, 'r',
+                      encoding='utf-8') as fh:
+                raw = json.load(fh)
+            if not isinstance(raw, dict):
+                return
+            restored = {}
+            for key, entry in raw.items():
+                if not isinstance(entry, dict):
+                    continue
+                updated_at = None
+                updated_at_str = entry.get('updated_at')
+                if updated_at_str:
+                    try:
+                        updated_at = datetime.fromisoformat(updated_at_str)
+                    except Exception:
+                        pass
+                restored[key] = {
+                    'health': entry.get('health', {}),
+                    'updated_at': updated_at,
+                    'in_progress': False,
+                    'perms': entry.get('perms', []),
+                }
+            with self._admin_health_cache_lock:
+                self._admin_health_cache = restored
+        except Exception:
+            pass
+
+    def _save_health_cache_to_disk(self) -> None:
+        """Persist current in-memory admin health cache to disk."""
+        try:
+            with self._admin_health_cache_lock:
+                snapshot = dict(self._admin_health_cache)
+            serializable = {}
+            for key, entry in snapshot.items():
+                updated_at = entry.get('updated_at')
+                serializable[key] = {
+                    'health': entry.get('health', {}),
+                    'updated_at': (
+                        updated_at.isoformat() if updated_at else None
+                    ),
+                    'perms': entry.get('perms', []),
+                }
+            self._admin_health_cache_file.parent.mkdir(
+                parents=True, exist_ok=True)
+            tmp = self._admin_health_cache_file.with_suffix('.tmp')
+            with open(tmp, 'w', encoding='utf-8') as fh:
+                json.dump(serializable, fh)
+            tmp.replace(self._admin_health_cache_file)
+        except Exception:
+            pass
+
     def _start_admin_health_refresher(self) -> None:
-        """Start background hourly refresh for existing admin-health cache."""
+        """Start background hourly refresh; spawn async refresh of any
+        entries loaded from the persisted disk cache at startup."""
+        with self._admin_health_cache_lock:
+            startup_items = [
+                (key, set(entry.get('perms', [])))
+                for key, entry in self._admin_health_cache.items()
+            ]
+        for key, perms in startup_items:
+            self._spawn_admin_health_refresh(key, None, perms)
         thread = threading.Thread(
             target=self._admin_health_refresher_loop,
             daemon=True,
@@ -1705,6 +2053,11 @@ class ARIApp(Flask):
                 'in_progress': False,
                 'perms': sorted(perms),
             }
+        threading.Thread(
+            target=self._save_health_cache_to_disk,
+            daemon=True,
+            name='admin-health-disk-save',
+        ).start()
 
     def _spawn_admin_health_refresh(self, cache_key: str,
                                     user_info,
@@ -1854,6 +2207,7 @@ class ARIApp(Flask):
         health = {}
 
         # ── User Management: warn if any user has only 'public' group  ───
+        _t0 = time.monotonic()
         if 'view.admin' in perms:
             try:
                 all_users = load_users()
@@ -1871,8 +2225,11 @@ class ARIApp(Flask):
                         'status': 'ok', 'message': ''}
             except Exception:
                 pass
+        if 'home.admin_portal.users' in health:
+            health['home.admin_portal.users']['duration_s'] = round(time.monotonic() - _t0, 2)
 
         # ── Email: error if enabled but connection fails ──────────────────
+        _t0 = time.monotonic()
         if 'view.admin' in perms:
             try:
                 email_cfg = eb.load_email_config()
@@ -1882,7 +2239,7 @@ class ARIApp(Flask):
                         'message': 'Email delivery is not enabled. Verification codes go to log file.',
                     }
                 else:
-                    test = eb.test_email_connection(email_cfg)
+                    test = eb.test_email_connection(email_cfg, quick_test=True)
                     if test['ok']:
                         health['home.admin_portal.email'] = {
                             'status': 'ok', 'message': ''}
@@ -1893,8 +2250,11 @@ class ARIApp(Flask):
                         }
             except Exception:
                 pass
+        if 'home.admin_portal.email' in health:
+            health['home.admin_portal.email']['duration_s'] = round(time.monotonic() - _t0, 2)
 
         # ── Backup Settings: warn if cloud mirror disabled, error if broken ─
+        _t0 = time.monotonic()
         if 'view.admin' in perms:
             try:
                 backup_cfg = bb.load_backup_config()
@@ -1917,16 +2277,22 @@ class ARIApp(Flask):
                         }
             except Exception:
                 pass
+        if 'home.admin_portal.backup_settings' in health:
+            health['home.admin_portal.backup_settings']['duration_s'] = round(time.monotonic() - _t0, 2)
 
         # ── SSHFS Management: check mount status ───────────────────────
+        _t0 = time.monotonic()
         if 'view.admin' in perms:
             try:
                 health_check = sb.health_check()
                 health['home.admin_portal.sshfs_management'] = health_check
             except Exception:
                 pass
+        if 'home.admin_portal.sshfs_management' in health:
+            health['home.admin_portal.sshfs_management']['duration_s'] = round(time.monotonic() - _t0, 2)
 
         # ── APERO Profiles: error if any profile has DB/path failures ────
+        _t0 = time.monotonic()
         if 'manage.apero_profile' in perms:
             try:
                 overview = self._build_apero_profiles_overview_status()
@@ -1945,8 +2311,11 @@ class ARIApp(Flask):
                         'status': 'ok', 'message': ''}
             except Exception:
                 pass
+        if 'home.admin_portal.apero_profiles' in health:
+            health['home.admin_portal.apero_profiles']['duration_s'] = round(time.monotonic() - _t0, 2)
 
         # ── Async Tasks: error if any active task has failed/errors ─────
+        _t0 = time.monotonic()
         if 'manage.apero_profile' in perms:
             try:
                 all_tasks = load_async_tasks()
@@ -1995,8 +2364,11 @@ class ARIApp(Flask):
                         'status': 'ok', 'message': ''}
             except Exception:
                 pass
+        if 'home.admin_portal.async_tasks' in health:
+            health['home.admin_portal.async_tasks']['duration_s'] = round(time.monotonic() - _t0, 2)
 
         # ── Science Groups: warn on assignment/configuration gaps ───────
+        _t0 = time.monotonic()
         if 'manage.sci_group' in perms:
             try:
                 params = load_parameters()
@@ -2111,8 +2483,11 @@ class ARIApp(Flask):
                     'status': 'error',
                     'message': f'Science group health check failed: {exc}',
                 }
+        if 'home.admin_portal.science_groups' in health:
+            health['home.admin_portal.science_groups']['duration_s'] = round(time.monotonic() - _t0, 2)
 
         # ── User DB Access: warn if profile table access is incomplete ──
+        _t0 = time.monotonic()
         if 'manage.admin.user_db_access' in perms:
             try:
                 report = self._build_user_db_access_health_report(user_info)
@@ -2125,6 +2500,8 @@ class ARIApp(Flask):
                     'status': 'error',
                     'message': f'User DB access health check failed: {exc}',
                 }
+        if 'home.admin_portal.user_db_access' in health:
+            health['home.admin_portal.user_db_access']['duration_s'] = round(time.monotonic() - _t0, 2)
 
         return health
 
@@ -2195,6 +2572,7 @@ class ARIApp(Flask):
             page_def = self.ari_pages.get(pid, {})
             page_label = str(page_def.get('label', pid)).strip()
 
+            duration_s = status_data.get('duration_s')
             rows.append({
                 'page_id': pid,
                 'label': page_label,
@@ -2203,6 +2581,7 @@ class ARIApp(Flask):
                 'message': msg or rule_msg,
                 'rule_message': rule_msg,
                 'details': details,
+                'duration_s': duration_s,
             })
 
         return rows
@@ -3562,12 +3941,33 @@ class ARIApp(Flask):
         }
         return render_template('data_portal/object_table.html', **context)
 
+    def _api_profiles_list(self):
+        """Return list of accessible profile IDs and basic metadata."""
+        user_info = self._get_api_user()
+        if user_info:
+            perms = resolve_user_permissions(
+                user_info['groups'], self.ari_groups
+            )
+        else:
+            perms = get_public_permissions()
+        if 'view.data_portal' not in perms:
+            return jsonify(success=False, error='Unauthorized'), 401
+        accessible = get_accessible_profiles(user_info, self.ari_groups)
+        profiles = []
+        for prof in accessible:
+            profiles.append({
+                'profile_id': prof['profile_id'],
+                'instrument': prof.get('instrument', ''),
+                'label': prof.get('label', prof['profile_id']),
+            })
+        return jsonify(success=True, profiles=profiles)
+
     def _api_object_table(self):
         """Return object table rows for a profile, filtered by science group."""
         import json as _json
         base_dir = Path(self.args.data_dir or str(Path.home() / '.ari'))
 
-        user_info = get_effective_user(session)
+        user_info = self._get_api_user()
         if user_info:
             perms = resolve_user_permissions(
                 user_info['groups'], self.ari_groups
@@ -3881,6 +4281,33 @@ class ARIApp(Flask):
             objname=objname,
         )
 
+        # Check whether a finder chart is already cached
+        finder_cached = False
+        try:
+            from apero_ri.core.plot_cache import (
+                load_cache_config, resolve_cache_root, is_cache_enabled,
+                get_finder_cached, _profile_dir, _load_meta,
+                _db_fingerprint_matches,
+            )
+            base_dir = Path(self.args.data_dir
+                            or str(Path.home() / '.ari'))
+            cfg = load_cache_config(base_dir)
+            if is_cache_enabled(cfg=cfg):
+                cache_root = resolve_cache_root(base_dir, cfg)
+                profile_data = profile.get('data') or {}
+                pdir = _profile_dir(cache_root, profile['instrument'],
+                                    profile_id)
+                meta = _load_meta(pdir)
+                db_upd = profile_data.get('database-update', {})
+                if (isinstance(db_upd, dict) and db_upd
+                        and _db_fingerprint_matches(meta, db_upd)):
+                    fc_hit = get_finder_cached(
+                        cache_root, profile['instrument'],
+                        profile_id, objname)
+                    finder_cached = fc_hit is not None
+        except Exception:
+            pass
+
         context = {
             'page_id': page_id,
             'page_label': page_label,
@@ -3890,6 +4317,7 @@ class ARIApp(Flask):
             'profile_color': color,
             'objname': objname,
             'api_url': '/api/data-portal/object-page',
+            'finder_chart_cached': finder_cached,
             'sidebar_root': 'home.data_portal',
             'sidebar_label': 'Data Portal',
             'sidebar_icon': 'fa-solid fa-database',
@@ -3904,7 +4332,7 @@ class ARIApp(Flask):
 
         base_dir = Path(self.args.data_dir or str(Path.home() / '.ari'))
 
-        user_info = get_effective_user(session)
+        user_info = self._get_api_user()
         if user_info:
             perms = resolve_user_permissions(
                 user_info['groups'], self.ari_groups
@@ -4015,9 +4443,51 @@ class ARIApp(Flask):
             labels=labels,
         )
 
+    @staticmethod
+    def _rid_cache_tag(accessible_run_ids):
+        """Return a short hash of the accessible run_id set for cache keys."""
+        import hashlib
+        blob = '|'.join(sorted(accessible_run_ids)).encode()
+        return hashlib.md5(blob).hexdigest()[:8]
+
+    @staticmethod
+    def _filter_plot_rows(htable_rows, ftable_dict, accessible_run_ids):
+        """Filter htable and ftable rows by accessible run_ids.
+
+        Parameters
+        ----------
+        htable_rows : list of dict
+        ftable_dict : dict of {label: list of dict}
+        accessible_run_ids : set of str
+
+        Returns
+        -------
+        filtered_htable : list of dict
+        filtered_ftables : dict of {label: list of dict}
+        """
+        from apero_ri.core.basket_funcs import filter_accessible_rows
+        filtered_ftables = {}
+        accessible_ids = set()
+        for label, rows in ftable_dict.items():
+            filt = filter_accessible_rows(rows, accessible_run_ids)
+            filtered_ftables[label] = filt
+            for r in filt:
+                ident = str(r.get('IDENTIFIER', '') or '').strip()
+                if ident:
+                    accessible_ids.add(ident)
+        if accessible_ids:
+            filtered_htable = [
+                r for r in htable_rows
+                if str(r.get('IDENTIFIER', '') or '').strip()
+                in accessible_ids
+            ]
+        else:
+            filtered_htable = list(htable_rows)
+        return filtered_htable, filtered_ftables
+
     def _api_object_plots(self):
         """Return Bokeh JSON plot payloads (SNR, BERV, spec, CCF) for the object page."""
-        user_info = get_effective_user(session)
+        user_info = self._get_api_user()
         if user_info:
             perms = resolve_user_permissions(
                 user_info['groups'], self.ari_groups
@@ -4052,6 +4522,10 @@ class ARIApp(Flask):
             return jsonify(success=False, error='Profile not found'), 404
 
         instrument = profile['instrument']
+        accessible_run_ids = self._get_user_accessible_run_ids(
+            user_info, instrument
+        )
+
         profile_data = profile.get('data') or {}
         instrument_profile_file = str(
             profile_data.get('APERO_INSTRUMENT_PROFILE', '')
@@ -4062,9 +4536,36 @@ class ARIApp(Flask):
         base_dir = Path(self.args.data_dir or str(Path.home() / '.ari'))
         objects_dir = base_dir / 'tasks' / instrument / profile_id / 'objects'
 
+        # --- Plot cache: try to serve from cache first ---
+        from apero_ri.core.plot_cache import check_and_serve, generate_and_cache
+        rid_tag = self._rid_cache_tag(accessible_run_ids)
+        cache_key = (f'{objname}__{rid_tag}' if vsys_ms is None
+                     else f'{objname}__vsys{vsys_ms}__{rid_tag}')
+        cached = check_and_serve(
+            base_dir, instrument, profile_id,
+            'object_plots', cache_key, aparams=profile_data)
+        if cached is not None:
+            return jsonify(**cached)
+
         htable_rows = load_object_htable_rows(objects_dir, objname)
         preset = load_object_preset(instrument_profile_file)
         obj_props = load_object_table_row(objects_dir, objname)
+
+        # Filter by accessible run_ids
+        ftable_ext_rows = load_object_ftable_rows(objects_dir, objname, 'ext')
+        ftable_tcorr_rows = load_object_ftable_rows(
+            objects_dir, objname, 'tcorr')
+        ftable_ccf_rows = load_object_ftable_rows(objects_dir, objname, 'ccf')
+
+        htable_rows, ftables = self._filter_plot_rows(
+            htable_rows,
+            {'ext': ftable_ext_rows, 'tcorr': ftable_tcorr_rows,
+             'ccf': ftable_ccf_rows},
+            accessible_run_ids,
+        )
+        ftable_ext_rows = ftables['ext']
+        ftable_tcorr_rows = ftables['tcorr']
+        ftable_ccf_rows = ftables['ccf']
 
         # Build path dict for file resolution
         path_red = str(
@@ -4092,11 +4593,6 @@ class ARIApp(Flask):
         except Exception:
             berv = _no_plot
 
-        ftable_ext_rows = load_object_ftable_rows(objects_dir, objname, 'ext')
-        ftable_tcorr_rows = load_object_ftable_rows(
-            objects_dir, objname, 'tcorr')
-        ftable_ccf_rows = load_object_ftable_rows(objects_dir, objname, 'ccf')
-
         try:
             spec = build_spec_plot_json(htable_rows, ftable_ext_rows,
                                         ftable_tcorr_rows, paths, preset)
@@ -4118,12 +4614,36 @@ class ARIApp(Flask):
         except Exception:
             ts_airmass = _no_plot
 
-        return jsonify(success=True, snr=snr, berv=berv, spec=spec, ccf=ccf,
-                       ts_snr=ts_snr, ts_airmass=ts_airmass)
+        result = dict(success=True, snr=snr, berv=berv, spec=spec, ccf=ccf,
+                      ts_snr=ts_snr, ts_airmass=ts_airmass)
+
+        # Store in cache (fire-and-forget; failures are non-fatal)
+        try:
+            from apero_ri.core.plot_cache import (
+                is_cache_enabled, resolve_cache_root, put_cached,
+                _profile_dir, _load_meta, _save_meta, load_cache_config,
+            )
+            cfg = load_cache_config(base_dir)
+            if cfg.get('enabled'):
+                cache_root = resolve_cache_root(base_dir, cfg)
+                put_cached(cache_root, instrument, profile_id,
+                           'object_plots', cache_key, result)
+                pdir = _profile_dir(cache_root, instrument, profile_id)
+                meta = _load_meta(pdir)
+                db_upd = profile_data.get('database-update', {})
+                if isinstance(db_upd, dict) and db_upd:
+                    meta['db_updates'] = dict(db_upd)
+                from datetime import datetime as _dt, timezone as _tz
+                meta['last_cached'] = _dt.now(_tz.utc).isoformat()
+                _save_meta(pdir, meta)
+        except Exception:
+            pass
+
+        return jsonify(**result)
 
     def _api_object_lbl_plots(self):
         """Return Bokeh JSON plot payloads for all LBL flavors of an object."""
-        user_info = get_effective_user(session)
+        user_info = self._get_api_user()
         if user_info:
             perms = resolve_user_permissions(
                 user_info['groups'], self.ari_groups
@@ -4150,6 +4670,10 @@ class ARIApp(Flask):
             return jsonify(success=False, error='Profile not found'), 404
 
         instrument = profile['instrument']
+        accessible_run_ids = self._get_user_accessible_run_ids(
+            user_info, instrument
+        )
+
         profile_data = profile.get('data') or {}
         instrument_profile_file = str(
             profile_data.get('APERO_INSTRUMENT_PROFILE', '')
@@ -4160,12 +4684,27 @@ class ARIApp(Flask):
         base_dir = Path(self.args.data_dir or str(Path.home() / '.ari'))
         objects_dir = base_dir / 'tasks' / instrument / profile_id / 'objects'
 
+        # --- LBL cache (keyed by run_id access level) ---
+        from apero_ri.core.plot_cache import check_and_serve
+        rid_tag = self._rid_cache_tag(accessible_run_ids)
+        cache_key = f'{objname}__{rid_tag}'
+        cached = check_and_serve(
+            base_dir, instrument, profile_id,
+            'lbl_plots', cache_key, aparams=profile_data)
+        if cached is not None:
+            return jsonify(**cached)
+
         preset = load_object_preset(instrument_profile_file)
         path_lbl = str(
             self._profile_get_path(profile_data, 'PATH_LBL', '') or '')
 
         ftable_lbl_rdb_rows = load_object_ftable_rows(
             objects_dir, objname, 'lbl_rdb'
+        )
+        # Filter by accessible run_ids
+        from apero_ri.core.basket_funcs import filter_accessible_rows
+        ftable_lbl_rdb_rows = filter_accessible_rows(
+            ftable_lbl_rdb_rows, accessible_run_ids
         )
 
         from apero_ri.plots.plot_objects import build_lbl_plots_json
@@ -4174,14 +4713,28 @@ class ARIApp(Flask):
         except Exception:
             plots = {}
 
-        return jsonify(success=True, plots=plots)
+        result = dict(success=True, plots=plots)
+
+        try:
+            from apero_ri.core.plot_cache import (
+                load_cache_config, resolve_cache_root, put_cached,
+            )
+            cfg = load_cache_config(base_dir)
+            if cfg.get('enabled'):
+                cache_root = resolve_cache_root(base_dir, cfg)
+                put_cached(cache_root, instrument, profile_id,
+                           'lbl_plots', cache_key, result)
+        except Exception:
+            pass
+
+        return jsonify(**result)
 
     def _api_filename_plot(self):
         """Return a Bokeh JSON plot for a single file (filename-click feature)."""
         from apero_ri.base.base import BLOCK_KIND as _BLOCK_KIND_MAP
         from apero_ri.plots.plots_filename import build_filename_plot_json
 
-        user_info = get_effective_user(session)
+        user_info = self._get_api_user()
         if user_info:
             perms = resolve_user_permissions(
                 user_info['groups'], self.ari_groups
@@ -4198,6 +4751,7 @@ class ARIApp(Flask):
         filename = request.args.get('filename', '').strip()
         kw_output = request.args.get('kw_output', '').strip()
         kw_fiber = (request.args.get('kw_fiber', '').strip() or 'AB')
+        kw_run_id = request.args.get('kw_run_id', '').strip()
 
         if not all([profile_id, block_kind, filename, kw_output]):
             return jsonify(success=False, error='Missing required params'), 400
@@ -4208,6 +4762,17 @@ class ARIApp(Flask):
         )
         if not profile:
             return jsonify(success=False, error='Profile not found'), 404
+
+        # Validate run_id access
+        instrument = profile['instrument']
+        accessible_run_ids = self._get_user_accessible_run_ids(
+            user_info, instrument
+        )
+        if kw_run_id and kw_run_id not in accessible_run_ids:
+            return jsonify(
+                success=False,
+                error='Access denied for this run_id',
+            ), 403
 
         path_key = _BLOCK_KIND_MAP.get(block_kind)
         if not path_key:
@@ -4279,6 +4844,10 @@ class ARIApp(Flask):
                 pass
 
         instrument = profile['instrument']
+        accessible_run_ids = self._get_user_accessible_run_ids(
+            user_info, instrument
+        )
+
         profile_data = profile.get('data') or {}
         instrument_profile_file = str(
             profile_data.get('APERO_INSTRUMENT_PROFILE', '')
@@ -4292,6 +4861,23 @@ class ARIApp(Flask):
         htable_rows = load_object_htable_rows(objects_dir, objname)
         preset = load_object_preset(instrument_profile_file)
         obj_props = load_object_table_row(objects_dir, objname)
+
+        # Pre-load ftable rows that may be needed and filter by run_id
+        _ftable_ext = load_object_ftable_rows(objects_dir, objname, 'ext')
+        _ftable_tcorr = load_object_ftable_rows(objects_dir, objname, 'tcorr')
+        _ftable_ccf = load_object_ftable_rows(objects_dir, objname, 'ccf')
+        _ftable_lbl = load_object_ftable_rows(objects_dir, objname, 'lbl_rdb')
+
+        htable_rows, ftables = self._filter_plot_rows(
+            htable_rows,
+            {'ext': _ftable_ext, 'tcorr': _ftable_tcorr,
+             'ccf': _ftable_ccf, 'lbl_rdb': _ftable_lbl},
+            accessible_run_ids,
+        )
+        _ftable_ext = ftables['ext']
+        _ftable_tcorr = ftables['tcorr']
+        _ftable_ccf = ftables['ccf']
+        _ftable_lbl = ftables['lbl_rdb']
 
         from apero_ri.plots.plot_objects import build_snr_plot_components
         from apero_ri.plots.plot_objects import build_berv_plot_components
@@ -4313,34 +4899,58 @@ class ARIApp(Flask):
             path_red = str(
             self._profile_get_path(profile_data, 'PATH_RED', '') or '')
             paths = {'PATH_RED': path_red}
-            ftable_ext_rows = load_object_ftable_rows(
-                objects_dir, objname, 'ext')
-            ftable_tcorr_rows = load_object_ftable_rows(
-            objects_dir, objname, 'tcorr')
             plot_payload = build_spec_plot_components(
-                htable_rows, ftable_ext_rows, ftable_tcorr_rows, paths, preset)
+                htable_rows, _ftable_ext, _ftable_tcorr, paths,
+                preset, maximize=True)
             display_name = 'Median Spectrum'
         elif safe_key == 'ccf':
             path_red = str(
             self._profile_get_path(profile_data, 'PATH_RED', '') or '')
             paths = {'PATH_RED': path_red}
-            ftable_ccf_rows = load_object_ftable_rows(
-                objects_dir, objname, 'ccf')
             plot_payload = build_ccf_plot_components(
-                htable_rows, ftable_ccf_rows, paths, preset)
+                htable_rows, _ftable_ccf, paths, preset)
             display_name = 'CCF Analysis'
         elif safe_key == 'ts_snr':
-            ftable_ext_rows = load_object_ftable_rows(
-                objects_dir, objname, 'ext')
             plot_payload = build_ts_snr_plot_components(
-                htable_rows, ftable_ext_rows, preset)
+                htable_rows, _ftable_ext, preset)
             display_name = 'SNR per Night'
         elif safe_key == 'ts_airmass':
-            ftable_ext_rows = load_object_ftable_rows(
-                objects_dir, objname, 'ext')
             plot_payload = build_ts_airmass_plot_components(
-                htable_rows, ftable_ext_rows, preset)
+                htable_rows, _ftable_ext, preset)
             display_name = 'Airmass per Night'
+        elif safe_key == 'lbl':
+            from apero_ri.plots.plot_objects import build_lbl_plot_components
+            lbl_file = str(request.args.get('lbl_file', '')).strip()
+            path_lbl = str(
+                self._profile_get_path(profile_data, 'PATH_LBL', '') or '')
+            plot_payload = build_lbl_plot_components(
+                _ftable_lbl, path_lbl, preset, lbl_file)
+            display_name = f'LBL Velocity — {lbl_file}' if lbl_file else 'LBL Velocity'
+        elif safe_key == 'finder':
+            band_idx_str = str(request.args.get('band_idx', '0')).strip()
+            try:
+                band_idx = int(band_idx_str)
+            except ValueError:
+                band_idx = 0
+            plot_payload = self._build_finder_max_payload(
+                profile, objname, obj_props, preset, band_idx)
+            display_name = 'Finder Chart'
+        elif safe_key.startswith('debug_'):
+            debug_plot_key = safe_key[6:]  # strip 'debug_' prefix
+            from apero_ri.plots.plot_debug import generate_single_debug_plot
+            from apero_ri.plots.plot_debug import DEBUG_PLOT_DEFS
+            paths = None
+            if debug_plot_key == 'tcorr_map':
+                path_red = str(
+                    self._profile_get_path(
+                        profile_data, 'PATH_RED', '') or '')
+                paths = {'PATH_RED': path_red}
+            plot_payload = generate_single_debug_plot(
+                debug_plot_key, htable_rows, objname, preset,
+                _ftable_tcorr if debug_plot_key == 'tcorr_map' else None,
+                paths)
+            defn = DEBUG_PLOT_DEFS.get(debug_plot_key, {})
+            display_name = defn.get('title', debug_plot_key)
         else:
             plot_payload = {'has_plot': False, 'script': '', 'div': '',
                             'message': f'Unknown plot key: {plot_key}'}
@@ -4362,6 +4972,208 @@ class ARIApp(Flask):
         return render_template('data_portal/object_plot_max.html', **context)
 
     # -----------------------------------------------------------------
+    # Finder chart helpers
+    # -----------------------------------------------------------------
+
+    def _api_finder_chart(self):
+        """Generate finder charts on demand (called via AJAX)."""
+        user_info = self._get_api_user()
+        if user_info:
+            perms = resolve_user_permissions(
+                user_info['groups'], self.ari_groups
+            )
+        else:
+            perms = get_public_permissions()
+        if 'view.data_portal' not in perms:
+            return jsonify(success=False, error='Unauthorized'), 401
+
+        profile_id = request.args.get('profile_id', '').strip()
+        objname = request.args.get('objname', '').strip()
+        if not profile_id or not objname:
+            return jsonify(success=False,
+                           error='Missing profile_id or objname'), 400
+
+        accessible = get_accessible_profiles(user_info, self.ari_groups)
+        profile = next(
+            (p for p in accessible if p['profile_id'] == profile_id), None
+        )
+        if not profile:
+            return jsonify(success=False, error='Profile not found'), 404
+
+        instrument = profile['instrument']
+        profile_data = profile.get('data') or {}
+        instrument_profile_file = str(
+            profile_data.get('APERO_INSTRUMENT_PROFILE', '')
+            or profile_data.get('apero_instrument_profile', '')
+            or ''
+        ).strip()
+
+        base_dir = Path(self.args.data_dir or str(Path.home() / '.ari'))
+        objects_dir = (base_dir / 'tasks' / instrument
+                       / profile_id / 'objects')
+
+        obj_props = load_object_table_row(objects_dir, objname)
+        preset = load_object_preset(instrument_profile_file)
+
+        # --- Finder chart cache ---
+        from apero_ri.core.plot_cache import (
+            load_cache_config, resolve_cache_root, is_cache_enabled,
+            get_finder_cached, put_finder_cached,
+            _profile_dir, _load_meta, _save_meta,
+            _db_fingerprint_matches,
+        )
+        cfg = load_cache_config(base_dir)
+        if is_cache_enabled(cfg=cfg):
+            cache_root = resolve_cache_root(base_dir, cfg)
+            pdir = _profile_dir(cache_root, instrument, profile_id)
+            meta = _load_meta(pdir)
+            db_upd = profile_data.get('database-update', {})
+            if isinstance(db_upd, dict) and db_upd and _db_fingerprint_matches(meta, db_upd):
+                hit = get_finder_cached(cache_root, instrument, profile_id, objname)
+                if hit is not None:
+                    return jsonify(**hit)
+
+        from apero_ri.plots.plot_find import generate_finder_charts
+        result = generate_finder_charts(obj_props, preset)
+
+        try:
+            if is_cache_enabled(cfg=cfg):
+                cache_root = resolve_cache_root(base_dir, cfg)
+                put_finder_cached(cache_root, instrument, profile_id,
+                                  objname, result)
+                pdir = _profile_dir(cache_root, instrument, profile_id)
+                meta = _load_meta(pdir)
+                db_upd = profile_data.get('database-update', {})
+                if isinstance(db_upd, dict) and db_upd:
+                    meta['db_updates'] = dict(db_upd)
+                from datetime import datetime as _dt, timezone as _tz
+                meta['last_cached'] = _dt.now(_tz.utc).isoformat()
+                _save_meta(pdir, meta)
+        except Exception:
+            pass
+
+        return jsonify(**result)
+
+    def _api_debug_plots(self):
+        """Generate debug plots on demand (called via AJAX)."""
+        user_info = self._get_api_user()
+        if user_info:
+            perms = resolve_user_permissions(
+                user_info['groups'], self.ari_groups
+            )
+        else:
+            perms = get_public_permissions()
+        if 'view.data_portal' not in perms:
+            return jsonify(success=False, error='Unauthorized'), 401
+
+        profile_id = request.args.get('profile_id', '').strip()
+        objname = request.args.get('objname', '').strip()
+        if not profile_id or not objname:
+            return jsonify(success=False,
+                           error='Missing profile_id or objname'), 400
+
+        accessible = get_accessible_profiles(user_info, self.ari_groups)
+        profile = next(
+            (p for p in accessible if p['profile_id'] == profile_id), None
+        )
+        if not profile:
+            return jsonify(success=False, error='Profile not found'), 404
+
+        instrument = profile['instrument']
+        accessible_run_ids = self._get_user_accessible_run_ids(
+            user_info, instrument
+        )
+
+        profile_data = profile.get('data') or {}
+        instrument_profile_file = str(
+            profile_data.get('APERO_INSTRUMENT_PROFILE', '')
+            or profile_data.get('apero_instrument_profile', '')
+            or ''
+        ).strip()
+
+        base_dir = Path(self.args.data_dir or str(Path.home() / '.ari'))
+        objects_dir = (base_dir / 'tasks' / instrument
+                       / profile_id / 'objects')
+
+        # --- Debug plots cache (keyed by run_id access level) ---
+        from apero_ri.core.plot_cache import check_and_serve
+        rid_tag = self._rid_cache_tag(accessible_run_ids)
+        cache_key = f'{objname}__{rid_tag}'
+        cached = check_and_serve(
+            base_dir, instrument, profile_id,
+            'debug_plots', cache_key, aparams=profile_data)
+        if cached is not None:
+            return jsonify(**cached)
+
+        htable_rows = load_object_htable_rows(objects_dir, objname)
+        preset = load_object_preset(instrument_profile_file)
+
+        # Load tcorr data for the telluric map (optional)
+        ftable_tcorr_rows = load_object_ftable_rows(
+            objects_dir, objname, 'tcorr')
+
+        # Filter by accessible run_ids
+        htable_rows, ftables = self._filter_plot_rows(
+            htable_rows,
+            {'tcorr': ftable_tcorr_rows},
+            accessible_run_ids,
+        )
+        ftable_tcorr_rows = ftables['tcorr']
+
+        path_red = str(
+            self._profile_get_path(profile_data, 'PATH_RED', '') or '')
+        paths = {'PATH_RED': path_red} if path_red else None
+
+        from apero_ri.plots.plot_debug import generate_debug_plots
+        result = generate_debug_plots(
+            htable_rows, objname, preset, ftable_tcorr_rows, paths)
+
+        try:
+            from apero_ri.core.plot_cache import (
+                load_cache_config, resolve_cache_root, put_cached,
+                _profile_dir, _load_meta, _save_meta,
+            )
+            cfg = load_cache_config(base_dir)
+            if cfg.get('enabled'):
+                cache_root = resolve_cache_root(base_dir, cfg)
+                put_cached(cache_root, instrument, profile_id,
+                           'debug_plots', cache_key, result)
+                pdir = _profile_dir(cache_root, instrument, profile_id)
+                meta = _load_meta(pdir)
+                db_upd = profile_data.get('database-update', {})
+                if isinstance(db_upd, dict) and db_upd:
+                    meta['db_updates'] = dict(db_upd)
+                from datetime import datetime as _dt, timezone as _tz
+                meta['last_cached'] = _dt.now(_tz.utc).isoformat()
+                _save_meta(pdir, meta)
+        except Exception:
+            pass
+
+        return jsonify(**result)
+
+    def _build_finder_max_payload(self, profile, objname, obj_props,
+                                  preset, band_idx):
+        """Build the plot_payload dict for a finder chart maximize page."""
+        from apero_ri.plots.plot_find import generate_finder_charts
+        result = generate_finder_charts(obj_props, preset)
+        if not result.get('success') or not result.get('images'):
+            return {'has_plot': False, 'script': '', 'div': '',
+                    'message': result.get('error', 'Generation failed.')}
+        idx = max(0, min(band_idx, len(result['images']) - 1))
+        img_b64 = result['images'][idx]
+        band_label = result.get('titles', result['bands'])[idx]
+        div_html = (
+            f'<div style="display:flex;align-items:center;'
+            f'justify-content:center;width:100%;height:100%;">'
+            f'<img src="data:image/png;base64,{img_b64}" '
+            f'alt="Finder Chart – {band_label}" '
+            f'style="max-width:100%;max-height:100%;object-fit:contain;">'
+            f'</div>'
+        )
+        return {'has_plot': True, 'script': '', 'div': div_html,
+                'message': ''}
+
+    # -----------------------------------------------------------------
     # Download basket helpers
     # -----------------------------------------------------------------
 
@@ -4370,7 +5182,7 @@ class ARIApp(Flask):
         Shared access-check helper for all basket routes.
         Returns (user_info, None) on success, (None, error_response) on failure.
         """
-        user_info = get_effective_user(session)
+        user_info = self._get_api_user()
         if user_info:
             perms = resolve_user_permissions(
                 user_info['groups'], self.ari_groups
@@ -4667,9 +5479,26 @@ class ARIApp(Flask):
             return err
 
         username = user_info['username']
+
+        # Rate-limit check
+        wait = dt.check_rate_limit(username, 'basket')
+        if wait is not None:
+            return jsonify(
+                success=False,
+                error=f'Rate limited – please wait {wait:.1f}s',
+                retry_after=wait,
+            ), 429
+
         path = bk.get_job_chunk_path(username, job_id, chunk_idx)
         if path is None:
             return jsonify(success=False, error='File not found or not ready'), 404
+
+        # Track the download
+        try:
+            file_bytes = path.stat().st_size
+        except OSError:
+            file_bytes = 0
+        dt.record_download(username, 'basket', file_bytes, 1)
 
         return send_file(
             str(path),
@@ -4905,11 +5734,30 @@ class ARIApp(Flask):
         share_info = bk.get_share_job(str(token or ''))
         if share_info is None:
             return jsonify(success=False, error='Link expired or not found'), 404
-        path = bk.get_job_chunk_path(share_info['username'],
+        username = share_info['username']
+
+        # Rate-limit check (uses basket category for share links)
+        wait = dt.check_rate_limit(username, 'basket')
+        if wait is not None:
+            return jsonify(
+                success=False,
+                error=f'Rate limited – please wait {wait:.1f}s',
+                retry_after=wait,
+            ), 429
+
+        path = bk.get_job_chunk_path(username,
                                      share_info['job_id'],
                                      chunk_idx)
         if path is None:
             return jsonify(success=False, error='File not found'), 404
+
+        # Track the download
+        try:
+            file_bytes = path.stat().st_size
+        except OSError:
+            file_bytes = 0
+        dt.record_download(username, 'basket', file_bytes, 1)
+
         return send_file(
             str(path), as_attachment=True, download_name=path.name)
 
@@ -4997,7 +5845,7 @@ class ARIApp(Flask):
         import time as _time
         t_start = _time.time()
 
-        user_info = get_effective_user(session)
+        user_info = self._get_api_user()
         if user_info:
             perms = resolve_user_permissions(
                 user_info['groups'], self.ari_groups
@@ -5059,7 +5907,7 @@ class ARIApp(Flask):
         import json as _json
         base_dir = Path(self.args.data_dir or str(Path.home() / '.ari'))
 
-        user_info = get_effective_user(session)
+        user_info = self._get_api_user()
         if user_info:
             perms = resolve_user_permissions(
                 user_info['groups'], self.ari_groups
@@ -5569,7 +6417,41 @@ class ARIApp(Flask):
         from apero_ri.plots.plots_qc import build_qc_plot_payload
 
         base_dir = Path(self.args.data_dir or str(Path.home() / '.ari'))
-        qc_payload = build_qc_plot_payload(base_dir=base_dir, profile=profile)
+
+        # --- QC cache ---
+        from apero_ri.core.plot_cache import check_and_serve, is_cache_enabled
+        profile_data = profile.get('data') or {}
+        cached_qc = check_and_serve(
+            base_dir, profile['instrument'], profile_id,
+            'qc_graphs', 'payload', aparams=profile_data)
+        if cached_qc is not None:
+            qc_payload = cached_qc
+        else:
+            qc_payload = build_qc_plot_payload(base_dir=base_dir,
+                                               profile=profile)
+            # Store in cache
+            try:
+                from apero_ri.core.plot_cache import (
+                    load_cache_config, resolve_cache_root, put_cached,
+                    _profile_dir, _load_meta, _save_meta,
+                )
+                cfg = load_cache_config(base_dir)
+                if cfg.get('enabled'):
+                    cache_root = resolve_cache_root(base_dir, cfg)
+                    import time as _time
+                    put_cached(cache_root, profile['instrument'], profile_id,
+                               'qc_graphs', 'payload', qc_payload)
+                    pdir = _profile_dir(cache_root, profile['instrument'],
+                                        profile_id)
+                    meta = _load_meta(pdir)
+                    db_upd = profile_data.get('database-update', {})
+                    if isinstance(db_upd, dict) and db_upd:
+                        meta['db_updates'] = dict(db_upd)
+                    from datetime import datetime as _dt, timezone as _tz
+                    meta['last_cached'] = _dt.now(_tz.utc).isoformat()
+                    _save_meta(pdir, meta)
+            except Exception:
+                pass
 
         context = {
             'page_id': page_id,
@@ -5818,7 +6700,7 @@ class ARIApp(Flask):
 
     def _api_query_db_schema(self):
         """Return allowed tables and columns for a profile+user combination."""
-        user_info = get_effective_user(session)
+        user_info = self._get_api_user()
         if user_info:
             perms = resolve_user_permissions(
                 user_info['groups'], self.ari_groups
@@ -5886,7 +6768,7 @@ class ARIApp(Flask):
         Run-ID filtering is automatically applied to the FINDEX table.
         Only SELECT behaviour is possible through this API by design.
         """
-        user_info = get_effective_user(session)
+        user_info = self._get_api_user()
         if user_info:
             perms = resolve_user_permissions(
                 user_info['groups'], self.ari_groups
@@ -8712,6 +9594,29 @@ class ARIApp(Flask):
         return jsonify(success=True, html=html)
 
     # -----------------------------------------------------------------
+    # User preferences API
+    # -----------------------------------------------------------------
+    def _api_user_prefs_get(self):
+        user_info = self._require_user()
+        if not user_info:
+            return jsonify(success=False, error='Unauthorized'), 401
+        prefs = ud.load_user_prefs(user_info['username'])
+        return jsonify(success=True, prefs=prefs)
+
+    def _api_user_prefs_save(self):
+        user_info = self._require_user()
+        if not user_info:
+            return jsonify(success=False, error='Unauthorized'), 401
+        body = request.get_json() or {}
+        updates = {}
+        if 'timezone' in body:
+            updates['timezone'] = str(body['timezone']).strip() or 'UTC'
+        if updates:
+            ud.save_user_prefs(user_info['username'], updates)
+        prefs = ud.load_user_prefs(user_info['username'])
+        return jsonify(success=True, prefs=prefs)
+
+    # -----------------------------------------------------------------
     # User calendar API
     # -----------------------------------------------------------------
     def _api_user_calendar_list(self):
@@ -8756,6 +9661,7 @@ class ARIApp(Flask):
             'category': str(body.get('category', 'personal')).strip(),
             'recurrence': str(body.get('recurrence', 'none')).strip(),
             'status': str(body.get('status', 'confirmed')).strip(),
+            'timezone': str(body.get('timezone', 'UTC')).strip(),
         }
         if not event['title'] or not event['date']:
             return jsonify(success=False, error='title and date required'), 400
@@ -8898,6 +9804,7 @@ class ARIApp(Flask):
             'category': 'instrument',
             'recurrence': str(body.get('recurrence', 'none')).strip(),
             'status': str(body.get('status', 'confirmed')).strip(),
+            'timezone': str(body.get('timezone', 'UTC')).strip(),
         }
         if not event['title'] or not event['date']:
             return jsonify(success=False, error='title and date required'), 400

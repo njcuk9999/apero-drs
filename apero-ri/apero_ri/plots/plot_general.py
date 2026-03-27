@@ -113,7 +113,7 @@ def make_time_figure(title: str = '', height: int = 350) -> Any:
         height=height,
         sizing_mode='stretch_width',
         title=title,
-        background_fill_color='#f5f0d0',
+        background_fill_color=base.PLOT_BACKGROUND_COLOR,
     )
     # -------------------------------------------------------------------------
     # add crosshair and datetime formatter

@@ -63,10 +63,18 @@
                     {% endif %}
                 </span>
                 <div style="min-width:0;">
-                    <div style="font-weight:700;">
-                        <a href="{{ row.url }}" style="color:inherit; text-decoration:none;">
-                            {{ row.label }}
-                        </a>
+                    <div style="display:flex; align-items:baseline; gap:0.5rem; flex-wrap:wrap;">
+                        <span style="font-weight:700;">
+                            <a href="{{ row.url }}" style="color:inherit; text-decoration:none;">
+                                {{ row.label }}
+                            </a>
+                        </span>
+                        {% if row.duration_s is not none and row.duration_s is not undefined %}
+                        <span title="Time taken for this check"
+                              style="font-size:0.76rem; color:var(--ari-text-muted); white-space:nowrap;">
+                            {{ row.duration_s }}s
+                        </span>
+                        {% endif %}
                     </div>
                     {% if row.message %}
                     <div style="font-size:0.88rem; color:var(--ari-text-muted);">{{ row.message }}</div>

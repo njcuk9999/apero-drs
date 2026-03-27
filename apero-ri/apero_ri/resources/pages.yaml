@@ -136,6 +136,17 @@ home.docs.install:
     pinned: False
     top-level: False
     show: True
+
+home.docs.api:
+  label: API & Downloads
+  parent: home.docs
+  view-permission: view.doc
+  icon: fa-solid fa-plug
+  quick-nav: True
+  side-nav:
+    pinned: False
+    top-level: False
+    show: True
   
 # ==============================================================================
 # APERO RI: Data Portal Pages
@@ -219,7 +230,7 @@ home.docs.install:
     show: True
 
 "home.data_portal.{apero_profile}.{objname}":
-  label: "{objname}"
+  label: "Object Page: {objname}"
   parent: "home.data_portal.{apero_profile}"
   view-permission: "view.{apero profile}"
   icon: fa-solid fa-star
@@ -314,6 +325,17 @@ home.user_portal.todo:
   parent: home.user_portal
   view-permission: view.home
   icon: fa-solid fa-list-check
+  quick-nav: False
+  side-nav:
+    pinned: False
+    top-level: False
+    show: True
+
+home.user_portal.api_access:
+  label: API Access
+  parent: home.user_portal
+  view-permission: view.home
+  icon: fa-solid fa-plug
   quick-nav: False
   side-nav:
     pinned: False
@@ -449,6 +471,28 @@ home.admin_portal.sshfs_management:
   parent: home.admin_portal
   view-permission: view.admin
   icon: fa-solid fa-hard-drive
+  quick-nav: False
+  side-nav:
+    pinned: False
+    top-level: False
+    show: True
+
+home.admin_portal.cache_settings:
+  label: Plot Cache
+  parent: home.admin_portal
+  view-permission: view.admin
+  icon: fa-solid fa-bolt
+  quick-nav: False
+  side-nav:
+    pinned: False
+    top-level: False
+    show: True
+
+home.admin_portal.download_management:
+  label: Download Management
+  parent: home.admin_portal
+  view-permission: view.admin
+  icon: fa-solid fa-gauge-high
   quick-nav: False
   side-nav:
     pinned: False

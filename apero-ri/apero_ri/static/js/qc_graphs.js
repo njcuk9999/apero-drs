@@ -49,7 +49,7 @@
         pinBtn.setAttribute('aria-label', pinBtn.title);
         pinBtn.innerHTML = pinned
             ? '<i class="fa-solid fa-thumbtack"></i>'
-            : '<i class="fa-regular fa-thumbtack"></i>';
+            : '<i class="fa-solid fa-thumbtack" style="transform:rotate(45deg);opacity:0.45"></i>';
     }
 
     function reorderPinnedSections() {

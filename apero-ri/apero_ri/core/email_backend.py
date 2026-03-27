@@ -162,10 +162,8 @@ def load_email_config() -> dict:
             cfg = {}
 
     password_path = _get_email_password_path()
-    if (str(cfg.get('smtp_password_enc', '')).strip()
-            and not password_path.exists()):
-        password_path.write_text(
-            str(cfg.get('smtp_password_enc', '')).strip(), encoding='utf-8')
+    if str(cfg.get('smtp_password_enc', '')).strip() and not password_path.exists():
+        password_path.write_text(str(cfg.get('smtp_password_enc', '')).strip(), encoding='utf-8')
         ss.protect_path(password_path, 0o600)
     if password_path.exists():
         cfg['smtp_password_enc'] = '__stored__'
@@ -184,8 +182,7 @@ def save_email_config(cfg: dict) -> None:
         provider = str(cfg.get('provider', '')).strip().lower()
         normalized = _normalize_smtp_password(str(raw_pw), provider)
         if normalized:
-            password_path.write_text(
-                _encode_password(normalized), encoding='utf-8')
+            password_path.write_text(_encode_password(normalized), encoding='utf-8')
             ss.protect_path(password_path, 0o600)
         else:
             password_path.unlink(missing_ok=True)
@@ -233,17 +230,17 @@ def get_smtp_password(cfg: dict) -> str:
         except Exception:
             encoded = ''
         if encoded:
-            return _normalize_smtp_password(
-                _decode_password(encoded), provider)
+            return _normalize_smtp_password(_decode_password(encoded), provider)
     if 'smtp_password_enc' in cfg and cfg['smtp_password_enc']:
-        return _normalize_smtp_password(
-            _decode_password(cfg['smtp_password_enc']), provider)
+        return _normalize_smtp_password(_decode_password(cfg['smtp_password_enc']),
+                                        provider)
     return ''
 
 
-def test_email_connection(cfg: Optional[dict] = None) -> dict:
+def test_email_connection(cfg: Optional[dict] = None, quick_test: bool = False) -> dict:
     """
-    Attempt to connect and authenticate with the configured SMTP server.
+    Test SMTP connectivity. By default does full login handshake.
+    If quick_test=True, only tests EHLO+STARTTLS without login (faster).
     Returns {'ok': bool, 'error': str}.
     """
     if cfg is None:
@@ -267,20 +264,25 @@ def test_email_connection(cfg: Optional[dict] = None) -> dict:
     if not password:
         return {'ok': False, 'error': 'No SMTP password configured.'}
 
+    # For quick health checks, use a shorter timeout (just for connectivity)
     timeout = float(cfg.get('smtp_timeout', 20))
+    if quick_test:
+        timeout = min(timeout, 5)  # cap at 5s for quick test
 
     try:
         if use_ssl:
             with smtplib.SMTP_SSL(host, port, timeout=timeout) as server:
                 server.ehlo()
-                server.login(user, password)
+                if not quick_test:
+                    server.login(user, password)
         else:
             with smtplib.SMTP(host, port, timeout=timeout) as server:
                 server.ehlo()
                 if use_tls:
                     server.starttls()
                     server.ehlo()
-                server.login(user, password)
+                if not quick_test:
+                    server.login(user, password)
         return {'ok': True, 'error': ''}
     except Exception as exc:
         return {'ok': False, 'error': str(exc)}
@@ -310,8 +312,7 @@ def send_email(to_address: str,
     port = int(cfg.get('smtp_port', 587))
     use_ssl = bool(cfg.get('smtp_ssl', False))
     use_tls = bool(cfg.get('smtp_tls', False))
-    from_addr = (str(cfg.get('from_address', '')).strip()
-                 or str(cfg.get('smtp_user', '')).strip())
+    from_addr = str(cfg.get('from_address', '')).strip() or str(cfg.get('smtp_user', '')).strip()
     user = str(cfg.get('smtp_user', '')).strip()
     password = get_smtp_password(cfg)
 

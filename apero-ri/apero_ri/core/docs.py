@@ -101,6 +101,9 @@ def get_doc_content(page_id: str,
 
     md_file = DOC_ROOT / version / f'{page_id}.md'
     if not md_file.exists():
+        # Fall back to the 'all' directory for version-agnostic pages
+        md_file = DOC_ROOT / 'all' / f'{page_id}.md'
+    if not md_file.exists():
         return '', '<p>No documentation available for this version.</p>', version
 
     raw = md_file.read_text(encoding='utf-8')

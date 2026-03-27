@@ -78,6 +78,7 @@ Homepage = 'http://apero.exoplanets.ca'
 Repository = 'https://github.com/njcuk9999/apero-drs'
 
 [project.optional-dependencies]
+api = ["requests>=2.28"]
 full = ["aperodrs @ git+https://github.com/njcuk9999/apero-drs.git@v0.8.running#subdirectory=apero-drs"]
 dev = ["aperodrs"]
 

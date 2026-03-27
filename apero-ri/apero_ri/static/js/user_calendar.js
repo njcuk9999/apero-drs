@@ -1,4 +1,4 @@
-/* global ARI_CALENDAR */
+/* global ARI_CALENDAR, ariPopulateTimezoneSelect, ariConvertEventTime, ariTzShortLabel */
 'use strict';
 
 let _events = [];
@@ -7,6 +7,7 @@ let _month = new Date().getMonth(); // 0-based
 let _editId = null;
 let _listPage = 1;
 let _listPerPage = 8;
+let _userTz = (window.ARI_CALENDAR || {}).userTimezone || 'UTC';
 
 const _MONTH_NAMES = ['January','February','March','April','May','June',
                       'July','August','September','October','November','December'];
@@ -40,11 +41,26 @@ function _sortEvents(a, b) {
 
 function _formatEventWhen(ev) {
     if (!ev.date) return '';
+    const evTz = ev.timezone || 'UTC';
+    // Convert to user's timezone if the event has a time
+    if (ev.time && evTz !== _userTz) {
+        const conv = ariConvertEventTime(ev.date, ev.time, evTz, _userTz);
+        const date = new Date(`${conv.date}T${conv.time || '00:00'}`);
+        const dateStr = date.toLocaleDateString(undefined, {
+            weekday: 'short', month: 'short', day: 'numeric'
+        });
+        const tzLabel = ariTzShortLabel(_userTz);
+        return `${dateStr}, ${conv.time} ${tzLabel}`;
+    }
     const date = new Date(`${ev.date}T${ev.time || '00:00'}`);
     const dateStr = date.toLocaleDateString(undefined, {
         weekday: 'short', month: 'short', day: 'numeric'
     });
-    return ev.time ? `${dateStr}, ${ev.time}` : dateStr;
+    if (ev.time) {
+        const tzLabel = ariTzShortLabel(evTz);
+        return `${dateStr}, ${ev.time} ${tzLabel}`;
+    }
+    return dateStr;
 }
 
 function _renderEventList(expanded) {
@@ -181,12 +197,22 @@ function _renderMonth() {
         const dateStr = `${_year}-${String(_month + 1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
         const isToday = dateStr === todayStr;
         const dayEvents = byDate[dateStr] || [];
-        const evHtml = dayEvents.slice(0, 3).map(ev =>
-            `<div class="ari-cal-event ${ev._source ? 'ari-cal-event--instr' : ''}"
+        const evHtml = dayEvents.slice(0, 3).map(ev => {
+            let label = ev.title;
+            if (ev.time) {
+                const evTz = ev.timezone || 'UTC';
+                if (evTz !== _userTz) {
+                    const conv = ariConvertEventTime(ev.date, ev.time, evTz, _userTz);
+                    label = `${conv.time} ${ev.title}`;
+                } else {
+                    label = `${ev.time} ${ev.title}`;
+                }
+            }
+            return `<div class="ari-cal-event ${ev._source ? 'ari-cal-event--instr' : ''}"
                   style="background:${_esc(ev.color || '#4a90d9')}"
                   data-id="${_esc(ev.id)}"
-                  title="${_esc(ev.title)}">${_esc(ev.title)}</div>`
-        ).join('');
+                  title="${_esc(label)}">${_esc(label)}</div>`;
+        }).join('');
         const more = dayEvents.length > 3 ? `<div class="ari-cal-more">+${dayEvents.length - 3} more</div>` : '';
         html += `<div class="ari-cal-cell ${isToday ? 'ari-cal-cell--today' : ''}" data-date="${dateStr}">
             <span class="ari-cal-day-num">${d}</span>
@@ -226,6 +252,8 @@ function _openModal(event, defaultDate = '') {
     document.getElementById('cal-modal-event-title').value = event ? event.title : '';
     document.getElementById('cal-modal-date').value = event ? event.date : defaultDate;
     document.getElementById('cal-modal-time').value = event ? (event.time || '') : '';
+    const tzSel = document.getElementById('cal-modal-timezone');
+    ariPopulateTimezoneSelect(tzSel, event ? (event.timezone || _userTz) : _userTz);
     document.getElementById('cal-modal-category').value = event ? (event.category || 'personal') : 'personal';
     document.getElementById('cal-modal-recurrence').value = event ? (event.recurrence || 'none') : 'none';
     document.getElementById('cal-modal-status').value = event ? (event.status || 'confirmed') : 'confirmed';
@@ -244,6 +272,19 @@ async function _loadEvents() {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
+    // Populate timezone preference selector
+    const tzPrefSel = document.getElementById('cal-tz-pref');
+    if (tzPrefSel) {
+        ariPopulateTimezoneSelect(tzPrefSel, _userTz);
+        tzPrefSel.addEventListener('change', async () => {
+            _userTz = tzPrefSel.value;
+            // Persist server-side
+            await _api(ARI_CALENDAR.prefsSaveUrl, 'POST', {timezone: _userTz});
+            _renderMonth();
+            _toast('Timezone updated to ' + _userTz);
+        });
+    }
+
     _loadEvents();
 
     const instrSel = document.getElementById('cal-instr-select');
@@ -290,6 +331,7 @@ document.addEventListener('DOMContentLoaded', () => {
             title: eventTitle,
             date,
             time: document.getElementById('cal-modal-time').value,
+            timezone: document.getElementById('cal-modal-timezone').value,
             category: document.getElementById('cal-modal-category').value,
             recurrence: document.getElementById('cal-modal-recurrence').value,
             status: document.getElementById('cal-modal-status').value,

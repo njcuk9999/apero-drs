@@ -2155,7 +2155,7 @@ body.ari-up-wide-page .ari-doc-main {
     flex: 1;
     min-width: 0;
     padding: 2rem 2.5rem;
-    max-width: 960px;
+    max-width: none;
 }
 
 /* Mobile menu heading for doc nav */

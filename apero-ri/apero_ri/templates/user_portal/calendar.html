@@ -21,6 +21,12 @@
         {% endfor %}
     </select>
     {% endif %}
+    <div class="ari-cal-tz-pref" style="display:flex;align-items:center;gap:6px;">
+        <label for="cal-tz-pref" style="font-size:.82rem;white-space:nowrap;color:var(--ari-text-secondary,#aaa);">
+            <i class="fa-solid fa-globe"></i> My timezone
+        </label>
+        <select id="cal-tz-pref" class="ari-ud-select" style="min-width:160px;font-size:.82rem;"></select>
+    </div>
     <div class="ari-cal-nav">
         <button class="ari-btn ari-btn--secondary ari-btn--sm" id="cal-prev"><i class="fa-solid fa-chevron-left"></i></button>
         <span id="cal-month-label" class="ari-cal-month-label"></span>
@@ -75,6 +81,10 @@
             <input type="time" id="cal-modal-time">
         </div>
         <div class="ari-form-group">
+            <label>Timezone</label>
+            <select id="cal-modal-timezone" class="ari-ud-select"></select>
+        </div>
+        <div class="ari-form-group">
             <label>Category</label>
             <select id="cal-modal-category">
                 <option value="personal">Personal</option>
@@ -120,7 +130,11 @@ window.ARI_CALENDAR = {
     listUrl: {{ url_for('api_user_calendar_list')|tojson }},
     saveUrl: {{ url_for('api_user_calendar_save')|tojson }},
     deleteUrl: {{ url_for('api_user_calendar_delete')|tojson }},
+    prefsGetUrl: {{ url_for('api_user_prefs_get')|tojson }},
+    prefsSaveUrl: {{ url_for('api_user_prefs_save')|tojson }},
+    userTimezone: {{ (user_timezone or 'UTC')|tojson }},
 };
 </script>
+<script src="{{ url_for('static', filename='js/tz_common.js') }}"></script>
 <script src="{{ url_for('static', filename='js/user_calendar.js') }}"></script>
 {% endblock %}

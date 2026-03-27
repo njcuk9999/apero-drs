@@ -224,7 +224,7 @@ def _build_metric_plot(rows: List[Dict[str, Any]],
         height=320,
         sizing_mode='stretch_width',
         title=f'{display_name}: full time series',
-        background_fill_color='#f5f0d0',
+        background_fill_color=base.PLOT_BACKGROUND_COLOR,
     )
     p_full.add_tools(hover)
     p_full.add_tools(CrosshairTool(dimensions='both'))
@@ -252,7 +252,7 @@ def _build_metric_plot(rows: List[Dict[str, Any]],
         height=320,
         sizing_mode='stretch_width',
         title=f'{display_name}: last 6 months',
-        background_fill_color='#f0f4ff',
+        background_fill_color=base.PLOT_BACKGROUND_COLOR,
     )
     p_zoom.add_tools(HoverTool(
         tooltips=[

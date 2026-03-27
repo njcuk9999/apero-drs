@@ -57,24 +57,16 @@ def _get_arguments() -> argparse.Namespace:
     return parser.parse_args()
 
 
-def _prompt_for_data_dir(default_dir: Path) -> Path:
-    """Prompt for the local data directory unless already supplied."""
-    prompt = f'Local APERO RI data directory [{default_dir}]: '
-    try:
-        entered = input(prompt).strip()
-    except EOFError:
-        return default_dir
-    if not entered:
-        return default_dir
-    return Path(entered).expanduser()
-
-
 def main():
     """Entry point for apero_ri_setup."""
     args = _get_arguments()
     test_mode = args.test
     default_dir = resolve_local_data_dir(args.data_dir)
-    local_data_dir = Path(args.data_dir).expanduser() if args.data_dir else _prompt_for_data_dir(default_dir)
+    local_data_dir = (
+        Path(args.data_dir).expanduser()
+        if args.data_dir
+        else default_dir
+    )
 
     if test_mode:
         print('[TEST MODE] No files will be written to disk.')
@@ -98,6 +90,8 @@ def main():
     if test_mode:
         print('[TEST MODE] Setup wizard running in dry-run mode.')
     print(f'Local data directory: {local_data_dir}')
+    if not args.data_dir:
+        print('Tip: you can change this path on the first setup page in the browser.')
     print(f'Open {setup_url} to continue setup.')
     if not args.no_browser:
         try:
