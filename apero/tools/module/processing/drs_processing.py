@@ -3124,15 +3124,6 @@ def _multi_process_process(params, runlist, cores, groupname=None,
             # debug log: MULTIPROCESS - joining job {0}
             WLOG(params, 'debug', textentry('90-503-00021', args=[pit]))
             proc.join()
-        # ---------------------------------------------------------------------
-        # update the index database (taking into account include/exclude lists)
-        #    we have to loop around block kinds to prevent recipe from updating
-        #    the index database every time a new recipe starts
-        # this is really important as we have disabled updating for parallel
-        #  runs to make it more efficient
-        # do not update if we are running a test
-        if not params['TEST_RUN']:
-            update_index_db(params, findexdbm=findexdbm)
 
     # return return_dict
     return dict(return_dict)
@@ -3181,15 +3172,6 @@ def _multi_process_pool(params, runlist, cores, groupname=None,
         for row in range(len(results)):
             for key in results[row]:
                 return_dict[key] = results[row][key]
-        # ---------------------------------------------------------------------
-        # update the index database (taking into account include/exclude lists)
-        #    we have to loop around block kinds to prevent recipe from updating
-        #    the index database every time a new recipe starts
-        # this is really important as we have disabled updating for parallel
-        #  runs to make it more efficient
-        # do not update if we are running a test
-        if not params['TEST_RUN']:
-            update_index_db(params, findexdbm=findexdbm)
 
     # return return_dict
     return dict(return_dict)
@@ -3236,15 +3218,7 @@ def _multi_process_pathos(params, runlist, cores, groupname=None,
         for row in range(len(results)):
             for key in results[row]:
                 return_dict[key] = results[row][key]
-        # ---------------------------------------------------------------------
-        # update the index database (taking into account include/exclude lists)
-        #    we have to loop around block kinds to prevent recipe from updating
-        #    the index database every time a new recipe starts
-        # this is really important as we have disabled updating for parallel
-        #  runs to make it more efficient
-        # do not update if we are running a test
-        if not params['TEST_RUN']:
-            update_index_db(params, findexdbm=findexdbm)
+
     # return return_dict
     return dict(return_dict)
 
