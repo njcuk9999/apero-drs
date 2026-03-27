@@ -1654,7 +1654,9 @@ pp_seq_opt.add(apero_preprocess, name='PP_SCI', recipe_kind='pre-sci',
 pp_seq_opt.add(apero_preprocess, name='PP_TEL', recipe_kind='pre-tel',
                filters=dict(KW_OBJNAME='TELLURIC_TARGETS'))
 pp_seq_opt.add(apero_preprocess, name='PP_HC1HC1', files=[files.raw_hc1_hc1],
-               recipe_kind='pre-hchc')
+               recipe_kind='pre-hc1hc1')
+pp_seq_opt.add(apero_extract, name='PP_HC2HC2', files=[files.raw_hc2_hc2],
+            recipe_kind='pre-hc2hc2')
 pp_seq_opt.add(apero_preprocess, name='PP_FPFP', files=[files.raw_fp_fp],
                recipe_kind='pre-fpfp')
 pp_seq_opt.add(apero_preprocess, name='PP_FF', files=[files.raw_flat_flat],
@@ -1847,7 +1849,9 @@ eng_seq = drs_recipe.DrsRunSequence('eng_seq', __INSTRUMENT__)
 
 # extract sequences
 eng_seq.add(apero_extract, name='EXT_HC1HC1', files=[files.pp_hc1_hc1],
-            recipe_kind='extract-hchc')
+            recipe_kind='extract-hc1hc1')
+eng_seq.add(apero_extract, name='EXT_HC2HC2', files=[files.pp_hc2_hc2],
+            recipe_kind='extract-hc2hc2')
 eng_seq.add(apero_extract, name='EXT_FPFP', files=[files.pp_fp_fp],
             recipe_kind='extract-fpfp')
 eng_seq.add(apero_extract, name='EXT_FF', files=[files.pp_flat_flat],

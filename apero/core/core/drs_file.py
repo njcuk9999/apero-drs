@@ -2854,7 +2854,10 @@ class DrsFitsFile(DrsInputFile):
                 # log error: Required header key "{0}" not found'
                 WLOG(params, 'error', textentry('00-001-00058', args=eargs))
             # get value and required value
-            value = header[key].strip()
+            if isinstance(header[key], str):
+                value = header[key].strip()
+            else:
+                value = header[key]
             rvalue = rkeys[drskey].strip()
             # check if key is valid
             if rvalue != value:
