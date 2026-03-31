@@ -1664,10 +1664,11 @@ lbl_file.addset(lbl_template_file)
 
 # lbl mask file
 lbl_mask_file = drs_linput('LBL_MASK',
-                          filetype='.fits', path='masks',
-                          basename='LBL_MASK_{obj}_spip', datatype='table',
-                          outclass=lbl_ofile,
-                          description='Telluric mask file')
+                           filetype='.fits', path='masks',
+                           basename='LBL_MASK_{obj}_spip', datatype='table',
+                           outclass=lbl_ofile,
+                           description='Telluric mask file',
+                           required=False)
 lbl_file.addset(lbl_mask_file)
 
 # lbl fits files
