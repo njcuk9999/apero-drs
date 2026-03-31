@@ -52,6 +52,7 @@ __all__ = [
     'FWHM_PIXEL_LSF', 'IMAGE_SATURATION',
     'IMAGE_FRAME_TIME', 'ALL_POLAR_RHOMB_POS',
     'REF_FIND_TIME_COL', 'REF_FIND_START_DATE', 'REF_FIND_END_DATE',
+    'AREL_RDELTA', 'AREL_ADELTA', 'AREL_LDELTA',
     # general calib constants
     'COMBINE_METRIC_THRESHOLD1', 'CAVITY_1M_FILE', 'CAVITY_LL_FILE',
     'SIMBAD_TAP_URL',
@@ -612,6 +613,38 @@ REF_FIND_END_DATE = Const('REF_FIND_END_DATE', value=None, dtype=str,
                                       'used as the last date allowed for '
                                       'reference files ')
 
+# Define the time delta (in years) to add to the KW_IRELDATE key by default
+#   for raw files
+#   if there is no other way to determine the public release date (can be zero)
+AREL_RDELTA = Const('AREL_RDELTA', value=None, dtype=float,
+                    source=__NAME__, group=cgroup,
+                    minimum=0.0, maximum=20.0,
+                    description='Define the time delta (in years) to add to '
+                                'the KW_IRELDATE key by default for raw files'
+                                ' if there is no other way to determine the '
+                                'public release date (can be zero)')
+
+# Define the time delta (in years) to add to the KW_IRELDATE key by default
+#   for APERO files
+#   if there is no other way to determine the public release date (can be zero)
+AREL_ADELTA = Const('AREL_ADELTA', value=None, dtype=float,
+                    source=__NAME__, group=cgroup,
+                    minimum=0.0, maximum=20.0,
+                    description='Define the time delta (in years) to add to '
+                                'the KW_IRELDATE key by default for APERO files'
+                                ' if there is no other way to determine the '
+                                'public release date (can be zero)')
+
+# Define the time delta (in years) to add to the KW_IRELDATE key by default
+#   for LBL files
+#   if there is no other way to determine the public release date (can be zero)
+AREL_LDELTA = Const('AREL_LDELTA', value=None, dtype=float,
+                    source=__NAME__, group=cgroup,
+                    minimum=0.0, maximum=20.0,
+                    description='Define the time delta (in years) to add to '
+                                'the KW_IRELDATE key by default for LBL files'
+                                ' if there is no other way to determine the '
+                                'public release date (can be zero)')
 
 # =============================================================================
 # CALIBRATION: GENERAL SETTINGS

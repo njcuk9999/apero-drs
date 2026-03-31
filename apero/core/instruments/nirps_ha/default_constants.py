@@ -145,6 +145,27 @@ REF_FIND_END_DATE = REF_FIND_END_DATE.copy(__NAME__)
 REF_FIND_END_DATE.value = 'None'
 REF_FIND_END_DATE.author = base.AUTHORS['NJC']
 
+# Define the time delta (in years) to add to the KW_IRELDATE key by default
+#   for raw files
+#   if there is no other way to determine the public release date (can be zero)
+AREL_RDELTA = AREL_RDELTA.copy(__NAME__)
+AREL_RDELTA.value = 2.0
+AREL_RDELTA.author = base.AUTHORS['NJC']
+
+# Define the time delta (in years) to add to the KW_IRELDATE key by default
+#   for APERO files
+#   if there is no other way to determine the public release date (can be zero)
+AREL_ADELTA = AREL_ADELTA.copy(__NAME__)
+AREL_ADELTA.value = 2.0
+AREL_ADELTA.author = base.AUTHORS['NJC']
+
+# Define the time delta (in years) to add to the KW_IRELDATE key by default
+#   for raw files
+#   if there is no other way to determine the public release date (can be zero)
+AREL_LDELTA = AREL_LDELTA.copy(__NAME__)
+AREL_LDELTA.value = 3.0
+AREL_LDELTA.author = base.AUTHORS['NJC']
+
 # =============================================================================
 # CALIBRATION: GENERAL SETTINGS
 # =============================================================================
