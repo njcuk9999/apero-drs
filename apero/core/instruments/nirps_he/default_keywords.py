@@ -453,7 +453,7 @@ KW_IRELDATE.set(key='MJDMID', comment='queue release date', group='mjd')
 # Define the APERO Public Release date (YYYY-MM-DD) this may be different
 #  from raw file header's release date
 KW_ARELDATE = KW_ARELDATE.copy(__NAME__)
-KW_ARELDATE.set(key='ARELDATE',
+KW_ARELDATE.set(key='ARELDATE', combine_method='maximum',
                 comment='APERO determined public release date',
                 group='ppraw')
 

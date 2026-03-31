@@ -53,6 +53,7 @@ __all__ = [
     'IMAGE_FRAME_TIME', 'ALL_POLAR_RHOMB_POS',
     'REF_FIND_TIME_COL', 'REF_FIND_START_DATE', 'REF_FIND_END_DATE',
     'AREL_RDELTA', 'AREL_ADELTA', 'AREL_LDELTA',
+    'ARELDATE_GSHEET_URL', 'ARELDATE_GSHEET_ID',
     # general calib constants
     'COMBINE_METRIC_THRESHOLD1', 'CAVITY_1M_FILE', 'CAVITY_LL_FILE',
     'SIMBAD_TAP_URL',
@@ -645,6 +646,23 @@ AREL_LDELTA = Const('AREL_LDELTA', value=None, dtype=float,
                                 'the KW_IRELDATE key by default for LBL files'
                                 ' if there is no other way to determine the '
                                 'public release date (can be zero)')
+
+# Define the googlesheet URL for the apero release date lookup
+ARELDATE_GSHEET_URL = Const('ARELDATE_GSHEET_URL',
+                            value=None, dtype=str,
+                            source=__NAME__, group=cgroup,
+                            description='Define the googlesheet URL for the '
+                                        'apero release date lookup')
+
+# Define the googlesheet sheet id for the apero release date lookup
+# (there should be one sheet per instrument)
+ARELDATE_GSHEET_ID = Const('ARELDATE_GSHEET_ID',
+                           value=None, dtype=str,
+                           source=__NAME__, group=cgroup,
+                           description='Define the googlesheet sheet id for '
+                                       'the apero release date lookup (there '
+                                       'should be one sheet per instrument)')
+
 
 # =============================================================================
 # CALIBRATION: GENERAL SETTINGS

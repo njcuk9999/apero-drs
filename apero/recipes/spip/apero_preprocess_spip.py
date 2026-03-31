@@ -364,7 +364,10 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
         log1.add_qc(qc_params, passed)
         if passed:
             log1.update_flags(QCPASSED=True)
-
+        # ---------------------------------------------------------------------
+        # For this file figure out the APERO release date
+        # ---------------------------------------------------------------------
+        areldate = prep.get_areldate(params, header=infile.header)
         # ------------------------------------------------------------------
         # Save rotated image
         # ------------------------------------------------------------------
@@ -395,6 +398,8 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
         outfile.add_hkey('KW_PPC_NBAD_INTE', value=cprops['NUM_BAD_INTERCEPT'])
         outfile.add_hkey('KW_PPC_NBAD_SLOPE', value=cprops['NUM_BAD_SLOPE'])
         outfile.add_hkey('KW_PPC_NBAD_BOTH', value=cprops['NUM_BAD_BOTH'])
+        # update the areldate
+        outfile.add_hkey('KW_ARELDATE', value=areldate)
         # ------------------------------------------------------------------
         # copy data
         outfile.data = image

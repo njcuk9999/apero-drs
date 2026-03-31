@@ -655,6 +655,15 @@ AREL_LDELTA = AREL_LDELTA.copy(__NAME__)
 AREL_LDELTA.value = 1.0
 AREL_LDELTA.author = base.AUTHORS['NJC']
 
+# Define the googlesheet URL for the apero release date lookup
+ARELDATE_GSHEET_URL = ARELDATE_GSHEET_URL.copy(__NAME__)
+ARELDATE_GSHEET_URL.value = '1BcUdQZx0RcLEK4zuVPUWUK3I6gT78cRukl_LuoIhAgw'
+
+# Define the googlesheet sheet id for the apero release date lookup
+# (there should be one sheet per instrument)
+ARELDATE_GSHEET_ID = ARELDATE_GSHEET_ID.copy(__NAME__)
+ARELDATE_GSHEET_ID.value = '352080580'
+
 # =============================================================================
 # CALIBRATION: BAD PIXEL MAP SETTINGS
 # =============================================================================
