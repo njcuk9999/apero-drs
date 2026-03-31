@@ -281,6 +281,19 @@ class Instrument:
         # raise implementation error
         self._not_implemented('DRS_MIDMJD')
 
+    def GET_AREL_DATE(self, params: Any, header: Any,
+                      delta_key: str):
+        """
+        Get the apero release date
+
+        :param delta_key: str, the key to use for the time delta
+        :return:
+        """
+        # cannot get mid mjd without header definitions
+        _ = params, header, delta_key
+        # raise implementation error
+        self._not_implemented('GET_AREL_DATE')
+
     def FRAME_TIME(self, params: Any, header: Any):
         """
         Get the frame time (either from header or constants depending on
@@ -323,7 +336,7 @@ class Instrument:
         """
         _ = params, header, wlog
         # raise implementation error
-        self._not_implemented('DRS_MIDMJD')
+        self._not_implemented('GET_STOKES_FROM_HEADER')
 
     # =========================================================================
     # INDEXING SETTINGS
