@@ -65,6 +65,9 @@ BLOCK_KIND: dict = {
     'lbl':   'PATH_LBL',
 }
 
+# Shared plot background color (light yellow)
+PLOT_BACKGROUND_COLOR: str = '#fff9dc'
+
 # =============================================================================
 # Start of code
 # =============================================================================

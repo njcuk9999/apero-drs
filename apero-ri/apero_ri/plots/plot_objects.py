@@ -33,7 +33,8 @@ from typing import Any, Dict, List, Optional, Tuple
 
 import numpy as np
 from astropy.time import Time
-from bokeh.models import ColumnDataSource, CrosshairTool, HoverTool, Span
+from bokeh.models import (ColumnDataSource, CrosshairTool, HoverTool,
+                          Range1d, Span)
 
 from apero_ri.base import base
 from apero_ri.plots.plot_general import make_time_figure
@@ -768,6 +769,7 @@ def _make_spec_band_figure(
     xlim: List[float],
     title: str,
     height: int = 280,
+    sizing_mode: str = 'stretch_width',
 ) -> Any:
     """
     Build a single Bokeh figure for one wavelength band of the
@@ -779,6 +781,7 @@ def _make_spec_band_figure(
     :param xlim: list of two floats, [wave_min, wave_max] in nm
     :param title: str, figure title
     :param height: int, figure height in pixels
+    :param sizing_mode: str, Bokeh sizing_mode (default 'stretch_width')
 
     :return: Bokeh figure object
     :rtype: bokeh.plotting.figure
@@ -792,8 +795,8 @@ def _make_spec_band_figure(
         tools='pan,wheel_zoom,box_zoom,reset,save',
         active_scroll='wheel_zoom',
         height=height,
-        sizing_mode='stretch_width',
-        background_fill_color='#f5f0d0',
+        sizing_mode=sizing_mode,
+        background_fill_color=base.PLOT_BACKGROUND_COLOR,
     )
     mask = (wave >= xlim[0]) & (wave <= xlim[1])
     w_m = wave[mask]
@@ -829,6 +832,7 @@ def _build_spec_layout(
     ftable_tcorr_rows: List[Dict[str, Any]],
     paths: Dict[str, str],
     preset: Dict[str, Any],
+    maximize: bool = False,
 ) -> Tuple[Optional[Any], str]:
     """
     Core spectrum builder that returns ``(layout, message)``.
@@ -895,29 +899,60 @@ def _build_spec_layout(
         else 'Median spectrum'
     )
     # -------------------------------------------------------------------------
-    # build band figures
-    fig_full = _make_spec_band_figure(
-        wave, ext_flux, tcorr_flux, limit0, title_full, height=280
-    )
-    fig_z1 = _make_spec_band_figure(
-        wave, ext_flux, tcorr_flux, limit1,
-        f'Zoom in {limit1[0]}\u2013{limit1[1]} nm', height=220,
-    )
-    fig_z2 = _make_spec_band_figure(
-        wave, ext_flux, tcorr_flux, limit2,
-        f'Zoom in {limit2[0]}\u2013{limit2[1]} nm', height=220,
-    )
-    fig_z3 = _make_spec_band_figure(
-        wave, ext_flux, tcorr_flux, limit3,
-        f'Zoom in {limit3[0]}\u2013{limit3[1]} nm', height=220,
-    )
-    layout = bk_column([
-        fig_full,
-        gridplot(
+    # build figures for normal/object-page layout vs maximize layout
+    if maximize:
+        # In maximize mode each row is a separate Bokeh root so CSS
+        # flex can give each ~50 % of the available viewport height.
+        fig_full = _make_spec_band_figure(
+            wave, ext_flux, tcorr_flux, limit0, title_full,
+            height=200, sizing_mode='stretch_both',
+        )
+        fig_z1 = _make_spec_band_figure(
+            wave, ext_flux, tcorr_flux, limit1,
+            f'Zoom in {limit1[0]}\u2013{limit1[1]} nm',
+            height=200, sizing_mode='stretch_both',
+        )
+        fig_z2 = _make_spec_band_figure(
+            wave, ext_flux, tcorr_flux, limit2,
+            f'Zoom in {limit2[0]}\u2013{limit2[1]} nm',
+            height=200, sizing_mode='stretch_both',
+        )
+        fig_z3 = _make_spec_band_figure(
+            wave, ext_flux, tcorr_flux, limit3,
+            f'Zoom in {limit3[0]}\u2013{limit3[1]} nm',
+            height=200, sizing_mode='stretch_both',
+        )
+        zoom_grid = gridplot(
             [[fig_z1, fig_z2, fig_z3]],
-            sizing_mode='stretch_width',
-        ),
-    ], sizing_mode='stretch_width')
+            sizing_mode='stretch_both',
+        )
+        # Return two separate roots; build_spec_plot_components will
+        # call components([fig_full, zoom_grid]) to get one shared
+        # script and two independent divs for the template.
+        return [fig_full, zoom_grid], ''
+    else:
+        fig_full = _make_spec_band_figure(
+            wave, ext_flux, tcorr_flux, limit0, title_full, height=280
+        )
+        fig_z1 = _make_spec_band_figure(
+            wave, ext_flux, tcorr_flux, limit1,
+            f'Zoom in {limit1[0]}\u2013{limit1[1]} nm', height=220,
+        )
+        fig_z2 = _make_spec_band_figure(
+            wave, ext_flux, tcorr_flux, limit2,
+            f'Zoom in {limit2[0]}\u2013{limit2[1]} nm', height=220,
+        )
+        fig_z3 = _make_spec_band_figure(
+            wave, ext_flux, tcorr_flux, limit3,
+            f'Zoom in {limit3[0]}\u2013{limit3[1]} nm', height=220,
+        )
+        layout = bk_column([
+            fig_full,
+            gridplot(
+                [[fig_z1, fig_z2, fig_z3]],
+                sizing_mode='stretch_width',
+            ),
+        ], sizing_mode='stretch_width')
     return layout, ''
 
 
@@ -966,6 +1001,7 @@ def build_spec_plot_components(
     ftable_tcorr_rows: List[Dict[str, Any]],
     paths: Dict[str, str],
     preset: Dict[str, Any],
+    maximize: bool = False,
 ) -> Dict[str, Any]:
     """
     Build spectrum plot as ``(script, div)`` for server-side embedding.
@@ -980,12 +1016,25 @@ def build_spec_plot_components(
     :rtype: dict
     """
     layout, msg = _build_spec_layout(
-        htable_rows, ftable_ext_rows, ftable_tcorr_rows, paths, preset
+        htable_rows, ftable_ext_rows, ftable_tcorr_rows, paths, preset,
+        maximize=maximize,
     )
     if layout is None:
         return {
             'has_plot': False, 'script': '', 'div': '',
             'message': msg,
+        }
+    if isinstance(layout, list):
+        # maximize mode: two separate roots → one script, two divs
+        from bokeh.embed import components as _bk_components
+        script, div_list = _bk_components(layout)
+        return {
+            'has_plot': True,
+            'script': script,
+            'div': div_list[0],
+            'div2': div_list[1],
+            'two_rows': True,
+            'message': '',
         }
     script, div = plot_to_components(layout)
     return {
@@ -1246,7 +1295,7 @@ def _make_ccf_profile_figure(
         active_scroll='wheel_zoom',
         height=height,
         sizing_mode='stretch_width',
-        background_fill_color='#f5f0d0',
+        background_fill_color=base.PLOT_BACKGROUND_COLOR,
     )
     fig.add_tools(HoverTool(
         tooltips=[('RV', '$x{0.000} km/s'), ('CCF', '$y{0.000000}')],
@@ -1272,17 +1321,31 @@ def _make_ccf_profile_figure(
         base='x', upper='upper', lower='lower', source=src_1,
         fill_color='red', fill_alpha=0.4, line_color=None,
     ))
-    # legend proxy patches for bands
-    fig.patch([], [], fill_color='orange', fill_alpha=0.4,
-              line_color=None, legend_label='2σ band')
-    fig.patch([], [], fill_color='red', fill_alpha=0.4,
-              line_color=None, legend_label='1σ band')
+    # legend proxy quads for bands (on hidden extra ranges so auto-range unaffected)
+    fig.extra_x_ranges['_proxy'] = Range1d(start=0, end=1)
+    fig.extra_y_ranges['_proxy'] = Range1d(start=0, end=1)
+    fig.quad(left=[5], right=[6], top=[6], bottom=[5],
+            fill_color='orange', fill_alpha=0.4, line_color=None,
+            legend_label='2σ band',
+            x_range_name='_proxy', y_range_name='_proxy')
+    fig.quad(left=[5], right=[6], top=[6], bottom=[5],
+            fill_color='red', fill_alpha=0.4, line_color=None,
+            legend_label='1σ band',
+            x_range_name='_proxy', y_range_name='_proxy')
     fig.line(rv_m, med_ccf[limmask], line_color='black',
              line_width=1.5, legend_label='Median CCF')
     if has_fit:
         fig.line(rv_m, fit[limmask], line_color='dodgerblue',
                  line_width=2.0, line_dash='dashed',
                  legend_label='Gaussian fit')
+    # initial zoom to 2σ envelope with 10% padding
+    y_lo = float(np.nanmin(y1_2sig[limmask]))
+    y_hi = float(np.nanmax(y2_2sig[limmask]))
+    y_pad = 0.1 * (y_hi - y_lo) if y_hi > y_lo else 0.01
+    fig.y_range = Range1d(start=y_lo - y_pad, end=y_hi + y_pad)
+    x_pad = 0.02 * (float(rv_m[-1]) - float(rv_m[0])) if len(rv_m) > 1 else 1.0
+    fig.x_range = Range1d(start=float(rv_m[0]) - x_pad,
+                          end=float(rv_m[-1]) + x_pad)
     fig.legend.location = 'top_right'
     fig.legend.click_policy = 'hide'
     fig.grid.grid_line_color = 'lightgray'
@@ -1333,7 +1396,7 @@ def _make_ccf_residuals_figure(
         active_scroll='wheel_zoom',
         height=height,
         sizing_mode='stretch_width',
-        background_fill_color='#f5f0d0',
+        background_fill_color=base.PLOT_BACKGROUND_COLOR,
     )
     fig.add_tools(HoverTool(
         tooltips=[('RV', '$x{0.000} km/s'), ('Residual', '$y{0.000000}')],
@@ -1361,13 +1424,27 @@ def _make_ccf_residuals_figure(
             base='x', upper='upper', lower='lower', source=src_1,
             fill_color='red', fill_alpha=0.4,
         ))
-        # legend proxy patches for bands
-        fig.patch([], [], fill_color='orange', fill_alpha=0.4,
-                  line_color=None, legend_label='2σ band')
-        fig.patch([], [], fill_color='red', fill_alpha=0.4,
-                  line_color=None, legend_label='1σ band')
+        # legend proxy quads for bands (on hidden extra ranges)
+        fig.extra_x_ranges['_proxy'] = Range1d(start=0, end=1)
+        fig.extra_y_ranges['_proxy'] = Range1d(start=0, end=1)
+        fig.quad(left=[5], right=[6], top=[6], bottom=[5],
+                fill_color='orange', fill_alpha=0.4, line_color=None,
+                legend_label='2σ band',
+                x_range_name='_proxy', y_range_name='_proxy')
+        fig.quad(left=[5], right=[6], top=[6], bottom=[5],
+                fill_color='red', fill_alpha=0.4, line_color=None,
+                legend_label='1σ band',
+                x_range_name='_proxy', y_range_name='_proxy')
         fig.line(rv_m, med_ccf[limmask] - f_m, line_color='black',
                  line_width=1.2, legend_label='Median residual')
+        # initial zoom to 2σ residual envelope with 10% padding
+        res_lo = float(np.nanmin(y1_2sig[limmask] - f_m))
+        res_hi = float(np.nanmax(y2_2sig[limmask] - f_m))
+        res_pad = 0.1 * (res_hi - res_lo) if res_hi > res_lo else 0.01
+        fig.y_range = Range1d(start=res_lo - res_pad, end=res_hi + res_pad)
+        x_pad = 0.02 * (float(rv_m[-1]) - float(rv_m[0])) if len(rv_m) > 1 else 1.0
+        fig.x_range = Range1d(start=float(rv_m[0]) - x_pad,
+                              end=float(rv_m[-1]) + x_pad)
         fig.legend.location = 'top_right'
     else:
         fig.text(
@@ -1425,7 +1502,7 @@ def _make_ccf_spread_figure(
         active_scroll='wheel_zoom',
         height=height,
         sizing_mode='stretch_width',
-        background_fill_color='#f5f0d0',
+        background_fill_color=base.PLOT_BACKGROUND_COLOR,
     )
     fig.add_tools(HoverTool(
         tooltips=[('RV', '$x{0.000} km/s'), ('Spread', '$y{0.000000}')],
@@ -1453,11 +1530,17 @@ def _make_ccf_spread_figure(
         base='x', upper='upper', lower='lower', source=src_1,
         fill_color='red', fill_alpha=0.4, line_color=None,
     ))
-    # legend proxy patches for bands
-    fig.patch([], [], fill_color='orange', fill_alpha=0.4,
-              line_color=None, legend_label='2σ band')
-    fig.patch([], [], fill_color='red', fill_alpha=0.4,
-              line_color=None, legend_label='1σ band')
+    # legend proxy quads for bands (on hidden extra ranges)
+    fig.extra_x_ranges['_proxy'] = Range1d(start=0, end=1)
+    fig.extra_y_ranges['_proxy'] = Range1d(start=0, end=1)
+    fig.quad(left=[5], right=[6], top=[6], bottom=[5],
+            fill_color='orange', fill_alpha=0.4, line_color=None,
+            legend_label='2σ band',
+            x_range_name='_proxy', y_range_name='_proxy')
+    fig.quad(left=[5], right=[6], top=[6], bottom=[5],
+            fill_color='red', fill_alpha=0.4, line_color=None,
+            legend_label='1σ band',
+            x_range_name='_proxy', y_range_name='_proxy')
     fig.line(rv_m, np.zeros(len(rv_m)), line_color='black',
              line_width=1.2, legend_label='Median (zero)')
     # initial zoom to 2 sigma range
@@ -1466,6 +1549,9 @@ def _make_ccf_spread_figure(
     if y_max_2sig > 0:
         fig.y_range.start = -1.1 * y_max_2sig
         fig.y_range.end = 1.1 * y_max_2sig
+    x_pad = 0.02 * (float(rv_m[-1]) - float(rv_m[0])) if len(rv_m) > 1 else 1.0
+    fig.x_range = Range1d(start=float(rv_m[0]) - x_pad,
+                          end=float(rv_m[-1]) + x_pad)
     fig.legend.location = 'top_right'
     fig.grid.grid_line_color = 'lightgray'
     fig.grid.grid_line_dash = 'dashed'
@@ -1866,7 +1952,7 @@ def _make_lbl_wave_figure(
         active_scroll='wheel_zoom',
         height=height,
         sizing_mode='stretch_width',
-        background_fill_color='#f5f0d0',
+        background_fill_color=base.PLOT_BACKGROUND_COLOR,
     )
     fig.add_tools(HoverTool(
         tooltips=[
@@ -1937,8 +2023,14 @@ def _make_lbl_wave_figure(
     fig.y_range.start = central - 2.0 * diff
     fig.y_range.end = central + 2.0 * diff
     # -------------------------------------------------------------------------
-    fig.legend.location = 'top_right'
-    fig.legend.click_policy = 'hide'
+    # Move legend below the figure
+    legend = fig.legend[0]
+    legend.click_policy = 'hide'
+    legend.orientation = 'horizontal'
+    legend.label_text_font_size = '9pt'
+    legend.spacing = 2
+    legend.padding = 4
+    fig.add_layout(legend, 'below')
     fig.grid.grid_line_color = 'lightgray'
     fig.grid.grid_line_dash = 'dashed'
     return fig
@@ -2034,7 +2126,7 @@ def _build_lbl_layout(
     )
     fig_wave = _make_lbl_wave_figure(
         dts_s, vrad_s, svrad_s, wave_vrad_dict, wave_svrad_dict,
-        wavemap, flavor_id=flavor_id,
+        wavemap, flavor_id=flavor_id, height=420,
     )
     return bk_column([fig_rv, fig_snr, fig_wave],
                      sizing_mode='stretch_width')
@@ -2232,7 +2324,7 @@ def _make_ts_snr_figure(
         active_scroll='wheel_zoom',
         height=height,
         sizing_mode='stretch_width',
-        background_fill_color='#f5f0d0',
+        background_fill_color=base.PLOT_BACKGROUND_COLOR,
     )
     hover = HoverTool(
         tooltips=[('Obs Dir', '@x'), ('SNR', '@y{0.0}')],
@@ -2293,7 +2385,7 @@ def _make_ts_airmass_figure(
         active_scroll='wheel_zoom',
         height=height,
         sizing_mode='stretch_width',
-        background_fill_color='#f5f0d0',
+        background_fill_color=base.PLOT_BACKGROUND_COLOR,
     )
     hover = HoverTool(
         tooltips=[('Obs Dir', '@x'), ('Airmass', '@y{0.000}')],

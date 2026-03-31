@@ -49,7 +49,7 @@ __release__ = base.__release__
 _MAX_PTS: int = 30_000
 
 # Background colour shared with the rest of the UI
-_BG_COLOUR: str = '#f5f0d0'
+_BG_COLOUR: str = base.PLOT_BACKGROUND_COLOR
 
 # ---------------------------------------------------------------------------
 # Output types that have a plot defined in this module.
@@ -419,7 +419,7 @@ def _build_ccf_plot(
         y2_2sig = np.nanpercentile(all_ccf, upper2, axis=0)
         med_ccf = np.nanmedian(all_ccf, axis=0)
     # -------------------------------------------------------------------------
-    from bokeh.models import Band, ColumnDataSource, HoverTool
+    from bokeh.models import Band, ColumnDataSource, HoverTool, Legend, LegendItem
     from bokeh.plotting import figure as bk_figure
     fig = bk_figure(
         title=title,
@@ -438,6 +438,18 @@ def _build_ccf_plot(
         ],
         mode='mouse',
     ))
+    # Set y-axis range: 2σ band extent + 20 % padding so bands are clearly visible
+    with warnings.catch_warnings():
+        warnings.simplefilter('ignore')
+        finite_ccf = med_ccf[np.isfinite(med_ccf)]
+        finite_2sig_lo = y1_2sig[np.isfinite(y1_2sig)]
+        finite_2sig_hi = y2_2sig[np.isfinite(y2_2sig)]
+    if len(finite_ccf) > 0 and len(finite_2sig_lo) > 0:
+        y_lo = float(np.nanmin(finite_2sig_lo))
+        y_hi = float(np.nanmax(finite_2sig_hi))
+        y_pad = max((y_hi - y_lo) * 0.20, 0.02)
+        fig.y_range.start = y_lo - y_pad
+        fig.y_range.end   = y_hi + y_pad
     x = list(rv_vec)
     src_2 = ColumnDataSource(dict(
         x=x, upper=list(y2_2sig), lower=list(y1_2sig),
@@ -445,23 +457,32 @@ def _build_ccf_plot(
     src_1 = ColumnDataSource(dict(
         x=x, upper=list(y2_1sig), lower=list(y1_1sig),
     ))
-    fig.add_layout(Band(
+    r_2sig = fig.add_layout(Band(
         base='x', upper='upper', lower='lower', source=src_2,
         fill_color='orange', fill_alpha=0.4, line_color=None,
         level='underlay',
     ))
-    fig.add_layout(Band(
+    r_1sig = fig.add_layout(Band(
         base='x', upper='upper', lower='lower', source=src_1,
         fill_color='red', fill_alpha=0.4, line_color=None,
         level='underlay',
     ))
-    fig.line(x, list(med_ccf), line_color='black', line_width=1.2,
-             alpha=0.95, legend_label='Median CCF')
+    r_med = fig.line(x, list(med_ccf), line_color='black', line_width=1.2,
+                     alpha=0.95)
+    # Band glyphs don't appear in the auto-legend; build it explicitly
+    # using dummy patch glyphs so click-to-hide works correctly.
+    p_2sig = fig.patch([], [], fill_color='orange', fill_alpha=0.4,
+                       line_color=None, visible=False)
+    p_1sig = fig.patch([], [], fill_color='red', fill_alpha=0.4,
+                       line_color=None, visible=False)
+    legend = Legend(items=[
+        LegendItem(label='Median CCF',  renderers=[r_med]),
+        LegendItem(label='1\u03c3 band', renderers=[p_1sig]),
+        LegendItem(label='2\u03c3 band', renderers=[p_2sig]),
+    ], location='top_right', click_policy='hide')
+    fig.add_layout(legend)
     fig.grid.grid_line_color = 'lightgray'
     fig.grid.grid_line_dash = 'dashed'
-    if fig.legend:
-        fig.legend.location = 'top_right'
-        fig.legend.click_policy = 'hide'
     return {'has_plot': True, 'fig': fig, 'title': title, 'message': ''}
 
 

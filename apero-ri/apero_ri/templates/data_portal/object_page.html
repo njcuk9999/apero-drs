@@ -97,7 +97,19 @@
                 <span><i class="fa-solid fa-image"></i> Finder Chart</span>
             </div>
             <div class="at-section-card__body">
-                <div id="op-finder-chart" class="at-muted-hint">Coming soon</div>
+                <div id="op-finder-chart">
+                    <button id="op-finder-generate-btn"
+                            class="ari-btn ari-btn--sm ari-btn--secondary"
+                            title="Query Gaia/2MASS and generate finder charts"
+                            {% if finder_chart_cached %}style="display:none;"{% endif %}>
+                        <i class="fa-solid fa-wand-magic-sparkles"></i> Generate Finder Charts
+                    </button>
+                    <div id="op-finder-loading" style="display:none;" class="at-muted-hint">
+                        <i class="fa-solid fa-spinner fa-spin"></i> {% if finder_chart_cached %}Loading finder charts&hellip;{% else %}Generating finder charts (querying catalogues)&hellip;{% endif %}
+                    </div>
+                    <div id="op-finder-error" style="display:none;" class="at-muted-hint"></div>
+                    <div id="op-finder-images" style="display:none;"></div>
+                </div>
             </div>
         </div>
     </section>
@@ -438,20 +450,125 @@
 
     {# ──── Debug tab ─────────────────────────────────────────────── #}
     <section id="op-tab-debug" class="op-tab-panel" style="display:none;">
-        <div class="at-section-card at-section-card--warning" data-op-section-id="debug.info">
+
+        {# -- Status bar -- #}
+        <div style="margin-bottom:0.75rem;display:flex;align-items:center;gap:0.5rem;">
+            <button id="op-download-debug-csv"
+                    class="ari-btn ari-btn--sm ari-btn--secondary"
+                    title="Download debug section as CSV">
+                <i class="fa-solid fa-download"></i> CSV
+            </button>
+            <div id="op-debug-loading" style="display:none;" class="at-muted-hint">
+                <i class="fa-solid fa-spinner fa-spin"></i> Loading debug plots&hellip;
+            </div>
+            <div id="op-debug-error" style="display:none;" class="at-muted-hint"></div>
+        </div>
+
+        {# -- Max Saturation -- #}
+        <div class="at-section-card" data-op-section-id="debug.extsmax">
             <div class="at-section-card__header">
-                <span><i class="fa-solid fa-bug"></i> Debug</span>
-                <button id="op-download-debug-csv"
-                        class="ari-btn ari-btn--sm ari-btn--secondary"
-                        title="Download debug section as CSV"
-                        style="margin-left:auto;">
-                    <i class="fa-solid fa-download"></i> CSV
-                </button>
+                <span><i class="fa-solid fa-chart-line"></i> Maximum Saturation Level</span>
+                <a id="op-debug-extsmax-max-link"
+                   href="{{ url_for('ri_object_plot_max', profile_id=profile.profile_id, objname=objname, plot_key='debug_extsmax') }}"
+                   class="ari-btn ari-btn--sm ari-btn--secondary op-plot-max-btn"
+                   title="Maximize plot" style="margin-left:auto;">
+                    <i class="fa-solid fa-maximize"></i>
+                </a>
             </div>
             <div class="at-section-card__body">
-                <div class="at-muted-hint" id="op-debug-message">Coming soon</div>
+                <div id="op-debug-extsmax-wrap">
+                    <div id="op-debug-extsmax-loading" class="at-muted-hint">
+                        <i class="fa-solid fa-spinner fa-spin"></i> Loading&hellip;
+                    </div>
+                    <div id="op-debug-extsmax-div"></div>
+                </div>
             </div>
         </div>
+
+        {# -- Effective Readout Noise -- #}
+        <div class="at-section-card" data-op-section-id="debug.effron">
+            <div class="at-section-card__header">
+                <span><i class="fa-solid fa-chart-line"></i> Effective Readout Noise</span>
+                <a id="op-debug-effron-max-link"
+                   href="{{ url_for('ri_object_plot_max', profile_id=profile.profile_id, objname=objname, plot_key='debug_effron') }}"
+                   class="ari-btn ari-btn--sm ari-btn--secondary op-plot-max-btn"
+                   title="Maximize plot" style="margin-left:auto;">
+                    <i class="fa-solid fa-maximize"></i>
+                </a>
+            </div>
+            <div class="at-section-card__body">
+                <div id="op-debug-effron-wrap">
+                    <div id="op-debug-effron-loading" class="at-muted-hint">
+                        <i class="fa-solid fa-spinner fa-spin"></i> Loading&hellip;
+                    </div>
+                    <div id="op-debug-effron-div"></div>
+                </div>
+            </div>
+        </div>
+
+        {# -- Version & Processing -- #}
+        <div class="at-section-card" data-op-section-id="debug.version">
+            <div class="at-section-card__header">
+                <span><i class="fa-solid fa-chart-line"></i> APERO Processing Debug</span>
+                <a id="op-debug-version-max-link"
+                   href="{{ url_for('ri_object_plot_max', profile_id=profile.profile_id, objname=objname, plot_key='debug_version') }}"
+                   class="ari-btn ari-btn--sm ari-btn--secondary op-plot-max-btn"
+                   title="Maximize plot" style="margin-left:auto;">
+                    <i class="fa-solid fa-maximize"></i>
+                </a>
+            </div>
+            <div class="at-section-card__body">
+                <div id="op-debug-version-wrap">
+                    <div id="op-debug-version-loading" class="at-muted-hint">
+                        <i class="fa-solid fa-spinner fa-spin"></i> Loading&hellip;
+                    </div>
+                    <div id="op-debug-version-div"></div>
+                </div>
+            </div>
+        </div>
+
+        {# -- Calibration Times -- #}
+        <div class="at-section-card" data-op-section-id="debug.cdt">
+            <div class="at-section-card__header">
+                <span><i class="fa-solid fa-chart-line"></i> Calibration Times</span>
+                <a id="op-debug-cdt-max-link"
+                   href="{{ url_for('ri_object_plot_max', profile_id=profile.profile_id, objname=objname, plot_key='debug_cdt') }}"
+                   class="ari-btn ari-btn--sm ari-btn--secondary op-plot-max-btn"
+                   title="Maximize plot" style="margin-left:auto;">
+                    <i class="fa-solid fa-maximize"></i>
+                </a>
+            </div>
+            <div class="at-section-card__body">
+                <div id="op-debug-cdt-wrap">
+                    <div id="op-debug-cdt-loading" class="at-muted-hint">
+                        <i class="fa-solid fa-spinner fa-spin"></i> Loading&hellip;
+                    </div>
+                    <div id="op-debug-cdt-div"></div>
+                </div>
+            </div>
+        </div>
+
+        {# -- Telluric Map -- #}
+        <div class="at-section-card" data-op-section-id="debug.tcorr_map">
+            <div class="at-section-card__header">
+                <span><i class="fa-solid fa-chart-line"></i> Telluric Map</span>
+                <a id="op-debug-tcorr-map-max-link"
+                   href="{{ url_for('ri_object_plot_max', profile_id=profile.profile_id, objname=objname, plot_key='debug_tcorr_map') }}"
+                   class="ari-btn ari-btn--sm ari-btn--secondary op-plot-max-btn"
+                   title="Maximize plot" style="margin-left:auto;">
+                    <i class="fa-solid fa-maximize"></i>
+                </a>
+            </div>
+            <div class="at-section-card__body">
+                <div id="op-debug-tcorr-map-wrap">
+                    <div id="op-debug-tcorr-map-loading" class="at-muted-hint">
+                        <i class="fa-solid fa-spinner fa-spin"></i> Loading&hellip;
+                    </div>
+                    <div id="op-debug-tcorr-map-div"></div>
+                </div>
+            </div>
+        </div>
+
     </section>
 
     {# ──── Download (basket) tab ──────────────────────────────────── #}
@@ -491,6 +608,10 @@ window.ARI_OBJECT_PAGE = {
     apiUrl: {{ api_url | tojson }},
     objectPlotsApiUrl: '/api/data-portal/object-plots',
     objectLblPlotsApiUrl: '/api/data-portal/object-lbl-plots',
+    finderChartApiUrl: '/api/data-portal/finder-chart',
+    finderChartCached: {{ (finder_chart_cached | default(false)) | tojson }},
+    debugPlotsApiUrl: '/api/data-portal/debug-plots',
+    finderMaxUrl: {{ url_for('ri_object_plot_max', profile_id=profile.profile_id, objname=objname, plot_key='finder') | tojson }},
     snrMaxUrl: {{ url_for('ri_object_plot_max', profile_id=profile.profile_id, objname=objname, plot_key='snr') | tojson }},
     bervMaxUrl: {{ url_for('ri_object_plot_max', profile_id=profile.profile_id, objname=objname, plot_key='berv') | tojson }},
     specMaxUrl: {{ url_for('ri_object_plot_max', profile_id=profile.profile_id, objname=objname, plot_key='spec') | tojson }},

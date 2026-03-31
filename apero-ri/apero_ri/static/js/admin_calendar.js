@@ -82,10 +82,13 @@ function _renderMonth() {
         const dateStr = `${_year}-${String(_month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
         const isToday = dateStr === todayStr;
         const dayEvents = byDate[dateStr] || [];
-        const evHtml = dayEvents.slice(0, 3).map(ev =>
-            `<div class="ari-cal-event" style="background:${_esc(ev.color||'#7b5ea7')}"
-                  data-id="${_esc(ev.id)}" title="${_esc(ev.title)}">${_esc(ev.title)}</div>`
-        ).join('');
+        const evHtml = dayEvents.slice(0, 3).map(ev => {
+            const tzLabel = (ev.time && ev.timezone && ev.timezone !== 'UTC')
+                ? ` (${ariTzShortLabel(ev.timezone)})` : (ev.time ? ' (UTC)' : '');
+            const label = ev.time ? `${ev.time}${tzLabel} ${ev.title}` : ev.title;
+            return `<div class="ari-cal-event" style="background:${_esc(ev.color||'#7b5ea7')}"
+                  data-id="${_esc(ev.id)}" title="${_esc(label)}">${_esc(label)}</div>`;
+        }).join('');
         const more = dayEvents.length > 3 ? `<div class="ari-cal-more">+${dayEvents.length-3} more</div>` : '';
         html += `<div class="ari-cal-cell ${isToday ? 'ari-cal-cell--today' : ''}" data-date="${dateStr}">
             <span class="ari-cal-day-num">${d}</span>
@@ -118,6 +121,8 @@ function _openModal(event, defaultDate = '') {
     document.getElementById('admin-cal-modal-event-title').value = event ? event.title : '';
     document.getElementById('admin-cal-modal-date').value = event ? event.date : defaultDate;
     document.getElementById('admin-cal-modal-time').value = event ? (event.time || '') : '';
+    const tzSel = document.getElementById('admin-cal-modal-timezone');
+    ariPopulateTimezoneSelect(tzSel, event ? (event.timezone || 'UTC') : 'UTC');
     document.getElementById('admin-cal-modal-recurrence').value = event ? (event.recurrence || 'none') : 'none';
     document.getElementById('admin-cal-modal-status').value = event ? (event.status || 'confirmed') : 'confirmed';
     document.getElementById('admin-cal-modal-color').value = event ? (event.color || '#7b5ea7') : '#7b5ea7';
@@ -172,6 +177,7 @@ document.addEventListener('DOMContentLoaded', () => {
             title,
             date,
             time: document.getElementById('admin-cal-modal-time').value,
+            timezone: document.getElementById('admin-cal-modal-timezone').value,
             recurrence: document.getElementById('admin-cal-modal-recurrence').value,
             status: document.getElementById('admin-cal-modal-status').value,
             color: document.getElementById('admin-cal-modal-color').value,

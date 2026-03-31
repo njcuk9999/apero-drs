@@ -14,12 +14,17 @@
     var targetGrid = document.getElementById('op-target-grid');
     var spectrumGrid = document.getElementById('op-spectrum-grid');
     var finderChartEl = document.getElementById('op-finder-chart');
+    var finderGenerateBtn = document.getElementById('op-finder-generate-btn');
+    var finderLoading = document.getElementById('op-finder-loading');
+    var finderError = document.getElementById('op-finder-error');
+    var finderImages = document.getElementById('op-finder-images');
     var lblSections = document.getElementById('op-lbl-sections');
     var ccfGrid = document.getElementById('op-ccf-grid');
     var tsBody = document.getElementById('op-time-series-tbody');
     var allSectionsHost = document.getElementById('op-all-sections');
     var allPinnedReorder = document.getElementById('op-all-pinned-reorder');
-    var debugMessageEl = document.getElementById('op-debug-message');
+    var debugLoading = document.getElementById('op-debug-loading');
+    var debugError = document.getElementById('op-debug-error');
     var targetCsvBtn = document.getElementById('op-download-target-csv');
     var spectrumCsvBtn = document.getElementById('op-download-spectrum-csv');
     var lblCsvBtn = null;  // LBL CSV buttons are created dynamically per flavor
@@ -284,7 +289,7 @@
             btn.title = pinned ? 'Unpin section' : 'Pin section to top';
             btn.innerHTML = pinned
                 ? '<i class="fa-solid fa-thumbtack"></i>'
-                : '<i class="fa-regular fa-thumbtack"></i>';
+                : '<i class="fa-solid fa-thumbtack" style="transform:rotate(45deg);opacity:0.45"></i>';
         });
     }
 
@@ -328,7 +333,7 @@
         pinBtn.type = 'button';
         pinBtn.className = 'op-section-btn op-section-btn--pin';
         pinBtn.setAttribute('data-op-pin-id', sectionId);
-        pinBtn.innerHTML = '<i class="fa-regular fa-thumbtack"></i>';
+        pinBtn.innerHTML = '<i class="fa-solid fa-thumbtack" style="transform:rotate(45deg);opacity:0.45"></i>';
         pinBtn.title = 'Pin section to top';
         pinBtn.addEventListener('click', function () {
             toggleSectionPinned(sectionId);
@@ -569,7 +574,6 @@
         if (sectionId === 'spectrum.info') return downloadSpectrumCsv;
         if (sectionId === 'ccf.stats') return downloadCcfCsv;
         if (sectionId === 'time_series.table') return downloadTimeSeriesCsv;
-        if (sectionId === 'debug.info') return downloadDebugCsv;
         // LBL per-flavor CSV buttons have their handlers attached during
         // renderLbl(); the cloned button won't have one, but we can look
         // up the original button's handler by re-using the section ID.
@@ -855,20 +859,130 @@
         ];
 
         renderKvGrid(targetGrid, rows);
+    }
 
-        if (finderChartEl) {
-            var finder = valOrDash(target.finder_chart);
-            var finderLc = String(finder).toLowerCase();
-            if (finder === '--') {
-                finderChartEl.innerHTML = '<span class="at-muted-hint">No finder chart available.</span>';
-            } else if (finderLc.indexOf('http://') === 0 || finderLc.indexOf('https://') === 0) {
-                finderChartEl.innerHTML = '<a href="' + escHtml(finder)
-                    + '" target="_blank" rel="noopener">'
-                    + '<i class="fa-solid fa-arrow-up-right-from-square"></i> Open finder chart'
-                    + '</a>';
-            } else {
-                finderChartEl.innerHTML = escHtml(finder);
+    /* ------------------------------------------------------------------
+       Finder chart generation (on-demand)
+    ------------------------------------------------------------------ */
+    function loadFinderCharts() {
+        var url = cfg.finderChartApiUrl;
+        if (!url) return;
+        if (finderGenerateBtn) finderGenerateBtn.style.display = 'none';
+        if (finderLoading) finderLoading.style.display = '';
+        if (finderError) finderError.style.display = 'none';
+        if (finderImages) finderImages.style.display = 'none';
+
+        var params = '?profile_id=' + encodeURIComponent(cfg.profileId)
+            + '&objname=' + encodeURIComponent(cfg.objname);
+        fetch(url + params)
+            .then(function (r) { return r.json(); })
+            .then(function (data) {
+                if (finderLoading) finderLoading.style.display = 'none';
+                if (!data || !data.success) {
+                    if (finderError) {
+                        finderError.textContent = data && data.error
+                            ? data.error : 'Failed to generate finder charts.';
+                        finderError.style.display = '';
+                    }
+                    if (finderGenerateBtn) finderGenerateBtn.style.display = '';
+                    return;
+                }
+                renderFinderImages(data.images || [], data.bands || [],
+                                   data.titles || []);
+            })
+            .catch(function (err) {
+                if (finderLoading) finderLoading.style.display = 'none';
+                if (finderError) {
+                    finderError.textContent = 'Network error: ' + String(err);
+                    finderError.style.display = '';
+                }
+                if (finderGenerateBtn) finderGenerateBtn.style.display = '';
+            });
+    }
+
+    function renderFinderImages(images, bands, titles) {
+        if (!finderImages) return;
+        var html = '<div style="display:flex;flex-wrap:wrap;gap:1rem;">';
+        for (var i = 0; i < images.length; i++) {
+            var label = titles[i] || bands[i] || ('Band ' + i);
+            var maxUrl = (cfg.finderMaxUrl || '').split('?')[0]
+                + '?band_idx=' + i;
+            html += '<div style="flex:1 1 400px;max-width:600px;">'
+                + '<div style="display:flex;align-items:center;'
+                + 'justify-content:space-between;margin-bottom:0.4rem;">'
+                + '<strong>' + escHtml(label) + '</strong>'
+                + '<a href="' + escHtml(maxUrl) + '" '
+                + 'class="ari-btn ari-btn--sm ari-btn--secondary" '
+                + 'title="Maximize">'
+                + '<i class="fa-solid fa-maximize"></i></a></div>'
+                + '<img src="data:image/png;base64,' + images[i] + '" '
+                + 'alt="Finder Chart – ' + escHtml(label) + '" '
+                + 'style="width:100%;border-radius:0.4rem;'
+                + 'border:1px solid var(--op-border,#d6d9de);">'
+                + '</div>';
+        }
+        html += '</div>';
+        finderImages.innerHTML = html;
+        finderImages.style.display = '';
+    }
+
+    /* ------------------------------------------------------------------
+       Debug plot generation (auto-loaded)
+    ------------------------------------------------------------------ */
+    var debugPlotKeys = ['extsmax', 'effron', 'version', 'cdt', 'tcorr_map'];
+
+    function loadDebugPlots() {
+        var url = cfg.debugPlotsApiUrl;
+        if (!url) return;
+        if (debugLoading) debugLoading.style.display = '';
+        if (debugError) debugError.style.display = 'none';
+
+        var params = '?profile_id=' + encodeURIComponent(cfg.profileId)
+            + '&objname=' + encodeURIComponent(cfg.objname);
+        fetch(url + params)
+            .then(function (r) { return r.json(); })
+            .then(function (data) {
+                if (debugLoading) debugLoading.style.display = 'none';
+                if (!data || !data.success) {
+                    if (debugError) {
+                        debugError.textContent = data && data.error
+                            ? data.error : 'Failed to generate debug plots.';
+                        debugError.style.display = '';
+                    }
+                    return;
+                }
+                renderDebugPlots(data.plots || {});
+            })
+            .catch(function (err) {
+                if (debugLoading) debugLoading.style.display = 'none';
+                if (debugError) {
+                    debugError.textContent = 'Network error: ' + String(err);
+                    debugError.style.display = '';
+                }
+            });
+    }
+
+    function renderDebugPlots(plots) {
+        for (var i = 0; i < debugPlotKeys.length; i++) {
+            var key = debugPlotKeys[i];
+            var cssKey = key.replace(/_/g, '-');
+            var plotDiv = document.getElementById('op-debug-' + cssKey + '-div');
+            var info = plots[key];
+            var loadingEl = document.getElementById('op-debug-' + cssKey + '-loading');
+            if (loadingEl) loadingEl.style.display = 'none';
+            if (!plotDiv) continue;
+            if (!info || !info.has_plot || !info.image) {
+                plotDiv.innerHTML = '<div class="at-muted-hint">'
+                    + escHtml(info && info.error ? info.error : 'No data available')
+                    + '</div>';
+                continue;
             }
+            var maxH = (key === 'cdt' || key === 'tcorr_map') ? '700px' : '400px';
+            plotDiv.innerHTML = '<img src="data:image/png;base64,' + info.image
+                + '" alt="' + escHtml(info.title || key) + '" '
+                + 'style="width:100%;max-height:' + maxH + ';object-fit:contain;'
+                + 'border-radius:0.4rem;'
+                + 'border:1px solid var(--op-border,#d6d9de);">';
         }
     }
 
@@ -984,10 +1098,17 @@
             velCard.setAttribute('data-op-section-id', 'lbl.velocity.' + sidToken);
             var velLoadingId = 'op-lbl-vel-loading-' + sidToken;
             var velPlotDivId = 'op-lbl-vel-plot-' + sidToken;
+            var lblMaxHref = '/data_portal/' + encodeURIComponent(cfg.profileId)
+                + '/object-plot-max/' + encodeURIComponent(cfg.objname)
+                + '/lbl?lbl_file=' + encodeURIComponent(flavor.rdb_filename || '');
             velCard.innerHTML =
                 '<div class="at-section-card__header">'
                 + '<span><i class="fa-solid fa-chart-line"></i> LBL Velocity Plot -- '
                 + flavorId + '</span>'
+                + '<a href="' + lblMaxHref + '" '
+                + 'class="ari-btn ari-btn--sm ari-btn--secondary op-plot-max-btn" '
+                + 'title="Maximize plot" style="margin-left:auto;">'
+                + '<i class="fa-solid fa-maximize"></i></a>'
                 + '</div>'
                 + '<div class="at-section-card__body">'
                 + '<div id="' + velLoadingId + '" class="at-muted-hint">'
@@ -1368,11 +1489,11 @@
                 renderLbl(s.lbl || {});
                 renderCcf(s.ccf || {});
                 renderTimeSeries(s.time_series || []);
-                debugMessageEl.textContent = (s.debug && s.debug.message) ? s.debug.message : 'Coming soon';
                 refreshSectionsUi();
                 // Load plots after main data is ready
                 loadObjectPlots();
                 loadLblPlots();
+                loadDebugPlots();
             })
             .catch(function (err) {
                 showError('Network error: ' + String(err));
@@ -1399,6 +1520,13 @@
         }
         if (debugCsvBtn) {
             debugCsvBtn.addEventListener('click', downloadDebugCsv);
+        }
+        if (finderGenerateBtn) {
+            if (cfg.finderChartCached) {
+                loadFinderCharts();
+            } else {
+                finderGenerateBtn.addEventListener('click', loadFinderCharts);
+            }
         }
         loadSectionPrefs().finally(function () {
             refreshSectionsUi();

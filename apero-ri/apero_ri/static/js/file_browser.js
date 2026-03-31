@@ -800,7 +800,8 @@
             + '&obs_dir='    + encodeURIComponent(r.OBS_DIR    || '')
             + '&filename='   + encodeURIComponent(r.FILENAME   || '')
             + '&kw_output='  + encodeURIComponent(r.KW_OUTPUT  || '')
-            + '&kw_fiber='   + encodeURIComponent(r.KW_FIBER   || 'AB');
+            + '&kw_fiber='   + encodeURIComponent(r.KW_FIBER   || 'AB')
+            + '&kw_run_id='  + encodeURIComponent(r.KW_RUN_ID  || '');
 
         fetch(url)
             .then(function (resp) { return resp.json(); })

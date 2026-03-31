@@ -512,6 +512,34 @@ def render_note_html(content: str) -> str:
 
 
 # =============================================================================
+# User preferences (timezone, etc.)
+# =============================================================================
+_PREFS_DEFAULT: Dict = {'timezone': 'UTC'}
+
+
+def _prefs_path(username: str) -> Path:
+    return get_user_dir(username) / 'prefs.yaml'
+
+
+def load_user_prefs(username: str) -> Dict:
+    data = _load_yaml(_prefs_path(username), dict(_PREFS_DEFAULT))
+    if not isinstance(data, dict):
+        data = dict(_PREFS_DEFAULT)
+    data.setdefault('timezone', 'UTC')
+    return data
+
+
+def save_user_prefs(username: str, data: Dict) -> None:
+    current = load_user_prefs(username)
+    current.update(data)
+    _save_yaml(_prefs_path(username), current)
+
+
+def get_user_timezone(username: str) -> str:
+    return load_user_prefs(username).get('timezone', 'UTC')
+
+
+# =============================================================================
 # Calendar
 # =============================================================================
 _CAL_DEFAULT: Dict = {'events': []}

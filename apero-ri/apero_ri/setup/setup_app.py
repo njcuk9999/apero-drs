@@ -2,19 +2,22 @@
 # -*- coding: utf-8 -*-
 """Small Flask app used for first-run APERO RI setup."""
 
+import os
 import re
 import secrets
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Dict, List
 
-from flask import (Flask, flash, redirect, render_template, request, session,
-                   url_for)
+from flask import (Flask, flash, jsonify, redirect, render_template, request,
+                   session, url_for)
 
 from apero_ri.core import auth
 from apero_ri.core import email_backend as eb
 from apero_ri.setup.bootstrap import is_setup_complete
+from apero_ri.setup.bootstrap import ensure_directory_layout
 from apero_ri.setup.bootstrap import load_setup_state
+from apero_ri.setup.bootstrap import save_bootstrap_config
 from apero_ri.setup.bootstrap import save_setup_state
 
 # =============================================================================
@@ -53,26 +56,71 @@ class SetupApp(Flask):
         self._register_context_processors()
         self._register_routes()
 
+    @staticmethod
+    def _normalize_data_dir(raw_path: str) -> Path:
+        """Normalize a local data directory path for setup use."""
+        text = str(raw_path or '').strip()
+        if not text:
+            return (Path.home() / '.ari').expanduser().resolve()
+        return Path(text).expanduser().resolve()
+
+    def _set_local_data_dir(self, new_dir: Path) -> None:
+        """Switch setup runtime to a new local data directory."""
+        self.local_data_dir = Path(new_dir).expanduser().resolve()
+        os.environ['ARI_DIR'] = str(self.local_data_dir)
+        auth.set_ari_dir(str(self.local_data_dir))
+
+    def _completed_step(self) -> int:
+        """Compute wizard completion progress for tab lock/unlock state."""
+        completed = 1
+        email_cfg = eb.load_email_config()
+        if self._email_configured(email_cfg):
+            completed = 2
+        state = load_setup_state(self.local_data_dir)
+        if str(state.get('admin_username', '')).strip():
+            completed = 3
+        if bool(state.get('completed', False)):
+            completed = 4
+        return completed
+
     def _register_context_processors(self) -> None:
         @self.context_processor
         def inject_setup_context() -> Dict[str, object]:
             email_cfg = eb.load_email_config()
             state = load_setup_state(self.local_data_dir)
+            active_routes = {
+                'setup_welcome',
+                'setup_email',
+                'setup_admin',
+                'setup_complete',
+            }
+            active_step = (
+                request.endpoint
+                if request.endpoint in active_routes
+                else 'setup_welcome'
+            )
             return {
                 'local_data_dir': str(self.local_data_dir),
                 'provider_defaults': eb.PROVIDER_DEFAULTS,
                 'setup_email_configured': self._email_configured(email_cfg),
                 'setup_complete': bool(state.get('completed', False)),
                 'setup_admin_username': state.get('admin_username', ''),
+                'active_step': active_step,
+                'completed_step': self._completed_step(),
+                'test_mode': self.test_mode,
             }
 
     def _register_routes(self) -> None:
         self.add_url_rule('/', 'setup_index', self._index)
+        self.add_url_rule('/welcome', 'setup_welcome', self._welcome_step,
+                          methods=['GET', 'POST'])
         self.add_url_rule('/email', 'setup_email', self._email_step,
                           methods=['GET', 'POST'])
         self.add_url_rule('/admin', 'setup_admin', self._admin_step,
                           methods=['GET', 'POST'])
         self.add_url_rule('/complete', 'setup_complete', self._complete_step)
+        self.add_url_rule('/api/browse-dirs', 'setup_browse_dirs',
+                          self._browse_dirs)
 
     @staticmethod
     def _split_list(raw_value: str) -> List[str]:
@@ -138,10 +186,74 @@ class SetupApp(Flask):
     def _index(self):
         if is_setup_complete(self.local_data_dir):
             return redirect(url_for('setup_complete'))
-        email_cfg = eb.load_email_config()
-        if not self._email_configured(email_cfg):
-            return redirect(url_for('setup_email'))
-        return redirect(url_for('setup_admin'))
+        return redirect(url_for('setup_welcome'))
+
+    def _welcome_step(self):
+        if request.method == 'POST':
+            target_dir = self._normalize_data_dir(
+                request.form.get('local_data_dir', '')
+            )
+            try:
+                if self.test_mode:
+                    flash('[TEST MODE] Local data directory accepted but not created.',
+                          'success')
+                else:
+                    ensure_directory_layout(target_dir)
+                    save_bootstrap_config(str(target_dir))
+                    flash(f'Local data directory set to: {target_dir}',
+                          'success')
+                self._set_local_data_dir(target_dir)
+                session.pop('setup_pending_admin', None)
+                return redirect(url_for('setup_email'))
+            except Exception as exc:
+                flash(f'Could not use local data directory: {exc}', 'error')
+                return render_template(
+                    'setup/welcome.html',
+                    page_title='Setup Welcome',
+                    selected_dir=str(target_dir),
+                )
+
+        return render_template(
+            'setup/welcome.html',
+            page_title='Setup Welcome',
+            selected_dir=str(self.local_data_dir),
+        )
+
+    def _browse_dirs(self):
+        """Return a list of sub-directories for server-side path browsing."""
+        raw_path = str(request.args.get('path', '') or '').strip()
+        if not raw_path:
+            current = self.local_data_dir
+        else:
+            try:
+                current = Path(raw_path).expanduser().resolve()
+            except Exception:
+                current = self.local_data_dir
+
+        if not current.exists():
+            fallback = current.parent if current.parent.exists() else Path.home()
+            current = fallback
+        if current.exists() and not current.is_dir():
+            current = current.parent
+
+        dirs = []
+        try:
+            for child in sorted(current.iterdir(),
+                                key=lambda item: item.name.lower()):
+                if child.is_dir():
+                    dirs.append({
+                        'name': child.name,
+                        'path': str(child),
+                    })
+        except Exception:
+            dirs = []
+
+        return jsonify(
+            success=True,
+            path=str(current),
+            parent=str(current.parent),
+            dirs=dirs[:500],
+        )
 
     def _email_step(self):
         email_cfg = eb.load_email_config()

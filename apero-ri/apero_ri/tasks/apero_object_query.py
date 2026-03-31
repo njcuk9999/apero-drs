@@ -209,6 +209,26 @@ class AperoObjectQueryTask(apero_async.AperoAsyncTask):
                         f'\n- Warning: failed to persist database-update '
                         f'fingerprint for {apero_profile}: {exc}\n'
                     )
+                # Invalidate stale plot cache for this profile
+                try:
+                    from apero_ri.core.plot_cache import (
+                        load_cache_config, resolve_cache_root,
+                        invalidate_profile,
+                    )
+                    local_data = aparams.get('LOCAL_DATA_DIR', str(ARI_DIR))
+                    cache_cfg = load_cache_config(Path(local_data))
+                    if cache_cfg.get('enabled'):
+                        cache_root = resolve_cache_root(
+                            Path(local_data), cache_cfg)
+                        removed = invalidate_profile(
+                            cache_root, instrument, apero_profile)
+                        if removed:
+                            self.info += (
+                                f'\n- Invalidated {removed} cached plot '
+                                f'files for {apero_profile}\n'
+                            )
+                except Exception:
+                    pass
             # update the last run time
             self.last_run = datetime.now(timezone.utc).isoformat()
     

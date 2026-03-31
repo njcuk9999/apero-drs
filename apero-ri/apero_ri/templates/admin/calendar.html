@@ -49,6 +49,10 @@
             <input type="time" id="admin-cal-modal-time">
         </div>
         <div class="ari-form-group">
+            <label>Timezone</label>
+            <select id="admin-cal-modal-timezone" class="ari-ud-select"></select>
+        </div>
+        <div class="ari-form-group">
             <label>Recurrence</label>
             <select id="admin-cal-modal-recurrence">
                 <option value="none">None</option>
@@ -95,5 +99,6 @@ window.ARI_ADMIN_CAL = {
     canManage: {{ can_manage|tojson }},
 };
 </script>
+<script src="{{ url_for('static', filename='js/tz_common.js') }}"></script>
 <script src="{{ url_for('static', filename='js/admin_calendar.js') }}"></script>
 {% endblock %}

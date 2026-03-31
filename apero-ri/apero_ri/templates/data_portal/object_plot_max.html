@@ -6,6 +6,10 @@
     <title>{{ profile.profile_id }} – {{ objname }}: {{ display_name }}</title>
     <link rel="stylesheet" href="https://cdn.bokeh.org/bokeh/release/bokeh-3.8.2.min.css" type="text/css">
     <script src="https://cdn.bokeh.org/bokeh/release/bokeh-3.8.2.min.js"></script>
+        <link rel="stylesheet"
+            href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
+            integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA=="
+            crossorigin="anonymous" referrerpolicy="no-referrer" />
     <style>
     :root {
         --op-border: #d6d9de;
@@ -78,6 +82,9 @@
         color: #aab4bf;
     }
     .op-max-close {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
         border: 1px solid #555;
         background: transparent;
         color: #e8eaed;
@@ -89,6 +96,10 @@
         white-space: nowrap;
         flex-shrink: 0;
     }
+    .op-max-close i {
+        font-size: 0.95rem;
+        line-height: 1;
+    }
     .op-max-close:hover {
         border-color: #4dabf7;
         color: #4dabf7;
@@ -99,7 +110,7 @@
         display: flex;
         flex-direction: column;
         min-height: 0;
-        overflow: hidden;
+        overflow: auto;
     }
     .op-max-plot {
         flex: 1;
@@ -120,6 +131,36 @@
     }
     .op-max-plot .bk-root > div,
     .op-max-plot [data-root-id] > div {
+        width: 100% !important;
+        height: 100% !important;
+    }
+    /* Two-row layout (spec maximize): each row ~48 % of viewport via flex */
+    .op-max-rows {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        gap: 0.6rem;
+        min-height: 0;
+    }
+    .op-max-row {
+        flex: 1;
+        min-height: 0;
+        border: 1px solid var(--op-border);
+        border-radius: 0.5rem;
+        background: #fff;
+        padding: 0.3rem;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+    }
+    .op-max-row .bk-root,
+    .op-max-row [data-root-id] {
+        width: 100% !important;
+        flex: 1;
+        min-height: 0;
+    }
+    .op-max-row .bk-root > div,
+    .op-max-row [data-root-id] > div {
         width: 100% !important;
         height: 100% !important;
     }
@@ -145,13 +186,21 @@
             <span class="op-max-title">{{ profile.profile_id }}: {{ objname }} &mdash; {{ display_name }}</span>
         </div>
         <button class="op-max-close" type="button" onclick="closeAndReturn()">
-            &larr; Back
+            <i class="fa-solid fa-arrow-left-long" aria-hidden="true"></i>
+            <span>Back</span>
         </button>
     </header>
 
     <main class="op-max-main">
         {% if plot_payload.has_plot %}
+        {% if plot_payload.two_rows %}
+        <div class="op-max-rows">
+            <div class="op-max-row">{{ plot_payload.div | safe }}</div>
+            <div class="op-max-row">{{ plot_payload.div2 | safe }}</div>
+        </div>
+        {% else %}
         <div class="op-max-plot">{{ plot_payload.div | safe }}</div>
+        {% endif %}
         {{ plot_payload.script | safe }}
         {% else %}
         <div class="op-max-empty">{{ plot_payload.message or 'No data available for this plot.' }}</div>
@@ -169,7 +218,8 @@
     /* Switch Bokeh plots to stretch_both so they fill the viewport.
        Bokeh's components() inline script may finish after 'load', so
        we poll until at least one document root is available.         */
-    (function applyStretchBoth() {
+    (function applyStretchBoth(attempts) {
+        if (typeof attempts === 'undefined') attempts = 0;
         if (typeof Bokeh !== 'undefined' && Bokeh.documents && Bokeh.documents.length > 0) {
             for (var d = 0; d < Bokeh.documents.length; d++) {
                 var roots = Bokeh.documents[d].roots();
@@ -178,8 +228,8 @@
                 }
             }
             window.dispatchEvent(new Event('resize'));
-        } else {
-            setTimeout(applyStretchBoth, 100);
+        } else if (attempts < 50) {
+            setTimeout(function () { applyStretchBoth(attempts + 1); }, 100);
         }
     })();
     </script>
