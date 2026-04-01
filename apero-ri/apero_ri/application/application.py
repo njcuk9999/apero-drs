@@ -148,9 +148,12 @@ class ARIApp(Flask):
         self._admin_health_cache = {}
         self._admin_health_cache_ttl = timedelta(hours=1)
         self._admin_health_cache_lock = threading.Lock()
+        ari_root = Path(self.args.data_dir or str(Path.home() / '.ari'))
         self._admin_health_cache_file = (
-            Path(self.args.data_dir or str(Path.home() / '.ari'))
-            / 'admin' / 'health_cache.json'
+            ari_root / 'admin' / 'health' / 'health_cache.json'
+        )
+        self._admin_health_cache_legacy_file = (
+            ari_root / 'admin' / 'health_cache.json'
         )
         self._load_health_cache_from_disk()
         # Configure session lifetime for "remember me"
@@ -494,6 +497,9 @@ class ARIApp(Flask):
         self.add_url_rule('/api/admin/sshfs/mounts/status',
                   'api_admin_sshfs_mounts_status',
                   self._api_admin_sshfs_mounts_status)
+        self.add_url_rule('/api/admin/sshfs/mounts/log/<mount_name>',
+                  'api_admin_sshfs_mounts_log',
+                  self._api_admin_sshfs_mounts_log)
         # Interactive SSH terminal routes
         self.add_url_rule('/api/admin/sshfs/interactive/start-test',
                   'api_admin_sshfs_interactive_start_test',
@@ -642,9 +648,31 @@ class ARIApp(Flask):
                   'api_apero_profiles_test_db',
                   self._api_apero_profiles_test_db,
                   methods=['POST'])
+        self.add_url_rule('/api/admin/apero-profiles/list-tables',
+              'api_apero_profiles_list_tables',
+              self._api_apero_profiles_list_tables,
+              methods=['POST'])
         self.add_url_rule('/api/admin/apero-profiles/test-tables',
                   'api_apero_profiles_test_tables',
                   self._api_apero_profiles_test_tables,
+                  methods=['POST'])
+
+        # Interactive SSH tunnel for APERO profile DB connections
+        self.add_url_rule('/api/admin/apero-profiles/ssh-tunnel/start',
+                  'api_apero_profiles_ssh_tunnel_start',
+                  self._api_apero_profiles_ssh_tunnel_start,
+                  methods=['POST'])
+        self.add_url_rule('/api/admin/apero-profiles/ssh-tunnel/poll',
+                  'api_apero_profiles_ssh_tunnel_poll',
+                  self._api_apero_profiles_ssh_tunnel_poll,
+                  methods=['POST'])
+        self.add_url_rule('/api/admin/apero-profiles/ssh-tunnel/send',
+                  'api_apero_profiles_ssh_tunnel_send',
+                  self._api_apero_profiles_ssh_tunnel_send,
+                  methods=['POST'])
+        self.add_url_rule('/api/admin/apero-profiles/ssh-tunnel/close',
+                  'api_apero_profiles_ssh_tunnel_close',
+                  self._api_apero_profiles_ssh_tunnel_close,
                   methods=['POST'])
 
         # Admin user DB access API routes
@@ -707,6 +735,13 @@ class ARIApp(Flask):
         self.add_url_rule('/api/admin/async-tasks/status',
                   'api_async_tasks_status',
                   self._api_async_tasks_status)
+        self.add_url_rule('/api/admin/async-tasks/task-log',
+                  'api_async_tasks_task_log',
+                  self._api_async_tasks_task_log)
+        self.add_url_rule('/api/admin/async-tasks/cancel-task',
+                  'api_async_tasks_cancel_task',
+                  self._api_async_tasks_cancel_task,
+                  methods=['POST'])
         self.add_url_rule('/api/admin/async-tasks/read-file',
                   'api_async_tasks_read_file',
                   self._api_async_tasks_read_file)
@@ -1959,9 +1994,13 @@ class ARIApp(Flask):
     def _load_health_cache_from_disk(self) -> None:
         """Populate in-memory admin health cache from the persisted disk file."""
         try:
-            if not self._admin_health_cache_file.exists():
+            cache_file = self._admin_health_cache_file
+            if (not cache_file.exists()
+                    and self._admin_health_cache_legacy_file.exists()):
+                cache_file = self._admin_health_cache_legacy_file
+            if not cache_file.exists():
                 return
-            with open(self._admin_health_cache_file, 'r',
+            with open(cache_file, 'r',
                       encoding='utf-8') as fh:
                 raw = json.load(fh)
             if not isinstance(raw, dict):
@@ -2341,8 +2380,12 @@ class ARIApp(Flask):
                             error = str(runtime.get('error', '') or '').strip()
                         else:
                             status = str(task_cfg.get('last_status', '') or '')
-                            error = (str(task_cfg.get('error', '') or '')
-                                     .strip())
+                            persisted = task_runner.get_persisted_task_info_error(task_id)
+                            error = str(
+                                persisted.get('error', '')
+                                or task_cfg.get('error', '')
+                                or ''
+                            ).strip()
 
                         if status == 'failed' or error:
                             label = str(
@@ -3172,8 +3215,9 @@ class ARIApp(Flask):
         """Send verification code email via configured email backend.
 
         Returns None on success, error string on failure.
-        Configuration is read from {ARI_DIR}/admin/email.yaml.
-        Falls back to log mode (writes to email_log.txt) when unconfigured.
+        Configuration is read from {ARI_DIR}/admin/email/email.yaml.
+        Falls back to log mode (writes to admin/email/email_log.txt)
+        when unconfigured.
         """
         return eb.send_verification_email(recipient_email, code, purpose)
 
@@ -5295,7 +5339,12 @@ class ARIApp(Flask):
             entries = [e for e in entries if e.get('profile_id') == profile_id]
 
         profile_cfgs = self._build_profile_cfgs(user_info)
-        summary = bk.basket_summary(username, profile_cfgs, accessible_run_ids)
+        summary = bk.basket_summary(
+            username,
+            profile_cfgs,
+            accessible_run_ids,
+            profile_id=profile_id,
+        )
 
         return jsonify(success=True, entries=entries, summary=summary,
                        total=len(entries))
@@ -5311,10 +5360,16 @@ class ARIApp(Flask):
             return err
 
         username = user_info['username']
+        profile_id = request.args.get('profile_id', '').strip() or None
         accessible_run_ids = self._all_accessible_run_ids(user_info)
         profile_cfgs = self._build_profile_cfgs(user_info)
         bk.cleanup_expired_downloads(username)
-        summary = bk.basket_summary(username, profile_cfgs, accessible_run_ids)
+        summary = bk.basket_summary(
+            username,
+            profile_cfgs,
+            accessible_run_ids,
+            profile_id=profile_id,
+        )
         return jsonify(success=True, **summary)
 
     # -----------------------------------------------------------------
@@ -7649,7 +7704,28 @@ class ARIApp(Flask):
 
     def _build_user_db_access_health_report(self, user_info: dict) -> dict:
         """Build detailed health report for User DB Access rules."""
-        profiles = get_accessible_profiles(user_info, self.ari_groups)
+        if user_info is None:
+            # Background / startup refresh has no user context.  Load all
+            # profiles directly so the health check isn't limited to the
+            # public-only set (which usually finds zero configured tables
+            # and emits a spurious warning).
+            from apero_ri.core.auth import load_apero_profiles, _hydrate_profile_data
+            all_profiles_data = load_apero_profiles(hydrate=False)
+            profiles = []
+            for instrument, instr_profiles in (all_profiles_data or {}).items():
+                if not isinstance(instr_profiles, dict):
+                    continue
+                for profile_id, profile_data in instr_profiles.items():
+                    if not isinstance(profile_data, dict):
+                        continue
+                    hydrated = _hydrate_profile_data(profile_data, instrument)
+                    profiles.append({
+                        'instrument': instrument,
+                        'profile_id': profile_id,
+                        'data': hydrated,
+                    })
+        else:
+            profiles = get_accessible_profiles(user_info, self.ari_groups)
         db_access = load_db_access()
         table_key_map = self._db_access_table_keys()
 
@@ -8528,6 +8604,144 @@ class ARIApp(Flask):
         )
         return jsonify(success=True, **result)
 
+    def _api_apero_profiles_list_tables(self):
+        """List available tables in the selected APERO profile database."""
+        user_info, perms = self._require_apero_profile_perm()
+        if not user_info:
+            return jsonify(success=False, error='Unauthorized'), 401
+
+        data = request.get_json()
+        if not data:
+            return jsonify(success=False, error='Missing data'), 400
+
+        mode = data.get('DATABASE_MODE', '').strip()
+        host = data.get('DATABASE_HOST', '').strip()
+        port = str(data.get('DATABASE_PORT', '') or '').strip()
+        username = data.get('DATABASE_USERNAME', '').strip()
+        password = data.get('DATABASE_PASSWORD', '')
+        db_name = data.get('DATABASE_NAME', '').strip()
+        use_ssh_tunnel = data.get('DATABASE_USE_SSH_TUNNEL', False)
+        ssh_config_host = str(
+            data.get('DATABASE_SSH_CONFIG_HOST', '') or '').strip()
+        ssh_local_port = str(
+            data.get('DATABASE_SSH_LOCAL_PORT', '') or '').strip()
+        ssh_remote_port = str(
+            data.get('DATABASE_SSH_REMOTE_PORT', '') or '').strip()
+
+        if not all([mode, host, username, db_name]):
+            return jsonify(success=False,
+                           error='All database fields are required'), 400
+
+        db_params = {
+            'DATABASE_MODE': mode,
+            'DATABASE_HOST': host,
+            'DATABASE_PORT': port,
+            'DATABASE_USER': username,
+            'DATABASE_PASSWORD': password,
+            'DATABASE_NAME': db_name,
+            'DATABASE_USE_SSH_TUNNEL': use_ssh_tunnel,
+            'DATABASE_SSH_CONFIG_HOST': ssh_config_host,
+            'DATABASE_SSH_LOCAL_PORT': ssh_local_port,
+            'DATABASE_SSH_REMOTE_PORT': ssh_remote_port,
+            'LOCAL_DATA_DIR': str(self._resolve_local_data_dir()),
+        }
+
+        sql_db_name = str(db_name).replace("'", "''")
+        query = (
+            'SELECT table_name '
+            'FROM information_schema.tables '
+            f"WHERE table_schema = '{sql_db_name}' "
+            'ORDER BY table_name'
+        )
+
+        try:
+            rows = apero_async.database_query(db_params, query)
+            tables = sorted({
+                str(row.get('table_name')).strip()
+                for row in (rows or [])
+                if isinstance(row, dict)
+                and str(row.get('table_name') or '').strip()
+            })
+            return jsonify(success=True, valid=True, tables=tables)
+        except Exception as exc:
+            return jsonify(success=True, valid=False,
+                           error=str(exc), tables=[])
+
+    # -----------------------------------------------------------------
+    # Interactive SSH tunnel for APERO profile DB connections
+    # -----------------------------------------------------------------
+    def _api_apero_profiles_ssh_tunnel_start(self):
+        """Start an interactive SSH tunnel session for DB access."""
+        user_info, perms = self._require_apero_profile_perm()
+        if not user_info:
+            return jsonify(ok=False, error='Unauthorized'), 401
+
+        from apero_ri.core.sshfs_interactive import start_interactive_ssh_tunnel
+
+        body = request.get_json(silent=True) or {}
+        ssh_config_host = str(body.get('ssh_config_host', '')).strip()
+        local_port = body.get('local_port', 0)
+        remote_host = str(body.get('remote_host', '')).strip()
+        remote_port = body.get('remote_port', 3306)
+
+        try:
+            local_port = int(local_port)
+            remote_port = int(remote_port)
+        except (ValueError, TypeError):
+            return jsonify(ok=False, error='Invalid port number'), 400
+
+        result = start_interactive_ssh_tunnel(
+            ssh_config_host=ssh_config_host,
+            local_port=local_port,
+            remote_host=remote_host,
+            remote_port=remote_port,
+            local_data_dir=str(self._resolve_local_data_dir()),
+        )
+        return jsonify(**result)
+
+    def _api_apero_profiles_ssh_tunnel_poll(self):
+        """Poll output from an interactive SSH tunnel session."""
+        user_info, perms = self._require_apero_profile_perm()
+        if not user_info:
+            return jsonify(ok=False, error='Unauthorized'), 401
+
+        from apero_ri.core.sshfs_interactive import poll_session
+
+        body = request.get_json(silent=True) or {}
+        token = str(body.get('token', '')).strip()
+        if not token:
+            return jsonify(ok=False, error='token required'), 400
+        return jsonify(**poll_session(token))
+
+    def _api_apero_profiles_ssh_tunnel_send(self):
+        """Send input to an interactive SSH tunnel session."""
+        user_info, perms = self._require_apero_profile_perm()
+        if not user_info:
+            return jsonify(ok=False, error='Unauthorized'), 401
+
+        from apero_ri.core.sshfs_interactive import send_input
+
+        body = request.get_json(silent=True) or {}
+        token = str(body.get('token', '')).strip()
+        data = str(body.get('data', ''))
+        if not token:
+            return jsonify(ok=False, error='token required'), 400
+        return jsonify(**send_input(token, data))
+
+    def _api_apero_profiles_ssh_tunnel_close(self):
+        """Close and clean up an interactive SSH tunnel session."""
+        user_info, perms = self._require_apero_profile_perm()
+        if not user_info:
+            return jsonify(ok=False, error='Unauthorized'), 401
+
+        from apero_ri.core.sshfs_interactive import close_session
+
+        body = request.get_json(silent=True) or {}
+        token = str(body.get('token', '')).strip()
+        if not token:
+            return jsonify(ok=False, error='token required'), 400
+        return jsonify(**close_session(token))
+
     def _api_apero_profiles_test_tables(self):
         """Test table names and fetch available fibers / DPRTYPE options."""
         user_info, perms = self._require_apero_profile_perm()
@@ -8761,20 +8975,59 @@ class ARIApp(Flask):
                 merged_cfg['daily_copies'] = max(0, daily_copies)
                 merged_cfg['weekly_copies'] = max(0, weekly_copies)
 
-            for field in ['last_run', 'run_count', 'info', 'output_files',
-                          'error', 'last_status', 'cooldown_until']:
+            if bool(task_module.MULTI_PROCESS.get(task_key, False)):
+                try:
+                    ncores = int(task_cfg.get('ncores', 1) or 1)
+                except (TypeError, ValueError):
+                    ncores = 1
+                merged_cfg['ncores'] = max(1, ncores)
+                backend = str(task_cfg.get('mp_backend', 'threads')
+                              or 'threads').strip().lower()
+                start_method = str(task_cfg.get('mp_start_method', 'default')
+                                   or 'default').strip().lower()
+                merged_cfg['mp_backend'] = (
+                    backend if backend in ['threads', 'processes']
+                    else 'threads'
+                )
+                merged_cfg['mp_start_method'] = (
+                    start_method if start_method in
+                    ['default', 'spawn', 'fork', 'forkserver']
+                    else 'default'
+                )
+            else:
+                # Preserve previously saved multiprocessing fields even when
+                # task metadata is temporarily unavailable (e.g. import error).
+                if any(k in task_cfg for k in
+                       ['ncores', 'mp_backend', 'mp_start_method']):
+                    try:
+                        ncores = int(task_cfg.get('ncores', 1) or 1)
+                    except (TypeError, ValueError):
+                        ncores = 1
+                    merged_cfg['ncores'] = max(1, ncores)
+                    backend = str(task_cfg.get('mp_backend', 'threads')
+                                  or 'threads').strip().lower()
+                    start_method = str(
+                        task_cfg.get('mp_start_method', 'default')
+                        or 'default'
+                    ).strip().lower()
+                    merged_cfg['mp_backend'] = (
+                        backend if backend in ['threads', 'processes']
+                        else 'threads'
+                    )
+                    merged_cfg['mp_start_method'] = (
+                        start_method if start_method in
+                        ['default', 'spawn', 'fork', 'forkserver']
+                        else 'default'
+                    )
+
+            for field in ['last_run', 'run_count', 'output_files',
+                          'last_status', 'cooldown_until']:
                 if field in task_cfg:
                     merged_cfg[field] = task_cfg.get(field)
 
             import_error = str(import_errors.get(task_key, '')).strip()
             if import_error:
                 merged_cfg['last_status'] = 'failed'
-                merged_cfg['error'] = import_error
-                merged_cfg['info'] = (
-                    '## Task Import Error\n\n'
-                    f'**Task key**: `{task_key}`\n\n'
-                    f'```\n{import_error}\n```\n'
-                )
 
             merged.append(merged_cfg)
 
@@ -8801,22 +9054,38 @@ class ARIApp(Flask):
             save_async_tasks(all_tasks)
 
         result = []
+        import_errors = getattr(task_module, 'IMPORT_ERRORS', {}) or {}
         for tc in inst_tasks:
             entry = dict(tc)
             tid = tc.get('id', '')
             rt = task_runner.get_task_status(tid) if tid else {'found': False}
             if not rt.get('found'):
+                persisted = task_runner.get_persisted_task_info_error(tid)
+                import_error = str(import_errors.get(tc.get('task_key', ''), '')).strip()
+                info_text = persisted.get('info', '') or str(tc.get('info', '') or '')
+                err_text = persisted.get('error', '') or str(tc.get('error', '') or '')
+                if import_error:
+                    err_text = import_error
+                    if not info_text:
+                        info_text = (
+                            '## Task Import Error\n\n'
+                            f'**Task key**: `{tc.get("task_key", "")}`\n\n'
+                            f'```\n{import_error}\n```\n'
+                        )
                 rt = {
                     'found': False,
                     'status': tc.get('last_status', 'not_started'),
                     'progress': 0,
-                    'info': tc.get('info', ''),
+                    'subprogress': 0,
+                    'use_subprocess': bool(task_module.USE_SUBPROCESS.get(
+                        tc.get('task_key', ''), False)),
+                    'info': info_text,
                     'last_run': tc.get('last_run', 'Never'),
                     'output_files': tc.get('output_files', []),
                     'run_params': tc.get('last_run_params', {}),
                     'is_current': False,
                     'is_queued': False,
-                    'error': tc.get('error', ''),
+                    'error': err_text,
                     'run_count': tc.get('run_count', 0),
                 }
             entry['runtime'] = rt
@@ -8833,6 +9102,8 @@ class ARIApp(Flask):
         if not user_info:
             return jsonify(success=False, error='Unauthorized'), 401
 
+        from apero_ri import tasks as task_module
+        import_errors = getattr(task_module, 'IMPORT_ERRORS', {}) or {}
         all_tasks = load_async_tasks()
         global_scope = '__GLOBAL__'
         global_tasks, changed = self._merge_async_task_catalog(
@@ -8846,17 +9117,32 @@ class ARIApp(Flask):
             tid = tc.get('id', '')
             rt = task_runner.get_task_status(tid) if tid else {'found': False}
             if not rt.get('found'):
+                persisted = task_runner.get_persisted_task_info_error(tid)
+                import_error = str(import_errors.get(tc.get('task_key', ''), '')).strip()
+                info_text = persisted.get('info', '') or str(tc.get('info', '') or '')
+                err_text = persisted.get('error', '') or str(tc.get('error', '') or '')
+                if import_error:
+                    err_text = import_error
+                    if not info_text:
+                        info_text = (
+                            '## Task Import Error\n\n'
+                            f'**Task key**: `{tc.get("task_key", "")}`\n\n'
+                            f'```\n{import_error}\n```\n'
+                        )
                 rt = {
                     'found': False,
                     'status': tc.get('last_status', 'not_started'),
                     'progress': 0,
-                    'info': tc.get('info', ''),
+                    'subprogress': 0,
+                    'use_subprocess': bool(task_module.USE_SUBPROCESS.get(
+                        tc.get('task_key', ''), False)),
+                    'info': info_text,
                     'last_run': tc.get('last_run', 'Never'),
                     'output_files': tc.get('output_files', []),
                     'run_params': tc.get('last_run_params', {}),
                     'is_current': False,
                     'is_queued': False,
-                    'error': tc.get('error', ''),
+                    'error': err_text,
                     'run_count': tc.get('run_count', 0),
                 }
             entry['runtime'] = rt
@@ -8879,6 +9165,7 @@ class ARIApp(Flask):
             return jsonify(success=False,
                            error=f'Failed to import task catalog:\n{traceback.format_exc()}'), 200
         opts = []
+        max_cores = max(int(os.cpu_count() or 1), 1)
         for key, cls in task_module.TASK_LIST.items():
             try:
                 inst = cls()
@@ -8894,8 +9181,20 @@ class ARIApp(Flask):
                 'name': name,
                 'description': description,
                 'type': task_type,
+                'multi_process': bool(
+                    task_module.MULTI_PROCESS.get(key, False)
+                ),
             })
-        return jsonify(success=True, tasks=opts)
+        return jsonify(
+            success=True,
+            tasks=opts,
+            multiprocessing={
+                'max_cores': max_cores,
+                'recommended_max_cores': max(max_cores - 1, 1),
+                'backends': ['threads', 'processes'],
+                'start_methods': ['default', 'spawn', 'fork', 'forkserver'],
+            },
+        )
 
     def _api_async_tasks_save(self):
         """Update an async task configuration from the fixed task catalog."""
@@ -8914,6 +9213,15 @@ class ARIApp(Flask):
         active = bool(data.get('active', True))
         daily_copies = int(data.get('daily_copies', 0) or 0)
         weekly_copies = int(data.get('weekly_copies', 0) or 0)
+        has_ncores = 'ncores' in data
+        has_mp_backend = 'mp_backend' in data
+        has_mp_start_method = (
+            'mp_start_method' in data or 'mp_start_methd' in data
+        )
+
+        ncores = None
+        mp_backend = None
+        mp_start_method = None
 
         if not instrument or not task_id:
             return jsonify(success=False, error='Missing fields'), 400
@@ -8922,9 +9230,38 @@ class ARIApp(Flask):
         if daily_copies < 0 or weekly_copies < 0:
             return jsonify(success=False,
                            error='Backup copy counts must be non-negative'), 400
+        if has_ncores:
+            try:
+                ncores = int(data.get('ncores'))
+            except (TypeError, ValueError):
+                return jsonify(success=False,
+                               error='NCORES must be an integer'), 400
+            if ncores <= 0:
+                return jsonify(success=False, error='NCORES must be >= 1'), 400
+
+        if has_mp_backend:
+            mp_backend = str(data.get('mp_backend', '') or '').strip().lower()
+            if mp_backend not in ['threads', 'processes']:
+                return jsonify(success=False,
+                               error='mp_backend must be threads or processes'), 400
+
+        if has_mp_start_method:
+            mp_start_method_raw = data.get(
+                'mp_start_method', data.get('mp_start_methd', '')
+            )
+            mp_start_method = str(
+                mp_start_method_raw or ''
+            ).strip().lower()
+            if mp_start_method not in ['default', 'spawn', 'fork', 'forkserver']:
+                return jsonify(success=False,
+                               error='Invalid mp_start_method'), 400
 
         all_tasks = load_async_tasks()
         inst_tasks, _ = self._merge_async_task_catalog(instrument, all_tasks)
+        from apero_ri import tasks as task_module
+        max_cores = max(int(os.cpu_count() or 1), 1)
+        recommended_max_cores = max(max_cores - 1, 1)
+        warnings = []
 
         found = False
         for t in inst_tasks:
@@ -8942,6 +9279,57 @@ class ARIApp(Flask):
             if task_key == 'ARI_LOCAL_DATA_BACKUP':
                 t['daily_copies'] = daily_copies
                 t['weekly_copies'] = weekly_copies
+
+            supports_mp = bool(task_module.MULTI_PROCESS.get(task_key, False))
+            preserve_mp = (
+                supports_mp
+                or any(k in data for k in
+                       ['ncores', 'mp_backend', 'mp_start_method',
+                        'mp_start_methd'])
+                or any(k in t for k in
+                       ['ncores', 'mp_backend', 'mp_start_method'])
+            )
+            if preserve_mp:
+                existing_ncores = t.get('ncores', 1)
+                existing_backend = t.get('mp_backend', 'threads')
+                existing_start_method = t.get('mp_start_method', 'default')
+
+                try:
+                    resolved_ncores = int(
+                        ncores if ncores is not None else existing_ncores
+                    )
+                except (TypeError, ValueError):
+                    resolved_ncores = 1
+                resolved_ncores = max(1, resolved_ncores)
+
+                resolved_backend = str(
+                    mp_backend if mp_backend is not None else existing_backend
+                ).strip().lower()
+                if resolved_backend not in ['threads', 'processes']:
+                    resolved_backend = 'threads'
+
+                resolved_start_method = str(
+                    mp_start_method
+                    if mp_start_method is not None
+                    else existing_start_method
+                ).strip().lower()
+                if resolved_start_method not in [
+                    'default', 'spawn', 'fork', 'forkserver'
+                ]:
+                    resolved_start_method = 'default'
+
+                t['ncores'] = resolved_ncores
+                t['mp_backend'] = resolved_backend
+                t['mp_start_method'] = resolved_start_method
+                if resolved_ncores > recommended_max_cores:
+                    warnings.append(
+                        f'NCORES={resolved_ncores} is above recommended max '
+                        f'({recommended_max_cores}) for this server.'
+                    )
+            else:
+                t.pop('ncores', None)
+                t.pop('mp_backend', None)
+                t.pop('mp_start_method', None)
             found = True
             break
 
@@ -8951,7 +9339,7 @@ class ARIApp(Flask):
         all_tasks[instrument] = inst_tasks
         save_async_tasks(all_tasks)
         self._refresh_admin_health_after_change(user_info, perms)
-        return jsonify(success=True, id=task_id)
+        return jsonify(success=True, id=task_id, warnings=warnings)
 
     def _api_async_tasks_delete(self):
         """Delete an async task configuration."""
@@ -9088,6 +9476,9 @@ class ARIApp(Flask):
         )
         try:
             instance = task_runner.hydrate_runtime_state(task_cls(), task_cfg)
+            instance.USE_SUBPROCESS = bool(
+                task_module.USE_SUBPROCESS.get(task_key, False)
+            )
         except Exception:
             task_cfg['last_status'] = 'failed'
             task_cfg['error'] = traceback.format_exc()
@@ -9157,6 +9548,9 @@ class ARIApp(Flask):
                 instance = task_runner.hydrate_runtime_state(
                     task_cls(),
                     task_cfg)
+                instance.USE_SUBPROCESS = bool(
+                    task_module.USE_SUBPROCESS.get(task_key, False)
+                )
             except Exception:
                 task_cfg['last_status'] = 'failed'
                 task_cfg['error'] = traceback.format_exc()
@@ -9182,6 +9576,20 @@ class ARIApp(Flask):
         instrument = str(data.get('instrument', '') or '').strip() or None
         result = task_runner.stop_all_with_cooldown(instrument=instrument)
         return jsonify(success=True, **result)
+
+    def _api_async_tasks_cancel_task(self):
+        """Cancel a single queued or running task by task_id."""
+        user_info, perms = self._require_async_tasks_perm()
+        if not user_info:
+            return jsonify(success=False, error='Unauthorized'), 401
+        data = request.get_json(silent=True) or {}
+        task_id = str(data.get('task_id', '') or '').strip()
+        if not task_id:
+            return jsonify(success=False, error='task_id is required'), 400
+        result = task_runner.cancel_task(task_id)
+        if not result.get('success'):
+            return jsonify(**result), 404
+        return jsonify(**result)
 
     def _api_async_tasks_clear_history(self):
         """Clear recent async task history entries."""
@@ -9227,26 +9635,64 @@ class ARIApp(Flask):
                     task_cfg_map[_tid] = tc
 
         statuses: dict = {}
+        from apero_ri import tasks as task_module
         for tid in task_ids:
             rt = task_runner.get_task_status(tid)
             if not rt.get('found'):
                 tc = task_cfg_map.get(tid, {})
+                task_key = str(tc.get('task_key', '') or '')
+                persisted = task_runner.get_persisted_task_info_error(tid)
+                import_error = str(task_module.IMPORT_ERRORS.get(task_key, '') or '').strip()
+                info_text = persisted.get('info', '') or str(tc.get('info', '') or '')
+                err_text = persisted.get('error', '') or str(tc.get('error', '') or '')
+                if import_error:
+                    err_text = import_error
+                    if not info_text:
+                        info_text = (
+                            '## Task Import Error\n\n'
+                            f'**Task key**: `{task_key}`\n\n'
+                            f'```\n{import_error}\n```\n'
+                        )
                 rt = {
                     'found': False,
                     'status': tc.get('last_status', 'not_started'),
                     'progress': 0,
-                    'info': tc.get('info', ''),
+                    'subprogress': 0,
+                    'use_subprocess': bool(
+                        task_module.USE_SUBPROCESS.get(task_key, False)
+                    ),
+                    'info': info_text,
                     'last_run': tc.get('last_run', 'Never'),
                     'output_files': tc.get('output_files', []),
                     'run_params': tc.get('last_run_params', {}),
                     'is_current': False,
                     'is_queued': False,
-                    'error': tc.get('error', ''),
+                    'error': err_text,
                     'run_count': tc.get('run_count', 0),
+                    'log_path': '',
                 }
             statuses[tid] = rt
         queue_status = task_runner.get_status()
         return jsonify(success=True, statuses=statuses, queue=queue_status)
+
+    def _api_async_tasks_task_log(self):
+        """Return current per-task async log content."""
+        user_info, perms = self._require_async_tasks_perm()
+        if not user_info:
+            return jsonify(success=False, error='Unauthorized'), 401
+
+        task_id = str(request.args.get('task_id', '') or '').strip()
+        if not task_id:
+            return jsonify(success=False, error='Missing task_id'), 400
+
+        try:
+            lines = int(request.args.get('lines', 400) or 400)
+        except (TypeError, ValueError):
+            lines = 400
+        lines = max(1, min(lines, 2000))
+
+        payload = task_runner.get_task_log(task_id, lines=lines)
+        return jsonify(success=True, **payload)
 
     def _validate_async_task_file_path(self, path: str):
         """Validate and resolve an async task output file path."""
@@ -10557,6 +11003,19 @@ class ARIApp(Flask):
         result = sb.get_mounts_status()
         return jsonify(**result)
 
+    def _api_admin_sshfs_mounts_log(self, mount_name):
+        """Get the last saved log for a mount."""
+        user_info = get_effective_user(session)
+        if not user_info:
+            return jsonify(ok=False, error='Unauthorized'), 401
+
+        perms = resolve_user_permissions(user_info['groups'], self.ari_groups)
+        if 'view.admin' not in perms:
+            return jsonify(ok=False, error='Forbidden'), 403
+
+        result = sb.get_mount_log(mount_name)
+        return jsonify(**result)
+
     # -----------------------------------------------------------------
     # Interactive SSH terminal handlers
     # -----------------------------------------------------------------
@@ -10672,6 +11131,14 @@ class ARIApp(Flask):
             from apero_ri.core.sshfs_interactive import (
                 finalise_interactive_mount,
             )
+            # Save the terminal output as the mount log
+            terminal_log = str(body.get('terminal_log', '')).strip()
+            if terminal_log:
+                sb.save_mount_log(
+                    mount_name,
+                    terminal_log.splitlines(),
+                    source='interactive',
+                )
             mount_status = sb.check_mount_status(mount_name)
             if mount_status.get('mounted'):
                 finalise_interactive_mount(mount_name)

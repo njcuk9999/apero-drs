@@ -7,7 +7,7 @@ Tracks two categories independently:
   - **api**: downloads via the programmatic API (ari_api client)
   - **basket**: downloads via the web-based download basket
 
-Storage:  ~/.ari/admin/download_tracker.yaml
+Storage:  ~/.ari/admin/general/download_tracker.yaml
 """
 from __future__ import annotations
 
@@ -44,7 +44,17 @@ def set_ari_dir(path: Path) -> None:
 # Low-level I/O
 # =============================================================================
 def _tracker_path() -> Path:
-    return ARI_DIR / 'admin' / 'download_tracker.yaml'
+    admin_dir = ARI_DIR / 'admin'
+    general_dir = admin_dir / 'general'
+    general_dir.mkdir(parents=True, exist_ok=True)
+    tracker_file = general_dir / 'download_tracker.yaml'
+    legacy_file = admin_dir / 'download_tracker.yaml'
+    if not tracker_file.exists() and legacy_file.exists():
+        try:
+            tracker_file.write_bytes(legacy_file.read_bytes())
+        except Exception:
+            pass
+    return tracker_file
 
 
 def _load() -> Dict[str, Any]:

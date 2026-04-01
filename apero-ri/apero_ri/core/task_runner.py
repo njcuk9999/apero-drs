@@ -12,6 +12,8 @@ import traceback
 import time
 import json
 import yaml
+import contextlib
+import sys
 from copy import deepcopy
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
@@ -39,8 +41,55 @@ _worker_thread: Optional[threading.Thread] = None
 _scheduler_thread: Optional[threading.Thread] = None
 _scheduler_local_data_dir = str(Path.home() / '.ari')
 _scheduler_poll_seconds = 30.0
-_history_relpath = Path('admin') / 'async_history.txt'
+_async_tasks_rel_dir = Path('admin') / 'async_tasks'
+_history_relpath = _async_tasks_rel_dir / 'async_history.txt'
+_task_logs_rel_dir = _async_tasks_rel_dir / 'task_logs'
+_task_info_rel_dir = _async_tasks_rel_dir / 'task_info'
+_task_errors_rel_dir = _async_tasks_rel_dir / 'task_errors'
 _aprofile_preset_cache: Dict[str, dict] = {}
+_task_log_paths: Dict[str, str] = {}
+_task_instruments: Dict[str, str] = {}
+_stop_events: Dict[str, threading.Event] = {}
+
+
+class _TaskLogTeeStream:
+    """Tee stream that forwards output and writes timestamped log lines."""
+
+    def __init__(self, path: Path, sink: Any, stream_tag: str):
+        self._path = path
+        self._sink = sink
+        self._stream_tag = stream_tag
+        self._buffer = ''
+
+    def write(self, data: Any) -> int:
+        text = str(data or '')
+        if not text:
+            return 0
+        try:
+            self._sink.write(text)
+        except Exception:
+            pass
+        self._buffer += text
+        while '\n' in self._buffer:
+            line, self._buffer = self._buffer.split('\n', 1)
+            line = line.rstrip('\r')
+            if line.strip():
+                _append_task_log_line(
+                    self._path,
+                    f'[{self._stream_tag}] {line}',
+                )
+        return len(text)
+
+    def flush(self) -> None:
+        if self._buffer.strip():
+            _append_task_log_line(
+                self._path,
+                f'[{self._stream_tag}] {self._buffer.rstrip()}')
+        self._buffer = ''
+        try:
+            self._sink.flush()
+        except Exception:
+            pass
 
 
 # =============================================================================
@@ -161,6 +210,195 @@ def _history_file_path() -> Path:
     return Path(_scheduler_local_data_dir) / _history_relpath
 
 
+def _legacy_history_file_path() -> Path:
+    """Return legacy history file path for backward compatibility."""
+    return Path(_scheduler_local_data_dir) / 'admin' / 'async_history.txt'
+
+
+def _safe_scope_name(value: str) -> str:
+    """Return a filesystem-safe identifier for instrument scope names."""
+    text = str(value or '').strip()
+    if not text:
+        return 'unknown'
+    cleaned = ''.join(c if c.isalnum() or c in '-_.' else '_' for c in text)
+    return cleaned or 'unknown'
+
+
+def _task_log_file_path(instrument: str, task_id: str) -> Path:
+    """Return per-task current log file path."""
+    base = Path(_scheduler_local_data_dir) / _task_logs_rel_dir
+    scope = _safe_scope_name(instrument or 'GLOBAL')
+    name = _safe_scope_name(task_id)
+    return base / f'{scope}__{name}.log'
+
+
+def _task_info_file_path(instrument: str, task_id: str) -> Path:
+    """Return per-task info markdown path."""
+    base = Path(_scheduler_local_data_dir) / _task_info_rel_dir
+    scope = _safe_scope_name(instrument or 'GLOBAL')
+    name = _safe_scope_name(task_id)
+    return base / f'{scope}__{name}.md'
+
+
+def _task_error_file_path(instrument: str, task_id: str) -> Path:
+    """Return per-task error text path."""
+    base = Path(_scheduler_local_data_dir) / _task_errors_rel_dir
+    scope = _safe_scope_name(instrument or 'GLOBAL')
+    name = _safe_scope_name(task_id)
+    return base / f'{scope}__{name}.txt'
+
+
+def _append_task_log_line(path: Path, message: str) -> None:
+    """Append one timestamped line to task log file."""
+    try:
+        path.parent.mkdir(parents=True, exist_ok=True)
+        stamp = datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S')
+        with path.open('a', encoding='utf-8') as handle:
+            handle.write(f'{stamp} | {str(message or "")}\n')
+    except Exception:
+        pass
+
+
+def _prepare_task_log(instrument: str, task_id: str,
+                      task_name: str) -> Path:
+    """Create/overwrite the per-task current log and return its path."""
+    path = _task_log_file_path(instrument, task_id)
+    try:
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text('', encoding='utf-8')
+    except Exception:
+        pass
+    _append_task_log_line(path, f'Task queued: {task_name} [{task_id}]')
+    with _lock:
+        _task_log_paths[task_id] = str(path)
+        _task_instruments[task_id] = instrument
+    return path
+
+
+def _make_task_logger(log_path: Path):
+    """Build a callable logger injected into task run params."""
+
+    def _log_fn(message: Any) -> None:
+        _append_task_log_line(log_path, str(message or ''))
+
+    return _log_fn
+
+
+def _tail_lines(path: Path, lines: int) -> str:
+    """Return at most the last ``lines`` from a UTF-8 text file."""
+    try:
+        raw_lines = path.read_text(encoding='utf-8', errors='replace').splitlines()
+    except Exception:
+        return ''
+    if lines <= 0 or len(raw_lines) <= lines:
+        return '\n'.join(raw_lines)
+    return '\n'.join(raw_lines[-lines:])
+
+
+def _log_path_for_task(task_id: str, instrument: str = '') -> str:
+    """Return current log path for a task id without reading file content."""
+    path = _task_log_paths.get(task_id)
+    if path:
+        return path
+    # If in-memory cache was lost (e.g. process restart), recover the most
+    # recent log file for this task id from disk.
+    resolved = _resolve_existing_task_log_file(task_id)
+    if resolved is not None:
+        _task_log_paths[task_id] = str(resolved)
+        return str(resolved)
+    scope = instrument or _task_instruments.get(task_id, '')
+    return str(_task_log_file_path(scope, task_id))
+
+
+def _resolve_existing_task_log_file(task_id: str) -> Optional[Path]:
+    """Return most recent on-disk task log path for task id, if present."""
+    try:
+        safe_task = _safe_scope_name(task_id)
+        candidates: List[Path] = []
+        base_new = Path(_scheduler_local_data_dir) / _task_logs_rel_dir
+        candidates.extend(list(base_new.glob(f'*__{safe_task}.log')))
+        # Legacy location (before admin/async_tasks/task_logs migration)
+        base_old = Path(_scheduler_local_data_dir) / 'admin' / 'async_task_logs'
+        candidates.extend(list(base_old.glob(f'*__{safe_task}.log')))
+        if not candidates:
+            return None
+        candidates.sort(
+            key=lambda p: p.stat().st_mtime if p.exists() else 0,
+            reverse=True,
+        )
+        return candidates[0]
+    except Exception:
+        return None
+
+
+def _resolve_existing_task_data_file(task_id: str,
+                                     rel_dir: Path,
+                                     suffix: str) -> Optional[Path]:
+    """Return newest persisted per-task data file by task id."""
+    try:
+        base = Path(_scheduler_local_data_dir) / rel_dir
+        safe_task = _safe_scope_name(task_id)
+        candidates = list(base.glob(f'*__{safe_task}{suffix}'))
+        if not candidates:
+            return None
+        candidates.sort(
+            key=lambda p: p.stat().st_mtime if p.exists() else 0,
+            reverse=True,
+        )
+        return candidates[0]
+    except Exception:
+        return None
+
+
+def _read_text_file(path: Path) -> str:
+    """Read UTF-8 text file safely; return empty string on error."""
+    try:
+        if not path.is_file():
+            return ''
+        return path.read_text(encoding='utf-8', errors='replace')
+    except Exception:
+        return ''
+
+
+def _write_text_file(path: Path, content: str) -> None:
+    """Write UTF-8 text file safely; ignore write failures."""
+    try:
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(str(content or ''), encoding='utf-8')
+    except Exception:
+        pass
+
+
+def _persist_task_info_error(instrument: str, task_id: str,
+                             info: str, error: str) -> None:
+    """Persist task info/error payloads in dedicated files."""
+    _write_text_file(_task_info_file_path(instrument, task_id), info or '')
+    _write_text_file(_task_error_file_path(instrument, task_id), error or '')
+
+
+def get_persisted_task_info_error(task_id: str) -> Dict[str, str]:
+    """Return persisted task info/error from dedicated files."""
+    scope = _task_instruments.get(task_id, '')
+    info_path = _task_info_file_path(scope, task_id)
+    err_path = _task_error_file_path(scope, task_id)
+
+    info = _read_text_file(info_path)
+    error = _read_text_file(err_path)
+
+    if not info:
+        found = _resolve_existing_task_data_file(
+            task_id, _task_info_rel_dir, '.md')
+        if found is not None:
+            info = _read_text_file(found)
+    if not error:
+        found = _resolve_existing_task_data_file(
+            task_id, _task_errors_rel_dir, '.txt')
+        if found is not None:
+            error = _read_text_file(found)
+
+    return {'info': info, 'error': error}
+
+
 def _append_history_entry(instrument: str, task_id: str,
                           task_name: str, status: str,
                           details: str = '',
@@ -189,6 +427,10 @@ def get_recent_history(limit: int = 50) -> List[Dict[str, Any]]:
     """Return newest async history entries from async_history.txt."""
     try:
         path = _history_file_path()
+        if not path.exists():
+            legacy = _legacy_history_file_path()
+            if legacy.exists():
+                path = legacy
         if not path.exists() or limit <= 0:
             return []
         lines = path.read_text(encoding='utf-8', errors='replace').splitlines()
@@ -222,6 +464,7 @@ def clear_recent_history() -> Dict[str, Any]:
     """Clear async history entries from async_history.txt."""
     try:
         path = _history_file_path()
+        legacy = _legacy_history_file_path()
         removed = 0
         if path.exists():
             try:
@@ -231,8 +474,21 @@ def clear_recent_history() -> Dict[str, Any]:
                 )
             except Exception:
                 removed = 0
+        elif legacy.exists():
+            try:
+                removed = len(
+                    legacy.read_text(encoding='utf-8', errors='replace')
+                    .splitlines()
+                )
+            except Exception:
+                removed = 0
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text('', encoding='utf-8')
+        try:
+            if legacy.exists():
+                legacy.unlink()
+        except Exception:
+            pass
         return {'success': True, 'removed': removed}
     except Exception as exc:
         return {'success': False, 'error': str(exc)}
@@ -264,18 +520,46 @@ def _run_worker() -> None:
 
         instance.status = 'in_progress'
         start_time = time.perf_counter()
+        run_params = dict(getattr(instance, '_run_params', {}) or {})
+        task_name = str(getattr(instance, 'name', task_id) or task_id)
+        log_path = _prepare_task_log(_inst, task_id, task_name)
+        run_params['TASK_LOG_PATH'] = str(log_path)
+        run_params['TASK_LOGGER'] = _make_task_logger(log_path)
+        run_params['STOP_EVENT'] = _stop_events.get(task_id, threading.Event())
+        instance._run_params = run_params
+        instance._task_log_path = str(log_path)
+        _append_task_log_line(log_path, 'Task execution started.')
         try:
-            run_params = getattr(instance, '_run_params', {})
             # Treat task output files as this-run artifacts.
             instance.output_files = []
-            instance.run_job(run_params)
-            instance.status = 'completed'
+            stdout_tee = _TaskLogTeeStream(log_path, sink=sys.stdout, stream_tag='stdout')
+            stderr_tee = _TaskLogTeeStream(log_path, sink=sys.stderr, stream_tag='stderr')
+            with contextlib.redirect_stdout(stdout_tee), contextlib.redirect_stderr(stderr_tee):
+                instance.run_job(run_params)
+            stdout_tee.flush()
+            stderr_tee.flush()
+            stop_ev = _stop_events.get(task_id)
+            if stop_ev is not None and stop_ev.is_set():
+                instance.status = 'cancelled'
+                _append_task_log_line(log_path, 'Task cancelled by user request.')
+            else:
+                instance.status = 'completed'
+                _append_task_log_line(log_path, 'Task execution completed successfully.')
         except Exception:
             instance.status = 'failed'
+            _append_task_log_line(log_path, 'Task execution failed. Traceback follows:')
+            for line in traceback.format_exc().splitlines():
+                if line.strip():
+                    _append_task_log_line(log_path, line)
             with _lock:
                 _errors[task_id] = traceback.format_exc()
         finally:
             duration_seconds = max(0.0, time.perf_counter() - start_time)
+            _append_task_log_line(
+                log_path,
+                f'Task finished with status={instance.status} in '
+                f'{duration_seconds:.2f}s.',
+            )
             instance.run_count = getattr(instance, 'run_count', 0) + 1
             instance.last_run = datetime.now(timezone.utc).isoformat()
             _append_history_entry(
@@ -304,16 +588,22 @@ def _persist_runtime_state(instrument: str, task_id: str,
             if tc.get('id') == task_id:
                 tc['last_run'] = getattr(instance, 'last_run', 'Never')
                 tc['run_count'] = getattr(instance, 'run_count', 0)
-                tc['info'] = getattr(instance, 'info', '')
                 tc['output_files'] = _dedupe_strings(
                     getattr(instance, 'output_files', [])
                 )
                 tc['last_run_params'] = _sanitize_run_params(
                     getattr(instance, '_run_params', {})
                 )
-                tc['error'] = error
                 tc['last_status'] = getattr(instance, 'status', 'failed')
+                tc.pop('info', None)
+                tc.pop('error', None)
                 break
+        _persist_task_info_error(
+            instrument,
+            task_id,
+            getattr(instance, 'info', ''),
+            error,
+        )
         save_async_tasks(all_tasks)
     except Exception:
         pass  # Never let persistence failures crash the worker
@@ -461,8 +751,8 @@ def _scheduler_poll(local_data_dir: str) -> None:
     try:
         if fcntl is not None:
             lock_path = (
-                Path(local_data_dir) / 'admin'
-                / 'async_tasks.scheduler.lock'
+                Path(local_data_dir) / 'admin' / 'async_tasks'
+                / 'scheduler.lock'
             )
             lock_path.parent.mkdir(parents=True, exist_ok=True)
             lock_handle = lock_path.open('a+')
@@ -533,6 +823,34 @@ def _scheduler_poll(local_data_dir: str) -> None:
                     'order': idx,
                 }
 
+                # Preserve multiprocessing settings so scheduler merges do not
+                # silently reset task parallelism back to defaults.
+                supports_mp = bool(task_module.MULTI_PROCESS.get(task_key, False))
+                keep_mp = supports_mp or any(
+                    key in task_cfg
+                    for key in ['ncores', 'mp_backend', 'mp_start_method']
+                )
+                if keep_mp:
+                    try:
+                        ncores = int(task_cfg.get('ncores', 1) or 1)
+                    except (TypeError, ValueError):
+                        ncores = 1
+                    merged_cfg['ncores'] = max(1, ncores)
+
+                    backend = str(
+                        task_cfg.get('mp_backend', 'threads') or 'threads'
+                    ).strip().lower()
+                    if backend not in ['threads', 'processes']:
+                        backend = 'threads'
+                    merged_cfg['mp_backend'] = backend
+
+                    start_method = str(
+                        task_cfg.get('mp_start_method', 'default') or 'default'
+                    ).strip().lower()
+                    if start_method not in ['default', 'spawn', 'fork', 'forkserver']:
+                        start_method = 'default'
+                    merged_cfg['mp_start_method'] = start_method
+
                 if task_key == 'ARI_LOCAL_DATA_BACKUP':
                     try:
                         daily_copies = int(
@@ -547,20 +865,14 @@ def _scheduler_poll(local_data_dir: str) -> None:
                     merged_cfg['daily_copies'] = max(0, daily_copies)
                     merged_cfg['weekly_copies'] = max(0, weekly_copies)
 
-                for field in ['last_run', 'run_count', 'info', 'output_files',
-                              'error', 'last_status']:
+                for field in ['last_run', 'run_count', 'output_files',
+                              'last_status']:
                     if field in task_cfg:
                         merged_cfg[field] = task_cfg.get(field)
 
                 import_error = str(import_errors.get(task_key, '')).strip()
                 if import_error:
                     merged_cfg['last_status'] = 'failed'
-                    merged_cfg['error'] = import_error
-                    merged_cfg['info'] = (
-                        '## Task Import Error\n\n'
-                        f'**Task key**: `{task_key}`\n\n'
-                        f'```\n{import_error}\n```\n'
-                    )
 
                 merged.append(merged_cfg)
 
@@ -748,6 +1060,8 @@ def enqueue(instrument: str, task_id: str, instance: Any,
     instance.status = 'queued'
     with _lock:
         _instances[task_id] = instance
+        _task_instruments[task_id] = instrument
+        _stop_events[task_id] = threading.Event()
         _errors.pop(task_id, None)
         # Remove any existing entry for this task_id
         updated = [(i, t) for i, t in _queue if t != task_id]
@@ -843,13 +1157,105 @@ def stop_all_with_cooldown(instrument: Optional[str] = None) -> Dict[str, Any]:
     }
 
 
+def cancel_task(task_id: str) -> Dict[str, Any]:
+    """Cancel a queued or running task.
+
+    For queued tasks the entry is removed from the queue immediately and the
+    instance is marked cancelled.  For a running task the STOP_EVENT is set so
+    cooperative tasks can exit early; the worker will mark the task cancelled
+    once run_job() returns.
+    """
+    was_running = False
+    was_queued = False
+    task_name = task_id
+    _inst = ''
+
+    with _lock:
+        inst = _instances.get(task_id)
+        if inst is not None:
+            task_name = str(getattr(inst, 'name', task_id) or task_id)
+        # Is it currently running?
+        if _current and _current[1] == task_id:
+            was_running = True
+            _inst = _current[0]
+            stop_ev = _stop_events.get(task_id)
+            if stop_ev is not None:
+                stop_ev.set()
+            if inst is not None:
+                inst.status = 'cancelling'
+        else:
+            # Remove from queue
+            new_queue = [(i, t) for i, t in _queue if t != task_id]
+            if len(new_queue) < len(_queue):
+                was_queued = True
+                for i, t in _queue:
+                    if t == task_id:
+                        _inst = i
+                        break
+                _queue[:] = new_queue
+                if inst is not None:
+                    inst.status = 'cancelled'
+
+    if not was_running and not was_queued:
+        return {'success': False, 'error': 'Task not found in queue or currently running.'}
+
+    # Log and history outside the lock
+    log_path_str = _task_log_paths.get(task_id, '')
+    if log_path_str:
+        _append_task_log_line(
+            Path(log_path_str),
+            'Cancellation requested by user.' + (' (task is running; waiting for cooperative exit)' if was_running else ''),
+        )
+
+    if was_queued:
+        _append_history_entry(
+            _inst, task_id, task_name, 'cancelled',
+            'Cancelled by user from queue.',
+        )
+
+    return {
+        'success': True,
+        'task_id': task_id,
+        'was_running': was_running,
+        'was_queued': was_queued,
+    }
+
+
 def clear_instance(task_id: str) -> None:
     """Remove a task instance and its error record from memory."""
     with _lock:
         _instances.pop(task_id, None)
         _errors.pop(task_id, None)
+        _task_log_paths.pop(task_id, None)
+        _task_instruments.pop(task_id, None)
+        _stop_events.pop(task_id, None)
         # Remove from queue if present
         _queue[:] = [(i, t) for i, t in _queue if t != task_id]
+
+
+def get_task_log(task_id: str, lines: int = 400) -> Dict[str, Any]:
+    """Return current log content and metadata for one task id."""
+    path_str = _log_path_for_task(task_id)
+    path = Path(path_str)
+
+    exists = path.is_file()
+    content = _tail_lines(path, max(1, int(lines))) if exists else ''
+    mtime = None
+    if exists:
+        try:
+            mtime = datetime.fromtimestamp(
+                path.stat().st_mtime,
+                tz=timezone.utc,
+            ).isoformat()
+        except Exception:
+            mtime = None
+    return {
+        'task_id': task_id,
+        'path': str(path),
+        'exists': exists,
+        'content': content,
+        'updated_at': mtime,
+    }
 
 
 def get_status() -> dict:
@@ -866,6 +1272,7 @@ def get_status() -> dict:
                     getattr(curr_inst, 'name', curr_task_id)
                     if curr_inst else curr_task_id
                 ),
+                'log_path': _log_path_for_task(curr_task_id, curr_instrument),
             }
 
         queue_info = []
@@ -878,6 +1285,7 @@ def get_status() -> dict:
                     getattr(q_inst, 'name', q_task_id)
                     if q_inst else q_task_id
                 ),
+                'log_path': _log_path_for_task(q_task_id, q_instrument),
             })
 
         return {
@@ -904,6 +1312,8 @@ def get_task_status(task_id: str) -> dict:
         'found': True,
         'status': instance.status,
         'progress': instance.progress,
+        'subprogress': getattr(instance, 'subprogress', 0.0),
+        'use_subprocess': bool(getattr(instance, 'USE_SUBPROCESS', False)),
         'info': instance.info,
         'last_run': getattr(instance, 'last_run', 'Never'),
         'output_files': getattr(instance, 'output_files', []),
@@ -913,6 +1323,7 @@ def get_task_status(task_id: str) -> dict:
         'is_current': is_current,
         'is_queued': is_queued,
         'error': error,
+        'log_path': _log_path_for_task(task_id),
     }
 
 

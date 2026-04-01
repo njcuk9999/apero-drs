@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 """APERO RI: cloud backup backend helpers.
 
-Configuration is stored in {ARI_DIR}/admin/backup.yaml.
+Configuration is stored in {ARI_DIR}/admin/general/backup.yaml.
 The backend supports unattended backup mirroring with setup-once credentials.
 """
 
@@ -77,7 +77,17 @@ MANAGED_SECRET_PATHS = {
 # =============================================================================
 def _get_backup_config_path() -> Path:
     ari_dir = os.environ.get('ARI_DIR', os.path.expanduser('~/.ari'))
-    return Path(ari_dir) / 'admin' / 'backup.yaml'
+    admin_dir = Path(ari_dir) / 'admin'
+    general_dir = admin_dir / 'general'
+    general_dir.mkdir(parents=True, exist_ok=True)
+    config_file = general_dir / 'backup.yaml'
+    legacy_file = admin_dir / 'backup.yaml'
+    if not config_file.exists() and legacy_file.exists():
+        try:
+            config_file.write_bytes(legacy_file.read_bytes())
+        except Exception:
+            pass
+    return config_file
 
 
 def _get_s3_secret_access_key_path() -> Path:

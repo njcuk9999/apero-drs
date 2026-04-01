@@ -82,66 +82,116 @@ def _register_task(task_key: str,
     try:
         module = import_module(f'apero_ri.tasks.{module_name}')
         task_cls = getattr(module, class_name)
-        return {
-            'task_cls': task_cls,
-            'param_list': list(getattr(module, 'PARAM_LIST', [])),
-            'ap_list': list(
-                getattr(module, 'APERO_PROFILE_PARAM_LIST', [])
-            ),
-            'frequency': float(
-                getattr(module, 'DEFAULT_FREQUENCY', 24.0)
-            ),
-            'enabled': bool(getattr(module, 'DEFAULT_ENABLED', False)),
-            'task_type': str(
-                getattr(module, 'TASK_TYPE', task_type_fallback)
-            ),
-        }
+        
+        
+        outdict = dict()
+        outdict['task_cls'] = task_cls
+        outdict['param_list'] = list(getattr(module, 'PARAM_LIST', []))
+        outdict['ap_list'] = list(getattr(module, 'APERO_PROFILE_PARAM_LIST', 
+                                          []))
+        outdict['frequency'] = float(getattr(module, 'DEFAULT_FREQUENCY', 24.0))
+        outdict['enabled'] = bool(getattr(module, 'DEFAULT_ENABLED', False))
+        outdict['task_type'] = str(getattr(module, 'TASK_TYPE', task_type_fallback))
+        outdict['use_subprocess'] = bool(getattr(module, 'USE_SUBPROCESS', False))
+        outdict['multi_process'] = bool(getattr(module, 'MULTI_PROCESS', False))
+        return outdict
+
     except Exception:
         IMPORT_ERRORS[task_key] = traceback.format_exc()
-        return {
-            'task_cls': _failed_task_class(task_key, module_name),
-            'param_list': ['LOCAL_DATA_DIR', 'INSTRUMENT', 'TASK_CONFIG'],
-            'ap_list': [],
-            'frequency': 24.0,
-            'enabled': False,
-            'task_type': task_type_fallback,
-        }
+        
+        outdict = dict()
+        outdict['task_cls'] = _failed_task_class(task_key, module_name)
+        outdict['param_list'] = ['LOCAL_DATA_DIR', 'INSTRUMENT', 'TASK_CONFIG']
+        outdict['ap_list'] = []
+        outdict['frequency'] = 24.0
+        outdict['enabled'] = False
+        outdict['task_type'] = task_type_fallback
+        outdict['use_subprocess'] = False
+        outdict['multi_process'] = False
+        return outdict
 
 
 # =============================================================================
 # Define task registry
 # =============================================================================
-TASK_LIST: Dict[str, Any] = {}
-P_LIST: Dict[str, Any] = {}
-AP_LIST: Dict[str, Any] = {}
-FREQ: Dict[str, Any] = {}
-ENABLED: Dict[str, Any] = {}
-TYPE: Dict[str, Any] = {}
+TASK_LIST = dict()
+P_LIST = dict()
+AP_LIST = dict()
+FREQ = dict()
+ENABLED = dict()
+TYPE = dict()
+USE_SUBPROCESS = dict()
+MULTI_PROCESS = dict()
 
-# (task_key, module_name, class_name, task_type)
-_TASK_DEFS = [
-    ('ARI_LOCAL_DATA_BACKUP',
-     'apero_backup', 'AperoLocalDataBackupTask', 'GLOBAL'),
-    ('APERO_OBJECT_TABLE',
-     'apero_object_table', 'AperoObjectTableTask', 'INSTRUMENT'),
-    ('APERO_OBS_TABLE',
-     'apero_observation_table', 'AperoObservationTableTask', 'INSTRUMENT'),
-    ('APERO_OBJECT_QUERY',
-     'apero_object_query', 'AperoObjectQueryTask', 'INSTRUMENT'),
-    ('APERO_QC_STATIS',
-     'apero_qc_stats', 'AperoQCStats', 'INSTRUMENT'),
-]
+# ARI_LOCAL_DATA_BACKUP
+_entry = _register_task('ARI_LOCAL_DATA_BACKUP',
+                        'apero_backup',
+                        'AperoLocalDataBackupTask',
+                        'GLOBAL')
+TASK_LIST['ARI_LOCAL_DATA_BACKUP'] = _entry['task_cls']
+P_LIST['ARI_LOCAL_DATA_BACKUP'] = _entry['param_list']
+AP_LIST['ARI_LOCAL_DATA_BACKUP'] = _entry['ap_list']
+FREQ['ARI_LOCAL_DATA_BACKUP'] = _entry['frequency']
+ENABLED['ARI_LOCAL_DATA_BACKUP'] = _entry['enabled']
+TYPE['ARI_LOCAL_DATA_BACKUP'] = _entry['task_type']
+USE_SUBPROCESS['ARI_LOCAL_DATA_BACKUP'] = _entry['use_subprocess']
+MULTI_PROCESS['ARI_LOCAL_DATA_BACKUP'] = _entry['multi_process']
 
-for _task_key, _module_name, _class_name, _fallback_type in _TASK_DEFS:
-    _entry = _register_task(
-        _task_key, _module_name, _class_name, _fallback_type
-    )
-    TASK_LIST[_task_key] = _entry['task_cls']
-    P_LIST[_task_key] = _entry['param_list']
-    AP_LIST[_task_key] = _entry['ap_list']
-    FREQ[_task_key] = _entry['frequency']
-    ENABLED[_task_key] = _entry['enabled']
-    TYPE[_task_key] = _entry['task_type']
+# APERO_OBJECT_TABLE
+_entry = _register_task('APERO_OBJECT_TABLE',
+                        'apero_object_table',
+                        'AperoObjectTableTask',
+                        'INSTRUMENT')
+TASK_LIST['APERO_OBJECT_TABLE'] = _entry['task_cls']
+P_LIST['APERO_OBJECT_TABLE'] = _entry['param_list']
+AP_LIST['APERO_OBJECT_TABLE'] = _entry['ap_list']
+FREQ['APERO_OBJECT_TABLE'] = _entry['frequency']
+ENABLED['APERO_OBJECT_TABLE'] = _entry['enabled']
+TYPE['APERO_OBJECT_TABLE'] = _entry['task_type']
+USE_SUBPROCESS['APERO_OBJECT_TABLE'] = _entry['use_subprocess']
+MULTI_PROCESS['APERO_OBJECT_TABLE'] = _entry['multi_process']
+
+# APERO_OBS_TABLE
+_entry = _register_task('APERO_OBS_TABLE',
+                        'apero_observation_table',
+                        'AperoObservationTableTask',
+                        'INSTRUMENT')
+TASK_LIST['APERO_OBS_TABLE'] = _entry['task_cls']
+P_LIST['APERO_OBS_TABLE'] = _entry['param_list']
+AP_LIST['APERO_OBS_TABLE'] = _entry['ap_list']
+FREQ['APERO_OBS_TABLE'] = _entry['frequency']
+ENABLED['APERO_OBS_TABLE'] = _entry['enabled']
+TYPE['APERO_OBS_TABLE'] = _entry['task_type']
+USE_SUBPROCESS['APERO_OBS_TABLE'] = _entry['use_subprocess']
+MULTI_PROCESS['APERO_OBS_TABLE'] = _entry['multi_process']
+
+# APERO_OBJECT_QUERY
+_entry = _register_task('APERO_OBJECT_QUERY',
+                        'apero_object_query',
+                        'AperoObjectQueryTask',
+                        'INSTRUMENT')
+TASK_LIST['APERO_OBJECT_QUERY'] = _entry['task_cls']
+P_LIST['APERO_OBJECT_QUERY'] = _entry['param_list']
+AP_LIST['APERO_OBJECT_QUERY'] = _entry['ap_list']
+FREQ['APERO_OBJECT_QUERY'] = _entry['frequency']
+ENABLED['APERO_OBJECT_QUERY'] = _entry['enabled']
+TYPE['APERO_OBJECT_QUERY'] = _entry['task_type']
+USE_SUBPROCESS['APERO_OBJECT_QUERY'] = _entry['use_subprocess']
+MULTI_PROCESS['APERO_OBJECT_QUERY'] = _entry['multi_process']
+
+# APERO_QC_STATS
+_entry = _register_task('APERO_QC_STATS',
+                        'apero_qc_stats',
+                        'AperoQCStats',
+                        'INSTRUMENT')
+TASK_LIST['APERO_QC_STATS'] = _entry['task_cls']
+P_LIST['APERO_QC_STATS'] = _entry['param_list']
+AP_LIST['APERO_QC_STATS'] = _entry['ap_list']
+FREQ['APERO_QC_STATS'] = _entry['frequency']
+ENABLED['APERO_QC_STATS'] = _entry['enabled']
+TYPE['APERO_QC_STATS'] = _entry['task_type']
+USE_SUBPROCESS['APERO_QC_STATS'] = _entry['use_subprocess']
+MULTI_PROCESS['APERO_QC_STATS'] = _entry['multi_process']
 
 # =============================================================================
 # Start of code

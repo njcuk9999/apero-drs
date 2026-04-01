@@ -5,6 +5,9 @@ APERO RI: Async task management
 
 """
 import time
+import os
+import multiprocessing as mp
+from concurrent.futures import ThreadPoolExecutor, ProcessPoolExecutor, as_completed
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List, Tuple
@@ -35,6 +38,11 @@ DEFAULT_FREQUENCY = 6.0
 DEFAULT_ENABLED = True
 # Set the type of task (INSTRUMENT, GLOBAL)
 TASK_TYPE = 'INSTRUMENT'
+# Whether this task has a sub-process (for sub-processing loading bar in UI)
+USE_SUBPROCESS = False
+# Whether this task can be run in multi-process mode 
+# (if False, will always run in main process)
+MULTI_PROCESS = True
 
 
 # =============================================================================
@@ -91,15 +99,33 @@ class AperoQCStats(apero_async.AperoAsyncTask):
         apero_profiles = params['APERO_PROFILES']
         task_config = params.get('TASK_CONFIG', {})
         force_run = bool(task_config.get('force_run', False))
+        mp_cfg = _normalize_mp_config(task_config)
+        task_logger = params.get('TASK_LOGGER')
+        stop_event = params.get('STOP_EVENT')
+
+        def tlog(message: str) -> None:
+            if callable(task_logger):
+                try:
+                    task_logger(message)
+                except Exception:
+                    pass
+
+        tlog('APERO_QC_STATS start.')
+        tlog(f'Configured APERO profiles: {len(apero_profile_names)}')
         
         # Check if there are any profiles configured
         if not apero_profile_names:
             self.info = 'No APERO profiles configured.'
+            tlog('No APERO profiles configured. Nothing to do.')
             return
         
         for a_it, apero_profile in enumerate(apero_profile_names):
+            if stop_event is not None and stop_event.is_set():
+                tlog('Cancellation requested. Exiting before next profile.')
+                return
             # update the progress
             self.progress = (a_it + 1) / len(apero_profile_names)
+            tlog(f'Profile {a_it + 1}/{len(apero_profile_names)}: {apero_profile}')
             # -----------------------------------------------------------------
             # get parameters for this apero profile
             aparams = apero_profiles[apero_profile]
@@ -117,6 +143,7 @@ class AperoQCStats(apero_async.AperoAsyncTask):
                 should_skip = False
                 skip_reason = f'Database update-time check unavailable: {exc}'
             if should_skip:
+                tlog(f'Profile {apero_profile}: skipped. {skip_reason}')
                 self.info += (
                     f'\n## APERO query stats for APERO Profile: {apero_profile}\n\n'
                     f'- Skipped query run. {skip_reason}\n'
@@ -124,10 +151,35 @@ class AperoQCStats(apero_async.AperoAsyncTask):
                 continue
             # -----------------------------------------------------------------
             # step 1: get calibration files from database
-            cfiles, qtime, qnum = get_calib_file(aparams)
-
+            # -----------------------------------------------------------------
+            # log message
+            tlog(f'Profile {apero_profile}: querying calibration file '
+                 'inventory...')
+            # get the calib files
+            cfiles, qtime, qnum = get_calib_file(
+                aparams, task_logger=tlog, stop_event=stop_event
+            )
+            if stop_event is not None and stop_event.is_set():
+                tlog(f'Profile {apero_profile}: cancellation requested '
+                     'after DB query step. Exiting.')
+                return
+            # -----------------------------------------------------------------
             # step 2: read headers and get variables required
-            cresults, htime, hnum = read_calib_headers(aparams, cfiles)
+            # -----------------------------------------------------------------
+            # log message
+            tlog(f'Profile {apero_profile}: reading calibration headers...')
+            # read the headers
+            cresults, htime, hnum = read_calib_headers(aparams, cfiles, 
+                                                       task_logger=tlog, 
+                                                       stop_event=stop_event,
+                                                       ncores=mp_cfg['ncores'],
+                                                       mp_backend=mp_cfg['backend'],
+                                                       mp_start_method=mp_cfg['start_method'])
+            # deal with stop event
+            if stop_event is not None and stop_event.is_set():
+                tlog(f'Profile {apero_profile}: cancellation requested during '
+                     'header read. Exiting.')
+                return
             # -----------------------------------------------------------------
             # time now
             time_now = datetime.now(timezone.utc).isoformat()
@@ -138,11 +190,13 @@ class AperoQCStats(apero_async.AperoAsyncTask):
             metadata['HEADER_READ_TIME'] = htime
             metadata['N_HEADERS'] = hnum
             metadata['APERO_PROFILE'] = apero_profile
+            tlog(f'Profile {apero_profile}: step timings query={qtime:.2f}s '
+                 f'({qnum} queries), headers={htime:.2f}s ({hnum} '
+                 'header groups).')
             # construct filename
             for output in cresults:
-                instrument = (
-                    aparams.get('general', {}).get('INSTRUMENT', 'unknown')
-                )
+                instrument = (aparams.get('general', {}).get('INSTRUMENT', 
+                                                             'unknown'))
                 local_dir = (Path(params.get('LOCAL_DATA_DIR', str(ARI_DIR)))
                              / 'tasks' / instrument / apero_profile)
                 basename = f'qc_stats_{output}.json'
@@ -151,16 +205,25 @@ class AperoQCStats(apero_async.AperoAsyncTask):
                 result = cresults[output]
                 # save results to JSON file for use in the UI
                 apero_async.save_results(filename, result, metadata)
+                tlog(
+                    f'Profile {apero_profile}: saved qc stats for output={output} '
+                    f'to {filename}.'
+                )
                 # -------------------------------------------------------------
                 # add to the output files for this task
                 self.output_files.append(str(filename))
             # -----------------------------------------------------------------
             if db_updates:
                 try:
+                    tlog(f'Profile {apero_profile}: persisting DB update fingerprint.')
                     apero_async.save_profile_db_table_updates(
                         instrument, apero_profile, db_updates
                     )
                 except Exception as exc:
+                    tlog(
+                        f'Profile {apero_profile}: warning, failed to persist '
+                        f'database-update fingerprint: {exc}'
+                    )
                     self.info += (
                         f'\n- Warning: failed to persist database-update '
                         f'fingerprint for {apero_profile}: {exc}\n'
@@ -182,6 +245,8 @@ class AperoQCStats(apero_async.AperoAsyncTask):
 
             # update the last run time
             self.last_run = time_now
+
+        tlog('APERO_QC_STATS completed.')
     
     def test_query(self, params: Dict[str, Any]):
         """
@@ -253,7 +318,8 @@ class AperoQCStats(apero_async.AperoAsyncTask):
 # =============================================================================
 # Define functions
 # =============================================================================
-def get_calib_file(aparams: Dict[str, Any], return_query=False
+def get_calib_file(aparams: Dict[str, Any], return_query=False,
+                   task_logger=None, stop_event=None
                    ) -> Tuple[Dict[str, List[Path]], float, int]:
     # get the hkeys for this fkind
     hcfg = aparams.get('calib-headers', {})
@@ -277,6 +343,10 @@ def get_calib_file(aparams: Dict[str, Any], return_query=False
     findex = aparams['database']['FINDEX_TABLENAME']
     # loop around
     for output in hcfg:
+        if stop_event is not None and stop_event.is_set():
+            if callable(task_logger):
+                task_logger('QC stats DB query cancelled by stop request.')
+            break
         # generate the query
         rquery = query.format(OUTPUT=output, FINDEX_TABLENAME=findex)
         # if we only want the query stop here
@@ -286,6 +356,11 @@ def get_calib_file(aparams: Dict[str, Any], return_query=False
         # otherwise query the database
         start = time.time()
         results = apero_async.database_query(db_params, rquery)
+        if callable(task_logger):
+            task_logger(
+                f'QC stats DB query output={output}: '
+                f'{len(results)} rows in {time.time() - start:.2f}s.'
+            )
         # add to the timings
         times.append(time.time() - start)
         # storage list for this outputs absolute paths
@@ -313,7 +388,11 @@ def get_calib_file(aparams: Dict[str, Any], return_query=False
 
 
 def read_calib_headers(aparams: Dict[str, Any],
-                       cfiles: Dict[str, List[Path]]
+                       cfiles: Dict[str, List[Path]],
+                       task_logger=None, stop_event=None,
+                       ncores: int = 1,
+                       mp_backend: str = 'threads',
+                       mp_start_method: str = 'default'
                        ) -> Tuple[Dict[str, List[dict]], float, int]:
 
     # get the hkeys for this fkind
@@ -323,7 +402,16 @@ def read_calib_headers(aparams: Dict[str, Any],
     header_dict = dict()
     times = []
     # now we read the cfiles
+    use_parallel = MULTI_PROCESS and int(ncores or 1) > 1
+    executor = None
+    if use_parallel:
+        executor = _make_executor(mp_backend, int(ncores),
+                                  mp_start_method, task_logger)
     for output in cfiles:
+        if stop_event is not None and stop_event.is_set():
+            if callable(task_logger):
+                task_logger('QC stats header read cancelled by stop request.')
+            break
         # get files
         files = cfiles[output]
         # deal with no files
@@ -335,32 +423,105 @@ def read_calib_headers(aparams: Dict[str, Any],
         header_dict[output] = []
         # start a timer
         start = time.time()
-        # loop around files
-        for abspath in files:
-            # check if path exists - if it doesn't fill with None
-            if not abspath.exists():
-                header_dict[output].append(apero_async.fill_dict_null(hkeys))
-                continue
-            # check if file is fits file
-            if abspath.suffix != '.fits':
-                header_dict[output].append(apero_async.fill_dict_null(hkeys))
-                continue
-            #
-            fdict = dict()
-            # otherwise we open the file
-            hdr = fits.getheader(abspath)
-            # loop around header key and load into header list
-            for hkey in hkeys:
-                fdict[hkey] = apero_async.get_hdr_key(hdr, hkey, hkeys[hkey])
-            # push into header_dict
-            header_dict[output].append(fdict)
+        if executor is not None and len(files) > 1:
+            futures = {
+                executor.submit(_read_one_calib_header, str(abspath), hkeys): abspath
+                for abspath in files
+            }
+            for fut in as_completed(futures):
+                if stop_event is not None and stop_event.is_set():
+                    for _f in futures:
+                        _f.cancel()
+                    if callable(task_logger):
+                        task_logger(
+                            f'QC stats header read output={output}: cancelled mid-stream.'
+                        )
+                    break
+                header_dict[output].append(fut.result())
+        else:
+            # loop around files
+            for abspath in files:
+                if stop_event is not None and stop_event.is_set():
+                    if callable(task_logger):
+                        task_logger(
+                            f'QC stats header read output={output}: cancelled mid-stream.'
+                        )
+                    break
+                header_dict[output].append(_read_one_calib_header(str(abspath), hkeys))
+        if callable(task_logger):
+            task_logger(
+                f'QC stats header read output={output}: '
+                f'{len(header_dict.get(output, []))} rows processed.'
+            )
         # append read timer
         times.append(time.time() - start)
+    if executor is not None:
+        executor.shutdown(wait=True, cancel_futures=True)
     # work out the total query time
     total_read_time = sum(times)
     total_reads = len(times)
 
     return header_dict, total_read_time, total_reads
+
+
+def _read_one_calib_header(abspath: str, hkeys: Dict[str, Any]) -> Dict[str, Any]:
+    """Read selected FITS header keys for one file with null fallback."""
+    path = Path(abspath)
+    if not path.exists():
+        return apero_async.fill_dict_null(hkeys)
+    if path.suffix != '.fits':
+        return apero_async.fill_dict_null(hkeys)
+    hdr = fits.getheader(path)
+    fdict = dict()
+    for hkey in hkeys:
+        fdict[hkey] = apero_async.get_hdr_key(hdr, hkey, hkeys[hkey])
+    return fdict
+
+
+def _normalize_mp_config(task_config: Dict[str, Any]) -> Dict[str, Any]:
+    """Normalize multiprocessing config from TASK_CONFIG."""
+    cfg = task_config or {}
+    try:
+        ncores = int(cfg.get('ncores', cfg.get('NCORES', 1)) or 1)
+    except (TypeError, ValueError):
+        ncores = 1
+    ncores = max(1, ncores)
+
+    backend = str(cfg.get('mp_backend', 'threads') or 'threads').strip().lower()
+    if backend not in ('threads', 'processes'):
+        backend = 'threads'
+
+    start_method = str(
+        cfg.get('mp_start_method', 'default') or 'default'
+    ).strip().lower()
+    if start_method not in ('default', 'spawn', 'fork', 'forkserver'):
+        start_method = 'default'
+
+    max_cores = max(int(os.cpu_count() or 1), 1)
+    ncores = min(max_cores, ncores)
+    return {
+        'ncores': ncores,
+        'backend': backend,
+        'start_method': start_method,
+    }
+
+
+def _make_executor(mp_backend: str, ncores: int,
+                   mp_start_method: str, task_logger=None):
+    """Build thread/process executor with fallback to threads."""
+    if mp_backend == 'processes':
+        try:
+            ctx = None
+            if mp_start_method != 'default':
+                ctx = mp.get_context(mp_start_method)
+            return ProcessPoolExecutor(max_workers=max(1, ncores),
+                                       mp_context=ctx)
+        except Exception as exc:
+            if callable(task_logger):
+                task_logger(
+                    f'QC stats process pool init failed ({exc}); falling back to threads.'
+                )
+    return ThreadPoolExecutor(max_workers=max(1, ncores))
 
 # =============================================================================
 # Start of main code

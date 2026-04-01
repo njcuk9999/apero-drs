@@ -375,7 +375,10 @@ def start_interactive_test(
         remote_cmd,
     ]
 
-    return start_session(kind='ssh_test', cmd=cmd)
+    result = start_session(kind='ssh_test', cmd=cmd)
+    if result.get('ok'):
+        result['cmd'] = shlex.join(cmd)
+    return result
 
 
 def start_interactive_mount(mount_name: str) -> Dict[str, Any]:
@@ -383,8 +386,10 @@ def start_interactive_mount(mount_name: str) -> Dict[str, Any]:
     Start an interactive SSHFS mount session (PTY-backed).
 
     This allows responding to password/2FA prompts for the mount.
-    After mounting, sshfs runs in the foreground for a short time,
-    then the session exits. The mount persists via -o background.
+    Without ``-f`` sshfs will daemonize after successful authentication,
+    causing the PTY child to exit (code 0) while the FUSE mount
+    persists via the background daemon – the same pattern used by
+    ``start_interactive_ssh_tunnel()`` for database tunnels.
     """
     from apero_ri.core.sshfs_backend import (
         load_sshfs_config, save_sshfs_config,
@@ -400,7 +405,17 @@ def start_interactive_mount(mount_name: str) -> Dict[str, Any]:
         return {'ok': False, 'error': f'Mount "{mount_name}" not found.'}
 
     if mount.get('status') == 'mounted':
-        return {'ok': True, 'message': f'Mount "{mount_name}" is already mounted.'}
+        import subprocess as _sp
+        local_mount_path = mount.get('local_mount', '')
+        mq = _sp.run(['mountpoint', '-q', local_mount_path],
+                      capture_output=True, timeout=5)
+        if mq.returncode == 0:
+            return {'ok': True,
+                    'message': f'Mount "{mount_name}" is already mounted.'}
+        # Stale config — reset and continue with mount
+        mount['status'] = 'unmounted'
+        mount['mounted_at'] = None
+        save_sshfs_config(cfg)
 
     ssh_key = mount.get('ssh_key', '')
     key_path = _get_ssh_keys_dir() / f'{ssh_key}.key'
@@ -408,25 +423,39 @@ def start_interactive_mount(mount_name: str) -> Dict[str, Any]:
         return {'ok': False, 'error': f'SSH key "{ssh_key}" not found.'}
 
     local_mount = Path(mount.get('local_mount', ''))
-    local_mount.mkdir(parents=True, exist_ok=True)
+    from apero_ri.core.sshfs_backend import _prepare_mount_dir
+    prep_log: list = []
+    try:
+        _prepare_mount_dir(local_mount, prep_log)
+    except Exception as exc:
+        return {'ok': False,
+                'error': f'Cannot prepare mount directory: {exc}',
+                'log': prep_log}
 
     target_info = _resolve_connection_target(mount)
     remote_target = target_info['sshfs_target']
     if not remote_target:
         return {'ok': False, 'error': 'Mount target is incomplete.'}
 
-    # sshfs command WITHOUT BatchMode — allows interactive auth
+    # sshfs command WITHOUT BatchMode — allows interactive auth.
+    # No -f flag: sshfs daemonizes after auth succeeds, so the PTY
+    # child exits (code 0) while the FUSE mount persists.
     cmd = [
         'sshfs',
-        '-f',  # stay in foreground (so PTY stays connected)
         '-o', f'IdentityFile={key_path}',
         '-o', 'StrictHostKeyChecking=accept-new',
+        '-o', 'ConnectTimeout=15',
         '-o', 'reconnect,ServerAliveInterval=15,ServerAliveCountMax=3',
         remote_target,
         str(local_mount),
     ]
 
-    return start_session(kind='sshfs_mount', cmd=cmd, mount_name=mount_name)
+    result = start_session(kind='sshfs_mount', cmd=cmd, mount_name=mount_name)
+    if result.get('ok'):
+        result['cmd'] = shlex.join(cmd)
+        if prep_log:
+            result['prep_log'] = prep_log
+    return result
 
 
 def finalise_interactive_mount(mount_name: str) -> Dict[str, Any]:
@@ -451,6 +480,89 @@ def finalise_interactive_mount(mount_name: str) -> Dict[str, Any]:
     mount['mounted_at'] = datetime.now(tz=timezone.utc).isoformat()
     save_sshfs_config(cfg)
     return {'ok': True, 'message': f'Mount "{mount_name}" marked as mounted.'}
+
+
+# =============================================================================
+# Interactive SSH tunnel for database connections
+# =============================================================================
+def start_interactive_ssh_tunnel(
+    ssh_config_host: str,
+    local_port: int,
+    remote_host: str,
+    remote_port: int = 3306,
+    local_data_dir: str = '',
+) -> Dict[str, Any]:
+    """
+    Start an interactive SSH tunnel session (PTY-backed).
+
+    Unlike the non-interactive ``_ensure_ssh_tunnel()`` in apero_async
+    (which uses ``BatchMode=yes``), this spawns the SSH tunnel inside a
+    PTY so the admin can respond to password, Duo 2FA, or other
+    keyboard-interactive authentication prompts in the browser.
+
+    Uses the *same* control socket path as ``_ensure_ssh_tunnel()`` so
+    that once the user authenticates, the tunnel is discoverable by all
+    subsequent non-interactive database operations.  The ``-f`` flag
+    causes SSH to fork to the background after successful authentication,
+    which exits the PTY process (exit code 0) while the tunnel keeps
+    running via the control socket with ``ControlPersist=yes``.
+    """
+    from hashlib import sha1
+
+    ssh_config_host = str(ssh_config_host or '').strip()
+    remote_host = str(remote_host or '').strip()
+    if not ssh_config_host:
+        return {'ok': False, 'error': 'SSH config host is required.'}
+    if not remote_host:
+        return {'ok': False, 'error': 'Remote (database) host is required.'}
+
+    # ── Compute the same control-socket path as _ensure_ssh_tunnel ──
+    data_dir = str(local_data_dir or '').strip()
+    if not data_dir:
+        data_dir = os.environ.get('ARI_DIR', str(Path.home() / '.ari'))
+    state_root = Path(data_dir).expanduser().resolve() / 'secret' / 'db_tunnels'
+    state_root.mkdir(parents=True, exist_ok=True)
+    signature = sha1(
+        f'{ssh_config_host}|{remote_host}|{local_port}|{remote_port}'
+        .encode('utf-8')
+    ).hexdigest()[:16]
+    control_path = state_root / f'{signature}.sock'
+
+    # Remove stale socket so SSH can create a fresh one
+    if control_path.exists():
+        try:
+            import subprocess as _sp
+            chk = _sp.run(
+                ['ssh', '-S', str(control_path), '-O', 'check',
+                 ssh_config_host],
+                capture_output=True, text=True, timeout=6,
+            )
+            if chk.returncode == 0:
+                return {
+                    'ok': False,
+                    'error': 'An SSH tunnel is already running for this '
+                             'configuration.  Use "Test Connection" directly.',
+                }
+        except Exception:
+            pass
+        control_path.unlink(missing_ok=True)
+
+    cmd = [
+        'ssh',
+        '-f',                             # background after auth succeeds
+        '-N',                             # no remote command — tunnel only
+        '-M',                             # control-master mode
+        '-S', str(control_path),          # control socket (matches _ensure_ssh_tunnel)
+        '-o', 'ExitOnForwardFailure=yes',
+        '-o', 'StrictHostKeyChecking=accept-new',
+        '-o', 'ControlPersist=yes',
+        '-o', 'ConnectTimeout=15',
+        '-t', '-t',                       # force PTY for interactive auth
+        '-L', f'{local_port}:{remote_host}:{remote_port}',
+        ssh_config_host,
+    ]
+
+    return start_session(kind='ssh_tunnel', cmd=cmd)
 
 
 # =============================================================================

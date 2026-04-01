@@ -51,9 +51,14 @@
     var detTaskKey      = document.getElementById('det-task-key');
     var detDesc         = document.getElementById('det-description');
     var detFreq         = document.getElementById('det-frequency');
+    var detParallelRow  = document.getElementById('det-parallel-row');
+    var detParallel     = document.getElementById('det-parallel');
     var detProgressRow  = document.getElementById('det-progress-row');
     var detProgressFill = document.getElementById('det-progress-fill');
     var detProgressPct  = document.getElementById('det-progress-pct');
+    var detSubprogressRow  = document.getElementById('det-subprogress-row');
+    var detSubprogressFill = document.getElementById('det-subprogress-fill');
+    var detSubprogressPct  = document.getElementById('det-subprogress-pct');
     var detLastRun      = document.getElementById('det-last-run');
     var detRunCount     = document.getElementById('det-run-count');
     // Section cards
@@ -81,6 +86,8 @@
     var detBtnDelete    = document.getElementById('det-btn-delete');
     var detBtnRunNow    = document.getElementById('det-btn-run-now');
     var detBtnForceRun  = document.getElementById('det-btn-force-run');
+    var detBtnStop      = document.getElementById('det-btn-stop');
+    var detBtnViewLog   = document.getElementById('det-btn-view-log');
 
     // Queue tab
     var btnStopAll          = document.getElementById('btn-stop-all');
@@ -90,7 +97,12 @@
     var queueRunningInstr   = document.getElementById('queue-running-instrument');
     var queueProgressFill   = document.getElementById('queue-progress-fill');
     var queueProgressPct    = document.getElementById('queue-progress-pct');
+    var queueSubprogressRow = document.getElementById('queue-subprogress-row');
+    var queueSubprogressFill= document.getElementById('queue-subprogress-fill');
+    var queueSubprogressPct = document.getElementById('queue-subprogress-pct');
     var queueRunningInfo    = document.getElementById('queue-running-info');
+    var queueBtnViewLog     = document.getElementById('queue-btn-view-log');
+    var queueBtnStop        = document.getElementById('queue-btn-stop');
     var queuePendingList    = document.getElementById('queue-pending-list');
     var queueHistoryList    = document.getElementById('queue-history-list');
 
@@ -105,6 +117,11 @@
     var editBackupFields= document.getElementById('edit-backup-fields');
     var editDailyCopies = document.getElementById('edit-daily-copies');
     var editWeeklyCopies= document.getElementById('edit-weekly-copies');
+    var editMpFields    = document.getElementById('edit-mp-fields');
+    var editNcores      = document.getElementById('edit-ncores');
+    var editMpBackend   = document.getElementById('edit-mp-backend');
+    var editMpStartMethod = document.getElementById('edit-mp-start-method');
+    var editMpWarn      = document.getElementById('edit-mp-warn');
     var editRunCountRow = document.getElementById('edit-run-count-row');
     var editRunCount    = document.getElementById('edit-run-count');
     var editActive      = document.getElementById('edit-active');
@@ -131,12 +148,29 @@
     var btnFileModalClose= document.getElementById('btn-file-modal-close');
     var btnFileModalOk  = document.getElementById('btn-file-modal-ok');
 
+    var taskLogModal = document.getElementById('at-task-log-modal');
+    var taskLogModalTitle = document.getElementById('task-log-modal-title');
+    var taskLogModalContent = document.getElementById('task-log-modal-content');
+    var btnTaskLogClose = document.getElementById('btn-task-log-close');
+    var btnTaskLogCloseX = document.getElementById('btn-task-log-close-x');
+    var btnTaskLogRefresh = document.getElementById('btn-task-log-refresh');
+    var btnTaskLogCopy = document.getElementById('btn-task-log-copy');
+
     var BACKUP_TASK_KEY = 'ARI_LOCAL_DATA_BACKUP';
     var currentInfoText = '';
     var currentErrorText = '';
+    var currentTaskLogText = '';
     var currentParamsData = null;   // { 'Task Params': {...}, 'Input Params': {...} }
     var currentParamsExpanded = new Set();
     var currentParamsOwnerTaskId = null;
+    var openTaskLogTaskId = null;
+    var taskLogRefreshTimer = null;
+    var mpConfig = {
+        max_cores: 1,
+        recommended_max_cores: 1,
+        backends: ['threads', 'processes'],
+        start_methods: ['default', 'spawn', 'fork', 'forkserver'],
+    };
 
     var toast = document.getElementById('at-toast');
 
@@ -144,6 +178,10 @@
        Initialisation
     ----------------------------------------------------------------------- */
     function init() {
+        // If the page skeleton is not present, skip binding to avoid hard JS errors.
+        if (!tabsEl || !instrWs || !queueWs || !detailEmpty || !detailCard) {
+            return;
+        }
         renderTabs();
         renderInstrumentCards();
         loadTaskClasses();
@@ -153,6 +191,7 @@
         bindQueue();
         bindRunAll();
         bindFileModal();
+        bindTaskLogModal();
         bindSectionToggles();
 
         if (instruments.length === 0) {
@@ -166,6 +205,7 @@
        Tabs
     ----------------------------------------------------------------------- */
     function renderTabs() {
+        if (!tabsEl) return;
         tabsEl.innerHTML = '';
         [
             { value: 'global', label: '<i class="fa-solid fa-globe"></i> Global' },
@@ -208,6 +248,7 @@
     }
 
     function selectTab(value) {
+        if (!tabsEl) return;
         // Update active styling
         Array.from(tabsEl.querySelectorAll('.ari-sg-tab')).forEach(function (b) {
             b.classList.toggle('ari-sg-tab--active', b.dataset.value === value);
@@ -236,7 +277,9 @@
         if (value === 'global') {
             currentInstrument = GLOBAL_SCOPE;
             if (instrumentPicker) instrumentPicker.style.display = 'none';
-            btnRunAll.innerHTML = '<i class="fa-solid fa-play"></i> Run All Global';
+            if (btnRunAll) {
+                btnRunAll.innerHTML = '<i class="fa-solid fa-play"></i> Run All Global';
+            }
             loadGlobalTasks();
             startPoll();
             return;
@@ -247,7 +290,9 @@
             currentInstrument = instruments[0] || null;
         }
         highlightInstrumentCard();
-        btnRunAll.innerHTML = '<i class="fa-solid fa-play"></i> Run All';
+        if (btnRunAll) {
+            btnRunAll.innerHTML = '<i class="fa-solid fa-play"></i> Run All';
+        }
         queueWs.style.display = 'none';
         noInstrEl.style.display = 'none';
         loadTasks();
@@ -267,7 +312,12 @@
                 renderTaskLists();
                 updateRunningBadge(data.queue);
                 if (selectedTaskId) {
-                    updateDetailRuntime();
+                    var selected = allTasks.find(function (t) { return t.id === selectedTaskId; });
+                    if (selected) {
+                        showDetail(selected);
+                    } else {
+                        showDetail(null);
+                    }
                 }
             });
     }
@@ -281,7 +331,12 @@
                 renderTaskLists();
                 updateRunningBadge(data.queue);
                 if (selectedTaskId) {
-                    updateDetailRuntime();
+                    var selected = allTasks.find(function (t) { return t.id === selectedTaskId; });
+                    if (selected) {
+                        showDetail(selected);
+                    } else {
+                        showDetail(null);
+                    }
                 }
             });
     }
@@ -295,6 +350,7 @@
     }
 
     function renderTaskLists() {
+        if (!activeList || !inactiveList || !activeCount || !inactiveCount) return;
         var active   = allTasks.filter(function (t) { return t.active !== false; });
         var inactive = allTasks.filter(function (t) { return t.active === false; });
         var draggable = (currentInstrument !== GLOBAL_SCOPE);
@@ -454,6 +510,22 @@
         detTaskKey.textContent = task.task_key;
         detDesc.textContent = cls.description || '';
         detFreq.textContent = task.frequency ? task.frequency + ' hrs' : '';
+        if (detParallelRow && detParallel) {
+            var supportsMp = !!cls.multi_process
+                || ('ncores' in task)
+                || ('mp_backend' in task)
+                || ('mp_start_method' in task);
+            if (supportsMp) {
+                var ncores = parseInt(task.ncores, 10) || 1;
+                var backend = String(task.mp_backend || 'threads');
+                var method = String(task.mp_start_method || 'default');
+                detParallel.textContent = 'NCORES=' + ncores + ', backend=' + backend + ', method=' + method;
+                detParallelRow.style.display = '';
+            } else {
+                detParallel.textContent = '';
+                detParallelRow.style.display = 'none';
+            }
+        }
 
         var isActive = task.active !== false;
         detBtnToggle.querySelector('i').className =
@@ -470,16 +542,36 @@
         var rt = task.runtime || {};
         var status = rt.found ? rt.status : 'not_started';
         var progress = rt.found ? (rt.progress || 0) : 0;
+        var subprogress = rt.found ? (rt.subprogress || 0) : 0;
+        var useSubprocess = !!rt.use_subprocess;
 
         detStatusBadge.textContent = status.replace(/_/g, ' ');
         detStatusBadge.className = 'at-status-badge at-status-badge--' + statusClass(status);
 
-        var isActive = (status === 'in_progress' || status === 'queued');
+        var isActive = (status === 'in_progress' || status === 'queued' || status === 'cancelling');
         detProgressRow.style.display = isActive ? '' : 'none';
         if (isActive) {
-            var pct = Math.round(progress * 100);
+            var pct = (progress * 100).toFixed(2);
             detProgressFill.style.width = pct + '%';
             detProgressPct.textContent = pct + '%';
+        }
+
+        if (detSubprogressRow) {
+            var showSub = isActive && useSubprocess;
+            detSubprogressRow.style.display = showSub ? '' : 'none';
+            if (showSub) {
+                var subPct = (subprogress * 100).toFixed(2);
+                detSubprogressFill.style.width = subPct + '%';
+                detSubprogressPct.textContent = subPct + '%';
+            }
+        }
+
+        // Stop button: show when running, queued, or cancelling
+        var canStop = (status === 'in_progress' || status === 'queued' || status === 'cancelling');
+        if (detBtnStop) {
+            detBtnStop.style.display = canStop ? '' : 'none';
+            detBtnStop.disabled = (status === 'cancelling');
+            detBtnStop.title = (status === 'cancelling') ? 'Cancellation requested…' : 'Stop this task';
         }
 
         detLastRun.textContent = (rt.last_run && rt.last_run !== 'Never') ? rt.last_run : 'Never';
@@ -797,32 +889,117 @@
             if (e.target === fileModal) fileModal.style.display = 'none';
         });
     }
-    detBtnToggle.addEventListener('click', function () {
-        if (!selectedTaskId) return;
-        fetch(urls.toggle, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ instrument: currentInstrument, id: selectedTaskId }),
-        }).then(function (r) { return r.json(); }).then(function (d) {
-            if (d.success) { refreshCurrentTasks(); } else { showToast('Toggle failed: ' + d.error, 'error'); }
+
+    function fetchTaskLog(taskId, lines) {
+        return fetch(urls.taskLog + '?task_id=' + encodeURIComponent(taskId) + '&lines=' + encodeURIComponent(lines || 400))
+            .then(function (r) { return r.json(); });
+    }
+
+    function refreshOpenTaskLog() {
+        if (!openTaskLogTaskId) return;
+        fetchTaskLog(openTaskLogTaskId, 600)
+            .then(function (d) {
+                if (!d || !d.success) {
+                    // Keep last visible content on transient fetch/auth errors.
+                    if (!currentTaskLogText) {
+                        taskLogModalContent.textContent = '(No log lines yet)';
+                    }
+                    return;
+                }
+                var content = String(d.content || '');
+                currentTaskLogText = content;
+                taskLogModalContent.textContent = content || '(No log lines yet)';
+                taskLogModalContent.scrollTop = taskLogModalContent.scrollHeight;
+            })
+            .catch(function () {
+                // Keep existing log text instead of clobbering it.
+                if (!currentTaskLogText) {
+                    taskLogModalContent.textContent = '(No log lines yet)';
+                }
+            });
+    }
+
+    function openLiveTaskLog(taskId, taskName) {
+        openTaskLogTaskId = String(taskId || '');
+        if (!openTaskLogTaskId) return;
+        taskLogModalTitle.textContent = 'Task Log - ' + String(taskName || openTaskLogTaskId);
+        taskLogModalContent.textContent = 'Loading...';
+        taskLogModal.style.display = '';
+        if (taskLogRefreshTimer) {
+            clearInterval(taskLogRefreshTimer);
+            taskLogRefreshTimer = null;
+        }
+        refreshOpenTaskLog();
+        taskLogRefreshTimer = setInterval(refreshOpenTaskLog, 1500);
+    }
+
+    function closeLiveTaskLog() {
+        if (taskLogRefreshTimer) {
+            clearInterval(taskLogRefreshTimer);
+            taskLogRefreshTimer = null;
+        }
+        openTaskLogTaskId = null;
+        taskLogModal.style.display = 'none';
+    }
+
+    function bindTaskLogModal() {
+        if (!taskLogModal) return;
+        [btnTaskLogClose, btnTaskLogCloseX].forEach(function (btn) {
+            if (!btn) return;
+            btn.addEventListener('click', closeLiveTaskLog);
         });
-    });
+        if (btnTaskLogRefresh) {
+            btnTaskLogRefresh.addEventListener('click', refreshOpenTaskLog);
+        }
+        if (btnTaskLogCopy) {
+            btnTaskLogCopy.addEventListener('click', function () {
+                if (!currentTaskLogText) {
+                    showToast('No log to copy.', 'error');
+                    return;
+                }
+                copyToClipboard(currentTaskLogText, 'Task log copied to clipboard.');
+            });
+        }
+        taskLogModal.addEventListener('click', function (e) {
+            if (e.target === taskLogModal) closeLiveTaskLog();
+        });
+    }
+    if (detBtnToggle) {
+        detBtnToggle.addEventListener('click', function () {
+            if (!selectedTaskId) return;
+            fetch(urls.toggle, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ instrument: currentInstrument, id: selectedTaskId }),
+            }).then(function (r) { return r.json(); }).then(function (d) {
+                if (d.success) { refreshCurrentTasks(); } else { showToast('Toggle failed: ' + d.error, 'error'); }
+            });
+        });
+    }
 
-    detBtnEdit.addEventListener('click', function () {
-        if (!selectedTaskId) return;
-        var task = allTasks.find(function (t) { return t.id === selectedTaskId; });
-        if (!task) return;
-        openEditModal(task);
-    });
+    if (detBtnEdit) {
+        detBtnEdit.addEventListener('click', function () {
+            if (!selectedTaskId) return;
+            var task = allTasks.find(function (t) { return t.id === selectedTaskId; });
+            if (!task) return;
+            openEditModal(task);
+        });
+    }
 
-    detBtnDelete.addEventListener('click', function () {
-        if (!selectedTaskId) return;
-        var task = allTasks.find(function (t) { return t.id === selectedTaskId; });
-        if (!task) return;
-        pendingDeleteId = task.id;
-        deleteModalName.textContent = task.name || task.task_key;
-        deleteModal.style.display = '';
-    });
+    if (detBtnDelete) {
+        detBtnDelete.addEventListener('click', function () {
+            if (!selectedTaskId) return;
+            var task = allTasks.find(function (t) { return t.id === selectedTaskId; });
+            if (!task) return;
+            pendingDeleteId = task.id;
+            if (deleteModalName) {
+                deleteModalName.textContent = task.name || task.task_key;
+            }
+            if (deleteModal) {
+                deleteModal.style.display = '';
+            }
+        });
+    }
 
     function queueSelectedTask(forceRun) {
         if (!selectedTaskId) return;
@@ -849,13 +1026,56 @@
         });
     }
 
-    detBtnRunNow.addEventListener('click', function () {
-        queueSelectedTask(false);
-    });
+    if (detBtnRunNow) {
+        detBtnRunNow.addEventListener('click', function () {
+            queueSelectedTask(false);
+        });
+    }
 
     if (detBtnForceRun) {
         detBtnForceRun.addEventListener('click', function () {
             queueSelectedTask(true);
+        });
+    }
+
+    function cancelTask(taskId, taskName) {
+        if (!taskId) return;
+        var label = taskName || taskId;
+        if (!confirm('Stop task "' + label + '"?\n\nRunning tasks will be signalled to stop; they may take a moment to finish.')) return;
+        fetch(urls.cancelTask, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ task_id: taskId }),
+        }).then(function (r) { return r.json(); }).then(function (d) {
+            if (d.success) {
+                var msg = d.was_running
+                    ? 'Stop signal sent. Task will finish current operation then cancel.'
+                    : 'Task removed from queue.';
+                showToast(msg, 'success');
+                refreshCurrentTasks();
+            } else {
+                showToast('Cancel failed: ' + (d.error || 'unknown error'), 'error');
+            }
+        }).catch(function () {
+            showToast('Cancel request failed.', 'error');
+        });
+    }
+
+    if (detBtnStop) {
+        detBtnStop.addEventListener('click', function () {
+            if (!selectedTaskId) return;
+            var task = allTasks.find(function (t) { return t.id === selectedTaskId; });
+            var name = task ? (task.name || task.task_key || selectedTaskId) : selectedTaskId;
+            cancelTask(selectedTaskId, name);
+        });
+    }
+
+    if (detBtnViewLog) {
+        detBtnViewLog.addEventListener('click', function () {
+            if (!selectedTaskId) return;
+            var task = allTasks.find(function (t) { return t.id === selectedTaskId; });
+            var name = task ? (task.name || task.task_key || selectedTaskId) : selectedTaskId;
+            openLiveTaskLog(selectedTaskId, name);
         });
     }
 
@@ -883,6 +1103,7 @@
        Run All
     ----------------------------------------------------------------------- */
     function bindRunAll() {
+        if (!btnRunAll) return;
         btnRunAll.addEventListener('click', function () {
             // Check if queue is non-empty
             fetch(urls.status)
@@ -921,6 +1142,9 @@
     }
 
     function bindRunAllModal() {
+        if (!btnRunAllReplace || !btnRunAllAdd || !btnRunAllCancel || !runAllModal) {
+            return;
+        }
         btnRunAllReplace.addEventListener('click', function () {
             runAllModal.style.display = 'none';
             doRunAll('replace');
@@ -943,6 +1167,7 @@
             .then(function (d) {
                 if (!d.success) return;
                 taskClasses = d.tasks || [];
+                mpConfig = d.multiprocessing || mpConfig;
                 populateTaskKeySelect();
             });
     }
@@ -969,6 +1194,9 @@
         editFrequency.value = task.frequency || 24;
         editDailyCopies.value = task.daily_copies || 0;
         editWeeklyCopies.value = task.weekly_copies || 0;
+        editNcores.value = task.ncores || 1;
+        editMpBackend.value = task.mp_backend || 'threads';
+        editMpStartMethod.value = task.mp_start_method || 'default';
         editRunCount.textContent = task.runtime ? (task.runtime.run_count || 0) : 0;
         editActive.checked = task.active !== false;
         onTaskKeyChange();
@@ -979,6 +1207,13 @@
         var key = editTaskKey.value;
         var cls = taskClasses.find(function (c) { return c.key === key; });
         var isBackup = key === BACKUP_TASK_KEY;
+        var currentTask = allTasks.find(function (t) {
+            return t.id === editingTaskId;
+        }) || {};
+        var supportsMp = !!(cls && cls.multi_process)
+            || ('ncores' in currentTask)
+            || ('mp_backend' in currentTask)
+            || ('mp_start_method' in currentTask);
         if (cls) {
             editTaskInfoRow.style.display = '';
             editTaskName.textContent = cls.name;
@@ -987,15 +1222,42 @@
             editTaskInfoRow.style.display = 'none';
         }
         editBackupFields.style.display = isBackup ? '' : 'none';
+        editMpFields.style.display = supportsMp ? '' : 'none';
+        if (supportsMp) {
+            renderNcoresWarning();
+        }
         editRunCountRow.style.display = editingTaskId ? '' : 'none';
     }
 
-    editTaskKey.addEventListener('change', onTaskKeyChange);
+    function renderNcoresWarning() {
+        if (!editMpWarn) return;
+        var ncores = parseInt(editNcores.value, 10) || 1;
+        var rec = parseInt(mpConfig.recommended_max_cores, 10) || 1;
+        if (ncores > rec) {
+            editMpWarn.style.display = '';
+            var hint = editMpWarn.querySelector('.at-muted-hint');
+            if (hint) {
+                hint.textContent = 'Warning: this server recommends <= ' + rec + ' cores (N-1). You can still save this value.';
+            }
+        } else {
+            editMpWarn.style.display = 'none';
+        }
+    }
+
+    if (editTaskKey) {
+        editTaskKey.addEventListener('change', onTaskKeyChange);
+    }
 
     function bindEditModal() {
+        if (!btnEditCancel || !btnEditClose || !btnEditSave || !editModal) {
+            return;
+        }
         btnEditCancel.addEventListener('click', closeEditModal);
         btnEditClose.addEventListener('click', closeEditModal);
         btnEditSave.addEventListener('click', saveTask);
+        if (editNcores) {
+            editNcores.addEventListener('input', renderNcoresWarning);
+        }
         // Close on backdrop click
         editModal.addEventListener('click', function (e) {
             if (e.target === editModal) closeEditModal();
@@ -1010,12 +1272,24 @@
 
     function saveTask() {
         var taskKey = editTaskKey.value.trim();
+        var cls = taskClasses.find(function (c) { return c.key === taskKey; }) || {};
+        var currentTask = allTasks.find(function (t) {
+            return t.id === editingTaskId;
+        }) || {};
+        var supportsMp = !!cls.multi_process
+            || ('ncores' in currentTask)
+            || ('mp_backend' in currentTask)
+            || ('mp_start_method' in currentTask);
         var frequency = parseFloat(editFrequency.value);
         var dailyCopies = parseInt(editDailyCopies.value, 10) || 0;
         var weeklyCopies = parseInt(editWeeklyCopies.value, 10) || 0;
+        var ncores = parseInt(editNcores.value, 10) || 1;
+        var mpBackend = (editMpBackend.value || 'threads').trim();
+        var mpStartMethod = (editMpStartMethod.value || 'default').trim();
         if (!taskKey) { showToast('Missing task key.', 'error'); return; }
         if (isNaN(frequency) || frequency <= 0) { showToast('Frequency must be a positive number of hours.', 'error'); return; }
         if (dailyCopies < 0 || weeklyCopies < 0) { showToast('Backup copy counts must be non-negative.', 'error'); return; }
+        if (supportsMp && ncores <= 0) { showToast('NCORES must be >= 1.', 'error'); return; }
         if (taskKey === BACKUP_TASK_KEY && dailyCopies + weeklyCopies <= 0) {
             showToast('Backup task needs at least one retained daily or weekly copy.', 'error');
             return;
@@ -1029,6 +1303,11 @@
             weekly_copies: weeklyCopies,
             active: editActive.checked,
         };
+        if (supportsMp) {
+            payload.ncores = ncores;
+            payload.mp_backend = mpBackend;
+            payload.mp_start_method = mpStartMethod;
+        }
         payload.id = editingTaskId;
 
         fetch(urls.save, {
@@ -1039,6 +1318,9 @@
             if (d.success) {
                 closeEditModal();
                 showToast('Task saved.', 'success');
+                if (Array.isArray(d.warnings) && d.warnings.length) {
+                    showToast(d.warnings.join(' '), 'error');
+                }
                 refreshCurrentTasks();
             } else {
                 showToast('Save failed: ' + d.error, 'error');
@@ -1050,6 +1332,9 @@
        Delete modal
     ----------------------------------------------------------------------- */
     function bindDeleteModal() {
+        if (!btnDeleteCancel || !btnDeleteConfirm || !deleteModal) {
+            return;
+        }
         btnDeleteCancel.addEventListener('click', function () {
             deleteModal.style.display = 'none';
             pendingDeleteId = null;
@@ -1088,6 +1373,7 @@
        Queue tab
     ----------------------------------------------------------------------- */
     function bindQueue() {
+        if (!btnStopAll) return;
         btnStopAll.addEventListener('click', function () {
             fetch(urls.stop, { method: 'POST' })
                 .then(function (r) { return r.json(); })
@@ -1139,19 +1425,46 @@
             var inst = currentInfo.instrument || current[0];
             var tname = currentInfo.task_name || tid;
             var st = statuses[tid] || {};
+            var useSubprocess = !!st.use_subprocess;
             queueRunning.style.display = '';
             queueRunningName.textContent = tname;
             queueRunningInstr.textContent = inst;
-            var pct = Math.round((st.progress || 0) * 100);
+            var pct = ((st.progress || 0) * 100).toFixed(2);
             queueProgressFill.style.width = pct + '%';
             queueProgressPct.textContent = pct + '%';
+            if (queueSubprogressRow) {
+                var subPct = ((st.subprogress || 0) * 100).toFixed(2);
+                queueSubprogressRow.style.display = useSubprocess ? '' : 'none';
+                queueSubprogressFill.style.width = subPct + '%';
+                queueSubprogressPct.textContent = subPct + '%';
+            }
             if (st.info && window.marked) {
                 queueRunningInfo.innerHTML = window.marked.parse(st.info);
             } else {
                 queueRunningInfo.innerHTML = '';
             }
+            if (queueBtnStop) {
+                var isCancelling = (st.status === 'cancelling');
+                queueBtnStop.disabled = isCancelling;
+                queueBtnStop.title = isCancelling ? 'Cancellation requested…' : 'Stop this task';
+                queueBtnStop.onclick = function () { cancelTask(tid, tname); };
+            }
+            if (queueBtnViewLog) {
+                queueBtnViewLog.onclick = function () {
+                    openLiveTaskLog(tid, tname);
+                };
+            }
         } else {
             queueRunning.style.display = 'none';
+            if (queueSubprogressRow) {
+                queueSubprogressRow.style.display = 'none';
+            }
+            if (queueBtnStop) {
+                queueBtnStop.onclick = null;
+            }
+            if (queueBtnViewLog) {
+                queueBtnViewLog.onclick = null;
+            }
         }
 
         if (pending.length === 0) {
@@ -1169,8 +1482,24 @@
                     (taskId && taskId !== taskName
                         ? '<span class="at-queue-item__id" style="opacity:0.7;">' + esc(taskId) + '</span>'
                         : '') +
+                    (taskId
+                        ? '<button class="ari-btn ari-btn--sm ari-btn--danger at-queue-cancel-btn" data-task-id="' + esc(taskId) + '" data-task-name="' + esc(taskName) + '" style="margin-left:auto;">'
+                          + '<i class="fa-solid fa-stop"></i> Stop</button>'
+                          + '<button class="ari-btn ari-btn--sm ari-btn--secondary at-queue-log-btn" data-task-id="' + esc(taskId) + '" data-task-name="' + esc(taskName) + '">'
+                          + '<i class="fa-solid fa-file-lines"></i> Log</button>'
+                        : '') +
                     '</div>';
             }).join('');
+            queuePendingList.querySelectorAll('.at-queue-cancel-btn').forEach(function (btn) {
+                btn.addEventListener('click', function () {
+                    cancelTask(btn.dataset.taskId || '', btn.dataset.taskName || '');
+                });
+            });
+            queuePendingList.querySelectorAll('.at-queue-log-btn').forEach(function (btn) {
+                btn.addEventListener('click', function () {
+                    openLiveTaskLog(btn.dataset.taskId || '', btn.dataset.taskName || '');
+                });
+            });
         }
 
         var history = Array.isArray(queue.recent_history) ? queue.recent_history : [];
@@ -1272,6 +1601,7 @@
         switch (status) {
             case 'completed':   return 'ok';
             case 'in_progress': return 'running';
+            case 'cancelling':  return 'queued';
             case 'queued':      return 'queued';
             case 'failed':      return 'error';
             case 'cancelled':   return 'cancelled';

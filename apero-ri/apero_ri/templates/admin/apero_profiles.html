@@ -140,8 +140,15 @@
                 </div>
                 <div class="ari-ap-form__field">
                     <label for="profile-db-pass">DATABASE_PASSWORD <span class="ari-required">*</span></label>
-                    <input type="password" id="profile-db-pass" class="ari-ap-input"
-                           placeholder="••••••••" autocomplete="off">
+                    <div style="position:relative;">
+                        <input type="password" id="profile-db-pass" class="ari-ap-input"
+                               placeholder="••••••••" autocomplete="off" style="padding-right:2.4em;">
+                        <button type="button" id="btn-toggle-db-pass" class="ari-ap-eye-toggle"
+                                title="Show / hide password"
+                                style="position:absolute; right:0.45em; top:50%; transform:translateY(-50%); background:none; border:none; cursor:pointer; color:var(--ari-text-muted); font-size:1em; padding:0.2em;">
+                            <i class="fa-solid fa-eye"></i>
+                        </button>
+                    </div>
                 </div>
             </div>
             <div class="ari-ap-form__field">
@@ -152,6 +159,10 @@
             <div class="ari-ap-form__field">
                 <button id="btn-test-db" class="ari-btn ari-btn--secondary ari-btn--sm">
                     <i class="fa-solid fa-plug"></i> Test Connection
+                </button>
+                <button id="btn-interactive-ssh-tunnel" class="ari-btn ari-btn--secondary ari-btn--sm" style="display:none;"
+                        title="Opens an interactive terminal for password/DUO 2FA authentication, then tests the database connection">
+                    <i class="fa-solid fa-terminal"></i> Test Connection (interactive)
                 </button>
                 <div id="db-test-result" class="ari-ap-validation" style="display:none;"></div>
             </div>
@@ -167,37 +178,43 @@
             <div class="ari-ap-form__row">
                 <div class="ari-ap-form__field">
                     <label for="profile-tbl-astrom">ASTROM_TABLENAME <span class="ari-required">*</span></label>
-                    <input type="text" id="profile-tbl-astrom" class="ari-ap-input"
-                           placeholder="e.g. astrom" autocomplete="off">
+                    <select id="profile-tbl-astrom" class="ari-ap-input">
+                        <option value="">Select table...</option>
+                    </select>
                 </div>
                 <div class="ari-ap-form__field">
                     <label for="profile-tbl-calib">CALIB_TABLENAME <span class="ari-required">*</span></label>
-                    <input type="text" id="profile-tbl-calib" class="ari-ap-input"
-                           placeholder="e.g. calib" autocomplete="off">
+                    <select id="profile-tbl-calib" class="ari-ap-input">
+                        <option value="">Select table...</option>
+                    </select>
                 </div>
             </div>
             <div class="ari-ap-form__row">
                 <div class="ari-ap-form__field">
                     <label for="profile-tbl-findex">FINDEX_TABLENAME <span class="ari-required">*</span></label>
-                    <input type="text" id="profile-tbl-findex" class="ari-ap-input"
-                           placeholder="e.g. findex" autocomplete="off">
+                    <select id="profile-tbl-findex" class="ari-ap-input">
+                        <option value="">Select table...</option>
+                    </select>
                 </div>
                 <div class="ari-ap-form__field">
                     <label for="profile-tbl-log">LOG_TABLENAME <span class="ari-required">*</span></label>
-                    <input type="text" id="profile-tbl-log" class="ari-ap-input"
-                           placeholder="e.g. log" autocomplete="off">
+                    <select id="profile-tbl-log" class="ari-ap-input">
+                        <option value="">Select table...</option>
+                    </select>
                 </div>
             </div>
             <div class="ari-ap-form__row">
                 <div class="ari-ap-form__field">
                     <label for="profile-tbl-tellu">TELLU_TABLENAME <span class="ari-required">*</span></label>
-                    <input type="text" id="profile-tbl-tellu" class="ari-ap-input"
-                           placeholder="e.g. tellu" autocomplete="off">
+                    <select id="profile-tbl-tellu" class="ari-ap-input">
+                        <option value="">Select table...</option>
+                    </select>
                 </div>
                 <div class="ari-ap-form__field">
                     <label for="profile-tbl-reject">REJECT_TABLENAME <span class="ari-required">*</span></label>
-                    <input type="text" id="profile-tbl-reject" class="ari-ap-input"
-                           placeholder="e.g. reject" autocomplete="off">
+                    <select id="profile-tbl-reject" class="ari-ap-input">
+                        <option value="">Select table...</option>
+                    </select>
                 </div>
             </div>
             <div class="ari-ap-form__field">
@@ -263,15 +280,15 @@
                 <div id="{{ field_id }}-validation" class="ari-ap-validation" style="display:none;"></div>
             </div>
             {% endfor %}
+            <div class="ari-ap-form__field">
+                <button id="btn-test-paths" class="ari-btn ari-btn--secondary ari-btn--sm" disabled>
+                    <i class="fa-solid fa-list-check"></i> Test Paths
+                </button>
+                <div id="paths-test-result" class="ari-ap-validation" style="display:none;"></div>
+            </div>
             <div class="ari-ap-step-status" id="paths-step-status">
                 <i class="fa-solid fa-lock"></i> Complete science settings first.
             </div>
-            </div>
-
-            <div class="ari-ap-form__actions">
-                <button id="btn-save-profile" class="ari-btn ari-btn--primary" disabled>
-                    <i class="fa-solid fa-floppy-disk"></i> Save &amp; Close
-                </button>
             </div>
         </div>
     </div>
@@ -288,6 +305,12 @@
                 <i class="fa-solid fa-lock"></i> You do not have permission to manage any groups.
             </div>
         </div>
+    </div>
+
+    <div class="ari-ap-form__actions">
+        <button id="btn-save-profile" class="ari-btn ari-btn--primary" disabled>
+            <i class="fa-solid fa-floppy-disk"></i> Save &amp; Close
+        </button>
     </div>
 </div>
 
@@ -341,11 +364,44 @@
     </div>
 </div>
 
+<!-- Interactive SSH terminal modal -->
+<div id="apSshTermOverlay" style="display:none; position:fixed; inset:0; z-index:9000; background:rgba(0,0,0,0.55); align-items:center; justify-content:center;">
+    <div style="position:relative; background:#1e1e2e; border-radius:10px; width:min(720px,92vw); max-height:85vh; display:flex; flex-direction:column; box-shadow:0 8px 32px rgba(0,0,0,0.5);">
+        <div style="display:flex; align-items:center; justify-content:space-between; padding:10px 16px; border-bottom:1px solid #333; flex-shrink:0;">
+            <span id="apSshTermTitle" style="color:#e0e0e0; font-weight:700; font-size:0.92em;">
+                <i class="fa-solid fa-terminal"></i> Interactive SSH Tunnel Authentication
+            </span>
+            <button id="apSshTermCloseBtn" type="button" class="ari-btn ari-btn--sm ari-btn--secondary" style="border-color:#555; color:#ccc;" title="Close session">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+        <pre id="apSshTermOutput" style="flex:1 1 auto; overflow-y:auto; margin:0; padding:12px 14px; font-family:'Cascadia Mono','Fira Code','Consolas',monospace; font-size:0.82em; line-height:1.55; color:#d4d4d4; background:#1e1e2e; min-height:180px; max-height:55vh; white-space:pre-wrap; word-break:break-all;"></pre>
+        <div style="display:flex; gap:8px; padding:10px 14px; border-top:1px solid #333; flex-shrink:0; align-items:center;">
+            <input id="apSshTermInput" type="password" autocomplete="off" spellcheck="false"
+                   placeholder="Type response here and press Enter..."
+                   style="flex:1; background:#2a2a3a; border:1px solid #444; border-radius:4px; color:#e0e0e0; padding:6px 10px; font-family:inherit; font-size:0.88em;">
+            <button id="apSshTermToggleVis" type="button" class="ari-btn ari-btn--sm ari-btn--secondary" style="border-color:#555; color:#ccc; min-width:34px;" title="Show / hide input">
+                <i class="fa-solid fa-eye"></i>
+            </button>
+            <button id="apSshTermSendBtn" type="button" class="ari-btn ari-btn--sm ari-btn--primary" title="Send">
+                <i class="fa-solid fa-paper-plane"></i>
+            </button>
+        </div>
+        <div id="apSshTermStatus" style="padding:6px 14px; font-size:0.8em; color:#888; border-top:1px solid #292929; flex-shrink:0;"></div>
+    </div>
+    {# Success popup — shown over the terminal modal #}
+    <div id="apSshSuccessPopup" style="display:none; position:absolute; inset:0; z-index:1; background:rgba(0,0,0,0.55); border-radius:10px; align-items:center; justify-content:center;">
+        <div style="background:#1e1e2e; border:2px solid #1f8a44; border-radius:12px; padding:32px 40px; text-align:center; box-shadow:0 4px 24px rgba(0,0,0,0.4);">
+            <div style="font-size:3em; color:#1f8a44; margin-bottom:12px;"><i class="fa-solid fa-circle-check"></i></div>
+            <div style="color:#e0e0e0; font-size:1.1em; font-weight:600; margin-bottom:18px;">Tunnel authenticated</div>
+            <button id="apSshSuccessCloseBtn" type="button" class="ari-btn ari-btn--primary" style="min-width:100px;">OK</button>
+        </div>
+    </div>
+</div>
+
 <!-- Toast notification -->
 <div id="toast" class="ari-toast" style="display:none;"></div>
-{% endblock %}
 
-{% block extra_scripts %}
 <script>
 window.ARI_APERO_PROFILES = {
     listUrl: {{ url_for('api_apero_profiles_list')|tojson }},
@@ -357,7 +413,12 @@ window.ARI_APERO_PROFILES = {
     browseUrl: {{ url_for('api_apero_profiles_browse')|tojson }},
     updateGroupsUrl: {{ url_for('api_apero_profiles_update_groups')|tojson }},
     testDbUrl: {{ url_for('api_apero_profiles_test_db')|tojson }},
+    listTablesUrl: {{ url_for('api_apero_profiles_list_tables')|tojson }},
     testTablesUrl: {{ url_for('api_apero_profiles_test_tables')|tojson }},
+    sshTunnelStartUrl: {{ url_for('api_apero_profiles_ssh_tunnel_start')|tojson }},
+    sshTunnelPollUrl: {{ url_for('api_apero_profiles_ssh_tunnel_poll')|tojson }},
+    sshTunnelSendUrl: {{ url_for('api_apero_profiles_ssh_tunnel_send')|tojson }},
+    sshTunnelCloseUrl: {{ url_for('api_apero_profiles_ssh_tunnel_close')|tojson }},
     instruments: {{ instruments|tojson }},
     allGroups: {{ all_groups|tojson }},
     canManageGroups: {{ can_manage_groups|tojson }},

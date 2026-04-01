@@ -6,6 +6,9 @@ APERO RI: Async task management
 """
 import time
 import shutil
+import os
+import multiprocessing as mp
+from concurrent.futures import ThreadPoolExecutor, ProcessPoolExecutor, as_completed
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, Optional
@@ -36,7 +39,11 @@ DEFAULT_FREQUENCY = 6.0
 DEFAULT_ENABLED = True
 # Set the type of task (INSTRUMENT, GLOBAL)
 TASK_TYPE = 'INSTRUMENT'
-# BLOCK_KIND is imported from apero_ri.base.base (shared with basket_funcs)
+# Whether this task has a sub-process (for sub-processing loading bar in UI)
+USE_SUBPROCESS = True
+# Whether this task can be run in multi-process mode 
+# (if False, will always run in main process)
+MULTI_PROCESS = True
 
 
 # =============================================================================
@@ -94,14 +101,46 @@ class AperoObjectQueryTask(apero_async.AperoAsyncTask):
         apero_profiles = params['APERO_PROFILES']
         task_config = params.get('TASK_CONFIG', {})
         force_run = bool(task_config.get('force_run', False))
+        mp_cfg = _normalize_mp_config(task_config)
+        req_ncores = task_config.get('ncores', task_config.get('NCORES', 1))
+        req_backend = task_config.get('mp_backend', 'threads')
+        req_method = task_config.get('mp_start_method', 'default')
+        host_cores = max(int(os.cpu_count() or 1), 1)
+        task_logger = params.get('TASK_LOGGER')
+        stop_event = params.get('STOP_EVENT')
+
+        def tlog(message: str) -> None:
+            if callable(task_logger):
+                try:
+                    task_logger(message)
+                except Exception:
+                    pass
+
+        tlog('APERO_OBJECT_QUERY start.')
+        tlog(f'Configured APERO profiles: {len(apero_profile_names)}')
+        tlog(
+            'Parallel config: '
+            f'requested(ncores={req_ncores}, backend={req_backend}, '
+            f'start={req_method}), '
+            f'normalized(ncores={mp_cfg["ncores"]}, '
+            f'backend={mp_cfg["backend"]}, '
+            f'start={mp_cfg["start_method"]}), '
+            f'host_cores={host_cores}.'
+        )
         # Check if there are any profiles configured
         if not apero_profile_names:
             self.info = 'No APERO profiles configured.'
+            tlog('No APERO profiles configured. Nothing to do.')
             return
         
         # loop around apero profiles
         for a_it, apero_profile in enumerate(apero_profile_names):
+            tlog(f'Profile {a_it + 1}/{len(apero_profile_names)}: {apero_profile}')
             
+            # update progress
+            self.progress = (a_it + 1) / len(apero_profile_names)
+            # reset subprogress for this profile (used for object-level progress)
+            self.subprogress = 0.0
             # -----------------------------------------------------------------
             # get parameters for this apero profile
             aparams = apero_profiles[apero_profile]
@@ -123,6 +162,7 @@ class AperoObjectQueryTask(apero_async.AperoAsyncTask):
                     f'\n## Object Query for APERO Profile: {apero_profile}\n\n'
                     f'- Skipped query run. {skip_reason}\n'
                 )
+                tlog(f'Profile {apero_profile}: skipped. {skip_reason}')
                 continue
             # -----------------------------------------------------------------
             # define the object name query
@@ -130,11 +170,17 @@ class AperoObjectQueryTask(apero_async.AperoAsyncTask):
             # first lets get a list of objects from the astrometric database
             db_params = apero_async.get_db_params(aparams)
             start = time.time()
+            tlog(f'Profile {apero_profile}: querying distinct object names from database...')
             objlist = apero_async.database_query(db_params, obj_query)
+            obj_query_time = time.time() - start
             # get the number of objects
             self.info += f'Found {len(objlist)} unique objects in the database '
             self.info += f'for APERO profile: {apero_profile}\n'
-            self.info += f'Object query time: {time.time() - start:.2f} seconds\n'
+            self.info += f'Object query time: {obj_query_time:.2f} seconds\n'
+            tlog(
+                f'Profile {apero_profile}: found {len(objlist)} objects '
+                f'in {obj_query_time:.2f}s.'
+            )
             # ----------------------------------------------------------------
             # clear out and lock the object directory
             local_objdir = (Path(aparams.get('LOCAL_DATA_DIR', str(ARI_DIR)))
@@ -142,6 +188,7 @@ class AperoObjectQueryTask(apero_async.AperoAsyncTask):
                             / aparams.get('general', {}).get(
                                 'INSTRUMENT', 'unknown')
                             / apero_profile_names[a_it] / 'objects')
+            tlog(f'Profile {apero_profile}: clearing output directory {local_objdir}')
             with _acquire_directory_lock(local_objdir):
                 _clear_directory_contents(local_objdir)
             # ----------------------------------------------------------------
@@ -153,54 +200,136 @@ class AperoObjectQueryTask(apero_async.AperoAsyncTask):
             outputs = []
             htime = 0
             # -----------------------------------------------------------------
+            object_names = []
             for o_it, obj_entry in enumerate(objlist):
-                # get object name from entries
-                objname = obj_entry['KW_OBJNAME']
-                # update the progress (combination of apero_profile + object)
-                part1 = (o_it + 1) / len(objlist)
-                part2 = (a_it + 1) / len(apero_profile_names)
-                self.progress = part1 * part2
+                if isinstance(obj_entry, dict):
+                    objname = str(obj_entry.get('KW_OBJNAME', '') or '')
+                else:
+                    objname = str(obj_entry)
+                if not objname:
+                    tlog(
+                        f'Profile {apero_profile}: skipping object entry '
+                        f'{o_it + 1} with empty object name.'
+                    )
+                    continue
+                object_names.append(objname)
 
-                # -------------------------------------------------------------
-                # Step 1: Query the databases for the object and get all 
-                #         information
-                # -------------------------------------------------------------
-                # returns an object table (on row per parameter)
-                # return a file table (one row per observation)
-                outputs = object_query_db(aparams, objname,
-                                          apero_profile_names[a_it])
-                
-                # -------------------------------------------------------------
-                # Step 2: Get header keys for all files for this object
-                # -------------------------------------------------------------
-                # returns a header table (one row per observation)
-                htime = object_query_headers(aparams, objname,
-                                             apero_profile_names[a_it], outputs)
-                
-                # -------------------------------------------------------------
-                # combine the timings from all queries for this object
-                timing_per_obj.append(sum(outputs['timings'].values()))
+            if not object_names:
+                tlog(f'Profile {apero_profile}: no valid object names to process.')
+
+            total_objects = len(object_names)
+            header_rows_total = 0
+            if MULTI_PROCESS and mp_cfg['ncores'] > 1 and total_objects > 1:
+                tlog(
+                    f'Profile {apero_profile}: parallel object loop '
+                    f'backend={mp_cfg["backend"]}, workers={mp_cfg["ncores"]}, '
+                    f'start={mp_cfg["start_method"]}.'
+                )
+                done = 0
+                executor, pool_mode = _make_executor(
+                    mp_cfg['backend'], mp_cfg['ncores'],
+                    mp_cfg['start_method'], tlog,
+                )
+                tlog(
+                    f'Profile {apero_profile}: execution mode={pool_mode} '
+                    f'with workers={mp_cfg["ncores"]}.'
+                )
+                with executor as pool:
+                    futures = {
+                        pool.submit(
+                            _run_single_object_job,
+                            aparams,
+                            objname,
+                            apero_profile_names[a_it],
+                        ): objname
+                        for objname in object_names
+                    }
+                    for fut in as_completed(futures):
+                        if stop_event is not None and stop_event.is_set():
+                            for _f in futures:
+                                _f.cancel()
+                            tlog(
+                                f'Profile {apero_profile}: cancellation requested. '
+                                'Stopping object loop.'
+                            )
+                            return
+                        objname = futures[fut]
+                        result = fut.result()
+                        done += 1
+                        self.subprogress = done / max(1, total_objects)
+                        timing_per_obj.append(result['object_total'])
+                        htime = float(result['header_time'])
+                        header_rows_total += int(result['header_rows'])
+                        output_files.extend(result.get('output_files', []))
+                        outputs = {'results': {'rows': result['header_rows']}}
+                        tlog(
+                            f'Profile {apero_profile}: object {objname} complete '
+                            f'({done}/{total_objects}, db+headers '
+                            f'{result["object_total"]:.2f}s, '
+                            f'header read {result["header_time"]:.2f}s).'
+                        )
+            else:
+                reason = []
+                if not MULTI_PROCESS:
+                    reason.append('task MULTI_PROCESS=False')
+                if mp_cfg['ncores'] <= 1:
+                    reason.append(f'ncores={mp_cfg["ncores"]}')
+                if total_objects <= 1:
+                    reason.append(f'objects={total_objects}')
+                tlog(
+                    f'Profile {apero_profile}: execution mode=serial '
+                    f'({", ".join(reason) if reason else "default"}).'
+                )
+                for o_it, objname in enumerate(object_names):
+                    # cooperative cancellation check
+                    if stop_event is not None and stop_event.is_set():
+                        tlog(
+                            f'Profile {apero_profile}: cancellation requested. '
+                            'Stopping object loop.'
+                        )
+                        return
+                    # update object-level progress
+                    self.subprogress = (o_it + 1) / max(1, total_objects)
+                    result = _run_single_object_job(
+                        aparams, objname, apero_profile_names[a_it])
+                    timing_per_obj.append(result['object_total'])
+                    htime = float(result['header_time'])
+                    header_rows_total += int(result['header_rows'])
+                    output_files.extend(result.get('output_files', []))
+                    outputs = {'results': {'rows': result['header_rows']}}
+                    tlog(
+                        f'Profile {apero_profile}: object {objname} complete '
+                        f'({o_it + 1}/{total_objects}, db+headers '
+                        f'{result["object_total"]:.2f}s, '
+                        f'header read {result["header_time"]:.2f}s).'
+                    )
 
 
             # -----------------------------------------------------------------
             # get average query time
-            ave_query_time = sum(timing_per_obj) / len(timing_per_obj)
+            ave_query_time = (sum(timing_per_obj) / len(timing_per_obj)
+                              if timing_per_obj else 0.0)
             # update the info markdown with meta data
             self.info += f"""
             ## Object Query for APERO Profile: {apero_profile}
-            
+
             - Queried {len(timing_per_obj)} objects
-            - Average query time per object: {ave_query_time:.2f} seconds 
+            - Average query time per object: {ave_query_time:.2f} seconds
             - Total query time: {sum(timing_per_obj):.2f} seconds
-            
-            - Read {len(outputs)} headers
-            - Total time to read headers: {htime}
+
+            - Read {header_rows_total} headers
+            - Total time to read headers: {htime:.2f} seconds
             """
+            tlog(
+                f'Profile {apero_profile}: done. objects={len(timing_per_obj)}, '
+                f'avg={ave_query_time:.2f}s, total={sum(timing_per_obj):.2f}s.'
+            )
             # -----------------------------------------------------------------
             # add to the output files for this task
             self.output_files += output_files
             if db_updates:
                 try:
+                    tlog(f'Profile {apero_profile}: persisting DB update fingerprint.')
                     apero_async.save_profile_db_table_updates(
                         instrument, apero_profile, db_updates
                     )
@@ -208,6 +337,10 @@ class AperoObjectQueryTask(apero_async.AperoAsyncTask):
                     self.info += (
                         f'\n- Warning: failed to persist database-update '
                         f'fingerprint for {apero_profile}: {exc}\n'
+                    )
+                    tlog(
+                        f'Profile {apero_profile}: warning, failed to persist '
+                        f'database-update fingerprint: {exc}'
                     )
                 # Invalidate stale plot cache for this profile
                 try:
@@ -227,10 +360,16 @@ class AperoObjectQueryTask(apero_async.AperoAsyncTask):
                                 f'\n- Invalidated {removed} cached plot '
                                 f'files for {apero_profile}\n'
                             )
+                            tlog(
+                                f'Profile {apero_profile}: invalidated {removed} '
+                                'cached plot file(s).'
+                            )
                 except Exception:
                     pass
             # update the last run time
             self.last_run = datetime.now(timezone.utc).isoformat()
+
+        tlog('APERO_OBJECT_QUERY completed.')
     
     def test_query(self, params: Dict[str, Any], objnames: str):
         """
@@ -333,7 +472,11 @@ class AperoObjectQueryTask(apero_async.AperoAsyncTask):
 def object_query_db(aparams, objname, apero_profile_name, 
                     return_query: bool = False) -> dict[str, Any]:
     if not objname:
-        raise ValueError('Object name is empty or invalid.')
+        outputs = dict()
+        outputs['queries'] = dict()
+        outputs['timings'] = dict()
+        outputs['results'] = dict()
+        return outputs
     
     # check that all required parameters are present
     rparams = _check_required(aparams)
@@ -413,6 +556,82 @@ def object_query_db(aparams, objname, apero_profile_name,
                 raise RuntimeError(emg)
             
     return outputs
+
+
+def _normalize_mp_config(task_config: Dict[str, Any]) -> Dict[str, Any]:
+    """Normalize multiprocessing config from TASK_CONFIG."""
+    cfg = task_config or {}
+    try:
+        ncores = int(cfg.get('ncores', cfg.get('NCORES', 1)) or 1)
+    except (TypeError, ValueError):
+        ncores = 1
+    ncores = max(1, ncores)
+
+    backend = str(cfg.get('mp_backend', 'threads') or 'threads').strip().lower()
+    if backend not in ('threads', 'processes'):
+        backend = 'threads'
+
+    start_method = str(
+        cfg.get('mp_start_method', 'default') or 'default'
+    ).strip().lower()
+    if start_method not in ('default', 'spawn', 'fork', 'forkserver'):
+        start_method = 'default'
+
+    max_cores = max(int(os.cpu_count() or 1), 1)
+    ncores = min(max_cores, ncores)
+    return {
+        'ncores': ncores,
+        'backend': backend,
+        'start_method': start_method,
+    }
+
+
+def _make_executor(backend: str, ncores: int, start_method: str, tlog):
+    """Build executor and return (executor, mode) with fallback to threads."""
+    if backend == 'processes':
+        try:
+            ctx = None
+            if start_method != 'default':
+                ctx = mp.get_context(start_method)
+            mode = ('ProcessPoolExecutor'
+                    if start_method == 'default'
+                    else f'ProcessPoolExecutor[{start_method}]')
+            return ProcessPoolExecutor(max_workers=ncores, mp_context=ctx), mode
+        except Exception as exc:
+            tlog(f'Process pool init failed ({exc}); falling back to threads.')
+    return ThreadPoolExecutor(max_workers=ncores), 'ThreadPoolExecutor'
+
+
+def _run_single_object_job(aparams: Dict[str, Any], objname: str,
+                           apero_profile_name: str) -> Dict[str, Any]:
+    """Run one object query+header workflow and return summary metrics."""
+    outputs = object_query_db(aparams, objname, apero_profile_name)
+    htime = object_query_headers(aparams, objname, apero_profile_name, outputs)
+    object_total = sum(outputs.get('timings', {}).values())
+    result_rows = outputs.get('results', {})
+    header_rows = 0
+    if isinstance(result_rows, dict):
+        for rows in result_rows.values():
+            if isinstance(rows, list):
+                header_rows += len(rows)
+
+    instrument = aparams.get('INSTRUMENT', 'unknown')
+    local_dir = (Path(aparams.get('LOCAL_DATA_DIR', str(ARI_DIR)))
+                 / 'tasks' / instrument / apero_profile_name / 'objects')
+    output_files = [str(local_dir / f'htable_{objname}.json')]
+    if isinstance(result_rows, dict):
+        for fkind, rows in result_rows.items():
+            if isinstance(rows, list) and rows:
+                output_files.append(
+                    str(local_dir / f'ftable_{fkind}_{objname}.json')
+                )
+
+    return {
+        'object_total': float(object_total),
+        'header_time': float(htime),
+        'header_rows': int(header_rows),
+        'output_files': output_files,
+    }
 
 
 def object_query_headers(aparams, objname, apero_profile_name,

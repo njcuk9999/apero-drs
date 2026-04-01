@@ -76,6 +76,8 @@
     var dbTestResult = document.getElementById('db-test-result');
     var btnTestTables = document.getElementById('btn-test-tables');
     var tablesTestResult = document.getElementById('tables-test-result');
+    var btnTestPaths = document.getElementById('btn-test-paths');
+    var pathsTestResult = document.getElementById('paths-test-result');
 
     var tablesSection = document.getElementById('tables-section');
     var scienceSection = document.getElementById('science-section');
@@ -135,7 +137,9 @@
     var formDirty = false;       // track unsaved changes
     var dbTestPassed = false;
     var tablesTestPassed = false;
+    var pathsTestPassed = false;
     var draftGroups = [];
+    var availableDbTables = [];
     var globalStatusLastSignature = '';
     var globalStatusCollapsed = true;
     var sectionCollapsePrefs = {
@@ -167,6 +171,86 @@
 
     /* -- Mark form dirty ------------------------------------------------- */
     function markDirty() { formDirty = true; }
+
+    function setTableOptions(tableNames, preserveCurrent) {
+        availableDbTables = Array.isArray(tableNames)
+            ? tableNames.slice().sort()
+            : [];
+
+        TABLE_FIELDS.forEach(function (field) {
+            var select = tableInputs[field.id];
+            var currentValue = select.value;
+            var seen = {};
+            select.innerHTML = '<option value="">Select table...</option>';
+
+            availableDbTables.forEach(function (tableName) {
+                if (seen[tableName]) return;
+                seen[tableName] = true;
+                var option = document.createElement('option');
+                option.value = tableName;
+                option.textContent = tableName;
+                select.appendChild(option);
+            });
+
+            if (preserveCurrent && currentValue && !seen[currentValue]) {
+                var currentOption = document.createElement('option');
+                currentOption.value = currentValue;
+                currentOption.textContent = currentValue + ' (current)';
+                select.appendChild(currentOption);
+            }
+            select.value = currentValue || '';
+        });
+    }
+
+    function setSingleTableValue(fieldId, value) {
+        var select = tableInputs[fieldId];
+        var currentValue = String(value || '').trim();
+        if (!select) return;
+        if (!currentValue) {
+            select.value = '';
+            return;
+        }
+        var exists = Array.prototype.some.call(select.options, function (option) {
+            return option.value === currentValue;
+        });
+        if (!exists) {
+            var currentOption = document.createElement('option');
+            currentOption.value = currentValue;
+            currentOption.textContent = currentValue + ' (current)';
+            select.appendChild(currentOption);
+        }
+        select.value = currentValue;
+    }
+
+    function clearTableOptions(preserveCurrent) {
+        setTableOptions([], !!preserveCurrent);
+    }
+
+    function loadAvailableTables(options) {
+        options = options || {};
+        var payload = buildDbPayload();
+        return fetch(cfg.listTablesUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        })
+        .then(function (r) { return r.json(); })
+        .then(function (data) {
+            if (data.valid) {
+                setTableOptions(data.tables || [], true);
+                if (!options.silent) {
+                    showFieldValidation(tablesTestResult, true,
+                        'Loaded ' + String((data.tables || []).length) + ' tables from database.');
+                }
+                return data.tables || [];
+            }
+            if (!options.silent) {
+                showFieldValidation(tablesTestResult, false,
+                    data.error || 'Failed to load database tables');
+            }
+            throw new Error(data.error || 'Failed to load database tables');
+        });
+    }
 
     /* -- Instrument tabs ------------------------------------------------- */
     function renderTabs() {
@@ -489,6 +573,7 @@
         formDirty = false;
         dbTestPassed = false;
         tablesTestPassed = false;
+        pathsTestPassed = false;
         sectionCollapsePrefs.db = null;
         sectionCollapsePrefs.tables = null;
         sectionCollapsePrefs.science = null;
@@ -502,7 +587,7 @@
         if (profileDbUseSsh) profileDbUseSsh.checked = false;
         DB_TEXT_FIELDS.forEach(function (f) { dbInputs[f.id].value = ''; });
         dbInputs['profile-db-ssh-remote-port'].value = '3306';
-        TABLE_FIELDS.forEach(function (f) { tableInputs[f.id].value = ''; });
+        clearTableOptions(false);
         PATH_FIELDS.forEach(function (f) {
             pathInputs[f.id].value = '';
             var vdiv = document.getElementById(f.id + '-validation');
@@ -515,6 +600,7 @@
         sciParamsExpanded = new Set();
         dbTestResult.style.display = 'none';
         tablesTestResult.style.display = 'none';
+        if (pathsTestResult) pathsTestResult.style.display = 'none';
         formTitle.innerHTML = '<i class="fa-solid fa-plus"></i> Add Profile';
         formSection.style.display = 'none';
         groupsSection.style.display = 'none';
@@ -545,8 +631,12 @@
         if (!dbInputs['profile-db-ssh-remote-port'].value.trim()) {
             dbInputs['profile-db-ssh-remote-port'].value = '3306';
         }
+        clearTableOptions(false);
         TABLE_FIELDS.forEach(function (f) {
-            tableInputs[f.id].value = profile[f.key] || '';
+            setSingleTableValue(f.id, profile[f.key] || '');
+        });
+        loadAvailableTables({ silent: true }).catch(function () {
+            // Keep current saved values even if table discovery fails.
         });
         // Restore instrument profile file selection
         if (aprofileSelect) {
@@ -557,12 +647,15 @@
         // reset automatically if the user edits DB or table-name fields.
         dbTestPassed = true;
         tablesTestPassed = true;
+        pathsTestPassed = true;
         PATH_FIELDS.forEach(function (f) {
             pathInputs[f.id].value = profile[f.key] || '';
-            validatePathField(f.id, profile[f.key] || '');
+            var vdiv = document.getElementById(f.id + '-validation');
+            if (vdiv) vdiv.style.display = 'none';
         });
         dbTestResult.style.display = 'none';
         tablesTestResult.style.display = 'none';
+        if (pathsTestResult) pathsTestResult.style.display = 'none';
         formTitle.innerHTML = '<i class="fa-solid fa-pen"></i> Edit Profile: ' +
             escapeHtml(profile.name);
         formSection.style.display = '';
@@ -599,6 +692,86 @@
         }, 400);
     }
 
+    function validatePathNow(fieldId, path) {
+        var vdiv = document.getElementById(fieldId + '-validation');
+        if (!vdiv) return Promise.resolve(false);
+        if (!path) {
+            showFieldValidation(vdiv, false, 'Path is required');
+            return Promise.resolve(false);
+        }
+        return fetch(cfg.validateUrl + '?path=' + encodeURIComponent(path))
+            .then(function (r) { return r.json(); })
+            .then(function (data) {
+                var ok = !!(data.success && data.valid);
+                if (ok) {
+                    showFieldValidation(vdiv, true, 'Directory exists');
+                } else {
+                    showFieldValidation(vdiv, false,
+                        (data && data.error) ? data.error : 'Directory does not exist');
+                }
+                return ok;
+            })
+            .catch(function () {
+                showFieldValidation(vdiv, false, 'Could not validate');
+                return false;
+            });
+    }
+
+    function testPaths() {
+        var checks = [];
+        var allFilled = true;
+
+        PATH_FIELDS.forEach(function (f) {
+            var value = pathInputs[f.id].value.trim();
+            if (!value) allFilled = false;
+            checks.push(validatePathNow(f.id, value));
+        });
+
+        if (!allFilled) {
+            pathsTestPassed = false;
+            if (pathsTestResult) {
+                showFieldValidation(pathsTestResult, false,
+                    'All paths are required before running path test.');
+            }
+            updateWorkflowState();
+            return;
+        }
+
+        if (btnTestPaths) {
+            btnTestPaths.disabled = true;
+            btnTestPaths.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Testing...';
+        }
+
+        Promise.all(checks)
+            .then(function (results) {
+                var okCount = results.filter(function (r) { return !!r; }).length;
+                pathsTestPassed = okCount === PATH_FIELDS.length;
+                if (pathsTestResult) {
+                    if (pathsTestPassed) {
+                        showFieldValidation(pathsTestResult, true,
+                            'All ' + String(PATH_FIELDS.length) + ' paths validated.');
+                    } else {
+                        showFieldValidation(pathsTestResult, false,
+                            String(okCount) + '/' + String(PATH_FIELDS.length)
+                            + ' paths validated. Fix invalid paths and test again.');
+                    }
+                }
+            })
+            .catch(function () {
+                pathsTestPassed = false;
+                if (pathsTestResult) {
+                    showFieldValidation(pathsTestResult, false,
+                        'Path test failed due to a network/server error.');
+                }
+            })
+            .finally(function () {
+                if (btnTestPaths) {
+                    btnTestPaths.innerHTML = '<i class="fa-solid fa-list-check"></i> Test Paths';
+                }
+                updateWorkflowState();
+            });
+    }
+
     function showFieldValidation(el, valid, message) {
         el.style.display = 'block';
         el.className = 'ari-ap-validation' +
@@ -631,10 +804,14 @@
     }
 
     function syncTunnelVisibility() {
+        var tunnelOn = isDbTunnelEnabled();
         if (dbSshTunnelFields) {
-            dbSshTunnelFields.style.display = isDbTunnelEnabled() ? '' : 'none';
+            dbSshTunnelFields.style.display = tunnelOn ? '' : 'none';
         }
-        if (isDbTunnelEnabled() && !dbInputs['profile-db-ssh-remote-port'].value.trim()) {
+        if (btnInteractiveTunnel) {
+            btnInteractiveTunnel.style.display = tunnelOn ? '' : 'none';
+        }
+        if (tunnelOn && !dbInputs['profile-db-ssh-remote-port'].value.trim()) {
             dbInputs['profile-db-ssh-remote-port'].value = '3306';
         }
     }
@@ -642,6 +819,8 @@
     function resetDbAndTableTests() {
         dbTestPassed = false;
         tablesTestPassed = false;
+        availableDbTables = [];
+        clearTableOptions(true);
         dbTestResult.style.display = 'none';
         tablesTestResult.style.display = 'none';
     }
@@ -678,6 +857,7 @@
         sectionEl.classList.toggle('ari-ap-step--locked', locked);
         sectionEl.querySelectorAll('input, select, button, textarea').forEach(function (el) {
             if (el.id === 'btn-test-tables') return;
+            if (el.id === 'btn-test-paths') return;
             if (el.id === 'profile-science-types') return;
             if (el.id === 'btn-save-profile') return;
             if (el.classList.contains('ari-dpr-card')) return;
@@ -861,6 +1041,216 @@
         });
     }
 
+    /* -- Password visibility toggle ------------------------------------- */
+    var btnToggleDbPass = document.getElementById('btn-toggle-db-pass');
+    if (btnToggleDbPass) {
+        btnToggleDbPass.addEventListener('click', function () {
+            var inp = document.getElementById('profile-db-pass');
+            if (!inp) return;
+            var show = inp.type === 'password';
+            inp.type = show ? 'text' : 'password';
+            btnToggleDbPass.innerHTML = show
+                ? '<i class="fa-solid fa-eye-slash"></i>'
+                : '<i class="fa-solid fa-eye"></i>';
+        });
+    }
+
+    /* -- Interactive SSH tunnel terminal -------------------------------- */
+    var apSshToken = null;
+    var apSshPollTimer = null;
+    var btnInteractiveTunnel = document.getElementById('btn-interactive-ssh-tunnel');
+
+    function apSshTermSetVisIcon(visible) {
+        var btn = document.getElementById('apSshTermToggleVis');
+        if (btn) btn.innerHTML = visible
+            ? '<i class="fa-solid fa-eye-slash"></i>'
+            : '<i class="fa-solid fa-eye"></i>';
+    }
+
+    function apSshShowSuccess() {
+        var popup = document.getElementById('apSshSuccessPopup');
+        if (popup) popup.style.display = 'flex';
+    }
+
+    function apSshDismissSuccess() {
+        var popup = document.getElementById('apSshSuccessPopup');
+        if (popup) popup.style.display = 'none';
+        apSshTermClose();
+        testDbConnection();
+    }
+
+    function apSshTermToggleVisibility() {
+        var input = document.getElementById('apSshTermInput');
+        if (!input) return;
+        var showing = input.type === 'text';
+        input.type = showing ? 'password' : 'text';
+        apSshTermSetVisIcon(!showing);
+    }
+
+    function apSshTermOpen() {
+        var overlay = document.getElementById('apSshTermOverlay');
+        var output  = document.getElementById('apSshTermOutput');
+        var input   = document.getElementById('apSshTermInput');
+        var status  = document.getElementById('apSshTermStatus');
+        var popup   = document.getElementById('apSshSuccessPopup');
+        if (overlay) overlay.style.display = 'flex';
+        if (output) output.textContent = '';
+        if (input)  { input.value = ''; input.disabled = false; input.type = 'password'; }
+        if (popup) popup.style.display = 'none';
+        apSshTermSetVisIcon(false);
+        if (status) status.textContent = 'Connecting...';
+    }
+
+    function apSshTermClose() {
+        if (apSshPollTimer) { clearInterval(apSshPollTimer); apSshPollTimer = null; }
+        var overlay = document.getElementById('apSshTermOverlay');
+        if (overlay) overlay.style.display = 'none';
+
+        if (apSshToken) {
+            fetch(cfg.sshTunnelCloseUrl, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ token: apSshToken }),
+            }).catch(function () {});
+            apSshToken = null;
+        }
+    }
+
+    function apSshTermAppend(text) {
+        var output = document.getElementById('apSshTermOutput');
+        if (!output || !text) return;
+        output.textContent += text;
+        output.scrollTop = output.scrollHeight;
+    }
+
+    function apSshTermStartPolling() {
+        if (apSshPollTimer) clearInterval(apSshPollTimer);
+        apSshPollTimer = setInterval(function () {
+            if (!apSshToken) return;
+            fetch(cfg.sshTunnelPollUrl, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ token: apSshToken }),
+            })
+            .then(function (r) { return r.json(); })
+            .then(function (data) {
+                if (!data.ok) {
+                    apSshTermAppend('\n[Session expired or closed]\n');
+                    clearInterval(apSshPollTimer);
+                    apSshPollTimer = null;
+                    var status = document.getElementById('apSshTermStatus');
+                    if (status) status.textContent = 'Session ended.';
+                    var input = document.getElementById('apSshTermInput');
+                    if (input) input.disabled = true;
+                    return;
+                }
+                if (data.output) apSshTermAppend(data.output);
+                if (data.finished) {
+                    clearInterval(apSshPollTimer);
+                    apSshPollTimer = null;
+                    var code = data.exit_code;
+                    var status = document.getElementById('apSshTermStatus');
+                    var input = document.getElementById('apSshTermInput');
+                    if (input) input.disabled = true;
+                    if (code === 0) {
+                        if (status) status.textContent = 'Tunnel authenticated';
+                        apSshShowSuccess();
+                    } else {
+                        apSshTermAppend('\n[Session ended with exit code ' + code + ']\n');
+                        if (status) {
+                            status.textContent = 'SSH tunnel failed (exit code ' + code + '). You can try again.';
+                        }
+                    }
+                } else {
+                    // Session is active — update status hint
+                    var status = document.getElementById('apSshTermStatus');
+                    if (status && data.output && data.output.length > 0) {
+                        status.textContent = 'Session active — respond to any prompts below.';
+                    }
+                }
+            })
+            .catch(function () { /* network error — keep polling */ });
+        }, 500);
+    }
+
+    function apSshTermSendInput() {
+        var input = document.getElementById('apSshTermInput');
+        if (!input || !apSshToken) return;
+        var text = input.value;
+        input.value = '';
+        // Reset to hidden after every send
+        input.type = 'password';
+        apSshTermSetVisIcon(false);
+        fetch(cfg.sshTunnelSendUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ token: apSshToken, data: text + '\n' }),
+        }).catch(function () {
+            apSshTermAppend('\n[Failed to send input]\n');
+        });
+    }
+
+    function startInteractiveSshTunnel() {
+        var sshHost = dbInputs['profile-db-ssh-host'].value.trim();
+        var localPort = dbInputs['profile-db-ssh-local-port'].value.trim();
+        var remoteHost = dbInputs['profile-db-host'].value.trim();
+        var remotePort = dbInputs['profile-db-ssh-remote-port'].value.trim() || '3306';
+
+        if (!sshHost || !localPort || !remoteHost) {
+            showFieldValidation(dbTestResult, false,
+                'SSH config host, local port, and database host are required');
+            return;
+        }
+
+        apSshTermOpen();
+
+        fetch(cfg.sshTunnelStartUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                ssh_config_host: sshHost,
+                local_port: parseInt(localPort, 10),
+                remote_host: remoteHost,
+                remote_port: parseInt(remotePort, 10),
+            }),
+        })
+        .then(function (r) { return r.json(); })
+        .then(function (data) {
+            if (!data.ok) {
+                apSshTermAppend('[Error] ' + (data.error || 'Failed to start session.') + '\n');
+                var status = document.getElementById('apSshTermStatus');
+                if (status) status.textContent = 'Failed to start.';
+                return;
+            }
+            apSshToken = data.token;
+            var status = document.getElementById('apSshTermStatus');
+            if (status) status.textContent = 'Session active — respond to any prompts below.';
+            apSshTermStartPolling();
+        })
+        .catch(function (err) {
+            apSshTermAppend('[Error] ' + err.message + '\n');
+        });
+    }
+
+    // Wire up terminal modal controls
+    var apSshTermCloseBtn = document.getElementById('apSshTermCloseBtn');
+    var apSshTermSendBtn = document.getElementById('apSshTermSendBtn');
+    var apSshTermInput = document.getElementById('apSshTermInput');
+    var apSshTermToggleVisBtn = document.getElementById('apSshTermToggleVis');
+    var apSshSuccessCloseBtn = document.getElementById('apSshSuccessCloseBtn');
+    if (apSshTermCloseBtn) apSshTermCloseBtn.addEventListener('click', apSshTermClose);
+    if (apSshTermSendBtn) apSshTermSendBtn.addEventListener('click', apSshTermSendInput);
+    if (apSshTermToggleVisBtn) apSshTermToggleVisBtn.addEventListener('click', apSshTermToggleVisibility);
+    if (apSshSuccessCloseBtn) apSshSuccessCloseBtn.addEventListener('click', apSshDismissSuccess);
+    if (apSshTermInput) {
+        apSshTermInput.addEventListener('keydown', function (e) {
+            if (e.key === 'Enter') { e.preventDefault(); apSshTermSendInput(); }
+        });
+    }
+    if (btnInteractiveTunnel) {
+        btnInteractiveTunnel.addEventListener('click', startInteractiveSshTunnel);
+    }
+
     function updateWorkflowState() {
         syncTunnelVisibility();
         var dbFieldsFilled = dbInputs['profile-db-host'].value.trim()
@@ -889,6 +1279,14 @@
         var scienceComplete = !!selectedSciProfile;
         lockSection(pathsSection, !scienceComplete);
 
+        var allPathsFilled = true;
+        PATH_FIELDS.forEach(function (f) {
+            if (!pathInputs[f.id].value.trim()) allPathsFilled = false;
+        });
+        if (btnTestPaths) {
+            btnTestPaths.disabled = !(scienceComplete && allPathsFilled);
+        }
+
         if (!dbTestPassed) {
             dbStepStatus.innerHTML = '<i class="fa-solid fa-circle-info"></i> Database test is required before continuing.';
             tablesStepStatus.innerHTML = '<i class="fa-solid fa-lock"></i> Complete and test database settings first.';
@@ -900,19 +1298,20 @@
         if (!scienceComplete) {
             scienceStepStatus.innerHTML = '<i class="fa-solid fa-circle-info"></i> Select an instrument profile.';
             pathsStepStatus.innerHTML = '<i class="fa-solid fa-lock"></i> Complete science settings first.';
+        } else if (!allPathsFilled) {
+            scienceStepStatus.innerHTML = '<i class="fa-solid fa-circle-check"></i> Science settings complete.';
+            pathsStepStatus.innerHTML = '<i class="fa-solid fa-circle-info"></i> Fill all paths, then click Test Paths.';
+        } else if (!pathsTestPassed) {
+            scienceStepStatus.innerHTML = '<i class="fa-solid fa-circle-check"></i> Science settings complete.';
+            pathsStepStatus.innerHTML = '<i class="fa-solid fa-circle-info"></i> Click Test Paths to verify all path directories.';
         } else {
             scienceStepStatus.innerHTML = '<i class="fa-solid fa-circle-check"></i> Science settings complete.';
-            pathsStepStatus.innerHTML = '<i class="fa-solid fa-circle-check"></i> You can now define paths and save.';
+            pathsStepStatus.innerHTML = '<i class="fa-solid fa-circle-check"></i> Paths test passed.';
         }
-
-        var allPathsFilled = true;
-        PATH_FIELDS.forEach(function (f) {
-            if (!pathInputs[f.id].value.trim()) allPathsFilled = false;
-        });
 
         var tablesDone = !!tablesTestPassed;
         var scienceDone = !!scienceComplete;
-        var pathsDone = !!(scienceDone && allPathsFilled);
+        var pathsDone = !!(scienceDone && allPathsFilled && pathsTestPassed);
 
         if (!tablesDone) sectionCollapsePrefs.tables = null;
         if (!scienceDone) sectionCollapsePrefs.science = null;
@@ -933,6 +1332,7 @@
         }
 
         btnSaveProfile.disabled = !(dbTestPassed && tablesTestPassed
+            && pathsTestPassed
             && scienceComplete && allPathsFilled && groupsOk);
     }
 
@@ -968,11 +1368,19 @@
             if (data.valid) {
                 showFieldValidation(dbTestResult, true, 'Connection successful');
                 dbTestPassed = true;
+                return loadAvailableTables({ silent: true })
+                    .catch(function (err) {
+                        showFieldValidation(tablesTestResult, false,
+                            err.message || 'Connection succeeded, but table discovery failed');
+                        return [];
+                    });
             } else {
                 showFieldValidation(dbTestResult, false, data.error || 'Connection failed');
                 dbTestPassed = false;
+                return [];
             }
-            // DB changes invalidate downstream tests
+        })
+        .then(function () {
             if (!dbTestPassed) {
                 tablesTestPassed = false;
             }
@@ -1288,8 +1696,12 @@
         if (browseTargetId && pathInputs[browseTargetId]) {
             pathInputs[browseTargetId].value = currentBrowsePath;
             lastBrowsePaths[browseTargetId] = currentBrowsePath;
-            validatePathField(browseTargetId, currentBrowsePath);
+            pathsTestPassed = false;
+            var vdiv = document.getElementById(browseTargetId + '-validation');
+            if (vdiv) vdiv.style.display = 'none';
+            if (pathsTestResult) pathsTestResult.style.display = 'none';
             markDirty();
+            updateWorkflowState();
         }
         closeBrowseModal();
     }
@@ -1449,11 +1861,13 @@
         dbInputs[f.id].addEventListener('input', function () {
             markDirty();
             resetDbAndTableTests();
+            pathsTestPassed = false;
+            if (pathsTestResult) pathsTestResult.style.display = 'none';
             updateWorkflowState();
         });
     });
     TABLE_FIELDS.forEach(function (f) {
-        tableInputs[f.id].addEventListener('input', function () {
+        tableInputs[f.id].addEventListener('change', function () {
             markDirty();
             tablesTestPassed = false;
             tablesTestResult.style.display = 'none';
@@ -1463,12 +1877,16 @@
     profileDbMode.addEventListener('change', function () {
         markDirty();
         resetDbAndTableTests();
+        pathsTestPassed = false;
+        if (pathsTestResult) pathsTestResult.style.display = 'none';
         updateWorkflowState();
     });
     if (profileDbUseSsh) {
         profileDbUseSsh.addEventListener('change', function () {
             markDirty();
             resetDbAndTableTests();
+            pathsTestPassed = false;
+            if (pathsTestResult) pathsTestResult.style.display = 'none';
             if (isDbTunnelEnabled() && !dbInputs['profile-db-ssh-remote-port'].value.trim()) {
                 dbInputs['profile-db-ssh-remote-port'].value = '3306';
             }
@@ -1501,10 +1919,17 @@
     PATH_FIELDS.forEach(function (f) {
         pathInputs[f.id].addEventListener('input', function () {
             markDirty();
-            validatePathField(f.id, pathInputs[f.id].value.trim());
+            pathsTestPassed = false;
+            var vdiv = document.getElementById(f.id + '-validation');
+            if (vdiv) vdiv.style.display = 'none';
+            if (pathsTestResult) pathsTestResult.style.display = 'none';
             updateWorkflowState();
         });
     });
+
+    if (btnTestPaths) {
+        btnTestPaths.addEventListener('click', testPaths);
+    }
 
     document.querySelectorAll('.btn-browse-path').forEach(function (btn) {
         btn.addEventListener('click', function () {
@@ -1547,6 +1972,13 @@
     deleteModal.addEventListener('click', function (e) {
         if (e.target === deleteModal) closeDeleteModal();
     });
+
+    var apSshTermOverlay = document.getElementById('apSshTermOverlay');
+    if (apSshTermOverlay) {
+        apSshTermOverlay.addEventListener('click', function (e) {
+            if (e.target === apSshTermOverlay) apSshTermClose();
+        });
+    }
 
     window.addEventListener('beforeunload', function (e) {
         if (formDirty) {

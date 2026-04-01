@@ -3809,6 +3809,11 @@ select.ari-ap-input {
     max-width: 90vw;
 }
 
+.ari-modal--task-log {
+    width: 1200px;
+    max-width: 96vw;
+}
+
 .ari-ap-browser__path {
     display: flex;
     gap: 0.5rem;
@@ -4635,6 +4640,10 @@ select.ari-ap-input {
     background: var(--ari-primary, #3f51b5);
     border-radius: 4px;
     transition: width 0.5s;
+}
+
+.at-progress-bar__fill--sub {
+    background: #7b1fa2;
 }
 
 .at-progress-pct {

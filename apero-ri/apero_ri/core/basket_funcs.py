@@ -290,7 +290,8 @@ def _resolve_path(entry: Dict[str, Any],
 
 def basket_summary(username: str,
                    profile_cfgs: Dict[str, Dict[str, Any]],
-                   accessible_run_ids: Set[str]) -> Dict[str, Any]:
+                   accessible_run_ids: Set[str],
+                   profile_id: Optional[str] = None) -> Dict[str, Any]:
     """
     Return a summary dict for the user's basket:
       {total_files, accessible_files, total_size_bytes, missing_files}
@@ -299,6 +300,11 @@ def basket_summary(username: str,
     accessible_run_ids: the logged-in user's allowed run_ids (security gate)
     """
     entries = load_basket(username)
+    if profile_id:
+        entries = [
+            e for e in entries
+            if str(e.get('profile_id', '') or '') == str(profile_id)
+        ]
     total = len(entries)
     accessible = 0
     total_size = 0

@@ -134,6 +134,10 @@
                         <span class="at-detail__label">Frequency</span>
                         <span id="det-frequency"></span>
                     </div>
+                    <div class="at-sg-item" id="det-parallel-row" style="display:none;">
+                        <span class="at-detail__label">Parallel config</span>
+                        <span id="det-parallel"></span>
+                    </div>
                     <div class="at-sg-item at-sg-item--wide">
                         <span class="at-detail__label">Description</span>
                         <span id="det-description"></span>
@@ -156,12 +160,27 @@
                             <span id="det-progress-pct" class="at-progress-pct">0%</span>
                         </div>
                     </div>
+                    <div id="det-subprogress-row" class="at-sg-item at-sg-item--wide" style="display:none;">
+                        <span class="at-detail__label">Subprogress</span>
+                        <div class="at-progress-wrap">
+                            <div class="at-progress-bar">
+                                <div id="det-subprogress-fill" class="at-progress-bar__fill at-progress-bar__fill--sub" style="width:0%;"></div>
+                            </div>
+                            <span id="det-subprogress-pct" class="at-progress-pct">0%</span>
+                        </div>
+                    </div>
                     <div class="at-sg-item at-run-row">
                         <button id="det-btn-run-now" class="ari-btn ari-btn--primary">
                             <i class="fa-solid fa-play"></i> Run Now
                         </button>
                         <button id="det-btn-force-run" class="ari-btn ari-btn--secondary">
                             <i class="fa-solid fa-bolt"></i> Force Run
+                        </button>
+                        <button id="det-btn-stop" class="ari-btn ari-btn--danger" style="display:none;">
+                            <i class="fa-solid fa-stop"></i> Stop
+                        </button>
+                        <button id="det-btn-view-log" class="ari-btn ari-btn--secondary">
+                            <i class="fa-solid fa-file-lines"></i> View Log
                         </button>
                     </div>
                 </div>
@@ -263,6 +282,12 @@
                 <strong>Running:</strong>
                 <span id="queue-running-name"></span>
                 <span id="queue-running-instrument" class="at-queue-instrument"></span>
+                <button id="queue-btn-stop" class="ari-btn ari-btn--sm ari-btn--danger" style="margin-left:auto;">
+                    <i class="fa-solid fa-stop"></i> Stop
+                </button>
+                <button id="queue-btn-view-log" class="ari-btn ari-btn--sm ari-btn--secondary">
+                    <i class="fa-solid fa-file-lines"></i> View Log
+                </button>
             </div>
             <div class="at-progress-wrap">
                 <div class="at-progress-bar">
@@ -271,6 +296,14 @@
                          style="width:0%;"></div>
                 </div>
                 <span id="queue-progress-pct" class="at-progress-pct">0%</span>
+            </div>
+            <div id="queue-subprogress-row" class="at-progress-wrap" style="display:none; margin-top:0.35rem;">
+                <div class="at-progress-bar">
+                    <div id="queue-subprogress-fill"
+                         class="at-progress-bar__fill at-progress-bar__fill--sub"
+                         style="width:0%;"></div>
+                </div>
+                <span id="queue-subprogress-pct" class="at-progress-pct">0%</span>
             </div>
             <div id="queue-running-info" class="at-info-md at-queue-info"></div>
         </div>
@@ -347,6 +380,32 @@
                            min="0" step="1" value="4">
                 </div>
             </div>
+            <div id="edit-mp-fields" style="display:none;">
+                <div class="ari-ap-form__field">
+                    <label for="edit-ncores">NCORES</label>
+                    <input type="number" id="edit-ncores" class="ari-ap-input"
+                           min="1" step="1" value="1">
+                </div>
+                <div class="ari-ap-form__field">
+                    <label for="edit-mp-backend">Parallel backend</label>
+                    <select id="edit-mp-backend" class="ari-ap-input">
+                        <option value="threads">threads</option>
+                        <option value="processes">processes</option>
+                    </select>
+                </div>
+                <div class="ari-ap-form__field">
+                    <label for="edit-mp-start-method">Process start method</label>
+                    <select id="edit-mp-start-method" class="ari-ap-input">
+                        <option value="default">default</option>
+                        <option value="spawn">spawn</option>
+                        <option value="fork">fork</option>
+                        <option value="forkserver">forkserver</option>
+                    </select>
+                </div>
+                <div class="ari-ap-form__field" id="edit-mp-warn" style="display:none;">
+                    <div class="at-muted-hint"></div>
+                </div>
+            </div>
             <div class="ari-ap-form__field" id="edit-run-count-row" style="display:none;">
                 <label for="edit-run-count">Times run</label>
                 <div id="edit-run-count" class="at-detail__value--code" aria-live="polite">0</div>
@@ -419,6 +478,34 @@
 <div id="at-toast" class="ari-toast" style="display:none;"></div>
 
 <!-- ====================================================================== -->
+<!-- Live task log modal                                                     -->
+<!-- ====================================================================== -->
+<div id="at-task-log-modal" class="ari-modal-backdrop" style="display:none;">
+    <div class="ari-modal ari-modal--wide ari-modal--task-log">
+        <div class="ari-modal__header">
+            <i class="fa-solid fa-file-lines"></i>&nbsp;<span id="task-log-modal-title">Task Log</span>
+            <button class="ari-modal__close" id="btn-task-log-close-x">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+        <div class="ari-modal__body">
+            <div style="display:flex;gap:0.5rem;justify-content:flex-end;margin-bottom:0.5rem;">
+                <button id="btn-task-log-refresh" class="ari-btn ari-btn--sm ari-btn--secondary">
+                    <i class="fa-solid fa-rotate"></i> Refresh
+                </button>
+                <button id="btn-task-log-copy" class="ari-btn ari-btn--sm ari-btn--secondary">
+                    <i class="fa-solid fa-copy"></i> Copy
+                </button>
+            </div>
+            <pre id="task-log-modal-content" class="at-error-pre" style="max-height:65vh;overflow:auto;white-space:pre-wrap;"></pre>
+        </div>
+        <div class="ari-modal__footer">
+            <button id="btn-task-log-close" class="ari-btn ari-btn--secondary">Close</button>
+        </div>
+    </div>
+</div>
+
+<!-- ====================================================================== -->
 <!-- File table viewer modal                                                 -->
 <!-- ====================================================================== -->
 <div id="at-file-modal" class="ari-modal-backdrop" style="display:none;">
@@ -459,10 +546,12 @@ window.ARI_ASYNC_TASKS = {
         stop:     '{{ url_for("api_async_tasks_stop") }}',
         clearHistory: '{{ url_for("api_async_tasks_clear_history") }}',
         status:   '{{ url_for("api_async_tasks_status") }}',
+        taskLog:  '{{ url_for("api_async_tasks_task_log") }}',
+        cancelTask: '{{ url_for("api_async_tasks_cancel_task") }}',
         readFile: '{{ url_for("api_async_tasks_read_file") }}',
         downloadFile: '{{ url_for("api_async_tasks_download_file") }}',
     }
 };
 </script>
-<script src="{{ url_for('static', filename='js/admin_async_tasks.js') }}"></script>
+<script src="{{ url_for('static', filename='js/admin_async_tasks.js', v='20260331-2') }}"></script>
 {% endblock %}

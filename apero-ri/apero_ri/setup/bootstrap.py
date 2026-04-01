@@ -109,11 +109,17 @@ def _load_yaml_file(path: Path) -> Dict[str, Any]:
 
 
 def get_users_file(local_data_dir: Path) -> Path:
-    return Path(local_data_dir).expanduser() / 'admin' / 'users.yaml'
+    admin_dir = Path(local_data_dir).expanduser() / 'admin'
+    new_path = admin_dir / 'general' / 'users.yaml'
+    legacy_path = admin_dir / 'users.yaml'
+    return new_path if new_path.exists() or not legacy_path.exists() else legacy_path
 
 
 def get_email_file(local_data_dir: Path) -> Path:
-    return Path(local_data_dir).expanduser() / 'admin' / 'email.yaml'
+    admin_dir = Path(local_data_dir).expanduser() / 'admin'
+    new_path = admin_dir / 'email' / 'email.yaml'
+    legacy_path = admin_dir / 'email.yaml'
+    return new_path if new_path.exists() or not legacy_path.exists() else legacy_path
 
 
 def has_admin_user(local_data_dir: Path,

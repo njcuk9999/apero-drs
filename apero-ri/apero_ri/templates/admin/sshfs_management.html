@@ -226,7 +226,7 @@ chmod 600 ~/.ssh/authorized_keys</pre>
         <div style="display:flex; gap:10px; flex-wrap:wrap; margin-top:8px;">
             {% if can_manage %}
             <button type="button" class="ari-btn ari-btn--secondary" onclick="smTestConnection()">
-                <i class="fa-solid fa-network-wired"></i> Test SSH (key only)
+                <i class="fa-solid fa-network-wired"></i> Test SSH
             </button>
             <button type="button" class="ari-btn ari-btn--secondary" onclick="smInteractiveTest()" title="Opens an interactive terminal for password/2FA authentication">
                 <i class="fa-solid fa-terminal"></i> Test SSH (interactive)
@@ -309,7 +309,7 @@ chmod 600 ~/.ssh/authorized_keys</pre>
 
 {# ── Interactive SSH terminal modal ── #}
 <div id="smTermOverlay" style="display:none; position:fixed; inset:0; z-index:9000; background:rgba(0,0,0,0.55); align-items:center; justify-content:center;">
-    <div style="background:#1e1e2e; border-radius:10px; width:min(720px,92vw); max-height:85vh; display:flex; flex-direction:column; box-shadow:0 8px 32px rgba(0,0,0,0.5);">
+    <div style="position:relative; background:#1e1e2e; border-radius:10px; width:min(720px,92vw); max-height:85vh; display:flex; flex-direction:column; box-shadow:0 8px 32px rgba(0,0,0,0.5);">
         <div style="display:flex; align-items:center; justify-content:space-between; padding:10px 16px; border-bottom:1px solid #333; flex-shrink:0;">
             <span id="smTermTitle" style="color:#e0e0e0; font-weight:700; font-size:0.92em;">
                 <i class="fa-solid fa-terminal"></i> Interactive SSH Session
@@ -320,20 +320,55 @@ chmod 600 ~/.ssh/authorized_keys</pre>
         </div>
         <pre id="smTermOutput" style="flex:1 1 auto; overflow-y:auto; margin:0; padding:12px 14px; font-family:'Cascadia Mono','Fira Code','Consolas',monospace; font-size:0.82em; line-height:1.55; color:#d4d4d4; background:#1e1e2e; min-height:180px; max-height:55vh; white-space:pre-wrap; word-break:break-all;"></pre>
         <div style="display:flex; gap:8px; padding:10px 14px; border-top:1px solid #333; flex-shrink:0; align-items:center;">
-            <input id="smTermInput" type="text" autocomplete="off" spellcheck="false"
+            <input id="smTermInput" type="password" autocomplete="off" spellcheck="false"
                    placeholder="Type response here and press Enter..."
                    style="flex:1; background:#2a2a3a; border:1px solid #444; border-radius:4px; color:#e0e0e0; padding:6px 10px; font-family:inherit; font-size:0.88em;">
+            <button id="smTermToggleVis" type="button" class="ari-btn ari-btn--sm ari-btn--secondary" style="border-color:#555; color:#ccc; min-width:34px;" title="Show / hide input">
+                <i class="fa-solid fa-eye"></i>
+            </button>
             <button id="smTermSendBtn" type="button" class="ari-btn ari-btn--sm ari-btn--primary" title="Send">
                 <i class="fa-solid fa-paper-plane"></i>
             </button>
         </div>
         <div id="smTermStatus" style="padding:6px 14px; font-size:0.8em; color:#888; border-top:1px solid #292929; flex-shrink:0;"></div>
+        <style>
+            @keyframes smSpinPulse { 0%,80%,100%{opacity:.25} 40%{opacity:1} }
+            .sm-spinner{display:inline-block;margin-left:6px}
+            .sm-spinner>span{display:inline-block;width:5px;height:5px;border-radius:50%;background:#888;margin:0 1.5px;animation:smSpinPulse 1.2s infinite}
+            .sm-spinner>span:nth-child(2){animation-delay:.2s}
+            .sm-spinner>span:nth-child(3){animation-delay:.4s}
+        </style>
+    </div>
+    {# Success popup — shown over the terminal modal #}
+    <div id="smSuccessPopup" style="display:none; position:absolute; inset:0; z-index:1; background:rgba(0,0,0,0.55); border-radius:10px; align-items:center; justify-content:center;">
+        <div style="background:#1e1e2e; border:2px solid #1f8a44; border-radius:12px; padding:32px 40px; text-align:center; box-shadow:0 4px 24px rgba(0,0,0,0.4);">
+            <div style="font-size:3em; color:#1f8a44; margin-bottom:12px;"><i class="fa-solid fa-circle-check"></i></div>
+            <div id="smSuccessMsg" style="color:#e0e0e0; font-size:1.1em; font-weight:600; margin-bottom:18px;">Test succeeded</div>
+            <button id="smSuccessCloseBtn" type="button" class="ari-btn ari-btn--primary" style="min-width:100px;">OK</button>
+        </div>
     </div>
 </div>
 
-{% endblock %}
+{# ── Mount debug log modal ── #}
+<div id="smLogOverlay" style="display:none; position:fixed; inset:0; z-index:8500; background:rgba(0,0,0,0.55); align-items:center; justify-content:center;">
+    <div style="background:#1e1e2e; border-radius:10px; width:min(680px,92vw); max-height:80vh; display:flex; flex-direction:column; box-shadow:0 8px 32px rgba(0,0,0,0.5);">
+        <div style="display:flex; align-items:center; justify-content:space-between; padding:10px 16px; border-bottom:1px solid #333; flex-shrink:0;">
+            <span style="color:#e0e0e0; font-weight:700; font-size:0.92em;">
+                <i class="fa-solid fa-file-lines"></i> Mount Debug Log
+            </span>
+            <div style="display:flex; gap:6px;">
+                <button type="button" class="ari-btn ari-btn--sm ari-btn--secondary" style="border-color:#555; color:#ccc;" title="Copy log to clipboard" onclick="smCopyLog()">
+                    <i class="fa-solid fa-copy"></i>
+                </button>
+                <button id="smLogCloseBtn" type="button" class="ari-btn ari-btn--sm ari-btn--secondary" style="border-color:#555; color:#ccc;" title="Close">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+        </div>
+        <pre id="smLogOutput" style="flex:1 1 auto; overflow-y:auto; margin:0; padding:12px 14px; font-family:'Cascadia Mono','Fira Code','Consolas',monospace; font-size:0.82em; line-height:1.55; color:#d4d4d4; background:#1e1e2e; min-height:120px; max-height:60vh; white-space:pre-wrap; word-break:break-all;"></pre>
+    </div>
+</div>
 
-{% block extra_scripts %}
 <script>
 const SM_CAN_MANAGE = {{ can_manage | tojson }};
 let smLastTestKey = '';
@@ -352,6 +387,79 @@ function smSetMsg(text, ok = true) {
     }
     el.classList.add(ok ? 'ari-ae-save-msg--ok' : 'ari-ae-save-msg--err');
     el.style.display = 'block';
+}
+
+let smLastLog = [];
+
+function smShowLog(logLines) {
+    smLastLog = logLines || [];
+    const overlay = document.getElementById('smLogOverlay');
+    const output = document.getElementById('smLogOutput');
+    if (output) output.textContent = smLastLog.join('\n') || '(no log output)';
+    if (overlay) overlay.style.display = 'flex';
+}
+
+function smCloseLog() {
+    const overlay = document.getElementById('smLogOverlay');
+    if (overlay) overlay.style.display = 'none';
+}
+
+function smCopyLog() {
+    const output = document.getElementById('smLogOutput');
+    if (!output) return;
+    navigator.clipboard.writeText(output.textContent || '').then(() => {
+        smSetMsg('Log copied to clipboard.', true);
+    }).catch(() => {
+        smSetMsg('Failed to copy log.', false);
+    });
+}
+
+async function smViewMountLog(mountName) {
+    try {
+        const res = await fetch(`/api/admin/sshfs/mounts/log/${encodeURIComponent(mountName)}`);
+        const data = await res.json();
+        if (!data.ok && data.error) {
+            smSetMsg(data.error, false);
+            return;
+        }
+        const lines = data.log || [];
+        const source = data.source || '';
+        const ts = data.timestamp || '';
+        let header = '';
+        if (ts || source) {
+            const parts = [];
+            if (source) parts.push(source);
+            if (ts) parts.push(ts);
+            header = `[${parts.join(' | ')}]\n\n`;
+        }
+        const output = document.getElementById('smLogOutput');
+        if (output) output.textContent = lines.length ? header + lines.join('\n') : '(no log saved for this mount)';
+        const overlay = document.getElementById('smLogOverlay');
+        if (overlay) overlay.style.display = 'flex';
+    } catch (err) {
+        smSetMsg('Error fetching log: ' + err.message, false);
+    }
+}
+
+function smSetMsgWithLog(text, ok, logLines) {
+    const el = document.getElementById('smMsg');
+    if (!el) return;
+    el.classList.remove('ari-ae-save-msg--ok', 'ari-ae-save-msg--err');
+    el.classList.add(ok ? 'ari-ae-save-msg--ok' : 'ari-ae-save-msg--err');
+    el.style.display = 'block';
+    if (logLines && logLines.length) {
+        smLastLog = logLines;
+        el.innerHTML = '';
+        el.appendChild(document.createTextNode(text + ' '));
+        const link = document.createElement('a');
+        link.href = '#';
+        link.textContent = 'View Log';
+        link.style.cssText = 'color:inherit; text-decoration:underline; cursor:pointer;';
+        link.addEventListener('click', function (e) { e.preventDefault(); smShowLog(smLastLog); });
+        el.appendChild(link);
+    } else {
+        el.textContent = text;
+    }
 }
 
 async function smCopyCommand(elementId) {
@@ -818,10 +926,11 @@ async function smLoadMountsStatus() {
                             ? `<button class="ari-btn ari-btn--sm ari-btn--secondary" onclick="smUnmountVolume('${mount.name}')"><i class="fa-solid fa-arrow-down-to-bracket"></i> Unmount</button>
                                <button class="ari-btn ari-btn--sm ari-btn--primary" onclick="smUnmountAndReauth('${mount.name}')" title="Unmount stale mount and open interactive session to re-authenticate"><i class="fa-solid fa-terminal"></i> Re-authenticate</button>`
                             : !isMounted
-                            ? `<button class="ari-btn ari-btn--sm ari-btn--primary" onclick="smMountVolume('${mount.name}')"><i class="fa-solid fa-arrow-up-from-bracket"></i> Mount (key only)</button>
+                            ? `<button class="ari-btn ari-btn--sm ari-btn--primary" onclick="smMountVolume('${mount.name}')"><i class="fa-solid fa-arrow-up-from-bracket"></i> Mount</button>
                                <button class="ari-btn ari-btn--sm ari-btn--secondary" onclick="smInteractiveMount('${mount.name}')" title="Use for password/2FA authentication"><i class="fa-solid fa-terminal"></i> Mount (interactive)</button>`
                             : `<button class="ari-btn ari-btn--sm ari-btn--secondary" onclick="smUnmountVolume('${mount.name}')"><i class="fa-solid fa-arrow-down-to-bracket"></i> Unmount</button>`}
                         <button class="ari-btn ari-btn--sm ari-btn--secondary" onclick="smRefreshMountStatus('${mount.name}')"><i class="fa-solid fa-rotate"></i> Refresh</button>
+                        <button class="ari-btn ari-btn--sm ari-btn--secondary" onclick="smViewMountLog('${mount.name}')" title="View last mount/unmount log"><i class="fa-solid fa-file-lines"></i> Log</button>
                         <button class="ari-btn ari-btn--sm ari-btn--danger" onclick="smDeleteMount('${mount.name}')"><i class="fa-solid fa-trash"></i> Delete</button>
                     ` : '-'}
                 </div>
@@ -839,11 +948,12 @@ async function smMountVolume(mountName) {
     try {
         const res = await fetch(`/api/admin/sshfs/mounts/mount/${encodeURIComponent(mountName)}`, { method: 'POST' });
         const data = await res.json();
+        const logLines = data.log || [];
         if (!data.ok) {
-            smSetMsg(data.error || 'Failed to mount.', false);
+            smSetMsgWithLog(data.error || 'Failed to mount.', false, logLines);
             return;
         }
-        smSetMsg(data.message || 'Mounted.', true);
+        smSetMsgWithLog(data.message || 'Mounted.', true, logLines);
         smLoadMountsStatus();
     } catch (err) {
         smSetMsg('Error mounting: ' + err.message, false);
@@ -908,6 +1018,36 @@ async function smRefreshStatus() {
 let smTermToken = null;
 let smTermPollTimer = null;
 let smTermMountName = '';   // set when doing an interactive mount
+let smTermIdleCount = 0;    // polls with no new output
+const SM_SPINNER_HTML = '<span class="sm-spinner"><span></span><span></span><span></span></span>';
+
+function smTermSetVisIcon(visible) {
+    const btn = document.getElementById('smTermToggleVis');
+    if (btn) btn.innerHTML = visible
+        ? '<i class="fa-solid fa-eye-slash"></i>'
+        : '<i class="fa-solid fa-eye"></i>';
+}
+
+function smShowSuccess(msg) {
+    const popup = document.getElementById('smSuccessPopup');
+    const msgEl = document.getElementById('smSuccessMsg');
+    if (msgEl) msgEl.textContent = msg || 'Test succeeded';
+    if (popup) popup.style.display = 'flex';
+}
+
+function smDismissSuccess() {
+    const popup = document.getElementById('smSuccessPopup');
+    if (popup) popup.style.display = 'none';
+    smTermClose();
+}
+
+function smTermToggleVisibility() {
+    const input = document.getElementById('smTermInput');
+    if (!input) return;
+    const showing = input.type === 'text';
+    input.type = showing ? 'password' : 'text';
+    smTermSetVisIcon(!showing);
+}
 
 function smTermOpen(title) {
     const overlay = document.getElementById('smTermOverlay');
@@ -915,12 +1055,16 @@ function smTermOpen(title) {
     const input = document.getElementById('smTermInput');
     const status = document.getElementById('smTermStatus');
     const titleEl = document.getElementById('smTermTitle');
+    const popup = document.getElementById('smSuccessPopup');
     if (overlay) overlay.style.display = 'flex';
     if (output) output.textContent = '';
-    if (input) { input.value = ''; input.disabled = false; }
-    if (status) status.textContent = 'Connecting...';
+    if (input) { input.value = ''; input.disabled = false; input.type = 'password'; }
+    if (popup) popup.style.display = 'none';
+    smTermSetVisIcon(false);
+    if (status) { status.textContent = 'Connecting...'; }
     if (titleEl) titleEl.innerHTML = '<i class="fa-solid fa-terminal"></i> ' + (title || 'Interactive SSH Session');
     smTermMountName = '';
+    smTermIdleCount = 0;
 }
 
 function smTermClose() {
@@ -931,6 +1075,9 @@ function smTermClose() {
     if (smTermToken) {
         const body = { token: smTermToken };
         if (smTermMountName) body.mount_name = smTermMountName;
+        // Send terminal output so the server can persist it as the mount log
+        const termOut = document.getElementById('smTermOutput');
+        if (smTermMountName && termOut) body.terminal_log = termOut.textContent || '';
         fetch('/api/admin/sshfs/interactive/close', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -957,6 +1104,21 @@ function smTermAppend(text) {
     output.scrollTop = output.scrollHeight;
 }
 
+function smTermInfo(text) {
+    // Append an informational line prefixed with >>
+    smTermAppend('>> ' + text);
+}
+
+function smStatusBusy(msg) {
+    const s = document.getElementById('smTermStatus');
+    if (s) s.innerHTML = msg + SM_SPINNER_HTML;
+}
+
+function smStatusText(msg) {
+    const s = document.getElementById('smTermStatus');
+    if (s) s.textContent = msg;
+}
+
 function smTermStartPolling() {
     if (smTermPollTimer) clearInterval(smTermPollTimer);
     smTermPollTimer = setInterval(async () => {
@@ -969,37 +1131,72 @@ function smTermStartPolling() {
             });
             const data = await res.json();
             if (!data.ok) {
-                smTermAppend('\n[Session expired or closed]\n');
+                smTermInfo('Session expired or closed\n');
                 clearInterval(smTermPollTimer);
                 smTermPollTimer = null;
-                const status = document.getElementById('smTermStatus');
-                if (status) status.textContent = 'Session ended.';
+                smStatusText('Session ended.');
                 const input = document.getElementById('smTermInput');
                 if (input) input.disabled = true;
                 return;
             }
-            if (data.output) smTermAppend(data.output);
+            if (data.output) {
+                smTermAppend(data.output);
+                smTermIdleCount = 0;
+            } else {
+                smTermIdleCount++;
+            }
+            // Update status bar with activity indicator
+            if (!data.finished && smTermIdleCount > 2) {
+                smStatusBusy('Waiting for response');
+            } else if (!data.finished && data.output) {
+                smStatusBusy('Session active');
+            }
             if (data.finished) {
                 clearInterval(smTermPollTimer);
                 smTermPollTimer = null;
                 const code = data.exit_code;
-                const status = document.getElementById('smTermStatus');
                 const input = document.getElementById('smTermInput');
                 if (input) input.disabled = true;
 
                 if (smTermMountName) {
-                    // For mount sessions: sshfs -f stays running,
-                    // so "finished" means the mount dropped.
-                    if (status) status.textContent = 'SSHFS process exited (exit code ' + code + '). Close this terminal to check mount status.';
+                    // sshfs daemonizes after auth; exit code 0 means
+                    // the child forked — verify the mount is actually live.
+                    if (code === 0) {
+                        smTermInfo('Mount process daemonized — verifying mount...\n');
+                        smStatusBusy('Verifying mount');
+                        try {
+                            const mRes = await fetch(`/api/admin/sshfs/mounts/status`);
+                            const mData = await mRes.json();
+                            const mInfo = (mData.mounts || []).find(m => m.name === smTermMountName);
+                            const live = mInfo && mInfo.status && mInfo.status.mounted;
+                            if (live) {
+                                smTermInfo('Mount verified — volume is live\n');
+                                smStatusText('Mount succeeded');
+                                smShowSuccess('Mount succeeded');
+                            } else {
+                                smTermInfo('Mount NOT live — transport endpoint may have disconnected\n');
+                                smStatusText('Mount process exited OK but volume is not mounted. Try again or check the log.');
+                            }
+                        } catch (_) {
+                            smTermInfo('Could not verify mount status\n');
+                            smStatusText('Mount may have succeeded — verify manually.');
+                        }
+                    } else {
+                        smTermInfo('SSHFS exited with code ' + code + '\n');
+                        smStatusText('Mount failed (exit code ' + code + '). Close this terminal and try again.');
+                    }
                 } else {
                     // For test sessions
                     const ok = code === 0;
-                    smTermAppend('\n[Session ended with exit code ' + code + ']\n');
-                    if (status) status.textContent = ok ? 'Test succeeded (exit code 0).' : 'Test finished (exit code ' + code + ').';
                     if (ok) {
                         smLastTestOk = true;
                         smLastTestKey = smCandidateKey(smCandidate());
                         smSetMsg('Interactive test passed. You can now add the mount.', true);
+                        smStatusText('Test succeeded');
+                        smShowSuccess('Test succeeded');
+                    } else {
+                        smTermInfo('Session ended with exit code ' + code + '\n');
+                        smStatusText('Test finished (exit code ' + code + ').');
                     }
                 }
             }
@@ -1014,6 +1211,9 @@ async function smTermSendInput() {
     if (!input || !smTermToken) return;
     const text = input.value;
     input.value = '';
+    // Reset to hidden after every send
+    input.type = 'password';
+    smTermSetVisIcon(false);
     // Send with newline appended (Enter key)
     try {
         await fetch('/api/admin/sshfs/interactive/send', {
@@ -1022,7 +1222,7 @@ async function smTermSendInput() {
             body: JSON.stringify({ token: smTermToken, data: text + '\n' }),
         });
     } catch (_) {
-        smTermAppend('\n[Failed to send input]\n');
+        smTermInfo('Failed to send input\\n');
     }
 }
 
@@ -1065,17 +1265,16 @@ async function smInteractiveTest() {
         });
         const data = await res.json();
         if (!data.ok) {
-            smTermAppend('[Error] ' + (data.error || 'Failed to start session.') + '\n');
-            const status = document.getElementById('smTermStatus');
-            if (status) status.textContent = 'Failed to start.';
+            smTermInfo('Error: ' + (data.error || 'Failed to start session.') + '\n');
+            smStatusText('Failed to start.');
             return;
         }
         smTermToken = data.token;
-        const status = document.getElementById('smTermStatus');
-        if (status) status.textContent = 'Session active — respond to any prompts below.';
+        smStatusBusy('Session active — respond to any prompts below');
+        if (data.cmd) smTermInfo('Command: ' + data.cmd + '\n\n');
         smTermStartPolling();
     } catch (err) {
-        smTermAppend('[Error] ' + err.message + '\n');
+        smTermInfo('Error: ' + err.message + '\n');
     }
 }
 
@@ -1092,20 +1291,20 @@ async function smInteractiveMount(mountName) {
         });
         const data = await res.json();
         if (!data.ok) {
-            smTermAppend('[Error] ' + (data.error || 'Failed to start mount session.') + '\n');
-            const status = document.getElementById('smTermStatus');
-            if (status) status.textContent = 'Failed to start.';
+            smTermInfo('Error: ' + (data.error || 'Failed to start mount session.') + '\n');
+            smStatusText('Failed to start.');
             return;
         }
         smTermToken = data.token;
-        const status = document.getElementById('smTermStatus');
-        if (status) status.textContent = 'Session active — respond to any prompts. Once mounted, close this terminal.';
-        smTermAppend('Starting SSHFS mount for "' + mountName + '"...\n');
-        smTermAppend('Respond to any password/2FA prompts below.\n');
-        smTermAppend('Once the mount is running, close this terminal to finalize.\n\n');
+        smStatusBusy('Session active — respond to any prompts below');
+        smTermInfo('Starting SSHFS mount for "' + mountName + '"...\n');
+        if (data.cmd) smTermInfo('Command: ' + data.cmd + '\n');
+        if (data.prep_log && data.prep_log.length) smTermInfo(data.prep_log.join('\n>> ') + '\n');
+        smTermInfo('Respond to any password/2FA prompts below.\n');
+        smTermInfo('The terminal will close automatically once mounted.\n\n');
         smTermStartPolling();
     } catch (err) {
-        smTermAppend('[Error] ' + err.message + '\n');
+        smTermInfo('Error: ' + err.message + '\n');
     }
 }
 
@@ -1123,6 +1322,22 @@ document.addEventListener('DOMContentLoaded', function () {
     // Terminal close button
     const closeBtn = document.getElementById('smTermCloseBtn');
     if (closeBtn) closeBtn.addEventListener('click', smTermClose);
+
+    // Log overlay close button + click-outside
+    const logCloseBtn = document.getElementById('smLogCloseBtn');
+    if (logCloseBtn) logCloseBtn.addEventListener('click', smCloseLog);
+    const logOverlay = document.getElementById('smLogOverlay');
+    if (logOverlay) logOverlay.addEventListener('click', function (e) {
+        if (e.target === logOverlay) smCloseLog();
+    });
+
+    // Terminal visibility toggle
+    const toggleVisBtn = document.getElementById('smTermToggleVis');
+    if (toggleVisBtn) toggleVisBtn.addEventListener('click', smTermToggleVisibility);
+
+    // Success popup OK button
+    const successCloseBtn = document.getElementById('smSuccessCloseBtn');
+    if (successCloseBtn) successCloseBtn.addEventListener('click', smDismissSuccess);
 
     // Terminal overlay click-outside-to-close
     const overlay = document.getElementById('smTermOverlay');

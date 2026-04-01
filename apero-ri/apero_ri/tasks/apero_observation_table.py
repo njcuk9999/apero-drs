@@ -32,6 +32,11 @@ DEFAULT_FREQUENCY = 6.0
 DEFAULT_ENABLED = True
 # Set the type of task (INSTRUMENT, GLOBAL)
 TASK_TYPE = 'INSTRUMENT'
+# Whether this task has a sub-process (for sub-processing loading bar in UI)
+USE_SUBPROCESS = False
+# Whether this task can be run in multi-process mode 
+# (if False, will always run in main process)
+MULTI_PROCESS = False
 
 
 # =============================================================================
@@ -89,15 +94,32 @@ class AperoObservationTableTask(apero_async.AperoAsyncTask):
         apero_profiles = params['APERO_PROFILES']
         task_config = params.get('TASK_CONFIG', {})
         force_run = bool(task_config.get('force_run', False))
+        task_logger = params.get('TASK_LOGGER')
+        stop_event = params.get('STOP_EVENT')
+
+        def tlog(message: str) -> None:
+            if callable(task_logger):
+                try:
+                    task_logger(message)
+                except Exception:
+                    pass
+
+        tlog('APERO_OBSERVATION_TABLE start.')
+        tlog(f'Configured APERO profiles: {len(apero_profile_names)}')
         
         # Check if there are any profiles configured
         if not apero_profile_names:
             self.info = 'No APERO profiles configured.'
+            tlog('No APERO profiles configured. Nothing to do.')
             return
         
         for a_it, apero_profile in enumerate(apero_profile_names):
+            if stop_event is not None and stop_event.is_set():
+                tlog('Cancellation requested. Exiting before next profile.')
+                return
             # update the progress
             self.progress = (a_it + 1) / len(apero_profile_names)
+            tlog(f'Profile {a_it + 1}/{len(apero_profile_names)}: {apero_profile}')
             # -----------------------------------------------------------------
             # get parameters for this apero profile
             aparams = apero_profiles[apero_profile]
@@ -115,6 +137,7 @@ class AperoObservationTableTask(apero_async.AperoAsyncTask):
                 should_skip = False
                 skip_reason = f'Database update-time check unavailable: {exc}'
             if should_skip:
+                tlog(f'Profile {apero_profile}: skipped. {skip_reason}')
                 self.info += (
                     f'\n## Observation Table for APERO Profile: {apero_profile}\n\n'
                     f'- Skipped query run. {skip_reason}\n'
@@ -132,7 +155,15 @@ class AperoObservationTableTask(apero_async.AperoAsyncTask):
             # run the query and get results
             db_params = apero_async.get_db_params(aparams)
             start = time.time()
+            tlog(f'Profile {apero_profile}: running database query for observation table...')
             results = apero_async.database_query(db_params, rquery)
+            tlog(
+                f'Profile {apero_profile}: query complete with {len(results)} rows '
+                f'in {time.time() - start:.2f}s.'
+            )
+            if stop_event is not None and stop_event.is_set():
+                tlog(f'Profile {apero_profile}: cancellation requested after query. Exiting.')
+                return
             # -----------------------------------------------------------------
             # time now
             time_now = datetime.now(timezone.utc).isoformat()
@@ -151,12 +182,18 @@ class AperoObservationTableTask(apero_async.AperoAsyncTask):
             filename =  local_dir / basename
             # save results to JSON file for use in the UI
             apero_async.save_results(filename, results, metadata)
+            tlog(f'Profile {apero_profile}: saved observation table to {filename}.')
             if db_updates:
                 try:
+                    tlog(f'Profile {apero_profile}: persisting DB update fingerprint.')
                     apero_async.save_profile_db_table_updates(
                         instrument, apero_profile, db_updates
                     )
                 except Exception as exc:
+                    tlog(
+                        f'Profile {apero_profile}: warning, failed to persist '
+                        f'database-update fingerprint: {exc}'
+                    )
                     self.info += (
                         f'\n- Warning: failed to persist database-update '
                         f'fingerprint for {apero_profile}: {exc}\n'
@@ -175,6 +212,8 @@ class AperoObservationTableTask(apero_async.AperoAsyncTask):
             self.output_files.append(str(filename))
             # update the last run time
             self.last_run = time_now
+
+        tlog('APERO_OBSERVATION_TABLE completed.')
     
     def test_query(self, params: Dict[str, Any]):
         """

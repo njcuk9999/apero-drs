@@ -44,6 +44,8 @@ class AperoAsyncTask:
         # Progress is a float between 0.0 and 1.0 representing the 
         # completion percentage
         self.progress = 0.0
+        self.subprogress = 0.0
+        self.USE_SUBPROCESS = False
         # Status can be 'pending', 'in_progress', 'completed', or 'failed'
         self.status = status
         # Long string (markdown) for writing the info page
@@ -62,6 +64,8 @@ class AperoAsyncTask:
             'description': self.description,
             'status': self.status,
             'progress': self.progress,
+            'subprogress': self.subprogress,
+            'use_subprocess': bool(self.USE_SUBPROCESS),
             'info': self.info,
             'last_run': self.last_run,
             'output_files': self.output_files,

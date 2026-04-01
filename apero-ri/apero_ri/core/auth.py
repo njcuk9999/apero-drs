@@ -3,7 +3,7 @@
 """
 APERO RI: Authentication and user management.
 
-Manages user accounts stored in ~/.ari/admin/users.yaml,
+Manages user accounts stored in ~/.ari/admin/general/users.yaml,
 password hashing via the cryptography package, and Flask session login.
 """
 import os
@@ -25,9 +25,11 @@ from apero_ri.core.permissions import (resolve_user_permissions, load_groups,
 # =============================================================================
 ARI_DIR = Path.home() / '.ari'
 ADMIN_DIR = ARI_DIR / 'admin'
-USERS_FILE = ADMIN_DIR / 'users.yaml'
-SCI_GROUPS_DIR = ADMIN_DIR
-ADMIN_HEALTH_CONFIG_FILE = ADMIN_DIR / 'health_status.yaml'
+ADMIN_GENERAL_DIR = ADMIN_DIR / 'general'
+USERS_FILE = ADMIN_GENERAL_DIR / 'users.yaml'
+SCI_GROUPS_DIR = ADMIN_DIR / 'science_groups'
+ADMIN_HEALTH_DIR = ADMIN_DIR / 'health'
+ADMIN_HEALTH_CONFIG_FILE = ADMIN_HEALTH_DIR / 'health_status.yaml'
 
 # PBKDF2 parameters
 HASH_ALGORITHM = hashes.SHA256()
@@ -43,18 +45,20 @@ DEFAULT_GROUPS = ['admin']
 
 def set_ari_dir(path: Optional[str]) -> None:
     """Configure storage root for auth-managed files."""
-    global ARI_DIR, ADMIN_DIR, USERS_FILE, SCI_GROUPS_DIR
+    global ARI_DIR, ADMIN_DIR, ADMIN_GENERAL_DIR, USERS_FILE, SCI_GROUPS_DIR
     global APERO_PROFILES_FILE, DB_ACCESS_FILE, ASYNC_TASKS_FILE
-    global ADMIN_HEALTH_CONFIG_FILE
+    global ADMIN_HEALTH_DIR, ADMIN_HEALTH_CONFIG_FILE
     base = Path(path).expanduser() if path else (Path.home() / '.ari')
     ARI_DIR = base
     ADMIN_DIR = ARI_DIR / 'admin'
-    USERS_FILE = ADMIN_DIR / 'users.yaml'
-    SCI_GROUPS_DIR = ADMIN_DIR
-    APERO_PROFILES_FILE = ADMIN_DIR / 'apero_profiles.yaml'
-    DB_ACCESS_FILE = ADMIN_DIR / 'db_access.yaml'
-    ASYNC_TASKS_FILE = ADMIN_DIR / 'async_tasks.yaml'
-    ADMIN_HEALTH_CONFIG_FILE = ADMIN_DIR / 'health_status.yaml'
+    ADMIN_GENERAL_DIR = ADMIN_DIR / 'general'
+    USERS_FILE = ADMIN_GENERAL_DIR / 'users.yaml'
+    SCI_GROUPS_DIR = ADMIN_DIR / 'science_groups'
+    APERO_PROFILES_FILE = ADMIN_GENERAL_DIR / 'apero_profiles.yaml'
+    DB_ACCESS_FILE = ADMIN_GENERAL_DIR / 'db_access.yaml'
+    ASYNC_TASKS_FILE = ADMIN_DIR / 'async_tasks' / 'async_tasks.yaml'
+    ADMIN_HEALTH_DIR = ADMIN_DIR / 'health'
+    ADMIN_HEALTH_CONFIG_FILE = ADMIN_HEALTH_DIR / 'health_status.yaml'
 
 
 # =============================================================================
@@ -107,10 +111,21 @@ def verify_password(password: str, stored_hash: str) -> bool:
 def ensure_ari_directory() -> None:
     """Create the ~/.ari/admin directory if it doesn't exist."""
     ADMIN_DIR.mkdir(parents=True, exist_ok=True)
+    ADMIN_GENERAL_DIR.mkdir(parents=True, exist_ok=True)
+    SCI_GROUPS_DIR.mkdir(parents=True, exist_ok=True)
+    ASYNC_TASKS_FILE.parent.mkdir(parents=True, exist_ok=True)
+    ADMIN_HEALTH_DIR.mkdir(parents=True, exist_ok=True)
 
 
 def load_users() -> Dict[str, dict]:
     """Load users from users.yaml."""
+    ensure_ari_directory()
+    legacy_file = ADMIN_DIR / 'users.yaml'
+    if not USERS_FILE.exists() and legacy_file.exists():
+        try:
+            USERS_FILE.write_bytes(legacy_file.read_bytes())
+        except Exception:
+            pass
     if not USERS_FILE.exists():
         return {}
     with open(USERS_FILE, 'r', encoding='utf-8') as f:
@@ -288,14 +303,14 @@ def get_public_permissions() -> Set[str]:
 # =============================================================================
 # APERO profile management
 # =============================================================================
-APERO_PROFILES_FILE = ADMIN_DIR / 'apero_profiles.yaml'
-DB_ACCESS_FILE = ADMIN_DIR / 'db_access.yaml'
+APERO_PROFILES_FILE = ADMIN_GENERAL_DIR / 'apero_profiles.yaml'
+DB_ACCESS_FILE = ADMIN_GENERAL_DIR / 'db_access.yaml'
 
 
 # =============================================================================
 # Async tasks configuration
 # =============================================================================
-ASYNC_TASKS_FILE = ADMIN_DIR / 'async_tasks.yaml'
+ASYNC_TASKS_FILE = ADMIN_DIR / 'async_tasks' / 'async_tasks.yaml'
 
 # =============================================================================
 # Admin health status configuration
@@ -306,6 +321,12 @@ _ALLOWED_HEALTH_REFRESH = {'manual', '5m', '15m', '1h'}
 def load_admin_health_config() -> dict:
     """Load admin health-status settings from health_status.yaml."""
     ensure_ari_directory()
+    legacy_file = ADMIN_DIR / 'health_status.yaml'
+    if not ADMIN_HEALTH_CONFIG_FILE.exists() and legacy_file.exists():
+        try:
+            ADMIN_HEALTH_CONFIG_FILE.write_bytes(legacy_file.read_bytes())
+        except Exception:
+            pass
     if not ADMIN_HEALTH_CONFIG_FILE.exists():
         default = {'refresh_frequency': 'manual'}
         with open(ADMIN_HEALTH_CONFIG_FILE, 'w', encoding='utf-8') as f:
@@ -343,6 +364,13 @@ def load_async_tasks() -> dict:
     Returns dict: {instrument: [task_cfg_dict, ...]}
     """
     ensure_ari_directory()
+    ASYNC_TASKS_FILE.parent.mkdir(parents=True, exist_ok=True)
+    legacy_file = ADMIN_DIR / 'async_tasks.yaml'
+    if not ASYNC_TASKS_FILE.exists() and legacy_file.exists():
+        try:
+            ASYNC_TASKS_FILE.write_bytes(legacy_file.read_bytes())
+        except Exception:
+            pass
     if not ASYNC_TASKS_FILE.exists():
         ASYNC_TASKS_FILE.write_text('')
     try:
@@ -363,6 +391,7 @@ def load_async_tasks() -> dict:
 def save_async_tasks(tasks: dict) -> None:
     """Save async task configurations to async_tasks.yaml."""
     ensure_ari_directory()
+    ASYNC_TASKS_FILE.parent.mkdir(parents=True, exist_ok=True)
     with open(ASYNC_TASKS_FILE, 'w') as f:
         yaml.dump(tasks, f, default_flow_style=False)
 
@@ -379,6 +408,12 @@ def load_apero_profiles(hydrate: bool = True) -> dict:
             content (useful before mutating/saving profiles).
     """
     ensure_ari_directory()
+    legacy_file = ADMIN_DIR / 'apero_profiles.yaml'
+    if not APERO_PROFILES_FILE.exists() and legacy_file.exists():
+        try:
+            APERO_PROFILES_FILE.write_bytes(legacy_file.read_bytes())
+        except Exception:
+            pass
     if not APERO_PROFILES_FILE.exists():
         APERO_PROFILES_FILE.write_text('')
     with open(APERO_PROFILES_FILE, 'r') as f:
@@ -522,6 +557,12 @@ def _hydrate_profile_data(profile_data: dict, instrument: str) -> dict:
 def load_db_access() -> dict:
     """Load DB access configuration from db_access.yaml."""
     ensure_ari_directory()
+    legacy_file = ADMIN_DIR / 'db_access.yaml'
+    if not DB_ACCESS_FILE.exists() and legacy_file.exists():
+        try:
+            DB_ACCESS_FILE.write_bytes(legacy_file.read_bytes())
+        except Exception:
+            pass
     if not DB_ACCESS_FILE.exists():
         DB_ACCESS_FILE.write_text('')
     with open(DB_ACCESS_FILE, 'r') as f:
@@ -587,7 +628,15 @@ def validate_database_connection(mode: str, host: str, username: str,
 def _sci_groups_file(instrument: str) -> Path:
     """Return the path to the science groups YAML for an instrument."""
     safe = instrument.lower().replace(' ', '_')
-    return SCI_GROUPS_DIR / f'{safe}_science_groups.yaml'
+    new_path = SCI_GROUPS_DIR / f'{safe}_science_groups.yaml'
+    legacy_path = ADMIN_DIR / f'{safe}_science_groups.yaml'
+    if not new_path.exists() and legacy_path.exists():
+        try:
+            SCI_GROUPS_DIR.mkdir(parents=True, exist_ok=True)
+            new_path.write_bytes(legacy_path.read_bytes())
+        except Exception:
+            pass
+    return new_path
 
 
 def load_science_groups(instrument: str) -> Dict[str, dict]:

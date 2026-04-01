@@ -26,13 +26,21 @@ BACKUP_MAX_SIZE = 1024 ** 3
 # Top-level directories in LOCAL_DATA_DIR to exclude from backups by default.
 DEFAULT_EXCLUDE_DIRS = ('backups', 'tasks', 'download', 'downloads', 'secret')
 # Specific secret-bearing config files that should not be archived.
-DEFAULT_EXCLUDE_PATHS = ('admin/apero_profiles.yaml', 'admin/db_access.yaml')
+DEFAULT_EXCLUDE_PATHS = ('admin/general/apero_profiles.yaml',
+                         'admin/general/db_access.yaml',
+                         'admin/apero_profiles.yaml',
+                         'admin/db_access.yaml')
 # Set the default frequency for this task (in hours)
 DEFAULT_FREQUENCY = 6.0
 # Set whether this task is enabled by default in the admin portal
 DEFAULT_ENABLED = True
 # Set the type of task (INSTRUMENT, GLOBAL)
 TASK_TYPE = 'GLOBAL'
+# Whether this task has a sub-process (for sub-processing loading bar in UI)
+USE_SUBPROCESS = False
+# Whether this task can be run in multi-process mode 
+# (if False, will always run in main process)
+MULTI_PROCESS = False
 
 
 # =============================================================================
@@ -52,6 +60,22 @@ class AperoLocalDataBackupTask(apero_async.AperoAsyncTask):
             params.get('LOCAL_DATA_DIR', str(ARI_DIR))
         ).expanduser().resolve()
         task_cfg = dict(params.get('TASK_CONFIG', {}))
+        task_logger = params.get('TASK_LOGGER')
+        stop_event = params.get('STOP_EVENT')
+
+        def tlog(message: str) -> None:
+            if callable(task_logger):
+                try:
+                    task_logger(message)
+                except Exception:
+                    pass
+
+        tlog('LOCAL_DATA backup start.')
+        tlog(f'Source directory: {local_data_dir}')
+
+        if stop_event is not None and stop_event.is_set():
+            tlog('Cancellation requested before backup started. Exiting.')
+            return
 
         self._validate_source_dir(local_data_dir)
 
@@ -80,6 +104,11 @@ class AperoLocalDataBackupTask(apero_async.AperoAsyncTask):
         estimated_size = self._estimate_archive_input_size(local_data_dir,
                                                            exclude_dirs,
                                                            exclude_paths)
+        tlog(
+            'Estimated archive input size: '
+            f'{self._format_bytes(estimated_size)} '
+            f'(limit={self._format_bytes(BACKUP_MAX_SIZE)}).'
+        )
         if estimated_size > BACKUP_MAX_SIZE:
             warning_msg = (
                 'Backup skipped: estimated archive input size '
@@ -87,6 +116,7 @@ class AperoLocalDataBackupTask(apero_async.AperoAsyncTask):
                 f'({self._format_bytes(BACKUP_MAX_SIZE)}).'
             )
             print(f'WARNING: {warning_msg}')
+            tlog(f'WARNING: {warning_msg}')
             self.info = f'## Local Data Backup\n\n**WARNING**: {warning_msg}\n'
             self.progress = 1.0
             raise ValueError(warning_msg)
@@ -121,12 +151,21 @@ class AperoLocalDataBackupTask(apero_async.AperoAsyncTask):
             f'**Excluded dirs**: {", ".join(exclude_dirs) if exclude_dirs else "(none)"}  \n'
             f'**Excluded paths**: {", ".join(exclude_paths) if exclude_paths else "(none)"}\n'
         )
+        tlog(
+            f'Configured retention daily={daily_copies}, weekly={weekly_copies}, '
+            f'excluded_dirs={len(exclude_dirs)}, excluded_paths={len(exclude_paths)}.'
+        )
 
         if daily_copies > 0:
+            if stop_event is not None and stop_event.is_set():
+                tlog('Cancellation requested before daily archive creation. Exiting.')
+                return
             daily_path = daily_dir / f'{local_data_dir.name}_{day_tag}.tar.gz'
+            tlog(f'Creating daily archive: {daily_path.name}')
             daily_action = self._create_or_replace_archive(
                 local_data_dir, daily_path, exclude_dirs, exclude_paths
             )
+            tlog(f'Daily archive {daily_action}: {daily_path.name}')
             if daily_action == 'created':
                 self.info += f'\n### Daily backup\nCreated `{daily_path.name}`\n'
             else:
@@ -136,10 +175,15 @@ class AperoLocalDataBackupTask(apero_async.AperoAsyncTask):
             self.progress = 0.5 if weekly_copies > 0 else 0.8
 
         if weekly_copies > 0:
+            if stop_event is not None and stop_event.is_set():
+                tlog('Cancellation requested before weekly archive creation. Exiting.')
+                return
             weekly_path = weekly_dir / f'{local_data_dir.name}_{week_tag}.tar.gz'
+            tlog(f'Creating weekly archive: {weekly_path.name}')
             weekly_action = self._create_or_replace_archive(
                 local_data_dir, weekly_path, exclude_dirs, exclude_paths
             )
+            tlog(f'Weekly archive {weekly_action}: {weekly_path.name}')
             if weekly_action == 'created':
                 self.info += f'\n### Weekly backup\nCreated `{weekly_path.name}`\n'
             else:
@@ -150,6 +194,9 @@ class AperoLocalDataBackupTask(apero_async.AperoAsyncTask):
 
         pruned_daily = self._prune_archives(daily_dir, daily_copies)
         pruned_weekly = self._prune_archives(weekly_dir, weekly_copies)
+        tlog(
+            f'Pruned archives: daily={len(pruned_daily)}, weekly={len(pruned_weekly)}.'
+        )
 
         manifest_rows = []
         for path in archive_files:
@@ -174,6 +221,7 @@ class AperoLocalDataBackupTask(apero_async.AperoAsyncTask):
                 'WEEKLY_COPIES': weekly_copies,
             },
         )
+        tlog(f'Manifest saved: {manifest_path}')
 
         self.output_files = (
             [str(manifest_path)]
@@ -188,11 +236,19 @@ class AperoLocalDataBackupTask(apero_async.AperoAsyncTask):
         local_inventory = bb.list_local_backups(local_data_dir=local_data_dir)
         local_count = int(local_inventory.get('total_count', 0) or 0)
         local_size = int(local_inventory.get('total_bytes', 0) or 0)
+        tlog(
+            f'Local backup inventory: files={local_count}, '
+            f'size={bb.format_bytes(local_size)}.'
+        )
         self.info += (
             '\n### Local backup status\n'
             f'- Files: {local_count}\n'
             f'- Size: {bb.format_bytes(local_size)}\n'
         )
+
+        if stop_event is not None and stop_event.is_set():
+            tlog('Cancellation requested before cloud sync. Exiting.')
+            return
 
         sync_result = bb.sync_local_backups_to_cloud(
             local_data_dir=local_data_dir)
@@ -200,6 +256,7 @@ class AperoLocalDataBackupTask(apero_async.AperoAsyncTask):
         if not sync_result.get('configured', False):
             warning_msg = str(sync_result.get(
                 'warning', 'Cloud backup is not configured.'))
+            tlog(f'Cloud sync warning ({provider}): {warning_msg}')
             self.info += (
                 '\n### Cloud mirror status\n'
                 f'**WARNING**: {warning_msg}\n'
@@ -207,6 +264,7 @@ class AperoLocalDataBackupTask(apero_async.AperoAsyncTask):
             )
         elif not sync_result.get('ok', False):
             warning_msg = str(sync_result.get('warning', 'Cloud mirror failed.'))
+            tlog(f'Cloud sync failed ({provider}): {warning_msg}')
             self.info += (
                 '\n### Cloud mirror status\n'
                 f'**WARNING**: {warning_msg}\n'
@@ -219,6 +277,12 @@ class AperoLocalDataBackupTask(apero_async.AperoAsyncTask):
             query_ms = sync_result.get('query_ms', None)
             cloud_bytes = int(sync_result.get('cloud_total_bytes', 0) or 0)
             cloud_count = int(sync_result.get('cloud_total_count', 0) or 0)
+            tlog(
+                f'Cloud sync ok ({provider}): uploaded={int(sync_result.get("uploaded", 0) or 0)}, '
+                f'updated={int(sync_result.get("updated", 0) or 0)}, '
+                f'deleted={int(sync_result.get("deleted", 0) or 0)}, '
+                f'cloud_files={cloud_count}.'
+            )
             self.info += (
                 '\n### Cloud mirror status\n'
                 f'- Provider: `{provider}`\n'
@@ -232,6 +296,7 @@ class AperoLocalDataBackupTask(apero_async.AperoAsyncTask):
 
         self.last_run = generated_at
         self.progress = 1.0
+    tlog('LOCAL_DATA backup completed successfully.')
 
     @staticmethod
     def _validate_source_dir(source_dir: Path) -> None:

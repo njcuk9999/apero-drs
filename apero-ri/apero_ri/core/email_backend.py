@@ -3,7 +3,7 @@
 """
 APERO RI: Email backend module.
 
-Configuration is loaded from {ARI_DIR}/admin/email.yaml.
+Configuration is loaded from {ARI_DIR}/admin/email/email.yaml.
 If that file does not exist or is empty, falls back to the legacy
 ARI_EMAIL_BACKEND=log mode (writes codes to email_log.txt).
 
@@ -26,7 +26,7 @@ outlook:    smtp.office365.com  port 587  TLS (STARTTLS)
 yahoo:      smtp.mail.yahoo.com  port 465  SSL
 office365:  smtp.office365.com  port 587  TLS
 custom:     user-supplied host/port/flags
-log:        no SMTP; write verification codes to admin/email_log.txt
+log:        no SMTP; write verification codes to admin/email/email_log.txt
 """
 
 import base64
@@ -133,7 +133,7 @@ PROVIDER_DEFAULTS = {
         'help_url': '',
         'help_steps': [
             'In "log" mode no emails are sent.',
-            'Verification codes are written to ~/.ari/admin/email_log.txt.',
+            'Verification codes are written to ~/.ari/admin/email/email_log.txt.',
             'An admin must read the code from that file and share it manually.',
             'Useful when setting up the system before email is configured.',
         ],
@@ -143,7 +143,17 @@ PROVIDER_DEFAULTS = {
 
 def _get_email_config_path() -> Path:
     ari_dir = os.environ.get('ARI_DIR', os.path.expanduser('~/.ari'))
-    return Path(ari_dir) / 'admin' / 'email.yaml'
+    admin_dir = Path(ari_dir) / 'admin'
+    email_dir = admin_dir / 'email'
+    email_dir.mkdir(parents=True, exist_ok=True)
+    config_file = email_dir / 'email.yaml'
+    legacy_file = admin_dir / 'email.yaml'
+    if not config_file.exists() and legacy_file.exists():
+        try:
+            config_file.write_bytes(legacy_file.read_bytes())
+        except Exception:
+            pass
+    return config_file
 
 
 def _get_email_password_path() -> Path:
@@ -360,7 +370,16 @@ def send_verification_email(recipient_email: str,
 def _log_fallback(to_address: str, subject: str, body: str) -> Optional[str]:
     """Write email content to a log file instead of sending."""
     ari_dir = os.environ.get('ARI_DIR', os.path.expanduser('~/.ari'))
-    log_path = Path(ari_dir) / 'admin' / 'email_log.txt'
+    admin_dir = Path(ari_dir) / 'admin'
+    email_dir = admin_dir / 'email'
+    email_dir.mkdir(parents=True, exist_ok=True)
+    log_path = email_dir / 'email_log.txt'
+    legacy_log = admin_dir / 'email_log.txt'
+    if not log_path.exists() and legacy_log.exists():
+        try:
+            log_path.write_bytes(legacy_log.read_bytes())
+        except Exception:
+            pass
     try:
         log_path.parent.mkdir(parents=True, exist_ok=True)
         with open(log_path, 'a') as lf:

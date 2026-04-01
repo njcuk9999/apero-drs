@@ -3,7 +3,7 @@
 """
 APERO RI: SSHFS mount management backend.
 
-Configuration is stored in {ARI_DIR}/admin/sshfs.yaml.
+Configuration is stored in {ARI_DIR}/admin/sshfs/sshfs.yaml.
 SSH keys are stored in {ARI_DIR}/secret/ssh_keys/{key_name}.key.
 Mount status is checked via subprocess commands.
 """
@@ -13,13 +13,15 @@ Mount status is checked via subprocess commands.
 # =============================================================================
 from __future__ import annotations
 
+import json
+import logging
 import os
 import re
 import shlex
 import subprocess
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Dict
+from typing import Any, Dict, List
 
 import yaml
 
@@ -35,6 +37,61 @@ __NAME__ = 'apero_ri.core.sshfs_backend'
 # -------------------------------------------------------------------------
 # Define private helpers
 # -------------------------------------------------------------------------
+
+def _get_mount_logs_dir() -> Path:
+    """Get directory for per-mount log files."""
+    ari_dir = Path(os.environ.get('ARI_DIR', os.path.expanduser('~/.ari')))
+    log_dir = ari_dir / 'admin' / 'sshfs' / 'logs'
+    log_dir.mkdir(parents=True, exist_ok=True)
+
+    legacy_dir = ari_dir / 'admin' / 'sshfs_logs'
+    if legacy_dir.exists() and legacy_dir.is_dir():
+        for child in legacy_dir.iterdir():
+            dest = log_dir / child.name
+            if dest.exists():
+                continue
+            try:
+                child.replace(dest)
+            except OSError:
+                continue
+        try:
+            legacy_dir.rmdir()
+        except OSError:
+            pass
+
+    return log_dir
+
+
+def save_mount_log(mount_name: str, log_lines: List[str],
+                   source: str = 'mount') -> None:
+    """Persist the last log for a mount to disk."""
+    safe_name = re.sub(r'[^\w\-.]', '_', mount_name)
+    log_path = _get_mount_logs_dir() / f'{safe_name}.json'
+    entry = {
+        'timestamp': datetime.now(tz=timezone.utc).isoformat(),
+        'source': source,
+        'lines': log_lines,
+    }
+    log_path.write_text(json.dumps(entry, indent=2), encoding='utf-8')
+
+
+def get_mount_log(mount_name: str) -> Dict[str, Any]:
+    """Read the last saved log for a mount."""
+    safe_name = re.sub(r'[^\w\-.]', '_', mount_name)
+    log_path = _get_mount_logs_dir() / f'{safe_name}.json'
+    if not log_path.exists():
+        return {'ok': True, 'log': [], 'timestamp': None, 'source': None}
+    try:
+        entry = json.loads(log_path.read_text(encoding='utf-8'))
+        return {
+            'ok': True,
+            'log': entry.get('lines', []),
+            'timestamp': entry.get('timestamp'),
+            'source': entry.get('source'),
+        }
+    except Exception as exc:
+        return {'ok': False, 'error': f'Failed to read log: {exc}'}
+
 
 def _normalize_connection_mode(value: str) -> str:
     mode = str(value or 'direct').strip().lower()
@@ -75,7 +132,19 @@ def _resolve_connection_target(mount_config: Dict[str, Any]) -> Dict[str, str]:
 def _get_sshfs_config_path() -> Path:
     """Get path to SSHFS configuration file."""
     ari_dir = os.environ.get('ARI_DIR', os.path.expanduser('~/.ari'))
-    return Path(ari_dir) / 'admin' / 'sshfs.yaml'
+    admin_dir = Path(ari_dir) / 'admin'
+    config_dir = admin_dir / 'sshfs'
+    config_dir.mkdir(parents=True, exist_ok=True)
+    config_file = config_dir / 'sshfs.yaml'
+    legacy_file = admin_dir / 'sshfs.yaml'
+
+    if not config_file.exists() and legacy_file.exists():
+        try:
+            config_file.write_bytes(legacy_file.read_bytes())
+        except Exception:
+            pass
+
+    return config_file
 
 
 def _get_secret_dir() -> Path:
@@ -370,8 +439,39 @@ def update_mount(original_name: str,
         return {'ok': False, 'error': f'Failed to update mount: {str(e)}'}
 
 
+def _prepare_mount_dir(local_mount: Path, log: List[str]) -> None:
+    """Ensure *local_mount* exists as a directory, cleaning up stale FUSE
+    mount points when necessary."""
+    try:
+        local_mount.mkdir(parents=True, exist_ok=True)
+        log.append(f'Mount directory ready: {local_mount}')
+    except OSError:
+        # Likely a stale FUSE mount (I/O error on stat).  Try to
+        # force-unmount and then re-create.
+        log.append(f'Mount directory exists but inaccessible (stale FUSE?) — '
+                   f'attempting fusermount -uz {local_mount}')
+        fuse = subprocess.run(
+            ['fusermount', '-uz', str(local_mount)],
+            capture_output=True, text=True, timeout=10,
+        )
+        log.append(f'fusermount exit={fuse.returncode}  '
+                   f'stderr={fuse.stderr.strip() or "(none)"}')
+        # If fusermount failed, try lazy umount as fallback
+        if fuse.returncode != 0:
+            log.append(f'Trying umount -l {local_mount}')
+            um = subprocess.run(
+                ['umount', '-l', str(local_mount)],
+                capture_output=True, text=True, timeout=10,
+            )
+            log.append(f'umount -l exit={um.returncode}  '
+                       f'stderr={um.stderr.strip() or "(none)"}')
+        local_mount.mkdir(parents=True, exist_ok=True)
+        log.append(f'Mount directory ready after cleanup: {local_mount}')
+
+
 def mount_sshfs(mount_name: str) -> Dict[str, Any]:
     """Mount an SSHFS volume."""
+    log: List[str] = []
     try:
         cfg = load_sshfs_config()
         mount = next(
@@ -379,10 +479,26 @@ def mount_sshfs(mount_name: str) -> Dict[str, Any]:
              if m.get('name') == mount_name), None)
         
         if not mount:
-            return {'ok': False, 'error': f'Mount "{mount_name}" not found.'}
+            return {'ok': False, 'error': f'Mount "{mount_name}" not found.',
+                    'log': log}
         
         if mount.get('status') == 'mounted':
-            return {'ok': True, 'message': f'Mount "{mount_name}" is already mounted.'}
+            # Verify the mount is actually live before returning early
+            local_mount_path = mount.get('local_mount', '')
+            mq = subprocess.run(
+                ['mountpoint', '-q', local_mount_path],
+                capture_output=True, timeout=5,
+            )
+            if mq.returncode == 0:
+                return {'ok': True,
+                        'message': f'Mount "{mount_name}" is already mounted.',
+                        'log': log}
+            # Config says mounted but it's not — fix the stale status
+            log.append(f'Config says mounted but mountpoint check failed — '
+                       f'resetting status')
+            mount['status'] = 'unmounted'
+            mount['mounted_at'] = None
+            save_sshfs_config(cfg)
         
         # Get SSH key path
         ssh_key = mount.get('ssh_key')
@@ -390,16 +506,18 @@ def mount_sshfs(mount_name: str) -> Dict[str, Any]:
         key_path = ssh_keys_dir / f'{ssh_key}.key'
         
         if not key_path.exists():
-            return {'ok': False, 'error': f'SSH key "{ssh_key}" not found.'}
+            return {'ok': False, 'error': f'SSH key "{ssh_key}" not found.',
+                    'log': log}
         
-        # Create local mount directory
+        # Create local mount directory (handle stale mounts)
         local_mount = Path(mount.get('local_mount', ''))
-        local_mount.mkdir(parents=True, exist_ok=True)
+        _prepare_mount_dir(local_mount, log)
 
         target_info = _resolve_connection_target(mount)
         remote_target = target_info['sshfs_target']
         if not remote_target:
-            return {'ok': False, 'error': 'Mount target is incomplete.'}
+            return {'ok': False, 'error': 'Mount target is incomplete.',
+                    'log': log}
 
         # Build sshfs command
         cmd = [
@@ -411,24 +529,41 @@ def mount_sshfs(mount_name: str) -> Dict[str, Any]:
             remote_target,
             str(local_mount),
         ]
-        
+
+        log.append(f'Running: {shlex.join(cmd)}')
         result = subprocess.run(
             cmd, capture_output=True, text=True, timeout=10)
         
+        log.append(f'Exit code: {result.returncode}')
+        if result.stdout.strip():
+            log.append(f'stdout: {result.stdout.strip()}')
+        if result.stderr.strip():
+            log.append(f'stderr: {result.stderr.strip()}')
+
         if result.returncode != 0:
             error = result.stderr or result.stdout or 'Unknown error'
-            return {'ok': False, 'error': f'Failed to mount: {error}'}
+            save_mount_log(mount_name, log, source='mount')
+            return {'ok': False, 'error': f'Failed to mount: {error}',
+                    'log': log}
         
         # Update config
         mount['status'] = 'mounted'
         mount['mounted_at'] = datetime.now(tz=timezone.utc).isoformat()
         save_sshfs_config(cfg)
         
-        return {'ok': True, 'message': f'Mount "{mount_name}" mounted successfully.'}
+        save_mount_log(mount_name, log, source='mount')
+        return {'ok': True, 'message': f'Mount "{mount_name}" mounted successfully.',
+                'log': log}
     except subprocess.TimeoutExpired:
-        return {'ok': False, 'error': 'Mount operation timed out.'}
+        log.append('Operation timed out')
+        save_mount_log(mount_name, log, source='mount')
+        return {'ok': False, 'error': 'Mount operation timed out.',
+                'log': log}
     except Exception as e:
-        return {'ok': False, 'error': f'Failed to mount: {str(e)}'}
+        log.append(f'Exception: {e}')
+        save_mount_log(mount_name, log, source='mount')
+        return {'ok': False, 'error': f'Failed to mount: {str(e)}',
+                'log': log}
 
 
 def unmount_sshfs(mount_name: str) -> Dict[str, Any]:
