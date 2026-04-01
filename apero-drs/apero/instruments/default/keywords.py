@@ -469,6 +469,7 @@ KDict.add('KW_IRELDATE', key='NULL', dtype=str, source=__NAME__,
 # Define the APERO Public Release date (YYYY-MM-DD) this may be different
 #  from raw file header's release date
 KDict.add('KW_ARELDATE', key='NULL', dtype=str, source=__NAME__,
+          combine_method='maximum',
           description='Define the APERO Public Release date '
                       '(YYYY-MM-DD) this may be different from '
                       'raw file headers release date')

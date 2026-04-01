@@ -383,7 +383,10 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
         qc_params, passed = prep.quality_control2(params, *qargs2)
         # update recipe log
         log1.add_qc(qc_params, passed)
-
+        # ---------------------------------------------------------------------
+        # For this file figure out the APERO release date
+        # ---------------------------------------------------------------------
+        areldate = prep.get_areldate(params, header=infile.header)
         # ------------------------------------------------------------------
         # Save rotated image
         # ------------------------------------------------------------------
@@ -424,6 +427,8 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
                          value=postmeter_props['PP_MED_FLUX_DIFF'])
         outfile.add_hkey('KW_PP_MED_POSE',
                          value=postmeter_props['PP_RMS_FLUX_DIFF'])
+        # update the areldate
+        outfile.add_hkey('KW_ARELDATE', value=areldate)
         # ------------------------------------------------------------------
         # copy data
         outfile.data = image

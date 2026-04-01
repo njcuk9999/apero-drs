@@ -320,6 +320,17 @@ class NirpsHa(instrument_mod.Instrument):
         header, _ = get_mid_obs_time(params, header, None, filename)
         return float(header[params['KW_MID_OBS_TIME']])
 
+    def GET_AREL_DATE(self, params: ParamDict, header: Any,
+                      delta_key: str = 'ARELDATE') -> str:
+        """
+        Get the apero release date
+
+        :param delta_key: str, the key to use for the time delta
+        :return:
+        """
+        return set_apero_reldate(params, header, delta_key=delta_key,
+                                 return_value=True)
+
     def FRAME_TIME(self, params: ParamDict, header: Any):
         """
         Get the frame time (either from header or constants depending on
@@ -1252,13 +1263,17 @@ def set_drs_qc(params: ParamDict, header: Any, hdict: Any) -> Tuple[Any, Any]:
 
 
 def set_apero_reldate(params: ParamDict, header: Any,
-                      hdict: Any) -> Tuple[Any, Any]:
+                      hdict: Any = None,
+                      delta_key: str = 'DATA.AREL_RDELTA',
+                      return_value: bool = False
+                      ) -> Union[Tuple[Any, Any], str]:
     """
     Work out the APERO public release date (not based on special cases
     but just based on the raw file)
 
     :param params: ParamDict, the parameter dictionary of constants
-    :param header: drs_fits.Header or astropy.io.fits.Header
+    :param header: drs_fits.Header or astropy.io.fits.Header, the header to
+                   check for objname (if "objname" not set)
     :param hdict: dict, the header dictionary to update with
 
     :return:
@@ -1269,13 +1284,16 @@ def set_apero_reldate(params: ParamDict, header: Any,
     kw_areldate_comment = params['KW_ARELDATE'][2]
     kw_areldate_datatype = params.instances['KW_ARELDATE'].datatype
     # get the time delta from APERO
-    tdelta = params['DATA.AREL_RDELTA']
+    tdelta = params[delta_key]
     # get the default time to add to instrument release date
     time_delta = TimeDelta(tdelta * uu.year)
     # get and convert ireldate
     ireldate = Time(header[kw_ireldate], format=kw_areldate_datatype)
     # calculate relative date
     areldate = ireldate + time_delta
+    # deal with returning just the value
+    if return_value:
+        return areldate.iso
     #  update header / hdict
     header[kw_areldate] = (areldate.iso, kw_areldate_comment)
     hdict[kw_areldate] = (areldate.iso, kw_areldate_comment)
