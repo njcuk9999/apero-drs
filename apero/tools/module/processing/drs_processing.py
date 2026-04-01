@@ -1020,7 +1020,11 @@ def update_header_fix(params):
     elif params['REPROCESS_MP_FINDEX'].lower() == 'process' and cores > 1:
         _multi_process_headerfix_process(params, raw_obs_dirs, cores)
     else:
-        _multi_headerfix(params, raw_obs_dirs)
+        # Use return_entries=True so no per-row set() call is made inside
+        # the worker; the payload is flushed in one bulk UPDATE here,
+        # reducing N write-connections to ceil(N/chunk_size) connections.
+        payload = _multi_headerfix(params, raw_obs_dirs, return_entries=True)
+        _bulk_headerfix_updates(params, [payload])
 
 
 def _bulk_headerfix_updates(params: ParamDict,
@@ -1056,6 +1060,11 @@ def _multi_headerfix(params, obs_dirs, job: int = None, total_jobs: int = None,
     # load the object database
     objdbm = drs_database.AstrometricDatabase(params)
     objdbm.load_db()
+    # Pre-load all object names + aliases into the module-level
+    # _ASTROM_CLEANED_MAP so that find_objname() resolves every raw header
+    # object name with an O(1) dict look-up instead of 1–3 MySQL connections
+    # per unique name.  Cost: 2 connections once per worker process.
+    objdbm.warm_cache(objdbm.pconst)
     # construct the index database instance
     findexdbm = drs_database.FileIndexDatabase(params)
     findexdbm.load_db()

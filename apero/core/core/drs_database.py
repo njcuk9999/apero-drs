@@ -89,6 +89,10 @@ DealFilenameReturn = Union[Tuple[str, str], Tuple[Path, str, str, str]]
 OBS_PATHS = dict()
 FILEDBS = dict()
 OBS_NAMES = dict()
+# module-level cache: cleaned_name -> (canonical_objname, found_flag)
+# populated once per process by AstrometricDatabase.warm_cache()
+# eliminates per-object count()/get_entries() round-trips to MySQL
+_ASTROM_CLEANED_MAP: Optional[Dict[str, Tuple[str, int]]] = None
 # define reserved object names
 RESERVED_OBJ_NAMES = ['CALIB', 'SKY', 'TEST']
 # define database names
@@ -498,6 +502,52 @@ class AstrometricDatabase(DatabaseManager):
         """
         return self.database.count(condition=condition)
 
+    def warm_cache(self, pconst: constants.PseudoConstants) -> None:
+        """
+        Pre-load the full astrometric table (OBJNAME + ALIASES) into the
+        module-level ``_ASTROM_CLEANED_MAP`` dict, keyed by the
+        *cleaned* form of every object name and alias.
+
+        After calling this once per process, ``find_objname`` will look up
+        cleaned names entirely in-memory, replacing the two MySQL round-trips
+        (``count()`` + ``get_entries()``) that it would otherwise make for
+        every unique raw object name it encounters in file headers.
+
+        Cost: **2 MySQL connections** (one ``SHOW columns`` + one SELECT via
+        sqlalchemy), amortised across the entire obs_dir batch.
+
+        Call from ``_multi_headerfix`` immediately after ``objdbm.load_db()``.
+
+        :param pconst: PseudoConstants instance used to clean names
+        :return: None (populates module-level ``_ASTROM_CLEANED_MAP``)
+        """
+        global _ASTROM_CLEANED_MAP
+        # Only build the map once per process (worker or main).
+        if _ASTROM_CLEANED_MAP is not None:
+            return
+        # deal with no database loaded
+        if self.database is None:
+            self.load_db()
+        # Single query: fetch every row's canonical name + pipe-separated aliases.
+        # This uses get_entries() which costs exactly 2 connections
+        # (colnames/SHOW + pandas SELECT).
+        full_table = self.get_entries('OBJNAME, ALIASES', condition=None)
+        cleaned_map: Dict[str, Tuple[str, int]] = {}
+        if full_table is not None and len(full_table) > 0:
+            for row in range(len(full_table)):
+                canonical = str(full_table['OBJNAME'].iloc[row])
+                aliases_raw = full_table['ALIASES'].iloc[row]
+                # Map the cleaned canonical name → (canonical, flag=1)
+                cleaned_canonical = pconst.DRS_OBJ_NAME(canonical)
+                cleaned_map[cleaned_canonical] = (canonical, 1)
+                # Map every cleaned alias → (canonical, flag=2)
+                if aliases_raw and not drs_text.null_text(aliases_raw, ['None', 'NULL', '']):
+                    for alias in str(aliases_raw).split('|'):
+                        cleaned_alias = pconst.DRS_OBJ_NAME(alias)
+                        if cleaned_alias and cleaned_alias not in cleaned_map:
+                            cleaned_map[cleaned_alias] = (canonical, 2)
+        _ASTROM_CLEANED_MAP = cleaned_map
+
     def find_objnames(self, pconst: constants.PseudoConstants,
                       objnames: Union[List[str], np.ndarray],
                       allow_empty: bool,
@@ -567,9 +617,10 @@ class AstrometricDatabase(DatabaseManager):
                  2. a flag on where object was found 0=not found, 1=found in
                     OBJNAME, 2=found in ALIASES
         """
-        # global to be updated so we don't do this more than once for the
-        #   same objname
-        global OBS_NAMES
+        # globals: OBS_NAMES caches results keyed by raw input name;
+        #          _ASTROM_CLEANED_MAP (built by warm_cache) maps cleaned
+        #          name → (canonical, flag) and eliminates per-object DB calls.
+        global OBS_NAMES, _ASTROM_CLEANED_MAP
         # ---------------------------------------------------------------------
         # check objname in global
         if objname in OBS_NAMES:
@@ -589,36 +640,51 @@ class AstrometricDatabase(DatabaseManager):
                 return '', 0
             else:
                 return '', False
-        # sql obj condition
-        sql_obj_cond = 'OBJNAME="{0}" AND USED=1'.format(cobjname)
-        # look for object name in database
-        count = self.count(condition=sql_obj_cond)
-        # if we have not found our object we must check aliases
-        if count == 0:
-            # condition - only use ones with USED
-            condition = 'USED=1'
-            # get the full database
-            full_table = self.get_entries('OBJNAME, ALIASES',
-                                          condition=condition)
-            aliases = full_table['ALIASES']
-            # set row to zero as a place holder
-            row = 0
-            # loop around each row in the table
-            for row in range(len(aliases)):
-                # loop around aliases until we find the alias
-                for alias in aliases[row].split('|'):
-                    if pconst.DRS_OBJ_NAME(alias) == cobjname:
-                        found = 2
-                        break
-                # stop looping if we have found our object
-                if found > 0:
-                    break
-            # get the cobjname for this target if found
-            if found > 0:
-                cobjname = full_table['OBJNAME'][row]
-        # if there is an entry we found the object
+        # ---------------------------------------------------------------------
+        # Fast path: warm_cache() has pre-loaded the full astrometric table
+        # into _ASTROM_CLEANED_MAP (cleaned_name → (canonical, flag)).
+        # This avoids 1–3 MySQL connections per unique object name.
+        # ---------------------------------------------------------------------
+        if _ASTROM_CLEANED_MAP is not None:
+            if cobjname in _ASTROM_CLEANED_MAP:
+                cobjname, found = _ASTROM_CLEANED_MAP[cobjname]
+            # else: found stays 0 (object not in DB at all)
         else:
-            found = 1
+            # ------------------------------------------------------------------
+            # Slow / legacy path: query the DB on every unique raw name.
+            # Used when warm_cache() has not been called (e.g. outside of the
+            # header-fix multiprocess context).
+            # ------------------------------------------------------------------
+            # sql obj condition
+            sql_obj_cond = 'OBJNAME="{0}" AND USED=1'.format(cobjname)
+            # look for object name in database  (1 MySQL connection)
+            db_count = self.count(condition=sql_obj_cond)
+            # if we have not found our object we must check aliases
+            if db_count == 0:
+                # condition - only use ones with USED
+                condition = 'USED=1'
+                # get the full database  (2 MySQL connections)
+                full_table = self.get_entries('OBJNAME, ALIASES',
+                                              condition=condition)
+                aliases = full_table['ALIASES']
+                # set row to zero as a place holder
+                row = 0
+                # loop around each row in the table
+                for row in range(len(aliases)):
+                    # loop around aliases until we find the alias
+                    for alias in aliases[row].split('|'):
+                        if pconst.DRS_OBJ_NAME(alias) == cobjname:
+                            found = 2
+                            break
+                    # stop looping if we have found our object
+                    if found > 0:
+                        break
+                # get the cobjname for this target if found
+                if found > 0:
+                    cobjname = full_table['OBJNAME'][row]
+            # if there is an entry we found the object
+            else:
+                found = 1
         # store in global so we don't have to do this again
         OBS_NAMES[objname] = [cobjname, found]
         # return the correct object name
