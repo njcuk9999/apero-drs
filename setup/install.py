@@ -32,7 +32,7 @@ __PACKAGE__ = 'APERO'
 # define the drs name (and module name)
 DRS_PATH = 'apero'
 # instruments
-INSTRUMENTS = ['SPIROU', 'NIRPS_HA', 'NIRPS_HE', 'ILOCATER']
+INSTRUMENTS = ['SPIROU', 'NIRPS_HA', 'NIRPS_HE', 'SPIP', 'ILOCATER']
 # define the place where the constant recipes are
 CONSTANTS_PATH = 'core.constants'
 # define the place where the installation recipes are

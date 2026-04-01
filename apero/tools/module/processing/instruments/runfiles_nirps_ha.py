@@ -18,7 +18,7 @@ from apero.tools.module.processing import drs_run_ini
 # =============================================================================
 # Define variables
 # =============================================================================
-__NAME__ = 'instruments.runfiles_nirps_ha.ini.py'
+__NAME__ = 'instruments.runfiles_nirps_ha.py'
 __INSTRUMENT__ = 'NIRPS_HA'
 __PACKAGE__ = base.__PACKAGE__
 __version__ = base.__version__

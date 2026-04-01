@@ -48,6 +48,7 @@ AUTHORS['NJC'] = 'Neil James Cook'
 AUTHORS['EA'] = 'Etienne Artigau'
 AUTHORS['EM'] = 'Eder Martioli'
 AUTHORS['MH'] = 'Melissa Hobson'
+AUTHORS['ACG'] = 'Andres Carmona-Gonzalez'
 
 # Define yaml files
 INSTALL_YAML = 'install.yaml'
@@ -56,7 +57,7 @@ USER_ENV = 'DRS_UCONFIG'
 # switch for no db in args
 NO_DB = False
 # Define instruments (last one should be 'None')
-INSTRUMENTS = ['SPIROU', 'NIRPS_HA', 'NIRPS_HE', 'ILOCATER', 'None']
+INSTRUMENTS = ['SPIROU', 'NIRPS_HA', 'NIRPS_HE', 'SPIP', 'ILOCATER', 'None']
 # -----------------------------------------------------------------------------
 # constants/parameter settings
 # -----------------------------------------------------------------------------

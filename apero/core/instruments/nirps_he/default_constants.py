@@ -124,6 +124,56 @@ IMAGE_SATURATION.value = 60000
 IMAGE_FRAME_TIME = IMAGE_FRAME_TIME.copy(__NAME__)
 IMAGE_FRAME_TIME.value = 5.57192
 
+# Define the time column (in the database) to use for filtering reference
+# files by
+REF_FIND_TIME_COL = REF_FIND_TIME_COL.copy(__NAME__)
+REF_FIND_TIME_COL.value = 'KW_ACQTIME'
+REF_FIND_TIME_COL.author = base.AUTHORS['NJC']
+
+# Define the start date for reference calibrations (date format must match
+# that in REF_FIND_TIME_COL). This is used as the first date allowed for
+# reference files (i.e. any file before this date will be ignored)
+REF_FIND_START_DATE = REF_FIND_START_DATE.copy(__NAME__)
+REF_FIND_START_DATE.value = 59890 # 2022-11-07
+REF_FIND_START_DATE.author = base.AUTHORS['NJC']
+
+# Define the end date for reference calibrations (date format must match that in
+# REF_FIND_TIME_COL). This is used as the last date allowed for reference files
+# (i.e. any file after this date will be ignored)
+REF_FIND_END_DATE = REF_FIND_END_DATE.copy(__NAME__)
+REF_FIND_END_DATE.value = 'None'
+REF_FIND_END_DATE.author = base.AUTHORS['NJC']
+
+# Define the time delta (in years) to add to the KW_IRELDATE key by default
+#   for raw files
+#   if there is no other way to determine the public release date (can be zero)
+AREL_RDELTA = AREL_RDELTA.copy(__NAME__)
+AREL_RDELTA.value = 2.0
+AREL_RDELTA.author = base.AUTHORS['NJC']
+
+# Define the time delta (in years) to add to the KW_IRELDATE key by default
+#   for APERO files
+#   if there is no other way to determine the public release date (can be zero)
+AREL_ADELTA = AREL_ADELTA.copy(__NAME__)
+AREL_ADELTA.value = 2.0
+AREL_ADELTA.author = base.AUTHORS['NJC']
+
+# Define the time delta (in years) to add to the KW_IRELDATE key by default
+#   for raw files
+#   if there is no other way to determine the public release date (can be zero)
+AREL_LDELTA = AREL_LDELTA.copy(__NAME__)
+AREL_LDELTA.value = 3.0
+AREL_LDELTA.author = base.AUTHORS['NJC']
+
+# Define the googlesheet URL for the apero release date lookup
+ARELDATE_GSHEET_URL = ARELDATE_GSHEET_URL.copy(__NAME__)
+ARELDATE_GSHEET_URL.value = '1BcUdQZx0RcLEK4zuVPUWUK3I6gT78cRukl_LuoIhAgw'
+
+# Define the googlesheet sheet id for the apero release date lookup
+# (there should be one sheet per instrument)
+ARELDATE_GSHEET_ID = ARELDATE_GSHEET_ID.copy(__NAME__)
+ARELDATE_GSHEET_ID.value = '1565323192'
+
 # =============================================================================
 # CALIBRATION: GENERAL SETTINGS
 # =============================================================================
@@ -378,6 +428,10 @@ PP_DARK_MED_BINNUM.value = 32
 #   Defines the pp hot pixel file (located in the data folder)
 PP_HOTPIX_FILE = PP_HOTPIX_FILE.copy(__NAME__)
 PP_HOTPIX_FILE.value = 'hotpix_pp.csv'
+
+# Define the pp hot pixel format
+PP_HOTPIX_FMT = PP_HOTPIX_FMT.copy(__NAME__)
+PP_HOTPIX_FMT.value = 'csv'
 
 #   Defines the pp amplifier bias model (located in the data folder)
 PP_AMP_ERROR_MODEL = PP_AMP_ERROR_MODEL.copy(__NAME__)

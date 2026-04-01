@@ -1667,7 +1667,8 @@ lbl_mask_file = drs_linput('LBL_MASK',
                           filetype='.fits', path='masks',
                           basename='LBL_MASK_{obj}_spirou', datatype='table',
                           outclass=lbl_ofile,
-                          description='Telluric mask file')
+                          description='Telluric mask file',
+                          required=False)
 lbl_file.addset(lbl_mask_file)
 
 # lbl fits files

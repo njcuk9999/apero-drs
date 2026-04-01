@@ -1,0 +1,17 @@
+2026-03-12:
+  find ref files:
+    - need to use time_column=REF_FIND_TIME_COL, start_date=REF_FIND_START_DATE and end_date=REF_FIND_END_DATE in some find_file functions
+    - affects dark_ref, leak_ref, pp_ref, shape_ref (recipes dir)
+    - time_column, start_date and end_date needed for create_led_flat function in pp_ref
+    - need to add REF_FIND_TIME_COL to constants
+    - need to add REF_FIND_START_DATE to constants
+    - need to add REF_FIND_END_DATE to constants
+
+2026-03-25:
+  - add 'KW_IRELDATE', 'KW_ARELDATE', 'KW_DRS_QC' to FILEINDEX_HEADER_COLS (pseudo_constants)
+  - add 'KW_IRELDATE', 'KW_ARELDATE' to default_keywords
+  - add "set_drs_qc" and  "set_apero_reldate" functions to pseudo_constants
+
+2026-03-30:
+  - add AREL_RDELTA, AREL_ADELTA, AREL_LDELTA to default_constants
+  - add ARELDATE_GSHEET_URL and ARELDATE_GSHEET_ID to default_constants

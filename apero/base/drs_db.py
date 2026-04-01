@@ -56,6 +56,11 @@ TIMEOUT = 20.0
 MAXWAIT = 1000
 # mysql timeout
 MYSQL_WAIT = 30  # 5
+# mysql execute retry policy for transient "table does not exist" races
+MYSQL_EXECUTE_MAX_RETRIES = 5
+MYSQL_EXECUTE_BACKOFF_BASE = 0.05
+MYSQL_EXECUTE_BACKOFF_MAX = 1.0
+MYSQL_ERROR_TABLE_MISSING = 1146
 
 # unique hash column
 UHASH_COL = 'UHASH'
@@ -1626,8 +1631,9 @@ class SQLiteDatabase(Database):
             conn.close()
             # log error: {0}: {1} \n\t Command: {2} \n\t Function: {3}
             ecode = '00-002-00040'
+            ecmd = f'Table={table} Path={self.path} {command}'
             emsg = drs_base.BETEXT[ecode]
-            eargs = [type(e), str(e), self.path, table, func_name]
+            eargs = [type(e), str(e), ecmd, func_name]
             # log base error
             raise drs_base.base_error(ecode, emsg, 'error', args=eargs,
                                       exceptionname='DatabaseError',
@@ -2090,22 +2096,33 @@ class MySQLDatabase(Database):
         :param command: str, The SQL command to be run.
         :return:
         """
-        # while counter is less than maximum wait time
-        try:
-            cursor = _mysql_exectue(cursor, command)
-            if fetch:
-                result = cursor.fetchall()
-                return result
-            else:
-                return None
-        # deal with unique error on INSERT
-        except mysql.IntegrityError as e:
-            # look for word 'unique' in exception
-            if 'duplicate' in str(e).lower():
-                raise UniqueEntryException(str(e))
-            # else raise exception
-            else:
-                raise mysql.IntegrityError(str(e))
+        # Retry a few times for transient "table does not exist" races.
+        for attempt in range(MYSQL_EXECUTE_MAX_RETRIES):
+            try:
+                cursor = _mysql_exectue(cursor, command)
+                if fetch:
+                    result = cursor.fetchall()
+                    return result
+                else:
+                    return None
+            # deal with unique error on INSERT
+            except mysql.IntegrityError as e:
+                # look for word 'unique' in exception
+                if 'duplicate' in str(e).lower():
+                    raise UniqueEntryException(str(e))
+                # else raise exception
+                else:
+                    raise mysql.IntegrityError(str(e))
+            except Exception as e:
+                is_last = attempt >= (MYSQL_EXECUTE_MAX_RETRIES - 1)
+                if _is_mysql_table_missing_error(e) and not is_last:
+                    delay = MYSQL_EXECUTE_BACKOFF_BASE * (2 ** attempt)
+                    delay = min(delay, MYSQL_EXECUTE_BACKOFF_MAX)
+                    # Add jitter to avoid synchronized retries across workers.
+                    delay += np.random.uniform(0, MYSQL_EXECUTE_BACKOFF_BASE)
+                    time.sleep(delay)
+                    continue
+                raise
 
     # table methods
     def add_table(self, name: str, field_names: List[str],
@@ -2399,9 +2416,9 @@ class MySQLDatabase(Database):
                     cursor.close()
                     conn.close()
                     # log error: {0}: {1} \n\t Command: {2} \n\t Function: {3}
-                    ecode = '00-002-00040'
+                    ecmd = f'Table={table} Path={self.path} {command}'
                     emsg = drs_base.BETEXT[ecode]
-                    eargs = [type(e), str(e), self.path, table, func_name]
+                    eargs = [type(e), str(e), ecmd, func_name]
                     # log base error
                     raise drs_base.base_error(ecode, emsg, 'error', args=eargs,
                                               exceptionname='DatabaseError',
@@ -2639,6 +2656,22 @@ def _proxy_table(tablename: str) -> str:
         return tablename.lower()
     else:
         return tablename.lower() + '_db'
+
+
+def _is_mysql_table_missing_error(error: Exception) -> bool:
+    """
+    Identify MySQL/MariaDB "table does not exist" errors (errno 1146).
+
+    :param error: exception raised during SQL execution
+    :return: bool, True when the exception matches errno 1146
+    """
+    # mysql.connector exceptions expose errno directly
+    errno = getattr(error, 'errno', None)
+    if errno == MYSQL_ERROR_TABLE_MISSING:
+        return True
+    # fall back to message parsing for wrapped exceptions
+    emsg = str(error).lower()
+    return '1146' in emsg and 'table' in emsg and "doesn't exist" in emsg
 
 
 def _clean_nans(df: pd.DataFrame) -> pd.DataFrame:

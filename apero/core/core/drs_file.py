@@ -8714,9 +8714,26 @@ def combine_hkey(values: List[Any], method: str, math: str) -> Any:
 
     :return: Any, single value of the combined type or None if not combinable
     """
+    func_name = display_func('combine_hkey', __NAME__)
     # deal with method == math (set method == to the math directly)
     if method == 'math':
         method = str(math)
+
+    # get dtype of values - if mixed we have a problem
+    dtypes = [type(value) for value in values]
+    if len(set(dtypes)) != 1:
+        emsg = 'Mixed type in "values"\n\tValues={0}\n\tfunction = {0}'
+        eargs = [', '.format([str(value) for value in values]), func_name]
+        raise drs_exceptions.DrsCodedException('', message=emsg.format(*eargs),
+                                               targs=eargs)
+
+    # deal with strings - max and min work
+    if dtypes[0] is str:
+        if method in ['minimum', 'min']:
+            return min(values)
+        if method in ['maximum', 'max']:
+            return max(values)
+
     # noinspection PyBroadException
     try:
         if method in ['mean', 'average']:

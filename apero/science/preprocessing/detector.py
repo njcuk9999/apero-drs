@@ -705,7 +705,8 @@ def construct_led_cube(params: ParamDict, led_files: np.ndarray,
 
 
 def create_led_flat(params: ParamDict, recipe: DrsRecipe, led_file: DrsFitsFile,
-                    dark_file: DrsFitsFile) -> DrsFitsFile:
+                    dark_file: DrsFitsFile, start_date: float = None,
+                    end_date: float = None, time_col: str = None) -> DrsFitsFile:
     """
     Creates the LED flats for use in preprocessing
 
@@ -713,6 +714,15 @@ def create_led_flat(params: ParamDict, recipe: DrsRecipe, led_file: DrsFitsFile,
     :param recipe: DrsRecipe, the recipe class that called this function
     :param led_file: DrsFitsFile class describing the LED file
     :param dark_file: DrsFitsFile class describing the DARK file
+    :param start_date: float, the start date for led files
+                       (no files will be used before this date, date format
+                       should match time_col)
+    :param end_date: float, the end date for led files
+                     (no files will be used after this date, date format
+                     should match time_col)
+    :param time_col: str, the column in the file index database that contains
+                     the time information
+
     :return:
     """
     # get the required header keys for led and dark files
@@ -726,9 +736,15 @@ def create_led_flat(params: ParamDict, recipe: DrsRecipe, led_file: DrsFitsFile,
         del dark_hkeys['KW_INST_MODE']
     # get all files that match these raw file definitions
     raw_led_files = drs_utils.find_files(params, block_kind='raw',
-                                         filters=led_hkeys)
+                                         filters=led_hkeys,
+                                         start_date=start_date,
+                                         end_date=end_date,
+                                         time_column=time_col)
     raw_dark_files = drs_utils.find_files(params, block_kind='raw',
-                                          filters=dark_hkeys)
+                                          filters=dark_hkeys,
+                                          start_date=start_date,
+                                          end_date=end_date,
+                                          time_column=time_col)
     # check that we have files
     if len(raw_led_files) == 0:
         emsg = 'No LED files found for {0}'
