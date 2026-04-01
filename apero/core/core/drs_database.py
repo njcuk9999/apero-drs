@@ -22,6 +22,7 @@ import os
 import shutil
 import time
 import warnings
+from collections import OrderedDict
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple, Type, Union
 
@@ -1763,6 +1764,129 @@ class FileIndexDatabase(DatabaseManager):
         # store whether an update has been done
         self.update_entries_params = []
 
+    def _entry_dict(self, basefile: drs_file.DrsPath,
+                    block_kind: str, recipe: Union[str, None] = None,
+                    runstring: Union[str, None] = None,
+                    infiles: Union[str, None] = None,
+                    hkeys: Union[Dict[str, str], None] = None,
+                    used: Union[int, None] = None,
+                    rawfix: Union[int, None] = None) -> Dict[str, Any]:
+        """
+        Construct a file index row as a serializable dictionary.
+
+        :param basefile: DrsPath instance for the file to index
+        :param block_kind: str, block kind for the indexed file
+        :param recipe: optional recipe name
+        :param runstring: optional run string
+        :param infiles: optional infiles string
+        :param hkeys: optional header key dictionary
+        :param used: optional used flag override
+        :param rawfix: optional rawfix flag override
+
+        :return: dict, mapping FILEINDEX_DB_COLUMNS names to row values
+        """
+        # set function
+        func_name = display_func('_entry_dict', __NAME__, self.classname)
+        # set used to 1
+        if used is None:
+            used = 1
+        # this is a flag to test whether raw data has been fixed
+        if rawfix is None:
+            if block_kind.lower() == 'raw':
+                rawfix = 0
+            else:
+                rawfix = 1
+        # get last modified time for file (need absolute path)
+        last_modified = basefile.to_path().stat().st_mtime
+        # get recipe
+        if drs_text.null_text(recipe, ['None', 'Null']):
+            recipe = 'Unknown'
+        # get run string
+        if drs_text.null_text(runstring, ['None', 'Null']):
+            runstring = 'NULL'
+        # get infiles
+        if drs_text.null_text(infiles, ['None', 'Null', '']):
+            infiles = 'NULL'
+        # get allowed header keys
+        iheader_cols = self.pconst.FILEINDEX_HEADER_COLS()
+        rkeys = list(iheader_cols.names)
+        rtypes = list(iheader_cols.dtypes)
+        # store values in correct order for database.add_row
+        hvalues = []
+        # deal with no hkeys
+        if hkeys is None:
+            hkeys = dict()
+        # loop around allowed header keys and check for them in headers
+        for h_it, hkey in enumerate(rkeys):
+            if hkey in hkeys:
+                try:
+                    dtype = rtypes[h_it]
+                    value = hkeys[hkey]
+                    if drs_text.null_text(value, ['None', 'Null']):
+                        hvalues.append('NULL')
+                    else:
+                        hvalues.append(dtype(value))
+                except Exception as _:
+                    wargs = [self.name, hkey, hkeys[hkey], rtypes[h_it],
+                             func_name]
+                    wmsg = textentry('10-002-00003', args=wargs)
+                    WLOG(self.params, 'warning', wmsg, sublevel=2)
+                    hvalues.append('NULL')
+            else:
+                hvalues.append('NULL')
+        # get values for database
+        values = [str(basefile.abspath), str(basefile.obs_dir),
+                  str(basefile.basename), block_kind, float(last_modified),
+                  str(recipe), str(runstring), str(infiles)]
+        values += hvalues + [used, rawfix]
+        # return dictionary in the database column order (excluding UHASH)
+        idb_cols = self.pconst.FILEINDEX_DB_COLUMNS()
+        return dict(zip(list(idb_cols.names), values))
+
+    @staticmethod
+    def _update_scope_condition(
+            include_directories: Union[List[str], None] = None,
+            include_files: Union[List[Union[Path, str]], None] = None
+    ) -> Union[str, None]:
+        """
+        Construct a SQL condition describing the scope of an update.
+
+        :param include_directories: optional list of observation directories
+        :param include_files: optional list of files
+
+        :return: optional SQL condition without block kind restriction
+        """
+        conditions = []
+        if include_directories is not None and len(include_directories) > 0:
+            sub_conditions = []
+            for obs_dir in include_directories:
+                sub_conditions.append('OBS_DIR="{0}"'.format(obs_dir))
+            conditions.append('({0})'.format(' OR '.join(sub_conditions)))
+        if include_files is not None and len(include_files) > 0:
+            sub_conditions = []
+            for include_file in include_files:
+                sub_conditions.append('ABSPATH="{0}"'.format(include_file))
+            conditions.append('({0})'.format(' OR '.join(sub_conditions)))
+        if len(conditions) == 0:
+            return None
+        return ' AND '.join(conditions)
+
+    def _get_scope_entries(self, block_kind: str,
+                           scope_condition: Union[str, None] = None
+                           ) -> pd.DataFrame:
+        """
+        Get all rows within an update scope, including USED=0 rows.
+
+        :param block_kind: str, block kind for the scope
+        :param scope_condition: optional SQL condition narrowing the scope
+
+        :return: pandas DataFrame of matching rows
+        """
+        condition = 'BLOCK_KIND = "{0}"'.format(block_kind)
+        if scope_condition is not None:
+            condition += ' AND ({0})'.format(scope_condition)
+        return self.database.get('*', condition=condition, return_pandas=True)
+
     def add_entry(self, basefile: drs_file.DrsPath,
                   block_kind: str, recipe: Union[str, None] = None,
                   runstring: Union[str, None] = None,
@@ -1805,70 +1929,16 @@ class FileIndexDatabase(DatabaseManager):
         # deal with no database loaded
         if self.database is None:
             self.load_db()
-        # set used to 1
-        if used is None:
-            used = 1
-        # this is a flag to test whether raw data has been fixed (so we don't
-        #   do it again when not required)
-        if rawfix is None:
-            if block_kind.lower() == 'raw':
-                rawfix = 0
-            else:
-                rawfix = 1
-        # ------------------------------------------------------------------
-        # get last modified time for file (need absolute path)
-        last_modified = basefile.to_path().stat().st_mtime
-        # get recipe
-        if drs_text.null_text(recipe, ['None', 'Null']):
-            recipe = 'Unknown'
-        # get run string
-        if drs_text.null_text(runstring, ['None', 'Null']):
-            runstring = 'NULL'
-        # get infiles
-        if drs_text.null_text(infiles, ['None', 'Null', '']):
-            infiles = 'NULL'
-        # ------------------------------------------------------------------
-        # get allowed header keys
-        iheader_cols = self.pconst.FILEINDEX_HEADER_COLS()
-        rkeys = list(iheader_cols.names)
-        rtypes = list(iheader_cols.dtypes)
-        # get unique columns
+        # get row data and unique columns
+        entry = self._entry_dict(basefile, block_kind, recipe=recipe,
+                                 runstring=runstring, infiles=infiles,
+                                 hkeys=hkeys, used=used, rawfix=rawfix)
         idb_cols = self.pconst.FILEINDEX_DB_COLUMNS()
         ucols = list(idb_cols.unique_cols)
-        # store values in correct order for database.add_row
-        hvalues = []
-        # deal with no hkeys
-        if hkeys is None:
-            hkeys = dict()
-        # loop around allowed header keys and check for them in headers
-        #  keys - if not there set to 'None'
-        for h_it, hkey in enumerate(rkeys):
-            if hkey in hkeys:
-                # noinspection PyBroadException
-                try:
-                    # get data type
-                    dtype = rtypes[h_it]
-                    # get value
-                    value = hkeys[hkey]
-                    # deal with a null value
-                    if drs_text.null_text(value, ['None', 'Null']):
-                        hvalues.append('NULL')
-                    else:
-                        # try to case and append
-                        hvalues.append(dtype(value))
-                except Exception as _:
-                    wargs = [self.name, hkey, hkeys[hkey],
-                             rtypes[h_it], func_name]
-                    wmsg = textentry('10-002-00003', args=wargs)
-                    WLOG(self.params, 'warning', wmsg, sublevel=2)
-                    hvalues.append('NULL')
-            else:
-                hvalues.append('NULL')
-        # ------------------------------------------------------------------
-        # get values for database
-        path = str(basefile.abspath)
-        obs_dir = str(basefile.obs_dir)
-        basename = str(basefile.basename)
+        values = [entry[key] for key in list(idb_cols.names)]
+        path = entry['ABSPATH']
+        obs_dir = entry['OBS_DIR']
+        basename = entry['FILENAME']
         # ------------------------------------------------------------------
         # check for entry already in database
         condition = '(OBS_DIR="{0}")'.format(obs_dir)
@@ -1879,9 +1949,6 @@ class FileIndexDatabase(DatabaseManager):
         # if we don't have an entry we add a row
         if num_rows == 0:
             # add new entry to database
-            values = [path, obs_dir, basename, block_kind, float(last_modified),
-                      str(recipe), str(runstring), str(infiles)]
-            values += hvalues + [used, rawfix]
             # add row
             try:
                 self.database.add_row(values, unique_cols=ucols)
@@ -1892,10 +1959,6 @@ class FileIndexDatabase(DatabaseManager):
                 pass
 
         # else we update the row using "set" instead of adding
-        # add new entry to database
-        values = [path, obs_dir, basename, block_kind, float(last_modified),
-                  str(recipe), str(runstring), str(infiles)]
-        values += hvalues + [used, rawfix]
         # condition comes from uhash - so set to None here (to remember)
         condition = None
         # update row in database
@@ -2056,7 +2119,8 @@ class FileIndexDatabase(DatabaseManager):
                        include_directories: Union[List[str], None] = None,
                        exclude_directories: Union[List[str], None] = None,
                        filename: FileTypes = None, suffix: str = '',
-                       force_update: bool = False, job_msg: str = ''):
+                       force_update: bool = False, job_msg: str = '',
+                       return_entries: bool = False):
         """
         Update the index database for files of 'kind', deal with including
         and excluding directories for files with 'suffix'
@@ -2078,8 +2142,12 @@ class FileIndexDatabase(DatabaseManager):
                        to only set these files
         :param force_update: bool, if True forces the update even if database
                              thinks it is up-to-date
+        :param return_entries: bool, if True do not write rows directly;
+                               instead return a serializable payload containing
+                               the full replacement rows for this update scope
 
-        :return: None - updates the index database
+        :return: None unless return_entries is True, in which case returns a
+                 dictionary describing the update scope and rows
         """
         # set function
         # _ = display_func('update_entries', __NAME__,
@@ -2117,10 +2185,13 @@ class FileIndexDatabase(DatabaseManager):
                 include_files = filename
         else:
             include_files = []
+        scope_condition = self._update_scope_condition(include_directories,
+                                                       include_files)
         # ---------------------------------------------------------------------
         # deal with files we don't need (already have)
         etable = self.get_entries('ABSPATH, OBS_DIR, LAST_MODIFIED',
-                                  block_kind=block_kind)
+                                  block_kind=block_kind,
+                                  condition=scope_condition)
         raw_exclude_files = list(etable['ABSPATH'])
         raw_exclude_obs_dirs = list(etable['OBS_DIR'])
         # ---------------------------------------------------------------------
@@ -2154,41 +2225,45 @@ class FileIndexDatabase(DatabaseManager):
                     remove_files.append(raw_exclude_file)
                     remove_obs_dirs.append(raw_exclude_obs_dirs[r_it])
             # remove entries from database where file does not exist
-            rm_condition_all = 'BLOCK_KIND="{0}" AND '.format(block_kind)
-            count = 0
-            # get number in remove group
-            num_in_remove_group = self.params['REPROCESS_REMOVE_NGROUP']
-            # split remove files in to chunks
-            while count < len(remove_files):
-                for it in range(num_in_remove_group):
-                    rm_condition_loop = str(rm_condition_all)
-                    # cut down remove files to this loops values
-                    rm_start = count
-                    rm_end = count + num_in_remove_group
-                    remove_files_loop = remove_files[rm_start:rm_end]
-                    rm_conditions_loop = []
-                    # loop around files to remove
-                    for r_it, remove_file in enumerate(remove_files_loop):
-                        # update the count
-                        count += 1
-                        # add remove file condition with obs_dir + filename
-                        rm_cond = '(OBS_DIR="{0}" AND FILENAME="{1}")'
-                        rm_args = [remove_obs_dirs[r_it], os.path.basename(remove_file)]
-                        rm_conditions_loop.append(rm_cond.format(*rm_args))
-                        # print removing file: File no longer on disk - removing from
-                        #                file index database: {0}
-                        wmsg = textentry('10-002-00008', args=[remove_file])
-                        WLOG(self.params, 'warning', wmsg + job_msg)
+            if not return_entries:
+                rm_condition_all = 'BLOCK_KIND="{0}" AND '.format(block_kind)
+                count = 0
+                # get number in remove group
+                num_in_remove_group = self.params['REPROCESS_REMOVE_NGROUP']
+                # split remove files in to chunks
+                while count < len(remove_files):
+                    for it in range(num_in_remove_group):
+                        rm_condition_loop = str(rm_condition_all)
+                        # cut down remove files to this loops values
+                        rm_start = count
+                        rm_end = count + num_in_remove_group
+                        remove_files_loop = remove_files[rm_start:rm_end]
+                        rm_conditions_loop = []
+                        # loop around files to remove
+                        for r_it, remove_file in enumerate(remove_files_loop):
+                            # update the count
+                            count += 1
+                            # add remove file condition with obs_dir + filename
+                            rm_cond = '(OBS_DIR="{0}" AND FILENAME="{1}")'
+                            rm_args = [remove_obs_dirs[r_it],
+                                       os.path.basename(remove_file)]
+                            rm_conditions_loop.append(rm_cond.format(*rm_args))
+                            # print removing file: File no longer on disk - removing from
+                            #                file index database: {0}
+                            wmsg = textentry('10-002-00008', args=[remove_file])
+                            WLOG(self.params, 'warning', wmsg + job_msg)
 
-                    # remove entries which no longer exist on disk
-                    if len(rm_conditions_loop) > 0:
-                        # add all remove conditions with the OR criteria
-                        rm_condition_loop += ' OR '.join(rm_conditions_loop)
-                        # use database to remove entries
-                        self.remove_entries(condition=rm_condition_loop)
+                        # remove entries which no longer exist on disk
+                        if len(rm_conditions_loop) > 0:
+                            # add all remove conditions with the OR criteria
+                            rm_condition_loop += ' OR '.join(rm_conditions_loop)
+                            # use database to remove entries
+                            self.remove_entries(condition=rm_condition_loop)
         # else we just use the raw list
         else:
             exclude_files = list(raw_exclude_files)
+            remove_files = []
+            remove_obs_dirs = []
             elast_mod = raw_last_mod
 
         # ---------------------------------------------------------------------
@@ -2246,11 +2321,25 @@ class FileIndexDatabase(DatabaseManager):
                 WLOG(self.params, 'info', textentry('40-006-00006', args=iargs))
                 self.update_entries('red', force_update=True)
                 return
+        payload = None
+        if return_entries:
+            idb_cols = self.pconst.FILEINDEX_DB_COLUMNS()
+            scope_table = self._get_scope_entries(block_kind, scope_condition)
+            if scope_table is None:
+                scope_table = pd.DataFrame(columns=list(idb_cols.names))
+            remove_paths = set(list(map(str, remove_files)))
+            update_paths = set(list(map(str, reqfiles)))
+            stale_paths = remove_paths.union(update_paths)
+            if len(scope_table) > 0 and len(stale_paths) > 0:
+                scope_table = scope_table[~scope_table['ABSPATH'].isin(stale_paths)]
+            payload = dict(block_kind=block_kind,
+                           scope_condition=scope_condition,
+                           rows=scope_table.to_dict('records'))
         # ---------------------------------------------------------------------
         # deal with no files
         if len(reqfiles) == 0:
             # return
-            return
+            return payload
         # ---------------------------------------------------------------------
         # log: Reading headers of {0} files (to be updated)
         margs = [len(reqfiles)]
@@ -2290,18 +2379,143 @@ class FileIndexDatabase(DatabaseManager):
                     # if key is in header then add to hkeys
                     if drs_key in header:
                         hkeys[rkey] = header[drs_key]
-            # add to database
-            self.add_entry(req_inst, block_kind, hkeys=hkeys)
+            # add to database or payload
+            if return_entries:
+                payload['rows'].append(self._entry_dict(req_inst, block_kind,
+                                                       hkeys=hkeys))
+            else:
+                self.add_entry(req_inst, block_kind, hkeys=hkeys)
         # as we don't have tqdm - add a print out saying how long things took
         if len(job_msg) > 0:
             dur_hread = time.time() - start_hread
             msg = '\tRead {0} headers in {1:.2f} s'
             margs = [len(reqfiles), dur_hread]
             WLOG(self.params, '', msg.format(*margs) + job_msg)
+        if return_entries:
+            return payload
+
+    def bulk_update_entries(self, block_kind: str,
+                            payloads: List[Optional[Dict[str, Any]]]):
+        """
+        Replace one or more indexed scopes in bulk using collected payloads.
+
+        :param block_kind: str, the block kind being updated
+        :param payloads: list of payload dictionaries returned by update_entries
+                         with return_entries=True
+
+        :return: None
+        """
+        # deal with no instrument set
+        if self.instrument == 'None':
+            return None
+        # deal with no database loaded
+        if self.database is None:
+            self.load_db()
+        valid_payloads = []
+        all_rows = []
+        for payload in payloads:
+            if payload is None:
+                continue
+            if payload.get('block_kind', block_kind) != block_kind:
+                continue
+            valid_payloads.append(payload)
+            all_rows += list(payload.get('rows', []))
+        if len(valid_payloads) == 0:
+            return None
+        # remove all existing rows for each returned scope before re-adding them
+        for payload in valid_payloads:
+            scope_condition = payload.get('scope_condition')
+            if scope_condition is None:
+                condition = 'BLOCK_KIND="{0}"'.format(block_kind)
+            else:
+                condition = 'BLOCK_KIND="{0}" AND ({1})'.format(block_kind,
+                                                                scope_condition)
+            self.remove_entries(condition=condition)
+        # append all replacement rows in one batch
+        if len(all_rows) > 0:
+            idb_cols = self.pconst.FILEINDEX_DB_COLUMNS()
+            cols = list(idb_cols.names)
+            ucols = list(idb_cols.unique_cols)
+            dataframe = pd.DataFrame(all_rows)
+            for col in cols:
+                if col not in dataframe.columns:
+                    dataframe[col] = None
+            dataframe = dataframe[cols]
+            dataframe = dataframe.drop_duplicates(subset=['ABSPATH'],
+                                                  keep='last')
+            # preserve historical hash semantics (built with the string
+            # sentinel 'NULL') before converting sentinel strings to real SQL
+            # NULL values for pandas/to_sql insertion.
+            hash_df = dataframe.copy()
+            hash_df = hash_df.fillna('NULL')
+            hash_df = drs_db._hash_df(hash_df, ucols)
+            dataframe[drs_db.UHASH_COL] = hash_df[drs_db.UHASH_COL].values
+            # convert sentinel strings to real nulls so numeric columns do not
+            # receive the literal string 'NULL' in MySQL/SQLite bulk inserts.
+            for col in dataframe.columns:
+                if col == drs_db.UHASH_COL:
+                    continue
+                dataframe[col] = dataframe[col].map(
+                    lambda x: None if isinstance(x, str)
+                    and x.upper() == 'NULL' else x)
+            self.database.add_from_pandas(dataframe, unique_cols=None)
+        # reset cached pandas storage for this block kind
+        store = PandasDBStorage()
+        store.reset(subkey=block_kind)
+
+    def set_entries(self, updates: List[Dict[str, Any]],
+                    key: str = 'ABSPATH',
+                    condition: Union[str, None] = None,
+                    subkey: Union[str, None] = None,
+                    chunk_size: Union[int, None] = None):
+        """
+        Update existing rows in bulk using a CASE-based SQL UPDATE.
+
+        :param updates: list of dictionaries containing the unique key and the
+                        columns to update for each row
+        :param key: str, the unique key column to match rows on
+        :param condition: optional SQL condition to restrict updates
+        :param subkey: optional PandasDBStorage subkey to reset afterwards
+        :param chunk_size: optional chunk size for splitting updates
+
+        :return: None
+        """
+        # deal with no instrument set
+        if self.instrument == 'None':
+            return None
+        # deal with no database loaded
+        if self.database is None:
+            self.load_db()
+        if len(updates) == 0:
+            return None
+        # de-duplicate on the key (keep the latest update)
+        update_dict = OrderedDict()
+        for update in updates:
+            if update is None:
+                continue
+            if key not in update:
+                continue
+            update_dict[update[key]] = dict(update)
+        updates = list(update_dict.values())
+        if len(updates) == 0:
+            return None
+        # chunking to avoid very large SQL commands
+        if chunk_size is None:
+            chunk_size = self.params['REPROCESS_DB_CHUNK_SIZE']
+        chunk_size = max(1, int(chunk_size))
+        # backend-specific SQL syntax/strategy is implemented in drs_db classes
+        self.database.bulk_set_entries(updates=updates, key=key,
+                                       condition=condition,
+                                       chunk_size=chunk_size)
+        # reset cached pandas storage if required
+        if subkey is not None:
+            store = PandasDBStorage()
+            store.reset(subkey=subkey)
 
     def update_header_fix(self, objdbm: AstrometricDatabase,
                           obs_dirs: Union[List[str], None] = None,
-                          job_msg: str = ''):
+                          job_msg: str = '',
+                          return_entries: bool = False):
         """
         Update the index database with the header fixes for block_kind = raw
 
@@ -2311,7 +2525,11 @@ class FileIndexDatabase(DatabaseManager):
         :param recipe: DrsRecipe, the recipe that called this function
         :param objdbm: ObjectDatabase, the object database class
 
-        :return: None - updates the IndexDatabase
+        :param return_entries: bool, if True collect row updates and return
+                               them instead of updating the database directly
+
+        :return: None unless return_entries is True, in which case a payload
+                 dictionary of row updates is returned
         """
         # set function name
         # _ = display_func('update_objname', __NAME__, self.classname)
@@ -2339,7 +2557,12 @@ class FileIndexDatabase(DatabaseManager):
         table = self.get_entries(', '.join(columns), condition=condition)
         # if all rows have rawfix == 1 then just return now
         if np.sum(table['RAWFIX']) == len(table):
+            if return_entries:
+                return None
             return
+        payload = None
+        if return_entries:
+            payload = dict(block_kind='raw', condition=condition, updates=[])
         # disable tqdm
         if len(job_msg) > 0:
             _tqdm = base.tqdm_module(use=False)
@@ -2382,23 +2605,33 @@ class FileIndexDatabase(DatabaseManager):
             condition = ctxt.format(*cargs)
             # get values
             values = cargs + ['1']
+            update = dict(ABSPATH=table['ABSPATH'].iloc[row], RAWFIX=1)
             # add header keys in rkeys
             for rkey in rkeys:
                 # get drs key
                 drs_key = self.params[rkey][0]
                 # get value from table for rkey
                 if drs_key in header:
-                    values.append(header[drs_key])
+                    value = header[drs_key]
                 else:
-                    values.append('Null')
-            # update this row (should only be one row based on condition)
-            self.database.set(columns, values=values, condition=condition)
+                    value = 'Null'
+                values.append(value)
+                update[rkey] = value
+            # update this row or add to payload for parent-side bulk update
+            if return_entries:
+                payload['updates'].append(update)
+            else:
+                self.database.set(columns, values=values, condition=condition)
         # as we don't have tqdm - add a print out saying how long things took
         if len(job_msg) > 0:
             dur_hfix = time.time() - start_hfix
             msg = '\tFixed {0} headers in {1:.2f} s'
             margs = [len(table), dur_hfix]
             WLOG(self.params, '', msg.format(*margs) + job_msg)
+        if return_entries:
+            if len(payload['updates']) == 0:
+                return None
+            return payload
 
 
     def _update_params(self, **kwargs) -> bool:

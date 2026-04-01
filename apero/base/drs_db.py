@@ -631,6 +631,26 @@ class Database:
         # execute sql command
         self.execute(command, fetch=False)
 
+    def bulk_set_entries(self, updates: List[Dict[str, Any]], key: str,
+                         table: Optional[str] = None,
+                         condition: Optional[str] = None,
+                         chunk_size: int = 100) -> None:
+        """
+        Bulk update rows using a backend-specific strategy.
+
+        :param updates: list of dictionaries, each containing `key` and one or
+                        more columns to update
+        :param key: str, the key column used to match rows
+        :param table: optional table name (uses default when None)
+        :param condition: optional SQL condition to restrict updates
+        :param chunk_size: chunk size used to split updates
+
+        :return: None
+        """
+        _ = updates, key, table, condition, chunk_size
+        emsg = 'Must implement "Database.bulk_set_entries" in child database class'
+        raise NotImplementedError(emsg)
+
     def add_row(self, values: List[object], table: Optional[str] = None,
                 columns: Union[str, List[str]] = "*",
                 unique_cols: Optional[List[str]] = None):
@@ -1345,6 +1365,66 @@ class SQLiteDatabase(Database):
         # update table list
         self._update_table_list_()
 
+    def bulk_set_entries(self, updates: List[Dict[str, Any]], key: str,
+                         table: Optional[str] = None,
+                         condition: Optional[str] = None,
+                         chunk_size: int = 100) -> None:
+        """
+        Bulk update rows in SQLite using CASE statements per chunk.
+
+        :param updates: list of dictionaries, each containing `key` and one or
+                        more columns to update
+        :param key: str, the key column used to match rows
+        :param table: optional table name (uses default when None)
+        :param condition: optional SQL condition to restrict updates
+        :param chunk_size: chunk size used to split updates
+
+        :return: None
+        """
+        if len(updates) == 0:
+            return
+        table = self._infer_table_(table)
+        chunk_size = max(1, int(chunk_size))
+        # loop around chunks
+        for start in range(0, len(updates), chunk_size):
+            chunk = updates[start:start + chunk_size]
+            # find all columns to update in this chunk
+            columns = []
+            for update in chunk:
+                for col in update:
+                    if col != key and col not in columns:
+                        columns.append(col)
+            if len(columns) == 0:
+                continue
+            # construct set clauses using CASE statements
+            set_clauses = []
+            for column in columns:
+                cases = []
+                for update in chunk:
+                    if column not in update:
+                        continue
+                    key_value = _decode_value(update[key])
+                    col_value = _decode_value(update[column])
+                    cases.append('WHEN {0} THEN {1}'.format(key_value,
+                                                            col_value))
+                if len(cases) > 0:
+                    clause = '{0} = CASE {1} {2} ELSE {0} END'
+                    set_clauses.append(clause.format(column, key,
+                                                     ' '.join(cases)))
+            if len(set_clauses) == 0:
+                continue
+            # construct the WHERE clause
+            key_values = []
+            for update in chunk:
+                key_values.append(_decode_value(update[key]))
+            where_conditions = ['{0} IN ({1})'.format(key,
+                                                      ', '.join(key_values))]
+            if condition is not None:
+                where_conditions.insert(0, '({0})'.format(condition))
+            command = 'UPDATE {0} SET {1} WHERE {2}'
+            cargs = [table, ', '.join(set_clauses), ' AND '.join(where_conditions)]
+            self.execute(command.format(*cargs), fetch=False)
+
     # table methods
     def add_table(self, name: str, field_names: List[str],
                   field_types: List[Union[str, type]],
@@ -1990,6 +2070,66 @@ class MySQLDatabase(Database):
         self.__dict__.update(state)
         # update table list
         self._update_table_list_()
+
+    def bulk_set_entries(self, updates: List[Dict[str, Any]], key: str,
+                         table: Optional[str] = None,
+                         condition: Optional[str] = None,
+                         chunk_size: int = 100) -> None:
+        """
+        Bulk update rows in MySQL using CASE statements per chunk.
+
+        :param updates: list of dictionaries, each containing `key` and one or
+                        more columns to update
+        :param key: str, the key column used to match rows
+        :param table: optional table name (uses default when None)
+        :param condition: optional SQL condition to restrict updates
+        :param chunk_size: chunk size used to split updates
+
+        :return: None
+        """
+        if len(updates) == 0:
+            return
+        table = self._infer_table_(table)
+        chunk_size = max(1, int(chunk_size))
+        # loop around chunks
+        for start in range(0, len(updates), chunk_size):
+            chunk = updates[start:start + chunk_size]
+            # find all columns to update in this chunk
+            columns = []
+            for update in chunk:
+                for col in update:
+                    if col != key and col not in columns:
+                        columns.append(col)
+            if len(columns) == 0:
+                continue
+            # construct set clauses using CASE statements
+            set_clauses = []
+            for column in columns:
+                cases = []
+                for update in chunk:
+                    if column not in update:
+                        continue
+                    key_value = _decode_value(update[key])
+                    col_value = _decode_value(update[column])
+                    cases.append('WHEN {0} THEN {1}'.format(key_value,
+                                                            col_value))
+                if len(cases) > 0:
+                    clause = '{0} = CASE {1} {2} ELSE {0} END'
+                    set_clauses.append(clause.format(column, key,
+                                                     ' '.join(cases)))
+            if len(set_clauses) == 0:
+                continue
+            # construct the WHERE clause
+            key_values = []
+            for update in chunk:
+                key_values.append(_decode_value(update[key]))
+            where_conditions = ['{0} IN ({1})'.format(key,
+                                                      ', '.join(key_values))]
+            if condition is not None:
+                where_conditions.insert(0, '({0})'.format(condition))
+            command = 'UPDATE {0} SET {1} WHERE {2}'
+            cargs = [table, ', '.join(set_clauses), ' AND '.join(where_conditions)]
+            self.execute(command.format(*cargs), fetch=False)
 
     # get / set / execute / add methods
     def execute(self, command: str, fetch: bool) -> Any:
