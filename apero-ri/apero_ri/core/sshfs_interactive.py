@@ -292,6 +292,20 @@ def close_session(token: str) -> Dict[str, Any]:
     return {'ok': True, 'message': 'Session closed.'}
 
 
+def close_all_sessions() -> Dict[str, Any]:
+    """Terminate and clean up all active interactive sessions."""
+    with _sessions_lock:
+        tokens = list(_sessions.keys())
+
+    for token in tokens:
+        close_session(token)
+
+    return {
+        'ok': True,
+        'closed': len(tokens),
+    }
+
+
 def list_sessions() -> List[Dict[str, Any]]:
     """Return summary of active sessions (for debugging)."""
     now = time.monotonic()
@@ -328,6 +342,7 @@ def start_interactive_test(
     """
     from apero_ri.core.sshfs_backend import _get_ssh_keys_dir
     from apero_ri.core.sshfs_backend import _normalize_connection_mode
+    from apero_ri.core.sshfs_backend import _throttle_ssh_target
 
     connection_mode = _normalize_connection_mode(connection_mode)
     remote_host = str(remote_host or '').strip()
@@ -351,6 +366,10 @@ def start_interactive_test(
         if not remote_host:
             return {'ok': False, 'error': 'Remote host is required.'}
         target = f'{remote_user}@{remote_host}'
+
+    throttle_error = _throttle_ssh_target(target, action='interactive SSH test')
+    if throttle_error:
+        return {'ok': False, 'error': throttle_error}
 
     # Build a multi-step test command:
     # 1) echo SSH_OK (proves login)
@@ -394,6 +413,7 @@ def start_interactive_mount(mount_name: str) -> Dict[str, Any]:
     from apero_ri.core.sshfs_backend import (
         load_sshfs_config, save_sshfs_config,
         _get_ssh_keys_dir, _resolve_connection_target,
+        _throttle_ssh_target,
     )
 
     cfg = load_sshfs_config()
@@ -437,6 +457,13 @@ def start_interactive_mount(mount_name: str) -> Dict[str, Any]:
     if not remote_target:
         return {'ok': False, 'error': 'Mount target is incomplete.'}
 
+    throttle_error = _throttle_ssh_target(
+        target_info.get('display_target', ''),
+        action=f'interactive mount {mount_name}',
+    )
+    if throttle_error:
+        return {'ok': False, 'error': throttle_error}
+
     # sshfs command WITHOUT BatchMode — allows interactive auth.
     # No -f flag: sshfs daemonizes after auth succeeds, so the PTY
     # child exits (code 0) while the FUSE mount persists.
@@ -445,7 +472,7 @@ def start_interactive_mount(mount_name: str) -> Dict[str, Any]:
         '-o', f'IdentityFile={key_path}',
         '-o', 'StrictHostKeyChecking=accept-new',
         '-o', 'ConnectTimeout=15',
-        '-o', 'reconnect,ServerAliveInterval=15,ServerAliveCountMax=3',
+        '-o', 'ServerAliveInterval=15,ServerAliveCountMax=3',
         remote_target,
         str(local_mount),
     ]
@@ -508,6 +535,7 @@ def start_interactive_ssh_tunnel(
     running via the control socket with ``ControlPersist=yes``.
     """
     from hashlib import sha1
+    from apero_ri.core.sshfs_backend import _throttle_ssh_target
 
     ssh_config_host = str(ssh_config_host or '').strip()
     remote_host = str(remote_host or '').strip()
@@ -515,6 +543,13 @@ def start_interactive_ssh_tunnel(
         return {'ok': False, 'error': 'SSH config host is required.'}
     if not remote_host:
         return {'ok': False, 'error': 'Remote (database) host is required.'}
+
+    throttle_error = _throttle_ssh_target(
+        ssh_config_host,
+        action='interactive SSH tunnel',
+    )
+    if throttle_error:
+        return {'ok': False, 'error': throttle_error}
 
     # ── Compute the same control-socket path as _ensure_ssh_tunnel ──
     data_dir = str(local_data_dir or '').strip()

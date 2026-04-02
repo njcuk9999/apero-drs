@@ -122,6 +122,7 @@ ENABLED = dict()
 TYPE = dict()
 USE_SUBPROCESS = dict()
 MULTI_PROCESS = dict()
+LOCAL_TASK = dict()
 
 # ARI_LOCAL_DATA_BACKUP
 _entry = _register_task('ARI_LOCAL_DATA_BACKUP',
@@ -136,6 +137,7 @@ ENABLED['ARI_LOCAL_DATA_BACKUP'] = _entry['enabled']
 TYPE['ARI_LOCAL_DATA_BACKUP'] = _entry['task_type']
 USE_SUBPROCESS['ARI_LOCAL_DATA_BACKUP'] = _entry['use_subprocess']
 MULTI_PROCESS['ARI_LOCAL_DATA_BACKUP'] = _entry['multi_process']
+LOCAL_TASK['ARI_LOCAL_DATA_BACKUP'] = bool(getattr(_entry['task_cls'], 'LOCAL_TASK', False))
 
 # APERO_OBJECT_TABLE
 _entry = _register_task('APERO_OBJECT_TABLE',
@@ -150,6 +152,7 @@ ENABLED['APERO_OBJECT_TABLE'] = _entry['enabled']
 TYPE['APERO_OBJECT_TABLE'] = _entry['task_type']
 USE_SUBPROCESS['APERO_OBJECT_TABLE'] = _entry['use_subprocess']
 MULTI_PROCESS['APERO_OBJECT_TABLE'] = _entry['multi_process']
+LOCAL_TASK['APERO_OBJECT_TABLE'] = bool(getattr(_entry['task_cls'], 'LOCAL_TASK', False))
 
 # APERO_OBS_TABLE
 _entry = _register_task('APERO_OBS_TABLE',
@@ -164,6 +167,7 @@ ENABLED['APERO_OBS_TABLE'] = _entry['enabled']
 TYPE['APERO_OBS_TABLE'] = _entry['task_type']
 USE_SUBPROCESS['APERO_OBS_TABLE'] = _entry['use_subprocess']
 MULTI_PROCESS['APERO_OBS_TABLE'] = _entry['multi_process']
+LOCAL_TASK['APERO_OBS_TABLE'] = bool(getattr(_entry['task_cls'], 'LOCAL_TASK', False))
 
 # APERO_OBJECT_QUERY
 _entry = _register_task('APERO_OBJECT_QUERY',
@@ -178,6 +182,7 @@ ENABLED['APERO_OBJECT_QUERY'] = _entry['enabled']
 TYPE['APERO_OBJECT_QUERY'] = _entry['task_type']
 USE_SUBPROCESS['APERO_OBJECT_QUERY'] = _entry['use_subprocess']
 MULTI_PROCESS['APERO_OBJECT_QUERY'] = _entry['multi_process']
+LOCAL_TASK['APERO_OBJECT_QUERY'] = bool(getattr(_entry['task_cls'], 'LOCAL_TASK', False))
 
 # APERO_QC_STATS
 _entry = _register_task('APERO_QC_STATS',
@@ -192,6 +197,7 @@ ENABLED['APERO_QC_STATS'] = _entry['enabled']
 TYPE['APERO_QC_STATS'] = _entry['task_type']
 USE_SUBPROCESS['APERO_QC_STATS'] = _entry['use_subprocess']
 MULTI_PROCESS['APERO_QC_STATS'] = _entry['multi_process']
+LOCAL_TASK['APERO_QC_STATS'] = bool(getattr(_entry['task_cls'], 'LOCAL_TASK', False))
 
 # =============================================================================
 # Start of code

@@ -83,53 +83,34 @@
 
             <!-- Database settings -->
             <h4 class="ari-ap-form__heading"><i class="fa-solid fa-database"></i> Database Settings</h4>
+            <div class="ari-ap-form__field">
+                <div class="ari-ap-step-status" style="display:block; border-left:4px solid #1e6fbe; background:var(--ari-surface-muted, #f5f8fc); color:var(--ari-text, #1f2937);">
+                    <i class="fa-solid fa-database"></i>
+                    Databases are added via the
+                    <a href="{{ url_for('home_admin_portal_database_setup') }}" style="font-weight:600;">Database Setup</a> page.
+                </div>
+            </div>
             <div id="db-section" class="ari-ap-step">
             <div class="ari-ap-form__row">
                 <div class="ari-ap-form__field">
-                    <label for="profile-db-mode">DATABASE_MODE <span class="ari-required">*</span></label>
-                    <select id="profile-db-mode" class="ari-ap-input">
-                        <option value="mysql+pymysql">mysql+pymysql</option>
+                    <label for="profile-db-source">Database Source <span class="ari-required">*</span></label>
+                    <select id="profile-db-source" class="ari-ap-input">
+                        <option value="local">local</option>
+                        <option value="db_ssh_tunnel">db ssh tunnel</option>
                     </select>
                 </div>
                 <div class="ari-ap-form__field">
-                    <label for="profile-db-host">DATABASE_HOST <span class="ari-required">*</span></label>
-                    <input type="text" id="profile-db-host" class="ari-ap-input"
-                           placeholder="e.g. localhost or rali" autocomplete="off">
+                    <label for="profile-db-definition-name">Database Definition <span class="ari-required">*</span></label>
+                    <select id="profile-db-definition-name" class="ari-ap-input">
+                        <option value="">Select database definition...</option>
+                    </select>
                 </div>
             </div>
-            <div class="ari-ap-form__row">
-                <div class="ari-ap-form__field">
-                    <label for="profile-db-port">DATABASE_PORT</label>
-                    <input type="text" id="profile-db-port" class="ari-ap-input"
-                           placeholder="e.g. 3306" autocomplete="off">
-                </div>
-                <div class="ari-ap-form__field">
-                    <label for="profile-db-use-ssh">Connection Routing</label>
-                    <label class="ari-ap-checkbox" for="profile-db-use-ssh">
-                        <input type="checkbox" id="profile-db-use-ssh">
-                        <span>Connect to database via ~/.ssh/config host</span>
-                    </label>
-                </div>
-            </div>
-            <div id="db-ssh-tunnel-fields" style="display:none;">
-                <div class="ari-ap-form__row">
-                    <div class="ari-ap-form__field">
-                        <label for="profile-db-ssh-host">SSH Config Host <span class="ari-required">*</span>
-                            <span class="ari-ap-form__hint">Host alias from ~/.ssh/config</span>
-                        </label>
-                        <input type="text" id="profile-db-ssh-host" class="ari-ap-input"
-                               placeholder="e.g. my-db-tunnel" autocomplete="off">
-                    </div>
-                    <div class="ari-ap-form__field">
-                        <label for="profile-db-ssh-local-port">Local Port <span class="ari-required">*</span></label>
-                        <input type="text" id="profile-db-ssh-local-port" class="ari-ap-input"
-                               placeholder="e.g. 3307" autocomplete="off">
-                    </div>
-                </div>
-                <div class="ari-ap-form__field">
-                    <label for="profile-db-ssh-remote-port">Remote Port</label>
-                    <input type="text" id="profile-db-ssh-remote-port" class="ari-ap-input"
-                           placeholder="3306" autocomplete="off" value="3306">
+            <div class="ari-ap-form__field">
+                <div id="db-definition-admin-hint" class="ari-ap-step-status" style="display:block; border-left:4px solid #1e6fbe; background:var(--ari-surface-muted, #f5f8fc); color:var(--ari-text, #1f2937);">
+                    <i class="fa-solid fa-route"></i>
+                    This profile selects one saved database definition from
+                    <a href="{{ url_for('home_admin_portal_database_setup') }}" style="font-weight:600;">Database Setup</a>.
                 </div>
             </div>
             <div class="ari-ap-form__row">
@@ -159,10 +140,6 @@
             <div class="ari-ap-form__field">
                 <button id="btn-test-db" class="ari-btn ari-btn--secondary ari-btn--sm">
                     <i class="fa-solid fa-plug"></i> Test Connection
-                </button>
-                <button id="btn-interactive-ssh-tunnel" class="ari-btn ari-btn--secondary ari-btn--sm" style="display:none;"
-                        title="Opens an interactive terminal for password/DUO 2FA authentication, then tests the database connection">
-                    <i class="fa-solid fa-terminal"></i> Test Connection (interactive)
                 </button>
                 <div id="db-test-result" class="ari-ap-validation" style="display:none;"></div>
             </div>
@@ -425,10 +402,13 @@ window.ARI_APERO_PROFILES = {
     testDbUrl: {{ url_for('api_apero_profiles_test_db')|tojson }},
     listTablesUrl: {{ url_for('api_apero_profiles_list_tables')|tojson }},
     testTablesUrl: {{ url_for('api_apero_profiles_test_tables')|tojson }},
+    localDbListUrl: {{ url_for('api_database_setup_local_db_list')|tojson }},
+    dbTunnelListUrl: {{ url_for('api_db_ssh_tunnel_list')|tojson }},
     sshTunnelStartUrl: {{ url_for('api_apero_profiles_ssh_tunnel_start')|tojson }},
     sshTunnelPollUrl: {{ url_for('api_apero_profiles_ssh_tunnel_poll')|tojson }},
     sshTunnelSendUrl: {{ url_for('api_apero_profiles_ssh_tunnel_send')|tojson }},
     sshTunnelCloseUrl: {{ url_for('api_apero_profiles_ssh_tunnel_close')|tojson }},
+    dbTunnelAdminUrl: {{ url_for('home_admin_portal_database_setup')|tojson }},
     instruments: {{ instruments|tojson }},
     allGroups: {{ all_groups|tojson }},
     canManageGroups: {{ can_manage_groups|tojson }},

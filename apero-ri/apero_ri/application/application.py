@@ -7,6 +7,7 @@ ARIApp inherits from Flask and wires up all routes, authentication,
 and permission handling from groups.yaml / pages.yaml.
 """
 import argparse
+import atexit
 import json
 import os
 import re
@@ -67,6 +68,8 @@ from apero_ri.core.auth import load_apero_profiles
 from apero_ri.core.auth import save_apero_profiles
 from apero_ri.core.auth import load_db_access
 from apero_ri.core.auth import save_db_access
+from apero_ri.core.auth import load_db_tunnels
+from apero_ri.core.auth import save_db_tunnels
 from apero_ri.core.auth import load_admin_health_config
 from apero_ri.core.auth import save_admin_health_config
 from apero_ri.core.auth import validate_path_exists
@@ -158,6 +161,8 @@ class ARIApp(Flask):
             ari_root / 'admin' / 'health_cache.json'
         )
         self._load_health_cache_from_disk()
+        self._shutdown_lock = threading.Lock()
+        self._shutdown_started = False
         # Configure session lifetime for "remember me"
         self.config['PERMANENT_SESSION_LIFETIME'] = timedelta(days=30)
         self.config['SESSION_COOKIE_NAME'] = 'apero_ri'
@@ -171,6 +176,7 @@ class ARIApp(Flask):
         task_runner.start_background_services(
             self.args.data_dir or str(Path.home() / '.ari')
         )
+        atexit.register(self.shutdown)
 
     # -----------------------------------------------------------------
     # Argument parsing
@@ -496,6 +502,9 @@ class ARIApp(Flask):
         self.add_url_rule('/api/admin/sshfs/mounts/unmount/<mount_name>',
                   'api_admin_sshfs_mounts_unmount',
                   self._api_admin_sshfs_mounts_unmount, methods=['POST'])
+        self.add_url_rule('/api/admin/sshfs/mounts/unmount-lazy/<mount_name>',
+              'api_admin_sshfs_mounts_unmount_lazy',
+              self._api_admin_sshfs_mounts_unmount_lazy, methods=['POST'])
         self.add_url_rule('/api/admin/sshfs/mounts/status',
                   'api_admin_sshfs_mounts_status',
                   self._api_admin_sshfs_mounts_status)
@@ -616,6 +625,10 @@ class ARIApp(Flask):
                   'api_sci_groups_delete',
                   self._api_sci_groups_delete,
                   methods=['POST'])
+        self.add_url_rule('/api/admin/sci-groups/refresh-run-ids',
+              'api_sci_groups_refresh_run_ids',
+              self._api_sci_groups_refresh_run_ids,
+              methods=['POST'])
 
         # Admin APERO profiles API routes
         self.add_url_rule('/api/admin/apero-profiles/list',
@@ -676,6 +689,63 @@ class ARIApp(Flask):
                   'api_apero_profiles_ssh_tunnel_close',
                   self._api_apero_profiles_ssh_tunnel_close,
                   methods=['POST'])
+        self.add_url_rule('/api/admin/db-ssh-tunnel/status',
+              'api_db_ssh_tunnel_status',
+              self._api_db_ssh_tunnel_status)
+        self.add_url_rule('/api/admin/db-ssh-tunnel/list',
+              'api_db_ssh_tunnel_list',
+              self._api_db_ssh_tunnel_list)
+        self.add_url_rule('/api/admin/db-ssh-tunnel/save',
+              'api_db_ssh_tunnel_save',
+              self._api_db_ssh_tunnel_save,
+              methods=['POST'])
+        self.add_url_rule(
+            '/api/admin/db-ssh-tunnel/delete',
+            'api_db_ssh_tunnel_delete',
+            self._api_db_ssh_tunnel_delete,
+            methods=['POST'],
+        )
+        self.add_url_rule(
+            '/api/admin/db-ssh-tunnel/ensure',
+            'api_db_ssh_tunnel_ensure',
+            self._api_db_ssh_tunnel_ensure,
+            methods=['POST'],
+        )
+        self.add_url_rule(
+            '/api/admin/db-ssh-tunnel/test',
+            'api_db_ssh_tunnel_test',
+            self._api_db_ssh_tunnel_test,
+            methods=['POST'],
+        )
+        self.add_url_rule(
+            '/api/admin/db-ssh-tunnel/close',
+            'api_db_ssh_tunnel_close',
+            self._api_db_ssh_tunnel_close,
+            methods=['POST'],
+        )
+        self.add_url_rule(
+            '/api/admin/database-setup/local-db/list',
+            'api_database_setup_local_db_list',
+            self._api_database_setup_local_db_list,
+        )
+        self.add_url_rule(
+            '/api/admin/database-setup/local-db/save',
+            'api_database_setup_local_db_save',
+            self._api_database_setup_local_db_save,
+            methods=['POST'],
+        )
+        self.add_url_rule(
+            '/api/admin/database-setup/local-db/delete',
+            'api_database_setup_local_db_delete',
+            self._api_database_setup_local_db_delete,
+            methods=['POST'],
+        )
+        self.add_url_rule(
+            '/api/admin/database-setup/local-db/test',
+            'api_database_setup_local_db_test',
+            self._api_database_setup_local_db_test,
+            methods=['POST'],
+        )
 
         # Admin user DB access API routes
         self.add_url_rule('/api/admin/user-db-access/profiles',
@@ -1232,6 +1302,12 @@ class ARIApp(Flask):
             if page_id == 'home.admin_portal.sshfs_management':
                 context.update(self._build_admin_sshfs_context(perms))
 
+            # Admin DB SSH tunnel management
+            if page_id == 'home.admin_portal.database_setup':
+                context.update(
+                    self._build_admin_db_tunnel_context(user_info, perms)
+                )
+
             # Admin plot cache
             if page_id == 'home.admin_portal.cache_settings':
                 context.update(self._build_admin_cache_context(perms))
@@ -1297,38 +1373,67 @@ class ARIApp(Flask):
 
     @staticmethod
     def _get_instrument_run_ids(instrument):
-        """Return sorted list of all unique run_ids from object table JSONs."""
+        """Return sorted list of all unique run_ids from object table JSONs.
+        
+        Only scans profiles that currently exist in apero_profiles to avoid
+        picking up orphaned task files from deleted profiles.
+        """
         import json as _json
-        from apero_ri.core.auth import ARI_DIR
+        from apero_ri.core.auth import ARI_DIR, load_apero_profiles
+        
+        # Get current profiles; only scan their task files
+        all_profiles = load_apero_profiles(hydrate=False)
+        current_profile_names = set()
+        if instrument in all_profiles:
+            inst_profiles = all_profiles[instrument]
+            if isinstance(inst_profiles, dict):
+                current_profile_names = set(inst_profiles.keys())
+        
         tasks_dir = ARI_DIR / 'tasks' / instrument
         run_ids = set()
         if tasks_dir.exists():
             # New layout: tasks/<instrument>/<apero_profile>/object_table.json
-            for jf in tasks_dir.glob('*/object_table.json'):
-                try:
-                    with open(jf, encoding='utf-8') as f:
-                        data = _json.load(f)
-                    for row in data.get('rows', []):
-                        raw = str(row.get('RUN_ID', '') or '')
-                        for rid in raw.split(','):
-                            rid = rid.strip()
-                            if rid:
-                                run_ids.add(rid)
-                except Exception:
-                    pass
+            # Only scan directories that correspond to current profiles
+            for profile_dir in tasks_dir.iterdir():
+                if not profile_dir.is_dir():
+                    continue
+                profile_name = profile_dir.name
+                if profile_name not in current_profile_names:
+                    continue  # Skip orphaned profile dirs
+                jf = profile_dir / 'object_table.json'
+                if jf.exists():
+                    try:
+                        with open(jf, encoding='utf-8') as f:
+                            data = _json.load(f)
+                        for row in data.get('rows', []):
+                            raw = str(row.get('RUN_ID', '') or '')
+                            for rid in raw.split(','):
+                                rid = rid.strip()
+                                if rid:
+                                    run_ids.add(rid)
+                    except Exception:
+                        pass
+            
             # Legacy layout: tasks/<instrument>/object_table_<profile>.json
+            # Check these only if they correspond to current profiles
             for jf in tasks_dir.glob('object_table_*.json'):
-                try:
-                    with open(jf, encoding='utf-8') as f:
-                        data = _json.load(f)
-                    for row in data.get('rows', []):
-                        raw = str(row.get('RUN_ID', '') or '')
-                        for rid in raw.split(','):
-                            rid = rid.strip()
-                            if rid:
-                                run_ids.add(rid)
-                except Exception:
-                    pass
+                # Extract profile name from filename (object_table_<profile>.json)
+                fname = jf.name
+                if fname.startswith('object_table_') and fname.endswith('.json'):
+                    profile_name = fname[len('object_table_'):-len('.json')]
+                    if profile_name not in current_profile_names:
+                        continue  # Skip orphaned legacy files
+                    try:
+                        with open(jf, encoding='utf-8') as f:
+                            data = _json.load(f)
+                        for row in data.get('rows', []):
+                            raw = str(row.get('RUN_ID', '') or '')
+                            for rid in raw.split(','):
+                                rid = rid.strip()
+                                if rid:
+                                    run_ids.add(rid)
+                    except Exception:
+                        pass
         return sorted(run_ids)
 
     @staticmethod
@@ -1847,14 +1952,154 @@ class ARIApp(Flask):
 
     def _build_admin_sshfs_context(self, perms):
         """Build context for admin SSHFS management page."""
-        import json as _json
-        mounts_status = sb.get_mounts_status()
-        ssh_keys = sb.list_ssh_keys()
-        
+        # Keep initial page render fast.  Live mount checks can be slow on
+        # stale/broken SSHFS targets, so we only preload static config here
+        # and let the page fetch live status asynchronously via API.
+        try:
+            cfg = sb.load_sshfs_config()
+            mounts_data = cfg.get('mounts', []) if isinstance(cfg, dict) else []
+            if not isinstance(mounts_data, list):
+                mounts_data = []
+        except Exception:
+            mounts_data = []
+
+        try:
+            ssh_keys = sb.list_ssh_keys()
+            ssh_keys_data = ssh_keys.get('keys', []) if isinstance(ssh_keys, dict) else []
+            if not isinstance(ssh_keys_data, list):
+                ssh_keys_data = []
+        except Exception:
+            ssh_keys_data = []
+
         return {
             'can_manage': 'manage.admin.sshfs' in perms or 'view.admin' in perms,
-            'mounts_data': mounts_status.get('mounts', []),
-            'ssh_keys_data': ssh_keys.get('keys', []),
+            'mounts_data': mounts_data,
+            'ssh_keys_data': ssh_keys_data,
+        }
+
+    @staticmethod
+    def _normalize_db_source(value: str) -> str:
+        """Normalize database source mode for profile UI/runtime."""
+        raw = str(value or '').strip().lower()
+        return 'db_ssh_tunnel' if raw in {'db_ssh_tunnel', 'ssh', 'tunnel'} else 'local'
+
+    def _load_db_tunnel_definitions(self) -> dict:
+        """Load named DB SSH tunnel definitions."""
+        data = load_db_tunnels()
+        tunnels = data.get('tunnels', {}) if isinstance(data, dict) else {}
+        return tunnels if isinstance(tunnels, dict) else {}
+
+    def _save_db_tunnel_definitions(self, tunnels: dict) -> None:
+        """Persist named DB SSH tunnel definitions."""
+        existing = load_db_tunnels()
+        payload = {
+            'tunnels': tunnels if isinstance(tunnels, dict) else {},
+            'local_databases': existing.get('local_databases', {})
+            if isinstance(existing, dict) else {},
+        }
+        save_db_tunnels(payload)
+
+    def _load_local_db_definitions(self) -> dict:
+        """Load named local database definitions."""
+        data = load_db_tunnels()
+        local_db = data.get('local_databases', {}) if isinstance(data, dict) else {}
+        return local_db if isinstance(local_db, dict) else {}
+
+    def _save_local_db_definitions(self, local_databases: dict) -> None:
+        """Persist named local database definitions."""
+        existing = load_db_tunnels()
+        payload = {
+            'tunnels': existing.get('tunnels', {}) if isinstance(existing, dict) else {},
+            'local_databases': local_databases if isinstance(local_databases, dict) else {},
+        }
+        save_db_tunnels(payload)
+
+    def _build_db_tunnel_runtime_params(self, tunnel_name: str,
+                                        tunnel_def: dict,
+                                        mode: str = 'mysql+pymysql') -> dict:
+        """Build apero_async-compatible params for one tunnel definition."""
+        _ = tunnel_name
+        tdef = tunnel_def if isinstance(tunnel_def, dict) else {}
+        remote_host = str(tdef.get('remote_host', '') or '').strip()
+        remote_port = str(tdef.get('remote_port', '') or '').strip() or '3306'
+        local_port = str(tdef.get('local_port', '') or '').strip()
+        ssh_host = str(tdef.get('ssh_config_host', '') or '').strip()
+        return {
+            'DATABASE_MODE': str(mode or 'mysql+pymysql').strip() or 'mysql+pymysql',
+            'DATABASE_HOST': remote_host,
+            'DATABASE_PORT': local_port,
+            'DATABASE_USER': '',
+            'DATABASE_USERNAME': '',
+            'DATABASE_PASSWORD': '',
+            'DATABASE_NAME': '',
+            'DATABASE_USE_SSH_TUNNEL': True,
+            'DATABASE_SSH_CONFIG_HOST': ssh_host,
+            'DATABASE_SSH_LOCAL_PORT': local_port,
+            'DATABASE_SSH_REMOTE_PORT': remote_port,
+            'LOCAL_DATA_DIR': str(self._resolve_local_data_dir()),
+        }
+
+    def _list_db_tunnel_rows(self) -> List[dict]:
+        """List DB tunnel definitions with live health details."""
+        tunnels = self._load_db_tunnel_definitions()
+        rows = []
+        for name in sorted(tunnels.keys()):
+            tunnel_def = tunnels.get(name, {})
+            params = self._build_db_tunnel_runtime_params(name, tunnel_def)
+            ssh_host = str(params.get('DATABASE_SSH_CONFIG_HOST', '') or '')
+            remote_host = str(params.get('DATABASE_HOST', '') or '')
+            local_port = str(params.get('DATABASE_SSH_LOCAL_PORT', '') or '')
+            valid = bool(name and ssh_host and remote_host and local_port)
+
+            status = {
+                'active': False,
+                'control_alive': False,
+                'local_port_open': False,
+                'local_host': '127.0.0.1',
+                'local_port': local_port,
+                'ssh_host': ssh_host,
+                'remote_host': remote_host,
+                'remote_port': str(params.get('DATABASE_SSH_REMOTE_PORT', '') or ''),
+                'created_at': '',
+            }
+            err = ''
+            if valid:
+                try:
+                    status = apero_async.get_db_tunnel_status(params)
+                except Exception as exc:
+                    err = str(exc)
+            else:
+                err = ('Tunnel definition is incomplete. '
+                       'Require name, ssh_config_host, remote_host, local_port.')
+
+            rows.append({
+                'name': name,
+                'definition': tunnel_def,
+                'valid_config': valid,
+                'config_error': err if not valid else '',
+                'status': status,
+                'error': err if valid else '',
+            })
+
+        return rows
+
+    def _resolve_tunnel_name_from_profile_cfg(self, cfg: dict) -> str:
+        """Resolve selected tunnel name from profile database settings."""
+        return str(self._profile_get_db(cfg, 'DATABASE_TUNNEL_NAME', '') or '').strip()
+
+    def _resolve_local_db_name_from_profile_cfg(self, cfg: dict) -> str:
+        """Resolve selected local database definition name from profile settings."""
+        return str(self._profile_get_db(cfg, 'DATABASE_LOCAL_NAME', '') or '').strip()
+
+    def _build_admin_db_tunnel_context(self, user_info, perms):
+        """Build context for DB setup page."""
+        _ = user_info
+        tunnel_rows = self._list_db_tunnel_rows()
+        local_db = self._load_local_db_definitions()
+        return {
+            'can_manage_db_tunnel': 'manage.apero_profile' in (perms or set()),
+            'db_tunnels': [row.get('name', '') for row in tunnel_rows],
+            'db_local_databases': sorted(local_db.keys()),
         }
 
     def _build_admin_cache_context(self, perms):
@@ -2187,6 +2432,51 @@ class ARIApp(Flask):
             daemon=True,
             name='admin-health-refresh-now',
         ).start()
+
+    def shutdown(self) -> None:
+        """Clean up background services and interactive child processes."""
+        import sys as _sys
+        with self._shutdown_lock:
+            if self._shutdown_started:
+                return
+            self._shutdown_started = True
+
+        _debug = self.debug
+
+        if _debug:
+            print('[apero_ri] Saving admin health cache...', file=_sys.stderr, flush=True)
+        try:
+            self._save_health_cache_to_disk()
+            if _debug:
+                print('[apero_ri]   health cache saved.', file=_sys.stderr, flush=True)
+        except Exception as _exc:
+            if _debug:
+                print(f'[apero_ri]   health cache save failed: {_exc}', file=_sys.stderr, flush=True)
+
+        if _debug:
+            print('[apero_ri] Stopping background task worker/scheduler...', file=_sys.stderr, flush=True)
+        try:
+            task_runner.shutdown_background_services(debug=_debug)
+            if _debug:
+                print('[apero_ri]   background services stopped.', file=_sys.stderr, flush=True)
+        except Exception as _exc:
+            if _debug:
+                print(f'[apero_ri]   background services stop failed: {_exc}', file=_sys.stderr, flush=True)
+
+        if _debug:
+            print('[apero_ri] Closing interactive SSHFS sessions...', file=_sys.stderr, flush=True)
+        try:
+            from apero_ri.core.sshfs_interactive import close_all_sessions
+            result = close_all_sessions()
+            if _debug:
+                n = result.get('closed', 0)
+                print(f'[apero_ri]   closed {n} interactive session(s).', file=_sys.stderr, flush=True)
+        except Exception as _exc:
+            if _debug:
+                print(f'[apero_ri]   SSHFS session cleanup failed: {_exc}', file=_sys.stderr, flush=True)
+
+        if _debug:
+            print('[apero_ri] Shutdown complete.', file=_sys.stderr, flush=True)
 
     def _get_admin_health(self, user_info, perms,
                           force: bool = False,
@@ -2653,7 +2943,7 @@ class ARIApp(Flask):
                 'error': 'Cloud backup test failed.',
             },
             'home.admin_portal.sshfs_management': {
-                'ok': 'All configured SSHFS mounts are mounted and accessible.',
+                'ok': 'All configured SSHFS mounts are mounted.',
                 'warning': 'Some SSHFS mounts are not currently mounted, or no mounts are configured.',
                 'error': 'One or more SSHFS mounts have connection issues.',
             },
@@ -7511,6 +7801,40 @@ class ARIApp(Flask):
             }
         )
 
+    def _api_sci_groups_refresh_run_ids(self):
+        """Re-scan instrument run IDs and sync the reserved All group only."""
+        user_info, perms = self._require_sci_group_perm()
+        if not user_info:
+            return jsonify(success=False, error='Unauthorized'), 401
+
+        data = request.get_json(silent=True) or {}
+        instrument = str(data.get('instrument', '') or '').strip()
+        if not instrument:
+            return jsonify(success=False, error='Missing instrument'), 400
+
+        params = load_parameters()
+        valid = params.get('instruments', {}).get('value', [])
+        if instrument not in valid:
+            return jsonify(success=False, error='Invalid instrument'), 400
+
+        groups = load_science_groups(instrument)
+        run_ids = self._get_instrument_run_ids(instrument)
+        _, run_ids = self._sync_all_science_group(
+            instrument,
+            groups=groups,
+            run_ids=run_ids,
+            persist=True,
+        )
+        self._refresh_admin_health_after_change(user_info, perms)
+
+        return jsonify(
+            success=True,
+            run_ids=run_ids,
+            removed_run_ids=0,
+            message=('Run ID list refreshed. User-defined group run IDs were left unchanged; '
+                     'the All group was synchronized automatically.'),
+        )
+
     def _api_sci_groups_save(self):
         """Save run_ids and users for a science group."""
         user_info, perms = self._require_sci_group_perm()
@@ -7755,42 +8079,249 @@ class ARIApp(Flask):
 
     def _profile_db_params(self, profile_cfg: dict) -> dict:
         """Build runtime DB params for one APERO profile."""
-        username = str(
-            self._profile_get_db(profile_cfg, 'DATABASE_USERNAME', '')
-            or self._profile_get_db(profile_cfg, 'DATABASE_USER', '')
-        ).strip()
+        username = str(self._profile_get_db(profile_cfg, 'DATABASE_USERNAME', '')).strip()
+        source = self._normalize_db_source(
+            self._profile_get_db(profile_cfg, 'DATABASE_SOURCE', '')
+        )
+        local_name = self._resolve_local_db_name_from_profile_cfg(profile_cfg)
+        tunnel_name = self._resolve_tunnel_name_from_profile_cfg(profile_cfg)
+
+        if source == 'local' and local_name:
+            local_defs = self._load_local_db_definitions()
+            local_def = local_defs.get(local_name, {})
+            if isinstance(local_def, dict) and local_def:
+                return {
+                    'DATABASE_MODE': str(local_def.get('DATABASE_MODE', '') or 'mysql+pymysql').strip(),
+                    'DATABASE_SOURCE': source,
+                    'DATABASE_LOCAL_NAME': local_name,
+                    'DATABASE_TUNNEL_NAME': '',
+                    'DATABASE_HOST': str(local_def.get('DATABASE_HOST', '') or '').strip(),
+                    'DATABASE_PORT': str(local_def.get('DATABASE_PORT', '') or '3306').strip(),
+                    'DATABASE_USERNAME': username,
+                    'DATABASE_PASSWORD': str(self._profile_get_db(profile_cfg, 'DATABASE_PASSWORD', '') or ''),
+                    'DATABASE_NAME': str(self._profile_get_db(profile_cfg, 'DATABASE_NAME', '')).strip(),
+                    'DATABASE_USE_SSH_TUNNEL': False,
+                    'DATABASE_SSH_CONFIG_HOST': '',
+                    'DATABASE_SSH_LOCAL_PORT': '',
+                    'DATABASE_SSH_REMOTE_PORT': '',
+                    'LOCAL_DATA_DIR': str(self._resolve_local_data_dir()),
+                }
+
+        if source == 'db_ssh_tunnel' and tunnel_name:
+            tunnels = self._load_db_tunnel_definitions()
+            tunnel_def = tunnels.get(tunnel_name, {})
+            if isinstance(tunnel_def, dict) and tunnel_def:
+                tparams = self._build_db_tunnel_runtime_params(
+                    tunnel_name, tunnel_def, mode='mysql+pymysql')
+                host = str(tparams.get('DATABASE_HOST', '') or '').strip()
+                port = str(tparams.get('DATABASE_PORT', '') or '').strip()
+                return {
+                    'DATABASE_MODE': str(tparams.get('DATABASE_MODE', 'mysql+pymysql')).strip(),
+                    'DATABASE_SOURCE': source,
+                    'DATABASE_LOCAL_NAME': '',
+                    'DATABASE_TUNNEL_NAME': tunnel_name,
+                    'DATABASE_HOST': host,
+                    'DATABASE_PORT': port,
+                    'DATABASE_USERNAME': username,
+                    'DATABASE_PASSWORD': str(self._profile_get_db(profile_cfg, 'DATABASE_PASSWORD', '') or ''),
+                    'DATABASE_NAME': str(self._profile_get_db(profile_cfg, 'DATABASE_NAME', '')).strip(),
+                    'DATABASE_USE_SSH_TUNNEL': True,
+                    'DATABASE_SSH_CONFIG_HOST': str(tparams.get('DATABASE_SSH_CONFIG_HOST', '') or '').strip(),
+                    'DATABASE_SSH_LOCAL_PORT': str(tparams.get('DATABASE_SSH_LOCAL_PORT', '') or '').strip(),
+                    'DATABASE_SSH_REMOTE_PORT': str(tparams.get('DATABASE_SSH_REMOTE_PORT', '') or '').strip(),
+                    'LOCAL_DATA_DIR': str(self._resolve_local_data_dir()),
+                }
+
         return {
-            'DATABASE_MODE': str(self._profile_get_db(profile_cfg, 'DATABASE_MODE', '')).strip(),
-            'DATABASE_HOST': str(self._profile_get_db(profile_cfg, 'DATABASE_HOST', '')).strip(),
-            'DATABASE_PORT': str(self._profile_get_db(profile_cfg, 'DATABASE_PORT', '')).strip(),
-            'DATABASE_USER': username,
+            'DATABASE_MODE': '',
+            'DATABASE_SOURCE': source,
+            'DATABASE_LOCAL_NAME': local_name,
+            'DATABASE_TUNNEL_NAME': tunnel_name,
+            'DATABASE_HOST': '',
+            'DATABASE_PORT': '',
             'DATABASE_USERNAME': username,
             'DATABASE_PASSWORD': str(self._profile_get_db(profile_cfg, 'DATABASE_PASSWORD', '') or ''),
             'DATABASE_NAME': str(self._profile_get_db(profile_cfg, 'DATABASE_NAME', '')).strip(),
-            'DATABASE_USE_SSH_TUNNEL': self._profile_get_db(profile_cfg, 'DATABASE_USE_SSH_TUNNEL', False),
-            'DATABASE_SSH_CONFIG_HOST': str(self._profile_get_db(profile_cfg, 'DATABASE_SSH_CONFIG_HOST', '')).strip(),
-            'DATABASE_SSH_LOCAL_PORT': str(self._profile_get_db(profile_cfg, 'DATABASE_SSH_LOCAL_PORT', '')).strip(),
-            'DATABASE_SSH_REMOTE_PORT': str(self._profile_get_db(profile_cfg, 'DATABASE_SSH_REMOTE_PORT', '')).strip(),
+            'DATABASE_USE_SSH_TUNNEL': False,
+            'DATABASE_SSH_CONFIG_HOST': '',
+            'DATABASE_SSH_LOCAL_PORT': '',
+            'DATABASE_SSH_REMOTE_PORT': '',
             'LOCAL_DATA_DIR': str(self._resolve_local_data_dir()),
+        }
+
+    def _resolve_db_payload_for_test(self, data: dict) -> dict:
+        """Resolve request DB payload into concrete test connection params."""
+        mode = str(data.get('DATABASE_MODE', '') or '').strip()
+        source = self._normalize_db_source(data.get('DATABASE_SOURCE', ''))
+        local_name = str(data.get('DATABASE_LOCAL_NAME', '') or '').strip()
+        username = str(data.get('DATABASE_USERNAME', '') or '').strip()
+        password = data.get('DATABASE_PASSWORD', '')
+        db_name = str(data.get('DATABASE_NAME', '') or '').strip()
+        tunnel_name = str(data.get('DATABASE_TUNNEL_NAME', '') or '').strip()
+
+        if not all([username, db_name]):
+            return {
+                'ok': False,
+                'error': 'DATABASE_USERNAME and DATABASE_NAME are required.',
+            }
+
+        if source == 'local':
+            if not local_name:
+                return {'ok': False, 'error': 'DATABASE_LOCAL_NAME is required for local source.'}
+            local_defs = self._load_local_db_definitions()
+            local_def = local_defs.get(local_name, {})
+            if not isinstance(local_def, dict) or not local_def:
+                return {'ok': False, 'error': f'Unknown local database definition: {local_name}'}
+            mode = str(local_def.get('DATABASE_MODE', '') or 'mysql+pymysql').strip()
+            host = str(local_def.get('DATABASE_HOST', '') or '').strip()
+            port = str(local_def.get('DATABASE_PORT', '') or '3306').strip()
+            if not host:
+                return {'ok': False, 'error': 'Selected local database definition has no DATABASE_HOST.'}
+            return {
+                'ok': True,
+                'mode': mode,
+                'host': host,
+                'port': port,
+                'username': username,
+                'password': password,
+                'db_name': db_name,
+                'use_ssh_tunnel': False,
+                'ssh_config_host': '',
+                'ssh_local_port': '',
+                'ssh_remote_port': '',
+                'database_source': 'local',
+                'database_local_name': local_name,
+                'database_tunnel_name': '',
+            }
+
+        if not tunnel_name:
+            return {
+                'ok': False,
+                'error': 'DATABASE_TUNNEL_NAME is required when source is DB SSH tunnel.',
+            }
+
+        tunnels = self._load_db_tunnel_definitions()
+        tunnel_def = tunnels.get(tunnel_name, {})
+        if not isinstance(tunnel_def, dict) or not tunnel_def:
+            return {
+                'ok': False,
+                'error': f'Unknown DB tunnel definition: {tunnel_name}',
+            }
+
+        runtime = self._build_db_tunnel_runtime_params(tunnel_name, tunnel_def, mode='mysql+pymysql')
+        try:
+            status = apero_async.get_db_tunnel_status(runtime)
+        except Exception as exc:
+            return {
+                'ok': False,
+                'error': str(exc),
+                'requires_tunnel_admin': True,
+                'tunnel_admin_url': url_for('home_admin_portal_database_setup'),
+            }
+
+        if not status.get('active'):
+            return {
+                'ok': False,
+                'error': (
+                    f'No active DB SSH tunnel for "{tunnel_name}". '
+                    'Open Database Setup and start/authenticate it first.'
+                ),
+                'requires_tunnel_admin': True,
+                'tunnel_admin_url': url_for('home_admin_portal_database_setup'),
+            }
+
+        return {
+            'ok': True,
+            'mode': 'mysql+pymysql',
+            'host': '127.0.0.1',
+            'port': str(status.get('local_port', '') or ''),
+            'username': username,
+            'password': password,
+            'db_name': db_name,
+            'use_ssh_tunnel': False,
+            'ssh_config_host': '',
+            'ssh_local_port': '',
+            'ssh_remote_port': '',
+            'database_source': 'db_ssh_tunnel',
+            'database_local_name': '',
+            'database_tunnel_name': tunnel_name,
+        }
+
+    def _resolve_profile_db_test_target(self, mode: str, host: str,
+                                        port: str, username: str,
+                                        password: str, db_name: str,
+                                        use_ssh_tunnel: bool,
+                                        ssh_config_host: str,
+                                        ssh_local_port: str,
+                                        ssh_remote_port: str):
+        """Resolve DB test target while keeping tunnel setup on admin page."""
+        if not use_ssh_tunnel:
+            return {
+                'mode': mode,
+                'host': host,
+                'port': port,
+                'username': username,
+                'password': password,
+                'db_name': db_name,
+                'use_ssh_tunnel': False,
+                'ssh_config_host': '',
+                'ssh_local_port': '',
+                'ssh_remote_port': '',
+                'tunnel_required': False,
+            }
+
+        db_params = {
+            'DATABASE_MODE': mode,
+            'DATABASE_HOST': host,
+            'DATABASE_PORT': port,
+            'DATABASE_USERNAME': username,
+            'DATABASE_PASSWORD': password,
+            'DATABASE_NAME': db_name,
+            'DATABASE_USE_SSH_TUNNEL': True,
+            'DATABASE_SSH_CONFIG_HOST': ssh_config_host,
+            'DATABASE_SSH_LOCAL_PORT': ssh_local_port,
+            'DATABASE_SSH_REMOTE_PORT': ssh_remote_port,
+            'LOCAL_DATA_DIR': str(self._resolve_local_data_dir()),
+        }
+        status = apero_async.get_db_tunnel_status(db_params)
+        if not status.get('active'):
+            return {
+                'tunnel_required': True,
+                'error': (
+                    'No active DB SSH tunnel for this profile. '
+                    'Open Database Setup and start/authenticate tunnel first.'
+                ),
+                'tunnel_admin_url': url_for('home_admin_portal_database_setup'),
+            }
+
+        return {
+            'mode': mode,
+            'host': '127.0.0.1',
+            'port': str(status.get('local_port', '') or ''),
+            'username': username,
+            'password': password,
+            'db_name': db_name,
+            'use_ssh_tunnel': False,
+            'ssh_config_host': '',
+            'ssh_local_port': '',
+            'ssh_remote_port': '',
+            'tunnel_required': False,
         }
 
     def _validate_profile_database(self, profile_cfg: dict) -> dict:
         """Validate one profile DB config using the shared runtime path."""
+        db_params = self._profile_db_params(profile_cfg)
         return validate_database_connection(
-            self._profile_get_db(profile_cfg, 'DATABASE_MODE', ''),
-            self._profile_get_db(profile_cfg, 'DATABASE_HOST', ''),
-            self._profile_get_db(profile_cfg, 'DATABASE_USERNAME', ''),
-            self._profile_get_db(profile_cfg, 'DATABASE_PASSWORD', ''),
-            self._profile_get_db(profile_cfg, 'DATABASE_NAME', ''),
-            port=self._profile_get_db(profile_cfg, 'DATABASE_PORT', ''),
-            use_ssh_tunnel=self._profile_get_db(
-                profile_cfg, 'DATABASE_USE_SSH_TUNNEL', False),
-            ssh_config_host=self._profile_get_db(
-                profile_cfg, 'DATABASE_SSH_CONFIG_HOST', ''),
-            ssh_local_port=self._profile_get_db(
-                profile_cfg, 'DATABASE_SSH_LOCAL_PORT', ''),
-            ssh_remote_port=self._profile_get_db(
-                profile_cfg, 'DATABASE_SSH_REMOTE_PORT', ''),
+            db_params.get('DATABASE_MODE', ''),
+            db_params.get('DATABASE_HOST', ''),
+            db_params.get('DATABASE_USERNAME', ''),
+            db_params.get('DATABASE_PASSWORD', ''),
+            db_params.get('DATABASE_NAME', ''),
+            port=db_params.get('DATABASE_PORT', ''),
+            use_ssh_tunnel=db_params.get('DATABASE_USE_SSH_TUNNEL', False),
+            ssh_config_host=db_params.get('DATABASE_SSH_CONFIG_HOST', ''),
+            ssh_local_port=db_params.get('DATABASE_SSH_LOCAL_PORT', ''),
+            ssh_remote_port=db_params.get('DATABASE_SSH_REMOTE_PORT', ''),
             local_data_dir=str(self._resolve_local_data_dir()),
         )
 
@@ -8293,10 +8824,8 @@ class ARIApp(Flask):
 
         # Keys stored per profile (served flat to UI for compatibility)
         _DB_KEYS = [
-            'DATABASE_MODE', 'DATABASE_HOST', 'DATABASE_PORT',
             'DATABASE_USERNAME', 'DATABASE_PASSWORD', 'DATABASE_NAME',
-            'DATABASE_USE_SSH_TUNNEL', 'DATABASE_SSH_CONFIG_HOST',
-            'DATABASE_SSH_LOCAL_PORT', 'DATABASE_SSH_REMOTE_PORT',
+            'DATABASE_SOURCE', 'DATABASE_LOCAL_NAME', 'DATABASE_TUNNEL_NAME',
             'ASTROM_TABLENAME', 'CALIB_TABLENAME', 'FINDEX_TABLENAME',
             'LOG_TABLENAME', 'TELLU_TABLENAME', 'REJECT_TABLENAME',
         ]
@@ -8319,6 +8848,9 @@ class ARIApp(Flask):
             # Copy DB fields
             for k in _DB_KEYS:
                 entry[k] = self._profile_get_db(cfg, k, '')
+            entry['DATABASE_SOURCE'] = self._normalize_db_source(
+                entry.get('DATABASE_SOURCE', '')
+            )
             entry['SCIENCE_FIBER'] = self._profile_get_general(
                 cfg, 'SCIENCE_FIBER', '')
             # SCIENCE_TYPES is a list
@@ -8421,14 +8953,14 @@ class ARIApp(Flask):
         # Collect all required fields
         _META_KEYS = ['apero_version', 'reduction_server']
         _DB_REQUIRED_KEYS = [
-            'DATABASE_MODE', 'DATABASE_HOST', 'DATABASE_USERNAME',
+            'DATABASE_USERNAME',
             'DATABASE_NAME', 'ASTROM_TABLENAME', 'CALIB_TABLENAME',
             'FINDEX_TABLENAME', 'LOG_TABLENAME', 'TELLU_TABLENAME',
             'REJECT_TABLENAME',
         ]
         _DB_OPTIONAL_KEYS = [
-            'DATABASE_PASSWORD', 'DATABASE_PORT', 'DATABASE_SSH_CONFIG_HOST',
-            'DATABASE_SSH_LOCAL_PORT', 'DATABASE_SSH_REMOTE_PORT',
+            'DATABASE_PASSWORD', 'DATABASE_SOURCE',
+            'DATABASE_LOCAL_NAME', 'DATABASE_TUNNEL_NAME',
         ]
         # Store instrument profile file reference (optional, no validation)
         _apero_instrument_profile = str(
@@ -8464,30 +8996,50 @@ class ARIApp(Flask):
                 continue
             db_values[k] = str(data.get(k, '') or '').strip()
 
-        use_ssh_tunnel = data.get('DATABASE_USE_SSH_TUNNEL', False)
-        if isinstance(use_ssh_tunnel, str):
-            use_ssh_tunnel = use_ssh_tunnel.strip().lower() in [
-                '1', 'true', 'yes', 'on'
-            ]
-        else:
-            use_ssh_tunnel = bool(use_ssh_tunnel)
-        db_values['DATABASE_USE_SSH_TUNNEL'] = use_ssh_tunnel
+        database_source = self._normalize_db_source(data.get('DATABASE_SOURCE', ''))
+        local_name = str(data.get('DATABASE_LOCAL_NAME', '') or '').strip()
+        tunnel_name = str(data.get('DATABASE_TUNNEL_NAME', '') or '').strip()
 
-        if use_ssh_tunnel:
-            if not db_values['DATABASE_SSH_CONFIG_HOST']:
+        db_values['DATABASE_SOURCE'] = database_source
+        db_values['DATABASE_LOCAL_NAME'] = local_name
+        db_values['DATABASE_TUNNEL_NAME'] = tunnel_name
+
+        if database_source == 'local':
+            if not local_name:
                 return jsonify(
                     success=False,
-                    error='DATABASE_SSH_CONFIG_HOST is required when SSH tunneling is enabled'
+                    error='DATABASE_LOCAL_NAME is required when DATABASE_SOURCE is local'
                 ), 400
-            if not db_values['DATABASE_SSH_LOCAL_PORT']:
+            local_defs = self._load_local_db_definitions()
+            local_def = local_defs.get(local_name, {})
+            if not isinstance(local_def, dict) or not local_def:
                 return jsonify(
                     success=False,
-                    error='DATABASE_SSH_LOCAL_PORT is required when SSH tunneling is enabled'
+                    error=f'Unknown local database definition: {local_name}'
                 ), 400
-            if not db_values['DATABASE_SSH_REMOTE_PORT']:
-                db_values['DATABASE_SSH_REMOTE_PORT'] = '3306'
-        elif not db_values['DATABASE_SSH_REMOTE_PORT']:
-            db_values['DATABASE_SSH_REMOTE_PORT'] = '3306'
+            db_values.pop('DATABASE_MODE', None)
+            db_values.pop('DATABASE_HOST', None)
+            db_values.pop('DATABASE_PORT', None)
+            db_values['DATABASE_TUNNEL_NAME'] = ''
+        else:
+            if not tunnel_name:
+                return jsonify(
+                    success=False,
+                    error='DATABASE_TUNNEL_NAME is required when DATABASE_SOURCE is db_ssh_tunnel'
+                ), 400
+            tunnels = self._load_db_tunnel_definitions()
+            tunnel_def = tunnels.get(tunnel_name, {})
+            if not isinstance(tunnel_def, dict) or not tunnel_def:
+                return jsonify(
+                    success=False,
+                    error=f'Unknown DB tunnel definition: {tunnel_name}'
+                ), 400
+            # Keep local DB host/port fields empty in tunnel mode; runtime resolves
+            # from selected tunnel definition.
+            db_values.pop('DATABASE_MODE', None)
+            db_values.pop('DATABASE_HOST', None)
+            db_values.pop('DATABASE_PORT', None)
+            db_values['DATABASE_LOCAL_NAME'] = ''
 
         science_fiber = str(data.get('SCIENCE_FIBER', '')).strip()
         if not science_fiber:
@@ -8520,13 +9072,6 @@ class ARIApp(Flask):
                 if str(t).strip()]
         if not science_types:
             return jsonify(success=False, error='SCIENCE_TYPES is required'), 400
-
-        # Validate DATABASE_MODE
-        if db_values['DATABASE_MODE'] not in ('mysql+pymysql',):
-            return jsonify(
-                success=False,
-                error='Unsupported DATABASE_MODE'
-            ), 400
 
         all_profiles = load_apero_profiles(hydrate=False)
         inst_profiles = all_profiles.setdefault(instrument, {})
@@ -8579,7 +9124,7 @@ class ARIApp(Flask):
         return jsonify(success=True)
 
     def _api_apero_profiles_delete(self):
-        """Delete an APERO profile."""
+        """Delete an APERO profile and remove all matching profile directories."""
         user_info, perms = self._require_apero_profile_perm()
         if not user_info:
             return jsonify(success=False, error='Unauthorized'), 401
@@ -8603,6 +9148,18 @@ class ARIApp(Flask):
         del inst_profiles[name]
         all_profiles[instrument] = inst_profiles
         save_apero_profiles(all_profiles)
+        
+        # Clean up all directories named after this profile from local data directory
+        import shutil
+        local_data_dir = self._resolve_local_data_dir()
+        if local_data_dir and os.path.isdir(local_data_dir):
+            for item in Path(local_data_dir).rglob(name):
+                if item.is_dir():
+                    try:
+                        shutil.rmtree(item)
+                    except Exception:
+                        pass  # Log silently; don't block profile deletion on cleanup errors
+        
         self._refresh_admin_health_after_change(user_info, perms)
         return jsonify(success=True)
 
@@ -8730,31 +9287,26 @@ class ARIApp(Flask):
         if not data:
             return jsonify(success=False, error='Missing data'), 400
 
-        mode = data.get('DATABASE_MODE', '').strip()
-        host = data.get('DATABASE_HOST', '').strip()
-        port = str(data.get('DATABASE_PORT', '') or '').strip()
-        username = data.get('DATABASE_USERNAME', '').strip()
-        password = data.get('DATABASE_PASSWORD', '')
-        db_name = data.get('DATABASE_NAME', '').strip()
-        use_ssh_tunnel = data.get('DATABASE_USE_SSH_TUNNEL', False)
-        ssh_config_host = str(
-            data.get('DATABASE_SSH_CONFIG_HOST', '') or '').strip()
-        ssh_local_port = str(
-            data.get('DATABASE_SSH_LOCAL_PORT', '') or '').strip()
-        ssh_remote_port = str(
-            data.get('DATABASE_SSH_REMOTE_PORT', '') or '').strip()
-
-        if not all([mode, host, username, db_name]):
-            return jsonify(success=False,
-                           error='All database fields are required'), 400
+        resolved = self._resolve_db_payload_for_test(data)
+        if not resolved.get('ok') and resolved.get('requires_tunnel_admin'):
+            return jsonify(
+                success=True,
+                valid=False,
+                requires_tunnel_admin=True,
+                error=resolved.get('error', 'DB tunnel required.'),
+                tunnel_admin_url=resolved.get('tunnel_admin_url', ''),
+            )
+        if not resolved.get('ok'):
+            return jsonify(success=False, error=resolved.get('error', 'Invalid database payload')), 400
 
         result = validate_database_connection(
-            mode, host, username, password, db_name,
-            port=port,
-            use_ssh_tunnel=use_ssh_tunnel,
-            ssh_config_host=ssh_config_host,
-            ssh_local_port=ssh_local_port,
-            ssh_remote_port=ssh_remote_port,
+            resolved['mode'], resolved['host'], resolved['username'],
+            resolved['password'], resolved['db_name'],
+            port=resolved['port'],
+            use_ssh_tunnel=resolved['use_ssh_tunnel'],
+            ssh_config_host=resolved['ssh_config_host'],
+            ssh_local_port=resolved['ssh_local_port'],
+            ssh_remote_port=resolved['ssh_remote_port'],
             local_data_dir=str(self._resolve_local_data_dir()),
         )
         return jsonify(success=True, **result)
@@ -8769,39 +9321,34 @@ class ARIApp(Flask):
         if not data:
             return jsonify(success=False, error='Missing data'), 400
 
-        mode = data.get('DATABASE_MODE', '').strip()
-        host = data.get('DATABASE_HOST', '').strip()
-        port = str(data.get('DATABASE_PORT', '') or '').strip()
-        username = data.get('DATABASE_USERNAME', '').strip()
-        password = data.get('DATABASE_PASSWORD', '')
-        db_name = data.get('DATABASE_NAME', '').strip()
-        use_ssh_tunnel = data.get('DATABASE_USE_SSH_TUNNEL', False)
-        ssh_config_host = str(
-            data.get('DATABASE_SSH_CONFIG_HOST', '') or '').strip()
-        ssh_local_port = str(
-            data.get('DATABASE_SSH_LOCAL_PORT', '') or '').strip()
-        ssh_remote_port = str(
-            data.get('DATABASE_SSH_REMOTE_PORT', '') or '').strip()
-
-        if not all([mode, host, username, db_name]):
-            return jsonify(success=False,
-                           error='All database fields are required'), 400
+        resolved = self._resolve_db_payload_for_test(data)
+        if not resolved.get('ok') and resolved.get('requires_tunnel_admin'):
+            return jsonify(
+                success=True,
+                valid=False,
+                tables=[],
+                requires_tunnel_admin=True,
+                error=resolved.get('error', 'DB tunnel required.'),
+                tunnel_admin_url=resolved.get('tunnel_admin_url', ''),
+            )
+        if not resolved.get('ok'):
+            return jsonify(success=False, error=resolved.get('error', 'Invalid database payload')), 400
 
         db_params = {
-            'DATABASE_MODE': mode,
-            'DATABASE_HOST': host,
-            'DATABASE_PORT': port,
-            'DATABASE_USER': username,
-            'DATABASE_PASSWORD': password,
-            'DATABASE_NAME': db_name,
-            'DATABASE_USE_SSH_TUNNEL': use_ssh_tunnel,
-            'DATABASE_SSH_CONFIG_HOST': ssh_config_host,
-            'DATABASE_SSH_LOCAL_PORT': ssh_local_port,
-            'DATABASE_SSH_REMOTE_PORT': ssh_remote_port,
+            'DATABASE_MODE': resolved['mode'],
+            'DATABASE_HOST': resolved['host'],
+            'DATABASE_PORT': resolved['port'],
+            'DATABASE_USER': resolved['username'],
+            'DATABASE_PASSWORD': resolved['password'],
+            'DATABASE_NAME': resolved['db_name'],
+            'DATABASE_USE_SSH_TUNNEL': resolved['use_ssh_tunnel'],
+            'DATABASE_SSH_CONFIG_HOST': resolved['ssh_config_host'],
+            'DATABASE_SSH_LOCAL_PORT': resolved['ssh_local_port'],
+            'DATABASE_SSH_REMOTE_PORT': resolved['ssh_remote_port'],
             'LOCAL_DATA_DIR': str(self._resolve_local_data_dir()),
         }
 
-        sql_db_name = str(db_name).replace("'", "''")
+        sql_db_name = str(resolved['db_name']).replace("'", "''")
         query = (
             'SELECT table_name '
             'FROM information_schema.tables '
@@ -8844,6 +9391,16 @@ class ARIApp(Flask):
             remote_port = int(remote_port)
         except (ValueError, TypeError):
             return jsonify(ok=False, error='Invalid port number'), 400
+
+        singleton = apero_async.ensure_single_db_tunnel_slot({
+            'DATABASE_SSH_CONFIG_HOST': ssh_config_host,
+            'DATABASE_HOST': remote_host,
+            'DATABASE_SSH_LOCAL_PORT': local_port,
+            'DATABASE_SSH_REMOTE_PORT': remote_port,
+            'LOCAL_DATA_DIR': str(self._resolve_local_data_dir()),
+        })
+        if not singleton.get('ok'):
+            return jsonify(ok=False, error=singleton.get('error', 'Failed to enforce single active DB SSH tunnel policy.')), 400
 
         result = start_interactive_ssh_tunnel(
             ssh_config_host=ssh_config_host,
@@ -8897,6 +9454,425 @@ class ARIApp(Flask):
             return jsonify(ok=False, error='token required'), 400
         return jsonify(**close_session(token))
 
+    def _api_db_ssh_tunnel_status(self):
+        """List tunnel status for all saved DB tunnel definitions."""
+        user_info, perms = self._require_apero_profile_perm()
+        if not user_info:
+            return jsonify(success=False, error='Unauthorized'), 401
+
+        rows = self._list_db_tunnel_rows()
+        active_count = sum(1 for row in rows if bool((row.get('status') or {}).get('active')))
+
+        return jsonify(
+            success=True,
+            tunnels=rows,
+            active_count=active_count,
+            singleton_ok=active_count <= 1,
+        )
+
+    def _api_db_ssh_tunnel_list(self):
+        """List DB tunnel definitions for setup UI and profile dropdowns."""
+        user_info, perms = self._require_apero_profile_perm()
+        if not user_info:
+            return jsonify(success=False, error='Unauthorized'), 401
+
+        tunnels = self._load_db_tunnel_definitions()
+        rows = []
+        for name in sorted(tunnels.keys()):
+            tdef = tunnels.get(name, {})
+            if not isinstance(tdef, dict):
+                continue
+            rows.append({
+                'name': name,
+                'ssh_config_host': str(tdef.get('ssh_config_host', '') or '').strip(),
+                'remote_host': str(tdef.get('remote_host', '') or '').strip(),
+                'remote_port': str(tdef.get('remote_port', '') or '').strip() or '3306',
+                'local_port': str(tdef.get('local_port', '') or '').strip(),
+                'DATABASE_USERNAME': str(tdef.get('DATABASE_USERNAME', '') or '').strip(),
+                'DATABASE_PASSWORD': str(tdef.get('DATABASE_PASSWORD', '') or ''),
+                'DATABASE_NAME': str(tdef.get('DATABASE_NAME', '') or '').strip(),
+                'notes': str(tdef.get('notes', '') or '').strip(),
+            })
+        return jsonify(success=True, tunnels=rows)
+
+    def _api_db_ssh_tunnel_save(self):
+        """Create or update one DB tunnel definition."""
+        user_info, perms = self._require_apero_profile_perm()
+        if not user_info:
+            return jsonify(success=False, error='Unauthorized'), 401
+
+        body = request.get_json(silent=True) or {}
+        name = str(body.get('name', '') or '').strip()
+        ssh_config_host = str(body.get('ssh_config_host', '') or '').strip()
+        remote_host = str(body.get('remote_host', '') or '').strip()
+        remote_port = str(body.get('remote_port', '') or '').strip()
+        local_port = str(body.get('local_port', '') or '').strip()
+        username = str(body.get('DATABASE_USERNAME', '') or '').strip()
+        password = str(body.get('DATABASE_PASSWORD', '') or '')
+        db_name = str(body.get('DATABASE_NAME', '') or '').strip()
+        notes = str(body.get('notes', '') or '').strip()
+
+        if not name:
+            return jsonify(success=False, error='name is required'), 400
+        if not re.match(r'^[A-Za-z0-9_\-]+$', name):
+            return jsonify(success=False,
+                           error='name must be alphanumeric, dash, or underscore'), 400
+        if not ssh_config_host:
+            return jsonify(success=False, error='ssh_config_host is required'), 400
+        if not remote_host:
+            return jsonify(success=False, error='remote_host is required'), 400
+        if not local_port:
+            return jsonify(success=False, error='local_port is required'), 400
+        if not str(remote_port).isdigit() or not str(local_port).isdigit():
+            return jsonify(success=False, error='local_port and remote_port must be numeric'), 400
+
+        tunnels = self._load_db_tunnel_definitions()
+        tunnels[name] = {
+            'ssh_config_host': ssh_config_host,
+            'remote_host': remote_host,
+            'remote_port': remote_port,
+            'local_port': local_port,
+            'DATABASE_USERNAME': username,
+            'DATABASE_PASSWORD': password,
+            'DATABASE_NAME': db_name,
+            'notes': notes,
+        }
+        self._save_db_tunnel_definitions(tunnels)
+        self._refresh_admin_health_after_change(user_info, perms)
+        return jsonify(success=True)
+
+    def _api_db_ssh_tunnel_delete(self):
+        """Delete one DB tunnel definition."""
+        user_info, perms = self._require_apero_profile_perm()
+        if not user_info:
+            return jsonify(success=False, error='Unauthorized'), 401
+
+        body = request.get_json(silent=True) or {}
+        name = str(body.get('name', '') or '').strip()
+        if not name:
+            return jsonify(success=False, error='name is required'), 400
+
+        all_profiles = load_apero_profiles(hydrate=False)
+        in_use = []
+        for instrument, inst_profiles in (all_profiles or {}).items():
+            if not isinstance(inst_profiles, dict):
+                continue
+            for profile_name, profile_cfg in inst_profiles.items():
+                cfg = profile_cfg if isinstance(profile_cfg, dict) else {}
+                source = self._normalize_db_source(
+                    self._profile_get_db(cfg, 'DATABASE_SOURCE', ''))
+                tname = self._resolve_tunnel_name_from_profile_cfg(cfg)
+                if source == 'db_ssh_tunnel' and tname == name:
+                    in_use.append(f'{instrument}/{profile_name}')
+
+        if in_use:
+            return jsonify(success=False,
+                           error=('Tunnel is used by profile(s): '
+                                  + ', '.join(in_use))), 400
+
+        tunnels = self._load_db_tunnel_definitions()
+        if name not in tunnels:
+            return jsonify(success=False, error='Tunnel not found'), 404
+
+        del tunnels[name]
+        self._save_db_tunnel_definitions(tunnels)
+        self._refresh_admin_health_after_change(user_info, perms)
+        return jsonify(success=True)
+
+    def _api_db_ssh_tunnel_ensure(self):
+        """Ensure selected named tunnel is active (singleton enforced)."""
+        user_info, perms = self._require_apero_profile_perm()
+        if not user_info:
+            return jsonify(success=False, error='Unauthorized'), 401
+
+        body = request.get_json(silent=True) or {}
+        tunnel_name = str(body.get('tunnel_name', '') or '').strip()
+        if not tunnel_name:
+            return jsonify(success=False,
+                           error='tunnel_name is required'), 400
+
+        tunnels = self._load_db_tunnel_definitions()
+        tunnel_def = tunnels.get(tunnel_name, {})
+        if not isinstance(tunnel_def, dict) or not tunnel_def:
+            return jsonify(success=False, error='Tunnel not found'), 404
+
+        db_params = self._build_db_tunnel_runtime_params(tunnel_name, tunnel_def)
+
+        try:
+            host, port = apero_async._ensure_ssh_tunnel(db_params)
+            status = apero_async.get_db_tunnel_status(db_params)
+            return jsonify(success=True,
+                           message='DB SSH tunnel is active.',
+                           tunnel_name=tunnel_name,
+                           local_host=host,
+                           local_port=port,
+                           status=status)
+        except Exception as exc:
+            return jsonify(success=False,
+                           error=f'Failed to ensure DB tunnel: {exc}'), 500
+
+    def _api_db_ssh_tunnel_close(self):
+        """Close one selected named DB tunnel or all saved DB tunnels."""
+        user_info, perms = self._require_apero_profile_perm()
+        if not user_info:
+            return jsonify(success=False, error='Unauthorized'), 401
+
+        body = request.get_json(silent=True) or {}
+        close_all = bool(body.get('close_all', False))
+        rows = self._list_db_tunnel_rows()
+
+        if close_all:
+            seen_controls = set()
+            closed = 0
+            failed = []
+            for row in rows:
+                if not row.get('valid_config'):
+                    continue
+                try:
+                    status = row.get('status', {}) if isinstance(row.get('status'), dict) else {}
+                    control_path = str(status.get('control_path', '') or '')
+                    if not control_path or control_path in seen_controls:
+                        continue
+                    seen_controls.add(control_path)
+                    tdef = row.get('definition', {}) if isinstance(row.get('definition'), dict) else {}
+                    db_params = self._build_db_tunnel_runtime_params(
+                        str(row.get('name', '') or ''), tdef)
+                    result = apero_async.close_db_tunnel(db_params)
+                    if result.get('ok'):
+                        closed += 1
+                    else:
+                        failed.append(result.get('error', 'Unknown close error'))
+                except Exception as exc:
+                    failed.append(str(exc))
+
+            if failed:
+                return jsonify(success=False,
+                               error='; '.join(failed),
+                               closed=closed)
+            return jsonify(success=True,
+                           message='Closed all DB SSH tunnels.',
+                           closed=closed)
+
+        tunnel_name = str(body.get('tunnel_name', '') or '').strip()
+        if not tunnel_name:
+            return jsonify(success=False,
+                           error='tunnel_name is required'), 400
+
+        tunnels = self._load_db_tunnel_definitions()
+        tunnel_def = tunnels.get(tunnel_name, {})
+        if not isinstance(tunnel_def, dict) or not tunnel_def:
+            return jsonify(success=False, error='Tunnel not found'), 404
+
+        db_params = self._build_db_tunnel_runtime_params(tunnel_name, tunnel_def)
+        result = apero_async.close_db_tunnel(db_params)
+        status_code = 200 if result.get('ok') else 500
+        return jsonify(success=bool(result.get('ok')),
+                       **result), status_code
+
+    def _api_db_ssh_tunnel_test(self):
+        """Test one DB SSH tunnel definition using stored or supplied test credentials."""
+        user_info, perms = self._require_apero_profile_perm()
+        if not user_info:
+            return jsonify(success=False, error='Unauthorized'), 401
+
+        body = request.get_json(silent=True) or {}
+        name = str(body.get('name', '') or '').strip()
+        ssh_config_host = str(body.get('ssh_config_host', '') or '').strip()
+        remote_host = str(body.get('remote_host', '') or '').strip()
+        remote_port = str(body.get('remote_port', '') or '').strip() or '3306'
+        local_port = str(body.get('local_port', '') or '').strip()
+        username = str(body.get('DATABASE_USERNAME', '') or '').strip()
+        password = str(body.get('DATABASE_PASSWORD', '') or '')
+        db_name = str(body.get('DATABASE_NAME', '') or '').strip()
+
+        if name:
+            tunnels = self._load_db_tunnel_definitions()
+            tdef = tunnels.get(name, {})
+            if not isinstance(tdef, dict) or not tdef:
+                return jsonify(success=False, error='Tunnel not found'), 404
+            ssh_config_host = ssh_config_host or str(tdef.get('ssh_config_host', '') or '').strip()
+            remote_host = remote_host or str(tdef.get('remote_host', '') or '').strip()
+            remote_port = remote_port or str(tdef.get('remote_port', '') or '').strip()
+            local_port = local_port or str(tdef.get('local_port', '') or '').strip()
+            username = username or str(tdef.get('DATABASE_USERNAME', '') or '').strip()
+            password = password or str(tdef.get('DATABASE_PASSWORD', '') or '')
+            db_name = db_name or str(tdef.get('DATABASE_NAME', '') or '').strip()
+
+        remote_port = remote_port or '3306'
+
+        if not ssh_config_host:
+            return jsonify(success=False, error='DATABASE_SSH_CONFIG_HOST is required'), 400
+        if not remote_host:
+            return jsonify(success=False, error='DATABASE_HOST is required'), 400
+        if not local_port:
+            return jsonify(success=False, error='DATABASE_SSH_LOCAL_PORT is required'), 400
+        if not str(remote_port).isdigit() or not str(local_port).isdigit():
+            return jsonify(success=False, error='DATABASE_SSH_LOCAL_PORT and DATABASE_SSH_REMOTE_PORT must be numeric'), 400
+        if not username or not db_name:
+            return jsonify(success=False, error='DATABASE_USERNAME and DATABASE_NAME are required'), 400
+
+        runtime = self._build_db_tunnel_runtime_params(
+            name or '__adhoc__',
+            {
+                'ssh_config_host': ssh_config_host,
+                'remote_host': remote_host,
+                'remote_port': remote_port,
+                'local_port': local_port,
+            },
+            mode='mysql+pymysql',
+        )
+        try:
+            status = apero_async.get_db_tunnel_status(runtime)
+        except Exception as exc:
+            return jsonify(success=True,
+                           valid=False,
+                           error=str(exc)), 200
+
+        if not status.get('active'):
+            return jsonify(success=True,
+                           valid=False,
+                           error=('No active DB SSH tunnel for this definition. '
+                                  'Use Ensure Active or Interactive Auth first.'))
+
+        result = validate_database_connection(
+            'mysql+pymysql',
+            '127.0.0.1',
+            username,
+            password,
+            db_name,
+            port=str(status.get('local_port', '') or ''),
+            use_ssh_tunnel=False,
+            ssh_config_host='',
+            ssh_local_port='',
+            ssh_remote_port='',
+            local_data_dir=str(self._resolve_local_data_dir()),
+        )
+        return jsonify(success=True, **result)
+
+    def _api_database_setup_local_db_list(self):
+        """List reusable local database definitions."""
+        user_info, perms = self._require_apero_profile_perm()
+        if not user_info:
+            return jsonify(success=False, error='Unauthorized'), 401
+
+        defs = self._load_local_db_definitions()
+        rows = []
+        for name in sorted(defs.keys()):
+            item = defs.get(name, {})
+            if not isinstance(item, dict):
+                continue
+            rows.append({
+                'name': name,
+                'DATABASE_MODE': str(item.get('DATABASE_MODE', '') or '').strip() or 'mysql+pymysql',
+                'DATABASE_HOST': str(item.get('DATABASE_HOST', '') or '').strip(),
+                'DATABASE_PORT': str(item.get('DATABASE_PORT', '') or '').strip() or '3306',
+                'DATABASE_USERNAME': str(item.get('DATABASE_USERNAME', '') or '').strip(),
+                'DATABASE_PASSWORD': str(item.get('DATABASE_PASSWORD', '') or ''),
+                'DATABASE_NAME': str(item.get('DATABASE_NAME', '') or '').strip(),
+                'notes': str(item.get('notes', '') or '').strip(),
+            })
+        return jsonify(success=True, local_databases=rows)
+
+    def _api_database_setup_local_db_save(self):
+        """Create/update one reusable local database definition."""
+        user_info, perms = self._require_apero_profile_perm()
+        if not user_info:
+            return jsonify(success=False, error='Unauthorized'), 401
+
+        body = request.get_json(silent=True) or {}
+        name = str(body.get('name', '') or '').strip()
+        mode = str(body.get('DATABASE_MODE', '') or '').strip() or 'mysql+pymysql'
+        host = str(body.get('DATABASE_HOST', '') or '').strip()
+        port = str(body.get('DATABASE_PORT', '') or '').strip() or '3306'
+        username = str(body.get('DATABASE_USERNAME', '') or '').strip()
+        password = str(body.get('DATABASE_PASSWORD', '') or '')
+        db_name = str(body.get('DATABASE_NAME', '') or '').strip()
+        notes = str(body.get('notes', '') or '').strip()
+
+        if not name:
+            return jsonify(success=False, error='name is required'), 400
+        if not re.match(r'^[A-Za-z0-9_\-]+$', name):
+            return jsonify(success=False,
+                           error='name must be alphanumeric, dash, or underscore'), 400
+        if mode not in ('mysql+pymysql',):
+            return jsonify(success=False, error='Unsupported DATABASE_MODE'), 400
+        if not host:
+            return jsonify(success=False, error='DATABASE_HOST is required'), 400
+        if not port.isdigit():
+            return jsonify(success=False, error='DATABASE_PORT must be numeric'), 400
+
+        defs = self._load_local_db_definitions()
+        defs[name] = {
+            'DATABASE_MODE': mode,
+            'DATABASE_HOST': host,
+            'DATABASE_PORT': port,
+            'DATABASE_USERNAME': username,
+            'DATABASE_PASSWORD': password,
+            'DATABASE_NAME': db_name,
+            'notes': notes,
+        }
+        self._save_local_db_definitions(defs)
+        self._refresh_admin_health_after_change(user_info, perms)
+        return jsonify(success=True)
+
+    def _api_database_setup_local_db_delete(self):
+        """Delete one reusable local database definition."""
+        user_info, perms = self._require_apero_profile_perm()
+        if not user_info:
+            return jsonify(success=False, error='Unauthorized'), 401
+
+        body = request.get_json(silent=True) or {}
+        name = str(body.get('name', '') or '').strip()
+        if not name:
+            return jsonify(success=False, error='name is required'), 400
+
+        defs = self._load_local_db_definitions()
+        if name not in defs:
+            return jsonify(success=False, error='Local database definition not found'), 404
+
+        del defs[name]
+        self._save_local_db_definitions(defs)
+        self._refresh_admin_health_after_change(user_info, perms)
+        return jsonify(success=True)
+
+    def _api_database_setup_local_db_test(self):
+        """Test one local database definition with supplied credentials."""
+        user_info, perms = self._require_apero_profile_perm()
+        if not user_info:
+            return jsonify(success=False, error='Unauthorized'), 401
+
+        body = request.get_json(silent=True) or {}
+        mode = str(body.get('DATABASE_MODE', '') or '').strip() or 'mysql+pymysql'
+        host = str(body.get('DATABASE_HOST', '') or '').strip()
+        port = str(body.get('DATABASE_PORT', '') or '').strip() or '3306'
+        username = str(body.get('DATABASE_USERNAME', '') or '').strip()
+        password = str(body.get('DATABASE_PASSWORD', '') or '')
+        db_name = str(body.get('DATABASE_NAME', '') or '').strip()
+
+        if mode not in ('mysql+pymysql',):
+            return jsonify(success=False, error='Unsupported DATABASE_MODE'), 400
+        if not host:
+            return jsonify(success=False, error='DATABASE_HOST is required'), 400
+        if not port.isdigit():
+            return jsonify(success=False, error='DATABASE_PORT must be numeric'), 400
+        if not username or not db_name:
+            return jsonify(success=False, error='DATABASE_USERNAME and DATABASE_NAME are required'), 400
+
+        result = validate_database_connection(
+            mode,
+            host,
+            username,
+            password,
+            db_name,
+            port=port,
+            use_ssh_tunnel=False,
+            ssh_config_host='',
+            ssh_local_port='',
+            ssh_remote_port='',
+            local_data_dir=str(self._resolve_local_data_dir()),
+        )
+        return jsonify(success=True, **result)
+
     def _api_apero_profiles_test_tables(self):
         """Test table names and fetch available fibers / DPRTYPE options."""
         user_info, perms = self._require_apero_profile_perm()
@@ -8907,28 +9883,22 @@ class ARIApp(Flask):
         if not data:
             return jsonify(success=False, error='Missing data'), 400
 
-        mode = data.get('DATABASE_MODE', '').strip()
-        host = data.get('DATABASE_HOST', '').strip()
-        port = str(data.get('DATABASE_PORT', '') or '').strip()
-        username = data.get('DATABASE_USERNAME', '').strip()
-        password = data.get('DATABASE_PASSWORD', '')
-        db_name = data.get('DATABASE_NAME', '').strip()
-        use_ssh_tunnel = data.get('DATABASE_USE_SSH_TUNNEL', False)
-        ssh_config_host = str(
-            data.get('DATABASE_SSH_CONFIG_HOST', '') or '').strip()
-        ssh_local_port = str(
-            data.get('DATABASE_SSH_LOCAL_PORT', '') or '').strip()
-        ssh_remote_port = str(
-            data.get('DATABASE_SSH_REMOTE_PORT', '') or '').strip()
-
         table_keys = [
             'ASTROM_TABLENAME', 'CALIB_TABLENAME', 'FINDEX_TABLENAME',
             'LOG_TABLENAME', 'TELLU_TABLENAME', 'REJECT_TABLENAME',
         ]
 
-        if not all([mode, host, username, db_name]):
-            return jsonify(success=False,
-                           error='All database fields are required'), 400
+        resolved = self._resolve_db_payload_for_test(data)
+        if not resolved.get('ok') and resolved.get('requires_tunnel_admin'):
+            return jsonify(
+                success=True,
+                valid=False,
+                requires_tunnel_admin=True,
+                error=resolved.get('error', 'DB tunnel required.'),
+                tunnel_admin_url=resolved.get('tunnel_admin_url', ''),
+            )
+        if not resolved.get('ok'):
+            return jsonify(success=False, error=resolved.get('error', 'Invalid database payload')), 400
 
         tables = {}
         for key in table_keys:
@@ -8946,16 +9916,16 @@ class ARIApp(Flask):
             return '.'.join(f'`{part}`' for part in name.split('.'))
 
         db_params = {
-            'DATABASE_MODE': mode,
-            'DATABASE_HOST': host,
-            'DATABASE_PORT': port,
-            'DATABASE_USER': username,
-            'DATABASE_PASSWORD': password,
-            'DATABASE_NAME': db_name,
-            'DATABASE_USE_SSH_TUNNEL': use_ssh_tunnel,
-            'DATABASE_SSH_CONFIG_HOST': ssh_config_host,
-            'DATABASE_SSH_LOCAL_PORT': ssh_local_port,
-            'DATABASE_SSH_REMOTE_PORT': ssh_remote_port,
+            'DATABASE_MODE': resolved['mode'],
+            'DATABASE_HOST': resolved['host'],
+            'DATABASE_PORT': resolved['port'],
+            'DATABASE_USER': resolved['username'],
+            'DATABASE_PASSWORD': resolved['password'],
+            'DATABASE_NAME': resolved['db_name'],
+            'DATABASE_USE_SSH_TUNNEL': resolved['use_ssh_tunnel'],
+            'DATABASE_SSH_CONFIG_HOST': resolved['ssh_config_host'],
+            'DATABASE_SSH_LOCAL_PORT': resolved['ssh_local_port'],
+            'DATABASE_SSH_REMOTE_PORT': resolved['ssh_remote_port'],
             'LOCAL_DATA_DIR': str(self._resolve_local_data_dir()),
         }
 
@@ -9175,6 +10145,13 @@ class ARIApp(Flask):
                         else 'default'
                     )
 
+            if bool(task_module.LOCAL_TASK.get(task_key, False)):
+                merged_cfg['sync_source'] = str(
+                    task_cfg.get('sync_source', '') or ''
+                ).strip()
+            else:
+                merged_cfg.pop('sync_source', None)
+
             for field in ['last_run', 'run_count', 'output_files',
                           'last_status', 'cooldown_until']:
                 if field in task_cfg:
@@ -9246,6 +10223,7 @@ class ARIApp(Flask):
             entry['runtime'] = rt
             task_key = entry.get('task_key', '')
             entry['task_type'] = task_module.TYPE.get(task_key, 'INSTRUMENT')
+            entry['local_task'] = bool(task_module.LOCAL_TASK.get(task_key, False))
             result.append(entry)
 
         queue_status = task_runner.get_status()
@@ -9303,6 +10281,8 @@ class ARIApp(Flask):
             entry['runtime'] = rt
             entry['task_type'] = 'GLOBAL'
             entry['instrument'] = global_scope
+            task_key = entry.get('task_key', '')
+            entry['local_task'] = bool(task_module.LOCAL_TASK.get(task_key, False))
             result.append(entry)
 
         queue_status = task_runner.get_status()
@@ -9336,6 +10316,7 @@ class ARIApp(Flask):
                 'name': name,
                 'description': description,
                 'type': task_type,
+                'local_task': bool(task_module.LOCAL_TASK.get(key, False)),
                 'multi_process': bool(
                     task_module.MULTI_PROCESS.get(key, False)
                 ),
@@ -9373,10 +10354,12 @@ class ARIApp(Flask):
         has_mp_start_method = (
             'mp_start_method' in data or 'mp_start_methd' in data
         )
+        has_sync_source = 'sync_source' in data
 
         ncores = None
         mp_backend = None
         mp_start_method = None
+        sync_source = None
 
         if not instrument or not task_id:
             return jsonify(success=False, error='Missing fields'), 400
@@ -9411,6 +10394,9 @@ class ARIApp(Flask):
                 return jsonify(success=False,
                                error='Invalid mp_start_method'), 400
 
+        if has_sync_source:
+            sync_source = str(data.get('sync_source', '') or '').strip()
+
         all_tasks = load_async_tasks()
         inst_tasks, _ = self._merge_async_task_catalog(instrument, all_tasks)
         from apero_ri import tasks as task_module
@@ -9436,6 +10422,13 @@ class ARIApp(Flask):
                 t['weekly_copies'] = weekly_copies
 
             supports_mp = bool(task_module.MULTI_PROCESS.get(task_key, False))
+            supports_local_task = bool(task_module.LOCAL_TASK.get(task_key, False))
+            if (sync_source is not None and sync_source
+                    and not supports_local_task):
+                return jsonify(
+                    success=False,
+                    error='sync_source is only supported for LOCAL_TASK tasks'
+                ), 400
             preserve_mp = (
                 supports_mp
                 or any(k in data for k in
@@ -9485,6 +10478,14 @@ class ARIApp(Flask):
                 t.pop('ncores', None)
                 t.pop('mp_backend', None)
                 t.pop('mp_start_method', None)
+
+            if supports_local_task:
+                if sync_source is not None:
+                    t['sync_source'] = sync_source
+                else:
+                    t.setdefault('sync_source', str(t.get('sync_source', '') or ''))
+            else:
+                t.pop('sync_source', None)
             found = True
             break
 
@@ -9634,6 +10635,7 @@ class ARIApp(Flask):
             instance.USE_SUBPROCESS = bool(
                 task_module.USE_SUBPROCESS.get(task_key, False)
             )
+            instance._task_key = task_key
         except Exception:
             task_cfg['last_status'] = 'failed'
             task_cfg['error'] = traceback.format_exc()
@@ -9706,6 +10708,7 @@ class ARIApp(Flask):
                 instance.USE_SUBPROCESS = bool(
                     task_module.USE_SUBPROCESS.get(task_key, False)
                 )
+                instance._task_key = task_key
             except Exception:
                 task_cfg['last_status'] = 'failed'
                 task_cfg['error'] = traceback.format_exc()
@@ -11045,6 +12048,7 @@ class ARIApp(Flask):
             'local_mount': data.get('local_mount', '').strip(),
             'ssh_key': data.get('ssh_key', '').strip(),
             'remote_user': data.get('remote_user', '').strip() or 'root',
+            'manual_mode': data.get('manual_mode', False),
         }
         
         result = sb.add_mount(mount_config)
@@ -11093,6 +12097,7 @@ class ARIApp(Flask):
             'local_mount': data.get('local_mount', '').strip(),
             'ssh_key': data.get('ssh_key', '').strip(),
             'remote_user': data.get('remote_user', '').strip() or 'root',
+            'manual_mode': data.get('manual_mode', False),
         }
 
         result = sb.update_mount(mount_name, mount_config)
@@ -11141,6 +12146,21 @@ class ARIApp(Flask):
             return jsonify(ok=False, error='Forbidden'), 403
         
         result = sb.unmount_sshfs(mount_name)
+        if result['ok']:
+            self._refresh_admin_health_after_change(user_info, perms)
+        return jsonify(**result)
+
+    def _api_admin_sshfs_mounts_unmount_lazy(self, mount_name):
+        """Lazy-unmount an SSHFS volume."""
+        user_info = get_effective_user(session)
+        if not user_info:
+            return jsonify(ok=False, error='Unauthorized'), 401
+
+        perms = resolve_user_permissions(user_info['groups'], self.ari_groups)
+        if 'view.admin' not in perms:
+            return jsonify(ok=False, error='Forbidden'), 403
+
+        result = sb.lazy_unmount_sshfs(mount_name)
         if result['ok']:
             self._refresh_admin_health_after_change(user_info, perms)
         return jsonify(**result)
@@ -11314,11 +12334,106 @@ class ARIApp(Flask):
 
         Uses values from command-line args unless explicitly overridden.
         """
+        """Run the ARI Flask application.
+
+        Uses values from command-line args unless explicitly overridden.
+
+        Werkzeug's ``ThreadingMixIn`` uses ``block_on_close=True``, which
+        means ``server_close()`` joins every active request-handler thread
+        before returning.  If any handler is long-running (SSE poll, slow
+        DB/SSHFS call) this blocks indefinitely on Ctrl+C.
+
+        A SIGINT handler is installed that:
+        1. Starts a 5-second watchdog daemon thread.
+        2. Re-raises ``KeyboardInterrupt`` to unblock ``serve_forever()``.
+        3. Watchdog calls ``os._exit(130)`` if the server has not returned
+           within 5 seconds, guaranteeing the port is always released.
+        """
+        import signal
+        import sys as _sys
+
         if host is None:
             host = self._resolve_host(self.args.host)
         if port is None:
             port = self.args.port
-        super().run(host=host, port=port, debug=debug, **kwargs)
+        kwargs.setdefault('use_reloader', False)
+
+        if debug:
+            print(
+                f'[apero_ri] Starting server on {host}:{port}'
+                f' (debug={debug}, reloader=off)',
+                file=_sys.stderr, flush=True,
+            )
+
+        _cleanup_done = threading.Event()
+
+        def _watchdog(timeout_s: float) -> None:
+            """Force-exit if clean shutdown takes longer than *timeout_s* s.
+
+            Werkzeug's ThreadingMixIn block_on_close=True can hang
+            server_close() waiting for long-running request threads
+            (e.g. SSE, slow SSHFS/DB calls).  After the timeout we call
+            os._exit() which bypasses atexit but releases the port
+            immediately.  Daemon threads (task worker, scheduler) are
+            killed by the OS on process exit.
+            """
+            if not _cleanup_done.wait(timeout_s):
+                if debug:
+                    print(
+                        f'\n[apero_ri] Shutdown watchdog fired after '
+                        f'{timeout_s}s — a request-handler thread did not '
+                        f'finish in time.  Forcing exit. '
+                        f'(Port will be released.)',
+                        file=_sys.stderr, flush=True,
+                    )
+                os._exit(130)
+
+        _watchdog_thread = None
+        _original_sigint = signal.getsignal(signal.SIGINT)
+
+        def _sigint_handler(signum, frame):
+            nonlocal _watchdog_thread
+            # Restore the previous handler so a *second* Ctrl+C forces
+            # the original behaviour (usually raising KeyboardInterrupt
+            # directly, which unblocks if still stuck).
+            signal.signal(signal.SIGINT, _original_sigint)
+            if debug:
+                print(
+                    '\n[apero_ri] Ctrl+C received — shutting down...',
+                    file=_sys.stderr, flush=True,
+                )
+            # Arm watchdog before re-raising so Werkzeug block_on_close
+            # cannot hang us beyond the timeout.
+            if _watchdog_thread is None:
+                _watchdog_thread = threading.Thread(
+                    target=_watchdog,
+                    args=(5.0,),
+                    daemon=True,
+                    name='ari-shutdown-watchdog',
+                )
+                _watchdog_thread.start()
+                if debug:
+                    print(
+                        '[apero_ri] Shutdown watchdog armed (5s timeout).',
+                        file=_sys.stderr, flush=True,
+                    )
+            raise KeyboardInterrupt
+
+        signal.signal(signal.SIGINT, _sigint_handler)
+        try:
+            super().run(host=host, port=port, debug=debug, **kwargs)
+        except KeyboardInterrupt:
+            pass
+        finally:
+            signal.signal(signal.SIGINT, _original_sigint)
+            if debug:
+                print(
+                    '[apero_ri] Server stopped — running shutdown hook...',
+                    file=_sys.stderr, flush=True,
+                )
+            self.shutdown()
+            # Signal the watchdog that cleanup finished; it will not fire.
+            _cleanup_done.set()
 
 
 # =============================================================================

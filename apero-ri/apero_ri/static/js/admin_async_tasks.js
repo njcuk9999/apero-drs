@@ -122,6 +122,8 @@
     var editMpBackend   = document.getElementById('edit-mp-backend');
     var editMpStartMethod = document.getElementById('edit-mp-start-method');
     var editMpWarn      = document.getElementById('edit-mp-warn');
+    var editLocalSyncFields = document.getElementById('edit-local-sync-fields');
+    var editSyncSource  = document.getElementById('edit-sync-source');
     var editRunCountRow = document.getElementById('edit-run-count-row');
     var editRunCount    = document.getElementById('edit-run-count');
     var editActive      = document.getElementById('edit-active');
@@ -619,7 +621,8 @@
             if (Object.keys(taskParams).length) { currentParamsData['Task Params'] = taskParams; }
             if (Object.keys(taskConfig).length)  { currentParamsData['Input Params'] = taskConfig; }
             if (currentParamsOwnerTaskId !== selectedTaskId) {
-                currentParamsExpanded = new Set(['Task Params', 'Input Params']);
+                // Start with top-level folders collapsed for less visual noise.
+                currentParamsExpanded = new Set();
                 currentParamsOwnerTaskId = selectedTaskId;
             }
             renderParamsExplorer();
@@ -1197,6 +1200,9 @@
         editNcores.value = task.ncores || 1;
         editMpBackend.value = task.mp_backend || 'threads';
         editMpStartMethod.value = task.mp_start_method || 'default';
+        if (editSyncSource) {
+            editSyncSource.value = String(task.sync_source || '');
+        }
         editRunCount.textContent = task.runtime ? (task.runtime.run_count || 0) : 0;
         editActive.checked = task.active !== false;
         onTaskKeyChange();
@@ -1214,6 +1220,8 @@
             || ('ncores' in currentTask)
             || ('mp_backend' in currentTask)
             || ('mp_start_method' in currentTask);
+        var supportsLocalTask = !!(cls && cls.local_task)
+            || ('sync_source' in currentTask);
         if (cls) {
             editTaskInfoRow.style.display = '';
             editTaskName.textContent = cls.name;
@@ -1223,6 +1231,9 @@
         }
         editBackupFields.style.display = isBackup ? '' : 'none';
         editMpFields.style.display = supportsMp ? '' : 'none';
+        if (editLocalSyncFields) {
+            editLocalSyncFields.style.display = supportsLocalTask ? '' : 'none';
+        }
         if (supportsMp) {
             renderNcoresWarning();
         }
@@ -1280,12 +1291,15 @@
             || ('ncores' in currentTask)
             || ('mp_backend' in currentTask)
             || ('mp_start_method' in currentTask);
+        var supportsLocalTask = !!cls.local_task
+            || ('sync_source' in currentTask);
         var frequency = parseFloat(editFrequency.value);
         var dailyCopies = parseInt(editDailyCopies.value, 10) || 0;
         var weeklyCopies = parseInt(editWeeklyCopies.value, 10) || 0;
         var ncores = parseInt(editNcores.value, 10) || 1;
         var mpBackend = (editMpBackend.value || 'threads').trim();
         var mpStartMethod = (editMpStartMethod.value || 'default').trim();
+        var syncSource = editSyncSource ? String(editSyncSource.value || '').trim() : '';
         if (!taskKey) { showToast('Missing task key.', 'error'); return; }
         if (isNaN(frequency) || frequency <= 0) { showToast('Frequency must be a positive number of hours.', 'error'); return; }
         if (dailyCopies < 0 || weeklyCopies < 0) { showToast('Backup copy counts must be non-negative.', 'error'); return; }
@@ -1307,6 +1321,9 @@
             payload.ncores = ncores;
             payload.mp_backend = mpBackend;
             payload.mp_start_method = mpStartMethod;
+        }
+        if (supportsLocalTask) {
+            payload.sync_source = syncSource;
         }
         payload.id = editingTaskId;
 

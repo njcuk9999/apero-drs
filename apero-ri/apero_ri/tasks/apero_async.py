@@ -143,6 +143,61 @@ def get_db_params(aparams: Dict[str, Any]):
     ):
         if _k not in db_params and aparams.get(_k):
             db_params[_k] = aparams.get(_k)
+
+    source = str(db_params.get('DATABASE_SOURCE', '') or '').strip().lower()
+    local_name = str(db_params.get('DATABASE_LOCAL_NAME', '') or '').strip()
+    tunnel_name = str(db_params.get('DATABASE_TUNNEL_NAME', '') or '').strip()
+
+    # Resolve saved DB definitions (new model) for async workers.
+    if source in ('local', 'db_ssh_tunnel'):
+        try:
+            from apero_ri.core.auth import load_db_tunnels
+
+            defs = load_db_tunnels()
+            local_defs = defs.get('local_databases', {}) if isinstance(defs, dict) else {}
+            tunnel_defs = defs.get('tunnels', {}) if isinstance(defs, dict) else {}
+            if not isinstance(local_defs, dict):
+                local_defs = {}
+            if not isinstance(tunnel_defs, dict):
+                tunnel_defs = {}
+
+            if source == 'local' and local_name:
+                local_def = local_defs.get(local_name, {})
+                if isinstance(local_def, dict) and local_def:
+                    db_params['DATABASE_MODE'] = str(
+                        local_def.get('DATABASE_MODE', '') or 'mysql+pymysql'
+                    ).strip()
+                    db_params['DATABASE_HOST'] = str(
+                        local_def.get('DATABASE_HOST', '') or ''
+                    ).strip()
+                    db_params['DATABASE_PORT'] = str(
+                        local_def.get('DATABASE_PORT', '') or '3306'
+                    ).strip()
+                    db_params['DATABASE_USE_SSH_TUNNEL'] = False
+                    db_params['DATABASE_SSH_CONFIG_HOST'] = ''
+                    db_params['DATABASE_SSH_LOCAL_PORT'] = ''
+                    db_params['DATABASE_SSH_REMOTE_PORT'] = ''
+
+            if source == 'db_ssh_tunnel' and tunnel_name:
+                tunnel_def = tunnel_defs.get(tunnel_name, {})
+                if isinstance(tunnel_def, dict) and tunnel_def:
+                    remote_host = str(tunnel_def.get('remote_host', '') or '').strip()
+                    remote_port = str(tunnel_def.get('remote_port', '') or '3306').strip()
+                    local_port = str(tunnel_def.get('local_port', '') or '').strip()
+                    ssh_host = str(tunnel_def.get('ssh_config_host', '') or '').strip()
+
+                    db_params['DATABASE_MODE'] = 'mysql+pymysql'
+                    db_params['DATABASE_HOST'] = remote_host
+                    db_params['DATABASE_PORT'] = local_port
+                    db_params['DATABASE_USE_SSH_TUNNEL'] = True
+                    db_params['DATABASE_SSH_CONFIG_HOST'] = ssh_host
+                    db_params['DATABASE_SSH_LOCAL_PORT'] = local_port
+                    db_params['DATABASE_SSH_REMOTE_PORT'] = remote_port
+        except Exception:
+            # Keep backward-compatible behavior if definition resolution fails;
+            # downstream validators will report any missing required fields.
+            pass
+
     if 'DATABASE_USERNAME' in db_params and 'DATABASE_USER' not in db_params:
         db_params['DATABASE_USER'] = db_params['DATABASE_USERNAME']
     return db_params
@@ -274,13 +329,176 @@ def _check_existing_tunnel(control_path: Path, ssh_host: str) -> bool:
     """Return whether the SSH control socket still represents a live tunnel."""
     if not control_path.exists():
         return False
-    result = subprocess.run(
-        ['ssh', '-S', str(control_path), '-O', 'check', ssh_host],
-        capture_output=True,
-        text=True,
-        timeout=6,
-    )
+    try:
+        result = subprocess.run(
+            ['ssh', '-S', str(control_path), '-O', 'check', ssh_host],
+            capture_output=True,
+            text=True,
+            timeout=6,
+        )
+    except subprocess.TimeoutExpired:
+        return False
     return result.returncode == 0
+
+
+def _close_tunnel_control(control_path: Path, ssh_host: str) -> bool:
+    """Close a running SSH control socket tunnel."""
+    if not control_path.exists() or not ssh_host:
+        return False
+    try:
+        result = subprocess.run(
+            ['ssh', '-S', str(control_path), '-O', 'exit', ssh_host],
+            capture_output=True,
+            text=True,
+            timeout=6,
+        )
+    except subprocess.TimeoutExpired:
+        return False
+    return result.returncode == 0
+
+
+def _cleanup_tunnel_state(control_path: Path, meta_path: Path) -> None:
+    """Remove stale state files for a tunnel definition."""
+    if control_path.exists():
+        control_path.unlink()
+    if meta_path.exists():
+        meta_path.unlink()
+
+
+def _load_tunnel_meta(meta_path: Path) -> Dict[str, Any]:
+    """Load tunnel metadata from disk, returning an empty dict on error."""
+    try:
+        if not meta_path.exists():
+            return {}
+        raw = json.loads(meta_path.read_text(encoding='utf-8'))
+        if isinstance(raw, dict):
+            return raw
+    except Exception:
+        pass
+    return {}
+
+
+def _close_other_tunnels(params: Dict[str, Any], keep_control: Path) -> None:
+    """Ensure at most one persistent DB tunnel is active at a time."""
+    state_root = _get_local_data_dir(params) / 'secret' / 'db_tunnels'
+    state_root.mkdir(parents=True, exist_ok=True)
+
+    for control_path in sorted(state_root.glob('*.sock')):
+        if control_path == keep_control:
+            continue
+
+        meta_path = control_path.with_suffix('.meta')
+        meta = _load_tunnel_meta(meta_path)
+        ssh_host = str(meta.get('ssh_host') or '').strip()
+
+        is_active = bool(ssh_host) and _check_existing_tunnel(
+            control_path, ssh_host)
+        if not is_active:
+            _cleanup_tunnel_state(control_path, meta_path)
+            continue
+
+        _close_tunnel_control(control_path, ssh_host)
+        time.sleep(0.2)
+        if _check_existing_tunnel(control_path, ssh_host):
+            raise RuntimeError(
+                'Unable to enforce single DB SSH tunnel: '
+                f'active tunnel via {ssh_host} could not be closed.'
+            )
+        _cleanup_tunnel_state(control_path, meta_path)
+
+
+def get_db_tunnel_status(params: Dict[str, Any]) -> Dict[str, Any]:
+    """Return live status for one DB SSH tunnel definition."""
+    ssh_host = str(params.get('DATABASE_SSH_CONFIG_HOST') or '').strip()
+    remote_host = str(params.get('DATABASE_HOST') or '').strip()
+    local_port = _coerce_int(
+        params.get('DATABASE_SSH_LOCAL_PORT'),
+        'DATABASE_SSH_LOCAL_PORT',
+    )
+    remote_port = _coerce_int(
+        params.get('DATABASE_SSH_REMOTE_PORT'),
+        'DATABASE_SSH_REMOTE_PORT',
+        default=3306,
+    )
+    control_path, meta_path = _tunnel_control_paths(
+        params, ssh_host, remote_host, local_port, remote_port
+    )
+    meta = _load_tunnel_meta(meta_path)
+    control_alive = bool(ssh_host) and _check_existing_tunnel(
+        control_path, ssh_host)
+    local_port_open = _is_local_port_open(local_port)
+    return {
+        'active': bool(control_alive and local_port_open),
+        'control_alive': control_alive,
+        'local_port_open': local_port_open,
+        'local_host': '127.0.0.1',
+        'local_port': local_port,
+        'remote_host': remote_host,
+        'remote_port': remote_port,
+        'ssh_host': ssh_host,
+        'control_path': str(control_path),
+        'meta_path': str(meta_path),
+        'created_at': meta.get('created_at', ''),
+    }
+
+
+def close_db_tunnel(params: Dict[str, Any]) -> Dict[str, Any]:
+    """Close one DB SSH tunnel definition and clean up state files."""
+    status = get_db_tunnel_status(params)
+    control_path = Path(status['control_path'])
+    meta_path = Path(status['meta_path'])
+    ssh_host = str(status.get('ssh_host') or '').strip()
+
+    closed = True
+    if ssh_host and control_path.exists() and status.get('control_alive'):
+        closed = _close_tunnel_control(control_path, ssh_host)
+        time.sleep(0.2)
+    if ssh_host and control_path.exists() and _check_existing_tunnel(
+            control_path, ssh_host):
+        return {
+            'ok': False,
+            'error': f'Failed to close DB tunnel via {ssh_host}.',
+            'status': status,
+        }
+
+    _cleanup_tunnel_state(control_path, meta_path)
+    return {
+        'ok': True,
+        'closed': bool(closed),
+        'message': 'DB SSH tunnel closed.',
+    }
+
+
+def ensure_single_db_tunnel_slot(params: Dict[str, Any]) -> Dict[str, Any]:
+    """Enforce single-active DB tunnel policy for the requested tunnel slot."""
+    ssh_host = str(params.get('DATABASE_SSH_CONFIG_HOST') or '').strip()
+    remote_host = str(params.get('DATABASE_HOST') or '').strip()
+    if not ssh_host:
+        return {'ok': False, 'error': 'DATABASE_SSH_CONFIG_HOST is required.'}
+    if not remote_host:
+        return {'ok': False, 'error': 'DATABASE_HOST is required.'}
+
+    try:
+        local_port = _coerce_int(
+            params.get('DATABASE_SSH_LOCAL_PORT'),
+            'DATABASE_SSH_LOCAL_PORT',
+        )
+        remote_port = _coerce_int(
+            params.get('DATABASE_SSH_REMOTE_PORT'),
+            'DATABASE_SSH_REMOTE_PORT',
+            default=3306,
+        )
+    except Exception as exc:
+        return {'ok': False, 'error': str(exc)}
+
+    try:
+        keep_control, _ = _tunnel_control_paths(
+            params, ssh_host, remote_host, local_port, remote_port
+        )
+        _close_other_tunnels(params, keep_control)
+        return {'ok': True}
+    except Exception as exc:
+        return {'ok': False, 'error': str(exc)}
 
 
 def _ensure_ssh_tunnel(params: Dict[str, Any]) -> Tuple[str, int]:
@@ -314,13 +532,14 @@ def _ensure_ssh_tunnel(params: Dict[str, Any]) -> Tuple[str, int]:
         params, ssh_host, remote_host, local_port, remote_port
     )
 
+    # Keep exactly one persistent DB tunnel at a time.
+    _close_other_tunnels(params, control_path)
+
+    # Always allow immediate reuse of an existing control socket.
     if _check_existing_tunnel(control_path, ssh_host):
         return '127.0.0.1', local_port
 
-    if control_path.exists():
-        control_path.unlink()
-    if meta_path.exists():
-        meta_path.unlink()
+    _cleanup_tunnel_state(control_path, meta_path)
 
     cmd = [
         'ssh',
@@ -336,19 +555,36 @@ def _ensure_ssh_tunnel(params: Dict[str, Any]) -> Tuple[str, int]:
         '-L', f'{local_port}:{remote_host}:{remote_port}',
         ssh_host,
     ]
-    result = subprocess.run(
-        cmd,
-        capture_output=True,
-        text=True,
-        timeout=15,
+    # Allow startup timeout to be tuned per profile; keep a conservative
+    # default that is longer than SSH's own ConnectTimeout.
+    startup_timeout = _coerce_int(
+        params.get('DATABASE_SSH_STARTUP_TIMEOUT'),
+        'DATABASE_SSH_STARTUP_TIMEOUT',
+        default=30,
     )
-    if result.returncode != 0:
-        err = (
-            result.stderr or result.stdout or 'Unknown SSH tunnel error'
-        ).strip()
-        raise RuntimeError(f'Failed to start SSH tunnel via {ssh_host}: {err}')
+    startup_timeout = max(10, startup_timeout)
+    tunnel_started = False
+    result = None
+    timeout_error = ''
+    try:
+        result = subprocess.run(
+            cmd,
+            capture_output=True,
+            text=True,
+            timeout=startup_timeout,
+        )
+        if result.returncode == 0:
+            tunnel_started = True
+    except subprocess.TimeoutExpired:
+        # Some SSH setups can exceed the startup timeout but still establish
+        # the forwarded socket shortly after; verify readiness below before
+        # treating this as a hard failure.
+        timeout_error = (
+            f'SSH tunnel start command timed out after {startup_timeout}s '
+            f'for host {ssh_host}.'
+        )
 
-    for _ in range(10):
+    for _ in range(25):
         if (_check_existing_tunnel(control_path, ssh_host)
                 or _is_local_port_open(local_port)):
             meta_path.write_text(
@@ -358,11 +594,20 @@ def _ensure_ssh_tunnel(params: Dict[str, Any]) -> Tuple[str, int]:
                     'local_port': local_port,
                     'remote_port': remote_port,
                     'created_at': datetime.now(timezone.utc).isoformat(),
+                    'startup_timeout_s': startup_timeout,
                 }, indent=2),
                 encoding='utf-8',
             )
             return '127.0.0.1', local_port
         time.sleep(0.2)
+
+    if result is not None and result.returncode != 0:
+        err = (
+            result.stderr or result.stdout or 'Unknown SSH tunnel error'
+        ).strip()
+        raise RuntimeError(f'Failed to start SSH tunnel via {ssh_host}: {err}')
+    if timeout_error:
+        raise RuntimeError(timeout_error)
 
     raise RuntimeError(
         f'SSH tunnel via {ssh_host} started but local port {local_port} did not become ready.'

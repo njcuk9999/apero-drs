@@ -406,6 +406,16 @@
                     <div class="at-muted-hint"></div>
                 </div>
             </div>
+            <div id="edit-local-sync-fields" style="display:none;">
+                <div class="ari-ap-form__field">
+                    <label for="edit-sync-source">Sync Source Path (optional)</label>
+                    <input type="text" id="edit-sync-source" class="ari-ap-input"
+                           placeholder="/path/to/prebuilt/.ari">
+                    <div class="at-muted-hint">
+                        If set, this task copies files from this path instead of running.
+                    </div>
+                </div>
+            </div>
             <div class="ari-ap-form__field" id="edit-run-count-row" style="display:none;">
                 <label for="edit-run-count">Times run</label>
                 <div id="edit-run-count" class="at-detail__value--code" aria-live="polite">0</div>

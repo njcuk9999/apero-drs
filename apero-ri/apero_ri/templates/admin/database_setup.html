@@ -1,0 +1,917 @@
+{% extends "general/sidebar_base.html" %}
+{% block title %}APERO RI - Database Setup{% endblock %}
+{% block body_class %}ari-has-sidebar ari-up-wide-page{% endblock %}
+
+{% block doc_content %}
+<div class="ari-up-shell sm-shell">
+    <div class="ari-page-header">
+        <h1><i class="fa-solid fa-database"></i> Database Setup</h1>
+    </div>
+
+    <div id="dbSetupMsg" class="ari-ae-save-msg" style="display:none;"></div>
+
+    <div style="display:flex; gap:8px; margin-bottom:12px; flex-wrap:wrap;">
+        <button id="db-tab-local" class="ari-btn ari-btn--primary ari-btn--sm" type="button" onclick="dbShowTab('local')">
+            <i class="fa-solid fa-computer"></i> Local
+        </button>
+        <button id="db-tab-tunnel" class="ari-btn ari-btn--secondary ari-btn--sm" type="button" onclick="dbShowTab('tunnel')">
+            <i class="fa-solid fa-route"></i> DB SSH Tunnel
+        </button>
+    </div>
+
+    <div id="db-setup-tab-local">
+        <div class="ari-ae-section" style="margin-bottom:12px;">
+            <h2 class="ari-ae-section-title">
+                <i class="fa-solid fa-computer"></i> Local Database Definitions
+            </h2>
+
+            <div style="display:grid; gap:10px; grid-template-columns:repeat(auto-fit,minmax(320px,1fr)); margin-bottom:10px;">
+                <div class="ari-ae-field">
+                    <label class="ari-ae-label" for="dbLocalName">Definition Name</label>
+                    <input id="dbLocalName" class="ari-ap-input" placeholder="e.g. spirou_main_local">
+                </div>
+                <div class="ari-ae-field">
+                    <label class="ari-ae-label" for="dbLocalMode">DATABASE_MODE</label>
+                    <select id="dbLocalMode" class="ari-ap-input">
+                        <option value="mysql+pymysql">mysql+pymysql</option>
+                    </select>
+                </div>
+                <div class="ari-ae-field">
+                    <label class="ari-ae-label" for="dbLocalHost">DATABASE_HOST</label>
+                    <input id="dbLocalHost" class="ari-ap-input" placeholder="e.g. localhost or rali">
+                </div>
+                <div class="ari-ae-field">
+                    <label class="ari-ae-label" for="dbLocalPort">DATABASE_PORT</label>
+                    <input id="dbLocalPort" class="ari-ap-input" placeholder="3306" value="3306">
+                </div>
+                <div class="ari-ae-field" style="grid-column:1 / -1;">
+                    <label class="ari-ae-label" for="dbLocalNotes">Notes</label>
+                    <input id="dbLocalNotes" class="ari-ap-input" placeholder="Optional notes">
+                </div>
+            </div>
+
+            <div style="display:grid; gap:10px; grid-template-columns:repeat(auto-fit,minmax(320px,1fr)); margin-bottom:10px; border-top:1px solid #ddd; padding-top:10px;">
+                <div class="ari-ae-field">
+                    <label class="ari-ae-label" for="dbLocalTestUser">DATABASE_USERNAME</label>
+                    <input id="dbLocalTestUser" class="ari-ap-input" placeholder="For connection testing only">
+                </div>
+                <div class="ari-ae-field">
+                    <label class="ari-ae-label" for="dbLocalTestPass">DATABASE_PASSWORD</label>
+                    <div style="position:relative;">
+                        <input id="dbLocalTestPass" class="ari-ap-input" type="password" placeholder="For connection testing only" style="padding-right:2.4em;">
+                        <button type="button" id="dbLocalTogglePass" class="ari-ap-eye-toggle"
+                                title="Show / hide password"
+                                style="position:absolute; right:0.45em; top:50%; transform:translateY(-50%); background:none; border:none; cursor:pointer; color:var(--ari-text-muted); font-size:1em; padding:0.2em;">
+                            <i class="fa-solid fa-eye"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="ari-ae-field">
+                    <label class="ari-ae-label" for="dbLocalTestDbName">DATABASE_NAME</label>
+                    <input id="dbLocalTestDbName" class="ari-ap-input" placeholder="For connection testing only">
+                </div>
+            </div>
+
+            <div style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:6px;">
+                <button class="ari-btn ari-btn--primary ari-btn--sm" onclick="dbLocalSaveDefinition()">
+                    <i class="fa-solid fa-floppy-disk"></i> Save Local Database
+                </button>
+                <button class="ari-btn ari-btn--secondary ari-btn--sm" onclick="dbLocalTestDefinition()">
+                    <i class="fa-solid fa-plug"></i> Test Connection
+                </button>
+                <button class="ari-btn ari-btn--secondary ari-btn--sm" onclick="dbLocalResetForm()">
+                    <i class="fa-solid fa-eraser"></i> Clear Form
+                </button>
+            </div>
+            <div id="dbLocalTestResult" class="ari-ap-validation" style="display:none;"></div>
+        </div>
+
+        <div class="ari-ae-section" style="margin-bottom:12px;">
+            <h2 class="ari-ae-section-title">
+                <i class="fa-solid fa-server"></i> Saved Local Databases
+            </h2>
+            <div id="dbLocalList" style="display:grid; gap:10px;"></div>
+        </div>
+    </div>
+
+    <div id="db-setup-tab-tunnel" style="display:none;">
+        <div class="ari-ae-status-card" id="dbTunnelStatusCard" style="margin-bottom:12px;">
+            <div class="ari-ae-status-icon" id="dbTunnelStatusIcon"><i class="fa-solid fa-spinner fa-spin"></i></div>
+            <div class="ari-ae-status-body">
+                <span class="ari-ae-status-title" id="dbTunnelStatusTitle">Checking DB tunnel health...</span>
+                <span class="ari-ae-status-detail" id="dbTunnelStatusDetail"></span>
+            </div>
+            <button class="ari-btn ari-btn--secondary ari-btn--sm" onclick="dbTunnelRefresh()">
+                <i class="fa-solid fa-rotate"></i> Refresh
+            </button>
+        </div>
+
+        <div class="ari-ae-section" style="margin-bottom:12px;">
+            <h2 class="ari-ae-section-title">
+                <i class="fa-solid fa-pen-ruler"></i> DB SSH Tunnel Definitions
+            </h2>
+
+            <div class="ari-ae-callout" style="background:#f8fbff; border-left:4px solid #0b6fcc; padding:10px; margin-bottom:10px;">
+                <div style="font-size:0.88em; line-height:1.5; color:#2b2b2b; display:grid; gap:6px;">
+                    <div>
+                        <strong>Quick setup checklist:</strong>
+                        1) Fill tunnel name, SSH config host, remote DB host, remote DB port, local forward port.
+                        2) Save tunnel definition.
+                        3) Click <strong>Ensure Active</strong> (or <strong>Interactive Auth</strong> if prompted).
+                        4) Click <strong>Test</strong> using saved test username/password/database name.
+                    </div>
+                    <div>
+                        <strong>Tip:</strong>
+                        Keep local forward ports unique per definition (for example 3307, 3308, ...).
+                    </div>
+                </div>
+            </div>
+
+            <div style="display:grid; gap:10px; grid-template-columns:repeat(auto-fit,minmax(320px,1fr)); margin-bottom:10px;">
+                <div class="ari-ae-field">
+                    <label class="ari-ae-label" for="dbTunnelName">DATABASE_TUNNEL_NAME</label>
+                    <input id="dbTunnelName" class="ari-ap-input" placeholder="e.g. spirou_main_tunnel">
+                </div>
+                <div class="ari-ae-field">
+                    <label class="ari-ae-label" for="dbTunnelSshHost">DATABASE_SSH_CONFIG_HOST</label>
+                    <input id="dbTunnelSshHost" class="ari-ap-input" placeholder="SSH config host alias">
+                </div>
+                <div class="ari-ae-field">
+                    <label class="ari-ae-label" for="dbTunnelRemoteHost">DATABASE_HOST</label>
+                    <input id="dbTunnelRemoteHost" class="ari-ap-input" placeholder="Remote DB host">
+                </div>
+                <div class="ari-ae-field">
+                    <label class="ari-ae-label" for="dbTunnelRemotePort">DATABASE_SSH_REMOTE_PORT</label>
+                    <input id="dbTunnelRemotePort" class="ari-ap-input" placeholder="3306" value="3306">
+                </div>
+                <div class="ari-ae-field">
+                    <label class="ari-ae-label" for="dbTunnelLocalPort">DATABASE_SSH_LOCAL_PORT</label>
+                    <input id="dbTunnelLocalPort" class="ari-ap-input" placeholder="Local forward port">
+                </div>
+                <div class="ari-ae-field" style="grid-column:1 / -1;">
+                    <label class="ari-ae-label" for="dbTunnelNotes">Notes</label>
+                    <input id="dbTunnelNotes" class="ari-ap-input" placeholder="Optional notes">
+                </div>
+            </div>
+
+            <div style="display:grid; gap:10px; grid-template-columns:repeat(auto-fit,minmax(320px,1fr)); margin-bottom:10px; border-top:1px solid #ddd; padding-top:10px;">
+                <div class="ari-ae-field">
+                    <label class="ari-ae-label" for="dbTunnelTestUser">DATABASE_USERNAME</label>
+                    <input id="dbTunnelTestUser" class="ari-ap-input" placeholder="For connection testing only">
+                </div>
+                <div class="ari-ae-field">
+                    <label class="ari-ae-label" for="dbTunnelTestPass">DATABASE_PASSWORD</label>
+                    <div style="position:relative;">
+                        <input id="dbTunnelTestPass" class="ari-ap-input" type="password" placeholder="For connection testing only" style="padding-right:2.4em;">
+                        <button type="button" id="dbTunnelTogglePass" class="ari-ap-eye-toggle"
+                                title="Show / hide password"
+                                style="position:absolute; right:0.45em; top:50%; transform:translateY(-50%); background:none; border:none; cursor:pointer; color:var(--ari-text-muted); font-size:1em; padding:0.2em;">
+                            <i class="fa-solid fa-eye"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="ari-ae-field">
+                    <label class="ari-ae-label" for="dbTunnelTestDbName">DATABASE_NAME</label>
+                    <input id="dbTunnelTestDbName" class="ari-ap-input" placeholder="For connection testing only">
+                </div>
+            </div>
+
+            <div style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:6px;">
+                <button class="ari-btn ari-btn--primary ari-btn--sm" onclick="dbTunnelSaveDefinition()">
+                    <i class="fa-solid fa-floppy-disk"></i> Save Tunnel
+                </button>
+                <button class="ari-btn ari-btn--secondary ari-btn--sm" onclick="dbTunnelTestDefinition()">
+                    <i class="fa-solid fa-plug"></i> Test Connection
+                </button>
+                <button class="ari-btn ari-btn--secondary ari-btn--sm" onclick="dbTunnelResetForm()">
+                    <i class="fa-solid fa-eraser"></i> Clear Form
+                </button>
+            </div>
+            <div id="dbTunnelTestResult" class="ari-ap-validation" style="display:none;"></div>
+        </div>
+
+        <div class="ari-ae-section" style="margin-bottom:12px;">
+            <h2 class="ari-ae-section-title">
+                <i class="fa-solid fa-server"></i> Saved DB SSH Tunnels
+            </h2>
+            <div id="dbTunnelList" style="display:grid; gap:10px;"></div>
+        </div>
+
+        {% if can_manage_db_tunnel %}
+        <div style="display:flex; gap:8px; flex-wrap:wrap;">
+            <button class="ari-btn ari-btn--secondary" onclick="dbTunnelCloseAll()">
+                <i class="fa-solid fa-power-off"></i> Close All Tunnels
+            </button>
+            <a class="ari-btn ari-btn--secondary" href="{{ url_for('home_admin_portal_apero_profiles') }}">
+                <i class="fa-solid fa-sliders"></i> Back To APERO Profiles
+            </a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<div id="dbSshTermOverlay" style="display:none; position:fixed; inset:0; z-index:9000; background:rgba(0,0,0,0.55); align-items:center; justify-content:center;">
+    <div style="position:relative; background:#1e1e2e; border-radius:10px; width:min(720px,92vw); max-height:85vh; display:flex; flex-direction:column; box-shadow:0 8px 32px rgba(0,0,0,0.5);">
+        <div style="display:flex; align-items:center; justify-content:space-between; padding:10px 16px; border-bottom:1px solid #333; flex-shrink:0;">
+            <span style="color:#e0e0e0; font-weight:700; font-size:0.92em;">
+                <i class="fa-solid fa-terminal"></i> Interactive DB Tunnel Authentication
+            </span>
+            <button id="dbSshTermCloseBtn" type="button" class="ari-btn ari-btn--sm ari-btn--secondary" style="border-color:#555; color:#ccc;" title="Close session">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+        <pre id="dbSshTermOutput" style="flex:1 1 auto; overflow-y:auto; margin:0; padding:12px 14px; font-family:'Cascadia Mono','Fira Code','Consolas',monospace; font-size:0.82em; line-height:1.55; color:#d4d4d4; background:#1e1e2e; min-height:180px; max-height:55vh; white-space:pre-wrap; word-break:break-all;"></pre>
+        <div style="display:flex; gap:8px; padding:10px 14px; border-top:1px solid #333; flex-shrink:0; align-items:center;">
+            <input id="dbSshTermInput" type="password" autocomplete="off" spellcheck="false"
+                   placeholder="Type response here and press Enter..."
+                   style="flex:1; background:#2a2a3a; border:1px solid #444; border-radius:4px; color:#e0e0e0; padding:6px 10px; font-family:inherit; font-size:0.88em;">
+            <button id="dbSshTermSendBtn" type="button" class="ari-btn ari-btn--sm ari-btn--primary" title="Send">
+                <i class="fa-solid fa-paper-plane"></i>
+            </button>
+        </div>
+        <div id="dbSshTermStatus" style="padding:6px 14px; font-size:0.8em; color:#888; border-top:1px solid #292929; flex-shrink:0;"></div>
+    </div>
+</div>
+
+<script>
+const DB_SETUP_CFG = {
+    localListUrl: {{ url_for('api_database_setup_local_db_list')|tojson }},
+    localSaveUrl: {{ url_for('api_database_setup_local_db_save')|tojson }},
+    localDeleteUrl: {{ url_for('api_database_setup_local_db_delete')|tojson }},
+    localTestUrl: {{ url_for('api_database_setup_local_db_test')|tojson }},
+    tunnelListUrl: {{ url_for('api_db_ssh_tunnel_list')|tojson }},
+    tunnelSaveUrl: {{ url_for('api_db_ssh_tunnel_save')|tojson }},
+    tunnelDeleteUrl: {{ url_for('api_db_ssh_tunnel_delete')|tojson }},
+    tunnelStatusUrl: {{ url_for('api_db_ssh_tunnel_status')|tojson }},
+    tunnelEnsureUrl: {{ url_for('api_db_ssh_tunnel_ensure')|tojson }},
+    tunnelTestUrl: {{ url_for('api_db_ssh_tunnel_test')|tojson }},
+    tunnelCloseUrl: {{ url_for('api_db_ssh_tunnel_close')|tojson }},
+    sshStartUrl: {{ url_for('api_apero_profiles_ssh_tunnel_start')|tojson }},
+    sshPollUrl: {{ url_for('api_apero_profiles_ssh_tunnel_poll')|tojson }},
+    sshSendUrl: {{ url_for('api_apero_profiles_ssh_tunnel_send')|tojson }},
+    sshCloseUrl: {{ url_for('api_apero_profiles_ssh_tunnel_close')|tojson }},
+    canManage: {{ can_manage_db_tunnel|tojson }}
+};
+
+let dbLocalRows = [];
+let dbTunnelRows = [];
+let dbSshToken = null;
+let dbSshPoll = null;
+
+function dbTogglePassword(inputId, buttonId) {
+    const input = document.getElementById(inputId);
+    const button = document.getElementById(buttonId);
+    if (!input || !button) return;
+    const showing = input.type === 'text';
+    input.type = showing ? 'password' : 'text';
+    button.innerHTML = '<i class="fa-solid ' + (showing ? 'fa-eye' : 'fa-eye-slash') + '"></i>';
+}
+
+function dbSetMsg(text, ok) {
+    const el = document.getElementById('dbSetupMsg');
+    if (!el) return;
+    el.classList.remove('ari-ae-save-msg--ok', 'ari-ae-save-msg--err');
+    if (!text) {
+        el.style.display = 'none';
+        return;
+    }
+    el.classList.add(ok ? 'ari-ae-save-msg--ok' : 'ari-ae-save-msg--err');
+    el.textContent = text;
+    el.style.display = 'block';
+}
+
+function dbEsc(text) {
+    const div = document.createElement('div');
+    div.appendChild(document.createTextNode(String(text || '')));
+    return div.innerHTML;
+}
+
+function dbSetValidation(id, valid, text) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.style.display = 'block';
+    el.className = 'ari-ap-validation' + (valid ? ' ari-ap-validation--valid' : ' ari-ap-validation--invalid');
+    el.innerHTML = '<i class="fa-solid ' + (valid ? 'fa-circle-check' : 'fa-circle-xmark') + '"></i> ' + dbEsc(text);
+}
+
+function dbShowTab(tab) {
+    const isLocal = tab === 'local';
+    const localEl = document.getElementById('db-setup-tab-local');
+    const tunnelEl = document.getElementById('db-setup-tab-tunnel');
+    const localBtn = document.getElementById('db-tab-local');
+    const tunnelBtn = document.getElementById('db-tab-tunnel');
+    if (localEl) localEl.style.display = isLocal ? '' : 'none';
+    if (tunnelEl) tunnelEl.style.display = isLocal ? 'none' : '';
+    if (localBtn) localBtn.className = isLocal ? 'ari-btn ari-btn--primary ari-btn--sm' : 'ari-btn ari-btn--secondary ari-btn--sm';
+    if (tunnelBtn) tunnelBtn.className = isLocal ? 'ari-btn ari-btn--secondary ari-btn--sm' : 'ari-btn ari-btn--primary ari-btn--sm';
+}
+
+function dbLocalPayload() {
+    return {
+        name: String(document.getElementById('dbLocalName').value || '').trim(),
+        DATABASE_MODE: String(document.getElementById('dbLocalMode').value || '').trim(),
+        DATABASE_HOST: String(document.getElementById('dbLocalHost').value || '').trim(),
+        DATABASE_PORT: String(document.getElementById('dbLocalPort').value || '').trim(),
+        DATABASE_USERNAME: String(document.getElementById('dbLocalTestUser').value || '').trim(),
+        DATABASE_PASSWORD: String(document.getElementById('dbLocalTestPass').value || ''),
+        DATABASE_NAME: String(document.getElementById('dbLocalTestDbName').value || '').trim(),
+        notes: String(document.getElementById('dbLocalNotes').value || '').trim(),
+    };
+}
+
+function dbLocalTestPayload() {
+    return dbLocalPayload();
+}
+
+function dbLocalResetForm() {
+    ['dbLocalName', 'dbLocalHost', 'dbLocalPort', 'dbLocalNotes', 'dbLocalTestUser', 'dbLocalTestPass', 'dbLocalTestDbName']
+        .forEach((id) => {
+            const el = document.getElementById(id);
+            if (el) el.value = '';
+        });
+    const mode = document.getElementById('dbLocalMode');
+    if (mode) mode.value = 'mysql+pymysql';
+    const port = document.getElementById('dbLocalPort');
+    if (port) port.value = '3306';
+    const result = document.getElementById('dbLocalTestResult');
+    if (result) result.style.display = 'none';
+}
+
+async function dbLocalRefresh() {
+    try {
+        const res = await fetch(DB_SETUP_CFG.localListUrl);
+        const data = await res.json();
+        if (!data.success) {
+            dbSetMsg(data.error || 'Failed to load local database definitions.', false);
+            return;
+        }
+        dbLocalRows = Array.isArray(data.local_databases) ? data.local_databases : [];
+        renderDbLocalRows();
+    } catch (err) {
+        dbSetMsg('Failed to load local database definitions: ' + err.message, false);
+    }
+}
+
+function renderDbLocalRows() {
+    const list = document.getElementById('dbLocalList');
+    if (!list) return;
+    list.innerHTML = '';
+    if (!dbLocalRows.length) {
+        list.innerHTML = '<div style="text-align:center; color:#666; padding:18px; border:1px solid #ddd; border-radius:8px;">No local database definitions saved yet.</div>';
+        return;
+    }
+    dbLocalRows.forEach((row, index) => {
+        const card = document.createElement('div');
+        card.style.cssText = 'border:1px solid #ddd; border-radius:8px; padding:10px; display:grid; gap:8px;';
+        card.innerHTML = `
+            <div style="display:flex; align-items:center; gap:8px; font-weight:700;">
+                <i class="fa-solid fa-database" style="color:#1f8a44;"></i>
+                <span>${dbEsc(row.name || '')}</span>
+            </div>
+            <div style="font-size:0.9em; color:#555; line-height:1.45;">
+                <div><strong>DATABASE_MODE:</strong> ${dbEsc(row.DATABASE_MODE || '')}</div>
+                <div><strong>DATABASE_HOST:</strong> ${dbEsc(row.DATABASE_HOST || '')}</div>
+                <div><strong>DATABASE_PORT:</strong> ${dbEsc(row.DATABASE_PORT || '')}</div>
+                ${row.DATABASE_USERNAME ? `<div><strong>Test user:</strong> ${dbEsc(row.DATABASE_USERNAME)}</div>` : ''}
+                ${row.DATABASE_NAME ? `<div><strong>Test database:</strong> ${dbEsc(row.DATABASE_NAME)}</div>` : ''}
+                ${row.notes ? `<div><strong>Notes:</strong> ${dbEsc(row.notes)}</div>` : ''}
+            </div>
+            <div style="display:flex; gap:8px; flex-wrap:wrap;">
+                <button class="ari-btn ari-btn--sm ari-btn--secondary" onclick="dbLocalEdit(${index})"><i class="fa-solid fa-pen"></i> Edit</button>
+                <button class="ari-btn ari-btn--sm ari-btn--primary" onclick="dbLocalTestSaved(${index})"><i class="fa-solid fa-plug"></i> Test</button>
+                <button class="ari-btn ari-btn--sm ari-btn--secondary" onclick="dbLocalDelete(${index})"><i class="fa-solid fa-trash"></i> Delete</button>
+            </div>
+        `;
+        list.appendChild(card);
+    });
+}
+
+function dbLocalEdit(index) {
+    const row = dbLocalRows[index];
+    if (!row) return;
+    document.getElementById('dbLocalName').value = String(row.name || '');
+    document.getElementById('dbLocalMode').value = String(row.DATABASE_MODE || 'mysql+pymysql');
+    document.getElementById('dbLocalHost').value = String(row.DATABASE_HOST || '');
+    document.getElementById('dbLocalPort').value = String(row.DATABASE_PORT || '3306');
+    document.getElementById('dbLocalTestUser').value = String(row.DATABASE_USERNAME || '');
+    document.getElementById('dbLocalTestPass').value = String(row.DATABASE_PASSWORD || '');
+    document.getElementById('dbLocalTestDbName').value = String(row.DATABASE_NAME || '');
+    document.getElementById('dbLocalNotes').value = String(row.notes || '');
+}
+
+async function dbLocalTestSaved(index) {
+    const row = dbLocalRows[index];
+    if (!row) return;
+    try {
+        const res = await fetch(DB_SETUP_CFG.localTestUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(row),
+        });
+        const data = await res.json();
+        if (!data.success) {
+            dbSetMsg(data.error || 'Saved local database test failed.', false);
+            return;
+        }
+        dbSetMsg(data.valid ? ('Test passed for ' + row.name + '.') : (data.error || ('Test failed for ' + row.name + '.')), !!data.valid);
+    } catch (err) {
+        dbSetMsg('Saved local database test failed: ' + err.message, false);
+    }
+}
+
+async function dbLocalSaveDefinition() {
+    const payload = dbLocalPayload();
+    if (!payload.name || !payload.DATABASE_HOST) {
+        dbSetMsg('Definition Name and DATABASE_HOST are required.', false);
+        return;
+    }
+    try {
+        const res = await fetch(DB_SETUP_CFG.localSaveUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload),
+        });
+        const data = await res.json();
+        if (!data.success) {
+            dbSetMsg(data.error || 'Failed to save local database definition.', false);
+            return;
+        }
+        dbSetMsg('Local database definition saved.', true);
+        await dbLocalRefresh();
+    } catch (err) {
+        dbSetMsg('Failed to save local database definition: ' + err.message, false);
+    }
+}
+
+async function dbLocalDelete(index) {
+    const row = dbLocalRows[index];
+    if (!row) return;
+    const name = String(row.name || '').trim();
+    if (!name || !confirm('Delete local database definition "' + name + '"?')) return;
+    try {
+        const res = await fetch(DB_SETUP_CFG.localDeleteUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name }),
+        });
+        const data = await res.json();
+        if (!data.success) {
+            dbSetMsg(data.error || 'Failed to delete local database definition.', false);
+            return;
+        }
+        dbSetMsg('Local database definition deleted.', true);
+        await dbLocalRefresh();
+    } catch (err) {
+        dbSetMsg('Failed to delete local database definition: ' + err.message, false);
+    }
+}
+
+async function dbLocalTestDefinition() {
+    const payload = dbLocalTestPayload();
+    try {
+        const res = await fetch(DB_SETUP_CFG.localTestUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload),
+        });
+        const data = await res.json();
+        if (!data.success) {
+            dbSetValidation('dbLocalTestResult', false, data.error || 'Connection failed.');
+            return;
+        }
+        dbSetValidation('dbLocalTestResult', !!data.valid, data.valid ? 'Connection successful.' : (data.error || 'Connection failed.'));
+    } catch (err) {
+        dbSetValidation('dbLocalTestResult', false, 'Connection test failed: ' + err.message);
+    }
+}
+
+function dbTunnelResetForm() {
+    ['dbTunnelName', 'dbTunnelSshHost', 'dbTunnelRemoteHost', 'dbTunnelRemotePort', 'dbTunnelLocalPort', 'dbTunnelNotes', 'dbTunnelTestUser', 'dbTunnelTestPass', 'dbTunnelTestDbName']
+        .forEach((id) => {
+            const el = document.getElementById(id);
+            if (el) el.value = '';
+        });
+    const remotePort = document.getElementById('dbTunnelRemotePort');
+    if (remotePort) remotePort.value = '3306';
+    const result = document.getElementById('dbTunnelTestResult');
+    if (result) result.style.display = 'none';
+}
+
+function dbTunnelEdit(index) {
+    const row = dbTunnelRows[index];
+    if (!row) return;
+    const def = row.definition || {};
+    document.getElementById('dbTunnelName').value = String(row.name || '');
+    document.getElementById('dbTunnelSshHost').value = String(def.ssh_config_host || '');
+    document.getElementById('dbTunnelRemoteHost').value = String(def.remote_host || '');
+    document.getElementById('dbTunnelRemotePort').value = String(def.remote_port || '3306');
+    document.getElementById('dbTunnelLocalPort').value = String(def.local_port || '');
+    document.getElementById('dbTunnelTestUser').value = String(row.DATABASE_USERNAME || '');
+    document.getElementById('dbTunnelTestPass').value = String(row.DATABASE_PASSWORD || '');
+    document.getElementById('dbTunnelTestDbName').value = String(row.DATABASE_NAME || '');
+    document.getElementById('dbTunnelNotes').value = String(def.notes || '');
+}
+
+function dbTunnelPayload() {
+    return {
+        name: String(document.getElementById('dbTunnelName').value || '').trim(),
+        ssh_config_host: String(document.getElementById('dbTunnelSshHost').value || '').trim(),
+        remote_host: String(document.getElementById('dbTunnelRemoteHost').value || '').trim(),
+        remote_port: String(document.getElementById('dbTunnelRemotePort').value || '').trim(),
+        local_port: String(document.getElementById('dbTunnelLocalPort').value || '').trim(),
+        DATABASE_USERNAME: String(document.getElementById('dbTunnelTestUser').value || '').trim(),
+        DATABASE_PASSWORD: String(document.getElementById('dbTunnelTestPass').value || ''),
+        DATABASE_NAME: String(document.getElementById('dbTunnelTestDbName').value || '').trim(),
+        notes: String(document.getElementById('dbTunnelNotes').value || '').trim(),
+    };
+}
+
+async function dbTunnelRefresh() {
+    const statusIcon = document.getElementById('dbTunnelStatusIcon');
+    const statusTitle = document.getElementById('dbTunnelStatusTitle');
+    const statusDetail = document.getElementById('dbTunnelStatusDetail');
+    if (statusIcon) statusIcon.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
+    if (statusTitle) statusTitle.textContent = 'Checking DB tunnel health...';
+    if (statusDetail) statusDetail.textContent = '';
+
+    try {
+        const res = await fetch(DB_SETUP_CFG.tunnelStatusUrl);
+        const data = await res.json();
+        if (!data.success) {
+            dbSetMsg(data.error || 'Failed to load tunnel status.', false);
+            if (statusIcon) statusIcon.innerHTML = '<i class="fa-solid fa-circle-xmark" style="color:#b33939;"></i>';
+            if (statusTitle) statusTitle.textContent = 'DB tunnel status unavailable';
+            return;
+        }
+
+        dbTunnelRows = Array.isArray(data.tunnels) ? data.tunnels : [];
+        renderDbTunnelRows();
+
+        const active = Number(data.active_count || 0);
+        if (statusIcon) {
+            statusIcon.innerHTML = data.singleton_ok
+                ? '<i class="fa-solid fa-circle-check" style="color:#1f8a44;"></i>'
+                : '<i class="fa-solid fa-triangle-exclamation" style="color:#c67a00;"></i>';
+        }
+        if (statusTitle) {
+            statusTitle.textContent = data.singleton_ok
+                ? 'DB tunnel health is within policy'
+                : 'Multiple active DB tunnels detected';
+        }
+        if (statusDetail) {
+            statusDetail.textContent = 'Active tunnels: ' + String(active)
+                + '. Saved tunnel definitions: ' + String(dbTunnelRows.length) + '.';
+        }
+    } catch (err) {
+        dbSetMsg('Failed to refresh DB tunnel status: ' + err.message, false);
+    }
+}
+
+function renderDbTunnelRows() {
+    const list = document.getElementById('dbTunnelList');
+    if (!list) return;
+    list.innerHTML = '';
+    if (!dbTunnelRows.length) {
+        list.innerHTML = '<div style="text-align:center; color:#666; padding:18px; border:1px solid #ddd; border-radius:8px;">No DB tunnel definitions saved yet.</div>';
+        return;
+    }
+    dbTunnelRows.forEach((row, index) => {
+        const status = row.status || {};
+        const active = !!status.active;
+        const controlAlive = !!status.control_alive;
+        const localOpen = !!status.local_port_open;
+        const icon = active
+            ? '<i class="fa-solid fa-circle-check" style="color:#1f8a44;"></i>'
+            : '<i class="fa-solid fa-circle-xmark" style="color:#999;"></i>';
+        const detail = active ? 'Active' : 'Inactive';
+        const card = document.createElement('div');
+        card.style.cssText = 'border:1px solid #ddd; border-radius:8px; padding:10px; display:grid; gap:8px;';
+        card.innerHTML = `
+            <div style="display:flex; align-items:center; gap:8px; font-weight:700;">
+                ${icon}
+                <span>${dbEsc(row.name || '')}</span>
+                <span style="font-weight:500; color:#666;">(${detail})</span>
+            </div>
+            <div style="font-size:0.9em; color:#555; line-height:1.45;">
+                <div><strong>DATABASE_SSH_CONFIG_HOST:</strong> ${dbEsc(status.ssh_host || '')}</div>
+                <div><strong>DATABASE_HOST:</strong> ${dbEsc(status.remote_host || '')}</div>
+                <div><strong>DATABASE_SSH_REMOTE_PORT:</strong> ${dbEsc(status.remote_port || '')}</div>
+                <div><strong>DATABASE_SSH_LOCAL_PORT:</strong> ${dbEsc(status.local_port || '')}</div>
+                ${row.DATABASE_USERNAME ? `<div><strong>Test user:</strong> ${dbEsc(row.DATABASE_USERNAME)}</div>` : ''}
+                ${row.DATABASE_NAME ? `<div><strong>Test database:</strong> ${dbEsc(row.DATABASE_NAME)}</div>` : ''}
+                <div><strong>Control socket:</strong> ${controlAlive ? 'alive' : 'not alive'}; <strong>Local port:</strong> ${localOpen ? 'open' : 'closed'}</div>
+                ${status.created_at ? `<div><strong>Created:</strong> ${dbEsc(status.created_at)}</div>` : ''}
+                ${row.error ? `<div style="color:#b33939;"><i class="fa-solid fa-triangle-exclamation"></i> ${dbEsc(row.error)}</div>` : ''}
+                ${(!row.valid_config && row.config_error) ? `<div style="color:#b33939;"><i class="fa-solid fa-triangle-exclamation"></i> ${dbEsc(row.config_error)}</div>` : ''}
+            </div>
+            <div style="display:flex; gap:8px; flex-wrap:wrap;">
+                <button class="ari-btn ari-btn--sm ari-btn--secondary" onclick="dbTunnelEdit(${index})"><i class="fa-solid fa-pen"></i> Edit</button>
+                <button class="ari-btn ari-btn--sm ari-btn--primary" onclick="dbTunnelTestSaved(${index})"><i class="fa-solid fa-plug"></i> Test</button>
+                <button class="ari-btn ari-btn--sm ari-btn--primary" onclick="dbTunnelEnsure(${index})" ${row.valid_config ? '' : 'disabled'}><i class="fa-solid fa-plug-circle-check"></i> Ensure Active</button>
+                <button class="ari-btn ari-btn--sm ari-btn--secondary" onclick="dbTunnelInteractive(${index})" ${row.valid_config ? '' : 'disabled'}><i class="fa-solid fa-terminal"></i> Interactive Auth</button>
+                <button class="ari-btn ari-btn--sm ari-btn--secondary" onclick="dbTunnelCloseOne(${index})" ${row.valid_config ? '' : 'disabled'}><i class="fa-solid fa-power-off"></i> Close</button>
+                <button class="ari-btn ari-btn--sm ari-btn--secondary" onclick="dbTunnelDelete(${index})"><i class="fa-solid fa-trash"></i> Delete</button>
+            </div>
+        `;
+        list.appendChild(card);
+    });
+}
+
+async function dbTunnelSaveDefinition() {
+    const payload = dbTunnelPayload();
+    if (!payload.name || !payload.ssh_config_host || !payload.remote_host || !payload.local_port) {
+        dbSetMsg('DATABASE_TUNNEL_NAME, DATABASE_SSH_CONFIG_HOST, DATABASE_HOST and DATABASE_SSH_LOCAL_PORT are required.', false);
+        return;
+    }
+    try {
+        const res = await fetch(DB_SETUP_CFG.tunnelSaveUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload),
+        });
+        const data = await res.json();
+        if (!data.success) {
+            dbSetMsg(data.error || 'Failed to save tunnel definition.', false);
+            return;
+        }
+        dbSetMsg('Tunnel definition saved.', true);
+        await dbTunnelRefresh();
+    } catch (err) {
+        dbSetMsg('Failed to save tunnel definition: ' + err.message, false);
+    }
+}
+
+async function dbTunnelTestDefinition() {
+    const payload = dbTunnelPayload();
+    try {
+        const res = await fetch(DB_SETUP_CFG.tunnelTestUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload),
+        });
+        const data = await res.json();
+        if (!data.success) {
+            dbSetValidation('dbTunnelTestResult', false, data.error || 'Connection failed.');
+            return;
+        }
+        dbSetValidation('dbTunnelTestResult', !!data.valid, data.valid ? 'Connection successful.' : (data.error || 'Connection failed.'));
+    } catch (err) {
+        dbSetValidation('dbTunnelTestResult', false, 'Connection test failed: ' + err.message);
+    }
+}
+
+async function dbTunnelTestSaved(index) {
+    const row = dbTunnelRows[index];
+    if (!row) return;
+    try {
+        const res = await fetch(DB_SETUP_CFG.tunnelTestUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                name: row.name,
+                DATABASE_USERNAME: row.DATABASE_USERNAME || '',
+                DATABASE_PASSWORD: row.DATABASE_PASSWORD || '',
+                DATABASE_NAME: row.DATABASE_NAME || '',
+            }),
+        });
+        const data = await res.json();
+        if (!data.success) {
+            dbSetMsg(data.error || 'Saved tunnel test failed.', false);
+            return;
+        }
+        dbSetMsg(data.valid ? ('Test passed for ' + row.name + '.') : (data.error || ('Test failed for ' + row.name + '.')), !!data.valid);
+    } catch (err) {
+        dbSetMsg('Saved tunnel test failed: ' + err.message, false);
+    }
+}
+
+async function dbTunnelDelete(index) {
+    const row = dbTunnelRows[index];
+    if (!row) return;
+    const name = String(row.name || '').trim();
+    if (!name || !confirm('Delete tunnel definition "' + name + '"?')) return;
+    try {
+        const res = await fetch(DB_SETUP_CFG.tunnelDeleteUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name }),
+        });
+        const data = await res.json();
+        if (!data.success) {
+            dbSetMsg(data.error || 'Failed to delete tunnel definition.', false);
+            return;
+        }
+        dbSetMsg('Tunnel definition deleted.', true);
+        await dbTunnelRefresh();
+    } catch (err) {
+        dbSetMsg('Failed to delete tunnel definition: ' + err.message, false);
+    }
+}
+
+async function dbTunnelEnsure(index) {
+    const row = dbTunnelRows[index];
+    if (!row) return;
+    dbSetMsg('Ensuring DB tunnel is active...', true);
+    try {
+        const res = await fetch(DB_SETUP_CFG.tunnelEnsureUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ tunnel_name: row.name })
+        });
+        const data = await res.json();
+        if (!data.success) {
+            dbSetMsg(data.error || 'Failed to ensure tunnel.', false);
+            return;
+        }
+        dbSetMsg(data.message || 'Tunnel active.', true);
+        await dbTunnelRefresh();
+    } catch (err) {
+        dbSetMsg('Failed to ensure tunnel: ' + err.message, false);
+    }
+}
+
+async function dbTunnelCloseOne(index) {
+    const row = dbTunnelRows[index];
+    if (!row) return;
+    dbSetMsg('Closing selected DB tunnel...', true);
+    try {
+        const res = await fetch(DB_SETUP_CFG.tunnelCloseUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ tunnel_name: row.name })
+        });
+        const data = await res.json();
+        if (!data.success) {
+            dbSetMsg(data.error || 'Failed to close tunnel.', false);
+            return;
+        }
+        dbSetMsg(data.message || 'Tunnel closed.', true);
+        await dbTunnelRefresh();
+    } catch (err) {
+        dbSetMsg('Failed to close tunnel: ' + err.message, false);
+    }
+}
+
+async function dbTunnelCloseAll() {
+    if (!confirm('Close all DB SSH tunnels?')) return;
+    dbSetMsg('Closing all DB tunnels...', true);
+    try {
+        const res = await fetch(DB_SETUP_CFG.tunnelCloseUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ close_all: true })
+        });
+        const data = await res.json();
+        if (!data.success) {
+            dbSetMsg(data.error || 'Failed to close all tunnels.', false);
+            return;
+        }
+        dbSetMsg(data.message || 'All tunnels closed.', true);
+        await dbTunnelRefresh();
+    } catch (err) {
+        dbSetMsg('Failed to close all tunnels: ' + err.message, false);
+    }
+}
+
+function dbSshTermAppend(text) {
+    const out = document.getElementById('dbSshTermOutput');
+    if (!out || !text) return;
+    out.textContent += text;
+    out.scrollTop = out.scrollHeight;
+}
+
+function dbSshTermClose() {
+    if (dbSshPoll) { clearInterval(dbSshPoll); dbSshPoll = null; }
+    const overlay = document.getElementById('dbSshTermOverlay');
+    if (overlay) overlay.style.display = 'none';
+    if (dbSshToken) {
+        fetch(DB_SETUP_CFG.sshCloseUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ token: dbSshToken })
+        }).catch(() => {});
+        dbSshToken = null;
+    }
+}
+
+function dbSshTermStartPolling() {
+    if (dbSshPoll) clearInterval(dbSshPoll);
+    dbSshPoll = setInterval(async () => {
+        if (!dbSshToken) return;
+        try {
+            const res = await fetch(DB_SETUP_CFG.sshPollUrl, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ token: dbSshToken })
+            });
+            const data = await res.json();
+            if (!data.ok) {
+                dbSshTermAppend('\n[Session ended]\n');
+                dbSshTermClose();
+                return;
+            }
+            if (data.output) dbSshTermAppend(data.output);
+            if (data.finished) {
+                if (data.exit_code === 0) {
+                    dbSetMsg('Interactive tunnel authentication succeeded.', true);
+                    dbSshTermClose();
+                    dbTunnelRefresh();
+                } else {
+                    dbSetMsg('Interactive tunnel authentication failed (exit code ' + data.exit_code + ').', false);
+                }
+            }
+        } catch (_) {
+        }
+    }, 500);
+}
+
+function dbSshTermSend() {
+    const input = document.getElementById('dbSshTermInput');
+    if (!input || !dbSshToken) return;
+    const text = input.value;
+    input.value = '';
+    fetch(DB_SETUP_CFG.sshSendUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token: dbSshToken, data: text + '\n' })
+    }).catch(() => {
+        dbSshTermAppend('\n[Failed to send input]\n');
+    });
+}
+
+async function dbTunnelInteractive(index) {
+    const row = dbTunnelRows[index];
+    if (!row) return;
+    const status = row.status || {};
+    const sshHost = String(status.ssh_host || '').trim();
+    const remoteHost = String(status.remote_host || '').trim();
+    const localPort = parseInt(String(status.local_port || '').trim(), 10);
+    const remotePort = parseInt(String(status.remote_port || '').trim() || '3306', 10);
+    if (!sshHost || !remoteHost || !localPort) {
+        dbSetMsg('Missing SSH host, remote host, or local port for interactive auth.', false);
+        return;
+    }
+    const overlay = document.getElementById('dbSshTermOverlay');
+    const out = document.getElementById('dbSshTermOutput');
+    const statusEl = document.getElementById('dbSshTermStatus');
+    if (overlay) overlay.style.display = 'flex';
+    if (out) out.textContent = '';
+    if (statusEl) statusEl.textContent = 'Connecting...';
+    try {
+        const res = await fetch(DB_SETUP_CFG.sshStartUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                ssh_config_host: sshHost,
+                local_port: localPort,
+                remote_host: remoteHost,
+                remote_port: remotePort,
+            })
+        });
+        const data = await res.json();
+        if (!data.ok) {
+            dbSshTermAppend('[Error] ' + (data.error || 'Failed to start interactive session.') + '\n');
+            return;
+        }
+        dbSshToken = data.token;
+        if (statusEl) statusEl.textContent = 'Session active. Respond to prompts below.';
+        dbSshTermStartPolling();
+    } catch (err) {
+        dbSetMsg('Failed to start interactive session: ' + err.message, false);
+    }
+}
+
+(function initDatabaseSetupPage() {
+    const closeBtn = document.getElementById('dbSshTermCloseBtn');
+    const sendBtn = document.getElementById('dbSshTermSendBtn');
+    const input = document.getElementById('dbSshTermInput');
+    const localTogglePass = document.getElementById('dbLocalTogglePass');
+    const tunnelTogglePass = document.getElementById('dbTunnelTogglePass');
+    if (closeBtn) closeBtn.addEventListener('click', dbSshTermClose);
+    if (sendBtn) sendBtn.addEventListener('click', dbSshTermSend);
+    if (localTogglePass) {
+        localTogglePass.addEventListener('click', function () {
+            dbTogglePassword('dbLocalTestPass', 'dbLocalTogglePass');
+        });
+    }
+    if (tunnelTogglePass) {
+        tunnelTogglePass.addEventListener('click', function () {
+            dbTogglePassword('dbTunnelTestPass', 'dbTunnelTogglePass');
+        });
+    }
+    if (input) {
+        input.addEventListener('keydown', function (e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                dbSshTermSend();
+            }
+        });
+    }
+
+    dbShowTab('local');
+    dbLocalRefresh();
+    dbTunnelRefresh();
+    setInterval(dbTunnelRefresh, 12000);
+})();
+</script>
+{% endblock %}

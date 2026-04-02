@@ -15,10 +15,13 @@ from __future__ import annotations
 
 import json
 import logging
+import multiprocessing
 import os
 import re
 import shlex
 import subprocess
+import threading
+import time
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List
@@ -29,6 +32,10 @@ import yaml
 # Define variables
 # =============================================================================
 __NAME__ = 'apero_ri.core.sshfs_backend'
+DEFAULT_STATUS_SUBPROCESS_TIMEOUT_S = 4.0
+SSH_CONNECT_MIN_INTERVAL_S = 20.0
+_ssh_attempt_lock = threading.Lock()
+_ssh_attempt_times: Dict[str, float] = {}
 
 # =============================================================================
 # Define functions
@@ -98,6 +105,15 @@ def _normalize_connection_mode(value: str) -> str:
     return mode if mode in {'direct', 'ssh_config_host'} else 'direct'
 
 
+def _normalize_bool(value: Any) -> bool:
+    """Normalize bool-like values from JSON/YAML payloads."""
+    if isinstance(value, bool):
+        return value
+    if value is None:
+        return False
+    return str(value).strip().lower() in {'1', 'true', 'yes', 'on'}
+
+
 def _resolve_connection_target(mount_config: Dict[str, Any]) -> Dict[str, str]:
     """Resolve connection target details for direct or ssh-config modes."""
     mode = _normalize_connection_mode(
@@ -127,6 +143,49 @@ def _resolve_connection_target(mount_config: Dict[str, Any]) -> Dict[str, str]:
             if ssh_target and remote_path else ''),
         'display_target': ssh_target,
     }
+
+
+def _build_sshfs_mount_command(mount: Dict[str, Any], key_path: Path,
+                               local_mount: Path) -> List[str]:
+    """Build sshfs command for one mount definition."""
+    target_info = _resolve_connection_target(mount)
+    remote_target = target_info['sshfs_target']
+    if not remote_target:
+        raise ValueError('Mount target is incomplete.')
+
+    return [
+        'sshfs',
+        '-o', f'IdentityFile={key_path}',
+        '-o', 'BatchMode=yes',
+        '-o', 'StrictHostKeyChecking=accept-new',
+        '-o', 'ServerAliveInterval=15,ServerAliveCountMax=3',
+        remote_target,
+        str(local_mount),
+    ]
+
+
+def _throttle_ssh_target(target: str,
+                         action: str,
+                         min_interval_s: float = SSH_CONNECT_MIN_INTERVAL_S
+                         ) -> str:
+    """Return an error string if a target is being contacted too often."""
+    key = str(target or '').strip()
+    if not key:
+        return ''
+
+    now = time.monotonic()
+    with _ssh_attempt_lock:
+        last = _ssh_attempt_times.get(key)
+        if last is not None:
+            delta = now - last
+            if delta < min_interval_s:
+                wait_s = max(0.0, min_interval_s - delta)
+                return (
+                    f'SSH connection to {key} throttled for safety during '
+                    f'{action}. Wait about {wait_s:.0f}s and try again.'
+                )
+        _ssh_attempt_times[key] = now
+    return ''
 
 
 def _get_sshfs_config_path() -> Path:
@@ -302,6 +361,9 @@ def add_mount(mount_config: Dict[str, Any]) -> Dict[str, Any]:
         mount_config.get('connection_mode', 'direct')
     )
     mount_config['connection_mode'] = connection_mode
+    mount_config['manual_mode'] = _normalize_bool(
+        mount_config.get('manual_mode', False)
+    )
 
     required = ['name', 'remote_path', 'local_mount', 'ssh_key']
     for field in required:
@@ -386,6 +448,9 @@ def update_mount(original_name: str,
         mount_config.get('connection_mode', 'direct')
     )
     mount_config['connection_mode'] = connection_mode
+    mount_config['manual_mode'] = _normalize_bool(
+        mount_config.get('manual_mode', False)
+    )
 
     required = ['name', 'remote_path', 'local_mount', 'ssh_key']
     for field in required:
@@ -513,19 +578,47 @@ def mount_sshfs(mount_name: str) -> Dict[str, Any]:
         local_mount = Path(mount.get('local_mount', ''))
         _prepare_mount_dir(local_mount, log)
 
+        key_path_str = str(key_path)
+        if _normalize_bool(mount.get('manual_mode', False)):
+            manual_cmd = _build_sshfs_mount_command(mount, key_path,
+                                                    local_mount)
+            cmd_text = shlex.join(manual_cmd)
+            log.append('Manual mode enabled; mount command was not executed.')
+            log.append(f'Run manually: {cmd_text}')
+            save_mount_log(mount_name, log, source='mount')
+            return {
+                'ok': True,
+                'manual_mode': True,
+                'message': (
+                    f'Mount "{mount_name}" is in manual mode. '
+                    'Run the returned command in a shell to mount it.'
+                ),
+                'command': cmd_text,
+                'log': log,
+            }
+
         target_info = _resolve_connection_target(mount)
         remote_target = target_info['sshfs_target']
         if not remote_target:
             return {'ok': False, 'error': 'Mount target is incomplete.',
                     'log': log}
 
+        throttle_error = _throttle_ssh_target(
+            target_info.get('display_target', ''),
+            action=f'mount {mount_name}',
+        )
+        if throttle_error:
+            log.append(throttle_error)
+            save_mount_log(mount_name, log, source='mount')
+            return {'ok': False, 'error': throttle_error, 'log': log}
+
         # Build sshfs command
         cmd = [
             'sshfs',
-            '-o', f'IdentityFile={key_path}',
+            '-o', f'IdentityFile={key_path_str}',
             '-o', 'BatchMode=yes',
             '-o', 'StrictHostKeyChecking=accept-new',
-            '-o', 'reconnect,ServerAliveInterval=15,ServerAliveCountMax=3',
+            '-o', 'ServerAliveInterval=15,ServerAliveCountMax=3',
             remote_target,
             str(local_mount),
         ]
@@ -608,9 +701,134 @@ def unmount_sshfs(mount_name: str) -> Dict[str, Any]:
         return {'ok': False, 'error': f'Failed to unmount: {str(e)}'}
 
 
+def lazy_unmount_sshfs(mount_name: str) -> Dict[str, Any]:
+    """Attempt to repair a stuck SSHFS mount via lazy detach commands."""
+    try:
+        cfg = load_sshfs_config()
+        mount = next(
+            (m for m in cfg.get('mounts', [])
+             if m.get('name') == mount_name), None)
+
+        if not mount:
+            return {'ok': False, 'error': f'Mount "{mount_name}" not found.'}
+
+        local_mount = str(mount.get('local_mount', '') or '').strip()
+        if not local_mount:
+            return {'ok': False, 'error': 'Mount has no local mount path.'}
+
+        attempts = [
+            ['fusermount', '-uz', local_mount],
+            ['umount', '-l', local_mount],
+        ]
+        errors: List[str] = []
+        for cmd in attempts:
+            try:
+                result = subprocess.run(
+                    cmd,
+                    capture_output=True,
+                    text=True,
+                    timeout=10,
+                )
+            except FileNotFoundError:
+                errors.append(f'{cmd[0]} not available')
+                continue
+            except subprocess.TimeoutExpired:
+                errors.append(f'{" ".join(cmd)} timed out')
+                continue
+
+            if result.returncode == 0:
+                mount['status'] = 'unmounted'
+                mount['mounted_at'] = None
+                save_sshfs_config(cfg)
+                return {
+                    'ok': True,
+                    'message': f'Mount "{mount_name}" lazy-unmounted successfully.',
+                    'command': ' '.join(cmd),
+                }
+
+            err = (result.stderr or result.stdout or 'Unknown error').strip()
+            errors.append(f'{" ".join(cmd)}: {err}')
+
+        try:
+            status_check = subprocess.run(
+                ['mountpoint', '-q', local_mount],
+                capture_output=True,
+                text=True,
+                timeout=3,
+            )
+            if status_check.returncode != 0:
+                mount['status'] = 'unmounted'
+                mount['mounted_at'] = None
+                save_sshfs_config(cfg)
+                return {
+                    'ok': True,
+                    'message': (
+                        f'Mount "{mount_name}" appears detached now; '
+                        f'local state was reset.'
+                    ),
+                    'command': 'status-reset',
+                }
+        except Exception:
+            pass
+
+        return {
+            'ok': False,
+            'error': 'Failed to lazy-unmount: ' + '; '.join(errors),
+        }
+    except Exception as e:
+        return {'ok': False, 'error': f'Failed to lazy-unmount: {str(e)}'}
+
+
 # -------------------------------------------------------------------------
 # Define status and health functions
 # -------------------------------------------------------------------------
+def _check_mount_status_worker(mount: Dict[str, Any],
+                               out_conn) -> None:
+    """Worker for mount status checks, isolated in a child process."""
+    try:
+        local_mount = str(mount.get('local_mount', '') or '').strip()
+        if not local_mount:
+            out_conn.send({
+                'ok': False,
+                'error': 'Mount has no local_mount configured.',
+                'status': 'unknown',
+            })
+            return
+
+        result = subprocess.run(
+            ['mountpoint', '-q', local_mount],
+            capture_output=True,
+            timeout=3,
+        )
+        is_mounted = result.returncode == 0
+
+        status_data = {
+            'ok': True,
+            'mounted': is_mounted,
+            'local_mount': local_mount,
+            'mounted_at': mount.get('mounted_at'),
+            'check_mode': 'mountpoint-only',
+        }
+        out_conn.send(status_data)
+    except subprocess.TimeoutExpired:
+        out_conn.send({
+            'ok': False,
+            'error': 'Status check timed out (mountpoint).',
+            'status': 'unknown',
+        })
+    except Exception as exc:
+        out_conn.send({
+            'ok': False,
+            'error': f'Failed to check status: {exc}',
+            'status': 'unknown',
+        })
+    finally:
+        try:
+            out_conn.close()
+        except Exception:
+            pass
+
+
 def check_mount_status(mount_name: str) -> Dict[str, Any]:
     """Check the status of an SSHFS mount."""
     try:
@@ -622,43 +840,67 @@ def check_mount_status(mount_name: str) -> Dict[str, Any]:
         if not mount:
             return {'ok': False, 'error': f'Mount "{mount_name}" not found.', 'status': 'unknown'}
         
-        local_mount = mount.get('local_mount')
-        
-        # Check if mount point is actually mounted
-        result = subprocess.run(
-            ['mountpoint', '-q', local_mount],
-            capture_output=True,
-            timeout=5
+        timeout_s = max(1.0, float(DEFAULT_STATUS_SUBPROCESS_TIMEOUT_S))
+        ctx = multiprocessing.get_context('spawn')
+        parent_conn, child_conn = ctx.Pipe(duplex=False)
+        proc = ctx.Process(
+            target=_check_mount_status_worker,
+            args=(mount, child_conn),
+            daemon=True,
         )
-        
-        is_mounted = result.returncode == 0
-        
-        # Try to list directory contents
-        file_count = 0
-        last_error = None
-        
+        proc.start()
         try:
-            local_path = Path(local_mount)
-            if local_path.exists() and is_mounted:
-                file_count = len(list(local_path.iterdir()))
-        except Exception as e:
-            last_error = str(e)
-        
-        status_data = {
-            'ok': True,
-            'mounted': is_mounted,
-            'local_mount': local_mount,
-            'file_count': file_count if is_mounted else 0,
-            'mounted_at': mount.get('mounted_at'),
-        }
-        
-        if last_error:
-            status_data['warning'] = last_error
-        
+            child_conn.close()
+        except Exception:
+            pass
+        proc.join(timeout=timeout_s)
+
+        if proc.is_alive():
+            proc.terminate()
+            proc.join(timeout=1.0)
+            if proc.is_alive():
+                proc.kill()
+                proc.join(timeout=1.0)
+            try:
+                parent_conn.close()
+            except Exception:
+                pass
+            return {
+                'ok': False,
+                'error': (
+                    f'Status check timed out after {timeout_s:.1f}s '
+                    f'(subprocess terminated).'
+                ),
+                'status': 'unknown',
+            }
+
+        try:
+            if not parent_conn.poll(0.05):
+                raise RuntimeError('no result')
+            status_data = parent_conn.recv()
+        except Exception:
+            try:
+                parent_conn.close()
+            except Exception:
+                pass
+            return {
+                'ok': False,
+                'error': 'Status check subprocess exited without result.',
+                'status': 'unknown',
+            }
+        finally:
+            try:
+                parent_conn.close()
+            except Exception:
+                pass
+
+        if not isinstance(status_data, dict):
+            return {
+                'ok': False,
+                'error': 'Invalid status payload from status subprocess.',
+                'status': 'unknown',
+            }
         return status_data
-    except subprocess.TimeoutExpired:
-        return {'ok': False, 'error': 'Status check timed out.',
-                'status': 'unknown'}
     except Exception as e:
         return {'ok': False, 'error': f'Failed to check status: {str(e)}', 'status': 'unknown'}
 
@@ -672,10 +914,25 @@ def get_mounts_status() -> Dict[str, Any]:
         for mount in cfg.get('mounts', []):
             status = check_mount_status(mount.get('name', ''))
             target_info = _resolve_connection_target(mount)
+            key_name = str(mount.get('ssh_key') or '').strip()
+            key_path = _get_ssh_keys_dir() / f'{key_name}.key'
+            mount_cmd = ''
+            if key_name and key_path.exists():
+                try:
+                    cmd = _build_sshfs_mount_command(
+                        mount,
+                        key_path,
+                        Path(str(mount.get('local_mount') or '')),
+                    )
+                    mount_cmd = shlex.join(cmd)
+                except Exception:
+                    mount_cmd = ''
             mounts.append({
                 'name': mount.get('name'),
                 'connection_mode': _normalize_connection_mode(
                     mount.get('connection_mode', 'direct')),
+                'manual_mode': _normalize_bool(
+                    mount.get('manual_mode', False)),
                 'ssh_config_host': mount.get('ssh_config_host', ''),
                 'remote_host': mount.get('remote_host'),
                 'remote_path': mount.get('remote_path'),
@@ -683,6 +940,7 @@ def get_mounts_status() -> Dict[str, Any]:
                 'ssh_key': mount.get('ssh_key'),
                 'remote_user': mount.get('remote_user', 'root'),
                 'display_target': target_info.get('display_target', ''),
+                'mount_command': mount_cmd,
                 'status': status,
             })
         
@@ -730,6 +988,10 @@ def test_ssh_connection(
     else:
         target = f'{remote_user}@{remote_host}'
 
+    throttle_error = _throttle_ssh_target(target, action='test connection')
+    if throttle_error:
+        return {'ok': False, 'error': throttle_error}
+
     base_ssh_cmd = [
         'ssh',
         '-i', str(key_path),
@@ -739,9 +1001,20 @@ def test_ssh_connection(
         target,
     ]
 
-    # Step 1: Validate login/auth only.
+    # Use a single SSH session for the whole validation to avoid connection
+    # bursts on hosts that enforce strict per-user limits.
+    if remote_path:
+        remote_cmd = (
+            'echo SSH_OK && '
+            f'test -d {shlex.quote(remote_path)} && '
+            'echo PATH_OK && '
+            f'ls -1 {shlex.quote(remote_path)} 2>/dev/null | head -1'
+        )
+    else:
+        remote_cmd = 'echo SSH_OK'
+
     login = subprocess.run(
-        base_ssh_cmd + ['echo', 'SSH_OK'],
+        base_ssh_cmd + ['sh', '-lc', remote_cmd],
         capture_output=True,
         text=True,
         timeout=12,
@@ -750,30 +1023,49 @@ def test_ssh_connection(
         err = (login.stderr or login.stdout or 'Unknown SSH error').strip()
         return {'ok': False, 'error': f'SSH connection failed: {err}'}
 
-    # Step 2: Optionally validate remote path exists and is readable.
-    if not remote_path:
-        return {'ok': True, 'message': 'SSH authentication succeeded.'}
+    lines = [line.strip() for line in (login.stdout or '').splitlines()
+             if line.strip()]
+    has_ssh_ok = 'SSH_OK' in lines
+    has_path_ok = 'PATH_OK' in lines
 
-    path_check = subprocess.run(
-        base_ssh_cmd + ['test', '-d', remote_path],
-        capture_output=True,
-        text=True,
-        timeout=12,
-    )
-    if path_check.returncode != 0:
+    if not remote_path:
+        if has_ssh_ok:
+            return {'ok': True, 'message': 'SSH authentication succeeded.'}
+        # Some ssh_config targets use wrappers/forced commands that can suppress
+        # marker output even when auth succeeds. A zero return code is enough
+        # to confirm login in this case.
         return {
-            'ok': False,
-            'error': f'SSH login worked, but remote path "{remote_path}" is not accessible as a directory.',
+            'ok': True,
+            'message': (
+                'SSH authentication succeeded '
+                '(login marker output was not returned by remote shell).'
+            ),
         }
 
-    sample_cmd = f'ls -1 {shlex.quote(remote_path)} 2>/dev/null | head -1'
-    sample = subprocess.run(
-        base_ssh_cmd + ['sh', '-lc', sample_cmd],
-        capture_output=True,
-        text=True,
-        timeout=12,
-    )
-    first_item = (sample.stdout or '').strip()
+    if not has_path_ok:
+        # Fallback probe: on some hosts marker echoes may be filtered, so test
+        # the directory directly in a second call.
+        path_probe = subprocess.run(
+            base_ssh_cmd + ['test', '-d', remote_path],
+            capture_output=True,
+            text=True,
+            timeout=10,
+        )
+        if path_probe.returncode != 0:
+            return {
+                'ok': False,
+                'error': (
+                    f'SSH login worked, but remote path "{remote_path}" '
+                    f'is not accessible as a directory.'
+                ),
+            }
+    first_item = ''
+    try:
+        marker_index = lines.index('PATH_OK')
+        if marker_index + 1 < len(lines):
+            first_item = lines[marker_index + 1]
+    except ValueError:
+        first_item = ''
     return {
         'ok': True,
         'message': (
@@ -814,7 +1106,7 @@ def health_check() -> Dict[str, Any]:
             }
         
         if mounted_count == len(all_mounts):
-            return {'status': 'ok', 'message': f'All {len(all_mounts)} SSHFS mounts are mounted and accessible.'}
+            return {'status': 'ok', 'message': f'All {len(all_mounts)} SSHFS mounts are mounted.'}
         
         unmounted = len(all_mounts) - mounted_count
         return {

@@ -477,6 +477,17 @@ home.admin_portal.sshfs_management:
     top-level: False
     show: True
 
+home.admin_portal.database_setup:
+  label: Database Setup
+  parent: home.admin_portal
+  view-permission: view.admin
+  icon: fa-solid fa-route
+  quick-nav: False
+  side-nav:
+    pinned: False
+    top-level: False
+    show: True
+
 home.admin_portal.cache_settings:
   label: Plot Cache
   parent: home.admin_portal
