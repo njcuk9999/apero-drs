@@ -667,8 +667,12 @@ def object_query_headers(aparams, objname, apero_profile_name,
             # construct filename from keys
             abspath = Path(block_kind) / entry['OBS_DIR'] / entry['FILENAME']
             # -----------------------------------------------------------------
-            # check if path exists - if it doesn't fill with None
-            if not abspath.exists():
+            # check if path exists - on SSHFS this can raise OSError
+            try:
+                path_exists = abspath.exists()
+            except OSError:
+                path_exists = False
+            if not path_exists:
                 header_dict[identifier] = apero_async.fill_dict_null(hkeys)
                 continue
             # -----------------------------------------------------------------
@@ -677,7 +681,11 @@ def object_query_headers(aparams, objname, apero_profile_name,
                 header_dict[identifier] = apero_async.fill_dict_null(hkeys)
                 continue
             # otherwise we open the file
-            hdr = fits.getheader(abspath)
+            try:
+                hdr = fits.getheader(abspath)
+            except OSError:
+                header_dict[identifier] = apero_async.fill_dict_null(hkeys)
+                continue
             # loop around header key and load into header list
             for hkey in hkeys:
                 _hvalue = apero_async.get_hdr_key(hdr, hkey, hkeys[hkey])
