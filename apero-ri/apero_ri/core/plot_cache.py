@@ -26,6 +26,7 @@ Cache layout::
 import hashlib
 import json
 import os
+import threading
 import time
 from datetime import datetime, timezone
 from pathlib import Path
@@ -41,6 +42,12 @@ __NAME__ = 'apero_ri.core.plot_cache'
 _DEFAULT_CACHE_DIR_NAME = 'cache'
 _CONFIG_FILENAME = 'cache_config.yaml'
 _META_FILENAME = '_meta.json'
+
+# cache_config.yaml is read on every API call.  Cache it in-process with a
+# short TTL so the admin UI can still update it within ~10 seconds.
+_CFG_TTL: float = 10.0
+_cfg_cache: dict = {}          # str(data_dir) -> {'expires': float, 'cfg': dict}
+_cfg_lock = threading.Lock()
 
 # Section keys (used in _meta.json, admin page, and API integration)
 CACHE_SECTIONS = [
@@ -63,20 +70,33 @@ def _config_path(data_dir: Optional[Path] = None) -> Path:
 
 
 def load_cache_config(data_dir: Optional[Path] = None) -> Dict[str, Any]:
-    """Load cache configuration.  Returns defaults when file is absent."""
+    """Load cache configuration.  Returns defaults when file is absent.
+
+    The result is cached in-process for _CFG_TTL seconds so repeated
+    calls within the same request (or across rapid sequential requests)
+    do not hit the file system more than once every few seconds.
+    """
+    key = str(data_dir) if data_dir else '__default__'
+    now = time.monotonic()
+    with _cfg_lock:
+        entry = _cfg_cache.get(key)
+        if entry is not None and now < entry['expires']:
+            return entry['cfg']
+    # Cache miss — read from disk outside the lock.
     path = _config_path(data_dir)
     defaults: Dict[str, Any] = {
         'enabled': False,
         'cache_dir': '',  # empty → use default (<data_dir>/cache)
     }
-    if not path.exists():
-        return defaults
-    try:
-        with open(path, 'r') as f:
-            cfg = yaml.safe_load(f) or {}
-        defaults.update({k: v for k, v in cfg.items() if k in defaults})
-    except Exception:
-        pass
+    if path.exists():
+        try:
+            with open(path, 'r') as f:
+                cfg = yaml.safe_load(f) or {}
+            defaults.update({k: v for k, v in cfg.items() if k in defaults})
+        except Exception:
+            pass
+    with _cfg_lock:
+        _cfg_cache[key] = {'expires': now + _CFG_TTL, 'cfg': defaults}
     return defaults
 
 
@@ -87,6 +107,11 @@ def save_cache_config(cfg: Dict[str, Any],
     path.parent.mkdir(parents=True, exist_ok=True)
     with open(path, 'w') as f:
         yaml.dump(dict(cfg), f, default_flow_style=False)
+    # Invalidate the in-process config cache so the new value is seen
+    # immediately by subsequent calls within this process.
+    key = str(data_dir) if data_dir else '__default__'
+    with _cfg_lock:
+        _cfg_cache.pop(key, None)
 
 
 def resolve_cache_root(data_dir: Optional[Path] = None,

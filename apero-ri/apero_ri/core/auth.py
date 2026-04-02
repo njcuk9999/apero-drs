@@ -8,6 +8,8 @@ password hashing via the cryptography package, and Flask session login.
 """
 import os
 import base64
+import threading
+import time
 from copy import deepcopy
 from datetime import datetime, timezone
 from pathlib import Path
@@ -37,10 +39,30 @@ HASH_ITERATIONS = 600_000
 HASH_KEY_LENGTH = 32
 SALT_LENGTH = 16
 
+# ---------------------------------------------------------------------------
+# In-process TTL cache for apero_profiles.yaml.  The file is read on every
+# API call (via get_accessible_profiles).  A 30-second TTL gives immediate
+# visibility of admin UI changes while eliminating the bulk of SSHFS reads.
+# ---------------------------------------------------------------------------
+_PROFILES_TTL: float = 30.0       # seconds between re-reads
+_profiles_cache: dict = {}         # key: 'raw' or 'hydrated' -> {'expires', 'data'}
+_profiles_lock = threading.Lock()
+
 # Default admin account
 DEFAULT_USER = 'neil'
 DEFAULT_PASSWORD = '1234'
-DEFAULT_GROUPS = ['admin']
+DEFAULT_GROUPS = ['super_admin']
+
+
+def user_is_super_admin(groups: Optional[List[str]]) -> bool:
+    """Return True if group list includes super_admin."""
+    return 'super_admin' in set(groups or [])
+
+
+def user_has_admin_privileges(groups: Optional[List[str]]) -> bool:
+    """Return True if group list includes admin-level privileges."""
+    gset = set(groups or [])
+    return ('admin' in gset) or ('super_admin' in gset)
 
 
 def set_ari_dir(path: Optional[str]) -> None:
@@ -155,7 +177,8 @@ def ensure_default_user() -> None:
     """Ensure the default admin user exists."""
     users = load_users()
     for user_data in users.values():
-        if isinstance(user_data, dict) and 'admin' in user_data.get('groups', []):
+        if (isinstance(user_data, dict)
+                and user_has_admin_privileges(user_data.get('groups', []))):
             return
     if DEFAULT_USER not in users:
         create_user(DEFAULT_USER, DEFAULT_PASSWORD, DEFAULT_GROUPS)
@@ -406,7 +429,18 @@ def load_apero_profiles(hydrate: bool = True) -> dict:
         hydrate: When True, merge APERO_INSTRUMENT_PROFILE defaults into each
             profile payload for runtime use. When False, return raw file
             content (useful before mutating/saving profiles).
+
+    The loaded profiles are cached in-process for _PROFILES_TTL seconds so
+    that repeated calls within the same server process (e.g. multiple
+    simultaneous API requests) do not all hit the YAML file on disk.
     """
+    cache_key = 'hydrated' if hydrate else 'raw'
+    now = time.monotonic()
+    with _profiles_lock:
+        entry = _profiles_cache.get(cache_key)
+        if entry is not None and now < entry['expires']:
+            return entry['data']
+    # Cache miss — read from disk outside the lock.
     ensure_ari_directory()
     legacy_file = ADMIN_DIR / 'apero_profiles.yaml'
     if not APERO_PROFILES_FILE.exists() and legacy_file.exists():
@@ -420,21 +454,24 @@ def load_apero_profiles(hydrate: bool = True) -> dict:
         data = yaml.safe_load(f)
     profiles = data if data else {}
     if not hydrate:
-        return profiles
-    if not isinstance(profiles, dict):
-        return {}
-
-    hydrated: Dict[str, dict] = {}
-    for instrument, instr_profiles in profiles.items():
-        if not isinstance(instr_profiles, dict):
-            continue
-        hprofiles: Dict[str, dict] = {}
-        for profile_id, profile_data in instr_profiles.items():
-            if not isinstance(profile_data, dict):
+        result = profiles
+    elif not isinstance(profiles, dict):
+        result = {}
+    else:
+        hydrated: Dict[str, dict] = {}
+        for instrument, instr_profiles in profiles.items():
+            if not isinstance(instr_profiles, dict):
                 continue
-            hprofiles[profile_id] = _hydrate_profile_data(profile_data, instrument)
-        hydrated[instrument] = hprofiles
-    return hydrated
+            hprofiles: Dict[str, dict] = {}
+            for profile_id, profile_data in instr_profiles.items():
+                if not isinstance(profile_data, dict):
+                    continue
+                hprofiles[profile_id] = _hydrate_profile_data(profile_data, instrument)
+            hydrated[instrument] = hprofiles
+        result = hydrated
+    with _profiles_lock:
+        _profiles_cache[cache_key] = {'expires': now + _PROFILES_TTL, 'data': result}
+    return result
 
 
 def save_apero_profiles(profiles: dict) -> None:
@@ -442,6 +479,9 @@ def save_apero_profiles(profiles: dict) -> None:
     ensure_ari_directory()
     with open(APERO_PROFILES_FILE, 'w') as f:
         yaml.dump(profiles, f, default_flow_style=False)
+    # Invalidate in-process cache so the next read returns the new data.
+    with _profiles_lock:
+        _profiles_cache.clear()
 
 
 def _apero_instrument_profile_path(filename: str) -> Path:
@@ -647,7 +687,30 @@ def load_science_groups(instrument: str) -> Dict[str, dict]:
         path.write_text('')
     with open(path, 'r') as f:
         data = yaml.safe_load(f)
-    return data if data else {}
+    groups = data if isinstance(data, dict) else {}
+
+    # Keep a reserved canonical All group present for every instrument.
+    changed = False
+    all_entry = groups.get('All')
+    if not isinstance(all_entry, dict):
+        groups['All'] = {'run_ids': [], 'users': []}
+        changed = True
+    else:
+        if not isinstance(all_entry.get('run_ids', []), list):
+            all_entry['run_ids'] = []
+            changed = True
+        if not isinstance(all_entry.get('users', []), list):
+            all_entry['users'] = []
+            changed = True
+        groups['All'] = all_entry
+
+    if changed:
+        try:
+            save_science_groups(instrument, groups)
+        except Exception:
+            pass
+
+    return groups
 
 
 def save_science_groups(instrument: str,

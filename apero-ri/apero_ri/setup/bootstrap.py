@@ -127,10 +127,11 @@ def has_admin_user(local_data_dir: Path,
     users = _load_yaml_file(get_users_file(local_data_dir))
     if preferred_username and preferred_username in users:
         groups = users.get(preferred_username, {}).get('groups', [])
-        return 'admin' in groups
+        return ('admin' in groups) or ('super_admin' in groups)
     for user_data in users.values():
         if (isinstance(user_data, dict)
-                and 'admin' in user_data.get('groups', [])):
+                and (('admin' in user_data.get('groups', []))
+                     or ('super_admin' in user_data.get('groups', [])))):
             return True
     return False
 
@@ -141,7 +142,8 @@ def is_legacy_local_install(local_data_dir: Path) -> bool:
     if LEGACY_LOCAL_USER not in users:
         return False
     legacy_user = users.get(LEGACY_LOCAL_USER, {})
-    if 'admin' not in legacy_user.get('groups', []):
+    if (('admin' not in legacy_user.get('groups', []))
+            and ('super_admin' not in legacy_user.get('groups', []))):
         return False
     if not str(legacy_user.get('primary_email', '')).strip():
         return False

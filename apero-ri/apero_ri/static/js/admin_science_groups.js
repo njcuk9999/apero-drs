@@ -68,6 +68,10 @@
 
     var LAZY_BATCH = 80;
 
+    function isAllGroupName(name) {
+        return String(name || '').trim().toLowerCase() === 'all';
+    }
+
     function setScienceHealth(status, message, healthDetails) {
         if (!sgHealth || !sgHealthHeadline) return;
         sgHealth.className = 'ari-ap-status ari-ap-status--' +
@@ -253,7 +257,8 @@
                 it.textContent.trim() === name);
         });
         btnSave.disabled = false;
-        btnDelete.disabled = false;
+        btnDelete.disabled = isAllGroupName(name);
+        btnAddAllRunIds.disabled = isAllGroupName(name);
 
         fetch(cfg.getUrl + '?instrument=' + encodeURIComponent(currentInstrument) +
               '&name=' + encodeURIComponent(name))
@@ -287,6 +292,7 @@
         userAddedCount.textContent = '0';
         btnSave.disabled = true;
         btnDelete.disabled = true;
+        btnAddAllRunIds.disabled = false;
         groupFilter.value = '';
         runidAvailFilter.value = '';
         runidAddedFilter.value = '';
@@ -479,6 +485,10 @@
 
     /* -- Add / remove ---------------------------------------------------- */
     function addSelection(type, item) {
+        if (type === 'runid' && isAllGroupName(currentGroup)) {
+            showToast('Run IDs for "All" are managed automatically', 'info');
+            return;
+        }
         var arr = (type === 'runid') ? selectedRunIds : selectedUsers;
         if (arr.indexOf(item) === -1) {
             arr.push(item);
@@ -488,6 +498,10 @@
     }
 
     function removeSelection(type, item) {
+        if (type === 'runid' && isAllGroupName(currentGroup)) {
+            showToast('Run IDs for "All" are managed automatically', 'info');
+            return;
+        }
         if (type === 'runid') {
             selectedRunIds = selectedRunIds.filter(function (x) { return x !== item; });
         } else {
@@ -500,6 +514,10 @@
     function addAllSelections(type) {
         if (!currentGroup) {
             showToast('Select a group first', 'warning');
+            return;
+        }
+        if (type === 'runid' && isAllGroupName(currentGroup)) {
+            showToast('Run IDs for "All" are managed automatically', 'info');
             return;
         }
 
@@ -567,6 +585,12 @@
         .then(function (data) {
             btnSave.disabled = false;
             if (data.success) {
+                if (data.group && typeof data.group === 'object') {
+                    selectedRunIds = data.group.run_ids || [];
+                    selectedUsers = data.group.users || [];
+                    refreshTransfer('runid');
+                    refreshTransfer('user');
+                }
                 showToast('Saved "' + currentGroup + '"', 'success');
                 refreshScienceHealthBanner();
             } else {

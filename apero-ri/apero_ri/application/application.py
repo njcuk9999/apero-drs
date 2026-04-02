@@ -58,6 +58,8 @@ from apero_ri.core.auth import update_user_instruments
 from apero_ri.core.auth import delete_user
 from apero_ri.core.auth import load_users
 from apero_ri.core.auth import save_users
+from apero_ri.core.auth import user_has_admin_privileges
+from apero_ri.core.auth import user_is_super_admin
 from apero_ri.core.auth import load_science_groups
 from apero_ri.core.auth import save_science_groups
 from apero_ri.core.auth import get_users_for_instrument
@@ -1329,6 +1331,64 @@ class ARIApp(Flask):
                     pass
         return sorted(run_ids)
 
+    @staticmethod
+    def _is_all_science_group(name: str) -> bool:
+        """Return True when a science-group name refers to the reserved All group."""
+        return str(name or '').strip().lower() == 'all'
+
+    def _sync_all_science_group(self, instrument: str,
+                                groups: Optional[dict] = None,
+                                run_ids: Optional[list] = None,
+                                persist: bool = True):
+        """Ensure the reserved All science group exists and mirrors instrument run IDs."""
+        if groups is None:
+            groups = load_science_groups(instrument)
+        if not isinstance(groups, dict):
+            groups = {}
+
+        if run_ids is None:
+            run_ids = self._get_instrument_run_ids(instrument)
+        normalized_run_ids = sorted({
+            str(rid).strip() for rid in run_ids if str(rid).strip()
+        })
+
+        changed = False
+        canonical_name = 'All'
+        all_entry = groups.get(canonical_name)
+        if not isinstance(all_entry, dict):
+            all_entry = {}
+            changed = True
+
+        # Merge any legacy/case-variant "all" group names into canonical "All".
+        for gname in list(groups.keys()):
+            if gname == canonical_name:
+                continue
+            if self._is_all_science_group(gname):
+                legacy_entry = groups.pop(gname)
+                if isinstance(legacy_entry, dict):
+                    legacy_users = legacy_entry.get('users', [])
+                    if isinstance(legacy_users, list) and 'users' not in all_entry:
+                        all_entry['users'] = legacy_users
+                changed = True
+
+        users = all_entry.get('users', [])
+        if not isinstance(users, list):
+            users = []
+            changed = True
+
+        desired_all = {
+            'run_ids': normalized_run_ids,
+            'users': users,
+        }
+        if groups.get(canonical_name) != desired_all:
+            groups[canonical_name] = desired_all
+            changed = True
+
+        if changed and persist:
+            save_science_groups(instrument, groups)
+
+        return groups, normalized_run_ids
+
     def _get_user_accessible_run_ids(self, user_info, instrument):
         """Return set of run_ids the user may see for this instrument.
 
@@ -2438,12 +2498,17 @@ class ARIApp(Flask):
                     total_run_ids |= inst_run_ids
 
                     groups = load_science_groups(inst)
-                    if not isinstance(groups, dict):
-                        continue
+                    groups, _ = self._sync_all_science_group(
+                        inst,
+                        groups=groups,
+                        run_ids=sorted(inst_run_ids),
+                        persist=True,
+                    )
 
                     for gname, entry in groups.items():
                         if not isinstance(entry, dict):
                             continue
+                        is_all_group = self._is_all_science_group(gname)
 
                         group_users = []
                         for username in entry.get('users', []):
@@ -2457,11 +2522,12 @@ class ARIApp(Flask):
                             rid = str(run_id).strip()
                             if rid:
                                 group_run_ids.append(rid)
-                                assigned_run_ids.add(rid)
+                                if not is_all_group:
+                                    assigned_run_ids.add(rid)
 
-                        if not group_users:
+                        if not group_users and not is_all_group:
                             groups_without_users.append(f'{inst}:{gname}')
-                        if not group_run_ids:
+                        if not group_run_ids and not is_all_group:
                             groups_without_run_ids.append(f'{inst}:{gname}')
 
                 unassigned_users = sorted(total_users - assigned_users)
@@ -6951,12 +7017,19 @@ class ARIApp(Flask):
 
         # Build group metadata for the editing user
         all_groups = list(self.ari_groups.keys())
-        editor_is_admin = 'admin' in (user_info.get('groups', []) or [])
+        editor_is_admin = user_has_admin_privileges(
+            user_info.get('groups', [])
+        )
+        editor_is_super_admin = user_is_super_admin(
+            user_info.get('groups', [])
+        )
         # Which groups can the editor manage?
         can_add = {g for g in all_groups if f'manage.group.{g}' in perms}
         # Admin users can manage all non-admin groups from this UI.
-        if editor_is_admin:
-            can_add |= {g for g in all_groups if g != 'admin'}
+        if editor_is_super_admin:
+            can_add |= set(all_groups)
+        elif editor_is_admin:
+            can_add |= {g for g in all_groups if g not in ('admin', 'super_admin')}
         # For each group, what groups does it encompass?
         inherited_map = {}
         for g in all_groups:
@@ -6992,6 +7065,7 @@ class ARIApp(Flask):
             can_add_instrument_groups=sorted(can_manage_instrument_groups),
             editor_username=user_info['username'],
             editor_is_admin=editor_is_admin,
+            editor_is_super_admin=editor_is_super_admin,
         )
 
     def _api_user_update_groups(self):
@@ -7014,21 +7088,31 @@ class ARIApp(Flask):
         if not target_info:
             return jsonify(success=False, error='User not found'), 404
 
-        editor_is_admin = 'admin' in (user_info.get('groups', []) or [])
+        editor_is_admin = user_has_admin_privileges(
+            user_info.get('groups', [])
+        )
+        editor_is_super_admin = user_is_super_admin(
+            user_info.get('groups', [])
+        )
         target_groups = set(target_info.get('groups', []))
 
-        # Never allow edits to admin accounts from this endpoint.
-        if 'admin' in target_groups:
+        # Only super-admin may edit admin/super-admin accounts.
+        if ('super_admin' in target_groups) and not editor_is_super_admin:
             return jsonify(
                 success=False,
-                error='Cannot modify admin accounts'
+                error='Only super-admin can modify super-admin accounts'
+            ), 403
+        if ('admin' in target_groups) and not editor_is_super_admin:
+            return jsonify(
+                success=False,
+                error='Only super-admin can modify admin accounts'
             ), 403
 
-        # Never allow assigning admin via the users UI.
-        if 'admin' in set(new_groups):
+        # Only super-admin may assign admin/super-admin from this UI.
+        if (('admin' in set(new_groups)) or ('super_admin' in set(new_groups))) and not editor_is_super_admin:
             return jsonify(
                 success=False,
-                error='Cannot assign admin group from this page'
+                error='Only super-admin can assign admin-level groups'
             ), 403
 
         old_groups = target_groups
@@ -7064,14 +7148,24 @@ class ARIApp(Flask):
         if not target_info:
             return jsonify(success=False, error='User not found'), 404
 
-        editor_is_admin = 'admin' in (user_info.get('groups', []) or [])
+        editor_is_admin = user_has_admin_privileges(
+            user_info.get('groups', [])
+        )
+        editor_is_super_admin = user_is_super_admin(
+            user_info.get('groups', [])
+        )
         target_groups = set(target_info.get('groups', []))
 
-        # Never allow edits to admin accounts from this endpoint.
-        if 'admin' in target_groups:
+        # Only super-admin may edit admin/super-admin account instruments.
+        if ('super_admin' in target_groups) and not editor_is_super_admin:
             return jsonify(
                 success=False,
-                error='Cannot modify admin accounts'
+                error='Only super-admin can modify super-admin accounts'
+            ), 403
+        if ('admin' in target_groups) and not editor_is_super_admin:
+            return jsonify(
+                success=False,
+                error='Only super-admin can modify admin accounts'
             ), 403
 
         # Non-admin editors may always edit their own instruments.
@@ -7270,11 +7364,20 @@ class ARIApp(Flask):
         if instrument not in valid:
             return jsonify(success=False, error='Invalid instrument'), 400
 
-        groups = load_science_groups(instrument)
-        group_names = sorted(groups.keys())
-
         # Derive available run_ids from all object table JSONs for instrument
         run_ids = self._get_instrument_run_ids(instrument)
+        groups = load_science_groups(instrument)
+        groups, run_ids = self._sync_all_science_group(
+            instrument,
+            groups=groups,
+            run_ids=run_ids,
+            persist=True,
+        )
+        group_names = sorted(
+            groups.keys(),
+            key=lambda n: (0 if self._is_all_science_group(n) else 1,
+                           str(n).lower())
+        )
         available_users = get_users_for_instrument(instrument)
 
         assigned_users = set()
@@ -7284,6 +7387,7 @@ class ARIApp(Flask):
         for gname, group_entry in groups.items():
             if not isinstance(group_entry, dict):
                 continue
+            is_all_group = self._is_all_science_group(gname)
 
             group_users = []
             for username in group_entry.get('users', []):
@@ -7297,11 +7401,12 @@ class ARIApp(Flask):
                 rid = str(run_id).strip()
                 if rid:
                     group_run_ids.append(rid)
-                    assigned_run_ids.add(rid)
+                    if not is_all_group:
+                        assigned_run_ids.add(rid)
 
-            if not group_users:
+            if not group_users and not is_all_group:
                 groups_without_users.append(str(gname))
-            if not group_run_ids:
+            if not group_run_ids and not is_all_group:
                 groups_without_run_ids.append(str(gname))
 
         available_set = {str(u).strip()
@@ -7384,13 +7489,20 @@ class ARIApp(Flask):
             return jsonify(success=False, error='Missing params'), 400
 
         groups = load_science_groups(instrument)
-        if name not in groups:
+        groups, run_ids = self._sync_all_science_group(
+            instrument,
+            groups=groups,
+            run_ids=self._get_instrument_run_ids(instrument),
+            persist=True,
+        )
+        canonical_name = 'All' if self._is_all_science_group(name) else name
+        if canonical_name not in groups:
             return jsonify(
                 success=True,
                 group={'run_ids': [], 'users': []}
             )
 
-        entry = groups[name]
+        entry = groups[canonical_name]
         return jsonify(
             success=True,
             group={
@@ -7418,13 +7530,35 @@ class ARIApp(Flask):
             return jsonify(success=False, error='Missing fields'), 400
 
         groups = load_science_groups(instrument)
-        groups[name] = {
-            'run_ids': run_ids,
-            'users': users,
+        groups, all_run_ids = self._sync_all_science_group(
+            instrument,
+            groups=groups,
+            run_ids=self._get_instrument_run_ids(instrument),
+            persist=True,
+        )
+        canonical_name = 'All' if self._is_all_science_group(name) else name
+
+        run_ids_clean = sorted({
+            str(rid).strip() for rid in (run_ids or []) if str(rid).strip()
+        })
+        users_clean = sorted({
+            str(user).strip() for user in (users or []) if str(user).strip()
+        })
+        if self._is_all_science_group(canonical_name):
+            run_ids_clean = all_run_ids
+
+        groups[canonical_name] = {
+            'run_ids': run_ids_clean,
+            'users': users_clean,
         }
-        save_science_groups(instrument, groups)
+        groups, _ = self._sync_all_science_group(
+            instrument,
+            groups=groups,
+            run_ids=all_run_ids,
+            persist=True,
+        )
         self._refresh_admin_health_after_change(user_info, perms)
-        return jsonify(success=True)
+        return jsonify(success=True, group=groups.get(canonical_name, {}))
 
     def _api_sci_groups_create(self):
         """Create a new science group."""
@@ -7450,12 +7584,19 @@ class ARIApp(Flask):
             ), 400
 
         groups = load_science_groups(instrument)
-        if name in groups:
+        groups, _ = self._sync_all_science_group(
+            instrument,
+            groups=groups,
+            run_ids=self._get_instrument_run_ids(instrument),
+            persist=True,
+        )
+        canonical_name = 'All' if self._is_all_science_group(name) else name
+        if canonical_name in groups:
             return jsonify(
                 success=False, error='Group already exists'
             ), 409
 
-        groups[name] = {'run_ids': [], 'users': []}
+        groups[canonical_name] = {'run_ids': [], 'users': []}
         save_science_groups(instrument, groups)
         self._refresh_admin_health_after_change(user_info, perms)
         return jsonify(success=True)
@@ -7477,12 +7618,23 @@ class ARIApp(Flask):
             return jsonify(success=False, error='Missing fields'), 400
 
         groups = load_science_groups(instrument)
-        if name not in groups:
+        groups, _ = self._sync_all_science_group(
+            instrument,
+            groups=groups,
+            run_ids=self._get_instrument_run_ids(instrument),
+            persist=True,
+        )
+        canonical_name = 'All' if self._is_all_science_group(name) else name
+        if self._is_all_science_group(canonical_name):
+            return jsonify(
+                success=False, error='The All group cannot be deleted'
+            ), 400
+        if canonical_name not in groups:
             return jsonify(
                 success=False, error='Group not found'
             ), 404
 
-        del groups[name]
+        del groups[canonical_name]
         save_science_groups(instrument, groups)
         self._refresh_admin_health_after_change(user_info, perms)
         return jsonify(success=True)
@@ -7530,9 +7682,12 @@ class ARIApp(Flask):
         """Return groups this editor may grant DB table access to."""
         all_groups = list(self.ari_groups.keys())
         editor_groups = set(user_info.get('groups', []))
-        editor_is_admin = 'admin' in editor_groups
-        if editor_is_admin:
+        editor_is_admin = user_has_admin_privileges(list(editor_groups))
+        editor_is_super_admin = user_is_super_admin(list(editor_groups))
+        if editor_is_super_admin:
             return sorted(all_groups)
+        if editor_is_admin:
+            return sorted([g for g in all_groups if g != 'super_admin'])
 
         allowed = {g for g in all_groups if f'manage.group.{g}' in perms}
         expanded = set(allowed)

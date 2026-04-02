@@ -296,7 +296,7 @@ class AperoLocalDataBackupTask(apero_async.AperoAsyncTask):
 
         self.last_run = generated_at
         self.progress = 1.0
-    tlog('LOCAL_DATA backup completed successfully.')
+        tlog('LOCAL_DATA backup completed successfully.')
 
     @staticmethod
     def _validate_source_dir(source_dir: Path) -> None:

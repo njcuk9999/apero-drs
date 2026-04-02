@@ -17,6 +17,8 @@ from __future__ import annotations
 import json
 import math
 import re
+import threading
+import time
 from pathlib import Path
 from typing import Any, Dict, Iterable, List, Optional, Sequence
 
@@ -1278,22 +1280,58 @@ def _qc_counts(rows: Iterable[Dict[str, Any]]) -> Dict[str, int]:
     }
 
 
+# ---------------------------------------------------------------------------
+# In-process read cache: avoids re-reading the same large JSON data files
+# on every plot API request.  Files are only refreshed after
+# _JSON_ROWS_TTL seconds, which is safe because the task runner updates
+# them at most once per hour.  On SSHFS this eliminates repeated
+# round-trips for hot objects.
+# ---------------------------------------------------------------------------
+_JSON_ROWS_TTL: float = 300.0   # seconds before a cached entry is refreshed
+_json_rows_cache: Dict[str, Any] = {}   # path_str -> {'expires': float, 'rows': list}
+_json_rows_lock = threading.Lock()
+
+
 def _load_json_rows(path: Path) -> List[Dict[str, Any]]:
+    key = str(path)
+    now = time.monotonic()
+    # Check the cache first (under lock to avoid torn reads).
+    with _json_rows_lock:
+        entry = _json_rows_cache.get(key)
+        if entry is not None and now < entry['expires']:
+            return entry['rows']
+    # Cache miss or expired — read from disk outside the lock so other
+    # threads are not blocked during a potentially slow SSHFS read.
     if not path.exists():
-        return []
-    try:
-        with path.open('r', encoding='utf-8') as rfile:
-            payload = json.load(rfile) or {}
-        rows = payload.get('rows') or []
-    except Exception:
-        return []
-    return [row for row in rows if _is_dict_row(row)]
+        rows: List[Dict[str, Any]] = []
+    else:
+        try:
+            with path.open('r', encoding='utf-8') as rfile:
+                payload = json.load(rfile) or {}
+            raw = payload.get('rows') or []
+            rows = [r for r in raw if _is_dict_row(r)]
+        except Exception:
+            rows = []
+    with _json_rows_lock:
+        _json_rows_cache[key] = {'expires': now + _JSON_ROWS_TTL, 'rows': rows}
+    return rows
+
+
+# Instrument profile YAMLs live inside the installed package and never
+# change at runtime, so a plain dict cache (populated on first access) is
+# sufficient — no TTL needed.
+_instrument_profile_cache: Dict[str, Dict[str, Any]] = {}
 
 
 def _load_instrument_profile(instrument_profile_file: str) -> Dict[str, Any]:
     if not instrument_profile_file:
         return {}
-    resources_dir = Path(__file__).resolve().parents[1] / 'resources' / 'aprofile_instruments'
+    # Return the already-loaded dict without touching the file system.
+    cached = _instrument_profile_cache.get(instrument_profile_file)
+    if cached is not None:
+        return cached
+    resources_dir = (Path(__file__).resolve().parents[1]
+                     / 'resources' / 'aprofile_instruments')
     path = resources_dir / instrument_profile_file
     if not path.is_file():
         return {}
@@ -1302,6 +1340,7 @@ def _load_instrument_profile(instrument_profile_file: str) -> Dict[str, Any]:
             data = yaml.safe_load(rfile) or {}
         if not isinstance(data, dict):
             return {}
+        _instrument_profile_cache[instrument_profile_file] = data
         return data
     except Exception:
         return {}

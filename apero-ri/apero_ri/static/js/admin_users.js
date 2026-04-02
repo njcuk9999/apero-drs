@@ -5,7 +5,7 @@
     var CONFIG = window.ARI_ADMIN;
 
     // Fallback precedence (used only if API metadata is unavailable)
-    var GROUP_PRECEDENCE_FALLBACK = ['admin', 'moderator', 'developer', 'monitor', 'general', 'public'];
+    var GROUP_PRECEDENCE_FALLBACK = ['super_admin', 'admin', 'moderator', 'developer', 'monitor', 'general', 'public'];
 
     // =========================================================================
     // DOM refs
@@ -373,9 +373,10 @@
         var inheritedMap = searchMeta.inherited_map || {};
         var userGroups   = new Set(user.groups || []);
         var editorIsAdmin = !!searchMeta.editor_is_admin;
-        var targetIsAdmin = userGroups.has('admin');
+        var editorIsSuperAdmin = !!searchMeta.editor_is_super_admin;
+        var targetIsAdmin = userGroups.has('admin') || userGroups.has('super_admin');
 
-        if (targetIsAdmin) {
+        if (targetIsAdmin && !editorIsSuperAdmin) {
             groupsNoPerm.style.display = '';
             allGroups.forEach(function (group) {
                 var card = document.createElement('span');
@@ -384,7 +385,7 @@
                     ? '<i class="fa-solid fa-check ari-toggle-card__icon"></i>'
                     : '<i class="fa-solid fa-xmark ari-toggle-card__icon"></i>') +
                     ' ' + escapeHtml(group);
-                card.title = 'Admin accounts cannot be edited from this page';
+                card.title = 'Admin-level accounts cannot be edited from this page';
                 groupsContainer.appendChild(card);
             });
             return;
@@ -400,14 +401,14 @@
 
         allGroups.forEach(function (group) {
             var isEnabled          = userGroups.has(group);
-            var canManage          = canAdd.has(group) || (editorIsAdmin && group !== 'admin');
+            var canManage          = canAdd.has(group) || (editorIsAdmin && group !== 'admin' && group !== 'super_admin');
             var isEncompassed      = encompassed.has(group) && !isEnabled;
             var isEncompassedOn    = encompassed.has(group) && isEnabled;
 
             var card = document.createElement('span');
             var stateClass, iconHtml, tooltip;
 
-            if (group === 'admin') {
+            if ((group === 'admin' || group === 'super_admin') && !editorIsSuperAdmin) {
                 stateClass = isEnabled
                     ? 'ari-toggle-card--locked'
                     : 'ari-toggle-card--disabled';
@@ -415,8 +416,8 @@
                     ? '<i class="fa-solid fa-check ari-toggle-card__icon"></i>'
                     : '<i class="fa-solid fa-xmark ari-toggle-card__icon"></i>';
                 tooltip = isEnabled
-                    ? 'Admin group cannot be edited from this page'
-                    : 'Admin group cannot be assigned from this page';
+                    ? 'Admin-level groups cannot be edited from this page'
+                    : 'Admin-level groups cannot be assigned from this page';
             } else if (!canManage) {
                 stateClass = 'ari-toggle-card--locked';
                 iconHtml   = isEnabled
@@ -504,10 +505,12 @@
         var canAddInstrumentGroups = new Set(searchMeta.can_add_instrument_groups || []);
         var editorUsername   = searchMeta.editor_username;
         var editorIsAdmin    = !!searchMeta.editor_is_admin;
+        var editorIsSuperAdmin = !!searchMeta.editor_is_super_admin;
         var editorInstruments = new Set(searchMeta.editor_instruments || []);
         var userInstruments  = new Set(user.instruments || []);
         var userGroups       = new Set(user.groups || []);
-        var targetIsAdmin = (user.groups || []).indexOf('admin') !== -1;
+        var targetIsAdmin = (user.groups || []).indexOf('admin') !== -1
+            || (user.groups || []).indexOf('super_admin') !== -1;
 
         var canManageTargetGroups = true;
         userGroups.forEach(function (group) {
@@ -516,7 +519,7 @@
             }
         });
 
-        var canManage = !targetIsAdmin &&
+        var canManage = (!targetIsAdmin || editorIsSuperAdmin) &&
             (canAddInstrument || editorIsAdmin || canManageTargetGroups ||
                 (user.username === editorUsername));
 

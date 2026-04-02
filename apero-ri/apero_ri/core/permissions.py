@@ -189,6 +189,16 @@ def resolve_user_permissions(user_groups: List[str],
     permissions: Set[str] = set()
     for group_name in user_groups:
         permissions |= resolve_group_permissions(group_name, groups)
+
+    # Super-admin gets all defined permissions plus full group/instrument/login_as
+    # control for every known group.
+    if 'super_admin' in set(user_groups or []):
+        for group_name in groups:
+            permissions |= resolve_group_permissions(group_name, groups)
+            permissions.add(f'manage.group.{group_name}')
+            permissions.add(f'manage.instrument.{group_name}')
+            permissions.add(f'login_as.{group_name}')
+        permissions.add('add.instrument')
     return permissions
 
 

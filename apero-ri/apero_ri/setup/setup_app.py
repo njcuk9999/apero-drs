@@ -14,6 +14,7 @@ from flask import (Flask, flash, jsonify, redirect, render_template, request,
 
 from apero_ri.core import auth
 from apero_ri.core import email_backend as eb
+from apero_ri.core.permissions import load_parameters
 from apero_ri.setup.bootstrap import is_setup_complete
 from apero_ri.setup.bootstrap import ensure_directory_layout
 from apero_ri.setup.bootstrap import load_setup_state
@@ -183,6 +184,15 @@ class SetupApp(Flask):
                 cfg['smtp_password_enc'] = existing_pw
         return cfg
 
+    @staticmethod
+    def _all_instruments() -> List[str]:
+        """Return the configured instrument list from parameters.yaml."""
+        params = load_parameters()
+        values = params.get('instruments', {}).get('value', [])
+        if not isinstance(values, list):
+            return []
+        return [str(item) for item in values if str(item).strip()]
+
     def _index(self):
         if is_setup_complete(self.local_data_dir):
             return redirect(url_for('setup_complete'))
@@ -345,10 +355,15 @@ class SetupApp(Flask):
                 created_at = existing_user.get(
                     'created_at', datetime.now(timezone.utc).isoformat())
                 last_login = existing_user.get('last_login')
-                instruments = existing_user.get('instruments', [])
+                configured_instruments = self._all_instruments()
+                existing_instruments = existing_user.get('instruments', [])
+                if not isinstance(existing_instruments, list):
+                    existing_instruments = []
+                instruments = sorted(set(configured_instruments)
+                                     | set(existing_instruments))
                 users[username] = {
                     'password': pending['password_hash'],
-                    'groups': ['admin'],
+                    'groups': ['super_admin'],
                     'instruments': instruments,
                     'first_names': pending['first_names'],
                     'last_name': pending['last_name'],
@@ -497,7 +512,7 @@ class SetupApp(Flask):
                                    existing_user=existing_user)
 
         preferred = users.get('njcuk9999', {})
-        if preferred and 'admin' in preferred.get('groups', []):
+        if preferred and auth.user_has_admin_privileges(preferred.get('groups', [])):
             form_data = {
                 'username': 'njcuk9999',
                 'first_names': preferred.get('first_names', ''),

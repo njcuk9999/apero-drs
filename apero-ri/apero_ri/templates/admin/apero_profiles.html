@@ -254,20 +254,30 @@
             <!-- Data paths -->
             <h4 class="ari-ap-form__heading"><i class="fa-solid fa-folder-tree"></i> Data Paths</h4>
             <div id="paths-section" class="ari-ap-step ari-ap-step--locked">
+            <div class="ari-ap-form__field">
+                <div class="ari-ap-step-status" style="display:block; border-left:4px solid #1e6fbe; background:var(--ari-surface-muted, #f5f8fc); color:var(--ari-text, #1f2937);">
+                    <i class="fa-solid fa-hard-drive"></i>
+                    Note: for external paths, set up SSHFS first.
+                    <a href="{{ url_for('home_admin_portal_sshfs_management') }}" style="font-weight:600;">Click here to set up SSHFS</a>.
+                </div>
+            </div>
             {% set path_fields = [
-                ('profile-path-raw',   'PATH.RAW',   'formally DRS_DATA_RAW'),
-                ('profile-path-pp',    'PATH.PP',    'formally DRS_DATA_WORKING'),
-                ('profile-path-red',   'PATH.RED',   'formally DRS_DATA_RED'),
-                ('profile-path-out',   'PATH.OUT',   'formally DRS_DATA_OUT'),
-                ('profile-path-calib', 'PATH.CALIB', 'formally DRS_CALIB_DB'),
-                ('profile-path-tellu', 'PATH.TELLU', 'formally DRS_TELLU_DB'),
-                ('profile-path-log',   'PATH.LOG',   'formally DRS_DATA_MSG'),
-                ('profile-path-lbl',   'PATH.LBL',   'formally LBL_PATH'),
+                ('profile-path-raw',   'PATH.RAW',   'formally DRS_DATA_RAW', 'SSH symlink paths are not supported; link the actual raw directory.'),
+                ('profile-path-pp',    'PATH.PP',    'formally DRS_DATA_WORKING', ''),
+                ('profile-path-red',   'PATH.RED',   'formally DRS_DATA_RED', ''),
+                ('profile-path-out',   'PATH.OUT',   'formally DRS_DATA_OUT', ''),
+                ('profile-path-calib', 'PATH.CALIB', 'formally DRS_CALIB_DB', ''),
+                ('profile-path-tellu', 'PATH.TELLU', 'formally DRS_TELLU_DB', ''),
+                ('profile-path-log',   'PATH.LOG',   'formally DRS_DATA_MSG', ''),
+                ('profile-path-lbl',   'PATH.LBL',   'formally LBL_PATH', ''),
             ] %}
-            {% for field_id, label, hint in path_fields %}
+            {% for field_id, label, hint, extra_note in path_fields %}
             <div class="ari-ap-form__field">
                 <label for="{{ field_id }}">{{ label }} <span class="ari-required">*</span>
                     <span class="ari-ap-form__hint">{{ hint }}</span>
+                    {% if extra_note %}
+                    <span class="ari-ap-form__hint" style="color:#a64b00; font-weight:600;">{{ extra_note }}</span>
+                    {% endif %}
                 </label>
                 <div class="ari-ap-path-row">
                     <input type="text" id="{{ field_id }}" class="ari-ap-input ari-ap-input--path"

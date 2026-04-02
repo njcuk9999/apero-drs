@@ -56,58 +56,107 @@ class AperoObjectQueryTask(apero_async.AperoAsyncTask):
         description = ('Generate the object query for the '
                        'APERO reduction interface for each apero profile.')
         super().__init__(name, description, status)
-        
 
+    # -----------------------------------------------------------------
+    # Main entry point
+    # -----------------------------------------------------------------
     def run_job(self, params: Dict[str, Any]):
-        """
-        Create a file that can be used to populate the object table in the 
-        APERO reduction interface.
-        
-        parameters needed in params for this task:
-        - LOCAL_DATA_DIR: str, the local directory where data files are stored
-        - APERO_PROFILES: dict of dicts, where each key is an APERO profile 
-                          name and each value is a dictionary of parameters for 
-                          that profile
-        - APERO_PROFILE_NAMES: list of strings
-        
-        parameters needed in params['APERO_PROFILES'] for each profile::
+        """Run per-object DB+header queries for every configured profile.
 
-        - DATABASE_MODE: str, mysql+pymysql
-        - DATABASE_HOST: str, the database host, e.g. localhost
-        - DATABASE_USER: str, the database user, e.g. root
-        - DATABASE_PASSWORD: str, the database password, e.g. password
-        - DATABASE_NAME: str, the database name to connect to
-        - ASTROM_TABLENAME: str, the name of the table containing astrometric
-          data
-        - CALIB_TABLENAME: str, the name of the table containing calibration
-          data
-        - FINDEX_TABLENAME: str, the name of the table containing file index
-          data
-        - LOG_TABLENAME: str, the name of the table containing log data
-        - TELLU_TABLENAME: str, the name of the table containing telluric data
-        - REJECT_TABLENAME: str, the name of the table containing rejected data
-        - SCIENCE_FIBER: str, the name of the science fiber, e.g. 'A' or 'B'
-        - SCIENCE_TYPES: list of str, the list of DPRTYPEs to include in 
-                            the object table, e.g. 'POLAR_FP', 'OBJ_SKY' etc
-        
-        :param params: A dictionary of parameters needed to run the job. 
-        This should include database connection parameters and any other 
-        necessary information.
+        Required keys in *params*:
+
+        - ``APERO_PROFILE_NAMES``: list of profile name strings
+        - ``APERO_PROFILES``: dict mapping each name → profile config
+        - ``LOCAL_DATA_DIR`` (str): output root directory
+        - ``INSTRUMENT`` (str)
+
+        Optional keys:
+
+        - ``TASK_CONFIG``: dict with ``force_run``, ``ncores``,
+          ``mp_backend``, ``mp_start_method``
+        - ``TASK_LOGGER``: callable for progress messages
+        - ``STOP_EVENT``: threading/multiprocessing Event for
+          cooperative cancellation
         """
-        # empty the info
         self.info = ''
-        # get apero profiles:
-        apero_profile_names = params['APERO_PROFILE_NAMES']
-        apero_profiles = params['APERO_PROFILES']
+        ctx = self._init_run_context(params)
+
+        if not ctx['profile_names']:
+            self.info = 'No APERO profiles configured.'
+            ctx['tlog']('No APERO profiles configured. Nothing to do.')
+            return
+
+        for a_it, profile_name in enumerate(ctx['profile_names']):
+            self.progress = (a_it + 1) / len(ctx['profile_names'])
+            self.subprogress = 0.0
+            self._run_profile(ctx, a_it, profile_name)
+
+        ctx['tlog']('APERO_OBJECT_QUERY completed.')
+
+    # -----------------------------------------------------------------
+    # Per-profile processing
+    # -----------------------------------------------------------------
+    def _run_profile(self, ctx: dict, a_it: int, profile_name: str):
+        """Process one APERO profile: skip check, query objects, run jobs."""
+        tlog = ctx['tlog']
+        stop_event = ctx['stop_event']
+        aparams = ctx['profiles'][profile_name]
+        instrument = str(
+            ctx['params'].get('INSTRUMENT')
+            or aparams.get('general', {}).get('INSTRUMENT')
+            or 'unknown'
+        )
+
+        tlog(f'Profile {a_it + 1}/{len(ctx["profile_names"])}: {profile_name}')
+
+        # check if DB has changed since last run
+        db_updates, should_skip, skip_reason = self._check_db_skip(
+            aparams, ctx['force_run']
+        )
+        if should_skip:
+            self.info += (
+                f'\n## Object Query for APERO Profile: {profile_name}\n\n'
+                f'- Skipped query run. {skip_reason}\n'
+            )
+            tlog(f'Profile {profile_name}: skipped. {skip_reason}')
+            return
+
+        # query distinct object names
+        object_names, obj_query_time = self._query_object_names(
+            aparams, profile_name, tlog
+        )
+
+        # prepare output directory
+        local_objdir = _resolve_objects_dir(aparams, profile_name)
+        tlog(f'Profile {profile_name}: clearing output directory {local_objdir}')
+        with _acquire_directory_lock(local_objdir):
+            _clear_directory_contents(local_objdir)
+
+        # run the object loop (parallel or serial)
+        timing_per_obj, output_files, header_rows_total = self._run_object_loop(
+            ctx, aparams, profile_name, object_names
+        )
+
+        # report and persist
+        self._report_profile_results(
+            profile_name, obj_query_time,
+            timing_per_obj, header_rows_total, tlog,
+        )
+        self.output_files += output_files
+        self._persist_db_updates(
+            aparams, instrument, profile_name, db_updates, tlog,
+        )
+        self.last_run = datetime.now(timezone.utc).isoformat()
+
+    # -----------------------------------------------------------------
+    # Helpers: init, skip check, object loop, reporting, persistence
+    # -----------------------------------------------------------------
+    @staticmethod
+    def _init_run_context(params: Dict[str, Any]) -> dict:
+        """Extract commonly used values from *params* into a context dict."""
         task_config = params.get('TASK_CONFIG', {})
-        force_run = bool(task_config.get('force_run', False))
         mp_cfg = _normalize_mp_config(task_config)
-        req_ncores = task_config.get('ncores', task_config.get('NCORES', 1))
-        req_backend = task_config.get('mp_backend', 'threads')
-        req_method = task_config.get('mp_start_method', 'default')
-        host_cores = max(int(os.cpu_count() or 1), 1)
         task_logger = params.get('TASK_LOGGER')
-        stop_event = params.get('STOP_EVENT')
 
         def tlog(message: str) -> None:
             if callable(task_logger):
@@ -117,259 +166,196 @@ class AperoObjectQueryTask(apero_async.AperoAsyncTask):
                     pass
 
         tlog('APERO_OBJECT_QUERY start.')
-        tlog(f'Configured APERO profiles: {len(apero_profile_names)}')
-        tlog(
-            'Parallel config: '
-            f'requested(ncores={req_ncores}, backend={req_backend}, '
-            f'start={req_method}), '
-            f'normalized(ncores={mp_cfg["ncores"]}, '
-            f'backend={mp_cfg["backend"]}, '
-            f'start={mp_cfg["start_method"]}), '
-            f'host_cores={host_cores}.'
+        return {
+            'params': params,
+            'profile_names': params.get('APERO_PROFILE_NAMES', []),
+            'profiles': params.get('APERO_PROFILES', {}),
+            'force_run': bool(task_config.get('force_run', False)),
+            'mp_cfg': mp_cfg,
+            'tlog': tlog,
+            'stop_event': params.get('STOP_EVENT'),
+        }
+
+    @staticmethod
+    def _check_db_skip(aparams, force_run):
+        """Return (db_updates, should_skip, reason)."""
+        db_updates = {}
+        try:
+            should_skip, db_updates, skip_reason = (
+                apero_async.should_skip_profile_query(
+                    aparams, force_run=force_run
+                )
+            )
+        except Exception as exc:
+            should_skip = False
+            skip_reason = f'Database update-time check unavailable: {exc}'
+        return db_updates, should_skip, skip_reason
+
+    def _query_object_names(self, aparams, profile_name, tlog):
+        """Query distinct object names from the file index table."""
+        obj_query = _construct_obj_query(aparams)
+        db_params = apero_async.get_db_params(aparams)
+        tlog(f'Profile {profile_name}: querying distinct object names...')
+        start = time.time()
+        objlist = apero_async.database_query(db_params, obj_query)
+        elapsed = time.time() - start
+
+        self.info += (
+            f'Found {len(objlist)} unique objects in the database '
+            f'for APERO profile: {profile_name}\n'
+            f'Object query time: {elapsed:.2f} seconds\n'
         )
-        # Check if there are any profiles configured
-        if not apero_profile_names:
-            self.info = 'No APERO profiles configured.'
-            tlog('No APERO profiles configured. Nothing to do.')
+        tlog(f'Profile {profile_name}: found {len(objlist)} objects in {elapsed:.2f}s.')
+
+        names = []
+        for entry in objlist:
+            name = str(entry.get('KW_OBJNAME', '') if isinstance(entry, dict) else entry or '')
+            if name:
+                names.append(name)
+        return names, elapsed
+
+    def _run_object_loop(self, ctx, aparams, profile_name, object_names):
+        """Execute per-object jobs, returning timing, files, header count."""
+        tlog = ctx['tlog']
+        stop_event = ctx['stop_event']
+        mp_cfg = ctx['mp_cfg']
+        total = len(object_names)
+        timing = []
+        output_files = []
+        header_rows_total = 0
+
+        if not object_names:
+            tlog(f'Profile {profile_name}: no valid object names to process.')
+            return timing, output_files, header_rows_total
+
+        use_parallel = MULTI_PROCESS and mp_cfg['ncores'] > 1 and total > 1
+        if use_parallel:
+            timing, output_files, header_rows_total = self._run_parallel(
+                aparams, profile_name, object_names, mp_cfg, tlog, stop_event,
+                total,
+            )
+        else:
+            timing, output_files, header_rows_total = self._run_serial(
+                aparams, profile_name, object_names, tlog, stop_event, total,
+            )
+        return timing, output_files, header_rows_total
+
+    def _run_parallel(self, aparams, profile_name, object_names,
+                      mp_cfg, tlog, stop_event, total):
+        """Run object jobs in parallel using a configured executor."""
+        tlog(
+            f'Profile {profile_name}: parallel object loop '
+            f'backend={mp_cfg["backend"]}, workers={mp_cfg["ncores"]}.'
+        )
+        timing = []
+        output_files = []
+        header_rows_total = 0
+        done = 0
+        executor, pool_mode = _make_executor(
+            mp_cfg['backend'], mp_cfg['ncores'], mp_cfg['start_method'], tlog,
+        )
+        tlog(f'Profile {profile_name}: mode={pool_mode} workers={mp_cfg["ncores"]}.')
+        with executor as pool:
+            futures = {
+                pool.submit(
+                    _run_single_object_job, aparams, name, profile_name,
+                ): name
+                for name in object_names
+            }
+            for fut in as_completed(futures):
+                if stop_event is not None and stop_event.is_set():
+                    for _f in futures:
+                        _f.cancel()
+                    tlog(f'Profile {profile_name}: cancelled.')
+                    return timing, output_files, header_rows_total
+                objname = futures[fut]
+                result = fut.result()
+                done += 1
+                self.subprogress = done / max(1, total)
+                timing.append(result['object_total'])
+                header_rows_total += int(result['header_rows'])
+                output_files.extend(result.get('output_files', []))
+                tlog(
+                    f'Profile {profile_name}: {objname} done '
+                    f'({done}/{total}, {result["object_total"]:.2f}s).'
+                )
+        return timing, output_files, header_rows_total
+
+    def _run_serial(self, aparams, profile_name, object_names,
+                    tlog, stop_event, total):
+        """Run object jobs serially."""
+        tlog(f'Profile {profile_name}: serial mode.')
+        timing = []
+        output_files = []
+        header_rows_total = 0
+        for o_it, objname in enumerate(object_names):
+            if stop_event is not None and stop_event.is_set():
+                tlog(f'Profile {profile_name}: cancelled.')
+                return timing, output_files, header_rows_total
+            self.subprogress = (o_it + 1) / max(1, total)
+            result = _run_single_object_job(aparams, objname, profile_name)
+            timing.append(result['object_total'])
+            header_rows_total += int(result['header_rows'])
+            output_files.extend(result.get('output_files', []))
+            tlog(
+                f'Profile {profile_name}: {objname} done '
+                f'({o_it + 1}/{total}, {result["object_total"]:.2f}s).'
+            )
+        return timing, output_files, header_rows_total
+
+    def _report_profile_results(self, profile_name, obj_query_time,
+                                timing_per_obj, header_rows_total, tlog):
+        """Append summary markdown and log final profile stats."""
+        ave = (sum(timing_per_obj) / len(timing_per_obj)
+               if timing_per_obj else 0.0)
+        total_time = sum(timing_per_obj)
+        self.info += (
+            f'\n## Object Query for APERO Profile: {profile_name}\n\n'
+            f'- Queried {len(timing_per_obj)} objects\n'
+            f'- Average query time per object: {ave:.2f} seconds\n'
+            f'- Total query time: {total_time:.2f} seconds\n'
+            f'- Read {header_rows_total} headers\n'
+        )
+        tlog(
+            f'Profile {profile_name}: done. objects={len(timing_per_obj)}, '
+            f'avg={ave:.2f}s, total={total_time:.2f}s.'
+        )
+
+    def _persist_db_updates(self, aparams, instrument, profile_name,
+                            db_updates, tlog):
+        """Persist DB fingerprint and invalidate stale plot cache."""
+        if not db_updates:
             return
-        
-        # loop around apero profiles
-        for a_it, apero_profile in enumerate(apero_profile_names):
-            tlog(f'Profile {a_it + 1}/{len(apero_profile_names)}: {apero_profile}')
-            
-            # update progress
-            self.progress = (a_it + 1) / len(apero_profile_names)
-            # reset subprogress for this profile (used for object-level progress)
-            self.subprogress = 0.0
-            # -----------------------------------------------------------------
-            # get parameters for this apero profile
-            aparams = apero_profiles[apero_profile]
-            instrument = str(params.get('INSTRUMENT')
-                             or aparams.get('general', {}).get('INSTRUMENT')
-                             or 'unknown')
-            db_updates = {}
-            try:
-                should_skip, db_updates, skip_reason = (
-                    apero_async.should_skip_profile_query(
-                        aparams, force_run=force_run
-                    )
-                )
-            except Exception as exc:
-                should_skip = False
-                skip_reason = f'Database update-time check unavailable: {exc}'
-            if should_skip:
-                self.info += (
-                    f'\n## Object Query for APERO Profile: {apero_profile}\n\n'
-                    f'- Skipped query run. {skip_reason}\n'
-                )
-                tlog(f'Profile {apero_profile}: skipped. {skip_reason}')
-                continue
-            # -----------------------------------------------------------------
-            # define the object name query
-            obj_query = _construct_obj_query(aparams)
-            # first lets get a list of objects from the astrometric database
-            db_params = apero_async.get_db_params(aparams)
-            start = time.time()
-            tlog(f'Profile {apero_profile}: querying distinct object names from database...')
-            objlist = apero_async.database_query(db_params, obj_query)
-            obj_query_time = time.time() - start
-            # get the number of objects
-            self.info += f'Found {len(objlist)} unique objects in the database '
-            self.info += f'for APERO profile: {apero_profile}\n'
-            self.info += f'Object query time: {obj_query_time:.2f} seconds\n'
-            tlog(
-                f'Profile {apero_profile}: found {len(objlist)} objects '
-                f'in {obj_query_time:.2f}s.'
+        try:
+            tlog(f'Profile {profile_name}: persisting DB update fingerprint.')
+            apero_async.save_profile_db_table_updates(
+                instrument, profile_name, db_updates
             )
-            # ----------------------------------------------------------------
-            # clear out and lock the object directory
-            local_objdir = (Path(aparams.get('LOCAL_DATA_DIR', str(ARI_DIR)))
-                            / 'tasks'
-                            / aparams.get('general', {}).get(
-                                'INSTRUMENT', 'unknown')
-                            / apero_profile_names[a_it] / 'objects')
-            tlog(f'Profile {apero_profile}: clearing output directory {local_objdir}')
-            with _acquire_directory_lock(local_objdir):
-                _clear_directory_contents(local_objdir)
-            # ----------------------------------------------------------------
-            # storage of timings per object
-            timing_per_obj = []
-            # storage of output file names
-            output_files = []
-            # if there are no objects fill storage
-            outputs = []
-            htime = 0
-            # -----------------------------------------------------------------
-            object_names = []
-            for o_it, obj_entry in enumerate(objlist):
-                if isinstance(obj_entry, dict):
-                    objname = str(obj_entry.get('KW_OBJNAME', '') or '')
-                else:
-                    objname = str(obj_entry)
-                if not objname:
-                    tlog(
-                        f'Profile {apero_profile}: skipping object entry '
-                        f'{o_it + 1} with empty object name.'
-                    )
-                    continue
-                object_names.append(objname)
-
-            if not object_names:
-                tlog(f'Profile {apero_profile}: no valid object names to process.')
-
-            total_objects = len(object_names)
-            header_rows_total = 0
-            if MULTI_PROCESS and mp_cfg['ncores'] > 1 and total_objects > 1:
-                tlog(
-                    f'Profile {apero_profile}: parallel object loop '
-                    f'backend={mp_cfg["backend"]}, workers={mp_cfg["ncores"]}, '
-                    f'start={mp_cfg["start_method"]}.'
-                )
-                done = 0
-                executor, pool_mode = _make_executor(
-                    mp_cfg['backend'], mp_cfg['ncores'],
-                    mp_cfg['start_method'], tlog,
-                )
-                tlog(
-                    f'Profile {apero_profile}: execution mode={pool_mode} '
-                    f'with workers={mp_cfg["ncores"]}.'
-                )
-                with executor as pool:
-                    futures = {
-                        pool.submit(
-                            _run_single_object_job,
-                            aparams,
-                            objname,
-                            apero_profile_names[a_it],
-                        ): objname
-                        for objname in object_names
-                    }
-                    for fut in as_completed(futures):
-                        if stop_event is not None and stop_event.is_set():
-                            for _f in futures:
-                                _f.cancel()
-                            tlog(
-                                f'Profile {apero_profile}: cancellation requested. '
-                                'Stopping object loop.'
-                            )
-                            return
-                        objname = futures[fut]
-                        result = fut.result()
-                        done += 1
-                        self.subprogress = done / max(1, total_objects)
-                        timing_per_obj.append(result['object_total'])
-                        htime = float(result['header_time'])
-                        header_rows_total += int(result['header_rows'])
-                        output_files.extend(result.get('output_files', []))
-                        outputs = {'results': {'rows': result['header_rows']}}
-                        tlog(
-                            f'Profile {apero_profile}: object {objname} complete '
-                            f'({done}/{total_objects}, db+headers '
-                            f'{result["object_total"]:.2f}s, '
-                            f'header read {result["header_time"]:.2f}s).'
-                        )
-            else:
-                reason = []
-                if not MULTI_PROCESS:
-                    reason.append('task MULTI_PROCESS=False')
-                if mp_cfg['ncores'] <= 1:
-                    reason.append(f'ncores={mp_cfg["ncores"]}')
-                if total_objects <= 1:
-                    reason.append(f'objects={total_objects}')
-                tlog(
-                    f'Profile {apero_profile}: execution mode=serial '
-                    f'({", ".join(reason) if reason else "default"}).'
-                )
-                for o_it, objname in enumerate(object_names):
-                    # cooperative cancellation check
-                    if stop_event is not None and stop_event.is_set():
-                        tlog(
-                            f'Profile {apero_profile}: cancellation requested. '
-                            'Stopping object loop.'
-                        )
-                        return
-                    # update object-level progress
-                    self.subprogress = (o_it + 1) / max(1, total_objects)
-                    result = _run_single_object_job(
-                        aparams, objname, apero_profile_names[a_it])
-                    timing_per_obj.append(result['object_total'])
-                    htime = float(result['header_time'])
-                    header_rows_total += int(result['header_rows'])
-                    output_files.extend(result.get('output_files', []))
-                    outputs = {'results': {'rows': result['header_rows']}}
-                    tlog(
-                        f'Profile {apero_profile}: object {objname} complete '
-                        f'({o_it + 1}/{total_objects}, db+headers '
-                        f'{result["object_total"]:.2f}s, '
-                        f'header read {result["header_time"]:.2f}s).'
-                    )
-
-
-            # -----------------------------------------------------------------
-            # get average query time
-            ave_query_time = (sum(timing_per_obj) / len(timing_per_obj)
-                              if timing_per_obj else 0.0)
-            # update the info markdown with meta data
-            self.info += f"""
-            ## Object Query for APERO Profile: {apero_profile}
-
-            - Queried {len(timing_per_obj)} objects
-            - Average query time per object: {ave_query_time:.2f} seconds
-            - Total query time: {sum(timing_per_obj):.2f} seconds
-
-            - Read {header_rows_total} headers
-            - Total time to read headers: {htime:.2f} seconds
-            """
-            tlog(
-                f'Profile {apero_profile}: done. objects={len(timing_per_obj)}, '
-                f'avg={ave_query_time:.2f}s, total={sum(timing_per_obj):.2f}s.'
+        except Exception as exc:
+            self.info += (
+                f'\n- Warning: failed to persist database-update '
+                f'fingerprint for {profile_name}: {exc}\n'
             )
-            # -----------------------------------------------------------------
-            # add to the output files for this task
-            self.output_files += output_files
-            if db_updates:
-                try:
-                    tlog(f'Profile {apero_profile}: persisting DB update fingerprint.')
-                    apero_async.save_profile_db_table_updates(
-                        instrument, apero_profile, db_updates
-                    )
-                except Exception as exc:
+            tlog(f'Profile {profile_name}: fingerprint persist failed: {exc}')
+        # Invalidate stale plot cache for this profile
+        try:
+            from apero_ri.core.plot_cache import (
+                load_cache_config, resolve_cache_root, invalidate_profile,
+            )
+            local_data = aparams.get('LOCAL_DATA_DIR', str(ARI_DIR))
+            cache_cfg = load_cache_config(Path(local_data))
+            if cache_cfg.get('enabled'):
+                cache_root = resolve_cache_root(Path(local_data), cache_cfg)
+                removed = invalidate_profile(
+                    cache_root, instrument, profile_name)
+                if removed:
                     self.info += (
-                        f'\n- Warning: failed to persist database-update '
-                        f'fingerprint for {apero_profile}: {exc}\n'
+                        f'\n- Invalidated {removed} cached plot '
+                        f'files for {profile_name}\n'
                     )
-                    tlog(
-                        f'Profile {apero_profile}: warning, failed to persist '
-                        f'database-update fingerprint: {exc}'
-                    )
-                # Invalidate stale plot cache for this profile
-                try:
-                    from apero_ri.core.plot_cache import (
-                        load_cache_config, resolve_cache_root,
-                        invalidate_profile,
-                    )
-                    local_data = aparams.get('LOCAL_DATA_DIR', str(ARI_DIR))
-                    cache_cfg = load_cache_config(Path(local_data))
-                    if cache_cfg.get('enabled'):
-                        cache_root = resolve_cache_root(
-                            Path(local_data), cache_cfg)
-                        removed = invalidate_profile(
-                            cache_root, instrument, apero_profile)
-                        if removed:
-                            self.info += (
-                                f'\n- Invalidated {removed} cached plot '
-                                f'files for {apero_profile}\n'
-                            )
-                            tlog(
-                                f'Profile {apero_profile}: invalidated {removed} '
-                                'cached plot file(s).'
-                            )
-                except Exception:
-                    pass
-            # update the last run time
-            self.last_run = datetime.now(timezone.utc).isoformat()
-
-        tlog('APERO_OBJECT_QUERY completed.')
+                    tlog(f'Profile {profile_name}: invalidated {removed} cached plot(s).')
+        except Exception:
+            pass
     
     def test_query(self, params: Dict[str, Any], objnames: str):
         """
@@ -464,7 +450,15 @@ class AperoObjectQueryTask(apero_async.AperoAsyncTask):
 
 # =============================================================================
 # Define main functions (used in run_job)
-# =============================================================================               
+# =============================================================================
+def _resolve_objects_dir(aparams: Dict[str, Any],
+                         profile_name: str) -> Path:
+    """Return the per-profile objects output directory."""
+    instrument = aparams.get('general', {}).get('INSTRUMENT',
+                   aparams.get('INSTRUMENT', 'unknown'))
+    return (Path(aparams.get('LOCAL_DATA_DIR', str(ARI_DIR)))
+            / 'tasks' / instrument / profile_name / 'objects')
+
 
 # =============================================================================
 # Define functions

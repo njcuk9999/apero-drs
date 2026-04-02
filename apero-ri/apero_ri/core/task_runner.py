@@ -495,6 +495,91 @@ def clear_recent_history() -> Dict[str, Any]:
 
 
 # =============================================================================
+# Sync-source override
+# =============================================================================
+def _run_sync_source_override(instance: Any,
+                              run_params: Dict[str, Any],
+                              sync_source: str,
+                              instrument: str,
+                              log_path: Path) -> None:
+    """Copy pre-built task output files from *sync_source* into LOCAL_DATA_DIR.
+
+    When a task's TASK_CONFIG contains ``sync_source`` (a directory path,
+    typically an SSHFS mount or an rsync'd mirror produced by
+    ``apero_sync.run()`` on the remote host), the server skips ``run_job``
+    entirely and instead copies the result JSON files from that path into
+    the local tasks directory.
+
+    The source layout is expected to mirror the standard output layout::
+
+        <sync_source>/tasks/<INSTRUMENT>/<profile>/…
+
+    Files are copied to::
+
+        <LOCAL_DATA_DIR>/tasks/<INSTRUMENT>/<profile>/…
+    """
+    import shutil
+
+    tlog = _make_task_logger(log_path)
+
+    source = Path(sync_source).expanduser().resolve()
+    if not source.is_dir():
+        raise FileNotFoundError(
+            f'sync_source directory does not exist: {source}'
+        )
+
+    local_data_dir = Path(
+        run_params.get('LOCAL_DATA_DIR') or str(Path.home() / '.ari')
+    ).expanduser().resolve()
+
+    synced: List[str] = []
+    skipped = 0
+    errors: List[str] = []
+
+    # Walk the source tasks directory tree and copy all files
+    source_tasks = source / 'tasks'
+    if not source_tasks.is_dir():
+        # If the source is already the tasks/<instrument> level, handle that
+        source_tasks = source
+
+    tlog(f'sync_source: scanning {source_tasks}')
+
+    for src_file in source_tasks.rglob('*'):
+        if src_file.is_dir():
+            continue
+        try:
+            rel = src_file.relative_to(source_tasks)
+        except ValueError:
+            skipped += 1
+            continue
+
+        dst_file = local_data_dir / 'tasks' / rel
+        try:
+            dst_file.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copy2(str(src_file), str(dst_file))
+            synced.append(str(dst_file))
+        except Exception as exc:
+            errors.append(f'{rel}: {exc}')
+
+    tlog(f'sync_source: copied {len(synced)} files, skipped {skipped}, errors {len(errors)}.')
+
+    instance.output_files = synced
+    instance.info = (
+        f'## Sync Source Override\n\n'
+        f'- Source: `{source}`\n'
+        f'- Files copied: {len(synced)}\n'
+        f'- Errors: {len(errors)}\n'
+    )
+    if errors:
+        instance.info += '\n### Errors\n'
+        for err in errors[:20]:
+            instance.info += f'- {err}\n'
+
+    instance.last_run = datetime.now(timezone.utc).isoformat()
+    instance.progress = 1.0
+
+
+# =============================================================================
 # Worker
 # =============================================================================
 def _run_worker() -> None:
@@ -532,12 +617,25 @@ def _run_worker() -> None:
         try:
             # Treat task output files as this-run artifacts.
             instance.output_files = []
-            stdout_tee = _TaskLogTeeStream(log_path, sink=sys.stdout, stream_tag='stdout')
-            stderr_tee = _TaskLogTeeStream(log_path, sink=sys.stderr, stream_tag='stderr')
-            with contextlib.redirect_stdout(stdout_tee), contextlib.redirect_stderr(stderr_tee):
-                instance.run_job(run_params)
-            stdout_tee.flush()
-            stderr_tee.flush()
+
+            # ── sync_source override ────────────────────────────────────
+            # When a task has sync_source configured, copy pre-built
+            # results from that path instead of running the task.
+            task_cfg = run_params.get('TASK_CONFIG', {})
+            sync_source = str(task_cfg.get('sync_source', '') or '').strip()
+            if sync_source:
+                _run_sync_source_override(
+                    instance, run_params, sync_source,
+                    _inst, log_path,
+                )
+            else:
+                stdout_tee = _TaskLogTeeStream(log_path, sink=sys.stdout, stream_tag='stdout')
+                stderr_tee = _TaskLogTeeStream(log_path, sink=sys.stderr, stream_tag='stderr')
+                with contextlib.redirect_stdout(stdout_tee), contextlib.redirect_stderr(stderr_tee):
+                    instance.run_job(run_params)
+                stdout_tee.flush()
+                stderr_tee.flush()
+
             stop_ev = _stop_events.get(task_id)
             if stop_ev is not None and stop_ev.is_set():
                 instance.status = 'cancelled'
@@ -866,7 +964,7 @@ def _scheduler_poll(local_data_dir: str) -> None:
                     merged_cfg['weekly_copies'] = max(0, weekly_copies)
 
                 for field in ['last_run', 'run_count', 'output_files',
-                              'last_status']:
+                              'last_status', 'sync_source']:
                     if field in task_cfg:
                         merged_cfg[field] = task_cfg.get(field)
 

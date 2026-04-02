@@ -11,6 +11,22 @@
 # - edit       // to allow editing a specific page or section of the app
 
 # ==============================================================================
+# Super Admin group
+# ==============================================================================
+super_admin:
+  permissions:
+    # full user/group/instrument management including admin-level accounts
+    - add.instrument
+    - manage.group.super_admin
+    - manage.group.admin
+    - manage.instrument.super_admin
+    - manage.instrument.admin
+    - login_as.super_admin
+    - login_as.admin
+  groups:
+    - admin
+
+# ==============================================================================
 # Admin group
 # ==============================================================================
 admin:
