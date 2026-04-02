@@ -3261,6 +3261,11 @@ def _linear_headerfix(params, obs_dirs, shortname,
     # load the object database
     objdbm = drs_database.AstrometricDatabase(params, shortname)
     objdbm.load_db()
+    # Pre-load all object names + aliases into the module-level
+    # _ASTROM_CLEANED_MAP so that find_objname() resolves every raw header
+    # object name with an O(1) dict look-up instead of 1–3 MySQL connections
+    # per unique name.  Cost: 2 connections once per worker process.
+    objdbm.warm_cache(objdbm.pconst)
     # construct the index database instance
     findexdbm = drs_database.FileIndexDatabase(params, shortname)
     findexdbm.load_db()
