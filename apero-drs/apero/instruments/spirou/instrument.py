@@ -481,7 +481,7 @@ class Spirou(instrument_mod.Instrument):
         header_cols.add(name='KW_FIBER', datatype=sqlalchemy.String(80))
         header_cols.add(name='KW_IDENTIFIER', datatype=sqlalchemy.String(80),
                         is_index=True)
-        header_cols.add(name='KW_IRELDATE', datatype='VARCHAR(80)')
+        header_cols.add(name='KW_IRELDATE', datatype=sqlalchemy.String(80))
         header_cols.add(name='KW_ARELDATE', datatype=sqlalchemy.String(80))
         header_cols.add(name='KW_DRS_QC', datatype=sqlalchemy.Integer)
         # check that filedef keys are present
