@@ -606,7 +606,7 @@ def get_areldate(params: ParamDict, header: drs_fits.Header) -> str:
     # -------------------------------------------------------------------------
     # option 2: if not set from googlesheet set from raw areldate + time delta
     # -------------------------------------------------------------------------
-    if arealdate is None:
+    if areldate is None:
         areldate = pconst.GET_AREL_DATE(params, header,
                                         delta_key='AREL_ADELTA')
 
