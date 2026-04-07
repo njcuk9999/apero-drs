@@ -8259,6 +8259,10 @@ class ARIApp(Flask):
             run_ids=all_run_ids,
             persist=True,
         )
+        # Persist explicitly: _sync_all_science_group only saves when the
+        # reserved All entry itself changes, but this endpoint also edits
+        # arbitrary groups (users/run_ids) that must always be written.
+        save_science_groups(instrument, groups)
         self._refresh_admin_health_after_change(user_info, perms)
         return jsonify(success=True, group=groups.get(canonical_name, {}))
 
@@ -10117,32 +10121,31 @@ class ARIApp(Flask):
             },
             mode='mysql+pymysql',
         )
-        try:
-            status = apero_async.get_db_tunnel_status(runtime)
-        except Exception as exc:
-            return jsonify(success=True,
-                           valid=False,
-                           error=str(exc)), 200
-
-        if not status.get('active'):
-            return jsonify(success=True,
-                           valid=False,
-                           error=('No active DB SSH tunnel for this definition. '
-                                  'Use Ensure Active or Interactive Auth first.'))
-
+        # Test Connection should be self-contained: attempt tunnel bring-up
+        # from the provided definition and then run SELECT 1.
         result = validate_database_connection(
             'mysql+pymysql',
-            '127.0.0.1',
+            remote_host,
             username,
             password,
             db_name,
-            port=str(status.get('local_port', '') or ''),
-            use_ssh_tunnel=False,
-            ssh_config_host='',
-            ssh_local_port='',
-            ssh_remote_port='',
+            port=str(local_port),
+            use_ssh_tunnel=True,
+            ssh_config_host=ssh_config_host,
+            ssh_local_port=str(local_port),
+            ssh_remote_port=str(remote_port),
             local_data_dir=str(self._resolve_local_data_dir()),
         )
+
+        if not result.get('valid'):
+            err = str(result.get('error', '') or '')
+            if ('batchmode' in err.lower() or 'permission denied' in err.lower()
+                    or 'passphrase' in err.lower()):
+                err = (
+                    f'{err} Interactive Auth may be required for this SSH host.'
+                ).strip()
+                result['error'] = err
+
         return jsonify(success=True, **result)
 
     def _api_database_setup_local_db_list(self):

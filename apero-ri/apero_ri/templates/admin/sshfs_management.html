@@ -198,7 +198,8 @@ chmod 600 ~/.ssh/authorized_keys</pre>
 
         <div id="smConfigHostField" class="ari-ae-field" style="display:none;">
             <label class="ari-ae-label">SSH config host</label>
-            <input type="text" id="smSshConfigHost" class="ari-ae-input" placeholder="e.g., my-tunnel-host" style="max-width:420px;">
+            <input type="text" id="smSshConfigHost" class="ari-ae-input" list="smSshConfigHostList" placeholder="e.g., my-tunnel-host" style="max-width:420px;">
+            <datalist id="smSshConfigHostList"></datalist>
             <span class="ari-ae-hint">Host alias defined in ~/.ssh/config on this machine, including any ProxyJump or tunnel settings.</span>
         </div>
 
@@ -383,6 +384,7 @@ let smLastTestKey = '';
 let smLastTestOk = false;
 let smEditingMountName = '';
 let smMountsCache = [];
+let smSshConfigHosts = [];
 
 function smSetMsg(text, ok = true) {
     const el = document.getElementById('smMsg');
@@ -552,6 +554,36 @@ function smResetConnectionValidation() {
     smLastTestKey = '';
     const result = document.getElementById('smTestResult');
     if (result) result.textContent = '';
+}
+
+function smRenderSshConfigHostOptions(currentValue = '') {
+    const list = document.getElementById('smSshConfigHostList');
+    if (!list) return;
+    const needle = String(currentValue || '').trim().toLowerCase();
+    list.innerHTML = '';
+
+    let options = Array.isArray(smSshConfigHosts) ? smSshConfigHosts.slice() : [];
+    if (needle) {
+        options = options.filter((host) => String(host || '').toLowerCase().includes(needle));
+    }
+    options.slice(0, 100).forEach((host) => {
+        const opt = document.createElement('option');
+        opt.value = String(host || '');
+        list.appendChild(opt);
+    });
+}
+
+async function smLoadSshConfigHosts() {
+    try {
+        const res = await fetch('/api/admin/db-ssh-tunnel/ssh-hosts');
+        const data = await res.json();
+        if (!data.success) return;
+        smSshConfigHosts = Array.isArray(data.hosts) ? data.hosts : [];
+        const input = document.getElementById('smSshConfigHost');
+        smRenderSshConfigHostOptions(input ? input.value : '');
+    } catch (_) {
+        // Optional enhancement only; ignore fetch failures silently.
+    }
 }
 
 function smSetEditMode(mountName = '') {
@@ -1368,6 +1400,7 @@ async function smInteractiveMount(mountName) {
 
 document.addEventListener('DOMContentLoaded', function () {
     smLoadMountDropdown();
+    smLoadSshConfigHosts();
     smRefreshStatus();
     smUpdateConnectionMode();
 
@@ -1376,6 +1409,16 @@ document.addEventListener('DOMContentLoaded', function () {
         if (el) el.addEventListener('input', smResetConnectionValidation);
         if (el && el.tagName === 'SELECT') el.addEventListener('change', smResetConnectionValidation);
     });
+
+    const sshHostInput = document.getElementById('smSshConfigHost');
+    if (sshHostInput) {
+        sshHostInput.addEventListener('focus', function () {
+            smRenderSshConfigHostOptions(sshHostInput.value || '');
+        });
+        sshHostInput.addEventListener('input', function () {
+            smRenderSshConfigHostOptions(sshHostInput.value || '');
+        });
+    }
 
     // Terminal close button
     const closeBtn = document.getElementById('smTermCloseBtn');
