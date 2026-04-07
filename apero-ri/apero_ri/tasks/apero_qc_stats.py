@@ -43,6 +43,8 @@ USE_SUBPROCESS = False
 # Whether this task can be run in multi-process mode 
 # (if False, will always run in main process)
 MULTI_PROCESS = True
+# Whether this task supports local pre-built output sync/copy workflows.
+LOCAL_TASK = True
 
 
 # =============================================================================

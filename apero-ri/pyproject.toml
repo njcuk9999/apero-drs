@@ -72,6 +72,7 @@ dependencies = [
 [project.scripts]
 apero_ri_run = "apero_ri.recipes.apero_ri_run:main"
 apero_ri_setup = "apero_ri.recipes.apero_ri_setup:main"
+apero_ri_task = "apero_ri.recipes.aperi_ri_task:main"
 
 [project.urls]
 Homepage = 'http://apero.exoplanets.ca'

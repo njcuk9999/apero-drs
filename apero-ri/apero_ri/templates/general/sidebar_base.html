@@ -130,6 +130,32 @@
     });
 }());
 </script>
+<script>
+(function () {
+    'use strict';
+    function initAdminInfoPanels() {
+        document.querySelectorAll('details.ari-admin-info[id]').forEach(function (el) {
+            var key = 'ari-admin-info-' + el.id;
+            var saved = null;
+            try { saved = localStorage.getItem(key); } catch (_) { saved = null; }
+            // Default to collapsed unless user explicitly opened it.
+            if (saved === '1') {
+                el.setAttribute('open', 'open');
+            } else {
+                el.removeAttribute('open');
+            }
+            el.addEventListener('toggle', function () {
+                try { localStorage.setItem(key, el.open ? '1' : '0'); } catch (_) {}
+            });
+        });
+    }
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initAdminInfoPanels);
+    } else {
+        initAdminInfoPanels();
+    }
+}());
+</script>
 {% endblock %}
         {% if messages %}
         {% for category, message in messages %}
@@ -140,6 +166,48 @@
         {% endfor %}
         {% endif %}
         {% endwith %}
+
+        {% if page_id is defined and page_id.startswith('home.admin_portal') %}
+        <details class="ari-admin-info ot-howto" id="{{ page_id|replace('.', '-') }}-info" style="margin-bottom:0.9rem; border:1px solid var(--ari-border,#d6d6d6); border-radius:0.5rem; background:var(--ari-surface-muted,#fafafa);">
+            <summary style="cursor:pointer; font-weight:700; padding:0.65rem 0.85rem; list-style:none; display:flex; align-items:center; gap:0.45rem;">
+                <i class="fa-solid fa-circle-info"></i>
+                Information
+            </summary>
+            <div style="padding:0.15rem 0.9rem 0.9rem 0.9rem; font-size:0.92em; line-height:1.6; color:var(--ari-text,#242424);">
+                {% if page_id == 'home.admin_portal.database_setup' %}
+                <p>Define reusable local and DB SSH tunnel database connections that APERO profiles reference. Use Local for direct connections and DB SSH Tunnel for connections routed through an SSH gateway.</p>
+                {% elif page_id == 'home.admin_portal.apero_profiles' %}
+                <p>Create and maintain APERO profiles that drive paths, table names, and science settings. Database definitions are managed separately in Database Setup to keep forms simple.</p>
+                {% elif page_id == 'home.admin_portal.sshfs_management' %}
+                <p>Configure and monitor SSHFS mounts used by data paths on this server. Use SSH config mode to reference host aliases from <code>~/.ssh/config</code>.</p>
+                {% elif page_id == 'home.admin_portal.async_tasks' %}
+                <p>Schedule and monitor automated background tasks. Set cadence, inspect logs, and pause/resume execution as needed.</p>
+                {% elif page_id == 'home.admin_portal.user_db_access' %}
+                <p>Control group-level database table permissions across science groups and profiles. Grant minimum required access to balance security and usability.</p>
+                {% elif page_id == 'home.admin_portal.science_groups' %}
+                <p>Define science groups and manage run-ID membership for access control and profile visibility. Use refresh to rescan available run IDs from object tables.</p>
+                {% elif page_id == 'home.admin_portal.email' %}
+                <p>Configure outbound email service for alerts and notifications. Test your settings before enabling automated sends.</p>
+                {% elif page_id == 'home.admin_portal.backup_settings' %}
+                <p>Configure backup destinations and schedules. Validate credentials and paths first, then enable recurring backups.</p>
+                {% elif page_id == 'home.admin_portal.cache_settings' %}
+                <p>Tune plot and data cache behavior to balance performance and storage usage. Use conservative limits on constrained disks.</p>
+                {% elif page_id == 'home.admin_portal.download_management' %}
+                <p>Manage shared download jobs and storage cleanup. Review old downloads regularly to prevent unnecessary disk usage.</p>
+                {% elif page_id == 'home.admin_portal.calendar' %}
+                <p>Manage admin calendar entries for team coordination. Keep event metadata clear for easy filtering and search.</p>
+                {% elif page_id == 'home.admin_portal.links' %}
+                <p>Maintain shared links for team resources and operations. Use descriptive labels and remove stale links regularly.</p>
+                {% elif page_id == 'home.admin_portal.health_status' %}
+                <p>Review system health checks across admin subsystems. Warnings indicate incomplete setup; errors require immediate attention.</p>
+                {% elif page_id == 'home.admin_portal' %}
+                <p>Admin Portal overview. Use the health cards to identify setup gaps, then open each section to configure and test.</p>
+                {% else %}
+                <p>This page controls operational settings. Make one change at a time and test before saving.</p>
+                {% endif %}
+            </div>
+        </details>
+        {% endif %}
 
         {% block doc_content %}{% endblock %}
     </div>

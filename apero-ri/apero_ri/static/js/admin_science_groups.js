@@ -29,6 +29,7 @@
     var runidCount = document.getElementById('runid-count');
     var runidAvailCount = document.getElementById('runid-avail-count');
     var runidAddedCount = document.getElementById('runid-added-count');
+    var btnRefreshRunIds = document.getElementById('btn-refresh-runids');
     var btnAddAllRunIds = document.getElementById('btn-add-all-runids');
 
     var userSection = document.getElementById('user-section');
@@ -603,6 +604,49 @@
         });
     }
 
+    function refreshRunIds() {
+        if (!currentInstrument) {
+            showToast('Select an instrument first', 'warning');
+            return;
+        }
+        if (!cfg.refreshRunIdsUrl) {
+            showToast('Run ID refresh is not configured', 'error');
+            return;
+        }
+
+        if (btnRefreshRunIds) btnRefreshRunIds.disabled = true;
+        fetch(cfg.refreshRunIdsUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ instrument: currentInstrument })
+        })
+        .then(function (r) { return r.json(); })
+        .then(function (data) {
+            if (btnRefreshRunIds) btnRefreshRunIds.disabled = false;
+            if (!data.success) {
+                showToast(data.error || 'Run ID refresh failed', 'error');
+                return;
+            }
+
+            var scannedCount = Array.isArray(data.run_ids) ? data.run_ids.length : 0;
+            console.log('Refresh API returned ' + scannedCount + ' run IDs');
+
+            // Reload all server-derived lists and re-open the current group.
+            loadGroupList();
+            setTimeout(function () {
+                var msg = 'Run IDs refreshed (found ' + allRunIds.length + ' total)';
+                showToast(msg, 'success');
+                if (currentGroup) {
+                    selectGroup(currentGroup);
+                }
+            }, 100);
+        })
+        .catch(function () {
+            if (btnRefreshRunIds) btnRefreshRunIds.disabled = false;
+            showToast('Run ID refresh failed', 'error');
+        });
+    }
+
     /* -- Create group ---------------------------------------------------- */
     function openCreateModal() {
         newGroupName.value = '';
@@ -721,6 +765,9 @@
     btnAddGroup.addEventListener('click', openCreateModal);
     btnSave.addEventListener('click', saveGroup);
     btnDelete.addEventListener('click', openDeleteModal);
+    if (btnRefreshRunIds) {
+        btnRefreshRunIds.addEventListener('click', refreshRunIds);
+    }
     btnAddAllRunIds.addEventListener('click', function () {
         addAllSelections('runid');
     });

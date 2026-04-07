@@ -44,6 +44,10 @@ def main():
     from apero_ri.application import application
 
     app = application.ARIApp()
+    # Ctrl+C is handled inside app.run() via a SIGINT handler that arms a
+    # 5-second watchdog.  If the server exits cleanly, shutdown() runs in
+    # the finally block of run().  If block_on_close hangs, the watchdog
+    # calls os._exit(130) so the port is always released.
     app.run()
 
 

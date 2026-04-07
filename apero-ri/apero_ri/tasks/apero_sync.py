@@ -116,6 +116,16 @@ def run(task_key: str,
             f'Available: {", ".join(available)}'
         )
 
+    # apero_sync is intentionally restricted to tasks that explicitly
+    # support local pre-built workflows (LOCAL_TASK=True).
+    local_allowed = bool(task_module.LOCAL_TASK.get(task_key, False))
+    if not local_allowed:
+        allowed = ', '.join(sorted(local_task_keys()))
+        raise ValueError(
+            f'Task {task_key!r} is not LOCAL_TASK-enabled. '
+            f'Allowed tasks: {allowed}'
+        )
+
     # Some tasks may fail to import (e.g. missing optional dependency).
     # IMPORT_ERRORS stores the traceback string, if any, keyed by task key.
     import_error = (task_module.IMPORT_ERRORS or {}).get(task_key, '')
@@ -241,10 +251,21 @@ def list_tasks() -> Dict[str, Dict[str, Any]]:
             'enabled': tm.ENABLED.get(key, False),
             # Whether the task supports multiprocessing internally.
             'multi_process': tm.MULTI_PROCESS.get(key, False),
+            # Whether this task is allowed for local sync/copy workflows.
+            'local_task': tm.LOCAL_TASK.get(key, False),
             # Non-empty string if the task module failed to import.
             'import_error': (tm.IMPORT_ERRORS or {}).get(key, ''),
         }
     return out
+
+
+def local_task_keys() -> List[str]:
+    """Return task keys that are LOCAL_TASK-enabled."""
+    from apero_ri import tasks as tm
+    return sorted([
+        key for key in tm.TASK_LIST.keys()
+        if bool(tm.LOCAL_TASK.get(key, False))
+    ])
 
 
 def run_for_profile(task_key: str,
@@ -375,14 +396,18 @@ def _cli_main(argv: Optional[List[str]] = None) -> None:
     # Build a minimal argument parser.  Only two positional args are
     # required: the task key and a YAML file containing the run params.
     parser = argparse.ArgumentParser(
-        description='Run an APERO RI task locally.',
+        description='Run a LOCAL_TASK APERO RI task locally.',
+    )
+    parser.add_argument(
+        '--list-local-tasks', action='store_true',
+        help='List task keys that support LOCAL_TASK local execution and exit.',
     )
     # Positional: which task to run (e.g. 'APERO_OBJECT_QUERY').
-    parser.add_argument('task_key', help='Task key from TASK_LIST.')
+    parser.add_argument('task_key', nargs='?', help='Task key from TASK_LIST.')
     # Positional: path to a YAML file whose top-level dict is the params
     # dict passed to run_job (LOCAL_DATA_DIR, APERO_PROFILES, etc.).
     parser.add_argument(
-        'params_yaml',
+        'params_yaml', nargs='?',
         help='Path to a YAML file containing the run params dict.',
     )
     # Optional: write timestamped log lines to this file as well.
@@ -396,6 +421,19 @@ def _cli_main(argv: Optional[List[str]] = None) -> None:
     )
     args = parser.parse_args(argv)
 
+    if args.list_local_tasks:
+        keys = local_task_keys()
+        if not keys:
+            print('No LOCAL_TASK-enabled tasks found.')
+        else:
+            print('LOCAL_TASK-enabled tasks:')
+            for key in keys:
+                print(f'- {key}')
+        return
+
+    if not args.task_key or not args.params_yaml:
+        parser.error('task_key and params_yaml are required unless --list-local-tasks is used')
+
     # Load the params YAML file.  Must be a top-level dict.
     with open(args.params_yaml, 'r', encoding='utf-8') as fh:
         params = yaml.safe_load(fh) or {}
@@ -404,7 +442,7 @@ def _cli_main(argv: Optional[List[str]] = None) -> None:
         sys.exit(1)
 
     # Delegate to run() with the parsed arguments.
-    result = run(args.task_key, params, verbose=not args.quiet, 
+    result = run(args.task_key, params, verbose=not args.quiet,
                  log_file=args.log)
     
     # Exit with a non-zero code on failure so callers (e.g. cron, CI)

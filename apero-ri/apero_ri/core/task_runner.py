@@ -50,6 +50,7 @@ _aprofile_preset_cache: Dict[str, dict] = {}
 _task_log_paths: Dict[str, str] = {}
 _task_instruments: Dict[str, str] = {}
 _stop_events: Dict[str, threading.Event] = {}
+_shutdown_event = threading.Event()
 
 
 class _TaskLogTeeStream:
@@ -585,7 +586,7 @@ def _run_sync_source_override(instance: Any,
 def _run_worker() -> None:
     """Daemon worker: pop tasks from the queue and execute them."""
     global _current
-    while True:
+    while not _shutdown_event.is_set():
         entry: Optional[Tuple[str, str]] = None
         with _lock:
             if _queue:
@@ -593,7 +594,7 @@ def _run_worker() -> None:
                 _current = entry
 
         if entry is None:
-            time.sleep(0.5)
+            _shutdown_event.wait(0.5)
             continue
 
         _inst, task_id = entry
@@ -623,11 +624,30 @@ def _run_worker() -> None:
             # results from that path instead of running the task.
             task_cfg = run_params.get('TASK_CONFIG', {})
             sync_source = str(task_cfg.get('sync_source', '') or '').strip()
-            if sync_source:
+            local_task_enabled = False
+            try:
+                from apero_ri import tasks as task_module
+                task_key = str(getattr(instance, '_task_key', '') or '').strip()
+                local_task_enabled = bool(task_module.LOCAL_TASK.get(task_key, False))
+            except Exception:
+                local_task_enabled = False
+
+            if sync_source and local_task_enabled:
                 _run_sync_source_override(
                     instance, run_params, sync_source,
                     _inst, log_path,
                 )
+            elif sync_source and not local_task_enabled:
+                _append_task_log_line(
+                    log_path,
+                    'sync_source ignored: task does not support LOCAL_TASK override.'
+                )
+                stdout_tee = _TaskLogTeeStream(log_path, sink=sys.stdout, stream_tag='stdout')
+                stderr_tee = _TaskLogTeeStream(log_path, sink=sys.stderr, stream_tag='stderr')
+                with contextlib.redirect_stdout(stdout_tee), contextlib.redirect_stderr(stderr_tee):
+                    instance.run_job(run_params)
+                stdout_tee.flush()
+                stderr_tee.flush()
             else:
                 stdout_tee = _TaskLogTeeStream(log_path, sink=sys.stdout, stream_tag='stdout')
                 stderr_tee = _TaskLogTeeStream(log_path, sink=sys.stderr, stream_tag='stderr')
@@ -1013,10 +1033,10 @@ def _scheduler_poll(local_data_dir: str) -> None:
 
 def _run_scheduler() -> None:
     """Daemon scheduler that enqueues due tasks based on frequency."""
-    while True:
+    while not _shutdown_event.is_set():
         _ensure_worker()
         _scheduler_poll(_scheduler_local_data_dir)
-        time.sleep(_scheduler_poll_seconds)
+        _shutdown_event.wait(_scheduler_poll_seconds)
 
 
 def start_background_services(local_data_dir: Optional[str] = None) -> None:
@@ -1025,12 +1045,68 @@ def start_background_services(local_data_dir: Optional[str] = None) -> None:
     if local_data_dir:
         _scheduler_local_data_dir = str(local_data_dir)
 
+    _shutdown_event.clear()
     _ensure_worker()
     if _scheduler_thread is None or not _scheduler_thread.is_alive():
         _scheduler_thread = threading.Thread(
             target=_run_scheduler, daemon=True, name='ari-task-scheduler'
         )
         _scheduler_thread.start()
+
+
+def shutdown_background_services(join_timeout: float = 2.0,
+                                 debug: bool = False) -> None:
+    """Request background worker/scheduler shutdown and join briefly."""
+    import sys as _sys
+    global _worker_thread, _scheduler_thread, _current
+
+    _debug = debug
+
+    if _debug:
+        with _lock:
+            queued = len(_queue)
+            current = _current
+        print(
+            f'[task_runner] Shutdown requested. '
+            f'Queued tasks: {queued}. '
+            f'Current task: {current[1] if current else "none"}.'
+            , file=_sys.stderr, flush=True)
+
+    _shutdown_event.set()
+    with _lock:
+        n_stop = len(_stop_events)
+        for stop_event in _stop_events.values():
+            stop_event.set()
+    if _debug and n_stop:
+        print(f'[task_runner] Sent stop signal to {n_stop} task stop-event(s).', file=_sys.stderr, flush=True)
+
+    for thread in [_scheduler_thread, _worker_thread]:
+        if thread is None or not thread.is_alive():
+            continue
+        if _debug:
+            print(f'[task_runner] Joining thread "{thread.name}" (timeout={join_timeout}s)...', file=_sys.stderr, flush=True)
+        thread.join(timeout=max(0.0, float(join_timeout)))
+        if _debug:
+            still_alive = thread.is_alive()
+            state = 'still running (timed out)' if still_alive else 'exited cleanly'
+            print(f'[task_runner]   "{thread.name}" {state}.', file=_sys.stderr, flush=True)
+
+    with _lock:
+        if _current is None:
+            _instances.clear()
+            _queue.clear()
+            _errors.clear()
+            _stop_events.clear()
+            _task_log_paths.clear()
+            _task_instruments.clear()
+            if _debug:
+                print('[task_runner] In-memory state cleared.', file=_sys.stderr, flush=True)
+        else:
+            if _debug:
+                print('[task_runner] A task is still running; in-memory state preserved.', file=_sys.stderr, flush=True)
+
+    _worker_thread = None
+    _scheduler_thread = None
 
 
 # =============================================================================

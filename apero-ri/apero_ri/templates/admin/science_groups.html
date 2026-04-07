@@ -21,6 +21,14 @@
 <!-- Main layout: stacked full-width sections -->
 <div id="sg-workspace" class="ari-sg-workspace" style="display:none;">
 
+    <!-- Toolbar: Refresh Run IDs -->
+    <div style="display:flex; gap:8px; margin-bottom:12px;">
+        <button id="btn-refresh-runids" class="ari-btn ari-btn--secondary ari-btn--sm"
+                title="Re-scan object tables and refresh available run IDs (only All auto-syncs)">
+            <i class="fa-solid fa-rotate"></i> Refresh Run IDs
+        </button>
+    </div>
+
     <!-- Science Groups section -->
     <div class="ari-sg-section">
         <div class="ari-sg-section__header">
@@ -200,6 +208,7 @@ window.ARI_SCI_GROUPS = {
     saveUrl: {{ url_for('api_sci_groups_save')|tojson }},
     createUrl: {{ url_for('api_sci_groups_create')|tojson }},
     deleteUrl: {{ url_for('api_sci_groups_delete')|tojson }},
+    refreshRunIdsUrl: {{ url_for('api_sci_groups_refresh_run_ids')|tojson }},
     instruments: {{ instruments|tojson }}
 };
 </script>

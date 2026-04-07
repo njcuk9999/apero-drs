@@ -19,14 +19,9 @@
     ];
 
     var DB_TEXT_FIELDS = [
-        { key: 'DATABASE_HOST',     id: 'profile-db-host' },
-        { key: 'DATABASE_PORT',     id: 'profile-db-port' },
         { key: 'DATABASE_USERNAME', id: 'profile-db-user' },
         { key: 'DATABASE_PASSWORD', id: 'profile-db-pass' },
         { key: 'DATABASE_NAME',     id: 'profile-db-name' },
-        { key: 'DATABASE_SSH_CONFIG_HOST', id: 'profile-db-ssh-host' },
-        { key: 'DATABASE_SSH_LOCAL_PORT',  id: 'profile-db-ssh-local-port' },
-        { key: 'DATABASE_SSH_REMOTE_PORT', id: 'profile-db-ssh-remote-port' },
     ];
 
     var TABLE_FIELDS = [
@@ -64,9 +59,8 @@
     var profileNameInput = document.getElementById('profile-name');
     var profileVersionInput = document.getElementById('profile-version');
     var profileServerInput = document.getElementById('profile-server');
-    var profileDbMode = document.getElementById('profile-db-mode');
-    var profileDbUseSsh = document.getElementById('profile-db-use-ssh');
-    var dbSshTunnelFields = document.getElementById('db-ssh-tunnel-fields');
+    var profileDbSource = document.getElementById('profile-db-source');
+    var profileDbDefinitionName = document.getElementById('profile-db-definition-name');
 
     var btnSaveProfile = document.getElementById('btn-save-profile');
     var btnCancelEdit = document.getElementById('btn-cancel-edit');
@@ -142,6 +136,8 @@
     var availableDbTables = [];
     var globalStatusLastSignature = '';
     var globalStatusCollapsed = true;
+    var dbLocalOptions = [];
+    var dbTunnelOptions = [];
     var sectionCollapsePrefs = {
         db: null,
         tables: null,
@@ -250,6 +246,77 @@
             }
             throw new Error(data.error || 'Failed to load database tables');
         });
+    }
+
+    function populateDbDefinitionSelect(source, selectedName) {
+        if (!profileDbDefinitionName) return;
+        var current = String(selectedName || profileDbDefinitionName.value || '').trim();
+        var useTunnel = source === 'db_ssh_tunnel';
+        var rows = useTunnel ? dbTunnelOptions : dbLocalOptions;
+        profileDbDefinitionName.innerHTML = '<option value="">Select database definition...</option>';
+        rows.forEach(function (row) {
+            var name = String(row.name || '').trim();
+            if (!name) return;
+            var option = document.createElement('option');
+            option.value = name;
+            option.textContent = name;
+            profileDbDefinitionName.appendChild(option);
+        });
+        if (current) {
+            var hasCurrent = Array.prototype.some.call(
+                profileDbDefinitionName.options,
+                function (opt) { return opt.value === current; }
+            );
+            if (!hasCurrent) {
+                var missing = document.createElement('option');
+                missing.value = current;
+                missing.textContent = current + ' (missing)';
+                profileDbDefinitionName.appendChild(missing);
+            }
+            profileDbDefinitionName.value = current;
+        }
+    }
+
+    function loadDbDefinitionOptions(source, selectedName) {
+        var resolvedSource = String(source || (profileDbSource ? profileDbSource.value : 'local') || 'local');
+        var jobs = [];
+
+        if (cfg.localDbListUrl) {
+            jobs.push(
+                fetch(cfg.localDbListUrl)
+                    .then(function (r) { return r.json(); })
+                    .then(function (data) {
+                        if (!data.success) throw new Error(data.error || 'Could not load local database definitions');
+                        dbLocalOptions = Array.isArray(data.local_databases) ? data.local_databases : [];
+                    })
+            );
+        } else {
+            dbLocalOptions = [];
+        }
+
+        if (cfg.dbTunnelListUrl) {
+            jobs.push(
+                fetch(cfg.dbTunnelListUrl)
+                    .then(function (r) { return r.json(); })
+                    .then(function (data) {
+                        if (!data.success) throw new Error(data.error || 'Could not load DB tunnel definitions');
+                        dbTunnelOptions = Array.isArray(data.tunnels) ? data.tunnels : [];
+                    })
+            );
+        } else {
+            dbTunnelOptions = [];
+        }
+
+        return Promise.all(jobs)
+            .then(function () {
+                populateDbDefinitionSelect(resolvedSource, selectedName || '');
+                return resolvedSource === 'db_ssh_tunnel' ? dbTunnelOptions : dbLocalOptions;
+            })
+            .catch(function (err) {
+                populateDbDefinitionSelect(resolvedSource, selectedName || '');
+                showToast(err.message || 'Could not load database definitions', 'error');
+                return [];
+            });
     }
 
     /* -- Instrument tabs ------------------------------------------------- */
@@ -583,10 +650,9 @@
         profileNameInput.disabled = false;
         profileVersionInput.value = '';
         profileServerInput.value = '';
-        profileDbMode.value = 'mysql+pymysql';
-        if (profileDbUseSsh) profileDbUseSsh.checked = false;
+        if (profileDbSource) profileDbSource.value = 'local';
+        if (profileDbDefinitionName) profileDbDefinitionName.value = '';
         DB_TEXT_FIELDS.forEach(function (f) { dbInputs[f.id].value = ''; });
-        dbInputs['profile-db-ssh-remote-port'].value = '3306';
         clearTableOptions(false);
         PATH_FIELDS.forEach(function (f) {
             pathInputs[f.id].value = '';
@@ -606,6 +672,7 @@
         groupsSection.style.display = 'none';
         groupsContainer.innerHTML = '';
         groupsNoPerm.style.display = 'none';
+        loadDbDefinitionOptions('local', '');
         syncTunnelVisibility();
         updateWorkflowState();
     }
@@ -617,20 +684,17 @@
         profileNameInput.disabled = true;
         profileVersionInput.value = profile.apero_version || '';
         profileServerInput.value = profile.reduction_server || '';
-        profileDbMode.value = profile.DATABASE_MODE || 'mysql+pymysql';
-        if (profileDbUseSsh) {
-            profileDbUseSsh.checked = isTruthy(profile.DATABASE_USE_SSH_TUNNEL);
+        if (profileDbSource) {
+            profileDbSource.value = profile.DATABASE_SOURCE || 'local';
         }
-        var dbHostParts = splitDbHostPort(profile.DATABASE_HOST || '', profile.DATABASE_PORT || '');
-        dbInputs['profile-db-host'].value = dbHostParts.host;
-        dbInputs['profile-db-port'].value = dbHostParts.port;
+        if (profileDbDefinitionName) {
+            profileDbDefinitionName.value = profile.DATABASE_SOURCE === 'db_ssh_tunnel'
+                ? (profile.DATABASE_TUNNEL_NAME || '')
+                : (profile.DATABASE_LOCAL_NAME || '');
+        }
         DB_TEXT_FIELDS.forEach(function (f) {
-            if (f.key === 'DATABASE_HOST' || f.key === 'DATABASE_PORT') return;
             dbInputs[f.id].value = profile[f.key] || '';
         });
-        if (!dbInputs['profile-db-ssh-remote-port'].value.trim()) {
-            dbInputs['profile-db-ssh-remote-port'].value = '3306';
-        }
         clearTableOptions(false);
         TABLE_FIELDS.forEach(function (f) {
             setSingleTableValue(f.id, profile[f.key] || '');
@@ -661,6 +725,12 @@
         formSection.style.display = '';
         formTitle.scrollIntoView({ behavior: 'smooth', block: 'start' });
         renderProfileGroups(profile);
+        loadDbDefinitionOptions(
+            profile.DATABASE_SOURCE || 'local',
+            profile.DATABASE_SOURCE === 'db_ssh_tunnel'
+                ? (profile.DATABASE_TUNNEL_NAME || '')
+                : (profile.DATABASE_LOCAL_NAME || '')
+        );
         syncTunnelVisibility();
         updateWorkflowState();
     }
@@ -780,6 +850,14 @@
         el.innerHTML = '<i class="fa-solid ' + icon + '"></i> ' + escapeHtml(message);
     }
 
+    function showFieldValidationHtml(el, valid, html) {
+        el.style.display = 'block';
+        el.className = 'ari-ap-validation' +
+            (valid ? ' ari-ap-validation--valid' : ' ari-ap-validation--invalid');
+        var icon = valid ? 'fa-circle-check' : 'fa-circle-xmark';
+        el.innerHTML = '<i class="fa-solid ' + icon + '"></i> ' + html;
+    }
+
     function isTruthy(value) {
         if (typeof value === 'boolean') return value;
         if (value === null || value === undefined) return false;
@@ -800,19 +878,14 @@
     }
 
     function isDbTunnelEnabled() {
-        return !!(profileDbUseSsh && profileDbUseSsh.checked);
+        return !!(profileDbSource && profileDbSource.value === 'db_ssh_tunnel');
     }
 
     function syncTunnelVisibility() {
-        var tunnelOn = isDbTunnelEnabled();
-        if (dbSshTunnelFields) {
-            dbSshTunnelFields.style.display = tunnelOn ? '' : 'none';
-        }
+        var source = profileDbSource ? profileDbSource.value : 'local';
+        populateDbDefinitionSelect(source, profileDbDefinitionName ? profileDbDefinitionName.value : '');
         if (btnInteractiveTunnel) {
-            btnInteractiveTunnel.style.display = tunnelOn ? '' : 'none';
-        }
-        if (tunnelOn && !dbInputs['profile-db-ssh-remote-port'].value.trim()) {
-            dbInputs['profile-db-ssh-remote-port'].value = '3306';
+            btnInteractiveTunnel.style.display = 'none';
         }
     }
 
@@ -826,22 +899,15 @@
     }
 
     function buildDbPayload() {
-        var dbPort = dbInputs['profile-db-port'].value.trim();
-        var tunnelLocalPort = dbInputs['profile-db-ssh-local-port'].value.trim();
-        if (!dbPort && isDbTunnelEnabled()) {
-            dbPort = tunnelLocalPort;
-        }
+        var source = isDbTunnelEnabled() ? 'db_ssh_tunnel' : 'local';
+        var definitionName = profileDbDefinitionName ? profileDbDefinitionName.value.trim() : '';
         return {
-            DATABASE_MODE: profileDbMode.value,
-            DATABASE_HOST: dbInputs['profile-db-host'].value.trim(),
-            DATABASE_PORT: dbPort,
+            DATABASE_SOURCE: source,
+            DATABASE_LOCAL_NAME: source === 'local' ? definitionName : '',
+            DATABASE_TUNNEL_NAME: source === 'db_ssh_tunnel' ? definitionName : '',
             DATABASE_USERNAME: dbInputs['profile-db-user'].value.trim(),
             DATABASE_PASSWORD: dbInputs['profile-db-pass'].value,
             DATABASE_NAME: dbInputs['profile-db-name'].value.trim(),
-            DATABASE_USE_SSH_TUNNEL: isDbTunnelEnabled(),
-            DATABASE_SSH_CONFIG_HOST: dbInputs['profile-db-ssh-host'].value.trim(),
-            DATABASE_SSH_LOCAL_PORT: dbInputs['profile-db-ssh-local-port'].value.trim(),
-            DATABASE_SSH_REMOTE_PORT: dbInputs['profile-db-ssh-remote-port'].value.trim(),
         };
     }
 
@@ -1191,14 +1257,22 @@
     }
 
     function startInteractiveSshTunnel() {
-        var sshHost = dbInputs['profile-db-ssh-host'].value.trim();
-        var localPort = dbInputs['profile-db-ssh-local-port'].value.trim();
-        var remoteHost = dbInputs['profile-db-host'].value.trim();
-        var remotePort = dbInputs['profile-db-ssh-remote-port'].value.trim() || '3306';
+        var selectedTunnel = profileDbDefinitionName ? profileDbDefinitionName.value.trim() : '';
+        var tunnelDef = null;
+        for (var i = 0; i < dbTunnelOptions.length; i++) {
+            if (String(dbTunnelOptions[i].name || '').trim() === selectedTunnel) {
+                tunnelDef = dbTunnelOptions[i];
+                break;
+            }
+        }
+        var sshHost = tunnelDef ? String(tunnelDef.ssh_config_host || '').trim() : '';
+        var localPort = tunnelDef ? String(tunnelDef.local_port || '').trim() : '';
+        var remoteHost = tunnelDef ? String(tunnelDef.remote_host || '').trim() : '';
+        var remotePort = tunnelDef ? String(tunnelDef.remote_port || '').trim() : '3306';
 
         if (!sshHost || !localPort || !remoteHost) {
             showFieldValidation(dbTestResult, false,
-                'SSH config host, local port, and database host are required');
+                'Select a valid DB tunnel definition first');
             return;
         }
 
@@ -1253,14 +1327,11 @@
 
     function updateWorkflowState() {
         syncTunnelVisibility();
-        var dbFieldsFilled = dbInputs['profile-db-host'].value.trim()
-            && dbInputs['profile-db-user'].value.trim()
+        var dbFieldsFilled = dbInputs['profile-db-user'].value.trim()
             && dbInputs['profile-db-name'].value.trim();
-        if (isDbTunnelEnabled()) {
-            dbFieldsFilled = dbFieldsFilled
-                && dbInputs['profile-db-ssh-host'].value.trim()
-                && dbInputs['profile-db-ssh-local-port'].value.trim();
-        }
+        dbFieldsFilled = dbFieldsFilled
+            && profileDbDefinitionName
+            && profileDbDefinitionName.value.trim();
 
         installSectionToggle(tablesStepStatus, 'tables');
         installSectionToggle(scienceStepStatus, 'science');
@@ -1339,18 +1410,22 @@
     /* -- Test database connection ---------------------------------------- */
     function testDbConnection() {
         var payload = buildDbPayload();
-        var host = payload.DATABASE_HOST;
         var user = payload.DATABASE_USERNAME;
         var name = payload.DATABASE_NAME;
 
-        if (!host || !user || !name) {
-            showFieldValidation(dbTestResult, false, 'Fill in all database fields first');
+        if (!user || !name) {
+            showFieldValidation(dbTestResult, false,
+                'DATABASE_USERNAME and DATABASE_NAME are required');
             return;
         }
-        if (payload.DATABASE_USE_SSH_TUNNEL
-            && (!payload.DATABASE_SSH_CONFIG_HOST || !payload.DATABASE_SSH_LOCAL_PORT)) {
+        if (payload.DATABASE_SOURCE === 'local' && !payload.DATABASE_LOCAL_NAME) {
             showFieldValidation(dbTestResult, false,
-                'SSH config host and local port are required for tunnel mode');
+                'Select a local database definition');
+            return;
+        }
+        if (payload.DATABASE_SOURCE === 'db_ssh_tunnel' && !payload.DATABASE_TUNNEL_NAME) {
+            showFieldValidation(dbTestResult, false,
+                'Select a DB tunnel for db ssh tunnel source');
             return;
         }
 
@@ -1365,6 +1440,17 @@
         .then(function (data) {
             btnTestDb.disabled = false;
             btnTestDb.innerHTML = '<i class="fa-solid fa-plug"></i> Test Connection';
+            if (data.requires_tunnel_admin) {
+                var adminUrl = String(data.tunnel_admin_url || cfg.dbTunnelAdminUrl || '').trim();
+                var msg = escapeHtml(String(data.error || 'DB tunnel is required before testing this profile.'));
+                if (adminUrl) {
+                    msg += ' <a href="' + encodeURI(adminUrl) + '" style="font-weight:600;">Open DB SSH Tunnel Management</a>';
+                }
+                showFieldValidationHtml(dbTestResult, false, msg);
+                dbTestPassed = false;
+                tablesTestPassed = false;
+                return [];
+            }
             if (data.valid) {
                 showFieldValidation(dbTestResult, true, 'Connection successful');
                 dbTestPassed = true;
@@ -1419,6 +1505,17 @@
         .then(function (data) {
             btnTestTables.innerHTML =
                 '<i class="fa-solid fa-vial-circle-check"></i> Test Table Names';
+            if (data.requires_tunnel_admin) {
+                var adminUrl = String(data.tunnel_admin_url || cfg.dbTunnelAdminUrl || '').trim();
+                var msg = escapeHtml(String(data.error || 'DB tunnel is required before table tests.'));
+                if (adminUrl) {
+                    msg += ' <a href="' + encodeURI(adminUrl) + '" style="font-weight:600;">Open DB SSH Tunnel Management</a>';
+                }
+                tablesTestPassed = false;
+                showFieldValidationHtml(tablesTestResult, false, msg);
+                updateWorkflowState();
+                return;
+            }
             if (data.valid) {
                 tablesTestPassed = true;
                 showFieldValidation(tablesTestResult, true, 'Table checks passed.');
@@ -1484,20 +1581,14 @@
         if (!payload.apero_version) { showToast('APERO version is required', 'error'); return null; }
         if (!payload.reduction_server) { showToast('Reduction server is required', 'error'); return null; }
 
-        var dbReq = ['DATABASE_MODE', 'DATABASE_HOST', 'DATABASE_USERNAME', 'DATABASE_NAME'];
+        var dbReq = ['DATABASE_SOURCE', 'DATABASE_LOCAL_NAME', 'DATABASE_USERNAME', 'DATABASE_NAME'];
+        if (payload.DATABASE_SOURCE === 'db_ssh_tunnel') {
+            dbReq = ['DATABASE_SOURCE', 'DATABASE_TUNNEL_NAME', 'DATABASE_USERNAME', 'DATABASE_NAME'];
+        }
         for (var i = 0; i < dbReq.length; i++) {
             if (!payload[dbReq[i]]) {
                 showToast(dbReq[i] + ' is required', 'error');
                 return null;
-            }
-        }
-        if (payload.DATABASE_USE_SSH_TUNNEL) {
-            var tunnelReq = ['DATABASE_SSH_CONFIG_HOST', 'DATABASE_SSH_LOCAL_PORT'];
-            for (var t = 0; t < tunnelReq.length; t++) {
-                if (!payload[tunnelReq[t]]) {
-                    showToast(tunnelReq[t] + ' is required in tunnel mode', 'error');
-                    return null;
-                }
             }
         }
         if (!dbTestPassed) {
@@ -1550,17 +1641,36 @@
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(payload)
         })
-        .then(function (r) { return r.json(); })
-        .then(function (data) {
+        .then(function (r) {
+            return r.text().then(function (text) {
+                var data = null;
+                try { data = JSON.parse(text); } catch (_) { data = null; }
+                return {
+                    ok: r.ok,
+                    status: r.status,
+                    data: data,
+                    text: text || ''
+                };
+            });
+        })
+        .then(function (res) {
             btnSaveProfile.disabled = false;
-            if (data.success) {
+            var data = res.data || {};
+            if (res.ok && data.success) {
                 formDirty = false;
                 var verb = editingProfile ? 'Updated' : 'Created';
                 showToast(verb + ' "' + payload.name + '"', 'success');
                 resetForm();
                 loadProfiles();
             } else {
-                showToast(data.error || 'Save failed', 'error');
+                var errMsg = data.error || '';
+                if (!errMsg && res.text) {
+                    errMsg = String(res.text).trim().slice(0, 220);
+                }
+                if (!errMsg) {
+                    errMsg = 'Save failed (HTTP ' + res.status + ')';
+                }
+                showToast(errMsg, 'error');
             }
         })
         .catch(function () {
@@ -1874,22 +1984,22 @@
             updateWorkflowState();
         });
     });
-    profileDbMode.addEventListener('change', function () {
-        markDirty();
-        resetDbAndTableTests();
-        pathsTestPassed = false;
-        if (pathsTestResult) pathsTestResult.style.display = 'none';
-        updateWorkflowState();
-    });
-    if (profileDbUseSsh) {
-        profileDbUseSsh.addEventListener('change', function () {
+    if (profileDbSource) {
+        profileDbSource.addEventListener('change', function () {
             markDirty();
             resetDbAndTableTests();
             pathsTestPassed = false;
             if (pathsTestResult) pathsTestResult.style.display = 'none';
-            if (isDbTunnelEnabled() && !dbInputs['profile-db-ssh-remote-port'].value.trim()) {
-                dbInputs['profile-db-ssh-remote-port'].value = '3306';
-            }
+            loadDbDefinitionOptions(profileDbSource.value, '');
+            updateWorkflowState();
+        });
+    }
+    if (profileDbDefinitionName) {
+        profileDbDefinitionName.addEventListener('change', function () {
+            markDirty();
+            resetDbAndTableTests();
+            pathsTestPassed = false;
+            if (pathsTestResult) pathsTestResult.style.display = 'none';
             updateWorkflowState();
         });
     }
@@ -1989,6 +2099,7 @@
 
     /* -- Init ------------------------------------------------------------ */
     populateInstrumentProfileSelect();
+    loadDbDefinitionOptions('local', '');
     renderTabs();
     updateWorkflowState();
 })();

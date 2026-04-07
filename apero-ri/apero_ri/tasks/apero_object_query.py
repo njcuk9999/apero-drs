@@ -44,6 +44,8 @@ USE_SUBPROCESS = True
 # Whether this task can be run in multi-process mode 
 # (if False, will always run in main process)
 MULTI_PROCESS = True
+# Whether this task supports local pre-built output sync/copy workflows.
+LOCAL_TASK = True
 
 
 # =============================================================================
@@ -251,34 +253,64 @@ class AperoObjectQueryTask(apero_async.AperoAsyncTask):
         output_files = []
         header_rows_total = 0
         done = 0
+        worker_pids = set()
+        batch_size = max(1, int(mp_cfg['ncores']))
         executor, pool_mode = _make_executor(
             mp_cfg['backend'], mp_cfg['ncores'], mp_cfg['start_method'], tlog,
         )
         tlog(f'Profile {profile_name}: mode={pool_mode} workers={mp_cfg["ncores"]}.')
         with executor as pool:
-            futures = {
-                pool.submit(
-                    _run_single_object_job, aparams, name, profile_name,
-                ): name
-                for name in object_names
-            }
-            for fut in as_completed(futures):
-                if stop_event is not None and stop_event.is_set():
-                    for _f in futures:
-                        _f.cancel()
-                    tlog(f'Profile {profile_name}: cancelled.')
-                    return timing, output_files, header_rows_total
-                objname = futures[fut]
-                result = fut.result()
-                done += 1
-                self.subprogress = done / max(1, total)
-                timing.append(result['object_total'])
-                header_rows_total += int(result['header_rows'])
-                output_files.extend(result.get('output_files', []))
+            num_batches = (total + batch_size - 1) // batch_size
+            for batch_idx in range(num_batches):
+                batch_start = batch_idx * batch_size
+                batch_end = min(total, batch_start + batch_size)
+                batch_objects = object_names[batch_start:batch_end]
                 tlog(
-                    f'Profile {profile_name}: {objname} done '
-                    f'({done}/{total}, {result["object_total"]:.2f}s).'
+                    f'Profile {profile_name}: submitting batch '
+                    f'{batch_idx + 1}/{num_batches} '
+                    f'({batch_start + 1}-{batch_end}/{total}).'
                 )
+
+                futures = {
+                    pool.submit(
+                        _run_single_object_job, aparams, name, profile_name,
+                    ): (name, global_idx)
+                    for global_idx, name in enumerate(
+                        batch_objects, start=batch_start + 1
+                    )
+                }
+
+                for fut in as_completed(futures):
+                    if stop_event is not None and stop_event.is_set():
+                        for _f in futures:
+                            _f.cancel()
+                        tlog(f'Profile {profile_name}: cancelled.')
+                        return timing, output_files, header_rows_total
+
+                    objname, global_idx = futures[fut]
+                    result = fut.result()
+                    done += 1
+                    self.subprogress = done / max(1, total)
+                    timing.append(result['object_total'])
+                    header_rows_total += int(result['header_rows'])
+                    output_files.extend(result.get('output_files', []))
+                    worker_pid = int(result.get('worker_pid', 0) or 0)
+                    if worker_pid > 0:
+                        worker_pids.add(worker_pid)
+                    tlog(
+                        f'Profile {profile_name}: {objname} done '
+                        f'({global_idx}/{total}, {result["object_total"]:.2f}s, '
+                        f'batch={batch_idx + 1}/{num_batches}, '
+                        f'worker_pid={worker_pid or "n/a"}, '
+                        f'unique_workers={len(worker_pids)}/{mp_cfg["ncores"]}).'
+                    )
+        if worker_pids:
+            pids = ', '.join(str(pid) for pid in sorted(worker_pids))
+            tlog(
+                f'Profile {profile_name}: parallel verification summary: '
+                f'unique worker processes used={len(worker_pids)}/{mp_cfg["ncores"]}; '
+                f'pids=[{pids}].'
+            )
         return timing, output_files, header_rows_total
 
     def _run_serial(self, aparams, profile_name, object_names,
@@ -599,6 +631,7 @@ def _make_executor(backend: str, ncores: int, start_method: str, tlog):
 def _run_single_object_job(aparams: Dict[str, Any], objname: str,
                            apero_profile_name: str) -> Dict[str, Any]:
     """Run one object query+header workflow and return summary metrics."""
+    worker_pid = os.getpid()
     outputs = object_query_db(aparams, objname, apero_profile_name)
     htime = object_query_headers(aparams, objname, apero_profile_name, outputs)
     object_total = sum(outputs.get('timings', {}).values())
@@ -624,6 +657,7 @@ def _run_single_object_job(aparams: Dict[str, Any], objname: str,
         'object_total': float(object_total),
         'header_time': float(htime),
         'header_rows': int(header_rows),
+        'worker_pid': int(worker_pid),
         'output_files': output_files,
     }
 

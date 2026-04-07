@@ -68,7 +68,8 @@ def user_has_admin_privileges(groups: Optional[List[str]]) -> bool:
 def set_ari_dir(path: Optional[str]) -> None:
     """Configure storage root for auth-managed files."""
     global ARI_DIR, ADMIN_DIR, ADMIN_GENERAL_DIR, USERS_FILE, SCI_GROUPS_DIR
-    global APERO_PROFILES_FILE, DB_ACCESS_FILE, ASYNC_TASKS_FILE
+    global APERO_PROFILES_FILE, DB_ACCESS_FILE, DB_TUNNELS_FILE
+    global ASYNC_TASKS_FILE
     global ADMIN_HEALTH_DIR, ADMIN_HEALTH_CONFIG_FILE
     base = Path(path).expanduser() if path else (Path.home() / '.ari')
     ARI_DIR = base
@@ -78,6 +79,7 @@ def set_ari_dir(path: Optional[str]) -> None:
     SCI_GROUPS_DIR = ADMIN_DIR / 'science_groups'
     APERO_PROFILES_FILE = ADMIN_GENERAL_DIR / 'apero_profiles.yaml'
     DB_ACCESS_FILE = ADMIN_GENERAL_DIR / 'db_access.yaml'
+    DB_TUNNELS_FILE = ADMIN_GENERAL_DIR / 'db_tunnels.yaml'
     ASYNC_TASKS_FILE = ADMIN_DIR / 'async_tasks' / 'async_tasks.yaml'
     ADMIN_HEALTH_DIR = ADMIN_DIR / 'health'
     ADMIN_HEALTH_CONFIG_FILE = ADMIN_HEALTH_DIR / 'health_status.yaml'
@@ -328,6 +330,7 @@ def get_public_permissions() -> Set[str]:
 # =============================================================================
 APERO_PROFILES_FILE = ADMIN_GENERAL_DIR / 'apero_profiles.yaml'
 DB_ACCESS_FILE = ADMIN_GENERAL_DIR / 'db_access.yaml'
+DB_TUNNELS_FILE = ADMIN_GENERAL_DIR / 'db_tunnels.yaml'
 
 
 # =============================================================================
@@ -615,6 +618,54 @@ def save_db_access(data: dict) -> None:
     ensure_ari_directory()
     with open(DB_ACCESS_FILE, 'w') as f:
         yaml.dump(data, f, default_flow_style=False)
+
+
+def load_db_tunnels() -> dict:
+    """Load DB tunnel/local definitions from db_tunnels.yaml."""
+    ensure_ari_directory()
+    legacy_file = ADMIN_DIR / 'db_tunnels.yaml'
+    if not DB_TUNNELS_FILE.exists() and legacy_file.exists():
+        try:
+            DB_TUNNELS_FILE.write_bytes(legacy_file.read_bytes())
+        except Exception:
+            pass
+    if not DB_TUNNELS_FILE.exists():
+        DB_TUNNELS_FILE.write_text('')
+    with open(DB_TUNNELS_FILE, 'r') as f:
+        data = yaml.safe_load(f)
+    if not isinstance(data, dict):
+        data = {}
+    tunnels = data.get('tunnels', {})
+    if not isinstance(tunnels, dict):
+        tunnels = {}
+    local_databases = data.get('local_databases', {})
+    if not isinstance(local_databases, dict):
+        local_databases = {}
+    return {
+        'tunnels': tunnels,
+        'local_databases': local_databases,
+    }
+
+
+def save_db_tunnels(data: dict) -> None:
+    """Save DB tunnel/local definitions to db_tunnels.yaml."""
+    ensure_ari_directory()
+    payload = data if isinstance(data, dict) else {}
+    tunnels = payload.get('tunnels', {})
+    if not isinstance(tunnels, dict):
+        tunnels = {}
+    local_databases = payload.get('local_databases', {})
+    if not isinstance(local_databases, dict):
+        local_databases = {}
+    with open(DB_TUNNELS_FILE, 'w') as f:
+        yaml.dump(
+            {
+                'tunnels': tunnels,
+                'local_databases': local_databases,
+            },
+            f,
+            default_flow_style=False,
+        )
 
 
 def validate_path_exists(path_str: str) -> dict:
