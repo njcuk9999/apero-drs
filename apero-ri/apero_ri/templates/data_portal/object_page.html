@@ -211,20 +211,39 @@
                 <div id="op-ccf-grid" class="op-kv-grid"></div>
             </div>
         </div>
-        <div class="at-section-card" data-op-section-id="ccf.plot">
+        <div class="at-section-card" data-op-section-id="ccf.rv_plot">
             <div class="at-section-card__header">
-                <span><i class="fa-solid fa-chart-line"></i> CCF Plot</span>
-                <a id="op-ccf-plot-max-link"
-                   href="{{ url_for('ri_object_plot_max', profile_id=profile.profile_id, objname=objname, plot_key='ccf') }}"
+                <span><i class="fa-solid fa-chart-line"></i> CCF RV vs Time</span>
+                <a id="op-ccf-rv-plot-max-link"
+                   href="{{ url_for('ri_object_plot_max', profile_id=profile.profile_id, objname=objname, plot_key='ccf_rv') }}"
                    class="ari-btn ari-btn--sm ari-btn--secondary op-plot-max-btn"
                    title="Maximize plot" style="margin-left:auto;">
                     <i class="fa-solid fa-maximize"></i>
                 </a>
             </div>
             <div class="at-section-card__body">
-                <div id="op-ccf-plot-wrap">
-                    <p id="op-ccf-sampling-note" class="at-muted-hint" style="margin-bottom:0.75rem;">
-                        The CCF plot uses up to 100 files sampled uniformly in time. Change the time period here:
+                <div id="op-ccf-rv-plot-wrap">
+                    <div id="op-ccf-rv-plot-loading" class="at-muted-hint">
+                        <i class="fa-solid fa-spinner fa-spin"></i> Loading RV plot&hellip;
+                    </div>
+                    <div id="op-ccf-rv-plot-div"></div>
+                </div>
+            </div>
+        </div>
+        <div class="at-section-card" data-op-section-id="ccf.profile_plot">
+            <div class="at-section-card__header">
+                <span><i class="fa-solid fa-wave-square"></i> Median CCF Profile</span>
+                <a id="op-ccf-profile-plot-max-link"
+                   href="{{ url_for('ri_object_plot_max', profile_id=profile.profile_id, objname=objname, plot_key='ccf_profile') }}"
+                   class="ari-btn ari-btn--sm ari-btn--secondary op-plot-max-btn"
+                   title="Maximize plot" style="margin-left:auto;">
+                    <i class="fa-solid fa-maximize"></i>
+                </a>
+            </div>
+            <div class="at-section-card__body">
+                <div id="op-ccf-profile-plot-wrap">
+                    <p id="op-ccf-sampling-note" class="at-muted-hint op-ccf-sampling-note" style="margin-bottom:0.75rem;">
+                        The median CCF profile uses up to 100 files sampled uniformly in time. Change the time period here:
                     </p>
                     <div id="op-ccf-controls" style="display:flex;gap:0.6rem;flex-wrap:wrap;align-items:flex-end;margin-bottom:0.75rem;">
                         <label style="display:flex;flex-direction:column;gap:0.2rem;">
@@ -247,9 +266,9 @@
                         </button>
                     </div>
                     <div id="op-ccf-plot-loading" class="at-muted-hint">
-                        <i class="fa-solid fa-spinner fa-spin"></i> Loading plot&hellip;
+                        <i class="fa-solid fa-spinner fa-spin"></i> Loading median profile&hellip;
                     </div>
-                    <div id="op-ccf-plot-div"></div>
+                    <div id="op-ccf-profile-plot-div"></div>
                 </div>
             </div>
         </div>
@@ -638,7 +657,8 @@ window.ARI_OBJECT_PAGE = {
     snrMaxUrl: {{ url_for('ri_object_plot_max', profile_id=profile.profile_id, objname=objname, plot_key='snr') | tojson }},
     bervMaxUrl: {{ url_for('ri_object_plot_max', profile_id=profile.profile_id, objname=objname, plot_key='berv') | tojson }},
     specMaxUrl: {{ url_for('ri_object_plot_max', profile_id=profile.profile_id, objname=objname, plot_key='spec') | tojson }},
-    ccfMaxUrl: {{ url_for('ri_object_plot_max', profile_id=profile.profile_id, objname=objname, plot_key='ccf') | tojson }},
+    ccfRvMaxUrl: {{ url_for('ri_object_plot_max', profile_id=profile.profile_id, objname=objname, plot_key='ccf_rv') | tojson }},
+    ccfProfileMaxUrl: {{ url_for('ri_object_plot_max', profile_id=profile.profile_id, objname=objname, plot_key='ccf_profile') | tojson }},
     profileId: {{ profile.profile_id | tojson }},
     instrument: {{ profile.instrument | tojson }},
     objname: {{ objname | tojson }},
@@ -659,7 +679,7 @@ window.ARI_BASKET_CFG = {
 };
 </script>
 <script src="https://cdn.bokeh.org/bokeh/release/bokeh-3.8.2.min.js"></script>
-<script src="{{ url_for('static', filename='js/object_page.js', v='20260407a') }}" defer></script>
+<script src="{{ url_for('static', filename='js/object_page.js', v='20260407c') }}" defer></script>
 <script src="{{ url_for('static', filename='js/file_browser.js') }}" defer></script>
 
 <!-- ──── Filename-click plot modal ──────────────────────────────────────── -->

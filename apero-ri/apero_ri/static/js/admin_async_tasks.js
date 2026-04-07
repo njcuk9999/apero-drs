@@ -54,6 +54,8 @@
     var detFreq         = document.getElementById('det-frequency');
     var detParallelRow  = document.getElementById('det-parallel-row');
     var detParallel     = document.getElementById('det-parallel');
+    var detSyncModeRow  = document.getElementById('det-sync-mode-row');
+    var detSyncMode     = document.getElementById('det-sync-mode');
     var detProgressRow  = document.getElementById('det-progress-row');
     var detProgressFill = document.getElementById('det-progress-fill');
     var detProgressPct  = document.getElementById('det-progress-pct');
@@ -124,6 +126,10 @@
     var editMpStartMethod = document.getElementById('edit-mp-start-method');
     var editMpWarn      = document.getElementById('edit-mp-warn');
     var editLocalSyncFields = document.getElementById('edit-local-sync-fields');
+    var editSyncModeRow = document.getElementById('edit-sync-mode-row');
+    var editSyncMode    = document.getElementById('edit-sync-mode');
+    var editSyncSourceField = document.getElementById('edit-sync-source-field');
+    var editSyncSourceRequired = document.getElementById('edit-sync-source-required');
     var editSyncSource  = document.getElementById('edit-sync-source');
     var editRunCountRow = document.getElementById('edit-run-count-row');
     var editRunCount    = document.getElementById('edit-run-count');
@@ -528,6 +534,21 @@
             } else {
                 detParallel.textContent = '';
                 detParallelRow.style.display = 'none';
+            }
+        }
+        if (detSyncModeRow && detSyncMode) {
+            var supportsLocalTask = !!cls.local_task
+                || !!task.local_task
+                || ('sync_source' in task);
+            if (supportsLocalTask) {
+                var syncSource = String(task.sync_source || '').trim();
+                detSyncMode.textContent = syncSource
+                    ? ('Sync from: ' + syncSource)
+                    : 'Run task (no sync source set)';
+                detSyncModeRow.style.display = '';
+            } else {
+                detSyncMode.textContent = '';
+                detSyncModeRow.style.display = 'none';
             }
         }
 
@@ -1219,6 +1240,19 @@
         if (editSyncSource) {
             editSyncSource.value = String(task.sync_source || '');
         }
+        if (editSyncMode) {
+            var taskKey = String(task.task_key || '').trim();
+            var supportsLocalTask = !!task.local_task
+                || ('sync_source' in task)
+                || taskKey === 'APERO_OBJECT_QUERY';
+            if (!supportsLocalTask) {
+                editSyncMode.value = 'run_server';
+            } else {
+                editSyncMode.value = String(task.sync_source || '').trim()
+                    ? 'fetch_precomputed'
+                    : '';
+            }
+        }
         editRunCount.textContent = task.runtime ? (task.runtime.run_count || 0) : 0;
         editActive.checked = task.active !== false;
         onTaskKeyChange();
@@ -1237,7 +1271,20 @@
             || ('mp_backend' in currentTask)
             || ('mp_start_method' in currentTask);
         var supportsLocalTask = !!(cls && cls.local_task)
-            || ('sync_source' in currentTask);
+            || !!currentTask.local_task
+            || ('sync_source' in currentTask)
+            || key === 'APERO_OBJECT_QUERY';
+        var inferredMode = (editSyncSource && String(editSyncSource.value || '').trim())
+            ? 'fetch_precomputed'
+            : 'run_server';
+        var selectedMode = editSyncMode
+            ? String(editSyncMode.value || '').trim()
+            : '';
+        if (!supportsLocalTask) {
+            selectedMode = 'run_server';
+        } else if (selectedMode !== 'run_server' && selectedMode !== 'fetch_precomputed') {
+            selectedMode = '';
+        }
         if (cls) {
             editTaskInfoRow.style.display = '';
             editTaskName.textContent = cls.name;
@@ -1246,11 +1293,43 @@
             editTaskInfoRow.style.display = 'none';
         }
         editBackupFields.style.display = isBackup ? '' : 'none';
-        editMpFields.style.display = supportsMp ? '' : 'none';
+
         if (editLocalSyncFields) {
-            editLocalSyncFields.style.display = supportsLocalTask ? '' : 'none';
+            editLocalSyncFields.style.display = key ? '' : 'none';
         }
-        if (supportsMp) {
+        if (editSyncModeRow && editSyncMode) {
+            if (key) {
+                if (supportsLocalTask) {
+                    editSyncMode.disabled = false;
+                    editSyncMode.innerHTML = ''
+                        + '<option value="">Select mode</option>'
+                        + '<option value="run_server">Run on server</option>'
+                        + '<option value="fetch_precomputed">Fetch pre-computed</option>';
+                } else {
+                    editSyncMode.disabled = true;
+                    editSyncMode.innerHTML = '<option value="run_server">Run on server</option>';
+                }
+                editSyncMode.value = selectedMode;
+                editSyncModeRow.style.display = '';
+            } else {
+                editSyncModeRow.style.display = 'none';
+            }
+        }
+
+        var runOnServer = (selectedMode === 'run_server');
+        editMpFields.style.display = (supportsMp && runOnServer) ? '' : 'none';
+        if (editSyncSourceField) {
+            var showSyncSource = !!(supportsLocalTask && selectedMode === 'fetch_precomputed');
+            editSyncSourceField.style.display = showSyncSource ? '' : 'none';
+            if (editSyncSource) {
+                editSyncSource.required = showSyncSource;
+            }
+            if (editSyncSourceRequired) {
+                editSyncSourceRequired.style.display = showSyncSource ? '' : 'none';
+            }
+        }
+
+        if (supportsMp && runOnServer) {
             renderNcoresWarning();
         }
         editRunCountRow.style.display = editingTaskId ? '' : 'none';
@@ -1285,6 +1364,9 @@
         if (editNcores) {
             editNcores.addEventListener('input', renderNcoresWarning);
         }
+        if (editSyncMode) {
+            editSyncMode.addEventListener('change', onTaskKeyChange);
+        }
         // Close on backdrop click
         editModal.addEventListener('click', function (e) {
             if (e.target === editModal) closeEditModal();
@@ -1308,7 +1390,18 @@
             || ('mp_backend' in currentTask)
             || ('mp_start_method' in currentTask);
         var supportsLocalTask = !!cls.local_task
-            || ('sync_source' in currentTask);
+            || !!currentTask.local_task
+            || ('sync_source' in currentTask)
+            || taskKey === 'APERO_OBJECT_QUERY';
+        var syncMode = editSyncMode
+            ? String(editSyncMode.value || '').trim()
+            : '';
+        if (!supportsLocalTask) {
+            syncMode = 'run_server';
+        } else if (syncMode !== 'run_server' && syncMode !== 'fetch_precomputed') {
+            syncMode = '';
+        }
+        var runOnServer = (syncMode === 'run_server');
         var frequency = parseFloat(editFrequency.value);
         var dailyCopies = parseInt(editDailyCopies.value, 10) || 0;
         var weeklyCopies = parseInt(editWeeklyCopies.value, 10) || 0;
@@ -1319,9 +1412,17 @@
         if (!taskKey) { showToast('Missing task key.', 'error'); return; }
         if (isNaN(frequency) || frequency <= 0) { showToast('Frequency must be a positive number of hours.', 'error'); return; }
         if (dailyCopies < 0 || weeklyCopies < 0) { showToast('Backup copy counts must be non-negative.', 'error'); return; }
-        if (supportsMp && ncores <= 0) { showToast('NCORES must be >= 1.', 'error'); return; }
+        if (supportsMp && runOnServer && ncores <= 0) { showToast('NCORES must be >= 1.', 'error'); return; }
         if (taskKey === BACKUP_TASK_KEY && dailyCopies + weeklyCopies <= 0) {
             showToast('Backup task needs at least one retained daily or weekly copy.', 'error');
+            return;
+        }
+        if (supportsLocalTask && !syncMode) {
+            showToast('Please choose a Sync mode.', 'error');
+            return;
+        }
+        if (supportsLocalTask && !runOnServer && !syncSource) {
+            showToast('Sync Source Path is required when Fetch pre-computed is selected.', 'error');
             return;
         }
 
@@ -1333,13 +1434,13 @@
             weekly_copies: weeklyCopies,
             active: editActive.checked,
         };
-        if (supportsMp) {
+        if (supportsMp && runOnServer) {
             payload.ncores = ncores;
             payload.mp_backend = mpBackend;
             payload.mp_start_method = mpStartMethod;
         }
         if (supportsLocalTask) {
-            payload.sync_source = syncSource;
+            payload.sync_source = runOnServer ? '' : syncSource;
         }
         payload.id = editingTaskId;
 

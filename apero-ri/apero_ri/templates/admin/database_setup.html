@@ -116,13 +116,19 @@
                     <div>
                         <strong>Quick setup checklist:</strong>
                         1) Fill tunnel name, SSH config host, remote DB host, remote DB port, local forward port.
-                        2) Save tunnel definition.
-                        3) Click <strong>Ensure Active</strong> (or <strong>Interactive Auth</strong> if prompted).
-                        4) Click <strong>Test</strong> using saved test username/password/database name.
+                        2) Enter test username/password/database name.
+                        3) Click <strong>Test Connection</strong> before saving whenever possible.
+                        4) Save tunnel definition.
+                        5) Click <strong>Start / Verify Tunnel</strong> (or <strong>Interactive Auth</strong> if prompted).
+                        6) Re-run <strong>Test Connection</strong> to confirm.
                     </div>
                     <div>
                         <strong>Tip:</strong>
                         Keep local forward ports unique per definition (for example 3307, 3308, ...).
+                    </div>
+                    <div>
+                        <strong>Note:</strong>
+                        Multiple DB SSH tunnels can be active at the same time.
                     </div>
                 </div>
             </div>
@@ -134,7 +140,8 @@
                 </div>
                 <div class="ari-ae-field">
                     <label class="ari-ae-label" for="dbTunnelSshHost">DATABASE_SSH_CONFIG_HOST</label>
-                    <input id="dbTunnelSshHost" class="ari-ap-input" placeholder="SSH config host alias">
+                    <input id="dbTunnelSshHost" class="ari-ap-input" list="dbTunnelSshHostList" placeholder="Select or type SSH config host alias">
+                    <datalist id="dbTunnelSshHostList"></datalist>
                 </div>
                 <div class="ari-ae-field">
                     <label class="ari-ae-label" for="dbTunnelRemoteHost">DATABASE_HOST</label>
@@ -240,6 +247,7 @@ const DB_SETUP_CFG = {
     localDeleteUrl: {{ url_for('api_database_setup_local_db_delete')|tojson }},
     localTestUrl: {{ url_for('api_database_setup_local_db_test')|tojson }},
     tunnelListUrl: {{ url_for('api_db_ssh_tunnel_list')|tojson }},
+    tunnelSshHostsUrl: {{ url_for('api_db_ssh_tunnel_ssh_hosts')|tojson }},
     tunnelSaveUrl: {{ url_for('api_db_ssh_tunnel_save')|tojson }},
     tunnelDeleteUrl: {{ url_for('api_db_ssh_tunnel_delete')|tojson }},
     tunnelStatusUrl: {{ url_for('api_db_ssh_tunnel_status')|tojson }},
@@ -255,8 +263,46 @@ const DB_SETUP_CFG = {
 
 let dbLocalRows = [];
 let dbTunnelRows = [];
+let dbSshHostOptions = [];
 let dbSshToken = null;
 let dbSshPoll = null;
+
+function dbSetSshHostInputValue(value) {
+    const input = document.getElementById('dbTunnelSshHost');
+    if (!input) return;
+    input.value = String(value || '').trim();
+}
+
+function dbRenderSshHostOptions(selectedValue) {
+    const list = document.getElementById('dbTunnelSshHostList');
+    if (!list) return;
+    const selected = String(selectedValue || '').trim();
+    list.innerHTML = '';
+    const opts = Array.isArray(dbSshHostOptions) ? dbSshHostOptions.slice() : [];
+    if (selected && opts.indexOf(selected) === -1) {
+        opts.unshift(selected);
+    }
+    opts.forEach((host) => {
+        const h = String(host || '').trim();
+        if (!h) return;
+        const opt = document.createElement('option');
+        opt.value = h;
+        list.appendChild(opt);
+    });
+}
+
+async function dbTunnelRefreshSshHosts() {
+    try {
+        const res = await fetch(DB_SETUP_CFG.tunnelSshHostsUrl);
+        const data = await res.json();
+        if (!data.success) {
+            return;
+        }
+        dbSshHostOptions = Array.isArray(data.hosts) ? data.hosts : [];
+        dbRenderSshHostOptions(document.getElementById('dbTunnelSshHost')?.value || '');
+    } catch (_) {
+    }
+}
 
 function dbTogglePassword(inputId, buttonId) {
     const input = document.getElementById(inputId);
@@ -502,7 +548,8 @@ function dbTunnelEdit(index) {
     if (!row) return;
     const def = row.definition || {};
     document.getElementById('dbTunnelName').value = String(row.name || '');
-    document.getElementById('dbTunnelSshHost').value = String(def.ssh_config_host || '');
+    dbSetSshHostInputValue(String(def.ssh_config_host || ''));
+    dbRenderSshHostOptions(String(def.ssh_config_host || ''));
     document.getElementById('dbTunnelRemoteHost').value = String(def.remote_host || '');
     document.getElementById('dbTunnelRemotePort').value = String(def.remote_port || '3306');
     document.getElementById('dbTunnelLocalPort').value = String(def.local_port || '');
@@ -549,18 +596,15 @@ async function dbTunnelRefresh() {
 
         const active = Number(data.active_count || 0);
         if (statusIcon) {
-            statusIcon.innerHTML = data.singleton_ok
-                ? '<i class="fa-solid fa-circle-check" style="color:#1f8a44;"></i>'
-                : '<i class="fa-solid fa-triangle-exclamation" style="color:#c67a00;"></i>';
+            statusIcon.innerHTML = '<i class="fa-solid fa-circle-check" style="color:#1f8a44;"></i>';
         }
         if (statusTitle) {
-            statusTitle.textContent = data.singleton_ok
-                ? 'DB tunnel health is within policy'
-                : 'Multiple active DB tunnels detected';
+            statusTitle.textContent = 'DB tunnel health loaded';
         }
         if (statusDetail) {
             statusDetail.textContent = 'Active tunnels: ' + String(active)
-                + '. Saved tunnel definitions: ' + String(dbTunnelRows.length) + '.';
+                + '. Saved tunnel definitions: ' + String(dbTunnelRows.length)
+                + '. Multiple active tunnels are supported.';
         }
     } catch (err) {
         dbSetMsg('Failed to refresh DB tunnel status: ' + err.message, false);
@@ -607,7 +651,7 @@ function renderDbTunnelRows() {
             <div style="display:flex; gap:8px; flex-wrap:wrap;">
                 <button class="ari-btn ari-btn--sm ari-btn--secondary" onclick="dbTunnelEdit(${index})"><i class="fa-solid fa-pen"></i> Edit</button>
                 <button class="ari-btn ari-btn--sm ari-btn--primary" onclick="dbTunnelTestSaved(${index})"><i class="fa-solid fa-plug"></i> Test</button>
-                <button class="ari-btn ari-btn--sm ari-btn--primary" onclick="dbTunnelEnsure(${index})" ${row.valid_config ? '' : 'disabled'}><i class="fa-solid fa-plug-circle-check"></i> Ensure Active</button>
+                <button class="ari-btn ari-btn--sm ari-btn--primary" onclick="dbTunnelEnsure(${index})" ${row.valid_config ? '' : 'disabled'}><i class="fa-solid fa-plug-circle-check"></i> Start / Verify Tunnel</button>
                 <button class="ari-btn ari-btn--sm ari-btn--secondary" onclick="dbTunnelInteractive(${index})" ${row.valid_config ? '' : 'disabled'}><i class="fa-solid fa-terminal"></i> Interactive Auth</button>
                 <button class="ari-btn ari-btn--sm ari-btn--secondary" onclick="dbTunnelCloseOne(${index})" ${row.valid_config ? '' : 'disabled'}><i class="fa-solid fa-power-off"></i> Close</button>
                 <button class="ari-btn ari-btn--sm ari-btn--secondary" onclick="dbTunnelDelete(${index})"><i class="fa-solid fa-trash"></i> Delete</button>
@@ -711,7 +755,7 @@ async function dbTunnelDelete(index) {
 async function dbTunnelEnsure(index) {
     const row = dbTunnelRows[index];
     if (!row) return;
-    dbSetMsg('Ensuring DB tunnel is active...', true);
+    dbSetMsg('Starting or verifying DB tunnel...', true);
     try {
         const res = await fetch(DB_SETUP_CFG.tunnelEnsureUrl, {
             method: 'POST',
@@ -723,7 +767,7 @@ async function dbTunnelEnsure(index) {
             dbSetMsg(data.error || 'Failed to ensure tunnel.', false);
             return;
         }
-        dbSetMsg(data.message || 'Tunnel active.', true);
+        dbSetMsg(data.message || 'Tunnel is active.', true);
         await dbTunnelRefresh();
     } catch (err) {
         dbSetMsg('Failed to ensure tunnel: ' + err.message, false);
@@ -866,6 +910,7 @@ async function dbTunnelInteractive(index) {
                 local_port: localPort,
                 remote_host: remoteHost,
                 remote_port: remotePort,
+                allow_multiple: true,
             })
         });
         const data = await res.json();
@@ -909,6 +954,7 @@ async function dbTunnelInteractive(index) {
     }
 
     dbShowTab('local');
+    dbTunnelRefreshSshHosts();
     dbLocalRefresh();
     dbTunnelRefresh();
     setInterval(dbTunnelRefresh, 12000);

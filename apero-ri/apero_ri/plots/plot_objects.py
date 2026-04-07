@@ -1387,10 +1387,15 @@ def _make_ccf_rv_figure(
         ))
         fig.circle('x', 'y', source=src, size=6, color='green',
                    alpha=0.7, legend_label='Good')
-        fig.add_layout(Whisker(
+        whisk = Whisker(
             source=src, base='x', upper='upper', lower='lower',
-            line_color='green', line_alpha=0.5,
-        ))
+            line_color='green', line_alpha=0.7,
+        )
+        whisk.upper_head.line_color = 'green'
+        whisk.lower_head.line_color = 'green'
+        whisk.upper_head.line_alpha = 0.7
+        whisk.lower_head.line_alpha = 0.7
+        fig.add_layout(whisk)
     # -------------------------------------------------------------------------
     l_arrow = 0.04 * diff
     for clip_mask, yt, marker in [
@@ -1811,25 +1816,237 @@ def _build_ccf_layout(
     )
     fig_ms = (time.perf_counter() - t_fig0) * 1000.0
 
-    if str(summary.get('sampling_mode', '')) == 'equally_spaced':
-        smjd = summary.get('selected_mjd_min', None)
-        emjd = summary.get('selected_mjd_max', None)
-        try:
-            sdate = Time(float(smjd), format='mjd').to_datetime(
-                timezone=timezone.utc).strftime('%Y-%m-%d')
-            edate = Time(float(emjd), format='mjd').to_datetime(
-                timezone=timezone.utc).strftime('%Y-%m-%d')
-        except Exception:
-            sdate = '--'
-            edate = '--'
-        nobs = int(summary.get('selected_total', 0) or 0)
-        suffix = f' [{sdate} to {edate}, Nobs={nobs}]'
-        fig_rv.title.text = str(fig_rv.title.text) + suffix
-        fig_prof.title.text = str(fig_prof.title.text) + suffix
-        fig_res.title.text = str(fig_res.title.text) + suffix
-        fig_spread.title.text = str(fig_spread.title.text) + suffix
+    smjd = summary.get('selected_mjd_min', None)
+    emjd = summary.get('selected_mjd_max', None)
+    try:
+        sdate = Time(float(smjd), format='mjd').to_datetime(
+            timezone=timezone.utc).strftime('%Y-%m-%d')
+        edate = Time(float(emjd), format='mjd').to_datetime(
+            timezone=timezone.utc).strftime('%Y-%m-%d')
+    except Exception:
+        sdate = '--'
+        edate = '--'
+    nobs = int(summary.get('selected_total', 0) or 0)
+    suffix = f' [{sdate} to {edate} (Nobs={nobs})]'
+    fig_rv.title.text = str(fig_rv.title.text) + suffix
+    fig_prof.title.text = str(fig_prof.title.text) + suffix
+    fig_res.title.text = str(fig_res.title.text) + suffix
+    fig_spread.title.text = str(fig_spread.title.text) + suffix
 
     layout = bk_column([fig_rv, fig_prof, fig_res, fig_spread],
+                       sizing_mode='stretch_width')
+    total_ms = load_ms + stats_ms + fig_ms
+    summary['timings_ms'] = {
+        'load_data': round(load_ms, 2),
+        'stats_fit': round(stats_ms, 2),
+        'build_figures': round(fig_ms, 2),
+        'total': round(total_ms, 2),
+    }
+    return layout, '', summary
+
+
+def _load_ccf_rv_from_htable(
+    htable_rows: List[Dict[str, Any]],
+) -> Optional[Tuple[np.ndarray, np.ndarray, np.ndarray, Dict[str, Any]]]:
+    """
+    Load CCF RV time-series directly from htable rows (no CCF FITS reads).
+
+    :param htable_rows: list of htable row dicts
+
+    :return: tuple (datetimes, dv_ms, sdv_ms, summary) or None
+    :rtype: tuple | None
+    """
+    datetimes_list: List[Any] = []
+    dv_ms_list: List[float] = []
+    sdv_ms_list: List[float] = []
+    total_rows = len(htable_rows)
+    candidate_rows = 0
+
+    for row in htable_rows:
+        if not isinstance(row, dict):
+            continue
+        raw_dv = row.get('CCF_DV')
+        raw_sdv = row.get('CCF_SDV')
+        if raw_dv is None or raw_sdv is None:
+            continue
+        candidate_rows += 1
+        try:
+            dv_ms_val = float(raw_dv) * 1000.0
+            sdv_ms_val = float(raw_sdv)
+        except Exception:
+            continue
+
+        dt = None
+        raw_mjd = row.get('CCF_MJDMID')
+        if raw_mjd is not None:
+            try:
+                dt = mjd_to_datetime(float(raw_mjd))
+            except Exception:
+                dt = None
+        if dt is None:
+            raw_mid = row.get('MID_OBS_TIME')
+            if raw_mid is not None:
+                sval = str(raw_mid).strip()
+                if sval:
+                    try:
+                        dt = Time(sval, format='isot', scale='utc').to_datetime(
+                            timezone=timezone.utc
+                        )
+                    except Exception:
+                        dt = None
+        if dt is None:
+            continue
+
+        datetimes_list.append(dt)
+        dv_ms_list.append(dv_ms_val)
+        sdv_ms_list.append(sdv_ms_val)
+
+    loaded_total = len(datetimes_list)
+    summary: Dict[str, Any] = {
+        'total_rows': int(total_rows),
+        'candidate_rows': int(candidate_rows),
+        'loaded_total': int(loaded_total),
+    }
+    if loaded_total == 0:
+        return None
+
+    datetimes = np.array(datetimes_list)
+    dv_ms = np.array(dv_ms_list)
+    sdv_ms = np.array(sdv_ms_list)
+    sort_idx = np.argsort([dt.timestamp() for dt in datetimes])
+    return datetimes[sort_idx], dv_ms[sort_idx], sdv_ms[sort_idx], summary
+
+
+def _build_ccf_rv_layout(
+    htable_rows: List[Dict[str, Any]],
+) -> Tuple[Optional[Any], str, Dict[str, Any]]:
+    """Build the fast CCF RV-vs-time layout from htable only."""
+    t0 = time.perf_counter()
+    out = _load_ccf_rv_from_htable(htable_rows)
+    load_ms = (time.perf_counter() - t0) * 1000.0
+    if out is None:
+        return None, 'No CCF RV points available.', {
+            'total_rows': int(len(htable_rows)),
+            'candidate_rows': 0,
+            'loaded_total': 0,
+            'timings_ms': {
+                'load_data': round(load_ms, 2),
+                'build_figures': 0.0,
+                'total': round(load_ms, 2),
+            },
+        }
+
+    datetimes, dv_ms, sdv_ms, summary = out
+    t1 = time.perf_counter()
+    fig_rv = _make_ccf_rv_figure(datetimes, dv_ms, sdv_ms)
+    from bokeh.layouts import column as bk_column
+    layout = bk_column([fig_rv], sizing_mode='stretch_width')
+    fig_ms = (time.perf_counter() - t1) * 1000.0
+    total_ms = load_ms + fig_ms
+    summary['timings_ms'] = {
+        'load_data': round(load_ms, 2),
+        'build_figures': round(fig_ms, 2),
+        'total': round(total_ms, 2),
+    }
+    return layout, '', summary
+
+
+def _build_ccf_profile_layout(
+    htable_rows: List[Dict[str, Any]],
+    ftable_ccf_rows: List[Dict[str, Any]],
+    paths: Dict[str, str],
+    ccf_mjd_start: Optional[float] = None,
+    ccf_mjd_end: Optional[float] = None,
+    ccf_nobs: int = 100,
+) -> Tuple[Optional[Any], str, Dict[str, Any]]:
+    """
+    Build the heavy CCF profile/residual/spread layout (no RV panel).
+    """
+    from bokeh.layouts import column as bk_column
+
+    t_load0 = time.perf_counter()
+    result = _load_ccf_data(
+        ftable_ccf_rows,
+        htable_rows,
+        paths,
+        ccf_mjd_start=ccf_mjd_start,
+        ccf_mjd_end=ccf_mjd_end,
+        max_files=int(max(1, ccf_nobs)),
+    )
+    load_ms = (time.perf_counter() - t_load0) * 1000.0
+    if result is None:
+        return None, 'No CCF profile data could be loaded.', {
+            'max_files': int(max(1, ccf_nobs)),
+            'sampling_mode': 'all',
+            'selected_total': 0,
+            'loaded_total': 0,
+            'in_range_total': 0,
+            'ccf_mjd_start': ccf_mjd_start,
+            'ccf_mjd_end': ccf_mjd_end,
+            'timings_ms': {
+                'load_data': round(load_ms, 2),
+                'stats_fit': 0.0,
+                'build_figures': 0.0,
+                'total': round(load_ms, 2),
+            },
+        }
+
+    rv_vec, all_ccf, _datetimes, _dv_ms, _sdv_ms, summary = result
+    rv_used, ccf_used, rv_points_orig, rv_points_used = _decimate_ccf_grid(
+        rv_vec, all_ccf, max_points=_CCF_RV_MAX_POINTS
+    )
+    summary['rv_points_original'] = int(rv_points_orig)
+    summary['rv_points_used'] = int(rv_points_used)
+    summary['rv_decimated'] = bool(rv_points_used < rv_points_orig)
+
+    t_stats0 = time.perf_counter()
+    lower1 = 100.0 * (0.5 - 0.6827 / 2.0)
+    upper1 = 100.0 * (0.5 + 0.6827 / 2.0)
+    lower2 = 100.0 * (0.5 - 0.9545 / 2.0)
+    upper2 = 100.0 * (0.5 + 0.9545 / 2.0)
+    y1_1sig = np.nanpercentile(ccf_used, lower1, axis=0)
+    y2_1sig = np.nanpercentile(ccf_used, upper1, axis=0)
+    y1_2sig = np.nanpercentile(ccf_used, lower2, axis=0)
+    y2_2sig = np.nanpercentile(ccf_used, upper2, axis=0)
+    med_ccf = np.nanmedian(ccf_used, axis=0)
+    has_fit, fit, xlim = _fit_ccf_gaussian(rv_used, med_ccf)
+    stats_ms = (time.perf_counter() - t_stats0) * 1000.0
+
+    t_fig0 = time.perf_counter()
+    fig_prof = _make_ccf_profile_figure(
+        rv_used, med_ccf,
+        y1_1sig, y2_1sig, y1_2sig, y2_2sig,
+        fit, xlim, has_fit,
+    )
+    fig_res = _make_ccf_residuals_figure(
+        rv_used, med_ccf, fit,
+        y1_1sig, y2_1sig, y1_2sig, y2_2sig,
+        xlim, has_fit,
+    )
+    fig_spread = _make_ccf_spread_figure(
+        rv_used, med_ccf,
+        y1_1sig, y2_1sig, y1_2sig, y2_2sig,
+        xlim, has_fit,
+    )
+    fig_ms = (time.perf_counter() - t_fig0) * 1000.0
+
+    smjd = summary.get('selected_mjd_min', None)
+    emjd = summary.get('selected_mjd_max', None)
+    try:
+        sdate = Time(float(smjd), format='mjd').to_datetime(
+            timezone=timezone.utc).strftime('%Y-%m-%d')
+        edate = Time(float(emjd), format='mjd').to_datetime(
+            timezone=timezone.utc).strftime('%Y-%m-%d')
+    except Exception:
+        sdate = '--'
+        edate = '--'
+    nobs = int(summary.get('selected_total', 0) or 0)
+    suffix = f' [{sdate} to {edate} (Nobs={nobs})]'
+    fig_prof.title.text = str(fig_prof.title.text) + suffix
+    fig_res.title.text = str(fig_res.title.text) + suffix
+    fig_spread.title.text = str(fig_spread.title.text) + suffix
+
+    layout = bk_column([fig_prof, fig_res, fig_spread],
                        sizing_mode='stretch_width')
     total_ms = load_ms + stats_ms + fig_ms
     summary['timings_ms'] = {
@@ -1918,6 +2135,116 @@ def build_ccf_plot_components(
     if layout is None:
         return {
             'has_plot': False, 'script': '', 'div': '',
+            'message': msg,
+            'sample_info': summary,
+        }
+    script, div = plot_to_components(layout)
+    return {
+        'has_plot': True,
+        'script': script,
+        'div': div,
+        'message': '',
+        'sample_info': summary,
+    }
+
+
+def build_ccf_rv_plot_json(
+    htable_rows: List[Dict[str, Any]],
+    preset: Dict[str, Any],
+    target_id: str = 'op-ccf-rv-plot-div',
+) -> Dict[str, Any]:
+    """Build fast CCF RV-vs-time plot JSON from htable only."""
+    layout, msg, summary = _build_ccf_rv_layout(htable_rows)
+    if layout is None:
+        return {'has_plot': False, 'message': msg, 'sample_info': summary}
+    script, div = plot_to_components(layout)
+    return {
+        'has_plot': True,
+        'script': script,
+        'div': div,
+        'message': '',
+        'sample_info': summary,
+    }
+
+
+def build_ccf_rv_plot_components(
+    htable_rows: List[Dict[str, Any]],
+    preset: Dict[str, Any],
+) -> Dict[str, Any]:
+    """Build fast CCF RV-vs-time plot as components from htable only."""
+    layout, msg, summary = _build_ccf_rv_layout(htable_rows)
+    if layout is None:
+        return {
+            'has_plot': False,
+            'script': '',
+            'div': '',
+            'message': msg,
+            'sample_info': summary,
+        }
+    script, div = plot_to_components(layout)
+    return {
+        'has_plot': True,
+        'script': script,
+        'div': div,
+        'message': '',
+        'sample_info': summary,
+    }
+
+
+def build_ccf_profile_plot_json(
+    htable_rows: List[Dict[str, Any]],
+    ftable_ccf_rows: List[Dict[str, Any]],
+    paths: Dict[str, str],
+    preset: Dict[str, Any],
+    ccf_mjd_start: Optional[float] = None,
+    ccf_mjd_end: Optional[float] = None,
+    ccf_nobs: int = 100,
+    target_id: str = 'op-ccf-profile-plot-div',
+) -> Dict[str, Any]:
+    """Build CCF median profile/residual/spread plot JSON."""
+    layout, msg, summary = _build_ccf_profile_layout(
+        htable_rows,
+        ftable_ccf_rows,
+        paths,
+        ccf_mjd_start=ccf_mjd_start,
+        ccf_mjd_end=ccf_mjd_end,
+        ccf_nobs=ccf_nobs,
+    )
+    if layout is None:
+        return {'has_plot': False, 'message': msg, 'sample_info': summary}
+    script, div = plot_to_components(layout)
+    return {
+        'has_plot': True,
+        'script': script,
+        'div': div,
+        'message': '',
+        'sample_info': summary,
+    }
+
+
+def build_ccf_profile_plot_components(
+    htable_rows: List[Dict[str, Any]],
+    ftable_ccf_rows: List[Dict[str, Any]],
+    paths: Dict[str, str],
+    preset: Dict[str, Any],
+    ccf_mjd_start: Optional[float] = None,
+    ccf_mjd_end: Optional[float] = None,
+    ccf_nobs: int = 100,
+) -> Dict[str, Any]:
+    """Build CCF median profile/residual/spread plot as components."""
+    layout, msg, summary = _build_ccf_profile_layout(
+        htable_rows,
+        ftable_ccf_rows,
+        paths,
+        ccf_mjd_start=ccf_mjd_start,
+        ccf_mjd_end=ccf_mjd_end,
+        ccf_nobs=ccf_nobs,
+    )
+    if layout is None:
+        return {
+            'has_plot': False,
+            'script': '',
+            'div': '',
             'message': msg,
             'sample_info': summary,
         }
@@ -2067,7 +2394,7 @@ def _make_lbl_rv_figure(
                    alpha=0.7, legend_label='Good')
         fig.add_layout(Whisker(
             source=src, base='x', upper='upper', lower='lower',
-            line_color='green', line_alpha=0.5,
+            line_color='green', line_alpha=0.7,
         ))
     if np.any(reset_mask):
         src_rst = ColumnDataSource(dict(
@@ -2080,7 +2407,7 @@ def _make_lbl_rv_figure(
                    legend_label='Reset RV')
         fig.add_layout(Whisker(
             source=src_rst, base='x', upper='upper', lower='lower',
-            line_color='mediumpurple', line_alpha=0.5,
+            line_color='mediumpurple', line_alpha=0.7,
         ))
     # -------------------------------------------------------------------------
     diff = float(ylim[1] - ylim[0])
@@ -2249,23 +2576,35 @@ def _make_lbl_wave_figure(
             lower=vrad_key - svrad_key,
         ))
         fig.scatter('x', 'y', source=src_w, size=4, color=color,
-                    alpha=0.6, marker='circle', legend_label=label)
-        fig.add_layout(Whisker(
+                    alpha=0.5, marker='circle', legend_label=label)
+        whisk = Whisker(
             source=src_w, base='x', upper='upper', lower='lower',
-            line_color=color, line_alpha=0.3,
-        ))
-    # overall vrad as black points
+            line_color=color, line_alpha=0.5,
+        )
+        # Match whisker caps to wavelength colour (avoid default black caps).
+        whisk.upper_head.line_color = color
+        whisk.lower_head.line_color = color
+        whisk.upper_head.line_alpha = 0.5
+        whisk.lower_head.line_alpha = 0.5
+        fig.add_layout(whisk)
+    # overall vrad as black points (drawn last so it remains on top)
     src_ov = ColumnDataSource(dict(
         x=dts_ms, y=vrad,
         upper=vrad + svrad,
         lower=vrad - svrad,
     ))
     fig.scatter('x', 'y', source=src_ov, size=5, color='black',
-                alpha=0.8, marker='circle', legend_label='Overall vrad')
-    fig.add_layout(Whisker(
+                alpha=0.55, marker='circle', legend_label='Overall vrad',
+                level='overlay')
+    whisk_ov = Whisker(
         source=src_ov, base='x', upper='upper', lower='lower',
-        line_color='black', line_alpha=0.4,
-    ))
+        line_color='black', line_alpha=0.55,
+    )
+    whisk_ov.upper_head.line_color = 'black'
+    whisk_ov.lower_head.line_color = 'black'
+    whisk_ov.upper_head.line_alpha = 0.55
+    whisk_ov.lower_head.line_alpha = 0.55
+    fig.add_layout(whisk_ov)
     # -------------------------------------------------------------------------
     # initial zoom around overall vrad (outlier rejection)
     pp = np.nanpercentile(vrad, [5, 95])
@@ -2280,6 +2619,8 @@ def _make_lbl_wave_figure(
     legend = fig.legend[0]
     legend.click_policy = 'hide'
     legend.orientation = 'horizontal'
+    if hasattr(legend, 'nrows'):
+        legend.nrows = 2
     legend.label_text_font_size = '9pt'
     legend.spacing = 2
     legend.padding = 4
@@ -2348,14 +2689,21 @@ def _build_lbl_layout(
     ]
     # -------------------------------------------------------------------------
     # wave-binned columns
-    wave_vrad_cols = sorted([
+    wave_vrad_cols = [
         c for c in tbl.colnames
         if c.startswith('vrad_') and 'nm' in c
-    ])
-    wave_svrad_cols = sorted([
+    ]
+    wave_svrad_cols = [
         c for c in tbl.colnames
         if c.startswith('svrad_') and 'nm' in c
-    ])
+    ]
+    def _wave_nm_from_col(colname: str) -> float:
+        m = re.match(r'.*_(\d+)nm', str(colname))
+        if m:
+            return float(m.group(1))
+        return float('inf')
+    wave_vrad_cols = sorted(wave_vrad_cols, key=_wave_nm_from_col)
+    wave_svrad_cols = sorted(wave_svrad_cols, key=_wave_nm_from_col)
     wave_vrad_dict: Dict[str, np.ndarray] = {}
     wave_svrad_dict: Dict[str, np.ndarray] = {}
     wavemap: List[float] = []

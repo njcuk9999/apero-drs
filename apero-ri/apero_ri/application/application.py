@@ -701,6 +701,9 @@ class ARIApp(Flask):
         self.add_url_rule('/api/admin/db-ssh-tunnel/list',
               'api_db_ssh_tunnel_list',
               self._api_db_ssh_tunnel_list)
+        self.add_url_rule('/api/admin/db-ssh-tunnel/ssh-hosts',
+              'api_db_ssh_tunnel_ssh_hosts',
+              self._api_db_ssh_tunnel_ssh_hosts)
         self.add_url_rule('/api/admin/db-ssh-tunnel/save',
               'api_db_ssh_tunnel_save',
               self._api_db_ssh_tunnel_save,
@@ -2047,8 +2050,40 @@ class ARIApp(Flask):
             'DATABASE_SSH_CONFIG_HOST': ssh_host,
             'DATABASE_SSH_LOCAL_PORT': local_port,
             'DATABASE_SSH_REMOTE_PORT': remote_port,
+            # DB setup management supports multiple simultaneously active
+            # tunnels; do not force-close other definitions for this path.
+            'DATABASE_SSH_ALLOW_MULTIPLE': True,
             'LOCAL_DATA_DIR': str(self._resolve_local_data_dir()),
         }
+
+    @staticmethod
+    def _list_ssh_config_hosts() -> List[str]:
+        """Return host aliases from ~/.ssh/config (excluding wildcards)."""
+        cfg_path = Path.home() / '.ssh' / 'config'
+        if not cfg_path.exists() or not cfg_path.is_file():
+            return []
+
+        hosts: set = set()
+        try:
+            with open(cfg_path, 'r', encoding='utf-8', errors='replace') as fobj:
+                for raw_line in fobj:
+                    line = str(raw_line).strip()
+                    if not line or line.startswith('#'):
+                        continue
+                    if not line.lower().startswith('host '):
+                        continue
+                    parts = line.split()[1:]
+                    for token in parts:
+                        tval = str(token or '').strip()
+                        if not tval:
+                            continue
+                        if any(ch in tval for ch in ['*', '?', '!']):
+                            continue
+                        hosts.add(tval)
+        except Exception:
+            return []
+
+        return sorted(hosts)
 
     def _list_db_tunnel_rows(self) -> List[dict]:
         """List DB tunnel definitions with live health details."""
@@ -5102,11 +5137,11 @@ class ARIApp(Flask):
         profile_id = request.args.get('profile_id', '').strip()
         objname = request.args.get('objname', '').strip()
         plot_group = str(request.args.get('plot_group', 'all') or 'all').strip().lower()
-        valid_groups = {'all', 'spectrum', 'ccf', 'time_series'}
+        valid_groups = {'all', 'spectrum', 'ccf', 'ccf_rv', 'ccf_profile', 'time_series'}
         if plot_group not in valid_groups:
             return jsonify(success=False,
                            error=('Invalid plot_group. Use one of: '
-                                  'all, spectrum, ccf, time_series')), 400
+                                  'all, spectrum, ccf, ccf_rv, ccf_profile, time_series')), 400
         if not profile_id or not objname:
             return jsonify(
                 success=False,
@@ -5175,13 +5210,13 @@ class ARIApp(Flask):
         rid_tag = self._rid_cache_tag(accessible_run_ids)
         cache_key = (f'{plot_group}__{objname}__{rid_tag}' if vsys_ms is None
                      else f'{plot_group}__{objname}__vsys{vsys_ms}__{rid_tag}')
-        if plot_group in {'all', 'ccf'} and (
+        if plot_group in {'all', 'ccf', 'ccf_profile'} and (
                 ccf_mjd_start is not None or ccf_mjd_end is not None):
             cache_key += (
                 f'__ccfmjd_{ccf_mjd_start if ccf_mjd_start is not None else ""}'
                 f'_{ccf_mjd_end if ccf_mjd_end is not None else ""}'
             )
-        if plot_group in {'all', 'ccf'}:
+        if plot_group in {'all', 'ccf', 'ccf_profile'}:
             cache_key += f'__ccfnobs_{int(ccf_nobs)}'
         if plot_group in {'all', 'time_series'}:
             cache_key += '__tsaxis_v2'
@@ -5203,7 +5238,7 @@ class ARIApp(Flask):
         # Load only file tables needed for the requested plot group.
         need_ext = plot_group in {'all', 'spectrum', 'time_series'}
         need_tcorr = plot_group in {'all', 'spectrum'}
-        need_ccf = plot_group in {'all', 'ccf'}
+        need_ccf = plot_group in {'all', 'ccf', 'ccf_profile'}
         ftable_ext_rows = (load_object_ftable_rows(objects_dir, objname, 'ext')
                            if need_ext else [])
         ftable_tcorr_rows = (load_object_ftable_rows(objects_dir, objname, 'tcorr')
@@ -5231,7 +5266,8 @@ class ARIApp(Flask):
         from apero_ri.plots.plot_objects import build_snr_plot_json
         from apero_ri.plots.plot_objects import build_berv_plot_json
         from apero_ri.plots.plot_objects import build_spec_plot_json
-        from apero_ri.plots.plot_objects import build_ccf_plot_json
+        from apero_ri.plots.plot_objects import build_ccf_rv_plot_json
+        from apero_ri.plots.plot_objects import build_ccf_profile_plot_json
         from apero_ri.plots.plot_objects import build_ts_snr_plot_json
         from apero_ri.plots.plot_objects import build_ts_airmass_plot_json
 
@@ -5267,9 +5303,16 @@ class ARIApp(Flask):
                     htable_rows, ftable_ext_rows, ftable_tcorr_rows,
                     paths, preset))
 
-        if plot_group in {'all', 'ccf'}:
-            result['ccf'] = _timed_build(
-                'ccf', lambda: build_ccf_plot_json(
+        if plot_group in {'all', 'ccf_rv'}:
+            result['ccf_rv'] = _timed_build(
+                'ccf_rv', lambda: build_ccf_rv_plot_json(
+                    htable_rows,
+                    preset,
+                ))
+
+        if plot_group in {'all', 'ccf', 'ccf_profile'}:
+            ccf_profile_payload = _timed_build(
+                'ccf_profile', lambda: build_ccf_profile_plot_json(
                     htable_rows,
                     ftable_ccf_rows,
                     paths,
@@ -5278,6 +5321,10 @@ class ARIApp(Flask):
                     ccf_mjd_end=ccf_mjd_end,
                     ccf_nobs=ccf_nobs,
                 ))
+            result['ccf_profile'] = ccf_profile_payload
+            if plot_group == 'ccf':
+                # Backward compatibility for any client still expecting "ccf".
+                result['ccf'] = ccf_profile_payload
 
         if plot_group in {'all', 'time_series'}:
             result['ts_snr'] = _timed_build(
@@ -5595,7 +5642,8 @@ class ARIApp(Flask):
         from apero_ri.plots.plot_objects import build_snr_plot_components
         from apero_ri.plots.plot_objects import build_berv_plot_components
         from apero_ri.plots.plot_objects import build_spec_plot_components
-        from apero_ri.plots.plot_objects import build_ccf_plot_components
+        from apero_ri.plots.plot_objects import build_ccf_rv_plot_components
+        from apero_ri.plots.plot_objects import build_ccf_profile_plot_components
         from apero_ri.plots.plot_objects import build_ts_snr_plot_components
         from apero_ri.plots.plot_objects import build_ts_airmass_plot_components
 
@@ -5616,11 +5664,17 @@ class ARIApp(Flask):
                 htable_rows, _ftable_ext, _ftable_tcorr, paths,
                 preset, maximize=True)
             display_name = 'Median Spectrum'
-        elif safe_key == 'ccf':
+        elif safe_key == 'ccf_rv':
+            plot_payload = build_ccf_rv_plot_components(
+                htable_rows,
+                preset,
+            )
+            display_name = 'CCF RV vs Time'
+        elif safe_key in {'ccf', 'ccf_profile'}:
             path_red = str(
             self._profile_get_path(profile_data, 'PATH_RED', '') or '')
             paths = {'PATH_RED': path_red}
-            plot_payload = build_ccf_plot_components(
+            plot_payload = build_ccf_profile_plot_components(
                 htable_rows,
                 _ftable_ccf,
                 paths,
@@ -5629,7 +5683,7 @@ class ARIApp(Flask):
                 ccf_mjd_end=ccf_mjd_end,
                 ccf_nobs=ccf_nobs,
             )
-            display_name = 'CCF Analysis'
+            display_name = 'Median CCF Profile'
         elif safe_key == 'ts_snr':
             plot_payload = build_ts_snr_plot_components(
                 htable_rows, _ftable_ext, preset)
@@ -9713,6 +9767,7 @@ class ARIApp(Flask):
         local_port = body.get('local_port', 0)
         remote_host = str(body.get('remote_host', '')).strip()
         remote_port = body.get('remote_port', 3306)
+        allow_multiple = bool(body.get('allow_multiple', False))
 
         try:
             local_port = int(local_port)
@@ -9720,15 +9775,16 @@ class ARIApp(Flask):
         except (ValueError, TypeError):
             return jsonify(ok=False, error='Invalid port number'), 400
 
-        singleton = apero_async.ensure_single_db_tunnel_slot({
-            'DATABASE_SSH_CONFIG_HOST': ssh_config_host,
-            'DATABASE_HOST': remote_host,
-            'DATABASE_SSH_LOCAL_PORT': local_port,
-            'DATABASE_SSH_REMOTE_PORT': remote_port,
-            'LOCAL_DATA_DIR': str(self._resolve_local_data_dir()),
-        })
-        if not singleton.get('ok'):
-            return jsonify(ok=False, error=singleton.get('error', 'Failed to enforce single active DB SSH tunnel policy.')), 400
+        if not allow_multiple:
+            singleton = apero_async.ensure_single_db_tunnel_slot({
+                'DATABASE_SSH_CONFIG_HOST': ssh_config_host,
+                'DATABASE_HOST': remote_host,
+                'DATABASE_SSH_LOCAL_PORT': local_port,
+                'DATABASE_SSH_REMOTE_PORT': remote_port,
+                'LOCAL_DATA_DIR': str(self._resolve_local_data_dir()),
+            })
+            if not singleton.get('ok'):
+                return jsonify(ok=False, error=singleton.get('error', 'Failed to enforce single active DB SSH tunnel policy.')), 400
 
         result = start_interactive_ssh_tunnel(
             ssh_config_host=ssh_config_host,
@@ -9795,8 +9851,16 @@ class ARIApp(Flask):
             success=True,
             tunnels=rows,
             active_count=active_count,
-            singleton_ok=active_count <= 1,
+            multi_active_supported=True,
         )
+
+    def _api_db_ssh_tunnel_ssh_hosts(self):
+        """List SSH config host aliases from ~/.ssh/config for dropdowns."""
+        user_info, perms = self._require_apero_profile_perm()
+        if not user_info:
+            return jsonify(success=False, error='Unauthorized'), 401
+
+        return jsonify(success=True, hosts=self._list_ssh_config_hosts())
 
     def _api_db_ssh_tunnel_list(self):
         """List DB tunnel definitions for setup UI and profile dropdowns."""
@@ -9908,7 +9972,7 @@ class ARIApp(Flask):
         return jsonify(success=True)
 
     def _api_db_ssh_tunnel_ensure(self):
-        """Ensure selected named tunnel is active (singleton enforced)."""
+        """Ensure selected named tunnel is active."""
         user_info, perms = self._require_apero_profile_perm()
         if not user_info:
             return jsonify(success=False, error='Unauthorized'), 401
@@ -9930,7 +9994,7 @@ class ARIApp(Flask):
             host, port = apero_async._ensure_ssh_tunnel(db_params)
             status = apero_async.get_db_tunnel_status(db_params)
             return jsonify(success=True,
-                           message='DB SSH tunnel is active.',
+                           message='DB SSH tunnel is active (or started).',
                            tunnel_name=tunnel_name,
                            local_host=host,
                            local_port=port,
@@ -10013,7 +10077,11 @@ class ARIApp(Flask):
         password = str(body.get('DATABASE_PASSWORD', '') or '')
         db_name = str(body.get('DATABASE_NAME', '') or '').strip()
 
-        if name:
+        has_direct_tunnel_fields = bool(
+            ssh_config_host or remote_host or local_port
+        )
+
+        if name and not has_direct_tunnel_fields:
             tunnels = self._load_db_tunnel_definitions()
             tdef = tunnels.get(name, {})
             if not isinstance(tdef, dict) or not tdef:
