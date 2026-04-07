@@ -631,6 +631,26 @@ class Database:
         # execute sql command
         self.execute(command, fetch=False)
 
+    def bulk_set_entries(self, updates: List[Dict[str, Any]], key: str,
+                         table: Optional[str] = None,
+                         condition: Optional[str] = None,
+                         chunk_size: int = 100) -> None:
+        """
+        Bulk update rows using a backend-specific strategy.
+
+        :param updates: list of dictionaries, each containing `key` and one or
+                        more columns to update
+        :param key: str, the key column used to match rows
+        :param table: optional table name (uses default when None)
+        :param condition: optional SQL condition to restrict updates
+        :param chunk_size: chunk size used to split updates
+
+        :return: None
+        """
+        _ = updates, key, table, condition, chunk_size
+        emsg = 'Must implement "Database.bulk_set_entries" in child database class'
+        raise NotImplementedError(emsg)
+
     def add_row(self, values: List[object], table: Optional[str] = None,
                 columns: Union[str, List[str]] = "*",
                 unique_cols: Optional[List[str]] = None):
@@ -1080,7 +1100,7 @@ class Database:
         # return astropy table
         return table
 
-    def add_from_pandas(self, df: pd.DataFrame, table: Optional[str],
+    def add_from_pandas(self, df: pd.DataFrame, table: Optional[str] = None,
                         if_exists: str = 'append', index: bool = False,
                         unique_cols: Optional[List[str]] = None):
         """
@@ -1101,6 +1121,15 @@ class Database:
                             are used to form the unique hash for specifying
                             unique rows
 
+        :return:
+        """
+        emsg = 'Please abstract method with SQLiteDatabase or MySQLDatabase'
+        NotImplemented(emsg)
+
+    def _to_pandas(self, command: str) -> Any:
+        """
+        Use pandas to get sql command
+        :param command:
         :return:
         """
         emsg = 'Please abstract method with SQLiteDatabase or MySQLDatabase'
@@ -1336,6 +1365,66 @@ class SQLiteDatabase(Database):
         # update table list
         self._update_table_list_()
 
+    def bulk_set_entries(self, updates: List[Dict[str, Any]], key: str,
+                         table: Optional[str] = None,
+                         condition: Optional[str] = None,
+                         chunk_size: int = 100) -> None:
+        """
+        Bulk update rows in SQLite using CASE statements per chunk.
+
+        :param updates: list of dictionaries, each containing `key` and one or
+                        more columns to update
+        :param key: str, the key column used to match rows
+        :param table: optional table name (uses default when None)
+        :param condition: optional SQL condition to restrict updates
+        :param chunk_size: chunk size used to split updates
+
+        :return: None
+        """
+        if len(updates) == 0:
+            return
+        table = self._infer_table_(table)
+        chunk_size = max(1, int(chunk_size))
+        # loop around chunks
+        for start in range(0, len(updates), chunk_size):
+            chunk = updates[start:start + chunk_size]
+            # find all columns to update in this chunk
+            columns = []
+            for update in chunk:
+                for col in update:
+                    if col != key and col not in columns:
+                        columns.append(col)
+            if len(columns) == 0:
+                continue
+            # construct set clauses using CASE statements
+            set_clauses = []
+            for column in columns:
+                cases = []
+                for update in chunk:
+                    if column not in update:
+                        continue
+                    key_value = _decode_value(update[key])
+                    col_value = _decode_value(update[column])
+                    cases.append('WHEN {0} THEN {1}'.format(key_value,
+                                                            col_value))
+                if len(cases) > 0:
+                    clause = '{0} = CASE {1} {2} ELSE {0} END'
+                    set_clauses.append(clause.format(column, key,
+                                                     ' '.join(cases)))
+            if len(set_clauses) == 0:
+                continue
+            # construct the WHERE clause
+            key_values = []
+            for update in chunk:
+                key_values.append(_decode_value(update[key]))
+            where_conditions = ['{0} IN ({1})'.format(key,
+                                                      ', '.join(key_values))]
+            if condition is not None:
+                where_conditions.insert(0, '({0})'.format(condition))
+            command = 'UPDATE {0} SET {1} WHERE {2}'
+            cargs = [table, ', '.join(set_clauses), ' AND '.join(where_conditions)]
+            self.execute(command.format(*cargs), fetch=False)
+
     # table methods
     def add_table(self, name: str, field_names: List[str],
                   field_types: List[Union[str, type]],
@@ -1529,7 +1618,7 @@ class SQLiteDatabase(Database):
         emsg = 'database locked for > {0} s'.format(MAXWAIT)
         raise sqlite3.OperationalError(emsg)
 
-    def add_from_pandas(self, df: pd.DataFrame, table: Optional[str],
+    def add_from_pandas(self, df: pd.DataFrame, table: Optional[str] = None,
                         if_exists: str = 'append', index: bool = False,
                         unique_cols: Optional[List[str]] = None):
         """
@@ -1595,6 +1684,33 @@ class SQLiteDatabase(Database):
             raise drs_base.base_error(ecode, emsg, 'error', args=eargs,
                                       exceptionname='DatabaseError',
                                       exception=DatabaseError)
+
+    def _to_pandas(self, command: str) -> pd.DataFrame:
+        """
+        Use pandas to get sql command
+        :param command:
+        :return:
+        """
+        # set function name
+        func_name = __NAME__ + '.SQLiteDatabase._to_pandas()'
+        # try to read sql using pandas
+        # noinspection PyBroadException
+        try:
+            conargs = dict(func=func_name, kind='_READ_SQL:sqlite3')
+            with closing(self.connection(**conargs)) as tmpconn:
+                df = pd.read_sql(command, tmpconn)
+                tmpconn.close()
+        except Exception as _:
+            # log error: Could not read SQL command as pandas table
+            ecode = '00-002-00048'
+            emsg = drs_base.BETEXT[ecode]
+            eargs = [command, self.path, func_name]
+            # log base error
+            raise drs_base.base_error(ecode, emsg, 'error', args=eargs,
+                                      exceptionname='DatabaseError',
+                                      exception=DatabaseError)
+        # return dataframe
+        return df
 
     def table_info(self, table: Optional[str] = None
                    ) -> Tuple[List[str], List[str]]:
@@ -1790,7 +1906,7 @@ class MySQLDatabase(Database):
         _ = path
         # set function name
         func_name = '{0}.{1}.{2}()'.format(__NAME__, self.classname,
-                                           '__init__')
+                                           '__init__()')
         # set path
         aperohome = os.path.join(os.path.expanduser('~'), '.apero')
         if not os.path.exists(aperohome):
@@ -1957,6 +2073,66 @@ class MySQLDatabase(Database):
         self.__dict__.update(state)
         # update table list
         self._update_table_list_()
+
+    def bulk_set_entries(self, updates: List[Dict[str, Any]], key: str,
+                         table: Optional[str] = None,
+                         condition: Optional[str] = None,
+                         chunk_size: int = 100) -> None:
+        """
+        Bulk update rows in MySQL using CASE statements per chunk.
+
+        :param updates: list of dictionaries, each containing `key` and one or
+                        more columns to update
+        :param key: str, the key column used to match rows
+        :param table: optional table name (uses default when None)
+        :param condition: optional SQL condition to restrict updates
+        :param chunk_size: chunk size used to split updates
+
+        :return: None
+        """
+        if len(updates) == 0:
+            return
+        table = self._infer_table_(table)
+        chunk_size = max(1, int(chunk_size))
+        # loop around chunks
+        for start in range(0, len(updates), chunk_size):
+            chunk = updates[start:start + chunk_size]
+            # find all columns to update in this chunk
+            columns = []
+            for update in chunk:
+                for col in update:
+                    if col != key and col not in columns:
+                        columns.append(col)
+            if len(columns) == 0:
+                continue
+            # construct set clauses using CASE statements
+            set_clauses = []
+            for column in columns:
+                cases = []
+                for update in chunk:
+                    if column not in update:
+                        continue
+                    key_value = _decode_value(update[key])
+                    col_value = _decode_value(update[column])
+                    cases.append('WHEN {0} THEN {1}'.format(key_value,
+                                                            col_value))
+                if len(cases) > 0:
+                    clause = '{0} = CASE {1} {2} ELSE {0} END'
+                    set_clauses.append(clause.format(column, key,
+                                                     ' '.join(cases)))
+            if len(set_clauses) == 0:
+                continue
+            # construct the WHERE clause
+            key_values = []
+            for update in chunk:
+                key_values.append(_decode_value(update[key]))
+            where_conditions = ['{0} IN ({1})'.format(key,
+                                                      ', '.join(key_values))]
+            if condition is not None:
+                where_conditions.insert(0, '({0})'.format(condition))
+            command = 'UPDATE {0} SET {1} WHERE {2}'
+            cargs = [table, ', '.join(set_clauses), ' AND '.join(where_conditions)]
+            self.execute(command.format(*cargs), fetch=False)
 
     # get / set / execute / add methods
     def execute(self, command: str, fetch: bool) -> Any:
@@ -2272,7 +2448,7 @@ class MySQLDatabase(Database):
         # execute command
         self.execute(command, fetch=False)
 
-    def add_from_pandas(self, df: pd.DataFrame, table: Optional[str],
+    def add_from_pandas(self, df: pd.DataFrame, table: Optional[str] = None,
                         if_exists: str = 'append', index: bool = False,
                         unique_cols: Optional[List[str]] = None):
         """
@@ -2416,6 +2592,7 @@ class MySQLDatabase(Database):
                     cursor.close()
                     conn.close()
                     # log error: {0}: {1} \n\t Command: {2} \n\t Function: {3}
+                    ecode = '00-002-00040'
                     ecmd = f'Table={table} Path={self.path} {command}'
                     emsg = drs_base.BETEXT[ecode]
                     eargs = [type(e), str(e), ecmd, func_name]

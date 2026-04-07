@@ -780,12 +780,14 @@ def update_index_db(params: ParamDict, block_kind: str,
                     filename: FileType = None,
                     suffix: str = '',
                     findexdbm: Union[FileIndexDatabase, None] = None,
-                    job: int = None, total_jobs: int = None
-                    ) -> FileIndexDatabase:
+                    job: int = None, total_jobs: int = None,
+                    return_entries: bool = False
+                    ) -> Union[FileIndexDatabase, Dict[str, Any], None]:
     """
     Block function to update index database
 
-    (if params['INPUTS']['PARALLEL'] is True does not update database).
+    (if params['INPUTS']['PARALLEL'] is True does not update the database
+    directly unless return_entries is requested).
 
     :param params: ParamDict, the parameter dictionary of constants
     :param block_kind: str, the block kind (raw/tmp/red)
@@ -799,9 +801,14 @@ def update_index_db(params: ParamDict, block_kind: str,
                    to only set these files
     :param findexdbm: IndexDatabase instance or None, if set will not reload
                      index database if None will load index database
+    :param return_entries: bool, if True do not write to the database here;
+                           instead return a serializable payload describing the
+                           updated scope and rows
 
-    :return: updated or loaded index database unless
-             params['INPUTS']['PARALLEL'] is True
+    :return: updated or loaded index database unless return_entries is True,
+             in which case a payload dictionary is returned. If
+             params['INPUTS']['PARALLEL'] is True and return_entries is False,
+             returns the loaded database unchanged.
     """
     # start a message if job and total_jobs given
     if (job is not None) and (total_jobs is not None):
@@ -819,7 +826,7 @@ def update_index_db(params: ParamDict, block_kind: str,
     if 'INPUTS' in params:
         if params['INPUTS'].get('PARALLEL', False):
             update_index = False
-    if not update_index:
+    if not update_index and not return_entries:
         return findexdbm
     # -------------------------------------------------------------------------
     # deal with white list and black list
@@ -841,11 +848,14 @@ def update_index_db(params: ParamDict, block_kind: str,
         exclude_dirs = list(excludelist)
     # -------------------------------------------------------------------------
     # update index database with raw files
-    findexdbm.update_entries(block_kind=block_kind,
-                             exclude_directories=exclude_dirs,
-                             include_directories=include_dirs,
-                             filename=filename, suffix=suffix,
-                             job_msg=job_msg)
+    result = findexdbm.update_entries(block_kind=block_kind,
+                                      exclude_directories=exclude_dirs,
+                                      include_directories=include_dirs,
+                                      filename=filename, suffix=suffix,
+                                      job_msg=job_msg,
+                                      return_entries=return_entries)
+    if return_entries:
+        return result
     # -------------------------------------------------------------------------
     # we need to reset some globally stored variables - these should be
     #   recalculated when used
@@ -855,11 +865,9 @@ def update_index_db(params: ParamDict, block_kind: str,
     return findexdbm
 
 
-def find_files(params: ParamDict, block_kind: str,
-               filters: Dict[str, str], columns='ABSPATH',
-               findexdbm: Union[FileIndexDatabase, None] = None,
-               start_date: float = None, end_date: float = None,
-               time_column: str = 'KW_ACQTIME'
+def find_files(params: ParamDict, block_kind: str, filters: Dict[str, str],
+               columns='ABSPATH',
+               findexdbm: Union[FileIndexDatabase, None] = None
                ) -> Union[np.ndarray, pd.DataFrame]:
     """
     Find a type of files from the file index database using a set of filters
@@ -874,12 +882,6 @@ def find_files(params: ParamDict, block_kind: str,
                     if returned otherwise a pandas dataframe is returned
     :param findexdbm: FileIndexDatabase class or None, pass a current
                       file index database class (otherwise reloaded)
-    :param start_date: float, start date for filtering files by
-                      [same date format as time_column], None skips this
-    :param end_date: float, end date for filtering files by
-                      [same date format as time_column], None skip this
-    :param time_column: str, the column to use for time filtering (must be a
-                        column in the database and must be a float time format)
 
     :return: if one column a numpy 1D array is returned, otherwise a pandas
              dataframe is returned with all the requested columns
@@ -913,11 +915,6 @@ def find_files(params: ParamDict, block_kind: str,
                 subconditions.append('{0}="{1}"'.format(fkey, _filter))
             # add subconditions to condition
             condition += ' AND ({0})'.format(' OR '.join(subconditions))
-    # deal with start time
-    if not drs_text.null_text(start_date, ['', 'Null', 'None', None]):
-        condition += f' AND {time_column} >={start_date}'
-    if not drs_text.null_text(end_date, ['', 'Null', 'None', None]):
-        condition += f' AND {time_column} <={end_date}'
     # get columns for this condition
     return findexdbm.get_entries(columns, block_kind=block_kind,
                                  condition=condition)

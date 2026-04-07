@@ -384,7 +384,8 @@ __all__ = [
     'REPROCESS_RUN_KEY', 'REPROCESS_OBSDIR_COL', 'REPROCESS_ABSFILECOL',
     'REPROCESS_MODIFIEDCOL', 'REPROCESS_SORTCOL_HDRKEY',
     'REPROCESS_RAWINDEXFILE', 'REPROCESS_SEQCOL', 'REPROCESS_TIMECOL',
-    'REPROCESS_REJECT_SQL', 'REPROCESS_REMOVE_NGROUP', 'REPROCESS_OBJ_SCI_SQL',
+    'REPROCESS_REJECT_SQL', 'REPROCESS_REMOVE_NGROUP',
+    'REPROCESS_DB_CHUNK_SIZE', 'REPROCESS_OBJ_SCI_SQL',
     'SUMMARY_LATEX_PDF', 'EXPMETER_MIN_LAMBDA', 'EXPMETER_MAX_LAMBDA',
     'EXPMETER_TELLU_THRES', 'REPROCESS_PINAMECOL', 'DRIFT_DPRTYPES',
     'DRIFT_DPR_FIBER_TYPE',
@@ -5861,6 +5862,14 @@ REPROCESS_REMOVE_NGROUP = Const('REPROCESS_REMOVE_NGROUP', value=20, dtype=int,
                                 source=__NAME__, group=cgroup,
                                 description='Define the number of targets to '
                                             'remove (max) per query')
+
+# Define the number of chunks to batch database updates info
+#    (only in processing)
+REPROCESS_DB_CHUNK_SIZE = Const('REPROCESS_DB_CHUNK_SIZE', value=500, dtype=int,
+                                source=__NAME__, group=cgroup,
+                                description='Define the number of chunks '
+                                            'to batch database updates into'
+                                            ' (only in processing)')
 
 # Define the extra SQL science object select critera
 REPROCESS_OBJ_SCI_SQL = Const('REPROCESS_OBJ_SCI_SQL', value='', dtype=str,
