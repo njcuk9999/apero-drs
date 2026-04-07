@@ -225,13 +225,10 @@ chmod 600 ~/.ssh/authorized_keys</pre>
 
         <div class="ari-ae-field">
             <label class="ari-ae-label">Mount execution mode</label>
-            <label style="display:inline-flex; align-items:flex-start; gap:8px; font-size:0.92em; color:#2b2b2b;">
-                <input type="checkbox" id="smManualMode" onchange="smResetConnectionValidation()" style="margin-top:2px;">
-                <span>
-                    Manual mode: do not run SSHFS automatically.
-                    The Mount action will provide the exact command to run manually.
-                </span>
-            </label>
+            <div style="font-size:0.92em; color:#2b2b2b;">
+                Command-only mode: this UI never mounts SSHFS directly.
+                The Mount action copies the exact command for you to run in your terminal.
+            </div>
         </div>
 
         <div style="display:flex; gap:10px; flex-wrap:wrap; margin-top:8px;">
@@ -525,7 +522,7 @@ function smCandidate() {
         remote_path: (document.getElementById('smRemotePath').value || '').trim(),
         local_mount: (document.getElementById('smLocalMount').value || '').trim(),
         ssh_key: (document.getElementById('smSshKey').value || '').trim(),
-        manual_mode: !!(document.getElementById('smManualMode') && document.getElementById('smManualMode').checked),
+        manual_mode: true,
     };
 }
 
@@ -538,7 +535,6 @@ function smCandidateKey(obj) {
         remote_path: obj.remote_path,
         local_mount: obj.local_mount,
         ssh_key: obj.ssh_key,
-        manual_mode: !!obj.manual_mode,
     });
 }
 
@@ -587,8 +583,6 @@ function smClearForm() {
     document.getElementById('smRemoteUser').value = 'root';
     const configHost = document.getElementById('smSshConfigHost');
     if (configHost) configHost.value = '';
-    const manualMode = document.getElementById('smManualMode');
-    if (manualMode) manualMode.checked = false;
     const directRadio = document.querySelector('input[name="smConnectionMode"][value="direct"]');
     if (directRadio) directRadio.checked = true;
     smUpdateConnectionMode();
@@ -604,8 +598,6 @@ function smApplyMountToForm(mount) {
     document.getElementById('smRemotePath').value = mount.remote_path || '';
     document.getElementById('smLocalMount').value = mount.local_mount || '';
     document.getElementById('smSshKey').value = mount.ssh_key || '';
-    const manualMode = document.getElementById('smManualMode');
-    if (manualMode) manualMode.checked = !!mount.manual_mode;
     document.getElementById('smRemoteUser').value = mount.remote_user || 'root';
     const configHost = document.getElementById('smSshConfigHost');
     if (configHost) configHost.value = mount.ssh_config_host || '';
@@ -945,10 +937,9 @@ async function smLoadMountsStatus() {
                                 ${isStale
                                      ? `<button class="ari-btn ari-btn--sm ari-btn--secondary" onclick="smUnmountVolume('${mount.name}')"><i class="fa-solid fa-arrow-down-to-bracket"></i> Unmount</button>
                                          <button class="ari-btn ari-btn--sm ari-btn--secondary" onclick="smFixStuckMount('${mount.name}')" title="Repair a stale or wedged SSHFS/FUSE mount"><i class="fa-solid fa-wrench"></i> Fix stuck mount</button>
-                                         <button class="ari-btn ari-btn--sm ari-btn--primary" onclick="smUnmountAndReauth('${mount.name}')" title="Fix stale mount and open interactive session to re-authenticate"><i class="fa-solid fa-terminal"></i> Re-authenticate</button>`
+                                         <button class="ari-btn ari-btn--sm ari-btn--primary" onclick="smUnmountAndReauth('${mount.name}')" title="Fix stale mount then copy the mount command"><i class="fa-solid fa-copy"></i> Copy Mount Command</button>`
                                      : !isMounted
-                                     ? `<button class="ari-btn ari-btn--sm ari-btn--primary" onclick="smMountVolume('${mount.name}')"><i class="fa-solid fa-arrow-up-from-bracket"></i> ${manualMode ? 'Mount Command' : 'Mount'}</button>
-                                         ${manualMode ? '' : `<button class="ari-btn ari-btn--sm ari-btn--secondary" onclick="smInteractiveMount('${mount.name}')" title="Use for password/2FA authentication"><i class="fa-solid fa-terminal"></i> Mount (interactive)</button>`}
+                                     ? `<button class="ari-btn ari-btn--sm ari-btn--primary" onclick="smMountVolume('${mount.name}')"><i class="fa-solid fa-copy"></i> Copy Mount Command</button>
                                          <button class="ari-btn ari-btn--sm ari-btn--secondary" onclick="smFixStuckMount('${mount.name}')" title="Use when the mount path is wedged even though it looks unmounted"><i class="fa-solid fa-wrench"></i> Fix stuck mount</button>`
                                      : `<button class="ari-btn ari-btn--sm ari-btn--secondary" onclick="smUnmountVolume('${mount.name}')"><i class="fa-solid fa-arrow-down-to-bracket"></i> Unmount</button>
                                          <button class="ari-btn ari-btn--sm ari-btn--secondary" onclick="smFixStuckMount('${mount.name}')" title="Use if normal unmount hangs or the mount behaves oddly"><i class="fa-solid fa-wrench"></i> Fix stuck mount</button>`}
@@ -976,21 +967,34 @@ async function smMountVolume(mountName) {
             smSetMsgWithLog(data.error || 'Failed to mount.', false, logLines);
             return;
         }
-        if (data.manual_mode) {
-            const command = String(data.command || '').trim();
-            if (command) {
+        const command = String(data.command || '').trim();
+        if (command && navigator.clipboard && navigator.clipboard.writeText) {
+            try {
+                await navigator.clipboard.writeText(command);
                 smSetMsgWithLog(
-                    (data.message || 'Manual mode enabled.') + ' Use the command below.',
+                    (data.message || 'Mount command ready.')
+                    + ' Command copied. Run this command in your terminal:\n' + command,
                     true,
                     [`Manual mount command: ${command}`].concat(logLines)
                 );
-            } else {
-                smSetMsgWithLog(data.message || 'Manual mode enabled.', true, logLines);
+            } catch (_) {
+                smSetMsgWithLog(
+                    (data.message || 'Mount command ready.')
+                    + ' Copy and run this command in your terminal:\n' + command,
+                    true,
+                    [`Manual mount command: ${command}`].concat(logLines)
+                );
             }
-            smLoadMountsStatus();
-            return;
+        } else if (command) {
+            smSetMsgWithLog(
+                (data.message || 'Mount command ready.')
+                + ' Copy and run this command in your terminal:\n' + command,
+                true,
+                [`Manual mount command: ${command}`].concat(logLines)
+            );
+        } else {
+            smSetMsgWithLog(data.message || 'Mount command ready.', true, logLines);
         }
-        smSetMsgWithLog(data.message || 'Mounted.', true, logLines);
         smLoadMountsStatus();
     } catch (err) {
         smSetMsg('Error mounting: ' + err.message, false);
@@ -1282,7 +1286,7 @@ async function smTermSendInput() {
 
 async function smUnmountAndReauth(mountName) {
     if (!SM_CAN_MANAGE) return;
-    smSetMsg(`Fixing stale mount "${mountName}" before re-authentication...`, true);
+    smSetMsg(`Fixing stale mount "${mountName}" before copying mount command...`, true);
     try {
         const res = await fetch(`/api/admin/sshfs/mounts/unmount-lazy/${encodeURIComponent(mountName)}`, {
             method: 'POST',
@@ -1292,10 +1296,10 @@ async function smUnmountAndReauth(mountName) {
             smSetMsg(`Failed to fix stuck mount "${mountName}": ${data.error || 'unknown error'}. Try the Fix stuck mount button first.`, false);
             return;
         }
-        smSetMsg(`Fixed "${mountName}". Starting interactive re-authentication...`, true);
-        await smInteractiveMount(mountName);
+        smSetMsg(`Fixed "${mountName}". Getting mount command...`, true);
+        await smMountVolume(mountName);
     } catch (err) {
-        smSetMsg('Error during re-authentication: ' + err.message, false);
+        smSetMsg('Error while preparing mount command: ' + err.message, false);
     }
 }
 

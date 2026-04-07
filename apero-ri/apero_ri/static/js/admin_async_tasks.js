@@ -36,6 +36,7 @@
     var noInstrEl       = document.getElementById('at-no-instruments');
 
     var btnRunAll       = document.getElementById('btn-run-all');
+    var btnForceRunAll  = document.getElementById('btn-force-run-all');
     var runningBadge    = document.getElementById('at-running-badge');
 
     var activeList      = document.getElementById('active-task-list');
@@ -142,6 +143,7 @@
     var btnRunAllReplace= document.getElementById('btn-runall-replace');
     var btnRunAllAdd    = document.getElementById('btn-runall-add');
     var btnRunAllCancel = document.getElementById('btn-runall-cancel');
+    var runAllForceMode = false;
 
     // File viewer modal
     var fileModal       = document.getElementById('at-file-modal');
@@ -1106,8 +1108,8 @@
        Run All
     ----------------------------------------------------------------------- */
     function bindRunAll() {
-        if (!btnRunAll) return;
-        btnRunAll.addEventListener('click', function () {
+        function queueRunAll(forceRun) {
+            runAllForceMode = !!forceRun;
             // Check if queue is non-empty
             fetch(urls.status)
                 .then(function (r) { return r.json(); })
@@ -1118,13 +1120,25 @@
                     if (busy) {
                         runAllModal.style.display = '';
                     } else {
-                        doRunAll('add');
+                        doRunAll('add', runAllForceMode);
                     }
                 });
-        });
+        }
+
+        if (btnRunAll) {
+            btnRunAll.addEventListener('click', function () {
+                queueRunAll(false);
+            });
+        }
+        if (btnForceRunAll) {
+            btnForceRunAll.addEventListener('click', function () {
+                queueRunAll(true);
+            });
+        }
+        if (!btnRunAll && !btnForceRunAll) return;
     }
 
-    function doRunAll(action) {
+    function doRunAll(action, forceRun) {
         var localDir = window.ARI_LOCAL_DATA_DIR || '';
         fetch(urls.runAll, {
             method: 'POST',
@@ -1132,11 +1146,13 @@
             body: JSON.stringify({
                 instrument: currentInstrument,
                 action: action,
+                force_run: !!forceRun,
                 local_data_dir: localDir,
             }),
         }).then(function (r) { return r.json(); }).then(function (d) {
             if (d.success) {
-                showToast('Added ' + (d.added || []).length + ' task(s) to queue.', 'success');
+                var msgPrefix = forceRun ? 'Force-queued ' : 'Added ';
+                showToast(msgPrefix + (d.added || []).length + ' task(s) to queue.', 'success');
                 refreshCurrentTasks();
             } else {
                 showToast('Run All failed: ' + d.error, 'error');
@@ -1150,11 +1166,11 @@
         }
         btnRunAllReplace.addEventListener('click', function () {
             runAllModal.style.display = 'none';
-            doRunAll('replace');
+            doRunAll('replace', runAllForceMode);
         });
         btnRunAllAdd.addEventListener('click', function () {
             runAllModal.style.display = 'none';
-            doRunAll('add');
+            doRunAll('add', runAllForceMode);
         });
         btnRunAllCancel.addEventListener('click', function () {
             runAllModal.style.display = 'none';

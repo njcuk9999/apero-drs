@@ -26,6 +26,8 @@
     var fbCurrentPage  = 1;
     var fbPerPage      = 50;
     var fbLoaded       = false;
+    var fbFilterTimers = {};
+    var FB_FILTER_DEBOUNCE_MS = 550;
 
     /* Output types that have a Bokeh plot defined in plots_filename.py */
     var FB_PLOTABLE_OUTPUTS = new Set([
@@ -53,12 +55,8 @@
 
     var FB_GROUP_OPTIONS = [
         'BLOCK_KIND', 'OBS_DIR', 'KW_OUTPUT', 'KW_DPRTYPE',
-        'KW_FIBER', 'KW_PI_NAME', 'KW_RUN_ID',
     ];
 
-    /* -----------------------------------------------------------------------
-       Presets
-    ----------------------------------------------------------------------- */
     var FB_PRESETS = [
         { id: 'default',  label: 'All processed (out, QC\u22651)', preset: 'default' },
         { id: 'none',     label: 'No preset',                      preset: 'none'    },
@@ -118,6 +116,28 @@
         return isNaN(parsed) ? null : parsed;
     }
 
+    function normalizeBoolToken(value) {
+        var raw = String(value === null || value === undefined ? '' : value)
+            .trim().toLowerCase();
+        if (!raw) return '';
+        if (raw === '1' || raw === 'true' || raw === 't'
+                || raw === 'yes' || raw === 'y') {
+            return 'true';
+        }
+        if (raw === '0' || raw === 'false' || raw === 'f'
+                || raw === 'no' || raw === 'n') {
+            return 'false';
+        }
+        return '';
+    }
+
+    function isBooleanLikeValues(values) {
+        if (!values || !values.length) return false;
+        return values.every(function (v) {
+            return normalizeBoolToken(v) !== '';
+        });
+    }
+
     function shouldUseDropdownFilter(colKey) {
         var cname = String(colKey || '').toLowerCase();
         if (/(date|time|timestamp|night|mjd|jd|unix|obs_time)/.test(cname)) {
@@ -131,6 +151,10 @@
         });
 
         if (!nonBlank.length) {
+            return true;
+        }
+
+        if (isBooleanLikeValues(nonBlank)) {
             return true;
         }
 
@@ -239,8 +263,18 @@
                 var q = fbColFilters[col];
                 if (!q) return;
                 rows = rows.filter(function (r) {
-                    return String(r[col] == null ? '' : r[col])
-                        .toLowerCase().indexOf(q) !== -1;
+                    var cellRaw = String(r[col] == null ? '' : r[col]);
+                    var cell = cellRaw.toLowerCase();
+                    if (q === '__bool_true__') {
+                        return normalizeBoolToken(cellRaw) === 'true';
+                    }
+                    if (q === '__bool_false__') {
+                        return normalizeBoolToken(cellRaw) === 'false';
+                    }
+                    if (q === '__blank__') {
+                        return cell.trim() === '';
+                    }
+                    return cell.indexOf(q) !== -1;
                 });
             });
         }

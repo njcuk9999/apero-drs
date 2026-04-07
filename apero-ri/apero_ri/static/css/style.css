@@ -218,10 +218,20 @@ a:hover {
 /* ==========================================================================
    Page pinning
    ========================================================================== */
-.ari-page-pin-fab {
+.ari-page-fab-group {
     position: absolute;
     top: 1.2rem;
     right: 1rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    z-index: 5;
+}
+
+.ari-page-pin-fab {
+    position: relative;
+    top: auto;
+    right: auto;
     width: 2.4rem;
     height: 2.4rem;
     border: 1px solid rgba(44, 62, 80, 0.12);
@@ -288,14 +298,142 @@ a:hover {
     overflow: visible;
 }
 
+.ari-page-api-fab {
+    color: #225f9b;
+}
+
+.ari-page-api-fab:hover,
+.ari-page-api-fab:focus,
+.ari-page-api-fab:focus-visible {
+    color: #1e4f80;
+}
+
+.ari-page-api-fab .ari-page-pin-fab__icon {
+    font-size: 0.95rem;
+}
+
 @media (max-width: 760px) {
-    .ari-page-pin-fab {
+    .ari-page-fab-group {
         top: 0.85rem;
         right: 0.75rem;
+        gap: 0.35rem;
+    }
+
+    .ari-page-pin-fab {
         width: 2.2rem;
         height: 2.2rem;
     }
 }
+
+/* API snippet modal */
+.ari-api-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 1200;
+}
+
+.ari-api-modal__backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.55);
+}
+
+.ari-api-modal__panel {
+    position: relative;
+    margin: 5vh auto 0;
+    width: min(860px, calc(100vw - 2rem));
+    max-height: 90vh;
+    display: flex;
+    flex-direction: column;
+    border-radius: 12px;
+    overflow: hidden;
+    border: 1px solid rgba(0, 0, 0, 0.09);
+    background: #ffffff;
+    box-shadow: 0 26px 80px rgba(15, 23, 42, 0.45);
+}
+
+.ari-api-modal__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    padding: 0.85rem 1rem;
+    border-bottom: 1px solid #e5e7eb;
+    background: linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%);
+}
+
+.ari-api-modal__header h3 {
+    margin: 0;
+    font-size: 1rem;
+    font-weight: 700;
+    color: #1f2937;
+}
+
+.ari-api-modal__actions {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+}
+
+.ari-api-modal__body {
+    padding: 0.9rem 1rem 1rem;
+    overflow: auto;
+}
+
+.ari-api-modal__desc {
+    margin: 0 0 0.7rem;
+    color: #4b5563;
+    font-size: 0.92rem;
+}
+
+.ari-api-modal__note {
+    margin: 0 0 0.65rem;
+    padding: 0.55rem 0.7rem;
+    border-radius: 8px;
+    border: 1px solid #d7dde5;
+    background: #f8fafc;
+    color: #334155;
+    font-size: 0.86rem;
+}
+
+.ari-api-modal__note code {
+    font-family: "JetBrains Mono", "Fira Code", "Cascadia Mono", Consolas, monospace;
+    font-size: 0.82rem;
+}
+
+.ari-api-code-wrap {
+    border: 1px solid #e5e7eb;
+    border-radius: 10px;
+    background: #272822;
+    overflow: auto;
+}
+
+.ari-api-code-lines {
+    margin: 0;
+    padding: 0.8rem 0 0.8rem 3.6rem;
+    list-style: decimal;
+    color: #f8f8f2;
+    font: 0.83rem/1.55 "JetBrains Mono", "Fira Code", "Cascadia Mono", Consolas, monospace;
+}
+
+.ari-api-code-lines li {
+    padding: 0 0.9rem;
+    white-space: pre;
+}
+
+.ari-api-code-lines li::marker {
+    color: #75715e;
+}
+
+.ari-api-code-lines li > span {
+    color: #f8f8f2;
+}
+
+.ari-py-kw { color: #f92672; }
+.ari-py-str { color: #e6db74; }
+.ari-py-cmt { color: #75715e; }
+.ari-py-num { color: #ae81ff; }
+.ari-py-bi { color: #66d9ef; }
 
 .ari-pinned-list {
     display: flex;
@@ -680,6 +818,146 @@ a:hover {
     display: flex;
     flex-direction: column;
     gap: 0.38rem;
+}
+
+.ab-method-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    gap: 0.9rem;
+}
+
+.ab-method-row__col {
+    min-width: 0;
+}
+
+.ab-method-row__col--select {
+    flex: 1 1 260px;
+}
+
+.ab-method-row__col--name {
+    flex: 2 1 320px;
+}
+
+.ab-method-row__col--actions {
+    flex: 0 0 auto;
+    flex-direction: row;
+    align-items: center;
+}
+
+.ab-method-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 0.65rem;
+}
+
+.ab-method-card {
+    border: 1px solid var(--ari-border, #d0d7e6);
+    border-radius: 10px;
+    background: #ffffff;
+    padding: 0.55rem;
+    display: flex;
+    align-items: stretch;
+    gap: 0.4rem;
+}
+
+.ab-method-card--enabled {
+    background: #ecfdf3;
+    border-color: #8ed9b0;
+}
+
+.ab-method-card--disabled {
+    background: #fef1f1;
+    border-color: #f2b5b5;
+}
+
+.ab-method-card--active {
+    box-shadow: inset 0 0 0 2px rgba(17, 24, 39, 0.16);
+}
+
+.ab-method-card--add {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.45rem;
+    cursor: pointer;
+    font-weight: 700;
+    color: #5b2a86;
+    background: #f4ecff;
+    border-color: #cbb1f5;
+    border-style: dashed;
+}
+
+.ab-method-card__body {
+    flex: 1;
+    border: 0;
+    background: transparent;
+    text-align: left;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+    min-width: 0;
+}
+
+.ab-method-card__title {
+    font-weight: 700;
+    color: #1f2937;
+    font-size: 0.9rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.ab-method-card__meta {
+    font-size: 0.8rem;
+    color: #6b7280;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.ab-method-card__actions {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.ab-local-browse-panel {
+    border: 1px solid var(--ari-border, #d0d7e6);
+    border-radius: 8px;
+    background: #fafcff;
+    padding: 0.45rem;
+}
+
+.ab-local-browse-panel__head {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    margin-bottom: 0.4rem;
+    flex-wrap: wrap;
+}
+
+.ab-local-browse-panel__path {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+    font-size: 0.8rem;
+    color: #475569;
+}
+
+.ab-local-browse-panel__list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 0.35rem;
+}
+
+.ab-local-browse-panel__item {
+    border: 1px solid var(--ari-border, #d0d7e6);
+    border-radius: 6px;
+    background: #fff;
+    color: #1f2937;
+    padding: 0.35rem 0.45rem;
+    text-align: left;
+    cursor: pointer;
 }
 
 .ari-ae-label {
@@ -5210,6 +5488,105 @@ details.ot-howto[open] .ot-howto__chevron {
 }
 .ot-meta-bar__item { color: var(--ari-text-muted, #666); }
 .ot-meta-bar__item--muted { opacity: 0.75; }
+
+/* ── Find Object search panel ── */
+.ot-find-panel {
+    margin-bottom: 0.8rem;
+    border: 1px solid var(--ari-border, #ddd);
+    border-radius: 8px;
+    background: var(--ari-card-bg, #fff);
+    padding: 0.75rem;
+}
+
+.ot-find-panel__grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 0.55rem;
+    align-items: end;
+}
+
+.ot-find-field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.ot-find-field__label {
+    font-size: 0.8rem;
+    color: var(--ari-text-muted, #666);
+}
+
+.ot-find-input,
+.ot-find-select {
+    width: 100%;
+    border: 1px solid var(--ari-border, #ccc);
+    border-radius: 4px;
+    padding: 0.34rem 0.5rem;
+    font-size: 0.85rem;
+    background: #fff;
+}
+
+.ot-find-status {
+    margin-top: 0.55rem;
+    font-size: 0.82rem;
+    color: var(--ari-text-muted, #666);
+}
+
+.ot-find-status--error {
+    color: #b42318;
+}
+
+.ot-find-embed {
+    margin-top: -0.2rem;
+}
+
+.ot-find-tabs {
+    display: inline-flex;
+    gap: 0.35rem;
+    margin-bottom: 0.65rem;
+}
+
+.ot-find-tab {
+    border: 1px solid var(--ari-border, #ccc);
+    background: #fff;
+    color: var(--ari-text, #333);
+    border-radius: 999px;
+    padding: 0.25rem 0.65rem;
+    font-size: 0.82rem;
+    cursor: pointer;
+}
+
+.ot-find-tab--active {
+    border-color: var(--ari-primary, #3f51b5);
+    background: rgba(63, 81, 181, 0.1);
+    color: var(--ari-primary, #3f51b5);
+    font-weight: 600;
+}
+
+.ot-find-tab-panel {
+    display: none;
+}
+
+.ot-find-tab-panel--active {
+    display: block;
+}
+
+.ot-find-desc {
+    margin: 0 0 0.55rem 0;
+    font-size: 0.84rem;
+    color: var(--ari-text-muted, #666);
+}
+
+.ot-find-adv-inputs {
+    display: contents;
+}
+
+.ot-find-actions {
+    display: flex;
+    gap: 0.45rem;
+    align-items: center;
+    flex-wrap: wrap;
+}
 
 /* ── Toolbar ── */
 .ot-toolbar {

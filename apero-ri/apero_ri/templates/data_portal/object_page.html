@@ -223,6 +223,29 @@
             </div>
             <div class="at-section-card__body">
                 <div id="op-ccf-plot-wrap">
+                    <p id="op-ccf-sampling-note" class="at-muted-hint" style="margin-bottom:0.75rem;">
+                        The CCF plot uses up to 100 files sampled uniformly in time. Change the time period here:
+                    </p>
+                    <div id="op-ccf-controls" style="display:flex;gap:0.6rem;flex-wrap:wrap;align-items:flex-end;margin-bottom:0.75rem;">
+                        <label style="display:flex;flex-direction:column;gap:0.2rem;">
+                            <span style="font-size:0.82rem;color:var(--text-muted,#6b7280);">Start date (UTC)</span>
+                            <input id="op-ccf-mjd-start" type="date" class="ari-form-input" style="min-width:11rem;">
+                        </label>
+                        <label style="display:flex;flex-direction:column;gap:0.2rem;">
+                            <span style="font-size:0.82rem;color:var(--text-muted,#6b7280);">End date (UTC)</span>
+                            <input id="op-ccf-mjd-end" type="date" class="ari-form-input" style="min-width:11rem;">
+                        </label>
+                        <label style="display:flex;flex-direction:column;gap:0.2rem;">
+                            <span style="font-size:0.82rem;color:var(--text-muted,#6b7280);">Nobs</span>
+                            <input id="op-ccf-nobs" type="number" min="1" max="1000" step="1" value="100" class="ari-form-input" style="width:7rem;">
+                        </label>
+                        <button id="op-ccf-apply-range" type="button" class="ari-btn ari-btn--sm ari-btn--secondary">
+                            <i class="fa-solid fa-rotate"></i> Re-generate
+                        </button>
+                        <button id="op-ccf-reset-range" type="button" class="ari-btn ari-btn--sm ari-btn--secondary">
+                            <i class="fa-solid fa-xmark"></i> Clear range
+                        </button>
+                    </div>
                     <div id="op-ccf-plot-loading" class="at-muted-hint">
                         <i class="fa-solid fa-spinner fa-spin"></i> Loading plot&hellip;
                     </div>
@@ -636,7 +659,7 @@ window.ARI_BASKET_CFG = {
 };
 </script>
 <script src="https://cdn.bokeh.org/bokeh/release/bokeh-3.8.2.min.js"></script>
-<script src="{{ url_for('static', filename='js/object_page.js') }}" defer></script>
+<script src="{{ url_for('static', filename='js/object_page.js', v='20260407a') }}" defer></script>
 <script src="{{ url_for('static', filename='js/file_browser.js') }}" defer></script>
 
 <!-- ──── Filename-click plot modal ──────────────────────────────────────── -->

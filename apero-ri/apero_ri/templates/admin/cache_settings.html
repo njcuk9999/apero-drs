@@ -120,6 +120,29 @@
     margin-top: 0.6rem;
     flex-wrap: wrap;
 }
+.ac-profile-tabs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.45rem;
+    margin-bottom: 0.8rem;
+}
+.ac-profile-tab {
+    border: 1px solid var(--card-border, #d6d9de);
+    background: #fff;
+    border-radius: 999px;
+    padding: 0.25rem 0.7rem;
+    font-size: 0.82rem;
+    cursor: pointer;
+}
+.ac-profile-tab--active {
+    background: #eaf2fc;
+    border-color: #7ca7dd;
+    color: #0b4f9a;
+    font-weight: 600;
+}
+.ac-profile-card--hidden {
+    display: none;
+}
 .ac-toast {
     position: fixed;
     bottom: 1.5rem;
@@ -214,10 +237,25 @@
 <!-- Per-profile breakdown -->
 <div class="ac-card">
     <h2><i class="fa-solid fa-layer-group"></i> Per-profile breakdown</h2>
+    {% if cache_inventory.profiles %}
+    <div id="acProfileTabs" class="ac-profile-tabs" role="tablist" aria-label="Cache profiles">
+        <button type="button" class="ac-profile-tab ac-profile-tab--active"
+                data-profile-tab="all" onclick="acSelectProfileTab('all')">
+            All profiles
+        </button>
+        {% for prof in cache_inventory.profiles %}
+        <button type="button" class="ac-profile-tab"
+                data-profile-tab="{{ prof.instrument }}__{{ prof.profile_id }}"
+                onclick="acSelectProfileTab('{{ prof.instrument }}__{{ prof.profile_id }}')">
+            {{ prof.instrument }} / {{ prof.profile_id }}
+        </button>
+        {% endfor %}
+    </div>
+    {% endif %}
     <div id="acProfileList">
     {% if cache_inventory.profiles %}
     {% for prof in cache_inventory.profiles %}
-    <div class="ac-profile-card">
+    <div class="ac-profile-card" data-profile-card="{{ prof.instrument }}__{{ prof.profile_id }}">
         <h3>
             <i class="fa-solid fa-server"></i>
             {{ prof.instrument }} / {{ prof.profile_id }}
@@ -254,6 +292,33 @@
             {% endfor %}
             </tbody>
         </table>
+        {% if prof.timing_stats %}
+        <div style="margin-top:0.8rem;">
+            <div style="font-size:0.82rem;font-weight:600;color:var(--op-muted,#5f6b78);margin-bottom:0.35rem;">
+                Mean plot timing (from cached object plot payloads)
+            </div>
+            <table class="ac-section-table">
+                <thead>
+                    <tr><th>Plot</th><th>Count</th><th>Min (ms)</th><th>Mean (ms)</th><th>Max (ms)</th></tr>
+                </thead>
+                <tbody>
+                {% for t in prof.timing_stats %}
+                    <tr>
+                        <td>{{ t.plot }}</td>
+                        <td style="text-align:right;">{{ t.count }}</td>
+                        <td style="text-align:right;">{{ t.min_ms }}</td>
+                        <td style="text-align:right;">{{ t.mean_ms }}</td>
+                        <td style="text-align:right;">{{ t.max_ms }}</td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div style="margin-top:0.8rem;font-size:0.82rem;color:var(--op-muted,#5f6b78);">
+            No timing samples yet for this profile.
+        </div>
+        {% endif %}
         {% if can_manage %}
         <div class="ac-btn-row">
             <button class="ari-btn ari-btn--danger ari-btn--sm"
@@ -374,6 +439,17 @@ function acPurgeSection(instrument, profileId, section) {
 
 function acRefresh() {
     location.reload();
+}
+
+function acSelectProfileTab(profileKey) {
+    var key = String(profileKey || 'all');
+    document.querySelectorAll('[data-profile-tab]').forEach(function (btn) {
+        btn.classList.toggle('ac-profile-tab--active', btn.getAttribute('data-profile-tab') === key);
+    });
+    document.querySelectorAll('[data-profile-card]').forEach(function (card) {
+        var show = (key === 'all') || (card.getAttribute('data-profile-card') === key);
+        card.classList.toggle('ac-profile-card--hidden', !show);
+    });
 }
 </script>
 

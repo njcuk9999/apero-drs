@@ -250,49 +250,58 @@ class AperoLocalDataBackupTask(apero_async.AperoAsyncTask):
             tlog('Cancellation requested before cloud sync. Exiting.')
             return
 
-        sync_result = bb.sync_local_backups_to_cloud(
+        sync_all = bb.sync_local_backups_to_all_methods(
             local_data_dir=local_data_dir)
-        provider = str(sync_result.get('provider', 'local_only'))
-        if not sync_result.get('configured', False):
-            warning_msg = str(sync_result.get(
-                'warning', 'Cloud backup is not configured.'))
-            tlog(f'Cloud sync warning ({provider}): {warning_msg}')
+        method_results = list(sync_all.get('results', []) or [])
+        if not method_results:
+            warning_msg = str(sync_all.get(
+                'warning', 'No enabled backup methods found.'))
+            tlog(f'Cloud sync warning: {warning_msg}')
             self.info += (
                 '\n### Cloud mirror status\n'
                 f'**WARNING**: {warning_msg}\n'
-                f'- Provider: `{provider}`\n'
-            )
-        elif not sync_result.get('ok', False):
-            warning_msg = str(sync_result.get('warning', 'Cloud mirror failed.'))
-            tlog(f'Cloud sync failed ({provider}): {warning_msg}')
-            self.info += (
-                '\n### Cloud mirror status\n'
-                f'**WARNING**: {warning_msg}\n'
-                f'- Provider: `{provider}`\n'
-                f'- Uploaded: {int(sync_result.get("uploaded", 0) or 0)}\n'
-                f'- Updated: {int(sync_result.get("updated", 0) or 0)}\n'
-                f'- Deleted: {int(sync_result.get("deleted", 0) or 0)}\n'
             )
         else:
-            query_ms = sync_result.get('query_ms', None)
-            cloud_bytes = int(sync_result.get('cloud_total_bytes', 0) or 0)
-            cloud_count = int(sync_result.get('cloud_total_count', 0) or 0)
-            tlog(
-                f'Cloud sync ok ({provider}): uploaded={int(sync_result.get("uploaded", 0) or 0)}, '
-                f'updated={int(sync_result.get("updated", 0) or 0)}, '
-                f'deleted={int(sync_result.get("deleted", 0) or 0)}, '
-                f'cloud_files={cloud_count}.'
-            )
-            self.info += (
-                '\n### Cloud mirror status\n'
-                f'- Provider: `{provider}`\n'
-                f'- Uploaded: {int(sync_result.get("uploaded", 0) or 0)}\n'
-                f'- Updated: {int(sync_result.get("updated", 0) or 0)}\n'
-                f'- Deleted: {int(sync_result.get("deleted", 0) or 0)}\n'
-                f'- Cloud files: {cloud_count}\n'
-                f'- Cloud size: {bb.format_bytes(cloud_bytes)}\n'
-                f'- Query time: {query_ms if query_ms is not None else "n/a"} ms\n'
-            )
+            self.info += '\n### Cloud mirror status\n'
+            for result in method_results:
+                method_name = str(result.get('method_name', 'method'))
+                provider = str(result.get('provider', 'local_only'))
+                ok = bool(result.get('ok', False))
+                uploaded = int(result.get('uploaded', 0) or 0)
+                updated = int(result.get('updated', 0) or 0)
+                deleted = int(result.get('deleted', 0) or 0)
+                cloud_count = int(result.get('cloud_total_count', 0) or 0)
+                cloud_bytes = int(result.get('cloud_total_bytes', 0) or 0)
+                query_ms = result.get('query_ms', None)
+                warning_msg = str(result.get('warning', '') or '').strip()
+
+                if ok:
+                    tlog(
+                        f'Cloud sync ok ({method_name}/{provider}): '
+                        f'uploaded={uploaded}, updated={updated}, deleted={deleted}.'
+                    )
+                    self.info += (
+                        f'- **{method_name}** (`{provider}`): '
+                        f'uploaded={uploaded}, updated={updated}, '
+                        f'deleted={deleted}, cloud_files={cloud_count}, '
+                        f'cloud_size={bb.format_bytes(cloud_bytes)}, '
+                        f'query_ms={query_ms if query_ms is not None else "n/a"}\n'
+                    )
+                else:
+                    tlog(
+                        f'Cloud sync warning ({method_name}/{provider}): '
+                        f'{warning_msg or "unknown warning"}'
+                    )
+                    self.info += (
+                        f'- **WARNING** {method_name} (`{provider}`): '
+                        f'{warning_msg or "sync failed"}\n'
+                    )
+
+            if not bool(sync_all.get('ok', True)):
+                self.info += (
+                    f'\n**WARNING**: One or more backup methods were skipped/failed. '
+                    f'{str(sync_all.get("warning", "")).strip()}\n'
+                )
 
         self.last_run = generated_at
         self.progress = 1.0

@@ -473,6 +473,12 @@ class ARIApp(Flask):
         self.add_url_rule('/api/admin/backups/sync-from-cloud',
                   'api_admin_backups_sync_from_cloud',
                   self._api_admin_backups_sync_from_cloud, methods=['POST'])
+        self.add_url_rule('/api/admin/backups/browse',
+              'api_admin_backups_browse',
+              self._api_admin_backups_browse)
+        self.add_url_rule('/api/admin/backups/validate-dir',
+              'api_admin_backups_validate_dir',
+              self._api_admin_backups_validate_dir)
         # SSHFS management routes
         self.add_url_rule('/api/admin/sshfs/keys/list',
                   'api_admin_sshfs_keys_list',
@@ -854,6 +860,9 @@ class ARIApp(Flask):
         self.add_url_rule('/data_portal/<profile_id>/object-table',
                           'ri_object_table',
                           self._ri_object_table_view)
+        self.add_url_rule('/data_portal/<profile_id>/find-object',
+                  'ri_find_object',
+                  self._ri_find_object_view)
         self.add_url_rule('/api/data-portal/object-table',
                           'api_object_table',
                           self._api_object_table)
@@ -1934,12 +1943,14 @@ class ARIApp(Flask):
         import json as _json
         cfg = bb.load_backup_config()
         providers = bb.PROVIDER_DEFAULTS
-        current_provider = str(cfg.get('provider', 'gdrive_oauth')).strip()
+        current_provider = str(cfg.get('provider', 'local_only')).strip()
         if current_provider not in providers:
-            current_provider = 'gdrive_oauth'
+            current_provider = 'local_only'
 
         local_data_dir = self._resolve_local_data_dir()
-        inventory = bb.backup_inventory(local_data_dir=local_data_dir, cfg=cfg)
+        inventory = bb.backup_inventory(local_data_dir=local_data_dir,
+                        cfg=cfg,
+                        method_id=cfg.get('active_method_id'))
 
         return {
             'backup_cfg': cfg,
@@ -2110,6 +2121,51 @@ class ARIApp(Flask):
         data_dir = self._resolve_local_data_dir()
         cfg = load_cache_config(data_dir)
         inv = cache_inventory(data_dir)
+
+        # Aggregate per-plot timing stats from cached object_plots payloads.
+        # Each cache file stores payload.server_timings_ms from API generation.
+        cache_root = Path(inv.get('cache_dir', '') or '')
+        for prof in inv.get('profiles', []):
+            instrument = str(prof.get('instrument', '') or '').strip()
+            profile_id = str(prof.get('profile_id', '') or '').strip()
+            timing_rows = {}
+            if instrument and profile_id and cache_root:
+                section_dir = cache_root / instrument / profile_id / 'object_plots'
+                if section_dir.exists():
+                    for cfile in section_dir.glob('*.json'):
+                        try:
+                            with open(cfile, 'r', encoding='utf-8') as fh:
+                                entry = json.load(fh)
+                            payload = (entry or {}).get('payload', {})
+                            timings = payload.get('server_timings_ms', {})
+                            if not isinstance(timings, dict):
+                                continue
+                            for plot_name, value in timings.items():
+                                try:
+                                    ms = float(value)
+                                except Exception:
+                                    continue
+                                timing_rows.setdefault(str(plot_name), []).append(ms)
+                        except Exception:
+                            continue
+
+            prof['timing_stats'] = []
+            for plot_name in sorted(timing_rows.keys()):
+                values = timing_rows.get(plot_name, [])
+                if not values:
+                    continue
+                count = len(values)
+                vmin = min(values)
+                vmax = max(values)
+                vmean = sum(values) / count
+                prof['timing_stats'].append({
+                    'plot': plot_name,
+                    'count': count,
+                    'min_ms': round(vmin, 2),
+                    'mean_ms': round(vmean, 2),
+                    'max_ms': round(vmax, 2),
+                })
+
         return {
             'can_manage': 'view.admin' in perms,
             'cache_cfg': cfg,
@@ -4341,6 +4397,10 @@ class ARIApp(Flask):
         }
         return render_template('data_portal/object_table.html', **context)
 
+    def _ri_find_object_view(self, profile_id):
+        """Legacy Find Object URL now redirects to object table."""
+        return redirect(url_for('ri_object_table', profile_id=profile_id))
+
     def _api_profiles_list(self):
         """Return list of accessible profile IDs and basic metadata."""
         user_info = self._get_api_user()
@@ -4365,6 +4425,8 @@ class ARIApp(Flask):
     def _api_object_table(self):
         """Return object table rows for a profile, filtered by science group."""
         import json as _json
+        import re
+        import math
         base_dir = Path(self.args.data_dir or str(Path.home() / '.ari'))
 
         user_info = self._get_api_user()
@@ -4451,6 +4513,121 @@ class ARIApp(Flask):
             if row_rids & accessible_run_ids:
                 filtered.append(row)
 
+        # Optional dynamic finder filters.
+        find_only = str(request.args.get('find_only', '')).strip().lower() in {
+            '1', 'true', 'yes', 'on'
+        }
+        name_query = str(request.args.get('name_query', '') or '').strip()
+
+        ra_raw = str(request.args.get('ra', '') or '').strip()
+        dec_raw = str(request.args.get('dec', '') or '').strip()
+        sep_raw = str(request.args.get('separation', '') or '').strip()
+        sep_unit = str(request.args.get('separation_unit', 'arcsec') or '').strip().lower()
+
+        def _norm_variants(value: str):
+            text = str(value or '').strip().lower()
+            if not text:
+                return set()
+            variants = {
+                re.sub(r'[^a-z0-9]+', '', text),
+                re.sub(r'[^a-z0-9]+', '', text.replace('+', 'p').replace('-', 'm')),
+            }
+            return {v for v in variants if v}
+
+        def _name_match_row(row, query):
+            qvars = _norm_variants(query)
+            if not qvars:
+                return True
+            names = [str(row.get('OBJNAME', '') or '')]
+            aliases = str(row.get('ALIASES', '') or '')
+            if aliases:
+                names.extend(part.strip() for part in aliases.split('|') if part.strip())
+
+            for name in names:
+                nvars = _norm_variants(name)
+                if any(qv in nv for qv in qvars for nv in nvars):
+                    return True
+            return False
+
+        def _row_ra_dec_deg(row):
+            ra_keys = ('RA [Deg]', 'RA', 'OBJRA', 'OBJ_RA')
+            dec_keys = ('Dec [Deg]', 'DEC', 'Dec', 'OBJDEC', 'OBJ_DEC')
+            ra_val = None
+            dec_val = None
+            for key in ra_keys:
+                if key in row:
+                    try:
+                        ra_val = float(row.get(key))
+                        break
+                    except Exception:
+                        continue
+            for key in dec_keys:
+                if key in row:
+                    try:
+                        dec_val = float(row.get(key))
+                        break
+                    except Exception:
+                        continue
+            if ra_val is None or dec_val is None:
+                return None
+            return ra_val, dec_val
+
+        has_name_filter = len(name_query) >= 1
+        has_coord_filter = bool(ra_raw and dec_raw and sep_raw)
+
+        ra0 = dec0 = sep_deg = None
+        if has_coord_filter:
+            try:
+                ra0 = float(ra_raw)
+                dec0 = float(dec_raw)
+                sep = float(sep_raw)
+            except ValueError:
+                return jsonify(success=False,
+                               error='Invalid RA/Dec/separation values.'), 400
+
+            if sep_unit == 'deg':
+                sep_deg = sep
+            elif sep_unit == 'arcmin':
+                sep_deg = sep / 60.0
+            else:
+                sep_deg = sep / 3600.0
+
+        if find_only and not has_name_filter and not has_coord_filter:
+            return jsonify(
+                success=True,
+                rows=[],
+                columns=[],
+                column_meta={},
+                generated_at=generated_at,
+                total_rows=len(all_rows),
+                message='Type at least 1 character for object search '
+                        'or provide RA/Dec + separation.',
+            )
+
+        if has_name_filter:
+            filtered = [row for row in filtered if _name_match_row(row, name_query)]
+
+        if has_coord_filter and sep_deg is not None:
+            ra0r = math.radians(ra0)
+            dec0r = math.radians(dec0)
+            cos_sep_max = math.cos(math.radians(max(sep_deg, 0.0)))
+
+            coord_filtered = []
+            for row in filtered:
+                row_coords = _row_ra_dec_deg(row)
+                if row_coords is None:
+                    continue
+                ra1, dec1 = row_coords
+                ra1r = math.radians(ra1)
+                dec1r = math.radians(dec1)
+                cos_sep = (
+                    math.sin(dec0r) * math.sin(dec1r)
+                    + math.cos(dec0r) * math.cos(dec1r) * math.cos(ra0r - ra1r)
+                )
+                if cos_sep >= cos_sep_max:
+                    coord_filtered.append(row)
+            filtered = coord_filtered
+
         # Build column list (exclude RUN_ID)
         skip = {'RUN_ID', 'run_id', 'ALL_RUN_IDS', 'all_run_ids'}
         columns = [c for c in (all_rows[0].keys() if all_rows else [])
@@ -4478,6 +4655,26 @@ class ARIApp(Flask):
              if k not in skip and k not in hidden_by_meta}
             for row in filtered
         ]
+
+        def _date_only(value):
+            """Return date string in YYYY-MM-DD form when possible."""
+            if value is None:
+                return value
+            text = str(value).strip()
+            if not text:
+                return value
+            if 'T' in text:
+                return text.split('T', 1)[0]
+            if ' ' in text:
+                return text.split(' ', 1)[0]
+            return text
+
+        # Keep object-table dates compact (no HH:MM:SS in table display).
+        _date_cols = {'last obs', 'latest obs', 'last modified'}
+        for row in clean_rows:
+            for col in _date_cols:
+                if col in row:
+                    row[col] = _date_only(row.get(col))
 
         # ── File-count columns (parallel ftable reads) ────────────────────
         import concurrent.futures as _futures
@@ -4566,7 +4763,7 @@ class ARIApp(Flask):
         })
         # ── End file-count columns ────────────────────────────────────────
 
-        return jsonify(
+        payload = dict(
             success=True,
             rows=clean_rows,
             columns=columns,
@@ -4574,6 +4771,10 @@ class ARIApp(Flask):
             generated_at=generated_at,
             total_rows=len(all_rows),
         )
+        if find_only and not clean_rows and (has_name_filter or has_coord_filter):
+            payload['message'] = 'No objects matched the current search criteria.'
+
+        return jsonify(**payload)
 
     def _ri_obs_table_view(self, profile_id):
         """Serve the observation table page for a profile."""
@@ -4900,6 +5101,12 @@ class ARIApp(Flask):
 
         profile_id = request.args.get('profile_id', '').strip()
         objname = request.args.get('objname', '').strip()
+        plot_group = str(request.args.get('plot_group', 'all') or 'all').strip().lower()
+        valid_groups = {'all', 'spectrum', 'ccf', 'time_series'}
+        if plot_group not in valid_groups:
+            return jsonify(success=False,
+                           error=('Invalid plot_group. Use one of: '
+                                  'all, spectrum, ccf, time_series')), 400
         if not profile_id or not objname:
             return jsonify(
                 success=False,
@@ -4913,6 +5120,33 @@ class ARIApp(Flask):
                 vsys_ms = float(vsys_ms_str)
             except ValueError:
                 pass
+
+        ccf_mjd_start = None
+        ccf_mjd_start_str = request.args.get('ccf_mjd_start', '').strip()
+        if ccf_mjd_start_str:
+            try:
+                ccf_mjd_start = float(ccf_mjd_start_str)
+            except ValueError:
+                pass
+
+        ccf_mjd_end = None
+        ccf_mjd_end_str = request.args.get('ccf_mjd_end', '').strip()
+        if ccf_mjd_end_str:
+            try:
+                ccf_mjd_end = float(ccf_mjd_end_str)
+            except ValueError:
+                pass
+        ccf_nobs = 100
+        ccf_nobs_str = request.args.get('ccf_nobs', '').strip()
+        if ccf_nobs_str:
+            try:
+                ccf_nobs = max(1, min(1000, int(float(ccf_nobs_str))))
+            except ValueError:
+                ccf_nobs = 100
+        if (ccf_mjd_start is not None and ccf_mjd_end is not None
+                and ccf_mjd_start > ccf_mjd_end):
+            ccf_mjd_start, ccf_mjd_end = ccf_mjd_end, ccf_mjd_start
+        force_regen = bool(str(request.args.get('_ts', '')).strip())
 
         accessible = get_accessible_profiles(user_info, self.ari_groups)
         profile = next(
@@ -4937,25 +5171,45 @@ class ARIApp(Flask):
         objects_dir = base_dir / 'tasks' / instrument / profile_id / 'objects'
 
         # --- Plot cache: try to serve from cache first ---
-        from apero_ri.core.plot_cache import check_and_serve, generate_and_cache
+        from apero_ri.core.plot_cache import check_and_serve
         rid_tag = self._rid_cache_tag(accessible_run_ids)
-        cache_key = (f'{objname}__{rid_tag}' if vsys_ms is None
-                     else f'{objname}__vsys{vsys_ms}__{rid_tag}')
-        cached = check_and_serve(
-            base_dir, instrument, profile_id,
-            'object_plots', cache_key, aparams=profile_data)
-        if cached is not None:
-            return jsonify(**cached)
+        cache_key = (f'{plot_group}__{objname}__{rid_tag}' if vsys_ms is None
+                     else f'{plot_group}__{objname}__vsys{vsys_ms}__{rid_tag}')
+        if plot_group in {'all', 'ccf'} and (
+                ccf_mjd_start is not None or ccf_mjd_end is not None):
+            cache_key += (
+                f'__ccfmjd_{ccf_mjd_start if ccf_mjd_start is not None else ""}'
+                f'_{ccf_mjd_end if ccf_mjd_end is not None else ""}'
+            )
+        if plot_group in {'all', 'ccf'}:
+            cache_key += f'__ccfnobs_{int(ccf_nobs)}'
+        if plot_group in {'all', 'time_series'}:
+            cache_key += '__tsaxis_v2'
+        if not force_regen:
+            cached = check_and_serve(
+                base_dir, instrument, profile_id,
+                'object_plots', cache_key, aparams=profile_data)
+            if cached is not None:
+                self.logger.info(
+                    'OBJECT_PLOTS cache_hit profile=%s object=%s group=%s',
+                    profile_id, objname, plot_group,
+                )
+                return jsonify(**cached)
 
         htable_rows = load_object_htable_rows(objects_dir, objname)
         preset = load_object_preset(instrument_profile_file)
         obj_props = load_object_table_row(objects_dir, objname)
 
-        # Filter by accessible run_ids
-        ftable_ext_rows = load_object_ftable_rows(objects_dir, objname, 'ext')
-        ftable_tcorr_rows = load_object_ftable_rows(
-            objects_dir, objname, 'tcorr')
-        ftable_ccf_rows = load_object_ftable_rows(objects_dir, objname, 'ccf')
+        # Load only file tables needed for the requested plot group.
+        need_ext = plot_group in {'all', 'spectrum', 'time_series'}
+        need_tcorr = plot_group in {'all', 'spectrum'}
+        need_ccf = plot_group in {'all', 'ccf'}
+        ftable_ext_rows = (load_object_ftable_rows(objects_dir, objname, 'ext')
+                           if need_ext else [])
+        ftable_tcorr_rows = (load_object_ftable_rows(objects_dir, objname, 'tcorr')
+                             if need_tcorr else [])
+        ftable_ccf_rows = (load_object_ftable_rows(objects_dir, objname, 'ccf')
+                          if need_ccf else [])
 
         htable_rows, ftables = self._filter_plot_rows(
             htable_rows,
@@ -4982,40 +5236,58 @@ class ARIApp(Flask):
         from apero_ri.plots.plot_objects import build_ts_airmass_plot_json
 
         _no_plot = {'has_plot': False, 'message': 'Plot build failed'}
+        timings_ms = {}
 
-        try:
-            snr = build_snr_plot_json(htable_rows, preset)
-        except Exception:
-            snr = _no_plot
-        try:
-            berv = build_berv_plot_json(htable_rows, vsys_ms, preset,
-                                        obj_props=obj_props)
-        except Exception:
-            berv = _no_plot
+        def _timed_build(name, func):
+            t0 = time.perf_counter()
+            ok = True
+            try:
+                payload = func()
+            except Exception:
+                payload = dict(_no_plot)
+                ok = False
+            dt_ms = (time.perf_counter() - t0) * 1000.0
+            timings_ms[name] = round(dt_ms, 2)
+            self.logger.info(
+                'OBJECT_PLOTS build profile=%s object=%s group=%s plot=%s ok=%s ms=%.2f',
+                profile_id, objname, plot_group, name, ok, dt_ms,
+            )
+            return payload
 
-        try:
-            spec = build_spec_plot_json(htable_rows, ftable_ext_rows,
-                                        ftable_tcorr_rows, paths, preset)
-        except Exception:
-            spec = _no_plot
-        try:
-            ccf = build_ccf_plot_json(htable_rows, ftable_ccf_rows,
-                                      paths, preset)
-        except Exception:
-            ccf = _no_plot
-        try:
-            ts_snr = build_ts_snr_plot_json(htable_rows, ftable_ext_rows,
-                                            preset)
-        except Exception:
-            ts_snr = _no_plot
-        try:
-            ts_airmass = build_ts_airmass_plot_json(htable_rows,
-                                                    ftable_ext_rows, preset)
-        except Exception:
-            ts_airmass = _no_plot
+        result = dict(success=True, plot_group=plot_group)
 
-        result = dict(success=True, snr=snr, berv=berv, spec=spec, ccf=ccf,
-                      ts_snr=ts_snr, ts_airmass=ts_airmass)
+        if plot_group in {'all', 'spectrum'}:
+            result['snr'] = _timed_build(
+                'snr', lambda: build_snr_plot_json(htable_rows, preset))
+            result['berv'] = _timed_build(
+                'berv', lambda: build_berv_plot_json(
+                    htable_rows, vsys_ms, preset, obj_props=obj_props))
+            result['spec'] = _timed_build(
+                'spec', lambda: build_spec_plot_json(
+                    htable_rows, ftable_ext_rows, ftable_tcorr_rows,
+                    paths, preset))
+
+        if plot_group in {'all', 'ccf'}:
+            result['ccf'] = _timed_build(
+                'ccf', lambda: build_ccf_plot_json(
+                    htable_rows,
+                    ftable_ccf_rows,
+                    paths,
+                    preset,
+                    ccf_mjd_start=ccf_mjd_start,
+                    ccf_mjd_end=ccf_mjd_end,
+                    ccf_nobs=ccf_nobs,
+                ))
+
+        if plot_group in {'all', 'time_series'}:
+            result['ts_snr'] = _timed_build(
+                'ts_snr', lambda: build_ts_snr_plot_json(
+                    htable_rows, ftable_ext_rows, preset))
+            result['ts_airmass'] = _timed_build(
+                'ts_airmass', lambda: build_ts_airmass_plot_json(
+                    htable_rows, ftable_ext_rows, preset))
+        result['updated_at'] = datetime.now(timezone.utc).isoformat()
+        result['server_timings_ms'] = timings_ms
 
         # Store in cache (fire-and-forget; failures are non-fatal)
         try:
@@ -5039,6 +5311,15 @@ class ARIApp(Flask):
         except Exception:
             pass
 
+        self.logger.info(
+            'OBJECT_PLOTS done profile=%s object=%s group=%s total_ms=%.2f rows=%d',
+            profile_id,
+            objname,
+            plot_group,
+            sum(timings_ms.values()),
+            len(htable_rows),
+        )
+
         return jsonify(**result)
 
     def _api_object_lbl_plots(self):
@@ -5061,6 +5342,7 @@ class ARIApp(Flask):
                 success=False,
                 error='Missing profile_id or objname',
             ), 400
+        force_regen = bool(str(request.args.get('_ts', '')).strip())
 
         accessible = get_accessible_profiles(user_info, self.ari_groups)
         profile = next(
@@ -5088,11 +5370,12 @@ class ARIApp(Flask):
         from apero_ri.core.plot_cache import check_and_serve
         rid_tag = self._rid_cache_tag(accessible_run_ids)
         cache_key = f'{objname}__{rid_tag}'
-        cached = check_and_serve(
-            base_dir, instrument, profile_id,
-            'lbl_plots', cache_key, aparams=profile_data)
-        if cached is not None:
-            return jsonify(**cached)
+        if not force_regen:
+            cached = check_and_serve(
+                base_dir, instrument, profile_id,
+                'lbl_plots', cache_key, aparams=profile_data)
+            if cached is not None:
+                return jsonify(**cached)
 
         preset = load_object_preset(instrument_profile_file)
         path_lbl = str(
@@ -5113,7 +5396,11 @@ class ARIApp(Flask):
         except Exception:
             plots = {}
 
-        result = dict(success=True, plots=plots)
+        result = dict(
+            success=True,
+            plots=plots,
+            updated_at=datetime.now(timezone.utc).isoformat(),
+        )
 
         try:
             from apero_ri.core.plot_cache import (
@@ -5243,6 +5530,32 @@ class ARIApp(Flask):
             except ValueError:
                 pass
 
+        ccf_mjd_start = None
+        ccf_mjd_start_str = request.args.get('ccf_mjd_start', '').strip()
+        if ccf_mjd_start_str:
+            try:
+                ccf_mjd_start = float(ccf_mjd_start_str)
+            except ValueError:
+                pass
+
+        ccf_mjd_end = None
+        ccf_mjd_end_str = request.args.get('ccf_mjd_end', '').strip()
+        if ccf_mjd_end_str:
+            try:
+                ccf_mjd_end = float(ccf_mjd_end_str)
+            except ValueError:
+                pass
+        ccf_nobs = 100
+        ccf_nobs_str = request.args.get('ccf_nobs', '').strip()
+        if ccf_nobs_str:
+            try:
+                ccf_nobs = max(1, min(1000, int(float(ccf_nobs_str))))
+            except ValueError:
+                ccf_nobs = 100
+        if (ccf_mjd_start is not None and ccf_mjd_end is not None
+                and ccf_mjd_start > ccf_mjd_end):
+            ccf_mjd_start, ccf_mjd_end = ccf_mjd_end, ccf_mjd_start
+
         instrument = profile['instrument']
         accessible_run_ids = self._get_user_accessible_run_ids(
             user_info, instrument
@@ -5308,7 +5621,14 @@ class ARIApp(Flask):
             self._profile_get_path(profile_data, 'PATH_RED', '') or '')
             paths = {'PATH_RED': path_red}
             plot_payload = build_ccf_plot_components(
-                htable_rows, _ftable_ccf, paths, preset)
+                htable_rows,
+                _ftable_ccf,
+                paths,
+                preset,
+                ccf_mjd_start=ccf_mjd_start,
+                ccf_mjd_end=ccf_mjd_end,
+                ccf_nobs=ccf_nobs,
+            )
             display_name = 'CCF Analysis'
         elif safe_key == 'ts_snr':
             plot_payload = build_ts_snr_plot_components(
@@ -5392,6 +5712,7 @@ class ARIApp(Flask):
         if not profile_id or not objname:
             return jsonify(success=False,
                            error='Missing profile_id or objname'), 400
+        force_regen = bool(str(request.args.get('_ts', '')).strip())
 
         accessible = get_accessible_profiles(user_info, self.ari_groups)
         profile = next(
@@ -5499,11 +5820,12 @@ class ARIApp(Flask):
         from apero_ri.core.plot_cache import check_and_serve
         rid_tag = self._rid_cache_tag(accessible_run_ids)
         cache_key = f'{objname}__{rid_tag}'
-        cached = check_and_serve(
-            base_dir, instrument, profile_id,
-            'debug_plots', cache_key, aparams=profile_data)
-        if cached is not None:
-            return jsonify(**cached)
+        if not force_regen:
+            cached = check_and_serve(
+                base_dir, instrument, profile_id,
+                'debug_plots', cache_key, aparams=profile_data)
+            if cached is not None:
+                return jsonify(**cached)
 
         htable_rows = load_object_htable_rows(objects_dir, objname)
         preset = load_object_preset(instrument_profile_file)
@@ -5527,6 +5849,8 @@ class ARIApp(Flask):
         from apero_ri.plots.plot_debug import generate_debug_plots
         result = generate_debug_plots(
             htable_rows, objname, preset, ftable_tcorr_rows, paths)
+        if isinstance(result, dict):
+            result['updated_at'] = datetime.now(timezone.utc).isoformat()
 
         try:
             from apero_ri.core.plot_cache import (
@@ -8328,6 +8652,10 @@ class ARIApp(Flask):
     def _fetch_table_columns(self, profile_cfg: dict, table_name: str):
         """Fetch ordered column names from a profile DB/table."""
         db_params = self._profile_db_params(profile_cfg)
+        if ('DATABASE_USER' not in db_params
+                and str(db_params.get('DATABASE_USERNAME', '')).strip()):
+            db_params['DATABASE_USER'] = str(
+                db_params.get('DATABASE_USERNAME', '')).strip()
         mode = str(db_params.get('DATABASE_MODE', '')).strip()
         host = str(db_params.get('DATABASE_HOST', '')).strip()
         username = str(db_params.get('DATABASE_USERNAME', '')).strip()
@@ -10663,6 +10991,7 @@ class ARIApp(Flask):
 
         instrument = data.get('instrument', '').strip()
         action = data.get('action', 'add')  # 'add' | 'replace'
+        force_run = bool(data.get('force_run', False))
         local_data_dir = (data.get('local_data_dir', '') or
                           str(Path.home() / '.ari'))
         if not instrument:
@@ -10698,8 +11027,12 @@ class ARIApp(Flask):
             tid = task_cfg.get('id', '')
             if not tid:
                 continue
+            run_task_cfg = dict(task_cfg)
+            if force_run:
+                run_task_cfg['force_run'] = True
+
             run_params = task_runner.build_run_params(
-                instrument, local_data_dir, all_profiles, task_cfg
+                instrument, local_data_dir, all_profiles, run_task_cfg
             )
             try:
                 instance = task_runner.hydrate_runtime_state(
@@ -11614,7 +11947,9 @@ class ARIApp(Flask):
         if 'view.admin' not in (perms or set()):
             return jsonify(ok=False, error='Insufficient permissions'), 403
 
-        result = bb.test_backup_connection(bb.load_backup_config())
+        method_id = str(request.args.get('method_id', '') or '').strip() or None
+        result = bb.test_backup_connection(bb.load_backup_config(),
+                           method_id=method_id)
         return jsonify(result)
 
     def _api_admin_backups_oauth_start(self):
@@ -11766,7 +12101,10 @@ class ARIApp(Flask):
         if 'manage.admin.backup' not in (perms or set()):
             return jsonify(ok=False, error='Insufficient permissions'), 403
 
-        result = bb.test_backup_roundtrip(bb.load_backup_config())
+        body = request.get_json(silent=True) or {}
+        method_id = str(body.get('method_id', '') or '').strip() or None
+        result = bb.test_backup_roundtrip(bb.load_backup_config(),
+                          method_id=method_id)
         return jsonify(result)
 
     def _api_admin_backups_save(self):
@@ -11784,6 +12122,10 @@ class ARIApp(Flask):
             's3_bucket', 's3_prefix', 's3_region', 's3_endpoint_url',
             's3_access_key_id', 's3_secret_access_key',
             's3_credentials_file',
+            'rsync_ssh_target', 'rsync_remote_dir', 'rsync_ssh_key',
+            'rsync_port', 'rsync_extra_opts',
+            'local_mirror_dir',
+            'backup_methods', 'active_method_id',
         }
 
         existing = bb.load_backup_config()
@@ -11870,7 +12212,10 @@ class ARIApp(Flask):
 
         cfg = bb.load_backup_config()
         local_data_dir = self._resolve_local_data_dir()
-        inventory = bb.backup_inventory(local_data_dir=local_data_dir, cfg=cfg)
+        method_id = str(request.args.get('method_id', '') or '').strip() or None
+        inventory = bb.backup_inventory(local_data_dir=local_data_dir,
+                        cfg=cfg,
+                        method_id=method_id)
         return jsonify(success=True, data=inventory)
 
     def _api_admin_backups_delete(self):
@@ -11883,6 +12228,7 @@ class ARIApp(Flask):
         body = request.get_json() or {}
         rel = str(body.get('relative_path', '')).strip()
         target = str(body.get('target', 'both')).strip().lower()
+        method_id = str(body.get('method_id', '') or '').strip() or None
         if target not in {'local', 'cloud', 'both'}:
             return jsonify(success=False, error='Invalid target'), 400
         if not rel:
@@ -11893,7 +12239,8 @@ class ARIApp(Flask):
             local_data_dir = self._resolve_local_data_dir()
             result = bb.delete_backup(rel, target=target,
                                       local_data_dir=local_data_dir,
-                                      cfg=cfg)
+                                      cfg=cfg,
+                                      method_id=method_id)
             self._refresh_admin_health_after_change(user_info, perms)
             return jsonify(success=True, data=result)
         except Exception as exc:
@@ -11909,6 +12256,7 @@ class ARIApp(Flask):
         body = request.get_json() or {}
         period = str(body.get('period', 'all')).strip().lower()
         target = str(body.get('target', 'both')).strip().lower()
+        method_id = str(body.get('method_id', '') or '').strip() or None
         if period not in {'daily', 'weekly', 'all'}:
             return jsonify(success=False, error='Invalid period'), 400
         if target not in {'local', 'cloud', 'both'}:
@@ -11920,7 +12268,8 @@ class ARIApp(Flask):
             result = bb.delete_all_backups(period=period,
                                            target=target,
                                            local_data_dir=local_data_dir,
-                                           cfg=cfg)
+                                           cfg=cfg,
+                                           method_id=method_id)
             self._refresh_admin_health_after_change(user_info, perms)
             return jsonify(success=True, data=result)
         except Exception as exc:
@@ -11935,8 +12284,11 @@ class ARIApp(Flask):
 
         cfg = bb.load_backup_config()
         local_data_dir = self._resolve_local_data_dir()
+        body = request.get_json(silent=True) or {}
+        method_id = str(body.get('method_id', '') or '').strip() or None
         result = bb.sync_local_backups_to_cloud(local_data_dir=local_data_dir,
-                                                cfg=cfg)
+                            cfg=cfg,
+                            method_id=method_id)
         self._refresh_admin_health_after_change(user_info, perms)
         return jsonify(success=True, data=result)
 
@@ -11949,6 +12301,7 @@ class ARIApp(Flask):
 
         body = request.get_json() or {}
         relative_path = str(body.get('relative_path', '')).strip()
+        method_id = str(body.get('method_id', '') or '').strip() or None
         if not relative_path:
             return jsonify(success=False, error='relative_path is required.'), 400
 
@@ -11957,7 +12310,8 @@ class ARIApp(Flask):
         result = bb.download_cloud_backup(
             relative_path,
             local_data_dir=local_data_dir,
-            cfg=cfg)
+            cfg=cfg,
+            method_id=method_id)
         
         self._refresh_admin_health_after_change(user_info, perms)
         return jsonify(success=result.get('ok', False), 
@@ -11973,14 +12327,89 @@ class ARIApp(Flask):
 
         cfg = bb.load_backup_config()
         local_data_dir = self._resolve_local_data_dir()
+        body = request.get_json(silent=True) or {}
+        method_id = str(body.get('method_id', '') or '').strip() or None
         result = bb.sync_cloud_backups_to_local(
             local_data_dir=local_data_dir,
-            cfg=cfg)
+            cfg=cfg,
+            method_id=method_id)
         
         self._refresh_admin_health_after_change(user_info, perms)
         return jsonify(success=result.get('ok', False),
                       downloaded=result.get('downloaded', 0),
                       error=result.get('error'))
+
+    def _api_admin_backups_validate_dir(self):
+        try:
+            user_info, perms = self._require_admin_backup_perm()
+            if not user_info:
+                return jsonify(success=False, error='Unauthorized'), 401
+            if 'view.admin' not in (perms or set()):
+                return jsonify(success=False, error='Insufficient permissions'), 403
+
+            path = str(request.args.get('path', '') or '').strip()
+            if not path:
+                return jsonify(success=False, error='No path provided'), 400
+            if not os.path.isabs(path):
+                return jsonify(success=False, error='Path must be absolute'), 400
+
+            target = Path(path).expanduser()
+            if not target.exists():
+                return jsonify(success=True, ok=False,
+                               path=str(target),
+                               message='Directory does not exist')
+            if not target.is_dir():
+                return jsonify(success=True, ok=False,
+                               path=str(target),
+                               message='Path is not a directory')
+            try:
+                _ = any(target.iterdir())
+            except PermissionError:
+                return jsonify(success=True, ok=False,
+                               path=str(target),
+                               message='Permission denied for this directory')
+            return jsonify(success=True, ok=True,
+                           path=str(target), message='Directory is valid')
+        except Exception as exc:
+            return jsonify(success=False,
+                           error=f'Validate directory failed: {exc}'), 500
+
+    def _api_admin_backups_browse(self):
+        try:
+            user_info, perms = self._require_admin_backup_perm()
+            if not user_info:
+                return jsonify(success=False, error='Unauthorized'), 401
+            if 'view.admin' not in (perms or set()):
+                return jsonify(success=False, error='Insufficient permissions'), 403
+
+            path = str(request.args.get('path', '/') or '/').strip()
+            if not os.path.isabs(path):
+                return jsonify(success=False, error='Path must be absolute'), 400
+
+            target = Path(path).expanduser()
+            if not target.is_dir():
+                return jsonify(success=False, error='Not a directory'), 400
+
+            dirs = []
+            try:
+                for entry in sorted(target.iterdir()):
+                    try:
+                        is_dir = entry.is_dir()
+                    except PermissionError:
+                        continue
+                    if is_dir and not entry.name.startswith('.'):
+                        dirs.append(entry.name)
+            except PermissionError:
+                return jsonify(success=False, error='Permission denied'), 403
+
+            parent = str(target.parent) if str(target) != '/' else '/'
+            return jsonify(success=True,
+                           path=str(target),
+                           parent=parent,
+                           dirs=dirs)
+        except Exception as exc:
+            return jsonify(success=False,
+                           error=f'Browse failed: {exc}'), 500
 
     # -----------------------------------------------------------------
     # SSHFS Management API handlers

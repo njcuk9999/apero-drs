@@ -26,8 +26,12 @@ Created on 2024-01-01
 from __future__ import annotations
 
 import re
+import threading
+import time
 import warnings
-from datetime import timezone
+from collections import OrderedDict
+from datetime import datetime, timezone
+from os import path as op
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
@@ -62,6 +66,77 @@ _BLOCK_KIND_TO_PATH: Dict[str, str] = {
     'out':   'PATH_OUT',
     'lbl':   'PATH_LBL',
 }
+
+# CCF performance knobs (kept conservative for UI responsiveness)
+_CCF_CACHE_MAX_ENTRIES = 512
+_CCF_RV_MAX_POINTS = 2500
+_CCF_FILE_CACHE: OrderedDict[str, Tuple[float, np.ndarray, np.ndarray]] = OrderedDict()
+_CCF_FILE_CACHE_LOCK = threading.Lock()
+
+
+def _decimate_ccf_grid(
+    rv_vec: np.ndarray,
+    all_ccf: np.ndarray,
+    max_points: int = _CCF_RV_MAX_POINTS,
+) -> Tuple[np.ndarray, np.ndarray, int, int]:
+    """
+    Downsample the CCF RV grid when it is very dense to reduce percentile,
+    JSON serialization, and browser rendering costs.
+
+    :param rv_vec: RV axis array [km/s]
+    :param all_ccf: 2D CCF stack [n_obs, n_rv]
+    :param max_points: maximum RV samples to keep
+
+    :return: tuple (rv_used, ccf_used, original_points, used_points)
+    :rtype: tuple
+    """
+    try:
+        npts = int(len(rv_vec))
+    except Exception:
+        return rv_vec, all_ccf, 0, 0
+    if npts <= 0 or npts <= int(max_points):
+        return rv_vec, all_ccf, npts, npts
+    idx = np.linspace(0, npts - 1, int(max_points), dtype=int)
+    return rv_vec[idx], all_ccf[:, idx], npts, int(len(idx))
+
+
+def _read_ccf_row_cached(path: str) -> Optional[Tuple[np.ndarray, np.ndarray]]:
+    """
+    Read RV/CCF arrays from a CCF FITS file with a small in-process LRU cache.
+    Cache entries are invalidated automatically when file mtime changes.
+
+    :param path: absolute file path to CCF FITS file
+
+    :return: tuple (rv_vec, ccf_row) or None on any read error
+    :rtype: tuple | None
+    """
+    from astropy.io import fits as _fits
+
+    try:
+        mtime = float(op.getmtime(path))
+    except Exception:
+        return None
+
+    with _CCF_FILE_CACHE_LOCK:
+        cached = _CCF_FILE_CACHE.get(path)
+        if cached is not None and float(cached[0]) == mtime:
+            _CCF_FILE_CACHE.move_to_end(path)
+            return cached[1], cached[2]
+
+    try:
+        with _fits.open(str(path), memmap=False) as hdul:
+            t = hdul['RV_TABLE']
+            rv_vec = np.array(t.data['RV'], dtype=float)
+            ccf_row = np.array(t.data['CCF_STACK'], dtype=float)
+    except Exception:
+        return None
+
+    with _CCF_FILE_CACHE_LOCK:
+        _CCF_FILE_CACHE[path] = (mtime, rv_vec, ccf_row)
+        _CCF_FILE_CACHE.move_to_end(path)
+        while len(_CCF_FILE_CACHE) > _CCF_CACHE_MAX_ENTRIES:
+            _CCF_FILE_CACHE.popitem(last=False)
+    return rv_vec, ccf_row
 
 
 # =============================================================================
@@ -1049,8 +1124,11 @@ def _load_ccf_data(
     ftable_ccf_rows: List[Dict[str, Any]],
     htable_rows: List[Dict[str, Any]],
     paths: Dict[str, str],
+    ccf_mjd_start: Optional[float] = None,
+    ccf_mjd_end: Optional[float] = None,
+    max_files: int = 100,
 ) -> Optional[Tuple[
-    np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray
+    np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray, Dict[str, Any]
 ]]:
     """
     Load and stack CCF data from all CCF FITS files.
@@ -1058,12 +1136,98 @@ def _load_ccf_data(
     :param ftable_ccf_rows: list of ftable ccf row dicts
     :param htable_rows: list of htable row dicts
     :param paths: dict mapping PATH_* keys to directory strings
+    :param ccf_mjd_start: float or None, lower MJD bound (inclusive)
+    :param ccf_mjd_end: float or None, upper MJD bound (inclusive)
+    :param max_files: int, maximum number of CCF files to load
 
     :return: tuple (rv_vec, all_ccf, datetimes, dv_ms, sdv_ms) sorted
              by time, or None if no data could be loaded
     :rtype: tuple | None
     """
-    from astropy.io import fits as _fits
+    def _row_mid_obs_mjd(row: Dict[str, Any]) -> Optional[float]:
+        raw = row.get('MID_OBS_TIME')
+        if raw is None:
+            return None
+        sval = str(raw).strip()
+        if not sval:
+            return None
+        try:
+            return float(Time(sval, format='isot', scale='utc').mjd)
+        except Exception:
+            try:
+                return float(sval)
+            except Exception:
+                return None
+
+    def _equally_spaced_indices(nvals: int, nout: int) -> List[int]:
+        if nvals <= 0 or nout <= 0:
+            return []
+        if nout >= nvals:
+            return list(range(nvals))
+        if nout == 1:
+            return [0]
+        idx = [int(round(i * (nvals - 1) / (nout - 1))) for i in range(nout)]
+        uniq: List[int] = []
+        seen = set()
+        for i in idx:
+            ii = min(max(i, 0), nvals - 1)
+            if ii not in seen:
+                seen.add(ii)
+                uniq.append(ii)
+        if len(uniq) < nout:
+            for i in range(nvals):
+                if i in seen:
+                    continue
+                uniq.append(i)
+                if len(uniq) >= nout:
+                    break
+        return sorted(uniq[:nout])
+
+    total_rows = len(ftable_ccf_rows)
+    timed_rows: List[Tuple[float, Dict[str, Any]]] = []
+    for row in ftable_ccf_rows:
+        mjd = _row_mid_obs_mjd(row)
+        if mjd is None:
+            continue
+        timed_rows.append((mjd, row))
+    timed_rows.sort(key=lambda x: x[0])
+
+    all_mjd_vals = [x[0] for x in timed_rows]
+    available_mjd_min = min(all_mjd_vals) if all_mjd_vals else None
+    available_mjd_max = max(all_mjd_vals) if all_mjd_vals else None
+
+    in_range_rows: List[Tuple[float, Dict[str, Any]]] = []
+    for mjd, row in timed_rows:
+        if ccf_mjd_start is not None and mjd < ccf_mjd_start:
+            continue
+        if ccf_mjd_end is not None and mjd > ccf_mjd_end:
+            continue
+        in_range_rows.append((mjd, row))
+
+    in_range_total = len(in_range_rows)
+    if in_range_total > max_files:
+        sel_idx = _equally_spaced_indices(in_range_total, max_files)
+        selected_rows = [in_range_rows[i] for i in sel_idx]
+        sampling_mode = 'equally_spaced'
+    else:
+        selected_rows = in_range_rows
+        sampling_mode = 'all'
+
+    summary: Dict[str, Any] = {
+        'max_files': int(max_files),
+        'total_rows': int(total_rows),
+        'rows_with_mid_obs_time': int(len(timed_rows)),
+        'in_range_total': int(in_range_total),
+        'selected_total': int(len(selected_rows)),
+        'loaded_total': 0,
+        'sampling_mode': sampling_mode,
+        'ccf_mjd_start': ccf_mjd_start,
+        'ccf_mjd_end': ccf_mjd_end,
+        'available_mjd_min': available_mjd_min,
+        'available_mjd_max': available_mjd_max,
+        'selected_mjd_min': (selected_rows[0][0] if selected_rows else None),
+        'selected_mjd_max': (selected_rows[-1][0] if selected_rows else None),
+    }
 
     ht_by_id: Dict[str, Dict[str, Any]] = {}
     for row in htable_rows:
@@ -1077,7 +1241,7 @@ def _load_ccf_data(
     dv_ms_list: List[float] = []
     sdv_ms_list: List[float] = []
 
-    for row in ftable_ccf_rows:
+    for mjd_val, row in selected_rows:
         path = _resolve_file_path(row, paths)
         if path is None:
             continue
@@ -1085,22 +1249,20 @@ def _load_ccf_data(
         ht_row = ht_by_id.get(ident, {})
         raw_dv = ht_row.get('CCF_DV')
         raw_sdv = ht_row.get('CCF_SDV')
-        raw_mjd = ht_row.get('CCF_MJDMID')
-        if raw_dv is None or raw_sdv is None or raw_mjd is None:
+        if raw_dv is None or raw_sdv is None:
             continue
         try:
             dv_ms_val = float(raw_dv) * 1000.0   # km/s → m/s
             sdv_ms_val = float(raw_sdv)           # already m/s
-            dt = mjd_to_datetime(float(raw_mjd))
+            dt = mjd_to_datetime(float(mjd_val))
             if dt is None:
                 continue
-            with _fits.open(str(path)) as hdul:
-                t = hdul['RV_TABLE']
-                if rv_vec is None:
-                    rv_vec = np.array(t.data['RV'], dtype=float)
-                ccf_row = np.array(
-                    t.data['CCF_STACK'], dtype=float
-                )
+            read_out = _read_ccf_row_cached(str(path))
+            if read_out is None:
+                continue
+            rv_file, ccf_row = read_out
+            if rv_vec is None:
+                rv_vec = rv_file
             med = float(np.nanmedian(ccf_row))
             if med != 0.0:
                 ccf_row = ccf_row / med
@@ -1110,6 +1272,8 @@ def _load_ccf_data(
             sdv_ms_list.append(sdv_ms_val)
         except Exception:
             continue
+
+    summary['loaded_total'] = int(len(all_ccf_rows))
 
     if rv_vec is None or len(all_ccf_rows) == 0:
         return None
@@ -1125,6 +1289,7 @@ def _load_ccf_data(
         datetimes[sort_idx],
         dv_ms_arr[sort_idx],
         sdv_ms_arr[sort_idx],
+        summary,
     )
 
 
@@ -1562,7 +1727,10 @@ def _build_ccf_layout(
     htable_rows: List[Dict[str, Any]],
     ftable_ccf_rows: List[Dict[str, Any]],
     paths: Dict[str, str],
-) -> Tuple[Optional[Any], str]:
+    ccf_mjd_start: Optional[float] = None,
+    ccf_mjd_end: Optional[float] = None,
+    ccf_nobs: int = 100,
+) -> Tuple[Optional[Any], str, Dict[str, Any]]:
     """
     Core CCF builder that returns ``(layout, message)``.
 
@@ -1575,43 +1743,102 @@ def _build_ccf_layout(
     """
     from bokeh.layouts import column as bk_column
 
-    result = _load_ccf_data(ftable_ccf_rows, htable_rows, paths)
+    t_load0 = time.perf_counter()
+    result = _load_ccf_data(
+        ftable_ccf_rows,
+        htable_rows,
+        paths,
+        ccf_mjd_start=ccf_mjd_start,
+        ccf_mjd_end=ccf_mjd_end,
+        max_files=int(max(1, ccf_nobs)),
+    )
+    load_ms = (time.perf_counter() - t_load0) * 1000.0
     if result is None:
-        return None, 'No CCF data could be loaded.'
+        return None, 'No CCF data could be loaded.', {
+            'max_files': int(max(1, ccf_nobs)),
+            'sampling_mode': 'all',
+            'selected_total': 0,
+            'loaded_total': 0,
+            'in_range_total': 0,
+            'ccf_mjd_start': ccf_mjd_start,
+            'ccf_mjd_end': ccf_mjd_end,
+            'timings_ms': {
+                'load_data': round(load_ms, 2),
+                'stats_fit': 0.0,
+                'build_figures': 0.0,
+                'total': round(load_ms, 2),
+            },
+        }
 
-    rv_vec, all_ccf, datetimes, dv_ms, sdv_ms = result
+    rv_vec, all_ccf, datetimes, dv_ms, sdv_ms, summary = result
+    rv_used, ccf_used, rv_points_orig, rv_points_used = _decimate_ccf_grid(
+        rv_vec, all_ccf, max_points=_CCF_RV_MAX_POINTS
+    )
+    summary['rv_points_original'] = int(rv_points_orig)
+    summary['rv_points_used'] = int(rv_points_used)
+    summary['rv_decimated'] = bool(rv_points_used < rv_points_orig)
     # -------------------------------------------------------------------------
     # percentile bands for profile, residuals, and spread panels
+    t_stats0 = time.perf_counter()
     lower1 = 100.0 * (0.5 - 0.6827 / 2.0)
     upper1 = 100.0 * (0.5 + 0.6827 / 2.0)
     lower2 = 100.0 * (0.5 - 0.9545 / 2.0)
     upper2 = 100.0 * (0.5 + 0.9545 / 2.0)
-    y1_1sig = np.nanpercentile(all_ccf, lower1, axis=0)
-    y2_1sig = np.nanpercentile(all_ccf, upper1, axis=0)
-    y1_2sig = np.nanpercentile(all_ccf, lower2, axis=0)
-    y2_2sig = np.nanpercentile(all_ccf, upper2, axis=0)
-    med_ccf = np.nanmedian(all_ccf, axis=0)
-    has_fit, fit, xlim = _fit_ccf_gaussian(rv_vec, med_ccf)
+    y1_1sig = np.nanpercentile(ccf_used, lower1, axis=0)
+    y2_1sig = np.nanpercentile(ccf_used, upper1, axis=0)
+    y1_2sig = np.nanpercentile(ccf_used, lower2, axis=0)
+    y2_2sig = np.nanpercentile(ccf_used, upper2, axis=0)
+    med_ccf = np.nanmedian(ccf_used, axis=0)
+    has_fit, fit, xlim = _fit_ccf_gaussian(rv_used, med_ccf)
+    stats_ms = (time.perf_counter() - t_stats0) * 1000.0
     # -------------------------------------------------------------------------
+    t_fig0 = time.perf_counter()
     fig_rv = _make_ccf_rv_figure(datetimes, dv_ms, sdv_ms)
     fig_prof = _make_ccf_profile_figure(
-        rv_vec, med_ccf,
+        rv_used, med_ccf,
         y1_1sig, y2_1sig, y1_2sig, y2_2sig,
         fit, xlim, has_fit,
     )
     fig_res = _make_ccf_residuals_figure(
-        rv_vec, med_ccf, fit,
+        rv_used, med_ccf, fit,
         y1_1sig, y2_1sig, y1_2sig, y2_2sig,
         xlim, has_fit,
     )
     fig_spread = _make_ccf_spread_figure(
-        rv_vec, med_ccf,
+        rv_used, med_ccf,
         y1_1sig, y2_1sig, y1_2sig, y2_2sig,
         xlim, has_fit,
     )
+    fig_ms = (time.perf_counter() - t_fig0) * 1000.0
+
+    if str(summary.get('sampling_mode', '')) == 'equally_spaced':
+        smjd = summary.get('selected_mjd_min', None)
+        emjd = summary.get('selected_mjd_max', None)
+        try:
+            sdate = Time(float(smjd), format='mjd').to_datetime(
+                timezone=timezone.utc).strftime('%Y-%m-%d')
+            edate = Time(float(emjd), format='mjd').to_datetime(
+                timezone=timezone.utc).strftime('%Y-%m-%d')
+        except Exception:
+            sdate = '--'
+            edate = '--'
+        nobs = int(summary.get('selected_total', 0) or 0)
+        suffix = f' [{sdate} to {edate}, Nobs={nobs}]'
+        fig_rv.title.text = str(fig_rv.title.text) + suffix
+        fig_prof.title.text = str(fig_prof.title.text) + suffix
+        fig_res.title.text = str(fig_res.title.text) + suffix
+        fig_spread.title.text = str(fig_spread.title.text) + suffix
+
     layout = bk_column([fig_rv, fig_prof, fig_res, fig_spread],
                        sizing_mode='stretch_width')
-    return layout, ''
+    total_ms = load_ms + stats_ms + fig_ms
+    summary['timings_ms'] = {
+        'load_data': round(load_ms, 2),
+        'stats_fit': round(stats_ms, 2),
+        'build_figures': round(fig_ms, 2),
+        'total': round(total_ms, 2),
+    }
+    return layout, '', summary
 
 
 # =============================================================================
@@ -1622,6 +1849,9 @@ def build_ccf_plot_json(
     ftable_ccf_rows: List[Dict[str, Any]],
     paths: Dict[str, str],
     preset: Dict[str, Any],
+    ccf_mjd_start: Optional[float] = None,
+    ccf_mjd_end: Optional[float] = None,
+    ccf_nobs: int = 100,
     target_id: str = 'op-ccf-plot-div',
 ) -> Dict[str, Any]:
     """
@@ -1637,15 +1867,23 @@ def build_ccf_plot_json(
     :return: dict with has_plot, item/message
     :rtype: dict
     """
-    layout, msg = _build_ccf_layout(htable_rows, ftable_ccf_rows, paths)
+    layout, msg, summary = _build_ccf_layout(
+        htable_rows,
+        ftable_ccf_rows,
+        paths,
+        ccf_mjd_start=ccf_mjd_start,
+        ccf_mjd_end=ccf_mjd_end,
+        ccf_nobs=ccf_nobs,
+    )
     if layout is None:
-        return {'has_plot': False, 'message': msg}
+        return {'has_plot': False, 'message': msg, 'sample_info': summary}
     script, div = plot_to_components(layout)
     return {
         'has_plot': True,
         'script': script,
         'div': div,
         'message': '',
+        'sample_info': summary,
     }
 
 
@@ -1654,6 +1892,9 @@ def build_ccf_plot_components(
     ftable_ccf_rows: List[Dict[str, Any]],
     paths: Dict[str, str],
     preset: Dict[str, Any],
+    ccf_mjd_start: Optional[float] = None,
+    ccf_mjd_end: Optional[float] = None,
+    ccf_nobs: int = 100,
 ) -> Dict[str, Any]:
     """
     Build CCF plot as ``(script, div)`` for server-side embedding.
@@ -1666,15 +1907,27 @@ def build_ccf_plot_components(
     :return: dict with has_plot, script, div, message
     :rtype: dict
     """
-    layout, msg = _build_ccf_layout(htable_rows, ftable_ccf_rows, paths)
+    layout, msg, summary = _build_ccf_layout(
+        htable_rows,
+        ftable_ccf_rows,
+        paths,
+        ccf_mjd_start=ccf_mjd_start,
+        ccf_mjd_end=ccf_mjd_end,
+        ccf_nobs=ccf_nobs,
+    )
     if layout is None:
         return {
             'has_plot': False, 'script': '', 'div': '',
             'message': msg,
+            'sample_info': summary,
         }
     script, div = plot_to_components(layout)
     return {
-        'has_plot': True, 'script': script, 'div': div, 'message': ''
+        'has_plot': True,
+        'script': script,
+        'div': div,
+        'message': '',
+        'sample_info': summary,
     }
 
 
@@ -2306,7 +2559,7 @@ def _make_ts_snr_figure(
     :return: Bokeh figure or None if obs_data is empty
     :rtype: bokeh.plotting.figure | None
     """
-    from bokeh.models import FactorRange
+    from bokeh.models import DatetimeTickFormatter, DatetimeTicker, FactorRange
     from bokeh.plotting import figure as bk_figure
 
     if not obs_data:
@@ -2314,32 +2567,91 @@ def _make_ts_snr_figure(
     obs_dirs = [d[0] for d in obs_data]
     snr_h = [d[1].get('EXT_H', float('nan')) for d in obs_data]
     snr_y = [d[1].get('EXT_Y', float('nan')) for d in obs_data]
+
+    def _obs_dir_to_dt(obs_dir: str) -> Optional[datetime]:
+        text = str(obs_dir or '').strip()
+        m = re.match(r'^(\d{4})[-_]?([01]\d)[-_]?([0-3]\d)$', text)
+        if not m:
+            return None
+        try:
+            return datetime(
+                int(m.group(1)), int(m.group(2)), int(m.group(3)),
+                tzinfo=timezone.utc,
+            )
+        except ValueError:
+            return None
+
+    dts = [_obs_dir_to_dt(obs) for obs in obs_dirs]
+    has_all_dates = all(dt is not None for dt in dts)
+    use_time_axis = has_all_dates and len(obs_dirs) >= 2
     # -------------------------------------------------------------------------
-    fig = bk_figure(
-        x_range=FactorRange(*obs_dirs),
-        title='SNR per Night',
-        x_axis_label='Obs Dir',
-        y_axis_label='SNR',
-        tools='pan,wheel_zoom,box_zoom,reset,save',
-        active_scroll='wheel_zoom',
-        height=height,
-        sizing_mode='stretch_width',
-        background_fill_color=base.PLOT_BACKGROUND_COLOR,
-    )
-    hover = HoverTool(
-        tooltips=[('Obs Dir', '@x'), ('SNR', '@y{0.0}')],
-        mode='mouse',
-    )
-    fig.add_tools(hover)
-    # -------------------------------------------------------------------------
-    src_h = ColumnDataSource({'x': obs_dirs, 'y': snr_h})
-    src_y = ColumnDataSource({'x': obs_dirs, 'y': snr_y})
+    if use_time_axis:
+        x_ms = [int(dt.timestamp() * 1000.0) for dt in dts if dt is not None]
+        fig = bk_figure(
+            x_axis_type='datetime',
+            title='SNR per Night',
+            x_axis_label='Date (UTC)',
+            y_axis_label='SNR',
+            tools='pan,wheel_zoom,box_zoom,reset,save',
+            active_scroll='wheel_zoom',
+            height=height,
+            sizing_mode='stretch_width',
+            background_fill_color=base.PLOT_BACKGROUND_COLOR,
+        )
+        hover = HoverTool(
+            tooltips=[('Obs Dir', '@obs'), ('Date', '@x{%F}'),
+                      ('SNR', '@y{0.0}')],
+            formatters={'@x': 'datetime'},
+            mode='mouse',
+        )
+        fig.add_tools(hover)
+        src_h = ColumnDataSource({'x': x_ms, 'y': snr_h, 'obs': obs_dirs})
+        src_y = ColumnDataSource({'x': x_ms, 'y': snr_y, 'obs': obs_dirs})
+
+        first_dt = min(dt for dt in dts if dt is not None)
+        last_dt = max(dt for dt in dts if dt is not None)
+        span_days = max((last_dt - first_dt).days, 0)
+
+        fig.xaxis.ticker = DatetimeTicker(desired_num_ticks=10)
+        if span_days >= 365 * 2:
+            fig.xaxis.formatter = DatetimeTickFormatter(
+                years='%Y', months='%Y', days='%Y',
+            )
+        elif span_days >= 90:
+            fig.xaxis.formatter = DatetimeTickFormatter(
+                years='%Y', months='%Y-%m', days='%Y-%m',
+            )
+        else:
+            fig.xaxis.formatter = DatetimeTickFormatter(
+                years='%Y', months='%Y-%m', days='%Y-%m-%d',
+            )
+        fig.xaxis.major_label_orientation = 0.785
+    else:
+        fig = bk_figure(
+            x_range=FactorRange(*obs_dirs),
+            title='SNR per Night',
+            x_axis_label='Obs Dir',
+            y_axis_label='SNR',
+            tools='pan,wheel_zoom,box_zoom,reset,save',
+            active_scroll='wheel_zoom',
+            height=height,
+            sizing_mode='stretch_width',
+            background_fill_color=base.PLOT_BACKGROUND_COLOR,
+        )
+        hover = HoverTool(
+            tooltips=[('Obs Dir', '@x'), ('SNR', '@y{0.0}')],
+            mode='mouse',
+        )
+        fig.add_tools(hover)
+        src_h = ColumnDataSource({'x': obs_dirs, 'y': snr_h})
+        src_y = ColumnDataSource({'x': obs_dirs, 'y': snr_y})
+        fig.xaxis.major_label_orientation = 'vertical'
+
     fig.scatter('x', 'y', source=src_h, size=8, color='#e6820a',
                 marker='circle', alpha=0.85, legend_label=label_h)
     fig.scatter('x', 'y', source=src_y, size=8, color='#7e22ce',
                 marker='circle', alpha=0.85, legend_label=label_y)
     # -------------------------------------------------------------------------
-    fig.xaxis.major_label_orientation = 'vertical'
     fig.xgrid.grid_line_color = None
     fig.grid.grid_line_color = 'lightgray'
     fig.grid.grid_line_dash = 'dashed'
@@ -2362,11 +2674,26 @@ def _make_ts_airmass_figure(
     :return: Bokeh figure or None if no valid airmass data
     :rtype: bokeh.plotting.figure | None
     """
-    from bokeh.models import FactorRange, Range1d
+    from bokeh.models import (DatetimeTickFormatter, DatetimeTicker,
+                              FactorRange, Range1d)
     from bokeh.plotting import figure as bk_figure
 
     obs_dirs: List[str] = []
     airmass: List[float] = []
+
+    def _obs_dir_to_dt(obs_dir: str) -> Optional[datetime]:
+        text = str(obs_dir or '').strip()
+        m = re.match(r'^(\d{4})[-_]?([01]\d)[-_]?([0-3]\d)$', text)
+        if not m:
+            return None
+        try:
+            return datetime(
+                int(m.group(1)), int(m.group(2)), int(m.group(3)),
+                tzinfo=timezone.utc,
+            )
+        except ValueError:
+            return None
+
     for obs_dir, means in obs_data:
         am = means.get('EXT_AIRMASS', float('nan'))
         if 0.0 <= am <= 2.0:
@@ -2374,30 +2701,75 @@ def _make_ts_airmass_figure(
             airmass.append(am)
     if not obs_dirs:
         return None
+
+    dts = [_obs_dir_to_dt(obs) for obs in obs_dirs]
+    has_all_dates = all(dt is not None for dt in dts)
+    use_time_axis = has_all_dates and len(obs_dirs) >= 2
     # -------------------------------------------------------------------------
-    fig = bk_figure(
-        x_range=FactorRange(*obs_dirs),
-        y_range=Range1d(0.0, 2.0),
-        title='Airmass per Night',
-        x_axis_label='Obs Dir',
-        y_axis_label='Airmass',
-        tools='pan,wheel_zoom,box_zoom,reset,save',
-        active_scroll='wheel_zoom',
-        height=height,
-        sizing_mode='stretch_width',
-        background_fill_color=base.PLOT_BACKGROUND_COLOR,
-    )
-    hover = HoverTool(
-        tooltips=[('Obs Dir', '@x'), ('Airmass', '@y{0.000}')],
-        mode='mouse',
-    )
-    fig.add_tools(hover)
-    # -------------------------------------------------------------------------
-    src = ColumnDataSource({'x': obs_dirs, 'y': airmass})
+    if use_time_axis:
+        x_ms = [int(dt.timestamp() * 1000.0) for dt in dts if dt is not None]
+        fig = bk_figure(
+            x_axis_type='datetime',
+            y_range=Range1d(0.0, 2.0),
+            title='Airmass per Night',
+            x_axis_label='Date (UTC)',
+            y_axis_label='Airmass',
+            tools='pan,wheel_zoom,box_zoom,reset,save',
+            active_scroll='wheel_zoom',
+            height=height,
+            sizing_mode='stretch_width',
+            background_fill_color=base.PLOT_BACKGROUND_COLOR,
+        )
+        hover = HoverTool(
+            tooltips=[('Obs Dir', '@obs'), ('Date', '@x{%F}'),
+                      ('Airmass', '@y{0.000}')],
+            formatters={'@x': 'datetime'},
+            mode='mouse',
+        )
+        fig.add_tools(hover)
+        src = ColumnDataSource({'x': x_ms, 'y': airmass, 'obs': obs_dirs})
+        first_dt = min(dt for dt in dts if dt is not None)
+        last_dt = max(dt for dt in dts if dt is not None)
+        span_days = max((last_dt - first_dt).days, 0)
+
+        fig.xaxis.ticker = DatetimeTicker(desired_num_ticks=10)
+        if span_days >= 365 * 2:
+            fig.xaxis.formatter = DatetimeTickFormatter(
+                years='%Y', months='%Y', days='%Y',
+            )
+        elif span_days >= 90:
+            fig.xaxis.formatter = DatetimeTickFormatter(
+                years='%Y', months='%Y-%m', days='%Y-%m',
+            )
+        else:
+            fig.xaxis.formatter = DatetimeTickFormatter(
+                years='%Y', months='%Y-%m', days='%Y-%m-%d',
+            )
+        fig.xaxis.major_label_orientation = 0.785
+    else:
+        fig = bk_figure(
+            x_range=FactorRange(*obs_dirs),
+            y_range=Range1d(0.0, 2.0),
+            title='Airmass per Night',
+            x_axis_label='Obs Dir',
+            y_axis_label='Airmass',
+            tools='pan,wheel_zoom,box_zoom,reset,save',
+            active_scroll='wheel_zoom',
+            height=height,
+            sizing_mode='stretch_width',
+            background_fill_color=base.PLOT_BACKGROUND_COLOR,
+        )
+        hover = HoverTool(
+            tooltips=[('Obs Dir', '@x'), ('Airmass', '@y{0.000}')],
+            mode='mouse',
+        )
+        fig.add_tools(hover)
+        src = ColumnDataSource({'x': obs_dirs, 'y': airmass})
+        fig.xaxis.major_label_orientation = 'vertical'
+
     fig.scatter('x', 'y', source=src, size=8, color='steelblue',
                 marker='circle', alpha=0.85, legend_label='Mean airmass')
     # -------------------------------------------------------------------------
-    fig.xaxis.major_label_orientation = 'vertical'
     fig.xgrid.grid_line_color = None
     fig.grid.grid_line_color = 'lightgray'
     fig.grid.grid_line_dash = 'dashed'

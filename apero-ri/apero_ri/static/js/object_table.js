@@ -5,6 +5,7 @@
     'use strict';
 
     var cfg = window.ARI_OBJ_TABLE;
+    var minNameChars = Math.max(1, Number((cfg && cfg.minNameChars) || 1));
 
     /* -----------------------------------------------------------------------
        State
@@ -52,6 +53,59 @@
     var btnNext        = document.getElementById('ot-btn-next');
     var btnLast        = document.getElementById('ot-btn-last');
 
+    // Optional Find Object controls (present on object_table page)
+    var findTabName   = document.getElementById('fo-tab-name');
+    var findTabCoords = document.getElementById('fo-tab-coords');
+    var findTabDate = document.getElementById('fo-tab-date');
+    var findTabAdvanced = document.getElementById('fo-tab-advanced');
+    var findPanelName = document.getElementById('fo-panel-name');
+    var findPanelCoords = document.getElementById('fo-panel-coords');
+    var findPanelDate = document.getElementById('fo-panel-date');
+    var findPanelAdvanced = document.getElementById('fo-panel-advanced');
+    var findNameInput  = document.getElementById('fo-name-query');
+    var findRaInput    = document.getElementById('fo-ra');
+    var findDecInput   = document.getElementById('fo-dec');
+    var findRaLabel    = document.getElementById('fo-ra-label');
+    var findDecLabel   = document.getElementById('fo-dec-label');
+    var findSepInput   = document.getElementById('fo-sep');
+    var findCoordFormatSelect = document.getElementById('fo-coord-format');
+    var findUnitSelect = document.getElementById('fo-unit');
+    var findCoordsBtn  = document.getElementById('fo-find-coords');
+    var findDateFirstInput = document.getElementById('fo-date-first');
+    var findDateLastInput = document.getElementById('fo-date-last');
+    var findDateApplyBtn = document.getElementById('fo-date-apply');
+    var findAdvancedColumnSelect = document.getElementById('fo-adv-column');
+    var findAdvancedInputsContainer = document.getElementById('fo-adv-inputs');
+    var findAdvancedApplyBtn = document.getElementById('fo-adv-apply');
+    var findClearBtn   = document.getElementById('fo-clear-find');
+    var findStatusEl   = document.getElementById('fo-status');
+    var hasFindControls = !!(
+        findTabName && findTabCoords && findTabDate && findTabAdvanced
+        && findPanelName && findPanelCoords
+        && findPanelDate && findPanelAdvanced
+        && findNameInput && findRaInput && findDecInput && findSepInput
+        && findRaLabel && findDecLabel
+        && findCoordFormatSelect && findUnitSelect
+        && findCoordsBtn
+        && findDateFirstInput && findDateLastInput && findDateApplyBtn
+        && findAdvancedColumnSelect && findAdvancedInputsContainer
+        && findAdvancedApplyBtn && findClearBtn
+    );
+    var activeFindTab = 'name';
+    var coordSearchRequested = false;
+    var dateFilterApplied = {
+        first: '',
+        last: '',
+    };
+    var advancedFilterApplied = {
+        column: '',
+        colType: '',
+        contains: '',
+        from: '',
+        to: '',
+    };
+    var lastRequestId  = 0;
+
     /* -----------------------------------------------------------------------
        Helpers
     ----------------------------------------------------------------------- */
@@ -83,10 +137,320 @@
                 removable: meta.removable !== false,
                 default: meta.default !== false,
                 hidden: meta.hidden === true,
-                type: meta.type ? String(meta.type).toLowerCase() : 'string',
+                type: meta.type ? String(meta.type).toLowerCase()
+                    : meta.coltype ? String(meta.coltype).toLowerCase()
+                    : 'string',
+                advanced_search: meta.advanced_search === true,
             };
         });
         return out;
+    }
+
+    function setFindStatus(text, isError) {
+        if (!hasFindControls || !findStatusEl) return;
+        findStatusEl.textContent = text;
+        findStatusEl.classList.toggle('ot-find-status--error', !!isError);
+    }
+
+    function setFindTab(tab) {
+        if (!hasFindControls) return;
+        activeFindTab = tab;
+
+        var _tabs = [
+            ['name', findTabName, findPanelName],
+            ['coords', findTabCoords, findPanelCoords],
+            ['date', findTabDate, findPanelDate],
+            ['advanced', findTabAdvanced, findPanelAdvanced],
+        ];
+        _tabs.forEach(function (item) {
+            var key = item[0];
+            var tabBtn = item[1];
+            var panel = item[2];
+            var active = key === activeFindTab;
+            tabBtn.classList.toggle('ot-find-tab--active', active);
+            tabBtn.setAttribute('aria-selected', active ? 'true' : 'false');
+            panel.classList.toggle('ot-find-tab-panel--active', active);
+            panel.hidden = !active;
+        });
+
+        coordSearchRequested = false;
+        if (activeFindTab === 'name') {
+            if (String(findNameInput.value || '').trim().length >= minNameChars) {
+                setFindStatus('Searching by name...', false);
+            } else {
+                setFindStatus('Type object name to search aliases.', false);
+            }
+        } else if (activeFindTab === 'coords') {
+            setFindStatus('Enter RA, Dec, and separation, then click Find.', false);
+        } else if (activeFindTab === 'date') {
+            setFindStatus('Set first/last observed dates and click Apply.', false);
+        } else {
+            setFindStatus('Choose a property, enter text, and click Apply.', false);
+        }
+    }
+
+    function populateAdvancedColumns() {
+        if (!hasFindControls) return;
+        var current = String(findAdvancedColumnSelect.value || '');
+        var opts = columns.filter(function (col) {
+            return (columnMeta[col] || {}).advanced_search === true;
+        });
+        findAdvancedColumnSelect.innerHTML = '';
+
+        var placeholder = document.createElement('option');
+        placeholder.value = '';
+        placeholder.textContent = 'Select a property';
+        findAdvancedColumnSelect.appendChild(placeholder);
+
+        opts.forEach(function (col) {
+            var opt = document.createElement('option');
+            opt.value = col;
+            opt.textContent = col;
+            findAdvancedColumnSelect.appendChild(opt);
+        });
+
+        if (current && opts.indexOf(current) !== -1) {
+            findAdvancedColumnSelect.value = current;
+            advancedBindInputs();
+        } else {
+            findAdvancedInputsContainer.innerHTML = '';
+        }
+    }
+
+    function advancedBindInputs() {
+        if (!hasFindControls) return;
+        findAdvancedInputsContainer.innerHTML = '';
+        var col = String(findAdvancedColumnSelect.value || '').trim();
+        if (!col) return;
+        var meta = columnMeta[col] || {};
+        var type = String(meta.type || 'string');
+
+        function makeField(labelText, inputId, inputType, placeholder, step) {
+            var lbl = document.createElement('label');
+            lbl.className = 'ot-find-field';
+            var span = document.createElement('span');
+            span.className = 'ot-find-field__label';
+            span.textContent = labelText;
+            var inp = document.createElement('input');
+            inp.id = inputId;
+            inp.className = 'ot-find-input';
+            inp.type = inputType;
+            if (placeholder) inp.placeholder = placeholder;
+            if (step) inp.step = step;
+            lbl.appendChild(span);
+            lbl.appendChild(inp);
+            return lbl;
+        }
+
+        if (type === 'number' || type === 'int' || type === 'float') {
+            findAdvancedInputsContainer.appendChild(
+                makeField('From', 'fo-adv-from', 'number', '', 'any'));
+            findAdvancedInputsContainer.appendChild(
+                makeField('To', 'fo-adv-to', 'number', '', 'any'));
+        } else if (type === 'date' || type === 'datetime' || type === 'night') {
+            findAdvancedInputsContainer.appendChild(
+                makeField('From', 'fo-adv-from', 'date', '', ''));
+            findAdvancedInputsContainer.appendChild(
+                makeField('To', 'fo-adv-to', 'date', '', ''));
+        } else {
+            findAdvancedInputsContainer.appendChild(
+                makeField('Contains', 'fo-adv-contains', 'text',
+                          'Type value to match', ''));
+        }
+    }
+
+    function getAdvancedFilterState() {
+        var col = String(findAdvancedColumnSelect.value || '').trim();
+        if (!col) {
+            return { column: '', colType: '', contains: '', from: '', to: '' };
+        }
+        var meta = columnMeta[col] || {};
+        var type = String(meta.type || 'string');
+
+        if (type === 'number' || type === 'int' || type === 'float'
+                || type === 'date' || type === 'datetime' || type === 'night') {
+            var fromEl = document.getElementById('fo-adv-from');
+            var toEl   = document.getElementById('fo-adv-to');
+            return {
+                column: col,
+                colType: type,
+                contains: '',
+                from: fromEl ? String(fromEl.value || '').trim() : '',
+                to:   toEl   ? String(toEl.value   || '').trim() : '',
+            };
+        }
+        var containsEl = document.getElementById('fo-adv-contains');
+        return {
+            column: col,
+            colType: type,
+            contains: containsEl ? String(containsEl.value || '').trim() : '',
+            from: '',
+            to: '',
+        };
+    }
+
+    function clearFindInputs() {
+        if (!hasFindControls) return;
+        findNameInput.value = '';
+        findRaInput.value = '';
+        findDecInput.value = '';
+        findSepInput.value = '';
+        findCoordFormatSelect.value = 'deg';
+        findUnitSelect.value = 'arcsec';
+        findDateFirstInput.value = '';
+        findDateLastInput.value = '';
+        findAdvancedColumnSelect.value = '';
+        if (findAdvancedInputsContainer) findAdvancedInputsContainer.innerHTML = '';
+        dateFilterApplied = { first: '', last: '' };
+        advancedFilterApplied = { column: '', colType: '', contains: '', from: '', to: '' };
+        coordSearchRequested = false;
+        syncCoordInputFormatUi();
+    }
+
+    function parseNumberInput(el) {
+        if (!el) return null;
+        var raw = String(el.value || '').trim();
+        if (!raw) return null;
+        var v = Number(raw);
+        return isNaN(v) ? null : v;
+    }
+
+    function parseSexagesimal(raw, allowSign) {
+        var txt = String(raw || '').trim();
+        if (!txt) return null;
+        txt = txt
+            .replace(/[hHdD]/g, ':')
+            .replace(/[mM]/g, ':')
+            .replace(/[sS]/g, '')
+            .replace(/\s+/g, ':')
+            .replace(/:+/g, ':');
+
+        var sign = 1;
+        if (txt.charAt(0) === '+') {
+            txt = txt.slice(1);
+        } else if (txt.charAt(0) === '-') {
+            if (!allowSign) return null;
+            sign = -1;
+            txt = txt.slice(1);
+        }
+
+        var parts = txt.split(':').filter(function (p) {
+            return p !== '';
+        });
+        if (parts.length < 2 || parts.length > 3) return null;
+
+        var a = Number(parts[0]);
+        var b = Number(parts[1]);
+        var c = (parts.length === 3) ? Number(parts[2]) : 0;
+        if ([a, b, c].some(function (v) { return isNaN(v); })) return null;
+        if (b < 0 || b >= 60 || c < 0 || c >= 60) return null;
+
+        return {
+            sign: sign,
+            a: Math.abs(a),
+            b: b,
+            c: c,
+        };
+    }
+
+    function parseRaToDeg(raw, format) {
+        if (format === 'deg') {
+            return Number(raw);
+        }
+        var sx = parseSexagesimal(raw, false);
+        if (!sx) return null;
+        var hours = sx.a + (sx.b / 60) + (sx.c / 3600);
+        if (!(hours >= 0 && hours <= 24)) return null;
+        return hours * 15;
+    }
+
+    function parseDecToDeg(raw, format) {
+        if (format === 'deg') {
+            return Number(raw);
+        }
+        var sx = parseSexagesimal(raw, true);
+        if (!sx) return null;
+        var deg = sx.a + (sx.b / 60) + (sx.c / 3600);
+        deg *= sx.sign;
+        if (!(deg >= -90 && deg <= 90)) return null;
+        return deg;
+    }
+
+    function syncCoordInputFormatUi() {
+        if (!hasFindControls) return;
+        var mode = String(findCoordFormatSelect.value || 'deg').toLowerCase();
+        if (mode === 'hms') {
+            findRaLabel.textContent = 'RA [HH:MM:SS]';
+            findDecLabel.textContent = 'Dec [DD:MM:SS]';
+            findRaInput.placeholder = 'e.g. 21:52:29.92';
+            findDecInput.placeholder = 'e.g. +28:47:36.7';
+        } else {
+            findRaLabel.textContent = 'RA [deg]';
+            findDecLabel.textContent = 'Dec [deg]';
+            findRaInput.placeholder = 'e.g. 328.1243';
+            findDecInput.placeholder = 'e.g. 28.7933';
+        }
+    }
+
+    function buildApiQuery() {
+        var params = new URLSearchParams();
+        params.set('profile_id', cfg.profileId);
+
+        if (!hasFindControls) {
+            return { params: params, valid: true };
+        }
+
+        if (activeFindTab === 'name') {
+            var nameQuery = String(findNameInput.value || '').trim();
+            if (nameQuery.length >= minNameChars) {
+                params.set('find_only', '1');
+                params.set('name_query', nameQuery);
+                setFindStatus('Searching by name...', false);
+            } else {
+                // No name criterion means show full table, not empty result.
+                setFindStatus('Type object name to search aliases.', false);
+            }
+            return { params: params, valid: true };
+        }
+
+        if (activeFindTab === 'date' || activeFindTab === 'advanced') {
+            return { params: params, valid: true };
+        }
+
+        // Coordinate tab is manual: only filter after explicit Find.
+        if (!coordSearchRequested) {
+            setFindStatus('Enter RA, Dec, and separation, then click Find.', false);
+            return { params: params, valid: true };
+        }
+
+        var raRaw = String(findRaInput.value || '').trim();
+        var decRaw = String(findDecInput.value || '').trim();
+        var sepRaw = String(findSepInput.value || '').trim();
+        if (!(raRaw && decRaw && sepRaw)) {
+            setFindStatus('Provide RA, Dec, and separation before clicking Find.', true);
+            return { params: params, valid: false };
+        }
+
+        var cfmt = String(findCoordFormatSelect.value || 'deg').toLowerCase();
+        var ra = parseRaToDeg(raRaw, cfmt);
+        var dec = parseDecToDeg(decRaw, cfmt);
+        var sep = parseNumberInput(findSepInput);
+        if (!isFinite(ra) || !isFinite(dec) || sep === null || sep < 0) {
+            if (cfmt === 'hms') {
+                setFindStatus('Use RA HH:MM:SS, Dec DD:MM:SS, and numeric separation.', true);
+            } else {
+                setFindStatus('RA, Dec, and separation must be valid numbers.', true);
+            }
+            return { params: params, valid: false };
+        }
+
+        params.set('find_only', '1');
+        params.set('ra', String(ra));
+        params.set('dec', String(dec));
+        params.set('separation', String(sep));
+        params.set('separation_unit', findUnitSelect.value || 'arcsec');
+        setFindStatus('Searching by coordinates...', false);
+        return { params: params, valid: true };
     }
 
     function getColumnMeta(col) {
@@ -237,22 +601,36 @@
        Load data from API
     ----------------------------------------------------------------------- */
     function loadData() {
+        var requestId = ++lastRequestId;
+        var queryBuild = buildApiQuery();
+        if (!queryBuild.valid) {
+            // Keep current table visible; only update finder status.
+            return;
+        }
+
         tbody.innerHTML = '<tr><td class="ot-loading" colspan="20">'
             + '<i class="fa-solid fa-spinner fa-spin"></i> Loading data&hellip;'
             + '</td></tr>';
 
-        fetch(cfg.apiUrl + '?profile_id=' + encodeURIComponent(cfg.profileId))
+        fetch(cfg.apiUrl + '?' + queryBuild.params.toString())
             .then(function (r) { return r.json(); })
             .then(function (data) {
+                if (requestId !== lastRequestId) {
+                    return;
+                }
                 if (!data.success) {
                     tbody.innerHTML = '<tr><td class="ot-error" colspan="20">'
                         + escHtml(data.error || 'Failed to load data') + '</td></tr>';
+                    if (hasFindControls) {
+                        setFindStatus(data.error || 'Search failed.', true);
+                    }
                     return;
                 }
 
                 allRows  = data.rows    || [];
                 columns  = data.columns || [];
                 columnMeta = normalizeColumnMeta(data.column_meta || {});
+                populateAdvancedColumns();
 
                 // Enforce hard exclusion for metadata-hidden columns.
                 columns = columns.filter(function (col) {
@@ -291,16 +669,42 @@
                 if (data.message && allRows.length === 0) {
                     tbody.innerHTML = '<tr><td class="ot-empty" colspan="20">'
                         + escHtml(data.message) + '</td></tr>';
+                    if (hasFindControls) {
+                        setFindStatus(data.message, false);
+                    }
+                    updatePagination();
                     return;
+                }
+
+                if (hasFindControls) {
+                    setFindStatus('Showing ' + allRows.length + ' matching objects.', false);
                 }
 
                 buildHeaders();
                 applyFilterSort();
             })
             .catch(function (err) {
+                if (requestId !== lastRequestId) {
+                    return;
+                }
                 tbody.innerHTML = '<tr><td class="ot-error" colspan="20">'
                     + 'Network error: ' + escHtml(String(err)) + '</td></tr>';
+                if (hasFindControls) {
+                    setFindStatus('Network error while searching.', true);
+                }
             });
+    }
+
+    function debounce(fn, waitMs) {
+        var timer = null;
+        return function () {
+            if (timer) {
+                window.clearTimeout(timer);
+            }
+            timer = window.setTimeout(function () {
+                fn();
+            }, waitMs);
+        };
     }
 
     /* -----------------------------------------------------------------------
@@ -454,6 +858,71 @@
     ----------------------------------------------------------------------- */
     function applyFilterSort() {
         filteredRows = allRows.filter(function (row) {
+            if (activeFindTab === 'advanced') {
+                var advCol = String(advancedFilterApplied.column || '');
+                if (advCol) {
+                    var advColType = String(advancedFilterApplied.colType || 'string');
+                    if (advColType === 'number' || advColType === 'int' || advColType === 'float') {
+                        var advFromNum = advancedFilterApplied.from !== ''
+                            ? Number(advancedFilterApplied.from) : null;
+                        var advToNum = advancedFilterApplied.to !== ''
+                            ? Number(advancedFilterApplied.to) : null;
+                        if ((advFromNum !== null && !isNaN(advFromNum))
+                                || (advToNum !== null && !isNaN(advToNum))) {
+                            var advCellNum = parseStrictNumber(row[advCol]);
+                            if (advCellNum === null) return false;
+                            if (advFromNum !== null && !isNaN(advFromNum)
+                                    && advCellNum < advFromNum) return false;
+                            if (advToNum !== null && !isNaN(advToNum)
+                                    && advCellNum > advToNum) return false;
+                        }
+                    } else if (advColType === 'date' || advColType === 'datetime'
+                            || advColType === 'night') {
+                        var advFromDate = advancedFilterApplied.from
+                            ? Date.parse(advancedFilterApplied.from + 'T00:00:00Z') : null;
+                        var advToDate = advancedFilterApplied.to
+                            ? Date.parse(advancedFilterApplied.to + 'T23:59:59Z') : null;
+                        if ((advFromDate !== null && !isNaN(advFromDate))
+                                || (advToDate !== null && !isNaN(advToDate))) {
+                            var advCellDate = parseNightDate(row[advCol]);
+                            if (advCellDate === null) return false;
+                            if (advFromDate !== null && !isNaN(advFromDate)
+                                    && advCellDate < advFromDate) return false;
+                            if (advToDate !== null && !isNaN(advToDate)
+                                    && advCellDate > advToDate) return false;
+                        }
+                    } else {
+                        var advQuery = String(advancedFilterApplied.contains || '')
+                            .trim().toLowerCase();
+                        if (advQuery) {
+                            var advCell = (row[advCol] === null || row[advCol] === undefined)
+                                ? '' : String(row[advCol]).toLowerCase();
+                            if (advCell.indexOf(advQuery) === -1) return false;
+                        }
+                    }
+                }
+            }
+
+            if (activeFindTab === 'date') {
+                var firstStr = String(dateFilterApplied.first || '').trim();
+                var lastStr = String(dateFilterApplied.last || '').trim();
+                if (firstStr || lastStr) {
+                    var dateRaw = row['last obs'] || row['latest obs'] || '';
+                    var dateTs = parseNightDate(dateRaw);
+                    if (dateTs === null) {
+                        return false;
+                    }
+                    var firstTs = firstStr ? Date.parse(firstStr + 'T00:00:00Z') : null;
+                    var lastTs = lastStr ? Date.parse(lastStr + 'T23:59:59Z') : null;
+                    if (firstTs !== null && !isNaN(firstTs) && dateTs < firstTs) {
+                        return false;
+                    }
+                    if (lastTs !== null && !isNaN(lastTs) && dateTs > lastTs) {
+                        return false;
+                    }
+                }
+            }
+
             for (var col in colFilters) {
                 if (!isColumnFilterable(col)) {
                     continue;
@@ -725,6 +1194,100 @@
         currentPage = 1;
         applyFilterSort();
     });
+
+    if (hasFindControls) {
+        var debouncedLoad = debounce(function () {
+            currentPage = 1;
+            loadData();
+        }, 250);
+
+        findTabName.addEventListener('click', function () {
+            setFindTab('name');
+            currentPage = 1;
+            loadData();
+        });
+        findTabCoords.addEventListener('click', function () {
+            setFindTab('coords');
+            currentPage = 1;
+            loadData();
+        });
+        findTabDate.addEventListener('click', function () {
+            setFindTab('date');
+            currentPage = 1;
+            loadData();
+        });
+        findTabAdvanced.addEventListener('click', function () {
+            setFindTab('advanced');
+            currentPage = 1;
+            loadData();
+        });
+
+        findNameInput.addEventListener('input', function () {
+            if (activeFindTab !== 'name') {
+                return;
+            }
+            debouncedLoad();
+        });
+
+        findCoordsBtn.addEventListener('click', function () {
+            coordSearchRequested = true;
+            currentPage = 1;
+            loadData();
+        });
+
+        findDateApplyBtn.addEventListener('click', function () {
+            var first = String(findDateFirstInput.value || '').trim();
+            var last = String(findDateLastInput.value || '').trim();
+            dateFilterApplied = { first: first, last: last };
+            currentPage = 1;
+            applyFilterSort();
+            setFindStatus('Date filter applied.', false);
+        });
+
+        findAdvancedColumnSelect.addEventListener('change', function () {
+            advancedFilterApplied = { column: '', colType: '', contains: '', from: '', to: '' };
+            advancedBindInputs();
+        });
+
+        findAdvancedApplyBtn.addEventListener('click', function () {
+            advancedFilterApplied = getAdvancedFilterState();
+            currentPage = 1;
+            applyFilterSort();
+            setFindStatus('Advanced filter applied.', false);
+        });
+
+        [findRaInput, findDecInput, findSepInput].forEach(function (el) {
+            el.addEventListener('input', function () {
+                if (activeFindTab === 'coords') {
+                    coordSearchRequested = false;
+                    setFindStatus('Enter RA, Dec, and separation, then click Find.', false);
+                }
+            });
+        });
+        findCoordFormatSelect.addEventListener('change', function () {
+            coordSearchRequested = false;
+            syncCoordInputFormatUi();
+            if (activeFindTab === 'coords') {
+                setFindStatus('Enter RA, Dec, and separation, then click Find.', false);
+            }
+        });
+        findUnitSelect.addEventListener('change', function () {
+            if (activeFindTab === 'coords') {
+                coordSearchRequested = false;
+                setFindStatus('Enter RA, Dec, and separation, then click Find.', false);
+            }
+        });
+
+        findClearBtn.addEventListener('click', function () {
+            clearFindInputs();
+            setFindTab(activeFindTab);
+            currentPage = 1;
+            loadData();
+        });
+
+        setFindTab('name');
+        syncCoordInputFormatUi();
+    }
 
     /* -----------------------------------------------------------------------
        Window resize: re-sync scroll mirror width

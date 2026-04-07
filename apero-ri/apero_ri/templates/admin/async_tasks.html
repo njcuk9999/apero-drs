@@ -56,6 +56,9 @@
         <button id="btn-run-all" class="ari-btn ari-btn--primary">
             <i class="fa-solid fa-play"></i> Run All
         </button>
+        <button id="btn-force-run-all" class="ari-btn ari-btn--secondary">
+            <i class="fa-solid fa-bolt"></i> Force Run All
+        </button>
         <span id="at-running-badge" class="at-running-badge" style="display:none;">
             <i class="fa-solid fa-circle-notch fa-spin"></i> Running…
         </span>
@@ -563,5 +566,5 @@ window.ARI_ASYNC_TASKS = {
     }
 };
 </script>
-<script src="{{ url_for('static', filename='js/admin_async_tasks.js', v='20260331-2') }}"></script>
+<script src="{{ url_for('static', filename='js/admin_async_tasks.js', v='20260403-1') }}"></script>
 {% endblock %}
