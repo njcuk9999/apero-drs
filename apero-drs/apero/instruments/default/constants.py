@@ -77,6 +77,25 @@ CDict.add('AREL_LDELTA', value=None, dtype=float,
                       'date (can be zero)')
 
 
+# Define the googlesheet URL for the apero release date lookup
+CDict.add('AREL_GSHEET_URL', value=None, dtype=str,
+          source=__NAME__, group=cgroup,
+          description='Define the googlesheet URL for the apero release date '
+                      'lookup')
+
+# Define the googlesheet sheet id for the apero release date lookup
+# (there should be one sheet per instrument)
+CDict.add('AREL_GSHEET_ID', value=None, dtype=str, source=__NAME__,
+          group=cgroup,
+          description='Define the googlesheet sheet id for the apero release '
+                      'date lookup (there should be one sheet per instrument)')
+
+# Define the googlesheet sheet column for the apero release date
+CDict.add('AREL_GSHEET_ACOL', value=None, dtype=str, source=__NAME__,
+          group=cgroup,
+          description='Define the googlesheet sheet column for the '
+                      'apero release date')
+
 # =============================================================================
 # COMMON IMAGE SETTINGS
 # =============================================================================

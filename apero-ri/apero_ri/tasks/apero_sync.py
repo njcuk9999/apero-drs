@@ -77,7 +77,6 @@ __NAME__ = 'apero_ri.tasks.apero_sync'
 # =============================================================================
 def run(task_key: str,
         params: Dict[str, Any],
-        *,
         verbose: bool = True,
         log_file: Optional[str] = None) -> Dict[str, Any]:
     """Run a registered APERO RI task locally with the supplied params.
@@ -270,7 +269,6 @@ def local_task_keys() -> List[str]:
 
 def run_for_profile(task_key: str,
                     profile_yaml: str,
-                    *,
                     local_data_dir: str = '',
                     instrument: str = '',
                     task_config: Optional[Dict[str, Any]] = None,

@@ -565,6 +565,66 @@ def get_file_reject_list(params: ParamDict, recipe: DrsRecipe,
         return np.array(reject_list)
 
 
+def get_areldate(params: ParamDict, header: drs_fits.Header) -> str:
+    """
+    Get the APERO release date from:
+
+    Option 1. The google sheet (based on run id)
+    Option 2. The pseudo const (raw + time delta)
+
+    :param params: ParamDict, parameter dictionary of constants
+    :param header: Header, fits header (required for KW_RUN_ID and KW_IRELDATE)
+
+    :return: str, the YYYY-MM-DD hh:mm:ss.ss representation of the apero
+             release date
+    """
+    # get psuedo constants
+    pconst = load_functions.load_pconfig(select.INSTRUMENTS)
+    # set apero release date to None to start
+    areldate = None
+    # get header key
+    run_id = header.get(params['KW_RUN_ID'][0], None)
+    # -------------------------------------------------------------------------
+    # option 1: Check the google sheet for an entry
+    # -------------------------------------------------------------------------
+    # if we have no run id we can't do this
+    if run_id is not None:
+        # clean run id
+        run_id = str(run_id).strip()
+        # get parameters from params
+        gsheet_url = params['DATA.AREL_GSHEET_URL']
+        gsheet_id = params['DATA.AREL_GSHEET_ID']
+        gsheet_acol = params['DATA.AREL_GSHEET_ACOL']
+        # get areldate list google sheets
+        try:
+            adate_table = drs_database.get_google_sheet(params, gsheet_url,
+                                                        gsheet_id)
+            # set areldate if in table
+            if run_id in list(adate_table['RUN_ID']):
+                # get positions in table
+                mask = adate_table['RUN_ID'] == str(run_id)
+                # get the last appearing row in googlesheet
+                areldate = adate_table[gsheet_acol][mask][-1]
+
+        # any exception here should return a warning and a empty array
+        except Exception as e:
+            wmsg = 'Cannot read areldate list {0}.'
+            wargs = [GOOGLE_BASE_URL.format(gsheet_url, gsheet_id),
+                     type(e), str(e)]
+            WLOG(params, 'warning', wmsg.format(*wargs), sublevel=3)
+
+    # -------------------------------------------------------------------------
+    # option 2: if not set from googlesheet set from raw areldate + time delta
+    # -------------------------------------------------------------------------
+    if areldate is None:
+        areldate = pconst.GET_AREL_DATE(params, header,
+                                        delta_key='DATA.AREL_ADELTA')
+
+    # -------------------------------------------------------------------------
+    # return the apero release date
+    return areldate
+
+
 # =============================================================================
 # Define other functions
 # =============================================================================

@@ -46,6 +46,19 @@ CDict.set('AREL_ADELTA', value=2.0, source=__NAME__, group=cgroup)
 #   if there is no other way to determine the public release date (can be zero)
 CDict.set('AREL_LDELTA', value=3.0, source=__NAME__, group=cgroup)
 
+# Define the googlesheet URL for the apero release date lookup
+CDict.set('AREL_GSHEET_URL', source=__NAME__, group=cgroup,
+          value='1BcUdQZx0RcLEK4zuVPUWUK3I6gT78cRukl_LuoIhAgw')
+
+# Define the googlesheet sheet id for the apero release date lookup
+# (there should be one sheet per instrument)
+CDict.set('AREL_GSHEET_ID', source=__NAME__, group=cgroup,
+          value='1768624938')
+
+# Define the googlesheet sheet column for the apero release date
+CDict.set('AREL_GSHEET_ACOL', source=__NAME__, group=cgroup,
+          value='APERO_REL_DATE')
+
 # =============================================================================
 # COMMON IMAGE SETTINGS
 # =============================================================================
