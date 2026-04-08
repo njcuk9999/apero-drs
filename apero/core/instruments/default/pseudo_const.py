@@ -367,7 +367,7 @@ class DefaultPseudoConstants:
         self._not_implemented('DRS_MIDMJD')
 
     def GET_AREL_DATE(self, params: Any, header: Any,
-                      delta_key: str = 'ARELDATE'):
+                      delta_key: str):
         """
         Get the apero release date
 

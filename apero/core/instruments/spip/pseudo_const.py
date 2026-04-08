@@ -313,7 +313,7 @@ class PseudoConstants(pseudo_const.DefaultPseudoConstants):
         # ------------------------------------------------------------------
         # Deal with the default apero release date
         # ------------------------------------------------------------------
-        header, hdict = set_apero_reldate(params, header, hdict)
+        header, hdict = manual_apero_reldate(params, header, hdict)
 
         # ------------------------------------------------------------------
         # Return header
@@ -392,15 +392,15 @@ class PseudoConstants(pseudo_const.DefaultPseudoConstants):
         return float(header[params['KW_MID_OBS_TIME']])
 
     def GET_AREL_DATE(self, params: ParamDict, header: Any,
-                      delta_key: str = 'ARELDATE') -> str:
+                      delta_key: str) -> str:
         """
         Get the apero release date
 
         :param delta_key: str, the key to use for the time delta
         :return:
         """
-        return set_apero_reldate(params, header, delta_key=delta_key,
-                                 return_value=True)
+        return manual_apero_reldate(params, header, delta_key=delta_key,
+                                    return_value=True)
 
     def FRAME_TIME(self, params: ParamDict, header: Any):
         """
@@ -1616,7 +1616,7 @@ def set_drs_qc(params: ParamDict, header: Any, hdict: Any) -> Tuple[Any, Any]:
     return header, hdict
 
 
-def set_apero_reldate(params: ParamDict, header: Any,
+def manual_apero_reldate(params: ParamDict, header: Any,
                       hdict: Any = None,
                       delta_key: str = 'AREL_RDELTA',
                       return_value: bool = False
@@ -1636,13 +1636,17 @@ def set_apero_reldate(params: ParamDict, header: Any,
     kw_ireldate = params['KW_IRELDATE'][0]
     kw_areldate = params['KW_ARELDATE'][0]
     kw_areldate_comment = params['KW_ARELDATE'][2]
-    kw_areldate_datatype = params.instances['KW_ARELDATE'].datatype
+    kw_ireldate_datatype = params.instances['KW_IRELDATE'].datatype
     # get the time delta from APERO
     tdelta = params[delta_key]
     # get the default time to add to instrument release date
     time_delta = TimeDelta(tdelta * uu.year)
+    # deal with no IRELDATE in header -> fall back to KW_ACQTIME
+    if kw_ireldate not in header:
+        kw_ireldate = params['KW_ACQTIME'][0]
+        kw_ireldate_datatype = params.instances['KW_ACQTIME'].datatype
     # get and convert ireldate
-    ireldate = Time(header[kw_ireldate], format=kw_areldate_datatype)
+    ireldate = Time(header[kw_ireldate], format=kw_ireldate_datatype)
     # calculate relative date
     areldate = ireldate + time_delta
     # deal with returning just the value

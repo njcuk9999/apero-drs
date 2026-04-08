@@ -612,6 +612,7 @@ KW_MID_OBSTIME_METHOD = Keyword('KW_MID_OBSTIME_METHOD', key='NULL', dtype=str,
 
 # Define the raw file release date
 KW_IRELDATE = Keyword('KW_IRELDATE', key='NULL', dtype=str, source=__NAME__,
+                      combine_method='maximum',
                       description='Define the raw file release date')
 
 # Define the APERO Public Release date (YYYY-MM-DD) this may be different

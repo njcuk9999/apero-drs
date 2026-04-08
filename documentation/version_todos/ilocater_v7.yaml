@@ -10,7 +10,7 @@
 2026-03-25:
   - add 'KW_IRELDATE', 'KW_ARELDATE', 'KW_DRS_QC' to FILEINDEX_HEADER_COLS (pseudo_constants)
   - add 'KW_IRELDATE', 'KW_ARELDATE' to default_keywords
-  - add "set_drs_qc" and  "set_apero_reldate" functions to pseudo_constants
+  - add "set_drs_qc" and  "manual_apero_reldate" functions to pseudo_constants
 
 2026-03-30:
   - add AREL_RDELTA, AREL_ADELTA, AREL_LDELTA to default_constants

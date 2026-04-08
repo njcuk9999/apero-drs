@@ -448,7 +448,9 @@ KW_MID_OBSTIME_METHOD.set(key='MJDMIDMD',
 
 # Define the raw file release date
 KW_IRELDATE = KW_IRELDATE.copy(__NAME__)
-KW_IRELDATE.set(key='MJDMID', comment='queue release date', group='mjd')
+KW_IRELDATE.set(key='MJDMID', comment='queue release date', group='raw',
+                datatype='mjd', dataformat=float,
+                combine_method='maximum')
 
 # Define the APERO Public Release date (YYYY-MM-DD) this may be different
 #  from raw file header's release date

@@ -668,6 +668,10 @@ ARELDATE_GSHEET_ID.value = '352080580'
 ARELDATE_GSHEET_ACOL = ARELDATE_GSHEET_ACOL.copy(__NAME__)
 ARELDATE_GSHEET_ACOL.value = 'APERO_REL_DATE'
 
+# Define the googlesheet sheet column for the apero release date
+ARELDATE_GSHEET_LCOL = ARELDATE_GSHEET_LCOL.copy(__NAME__)
+ARELDATE_GSHEET_LCOL.value = 'LBL_REL_DATE'
+
 # =============================================================================
 # CALIBRATION: BAD PIXEL MAP SETTINGS
 # =============================================================================
