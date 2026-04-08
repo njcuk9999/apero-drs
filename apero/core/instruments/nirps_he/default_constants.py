@@ -174,6 +174,10 @@ ARELDATE_GSHEET_URL.value = '1BcUdQZx0RcLEK4zuVPUWUK3I6gT78cRukl_LuoIhAgw'
 ARELDATE_GSHEET_ID = ARELDATE_GSHEET_ID.copy(__NAME__)
 ARELDATE_GSHEET_ID.value = '1565323192'
 
+# Define the googlesheet sheet column for the apero release date
+ARELDATE_GSHEET_ACOL = ARELDATE_GSHEET_ACOL.copy(__NAME__)
+ARELDATE_GSHEET_ACOL.value = 'APERO_REL_DATE'
+
 # =============================================================================
 # CALIBRATION: GENERAL SETTINGS
 # =============================================================================

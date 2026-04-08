@@ -585,16 +585,17 @@ def get_areldate(params: ParamDict, header: drs_fits.Header) -> str:
         # get parameters from params
         gsheet_url = params['ARELDATE_GSHEET_URL']
         gsheet_id = params['ARELDATE_GSHEET_ID']
+        gsheet_acol = params['ARELDATE_GSHEET_ACOL']
         # get areldate list google sheets
         try:
             adate_table = drs_database.get_google_sheet(params, gsheet_url,
                                                         gsheet_id)
             # set areldate if in table
-            if run_id in adate_table['RUN_ID'].values:
+            if run_id in list(adate_table['RUN_ID']):
                 # get positions in table
                 mask = adate_table['RUN_ID'] == str(run_id)
                 # get the last appearing row in googlesheet
-                areldate = adate_table['ARELDATE'][mask][-1]
+                areldate = adate_table[gsheet_acol][mask][-1]
 
         # any exception here should return a warning and a empty array
         except Exception as e:

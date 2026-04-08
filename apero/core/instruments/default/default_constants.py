@@ -53,7 +53,7 @@ __all__ = [
     'IMAGE_FRAME_TIME', 'ALL_POLAR_RHOMB_POS',
     'REF_FIND_TIME_COL', 'REF_FIND_START_DATE', 'REF_FIND_END_DATE',
     'AREL_RDELTA', 'AREL_ADELTA', 'AREL_LDELTA',
-    'ARELDATE_GSHEET_URL', 'ARELDATE_GSHEET_ID',
+    'ARELDATE_GSHEET_URL', 'ARELDATE_GSHEET_ID', 'ARELDATE_GSHEET_ACOL',
     # general calib constants
     'COMBINE_METRIC_THRESHOLD1', 'CAVITY_1M_FILE', 'CAVITY_LL_FILE',
     'SIMBAD_TAP_URL',
@@ -664,6 +664,11 @@ ARELDATE_GSHEET_ID = Const('ARELDATE_GSHEET_ID',
                                        'the apero release date lookup (there '
                                        'should be one sheet per instrument)')
 
+# Define the googlesheet sheet column for the apero release date
+ARELDATE_GSHEET_ACOL = Const('ARELDATE_GSHEET_ACOL', value=None, dtype=str,
+                             source=__NAME__, group=cgroup,
+                             description='Define the googlesheet sheet '
+                                         'column for the apero release date')
 
 # =============================================================================
 # CALIBRATION: GENERAL SETTINGS
