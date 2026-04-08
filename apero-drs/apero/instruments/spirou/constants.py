@@ -57,6 +57,10 @@ CDict.set('AREL_GSHEET_ID', source=__NAME__, group=cgroup,
 CDict.set('AREL_GSHEET_ACOL', source=__NAME__, group=cgroup,
           value='APERO_REL_DATE')
 
+# Define the googlesheet sheet column for the lbl release date
+CDict.set('AREL_GSHEET_LCOL', source=__NAME__, group=cgroup,
+          value='LBL_REL_DATE')
+
 # =============================================================================
 # COMMON IMAGE SETTINGS
 # =============================================================================

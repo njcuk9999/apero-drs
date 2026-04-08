@@ -96,6 +96,12 @@ CDict.add('AREL_GSHEET_ACOL', value=None, dtype=str, source=__NAME__,
           description='Define the googlesheet sheet column for the '
                       'apero release date')
 
+# Define the googlesheet sheet column for the lbl release date
+CDict.add('AREL_GSHEET_LCOL', value=None, dtype=str, source=__NAME__,
+          group=cgroup,
+          description='Define the googlesheet sheet column for the '
+                      'lbl release date')
+
 # =============================================================================
 # COMMON IMAGE SETTINGS
 # =============================================================================

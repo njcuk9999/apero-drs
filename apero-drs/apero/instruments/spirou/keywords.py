@@ -431,7 +431,8 @@ KDict.set('KW_MID_OBSTIME_METHOD', key='MJDMIDMD',
 
 # Define the raw file release date
 KDict.set('KW_IRELDATE', key='REL_DATE', comment='queue release date',
-          group='raw', datatype='iso', dataformat='str')
+          group='raw', datatype='fits', dataformat='str',
+          combine_method='maximum')
 
 # Define the APERO Public Release date (YYYY-MM-DD) this may be different
 #  from raw file header's release date
