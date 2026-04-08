@@ -20,6 +20,12 @@
     var finderImages = document.getElementById('op-finder-images');
     var lblSections = document.getElementById('op-lbl-sections');
     var ccfGrid = document.getElementById('op-ccf-grid');
+    var ccfMjdStartInput = document.getElementById('op-ccf-mjd-start');
+    var ccfMjdEndInput = document.getElementById('op-ccf-mjd-end');
+    var ccfNobsInput = document.getElementById('op-ccf-nobs');
+    var ccfApplyRangeBtn = document.getElementById('op-ccf-apply-range');
+    var ccfResetRangeBtn = document.getElementById('op-ccf-reset-range');
+    var ccfSamplingNote = document.getElementById('op-ccf-sampling-note');
     var tsBody = document.getElementById('op-time-series-tbody');
     var allSectionsHost = document.getElementById('op-all-sections');
     var allPinnedReorder = document.getElementById('op-all-pinned-reorder');
@@ -41,6 +47,11 @@
     var sectionTitleMap = {};
     var tabOrderMap = {};
     var vsysMs = null;
+    var ccfRangeFilter = {
+        mjdStart: null,
+        mjdEnd: null,
+        nobs: 100,
+    };
 
     /* ------------------------------------------------------------------
        Deferred Bokeh embedding  (components-based)
@@ -51,6 +62,241 @@
     ------------------------------------------------------------------ */
     var pendingPlotEmbeds = {};   // { divId: { script, div } }
     var embeddedPlots     = {};   // divId -> true once injected
+    var objectPlotsState  = {
+        spectrum: 'idle',
+        ccf_rv: 'idle',
+        ccf_profile: 'idle',
+        time_series: 'idle',
+    };
+    var lblPlotsState     = 'idle';   // idle | loading | loaded
+    var debugPlotsState   = 'idle';   // idle | loading | loaded
+    var backgroundPrefetchStarted = false;
+    var plotLastUpdatedByKey = {};
+    var plotReloadingByKey = {};
+
+    function currentUtcDateLabel() {
+        return new Date().toISOString().slice(0, 10);
+    }
+
+    function dateLabelFromTimestamp(rawValue) {
+        var raw = String(rawValue || '').trim();
+        if (!raw) return '';
+        var dt = new Date(raw);
+        if (Number.isNaN(dt.getTime())) return '';
+        return dt.toISOString().slice(0, 10);
+    }
+
+    function payloadUpdatedDateLabel(payload) {
+        if (!payload || typeof payload !== 'object') return '';
+        return (
+            dateLabelFromTimestamp(payload.updated_at)
+            || dateLabelFromTimestamp(payload._cache_cached_at)
+            || dateLabelFromTimestamp(payload.generated_at)
+            || ''
+        );
+    }
+
+    function refreshUpdatedLinkNode(lnk, key) {
+        if (!(lnk instanceof Element)) return;
+        if (plotReloadingByKey[key]) {
+            lnk.textContent = 'Reloading plot...';
+            lnk.title = 'Plot reload in progress';
+            return;
+        }
+        lnk.textContent = 'Last updated ' + (plotLastUpdatedByKey[key] || '--');
+        lnk.title = 'Reload ' + key + ' plot';
+    }
+
+    function setPlotLastUpdated(plotKey, dateLabel) {
+        var key = String(plotKey || '').toLowerCase();
+        if (!key) return;
+        plotLastUpdatedByKey[key] = String(dateLabel || currentUtcDateLabel());
+        document.querySelectorAll('.op-plot-updated-link').forEach(function (lnk) {
+            if (!(lnk instanceof Element)) return;
+            if (String(lnk.getAttribute('data-plot-key') || '').toLowerCase() !== key) return;
+            refreshUpdatedLinkNode(lnk, key);
+        });
+    }
+
+    function setPlotReloading(plotKey, isReloading) {
+        var key = String(plotKey || '').toLowerCase();
+        if (!key) return;
+        plotReloadingByKey[key] = !!isReloading;
+        document.querySelectorAll('.op-plot-updated-link').forEach(function (lnk) {
+            if (!(lnk instanceof Element)) return;
+            if (String(lnk.getAttribute('data-plot-key') || '').toLowerCase() !== key) return;
+            refreshUpdatedLinkNode(lnk, key);
+        });
+    }
+
+    function setGroupLastUpdated(group) {
+        var g = String(group || '').toLowerCase();
+        var d = currentUtcDateLabel();
+        if (g === 'spectrum') {
+            ['snr', 'berv', 'spec'].forEach(function (k) { setPlotLastUpdated(k, d); });
+            return;
+        }
+        if (g === 'ccf_rv') {
+            setPlotLastUpdated('ccf_rv', d);
+            return;
+        }
+        if (g === 'ccf_profile') {
+            setPlotLastUpdated('ccf_profile', d);
+            return;
+        }
+        if (g === 'time_series') {
+            ['ts_snr', 'ts_airmass'].forEach(function (k) { setPlotLastUpdated(k, d); });
+        }
+    }
+
+    function ensurePlotsForTab(tabKey) {
+        var key = String(tabKey || '').trim();
+        if (key === 'all') {
+            loadObjectPlots('spectrum');
+            loadObjectPlots('ccf_rv');
+            loadObjectPlots('ccf_profile');
+            loadObjectPlots('time_series');
+            if (lblPlotsState === 'idle') loadLblPlots();
+            if (debugPlotsState === 'idle') loadDebugPlots();
+            return;
+        }
+        if (key === 'spectrum') {
+            loadObjectPlots('spectrum');
+        }
+        if (key === 'ccf') {
+            loadObjectPlots('ccf_rv');
+            loadObjectPlots('ccf_profile');
+        }
+        if (key === 'time_series') {
+            loadObjectPlots('time_series');
+        }
+        if (key === 'lbl' && lblPlotsState === 'idle') {
+            loadLblPlots();
+        }
+        if (key === 'debug' && debugPlotsState === 'idle') {
+            loadDebugPlots();
+        }
+    }
+
+    function getPlotKeyFromHref(href) {
+        var text = String(href || '').trim();
+        if (!text) return '';
+        try {
+            var url = new URL(text, window.location.origin);
+            var parts = url.pathname.split('/').filter(function (p) {
+                return String(p || '').trim().length > 0;
+            });
+            var idx = parts.indexOf('object-plot-max');
+            if (idx >= 0 && parts.length > idx + 3) {
+                return decodeURIComponent(parts[parts.length - 1]).toLowerCase();
+            }
+        } catch (err) {
+            // Fall back to regex parse for malformed URLs.
+        }
+        var m = text.match(/\/object-plot-max\/.+\/([^/?#]+)/i);
+        return m ? decodeURIComponent(m[1]).toLowerCase() : '';
+    }
+
+    function reloadPlotByKey(plotKey) {
+        var key = String(plotKey || '').toLowerCase();
+        if (!key) return;
+        if (key === 'snr' || key === 'berv' || key === 'spec') {
+            setPlotReloading(key, true);
+            loadObjectPlots('spectrum', true, key);
+            return;
+        }
+        if (key === 'ccf' || key === 'ccf_profile') {
+            setPlotReloading('ccf_profile', true);
+            loadObjectPlots('ccf_profile', true, 'ccf_profile');
+            return;
+        }
+        if (key === 'ccf_rv') {
+            setPlotReloading('ccf_rv', true);
+            loadObjectPlots('ccf_rv', true, 'ccf_rv');
+            return;
+        }
+        if (key === 'ts_snr' || key === 'ts_airmass') {
+            setPlotReloading(key, true);
+            loadObjectPlots('time_series', true, key);
+            return;
+        }
+        if (key === 'lbl') {
+            setPlotReloading(key, true);
+            loadLblPlots(true, key);
+            return;
+        }
+        if (key.indexOf('debug_') === 0) {
+            setPlotReloading(key, true);
+            loadDebugPlots(true, key);
+        }
+    }
+
+    function ensurePlotReloadButtons() {
+        document.querySelectorAll('.op-plot-max-btn').forEach(function (maxBtn) {
+            if (!(maxBtn instanceof Element)) return;
+            if (maxBtn.getAttribute('data-op-max-wired') !== '1') {
+                maxBtn.setAttribute('data-op-max-wired', '1');
+            }
+
+            var parent = maxBtn.parentElement;
+            if (!parent) return;
+            if (parent.querySelector('.op-plot-reload-btn')) return;
+
+            var reloadBtn = document.createElement('button');
+            reloadBtn.type = 'button';
+            reloadBtn.className = 'ari-btn ari-btn--sm ari-btn--secondary op-plot-reload-btn';
+            reloadBtn.title = 'Reload plot';
+            reloadBtn.style.marginLeft = '0.4rem';
+            reloadBtn.innerHTML = '<i class="fa-solid fa-rotate"></i>';
+            reloadBtn.addEventListener('click', function (ev) {
+                ev.preventDefault();
+                ev.stopPropagation();
+                reloadPlotByKey(getPlotKeyFromHref(maxBtn.getAttribute('href') || ''));
+            });
+            parent.insertBefore(reloadBtn, maxBtn);
+
+            if (!parent.querySelector('.op-plot-updated-link')) {
+                var key = getPlotKeyFromHref(maxBtn.getAttribute('href') || '');
+                var upd = document.createElement('a');
+                upd.href = '#';
+                upd.className = 'op-plot-updated-link';
+                upd.setAttribute('data-plot-key', key);
+                upd.style.marginLeft = '0.5rem';
+                upd.style.fontSize = '0.78rem';
+                upd.style.textDecoration = 'none';
+                upd.style.color = 'var(--ari-text-muted, #6b7280)';
+                refreshUpdatedLinkNode(upd, key);
+                upd.addEventListener('click', function (ev) {
+                    ev.preventDefault();
+                    ev.stopPropagation();
+                    reloadPlotByKey(key);
+                });
+                parent.insertBefore(upd, reloadBtn);
+            }
+        });
+    }
+
+    function startBackgroundPlotPrefetch() {
+        if (backgroundPrefetchStarted) return;
+        backgroundPrefetchStarted = true;
+
+        var idleCb = window.requestIdleCallback || function (cb) {
+            return window.setTimeout(cb, 1200);
+        };
+
+        idleCb(function () {
+            loadObjectPlots('spectrum');
+            window.setTimeout(function () {
+                loadObjectPlots('ccf_rv');
+            }, 1200);
+            window.setTimeout(function () {
+                loadObjectPlots('ccf_profile');
+            }, 1200);
+            window.setTimeout(function () {
+                loadObjectPlots('time_series');
+            }, 2600);
+        });
+    }
 
     function isElementVisible(el) {
         if (!el) return false;
@@ -192,6 +438,7 @@
         applySectionFilter(tabKey);
         // Notify lazy-loading tab modules (e.g. file_browser.js)
         document.dispatchEvent(new CustomEvent('ARI_TAB_ACTIVATED', {detail: {tabKey: tabKey}}));
+        ensurePlotsForTab(tabKey);
         // Flush deferred Bokeh embeds for now-visible containers, then
         // fire resize so existing stretch_width plots re-measure.
         setTimeout(function () {
@@ -711,6 +958,7 @@
             applySectionFilter(tabKey);
         });
         applySectionFilter('all');
+        ensurePlotReloadButtons();
     }
 
     function toggleSectionPinned(sectionId) {
@@ -926,24 +1174,37 @@
         finderImages.style.display = '';
     }
 
-    /* ------------------------------------------------------------------
-       Debug plot generation (auto-loaded)
-    ------------------------------------------------------------------ */
+     /* ------------------------------------------------------------------
+         Debug plot generation (lazy-loaded)
+     ------------------------------------------------------------------ */
     var debugPlotKeys = ['extsmax', 'effron', 'version', 'cdt', 'tcorr_map'];
 
-    function loadDebugPlots() {
+    function loadDebugPlots(forceReload, activePlotKey) {
+        if (forceReload) {
+            debugPlotsState = 'idle';
+        }
+        if (debugPlotsState === 'loading' || debugPlotsState === 'loaded') return;
+        debugPlotsState = 'loading';
         var url = cfg.debugPlotsApiUrl;
-        if (!url) return;
+        if (!url) {
+            debugPlotsState = 'idle';
+            return;
+        }
         if (debugLoading) debugLoading.style.display = '';
         if (debugError) debugError.style.display = 'none';
 
         var params = '?profile_id=' + encodeURIComponent(cfg.profileId)
             + '&objname=' + encodeURIComponent(cfg.objname);
+        if (forceReload) {
+            params += '&_ts=' + encodeURIComponent(String(Date.now()));
+        }
         fetch(url + params)
             .then(function (r) { return r.json(); })
             .then(function (data) {
                 if (debugLoading) debugLoading.style.display = 'none';
                 if (!data || !data.success) {
+                    if (activePlotKey) setPlotReloading(activePlotKey, false);
+                    debugPlotsState = 'idle';
                     if (debugError) {
                         debugError.textContent = data && data.error
                             ? data.error : 'Failed to generate debug plots.';
@@ -952,8 +1213,16 @@
                     return;
                 }
                 renderDebugPlots(data.plots || {});
+                var updated = payloadUpdatedDateLabel(data) || currentUtcDateLabel();
+                debugPlotKeys.forEach(function (k) {
+                    setPlotLastUpdated('debug_' + k, updated);
+                });
+                if (activePlotKey) setPlotReloading(activePlotKey, false);
+                debugPlotsState = 'loaded';
             })
             .catch(function (err) {
+                if (activePlotKey) setPlotReloading(activePlotKey, false);
+                debugPlotsState = 'idle';
                 if (debugLoading) debugLoading.style.display = 'none';
                 if (debugError) {
                     debugError.textContent = 'Network error: ' + String(err);
@@ -1323,8 +1592,165 @@
         embedOrDefer('op-spec-plot-div', payload, 'No spectrum data available.');
     }
 
-    function renderCcfPlot(payload) {
-        embedOrDefer('op-ccf-plot-div', payload, 'No CCF data available.');
+    function renderCcfRvPlot(payload) {
+        embedOrDefer('op-ccf-rv-plot-div', payload, 'No CCF RV data available.', 'op-ccf-rv-plot-loading');
+    }
+
+    function renderCcfProfilePlot(payload) {
+        embedOrDefer('op-ccf-profile-plot-div', payload, 'No CCF profile data available.', 'op-ccf-plot-loading');
+        updateCcfSamplingNote(payload ? payload.sample_info : null);
+    }
+
+    function parseMjdInputValue(inputEl) {
+        if (!inputEl) return null;
+        var sval = String(inputEl.value || '').trim();
+        if (!sval) return null;
+        if (/^\d{4}-\d{2}-\d{2}$/.test(sval)) {
+            var ms = Date.parse(sval + 'T00:00:00Z');
+            if (!isFinite(ms)) return null;
+            return (ms / 86400000.0) + 40587.0;
+        }
+        var v = Number(sval);
+        if (!isFinite(v)) return null;
+        return v;
+    }
+
+    function parseMjdEndInputValue(inputEl) {
+        if (!inputEl) return null;
+        var sval = String(inputEl.value || '').trim();
+        if (!sval) return null;
+        if (/^\d{4}-\d{2}-\d{2}$/.test(sval)) {
+            var ms = Date.parse(sval + 'T23:59:59.999Z');
+            if (!isFinite(ms)) return null;
+            return (ms / 86400000.0) + 40587.0;
+        }
+        var v = Number(sval);
+        if (!isFinite(v)) return null;
+        return v;
+    }
+
+    function parseNobsInputValue(inputEl) {
+        if (!inputEl) return 100;
+        var sval = String(inputEl.value || '').trim();
+        if (!sval) return 100;
+        var n = parseInt(sval, 10);
+        if (!isFinite(n) || n < 1) return 100;
+        return n;
+    }
+
+    function mjdToIsoDate(mjd) {
+        var v = Number(mjd);
+        if (!isFinite(v)) return '';
+        var ms = (v - 40587.0) * 86400000.0;
+        var d = new Date(ms);
+        if (!isFinite(d.getTime())) return '';
+        return d.toISOString().slice(0, 10);
+    }
+
+    function syncCcfRangeInputs(sampleInfo) {
+        if (!sampleInfo || typeof sampleInfo !== 'object') return;
+        var minMjd = Number(sampleInfo.available_mjd_min);
+        var maxMjd = Number(sampleInfo.available_mjd_max);
+        var minDate = isFinite(minMjd) ? mjdToIsoDate(minMjd) : '';
+        var maxDate = isFinite(maxMjd) ? mjdToIsoDate(maxMjd) : '';
+        if (ccfMjdStartInput && minDate) {
+            ccfMjdStartInput.min = minDate;
+        }
+        if (ccfMjdEndInput && maxDate) {
+            ccfMjdEndInput.max = maxDate;
+        }
+        if (ccfNobsInput) {
+            var maxFiles = Number(sampleInfo.max_files || 100);
+            if (isFinite(maxFiles) && maxFiles >= 1) {
+                ccfNobsInput.max = String(Math.max(1, Math.floor(maxFiles * 10)));
+            }
+        }
+    }
+
+    function updateCcfSamplingNote(sampleInfo) {
+        var noteEls = [];
+        document.querySelectorAll('.op-ccf-sampling-note').forEach(function (el) {
+            if (el instanceof Element) noteEls.push(el);
+        });
+        if (ccfSamplingNote && noteEls.indexOf(ccfSamplingNote) === -1) {
+            noteEls.unshift(ccfSamplingNote);
+        }
+        if (!noteEls.length) return;
+
+        function setAllNotes(text) {
+            noteEls.forEach(function (el) {
+                el.textContent = text;
+            });
+        }
+
+        if (!sampleInfo || typeof sampleInfo !== 'object') {
+            setAllNotes(
+                'The median CCF profile uses up to 100 files sampled uniformly in time. Change the time period here:'
+            );
+            return;
+        }
+        syncCcfRangeInputs(sampleInfo);
+        var maxFiles = Number(sampleInfo.max_files || 100);
+        var mode = String(sampleInfo.sampling_mode || 'all');
+        var modeTxt = (mode === 'equally_spaced')
+            ? ('using ' + maxFiles + ' equally time-spaced files')
+            : 'using all files (<= ' + maxFiles + ')';
+        setAllNotes(
+            'The median CCF profile uses up to ' + maxFiles + ' files sampled uniformly in time. '
+            + 'Change the time period here: ' + modeTxt + '.'
+        );
+    }
+
+    function bindCcfRangeControls() {
+        function applyRange() {
+            var startVal = parseMjdInputValue(ccfMjdStartInput);
+            var endVal = parseMjdEndInputValue(ccfMjdEndInput);
+            var nobsVal = parseNobsInputValue(ccfNobsInput);
+            if (startVal !== null && endVal !== null && startVal > endVal) {
+                var tmp = startVal;
+                startVal = endVal;
+                endVal = tmp;
+                if (ccfMjdStartInput) ccfMjdStartInput.value = mjdToIsoDate(startVal);
+                if (ccfMjdEndInput) ccfMjdEndInput.value = mjdToIsoDate(endVal);
+            }
+            if (ccfNobsInput) ccfNobsInput.value = String(nobsVal);
+            ccfRangeFilter.mjdStart = startVal;
+            ccfRangeFilter.mjdEnd = endVal;
+            ccfRangeFilter.nobs = nobsVal;
+            updatePlotMaxLinks();
+            loadObjectPlots('ccf_profile', true);
+        }
+
+        if (ccfApplyRangeBtn) {
+            ccfApplyRangeBtn.addEventListener('click', applyRange);
+        }
+        if (ccfResetRangeBtn) {
+            ccfResetRangeBtn.addEventListener('click', function () {
+                if (ccfMjdStartInput) ccfMjdStartInput.value = '';
+                if (ccfMjdEndInput) ccfMjdEndInput.value = '';
+                if (ccfNobsInput) ccfNobsInput.value = '100';
+                ccfRangeFilter.mjdStart = null;
+                ccfRangeFilter.mjdEnd = null;
+                ccfRangeFilter.nobs = 100;
+                updatePlotMaxLinks();
+                loadObjectPlots('ccf_profile', true);
+            });
+        }
+        if (ccfMjdStartInput) {
+            ccfMjdStartInput.addEventListener('keydown', function (ev) {
+                if (ev.key === 'Enter') applyRange();
+            });
+        }
+        if (ccfMjdEndInput) {
+            ccfMjdEndInput.addEventListener('keydown', function (ev) {
+                if (ev.key === 'Enter') applyRange();
+            });
+        }
+        if (ccfNobsInput) {
+            ccfNobsInput.addEventListener('keydown', function (ev) {
+                if (ev.key === 'Enter') applyRange();
+            });
+        }
     }
 
     function renderTsSnrPlot(payload) {
@@ -1335,15 +1761,30 @@
         embedOrDefer('op-ts-airmass-plot-div', payload, 'No per-night airmass data available.');
     }
 
-    function loadLblPlots() {
+    function loadLblPlots(forceReload, activePlotKey) {
+        if (forceReload) {
+            lblPlotsState = 'idle';
+        }
+        if (lblPlotsState === 'loading' || lblPlotsState === 'loaded') return;
+        lblPlotsState = 'loading';
         var url = cfg.objectLblPlotsApiUrl;
-        if (!url) return;
+        if (!url) {
+            lblPlotsState = 'idle';
+            return;
+        }
         var params = '?profile_id=' + encodeURIComponent(cfg.profileId)
             + '&objname=' + encodeURIComponent(cfg.objname);
+        if (forceReload) {
+            params += '&_ts=' + encodeURIComponent(String(Date.now()));
+        }
         fetch(url + params)
             .then(function (r) { return r.json(); })
             .then(function (data) {
-                if (!data || !data.success || !data.plots) return;
+                if (!data || !data.success || !data.plots) {
+                    if (activePlotKey) setPlotReloading(activePlotKey, false);
+                    lblPlotsState = 'idle';
+                    return;
+                }
                 Object.keys(data.plots).forEach(function (rdb_filename) {
                     var payload = data.plots[rdb_filename];
                     var m = rdb_filename.match(/^lbl_(.+)\.rdb$/i);
@@ -1353,72 +1794,167 @@
                     var loadId = 'op-lbl-vel-loading-' + sidToken;
                     embedOrDefer(divId, payload, 'No LBL data available.', loadId);
                 });
+                setPlotLastUpdated('lbl', payloadUpdatedDateLabel(data) || currentUtcDateLabel());
+                if (activePlotKey) setPlotReloading(activePlotKey, false);
+                lblPlotsState = 'loaded';
             })
-            .catch(function () {});
+            .catch(function () {
+                if (activePlotKey) setPlotReloading(activePlotKey, false);
+                lblPlotsState = 'idle';
+            });
     }
 
     function updatePlotMaxLinks() {
         // Append vsys_ms to maximize link hrefs so the standalone page can use it
-        if (vsysMs === null || vsysMs === undefined) return;
         var snrLink = document.getElementById('op-snr-plot-max-link');
         var bervLink = document.getElementById('op-berv-plot-max-link');
         var specLink = document.getElementById('op-spec-plot-max-link');
-        var ccfLink = document.getElementById('op-ccf-plot-max-link');
-        var suffix = '?vsys_ms=' + encodeURIComponent(String(vsysMs));
+        var ccfRvLink = document.getElementById('op-ccf-rv-plot-max-link');
+        var ccfProfileLink = document.getElementById('op-ccf-profile-plot-max-link');
+        var suffix = '';
+        if (vsysMs !== null && vsysMs !== undefined) {
+            suffix += '?vsys_ms=' + encodeURIComponent(String(vsysMs));
+        }
+        if (ccfRangeFilter.mjdStart !== null && ccfRangeFilter.mjdStart !== undefined) {
+            suffix += (suffix ? '&' : '?')
+                + 'ccf_mjd_start=' + encodeURIComponent(String(ccfRangeFilter.mjdStart));
+        }
+        if (ccfRangeFilter.mjdEnd !== null && ccfRangeFilter.mjdEnd !== undefined) {
+            suffix += (suffix ? '&' : '?')
+                + 'ccf_mjd_end=' + encodeURIComponent(String(ccfRangeFilter.mjdEnd));
+        }
+        if (ccfRangeFilter.nobs !== null && ccfRangeFilter.nobs !== undefined) {
+            suffix += (suffix ? '&' : '?')
+                + 'ccf_nobs=' + encodeURIComponent(String(ccfRangeFilter.nobs));
+        }
         if (snrLink) {
             var snrBase = cfg.snrMaxUrl || snrLink.getAttribute('href') || '';
-            snrLink.href = snrBase.split('?')[0] + suffix;
+            snrLink.href = snrBase.split('?')[0]
+                + (vsysMs !== null && vsysMs !== undefined
+                    ? '?vsys_ms=' + encodeURIComponent(String(vsysMs))
+                    : '');
         }
         if (bervLink) {
             var bervBase = cfg.bervMaxUrl || bervLink.getAttribute('href') || '';
-            bervLink.href = bervBase.split('?')[0] + suffix;
+            bervLink.href = bervBase.split('?')[0]
+                + (vsysMs !== null && vsysMs !== undefined
+                    ? '?vsys_ms=' + encodeURIComponent(String(vsysMs))
+                    : '');
         }
         if (specLink) {
             var specBase = cfg.specMaxUrl || specLink.getAttribute('href') || '';
-            specLink.href = specBase.split('?')[0] + suffix;
+            specLink.href = specBase.split('?')[0]
+                + (vsysMs !== null && vsysMs !== undefined
+                    ? '?vsys_ms=' + encodeURIComponent(String(vsysMs))
+                    : '');
         }
-        if (ccfLink) {
-            var ccfBase = cfg.ccfMaxUrl || ccfLink.getAttribute('href') || '';
-            ccfLink.href = ccfBase.split('?')[0] + suffix;
+        if (ccfRvLink) {
+            var ccfRvBase = cfg.ccfRvMaxUrl || ccfRvLink.getAttribute('href') || '';
+            ccfRvLink.href = ccfRvBase.split('?')[0];
+        }
+        if (ccfProfileLink) {
+            var ccfProfBase = cfg.ccfProfileMaxUrl || ccfProfileLink.getAttribute('href') || '';
+            ccfProfileLink.href = ccfProfBase.split('?')[0] + suffix;
         }
     }
 
-    function loadObjectPlots() {
+    function loadObjectPlots(plotGroup, forceReload, activePlotKey) {
+        var group = String(plotGroup || 'spectrum').trim().toLowerCase();
+        if (!(group in objectPlotsState)) {
+            return;
+        }
+        if (forceReload) {
+            objectPlotsState[group] = 'idle';
+        }
+        if (objectPlotsState[group] === 'loading'
+                || objectPlotsState[group] === 'loaded') {
+            return;
+        }
+        objectPlotsState[group] = 'loading';
         var url = cfg.objectPlotsApiUrl;
-        if (!url) return;
+        if (!url) {
+            objectPlotsState[group] = 'idle';
+            return;
+        }
 
         var params = '?profile_id=' + encodeURIComponent(cfg.profileId)
-            + '&objname=' + encodeURIComponent(cfg.objname);
+            + '&objname=' + encodeURIComponent(cfg.objname)
+            + '&plot_group=' + encodeURIComponent(group);
         if (vsysMs !== null && vsysMs !== undefined) {
             params += '&vsys_ms=' + encodeURIComponent(String(vsysMs));
+        }
+        if (group === 'ccf_profile') {
+            if (ccfRangeFilter.mjdStart !== null && ccfRangeFilter.mjdStart !== undefined) {
+                params += '&ccf_mjd_start=' + encodeURIComponent(String(ccfRangeFilter.mjdStart));
+            }
+            if (ccfRangeFilter.mjdEnd !== null && ccfRangeFilter.mjdEnd !== undefined) {
+                params += '&ccf_mjd_end=' + encodeURIComponent(String(ccfRangeFilter.mjdEnd));
+            }
+            if (ccfRangeFilter.nobs !== null && ccfRangeFilter.nobs !== undefined) {
+                params += '&ccf_nobs=' + encodeURIComponent(String(ccfRangeFilter.nobs));
+            }
+        }
+        if (forceReload) {
+            params += '&_ts=' + encodeURIComponent(String(Date.now()));
         }
 
         fetch(url + params)
             .then(function (r) { return r.json(); })
             .then(function (data) {
-                if (!data || !data.success) return;
-                renderSnrPlot(data.snr || null);
-                renderBervPlot(data.berv || null);
-                renderSpecPlot(data.spec || null);
-                renderCcfPlot(data.ccf || null);
-                renderTsSnrPlot(data.ts_snr || null);
-                renderTsAirmassPlot(data.ts_airmass || null);
+                if (!data || !data.success) {
+                    if (activePlotKey) setPlotReloading(activePlotKey, false);
+                    objectPlotsState[group] = 'idle';
+                    return;
+                }
+                if (group === 'spectrum') {
+                    renderSnrPlot(data.snr || null);
+                    renderBervPlot(data.berv || null);
+                    renderSpecPlot(data.spec || null);
+                } else if (group === 'ccf_rv') {
+                    renderCcfRvPlot(data.ccf_rv || null);
+                } else if (group === 'ccf_profile') {
+                    renderCcfProfilePlot(data.ccf_profile || data.ccf || null);
+                } else if (group === 'time_series') {
+                    renderTsSnrPlot(data.ts_snr || null);
+                    renderTsAirmassPlot(data.ts_airmass || null);
+                }
+                var updated = payloadUpdatedDateLabel(data) || currentUtcDateLabel();
+                if (group === 'spectrum') {
+                    ['snr', 'berv', 'spec'].forEach(function (k) { setPlotLastUpdated(k, updated); });
+                } else if (group === 'ccf_rv') {
+                    setPlotLastUpdated('ccf_rv', updated);
+                } else if (group === 'ccf_profile') {
+                    setPlotLastUpdated('ccf_profile', updated);
+                } else if (group === 'time_series') {
+                    ['ts_snr', 'ts_airmass'].forEach(function (k) { setPlotLastUpdated(k, updated); });
+                } else {
+                    setGroupLastUpdated(group);
+                }
+                if (activePlotKey) setPlotReloading(activePlotKey, false);
                 refreshSectionsUi();
+                objectPlotsState[group] = 'loaded';
             })
             .catch(function () {
-                // Silently hide loading spinners on error
-                var snrLoading = document.getElementById('op-snr-plot-loading');
-                var bervLoading = document.getElementById('op-berv-plot-loading');
-                var specLoading = document.getElementById('op-spec-plot-loading');
-                var ccfLoading = document.getElementById('op-ccf-plot-loading');
-                var tsSnrLoading = document.getElementById('op-ts-snr-plot-loading');
-                var tsAirmassLoading = document.getElementById('op-ts-airmass-plot-loading');
-                if (snrLoading) snrLoading.innerHTML = '<span class="at-muted-hint">Plot unavailable.</span>';
-                if (bervLoading) bervLoading.innerHTML = '<span class="at-muted-hint">Plot unavailable.</span>';
-                if (specLoading) specLoading.innerHTML = '<span class="at-muted-hint">Plot unavailable.</span>';
-                if (ccfLoading) ccfLoading.innerHTML = '<span class="at-muted-hint">Plot unavailable.</span>';
-                if (tsSnrLoading) tsSnrLoading.innerHTML = '<span class="at-muted-hint">Plot unavailable.</span>';
-                if (tsAirmassLoading) tsAirmassLoading.innerHTML = '<span class="at-muted-hint">Plot unavailable.</span>';
+                if (activePlotKey) setPlotReloading(activePlotKey, false);
+                objectPlotsState[group] = 'idle';
+                function markUnavailable(id) {
+                    var el = document.getElementById(id);
+                    if (el) {
+                        el.innerHTML = '<span class="at-muted-hint">Plot unavailable.</span>';
+                    }
+                }
+                if (group === 'spectrum') {
+                    markUnavailable('op-snr-plot-loading');
+                    markUnavailable('op-berv-plot-loading');
+                    markUnavailable('op-spec-plot-loading');
+                } else if (group === 'ccf_rv') {
+                    markUnavailable('op-ccf-rv-plot-loading');
+                } else if (group === 'ccf_profile') {
+                    markUnavailable('op-ccf-plot-loading');
+                } else if (group === 'time_series') {
+                    markUnavailable('op-ts-snr-plot-loading');
+                    markUnavailable('op-ts-airmass-plot-loading');
+                }
             });
     }
 
@@ -1478,6 +2014,19 @@
                 updatedEl.innerHTML = '<i class="fa-solid fa-clock"></i> Last updated: '
                     + escHtml(formatDate(data.generated_at));
 
+                var pageUpdated = payloadUpdatedDateLabel(data);
+                if (pageUpdated) {
+                    ['snr', 'berv', 'spec', 'ccf', 'ts_snr', 'ts_airmass', 'lbl'].forEach(function (k) {
+                        setPlotLastUpdated(k, pageUpdated);
+                    });
+                    ['ccf_rv', 'ccf_profile'].forEach(function (k) {
+                        setPlotLastUpdated(k, pageUpdated);
+                    });
+                    debugPlotKeys.forEach(function (k) {
+                        setPlotLastUpdated('debug_' + k, pageUpdated);
+                    });
+                }
+
                 var s = data.sections || {};
                 // Extract systemic velocity (m/s) for BERV plot computation
                 if (s.lbl && s.lbl.vsys_ms !== null && s.lbl.vsys_ms !== undefined) {
@@ -1490,10 +2039,9 @@
                 renderCcf(s.ccf || {});
                 renderTimeSeries(s.time_series || []);
                 refreshSectionsUi();
-                // Load plots after main data is ready
-                loadObjectPlots();
-                loadLblPlots();
-                loadDebugPlots();
+                // Plot payloads now load lazily when their tab is activated.
+                ensurePlotsForTab('target_info');
+                startBackgroundPlotPrefetch();
             })
             .catch(function (err) {
                 showError('Network error: ' + String(err));
@@ -1504,6 +2052,7 @@
         persistLastObjectPage();
         refreshTabOrderMap();
         bindTabs();
+        bindCcfRangeControls();
         activateTab('target_info');
         if (targetCsvBtn) {
             targetCsvBtn.addEventListener('click', downloadTargetCsv);

@@ -400,18 +400,21 @@ def meta_columns():
                            removable=False,
                            default=True,
                            coltype='string',
-                           hidden=False)
+                           hidden=False,
+                           advanced_search=False)
     # -------------------------------------------------------------------------
     # astrometric default cols
     colnames = ['RA [Deg]', 'Dec [Deg]', 'Teff [K]', 'SpT']
     coltypes = ['number', 'number', 'number', 'string', 'string']
-    for colname, coltype in zip(colnames, coltypes):
+    asearch = [False, False, True, True]
+    for colname, coltype, adv_search in zip(colnames, coltypes, asearch):
         cols[colname] = dict(sortable=False, 
                              filterable=True, 
                              removable=True, 
                              default=True, 
                              coltype=coltype, 
-                             hidden=False)
+                             hidden=False,
+                             advanced_search=adv_search)
     # -------------------------------------------------------------------------
     # other astromeric (not default)
     astrom_cols = ['RA source', 'Dec source', 'Teff source', 'SpT source',
@@ -427,7 +430,8 @@ def meta_columns():
                              removable=True, 
                              default=False, 
                              coltype=coltype, 
-                             hidden=True)
+                             hidden=True,
+                             advanced_search=False)
     # -------------------------------------------------------------------------
     # dprtype
     cols['DPRTYPE'] = dict(sortable=True,
@@ -435,7 +439,8 @@ def meta_columns():
                            removable=True,
                            default=True,
                            coltype='string',
-                           hidden=False)
+                           hidden=False,
+                           advanced_search=True)
     # -------------------------------------------------------------------------
     # date cols
     date_colnames = ['latest obs', 'last modified']
@@ -445,22 +450,25 @@ def meta_columns():
                              removable=True,
                              default=True,
                              coltype='date',
-                             hidden=False)
+                             hidden=False,
+                             advanced_search=False)
     # -------------------------------------------------------------------------
     # hidden cols
     hidden_cols = ['ALIASES', 'RA source', 'Dec source', 
                    'Teff source', 'SpT source',
                    'PMRA source', 'PMDE source', 'Plx source', 'RV source',
-                   'ALL_DPRTYPES', 'ALL_RUN_IDS']
+                   'ALL_DPRTYPES', 'RUN_IDS', 'PI_NAMES']
     hcoltypes = ['string', 'string', 'string', 'string', 'string', 'string', 
-                 'string', 'string', 'string', 'string', 'string']
+                 'string', 'string', 'string', 'string', 'string', 'string', 
+                 'string']
     for colname, coltype in zip(hidden_cols, hcoltypes):
         cols[colname] = dict(sortable=False,
                              filterable=False,
                              removable=False,
                              default=False,
                              coltype=coltype,
-                             hidden=True)
+                             hidden=True,
+                             advanced_search=False)
     # -------------------------------------------------------------------------
     # return the column meta data
     return cols

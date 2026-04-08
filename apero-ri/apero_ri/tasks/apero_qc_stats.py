@@ -39,7 +39,7 @@ DEFAULT_ENABLED = True
 # Set the type of task (INSTRUMENT, GLOBAL)
 TASK_TYPE = 'INSTRUMENT'
 # Whether this task has a sub-process (for sub-processing loading bar in UI)
-USE_SUBPROCESS = False
+USE_SUBPROCESS = True
 # Whether this task can be run in multi-process mode 
 # (if False, will always run in main process)
 MULTI_PROCESS = True
@@ -53,15 +53,17 @@ LOCAL_TASK = True
 class AperoQCStats(apero_async.AperoAsyncTask):
     """Class representing an asynchronous task in APERO RI."""
     def __init__(self, status='pending'):
-        name = 'APERO Observation Table Task'
-        description = ('Generate the observation table for the '
+        name = 'APERO Quality Control Task'
+        description = ('Generate the quality control statistics for the '
                        'APERO reduction interface for each apero profile.')
         super().__init__(name, description, status)
+        self.subprogress = 0.0
+        self.USE_SUBPROCESS = True
 
     def run_job(self, params: Dict[str, Any]):
         """
-        Create a file that can be used to populate the observation table in the 
-        APERO reduction interface.
+        Create a file that can be used to populate the quality control 
+        statistics in the APERO reduction interface.
         
         parameters needed in params for this task:
         - LOCAL_DATA_DIR: str, the local directory where data files are stored
@@ -170,13 +172,23 @@ class AperoQCStats(apero_async.AperoAsyncTask):
             # -----------------------------------------------------------------
             # log message
             tlog(f'Profile {apero_profile}: reading calibration headers...')
+            self.subprogress = 0.0
+
+            def _update_subprogress(done_items: int,
+                                    total_items: int,
+                                    _item_name: str) -> None:
+                total = max(int(total_items or 0), 1)
+                self.subprogress = min(1.0, float(done_items) / float(total))
+
             # read the headers
             cresults, htime, hnum = read_calib_headers(aparams, cfiles, 
                                                        task_logger=tlog, 
                                                        stop_event=stop_event,
                                                        ncores=mp_cfg['ncores'],
                                                        mp_backend=mp_cfg['backend'],
-                                                       mp_start_method=mp_cfg['start_method'])
+                                                       mp_start_method=mp_cfg['start_method'],
+                                                       progress_callback=_update_subprogress)
+            self.subprogress = 1.0
             # deal with stop event
             if stop_event is not None and stop_event.is_set():
                 tlog(f'Profile {apero_profile}: cancellation requested during '
@@ -394,7 +406,8 @@ def read_calib_headers(aparams: Dict[str, Any],
                        task_logger=None, stop_event=None,
                        ncores: int = 1,
                        mp_backend: str = 'threads',
-                       mp_start_method: str = 'default'
+                       mp_start_method: str = 'default',
+                       progress_callback=None
                        ) -> Tuple[Dict[str, List[dict]], float, int]:
 
     # get the hkeys for this fkind
@@ -409,6 +422,13 @@ def read_calib_headers(aparams: Dict[str, Any],
     if use_parallel:
         executor = _make_executor(mp_backend, int(ncores),
                                   mp_start_method, task_logger)
+    total_files = sum(len(files or []) for files in cfiles.values())
+    done_files = 0
+    if callable(progress_callback):
+        try:
+            progress_callback(done_files, total_files, '')
+        except Exception:
+            pass
     for output in cfiles:
         if stop_event is not None and stop_event.is_set():
             if callable(task_logger):
@@ -440,6 +460,13 @@ def read_calib_headers(aparams: Dict[str, Any],
                         )
                     break
                 header_dict[output].append(fut.result())
+                done_files += 1
+                if callable(progress_callback):
+                    try:
+                        progress_callback(done_files, total_files,
+                                          str(futures.get(fut, '')))
+                    except Exception:
+                        pass
         else:
             # loop around files
             for abspath in files:
@@ -450,6 +477,12 @@ def read_calib_headers(aparams: Dict[str, Any],
                         )
                     break
                 header_dict[output].append(_read_one_calib_header(str(abspath), hkeys))
+                done_files += 1
+                if callable(progress_callback):
+                    try:
+                        progress_callback(done_files, total_files, str(abspath))
+                    except Exception:
+                        pass
         if callable(task_logger):
             task_logger(
                 f'QC stats header read output={output}: '

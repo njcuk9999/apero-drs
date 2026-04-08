@@ -26,6 +26,59 @@
     border-color: var(--ari-primary, #0b66c3);
     box-shadow: inset 0 0 0 1px var(--ari-primary, #0b66c3);
 }
+
+/* Edit Task modal readability improvements */
+#at-edit-modal .ari-modal {
+    width: min(92vw, 760px);
+    max-width: 760px;
+}
+#at-edit-modal .ari-modal__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+}
+#at-edit-modal .ari-modal__header h3 {
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    color: var(--ari-text-main, #1f2937);
+}
+#at-edit-modal .ari-modal__close {
+    margin-left: 0;
+    flex: 0 0 auto;
+}
+#at-edit-modal .ari-modal__body {
+    display: grid;
+    gap: 0.9rem;
+    max-height: 72vh;
+    overflow: auto;
+}
+#at-edit-modal .ari-ap-form__field {
+    margin: 0;
+}
+#at-edit-modal #edit-task-info-row,
+#at-edit-modal #edit-backup-fields,
+#at-edit-modal #edit-mp-fields,
+#at-edit-modal #edit-local-sync-fields {
+    border: 1px solid var(--ari-border, #d6d9de);
+    border-radius: 8px;
+    background: var(--ari-panel, #f9fafb);
+    padding: 0.75rem;
+}
+#at-edit-modal #edit-backup-fields,
+#at-edit-modal #edit-mp-fields,
+#at-edit-modal #edit-local-sync-fields {
+    display: grid;
+    gap: 0.75rem;
+}
+#at-edit-modal #edit-run-count {
+    padding: 0.4rem 0.6rem;
+    border: 1px solid var(--ari-border, #d6d9de);
+    border-radius: 6px;
+    background: var(--ari-panel, #ffffff);
+}
 </style>
 {% endblock %}
 
@@ -55,6 +108,9 @@
     <div class="at-toolbar">
         <button id="btn-run-all" class="ari-btn ari-btn--primary">
             <i class="fa-solid fa-play"></i> Run All
+        </button>
+        <button id="btn-force-run-all" class="ari-btn ari-btn--secondary">
+            <i class="fa-solid fa-bolt"></i> Force Run All
         </button>
         <span id="at-running-badge" class="at-running-badge" style="display:none;">
             <i class="fa-solid fa-circle-notch fa-spin"></i> Running…
@@ -137,6 +193,10 @@
                     <div class="at-sg-item" id="det-parallel-row" style="display:none;">
                         <span class="at-detail__label">Parallel config</span>
                         <span id="det-parallel"></span>
+                    </div>
+                    <div class="at-sg-item" id="det-sync-mode-row" style="display:none;">
+                        <span class="at-detail__label">Sync mode</span>
+                        <span id="det-sync-mode"></span>
                     </div>
                     <div class="at-sg-item at-sg-item--wide">
                         <span class="at-detail__label">Description</span>
@@ -380,6 +440,25 @@
                            min="0" step="1" value="4">
                 </div>
             </div>
+            <div id="edit-local-sync-fields" style="display:none;">
+                <div class="ari-ap-form__field" id="edit-sync-mode-row" style="display:none;">
+                    <label for="edit-sync-mode">Sync mode</label>
+                    <select id="edit-sync-mode" class="ari-ap-input">
+                        <option value="run_server">Run on server</option>
+                        <option value="fetch_precomputed">Fetch pre-computed</option>
+                    </select>
+                </div>
+                <div class="ari-ap-form__field" id="edit-sync-source-field" style="display:none;">
+                    <label for="edit-sync-source">Sync Source Path <span id="edit-sync-source-required" class="ari-required" style="display:none;">*</span></label>
+                    <input type="text" id="edit-sync-source" class="ari-ap-input"
+                           placeholder="/path/to/prebuilt/.ari">
+                    <div class="at-muted-hint">
+                        Required when Sync mode is set to Fetch pre-computed.
+                        Save with this path, then use Run Now (or Run All) to sync files instead of running the task.
+                        You can use either a root containing tasks/ (for example ~/.ari) or a direct tasks/&lt;instrument&gt; directory.
+                    </div>
+                </div>
+            </div>
             <div id="edit-mp-fields" style="display:none;">
                 <div class="ari-ap-form__field">
                     <label for="edit-ncores">NCORES</label>
@@ -404,16 +483,6 @@
                 </div>
                 <div class="ari-ap-form__field" id="edit-mp-warn" style="display:none;">
                     <div class="at-muted-hint"></div>
-                </div>
-            </div>
-            <div id="edit-local-sync-fields" style="display:none;">
-                <div class="ari-ap-form__field">
-                    <label for="edit-sync-source">Sync Source Path (optional)</label>
-                    <input type="text" id="edit-sync-source" class="ari-ap-input"
-                           placeholder="/path/to/prebuilt/.ari">
-                    <div class="at-muted-hint">
-                        If set, this task copies files from this path instead of running.
-                    </div>
                 </div>
             </div>
             <div class="ari-ap-form__field" id="edit-run-count-row" style="display:none;">
@@ -563,5 +632,5 @@ window.ARI_ASYNC_TASKS = {
     }
 };
 </script>
-<script src="{{ url_for('static', filename='js/admin_async_tasks.js', v='20260331-2') }}"></script>
+<script src="{{ url_for('static', filename='js/admin_async_tasks.js', v='20260407-5') }}"></script>
 {% endblock %}

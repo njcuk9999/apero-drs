@@ -532,8 +532,11 @@ def _ensure_ssh_tunnel(params: Dict[str, Any]) -> Tuple[str, int]:
         params, ssh_host, remote_host, local_port, remote_port
     )
 
-    # Keep exactly one persistent DB tunnel at a time.
-    _close_other_tunnels(params, control_path)
+    # By default we keep exactly one persistent DB tunnel at a time.
+    # DB setup management can opt out via DATABASE_SSH_ALLOW_MULTIPLE.
+    allow_multiple = bool(params.get('DATABASE_SSH_ALLOW_MULTIPLE', False))
+    if not allow_multiple:
+        _close_other_tunnels(params, control_path)
 
     # Always allow immediate reuse of an existing control socket.
     if _check_existing_tunnel(control_path, ssh_host):

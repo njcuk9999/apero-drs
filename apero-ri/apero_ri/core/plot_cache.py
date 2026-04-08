@@ -417,7 +417,15 @@ def check_and_serve(data_dir: Path, instrument: str, profile_id: str,
     entry = get_cached(cache_root, instrument, profile_id, section, key)
     if entry is None:
         return None
-    return entry.get('payload')
+    payload = entry.get('payload')
+    if not isinstance(payload, dict):
+        return payload
+    # Include cache metadata so API callers can expose a reliable
+    # "last updated" value without changing payload structure elsewhere.
+    out = dict(payload)
+    out['_cache_cached_at'] = entry.get('cached_at', '')
+    out['_served_from_cache'] = True
+    return out
 
 
 def generate_and_cache(data_dir: Path, instrument: str, profile_id: str,

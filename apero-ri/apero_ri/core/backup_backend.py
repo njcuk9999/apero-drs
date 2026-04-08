@@ -11,6 +11,8 @@ from __future__ import annotations
 import base64
 import json
 import os
+import shutil
+import subprocess
 import time
 from datetime import datetime, timezone
 from pathlib import Path
@@ -51,6 +53,26 @@ PROVIDER_DEFAULTS: Dict[str, Dict[str, Any]] = {
             'Run Test connection, then Save settings.',
         ],
     },
+    'ssh_rsync': {
+        'label': 'SSH / rsync mirror',
+        'help_url': 'https://download.samba.org/pub/rsync/rsync.1',
+        'help_steps': [
+            'Set an SSH target such as user@host.',
+            'Set a remote backup directory path on that host.',
+            'Optionally set SSH key path and SSH port.',
+            'Ensure rsync is installed both locally and on the remote host.',
+            'Run Test connection, then Save settings.',
+        ],
+    },
+    'local_copy': {
+        'label': 'Local mirror path',
+        'help_url': '',
+        'help_steps': [
+            'Set a local destination directory for mirrored backup archives.',
+            'APERO will mirror daily/weekly backup files to that path.',
+            'Use this for double-local backup copies on another mounted volume.',
+        ],
+    },
     'local_only': {
         'label': 'Local only (no cloud mirror)',
         'help_url': '',
@@ -70,6 +92,147 @@ MANAGED_SECRET_PATHS = {
     'gdrive_oauth_token_file': 'gdrive_oauth_token.json',
     's3_credentials_file': 's3_credentials.json',
 }
+
+METHOD_FIELDS = {
+    'id', 'name', 'enabled', 'provider',
+    'gdrive_oauth_client_secret_file', 'gdrive_oauth_token_file',
+    'gdrive_folder_id',
+    's3_bucket', 's3_prefix', 's3_region', 's3_endpoint_url',
+    's3_access_key_id', 's3_secret_access_key', 's3_secret_access_key_enc',
+    's3_credentials_file',
+    'rsync_ssh_target', 'rsync_remote_dir', 'rsync_ssh_key',
+    'rsync_port', 'rsync_extra_opts',
+    'local_mirror_dir',
+}
+
+
+def _default_method() -> Dict[str, Any]:
+    return {
+        'id': 'default',
+        'name': 'Local (built-in)',
+        'enabled': True,
+        'provider': 'local_only',
+        'gdrive_oauth_client_secret_file': '',
+        'gdrive_oauth_token_file': '',
+        'gdrive_folder_id': '',
+        's3_bucket': '',
+        's3_prefix': 'apero/backups',
+        's3_region': '',
+        's3_endpoint_url': '',
+        's3_access_key_id': '',
+        's3_credentials_file': '',
+        's3_secret_access_key_enc': '',
+        'rsync_ssh_target': '',
+        'rsync_remote_dir': '',
+        'rsync_ssh_key': '',
+        'rsync_port': '',
+        'rsync_extra_opts': '',
+        'local_mirror_dir': '',
+    }
+
+
+def _sanitize_method(raw: Dict[str, Any], index: int) -> Dict[str, Any]:
+    method = _default_method()
+    if isinstance(raw, dict):
+        for key in METHOD_FIELDS:
+            if key in raw:
+                method[key] = raw.get(key)
+
+    method_id = str(method.get('id', '') or '').strip() or f'method_{index + 1}'
+    method['id'] = method_id
+    method['name'] = str(method.get('name', '') or '').strip() or method_id
+    if method['name'].lower() == 'deauflt backup method':
+        method['name'] = 'Default backup method'
+    method['provider'] = str(method.get('provider', 'local_only') or 'local_only').strip()
+    if method['provider'] not in PROVIDER_DEFAULTS:
+        method['provider'] = 'local_only'
+    method['enabled'] = bool(method.get('enabled', False))
+
+    # Keep the default method as the immutable built-in local storage source.
+    if method_id == 'default':
+        method['name'] = 'Local (built-in)'
+        method['provider'] = 'local_only'
+        method['enabled'] = True
+
+    if method['provider'] == 's3':
+        # Keep encrypted secret field only; plain secret is never persisted.
+        method.pop('s3_secret_access_key', None)
+
+    return method
+
+
+def get_backup_methods(cfg: Optional[Dict[str, Any]] = None,
+                       enabled_only: bool = False) -> List[Dict[str, Any]]:
+    if cfg is None:
+        cfg = load_backup_config()
+
+    raw_methods = cfg.get('backup_methods', [])
+    methods: List[Dict[str, Any]] = []
+    if isinstance(raw_methods, list):
+        for index, row in enumerate(raw_methods):
+            if isinstance(row, dict):
+                methods.append(_sanitize_method(row, index))
+
+    if not methods:
+        legacy = _default_method()
+        legacy.update({
+            'id': 'default',
+            'name': 'Local (built-in)',
+            'enabled': True,
+            'provider': 'local_only',
+            'gdrive_oauth_client_secret_file': str(cfg.get('gdrive_oauth_client_secret_file', '') or ''),
+            'gdrive_oauth_token_file': str(cfg.get('gdrive_oauth_token_file', '') or ''),
+            'gdrive_folder_id': str(cfg.get('gdrive_folder_id', '') or ''),
+            's3_bucket': str(cfg.get('s3_bucket', '') or ''),
+            's3_prefix': str(cfg.get('s3_prefix', 'apero/backups') or 'apero/backups'),
+            's3_region': str(cfg.get('s3_region', '') or ''),
+            's3_endpoint_url': str(cfg.get('s3_endpoint_url', '') or ''),
+            's3_access_key_id': str(cfg.get('s3_access_key_id', '') or ''),
+            's3_credentials_file': str(cfg.get('s3_credentials_file', '') or ''),
+            's3_secret_access_key_enc': str(cfg.get('s3_secret_access_key_enc', '') or ''),
+            'rsync_ssh_target': str(cfg.get('rsync_ssh_target', '') or ''),
+            'rsync_remote_dir': str(cfg.get('rsync_remote_dir', '') or ''),
+            'rsync_ssh_key': str(cfg.get('rsync_ssh_key', '') or ''),
+            'rsync_port': str(cfg.get('rsync_port', '') or ''),
+            'rsync_extra_opts': str(cfg.get('rsync_extra_opts', '') or ''),
+            'local_mirror_dir': str(cfg.get('local_mirror_dir', '') or ''),
+        })
+        methods = [_sanitize_method(legacy, 0)]
+
+    # Ensure built-in local method always exists and remains first.
+    has_default = any(str(m.get('id', '')) == 'default' for m in methods)
+    if not has_default:
+        methods.insert(0, _default_method())
+    else:
+        methods = sorted(methods,
+                         key=lambda m: 0 if str(m.get('id', '')) == 'default' else 1)
+        methods[0] = _sanitize_method(methods[0], 0)
+
+    if enabled_only:
+        return [m for m in methods if bool(m.get('enabled', False))]
+    return methods
+
+
+def _cfg_for_method(cfg: Dict[str, Any],
+                    method_id: Optional[str] = None) -> Dict[str, Any]:
+    methods = get_backup_methods(cfg, enabled_only=False)
+    active_id = str(method_id or cfg.get('active_method_id', '') or '').strip()
+
+    selected: Optional[Dict[str, Any]] = None
+    if active_id:
+        for method in methods:
+            if str(method.get('id', '')) == active_id:
+                selected = method
+                break
+    if selected is None:
+        selected = methods[0] if methods else _default_method()
+
+    merged = dict(cfg)
+    for key in METHOD_FIELDS:
+        if key in selected:
+            merged[key] = selected.get(key)
+    merged['active_method_id'] = str(selected.get('id', ''))
+    return merged
 
 
 # =============================================================================
@@ -154,11 +317,30 @@ def _migrate_backup_secret_config(cfg: Dict[str, Any]) -> Dict[str, Any]:
         allow_blank=True,
     )
 
+    methods = get_backup_methods(cfg, enabled_only=False)
+    for method in methods:
+        method['gdrive_oauth_token_file'] = _maybe_migrate_managed_secret_path(
+            'gdrive_oauth_token_file',
+            str(method.get('gdrive_oauth_token_file', '') or ''),
+            allow_blank=False,
+        )
+        method['gdrive_oauth_client_secret_file'] = _maybe_migrate_managed_secret_path(
+            'gdrive_oauth_client_secret_file',
+            str(method.get('gdrive_oauth_client_secret_file', '') or ''),
+            allow_blank=True,
+        )
+        method['s3_credentials_file'] = _maybe_migrate_managed_secret_path(
+            's3_credentials_file',
+            str(method.get('s3_credentials_file', '') or ''),
+            allow_blank=True,
+        )
+
     legacy_secret = _decode_secret(
         str(cfg.get('s3_secret_access_key_enc', '') or '')).strip()
     secret_path = _get_s3_secret_access_key_path()
     if legacy_secret and not secret_path.exists():
         _write_secret_text(secret_path, legacy_secret)
+    cfg['backup_methods'] = methods
     return cfg
 
 
@@ -176,7 +358,7 @@ def _decode_secret(value: str) -> str:
 def _default_config() -> Dict[str, Any]:
     return {
         'enabled': False,
-        'provider': 'gdrive_oauth',
+        'provider': 'local_only',
         'gdrive_oauth_client_secret_file': '',
         'gdrive_oauth_token_file': '',
         'gdrive_folder_id': '',
@@ -187,6 +369,14 @@ def _default_config() -> Dict[str, Any]:
         's3_access_key_id': '',
         's3_credentials_file': '',
         's3_secret_access_key_enc': '',
+        'rsync_ssh_target': '',
+        'rsync_remote_dir': '',
+        'rsync_ssh_key': '',
+        'rsync_port': '',
+        'rsync_extra_opts': '',
+        'local_mirror_dir': '',
+        'backup_methods': [],
+        'active_method_id': 'default',
     }
 
 
@@ -214,9 +404,25 @@ def load_backup_config() -> Dict[str, Any]:
             cfg.get('gdrive_service_account_file', '')
         ).strip()
 
-    provider = str(cfg.get('provider', 'gdrive_oauth')).strip()
+    provider = str(cfg.get('provider', 'local_only')).strip()
     if provider not in PROVIDER_DEFAULTS:
-        cfg['provider'] = 'gdrive_oauth'
+        cfg['provider'] = 'local_only'
+
+    methods = get_backup_methods(cfg, enabled_only=False)
+    cfg['backup_methods'] = methods
+    active_id = str(cfg.get('active_method_id', '') or '').strip()
+    if active_id and any(str(m.get('id', '')) == active_id for m in methods):
+        cfg['active_method_id'] = active_id
+    else:
+        cfg['active_method_id'] = str(methods[0].get('id', 'default'))
+
+    active_cfg = _cfg_for_method(cfg, cfg.get('active_method_id'))
+    # Mirror active method fields for backward compatibility.
+    for key in METHOD_FIELDS:
+        if key in active_cfg:
+            cfg[key] = active_cfg.get(key)
+    cfg['enabled'] = bool(active_cfg.get('enabled', False))
+    cfg['provider'] = str(active_cfg.get('provider', 'local_only'))
     cfg = _migrate_backup_secret_config(cfg)
     return cfg
 
@@ -228,6 +434,21 @@ def save_backup_config(cfg: Dict[str, Any]) -> None:
 
     out_cfg = _default_config()
     out_cfg.update(cfg)
+
+    methods = get_backup_methods(out_cfg, enabled_only=False)
+    out_cfg['backup_methods'] = methods
+    active_id = str(out_cfg.get('active_method_id', '') or '').strip()
+    if not active_id or not any(str(m.get('id', '')) == active_id for m in methods):
+        active_id = str(methods[0].get('id', 'default'))
+    out_cfg['active_method_id'] = active_id
+
+    active_cfg = _cfg_for_method(out_cfg, active_id)
+    for key in METHOD_FIELDS:
+        if key in active_cfg:
+            out_cfg[key] = active_cfg.get(key)
+    out_cfg['enabled'] = bool(active_cfg.get('enabled', False))
+    out_cfg['provider'] = str(active_cfg.get('provider', 'local_only'))
+
     out_cfg = _migrate_backup_secret_config(out_cfg)
 
     for plain_field, enc_field in SECRET_FIELDS.items():
@@ -286,7 +507,7 @@ def _is_cloud_enabled(cfg: Dict[str, Any]) -> bool:
     if not bool(cfg.get('enabled', False)):
         return False
     provider = str(cfg.get('provider', 'local_only')).strip()
-    return provider in {'gdrive_oauth', 's3'}
+    return provider in {'gdrive_oauth', 's3', 'ssh_rsync', 'local_copy'}
 
 
 def get_gdrive_oauth_token_path(cfg: Dict[str, Any]) -> Path:
@@ -400,6 +621,21 @@ def _provider_requirements_ok(cfg: Dict[str, Any]) -> Tuple[bool, str]:
             return False, 'S3 access key ID is required (or provide it in an S3 credentials JSON file).'
         if not secret_key:
             return False, 'S3 secret access key is required (or provide it in an S3 credentials JSON file).'
+        return True, ''
+
+    if provider == 'ssh_rsync':
+        target = str(cfg.get('rsync_ssh_target', '')).strip()
+        remote_dir = str(cfg.get('rsync_remote_dir', '')).strip()
+        if not target:
+            return False, 'SSH target is required for rsync mirror (example: user@host).'
+        if not remote_dir:
+            return False, 'Remote directory is required for rsync mirror.'
+        return True, ''
+
+    if provider == 'local_copy':
+        mirror_dir = str(cfg.get('local_mirror_dir', '')).strip()
+        if not mirror_dir:
+            return False, 'Local mirror directory is required for local copy method.'
         return True, ''
 
     return False, 'No cloud provider configured.'
@@ -664,11 +900,52 @@ def _s3_list_period(client, bucket: str, prefix: str,
     return out
 
 
+def _build_rsync_ssh_transport(cfg: Dict[str, Any]) -> Tuple[List[str], str]:
+    target = str(cfg.get('rsync_ssh_target', '')).strip()
+    remote_root = str(cfg.get('rsync_remote_dir', '')).strip().rstrip('/')
+    if not target or not remote_root:
+        raise RuntimeError('Rsync SSH target and remote dir are required.')
+
+    ssh_parts = ['ssh', '-o', 'BatchMode=yes', '-o',
+                 'StrictHostKeyChecking=accept-new', '-o', 'ConnectTimeout=10']
+    key_path = str(cfg.get('rsync_ssh_key', '') or '').strip()
+    if key_path:
+        ssh_parts.extend(['-i', str(Path(key_path).expanduser())])
+    port = str(cfg.get('rsync_port', '') or '').strip()
+    if port:
+        ssh_parts.extend(['-p', port])
+    return ssh_parts, f'{target}:{remote_root}'
+
+
+def _run_rsync_ssh(cfg: Dict[str, Any], src_dir: Path,
+                   remote_period: str) -> Tuple[int, str]:
+    ssh_parts, remote_base = _build_rsync_ssh_transport(cfg)
+    src_with_slash = str(src_dir).rstrip('/') + '/'
+    dst = f'{remote_base}/{remote_period}/'
+
+    cmd = ['rsync', '-az', '--delete', '-e', ' '.join(ssh_parts)]
+    extra_opts = str(cfg.get('rsync_extra_opts', '') or '').strip()
+    if extra_opts:
+        cmd.extend([opt for opt in extra_opts.split(' ') if opt])
+    cmd.extend([src_with_slash, dst])
+
+    result = subprocess.run(
+        cmd,
+        capture_output=True,
+        text=True,
+        timeout=1800,
+    )
+    out = (result.stdout or '') + ('\n' + result.stderr if result.stderr else '')
+    return result.returncode, out.strip()
+
+
 def test_backup_connection(
-        cfg: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+    cfg: Optional[Dict[str, Any]] = None,
+    method_id: Optional[str] = None) -> Dict[str, Any]:
     """Test configured cloud backup connection."""
     if cfg is None:
         cfg = load_backup_config()
+    cfg = _cfg_for_method(cfg, method_id)
 
     provider = str(cfg.get('provider', 'local_only')).strip()
     if provider == 'local_only' or not bool(cfg.get('enabled', False)):
@@ -697,6 +974,28 @@ def test_backup_connection(
             client.head_bucket(Bucket=bucket)
             client.list_objects_v2(Bucket=bucket, Prefix=prefix, MaxKeys=1)
 
+        elif provider == 'ssh_rsync':
+            ssh_parts, remote_base = _build_rsync_ssh_transport(cfg)
+            remote_cmd = (
+                "mkdir -p "
+                + f"'{remote_base.split(':', 1)[1]}/daily' "
+                + f"'{remote_base.split(':', 1)[1]}/weekly'"
+            )
+            target = remote_base.split(':', 1)[0]
+            cmd = ssh_parts + [target, remote_cmd]
+            result = subprocess.run(
+                cmd, capture_output=True, text=True, timeout=20)
+            if result.returncode != 0:
+                msg = (result.stderr or result.stdout or '').strip()
+                raise RuntimeError(msg or 'SSH connectivity test failed.')
+
+        elif provider == 'local_copy':
+            mirror_root = Path(
+                str(cfg.get('local_mirror_dir', '') or '')
+            ).expanduser().resolve()
+            (mirror_root / 'daily').mkdir(parents=True, exist_ok=True)
+            (mirror_root / 'weekly').mkdir(parents=True, exist_ok=True)
+
         else:
             return {
                 'ok': False,
@@ -719,10 +1018,12 @@ def test_backup_connection(
 
 
 def test_backup_roundtrip(
-        cfg: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+    cfg: Optional[Dict[str, Any]] = None,
+    method_id: Optional[str] = None) -> Dict[str, Any]:
     """Run a backup probe by writing, validating, and deleting one test object."""
     if cfg is None:
         cfg = load_backup_config()
+    cfg = _cfg_for_method(cfg, method_id)
 
     provider = str(cfg.get('provider', 'local_only')).strip()
     if provider == 'local_only' or not bool(cfg.get('enabled', False)):
@@ -793,6 +1094,46 @@ def test_backup_roundtrip(
             client.head_object(Bucket=bucket, Key=probe_key)
             client.delete_object(Bucket=bucket, Key=probe_key)
 
+        elif provider == 'ssh_rsync':
+            tmp_root = Path(os.environ.get('ARI_DIR', os.path.expanduser('~/.ari')))
+            local_probe = tmp_root / 'tmp' / probe_name
+            local_probe.parent.mkdir(parents=True, exist_ok=True)
+            local_probe.write_bytes(probe_payload)
+            try:
+                ssh_parts, remote_base = _build_rsync_ssh_transport(cfg)
+                target, remote_root = remote_base.split(':', 1)
+                remote_daily = f'{remote_root}/daily'
+                mk_cmd = ssh_parts + [target, f"mkdir -p '{remote_daily}'"]
+                mk_res = subprocess.run(
+                    mk_cmd, capture_output=True, text=True, timeout=20)
+                if mk_res.returncode != 0:
+                    msg = (mk_res.stderr or mk_res.stdout or '').strip()
+                    raise RuntimeError(msg or 'Could not prepare remote probe directory.')
+
+                rsync_cmd = ['rsync', '-az', '-e', ' '.join(ssh_parts),
+                             str(local_probe), f'{target}:{remote_daily}/{probe_name}']
+                rs_res = subprocess.run(
+                    rsync_cmd, capture_output=True, text=True, timeout=60)
+                if rs_res.returncode != 0:
+                    msg = (rs_res.stderr or rs_res.stdout or '').strip()
+                    raise RuntimeError(msg or 'rsync probe upload failed')
+
+                rm_cmd = ssh_parts + [target, f"rm -f '{remote_daily}/{probe_name}'"]
+                subprocess.run(rm_cmd, capture_output=True, text=True, timeout=20)
+            finally:
+                local_probe.unlink(missing_ok=True)
+
+        elif provider == 'local_copy':
+            mirror_root = Path(
+                str(cfg.get('local_mirror_dir', '') or '')
+            ).expanduser().resolve()
+            daily_dir = mirror_root / 'daily'
+            daily_dir.mkdir(parents=True, exist_ok=True)
+            probe_path = daily_dir / probe_name
+            probe_path.write_bytes(probe_payload)
+            probe_path.read_bytes()
+            probe_path.unlink(missing_ok=True)
+
         else:
             return {
                 'ok': False,
@@ -823,6 +1164,13 @@ def _local_backup_root(local_data_dir: Optional[Path]) -> Path:
         ari_dir = Path(os.environ.get('ARI_DIR', os.path.expanduser('~/.ari')))
         return (ari_dir / 'backups').expanduser().resolve()
     return (Path(local_data_dir).expanduser().resolve() / 'backups')
+
+
+def _resolve_local_data_dir() -> Path:
+    """Resolve local data directory used by backup helpers."""
+    return Path(
+        os.environ.get('ARI_DIR', os.path.expanduser('~/.ari'))
+    ).expanduser().resolve()
 
 
 def list_local_backups(
@@ -864,10 +1212,47 @@ def list_local_backups(
     }
 
 
-def list_cloud_backups(cfg: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+def _list_mirror_backups(mirror_root: Path) -> Dict[str, Any]:
+    """List backups from a local mirror root using daily/weekly layout."""
+    daily_dir = mirror_root / 'daily'
+    weekly_dir = mirror_root / 'weekly'
+
+    def _list_period(period: str, directory: Path) -> List[Dict[str, Any]]:
+        rows: List[Dict[str, Any]] = []
+        if not directory.exists():
+            return rows
+        for path in sorted(directory.glob('*.tar.gz')):
+            try:
+                st = path.stat()
+            except OSError:
+                continue
+            rows.append({
+                'name': path.name,
+                'period': period,
+                'relative_path': f'{period}/{path.name}',
+                'size_bytes': int(st.st_size),
+                'mtime': datetime.fromtimestamp(
+                    st.st_mtime, tz=timezone.utc).isoformat(),
+            })
+        return rows
+
+    daily_rows = _list_period('daily', daily_dir)
+    weekly_rows = _list_period('weekly', weekly_dir)
+    total_bytes = sum(row['size_bytes'] for row in daily_rows + weekly_rows)
+    return {
+        'daily': daily_rows,
+        'weekly': weekly_rows,
+        'total_count': len(daily_rows) + len(weekly_rows),
+        'total_bytes': total_bytes,
+    }
+
+
+def list_cloud_backups(cfg: Optional[Dict[str, Any]] = None,
+                       method_id: Optional[str] = None) -> Dict[str, Any]:
     """List cloud backups for configured provider."""
     if cfg is None:
         cfg = load_backup_config()
+    cfg = _cfg_for_method(cfg, method_id)
 
     provider = str(cfg.get('provider', 'local_only')).strip()
     if not _is_cloud_enabled(cfg):
@@ -922,6 +1307,30 @@ def list_cloud_backups(cfg: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
             all_rows.update(_s3_list_period(client, bucket, prefix, 'daily'))
             all_rows.update(_s3_list_period(client, bucket, prefix, 'weekly'))
 
+        elif provider == 'ssh_rsync':
+            return {
+                'configured': True,
+                'provider': provider,
+                'ok': False,
+                'error': ('Cloud listing is not available for ssh_rsync methods. '
+                          'Use sync/test operations and inspect the remote path directly.'),
+                'query_ms': None,
+                'daily': [],
+                'weekly': [],
+                'total_count': 0,
+                'total_bytes': 0,
+            }
+
+        elif provider == 'local_copy':
+            mirror_root = Path(
+                str(cfg.get('local_mirror_dir', '') or '')
+            ).expanduser().resolve()
+            listing = _list_mirror_backups(mirror_root)
+            all_rows.update({row['relative_path']: row
+                             for row in listing.get('daily', [])})
+            all_rows.update({row['relative_path']: row
+                             for row in listing.get('weekly', [])})
+
         else:
             return {
                 'configured': False,
@@ -966,8 +1375,9 @@ def list_cloud_backups(cfg: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
         }
 
 
-def _remote_map(cfg: Dict[str, Any]) -> Dict[str, Dict[str, Any]]:
-    cloud = list_cloud_backups(cfg)
+def _remote_map(cfg: Dict[str, Any],
+                method_id: Optional[str] = None) -> Dict[str, Dict[str, Any]]:
+    cloud = list_cloud_backups(cfg, method_id=method_id)
     if not cloud.get('ok', False):
         raise RuntimeError(
         str(cloud.get('error', 'Could not list cloud backups.')))
@@ -978,11 +1388,13 @@ def _remote_map(cfg: Dict[str, Any]) -> Dict[str, Dict[str, Any]]:
 
 
 def sync_local_backups_to_cloud(local_data_dir: Optional[Path] = None,
-                                cfg: Optional[Dict[str, Any]] = None
+                                cfg: Optional[Dict[str, Any]] = None,
+                                method_id: Optional[str] = None
                                 ) -> Dict[str, Any]:
     """Mirror local daily/weekly backup archives to configured cloud provider."""
     if cfg is None:
         cfg = load_backup_config()
+    cfg = _cfg_for_method(cfg, method_id)
 
     provider = str(cfg.get('provider', 'local_only')).strip()
     if not _is_cloud_enabled(cfg):
@@ -1033,7 +1445,9 @@ def sync_local_backups_to_cloud(local_data_dir: Optional[Path] = None,
     deleted = 0
 
     try:
-        remote_before = _remote_map(cfg)
+        remote_before = {}
+        if provider in {'gdrive_oauth', 's3'}:
+            remote_before = _remote_map(cfg, method_id=method_id)
 
         if provider == 'gdrive_oauth':
             service = _build_google_drive_service(cfg)
@@ -1101,6 +1515,49 @@ def sync_local_backups_to_cloud(local_data_dir: Optional[Path] = None,
                     client.delete_object(Bucket=bucket, Key=key)
                     deleted += 1
 
+        elif provider == 'ssh_rsync':
+            backup_root = Path(local['backup_root'])
+            for period in ['daily', 'weekly']:
+                src = backup_root / period
+                src.mkdir(parents=True, exist_ok=True)
+                rc, output = _run_rsync_ssh(cfg, src, period)
+                if rc != 0:
+                    raise RuntimeError(output or f'rsync failed for {period} backups')
+
+        elif provider == 'local_copy':
+            mirror_root = Path(
+                str(cfg.get('local_mirror_dir', '') or '')
+            ).expanduser().resolve()
+            mirror_root.mkdir(parents=True, exist_ok=True)
+            local_backup_root = Path(local['backup_root'])
+            for period in ['daily', 'weekly']:
+                src = local_backup_root / period
+                dst = mirror_root / period
+                src.mkdir(parents=True, exist_ok=True)
+                dst.mkdir(parents=True, exist_ok=True)
+
+                src_map = {p.name: p for p in src.glob('*.tar.gz')}
+                dst_map = {p.name: p for p in dst.glob('*.tar.gz')}
+
+                for name, src_path in src_map.items():
+                    dst_path = dst / name
+                    if name in dst_map:
+                        try:
+                            if dst_path.stat().st_size != src_path.stat().st_size:
+                                shutil.copy2(src_path, dst_path)
+                                updated += 1
+                        except Exception:
+                            shutil.copy2(src_path, dst_path)
+                            updated += 1
+                    else:
+                        shutil.copy2(src_path, dst_path)
+                        uploaded += 1
+
+                for name, dst_path in dst_map.items():
+                    if name not in src_map:
+                        dst_path.unlink(missing_ok=True)
+                        deleted += 1
+
         else:
             return {
                 'configured': True,
@@ -1115,8 +1572,34 @@ def sync_local_backups_to_cloud(local_data_dir: Optional[Path] = None,
                 'cloud_total_count': 0,
             }
 
-        cloud_after = list_cloud_backups(cfg)
+        cloud_after = list_cloud_backups(cfg, method_id=method_id)
         elapsed_ms = int((time.perf_counter() - start) * 1000)
+        if provider == 'ssh_rsync':
+            return {
+                'configured': True,
+                'ok': True,
+                'warning': '',
+                'provider': provider,
+                'query_ms': elapsed_ms,
+                'uploaded': uploaded,
+                'updated': updated,
+                'deleted': deleted,
+                'cloud_total_bytes': 0,
+                'cloud_total_count': 0,
+            }
+        if provider == 'local_copy':
+            return {
+                'configured': True,
+                'ok': bool(cloud_after.get('ok', False)),
+                'warning': str(cloud_after.get('error', '') or ''),
+                'provider': provider,
+                'query_ms': cloud_after.get('query_ms', elapsed_ms),
+                'uploaded': uploaded,
+                'updated': updated,
+                'deleted': deleted,
+                'cloud_total_bytes': int(cloud_after.get('total_bytes', 0) or 0),
+                'cloud_total_count': int(cloud_after.get('total_count', 0) or 0),
+            }
         return {
             'configured': True,
             'ok': bool(cloud_after.get('ok', False)),
@@ -1145,6 +1628,58 @@ def sync_local_backups_to_cloud(local_data_dir: Optional[Path] = None,
         }
 
 
+def sync_local_backups_to_all_methods(
+        local_data_dir: Optional[Path] = None,
+        cfg: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+    """Run local->cloud sync for all enabled backup methods."""
+    if cfg is None:
+        cfg = load_backup_config()
+
+    methods = get_backup_methods(cfg, enabled_only=False)
+    enabled_methods = [m for m in methods if bool(m.get('enabled', False))]
+    # local_only is built-in storage, not a mirror target.
+    enabled_methods = [
+        m for m in enabled_methods
+        if str(m.get('provider', 'local_only')).strip() != 'local_only'
+    ]
+    if not enabled_methods:
+        return {
+            'ok': True,
+            'results': [],
+            'warning': 'No enabled backup methods found; skipping cloud mirror.',
+        }
+
+    results: List[Dict[str, Any]] = []
+    any_error = False
+    for method in enabled_methods:
+        method_id = str(method.get('id', '') or '')
+        result = sync_local_backups_to_cloud(
+            local_data_dir=local_data_dir,
+            cfg=cfg,
+            method_id=method_id,
+        )
+        result['method_id'] = method_id
+        result['method_name'] = str(method.get('name', method_id) or method_id)
+        results.append(result)
+        if not bool(result.get('ok', False)):
+            any_error = True
+
+    warning = ''
+    if any_error:
+        failed = [
+            f"{r.get('method_name', r.get('method_id', 'unknown'))}: "
+            f"{str(r.get('warning', 'failed')).strip() or 'failed'}"
+            for r in results if not bool(r.get('ok', False))
+        ]
+        warning = ' ; '.join(failed)
+
+    return {
+        'ok': not any_error,
+        'results': results,
+        'warning': warning,
+    }
+
+
 def _safe_relative_path(relative_path: str) -> Tuple[str, str]:
     rel = str(relative_path or '').strip().replace('\\', '/')
     parts = [part for part in rel.split('/') if part]
@@ -1161,10 +1696,12 @@ def _safe_relative_path(relative_path: str) -> Tuple[str, str]:
 def delete_backup(relative_path: str,
                   target: str = 'both',
                   local_data_dir: Optional[Path] = None,
-                  cfg: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+                  cfg: Optional[Dict[str, Any]] = None,
+                  method_id: Optional[str] = None) -> Dict[str, Any]:
     """Delete one backup from local and/or cloud target."""
     if cfg is None:
         cfg = load_backup_config()
+    cfg = _cfg_for_method(cfg, method_id)
 
     period, name = _safe_relative_path(relative_path)
     deleted_local = False
@@ -1199,6 +1736,14 @@ def delete_backup(relative_path: str,
             key = f'{prefix}{period}/{name}'
             client.delete_object(Bucket=bucket, Key=key)
             deleted_cloud = True
+        elif provider == 'local_copy':
+            mirror_root = Path(
+                str(cfg.get('local_mirror_dir', '') or '')
+            ).expanduser().resolve()
+            mirror_path = mirror_root / period / name
+            if mirror_path.exists():
+                mirror_path.unlink(missing_ok=True)
+                deleted_cloud = True
 
     return {
         'success': True,
@@ -1210,10 +1755,12 @@ def delete_backup(relative_path: str,
 def delete_all_backups(period: str = 'all',
                        target: str = 'both',
                        local_data_dir: Optional[Path] = None,
-                       cfg: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+                       cfg: Optional[Dict[str, Any]] = None,
+                       method_id: Optional[str] = None) -> Dict[str, Any]:
     """Delete all backups for one period or all periods."""
     if cfg is None:
         cfg = load_backup_config()
+    cfg = _cfg_for_method(cfg, method_id)
 
     periods = ['daily', 'weekly'] if period == 'all' else [period]
     if any(p not in {'daily', 'weekly'} for p in periods):
@@ -1246,7 +1793,8 @@ def delete_all_backups(period: str = 'all',
                 try:
                     result = delete_backup(rel, target='cloud',
                                            local_data_dir=local_data_dir,
-                                           cfg=cfg)
+                                           cfg=cfg,
+                                           method_id=method_id)
                     if result.get('deleted_cloud', False):
                         cloud_deleted += 1
                 except Exception:
@@ -1260,13 +1808,15 @@ def delete_all_backups(period: str = 'all',
 
 
 def backup_inventory(local_data_dir: Optional[Path] = None,
-                     cfg: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+                     cfg: Optional[Dict[str, Any]] = None,
+                     method_id: Optional[str] = None) -> Dict[str, Any]:
     """Return combined local/cloud backup inventory."""
     if cfg is None:
         cfg = load_backup_config()
+    cfg = _cfg_for_method(cfg, method_id)
 
     local = list_local_backups(local_data_dir)
-    cloud = list_cloud_backups(cfg)
+    cloud = list_cloud_backups(cfg, method_id=method_id)
 
     local_map: Dict[str, Dict[str, Any]] = {}
     for row in local.get('daily', []) + local.get('weekly', []):
@@ -1313,11 +1863,13 @@ def backup_inventory(local_data_dir: Optional[Path] = None,
 
 def download_cloud_backup(relative_path: str,
                          local_data_dir: Optional[Path] = None,
-                         cfg: Optional[Dict[str, Any]] = None
+                         cfg: Optional[Dict[str, Any]] = None,
+                         method_id: Optional[str] = None
                          ) -> Dict[str, Any]:
     """Download a specific cloud backup to local."""
     if cfg is None:
         cfg = load_backup_config()
+    cfg = _cfg_for_method(cfg, method_id)
 
     if local_data_dir is None:
         local_data_dir = _resolve_local_data_dir()
@@ -1389,6 +1941,17 @@ def download_cloud_backup(relative_path: str,
             s3_client.download_file(bucket, key, str(local_path))
             return {'ok': True, 'path': str(local_path)}
 
+        elif provider == 'local_copy':
+            mirror_root = Path(
+                str(cfg.get('local_mirror_dir', '') or '')
+            ).expanduser().resolve()
+            src_path = mirror_root / relative_path
+            if not src_path.exists():
+                return {'ok': False,
+                        'error': f'Mirror backup not found: {relative_path}'}
+            shutil.copy2(src_path, local_path)
+            return {'ok': True, 'path': str(local_path)}
+
         return {'ok': False, 'error': f'Unsupported provider: {provider}'}
 
     except Exception as e:
@@ -1402,10 +1965,12 @@ def download_cloud_backup(relative_path: str,
 
 def sync_cloud_backups_to_local(local_data_dir: Optional[Path] = None,
                                 cfg: Optional[Dict[str, Any]] = None
+                                , method_id: Optional[str] = None
                                 ) -> Dict[str, Any]:
     """Download all cloud backups that don't exist locally."""
     if cfg is None:
         cfg = load_backup_config()
+    cfg = _cfg_for_method(cfg, method_id)
 
     if local_data_dir is None:
         local_data_dir = _resolve_local_data_dir()
@@ -1427,7 +1992,7 @@ def sync_cloud_backups_to_local(local_data_dir: Optional[Path] = None,
         if rel:
             local_map.add(rel)
 
-    cloud_backups = list_cloud_backups(cfg)
+    cloud_backups = list_cloud_backups(cfg, method_id=method_id)
     cloud_files = []
     for row in (cloud_backups.get('daily', [])
                 + cloud_backups.get('weekly', [])):
@@ -1442,7 +2007,8 @@ def sync_cloud_backups_to_local(local_data_dir: Optional[Path] = None,
     errors = []
 
     for rel_path in cloud_files:
-        result = download_cloud_backup(rel_path, local_data_dir, cfg)
+        result = download_cloud_backup(rel_path, local_data_dir, cfg,
+                           method_id=method_id)
         if result.get('ok'):
             downloaded += 1
         else:

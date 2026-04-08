@@ -7,6 +7,7 @@ APERO RI: Async task management
 import time
 import shutil
 import os
+import json
 import multiprocessing as mp
 from concurrent.futures import ThreadPoolExecutor, ProcessPoolExecutor, as_completed
 from datetime import datetime, timezone
@@ -128,11 +129,10 @@ class AperoObjectQueryTask(apero_async.AperoAsyncTask):
             aparams, profile_name, tlog
         )
 
-        # prepare output directory
+        # Ensure output directory exists. Per-object cleanup is now conditional
+        # and handled inside the worker after raw fingerprint checks.
         local_objdir = _resolve_objects_dir(aparams, profile_name)
-        tlog(f'Profile {profile_name}: clearing output directory {local_objdir}')
-        with _acquire_directory_lock(local_objdir):
-            _clear_directory_contents(local_objdir)
+        local_objdir.mkdir(parents=True, exist_ok=True)
 
         # run the object loop (parallel or serial)
         timing_per_obj, output_files, header_rows_total = self._run_object_loop(
@@ -221,6 +221,7 @@ class AperoObjectQueryTask(apero_async.AperoAsyncTask):
         tlog = ctx['tlog']
         stop_event = ctx['stop_event']
         mp_cfg = ctx['mp_cfg']
+        force_run = bool(ctx.get('force_run', False))
         total = len(object_names)
         timing = []
         output_files = []
@@ -234,16 +235,17 @@ class AperoObjectQueryTask(apero_async.AperoAsyncTask):
         if use_parallel:
             timing, output_files, header_rows_total = self._run_parallel(
                 aparams, profile_name, object_names, mp_cfg, tlog, stop_event,
-                total,
+                total, force_run,
             )
         else:
             timing, output_files, header_rows_total = self._run_serial(
                 aparams, profile_name, object_names, tlog, stop_event, total,
+                force_run,
             )
         return timing, output_files, header_rows_total
 
     def _run_parallel(self, aparams, profile_name, object_names,
-                      mp_cfg, tlog, stop_event, total):
+                      mp_cfg, tlog, stop_event, total, force_run):
         """Run object jobs in parallel using a configured executor."""
         tlog(
             f'Profile {profile_name}: parallel object loop '
@@ -271,9 +273,19 @@ class AperoObjectQueryTask(apero_async.AperoAsyncTask):
                     f'({batch_start + 1}-{batch_end}/{total}).'
                 )
 
+                for global_idx, name in enumerate(
+                    batch_objects, start=batch_start + 1
+                ):
+                    tlog(
+                        f'Profile {profile_name}: {name} START '
+                        f'({global_idx}/{total}, '
+                        f'batch={batch_idx + 1}/{num_batches}).'
+                    )
+
                 futures = {
                     pool.submit(
                         _run_single_object_job, aparams, name, profile_name,
+                        force_run,
                     ): (name, global_idx)
                     for global_idx, name in enumerate(
                         batch_objects, start=batch_start + 1
@@ -297,8 +309,9 @@ class AperoObjectQueryTask(apero_async.AperoAsyncTask):
                     worker_pid = int(result.get('worker_pid', 0) or 0)
                     if worker_pid > 0:
                         worker_pids.add(worker_pid)
+                    skip_tag = ' SKIPPED' if result.get('skipped', False) else ''
                     tlog(
-                        f'Profile {profile_name}: {objname} done '
+                        f'Profile {profile_name}: {objname}{skip_tag} DONE '
                         f'({global_idx}/{total}, {result["object_total"]:.2f}s, '
                         f'batch={batch_idx + 1}/{num_batches}, '
                         f'worker_pid={worker_pid or "n/a"}, '
@@ -314,7 +327,7 @@ class AperoObjectQueryTask(apero_async.AperoAsyncTask):
         return timing, output_files, header_rows_total
 
     def _run_serial(self, aparams, profile_name, object_names,
-                    tlog, stop_event, total):
+                    tlog, stop_event, total, force_run):
         """Run object jobs serially."""
         tlog(f'Profile {profile_name}: serial mode.')
         timing = []
@@ -325,12 +338,19 @@ class AperoObjectQueryTask(apero_async.AperoAsyncTask):
                 tlog(f'Profile {profile_name}: cancelled.')
                 return timing, output_files, header_rows_total
             self.subprogress = (o_it + 1) / max(1, total)
-            result = _run_single_object_job(aparams, objname, profile_name)
+            tlog(
+                f'Profile {profile_name}: {objname} START '
+                f'({o_it + 1}/{total}).'
+            )
+            result = _run_single_object_job(
+                aparams, objname, profile_name, force_run
+            )
             timing.append(result['object_total'])
             header_rows_total += int(result['header_rows'])
             output_files.extend(result.get('output_files', []))
+            skip_tag = ' SKIPPED' if result.get('skipped', False) else ''
             tlog(
-                f'Profile {profile_name}: {objname} done '
+                f'Profile {profile_name}: {objname}{skip_tag} DONE '
                 f'({o_it + 1}/{total}, {result["object_total"]:.2f}s).'
             )
         return timing, output_files, header_rows_total
@@ -512,9 +532,6 @@ def object_query_db(aparams, objname, apero_profile_name,
     scitypes = rparams['SCIENCE_TYPES']
     # storage of queries
     queries = dict()
-    # all files
-    all_results = _file_col_query(rparams, objname)
-    queries['all'] = all_results
     # raw file table
     raw_results = _file_col_query(rparams, objname,
                                  block_kind='raw', scitype=scitypes)
@@ -556,7 +573,9 @@ def object_query_db(aparams, objname, apero_profile_name,
     lbl_rdb_results = _file_col_query(rparams, objname, block_kind='lbl',
                                      scitype=None, output='LBL_RDB')
     queries['lbl_rdb'] = lbl_rdb_results
-
+    # all files
+    all_results = _file_col_query(rparams, objname)
+    queries['all'] = all_results
     # storage for timing for database queries
     outputs = dict()
     outputs['queries'] = queries
@@ -629,12 +648,52 @@ def _make_executor(backend: str, ncores: int, start_method: str, tlog):
 
 
 def _run_single_object_job(aparams: Dict[str, Any], objname: str,
-                           apero_profile_name: str) -> Dict[str, Any]:
+                           apero_profile_name: str,
+                           force_run: bool = False) -> Dict[str, Any]:
     """Run one object query+header workflow and return summary metrics."""
     worker_pid = os.getpid()
+    start_total = time.time()
+
+    # Run raw query first to decide whether full regeneration is required.
+    rparams = _check_required(aparams)
+    scitypes = rparams['SCIENCE_TYPES']
+    raw_query = _file_col_query(
+        rparams, objname, block_kind='raw', scitype=scitypes
+    )
+    raw_outputs = {'timings': {}, 'results': {}}
+    raw_outputs = _file_col_cmd(
+        aparams, raw_query, apero_profile_name,
+        objname=objname, fkind='raw', outputs=raw_outputs,
+    )
+
+    raw_results = raw_outputs.get('results', {}).get('raw', [])
+    current_raw_fp = _extract_raw_last_modified_fingerprint(raw_results)
+
+    instrument = aparams.get('INSTRUMENT', 'unknown')
+    local_dir = (Path(aparams.get('LOCAL_DATA_DIR', str(ARI_DIR)))
+                 / 'tasks' / instrument / apero_profile_name / 'objects')
+    local_dir.mkdir(parents=True, exist_ok=True)
+    prev_raw_fp = _load_object_raw_fingerprint(local_dir, objname)
+
+    is_changed = force_run or (prev_raw_fp is None) or (current_raw_fp != prev_raw_fp)
+    if not is_changed:
+        raw_path = local_dir / f'ftable_raw_{objname}.json'
+        output_files = [str(raw_path)] if raw_path.exists() else []
+        return {
+            'object_total': float(time.time() - start_total),
+            'header_time': 0.0,
+            'header_rows': 0,
+            'worker_pid': int(worker_pid),
+            'output_files': output_files,
+            'skipped': True,
+        }
+
+    # Data changed (or force mode): delete stale object files, then rebuild all.
+    _remove_object_outputs(local_dir, objname)
     outputs = object_query_db(aparams, objname, apero_profile_name)
     htime = object_query_headers(aparams, objname, apero_profile_name, outputs)
-    object_total = sum(outputs.get('timings', {}).values())
+    _save_object_raw_fingerprint(local_dir, objname, current_raw_fp)
+
     result_rows = outputs.get('results', {})
     header_rows = 0
     if isinstance(result_rows, dict):
@@ -642,9 +701,6 @@ def _run_single_object_job(aparams: Dict[str, Any], objname: str,
             if isinstance(rows, list):
                 header_rows += len(rows)
 
-    instrument = aparams.get('INSTRUMENT', 'unknown')
-    local_dir = (Path(aparams.get('LOCAL_DATA_DIR', str(ARI_DIR)))
-                 / 'tasks' / instrument / apero_profile_name / 'objects')
     output_files = [str(local_dir / f'htable_{objname}.json')]
     if isinstance(result_rows, dict):
         for fkind, rows in result_rows.items():
@@ -654,12 +710,78 @@ def _run_single_object_job(aparams: Dict[str, Any], objname: str,
                 )
 
     return {
-        'object_total': float(object_total),
+        'object_total': float(time.time() - start_total),
         'header_time': float(htime),
         'header_rows': int(header_rows),
         'worker_pid': int(worker_pid),
         'output_files': output_files,
+        'skipped': False,
     }
+
+
+def _extract_raw_last_modified_fingerprint(raw_rows: Any) -> str:
+    """Build a stable fingerprint from raw-query LAST_MODIFIED values."""
+    if not isinstance(raw_rows, list) or not raw_rows:
+        return 'none:0'
+    values = []
+    for row in raw_rows:
+        if isinstance(row, dict):
+            values.append(str(row.get('LAST_MODIFIED', '') or '').strip())
+    values = [v for v in values if v]
+    if not values:
+        return f'empty:{len(raw_rows)}'
+    return f'{max(values)}:{len(values)}'
+
+
+def _object_state_file(local_dir: Path, objname: str) -> Path:
+    """Return per-object state filename used for raw fingerprint caching."""
+    return Path(local_dir) / f'.state_{objname}.json'
+
+
+def _load_object_raw_fingerprint(local_dir: Path,
+                                 objname: str) -> Optional[str]:
+    """Load previously stored raw fingerprint for one object."""
+    state_file = _object_state_file(local_dir, objname)
+    if not state_file.exists():
+        return None
+    try:
+        payload = json.loads(state_file.read_text(encoding='utf-8'))
+    except Exception:
+        return None
+    if not isinstance(payload, dict):
+        return None
+    value = payload.get('raw_last_modified_fingerprint', None)
+    return None if value in (None, '') else str(value)
+
+
+def _save_object_raw_fingerprint(local_dir: Path,
+                                 objname: str,
+                                 fingerprint: str) -> None:
+    """Persist raw fingerprint for one object."""
+    state_file = _object_state_file(local_dir, objname)
+    payload = {
+        'raw_last_modified_fingerprint': str(fingerprint or ''),
+        'saved_at': datetime.now(timezone.utc).isoformat(),
+    }
+    state_file.write_text(
+        json.dumps(payload, sort_keys=True, indent=2),
+        encoding='utf-8',
+    )
+
+
+def _remove_object_outputs(local_dir: Path, objname: str) -> None:
+    """Delete existing ftable/htable outputs for a single object."""
+    local_dir = Path(local_dir)
+    if not local_dir.exists():
+        return
+    hname = f'htable_{objname}.json'
+    fsuffix = f'_{objname}.json'
+    for entry in local_dir.iterdir():
+        if not entry.is_file():
+            continue
+        name = entry.name
+        if name == hname or (name.startswith('ftable_') and name.endswith(fsuffix)):
+            entry.unlink(missing_ok=True)
 
 
 def object_query_headers(aparams, objname, apero_profile_name,

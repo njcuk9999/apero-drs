@@ -361,9 +361,8 @@ def add_mount(mount_config: Dict[str, Any]) -> Dict[str, Any]:
         mount_config.get('connection_mode', 'direct')
     )
     mount_config['connection_mode'] = connection_mode
-    mount_config['manual_mode'] = _normalize_bool(
-        mount_config.get('manual_mode', False)
-    )
+    # UI policy: mounting is command-only (never executed inside the UI).
+    mount_config['manual_mode'] = True
 
     required = ['name', 'remote_path', 'local_mount', 'ssh_key']
     for field in required:
@@ -448,9 +447,8 @@ def update_mount(original_name: str,
         mount_config.get('connection_mode', 'direct')
     )
     mount_config['connection_mode'] = connection_mode
-    mount_config['manual_mode'] = _normalize_bool(
-        mount_config.get('manual_mode', False)
-    )
+    # UI policy: mounting is command-only (never executed inside the UI).
+    mount_config['manual_mode'] = True
 
     required = ['name', 'remote_path', 'local_mount', 'ssh_key']
     for field in required:
@@ -535,7 +533,11 @@ def _prepare_mount_dir(local_mount: Path, log: List[str]) -> None:
 
 
 def mount_sshfs(mount_name: str) -> Dict[str, Any]:
-    """Mount an SSHFS volume."""
+    """Return a command to mount an SSHFS volume manually.
+
+    UI policy intentionally avoids executing SSHFS mount commands directly in
+    the web process.
+    """
     log: List[str] = []
     try:
         cfg = load_sshfs_config()
@@ -578,75 +580,20 @@ def mount_sshfs(mount_name: str) -> Dict[str, Any]:
         local_mount = Path(mount.get('local_mount', ''))
         _prepare_mount_dir(local_mount, log)
 
-        key_path_str = str(key_path)
-        if _normalize_bool(mount.get('manual_mode', False)):
-            manual_cmd = _build_sshfs_mount_command(mount, key_path,
-                                                    local_mount)
-            cmd_text = shlex.join(manual_cmd)
-            log.append('Manual mode enabled; mount command was not executed.')
-            log.append(f'Run manually: {cmd_text}')
-            save_mount_log(mount_name, log, source='mount')
-            return {
-                'ok': True,
-                'manual_mode': True,
-                'message': (
-                    f'Mount "{mount_name}" is in manual mode. '
-                    'Run the returned command in a shell to mount it.'
-                ),
-                'command': cmd_text,
-                'log': log,
-            }
-
-        target_info = _resolve_connection_target(mount)
-        remote_target = target_info['sshfs_target']
-        if not remote_target:
-            return {'ok': False, 'error': 'Mount target is incomplete.',
-                    'log': log}
-
-        throttle_error = _throttle_ssh_target(
-            target_info.get('display_target', ''),
-            action=f'mount {mount_name}',
-        )
-        if throttle_error:
-            log.append(throttle_error)
-            save_mount_log(mount_name, log, source='mount')
-            return {'ok': False, 'error': throttle_error, 'log': log}
-
-        # Build sshfs command
-        cmd = [
-            'sshfs',
-            '-o', f'IdentityFile={key_path_str}',
-            '-o', 'BatchMode=yes',
-            '-o', 'StrictHostKeyChecking=accept-new',
-            '-o', 'ServerAliveInterval=15,ServerAliveCountMax=3',
-            remote_target,
-            str(local_mount),
-        ]
-
-        log.append(f'Running: {shlex.join(cmd)}')
-        result = subprocess.run(
-            cmd, capture_output=True, text=True, timeout=10)
-        
-        log.append(f'Exit code: {result.returncode}')
-        if result.stdout.strip():
-            log.append(f'stdout: {result.stdout.strip()}')
-        if result.stderr.strip():
-            log.append(f'stderr: {result.stderr.strip()}')
-
-        if result.returncode != 0:
-            error = result.stderr or result.stdout or 'Unknown error'
-            save_mount_log(mount_name, log, source='mount')
-            return {'ok': False, 'error': f'Failed to mount: {error}',
-                    'log': log}
-        
-        # Update config
-        mount['status'] = 'mounted'
-        mount['mounted_at'] = datetime.now(tz=timezone.utc).isoformat()
-        save_sshfs_config(cfg)
-        
+        manual_cmd = _build_sshfs_mount_command(mount, key_path, local_mount)
+        cmd_text = shlex.join(manual_cmd)
+        log.append('Command-only mode enabled; mount command was not executed.')
+        log.append(f'Run manually: {cmd_text}')
         save_mount_log(mount_name, log, source='mount')
-        return {'ok': True, 'message': f'Mount "{mount_name}" mounted successfully.',
-                'log': log}
+        return {
+            'ok': True,
+            'manual_mode': True,
+            'message': (
+                f'Run this command in your terminal to mount "{mount_name}".'
+            ),
+            'command': cmd_text,
+            'log': log,
+        }
     except subprocess.TimeoutExpired:
         log.append('Operation timed out')
         save_mount_log(mount_name, log, source='mount')
@@ -807,8 +754,44 @@ def _check_mount_status_worker(mount: Dict[str, Any],
             'mounted': is_mounted,
             'local_mount': local_mount,
             'mounted_at': mount.get('mounted_at'),
-            'check_mode': 'mountpoint-only',
+            'check_mode': 'mountpoint+ls-timeout',
         }
+
+        # If it is mounted, probe local directory responsiveness without SSH.
+        # This catches stale mounts while avoiding long hangs via timeout.
+        if is_mounted:
+            try:
+                ls_result = subprocess.run(
+                    ['ls', '-1', local_mount],
+                    capture_output=True,
+                    text=True,
+                    timeout=2,
+                )
+                if ls_result.returncode == 0:
+                    status_data['responsive'] = True
+                    sample = ''
+                    for line in (ls_result.stdout or '').splitlines():
+                        line = line.strip()
+                        if line:
+                            sample = line
+                            break
+                    if sample:
+                        status_data['sample_entry'] = sample
+                else:
+                    status_data['responsive'] = False
+                    status_data['auth_stale'] = True
+                    err = (ls_result.stderr or ls_result.stdout or '').strip()
+                    status_data['warning'] = (
+                        'Mountpoint exists but directory listing failed'
+                        + (f': {err}' if err else '.')
+                    )
+            except subprocess.TimeoutExpired:
+                status_data['responsive'] = False
+                status_data['auth_stale'] = True
+                status_data['warning'] = (
+                    'Mountpoint exists but directory listing timed out; '
+                    'mount is likely stale/unresponsive.'
+                )
         out_conn.send(status_data)
     except subprocess.TimeoutExpired:
         out_conn.send({
@@ -931,8 +914,7 @@ def get_mounts_status() -> Dict[str, Any]:
                 'name': mount.get('name'),
                 'connection_mode': _normalize_connection_mode(
                     mount.get('connection_mode', 'direct')),
-                'manual_mode': _normalize_bool(
-                    mount.get('manual_mode', False)),
+                'manual_mode': True,
                 'ssh_config_host': mount.get('ssh_config_host', ''),
                 'remote_host': mount.get('remote_host'),
                 'remote_path': mount.get('remote_path'),
