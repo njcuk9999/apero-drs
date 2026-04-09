@@ -206,8 +206,6 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
     qc_params = [qc_names, qc_values, qc_logic, qc_pass]
     recipe.log.add_qc(qc_params, True)
     # -------------------------------------------------------------------------
-
-    # -------------------------------------------------------------------------
     # deal with printing errors
     if has_skipped:
         if len(error_storage) > 0:
