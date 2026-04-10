@@ -172,50 +172,62 @@ sci-headers:
       key: CDTDARK
       label: DARK file
       dtype: float
+      ref: true
     EXT_CDTBAD:
       key: CDTBAD
       label: BADPIX file
       dtype: float
+      ref: False
     EXT_CDTBACK:
       key: CDTBACK
       label: BACKGROUND file
       dtype: float
+      ref: False
     EXT_CDTORDP:
       key: CDTORDP
       label: ORDER_PROFILE file
       dtype: float
+      ref: False
     EXT_CDTLOCO:
       key: CDTLOCO
-      label: LOCO file
+      label: LOCO fi
+      ref: False
       dtype: float
     EXT_CDTSHAPL:
       key: CDTSHAPL
       label: Local shape file
       dtype: float
+      ref: False
     EXT_CDTSHAPX:
       key: CDTSHAPX
       label: Shape X file
       dtype: float
+      ref: true
     EXT_CDTSHAPY:
       key: CDTSHAPY
       label: Shape Y file
       dtype: float
+      ref: true
     EXT_CDTFLAT:
       key: CDTFLAT
       label: FLAT file
       dtype: float
+      ref: False
     EXT_CDTBLAZE:
       key: CDTBLAZE
       label: BLAZE file
       dtype: float
+      ref: False
     EXT_CDTWAVE:
       key: CDTWAVE
       label: Wave file
       dtype: float
+      ref: False
     EXT_WAVETIME:
       key: WAVETIME
       label: Wave sol
       dtype: float
+      ref: False
   tcorr:
     TCORR_MJDMID:
       key: MJDMID

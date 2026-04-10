@@ -27,10 +27,14 @@
     var ccfResetRangeBtn = document.getElementById('op-ccf-reset-range');
     var ccfSamplingNote = document.getElementById('op-ccf-sampling-note');
     var tsBody = document.getElementById('op-time-series-tbody');
+    var tsWrap = document.getElementById('op-time-series-wrap');
+    var tsTopScroll = document.getElementById('op-time-series-scroll-top');
+    var tsTopSizer = document.getElementById('op-time-series-scroll-sizer');
     var allSectionsHost = document.getElementById('op-all-sections');
     var allPinnedReorder = document.getElementById('op-all-pinned-reorder');
     var debugLoading = document.getElementById('op-debug-loading');
     var debugError = document.getElementById('op-debug-error');
+    var debugStatusBar = document.getElementById('op-debug-statusbar');
     var targetCsvBtn = document.getElementById('op-download-target-csv');
     var spectrumCsvBtn = document.getElementById('op-download-spectrum-csv');
     var lblCsvBtn = null;  // LBL CSV buttons are created dynamically per flavor
@@ -73,6 +77,228 @@
     var backgroundPrefetchStarted = false;
     var plotLastUpdatedByKey = {};
     var plotReloadingByKey = {};
+    var yAxisZoomByDiv = {};
+    var yAxisRetryByDiv = {};
+
+    function median(values) {
+        if (!values.length) return null;
+        var sorted = values.slice().sort(function (a, b) { return a - b; });
+        var n = sorted.length;
+        var m = Math.floor(n / 2);
+        if (n % 2 === 0) {
+            return 0.5 * (sorted[m - 1] + sorted[m]);
+        }
+        return sorted[m];
+    }
+
+    function stdDev(values, center) {
+        if (!values.length) return 0;
+        var c = (center === null || center === undefined) ? 0 : Number(center);
+        var sum = 0;
+        for (var i = 0; i < values.length; i += 1) {
+            var d = Number(values[i]) - c;
+            sum += d * d;
+        }
+        return Math.sqrt(sum / values.length);
+    }
+
+    function extractFieldName(spec) {
+        if (typeof spec === 'string' && spec) return spec;
+        if (!spec || typeof spec !== 'object') return '';
+        if (typeof spec.field === 'string' && spec.field) return spec.field;
+        return '';
+    }
+
+    function isArrayLike(v) {
+        // Accept plain arrays AND TypedArrays (Float32Array, Float64Array, etc.)
+        // which Bokeh 3.x uses internally for ColumnDataSource data.
+        return Array.isArray(v)
+            || (v != null && typeof v === 'object'
+                && typeof v.length === 'number'
+                && (ArrayBuffer.isView(v)
+                    || Object.prototype.toString.call(v).indexOf('Array') !== -1));
+    }
+
+    function collectNumericValues(value, out) {
+        if (isArrayLike(value)) {
+            for (var i = 0; i < value.length; i += 1) {
+                collectNumericValues(value[i], out);
+            }
+            return;
+        }
+        var num = Number(value);
+        if (isFinite(num)) {
+            out.push(num);
+        }
+    }
+
+    function figureSeries(figModel) {
+        var points = [];
+        var ys = [];
+        var renderers = Array.isArray(figModel.renderers) ? figModel.renderers : [];
+        for (var i = 0; i < renderers.length; i += 1) {
+            var r = renderers[i];
+            if (!r || !r.glyph || !r.data_source || !r.data_source.data) continue;
+            var data = r.data_source.data;
+            var xField = extractFieldName(r.glyph.x);
+            var yFields = [];
+            ['y', 'top', 'bottom', 'y0', 'y1'].forEach(function (k) {
+                var field = extractFieldName(r.glyph[k]);
+                if (field) yFields.push(field);
+            });
+            if (!xField || !yFields.length) continue;
+            var xs = data[xField];
+            if (!isArrayLike(xs)) continue;
+            for (var f = 0; f < yFields.length; f += 1) {
+                var yField = yFields[f];
+                var yv = data[yField];
+                if (!isArrayLike(yv)) continue;
+                var n = Math.min(xs.length, yv.length);
+                for (var j = 0; j < n; j += 1) {
+                    var before = ys.length;
+                    collectNumericValues(yv[j], ys);
+                    for (var yy = before; yy < ys.length; yy += 1) {
+                        points.push({ x: xs[j], y: ys[yy] });
+                    }
+                }
+            }
+        }
+        return { points: points, ys: ys };
+    }
+
+    function getContainerFigures(containerEl) {
+        if (!containerEl || !window.Bokeh || !Bokeh.index) return [];
+        var views = [];
+        Object.keys(Bokeh.index).forEach(function (k) {
+            var view = Bokeh.index[k];
+            if (!view || !view.model || !view.el) return;
+            if (!containerEl.contains(view.el)) return;
+            var model = view.model;
+            if (!model.y_range || !Array.isArray(model.renderers)) return;
+            views.push(view);
+        });
+        return views;
+    }
+
+    function ensureYAxisControl(divId) {
+        var plotDiv = document.getElementById(divId);
+        if (!plotDiv) return;
+        var host = plotDiv.parentElement;
+        if (!host) return;
+        if (host.querySelector('.op-yzoom-control[data-op-target="' + divId + '"]')) return;
+
+        var bar = document.createElement('div');
+        bar.className = 'op-yzoom-control';
+        bar.setAttribute('data-op-target', divId);
+        bar.innerHTML = ''
+            + '<label class="op-yzoom-control__label">'
+            + 'y-axis zoom:'
+            + '<select class="op-yzoom-control__select">'
+            + '<option value="3sig" selected>3 sig</option>'
+            + '<option value="5sig">5 sig</option>'
+            + '<option value="10sig">10 sig</option>'
+            + '<option value="full">full</option>'
+            + '</select>'
+            + '</label>'
+            + '<span class="op-yzoom-control__status" aria-live="polite"></span>';
+        host.insertBefore(bar, plotDiv);
+
+        var sel = bar.querySelector('.op-yzoom-control__select');
+        if (sel) {
+            sel.addEventListener('change', function () {
+                yAxisZoomByDiv[divId] = sel.value;
+                applyYAxisZoom(divId);
+            });
+        }
+    }
+
+    function setYAxisStatus(divId, above, below) {
+        var statusEl = document.querySelector(
+            '.op-yzoom-control[data-op-target="' + divId + '"] .op-yzoom-control__status'
+        );
+        if (!statusEl) return;
+        if ((above + below) <= 0) {
+            statusEl.textContent = '';
+            return;
+        }
+        statusEl.textContent = '\u2191 ' + above + ' off-graph  \u2193 ' + below + ' off-graph';
+    }
+
+    function applyYAxisZoom(divId) {
+        var plotDiv = document.getElementById(divId);
+        if (!plotDiv) return false;
+        var mode = String(yAxisZoomByDiv[divId] || '3sig');
+        var figures = getContainerFigures(plotDiv);
+        if (!figures.length) return false;
+
+        var sigMul = 3;
+        if (mode === '5sig') sigMul = 5;
+        if (mode === '10sig') sigMul = 10;
+
+        var totalAbove = 0;
+        var totalBelow = 0;
+        figures.forEach(function (view) {
+            var fig = view.model;
+            var series = figureSeries(fig);
+            var ys = series.ys;
+            if (!ys.length) return;
+            var yMin = Math.min.apply(null, ys);
+            var yMax = Math.max.apply(null, ys);
+            var lo = yMin;
+            var hi = yMax;
+
+            if (mode !== 'full') {
+                var med = median(ys);
+                var sig = stdDev(ys, med);
+                var half = Math.max(sigMul * sig, 1.0e-12);
+                lo = med - half;
+                hi = med + half;
+            }
+            if (!isFinite(lo) || !isFinite(hi)) return;
+            if (lo === hi) {
+                lo -= 1.0;
+                hi += 1.0;
+            }
+
+            fig.y_range.start = lo;
+            fig.y_range.end = hi;
+            if (fig.y_range && fig.y_range.change
+                    && typeof fig.y_range.change.emit === 'function') {
+                fig.y_range.change.emit();
+            }
+            if (fig.change && typeof fig.change.emit === 'function') {
+                fig.change.emit();
+            }
+            if (view.request_render && typeof view.request_render === 'function') {
+                view.request_render();
+            }
+            if (view.request_paint && typeof view.request_paint === 'function') {
+                view.request_paint();
+            }
+
+            if (mode !== 'full') {
+                for (var i = 0; i < ys.length; i += 1) {
+                    if (ys[i] > hi) totalAbove += 1;
+                    else if (ys[i] < lo) totalBelow += 1;
+                }
+            }
+        });
+
+        setYAxisStatus(divId, totalAbove, totalBelow);
+        return true;
+    }
+
+    function applyYAxisZoomDeferred(divId) {
+        ensureYAxisControl(divId);
+        if (!applyYAxisZoom(divId)) {
+            var n = Number(yAxisRetryByDiv[divId] || 0);
+            if (n >= 6) return;
+            yAxisRetryByDiv[divId] = n + 1;
+            setTimeout(function () { applyYAxisZoomDeferred(divId); }, 120);
+            return;
+        }
+        yAxisRetryByDiv[divId] = 0;
+    }
 
     function currentUtcDateLabel() {
         return new Date().toISOString().slice(0, 10);
@@ -325,6 +551,7 @@
             }
         }
         embeddedPlots[divId] = true;
+        applyYAxisZoomDeferred(divId);
     }
 
     function embedOrDefer(divId, payload, noPlotMsg, loadingId) {
@@ -358,6 +585,7 @@
             if (divEl && isElementVisible(divEl) && !embeddedPlots[divId]) {
                 injectPlot(divId, pendingPlotEmbeds[divId].script, pendingPlotEmbeds[divId].div);
                 delete pendingPlotEmbeds[divId];
+                applyYAxisZoomDeferred(divId);
             }
         }
     }
@@ -428,13 +656,47 @@
         }
     }
 
+    function syncLastOpenedObject() {
+        var apiUrl = String(cfg.objectFavouriteApiLastOpened || '').trim();
+        var profileId = String(cfg.profileId || '').trim();
+        var objname = String(cfg.objname || '').trim();
+        if (!apiUrl || !profileId || !objname) {
+            return;
+        }
+        fetch(apiUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                profile_id: profileId,
+                objname: objname,
+            })
+        }).catch(function () {
+            // Silent best-effort update.
+        });
+    }
+
     function activateTab(tabKey) {
         document.querySelectorAll('#op-tabs .ari-sg-tab').forEach(function (btn) {
             btn.classList.toggle('ari-sg-tab--active', btn.dataset.tab === tabKey);
         });
-        document.querySelectorAll('.op-tab-panel').forEach(function (panel) {
-            panel.style.display = (panel.id === 'op-tab-' + tabKey) ? '' : 'none';
-        });
+        if (tabKey === 'all') {
+            document.querySelectorAll('.op-tab-panel').forEach(function (panel) {
+                var pid = String(panel.id || '');
+                if (pid === 'op-tab-all') {
+                    panel.style.display = 'none';
+                    return;
+                }
+                panel.style.display = '';
+            });
+        } else {
+            document.querySelectorAll('.op-tab-panel').forEach(function (panel) {
+                panel.style.display = (panel.id === 'op-tab-' + tabKey) ? '' : 'none';
+            });
+        }
+        updateSearchUiForTab(tabKey);
+        if (debugStatusBar) {
+            debugStatusBar.style.display = (tabKey === 'debug') ? '' : 'none';
+        }
         applySectionFilter(tabKey);
         // Notify lazy-loading tab modules (e.g. file_browser.js)
         document.dispatchEvent(new CustomEvent('ARI_TAB_ACTIVATED', {detail: {tabKey: tabKey}}));
@@ -445,6 +707,49 @@
             flushPendingEmbeds();
             window.dispatchEvent(new Event('resize'));
         }, 60);
+    }
+
+    function refreshTimeSeriesDualScroll() {
+        if (!tsWrap || !tsTopScroll || !tsTopSizer) return;
+        var table = document.getElementById('op-time-series-table');
+        if (!table) return;
+        tsTopSizer.style.width = String(table.scrollWidth) + 'px';
+        var needsX = tsWrap.scrollWidth > tsWrap.clientWidth;
+        tsTopScroll.style.display = needsX ? '' : 'none';
+    }
+
+    function bindTimeSeriesDualScroll() {
+        if (!tsWrap || !tsTopScroll || !tsTopSizer) return;
+        var syncingTop = false;
+        var syncingWrap = false;
+
+        tsTopScroll.addEventListener('scroll', function () {
+            if (syncingTop) return;
+            syncingWrap = true;
+            tsWrap.scrollLeft = tsTopScroll.scrollLeft;
+            syncingWrap = false;
+        });
+        tsWrap.addEventListener('scroll', function () {
+            if (syncingWrap) return;
+            syncingTop = true;
+            tsTopScroll.scrollLeft = tsWrap.scrollLeft;
+            syncingTop = false;
+        });
+        window.addEventListener('resize', function () {
+            refreshTimeSeriesDualScroll();
+        });
+        refreshTimeSeriesDualScroll();
+    }
+
+    function updateSearchUiForTab(tabKey) {
+        var isAll = (tabKey === 'all');
+        document.querySelectorAll('.op-section-search[data-op-search-scope="tab"]').forEach(function (wrap) {
+            wrap.style.display = isAll ? 'none' : '';
+        });
+        var allWrap = ensureAllSearchInput();
+        if (allWrap) {
+            allWrap.style.display = isAll ? '' : 'none';
+        }
     }
 
     function bindTabs() {
@@ -553,8 +858,8 @@
         var controls = document.createElement('div');
         controls.className = 'op-section-controls';
 
-        // Move existing CSV download button into the controls group
-        var csvBtn = header.querySelector('button.ari-btn');
+        // Capture CSV button — will be appended last (far right)
+        var csvBtn = header.querySelector('button[id^="op-download-"][id$="-csv"], button.op-section-btn--csv');
         if (csvBtn) {
             csvBtn.style.marginLeft = '';
             csvBtn.classList.remove('ari-btn--sm');
@@ -562,7 +867,6 @@
             csvBtn.classList.remove('ari-btn');
             csvBtn.classList.add('op-section-btn');
             csvBtn.classList.add('op-section-btn--csv');
-            controls.appendChild(csvBtn);
         }
 
         // Move existing "maximize plot" link into the controls group
@@ -596,6 +900,10 @@
 
         controls.appendChild(pinBtn);
         controls.appendChild(toggleBtn);
+        // CSV button is rightmost — append after pin/toggle
+        if (csvBtn) {
+            controls.appendChild(csvBtn);
+        }
         header.appendChild(controls);
 
         if (!header.hasAttribute('data-op-click-toggle')) {
@@ -621,6 +929,7 @@
 
         var wrap = document.createElement('div');
         wrap.className = 'op-section-search';
+        wrap.setAttribute('data-op-search-scope', 'tab');
         var input = document.createElement('input');
         input.type = 'text';
         input.className = 'op-section-search__input';
@@ -635,13 +944,15 @@
     }
 
     function ensureAllSearchInput() {
-        if (!allSectionsHost) return;
-        var allPanel = document.getElementById('op-tab-all');
-        if (!allPanel) return;
-        if (allPanel.querySelector('.op-section-search')) return;
+        var contentHost = document.getElementById('op-content');
+        if (!contentHost) return null;
+        var existing = contentHost.querySelector('.op-section-search[data-op-search-scope="all"]');
+        if (existing) return existing;
 
         var wrap = document.createElement('div');
         wrap.className = 'op-section-search';
+        wrap.setAttribute('data-op-search-scope', 'all');
+        wrap.style.display = 'none';
         var input = document.createElement('input');
         input.type = 'text';
         input.className = 'op-section-search__input';
@@ -653,10 +964,13 @@
         });
         wrap.appendChild(input);
 
-        var hostParent = allSectionsHost.parentElement;
-        if (hostParent) {
-            hostParent.insertBefore(wrap, allSectionsHost);
+        var firstRealPanel = contentHost.querySelector('.op-tab-panel:not(#op-tab-all)');
+        if (firstRealPanel) {
+            contentHost.insertBefore(wrap, firstRealPanel);
+        } else {
+            contentHost.insertBefore(wrap, contentHost.firstChild);
         }
+        return wrap;
     }
 
     function collectSectionCards() {
@@ -715,7 +1029,7 @@
 
     function applyDefaultCollapse(cards) {
         cards.forEach(function (meta) {
-            setSectionCollapsed(meta.card, false);
+            setSectionCollapsed(meta.card, !isSectionPinned(meta.id));
         });
     }
 
@@ -924,9 +1238,11 @@
     function applySectionFilter(tabKey) {
         var query = String(sectionSearch[tabKey] || '').trim().toLowerCase();
         if (tabKey === 'all') {
-            if (!allSectionsHost) return;
-            allSectionsHost.querySelectorAll('.at-section-card[data-op-origin-id]').forEach(function (card) {
+            document.querySelectorAll('.op-tab-panel:not(#op-tab-all) .at-section-card[data-op-section-id]').forEach(function (card) {
                 var sid = card.getAttribute('data-op-origin-id') || '';
+                if (!sid) {
+                    sid = card.getAttribute('data-op-section-id') || '';
+                }
                 var txt = (card.textContent || '').toLowerCase();
                 var show = !query || txt.indexOf(query) !== -1 || sid.indexOf(query) !== -1;
                 card.style.display = show ? '' : 'none';
@@ -948,7 +1264,11 @@
         var cards = collectSectionCards();
         orderSections(cards);
         applyDefaultCollapse(cards);
-        rebuildAllSections(cards);
+        // All-tab now shows original tab panels directly; do not build cloned
+        // synthetic cards to avoid duplicated/misplaced controls.
+        if (allSectionsHost) {
+            allSectionsHost.innerHTML = '';
+        }
         renderPinnedReorder(cards);
         updatePinnedButtons();
 
@@ -1199,7 +1519,23 @@
             params += '&_ts=' + encodeURIComponent(String(Date.now()));
         }
         fetch(url + params)
-            .then(function (r) { return r.json(); })
+            .then(function (r) {
+                var ctype = String(r.headers.get('content-type') || '').toLowerCase();
+                if (ctype.indexOf('application/json') === -1) {
+                    return r.text().then(function (txt) {
+                        throw new Error('Debug plots API returned non-JSON response ('
+                            + r.status + ').');
+                    });
+                }
+                return r.json().then(function (data) {
+                    if (!r.ok) {
+                        var msg = (data && data.error) ? data.error
+                            : ('Debug plots request failed (' + r.status + ').');
+                        throw new Error(msg);
+                    }
+                    return data;
+                });
+            })
             .then(function (data) {
                 if (debugLoading) debugLoading.style.display = 'none';
                 if (!data || !data.success) {
@@ -1234,26 +1570,86 @@
     function renderDebugPlots(plots) {
         for (var i = 0; i < debugPlotKeys.length; i++) {
             var key = debugPlotKeys[i];
+            // tcorr_map is generated on demand via its own button
+            if (key === 'tcorr_map') continue;
             var cssKey = key.replace(/_/g, '-');
-            var plotDiv = document.getElementById('op-debug-' + cssKey + '-div');
+            var divId = 'op-debug-' + cssKey + '-div';
+            var loadId = 'op-debug-' + cssKey + '-loading';
             var info = plots[key];
-            var loadingEl = document.getElementById('op-debug-' + cssKey + '-loading');
-            if (loadingEl) loadingEl.style.display = 'none';
-            if (!plotDiv) continue;
-            if (!info || !info.has_plot || !info.image) {
-                plotDiv.innerHTML = '<div class="at-muted-hint">'
-                    + escHtml(info && info.error ? info.error : 'No data available')
-                    + '</div>';
-                continue;
+            // Normalise error → message for embedOrDefer
+            if (info && !info.message && info.error) {
+                info.message = info.error;
             }
-            var maxH = (key === 'cdt' || key === 'tcorr_map') ? '700px' : '400px';
-            plotDiv.innerHTML = '<img src="data:image/png;base64,' + info.image
-                + '" alt="' + escHtml(info.title || key) + '" '
-                + 'style="width:100%;max-height:' + maxH + ';object-fit:contain;'
-                + 'border-radius:0.4rem;'
-                + 'border:1px solid var(--op-border,#d6d9de);">';
+            embedOrDefer(divId, info, 'No data available.', loadId);
         }
     }
+
+    /* --- Telluric map generate-on-demand button ---------------------- */
+    (function () {
+        function initTcorrMapBtn() {
+            var btn = document.getElementById('op-debug-tcorr-map-btn');
+            if (!btn) return;
+            btn.addEventListener('click', function () {
+                var loading = document.getElementById(
+                    'op-debug-tcorr-map-loading'
+                );
+                var genWrap = document.getElementById(
+                    'op-debug-tcorr-map-generate-wrap'
+                );
+                var divId = 'op-debug-tcorr-map-div';
+                btn.disabled = true;
+                if (genWrap) genWrap.style.display = 'none';
+                if (loading) loading.style.display = '';
+
+                var url = (cfg.tcorrMapGenerateApiUrl || '')
+                    + '?profile_id=' + encodeURIComponent(cfg.profileId)
+                    + '&objname=' + encodeURIComponent(cfg.objname);
+                fetch(url)
+                    .then(function (r) { return r.json(); })
+                    .then(function (data) {
+                        if (loading) loading.style.display = 'none';
+                        if (!data || !data.has_plot) {
+                            var divEl = document.getElementById(divId);
+                            if (divEl) {
+                                divEl.innerHTML
+                                    = '<div class="at-muted-hint">'
+                                    + escHtml(
+                                        data && data.message
+                                            ? data.message
+                                            : 'No telluric map data available.'
+                                    )
+                                    + '</div>';
+                            }
+                            if (genWrap) genWrap.style.display = '';
+                            btn.disabled = false;
+                            return;
+                        }
+                        // Use injectPlot directly (script may be empty for image)
+                        injectPlot(divId, data.script || '', data.div || '');
+                        setPlotLastUpdated(
+                            'debug_tcorr_map',
+                            currentUtcDateLabel()
+                        );
+                    })
+                    .catch(function (err) {
+                        if (loading) loading.style.display = 'none';
+                        var divEl = document.getElementById(divId);
+                        if (divEl) {
+                            divEl.innerHTML = '<div class="at-muted-hint">'
+                                + escHtml('Network error: ' + String(err))
+                                + '</div>';
+                        }
+                        if (genWrap) genWrap.style.display = '';
+                        btn.disabled = false;
+                    });
+            });
+        }
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initTcorrMapBtn);
+        } else {
+            initTcorrMapBtn();
+        }
+    }());
 
     function renderSpectrum(spec) {
         var rows = [
@@ -1411,6 +1807,7 @@
 
         if (!rows || rows.length === 0) {
             tsBody.innerHTML = '<tr><td colspan="12" class="ot-empty">No rows</td></tr>';
+            refreshTimeSeriesDualScroll();
             return;
         }
 
@@ -1490,6 +1887,7 @@
             frag.appendChild(tr);
         });
         tsBody.appendChild(frag);
+        refreshTimeSeriesDualScroll();
     }
 
     function csvEscape(cell) {
@@ -2050,9 +2448,11 @@
 
     function init() {
         persistLastObjectPage();
+        syncLastOpenedObject();
         refreshTabOrderMap();
         bindTabs();
         bindCcfRangeControls();
+        bindTimeSeriesDualScroll();
         activateTab('target_info');
         if (targetCsvBtn) {
             targetCsvBtn.addEventListener('click', downloadTargetCsv);

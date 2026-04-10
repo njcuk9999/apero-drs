@@ -180,10 +180,6 @@ def calib_tellu_update(params: ParamDict, recipe: DrsRecipe,
         dbmanager.load_db()
     else:
         raise AperoCodedException(params, '09-505-00001', targs=[db_type])
-        dbmanager = None
-        db_path = None
-        name = None
-        file_set_name = None
     # ----------------------------------------------------------------------
     # get a list of all database paths
     db_list = manage_databases.list_databases(params, recipe.shortname)

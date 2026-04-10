@@ -79,6 +79,27 @@
     border-radius: 6px;
     background: var(--ari-panel, #ffffff);
 }
+.at-edit-tabs {
+    display: flex;
+    gap: 0.5rem;
+    border-bottom: 1px solid var(--ari-border, #d6d9de);
+    padding-bottom: 0.5rem;
+    margin-bottom: 0.25rem;
+}
+.at-edit-tab {
+    border: 1px solid var(--ari-border, #d6d9de);
+    background: var(--ari-panel, #ffffff);
+    border-radius: 6px;
+    padding: 0.35rem 0.65rem;
+    cursor: pointer;
+    font-weight: 600;
+}
+.at-edit-tab--active {
+    border-color: var(--ari-primary, #0b66c3);
+    color: var(--ari-primary, #0b66c3);
+}
+.at-edit-tab-pane { display: none; }
+.at-edit-tab-pane--active { display: grid; gap: 0.9rem; }
 </style>
 {% endblock %}
 
@@ -202,6 +223,17 @@
                         <span class="at-detail__label">Description</span>
                         <span id="det-description"></span>
                     </div>
+                    <div class="at-sg-item at-sg-item--wide"
+                         id="det-filters-warning" style="display:none;">
+                        <div class="at-filters-warning">
+                            <div class="at-filters-warning__title">
+                                <i class="fa-solid fa-triangle-exclamation"></i>
+                                Filters are applied to this task
+                            </div>
+                            <ul id="det-filters-warning-list"
+                                class="at-filters-warning__list"></ul>
+                        </div>
+                    </div>
                     <div class="at-sg-item">
                         <span class="at-detail__label">Last run</span>
                         <span id="det-last-run"></span>
@@ -311,11 +343,17 @@
             <!-- ── Section 5: Output Files ── -->
             <div class="at-section-card" id="det-files-section" style="display:none;">
                 <div class="at-section-card__header">
-                    <i class="fa-solid fa-file-code"></i> Output Files
+                    <span><i class="fa-solid fa-file-code"></i> Output Files</span>
+                    <button id="det-btn-purge-files"
+                            class="ari-btn ari-btn--sm ari-btn--danger"
+                            title="Delete output files for this task"
+                            style="margin-left:auto;">
+                        <i class="fa-solid fa-trash-can"></i> Purge Files
+                    </button>
                 </div>
                 <div class="at-section-card__body">
                     <ul id="det-output-files" class="at-file-list"></ul>
-                    <div class="at-muted-hint">Preview shows the first 50 lines only.</div>
+                    <div class="at-muted-hint">Showing a short preview per file type. Preview shows the first 50 lines only.</div>
                 </div>
             </div>
 
@@ -407,93 +445,106 @@
             </button>
         </div>
         <div class="ari-modal__body">
-            <div class="ari-ap-form__field">
-                <label for="edit-task-key">Task <span class="ari-required">*</span></label>
-                <select id="edit-task-key" class="ari-ap-input">
-                    <option value="">— select a task —</option>
-                </select>
+            <div class="at-edit-tabs">
+                <button type="button" id="edit-tab-run" class="at-edit-tab at-edit-tab--active">Run</button>
+                <button type="button" id="edit-tab-filters" class="at-edit-tab">Filters</button>
             </div>
-            <div class="ari-ap-form__field" id="edit-task-info-row" style="display:none;">
-                <div class="at-task-class-info">
-                    <span class="at-detail__label">Name:</span>
-                    <span id="edit-task-name"></span>
-                </div>
-                <div class="at-task-class-info">
-                    <span class="at-detail__label">Description:</span>
-                    <span id="edit-task-desc"></span>
-                </div>
-            </div>
-            <div class="ari-ap-form__field">
-                <label for="edit-frequency">Frequency (hours) <span class="ari-required">*</span></label>
-                <input type="number" id="edit-frequency" class="ari-ap-input"
-                       placeholder="e.g. 24" min="0.5" step="0.5" value="24">
-            </div>
-            <div id="edit-backup-fields" style="display:none;">
+
+            <div id="edit-pane-run" class="at-edit-tab-pane at-edit-tab-pane--active">
                 <div class="ari-ap-form__field">
-                    <label for="edit-daily-copies">Daily copies to keep</label>
-                    <input type="number" id="edit-daily-copies" class="ari-ap-input"
-                           min="0" step="1" value="7">
-                </div>
-                <div class="ari-ap-form__field">
-                    <label for="edit-weekly-copies">Weekly copies to keep</label>
-                    <input type="number" id="edit-weekly-copies" class="ari-ap-input"
-                           min="0" step="1" value="4">
-                </div>
-            </div>
-            <div id="edit-local-sync-fields" style="display:none;">
-                <div class="ari-ap-form__field" id="edit-sync-mode-row" style="display:none;">
-                    <label for="edit-sync-mode">Sync mode</label>
-                    <select id="edit-sync-mode" class="ari-ap-input">
-                        <option value="run_server">Run on server</option>
-                        <option value="fetch_precomputed">Fetch pre-computed</option>
+                    <label for="edit-task-key">Task <span class="ari-required">*</span></label>
+                    <select id="edit-task-key" class="ari-ap-input">
+                        <option value="">— select a task —</option>
                     </select>
                 </div>
-                <div class="ari-ap-form__field" id="edit-sync-source-field" style="display:none;">
-                    <label for="edit-sync-source">Sync Source Path <span id="edit-sync-source-required" class="ari-required" style="display:none;">*</span></label>
-                    <input type="text" id="edit-sync-source" class="ari-ap-input"
-                           placeholder="/path/to/prebuilt/.ari">
-                    <div class="at-muted-hint">
-                        Required when Sync mode is set to Fetch pre-computed.
-                        Save with this path, then use Run Now (or Run All) to sync files instead of running the task.
-                        You can use either a root containing tasks/ (for example ~/.ari) or a direct tasks/&lt;instrument&gt; directory.
+                <div class="ari-ap-form__field" id="edit-task-info-row" style="display:none;">
+                    <div class="at-task-class-info">
+                        <span class="at-detail__label">Name:</span>
+                        <span id="edit-task-name"></span>
+                    </div>
+                    <div class="at-task-class-info">
+                        <span class="at-detail__label">Description:</span>
+                        <span id="edit-task-desc"></span>
                     </div>
                 </div>
-            </div>
-            <div id="edit-mp-fields" style="display:none;">
                 <div class="ari-ap-form__field">
-                    <label for="edit-ncores">NCORES</label>
-                    <input type="number" id="edit-ncores" class="ari-ap-input"
-                           min="1" step="1" value="1">
+                    <label for="edit-frequency">Frequency (hours) <span class="ari-required">*</span></label>
+                    <input type="number" id="edit-frequency" class="ari-ap-input"
+                           placeholder="e.g. 24" min="0.5" step="0.5" value="24">
+                </div>
+                <div id="edit-backup-fields" style="display:none;">
+                    <div class="ari-ap-form__field">
+                        <label for="edit-daily-copies">Daily copies to keep</label>
+                        <input type="number" id="edit-daily-copies" class="ari-ap-input"
+                               min="0" step="1" value="7">
+                    </div>
+                    <div class="ari-ap-form__field">
+                        <label for="edit-weekly-copies">Weekly copies to keep</label>
+                        <input type="number" id="edit-weekly-copies" class="ari-ap-input"
+                               min="0" step="1" value="4">
+                    </div>
+                </div>
+                <div id="edit-local-sync-fields" style="display:none;">
+                    <div class="ari-ap-form__field" id="edit-sync-mode-row" style="display:none;">
+                        <label for="edit-sync-mode">Sync mode</label>
+                        <select id="edit-sync-mode" class="ari-ap-input">
+                            <option value="run_server">Run on server</option>
+                            <option value="fetch_precomputed">Fetch pre-computed</option>
+                        </select>
+                    </div>
+                    <div class="ari-ap-form__field" id="edit-sync-source-field" style="display:none;">
+                        <label for="edit-sync-source">Sync Source Path <span id="edit-sync-source-required" class="ari-required" style="display:none;">*</span></label>
+                        <input type="text" id="edit-sync-source" class="ari-ap-input"
+                               placeholder="/path/to/prebuilt/.ari">
+                        <div class="at-muted-hint">
+                            Required when Sync mode is set to Fetch pre-computed.
+                            Save with this path, then use Run Now (or Run All) to sync files instead of running the task.
+                            You can use either a root containing tasks/ (for example ~/.ari) or a direct tasks/&lt;instrument&gt; directory.
+                        </div>
+                    </div>
+                </div>
+                <div id="edit-mp-fields" style="display:none;">
+                    <div class="ari-ap-form__field">
+                        <label for="edit-ncores">NCORES</label>
+                        <input type="number" id="edit-ncores" class="ari-ap-input"
+                               min="1" step="1" value="1">
+                    </div>
+                    <div class="ari-ap-form__field">
+                        <label for="edit-mp-backend">Parallel backend</label>
+                        <select id="edit-mp-backend" class="ari-ap-input">
+                            <option value="threads">threads</option>
+                            <option value="processes">processes</option>
+                        </select>
+                    </div>
+                    <div class="ari-ap-form__field">
+                        <label for="edit-mp-start-method">Process start method</label>
+                        <select id="edit-mp-start-method" class="ari-ap-input">
+                            <option value="default">default</option>
+                            <option value="spawn">spawn</option>
+                            <option value="fork">fork</option>
+                            <option value="forkserver">forkserver</option>
+                        </select>
+                    </div>
+                    <div class="ari-ap-form__field" id="edit-mp-warn" style="display:none;">
+                        <div class="at-muted-hint"></div>
+                    </div>
+                </div>
+                <div class="ari-ap-form__field" id="edit-run-count-row" style="display:none;">
+                    <label for="edit-run-count">Times run</label>
+                    <div id="edit-run-count" class="at-detail__value--code" aria-live="polite">0</div>
                 </div>
                 <div class="ari-ap-form__field">
-                    <label for="edit-mp-backend">Parallel backend</label>
-                    <select id="edit-mp-backend" class="ari-ap-input">
-                        <option value="threads">threads</option>
-                        <option value="processes">processes</option>
-                    </select>
-                </div>
-                <div class="ari-ap-form__field">
-                    <label for="edit-mp-start-method">Process start method</label>
-                    <select id="edit-mp-start-method" class="ari-ap-input">
-                        <option value="default">default</option>
-                        <option value="spawn">spawn</option>
-                        <option value="fork">fork</option>
-                        <option value="forkserver">forkserver</option>
-                    </select>
-                </div>
-                <div class="ari-ap-form__field" id="edit-mp-warn" style="display:none;">
-                    <div class="at-muted-hint"></div>
+                    <label>
+                        <input type="checkbox" id="edit-active" checked>
+                        Active (will be included in Run All)
+                    </label>
                 </div>
             </div>
-            <div class="ari-ap-form__field" id="edit-run-count-row" style="display:none;">
-                <label for="edit-run-count">Times run</label>
-                <div id="edit-run-count" class="at-detail__value--code" aria-live="polite">0</div>
-            </div>
-            <div class="ari-ap-form__field">
-                <label>
-                    <input type="checkbox" id="edit-active" checked>
-                    Active (will be included in Run All)
-                </label>
+
+            <div id="edit-pane-filters" class="at-edit-tab-pane">
+                <div class="at-muted-hint">Configure optional per-task filters. Leave blank to disable a filter.</div>
+                <div id="edit-filters-empty" class="at-muted-hint">No filters available for this task.</div>
+                <div id="edit-filters-container"></div>
             </div>
         </div>
         <div class="ari-modal__footer">
@@ -629,8 +680,9 @@ window.ARI_ASYNC_TASKS = {
         cancelTask: '{{ url_for("api_async_tasks_cancel_task") }}',
         readFile: '{{ url_for("api_async_tasks_read_file") }}',
         downloadFile: '{{ url_for("api_async_tasks_download_file") }}',
+        purgeFiles: '/api/admin/async-tasks/purge-files',
     }
 };
 </script>
-<script src="{{ url_for('static', filename='js/admin_async_tasks.js', v='20260407-5') }}"></script>
+    <script src="{{ url_for('static', filename='js/admin_async_tasks.js', v='20260408-1') }}"></script>
 {% endblock %}

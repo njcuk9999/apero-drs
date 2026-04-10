@@ -5,6 +5,7 @@ APERO RI: Async task infrastructure.
 
 Note: no imports from apero_ri (prevents circular imports).
 """
+
 import json
 import os
 import socket
@@ -20,16 +21,15 @@ from astropy.io import fits
 # =============================================================================
 # Define variables
 # =============================================================================
-__NAME__ = 'apero_ri.tasks.apero_async'
+__NAME__ = "apero_ri.tasks.apero_async"
 DB_UPDATE_TABLE_KEYS = (
-    'ASTROM_TABLENAME',
-    'CALIB_TABLENAME',
-    'FINDEX_TABLENAME',
-    'LOG_TABLENAME',
-    'REJECT_TABLENAME',
-    'TELLU_TABLENAME',
+    "ASTROM_TABLENAME",
+    "CALIB_TABLENAME",
+    "FINDEX_TABLENAME",
+    "LOG_TABLENAME",
+    "REJECT_TABLENAME",
+    "TELLU_TABLENAME",
 )
-
 
 
 # =============================================================================
@@ -37,11 +37,12 @@ DB_UPDATE_TABLE_KEYS = (
 # =============================================================================
 class AperoAsyncTask:
     """Class representing an asynchronous task in APERO RI."""
-    def __init__(self, name, description, status='pending'):
+
+    def __init__(self, name, description, status="pending"):
         # name and description
-        self.name = name     
+        self.name = name
         self.description = description
-        # Progress is a float between 0.0 and 1.0 representing the 
+        # Progress is a float between 0.0 and 1.0 representing the
         # completion percentage
         self.progress = 0.0
         self.subprogress = 0.0
@@ -49,32 +50,100 @@ class AperoAsyncTask:
         # Status can be 'pending', 'in_progress', 'completed', or 'failed'
         self.status = status
         # Long string (markdown) for writing the info page
-        self.info = ''
+        self.info = ""
         # list of output files this task produces (for use in the UI)
         self.output_files = []
         # last run (string "Never" or ISO timestamp of last run)
-        self.last_run = 'Never'
+        self.last_run = "Never"
         # number of times this task has been run
         self.run_count = 0
 
     def to_dict(self):
         """Convert the task to a dictionary for JSON serialization."""
         return {
-            'name': self.name,
-            'description': self.description,
-            'status': self.status,
-            'progress': self.progress,
-            'subprogress': self.subprogress,
-            'use_subprocess': bool(self.USE_SUBPROCESS),
-            'info': self.info,
-            'last_run': self.last_run,
-            'output_files': self.output_files,
-            'run_count': self.run_count,
+            "name": self.name,
+            "description": self.description,
+            "status": self.status,
+            "progress": self.progress,
+            "subprogress": self.subprogress,
+            "use_subprocess": bool(self.USE_SUBPROCESS),
+            "info": self.info,
+            "last_run": self.last_run,
+            "output_files": self.output_files,
+            "run_count": self.run_count,
         }
-        
+
     def run_job(self, params: Dict[str, Any]):
-        raise NotImplementedError('Subclasses must implement the '
-                                  'run_job method.')
+        raise NotImplementedError(
+            "Subclasses must implement the " "run_job method."
+        )
+
+
+def normalize_filter_map(raw_filters: Any) -> Dict[str, str]:
+    """Normalize task filters into uppercase {KEY: value} strings."""
+    if not isinstance(raw_filters, dict):
+        return {}
+    out: Dict[str, str] = {}
+    for key, value in raw_filters.items():
+        skey = str(key or "").strip().upper()
+        if not skey:
+            continue
+        out[skey] = str(value or "").strip()
+    return out
+
+
+def _parse_filter_name_list(raw_value: Any) -> set[str]:
+    """Parse comma/semicolon/newline list into normalized names."""
+    text = str(raw_value or "").strip()
+    if not text:
+        return set()
+    norm = text.replace(";", ",").replace("\n", ",")
+    values = {
+        chunk.strip().lower()
+        for chunk in norm.split(",")
+        if chunk and chunk.strip()
+    }
+    return values
+
+
+def filter_profile_names(
+    profile_names: Sequence[str], filters: Dict[str, str]
+) -> List[str]:
+    """Apply APERO profile include/exclude filters to a name list."""
+    include = _parse_filter_name_list(filters.get("APERO_PROFILE_INCLUDE", ""))
+    exclude = _parse_filter_name_list(filters.get("APERO_PROFILE_EXCLUDE", ""))
+    out: List[str] = []
+    for profile_name in profile_names:
+        name = str(profile_name or "").strip()
+        lname = name.lower()
+        if not name:
+            continue
+        if include and lname not in include:
+            continue
+        if lname in exclude:
+            continue
+        out.append(name)
+    return out
+
+
+def profile_filter_note(
+    all_profiles: Sequence[str],
+    selected_profiles: Sequence[str],
+    filters: Dict[str, str],
+) -> str:
+    """Build a short note describing active APERO profile filters."""
+    include_raw = str(filters.get("APERO_PROFILE_INCLUDE", "") or "").strip()
+    exclude_raw = str(filters.get("APERO_PROFILE_EXCLUDE", "") or "").strip()
+    has_include = bool(include_raw)
+    has_exclude = bool(exclude_raw)
+    if not has_include and not has_exclude:
+        return ""
+    return (
+        "APERO profile filters active: "
+        f"selected {len(selected_profiles)}/{len(all_profiles)} profiles "
+        f'(include={"yes" if has_include else "no"}, '
+        f'exclude={"yes" if has_exclude else "no"}).'
+    )
 
 
 # =============================================================================
@@ -101,22 +170,22 @@ def database_query(params: Dict[str, Any], query: str):
     from sqlalchemy import create_engine, text
 
     required = [
-        'DATABASE_MODE',
-        'DATABASE_HOST',
-        'DATABASE_USER',
-        'DATABASE_NAME',
+        "DATABASE_MODE",
+        "DATABASE_HOST",
+        "DATABASE_USER",
+        "DATABASE_NAME",
     ]
     missing = [key for key in required if not params.get(key)]
     if missing:
         raise ValueError(f"Missing database parameter(s): {', '.join(missing)}")
 
-    mode = str(params['DATABASE_MODE'])
-    user = quote_plus(str(params['DATABASE_USER']))
-    password = quote_plus(str(params['DATABASE_PASSWORD']))
-    dbname = str(params['DATABASE_NAME'])
+    mode = str(params["DATABASE_MODE"])
+    user = quote_plus(str(params["DATABASE_USER"]))
+    password = quote_plus(str(params["DATABASE_PASSWORD"]))
+    dbname = str(params["DATABASE_NAME"])
     host, port = _resolve_database_endpoint(params)
 
-    db_url = f'{mode}://{user}:{password}@{host}:{port}/{dbname}'
+    db_url = f"{mode}://{user}:{password}@{host}:{port}/{dbname}"
     engine = create_engine(db_url, future=True)
 
     try:
@@ -124,82 +193,105 @@ def database_query(params: Dict[str, Any], query: str):
             result = connection.execute(text(query))
             if result.returns_rows:
                 return [dict(row) for row in result.mappings().all()]
-            return {'rowcount': result.rowcount}
+            return {"rowcount": result.rowcount}
     finally:
         engine.dispose()
-        
+
 
 def get_db_params(aparams: Dict[str, Any]):
-    db_cfg = aparams.get('database', {})
+    db_cfg = aparams.get("database", {})
     if not isinstance(db_cfg, dict):
         db_cfg = {}
     db_params = dict(db_cfg)
     for _k in (
-        'DATABASE_MODE', 'DATABASE_HOST', 'DATABASE_PORT',
-        'DATABASE_PASSWORD', 'DATABASE_NAME', 'DATABASE_USER',
-        'DATABASE_USERNAME', 'DATABASE_USE_SSH_TUNNEL',
-        'DATABASE_SSH_CONFIG_HOST', 'DATABASE_SSH_LOCAL_PORT',
-        'DATABASE_SSH_REMOTE_PORT', 'LOCAL_DATA_DIR',
+        "DATABASE_MODE",
+        "DATABASE_HOST",
+        "DATABASE_PORT",
+        "DATABASE_PASSWORD",
+        "DATABASE_NAME",
+        "DATABASE_USER",
+        "DATABASE_USERNAME",
+        "DATABASE_USE_SSH_TUNNEL",
+        "DATABASE_SSH_CONFIG_HOST",
+        "DATABASE_SSH_LOCAL_PORT",
+        "DATABASE_SSH_REMOTE_PORT",
+        "LOCAL_DATA_DIR",
     ):
         if _k not in db_params and aparams.get(_k):
             db_params[_k] = aparams.get(_k)
 
-    source = str(db_params.get('DATABASE_SOURCE', '') or '').strip().lower()
-    local_name = str(db_params.get('DATABASE_LOCAL_NAME', '') or '').strip()
-    tunnel_name = str(db_params.get('DATABASE_TUNNEL_NAME', '') or '').strip()
+    source = str(db_params.get("DATABASE_SOURCE", "") or "").strip().lower()
+    local_name = str(db_params.get("DATABASE_LOCAL_NAME", "") or "").strip()
+    tunnel_name = str(db_params.get("DATABASE_TUNNEL_NAME", "") or "").strip()
 
     # Resolve saved DB definitions (new model) for async workers.
-    if source in ('local', 'db_ssh_tunnel'):
+    if source in ("local", "db_ssh_tunnel"):
         try:
             from apero_ri.core.auth import load_db_tunnels
 
             defs = load_db_tunnels()
-            local_defs = defs.get('local_databases', {}) if isinstance(defs, dict) else {}
-            tunnel_defs = defs.get('tunnels', {}) if isinstance(defs, dict) else {}
+            local_defs = (
+                defs.get("local_databases", {})
+                if isinstance(defs, dict)
+                else {}
+            )
+            tunnel_defs = (
+                defs.get("tunnels", {}) if isinstance(defs, dict) else {}
+            )
             if not isinstance(local_defs, dict):
                 local_defs = {}
             if not isinstance(tunnel_defs, dict):
                 tunnel_defs = {}
 
-            if source == 'local' and local_name:
+            if source == "local" and local_name:
                 local_def = local_defs.get(local_name, {})
                 if isinstance(local_def, dict) and local_def:
-                    db_params['DATABASE_MODE'] = str(
-                        local_def.get('DATABASE_MODE', '') or 'mysql+pymysql'
+                    db_params["DATABASE_MODE"] = str(
+                        local_def.get("DATABASE_MODE", "") or "mysql+pymysql"
                     ).strip()
-                    db_params['DATABASE_HOST'] = str(
-                        local_def.get('DATABASE_HOST', '') or ''
+                    db_params["DATABASE_HOST"] = str(
+                        local_def.get("DATABASE_HOST", "") or ""
                     ).strip()
-                    db_params['DATABASE_PORT'] = str(
-                        local_def.get('DATABASE_PORT', '') or '3306'
+                    db_params["DATABASE_PORT"] = str(
+                        local_def.get("DATABASE_PORT", "") or "3306"
                     ).strip()
-                    db_params['DATABASE_USE_SSH_TUNNEL'] = False
-                    db_params['DATABASE_SSH_CONFIG_HOST'] = ''
-                    db_params['DATABASE_SSH_LOCAL_PORT'] = ''
-                    db_params['DATABASE_SSH_REMOTE_PORT'] = ''
+                    db_params["DATABASE_USE_SSH_TUNNEL"] = False
+                    db_params["DATABASE_SSH_CONFIG_HOST"] = ""
+                    db_params["DATABASE_SSH_LOCAL_PORT"] = ""
+                    db_params["DATABASE_SSH_REMOTE_PORT"] = ""
 
-            if source == 'db_ssh_tunnel' and tunnel_name:
+            if source == "db_ssh_tunnel" and tunnel_name:
                 tunnel_def = tunnel_defs.get(tunnel_name, {})
                 if isinstance(tunnel_def, dict) and tunnel_def:
-                    remote_host = str(tunnel_def.get('remote_host', '') or '').strip()
-                    remote_port = str(tunnel_def.get('remote_port', '') or '3306').strip()
-                    local_port = str(tunnel_def.get('local_port', '') or '').strip()
-                    ssh_host = str(tunnel_def.get('ssh_config_host', '') or '').strip()
+                    remote_host = str(
+                        tunnel_def.get("remote_host", "") or ""
+                    ).strip()
+                    remote_port = str(
+                        tunnel_def.get("remote_port", "") or "3306"
+                    ).strip()
+                    local_port = str(
+                        tunnel_def.get("local_port", "") or ""
+                    ).strip()
+                    ssh_host = str(
+                        tunnel_def.get("ssh_config_host", "") or ""
+                    ).strip()
 
-                    db_params['DATABASE_MODE'] = 'mysql+pymysql'
-                    db_params['DATABASE_HOST'] = remote_host
-                    db_params['DATABASE_PORT'] = local_port
-                    db_params['DATABASE_USE_SSH_TUNNEL'] = True
-                    db_params['DATABASE_SSH_CONFIG_HOST'] = ssh_host
-                    db_params['DATABASE_SSH_LOCAL_PORT'] = local_port
-                    db_params['DATABASE_SSH_REMOTE_PORT'] = remote_port
+                    db_params["DATABASE_MODE"] = "mysql+pymysql"
+                    db_params["DATABASE_HOST"] = remote_host
+                    db_params["DATABASE_PORT"] = local_port
+                    db_params["DATABASE_USE_SSH_TUNNEL"] = True
+                    db_params["DATABASE_SSH_CONFIG_HOST"] = ssh_host
+                    db_params["DATABASE_SSH_LOCAL_PORT"] = local_port
+                    db_params["DATABASE_SSH_REMOTE_PORT"] = remote_port
+                    # Named DB tunnel definitions should be able to coexist.
+                    db_params["DATABASE_SSH_ALLOW_MULTIPLE"] = True
         except Exception:
             # Keep backward-compatible behavior if definition resolution fails;
             # downstream validators will report any missing required fields.
             pass
 
-    if 'DATABASE_USERNAME' in db_params and 'DATABASE_USER' not in db_params:
-        db_params['DATABASE_USER'] = db_params['DATABASE_USERNAME']
+    if "DATABASE_USERNAME" in db_params and "DATABASE_USER" not in db_params:
+        db_params["DATABASE_USER"] = db_params["DATABASE_USERNAME"]
     return db_params
 
 
@@ -213,29 +305,30 @@ def fill_dict_null(mykeys, mydict: Optional[dict] = None):
     return mydict
 
 
-def get_hdr_key(hdr: fits.Header, keyname: str,
-                 hkey: Dict[str, Any]):
-    header_key = hkey.get('key', 'Unknown')
-    dtype = hkey.get('dtype', 'str')
+def get_hdr_key(hdr: fits.Header, keyname: str, hkey: Dict[str, Any]):
+    header_key = hkey.get("key", "Unknown")
+    dtype = hkey.get("dtype", "str")
     # try to open and type cast header key
     try:
         # deal with header key existing
         if header_key in hdr:
             raw_value = hdr[header_key]
             # deal with types
-            if dtype == 'float':
+            if dtype == "float":
                 value = float(raw_value)
-            elif dtype == 'int':
+            elif dtype == "int":
                 value = int(raw_value)
-            elif dtype == 'bool':
+            elif dtype == "bool":
                 value = bool(raw_value)
             else:
                 value = str(raw_value)
         else:
             value = None
     except Exception as e:
-        emsg = (f'Missing required parameter {keyname}: {header_key}'
-                f'\n\tError {type(e)}: {e}')
+        emsg = (
+            f"Missing required parameter {keyname}: {header_key}"
+            f"\n\tError {type(e)}: {e}"
+        )
         raise ValueError(emsg)
     # return values
     return value
@@ -250,45 +343,52 @@ def _coerce_bool(value: Any) -> bool:
         return value
     if value is None:
         return False
-    return str(value).strip().lower() in ('1', 'true', 'yes', 'on')
+    return str(value).strip().lower() in ("1", "true", "yes", "on")
 
 
-def _coerce_int(value: Any, field_name: str, *, default: Optional[int] = None,
-                minimum: int = 1) -> int:
+def _coerce_int(
+    value: Any,
+    field_name: str,
+    *,
+    default: Optional[int] = None,
+    minimum: int = 1,
+) -> int:
     """Normalize integer-like config values with a clear error message."""
-    if value in (None, ''):
+    if value in (None, ""):
         if default is None:
-            raise ValueError(f'Missing required value for {field_name}.')
+            raise ValueError(f"Missing required value for {field_name}.")
         return int(default)
     try:
         ivalue = int(str(value).strip())
     except (TypeError, ValueError):
-        raise ValueError(f'Invalid integer for {field_name}: {value}') from None
+        raise ValueError(f"Invalid integer for {field_name}: {value}") from None
     if ivalue < minimum:
-        raise ValueError(f'{field_name} must be >= {minimum}.')
+        raise ValueError(f"{field_name} must be >= {minimum}.")
     return ivalue
 
 
 def _split_host_port(host: Any, port: Any) -> Tuple[str, int]:
     """Split legacy host:port strings while supporting a separate port field."""
-    host_str = str(host or '').strip()
-    port_str = str(port or '').strip()
+    host_str = str(host or "").strip()
+    port_str = str(port or "").strip()
     if not host_str:
-        raise ValueError('Missing required value for DATABASE_HOST.')
+        raise ValueError("Missing required value for DATABASE_HOST.")
 
     parsed_host = host_str
     parsed_port: Optional[int] = None
 
-    if host_str.count(':') == 1:
-        maybe_host, maybe_port = host_str.rsplit(':', 1)
+    if host_str.count(":") == 1:
+        maybe_host, maybe_port = host_str.rsplit(":", 1)
         if maybe_host and maybe_port.isdigit():
             parsed_host = maybe_host.strip()
             parsed_port = int(maybe_port)
 
     if port_str:
-        explicit_port = _coerce_int(port_str, 'DATABASE_PORT')
+        explicit_port = _coerce_int(port_str, "DATABASE_PORT")
         if parsed_port is not None and explicit_port != parsed_port:
-            raise ValueError('DATABASE_HOST port and DATABASE_PORT do not match.')
+            raise ValueError(
+                "DATABASE_HOST port and DATABASE_PORT do not match."
+            )
         parsed_port = explicit_port
 
     if parsed_port is None:
@@ -299,9 +399,9 @@ def _split_host_port(host: Any, port: Any) -> Tuple[str, int]:
 def _get_local_data_dir(params: Dict[str, Any]) -> Path:
     """Resolve the runtime local data dir for tunnel state files."""
     raw = (
-        params.get('LOCAL_DATA_DIR')
-        or os.environ.get('ARI_DIR')
-        or str(Path.home() / '.ari')
+        params.get("LOCAL_DATA_DIR")
+        or os.environ.get("ARI_DIR")
+        or str(Path.home() / ".ari")
     )
     return Path(str(raw)).expanduser().resolve()
 
@@ -310,19 +410,23 @@ def _is_local_port_open(port: int) -> bool:
     """Check whether a local TCP port already accepts connections."""
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
         sock.settimeout(0.3)
-        return sock.connect_ex(('127.0.0.1', port)) == 0
+        return sock.connect_ex(("127.0.0.1", port)) == 0
 
 
-def _tunnel_control_paths(params: Dict[str, Any], ssh_host: str,
-                          remote_host: str, local_port: int,
-                          remote_port: int) -> Tuple[Path, Path]:
+def _tunnel_control_paths(
+    params: Dict[str, Any],
+    ssh_host: str,
+    remote_host: str,
+    local_port: int,
+    remote_port: int,
+) -> Tuple[Path, Path]:
     """Return stable state paths for one DB SSH tunnel definition."""
-    state_root = _get_local_data_dir(params) / 'secret' / 'db_tunnels'
+    state_root = _get_local_data_dir(params) / "secret" / "db_tunnels"
     state_root.mkdir(parents=True, exist_ok=True)
     signature = sha1(
-        f'{ssh_host}|{remote_host}|{local_port}|{remote_port}'.encode('utf-8')
+        f"{ssh_host}|{remote_host}|{local_port}|{remote_port}".encode("utf-8")
     ).hexdigest()[:16]
-    return state_root / f'{signature}.sock', state_root / f'{signature}.meta'
+    return state_root / f"{signature}.sock", state_root / f"{signature}.meta"
 
 
 def _check_existing_tunnel(control_path: Path, ssh_host: str) -> bool:
@@ -331,7 +435,7 @@ def _check_existing_tunnel(control_path: Path, ssh_host: str) -> bool:
         return False
     try:
         result = subprocess.run(
-            ['ssh', '-S', str(control_path), '-O', 'check', ssh_host],
+            ["ssh", "-S", str(control_path), "-O", "check", ssh_host],
             capture_output=True,
             text=True,
             timeout=6,
@@ -347,7 +451,7 @@ def _close_tunnel_control(control_path: Path, ssh_host: str) -> bool:
         return False
     try:
         result = subprocess.run(
-            ['ssh', '-S', str(control_path), '-O', 'exit', ssh_host],
+            ["ssh", "-S", str(control_path), "-O", "exit", ssh_host],
             capture_output=True,
             text=True,
             timeout=6,
@@ -370,7 +474,7 @@ def _load_tunnel_meta(meta_path: Path) -> Dict[str, Any]:
     try:
         if not meta_path.exists():
             return {}
-        raw = json.loads(meta_path.read_text(encoding='utf-8'))
+        raw = json.loads(meta_path.read_text(encoding="utf-8"))
         if isinstance(raw, dict):
             return raw
     except Exception:
@@ -380,19 +484,20 @@ def _load_tunnel_meta(meta_path: Path) -> Dict[str, Any]:
 
 def _close_other_tunnels(params: Dict[str, Any], keep_control: Path) -> None:
     """Ensure at most one persistent DB tunnel is active at a time."""
-    state_root = _get_local_data_dir(params) / 'secret' / 'db_tunnels'
+    state_root = _get_local_data_dir(params) / "secret" / "db_tunnels"
     state_root.mkdir(parents=True, exist_ok=True)
 
-    for control_path in sorted(state_root.glob('*.sock')):
+    for control_path in sorted(state_root.glob("*.sock")):
         if control_path == keep_control:
             continue
 
-        meta_path = control_path.with_suffix('.meta')
+        meta_path = control_path.with_suffix(".meta")
         meta = _load_tunnel_meta(meta_path)
-        ssh_host = str(meta.get('ssh_host') or '').strip()
+        ssh_host = str(meta.get("ssh_host") or "").strip()
 
         is_active = bool(ssh_host) and _check_existing_tunnel(
-            control_path, ssh_host)
+            control_path, ssh_host
+        )
         if not is_active:
             _cleanup_tunnel_state(control_path, meta_path)
             continue
@@ -401,23 +506,23 @@ def _close_other_tunnels(params: Dict[str, Any], keep_control: Path) -> None:
         time.sleep(0.2)
         if _check_existing_tunnel(control_path, ssh_host):
             raise RuntimeError(
-                'Unable to enforce single DB SSH tunnel: '
-                f'active tunnel via {ssh_host} could not be closed.'
+                "Unable to enforce single DB SSH tunnel: "
+                f"active tunnel via {ssh_host} could not be closed."
             )
         _cleanup_tunnel_state(control_path, meta_path)
 
 
 def get_db_tunnel_status(params: Dict[str, Any]) -> Dict[str, Any]:
     """Return live status for one DB SSH tunnel definition."""
-    ssh_host = str(params.get('DATABASE_SSH_CONFIG_HOST') or '').strip()
-    remote_host = str(params.get('DATABASE_HOST') or '').strip()
+    ssh_host = str(params.get("DATABASE_SSH_CONFIG_HOST") or "").strip()
+    remote_host = str(params.get("DATABASE_HOST") or "").strip()
     local_port = _coerce_int(
-        params.get('DATABASE_SSH_LOCAL_PORT'),
-        'DATABASE_SSH_LOCAL_PORT',
+        params.get("DATABASE_SSH_LOCAL_PORT"),
+        "DATABASE_SSH_LOCAL_PORT",
     )
     remote_port = _coerce_int(
-        params.get('DATABASE_SSH_REMOTE_PORT'),
-        'DATABASE_SSH_REMOTE_PORT',
+        params.get("DATABASE_SSH_REMOTE_PORT"),
+        "DATABASE_SSH_REMOTE_PORT",
         default=3306,
     )
     control_path, meta_path = _tunnel_control_paths(
@@ -425,107 +530,117 @@ def get_db_tunnel_status(params: Dict[str, Any]) -> Dict[str, Any]:
     )
     meta = _load_tunnel_meta(meta_path)
     control_alive = bool(ssh_host) and _check_existing_tunnel(
-        control_path, ssh_host)
+        control_path, ssh_host
+    )
     local_port_open = _is_local_port_open(local_port)
     return {
-        'active': bool(control_alive and local_port_open),
-        'control_alive': control_alive,
-        'local_port_open': local_port_open,
-        'local_host': '127.0.0.1',
-        'local_port': local_port,
-        'remote_host': remote_host,
-        'remote_port': remote_port,
-        'ssh_host': ssh_host,
-        'control_path': str(control_path),
-        'meta_path': str(meta_path),
-        'created_at': meta.get('created_at', ''),
+        "active": bool(control_alive and local_port_open),
+        "control_alive": control_alive,
+        "local_port_open": local_port_open,
+        "local_host": "127.0.0.1",
+        "local_port": local_port,
+        "remote_host": remote_host,
+        "remote_port": remote_port,
+        "ssh_host": ssh_host,
+        "control_path": str(control_path),
+        "meta_path": str(meta_path),
+        "created_at": meta.get("created_at", ""),
     }
 
 
 def close_db_tunnel(params: Dict[str, Any]) -> Dict[str, Any]:
     """Close one DB SSH tunnel definition and clean up state files."""
     status = get_db_tunnel_status(params)
-    control_path = Path(status['control_path'])
-    meta_path = Path(status['meta_path'])
-    ssh_host = str(status.get('ssh_host') or '').strip()
+    control_path = Path(status["control_path"])
+    meta_path = Path(status["meta_path"])
+    ssh_host = str(status.get("ssh_host") or "").strip()
 
     closed = True
-    if ssh_host and control_path.exists() and status.get('control_alive'):
+    if ssh_host and control_path.exists() and status.get("control_alive"):
         closed = _close_tunnel_control(control_path, ssh_host)
         time.sleep(0.2)
-    if ssh_host and control_path.exists() and _check_existing_tunnel(
-            control_path, ssh_host):
+    if (
+        ssh_host
+        and control_path.exists()
+        and _check_existing_tunnel(control_path, ssh_host)
+    ):
         return {
-            'ok': False,
-            'error': f'Failed to close DB tunnel via {ssh_host}.',
-            'status': status,
+            "ok": False,
+            "error": f"Failed to close DB tunnel via {ssh_host}.",
+            "status": status,
         }
 
     _cleanup_tunnel_state(control_path, meta_path)
     return {
-        'ok': True,
-        'closed': bool(closed),
-        'message': 'DB SSH tunnel closed.',
+        "ok": True,
+        "closed": bool(closed),
+        "message": "DB SSH tunnel closed.",
     }
 
 
 def ensure_single_db_tunnel_slot(params: Dict[str, Any]) -> Dict[str, Any]:
     """Enforce single-active DB tunnel policy for the requested tunnel slot."""
-    ssh_host = str(params.get('DATABASE_SSH_CONFIG_HOST') or '').strip()
-    remote_host = str(params.get('DATABASE_HOST') or '').strip()
+    ssh_host = str(params.get("DATABASE_SSH_CONFIG_HOST") or "").strip()
+    remote_host = str(params.get("DATABASE_HOST") or "").strip()
     if not ssh_host:
-        return {'ok': False, 'error': 'DATABASE_SSH_CONFIG_HOST is required.'}
+        return {"ok": False, "error": "DATABASE_SSH_CONFIG_HOST is required."}
     if not remote_host:
-        return {'ok': False, 'error': 'DATABASE_HOST is required.'}
+        return {"ok": False, "error": "DATABASE_HOST is required."}
 
     try:
         local_port = _coerce_int(
-            params.get('DATABASE_SSH_LOCAL_PORT'),
-            'DATABASE_SSH_LOCAL_PORT',
+            params.get("DATABASE_SSH_LOCAL_PORT"),
+            "DATABASE_SSH_LOCAL_PORT",
         )
         remote_port = _coerce_int(
-            params.get('DATABASE_SSH_REMOTE_PORT'),
-            'DATABASE_SSH_REMOTE_PORT',
+            params.get("DATABASE_SSH_REMOTE_PORT"),
+            "DATABASE_SSH_REMOTE_PORT",
             default=3306,
         )
     except Exception as exc:
-        return {'ok': False, 'error': str(exc)}
+        return {"ok": False, "error": str(exc)}
 
     try:
         keep_control, _ = _tunnel_control_paths(
             params, ssh_host, remote_host, local_port, remote_port
         )
         _close_other_tunnels(params, keep_control)
-        return {'ok': True}
+        return {"ok": True}
     except Exception as exc:
-        return {'ok': False, 'error': str(exc)}
+        return {"ok": False, "error": str(exc)}
 
 
 def _ensure_ssh_tunnel(params: Dict[str, Any]) -> Tuple[str, int]:
     """Ensure a reusable SSH local-forward exists and return local endpoint."""
-    ssh_host = str(params.get('DATABASE_SSH_CONFIG_HOST') or '').strip()
-    remote_host = str(params.get('DATABASE_HOST') or '').strip()
+    ssh_host = str(params.get("DATABASE_SSH_CONFIG_HOST") or "").strip()
+    remote_host = str(params.get("DATABASE_HOST") or "").strip()
     if not ssh_host:
-        raise ValueError('DATABASE_SSH_CONFIG_HOST is required when SSH tunneling is enabled.')
+        raise ValueError(
+            "DATABASE_SSH_CONFIG_HOST is required when SSH tunneling "
+            "is enabled."
+        )
     if not remote_host:
-        raise ValueError('DATABASE_HOST is required when SSH tunneling is enabled.')
+        raise ValueError(
+            "DATABASE_HOST is required when SSH tunneling is enabled."
+        )
 
     local_port = _coerce_int(
-        params.get('DATABASE_SSH_LOCAL_PORT'),
-        'DATABASE_SSH_LOCAL_PORT',
+        params.get("DATABASE_SSH_LOCAL_PORT"),
+        "DATABASE_SSH_LOCAL_PORT",
     )
     remote_port = _coerce_int(
-        params.get('DATABASE_SSH_REMOTE_PORT'),
-        'DATABASE_SSH_REMOTE_PORT',
+        params.get("DATABASE_SSH_REMOTE_PORT"),
+        "DATABASE_SSH_REMOTE_PORT",
         default=3306,
     )
 
-    db_port_raw = str(params.get('DATABASE_PORT') or '').strip()
+    db_port_raw = str(params.get("DATABASE_PORT") or "").strip()
     if db_port_raw:
-        db_port = _coerce_int(db_port_raw, 'DATABASE_PORT')
+        db_port = _coerce_int(db_port_raw, "DATABASE_PORT")
         if db_port != local_port:
             raise ValueError(
-                'DATABASE_PORT must match DATABASE_SSH_LOCAL_PORT when SSH tunneling is enabled.'
+                "DATABASE_PORT must match DATABASE_SSH_LOCAL_PORT "
+                "when SSH tunneling is enabled."
             )
 
     control_path, meta_path = _tunnel_control_paths(
@@ -534,41 +649,48 @@ def _ensure_ssh_tunnel(params: Dict[str, Any]) -> Tuple[str, int]:
 
     # By default we keep exactly one persistent DB tunnel at a time.
     # DB setup management can opt out via DATABASE_SSH_ALLOW_MULTIPLE.
-    allow_multiple = bool(params.get('DATABASE_SSH_ALLOW_MULTIPLE', False))
+    allow_multiple = bool(params.get("DATABASE_SSH_ALLOW_MULTIPLE", False))
     if not allow_multiple:
         _close_other_tunnels(params, control_path)
 
     # Always allow immediate reuse of an existing control socket.
     if _check_existing_tunnel(control_path, ssh_host):
-        return '127.0.0.1', local_port
+        return "127.0.0.1", local_port
 
     _cleanup_tunnel_state(control_path, meta_path)
 
     cmd = [
-        'ssh',
-        '-f',
-        '-N',
-        '-M',
-        '-S', str(control_path),
-        '-o', 'BatchMode=yes',
-        '-o', 'ExitOnForwardFailure=yes',
-        '-o', 'StrictHostKeyChecking=accept-new',
-        '-o', 'ControlPersist=yes',
-        '-o', 'ConnectTimeout=10',
-        '-L', f'{local_port}:{remote_host}:{remote_port}',
+        "ssh",
+        "-f",
+        "-N",
+        "-M",
+        "-S",
+        str(control_path),
+        "-o",
+        "BatchMode=yes",
+        "-o",
+        "ExitOnForwardFailure=yes",
+        "-o",
+        "StrictHostKeyChecking=accept-new",
+        "-o",
+        "ControlPersist=yes",
+        "-o",
+        "ConnectTimeout=10",
+        "-L",
+        f"{local_port}:{remote_host}:{remote_port}",
         ssh_host,
     ]
     # Allow startup timeout to be tuned per profile; keep a conservative
     # default that is longer than SSH's own ConnectTimeout.
     startup_timeout = _coerce_int(
-        params.get('DATABASE_SSH_STARTUP_TIMEOUT'),
-        'DATABASE_SSH_STARTUP_TIMEOUT',
+        params.get("DATABASE_SSH_STARTUP_TIMEOUT"),
+        "DATABASE_SSH_STARTUP_TIMEOUT",
         default=30,
     )
     startup_timeout = max(10, startup_timeout)
     tunnel_started = False
     result = None
-    timeout_error = ''
+    timeout_error = ""
     try:
         result = subprocess.run(
             cmd,
@@ -583,46 +705,52 @@ def _ensure_ssh_tunnel(params: Dict[str, Any]) -> Tuple[str, int]:
         # the forwarded socket shortly after; verify readiness below before
         # treating this as a hard failure.
         timeout_error = (
-            f'SSH tunnel start command timed out after {startup_timeout}s '
-            f'for host {ssh_host}.'
+            f"SSH tunnel start command timed out after {startup_timeout}s "
+            f"for host {ssh_host}."
         )
 
     for _ in range(25):
-        if (_check_existing_tunnel(control_path, ssh_host)
-                or _is_local_port_open(local_port)):
+        if _check_existing_tunnel(
+            control_path, ssh_host
+        ) or _is_local_port_open(local_port):
             meta_path.write_text(
-                json.dumps({
-                    'ssh_host': ssh_host,
-                    'remote_host': remote_host,
-                    'local_port': local_port,
-                    'remote_port': remote_port,
-                    'created_at': datetime.now(timezone.utc).isoformat(),
-                    'startup_timeout_s': startup_timeout,
-                }, indent=2),
-                encoding='utf-8',
+                json.dumps(
+                    {
+                        "ssh_host": ssh_host,
+                        "remote_host": remote_host,
+                        "local_port": local_port,
+                        "remote_port": remote_port,
+                        "created_at": datetime.now(timezone.utc).isoformat(),
+                        "startup_timeout_s": startup_timeout,
+                    },
+                    indent=2,
+                ),
+                encoding="utf-8",
             )
-            return '127.0.0.1', local_port
+            return "127.0.0.1", local_port
         time.sleep(0.2)
 
     if result is not None and result.returncode != 0:
         err = (
-            result.stderr or result.stdout or 'Unknown SSH tunnel error'
+            result.stderr or result.stdout or "Unknown SSH tunnel error"
         ).strip()
-        raise RuntimeError(f'Failed to start SSH tunnel via {ssh_host}: {err}')
+        raise RuntimeError(f"Failed to start SSH tunnel via {ssh_host}: {err}")
     if timeout_error:
         raise RuntimeError(timeout_error)
 
     raise RuntimeError(
-        f'SSH tunnel via {ssh_host} started but local port {local_port} did not become ready.'
+        f"SSH tunnel via {ssh_host} started but local port "
+        f"{local_port} did not become ready."
     )
 
 
 def _resolve_database_endpoint(params: Dict[str, Any]) -> Tuple[str, int]:
     """Resolve the effective DB host/port, starting an SSH tunnel if needed."""
-    if _coerce_bool(params.get('DATABASE_USE_SSH_TUNNEL')):
+    if _coerce_bool(params.get("DATABASE_USE_SSH_TUNNEL")):
         return _ensure_ssh_tunnel(params)
     return _split_host_port(
-        params.get('DATABASE_HOST'), params.get('DATABASE_PORT'))
+        params.get("DATABASE_HOST"), params.get("DATABASE_PORT")
+    )
 
 
 def _sql_quote(value: Any) -> str:
@@ -630,33 +758,35 @@ def _sql_quote(value: Any) -> str:
     return str(value).replace("'", "''")
 
 
-def get_profile_db_table_updates(aparams: Dict[str, Any],
-                                 table_keys: Optional[Sequence[str]] = None
-                                 ) -> Dict[str, str]:
+def get_profile_db_table_updates(
+    aparams: Dict[str, Any], table_keys: Optional[Sequence[str]] = None
+) -> Dict[str, str]:
     """Return UPDATE_TIME fingerprints for configured profile tables."""
     keys = list(table_keys or DB_UPDATE_TABLE_KEYS)
     db_params = get_db_params(aparams)
-    schema = str(db_params.get('DATABASE_NAME') or '').strip()
+    schema = str(db_params.get("DATABASE_NAME") or "").strip()
     if not schema:
-        raise ValueError('Missing required database name for update-time check.')
+        raise ValueError(
+            "Missing required database name for update-time check."
+        )
 
-    db_cfg = aparams.get('database', {})
+    db_cfg = aparams.get("database", {})
     if not isinstance(db_cfg, dict):
         db_cfg = {}
 
     table_names: List[Tuple[str, str]] = []
     for key in keys:
         table_name = db_cfg.get(key, aparams.get(key))
-        if table_name in (None, ''):
-            raise ValueError(f'Missing required parameter: database.{key}')
+        if table_name in (None, ""):
+            raise ValueError(f"Missing required parameter: database.{key}")
         table_names.append((key, str(table_name)))
 
-    in_clause = ', '.join([f"'{_sql_quote(name)}'" for _, name in table_names])
+    in_clause = ", ".join([f"'{_sql_quote(name)}'" for _, name in table_names])
     query = (
-        'SELECT table_name, UPDATE_TIME '
-        'FROM information_schema.tables '
+        "SELECT table_name, UPDATE_TIME "
+        "FROM information_schema.tables "
         f"WHERE table_schema = '{_sql_quote(schema)}' "
-        f'AND table_name IN ({in_clause});'
+        f"AND table_name IN ({in_clause});"
     )
     rows = database_query(db_params, query)
     by_table: Dict[str, Any] = {}
@@ -664,10 +794,10 @@ def get_profile_db_table_updates(aparams: Dict[str, Any],
         for row in rows:
             if not isinstance(row, dict):
                 continue
-            tname = str(row.get('table_name') or '').strip()
+            tname = str(row.get("table_name") or "").strip()
             if not tname:
                 continue
-            by_table[tname] = row.get('UPDATE_TIME')
+            by_table[tname] = row.get("UPDATE_TIME")
 
     updates: Dict[str, str] = {}
     for key, table_name in table_names:
@@ -677,44 +807,53 @@ def get_profile_db_table_updates(aparams: Dict[str, Any],
                 raw_value = raw_value.replace(tzinfo=timezone.utc)
             updates[key] = raw_value.astimezone(timezone.utc).isoformat()
         elif raw_value is None:
-            updates[key] = ''
+            updates[key] = ""
         else:
             updates[key] = str(raw_value)
     return updates
 
 
-def should_skip_profile_query(aparams: Dict[str, Any],
-                              table_keys: Optional[Sequence[str]] = None,
-                              force_run: bool = False
-                              ) -> Tuple[bool, Dict[str, str], str]:
+def should_skip_profile_query(
+    aparams: Dict[str, Any],
+    table_keys: Optional[Sequence[str]] = None,
+    force_run: bool = False,
+) -> Tuple[bool, Dict[str, str], str]:
     """Return whether a profile query can be skipped based on table updates."""
     if force_run:
         current_updates = get_profile_db_table_updates(aparams, table_keys)
-        return False, current_updates, 'Force run requested; bypassing DB update-time skip.'
+        return (
+            False,
+            current_updates,
+            "Force run requested; bypassing DB update-time skip.",
+        )
 
     keys = list(table_keys or DB_UPDATE_TABLE_KEYS)
     current_updates = get_profile_db_table_updates(aparams, keys)
 
-    stored_updates = aparams.get('database-update', {})
+    stored_updates = aparams.get("database-update", {})
     if not isinstance(stored_updates, dict):
         stored_updates = {}
     missing_keys = [key for key in keys if key not in stored_updates]
     if missing_keys:
-        return False, current_updates, 'No stored database-update fingerprint.'
+        return False, current_updates, "No stored database-update fingerprint."
 
     unchanged = all(
-        str(stored_updates.get(key, '')).strip() ==
-        str(current_updates.get(key, '')).strip()
+        str(stored_updates.get(key, "")).strip()
+        == str(current_updates.get(key, "")).strip()
         for key in keys
     )
     if unchanged:
-        return True, current_updates, 'All tracked DB table update times are unchanged.'
-    return False, current_updates, 'Tracked DB table update times changed.'
+        return (
+            True,
+            current_updates,
+            "All tracked DB table update times are unchanged.",
+        )
+    return False, current_updates, "Tracked DB table update times changed."
 
 
-def save_profile_db_table_updates(instrument: str,
-                                  profile_name: str,
-                                  updates: Dict[str, str]) -> None:
+def save_profile_db_table_updates(
+    instrument: str, profile_name: str, updates: Dict[str, str]
+) -> None:
     """Persist per-profile table update fingerprints in apero_profiles.yaml."""
     from apero_ri.core.auth import load_apero_profiles, save_apero_profiles
 
@@ -728,8 +867,9 @@ def save_profile_db_table_updates(instrument: str,
             if str(candidate).lower() == instrument_key.lower():
                 instrument_key = str(candidate)
                 break
-    if (instrument_key not in profiles
-            or not isinstance(profiles[instrument_key], dict)):
+    if instrument_key not in profiles or not isinstance(
+        profiles[instrument_key], dict
+    ):
         profiles[instrument_key] = {}
 
     profile_key = str(profile_name)
@@ -738,31 +878,33 @@ def save_profile_db_table_updates(instrument: str,
             if str(candidate).lower() == profile_key.lower():
                 profile_key = str(candidate)
                 break
-    if (profile_key not in profiles[instrument_key]
-            or not isinstance(
-                profiles[instrument_key][profile_key], dict)):
+    if profile_key not in profiles[instrument_key] or not isinstance(
+        profiles[instrument_key][profile_key], dict
+    ):
         profiles[instrument_key][profile_key] = {}
 
-    profiles[instrument_key][profile_key]['database-update'] = dict(updates)
+    profiles[instrument_key][profile_key]["database-update"] = dict(updates)
     save_apero_profiles(profiles)
 
 
-def save_results(filename: Path, results: Any, 
-                 metadata: Optional[Dict[str, Any]] = None):
+def save_results(
+    filename: Path, results: Any, metadata: Optional[Dict[str, Any]] = None
+):
     """
-    Save results to a file. This can be used to store results of a task for 
+    Save results to a file. This can be used to store results of a task for
     later retrieval by the UI.
 
     :param filename: The path to the file where results should be saved.
-    :param results: The results data to save (e.g. list of dicts, or any 
+    :param results: The results data to save (e.g. list of dicts, or any
                     serializable data).
-    :param metadata: Optional dictionary of metadata to save alongside the results.
+    :param metadata: Optional metadata dictionary stored with results.
     """
+
     def _json_default(value: Any):
         """Fallback serializer for common non-JSON-native values."""
         if isinstance(value, Path):
             return str(value)
-        if isinstance(value, (datetime, )):
+        if isinstance(value, (datetime,)):
             return value.isoformat()
         return str(value)
 
@@ -770,22 +912,24 @@ def save_results(filename: Path, results: Any,
     path.parent.mkdir(parents=True, exist_ok=True)
 
     payload = {
-        'generated_at': datetime.now(timezone.utc).isoformat(),
-        'row_count': len(results) if isinstance(results, list) else None,
-        'schema_version': 1,
-        'metadata': metadata or {},
-        'rows': results,
+        "generated_at": datetime.now(timezone.utc).isoformat(),
+        "row_count": len(results) if isinstance(results, list) else None,
+        "schema_version": 1,
+        "metadata": metadata or {},
+        "rows": results,
     }
-    
-    with path.open('w', encoding='utf-8') as fobj:
-        json.dump(payload, fobj, ensure_ascii=False, indent=2,
-                  default=_json_default)
+
+    with path.open("w", encoding="utf-8") as fobj:
+        json.dump(
+            payload, fobj, ensure_ascii=False, indent=2, default=_json_default
+        )
+
 
 # =============================================================================
 # Start of code
 # =============================================================================
-if __name__ == '__main__':
-    print('Hello World!')
+if __name__ == "__main__":
+    print("Hello World!")
 
 # =============================================================================
 # End of code

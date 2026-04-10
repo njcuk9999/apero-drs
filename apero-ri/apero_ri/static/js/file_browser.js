@@ -201,7 +201,23 @@
         if (tableWrap) tableWrap.style.display = 'none';
 
         fetch(url)
-            .then(function (r) { return r.json(); })
+            .then(function (r) {
+                var ctype = String(r.headers.get('content-type') || '').toLowerCase();
+                if (ctype.indexOf('application/json') === -1) {
+                    return r.text().then(function (_txt) {
+                        throw new Error('File browser API returned non-JSON response ('
+                            + r.status + ').');
+                    });
+                }
+                return r.json().then(function (data) {
+                    if (!r.ok) {
+                        var msg = (data && data.error) ? data.error
+                            : ('File browser request failed (' + r.status + ').');
+                        throw new Error(msg);
+                    }
+                    return data;
+                });
+            })
             .then(function (data) {
                 if (loadingEl) loadingEl.style.display = 'none';
                 if (tableWrap) tableWrap.style.display = '';
@@ -801,7 +817,9 @@
        Tab activation hook – load data on first view
     ----------------------------------------------------------------------- */
     document.addEventListener('ARI_TAB_ACTIVATED', function (e) {
-        if (e.detail && e.detail.tabKey === 'file_browser' && !fbLoaded) {
+        if (!e.detail || !e.detail.tabKey) return;
+        if ((e.detail.tabKey === 'file_browser' || e.detail.tabKey === 'all')
+                && !fbLoaded) {
             loadFbData();
         }
     });

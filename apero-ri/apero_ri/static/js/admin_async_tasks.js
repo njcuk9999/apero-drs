@@ -22,6 +22,7 @@
     var pollTimer = null;
     var POLL_FAST_MS = 1000;
     var POLL_SLOW_MS = 5000;
+    var OUTPUT_PREVIEW_PER_TYPE = 3;
     var pollIntervalMs = POLL_SLOW_MS;
     var dragSrcId = null;
 
@@ -64,6 +65,10 @@
     var detSubprogressPct  = document.getElementById('det-subprogress-pct');
     var detLastRun      = document.getElementById('det-last-run');
     var detRunCount     = document.getElementById('det-run-count');
+    var detFiltersWarning = document.getElementById('det-filters-warning');
+    var detFiltersWarningList = document.getElementById(
+        'det-filters-warning-list'
+    );
     // Section cards
     var detInfoSection  = document.getElementById('det-info-section');
     var detInfoBody     = document.getElementById('det-info-body');
@@ -82,6 +87,7 @@
     var detParamsExplorer     = document.getElementById('det-params-explorer');
     var detBtnToggleParams    = document.getElementById('det-btn-toggle-params');
     var detFilesSection = document.getElementById('det-files-section');
+    var detBtnPurgeFiles = document.getElementById('det-btn-purge-files');
     var detOutputFiles  = document.getElementById('det-output-files');
 
     var detBtnToggle    = document.getElementById('det-btn-toggle');
@@ -116,6 +122,10 @@
     var editTaskInfoRow = document.getElementById('edit-task-info-row');
     var editTaskName    = document.getElementById('edit-task-name');
     var editTaskDesc    = document.getElementById('edit-task-desc');
+    var editTabRunBtn   = document.getElementById('edit-tab-run');
+    var editTabFiltersBtn = document.getElementById('edit-tab-filters');
+    var editPaneRun     = document.getElementById('edit-pane-run');
+    var editPaneFilters = document.getElementById('edit-pane-filters');
     var editFrequency   = document.getElementById('edit-frequency');
     var editBackupFields= document.getElementById('edit-backup-fields');
     var editDailyCopies = document.getElementById('edit-daily-copies');
@@ -134,6 +144,8 @@
     var editRunCountRow = document.getElementById('edit-run-count-row');
     var editRunCount    = document.getElementById('edit-run-count');
     var editActive      = document.getElementById('edit-active');
+    var editFiltersEmpty = document.getElementById('edit-filters-empty');
+    var editFiltersContainer = document.getElementById('edit-filters-container');
     var btnEditCancel   = document.getElementById('btn-edit-cancel');
     var btnEditSave     = document.getElementById('btn-edit-save');
     var btnEditClose    = document.getElementById('btn-edit-modal-close');
@@ -150,6 +162,7 @@
     var btnRunAllAdd    = document.getElementById('btn-runall-add');
     var btnRunAllCancel = document.getElementById('btn-runall-cancel');
     var runAllForceMode = false;
+    var editFilterInputs = {};
 
     // File viewer modal
     var fileModal       = document.getElementById('at-file-modal');
@@ -552,6 +565,29 @@
             }
         }
 
+        if (detFiltersWarning && detFiltersWarningList) {
+            var rawFilters = (task.filters && typeof task.filters === 'object')
+                ? task.filters
+                : {};
+            var appliedKeys = Object.keys(rawFilters).filter(function (key) {
+                var value = String(rawFilters[key] || '').trim();
+                return value.length > 0;
+            });
+
+            if (appliedKeys.length > 0) {
+                var items = appliedKeys.map(function (key) {
+                    var value = String(rawFilters[key] || '').trim();
+                    return '<li><strong>' + esc(key) + ':</strong> '
+                        + '<code>' + esc(value) + '</code></li>';
+                });
+                detFiltersWarningList.innerHTML = items.join('');
+                detFiltersWarning.style.display = '';
+            } else {
+                detFiltersWarningList.innerHTML = '';
+                detFiltersWarning.style.display = 'none';
+            }
+        }
+
         var isActive = task.active !== false;
         detBtnToggle.querySelector('i').className =
             'fa-solid ' + (isActive ? 'fa-toggle-on' : 'fa-toggle-off');
@@ -660,17 +696,10 @@
         var files = rt.output_files || [];
         if (files.length) {
             detFilesSection.style.display = '';
-            detOutputFiles.innerHTML = files.map(function (f) {
-                return '<li class="at-file-list__item">' +
-                    '<code class="at-file-list__path">' + esc(f) + '</code>' +
-                    '<button class="ari-btn ari-btn--sm ari-btn--secondary at-file-preview-btn"' +
-                    ' data-path="' + esc(f) + '">' +
-                    '<i class="fa-solid fa-file-lines"></i> Preview</button>' +
-                    '<button class="ari-btn ari-btn--sm ari-btn--secondary at-file-download-btn"' +
-                    ' data-path="' + esc(f) + '">' +
-                    '<i class="fa-solid fa-download"></i> Download</button>' +
-                    '</li>';
-            }).join('');
+            if (detBtnPurgeFiles) {
+                detBtnPurgeFiles.disabled = false;
+            }
+            detOutputFiles.innerHTML = renderOutputFileList(files);
             detOutputFiles.querySelectorAll('.at-file-preview-btn').forEach(function (btn) {
                 btn.addEventListener('click', function () {
                     previewFile(btn.dataset.path);
@@ -683,6 +712,9 @@
             });
         } else {
             detFilesSection.style.display = 'none';
+            if (detBtnPurgeFiles) {
+                detBtnPurgeFiles.disabled = true;
+            }
         }
     }
 
@@ -900,6 +932,68 @@
         });
 
         html += '</tbody></table></div>';
+        return html;
+    }
+
+    function outputFileType(path) {
+        var name = String(path || '').split('/').pop() || '';
+        var lower = name.toLowerCase();
+        if (lower.endsWith('.fits.gz')) return '.fits.gz';
+        if (lower.endsWith('.tar.gz')) return '.tar.gz';
+        var idx = lower.lastIndexOf('.');
+        if (idx <= 0 || idx === lower.length - 1) return '(no extension)';
+        return lower.slice(idx);
+    }
+
+    function outputFileGroups(paths) {
+        var order = [];
+        var groups = {};
+        (paths || []).forEach(function (path) {
+            var key = outputFileType(path);
+            if (!groups[key]) {
+                groups[key] = [];
+                order.push(key);
+            }
+            groups[key].push(path);
+        });
+        return { order: order, groups: groups };
+    }
+
+    function renderOutputFileList(paths) {
+        var grouped = outputFileGroups(paths);
+        var html = '';
+
+        grouped.order.forEach(function (key) {
+            var files = grouped.groups[key] || [];
+            var visible = files.slice(0, OUTPUT_PREVIEW_PER_TYPE);
+            var hiddenCount = Math.max(files.length - visible.length, 0);
+
+            html += '<li class="at-file-list__item" style="padding-top:0.45rem;">'
+                + '<strong>' + esc(key) + '</strong>'
+                + '<span class="at-muted-hint" style="font-style:normal;">'
+                + ' (' + files.length + ' file' + (files.length === 1 ? '' : 's') + ')</span>'
+                + '</li>';
+
+            visible.forEach(function (f) {
+                html += '<li class="at-file-list__item">'
+                    + '<code class="at-file-list__path">' + esc(f) + '</code>'
+                    + '<button class="ari-btn ari-btn--sm ari-btn--secondary at-file-preview-btn"'
+                    + ' data-path="' + esc(f) + '">'
+                    + '<i class="fa-solid fa-file-lines"></i> Preview</button>'
+                    + '<button class="ari-btn ari-btn--sm ari-btn--secondary at-file-download-btn"'
+                    + ' data-path="' + esc(f) + '">'
+                    + '<i class="fa-solid fa-download"></i> Download</button>'
+                    + '</li>';
+            });
+
+            if (hiddenCount > 0) {
+                html += '<li class="at-file-list__item">'
+                    + '<span class="at-muted-hint" style="font-style:normal;">'
+                    + '... ' + hiddenCount + ' more ' + esc(key) + ' file'
+                    + (hiddenCount === 1 ? '' : 's') + '</span>'
+                    + '</li>';
+            }
+        });
         return html;
     }
 
@@ -1125,6 +1219,50 @@
         });
     }
 
+    if (detBtnPurgeFiles) {
+        detBtnPurgeFiles.addEventListener('click', function () {
+            if (!selectedTaskId) return;
+            var task = allTasks.find(function (t) { return t.id === selectedTaskId; });
+            if (!task) return;
+            var rt = task.runtime || {};
+            var files = Array.isArray(rt.output_files) ? rt.output_files : [];
+            if (!files.length) {
+                showToast('No output files to purge.', 'error');
+                return;
+            }
+
+            var label = task.name || task.task_key || selectedTaskId;
+            if (!confirm('Purge ' + files.length + ' output file(s) for "' + label + '"?\n\nThis will delete files from disk and clear them from task output files.')) {
+                return;
+            }
+
+            fetch(urls.purgeFiles, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    instrument: currentInstrument,
+                    id: selectedTaskId,
+                }),
+            }).then(function (r) { return r.json(); }).then(function (d) {
+                if (!d.success) {
+                    showToast('Purge failed: ' + (d.error || 'unknown error'), 'error');
+                    return;
+                }
+
+                var deleted = Array.isArray(d.deleted) ? d.deleted.length : 0;
+                var missing = Array.isArray(d.missing) ? d.missing.length : 0;
+                var failed = Array.isArray(d.failed) ? d.failed.length : 0;
+                showToast(
+                    'Purge complete: deleted ' + deleted + ', missing ' + missing + ', failed ' + failed + '.',
+                    failed > 0 ? 'error' : 'success'
+                );
+                refreshCurrentTasks();
+            }).catch(function () {
+                showToast('Purge request failed.', 'error');
+            });
+        });
+    }
+
     /* -----------------------------------------------------------------------
        Run All
     ----------------------------------------------------------------------- */
@@ -1255,8 +1393,84 @@
         }
         editRunCount.textContent = task.runtime ? (task.runtime.run_count || 0) : 0;
         editActive.checked = task.active !== false;
+        selectEditTab('run');
         onTaskKeyChange();
         editModal.style.display = '';
+    }
+
+    function selectEditTab(tabName) {
+        var showRun = (tabName !== 'filters');
+        if (editPaneRun) {
+            editPaneRun.classList.toggle('at-edit-tab-pane--active', showRun);
+        }
+        if (editPaneFilters) {
+            editPaneFilters.classList.toggle('at-edit-tab-pane--active', !showRun);
+        }
+        if (editTabRunBtn) {
+            editTabRunBtn.classList.toggle('at-edit-tab--active', showRun);
+        }
+        if (editTabFiltersBtn) {
+            editTabFiltersBtn.classList.toggle('at-edit-tab--active', !showRun);
+        }
+    }
+
+    function taskFilterKeys(taskKey) {
+        var cls = taskClasses.find(function (c) { return c.key === taskKey; }) || {};
+        var values = Array.isArray(cls.filters) ? cls.filters : [];
+        return values
+            .map(function (x) { return String(x || '').trim(); })
+            .filter(function (x) { return !!x; });
+    }
+
+    function renderTaskFilters(taskKey, taskConfig) {
+        if (!editFiltersContainer || !editFiltersEmpty) return;
+        editFiltersContainer.innerHTML = '';
+        editFilterInputs = {};
+
+        var keys = taskFilterKeys(taskKey);
+        var currentFilters = (taskConfig && typeof taskConfig.filters === 'object')
+            ? taskConfig.filters
+            : {};
+
+        if (!keys.length) {
+            editFiltersEmpty.style.display = '';
+            return;
+        }
+
+        editFiltersEmpty.style.display = 'none';
+        keys.forEach(function (key) {
+            var field = document.createElement('div');
+            field.className = 'ari-ap-form__field';
+
+            var label = document.createElement('label');
+            label.setAttribute('for', 'edit-filter-' + key);
+            label.textContent = key;
+
+            var input = document.createElement('input');
+            input.type = 'text';
+            input.id = 'edit-filter-' + key;
+            input.className = 'ari-ap-input';
+            input.value = String(currentFilters[key] || '');
+            if (key.toUpperCase() === 'OBJNAME_INCLUDE') {
+                input.placeholder = 'Comma-separated object names to include only';
+            }
+            if (key.toUpperCase() === 'OBJNAME_EXCLUDE') {
+                input.placeholder = 'Comma-separated object names to exclude';
+            }
+            if (key.toUpperCase() === 'APERO_PROFILE_INCLUDE') {
+                input.placeholder =
+                    'Comma-separated APERO profile names to include only';
+            }
+            if (key.toUpperCase() === 'APERO_PROFILE_EXCLUDE') {
+                input.placeholder =
+                    'Comma-separated APERO profile names to exclude';
+            }
+
+            field.appendChild(label);
+            field.appendChild(input);
+            editFiltersContainer.appendChild(field);
+            editFilterInputs[key] = input;
+        });
     }
 
     function onTaskKeyChange() {
@@ -1333,6 +1547,7 @@
             renderNcoresWarning();
         }
         editRunCountRow.style.display = editingTaskId ? '' : 'none';
+        renderTaskFilters(key, currentTask);
     }
 
     function renderNcoresWarning() {
@@ -1361,6 +1576,12 @@
         btnEditCancel.addEventListener('click', closeEditModal);
         btnEditClose.addEventListener('click', closeEditModal);
         btnEditSave.addEventListener('click', saveTask);
+        if (editTabRunBtn) {
+            editTabRunBtn.addEventListener('click', function () { selectEditTab('run'); });
+        }
+        if (editTabFiltersBtn) {
+            editTabFiltersBtn.addEventListener('click', function () { selectEditTab('filters'); });
+        }
         if (editNcores) {
             editNcores.addEventListener('input', renderNcoresWarning);
         }
@@ -1433,7 +1654,13 @@
             daily_copies: dailyCopies,
             weekly_copies: weeklyCopies,
             active: editActive.checked,
+            filters: {},
         };
+        Object.keys(editFilterInputs || {}).forEach(function (keyName) {
+            var inputEl = editFilterInputs[keyName];
+            if (!inputEl) return;
+            payload.filters[keyName] = String(inputEl.value || '').trim();
+        });
         if (supportsMp && runOnServer) {
             payload.ncores = ncores;
             payload.mp_backend = mpBackend;

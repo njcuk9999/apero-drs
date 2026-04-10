@@ -163,6 +163,7 @@ sci-headers:
       key: CDTDARK
       label: DARK file
       dtype: float
+      ref: true
     EXT_CDTBAD:
       key: CDTBAD
       label: BADPIX file
@@ -187,10 +188,12 @@ sci-headers:
       key: CDTSHAPX
       label: Shape X file
       dtype: float
+      ref: true
     EXT_CDTSHAPY:
       key: CDTSHAPY
       label: Shape Y file
       dtype: float
+      ref: true
     EXT_CDTFLAT:
       key: CDTFLAT
       label: FLAT file

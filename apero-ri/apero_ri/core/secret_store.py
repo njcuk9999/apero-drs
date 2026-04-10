@@ -15,7 +15,7 @@ from typing import Iterable
 # =============================================================================
 # Define variables
 # =============================================================================
-__NAME__ = 'apero_ri.core.secret_store'
+__NAME__ = "apero_ri.core.secret_store"
 
 # =============================================================================
 # Define functions
@@ -24,12 +24,16 @@ __NAME__ = 'apero_ri.core.secret_store'
 
 def get_ari_dir() -> Path:
     """Return the configured ARI data directory."""
-    return Path(os.environ.get('ARI_DIR', os.path.expanduser('~/.ari'))).expanduser().resolve()
+    return (
+        Path(os.environ.get("ARI_DIR", os.path.expanduser("~/.ari")))
+        .expanduser()
+        .resolve()
+    )
 
 
 def get_secret_dir() -> Path:
     """Return the managed secret directory under ARI_DIR."""
-    path = get_ari_dir() / 'secret'
+    path = get_ari_dir() / "secret"
     path.mkdir(parents=True, exist_ok=True)
     try:
         path.chmod(0o700)
@@ -68,9 +72,9 @@ def _unique_paths(paths: Iterable[Path]) -> list[Path]:
     return unique
 
 
-def resolve_secret_file(name: str,
-                        legacy_paths: Iterable[Path] = (),
-                        mode: int = 0o600) -> Path:
+def resolve_secret_file(
+    name: str, legacy_paths: Iterable[Path] = (), mode: int = 0o600
+) -> Path:
     """
     Return a managed secret file path, moving any legacy file in place.
 
@@ -101,21 +105,22 @@ def resolve_secret_file(name: str,
 
     return target
 
+
 # =============================================================================
 # Start of code
 # =============================================================================
-if __name__ == '__main__':
-    print('Hello World!')
+if __name__ == "__main__":
+    print("Hello World!")
 
 # =============================================================================
 # End of code
 # =============================================================================
 
 
-def resolve_secret_subdir(name: str,
-                          legacy_paths: Iterable[Path] = (),
-                          mode: int = 0o700) -> Path:
-    """Return a managed secret subdirectory, moving legacy contents if needed."""
+def resolve_secret_subdir(
+    name: str, legacy_paths: Iterable[Path] = (), mode: int = 0o700
+) -> Path:
+    """Return managed secret subdirectory, migrating legacy contents."""
     target = get_secret_path(name)
     target.mkdir(parents=True, exist_ok=True)
 

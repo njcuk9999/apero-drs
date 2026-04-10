@@ -1,0 +1,98 @@
+{% extends "general/sidebar_base.html" %}
+{% block title %}APERO RI – {{ page_label }}{% endblock %}
+
+{% block body_class %}ari-has-sidebar ari-dp-profile-page{% endblock %}
+
+{% block doc_content %}
+<div class="ari-page-header">
+    <h1>
+        <i class="{{ page_icon }}"></i>
+        {{ page_label }}
+    </h1>
+    <p class="ari-page-subtitle">
+        Quick access to your saved starred objects for
+        <strong>{{ profile.profile_id }}</strong>.
+    </p>
+</div>
+
+<div class="ari-rp-summary">
+    <div class="ari-rp-summary__badge"
+         style="--card-bg: {{ profile_color.bg }};
+                --card-text: {{ profile_color.text }};
+                --card-border: {{ profile_color.border }};">
+        <span class="ari-db-card__instrument">{{ profile.instrument }}</span>
+    </div>
+    <div class="ari-rp-summary__meta">
+        <span class="ari-rp-summary__item">
+            <i class="fa-solid fa-star"></i>
+            <span id="fav-objects-count">{{ favourite_objects|length }}</span>
+            favourite object{% if favourite_objects|length != 1 %}s{% endif %}
+        </span>
+    </div>
+</div>
+
+<div class="ari-fav-grid">
+    {% if last_object and last_object_url %}
+    <a href="{{ last_object_url }}"
+       class="ari-rp-section-card ari-fav-last-card">
+        <div class="ari-rp-section-card__icon">
+            <i class="fa-solid fa-clock-rotate-left"></i>
+        </div>
+        <div class="ari-rp-section-card__body">
+            <h3>Last Object Visited</h3>
+            <p>{{ last_object }}</p>
+        </div>
+    </a>
+    {% endif %}
+
+    <div id="fav-objects-list" class="ari-fav-list">
+        {% for objname in favourite_objects %}
+        <article class="ari-rp-section-card ari-fav-card"
+                 data-objname="{{ objname }}"
+                 data-open-url="{{ url_for('ri_object_page', profile_id=profile.profile_id, objname=objname) }}"
+                 draggable="true">
+            <button type="button"
+                    class="ari-fav-card__drag"
+                    title="Drag to reorder"
+                    aria-label="Drag to reorder">
+                <span class="ari-fav-card__drag-dots" aria-hidden="true">
+                    <span></span><span></span>
+                    <span></span><span></span>
+                    <span></span><span></span>
+                </span>
+            </button>
+            <div class="ari-rp-section-card__icon">
+                <i class="fa-solid fa-star"></i>
+            </div>
+            <div class="ari-rp-section-card__body">
+                <h3>{{ objname }}</h3>
+                <p>Saved favourite object.</p>
+            </div>
+            <div class="ari-fav-card__actions">
+                <button type="button"
+                        class="ari-btn ari-btn--sm ari-btn--secondary fav-remove-btn"
+                        data-objname="{{ objname }}"
+                        title="Remove favourite">
+                    <i class="fa-solid fa-trash"></i>
+                </button>
+            </div>
+        </article>
+        {% endfor %}
+    </div>
+</div>
+
+<p id="fav-empty" class="ari-rp-note" {% if favourite_objects %}style="display:none;"{% endif %}>
+    <i class="fa-solid fa-circle-info"></i>
+    No saved favourite objects yet. Open any object page and click the star
+    next to the pin/API buttons.
+</p>
+
+<script>
+window.ARI_FAVOURITES_OBJECTS = {
+    profileId: {{ profile.profile_id | tojson }},
+    removeApiUrl: {{ remove_api_url | tojson }},
+    reorderApiUrl: {{ reorder_api_url | tojson }}
+};
+</script>
+<script src="{{ url_for('static', filename='js/favourites_objects.js', v='20260409c') }}" defer></script>
+{% endblock %}

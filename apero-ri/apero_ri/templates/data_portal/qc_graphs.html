@@ -110,6 +110,13 @@ body.ari-qc-page .ari-doc-main {
     <label for="qc-section-filter"><i class="fa-solid fa-filter"></i> Section Filter</label>
     <input id="qc-section-filter" class="qc-filter-input" type="text"
            placeholder="Filter sections...">
+    <label for="qc-wave-fiber-filter"><i class="fa-solid fa-circle-dot"></i> Wave Fiber</label>
+    <select id="qc-wave-fiber-filter" class="qc-filter-input" style="max-width:14rem;flex:0 0 14rem;">
+        <option value="">All fibers</option>
+        {% for fiber in qc_payload.wave_fibers %}
+        <option value="{{ fiber }}"{% if qc_payload.selected_wave_fiber == fiber %} selected{% endif %}>{{ fiber }}</option>
+        {% endfor %}
+    </select>
 </div>
 
 <div class="at-section-card qc-section-card" data-qc-section="shape quality control" data-qc-section-id="shape_quality_control">
@@ -145,7 +152,7 @@ body.ari-qc-page .ari-doc-main {
             <div class="qc-plot-grid">
                 <div class="qc-plot-card">
                     <a class="qc-plot-max"
-                       href="{{ url_for('ri_qc_graphs_max', profile_id=profile.profile_id, section='shape', metric_key=metric.metric_key, view_key='full') }}"
+                              href="{{ url_for('ri_qc_graphs_max', profile_id=profile.profile_id, section='shape', metric_key=metric.metric_key, view_key='full', fiber=qc_payload.selected_wave_fiber) }}"
                        title="Maximize full-series plot">
                         <i class="fa-solid fa-up-right-and-down-left-from-center"></i>
                     </a>
@@ -153,7 +160,7 @@ body.ari-qc-page .ari-doc-main {
                 </div>
                 <div class="qc-plot-card">
                     <a class="qc-plot-max"
-                       href="{{ url_for('ri_qc_graphs_max', profile_id=profile.profile_id, section='shape', metric_key=metric.metric_key, view_key='zoom') }}"
+                              href="{{ url_for('ri_qc_graphs_max', profile_id=profile.profile_id, section='shape', metric_key=metric.metric_key, view_key='zoom', fiber=qc_payload.selected_wave_fiber) }}"
                        title="Maximize 6-month plot">
                         <i class="fa-solid fa-up-right-and-down-left-from-center"></i>
                     </a>
@@ -203,7 +210,7 @@ body.ari-qc-page .ari-doc-main {
             <div class="qc-plot-grid">
                 <div class="qc-plot-card">
                     <a class="qc-plot-max"
-                       href="{{ url_for('ri_qc_graphs_max', profile_id=profile.profile_id, section='wave', metric_key=metric.metric_key, view_key='full') }}"
+                              href="{{ url_for('ri_qc_graphs_max', profile_id=profile.profile_id, section='wave', metric_key=metric.metric_key, view_key='full', fiber=qc_payload.selected_wave_fiber) }}"
                        title="Maximize full-series plot">
                         <i class="fa-solid fa-up-right-and-down-left-from-center"></i>
                     </a>
@@ -211,7 +218,7 @@ body.ari-qc-page .ari-doc-main {
                 </div>
                 <div class="qc-plot-card">
                     <a class="qc-plot-max"
-                       href="{{ url_for('ri_qc_graphs_max', profile_id=profile.profile_id, section='wave', metric_key=metric.metric_key, view_key='zoom') }}"
+                              href="{{ url_for('ri_qc_graphs_max', profile_id=profile.profile_id, section='wave', metric_key=metric.metric_key, view_key='zoom', fiber=qc_payload.selected_wave_fiber) }}"
                        title="Maximize 6-month plot">
                         <i class="fa-solid fa-up-right-and-down-left-from-center"></i>
                     </a>
@@ -235,6 +242,21 @@ body.ari-qc-page .ari-doc-main {
 window.ARI_QC_PAGE = {
     profileId: {{ profile.profile_id | tojson }}
 };
+
+(function bindWaveFiberFilter() {
+    var sel = document.getElementById('qc-wave-fiber-filter');
+    if (!sel) return;
+    sel.addEventListener('change', function () {
+        var url = new URL(window.location.href);
+        var val = String(sel.value || '').trim();
+        if (val) {
+            url.searchParams.set('fiber', val);
+        } else {
+            url.searchParams.delete('fiber');
+        }
+        window.location.href = url.toString();
+    });
+})();
 </script>
-<script src="{{ url_for('static', filename='js/qc_graphs.js') }}" defer></script>
+<script src="{{ url_for('static', filename='js/qc_graphs.js', v='20260409f') }}" defer></script>
 {% endblock %}

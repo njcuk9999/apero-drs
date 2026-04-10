@@ -6,8 +6,9 @@ APERO RI: Authentication and user management.
 Manages user accounts stored in ~/.ari/admin/general/users.yaml,
 password hashing via the cryptography package, and Flask session login.
 """
-import os
+
 import base64
+import os
 import threading
 import time
 from copy import deepcopy
@@ -16,22 +17,24 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional, Set
 
 import yaml
-from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
+from apero_ri.core.permissions import (
+    load_groups,
+    load_pages,
+    resolve_user_permissions,
+)
 from cryptography.hazmat.primitives import hashes
-
-from apero_ri.core.permissions import (resolve_user_permissions, load_groups,
-                                       load_pages)
+from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 
 # =============================================================================
 # Define variables
 # =============================================================================
-ARI_DIR = Path.home() / '.ari'
-ADMIN_DIR = ARI_DIR / 'admin'
-ADMIN_GENERAL_DIR = ADMIN_DIR / 'general'
-USERS_FILE = ADMIN_GENERAL_DIR / 'users.yaml'
-SCI_GROUPS_DIR = ADMIN_DIR / 'science_groups'
-ADMIN_HEALTH_DIR = ADMIN_DIR / 'health'
-ADMIN_HEALTH_CONFIG_FILE = ADMIN_HEALTH_DIR / 'health_status.yaml'
+ARI_DIR = Path.home() / ".ari"
+ADMIN_DIR = ARI_DIR / "admin"
+ADMIN_GENERAL_DIR = ADMIN_DIR / "general"
+USERS_FILE = ADMIN_GENERAL_DIR / "users.yaml"
+SCI_GROUPS_DIR = ADMIN_DIR / "science_groups"
+ADMIN_HEALTH_DIR = ADMIN_DIR / "health"
+ADMIN_HEALTH_CONFIG_FILE = ADMIN_HEALTH_DIR / "health_status.yaml"
 
 # PBKDF2 parameters
 HASH_ALGORITHM = hashes.SHA256()
@@ -44,25 +47,25 @@ SALT_LENGTH = 16
 # API call (via get_accessible_profiles).  A 30-second TTL gives immediate
 # visibility of admin UI changes while eliminating the bulk of SSHFS reads.
 # ---------------------------------------------------------------------------
-_PROFILES_TTL: float = 30.0       # seconds between re-reads
-_profiles_cache: dict = {}         # key: 'raw' or 'hydrated' -> {'expires', 'data'}
+_PROFILES_TTL: float = 30.0  # seconds between re-reads
+_profiles_cache: dict = {}  # key: 'raw' or 'hydrated' -> {'expires', 'data'}
 _profiles_lock = threading.Lock()
 
 # Default admin account
-DEFAULT_USER = 'neil'
-DEFAULT_PASSWORD = '1234'
-DEFAULT_GROUPS = ['super_admin']
+DEFAULT_USER = "neil"
+DEFAULT_PASSWORD = "1234"
+DEFAULT_GROUPS = ["super_admin"]
 
 
 def user_is_super_admin(groups: Optional[List[str]]) -> bool:
     """Return True if group list includes super_admin."""
-    return 'super_admin' in set(groups or [])
+    return "super_admin" in set(groups or [])
 
 
 def user_has_admin_privileges(groups: Optional[List[str]]) -> bool:
     """Return True if group list includes admin-level privileges."""
     gset = set(groups or [])
-    return ('admin' in gset) or ('super_admin' in gset)
+    return ("admin" in gset) or ("super_admin" in gset)
 
 
 def set_ari_dir(path: Optional[str]) -> None:
@@ -71,18 +74,18 @@ def set_ari_dir(path: Optional[str]) -> None:
     global APERO_PROFILES_FILE, DB_ACCESS_FILE, DB_TUNNELS_FILE
     global ASYNC_TASKS_FILE
     global ADMIN_HEALTH_DIR, ADMIN_HEALTH_CONFIG_FILE
-    base = Path(path).expanduser() if path else (Path.home() / '.ari')
+    base = Path(path).expanduser() if path else (Path.home() / ".ari")
     ARI_DIR = base
-    ADMIN_DIR = ARI_DIR / 'admin'
-    ADMIN_GENERAL_DIR = ADMIN_DIR / 'general'
-    USERS_FILE = ADMIN_GENERAL_DIR / 'users.yaml'
-    SCI_GROUPS_DIR = ADMIN_DIR / 'science_groups'
-    APERO_PROFILES_FILE = ADMIN_GENERAL_DIR / 'apero_profiles.yaml'
-    DB_ACCESS_FILE = ADMIN_GENERAL_DIR / 'db_access.yaml'
-    DB_TUNNELS_FILE = ADMIN_GENERAL_DIR / 'db_tunnels.yaml'
-    ASYNC_TASKS_FILE = ADMIN_DIR / 'async_tasks' / 'async_tasks.yaml'
-    ADMIN_HEALTH_DIR = ADMIN_DIR / 'health'
-    ADMIN_HEALTH_CONFIG_FILE = ADMIN_HEALTH_DIR / 'health_status.yaml'
+    ADMIN_DIR = ARI_DIR / "admin"
+    ADMIN_GENERAL_DIR = ADMIN_DIR / "general"
+    USERS_FILE = ADMIN_GENERAL_DIR / "users.yaml"
+    SCI_GROUPS_DIR = ADMIN_DIR / "science_groups"
+    APERO_PROFILES_FILE = ADMIN_GENERAL_DIR / "apero_profiles.yaml"
+    DB_ACCESS_FILE = ADMIN_GENERAL_DIR / "db_access.yaml"
+    DB_TUNNELS_FILE = ADMIN_GENERAL_DIR / "db_tunnels.yaml"
+    ASYNC_TASKS_FILE = ADMIN_DIR / "async_tasks" / "async_tasks.yaml"
+    ADMIN_HEALTH_DIR = ADMIN_DIR / "health"
+    ADMIN_HEALTH_CONFIG_FILE = ADMIN_HEALTH_DIR / "health_status.yaml"
 
 
 # =============================================================================
@@ -101,16 +104,16 @@ def hash_password(password: str, salt: Optional[bytes] = None) -> str:
         salt=salt,
         iterations=HASH_ITERATIONS,
     )
-    key = kdf.derive(password.encode('utf-8'))
-    salt_b64 = base64.b64encode(salt).decode('ascii')
-    key_b64 = base64.b64encode(key).decode('ascii')
-    return f'{salt_b64}:{key_b64}'
+    key = kdf.derive(password.encode("utf-8"))
+    salt_b64 = base64.b64encode(salt).decode("ascii")
+    key_b64 = base64.b64encode(key).decode("ascii")
+    return f"{salt_b64}:{key_b64}"
 
 
 def verify_password(password: str, stored_hash: str) -> bool:
     """Verify a password against a stored hash."""
     try:
-        salt_b64, key_b64 = stored_hash.split(':')
+        salt_b64, key_b64 = stored_hash.split(":")
         salt = base64.b64decode(salt_b64)
         stored_key = base64.b64decode(key_b64)
     except (ValueError, Exception):
@@ -123,7 +126,7 @@ def verify_password(password: str, stored_hash: str) -> bool:
         iterations=HASH_ITERATIONS,
     )
     try:
-        kdf.verify(password.encode('utf-8'), stored_key)
+        kdf.verify(password.encode("utf-8"), stored_key)
         return True
     except Exception:
         return False
@@ -144,7 +147,7 @@ def ensure_ari_directory() -> None:
 def load_users() -> Dict[str, dict]:
     """Load users from users.yaml."""
     ensure_ari_directory()
-    legacy_file = ADMIN_DIR / 'users.yaml'
+    legacy_file = ADMIN_DIR / "users.yaml"
     if not USERS_FILE.exists() and legacy_file.exists():
         try:
             USERS_FILE.write_bytes(legacy_file.read_bytes())
@@ -152,7 +155,7 @@ def load_users() -> Dict[str, dict]:
             pass
     if not USERS_FILE.exists():
         return {}
-    with open(USERS_FILE, 'r', encoding='utf-8') as f:
+    with open(USERS_FILE, "r", encoding="utf-8") as f:
         data = yaml.safe_load(f)
     return data if data else {}
 
@@ -160,17 +163,16 @@ def load_users() -> Dict[str, dict]:
 def save_users(users: Dict[str, dict]) -> None:
     """Save users to users.yaml."""
     ensure_ari_directory()
-    with open(USERS_FILE, 'w', encoding='utf-8') as f:
+    with open(USERS_FILE, "w", encoding="utf-8") as f:
         yaml.dump(users, f, default_flow_style=False)
 
 
-def create_user(username: str, password: str,
-                groups: List[str]) -> None:
+def create_user(username: str, password: str, groups: List[str]) -> None:
     """Create a new user or update an existing one."""
     users = load_users()
     users[username] = {
-        'password': hash_password(password),
-        'groups': groups,
+        "password": hash_password(password),
+        "groups": groups,
     }
     save_users(users)
 
@@ -179,8 +181,9 @@ def ensure_default_user() -> None:
     """Ensure the default admin user exists."""
     users = load_users()
     for user_data in users.values():
-        if (isinstance(user_data, dict)
-                and user_has_admin_privileges(user_data.get('groups', []))):
+        if isinstance(user_data, dict) and user_has_admin_privileges(
+            user_data.get("groups", [])
+        ):
             return
     if DEFAULT_USER not in users:
         create_user(DEFAULT_USER, DEFAULT_PASSWORD, DEFAULT_GROUPS)
@@ -192,17 +195,17 @@ def authenticate(username: str, password: str) -> Optional[dict]:
     if username not in users:
         return None
     user = users[username]
-    if not verify_password(password, user.get('password', '')):
+    if not verify_password(password, user.get("password", "")):
         return None
     # Record previous last_login before updating
-    prev_login = user.get('last_login')
+    prev_login = user.get("last_login")
     # Update last_login timestamp
-    user['last_login'] = datetime.now(timezone.utc).isoformat()
+    user["last_login"] = datetime.now(timezone.utc).isoformat()
     save_users(users)
     return {
-        'username': username,
-        'groups': user.get('groups', []),
-        'last_login': prev_login,
+        "username": username,
+        "groups": user.get("groups", []),
+        "last_login": prev_login,
     }
 
 
@@ -213,11 +216,11 @@ def get_user_info(username: str) -> Optional[dict]:
         return None
     user = users[username]
     return {
-        'username': username,
-        'first_names': user.get('first_names', ''),
-        'groups': user.get('groups', []),
-        'instruments': user.get('instruments', []),
-        'last_login': user.get('last_login'),
+        "username": username,
+        "first_names": user.get("first_names", ""),
+        "groups": user.get("groups", []),
+        "instruments": user.get("instruments", []),
+        "last_login": user.get("last_login"),
     }
 
 
@@ -230,13 +233,15 @@ def search_users(query: str) -> List[dict]:
     results = []
     for username, data in users.items():
         if query_lower in username.lower():
-            results.append({
-                'username': username,
-                'groups': data.get('groups', []),
-                'instruments': data.get('instruments', []),
-                'first_names': data.get('first_names', ''),
-                'last_name': data.get('last_name', ''),
-            })
+            results.append(
+                {
+                    "username": username,
+                    "groups": data.get("groups", []),
+                    "instruments": data.get("instruments", []),
+                    "first_names": data.get("first_names", ""),
+                    "last_name": data.get("last_name", ""),
+                }
+            )
     return results
 
 
@@ -245,11 +250,11 @@ def list_all_users() -> List[dict]:
     users = load_users()
     return [
         {
-            'username': username,
-            'groups': data.get('groups', []),
-            'instruments': data.get('instruments', []),
-            'first_names': data.get('first_names', ''),
-            'last_name': data.get('last_name', ''),
+            "username": username,
+            "groups": data.get("groups", []),
+            "instruments": data.get("instruments", []),
+            "first_names": data.get("first_names", ""),
+            "last_name": data.get("last_name", ""),
         }
         for username, data in users.items()
     ]
@@ -260,18 +265,17 @@ def update_user_groups(username: str, groups: List[str]) -> bool:
     users = load_users()
     if username not in users:
         return False
-    users[username]['groups'] = groups
+    users[username]["groups"] = groups
     save_users(users)
     return True
 
 
-def update_user_instruments(username: str,
-                            instruments: List[str]) -> bool:
+def update_user_instruments(username: str, instruments: List[str]) -> bool:
     """Update a user's instruments list. Returns True on success."""
     users = load_users()
     if username not in users:
         return False
-    users[username]['instruments'] = instruments
+    users[username]["instruments"] = instruments
     save_users(users)
     return True
 
@@ -295,26 +299,24 @@ def get_effective_user(session: dict) -> Optional[dict]:
 
     Returns user info for the effective (impersonated or real) user.
     """
-    real_user = session.get('user')
+    real_user = session.get("user")
     if real_user is None:
         return None
 
-    login_as_user = session.get('login_as')
+    login_as_user = session.get("login_as")
     if login_as_user:
         # Verify the real user has permission to login as this user's group
         real_info = get_user_info(real_user)
         target_info = get_user_info(login_as_user)
         if real_info and target_info:
             groups = load_groups()
-            real_perms = resolve_user_permissions(
-                real_info['groups'], groups
-            )
+            real_perms = resolve_user_permissions(real_info["groups"], groups)
             # Check if real user can login_as any of target's groups
-            for target_group in target_info['groups']:
-                if f'login_as.{target_group}' in real_perms:
+            for target_group in target_info["groups"]:
+                if f"login_as.{target_group}" in real_perms:
                     return target_info
         # If impersonation not allowed, fall back to real user
-        session.pop('login_as', None)
+        session.pop("login_as", None)
 
     return get_user_info(real_user)
 
@@ -322,65 +324,65 @@ def get_effective_user(session: dict) -> Optional[dict]:
 def get_public_permissions() -> Set[str]:
     """Get permissions for unauthenticated (public) users."""
     groups = load_groups()
-    return resolve_user_permissions(['public'], groups)
+    return resolve_user_permissions(["public"], groups)
 
 
 # =============================================================================
 # APERO profile management
 # =============================================================================
-APERO_PROFILES_FILE = ADMIN_GENERAL_DIR / 'apero_profiles.yaml'
-DB_ACCESS_FILE = ADMIN_GENERAL_DIR / 'db_access.yaml'
-DB_TUNNELS_FILE = ADMIN_GENERAL_DIR / 'db_tunnels.yaml'
+APERO_PROFILES_FILE = ADMIN_GENERAL_DIR / "apero_profiles.yaml"
+DB_ACCESS_FILE = ADMIN_GENERAL_DIR / "db_access.yaml"
+DB_TUNNELS_FILE = ADMIN_GENERAL_DIR / "db_tunnels.yaml"
 
 
 # =============================================================================
 # Async tasks configuration
 # =============================================================================
-ASYNC_TASKS_FILE = ADMIN_DIR / 'async_tasks' / 'async_tasks.yaml'
+ASYNC_TASKS_FILE = ADMIN_DIR / "async_tasks" / "async_tasks.yaml"
 
 # =============================================================================
 # Admin health status configuration
 # =============================================================================
-_ALLOWED_HEALTH_REFRESH = {'manual', '5m', '15m', '1h'}
+_ALLOWED_HEALTH_REFRESH = {"manual", "5m", "15m", "1h"}
 
 
 def load_admin_health_config() -> dict:
     """Load admin health-status settings from health_status.yaml."""
     ensure_ari_directory()
-    legacy_file = ADMIN_DIR / 'health_status.yaml'
+    legacy_file = ADMIN_DIR / "health_status.yaml"
     if not ADMIN_HEALTH_CONFIG_FILE.exists() and legacy_file.exists():
         try:
             ADMIN_HEALTH_CONFIG_FILE.write_bytes(legacy_file.read_bytes())
         except Exception:
             pass
     if not ADMIN_HEALTH_CONFIG_FILE.exists():
-        default = {'refresh_frequency': 'manual'}
-        with open(ADMIN_HEALTH_CONFIG_FILE, 'w', encoding='utf-8') as f:
+        default = {"refresh_frequency": "manual"}
+        with open(ADMIN_HEALTH_CONFIG_FILE, "w", encoding="utf-8") as f:
             yaml.dump(default, f, default_flow_style=False)
         return default
 
-    with open(ADMIN_HEALTH_CONFIG_FILE, 'r', encoding='utf-8') as f:
+    with open(ADMIN_HEALTH_CONFIG_FILE, "r", encoding="utf-8") as f:
         data = yaml.safe_load(f)
     if not isinstance(data, dict):
         data = {}
 
-    freq = str(data.get('refresh_frequency', 'manual')).strip().lower()
+    freq = str(data.get("refresh_frequency", "manual")).strip().lower()
     if freq not in _ALLOWED_HEALTH_REFRESH:
-        freq = 'manual'
-    return {'refresh_frequency': freq}
+        freq = "manual"
+    return {"refresh_frequency": freq}
 
 
 def save_admin_health_config(config: dict) -> None:
     """Save admin health-status settings to health_status.yaml."""
     ensure_ari_directory()
-    freq = str(config.get('refresh_frequency', 'manual')).strip().lower()
+    freq = str(config.get("refresh_frequency", "manual")).strip().lower()
     if freq not in _ALLOWED_HEALTH_REFRESH:
-        freq = 'manual'
+        freq = "manual"
     payload = {
-        'refresh_frequency': freq,
-        'updated_at': datetime.now(timezone.utc).isoformat(),
+        "refresh_frequency": freq,
+        "updated_at": datetime.now(timezone.utc).isoformat(),
     }
-    with open(ADMIN_HEALTH_CONFIG_FILE, 'w', encoding='utf-8') as f:
+    with open(ADMIN_HEALTH_CONFIG_FILE, "w", encoding="utf-8") as f:
         yaml.dump(payload, f, default_flow_style=False)
 
 
@@ -391,23 +393,23 @@ def load_async_tasks() -> dict:
     """
     ensure_ari_directory()
     ASYNC_TASKS_FILE.parent.mkdir(parents=True, exist_ok=True)
-    legacy_file = ADMIN_DIR / 'async_tasks.yaml'
+    legacy_file = ADMIN_DIR / "async_tasks.yaml"
     if not ASYNC_TASKS_FILE.exists() and legacy_file.exists():
         try:
             ASYNC_TASKS_FILE.write_bytes(legacy_file.read_bytes())
         except Exception:
             pass
     if not ASYNC_TASKS_FILE.exists():
-        ASYNC_TASKS_FILE.write_text('')
+        ASYNC_TASKS_FILE.write_text("")
     try:
-        with open(ASYNC_TASKS_FILE, 'r') as f:
+        with open(ASYNC_TASKS_FILE, "r") as f:
             data = yaml.safe_load(f)
     except Exception:
         # File may be corrupted (e.g. null bytes from truncated write).
         # Try stripping null bytes before giving up.
         try:
             raw = ASYNC_TASKS_FILE.read_bytes()
-            cleaned = raw.replace(b'\x00', b'')
+            cleaned = raw.replace(b"\x00", b"")
             data = yaml.safe_load(cleaned)
         except Exception:
             data = None
@@ -418,7 +420,7 @@ def save_async_tasks(tasks: dict) -> None:
     """Save async task configurations to async_tasks.yaml."""
     ensure_ari_directory()
     ASYNC_TASKS_FILE.parent.mkdir(parents=True, exist_ok=True)
-    with open(ASYNC_TASKS_FILE, 'w') as f:
+    with open(ASYNC_TASKS_FILE, "w") as f:
         yaml.dump(tasks, f, default_flow_style=False)
 
 
@@ -437,23 +439,23 @@ def load_apero_profiles(hydrate: bool = True) -> dict:
     that repeated calls within the same server process (e.g. multiple
     simultaneous API requests) do not all hit the YAML file on disk.
     """
-    cache_key = 'hydrated' if hydrate else 'raw'
+    cache_key = "hydrated" if hydrate else "raw"
     now = time.monotonic()
     with _profiles_lock:
         entry = _profiles_cache.get(cache_key)
-        if entry is not None and now < entry['expires']:
-            return entry['data']
+        if entry is not None and now < entry["expires"]:
+            return entry["data"]
     # Cache miss — read from disk outside the lock.
     ensure_ari_directory()
-    legacy_file = ADMIN_DIR / 'apero_profiles.yaml'
+    legacy_file = ADMIN_DIR / "apero_profiles.yaml"
     if not APERO_PROFILES_FILE.exists() and legacy_file.exists():
         try:
             APERO_PROFILES_FILE.write_bytes(legacy_file.read_bytes())
         except Exception:
             pass
     if not APERO_PROFILES_FILE.exists():
-        APERO_PROFILES_FILE.write_text('')
-    with open(APERO_PROFILES_FILE, 'r') as f:
+        APERO_PROFILES_FILE.write_text("")
+    with open(APERO_PROFILES_FILE, "r") as f:
         data = yaml.safe_load(f)
     profiles = data if data else {}
     if not hydrate:
@@ -469,18 +471,23 @@ def load_apero_profiles(hydrate: bool = True) -> dict:
             for profile_id, profile_data in instr_profiles.items():
                 if not isinstance(profile_data, dict):
                     continue
-                hprofiles[profile_id] = _hydrate_profile_data(profile_data, instrument)
+                hprofiles[profile_id] = _hydrate_profile_data(
+                    profile_data, instrument
+                )
             hydrated[instrument] = hprofiles
         result = hydrated
     with _profiles_lock:
-        _profiles_cache[cache_key] = {'expires': now + _PROFILES_TTL, 'data': result}
+        _profiles_cache[cache_key] = {
+            "expires": now + _PROFILES_TTL,
+            "data": result,
+        }
     return result
 
 
 def save_apero_profiles(profiles: dict) -> None:
     """Save APERO profiles to apero_profiles.yaml."""
     ensure_ari_directory()
-    with open(APERO_PROFILES_FILE, 'w') as f:
+    with open(APERO_PROFILES_FILE, "w") as f:
         yaml.dump(profiles, f, default_flow_style=False)
     # Invalidate in-process cache so the next read returns the new data.
     with _profiles_lock:
@@ -490,8 +497,8 @@ def save_apero_profiles(profiles: dict) -> None:
 def _apero_instrument_profile_path(filename: str) -> Path:
     """Return path under resources/aprofile_instruments for a profile file."""
     pkg_dir = Path(__file__).resolve().parents[1]
-    safe_name = Path(str(filename or '')).name
-    return pkg_dir / 'resources' / 'aprofile_instruments' / safe_name
+    safe_name = Path(str(filename or "")).name
+    return pkg_dir / "resources" / "aprofile_instruments" / safe_name
 
 
 def _load_apero_instrument_profile(filename: str) -> Dict:
@@ -500,7 +507,7 @@ def _load_apero_instrument_profile(filename: str) -> Dict:
     if not path.is_file():
         return {}
     try:
-        with path.open('r', encoding='utf-8') as f:
+        with path.open("r", encoding="utf-8") as f:
             data = yaml.safe_load(f) or {}
     except Exception:
         return {}
@@ -531,9 +538,9 @@ def _hydrate_profile_data(profile_data: dict, instrument: str) -> dict:
     """
     out = deepcopy(profile_data) if isinstance(profile_data, dict) else {}
     ref_name = str(
-        out.get('APERO_INSTRUMENT_PROFILE', '')
-        or out.get('apero_instrument_profile', '')
-        or ''
+        out.get("APERO_INSTRUMENT_PROFILE", "")
+        or out.get("apero_instrument_profile", "")
+        or ""
     ).strip()
     if not ref_name:
         return out
@@ -544,55 +551,57 @@ def _hydrate_profile_data(profile_data: dict, instrument: str) -> dict:
 
     # Keep all preset keys available (forward compatible with new fields).
     _merge_missing_profile(out, preset)
-    out['APERO_INSTRUMENT_PROFILE_DATA'] = deepcopy(preset)
+    out["APERO_INSTRUMENT_PROFILE_DATA"] = deepcopy(preset)
 
     # sci-headers: always from instrument resource profile
-    if isinstance(preset.get('sci-headers'), dict):
-        out['sci-headers'] = deepcopy(preset.get('sci-headers', {}))
-    elif isinstance(preset.get('headers'), dict):
+    if isinstance(preset.get("sci-headers"), dict):
+        out["sci-headers"] = deepcopy(preset.get("sci-headers", {}))
+    elif isinstance(preset.get("headers"), dict):
         # Backward compatibility for legacy preset files.
-        out['sci-headers'] = deepcopy(preset.get('headers', {}))
+        out["sci-headers"] = deepcopy(preset.get("headers", {}))
 
     # calib-headers: always from instrument resource profile when available.
-    if isinstance(preset.get('calib-headers'), dict):
-        out['calib-headers'] = deepcopy(preset.get('calib-headers', {}))
+    if isinstance(preset.get("calib-headers"), dict):
+        out["calib-headers"] = deepcopy(preset.get("calib-headers", {}))
 
     # plots: accept either "plots" or "plot" in resource file
-    if isinstance(preset.get('plots'), dict):
-        out['plots'] = deepcopy(preset.get('plots', {}))
-    elif isinstance(preset.get('plot'), dict):
-        out['plots'] = deepcopy(preset.get('plot', {}))
-    if isinstance(out.get('plots'), dict):
-        out['plot'] = deepcopy(out.get('plots', {}))
+    if isinstance(preset.get("plots"), dict):
+        out["plots"] = deepcopy(preset.get("plots", {}))
+    elif isinstance(preset.get("plot"), dict):
+        out["plots"] = deepcopy(preset.get("plot", {}))
+    if isinstance(out.get("plots"), dict):
+        out["plot"] = deepcopy(out.get("plots", {}))
 
     # general: start from resource defaults, then force canonical science keys
     # from saved profile to preserve admin/user selections.
-    preset_general = preset.get('general', {})
-    saved_general = out.get('general', {}) if isinstance(out.get('general'), dict) else {}
+    preset_general = preset.get("general", {})
+    saved_general = (
+        out.get("general", {}) if isinstance(out.get("general"), dict) else {}
+    )
     if isinstance(preset_general, dict):
         merged_general = deepcopy(preset_general)
 
         sci_fiber = (
-            saved_general.get('SCIENCE_FIBER')
-            or saved_general.get('science_fiber')
-            or ''
+            saved_general.get("SCIENCE_FIBER")
+            or saved_general.get("science_fiber")
+            or ""
         )
         sci_types = (
-            saved_general.get('SCIENCE_TYPES')
-            or saved_general.get('science_types')
+            saved_general.get("SCIENCE_TYPES")
+            or saved_general.get("science_types")
             or []
         )
         if isinstance(sci_types, str):
-            sci_types = [v.strip() for v in sci_types.split(',') if v.strip()]
+            sci_types = [v.strip() for v in sci_types.split(",") if v.strip()]
         elif not isinstance(sci_types, list):
             sci_types = []
 
-        merged_general['INSTRUMENT'] = instrument
+        merged_general["INSTRUMENT"] = instrument
         if sci_fiber:
-            merged_general['SCIENCE_FIBER'] = sci_fiber
+            merged_general["SCIENCE_FIBER"] = sci_fiber
         if sci_types:
-            merged_general['SCIENCE_TYPES'] = sci_types
-        out['general'] = merged_general
+            merged_general["SCIENCE_TYPES"] = sci_types
+        out["general"] = merged_general
 
     return out
 
@@ -600,15 +609,15 @@ def _hydrate_profile_data(profile_data: dict, instrument: str) -> dict:
 def load_db_access() -> dict:
     """Load DB access configuration from db_access.yaml."""
     ensure_ari_directory()
-    legacy_file = ADMIN_DIR / 'db_access.yaml'
+    legacy_file = ADMIN_DIR / "db_access.yaml"
     if not DB_ACCESS_FILE.exists() and legacy_file.exists():
         try:
             DB_ACCESS_FILE.write_bytes(legacy_file.read_bytes())
         except Exception:
             pass
     if not DB_ACCESS_FILE.exists():
-        DB_ACCESS_FILE.write_text('')
-    with open(DB_ACCESS_FILE, 'r') as f:
+        DB_ACCESS_FILE.write_text("")
+    with open(DB_ACCESS_FILE, "r") as f:
         data = yaml.safe_load(f)
     return data if data else {}
 
@@ -616,34 +625,34 @@ def load_db_access() -> dict:
 def save_db_access(data: dict) -> None:
     """Save DB access configuration to db_access.yaml."""
     ensure_ari_directory()
-    with open(DB_ACCESS_FILE, 'w') as f:
+    with open(DB_ACCESS_FILE, "w") as f:
         yaml.dump(data, f, default_flow_style=False)
 
 
 def load_db_tunnels() -> dict:
     """Load DB tunnel/local definitions from db_tunnels.yaml."""
     ensure_ari_directory()
-    legacy_file = ADMIN_DIR / 'db_tunnels.yaml'
+    legacy_file = ADMIN_DIR / "db_tunnels.yaml"
     if not DB_TUNNELS_FILE.exists() and legacy_file.exists():
         try:
             DB_TUNNELS_FILE.write_bytes(legacy_file.read_bytes())
         except Exception:
             pass
     if not DB_TUNNELS_FILE.exists():
-        DB_TUNNELS_FILE.write_text('')
-    with open(DB_TUNNELS_FILE, 'r') as f:
+        DB_TUNNELS_FILE.write_text("")
+    with open(DB_TUNNELS_FILE, "r") as f:
         data = yaml.safe_load(f)
     if not isinstance(data, dict):
         data = {}
-    tunnels = data.get('tunnels', {})
+    tunnels = data.get("tunnels", {})
     if not isinstance(tunnels, dict):
         tunnels = {}
-    local_databases = data.get('local_databases', {})
+    local_databases = data.get("local_databases", {})
     if not isinstance(local_databases, dict):
         local_databases = {}
     return {
-        'tunnels': tunnels,
-        'local_databases': local_databases,
+        "tunnels": tunnels,
+        "local_databases": local_databases,
     }
 
 
@@ -651,17 +660,17 @@ def save_db_tunnels(data: dict) -> None:
     """Save DB tunnel/local definitions to db_tunnels.yaml."""
     ensure_ari_directory()
     payload = data if isinstance(data, dict) else {}
-    tunnels = payload.get('tunnels', {})
+    tunnels = payload.get("tunnels", {})
     if not isinstance(tunnels, dict):
         tunnels = {}
-    local_databases = payload.get('local_databases', {})
+    local_databases = payload.get("local_databases", {})
     if not isinstance(local_databases, dict):
         local_databases = {}
-    with open(DB_TUNNELS_FILE, 'w') as f:
+    with open(DB_TUNNELS_FILE, "w") as f:
         yaml.dump(
             {
-                'tunnels': tunnels,
-                'local_databases': local_databases,
+                "tunnels": tunnels,
+                "local_databases": local_databases,
             },
             f,
             default_flow_style=False,
@@ -675,17 +684,22 @@ def validate_path_exists(path_str: str) -> dict:
     """
     p = Path(path_str)
     exists = p.is_dir()
-    return {'valid': exists, 'exists': exists}
+    return {"valid": exists, "exists": exists}
 
 
-def validate_database_connection(mode: str, host: str, username: str,
-                                 password: str, db_name: str,
-                                 port: str = '',
-                                 use_ssh_tunnel: Any = False,
-                                 ssh_config_host: str = '',
-                                 ssh_local_port: str = '',
-                                 ssh_remote_port: str = '',
-                                 local_data_dir: Optional[str] = None) -> dict:
+def validate_database_connection(
+    mode: str,
+    host: str,
+    username: str,
+    password: str,
+    db_name: str,
+    port: str = "",
+    use_ssh_tunnel: Any = False,
+    ssh_config_host: str = "",
+    ssh_local_port: str = "",
+    ssh_remote_port: str = "",
+    local_data_dir: Optional[str] = None,
+) -> dict:
     """Try to connect to a database using the given credentials.
 
     Returns dict with 'valid' bool and 'error' string.
@@ -694,23 +708,24 @@ def validate_database_connection(mode: str, host: str, username: str,
         from apero_ri.tasks import apero_async
 
         db_params = {
-            'DATABASE_MODE': mode,
-            'DATABASE_HOST': host,
-            'DATABASE_PORT': port,
-            'DATABASE_USER': username,
-            'DATABASE_PASSWORD': password,
-            'DATABASE_NAME': db_name,
-            'DATABASE_USE_SSH_TUNNEL': use_ssh_tunnel,
-            'DATABASE_SSH_CONFIG_HOST': ssh_config_host,
-            'DATABASE_SSH_LOCAL_PORT': ssh_local_port,
-            'DATABASE_SSH_REMOTE_PORT': ssh_remote_port,
+            "DATABASE_MODE": mode,
+            "DATABASE_HOST": host,
+            "DATABASE_PORT": port,
+            "DATABASE_USER": username,
+            "DATABASE_PASSWORD": password,
+            "DATABASE_NAME": db_name,
+            "DATABASE_USE_SSH_TUNNEL": use_ssh_tunnel,
+            "DATABASE_SSH_CONFIG_HOST": ssh_config_host,
+            "DATABASE_SSH_LOCAL_PORT": ssh_local_port,
+            "DATABASE_SSH_REMOTE_PORT": ssh_remote_port,
+            "DATABASE_SSH_ALLOW_MULTIPLE": bool(use_ssh_tunnel),
         }
         if local_data_dir:
-            db_params['LOCAL_DATA_DIR'] = str(local_data_dir)
-        apero_async.database_query(db_params, 'SELECT 1 AS ok')
-        return {'valid': True, 'error': ''}
+            db_params["LOCAL_DATA_DIR"] = str(local_data_dir)
+        apero_async.database_query(db_params, "SELECT 1 AS ok")
+        return {"valid": True, "error": ""}
     except Exception as e:
-        return {'valid': False, 'error': str(e)}
+        return {"valid": False, "error": str(e)}
 
 
 # =============================================================================
@@ -718,9 +733,9 @@ def validate_database_connection(mode: str, host: str, username: str,
 # =============================================================================
 def _sci_groups_file(instrument: str) -> Path:
     """Return the path to the science groups YAML for an instrument."""
-    safe = instrument.lower().replace(' ', '_')
-    new_path = SCI_GROUPS_DIR / f'{safe}_science_groups.yaml'
-    legacy_path = ADMIN_DIR / f'{safe}_science_groups.yaml'
+    safe = instrument.lower().replace(" ", "_")
+    new_path = SCI_GROUPS_DIR / f"{safe}_science_groups.yaml"
+    legacy_path = ADMIN_DIR / f"{safe}_science_groups.yaml"
     if not new_path.exists() and legacy_path.exists():
         try:
             SCI_GROUPS_DIR.mkdir(parents=True, exist_ok=True)
@@ -735,25 +750,25 @@ def load_science_groups(instrument: str) -> Dict[str, dict]:
     path = _sci_groups_file(instrument)
     ensure_ari_directory()
     if not path.exists():
-        path.write_text('')
-    with open(path, 'r') as f:
+        path.write_text("")
+    with open(path, "r") as f:
         data = yaml.safe_load(f)
     groups = data if isinstance(data, dict) else {}
 
     # Keep a reserved canonical All group present for every instrument.
     changed = False
-    all_entry = groups.get('All')
+    all_entry = groups.get("All")
     if not isinstance(all_entry, dict):
-        groups['All'] = {'run_ids': [], 'users': []}
+        groups["All"] = {"run_ids": [], "users": []}
         changed = True
     else:
-        if not isinstance(all_entry.get('run_ids', []), list):
-            all_entry['run_ids'] = []
+        if not isinstance(all_entry.get("run_ids", []), list):
+            all_entry["run_ids"] = []
             changed = True
-        if not isinstance(all_entry.get('users', []), list):
-            all_entry['users'] = []
+        if not isinstance(all_entry.get("users", []), list):
+            all_entry["users"] = []
             changed = True
-        groups['All'] = all_entry
+        groups["All"] = all_entry
 
     if changed:
         try:
@@ -764,12 +779,11 @@ def load_science_groups(instrument: str) -> Dict[str, dict]:
     return groups
 
 
-def save_science_groups(instrument: str,
-                        groups: Dict[str, dict]) -> None:
+def save_science_groups(instrument: str, groups: Dict[str, dict]) -> None:
     """Save science groups for an instrument."""
     ensure_ari_directory()
     path = _sci_groups_file(instrument)
-    with open(path, 'w') as f:
+    with open(path, "w") as f:
         yaml.dump(groups, f, default_flow_style=False)
 
 
@@ -778,13 +792,14 @@ def get_users_for_instrument(instrument: str) -> List[str]:
     users = load_users()
     result = []
     for username, data in users.items():
-        if instrument in data.get('instruments', []):
+        if instrument in data.get("instruments", []):
             result.append(username)
     return sorted(result)
 
 
-def get_accessible_profiles(user_info: Optional[dict],
-                            ari_groups: Dict[str, dict]) -> List[dict]:
+def get_accessible_profiles(
+    user_info: Optional[dict], ari_groups: Dict[str, dict]
+) -> List[dict]:
     """Get APERO profiles accessible to a user.
 
     Access rules:
@@ -802,14 +817,14 @@ def get_accessible_profiles(user_info: Optional[dict],
         return []
 
     if user_info:
-        user_instruments = set(user_info.get('instruments', []))
-        user_groups = set(user_info.get('groups', []))
+        user_instruments = set(user_info.get("instruments", []))
+        user_groups = set(user_info.get("groups", []))
         all_user_groups = set(user_groups)
         for grp in list(user_groups):
             all_user_groups |= get_inherited_groups(grp, ari_groups)
     else:
         user_instruments = set()
-        all_user_groups = {'public'}
+        all_user_groups = {"public"}
 
     accessible = []
     for instrument, instr_profiles in profiles_data.items():
@@ -821,16 +836,19 @@ def get_accessible_profiles(user_info: Optional[dict],
         for profile_id, profile_data in instr_profiles.items():
             if not isinstance(profile_data, dict):
                 continue
-            profile_groups = set(profile_data.get('groups', []))
+            profile_groups = set(profile_data.get("groups", []))
             if profile_groups and not all_user_groups & profile_groups:
                 continue
             hydrated_data = _hydrate_profile_data(profile_data, instrument)
-            accessible.append({
-                'instrument': instrument,
-                'profile_id': profile_id,
-                'data': hydrated_data,
-            })
+            accessible.append(
+                {
+                    "instrument": instrument,
+                    "profile_id": profile_id,
+                    "data": hydrated_data,
+                }
+            )
 
-    accessible.sort(key=lambda x: (x['instrument'],
-                                   x['data'].get('DISPLAY_ORDER', 999)))
+    accessible.sort(
+        key=lambda x: (x["instrument"], x["data"].get("DISPLAY_ORDER", 999))
+    )
     return accessible

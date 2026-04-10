@@ -286,7 +286,10 @@
                 </button>
             </div>
             <div class="at-section-card__body">
-                <div class="ot-table-wrap">
+                <div id="op-time-series-scroll-top" class="ot-scroll-top" style="display:none;">
+                    <div id="op-time-series-scroll-sizer" class="ot-scroll-sizer"></div>
+                </div>
+                <div id="op-time-series-wrap" class="ot-table-wrap">
                     <table class="ot-table" id="op-time-series-table">
                         <thead>
                             <tr>
@@ -494,7 +497,7 @@
     <section id="op-tab-debug" class="op-tab-panel" style="display:none;">
 
         {# -- Status bar -- #}
-        <div style="margin-bottom:0.75rem;display:flex;align-items:center;gap:0.5rem;">
+        <div id="op-debug-statusbar" style="margin-bottom:0.75rem;display:flex;align-items:center;gap:0.5rem;">
             <button id="op-download-debug-csv"
                     class="ari-btn ari-btn--sm ari-btn--secondary"
                     title="Download debug section as CSV">
@@ -603,8 +606,23 @@
             </div>
             <div class="at-section-card__body">
                 <div id="op-debug-tcorr-map-wrap">
-                    <div id="op-debug-tcorr-map-loading" class="at-muted-hint">
-                        <i class="fa-solid fa-spinner fa-spin"></i> Loading&hellip;
+                    <div id="op-debug-tcorr-map-loading"
+                         class="at-muted-hint" style="display:none;">
+                        <i class="fa-solid fa-spinner fa-spin"></i>
+                        Generating telluric map&hellip; (may take a few seconds)
+                    </div>
+                    <div id="op-debug-tcorr-map-generate-wrap"
+                         style="padding:1rem 0;">
+                        <button id="op-debug-tcorr-map-btn"
+                                class="ari-btn ari-btn--primary">
+                            <i class="fa-solid fa-play"></i>
+                            Generate Telluric Map
+                        </button>
+                        <span class="at-muted-hint"
+                              style="margin-left:0.8em;font-size:0.85em;">
+                            This plot is computationally expensive — click to
+                            generate on demand.
+                        </span>
                     </div>
                     <div id="op-debug-tcorr-map-div"></div>
                 </div>
@@ -653,6 +671,7 @@ window.ARI_OBJECT_PAGE = {
     finderChartApiUrl: '/api/data-portal/finder-chart',
     finderChartCached: {{ (finder_chart_cached | default(false)) | tojson }},
     debugPlotsApiUrl: '/api/data-portal/debug-plots',
+    tcorrMapGenerateApiUrl: '/api/data-portal/tcorr-map-generate',
     finderMaxUrl: {{ url_for('ri_object_plot_max', profile_id=profile.profile_id, objname=objname, plot_key='finder') | tojson }},
     snrMaxUrl: {{ url_for('ri_object_plot_max', profile_id=profile.profile_id, objname=objname, plot_key='snr') | tojson }},
     bervMaxUrl: {{ url_for('ri_object_plot_max', profile_id=profile.profile_id, objname=objname, plot_key='berv') | tojson }},
@@ -666,6 +685,9 @@ window.ARI_OBJECT_PAGE = {
     objectSectionApiGet: '/api/user/object-sections/get',
     objectSectionApiToggle: '/api/user/object-sections/toggle',
     objectSectionApiReorder: '/api/user/object-sections/reorder',
+    objectFavouriteApiGet: '/api/user/favourite-objects/get',
+    objectFavouriteApiToggle: '/api/user/favourite-objects/toggle',
+    objectFavouriteApiLastOpened: '/api/user/favourite-objects/last-opened',
     filenamePlotApiUrl: '/api/data-portal/filename-plot'
 };
 window.ARI_BASKET_CFG = {
@@ -679,8 +701,8 @@ window.ARI_BASKET_CFG = {
 };
 </script>
 <script src="https://cdn.bokeh.org/bokeh/release/bokeh-3.8.2.min.js"></script>
-<script src="{{ url_for('static', filename='js/object_page.js', v='20260407c') }}" defer></script>
-<script src="{{ url_for('static', filename='js/file_browser.js') }}" defer></script>
+<script src="{{ url_for('static', filename='js/object_page.js', v='20260409f') }}" defer></script>
+<script src="{{ url_for('static', filename='js/file_browser.js', v='20260409f') }}" defer></script>
 
 <!-- ──── Filename-click plot modal ──────────────────────────────────────── -->
 <div id="fn-plot-modal" class="fn-modal-overlay" style="display:none;" role="dialog" aria-modal="true" aria-labelledby="fn-plot-title">

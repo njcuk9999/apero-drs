@@ -11,25 +11,31 @@ Created on 2024-01-01
 
 @author: cook
 """
+
 from __future__ import annotations
 
 import json
+import math
+import statistics
 from datetime import timedelta, timezone
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
+from apero_ri.base import base
 from astropy.time import Time
 from bokeh.embed import components
-from bokeh.models import (ColumnDataSource, CrosshairTool,
-                          DatetimeTickFormatter, HoverTool)
+from bokeh.models import (
+    ColumnDataSource,
+    CrosshairTool,
+    DatetimeTickFormatter,
+    HoverTool,
+)
 from bokeh.plotting import figure
-
-from apero_ri.base import base
 
 # =============================================================================
 # Define variables
 # =============================================================================
-__NAME__ = 'apero_ri.plots.plots_qc'
+__NAME__ = "apero_ri.plots.plots_qc"
 __PACKAGE__ = base.__PACKAGE__
 __version__ = base.__version__
 __authors__ = base.__authors__
@@ -53,23 +59,23 @@ def _load_rows(path: Path) -> Tuple[List[Dict[str, Any]], str]:
     # -------------------------------------------------------------------------
     # check file exists
     if not path.exists():
-        return [], f'Missing file: {path.name}'
+        return [], f"Missing file: {path.name}"
     # -------------------------------------------------------------------------
     # load and parse JSON
     try:
-        with open(path, 'r', encoding='utf-8') as fio:
+        with open(path, "r", encoding="utf-8") as fio:
             payload = json.load(fio)
     except Exception as exc:
-        return [], f'Failed to read {path.name}: {exc}'
-    rows = payload.get('rows', [])
+        return [], f"Failed to read {path.name}: {exc}"
+    rows = payload.get("rows", [])
     if not isinstance(rows, list):
-        return [], f'Invalid rows format in {path.name}'
-    return rows, ''
+        return [], f"Invalid rows format in {path.name}"
+    return rows, ""
 
 
-def _label_from_headers(profile_data: Dict[str, Any],
-                        section: str, key: str,
-                        fallback: str) -> str:
+def _label_from_headers(
+    profile_data: Dict[str, Any], section: str, key: str, fallback: str
+) -> str:
     """
     Resolve a display label from the calib-headers section of a
     profile data dict.
@@ -86,7 +92,7 @@ def _label_from_headers(profile_data: Dict[str, Any],
     # validate structure
     calib: Dict[str, Any] = {}
     if isinstance(profile_data, dict):
-        calib = profile_data.get('calib-headers', {})
+        calib = profile_data.get("calib-headers", {})
     if not isinstance(calib, dict):
         return fallback
     # -------------------------------------------------------------------------
@@ -97,7 +103,7 @@ def _label_from_headers(profile_data: Dict[str, Any],
     meta = sec.get(key, {})
     if not isinstance(meta, dict):
         return fallback
-    label = str(meta.get('label', '') or '').strip()
+    label = str(meta.get("label", "") or "").strip()
     return label or fallback
 
 
@@ -115,13 +121,14 @@ def _to_datetime(value: Any) -> Any:
     except (TypeError, ValueError):
         return None
     try:
-        return Time(mjd, format='mjd').to_datetime(timezone=timezone.utc)
+        return Time(mjd, format="mjd").to_datetime(timezone=timezone.utc)
     except Exception:
         return None
 
 
-def _series(rows: List[Dict[str, Any]],
-            y_key: str) -> Tuple[List[Any], List[float]]:
+def _series(
+    rows: List[Dict[str, Any]], y_key: str
+) -> Tuple[List[Any], List[float]]:
     """
     Extract and sort a (datetime, y-value) series for one metric key.
 
@@ -138,7 +145,7 @@ def _series(rows: List[Dict[str, Any]],
     for row in rows:
         if not isinstance(row, dict):
             continue
-        dt = _to_datetime(row.get('KW_MID_OBS_TIME'))
+        dt = _to_datetime(row.get("KW_MID_OBS_TIME"))
         if dt is None:
             continue
         raw_y = row.get(y_key)
@@ -157,8 +164,9 @@ def _series(rows: List[Dict[str, Any]],
     return xvals, yvals
 
 
-def _empty_metric(display_name: str, label: str,
-                  message: str) -> Dict[str, Any]:
+def _empty_metric(
+    display_name: str, label: str, message: str
+) -> Dict[str, Any]:
     """
     Return a payload dict representing a metric with no plot data.
 
@@ -170,21 +178,20 @@ def _empty_metric(display_name: str, label: str,
     :rtype: dict
     """
     return {
-        'display_name': display_name,
-        'label': label,
-        'full_script': '',
-        'zoom_script': '',
-        'full_div': '',
-        'zoom_div': '',
-        'has_plot': False,
-        'message': message,
+        "display_name": display_name,
+        "label": label,
+        "full_script": "",
+        "zoom_script": "",
+        "full_div": "",
+        "zoom_div": "",
+        "has_plot": False,
+        "message": message,
     }
 
 
-def _build_metric_plot(rows: List[Dict[str, Any]],
-                       metric_key: str,
-                       display_name: str,
-                       label: str) -> Dict[str, Any]:
+def _build_metric_plot(
+    rows: List[Dict[str, Any]], metric_key: str, display_name: str, label: str
+) -> Dict[str, Any]:
     """
     Create full time-series and 6-month zoom scatter plots for one
     QC metric.
@@ -202,37 +209,51 @@ def _build_metric_plot(rows: List[Dict[str, Any]],
     xvals, yvals = _series(rows, metric_key)
     if not xvals:
         return _empty_metric(
-            display_name, label,
-            f'No valid data for {display_name}.',
+            display_name,
+            label,
+            f"No valid data for {display_name}.",
         )
     # -------------------------------------------------------------------------
     # build full time-series figure
-    src = ColumnDataSource(data={'x': xvals, 'y': yvals})
-    tools = 'pan,wheel_zoom,box_zoom,reset,save'
+    f_low, f_high = _sigma_window(yvals, nsigma=5.0)
+    full_in_x, full_in_y, full_low_x, full_high_x = _split_outliers(
+        xvals, yvals, f_low, f_high
+    )
+    src = ColumnDataSource(data={"x": full_in_x, "y": full_in_y})
+    tools = "pan,wheel_zoom,box_zoom,reset,save"
     hover = HoverTool(
         tooltips=[
-            ('Date (UTC)', '@x{%F %T}'),
-            ('Value', '@y{0.000000}'),
+            ("Date (UTC)", "@x{%F %T}"),
+            ("Value", "@y{0.000000}"),
         ],
-        formatters={'@x': 'datetime'},
-        mode='mouse',
+        formatters={"@x": "datetime"},
+        mode="mouse",
     )
     p_full = figure(
-        x_axis_type='datetime',
+        x_axis_type="datetime",
         tools=tools,
-        active_scroll='wheel_zoom',
+        active_scroll="wheel_zoom",
         height=320,
-        sizing_mode='stretch_width',
-        title=f'{display_name}: full time series',
+        sizing_mode="stretch_width",
+        title=f"{display_name}: full time series",
         background_fill_color=base.PLOT_BACKGROUND_COLOR,
     )
     p_full.add_tools(hover)
-    p_full.add_tools(CrosshairTool(dimensions='both'))
-    p_full.scatter('x', 'y', source=src, size=6, alpha=0.75)
-    p_full.xaxis.axis_label = 'Date (UTC)'
+    p_full.add_tools(CrosshairTool(dimensions="both"))
+    p_full.scatter("x", "y", source=src, size=6, alpha=0.75)
+    _apply_plot_window_and_outlier_arrows(
+        p_full,
+        ymin=f_low,
+        ymax=f_high,
+        low_x=full_low_x,
+        high_x=full_high_x,
+    )
+    p_full.xaxis.axis_label = "Date (UTC)"
     p_full.yaxis.axis_label = label
     p_full.xaxis.formatter = DatetimeTickFormatter(
-        days='%Y-%m-%d', months='%Y-%m', years='%Y',
+        days="%Y-%m-%d",
+        months="%Y-%m",
+        years="%Y",
     )
     # -------------------------------------------------------------------------
     # build 6-month zoom figure
@@ -241,49 +262,245 @@ def _build_metric_plot(rows: List[Dict[str, Any]],
     recent_mask = [i for i, dt in enumerate(xvals) if dt >= start_dt]
     if not recent_mask:
         recent_mask = [len(xvals) - 1]
-    src_zoom = ColumnDataSource(data={
-        'x': [xvals[i] for i in recent_mask],
-        'y': [yvals[i] for i in recent_mask],
-    })
+    src_zoom = ColumnDataSource(
+        data={
+            "x": [xvals[i] for i in recent_mask],
+            "y": [yvals[i] for i in recent_mask],
+        }
+    )
+    zoom_xvals = [xvals[i] for i in recent_mask]
+    zoom_yvals = [yvals[i] for i in recent_mask]
+    z_low, z_high = _sigma_window(zoom_yvals, nsigma=5.0)
+    zoom_in_x, zoom_in_y, zoom_low_x, zoom_high_x = _split_outliers(
+        zoom_xvals, zoom_yvals, z_low, z_high
+    )
+    src_zoom = ColumnDataSource(data={"x": zoom_in_x, "y": zoom_in_y})
     p_zoom = figure(
-        x_axis_type='datetime',
+        x_axis_type="datetime",
         tools=tools,
-        active_scroll='wheel_zoom',
+        active_scroll="wheel_zoom",
         height=320,
-        sizing_mode='stretch_width',
-        title=f'{display_name}: last 6 months',
+        sizing_mode="stretch_width",
+        title=f"{display_name}: last 6 months",
         background_fill_color=base.PLOT_BACKGROUND_COLOR,
     )
-    p_zoom.add_tools(HoverTool(
-        tooltips=[
-            ('Date (UTC)', '@x{%F %T}'),
-            ('Value', '@y{0.000000}'),
-        ],
-        formatters={'@x': 'datetime'},
-        mode='mouse',
-    ))
-    p_zoom.add_tools(CrosshairTool(dimensions='both'))
-    p_zoom.scatter('x', 'y', source=src_zoom, size=6, alpha=0.85,
-                   color='#d95f02')
-    p_zoom.xaxis.axis_label = 'Date (UTC)'
+    p_zoom.add_tools(
+        HoverTool(
+            tooltips=[
+                ("Date (UTC)", "@x{%F %T}"),
+                ("Value", "@y{0.000000}"),
+            ],
+            formatters={"@x": "datetime"},
+            mode="mouse",
+        )
+    )
+    p_zoom.add_tools(CrosshairTool(dimensions="both"))
+    p_zoom.scatter(
+        "x", "y", source=src_zoom, size=6, alpha=0.85, color="#d95f02"
+    )
+    _apply_plot_window_and_outlier_arrows(
+        p_zoom,
+        ymin=z_low,
+        ymax=z_high,
+        low_x=zoom_low_x,
+        high_x=zoom_high_x,
+    )
+    p_zoom.xaxis.axis_label = "Date (UTC)"
     p_zoom.yaxis.axis_label = label
     p_zoom.xaxis.formatter = DatetimeTickFormatter(
-        days='%Y-%m-%d', months='%Y-%m', years='%Y',
+        days="%Y-%m-%d",
+        months="%Y-%m",
+        years="%Y",
     )
     # -------------------------------------------------------------------------
     # serialise both views
     full_script, full_div = components(p_full)
     zoom_script, zoom_div = components(p_zoom)
     return {
-        'display_name': display_name,
-        'label': label,
-        'full_script': full_script,
-        'zoom_script': zoom_script,
-        'full_div': full_div,
-        'zoom_div': zoom_div,
-        'has_plot': True,
-        'message': '',
+        "display_name": display_name,
+        "label": label,
+        "full_script": full_script,
+        "zoom_script": zoom_script,
+        "full_div": full_div,
+        "zoom_div": zoom_div,
+        "has_plot": True,
+        "message": "",
     }
+
+
+def _science_fiber(profile_data: Dict[str, Any]) -> str:
+    """Return configured science fiber (upper case), or empty when unset."""
+    if not isinstance(profile_data, dict):
+        return ""
+    general = profile_data.get("general", {})
+    if not isinstance(general, dict):
+        return ""
+    return str(general.get("science_fiber", "") or "").strip().upper()
+
+
+def _normalize_row_fiber(row: Dict[str, Any]) -> str:
+    """Extract a row fiber label from any known key names."""
+    for key in ("KW_FIBER", "FIBER", "SCIENCE_FIBER"):
+        raw = row.get(key)
+        if raw is None:
+            continue
+        sval = str(raw).strip().upper()
+        if sval:
+            return sval
+    return ""
+
+
+def _wave_fiber_values(rows: List[Dict[str, Any]]) -> List[str]:
+    """Return sorted distinct fiber labels from wave rows."""
+    fibers = set()
+    for row in rows:
+        if not isinstance(row, dict):
+            continue
+        fiber = _normalize_row_fiber(row)
+        if fiber:
+            fibers.add(fiber)
+    return sorted(fibers)
+
+
+def _dedupe_wave_rows(rows: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    """Fallback de-duplication: keep first row per timestamp."""
+    deduped: List[Dict[str, Any]] = []
+    seen_times = set()
+    for row in rows:
+        if not isinstance(row, dict):
+            continue
+        tval = row.get("KW_MID_OBS_TIME")
+        if tval in seen_times:
+            continue
+        seen_times.add(tval)
+        deduped.append(row)
+    return deduped
+
+
+def _filter_wave_rows(
+    rows: List[Dict[str, Any]],
+    profile_data: Dict[str, Any],
+    selected_fiber: str = "",
+) -> Tuple[List[Dict[str, Any]], str, List[str]]:
+    """Filter wave rows by selected/default fiber and return metadata."""
+    if not rows:
+        return rows, "", []
+
+    available_fibers = _wave_fiber_values(rows)
+    fibers_present = len(available_fibers) > 0
+    requested = str(selected_fiber or "").strip().upper()
+    if requested in {"ALL", "__ALL__", "*"}:
+        requested = ""
+
+    if requested and fibers_present:
+        filtered = [
+            r
+            for r in rows
+            if isinstance(r, dict) and _normalize_row_fiber(r) == requested
+        ]
+        return filtered, requested, available_fibers
+
+    default_fiber = _science_fiber(profile_data)
+    if not requested and default_fiber and fibers_present:
+        filtered = [
+            r
+            for r in rows
+            if isinstance(r, dict) and _normalize_row_fiber(r) == default_fiber
+        ]
+        if filtered:
+            return filtered, default_fiber, available_fibers
+
+    # Legacy rows may have no fiber metadata yet.
+    return _dedupe_wave_rows(rows), "", available_fibers
+
+
+def _sigma_window(
+    values: List[float], nsigma: float = 5.0
+) -> Tuple[float, float]:
+    """Return a robust y-range around median ± nsigma*std with sane padding."""
+    clean: List[float] = []
+    for value in values:
+        if value is None:
+            continue
+        try:
+            fval = float(value)
+        except (TypeError, ValueError):
+            continue
+        if not math.isfinite(fval):
+            continue
+        clean.append(fval)
+    if not clean:
+        return -1.0, 1.0
+
+    med = float(statistics.median(clean))
+    sigma = float(statistics.pstdev(clean)) if len(clean) > 1 else 0.0
+    if sigma <= 0:
+        # Flat series: center around median with a small non-zero window.
+        pad = max(abs(med) * 0.05, 1e-6)
+        ymin = med - pad
+        ymax = med + pad
+    else:
+        ymin = med - nsigma * sigma
+        ymax = med + nsigma * sigma
+
+    if not math.isfinite(ymin) or not math.isfinite(ymax) or ymin == ymax:
+        pad = max(abs(med) * 0.05, 1e-6)
+        ymin = med - pad
+        ymax = med + pad
+    return ymin, ymax
+
+
+def _split_outliers(
+    xvals: List[Any], yvals: List[float], ymin: float, ymax: float
+) -> Tuple[List[Any], List[float], List[Any], List[Any]]:
+    """Split points into in-range, low-outlier and high-outlier buckets."""
+    in_x: List[Any] = []
+    in_y: List[float] = []
+    low_x: List[Any] = []
+    high_x: List[Any] = []
+    for xval, yval in zip(xvals, yvals):
+        if yval < ymin:
+            low_x.append(xval)
+        elif yval > ymax:
+            high_x.append(xval)
+        else:
+            in_x.append(xval)
+            in_y.append(yval)
+    return in_x, in_y, low_x, high_x
+
+
+def _apply_plot_window_and_outlier_arrows(
+    pobj: Any, ymin: float, ymax: float, low_x: List[Any], high_x: List[Any]
+) -> None:
+    """Apply y-range and draw arrow-like markers for clipped outliers."""
+    span = ymax - ymin
+    if not math.isfinite(span) or span <= 0:
+        span = max(abs(ymax), 1.0)
+    margin = max(0.02 * span, 1e-9)
+
+    pobj.y_range.start = ymin
+    pobj.y_range.end = ymax
+
+    # Draw downward triangles near top edge for high outliers and upward
+    # triangles near bottom edge for low outliers.
+    if high_x:
+        pobj.scatter(
+            x=high_x,
+            y=[ymax - margin] * len(high_x),
+            marker="inverted_triangle",
+            size=9,
+            color="#c1121f",
+            alpha=0.95,
+        )
+    if low_x:
+        pobj.scatter(
+            x=low_x,
+            y=[ymin + margin] * len(low_x),
+            marker="triangle",
+            size=9,
+            color="#003049",
+            alpha=0.95,
+        )
 
 
 def _metric_definitions(section: str) -> List[Tuple[str, str, str, str]]:
@@ -298,32 +515,34 @@ def _metric_definitions(section: str) -> List[Tuple[str, str, str, str]]:
     :return: list of 4-tuples describing each metric
     :rtype: list[tuple[str, str, str, str]]
     """
-    sname = str(section or '').strip().lower()
+    sname = str(section or "").strip().lower()
     # -------------------------------------------------------------------------
     # shape metrics
-    if sname == 'shape':
+    if sname == "shape":
         return [
-            ('KW_SHAPE_DX', 'SHAPE DX', 'SHAPEL',
-             'qc_stats_SHAPEL.json'),
-            ('KW_SHAPE_DY', 'SHAPE DY', 'SHAPEL',
-             'qc_stats_SHAPEL.json'),
-            ('KW_SHAPE_A', 'SHAPE A', 'SHAPEL',
-             'qc_stats_SHAPEL.json'),
-            ('KW_SHAPE_B', 'SHAPE B', 'SHAPEL',
-             'qc_stats_SHAPEL.json'),
-            ('KW_SHAPE_C', 'SHAPE C', 'SHAPEL',
-             'qc_stats_SHAPEL.json'),
-            ('KW_SHAPE_D', 'SHAPE D', 'SHAPEL',
-             'qc_stats_SHAPEL.json'),
+            ("KW_SHAPE_DX", "SHAPE DX", "SHAPEL", "qc_stats_SHAPEL.json"),
+            ("KW_SHAPE_DY", "SHAPE DY", "SHAPEL", "qc_stats_SHAPEL.json"),
+            ("KW_SHAPE_A", "SHAPE A", "SHAPEL", "qc_stats_SHAPEL.json"),
+            ("KW_SHAPE_B", "SHAPE B", "SHAPEL", "qc_stats_SHAPEL.json"),
+            ("KW_SHAPE_C", "SHAPE C", "SHAPEL", "qc_stats_SHAPEL.json"),
+            ("KW_SHAPE_D", "SHAPE D", "SHAPEL", "qc_stats_SHAPEL.json"),
         ]
     # -------------------------------------------------------------------------
     # wave metrics
-    if sname == 'wave':
+    if sname == "wave":
         return [
-            ('KW_WFP_DRIFT', 'WFP DRIFT', 'WAVE_NIGHT',
-             'qc_stats_WAVE_NIGHT.json'),
-            ('KW_CAVITY_WIDTH', 'CAVITY WIDTH', 'WAVE_NIGHT',
-             'qc_stats_WAVE_NIGHT.json'),
+            (
+                "KW_WFP_DRIFT",
+                "WFP DRIFT",
+                "WAVE_NIGHT",
+                "qc_stats_WAVE_NIGHT.json",
+            ),
+            (
+                "KW_CAVITY_WIDTH",
+                "CAVITY WIDTH",
+                "WAVE_NIGHT",
+                "qc_stats_WAVE_NIGHT.json",
+            ),
         ]
     return []
 
@@ -331,8 +550,9 @@ def _metric_definitions(section: str) -> List[Tuple[str, str, str, str]]:
 # =============================================================================
 # Define public builder functions
 # =============================================================================
-def build_qc_plot_payload(base_dir: Path,
-                          profile: Dict[str, Any]) -> Dict[str, Any]:
+def build_qc_plot_payload(
+    base_dir: Path, profile: Dict[str, Any], selected_fiber: str = ""
+) -> Dict[str, Any]:
     """
     Build the full page payload for the quality-control graphs page.
 
@@ -346,21 +566,25 @@ def build_qc_plot_payload(base_dir: Path,
     """
     # -------------------------------------------------------------------------
     # resolve profile metadata
-    profile_id = str(profile.get('profile_id', '') or '').strip()
-    instrument = str(profile.get('instrument', '') or '').strip()
+    profile_id = str(profile.get("profile_id", "") or "").strip()
+    instrument = str(profile.get("instrument", "") or "").strip()
     profile_data: Dict[str, Any] = {}
-    if isinstance(profile.get('data'), dict):
-        profile_data = profile['data']
+    if isinstance(profile.get("data"), dict):
+        profile_data = profile["data"]
     # -------------------------------------------------------------------------
     # load qc_stats JSON rows
-    tasks_dir = Path(base_dir) / 'tasks' / instrument / profile_id
-    shape_rows, shape_err = _load_rows(tasks_dir / 'qc_stats_SHAPEL.json')
-    wave_rows, wave_err = _load_rows(
-        tasks_dir / 'qc_stats_WAVE_NIGHT.json'
-    )
+    tasks_dir = Path(base_dir) / "tasks" / instrument / profile_id
+    shape_rows, shape_err = _load_rows(tasks_dir / "qc_stats_SHAPEL.json")
+    wave_rows, wave_err = _load_rows(tasks_dir / "qc_stats_WAVE_NIGHT.json")
+    wave_fibers: List[str] = []
+    active_wave_fiber = ""
+    if not wave_err:
+        wave_rows, active_wave_fiber, wave_fibers = _filter_wave_rows(
+            wave_rows, profile_data, selected_fiber=selected_fiber
+        )
     # -------------------------------------------------------------------------
     # build shape plots
-    shape_defs = [(m[0], m[1]) for m in _metric_definitions('shape')]
+    shape_defs = [(m[0], m[1]) for m in _metric_definitions("shape")]
     shape_plots: List[Dict[str, Any]] = []
     if shape_err:
         for metric_key, display_name in shape_defs:
@@ -370,16 +594,16 @@ def build_qc_plot_payload(base_dir: Path,
     else:
         for metric_key, display_name in shape_defs:
             label = _label_from_headers(
-                profile_data, 'SHAPEL', metric_key, display_name
+                profile_data, "SHAPEL", metric_key, display_name
             )
             item = _build_metric_plot(
                 shape_rows, metric_key, display_name, label
             )
-            item['metric_key'] = metric_key
+            item["metric_key"] = metric_key
             shape_plots.append(item)
     # -------------------------------------------------------------------------
     # build wave plots
-    wave_defs = [(m[0], m[1]) for m in _metric_definitions('wave')]
+    wave_defs = [(m[0], m[1]) for m in _metric_definitions("wave")]
     wave_plots: List[Dict[str, Any]] = []
     if wave_err:
         for metric_key, display_name in wave_defs:
@@ -389,28 +613,33 @@ def build_qc_plot_payload(base_dir: Path,
     else:
         for metric_key, display_name in wave_defs:
             label = _label_from_headers(
-                profile_data, 'WAVE_NIGHT', metric_key, display_name
+                profile_data, "WAVE_NIGHT", metric_key, display_name
             )
             item = _build_metric_plot(
                 wave_rows, metric_key, display_name, label
             )
-            item['metric_key'] = metric_key
+            item["metric_key"] = metric_key
             wave_plots.append(item)
     # -------------------------------------------------------------------------
     # return assembled payload
     return {
-        'shape_plots': shape_plots,
-        'wave_plots': wave_plots,
-        'shape_file': str(tasks_dir / 'qc_stats_SHAPEL.json'),
-        'wave_file': str(tasks_dir / 'qc_stats_WAVE_NIGHT.json'),
+        "shape_plots": shape_plots,
+        "wave_plots": wave_plots,
+        "shape_file": str(tasks_dir / "qc_stats_SHAPEL.json"),
+        "wave_file": str(tasks_dir / "qc_stats_WAVE_NIGHT.json"),
+        "wave_fibers": wave_fibers,
+        "selected_wave_fiber": active_wave_fiber,
     }
 
 
-def build_qc_single_plot_payload(base_dir: Path,
-                                 profile: Dict[str, Any],
-                                 section: str,
-                                 metric_key: str,
-                                 view_key: str) -> Dict[str, Any]:
+def build_qc_single_plot_payload(
+    base_dir: Path,
+    profile: Dict[str, Any],
+    section: str,
+    metric_key: str,
+    view_key: str,
+    selected_fiber: str = "",
+) -> Dict[str, Any]:
     """
     Build the payload for a single QC plot variant used by the
     maximize view.
@@ -426,11 +655,11 @@ def build_qc_single_plot_payload(base_dir: Path,
     """
     # -------------------------------------------------------------------------
     # resolve profile metadata
-    profile_id = str(profile.get('profile_id', '') or '').strip()
-    instrument = str(profile.get('instrument', '') or '').strip()
+    profile_id = str(profile.get("profile_id", "") or "").strip()
+    instrument = str(profile.get("instrument", "") or "").strip()
     profile_data: Dict[str, Any] = {}
-    if isinstance(profile.get('data'), dict):
-        profile_data = profile['data']
+    if isinstance(profile.get("data"), dict):
+        profile_data = profile["data"]
     # -------------------------------------------------------------------------
     # look up metric definition
     defs = _metric_definitions(section)
@@ -441,87 +670,90 @@ def build_qc_single_plot_payload(base_dir: Path,
             break
     if metric is None:
         return {
-            'has_plot': False,
-            'message': f'Unknown QC metric: {metric_key}',
-            'display_name': metric_key,
-            'label': metric_key,
-            'section': section,
-            'view_name': view_key,
-            'plot_div': '',
-            'plot_script': '',
+            "has_plot": False,
+            "message": f"Unknown QC metric: {metric_key}",
+            "display_name": metric_key,
+            "label": metric_key,
+            "section": section,
+            "view_name": view_key,
+            "plot_div": "",
+            "plot_script": "",
         }
     # -------------------------------------------------------------------------
     # load data rows
     _, display_name, header_section, filename = metric
-    tasks_dir = Path(base_dir) / 'tasks' / instrument / profile_id
+    tasks_dir = Path(base_dir) / "tasks" / instrument / profile_id
     rows, err = _load_rows(tasks_dir / filename)
+    active_wave_fiber = ""
+    if not err and str(section or "").strip().lower() == "wave":
+        rows, active_wave_fiber, _ = _filter_wave_rows(
+            rows, profile_data, selected_fiber=selected_fiber
+        )
     label = _label_from_headers(
         profile_data, header_section, metric_key, display_name
     )
     if err:
         return {
-            'has_plot': False,
-            'message': err,
-            'display_name': display_name,
-            'label': label,
-            'section': section,
-            'view_name': view_key,
-            'plot_div': '',
-            'plot_script': '',
+            "has_plot": False,
+            "message": err,
+            "display_name": display_name,
+            "label": label,
+            "section": section,
+            "view_name": view_key,
+            "plot_div": "",
+            "plot_script": "",
         }
     # -------------------------------------------------------------------------
     # build full metric payload
-    metric_payload = _build_metric_plot(
-        rows, metric_key, display_name, label
-    )
-    if not metric_payload.get('has_plot'):
+    metric_payload = _build_metric_plot(rows, metric_key, display_name, label)
+    if not metric_payload.get("has_plot"):
         return {
-            'has_plot': False,
-            'message': metric_payload.get(
-                'message', f'No valid data for {display_name}.'
+            "has_plot": False,
+            "message": metric_payload.get(
+                "message", f"No valid data for {display_name}."
             ),
-            'display_name': display_name,
-            'label': label,
-            'section': section,
-            'view_name': view_key,
-            'plot_div': '',
-            'plot_script': '',
+            "display_name": display_name,
+            "label": label,
+            "section": section,
+            "view_name": view_key,
+            "plot_div": "",
+            "plot_script": "",
         }
     # -------------------------------------------------------------------------
     # select view variant
-    vkey = str(view_key or '').strip().lower()
-    if vkey not in {'full', 'zoom'}:
-        vkey = 'full'
-    if vkey == 'zoom':
-        plot_div = metric_payload.get('zoom_div', '')
-        plot_script = metric_payload.get('zoom_script', '')
-        view_name = 'Last 6 months'
+    vkey = str(view_key or "").strip().lower()
+    if vkey not in {"full", "zoom"}:
+        vkey = "full"
+    if vkey == "zoom":
+        plot_div = metric_payload.get("zoom_div", "")
+        plot_script = metric_payload.get("zoom_script", "")
+        view_name = "Last 6 months"
     else:
-        plot_div = metric_payload.get('full_div', '')
-        plot_script = metric_payload.get('full_script', '')
-        view_name = 'Full time series'
+        plot_div = metric_payload.get("full_div", "")
+        plot_script = metric_payload.get("full_script", "")
+        view_name = "Full time series"
     # -------------------------------------------------------------------------
     # return final payload
     return {
-        'has_plot': True,
-        'message': '',
-        'display_name': display_name,
-        'label': label,
-        'section': section,
-        'view_name': view_name,
-        'plot_div': plot_div,
-        'plot_script': plot_script,
+        "has_plot": True,
+        "message": "",
+        "display_name": display_name,
+        "label": label,
+        "section": section,
+        "view_name": view_name,
+        "plot_div": plot_div,
+        "plot_script": plot_script,
+        "selected_wave_fiber": active_wave_fiber,
     }
 
 
 # =============================================================================
 # Start of code
 # =============================================================================
-if __name__ == '__main__':
+if __name__ == "__main__":
     # --------------------------------------------------------------------------
-    print('Hello World!')
+    print("Hello World!")
 
 # =============================================================================
 # End of code
 # =============================================================================
-

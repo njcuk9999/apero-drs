@@ -22,10 +22,17 @@
     <div id="db-setup-tab-local">
         <div class="ari-ae-section" style="margin-bottom:12px;">
             <h2 class="ari-ae-section-title">
+                <i class="fa-solid fa-server"></i> Saved Local Databases
+            </h2>
+            <div id="dbLocalList" style="display:grid; gap:10px;"></div>
+        </div>
+
+        <div class="ari-ae-section" style="margin-bottom:12px;">
+            <h2 class="ari-ae-section-title">
                 <i class="fa-solid fa-computer"></i> Local Database Definitions
             </h2>
 
-            <div style="display:grid; gap:10px; grid-template-columns:repeat(auto-fit,minmax(320px,1fr)); margin-bottom:10px;">
+            <div style="display:grid; gap:10px; grid-template-columns:1fr; margin-bottom:10px;">
                 <div class="ari-ae-field">
                     <label class="ari-ae-label" for="dbLocalName">Definition Name</label>
                     <input id="dbLocalName" class="ari-ap-input" placeholder="e.g. spirou_main_local">
@@ -44,13 +51,13 @@
                     <label class="ari-ae-label" for="dbLocalPort">DATABASE_PORT: local database-port (must be unique from other databases)</label>
                     <input id="dbLocalPort" class="ari-ap-input" placeholder="3306 (local DB port)" value="3306">
                 </div>
-                <div class="ari-ae-field" style="grid-column:1 / -1;">
+                <div class="ari-ae-field">
                     <label class="ari-ae-label" for="dbLocalNotes">Notes</label>
                     <input id="dbLocalNotes" class="ari-ap-input" placeholder="Optional notes">
                 </div>
             </div>
 
-            <div style="display:grid; gap:10px; grid-template-columns:repeat(auto-fit,minmax(320px,1fr)); margin-bottom:10px; border-top:1px solid #ddd; padding-top:10px;">
+            <div style="display:grid; gap:10px; grid-template-columns:1fr; margin-bottom:10px; border-top:1px solid #ddd; padding-top:10px;">
                 <div class="ari-ae-field">
                     <label class="ari-ae-label" for="dbLocalTestUser">DATABASE_USERNAME</label>
                     <input id="dbLocalTestUser" class="ari-ap-input" placeholder="For connection testing only">
@@ -85,13 +92,6 @@
             </div>
             <div id="dbLocalTestResult" class="ari-ap-validation" style="display:none;"></div>
         </div>
-
-        <div class="ari-ae-section" style="margin-bottom:12px;">
-            <h2 class="ari-ae-section-title">
-                <i class="fa-solid fa-server"></i> Saved Local Databases
-            </h2>
-            <div id="dbLocalList" style="display:grid; gap:10px;"></div>
-        </div>
     </div>
 
     <div id="db-setup-tab-tunnel" style="display:none;">
@@ -104,6 +104,13 @@
             <button class="ari-btn ari-btn--secondary ari-btn--sm" onclick="dbTunnelRefresh()">
                 <i class="fa-solid fa-rotate"></i> Refresh
             </button>
+        </div>
+
+        <div class="ari-ae-section" style="margin-bottom:12px;">
+            <h2 class="ari-ae-section-title">
+                <i class="fa-solid fa-server"></i> Saved DB SSH Tunnels
+            </h2>
+            <div id="dbTunnelList" style="display:grid; gap:10px;"></div>
         </div>
 
         <div class="ari-ae-section" style="margin-bottom:12px;">
@@ -133,7 +140,7 @@
                 </div>
             </div>
 
-            <div style="display:grid; gap:10px; grid-template-columns:repeat(auto-fit,minmax(320px,1fr)); margin-bottom:10px;">
+            <div style="display:grid; gap:10px; grid-template-columns:1fr; margin-bottom:10px;">
                 <div class="ari-ae-field">
                     <label class="ari-ae-label" for="dbTunnelName">DATABASE_TUNNEL_NAME: Definition name</label>
                     <input id="dbTunnelName" class="ari-ap-input" placeholder="e.g. spirou_main_tunnel">
@@ -155,13 +162,19 @@
                     <label class="ari-ae-label" for="dbTunnelLocalPort">DATABASE_SSH_LOCAL_PORT: local database-port (must be unique from other databases)</label>
                     <input id="dbTunnelLocalPort" class="ari-ap-input" placeholder="Local forward DB port (must be unique)">
                 </div>
-                <div class="ari-ae-field" style="grid-column:1 / -1;">
+                <div class="ari-ae-field" style="display:flex; align-items:end;">
+                    <label class="ari-ae-label" style="display:flex; gap:8px; align-items:center; margin:0;">
+                        <input id="dbTunnelEnabled" type="checkbox" checked>
+                        Enabled (included in health checks)
+                    </label>
+                </div>
+                <div class="ari-ae-field">
                     <label class="ari-ae-label" for="dbTunnelNotes">Notes</label>
                     <input id="dbTunnelNotes" class="ari-ap-input" placeholder="Optional notes">
                 </div>
             </div>
 
-            <div style="display:grid; gap:10px; grid-template-columns:repeat(auto-fit,minmax(320px,1fr)); margin-bottom:10px; border-top:1px solid #ddd; padding-top:10px;">
+            <div style="display:grid; gap:10px; grid-template-columns:1fr; margin-bottom:10px; border-top:1px solid #ddd; padding-top:10px;">
                 <div class="ari-ae-field">
                     <label class="ari-ae-label" for="dbTunnelTestUser">DATABASE_USERNAME</label>
                     <input id="dbTunnelTestUser" class="ari-ap-input" placeholder="For connection testing only">
@@ -195,13 +208,6 @@
                 </button>
             </div>
             <div id="dbTunnelTestResult" class="ari-ap-validation" style="display:none;"></div>
-        </div>
-
-        <div class="ari-ae-section" style="margin-bottom:12px;">
-            <h2 class="ari-ae-section-title">
-                <i class="fa-solid fa-server"></i> Saved DB SSH Tunnels
-            </h2>
-            <div id="dbTunnelList" style="display:grid; gap:10px;"></div>
         </div>
 
         {% if can_manage_db_tunnel %}
@@ -539,6 +545,8 @@ function dbTunnelResetForm() {
         });
     const remotePort = document.getElementById('dbTunnelRemotePort');
     if (remotePort) remotePort.value = '3306';
+    const enabled = document.getElementById('dbTunnelEnabled');
+    if (enabled) enabled.checked = true;
     const result = document.getElementById('dbTunnelTestResult');
     if (result) result.style.display = 'none';
 }
@@ -556,6 +564,7 @@ function dbTunnelEdit(index) {
     document.getElementById('dbTunnelTestUser').value = String(row.DATABASE_USERNAME || '');
     document.getElementById('dbTunnelTestPass').value = String(row.DATABASE_PASSWORD || '');
     document.getElementById('dbTunnelTestDbName').value = String(row.DATABASE_NAME || '');
+    document.getElementById('dbTunnelEnabled').checked = row.enabled !== false;
     document.getElementById('dbTunnelNotes').value = String(def.notes || '');
 }
 
@@ -569,6 +578,7 @@ function dbTunnelPayload() {
         DATABASE_USERNAME: String(document.getElementById('dbTunnelTestUser').value || '').trim(),
         DATABASE_PASSWORD: String(document.getElementById('dbTunnelTestPass').value || ''),
         DATABASE_NAME: String(document.getElementById('dbTunnelTestDbName').value || '').trim(),
+        enabled: !!document.getElementById('dbTunnelEnabled').checked,
         notes: String(document.getElementById('dbTunnelNotes').value || '').trim(),
     };
 }
@@ -595,15 +605,25 @@ async function dbTunnelRefresh() {
         renderDbTunnelRows();
 
         const active = Number(data.active_count || 0);
+        const enabled = Number(data.enabled_count || 0);
+        const enabledActive = Number(data.enabled_active_count || 0);
+        const disabled = Number(data.disabled_count || 0);
         if (statusIcon) {
-            statusIcon.innerHTML = '<i class="fa-solid fa-circle-check" style="color:#1f8a44;"></i>';
+            const okAllEnabled = enabled > 0 && enabledActive === enabled;
+            if (okAllEnabled) {
+                statusIcon.innerHTML = '<i class="fa-solid fa-circle-check" style="color:#1f8a44;"></i>';
+            } else {
+                statusIcon.innerHTML = '<i class="fa-solid fa-triangle-exclamation" style="color:#b38200;"></i>';
+            }
         }
         if (statusTitle) {
             statusTitle.textContent = 'DB tunnel health loaded';
         }
         if (statusDetail) {
-            statusDetail.textContent = 'Active tunnels: ' + String(active)
-                + '. Saved tunnel definitions: ' + String(dbTunnelRows.length)
+            statusDetail.textContent = 'Enabled active: '
+                + String(enabledActive) + '/' + String(enabled)
+                + '. Total active: ' + String(active)
+                + '. Disabled definitions: ' + String(disabled)
                 + '. Multiple active tunnels are supported.';
         }
     } catch (err) {
@@ -621,13 +641,16 @@ function renderDbTunnelRows() {
     }
     dbTunnelRows.forEach((row, index) => {
         const status = row.status || {};
+        const enabled = row.enabled !== false;
         const active = !!status.active;
         const controlAlive = !!status.control_alive;
         const localOpen = !!status.local_port_open;
         const icon = active
             ? '<i class="fa-solid fa-circle-check" style="color:#1f8a44;"></i>'
             : '<i class="fa-solid fa-circle-xmark" style="color:#999;"></i>';
-        const detail = active ? 'Active' : 'Inactive';
+        const detail = enabled
+            ? (active ? 'Active' : 'Inactive')
+            : 'Disabled';
         const card = document.createElement('div');
         card.style.cssText = 'border:1px solid #ddd; border-radius:8px; padding:10px; display:grid; gap:8px;';
         card.innerHTML = `
@@ -651,8 +674,8 @@ function renderDbTunnelRows() {
             <div style="display:flex; gap:8px; flex-wrap:wrap;">
                 <button class="ari-btn ari-btn--sm ari-btn--secondary" onclick="dbTunnelEdit(${index})"><i class="fa-solid fa-pen"></i> Edit</button>
                 <button class="ari-btn ari-btn--sm ari-btn--primary" onclick="dbTunnelTestSaved(${index})"><i class="fa-solid fa-plug"></i> Test</button>
-                <button class="ari-btn ari-btn--sm ari-btn--primary" onclick="dbTunnelEnsure(${index})" ${row.valid_config ? '' : 'disabled'}><i class="fa-solid fa-plug-circle-check"></i> Start / Verify Tunnel</button>
-                <button class="ari-btn ari-btn--sm ari-btn--secondary" onclick="dbTunnelInteractive(${index})" ${row.valid_config ? '' : 'disabled'}><i class="fa-solid fa-terminal"></i> Interactive Auth</button>
+                <button class="ari-btn ari-btn--sm ari-btn--primary" onclick="dbTunnelEnsure(${index})" ${(row.valid_config && enabled) ? '' : 'disabled'}><i class="fa-solid fa-plug-circle-check"></i> Start / Verify Tunnel</button>
+                <button class="ari-btn ari-btn--sm ari-btn--secondary" onclick="dbTunnelInteractive(${index})" ${(row.valid_config && enabled) ? '' : 'disabled'}><i class="fa-solid fa-terminal"></i> Interactive Auth</button>
                 <button class="ari-btn ari-btn--sm ari-btn--secondary" onclick="dbTunnelCloseOne(${index})" ${row.valid_config ? '' : 'disabled'}><i class="fa-solid fa-power-off"></i> Close</button>
                 <button class="ari-btn ari-btn--sm ari-btn--secondary" onclick="dbTunnelDelete(${index})"><i class="fa-solid fa-trash"></i> Delete</button>
             </div>

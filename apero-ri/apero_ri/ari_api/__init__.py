@@ -27,13 +27,19 @@ Quick start::
     info = obj.target_info()               # pandas DataFrame
     obj.get_data('/tmp/GL699_data')        # download files
 """
+
 from apero_ri.ari_api.client import (
+    AperoObject,
+    AperoProfile,
     configure,
     list_profiles,
     list_profiles_detailed,
-    AperoProfile,
-    AperoObject,
 )
 
-__all__ = ['configure', 'list_profiles', 'list_profiles_detailed',
-           'AperoProfile', 'AperoObject']
+__all__ = [
+    "configure",
+    "list_profiles",
+    "list_profiles_detailed",
+    "AperoProfile",
+    "AperoObject",
+]

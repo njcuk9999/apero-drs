@@ -23,6 +23,7 @@ Created on 2024-01-01
 
 @author: cook
 """
+
 from __future__ import annotations
 
 import re
@@ -36,20 +37,26 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
 import numpy as np
-from astropy.time import Time
-from bokeh.models import (ColumnDataSource, CrosshairTool, HoverTool,
-                          Range1d, Span)
-
 from apero_ri.base import base
-from apero_ri.plots.plot_general import make_time_figure
-from apero_ri.plots.plot_general import mjd_to_datetime
-from apero_ri.plots.plot_general import plot_to_components
-from apero_ri.plots.plot_general import sci_header_label
+from apero_ri.plots.plot_general import (
+    make_time_figure,
+    mjd_to_datetime,
+    plot_to_components,
+    sci_header_label,
+)
+from astropy.time import Time
+from bokeh.models import (
+    ColumnDataSource,
+    CrosshairTool,
+    HoverTool,
+    Range1d,
+    Span,
+)
 
 # =============================================================================
 # Define variables
 # =============================================================================
-__NAME__ = 'apero_ri.plots.plot_objects'
+__NAME__ = "apero_ri.plots.plot_objects"
 __PACKAGE__ = base.__PACKAGE__
 __version__ = base.__version__
 __authors__ = base.__authors__
@@ -58,19 +65,21 @@ __release__ = base.__release__
 
 # BLOCK_KIND → PATH_KEY mapping (mirrors apero_ri.base.base)
 _BLOCK_KIND_TO_PATH: Dict[str, str] = {
-    'raw':   'PATH_RAW',
-    'tmp':   'PATH_PP',
-    'calib': 'PATH_CALIB',
-    'red':   'PATH_RED',
-    'tellu': 'PATH_TELLU',
-    'out':   'PATH_OUT',
-    'lbl':   'PATH_LBL',
+    "raw": "PATH_RAW",
+    "tmp": "PATH_PP",
+    "calib": "PATH_CALIB",
+    "red": "PATH_RED",
+    "tellu": "PATH_TELLU",
+    "out": "PATH_OUT",
+    "lbl": "PATH_LBL",
 }
 
 # CCF performance knobs (kept conservative for UI responsiveness)
 _CCF_CACHE_MAX_ENTRIES = 512
 _CCF_RV_MAX_POINTS = 2500
-_CCF_FILE_CACHE: OrderedDict[str, Tuple[float, np.ndarray, np.ndarray]] = OrderedDict()
+_CCF_FILE_CACHE: OrderedDict[str, Tuple[float, np.ndarray, np.ndarray]] = (
+    OrderedDict()
+)
 _CCF_FILE_CACHE_LOCK = threading.Lock()
 
 
@@ -125,9 +134,9 @@ def _read_ccf_row_cached(path: str) -> Optional[Tuple[np.ndarray, np.ndarray]]:
 
     try:
         with _fits.open(str(path), memmap=False) as hdul:
-            t = hdul['RV_TABLE']
-            rv_vec = np.array(t.data['RV'], dtype=float)
-            ccf_row = np.array(t.data['CCF_STACK'], dtype=float)
+            t = hdul["RV_TABLE"]
+            rv_vec = np.array(t.data["RV"], dtype=float)
+            ccf_row = np.array(t.data["CCF_STACK"], dtype=float)
     except Exception:
         return None
 
@@ -159,18 +168,18 @@ def _extract_snr_points(
     for row in htable_rows:
         if not isinstance(row, dict):
             continue
-        dt = mjd_to_datetime(row.get('EXT_MJDMID'))
+        dt = mjd_to_datetime(row.get("EXT_MJDMID"))
         if dt is None:
             continue
-        qc_ok = int(row.get('EXT_QCC_ALL') or 1) == 1
+        qc_ok = int(row.get("EXT_QCC_ALL") or 1) == 1
         # ---------------------------------------------------------------------
-        raw_h = row.get('EXT_H')
+        raw_h = row.get("EXT_H")
         if raw_h is not None:
             try:
                 h_pts.append((dt, float(raw_h), qc_ok))
             except (TypeError, ValueError):
                 pass
-        raw_y = row.get('EXT_Y')
+        raw_y = row.get("EXT_Y")
         if raw_y is not None:
             try:
                 y_pts.append((dt, float(raw_y), qc_ok))
@@ -210,10 +219,10 @@ def _extract_berv_points(
     for row in htable_rows:
         if not isinstance(row, dict):
             continue
-        dt = mjd_to_datetime(row.get('EXT_MJDMID'))
+        dt = mjd_to_datetime(row.get("EXT_MJDMID"))
         if dt is None:
             continue
-        raw_berv = row.get('EXT_BERV')
+        raw_berv = row.get("EXT_BERV")
         if raw_berv is None:
             continue
         try:
@@ -221,12 +230,9 @@ def _extract_berv_points(
         except (TypeError, ValueError):
             continue
         # ---------------------------------------------------------------------
-        vtot = (
-            (vsys_kms - berv_kms) if vsys_kms is not None
-            else -berv_kms
-        )
-        ext_qc_ok = int(row.get('EXT_QCC_ALL') or 1) == 1
-        tcorr_qc_raw = row.get('TCORR_QCC_ALL')
+        vtot = (vsys_kms - berv_kms) if vsys_kms is not None else -berv_kms
+        ext_qc_ok = int(row.get("EXT_QCC_ALL") or 1) == 1
+        tcorr_qc_raw = row.get("TCORR_QCC_ALL")
         tcorr_qc_ok = (
             bool(int(tcorr_qc_raw) == 1)
             if tcorr_qc_raw is not None
@@ -285,7 +291,7 @@ def _compute_berv_curve(
         for row in htable_rows:
             if not isinstance(row, dict):
                 continue
-            v = row.get('EXT_MJDMID')
+            v = row.get("EXT_MJDMID")
             if v is not None:
                 try:
                     mjd_vals.append(float(v))
@@ -297,35 +303,40 @@ def _compute_berv_curve(
         # daily JD times, 14 days before first obs and 60 days after last
         mjd_min = min(mjd_vals)
         mjd_max = max(mjd_vals)
-        jd_start = Time(mjd_min, format='mjd').jd - 14
-        jd_end = Time(mjd_max, format='mjd').jd + 60
+        jd_start = Time(mjd_min, format="mjd").jd - 14
+        jd_end = Time(mjd_max, format="mjd").jd + 60
         times_jd = np.arange(jd_start, jd_end, 1.0)
         # ---------------------------------------------------------------------
         # object parameters
-        ra = float(obj_props.get('RA [Deg]') or 0.0)
-        dec = float(obj_props.get('Dec [Deg]') or 0.0)
-        pmra = float(obj_props.get('PMRA [mas/yr]') or 0.0)
-        pmdec = float(obj_props.get('PMDE [mas/yr]') or 0.0)
-        px = float(obj_props.get('Plx [mas]') or 0.0)
-        rv = float(obj_props.get('RV [km/s]') or 0.0)
+        ra = float(obj_props.get("RA [Deg]") or 0.0)
+        dec = float(obj_props.get("Dec [Deg]") or 0.0)
+        pmra = float(obj_props.get("PMRA [mas/yr]") or 0.0)
+        pmdec = float(obj_props.get("PMDE [mas/yr]") or 0.0)
+        px = float(obj_props.get("Plx [mas]") or 0.0)
+        rv = float(obj_props.get("RV [km/s]") or 0.0)
         # ---------------------------------------------------------------------
         # observatory parameters
-        lat = float(obs_props.get('lat', 0.0))
-        lon = float(obs_props.get('lon', 0.0))
-        alt = float(obs_props.get('alt', 0.0))
+        lat = float(obs_props.get("lat", 0.0))
+        lon = float(obs_props.get("lon", 0.0))
+        alt = float(obs_props.get("alt", 0.0))
 
         with warnings.catch_warnings():
-            warnings.simplefilter('ignore')
+            warnings.simplefilter("ignore")
             result = barycorrpy.get_BC_vel(
                 JDUTC=times_jd,
-                ra=ra, dec=dec,
-                epoch=2451545.0,   # J2000.0 in JD
-                pmra=pmra, pmdec=pmdec,
-                px=px, rv=rv,
-                lat=lat, longi=lon, alt=alt,
+                ra=ra,
+                dec=dec,
+                epoch=2451545.0,  # J2000.0 in JD
+                pmra=pmra,
+                pmdec=pmdec,
+                px=px,
+                rv=rv,
+                lat=lat,
+                longi=lon,
+                alt=alt,
                 leap_update=False,
             )
-        bervs_kms = result[0] / 1000.0   # convert m/s → km/s
+        bervs_kms = result[0] / 1000.0  # convert m/s → km/s
         vsys_kms = (vsys_ms / 1000.0) if vsys_ms is not None else 0.0
         vtot_kms = vsys_kms - bervs_kms
         # ---------------------------------------------------------------------
@@ -333,9 +344,7 @@ def _compute_berv_curve(
         x_dates = []
         for jd in times_jd:
             try:
-                dt = Time(jd, format='jd').to_datetime(
-                    timezone=timezone.utc
-                )
+                dt = Time(jd, format="jd").to_datetime(timezone=timezone.utc)
                 x_dates.append(dt)
             except Exception:
                 pass
@@ -348,8 +357,9 @@ def _compute_berv_curve(
 # =============================================================================
 # Define private SNR / BERV figure builders
 # =============================================================================
-def _make_snr_figure(h_pts: list, y_pts: list,
-                     label_h: str, label_y: str) -> Any:
+def _make_snr_figure(
+    h_pts: list, y_pts: list, label_h: str, label_y: str
+) -> Any:
     """
     Build a Bokeh figure for the SNR vs time plot.
 
@@ -361,44 +371,58 @@ def _make_snr_figure(h_pts: list, y_pts: list,
     :return: Bokeh figure object
     :rtype: bokeh.plotting.figure
     """
-    fig = make_time_figure(
-        title='Signal to Noise Ratio vs Time', height=400
-    )
+    fig = make_time_figure(title="Signal to Noise Ratio vs Time", height=400)
     hover = HoverTool(
         tooltips=[
-            ('Date (UTC)', '@x{%F %T}'),
-            ('SNR',        '@y{0.00}'),
+            ("Date (UTC)", "@x{%F %T}"),
+            ("SNR", "@y{0.00}"),
         ],
-        formatters={'@x': 'datetime'},
-        mode='mouse',
+        formatters={"@x": "datetime"},
+        mode="mouse",
     )
     fig.add_tools(hover)
+
     # -------------------------------------------------------------------------
-    def _add_series(pts: list, color: str,
-                    legend_label: str) -> None:
+    def _add_series(pts: list, color: str, legend_label: str) -> None:
         pass_x = [p[0] for p in pts if p[2]]
         pass_y = [p[1] for p in pts if p[2]]
         fail_x = [p[0] for p in pts if not p[2]]
         fail_y = [p[1] for p in pts if not p[2]]
         if pass_x:
-            src = ColumnDataSource({'x': pass_x, 'y': pass_y})
-            fig.scatter('x', 'y', source=src, color=color, size=6,
-                        alpha=0.78, marker='circle',
-                        legend_label=legend_label)
+            src = ColumnDataSource({"x": pass_x, "y": pass_y})
+            fig.scatter(
+                "x",
+                "y",
+                source=src,
+                color=color,
+                size=6,
+                alpha=0.78,
+                marker="circle",
+                legend_label=legend_label,
+            )
         if fail_x:
-            src = ColumnDataSource({'x': fail_x, 'y': fail_y})
-            fig.scatter('x', 'y', source=src, color=color, size=9,
-                        alpha=0.9, line_width=2, marker='cross',
-                        legend_label=f'{legend_label} (QC fail)')
-    # -------------------------------------------------------------------------
-    _add_series(h_pts, '#e6820a', label_h)   # orange for H-band
-    _add_series(y_pts, '#7e22ce', label_y)   # purple for Y-band
+            src = ColumnDataSource({"x": fail_x, "y": fail_y})
+            fig.scatter(
+                "x",
+                "y",
+                source=src,
+                color=color,
+                size=9,
+                alpha=0.9,
+                line_width=2,
+                marker="cross",
+                legend_label=f"{legend_label} (QC fail)",
+            )
 
-    fig.xaxis.axis_label = 'Date (UTC)'
-    fig.yaxis.axis_label = 'SNR'
+    # -------------------------------------------------------------------------
+    _add_series(h_pts, "#e6820a", label_h)  # orange for H-band
+    _add_series(y_pts, "#7e22ce", label_y)  # purple for Y-band
+
+    fig.xaxis.axis_label = "Date (UTC)"
+    fig.yaxis.axis_label = "SNR"
     if fig.legend:
-        fig.legend.location = 'top_left'
-        fig.legend.click_policy = 'hide'
+        fig.legend.location = "top_left"
+        fig.legend.click_policy = "hide"
     return fig
 
 
@@ -425,69 +449,116 @@ def _make_berv_figure(
     :return: Bokeh figure object
     :rtype: bokeh.plotting.figure
     """
-    fig = make_time_figure(title='BERV Coverage', height=400)
+    fig = make_time_figure(title="BERV Coverage", height=400)
     hover_pts = HoverTool(
         tooltips=[
-            ('Date (UTC)', '@x{%F %T}'),
-            ('Vtot',       '@y{0.000} km/s'),
+            ("Date (UTC)", "@x{%F %T}"),
+            ("Vtot", "@y{0.000} km/s"),
         ],
-        formatters={'@x': 'datetime'},
-        mode='mouse',
+        formatters={"@x": "datetime"},
+        mode="mouse",
     )
     fig.add_tools(hover_pts)
     # -------------------------------------------------------------------------
     # BERV curve (background line)
     if curve_x and curve_y:
-        src_curve = ColumnDataSource({'x': curve_x, 'y': curve_y})
-        fig.line('x', 'y', source=src_curve, line_color='gray',
-                 line_dash='dotted', line_width=2, alpha=0.7,
-                 legend_label='BERV curve')
+        src_curve = ColumnDataSource({"x": curve_x, "y": curve_y})
+        fig.line(
+            "x",
+            "y",
+            source=src_curve,
+            line_color="gray",
+            line_dash="dotted",
+            line_width=2,
+            alpha=0.7,
+            legend_label="BERV curve",
+        )
     # -------------------------------------------------------------------------
     # Vsys horizontal line  — solid blue
     if vsys_ms is not None:
         vsys_kms = vsys_ms / 1000.0
         vsys_span = Span(
-            location=vsys_kms, dimension='width',
-            line_color='blue', line_dash='solid',
-            line_width=1.5, level='overlay',
+            location=vsys_kms,
+            dimension="width",
+            line_color="blue",
+            line_dash="solid",
+            line_width=1.5,
+            level="overlay",
         )
         fig.add_layout(vsys_span)
-        src_dummy = ColumnDataSource({'x': [], 'y': []})
-        fig.line('x', 'y', source=src_dummy, line_color='blue',
-                 line_width=1.5,
-                 legend_label=f'v_sys = {vsys_kms:.3f} km/s')
+        src_dummy = ColumnDataSource({"x": [], "y": []})
+        fig.line(
+            "x",
+            "y",
+            source=src_dummy,
+            line_color="blue",
+            line_width=1.5,
+            legend_label=f"v_sys = {vsys_kms:.3f} km/s",
+        )
     # -------------------------------------------------------------------------
     # observation points (rendered on top)
     if passed:
-        src = ColumnDataSource({
-            'x': [p[0] for p in passed],
-            'y': [p[1] for p in passed],
-        })
-        fig.scatter('x', 'y', source=src, name='berv_pts',
-                    color='green', size=6, alpha=0.6,
-                    marker='circle', legend_label='Passed all QC')
+        src = ColumnDataSource(
+            {
+                "x": [p[0] for p in passed],
+                "y": [p[1] for p in passed],
+            }
+        )
+        fig.scatter(
+            "x",
+            "y",
+            source=src,
+            name="berv_pts",
+            color="green",
+            size=6,
+            alpha=0.6,
+            marker="circle",
+            legend_label="Passed all QC",
+        )
     if ext_fail:
-        src = ColumnDataSource({
-            'x': [p[0] for p in ext_fail],
-            'y': [p[1] for p in ext_fail],
-        })
-        fig.scatter('x', 'y', source=src, name='berv_pts',
-                    color='blue', size=9, alpha=0.9, line_width=2,
-                    marker='cross', legend_label='Failed QC (EXT)')
+        src = ColumnDataSource(
+            {
+                "x": [p[0] for p in ext_fail],
+                "y": [p[1] for p in ext_fail],
+            }
+        )
+        fig.scatter(
+            "x",
+            "y",
+            source=src,
+            name="berv_pts",
+            color="blue",
+            size=9,
+            alpha=0.9,
+            line_width=2,
+            marker="cross",
+            legend_label="Failed QC (EXT)",
+        )
     if tcorr_fail:
-        src = ColumnDataSource({
-            'x': [p[0] for p in tcorr_fail],
-            'y': [p[1] for p in tcorr_fail],
-        })
-        fig.scatter('x', 'y', source=src, name='berv_pts',
-                    color='red', size=9, alpha=0.9, line_width=2,
-                    marker='cross', legend_label='Failed QC (TCORR)')
+        src = ColumnDataSource(
+            {
+                "x": [p[0] for p in tcorr_fail],
+                "y": [p[1] for p in tcorr_fail],
+            }
+        )
+        fig.scatter(
+            "x",
+            "y",
+            source=src,
+            name="berv_pts",
+            color="red",
+            size=9,
+            alpha=0.9,
+            line_width=2,
+            marker="cross",
+            legend_label="Failed QC (TCORR)",
+        )
     # -------------------------------------------------------------------------
-    fig.xaxis.axis_label = 'Date (UTC)'
+    fig.xaxis.axis_label = "Date (UTC)"
     fig.yaxis.axis_label = y_label
     if fig.legend:
-        fig.legend.location = 'top_left'
-        fig.legend.click_policy = 'hide'
+        fig.legend.location = "top_left"
+        fig.legend.click_policy = "hide"
     return fig
 
 
@@ -497,7 +568,7 @@ def _make_berv_figure(
 def build_snr_plot_json(
     htable_rows: List[Dict[str, Any]],
     preset: Dict[str, Any],
-    target_id: str = 'op-snr-plot-div',
+    target_id: str = "op-snr-plot-div",
 ) -> Dict[str, Any]:
     """
     Build SNR plot payload as a ``json_item`` dict for client-side
@@ -510,21 +581,21 @@ def build_snr_plot_json(
     :return: dict with has_plot, item/message
     :rtype: dict
     """
-    label_h = sci_header_label(preset, 'ext', 'EXT_H', 'H-band SNR')
-    label_y = sci_header_label(preset, 'ext', 'EXT_Y', 'Y-band SNR')
+    label_h = sci_header_label(preset, "ext", "EXT_H", "H-band SNR")
+    label_y = sci_header_label(preset, "ext", "EXT_Y", "Y-band SNR")
     h_pts, y_pts = _extract_snr_points(htable_rows)
     if not h_pts and not y_pts:
         return {
-            'has_plot': False,
-            'message': 'No SNR data found in htable.',
+            "has_plot": False,
+            "message": "No SNR data found in htable.",
         }
     fig = _make_snr_figure(h_pts, y_pts, label_h, label_y)
     script, div = plot_to_components(fig)
     return {
-        'has_plot': True,
-        'script': script,
-        'div': div,
-        'message': '',
+        "has_plot": True,
+        "script": script,
+        "div": div,
+        "message": "",
     }
 
 
@@ -533,7 +604,7 @@ def build_berv_plot_json(
     vsys_ms: Optional[float],
     preset: Dict[str, Any],
     obj_props: Optional[Dict[str, Any]] = None,
-    target_id: str = 'op-berv-plot-div',
+    target_id: str = "op-berv-plot-div",
 ) -> Dict[str, Any]:
     """
     Build BERV coverage plot payload as a ``json_item`` dict for
@@ -548,33 +619,36 @@ def build_berv_plot_json(
     :return: dict with has_plot, item/message
     :rtype: dict
     """
-    passed, ext_fail, tcorr_fail = _extract_berv_points(
-        htable_rows, vsys_ms
-    )
+    passed, ext_fail, tcorr_fail = _extract_berv_points(htable_rows, vsys_ms)
     if not passed and not ext_fail and not tcorr_fail:
         return {
-            'has_plot': False,
-            'message': 'No BERV data found in htable.',
+            "has_plot": False,
+            "message": "No BERV data found in htable.",
         }
-    obs_props = (preset or {}).get('observatory', {})
+    obs_props = (preset or {}).get("observatory", {})
     curve_x, curve_y = _compute_berv_curve(
         htable_rows, obj_props or {}, obs_props, vsys_ms
     )
     y_label = (
-        'Vtot = Vsys \u2212 BERV [km/s]'
+        "Vtot = Vsys \u2212 BERV [km/s]"
         if vsys_ms is not None
-        else '\u2212BERV [km/s]'
+        else "\u2212BERV [km/s]"
     )
     fig = _make_berv_figure(
-        passed, ext_fail, tcorr_fail,
-        curve_x, curve_y, vsys_ms, y_label,
+        passed,
+        ext_fail,
+        tcorr_fail,
+        curve_x,
+        curve_y,
+        vsys_ms,
+        y_label,
     )
     script, div = plot_to_components(fig)
     return {
-        'has_plot': True,
-        'script': script,
-        'div': div,
-        'message': '',
+        "has_plot": True,
+        "script": script,
+        "div": div,
+        "message": "",
     }
 
 
@@ -592,19 +666,19 @@ def build_snr_plot_components(
     :return: dict with has_plot, script, div, message
     :rtype: dict
     """
-    label_h = sci_header_label(preset, 'ext', 'EXT_H', 'H-band SNR')
-    label_y = sci_header_label(preset, 'ext', 'EXT_Y', 'Y-band SNR')
+    label_h = sci_header_label(preset, "ext", "EXT_H", "H-band SNR")
+    label_y = sci_header_label(preset, "ext", "EXT_Y", "Y-band SNR")
     h_pts, y_pts = _extract_snr_points(htable_rows)
     if not h_pts and not y_pts:
         return {
-            'has_plot': False, 'script': '', 'div': '',
-            'message': 'No SNR data found in htable.',
+            "has_plot": False,
+            "script": "",
+            "div": "",
+            "message": "No SNR data found in htable.",
         }
     fig = _make_snr_figure(h_pts, y_pts, label_h, label_y)
     script, div = plot_to_components(fig)
-    return {
-        'has_plot': True, 'script': script, 'div': div, 'message': ''
-    }
+    return {"has_plot": True, "script": script, "div": div, "message": ""}
 
 
 def build_berv_plot_components(
@@ -625,38 +699,42 @@ def build_berv_plot_components(
     :return: dict with has_plot, script, div, message
     :rtype: dict
     """
-    passed, ext_fail, tcorr_fail = _extract_berv_points(
-        htable_rows, vsys_ms
-    )
+    passed, ext_fail, tcorr_fail = _extract_berv_points(htable_rows, vsys_ms)
     if not passed and not ext_fail and not tcorr_fail:
         return {
-            'has_plot': False, 'script': '', 'div': '',
-            'message': 'No BERV data found in htable.',
+            "has_plot": False,
+            "script": "",
+            "div": "",
+            "message": "No BERV data found in htable.",
         }
-    obs_props = (preset or {}).get('observatory', {})
+    obs_props = (preset or {}).get("observatory", {})
     curve_x, curve_y = _compute_berv_curve(
         htable_rows, obj_props or {}, obs_props, vsys_ms
     )
     y_label = (
-        'Vtot = Vsys \u2212 BERV [km/s]'
+        "Vtot = Vsys \u2212 BERV [km/s]"
         if vsys_ms is not None
-        else '\u2212BERV [km/s]'
+        else "\u2212BERV [km/s]"
     )
     fig = _make_berv_figure(
-        passed, ext_fail, tcorr_fail,
-        curve_x, curve_y, vsys_ms, y_label,
+        passed,
+        ext_fail,
+        tcorr_fail,
+        curve_x,
+        curve_y,
+        vsys_ms,
+        y_label,
     )
     script, div = plot_to_components(fig)
-    return {
-        'has_plot': True, 'script': script, 'div': div, 'message': ''
-    }
+    return {"has_plot": True, "script": script, "div": div, "message": ""}
 
 
 # =============================================================================
 # Define private file path helpers
 # =============================================================================
-def _resolve_file_path(row: Dict[str, Any],
-                       paths: Dict[str, str]) -> Optional[Path]:
+def _resolve_file_path(
+    row: Dict[str, Any], paths: Dict[str, str]
+) -> Optional[Path]:
     """
     Resolve a FITS file path from an ftable row, guarding against
     path-traversal attacks.
@@ -667,22 +745,20 @@ def _resolve_file_path(row: Dict[str, Any],
     :return: Path if the resolved file exists, None otherwise
     :rtype: Path | None
     """
-    block_kind = str(row.get('BLOCK_KIND', '') or '').strip()
+    block_kind = str(row.get("BLOCK_KIND", "") or "").strip()
     path_key = _BLOCK_KIND_TO_PATH.get(block_kind)
     if not path_key:
         return None
-    base_str = str(paths.get(path_key, '') or '').strip()
+    base_str = str(paths.get(path_key, "") or "").strip()
     if not base_str:
         return None
     base_p = Path(base_str).resolve()
-    obs_dir = str(row.get('OBS_DIR', '') or '').strip()
-    filename = str(row.get('FILENAME', '') or '').strip()
+    obs_dir = str(row.get("OBS_DIR", "") or "").strip()
+    filename = str(row.get("FILENAME", "") or "").strip()
     if not filename:
         return None
     try:
-        obs_part = (
-            Path(obs_dir.strip('/')) if obs_dir else Path('')
-        )
+        obs_part = Path(obs_dir.strip("/")) if obs_dir else Path("")
         candidate = (base_p / obs_part / filename).resolve()
         # raises ValueError on path traversal
         candidate.relative_to(base_p)
@@ -691,8 +767,7 @@ def _resolve_file_path(row: Dict[str, Any],
         return None
 
 
-def _gauss_fn(x: Any, amp: float, pos: float,
-              sig: float, dc: float) -> Any:
+def _gauss_fn(x: Any, amp: float, pos: float, sig: float, dc: float) -> Any:
     """
     Evaluate a 1D Gaussian function with a DC offset.
 
@@ -727,8 +802,8 @@ def _find_median_ext_row(
     """
     id_to_snr: Dict[str, float] = {}
     for row in htable_rows:
-        ident = str(row.get('IDENTIFIER', '') or '').strip()
-        raw_h = row.get('EXT_H')
+        ident = str(row.get("IDENTIFIER", "") or "").strip()
+        raw_h = row.get("EXT_H")
         if ident and raw_h is not None:
             try:
                 id_to_snr[ident] = float(raw_h)
@@ -739,14 +814,14 @@ def _find_median_ext_row(
     med_snr = float(np.nanmedian(list(id_to_snr.values())))
     scored: List[Tuple[float, Dict[str, Any]]] = []
     for row in ftable_ext_rows:
-        ident = str(row.get('IDENTIFIER', '') or '').strip()
+        ident = str(row.get("IDENTIFIER", "") or "").strip()
         if ident in id_to_snr:
             scored.append((abs(id_to_snr[ident] - med_snr), row))
     if not scored:
         return None, None
     scored.sort(key=lambda x: x[0])
     best_row = scored[0][1]
-    best_ident = str(best_row.get('IDENTIFIER', '') or '').strip()
+    best_ident = str(best_row.get("IDENTIFIER", "") or "").strip()
     return best_row, best_ident
 
 
@@ -764,14 +839,14 @@ def _find_ftable_row_by_identifier(
     :rtype: dict | None
     """
     for row in ftable_rows:
-        if (str(row.get('IDENTIFIER', '') or '').strip()
-                == identifier):
+        if str(row.get("IDENTIFIER", "") or "").strip() == identifier:
             return row
     return None
 
 
-def _derive_s1d_path(ext_row: Dict[str, Any],
-                     paths: Dict[str, str]) -> Optional[Path]:
+def _derive_s1d_path(
+    ext_row: Dict[str, Any], paths: Dict[str, str]
+) -> Optional[Path]:
     """
     Derive the extracted S1D path by replacing ``_e2dsff_`` with
     ``_s1d_v_`` in the filename.
@@ -782,17 +857,16 @@ def _derive_s1d_path(ext_row: Dict[str, Any],
     :return: resolved Path or None
     :rtype: Path | None
     """
-    filename = str(ext_row.get('FILENAME', '') or '').strip()
-    s1d_filename = filename.replace('_e2dsff_', '_s1d_v_')
+    filename = str(ext_row.get("FILENAME", "") or "").strip()
+    s1d_filename = filename.replace("_e2dsff_", "_s1d_v_")
     if s1d_filename == filename:
         return None
-    return _resolve_file_path(
-        dict(ext_row, FILENAME=s1d_filename), paths
-    )
+    return _resolve_file_path(dict(ext_row, FILENAME=s1d_filename), paths)
 
 
-def _derive_sc1d_path(tcorr_row: Dict[str, Any],
-                      paths: Dict[str, str]) -> Optional[Path]:
+def _derive_sc1d_path(
+    tcorr_row: Dict[str, Any], paths: Dict[str, str]
+) -> Optional[Path]:
     """
     Derive the telluric-corrected S1D path by replacing
     ``_e2dsff_tcorr_`` with ``_s1d_v_tcorr_`` in the filename.
@@ -803,15 +877,11 @@ def _derive_sc1d_path(tcorr_row: Dict[str, Any],
     :return: resolved Path or None
     :rtype: Path | None
     """
-    filename = str(tcorr_row.get('FILENAME', '') or '').strip()
-    sc1d_filename = filename.replace(
-        '_e2dsff_tcorr_', '_s1d_v_tcorr_'
-    )
+    filename = str(tcorr_row.get("FILENAME", "") or "").strip()
+    sc1d_filename = filename.replace("_e2dsff_tcorr_", "_s1d_v_tcorr_")
     if sc1d_filename == filename:
         return None
-    return _resolve_file_path(
-        dict(tcorr_row, FILENAME=sc1d_filename), paths
-    )
+    return _resolve_file_path(dict(tcorr_row, FILENAME=sc1d_filename), paths)
 
 
 def _load_s1d_data(
@@ -828,10 +898,11 @@ def _load_s1d_data(
     """
     try:
         from astropy.io import fits as _fits
+
         with _fits.open(str(path)) as hdul:
             dat = hdul[1].data
-            wave = np.array(dat['wavelength'], dtype=float)
-            flux = np.array(dat['flux'], dtype=float)
+            wave = np.array(dat["wavelength"], dtype=float)
+            flux = np.array(dat["flux"], dtype=float)
         return wave, flux
     except Exception:
         return None, None
@@ -844,7 +915,7 @@ def _make_spec_band_figure(
     xlim: List[float],
     title: str,
     height: int = 280,
-    sizing_mode: str = 'stretch_width',
+    sizing_mode: str = "stretch_width",
 ) -> Any:
     """
     Build a single Bokeh figure for one wavelength band of the
@@ -865,10 +936,10 @@ def _make_spec_band_figure(
 
     fig = bk_figure(
         title=title,
-        x_axis_label='Wavelength [nm]',
-        y_axis_label='Flux',
-        tools='pan,wheel_zoom,box_zoom,reset,save',
-        active_scroll='wheel_zoom',
+        x_axis_label="Wavelength [nm]",
+        y_axis_label="Flux",
+        tools="pan,wheel_zoom,box_zoom,reset,save",
+        active_scroll="wheel_zoom",
         height=height,
         sizing_mode=sizing_mode,
         background_fill_color=base.PLOT_BACKGROUND_COLOR,
@@ -877,27 +948,33 @@ def _make_spec_band_figure(
     w_m = wave[mask]
     # -------------------------------------------------------------------------
     if ext_flux is not None:
-        ef_m = np.where(
-            np.isfinite(ext_flux[mask]), ext_flux[mask], np.nan
+        ef_m = np.where(np.isfinite(ext_flux[mask]), ext_flux[mask], np.nan)
+        fig.line(
+            w_m,
+            ef_m,
+            line_color="black",
+            line_width=0.8,
+            alpha=0.9,
+            legend_label="Extracted",
         )
-        fig.line(w_m, ef_m, line_color='black', line_width=0.8,
-                 alpha=0.9, legend_label='Extracted')
     if tcorr_flux is not None:
-        tf_m = np.where(
-            np.isfinite(tcorr_flux[mask]), tcorr_flux[mask], np.nan
+        tf_m = np.where(np.isfinite(tcorr_flux[mask]), tcorr_flux[mask], np.nan)
+        fig.line(
+            w_m,
+            tf_m,
+            line_color="red",
+            line_width=0.8,
+            alpha=0.9,
+            legend_label="Telluric corrected",
         )
-        fig.line(w_m, tf_m, line_color='red', line_width=0.8,
-                 alpha=0.9, legend_label='Telluric corrected')
         valid_tc = tf_m[np.isfinite(tf_m)]
         if len(valid_tc) > 0:
             fig.y_range.start = 0.0
-            fig.y_range.end = float(
-                1.5 * np.nanpercentile(valid_tc, 99)
-            )
-    fig.legend.location = 'top_right'
-    fig.legend.click_policy = 'hide'
-    fig.grid.grid_line_color = 'lightgray'
-    fig.grid.grid_line_dash = 'dashed'
+            fig.y_range.end = float(1.5 * np.nanpercentile(valid_tc, 99))
+    fig.legend.location = "top_right"
+    fig.legend.click_policy = "hide"
+    fig.grid.grid_line_color = "lightgray"
+    fig.grid.grid_line_dash = "dashed"
     return fig
 
 
@@ -921,21 +998,20 @@ def _build_spec_layout(
     :return: tuple (Bokeh layout or None, error message string)
     :rtype: tuple
     """
-    from bokeh.layouts import column as bk_column, gridplot
+    from bokeh.layouts import column as bk_column
+    from bokeh.layouts import gridplot
 
-    ext_row, best_ident = _find_median_ext_row(
-        htable_rows, ftable_ext_rows
-    )
+    ext_row, best_ident = _find_median_ext_row(htable_rows, ftable_ext_rows)
     if ext_row is None:
-        return None, 'No matching EXT spectrum found.'
+        return None, "No matching EXT spectrum found."
 
     s1d_path = _derive_s1d_path(ext_row, paths)
     if s1d_path is None:
-        return None, 'Extracted S1D file not found on disk.'
+        return None, "Extracted S1D file not found on disk."
 
     wave, ext_flux = _load_s1d_data(s1d_path)
     if wave is None:
-        return None, 'Could not load extracted S1D data.'
+        return None, "Could not load extracted S1D data."
     # -------------------------------------------------------------------------
     # load telluric-corrected S1D (optional)
     tcorr_flux: Optional[np.ndarray] = None
@@ -949,29 +1025,26 @@ def _build_spec_layout(
                 _, tcorr_flux = _load_s1d_data(sc1d_path)
     # -------------------------------------------------------------------------
     # wavelength limits from preset
-    spec_wave = (preset or {}).get('plot', {}).get('SpecWave', {})
-    limit0: List[float] = spec_wave.get('limit0', [965, 2500])
-    limit1: List[float] = spec_wave.get('limit1', [1082, 1085])
-    limit2: List[float] = spec_wave.get('limit2', [1600, 1604])
-    limit3: List[float] = spec_wave.get('limit3', [2164, 2169])
+    spec_wave = (preset or {}).get("plot", {}).get("SpecWave", {})
+    limit0: List[float] = spec_wave.get("limit0", [965, 2500])
+    limit1: List[float] = spec_wave.get("limit1", [1082, 1085])
+    limit2: List[float] = spec_wave.get("limit2", [1600, 1604])
+    limit3: List[float] = spec_wave.get("limit3", [2164, 2169])
     # -------------------------------------------------------------------------
     # build title with median SNR
-    snr_h_label = sci_header_label(
-        preset, 'ext', 'EXT_H', 'H-band SNR'
-    )
+    snr_h_label = sci_header_label(preset, "ext", "EXT_H", "H-band SNR")
     med_snr_h: Optional[float] = None
     for row in htable_rows:
-        if (str(row.get('IDENTIFIER', '') or '').strip()
-                == best_ident):
+        if str(row.get("IDENTIFIER", "") or "").strip() == best_ident:
             try:
-                med_snr_h = float(row.get('EXT_H') or 0)
+                med_snr_h = float(row.get("EXT_H") or 0)
             except (TypeError, ValueError):
                 pass
             break
     title_full = (
-        f'Median spectrum [{snr_h_label}={med_snr_h:.1f}]'
+        f"Median spectrum [{snr_h_label}={med_snr_h:.1f}]"
         if med_snr_h is not None
-        else 'Median spectrum'
+        else "Median spectrum"
     )
     # -------------------------------------------------------------------------
     # build figures for normal/object-page layout vs maximize layout
@@ -979,56 +1052,88 @@ def _build_spec_layout(
         # In maximize mode each row is a separate Bokeh root so CSS
         # flex can give each ~50 % of the available viewport height.
         fig_full = _make_spec_band_figure(
-            wave, ext_flux, tcorr_flux, limit0, title_full,
-            height=200, sizing_mode='stretch_both',
+            wave,
+            ext_flux,
+            tcorr_flux,
+            limit0,
+            title_full,
+            height=200,
+            sizing_mode="stretch_both",
         )
         fig_z1 = _make_spec_band_figure(
-            wave, ext_flux, tcorr_flux, limit1,
-            f'Zoom in {limit1[0]}\u2013{limit1[1]} nm',
-            height=200, sizing_mode='stretch_both',
+            wave,
+            ext_flux,
+            tcorr_flux,
+            limit1,
+            f"Zoom in {limit1[0]}\u2013{limit1[1]} nm",
+            height=200,
+            sizing_mode="stretch_both",
         )
         fig_z2 = _make_spec_band_figure(
-            wave, ext_flux, tcorr_flux, limit2,
-            f'Zoom in {limit2[0]}\u2013{limit2[1]} nm',
-            height=200, sizing_mode='stretch_both',
+            wave,
+            ext_flux,
+            tcorr_flux,
+            limit2,
+            f"Zoom in {limit2[0]}\u2013{limit2[1]} nm",
+            height=200,
+            sizing_mode="stretch_both",
         )
         fig_z3 = _make_spec_band_figure(
-            wave, ext_flux, tcorr_flux, limit3,
-            f'Zoom in {limit3[0]}\u2013{limit3[1]} nm',
-            height=200, sizing_mode='stretch_both',
+            wave,
+            ext_flux,
+            tcorr_flux,
+            limit3,
+            f"Zoom in {limit3[0]}\u2013{limit3[1]} nm",
+            height=200,
+            sizing_mode="stretch_both",
         )
         zoom_grid = gridplot(
             [[fig_z1, fig_z2, fig_z3]],
-            sizing_mode='stretch_both',
+            sizing_mode="stretch_both",
         )
         # Return two separate roots; build_spec_plot_components will
         # call components([fig_full, zoom_grid]) to get one shared
         # script and two independent divs for the template.
-        return [fig_full, zoom_grid], ''
+        return [fig_full, zoom_grid], ""
     else:
         fig_full = _make_spec_band_figure(
             wave, ext_flux, tcorr_flux, limit0, title_full, height=280
         )
         fig_z1 = _make_spec_band_figure(
-            wave, ext_flux, tcorr_flux, limit1,
-            f'Zoom in {limit1[0]}\u2013{limit1[1]} nm', height=220,
+            wave,
+            ext_flux,
+            tcorr_flux,
+            limit1,
+            f"Zoom in {limit1[0]}\u2013{limit1[1]} nm",
+            height=220,
         )
         fig_z2 = _make_spec_band_figure(
-            wave, ext_flux, tcorr_flux, limit2,
-            f'Zoom in {limit2[0]}\u2013{limit2[1]} nm', height=220,
+            wave,
+            ext_flux,
+            tcorr_flux,
+            limit2,
+            f"Zoom in {limit2[0]}\u2013{limit2[1]} nm",
+            height=220,
         )
         fig_z3 = _make_spec_band_figure(
-            wave, ext_flux, tcorr_flux, limit3,
-            f'Zoom in {limit3[0]}\u2013{limit3[1]} nm', height=220,
+            wave,
+            ext_flux,
+            tcorr_flux,
+            limit3,
+            f"Zoom in {limit3[0]}\u2013{limit3[1]} nm",
+            height=220,
         )
-        layout = bk_column([
-            fig_full,
-            gridplot(
-                [[fig_z1, fig_z2, fig_z3]],
-                sizing_mode='stretch_width',
-            ),
-        ], sizing_mode='stretch_width')
-    return layout, ''
+        layout = bk_column(
+            [
+                fig_full,
+                gridplot(
+                    [[fig_z1, fig_z2, fig_z3]],
+                    sizing_mode="stretch_width",
+                ),
+            ],
+            sizing_mode="stretch_width",
+        )
+    return layout, ""
 
 
 # =============================================================================
@@ -1040,7 +1145,7 @@ def build_spec_plot_json(
     ftable_tcorr_rows: List[Dict[str, Any]],
     paths: Dict[str, str],
     preset: Dict[str, Any],
-    target_id: str = 'op-spec-plot-div',
+    target_id: str = "op-spec-plot-div",
 ) -> Dict[str, Any]:
     """
     Build spectrum plot as a ``json_item`` dict for client-side
@@ -1060,13 +1165,13 @@ def build_spec_plot_json(
         htable_rows, ftable_ext_rows, ftable_tcorr_rows, paths, preset
     )
     if layout is None:
-        return {'has_plot': False, 'message': msg}
+        return {"has_plot": False, "message": msg}
     script, div = plot_to_components(layout)
     return {
-        'has_plot': True,
-        'script': script,
-        'div': div,
-        'message': '',
+        "has_plot": True,
+        "script": script,
+        "div": div,
+        "message": "",
     }
 
 
@@ -1091,30 +1196,35 @@ def build_spec_plot_components(
     :rtype: dict
     """
     layout, msg = _build_spec_layout(
-        htable_rows, ftable_ext_rows, ftable_tcorr_rows, paths, preset,
+        htable_rows,
+        ftable_ext_rows,
+        ftable_tcorr_rows,
+        paths,
+        preset,
         maximize=maximize,
     )
     if layout is None:
         return {
-            'has_plot': False, 'script': '', 'div': '',
-            'message': msg,
+            "has_plot": False,
+            "script": "",
+            "div": "",
+            "message": msg,
         }
     if isinstance(layout, list):
         # maximize mode: two separate roots → one script, two divs
         from bokeh.embed import components as _bk_components
+
         script, div_list = _bk_components(layout)
         return {
-            'has_plot': True,
-            'script': script,
-            'div': div_list[0],
-            'div2': div_list[1],
-            'two_rows': True,
-            'message': '',
+            "has_plot": True,
+            "script": script,
+            "div": div_list[0],
+            "div2": div_list[1],
+            "two_rows": True,
+            "message": "",
         }
     script, div = plot_to_components(layout)
-    return {
-        'has_plot': True, 'script': script, 'div': div, 'message': ''
-    }
+    return {"has_plot": True, "script": script, "div": div, "message": ""}
 
 
 # =============================================================================
@@ -1127,9 +1237,16 @@ def _load_ccf_data(
     ccf_mjd_start: Optional[float] = None,
     ccf_mjd_end: Optional[float] = None,
     max_files: int = 100,
-) -> Optional[Tuple[
-    np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray, Dict[str, Any]
-]]:
+) -> Optional[
+    Tuple[
+        np.ndarray,
+        np.ndarray,
+        np.ndarray,
+        np.ndarray,
+        np.ndarray,
+        Dict[str, Any],
+    ]
+]:
     """
     Load and stack CCF data from all CCF FITS files.
 
@@ -1144,15 +1261,16 @@ def _load_ccf_data(
              by time, or None if no data could be loaded
     :rtype: tuple | None
     """
+
     def _row_mid_obs_mjd(row: Dict[str, Any]) -> Optional[float]:
-        raw = row.get('MID_OBS_TIME')
+        raw = row.get("MID_OBS_TIME")
         if raw is None:
             return None
         sval = str(raw).strip()
         if not sval:
             return None
         try:
-            return float(Time(sval, format='isot', scale='utc').mjd)
+            return float(Time(sval, format="isot", scale="utc").mjd)
         except Exception:
             try:
                 return float(sval)
@@ -1208,30 +1326,30 @@ def _load_ccf_data(
     if in_range_total > max_files:
         sel_idx = _equally_spaced_indices(in_range_total, max_files)
         selected_rows = [in_range_rows[i] for i in sel_idx]
-        sampling_mode = 'equally_spaced'
+        sampling_mode = "equally_spaced"
     else:
         selected_rows = in_range_rows
-        sampling_mode = 'all'
+        sampling_mode = "all"
 
     summary: Dict[str, Any] = {
-        'max_files': int(max_files),
-        'total_rows': int(total_rows),
-        'rows_with_mid_obs_time': int(len(timed_rows)),
-        'in_range_total': int(in_range_total),
-        'selected_total': int(len(selected_rows)),
-        'loaded_total': 0,
-        'sampling_mode': sampling_mode,
-        'ccf_mjd_start': ccf_mjd_start,
-        'ccf_mjd_end': ccf_mjd_end,
-        'available_mjd_min': available_mjd_min,
-        'available_mjd_max': available_mjd_max,
-        'selected_mjd_min': (selected_rows[0][0] if selected_rows else None),
-        'selected_mjd_max': (selected_rows[-1][0] if selected_rows else None),
+        "max_files": int(max_files),
+        "total_rows": int(total_rows),
+        "rows_with_mid_obs_time": int(len(timed_rows)),
+        "in_range_total": int(in_range_total),
+        "selected_total": int(len(selected_rows)),
+        "loaded_total": 0,
+        "sampling_mode": sampling_mode,
+        "ccf_mjd_start": ccf_mjd_start,
+        "ccf_mjd_end": ccf_mjd_end,
+        "available_mjd_min": available_mjd_min,
+        "available_mjd_max": available_mjd_max,
+        "selected_mjd_min": (selected_rows[0][0] if selected_rows else None),
+        "selected_mjd_max": (selected_rows[-1][0] if selected_rows else None),
     }
 
     ht_by_id: Dict[str, Dict[str, Any]] = {}
     for row in htable_rows:
-        ident = str(row.get('IDENTIFIER', '') or '').strip()
+        ident = str(row.get("IDENTIFIER", "") or "").strip()
         if ident:
             ht_by_id[ident] = row
 
@@ -1245,15 +1363,15 @@ def _load_ccf_data(
         path = _resolve_file_path(row, paths)
         if path is None:
             continue
-        ident = str(row.get('IDENTIFIER', '') or '').strip()
+        ident = str(row.get("IDENTIFIER", "") or "").strip()
         ht_row = ht_by_id.get(ident, {})
-        raw_dv = ht_row.get('CCF_DV')
-        raw_sdv = ht_row.get('CCF_SDV')
+        raw_dv = ht_row.get("CCF_DV")
+        raw_sdv = ht_row.get("CCF_SDV")
         if raw_dv is None or raw_sdv is None:
             continue
         try:
-            dv_ms_val = float(raw_dv) * 1000.0   # km/s → m/s
-            sdv_ms_val = float(raw_sdv)           # already m/s
+            dv_ms_val = float(raw_dv) * 1000.0  # km/s → m/s
+            sdv_ms_val = float(raw_sdv)  # already m/s
             dt = mjd_to_datetime(float(mjd_val))
             if dt is None:
                 continue
@@ -1273,7 +1391,7 @@ def _load_ccf_data(
         except Exception:
             continue
 
-    summary['loaded_total'] = int(len(all_ccf_rows))
+    summary["loaded_total"] = int(len(all_ccf_rows))
 
     if rv_vec is None or len(all_ccf_rows) == 0:
         return None
@@ -1320,10 +1438,13 @@ def _fit_ccf_gaussian(
     guess = [-amp0, pos0, 4.0, 1.0]
     try:
         with warnings.catch_warnings():
-            warnings.simplefilter('ignore')
+            warnings.simplefilter("ignore")
             coeffs, _ = curve_fit(
-                _gauss_fn, rv_vec, med_ccf,
-                p0=guess, maxfev=5000,
+                _gauss_fn,
+                rv_vec,
+                med_ccf,
+                p0=guess,
+                maxfev=5000,
             )
         fit = _gauss_fn(rv_vec, *coeffs)
         xlim: List[float] = [
@@ -1359,15 +1480,17 @@ def _make_ccf_rv_figure(
     """
     from bokeh.models import Whisker
 
-    fig = make_time_figure('CCF Radial Velocity vs Time', height=height)
-    fig.add_tools(HoverTool(
-        tooltips=[
-            ('Date (UTC)', '@x{%F %T}'),
-            ('RV', '@y{0.000} m/s'),
-        ],
-        formatters={'@x': 'datetime'},
-        mode='mouse',
-    ))
+    fig = make_time_figure("CCF Radial Velocity vs Time", height=height)
+    fig.add_tools(
+        HoverTool(
+            tooltips=[
+                ("Date (UTC)", "@x{%F %T}"),
+                ("RV", "@y{0.000} m/s"),
+            ],
+            formatters={"@x": "datetime"},
+            mode="mouse",
+        )
+    )
     pp = np.nanpercentile(dv_ms, [10, 90])
     diff = float(pp[1] - pp[0])
     if diff < 1e-6:
@@ -1380,44 +1503,67 @@ def _make_ccf_rv_figure(
     good = (dv_ms >= ylim_lo) & (dv_ms <= ylim_hi)
     # -------------------------------------------------------------------------
     if np.any(good):
-        src = ColumnDataSource(dict(
-            x=dts_ms[good], y=dv_ms[good],
-            upper=dv_ms[good] + sdv_ms[good],
-            lower=dv_ms[good] - sdv_ms[good],
-        ))
-        fig.circle('x', 'y', source=src, size=6, color='green',
-                   alpha=0.7, legend_label='Good')
-        whisk = Whisker(
-            source=src, base='x', upper='upper', lower='lower',
-            line_color='green', line_alpha=0.7,
+        src = ColumnDataSource(
+            dict(
+                x=dts_ms[good],
+                y=dv_ms[good],
+                upper=dv_ms[good] + sdv_ms[good],
+                lower=dv_ms[good] - sdv_ms[good],
+            )
         )
-        whisk.upper_head.line_color = 'green'
-        whisk.lower_head.line_color = 'green'
+        fig.circle(
+            "x",
+            "y",
+            source=src,
+            size=6,
+            color="green",
+            alpha=0.7,
+            legend_label="Good",
+        )
+        whisk = Whisker(
+            source=src,
+            base="x",
+            upper="upper",
+            lower="lower",
+            line_color="green",
+            line_alpha=0.7,
+        )
+        whisk.upper_head.line_color = "green"
+        whisk.lower_head.line_color = "green"
         whisk.upper_head.line_alpha = 0.7
         whisk.lower_head.line_alpha = 0.7
         fig.add_layout(whisk)
     # -------------------------------------------------------------------------
     l_arrow = 0.04 * diff
     for clip_mask, yt, marker in [
-        (dv_ms < ylim_lo, ylim_lo + l_arrow, 'triangle'),
-        (dv_ms > ylim_hi, ylim_hi - l_arrow, 'inverted_triangle'),
+        (dv_ms < ylim_lo, ylim_lo + l_arrow, "triangle"),
+        (dv_ms > ylim_hi, ylim_hi - l_arrow, "inverted_triangle"),
     ]:
         if np.any(clip_mask):
-            src_out = ColumnDataSource(dict(
-                x=dts_ms[clip_mask],
-                y=np.full(int(np.sum(clip_mask)), yt),
-            ))
-            fig.scatter('x', 'y', source=src_out, marker=marker,
-                        size=8, color='red', alpha=0.8,
-                        legend_label='Outlier')
+            src_out = ColumnDataSource(
+                dict(
+                    x=dts_ms[clip_mask],
+                    y=np.full(int(np.sum(clip_mask)), yt),
+                )
+            )
+            fig.scatter(
+                "x",
+                "y",
+                source=src_out,
+                marker=marker,
+                size=8,
+                color="red",
+                alpha=0.8,
+                legend_label="Outlier",
+            )
     # -------------------------------------------------------------------------
     fig.y_range.start = ylim_lo
     fig.y_range.end = ylim_hi
-    fig.yaxis.axis_label = 'RV [m/s]'
-    fig.legend.location = 'top_right'
-    fig.legend.click_policy = 'hide'
-    fig.grid.grid_line_color = 'lightgray'
-    fig.grid.grid_line_dash = 'dashed'
+    fig.yaxis.axis_label = "RV [m/s]"
+    fig.legend.location = "top_right"
+    fig.legend.click_policy = "hide"
+    fig.grid.grid_line_color = "lightgray"
+    fig.grid.grid_line_dash = "dashed"
     return fig
 
 
@@ -1458,68 +1604,116 @@ def _make_ccf_profile_figure(
     rv_m = rv_vec[limmask]
 
     fig = bk_figure(
-        title='Median CCF Profile',
-        x_axis_label='RV [km/s]',
-        y_axis_label='Normalized CCF',
-        tools='pan,wheel_zoom,box_zoom,reset,save',
-        active_scroll='wheel_zoom',
+        title="Median CCF Profile",
+        x_axis_label="RV [km/s]",
+        y_axis_label="Normalized CCF",
+        tools="pan,wheel_zoom,box_zoom,reset,save",
+        active_scroll="wheel_zoom",
         height=height,
-        sizing_mode='stretch_width',
+        sizing_mode="stretch_width",
         background_fill_color=base.PLOT_BACKGROUND_COLOR,
     )
-    fig.add_tools(HoverTool(
-        tooltips=[('RV', '$x{0.000} km/s'), ('CCF', '$y{0.000000}')],
-        mode='mouse',
-    ))
-    fig.add_tools(CrosshairTool(dimensions='both'))
+    fig.add_tools(
+        HoverTool(
+            tooltips=[("RV", "$x{0.000} km/s"), ("CCF", "$y{0.000000}")],
+            mode="mouse",
+        )
+    )
+    fig.add_tools(CrosshairTool(dimensions="both"))
     # -------------------------------------------------------------------------
-    src_2 = ColumnDataSource(dict(
-        x=rv_m,
-        upper=y2_2sig[limmask],
-        lower=y1_2sig[limmask],
-    ))
-    fig.add_layout(Band(
-        base='x', upper='upper', lower='lower', source=src_2,
-        fill_color='orange', fill_alpha=0.4, line_color=None,
-    ))
-    src_1 = ColumnDataSource(dict(
-        x=rv_m,
-        upper=y2_1sig[limmask],
-        lower=y1_1sig[limmask],
-    ))
-    fig.add_layout(Band(
-        base='x', upper='upper', lower='lower', source=src_1,
-        fill_color='red', fill_alpha=0.4, line_color=None,
-    ))
-    # legend proxy quads for bands (on hidden extra ranges so auto-range unaffected)
-    fig.extra_x_ranges['_proxy'] = Range1d(start=0, end=1)
-    fig.extra_y_ranges['_proxy'] = Range1d(start=0, end=1)
-    fig.quad(left=[5], right=[6], top=[6], bottom=[5],
-            fill_color='orange', fill_alpha=0.4, line_color=None,
-            legend_label='2σ band',
-            x_range_name='_proxy', y_range_name='_proxy')
-    fig.quad(left=[5], right=[6], top=[6], bottom=[5],
-            fill_color='red', fill_alpha=0.4, line_color=None,
-            legend_label='1σ band',
-            x_range_name='_proxy', y_range_name='_proxy')
-    fig.line(rv_m, med_ccf[limmask], line_color='black',
-             line_width=1.5, legend_label='Median CCF')
+    src_2 = ColumnDataSource(
+        dict(
+            x=rv_m,
+            upper=y2_2sig[limmask],
+            lower=y1_2sig[limmask],
+        )
+    )
+    fig.add_layout(
+        Band(
+            base="x",
+            upper="upper",
+            lower="lower",
+            source=src_2,
+            fill_color="orange",
+            fill_alpha=0.4,
+            line_color=None,
+        )
+    )
+    src_1 = ColumnDataSource(
+        dict(
+            x=rv_m,
+            upper=y2_1sig[limmask],
+            lower=y1_1sig[limmask],
+        )
+    )
+    fig.add_layout(
+        Band(
+            base="x",
+            upper="upper",
+            lower="lower",
+            source=src_1,
+            fill_color="red",
+            fill_alpha=0.4,
+            line_color=None,
+        )
+    )
+    # legend proxy quads for bands (on hidden extra ranges so auto-range
+    # unaffected)
+    fig.extra_x_ranges["_proxy"] = Range1d(start=0, end=1)
+    fig.extra_y_ranges["_proxy"] = Range1d(start=0, end=1)
+    fig.quad(
+        left=[5],
+        right=[6],
+        top=[6],
+        bottom=[5],
+        fill_color="orange",
+        fill_alpha=0.4,
+        line_color=None,
+        legend_label="2σ band",
+        x_range_name="_proxy",
+        y_range_name="_proxy",
+    )
+    fig.quad(
+        left=[5],
+        right=[6],
+        top=[6],
+        bottom=[5],
+        fill_color="red",
+        fill_alpha=0.4,
+        line_color=None,
+        legend_label="1σ band",
+        x_range_name="_proxy",
+        y_range_name="_proxy",
+    )
+    fig.line(
+        rv_m,
+        med_ccf[limmask],
+        line_color="black",
+        line_width=1.5,
+        legend_label="Median CCF",
+    )
     if has_fit:
-        fig.line(rv_m, fit[limmask], line_color='dodgerblue',
-                 line_width=2.0, line_dash='dashed',
-                 legend_label='Gaussian fit')
+        fig.line(
+            rv_m,
+            fit[limmask],
+            line_color="dodgerblue",
+            line_width=2.0,
+            line_dash="dashed",
+            legend_label="Gaussian fit",
+        )
     # initial zoom to 2σ envelope with 10% padding
     y_lo = float(np.nanmin(y1_2sig[limmask]))
     y_hi = float(np.nanmax(y2_2sig[limmask]))
     y_pad = 0.1 * (y_hi - y_lo) if y_hi > y_lo else 0.01
     fig.y_range = Range1d(start=y_lo - y_pad, end=y_hi + y_pad)
     x_pad = 0.02 * (float(rv_m[-1]) - float(rv_m[0])) if len(rv_m) > 1 else 1.0
-    fig.x_range = Range1d(start=float(rv_m[0]) - x_pad,
-                          end=float(rv_m[-1]) + x_pad)
-    fig.legend.location = 'top_right'
-    fig.legend.click_policy = 'hide'
-    fig.grid.grid_line_color = 'lightgray'
-    fig.grid.grid_line_dash = 'dashed'
+    fig.x_range = Range1d(
+        start=float(rv_m[0]) - x_pad, end=float(rv_m[-1]) + x_pad
+    )
+    fig.legend.location = "top_right"
+    fig.legend.click_policy = "hide"
+    fig.grid.grid_line_color = "lightgray"
+    fig.grid.grid_line_dash = "dashed"
     return fig
 
 
@@ -1559,73 +1753,118 @@ def _make_ccf_residuals_figure(
     rv_m = rv_vec[limmask]
 
     fig = bk_figure(
-        title='CCF Residuals (CCF \u2212 fit)',
-        x_axis_label='RV [km/s]',
-        y_axis_label='Residuals',
-        tools='pan,wheel_zoom,box_zoom,reset,save',
-        active_scroll='wheel_zoom',
+        title="CCF Residuals (CCF \u2212 fit)",
+        x_axis_label="RV [km/s]",
+        y_axis_label="Residuals",
+        tools="pan,wheel_zoom,box_zoom,reset,save",
+        active_scroll="wheel_zoom",
         height=height,
-        sizing_mode='stretch_width',
+        sizing_mode="stretch_width",
         background_fill_color=base.PLOT_BACKGROUND_COLOR,
     )
-    fig.add_tools(HoverTool(
-        tooltips=[('RV', '$x{0.000} km/s'), ('Residual', '$y{0.000000}')],
-        mode='mouse',
-    ))
-    fig.add_tools(CrosshairTool(dimensions='both'))
+    fig.add_tools(
+        HoverTool(
+            tooltips=[("RV", "$x{0.000} km/s"), ("Residual", "$y{0.000000}")],
+            mode="mouse",
+        )
+    )
+    fig.add_tools(CrosshairTool(dimensions="both"))
     # -------------------------------------------------------------------------
     if has_fit:
         f_m = fit[limmask]
-        src_2 = ColumnDataSource(dict(
-            x=rv_m,
-            upper=y2_2sig[limmask] - f_m,
-            lower=y1_2sig[limmask] - f_m,
-        ))
-        src_1 = ColumnDataSource(dict(
-            x=rv_m,
-            upper=y2_1sig[limmask] - f_m,
-            lower=y1_1sig[limmask] - f_m,
-        ))
-        fig.add_layout(Band(
-            base='x', upper='upper', lower='lower', source=src_2,
-            fill_color='orange', fill_alpha=0.4,
-        ))
-        fig.add_layout(Band(
-            base='x', upper='upper', lower='lower', source=src_1,
-            fill_color='red', fill_alpha=0.4,
-        ))
+        src_2 = ColumnDataSource(
+            dict(
+                x=rv_m,
+                upper=y2_2sig[limmask] - f_m,
+                lower=y1_2sig[limmask] - f_m,
+            )
+        )
+        src_1 = ColumnDataSource(
+            dict(
+                x=rv_m,
+                upper=y2_1sig[limmask] - f_m,
+                lower=y1_1sig[limmask] - f_m,
+            )
+        )
+        fig.add_layout(
+            Band(
+                base="x",
+                upper="upper",
+                lower="lower",
+                source=src_2,
+                fill_color="orange",
+                fill_alpha=0.4,
+            )
+        )
+        fig.add_layout(
+            Band(
+                base="x",
+                upper="upper",
+                lower="lower",
+                source=src_1,
+                fill_color="red",
+                fill_alpha=0.4,
+            )
+        )
         # legend proxy quads for bands (on hidden extra ranges)
-        fig.extra_x_ranges['_proxy'] = Range1d(start=0, end=1)
-        fig.extra_y_ranges['_proxy'] = Range1d(start=0, end=1)
-        fig.quad(left=[5], right=[6], top=[6], bottom=[5],
-                fill_color='orange', fill_alpha=0.4, line_color=None,
-                legend_label='2σ band',
-                x_range_name='_proxy', y_range_name='_proxy')
-        fig.quad(left=[5], right=[6], top=[6], bottom=[5],
-                fill_color='red', fill_alpha=0.4, line_color=None,
-                legend_label='1σ band',
-                x_range_name='_proxy', y_range_name='_proxy')
-        fig.line(rv_m, med_ccf[limmask] - f_m, line_color='black',
-                 line_width=1.2, legend_label='Median residual')
+        fig.extra_x_ranges["_proxy"] = Range1d(start=0, end=1)
+        fig.extra_y_ranges["_proxy"] = Range1d(start=0, end=1)
+        fig.quad(
+            left=[5],
+            right=[6],
+            top=[6],
+            bottom=[5],
+            fill_color="orange",
+            fill_alpha=0.4,
+            line_color=None,
+            legend_label="2σ band",
+            x_range_name="_proxy",
+            y_range_name="_proxy",
+        )
+        fig.quad(
+            left=[5],
+            right=[6],
+            top=[6],
+            bottom=[5],
+            fill_color="red",
+            fill_alpha=0.4,
+            line_color=None,
+            legend_label="1σ band",
+            x_range_name="_proxy",
+            y_range_name="_proxy",
+        )
+        fig.line(
+            rv_m,
+            med_ccf[limmask] - f_m,
+            line_color="black",
+            line_width=1.2,
+            legend_label="Median residual",
+        )
         # initial zoom to 2σ residual envelope with 10% padding
         res_lo = float(np.nanmin(y1_2sig[limmask] - f_m))
         res_hi = float(np.nanmax(y2_2sig[limmask] - f_m))
         res_pad = 0.1 * (res_hi - res_lo) if res_hi > res_lo else 0.01
         fig.y_range = Range1d(start=res_lo - res_pad, end=res_hi + res_pad)
-        x_pad = 0.02 * (float(rv_m[-1]) - float(rv_m[0])) if len(rv_m) > 1 else 1.0
-        fig.x_range = Range1d(start=float(rv_m[0]) - x_pad,
-                              end=float(rv_m[-1]) + x_pad)
-        fig.legend.location = 'top_right'
+        x_pad = (
+            0.02 * (float(rv_m[-1]) - float(rv_m[0])) if len(rv_m) > 1 else 1.0
+        )
+        fig.x_range = Range1d(
+            start=float(rv_m[0]) - x_pad, end=float(rv_m[-1]) + x_pad
+        )
+        fig.legend.location = "top_right"
     else:
         fig.text(
-            x=[0.5], y=[0.5],
-            text=['No Gaussian fit available'],
-            text_font_size='12pt', text_color='gray',
-            text_align='center',
-            x_units='screen', y_units='screen',
+            x=[0.5],
+            y=[0.5],
+            text=["No Gaussian fit available"],
+            text_font_size="12pt",
+            text_color="gray",
+            text_align="center",
+            x_units="screen",
+            y_units="screen",
         )
-    fig.grid.grid_line_color = 'lightgray'
-    fig.grid.grid_line_dash = 'dashed'
+    fig.grid.grid_line_color = "lightgray"
+    fig.grid.grid_line_dash = "dashed"
     return fig
 
 
@@ -1665,66 +1904,111 @@ def _make_ccf_spread_figure(
     med_m = med_ccf[limmask]
 
     fig = bk_figure(
-        title='CCF Spread (relative to median)',
-        x_axis_label='RV [km/s]',
-        y_axis_label='Spread',
-        tools='pan,wheel_zoom,box_zoom,reset,save',
-        active_scroll='wheel_zoom',
+        title="CCF Spread (relative to median)",
+        x_axis_label="RV [km/s]",
+        y_axis_label="Spread",
+        tools="pan,wheel_zoom,box_zoom,reset,save",
+        active_scroll="wheel_zoom",
         height=height,
-        sizing_mode='stretch_width',
+        sizing_mode="stretch_width",
         background_fill_color=base.PLOT_BACKGROUND_COLOR,
     )
-    fig.add_tools(HoverTool(
-        tooltips=[('RV', '$x{0.000} km/s'), ('Spread', '$y{0.000000}')],
-        mode='mouse',
-    ))
-    fig.add_tools(CrosshairTool(dimensions='both'))
+    fig.add_tools(
+        HoverTool(
+            tooltips=[("RV", "$x{0.000} km/s"), ("Spread", "$y{0.000000}")],
+            mode="mouse",
+        )
+    )
+    fig.add_tools(CrosshairTool(dimensions="both"))
     # -------------------------------------------------------------------------
     spread_2sig_upper = y2_2sig[limmask] - med_m
     spread_2sig_lower = y1_2sig[limmask] - med_m
-    src_2 = ColumnDataSource(dict(
-        x=rv_m,
-        upper=spread_2sig_upper,
-        lower=spread_2sig_lower,
-    ))
-    src_1 = ColumnDataSource(dict(
-        x=rv_m,
-        upper=y2_1sig[limmask] - med_m,
-        lower=y1_1sig[limmask] - med_m,
-    ))
-    fig.add_layout(Band(
-        base='x', upper='upper', lower='lower', source=src_2,
-        fill_color='orange', fill_alpha=0.4, line_color=None,
-    ))
-    fig.add_layout(Band(
-        base='x', upper='upper', lower='lower', source=src_1,
-        fill_color='red', fill_alpha=0.4, line_color=None,
-    ))
+    src_2 = ColumnDataSource(
+        dict(
+            x=rv_m,
+            upper=spread_2sig_upper,
+            lower=spread_2sig_lower,
+        )
+    )
+    src_1 = ColumnDataSource(
+        dict(
+            x=rv_m,
+            upper=y2_1sig[limmask] - med_m,
+            lower=y1_1sig[limmask] - med_m,
+        )
+    )
+    fig.add_layout(
+        Band(
+            base="x",
+            upper="upper",
+            lower="lower",
+            source=src_2,
+            fill_color="orange",
+            fill_alpha=0.4,
+            line_color=None,
+        )
+    )
+    fig.add_layout(
+        Band(
+            base="x",
+            upper="upper",
+            lower="lower",
+            source=src_1,
+            fill_color="red",
+            fill_alpha=0.4,
+            line_color=None,
+        )
+    )
     # legend proxy quads for bands (on hidden extra ranges)
-    fig.extra_x_ranges['_proxy'] = Range1d(start=0, end=1)
-    fig.extra_y_ranges['_proxy'] = Range1d(start=0, end=1)
-    fig.quad(left=[5], right=[6], top=[6], bottom=[5],
-            fill_color='orange', fill_alpha=0.4, line_color=None,
-            legend_label='2σ band',
-            x_range_name='_proxy', y_range_name='_proxy')
-    fig.quad(left=[5], right=[6], top=[6], bottom=[5],
-            fill_color='red', fill_alpha=0.4, line_color=None,
-            legend_label='1σ band',
-            x_range_name='_proxy', y_range_name='_proxy')
-    fig.line(rv_m, np.zeros(len(rv_m)), line_color='black',
-             line_width=1.2, legend_label='Median (zero)')
+    fig.extra_x_ranges["_proxy"] = Range1d(start=0, end=1)
+    fig.extra_y_ranges["_proxy"] = Range1d(start=0, end=1)
+    fig.quad(
+        left=[5],
+        right=[6],
+        top=[6],
+        bottom=[5],
+        fill_color="orange",
+        fill_alpha=0.4,
+        line_color=None,
+        legend_label="2σ band",
+        x_range_name="_proxy",
+        y_range_name="_proxy",
+    )
+    fig.quad(
+        left=[5],
+        right=[6],
+        top=[6],
+        bottom=[5],
+        fill_color="red",
+        fill_alpha=0.4,
+        line_color=None,
+        legend_label="1σ band",
+        x_range_name="_proxy",
+        y_range_name="_proxy",
+    )
+    fig.line(
+        rv_m,
+        np.zeros(len(rv_m)),
+        line_color="black",
+        line_width=1.2,
+        legend_label="Median (zero)",
+    )
     # initial zoom to 2 sigma range
-    y_max_2sig = float(np.nanmax(np.abs(np.concatenate(
-        [spread_2sig_upper, spread_2sig_lower]))))
+    y_max_2sig = float(
+        np.nanmax(
+            np.abs(np.concatenate([spread_2sig_upper, spread_2sig_lower]))
+        )
+    )
     if y_max_2sig > 0:
         fig.y_range.start = -1.1 * y_max_2sig
         fig.y_range.end = 1.1 * y_max_2sig
     x_pad = 0.02 * (float(rv_m[-1]) - float(rv_m[0])) if len(rv_m) > 1 else 1.0
-    fig.x_range = Range1d(start=float(rv_m[0]) - x_pad,
-                          end=float(rv_m[-1]) + x_pad)
-    fig.legend.location = 'top_right'
-    fig.grid.grid_line_color = 'lightgray'
-    fig.grid.grid_line_dash = 'dashed'
+    fig.x_range = Range1d(
+        start=float(rv_m[0]) - x_pad, end=float(rv_m[-1]) + x_pad
+    )
+    fig.legend.location = "top_right"
+    fig.grid.grid_line_color = "lightgray"
+    fig.grid.grid_line_dash = "dashed"
     return fig
 
 
@@ -1759,29 +2043,33 @@ def _build_ccf_layout(
     )
     load_ms = (time.perf_counter() - t_load0) * 1000.0
     if result is None:
-        return None, 'No CCF data could be loaded.', {
-            'max_files': int(max(1, ccf_nobs)),
-            'sampling_mode': 'all',
-            'selected_total': 0,
-            'loaded_total': 0,
-            'in_range_total': 0,
-            'ccf_mjd_start': ccf_mjd_start,
-            'ccf_mjd_end': ccf_mjd_end,
-            'timings_ms': {
-                'load_data': round(load_ms, 2),
-                'stats_fit': 0.0,
-                'build_figures': 0.0,
-                'total': round(load_ms, 2),
+        return (
+            None,
+            "No CCF data could be loaded.",
+            {
+                "max_files": int(max(1, ccf_nobs)),
+                "sampling_mode": "all",
+                "selected_total": 0,
+                "loaded_total": 0,
+                "in_range_total": 0,
+                "ccf_mjd_start": ccf_mjd_start,
+                "ccf_mjd_end": ccf_mjd_end,
+                "timings_ms": {
+                    "load_data": round(load_ms, 2),
+                    "stats_fit": 0.0,
+                    "build_figures": 0.0,
+                    "total": round(load_ms, 2),
+                },
             },
-        }
+        )
 
     rv_vec, all_ccf, datetimes, dv_ms, sdv_ms, summary = result
     rv_used, ccf_used, rv_points_orig, rv_points_used = _decimate_ccf_grid(
         rv_vec, all_ccf, max_points=_CCF_RV_MAX_POINTS
     )
-    summary['rv_points_original'] = int(rv_points_orig)
-    summary['rv_points_used'] = int(rv_points_used)
-    summary['rv_decimated'] = bool(rv_points_used < rv_points_orig)
+    summary["rv_points_original"] = int(rv_points_orig)
+    summary["rv_points_used"] = int(rv_points_used)
+    summary["rv_decimated"] = bool(rv_points_used < rv_points_orig)
     # -------------------------------------------------------------------------
     # percentile bands for profile, residuals, and spread panels
     t_stats0 = time.perf_counter()
@@ -1800,49 +2088,73 @@ def _build_ccf_layout(
     t_fig0 = time.perf_counter()
     fig_rv = _make_ccf_rv_figure(datetimes, dv_ms, sdv_ms)
     fig_prof = _make_ccf_profile_figure(
-        rv_used, med_ccf,
-        y1_1sig, y2_1sig, y1_2sig, y2_2sig,
-        fit, xlim, has_fit,
+        rv_used,
+        med_ccf,
+        y1_1sig,
+        y2_1sig,
+        y1_2sig,
+        y2_2sig,
+        fit,
+        xlim,
+        has_fit,
     )
     fig_res = _make_ccf_residuals_figure(
-        rv_used, med_ccf, fit,
-        y1_1sig, y2_1sig, y1_2sig, y2_2sig,
-        xlim, has_fit,
+        rv_used,
+        med_ccf,
+        fit,
+        y1_1sig,
+        y2_1sig,
+        y1_2sig,
+        y2_2sig,
+        xlim,
+        has_fit,
     )
     fig_spread = _make_ccf_spread_figure(
-        rv_used, med_ccf,
-        y1_1sig, y2_1sig, y1_2sig, y2_2sig,
-        xlim, has_fit,
+        rv_used,
+        med_ccf,
+        y1_1sig,
+        y2_1sig,
+        y1_2sig,
+        y2_2sig,
+        xlim,
+        has_fit,
     )
     fig_ms = (time.perf_counter() - t_fig0) * 1000.0
 
-    smjd = summary.get('selected_mjd_min', None)
-    emjd = summary.get('selected_mjd_max', None)
+    smjd = summary.get("selected_mjd_min", None)
+    emjd = summary.get("selected_mjd_max", None)
     try:
-        sdate = Time(float(smjd), format='mjd').to_datetime(
-            timezone=timezone.utc).strftime('%Y-%m-%d')
-        edate = Time(float(emjd), format='mjd').to_datetime(
-            timezone=timezone.utc).strftime('%Y-%m-%d')
+        sdate = (
+            Time(float(smjd), format="mjd")
+            .to_datetime(timezone=timezone.utc)
+            .strftime("%Y-%m-%d")
+        )
+        edate = (
+            Time(float(emjd), format="mjd")
+            .to_datetime(timezone=timezone.utc)
+            .strftime("%Y-%m-%d")
+        )
     except Exception:
-        sdate = '--'
-        edate = '--'
-    nobs = int(summary.get('selected_total', 0) or 0)
-    suffix = f' [{sdate} to {edate} (Nobs={nobs})]'
+        sdate = "--"
+        edate = "--"
+    nobs = int(summary.get("selected_total", 0) or 0)
+    suffix = f" [{sdate} to {edate} (Nobs={nobs})]"
     fig_rv.title.text = str(fig_rv.title.text) + suffix
     fig_prof.title.text = str(fig_prof.title.text) + suffix
     fig_res.title.text = str(fig_res.title.text) + suffix
     fig_spread.title.text = str(fig_spread.title.text) + suffix
 
-    layout = bk_column([fig_rv, fig_prof, fig_res, fig_spread],
-                       sizing_mode='stretch_width')
+    layout = bk_column(
+        [fig_rv, fig_prof, fig_res, fig_spread], sizing_mode="stretch_width"
+    )
     total_ms = load_ms + stats_ms + fig_ms
-    summary['timings_ms'] = {
-        'load_data': round(load_ms, 2),
-        'stats_fit': round(stats_ms, 2),
-        'build_figures': round(fig_ms, 2),
-        'total': round(total_ms, 2),
+    summary["timings_ms"] = {
+        "load_data": round(load_ms, 2),
+        "stats_fit": round(stats_ms, 2),
+        "build_figures": round(fig_ms, 2),
+        "total": round(total_ms, 2),
     }
-    return layout, '', summary
+    return layout, "", summary
 
 
 def _load_ccf_rv_from_htable(
@@ -1865,8 +2177,8 @@ def _load_ccf_rv_from_htable(
     for row in htable_rows:
         if not isinstance(row, dict):
             continue
-        raw_dv = row.get('CCF_DV')
-        raw_sdv = row.get('CCF_SDV')
+        raw_dv = row.get("CCF_DV")
+        raw_sdv = row.get("CCF_SDV")
         if raw_dv is None or raw_sdv is None:
             continue
         candidate_rows += 1
@@ -1877,19 +2189,19 @@ def _load_ccf_rv_from_htable(
             continue
 
         dt = None
-        raw_mjd = row.get('CCF_MJDMID')
+        raw_mjd = row.get("CCF_MJDMID")
         if raw_mjd is not None:
             try:
                 dt = mjd_to_datetime(float(raw_mjd))
             except Exception:
                 dt = None
         if dt is None:
-            raw_mid = row.get('MID_OBS_TIME')
+            raw_mid = row.get("MID_OBS_TIME")
             if raw_mid is not None:
                 sval = str(raw_mid).strip()
                 if sval:
                     try:
-                        dt = Time(sval, format='isot', scale='utc').to_datetime(
+                        dt = Time(sval, format="isot", scale="utc").to_datetime(
                             timezone=timezone.utc
                         )
                     except Exception:
@@ -1903,9 +2215,9 @@ def _load_ccf_rv_from_htable(
 
     loaded_total = len(datetimes_list)
     summary: Dict[str, Any] = {
-        'total_rows': int(total_rows),
-        'candidate_rows': int(candidate_rows),
-        'loaded_total': int(loaded_total),
+        "total_rows": int(total_rows),
+        "candidate_rows": int(candidate_rows),
+        "loaded_total": int(loaded_total),
     }
     if loaded_total == 0:
         return None
@@ -1925,30 +2237,35 @@ def _build_ccf_rv_layout(
     out = _load_ccf_rv_from_htable(htable_rows)
     load_ms = (time.perf_counter() - t0) * 1000.0
     if out is None:
-        return None, 'No CCF RV points available.', {
-            'total_rows': int(len(htable_rows)),
-            'candidate_rows': 0,
-            'loaded_total': 0,
-            'timings_ms': {
-                'load_data': round(load_ms, 2),
-                'build_figures': 0.0,
-                'total': round(load_ms, 2),
+        return (
+            None,
+            "No CCF RV points available.",
+            {
+                "total_rows": int(len(htable_rows)),
+                "candidate_rows": 0,
+                "loaded_total": 0,
+                "timings_ms": {
+                    "load_data": round(load_ms, 2),
+                    "build_figures": 0.0,
+                    "total": round(load_ms, 2),
+                },
             },
-        }
+        )
 
     datetimes, dv_ms, sdv_ms, summary = out
     t1 = time.perf_counter()
     fig_rv = _make_ccf_rv_figure(datetimes, dv_ms, sdv_ms)
     from bokeh.layouts import column as bk_column
-    layout = bk_column([fig_rv], sizing_mode='stretch_width')
+
+    layout = bk_column([fig_rv], sizing_mode="stretch_width")
     fig_ms = (time.perf_counter() - t1) * 1000.0
     total_ms = load_ms + fig_ms
-    summary['timings_ms'] = {
-        'load_data': round(load_ms, 2),
-        'build_figures': round(fig_ms, 2),
-        'total': round(total_ms, 2),
+    summary["timings_ms"] = {
+        "load_data": round(load_ms, 2),
+        "build_figures": round(fig_ms, 2),
+        "total": round(total_ms, 2),
     }
-    return layout, '', summary
+    return layout, "", summary
 
 
 def _build_ccf_profile_layout(
@@ -1975,29 +2292,33 @@ def _build_ccf_profile_layout(
     )
     load_ms = (time.perf_counter() - t_load0) * 1000.0
     if result is None:
-        return None, 'No CCF profile data could be loaded.', {
-            'max_files': int(max(1, ccf_nobs)),
-            'sampling_mode': 'all',
-            'selected_total': 0,
-            'loaded_total': 0,
-            'in_range_total': 0,
-            'ccf_mjd_start': ccf_mjd_start,
-            'ccf_mjd_end': ccf_mjd_end,
-            'timings_ms': {
-                'load_data': round(load_ms, 2),
-                'stats_fit': 0.0,
-                'build_figures': 0.0,
-                'total': round(load_ms, 2),
+        return (
+            None,
+            "No CCF profile data could be loaded.",
+            {
+                "max_files": int(max(1, ccf_nobs)),
+                "sampling_mode": "all",
+                "selected_total": 0,
+                "loaded_total": 0,
+                "in_range_total": 0,
+                "ccf_mjd_start": ccf_mjd_start,
+                "ccf_mjd_end": ccf_mjd_end,
+                "timings_ms": {
+                    "load_data": round(load_ms, 2),
+                    "stats_fit": 0.0,
+                    "build_figures": 0.0,
+                    "total": round(load_ms, 2),
+                },
             },
-        }
+        )
 
     rv_vec, all_ccf, _datetimes, _dv_ms, _sdv_ms, summary = result
     rv_used, ccf_used, rv_points_orig, rv_points_used = _decimate_ccf_grid(
         rv_vec, all_ccf, max_points=_CCF_RV_MAX_POINTS
     )
-    summary['rv_points_original'] = int(rv_points_orig)
-    summary['rv_points_used'] = int(rv_points_used)
-    summary['rv_decimated'] = bool(rv_points_used < rv_points_orig)
+    summary["rv_points_original"] = int(rv_points_orig)
+    summary["rv_points_used"] = int(rv_points_used)
+    summary["rv_decimated"] = bool(rv_points_used < rv_points_orig)
 
     t_stats0 = time.perf_counter()
     lower1 = 100.0 * (0.5 - 0.6827 / 2.0)
@@ -2014,48 +2335,72 @@ def _build_ccf_profile_layout(
 
     t_fig0 = time.perf_counter()
     fig_prof = _make_ccf_profile_figure(
-        rv_used, med_ccf,
-        y1_1sig, y2_1sig, y1_2sig, y2_2sig,
-        fit, xlim, has_fit,
+        rv_used,
+        med_ccf,
+        y1_1sig,
+        y2_1sig,
+        y1_2sig,
+        y2_2sig,
+        fit,
+        xlim,
+        has_fit,
     )
     fig_res = _make_ccf_residuals_figure(
-        rv_used, med_ccf, fit,
-        y1_1sig, y2_1sig, y1_2sig, y2_2sig,
-        xlim, has_fit,
+        rv_used,
+        med_ccf,
+        fit,
+        y1_1sig,
+        y2_1sig,
+        y1_2sig,
+        y2_2sig,
+        xlim,
+        has_fit,
     )
     fig_spread = _make_ccf_spread_figure(
-        rv_used, med_ccf,
-        y1_1sig, y2_1sig, y1_2sig, y2_2sig,
-        xlim, has_fit,
+        rv_used,
+        med_ccf,
+        y1_1sig,
+        y2_1sig,
+        y1_2sig,
+        y2_2sig,
+        xlim,
+        has_fit,
     )
     fig_ms = (time.perf_counter() - t_fig0) * 1000.0
 
-    smjd = summary.get('selected_mjd_min', None)
-    emjd = summary.get('selected_mjd_max', None)
+    smjd = summary.get("selected_mjd_min", None)
+    emjd = summary.get("selected_mjd_max", None)
     try:
-        sdate = Time(float(smjd), format='mjd').to_datetime(
-            timezone=timezone.utc).strftime('%Y-%m-%d')
-        edate = Time(float(emjd), format='mjd').to_datetime(
-            timezone=timezone.utc).strftime('%Y-%m-%d')
+        sdate = (
+            Time(float(smjd), format="mjd")
+            .to_datetime(timezone=timezone.utc)
+            .strftime("%Y-%m-%d")
+        )
+        edate = (
+            Time(float(emjd), format="mjd")
+            .to_datetime(timezone=timezone.utc)
+            .strftime("%Y-%m-%d")
+        )
     except Exception:
-        sdate = '--'
-        edate = '--'
-    nobs = int(summary.get('selected_total', 0) or 0)
-    suffix = f' [{sdate} to {edate} (Nobs={nobs})]'
+        sdate = "--"
+        edate = "--"
+    nobs = int(summary.get("selected_total", 0) or 0)
+    suffix = f" [{sdate} to {edate} (Nobs={nobs})]"
     fig_prof.title.text = str(fig_prof.title.text) + suffix
     fig_res.title.text = str(fig_res.title.text) + suffix
     fig_spread.title.text = str(fig_spread.title.text) + suffix
 
-    layout = bk_column([fig_prof, fig_res, fig_spread],
-                       sizing_mode='stretch_width')
+    layout = bk_column(
+        [fig_prof, fig_res, fig_spread], sizing_mode="stretch_width"
+    )
     total_ms = load_ms + stats_ms + fig_ms
-    summary['timings_ms'] = {
-        'load_data': round(load_ms, 2),
-        'stats_fit': round(stats_ms, 2),
-        'build_figures': round(fig_ms, 2),
-        'total': round(total_ms, 2),
+    summary["timings_ms"] = {
+        "load_data": round(load_ms, 2),
+        "stats_fit": round(stats_ms, 2),
+        "build_figures": round(fig_ms, 2),
+        "total": round(total_ms, 2),
     }
-    return layout, '', summary
+    return layout, "", summary
 
 
 # =============================================================================
@@ -2069,7 +2414,7 @@ def build_ccf_plot_json(
     ccf_mjd_start: Optional[float] = None,
     ccf_mjd_end: Optional[float] = None,
     ccf_nobs: int = 100,
-    target_id: str = 'op-ccf-plot-div',
+    target_id: str = "op-ccf-plot-div",
 ) -> Dict[str, Any]:
     """
     Build CCF plot (4 panels) as a ``json_item`` dict for client-side
@@ -2093,14 +2438,14 @@ def build_ccf_plot_json(
         ccf_nobs=ccf_nobs,
     )
     if layout is None:
-        return {'has_plot': False, 'message': msg, 'sample_info': summary}
+        return {"has_plot": False, "message": msg, "sample_info": summary}
     script, div = plot_to_components(layout)
     return {
-        'has_plot': True,
-        'script': script,
-        'div': div,
-        'message': '',
-        'sample_info': summary,
+        "has_plot": True,
+        "script": script,
+        "div": div,
+        "message": "",
+        "sample_info": summary,
     }
 
 
@@ -2134,36 +2479,38 @@ def build_ccf_plot_components(
     )
     if layout is None:
         return {
-            'has_plot': False, 'script': '', 'div': '',
-            'message': msg,
-            'sample_info': summary,
+            "has_plot": False,
+            "script": "",
+            "div": "",
+            "message": msg,
+            "sample_info": summary,
         }
     script, div = plot_to_components(layout)
     return {
-        'has_plot': True,
-        'script': script,
-        'div': div,
-        'message': '',
-        'sample_info': summary,
+        "has_plot": True,
+        "script": script,
+        "div": div,
+        "message": "",
+        "sample_info": summary,
     }
 
 
 def build_ccf_rv_plot_json(
     htable_rows: List[Dict[str, Any]],
     preset: Dict[str, Any],
-    target_id: str = 'op-ccf-rv-plot-div',
+    target_id: str = "op-ccf-rv-plot-div",
 ) -> Dict[str, Any]:
     """Build fast CCF RV-vs-time plot JSON from htable only."""
     layout, msg, summary = _build_ccf_rv_layout(htable_rows)
     if layout is None:
-        return {'has_plot': False, 'message': msg, 'sample_info': summary}
+        return {"has_plot": False, "message": msg, "sample_info": summary}
     script, div = plot_to_components(layout)
     return {
-        'has_plot': True,
-        'script': script,
-        'div': div,
-        'message': '',
-        'sample_info': summary,
+        "has_plot": True,
+        "script": script,
+        "div": div,
+        "message": "",
+        "sample_info": summary,
     }
 
 
@@ -2175,19 +2522,19 @@ def build_ccf_rv_plot_components(
     layout, msg, summary = _build_ccf_rv_layout(htable_rows)
     if layout is None:
         return {
-            'has_plot': False,
-            'script': '',
-            'div': '',
-            'message': msg,
-            'sample_info': summary,
+            "has_plot": False,
+            "script": "",
+            "div": "",
+            "message": msg,
+            "sample_info": summary,
         }
     script, div = plot_to_components(layout)
     return {
-        'has_plot': True,
-        'script': script,
-        'div': div,
-        'message': '',
-        'sample_info': summary,
+        "has_plot": True,
+        "script": script,
+        "div": div,
+        "message": "",
+        "sample_info": summary,
     }
 
 
@@ -2199,7 +2546,7 @@ def build_ccf_profile_plot_json(
     ccf_mjd_start: Optional[float] = None,
     ccf_mjd_end: Optional[float] = None,
     ccf_nobs: int = 100,
-    target_id: str = 'op-ccf-profile-plot-div',
+    target_id: str = "op-ccf-profile-plot-div",
 ) -> Dict[str, Any]:
     """Build CCF median profile/residual/spread plot JSON."""
     layout, msg, summary = _build_ccf_profile_layout(
@@ -2211,14 +2558,14 @@ def build_ccf_profile_plot_json(
         ccf_nobs=ccf_nobs,
     )
     if layout is None:
-        return {'has_plot': False, 'message': msg, 'sample_info': summary}
+        return {"has_plot": False, "message": msg, "sample_info": summary}
     script, div = plot_to_components(layout)
     return {
-        'has_plot': True,
-        'script': script,
-        'div': div,
-        'message': '',
-        'sample_info': summary,
+        "has_plot": True,
+        "script": script,
+        "div": div,
+        "message": "",
+        "sample_info": summary,
     }
 
 
@@ -2242,19 +2589,19 @@ def build_ccf_profile_plot_components(
     )
     if layout is None:
         return {
-            'has_plot': False,
-            'script': '',
-            'div': '',
-            'message': msg,
-            'sample_info': summary,
+            "has_plot": False,
+            "script": "",
+            "div": "",
+            "message": msg,
+            "sample_info": summary,
         }
     script, div = plot_to_components(layout)
     return {
-        'has_plot': True,
-        'script': script,
-        'div': div,
-        'message': '',
-        'sample_info': summary,
+        "has_plot": True,
+        "script": script,
+        "div": div,
+        "message": "",
+        "sample_info": summary,
     }
 
 
@@ -2273,8 +2620,133 @@ def _lbl_rdb_flavor_id(filename: str) -> str:
     :rtype: str
     """
     fname = Path(filename).name
-    m = re.match(r'^lbl_(.+)\.rdb$', fname, re.IGNORECASE)
+    m = re.match(r"^lbl_(.+)\.rdb$", fname, re.IGNORECASE)
     return m.group(1) if m else fname
+
+
+def _norm_obj_token(value: str) -> str:
+    """
+    Normalize an object/flavor token for robust equality checks.
+
+    :param value: str, input token
+
+    :return: str, lowercase alphanumeric-only token
+    :rtype: str
+    """
+    return re.sub(r"[^a-z0-9]+", "", str(value or "").lower())
+
+
+def _is_self_lbl_flavor(flavor_id: str, objname: str) -> bool:
+    """
+    Return True when *flavor_id* represents the self-self flavor for
+    *objname* (i.e. ``{objname}_{objname}``, normalization-aware).
+
+    :param flavor_id: str, parsed LBL flavor ID
+    :param objname: str, object name from request/context
+
+    :return: bool, True for self-self flavor
+    :rtype: bool
+    """
+    ftoken = _norm_obj_token(flavor_id)
+    otoken = _norm_obj_token(objname)
+    if not ftoken or not otoken:
+        return False
+    return ftoken == (otoken + otoken)
+
+
+def _sort_lbl_rdb_rows(
+    rows: List[Dict[str, Any]], objname: str = ""
+) -> List[Dict[str, Any]]:
+    """
+    Sort LBL RDB rows with self-self flavor first, then by filename.
+
+    :param rows: list of LBL RDB ftable rows
+    :param objname: str, target object name
+
+    :return: sorted row list
+    :rtype: list
+    """
+
+    def _key(row: Dict[str, Any]) -> Tuple[int, str]:
+        fname = str(row.get("FILENAME", "") or "").strip()
+        flavor_id = _lbl_rdb_flavor_id(fname)
+        return (
+            0 if _is_self_lbl_flavor(flavor_id, objname) else 1,
+            fname.lower(),
+        )
+
+    return sorted(list(rows), key=_key)
+
+
+def _match_lbl_snr_from_htable(
+    rjd: np.ndarray,
+    htable_rows: List[Dict[str, Any]],
+    max_dt_days: float = 3.0e-2,
+) -> Tuple[np.ndarray, np.ndarray]:
+    """
+    Map LBL ``rjd`` samples to htable SNR columns using nearest
+    ``EXT_MJDMID`` match within a small tolerance.
+
+    :param rjd: numpy.ndarray, LBL MJD times
+    :param htable_rows: list of htable rows
+    :param max_dt_days: float, max allowed |delta_mjd| for match
+
+    :return: tuple (snr_h, snr_y) arrays aligned to ``rjd``
+    :rtype: tuple[numpy.ndarray, numpy.ndarray]
+    """
+    snr_h = np.full(len(rjd), np.nan, dtype=float)
+    snr_y = np.full(len(rjd), np.nan, dtype=float)
+    if not len(rjd) or not htable_rows:
+        return snr_h, snr_y
+
+    mjd_vals: List[float] = []
+    h_vals: List[float] = []
+    y_vals: List[float] = []
+    for row in htable_rows:
+        if not isinstance(row, dict):
+            continue
+        try:
+            mjd = float(row.get("EXT_MJDMID"))
+        except (TypeError, ValueError):
+            continue
+        try:
+            hval = float(row.get("EXT_H"))
+        except (TypeError, ValueError):
+            hval = np.nan
+        try:
+            yval = float(row.get("EXT_Y"))
+        except (TypeError, ValueError):
+            yval = np.nan
+        mjd_vals.append(mjd)
+        h_vals.append(hval)
+        y_vals.append(yval)
+
+    if not mjd_vals:
+        return snr_h, snr_y
+
+    mjd_arr = np.array(mjd_vals, dtype=float)
+    h_arr = np.array(h_vals, dtype=float)
+    y_arr = np.array(y_vals, dtype=float)
+    for it, rjd_i in enumerate(rjd):
+        r = float(rjd_i)
+        # LBL tables can carry RJD-like values offset from MJD by 0.5 day.
+        # Try direct and +/-0.5 shifted matches, then keep the best.
+        d0 = np.abs(mjd_arr - r)
+        d1 = np.abs(mjd_arr - (r - 0.5))
+        d2 = np.abs(mjd_arr - (r + 0.5))
+        if d0.size == 0:
+            continue
+        cands = [
+            (float(np.min(d0)), int(np.argmin(d0))),
+            (float(np.min(d1)), int(np.argmin(d1))),
+            (float(np.min(d2)), int(np.argmin(d2))),
+        ]
+        cands.sort(key=lambda item: item[0])
+        best_dt, j = cands[0]
+        if best_dt <= float(max_dt_days):
+            snr_h[it] = h_arr[j]
+            snr_y[it] = y_arr[j]
+    return snr_h, snr_y
 
 
 def _load_lbl_table(
@@ -2292,15 +2764,13 @@ def _load_lbl_table(
     """
     if not path_lbl:
         return None, None
-    obs_dir = str(lbl_row.get('OBS_DIR', '') or '').strip()
-    filename = str(lbl_row.get('FILENAME', '') or '').strip()
+    obs_dir = str(lbl_row.get("OBS_DIR", "") or "").strip()
+    filename = str(lbl_row.get("FILENAME", "") or "").strip()
     if not filename:
         return None, None
     base = Path(path_lbl).resolve()
     try:
-        obs_part = (
-            Path(obs_dir.strip('/')) if obs_dir else Path('')
-        )
+        obs_part = Path(obs_dir.strip("/")) if obs_dir else Path("")
         candidate = (base / obs_part / filename).resolve()
         candidate.relative_to(base)
         if not candidate.is_file():
@@ -2309,14 +2779,14 @@ def _load_lbl_table(
         return None, None
     try:
         from astropy.table import Table as _ATable
-        tbl = _ATable.read(str(candidate), format='ascii.rdb')
+
+        tbl = _ATable.read(str(candidate), format="ascii.rdb")
     except Exception:
         return None, None
     return _lbl_rdb_flavor_id(filename), tbl
 
 
-def _lbl_wave_colour(wave_nm: float,
-                     wave_min: float, wave_max: float) -> str:
+def _lbl_wave_colour(wave_nm: float, wave_min: float, wave_max: float) -> str:
     """
     Map a wavelength value to a blue→red hex colour string using a
     simple coolwarm approximation.
@@ -2329,10 +2799,7 @@ def _lbl_wave_colour(wave_nm: float,
     :rtype: str
     """
     span = wave_max - wave_min
-    t = (
-        0.0 if span <= 0
-        else max(0.0, min(1.0, (wave_nm - wave_min) / span))
-    )
+    t = 0.0 if span <= 0 else max(0.0, min(1.0, (wave_nm - wave_min) / span))
     if t < 0.5:
         r = int(round(2.0 * t * 255))
         g = int(round(2.0 * t * 255))
@@ -2341,7 +2808,7 @@ def _lbl_wave_colour(wave_nm: float,
         r = 255
         g = int(round(2.0 * (1.0 - t) * 255))
         b = int(round(2.0 * (1.0 - t) * 255))
-    return '#{:02x}{:02x}{:02x}'.format(r, g, b)
+    return "#{:02x}{:02x}{:02x}".format(r, g, b)
 
 
 def _make_lbl_rv_figure(
@@ -2371,67 +2838,109 @@ def _make_lbl_rv_figure(
     from bokeh.models import Whisker
 
     fig = make_time_figure(
-        f'LBL Radial Velocity \u2014 {flavor_id}', height=height
+        f"LBL Radial Velocity \u2014 {flavor_id}", height=height
     )
-    fig.add_tools(HoverTool(
-        tooltips=[
-            ('Date (UTC)', '@x{%F %T}'),
-            ('RV', '@y{0.000} m/s'),
-        ],
-        formatters={'@x': 'datetime'},
-        mode='mouse',
-    ))
+    fig.add_tools(
+        HoverTool(
+            tooltips=[
+                ("Date (UTC)", "@x{%F %T}"),
+                ("RV", "@y{0.000} m/s"),
+            ],
+            formatters={"@x": "datetime"},
+            mode="mouse",
+        )
+    )
     dts_ms = np.array([dt.timestamp() * 1000.0 for dt in datetimes])
     good = ~reset_mask
     # -------------------------------------------------------------------------
     if np.any(good):
-        src = ColumnDataSource(dict(
-            x=dts_ms[good], y=vrad[good],
-            upper=vrad[good] + svrad[good],
-            lower=vrad[good] - svrad[good],
-        ))
-        fig.circle('x', 'y', source=src, size=5, color='green',
-                   alpha=0.7, legend_label='Good')
-        fig.add_layout(Whisker(
-            source=src, base='x', upper='upper', lower='lower',
-            line_color='green', line_alpha=0.7,
-        ))
+        src = ColumnDataSource(
+            dict(
+                x=dts_ms[good],
+                y=vrad[good],
+                upper=vrad[good] + svrad[good],
+                lower=vrad[good] - svrad[good],
+            )
+        )
+        fig.circle(
+            "x",
+            "y",
+            source=src,
+            size=5,
+            color="green",
+            alpha=0.7,
+            legend_label="Good",
+        )
+        fig.add_layout(
+            Whisker(
+                source=src,
+                base="x",
+                upper="upper",
+                lower="lower",
+                line_color="green",
+                line_alpha=0.7,
+            )
+        )
     if np.any(reset_mask):
-        src_rst = ColumnDataSource(dict(
-            x=dts_ms[reset_mask], y=vrad[reset_mask],
-            upper=vrad[reset_mask] + svrad[reset_mask],
-            lower=vrad[reset_mask] - svrad[reset_mask],
-        ))
-        fig.circle('x', 'y', source=src_rst, size=5,
-                   color='mediumpurple', alpha=0.7,
-                   legend_label='Reset RV')
-        fig.add_layout(Whisker(
-            source=src_rst, base='x', upper='upper', lower='lower',
-            line_color='mediumpurple', line_alpha=0.7,
-        ))
+        src_rst = ColumnDataSource(
+            dict(
+                x=dts_ms[reset_mask],
+                y=vrad[reset_mask],
+                upper=vrad[reset_mask] + svrad[reset_mask],
+                lower=vrad[reset_mask] - svrad[reset_mask],
+            )
+        )
+        fig.circle(
+            "x",
+            "y",
+            source=src_rst,
+            size=5,
+            color="mediumpurple",
+            alpha=0.7,
+            legend_label="Reset RV",
+        )
+        fig.add_layout(
+            Whisker(
+                source=src_rst,
+                base="x",
+                upper="upper",
+                lower="lower",
+                line_color="mediumpurple",
+                line_alpha=0.7,
+            )
+        )
     # -------------------------------------------------------------------------
     diff = float(ylim[1] - ylim[0])
     l_arrow = 0.04 * diff
     for clip_mask, yt, marker in [
-        (vrad < ylim[0], ylim[0] + l_arrow, 'triangle'),
-        (vrad > ylim[1], ylim[1] - l_arrow, 'inverted_triangle'),
+        (vrad < ylim[0], ylim[0] + l_arrow, "triangle"),
+        (vrad > ylim[1], ylim[1] - l_arrow, "inverted_triangle"),
     ]:
         if np.any(clip_mask):
-            src_out = ColumnDataSource(dict(
-                x=dts_ms[clip_mask],
-                y=np.full(int(np.sum(clip_mask)), yt),
-            ))
-            fig.scatter('x', 'y', source=src_out, marker=marker,
-                        size=8, color='red', alpha=0.8,
-                        legend_label='Outlier')
+            src_out = ColumnDataSource(
+                dict(
+                    x=dts_ms[clip_mask],
+                    y=np.full(int(np.sum(clip_mask)), yt),
+                )
+            )
+            fig.scatter(
+                "x",
+                "y",
+                source=src_out,
+                marker=marker,
+                size=8,
+                color="red",
+                alpha=0.8,
+                legend_label="Outlier",
+            )
     # -------------------------------------------------------------------------
     fig.y_range.start = ylim[0]
     fig.y_range.end = ylim[1]
-    fig.yaxis.axis_label = 'Velocity [m/s]'
-    fig.legend.location = 'top_right'
-    fig.legend.click_policy = 'hide'
-    fig.grid.grid_line_color = 'lightgray'
-    fig.grid.grid_line_dash = 'dashed'
+    fig.yaxis.axis_label = "Velocity [m/s]"
+    fig.legend.location = "top_right"
+    fig.legend.click_policy = "hide"
+    fig.grid.grid_line_color = "lightgray"
+    fig.grid.grid_line_dash = "dashed"
     return fig
 
 
@@ -2456,15 +2965,17 @@ def _make_lbl_snr_figure(
     :return: Bokeh figure object
     :rtype: bokeh.plotting.figure
     """
-    fig = make_time_figure(f'{snr_label} vs Time', height=height)
-    fig.add_tools(HoverTool(
-        tooltips=[
-            ('Date (UTC)', '@x{%F %T}'),
-            ('SNR', '@y{0.00}'),
-        ],
-        formatters={'@x': 'datetime'},
-        mode='mouse',
-    ))
+    fig = make_time_figure(f"{snr_label} vs Time", height=height)
+    fig.add_tools(
+        HoverTool(
+            tooltips=[
+                ("Date (UTC)", "@x{%F %T}"),
+                ("SNR", "@y{0.00}"),
+            ],
+            formatters={"@x": "datetime"},
+            mode="mouse",
+        )
+    )
     dts_ms = np.array([dt.timestamp() * 1000.0 for dt in datetimes])
     bad_set = set(bad_idxs)
     bad_mask = np.array(
@@ -2473,23 +2984,38 @@ def _make_lbl_snr_figure(
     good_no_bad = (~reset_mask) & (~bad_mask)
     # -------------------------------------------------------------------------
     if np.any(good_no_bad):
-        fig.circle(dts_ms[good_no_bad], snr_h[good_no_bad],
-                   size=5, color='green', alpha=0.7,
-                   legend_label='Good')
+        fig.circle(
+            dts_ms[good_no_bad],
+            snr_h[good_no_bad],
+            size=5,
+            color="green",
+            alpha=0.7,
+            legend_label="Good",
+        )
     if np.any(reset_mask):
-        fig.circle(dts_ms[reset_mask], snr_h[reset_mask],
-                   size=5, color='mediumpurple', alpha=0.7,
-                   legend_label='Reset RV')
+        fig.circle(
+            dts_ms[reset_mask],
+            snr_h[reset_mask],
+            size=5,
+            color="mediumpurple",
+            alpha=0.7,
+            legend_label="Reset RV",
+        )
     if np.any(bad_mask):
-        fig.circle(dts_ms[bad_mask], snr_h[bad_mask],
-                   size=5, color='red', alpha=0.8,
-                   legend_label='Outlier')
+        fig.circle(
+            dts_ms[bad_mask],
+            snr_h[bad_mask],
+            size=5,
+            color="red",
+            alpha=0.8,
+            legend_label="Outlier",
+        )
     # -------------------------------------------------------------------------
     fig.yaxis.axis_label = snr_label
-    fig.legend.location = 'top_right'
-    fig.legend.click_policy = 'hide'
-    fig.grid.grid_line_color = 'lightgray'
-    fig.grid.grid_line_dash = 'dashed'
+    fig.legend.location = "top_right"
+    fig.legend.click_policy = "hide"
+    fig.grid.grid_line_color = "lightgray"
+    fig.grid.grid_line_dash = "dashed"
     return fig
 
 
@@ -2500,7 +3026,7 @@ def _make_lbl_wave_figure(
     wave_vrad_dict: Dict[str, np.ndarray],
     wave_svrad_dict: Dict[str, np.ndarray],
     wavemap: List[float],
-    flavor_id: str = '',
+    flavor_id: str = "",
     height: int = 280,
 ) -> Any:
     """
@@ -2518,68 +3044,86 @@ def _make_lbl_wave_figure(
     :return: Bokeh figure object
     :rtype: bokeh.plotting.figure
     """
-    from bokeh.models import DatetimeTickFormatter
+    from bokeh.models import DatetimeTickFormatter, Whisker
     from bokeh.plotting import figure as bk_figure
 
-    from bokeh.models import Whisker
-
     fig = bk_figure(
-        title=f'LBL Wave RV vs Time \u2014 {flavor_id}' if flavor_id else 'LBL Wave RV vs Time',
-        x_axis_type='datetime',
-        x_axis_label='Date',
-        y_axis_label='RV [m/s]',
-        tools='pan,wheel_zoom,box_zoom,reset,save',
-        active_scroll='wheel_zoom',
+        title=(
+            f"LBL Wave RV vs Time \u2014 {flavor_id}"
+            if flavor_id
+            else "LBL Wave RV vs Time"
+        ),
+        x_axis_type="datetime",
+        x_axis_label="Date",
+        y_axis_label="RV [m/s]",
+        tools="pan,wheel_zoom,box_zoom,reset,save",
+        active_scroll="wheel_zoom",
         height=height,
-        sizing_mode='stretch_width',
+        sizing_mode="stretch_width",
         background_fill_color=base.PLOT_BACKGROUND_COLOR,
     )
-    fig.add_tools(HoverTool(
-        tooltips=[
-            ('Date (UTC)', '@x{%F %T}'),
-            ('RV', '@y{0.000} m/s'),
-        ],
-        formatters={'@x': 'datetime'},
-        mode='mouse',
-    ))
-    fig.add_tools(CrosshairTool(dimensions='both'))
+    fig.add_tools(
+        HoverTool(
+            tooltips=[
+                ("Date (UTC)", "@x{%F %T}"),
+                ("RV", "@y{0.000} m/s"),
+            ],
+            formatters={"@x": "datetime"},
+            mode="mouse",
+        )
+    )
+    fig.add_tools(CrosshairTool(dimensions="both"))
     fig.xaxis.formatter = DatetimeTickFormatter(
-        days='%Y-%m-%d', months='%Y-%m', years='%Y',
+        days="%Y-%m-%d",
+        months="%Y-%m",
+        years="%Y",
     )
 
     wave_min = min(wavemap) if wavemap else 900.0
     wave_max = max(wavemap) if wavemap else 2500.0
-    med_svrad = (
-        float(np.nanmedian(svrad)) if len(svrad) > 0 else 1.0
-    )
+    med_svrad = float(np.nanmedian(svrad)) if len(svrad) > 0 else 1.0
     dts_ms = np.array([dt.timestamp() * 1000.0 for dt in datetimes])
     # -------------------------------------------------------------------------
     for col_key, wave_nm in zip(wave_vrad_dict.keys(), wavemap):
         vrad_key = wave_vrad_dict[col_key]
-        svrad_col = col_key.replace('vrad_', 'svrad_')
+        svrad_col = col_key.replace("vrad_", "svrad_")
         svrad_key = wave_svrad_dict.get(
             svrad_col, np.full(len(vrad_key), np.nan)
         )
         med_svrad_key = (
-            float(np.nanmedian(svrad_key))
-            if len(svrad_key) > 0 else 0.0
+            float(np.nanmedian(svrad_key)) if len(svrad_key) > 0 else 0.0
         )
         if med_svrad_key > 10.0 * med_svrad:
             continue
         if med_svrad > 0 and med_svrad_key < med_svrad * 0.01:
             continue
         color = _lbl_wave_colour(wave_nm, wave_min, wave_max)
-        label = f'{int(wave_nm)} nm'
-        src_w = ColumnDataSource(dict(
-            x=dts_ms, y=vrad_key,
-            upper=vrad_key + svrad_key,
-            lower=vrad_key - svrad_key,
-        ))
-        fig.scatter('x', 'y', source=src_w, size=4, color=color,
-                    alpha=0.5, marker='circle', legend_label=label)
+        label = f"{int(wave_nm)} nm"
+        src_w = ColumnDataSource(
+            dict(
+                x=dts_ms,
+                y=vrad_key,
+                upper=vrad_key + svrad_key,
+                lower=vrad_key - svrad_key,
+            )
+        )
+        fig.scatter(
+            "x",
+            "y",
+            source=src_w,
+            size=4,
+            color=color,
+            alpha=0.5,
+            marker="circle",
+            legend_label=label,
+        )
         whisk = Whisker(
-            source=src_w, base='x', upper='upper', lower='lower',
-            line_color=color, line_alpha=0.5,
+            source=src_w,
+            base="x",
+            upper="upper",
+            lower="lower",
+            line_color=color,
+            line_alpha=0.5,
         )
         # Match whisker caps to wavelength colour (avoid default black caps).
         whisk.upper_head.line_color = color
@@ -2588,20 +3132,35 @@ def _make_lbl_wave_figure(
         whisk.lower_head.line_alpha = 0.5
         fig.add_layout(whisk)
     # overall vrad as black points (drawn last so it remains on top)
-    src_ov = ColumnDataSource(dict(
-        x=dts_ms, y=vrad,
-        upper=vrad + svrad,
-        lower=vrad - svrad,
-    ))
-    fig.scatter('x', 'y', source=src_ov, size=5, color='black',
-                alpha=0.55, marker='circle', legend_label='Overall vrad',
-                level='overlay')
-    whisk_ov = Whisker(
-        source=src_ov, base='x', upper='upper', lower='lower',
-        line_color='black', line_alpha=0.55,
+    src_ov = ColumnDataSource(
+        dict(
+            x=dts_ms,
+            y=vrad,
+            upper=vrad + svrad,
+            lower=vrad - svrad,
+        )
     )
-    whisk_ov.upper_head.line_color = 'black'
-    whisk_ov.lower_head.line_color = 'black'
+    fig.scatter(
+        "x",
+        "y",
+        source=src_ov,
+        size=5,
+        color="black",
+        alpha=0.55,
+        marker="circle",
+        legend_label="Overall vrad",
+        level="overlay",
+    )
+    whisk_ov = Whisker(
+        source=src_ov,
+        base="x",
+        upper="upper",
+        lower="lower",
+        line_color="black",
+        line_alpha=0.55,
+    )
+    whisk_ov.upper_head.line_color = "black"
+    whisk_ov.lower_head.line_color = "black"
     whisk_ov.upper_head.line_alpha = 0.55
     whisk_ov.lower_head.line_alpha = 0.55
     fig.add_layout(whisk_ov)
@@ -2617,16 +3176,16 @@ def _make_lbl_wave_figure(
     # -------------------------------------------------------------------------
     # Move legend below the figure
     legend = fig.legend[0]
-    legend.click_policy = 'hide'
-    legend.orientation = 'horizontal'
-    if hasattr(legend, 'nrows'):
+    legend.click_policy = "hide"
+    legend.orientation = "horizontal"
+    if hasattr(legend, "nrows"):
         legend.nrows = 2
-    legend.label_text_font_size = '9pt'
+    legend.label_text_font_size = "9pt"
     legend.spacing = 2
     legend.padding = 4
-    fig.add_layout(legend, 'below')
-    fig.grid.grid_line_color = 'lightgray'
-    fig.grid.grid_line_dash = 'dashed'
+    fig.add_layout(legend, "below")
+    fig.grid.grid_line_color = "lightgray"
+    fig.grid.grid_line_dash = "dashed"
     return fig
 
 
@@ -2634,6 +3193,7 @@ def _build_lbl_layout(
     tbl: Any,
     flavor_id: str,
     preset: Dict[str, Any],
+    htable_rows: Optional[List[Dict[str, Any]]] = None,
 ) -> Optional[Any]:
     """
     Build a 3-panel LBL column layout from an astropy RDB Table.
@@ -2647,16 +3207,24 @@ def _build_lbl_layout(
     """
     from bokeh.layouts import column as bk_column
 
-    rjd = np.array([float(v) for v in tbl['rjd']])
-    vrad = np.array([float(v) for v in tbl['vrad']])
-    svrad = np.array([float(v) for v in tbl['svrad']])
-    reset_mask = np.array([bool(int(v)) for v in tbl['RESET_RV']])
+    rjd = np.array([float(v) for v in tbl["rjd"]])
+    vrad = np.array([float(v) for v in tbl["vrad"]])
+    svrad = np.array([float(v) for v in tbl["svrad"]])
+    reset_mask = np.array([bool(int(v)) for v in tbl["RESET_RV"]])
 
-    snr_h_label = sci_header_label(preset, 'lbl', 'EXT_H', 'EXTSN035')
-    snr_key = 'EXTSN035'
-    try:
-        snr_h = np.array([float(v) for v in tbl[snr_key]])
-    except (KeyError, Exception):
+    snr_h_label = sci_header_label(preset, "lbl", "EXT_H", "EXT_H")
+    snr_h, snr_y = _match_lbl_snr_from_htable(rjd, htable_rows or [])
+    if not np.any(np.isfinite(snr_h)):
+        try:
+            snr_h = np.array([float(v) for v in tbl["EXT_H"]])
+        except (KeyError, Exception):
+            pass
+    if not np.any(np.isfinite(snr_h)):
+        try:
+            snr_h = np.array([float(v) for v in tbl["EXTSN035"]])
+        except (KeyError, Exception):
+            snr_h = np.array(snr_y, copy=True)
+    if not np.any(np.isfinite(snr_h)):
         snr_h = np.zeros(len(rjd))
     # -------------------------------------------------------------------------
     # convert MJD to UTC datetimes
@@ -2679,36 +3247,32 @@ def _build_lbl_layout(
     central = float(np.nanmean(pp))
     if diff < 1.0:
         diff = max(abs(central) * 0.01, 10.0)
-    ylim: List[float] = [
-        central - 1.5 * diff, central + 1.5 * diff
-    ]
+    ylim: List[float] = [central - 1.5 * diff, central + 1.5 * diff]
     bad_idxs = [
-        int(i) for i in np.where(
-            (vrad_s < ylim[0]) | (vrad_s > ylim[1])
-        )[0]
+        int(i) for i in np.where((vrad_s < ylim[0]) | (vrad_s > ylim[1]))[0]
     ]
     # -------------------------------------------------------------------------
     # wave-binned columns
     wave_vrad_cols = [
-        c for c in tbl.colnames
-        if c.startswith('vrad_') and 'nm' in c
+        c for c in tbl.colnames if c.startswith("vrad_") and "nm" in c
     ]
     wave_svrad_cols = [
-        c for c in tbl.colnames
-        if c.startswith('svrad_') and 'nm' in c
+        c for c in tbl.colnames if c.startswith("svrad_") and "nm" in c
     ]
+
     def _wave_nm_from_col(colname: str) -> float:
-        m = re.match(r'.*_(\d+)nm', str(colname))
+        m = re.match(r".*_(\d+)nm", str(colname))
         if m:
             return float(m.group(1))
-        return float('inf')
+        return float("inf")
+
     wave_vrad_cols = sorted(wave_vrad_cols, key=_wave_nm_from_col)
     wave_svrad_cols = sorted(wave_svrad_cols, key=_wave_nm_from_col)
     wave_vrad_dict: Dict[str, np.ndarray] = {}
     wave_svrad_dict: Dict[str, np.ndarray] = {}
     wavemap: List[float] = []
     for col in wave_vrad_cols:
-        m = re.match(r'vrad_(\d+)nm', col)
+        m = re.match(r"vrad_(\d+)nm", col)
         if m:
             wavemap.append(float(m.group(1)))
             wave_vrad_dict[col] = np.array(
@@ -2722,15 +3286,18 @@ def _build_lbl_layout(
     fig_rv = _make_lbl_rv_figure(
         dts_s, vrad_s, svrad_s, reset_s, ylim, flavor_id
     )
-    fig_snr = _make_lbl_snr_figure(
-        dts_s, snr_s, reset_s, bad_idxs, snr_h_label
-    )
+    fig_snr = _make_lbl_snr_figure(dts_s, snr_s, reset_s, bad_idxs, snr_h_label)
     fig_wave = _make_lbl_wave_figure(
-        dts_s, vrad_s, svrad_s, wave_vrad_dict, wave_svrad_dict,
-        wavemap, flavor_id=flavor_id, height=420,
+        dts_s,
+        vrad_s,
+        svrad_s,
+        wave_vrad_dict,
+        wave_svrad_dict,
+        wavemap,
+        flavor_id=flavor_id,
+        height=420,
     )
-    return bk_column([fig_rv, fig_snr, fig_wave],
-                     sizing_mode='stretch_width')
+    return bk_column([fig_rv, fig_snr, fig_wave], sizing_mode="stretch_width")
 
 
 # =============================================================================
@@ -2740,7 +3307,9 @@ def build_lbl_plots_json(
     ftable_lbl_rdb_rows: List[Dict[str, Any]],
     path_lbl: str,
     preset: Dict[str, Any],
-    target_id_prefix: str = 'op-lbl-vel-plot',
+    target_id_prefix: str = "op-lbl-vel-plot",
+    htable_rows: Optional[List[Dict[str, Any]]] = None,
+    objname: str = "",
 ) -> Dict[str, Dict[str, Any]]:
     """
     Build LBL plots for each RDB file as ``json_item`` dicts.
@@ -2754,37 +3323,39 @@ def build_lbl_plots_json(
     :rtype: dict
     """
     results: Dict[str, Dict[str, Any]] = {}
-    for row in ftable_lbl_rdb_rows:
-        filename = str(row.get('FILENAME', '') or '').strip()
+    for row in _sort_lbl_rdb_rows(ftable_lbl_rdb_rows, objname=objname):
+        filename = str(row.get("FILENAME", "") or "").strip()
         if not filename:
             continue
         flavor_id, tbl = _load_lbl_table(row, path_lbl)
         if tbl is None:
             results[filename] = {
-                'has_plot': False,
-                'message': f'Could not load {filename}',
+                "has_plot": False,
+                "message": f"Could not load {filename}",
             }
             continue
-        target_id = f'{target_id_prefix}-{flavor_id}'
+        target_id = f"{target_id_prefix}-{flavor_id}"
         try:
-            layout = _build_lbl_layout(tbl, flavor_id, preset)
+            layout = _build_lbl_layout(
+                tbl, flavor_id, preset, htable_rows=htable_rows
+            )
             if layout is None:
                 results[filename] = {
-                    'has_plot': False,
-                    'message': 'No valid date rows in RDB file.',
+                    "has_plot": False,
+                    "message": "No valid date rows in RDB file.",
                 }
                 continue
             script, div = plot_to_components(layout)
             results[filename] = {
-                'has_plot': True,
-                'script': script,
-                'div': div,
-                'message': '',
+                "has_plot": True,
+                "script": script,
+                "div": div,
+                "message": "",
             }
         except Exception as exc:
             results[filename] = {
-                'has_plot': False,
-                'message': f'Plot error: {exc}',
+                "has_plot": False,
+                "message": f"Plot error: {exc}",
             }
     return results
 
@@ -2794,6 +3365,7 @@ def build_lbl_plot_components(
     path_lbl: str,
     preset: Dict[str, Any],
     lbl_filename: str,
+    htable_rows: Optional[List[Dict[str, Any]]] = None,
 ) -> Dict[str, Any]:
     """
     Build a single LBL plot as ``(script, div)`` for server-side
@@ -2808,31 +3380,39 @@ def build_lbl_plot_components(
     :rtype: dict
     """
     for row in ftable_lbl_rdb_rows:
-        filename = str(row.get('FILENAME', '') or '').strip()
+        filename = str(row.get("FILENAME", "") or "").strip()
         if filename != lbl_filename:
             continue
         flavor_id, tbl = _load_lbl_table(row, path_lbl)
         if tbl is None:
             return {
-                'has_plot': False, 'script': '', 'div': '',
-                'message': f'Could not load {lbl_filename}',
+                "has_plot": False,
+                "script": "",
+                "div": "",
+                "message": f"Could not load {lbl_filename}",
             }
-        layout = _build_lbl_layout(tbl, flavor_id, preset)
+        layout = _build_lbl_layout(
+            tbl, flavor_id, preset, htable_rows=htable_rows
+        )
         if layout is None:
             return {
-                'has_plot': False, 'script': '', 'div': '',
-                'message': 'No valid date rows in RDB file.',
+                "has_plot": False,
+                "script": "",
+                "div": "",
+                "message": "No valid date rows in RDB file.",
             }
         script, div = plot_to_components(layout)
         return {
-            'has_plot': True, 'script': script, 'div': div,
-            'message': '',
+            "has_plot": True,
+            "script": script,
+            "div": div,
+            "message": "",
         }
     return {
-        'has_plot': False, 'script': '', 'div': '',
-        'message': (
-            f'RDB file {lbl_filename} not found in ftable rows.'
-        ),
+        "has_plot": False,
+        "script": "",
+        "div": "",
+        "message": (f"RDB file {lbl_filename} not found in ftable rows."),
     }
 
 
@@ -2857,14 +3437,14 @@ def _aggregate_by_obs_dir(
     """
     id_to_obs: Dict[str, str] = {}
     for row in ftable_ext_rows:
-        ident = str(row.get('IDENTIFIER', '') or '').strip()
-        obs = str(row.get('OBS_DIR', '') or '').strip()
+        ident = str(row.get("IDENTIFIER", "") or "").strip()
+        obs = str(row.get("OBS_DIR", "") or "").strip()
         if ident and obs:
             id_to_obs[ident] = obs
     # -------------------------------------------------------------------------
     obs_buckets: Dict[str, Dict[str, List[float]]] = {}
     for row in htable_rows:
-        ident = str(row.get('IDENTIFIER', '') or '').strip()
+        ident = str(row.get("IDENTIFIER", "") or "").strip()
         obs = id_to_obs.get(ident)
         if not obs:
             continue
@@ -2883,9 +3463,7 @@ def _aggregate_by_obs_dir(
         means: Dict[str, float] = {}
         for key in keys:
             vals = obs_buckets[obs][key]
-            means[key] = (
-                float(np.nanmean(vals)) if vals else float('nan')
-            )
+            means[key] = float(np.nanmean(vals)) if vals else float("nan")
         result.append((obs, means))
     return result
 
@@ -2907,23 +3485,25 @@ def _make_ts_snr_figure(
     :return: Bokeh figure or None if obs_data is empty
     :rtype: bokeh.plotting.figure | None
     """
-    from bokeh.models import DatetimeTickFormatter, DatetimeTicker, FactorRange
+    from bokeh.models import DatetimeTicker, DatetimeTickFormatter, FactorRange
     from bokeh.plotting import figure as bk_figure
 
     if not obs_data:
         return None
     obs_dirs = [d[0] for d in obs_data]
-    snr_h = [d[1].get('EXT_H', float('nan')) for d in obs_data]
-    snr_y = [d[1].get('EXT_Y', float('nan')) for d in obs_data]
+    snr_h = [d[1].get("EXT_H", float("nan")) for d in obs_data]
+    snr_y = [d[1].get("EXT_Y", float("nan")) for d in obs_data]
 
     def _obs_dir_to_dt(obs_dir: str) -> Optional[datetime]:
-        text = str(obs_dir or '').strip()
-        m = re.match(r'^(\d{4})[-_]?([01]\d)[-_]?([0-3]\d)$', text)
+        text = str(obs_dir or "").strip()
+        m = re.match(r"^(\d{4})[-_]?([01]\d)[-_]?([0-3]\d)$", text)
         if not m:
             return None
         try:
             return datetime(
-                int(m.group(1)), int(m.group(2)), int(m.group(3)),
+                int(m.group(1)),
+                int(m.group(2)),
+                int(m.group(3)),
                 tzinfo=timezone.utc,
             )
         except ValueError:
@@ -2936,25 +3516,28 @@ def _make_ts_snr_figure(
     if use_time_axis:
         x_ms = [int(dt.timestamp() * 1000.0) for dt in dts if dt is not None]
         fig = bk_figure(
-            x_axis_type='datetime',
-            title='SNR per Night',
-            x_axis_label='Date (UTC)',
-            y_axis_label='SNR',
-            tools='pan,wheel_zoom,box_zoom,reset,save',
-            active_scroll='wheel_zoom',
+            x_axis_type="datetime",
+            title="SNR per Night",
+            x_axis_label="Date (UTC)",
+            y_axis_label="SNR",
+            tools="pan,wheel_zoom,box_zoom,reset,save",
+            active_scroll="wheel_zoom",
             height=height,
-            sizing_mode='stretch_width',
+            sizing_mode="stretch_width",
             background_fill_color=base.PLOT_BACKGROUND_COLOR,
         )
         hover = HoverTool(
-            tooltips=[('Obs Dir', '@obs'), ('Date', '@x{%F}'),
-                      ('SNR', '@y{0.0}')],
-            formatters={'@x': 'datetime'},
-            mode='mouse',
+            tooltips=[
+                ("Obs Dir", "@obs"),
+                ("Date", "@x{%F}"),
+                ("SNR", "@y{0.0}"),
+            ],
+            formatters={"@x": "datetime"},
+            mode="mouse",
         )
         fig.add_tools(hover)
-        src_h = ColumnDataSource({'x': x_ms, 'y': snr_h, 'obs': obs_dirs})
-        src_y = ColumnDataSource({'x': x_ms, 'y': snr_y, 'obs': obs_dirs})
+        src_h = ColumnDataSource({"x": x_ms, "y": snr_h, "obs": obs_dirs})
+        src_y = ColumnDataSource({"x": x_ms, "y": snr_y, "obs": obs_dirs})
 
         first_dt = min(dt for dt in dts if dt is not None)
         last_dt = max(dt for dt in dts if dt is not None)
@@ -2963,48 +3546,70 @@ def _make_ts_snr_figure(
         fig.xaxis.ticker = DatetimeTicker(desired_num_ticks=10)
         if span_days >= 365 * 2:
             fig.xaxis.formatter = DatetimeTickFormatter(
-                years='%Y', months='%Y', days='%Y',
+                years="%Y",
+                months="%Y",
+                days="%Y",
             )
         elif span_days >= 90:
             fig.xaxis.formatter = DatetimeTickFormatter(
-                years='%Y', months='%Y-%m', days='%Y-%m',
+                years="%Y",
+                months="%Y-%m",
+                days="%Y-%m",
             )
         else:
             fig.xaxis.formatter = DatetimeTickFormatter(
-                years='%Y', months='%Y-%m', days='%Y-%m-%d',
+                years="%Y",
+                months="%Y-%m",
+                days="%Y-%m-%d",
             )
         fig.xaxis.major_label_orientation = 0.785
     else:
         fig = bk_figure(
             x_range=FactorRange(*obs_dirs),
-            title='SNR per Night',
-            x_axis_label='Obs Dir',
-            y_axis_label='SNR',
-            tools='pan,wheel_zoom,box_zoom,reset,save',
-            active_scroll='wheel_zoom',
+            title="SNR per Night",
+            x_axis_label="Obs Dir",
+            y_axis_label="SNR",
+            tools="pan,wheel_zoom,box_zoom,reset,save",
+            active_scroll="wheel_zoom",
             height=height,
-            sizing_mode='stretch_width',
+            sizing_mode="stretch_width",
             background_fill_color=base.PLOT_BACKGROUND_COLOR,
         )
         hover = HoverTool(
-            tooltips=[('Obs Dir', '@x'), ('SNR', '@y{0.0}')],
-            mode='mouse',
+            tooltips=[("Obs Dir", "@x"), ("SNR", "@y{0.0}")],
+            mode="mouse",
         )
         fig.add_tools(hover)
-        src_h = ColumnDataSource({'x': obs_dirs, 'y': snr_h})
-        src_y = ColumnDataSource({'x': obs_dirs, 'y': snr_y})
-        fig.xaxis.major_label_orientation = 'vertical'
+        src_h = ColumnDataSource({"x": obs_dirs, "y": snr_h})
+        src_y = ColumnDataSource({"x": obs_dirs, "y": snr_y})
+        fig.xaxis.major_label_orientation = "vertical"
 
-    fig.scatter('x', 'y', source=src_h, size=8, color='#e6820a',
-                marker='circle', alpha=0.85, legend_label=label_h)
-    fig.scatter('x', 'y', source=src_y, size=8, color='#7e22ce',
-                marker='circle', alpha=0.85, legend_label=label_y)
+    fig.scatter(
+        "x",
+        "y",
+        source=src_h,
+        size=8,
+        color="#e6820a",
+        marker="circle",
+        alpha=0.85,
+        legend_label=label_h,
+    )
+    fig.scatter(
+        "x",
+        "y",
+        source=src_y,
+        size=8,
+        color="#7e22ce",
+        marker="circle",
+        alpha=0.85,
+        legend_label=label_y,
+    )
     # -------------------------------------------------------------------------
     fig.xgrid.grid_line_color = None
-    fig.grid.grid_line_color = 'lightgray'
-    fig.grid.grid_line_dash = 'dashed'
-    fig.legend.location = 'top_right'
-    fig.legend.click_policy = 'hide'
+    fig.grid.grid_line_color = "lightgray"
+    fig.grid.grid_line_dash = "dashed"
+    fig.legend.location = "top_right"
+    fig.legend.click_policy = "hide"
     return fig
 
 
@@ -3022,28 +3627,34 @@ def _make_ts_airmass_figure(
     :return: Bokeh figure or None if no valid airmass data
     :rtype: bokeh.plotting.figure | None
     """
-    from bokeh.models import (DatetimeTickFormatter, DatetimeTicker,
-                              FactorRange, Range1d)
+    from bokeh.models import (
+        DatetimeTicker,
+        DatetimeTickFormatter,
+        FactorRange,
+        Range1d,
+    )
     from bokeh.plotting import figure as bk_figure
 
     obs_dirs: List[str] = []
     airmass: List[float] = []
 
     def _obs_dir_to_dt(obs_dir: str) -> Optional[datetime]:
-        text = str(obs_dir or '').strip()
-        m = re.match(r'^(\d{4})[-_]?([01]\d)[-_]?([0-3]\d)$', text)
+        text = str(obs_dir or "").strip()
+        m = re.match(r"^(\d{4})[-_]?([01]\d)[-_]?([0-3]\d)$", text)
         if not m:
             return None
         try:
             return datetime(
-                int(m.group(1)), int(m.group(2)), int(m.group(3)),
+                int(m.group(1)),
+                int(m.group(2)),
+                int(m.group(3)),
                 tzinfo=timezone.utc,
             )
         except ValueError:
             return None
 
     for obs_dir, means in obs_data:
-        am = means.get('EXT_AIRMASS', float('nan'))
+        am = means.get("EXT_AIRMASS", float("nan"))
         if 0.0 <= am <= 2.0:
             obs_dirs.append(obs_dir)
             airmass.append(am)
@@ -3057,25 +3668,28 @@ def _make_ts_airmass_figure(
     if use_time_axis:
         x_ms = [int(dt.timestamp() * 1000.0) for dt in dts if dt is not None]
         fig = bk_figure(
-            x_axis_type='datetime',
+            x_axis_type="datetime",
             y_range=Range1d(0.0, 2.0),
-            title='Airmass per Night',
-            x_axis_label='Date (UTC)',
-            y_axis_label='Airmass',
-            tools='pan,wheel_zoom,box_zoom,reset,save',
-            active_scroll='wheel_zoom',
+            title="Airmass per Night",
+            x_axis_label="Date (UTC)",
+            y_axis_label="Airmass",
+            tools="pan,wheel_zoom,box_zoom,reset,save",
+            active_scroll="wheel_zoom",
             height=height,
-            sizing_mode='stretch_width',
+            sizing_mode="stretch_width",
             background_fill_color=base.PLOT_BACKGROUND_COLOR,
         )
         hover = HoverTool(
-            tooltips=[('Obs Dir', '@obs'), ('Date', '@x{%F}'),
-                      ('Airmass', '@y{0.000}')],
-            formatters={'@x': 'datetime'},
-            mode='mouse',
+            tooltips=[
+                ("Obs Dir", "@obs"),
+                ("Date", "@x{%F}"),
+                ("Airmass", "@y{0.000}"),
+            ],
+            formatters={"@x": "datetime"},
+            mode="mouse",
         )
         fig.add_tools(hover)
-        src = ColumnDataSource({'x': x_ms, 'y': airmass, 'obs': obs_dirs})
+        src = ColumnDataSource({"x": x_ms, "y": airmass, "obs": obs_dirs})
         first_dt = min(dt for dt in dts if dt is not None)
         last_dt = max(dt for dt in dts if dt is not None)
         span_days = max((last_dt - first_dt).days, 0)
@@ -3083,45 +3697,59 @@ def _make_ts_airmass_figure(
         fig.xaxis.ticker = DatetimeTicker(desired_num_ticks=10)
         if span_days >= 365 * 2:
             fig.xaxis.formatter = DatetimeTickFormatter(
-                years='%Y', months='%Y', days='%Y',
+                years="%Y",
+                months="%Y",
+                days="%Y",
             )
         elif span_days >= 90:
             fig.xaxis.formatter = DatetimeTickFormatter(
-                years='%Y', months='%Y-%m', days='%Y-%m',
+                years="%Y",
+                months="%Y-%m",
+                days="%Y-%m",
             )
         else:
             fig.xaxis.formatter = DatetimeTickFormatter(
-                years='%Y', months='%Y-%m', days='%Y-%m-%d',
+                years="%Y",
+                months="%Y-%m",
+                days="%Y-%m-%d",
             )
         fig.xaxis.major_label_orientation = 0.785
     else:
         fig = bk_figure(
             x_range=FactorRange(*obs_dirs),
             y_range=Range1d(0.0, 2.0),
-            title='Airmass per Night',
-            x_axis_label='Obs Dir',
-            y_axis_label='Airmass',
-            tools='pan,wheel_zoom,box_zoom,reset,save',
-            active_scroll='wheel_zoom',
+            title="Airmass per Night",
+            x_axis_label="Obs Dir",
+            y_axis_label="Airmass",
+            tools="pan,wheel_zoom,box_zoom,reset,save",
+            active_scroll="wheel_zoom",
             height=height,
-            sizing_mode='stretch_width',
+            sizing_mode="stretch_width",
             background_fill_color=base.PLOT_BACKGROUND_COLOR,
         )
         hover = HoverTool(
-            tooltips=[('Obs Dir', '@x'), ('Airmass', '@y{0.000}')],
-            mode='mouse',
+            tooltips=[("Obs Dir", "@x"), ("Airmass", "@y{0.000}")],
+            mode="mouse",
         )
         fig.add_tools(hover)
-        src = ColumnDataSource({'x': obs_dirs, 'y': airmass})
-        fig.xaxis.major_label_orientation = 'vertical'
+        src = ColumnDataSource({"x": obs_dirs, "y": airmass})
+        fig.xaxis.major_label_orientation = "vertical"
 
-    fig.scatter('x', 'y', source=src, size=8, color='steelblue',
-                marker='circle', alpha=0.85, legend_label='Mean airmass')
+    fig.scatter(
+        "x",
+        "y",
+        source=src,
+        size=8,
+        color="steelblue",
+        marker="circle",
+        alpha=0.85,
+        legend_label="Mean airmass",
+    )
     # -------------------------------------------------------------------------
     fig.xgrid.grid_line_color = None
-    fig.grid.grid_line_color = 'lightgray'
-    fig.grid.grid_line_dash = 'dashed'
-    fig.legend.location = 'top_right'
+    fig.grid.grid_line_color = "lightgray"
+    fig.grid.grid_line_dash = "dashed"
+    fig.legend.location = "top_right"
     return fig
 
 
@@ -3132,7 +3760,7 @@ def build_ts_snr_plot_json(
     htable_rows: List[Dict[str, Any]],
     ftable_ext_rows: List[Dict[str, Any]],
     preset: Dict[str, Any],
-    target_id: str = 'op-ts-snr-plot-div',
+    target_id: str = "op-ts-snr-plot-div",
 ) -> Dict[str, Any]:
     """
     Build the per-night SNR plot as a ``json_item`` dict.
@@ -3145,22 +3773,22 @@ def build_ts_snr_plot_json(
     :return: dict with has_plot, item/message
     :rtype: dict
     """
-    label_h = sci_header_label(preset, 'ext', 'EXT_H', 'H-band SNR')
-    label_y = sci_header_label(preset, 'ext', 'EXT_Y', 'Y-band SNR')
+    label_h = sci_header_label(preset, "ext", "EXT_H", "H-band SNR")
+    label_y = sci_header_label(preset, "ext", "EXT_Y", "Y-band SNR")
     obs_data = _aggregate_by_obs_dir(
-        htable_rows, ftable_ext_rows, ['EXT_H', 'EXT_Y']
+        htable_rows, ftable_ext_rows, ["EXT_H", "EXT_Y"]
     )
     if not obs_data:
-        return {'has_plot': False, 'message': 'No per-night SNR data.'}
+        return {"has_plot": False, "message": "No per-night SNR data."}
     fig = _make_ts_snr_figure(obs_data, label_h, label_y)
     if fig is None:
-        return {'has_plot': False, 'message': 'No per-night SNR data.'}
+        return {"has_plot": False, "message": "No per-night SNR data."}
     script, div = plot_to_components(fig)
     return {
-        'has_plot': True,
-        'script': script,
-        'div': div,
-        'message': '',
+        "has_plot": True,
+        "script": script,
+        "div": div,
+        "message": "",
     }
 
 
@@ -3180,25 +3808,32 @@ def build_ts_snr_plot_components(
     :return: dict with has_plot, script, div, message
     :rtype: dict
     """
-    label_h = sci_header_label(preset, 'ext', 'EXT_H', 'H-band SNR')
-    label_y = sci_header_label(preset, 'ext', 'EXT_Y', 'Y-band SNR')
+    label_h = sci_header_label(preset, "ext", "EXT_H", "H-band SNR")
+    label_y = sci_header_label(preset, "ext", "EXT_Y", "Y-band SNR")
     obs_data = _aggregate_by_obs_dir(
-        htable_rows, ftable_ext_rows, ['EXT_H', 'EXT_Y']
+        htable_rows, ftable_ext_rows, ["EXT_H", "EXT_Y"]
     )
     if not obs_data:
         return {
-            'has_plot': False, 'script': '', 'div': '',
-            'message': 'No per-night SNR data.',
+            "has_plot": False,
+            "script": "",
+            "div": "",
+            "message": "No per-night SNR data.",
         }
     fig = _make_ts_snr_figure(obs_data, label_h, label_y)
     if fig is None:
         return {
-            'has_plot': False, 'script': '', 'div': '',
-            'message': 'No per-night SNR data.',
+            "has_plot": False,
+            "script": "",
+            "div": "",
+            "message": "No per-night SNR data.",
         }
     script, div = plot_to_components(fig)
     return {
-        'has_plot': True, 'script': script, 'div': div, 'message': '',
+        "has_plot": True,
+        "script": script,
+        "div": div,
+        "message": "",
     }
 
 
@@ -3206,7 +3841,7 @@ def build_ts_airmass_plot_json(
     htable_rows: List[Dict[str, Any]],
     ftable_ext_rows: List[Dict[str, Any]],
     preset: Dict[str, Any],
-    target_id: str = 'op-ts-airmass-plot-div',
+    target_id: str = "op-ts-airmass-plot-div",
 ) -> Dict[str, Any]:
     """
     Build the per-night airmass plot as a ``json_item`` dict.
@@ -3220,25 +3855,25 @@ def build_ts_airmass_plot_json(
     :rtype: dict
     """
     obs_data = _aggregate_by_obs_dir(
-        htable_rows, ftable_ext_rows, ['EXT_AIRMASS']
+        htable_rows, ftable_ext_rows, ["EXT_AIRMASS"]
     )
     if not obs_data:
         return {
-            'has_plot': False,
-            'message': 'No per-night airmass data.',
+            "has_plot": False,
+            "message": "No per-night airmass data.",
         }
     fig = _make_ts_airmass_figure(obs_data)
     if fig is None:
         return {
-            'has_plot': False,
-            'message': 'No airmass values in range 0\u20132.',
+            "has_plot": False,
+            "message": "No airmass values in range 0\u20132.",
         }
     script, div = plot_to_components(fig)
     return {
-        'has_plot': True,
-        'script': script,
-        'div': div,
-        'message': '',
+        "has_plot": True,
+        "script": script,
+        "div": div,
+        "message": "",
     }
 
 
@@ -3259,31 +3894,38 @@ def build_ts_airmass_plot_components(
     :rtype: dict
     """
     obs_data = _aggregate_by_obs_dir(
-        htable_rows, ftable_ext_rows, ['EXT_AIRMASS']
+        htable_rows, ftable_ext_rows, ["EXT_AIRMASS"]
     )
     if not obs_data:
         return {
-            'has_plot': False, 'script': '', 'div': '',
-            'message': 'No per-night airmass data.',
+            "has_plot": False,
+            "script": "",
+            "div": "",
+            "message": "No per-night airmass data.",
         }
     fig = _make_ts_airmass_figure(obs_data)
     if fig is None:
         return {
-            'has_plot': False, 'script': '', 'div': '',
-            'message': 'No airmass values in range 0\u20132.',
+            "has_plot": False,
+            "script": "",
+            "div": "",
+            "message": "No airmass values in range 0\u20132.",
         }
     script, div = plot_to_components(fig)
     return {
-        'has_plot': True, 'script': script, 'div': div, 'message': '',
+        "has_plot": True,
+        "script": script,
+        "div": div,
+        "message": "",
     }
 
 
 # =============================================================================
 # Start of code
 # =============================================================================
-if __name__ == '__main__':
+if __name__ == "__main__":
     # -------------------------------------------------------------------------
-    print('Hello World!')
+    print("Hello World!")
 
 # =============================================================================
 # End of code

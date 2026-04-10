@@ -5,6 +5,8 @@
     'use strict';
 
     var PAGE_KEY = 'ari.qc';
+    var qcZoomModeByDiv = {};
+    var qcZoomRetryByDiv = {};
 
     function getProfileId() {
         var ctx = window.ARI_QC_PAGE || {};
@@ -179,6 +181,10 @@
                         var paneId = pane.getAttribute('data-qc-pane') || '';
                         pane.classList.toggle('qc-metric-pane--active', paneId === target);
                     });
+
+                    setTimeout(function () {
+                        refreshVisibleQcZoom();
+                    }, 80);
                 });
             });
         });
@@ -196,12 +202,217 @@
         });
     }
 
+    function extractFieldName(spec) {
+        if (typeof spec === 'string' && spec) return spec;
+        if (!spec || typeof spec !== 'object') return '';
+        if (typeof spec.field === 'string' && spec.field) return spec.field;
+        return '';
+    }
+
+    function collectNumericValues(value, out) {
+        if (Array.isArray(value)) {
+            for (var i = 0; i < value.length; i += 1) {
+                collectNumericValues(value[i], out);
+            }
+            return;
+        }
+        var num = Number(value);
+        if (isFinite(num)) out.push(num);
+    }
+
+    function median(values) {
+        if (!values.length) return null;
+        var sorted = values.slice().sort(function (a, b) { return a - b; });
+        var n = sorted.length;
+        var m = Math.floor(n / 2);
+        if ((n % 2) === 0) return 0.5 * (sorted[m - 1] + sorted[m]);
+        return sorted[m];
+    }
+
+    function stdDev(values, center) {
+        if (!values.length) return 0;
+        var c = Number(center === null || center === undefined ? 0 : center);
+        var sum = 0;
+        for (var i = 0; i < values.length; i += 1) {
+            var d = Number(values[i]) - c;
+            sum += d * d;
+        }
+        return Math.sqrt(sum / values.length);
+    }
+
+    function getContainerFigures(containerEl) {
+        if (!containerEl || !window.Bokeh || !Bokeh.index) return [];
+        var views = [];
+        Object.keys(Bokeh.index).forEach(function (k) {
+            var view = Bokeh.index[k];
+            if (!view || !view.model || !view.el) return;
+            if (!containerEl.contains(view.el)) return;
+            var model = view.model;
+            if (!model.y_range || !Array.isArray(model.renderers)) return;
+            views.push(view);
+        });
+        return views;
+    }
+
+    function figureYs(figModel) {
+        var ys = [];
+        var renderers = Array.isArray(figModel.renderers) ? figModel.renderers : [];
+        for (var i = 0; i < renderers.length; i += 1) {
+            var r = renderers[i];
+            if (!r || !r.glyph || !r.data_source || !r.data_source.data) continue;
+            var data = r.data_source.data;
+            ['y', 'top', 'bottom', 'y0', 'y1'].forEach(function (k) {
+                var field = extractFieldName(r.glyph[k]);
+                if (!field) return;
+                if (!(field in data)) return;
+                collectNumericValues(data[field], ys);
+            });
+        }
+        return ys;
+    }
+
+    function setYAxisStatus(divId, above, below) {
+        var statusEl = document.querySelector(
+            '.op-yzoom-control[data-op-target="' + divId + '"] .op-yzoom-control__status'
+        );
+        if (!statusEl) return;
+        if ((above + below) <= 0) {
+            statusEl.textContent = '';
+            return;
+        }
+        statusEl.textContent = '\u2191 ' + above + ' off-graph  \u2193 ' + below + ' off-graph';
+    }
+
+    function applyYAxisZoom(divId) {
+        var plotDiv = document.getElementById(divId);
+        if (!plotDiv) return false;
+        var mode = String(qcZoomModeByDiv[divId] || '3sig');
+        var figures = getContainerFigures(plotDiv);
+        if (!figures.length) return false;
+
+        var sigMul = 3;
+        if (mode === '5sig') sigMul = 5;
+        if (mode === '10sig') sigMul = 10;
+
+        var totalAbove = 0;
+        var totalBelow = 0;
+        figures.forEach(function (view) {
+            var fig = view.model;
+            var ys = figureYs(fig);
+            if (!ys.length) return;
+            var yMin = Math.min.apply(null, ys);
+            var yMax = Math.max.apply(null, ys);
+            var lo = yMin;
+            var hi = yMax;
+
+            if (mode !== 'full') {
+                var med = median(ys);
+                var sig = stdDev(ys, med);
+                var half = Math.max(sigMul * sig, 1.0e-12);
+                lo = med - half;
+                hi = med + half;
+            }
+            if (!isFinite(lo) || !isFinite(hi)) return;
+            if (lo === hi) {
+                lo -= 1.0;
+                hi += 1.0;
+            }
+
+            fig.y_range.start = lo;
+            fig.y_range.end = hi;
+            if (fig.y_range && fig.y_range.change
+                    && typeof fig.y_range.change.emit === 'function') {
+                fig.y_range.change.emit();
+            }
+            if (fig.change && typeof fig.change.emit === 'function') {
+                fig.change.emit();
+            }
+            if (view.request_render && typeof view.request_render === 'function') {
+                view.request_render();
+            }
+            if (view.request_paint && typeof view.request_paint === 'function') {
+                view.request_paint();
+            }
+
+            if (mode !== 'full') {
+                for (var i = 0; i < ys.length; i += 1) {
+                    if (ys[i] > hi) totalAbove += 1;
+                    else if (ys[i] < lo) totalBelow += 1;
+                }
+            }
+        });
+
+        setYAxisStatus(divId, totalAbove, totalBelow);
+        return true;
+    }
+
+    function applyYAxisZoomDeferred(divId) {
+        if (!applyYAxisZoom(divId)) {
+            var n = Number(qcZoomRetryByDiv[divId] || 0);
+            if (n >= 8) return;
+            qcZoomRetryByDiv[divId] = n + 1;
+            setTimeout(function () { applyYAxisZoomDeferred(divId); }, 140);
+            return;
+        }
+        qcZoomRetryByDiv[divId] = 0;
+    }
+
+    function ensureYAxisControl(plotDiv) {
+        if (!plotDiv || !plotDiv.id) return;
+        var divId = String(plotDiv.id || '');
+        var host = plotDiv.parentElement;
+        if (!host) return;
+        if (host.querySelector('.op-yzoom-control[data-op-target="' + divId + '"]')) return;
+
+        var bar = document.createElement('div');
+        bar.className = 'op-yzoom-control';
+        bar.setAttribute('data-op-target', divId);
+        bar.innerHTML = ''
+            + '<label class="op-yzoom-control__label">'
+            + 'y-axis zoom:'
+            + '<select class="op-yzoom-control__select">'
+            + '<option value="3sig" selected>3 sig</option>'
+            + '<option value="5sig">5 sig</option>'
+            + '<option value="10sig">10 sig</option>'
+            + '<option value="full">full</option>'
+            + '</select>'
+            + '</label>'
+            + '<span class="op-yzoom-control__status" aria-live="polite"></span>';
+        host.insertBefore(bar, plotDiv);
+
+        var sel = bar.querySelector('.op-yzoom-control__select');
+        if (sel) {
+            sel.addEventListener('change', function () {
+                qcZoomModeByDiv[divId] = sel.value;
+                applyYAxisZoom(divId);
+            });
+        }
+    }
+
+    function initQcYAxisControls() {
+        document.querySelectorAll('.qc-plot-card').forEach(function (card) {
+            var plotDiv = card.querySelector('div[id]');
+            if (!plotDiv) return;
+            ensureYAxisControl(plotDiv);
+            applyYAxisZoomDeferred(plotDiv.id);
+        });
+    }
+
+    function refreshVisibleQcZoom() {
+        document.querySelectorAll('.qc-metric-pane--active .qc-plot-card div[id]').forEach(function (plotDiv) {
+            if (!plotDiv || !plotDiv.id) return;
+            ensureYAxisControl(plotDiv);
+            applyYAxisZoomDeferred(plotDiv.id);
+        });
+    }
+
     function init() {
         bindSectionFilter();
         bindSectionCollapse();
         bindSectionPins();
         bindMetricTabs();
         bindPlotMaximize();
+        initQcYAxisControls();
     }
 
     if (document.readyState === 'loading') {

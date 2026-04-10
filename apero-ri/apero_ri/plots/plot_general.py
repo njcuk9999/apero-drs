@@ -11,22 +11,22 @@ Created on 2024-01-01
 
 @author: cook
 """
+
 from __future__ import annotations
 
 from datetime import timezone
 from typing import Any, Dict, Tuple
 
+from apero_ri.base import base
 from astropy.time import Time
 from bokeh.embed import components, json_item
 from bokeh.models import CrosshairTool, DatetimeTickFormatter
 from bokeh.plotting import figure
 
-from apero_ri.base import base
-
 # =============================================================================
 # Define variables
 # =============================================================================
-__NAME__ = 'apero_ri.plots.plot_general'
+__NAME__ = "apero_ri.plots.plot_general"
 __PACKAGE__ = base.__PACKAGE__
 __version__ = base.__version__
 __authors__ = base.__authors__
@@ -55,13 +55,14 @@ def mjd_to_datetime(value: Any) -> Any:
     # -------------------------------------------------------------------------
     # convert MJD to UTC datetime
     try:
-        return Time(mjd, format='mjd').to_datetime(timezone=timezone.utc)
+        return Time(mjd, format="mjd").to_datetime(timezone=timezone.utc)
     except Exception:
         return None
 
 
-def sci_header_label(preset: Dict[str, Any], section: str,
-                     key: str, fallback: str) -> str:
+def sci_header_label(
+    preset: Dict[str, Any], section: str, key: str, fallback: str
+) -> str:
     """
     Resolve a display label from the sci-headers section of an
     instrument profile YAML.
@@ -78,7 +79,7 @@ def sci_header_label(preset: Dict[str, Any], section: str,
     # validate preset structure
     if not isinstance(preset, dict):
         return fallback
-    headers = preset.get('sci-headers', preset.get('headers', {}))
+    headers = preset.get("sci-headers", preset.get("headers", {}))
     if not isinstance(headers, dict):
         return fallback
     # -------------------------------------------------------------------------
@@ -89,11 +90,11 @@ def sci_header_label(preset: Dict[str, Any], section: str,
     item = sec.get(key, {})
     if not isinstance(item, dict):
         return fallback
-    label = str(item.get('label', '') or '').strip()
+    label = str(item.get("label", "") or "").strip()
     return label or fallback
 
 
-def make_time_figure(title: str = '', height: int = 350) -> Any:
+def make_time_figure(title: str = "", height: int = 350) -> Any:
     """
     Return a Bokeh figure with a datetime x-axis and standard tools.
 
@@ -105,23 +106,23 @@ def make_time_figure(title: str = '', height: int = 350) -> Any:
     """
     # -------------------------------------------------------------------------
     # build tools string and create figure
-    tools = 'pan,wheel_zoom,box_zoom,reset,save'
+    tools = "pan,wheel_zoom,box_zoom,reset,save"
     fig = figure(
-        x_axis_type='datetime',
+        x_axis_type="datetime",
         tools=tools,
-        active_scroll='wheel_zoom',
+        active_scroll="wheel_zoom",
         height=height,
-        sizing_mode='stretch_width',
+        sizing_mode="stretch_width",
         title=title,
         background_fill_color=base.PLOT_BACKGROUND_COLOR,
     )
     # -------------------------------------------------------------------------
     # add crosshair and datetime formatter
-    fig.add_tools(CrosshairTool(dimensions='both'))
+    fig.add_tools(CrosshairTool(dimensions="both"))
     fig.xaxis.formatter = DatetimeTickFormatter(
-        days='%Y-%m-%d',
-        months='%Y-%m',
-        years='%Y',
+        days="%Y-%m-%d",
+        months="%Y-%m",
+        years="%Y",
     )
     return fig
 
@@ -157,9 +158,9 @@ def plot_to_components(fig: Any) -> Tuple[str, str]:
 # =============================================================================
 # Start of code
 # =============================================================================
-if __name__ == '__main__':
+if __name__ == "__main__":
     # --------------------------------------------------------------------------
-    print('Hello World!')
+    print("Hello World!")
 
 # =============================================================================
 # End of code

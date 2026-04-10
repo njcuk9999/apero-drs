@@ -173,6 +173,35 @@
         text-align: center;
         font-size: 0.95rem;
     }
+    /* Y-axis sigma zoom control (matches object_page.js styling) */
+    .op-max-yzoom {
+        display: flex;
+        align-items: center;
+        gap: 0.6rem;
+        flex-shrink: 0;
+    }
+    .op-max-yzoom__label {
+        color: #aab4bf;
+        font-size: 0.82rem;
+        white-space: nowrap;
+        display: flex;
+        align-items: center;
+        gap: 0.35rem;
+    }
+    .op-max-yzoom__select {
+        background: #1a1a1a;
+        color: #e8eaed;
+        border: 1px solid #555;
+        border-radius: 0.3rem;
+        padding: 0.25rem 0.4rem;
+        font-size: 0.82rem;
+        cursor: pointer;
+    }
+    .op-max-yzoom__status {
+        color: #aab4bf;
+        font-size: 0.78rem;
+        white-space: nowrap;
+    }
     </style>
 </head>
 <body>
@@ -184,6 +213,18 @@
         </div>
         <div class="op-max-info">
             <span class="op-max-title">{{ profile.profile_id }}: {{ objname }} &mdash; {{ display_name }}</span>
+        </div>
+        <div class="op-max-yzoom" id="op-max-yzoom-wrap">
+            <label class="op-max-yzoom__label">
+                y-axis zoom:&nbsp;
+                <select id="op-max-yzoom-select" class="op-max-yzoom__select">
+                    <option value="3sig" selected>3 sig</option>
+                    <option value="5sig">5 sig</option>
+                    <option value="10sig">10 sig</option>
+                    <option value="full">full</option>
+                </select>
+            </label>
+            <span id="op-max-yzoom-status" class="op-max-yzoom__status"></span>
         </div>
         <button class="op-max-close" type="button" onclick="closeAndReturn()">
             <i class="fa-solid fa-arrow-left-long" aria-hidden="true"></i>
@@ -215,6 +256,141 @@
             window.location.href = {{ return_url | tojson }};
         }
     }
+
+    /* ── Y-axis sigma zoom for the max view ──────────────────────── */
+    var _maxZoomMode = '3sig';
+    var _maxZoomRetry = 0;
+
+    function _isArrayLike(v) {
+        return Array.isArray(v)
+            || (v != null && typeof v === 'object'
+                && typeof v.length === 'number'
+                && (typeof ArrayBuffer !== 'undefined' && ArrayBuffer.isView(v)));
+    }
+
+    function _median(vals) {
+        if (!vals.length) return null;
+        var s = vals.slice().sort(function (a, b) { return a - b; });
+        var m = Math.floor(s.length / 2);
+        return s.length % 2 ? s[m] : 0.5 * (s[m - 1] + s[m]);
+    }
+
+    function _stdDev(vals, c) {
+        if (!vals.length) return 0;
+        var sum = 0;
+        for (var i = 0; i < vals.length; i++) {
+            var d = vals[i] - c;
+            sum += d * d;
+        }
+        return Math.sqrt(sum / vals.length);
+    }
+
+    function _collectY(val, out) {
+        if (_isArrayLike(val)) {
+            for (var i = 0; i < val.length; i++) _collectY(val[i], out);
+            return;
+        }
+        var n = Number(val);
+        if (isFinite(n)) out.push(n);
+    }
+
+    function _extractField(spec) {
+        if (typeof spec === 'string' && spec) return spec;
+        if (spec && typeof spec === 'object' && typeof spec.field === 'string') return spec.field;
+        return '';
+    }
+
+    function _getAllFigures() {
+        if (!window.Bokeh || !Bokeh.index) return [];
+        var figs = [];
+        Object.keys(Bokeh.index).forEach(function (k) {
+            var v = Bokeh.index[k];
+            if (v && v.model && Array.isArray(v.model.renderers) && v.model.y_range) figs.push(v);
+        });
+        return figs;
+    }
+
+    function applyMaxZoom() {
+        var figs = _getAllFigures();
+        if (!figs.length) return false;
+        var mode = _maxZoomMode;
+        var sigMul = mode === '5sig' ? 5 : mode === '10sig' ? 10 : 3;
+        var totalAbove = 0, totalBelow = 0;
+        figs.forEach(function (view) {
+            var fig = view.model;
+            var ys = [];
+            (fig.renderers || []).forEach(function (r) {
+                if (!r || !r.glyph || !r.data_source || !r.data_source.data) return;
+                var data = r.data_source.data;
+                ['y', 'top', 'bottom', 'y0', 'y1'].forEach(function (prop) {
+                    var field = _extractField(r.glyph[prop]);
+                    if (!field) return;
+                    var arr = data[field];
+                    if (_isArrayLike(arr)) _collectY(arr, ys);
+                });
+            });
+            if (!ys.length) return;
+            var lo, hi;
+            if (mode === 'full') {
+                lo = Math.min.apply(null, ys);
+                hi = Math.max.apply(null, ys);
+            } else {
+                var med = _median(ys);
+                var sig = _stdDev(ys, med);
+                var half = Math.max(sigMul * sig, 1e-12);
+                lo = med - half; hi = med + half;
+            }
+            if (!isFinite(lo) || !isFinite(hi) || lo === hi) {
+                if (lo === hi) { lo -= 1; hi += 1; }
+                else return;
+            }
+            fig.y_range.start = lo;
+            fig.y_range.end = hi;
+            if (fig.y_range.change && typeof fig.y_range.change.emit === 'function') fig.y_range.change.emit();
+            if (fig.change && typeof fig.change.emit === 'function') fig.change.emit();
+            if (view.request_render) view.request_render();
+            if (view.request_paint) view.request_paint();
+            if (mode !== 'full') {
+                ys.forEach(function (y) {
+                    if (y > hi) totalAbove++;
+                    else if (y < lo) totalBelow++;
+                });
+            }
+        });
+        var statusEl = document.getElementById('op-max-yzoom-status');
+        if (statusEl) {
+            statusEl.textContent = (totalAbove + totalBelow) > 0
+                ? ('\u2191 ' + totalAbove + ' off  \u2193 ' + totalBelow + ' off')
+                : '';
+        }
+        /* hide zoom control for image-only plots (no Bokeh figures) */
+        var wrap = document.getElementById('op-max-yzoom-wrap');
+        if (wrap) wrap.style.display = figs.length ? '' : 'none';
+        return true;
+    }
+
+    function applyMaxZoomDeferred() {
+        if (!applyMaxZoom()) {
+            if (_maxZoomRetry < 60) {
+                _maxZoomRetry++;
+                setTimeout(applyMaxZoomDeferred, 150);
+            }
+        } else {
+            _maxZoomRetry = 0;
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+        var sel = document.getElementById('op-max-yzoom-select');
+        if (sel) {
+            sel.addEventListener('change', function () {
+                _maxZoomMode = sel.value;
+                applyMaxZoom();
+            });
+        }
+        applyMaxZoomDeferred();
+    });
+
     /* Switch Bokeh plots to stretch_both so they fill the viewport.
        Bokeh's components() inline script may finish after 'load', so
        we poll until at least one document root is available.         */

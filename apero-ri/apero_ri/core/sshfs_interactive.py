@@ -32,7 +32,7 @@ from typing import Any, Dict, List, Optional
 # =============================================================================
 # Define variables
 # =============================================================================
-__NAME__ = 'apero_ri.core.sshfs_interactive'
+__NAME__ = "apero_ri.core.sshfs_interactive"
 
 # Maximum time (seconds) a session can remain idle before auto-cleanup.
 SESSION_IDLE_TIMEOUT = 120
@@ -82,7 +82,9 @@ def _start_reaper():
     if _reaper_started:
         return
     _reaper_started = True
-    t = threading.Thread(target=_reaper_loop, daemon=True, name='sshfs-pty-reaper')
+    t = threading.Thread(
+        target=_reaper_loop, daemon=True, name="sshfs-pty-reaper"
+    )
     t.start()
 
 
@@ -93,9 +95,12 @@ def _reaper_loop():
         now = time.monotonic()
         with _sessions_lock:
             expired = [
-                token for token, s in _sessions.items()
-                if (now - s.last_activity > SESSION_IDLE_TIMEOUT
-                    or now - s.created_at > SESSION_MAX_LIFETIME)
+                token
+                for token, s in _sessions.items()
+                if (
+                    now - s.last_activity > SESSION_IDLE_TIMEOUT
+                    or now - s.created_at > SESSION_MAX_LIFETIME
+                )
             ]
         for token in expired:
             close_session(token)
@@ -128,7 +133,9 @@ def _reader_thread(session: InteractiveSession):
     # Process has likely exited — collect exit status
     try:
         _, status = os.waitpid(session.pid, os.WNOHANG)
-        session.exit_code = os.WEXITSTATUS(status) if os.WIFEXITED(status) else -1
+        session.exit_code = (
+            os.WEXITSTATUS(status) if os.WIFEXITED(status) else -1
+        )
     except ChildProcessError:
         session.exit_code = -1
     session.finished = True
@@ -140,7 +147,7 @@ def _reader_thread(session: InteractiveSession):
 def start_session(
     kind: str,
     cmd: List[str],
-    mount_name: str = '',
+    mount_name: str = "",
     env_extra: Optional[Dict[str, str]] = None,
 ) -> Dict[str, Any]:
     """
@@ -157,20 +164,23 @@ def start_session(
     # Limit concurrent sessions
     with _sessions_lock:
         if len(_sessions) >= 5:
-            return {'ok': False, 'error': 'Too many active interactive sessions.'}
+            return {
+                "ok": False,
+                "error": "Too many active interactive sessions.",
+            }
 
     token = secrets.token_urlsafe(24)
 
     # Build a sanitised environment
     child_env = dict(os.environ)
-    child_env['TERM'] = 'dumb'
+    child_env["TERM"] = "dumb"
     if env_extra:
         child_env.update(env_extra)
 
     try:
         pid, fd = os.forkpty()
     except OSError as exc:
-        return {'ok': False, 'error': f'Failed to create PTY: {exc}'}
+        return {"ok": False, "error": f"Failed to create PTY: {exc}"}
 
     if pid == 0:
         # ── child process ──
@@ -197,12 +207,14 @@ def start_session(
 
     # Start reader thread
     reader = threading.Thread(
-        target=_reader_thread, args=(session,),
-        daemon=True, name=f'pty-reader-{token[:8]}',
+        target=_reader_thread,
+        args=(session,),
+        daemon=True,
+        name=f"pty-reader-{token[:8]}",
     )
     reader.start()
 
-    return {'ok': True, 'token': token}
+    return {"ok": True, "token": token}
 
 
 def poll_session(token: str) -> Dict[str, Any]:
@@ -214,7 +226,7 @@ def poll_session(token: str) -> Dict[str, Any]:
     with _sessions_lock:
         session = _sessions.get(token)
     if not session:
-        return {'ok': False, 'error': 'Session not found or expired.'}
+        return {"ok": False, "error": "Session not found or expired."}
 
     with session.lock:
         session.touch()
@@ -222,18 +234,19 @@ def poll_session(token: str) -> Dict[str, Any]:
         session.read_cursor = len(session.output_buffer)
 
     # Decode, replacing non-UTF-8 bytes
-    text = new_data.decode('utf-8', errors='replace')
+    text = new_data.decode("utf-8", errors="replace")
     # Strip common ANSI escape sequences for cleaner browser display
     import re
-    text = re.sub(r'\x1b\[[0-9;]*[A-Za-z]', '', text)
-    text = re.sub(r'\x1b\].*?\x07', '', text)
-    text = text.replace('\r\n', '\n').replace('\r', '\n')
+
+    text = re.sub(r"\x1b\[[0-9;]*[A-Za-z]", "", text)
+    text = re.sub(r"\x1b\].*?\x07", "", text)
+    text = text.replace("\r\n", "\n").replace("\r", "\n")
 
     return {
-        'ok': True,
-        'output': text,
-        'finished': session.finished,
-        'exit_code': session.exit_code,
+        "ok": True,
+        "output": text,
+        "finished": session.finished,
+        "exit_code": session.exit_code,
     }
 
 
@@ -247,18 +260,18 @@ def send_input(token: str, data: str) -> Dict[str, Any]:
     with _sessions_lock:
         session = _sessions.get(token)
     if not session:
-        return {'ok': False, 'error': 'Session not found or expired.'}
+        return {"ok": False, "error": "Session not found or expired."}
 
     if session.finished:
-        return {'ok': False, 'error': 'Session has already exited.'}
+        return {"ok": False, "error": "Session has already exited."}
 
     try:
-        os.write(session.fd, data.encode('utf-8'))
+        os.write(session.fd, data.encode("utf-8"))
         with session.lock:
             session.touch()
-        return {'ok': True}
+        return {"ok": True}
     except OSError as exc:
-        return {'ok': False, 'error': f'Write failed: {exc}'}
+        return {"ok": False, "error": f"Write failed: {exc}"}
 
 
 def close_session(token: str) -> Dict[str, Any]:
@@ -268,10 +281,11 @@ def close_session(token: str) -> Dict[str, Any]:
     with _sessions_lock:
         session = _sessions.pop(token, None)
     if not session:
-        return {'ok': True, 'message': 'Session already closed.'}
+        return {"ok": True, "message": "Session already closed."}
 
     # Kill the child process
     import signal
+
     try:
         os.kill(session.pid, signal.SIGTERM)
     except ProcessLookupError:
@@ -289,7 +303,7 @@ def close_session(token: str) -> Dict[str, Any]:
     except ChildProcessError:
         pass
 
-    return {'ok': True, 'message': 'Session closed.'}
+    return {"ok": True, "message": "Session closed."}
 
 
 def close_all_sessions() -> Dict[str, Any]:
@@ -301,8 +315,8 @@ def close_all_sessions() -> Dict[str, Any]:
         close_session(token)
 
     return {
-        'ok': True,
-        'closed': len(tokens),
+        "ok": True,
+        "closed": len(tokens),
     }
 
 
@@ -312,12 +326,12 @@ def list_sessions() -> List[Dict[str, Any]]:
     with _sessions_lock:
         return [
             {
-                'token': s.token[:8] + '...',
-                'kind': s.kind,
-                'mount_name': s.mount_name,
-                'age_seconds': round(now - s.created_at, 1),
-                'idle_seconds': round(now - s.last_activity, 1),
-                'finished': s.finished,
+                "token": s.token[:8] + "...",
+                "kind": s.kind,
+                "mount_name": s.mount_name,
+                "age_seconds": round(now - s.created_at, 1),
+                "idle_seconds": round(now - s.last_activity, 1),
+                "finished": s.finished,
             }
             for s in _sessions.values()
         ]
@@ -340,63 +354,69 @@ def start_interactive_test(
     Unlike the non-interactive test_ssh_connection(), this allows
     the user to respond to password/2FA prompts in the browser.
     """
-    from apero_ri.core.sshfs_backend import _get_ssh_keys_dir
-    from apero_ri.core.sshfs_backend import _normalize_connection_mode
-    from apero_ri.core.sshfs_backend import _throttle_ssh_target
+    from apero_ri.core.sshfs_backend import (
+        _get_ssh_keys_dir,
+        _normalize_connection_mode,
+        _throttle_ssh_target,
+    )
 
     connection_mode = _normalize_connection_mode(connection_mode)
-    remote_host = str(remote_host or '').strip()
-    remote_user = str(remote_user or '').strip() or 'root'
-    ssh_config_host = str(ssh_config_host or '').strip()
-    remote_path = str(remote_path or '').strip()
-    ssh_key_name = str(ssh_key_name or '').strip()
+    remote_host = str(remote_host or "").strip()
+    remote_user = str(remote_user or "").strip() or "root"
+    ssh_config_host = str(ssh_config_host or "").strip()
+    remote_path = str(remote_path or "").strip()
+    ssh_key_name = str(ssh_key_name or "").strip()
 
     if not ssh_key_name:
-        return {'ok': False, 'error': 'SSH key is required.'}
+        return {"ok": False, "error": "SSH key is required."}
 
-    key_path = _get_ssh_keys_dir() / f'{ssh_key_name}.key'
+    key_path = _get_ssh_keys_dir() / f"{ssh_key_name}.key"
     if not key_path.exists():
-        return {'ok': False, 'error': f'SSH key "{ssh_key_name}" not found.'}
+        return {"ok": False, "error": f'SSH key "{ssh_key_name}" not found.'}
 
-    if connection_mode == 'ssh_config_host':
+    if connection_mode == "ssh_config_host":
         if not ssh_config_host:
-            return {'ok': False, 'error': 'SSH config host is required.'}
+            return {"ok": False, "error": "SSH config host is required."}
         target = ssh_config_host
     else:
         if not remote_host:
-            return {'ok': False, 'error': 'Remote host is required.'}
-        target = f'{remote_user}@{remote_host}'
+            return {"ok": False, "error": "Remote host is required."}
+        target = f"{remote_user}@{remote_host}"
 
-    throttle_error = _throttle_ssh_target(target, action='interactive SSH test')
+    throttle_error = _throttle_ssh_target(target, action="interactive SSH test")
     if throttle_error:
-        return {'ok': False, 'error': throttle_error}
+        return {"ok": False, "error": throttle_error}
 
     # Build a multi-step test command:
     # 1) echo SSH_OK (proves login)
     # 2) if remote_path provided, test -d and ls | head -1
     if remote_path:
         remote_cmd = (
-            'echo SSH_OK && '
-            f'test -d {shlex.quote(remote_path)} && '
-            f'echo PATH_OK && '
-            f'ls -1 {shlex.quote(remote_path)} 2>/dev/null | head -1'
+            "echo SSH_OK && "
+            f"test -d {shlex.quote(remote_path)} && "
+            f"echo PATH_OK && "
+            f"ls -1 {shlex.quote(remote_path)} 2>/dev/null | head -1"
         )
     else:
-        remote_cmd = 'echo SSH_OK'
+        remote_cmd = "echo SSH_OK"
 
     cmd = [
-        'ssh',
-        '-i', str(key_path),
-        '-o', 'StrictHostKeyChecking=accept-new',
-        '-o', 'ConnectTimeout=15',
-        '-t', '-t',  # force PTY allocation
+        "ssh",
+        "-i",
+        str(key_path),
+        "-o",
+        "StrictHostKeyChecking=accept-new",
+        "-o",
+        "ConnectTimeout=15",
+        "-t",
+        "-t",  # force PTY allocation
         target,
         remote_cmd,
     ]
 
-    result = start_session(kind='ssh_test', cmd=cmd)
-    if result.get('ok'):
-        result['cmd'] = shlex.join(cmd)
+    result = start_session(kind="ssh_test", cmd=cmd)
+    if result.get("ok"):
+        result["cmd"] = shlex.join(cmd)
     return result
 
 
@@ -411,77 +431,92 @@ def start_interactive_mount(mount_name: str) -> Dict[str, Any]:
     ``start_interactive_ssh_tunnel()`` for database tunnels.
     """
     from apero_ri.core.sshfs_backend import (
-        load_sshfs_config, save_sshfs_config,
-        _get_ssh_keys_dir, _resolve_connection_target,
+        _get_ssh_keys_dir,
+        _resolve_connection_target,
         _throttle_ssh_target,
+        load_sshfs_config,
+        save_sshfs_config,
     )
 
     cfg = load_sshfs_config()
     mount = next(
-        (m for m in cfg.get('mounts', []) if m.get('name') == mount_name),
+        (m for m in cfg.get("mounts", []) if m.get("name") == mount_name),
         None,
     )
     if not mount:
-        return {'ok': False, 'error': f'Mount "{mount_name}" not found.'}
+        return {"ok": False, "error": f'Mount "{mount_name}" not found.'}
 
-    if mount.get('status') == 'mounted':
+    if mount.get("status") == "mounted":
         import subprocess as _sp
-        local_mount_path = mount.get('local_mount', '')
-        mq = _sp.run(['mountpoint', '-q', local_mount_path],
-                      capture_output=True, timeout=5)
+
+        local_mount_path = mount.get("local_mount", "")
+        mq = _sp.run(
+            ["mountpoint", "-q", local_mount_path],
+            capture_output=True,
+            timeout=5,
+        )
         if mq.returncode == 0:
-            return {'ok': True,
-                    'message': f'Mount "{mount_name}" is already mounted.'}
+            return {
+                "ok": True,
+                "message": f'Mount "{mount_name}" is already mounted.',
+            }
         # Stale config — reset and continue with mount
-        mount['status'] = 'unmounted'
-        mount['mounted_at'] = None
+        mount["status"] = "unmounted"
+        mount["mounted_at"] = None
         save_sshfs_config(cfg)
 
-    ssh_key = mount.get('ssh_key', '')
-    key_path = _get_ssh_keys_dir() / f'{ssh_key}.key'
+    ssh_key = mount.get("ssh_key", "")
+    key_path = _get_ssh_keys_dir() / f"{ssh_key}.key"
     if not key_path.exists():
-        return {'ok': False, 'error': f'SSH key "{ssh_key}" not found.'}
+        return {"ok": False, "error": f'SSH key "{ssh_key}" not found.'}
 
-    local_mount = Path(mount.get('local_mount', ''))
+    local_mount = Path(mount.get("local_mount", ""))
     from apero_ri.core.sshfs_backend import _prepare_mount_dir
+
     prep_log: list = []
     try:
         _prepare_mount_dir(local_mount, prep_log)
     except Exception as exc:
-        return {'ok': False,
-                'error': f'Cannot prepare mount directory: {exc}',
-                'log': prep_log}
+        return {
+            "ok": False,
+            "error": f"Cannot prepare mount directory: {exc}",
+            "log": prep_log,
+        }
 
     target_info = _resolve_connection_target(mount)
-    remote_target = target_info['sshfs_target']
+    remote_target = target_info["sshfs_target"]
     if not remote_target:
-        return {'ok': False, 'error': 'Mount target is incomplete.'}
+        return {"ok": False, "error": "Mount target is incomplete."}
 
     throttle_error = _throttle_ssh_target(
-        target_info.get('display_target', ''),
-        action=f'interactive mount {mount_name}',
+        target_info.get("display_target", ""),
+        action=f"interactive mount {mount_name}",
     )
     if throttle_error:
-        return {'ok': False, 'error': throttle_error}
+        return {"ok": False, "error": throttle_error}
 
     # sshfs command WITHOUT BatchMode — allows interactive auth.
     # No -f flag: sshfs daemonizes after auth succeeds, so the PTY
     # child exits (code 0) while the FUSE mount persists.
     cmd = [
-        'sshfs',
-        '-o', f'IdentityFile={key_path}',
-        '-o', 'StrictHostKeyChecking=accept-new',
-        '-o', 'ConnectTimeout=15',
-        '-o', 'ServerAliveInterval=15,ServerAliveCountMax=3',
+        "sshfs",
+        "-o",
+        f"IdentityFile={key_path}",
+        "-o",
+        "StrictHostKeyChecking=accept-new",
+        "-o",
+        "ConnectTimeout=15",
+        "-o",
+        "ServerAliveInterval=15,ServerAliveCountMax=3",
         remote_target,
         str(local_mount),
     ]
 
-    result = start_session(kind='sshfs_mount', cmd=cmd, mount_name=mount_name)
-    if result.get('ok'):
-        result['cmd'] = shlex.join(cmd)
+    result = start_session(kind="sshfs_mount", cmd=cmd, mount_name=mount_name)
+    if result.get("ok"):
+        result["cmd"] = shlex.join(cmd)
         if prep_log:
-            result['prep_log'] = prep_log
+            result["prep_log"] = prep_log
     return result
 
 
@@ -492,21 +527,22 @@ def finalise_interactive_mount(mount_name: str) -> Dict[str, Any]:
     Called once the health-check or mountpoint -q confirms the mount
     is actually live.
     """
-    from apero_ri.core.sshfs_backend import load_sshfs_config, save_sshfs_config
     from datetime import datetime, timezone
+
+    from apero_ri.core.sshfs_backend import load_sshfs_config, save_sshfs_config
 
     cfg = load_sshfs_config()
     mount = next(
-        (m for m in cfg.get('mounts', []) if m.get('name') == mount_name),
+        (m for m in cfg.get("mounts", []) if m.get("name") == mount_name),
         None,
     )
     if not mount:
-        return {'ok': False, 'error': f'Mount "{mount_name}" not found.'}
+        return {"ok": False, "error": f'Mount "{mount_name}" not found.'}
 
-    mount['status'] = 'mounted'
-    mount['mounted_at'] = datetime.now(tz=timezone.utc).isoformat()
+    mount["status"] = "mounted"
+    mount["mounted_at"] = datetime.now(tz=timezone.utc).isoformat()
     save_sshfs_config(cfg)
-    return {'ok': True, 'message': f'Mount "{mount_name}" marked as mounted.'}
+    return {"ok": True, "message": f'Mount "{mount_name}" marked as mounted.'}
 
 
 # =============================================================================
@@ -517,7 +553,7 @@ def start_interactive_ssh_tunnel(
     local_port: int,
     remote_host: str,
     remote_port: int = 3306,
-    local_data_dir: str = '',
+    local_data_dir: str = "",
 ) -> Dict[str, Any]:
     """
     Start an interactive SSH tunnel session (PTY-backed).
@@ -535,69 +571,87 @@ def start_interactive_ssh_tunnel(
     running via the control socket with ``ControlPersist=yes``.
     """
     from hashlib import sha1
+
     from apero_ri.core.sshfs_backend import _throttle_ssh_target
 
-    ssh_config_host = str(ssh_config_host or '').strip()
-    remote_host = str(remote_host or '').strip()
+    ssh_config_host = str(ssh_config_host or "").strip()
+    remote_host = str(remote_host or "").strip()
     if not ssh_config_host:
-        return {'ok': False, 'error': 'SSH config host is required.'}
+        return {"ok": False, "error": "SSH config host is required."}
     if not remote_host:
-        return {'ok': False, 'error': 'Remote (database) host is required.'}
+        return {"ok": False, "error": "Remote (database) host is required."}
 
     throttle_error = _throttle_ssh_target(
         ssh_config_host,
-        action='interactive SSH tunnel',
+        action="interactive SSH tunnel",
     )
     if throttle_error:
-        return {'ok': False, 'error': throttle_error}
+        return {"ok": False, "error": throttle_error}
 
     # ── Compute the same control-socket path as _ensure_ssh_tunnel ──
-    data_dir = str(local_data_dir or '').strip()
+    data_dir = str(local_data_dir or "").strip()
     if not data_dir:
-        data_dir = os.environ.get('ARI_DIR', str(Path.home() / '.ari'))
-    state_root = Path(data_dir).expanduser().resolve() / 'secret' / 'db_tunnels'
+        data_dir = os.environ.get("ARI_DIR", str(Path.home() / ".ari"))
+    state_root = Path(data_dir).expanduser().resolve() / "secret" / "db_tunnels"
     state_root.mkdir(parents=True, exist_ok=True)
     signature = sha1(
-        f'{ssh_config_host}|{remote_host}|{local_port}|{remote_port}'
-        .encode('utf-8')
+        f"{ssh_config_host}|{remote_host}|{local_port}|{remote_port}".encode(
+            "utf-8"
+        )
     ).hexdigest()[:16]
-    control_path = state_root / f'{signature}.sock'
+    control_path = state_root / f"{signature}.sock"
 
     # Remove stale socket so SSH can create a fresh one
     if control_path.exists():
         try:
             import subprocess as _sp
+
             chk = _sp.run(
-                ['ssh', '-S', str(control_path), '-O', 'check',
-                 ssh_config_host],
-                capture_output=True, text=True, timeout=6,
+                [
+                    "ssh",
+                    "-S",
+                    str(control_path),
+                    "-O",
+                    "check",
+                    ssh_config_host,
+                ],
+                capture_output=True,
+                text=True,
+                timeout=6,
             )
             if chk.returncode == 0:
                 return {
-                    'ok': False,
-                    'error': 'An SSH tunnel is already running for this '
-                             'configuration.  Use "Test Connection" directly.',
+                    "ok": False,
+                    "error": "An SSH tunnel is already running for this "
+                    'configuration.  Use "Test Connection" directly.',
                 }
         except Exception:
             pass
         control_path.unlink(missing_ok=True)
 
     cmd = [
-        'ssh',
-        '-f',                             # background after auth succeeds
-        '-N',                             # no remote command — tunnel only
-        '-M',                             # control-master mode
-        '-S', str(control_path),          # control socket (matches _ensure_ssh_tunnel)
-        '-o', 'ExitOnForwardFailure=yes',
-        '-o', 'StrictHostKeyChecking=accept-new',
-        '-o', 'ControlPersist=yes',
-        '-o', 'ConnectTimeout=15',
-        '-t', '-t',                       # force PTY for interactive auth
-        '-L', f'{local_port}:{remote_host}:{remote_port}',
+        "ssh",
+        "-f",  # background after auth succeeds
+        "-N",  # no remote command — tunnel only
+        "-M",  # control-master mode
+        "-S",
+        str(control_path),  # control socket (matches _ensure_ssh_tunnel)
+        "-o",
+        "ExitOnForwardFailure=yes",
+        "-o",
+        "StrictHostKeyChecking=accept-new",
+        "-o",
+        "ControlPersist=yes",
+        "-o",
+        "ConnectTimeout=15",
+        "-t",
+        "-t",  # force PTY for interactive auth
+        "-L",
+        f"{local_port}:{remote_host}:{remote_port}",
         ssh_config_host,
     ]
 
-    return start_session(kind='ssh_tunnel', cmd=cmd)
+    return start_session(kind="ssh_tunnel", cmd=cmd)
 
 
 # =============================================================================

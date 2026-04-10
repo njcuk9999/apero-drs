@@ -32,9 +32,6 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
 import numpy as np
-from astropy.time import Time
-from bokeh.models import ColumnDataSource, HoverTool, Span
-
 from apero_ri.base import base
 from apero_ri.plots.plot_general import (
     make_time_figure,
@@ -43,6 +40,8 @@ from apero_ri.plots.plot_general import (
     plot_to_json_item,
     sci_header_label,
 )
+from astropy.time import Time
+from bokeh.models import ColumnDataSource, HoverTool, Span
 
 # =============================================================================
 # Define variables
@@ -56,13 +55,13 @@ __release__ = base.__release__
 
 # BLOCK_KIND → PATH_KEY mapping (mirrors apero_ri.base.base)
 _BLOCK_KIND_TO_PATH: Dict[str, str] = {
-    'raw':   'PATH_RAW',
-    'tmp':   'PATH_PP',
+    'raw': 'PATH_RAW',
+    'tmp': 'PATH_PP',
     'calib': 'PATH_CALIB',
-    'red':   'PATH_RED',
+    'red': 'PATH_RED',
     'tellu': 'PATH_TELLU',
-    'out':   'PATH_OUT',
-    'lbl':   'PATH_LBL',
+    'out': 'PATH_OUT',
+    'lbl': 'PATH_LBL',
 }
 
 
@@ -294,7 +293,7 @@ def _make_snr_figure(h_pts: list, y_pts: list,
     hover = HoverTool(
         tooltips=[
             ('Date (UTC)', '@x{%F %T}'),
-            ('SNR',        '@y{0.00}'),
+            ('SNR', '@y{0.00}'),
         ],
         formatters={'@x': 'datetime'},
         mode='mouse',
@@ -356,7 +355,7 @@ def _make_berv_figure(
     hover_pts = HoverTool(
         tooltips=[
             ('Date (UTC)', '@x{%F %T}'),
-            ('Vtot',       '@y{0.000} km/s'),
+            ('Vtot', '@y{0.000} km/s'),
         ],
         formatters={'@x': 'datetime'},
         mode='mouse',
@@ -841,7 +840,8 @@ def _build_spec_layout(
     :return: tuple (Bokeh layout or None, error message string)
     :rtype: tuple
     """
-    from bokeh.layouts import column as bk_column, gridplot
+    from bokeh.layouts import column as bk_column
+    from bokeh.layouts import gridplot
 
     ext_row, best_ident = _find_median_ext_row(
         htable_rows, ftable_ext_rows
@@ -2364,6 +2364,8 @@ if __name__ == '__main__':
 # =============================================================================
 # Define private per-night aggregation helper
 # =============================================================================
+
+
 def _aggregate_by_obs_dir(
     htable_rows: List[Dict[str, Any]],
     ftable_ext_rows: List[Dict[str, Any]],
@@ -2751,7 +2753,8 @@ def _extract_berv_points(htable_rows: List[Dict[str, Any]],
 
         ext_qc_ok = int(row.get('EXT_QCC_ALL') or 1) == 1
         tcorr_qc_raw = row.get('TCORR_QCC_ALL')
-        tcorr_qc_ok = bool(int(tcorr_qc_raw) == 1) if tcorr_qc_raw is not None else ext_qc_ok
+        tcorr_qc_ok = bool(
+            int(tcorr_qc_raw) == 1) if tcorr_qc_raw is not None else ext_qc_ok
 
         if not ext_qc_ok:
             ext_fail.append((dt, vtot))
@@ -2869,7 +2872,7 @@ def _make_snr_figure(h_pts: list, y_pts: list,
     hover = HoverTool(
         tooltips=[
             ('Date (UTC)', '@x{%F %T}'),
-            ('SNR',        '@y{0.00}'),
+            ('SNR', '@y{0.00}'),
         ],
         formatters={'@x': 'datetime'},
         mode='mouse',
@@ -2916,7 +2919,7 @@ def _make_berv_figure(
     hover_pts = HoverTool(
         tooltips=[
             ('Date (UTC)', '@x{%F %T}'),
-            ('Vtot',       '@y{0.000} km/s'),
+            ('Vtot', '@y{0.000} km/s'),
         ],
         formatters={'@x': 'datetime'},
         mode='mouse',
@@ -3246,7 +3249,8 @@ def _build_spec_layout(
     preset: Dict[str, Any],
 ) -> Tuple[Optional[Any], str]:
     """Core spectrum builder — returns (layout, message)."""
-    from bokeh.layouts import column as bk_column, gridplot
+    from bokeh.layouts import column as bk_column
+    from bokeh.layouts import gridplot
 
     ext_row, best_ident = _find_median_ext_row(htable_rows, ftable_ext_rows)
     if ext_row is None:
@@ -3263,7 +3267,8 @@ def _build_spec_layout(
     # Load telluric-corrected S1D (optional)
     tcorr_flux: Optional[np.ndarray] = None
     if best_ident:
-        tcorr_row = _find_ftable_row_by_identifier(ftable_tcorr_rows, best_ident)
+        tcorr_row = _find_ftable_row_by_identifier(
+            ftable_tcorr_rows, best_ident)
         if tcorr_row is not None:
             sc1d_path = _derive_sc1d_path(tcorr_row, paths)
             if sc1d_path is not None:
@@ -3439,7 +3444,7 @@ def _fit_ccf_gaussian(
                                   maxfev=5000)
         fit = _gauss_fn(rv_vec, *coeffs)
         xlim: List[float] = [coeffs[1] - abs(coeffs[2]) * 20,
-                              coeffs[1] + abs(coeffs[2]) * 20]
+                             coeffs[1] + abs(coeffs[2]) * 20]
         return True, fit, xlim
     except Exception:
         return (False, np.full(len(rv_vec), np.nan),
@@ -3515,8 +3520,8 @@ def _make_ccf_profile_figure(
     height: int = 280,
 ) -> Any:
     """Median CCF profile + 1σ/2σ bands + Gaussian fit panel."""
-    from bokeh.plotting import figure as bk_figure
     from bokeh.models import Band
+    from bokeh.plotting import figure as bk_figure
 
     limmask = (rv_vec >= xlim[0]) & (rv_vec <= xlim[1])
     rv_m = rv_vec[limmask]
@@ -3568,8 +3573,8 @@ def _make_ccf_residuals_figure(
     height: int = 230,
 ) -> Any:
     """CCF residuals (CCF minus Gaussian fit) panel."""
-    from bokeh.plotting import figure as bk_figure
     from bokeh.models import Band
+    from bokeh.plotting import figure as bk_figure
 
     limmask = (rv_vec >= xlim[0]) & (rv_vec <= xlim[1])
     rv_m = rv_vec[limmask]
@@ -3592,10 +3597,22 @@ def _make_ccf_residuals_figure(
         src_1 = ColumnDataSource(dict(x=rv_m,
                                       upper=y2_1sig[limmask] - f_m,
                                       lower=y1_1sig[limmask] - f_m))
-        fig.add_layout(Band(base='x', upper='upper', lower='lower', source=src_2,
-                            fill_color='orange', fill_alpha=0.4))
-        fig.add_layout(Band(base='x', upper='upper', lower='lower', source=src_1,
-                            fill_color='red', fill_alpha=0.4))
+        fig.add_layout(
+            Band(
+                base='x',
+                upper='upper',
+                lower='lower',
+                source=src_2,
+                fill_color='orange',
+                fill_alpha=0.4))
+        fig.add_layout(
+            Band(
+                base='x',
+                upper='upper',
+                lower='lower',
+                source=src_1,
+                fill_color='red',
+                fill_alpha=0.4))
         fig.line(rv_m, med_ccf[limmask] - f_m, line_color='black',
                  line_width=1.2, legend_label='Median residual')
         fig.legend.location = 'top_right'
@@ -3621,8 +3638,8 @@ def _make_ccf_spread_figure(
     height: int = 230,
 ) -> Any:
     """CCF spread (percentile bands relative to the median) panel."""
-    from bokeh.plotting import figure as bk_figure
     from bokeh.models import Band
+    from bokeh.plotting import figure as bk_figure
 
     limmask = (rv_vec >= xlim[0]) & (rv_vec <= xlim[1])
     rv_m = rv_vec[limmask]
@@ -3858,7 +3875,8 @@ def _make_lbl_snr_figure(
     fig = make_time_figure(f'{snr_label} vs Time', height=height)
     dts_ms = np.array([dt.timestamp() * 1000.0 for dt in datetimes])
     bad_set = set(bad_idxs)
-    bad_mask = np.array([i in bad_set for i in range(len(datetimes))], dtype=bool)
+    bad_mask = np.array(
+        [i in bad_set for i in range(len(datetimes))], dtype=bool)
     good_no_bad = (~reset_mask) & (~bad_mask)
 
     if np.any(good_no_bad):
@@ -3890,8 +3908,8 @@ def _make_lbl_wave_figure(
     height: int = 280,
 ) -> Any:
     """LBL wavelength-binned RV vs time panel (coloured by wavelength)."""
-    from bokeh.plotting import figure as bk_figure
     from bokeh.models import DatetimeTickFormatter
+    from bokeh.plotting import figure as bk_figure
 
     fig = bk_figure(
         title='LBL Wave-binned RVs vs Time',
@@ -3916,8 +3934,10 @@ def _make_lbl_wave_figure(
     for col_key, wave_nm in zip(wave_vrad_dict.keys(), wavemap):
         vrad_key = wave_vrad_dict[col_key]
         svrad_col = col_key.replace('vrad_', 'svrad_')
-        svrad_key = wave_svrad_dict.get(svrad_col, np.full(len(vrad_key), np.nan))
-        med_svrad_key = float(np.nanmedian(svrad_key)) if len(svrad_key) > 0 else 0.0
+        svrad_key = wave_svrad_dict.get(
+            svrad_col, np.full(len(vrad_key), np.nan))
+        med_svrad_key = float(np.nanmedian(svrad_key)) if len(
+            svrad_key) > 0 else 0.0
         if med_svrad_key > 10.0 * med_svrad:
             continue
         if med_svrad > 0 and med_svrad_key < med_svrad * 0.01:
@@ -4004,11 +4024,11 @@ def _build_lbl_layout(
         )[valid][sort_idx]
 
     fig_rv = _make_lbl_rv_figure(dts_s, vrad_s, svrad_s, reset_s, ylim,
-                                  flavor_id)
+                                 flavor_id)
     fig_snr = _make_lbl_snr_figure(dts_s, snr_s, reset_s, bad_idxs,
-                                    snr_h_label)
+                                   snr_h_label)
     fig_wave = _make_lbl_wave_figure(dts_s, vrad_s, svrad_s, wave_vrad_dict,
-                                      wave_svrad_dict, wavemap)
+                                     wave_svrad_dict, wavemap)
 
     return bk_column([fig_rv, fig_snr, fig_wave])
 
@@ -4083,4 +4103,3 @@ def build_lbl_plot_components(
         'has_plot': False, 'script': '', 'div': '',
         'message': f'RDB file {lbl_filename} not found in ftable rows.',
     }
-

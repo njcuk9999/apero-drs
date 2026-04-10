@@ -17,6 +17,7 @@ Token file structure::
       }
     }
 """
+
 from __future__ import annotations
 
 import json
@@ -27,14 +28,14 @@ from pathlib import Path
 from typing import Any, Dict, Optional
 
 from apero_ri.core.secret_store import (
-    resolve_secret_file,
     get_ari_dir,
+    resolve_secret_file,
 )
 
 # =============================================================================
 # Define variables
 # =============================================================================
-__NAME__ = 'apero_ri.core.api_tokens'
+__NAME__ = "apero_ri.core.api_tokens"
 
 _TOKEN_BYTES = 32  # 32 bytes → 64 hex chars
 _lock = threading.Lock()
@@ -45,8 +46,8 @@ _lock = threading.Lock()
 # =============================================================================
 def _tokens_path() -> Path:
     """Return the managed path for api_tokens.json."""
-    legacy = [get_ari_dir() / 'admin' / 'api_tokens.json']
-    return resolve_secret_file('api_tokens.json', legacy_paths=legacy)
+    legacy = [get_ari_dir() / "admin" / "api_tokens.json"]
+    return resolve_secret_file("api_tokens.json", legacy_paths=legacy)
 
 
 def _load() -> Dict[str, Any]:
@@ -54,7 +55,7 @@ def _load() -> Dict[str, Any]:
     if not path.exists():
         return {}
     try:
-        with open(path, 'r', encoding='utf-8') as fh:
+        with open(path, "r", encoding="utf-8") as fh:
             data = json.load(fh)
         return data if isinstance(data, dict) else {}
     except Exception:
@@ -64,7 +65,7 @@ def _load() -> Dict[str, Any]:
 def _save(tokens: Dict[str, Any]) -> None:
     path = _tokens_path()
     path.parent.mkdir(parents=True, exist_ok=True)
-    with open(path, 'w', encoding='utf-8') as fh:
+    with open(path, "w", encoding="utf-8") as fh:
         json.dump(tokens, fh, indent=2, default=str)
     try:
         path.chmod(0o600)
@@ -75,7 +76,7 @@ def _save(tokens: Dict[str, Any]) -> None:
 # =============================================================================
 # Public API
 # =============================================================================
-def generate_token(username: str, label: str = '') -> str:
+def generate_token(username: str, label: str = "") -> str:
     """Generate a new API token for *username*, revoking any old one.
 
     Returns the new token string (64 hex chars).
@@ -84,14 +85,15 @@ def generate_token(username: str, label: str = '') -> str:
         tokens = _load()
         # Revoke any existing tokens for this user
         tokens = {
-            tok: info for tok, info in tokens.items()
-            if info.get('username') != username
+            tok: info
+            for tok, info in tokens.items()
+            if info.get("username") != username
         }
         new_token = secrets.token_hex(_TOKEN_BYTES)
         tokens[new_token] = {
-            'username': username,
-            'created_at': datetime.now(timezone.utc).isoformat(),
-            'label': str(label or '').strip(),
+            "username": username,
+            "created_at": datetime.now(timezone.utc).isoformat(),
+            "label": str(label or "").strip(),
         }
         _save(tokens)
     return new_token
@@ -103,8 +105,9 @@ def revoke_token(username: str) -> bool:
         tokens = _load()
         before = len(tokens)
         tokens = {
-            tok: info for tok, info in tokens.items()
-            if info.get('username') != username
+            tok: info
+            for tok, info in tokens.items()
+            if info.get("username") != username
         }
         if len(tokens) < before:
             _save(tokens)
@@ -122,7 +125,7 @@ def validate_token(token: str) -> Optional[str]:
         tokens = _load()
     info = tokens.get(token)
     if info and isinstance(info, dict):
-        return info.get('username')
+        return info.get("username")
     return None
 
 
@@ -135,10 +138,10 @@ def get_user_token_info(username: str) -> Optional[Dict[str, Any]]:
     with _lock:
         tokens = _load()
     for tok, info in tokens.items():
-        if info.get('username') == username:
+        if info.get("username") == username:
             return {
-                'created_at': info.get('created_at', ''),
-                'label': info.get('label', ''),
-                'token_prefix': tok[:8],
+                "created_at": info.get("created_at", ""),
+                "label": info.get("label", ""),
+                "token_prefix": tok[:8],
             }
     return None

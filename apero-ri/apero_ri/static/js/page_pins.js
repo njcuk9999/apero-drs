@@ -17,6 +17,19 @@
 			'</svg>';
 	}
 
+	function favouriteIconSvg(isFavourite) {
+		if (isFavourite) {
+			return '' +
+				'<svg viewBox="0 0 20 20" aria-hidden="true" focusable="false">' +
+				'<path d="M10 2.4l2.2 4.45 4.9.71-3.55 3.46.84 4.88L10 13.57 5.61 15.9l.84-4.88L2.9 7.56l4.9-.71L10 2.4z" fill="currentColor"></path>' +
+				'</svg>';
+		}
+		return '' +
+			'<svg viewBox="0 0 20 20" aria-hidden="true" focusable="false">' +
+			'<path d="M10 2.4l2.2 4.45 4.9.71-3.55 3.46.84 4.88L10 13.57 5.61 15.9l.84-4.88L2.9 7.56l4.9-.71L10 2.4z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"></path>' +
+			'</svg>';
+	}
+
 	function shouldEnablePins(meta) {
 		if (!meta || !meta.loggedIn || !meta.pageId) {
 			return false;
@@ -32,6 +45,23 @@
 			return false;
 		}
 		return !!resolveApiContext(meta);
+	}
+
+	function shouldEnableFavourite(meta) {
+		if (!meta || !meta.loggedIn) {
+			return false;
+		}
+		var cfg = window.ARI_OBJECT_PAGE || null;
+		if (!cfg) {
+			return false;
+		}
+		if (!cfg.profileId || !cfg.objname) {
+			return false;
+		}
+		if (!cfg.objectFavouriteApiGet || !cfg.objectFavouriteApiToggle) {
+			return false;
+		}
+		return true;
 	}
 
 	function normalizePageLabel(meta) {
@@ -70,12 +100,50 @@
 		return data;
 	}
 
+	async function fetchFavouriteState(cfg) {
+		var url = String(cfg.objectFavouriteApiGet)
+			+ '?profile_id=' + encodeURIComponent(String(cfg.profileId || ''))
+			+ '&objname=' + encodeURIComponent(String(cfg.objname || ''));
+		var response = await fetch(url);
+		var payload = await response.json();
+		if (!payload.success) {
+			throw new Error(payload.error || 'Failed to load favourites');
+		}
+		return !!(payload.favourite_objects && payload.favourite_objects.is_favourite);
+	}
+
+	async function toggleFavourite(cfg) {
+		var response = await fetch(String(cfg.objectFavouriteApiToggle || ''), {
+			method: 'POST',
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify({
+				profile_id: String(cfg.profileId || ''),
+				objname: String(cfg.objname || ''),
+			})
+		});
+		var payload = await response.json();
+		if (!payload.success) {
+			throw new Error(payload.error || 'Failed to update favourites');
+		}
+		return !!payload.favourite;
+	}
+
 	function renderState(button, pinned) {
 		button.classList.toggle('is-pinned', !!pinned);
 		button.setAttribute('aria-pressed', pinned ? 'true' : 'false');
 		button.title = pinned ? 'Pinned page (click to remove)' : 'Pin this page';
 		button.setAttribute('aria-label', button.title);
 		button.innerHTML = iconSpan(bookmarkIconSvg(!!pinned));
+	}
+
+	function renderFavouriteState(button, favourite) {
+		button.classList.toggle('is-favourite', !!favourite);
+		button.setAttribute('aria-pressed', favourite ? 'true' : 'false');
+		button.title = favourite
+			? 'Object is in favourites (click to remove)'
+			: 'Add object to favourites';
+		button.setAttribute('aria-label', button.title);
+		button.innerHTML = iconSpan(favouriteIconSvg(!!favourite));
 	}
 
 	function quotePy(value) {
@@ -598,7 +666,8 @@
 		var meta = window.ARI_PAGE_META || null;
 		var enablePins = shouldEnablePins(meta);
 		var enableApi = shouldEnableApi(meta);
-		if (!enablePins && !enableApi) {
+		var enableFavourite = shouldEnableFavourite(meta);
+		if (!enablePins && !enableApi && !enableFavourite) {
 			return;
 		}
 
@@ -626,6 +695,39 @@
 				showApiModal(buildApiExample(meta));
 			});
 			group.appendChild(apiBtn);
+		}
+
+		if (enableFavourite) {
+			var favCfg = window.ARI_OBJECT_PAGE || {};
+			var favBtn = document.createElement('button');
+			favBtn.type = 'button';
+			favBtn.className = 'ari-page-pin-fab ari-page-favourite-fab';
+			group.appendChild(favBtn);
+
+			try {
+				var isFavourite = await fetchFavouriteState(favCfg);
+				renderFavouriteState(favBtn, isFavourite);
+			} catch (err) {
+				favBtn.remove();
+			}
+
+			var favBusy = false;
+			favBtn.addEventListener('click', async function () {
+				if (favBusy) {
+					return;
+				}
+				favBusy = true;
+				favBtn.disabled = true;
+				try {
+					var state = await toggleFavourite(favCfg);
+					renderFavouriteState(favBtn, state);
+				} catch (err) {
+					window.alert(err.message || 'Could not update favourites.');
+				} finally {
+					favBusy = false;
+					favBtn.disabled = false;
+				}
+			});
 		}
 
 		if (!enablePins) {
