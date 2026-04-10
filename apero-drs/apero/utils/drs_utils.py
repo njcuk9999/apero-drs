@@ -959,9 +959,9 @@ def find_files(params: ParamDict, block_kind: str, filters: Dict[str, str],
     # -------------------------------------------------------------------------
     # deal with start time
     if not drs_text.null_text(start_date, ['', 'Null', 'None', None]):
-        condition += f' AND {time_column} >={start_date}'
+        condition += f' AND {time_column} >= {start_date}'
     if not drs_text.null_text(end_date, ['', 'Null', 'None', None]):
-        condition += f' AND {time_column} <={end_date}'
+        condition += f' AND {time_column} <= {end_date}'
     # -------------------------------------------------------------------------
     # get columns for this condition
     if columns == 'ABSPATH':

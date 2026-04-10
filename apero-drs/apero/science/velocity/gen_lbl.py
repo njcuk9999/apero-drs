@@ -30,6 +30,7 @@ from apero.tools.recipes.bin import apero_get
 from apero.instruments import select
 from apero.base import base as apero_base
 from apero.science.calib import wave
+from apero.science.preprocessing import gen_pp
 
 
 # =============================================================================
@@ -340,6 +341,11 @@ def add_output(params: ParamDict, recipe: DrsRecipe,
     # add file to index database
     findexdbm.add_entry(basefile, 'lbl', recipe.name,
                         runstring=recipe.runstring, hkeys=hkeys)
+    # update the files on disk with the hkeys
+    # (this will add the hkeys to the header if they don't exist and
+    #  update the values if they do)
+    drs_fits.update_fits(params, filename, hkeys)
+
 
 
 def lbl_ref_qc(params: ParamDict) -> Tuple[List[list], int]:
@@ -516,6 +522,10 @@ def fake_hkeys(params: ParamDict, filename: str,
         pkeys['KW_OBJECTNAME2'] = obj_temp
 
     # need to add KW_DPRTYPE, KW_PI_NAME, KW_RUN_ID, KW_FIBER
+
+    # get apero release date
+    areldate = gen_pp.get_areldate(params, hdr, release_type='lbl')
+    pkeys['KW_ARELDATE'] = areldate
 
     # overwrite keys
     pkeys['KW_OBJNAME'] = objname

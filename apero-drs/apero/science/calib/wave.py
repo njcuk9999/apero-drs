@@ -3328,7 +3328,7 @@ def write_wavesol(params: ParamDict, recipe: DrsRecipe, fiber: str,
     # Make wave table
     # ------------------------------------------------------------------
     # get number of orders
-    nbo = wprops['COEFFS'].shape[0]
+    nbo = wprops['WAVEMAP'].shape[0]
     # add order column
     wave_cols = ['ORDER', 'ECHELLE_ORDER']
     wave_vals = [np.arange(nbo), wprops['EORDERS']]

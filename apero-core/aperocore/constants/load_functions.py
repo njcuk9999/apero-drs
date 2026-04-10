@@ -324,6 +324,9 @@ def load_from_yaml(files: List[str], params: ParamDict = None) -> ParamDict:
     for filename in files:
         # load the yaml in the standard way
         yaml_dict = base.load_yaml(filename)
+        # deal with nothing in a yaml file
+        if yaml_dict is None:
+            continue
         # flatten the dictionary
         flat_dict = _to_flat_dict(yaml_dict)
         # load all parameter instances into params
@@ -1435,6 +1438,7 @@ def _get_file_names(params: ParamDict,
 
 
 def _to_flat_dict(nested_dict, parent_key=''):
+
     flat_dict = {}
     for key, value in nested_dict.items():
         # get the full key

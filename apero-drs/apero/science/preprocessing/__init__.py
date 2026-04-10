@@ -41,6 +41,8 @@ get_obj_reject_list = gen_pp.get_obj_reject_list
 
 get_file_reject_list = gen_pp.get_file_reject_list
 
+get_areldate = gen_pp.get_areldate
+
 intercept_correct = detector.intercept_correct
 
 load_led_flat = detector.load_led_flat

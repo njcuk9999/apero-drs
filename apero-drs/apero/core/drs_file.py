@@ -7964,6 +7964,8 @@ class DrsOutFile(DrsInputFile):
         manual_keys['KW_VERSION'] = params['DRS.VERSION']
         manual_keys['KW_FIBER'] = 'None'
         manual_keys['KW_OUTPUT'] = self.name
+        # there are no quality control for postprocessing --> pass
+        manual_keys['KW_DRS_QC'] = 1
         # ---------------------------------------------------------------------
         # loop around the keys and find them in hdict (or add null character if
         #     not found)

@@ -2668,7 +2668,18 @@ def _multi_process_process(params, shortname, runlist, cores, groupname=None):
             # debug log: MULTIPROCESS - joining job {0}
             WLOG(params, 'debug', textentry('90-503-00021', args=[pit]))
             proc.join()
-
+        # -----------------------------------------------------------------
+        # push all pending db files to the database (after group is
+        # finished) group recipes are assumed independent of each other
+        # - so we can do this after only
+        # this is really important as we have disabled updating for parallel
+        #  runs to make it more efficient
+        # -----------------------------------------------------------------
+        # do not update if we are running a test
+        if not params['TEST_RUN']:
+            # -----------------------------------------------------------------
+            # We should update the database here
+            drs_database.db_push(params)
     # return return_dict
     return dict(return_dict)
 
@@ -2729,7 +2740,18 @@ def _multi_process_pool(params, shortname, runlist, cores, groupname=None):
             if result is not None:
                 for key in result:
                     return_dict[key] = result[key]
-
+        # -----------------------------------------------------------------
+        # push all pending db files to the database (after group is
+        # finished) group recipes are assumed independent of each other
+        # - so we can do this after only
+        # this is really important as we have disabled updating for parallel
+        #  runs to make it more efficient
+        # -----------------------------------------------------------------
+        # do not update if we are running a test
+        if not params['TEST_RUN']:
+            # -----------------------------------------------------------------
+            # We should update the database here
+            drs_database.db_push(params)
     # return return_dict
     return dict(return_dict)
 
@@ -2778,6 +2800,18 @@ def _multi_process_pathos(params, shortname, runlist, cores, groupname=None):
                 if result is not None:
                     for key in result:
                         return_dict[key] = result[key]
+            # -----------------------------------------------------------------
+            # push all pending db files to the database (after group is
+            # finished) group recipes are assumed independent of each other
+            # - so we can do this after only
+            # this is really important as we have disabled updating for parallel
+            #  runs to make it more efficient
+            # -----------------------------------------------------------------
+            # do not update if we are running a test
+            if not params['TEST_RUN']:
+                # -------------------------------------------------------------
+                # We should update the database here
+                drs_database.db_push(params)
         # return return_dict
         return dict(return_dict)
     except ImportError:

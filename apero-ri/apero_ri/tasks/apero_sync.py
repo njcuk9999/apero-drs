@@ -58,30 +58,27 @@ just as they would be on the ARI server.  The server task can then be
 configured with ``sync_source`` to copy those files instead of re-running the
 heavy DB+FITS queries over SSHFS.
 """
-
 import sys
 import time
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
+
 # =============================================================================
 # Define variables
 # =============================================================================
 # Module-level name used for logging / identification in tracebacks
-__NAME__ = "apero_ri.tasks.apero_sync"
+__NAME__ = 'apero_ri.tasks.apero_sync'
 
 
 # =============================================================================
 # Public API
 # =============================================================================
-def run(
-    task_key: str,
-    params: Dict[str, Any],
-    *,
-    verbose: bool = True,
-    log_file: Optional[str] = None,
-) -> Dict[str, Any]:
+def run(task_key: str,
+        params: Dict[str, Any],
+        verbose: bool = True,
+        log_file: Optional[str] = None) -> Dict[str, Any]:
     """Run a registered APERO RI task locally with the supplied params.
 
     Parameters
@@ -114,7 +111,7 @@ def run(
     if task_key not in task_module.TASK_LIST:
         available = sorted(task_module.TASK_LIST.keys())
         raise ValueError(
-            f"Unknown task key {task_key!r}.  "
+            f'Unknown task key {task_key!r}.  '
             f'Available: {", ".join(available)}'
         )
 
@@ -122,18 +119,18 @@ def run(
     # support local pre-built workflows (LOCAL_TASK=True).
     local_allowed = bool(task_module.LOCAL_TASK.get(task_key, False))
     if not local_allowed:
-        allowed = ", ".join(sorted(local_task_keys()))
+        allowed = ', '.join(sorted(local_task_keys()))
         raise ValueError(
-            f"Task {task_key!r} is not LOCAL_TASK-enabled. "
-            f"Allowed tasks: {allowed}"
+            f'Task {task_key!r} is not LOCAL_TASK-enabled. '
+            f'Allowed tasks: {allowed}'
         )
 
     # Some tasks may fail to import (e.g. missing optional dependency).
     # IMPORT_ERRORS stores the traceback string, if any, keyed by task key.
-    import_error = (task_module.IMPORT_ERRORS or {}).get(task_key, "")
+    import_error = (task_module.IMPORT_ERRORS or {}).get(task_key, '')
     if import_error:
         raise RuntimeError(
-            f"Task {task_key!r} failed to import:\n{import_error}"
+            f'Task {task_key!r} failed to import:\n{import_error}'
         )
 
     # ---- build logger ------------------------------------------------------
@@ -146,12 +143,12 @@ def run(
     # Inject the logger so the task's run_job can call
     # params['TASK_LOGGER'](msg) without needing the web-server logging
     # infrastructure.
-    params["TASK_LOGGER"] = logger
+    params['TASK_LOGGER'] = logger
 
     # ---- ensure LOCAL_DATA_DIR exists --------------------------------------
     # LOCAL_DATA_DIR is the root directory where all task output JSON/CSV
     # files are written (under tasks/<instrument>/<profile>/…).
-    local_data_dir = params.get("LOCAL_DATA_DIR")
+    local_data_dir = params.get('LOCAL_DATA_DIR')
     if local_data_dir:
         # Create the directory tree if it doesn't exist yet.
         Path(local_data_dir).mkdir(parents=True, exist_ok=True)
@@ -160,31 +157,29 @@ def run(
     # Tasks expect each profile config to carry INSTRUMENT both at the
     # top-level and inside the 'general' sub-dict.  When running locally
     # users often only set it at the top level, so we propagate it down.
-    instrument = params.get("INSTRUMENT", "")
-    profiles = params.get("APERO_PROFILES", {})
+    instrument = params.get('INSTRUMENT', '')
+    profiles = params.get('APERO_PROFILES', {})
     for _pname, pcfg in profiles.items():
         if not isinstance(pcfg, dict):
             continue
         # Ensure the 'general' sub-dict exists and carries INSTRUMENT.
-        general = pcfg.setdefault("general", {})
+        general = pcfg.setdefault('general', {})
         if isinstance(general, dict):
-            general.setdefault("INSTRUMENT", instrument)
+            general.setdefault('INSTRUMENT', instrument)
         # Also set INSTRUMENT and LOCAL_DATA_DIR at the profile top-level
         # because some helper functions read them from there directly.
-        pcfg.setdefault("INSTRUMENT", instrument)
-        pcfg.setdefault(
-            "LOCAL_DATA_DIR", local_data_dir or str(Path.home() / ".ari")
-        )
+        pcfg.setdefault('INSTRUMENT', instrument)
+        pcfg.setdefault('LOCAL_DATA_DIR', local_data_dir or str(Path.home() / '.ari'))
 
     # If the caller didn't explicitly list profile names, derive them
     # from the keys of the APERO_PROFILES dict (order preserved in 3.7+).
-    if "APERO_PROFILE_NAMES" not in params:
-        params["APERO_PROFILE_NAMES"] = list(profiles.keys())
+    if 'APERO_PROFILE_NAMES' not in params:
+        params['APERO_PROFILE_NAMES'] = list(profiles.keys())
 
     # TASK_CONFIG carries per-task overrides like force_run, ncores, etc.
     # Default to an empty dict so tasks can safely call .get() on it.
-    if "TASK_CONFIG" not in params:
-        params["TASK_CONFIG"] = {}
+    if 'TASK_CONFIG' not in params:
+        params['TASK_CONFIG'] = {}
 
     # ---- instantiate and run -----------------------------------------------
     # Look up the task class from the registry and create a fresh instance.
@@ -192,12 +187,12 @@ def run(
     # that run_job populates during execution.
     task_cls = task_module.TASK_LIST[task_key]
     instance = task_cls()
-    logger(f"apero_sync: running {task_key}")
+    logger(f'apero_sync: running {task_key}')
 
     # Record a high-resolution start time for duration measurement.
     t0 = time.perf_counter()
-    status = "completed"
-    error = ""
+    status = 'completed'
+    error = ''
     try:
         # run_job is the main entry point defined by each AperoAsyncTask
         # sub-class.  It reads from params and writes results to disk.
@@ -205,11 +200,10 @@ def run(
     except Exception as exc:
         # If run_job raises, capture the error but do not re-raise so we
         # can still return a summary dict to the caller.
-        status = "failed"
+        status = 'failed'
         error = str(exc)
         import traceback
-
-        logger(f"apero_sync: {task_key} FAILED: {exc}")
+        logger(f'apero_sync: {task_key} FAILED: {exc}')
         traceback.print_exc()
     finally:
         # Always compute duration, even on failure.
@@ -217,17 +211,15 @@ def run(
 
     # Build a summary dict that mirrors what the scheduler would store.
     result = {
-        "status": status,  # 'completed' or 'failed'
-        "duration_s": round(duration, 2),  # wall-clock seconds
-        "info": getattr(instance, "info", ""),  # markdown summary from the task
-        "output_files": getattr(
-            instance, "output_files", []
-        ),  # list of files written
-        "error": error,  # empty string on success
+        'status': status,                                      # 'completed' or 'failed'
+        'duration_s': round(duration, 2),                      # wall-clock seconds
+        'info': getattr(instance, 'info', ''),                 # markdown summary from the task
+        'output_files': getattr(instance, 'output_files', []), # list of files written
+        'error': error,                                        # empty string on success
     }
     logger(
-        f"apero_sync: {task_key} finished in {duration:.1f}s "
-        f"with status={status}."
+        f'apero_sync: {task_key} finished in {duration:.1f}s '
+        f'with status={status}.'
     )
     return result
 
@@ -250,19 +242,19 @@ def list_tasks() -> Dict[str, Dict[str, Any]]:
         out[key] = {
             # 'INSTRUMENT' or 'GENERAL' – whether the task runs per-
             # instrument or once globally.
-            "type": tm.TYPE.get(key, "INSTRUMENT"),
+            'type': tm.TYPE.get(key, 'INSTRUMENT'),
             # List of param keys the task expects in its run_job dict.
-            "param_list": tm.P_LIST.get(key, []),
+            'param_list': tm.P_LIST.get(key, []),
             # Default run frequency in hours (used by the scheduler).
-            "frequency": tm.FREQ.get(key, 24.0),
+            'frequency': tm.FREQ.get(key, 24.0),
             # Whether the scheduler would run this task automatically.
-            "enabled": tm.ENABLED.get(key, False),
+            'enabled': tm.ENABLED.get(key, False),
             # Whether the task supports multiprocessing internally.
-            "multi_process": tm.MULTI_PROCESS.get(key, False),
+            'multi_process': tm.MULTI_PROCESS.get(key, False),
             # Whether this task is allowed for local sync/copy workflows.
-            "local_task": tm.LOCAL_TASK.get(key, False),
+            'local_task': tm.LOCAL_TASK.get(key, False),
             # Non-empty string if the task module failed to import.
-            "import_error": (tm.IMPORT_ERRORS or {}).get(key, ""),
+            'import_error': (tm.IMPORT_ERRORS or {}).get(key, ''),
         }
     return out
 
@@ -270,26 +262,19 @@ def list_tasks() -> Dict[str, Dict[str, Any]]:
 def local_task_keys() -> List[str]:
     """Return task keys that are LOCAL_TASK-enabled."""
     from apero_ri import tasks as tm
-
-    return sorted(
-        [
-            key
-            for key in tm.TASK_LIST.keys()
-            if bool(tm.LOCAL_TASK.get(key, False))
-        ]
-    )
+    return sorted([
+        key for key in tm.TASK_LIST.keys()
+        if bool(tm.LOCAL_TASK.get(key, False))
+    ])
 
 
-def run_for_profile(
-    task_key: str,
-    profile_yaml: str,
-    *,
-    local_data_dir: str = "",
-    instrument: str = "",
-    task_config: Optional[Dict[str, Any]] = None,
-    verbose: bool = True,
-    log_file: Optional[str] = None,
-) -> Dict[str, Any]:
+def run_for_profile(task_key: str,
+                    profile_yaml: str,
+                    local_data_dir: str = '',
+                    instrument: str = '',
+                    task_config: Optional[Dict[str, Any]] = None,
+                    verbose: bool = True,
+                    log_file: Optional[str] = None) -> Dict[str, Any]:
     """Convenience wrapper that loads a single APERO profile YAML file.
 
     Parameters
@@ -324,12 +309,10 @@ def run_for_profile(
     # Load the YAML file – expected to be a single dict with database,
     # general, paths, sci-headers sub-keys (same structure as one entry
     # inside apero_profiles.yaml).
-    with profile_path.open("r", encoding="utf-8") as fh:
+    with profile_path.open('r', encoding='utf-8') as fh:
         profile_data = yaml.safe_load(fh) or {}
     if not isinstance(profile_data, dict):
-        raise ValueError(
-            f"Profile YAML must be a dict, got {type(profile_data).__name__}"
-        )
+        raise ValueError(f'Profile YAML must be a dict, got {type(profile_data).__name__}')
 
     # Use the filename stem (e.g. 'my_profile' from 'my_profile.yaml')
     # as the profile name.  This matches how the server identifies profiles.
@@ -338,23 +321,23 @@ def run_for_profile(
     # by the caller.
     if not instrument:
         instrument = (
-            profile_data.get("general", {}).get("INSTRUMENT", "")
-            or profile_data.get("INSTRUMENT", "")
-            or "unknown"
+            profile_data.get('general', {}).get('INSTRUMENT', '')
+            or profile_data.get('INSTRUMENT', '')
+            or 'unknown'
         )
     # Default output directory is ~/.ari, matching the server convention.
     if not local_data_dir:
-        local_data_dir = str(Path.home() / ".ari")
+        local_data_dir = str(Path.home() / '.ari')
 
     # Build the full params dict that run() expects, wrapping the single
     # profile in the same structure the server builds from
     # apero_profiles.yaml.
     params = {
-        "LOCAL_DATA_DIR": local_data_dir,
-        "INSTRUMENT": instrument,
-        "APERO_PROFILES": {profile_name: profile_data},
-        "APERO_PROFILE_NAMES": [profile_name],
-        "TASK_CONFIG": dict(task_config or {}),
+        'LOCAL_DATA_DIR': local_data_dir,
+        'INSTRUMENT': instrument,
+        'APERO_PROFILES': {profile_name: profile_data},
+        'APERO_PROFILE_NAMES': [profile_name],
+        'TASK_CONFIG': dict(task_config or {}),
     }
     # Delegate to the main run() function with the assembled params.
     return run(task_key, params, verbose=verbose, log_file=log_file)
@@ -380,8 +363,8 @@ def _build_logger(verbose: bool, log_file: Optional[str] = None):
 
     def _log(message: str) -> None:
         # UTC timestamp prefix for reproducible, timezone-independent logs.
-        stamp = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S")
-        line = f"{stamp} | {message}"
+        stamp = datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S')
+        line = f'{stamp} | {message}'
         # Print to stdout if verbose mode is on.
         if verbose:
             print(line, flush=True)
@@ -389,8 +372,8 @@ def _build_logger(verbose: bool, log_file: Optional[str] = None):
         # write failures (e.g. disk full) to avoid crashing the task.
         if log_path:
             try:
-                with log_path.open("a", encoding="utf-8") as fh:
-                    fh.write(line + "\n")
+                with log_path.open('a', encoding='utf-8') as fh:
+                    fh.write(line + '\n')
             except Exception:
                 pass
 
@@ -402,84 +385,75 @@ def _build_logger(verbose: bool, log_file: Optional[str] = None):
 # =============================================================================
 def _cli_main(argv: Optional[List[str]] = None) -> None:
     """
-    Minimal CLI:
-
+    Minimal CLI: 
+    
     ``python -m apero_ri.tasks.apero_sync TASK_KEY params.yaml``.
-
+    
     """
     import argparse
-
     import yaml
 
     # Build a minimal argument parser.  Only two positional args are
     # required: the task key and a YAML file containing the run params.
     parser = argparse.ArgumentParser(
-        description="Run a LOCAL_TASK APERO RI task locally.",
+        description='Run a LOCAL_TASK APERO RI task locally.',
     )
     parser.add_argument(
-        "--list-local-tasks",
-        action="store_true",
-        help="List task keys that support LOCAL_TASK local execution and exit.",
+        '--list-local-tasks', action='store_true',
+        help='List task keys that support LOCAL_TASK local execution and exit.',
     )
     # Positional: which task to run (e.g. 'APERO_OBJECT_QUERY').
-    parser.add_argument("task_key", nargs="?", help="Task key from TASK_LIST.")
+    parser.add_argument('task_key', nargs='?', help='Task key from TASK_LIST.')
     # Positional: path to a YAML file whose top-level dict is the params
     # dict passed to run_job (LOCAL_DATA_DIR, APERO_PROFILES, etc.).
     parser.add_argument(
-        "params_yaml",
-        nargs="?",
-        help="Path to a YAML file containing the run params dict.",
+        'params_yaml', nargs='?',
+        help='Path to a YAML file containing the run params dict.',
     )
     # Optional: write timestamped log lines to this file as well.
     parser.add_argument(
-        "--log",
-        default=None,
-        help="Optional log file path.",
+        '--log', default=None, help='Optional log file path.',
     )
     # Optional: suppress stdout output (log file still written if given).
     parser.add_argument(
-        "--quiet",
-        action="store_true",
-        help="Suppress stdout progress messages.",
+        '--quiet', action='store_true',
+        help='Suppress stdout progress messages.',
     )
     args = parser.parse_args(argv)
 
     if args.list_local_tasks:
         keys = local_task_keys()
         if not keys:
-            print("No LOCAL_TASK-enabled tasks found.")
+            print('No LOCAL_TASK-enabled tasks found.')
         else:
-            print("LOCAL_TASK-enabled tasks:")
+            print('LOCAL_TASK-enabled tasks:')
             for key in keys:
-                print(f"- {key}")
+                print(f'- {key}')
         return
 
     if not args.task_key or not args.params_yaml:
-        parser.error(
-            "task_key and params_yaml are required unless "
-            "--list-local-tasks is used"
-        )
+        parser.error('task_key and params_yaml are required unless '
+                     '--list-local-tasks is used')
 
     # Load the params YAML file.  Must be a top-level dict.
-    with open(args.params_yaml, "r", encoding="utf-8") as fh:
+    with open(args.params_yaml, 'r', encoding='utf-8') as fh:
         params = yaml.safe_load(fh) or {}
     if not isinstance(params, dict):
-        print(f"ERROR: params YAML must be a dict.", file=sys.stderr)
+        print(f'ERROR: params YAML must be a dict.', file=sys.stderr)
         sys.exit(1)
 
     # Delegate to run() with the parsed arguments.
-    result = run(
-        args.task_key, params, verbose=not args.quiet, log_file=args.log
-    )
-
+    result = run(args.task_key, params, verbose=not args.quiet,
+                 log_file=args.log)
+    
     # Exit with a non-zero code on failure so callers (e.g. cron, CI)
     # can detect errors.
-    if result["status"] != "completed":
+    if result['status'] != 'completed':
         print(f'\nTask failed: {result.get("error", "")}', file=sys.stderr)
         sys.exit(1)
     # On success, print a short summary of how many files were generated.
     print(f'\nDone. Output files: {len(result["output_files"])}')
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     _cli_main()
