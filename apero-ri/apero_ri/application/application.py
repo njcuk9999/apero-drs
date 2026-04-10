@@ -105,7 +105,7 @@ class ARIApp(Flask):
     """APERO Reduction Interface Flask application."""
 
     def __init__(self, **kwargs):
-        return _impls.ariapp_init(self, **kwargs)
+        _impls.ariapp_init(self, **kwargs)
 
     # -----------------------------------------------------------------
     # Argument parsing

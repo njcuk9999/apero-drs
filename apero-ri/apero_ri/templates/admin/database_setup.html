@@ -44,12 +44,12 @@
                     </select>
                 </div>
                 <div class="ari-ae-field">
-                    <label class="ari-ae-label" for="dbLocalHost">DATABASE_HOST: local database-hostname</label>
-                    <input id="dbLocalHost" class="ari-ap-input" placeholder="e.g. localhost or rali (local DB host)">
+                    <label class="ari-ae-label" for="dbLocalHost">DATABASE_HOST</label>
+                    <input id="dbLocalHost" class="ari-ap-input" placeholder="e.g. localhost or rali">
                 </div>
                 <div class="ari-ae-field">
-                    <label class="ari-ae-label" for="dbLocalPort">DATABASE_PORT: local database-port (must be unique from other databases)</label>
-                    <input id="dbLocalPort" class="ari-ap-input" placeholder="3306 (local DB port)" value="3306">
+                    <label class="ari-ae-label" for="dbLocalPort">DATABASE_PORT</label>
+                    <input id="dbLocalPort" class="ari-ap-input" placeholder="3306" value="3306">
                 </div>
                 <div class="ari-ae-field">
                     <label class="ari-ae-label" for="dbLocalNotes">Notes</label>
@@ -122,7 +122,7 @@
                 <div style="font-size:0.88em; line-height:1.5; color:#2b2b2b; display:grid; gap:6px;">
                     <div>
                         <strong>Quick setup checklist:</strong>
-                        1) Fill definition name, SSH host alias, remote database host, remote database port, and local forward port.
+                        1) Fill tunnel name, SSH config host, remote DB host, remote DB port, local forward port.
                         2) Enter test username/password/database name.
                         3) Click <strong>Test Connection</strong> before saving whenever possible.
                         4) Save tunnel definition.
@@ -142,25 +142,25 @@
 
             <div style="display:grid; gap:10px; grid-template-columns:1fr; margin-bottom:10px;">
                 <div class="ari-ae-field">
-                    <label class="ari-ae-label" for="dbTunnelName">DATABASE_TUNNEL_NAME: Definition name</label>
+                    <label class="ari-ae-label" for="dbTunnelName">DATABASE_TUNNEL_NAME</label>
                     <input id="dbTunnelName" class="ari-ap-input" placeholder="e.g. spirou_main_tunnel">
                 </div>
                 <div class="ari-ae-field">
-                    <label class="ari-ae-label" for="dbTunnelSshHost">DATABASE_SSH_CONFIG_HOST: ssh-host (from ssh config)</label>
-                    <input id="dbTunnelSshHost" class="ari-ap-input" list="dbTunnelSshHostList" placeholder="Select or type ssh-host alias from ~/.ssh/config">
+                    <label class="ari-ae-label" for="dbTunnelSshHost">DATABASE_SSH_CONFIG_HOST</label>
+                    <input id="dbTunnelSshHost" class="ari-ap-input" list="dbTunnelSshHostList" placeholder="Select or type SSH config host alias">
                     <datalist id="dbTunnelSshHostList"></datalist>
                 </div>
                 <div class="ari-ae-field">
-                    <label class="ari-ae-label" for="dbTunnelRemoteHost">DATABASE_HOST: remote database-hostname</label>
-                    <input id="dbTunnelRemoteHost" class="ari-ap-input" placeholder="Remote database host">
+                    <label class="ari-ae-label" for="dbTunnelRemoteHost">DATABASE_HOST</label>
+                    <input id="dbTunnelRemoteHost" class="ari-ap-input" placeholder="Remote DB host">
                 </div>
                 <div class="ari-ae-field">
-                    <label class="ari-ae-label" for="dbTunnelRemotePort">DATABASE_SSH_REMOTE_PORT: remote database-port</label>
-                    <input id="dbTunnelRemotePort" class="ari-ap-input" placeholder="3306 (remote DB port)" value="3306">
+                    <label class="ari-ae-label" for="dbTunnelRemotePort">DATABASE_SSH_REMOTE_PORT</label>
+                    <input id="dbTunnelRemotePort" class="ari-ap-input" placeholder="3306" value="3306">
                 </div>
                 <div class="ari-ae-field">
-                    <label class="ari-ae-label" for="dbTunnelLocalPort">DATABASE_SSH_LOCAL_PORT: local database-port (must be unique from other databases)</label>
-                    <input id="dbTunnelLocalPort" class="ari-ap-input" placeholder="Local forward DB port (must be unique)">
+                    <label class="ari-ae-label" for="dbTunnelLocalPort">DATABASE_SSH_LOCAL_PORT</label>
+                    <input id="dbTunnelLocalPort" class="ari-ap-input" placeholder="Local forward port">
                 </div>
                 <div class="ari-ae-field" style="display:flex; align-items:end;">
                     <label class="ari-ae-label" style="display:flex; gap:8px; align-items:center; margin:0;">
@@ -422,8 +422,8 @@ function renderDbLocalRows() {
             </div>
             <div style="font-size:0.9em; color:#555; line-height:1.45;">
                 <div><strong>DATABASE_MODE:</strong> ${dbEsc(row.DATABASE_MODE || '')}</div>
-                <div><strong>DATABASE_HOST (local database-hostname):</strong> ${dbEsc(row.DATABASE_HOST || '')}</div>
-                <div><strong>DATABASE_PORT (local database-port):</strong> ${dbEsc(row.DATABASE_PORT || '')}</div>
+                <div><strong>DATABASE_HOST:</strong> ${dbEsc(row.DATABASE_HOST || '')}</div>
+                <div><strong>DATABASE_PORT:</strong> ${dbEsc(row.DATABASE_PORT || '')}</div>
                 ${row.DATABASE_USERNAME ? `<div><strong>Test user:</strong> ${dbEsc(row.DATABASE_USERNAME)}</div>` : ''}
                 ${row.DATABASE_NAME ? `<div><strong>Test database:</strong> ${dbEsc(row.DATABASE_NAME)}</div>` : ''}
                 ${row.notes ? `<div><strong>Notes:</strong> ${dbEsc(row.notes)}</div>` : ''}
@@ -474,7 +474,7 @@ async function dbLocalTestSaved(index) {
 async function dbLocalSaveDefinition() {
     const payload = dbLocalPayload();
     if (!payload.name || !payload.DATABASE_HOST) {
-        dbSetMsg('Definition Name and DATABASE_HOST (local database-hostname) are required.', false);
+        dbSetMsg('Definition Name and DATABASE_HOST are required.', false);
         return;
     }
     try {
@@ -661,9 +661,9 @@ function renderDbTunnelRows() {
             </div>
             <div style="font-size:0.9em; color:#555; line-height:1.45;">
                 <div><strong>DATABASE_SSH_CONFIG_HOST:</strong> ${dbEsc(status.ssh_host || '')}</div>
-                <div><strong>DATABASE_HOST (remote database-hostname):</strong> ${dbEsc(status.remote_host || '')}</div>
-                <div><strong>DATABASE_SSH_REMOTE_PORT (remote database-port):</strong> ${dbEsc(status.remote_port || '')}</div>
-                <div><strong>DATABASE_SSH_LOCAL_PORT (local database-port):</strong> ${dbEsc(status.local_port || '')}</div>
+                <div><strong>DATABASE_HOST:</strong> ${dbEsc(status.remote_host || '')}</div>
+                <div><strong>DATABASE_SSH_REMOTE_PORT:</strong> ${dbEsc(status.remote_port || '')}</div>
+                <div><strong>DATABASE_SSH_LOCAL_PORT:</strong> ${dbEsc(status.local_port || '')}</div>
                 ${row.DATABASE_USERNAME ? `<div><strong>Test user:</strong> ${dbEsc(row.DATABASE_USERNAME)}</div>` : ''}
                 ${row.DATABASE_NAME ? `<div><strong>Test database:</strong> ${dbEsc(row.DATABASE_NAME)}</div>` : ''}
                 <div><strong>Control socket:</strong> ${controlAlive ? 'alive' : 'not alive'}; <strong>Local port:</strong> ${localOpen ? 'open' : 'closed'}</div>
@@ -687,7 +687,7 @@ function renderDbTunnelRows() {
 async function dbTunnelSaveDefinition() {
     const payload = dbTunnelPayload();
     if (!payload.name || !payload.ssh_config_host || !payload.remote_host || !payload.local_port) {
-        dbSetMsg('DATABASE_TUNNEL_NAME (Definition name), DATABASE_SSH_CONFIG_HOST (ssh-host), DATABASE_HOST (remote database-hostname), and DATABASE_SSH_LOCAL_PORT (local database-port) are required.', false);
+        dbSetMsg('DATABASE_TUNNEL_NAME, DATABASE_SSH_CONFIG_HOST, DATABASE_HOST and DATABASE_SSH_LOCAL_PORT are required.', false);
         return;
     }
     try {

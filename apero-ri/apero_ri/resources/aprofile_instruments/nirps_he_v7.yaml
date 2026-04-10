@@ -1,15 +1,6 @@
 general:
   # instrument
   instrument: NIRPS_HE
-  # science fiber
-  science_fiber: A
-  # science types
-  science_types:
-    - OBJ_FP
-    - OBJ_DARK
-    - OBJ_SKY
-    - TELLU_SKY
-    - FLUXSTD_SKY
   # spectral bands to show in the UI
   bands:
     - Y
