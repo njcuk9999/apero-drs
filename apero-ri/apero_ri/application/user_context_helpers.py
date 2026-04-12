@@ -261,11 +261,16 @@ def build_user_calendar_context(user_info):
         for inst in instruments
     }
     user_tz = ud.get_user_timezone(username)
+    try:
+        ics_feeds = ud.list_ics_feeds(username)
+    except Exception:
+        ics_feeds = []
     return {
         'events': events,
         'instr_events': instr_events,
         'instruments': instruments,
         'user_timezone': user_tz,
+        'ics_feeds': ics_feeds,
     }
 
 

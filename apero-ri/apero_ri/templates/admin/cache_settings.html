@@ -158,6 +158,54 @@
     pointer-events: none;
 }
 .ac-toast.ac-show { opacity: 1; pointer-events: auto; }
+[data-theme="dark"] .ac-card {
+    background: #161b22;
+    border-color: #30363d;
+}
+[data-theme="dark"] .ac-slider {
+    background: #30363d !important;
+}
+[data-theme="dark"] .ac-slider::before {
+    background: #8b949e !important;
+}
+[data-theme="dark"] .ac-switch input:checked + .ac-slider {
+    background: #1f6feb !important;
+}
+[data-theme="dark"] .ac-switch input:checked + .ac-slider::before {
+    background: #fff !important;
+}
+[data-theme="dark"] .ac-loc-row input[type="text"] {
+    background: #0d1117;
+    border-color: #30363d;
+    color: #e6edf3;
+}
+[data-theme="dark"] .ac-stat-box {
+    background: #1c2128;
+    border-color: #30363d;
+}
+[data-theme="dark"] .ac-profile-card {
+    background: #1c2128;
+    border-color: #30363d;
+}
+[data-theme="dark"] .ac-profile-tab {
+    background: #161b22;
+    border-color: #30363d;
+    color: #c9d1d9;
+}
+[data-theme="dark"] .ac-profile-tab--active {
+    background: #1a2d4a;
+    border-color: #388bfd;
+    color: #79b8ff;
+}
+[data-theme="dark"] .ac-section-table th,
+[data-theme="dark"] .ac-section-table td {
+    border-bottom-color: #21262d;
+}
+[data-theme="dark"] .ac-toast {
+    background: #21262d;
+    color: #e6edf3;
+    border: 1px solid #30363d;
+}
 </style>
 
 <div class="ari-up-shell">
@@ -325,6 +373,11 @@
                     onclick="acPurgeProfile('{{ prof.instrument }}', '{{ prof.profile_id }}')">
                 <i class="fa-solid fa-trash-can"></i> Purge this profile
             </button>
+            <button class="ari-btn ari-btn--secondary ari-btn--sm"
+                    title="Zero timing statistics without deleting cached data"
+                    onclick="acResetTimings('{{ prof.instrument }}', '{{ prof.profile_id }}')">
+                <i class="fa-solid fa-clock-rotate-left"></i> Reset timings
+            </button>
         </div>
         {% endif %}
     </div>
@@ -450,6 +503,26 @@ function acSelectProfileTab(profileKey) {
         var show = (key === 'all') || (card.getAttribute('data-profile-card') === key);
         card.classList.toggle('ac-profile-card--hidden', !show);
     });
+}
+
+function acResetTimings(instrument, profileId) {
+    if (!CAN_MANAGE) return;
+    if (!confirm('Reset timing statistics for ' + instrument + '/' + profileId + '?\nCached plot data will NOT be deleted.')) return;
+    fetch('{{ url_for("api_admin_cache_reset_timings") }}', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({instrument: instrument, profile_id: profileId})
+    })
+    .then(function(r){ return r.json(); })
+    .then(function(d){
+        if (d.success) {
+            acToast('Timing statistics reset');
+            setTimeout(function(){ location.reload(); }, 800);
+        } else {
+            acToast('Error: ' + (d.error || 'unknown'));
+        }
+    })
+    .catch(function(e){ acToast('Network error'); });
 }
 </script>
 

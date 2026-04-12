@@ -43,6 +43,7 @@ __NAME__ = "apero_ri.core.plot_cache"
 _DEFAULT_CACHE_DIR_NAME = "cache"
 _CONFIG_FILENAME = "cache_config.yaml"
 _META_FILENAME = "_meta.json"
+_TIMING_RESET_FILENAME = "_timing_reset.json"
 
 # cache_config.yaml is read on every API call.  Cache it in-process with a
 # short TTL so the admin UI can still update it within ~10 seconds.
@@ -160,6 +161,34 @@ def _save_meta(profile_dir: Path, meta: Dict[str, Any]) -> None:
     meta_path = profile_dir / _META_FILENAME
     with open(meta_path, "w") as f:
         json.dump(meta, f, indent=2)
+
+
+def get_timing_reset_ts(profile_dir: Path) -> Optional[float]:
+    """Return last timing-reset Unix timestamp, or None if never reset."""
+    path = profile_dir / _TIMING_RESET_FILENAME
+    if not path.exists():
+        return None
+    try:
+        with open(path, "r") as f:
+            data = json.load(f)
+        ts = float(data.get("reset_at_ts", 0) or 0)
+        return ts if ts > 0 else None
+    except Exception:
+        return None
+
+
+def write_timing_reset(profile_dir: Path) -> None:
+    """Record the current time as the timing-reset point for a profile."""
+    profile_dir.mkdir(parents=True, exist_ok=True)
+    path = profile_dir / _TIMING_RESET_FILENAME
+    with open(path, "w") as f:
+        json.dump(
+            {
+                "reset_at": datetime.now(timezone.utc).isoformat(),
+                "reset_at_ts": time.time(),
+            },
+            f,
+        )
 
 
 def _db_fingerprint_matches(

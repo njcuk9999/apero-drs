@@ -143,9 +143,11 @@ def api_debug_plots(app):
 
     from apero_ri.plots.plot_debug import generate_debug_plots
 
+    _t0_debug = time.time()
     result = generate_debug_plots(
         htable_rows, objname, preset, ftable_tcorr_rows, paths
     )
+    _gen_time_debug = time.time() - _t0_debug
     if isinstance(result, dict):
         result["updated_at"] = datetime.now(timezone.utc).isoformat()
 
@@ -169,6 +171,7 @@ def api_debug_plots(app):
                 "debug_plots",
                 cache_key,
                 result,
+                _gen_time_debug,
             )
             pdir = _profile_dir(cache_root, instrument, profile_id)
             meta = _load_meta(pdir)
@@ -328,11 +331,13 @@ def api_object_lbl_plots(app):
     )
 
     htable_rows = load_object_htable_rows(objects_dir, objname)
-    from apero_ri.core.basket_funcs import filter_accessible_rows as _far
-    htable_rows = _far(htable_rows, accessible_run_ids)
+    # Note: htable_rows are indexed by IDENTIFIER (not KW_RUN_ID) so we do
+    # NOT filter them by accessible_run_ids; they are already scoped to the
+    # object and are used only for supplemental SNR annotation.
 
     from apero_ri.plots.plot_objects import build_lbl_plots_json
 
+    _t0_lbl = time.time()
     try:
         plots = build_lbl_plots_json(
             ftable_lbl_rdb_rows,
@@ -343,6 +348,7 @@ def api_object_lbl_plots(app):
         )
     except Exception:
         plots = {}
+    _gen_time_lbl = time.time() - _t0_lbl
 
     result = dict(
         success=True,
@@ -367,6 +373,7 @@ def api_object_lbl_plots(app):
                 "lbl_plots",
                 cache_key,
                 result,
+                _gen_time_lbl,
             )
     except Exception:
         pass

@@ -108,6 +108,20 @@ class ARIApp(Flask):
         _impls.ariapp_init(self, **kwargs)
 
     # -----------------------------------------------------------------
+    # Live-reloading group definitions
+    # Always read groups.yaml from disk so permission changes take
+    # effect immediately without restarting the server.
+    # -----------------------------------------------------------------
+    @property
+    def ari_groups(self):
+        return perms.load_groups()
+
+    @ari_groups.setter
+    def ari_groups(self, _value):
+        # Ignore any cached assignment; the property always reads live.
+        pass
+
+    # -----------------------------------------------------------------
     # Argument parsing
     # -----------------------------------------------------------------
     @staticmethod
@@ -144,12 +158,17 @@ class ARIApp(Flask):
     def _is_doc_leaf(page_id: str, pages: dict) -> bool:
         """Check if a page is a documentation leaf page."""
         parts = page_id.split(".")
-        return (
-            len(parts) >= 3
-            and parts[0] == "home"
-            and parts[1] == "docs"
-            and not perms.is_parent_page(page_id, pages)
-        )
+        
+        cond = len(parts) >= 3
+        
+        if not cond:
+            return False
+        
+        cond &= parts[0] == "home"
+        cond &= parts[1] == "docs"
+        cond &= not perms.is_parent_page(page_id, pages)
+        
+        return cond
 
     @staticmethod
     def _is_doc_page(page_id: str) -> bool:
@@ -190,13 +209,10 @@ class ARIApp(Flask):
         """Return True when a science-group name is the reserved All group."""
         return str(name or "").strip().lower() == "all"
 
-    def _sync_all_science_group(
-        self,
-        instrument: str,
-        groups: Optional[dict] = None,
-        run_ids: Optional[list] = None,
-        persist: bool = True,
-    ):
+    def _sync_all_science_group(self, instrument: str, 
+                                groups: Optional[dict] = None,
+                                run_ids: Optional[list] = None,
+                                persist: bool = True):
         args = (instrument, groups, run_ids, persist)
         return _impls.ariapp_sync_all_science_group(self, *args)
 
@@ -207,16 +223,14 @@ class ARIApp(Flask):
     def _page_template_meta(self, template_id: str, **tokens) -> dict:
         return _impls.ariapp_page_template_meta(self, template_id, **tokens)
 
-    def _build_data_portal_sidebar_tree(
-        self,
-        accessible_profiles: list,
-        active_page_id: str,
-        user_permissions,
-        user_info=None,
-        current_profile_id: Optional[str] = None,
-        objname: Optional[str] = None,
-        include_children: bool = True,
-    ) -> list:
+    def _build_data_portal_sidebar_tree(self,
+                                        accessible_profiles: list,
+                                        active_page_id: str,
+                                        user_permissions,
+                                        user_info=None,
+                                        current_profile_id: Optional[str] = None,
+                                        objname: Optional[str] = None,
+                                        include_children: bool = True) -> list:
         args = (accessible_profiles, active_page_id, user_permissions,
                 user_info, current_profile_id, objname, include_children)
         return _impls.ariapp_build_data_portal_sidebar_tree(self, *args)
@@ -242,10 +256,8 @@ class ARIApp(Flask):
         return user_context_helpers.build_user_calendar_context(user_info)
 
     def _build_admin_instrument_context(self, user_info, perms):
-        return user_context_helpers.build_admin_instrument_context(
-            user_info,
-            perms,
-        )
+        return user_context_helpers.build_admin_instrument_context(user_info,
+                                                                   perms)
 
     def _build_admin_email_context(self, perms):
         return _impls.ariapp_build_admin_email_context(self, perms)
@@ -259,6 +271,23 @@ class ARIApp(Flask):
 
     def _build_admin_sshfs_context(self, perms):
         return _impls.ariapp_build_admin_sshfs_context(self, perms)
+
+    def _build_admin_manage_instruments_context(self, perms):
+        return _impls.ariapp_build_admin_manage_instruments_context(
+            self, perms
+        )
+
+    def _api_manage_instruments_groups_create(self):
+        return _impls.ariapp_api_manage_instruments_groups_create(self)
+
+    def _api_manage_instruments_groups_delete(self):
+        return _impls.ariapp_api_manage_instruments_groups_delete(self)
+
+    def _api_manage_instruments_add(self):
+        return _impls.ariapp_api_manage_instruments_add(self)
+
+    def _api_manage_instruments_remove(self):
+        return _impls.ariapp_api_manage_instruments_remove(self)
 
     @staticmethod
     def _normalize_db_source(value: str) -> str:
@@ -300,21 +329,26 @@ class ARIApp(Flask):
     def _save_local_db_definitions(self, local_databases: dict) -> None:
         """Persist named local database definitions."""
         existing = auth.load_db_tunnels()
-        payload = {
-            "tunnels": (
-                existing.get("tunnels", {})
-                if isinstance(existing, dict)
-                else {}
-            ),
-            "local_databases": (
-                local_databases if isinstance(local_databases, dict) else {}
-            ),
-        }
+        
+        if isinstance(existing, dict):
+            tunnels = existing.get("tunnels", {})
+        else:
+            tunnels = dict()
+        
+        if isinstance(local_databases, dict):
+            local_db = local_databases
+        else:
+            local_db = dict()
+        
+        payload = dict()
+        payload['tunnels'] = tunnels
+        payload['local_databases'] = local_db
+
         auth.save_db_tunnels(payload)
 
-    def _build_db_tunnel_runtime_params(
-        self, tunnel_name: str, tunnel_def: dict, mode: str = "mysql+pymysql"
-    ) -> dict:
+    def _build_db_tunnel_runtime_params(self, tunnel_name: str, 
+                                        tunnel_def: dict, 
+                                        mode: str = "mysql+pymysql") -> dict:
         args = (tunnel_name, tunnel_def, mode)
         return _impls.ariapp_build_db_tunnel_runtime_params(self, *args)
 
@@ -342,14 +376,21 @@ class ARIApp(Flask):
         _ = user_info
         tunnel_rows = self._list_db_tunnel_rows()
         local_db = self._load_local_db_definitions()
-        return {
-            "can_manage_db_tunnel": "manage.apero_profile" in (perms or set()),
-            "db_tunnels": [row.get("name", "") for row in tunnel_rows],
-            "db_local_databases": sorted(local_db.keys()),
-        }
+        
+        cond = "manage.apero_profile" in (perms or set())
+        
+        tcontext = dict()
+        tcontext['can_manage_db_tunnel'] = cond
+        tcontext['db_tunnels'] = [row.get("name", "") for row in tunnel_rows]
+        tcontext['db_local_databases'] = sorted(local_db.keys())
+
+        return tcontext
 
     def _build_admin_cache_context(self, perms):
         return admin_cache_helpers.build_admin_cache_context(self, perms)
+
+    def _api_admin_cache_reset_timings(self):
+        return _impls.ariapp_api_admin_cache_reset_timings(self)
 
     def _api_admin_cache_save(self):
         return _impls.ariapp_api_admin_cache_save(self)
@@ -433,24 +474,16 @@ class ARIApp(Flask):
     def shutdown(self) -> None:
         return _impls.ariapp_shutdown(self)
 
-    def _get_admin_health(
-        self,
-        user_info,
-        perms,
-        force: bool = False,
-        allow_async_refresh: bool = True,
-    ):
-        kwargs = dict(
-            user_info=user_info,
-            perms=perms,
-            force=force,
-            allow_async_refresh=allow_async_refresh,
-        )
+    def _get_admin_health(self, user_info,  perms,
+                          force: bool = False,
+                          allow_async_refresh: bool = True):
+        kwargs = dict(user_info=user_info,
+                      perms=perms, force=force,
+                      allow_async_refresh=allow_async_refresh)
         return admin_health_helpers.get_admin_health(self, **kwargs)
 
-    def _refresh_admin_health_after_change(
-        self, user_info=None, perms=None
-    ) -> None:
+    def _refresh_admin_health_after_change(self, user_info=None, 
+                                           perms=None) -> None:
         args = (user_info, perms)
         return _impls.ariapp_refresh_admin_health_after_change(self, *args)
 
@@ -544,21 +577,15 @@ class ARIApp(Flask):
 
     def _register_view(self):
         """Render self-registration page."""
-        return render_template(
-            "home/register.html",
-            page_label="Register",
-            page_icon="fa-solid fa-user-plus",
-        )
+        return render_template("home/register.html",
+                               page_label="Register",
+                               page_icon="fa-solid fa-user-plus")
 
     @staticmethod
-    def _send_verification_email(
-        recipient_email: str, code: str, purpose: str
-    ) -> Optional[str]:
-        return _impls.ariapp_send_verification_email(
-            recipient_email,
-            code,
-            purpose,
-        )
+    def _send_verification_email(recipient_email: str, code: str, 
+                                 purpose: str) -> Optional[str]:
+        return _impls.ariapp_send_verification_email(recipient_email,
+                                                     code, purpose)
 
     @staticmethod
     def _is_valid_username(username: str) -> bool:
@@ -670,6 +697,42 @@ class ARIApp(Flask):
     def _api_user_favourite_objects_last_opened(self):
         return _impls.ariapp_api_user_favourite_objects_last_opened(self)
 
+    def _api_user_favourite_objects_sections_save(self):
+        return (
+            user_favourites_api_helpers
+            .api_user_favourite_objects_sections_save(self)
+        )
+
+    def _api_user_favourite_objects_sections_rename(self):
+        return (
+            user_favourites_api_helpers
+            .api_user_favourite_objects_sections_rename(self)
+        )
+
+    def _api_user_favourite_objects_sections_delete(self):
+        return (
+            user_favourites_api_helpers
+            .api_user_favourite_objects_sections_delete(self)
+        )
+
+    def _api_user_favourite_objects_meta_save(self):
+        return (
+            user_favourites_api_helpers
+            .api_user_favourite_objects_meta_save(self)
+        )
+
+    def _api_user_favourite_objects_add(self):
+        return (
+            user_favourites_api_helpers
+            .api_user_favourite_objects_add(self)
+        )
+
+    def _api_user_favourite_objects_add_bulk(self):
+        return (
+            user_favourites_api_helpers
+            .api_user_favourite_objects_add_bulk(self)
+        )
+
     # -----------------------------------------------------------------
     # Documentation views
     # -----------------------------------------------------------------
@@ -725,11 +788,9 @@ class ARIApp(Flask):
 
     @staticmethod
     def _filter_plot_rows(htable_rows, ftable_dict, accessible_run_ids):
-        return _impls.ariapp_filter_plot_rows(
-            htable_rows,
-            ftable_dict,
-            accessible_run_ids,
-        )
+        
+        args = [htable_rows, ftable_dict, accessible_run_ids]
+        return _impls.ariapp_filter_plot_rows(*args)
 
     def _api_object_plots(self):
         return data_portal_api_helpers.api_object_plots(self)
@@ -916,11 +977,8 @@ class ARIApp(Flask):
 
     @staticmethod
     def _build_safe_select_query(table_access, query_spec, run_ids):
-        return _impls.ariapp_build_safe_select_query(
-            table_access,
-            query_spec,
-            run_ids,
-        )
+        args = [table_access, query_spec, run_ids]
+        return _impls.ariapp_build_safe_select_query(*args)
 
     def _ri_query_db_view(self, profile_id):
         kwargs = dict(profile_id=profile_id)
@@ -935,12 +993,9 @@ class ARIApp(Flask):
         return _impls.ariapp_ri_qc_graphs_max_view(self, *args)
 
     def _load_query_db_presets(self, profile):
-        return query_helpers.load_query_db_presets(
-            profile=profile,
-            package_dir=PACKAGE_DIR,
-            db_access_table_keys=self._db_access_table_keys(),
-            profile_get_db=self._profile_get_db,
-        )
+        args = [profile,  PACKAGE_DIR, self._db_access_table_keys(),
+                self._profile_get_db]
+        return query_helpers.load_query_db_presets(*args)
 
     @staticmethod
     def _parse_text_presets(text, replace_fn):
@@ -1023,21 +1078,22 @@ class ARIApp(Flask):
     @staticmethod
     def _db_access_table_keys() -> dict:
         """Map UI table labels to APERO profile table-name keys."""
-        return {
-            "ASTROM": "ASTROM_TABLENAME",
-            "CALIB": "CALIB_TABLENAME",
-            "FINDEX": "FINDEX_TABLENAME",
-            "LOG": "LOG_TABLENAME",
-            "TELLU": "TELLU_TABLENAME",
-            "REJECT": "REJECT_TABLENAME",
-        }
+        
+        dbaccess = dict()
+        dbaccess['ASTROM'] = "ASTROM_TABLENAME"
+        dbaccess['CALIB'] = "CALIB_TABLENAME"
+        dbaccess['FINDEX'] = "FINDEX_TABLENAME"
+        dbaccess['LOG'] = "LOG_TABLENAME"
+        dbaccess['TELLU'] = "TELLU_TABLENAME"
+        dbaccess['REJECT'] = "REJECT_TABLENAME"
+        
+        return dbaccess
 
     def _editable_groups_for_editor(self, user_info, perms):
         return _impls.ariapp_editable_groups_for_editor(self, user_info, perms)
 
-    def _find_accessible_profile(
-        self, user_info, profile_id: str, instrument: str = ""
-    ):
+    def _find_accessible_profile(self, user_info, profile_id: str, 
+                                 instrument: str = ""):
         """Find one profile in the editor's accessible profile set."""
         for profile in auth.get_accessible_profiles(user_info, self.ari_groups):
             if profile.get("profile_id") != profile_id:
@@ -1073,19 +1129,12 @@ class ARIApp(Flask):
     def _resolve_db_payload_for_test(self, data: dict) -> dict:
         return apero_profiles_api_helpers.resolve_db_payload_for_test(self, data)
 
-    def _resolve_profile_db_test_target(
-        self,
-        mode: str,
-        host: str,
-        port: str,
-        username: str,
-        password: str,
-        db_name: str,
-        use_ssh_tunnel: bool,
-        ssh_config_host: str,
-        ssh_local_port: str,
-        ssh_remote_port: str,
-    ):
+    def _resolve_profile_db_test_target(self, mode: str, host: str,  port: str,
+                                        username: str, password: str, 
+                                        db_name: str, use_ssh_tunnel: bool,
+                                        ssh_config_host: str,
+                                        ssh_local_port: str,
+                                        ssh_remote_port: str):
         args = (mode, host, port, username, password, db_name,
                 use_ssh_tunnel, ssh_config_host, ssh_local_port,
                 ssh_remote_port)
@@ -1238,10 +1287,9 @@ class ARIApp(Flask):
 
     def _merge_async_task_catalog(self, instrument: str, all_tasks: dict):
         """Merge persisted task overrides with the task catalog defaults."""
-        merged, changed = async_task_helpers.merge_async_task_catalog(
-            instrument=instrument,
-            all_tasks=all_tasks,
-        )
+        
+        kwargs = dict(instrument=instrument, all_tasks=all_tasks)
+        merged, changed = async_task_helpers.merge_async_task_catalog(**kwargs)
         return merged, changed
 
     def _api_async_tasks_list(self):
@@ -1301,10 +1349,8 @@ class ARIApp(Flask):
 
     @staticmethod
     def _build_json_preview_table(data, max_rows: int = 200) -> dict:
-        return async_tasks_api_helpers.build_json_preview_table(
-            data=data,
-            max_rows=max_rows,
-        )
+        kwargs = dict(data=data, max_rows=max_rows)
+        return async_tasks_api_helpers.build_json_preview_table(**kwargs)
 
     def _api_async_tasks_download_file(self):
         return _impls.ariapp_api_async_tasks_download_file(self)
@@ -1449,10 +1495,10 @@ class ARIApp(Flask):
         user_info = auth.get_effective_user(session)
         if not user_info:
             return None, None
-        perms = permissions_mod.resolve_user_permissions(
-            user_info["groups"],
-            self.ari_groups,
-        )
+        
+        args = (user_info["groups"], self.ari_groups)
+        perms = permissions_mod.resolve_user_permissions(*args)
+        
         if "view.admin.calendar" not in perms:
             return None, None
         return user_info, perms
@@ -1472,6 +1518,36 @@ class ARIApp(Flask):
 
     def _api_admin_calendar_delete(self):
         return _impls.ariapp_api_admin_calendar_delete(self)
+
+    # -----------------------------------------------------------------
+    # ICS feed API — user calendar
+    # -----------------------------------------------------------------
+    def _api_user_ics_list(self):
+        return _impls.ariapp_api_user_ics_list(self)
+
+    def _api_user_ics_add(self):
+        return _impls.ariapp_api_user_ics_add(self)
+
+    def _api_user_ics_delete(self):
+        return _impls.ariapp_api_user_ics_delete(self)
+
+    def _api_user_ics_refresh(self):
+        return _impls.ariapp_api_user_ics_refresh(self)
+
+    # -----------------------------------------------------------------
+    # ICS feed API — instrument / admin calendar
+    # -----------------------------------------------------------------
+    def _api_admin_ics_list(self):
+        return _impls.ariapp_api_admin_ics_list(self)
+
+    def _api_admin_ics_add(self):
+        return _impls.ariapp_api_admin_ics_add(self)
+
+    def _api_admin_ics_delete(self):
+        return _impls.ariapp_api_admin_ics_delete(self)
+
+    def _api_admin_ics_refresh(self):
+        return _impls.ariapp_api_admin_ics_refresh(self)
 
     # -----------------------------------------------------------------
     # Admin links API
@@ -1647,6 +1723,42 @@ class ARIApp(Flask):
 
     def _api_admin_sshfs_interactive_close(self):
         return admin_sshfs_api_helpers.api_admin_sshfs_interactive_close(self)
+
+    # -----------------------------------------------------------------
+    # Upload management — Admin API
+    # -----------------------------------------------------------------
+    def _api_admin_uploads_config_get(self):
+        return _impls.ariapp_api_admin_uploads_config_get(self)
+
+    def _api_admin_uploads_dir_add(self):
+        return _impls.ariapp_api_admin_uploads_dir_add(self)
+
+    def _api_admin_uploads_dir_edit(self):
+        return _impls.ariapp_api_admin_uploads_dir_edit(self)
+
+    def _api_admin_uploads_dir_delete(self):
+        return _impls.ariapp_api_admin_uploads_dir_delete(self)
+
+    def _api_admin_uploads_quota_get(self):
+        return _impls.ariapp_api_admin_uploads_quota_get(self)
+
+    # -----------------------------------------------------------------
+    # Upload management — User API
+    # -----------------------------------------------------------------
+    def _api_user_uploads_list(self):
+        return _impls.ariapp_api_user_uploads_list(self)
+
+    def _api_user_uploads_upload(self):
+        return _impls.ariapp_api_user_uploads_upload(self)
+
+    def _api_user_uploads_delete(self):
+        return _impls.ariapp_api_user_uploads_delete(self)
+
+    def _api_user_uploads_share(self):
+        return _impls.ariapp_api_user_uploads_share(self)
+
+    def _uploads_share_download(self, token):
+        return _impls.ariapp_uploads_share_download(self, token)
 
     # -----------------------------------------------------------------
     # Run override

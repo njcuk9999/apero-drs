@@ -1,0 +1,284 @@
+{% extends "general/sidebar_base.html" %}
+{% block title %}APERO RI – Manage Instruments{% endblock %}
+{% block body_class %}ari-has-sidebar ari-up-wide-page{% endblock %}
+
+{% block doc_content %}
+<div class="ari-page-header" style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:0.5rem;">
+    <h1><i class="{{ page_icon }}"></i> {{ page_label }}</h1>
+    {% if can_add %}
+    <button class="ari-btn ari-btn--primary ari-btn--sm"
+            type="button" id="mi-add-btn">
+        <i class="fa-solid fa-plus"></i> Add Instrument
+    </button>
+    {% endif %}
+</div>
+
+<div id="mi-msg" class="ari-ae-save-msg" style="display:none;"></div>
+
+{% if not instruments_data %}
+<div class="ari-sg-empty">
+    <i class="fa-solid fa-circle-info"></i>
+    No instruments found. Create APERO profiles to define instruments.
+</div>
+{% else %}
+<p class="ari-ae-help-text" style="margin-bottom:16px;">
+    Per-instrument groups (e.g. <code>monitor.SPIROU</code>) allow users to
+    be scoped to a specific instrument while inheriting all permissions of the
+    base group. Use the buttons below to create or remove these group
+    definitions for each instrument.
+</p>
+
+<div id="mi-instruments-list" style="display:grid; gap:16px;">
+{% for instr in instruments_data %}
+<div class="ari-ae-section" id="mi-instr-{{ instr.name }}">
+    <h2 class="ari-ae-section-title">
+        <i class="fa-solid fa-satellite-dish"></i>
+        {{ instr.name }}
+        {% if instr.groups_created %}
+        <span class="ari-health-badge ari-health-badge--ok"
+              style="margin-left:8px; font-size:0.75rem;">
+            <i class="fa-solid fa-circle-check"></i> groups&nbsp;active
+        </span>
+        {% else %}
+        <span class="ari-health-badge ari-health-badge--warn"
+              style="margin-left:8px; font-size:0.75rem;">
+            <i class="fa-solid fa-circle-xmark"></i> no groups
+        </span>
+        {% endif %}
+    </h2>
+
+    <div style="display:grid; gap:8px; grid-template-columns:repeat(auto-fill,minmax(180px,1fr)); margin-bottom:12px;">
+    {% for grp in instr.groups %}
+    <div class="ari-ae-field"
+         style="background:var(--ari-surface-alt,#f5f5f5);
+                border-radius:6px; padding:8px 10px;">
+        <div style="font-weight:600; font-size:0.85rem; margin-bottom:4px;">
+            {{ grp.name }}
+        </div>
+        {% if grp.exists %}
+        <div style="font-size:0.8rem; color:var(--ari-text-muted,#666);">
+            <i class="fa-solid fa-users"></i>
+            {{ grp.user_count }} user{{ 's' if grp.user_count != 1 else '' }}
+        </div>
+        {% if grp.users %}
+        <div style="font-size:0.75rem; color:var(--ari-text-muted,#666);
+                    margin-top:4px; word-break:break-all;">
+            {{ grp.users | join(', ') }}
+        </div>
+        {% endif %}
+        {% else %}
+        <div style="font-size:0.8rem; color:var(--ari-text-muted,#666);">
+            <i class="fa-solid fa-minus"></i> not created
+        </div>
+        {% endif %}
+    </div>
+    {% endfor %}
+    </div>
+
+    {% if can_manage %}
+    <div style="display:flex; gap:8px; flex-wrap:wrap; margin-top:4px;">
+        {% if not instr.groups_created %}
+        <button class="ari-btn ari-btn--primary ari-btn--sm"
+                type="button"
+                onclick="miCreateGroups('{{ instr.name }}')">
+            <i class="fa-solid fa-circle-plus"></i> Create Groups
+        </button>
+        {% else %}
+        <button class="ari-btn ari-btn--danger ari-btn--sm"
+                type="button"
+                onclick="miDeleteGroups('{{ instr.name }}')">
+            <i class="fa-solid fa-trash"></i> Delete Groups
+        </button>
+        {% endif %}
+        {% if can_add %}
+        <button class="ari-btn ari-btn--danger ari-btn--sm"
+                type="button"
+                onclick="miRemoveInstrument('{{ instr.name }}')">
+            <i class="fa-solid fa-circle-minus"></i> Remove Instrument
+        </button>
+        {% endif %}
+    </div>
+    {% endif %}
+</div>
+{% endfor %}
+</div>
+{% endif %}
+
+<!-- Add Instrument modal -->
+{% if can_add %}
+<div id="mi-add-overlay" class="ari-modal-overlay" style="display:none;"
+     aria-modal="true" role="dialog">
+    <div class="ari-modal" style="max-width:420px;width:95%;">
+        <div class="ari-modal__header ari-modal__header--normal">
+            <h2><i class="fa-solid fa-satellite-dish"></i> Add Instrument</h2>
+            <button class="ari-modal__close" id="mi-add-close"
+                    title="Close" aria-label="Close">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+        <div class="ari-modal__body">
+            <div class="ari-form-group">
+                <label for="mi-add-name">Instrument name</label>
+                <input type="text" id="mi-add-name"
+                       class="ari-form-control"
+                       placeholder="e.g. SPIROU"
+                       maxlength="40" autocomplete="off"
+                       style="text-transform:uppercase;">
+                <small class="ari-form-hint">
+                    Alphanumeric, underscores and hyphens allowed.
+                    Per-instrument groups will be created automatically.
+                </small>
+            </div>
+            <div id="mi-add-error" class="ari-alert ari-alert--danger"
+                 style="display:none;"></div>
+            <div class="ari-modal__footer">
+                <button id="mi-add-save"
+                        class="ari-btn ari-btn--primary">
+                    <i class="fa-solid fa-floppy-disk"></i> Add
+                </button>
+                <button id="mi-add-cancel"
+                        class="ari-btn ari-btn--secondary">Cancel</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<script>
+(function () {
+    var CREATE_URL = "{{ url_for('api_manage_instruments_groups_create') }}";
+    var DELETE_URL = "{{ url_for('api_manage_instruments_groups_delete') }}";
+    var ADD_URL    = "{{ url_for('api_manage_instruments_add') }}";
+    var REMOVE_URL = "{{ url_for('api_manage_instruments_remove') }}";
+
+    function showMsg(text, isError) {
+        var el = document.getElementById('mi-msg');
+        el.textContent = text;
+        el.style.display = 'block';
+        el.style.color = isError ? 'var(--ari-danger, #c0392b)'
+                                 : 'var(--ari-success, #27ae60)';
+        clearTimeout(el._t);
+        el._t = setTimeout(function () { el.style.display = 'none'; }, 5000);
+    }
+
+    function postJSON(url, body, cb) {
+        fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(body),
+        })
+        .then(function (r) { return r.json(); })
+        .then(cb)
+        .catch(function (e) { showMsg('Request failed: ' + e, true); });
+    }
+
+    window.miCreateGroups = function (instrument) {
+        postJSON(CREATE_URL, { instrument: instrument }, function (data) {
+            if (!data.success) {
+                showMsg('Error: ' + (data.error || 'unknown'), true);
+                return;
+            }
+            var created = (data.created || []).join(', ');
+            showMsg(
+                created
+                    ? 'Created groups: ' + created
+                    : 'All groups already exist for ' + instrument,
+                false
+            );
+            setTimeout(function () { location.reload(); }, 1200);
+        });
+    };
+
+    window.miDeleteGroups = function (instrument) {
+        if (!confirm(
+            'Delete all per-instrument groups for ' + instrument + '?\n\n' +
+            'Users in these groups will have those memberships removed.'
+        )) { return; }
+        postJSON(DELETE_URL, { instrument: instrument }, function (data) {
+            if (!data.success) {
+                showMsg('Error: ' + (data.error || 'unknown'), true);
+                return;
+            }
+            var deleted = (data.deleted || []).join(', ');
+            showMsg(
+                deleted
+                    ? 'Deleted groups: ' + deleted
+                    : 'No groups found for ' + instrument,
+                false
+            );
+            setTimeout(function () { location.reload(); }, 1200);
+        });
+    };
+
+    window.miRemoveInstrument = function (instrument) {
+        if (!confirm(
+            'Remove instrument ' + instrument + ' entirely?\n\n' +
+            'This will delete its profile entry and all per-instrument ' +
+            'groups. Users in those groups will have the membership removed.'
+        )) { return; }
+        postJSON(REMOVE_URL, { instrument: instrument }, function (data) {
+            if (!data.success) {
+                showMsg('Error: ' + (data.error || 'unknown'), true);
+                return;
+            }
+            showMsg('Removed instrument ' + instrument, false);
+            setTimeout(function () { location.reload(); }, 1200);
+        });
+    };
+
+    // Add Instrument modal
+    var addOverlay = document.getElementById('mi-add-overlay');
+    var addBtn     = document.getElementById('mi-add-btn');
+    var addClose   = document.getElementById('mi-add-close');
+    var addCancel  = document.getElementById('mi-add-cancel');
+    var addSave    = document.getElementById('mi-add-save');
+    var addName    = document.getElementById('mi-add-name');
+    var addError   = document.getElementById('mi-add-error');
+
+    function openAddModal() {
+        if (!addOverlay) { return; }
+        if (addName) { addName.value = ''; }
+        if (addError) { addError.style.display = 'none'; }
+        addOverlay.style.display = 'flex';
+        if (addName) { addName.focus(); }
+    }
+    function closeAddModal() {
+        if (addOverlay) { addOverlay.style.display = 'none'; }
+    }
+    function showAddError(msg) {
+        if (!addError) { return; }
+        addError.textContent = msg;
+        addError.style.display = 'block';
+    }
+
+    if (addBtn)    { addBtn.addEventListener('click', openAddModal); }
+    if (addClose)  { addClose.addEventListener('click', closeAddModal); }
+    if (addCancel) { addCancel.addEventListener('click', closeAddModal); }
+    if (addOverlay) {
+        addOverlay.addEventListener('click', function (e) {
+            if (e.target === addOverlay) { closeAddModal(); }
+        });
+    }
+    if (addSave) {
+        addSave.addEventListener('click', function () {
+            var name = (addName ? addName.value : '').trim().toUpperCase();
+            if (!name) {
+                showAddError('Instrument name is required.');
+                return;
+            }
+            addSave.disabled = true;
+            postJSON(ADD_URL, { instrument: name }, function (data) {
+                addSave.disabled = false;
+                if (!data.success) {
+                    showAddError(data.error || 'Unknown error');
+                    return;
+                }
+                closeAddModal();
+                showMsg('Added instrument ' + name, false);
+                setTimeout(function () { location.reload(); }, 1200);
+            });
+        });
+    }
+}());
+</script>
+{% endblock %}

@@ -2,9 +2,22 @@
 {% block title %}APERO RI – {{ page_label }}{% endblock %}
 
 {% block extra_head %}
-<link rel="stylesheet"
+<link rel="stylesheet" id="hljs-theme-light"
       href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github.min.css"
       crossorigin="anonymous" referrerpolicy="no-referrer" />
+<link rel="stylesheet" id="hljs-theme-dark"
+      href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css"
+      crossorigin="anonymous" referrerpolicy="no-referrer"
+      disabled />
+<script>
+(function () {
+    var t = document.documentElement.getAttribute('data-theme');
+    if (t === 'dark') {
+        document.getElementById('hljs-theme-light').disabled = true;
+        document.getElementById('hljs-theme-dark').disabled = false;
+    }
+})();
+</script>
 {% endblock %}
 
 {% block doc_content %}

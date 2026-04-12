@@ -15,6 +15,7 @@
     </p>
 </div>
 
+{# ── Profile badge + controls ─────────────────────────────────────── #}
 <div class="ari-rp-summary">
     <div class="ari-rp-summary__badge"
          style="--card-bg: {{ profile_color.bg }};
@@ -30,17 +31,18 @@
         </span>
         <span class="ari-rp-summary__item">
             <button type="button"
-                    id="fav-remove-all-btn"
+                    id="fav-manage-sections-btn"
                     class="ari-btn ari-btn--sm ari-btn--secondary"
-                    title="Remove all favourite objects">
-                <i class="fa-solid fa-trash-can"></i> Remove all
+                    title="Manage sections">
+                <i class="fa-solid fa-layer-group"></i> Manage sections
             </button>
         </span>
     </div>
 </div>
 
-<div class="ari-fav-grid">
-    {% if last_object and last_object_url %}
+{# ── Hero row: Last visited card + Add objects card ───────────────── #}
+<div class="ari-fav-cards-row">
+{% if last_object and last_object_url %}
     <a href="{{ last_object_url }}"
        class="ari-rp-section-card ari-fav-last-card">
         <div class="ari-rp-section-card__icon">
@@ -51,56 +53,361 @@
             <p>{{ last_object }}</p>
         </div>
     </a>
-    {% endif %}
+{% endif %}
+    <button type="button"
+            id="fav-show-add-modal-btn"
+            class="ari-rp-section-card ari-fav-add-card">
+        <div class="ari-rp-section-card__icon">
+            <i class="fa-solid fa-circle-plus"></i>
+        </div>
+        <div class="ari-rp-section-card__body">
+            <h3>Add Objects</h3>
+            <p>Search by name or alias, or bulk upload a file.</p>
+        </div>
+        <div class="ari-rp-section-card__arrow">
+            <i class="fa-solid fa-chevron-right"></i>
+        </div>
+    </button>
+</div>
 
-    <div id="fav-objects-list" class="ari-fav-list">
-        {% for objname in favourite_objects %}
-        <article class="ari-rp-section-card ari-fav-card"
-                 data-objname="{{ objname }}"
-                 data-open-url="{{ url_for('ri_object_page', profile_id=profile.profile_id, objname=objname) }}"
-                 draggable="true">
+{# ── Sections ──────────────────────────────────────────────────────── #}
+<div id="fav-sections-container" class="ari-fav-sections fav-page">
+    {% for sec in sections %}
+    <div class="at-section-card ari-fav-section"
+         data-section="{{ sec.name }}"
+         draggable="true">
+        <div class="at-section-card__header">
             <button type="button"
-                    class="ari-fav-card__drag"
-                    title="Drag to reorder"
-                    aria-label="Drag to reorder">
-                <span class="ari-fav-card__drag-dots" aria-hidden="true">
-                    <span></span><span></span>
-                    <span></span><span></span>
-                    <span></span><span></span>
-                </span>
+                    class="ari-fav-section__drag-handle op-section-btn"
+                    title="Drag to reorder sections"
+                    aria-label="Drag section">
+                <i class="fa-solid fa-grip-lines"></i>
             </button>
-            <div class="ari-rp-section-card__icon">
-                <i class="fa-solid fa-star"></i>
-            </div>
-            <div class="ari-rp-section-card__body">
-                <h3>{{ objname }}</h3>
-                <p>Saved favourite object.</p>
-            </div>
-            <div class="ari-fav-card__actions">
+            <i class="fa-solid fa-{% if sec.name == 'default' %}star{% else %}folder{% endif %} ari-fav-section__icon"></i>
+            <span class="ari-fav-section__name">{{ sec.name }}</span>
+            <span class="ari-fav-section__count">({{ sec['items']|length }})</span>
+            <div class="op-section-controls">
                 <button type="button"
-                        class="ari-btn ari-btn--sm ari-btn--secondary fav-remove-btn"
-                        data-objname="{{ objname }}"
-                        title="Remove favourite">
-                    <i class="fa-solid fa-trash"></i>
+                        class="ari-fav-section__remove-all-btn op-section-btn"
+                        title="Remove all objects in this section"
+                        aria-label="Remove all in section"
+                        {% if not sec['items'] %}disabled{% endif %}>
+                    <i class="fa-solid fa-trash-can"></i>
+                </button>
+                <button type="button"
+                        class="ari-fav-section__collapse-btn op-section-btn"
+                        title="Collapse / expand"
+                        aria-label="Toggle collapse"
+                        aria-expanded="{{ 'false' if sec.collapsed else 'true' }}">
+                    <i class="fa-solid fa-chevron-{{ 'right' if sec.collapsed else 'down' }}"></i>
                 </button>
             </div>
-        </article>
-        {% endfor %}
+        </div>
+        <div class="at-section-card__body ari-fav-section__body ari-fav-list"
+             {% if sec.collapsed %}style="display:none;"{% endif %}
+             data-section="{{ sec.name }}">
+            {% for item in sec['items'] %}
+            <article class="ari-rp-section-card ari-fav-card"
+                     data-objname="{{ item.objname }}"
+                     data-section="{{ sec.name }}"
+                     data-open-url="{{ url_for('ri_object_page', profile_id=profile.profile_id, objname=item.objname) }}"
+                     draggable="false">
+                <button type="button"
+                        class="ari-fav-card__drag"
+                        title="Drag to reorder"
+                        aria-label="Drag to reorder">
+                    <span class="ari-fav-card__drag-dots" aria-hidden="true">
+                        <span></span><span></span>
+                        <span></span><span></span>
+                        <span></span><span></span>
+                    </span>
+                </button>
+                <div class="ari-rp-section-card__icon">
+                    <i class="fa-solid fa-star"></i>
+                </div>
+                <div class="ari-rp-section-card__body">
+                    <h3>
+                        {% if item.nickname %}
+                            <span class="ari-fav-card__nickname">{{ item.nickname }}</span>
+                            <span class="ari-fav-card__aperoname">({{ item.objname }})</span>
+                        {% else %}
+                            {{ item.objname }}
+                        {% endif %}
+                    </h3>
+                    {% if item.note %}
+                    <p class="ari-fav-card__note">{{ item.note }}</p>
+                    {% endif %}
+                </div>
+                <div class="ari-fav-card__actions">
+                    <button type="button"
+                            class="ari-btn ari-btn--sm ari-btn--secondary fav-edit-meta-btn"
+                            data-objname="{{ item.objname }}"
+                            data-section="{{ sec.name }}"
+                            data-nickname="{{ item.nickname }}"
+                            data-note="{{ item.note }}"
+                            title="Edit nickname and note">
+                        <i class="fa-solid fa-pen-to-square"></i>
+                    </button>
+                    <button type="button"
+                            class="ari-btn ari-btn--sm ari-btn--secondary fav-remove-btn"
+                            data-objname="{{ item.objname }}"
+                            title="Remove favourite">
+                        <i class="fa-solid fa-trash"></i>
+                    </button>
+                </div>
+            </article>
+            {% endfor %}
+            <div class="ari-fav-section__drop-hint"
+                 style="display:none;">Drop here</div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+<p id="fav-empty"
+   class="ari-rp-note"
+   {% if favourite_objects %}style="display:none;"{% endif %}>
+    <i class="fa-solid fa-circle-info"></i>
+    No saved favourite objects yet. Click <strong>Add Objects</strong> above
+    to get started, or open any object page and click the
+    <i class="fa-solid fa-star"></i> star button.
+</p>
+
+{# ── Add objects modal ─────────────────────────────────────────────── #}
+<div id="fav-add-modal" class="ari-modal-overlay" style="display:none;"
+     role="dialog" aria-modal="true" aria-labelledby="fav-add-modal-title">
+    <div class="ari-modal ari-modal--fav">
+        <div class="ari-modal__header ari-modal__header--normal">
+            <h2 id="fav-add-modal-title">
+                <i class="fa-solid fa-circle-plus"></i>
+                Add Objects
+            </h2>
+            <button type="button" class="ari-modal__close"
+                    id="fav-add-modal-close">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+        <div class="ari-modal__body">
+            <div class="ari-form-group">
+                <label for="fav-add-query">Object name or alias</label>
+                <div class="ari-fav-modal-row">
+                    <input id="fav-add-query"
+                           type="text"
+                           class="ari-input"
+                           placeholder="e.g. GL436, Proxima Cen…"
+                           autocomplete="off">
+                    <select id="fav-add-section"
+                            class="ari-input ari-fav-modal-select"
+                            aria-label="Add to section">
+                        {% for sec in sections %}
+                        <option value="{{ sec.name }}">{{ sec.name }}</option>
+                        {% endfor %}
+                    </select>
+                    <button type="button"
+                            id="fav-add-btn"
+                            class="ari-btn ari-btn--primary">
+                        <i class="fa-solid fa-plus"></i> Add
+                    </button>
+                </div>
+                <div id="fav-add-feedback"
+                     class="ari-fav-add-feedback"
+                     style="display:none;"></div>
+                <div id="fav-add-candidates"
+                     class="ari-fav-candidates"
+                     style="display:none;"></div>
+            </div>
+
+            <hr class="ari-fav-divider">
+
+            <div class="ari-form-group">
+                <label>Bulk upload</label>
+                <p class="ari-form-hint">
+                    Upload a plain-text file — one object name or alias per
+                    line. Lines starting with <code>#</code> are ignored.
+                    Names are matched against the profile's object catalogue.
+                </p>
+                <div class="ari-fav-modal-row">
+                    <select id="fav-bulk-section"
+                            class="ari-input ari-fav-modal-select"
+                            aria-label="Upload to section">
+                        {% for sec in sections %}
+                        <option value="{{ sec.name }}">{{ sec.name }}</option>
+                        {% endfor %}
+                    </select>
+                    <button type="button"
+                            id="fav-bulk-btn"
+                            class="ari-btn ari-btn--secondary">
+                        <i class="fa-solid fa-file-arrow-up"></i> Upload file…
+                    </button>
+                </div>
+            </div>
+        </div>
+        <div class="ari-modal__footer">
+            <button type="button"
+                    id="fav-add-modal-done"
+                    class="ari-btn ari-btn--secondary">Done</button>
+        </div>
     </div>
 </div>
 
-<p id="fav-empty" class="ari-rp-note" {% if favourite_objects %}style="display:none;"{% endif %}>
-    <i class="fa-solid fa-circle-info"></i>
-    No saved favourite objects yet. Open any object page and click the star
-    next to the pin/API buttons.
-</p>
+<input id="fav-bulk-file" type="file" accept=".txt,.csv"
+       style="display:none;" aria-label="Upload object list file">
+
+{# ── Manage sections modal ─────────────────────────────────────────── #}
+<div id="fav-manage-modal" class="ari-modal-overlay" style="display:none;"
+     role="dialog" aria-modal="true" aria-labelledby="fav-manage-modal-title">
+    <div class="ari-modal ari-modal--fav">
+        <div class="ari-modal__header ari-modal__header--normal">
+            <h2 id="fav-manage-modal-title">
+                <i class="fa-solid fa-layer-group"></i>
+                Manage Sections
+            </h2>
+            <button type="button" class="ari-modal__close"
+                    id="fav-manage-modal-close">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+        <div class="ari-modal__body">
+            <div class="ari-form-group">
+                <label for="fav-new-section-input">New section</label>
+                <div class="ari-fav-modal-row">
+                    <input id="fav-new-section-input"
+                           type="text"
+                           class="ari-input"
+                           placeholder="Section name…"
+                           autocomplete="off">
+                    <button type="button"
+                            id="fav-new-section-add-btn"
+                            class="ari-btn ari-btn--primary">
+                        <i class="fa-solid fa-folder-plus"></i> Add
+                    </button>
+                </div>
+                <div id="fav-new-section-feedback"
+                     class="ari-fav-add-feedback"
+                     style="display:none;"></div>
+            </div>
+
+            <hr class="ari-fav-divider">
+
+            <div id="fav-manage-sections-list">
+                {% for sec in sections %}
+                <div class="ari-fav-manage-row"
+                     data-section="{{ sec.name }}">
+                    <i class="fa-solid fa-{% if sec.name == 'default' %}star{% else %}folder{% endif %}"></i>
+                    <span class="ari-fav-manage-row__name">{{ sec.name }}</span>
+                    <span class="ari-fav-manage-row__count">({{ sec['items']|length }})</span>
+                    {% if sec.name == 'default' %}
+                    <span class="ari-fav-manage-row__badge">default</span>
+                    {% else %}
+                    <div class="op-section-controls">
+                        <button type="button"
+                                class="op-section-btn ari-fav-manage-rename-btn"
+                                data-section="{{ sec.name }}"
+                                title="Rename section">
+                            <i class="fa-solid fa-pen"></i>
+                        </button>
+                        <button type="button"
+                                class="op-section-btn ari-fav-manage-delete-btn"
+                                data-section="{{ sec.name }}"
+                                title="Delete section (moves items to default)">
+                            <i class="fa-solid fa-folder-minus"></i>
+                        </button>
+                    </div>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        <div class="ari-modal__footer">
+            <button type="button"
+                    id="fav-manage-modal-done"
+                    class="ari-btn ari-btn--secondary">Done</button>
+        </div>
+    </div>
+</div>
+
+{# ── Meta edit modal ───────────────────────────────────────────────── #}
+<div id="fav-meta-modal" class="ari-modal-overlay" style="display:none;"
+     role="dialog" aria-modal="true" aria-labelledby="fav-meta-modal-title">
+    <div class="ari-modal ari-modal--fav">
+        <div class="ari-modal__header ari-modal__header--normal">
+            <h2 id="fav-meta-modal-title">
+                <i class="fa-solid fa-pen-to-square"></i>
+                Edit Favourite
+            </h2>
+            <button type="button" class="ari-modal__close"
+                    id="fav-meta-modal-close">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+        <div class="ari-modal__body">
+            <input type="hidden" id="fav-meta-objname" value="">
+            <input type="hidden" id="fav-meta-section" value="">
+            <div class="ari-form-group">
+                <label for="fav-meta-nickname-input">Nickname
+                    <span class="ari-form-hint">(optional display name)</span>
+                </label>
+                <input id="fav-meta-nickname-input" type="text"
+                       class="ari-input"
+                       placeholder="e.g. My favourite star"
+                       autocomplete="off">
+            </div>
+            <div class="ari-form-group">
+                <label for="fav-meta-note-input">Note
+                    <span class="ari-form-hint">(optional description)</span>
+                </label>
+                <textarea id="fav-meta-note-input" class="ari-input"
+                          rows="3"
+                          placeholder="e.g. Very interesting target"></textarea>
+            </div>
+        </div>
+        <div class="ari-modal__footer">
+            <button type="button"
+                    id="fav-meta-cancel-btn"
+                    class="ari-btn ari-btn--secondary">Cancel</button>
+            <button type="button"
+                    id="fav-meta-save-btn"
+                    class="ari-btn ari-btn--primary">Save</button>
+        </div>
+    </div>
+</div>
+
+{# ── Bulk upload results modal ─────────────────────────────────────── #}
+<div id="fav-bulk-results-modal" class="ari-modal-overlay" style="display:none;"
+     role="dialog" aria-modal="true" aria-labelledby="fav-bulk-modal-title">
+    <div class="ari-modal ari-modal--fav">
+        <div class="ari-modal__header ari-modal__header--normal">
+            <h2 id="fav-bulk-modal-title">
+                <i class="fa-solid fa-file-arrow-up"></i>
+                Bulk Upload Results
+            </h2>
+            <button type="button" class="ari-modal__close"
+                    id="fav-bulk-modal-close">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+        <div class="ari-modal__body" id="fav-bulk-results-body">
+        </div>
+        <div class="ari-modal__footer">
+            <button type="button"
+                    id="fav-bulk-modal-ok"
+                    class="ari-btn ari-btn--primary">OK</button>
+        </div>
+    </div>
+</div>
 
 <script>
 window.ARI_FAV_OBJECTS = {
     profileId: {{ profile.profile_id | tojson }},
     removeApiUrl: {{ remove_api_url | tojson }},
-    reorderApiUrl: {{ reorder_api_url | tojson }}
+    reorderApiUrl: {{ reorder_api_url | tojson }},
+    sectionsSaveApiUrl: {{ sections_save_api_url | tojson }},
+    sectionsRenameApiUrl: {{ sections_rename_api_url | tojson }},
+    sectionsDeleteApiUrl: {{ sections_delete_api_url | tojson }},
+    metaSaveApiUrl: {{ meta_save_api_url | tojson }},
+    addApiUrl: {{ add_api_url | tojson }},
+    addBulkApiUrl: {{ add_bulk_api_url | tojson }}
 };
 </script>
-<script src="{{ url_for('static', filename='js/fav_objects.js', v='20260409d') }}" defer></script>
+<script src="{{ url_for('static', filename='js/fav_objects.js', v='20260411c') }}" defer></script>
 {% endblock %}

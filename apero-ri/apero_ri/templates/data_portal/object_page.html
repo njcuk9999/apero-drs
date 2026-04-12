@@ -85,7 +85,7 @@
                         class="ari-btn ari-btn--sm ari-btn--secondary"
                         title="Download target information as CSV"
                         style="margin-left:auto;">
-                    <i class="fa-solid fa-download"></i> CSV
+                    <i class="fa-solid fa-download"></i>
                 </button>
             </div>
             <div class="at-section-card__body">
@@ -122,7 +122,7 @@
                         class="ari-btn ari-btn--sm ari-btn--secondary"
                         title="Download spectrum information as CSV"
                         style="margin-left:auto;">
-                    <i class="fa-solid fa-download"></i> CSV
+                    <i class="fa-solid fa-download"></i>
                 </button>
             </div>
             <div class="at-section-card__body">
@@ -180,7 +180,7 @@
                 </a>
             </div>
             <div class="at-section-card__body">
-                <div id="op-spec-plot-wrap">
+                <div id="op-spec-plot-wrap" data-op-nozoom="1">
                     <div id="op-spec-plot-loading" class="at-muted-hint">
                         <i class="fa-solid fa-spinner fa-spin"></i> Loading plot&hellip;
                     </div>
@@ -204,7 +204,7 @@
                         class="ari-btn ari-btn--sm ari-btn--secondary"
                         title="Download CCF statistics as CSV"
                         style="margin-left:auto;">
-                    <i class="fa-solid fa-download"></i> CSV
+                    <i class="fa-solid fa-download"></i>
                 </button>
             </div>
             <div class="at-section-card__body">
@@ -241,7 +241,7 @@
                 </a>
             </div>
             <div class="at-section-card__body">
-                <div id="op-ccf-profile-plot-wrap">
+                <div id="op-ccf-profile-plot-wrap" data-op-nozoom="1">
                     <p id="op-ccf-sampling-note" class="at-muted-hint op-ccf-sampling-note" style="margin-bottom:0.75rem;">
                         The median CCF profile uses up to 100 files sampled uniformly in time. Change the time period here:
                     </p>
@@ -282,7 +282,7 @@
                         class="ari-btn ari-btn--sm ari-btn--secondary"
                         title="Download time-series table as CSV"
                         style="margin-left:auto;">
-                    <i class="fa-solid fa-download"></i> CSV
+                    <i class="fa-solid fa-download"></i>
                 </button>
             </div>
             <div class="at-section-card__body">
@@ -386,7 +386,7 @@
                     <button class="ari-btn ari-btn--sm ari-btn--secondary fb-preset-btn fb-preset-btn--active"
                             data-preset="default">All processed (out, QC&ge;1)</button>
                     <button class="ari-btn ari-btn--sm ari-btn--secondary fb-preset-btn"
-                        data-preset="none">No preset</button>
+                        data-preset="none">All files</button>
                     <button class="ari-btn ari-btn--sm ari-btn--secondary fb-preset-btn"
                             data-preset="ext2d">Extracted 2D spectra</button>
                     <button class="ari-btn ari-btn--sm ari-btn--secondary fb-preset-btn"
@@ -498,15 +498,16 @@
 
         {# -- Status bar -- #}
         <div id="op-debug-statusbar" style="margin-bottom:0.75rem;display:flex;align-items:center;gap:0.5rem;">
-            <button id="op-download-debug-csv"
-                    class="ari-btn ari-btn--sm ari-btn--secondary"
-                    title="Download debug section as CSV">
-                <i class="fa-solid fa-download"></i> CSV
-            </button>
             <div id="op-debug-loading" style="display:none;" class="at-muted-hint">
                 <i class="fa-solid fa-spinner fa-spin"></i> Loading debug plots&hellip;
             </div>
             <div id="op-debug-error" style="display:none;" class="at-muted-hint"></div>
+            <button id="op-download-debug-csv"
+                    class="ari-btn ari-btn--sm ari-btn--secondary"
+                    title="Download debug section as CSV"
+                    style="margin-left:auto;">
+                <i class="fa-solid fa-download"></i>
+            </button>
         </div>
 
         {# -- Max Saturation -- #}
@@ -688,7 +689,8 @@ window.ARI_OBJECT_PAGE = {
     objectFavouriteApiGet: '/api/user/favourite-objects/get',
     objectFavouriteApiToggle: '/api/user/favourite-objects/toggle',
     objectFavouriteApiLastOpened: '/api/user/favourite-objects/last-opened',
-    filenamePlotApiUrl: '/api/data-portal/filename-plot'
+    filenamePlotApiUrl: '/api/data-portal/filename-plot',
+    plotYAxisZoom: {{ plot_yaxis_zoom | tojson }}
 };
 window.ARI_BASKET_CFG = {
     addApiUrl: '/api/data-portal/basket/add',
@@ -701,8 +703,9 @@ window.ARI_BASKET_CFG = {
 };
 </script>
 <script src="https://cdn.bokeh.org/bokeh/release/bokeh-3.8.2.min.js"></script>
-<script src="{{ url_for('static', filename='js/object_page.js', v='20260409f') }}" defer></script>
-<script src="{{ url_for('static', filename='js/file_browser.js', v='20260409f') }}" defer></script>
+<script src="https://cdn.bokeh.org/bokeh/release/bokeh-widgets-3.8.2.min.js"></script>
+<script src="{{ url_for('static', filename='js/object_page.js', v='20260410g') }}" defer></script>
+<script src="{{ url_for('static', filename='js/file_browser.js', v='20260410d') }}" defer></script>
 
 <!-- ──── Filename-click plot modal ──────────────────────────────────────── -->
 <div id="fn-plot-modal" class="fn-modal-overlay" style="display:none;" role="dialog" aria-modal="true" aria-labelledby="fn-plot-title">

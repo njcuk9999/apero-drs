@@ -230,6 +230,11 @@ def make_page_view(app, page_id: str, package_dir: Path):
         if page_id == "home.admin_portal.sshfs_management":
             context.update(app._build_admin_sshfs_context(perms))
 
+        if page_id == "home.admin_portal.manage_instruments":
+            context.update(
+                app._build_admin_manage_instruments_context(perms)
+            )
+
         if page_id == "home.admin_portal.database_setup":
             context.update(app._build_admin_db_tunnel_context(user_info, perms))
 

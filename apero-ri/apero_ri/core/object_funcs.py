@@ -807,7 +807,22 @@ def build_object_page_stats(
             lbl_rdb_by_file[fname] = row
 
     lbl_flavors: List[Dict[str, Any]] = []
-    for fname, row in sorted(lbl_rdb_by_file.items()):
+    _obj_up = (objname or '').upper()
+
+    def _lbl_flavor_sort_key(item):
+        # Self-flavor ({obj}_{obj}) first, then alphabetical
+        _fname, _ = item
+        fid, _ = _parse_lbl_rdb_flavor(_fname)
+        is_self = bool(
+            _obj_up
+            and fid.upper() == _obj_up + '_' + _obj_up
+        )
+        return (0 if is_self else 1, _fname.lower())
+
+    for fname, row in sorted(
+        lbl_rdb_by_file.items(),
+        key=_lbl_flavor_sort_key,
+    ):
         flavor_id, _ = _parse_lbl_rdb_flavor(fname)
         obs_dir = str(row.get("OBS_DIR", "") or "").strip()
 
@@ -1723,7 +1738,22 @@ def build_object_page_stats(
             lbl_rdb_by_file[fname] = row
 
     lbl_flavors: List[Dict[str, Any]] = []
-    for fname, row in sorted(lbl_rdb_by_file.items()):
+    _obj_up = (objname or '').upper()
+
+    def _lbl_flavor_sort_key(item):
+        # Self-flavor ({obj}_{obj}) first, then alphabetical
+        _fname, _ = item
+        fid, _ = _parse_lbl_rdb_flavor(_fname)
+        is_self = bool(
+            _obj_up
+            and fid.upper() == _obj_up + '_' + _obj_up
+        )
+        return (0 if is_self else 1, _fname.lower())
+
+    for fname, row in sorted(
+        lbl_rdb_by_file.items(),
+        key=_lbl_flavor_sort_key,
+    ):
         flavor_id, _ = _parse_lbl_rdb_flavor(fname)
         obs_dir = str(row.get("OBS_DIR", "") or "").strip()
 

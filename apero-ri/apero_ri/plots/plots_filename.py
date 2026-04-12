@@ -25,6 +25,7 @@ Created on 2025-01-01
 
 from __future__ import annotations
 
+import base64
 import re
 import warnings
 from pathlib import Path
@@ -50,6 +51,10 @@ _MAX_PTS: int = 30_000
 # Background colour shared with the rest of the UI
 _BG_COLOUR: str = base.PLOT_BACKGROUND_COLOR
 
+# Maximum display side-length (pixels) for 2D FITS frame images.
+# Larger images are stride-downsampled before embedding.
+_FRAME_MAX_PX: int = 1024
+
 # ---------------------------------------------------------------------------
 # Output types that have a plot defined in this module.
 # The file-browser JS uses this list to decide which filenames are
@@ -74,6 +79,27 @@ PLOTABLE_OUTPUT_TYPES: frozenset = frozenset(
         "LBL_FITS",
     ]
 )
+
+# KW_OUTPUT prefixes whose files are shown via the 2D frame viewer.
+# Any type whose name *starts with* one of these strings is plotable.
+FRAME_OUTPUT_PREFIXES: Tuple[str, ...] = ("RAW_", "DRS_PP")
+
+
+def _is_plotable(kw_output: str) -> bool:
+    """Return True if *kw_output* has a plot defined in this module.
+
+    Exact output types are in :data:`PLOTABLE_OUTPUT_TYPES`.
+    Output types whose names start with a prefix in
+    :data:`FRAME_OUTPUT_PREFIXES` are also plotable (DS9-style frame
+    viewer).
+
+    :param kw_output: str, upper-cased KW_OUTPUT value
+    :return: bool
+    :rtype: bool
+    """
+    if kw_output in PLOTABLE_OUTPUT_TYPES:
+        return True
+    return any(kw_output.startswith(p) for p in FRAME_OUTPUT_PREFIXES)
 
 
 # =============================================================================
@@ -1065,6 +1091,559 @@ def _build_lbl_fits_plot(
 
 
 # =============================================================================
+# JS callback code for the interactive 2D frame viewer
+# =============================================================================
+# _FRAME_JS_UPDATE  – main update (interval → stretch → flip → rotate → emit)
+# _FRAME_JS_RESET_PREFIX – reset widgets to defaults then run update
+#
+# Variable names injected via CustomJS args:
+#   b64_data, orig_rows, orig_cols, data_min, data_max, zs_lo, zs_hi
+#   source, fig_xr, fig_yr
+#   sel_interval, sel_stretch, sel_rotate, sel_cmap
+#   txt_pct, txt_pct_lo, txt_pct_hi, txt_vmin, txt_vmax, txt_stretch_a
+#   tog_flipx, tog_flipy
+#   mapper, _cmap_palettes
+#   default_int, default_str, default_rot, default_pct, default_pct_lo,
+#   default_pct_hi, default_vmin, default_vmax, default_sa, default_cmap
+# =============================================================================
+_FRAME_JS_UPDATE: str = """
+// 0. Update colormap palette.
+mapper.palette = _cmap_palettes[sel_cmap.value] || _cmap_palettes['gray'];
+
+// 1. Decode & cache raw Float32 data (avoid re-decode on every event).
+var _ck = 'af_' + source.id;
+if (!window[_ck]) {
+    var _b = atob(b64_data);
+    var _buf = new ArrayBuffer(_b.length);
+    var _u8  = new Uint8Array(_buf);
+    for (var _i = 0; _i < _b.length; _i++) { _u8[_i] = _b.charCodeAt(_i); }
+    window[_ck] = new Float32Array(_buf);
+}
+var raw = window[_ck];
+
+// 2. Interval widget visibility.
+var iMode = sel_interval.value;
+txt_pct.visible    = (iMode === 'percentile');
+txt_pct_lo.visible = (iMode === 'asymmetric');
+txt_pct_hi.visible = (iMode === 'asymmetric');
+txt_vmin.visible   = (iMode === 'manual');
+txt_vmax.visible   = (iMode === 'manual');
+
+// 3. Stretch param visibility + label.
+var sMode = sel_stretch.value;
+var sHasP = (sMode === 'log' || sMode === 'asinh' ||
+             sMode === 'sinh' || sMode === 'power');
+txt_stretch_a.visible = sHasP;
+if      (sMode === 'log')                     txt_stretch_a.title = 'a  (default: 1000)';
+else if (sMode === 'asinh' || sMode === 'sinh') txt_stretch_a.title = 'a  (default: 0.1)';
+else if (sMode === 'power')                   txt_stretch_a.title = 'index  (default: 1.5)';
+
+// 4. Sample-based percentile helper.
+function _pct(arr, p) {
+    var step = Math.max(1, Math.floor(arr.length / 50000));
+    var s = [];
+    for (var ii = 0; ii < arr.length; ii += step) {
+        if (isFinite(arr[ii])) s.push(arr[ii]);
+    }
+    if (!s.length) return 0;
+    s.sort(function(a, b) { return a - b; });
+    var ix = (p / 100) * (s.length - 1);
+    var lo = Math.floor(ix), hi = Math.ceil(ix);
+    return (lo === hi) ? s[lo] : s[lo] + (s[hi] - s[lo]) * (ix - lo);
+}
+
+// 5. Compute vmin / vmax from selected interval.
+var vmin, vmax;
+if (iMode === 'minmax') {
+    var mn = Infinity, mx = -Infinity;
+    for (var ii = 0; ii < raw.length; ii++) {
+        var v = raw[ii];
+        if (isFinite(v)) { if (v < mn) mn = v; if (v > mx) mx = v; }
+    }
+    vmin = mn; vmax = mx;
+} else if (iMode === 'zscale') {
+    vmin = zs_lo; vmax = zs_hi;
+} else if (iMode === 'percentile') {
+    var pv = parseFloat(txt_pct.value);
+    if (!isFinite(pv) || pv <= 0 || pv > 100) pv = 99;
+    vmin = _pct(raw, (100 - pv) / 2);
+    vmax = _pct(raw, (100 + pv) / 2);
+} else if (iMode === 'asymmetric') {
+    var plo = parseFloat(txt_pct_lo.value); if (!isFinite(plo)) plo = 1;
+    var phi = parseFloat(txt_pct_hi.value); if (!isFinite(phi)) phi = 99;
+    vmin = _pct(raw, plo); vmax = _pct(raw, phi);
+} else if (iMode === 'manual') {
+    vmin = parseFloat(txt_vmin.value); vmax = parseFloat(txt_vmax.value);
+    if (!isFinite(vmin)) vmin = data_min;
+    if (!isFinite(vmax)) vmax = data_max;
+} else {
+    vmin = data_min; vmax = data_max;
+}
+if (!isFinite(vmin) || !isFinite(vmax) || vmin >= vmax) {
+    vmin = data_min; vmax = (data_max > data_min) ? data_max : data_min + 1;
+}
+
+// 6. Normalize raw to [0, 1].
+var nd  = new Float32Array(raw.length);
+var rng = vmax - vmin;
+for (var ni = 0; ni < raw.length; ni++) {
+    var nv = (raw[ni] - vmin) / rng;
+    nd[ni] = (!isFinite(nv)) ? 0 : (nv < 0 ? 0 : (nv > 1 ? 1 : nv));
+}
+
+// 7. Apply stretch.
+var sa = parseFloat(txt_stretch_a.value);
+if (sMode === 'sqrt') {
+    for (var si = 0; si < nd.length; si++) nd[si] = Math.sqrt(nd[si]);
+} else if (sMode === 'squared') {
+    for (var si = 0; si < nd.length; si++) { var sv = nd[si]; nd[si] = sv * sv; }
+} else if (sMode === 'log') {
+    var lA = (isFinite(sa) && sa > 0) ? sa : 1000;
+    var lD = Math.log(lA + 1);
+    for (var si = 0; si < nd.length; si++) nd[si] = Math.log(lA * nd[si] + 1) / lD;
+} else if (sMode === 'asinh') {
+    var aA = (isFinite(sa) && sa > 0) ? sa : 0.1;
+    var aD = Math.log(1 / aA + Math.sqrt(1 / (aA * aA) + 1));
+    for (var si = 0; si < nd.length; si++) {
+        var sv = nd[si];
+        nd[si] = Math.log(sv / aA + Math.sqrt(sv * sv / (aA * aA) + 1)) / aD;
+    }
+} else if (sMode === 'sinh') {
+    var shA = (isFinite(sa) && sa > 0) ? sa : 0.1;
+    var shD = Math.sinh(1 / shA);
+    for (var si = 0; si < nd.length; si++) nd[si] = Math.sinh(nd[si] / shA) / shD;
+} else if (sMode === 'power') {
+    var pI = (isFinite(sa) && sa > 0) ? sa : 1.5;
+    for (var si = 0; si < nd.length; si++) nd[si] = Math.pow(nd[si], pI);
+}
+// Post-stretch clip.
+for (var ci = 0; ci < nd.length; ci++) {
+    var cv = nd[ci];
+    nd[ci] = (!isFinite(cv)) ? 0 : (cv < 0 ? 0 : (cv > 1 ? 1 : cv));
+}
+
+// 8. Apply Flip X (horizontal mirror).
+var imgR = orig_rows, imgC = orig_cols, imgD = nd;
+if (tog_flipx.active) {
+    var fx = new Float32Array(imgR * imgC);
+    for (var r = 0; r < imgR; r++) {
+        for (var c = 0; c < imgC; c++) {
+            fx[r * imgC + c] = imgD[r * imgC + (imgC - 1 - c)];
+        }
+    }
+    imgD = fx;
+}
+
+// Apply Flip Y (vertical mirror).
+if (tog_flipy.active) {
+    var fy = new Float32Array(imgR * imgC);
+    for (var r = 0; r < imgR; r++) {
+        for (var c = 0; c < imgC; c++) {
+            fy[r * imgC + c] = imgD[(imgR - 1 - r) * imgC + c];
+        }
+    }
+    imgD = fy;
+}
+
+// Apply rotation (CCW in 90° steps).
+// 90° CCW: out[i][j] = in[j][imgC-1-i], new shape (imgC × imgR)
+var turns = ((parseInt(sel_rotate.value) || 0) / 90 + 4) % 4;
+for (var t = 0; t < turns; t++) {
+    var rR = imgC, rC = imgR;
+    var rot = new Float32Array(rR * rC);
+    for (var ri = 0; ri < rR; ri++) {
+        for (var rj = 0; rj < rC; rj++) {
+            rot[ri * rC + rj] = imgD[rj * imgC + (imgC - 1 - ri)];
+        }
+    }
+    imgD = rot; imgR = rR; imgC = rC;
+}
+
+// 9. Attach Bokeh NDArray-compatible metadata so the image glyph
+//    _set_data() assertion (img.dimension == 2) passes.  Bokeh
+//    Float32NDArray extends Float32Array and sets these three
+//    properties in its constructor; we replicate that here so we
+//    can pass imgD directly without an extra copy.
+imgD['shape']     = [imgR, imgC];
+imgD['dimension'] = 2;
+imgD['dtype']     = 'float32';
+
+// 10. Push to Bokeh source and update axis ranges.
+source.data = { image: [imgD], x: [0], y: [0], dw: [imgC], dh: [imgR] };
+source.change.emit();
+fig_xr.start = 0; fig_xr.end = imgC;
+fig_yr.start = 0; fig_yr.end = imgR;
+"""
+
+_FRAME_JS_RESET_PREFIX: str = """
+sel_interval.value  = default_int;
+sel_stretch.value   = default_str;
+sel_rotate.value    = default_rot;
+txt_pct.value       = default_pct;
+txt_pct_lo.value    = default_pct_lo;
+txt_pct_hi.value    = default_pct_hi;
+txt_vmin.value      = default_vmin;
+txt_vmax.value      = default_vmax;
+txt_stretch_a.value = default_sa;
+tog_flipx.active    = false;
+tog_flipy.active    = false;
+sel_cmap.value      = default_cmap;
+"""
+
+
+# =============================================================================
+# Define 2D FITS frame (RAW_* / DRS_PP*) plot builder
+# =============================================================================
+def _build_frame_plot(filepath: Path) -> Dict[str, Any]:
+    """Build an interactive DS9-style 2D FITS frame viewer.
+
+    Reads the first 2D (or first slice of ≥3D) image HDU, downsamples
+    it to at most :data:`_FRAME_MAX_PX` pixels on each axis, and
+    produces a Bokeh figure with interactive controls for:
+
+    * **Interval** – MinMax, ZScale, Percentile, Asymmetric Percentile,
+      Manual
+    * **Stretch** – Linear, Sqrt, Log, Squared, Asinh, Sinh, Power
+      (with editable *a* / *index* parameter where applicable)
+    * **Flip X / Flip Y** – per-axis mirror
+    * **Rotate** – 0, 90, 180, 270, 360° (counter-clockwise)
+    * **Reset** – restores defaults (MinMax + Linear, no transforms)
+
+    All normalization and transforms run in the browser via Bokeh
+    CustomJS so the page needs no server round-trip when the user
+    changes a control.
+
+    :param filepath: Path, absolute path to the FITS file
+    :return: standard result dict
+    :rtype: dict
+    """
+    # ------------------------------------------------------------------
+    # 1. Load first 2D image extension.
+    # ------------------------------------------------------------------
+    try:
+        from astropy.io import fits as _fits
+
+        with _fits.open(str(filepath)) as hdul:
+            data: Optional[np.ndarray] = None
+            orig_shape = (0, 0)
+            for hdu in hdul:
+                if hdu.data is None:
+                    continue
+                d = np.asarray(hdu.data, dtype=float)
+                if d.ndim == 2:
+                    data = d
+                    orig_shape = d.shape
+                    break
+                elif d.ndim == 3:
+                    data = d[0].astype(float)
+                    orig_shape = data.shape
+                    break
+                elif d.ndim > 3:
+                    flat3 = d.reshape(-1, d.shape[-2], d.shape[-1])
+                    data = flat3[0].astype(float)
+                    orig_shape = data.shape
+                    break
+    except Exception as exc:
+        return _no_plot(f"Could not load FITS data: {exc}")
+
+    if data is None:
+        return _no_plot("No 2D image data found in FITS file.")
+
+    orig_h, orig_w = orig_shape
+
+    # ------------------------------------------------------------------
+    # 2. Use full resolution (no downsampling).
+    # ------------------------------------------------------------------
+    stride = 1
+    disp = data.copy()
+    disp_h, disp_w = disp.shape
+
+    # ------------------------------------------------------------------
+    # 3. Compute display statistics.
+    # ------------------------------------------------------------------
+    finite = disp[np.isfinite(disp)]
+    if len(finite) == 0:
+        return _no_plot("No finite data in image.")
+
+    data_min = float(np.nanmin(finite))
+    data_max = float(np.nanmax(finite))
+
+    try:
+        from astropy.visualization import ZScaleInterval as _ZSI
+
+        _zs = _ZSI()
+        zs_lo = float(_zs.get_limits(disp)[0])
+        zs_hi = float(_zs.get_limits(disp)[1])
+    except Exception:
+        zs_lo, zs_hi = data_min, data_max
+
+    # ------------------------------------------------------------------
+    # 4. Encode display data as base64 Float32LE (row-major).
+    # ------------------------------------------------------------------
+    disp_clean = np.where(
+        np.isfinite(disp), disp, data_min
+    ).astype(np.float32)
+    b64_data = base64.b64encode(disp_clean.tobytes()).decode("ascii")
+
+    # ------------------------------------------------------------------
+    # 5. Initial render: MinMax + Linear → normalised [0, 1].
+    # ------------------------------------------------------------------
+    _scale = data_max - data_min if data_max != data_min else 1.0
+    norm_init = np.clip(
+        (disp_clean - data_min) / _scale, 0.0, 1.0
+    )
+
+    # ------------------------------------------------------------------
+    # 6. Build Bokeh layout.
+    # ------------------------------------------------------------------
+    from bokeh.layouts import column as bk_column
+    from bokeh.layouts import row as bk_row
+    from bokeh.events import DocumentReady as _DocumentReady
+    from bokeh.models import (
+        Button,
+        ColumnDataSource,
+        CustomJS,
+        LinearColorMapper,
+        Select,
+        TextInput,
+        Toggle,
+    )
+    from bokeh.palettes import (
+        gray as bk_gray,
+        viridis as bk_viridis,
+        inferno as bk_inferno,
+        plasma as bk_plasma,
+        magma as bk_magma,
+        turbo as bk_turbo,
+    )
+    from bokeh.plotting import figure as bk_figure
+
+    # Use a minimal float64 placeholder so Bokeh's image glyph
+    # _set_data() assertion (img.dimension == 2) is satisfied on
+    # the initial render.  DocumentReady fires after lazy_initialize
+    # but before the first paint and replaces this with the real
+    # image via the same _FRAME_JS_UPDATE callback.
+    _placeholder = np.zeros((2, 2), dtype=np.float64)
+    src = ColumnDataSource(
+        data={
+            "image": [_placeholder],
+            "x": [0.0],
+            "y": [0.0],
+            "dw": [float(disp_w)],
+            "dh": [float(disp_h)],
+        }
+    )
+
+    palette = bk_gray(256)
+    mapper = LinearColorMapper(palette=palette, low=0.0, high=1.0)
+
+    _ds_note = (
+        f"  \u2192 {disp_w}\u00d7{disp_h} displayed"
+        if stride > 1
+        else ""
+    )
+    fig = bk_figure(
+        title=(
+            f"{filepath.name}  "
+            f"[{orig_w}\u00d7{orig_h} px]{_ds_note}"
+        ),
+        x_range=(0.0, float(disp_w)),
+        y_range=(0.0, float(disp_h)),
+        tools="pan,wheel_zoom,box_zoom,reset,save",
+        active_scroll="wheel_zoom",
+        height=500,
+        sizing_mode="stretch_width",
+        background_fill_color=_BG_COLOUR,
+    )
+    fig.image(
+        image="image",
+        x="x",
+        y="y",
+        dw="dw",
+        dh="dh",
+        color_mapper=mapper,
+        source=src,
+    )
+    fig.axis.visible = False
+    fig.grid.visible = False
+
+    # --- Interval controls ---
+    sel_interval = Select(
+        title="Interval",
+        value="minmax",
+        options=[
+            ("minmax", "MinMax"),
+            ("zscale", "ZScale"),
+            ("percentile", "Percentile"),
+            ("asymmetric", "Asymmetric Percentile"),
+            ("manual", "Manual"),
+        ],
+        width=210,
+    )
+    txt_pct = TextInput(
+        title="Percentile %", value="99", width=120, visible=False
+    )
+    txt_pct_lo = TextInput(
+        title="Lower %", value="1", width=100, visible=False
+    )
+    txt_pct_hi = TextInput(
+        title="Upper %", value="99", width=100, visible=False
+    )
+    txt_vmin = TextInput(
+        title="vmin",
+        value=f"{data_min:.6g}",
+        width=140,
+        visible=False,
+    )
+    txt_vmax = TextInput(
+        title="vmax",
+        value=f"{data_max:.6g}",
+        width=140,
+        visible=False,
+    )
+
+    # --- Stretch controls ---
+    sel_stretch = Select(
+        title="Stretch",
+        value="linear",
+        options=[
+            ("linear", "Linear"),
+            ("sqrt", "Sqrt"),
+            ("log", "Log"),
+            ("squared", "Squared"),
+            ("asinh", "Asinh"),
+            ("sinh", "Sinh"),
+            ("power", "Power"),
+        ],
+        width=160,
+    )
+    txt_stretch_a = TextInput(
+        title="a / index", value="1000", width=140, visible=False
+    )
+
+    # --- Transform controls ---
+    tog_flipx = Toggle(
+        label="Flip X", active=False, width=90, button_type="default"
+    )
+    tog_flipy = Toggle(
+        label="Flip Y", active=False, width=90, button_type="default"
+    )
+    sel_rotate = Select(
+        title="Rotate",
+        value="0",
+        options=[
+            ("0", "0°"),
+            ("90", "90°"),
+            ("180", "180°"),
+            ("270", "270°"),
+            ("360", "360°"),
+        ],
+        width=100,
+    )
+    btn_reset = Button(
+        label="Reset All", button_type="warning", width=100
+    )
+
+    # --- Colormap controls ---
+    _cmap_palettes = {
+        "gray":    list(bk_gray(256)),
+        "inferno": list(bk_inferno(256)),
+        "viridis": list(bk_viridis(256)),
+        "plasma":  list(bk_plasma(256)),
+        "magma":   list(bk_magma(256)),
+        "turbo":   list(bk_turbo(256)),
+    }
+    sel_cmap = Select(
+        title="Colormap",
+        value="gray",
+        options=[
+            ("gray",    "Gray"),
+            ("inferno", "Inferno"),
+            ("viridis", "Viridis"),
+            ("plasma",  "Plasma"),
+            ("magma",   "Magma"),
+            ("turbo",   "Rainbow"),
+        ],
+        width=150,
+    )
+    _cb_args = dict(
+        source=src,
+        fig_xr=fig.x_range,
+        fig_yr=fig.y_range,
+        sel_interval=sel_interval,
+        sel_stretch=sel_stretch,
+        sel_rotate=sel_rotate,
+        txt_pct=txt_pct,
+        txt_pct_lo=txt_pct_lo,
+        txt_pct_hi=txt_pct_hi,
+        txt_vmin=txt_vmin,
+        txt_vmax=txt_vmax,
+        txt_stretch_a=txt_stretch_a,
+        tog_flipx=tog_flipx,
+        tog_flipy=tog_flipy,
+        mapper=mapper,
+        sel_cmap=sel_cmap,
+        _cmap_palettes=_cmap_palettes,
+        b64_data=b64_data,
+        orig_rows=disp_h,
+        orig_cols=disp_w,
+        data_min=float(data_min),
+        data_max=float(data_max),
+        zs_lo=float(zs_lo),
+        zs_hi=float(zs_hi),
+        default_int="minmax",
+        default_str="linear",
+        default_rot="0",
+        default_pct="99",
+        default_pct_lo="1",
+        default_pct_hi="99",
+        default_vmin=f"{data_min:.6g}",
+        default_vmax=f"{data_max:.6g}",
+        default_sa="1000",
+        default_cmap="gray",
+    )
+
+    _cb_update = CustomJS(args=_cb_args, code=_FRAME_JS_UPDATE)
+    _cb_reset = CustomJS(
+        args=_cb_args,
+        code=_FRAME_JS_RESET_PREFIX + _FRAME_JS_UPDATE,
+    )
+    # Immediately replace the placeholder with the real image once
+    # the document is ready (before the first paint).
+    _cb_init = CustomJS(args=_cb_args, code=_FRAME_JS_UPDATE)
+    fig.js_on_event(_DocumentReady, _cb_init)
+
+    sel_interval.js_on_change("value", _cb_update)
+    sel_stretch.js_on_change("value", _cb_update)
+    sel_rotate.js_on_change("value", _cb_update)
+    sel_cmap.js_on_change("value", _cb_update)
+    txt_pct.js_on_change("value", _cb_update)
+    txt_pct_lo.js_on_change("value", _cb_update)
+    txt_pct_hi.js_on_change("value", _cb_update)
+    txt_vmin.js_on_change("value", _cb_update)
+    txt_vmax.js_on_change("value", _cb_update)
+    txt_stretch_a.js_on_change("value", _cb_update)
+    tog_flipx.js_on_change("active", _cb_update)
+    tog_flipy.js_on_change("active", _cb_update)
+    btn_reset.js_on_click(_cb_reset)
+
+    layout = bk_column(
+        bk_row(
+            sel_interval,
+            txt_pct, txt_pct_lo, txt_pct_hi,
+            txt_vmin, txt_vmax,
+            sel_stretch, txt_stretch_a,
+            sel_cmap,
+            tog_flipx, tog_flipy, sel_rotate, btn_reset,
+        ),
+        fig,
+        sizing_mode="stretch_width",
+    )
+    title = f"Frame: {filepath.name}  [{orig_w}\u00d7{orig_h}]"
+    return {"has_plot": True, "fig": layout, "title": title, "message": ""}
+
+
+# =============================================================================
 # Define public dispatch function
 # =============================================================================
 def build_filename_plot_json(
@@ -1093,7 +1672,7 @@ def build_filename_plot_json(
 
     kw_output = kw_output.strip().upper()
 
-    if kw_output not in PLOTABLE_OUTPUT_TYPES:
+    if not _is_plotable(kw_output):
         return _no_plot(f"No plot defined for output type: {kw_output}")
 
     try:
@@ -1143,6 +1722,10 @@ def build_filename_plot_json(
             result = _build_lbl_rdb_plot(filepath, kw_output)
         elif kw_output == "LBL_FITS":
             result = _build_lbl_fits_plot(filepath)
+        elif any(
+            kw_output.startswith(p) for p in FRAME_OUTPUT_PREFIXES
+        ):
+            result = _build_frame_plot(filepath)
         else:
             return _no_plot(f"No handler for output type: {kw_output}")
     except Exception as exc:

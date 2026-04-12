@@ -40,6 +40,7 @@ VERSIONS_FILE = DOC_ROOT / "versions.yaml"
 # Markdown extensions for rendering
 MD_EXTENSIONS = [
     "extra",
+    "admonition",
     "codehilite",
     "toc",
     "tables",

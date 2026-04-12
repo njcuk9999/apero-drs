@@ -61,6 +61,61 @@
             <span id="cal-list-page-info" class="ari-cal-list-page-info">Page 1 of 1</span>
             <button class="ari-btn ari-btn--secondary ari-btn--sm" id="cal-list-next">Next</button>
         </div>
+
+        <!-- ICS / External Calendars -->
+        <div class="ari-cal-ics-section">
+            <h4 class="ari-cal-ics-title">
+                <i class="fa-solid fa-link"></i> External Calendars
+            </h4>
+            <div id="cal-ics-feed-list" class="ari-cal-ics-list">
+                {% for feed in ics_feeds %}
+                <div class="ari-cal-ics-item" data-feed-id="{{ feed.id }}">
+                    <span class="ari-cal-ics-dot" style="background:{{ feed.color }};"></span>
+                    <span class="ari-cal-ics-name" title="{{ feed.url }}">{{ feed.name }}</span>
+                    <span class="ari-cal-ics-meta">
+                        {% if feed.last_synced %}{{ feed.last_synced }}{% else %}never{% endif %}
+                    </span>
+                    {% if feed.last_error %}
+                    <span class="ari-cal-ics-err" title="{{ feed.last_error }}">
+                        <i class="fa-solid fa-triangle-exclamation"></i>
+                    </span>
+                    {% endif %}
+                    <button class="ari-btn ari-btn--secondary ari-btn--sm ari-cal-ics-btn-refresh"
+                            data-feed-id="{{ feed.id }}" title="Refresh now">
+                        <i class="fa-solid fa-rotate"></i>
+                    </button>
+                    <button class="ari-btn ari-btn--danger ari-btn--sm ari-cal-ics-btn-delete"
+                            data-feed-id="{{ feed.id }}" title="Remove feed">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                </div>
+                {% else %}
+                <p class="ari-cal-ics-empty" id="cal-ics-empty">No external calendars linked.</p>
+                {% endfor %}
+            </div>
+            <details class="ari-cal-ics-add-wrap">
+                <summary class="ari-cal-ics-add-toggle">
+                    <i class="fa-solid fa-plus"></i> Link external calendar (.ics)
+                </summary>
+                <form class="ari-cal-ics-add-form" id="cal-ics-add-form">
+                    <div class="ari-form-group">
+                        <label>Name</label>
+                        <input type="text" id="cal-ics-name" placeholder="e.g. Telescope Schedule" required>
+                    </div>
+                    <div class="ari-form-group">
+                        <label>ICS URL</label>
+                        <input type="url" id="cal-ics-url" placeholder="https://…/calendar.ics" required>
+                    </div>
+                    <div class="ari-form-group">
+                        <label>Colour</label>
+                        <input type="color" id="cal-ics-color" value="#4a90d9">
+                    </div>
+                    <button type="submit" class="ari-btn ari-btn--primary ari-btn--sm">
+                        Add &amp; Sync
+                    </button>
+                </form>
+            </details>
+        </div>
     </aside>
 </div>
 
@@ -133,8 +188,13 @@ window.ARI_CALENDAR = {
     prefsGetUrl: {{ url_for('api_user_prefs_get')|tojson }},
     prefsSaveUrl: {{ url_for('api_user_prefs_save')|tojson }},
     userTimezone: {{ (user_timezone or 'UTC')|tojson }},
+    icsListUrl: {{ url_for('api_user_ics_list')|tojson }},
+    icsAddUrl: {{ url_for('api_user_ics_add')|tojson }},
+    icsDeleteUrl: {{ url_for('api_user_ics_delete')|tojson }},
+    icsRefreshUrl: {{ url_for('api_user_ics_refresh')|tojson }},
 };
 </script>
 <script src="{{ url_for('static', filename='js/tz_common.js') }}"></script>
 <script src="{{ url_for('static', filename='js/user_calendar.js') }}"></script>
+<script src="{{ url_for('static', filename='js/cal_ics.js') }}"></script>
 {% endblock %}

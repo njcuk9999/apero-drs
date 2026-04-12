@@ -63,6 +63,7 @@ from apero_ri.core import permissions as perms
 from apero_ri.core import secret_store as ss
 from apero_ri.core import sshfs_backend as sb
 from apero_ri.core import task_runner
+from apero_ri.core import upload_data as upd
 from apero_ri.core import user_data as ud
 from apero_ri.tasks import apero_async
 from flask import (
@@ -226,8 +227,9 @@ def ariapp_init(self, **kwargs):
     )
     # Secret key for sessions
     self.secret_key = self._load_or_create_secret()
-    # Load YAML definitions (read-only)
-    self.ari_groups = perms.load_groups()
+    # Load YAML definitions
+    # ari_groups is a live-reloading property on ARIApp; ari_pages is
+    # static and set once here.
     self.ari_pages = perms.load_pages()
     # Remove template entries (with {placeholders}) — they are
     # expanded dynamically at request time from apero_profiles.yaml
@@ -1009,6 +1011,8 @@ def ariapp_api_database_setup_local_db_test(self):
     user_info, perms = self._require_apero_profile_perm()
     if not user_info:
         return jsonify(success=False, error="Unauthorized"), 401
+    if "manage.admin.database_setup" not in (perms or set()):
+        return jsonify(success=False, error="Insufficient permissions"), 403
 
     body = request.get_json(silent=True) or {}
     mode = str(body.get("DATABASE_MODE", "") or "").strip() or "mysql+pymysql"
@@ -1125,8 +1129,16 @@ def ariapp_register_context_processors(self):
             welcome_name = None
             login_as = None
 
-        nav_pages = permissions_mod.get_nav_pages(user_perms, self.ari_pages)
+        nav_pages = permissions_mod.get_nav_pages(
+            user_perms, self.ari_pages
+        )
         logo_path = STATIC_DIR / "images" / "apero_logo.png"
+        if username:
+            current_theme = ud.load_user_prefs(username).get(
+                "theme", "default"
+            )
+        else:
+            current_theme = "default"
 
         return {
             "logged_in": logged_in,
@@ -1138,6 +1150,7 @@ def ariapp_register_context_processors(self):
             "nav_pages": nav_pages,
             "ari_pages": self.ari_pages,
             "logo_exists": logo_path.exists(),
+            "current_theme": current_theme,
         }
 
 
@@ -1152,32 +1165,60 @@ def ariapp_api_user_favourite_objects_toggle(self):
     objname = str(body.get("objname", "")).strip()
     if not profile_id or not objname:
         return (
-            jsonify(success=False, error="profile_id and objname are required"),
+            jsonify(
+                success=False,
+                error="profile_id and objname are required",
+            ),
             400,
         )
 
     username = user_info["username"]
-    payload = ud.get_profile_favourite_objects(username, profile_id)
-    favourites = payload.get("favourites", [])
-    if not isinstance(favourites, list):
-        favourites = []
-    favourites = [str(name).strip() for name in favourites if str(name).strip()]
+    payload = ud.get_profile_fav_sections(username, profile_id)
+    sections = payload.get("sections", [])
+    if not isinstance(sections, list):
+        sections = []
 
-    if objname in favourites:
-        favourites = [name for name in favourites if name != objname]
+    # Find which section (if any) this object is in
+    found_in = None
+    for sec in sections:
+        for item in sec.get("items", []):
+            if str(item.get("objname", "")).strip() == objname:
+                found_in = sec
+                break
+        if found_in is not None:
+            break
+
+    if found_in is not None:
+        # Remove from that section
+        found_in["items"] = [
+            it for it in found_in.get("items", [])
+            if str(it.get("objname", "")).strip() != objname
+        ]
         is_favourite = False
     else:
-        favourites.append(objname)
+        # Add to default section
+        default_sec = next(
+            (s for s in sections if s.get("name") == "default"), None
+        )
+        if default_sec is None:
+            default_sec = {
+                "name": "default", "collapsed": False, "items": []
+            }
+            sections.insert(0, default_sec)
+        default_sec["items"].append(
+            {"objname": objname, "nickname": "", "note": ""}
+        )
         is_favourite = True
 
-    updated = ud.save_profile_favourite_objects(
-        username,
-        profile_id,
-        favourites,
-        last_object=None,
+    updated = ud.save_profile_fav_sections(
+        username, profile_id, sections, last_object=None
     )
+    flat = ud.get_profile_favourite_objects(username, profile_id)
     return jsonify(
-        success=True, favourite=is_favourite, favourite_objects=updated
+        success=True,
+        favourite=is_favourite,
+        favourite_objects=flat,
+        sections=updated.get("sections", []),
     )
 
 
@@ -1998,27 +2039,34 @@ def ariapp_api_user_favourite_objects_remove(self):
     objname = str(body.get("objname", "")).strip()
     if not profile_id or not objname:
         return (
-            jsonify(success=False, error="profile_id and objname are required"),
+            jsonify(
+                success=False,
+                error="profile_id and objname are required",
+            ),
             400,
         )
 
     username = user_info["username"]
-    payload = ud.get_profile_favourite_objects(username, profile_id)
-    favourites = payload.get("favourites", [])
-    if not isinstance(favourites, list):
-        favourites = []
-    favourites = [
-        str(name).strip()
-        for name in favourites
-        if str(name).strip() and str(name).strip() != objname
-    ]
-    updated = ud.save_profile_favourite_objects(
-        username,
-        profile_id,
-        favourites,
-        last_object=None,
+    payload = ud.get_profile_fav_sections(username, profile_id)
+    sections = payload.get("sections", [])
+    if not isinstance(sections, list):
+        sections = []
+
+    for sec in sections:
+        sec["items"] = [
+            it for it in sec.get("items", [])
+            if str(it.get("objname", "")).strip() != objname
+        ]
+
+    updated = ud.save_profile_fav_sections(
+        username, profile_id, sections, last_object=None
     )
-    return jsonify(success=True, favourite_objects=updated)
+    flat = ud.get_profile_favourite_objects(username, profile_id)
+    return jsonify(
+        success=True,
+        favourite_objects=flat,
+        sections=updated.get("sections", []),
+    )
 
 
 def ariapp_api_basket_get(self):
@@ -2318,7 +2366,7 @@ def ariapp_build_admin_sshfs_context(self, perms):
         ssh_keys_data = []
 
     return {
-        "can_manage": "manage.admin.sshfs" in perms or "view.admin" in perms,
+        "can_manage": "manage.admin.sshfs_setup" in perms or "view.admin" in perms,
         "mounts_data": mounts_data,
         "ssh_keys_data": ssh_keys_data,
     }
@@ -2391,22 +2439,21 @@ def ariapp_api_user_favourite_objects_last_opened(self):
     objname = str(body.get("objname", "")).strip()
     if not profile_id or not objname:
         return (
-            jsonify(success=False, error="profile_id and objname are required"),
+            jsonify(
+                success=False,
+                error="profile_id and objname are required",
+            ),
             400,
         )
 
     username = user_info["username"]
-    payload = ud.get_profile_favourite_objects(username, profile_id)
-    favourites = payload.get("favourites", [])
-    if not isinstance(favourites, list):
-        favourites = []
-    updated = ud.save_profile_favourite_objects(
-        username,
-        profile_id,
-        [str(name).strip() for name in favourites if str(name).strip()],
-        last_object=objname,
+    payload = ud.get_profile_fav_sections(username, profile_id)
+    sections = payload.get("sections", [])
+    updated = ud.save_profile_fav_sections(
+        username, profile_id, sections, last_object=objname
     )
-    return jsonify(success=True, favourite_objects=updated)
+    flat = ud.get_profile_favourite_objects(username, profile_id)
+    return jsonify(success=True, favourite_objects=flat)
 
 
 def ariapp_api_basket_jobs_remove(self):
@@ -2674,17 +2721,17 @@ def ariapp_api_user_favourite_objects_get(self):
 
     objname = str(request.args.get("objname", "")).strip()
     username = user_info["username"]
-    payload = ud.get_profile_favourite_objects(username, profile_id)
-    favourites = payload.get("favourites", [])
-    if not isinstance(favourites, list):
-        favourites = []
-    payload["favourites"] = [
-        str(name).strip() for name in favourites if str(name).strip()
-    ]
-    payload["last_object"] = str(payload.get("last_object", "")).strip()
+    sec_payload = ud.get_profile_fav_sections(username, profile_id)
+    flat = ud.get_profile_favourite_objects(username, profile_id)
+    result = {
+        "profile_id": profile_id,
+        "favourites": flat.get("favourites", []),
+        "last_object": flat.get("last_object", ""),
+        "sections": sec_payload.get("sections", []),
+    }
     if objname:
-        payload["is_favourite"] = objname in payload["favourites"]
-    return jsonify(success=True, favourite_objects=payload)
+        result["is_favourite"] = objname in result["favourites"]
+    return jsonify(success=True, favourite_objects=result)
 
 
 def ariapp_api_user_db_access_health_check(self):
@@ -2722,6 +2769,8 @@ def ariapp_api_database_setup_local_db_list(self):
     user_info, perms = self._require_apero_profile_perm()
     if not user_info:
         return jsonify(success=False, error="Unauthorized"), 401
+    if "manage.admin.database_setup" not in (perms or set()):
+        return jsonify(success=False, error="Insufficient permissions"), 403
 
     defs = self._load_local_db_definitions()
     rows = []
@@ -2833,6 +2882,45 @@ def ariapp_build_admin_backup_context(self, perms):
         "can_manage": "manage.admin.backup" in perms,
         "backup_inventory": inventory,
     }
+
+
+def ariapp_api_admin_cache_reset_timings(self):
+    """Zero timing stats for a profile without deleting cached data."""
+    user_info = auth.get_effective_user(session)
+    if user_info:
+        perms = permissions_mod.resolve_user_permissions(
+            user_info["groups"], self.ari_groups
+        )
+    else:
+        perms = auth.get_public_permissions()
+    if "view.admin" not in perms:
+        return jsonify(success=False, error="Unauthorized"), 401
+
+    body = request.get_json(silent=True) or {}
+    instrument = str(body.get("instrument", "")).strip()
+    profile_id = str(body.get("profile_id", "")).strip()
+    if not instrument or not profile_id:
+        return (
+            jsonify(
+                success=False,
+                error="Missing instrument or profile_id",
+            ),
+            400,
+        )
+
+    from apero_ri.core.plot_cache import (
+        _profile_dir,
+        load_cache_config,
+        resolve_cache_root,
+        write_timing_reset,
+    )
+
+    data_dir = self._resolve_local_data_dir()
+    cfg = load_cache_config(data_dir)
+    cache_root = resolve_cache_root(data_dir, cfg)
+    pdir = _profile_dir(cache_root, instrument, profile_id)
+    write_timing_reset(pdir)
+    return jsonify(success=True)
 
 
 def ariapp_api_admin_cache_save(self):
@@ -3255,6 +3343,8 @@ def ariapp_api_database_setup_local_db_delete(self):
     user_info, perms = self._require_apero_profile_perm()
     if not user_info:
         return jsonify(success=False, error="Unauthorized"), 401
+    if "manage.admin.database_setup" not in (perms or set()):
+        return jsonify(success=False, error="Insufficient permissions"), 403
 
     body = request.get_json(silent=True) or {}
     name = str(body.get("name", "") or "").strip()
@@ -3527,7 +3617,7 @@ def ariapp_api_admin_email_send_test(self):
     user_info, perms = self._require_admin_email_perm()
     if not user_info:
         return jsonify(success=False, error="Unauthorized"), 401
-    if "manage.admin.email" not in (perms or set()):
+    if "manage.admin.email_setup" not in (perms or set()):
         return jsonify(success=False, error="Insufficient permissions"), 403
     body = request.get_json() or {}
     to = str(body.get("to", "")).strip()
@@ -3720,7 +3810,7 @@ def ariapp_api_admin_email_save(self):
     user_info, perms = self._require_admin_email_perm()
     if not user_info:
         return jsonify(success=False, error="Unauthorized"), 401
-    if "manage.admin.email" not in (perms or set()):
+    if "manage.admin.email_setup" not in (perms or set()):
         return jsonify(success=False, error="Insufficient permissions"), 403
     body = request.get_json() or {}
     allowed = {
@@ -3759,7 +3849,7 @@ def ariapp_build_admin_email_context(self, perms):
         "providers": providers,
         "providers_json": _json.dumps(providers),
         "current_provider": current_provider,
-        "can_manage": "manage.admin.email" in perms,
+        "can_manage": "manage.admin.email_setup" in perms,
     }
 
 
@@ -4354,6 +4444,157 @@ def ariapp_api_admin_calendar_delete(self):
     return jsonify(success=True, deleted=ok)
 
 
+# ---------------------------------------------------------------------------
+# ICS feed API — User calendar
+# ---------------------------------------------------------------------------
+
+def ariapp_api_user_ics_list(self):
+    user_info = self._require_user()
+    if not user_info:
+        return jsonify(success=False, error="Unauthorized"), 401
+    feeds = ud.list_ics_feeds(user_info["username"])
+    return jsonify(success=True, feeds=feeds)
+
+
+def ariapp_api_user_ics_add(self):
+    user_info = self._require_user()
+    if not user_info:
+        return jsonify(success=False, error="Unauthorized"), 401
+    body = request.get_json() or {}
+    name = str(body.get("name", "")).strip()
+    url = str(body.get("url", "")).strip()
+    color = str(body.get("color", "#4a90d9")).strip()
+    if not name or not url:
+        return jsonify(
+            success=False, error="name and url are required"
+        ), 400
+    try:
+        feed, count = ud.add_ics_feed(
+            user_info["username"], name, url, color
+        )
+        return jsonify(success=True, feed=feed, imported=count)
+    except Exception as exc:
+        return jsonify(success=False, error=str(exc)), 400
+
+
+def ariapp_api_user_ics_delete(self):
+    user_info = self._require_user()
+    if not user_info:
+        return jsonify(success=False, error="Unauthorized"), 401
+    body = request.get_json() or {}
+    feed_id = str(body.get("feed_id", "")).strip()
+    if not feed_id:
+        return jsonify(
+            success=False, error="feed_id required"
+        ), 400
+    ud.delete_ics_feed(user_info["username"], feed_id)
+    return jsonify(success=True)
+
+
+def ariapp_api_user_ics_refresh(self):
+    user_info = self._require_user()
+    if not user_info:
+        return jsonify(success=False, error="Unauthorized"), 401
+    body = request.get_json() or {}
+    feed_id = str(body.get("feed_id", "")).strip()
+    if not feed_id:
+        return jsonify(
+            success=False, error="feed_id required"
+        ), 400
+    try:
+        feed = ud.refresh_ics_feed(user_info["username"], feed_id)
+        return jsonify(success=True, feed=feed)
+    except Exception as exc:
+        return jsonify(success=False, error=str(exc)), 400
+
+
+# ---------------------------------------------------------------------------
+# ICS feed API — Instrument / Admin calendar
+# ---------------------------------------------------------------------------
+
+def ariapp_api_admin_ics_list(self):
+    user_info, perms = self._require_admin_calendar_perm()
+    if not user_info:
+        return jsonify(success=False, error="Unauthorized"), 401
+    instrument = request.args.get("instrument", "").strip()
+    if not instrument:
+        return jsonify(
+            success=False, error="instrument query param required"
+        ), 400
+    feeds = ud.list_instrument_ics_feeds(instrument)
+    return jsonify(success=True, feeds=feeds)
+
+
+def ariapp_api_admin_ics_add(self):
+    user_info, perms = self._require_admin_calendar_perm()
+    if not user_info:
+        return jsonify(success=False, error="Unauthorized"), 401
+    if "manage.admin.calendar" not in (perms or set()):
+        return jsonify(
+            success=False, error="Insufficient permissions"
+        ), 403
+    body = request.get_json() or {}
+    instrument = str(body.get("instrument", "")).strip()
+    name = str(body.get("name", "")).strip()
+    url = str(body.get("url", "")).strip()
+    color = str(body.get("color", "#7b5ea7")).strip()
+    if not instrument or not name or not url:
+        return jsonify(
+            success=False,
+            error="instrument, name and url are required",
+        ), 400
+    try:
+        feed, count = ud.add_instrument_ics_feed(
+            instrument, name, url, color
+        )
+        return jsonify(success=True, feed=feed, imported=count)
+    except Exception as exc:
+        return jsonify(success=False, error=str(exc)), 400
+
+
+def ariapp_api_admin_ics_delete(self):
+    user_info, perms = self._require_admin_calendar_perm()
+    if not user_info:
+        return jsonify(success=False, error="Unauthorized"), 401
+    if "manage.admin.calendar" not in (perms or set()):
+        return jsonify(
+            success=False, error="Insufficient permissions"
+        ), 403
+    body = request.get_json() or {}
+    instrument = str(body.get("instrument", "")).strip()
+    feed_id = str(body.get("feed_id", "")).strip()
+    if not instrument or not feed_id:
+        return jsonify(
+            success=False,
+            error="instrument and feed_id required",
+        ), 400
+    ud.delete_instrument_ics_feed(instrument, feed_id)
+    return jsonify(success=True)
+
+
+def ariapp_api_admin_ics_refresh(self):
+    user_info, perms = self._require_admin_calendar_perm()
+    if not user_info:
+        return jsonify(success=False, error="Unauthorized"), 401
+    if "manage.admin.calendar" not in (perms or set()):
+        return jsonify(
+            success=False, error="Insufficient permissions"
+        ), 403
+    body = request.get_json() or {}
+    instrument = str(body.get("instrument", "")).strip()
+    feed_id = str(body.get("feed_id", "")).strip()
+    if not instrument or not feed_id:
+        return jsonify(
+            success=False,
+            error="instrument and feed_id required",
+        ), 400
+    try:
+        feed = ud.refresh_instrument_ics_feed(instrument, feed_id)
+        return jsonify(success=True, feed=feed)
+    except Exception as exc:
+        return jsonify(success=False, error=str(exc)), 400
+
+
 def ariapp_api_admin_email_test(self):
     user_info, perms = self._require_admin_email_perm()
     if not user_info:
@@ -4460,6 +4701,12 @@ def ariapp_api_user_prefs_save(self):
     updates = {}
     if "timezone" in body:
         updates["timezone"] = str(body["timezone"]).strip() or "UTC"
+    if "theme" in body:
+        _theme = str(body["theme"]).strip()
+        updates["theme"] = (
+            _theme if _theme in ("default", "light", "dark")
+            else "default"
+        )
     if updates:
         ud.save_user_prefs(user_info["username"], updates)
     prefs = ud.load_user_prefs(user_info["username"])
@@ -4738,3 +4985,613 @@ def ariapp_api_admin_backups_test(self):
         bb.load_backup_config(), method_id=method_id
     )
     return jsonify(result)
+
+
+# =============================================================================
+# Manage Instruments admin page
+# =============================================================================
+
+#: Base group levels that get per-instrument variants
+_INSTRUMENT_GROUP_LEVELS = ["general", "monitor", "developer", "moderator"]
+
+
+def ariapp_build_admin_manage_instruments_context(self, perms):
+    """Build context dict for the Manage Instruments admin page."""
+    can_manage = "manage.instrument.super_admin" in (perms or set())
+    can_add = "add.instrument" in (perms or set())
+    all_groups = permissions_mod.load_groups()
+    profiles = auth.load_apero_profiles(hydrate=False)
+    instruments = sorted(profiles.keys()) if isinstance(profiles, dict) else []
+
+    all_users = auth.list_all_users()
+
+    def _users_in_group(group_name):
+        return [
+            u["username"]
+            for u in all_users
+            if group_name in (u.get("groups") or [])
+        ]
+
+    instruments_data = []
+    for instr in instruments:
+        groups_info = []
+        for level in _INSTRUMENT_GROUP_LEVELS:
+            gname = "{}.{}".format(level, instr)
+            exists = gname in all_groups
+            member_names = _users_in_group(gname) if exists else []
+            groups_info.append(
+                {
+                    "name": gname,
+                    "level": level,
+                    "exists": exists,
+                    "user_count": len(member_names),
+                    "users": member_names,
+                }
+            )
+        groups_created = all(g["exists"] for g in groups_info)
+        instruments_data.append(
+            {
+                "name": instr,
+                "groups": groups_info,
+                "groups_created": groups_created,
+            }
+        )
+
+    return {
+        "instruments_data": instruments_data,
+        "instrument_group_levels": _INSTRUMENT_GROUP_LEVELS,
+        "can_manage": can_manage,
+        "can_add": can_add,
+    }
+
+
+def ariapp_api_manage_instruments_groups_create(self):
+    """Create per-instrument groups for a given instrument."""
+    user_info, cur_perms = self._require_admin_user()
+    if not user_info:
+        return jsonify(success=False, error="Unauthorized"), 401
+    if "manage.instrument.super_admin" not in (cur_perms or set()):
+        return jsonify(success=False, error="Insufficient permissions"), 403
+
+    body = request.get_json(silent=True) or {}
+    instrument = str(body.get("instrument", "") or "").strip()
+    if not instrument:
+        return jsonify(success=False, error="instrument is required"), 400
+
+    profiles = auth.load_apero_profiles(hydrate=False)
+    if not isinstance(profiles, dict) or instrument not in profiles:
+        return jsonify(
+            success=False,
+            error="Instrument '{}' not found in profiles".format(instrument),
+        ), 404
+
+    all_groups = permissions_mod.load_groups()
+    created = []
+    for level in _INSTRUMENT_GROUP_LEVELS:
+        gname = "{}.{}".format(level, instrument)
+        if gname not in all_groups:
+            all_groups[gname] = {
+                "permissions": [],
+                "groups": [level],
+            }
+            created.append(gname)
+
+    if created:
+        permissions_mod.save_groups(all_groups)
+
+    return jsonify(success=True, created=created)
+
+
+def ariapp_api_manage_instruments_groups_delete(self):
+    """Delete per-instrument groups for a given instrument."""
+    user_info, cur_perms = self._require_admin_user()
+    if not user_info:
+        return jsonify(success=False, error="Unauthorized"), 401
+    if "manage.instrument.super_admin" not in (cur_perms or set()):
+        return jsonify(success=False, error="Insufficient permissions"), 403
+
+    body = request.get_json(silent=True) or {}
+    instrument = str(body.get("instrument", "") or "").strip()
+    if not instrument:
+        return jsonify(success=False, error="instrument is required"), 400
+
+    all_groups = permissions_mod.load_groups()
+    deleted = []
+    for level in _INSTRUMENT_GROUP_LEVELS:
+        gname = "{}.{}".format(level, instrument)
+        if gname in all_groups:
+            del all_groups[gname]
+            deleted.append(gname)
+
+    if deleted:
+        permissions_mod.save_groups(all_groups)
+        # Remove these group memberships from all users.
+        all_users_raw = auth.load_users()
+        for uname, udata in all_users_raw.items():
+            if not isinstance(udata, dict):
+                continue
+            user_groups = list(udata.get("groups") or [])
+            new_groups = [g for g in user_groups if g not in deleted]
+            if new_groups != user_groups:
+                all_users_raw[uname]["groups"] = new_groups
+        auth.save_users(all_users_raw)
+
+    return jsonify(success=True, deleted=deleted)
+
+
+def ariapp_api_manage_instruments_add(self):
+    """Add a new instrument stub entry to apero_profiles."""
+    user_info, cur_perms = self._require_admin_user()
+    if not user_info:
+        return jsonify(success=False, error="Unauthorized"), 401
+    if "add.instrument" not in (cur_perms or set()):
+        return jsonify(
+            success=False, error="Insufficient permissions"
+        ), 403
+
+    body = request.get_json(silent=True) or {}
+    instrument = str(body.get("instrument", "") or "").strip().upper()
+    if not instrument:
+        return jsonify(
+            success=False, error="instrument name is required"
+        ), 400
+    if not instrument.replace("_", "").replace("-", "").isalnum():
+        return jsonify(
+            success=False,
+            error="Instrument name must be alphanumeric"
+            " (underscores/hyphens allowed)",
+        ), 400
+
+    all_profiles = auth.load_apero_profiles(hydrate=False)
+    if not isinstance(all_profiles, dict):
+        all_profiles = {}
+    if instrument in all_profiles:
+        return jsonify(
+            success=False,
+            error="Instrument '{}' already exists".format(instrument),
+        ), 409
+
+    all_profiles[instrument] = {}
+    auth.save_apero_profiles(all_profiles)
+
+    # Also create the per-instrument groups immediately.
+    all_groups = permissions_mod.load_groups()
+    created_groups = []
+    for level in _INSTRUMENT_GROUP_LEVELS:
+        gname = "{}.{}".format(level, instrument)
+        if gname not in all_groups:
+            all_groups[gname] = {"permissions": [], "groups": [level]}
+            created_groups.append(gname)
+    if created_groups:
+        permissions_mod.save_groups(all_groups)
+
+    return jsonify(
+        success=True,
+        instrument=instrument,
+        created_groups=created_groups,
+    )
+
+
+def ariapp_api_manage_instruments_remove(self):
+    """Remove an instrument: deletes its profile entry and all groups."""
+    user_info, cur_perms = self._require_admin_user()
+    if not user_info:
+        return jsonify(success=False, error="Unauthorized"), 401
+    if "add.instrument" not in (cur_perms or set()):
+        return jsonify(
+            success=False, error="Insufficient permissions"
+        ), 403
+
+    body = request.get_json(silent=True) or {}
+    instrument = str(body.get("instrument", "") or "").strip()
+    if not instrument:
+        return jsonify(
+            success=False, error="instrument name is required"
+        ), 400
+
+    all_profiles = auth.load_apero_profiles(hydrate=False)
+    if not isinstance(all_profiles, dict) or instrument not in all_profiles:
+        return jsonify(
+            success=False,
+            error="Instrument '{}' not found".format(instrument),
+        ), 404
+
+    del all_profiles[instrument]
+    auth.save_apero_profiles(all_profiles)
+
+    # Delete per-instrument groups and remove from users.
+    all_groups = permissions_mod.load_groups()
+    deleted_groups = []
+    for level in _INSTRUMENT_GROUP_LEVELS:
+        gname = "{}.{}".format(level, instrument)
+        if gname in all_groups:
+            del all_groups[gname]
+            deleted_groups.append(gname)
+    if deleted_groups:
+        permissions_mod.save_groups(all_groups)
+        all_users_raw = auth.load_users()
+        for uname, udata in all_users_raw.items():
+            if not isinstance(udata, dict):
+                continue
+            user_groups = list(udata.get("groups") or [])
+            new_groups = [
+                g for g in user_groups if g not in deleted_groups
+            ]
+            if new_groups != user_groups:
+                all_users_raw[uname]["groups"] = new_groups
+        auth.save_users(all_users_raw)
+
+    return jsonify(
+        success=True,
+        instrument=instrument,
+        deleted_groups=deleted_groups,
+    )
+
+
+# =============================================================================
+# Upload management — Admin APIs
+# =============================================================================
+
+def ariapp_api_admin_uploads_config_get(self):
+    """Return all upload directory configurations."""
+    user_info, user_perms = self._require_admin_user()
+    if not user_info:
+        return jsonify(success=False, error="Unauthorized"), 401
+
+    all_groups = sorted(self.ari_groups.keys())
+    editor_groups = user_info.get("groups", [])
+    editor_perms = permissions_mod.resolve_user_permissions(
+        editor_groups, self.ari_groups
+    )
+    can_manage = sorted(
+        g for g in all_groups if f"manage.group.{g}" in editor_perms
+    )
+    if auth.user_has_admin_privileges(editor_groups):
+        can_manage = sorted(
+            g for g in all_groups if g not in ("super_admin",)
+        )
+    if auth.user_is_super_admin(editor_groups):
+        can_manage = all_groups
+
+    directories = upd.get_all_directories()
+    return jsonify(
+        success=True,
+        directories=directories,
+        all_groups=all_groups,
+        can_manage_groups=can_manage,
+    )
+
+
+def ariapp_api_admin_uploads_dir_add(self):
+    """Add a new upload directory."""
+    user_info, _ = self._require_admin_user()
+    if not user_info:
+        return jsonify(success=False, error="Unauthorized"), 401
+
+    body = request.get_json(silent=True) or {}
+    name = str(body.get("name", "")).strip()
+    path = str(body.get("path", "")).strip()
+    dir_type = str(body.get("type", "per_user")).strip()
+    quota_gb = body.get("quota_gb", 1.0)
+    allowed_groups = list(body.get("allowed_groups", []))
+
+    if not name:
+        return jsonify(success=False, error="Name is required"), 400
+    if not path:
+        return jsonify(success=False, error="Path is required"), 400
+    if dir_type not in ("per_user", "global"):
+        return jsonify(
+            success=False, error="type must be per_user or global"
+        ), 400
+    try:
+        quota_gb = float(quota_gb)
+        if quota_gb <= 0:
+            raise ValueError
+    except (TypeError, ValueError):
+        return jsonify(
+            success=False, error="quota_gb must be a positive number"
+        ), 400
+
+    # Validate allowed_groups against manageable groups
+    editor_groups = user_info.get("groups", [])
+    all_groups = set(self.ari_groups.keys())
+    editor_perms = permissions_mod.resolve_user_permissions(
+        editor_groups, self.ari_groups
+    )
+    if auth.user_is_super_admin(editor_groups):
+        can_set = all_groups
+    elif auth.user_has_admin_privileges(editor_groups):
+        can_set = {g for g in all_groups if g != "super_admin"}
+    else:
+        can_set = {
+            g for g in all_groups
+            if f"manage.group.{g}" in editor_perms
+        }
+    invalid = set(allowed_groups) - can_set
+    if invalid:
+        return jsonify(
+            success=False,
+            error=f"Cannot set groups: {sorted(invalid)}",
+        ), 403
+
+    entry = upd.add_directory(name, path, dir_type, quota_gb, allowed_groups)
+    return jsonify(success=True, entry=entry)
+
+
+def ariapp_api_admin_uploads_dir_edit(self):
+    """Edit an existing upload directory."""
+    user_info, _ = self._require_admin_user()
+    if not user_info:
+        return jsonify(success=False, error="Unauthorized"), 401
+
+    body = request.get_json(silent=True) or {}
+    dir_id = str(body.get("id", "")).strip()
+    if not dir_id:
+        return jsonify(success=False, error="id is required"), 400
+
+    name = str(body.get("name", "")).strip()
+    path = str(body.get("path", "")).strip()
+    dir_type = str(body.get("type", "per_user")).strip()
+    quota_gb = body.get("quota_gb", 1.0)
+    allowed_groups = list(body.get("allowed_groups", []))
+
+    if not name:
+        return jsonify(success=False, error="Name is required"), 400
+    if not path:
+        return jsonify(success=False, error="Path is required"), 400
+    if dir_type not in ("per_user", "global"):
+        return jsonify(
+            success=False, error="type must be per_user or global"
+        ), 400
+    try:
+        quota_gb = float(quota_gb)
+        if quota_gb <= 0:
+            raise ValueError
+    except (TypeError, ValueError):
+        return jsonify(
+            success=False, error="quota_gb must be a positive number"
+        ), 400
+
+    editor_groups = user_info.get("groups", [])
+    all_groups = set(self.ari_groups.keys())
+    editor_perms = permissions_mod.resolve_user_permissions(
+        editor_groups, self.ari_groups
+    )
+    if auth.user_is_super_admin(editor_groups):
+        can_set = all_groups
+    elif auth.user_has_admin_privileges(editor_groups):
+        can_set = {g for g in all_groups if g != "super_admin"}
+    else:
+        can_set = {
+            g for g in all_groups
+            if f"manage.group.{g}" in editor_perms
+        }
+    invalid = set(allowed_groups) - can_set
+    if invalid:
+        return jsonify(
+            success=False,
+            error=f"Cannot set groups: {sorted(invalid)}",
+        ), 403
+
+    updated = upd.edit_directory(
+        dir_id, name, path, dir_type, quota_gb, allowed_groups
+    )
+    if updated is None:
+        return jsonify(success=False, error="Directory not found"), 404
+    return jsonify(success=True, entry=updated)
+
+
+def ariapp_api_admin_uploads_dir_delete(self):
+    """Delete an upload directory entry."""
+    user_info, _ = self._require_admin_user()
+    if not user_info:
+        return jsonify(success=False, error="Unauthorized"), 401
+
+    body = request.get_json(silent=True) or {}
+    dir_id = str(body.get("id", "")).strip()
+    if not dir_id:
+        return jsonify(success=False, error="id is required"), 400
+
+    deleted = upd.delete_directory(dir_id)
+    if not deleted:
+        return jsonify(success=False, error="Directory not found"), 404
+    return jsonify(success=True)
+
+
+def ariapp_api_admin_uploads_quota_get(self):
+    """Return quota usage for all configured upload directories."""
+    user_info, _ = self._require_admin_user()
+    if not user_info:
+        return jsonify(success=False, error="Unauthorized"), 401
+
+    dirs = upd.get_all_directories()
+    result = []
+    for d in dirs:
+        rows = upd.get_all_users_quota(d)
+        result.append({"id": d["id"], "name": d["name"], "rows": rows})
+    return jsonify(success=True, quota=result)
+
+
+# =============================================================================
+# Upload management — User APIs
+# =============================================================================
+
+def _user_accessible_dirs(user_info):
+    """Return directories that the user has access to upload to."""
+    user_groups = set(user_info.get("groups", []))
+    accessible = []
+    for d in upd.get_all_directories():
+        allowed = set(d.get("allowed_groups", []))
+        if user_groups & allowed:
+            accessible.append(d)
+    return accessible
+
+
+def ariapp_api_user_uploads_list(self):
+    """List user's uploaded files per accessible directory."""
+    user_info = self._require_user()
+    if not user_info:
+        return jsonify(success=False, error="Unauthorized"), 401
+
+    username = user_info["username"]
+    accessible = _user_accessible_dirs(user_info)
+    result = []
+    for d in accessible:
+        files = upd.list_user_files(d, username)
+        quota_info = upd.get_quota_info_for_user(d, username)
+        # Attach share tokens if they exist
+        shares_data = upd._load_shares()
+        token_map = {}
+        for tok, info in shares_data.items():
+            if (
+                info.get("dir_id") == d["id"]
+                and info.get("username") == username
+            ):
+                token_map[info["filename"]] = tok
+        for f in files:
+            f["share_token"] = token_map.get(f["filename"])
+        result.append({
+            "id": d["id"],
+            "name": d["name"],
+            "type": d["type"],
+            "quota": quota_info,
+            "files": files,
+        })
+    return jsonify(success=True, directories=result)
+
+
+def ariapp_api_user_uploads_upload(self):
+    """Handle a file upload from a user."""
+    user_info = self._require_user()
+    if not user_info:
+        return jsonify(success=False, error="Unauthorized"), 401
+
+    username = user_info["username"]
+    dir_id = request.form.get("dir_id", "").strip()
+    if not dir_id:
+        return jsonify(success=False, error="dir_id is required"), 400
+
+    accessible = {d["id"]: d for d in _user_accessible_dirs(user_info)}
+    if dir_id not in accessible:
+        return jsonify(
+            success=False, error="Access denied to this directory"
+        ), 403
+
+    if "file" not in request.files:
+        return jsonify(success=False, error="No file part"), 400
+
+    file_obj = request.files["file"]
+    if not file_obj or not file_obj.filename:
+        return jsonify(success=False, error="No file selected"), 400
+
+    safe_name = secure_filename(file_obj.filename)
+    if not safe_name:
+        return jsonify(success=False, error="Invalid filename"), 400
+
+    dir_cfg = accessible[dir_id]
+    ok, err = upd.store_file(dir_cfg, username, safe_name, file_obj)
+    if not ok:
+        return jsonify(success=False, error=err), 400
+
+    files = upd.list_user_files(dir_cfg, username)
+    quota_info = upd.get_quota_info_for_user(dir_cfg, username)
+    return jsonify(
+        success=True,
+        filename=safe_name,
+        files=files,
+        quota=quota_info,
+    )
+
+
+def ariapp_api_user_uploads_delete(self):
+    """Delete a file from a user's upload directory."""
+    user_info = self._require_user()
+    if not user_info:
+        return jsonify(success=False, error="Unauthorized"), 401
+
+    username = user_info["username"]
+    body = request.get_json(silent=True) or {}
+    dir_id = str(body.get("dir_id", "")).strip()
+    filename = str(body.get("filename", "")).strip()
+
+    if not dir_id or not filename:
+        return jsonify(
+            success=False, error="dir_id and filename are required"
+        ), 400
+
+    accessible = {d["id"]: d for d in _user_accessible_dirs(user_info)}
+    if dir_id not in accessible:
+        return jsonify(
+            success=False, error="Access denied to this directory"
+        ), 403
+
+    dir_cfg = accessible[dir_id]
+    safe_name = secure_filename(filename)
+    if not safe_name or safe_name != filename:
+        return jsonify(success=False, error="Invalid filename"), 400
+
+    # Remove any share token for this file
+    upd.delete_share_token(dir_id, username, safe_name)
+
+    ok, err = upd.delete_file(dir_cfg, username, safe_name)
+    if not ok:
+        return jsonify(success=False, error=err), 400
+
+    files = upd.list_user_files(dir_cfg, username)
+    quota_info = upd.get_quota_info_for_user(dir_cfg, username)
+    return jsonify(success=True, files=files, quota=quota_info)
+
+
+def ariapp_api_user_uploads_share(self):
+    """Create or retrieve a share link for an uploaded file."""
+    user_info = self._require_user()
+    if not user_info:
+        return jsonify(success=False, error="Unauthorized"), 401
+
+    username = user_info["username"]
+    body = request.get_json(silent=True) or {}
+    dir_id = str(body.get("dir_id", "")).strip()
+    filename = str(body.get("filename", "")).strip()
+
+    if not dir_id or not filename:
+        return jsonify(
+            success=False, error="dir_id and filename are required"
+        ), 400
+
+    accessible = {d["id"]: d for d in _user_accessible_dirs(user_info)}
+    if dir_id not in accessible:
+        return jsonify(
+            success=False, error="Access denied to this directory"
+        ), 403
+
+    safe_name = secure_filename(filename)
+    if not safe_name or safe_name != filename:
+        return jsonify(success=False, error="Invalid filename"), 400
+
+    dir_cfg = accessible[dir_id]
+    upload_dir = upd._user_upload_dir(dir_cfg, username)
+    target = upd._resolve_safe(upload_dir, safe_name)
+    if target is None or not target.is_file():
+        return jsonify(success=False, error="File not found"), 404
+
+    token = upd.create_share_token(dir_id, username, safe_name)
+    return jsonify(success=True, token=token)
+
+
+def ariapp_uploads_share_download(self, token):
+    """Serve a shared uploaded file by token."""
+    result = upd.resolve_share_token(token)
+    if result is None:
+        return jsonify(error="Invalid or expired link"), 404
+
+    dir_cfg, username, filename = result
+    safe_name = secure_filename(filename)
+    if not safe_name:
+        return jsonify(error="Invalid file"), 404
+
+    upload_dir = upd._user_upload_dir(dir_cfg, username)
+    target = upd._resolve_safe(upload_dir, safe_name)
+    if target is None or not target.is_file():
+        return jsonify(error="File not found"), 404
+
+    return send_file(str(target), as_attachment=True, download_name=safe_name)

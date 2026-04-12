@@ -1000,27 +1000,34 @@ async function smMountVolume(mountName) {
             return;
         }
         const command = String(data.command || '').trim();
-        if (command && navigator.clipboard && navigator.clipboard.writeText) {
-            try {
-                await navigator.clipboard.writeText(command);
-                smSetMsgWithLog(
-                    (data.message || 'Mount command ready.')
-                    + ' Command copied. Run this command in your terminal:\n' + command,
-                    true,
-                    [`Manual mount command: ${command}`].concat(logLines)
-                );
-            } catch (_) {
-                smSetMsgWithLog(
-                    (data.message || 'Mount command ready.')
-                    + ' Copy and run this command in your terminal:\n' + command,
-                    true,
-                    [`Manual mount command: ${command}`].concat(logLines)
-                );
+        if (command) {
+            // Use execCommand fallback — navigator.clipboard requires a
+            // secure context AND a live user-gesture, both of which are lost
+            // after an await.  The textarea trick works reliably in all
+            // contexts the admin portal is served from.
+            let copied = false;
+            const ta = document.createElement('textarea');
+            ta.value = command;
+            ta.setAttribute('readonly', 'readonly');
+            ta.style.cssText = 'position:fixed;left:-9999px;top:0;';
+            document.body.appendChild(ta);
+            ta.select();
+            try { copied = document.execCommand('copy'); } catch (_) {}
+            document.body.removeChild(ta);
+
+            // Best-effort modern API on top (HTTPS / localhost only)
+            if (!copied && navigator.clipboard && navigator.clipboard.writeText) {
+                try {
+                    await navigator.clipboard.writeText(command);
+                    copied = true;
+                } catch (_) {}
             }
-        } else if (command) {
+
             smSetMsgWithLog(
                 (data.message || 'Mount command ready.')
-                + ' Copy and run this command in your terminal:\n' + command,
+                + (copied
+                    ? ' Command copied to clipboard. Run this command in your terminal:\n' + command
+                    : ' Could not copy automatically — run this command in your terminal:\n' + command),
                 true,
                 [`Manual mount command: ${command}`].concat(logLines)
             );

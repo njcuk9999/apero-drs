@@ -50,6 +50,23 @@ def load_groups() -> Dict[str, dict]:
         return yaml.safe_load(fio)
 
 
+def save_groups(groups: Dict[str, dict]) -> None:
+    """
+    Save group definitions to ``groups.yaml``.
+
+    :param groups: dict mapping group names to group definition dicts
+    :type groups: dict
+    """
+    with open(GROUPS_FILE, "w") as fio:
+        yaml.dump(
+            groups,
+            fio,
+            default_flow_style=False,
+            allow_unicode=True,
+            sort_keys=False,
+        )
+
+
 def load_pages() -> Dict[str, dict]:
     """
     Load page definitions from ``pages.yaml``.

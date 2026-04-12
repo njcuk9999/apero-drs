@@ -80,6 +80,41 @@
         </div>
     </div>
 </div>
+
+<!-- ICS / External Calendars (admin — per instrument) -->
+<div class="ari-cal-ics-section" id="admin-cal-ics-section" style="margin-top:1.5rem;">
+    <h4 class="ari-cal-ics-title">
+        <i class="fa-solid fa-link"></i> External Calendars
+        <span class="ari-cal-ics-instr-label" id="admin-ics-instr-label"></span>
+    </h4>
+    <div id="admin-cal-ics-feed-list" class="ari-cal-ics-list">
+        <p class="ari-cal-ics-empty" id="admin-cal-ics-empty">
+            Select an instrument above to manage its external feed links.
+        </p>
+    </div>
+    <details class="ari-cal-ics-add-wrap" id="admin-ics-add-wrap" style="display:none;">
+        <summary class="ari-cal-ics-add-toggle">
+            <i class="fa-solid fa-plus"></i> Link external calendar (.ics)
+        </summary>
+        <form class="ari-cal-ics-add-form" id="admin-cal-ics-add-form">
+            <div class="ari-form-group">
+                <label>Name</label>
+                <input type="text" id="admin-ics-name" placeholder="e.g. Telescope Schedule" required>
+            </div>
+            <div class="ari-form-group">
+                <label>ICS URL</label>
+                <input type="url" id="admin-ics-url" placeholder="https://…/calendar.ics" required>
+            </div>
+            <div class="ari-form-group">
+                <label>Colour</label>
+                <input type="color" id="admin-ics-color" value="#7b5ea7">
+            </div>
+            <button type="submit" class="ari-btn ari-btn--primary ari-btn--sm">
+                Add &amp; Sync
+            </button>
+        </form>
+    </details>
+</div>
 {% endif %}
 
 {% else %}
@@ -97,8 +132,13 @@ window.ARI_ADMIN_CAL = {
     saveUrl: {{ url_for('api_admin_calendar_save')|tojson }},
     deleteUrl: {{ url_for('api_admin_calendar_delete')|tojson }},
     canManage: {{ can_manage|tojson }},
+    icsListUrl: {{ url_for('api_admin_ics_list')|tojson }},
+    icsAddUrl: {{ url_for('api_admin_ics_add')|tojson }},
+    icsDeleteUrl: {{ url_for('api_admin_ics_delete')|tojson }},
+    icsRefreshUrl: {{ url_for('api_admin_ics_refresh')|tojson }},
 };
 </script>
 <script src="{{ url_for('static', filename='js/tz_common.js') }}"></script>
 <script src="{{ url_for('static', filename='js/admin_calendar.js') }}"></script>
+<script src="{{ url_for('static', filename='js/cal_ics.js') }}"></script>
 {% endblock %}

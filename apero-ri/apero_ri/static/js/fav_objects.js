@@ -1,51 +1,192 @@
+/* Favourite objects page – sections, drag/drop, modals (v20260411b) */
 (function () {
     'use strict';
 
-    var cfg = window.ARI_FAV_OBJECTS || {};
-    var profileId = String(cfg.profileId || '').trim();
-    var removeApiUrl = String(cfg.removeApiUrl || '').trim();
-    var reorderApiUrl = String(cfg.reorderApiUrl || '').trim();
+    var cfg              = window.ARI_FAV_OBJECTS || {};
+    var profileId        = String(cfg.profileId          || '').trim();
+    var removeApiUrl     = String(cfg.removeApiUrl        || '').trim();
+    var sectionsSaveUrl  = String(cfg.sectionsSaveApiUrl  || '').trim();
+    var secRenameUrl     = String(cfg.sectionsRenameApiUrl || '').trim();
+    var secDeleteUrl     = String(cfg.sectionsDeleteApiUrl || '').trim();
+    var metaSaveUrl      = String(cfg.metaSaveApiUrl      || '').trim();
+    var addApiUrl        = String(cfg.addApiUrl           || '').trim();
+    var addBulkApiUrl    = String(cfg.addBulkApiUrl       || '').trim();
 
-    var listEl = document.getElementById('fav-objects-list');
-    var emptyEl = document.getElementById('fav-empty');
-    var countEl = document.getElementById('fav-objects-count');
-    var removeAllBtn = document.getElementById('fav-remove-all-btn');
+    if (!profileId) { return; }
 
-    if (!listEl || !profileId || !removeApiUrl) {
-        return;
+    // ------------------------------------------------------------------
+    // DOM references
+    // ------------------------------------------------------------------
+    var sectionsContainer  = document.getElementById('fav-sections-container');
+    var emptyEl            = document.getElementById('fav-empty');
+    var countEl            = document.getElementById('fav-objects-count');
+
+    // Add objects modal
+    var showAddModalBtn    = document.getElementById('fav-show-add-modal-btn');
+    var addModal           = document.getElementById('fav-add-modal');
+    var addModalClose      = document.getElementById('fav-add-modal-close');
+    var addModalDone       = document.getElementById('fav-add-modal-done');
+    var addQueryEl         = document.getElementById('fav-add-query');
+    var addSectionEl       = document.getElementById('fav-add-section');
+    var addBtn             = document.getElementById('fav-add-btn');
+    var addFeedback        = document.getElementById('fav-add-feedback');
+    var addCandidates      = document.getElementById('fav-add-candidates');
+    var bulkSectionEl      = document.getElementById('fav-bulk-section');
+    var bulkBtn            = document.getElementById('fav-bulk-btn');
+    var bulkFileInput      = document.getElementById('fav-bulk-file');
+
+    // Manage sections modal
+    var manageSectionsBtn  = document.getElementById('fav-manage-sections-btn');
+    var manageModal        = document.getElementById('fav-manage-modal');
+    var manageModalClose   = document.getElementById('fav-manage-modal-close');
+    var manageModalDone    = document.getElementById('fav-manage-modal-done');
+    var newSectionInput    = document.getElementById('fav-new-section-input');
+    var newSectionAddBtn   = document.getElementById('fav-new-section-add-btn');
+    var newSectionFeedback = document.getElementById('fav-new-section-feedback');
+    var manageSectionsList = document.getElementById('fav-manage-sections-list');
+
+    // Meta modal
+    var metaModal          = document.getElementById('fav-meta-modal');
+    var metaObjname        = document.getElementById('fav-meta-objname');
+    var metaSection        = document.getElementById('fav-meta-section');
+    var metaNickname       = document.getElementById('fav-meta-nickname-input');
+    var metaNote           = document.getElementById('fav-meta-note-input');
+    var metaSaveBtn        = document.getElementById('fav-meta-save-btn');
+    var metaCancelBtn      = document.getElementById('fav-meta-cancel-btn');
+    var metaModalClose     = document.getElementById('fav-meta-modal-close');
+
+    // Bulk results modal
+    var bulkModal          = document.getElementById('fav-bulk-results-modal');
+    var bulkResultsBody    = document.getElementById('fav-bulk-results-body');
+    var bulkModalOk        = document.getElementById('fav-bulk-modal-ok');
+    var bulkModalClose     = document.getElementById('fav-bulk-modal-close');
+
+    // ------------------------------------------------------------------
+    // Utilities
+    // ------------------------------------------------------------------
+    function post(url, data) {
+        return fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+        }).then(function (r) { return r.json(); });
     }
 
-    function listCards() {
-        return Array.prototype.slice.call(
-            listEl.querySelectorAll('.ari-fav-card[data-objname]')
-        );
+    function _esc(str) {
+        return String(str || '')
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;');
     }
 
+    // ------------------------------------------------------------------
+    // Global state
+    // ------------------------------------------------------------------
     function updateState() {
-        var cards = listCards();
+        var cards = Array.prototype.slice.call(
+            document.querySelectorAll('.ari-fav-card[data-objname]')
+        );
         var count = cards.length;
-        if (countEl) {
-            countEl.textContent = String(count);
-        }
-        if (emptyEl) {
-            emptyEl.style.display = count ? 'none' : '';
-        }
-        if (removeAllBtn) {
-            removeAllBtn.disabled = (count === 0);
-        }
+        if (countEl) { countEl.textContent = String(count); }
+        if (emptyEl) { emptyEl.style.display = count ? 'none' : ''; }
+
+        // Per-section counts + disable remove-all when empty
+        Array.prototype.slice.call(
+            document.querySelectorAll('.ari-fav-section[data-section]')
+        ).forEach(function (secEl) {
+            var body   = secEl.querySelector('.ari-fav-section__body');
+            var badge  = secEl.querySelector('.ari-fav-section__count');
+            var rmBtn  = secEl.querySelector(
+                '.ari-fav-section__remove-all-btn'
+            );
+            if (body && badge) {
+                var n = body.querySelectorAll(
+                    '.ari-fav-card[data-objname]'
+                ).length;
+                badge.textContent = '(' + n + ')';
+                if (rmBtn) { rmBtn.disabled = n === 0; }
+            }
+        });
     }
 
-    function orderedObjectNames() {
-        return listCards()
-            .map(function (card) {
-                return String(card.getAttribute('data-objname') || '').trim();
-            })
-            .filter(function (name) { return !!name; });
+    function getSectionNames() {
+        return Array.prototype.slice.call(
+            document.querySelectorAll('.ari-fav-section[data-section]')
+        ).map(function (el) {
+            return el.getAttribute('data-section');
+        });
     }
 
-    function removeCard(objname) {
-        var card = listEl.querySelector(
-            '.ari-fav-card[data-objname="' + CSS.escape(objname) + '"]'
+    function updateSectionSelects() {
+        var names = getSectionNames();
+        function rebuild(sel) {
+            if (!sel) { return; }
+            var prev = sel.value;
+            sel.innerHTML = names.map(function (n) {
+                return '<option value="' + _esc(n) + '">'
+                    + _esc(n) + '</option>';
+            }).join('');
+            if (names.indexOf(prev) >= 0) { sel.value = prev; }
+        }
+        rebuild(addSectionEl);
+        rebuild(bulkSectionEl);
+    }
+
+    // ------------------------------------------------------------------
+    // Sections state – read DOM order / collapse / items
+    // ------------------------------------------------------------------
+    function readSectionsState() {
+        var secs = [];
+        Array.prototype.slice.call(
+            document.querySelectorAll('.ari-fav-section[data-section]')
+        ).forEach(function (secEl) {
+            var name = String(
+                secEl.getAttribute('data-section') || ''
+            ).trim();
+            var body = secEl.querySelector('.ari-fav-section__body');
+            var collapsed = body
+                ? body.style.display === 'none'
+                : false;
+            var items = [];
+            if (body) {
+                Array.prototype.slice.call(
+                    body.querySelectorAll('.ari-fav-card[data-objname]')
+                ).forEach(function (card) {
+                    var o = String(
+                        card.getAttribute('data-objname') || ''
+                    ).trim();
+                    if (o) { items.push({ objname: o }); }
+                });
+            }
+            if (name) {
+                secs.push({
+                    name: name,
+                    collapsed: collapsed,
+                    items: items
+                });
+            }
+        });
+        return secs;
+    }
+
+    async function saveSections() {
+        if (!sectionsSaveUrl) { return; }
+        try {
+            await post(sectionsSaveUrl, {
+                profile_id: profileId,
+                sections: readSectionsState()
+            });
+        } catch (e) { /* silent */ }
+    }
+
+    // ------------------------------------------------------------------
+    // Card removal
+    // ------------------------------------------------------------------
+    function removeCardFromDOM(objname) {
+        var esc  = CSS.escape(objname);
+        var card = document.querySelector(
+            '.ari-fav-card[data-objname="' + esc + '"]'
         );
         if (card && card.parentNode) {
             card.parentNode.removeChild(card);
@@ -53,234 +194,1107 @@
         updateState();
     }
 
-    async function removeFavourite(objname) {
-        var response = await fetch(removeApiUrl, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                profile_id: profileId,
-                objname: objname,
-            })
-        });
-        var payload = await response.json();
-        if (!payload.success) {
-            throw new Error(payload.error || 'Could not remove favourite object');
-        }
+    // ------------------------------------------------------------------
+    // Build a card DOM element
+    // ------------------------------------------------------------------
+    function buildCard(objname, nickname, note, sectionName) {
+        var displayName = nickname
+            ? '<span class="ari-fav-card__nickname">'
+              + _esc(nickname) + '</span>'
+              + ' <span class="ari-fav-card__aperoname">('
+              + _esc(objname) + ')</span>'
+            : _esc(objname);
+        var noteHtml = note
+            ? '<p class="ari-fav-card__note">'
+              + _esc(note) + '</p>'
+            : '<p class="ari-fav-card__note-placeholder">'
+              + 'No description.</p>';
+        var openUrl = window.location.href.replace(
+            /\/fav-objects.*$/,
+            '/' + encodeURIComponent(objname)
+        );
+        var wrapper = document.createElement('div');
+        wrapper.innerHTML = [
+            '<article class="ari-rp-section-card ari-fav-card"',
+            ' data-objname="' + _esc(objname) + '"',
+            ' data-section="' + _esc(sectionName) + '"',
+            ' data-open-url="' + _esc(openUrl) + '"',
+            ' draggable="false">',
+            '<button type="button" class="ari-fav-card__drag"',
+            ' title="Drag to reorder" aria-label="Drag to reorder">',
+            '<span class="ari-fav-card__drag-dots" aria-hidden="true">',
+            '<span></span><span></span>',
+            '<span></span><span></span>',
+            '<span></span><span></span>',
+            '</span></button>',
+            '<div class="ari-rp-section-card__icon">',
+            '<i class="fa-solid fa-star"></i></div>',
+            '<div class="ari-rp-section-card__body">',
+            '<h3>' + displayName + '</h3>' + noteHtml + '</div>',
+            '<div class="ari-fav-card__actions">',
+            '<button type="button"',
+            ' class="ari-btn ari-btn--sm ari-btn--secondary',
+            ' fav-edit-meta-btn"',
+            ' data-objname="' + _esc(objname) + '"',
+            ' data-section="' + _esc(sectionName) + '"',
+            ' data-nickname="' + _esc(nickname) + '"',
+            ' data-note="' + _esc(note) + '"',
+            ' title="Edit nickname and note">',
+            '<i class="fa-solid fa-pen-to-square"></i></button>',
+            '<button type="button"',
+            ' class="ari-btn ari-btn--sm ari-btn--secondary',
+            ' fav-remove-btn"',
+            ' data-objname="' + _esc(objname) + '"',
+            ' title="Remove favourite">',
+            '<i class="fa-solid fa-trash"></i></button>',
+            '</div></article>'
+        ].join('');
+        var card = wrapper.firstElementChild;
+        wireCardEvents(card);
+        return card;
     }
 
-    async function reorderFavourites(objnames) {
-        if (!reorderApiUrl) {
-            return;
-        }
-        var response = await fetch(reorderApiUrl, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                profile_id: profileId,
-                objnames: objnames,
-            })
-        });
-        var payload = await response.json();
-        if (!payload.success) {
-            throw new Error(payload.error || 'Could not reorder favourite objects');
-        }
-    }
-
-    function shouldIgnoreCardClick(target) {
-        if (!(target instanceof Element)) {
-            return false;
-        }
-        return !!target.closest('.fav-remove-btn, .ari-fav-card__drag');
-    }
-
-    function armCardForDrag(card) {
-        if (!(card instanceof Element)) {
-            return;
-        }
-        card.setAttribute('data-drag-armed', '1');
-    }
-
-    function disarmCardDrag(card) {
-        if (!(card instanceof Element)) {
-            return;
-        }
-        card.removeAttribute('data-drag-armed');
-    }
-
+    // ------------------------------------------------------------------
+    // Card event wiring
+    // ------------------------------------------------------------------
     function wireCardEvents(card) {
-        if (!(card instanceof Element)) {
-            return;
-        }
+        if (!(card instanceof Element)) { return; }
+        var openUrl = String(
+            card.getAttribute('data-open-url') || ''
+        ).trim();
 
-        var openUrl = String(card.getAttribute('data-open-url') || '').trim();
-        if (openUrl) {
-            card.addEventListener('click', function (ev) {
-                if (shouldIgnoreCardClick(ev.target)) {
-                    return;
-                }
-                window.location.href = openUrl;
-            });
-        }
+        card.addEventListener('click', function (ev) {
+            if (ev.target.closest(
+                '.fav-remove-btn,.fav-edit-meta-btn,.ari-fav-card__drag'
+            )) { return; }
+            if (openUrl) { window.location.href = openUrl; }
+        });
 
-        var dragHandle = card.querySelector('.ari-fav-card__drag');
         var removeBtn = card.querySelector('.fav-remove-btn');
         if (removeBtn) {
             removeBtn.addEventListener('click', async function (ev) {
                 ev.preventDefault();
                 ev.stopPropagation();
-                var objname = String(removeBtn.getAttribute('data-objname') || '').trim();
-                if (!objname) {
-                    return;
-                }
+                var o = String(
+                    removeBtn.getAttribute('data-objname') || ''
+                ).trim();
+                if (!o) { return; }
                 removeBtn.disabled = true;
                 try {
-                    await removeFavourite(objname);
-                    removeCard(objname);
+                    var r = await post(removeApiUrl, {
+                        profile_id: profileId,
+                        objname: o
+                    });
+                    if (!r.success) {
+                        throw new Error(r.error || 'Could not remove');
+                    }
+                    removeCardFromDOM(o);
                 } catch (err) {
-                    window.alert(err.message || 'Could not remove favourite object.');
+                    window.alert(err.message || 'Could not remove.');
                     removeBtn.disabled = false;
                 }
             });
         }
 
-        if (!dragHandle) {
-            return;
+        var editBtn = card.querySelector('.fav-edit-meta-btn');
+        if (editBtn) {
+            editBtn.addEventListener('click', function (ev) {
+                ev.preventDefault();
+                ev.stopPropagation();
+                openMetaModal(
+                    String(editBtn.getAttribute('data-objname')  || '').trim(),
+                    String(editBtn.getAttribute('data-section')  || '').trim(),
+                    String(editBtn.getAttribute('data-nickname') || '').trim(),
+                    String(editBtn.getAttribute('data-note')     || '').trim()
+                );
+            });
         }
 
-        dragHandle.addEventListener('mousedown', function (ev) {
-            ev.stopPropagation();
-            armCardForDrag(card);
-        });
-        dragHandle.addEventListener('pointerdown', function (ev) {
-            ev.stopPropagation();
-            armCardForDrag(card);
-        });
-        dragHandle.addEventListener('touchstart', function (ev) {
-            ev.stopPropagation();
-            armCardForDrag(card);
-        });
-        dragHandle.addEventListener('click', function (ev) {
-            ev.preventDefault();
-            ev.stopPropagation();
-        });
-        dragHandle.addEventListener('dragstart', function (ev) {
-            ev.stopPropagation();
-        });
+        wireDragCard(card);
+    }
+
+    // ------------------------------------------------------------------
+    // Card drag-and-drop
+    // ------------------------------------------------------------------
+    var _draggingCard = null;
+
+    function wireDragCard(card) {
+        var handle = card.querySelector('.ari-fav-card__drag');
+        var armed  = false;
+        card.setAttribute('draggable', 'false');
+
+        function disarm() {
+            armed = false;
+            card.setAttribute('draggable', 'false');
+        }
+
+        if (handle) {
+            ['mousedown', 'pointerdown', 'touchstart'].forEach(function (evType) {
+                handle.addEventListener(evType, function (e) {
+                    e.stopPropagation();
+                    armed = true;
+                    card.setAttribute('draggable', 'true');
+                });
+            });
+            handle.addEventListener('click', function (e) {
+                e.preventDefault();
+                e.stopPropagation();
+            });
+        }
 
         card.addEventListener('dragstart', function (ev) {
-            if (card.getAttribute('data-drag-armed') !== '1') {
-                ev.preventDefault();
+            if (!armed) {
+                ev.stopPropagation();
                 return;
             }
+            _draggingCard = card;
             card.classList.add('is-dragging');
             ev.dataTransfer.effectAllowed = 'move';
-            ev.dataTransfer.setData('text/plain',
-                String(card.getAttribute('data-objname') || ''));
+            ev.dataTransfer.setData(
+                'text/plain',
+                String(card.getAttribute('data-objname') || '')
+            );
         });
-
         card.addEventListener('dragend', function () {
             card.classList.remove('is-dragging');
-            disarmCardDrag(card);
+            disarm();
+            _draggingCard = null;
+            saveSections();
         });
-
-        card.addEventListener('mouseup', function () {
-            if (!card.classList.contains('is-dragging')) {
-                disarmCardDrag(card);
-            }
+        document.addEventListener('mouseup', function () {
+            if (!card.classList.contains('is-dragging')) { disarm(); }
         });
     }
 
-    listEl.addEventListener('dragover', function (ev) {
-        ev.preventDefault();
-        var dragging = listEl.querySelector('.ari-fav-card.is-dragging');
-        if (!dragging) {
-            return;
-        }
-        var target = ev.target.closest('.ari-fav-card[data-objname]');
-        if (!target || target === dragging || target.parentNode !== listEl) {
-            return;
-        }
-
-        var rect = target.getBoundingClientRect();
-        var insertBefore = ev.clientY < (rect.top + rect.height / 2);
-        if (insertBefore) {
-            listEl.insertBefore(dragging, target);
-        } else {
-            listEl.insertBefore(dragging, target.nextSibling);
-        }
-    });
-
-    listEl.addEventListener('drop', async function (ev) {
-        ev.preventDefault();
-        var dragging = listEl.querySelector('.ari-fav-card.is-dragging');
-        if (!dragging) {
-            return;
-        }
-        try {
-            await reorderFavourites(orderedObjectNames());
-        } catch (err) {
-            window.alert(err.message || 'Could not reorder favourites.');
-        }
-    });
-
-    // Delegated click handler keeps card navigation robust even if a card's
-    // individual handler was not wired for any reason.
-    listEl.addEventListener('click', function (ev) {
-        var target = ev.target;
-        if (!(target instanceof Element)) {
-            return;
-        }
-        if (shouldIgnoreCardClick(target)) {
-            return;
-        }
-        var card = target.closest('.ari-fav-card[data-open-url]');
-        if (!card) {
-            return;
-        }
-        var openUrl = String(card.getAttribute('data-open-url') || '').trim();
-        if (!openUrl) {
-            return;
-        }
-        window.location.href = openUrl;
-    });
-
-    document.addEventListener('mouseup', function () {
-        listCards().forEach(function (card) {
-            if (!card.classList.contains('is-dragging')) {
-                disarmCardDrag(card);
-            }
-        });
-    });
-
-    if (removeAllBtn) {
-        removeAllBtn.addEventListener('click', async function () {
-            var names = orderedObjectNames();
-            if (!names.length) {
-                return;
-            }
-            var confirmed = window.confirm(
-                'Remove all ' + names.length + ' favourite objects for this profile?'
+    function wireBodyDragover(body) {
+        body.addEventListener('dragover', function (ev) {
+            if (!_draggingCard) { return; }
+            ev.preventDefault();
+            var target = ev.target.closest(
+                '.ari-fav-card[data-objname]'
             );
-            if (!confirmed) {
+            if (!target || target === _draggingCard) { return; }
+            var rect   = target.getBoundingClientRect();
+            var before = ev.clientY < rect.top + rect.height / 2;
+            body.insertBefore(
+                _draggingCard,
+                before ? target : target.nextSibling
+            );
+        });
+        body.addEventListener('drop', function (ev) {
+            ev.preventDefault();
+        });
+    }
+
+    // ------------------------------------------------------------------
+    // Section drag-and-drop
+    // ------------------------------------------------------------------
+    var _draggingSection = null;
+
+    function wireSectionDrag(secEl) {
+        var handle = secEl.querySelector('.ari-fav-section__drag-handle');
+        var armed  = false;
+
+        if (handle) {
+            ['mousedown', 'pointerdown'].forEach(function (ev) {
+                handle.addEventListener(ev, function (e) {
+                    e.stopPropagation();
+                    armed = true;
+                });
+            });
+            handle.addEventListener('click', function (e) {
+                e.preventDefault();
+                e.stopPropagation();
+            });
+        }
+
+        secEl.addEventListener('dragstart', function (ev) {
+            if (!armed) { ev.preventDefault(); return; }
+            if (ev.target !== secEl) {
+                ev.stopPropagation();
                 return;
             }
+            _draggingSection = secEl;
+            secEl.classList.add('is-dragging');
+            ev.dataTransfer.effectAllowed = 'move';
+            ev.dataTransfer.setData(
+                'text/plain',
+                String(secEl.getAttribute('data-section') || '')
+            );
+        });
+        secEl.addEventListener('dragend', function () {
+            secEl.classList.remove('is-dragging');
+            armed = false;
+            _draggingSection = null;
+            saveSections();
+        });
+    }
 
-            removeAllBtn.disabled = true;
+    if (sectionsContainer) {
+        sectionsContainer.addEventListener('dragover', function (ev) {
+            if (!_draggingSection) { return; }
+            ev.preventDefault();
+            var target = ev.target.closest(
+                '.ari-fav-section[data-section]'
+            );
+            if (!target || target === _draggingSection) { return; }
+            var rect   = target.getBoundingClientRect();
+            var before = ev.clientY < rect.top + rect.height / 2;
+            sectionsContainer.insertBefore(
+                _draggingSection,
+                before ? target : target.nextSibling
+            );
+        });
+        sectionsContainer.addEventListener('drop', function (ev) {
+            ev.preventDefault();
+        });
+    }
+
+    // ------------------------------------------------------------------
+    // Collapse toggle
+    // ------------------------------------------------------------------
+    function wireCollapseBtn(secEl) {
+        var btn  = secEl.querySelector('.ari-fav-section__collapse-btn');
+        var body = secEl.querySelector('.ari-fav-section__body');
+        var icon = btn ? btn.querySelector('i') : null;
+        if (!btn || !body) { return; }
+        btn.addEventListener('click', function () {
+            var collapsed = body.style.display === 'none';
+            body.style.display = collapsed ? '' : 'none';
+            if (icon) {
+                icon.className = collapsed
+                    ? 'fa-solid fa-chevron-down'
+                    : 'fa-solid fa-chevron-right';
+            }
+            btn.setAttribute(
+                'aria-expanded',
+                collapsed ? 'true' : 'false'
+            );
+            saveSections();
+        });
+    }
+
+    // ------------------------------------------------------------------
+    // Per-section "remove all" button
+    // ------------------------------------------------------------------
+    function wireRemoveAllBtn(secEl) {
+        var btn = secEl.querySelector(
+            '.ari-fav-section__remove-all-btn'
+        );
+        if (!btn) { return; }
+        btn.addEventListener('click', async function (ev) {
+            ev.stopPropagation();
+            var secName = String(
+                secEl.getAttribute('data-section') || ''
+            ).trim();
+            var body    = secEl.querySelector('.ari-fav-section__body');
+            var cards   = body
+                ? Array.prototype.slice.call(
+                    body.querySelectorAll('.ari-fav-card[data-objname]')
+                )
+                : [];
+            if (!cards.length) { return; }
+            var confirmed = window.confirm(
+                'Remove all ' + cards.length
+                + ' object(s) from "' + secName + '"?'
+            );
+            if (!confirmed) { return; }
+            btn.disabled = true;
             try {
-                for (var i = 0; i < names.length; i += 1) {
-                    var objname = names[i];
-                    await removeFavourite(objname);
-                    removeCard(objname);
+                for (var i = 0; i < cards.length; i++) {
+                    var o = String(
+                        cards[i].getAttribute('data-objname') || ''
+                    ).trim();
+                    if (!o) { continue; }
+                    var r = await post(removeApiUrl, {
+                        profile_id: profileId,
+                        objname: o
+                    });
+                    if (r.success) { removeCardFromDOM(o); }
                 }
             } catch (err) {
-                window.alert(err.message || 'Could not remove all favourite objects.');
+                window.alert(err.message || 'Could not remove all.');
             } finally {
                 updateState();
             }
         });
     }
 
-    listCards().forEach(wireCardEvents);
+    // ------------------------------------------------------------------
+    // Section rename / delete (shared operations)
+    // ------------------------------------------------------------------
+    async function doRenameSection(oldName, newName) {
+        var r = await post(secRenameUrl, {
+            profile_id: profileId,
+            old_name: oldName,
+            new_name: newName
+        });
+        if (!r.success) {
+            throw new Error(r.error || 'Could not rename section');
+        }
+        // Update section el in main container
+        var secEl = document.querySelector(
+            '.ari-fav-section[data-section="'
+            + CSS.escape(oldName) + '"]'
+        );
+        if (secEl) {
+            secEl.setAttribute('data-section', newName);
+            var nameEl = secEl.querySelector('.ari-fav-section__name');
+            if (nameEl) { nameEl.textContent = newName; }
+            var body = secEl.querySelector('.ari-fav-section__body');
+            if (body) { body.setAttribute('data-section', newName); }
+            Array.prototype.slice.call(
+                secEl.querySelectorAll('.ari-fav-card[data-section]')
+            ).forEach(function (c) {
+                c.setAttribute('data-section', newName);
+                var mb = c.querySelector('.fav-edit-meta-btn');
+                if (mb) { mb.setAttribute('data-section', newName); }
+            });
+        }
+    }
 
+    async function doDeleteSection(secName) {
+        var r = await post(secDeleteUrl, {
+            profile_id: profileId,
+            section_name: secName,
+            move_to: 'default'
+        });
+        if (!r.success) {
+            throw new Error(r.error || 'Could not delete section');
+        }
+        var defBody = document.querySelector(
+            '.ari-fav-section__body[data-section="default"]'
+        );
+        var secEl = document.querySelector(
+            '.ari-fav-section[data-section="'
+            + CSS.escape(secName) + '"]'
+        );
+        if (secEl) {
+            var body = secEl.querySelector('.ari-fav-section__body');
+            if (defBody && body) {
+                var cards = Array.prototype.slice.call(
+                    body.querySelectorAll('.ari-fav-card')
+                );
+                cards.forEach(function (c) {
+                    c.setAttribute('data-section', 'default');
+                    var mb = c.querySelector('.fav-edit-meta-btn');
+                    if (mb) { mb.setAttribute('data-section', 'default'); }
+                    defBody.insertBefore(c, defBody.lastElementChild);
+                });
+            }
+            if (secEl.parentNode) {
+                secEl.parentNode.removeChild(secEl);
+            }
+        }
+    }
+
+    // ------------------------------------------------------------------
+    // Manage sections modal – build rows
+    // ------------------------------------------------------------------
+    function buildManageRow(name, itemCount) {
+        var isDefault = name === 'default';
+        var wrapper   = document.createElement('div');
+        wrapper.innerHTML = [
+            '<div class="ari-fav-manage-row"',
+            ' data-section="' + _esc(name) + '">',
+            '<i class="fa-solid fa-'
+                + (isDefault ? 'star' : 'folder') + '"></i>',
+            '<span class="ari-fav-manage-row__name">'
+                + _esc(name) + '</span>',
+            '<span class="ari-fav-manage-row__count">('
+                + itemCount + ')</span>',
+            isDefault
+                ? '<span class="ari-fav-manage-row__badge">default</span>'
+                : [
+                    '<div class="op-section-controls">',
+                    '<button type="button"',
+                    ' class="op-section-btn ari-fav-manage-rename-btn"',
+                    ' data-section="' + _esc(name) + '"',
+                    ' title="Rename section">',
+                    '<i class="fa-solid fa-pen"></i></button>',
+                    '<button type="button"',
+                    ' class="op-section-btn ari-fav-manage-delete-btn"',
+                    ' data-section="' + _esc(name) + '"',
+                    ' title="Delete section (moves items to default)">',
+                    '<i class="fa-solid fa-folder-minus"></i></button>',
+                    '</div>'
+                ].join(''),
+            '</div>'
+        ].join('');
+        var row = wrapper.firstElementChild;
+        wireManageRow(row);
+        return row;
+    }
+
+    function wireManageRow(row) {
+        var renameBtn = row.querySelector('.ari-fav-manage-rename-btn');
+        var deleteBtn = row.querySelector('.ari-fav-manage-delete-btn');
+
+        if (renameBtn) {
+            renameBtn.addEventListener('click', async function () {
+                var oldName = String(
+                    row.getAttribute('data-section') || ''
+                ).trim();
+                var newName = window.prompt(
+                    'Rename section "' + oldName + '" to:', oldName
+                );
+                if (!newName || newName.trim() === oldName) { return; }
+                newName = newName.trim();
+                renameBtn.disabled = true;
+                try {
+                    await doRenameSection(oldName, newName);
+                    row.setAttribute('data-section', newName);
+                    var nameEl = row.querySelector(
+                        '.ari-fav-manage-row__name'
+                    );
+                    if (nameEl) { nameEl.textContent = newName; }
+                    if (renameBtn) {
+                        renameBtn.setAttribute('data-section', newName);
+                    }
+                    if (deleteBtn) {
+                        deleteBtn.setAttribute('data-section', newName);
+                    }
+                    updateSectionSelects();
+                } catch (err) {
+                    window.alert(
+                        err.message || 'Could not rename section.'
+                    );
+                } finally {
+                    renameBtn.disabled = false;
+                }
+            });
+        }
+
+        if (deleteBtn) {
+            deleteBtn.addEventListener('click', async function () {
+                var secName = String(
+                    row.getAttribute('data-section') || ''
+                ).trim();
+                var confirmed = window.confirm(
+                    'Delete section "' + secName + '"? '
+                    + 'Its objects will be moved to default.'
+                );
+                if (!confirmed) { return; }
+                deleteBtn.disabled = true;
+                try {
+                    await doDeleteSection(secName);
+                    if (row.parentNode) {
+                        row.parentNode.removeChild(row);
+                    }
+                    updateState();
+                    updateSectionSelects();
+                } catch (err) {
+                    window.alert(
+                        err.message || 'Could not delete section.'
+                    );
+                    deleteBtn.disabled = false;
+                }
+            });
+        }
+    }
+
+    function rebuildManageList() {
+        if (!manageSectionsList) { return; }
+        manageSectionsList.innerHTML = '';
+        Array.prototype.slice.call(
+            document.querySelectorAll('.ari-fav-section[data-section]')
+        ).forEach(function (secEl) {
+            var name = secEl.getAttribute('data-section');
+            var body = secEl.querySelector('.ari-fav-section__body');
+            var n    = body
+                ? body.querySelectorAll(
+                    '.ari-fav-card[data-objname]'
+                ).length
+                : 0;
+            manageSectionsList.appendChild(buildManageRow(name, n));
+        });
+    }
+
+    function openManageModal() {
+        rebuildManageList();
+        if (manageModal) { manageModal.style.display = ''; }
+        if (newSectionInput) { newSectionInput.value = ''; }
+        if (newSectionFeedback) {
+            newSectionFeedback.style.display = 'none';
+        }
+    }
+
+    function closeManageModal() {
+        if (manageModal) { manageModal.style.display = 'none'; }
+    }
+
+    if (manageSectionsBtn) {
+        manageSectionsBtn.addEventListener('click', openManageModal);
+    }
+    if (manageModalClose) {
+        manageModalClose.addEventListener('click', closeManageModal);
+    }
+    if (manageModalDone) {
+        manageModalDone.addEventListener('click', closeManageModal);
+    }
+    if (manageModal) {
+        manageModal.addEventListener('click', function (ev) {
+            if (ev.target === manageModal) { closeManageModal(); }
+        });
+    }
+
+    // Add new section from manage modal
+    if (newSectionAddBtn && newSectionInput) {
+        newSectionAddBtn.addEventListener('click', async function () {
+            var name = newSectionInput.value.trim();
+            if (!name) { return; }
+            var existing = getSectionNames();
+            if (existing.indexOf(name) >= 0) {
+                if (newSectionFeedback) {
+                    newSectionFeedback.textContent =
+                        'Section "' + name + '" already exists.';
+                    newSectionFeedback.className =
+                        'ari-fav-add-feedback ari-fav-add-feedback--error';
+                    newSectionFeedback.style.display = '';
+                }
+                return;
+            }
+            var sections = readSectionsState();
+            sections.push({ name: name, collapsed: false, items: [] });
+            newSectionAddBtn.disabled = true;
+            try {
+                var r = await post(sectionsSaveUrl, {
+                    profile_id: profileId,
+                    sections: sections
+                });
+                if (!r.success) {
+                    throw new Error(r.error || 'Could not create section');
+                }
+                var secEl = buildSectionEl(name, false, []);
+                if (sectionsContainer) {
+                    sectionsContainer.appendChild(secEl);
+                }
+                if (manageSectionsList) {
+                    manageSectionsList.appendChild(
+                        buildManageRow(name, 0)
+                    );
+                }
+                updateState();
+                updateSectionSelects();
+                newSectionInput.value = '';
+                if (newSectionFeedback) {
+                    newSectionFeedback.textContent =
+                        '\u2713 Section "' + name + '" created.';
+                    newSectionFeedback.className = 'ari-fav-add-feedback';
+                    newSectionFeedback.style.display = '';
+                }
+            } catch (err) {
+                if (newSectionFeedback) {
+                    newSectionFeedback.textContent =
+                        err.message || 'Could not create section.';
+                    newSectionFeedback.className =
+                        'ari-fav-add-feedback ari-fav-add-feedback--error';
+                    newSectionFeedback.style.display = '';
+                }
+            } finally {
+                newSectionAddBtn.disabled = false;
+            }
+        });
+        newSectionInput.addEventListener('keydown', function (ev) {
+            if (ev.key === 'Enter') { newSectionAddBtn.click(); }
+        });
+    }
+
+    // Wire initial manage-list rows (rendered by Jinja)
+    Array.prototype.slice.call(
+        document.querySelectorAll(
+            '#fav-manage-sections-list .ari-fav-manage-row'
+        )
+    ).forEach(wireManageRow);
+
+    // ------------------------------------------------------------------
+    // Build a section DOM element
+    // ------------------------------------------------------------------
+    function buildSectionEl(name, collapsed, items) {
+        var isDefault = name === 'default';
+        var wrapper   = document.createElement('div');
+        wrapper.innerHTML = [
+            '<div class="at-section-card ari-fav-section"',
+            ' data-section="' + _esc(name) + '"',
+            ' draggable="true">',
+            '<div class="at-section-card__header">',
+            '<button type="button"',
+            ' class="ari-fav-section__drag-handle op-section-btn"',
+            ' title="Drag to reorder sections"',
+            ' aria-label="Drag section">',
+            '<i class="fa-solid fa-grip-lines"></i></button>',
+            '<i class="fa-solid fa-'
+                + (isDefault ? 'star' : 'folder')
+                + ' ari-fav-section__icon"></i>',
+            '<span class="ari-fav-section__name">'
+                + _esc(name) + '</span>',
+            '<span class="ari-fav-section__count">(0)</span>',
+            '<div class="op-section-controls">',
+            '<button type="button"',
+            ' class="ari-fav-section__remove-all-btn op-section-btn"',
+            ' title="Remove all objects in this section"',
+            ' aria-label="Remove all in section" disabled>',
+            '<i class="fa-solid fa-trash-can"></i></button>',
+            '<button type="button"',
+            ' class="ari-fav-section__collapse-btn op-section-btn"',
+            ' aria-expanded="' + (collapsed ? 'false' : 'true') + '"',
+            ' title="Collapse / expand">',
+            '<i class="fa-solid fa-chevron-'
+                + (collapsed ? 'right' : 'down') + '"></i></button>',
+            '</div></div>',
+            '<div class="at-section-card__body',
+            ' ari-fav-section__body ari-fav-list"',
+            ' data-section="' + _esc(name) + '"',
+            (collapsed ? ' style="display:none;"' : '') + '>',
+            '<div class="ari-fav-section__drop-hint"',
+            ' style="display:none;">Drop here</div>',
+            '</div></div>'
+        ].join('');
+        var secEl = wrapper.firstElementChild;
+        items.forEach(function (it) {
+            var body = secEl.querySelector('.ari-fav-section__body');
+            var hint = body && body.querySelector(
+                '.ari-fav-section__drop-hint'
+            );
+            if (body && it.objname) {
+                body.insertBefore(
+                    buildCard(
+                        String(it.objname),
+                        String(it.nickname || ''),
+                        String(it.note     || ''),
+                        name
+                    ),
+                    hint || null
+                );
+            }
+        });
+        wireSection(secEl);
+        return secEl;
+    }
+
+    // ------------------------------------------------------------------
+    // Wire all behaviours for a section element
+    // ------------------------------------------------------------------
+    function wireSection(secEl) {
+        var body = secEl.querySelector('.ari-fav-section__body');
+        wireCollapseBtn(secEl);
+        wireRemoveAllBtn(secEl);
+        wireSectionDrag(secEl);
+        if (body) {
+            wireBodyDragover(body);
+            Array.prototype.slice.call(
+                body.querySelectorAll('.ari-fav-card')
+            ).forEach(wireCardEvents);
+        }
+    }
+
+    // Wire all existing sections rendered by Jinja
+    Array.prototype.slice.call(
+        document.querySelectorAll('.ari-fav-section[data-section]')
+    ).forEach(wireSection);
+
+    // ------------------------------------------------------------------
+    // Add objects modal
+    // ------------------------------------------------------------------
+    function openAddModal() {
+        if (addModal) { addModal.style.display = ''; }
+        if (addQueryEl) { addQueryEl.focus(); }
+    }
+
+    function closeAddModal() {
+        if (addModal) { addModal.style.display = 'none'; }
+        showAddFeedback('', false);
+        hideCandidates();
+    }
+
+    if (showAddModalBtn) {
+        showAddModalBtn.addEventListener('click', openAddModal);
+    }
+    if (addModalClose) {
+        addModalClose.addEventListener('click', closeAddModal);
+    }
+    if (addModalDone) {
+        addModalDone.addEventListener('click', closeAddModal);
+    }
+    if (addModal) {
+        addModal.addEventListener('click', function (ev) {
+            if (ev.target === addModal) { closeAddModal(); }
+        });
+    }
+
+    // ------------------------------------------------------------------
+    // Add-object feedback / candidates
+    // ------------------------------------------------------------------
+    function showAddFeedback(msg, isError) {
+        if (!addFeedback) { return; }
+        addFeedback.textContent = msg;
+        addFeedback.style.display = msg ? '' : 'none';
+        addFeedback.className = 'ari-fav-add-feedback'
+            + (isError ? ' ari-fav-add-feedback--error' : '');
+    }
+
+    function showCandidates(candidates) {
+        if (!addCandidates) { return; }
+        if (!candidates || !candidates.length) {
+            addCandidates.style.display = 'none';
+            return;
+        }
+        addCandidates.innerHTML =
+            '<p>Multiple matches – pick one:</p>'
+            + candidates.map(function (c) {
+                return '<button type="button"'
+                    + ' class="ari-btn ari-btn--sm ari-btn--secondary'
+                    + ' ari-fav-candidate-btn"'
+                    + ' data-objname="' + _esc(c) + '">'
+                    + _esc(c) + '</button>';
+            }).join(' ');
+        addCandidates.style.display = '';
+    }
+
+    function hideCandidates() {
+        if (addCandidates) {
+            addCandidates.style.display = 'none';
+            addCandidates.innerHTML = '';
+        }
+    }
+
+    // ------------------------------------------------------------------
+    // Add object by name / alias
+    // ------------------------------------------------------------------
+    async function doAdd(query, sectionName) {
+        if (!query || !addApiUrl) { return; }
+        showAddFeedback('Adding\u2026', false);
+        hideCandidates();
+        try {
+            var r = await post(addApiUrl, {
+                profile_id: profileId,
+                query: query,
+                section_name: sectionName || 'default'
+            });
+            if (!r.success) {
+                if (r.candidates && r.candidates.length) {
+                    showAddFeedback(
+                        r.error || 'Multiple matches.',
+                        true
+                    );
+                    showCandidates(r.candidates);
+                } else {
+                    showAddFeedback(r.error || 'Could not add.', true);
+                }
+                return;
+            }
+            showAddFeedback(
+                '\u2713 Added ' + r.resolved_objname,
+                false
+            );
+            if (addQueryEl) { addQueryEl.value = ''; }
+            var targetName = sectionName || 'default';
+            var targetBody = document.querySelector(
+                '.ari-fav-section__body[data-section="'
+                + CSS.escape(targetName) + '"]'
+            );
+            if (!targetBody) {
+                var newSec = buildSectionEl(targetName, false, []);
+                if (sectionsContainer) {
+                    sectionsContainer.appendChild(newSec);
+                }
+                targetBody = newSec.querySelector(
+                    '.ari-fav-section__body'
+                );
+            }
+            if (targetBody) {
+                var dropHint = targetBody.querySelector(
+                    '.ari-fav-section__drop-hint'
+                );
+                targetBody.insertBefore(
+                    buildCard(r.resolved_objname, '', '', targetName),
+                    dropHint || null
+                );
+            }
+            updateState();
+        } catch (err) {
+            showAddFeedback(err.message || 'Could not add.', true);
+        }
+    }
+
+    if (addBtn) {
+        addBtn.addEventListener('click', function () {
+            var q   = addQueryEl ? addQueryEl.value.trim() : '';
+            var sec = addSectionEl ? addSectionEl.value : 'default';
+            doAdd(q, sec);
+        });
+    }
+    if (addQueryEl) {
+        addQueryEl.addEventListener('keydown', function (ev) {
+            if (ev.key === 'Enter') {
+                var q   = addQueryEl.value.trim();
+                var sec = addSectionEl ? addSectionEl.value : 'default';
+                doAdd(q, sec);
+            }
+        });
+    }
+    if (addCandidates) {
+        addCandidates.addEventListener('click', function (ev) {
+            var btn = ev.target.closest('.ari-fav-candidate-btn');
+            if (!btn) { return; }
+            var o   = String(
+                btn.getAttribute('data-objname') || ''
+            ).trim();
+            var sec = addSectionEl ? addSectionEl.value : 'default';
+            hideCandidates();
+            doAdd(o, sec);
+        });
+    }
+
+    // ------------------------------------------------------------------
+    // Bulk upload
+    // ------------------------------------------------------------------
+    if (bulkBtn && bulkFileInput) {
+        bulkBtn.addEventListener('click', function () {
+            bulkFileInput.value = '';
+            bulkFileInput.click();
+        });
+        bulkFileInput.addEventListener('change', async function () {
+            var file = bulkFileInput.files && bulkFileInput.files[0];
+            if (!file || !addBulkApiUrl) { return; }
+            var secName = bulkSectionEl ? bulkSectionEl.value : 'default';
+            var fd      = new FormData();
+            fd.append('profile_id',   profileId);
+            fd.append('section_name', secName);
+            fd.append('file',         file);
+            bulkBtn.disabled = true;
+            try {
+                var r = await fetch(addBulkApiUrl, {
+                    method: 'POST',
+                    body: fd
+                }).then(function (resp) { return resp.json(); });
+                if (r.success && r.sections) {
+                    rebuildSectionsFromServer(r.sections);
+                }
+                closeAddModal();
+                showBulkResults(r);
+            } catch (err) {
+                window.alert(err.message || 'Bulk upload failed.');
+            } finally {
+                bulkBtn.disabled = false;
+            }
+        });
+    }
+
+    function showBulkResults(r) {
+        if (!bulkModal || !bulkResultsBody) { return; }
+        var results      = (r && r.results) || {};
+        var added        = results.added         || [];
+        var notFound     = results.not_found     || [];
+        var alreadyExists = results.already_exists || [];
+        var ambiguous    = results.ambiguous     || [];
+        var html         = '';
+        if (added.length) {
+            html += '<p><strong>\u2713 Added ('
+                + added.length + '):</strong> '
+                + added.map(_esc).join(', ') + '</p>';
+        }
+        if (alreadyExists.length) {
+            html += '<p><strong>Already in favourites ('
+                + alreadyExists.length + '):</strong> '
+                + alreadyExists.map(_esc).join(', ') + '</p>';
+        }
+        if (ambiguous.length) {
+            html += '<p><strong>Ambiguous – skipped ('
+                + ambiguous.length + '):</strong> '
+                + ambiguous.map(_esc).join(', ') + '</p>';
+        }
+        if (notFound.length) {
+            html += '<p><strong>Not found ('
+                + notFound.length + '):</strong> '
+                + notFound.map(_esc).join(', ') + '</p>';
+        }
+        if (!html) { html = '<p>No changes made.</p>'; }
+        bulkResultsBody.innerHTML = html;
+        bulkModal.style.display = '';
+    }
+
+    function rebuildSectionsFromServer(serverSections) {
+        if (!sectionsContainer || !Array.isArray(serverSections)) {
+            return;
+        }
+        var existingByName = {};
+        Array.prototype.slice.call(
+            document.querySelectorAll('.ari-fav-section[data-section]')
+        ).forEach(function (el) {
+            existingByName[el.getAttribute('data-section')] = el;
+        });
+        serverSections.forEach(function (sec) {
+            var name  = String(sec.name  || '').trim();
+            if (!name) { return; }
+            var secEl = existingByName[name];
+            var items = Array.isArray(sec.items) ? sec.items : [];
+            if (!secEl) {
+                secEl = buildSectionEl(name, !!sec.collapsed, []);
+                sectionsContainer.appendChild(secEl);
+                existingByName[name] = secEl;
+            }
+            var body = secEl.querySelector('.ari-fav-section__body');
+            if (!body) { return; }
+            var serverNames = items.map(function (it) {
+                return String(it.objname || '').trim();
+            });
+            Array.prototype.slice.call(
+                body.querySelectorAll('.ari-fav-card[data-objname]')
+            ).forEach(function (c) {
+                var n = String(
+                    c.getAttribute('data-objname') || ''
+                ).trim();
+                if (serverNames.indexOf(n) < 0 && c.parentNode) {
+                    c.parentNode.removeChild(c);
+                }
+            });
+            var dropHint = body.querySelector(
+                '.ari-fav-section__drop-hint'
+            );
+            items.forEach(function (it) {
+                var n = String(it.objname || '').trim();
+                if (!n) { return; }
+                var existing = body.querySelector(
+                    '.ari-fav-card[data-objname="'
+                    + CSS.escape(n) + '"]'
+                );
+                if (!existing) {
+                    body.insertBefore(
+                        buildCard(
+                            n,
+                            String(it.nickname || '').trim(),
+                            String(it.note     || '').trim(),
+                            name
+                        ),
+                        dropHint || null
+                    );
+                }
+            });
+        });
+        updateSectionSelects();
+        updateState();
+    }
+
+    // ------------------------------------------------------------------
+    // Meta edit modal
+    // ------------------------------------------------------------------
+    function openMetaModal(objname, sectionName, nickname, note) {
+        if (!metaModal) { return; }
+        metaObjname.value  = objname;
+        metaSection.value  = sectionName;
+        metaNickname.value = nickname;
+        metaNote.value     = note;
+        metaModal.style.display = '';
+        if (metaNickname) { metaNickname.focus(); }
+    }
+
+    function closeMetaModal() {
+        if (metaModal) { metaModal.style.display = 'none'; }
+    }
+
+    if (metaCancelBtn) {
+        metaCancelBtn.addEventListener('click', closeMetaModal);
+    }
+    if (metaModalClose) {
+        metaModalClose.addEventListener('click', closeMetaModal);
+    }
+    if (metaModal) {
+        metaModal.addEventListener('click', function (ev) {
+            if (ev.target === metaModal) { closeMetaModal(); }
+        });
+    }
+
+    if (metaSaveBtn) {
+        metaSaveBtn.addEventListener('click', async function () {
+            var objname     = metaObjname ? metaObjname.value.trim()  : '';
+            var sectionName = metaSection ? metaSection.value.trim()  : '';
+            var nickname    = metaNickname ? metaNickname.value.trim() : '';
+            var note        = metaNote     ? metaNote.value.trim()     : '';
+            if (!objname || !metaSaveUrl) { return; }
+            metaSaveBtn.disabled = true;
+            try {
+                var r = await post(metaSaveUrl, {
+                    profile_id:   profileId,
+                    objname:      objname,
+                    section_name: sectionName,
+                    nickname:     nickname,
+                    note:         note
+                });
+                if (!r.success) {
+                    throw new Error(r.error || 'Could not save');
+                }
+                // Update card in DOM
+                var esc  = CSS.escape(objname);
+                var card = document.querySelector(
+                    '.ari-fav-card[data-objname="' + esc + '"]'
+                );
+                if (card) {
+                    var h3 = card.querySelector(
+                        '.ari-rp-section-card__body h3'
+                    );
+                    if (h3) {
+                        if (nickname) {
+                            h3.innerHTML =
+                                '<span class="ari-fav-card__nickname">'
+                                + _esc(nickname) + '</span>'
+                                + ' <span class="ari-fav-card__aperoname">('
+                                + _esc(objname) + ')</span>';
+                        } else {
+                            h3.textContent = objname;
+                        }
+                    }
+                    var noteEl = card.querySelector(
+                        '.ari-fav-card__note,'
+                        + '.ari-fav-card__note-placeholder'
+                    );
+                    if (noteEl) {
+                        if (note) {
+                            noteEl.className  = 'ari-fav-card__note';
+                            noteEl.textContent = note;
+                        } else {
+                            noteEl.className  =
+                                'ari-fav-card__note-placeholder';
+                            noteEl.textContent = 'No description.';
+                        }
+                    }
+                    var eb = card.querySelector('.fav-edit-meta-btn');
+                    if (eb) {
+                        eb.setAttribute('data-nickname', nickname);
+                        eb.setAttribute('data-note',     note);
+                    }
+                }
+                closeMetaModal();
+            } catch (err) {
+                window.alert(err.message || 'Could not save meta.');
+            } finally {
+                metaSaveBtn.disabled = false;
+            }
+        });
+    }
+
+    // ------------------------------------------------------------------
+    // Bulk results modal close
+    // ------------------------------------------------------------------
+    function closeBulkModal() {
+        if (bulkModal) { bulkModal.style.display = 'none'; }
+    }
+    if (bulkModalOk) {
+        bulkModalOk.addEventListener('click', closeBulkModal);
+    }
+    if (bulkModalClose) {
+        bulkModalClose.addEventListener('click', closeBulkModal);
+    }
+    if (bulkModal) {
+        bulkModal.addEventListener('click', function (ev) {
+            if (ev.target === bulkModal) { closeBulkModal(); }
+        });
+    }
+
+    // ------------------------------------------------------------------
+    // Initial state
+    // ------------------------------------------------------------------
     updateState();
+    updateSectionSelects();
+
 })();

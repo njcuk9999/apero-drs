@@ -45,6 +45,13 @@ admin:
     # which documentation pages can they edit?
     - edit.doc.overview
     - edit.doc.install
+    - edit.doc.api
+    # admin-only feature management (not available to moderator/developer)
+    - manage.admin.email_setup
+    - manage.admin.backup_setup
+    - manage.admin.sshfs_setup
+    - manage.admin.database_setup
+    - manage.admin.user_db_access
   groups:
     - moderator
     - developer
@@ -74,12 +81,6 @@ moderator:
     - manage.admin.calendar
     - view.admin.links
     - manage.admin.links
-    # can they manage email settings
-    - manage.admin.email
-    # can they manage backup settings
-    - manage.admin.backup
-    # can they manage APERO database access rules
-    - manage.admin.user_db_access
   groups:
     - monitor
 
@@ -95,12 +96,6 @@ developer:
     - manage.admin.calendar
     - view.admin.links
     - manage.admin.links
-    # can they manage email settings
-    - manage.admin.email
-    # can they manage backup settings
-    - manage.admin.backup
-    # can they manage APERO database access rules
-    - manage.admin.user_db_access
   groups:
     - monitor
 
@@ -135,3 +130,50 @@ public:
     - view.doc
   groups:
     - None
+
+# ==============================================================================
+# Instrument-scoped groups (inherits from base group, paired with
+# user.instruments field to restrict which profiles are visible)
+# ==============================================================================
+
+# --- SPIROU instrument-scoped groups ---
+moderator.SPIROU:
+  permissions: []
+  groups:
+    - moderator
+
+developer.SPIROU:
+  permissions: []
+  groups:
+    - developer
+
+monitor.SPIROU:
+  permissions: []
+  groups:
+    - monitor
+
+general.SPIROU:
+  permissions: []
+  groups:
+    - general
+
+# --- NIRPS_HE instrument-scoped groups ---
+moderator.NIRPS_HE:
+  permissions: []
+  groups:
+    - moderator
+
+developer.NIRPS_HE:
+  permissions: []
+  groups:
+    - developer
+
+monitor.NIRPS_HE:
+  permissions: []
+  groups:
+    - monitor
+
+general.NIRPS_HE:
+  permissions: []
+  groups:
+    - general

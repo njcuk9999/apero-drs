@@ -169,6 +169,31 @@ def register_static_routes(app):
         methods=["POST"],
     )
 
+    # User ICS feed routes
+    app.add_url_rule(
+        "/api/user/calendar/ics/list",
+        "api_user_ics_list",
+        app._api_user_ics_list,
+    )
+    app.add_url_rule(
+        "/api/user/calendar/ics/add",
+        "api_user_ics_add",
+        app._api_user_ics_add,
+        methods=["POST"],
+    )
+    app.add_url_rule(
+        "/api/user/calendar/ics/delete",
+        "api_user_ics_delete",
+        app._api_user_ics_delete,
+        methods=["POST"],
+    )
+    app.add_url_rule(
+        "/api/user/calendar/ics/refresh",
+        "api_user_ics_refresh",
+        app._api_user_ics_refresh,
+        methods=["POST"],
+    )
+
     # User todo API routes
     app.add_url_rule(
         "/api/user/todo/list", "api_user_todo_list", app._api_user_todo_list
@@ -214,6 +239,31 @@ def register_static_routes(app):
         "/api/admin/calendar/delete",
         "api_admin_calendar_delete",
         app._api_admin_calendar_delete,
+        methods=["POST"],
+    )
+
+    # Admin ICS feed routes
+    app.add_url_rule(
+        "/api/admin/calendar/ics/list",
+        "api_admin_ics_list",
+        app._api_admin_ics_list,
+    )
+    app.add_url_rule(
+        "/api/admin/calendar/ics/add",
+        "api_admin_ics_add",
+        app._api_admin_ics_add,
+        methods=["POST"],
+    )
+    app.add_url_rule(
+        "/api/admin/calendar/ics/delete",
+        "api_admin_ics_delete",
+        app._api_admin_ics_delete,
+        methods=["POST"],
+    )
+    app.add_url_rule(
+        "/api/admin/calendar/ics/refresh",
+        "api_admin_ics_refresh",
+        app._api_admin_ics_refresh,
         methods=["POST"],
     )
 
@@ -480,6 +530,12 @@ def register_static_routes(app):
         "/api/admin/cache/purge",
         "api_admin_cache_purge",
         app._api_admin_cache_purge,
+        methods=["POST"],
+    )
+    app.add_url_rule(
+        "/api/admin/cache/reset-timings",
+        "api_admin_cache_reset_timings",
+        app._api_admin_cache_reset_timings,
         methods=["POST"],
     )
 
@@ -1098,6 +1154,42 @@ def register_data_portal_routes(app):
         methods=["POST"],
     )
     app.add_url_rule(
+        "/api/user/favourite-objects/sections/save",
+        "api_user_favourite_objects_sections_save",
+        app._api_user_favourite_objects_sections_save,
+        methods=["POST"],
+    )
+    app.add_url_rule(
+        "/api/user/favourite-objects/sections/rename",
+        "api_user_favourite_objects_sections_rename",
+        app._api_user_favourite_objects_sections_rename,
+        methods=["POST"],
+    )
+    app.add_url_rule(
+        "/api/user/favourite-objects/sections/delete",
+        "api_user_favourite_objects_sections_delete",
+        app._api_user_favourite_objects_sections_delete,
+        methods=["POST"],
+    )
+    app.add_url_rule(
+        "/api/user/favourite-objects/meta/save",
+        "api_user_favourite_objects_meta_save",
+        app._api_user_favourite_objects_meta_save,
+        methods=["POST"],
+    )
+    app.add_url_rule(
+        "/api/user/favourite-objects/add",
+        "api_user_favourite_objects_add",
+        app._api_user_favourite_objects_add,
+        methods=["POST"],
+    )
+    app.add_url_rule(
+        "/api/user/favourite-objects/add-bulk",
+        "api_user_favourite_objects_add_bulk",
+        app._api_user_favourite_objects_add_bulk,
+        methods=["POST"],
+    )
+    app.add_url_rule(
         "/api/data-portal/finder-chart",
         "api_finder_chart",
         app._api_finder_chart,
@@ -1117,4 +1209,90 @@ def register_data_portal_routes(app):
     )
     app.add_url_rule(
         "/api/data-portal/obs-table", "api_obs_table", app._api_obs_table
+    )
+    app.add_url_rule(
+        "/api/admin/instruments/groups/create",
+        "api_manage_instruments_groups_create",
+        app._api_manage_instruments_groups_create,
+        methods=["POST"],
+    )
+    app.add_url_rule(
+        "/api/admin/instruments/groups/delete",
+        "api_manage_instruments_groups_delete",
+        app._api_manage_instruments_groups_delete,
+        methods=["POST"],
+    )
+    app.add_url_rule(
+        "/api/admin/instruments/add",
+        "api_manage_instruments_add",
+        app._api_manage_instruments_add,
+        methods=["POST"],
+    )
+    app.add_url_rule(
+        "/api/admin/instruments/remove",
+        "api_manage_instruments_remove",
+        app._api_manage_instruments_remove,
+        methods=["POST"],
+    )
+
+    # Upload management — Admin routes
+    app.add_url_rule(
+        "/api/admin/uploads/config",
+        "api_admin_uploads_config_get",
+        app._api_admin_uploads_config_get,
+    )
+    app.add_url_rule(
+        "/api/admin/uploads/dir/add",
+        "api_admin_uploads_dir_add",
+        app._api_admin_uploads_dir_add,
+        methods=["POST"],
+    )
+    app.add_url_rule(
+        "/api/admin/uploads/dir/edit",
+        "api_admin_uploads_dir_edit",
+        app._api_admin_uploads_dir_edit,
+        methods=["POST"],
+    )
+    app.add_url_rule(
+        "/api/admin/uploads/dir/delete",
+        "api_admin_uploads_dir_delete",
+        app._api_admin_uploads_dir_delete,
+        methods=["POST"],
+    )
+    app.add_url_rule(
+        "/api/admin/uploads/quota",
+        "api_admin_uploads_quota_get",
+        app._api_admin_uploads_quota_get,
+    )
+
+    # Upload management — User routes
+    app.add_url_rule(
+        "/api/user/uploads/list",
+        "api_user_uploads_list",
+        app._api_user_uploads_list,
+    )
+    app.add_url_rule(
+        "/api/user/uploads/upload",
+        "api_user_uploads_upload",
+        app._api_user_uploads_upload,
+        methods=["POST"],
+    )
+    app.add_url_rule(
+        "/api/user/uploads/delete",
+        "api_user_uploads_delete",
+        app._api_user_uploads_delete,
+        methods=["POST"],
+    )
+    app.add_url_rule(
+        "/api/user/uploads/share",
+        "api_user_uploads_share",
+        app._api_user_uploads_share,
+        methods=["POST"],
+    )
+
+    # Shared file download
+    app.add_url_rule(
+        "/uploads/share/<token>",
+        "uploads_share_download",
+        app._uploads_share_download,
     )

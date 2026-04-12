@@ -79,6 +79,11 @@
     var plotReloadingByKey = {};
     var yAxisZoomByDiv = {};
     var yAxisRetryByDiv = {};
+    // sectionUserState tracks explicit open/close from user interaction:
+    // sectionUserState[sid] = true  → user explicitly opened this section
+    // sectionUserState[sid] = false → user explicitly closed this section
+    // sectionUserState[sid] = undefined → follow default (pinned=open)
+    var sectionUserState = {};
 
     function median(values) {
         if (!values.length) return null;
@@ -100,6 +105,32 @@
             sum += d * d;
         }
         return Math.sqrt(sum / values.length);
+    }
+
+    function finiteMinMax(values) {
+        var minv = Infinity;
+        var maxv = -Infinity;
+        var found = false;
+        for (var i = 0; i < values.length; i += 1) {
+            var v = Number(values[i]);
+            if (!isFinite(v)) continue;
+            if (v < minv) minv = v;
+            if (v > maxv) maxv = v;
+            found = true;
+        }
+        if (!found) return null;
+        return { min: minv, max: maxv };
+    }
+
+    function sampledFiniteValues(values, maxCount) {
+        var out = [];
+        if (!values || !values.length) return out;
+        var stride = Math.max(1, Math.ceil(values.length / maxCount));
+        for (var i = 0; i < values.length; i += stride) {
+            var v = Number(values[i]);
+            if (isFinite(v)) out.push(v);
+        }
+        return out;
     }
 
     function extractFieldName(spec) {
@@ -166,18 +197,91 @@
         return { points: points, ys: ys };
     }
 
+    function _collectFigureViews(view, out, seen) {
+        if (!view || !view.model) return;
+        var id = view.model.id;
+        if (id && seen[id]) return;
+        if (id) seen[id] = true;
+        var model = view.model;
+        // A Plot model has y_range and renderers
+        if (model.y_range && model.renderers != null
+                && (Array.isArray(model.renderers)
+                    || typeof model.renderers.length === 'number')) {
+            out.push(view);
+            return; // don't recurse into plot's own children
+        }
+        // For layout models (column, row, gridplot) walk child_views
+        var cv = view.child_views;
+        if (cv && typeof cv === 'object') {
+            Object.keys(cv).forEach(function (k) {
+                _collectFigureViews(cv[k], out, seen);
+            });
+        }
+        // Fallback: walk views map (alternative Bokeh internals)
+        var vs = view.views;
+        if (vs && typeof vs === 'object' && vs !== cv) {
+            Object.keys(vs).forEach(function (k) {
+                _collectFigureViews(vs[k], out, seen);
+            });
+        }
+    }
+
     function getContainerFigures(containerEl) {
         if (!containerEl || !window.Bokeh || !Bokeh.index) return [];
         var views = [];
+        var seen = {};
         Object.keys(Bokeh.index).forEach(function (k) {
             var view = Bokeh.index[k];
-            if (!view || !view.model || !view.el) return;
+            if (!view || !view.el) return;
             if (!containerEl.contains(view.el)) return;
-            var model = view.model;
-            if (!model.y_range || !Array.isArray(model.renderers)) return;
-            views.push(view);
+            _collectFigureViews(view, views, seen);
         });
         return views;
+    }
+
+    // Return the ordered yaxiszoom option list for a given divId.
+    // Priority: exact div_id match, then LBL prefix match, then null.
+    function _getYAxisZoomOptions(divId) {
+        var z = (cfg && cfg.plotYAxisZoom) ? cfg.plotYAxisZoom : null;
+        if (!z) return null;
+        // Exact match (static plots registered with a div_id)
+        if (Object.prototype.hasOwnProperty.call(z, divId)) {
+            return z[divId];
+        }
+        // Prefix match for dynamically created LBL velocity divs
+        if (divId.indexOf('op-lbl-vel-plot-') === 0
+                && Object.prototype.hasOwnProperty.call(z, 'lbl')) {
+            return z['lbl'];
+        }
+        return null;
+    }
+
+    // Convert a single yaxiszoom entry (int or 'full') to
+    // {value, label} for a <select> <option>.
+    function _yaxisZoomEntry(v) {
+        if (String(v) === 'full') return {value: 'full', label: 'full'};
+        var n = parseInt(v, 10);
+        if (isFinite(n) && n > 0) {
+            return {value: n + 'sig', label: n + ' sig'};
+        }
+        return null;
+    }
+
+    // Build the inner HTML for the zoom <select> from a zoom options array.
+    // Falls back to the legacy hard-coded set when options is empty/null.
+    function _buildZoomSelectHtml(options) {
+        var opts = (options && options.length > 0) ? options : [3, 5, 10, 'full'];
+        var html = '';
+        var first = true;
+        for (var _oi = 0; _oi < opts.length; _oi++) {
+            var e = _yaxisZoomEntry(opts[_oi]);
+            if (!e) continue;
+            html += '<option value="' + e.value + '"'
+                + (first ? ' selected' : '') + '>'
+                + e.label + '</option>';
+            first = false;
+        }
+        return html;
     }
 
     function ensureYAxisControl(divId) {
@@ -185,6 +289,8 @@
         if (!plotDiv) return;
         var host = plotDiv.parentElement;
         if (!host) return;
+        // Parent wrapper with data-op-nozoom="1" opts this plot out entirely.
+        if (host.getAttribute('data-op-nozoom') === '1') return;
         if (host.querySelector('.op-yzoom-control[data-op-target="' + divId + '"]')) return;
 
         var bar = document.createElement('div');
@@ -194,13 +300,16 @@
             + '<label class="op-yzoom-control__label">'
             + 'y-axis zoom:'
             + '<select class="op-yzoom-control__select">'
-            + '<option value="3sig" selected>3 sig</option>'
-            + '<option value="5sig">5 sig</option>'
-            + '<option value="10sig">10 sig</option>'
-            + '<option value="full">full</option>'
+            + _buildZoomSelectHtml(_getYAxisZoomOptions(divId))
             + '</select>'
             + '</label>'
-            + '<span class="op-yzoom-control__status" aria-live="polite"></span>';
+            + '<button type="button"'
+            + ' class="op-yzoom-control__reset"'
+            + ' title="Reset view (resets all sub-plots)">'
+            + '\u21ba\u00a0Reset view'
+            + '</button>'
+            + '<span class="op-yzoom-control__status"'
+            + ' aria-live="polite"></span>';
         host.insertBefore(bar, plotDiv);
 
         var sel = bar.querySelector('.op-yzoom-control__select');
@@ -209,6 +318,73 @@
                 yAxisZoomByDiv[divId] = sel.value;
                 applyYAxisZoom(divId);
             });
+        }
+        var _rzb = bar.querySelector('.op-yzoom-control__reset');
+        if (_rzb) {
+            _rzb.addEventListener('click', function () {
+                resetPlotView(divId);
+            });
+        }
+    }
+
+    function ensureYAxisResetControl(divId) {
+        // Adds a reset-only control bar for data-op-nozoom plots
+        // (no zoom dropdown, just a Reset view button).
+        var plotDiv = document.getElementById(divId);
+        if (!plotDiv) return;
+        var host = plotDiv.parentElement;
+        if (!host) return;
+        if (host.getAttribute('data-op-nozoom') !== '1') return;
+        var _sel = '.op-yzoom-control[data-op-target="'
+            + divId + '"]';
+        if (host.querySelector(_sel)) return;
+        var bar = document.createElement('div');
+        bar.className = 'op-yzoom-control op-yzoom-control--reset-only';
+        bar.setAttribute('data-op-target', divId);
+        bar.innerHTML = '<button type="button"'
+            + ' class="op-yzoom-control__reset"'
+            + ' title="Reset view (resets all sub-plots)">'
+            + '\u21ba\u00a0Reset view'
+            + '</button>';
+        host.insertBefore(bar, plotDiv);
+        var _rzb = bar.querySelector('.op-yzoom-control__reset');
+        if (_rzb) {
+            _rzb.addEventListener('click', function () {
+                resetPlotView(divId);
+            });
+        }
+    }
+
+    function resetPlotView(divId) {
+        // Reset all Bokeh sub-figures in the container to their initial
+        // auto-ranges (equivalent to clicking Bokeh's own Reset button).
+        // For zoom-enabled plots the selected sigma zoom is re-applied
+        // automatically after Bokeh finishes resetting.
+        var plotDiv = document.getElementById(divId);
+        if (!plotDiv) return;
+        var figures = getContainerFigures(plotDiv);
+        if (figures.length > 0) {
+            // Use the Bokeh view model's reset() method (most reliable).
+            figures.forEach(function (view) {
+                if (view && typeof view.reset === 'function') {
+                    view.reset();
+                }
+            });
+        } else {
+            // Fallback: click each Bokeh reset toolbar button in the DOM.
+            var _btns = plotDiv.querySelectorAll(
+                'button[title="Reset"]'
+            );
+            for (var _bi = 0; _bi < _btns.length; _bi++) {
+                _btns[_bi].click();
+            }
+        }
+        // Re-apply sigma zoom for plots that have a zoom dropdown.
+        var hostEl = plotDiv.parentElement;
+        var isNozoom = hostEl
+            && hostEl.getAttribute('data-op-nozoom') === '1';
+        if (!isNozoom) {
+            setTimeout(function () { applyYAxisZoom(divId); }, 80);
         }
     }
 
@@ -231,9 +407,10 @@
         var figures = getContainerFigures(plotDiv);
         if (!figures.length) return false;
 
-        var sigMul = 3;
-        if (mode === '5sig') sigMul = 5;
-        if (mode === '10sig') sigMul = 10;
+        var _sigParsed = parseFloat(mode);
+        var sigMul = (mode !== 'full' && isFinite(_sigParsed) && _sigParsed > 0)
+            ? _sigParsed
+            : 3;
 
         var totalAbove = 0;
         var totalBelow = 0;
@@ -242,14 +419,19 @@
             var series = figureSeries(fig);
             var ys = series.ys;
             if (!ys.length) return;
-            var yMin = Math.min.apply(null, ys);
-            var yMax = Math.max.apply(null, ys);
+            var mm = finiteMinMax(ys);
+            if (!mm) return;
+            var yMin = mm.min;
+            var yMax = mm.max;
             var lo = yMin;
             var hi = yMax;
 
             if (mode !== 'full') {
-                var med = median(ys);
-                var sig = stdDev(ys, med);
+                // Keep y-zoom responsive on large datasets.
+                var sample = sampledFiniteValues(ys, 20000);
+                if (!sample.length) return;
+                var med = median(sample);
+                var sig = stdDev(sample, med);
                 var half = Math.max(sigMul * sig, 1.0e-12);
                 lo = med - half;
                 hi = med + half;
@@ -289,6 +471,14 @@
     }
 
     function applyYAxisZoomDeferred(divId) {
+        // For nozoom plots add a reset-only control bar, then leave
+        // Bokeh's own auto-range completely untouched.
+        var _pel = document.getElementById(divId);
+        var _hel = _pel && _pel.parentElement;
+        if (_hel && _hel.getAttribute('data-op-nozoom') === '1') {
+            ensureYAxisResetControl(divId);
+            return;
+        }
         ensureYAxisControl(divId);
         if (!applyYAxisZoom(divId)) {
             var n = Number(yAxisRetryByDiv[divId] || 0);
@@ -852,11 +1042,18 @@
 
         var existing = header.querySelector('.op-section-controls');
         if (existing) {
-            return;
+            existing.remove();
+        }
+
+        var titleSpan = header.querySelector('span');
+        if (titleSpan) {
+            titleSpan.style.flex = '1 1 auto';
+            titleSpan.style.minWidth = '0';
         }
 
         var controls = document.createElement('div');
         controls.className = 'op-section-controls';
+        controls.style.marginLeft = 'auto';
 
         // Capture CSV button — will be appended last (far right)
         var csvBtn = header.querySelector('button[id^="op-download-"][id$="-csv"], button.op-section-btn--csv');
@@ -895,7 +1092,9 @@
         toggleBtn.className = 'op-section-btn op-section-btn--toggle';
         toggleBtn.addEventListener('click', function () {
             var isCollapsed = cardEl.classList.contains('op-section--collapsed');
-            setSectionCollapsed(cardEl, !isCollapsed);
+            var nextCollapsed = !isCollapsed;
+            sectionUserState[sectionId] = !nextCollapsed; // true=open, false=closed
+            setSectionCollapsed(cardEl, nextCollapsed);
         });
 
         controls.appendChild(pinBtn);
@@ -914,7 +1113,9 @@
                 if (target.closest('.op-section-controls')) return;
                 if (target.closest('button, a, input, select, textarea, label')) return;
                 var isCollapsed = cardEl.classList.contains('op-section--collapsed');
-                setSectionCollapsed(cardEl, !isCollapsed);
+                var nextCollapsed = !isCollapsed;
+                sectionUserState[sectionId] = !nextCollapsed;
+                setSectionCollapsed(cardEl, nextCollapsed);
             });
         }
 
@@ -1029,7 +1230,18 @@
 
     function applyDefaultCollapse(cards) {
         cards.forEach(function (meta) {
-            setSectionCollapsed(meta.card, !isSectionPinned(meta.id));
+            var sid = meta.id;
+            var userState = sectionUserState[sid];
+            if (userState === true) {
+                // User explicitly opened: keep open
+                setSectionCollapsed(meta.card, false);
+            } else if (userState === false) {
+                // User explicitly closed: keep closed
+                setSectionCollapsed(meta.card, true);
+            } else {
+                // No explicit user state: apply default (pinned=open)
+                setSectionCollapsed(meta.card, !isSectionPinned(sid));
+            }
         });
     }
 
@@ -1293,7 +1505,12 @@
             .then(function (data) {
                 if (!data || !data.success) return;
                 var payload = data.object_section || {};
+                var wasPinned = isSectionPinned(sectionId);
                 sectionPinned = Array.isArray(payload.pinned) ? payload.pinned : [];
+                // Pinning a section always opens it; clear any explicit closed state
+                if (isSectionPinned(sectionId) && !wasPinned) {
+                    sectionUserState[sectionId] = true;
+                }
                 refreshSectionsUi();
             })
             .catch(function () {});
@@ -1737,7 +1954,7 @@
                 '<span><i class="fa-solid fa-chart-line"></i> LBL Stats &mdash; ' + flavorId + '</span>' +
                 '<button id="' + csvBtnId + '" class="ari-btn ari-btn--sm ari-btn--secondary" ' +
                     'title="Download LBL statistics as CSV" style="margin-left:auto;">' +
-                    '<i class="fa-solid fa-download"></i> CSV' +
+                    '<i class="fa-solid fa-download"></i>' +
                 '</button>' +
                 '</div>' +
                 '<div class="at-section-card__body"><div id="' + gridId + '" class="op-kv-grid"></div></div>';

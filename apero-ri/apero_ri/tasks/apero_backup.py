@@ -6,7 +6,7 @@ import os
 import tarfile
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 
 from apero_ri.core import backup_backend as bb
 from apero_ri.tasks import apero_async

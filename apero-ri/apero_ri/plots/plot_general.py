@@ -15,7 +15,8 @@ Created on 2024-01-01
 from __future__ import annotations
 
 from datetime import timezone
-from typing import Any, Dict, Tuple
+from pathlib import Path
+from typing import Any, Dict, Optional, Tuple
 
 from apero_ri.base import base
 from astropy.time import Time
@@ -32,6 +33,64 @@ __version__ = base.__version__
 __authors__ = base.__authors__
 __date__ = base.__date__
 __release__ = base.__release__
+
+# BLOCK_KIND → PATH_KEY mapping shared by all plot-object sub-modules.
+# Used by _resolve_file_path below.  Mirrors apero_ri.base.base.BLOCK_KIND.
+_BLOCK_KIND_TO_PATH: Dict[str, str] = {
+    "raw": "PATH_RAW",
+    "tmp": "PATH_PP",
+    "calib": "PATH_CALIB",
+    "red": "PATH_RED",
+    "tellu": "PATH_TELLU",
+    "out": "PATH_OUT",
+    "lbl": "PATH_LBL",
+}
+
+
+# =============================================================================
+# Define shared file-path helper
+# =============================================================================
+def resolve_file_path(
+    row: Dict[str, Any], paths: Dict[str, str]
+) -> Optional[Path]:
+    """
+    Resolve a FITS file path from an ftable row.
+
+    Guards against path-traversal: the resolved path *must* remain
+    inside the base directory for the block-kind or ``None`` is
+    returned.
+
+    Used by both ``plot_obj_spectrum`` (S1D / SC1D files) and
+    ``plot_obj_ccf`` (CCF FITS files).  Defined here to avoid a
+    cross-dependency between those two modules.
+
+    :param row: dict, ftable row with keys BLOCK_KIND, OBS_DIR,
+        FILENAME
+    :param paths: dict mapping PATH_* keys to directory strings (e.g.
+        PATH_RED, PATH_LBL)
+
+    :return: Path to the file if it exists, None otherwise
+    :rtype: pathlib.Path | None
+    """
+    block_kind = str(row.get("BLOCK_KIND", "") or "").strip()
+    path_key = _BLOCK_KIND_TO_PATH.get(block_kind)
+    if not path_key:
+        return None
+    base_str = str(paths.get(path_key, "") or "").strip()
+    if not base_str:
+        return None
+    base_p = Path(base_str).resolve()
+    obs_dir = str(row.get("OBS_DIR", "") or "").strip()
+    filename = str(row.get("FILENAME", "") or "").strip()
+    if not filename:
+        return None
+    try:
+        obs_part = Path(obs_dir.strip("/")) if obs_dir else Path("")
+        candidate = (base_p / obs_part / filename).resolve()
+        candidate.relative_to(base_p)  # raises ValueError on traversal
+        return candidate if candidate.is_file() else None
+    except (ValueError, OSError):
+        return None
 
 
 # =============================================================================

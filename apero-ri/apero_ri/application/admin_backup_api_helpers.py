@@ -15,7 +15,7 @@ def api_admin_backups_oauth_callback(app):
     user_info, perms = app._require_admin_backup_perm()
     if not user_info:
         return "Unauthorized", 401
-    if "manage.admin.backup" not in (perms or set()):
+    if "manage.admin.backup_setup" not in (perms or set()):
         return "Insufficient permissions", 403
 
     cfg = bb.load_backup_config()
@@ -121,7 +121,7 @@ def api_admin_backups_upload_json(app):
     user_info, perms = app._require_admin_backup_perm()
     if not user_info:
         return jsonify(success=False, error="Unauthorized"), 401
-    if "manage.admin.backup" not in (perms or set()):
+    if "manage.admin.backup_setup" not in (perms or set()):
         return jsonify(success=False, error="Insufficient permissions"), 403
 
     target_field = str(request.form.get("target_field", "")).strip()
@@ -186,7 +186,7 @@ def api_admin_backups_save(app):
     user_info, perms = app._require_admin_backup_perm()
     if not user_info:
         return jsonify(success=False, error="Unauthorized"), 401
-    if "manage.admin.backup" not in (perms or set()):
+    if "manage.admin.backup_setup" not in (perms or set()):
         return jsonify(success=False, error="Insufficient permissions"), 403
 
     body = request.get_json() or {}

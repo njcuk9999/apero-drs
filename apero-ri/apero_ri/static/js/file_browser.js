@@ -29,13 +29,24 @@
     var fbFilterTimers = {};
     var FB_FILTER_DEBOUNCE_MS = 550;
 
-    /* Output types that have a Bokeh plot defined in plots_filename.py */
+    /* Exact output types with a Bokeh plot (plots_filename.py). */
     var FB_PLOTABLE_OUTPUTS = new Set([
         'DRS_POST_E', 'DRS_POST_T', 'DRS_POST_S', 'DRS_POST_P', 'DRS_POST_V',
         'TELLU_TEMP', 'TELLU_TEMP_S1DV', 'TELLU_TEMP_S1DW',
         'LBL_RDB', 'LBL_RDB2', 'LBL_DRIFT', 'LBL_RDB_DRIFT',
         'LBL_RDB2_DRIFT', 'LBL_RDB_FITS', 'LBL_FITS',
     ]);
+
+    /* KW_OUTPUT prefixes that map to the DS9-style 2D frame viewer. */
+    var FB_FRAME_PREFIXES = ['RAW_', 'DRS_PP'];
+
+    function isPlotableOutput(kw) {
+        if (FB_PLOTABLE_OUTPUTS.has(kw)) return true;
+        for (var _fpi = 0; _fpi < FB_FRAME_PREFIXES.length; _fpi++) {
+            if (kw.startsWith(FB_FRAME_PREFIXES[_fpi])) return true;
+        }
+        return false;
+    }
 
     /* -----------------------------------------------------------------------
        Columns for the file browser table
@@ -59,7 +70,7 @@
 
     var FB_PRESETS = [
         { id: 'default',  label: 'All processed (out, QC\u22651)', preset: 'default' },
-        { id: 'none',     label: 'No preset',                      preset: 'none'    },
+        { id: 'none',     label: 'All files',                      preset: 'none'    },
         { id: 'ext2d',    label: 'Extracted 2D spectra',          preset: 'ext2d'   },
         { id: 'tcorr2d',  label: 'Telluric corrected 2D spectra', preset: 'tcorr2d' },
         { id: 'tcorr1d',  label: 'Telluric corrected 1D spectra', preset: 'tcorr1d' },
@@ -519,7 +530,7 @@
         FB_COLUMNS.forEach(function (col) {
             var td = document.createElement('td');
             var v = r[col.key];
-            if (col.key === 'FILENAME' && FB_PLOTABLE_OUTPUTS.has(r.KW_OUTPUT || '')) {
+            if (col.key === 'FILENAME' && isPlotableOutput(r.KW_OUTPUT || '')) {
                 var link = document.createElement('a');
                 link.href = '#';
                 link.className = 'fb-fn-plot-link';

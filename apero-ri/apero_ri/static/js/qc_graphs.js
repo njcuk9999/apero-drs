@@ -290,9 +290,10 @@
         var figures = getContainerFigures(plotDiv);
         if (!figures.length) return false;
 
-        var sigMul = 3;
-        if (mode === '5sig') sigMul = 5;
-        if (mode === '10sig') sigMul = 10;
+        var _sigParsed = parseFloat(mode);
+        var sigMul = (mode !== 'full' && isFinite(_sigParsed) && _sigParsed > 0)
+            ? _sigParsed
+            : 3;
 
         var totalAbove = 0;
         var totalBelow = 0;

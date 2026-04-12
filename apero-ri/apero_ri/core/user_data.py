@@ -447,7 +447,51 @@ def _favourite_objects_path(username: str) -> Path:
     return get_user_dir(username) / "favourite_objects.yaml"
 
 
+def _normalize_fav_item(item: Any) -> Optional[Dict]:
+    """Normalize a single favourite item to {objname, nickname, note}."""
+    if isinstance(item, dict):
+        objname = str(item.get("objname", "")).strip()
+        nickname = str(item.get("nickname", "")).strip()
+        note = str(item.get("note", "")).strip()
+    else:
+        objname = str(item).strip()
+        nickname = ""
+        note = ""
+    if not objname:
+        return None
+    return {"objname": objname, "nickname": nickname, "note": note}
+
+
+def _normalize_fav_section(section: Any) -> Optional[Dict]:
+    """Normalize a single section dict."""
+    if not isinstance(section, dict):
+        return None
+    name = str(section.get("name", "")).strip()
+    if not name:
+        return None
+    collapsed = bool(section.get("collapsed", False))
+    items_raw = section.get("items", [])
+    if not isinstance(items_raw, list):
+        items_raw = []
+    items: List[Dict] = []
+    seen: set = set()
+    for raw_item in items_raw:
+        item = _normalize_fav_item(raw_item)
+        if item is None or item["objname"] in seen:
+            continue
+        seen.add(item["objname"])
+        items.append(item)
+    return {"name": name, "collapsed": collapsed, "items": items}
+
+
 def _normalize_favourite_objects_data(data: Any) -> Dict:
+    """Normalize favourite objects YAML, migrating old flat-list format.
+
+    Old format: {profiles: {pid: {favourites: [...], last_object: ""}}}
+    New format: {profiles: {pid: {last_object: "",
+        sections: [{name, collapsed, items: [
+            {objname, nickname, note}]}]}}}
+    """
     if not isinstance(data, dict):
         data = {}
 
@@ -463,25 +507,51 @@ def _normalize_favourite_objects_data(data: Any) -> Dict:
         if not isinstance(payload, dict):
             payload = {}
 
-        favourites_raw = payload.get("favourites", [])
-        if not isinstance(favourites_raw, list):
-            favourites_raw = []
-        favourites: List[str] = []
-        seen = set()
-        for item in favourites_raw:
-            objname = str(item).strip()
-            if not objname or objname in seen:
-                continue
-            seen.add(objname)
-            favourites.append(objname)
-
         last_object = str(payload.get("last_object", "")).strip()
-        if not last_object:
-            last_object = ""
+
+        if "sections" in payload:
+            # New format: normalize sections
+            sections_raw = payload.get("sections", [])
+            if not isinstance(sections_raw, list):
+                sections_raw = []
+            sections: List[Dict] = []
+            seen_names: set = set()
+            for raw_sec in sections_raw:
+                sec = _normalize_fav_section(raw_sec)
+                if sec is None or sec["name"] in seen_names:
+                    continue
+                seen_names.add(sec["name"])
+                sections.append(sec)
+            if not any(s["name"] == "default" for s in sections):
+                sections.insert(0, {
+                    "name": "default",
+                    "collapsed": False,
+                    "items": [],
+                })
+        else:
+            # Old format: migrate flat favourites list to default section
+            favourites_raw = payload.get("favourites", [])
+            if not isinstance(favourites_raw, list):
+                favourites_raw = []
+            default_items: List[Dict] = []
+            seen_old: set = set()
+            for item in favourites_raw:
+                objname = str(item).strip()
+                if not objname or objname in seen_old:
+                    continue
+                seen_old.add(objname)
+                default_items.append(
+                    {"objname": objname, "nickname": "", "note": ""}
+                )
+            sections = [{
+                "name": "default",
+                "collapsed": False,
+                "items": default_items,
+            }]
 
         profiles[pid] = {
-            "favourites": favourites,
             "last_object": last_object,
+            "sections": sections,
         }
 
     return {"profiles": profiles}
@@ -499,7 +569,10 @@ def save_favourite_objects(username: str, data: Dict) -> None:
     _save_yaml(_favourite_objects_path(username), payload)
 
 
-def get_profile_favourite_objects(username: str, profile_id: str) -> Dict:
+def get_profile_fav_sections(
+    username: str, profile_id: str
+) -> Dict:
+    """Return sections list and last_object for a profile."""
     data = load_favourite_objects(username)
     profiles = data.get("profiles", {})
     if not isinstance(profiles, dict):
@@ -508,14 +581,67 @@ def get_profile_favourite_objects(username: str, profile_id: str) -> Dict:
     payload = profiles.get(pid, {}) if pid else {}
     if not isinstance(payload, dict):
         payload = {}
-    favourites = payload.get("favourites", [])
-    if not isinstance(favourites, list):
-        favourites = []
+    sections = payload.get("sections", [])
+    if not isinstance(sections, list):
+        sections = []
     last_object = str(payload.get("last_object", "")).strip()
     return {
         "profile_id": pid,
-        "favourites": [str(x).strip() for x in favourites if str(x).strip()],
         "last_object": last_object,
+        "sections": sections,
+    }
+
+
+def save_profile_fav_sections(
+    username: str,
+    profile_id: str,
+    sections: List[Dict],
+    last_object: Optional[str] = None,
+) -> Dict:
+    """Save sections structure for a profile."""
+    pid = str(profile_id).strip()
+    if not pid:
+        return {"profile_id": "", "last_object": "", "sections": []}
+
+    data = load_favourite_objects(username)
+    profiles = data.get("profiles", {})
+    if not isinstance(profiles, dict):
+        profiles = {}
+
+    if not isinstance(sections, list):
+        sections = []
+
+    existing = profiles.get(pid, {})
+    if not isinstance(existing, dict):
+        existing = {}
+    existing_last = str(existing.get("last_object", "")).strip()
+    clean_last = (
+        existing_last if last_object is None
+        else str(last_object).strip()
+    )
+
+    profiles[pid] = {"last_object": clean_last, "sections": sections}
+    data["profiles"] = profiles
+    save_favourite_objects(username, data)
+    return get_profile_fav_sections(username, pid)
+
+
+def get_profile_favourite_objects(
+    username: str, profile_id: str
+) -> Dict:
+    """Return flat favourites list and last_object (backward compat)."""
+    payload = get_profile_fav_sections(username, profile_id)
+    sections = payload.get("sections", [])
+    favourites: List[str] = []
+    for sec in sections:
+        for item in sec.get("items", []):
+            objname = str(item.get("objname", "")).strip()
+            if objname:
+                favourites.append(objname)
+    return {
+        "profile_id": payload["profile_id"],
+        "favourites": favourites,
+        "last_object": payload["last_object"],
     }
 
 
@@ -525,6 +651,10 @@ def save_profile_favourite_objects(
     favourites: List[str],
     last_object: Optional[str] = None,
 ) -> Dict:
+    """Save flat favourites to default section (backward compat).
+
+    Preserves non-default sections and per-item nickname/note.
+    """
     pid = str(profile_id).strip()
     if not pid:
         return {"profile_id": "", "favourites": [], "last_object": ""}
@@ -534,28 +664,68 @@ def save_profile_favourite_objects(
     if not isinstance(profiles, dict):
         profiles = {}
 
-    clean_favourites: List[str] = []
-    seen = set()
+    clean_favs: List[str] = []
+    seen: set = set()
     for item in favourites if isinstance(favourites, list) else []:
         objname = str(item).strip()
         if not objname or objname in seen:
             continue
         seen.add(objname)
-        clean_favourites.append(objname)
+        clean_favs.append(objname)
 
     existing = profiles.get(pid, {})
     if not isinstance(existing, dict):
         existing = {}
-    existing_last_object = str(existing.get("last_object", "")).strip()
-    if last_object is None:
-        clean_last_object = existing_last_object
-    else:
-        clean_last_object = str(last_object).strip()
+    existing_sections = existing.get("sections", [])
+    if not isinstance(existing_sections, list):
+        existing_sections = []
 
-    profiles[pid] = {
-        "favourites": clean_favourites,
-        "last_object": clean_last_object,
+    # Preserve nickname/note from existing default section
+    existing_default = next(
+        (s for s in existing_sections if s.get("name") == "default"),
+        {}
+    )
+    old_items_by_name: Dict[str, Dict] = {
+        str(it.get("objname", "")).strip(): it
+        for it in existing_default.get("items", [])
+        if str(it.get("objname", "")).strip()
     }
+    new_default_items = []
+    for objname in clean_favs:
+        old = old_items_by_name.get(objname, {})
+        new_default_items.append({
+            "objname": objname,
+            "nickname": str(old.get("nickname", "")).strip(),
+            "note": str(old.get("note", "")).strip(),
+        })
+
+    # Rebuild: replace default section, keep non-default sections
+    new_sections: List[Dict] = []
+    default_added = False
+    for sec in existing_sections:
+        if sec.get("name") == "default":
+            new_sections.append({
+                "name": "default",
+                "collapsed": bool(sec.get("collapsed", False)),
+                "items": new_default_items,
+            })
+            default_added = True
+        else:
+            new_sections.append(sec)
+    if not default_added:
+        new_sections.insert(0, {
+            "name": "default",
+            "collapsed": False,
+            "items": new_default_items,
+        })
+
+    existing_last = str(existing.get("last_object", "")).strip()
+    clean_last = (
+        existing_last if last_object is None
+        else str(last_object).strip()
+    )
+
+    profiles[pid] = {"last_object": clean_last, "sections": new_sections}
     data["profiles"] = profiles
     save_favourite_objects(username, data)
     return get_profile_favourite_objects(username, pid)
@@ -671,7 +841,7 @@ def render_note_html(content: str) -> str:
 # =============================================================================
 # User preferences (timezone, etc.)
 # =============================================================================
-_PREFS_DEFAULT: Dict = {"timezone": "UTC"}
+_PREFS_DEFAULT: Dict = {"timezone": "UTC", "theme": "default"}
 
 
 def _prefs_path(username: str) -> Path:
@@ -683,6 +853,7 @@ def load_user_prefs(username: str) -> Dict:
     if not isinstance(data, dict):
         data = dict(_PREFS_DEFAULT)
     data.setdefault("timezone", "UTC")
+    data.setdefault("theme", "default")
     return data
 
 
@@ -807,6 +978,138 @@ def get_merged_calendar(username: str, instrument: str) -> List[Dict]:
         ev["category"] = "instrument"
         tagged.append(ev)
     return personal + tagged
+
+
+# ---------------------------------------------------------------------------
+# ICS Feed helpers — User Calendar
+# ---------------------------------------------------------------------------
+
+def _import_ics_funcs():
+    # Deferred import so icalendar is optional at import time
+    from apero_ri.core import ics_funcs
+    return ics_funcs
+
+
+def list_ics_feeds(username: str) -> List[Dict]:
+    """Return the ics_feeds list from a user calendar."""
+    return _import_ics_funcs().get_feeds(load_calendar(username))
+
+
+def add_ics_feed(
+    username: str,
+    name: str,
+    url: str,
+    color: str = "#4a90d9",
+) -> tuple:
+    """Add an ICS feed and immediately refresh it.
+
+    :returns: ``(feed_dict, imported_count)``
+    """
+    ics = _import_ics_funcs()
+    data = load_calendar(username)
+    feed = ics.add_feed(data, name, url, color, category="personal")
+    ics.refresh_feed(data, feed["id"])
+    save_calendar(username, data)
+    count = sum(
+        1 for e in data.get("events", [])
+        if e.get("ics_feed_id") == feed["id"]
+    )
+    return feed, count
+
+
+def delete_ics_feed(username: str, feed_id: str) -> None:
+    """Remove an ICS feed and its events from a user calendar."""
+    ics = _import_ics_funcs()
+    data = load_calendar(username)
+    ics.delete_feed(data, feed_id)
+    save_calendar(username, data)
+
+
+def refresh_ics_feed(username: str, feed_id: str) -> Dict:
+    """Re-sync one ICS feed for a user calendar."""
+    ics = _import_ics_funcs()
+    data = load_calendar(username)
+    feed = ics.refresh_feed(data, feed_id)
+    save_calendar(username, data)
+    return feed
+
+
+def refresh_all_ics_feeds(username: str) -> Dict[str, str]:
+    """Re-sync all enabled ICS feeds for a user calendar."""
+    ics = _import_ics_funcs()
+    data = load_calendar(username)
+    results = ics.refresh_all_feeds(data)
+    save_calendar(username, data)
+    return results
+
+
+# ---------------------------------------------------------------------------
+# ICS Feed helpers — Instrument Calendar
+# ---------------------------------------------------------------------------
+
+def list_instrument_ics_feeds(instrument: str) -> List[Dict]:
+    """Return the ics_feeds list from an instrument calendar."""
+    return _import_ics_funcs().get_feeds(
+        load_instrument_calendar(instrument)
+    )
+
+
+def add_instrument_ics_feed(
+    instrument: str,
+    name: str,
+    url: str,
+    color: str = "#7b5ea7",
+) -> tuple:
+    """Add an ICS feed to an instrument calendar and immediately
+    refresh it.
+
+    :returns: ``(feed_dict, imported_count)``
+    """
+    ics = _import_ics_funcs()
+    data = load_instrument_calendar(instrument)
+    feed = ics.add_feed(
+        data, name, url, color, category="instrument"
+    )
+    ics.refresh_feed(data, feed["id"])
+    save_instrument_calendar(instrument, data)
+    count = sum(
+        1 for e in data.get("events", [])
+        if e.get("ics_feed_id") == feed["id"]
+    )
+    return feed, count
+
+
+def delete_instrument_ics_feed(
+    instrument: str, feed_id: str
+) -> None:
+    """Remove an ICS feed and its events from an instrument
+    calendar."""
+    ics = _import_ics_funcs()
+    data = load_instrument_calendar(instrument)
+    ics.delete_feed(data, feed_id)
+    save_instrument_calendar(instrument, data)
+
+
+def refresh_instrument_ics_feed(
+    instrument: str, feed_id: str
+) -> Dict:
+    """Re-sync one ICS feed for an instrument calendar."""
+    ics = _import_ics_funcs()
+    data = load_instrument_calendar(instrument)
+    feed = ics.refresh_feed(data, feed_id)
+    save_instrument_calendar(instrument, data)
+    return feed
+
+
+def refresh_all_instrument_ics_feeds(
+    instrument: str,
+) -> Dict[str, str]:
+    """Re-sync all enabled ICS feeds for an instrument calendar."""
+    ics = _import_ics_funcs()
+    data = load_instrument_calendar(instrument)
+    results = ics.refresh_all_feeds(data)
+    save_instrument_calendar(instrument, data)
+    return results
 
 
 # =============================================================================
