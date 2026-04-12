@@ -16,6 +16,10 @@ from apero_ri.core.object_funcs import (load_object_htable_rows,
                                         load_object_table_row)
 from apero_ri.application import instrument_color_helpers
 from apero_ri.plots.plot_manager import OBJ_PLOTS, DEBUG_PLOTS
+from apero_ri.plots.plots_filename import (
+    PLOTABLE_OUTPUT_TYPES,
+    FRAME_OUTPUT_PREFIXES,
+)
 
 
 def ri_profile_view(app, profile_id):
@@ -234,6 +238,8 @@ def ri_object_page_view(app, profile_id, objname):
         'sidebar_url': '/data_portal',
         'sidebar_tree': sidebar_tree,
         'plot_yaxis_zoom': plot_yaxis_zoom,
+        'plotable_output_types': sorted(PLOTABLE_OUTPUT_TYPES),
+        'frame_output_prefixes': list(FRAME_OUTPUT_PREFIXES),
     }
     return render_template('data_portal/object_page.html', **context)
 

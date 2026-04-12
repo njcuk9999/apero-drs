@@ -67,9 +67,27 @@ PLOTABLE_OUTPUT_TYPES: frozenset = frozenset(
         "DRS_POST_S",
         "DRS_POST_P",
         "DRS_POST_V",
+        # extracted 2D spectra
+        "EXT_E2DS",
+        "EXT_E2DS_FF",
+        "EXT_E2DS_LL",
+        # extracted 1D spectra
+        "EXT_S1D_W",
+        "EXT_S1D_V",
+        # telluric-corrected 2D spectra
+        "TELLU_OBJ",
+        "TELLU_RECON",
+        "TELLU_SCLEAN",
+        # telluric-corrected 1D spectra
+        "SC1D_W_FILE",
+        "SC1D_V_FILE",
+        "RC1D_W_FILE",
+        "RC1D_V_FILE",
+        # telluric templates
         "TELLU_TEMP",
         "TELLU_TEMP_S1DV",
         "TELLU_TEMP_S1DW",
+        # LBL
         "LBL_RDB",
         "LBL_RDB2",
         "LBL_DRIFT",
@@ -690,6 +708,81 @@ def _build_tellu_s1d_plot(
 
 
 # =============================================================================
+# Define raw 1D extracted spectrum plot builder
+# (EXT_S1D_W, EXT_S1D_V, SC1D_W_FILE, SC1D_V_FILE,
+#  RC1D_W_FILE, RC1D_V_FILE)
+# =============================================================================
+def _build_s1d_raw_plot(
+    filepath: Path,
+    title: str,
+) -> Dict[str, Any]:
+    """
+    Build a simple Bokeh wavelength vs flux line plot for raw APERO
+    1D extracted spectrum files.
+
+    Tries to read ``wavelength`` and ``flux`` columns from the first
+    binary FITS table extension.
+
+    :param filepath: Path, absolute path to the FITS file
+    :param title: str, figure title
+
+    :return: standard result dict
+    :rtype: dict
+    """
+    wave: Optional[np.ndarray] = None
+    flux: Optional[np.ndarray] = None
+    try:
+        from astropy.io import fits as _fits
+        from astropy.table import Table as _Table
+
+        with _fits.open(str(filepath)) as hdul:
+            for hdu in hdul:
+                if not hasattr(hdu, "columns"):
+                    continue
+                cols = [c.name.lower() for c in hdu.columns]
+                if "wavelength" in cols and "flux" in cols:
+                    tbl = _Table(hdu.data)
+                    wave = np.array(tbl["wavelength"], dtype=float)
+                    flux = np.array(tbl["flux"], dtype=float)
+                    break
+    except Exception as exc:
+        return _no_plot(f"Could not load S1D data: {exc}")
+    if wave is None or flux is None:
+        return _no_plot(
+            "No binary table with 'wavelength'/'flux' columns found."
+        )
+    finite_mask = np.isfinite(wave) & np.isfinite(flux)
+    wave = wave[finite_mask]
+    flux = flux[finite_mask]
+    if len(wave) == 0:
+        return _no_plot("No finite data points in spectrum.")
+    wave, flux = _downsample(wave, flux)
+    fig = _make_spec_figure(title)
+    from bokeh.models import HoverTool
+
+    fig.add_tools(
+        HoverTool(
+            tooltips=[
+                ("Wavelength", "@x{0.000} nm"),
+                ("Flux", "@y{0.000}"),
+            ],
+            mode="mouse",
+        )
+    )
+    fig.line(
+        list(wave),
+        list(flux),
+        line_color="black",
+        line_width=0.8,
+        alpha=0.85,
+        legend_label="Flux",
+    )
+    if fig.legend:
+        fig.legend.location = "top_right"
+    return {"has_plot": True, "fig": fig, "title": title, "message": ""}
+
+
+# =============================================================================
 # Define LBL RDB (time-series) plot builder
 # =============================================================================
 def _build_lbl_rdb_plot(
@@ -1099,12 +1192,12 @@ def _build_lbl_fits_plot(
 # Variable names injected via CustomJS args:
 #   b64_data, orig_rows, orig_cols, data_min, data_max, zs_lo, zs_hi
 #   source, fig_xr, fig_yr
-#   sel_interval, sel_stretch, sel_rotate, sel_cmap
+#   sel_interval, sel_stretch, sel_rotate, sel_cmap, sel_flip
 #   txt_pct, txt_pct_lo, txt_pct_hi, txt_vmin, txt_vmax, txt_stretch_a
-#   tog_flipx, tog_flipy
 #   mapper, _cmap_palettes
 #   default_int, default_str, default_rot, default_pct, default_pct_lo,
-#   default_pct_hi, default_vmin, default_vmax, default_sa, default_cmap
+#   default_pct_hi, default_vmin, default_vmax, default_sa, default_cmap,
+#   default_flip
 # =============================================================================
 _FRAME_JS_UPDATE: str = """
 // 0. Update colormap palette.
@@ -1222,9 +1315,10 @@ for (var ci = 0; ci < nd.length; ci++) {
     nd[ci] = (!isFinite(cv)) ? 0 : (cv < 0 ? 0 : (cv > 1 ? 1 : cv));
 }
 
-// 8. Apply Flip X (horizontal mirror).
+// 8. Apply Flip X / Flip Y.
 var imgR = orig_rows, imgC = orig_cols, imgD = nd;
-if (tog_flipx.active) {
+var fMode = sel_flip.value;
+if (fMode === 'x' || fMode === 'both') {
     var fx = new Float32Array(imgR * imgC);
     for (var r = 0; r < imgR; r++) {
         for (var c = 0; c < imgC; c++) {
@@ -1233,9 +1327,7 @@ if (tog_flipx.active) {
     }
     imgD = fx;
 }
-
-// Apply Flip Y (vertical mirror).
-if (tog_flipy.active) {
+if (fMode === 'y' || fMode === 'both') {
     var fy = new Float32Array(imgR * imgC);
     for (var r = 0; r < imgR; r++) {
         for (var c = 0; c < imgC; c++) {
@@ -1285,8 +1377,7 @@ txt_pct_hi.value    = default_pct_hi;
 txt_vmin.value      = default_vmin;
 txt_vmax.value      = default_vmax;
 txt_stretch_a.value = default_sa;
-tog_flipx.active    = false;
-tog_flipy.active    = false;
+sel_flip.value      = default_flip;
 sel_cmap.value      = default_cmap;
 """
 
@@ -1294,7 +1385,11 @@ sel_cmap.value      = default_cmap;
 # =============================================================================
 # Define 2D FITS frame (RAW_* / DRS_PP*) plot builder
 # =============================================================================
-def _build_frame_plot(filepath: Path) -> Dict[str, Any]:
+def _build_frame_plot(
+    filepath: Path,
+    match_aspect: bool = True,
+    pref_extnames: Optional[List[str]] = None,
+) -> Dict[str, Any]:
     """Build an interactive DS9-style 2D FITS frame viewer.
 
     Reads the first 2D (or first slice of ≥3D) image HDU, downsamples
@@ -1314,6 +1409,11 @@ def _build_frame_plot(filepath: Path) -> Dict[str, Any]:
     changes a control.
 
     :param filepath: Path, absolute path to the FITS file
+    :param match_aspect: bool, if True preserve pixel aspect ratio
+        (square pixels).  Set False for e2ds-style images where the
+        y-axis (orders) should be stretched to fill the display.
+    :param pref_extnames: optional list of HDU extension names to try
+        before falling back to the first 2D image HDU.
     :return: standard result dict
     :rtype: dict
     """
@@ -1326,23 +1426,38 @@ def _build_frame_plot(filepath: Path) -> Dict[str, Any]:
         with _fits.open(str(filepath)) as hdul:
             data: Optional[np.ndarray] = None
             orig_shape = (0, 0)
-            for hdu in hdul:
-                if hdu.data is None:
-                    continue
-                d = np.asarray(hdu.data, dtype=float)
-                if d.ndim == 2:
-                    data = d
-                    orig_shape = d.shape
-                    break
-                elif d.ndim == 3:
-                    data = d[0].astype(float)
-                    orig_shape = data.shape
-                    break
-                elif d.ndim > 3:
-                    flat3 = d.reshape(-1, d.shape[-2], d.shape[-1])
-                    data = flat3[0].astype(float)
-                    orig_shape = data.shape
-                    break
+            # Try preferred extension names first.
+            if pref_extnames:
+                for _ext in pref_extnames:
+                    try:
+                        _hdata = hdul[_ext].data
+                        if _hdata is not None:
+                            d = np.asarray(_hdata, dtype=float)
+                            if d.ndim == 2:
+                                data = d
+                                orig_shape = d.shape
+                                break
+                    except KeyError:
+                        continue
+            # Fall back to first 2D HDU.
+            if data is None:
+                for hdu in hdul:
+                    if hdu.data is None:
+                        continue
+                    d = np.asarray(hdu.data, dtype=float)
+                    if d.ndim == 2:
+                        data = d
+                        orig_shape = d.shape
+                        break
+                    elif d.ndim == 3:
+                        data = d[0].astype(float)
+                        orig_shape = data.shape
+                        break
+                    elif d.ndim > 3:
+                        flat3 = d.reshape(-1, d.shape[-2], d.shape[-1])
+                        data = flat3[0].astype(float)
+                        orig_shape = data.shape
+                        break
     except Exception as exc:
         return _no_plot(f"Could not load FITS data: {exc}")
 
@@ -1386,19 +1501,25 @@ def _build_frame_plot(filepath: Path) -> Dict[str, Any]:
     b64_data = base64.b64encode(disp_clean.tobytes()).decode("ascii")
 
     # ------------------------------------------------------------------
-    # 5. Initial render: MinMax + Linear → normalised [0, 1].
+    # 5. Compute initial display image: ZScale + Sqrt, float64.
+    #    float64 is required so Bokeh serialises it as a proper 2D
+    #    NDArray (img.dimension == 2) without needing a DocumentReady
+    #    JS workaround.
     # ------------------------------------------------------------------
-    _scale = data_max - data_min if data_max != data_min else 1.0
-    norm_init = np.clip(
-        (disp_clean - data_min) / _scale, 0.0, 1.0
+    _zs_lo = zs_lo if zs_hi > zs_lo else data_min
+    _zs_hi = zs_hi if zs_hi > zs_lo else data_max
+    _zs_scale = _zs_hi - _zs_lo if _zs_hi > _zs_lo else 1.0
+    _norm64 = np.clip(
+        (disp_clean.astype(np.float64) - _zs_lo) / _zs_scale,
+        0.0, 1.0,
     )
+    norm_init = np.sqrt(_norm64)
 
     # ------------------------------------------------------------------
     # 6. Build Bokeh layout.
     # ------------------------------------------------------------------
     from bokeh.layouts import column as bk_column
     from bokeh.layouts import row as bk_row
-    from bokeh.events import DocumentReady as _DocumentReady
     from bokeh.models import (
         Button,
         ColumnDataSource,
@@ -1406,7 +1527,6 @@ def _build_frame_plot(filepath: Path) -> Dict[str, Any]:
         LinearColorMapper,
         Select,
         TextInput,
-        Toggle,
     )
     from bokeh.palettes import (
         gray as bk_gray,
@@ -1418,15 +1538,12 @@ def _build_frame_plot(filepath: Path) -> Dict[str, Any]:
     )
     from bokeh.plotting import figure as bk_figure
 
-    # Use a minimal float64 placeholder so Bokeh's image glyph
-    # _set_data() assertion (img.dimension == 2) is satisfied on
-    # the initial render.  DocumentReady fires after lazy_initialize
-    # but before the first paint and replaces this with the real
-    # image via the same _FRAME_JS_UPDATE callback.
-    _placeholder = np.zeros((2, 2), dtype=np.float64)
+    # Bokeh serialises a float64 2D numpy array as a proper NDArray
+    # with dimension=2, so the image glyph renders correctly without
+    # any DocumentReady workaround.
     src = ColumnDataSource(
         data={
-            "image": [_placeholder],
+            "image": [norm_init],
             "x": [0.0],
             "y": [0.0],
             "dw": [float(disp_w)],
@@ -1434,7 +1551,7 @@ def _build_frame_plot(filepath: Path) -> Dict[str, Any]:
         }
     )
 
-    palette = bk_gray(256)
+    palette = bk_inferno(256)
     mapper = LinearColorMapper(palette=palette, low=0.0, high=1.0)
 
     _ds_note = (
@@ -1451,6 +1568,7 @@ def _build_frame_plot(filepath: Path) -> Dict[str, Any]:
         y_range=(0.0, float(disp_h)),
         tools="pan,wheel_zoom,box_zoom,reset,save",
         active_scroll="wheel_zoom",
+        match_aspect=match_aspect,
         height=500,
         sizing_mode="stretch_width",
         background_fill_color=_BG_COLOUR,
@@ -1470,7 +1588,7 @@ def _build_frame_plot(filepath: Path) -> Dict[str, Any]:
     # --- Interval controls ---
     sel_interval = Select(
         title="Interval",
-        value="minmax",
+        value="zscale",
         options=[
             ("minmax", "MinMax"),
             ("zscale", "ZScale"),
@@ -1505,7 +1623,7 @@ def _build_frame_plot(filepath: Path) -> Dict[str, Any]:
     # --- Stretch controls ---
     sel_stretch = Select(
         title="Stretch",
-        value="linear",
+        value="sqrt",
         options=[
             ("linear", "Linear"),
             ("sqrt", "Sqrt"),
@@ -1522,11 +1640,16 @@ def _build_frame_plot(filepath: Path) -> Dict[str, Any]:
     )
 
     # --- Transform controls ---
-    tog_flipx = Toggle(
-        label="Flip X", active=False, width=90, button_type="default"
-    )
-    tog_flipy = Toggle(
-        label="Flip Y", active=False, width=90, button_type="default"
+    sel_flip = Select(
+        title="Flip",
+        value="none",
+        options=[
+            ("none", "No flip"),
+            ("x",    "Flip X"),
+            ("y",    "Flip Y"),
+            ("both", "Flip Both"),
+        ],
+        width=130,
     )
     sel_rotate = Select(
         title="Rotate",
@@ -1555,7 +1678,7 @@ def _build_frame_plot(filepath: Path) -> Dict[str, Any]:
     }
     sel_cmap = Select(
         title="Colormap",
-        value="gray",
+        value="inferno",
         options=[
             ("gray",    "Gray"),
             ("inferno", "Inferno"),
@@ -1579,8 +1702,7 @@ def _build_frame_plot(filepath: Path) -> Dict[str, Any]:
         txt_vmin=txt_vmin,
         txt_vmax=txt_vmax,
         txt_stretch_a=txt_stretch_a,
-        tog_flipx=tog_flipx,
-        tog_flipy=tog_flipy,
+        sel_flip=sel_flip,
         mapper=mapper,
         sel_cmap=sel_cmap,
         _cmap_palettes=_cmap_palettes,
@@ -1591,8 +1713,8 @@ def _build_frame_plot(filepath: Path) -> Dict[str, Any]:
         data_max=float(data_max),
         zs_lo=float(zs_lo),
         zs_hi=float(zs_hi),
-        default_int="minmax",
-        default_str="linear",
+        default_int="zscale",
+        default_str="sqrt",
         default_rot="0",
         default_pct="99",
         default_pct_lo="1",
@@ -1600,7 +1722,8 @@ def _build_frame_plot(filepath: Path) -> Dict[str, Any]:
         default_vmin=f"{data_min:.6g}",
         default_vmax=f"{data_max:.6g}",
         default_sa="1000",
-        default_cmap="gray",
+        default_cmap="inferno",
+        default_flip="none",
     )
 
     _cb_update = CustomJS(args=_cb_args, code=_FRAME_JS_UPDATE)
@@ -1608,10 +1731,6 @@ def _build_frame_plot(filepath: Path) -> Dict[str, Any]:
         args=_cb_args,
         code=_FRAME_JS_RESET_PREFIX + _FRAME_JS_UPDATE,
     )
-    # Immediately replace the placeholder with the real image once
-    # the document is ready (before the first paint).
-    _cb_init = CustomJS(args=_cb_args, code=_FRAME_JS_UPDATE)
-    fig.js_on_event(_DocumentReady, _cb_init)
 
     sel_interval.js_on_change("value", _cb_update)
     sel_stretch.js_on_change("value", _cb_update)
@@ -1623,8 +1742,7 @@ def _build_frame_plot(filepath: Path) -> Dict[str, Any]:
     txt_vmin.js_on_change("value", _cb_update)
     txt_vmax.js_on_change("value", _cb_update)
     txt_stretch_a.js_on_change("value", _cb_update)
-    tog_flipx.js_on_change("active", _cb_update)
-    tog_flipy.js_on_change("active", _cb_update)
+    sel_flip.js_on_change("value", _cb_update)
     btn_reset.js_on_click(_cb_reset)
 
     layout = bk_column(
@@ -1634,7 +1752,7 @@ def _build_frame_plot(filepath: Path) -> Dict[str, Any]:
             txt_vmin, txt_vmax,
             sel_stretch, txt_stretch_a,
             sel_cmap,
-            tog_flipx, tog_flipy, sel_rotate, btn_reset,
+            sel_flip, sel_rotate, btn_reset,
         ),
         fig,
         sizing_mode="stretch_width",
@@ -1722,10 +1840,48 @@ def build_filename_plot_json(
             result = _build_lbl_rdb_plot(filepath, kw_output)
         elif kw_output == "LBL_FITS":
             result = _build_lbl_fits_plot(filepath)
+        elif kw_output in ("EXT_E2DS", "EXT_E2DS_FF", "EXT_E2DS_LL"):
+            result = _build_frame_plot(
+                filepath, match_aspect=False
+            )
+        elif kw_output in ("TELLU_OBJ", "TELLU_RECON"):
+            result = _build_frame_plot(
+                filepath, match_aspect=False
+            )
+        elif kw_output == "TELLU_SCLEAN":
+            result = _build_frame_plot(
+                filepath,
+                match_aspect=False,
+                pref_extnames=["SKY_A", "SKY_AB", "SKY_B"],
+            )
+        elif kw_output in (
+            "EXT_S1D_W",
+            "EXT_S1D_V",
+        ):
+            result = _build_s1d_raw_plot(
+                filepath,
+                "APERO Extracted 1D Spectrum",
+            )
+        elif kw_output in (
+            "SC1D_W_FILE",
+            "SC1D_V_FILE",
+        ):
+            result = _build_s1d_raw_plot(
+                filepath,
+                "APERO Telluric-Corrected 1D Spectrum",
+            )
+        elif kw_output in (
+            "RC1D_W_FILE",
+            "RC1D_V_FILE",
+        ):
+            result = _build_s1d_raw_plot(
+                filepath,
+                "APERO Reconstructed Telluric 1D",
+            )
         elif any(
             kw_output.startswith(p) for p in FRAME_OUTPUT_PREFIXES
         ):
-            result = _build_frame_plot(filepath)
+            result = _build_frame_plot(filepath, match_aspect=True)
         else:
             return _no_plot(f"No handler for output type: {kw_output}")
     except Exception as exc:

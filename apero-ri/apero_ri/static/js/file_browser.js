@@ -30,15 +30,23 @@
     var FB_FILTER_DEBOUNCE_MS = 550;
 
     /* Exact output types with a Bokeh plot (plots_filename.py). */
-    var FB_PLOTABLE_OUTPUTS = new Set([
-        'DRS_POST_E', 'DRS_POST_T', 'DRS_POST_S', 'DRS_POST_P', 'DRS_POST_V',
-        'TELLU_TEMP', 'TELLU_TEMP_S1DV', 'TELLU_TEMP_S1DW',
-        'LBL_RDB', 'LBL_RDB2', 'LBL_DRIFT', 'LBL_RDB_DRIFT',
-        'LBL_RDB2_DRIFT', 'LBL_RDB_FITS', 'LBL_FITS',
-    ]);
+    /* Plot-type sets – populated from window.ARI_* injected by the
+       template (data_portal_view_helpers.py → object_page.html).
+       The inline literals below are kept as a fallback only. */
+    var FB_PLOTABLE_OUTPUTS = new Set(
+        (window.ARI_PLOTABLE_OUTPUTS && window.ARI_PLOTABLE_OUTPUTS.length)
+            ? window.ARI_PLOTABLE_OUTPUTS
+            : [
+                'DRS_POST_E', 'DRS_POST_T', 'DRS_POST_S',
+                'DRS_POST_P', 'DRS_POST_V',
+              ]
+    );
 
     /* KW_OUTPUT prefixes that map to the DS9-style 2D frame viewer. */
-    var FB_FRAME_PREFIXES = ['RAW_', 'DRS_PP'];
+    var FB_FRAME_PREFIXES =
+        (window.ARI_FRAME_PREFIXES && window.ARI_FRAME_PREFIXES.length)
+            ? window.ARI_FRAME_PREFIXES
+            : ['RAW_', 'DRS_PP'];
 
     function isPlotableOutput(kw) {
         if (FB_PLOTABLE_OUTPUTS.has(kw)) return true;

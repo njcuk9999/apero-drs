@@ -705,6 +705,11 @@ window.ARI_BASKET_CFG = {
 <script src="https://cdn.bokeh.org/bokeh/release/bokeh-3.8.2.min.js"></script>
 <script src="https://cdn.bokeh.org/bokeh/release/bokeh-widgets-3.8.2.min.js"></script>
 <script src="{{ url_for('static', filename='js/object_page.js', v='20260410g') }}" defer></script>
+<script>
+/* Plot-type constants – generated from Python; consumed by file_browser.js */
+window.ARI_PLOTABLE_OUTPUTS = {{ plotable_output_types | tojson }};
+window.ARI_FRAME_PREFIXES   = {{ frame_output_prefixes | tojson }};
+</script>
 <script src="{{ url_for('static', filename='js/file_browser.js', v='20260410d') }}" defer></script>
 
 <!-- ──── Filename-click plot modal ──────────────────────────────────────── -->
