@@ -622,6 +622,23 @@ def add_ext_config_list(config_list: List[Union[ConstDict, KeywordDict]],
     return config_list
 
 
+def common_prefix(values: List[str]) -> str:
+    """
+    Take a list of files and return a common prefix to all files
+    :param values: list of files
+    :return: common prefix
+    """
+    # get all the basenames of the files
+    basenames = [os.path.basename(value) for value in values]
+    # get the common prefix
+    prefix = os.path.commonprefix(basenames)
+    # if there is no common prefix use a timestamp
+    if len(prefix) == 0:
+        return f'{base.Time.now().fits}'
+    # otherwise return the common prefix
+    return prefix
+
+
 # =============================================================================
 # Define starting point functions
 # =============================================================================
