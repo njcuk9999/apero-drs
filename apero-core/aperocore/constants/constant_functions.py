@@ -958,6 +958,8 @@ class ConstantsDict:
             # deal with no mode
             if modes is None or mode is None:
                 in_mode = True
+            elif len(modes) == 0:
+                in_mode = True
             else:
                 in_mode = mode in modes
             # if we are not in the correct mode skip
