@@ -81,6 +81,8 @@ moderator:
     - manage.admin.calendar
     - view.admin.links
     - manage.admin.links
+    # vault: shared secret/credential store for admin portal users
+    - manage.admin.vault
   groups:
     - monitor
 

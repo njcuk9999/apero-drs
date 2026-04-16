@@ -2235,12 +2235,15 @@ def ariapp_api_user_calendar_list(self):
 
         events = list(ud.list_events(user_info["username"]))
         for inst in instruments:
-            inst_events = ud.load_instrument_calendar(inst).get("events", [])
+            inst_events = ud.load_instrument_calendar(inst).get(
+                "events", []
+            )
             for ev in inst_events:
                 tagged = dict(ev)
                 tagged["_source"] = inst
                 tagged["category"] = "instrument"
                 events.append(tagged)
+        events = ud.dedup_events(events)
     elif instrument:
         events = ud.get_merged_calendar(user_info["username"], instrument)
     else:
@@ -3025,6 +3028,60 @@ def ariapp_api_admin_health_update(self):
         updated_at=self._format_utc_datetime(updated_at),
         health=health,
     )
+
+
+# Whitelist of individual health keys that page-level checks are
+# allowed to patch directly.  Only keys that mirror a page-owned
+# check are listed here.
+_PATCHABLE_HEALTH_KEYS = frozenset({
+    "home.admin_portal.email",
+    "home.admin_portal.backup_settings",
+    "home.admin_portal.sshfs_management",
+})
+
+
+def ariapp_api_admin_health_patch(self):
+    """Patch a single health-cache entry with a page-level result.
+
+    Accepts ``{key, status, message}`` in the JSON body.  Only
+    writes to pre-approved keys so pages cannot spoof unrelated
+    health entries.
+    """
+    user_info = auth.get_effective_user(session)
+    if not user_info:
+        return jsonify(success=False, error="Unauthorized"), 401
+    perms = permissions_mod.resolve_user_permissions(
+        user_info["groups"], self.ari_groups
+    )
+    if "view.admin" not in perms:
+        return jsonify(success=False, error="Forbidden"), 403
+    body = request.get_json() or {}
+    key = str(body.get("key", "")).strip()
+    status = str(body.get("status", "")).strip()
+    message = str(body.get("message", "")).strip()
+    if key not in _PATCHABLE_HEALTH_KEYS:
+        return jsonify(
+            success=False,
+            error=f"Key '{key}' is not patchable",
+        ), 400
+    if status not in ("ok", "warning", "error"):
+        return jsonify(
+            success=False,
+            error="status must be one of: ok, warning, error",
+        ), 400
+    cache_key = self._admin_health_cache_key(perms)
+    with self._admin_health_cache_lock:
+        entry = self._admin_health_cache.get(cache_key)
+        if entry is None:
+            return jsonify(
+                success=False, error="No health cache entry found"
+            ), 404
+        entry["health"][key] = {
+            "status": status,
+            "message": message,
+            "duration_s": 0.0,
+        }
+    return jsonify(success=True)
 
 
 def ariapp_load_user_pins(self, username):
@@ -4469,10 +4526,15 @@ def ariapp_api_user_ics_add(self):
             success=False, error="name and url are required"
         ), 400
     try:
+        username = user_info["username"]
         feed, count = ud.add_ics_feed(
-            user_info["username"], name, url, color
+            username, name, url, color
         )
-        return jsonify(success=True, feed=feed, imported=count)
+        feeds = ud.list_ics_feeds(username)
+        return jsonify(
+            success=True, feed=feed,
+            imported=count, feeds=feeds,
+        )
     except Exception as exc:
         return jsonify(success=False, error=str(exc)), 400
 
@@ -4487,8 +4549,10 @@ def ariapp_api_user_ics_delete(self):
         return jsonify(
             success=False, error="feed_id required"
         ), 400
-    ud.delete_ics_feed(user_info["username"], feed_id)
-    return jsonify(success=True)
+    username = user_info["username"]
+    ud.delete_ics_feed(username, feed_id)
+    feeds = ud.list_ics_feeds(username)
+    return jsonify(success=True, feeds=feeds)
 
 
 def ariapp_api_user_ics_refresh(self):
@@ -4502,8 +4566,37 @@ def ariapp_api_user_ics_refresh(self):
             success=False, error="feed_id required"
         ), 400
     try:
-        feed = ud.refresh_ics_feed(user_info["username"], feed_id)
-        return jsonify(success=True, feed=feed)
+        username = user_info["username"]
+        feed = ud.refresh_ics_feed(username, feed_id)
+        feeds = ud.list_ics_feeds(username)
+        return jsonify(success=True, feed=feed, feeds=feeds)
+    except Exception as exc:
+        return jsonify(success=False, error=str(exc)), 400
+
+
+def ariapp_api_user_ics_edit(self):
+    user_info = self._require_user()
+    if not user_info:
+        return jsonify(success=False, error="Unauthorized"), 401
+    body = request.get_json() or {}
+    feed_id = str(body.get("feed_id", "")).strip()
+    name = body.get("name")
+    color = body.get("color")
+    if not feed_id:
+        return jsonify(
+            success=False, error="feed_id required"
+        ), 400
+    if name is not None:
+        name = str(name).strip() or None
+    if color is not None:
+        color = str(color).strip() or None
+    try:
+        username = user_info["username"]
+        feed = ud.update_ics_feed(
+            username, feed_id, name=name, color=color
+        )
+        feeds = ud.list_ics_feeds(username)
+        return jsonify(success=True, feed=feed, feeds=feeds)
     except Exception as exc:
         return jsonify(success=False, error=str(exc)), 400
 
@@ -4547,7 +4640,11 @@ def ariapp_api_admin_ics_add(self):
         feed, count = ud.add_instrument_ics_feed(
             instrument, name, url, color
         )
-        return jsonify(success=True, feed=feed, imported=count)
+        feeds = ud.list_instrument_ics_feeds(instrument)
+        return jsonify(
+            success=True, feed=feed,
+            imported=count, feeds=feeds,
+        )
     except Exception as exc:
         return jsonify(success=False, error=str(exc)), 400
 
@@ -4569,7 +4666,8 @@ def ariapp_api_admin_ics_delete(self):
             error="instrument and feed_id required",
         ), 400
     ud.delete_instrument_ics_feed(instrument, feed_id)
-    return jsonify(success=True)
+    feeds = ud.list_instrument_ics_feeds(instrument)
+    return jsonify(success=True, feeds=feeds)
 
 
 def ariapp_api_admin_ics_refresh(self):
@@ -4590,7 +4688,44 @@ def ariapp_api_admin_ics_refresh(self):
         ), 400
     try:
         feed = ud.refresh_instrument_ics_feed(instrument, feed_id)
-        return jsonify(success=True, feed=feed)
+        feeds = ud.list_instrument_ics_feeds(instrument)
+        return jsonify(
+            success=True, feed=feed, feeds=feeds
+        )
+    except Exception as exc:
+        return jsonify(success=False, error=str(exc)), 400
+
+
+def ariapp_api_admin_ics_edit(self):
+    user_info, perms = self._require_admin_calendar_perm()
+    if not user_info:
+        return jsonify(success=False, error="Unauthorized"), 401
+    if "manage.admin.calendar" not in (perms or set()):
+        return jsonify(
+            success=False, error="Insufficient permissions"
+        ), 403
+    body = request.get_json() or {}
+    instrument = str(body.get("instrument", "")).strip()
+    feed_id = str(body.get("feed_id", "")).strip()
+    name = body.get("name")
+    color = body.get("color")
+    if not instrument or not feed_id:
+        return jsonify(
+            success=False,
+            error="instrument and feed_id required",
+        ), 400
+    if name is not None:
+        name = str(name).strip() or None
+    if color is not None:
+        color = str(color).strip() or None
+    try:
+        feed = ud.update_instrument_ics_feed(
+            instrument, feed_id, name=name, color=color
+        )
+        feeds = ud.list_instrument_ics_feeds(instrument)
+        return jsonify(
+            success=True, feed=feed, feeds=feeds
+        )
     except Exception as exc:
         return jsonify(success=False, error=str(exc)), 400
 
@@ -5001,7 +5136,17 @@ def ariapp_build_admin_manage_instruments_context(self, perms):
     can_add = "add.instrument" in (perms or set())
     all_groups = permissions_mod.load_groups()
     profiles = auth.load_apero_profiles(hydrate=False)
-    instruments = sorted(profiles.keys()) if isinstance(profiles, dict) else []
+    profile_instruments = (
+        set(profiles.keys()) if isinstance(profiles, dict) else set()
+    )
+    # Use parameters.yaml as the canonical list; also surface any
+    # instruments that exist in profiles but are missing from
+    # parameters.yaml so admins can see and clean them up.
+    params = permissions_mod.load_parameters()
+    params_instruments = set(
+        params.get("instruments", {}).get("value", [])
+    )
+    instruments = sorted(params_instruments | profile_instruments)
 
     all_users = auth.list_all_users()
 
@@ -5154,6 +5299,16 @@ def ariapp_api_manage_instruments_add(self):
     all_profiles[instrument] = {}
     auth.save_apero_profiles(all_profiles)
 
+    # Add instrument to parameters.yaml instruments list.
+    _params = permissions_mod.load_parameters()
+    _instr_block = _params.get("instruments")
+    if isinstance(_instr_block, dict):
+        _instr_list = _instr_block.get("value")
+        if isinstance(_instr_list, list):
+            if instrument not in _instr_list:
+                _instr_list.append(instrument)
+                permissions_mod.save_parameters(_params)
+
     # Also create the per-instrument groups immediately.
     all_groups = permissions_mod.load_groups()
     created_groups = []
@@ -5199,6 +5354,17 @@ def ariapp_api_manage_instruments_remove(self):
     del all_profiles[instrument]
     auth.save_apero_profiles(all_profiles)
 
+    # Remove instrument from parameters.yaml instruments list.
+    _params = permissions_mod.load_parameters()
+    _instr_block = _params.get("instruments")
+    if isinstance(_instr_block, dict):
+        _instr_list = _instr_block.get("value")
+        if isinstance(_instr_list, list) and instrument in _instr_list:
+            _instr_block["value"] = [
+                i for i in _instr_list if i != instrument
+            ]
+            permissions_mod.save_parameters(_params)
+
     # Delete per-instrument groups and remove from users.
     all_groups = permissions_mod.load_groups()
     deleted_groups = []
@@ -5226,6 +5392,48 @@ def ariapp_api_manage_instruments_remove(self):
         instrument=instrument,
         deleted_groups=deleted_groups,
     )
+
+
+def ariapp_api_manage_instruments_rename(self):
+    """Rename an instrument across all ARI data stores."""
+    user_info, cur_perms = self._require_admin_user()
+    if not user_info:
+        return jsonify(success=False, error="Unauthorized"), 401
+    if "add.instrument" not in (cur_perms or set()):
+        return jsonify(
+            success=False, error="Insufficient permissions"
+        ), 403
+
+    body = request.get_json(silent=True) or {}
+    old_name = str(body.get("old_name", "") or "").strip()
+    new_name = (
+        str(body.get("new_name", "") or "").strip().upper()
+    )
+    if not old_name or not new_name:
+        return jsonify(
+            success=False,
+            error="old_name and new_name are required",
+        ), 400
+    if not new_name.replace("_", "").replace("-", "").isalnum():
+        return jsonify(
+            success=False,
+            error=(
+                "Instrument name must be alphanumeric"
+                " (underscores/hyphens allowed)"
+            ),
+        ), 400
+
+    try:
+        summary = auth.rename_instrument(old_name, new_name)
+    except ValueError as exc:
+        return jsonify(success=False, error=str(exc)), 400
+    except Exception as exc:
+        return jsonify(
+            success=False,
+            error=f"Rename failed: {exc}",
+        ), 500
+
+    return jsonify(success=True, summary=summary, new_name=new_name)
 
 
 # =============================================================================
@@ -5594,4 +5802,219 @@ def ariapp_uploads_share_download(self, token):
     if target is None or not target.is_file():
         return jsonify(error="File not found"), 404
 
-    return send_file(str(target), as_attachment=True, download_name=safe_name)
+    return send_file(
+        str(target),
+        as_attachment=True,
+        download_name=safe_name,
+    )
+
+
+# =============================================================================
+# Vault — Admin portal
+# =============================================================================
+def ariapp_build_admin_vault_context(
+    self, resolved_perms: set
+) -> dict:
+    """Build template context for the Vault admin page."""
+    from apero_ri.core import vault_store as vs
+
+    accessible = vs.accessible_levels(resolved_perms)
+    manageable = set(vs.manageable_levels(resolved_perms))
+    sections = []
+    for level in accessible:
+        sections.append({
+            "level": level,
+            "label": vs.VAULT_LEVEL_LABELS[level],
+            "icon": vs.VAULT_LEVEL_ICONS[level],
+            "can_manage": level in manageable,
+        })
+    return {
+        "vault_sections": sections,
+        "can_manage": bool(manageable),
+    }
+
+
+def ariapp_api_vault_list(self):
+    """Return vault cards (no information) for user's levels."""
+    from apero_ri.core import vault_store as vs
+
+    user_info = auth.get_effective_user(session)
+    if not user_info:
+        return jsonify(success=False, error="Unauthorized"), 401
+    resolved = permissions_mod.resolve_user_permissions(
+        user_info["groups"], self.ari_groups
+    )
+    if "manage.admin.vault" not in resolved:
+        return jsonify(success=False, error="Forbidden"), 403
+
+    levels = vs.accessible_levels(resolved)
+    entries = vs.filter_by_level(vs.load_entries(), levels)
+    safe = [vs.strip_information(e) for e in entries]
+    return jsonify(success=True, entries=safe)
+
+
+def ariapp_api_vault_get(self):
+    """Return a single vault entry including information."""
+    from apero_ri.core import vault_store as vs
+
+    user_info = auth.get_effective_user(session)
+    if not user_info:
+        return jsonify(success=False, error="Unauthorized"), 401
+    resolved = permissions_mod.resolve_user_permissions(
+        user_info["groups"], self.ari_groups
+    )
+    if "manage.admin.vault" not in resolved:
+        return jsonify(success=False, error="Forbidden"), 403
+
+    entry_id = request.args.get("id", "").strip()
+    if not entry_id:
+        return jsonify(success=False, error="id required"), 400
+
+    entry = vs.get_entry(entry_id)
+    if not entry:
+        return jsonify(success=False, error="Not found"), 404
+
+    levels = vs.accessible_levels(resolved)
+    if entry.get("level", "moderator") not in levels:
+        return jsonify(success=False, error="Forbidden"), 403
+
+    return jsonify(success=True, entry=entry)
+
+
+def ariapp_api_vault_add(self):
+    """Create a new vault entry."""
+    from apero_ri.core import vault_store as vs
+
+    user_info = auth.get_effective_user(session)
+    if not user_info:
+        return jsonify(success=False, error="Unauthorized"), 401
+    resolved = permissions_mod.resolve_user_permissions(
+        user_info["groups"], self.ari_groups
+    )
+    manageable = vs.manageable_levels(resolved)
+    if not manageable:
+        return jsonify(success=False, error="Forbidden"), 403
+
+    body = request.get_json(silent=True) or {}
+    title = str(body.get("title", "") or "").strip()
+    information = str(body.get("information", "") or "")
+    level = str(
+        body.get("level", "moderator") or "moderator"
+    ).strip()
+
+    if not title:
+        return (
+            jsonify(success=False, error="title is required"),
+            400,
+        )
+    if level not in vs.VAULT_LEVELS:
+        return jsonify(success=False, error="invalid level"), 400
+    if level not in manageable:
+        return (
+            jsonify(
+                success=False,
+                error="Forbidden at that level",
+            ),
+            403,
+        )
+
+    entry = vs.save_entry(
+        title=title,
+        information=information,
+        level=level,
+        created_by=user_info["username"],
+    )
+    return jsonify(success=True, entry=vs.strip_information(entry))
+
+
+def ariapp_api_vault_update(self):
+    """Update an existing vault entry."""
+    from apero_ri.core import vault_store as vs
+
+    user_info = auth.get_effective_user(session)
+    if not user_info:
+        return jsonify(success=False, error="Unauthorized"), 401
+    resolved = permissions_mod.resolve_user_permissions(
+        user_info["groups"], self.ari_groups
+    )
+    manageable = vs.manageable_levels(resolved)
+    if not manageable:
+        return jsonify(success=False, error="Forbidden"), 403
+
+    body = request.get_json(silent=True) or {}
+    entry_id = str(body.get("id", "") or "").strip()
+    title = str(body.get("title", "") or "").strip()
+    information = str(body.get("information", "") or "")
+    level = str(
+        body.get("level", "moderator") or "moderator"
+    ).strip()
+
+    if not entry_id or not title:
+        return (
+            jsonify(
+                success=False,
+                error="id and title are required",
+            ),
+            400,
+        )
+    if level not in vs.VAULT_LEVELS:
+        return jsonify(success=False, error="invalid level"), 400
+
+    existing = vs.get_entry(entry_id)
+    if not existing:
+        return jsonify(success=False, error="Not found"), 404
+
+    if existing.get("level", "moderator") not in manageable:
+        return jsonify(success=False, error="Forbidden"), 403
+    if level not in manageable:
+        return (
+            jsonify(
+                success=False,
+                error="Forbidden at that level",
+            ),
+            403,
+        )
+
+    entry = vs.save_entry(
+        title=title,
+        information=information,
+        level=level,
+        created_by=existing.get(
+            "created_by", user_info["username"]
+        ),
+        entry_id=entry_id,
+    )
+    return jsonify(success=True, entry=vs.strip_information(entry))
+
+
+def ariapp_api_vault_delete(self):
+    """Delete a vault entry."""
+    from apero_ri.core import vault_store as vs
+
+    user_info = auth.get_effective_user(session)
+    if not user_info:
+        return jsonify(success=False, error="Unauthorized"), 401
+    resolved = permissions_mod.resolve_user_permissions(
+        user_info["groups"], self.ari_groups
+    )
+    manageable = vs.manageable_levels(resolved)
+    if not manageable:
+        return jsonify(success=False, error="Forbidden"), 403
+
+    body = request.get_json(silent=True) or {}
+    entry_id = str(body.get("id", "") or "").strip()
+    if not entry_id:
+        return (
+            jsonify(success=False, error="id is required"),
+            400,
+        )
+
+    existing = vs.get_entry(entry_id)
+    if not existing:
+        return jsonify(success=False, error="Not found"), 404
+
+    if existing.get("level", "moderator") not in manageable:
+        return jsonify(success=False, error="Forbidden"), 403
+
+    vs.delete_entry(entry_id)
+    return jsonify(success=True)

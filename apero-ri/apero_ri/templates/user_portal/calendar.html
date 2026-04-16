@@ -69,7 +69,9 @@
             </h4>
             <div id="cal-ics-feed-list" class="ari-cal-ics-list">
                 {% for feed in ics_feeds %}
-                <div class="ari-cal-ics-item" data-feed-id="{{ feed.id }}">
+                <div class="ari-cal-ics-item" data-feed-id="{{ feed.id }}"
+                     data-feed-name="{{ feed.name | e }}"
+                     data-feed-color="{{ feed.color }}">
                     <span class="ari-cal-ics-dot" style="background:{{ feed.color }};"></span>
                     <span class="ari-cal-ics-name" title="{{ feed.url }}">{{ feed.name }}</span>
                     <span class="ari-cal-ics-meta">
@@ -80,6 +82,10 @@
                         <i class="fa-solid fa-triangle-exclamation"></i>
                     </span>
                     {% endif %}
+                    <button class="ari-btn ari-btn--secondary ari-btn--sm ari-cal-ics-btn-edit"
+                            data-feed-id="{{ feed.id }}" title="Edit name / colour">
+                        <i class="fa-solid fa-pencil"></i>
+                    </button>
                     <button class="ari-btn ari-btn--secondary ari-btn--sm ari-cal-ics-btn-refresh"
                             data-feed-id="{{ feed.id }}" title="Refresh now">
                         <i class="fa-solid fa-rotate"></i>
@@ -192,6 +198,7 @@ window.ARI_CALENDAR = {
     icsAddUrl: {{ url_for('api_user_ics_add')|tojson }},
     icsDeleteUrl: {{ url_for('api_user_ics_delete')|tojson }},
     icsRefreshUrl: {{ url_for('api_user_ics_refresh')|tojson }},
+    icsEditUrl: {{ url_for('api_user_ics_edit')|tojson }},
 };
 </script>
 <script src="{{ url_for('static', filename='js/tz_common.js') }}"></script>

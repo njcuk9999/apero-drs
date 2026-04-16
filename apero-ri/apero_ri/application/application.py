@@ -289,6 +289,43 @@ class ARIApp(Flask):
     def _api_manage_instruments_remove(self):
         return _impls.ariapp_api_manage_instruments_remove(self)
 
+    def _api_manage_instruments_rename(self):
+        return _impls.ariapp_api_manage_instruments_rename(self)
+
+    # -----------------------------------------------------------------
+    # Vault API
+    # -----------------------------------------------------------------
+    def _require_vault_perm(self):
+        user_info = auth.get_effective_user(session)
+        if not user_info:
+            return None, None
+        resolved = permissions_mod.resolve_user_permissions(
+            user_info["groups"], self.ari_groups
+        )
+        if "manage.admin.vault" not in resolved:
+            return None, None
+        return user_info, resolved
+
+    def _build_admin_vault_context(self, perms):
+        return _impls.ariapp_build_admin_vault_context(
+            self, perms
+        )
+
+    def _api_admin_vault_list(self):
+        return _impls.ariapp_api_vault_list(self)
+
+    def _api_admin_vault_get(self):
+        return _impls.ariapp_api_vault_get(self)
+
+    def _api_admin_vault_add(self):
+        return _impls.ariapp_api_vault_add(self)
+
+    def _api_admin_vault_update(self):
+        return _impls.ariapp_api_vault_update(self)
+
+    def _api_admin_vault_delete(self):
+        return _impls.ariapp_api_vault_delete(self)
+
     @staticmethod
     def _normalize_db_source(value: str) -> str:
         """Normalize database source mode for profile UI/runtime."""
@@ -498,6 +535,9 @@ class ARIApp(Flask):
 
     def _api_admin_health_update(self):
         return _impls.ariapp_api_admin_health_update(self)
+
+    def _api_admin_health_patch(self):
+        return _impls.ariapp_api_admin_health_patch(self)
 
     def _api_admin_health_config_get(self):
         return _impls.ariapp_api_admin_health_config_get(self)
@@ -1534,6 +1574,9 @@ class ARIApp(Flask):
     def _api_user_ics_refresh(self):
         return _impls.ariapp_api_user_ics_refresh(self)
 
+    def _api_user_ics_edit(self):
+        return _impls.ariapp_api_user_ics_edit(self)
+
     # -----------------------------------------------------------------
     # ICS feed API — instrument / admin calendar
     # -----------------------------------------------------------------
@@ -1548,6 +1591,9 @@ class ARIApp(Flask):
 
     def _api_admin_ics_refresh(self):
         return _impls.ariapp_api_admin_ics_refresh(self)
+
+    def _api_admin_ics_edit(self):
+        return _impls.ariapp_api_admin_ics_edit(self)
 
     # -----------------------------------------------------------------
     # Admin links API

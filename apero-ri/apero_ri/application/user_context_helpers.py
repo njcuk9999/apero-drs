@@ -147,11 +147,7 @@ def build_ri_context(app, user_info, user_permissions):
     colors = app._instrument_colors()
     accessible = get_accessible_profiles(user_info, app.ari_groups)
 
-    user_instruments = user_info.get('instruments', []) if user_info else []
-    if user_instruments:
-        shown = [inst for inst in all_instruments if inst in user_instruments]
-    else:
-        shown = list(all_instruments)
+    shown = list(all_instruments)
 
     profile_cards = []
     for prof in accessible:
@@ -278,14 +274,9 @@ def build_admin_instrument_context(user_info, perms):
     """Build instruments context for admin calendar/links pages."""
     params = load_parameters()
     all_instr = params.get('instruments', {}).get('value', [])
-    user_instr = user_info.get('instruments', [])
-    instruments = (
-        [inst for inst in all_instr if inst in user_instr]
-        or list(all_instr)
-    )
     can_manage = ('manage.admin.calendar' in perms
                   or 'manage.admin.links' in perms)
     return {
-        'instruments': instruments,
+        'instruments': list(all_instr),
         'can_manage': can_manage,
     }

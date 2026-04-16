@@ -10072,11 +10072,55 @@ button.ari-rp-section-card:hover {
 }
 
 .ari-cal-ics-btn-refresh,
+.ari-cal-ics-btn-edit,
 .ari-cal-ics-btn-delete {
     flex-shrink: 0;
     padding: 0.18rem 0.42rem;
     font-size: 0.78rem;
     line-height: 1;
+}
+
+.ari-cal-ics-edit-row {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.35rem 0.6rem;
+    background: var(--ari-bg, #f8f9ff);
+    border: 1px solid var(--ari-border, #e4e8f5);
+    border-radius: 6px;
+    margin-bottom: 0.2rem;
+}
+
+.ari-cal-ics-edit-name {
+    flex: 1;
+    min-width: 0;
+    font-size: 0.85rem;
+    padding: 0.22rem 0.45rem;
+    border: 1px solid var(--ari-border, #d0d7de);
+    border-radius: 4px;
+    background: #fff;
+    color: inherit;
+}
+
+.ari-cal-ics-edit-color {
+    width: 2.2rem;
+    height: 1.6rem;
+    padding: 0.1rem;
+    border: 1px solid var(--ari-border, #d0d7de);
+    border-radius: 4px;
+    cursor: pointer;
+    flex-shrink: 0;
+}
+
+[data-theme="dark"] .ari-cal-ics-edit-row {
+    background: #1c2128;
+    border-color: #30363d;
+}
+
+[data-theme="dark"] .ari-cal-ics-edit-name {
+    background: #0d1117;
+    border-color: #30363d;
+    color: #e6edf3;
 }
 
 .ari-cal-ics-empty {

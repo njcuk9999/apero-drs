@@ -193,6 +193,12 @@ def register_static_routes(app):
         app._api_user_ics_refresh,
         methods=["POST"],
     )
+    app.add_url_rule(
+        "/api/user/calendar/ics/edit",
+        "api_user_ics_edit",
+        app._api_user_ics_edit,
+        methods=["POST"],
+    )
 
     # User todo API routes
     app.add_url_rule(
@@ -264,6 +270,12 @@ def register_static_routes(app):
         "/api/admin/calendar/ics/refresh",
         "api_admin_ics_refresh",
         app._api_admin_ics_refresh,
+        methods=["POST"],
+    )
+    app.add_url_rule(
+        "/api/admin/calendar/ics/edit",
+        "api_admin_ics_edit",
+        app._api_admin_ics_edit,
         methods=["POST"],
     )
 
@@ -505,6 +517,12 @@ def register_static_routes(app):
         "/api/admin/health/update",
         "api_admin_health_update",
         app._api_admin_health_update,
+        methods=["POST"],
+    )
+    app.add_url_rule(
+        "/api/admin/health/patch",
+        "api_admin_health_patch",
+        app._api_admin_health_patch,
         methods=["POST"],
     )
     app.add_url_rule(
@@ -1232,6 +1250,42 @@ def register_data_portal_routes(app):
         "/api/admin/instruments/remove",
         "api_manage_instruments_remove",
         app._api_manage_instruments_remove,
+        methods=["POST"],
+    )
+    app.add_url_rule(
+        "/api/admin/instruments/rename",
+        "api_manage_instruments_rename",
+        app._api_manage_instruments_rename,
+        methods=["POST"],
+    )
+
+    # Vault — Admin routes
+    app.add_url_rule(
+        "/api/admin/vault/list",
+        "api_admin_vault_list",
+        app._api_admin_vault_list,
+    )
+    app.add_url_rule(
+        "/api/admin/vault/get",
+        "api_admin_vault_get",
+        app._api_admin_vault_get,
+    )
+    app.add_url_rule(
+        "/api/admin/vault/add",
+        "api_admin_vault_add",
+        app._api_admin_vault_add,
+        methods=["POST"],
+    )
+    app.add_url_rule(
+        "/api/admin/vault/update",
+        "api_admin_vault_update",
+        app._api_admin_vault_update,
+        methods=["POST"],
+    )
+    app.add_url_rule(
+        "/api/admin/vault/delete",
+        "api_admin_vault_delete",
+        app._api_admin_vault_delete,
         methods=["POST"],
     )
 

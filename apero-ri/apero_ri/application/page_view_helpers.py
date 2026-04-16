@@ -242,7 +242,14 @@ def make_page_view(app, page_id: str, package_dir: Path):
             context.update(app._build_admin_cache_context(perms))
 
         if page_id == "home.admin_portal.download_management":
-            context.update(app._build_admin_download_mgmt_context(perms))
+            context.update(
+                app._build_admin_download_mgmt_context(perms)
+            )
+
+        if page_id == "home.admin_portal.vault":
+            context.update(
+                app._build_admin_vault_context(perms)
+            )
 
         if page_id in {"home.admin_portal", "home.admin_portal.health_status"}:
             health, updated_at, in_progress = app._get_admin_health(

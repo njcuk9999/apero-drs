@@ -88,6 +88,37 @@ def _map_rrule(rrule_prop: object) -> str:
 # Fetch + parse a single ICS URL
 # ---------------------------------------------------------------------------
 
+def _expand_rrule(start_prop: object, rrule_prop: object) -> list:
+    """Expand *rrule_prop* from *start_prop* into a list of naive
+    datetime occurrences.  Falls back to ``[dtstart]`` on error.
+
+    Capped at ``MAX_EVENTS_PER_FEED`` occurrences to guard against
+    open-ended rules (no UNTIL / no COUNT).
+    """
+    from dateutil.rrule import rrulestr as _rrulestr
+    from itertools import islice as _islice
+
+    dtstart = (
+        start_prop.dt
+        if hasattr(start_prop, "dt")
+        else start_prop
+    )
+    if isinstance(dtstart, datetime):
+        dtstart = dtstart.replace(tzinfo=None)
+    else:
+        dtstart = datetime(
+            dtstart.year, dtstart.month, dtstart.day
+        )
+    try:
+        rule_str = "RRULE:" + rrule_prop.to_ical().decode()
+        rule = _rrulestr(
+            rule_str, dtstart=dtstart, ignoretz=True
+        )
+        return list(_islice(rule, MAX_EVENTS_PER_FEED))
+    except Exception:
+        return [dtstart]
+
+
 def fetch_and_parse(
     url: str,
     feed_id: str,
@@ -96,6 +127,10 @@ def fetch_and_parse(
 ) -> list[dict]:
     """Download *url*, parse every VEVENT, return a list of event
     dicts compatible with the apero-ri calendar schema.
+
+    Recurring events (RRULE) are expanded into individual per-date
+    occurrences, each stored with ``recurrence="none"``, so the
+    front-end calendar does not attempt its own infinite expansion.
 
     :param url: HTTPS URL of the ICS feed
     :param feed_id: stable feed identifier (from :func:`_feed_id`)
@@ -109,8 +144,8 @@ def fetch_and_parse(
         from icalendar import Calendar  # type: ignore
     except ImportError:
         raise RuntimeError(
-            "The 'icalendar' package is required for ICS feed support. "
-            "Run: pip install icalendar"
+            "The 'icalendar' package is required for ICS feed "
+            "support. Run: pip install icalendar"
         )
 
     resp = requests.get(
@@ -121,58 +156,137 @@ def fetch_and_parse(
     resp.raise_for_status()
 
     cal = Calendar.from_ical(resp.content)
-    events: list[dict] = []
 
+    # First pass: collect {uid -> set(date_str)} for RECURRENCE-ID
+    # overrides so we can skip those dates during RRULE expansion.
+    override_dates: dict[str, set[str]] = {}
+    vevents: list = []
     for component in cal.walk():
         if component.name != "VEVENT":
             continue
+        vevents.append(component)
+        rec_id = component.get("RECURRENCE-ID")
+        if rec_id:
+            uid_str = str(component.get("UID", ""))
+            d = _to_date_str(rec_id)
+            if d:
+                override_dates.setdefault(
+                    uid_str, set()
+                ).add(d)
 
-        uid = component.get("UID", str(uuid.uuid4()))
+    events: list[dict] = []
+
+    def _tz_str(start) -> str:
+        if (
+            hasattr(start, "dt")
+            and hasattr(start.dt, "tzinfo")
+            and start.dt.tzinfo is not None
+        ):
+            return str(start.dt.tzinfo)
+        return "UTC"
+
+    def _mk_event(
+        uid_key: str,
+        date_str: str,
+        time_str: str,
+        tzone: str,
+        title: str,
+        notes: str,
+    ) -> dict:
+        return {
+            "id": _event_id(feed_id, uid_key),
+            "title": title,
+            "date": date_str,
+            "time": time_str,
+            "timezone": tzone,
+            "color": color,
+            "category": category,
+            "recurrence": "none",
+            "status": "confirmed",
+            "notes": notes,
+            "source": ICS_SOURCE,
+            "ics_feed_id": feed_id,
+        }
+
+    _capped = False
+    for component in vevents:
+        uid = str(component.get("UID", str(uuid.uuid4())))
         start = component.get("DTSTART")
-        summary = component.get("SUMMARY", "Untitled")
+        summary = str(
+            component.get("SUMMARY", "Untitled")
+        ).strip()
         description = component.get("DESCRIPTION", "")
+        notes = str(description).strip() if description else ""
         rrule_prop = component.get("RRULE")
-        tzone = "UTC"
-        if hasattr(start, "dt") and hasattr(start.dt, "tzinfo"):
-            tz = start.dt.tzinfo
-            if tz is not None:
-                tzone = str(tz)
+        rec_id = component.get("RECURRENCE-ID")
+        tz = _tz_str(start)
 
-        date_str = _to_date_str(start)
-        if not date_str:
-            continue
-
-        # Only set time if it is a datetime (not date-only)
-        time_str = ""
-        if hasattr(start, "dt") and isinstance(start.dt, datetime):
-            time_str = start.dt.strftime("%H:%M")
-
-        recurrence = _map_rrule(rrule_prop)
-
-        events.append(
-            {
-                "id": _event_id(feed_id, uid),
-                "title": str(summary).strip(),
-                "date": date_str,
-                "time": time_str,
-                "timezone": tzone,
-                "color": color,
-                "category": category,
-                "recurrence": recurrence,
-                "status": "confirmed",
-                "notes": str(description).strip() if description else "",
-                "source": ICS_SOURCE,
-                "ics_feed_id": feed_id,
-            }
-        )
-
-        if len(events) >= MAX_EVENTS_PER_FEED:
-            log.warning(
-                "Feed %s hit %d-event cap; remaining VEVENTs ignored.",
-                feed_id,
-                MAX_EVENTS_PER_FEED,
+        if rec_id:
+            # Override for one specific occurrence.
+            date_str = _to_date_str(start)
+            if not date_str:
+                continue
+            dt_val = (
+                start.dt if hasattr(start, "dt") else start
             )
+            time_str = (
+                dt_val.strftime("%H:%M")
+                if isinstance(dt_val, datetime)
+                else ""
+            )
+            events.append(
+                _mk_event(
+                    f"{uid}:{date_str}", date_str,
+                    time_str, tz, summary, notes,
+                )
+            )
+        elif rrule_prop:
+            # Master recurring: expand RRULE to individual dates.
+            excluded = override_dates.get(uid, set())
+            for occ_dt in _expand_rrule(start, rrule_prop):
+                occ_date = occ_dt.strftime("%Y-%m-%d")
+                if occ_date in excluded:
+                    continue
+                events.append(
+                    _mk_event(
+                        f"{uid}:{occ_date}", occ_date,
+                        occ_dt.strftime("%H:%M"), tz,
+                        summary, notes,
+                    )
+                )
+                if len(events) >= MAX_EVENTS_PER_FEED:
+                    _capped = True
+                    break
+        else:
+            # Single non-recurring event.
+            date_str = _to_date_str(start)
+            if not date_str:
+                continue
+            dt_val = (
+                start.dt if hasattr(start, "dt") else start
+            )
+            time_str = (
+                dt_val.strftime("%H:%M")
+                if isinstance(dt_val, datetime)
+                else ""
+            )
+            events.append(
+                _mk_event(
+                    uid, date_str, time_str, tz,
+                    summary, notes,
+                )
+            )
+
+        if _capped or len(events) >= MAX_EVENTS_PER_FEED:
+            _capped = True
             break
+
+    if _capped:
+        log.warning(
+            "Feed %s hit %d-event cap; remaining VEVENTs ignored.",
+            feed_id,
+            MAX_EVENTS_PER_FEED,
+        )
 
     return events
 
@@ -212,6 +326,38 @@ def add_feed(
         "last_error": None,
     }
     data.setdefault("ics_feeds", []).append(feed)
+    return feed
+
+
+def update_feed(
+    data: dict,
+    feed_id: str,
+    name: str | None = None,
+    color: str | None = None,
+) -> dict:
+    """Update the display name and/or colour of an existing feed.
+
+    Also updates the colour on all events already imported from that
+    feed so the calendar view reflects the change immediately.
+
+    :raises ValueError: if *feed_id* is not found.
+    """
+    feeds = data.get("ics_feeds", [])
+    feed = next(
+        (f for f in feeds if f.get("id") == feed_id), None
+    )
+    if feed is None:
+        raise ValueError(f"ICS feed '{feed_id}' not found")
+    if name is not None:
+        feed["name"] = name
+    if color is not None:
+        feed["color"] = color
+        for event in data.get("events", []):
+            if (
+                event.get("source") == ICS_SOURCE
+                and event.get("ics_feed_id") == feed_id
+            ):
+                event["color"] = color
     return feed
 
 

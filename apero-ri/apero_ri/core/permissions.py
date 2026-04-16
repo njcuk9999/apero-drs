@@ -89,6 +89,24 @@ def load_parameters() -> Dict[str, dict]:
         return yaml.safe_load(fio) or {}
 
 
+def save_parameters(params: Dict[str, dict]) -> None:
+    """
+    Save parameter definitions back to ``parameters.yaml``.
+
+    :param params: dict mapping parameter names to parameter definition
+        dicts
+    :type params: dict
+    """
+    with open(PARAMS_FILE, "w") as fio:
+        yaml.dump(
+            params,
+            fio,
+            default_flow_style=False,
+            allow_unicode=True,
+            sort_keys=False,
+        )
+
+
 # =============================================================================
 # Define page side-nav helpers
 # =============================================================================

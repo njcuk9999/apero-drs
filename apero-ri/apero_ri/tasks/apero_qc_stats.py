@@ -169,6 +169,31 @@ class AperoQCStats(apero_async.AperoAsyncTask):
                 )
                 continue
             # -----------------------------------------------------------------
+            # Guard: check that all configured paths are accessible.
+            # If an sshfs/remote drive is down, path.is_dir() returns
+            # False. We skip the profile entirely to avoid overwriting
+            # previously-good output files with null data.
+            # -----------------------------------------------------------------
+            missing_paths = apero_async.check_profile_paths_accessible(
+                aparams
+            )
+            if missing_paths:
+                detail = "; ".join(
+                    f"{k}={p}" for k, p in missing_paths
+                )
+                msg = (
+                    f"Profile {apero_profile}: skipping - one or more "
+                    "required data paths are not accessible (sshfs / "
+                    f"remote drive down?): {detail}"
+                )
+                tlog(msg)
+                self.info += (
+                    "\n## APERO query stats for APERO Profile: "
+                    f"{apero_profile}\n\n"
+                    f"- **Skipped** (path check failed): {msg}\n"
+                )
+                continue
+            # -----------------------------------------------------------------
             # step 1: get calibration files from database
             # -----------------------------------------------------------------
             # log message

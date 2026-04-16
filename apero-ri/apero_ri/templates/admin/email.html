@@ -378,11 +378,13 @@ async function aeTestConnection() {
             title.textContent = 'Connection OK';
             detail.textContent = data.detail || '';
             card.className = 'ari-ae-status-card ari-ae-status-card--ok';
+            _aePatchHealth('ok', '');
         } else {
             icon.innerHTML  = '<i class="fa-solid fa-triangle-exclamation"></i>';
             title.textContent = 'Connection problem';
             detail.textContent = data.error || 'Unknown error';
             card.className = 'ari-ae-status-card ari-ae-status-card--error';
+            _aePatchHealth('error', data.error || 'SMTP connection failed.');
         }
     } catch(e) {
         icon.innerHTML  = '<i class="fa-solid fa-triangle-exclamation"></i>';
@@ -390,6 +392,22 @@ async function aeTestConnection() {
         detail.textContent = String(e);
         card.className = 'ari-ae-status-card ari-ae-status-card--error';
     }
+}
+
+// Push the test result into the admin-portal health cache so the
+// health panel reflects it without waiting for the next full refresh.
+async function _aePatchHealth(status, message) {
+    try {
+        await fetch('/api/admin/health/patch', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+                key: 'home.admin_portal.email',
+                status,
+                message,
+            }),
+        });
+    } catch(_) { /* best-effort; ignore network errors */ }
 }
 
 // ── Send test email ─────────────────────────────────────────────────────────

@@ -553,3 +553,14 @@ home.admin_portal.manage_uploads:
     pinned: False
     top-level: False
     show: True
+
+home.admin_portal.vault:
+  label: Vault
+  parent: home.admin_portal
+  view-permission: manage.admin.vault
+  icon: fa-solid fa-vault
+  quick-nav: False
+  side-nav:
+    pinned: False
+    top-level: False
+    show: True

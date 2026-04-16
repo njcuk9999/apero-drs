@@ -297,10 +297,9 @@ def test_email_connection(
     if not password:
         return {"ok": False, "error": "No SMTP password configured."}
 
-    # For quick health checks, use a shorter timeout (just for connectivity)
+    # For quick health checks, skip the full login but still honour the
+    # configured socket timeout so slow servers don't cause false failures.
     timeout = float(cfg.get("smtp_timeout", 20))
-    if quick_test:
-        timeout = min(timeout, 5)  # cap at 5s for quick test
 
     try:
         if use_ssl:
