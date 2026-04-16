@@ -654,6 +654,23 @@ def add_ext_config_list(config_list: List[Union[ConstDict, KeywordDict]],
     return config_list
 
 
+def common_prefix(values: List[str]) -> str:
+    """
+    Take a list of files and return a common prefix to all files
+    :param values: list of files
+    :return: common prefix
+    """
+    # get all the basenames of the files
+    basenames = [os.path.basename(value) for value in values]
+    # get the common prefix
+    prefix = os.path.commonprefix(basenames)
+    # if there is no common prefix use a timestamp
+    if len(prefix) == 0:
+        return f'{base.Time.now().fits}'
+    # otherwise return the common prefix
+    return prefix
+
+
 # =============================================================================
 # Define starting point functions
 # =============================================================================
@@ -1098,13 +1115,9 @@ def ask_about_download_data(params, url):
         elif userinput in ['L', 'LOCAL']:
             # ask user for local path
             while True:
-                prompt_local = (
-                    '\nProvide the local path to demo data '
-                    '(or [Q]uit): '
-                )
-                user_path = (
-                    str(input(prompt_local)).strip()
-                )
+                prompt_local = ('\nProvide the local path to demo data '
+                                '(or [Q]uit): ' )
+                user_path = str(input(prompt_local)).strip()
                 # handle quit option
                 if user_path.upper() in ['Q', 'QUIT']:
                     return
@@ -1112,24 +1125,18 @@ def ask_about_download_data(params, url):
                 if os.path.isdir(user_path):
                     demolocal = user_path
                     # ask user about symlinks
-                    symlink_prompt = (
-                        '\nUse symlinks? '
-                        '[Y]es (symlinks) or [N]o '
-                        '(hard copy): '
-                    )
-                    symlink_input = (
-                        str(input(symlink_prompt)).upper().strip()
-                    )
+                    symlink_prompt = ('\nUse symlinks? '
+                                      '[Y]es (symlinks) or [N]o '
+                                      '(hard copy): ')
+                    symlink_input = str(input(symlink_prompt)).upper().strip()
                     if symlink_input in ['Y', 'YES']:
                         demosymlink = True
                     else:
                         demosymlink = False
                     break
                 else:
-                    msg = (
-                        f'Path does not exist: {user_path}. '
-                        'Please try again.'
-                    )
+                    msg = (f'Path does not exist: {user_path}. '
+                           'Please try again.')
                     WLOG(params, 'warning', msg)
             break
         else:
