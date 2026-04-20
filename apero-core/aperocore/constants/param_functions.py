@@ -961,7 +961,8 @@ class ParamDict(CaseInDict):
                        descs: Union[list, None] = None,
                        drsfitsfile: Any = None,
                        include_zero_counts: bool = False,
-                       tex: bool = False) -> Table:
+                       tex: bool = False,
+                       key_filter: str = None) -> Table:
         """
         Takes a snapshot of the current configuration (for reproducibility)
 
@@ -1031,6 +1032,10 @@ class ParamDict(CaseInDict):
         ikeys, ivalues = _yaml_walk(base.IPARAMS)
         # loop around input parameters
         for it, ikey in enumerate(ikeys):
+            # deal with key_filter - skip any keys that don't start with this
+            if key_filter is not None:
+                if not ikey.startswith(key_filter):
+                    continue
             # add install key name
             tabledict['NAME'].append(ikey)
             # add install kind
@@ -1156,7 +1161,7 @@ class ParamDict(CaseInDict):
         # return table
         return table
 
-    def out_tex_file(self) -> Table:
+    def out_tex_file(self, key_filter: str = None) -> Table:
         """
         Get a "snapshot" latex table of the parameter dictionary
 
@@ -1169,7 +1174,7 @@ class ParamDict(CaseInDict):
                  ascii.latex format
         """
         # get the keys that have the tex attribute
-        tsnapshot = self.snapshot_table(tex=True)
+        tsnapshot = self.snapshot_table(tex=True, key_filter=key_filter)
         # only keep name and value
         ts = tsnapshot['NAME', 'VALUE']
         # Escape underscores in the columns
