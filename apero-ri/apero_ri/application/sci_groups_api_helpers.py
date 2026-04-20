@@ -21,6 +21,12 @@ def api_sci_groups_list(app):
     if not instrument:
         return jsonify(success=False, error="No instrument"), 400
 
+    perm = f"manage.sci_group.{instrument}"
+    if perm not in (perms or set()):
+        return jsonify(
+            success=False, error="Insufficient permissions"
+        ), 403
+
     params = load_parameters()
     valid = params.get("instruments", {}).get("value", [])
     if instrument not in valid:
@@ -162,6 +168,12 @@ def api_sci_groups_save(app):
     if not instrument or not name:
         return jsonify(success=False, error="Missing fields"), 400
 
+    perm = f"manage.sci_group.{instrument}"
+    if perm not in (perms or set()):
+        return jsonify(
+            success=False, error="Insufficient permissions"
+        ), 403
+
     groups = load_science_groups(instrument)
     groups, all_run_ids = app._sync_all_science_group(
         instrument,
@@ -184,6 +196,7 @@ def api_sci_groups_save(app):
         "run_ids": run_ids_clean,
         "users": users_clean,
     }
+    save_science_groups(instrument, groups)
     groups, _ = app._sync_all_science_group(
         instrument,
         groups=groups,
@@ -208,6 +221,12 @@ def api_sci_groups_create(app):
     name = data.get("name", "").strip()
     if not instrument or not name:
         return jsonify(success=False, error="Missing fields"), 400
+
+    perm = f"manage.sci_group.{instrument}"
+    if perm not in (perms or set()):
+        return jsonify(
+            success=False, error="Insufficient permissions"
+        ), 403
 
     if not re.match(r"^[\w\-]+$", name):
         return (
@@ -248,6 +267,12 @@ def api_sci_groups_delete(app):
     name = data.get("name", "").strip()
     if not instrument or not name:
         return jsonify(success=False, error="Missing fields"), 400
+
+    perm = f"manage.sci_group.{instrument}"
+    if perm not in (perms or set()):
+        return jsonify(
+            success=False, error="Insufficient permissions"
+        ), 403
 
     groups = load_science_groups(instrument)
     groups, _ = app._sync_all_science_group(

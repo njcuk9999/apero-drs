@@ -132,6 +132,7 @@ window.ARI_ADMIN_CAL = {
     saveUrl: {{ url_for('api_admin_calendar_save')|tojson }},
     deleteUrl: {{ url_for('api_admin_calendar_delete')|tojson }},
     canManage: {{ can_manage|tojson }},
+    manageableInstruments: {{ manageable_instruments|tojson }},
     icsListUrl: {{ url_for('api_admin_ics_list')|tojson }},
     icsAddUrl: {{ url_for('api_admin_ics_add')|tojson }},
     icsDeleteUrl: {{ url_for('api_admin_ics_delete')|tojson }},

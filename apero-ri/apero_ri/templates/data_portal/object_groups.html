@@ -1,0 +1,183 @@
+{% extends "general/sidebar_base.html" %}
+{% block title %}APERO RI – {{ page_label }}{% endblock %}
+
+{% block body_class %}ari-has-sidebar ari-dp-profile-page op-page{% endblock %}
+
+{% block doc_content %}
+<div class="ari-page-header">
+    <h1>
+        <i class="{{ page_icon }}"></i>
+        {{ page_label }}
+    </h1>
+    <p class="ari-page-subtitle">
+        Shared object groups for
+        <strong>{{ profile.profile_id }}</strong>.
+    </p>
+</div>
+
+{# ── Profile badge + controls ─────────────────────────────── #}
+<div class="ari-rp-summary">
+    <div class="ari-rp-summary__badge"
+         style="--card-bg: {{ profile_color.bg }};
+                --card-text: {{ profile_color.text }};
+                --card-border: {{ profile_color.border }};">
+        <span class="ari-db-card__instrument">
+            {{ profile.instrument }}
+        </span>
+    </div>
+    <div class="ari-rp-summary__meta">
+        <span class="ari-rp-summary__item">
+            <i class="fa-solid fa-layer-group"></i>
+            <span id="og-group-count">0</span>
+            group<span id="og-group-plural">s</span>
+        </span>
+        <span class="ari-rp-summary__item">
+            <button type="button"
+                    id="og-create-group-btn"
+                    class="ari-btn ari-btn--sm ari-btn--primary"
+                    title="Create a new group">
+                <i class="fa-solid fa-folder-plus"></i>
+                New Group
+            </button>
+        </span>
+    </div>
+</div>
+
+{# ── Filter ────────────────────────────────────────────────── #}
+<div class="op-section-search" style="margin-top:0.8rem;">
+    <input id="og-filter-input" type="text"
+           class="op-section-search__input"
+           placeholder="Filter groups&hellip;"
+           autocomplete="off">
+</div>
+
+{# ── Groups container (populated by JS) ───────────────────── #}
+<div id="og-loading" class="ot-loading-block">
+    <i class="fa-solid fa-spinner fa-spin"></i>
+    Loading groups&hellip;
+</div>
+<div id="og-error" class="ot-error-block"
+     style="display:none;"></div>
+
+<div id="og-groups-container" class="ari-fav-sections"
+     style="display:none;">
+</div>
+
+<p id="og-empty" class="ari-rp-note" style="display:none;">
+    <i class="fa-solid fa-circle-info"></i>
+    No shared object groups yet. Click
+    <strong>New Group</strong> above to create one.
+</p>
+
+{# ── Add objects modal ─────────────────────────────────────── #}
+<div id="og-add-modal" class="ari-modal-overlay"
+     style="display:none;" role="dialog" aria-modal="true"
+     aria-labelledby="og-add-modal-title">
+    <div class="ari-modal ari-modal--fav">
+        <div class="ari-modal__header ari-modal__header--normal">
+            <h2 id="og-add-modal-title">
+                <i class="fa-solid fa-circle-plus"></i>
+                Add Objects to Group
+            </h2>
+            <button type="button" class="ari-modal__close"
+                    id="og-add-modal-close">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+        <div class="ari-modal__body">
+            <div class="ari-form-group">
+                <label for="og-add-query">
+                    Object name
+                </label>
+                <div class="ari-fav-modal-row">
+                    <input id="og-add-query" type="text"
+                           class="ari-input"
+                           placeholder="e.g. GL436"
+                           autocomplete="off">
+                    <input id="og-add-group"
+                           type="hidden" value="">
+                    <button id="og-add-single-btn"
+                            class="ari-btn ari-btn--primary">
+                        <i class="fa-solid fa-plus"></i> Add
+                    </button>
+                </div>
+                <div id="og-add-single-result"
+                     style="display:none;margin-top:0.4rem;">
+                </div>
+            </div>
+            <hr>
+            <div class="ari-form-group">
+                <label for="og-add-bulk-file">
+                    Bulk add from CSV / text file
+                </label>
+                <p class="at-muted-hint">
+                    One object name per line (or first CSV
+                    column).
+                </p>
+                <input id="og-add-bulk-file" type="file"
+                       class="ari-input" accept=".csv,.txt">
+                <button id="og-add-bulk-btn"
+                        class="ari-btn ari-btn--secondary"
+                        style="margin-top:0.4rem;">
+                    <i class="fa-solid fa-upload"></i>
+                    Upload
+                </button>
+                <div id="og-add-bulk-result"
+                     style="display:none;margin-top:0.6rem;">
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{# ── Rename modal ──────────────────────────────────────────── #}
+<div id="og-rename-modal" class="ari-modal-overlay"
+     style="display:none;" role="dialog" aria-modal="true"
+     aria-labelledby="og-rename-modal-title">
+    <div class="ari-modal ari-modal--sm">
+        <div class="ari-modal__header ari-modal__header--normal">
+            <h2 id="og-rename-modal-title">
+                <i class="fa-solid fa-pen"></i>
+                Rename Group
+            </h2>
+            <button type="button" class="ari-modal__close"
+                    id="og-rename-modal-close">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+        <div class="ari-modal__body">
+            <div class="ari-form-group">
+                <label for="og-rename-input">
+                    New name
+                </label>
+                <input id="og-rename-input" type="text"
+                       class="ari-input" autocomplete="off">
+                <input id="og-rename-old" type="hidden"
+                       value="">
+            </div>
+            <button id="og-rename-submit"
+                    class="ari-btn ari-btn--primary"
+                    style="margin-top:0.6rem;">
+                <i class="fa-solid fa-check"></i> Rename
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+window.ARI_OBJECT_GROUPS = {
+    profileId: {{ profile.profile_id | tojson }},
+    instrument: {{ profile.instrument | tojson }},
+    listApiUrl: '/api/data-portal/object-groups/list',
+    objectsApiUrl: '/api/data-portal/object-groups/objects',
+    createApiUrl: '/api/data-portal/object-groups/create',
+    deleteApiUrl: '/api/data-portal/object-groups/delete',
+    renameApiUrl: '/api/data-portal/object-groups/rename',
+    addObjectApiUrl: '/api/data-portal/object-groups/add-object',
+    addBulkApiUrl: '/api/data-portal/object-groups/add-objects-bulk',
+    removeObjectApiUrl: '/api/data-portal/object-groups/remove-object',
+    objectPageBaseUrl: '/data_portal/{{ profile.profile_id }}/'
+};
+</script>
+<script src="{{ url_for('static', filename='js/object_groups.js', v='20260609a') }}" defer></script>
+{% endblock %}

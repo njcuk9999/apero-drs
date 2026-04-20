@@ -34,11 +34,13 @@ admin:
     # can they manage apero profiles
     - manage.apero_profile
     # which groups can they manage
-    - manage.group.moderator
-    - manage.group.developer
+    - manage.group.moderator.SPIROU
+    - manage.group.developer.SPIROU
+    - manage.group.moderator.NIRPS
+    - manage.group.developer.NIRPS
     # which instruments can they manage
-    - manage.instrument.moderator
-    - manage.instrument.developer
+    - manage.instrument.SPIROU
+    - manage.instrument.NIRPS
     # which groups can they login as
     - login_as.moderator
     - login_as.developer
@@ -53,71 +55,121 @@ admin:
     - manage.admin.database_setup
     - manage.admin.user_db_access
   groups:
-    - moderator
-    - developer
+    - moderator.SPIROU
+    - moderator.NIRPS
+    - developer.SPIROU
+    - developer.NIRPS
 
 # ==============================================================================
 # Moderator group - manager level access to add/change users
 # ==============================================================================
-moderator:
+# --- SPIROU instrument-scoped groups ---
+moderator.SPIROU:
   permissions:
     # can they manage science groups
-    - manage.sci_group
+    - manage.sci_group.SPIROU
     # can they view the admin section
     - view.admin
     # which groups can they manage
-    - manage.group.monitor
-    - manage.group.general
+    - manage.group.monitor.SPIROU
+    - manage.group.general.SPIROU
     - manage.group.public
     # which instruments can they manage
-    - manage.instrument.monitor
-    - manage.instrument.general
+    - manage.instrument.SPIROU
     # which groups can they login as
-    - login_as.monitor
-    - login_as.general
+    - login_as.monitor.SPIROU
+    - login_as.general.SPIROU
     - login_as.public
     # can they view/manage instrument calendar and links
     - view.admin.calendar
-    - manage.admin.calendar
+    - manage.admin.calendar.SPIROU
     - view.admin.links
-    - manage.admin.links
+    - manage.admin.links.SPIROU
     # vault: shared secret/credential store for admin portal users
     - manage.admin.vault
   groups:
-    - monitor
+    - monitor.SPIROU
+
+# --- NIRPS instrument-scoped groups ---
+moderator.NIRPS:
+  permissions:
+    # can they manage science groups
+    - manage.sci_group.NIRPS
+    # can they view the admin section
+    - view.admin
+    # which groups can they manage
+    - manage.group.monitor.NIRPS
+    - manage.group.general.NIRPS
+    - manage.group.public
+    # which instruments can they manage
+    - manage.instrument.NIRPS
+    # which groups can they login as
+    - login_as.monitor.NIRPS
+    - login_as.general.NIRPS
+    - login_as.public
+    # can they view/manage instrument calendar and links
+    - view.admin.calendar
+    - manage.admin.calendar.NIRPS
+    - view.admin.links
+    - manage.admin.links.NIRPS
+    # vault: shared secret/credential store for admin portal users
+    - manage.admin.vault
+  groups:
+    - monitor.NIRPS
 
 # ==============================================================================
 # Developer group - access to edit documentation and instrument information
 # ==============================================================================
-developer:
+developer.SPIROU:
   permissions:
     # which documentation pages can they edit?
-    - edit.doc.instrument
+    - edit.doc.SPIROU
     # can they view/manage instrument calendar and links
     - view.admin.calendar
-    - manage.admin.calendar
+    - manage.admin.calendar.SPIROU
     - view.admin.links
-    - manage.admin.links
+    - manage.admin.links.SPIROU
   groups:
-    - monitor
+    - monitor.SPIROU
+
+developer.NIRPS:
+  permissions:
+    # which documentation pages can they edit?
+    - edit.doc.NIRPS
+    # can they view/manage instrument calendar and links
+    - view.admin.calendar
+    - manage.admin.calendar.NIRPS
+    - view.admin.links
+    - manage.admin.links.NIRPS
+  groups:
+    - monitor.NIRPS
+
 
 # ==============================================================================
 # Monitor group - access to monitoring tools
 # ==============================================================================
-monitor:
+monitor.SPIROU:
   permissions:
-    # can they view the monitor portal
-    - view.monitor_portal
+      - view.monitor_portal.SPIROU
   groups:
-    - general
+    - general.SPIROU
+
+monitor.NIRPS:
+  permissions:
+      - view.monitor_portal.NIRPS
+  groups:
+    - general.NIRPS
 
 # ==============================================================================
 # User group - access to data portal and documentation
 # ==============================================================================
-general:
-  permissions:
-    # can they view the data portal
-    - view.data_portal
+general.SPIROU:
+  permissions: []
+  groups:
+    - public
+
+general.NIRPS:
+  permissions: []
   groups:
     - public
 
@@ -126,6 +178,8 @@ general:
 # ==============================================================================
 public:
   permissions:
+    # can view the data portal
+    - view.data_portal
     # can they view the home page
     - view.home
     # can they view documentation
@@ -138,44 +192,9 @@ public:
 # user.instruments field to restrict which profiles are visible)
 # ==============================================================================
 
-# --- SPIROU instrument-scoped groups ---
-moderator.SPIROU:
-  permissions: []
-  groups:
-    - moderator
 
-developer.SPIROU:
-  permissions: []
-  groups:
-    - developer
 
-monitor.SPIROU:
-  permissions: []
-  groups:
-    - monitor
 
-general.SPIROU:
-  permissions: []
-  groups:
-    - general
 
-# --- NIRPS_HE instrument-scoped groups ---
-moderator.NIRPS_HE:
-  permissions: []
-  groups:
-    - moderator
 
-developer.NIRPS_HE:
-  permissions: []
-  groups:
-    - developer
 
-monitor.NIRPS_HE:
-  permissions: []
-  groups:
-    - monitor
-
-general.NIRPS_HE:
-  permissions: []
-  groups:
-    - general

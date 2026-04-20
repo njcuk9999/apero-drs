@@ -184,6 +184,17 @@ home.docs.api:
     top-level: False
     show: True
 
+"home.data_portal.{apero_profile}.object_groups":
+  label: "Object Groups"
+  parent: "home.data_portal.{apero_profile}"
+  view-permission: "view.{apero profile}"
+  icon: fa-solid fa-layer-group
+  quick-nav: False
+  side-nav:
+    pinned: False
+    top-level: False
+    show: True
+
 "home.data_portal.{apero_profile}.obs_table":
   label: "Observation Table"
   parent: "home.data_portal.{apero_profile}"

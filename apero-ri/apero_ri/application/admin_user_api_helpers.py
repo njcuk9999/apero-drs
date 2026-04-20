@@ -12,6 +12,7 @@ from apero_ri.core.auth import (
 )
 from apero_ri.core.permissions import (
     get_inherited_groups,
+    get_user_instruments,
     load_parameters,
     resolve_user_permissions,
 )
@@ -46,13 +47,19 @@ def api_user_search(app):
 
     params = load_parameters()
     all_instruments = params.get("instruments", {}).get("value", [])
-    editor_full = get_user_info(user_info["username"])
-    editor_instruments = (
-        editor_full.get("instruments", []) if editor_full else []
+    editor_instruments = get_user_instruments(
+        user_info.get('groups', []), app.ari_groups
     )
-    can_manage_instrument_groups = {
-        g for g in all_groups if f"manage.instrument.{g}" in perms
-    }
+    can_manage_instrument_groups = set()
+    for g in all_groups:
+        if f'manage.instrument.{g}' in perms:
+            can_manage_instrument_groups.add(g)
+        else:
+            parts = g.rsplit('.', 1)
+            if len(parts) == 2:
+                instrument = parts[1]
+                if f'manage.instrument.{instrument}' in perms:
+                    can_manage_instrument_groups.add(g)
     can_add_instrument = (
         ("add.instrument" in perms)
         or bool(can_manage_instrument_groups)
@@ -183,9 +190,18 @@ def api_user_update_instruments(app):
 
     if target != user_info["username"] and not editor_is_admin:
         can_manage_any = "add.instrument" in perms
-        missing = [
-            g for g in target_groups if f"manage.instrument.{g}" not in perms
-        ]
+        missing = []
+        for g in target_groups:
+            has_perm = f'manage.instrument.{g}' in perms
+            if not has_perm:
+                parts = g.rsplit('.', 1)
+                if len(parts) == 2:
+                    has_perm = (
+                        f'manage.instrument.{parts[1]}'
+                        in perms
+                    )
+            if not has_perm:
+                missing.append(g)
         if not can_manage_any and missing:
             return (
                 jsonify(

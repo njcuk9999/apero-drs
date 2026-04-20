@@ -580,6 +580,17 @@ def api_async_tasks_run_all(app):
     for task_cfg in inst_tasks:
         if not task_cfg.get("active", True):
             continue
+        # Skip tasks that were explicitly cancelled by
+        # the user – do not re-queue them automatically.
+        last_st = str(
+            task_cfg.get('last_status', '') or ''
+        ).strip().lower()
+        if last_st == 'cancelled':
+            blocked.append({
+                'id': task_cfg.get('id', ''),
+                'reason': 'Task was cancelled.',
+            })
+            continue
         allowed, reason = task_runner.can_enqueue_now(task_cfg)
         if not allowed:
             blocked.append({"id": task_cfg.get("id", ""), "reason": reason})

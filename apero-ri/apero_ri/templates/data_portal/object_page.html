@@ -3,6 +3,48 @@
 
 {% block extra_head %}
 <link rel="stylesheet" href="https://cdn.bokeh.org/bokeh/release/bokeh-3.8.2.min.css" type="text/css">
+<style>
+.op-cg-comment-card {
+    border: 1px solid var(--ari-border, #ddd);
+    border-radius: 0.5rem;
+    padding: 0.7rem 1rem;
+    margin-bottom: 0.5rem;
+    background: var(--ari-card-bg, #fff);
+}
+.op-cg-comment-meta {
+    font-size: 0.82em;
+    color: var(--ari-muted, #888);
+    margin-bottom: 0.3rem;
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.3rem;
+}
+.op-cg-comment-actions {
+    margin-left: auto;
+    display: inline-flex;
+    gap: 0.25rem;
+}
+.op-cg-comment-body {
+    white-space: pre-wrap;
+    word-break: break-word;
+}
+.op-cg-edit-textarea {
+    width: 100%;
+    resize: vertical;
+}
+.ari-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    background: var(--ari-tag-bg, #e9ecef);
+    color: var(--ari-tag-text, #333);
+    border-radius: 1rem;
+    padding: 0.25rem 0.8rem;
+    font-size: 0.85em;
+    margin: 0.15rem;
+}
+</style>
 {% endblock %}
 
 {% block body_class %}ari-has-sidebar op-page{% endblock %}
@@ -53,6 +95,9 @@
     <button class="ari-sg-tab" data-tab="download">
         <i class="fa-solid fa-basket-shopping"></i> Download
         <span id="op-basket-count" class="op-basket-badge"></span>
+    </button>
+    <button class="ari-sg-tab" data-tab="comments_groups">
+        <i class="fa-solid fa-comments"></i> Comments &amp; Groups
     </button>
 </div>
 
@@ -109,6 +154,55 @@
                     </div>
                     <div id="op-finder-error" style="display:none;" class="at-muted-hint"></div>
                     <div id="op-finder-images" style="display:none;"></div>
+                </div>
+            </div>
+        </div>
+        <div class="at-section-card" data-op-section-id="target.tess_rotation">
+            <div class="at-section-card__header">
+                <span><i class="fa-solid fa-rotate"></i> TESS Rotation Periods</span>
+            </div>
+            <div class="at-section-card__body">
+                <div id="op-tess-rotation">
+                    <button id="op-tess-generate-btn"
+                            class="ari-btn ari-btn--sm ari-btn--secondary"
+                            title="Run tessilator to generate TESS rotation period plots"
+                            {% if tess_rotation_cached %}style="display:none;"{% endif %}>
+                        <i class="fa-solid fa-wand-magic-sparkles"></i> Generate TESS Rotation Periods
+                    </button>
+                    <div id="op-tess-loading" style="display:none;" class="at-muted-hint">
+                        <i class="fa-solid fa-spinner fa-spin"></i>
+                        {% if tess_rotation_cached %}Loading TESS data&hellip;{% else %}Running tessilator (this may take a few minutes)&hellip;{% endif %}
+                    </div>
+                    <div id="op-tess-error" style="display:none;" class="at-muted-hint"></div>
+                    <div id="op-tess-viewer" style="display:none;">
+                        <div id="op-tess-nav" style="display:flex;align-items:center;gap:0.6rem;margin-bottom:0.6rem;flex-wrap:wrap;">
+                            <button id="op-tess-prev" class="ari-btn ari-btn--sm ari-btn--secondary" title="Previous sector">
+                                <i class="fa-solid fa-chevron-left"></i>
+                            </button>
+                            <span id="op-tess-label" style="font-weight:600;"></span>
+                            <button id="op-tess-next" class="ari-btn ari-btn--sm ari-btn--secondary" title="Next sector">
+                                <i class="fa-solid fa-chevron-right"></i>
+                            </button>
+                            <span style="flex:1;"></span>
+                            <a id="op-tess-dl-lc" href="#" class="ari-btn ari-btn--sm ari-btn--secondary" title="Download period results (ECSV)" style="display:none;">
+                                <i class="fa-solid fa-download"></i> Periods
+                            </a>
+                            <button id="op-tess-dl-png" class="ari-btn ari-btn--sm ari-btn--secondary" title="Download all sector PNGs" style="display:none;">
+                                <i class="fa-solid fa-images"></i> Download All PNGs
+                            </button>
+                            <button id="op-tess-regen" class="ari-btn ari-btn--sm ari-btn--secondary" title="Re-run tessilator (clears cache)" style="display:none;">
+                                <i class="fa-solid fa-arrows-rotate"></i> Regenerate
+                            </button>
+                        </div>
+                        <img id="op-tess-img" alt="TESS rotation plot" style="width:100%;max-width:800px;border-radius:0.4rem;border:1px solid var(--op-border,#d6d9de);">
+                    </div>
+                    <!-- Console log (collapsible) -->
+                    <details id="op-tess-log-wrap" style="display:none;margin-top:0.7rem;">
+                        <summary style="cursor:pointer;font-size:0.84rem;font-weight:600;color:var(--ari-text-muted,#6a737d);">
+                            <i class="fa-solid fa-terminal"></i> Console Output
+                        </summary>
+                        <pre id="op-tess-log" style="margin-top:0.4rem;max-height:18rem;overflow:auto;font-size:0.78rem;line-height:1.45;background:var(--ari-surface-muted,#f6f8fa);border:1px solid var(--op-border,#d6d9de);border-radius:0.35rem;padding:0.6rem 0.75rem;white-space:pre-wrap;word-break:break-word;"></pre>
+                    </details>
                 </div>
             </div>
         </div>
@@ -662,6 +756,124 @@
             </div>
         </div>
     </section>
+
+    {# ──── Comments & Groups tab ─────────────────────────────────── #}
+    <section id="op-tab-comments_groups" class="op-tab-panel"
+             style="display:none;">
+
+        {# -- Comments -- #}
+        <div class="at-section-card"
+             data-op-section-id="comments_groups.comments">
+            <div class="at-section-card__header">
+                <span>
+                    <i class="fa-solid fa-comments"></i>
+                    Comments
+                    <span id="op-cg-comment-count"
+                          class="op-basket-badge"></span>
+                </span>
+            </div>
+            <div class="at-section-card__body">
+                <div id="op-cg-comments-loading"
+                     class="at-muted-hint">
+                    <i class="fa-solid fa-spinner fa-spin"></i>
+                    Loading comments&hellip;
+                </div>
+                <div id="op-cg-comments-error"
+                     style="display:none;"
+                     class="at-muted-hint"></div>
+                <div id="op-cg-comments-list"
+                     style="display:none;"></div>
+                <div id="op-cg-comments-empty"
+                     class="at-muted-hint"
+                     style="display:none;">
+                    No comments yet. Be the first to add one!
+                </div>
+
+                <div id="op-cg-add-comment"
+                     style="margin-top:1rem;">
+                    <textarea id="op-cg-comment-input"
+                              class="ari-input"
+                              rows="3"
+                              placeholder="Add a comment&hellip;"
+                              style="width:100%;resize:vertical;">
+                    </textarea>
+                    <button id="op-cg-comment-submit"
+                            class="ari-btn ari-btn--primary ari-btn--sm"
+                            style="margin-top:0.4rem;">
+                        <i class="fa-solid fa-paper-plane"></i>
+                        Post Comment
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        {# -- Object Groups -- #}
+        <div class="at-section-card"
+             data-op-section-id="comments_groups.groups">
+            <div class="at-section-card__header">
+                <span>
+                    <i class="fa-solid fa-layer-group"></i>
+                    Object Groups
+                </span>
+            </div>
+            <div class="at-section-card__body">
+                <div id="op-cg-groups-loading"
+                     class="at-muted-hint">
+                    <i class="fa-solid fa-spinner fa-spin"></i>
+                    Loading groups&hellip;
+                </div>
+                <div id="op-cg-groups-error"
+                     style="display:none;"
+                     class="at-muted-hint"></div>
+                <div id="op-cg-groups-list"
+                     style="display:none;"></div>
+                <div id="op-cg-groups-empty"
+                     class="at-muted-hint"
+                     style="display:none;">
+                    This object is not in any group.
+                </div>
+
+                <div id="op-cg-add-to-group"
+                     style="margin-top:1rem;">
+                    <label class="ari-label"
+                           for="op-cg-group-select">
+                        Add to group
+                    </label>
+                    <div style="display:flex;gap:0.4rem;
+                                align-items:center;
+                                flex-wrap:wrap;">
+                        <select id="op-cg-group-select"
+                                class="ari-input"
+                                style="min-width:10rem;">
+                            <option value="">
+                                -- select group --
+                            </option>
+                        </select>
+                        <button id="op-cg-group-add-btn"
+                                class="ari-btn ari-btn--primary
+                                       ari-btn--sm">
+                            <i class="fa-solid fa-plus"></i> Add
+                        </button>
+                        <button id="op-cg-group-new-btn"
+                                class="ari-btn ari-btn--secondary
+                                       ari-btn--sm"
+                                title="Create a new group">
+                            <i class="fa-solid fa-folder-plus"></i>
+                            New Group
+                        </button>
+                    </div>
+                </div>
+
+                <p class="at-muted-hint"
+                   style="margin-top:0.8rem;">
+                    <a id="op-cg-groups-page-link" href="#">
+                        <i class="fa-solid fa-arrow-right"></i>
+                        Open Object Groups page
+                    </a>
+                </p>
+            </div>
+        </div>
+    </section>
 </div>
 
 <script>
@@ -671,6 +883,10 @@ window.ARI_OBJECT_PAGE = {
     objectLblPlotsApiUrl: '/api/data-portal/object-lbl-plots',
     finderChartApiUrl: '/api/data-portal/finder-chart',
     finderChartCached: {{ (finder_chart_cached | default(false)) | tojson }},
+    tessRotationApiUrl: '/api/data-portal/tess-rotation',
+    tessRotationLcApiUrl: '/api/data-portal/tess-rotation-lc',
+    tessRotationStreamUrl: '/api/data-portal/tess-rotation-stream',
+    tessRotationCached: {{ (tess_rotation_cached | default(false)) | tojson }},
     debugPlotsApiUrl: '/api/data-portal/debug-plots',
     tcorrMapGenerateApiUrl: '/api/data-portal/tcorr-map-generate',
     finderMaxUrl: {{ url_for('ri_object_plot_max', profile_id=profile.profile_id, objname=objname, plot_key='finder') | tojson }},
@@ -690,7 +906,16 @@ window.ARI_OBJECT_PAGE = {
     objectFavouriteApiToggle: '/api/user/favourite-objects/toggle',
     objectFavouriteApiLastOpened: '/api/user/favourite-objects/last-opened',
     filenamePlotApiUrl: '/api/data-portal/filename-plot',
-    plotYAxisZoom: {{ plot_yaxis_zoom | tojson }}
+    plotYAxisZoom: {{ plot_yaxis_zoom | tojson }},
+    commentsListApiUrl: '/api/data-portal/object-comments/list',
+    commentsAddApiUrl: '/api/data-portal/object-comments/add',
+    commentsEditApiUrl: '/api/data-portal/object-comments/edit',
+    commentsDeleteApiUrl: '/api/data-portal/object-comments/delete',
+    groupsForObjectApiUrl: '/api/data-portal/object-groups/for-object',
+    groupsCreateApiUrl: '/api/data-portal/object-groups/create',
+    groupsAddObjectApiUrl: '/api/data-portal/object-groups/add-object',
+    groupsRemoveObjectApiUrl: '/api/data-portal/object-groups/remove-object',
+    objectGroupsPageUrl: '/data_portal/{{ profile.profile_id }}/object-groups'
 };
 window.ARI_BASKET_CFG = {
     addApiUrl: '/api/data-portal/basket/add',
@@ -711,6 +936,7 @@ window.ARI_PLOTABLE_OUTPUTS = {{ plotable_output_types | tojson }};
 window.ARI_FRAME_PREFIXES   = {{ frame_output_prefixes | tojson }};
 </script>
 <script src="{{ url_for('static', filename='js/file_browser.js', v='20260410d') }}" defer></script>
+<script src="{{ url_for('static', filename='js/object_comments.js', v='20260609a') }}" defer></script>
 
 <!-- ──── Filename-click plot modal ──────────────────────────────────────── -->
 <div id="fn-plot-modal" class="fn-modal-overlay" style="display:none;" role="dialog" aria-modal="true" aria-labelledby="fn-plot-title">

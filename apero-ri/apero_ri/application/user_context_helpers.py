@@ -6,6 +6,7 @@ from apero_ri.core.auth import get_accessible_profiles
 from apero_ri.core.auth import load_users
 from apero_ri.core.auth import load_science_groups
 from apero_ri.core.permissions import get_inherited_groups
+from apero_ri.core.permissions import get_user_instruments
 from apero_ri.core.permissions import load_parameters
 from apero_ri.core import email_backend as eb
 from apero_ri.core import user_data as ud
@@ -16,12 +17,12 @@ from apero_ri.application import instrument_color_helpers
 
 def build_user_data_access_context(app, user_info):
     """Build summary of user's data access by instrument."""
-    params = load_parameters()
-    all_instr = params.get('instruments', {}).get('value', [])
-    user_instr = set(user_info.get('instruments', []))
-    if user_instr:
-        instruments = [i for i in all_instr if i in user_instr]
-    else:
+    instruments = get_user_instruments(
+        user_info.get('groups', []), app.ari_groups
+    )
+    if not instruments:
+        params = load_parameters()
+        all_instr = params.get('instruments', {}).get('value', [])
         instruments = list(all_instr)
 
     username = user_info.get('username', '')
@@ -64,12 +65,12 @@ def build_user_data_access_context(app, user_info):
 
 def build_user_support_context(app, user_info):
     """Build support contact lists grouped by instrument and role."""
-    params = load_parameters()
-    all_instr = params.get('instruments', {}).get('value', [])
-    user_instr = set(user_info.get('instruments', []))
-    if user_instr:
-        instruments = [i for i in all_instr if i in user_instr]
-    else:
+    instruments = get_user_instruments(
+        user_info.get('groups', []), app.ari_groups
+    )
+    if not instruments:
+        params = load_parameters()
+        all_instr = params.get('instruments', {}).get('value', [])
         instruments = list(all_instr)
 
     users = load_users()
@@ -91,24 +92,28 @@ def build_user_support_context(app, user_info):
         }
 
         for username, user_data in users.items():
-            u_instr = user_data.get('instruments', [])
-            if isinstance(u_instr, str):
-                u_instr = [u_instr]
-            u_instr = [str(val).strip()
-                       for val in (u_instr or [])
-                       if str(val).strip()]
-            if inst not in u_instr:
-                continue
-
             direct_groups = set(user_data.get('groups', []))
             all_groups = set(direct_groups)
             for group_name in list(direct_groups):
-                all_groups |= get_inherited_groups(group_name,
-                                                   app.ari_groups)
+                all_groups |= get_inherited_groups(
+                    group_name, app.ari_groups
+                )
+
+            # derive user instruments from groups
+            u_instr = get_user_instruments(
+                user_data.get('groups', []),
+                app.ari_groups,
+            )
+            if inst not in u_instr:
+                continue
 
             role_name = None
             for candidate in role_order:
-                if candidate in all_groups:
+                # match exact name or instrument-scoped
+                cond1 = candidate in all_groups
+                scoped = f'{candidate}.{inst}'
+                cond2 = scoped in all_groups
+                if cond1 or cond2:
                     role_name = candidate
                     break
             if role_name is None:
@@ -184,16 +189,18 @@ def build_ri_context(app, user_info, user_permissions):
     }
 
 
-def build_user_links_context(user_info):
+def build_user_links_context(app, user_info):
     """Build context for user links page."""
     username = user_info['username']
-    params = load_parameters()
-    all_instr = params.get('instruments', {}).get('value', [])
-    user_instr = user_info.get('instruments', [])
-    instruments = (
-        [inst for inst in all_instr if inst in user_instr]
-        or list(all_instr)
+    instruments = get_user_instruments(
+        user_info.get('groups', []), app.ari_groups
     )
+    if not instruments:
+        params = load_parameters()
+        all_instr = params.get(
+            'instruments', {}
+        ).get('value', [])
+        instruments = list(all_instr)
     links_data = ud.load_links(username)
     instr_links = {
         inst: ud.load_instrument_links(inst) for inst in instruments
@@ -241,16 +248,18 @@ def build_user_api_access_context(user_info):
     }
 
 
-def build_user_calendar_context(user_info):
+def build_user_calendar_context(app, user_info):
     """Build context for user calendar page."""
     username = user_info['username']
-    params = load_parameters()
-    all_instr = params.get('instruments', {}).get('value', [])
-    user_instr = user_info.get('instruments', [])
-    instruments = (
-        [inst for inst in all_instr if inst in user_instr]
-        or list(all_instr)
+    instruments = get_user_instruments(
+        user_info.get('groups', []), app.ari_groups
     )
+    if not instruments:
+        params = load_parameters()
+        all_instr = params.get(
+            'instruments', {}
+        ).get('value', [])
+        instruments = list(all_instr)
     events = ud.list_events(username)
     instr_events = {
         inst: ud.load_instrument_calendar(inst).get('events', [])
@@ -270,13 +279,26 @@ def build_user_calendar_context(user_info):
     }
 
 
-def build_admin_instrument_context(user_info, perms):
-    """Build instruments context for admin calendar/links pages."""
+def build_admin_instrument_context(
+    user_info, perms, manage_prefix
+):
+    """Build instruments context for admin calendar/links pages.
+
+    :param manage_prefix: e.g. ``'manage.admin.calendar'`` or
+        ``'manage.admin.links'``.  Per-instrument management is
+        determined by ``{manage_prefix}.{INSTRUMENT}`` in
+        *perms*.
+    """
     params = load_parameters()
-    all_instr = params.get('instruments', {}).get('value', [])
-    can_manage = ('manage.admin.calendar' in perms
-                  or 'manage.admin.links' in perms)
+    all_instr = params.get('instruments', {}).get(
+        'value', []
+    )
+    manageable = [
+        i for i in all_instr
+        if f"{manage_prefix}.{i}" in perms
+    ]
     return {
         'instruments': list(all_instr),
-        'can_manage': can_manage,
+        'can_manage': bool(manageable),
+        'manageable_instruments': manageable,
     }

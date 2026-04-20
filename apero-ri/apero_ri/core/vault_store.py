@@ -202,3 +202,158 @@ def strip_information(entry: dict) -> dict:
     result = dict(entry)
     result.pop("information", None)
     return result
+
+
+# ---------------------------------------------------------------------------
+# Export / Import with passphrase encryption
+# ---------------------------------------------------------------------------
+_PBKDF2_ITERS = 480_000
+
+
+def _derive_fernet_key(
+    passphrase: str, salt: bytes
+) -> bytes:
+    """Derive a Fernet-compatible key via PBKDF2-HMAC-SHA256.
+
+    :returns: 44-byte URL-safe base-64 encoded key suitable for
+        ``cryptography.fernet.Fernet``.
+    """
+    import base64 as _b64
+    from cryptography.hazmat.primitives import hashes
+    from cryptography.hazmat.primitives.kdf.pbkdf2 import (
+        PBKDF2HMAC,
+    )
+
+    kdf = PBKDF2HMAC(
+        algorithm=hashes.SHA256(),
+        length=32,
+        salt=salt,
+        iterations=_PBKDF2_ITERS,
+    )
+    return _b64.urlsafe_b64encode(
+        kdf.derive(passphrase.encode("utf-8"))
+    )
+
+
+def export_vault_yaml(
+    entries: List[dict],
+    passphrase: str,
+) -> bytes:
+    """Encrypt vault entry information and return YAML bytes.
+
+    Each entry's ``information`` field is encrypted with Fernet
+    using a key derived from *passphrase* and a random 16-byte
+    salt embedded in the file header.
+
+    :param entries: Plain-text vault entries (from
+        :func:`load_entries`).
+    :param passphrase: User-supplied passphrase.
+    :returns: UTF-8 encoded YAML suitable for writing to a file.
+    """
+    import base64 as _b64
+    import os as _os
+    from cryptography.fernet import Fernet
+
+    salt = _os.urandom(16)
+    fernet_key = _derive_fernet_key(passphrase, salt)
+    fnet = Fernet(fernet_key)
+
+    export_entries = []
+    for entry in entries:
+        info = entry.get("information", "") or ""
+        enc_token = fnet.encrypt(
+            info.encode("utf-8")
+        ).decode("ascii")
+        export_entries.append({
+            "id": entry.get("id", ""),
+            "title": entry.get("title", ""),
+            "level": entry.get("level", "moderator"),
+            "created_by": entry.get("created_by", ""),
+            "created_at": entry.get("created_at", ""),
+            "modified_at": entry.get("modified_at", ""),
+            "information_enc": enc_token,
+        })
+
+    payload = {
+        "vault_export": {
+            "version": 1,
+            "exported_at": datetime.now(
+                timezone.utc
+            ).isoformat(),
+            "salt": _b64.b64encode(salt).decode("ascii"),
+            "entries": export_entries,
+        }
+    }
+    return yaml.dump(
+        payload,
+        default_flow_style=False,
+        allow_unicode=True,
+        sort_keys=False,
+    ).encode("utf-8")
+
+
+def import_vault_yaml(
+    yaml_bytes: bytes,
+    passphrase: str,
+) -> List[dict]:
+    """Decrypt an export YAML file and return plaintext entries.
+
+    :param yaml_bytes: Raw bytes of the export YAML file.
+    :param passphrase: Passphrase used during export.
+    :returns: List of entry dicts with plaintext
+        ``information`` fields.
+    :raises ValueError: On wrong passphrase or malformed file.
+    """
+    import base64 as _b64
+    from cryptography.fernet import Fernet, InvalidToken
+
+    raw = (
+        yaml.safe_load(
+            yaml_bytes.decode("utf-8", errors="replace")
+        )
+        or {}
+    )
+    export = raw.get("vault_export")
+    if not isinstance(export, dict):
+        raise ValueError("Not a valid vault export file.")
+    version = export.get("version", 0)
+    if version != 1:
+        raise ValueError(
+            f"Unsupported export version: {version}"
+        )
+    salt_b64 = export.get("salt", "")
+    if not salt_b64:
+        raise ValueError("Missing salt in export file.")
+    try:
+        salt = _b64.b64decode(salt_b64)
+    except Exception:
+        raise ValueError("Corrupt salt in export file.")
+
+    fernet_key = _derive_fernet_key(passphrase, salt)
+    fnet = Fernet(fernet_key)
+
+    results: List[dict] = []
+    for raw_entry in export.get("entries", []):
+        enc = str(raw_entry.get("information_enc", ""))
+        try:
+            info = fnet.decrypt(
+                enc.encode("ascii")
+            ).decode("utf-8")
+        except InvalidToken:
+            raise ValueError(
+                "Wrong passphrase or corrupted file."
+            )
+        results.append({
+            "id": raw_entry.get("id", ""),
+            "title": raw_entry.get("title", ""),
+            "level": raw_entry.get("level", "moderator"),
+            "created_by": raw_entry.get("created_by", ""),
+            "created_at": raw_entry.get(
+                "created_at", ""
+            ),
+            "modified_at": raw_entry.get(
+                "modified_at", ""
+            ),
+            "information": info,
+        })
+    return results

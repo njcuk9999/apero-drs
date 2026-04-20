@@ -261,7 +261,9 @@
         [
             'vault-edit-overlay',
             'vault-view-overlay',
-            'vault-del-overlay'
+            'vault-del-overlay',
+            'vault-export-overlay',
+            'vault-import-overlay'
         ].forEach(function (id) {
             var el = document.getElementById(id);
             if (el) { el.style.display = 'none'; }
@@ -443,6 +445,192 @@
     }
 
     // -------------------------------------------------------------------
+    // Export overlay
+    // -------------------------------------------------------------------
+    window.vaultOpenExport = function () {
+        var passEl = document.getElementById(
+            'vault-export-passphrase'
+        );
+        var confirmEl = document.getElementById(
+            'vault-export-confirm'
+        );
+        var errEl = document.getElementById(
+            'vault-export-error'
+        );
+        if (passEl)    { passEl.value = ''; }
+        if (confirmEl) { confirmEl.value = ''; }
+        if (errEl)     { errEl.style.display = 'none'; }
+        var overlay = document.getElementById(
+            'vault-export-overlay'
+        );
+        if (overlay) {
+            overlay.style.display = 'flex';
+            if (passEl) { passEl.focus(); }
+        }
+    };
+
+    function _doExport() {
+        var passEl = document.getElementById(
+            'vault-export-passphrase'
+        );
+        var confirmEl = document.getElementById(
+            'vault-export-confirm'
+        );
+        var errEl = document.getElementById(
+            'vault-export-error'
+        );
+        var btn = document.getElementById(
+            'vault-export-btn'
+        );
+        errEl.style.display = 'none';
+        var pass    = (passEl.value    || '').trim();
+        var confirm = (confirmEl.value || '').trim();
+        if (!pass) {
+            errEl.textContent = 'Passphrase is required.';
+            errEl.style.display = 'block';
+            return;
+        }
+        if (pass !== confirm) {
+            errEl.textContent =
+                'Passphrases do not match.';
+            errEl.style.display = 'block';
+            return;
+        }
+        btn.disabled = true;
+        fetch(CFG.exportUrl, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ passphrase: pass })
+        })
+        .then(function (r) {
+            if (!r.ok) {
+                return r.json().then(function (d) {
+                    throw new Error(
+                        d.error || 'Export failed.'
+                    );
+                });
+            }
+            return r.blob();
+        })
+        .then(function (blob) {
+            var ts = new Date().toISOString()
+                .replace(/[:.]/g, '-').slice(0, 19);
+            var fname =
+                'vault_export_' + ts + '.yaml';
+            var url = URL.createObjectURL(blob);
+            var a = document.createElement('a');
+            a.href = url;
+            a.download = fname;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            _closeAll();
+            _showMsg('Vault exported.', false);
+        })
+        .catch(function (e) {
+            errEl.textContent = String(e);
+            errEl.style.display = 'block';
+        })
+        .finally(function () {
+            btn.disabled = false;
+        });
+    }
+
+    // -------------------------------------------------------------------
+    // Import overlay
+    // -------------------------------------------------------------------
+    window.vaultOpenImport = function () {
+        var fileEl = document.getElementById(
+            'vault-import-file'
+        );
+        var passEl = document.getElementById(
+            'vault-import-passphrase'
+        );
+        var errEl = document.getElementById(
+            'vault-import-error'
+        );
+        if (fileEl) { fileEl.value = ''; }
+        if (passEl) { passEl.value = ''; }
+        if (errEl)  { errEl.style.display = 'none'; }
+        var overlay = document.getElementById(
+            'vault-import-overlay'
+        );
+        if (overlay) { overlay.style.display = 'flex'; }
+    };
+
+    function _doImport() {
+        var fileEl = document.getElementById(
+            'vault-import-file'
+        );
+        var passEl = document.getElementById(
+            'vault-import-passphrase'
+        );
+        var errEl = document.getElementById(
+            'vault-import-error'
+        );
+        var btn = document.getElementById(
+            'vault-import-btn'
+        );
+        errEl.style.display = 'none';
+        if (!fileEl.files || !fileEl.files[0]) {
+            errEl.textContent =
+                'Please select a file.';
+            errEl.style.display = 'block';
+            return;
+        }
+        var pass = (passEl.value || '').trim();
+        if (!pass) {
+            errEl.textContent =
+                'Passphrase is required.';
+            errEl.style.display = 'block';
+            return;
+        }
+        btn.disabled = true;
+        var fd = new FormData();
+        fd.append('file', fileEl.files[0]);
+        fd.append('passphrase', pass);
+        fetch(CFG.importUrl, {
+            method: 'POST',
+            body: fd
+        })
+        .then(function (r) { return r.json(); })
+        .then(function (data) {
+            if (!data.success) {
+                errEl.textContent =
+                    data.error || 'Import failed.';
+                errEl.style.display = 'block';
+                return;
+            }
+            _closeAll();
+            var n = data.added;
+            var msg = 'Imported ' + n +
+                ' entr' + (n === 1 ? 'y' : 'ies') +
+                '.';
+            if (data.skipped_duplicate) {
+                msg += ' ' + data.skipped_duplicate +
+                    ' skipped (already exist).';
+            }
+            if (data.skipped_level) {
+                msg += ' ' + data.skipped_level +
+                    ' skipped (insufficient access).';
+            }
+            _showMsg(msg, false);
+            _loadEntries();
+        })
+        .catch(function (e) {
+            errEl.textContent = String(e);
+            errEl.style.display = 'block';
+        })
+        .finally(function () {
+            btn.disabled = false;
+            if (fileEl) { fileEl.value = ''; }
+        });
+    }
+
+    // -------------------------------------------------------------------
     // Initialisation
     // -------------------------------------------------------------------
     document.addEventListener('DOMContentLoaded', function () {
@@ -489,6 +677,56 @@
             .addEventListener('click', _closeAll);
         document.getElementById('vault-del-close')
             .addEventListener('click', _closeAll);
+
+        // Export overlay
+        var exportBtn =
+            document.getElementById('vault-export-btn');
+        if (exportBtn) {
+            exportBtn.addEventListener(
+                'click', _doExport
+            );
+        }
+        var exportCancelEl = document.getElementById(
+            'vault-export-cancel'
+        );
+        if (exportCancelEl) {
+            exportCancelEl.addEventListener(
+                'click', _closeAll
+            );
+        }
+        var exportCloseEl = document.getElementById(
+            'vault-export-close'
+        );
+        if (exportCloseEl) {
+            exportCloseEl.addEventListener(
+                'click', _closeAll
+            );
+        }
+
+        // Import overlay
+        var importBtn =
+            document.getElementById('vault-import-btn');
+        if (importBtn) {
+            importBtn.addEventListener(
+                'click', _doImport
+            );
+        }
+        var importCancelEl = document.getElementById(
+            'vault-import-cancel'
+        );
+        if (importCancelEl) {
+            importCancelEl.addEventListener(
+                'click', _closeAll
+            );
+        }
+        var importCloseEl = document.getElementById(
+            'vault-import-close'
+        );
+        if (importCloseEl) {
+            importCloseEl.addEventListener(
+                'click', _closeAll
+            );
+        }
 
         // Escape key closes any open overlay
         document.addEventListener('keydown', function (e) {

@@ -62,6 +62,9 @@ def ri_profile_view(app, profile_id):
         'fav_objects': f'/data_portal/{profile_id}/fav-objects',
         'favourites_objects': f'/data_portal/{profile_id}/fav-objects',
         'qc_graphs': f'/data_portal/{profile_id}/qc-graphs',
+        'object_groups': (
+            f'/data_portal/{profile_id}/object-groups'
+        ),
         'basket': f'/data_portal/{profile_id}/basket',
     }
     card_desc_map = {
@@ -77,6 +80,8 @@ def ri_profile_view(app, profile_id):
                              'their object pages quickly.',
         'qc_graphs': 'Interactive plots of quality control '
                      'metrics over time.',
+        'object_groups': 'Browse objects sorted by '
+                         'user groups.',
         'basket': 'Collect and download files from this '
                   'reduction profile.',
     }
@@ -210,6 +215,20 @@ def ri_object_page_view(app, profile_id, objname):
     except Exception:
         pass
 
+    tess_cached = False
+    try:
+        from apero_ri.core.run_tessilator import (
+            get_tess_cached,
+        )
+        if is_cache_enabled(cfg=cfg):
+            tess_hit = get_tess_cached(
+                cache_root, profile['instrument'],
+                objname,
+            )
+            tess_cached = tess_hit is not None
+    except Exception:
+        pass
+
     # Build plot_yaxis_zoom: {div_id: [options]} for divs in static HTML,
     # plus {'lbl': [options]} for the dynamically created LBL vel-plot divs.
     plot_yaxis_zoom = dict()
@@ -232,6 +251,7 @@ def ri_object_page_view(app, profile_id, objname):
         'objname': objname,
         'api_url': '/api/data-portal/object-page',
         'finder_chart_cached': finder_cached,
+        'tess_rotation_cached': tess_cached,
         'sidebar_root': 'home.data_portal',
         'sidebar_label': 'Data Portal',
         'sidebar_icon': 'fa-solid fa-database',
@@ -715,6 +735,70 @@ def ri_favourites_objects_view(app, profile_id):
     }
     return render_template('data_portal/fav_objects.html',
                            **context)
+
+
+def ri_object_groups_view(app, profile_id):
+    """Serve per-profile shared object groups page."""
+    user_info = get_effective_user(session)
+    if user_info:
+        perms = resolve_user_permissions(
+            user_info['groups'], app.ari_groups
+        )
+    else:
+        perms = get_public_permissions()
+
+    if 'view.data_portal' not in perms:
+        flash('You do not have permission to view '
+              'this page.', 'warning')
+        return redirect(url_for('login'))
+
+    accessible = get_accessible_profiles(
+        user_info, app.ari_groups
+    )
+    profile = None
+    for prof in accessible:
+        if prof['profile_id'] == profile_id:
+            profile = prof
+            break
+
+    if not profile:
+        flash('Profile not found or access denied.',
+              'warning')
+        return redirect(url_for('home_data_portal'))
+
+    page_id = (
+        f'home.data_portal.{profile_id}.object_groups'
+    )
+    colors = app._instrument_colors()
+    color = colors.get(
+        profile['instrument'],
+        instrument_color_helpers.DEFAULT_INSTRUMENT_COLOR,
+    )
+
+    sidebar_tree = app._build_data_portal_sidebar_tree(
+        accessible_profiles=accessible,
+        active_page_id=page_id,
+        user_permissions=perms,
+        user_info=user_info,
+        current_profile_id=profile_id,
+    )
+
+    context = {
+        'page_id': page_id,
+        'page_label': f'{profile_id}: Object Groups',
+        'page_icon': 'fa-solid fa-layer-group',
+        'is_parent': False,
+        'profile': profile,
+        'profile_color': color,
+        'sidebar_root': 'home.data_portal',
+        'sidebar_label': 'Data Portal',
+        'sidebar_icon': 'fa-solid fa-database',
+        'sidebar_url': '/data_portal',
+        'sidebar_tree': sidebar_tree,
+    }
+    return render_template(
+        'data_portal/object_groups.html', **context
+    )
 
 
 def ri_object_plot_max_view(app, profile_id, objname, plot_key):

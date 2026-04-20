@@ -61,6 +61,22 @@
             justify-content:space-between;
             flex-wrap:wrap; gap:0.5rem;">
     <h1><i class="{{ page_icon }}"></i> {{ page_label }}</h1>
+    {% if vault_sections %}
+    <div style="display:flex;gap:0.5rem;flex-wrap:wrap;">
+        <button class="ari-btn ari-btn--secondary ari-btn--sm"
+                onclick="vaultOpenExport();">
+            <i class="fa-solid fa-file-export"></i>
+            Export
+        </button>
+        {% if can_manage %}
+        <button class="ari-btn ari-btn--secondary ari-btn--sm"
+                onclick="vaultOpenImport();">
+            <i class="fa-solid fa-file-import"></i>
+            Import
+        </button>
+        {% endif %}
+    </div>
+    {% endif %}
 </div>
 
 <p class="ari-ae-help-text" style="margin-bottom:1rem;">
@@ -176,10 +192,12 @@
                           rows="7"
                           placeholder="Passwords, API tokens, notes…"
                           style="font-family:monospace;
-                                 resize:vertical;"></textarea>
+                                 resize:vertical;
+                                 width:100%;
+                                 box-sizing:border-box;"></textarea>
                 <small class="ari-form-hint">
-                    <strong>Never</strong> shown on the card —
-                    only visible when View is clicked.
+                    <strong>Never</strong> shown on the card.<br>
+                    Only visible when View is clicked.
                 </small>
             </div>
             <div id="vault-edit-error"
@@ -297,6 +315,131 @@
     </div>
 </div>
 
+<!-- ======================================================= -->
+<!-- Export overlay                                            -->
+<!-- ======================================================= -->
+<div id="vault-export-overlay" class="ari-modal-overlay"
+     style="display:none;" aria-modal="true" role="dialog">
+    <div class="ari-modal" style="max-width:440px;width:95%;">
+        <div class="ari-modal__header ari-modal__header--normal">
+            <h2>
+                <i class="fa-solid fa-file-export"></i>
+                Export Vault
+            </h2>
+            <button class="ari-modal__close"
+                    id="vault-export-close"
+                    title="Close" aria-label="Close">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+        <div class="ari-modal__body">
+            <p style="font-size:0.875rem;
+                      color:var(--ari-text-muted,#666);
+                      margin-bottom:1rem;">
+                Exports all vault entries you have access to.
+                The information fields are encrypted with your
+                passphrase &mdash; keep it safe, you will need
+                it to import.
+            </p>
+            <div class="ari-form-group">
+                <label for="vault-export-passphrase">
+                    Passphrase
+                </label>
+                <input type="password"
+                       id="vault-export-passphrase"
+                       class="ari-form-control"
+                       placeholder="Choose a strong passphrase"
+                       autocomplete="new-password">
+            </div>
+            <div class="ari-form-group">
+                <label for="vault-export-confirm">
+                    Confirm passphrase
+                </label>
+                <input type="password"
+                       id="vault-export-confirm"
+                       class="ari-form-control"
+                       placeholder="Re-enter passphrase"
+                       autocomplete="new-password">
+            </div>
+            <div id="vault-export-error"
+                 class="ari-alert ari-alert--danger"
+                 style="display:none;"></div>
+            <div class="ari-modal__footer">
+                <button id="vault-export-btn"
+                        class="ari-btn ari-btn--primary">
+                    <i class="fa-solid fa-download"></i>
+                    Download Export
+                </button>
+                <button id="vault-export-cancel"
+                        class="ari-btn ari-btn--secondary">
+                    Cancel
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ======================================================= -->
+<!-- Import overlay                                            -->
+<!-- ======================================================= -->
+<div id="vault-import-overlay" class="ari-modal-overlay"
+     style="display:none;" aria-modal="true" role="dialog">
+    <div class="ari-modal" style="max-width:440px;width:95%;">
+        <div class="ari-modal__header ari-modal__header--normal">
+            <h2>
+                <i class="fa-solid fa-file-import"></i>
+                Import Vault
+            </h2>
+            <button class="ari-modal__close"
+                    id="vault-import-close"
+                    title="Close" aria-label="Close">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+        <div class="ari-modal__body">
+            <p style="font-size:0.875rem;
+                      color:var(--ari-text-muted,#666);
+                      margin-bottom:1rem;">
+                Import a vault export file. Entries you cannot
+                manage or that share an existing ID are skipped.
+            </p>
+            <div class="ari-form-group">
+                <label for="vault-import-file">
+                    Export file
+                </label>
+                <input type="file"
+                       id="vault-import-file"
+                       class="ari-form-control"
+                       accept=".yaml,.yml">
+            </div>
+            <div class="ari-form-group">
+                <label for="vault-import-passphrase">
+                    Passphrase
+                </label>
+                <input type="password"
+                       id="vault-import-passphrase"
+                       class="ari-form-control"
+                       placeholder="Passphrase used during export"
+                       autocomplete="current-password">
+            </div>
+            <div id="vault-import-error"
+                 class="ari-alert ari-alert--danger"
+                 style="display:none;"></div>
+            <div class="ari-modal__footer">
+                <button id="vault-import-btn"
+                        class="ari-btn ari-btn--primary">
+                    <i class="fa-solid fa-upload"></i>
+                    Import
+                </button>
+                <button id="vault-import-cancel"
+                        class="ari-btn ari-btn--secondary">
+                    Cancel
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script>
 window.ARI_VAULT = {
     listUrl:   {{ url_for('api_admin_vault_list')|tojson }},
@@ -304,6 +447,8 @@ window.ARI_VAULT = {
     updateUrl: {{ url_for('api_admin_vault_update')|tojson }},
     deleteUrl: {{ url_for('api_admin_vault_delete')|tojson }},
     getUrl:    {{ url_for('api_admin_vault_get')|tojson }},
+    exportUrl: {{ url_for('api_admin_vault_export')|tojson }},
+    importUrl: {{ url_for('api_admin_vault_import')|tojson }},
     canManage: {{ can_manage|tojson }},
     sections:  {{ vault_sections|tojson }},
 };

@@ -100,6 +100,7 @@
 
     // Queue tab
     var btnStopAll          = document.getElementById('btn-stop-all');
+    var btnKillAll          = document.getElementById('btn-kill-all');
     var btnClearHistory     = document.getElementById('btn-clear-history');
     var queueRunning        = document.getElementById('queue-running');
     var queueRunningName    = document.getElementById('queue-running-name');
@@ -434,10 +435,14 @@
             tags += '<span class="at-tag at-tag--error">ERROR</span>';
         }
 
+        var instLabel = (currentInstrument && currentInstrument !== GLOBAL_SCOPE)
+            ? '<span class="at-task-card__inst">' + esc(currentInstrument) + ':</span> '
+            : '';
+
         card.innerHTML =
             grip + statusDot +
             '<div class="at-task-card__body">' +
-                '<span class="at-task-card__name">' + esc(task.name || task.task_key) + '</span>' +
+                '<span class="at-task-card__name">' + instLabel + esc(task.name || task.task_key) + '</span>' +
                 '<span class="at-task-card__freq">' + (task.frequency ? esc(task.frequency) + ' hrs' : '') + '</span>' +
                 tags +
             '</div>' +
@@ -1747,6 +1752,23 @@
                     }
                 });
         });
+
+        if (btnKillAll) {
+            btnKillAll.addEventListener('click', function () {
+                if (!confirm('Kill ALL async tasks immediately? This will interrupt the running task and clear the queue.')) return;
+                fetch(urls.killAll, { method: 'POST' })
+                    .then(function (r) { return r.json(); })
+                    .then(function (d) {
+                        if (d.success) {
+                            showToast('All tasks killed. Queue cleared.', 'success');
+                            refreshQueueView();
+                            refreshCurrentTasks();
+                        } else {
+                            showToast('Kill failed: ' + (d.error || 'Unknown error'), 'error');
+                        }
+                    });
+            });
+        }
 
         if (btnClearHistory) {
             btnClearHistory.addEventListener('click', function () {

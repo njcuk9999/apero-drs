@@ -980,11 +980,25 @@ def save_science_groups(instrument: str, groups: Dict[str, dict]) -> None:
 
 
 def get_users_for_instrument(instrument: str) -> List[str]:
-    """Get all usernames that have this instrument in their profile."""
+    """Get all usernames whose groups grant access to *instrument*."""
+    from apero_ri.core.permissions import (
+        get_inherited_groups,
+        load_groups,
+    )
+    groups = load_groups()
     users = load_users()
     result = []
     for username, data in users.items():
-        if instrument in data.get("instruments", []):
+        user_groups = set(data.get('groups', []))
+        all_groups = set(user_groups)
+        for g in list(user_groups):
+            all_groups |= get_inherited_groups(g, groups)
+        has_instr = any(
+            g.rsplit('.', 1)[-1] == instrument
+            for g in all_groups
+            if '.' in g
+        )
+        if has_instr:
             result.append(username)
     return sorted(result)
 
@@ -1003,13 +1017,16 @@ def get_accessible_profiles(
        has ``view.data_portal`` permission.
     """
     from apero_ri.core.permissions import get_inherited_groups
+    from apero_ri.core.permissions import get_user_instruments
 
     profiles_data = load_apero_profiles(hydrate=False)
     if not profiles_data:
         return []
 
     if user_info:
-        user_instruments = set(user_info.get("instruments", []))
+        user_instruments = set(get_user_instruments(
+            user_info.get('groups', []), ari_groups
+        ))
         user_groups = set(user_info.get("groups", []))
         all_user_groups = set(user_groups)
         for grp in list(user_groups):

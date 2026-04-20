@@ -1,5 +1,8 @@
 """Data Portal API helper functions for ARIApp."""
 
+import json as _json
+import queue
+import threading
 import time
 from datetime import datetime, timezone
 from pathlib import Path
@@ -13,7 +16,13 @@ from apero_ri.core.object_funcs import (
     load_object_table_row,
 )
 from apero_ri.core.permissions import resolve_user_permissions
-from flask import jsonify, request
+from flask import (
+    Response,
+    jsonify,
+    request,
+    send_file,
+    stream_with_context,
+)
 
 
 def api_ri_profile_health(app):
@@ -1488,4 +1497,343 @@ def api_obs_table(app):
         column_meta=column_meta,
         generated_at=generated_at,
         total_rows=len(all_rows),
+    )
+
+
+# ====================================================================
+# TESS rotation periods (tessilator)
+# ====================================================================
+
+def api_tess_rotation(app):
+    """Generate TESS rotation period plots on demand."""
+    user_info = app._get_api_user()
+    if user_info:
+        perms = resolve_user_permissions(
+            user_info['groups'], app.ari_groups
+        )
+    else:
+        perms = get_public_permissions()
+    if 'view.data_portal' not in perms:
+        return jsonify(
+            success=False, error='Unauthorized'
+        ), 401
+
+    profile_id = request.args.get(
+        'profile_id', ''
+    ).strip()
+    objname = request.args.get('objname', '').strip()
+    if not profile_id or not objname:
+        return jsonify(
+            success=False,
+            error='Missing profile_id or objname',
+        ), 400
+
+    accessible = get_accessible_profiles(
+        user_info, app.ari_groups
+    )
+    profile = next(
+        (p for p in accessible
+         if p['profile_id'] == profile_id), None
+    )
+    if not profile:
+        return jsonify(
+            success=False, error='Profile not found'
+        ), 404
+
+    instrument = profile['instrument']
+    base_dir = Path(
+        app.args.data_dir or str(Path.home() / '.ari')
+    )
+
+    from apero_ri.core.plot_cache import (
+        is_cache_enabled,
+        load_cache_config,
+        resolve_cache_root,
+    )
+    from apero_ri.core.run_tessilator import (
+        get_tess_cached,
+        run_tessilator,
+    )
+
+    cfg = load_cache_config(base_dir)
+    cache_root = resolve_cache_root(base_dir, cfg)
+
+    # Return cached result if available
+    force = bool(
+        str(request.args.get('_ts', '')).strip()
+    )
+    if not force:
+        hit = get_tess_cached(
+            cache_root, instrument, objname
+        )
+        if hit is not None:
+            return jsonify(**hit)
+
+    # Gather all known aliases for this object
+    objects_dir = (
+        base_dir / 'tasks' / instrument
+        / profile_id / 'objects'
+    )
+    obj_row = load_object_table_row(objects_dir, objname)
+    aliases_raw = str(
+        obj_row.get('ALIASES', '') or ''
+    )
+    aliases = [
+        a.strip() for a in aliases_raw.split('|')
+        if a.strip()
+    ]
+
+    result = run_tessilator(
+        objname=objname,
+        cache_root=cache_root,
+        instrument=instrument,
+        aliases=aliases,
+    )
+
+    return jsonify(**result)
+
+
+def api_tess_rotation_lc(app):
+    """Download a cached TESS light-curve CSV for one sector."""
+    user_info = app._get_api_user()
+    if user_info:
+        perms = resolve_user_permissions(
+            user_info['groups'], app.ari_groups
+        )
+    else:
+        perms = get_public_permissions()
+    if 'view.data_portal' not in perms:
+        return jsonify(
+            success=False, error='Unauthorized'
+        ), 401
+
+    profile_id = request.args.get(
+        'profile_id', ''
+    ).strip()
+    objname = request.args.get('objname', '').strip()
+    sector_str = request.args.get('sector', '').strip()
+    if not profile_id or not objname or not sector_str:
+        return jsonify(
+            success=False,
+            error='Missing profile_id, objname or sector',
+        ), 400
+
+    try:
+        sector = int(sector_str)
+    except ValueError:
+        return jsonify(
+            success=False, error='Invalid sector'
+        ), 400
+
+    accessible = get_accessible_profiles(
+        user_info, app.ari_groups
+    )
+    profile = next(
+        (p for p in accessible
+         if p['profile_id'] == profile_id), None
+    )
+    if not profile:
+        return jsonify(
+            success=False, error='Profile not found'
+        ), 404
+
+    instrument = profile['instrument']
+    base_dir = Path(
+        app.args.data_dir or str(Path.home() / '.ari')
+    )
+
+    from apero_ri.core.plot_cache import (
+        load_cache_config,
+        resolve_cache_root,
+    )
+    from apero_ri.core.run_tessilator import (
+        get_tess_lc_csv_path,
+    )
+
+    cfg = load_cache_config(base_dir)
+    cache_root = resolve_cache_root(base_dir, cfg)
+
+    csv_path = get_tess_lc_csv_path(
+        cache_root, instrument, objname, sector
+    )
+    if csv_path is None:
+        return jsonify(
+            success=False,
+            error='Period results not found',
+        ), 404
+
+    dl_name = f'{objname}_periods.ecsv'
+    return send_file(
+        str(csv_path),
+        as_attachment=True,
+        download_name=dl_name,
+    )
+
+
+def api_tess_rotation_stream(app):
+    """SSE endpoint: stream tessilator console output live.
+
+    Each event is a JSON object with a ``type`` field:
+      - ``log``   – a line of console output
+      - ``done``  – final result (sectors, images, …)
+      - ``error`` – something went wrong
+    """
+    user_info = app._get_api_user()
+    if user_info:
+        perms = resolve_user_permissions(
+            user_info['groups'], app.ari_groups
+        )
+    else:
+        perms = get_public_permissions()
+    if 'view.data_portal' not in perms:
+        return jsonify(
+            success=False, error='Unauthorized'
+        ), 401
+
+    profile_id = request.args.get(
+        'profile_id', ''
+    ).strip()
+    objname = request.args.get(
+        'objname', ''
+    ).strip()
+    if not profile_id or not objname:
+        return jsonify(
+            success=False,
+            error='Missing profile_id or objname',
+        ), 400
+
+    accessible = get_accessible_profiles(
+        user_info, app.ari_groups
+    )
+    profile = next(
+        (p for p in accessible
+         if p['profile_id'] == profile_id), None
+    )
+    if not profile:
+        return jsonify(
+            success=False, error='Profile not found'
+        ), 404
+
+    instrument = profile['instrument']
+    base_dir = Path(
+        app.args.data_dir
+        or str(Path.home() / '.ari')
+    )
+
+    from apero_ri.core.plot_cache import (
+        load_cache_config,
+        resolve_cache_root,
+    )
+    from apero_ri.core.run_tessilator import (
+        get_tess_cached,
+        run_tessilator,
+    )
+
+    cfg = load_cache_config(base_dir)
+    cache_root = resolve_cache_root(base_dir, cfg)
+
+    # If cached (and no force), return instantly
+    force = bool(
+        str(request.args.get('_ts', '')).strip()
+    )
+    if not force:
+        hit = get_tess_cached(
+            cache_root, instrument, objname
+        )
+        if hit is not None:
+            payload = _json.dumps(
+                dict(type='done', result=hit)
+            )
+
+            def _cached():
+                yield f'data: {payload}\n\n'
+
+            return Response(
+                stream_with_context(_cached()),
+                mimetype='text/event-stream',
+            )
+
+    # Gather aliases
+    objects_dir = (
+        base_dir / 'tasks' / instrument
+        / profile_id / 'objects'
+    )
+    obj_row = load_object_table_row(
+        objects_dir, objname
+    )
+    aliases_raw = str(
+        obj_row.get('ALIASES', '') or ''
+    )
+    aliases = [
+        a.strip() for a in aliases_raw.split('|')
+        if a.strip()
+    ]
+
+    # Shared queue for real-time log lines
+    log_q = queue.Queue()
+    # Holder for result from the background thread
+    result_holder = [None]
+
+    def _worker():
+        try:
+            result_holder[0] = run_tessilator(
+                objname=objname,
+                cache_root=cache_root,
+                instrument=instrument,
+                aliases=aliases,
+                log_queue=log_q,
+            )
+        except Exception as exc:
+            result_holder[0] = dict(
+                success=False,
+                error=str(exc),
+            )
+        finally:
+            log_q.put(None)  # sentinel
+
+    t = threading.Thread(
+        target=_worker, daemon=True
+    )
+    t.start()
+
+    def _generate():
+        while True:
+            try:
+                item = log_q.get(timeout=30)
+            except queue.Empty:
+                # keep-alive comment
+                yield ': keepalive\n\n'
+                continue
+            if item is None:
+                break
+            evt = _json.dumps(
+                dict(type='log', text=item)
+            )
+            yield f'data: {evt}\n\n'
+
+        # Final result
+        result = result_holder[0]
+        if result is None:
+            result = dict(
+                success=False,
+                error='No result from tessilator',
+            )
+        if result.get('success'):
+            payload = _json.dumps(
+                dict(type='done', result=result)
+            )
+        else:
+            payload = _json.dumps(dict(
+                type='error',
+                error=result.get('error', 'Failed'),
+            ))
+        yield f'data: {payload}\n\n'
+
+    return Response(
+        stream_with_context(_generate()),
+        mimetype='text/event-stream',
+        headers={
+            'Cache-Control': 'no-cache',
+            'X-Accel-Buffering': 'no',
+        },
     )

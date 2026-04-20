@@ -5034,6 +5034,12 @@ select.ari-ap-input {
     text-overflow: ellipsis;
 }
 
+.at-task-card__inst {
+    font-weight: 600;
+    color: var(--ari-accent, #5B9BD5);
+    font-size: 0.82rem;
+}
+
 .at-task-card__freq {
     font-size: 0.78rem;
     color: var(--ari-text-muted, #9e9e9e);

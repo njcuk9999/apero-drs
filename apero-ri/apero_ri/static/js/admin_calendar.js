@@ -15,6 +15,11 @@ function _currentInstrument() {
     return sel ? sel.value : '';
 }
 
+function _canManageInstrument() {
+    var mi = ARI_ADMIN_CAL.manageableInstruments || [];
+    return mi.indexOf(_currentInstrument()) !== -1;
+}
+
 async function _api(url, method = 'GET', body = null) {
     const opts = { method, headers: { 'Content-Type': 'application/json' } };
     if (body) opts.body = JSON.stringify(body);
@@ -99,7 +104,7 @@ function _renderMonth() {
     const grid = document.getElementById('admin-cal-grid');
     grid.innerHTML = html;
 
-    if (ARI_ADMIN_CAL.canManage) {
+    if (_canManageInstrument()) {
         grid.querySelectorAll('.ari-cal-event').forEach(el => {
             el.addEventListener('click', e => {
                 e.stopPropagation();
@@ -114,7 +119,7 @@ function _renderMonth() {
 }
 
 function _openModal(event, defaultDate = '') {
-    if (!ARI_ADMIN_CAL.canManage) return;
+    if (!_canManageInstrument()) return;
     _editId = event ? event.id : null;
     document.getElementById('admin-cal-modal-title').textContent = event ? 'Edit Event' : 'New Instrument Event';
     document.getElementById('admin-cal-modal-delete').style.display = event ? 'inline-flex' : 'none';

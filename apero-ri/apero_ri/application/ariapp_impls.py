@@ -1458,12 +1458,15 @@ def ariapp_api_user_links_get(self):
     username = user_info["username"]
     instrument = request.args.get("instrument", "").strip()
     if instrument == "__all__":
-        params = perms.load_parameters()
-        all_instr = params.get("instruments", {}).get("value", [])
-        user_instr = user_info.get("instruments", [])
-        instruments = [i for i in all_instr if i in user_instr] or list(
-            all_instr
+        instruments = perms.get_user_instruments(
+            user_info.get('groups', []), self.ari_groups
         )
+        if not instruments:
+            params = perms.load_parameters()
+            all_instr = params.get(
+                'instruments', {}
+            ).get('value', [])
+            instruments = list(all_instr)
 
         data = ud.load_links(username)
         merged = {
@@ -1699,6 +1702,12 @@ def ariapp_api_sci_groups_get(self):
     if not instrument or not name:
         return jsonify(success=False, error="Missing params"), 400
 
+    perm = f"manage.sci_group.{instrument}"
+    if perm not in (perms or set()):
+        return jsonify(
+            success=False, error="Insufficient permissions"
+        ), 403
+
     groups = auth.load_science_groups(instrument)
     groups, run_ids = self._sync_all_science_group(
         instrument,
@@ -1731,7 +1740,13 @@ def ariapp_api_sci_groups_refresh_run_ids(self):
     if not instrument:
         return jsonify(success=False, error="Missing instrument"), 400
 
-    params = perms.load_parameters()
+    perm = f"manage.sci_group.{instrument}"
+    if perm not in (perms or set()):
+        return jsonify(
+            success=False, error="Insufficient permissions"
+        ), 403
+
+    params = permissions_mod.load_parameters()
     valid = params.get("instruments", {}).get("value", [])
     if instrument not in valid:
         return jsonify(success=False, error="Invalid instrument"), 400
@@ -2226,12 +2241,15 @@ def ariapp_api_user_calendar_list(self):
         return jsonify(success=False, error="Unauthorized"), 401
     instrument = request.args.get("instrument", "").strip()
     if instrument == "__all__":
-        params = perms.load_parameters()
-        all_instr = params.get("instruments", {}).get("value", [])
-        user_instr = user_info.get("instruments", [])
-        instruments = [i for i in all_instr if i in user_instr] or list(
-            all_instr
+        instruments = perms.get_user_instruments(
+            user_info.get('groups', []), self.ari_groups
         )
+        if not instruments:
+            params = perms.load_parameters()
+            all_instr = params.get(
+                'instruments', {}
+            ).get('value', [])
+            instruments = list(all_instr)
 
         events = list(ud.list_events(user_info["username"]))
         for inst in instruments:
@@ -2521,12 +2539,13 @@ def ariapp_api_admin_calendar_save(self):
     user_info, perms = self._require_admin_calendar_perm()
     if not user_info:
         return jsonify(success=False, error="Unauthorized"), 401
-    if "manage.admin.calendar" not in (perms or set()):
-        return jsonify(success=False, error="Insufficient permissions"), 403
     body = request.get_json() or {}
     instrument = str(body.get("instrument", "")).strip()
     if not instrument:
         return jsonify(success=False, error="instrument required"), 400
+    cal_perm = f"manage.admin.calendar.{instrument}"
+    if cal_perm not in (perms or set()):
+        return jsonify(success=False, error="Insufficient permissions"), 403
     event = {
         "id": str(body.get("id", "")).strip(),
         "title": str(body.get("title", "")).strip(),
@@ -3425,8 +3444,6 @@ def ariapp_api_admin_links_update(self):
     user_info, perms = self._require_admin_links_perm()
     if not user_info:
         return jsonify(success=False, error="Unauthorized"), 401
-    if "manage.admin.links" not in (perms or set()):
-        return jsonify(success=False, error="Insufficient permissions"), 403
     body = request.get_json() or {}
     instrument = str(body.get("instrument", "")).strip()
     section = str(body.get("section", "")).strip()
@@ -3441,6 +3458,9 @@ def ariapp_api_admin_links_update(self):
             ),
             400,
         )
+    links_perm = f"manage.admin.links.{instrument}"
+    if links_perm not in (perms or set()):
+        return jsonify(success=False, error="Insufficient permissions"), 403
     data = ud.update_instrument_link(
         instrument,
         section,
@@ -3644,8 +3664,6 @@ def ariapp_api_admin_links_add(self):
     user_info, perms = self._require_admin_links_perm()
     if not user_info:
         return jsonify(success=False, error="Unauthorized"), 401
-    if "manage.admin.links" not in (perms or set()):
-        return jsonify(success=False, error="Insufficient permissions"), 403
     body = request.get_json() or {}
     instrument = str(body.get("instrument", "")).strip()
     section = str(body.get("section", "")).strip()
@@ -3659,6 +3677,9 @@ def ariapp_api_admin_links_add(self):
             ),
             400,
         )
+    links_perm = f"manage.admin.links.{instrument}"
+    if links_perm not in (perms or set()):
+        return jsonify(success=False, error="Insufficient permissions"), 403
     data = ud.add_instrument_link(
         instrument,
         section,
@@ -4121,8 +4142,6 @@ def ariapp_api_admin_links_remove(self):
     user_info, perms = self._require_admin_links_perm()
     if not user_info:
         return jsonify(success=False, error="Unauthorized"), 401
-    if "manage.admin.links" not in (perms or set()):
-        return jsonify(success=False, error="Insufficient permissions"), 403
     body = request.get_json() or {}
     instrument = str(body.get("instrument", "")).strip()
     section = str(body.get("section", "")).strip()
@@ -4130,10 +4149,14 @@ def ariapp_api_admin_links_remove(self):
     if not instrument or not section or not name:
         return (
             jsonify(
-                success=False, error="instrument, section and name required"
+                success=False,
+                error="instrument, section and name required"
             ),
             400,
         )
+    links_perm = f"manage.admin.links.{instrument}"
+    if links_perm not in (perms or set()):
+        return jsonify(success=False, error="Insufficient permissions"), 403
     data = ud.remove_instrument_link(instrument, section, name)
     return jsonify(success=True, data=data)
 
@@ -4247,16 +4270,20 @@ def ariapp_api_admin_links_add_section(self):
     user_info, perms = self._require_admin_links_perm()
     if not user_info:
         return jsonify(success=False, error="Unauthorized"), 401
-    if "manage.admin.links" not in (perms or set()):
-        return jsonify(success=False, error="Insufficient permissions"), 403
     body = request.get_json() or {}
     instrument = str(body.get("instrument", "")).strip()
     section = str(body.get("section", "")).strip()
     if not instrument or not section:
         return (
-            jsonify(success=False, error="instrument and section required"),
+            jsonify(
+                success=False,
+                error="instrument and section required"
+            ),
             400,
         )
+    links_perm = f"manage.admin.links.{instrument}"
+    if links_perm not in (perms or set()):
+        return jsonify(success=False, error="Insufficient permissions"), 403
     data = ud.add_instrument_link_section(instrument, section)
     return jsonify(success=True, data=data)
 
@@ -4265,16 +4292,20 @@ def ariapp_api_admin_links_remove_section(self):
     user_info, perms = self._require_admin_links_perm()
     if not user_info:
         return jsonify(success=False, error="Unauthorized"), 401
-    if "manage.admin.links" not in (perms or set()):
-        return jsonify(success=False, error="Insufficient permissions"), 403
     body = request.get_json() or {}
     instrument = str(body.get("instrument", "")).strip()
     section = str(body.get("section", "")).strip()
     if not instrument or not section:
         return (
-            jsonify(success=False, error="instrument and section required"),
+            jsonify(
+                success=False,
+                error="instrument and section required"
+            ),
             400,
         )
+    links_perm = f"manage.admin.links.{instrument}"
+    if links_perm not in (perms or set()):
+        return jsonify(success=False, error="Insufficient permissions"), 403
     data = ud.remove_instrument_link_section(instrument, section)
     return jsonify(success=True, data=data)
 
@@ -4490,13 +4521,14 @@ def ariapp_api_admin_calendar_delete(self):
     user_info, perms = self._require_admin_calendar_perm()
     if not user_info:
         return jsonify(success=False, error="Unauthorized"), 401
-    if "manage.admin.calendar" not in (perms or set()):
-        return jsonify(success=False, error="Insufficient permissions"), 403
     body = request.get_json() or {}
     instrument = str(body.get("instrument", "")).strip()
     event_id = str(body.get("id", "")).strip()
     if not instrument or not event_id:
         return jsonify(success=False, error="instrument and id required"), 400
+    cal_perm = f"manage.admin.calendar.{instrument}"
+    if cal_perm not in (perms or set()):
+        return jsonify(success=False, error="Insufficient permissions"), 403
     ok = ud.delete_instrument_event(instrument, event_id)
     return jsonify(success=True, deleted=ok)
 
@@ -4622,10 +4654,6 @@ def ariapp_api_admin_ics_add(self):
     user_info, perms = self._require_admin_calendar_perm()
     if not user_info:
         return jsonify(success=False, error="Unauthorized"), 401
-    if "manage.admin.calendar" not in (perms or set()):
-        return jsonify(
-            success=False, error="Insufficient permissions"
-        ), 403
     body = request.get_json() or {}
     instrument = str(body.get("instrument", "")).strip()
     name = str(body.get("name", "")).strip()
@@ -4636,6 +4664,11 @@ def ariapp_api_admin_ics_add(self):
             success=False,
             error="instrument, name and url are required",
         ), 400
+    cal_perm = f"manage.admin.calendar.{instrument}"
+    if cal_perm not in (perms or set()):
+        return jsonify(
+            success=False, error="Insufficient permissions"
+        ), 403
     try:
         feed, count = ud.add_instrument_ics_feed(
             instrument, name, url, color
@@ -4653,10 +4686,6 @@ def ariapp_api_admin_ics_delete(self):
     user_info, perms = self._require_admin_calendar_perm()
     if not user_info:
         return jsonify(success=False, error="Unauthorized"), 401
-    if "manage.admin.calendar" not in (perms or set()):
-        return jsonify(
-            success=False, error="Insufficient permissions"
-        ), 403
     body = request.get_json() or {}
     instrument = str(body.get("instrument", "")).strip()
     feed_id = str(body.get("feed_id", "")).strip()
@@ -4665,6 +4694,11 @@ def ariapp_api_admin_ics_delete(self):
             success=False,
             error="instrument and feed_id required",
         ), 400
+    cal_perm = f"manage.admin.calendar.{instrument}"
+    if cal_perm not in (perms or set()):
+        return jsonify(
+            success=False, error="Insufficient permissions"
+        ), 403
     ud.delete_instrument_ics_feed(instrument, feed_id)
     feeds = ud.list_instrument_ics_feeds(instrument)
     return jsonify(success=True, feeds=feeds)
@@ -4674,10 +4708,6 @@ def ariapp_api_admin_ics_refresh(self):
     user_info, perms = self._require_admin_calendar_perm()
     if not user_info:
         return jsonify(success=False, error="Unauthorized"), 401
-    if "manage.admin.calendar" not in (perms or set()):
-        return jsonify(
-            success=False, error="Insufficient permissions"
-        ), 403
     body = request.get_json() or {}
     instrument = str(body.get("instrument", "")).strip()
     feed_id = str(body.get("feed_id", "")).strip()
@@ -4686,6 +4716,11 @@ def ariapp_api_admin_ics_refresh(self):
             success=False,
             error="instrument and feed_id required",
         ), 400
+    cal_perm = f"manage.admin.calendar.{instrument}"
+    if cal_perm not in (perms or set()):
+        return jsonify(
+            success=False, error="Insufficient permissions"
+        ), 403
     try:
         feed = ud.refresh_instrument_ics_feed(instrument, feed_id)
         feeds = ud.list_instrument_ics_feeds(instrument)
@@ -4700,10 +4735,6 @@ def ariapp_api_admin_ics_edit(self):
     user_info, perms = self._require_admin_calendar_perm()
     if not user_info:
         return jsonify(success=False, error="Unauthorized"), 401
-    if "manage.admin.calendar" not in (perms or set()):
-        return jsonify(
-            success=False, error="Insufficient permissions"
-        ), 403
     body = request.get_json() or {}
     instrument = str(body.get("instrument", "")).strip()
     feed_id = str(body.get("feed_id", "")).strip()
@@ -4714,6 +4745,11 @@ def ariapp_api_admin_ics_edit(self):
             success=False,
             error="instrument and feed_id required",
         ), 400
+    cal_perm = f"manage.admin.calendar.{instrument}"
+    if cal_perm not in (perms or set()):
+        return jsonify(
+            success=False, error="Insufficient permissions"
+        ), 403
     if name is not None:
         name = str(name).strip() or None
     if color is not None:
@@ -5031,14 +5067,17 @@ def ariapp_api_basket_clear(self):
 
 
 def ariapp_require_sci_group_perm(self):
-    """Check for manage.sci_group permission."""
+    """Check for any manage.sci_group.* permission."""
     user_info = auth.get_effective_user(session)
     if not user_info:
         return None, None
     perms = permissions_mod.resolve_user_permissions(
         user_info["groups"], self.ari_groups
     )
-    if "manage.sci_group" not in perms:
+    has_any = any(
+        p.startswith("manage.sci_group.") for p in perms
+    )
+    if not has_any:
         return None, None
     return user_info, perms
 
@@ -6018,3 +6057,117 @@ def ariapp_api_vault_delete(self):
 
     vs.delete_entry(entry_id)
     return jsonify(success=True)
+
+
+def ariapp_api_vault_export(self):
+    """Export accessible vault entries as encrypted YAML."""
+    import io
+    from apero_ri.core import vault_store as vs
+
+    user_info = auth.get_effective_user(session)
+    if not user_info:
+        return jsonify(success=False, error="Unauthorized"), 401
+    resolved = permissions_mod.resolve_user_permissions(
+        user_info["groups"], self.ari_groups
+    )
+    if "manage.admin.vault" not in resolved:
+        return jsonify(success=False, error="Forbidden"), 403
+
+    body = request.get_json(silent=True) or {}
+    passphrase = str(
+        body.get("passphrase", "") or ""
+    ).strip()
+    if not passphrase:
+        return jsonify(
+            success=False, error="passphrase is required"
+        ), 400
+
+    levels = vs.accessible_levels(resolved)
+    entries = vs.filter_by_level(vs.load_entries(), levels)
+    try:
+        yaml_bytes = vs.export_vault_yaml(entries, passphrase)
+    except Exception as exc:
+        return jsonify(
+            success=False, error=str(exc)
+        ), 500
+
+    buf = io.BytesIO(yaml_bytes)
+    buf.seek(0)
+    return send_file(
+        buf,
+        mimetype="application/x-yaml",
+        as_attachment=True,
+        download_name="vault_export.yaml",
+    )
+
+
+def ariapp_api_vault_import(self):
+    """Import vault entries from an encrypted YAML file."""
+    from apero_ri.core import vault_store as vs
+
+    user_info = auth.get_effective_user(session)
+    if not user_info:
+        return jsonify(success=False, error="Unauthorized"), 401
+    resolved = permissions_mod.resolve_user_permissions(
+        user_info["groups"], self.ari_groups
+    )
+    manageable = vs.manageable_levels(resolved)
+    if not manageable:
+        return jsonify(success=False, error="Forbidden"), 403
+
+    passphrase = str(
+        request.form.get("passphrase", "") or ""
+    ).strip()
+    if not passphrase:
+        return jsonify(
+            success=False, error="passphrase is required"
+        ), 400
+
+    if "file" not in request.files:
+        return jsonify(
+            success=False, error="No file provided"
+        ), 400
+    file_obj = request.files["file"]
+    yaml_bytes = file_obj.read()
+
+    try:
+        entries = vs.import_vault_yaml(yaml_bytes, passphrase)
+    except ValueError as exc:
+        return jsonify(success=False, error=str(exc)), 400
+    except Exception as exc:
+        return jsonify(
+            success=False,
+            error=f"Import failed: {exc}",
+        ), 500
+
+    manageable_set = set(manageable)
+    existing_ids = {
+        e.get("id") for e in vs.load_entries()
+    }
+    added = 0
+    skipped_level = 0
+    skipped_duplicate = 0
+
+    for entry in entries:
+        if entry.get("level") not in manageable_set:
+            skipped_level += 1
+            continue
+        if entry.get("id") in existing_ids:
+            skipped_duplicate += 1
+            continue
+        vs.save_entry(
+            title=entry.get("title", ""),
+            information=entry.get("information", ""),
+            level=entry.get("level", "moderator"),
+            created_by=entry.get(
+                "created_by", user_info["username"]
+            ),
+        )
+        added += 1
+
+    return jsonify(
+        success=True,
+        added=added,
+        skipped_duplicate=skipped_duplicate,
+        skipped_level=skipped_level,
+    )
