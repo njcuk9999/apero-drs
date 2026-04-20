@@ -1032,10 +1032,6 @@ class ParamDict(CaseInDict):
         ikeys, ivalues = _yaml_walk(base.IPARAMS)
         # loop around input parameters
         for it, ikey in enumerate(ikeys):
-            # deal with key_filter - skip any keys that don't start with this
-            if key_filter is not None:
-                if not ikey.startswith(key_filter):
-                    continue
             # add install key name
             tabledict['NAME'].append(ikey)
             # add install kind
@@ -1090,6 +1086,10 @@ class ParamDict(CaseInDict):
         # ---------------------------------------------------------------------
         # loop around parameter keys
         for key in self.data.keys():
+            # deal with key_filter - skip any keys that don't start with this
+            if key_filter is not None:
+                if not key.startswith(key_filter):
+                    continue
             # deal with tex mode - only keep those keys with tex = True
             if tex:
                 # force include_zero_counts
@@ -1958,6 +1958,17 @@ def _add_param_dict_to_tabledict(tabledict: dict,
     # -------------------------------------------------------------------------
     # deal with a value being a dictionary
     elif isinstance(value, dict):
+        # ---------------------------------------------------------------------
+        # if our value is used all sub-values are used the same amount of times
+        if key in used:
+            _used = dict()
+            for skey in value.keys():
+                _used[skey] = used[key]
+        # otherwise if it isn't used we really shouldn't be here so continue
+        #   not being used
+        else:
+            _used = used
+        # ---------------------------------------------------------------------
         # loop around keys in dictionary
         for jt, skey in enumerate(value.keys()):
             # dict could be in instances/sources (if parameter)
@@ -1976,7 +1987,7 @@ def _add_param_dict_to_tabledict(tabledict: dict,
             # try to add sub-level to table dict
             tabledict = _add_param_dict_to_tabledict(tabledict, value,
                                                      rkey, _instances, _sources,
-                                                     used, None, pkey=skey)
+                                                     _used, None, pkey=skey)
         # stop here
         return tabledict
     # -------------------------------------------------------------------------
