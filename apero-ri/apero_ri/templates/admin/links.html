@@ -93,6 +93,7 @@ window.ARI_ADMIN_LINKS = {
     addSectionUrl: {{ url_for('api_admin_links_add_section')|tojson }},
     removeSectionUrl: {{ url_for('api_admin_links_remove_section')|tojson }},
     canManage: {{ can_manage|tojson }},
+    manageableInstruments: {{ manageable_instruments|tojson }},
 };
 </script>
 <script src="{{ url_for('static', filename='js/admin_links.js') }}"></script>

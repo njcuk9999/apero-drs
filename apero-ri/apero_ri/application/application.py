@@ -49,6 +49,10 @@ from apero_ri.application import (
 )
 from apero_ri.application import routes as app_routes
 from apero_ri.application import sci_groups_api_helpers
+from apero_ri.application import (
+    object_comments_api_helpers,
+    object_groups_api_helpers,
+)
 from apero_ri.application import sidebar as app_sidebar
 from apero_ri.application import (
     user_account_api_helpers,
@@ -247,17 +251,24 @@ class ARIApp(Flask):
         return user_context_helpers.build_user_support_context(self, user_info)
 
     def _build_user_links_context(self, user_info):
-        return user_context_helpers.build_user_links_context(user_info)
+        return user_context_helpers.build_user_links_context(
+            self, user_info
+        )
 
     def _build_user_api_access_context(self, user_info):
         return user_context_helpers.build_user_api_access_context(user_info)
 
     def _build_user_calendar_context(self, user_info):
-        return user_context_helpers.build_user_calendar_context(user_info)
+        return user_context_helpers.build_user_calendar_context(
+            self, user_info
+        )
 
-    def _build_admin_instrument_context(self, user_info, perms):
-        return user_context_helpers.build_admin_instrument_context(user_info,
-                                                                   perms)
+    def _build_admin_instrument_context(
+        self, user_info, perms, manage_prefix
+    ):
+        return user_context_helpers.build_admin_instrument_context(
+            user_info, perms, manage_prefix
+        )
 
     def _build_admin_email_context(self, perms):
         return _impls.ariapp_build_admin_email_context(self, perms)
@@ -288,6 +299,49 @@ class ARIApp(Flask):
 
     def _api_manage_instruments_remove(self):
         return _impls.ariapp_api_manage_instruments_remove(self)
+
+    def _api_manage_instruments_rename(self):
+        return _impls.ariapp_api_manage_instruments_rename(self)
+
+    # -----------------------------------------------------------------
+    # Vault API
+    # -----------------------------------------------------------------
+    def _require_vault_perm(self):
+        user_info = auth.get_effective_user(session)
+        if not user_info:
+            return None, None
+        resolved = permissions_mod.resolve_user_permissions(
+            user_info["groups"], self.ari_groups
+        )
+        if "manage.admin.vault" not in resolved:
+            return None, None
+        return user_info, resolved
+
+    def _build_admin_vault_context(self, perms):
+        return _impls.ariapp_build_admin_vault_context(
+            self, perms
+        )
+
+    def _api_admin_vault_list(self):
+        return _impls.ariapp_api_vault_list(self)
+
+    def _api_admin_vault_get(self):
+        return _impls.ariapp_api_vault_get(self)
+
+    def _api_admin_vault_add(self):
+        return _impls.ariapp_api_vault_add(self)
+
+    def _api_admin_vault_update(self):
+        return _impls.ariapp_api_vault_update(self)
+
+    def _api_admin_vault_delete(self):
+        return _impls.ariapp_api_vault_delete(self)
+
+    def _api_admin_vault_export(self):
+        return _impls.ariapp_api_vault_export(self)
+
+    def _api_admin_vault_import(self):
+        return _impls.ariapp_api_vault_import(self)
 
     @staticmethod
     def _normalize_db_source(value: str) -> str:
@@ -499,6 +553,9 @@ class ARIApp(Flask):
     def _api_admin_health_update(self):
         return _impls.ariapp_api_admin_health_update(self)
 
+    def _api_admin_health_patch(self):
+        return _impls.ariapp_api_admin_health_patch(self)
+
     def _api_admin_health_config_get(self):
         return _impls.ariapp_api_admin_health_config_get(self)
 
@@ -517,6 +574,79 @@ class ARIApp(Flask):
         kwargs = dict(profile_id=profile_id)
         return data_portal_view_helpers.ri_favourites_objects_view(
             self, **kwargs
+        )
+
+    def _ri_object_groups_view(self, profile_id):
+        kwargs = dict(profile_id=profile_id)
+        return data_portal_view_helpers.ri_object_groups_view(
+            self, **kwargs
+        )
+
+    def _api_object_comments_list(self):
+        return object_comments_api_helpers.api_object_comments_list(
+            self
+        )
+
+    def _api_object_comments_add(self):
+        return object_comments_api_helpers.api_object_comments_add(
+            self
+        )
+
+    def _api_object_comments_edit(self):
+        return object_comments_api_helpers.api_object_comments_edit(
+            self
+        )
+
+    def _api_object_comments_delete(self):
+        return object_comments_api_helpers.api_object_comments_delete(
+            self
+        )
+
+    def _api_object_groups_list(self):
+        return object_groups_api_helpers.api_object_groups_list(
+            self
+        )
+
+    def _api_object_groups_for_object(self):
+        return object_groups_api_helpers.api_object_groups_for_object(
+            self
+        )
+
+    def _api_object_groups_objects(self):
+        return object_groups_api_helpers.api_object_groups_objects(
+            self
+        )
+
+    def _api_object_groups_create(self):
+        return object_groups_api_helpers.api_object_groups_create(
+            self
+        )
+
+    def _api_object_groups_delete(self):
+        return object_groups_api_helpers.api_object_groups_delete(
+            self
+        )
+
+    def _api_object_groups_rename(self):
+        return object_groups_api_helpers.api_object_groups_rename(
+            self
+        )
+
+    def _api_object_groups_add_object(self):
+        return object_groups_api_helpers.api_object_groups_add_object(
+            self
+        )
+
+    def _api_object_groups_add_objects_bulk(self):
+        return (
+            object_groups_api_helpers
+            .api_object_groups_add_objects_bulk(self)
+        )
+
+    def _api_object_groups_remove_object(self):
+        return (
+            object_groups_api_helpers
+            .api_object_groups_remove_object(self)
         )
 
     def _api_ri_profile_health(self):
@@ -812,6 +942,22 @@ class ARIApp(Flask):
 
     def _api_finder_chart(self):
         return data_portal_api_helpers.api_finder_chart(self)
+
+    def _api_tess_rotation(self):
+        return data_portal_api_helpers.api_tess_rotation(
+            self
+        )
+
+    def _api_tess_rotation_lc(self):
+        return data_portal_api_helpers.api_tess_rotation_lc(
+            self
+        )
+
+    def _api_tess_rotation_stream(self):
+        return (
+            data_portal_api_helpers
+            .api_tess_rotation_stream(self)
+        )
 
     def _api_debug_plots(self):
         return data_portal_api_helpers.api_debug_plots(self)
@@ -1329,6 +1475,16 @@ class ARIApp(Flask):
         result = task_runner.stop_all_with_cooldown(instrument=instrument)
         return jsonify(success=True, **result)
 
+    def _api_async_tasks_kill_all(self):
+        """Immediately interrupt running task and clear queue."""
+        user_info, perms = self._require_async_tasks_perm()
+        if not user_info:
+            return jsonify(
+                success=False, error='Unauthorized'
+            ), 401
+        result = task_runner.kill_all()
+        return jsonify(success=True, **result)
+
     def _api_async_tasks_cancel_task(self):
         return _impls.ariapp_api_async_tasks_cancel_task(self)
 
@@ -1534,6 +1690,9 @@ class ARIApp(Flask):
     def _api_user_ics_refresh(self):
         return _impls.ariapp_api_user_ics_refresh(self)
 
+    def _api_user_ics_edit(self):
+        return _impls.ariapp_api_user_ics_edit(self)
+
     # -----------------------------------------------------------------
     # ICS feed API — instrument / admin calendar
     # -----------------------------------------------------------------
@@ -1548,6 +1707,9 @@ class ARIApp(Flask):
 
     def _api_admin_ics_refresh(self):
         return _impls.ariapp_api_admin_ics_refresh(self)
+
+    def _api_admin_ics_edit(self):
+        return _impls.ariapp_api_admin_ics_edit(self)
 
     # -----------------------------------------------------------------
     # Admin links API

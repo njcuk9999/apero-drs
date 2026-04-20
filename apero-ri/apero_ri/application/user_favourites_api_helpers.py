@@ -557,6 +557,11 @@ def api_user_favourite_objects_add(app):
             }
             sections.append(target)
 
+    # Auto-derive nickname from the alias query when the
+    # user did not supply one explicitly.
+    if not nickname and query.upper() != objname.upper():
+        nickname = query
+
     target["items"].append(
         {"objname": objname, "nickname": nickname, "note": note}
     )
@@ -565,7 +570,10 @@ def api_user_favourite_objects_add(app):
         username, profile_id, sections, last_object=None
     )
     return jsonify(
-        success=True, resolved_objname=objname, **updated
+        success=True,
+        resolved_objname=objname,
+        nickname=nickname,
+        **updated,
     )
 
 
@@ -679,8 +687,9 @@ def api_user_favourite_objects_add_bulk(app):
             results["already_exists"].append(objname)
             continue
 
+        nick = query if query.upper() != objname.upper() else ''
         target["items"].append(
-            {"objname": objname, "nickname": "", "note": ""}
+            {"objname": objname, "nickname": nick, "note": ""}
         )
         results["added"].append(objname)
 

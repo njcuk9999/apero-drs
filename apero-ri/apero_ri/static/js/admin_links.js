@@ -9,6 +9,11 @@ function _currentInstrument() {
     return sel ? sel.value : '';
 }
 
+function _canManageInstrument() {
+    var mi = ARI_ADMIN_LINKS.manageableInstruments || [];
+    return mi.indexOf(_currentInstrument()) !== -1;
+}
+
 async function _api(url, method = 'GET', body = null) {
     const opts = { method, headers: { 'Content-Type': 'application/json' } };
     if (body) opts.body = JSON.stringify(body);
@@ -43,7 +48,7 @@ function _renderLinks() {
             <div class="ari-links-section-header">
                 <span class="ari-links-section-title"><i class="fa-solid fa-folder-open"></i> ${_esc(section)}</span>
                 <div class="ari-links-section-actions">`;
-        if (ARI_ADMIN_LINKS.canManage) {
+        if (_canManageInstrument()) {
             html += `<button class="ari-btn ari-btn--secondary ari-btn--xs js-admin-add-to-section" data-section="${_esc(section)}" title="Add link"><i class="fa-solid fa-plus"></i></button>
                      <button class="ari-btn ari-btn--danger ari-btn--xs js-admin-remove-section" data-section="${_esc(section)}" title="Delete section"><i class="fa-solid fa-trash"></i></button>`;
         }
@@ -55,7 +60,7 @@ function _renderLinks() {
                     <span class="ari-link-name">${_esc(name)}</span>
                     ${link.description ? `<span class="ari-link-desc">${_esc(link.description)}</span>` : ''}
                 </a>`;
-            if (ARI_ADMIN_LINKS.canManage) {
+            if (_canManageInstrument()) {
                 html += `<div class="ari-link-actions">
                     <button class="ari-btn ari-btn--secondary ari-btn--xs js-admin-edit-link" data-section="${_esc(section)}" data-name="${_esc(name)}" title="Edit"><i class="fa-solid fa-pencil"></i></button>
                     <button class="ari-btn ari-btn--danger ari-btn--xs js-admin-remove-link" data-section="${_esc(section)}" data-name="${_esc(name)}" title="Remove"><i class="fa-solid fa-xmark"></i></button>

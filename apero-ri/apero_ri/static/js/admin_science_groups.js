@@ -4,6 +4,7 @@
 (function () {
     'use strict';
 
+    function init() {
     var cfg = window.ARI_SCI_GROUPS;
 
     /* -- DOM refs -------------------------------------------------------- */
@@ -802,4 +803,7 @@
 
     /* -- Init ------------------------------------------------------------ */
     renderTabs();
+    } // end init
+
+    document.addEventListener('DOMContentLoaded', init);
 })();

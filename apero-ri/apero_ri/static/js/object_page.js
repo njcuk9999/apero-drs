@@ -18,6 +18,19 @@
     var finderLoading = document.getElementById('op-finder-loading');
     var finderError = document.getElementById('op-finder-error');
     var finderImages = document.getElementById('op-finder-images');
+    var tessGenerateBtn = document.getElementById('op-tess-generate-btn');
+    var tessLoading = document.getElementById('op-tess-loading');
+    var tessError = document.getElementById('op-tess-error');
+    var tessViewer = document.getElementById('op-tess-viewer');
+    var tessImg = document.getElementById('op-tess-img');
+    var tessLabel = document.getElementById('op-tess-label');
+    var tessPrev = document.getElementById('op-tess-prev');
+    var tessNext = document.getElementById('op-tess-next');
+    var tessDlLc = document.getElementById('op-tess-dl-lc');
+    var tessDlPng = document.getElementById('op-tess-dl-png');
+    var tessRegen = document.getElementById('op-tess-regen');
+    var tessLogWrap = document.getElementById('op-tess-log-wrap');
+    var tessLogPre = document.getElementById('op-tess-log');
     var lblSections = document.getElementById('op-lbl-sections');
     var ccfGrid = document.getElementById('op-ccf-grid');
     var ccfMjdStartInput = document.getElementById('op-ccf-mjd-start');
@@ -822,6 +835,11 @@
         loadingEl.style.display = 'none';
         errorEl.style.display = '';
         errorEl.textContent = msg || 'Failed to load object page data.';
+        /* Hide tabs and all panels so the page looks clean */
+        if (tabsWrap) tabsWrap.style.display = 'none';
+        var panels = document.querySelectorAll('.op-tab-panel');
+        panels.forEach(function (p) { p.style.display = 'none'; });
+        if (updatedEl) updatedEl.style.display = 'none';
     }
 
     function persistLastObjectPage() {
@@ -1709,6 +1727,236 @@
         html += '</div>';
         finderImages.innerHTML = html;
         finderImages.style.display = '';
+    }
+
+    /* ------------------------------------------------------------------
+       TESS rotation periods (tessilator)
+    ------------------------------------------------------------------ */
+    var tessSectors = [];
+    var tessIdx = 0;
+
+    function _tessResetUi() {
+        if (tessGenerateBtn) tessGenerateBtn.style.display = 'none';
+        if (tessRegen) tessRegen.style.display = 'none';
+        if (tessLoading) tessLoading.style.display = '';
+        if (tessError) tessError.style.display = 'none';
+        if (tessViewer) tessViewer.style.display = 'none';
+        if (tessLogWrap) tessLogWrap.style.display = 'none';
+    }
+
+    function _tessShowError(msg) {
+        if (tessLoading) tessLoading.style.display = 'none';
+        if (tessError) {
+            tessError.textContent = msg;
+            tessError.style.display = '';
+        }
+        if (tessGenerateBtn) {
+            tessGenerateBtn.style.display = '';
+        }
+        if (tessRegen) {
+            tessRegen.style.display = '';
+        }
+    }
+
+    function _tessHandleResult(data) {
+        if (tessLoading) tessLoading.style.display = 'none';
+        if (!data || !data.success) {
+            _tessShowError(
+                (data && data.error)
+                    ? data.error
+                    : 'Failed to generate TESS data.'
+            );
+            return;
+        }
+        tessSectors = data.sectors || [];
+        tessIdx = 0;
+        renderTessSector();
+        showTessLog(data.console_log || '');
+    }
+
+    /**
+     * Load TESS rotation results.
+     *
+     * For cached results use a normal fetch.  For fresh
+     * generation open an SSE stream so that console output
+     * appears in real-time.
+     */
+    function loadTessRotation(force) {
+        var streamUrl = cfg.tessRotationStreamUrl;
+        var fetchUrl = cfg.tessRotationApiUrl;
+        if (!fetchUrl) return;
+        _tessResetUi();
+
+        var params = '?profile_id='
+            + encodeURIComponent(cfg.profileId)
+            + '&objname='
+            + encodeURIComponent(cfg.objname);
+        if (force) params += '&_ts=' + Date.now();
+
+        // Use SSE streaming for fresh generation
+        if (streamUrl && (force || !cfg.tessRotationCached)) {
+            _tessStreamGenerate(streamUrl + params);
+            return;
+        }
+        // Fall back to simple fetch (cached results)
+        fetch(fetchUrl + params)
+            .then(function (r) { return r.json(); })
+            .then(function (data) {
+                _tessHandleResult(data);
+            })
+            .catch(function (err) {
+                _tessShowError('Network error: '
+                    + String(err));
+            });
+    }
+
+    /**
+     * Open an EventSource to the SSE endpoint and stream
+     * tessilator console output into the log panel.
+     */
+    function _tessStreamGenerate(url) {
+        // Show the console output panel immediately (open)
+        if (tessLogWrap) {
+            tessLogWrap.style.display = '';
+            tessLogWrap.open = true;
+        }
+        if (tessLogPre) tessLogPre.textContent = '';
+
+        var source = new EventSource(url);
+
+        source.onmessage = function (e) {
+            var msg;
+            try { msg = JSON.parse(e.data); }
+            catch (_) { return; }
+
+            if (msg.type === 'log') {
+                _tessAppendLog(msg.text || '');
+            } else if (msg.type === 'done') {
+                source.close();
+                _tessHandleResult(msg.result);
+            } else if (msg.type === 'error') {
+                source.close();
+                _tessShowError(
+                    msg.error || 'Generation failed.'
+                );
+            }
+        };
+
+        source.onerror = function () {
+            source.close();
+            _tessShowError(
+                'Lost connection to server.'
+            );
+        };
+    }
+
+    function _tessAppendLog(text) {
+        if (!tessLogPre) return;
+        tessLogPre.textContent += text;
+        // Auto-scroll the <pre> into view
+        tessLogPre.scrollTop = tessLogPre.scrollHeight;
+    }
+
+    function renderTessSector() {
+        if (!tessSectors.length) return;
+        if (tessViewer) tessViewer.style.display = '';
+        var s = tessSectors[tessIdx];
+        var single = tessSectors.length === 1;
+        if (tessImg) {
+            tessImg.src = 'data:image/png;base64,'
+                + s.image;
+            tessImg.alt = 'TESS Sector ' + s.sector;
+        }
+        if (tessLabel) {
+            tessLabel.textContent = single
+                ? 'Sector ' + s.sector
+                : 'Sector ' + s.sector
+                    + ' (' + (tessIdx + 1) + ' / '
+                    + tessSectors.length + ')';
+        }
+        // Hide nav arrows when only one sector
+        if (tessPrev) {
+            tessPrev.style.display = single
+                ? 'none' : '';
+            tessPrev.disabled = (tessIdx === 0);
+        }
+        if (tessNext) {
+            tessNext.style.display = single
+                ? 'none' : '';
+            tessNext.disabled = (
+                tessIdx >= tessSectors.length - 1
+            );
+        }
+        // Periods ECSV download (shared across sectors)
+        if (tessDlLc) {
+            if (s.has_csv) {
+                tessDlLc.style.display = '';
+                tessDlLc.href =
+                    cfg.tessRotationLcApiUrl
+                    + '?profile_id='
+                    + encodeURIComponent(cfg.profileId)
+                    + '&objname='
+                    + encodeURIComponent(cfg.objname)
+                    + '&sector=' + s.sector;
+            } else {
+                tessDlLc.style.display = 'none';
+            }
+        }
+        // Download all PNGs button
+        if (tessDlPng) {
+            tessDlPng.style.display =
+                tessSectors.length > 0 ? '' : 'none';
+        }
+        // Regenerate button
+        if (tessRegen) {
+            tessRegen.style.display = '';
+        }
+    }
+
+    if (tessPrev) {
+        tessPrev.addEventListener('click', function () {
+            if (tessIdx > 0) { tessIdx--; renderTessSector(); }
+        });
+    }
+    if (tessNext) {
+        tessNext.addEventListener('click', function () {
+            if (tessIdx < tessSectors.length - 1) {
+                tessIdx++;
+                renderTessSector();
+            }
+        });
+    }
+
+    if (tessDlPng) {
+        tessDlPng.addEventListener('click', function () {
+            tessSectors.forEach(function (s) {
+                var a = document.createElement('a');
+                a.href = 'data:image/png;base64,'
+                    + s.image;
+                a.download = (cfg.objname || 'tess')
+                    + '_sector_' + s.sector + '.png';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+            });
+        });
+    }
+
+    if (tessRegen) {
+        tessRegen.addEventListener('click', function () {
+            loadTessRotation(true);
+        });
+    }
+
+    function showTessLog(text) {
+        if (!tessLogWrap || !tessLogPre) { return; }
+        var trimmed = (text || '').trim();
+        if (!trimmed) {
+            tessLogWrap.style.display = 'none';
+            return;
+        }
+        tessLogPre.textContent = trimmed;
+        tessLogWrap.style.display = '';
     }
 
      /* ------------------------------------------------------------------
@@ -2692,6 +2940,17 @@
                 loadFinderCharts();
             } else {
                 finderGenerateBtn.addEventListener('click', loadFinderCharts);
+            }
+        }
+        if (tessGenerateBtn) {
+            if (cfg.tessRotationCached) {
+                loadTessRotation();
+            } else {
+                tessGenerateBtn.addEventListener(
+                    'click', function () {
+                        loadTessRotation(false);
+                    }
+                );
             }
         }
         loadSectionPrefs().finally(function () {

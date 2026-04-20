@@ -89,6 +89,24 @@ def load_parameters() -> Dict[str, dict]:
         return yaml.safe_load(fio) or {}
 
 
+def save_parameters(params: Dict[str, dict]) -> None:
+    """
+    Save parameter definitions back to ``parameters.yaml``.
+
+    :param params: dict mapping parameter names to parameter definition
+        dicts
+    :type params: dict
+    """
+    with open(PARAMS_FILE, "w") as fio:
+        yaml.dump(
+            params,
+            fio,
+            default_flow_style=False,
+            allow_unicode=True,
+            sort_keys=False,
+        )
+
+
 # =============================================================================
 # Define page side-nav helpers
 # =============================================================================
@@ -209,16 +227,59 @@ def resolve_user_permissions(
     for group_name in user_groups:
         permissions |= resolve_group_permissions(group_name, groups)
 
-    # Super-admin gets all permissions plus group/instrument/login_as
-    # control for every known group.
+    # Super-admin gets all permissions plus group/login_as
+    # control for every known group.  manage.instrument.*
+    # permissions are inherited from admin → moderator groups.
     if "super_admin" in set(user_groups or []):
         for group_name in groups:
-            permissions |= resolve_group_permissions(group_name, groups)
+            permissions |= resolve_group_permissions(
+                group_name, groups
+            )
             permissions.add(f"manage.group.{group_name}")
-            permissions.add(f"manage.instrument.{group_name}")
             permissions.add(f"login_as.{group_name}")
         permissions.add("add.instrument")
     return permissions
+
+
+def get_user_instruments(
+    user_groups: List[str],
+    groups: Dict[str, dict],
+) -> List[str]:
+    """
+    Derive instruments a user can access from their group
+    memberships.
+
+    Walks the group hierarchy to collect all resolved groups,
+    then extracts instrument names from groups whose name
+    matches ``{level}.{INSTRUMENT}``.  Only instruments present
+    in ``parameters.yaml`` are returned.
+
+    :param user_groups: list of str, the user's direct groups
+    :param groups: dict, all group definitions from groups.yaml
+
+    :return: sorted list of instrument names
+    :rtype: list
+    """
+    all_user_groups = set(user_groups or [])
+    for g in list(all_user_groups):
+        all_user_groups |= get_inherited_groups(g, groups)
+
+    params = load_parameters()
+    valid = set(
+        params.get('instruments', {}).get('value', [])
+    )
+
+    instruments = set()
+    for g in all_user_groups:
+        parts = g.rsplit('.', 1)
+        if len(parts) == 2 and parts[1] in valid:
+            instruments.add(parts[1])
+
+    # super_admin sees all instruments
+    if 'super_admin' in set(user_groups or []):
+        instruments = set(valid)
+
+    return sorted(instruments)
 
 
 def get_inherited_groups(
@@ -373,6 +434,29 @@ def page_id_to_endpoint(page_id: str) -> str:
     return page_id.replace(".", "_")
 
 
+def has_view_permission(
+    view_perm: str, user_permissions: Set[str]
+) -> bool:
+    """
+    Check whether *user_permissions* satisfies *view_perm*.
+
+    An exact match is tried first.  If that fails, any permission
+    that starts with ``view_perm + '.'`` also counts as a match
+    (e.g. ``view.monitor_portal`` is satisfied by
+    ``view.monitor_portal.SPIROU``).
+
+    :param view_perm: str, required permission string
+    :param user_permissions: set of str, resolved user permissions
+
+    :return: True if the user has the permission
+    :rtype: bool
+    """
+    if view_perm in user_permissions:
+        return True
+    prefix = view_perm + '.'
+    return any(p.startswith(prefix) for p in user_permissions)
+
+
 # =============================================================================
 # Define user-visible page filters
 # =============================================================================
@@ -391,7 +475,7 @@ def get_visible_pages(
     visible = {}
     for pid, pdef in pages.items():
         view_perm = pdef.get("view-permission", "")
-        if view_perm in user_permissions:
+        if has_view_permission(view_perm, user_permissions):
             visible[pid] = pdef
     return visible
 
@@ -415,7 +499,7 @@ def get_nav_pages(
         if not is_side_nav_shown(pdef):
             continue
         view_perm = pdef.get("view-permission", "")
-        if view_perm not in user_permissions:
+        if not has_view_permission(view_perm, user_permissions):
             continue
         # skip login/logout — handled separately in nav
         if pid in ("home.login", "home.logout"):
@@ -457,7 +541,7 @@ def get_visible_cards(
         if not is_side_nav_shown(child_def):
             continue
         view_perm = child_def.get("view-permission", "")
-        if view_perm not in user_permissions:
+        if not has_view_permission(view_perm, user_permissions):
             continue
         # always skip logout from cards
         if child_id == "home.logout":
@@ -538,7 +622,9 @@ def get_sidebar_tree(
             if not is_side_nav_shown(child_def):
                 continue
             view_perm = child_def.get("view-permission", "")
-            if view_perm not in user_permissions:
+            if not has_view_permission(
+                view_perm, user_permissions
+            ):
                 continue
             # skip special pages
             if child_id in ("home.login", "home.logout", "home.user_portal"):
@@ -591,7 +677,7 @@ def get_pinned_sidebar_items(
         if not is_side_nav_shown(pdef):
             continue
         view_perm = pdef.get("view-permission", "")
-        if view_perm not in user_permissions:
+        if not has_view_permission(view_perm, user_permissions):
             continue
         # -----------------------------------------------------------------
         # auth-state specific pinned pages

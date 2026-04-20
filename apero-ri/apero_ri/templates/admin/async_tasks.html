@@ -387,6 +387,10 @@
             <button id="btn-stop-all" class="ari-btn ari-btn--danger ari-btn--sm">
                 <i class="fa-solid fa-stop"></i> Clear Queue
             </button>
+            <button id="btn-kill-all" class="ari-btn ari-btn--danger ari-btn--sm"
+                    title="Immediately interrupt running task and clear all queued tasks">
+                <i class="fa-solid fa-skull-crossbones"></i> Kill All
+            </button>
         </div>
 
         <!-- Running task summary -->
@@ -690,6 +694,7 @@ window.ARI_ASYNC_TASKS = {
         runNow:   '{{ url_for("api_async_tasks_run_now") }}',
         runAll:   '{{ url_for("api_async_tasks_run_all") }}',
         stop:     '{{ url_for("api_async_tasks_stop") }}',
+        killAll:  '{{ url_for("api_async_tasks_kill_all") }}',
         clearHistory: '{{ url_for("api_async_tasks_clear_history") }}',
         status:   '{{ url_for("api_async_tasks_status") }}',
         taskLog:  '{{ url_for("api_async_tasks_task_log") }}',

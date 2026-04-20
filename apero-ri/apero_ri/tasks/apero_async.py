@@ -887,6 +887,33 @@ def save_profile_db_table_updates(
     save_apero_profiles(profiles)
 
 
+def check_profile_paths_accessible(
+    aparams: Dict[str, Any],
+) -> List[Tuple[str, str]]:
+    """Check that every configured path in *aparams['paths']* is an
+    accessible directory on the local filesystem.
+
+    Paths that are empty/None are ignored (not configured).  A
+    non-empty path that is not a directory is treated as inaccessible
+    (sshfs mount missing, remote drive disconnected, etc.).
+
+    :returns: list of ``(key, path_string)`` pairs for inaccessible
+              paths.  An empty list means all configured paths are
+              accessible (or no paths are configured).
+    """
+    paths_cfg = aparams.get("paths", {})
+    if not isinstance(paths_cfg, dict):
+        return []
+    missing: List[Tuple[str, str]] = []
+    for key, value in paths_cfg.items():
+        pstr = str(value or "").strip()
+        if not pstr:
+            continue
+        if not Path(pstr).is_dir():
+            missing.append((str(key), pstr))
+    return missing
+
+
 def save_results(
     filename: Path, results: Any, metadata: Optional[Dict[str, Any]] = None
 ):

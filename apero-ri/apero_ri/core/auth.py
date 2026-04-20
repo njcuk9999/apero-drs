@@ -494,6 +494,198 @@ def save_apero_profiles(profiles: dict) -> None:
         _profiles_cache.clear()
 
 
+def rename_instrument(old_name: str, new_name: str) -> Dict[str, Any]:
+    """Rename an instrument across all ARI data stores.
+
+    Updates (in order):
+
+    1. ``apero_profiles.yaml`` — moves the top-level instrument key and
+       updates ``general.INSTRUMENT`` / ``general.instrument`` inside
+       every sub-profile.
+    2. Instrument data files under ``~/.ari/admin/instruments/`` — renames
+       ``{old}_calendar.yaml`` and ``{old}_links.yaml`` (if they exist).
+    3. Science-groups file under ``~/.ari/admin/science_groups/`` — renames
+       ``{old_lower}_science_groups.yaml`` (if it exists).
+    4. Per-instrument permission groups — renames every group named
+       ``{level}.{old}`` to ``{level}.{new}`` and updates user memberships.
+    5. User records — replaces ``old_name`` with ``new_name`` in every
+       user's ``instruments`` list.
+    6. Task output directory — renames ``~/.ari/tasks/{OLD}/`` if present.
+    7. Cache directory — renames ``~/.ari/cache/{OLD}/`` if present.
+    8. ``parameters.yaml`` — replaces ``old_name`` with ``new_name`` in
+       the ``instruments.value`` list.
+
+    :raises ValueError: if ``old_name`` is not found or ``new_name``
+        already exists.
+    :returns: summary dict describing what was changed.
+    """
+    import os
+
+    old = str(old_name or "").strip()
+    new = str(new_name or "").strip()
+    if not old or not new:
+        raise ValueError("Both old_name and new_name are required.")
+    if old == new:
+        raise ValueError("old_name and new_name are the same.")
+
+    summary: Dict[str, Any] = {
+        "profiles_updated": False,
+        "files_renamed": [],
+        "groups_renamed": [],
+        "users_updated": 0,
+        "tasks_dir_renamed": False,
+        "cache_dir_renamed": False,
+    }
+
+    # ------------------------------------------------------------------
+    # 1. apero_profiles.yaml
+    # ------------------------------------------------------------------
+    all_profiles = load_apero_profiles(hydrate=False)
+    if not isinstance(all_profiles, dict) or old not in all_profiles:
+        raise ValueError(
+            f"Instrument '{old}' not found in apero_profiles."
+        )
+    if new in all_profiles:
+        raise ValueError(
+            f"Instrument '{new}' already exists in apero_profiles."
+        )
+
+    # Move the key and update embedded instrument name in sub-profiles.
+    profile_block = all_profiles.pop(old)
+    if isinstance(profile_block, dict):
+        for pname, pdata in profile_block.items():
+            if not isinstance(pdata, dict):
+                continue
+            # Drop hydrated key if accidentally persisted.
+            pdata.pop("APERO_INSTRUMENT_PROFILE_DATA", None)
+            gen = pdata.get("general")
+            if isinstance(gen, dict):
+                if gen.get("INSTRUMENT") == old:
+                    gen["INSTRUMENT"] = new
+                if gen.get("instrument") == old:
+                    gen["instrument"] = new
+    all_profiles[new] = profile_block
+    save_apero_profiles(all_profiles)
+    summary["profiles_updated"] = True
+
+    # ------------------------------------------------------------------
+    # 2. Instrument data files (calendar, links)
+    # ------------------------------------------------------------------
+    instr_dir = INSTRUMENTS_DIR
+    instr_dir.mkdir(parents=True, exist_ok=True)
+    for suffix in ("_calendar.yaml", "_links.yaml"):
+        old_file = instr_dir / f"{old}{suffix}"
+        new_file = instr_dir / f"{new}{suffix}"
+        if old_file.exists():
+            os.rename(str(old_file), str(new_file))
+            summary["files_renamed"].append(str(new_file))
+
+    # ------------------------------------------------------------------
+    # 3. Science-groups file
+    # ------------------------------------------------------------------
+    sci_dir = SCI_GROUPS_DIR
+    old_sg = sci_dir / f"{old.lower()}_science_groups.yaml"
+    new_sg = sci_dir / f"{new.lower()}_science_groups.yaml"
+    if old_sg.exists() and not new_sg.exists():
+        os.rename(str(old_sg), str(new_sg))
+        summary["files_renamed"].append(str(new_sg))
+
+    # ------------------------------------------------------------------
+    # 4. Permission groups
+    # ------------------------------------------------------------------
+    from apero_ri.core import permissions as _perm_mod  # local import
+
+    all_groups = _perm_mod.load_groups()
+    group_levels = [
+        "general", "monitor", "developer", "moderator"
+    ]
+    old_group_names = {
+        f"{lvl}.{old}" for lvl in group_levels
+    }
+    renamed_groups: Dict[str, str] = {}
+    for old_gname in list(all_groups.keys()):
+        if old_gname in old_group_names:
+            new_gname = old_gname.replace(
+                f".{old}", f".{new}", 1
+            )
+            all_groups[new_gname] = all_groups.pop(old_gname)
+            renamed_groups[old_gname] = new_gname
+    if renamed_groups:
+        _perm_mod.save_groups(all_groups)
+        summary["groups_renamed"] = list(renamed_groups.values())
+
+    # Update group memberships in every user record.
+    if renamed_groups:
+        all_users_raw = load_users()
+        changed_users = 0
+        for uname, udata in all_users_raw.items():
+            if not isinstance(udata, dict):
+                continue
+            user_groups = list(udata.get("groups") or [])
+            new_groups = [
+                renamed_groups.get(g, g) for g in user_groups
+            ]
+            if new_groups != user_groups:
+                all_users_raw[uname]["groups"] = new_groups
+                changed_users += 1
+        if changed_users:
+            save_users(all_users_raw)
+
+    # ------------------------------------------------------------------
+    # 5. User instrument lists
+    # ------------------------------------------------------------------
+    all_users_raw = load_users()
+    users_updated = 0
+    for uname, udata in all_users_raw.items():
+        if not isinstance(udata, dict):
+            continue
+        user_instr = list(udata.get("instruments") or [])
+        if old in user_instr:
+            all_users_raw[uname]["instruments"] = [
+                new if i == old else i for i in user_instr
+            ]
+            users_updated += 1
+    if users_updated:
+        save_users(all_users_raw)
+    summary["users_updated"] = users_updated
+
+    # ------------------------------------------------------------------
+    # 6. Task output directory
+    # ------------------------------------------------------------------
+    tasks_old = ARI_DIR / "tasks" / old
+    tasks_new = ARI_DIR / "tasks" / new
+    if tasks_old.exists() and not tasks_new.exists():
+        os.rename(str(tasks_old), str(tasks_new))
+        summary["tasks_dir_renamed"] = True
+
+    # ------------------------------------------------------------------
+    # 7. Cache directory
+    # ------------------------------------------------------------------
+    cache_old = ARI_DIR / "cache" / old
+    cache_new = ARI_DIR / "cache" / new
+    if cache_old.exists() and not cache_new.exists():
+        os.rename(str(cache_old), str(cache_new))
+        summary["cache_dir_renamed"] = True
+
+    # ------------------------------------------------------------------
+    # 8. parameters.yaml instruments list
+    # ------------------------------------------------------------------
+    from apero_ri.core import permissions as _perm_mod  # local import
+
+    _params = _perm_mod.load_parameters()
+    _instr_block = _params.get("instruments")
+    if isinstance(_instr_block, dict):
+        _instr_list = _instr_block.get("value")
+        if isinstance(_instr_list, list) and old in _instr_list:
+            _instr_block["value"] = [
+                new if i == old else i for i in _instr_list
+            ]
+            _perm_mod.save_parameters(_params)
+            summary["parameters_yaml_updated"] = True
+
+    return summary
+
+
 def _apero_instrument_profile_path(filename: str) -> Path:
     """Return path under resources/aprofile_instruments for a profile file."""
     pkg_dir = Path(__file__).resolve().parents[1]
@@ -788,11 +980,25 @@ def save_science_groups(instrument: str, groups: Dict[str, dict]) -> None:
 
 
 def get_users_for_instrument(instrument: str) -> List[str]:
-    """Get all usernames that have this instrument in their profile."""
+    """Get all usernames whose groups grant access to *instrument*."""
+    from apero_ri.core.permissions import (
+        get_inherited_groups,
+        load_groups,
+    )
+    groups = load_groups()
     users = load_users()
     result = []
     for username, data in users.items():
-        if instrument in data.get("instruments", []):
+        user_groups = set(data.get('groups', []))
+        all_groups = set(user_groups)
+        for g in list(user_groups):
+            all_groups |= get_inherited_groups(g, groups)
+        has_instr = any(
+            g.rsplit('.', 1)[-1] == instrument
+            for g in all_groups
+            if '.' in g
+        )
+        if has_instr:
             result.append(username)
     return sorted(result)
 
@@ -811,13 +1017,16 @@ def get_accessible_profiles(
        has ``view.data_portal`` permission.
     """
     from apero_ri.core.permissions import get_inherited_groups
+    from apero_ri.core.permissions import get_user_instruments
 
     profiles_data = load_apero_profiles(hydrate=False)
     if not profiles_data:
         return []
 
     if user_info:
-        user_instruments = set(user_info.get("instruments", []))
+        user_instruments = set(get_user_instruments(
+            user_info.get('groups', []), ari_groups
+        ))
         user_groups = set(user_info.get("groups", []))
         all_user_groups = set(user_groups)
         for grp in list(user_groups):

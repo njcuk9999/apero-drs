@@ -332,14 +332,17 @@ def build_admin_card_health_uncached(app, user_info, perms) -> Dict[str, Any]:
         )
 
     _t0 = time.monotonic()
-    if "manage.sci_group" in perms:
+    has_sci_group = any(
+        p.startswith("manage.sci_group.") for p in perms
+    )
+    if has_sci_group:
         try:
             params = load_parameters()
             all_instr = params.get("instruments", {}).get("value", [])
-            user_instr = set((user_info or {}).get("instruments", []))
-            instruments = [i for i in all_instr if i in user_instr] or list(
-                all_instr
-            )
+            instruments = [
+                i for i in all_instr
+                if f"manage.sci_group.{i}" in perms
+            ]
 
             total_users = set()
             assigned_users = set()

@@ -967,17 +967,41 @@ def delete_instrument_event(instrument: str, event_id: str) -> bool:
     return False
 
 
-def get_merged_calendar(username: str, instrument: str) -> List[Dict]:
-    """Merge personal and instrument events; instrument events tagged."""
+def dedup_events(events: List[Dict]) -> List[Dict]:
+    """Remove duplicate events by id, keeping the first occurrence.
+
+    ICS events have stable ids derived from SHA1(feed_url) + VEVENT
+    UID, so the same ICS URL imported by multiple instruments (or by
+    both a user and an instrument) produces identical ids.  Keeping
+    only the first occurrence prevents duplicate calendar entries.
+    """
+    seen: set = set()
+    out: List[Dict] = []
+    for ev in events:
+        eid = ev.get("id")
+        if eid and eid in seen:
+            continue
+        if eid:
+            seen.add(eid)
+        out.append(ev)
+    return out
+
+
+def get_merged_calendar(
+    username: str, instrument: str
+) -> List[Dict]:
+    """Merge personal and instrument events; instrument tagged."""
     personal = list_events(username)
-    instr = load_instrument_calendar(instrument).get("events", [])
+    instr = load_instrument_calendar(instrument).get(
+        "events", []
+    )
     tagged = []
     for ev in instr:
         ev = dict(ev)
         ev["_source"] = instrument
         ev["category"] = "instrument"
         tagged.append(ev)
-    return personal + tagged
+    return dedup_events(personal + tagged)
 
 
 # ---------------------------------------------------------------------------
@@ -1015,6 +1039,20 @@ def add_ics_feed(
         if e.get("ics_feed_id") == feed["id"]
     )
     return feed, count
+
+
+def update_ics_feed(
+    username: str,
+    feed_id: str,
+    name: str | None = None,
+    color: str | None = None,
+) -> dict:
+    """Update the name and/or colour of a user ICS feed."""
+    ics = _import_ics_funcs()
+    data = load_calendar(username)
+    feed = ics.update_feed(data, feed_id, name=name, color=color)
+    save_calendar(username, data)
+    return feed
 
 
 def delete_ics_feed(username: str, feed_id: str) -> None:
@@ -1088,6 +1126,22 @@ def delete_instrument_ics_feed(
     data = load_instrument_calendar(instrument)
     ics.delete_feed(data, feed_id)
     save_instrument_calendar(instrument, data)
+
+
+def update_instrument_ics_feed(
+    instrument: str,
+    feed_id: str,
+    name: str | None = None,
+    color: str | None = None,
+) -> dict:
+    """Update the name and/or colour of an instrument ICS feed."""
+    ics = _import_ics_funcs()
+    data = load_instrument_calendar(instrument)
+    feed = ics.update_feed(
+        data, feed_id, name=name, color=color
+    )
+    save_instrument_calendar(instrument, data)
+    return feed
 
 
 def refresh_instrument_ics_feed(

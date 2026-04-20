@@ -2,15 +2,12 @@
 instruments:
   value:
     - SPIROU
-    - NIRPS_HE
-    - NIRPS_HA
+    - NIRPS
 
 # specific information on the instruments
 spirou:
   homepage: https://www.cfht.hawaii.edu/Instruments/SPIRou/
-nirps_he:
-  homepage: https://www.astro.umontreal.ca/nirps
-nirps_ha:
+nirps:
   homepage: https://www.astro.umontreal.ca/nirps
 
 # publications for the /home page

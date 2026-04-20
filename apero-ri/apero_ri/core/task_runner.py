@@ -1392,6 +1392,44 @@ def stop_and_clear() -> None:
         _queue.clear()
 
 
+def kill_all() -> Dict[str, Any]:
+    """Immediately interrupt the running task and clear the queue.
+
+    Sets the stop event on any running task so cooperative
+    tasks exit early, marks every queued task cancelled, and
+    clears the queue.  Cooldowns are set so the scheduler
+    does not immediately re-enqueue anything.
+    """
+    killed_current = None
+
+    with _lock:
+        # 1. Interrupt running task
+        if _current is not None:
+            cur_inst, cur_tid = _current
+            killed_current = cur_tid
+            ev = _stop_events.get(cur_tid)
+            if ev is not None:
+                ev.set()
+            inst = _instances.get(cur_tid)
+            if inst is not None:
+                inst.status = 'cancelling'
+
+        # 2. Cancel every queued task
+        cancelled = []
+        for qi, qtid in _queue:
+            inst = _instances.get(qtid)
+            if inst is not None:
+                inst.status = 'cancelled'
+            cancelled.append(qtid)
+        _queue.clear()
+
+    # 3. Apply cooldowns to prevent re-scheduling
+    result = stop_all_with_cooldown()
+    result['killed_current'] = killed_current
+    result['cancelled_queued'] = len(cancelled)
+    return result
+
+
 def stop_all_with_cooldown(instrument: Optional[str] = None) -> Dict[str, Any]:
     """Stop queued tasks and apply per-task cooldown windows.
 

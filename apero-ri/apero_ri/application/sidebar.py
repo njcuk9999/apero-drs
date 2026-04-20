@@ -64,6 +64,10 @@ def build_data_portal_sidebar_tree(
                 False,
             ),
             "qc_graphs": (f"/data_portal/{profile_id}/qc-graphs", False),
+            "object_groups": (
+                f"/data_portal/{profile_id}/object-groups",
+                False,
+            ),
             "basket": (f"/data_portal/{profile_id}/basket", False),
         }
         child_items = []

@@ -18,6 +18,7 @@ from apero_ri.core.permissions import (
     find_full_nav_root,
     get_inherited_groups,
     get_visible_cards,
+    has_view_permission,
     is_parent_page,
     load_parameters,
     page_id_to_endpoint,
@@ -46,7 +47,9 @@ def make_page_view(app, page_id: str, package_dir: Path):
         else:
             perms = get_public_permissions()
 
-        if view_perm and view_perm not in perms:
+        if view_perm and not has_view_permission(
+            view_perm, perms
+        ):
             flash("You do not have permission to view this page.", "warning")
             return redirect(url_for("login"))
 
@@ -101,9 +104,13 @@ def make_page_view(app, page_id: str, package_dir: Path):
 
         if page_id == "home.admin_portal.science_groups" and user_info:
             params = load_parameters()
-            all_instr = params.get("instruments", {}).get("value", [])
-            user_instr = user_info.get("instruments", [])
-            context["instruments"] = [i for i in all_instr if i in user_instr]
+            all_instr = params.get("instruments", {}).get(
+                "value", []
+            )
+            context["instruments"] = [
+                i for i in all_instr
+                if f"manage.sci_group.{i}" in perms
+            ]
 
         if page_id == "home.admin_portal.async_tasks" and user_info:
             params = load_parameters()
@@ -213,12 +220,18 @@ def make_page_view(app, page_id: str, package_dir: Path):
 
         if page_id == "home.admin_portal.calendar" and user_info:
             context.update(
-                app._build_admin_instrument_context(user_info, perms)
+                app._build_admin_instrument_context(
+                    user_info, perms,
+                    'manage.admin.calendar',
+                )
             )
 
         if page_id == "home.admin_portal.links" and user_info:
             context.update(
-                app._build_admin_instrument_context(user_info, perms)
+                app._build_admin_instrument_context(
+                    user_info, perms,
+                    'manage.admin.links',
+                )
             )
 
         if page_id == "home.admin_portal.email":
@@ -242,7 +255,14 @@ def make_page_view(app, page_id: str, package_dir: Path):
             context.update(app._build_admin_cache_context(perms))
 
         if page_id == "home.admin_portal.download_management":
-            context.update(app._build_admin_download_mgmt_context(perms))
+            context.update(
+                app._build_admin_download_mgmt_context(perms)
+            )
+
+        if page_id == "home.admin_portal.vault":
+            context.update(
+                app._build_admin_vault_context(perms)
+            )
 
         if page_id in {"home.admin_portal", "home.admin_portal.health_status"}:
             health, updated_at, in_progress = app._get_admin_health(

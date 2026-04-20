@@ -207,8 +207,7 @@
         var noteHtml = note
             ? '<p class="ari-fav-card__note">'
               + _esc(note) + '</p>'
-            : '<p class="ari-fav-card__note-placeholder">'
-              + 'No description.</p>';
+            : '';
         var openUrl = window.location.href.replace(
             /\/fav-objects.*$/,
             '/' + encodeURIComponent(objname)
@@ -454,11 +453,19 @@
     // Collapse toggle
     // ------------------------------------------------------------------
     function wireCollapseBtn(secEl) {
-        var btn  = secEl.querySelector('.ari-fav-section__collapse-btn');
-        var body = secEl.querySelector('.ari-fav-section__body');
+        var btn  = secEl.querySelector(
+            '.ari-fav-section__collapse-btn'
+        );
+        var hdr  = secEl.querySelector(
+            '.at-section-card__header'
+        );
+        var body = secEl.querySelector(
+            '.ari-fav-section__body'
+        );
         var icon = btn ? btn.querySelector('i') : null;
         if (!btn || !body) { return; }
-        btn.addEventListener('click', function () {
+
+        function toggle() {
             var collapsed = body.style.display === 'none';
             body.style.display = collapsed ? '' : 'none';
             if (icon) {
@@ -471,7 +478,25 @@
                 collapsed ? 'true' : 'false'
             );
             saveSections();
+        }
+
+        btn.addEventListener('click', function (e) {
+            e.stopPropagation();
+            toggle();
         });
+
+        if (hdr) {
+            hdr.style.cursor = 'pointer';
+            hdr.addEventListener('click', function (e) {
+                if (e.target.closest(
+                    '.op-section-controls'
+                )) { return; }
+                if (e.target.closest(
+                    '.ari-fav-section__drag-handle'
+                )) { return; }
+                toggle();
+            });
+        }
     }
 
     // ------------------------------------------------------------------
@@ -984,7 +1009,10 @@
                 return;
             }
             showAddFeedback(
-                '\u2713 Added ' + r.resolved_objname,
+                '\u2713 Added ' + r.resolved_objname +
+                (r.nickname
+                    ? ' (alias for ' + r.nickname + ')'
+                    : ''),
                 false
             );
             if (addQueryEl) { addQueryEl.value = ''; }
@@ -1007,7 +1035,12 @@
                     '.ari-fav-section__drop-hint'
                 );
                 targetBody.insertBefore(
-                    buildCard(r.resolved_objname, '', '', targetName),
+                    buildCard(
+                        r.resolved_objname,
+                        r.nickname || '',
+                        '',
+                        targetName
+                    ),
                     dropHint || null
                 );
             }
@@ -1253,10 +1286,16 @@
                             noteEl.className  = 'ari-fav-card__note';
                             noteEl.textContent = note;
                         } else {
-                            noteEl.className  =
-                                'ari-fav-card__note-placeholder';
-                            noteEl.textContent = 'No description.';
+                            noteEl.parentNode.removeChild(noteEl);
                         }
+                    } else if (note) {
+                        var p = document.createElement('p');
+                        p.className = 'ari-fav-card__note';
+                        p.textContent = note;
+                        var body = card.querySelector(
+                            '.ari-fav-card__body'
+                        );
+                        if (body) { body.appendChild(p); }
                     }
                     var eb = card.querySelector('.fav-edit-meta-btn');
                     if (eb) {

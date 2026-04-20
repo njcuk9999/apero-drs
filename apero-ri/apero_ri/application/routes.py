@@ -193,6 +193,12 @@ def register_static_routes(app):
         app._api_user_ics_refresh,
         methods=["POST"],
     )
+    app.add_url_rule(
+        "/api/user/calendar/ics/edit",
+        "api_user_ics_edit",
+        app._api_user_ics_edit,
+        methods=["POST"],
+    )
 
     # User todo API routes
     app.add_url_rule(
@@ -264,6 +270,12 @@ def register_static_routes(app):
         "/api/admin/calendar/ics/refresh",
         "api_admin_ics_refresh",
         app._api_admin_ics_refresh,
+        methods=["POST"],
+    )
+    app.add_url_rule(
+        "/api/admin/calendar/ics/edit",
+        "api_admin_ics_edit",
+        app._api_admin_ics_edit,
         methods=["POST"],
     )
 
@@ -505,6 +517,12 @@ def register_static_routes(app):
         "/api/admin/health/update",
         "api_admin_health_update",
         app._api_admin_health_update,
+        methods=["POST"],
+    )
+    app.add_url_rule(
+        "/api/admin/health/patch",
+        "api_admin_health_patch",
+        app._api_admin_health_patch,
         methods=["POST"],
     )
     app.add_url_rule(
@@ -901,6 +919,12 @@ def register_static_routes(app):
         methods=["POST"],
     )
     app.add_url_rule(
+        "/api/admin/async-tasks/kill-all",
+        "api_async_tasks_kill_all",
+        app._api_async_tasks_kill_all,
+        methods=["POST"],
+    )
+    app.add_url_rule(
         "/api/admin/async-tasks/clear-history",
         "api_async_tasks_clear_history",
         app._api_async_tasks_clear_history,
@@ -986,6 +1010,11 @@ def register_data_portal_routes(app):
         "/data_portal/<profile_id>/favourites-objects",
         "ri_favourites_objects_legacy",
         app._ri_favourites_objects_view,
+    )
+    app.add_url_rule(
+        "/data_portal/<profile_id>/object-groups",
+        "ri_object_groups",
+        app._ri_object_groups_view,
     )
     app.add_url_rule(
         "/data_portal/<profile_id>/qc-graphs",
@@ -1195,6 +1224,100 @@ def register_data_portal_routes(app):
         app._api_finder_chart,
     )
     app.add_url_rule(
+        "/api/data-portal/tess-rotation",
+        "api_tess_rotation",
+        app._api_tess_rotation,
+    )
+    app.add_url_rule(
+        "/api/data-portal/tess-rotation-lc",
+        "api_tess_rotation_lc",
+        app._api_tess_rotation_lc,
+    )
+    app.add_url_rule(
+        "/api/data-portal/tess-rotation-stream",
+        "api_tess_rotation_stream",
+        app._api_tess_rotation_stream,
+    )
+
+    # Object comments API routes
+    app.add_url_rule(
+        "/api/data-portal/object-comments/list",
+        "api_object_comments_list",
+        app._api_object_comments_list,
+    )
+    app.add_url_rule(
+        "/api/data-portal/object-comments/add",
+        "api_object_comments_add",
+        app._api_object_comments_add,
+        methods=["POST"],
+    )
+    app.add_url_rule(
+        "/api/data-portal/object-comments/edit",
+        "api_object_comments_edit",
+        app._api_object_comments_edit,
+        methods=["POST"],
+    )
+    app.add_url_rule(
+        "/api/data-portal/object-comments/delete",
+        "api_object_comments_delete",
+        app._api_object_comments_delete,
+        methods=["POST"],
+    )
+
+    # Object groups API routes
+    app.add_url_rule(
+        "/api/data-portal/object-groups/list",
+        "api_object_groups_list",
+        app._api_object_groups_list,
+    )
+    app.add_url_rule(
+        "/api/data-portal/object-groups/for-object",
+        "api_object_groups_for_object",
+        app._api_object_groups_for_object,
+    )
+    app.add_url_rule(
+        "/api/data-portal/object-groups/objects",
+        "api_object_groups_objects",
+        app._api_object_groups_objects,
+    )
+    app.add_url_rule(
+        "/api/data-portal/object-groups/create",
+        "api_object_groups_create",
+        app._api_object_groups_create,
+        methods=["POST"],
+    )
+    app.add_url_rule(
+        "/api/data-portal/object-groups/delete",
+        "api_object_groups_delete",
+        app._api_object_groups_delete,
+        methods=["POST"],
+    )
+    app.add_url_rule(
+        "/api/data-portal/object-groups/rename",
+        "api_object_groups_rename",
+        app._api_object_groups_rename,
+        methods=["POST"],
+    )
+    app.add_url_rule(
+        "/api/data-portal/object-groups/add-object",
+        "api_object_groups_add_object",
+        app._api_object_groups_add_object,
+        methods=["POST"],
+    )
+    app.add_url_rule(
+        "/api/data-portal/object-groups/add-objects-bulk",
+        "api_object_groups_add_objects_bulk",
+        app._api_object_groups_add_objects_bulk,
+        methods=["POST"],
+    )
+    app.add_url_rule(
+        "/api/data-portal/object-groups/remove-object",
+        "api_object_groups_remove_object",
+        app._api_object_groups_remove_object,
+        methods=["POST"],
+    )
+
+    app.add_url_rule(
         "/api/data-portal/debug-plots", "api_debug_plots", app._api_debug_plots
     )
     app.add_url_rule(
@@ -1232,6 +1355,54 @@ def register_data_portal_routes(app):
         "/api/admin/instruments/remove",
         "api_manage_instruments_remove",
         app._api_manage_instruments_remove,
+        methods=["POST"],
+    )
+    app.add_url_rule(
+        "/api/admin/instruments/rename",
+        "api_manage_instruments_rename",
+        app._api_manage_instruments_rename,
+        methods=["POST"],
+    )
+
+    # Vault — Admin routes
+    app.add_url_rule(
+        "/api/admin/vault/list",
+        "api_admin_vault_list",
+        app._api_admin_vault_list,
+    )
+    app.add_url_rule(
+        "/api/admin/vault/get",
+        "api_admin_vault_get",
+        app._api_admin_vault_get,
+    )
+    app.add_url_rule(
+        "/api/admin/vault/add",
+        "api_admin_vault_add",
+        app._api_admin_vault_add,
+        methods=["POST"],
+    )
+    app.add_url_rule(
+        "/api/admin/vault/update",
+        "api_admin_vault_update",
+        app._api_admin_vault_update,
+        methods=["POST"],
+    )
+    app.add_url_rule(
+        "/api/admin/vault/delete",
+        "api_admin_vault_delete",
+        app._api_admin_vault_delete,
+        methods=["POST"],
+    )
+    app.add_url_rule(
+        "/api/admin/vault/export",
+        "api_admin_vault_export",
+        app._api_admin_vault_export,
+        methods=["POST"],
+    )
+    app.add_url_rule(
+        "/api/admin/vault/import",
+        "api_admin_vault_import",
+        app._api_admin_vault_import,
         methods=["POST"],
     )
 

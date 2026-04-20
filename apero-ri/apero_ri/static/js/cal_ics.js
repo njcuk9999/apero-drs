@@ -46,6 +46,8 @@ function _makeItem(feed, mode) {
     const div = document.createElement('div');
     div.className = 'ari-cal-ics-item';
     div.dataset.feedId = feed.id;
+    div.dataset.feedName = feed.name || '';
+    div.dataset.feedColor = feed.color || '#888';
 
     const dot = document.createElement('span');
     dot.className = 'ari-cal-ics-dot';
@@ -74,6 +76,13 @@ function _makeItem(feed, mode) {
         return div;
     }
 
+    const btnEdit = document.createElement('button');
+    btnEdit.className =
+        'ari-btn ari-btn--secondary ari-btn--sm ari-cal-ics-btn-edit';
+    btnEdit.title = 'Edit name / colour';
+    btnEdit.dataset.feedId = feed.id;
+    btnEdit.innerHTML = '<i class="fa-solid fa-pencil"></i>';
+
     const btnRefresh = document.createElement('button');
     btnRefresh.className =
         'ari-btn ari-btn--secondary ari-btn--sm ari-cal-ics-btn-refresh';
@@ -88,12 +97,13 @@ function _makeItem(feed, mode) {
     btnDelete.dataset.feedId = feed.id;
     btnDelete.innerHTML = '<i class="fa-solid fa-xmark"></i>';
 
-    div.append(btnRefresh, btnDelete);
+    div.append(btnEdit, btnRefresh, btnDelete);
     return div;
 }
 
 function _renderFeeds(feeds, listEl, emptyEl, mode) {
     listEl.querySelectorAll('.ari-cal-ics-item').forEach(n => n.remove());
+    listEl.querySelectorAll('.ari-cal-ics-edit-row').forEach(n => n.remove());
     if (!feeds || feeds.length === 0) {
         if (emptyEl) emptyEl.style.display = '';
         return;
@@ -103,6 +113,52 @@ function _renderFeeds(feeds, listEl, emptyEl, mode) {
         _makeItem(f, mode),
         emptyEl || null,
     ));
+}
+
+// Build an inline edit row inserted below an item.
+function _makeEditRow(feedId, currentName, currentColor) {
+    const row = document.createElement('div');
+    row.className = 'ari-cal-ics-edit-row';
+    row.dataset.feedId = feedId;
+
+    const nameInput = document.createElement('input');
+    nameInput.type = 'text';
+    nameInput.className = 'ari-cal-ics-edit-name';
+    nameInput.value = currentName;
+    nameInput.placeholder = 'Feed name';
+
+    const colorInput = document.createElement('input');
+    colorInput.type = 'color';
+    colorInput.className = 'ari-cal-ics-edit-color';
+    colorInput.value = currentColor || '#4a90d9';
+
+    const btnSave = document.createElement('button');
+    btnSave.className =
+        'ari-btn ari-btn--primary ari-btn--sm ari-cal-ics-edit-save';
+    btnSave.textContent = 'Save';
+    btnSave.dataset.feedId = feedId;
+
+    const btnCancel = document.createElement('button');
+    btnCancel.className =
+        'ari-btn ari-btn--secondary ari-btn--sm ari-cal-ics-edit-cancel';
+    btnCancel.textContent = 'Cancel';
+    btnCancel.dataset.feedId = feedId;
+
+    row.append(nameInput, colorInput, btnSave, btnCancel);
+    return row;
+}
+
+function _openEditRow(itemEl, listEl) {
+    // Close any other open edit row first.
+    listEl.querySelectorAll('.ari-cal-ics-edit-row').forEach(
+        n => n.remove()
+    );
+    const feedId = itemEl.dataset.feedId;
+    const currentName = itemEl.dataset.feedName;
+    const currentColor = itemEl.dataset.feedColor;
+    const row = _makeEditRow(feedId, currentName, currentColor);
+    itemEl.insertAdjacentElement('afterend', row);
+    row.querySelector('.ari-cal-ics-edit-name').focus();
 }
 
 // ── user calendar ─────────────────────────────────────────────────────────────
@@ -129,7 +185,7 @@ function _initUser() {
             btn.textContent = 'Syncing…';
             try {
                 const data = await _post(cfg.icsAddUrl, { name, url, color });
-                if (data.ok) {
+                if (data.success) {
                     _toast('Feed added and synced.', true);
                     _renderFeeds(data.feeds, listEl, emptyEl, 'user');
                     addForm.reset();
@@ -147,11 +203,58 @@ function _initUser() {
         });
     }
 
-    // Delegated: refresh / delete
+    // Delegated: edit / refresh / delete
     listEl.addEventListener('click', async (e) => {
+        const editBtn    = e.target.closest('.ari-cal-ics-btn-edit');
+        const saveBtn    = e.target.closest('.ari-cal-ics-edit-save');
+        const cancelBtn  = e.target.closest('.ari-cal-ics-edit-cancel');
         const refreshBtn = e.target.closest('.ari-cal-ics-btn-refresh');
         const deleteBtn  = e.target.closest('.ari-cal-ics-btn-delete');
-        if (!refreshBtn && !deleteBtn) return;
+        if (!editBtn && !saveBtn && !cancelBtn &&
+                !refreshBtn && !deleteBtn) return;
+
+        if (editBtn) {
+            const itemEl = editBtn.closest('.ari-cal-ics-item');
+            _openEditRow(itemEl, listEl);
+            return;
+        }
+
+        if (cancelBtn) {
+            cancelBtn.closest('.ari-cal-ics-edit-row').remove();
+            return;
+        }
+
+        if (saveBtn) {
+            const row = saveBtn.closest('.ari-cal-ics-edit-row');
+            const feedId = row.dataset.feedId;
+            const name = row.querySelector(
+                '.ari-cal-ics-edit-name'
+            ).value.trim();
+            const color = row.querySelector(
+                '.ari-cal-ics-edit-color'
+            ).value;
+            if (!name) { _toast('Name cannot be empty.', false); return; }
+            saveBtn.disabled = true;
+            saveBtn.textContent = 'Saving…';
+            try {
+                const data = await _post(cfg.icsEditUrl, {
+                    feed_id: feedId, name, color,
+                });
+                if (data.success) {
+                    _toast('Feed updated.', true);
+                    _renderFeeds(data.feeds, listEl, emptyEl, 'user');
+                } else {
+                    _toast(data.error || 'Update failed.', false);
+                    saveBtn.disabled = false;
+                    saveBtn.textContent = 'Save';
+                }
+            } catch {
+                _toast('Network error.', false);
+                saveBtn.disabled = false;
+                saveBtn.textContent = 'Save';
+            }
+            return;
+        }
 
         const feedId = (refreshBtn || deleteBtn).dataset.feedId;
 
@@ -160,7 +263,7 @@ function _initUser() {
             refreshBtn.innerHTML = '<i class="fa-solid fa-rotate fa-spin"></i>';
             try {
                 const data = await _post(cfg.icsRefreshUrl, { feed_id: feedId });
-                if (data.ok) {
+                if (data.success) {
                     _toast('Feed refreshed.', true);
                     _renderFeeds(data.feeds, listEl, emptyEl, 'user');
                 } else {
@@ -181,7 +284,7 @@ function _initUser() {
             deleteBtn.disabled = true;
             try {
                 const data = await _post(cfg.icsDeleteUrl, { feed_id: feedId });
-                if (data.ok) {
+                if (data.success) {
                     _toast('Feed removed.', true);
                     _renderFeeds(data.feeds, listEl, emptyEl, 'user');
                 } else {
@@ -220,7 +323,7 @@ async function _adminIcsLoad(instrument) {
     try {
         const url = `${cfg.icsListUrl}?instrument=${encodeURIComponent(instrument)}`;
         const data = await _get(url);
-        if (data.ok) {
+        if (data.success) {
             _renderFeeds(data.feeds, listEl, emptyEl, 'admin');
         } else {
             if (emptyEl) {
@@ -272,7 +375,7 @@ function _initAdmin() {
                 const data = await _post(cfg.icsAddUrl, {
                     instrument, name, url, color,
                 });
-                if (data.ok) {
+                if (data.success) {
                     _toast('Feed added and synced.', true);
                     _renderFeeds(data.feeds, listEl, emptyEl, 'admin');
                     addForm.reset();
@@ -291,13 +394,61 @@ function _initAdmin() {
         });
     }
 
-    // Delegated: refresh / delete
+    // Delegated: edit / refresh / delete
     listEl.addEventListener('click', async (e) => {
+        const editBtn    = e.target.closest('.ari-cal-ics-btn-edit');
+        const saveBtn    = e.target.closest('.ari-cal-ics-edit-save');
+        const cancelBtn  = e.target.closest('.ari-cal-ics-edit-cancel');
         const refreshBtn = e.target.closest('.ari-cal-ics-btn-refresh');
         const deleteBtn  = e.target.closest('.ari-cal-ics-btn-delete');
-        if (!refreshBtn && !deleteBtn) return;
+        if (!editBtn && !saveBtn && !cancelBtn &&
+                !refreshBtn && !deleteBtn) return;
 
         const instrument = _adminIcsLoaded;
+
+        if (editBtn) {
+            const itemEl = editBtn.closest('.ari-cal-ics-item');
+            _openEditRow(itemEl, listEl);
+            return;
+        }
+
+        if (cancelBtn) {
+            cancelBtn.closest('.ari-cal-ics-edit-row').remove();
+            return;
+        }
+
+        if (saveBtn) {
+            const row = saveBtn.closest('.ari-cal-ics-edit-row');
+            const feedId = row.dataset.feedId;
+            const name = row.querySelector(
+                '.ari-cal-ics-edit-name'
+            ).value.trim();
+            const color = row.querySelector(
+                '.ari-cal-ics-edit-color'
+            ).value;
+            if (!name) { _toast('Name cannot be empty.', false); return; }
+            saveBtn.disabled = true;
+            saveBtn.textContent = 'Saving…';
+            try {
+                const data = await _post(cfg.icsEditUrl, {
+                    instrument, feed_id: feedId, name, color,
+                });
+                if (data.success) {
+                    _toast('Feed updated.', true);
+                    _renderFeeds(data.feeds, listEl, emptyEl, 'admin');
+                } else {
+                    _toast(data.error || 'Update failed.', false);
+                    saveBtn.disabled = false;
+                    saveBtn.textContent = 'Save';
+                }
+            } catch {
+                _toast('Network error.', false);
+                saveBtn.disabled = false;
+                saveBtn.textContent = 'Save';
+            }
+            return;
+        }
+
         const feedId = (refreshBtn || deleteBtn).dataset.feedId;
 
         if (refreshBtn) {
@@ -307,7 +458,7 @@ function _initAdmin() {
                 const data = await _post(cfg.icsRefreshUrl, {
                     instrument, feed_id: feedId,
                 });
-                if (data.ok) {
+                if (data.success) {
                     _toast('Feed refreshed.', true);
                     _renderFeeds(data.feeds, listEl, emptyEl, 'admin');
                 } else {
@@ -330,7 +481,7 @@ function _initAdmin() {
                 const data = await _post(cfg.icsDeleteUrl, {
                     instrument, feed_id: feedId,
                 });
-                if (data.ok) {
+                if (data.success) {
                     _toast('Feed removed.', true);
                     _renderFeeds(data.feeds, listEl, emptyEl, 'admin');
                 } else {
