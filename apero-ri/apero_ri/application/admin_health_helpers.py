@@ -125,7 +125,7 @@ def refresh_admin_health_after_change(
             user_info=user_info,
             perms=perms,
             force=True,
-            allow_async_refresh=False,
+            allow_async_refresh=True,
         )
     except Exception:
         return

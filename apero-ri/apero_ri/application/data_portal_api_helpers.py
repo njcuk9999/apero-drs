@@ -549,7 +549,7 @@ def api_finder_chart(app):
             if hit is not None:
                 return jsonify(**hit)
 
-    from apero_ri.plots.plot_find import generate_finder_charts
+    from apero_ri.core.object_finder import generate_finder_charts
 
     result = generate_finder_charts(obj_props, preset)
 
@@ -573,6 +573,225 @@ def api_finder_chart(app):
         pass
 
     return jsonify(**result)
+
+
+def api_finder_chart_stream(app):
+    """SSE endpoint: stream finder chart generation live.
+
+    Each event is a JSON object with a ``type`` field:
+      - ``log``   – a line of console output
+      - ``done``  – final result (images, bands, …)
+      - ``error`` – something went wrong
+    """
+    user_info = app._get_api_user()
+    if user_info:
+        perms = resolve_user_permissions(
+            user_info['groups'], app.ari_groups
+        )
+    else:
+        perms = get_public_permissions()
+    if 'view.data_portal' not in perms:
+        return jsonify(
+            success=False, error='Unauthorized'
+        ), 401
+
+    profile_id = request.args.get(
+        'profile_id', ''
+    ).strip()
+    objname = request.args.get(
+        'objname', ''
+    ).strip()
+    if not profile_id or not objname:
+        return jsonify(
+            success=False,
+            error='Missing profile_id or objname',
+        ), 400
+
+    accessible = get_accessible_profiles(
+        user_info, app.ari_groups
+    )
+    profile = next(
+        (p for p in accessible
+         if p['profile_id'] == profile_id), None
+    )
+    if not profile:
+        return jsonify(
+            success=False, error='Profile not found'
+        ), 404
+
+    instrument = profile['instrument']
+    profile_data = profile.get('data') or {}
+    instrument_profile_file = str(
+        profile_data.get(
+            'APERO_INSTRUMENT_PROFILE', ''
+        )
+        or profile_data.get(
+            'apero_instrument_profile', ''
+        )
+        or ''
+    ).strip()
+
+    base_dir = Path(
+        app.args.data_dir
+        or str(Path.home() / '.ari')
+    )
+    objects_dir = (
+        base_dir / 'tasks' / instrument
+        / profile_id / 'objects'
+    )
+
+    from apero_ri.core.plot_cache import (
+        _db_fingerprint_matches,
+        _load_meta,
+        _profile_dir,
+        _save_meta,
+        get_finder_cached,
+        is_cache_enabled,
+        load_cache_config,
+        put_finder_cached,
+        resolve_cache_root,
+    )
+
+    cfg = load_cache_config(base_dir)
+    # if cached, return instantly as a single SSE event
+    force = bool(
+        str(request.args.get('_ts', '')).strip()
+    )
+    if not force and is_cache_enabled(cfg=cfg):
+        cache_root = resolve_cache_root(base_dir, cfg)
+        pdir = _profile_dir(
+            cache_root, instrument, profile_id
+        )
+        meta = _load_meta(pdir)
+        db_upd = profile_data.get(
+            'database-update', {}
+        )
+        if (
+            isinstance(db_upd, dict)
+            and db_upd
+            and _db_fingerprint_matches(meta, db_upd)
+        ):
+            hit = get_finder_cached(
+                cache_root, instrument,
+                profile_id, objname,
+            )
+            if hit is not None:
+                payload = _json.dumps(
+                    dict(type='done', result=hit)
+                )
+
+                def _cached():
+                    yield f'data: {payload}\n\n'
+
+                return Response(
+                    stream_with_context(_cached()),
+                    mimetype='text/event-stream',
+                )
+
+    obj_props = load_object_table_row(
+        objects_dir, objname
+    )
+    preset = load_object_preset(
+        instrument_profile_file
+    )
+
+    # shared queue for real-time log lines
+    log_q = queue.Queue()
+    # holder for result from the background thread
+    result_holder = [None]
+
+    def _worker():
+        from apero_ri.core.object_finder import (
+            generate_finder_charts,
+        )
+        try:
+            result_holder[0] = generate_finder_charts(
+                obj_props, preset,
+                log_func=lambda msg: log_q.put(msg),
+            )
+        except Exception as exc:
+            result_holder[0] = dict(
+                success=False,
+                error=str(exc),
+            )
+        finally:
+            log_q.put(None)  # sentinel
+
+    t = threading.Thread(
+        target=_worker, daemon=True
+    )
+    t.start()
+
+    def _generate():
+        while True:
+            try:
+                item = log_q.get(timeout=30)
+            except queue.Empty:
+                # keep-alive comment
+                yield ': keepalive\n\n'
+                continue
+            if item is None:
+                break
+            evt = _json.dumps(
+                dict(type='log', text=item)
+            )
+            yield f'data: {evt}\n\n'
+
+        # final result
+        result = result_holder[0]
+        if result is None:
+            result = dict(
+                success=False,
+                error='No result from finder chart.',
+            )
+        # cache the result
+        try:
+            if is_cache_enabled(cfg=cfg):
+                cache_root = resolve_cache_root(
+                    base_dir, cfg
+                )
+                put_finder_cached(
+                    cache_root, instrument,
+                    profile_id, objname, result,
+                )
+                pdir = _profile_dir(
+                    cache_root, instrument,
+                    profile_id,
+                )
+                meta = _load_meta(pdir)
+                db_upd = profile_data.get(
+                    'database-update', {}
+                )
+                if isinstance(db_upd, dict) and db_upd:
+                    meta['db_updates'] = dict(db_upd)
+                from datetime import datetime as _dt
+                from datetime import timezone as _tz
+                meta['last_cached'] = (
+                    _dt.now(_tz.utc).isoformat()
+                )
+                _save_meta(pdir, meta)
+        except Exception:
+            pass
+
+        if result.get('success'):
+            payload = _json.dumps(
+                dict(type='done', result=result)
+            )
+        else:
+            payload = _json.dumps(dict(
+                type='error',
+                error=result.get('error', 'Failed'),
+            ))
+        yield f'data: {payload}\n\n'
+
+    return Response(
+        stream_with_context(_generate()),
+        mimetype='text/event-stream',
+        headers={
+            'Cache-Control': 'no-cache',
+            'X-Accel-Buffering': 'no',
+        },
+    )
 
 
 def api_object_table(app):
@@ -657,6 +876,8 @@ def api_object_table(app):
         raw = str(row.get("RUN_ID", "") or "")
         row_rids = {r.strip() for r in raw.split(",") if r.strip()}
         if row_rids & accessible_run_ids:
+            # Copy raw run-id list into user-visible column
+            row["Run ID"] = raw
             filtered.append(row)
 
     find_only = str(request.args.get("find_only", "")).strip().lower() in {
@@ -1665,6 +1886,84 @@ def api_tess_rotation_lc(app):
     dl_name = f'{objname}_periods.ecsv'
     return send_file(
         str(csv_path),
+        as_attachment=True,
+        download_name=dl_name,
+    )
+
+
+def api_tess_rotation_data(app):
+    """Download a cached TESS data file (light curve, etc.)."""
+    user_info = app._get_api_user()
+    if user_info:
+        perms = resolve_user_permissions(
+            user_info['groups'], app.ari_groups
+        )
+    else:
+        perms = get_public_permissions()
+    if 'view.data_portal' not in perms:
+        return jsonify(
+            success=False, error='Unauthorized'
+        ), 401
+
+    profile_id = request.args.get(
+        'profile_id', ''
+    ).strip()
+    objname = request.args.get(
+        'objname', ''
+    ).strip()
+    filename = request.args.get(
+        'filename', ''
+    ).strip()
+    if not profile_id or not objname or not filename:
+        return jsonify(
+            success=False,
+            error=(
+                'Missing profile_id, objname '
+                'or filename'
+            ),
+        ), 400
+
+    accessible = get_accessible_profiles(
+        user_info, app.ari_groups
+    )
+    profile = next(
+        (p for p in accessible
+         if p['profile_id'] == profile_id), None
+    )
+    if not profile:
+        return jsonify(
+            success=False, error='Profile not found'
+        ), 404
+
+    instrument = profile['instrument']
+    base_dir = Path(
+        app.args.data_dir
+        or str(Path.home() / '.ari')
+    )
+
+    from apero_ri.core.plot_cache import (
+        load_cache_config,
+        resolve_cache_root,
+    )
+    from apero_ri.core.run_tessilator import (
+        get_tess_data_file_path,
+    )
+
+    cfg = load_cache_config(base_dir)
+    cache_root = resolve_cache_root(base_dir, cfg)
+
+    file_path = get_tess_data_file_path(
+        cache_root, instrument, objname, filename,
+    )
+    if file_path is None:
+        return jsonify(
+            success=False,
+            error='Data file not found',
+        ), 404
+
+    dl_name = f'{objname}_{file_path.name}'
+    return send_file(
+        str(file_path),
         as_attachment=True,
         download_name=dl_name,
     )

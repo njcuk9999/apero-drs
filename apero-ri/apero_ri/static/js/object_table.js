@@ -58,10 +58,12 @@
     var findTabCoords = document.getElementById('fo-tab-coords');
     var findTabDate = document.getElementById('fo-tab-date');
     var findTabAdvanced = document.getElementById('fo-tab-advanced');
+    var findTabGroup = document.getElementById('fo-tab-group');
     var findPanelName = document.getElementById('fo-panel-name');
     var findPanelCoords = document.getElementById('fo-panel-coords');
     var findPanelDate = document.getElementById('fo-panel-date');
     var findPanelAdvanced = document.getElementById('fo-panel-advanced');
+    var findPanelGroup = document.getElementById('fo-panel-group');
     var findNameInput  = document.getElementById('fo-name-query');
     var findRaInput    = document.getElementById('fo-ra');
     var findDecInput   = document.getElementById('fo-dec');
@@ -77,12 +79,30 @@
     var findAdvancedColumnSelect = document.getElementById('fo-adv-column');
     var findAdvancedInputsContainer = document.getElementById('fo-adv-inputs');
     var findAdvancedApplyBtn = document.getElementById('fo-adv-apply');
+    var findGroupSelect = document.getElementById('fo-group-select');
+    var findGroupApplyBtn = document.getElementById('fo-group-apply');
+    var findGroupClearBtn = document.getElementById('fo-group-clear');
     var findClearBtn   = document.getElementById('fo-clear-find');
     var findStatusEl   = document.getElementById('fo-status');
+
+    // Send-to-Group overlay refs
+    var stgOverlay   = document.getElementById('stg-overlay');
+    var stgBackdrop  = document.getElementById('stg-backdrop');
+    var stgClose     = document.getElementById('stg-close');
+    var stgCount     = document.getElementById('stg-count');
+    var stgSelect    = document.getElementById('stg-group-select');
+    var stgNewName   = document.getElementById('stg-new-name');
+    var stgCreateBtn = document.getElementById('stg-create-btn');
+    var stgSendBtn   = document.getElementById('stg-send-btn');
+    var stgStatus    = document.getElementById('stg-status');
+    var btnSendToGroup = document.getElementById('ot-btn-send-to-group');
+
     var hasFindControls = !!(
         findTabName && findTabCoords && findTabDate && findTabAdvanced
+        && findTabGroup
         && findPanelName && findPanelCoords
         && findPanelDate && findPanelAdvanced
+        && findPanelGroup
         && findNameInput && findRaInput && findDecInput && findSepInput
         && findRaLabel && findDecLabel
         && findCoordFormatSelect && findUnitSelect
@@ -93,6 +113,8 @@
     );
     var activeFindTab = 'name';
     var coordSearchRequested = false;
+    // Active group filter: list of objnames in selected group
+    var groupFilterNames = null;
     var dateFilterApplied = {
         first: '',
         last: '',
@@ -161,6 +183,7 @@
             ['coords', findTabCoords, findPanelCoords],
             ['date', findTabDate, findPanelDate],
             ['advanced', findTabAdvanced, findPanelAdvanced],
+            ['group', findTabGroup, findPanelGroup],
         ];
         _tabs.forEach(function (item) {
             var key = item[0];
@@ -184,6 +207,8 @@
             setFindStatus('Enter RA, Dec, and separation, then click Find.', false);
         } else if (activeFindTab === 'date') {
             setFindStatus('Set first/last observed dates and click Apply.', false);
+        } else if (activeFindTab === 'group') {
+            setFindStatus('Choose a group and click Apply.', false);
         } else {
             setFindStatus('Choose a property, enter text, and click Apply.', false);
         }
@@ -301,8 +326,10 @@
         findDateLastInput.value = '';
         findAdvancedColumnSelect.value = '';
         if (findAdvancedInputsContainer) findAdvancedInputsContainer.innerHTML = '';
+        if (findGroupSelect) findGroupSelect.value = '';
         dateFilterApplied = { first: '', last: '' };
         advancedFilterApplied = { column: '', colType: '', contains: '', from: '', to: '' };
+        groupFilterNames = null;
         coordSearchRequested = false;
         syncCoordInputFormatUi();
     }
@@ -413,7 +440,9 @@
             return { params: params, valid: true };
         }
 
-        if (activeFindTab === 'date' || activeFindTab === 'advanced') {
+        if (activeFindTab === 'date'
+                || activeFindTab === 'advanced'
+                || activeFindTab === 'group') {
             return { params: params, valid: true };
         }
 
@@ -858,6 +887,17 @@
     ----------------------------------------------------------------------- */
     function applyFilterSort() {
         filteredRows = allRows.filter(function (row) {
+            // Group tab filter: only show objects in the group
+            if (activeFindTab === 'group'
+                    && groupFilterNames !== null) {
+                var objName = String(
+                    row['OBJNAME'] || ''
+                ).toUpperCase();
+                if (!groupFilterNames[objName]) {
+                    return false;
+                }
+            }
+
             if (activeFindTab === 'advanced') {
                 var advCol = String(advancedFilterApplied.column || '');
                 if (advCol) {
@@ -1287,6 +1327,275 @@
 
         setFindTab('name');
         syncCoordInputFormatUi();
+    }
+
+    /* -----------------------------------------------------------------------
+       Group tab: populate dropdown from groups API
+    ----------------------------------------------------------------------- */
+    var groupsApiBase = (cfg && cfg.groupsApiBase) || '';
+
+    function fetchGroupsList(selectEl, callback) {
+        if (!groupsApiBase || !selectEl) return;
+        var url = groupsApiBase + '/list?profile_id='
+            + encodeURIComponent(cfg.profileId);
+        fetch(url)
+            .then(function (r) { return r.json(); })
+            .then(function (data) {
+                selectEl.innerHTML = '';
+                // placeholder option
+                var ph = document.createElement('option');
+                ph.value = '';
+                ph.textContent = '— select group —';
+                selectEl.appendChild(ph);
+                if (!data.success || !data.groups) return;
+                data.groups.forEach(function (g) {
+                    var opt = document.createElement('option');
+                    opt.value = g.name;
+                    opt.textContent = g.name
+                        + ' (' + g.object_count + ')';
+                    selectEl.appendChild(opt);
+                });
+                if (callback) callback(data.groups);
+            })
+            .catch(function () {
+                selectEl.innerHTML = '';
+                var err = document.createElement('option');
+                err.value = '';
+                err.textContent = 'Failed to load groups';
+                selectEl.appendChild(err);
+            });
+    }
+
+    function fetchGroupObjects(groupName, callback) {
+        if (!groupsApiBase || !groupName) {
+            callback([]);
+            return;
+        }
+        var url = groupsApiBase + '/objects?profile_id='
+            + encodeURIComponent(cfg.profileId)
+            + '&group='
+            + encodeURIComponent(groupName);
+        fetch(url)
+            .then(function (r) { return r.json(); })
+            .then(function (data) {
+                if (!data.success) {
+                    callback([]);
+                    return;
+                }
+                var names = (data.objects || []).map(
+                    function (o) { return o.objname; }
+                );
+                callback(names);
+            })
+            .catch(function () { callback([]); });
+    }
+
+    // Populate group dropdown on tab select
+    if (hasFindControls && findTabGroup) {
+        findTabGroup.addEventListener('click', function () {
+            setFindTab('group');
+            fetchGroupsList(findGroupSelect);
+            currentPage = 1;
+            loadData();
+        });
+
+        if (findGroupApplyBtn) {
+            findGroupApplyBtn.addEventListener('click', function () {
+                var gName = String(
+                    findGroupSelect.value || ''
+                ).trim();
+                if (!gName) {
+                    groupFilterNames = null;
+                    currentPage = 1;
+                    applyFilterSort();
+                    setFindStatus('No group selected.', true);
+                    return;
+                }
+                setFindStatus('Loading group...', false);
+                fetchGroupObjects(gName, function (names) {
+                    // Build lookup set
+                    groupFilterNames = {};
+                    names.forEach(function (n) {
+                        groupFilterNames[
+                            String(n).toUpperCase()
+                        ] = true;
+                    });
+                    currentPage = 1;
+                    applyFilterSort();
+                    var msg = 'Group "' + gName
+                        + '": ' + names.length
+                        + ' objects. Showing '
+                        + filteredRows.length
+                        + ' matching rows.';
+                    setFindStatus(msg, false);
+                });
+            });
+        }
+
+        if (findGroupClearBtn) {
+            findGroupClearBtn.addEventListener('click', function () {
+                groupFilterNames = null;
+                if (findGroupSelect) findGroupSelect.value = '';
+                currentPage = 1;
+                applyFilterSort();
+                setFindStatus('Group filter cleared.', false);
+            });
+        }
+    }
+
+    /* -----------------------------------------------------------------------
+       Send to Group overlay
+    ----------------------------------------------------------------------- */
+    function stgShow() {
+        if (!stgOverlay) return;
+        // Update count of objects to send
+        var count = filteredRows.length;
+        if (stgCount) {
+            stgCount.textContent = 'Add '
+                + count + ' filtered object'
+                + (count !== 1 ? 's' : '')
+                + ' to the selected group.';
+        }
+        if (stgStatus) stgStatus.textContent = '';
+        if (stgNewName) stgNewName.value = '';
+        // Populate group dropdown
+        fetchGroupsList(stgSelect);
+        stgOverlay.style.display = '';
+    }
+
+    function stgHide() {
+        if (stgOverlay) stgOverlay.style.display = 'none';
+    }
+
+    if (btnSendToGroup) {
+        btnSendToGroup.addEventListener('click', stgShow);
+    }
+    if (stgClose) {
+        stgClose.addEventListener('click', stgHide);
+    }
+    if (stgBackdrop) {
+        stgBackdrop.addEventListener('click', stgHide);
+    }
+
+    // Create new group inside overlay
+    if (stgCreateBtn && stgNewName && stgSelect) {
+        stgCreateBtn.addEventListener('click', function () {
+            var name = String(stgNewName.value || '').trim();
+            if (!name) {
+                if (stgStatus) {
+                    stgStatus.textContent = 'Enter a name.';
+                }
+                return;
+            }
+            if (stgStatus) {
+                stgStatus.textContent = 'Creating...';
+            }
+            fetch(groupsApiBase + '/create', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({
+                    profile_id: cfg.profileId,
+                    name: name,
+                }),
+            })
+            .then(function (r) { return r.json(); })
+            .then(function (data) {
+                if (!data.success) {
+                    if (stgStatus) {
+                        stgStatus.textContent = data.error
+                            || 'Create failed.';
+                    }
+                    return;
+                }
+                // Refresh dropdown and select new group
+                fetchGroupsList(stgSelect, function () {
+                    stgSelect.value = name;
+                });
+                stgNewName.value = '';
+                if (stgStatus) {
+                    stgStatus.textContent = 'Created "'
+                        + name + '".';
+                }
+            })
+            .catch(function () {
+                if (stgStatus) {
+                    stgStatus.textContent = 'Network error.';
+                }
+            });
+        });
+    }
+
+    // Send filtered objects to selected group
+    if (stgSendBtn) {
+        stgSendBtn.addEventListener('click', function () {
+            var gName = String(
+                stgSelect ? stgSelect.value : ''
+            ).trim();
+            if (!gName) {
+                if (stgStatus) {
+                    stgStatus.textContent = 'Select a group.';
+                }
+                return;
+            }
+            // Collect OBJNAME from filtered rows
+            var names = filteredRows.map(function (r) {
+                return r['OBJNAME'] || '';
+            }).filter(function (n) { return !!n; });
+            if (!names.length) {
+                if (stgStatus) {
+                    stgStatus.textContent = 'No objects to send.';
+                }
+                return;
+            }
+            if (stgStatus) {
+                stgStatus.textContent = 'Sending '
+                    + names.length + ' objects...';
+            }
+            stgSendBtn.disabled = true;
+
+            fetch(groupsApiBase + '/add-objects-json', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({
+                    profile_id: cfg.profileId,
+                    group: gName,
+                    objnames: names,
+                }),
+            })
+            .then(function (r) { return r.json(); })
+            .then(function (data) {
+                stgSendBtn.disabled = false;
+                if (!data.success) {
+                    if (stgStatus) {
+                        stgStatus.textContent = data.error
+                            || 'Send failed.';
+                    }
+                    return;
+                }
+                var parts = [];
+                if (data.added) {
+                    parts.push(data.added + ' added');
+                }
+                if (data.skipped) {
+                    parts.push(data.skipped + ' already in group');
+                }
+                if (data.not_found && data.not_found.length) {
+                    parts.push(
+                        data.not_found.length + ' not found'
+                    );
+                }
+                if (stgStatus) {
+                    stgStatus.textContent = 'Done: '
+                        + parts.join(', ') + '.';
+                }
+            })
+            .catch(function () {
+                stgSendBtn.disabled = false;
+                if (stgStatus) {
+                    stgStatus.textContent = 'Network error.';
+                }
+            });
+        });
     }
 
     /* -----------------------------------------------------------------------

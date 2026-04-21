@@ -1,0 +1,247 @@
+{% extends "general/sidebar_base.html" %}
+{% block title %}APERO RI – Astrometrics{% endblock %}
+
+{% block body_class %}ari-has-sidebar ari-astro-page{% endblock %}
+
+{% block doc_content %}
+<div class="ari-page-header">
+    <h1>
+        <i class="{{ page_icon }}"></i>
+        Astrometrics
+    </h1>
+</div>
+
+{# Search bar above all sections #}
+<div class="ari-astro-search-bar">
+    <input type="text" id="astro-search-filter" class="ari-search-input"
+           placeholder="Filter sections...">
+</div>
+
+{# Section 1: Find Object in Data Portal #}
+<details class="ari-astro-section at-section-card" id="astro-section-find-object" open>
+    <summary class="ari-astro-section__header at-section-card__header">
+        <div class="ari-astro-section__header-left">
+            <i class="fa-solid fa-chevron-down ari-astro-section__chevron"></i>
+            <i class="fa-solid fa-magnifying-glass"></i>
+            <span class="ari-astro-section__title">Find Object in Data Portal</span>
+        </div>
+        <button class="ari-astro-section__pin-btn" type="button"
+                title="Pin/unpin this section"
+                data-section-id="find-object">
+            <i class="fa-solid fa-thumbtack"></i>
+        </button>
+    </summary>
+    <div class="ari-astro-section__body at-section-card__body">
+        <div class="ot-find-tabs" role="tablist" aria-label="Find object mode">
+            <button id="fo-tab-name" class="ot-find-tab ot-find-tab--active"
+                    type="button" role="tab" aria-selected="true"
+                    aria-controls="fo-panel-name">
+                Find by name
+            </button>
+            <button id="fo-tab-coords" class="ot-find-tab"
+                    type="button" role="tab" aria-selected="false"
+                    aria-controls="fo-panel-coords">
+                Find by coordinates
+            </button>
+            <button id="fo-tab-date" class="ot-find-tab"
+                    type="button" role="tab" aria-selected="false"
+                    aria-controls="fo-panel-date">
+                Date
+            </button>
+            <button id="fo-tab-advanced" class="ot-find-tab"
+                    type="button" role="tab" aria-selected="false"
+                    aria-controls="fo-panel-advanced">
+                Advanced
+            </button>
+        </div>
+
+        {# Find by name panel #}
+        <div id="fo-panel-name" class="ot-find-tab-panel ot-find-tab-panel--active"
+             role="tabpanel" aria-labelledby="fo-tab-name">
+            <p class="ot-find-desc">
+                Search for an object by name or alias.
+            </p>
+            <div class="ot-find-panel__grid">
+                <label class="ot-find-field">
+                    <span class="ot-find-field__label">Object / alias</span>
+                    <input id="fo-name-query" class="ot-find-input" type="text"
+                           placeholder="Type object name">
+                </label>
+                <div class="ot-find-actions">
+                    <button id="fo-find-name" class="ari-btn ari-btn--sm ari-btn--secondary"
+                            type="button">
+                        <i class="fa-solid fa-search"></i> Search
+                    </button>
+                    <button id="fo-clear-find-name" class="ari-btn ari-btn--sm ari-btn--secondary"
+                            type="button">
+                        <i class="fa-solid fa-eraser"></i> Clear
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        {# Find by coordinates panel #}
+        <div id="fo-panel-coords" class="ot-find-tab-panel"
+             role="tabpanel" aria-labelledby="fo-tab-coords" hidden>
+            <p class="ot-find-desc">
+                Search for objects within a radius of given coordinates.
+            </p>
+            <div class="ot-find-panel__grid">
+                <label class="ot-find-field ot-find-field--unit">
+                    <span class="ot-find-field__label">Coordinate format</span>
+                    <select id="fo-coord-format" class="ot-find-select">
+                        <option value="deg" selected>Deg</option>
+                        <option value="hms">HH:MM:SS / DD:MM:SS</option>
+                    </select>
+                </label>
+                <label class="ot-find-field">
+                    <span id="fo-ra-label" class="ot-find-field__label">RA [deg]</span>
+                    <input id="fo-ra" class="ot-find-input" type="text"
+                           placeholder="e.g. 328.1243">
+                </label>
+                <label class="ot-find-field">
+                    <span id="fo-dec-label" class="ot-find-field__label">Dec [deg]</span>
+                    <input id="fo-dec" class="ot-find-input" type="text"
+                           placeholder="e.g. 28.7933">
+                </label>
+                <label class="ot-find-field">
+                    <span class="ot-find-field__label">Separation</span>
+                    <input id="fo-sep" class="ot-find-input" type="number" step="any"
+                           min="0" placeholder="e.g. 30">
+                </label>
+                <label class="ot-find-field ot-find-field--unit">
+                    <span class="ot-find-field__label">Unit</span>
+                    <select id="fo-unit" class="ot-find-select">
+                        <option value="arcsec" selected>arcsec</option>
+                        <option value="arcmin">arcmin</option>
+                        <option value="deg">deg</option>
+                    </select>
+                </label>
+                <div class="ot-find-actions">
+                    <button id="fo-find-coords" class="ari-btn ari-btn--sm ari-btn--secondary"
+                            type="button">
+                        <i class="fa-solid fa-crosshairs"></i> Find
+                    </button>
+                    <button id="fo-clear-find-coords" class="ari-btn ari-btn--sm ari-btn--secondary"
+                            type="button">
+                        <i class="fa-solid fa-eraser"></i> Clear
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        {# Date filter panel #}
+        <div id="fo-panel-date" class="ot-find-tab-panel"
+             role="tabpanel" aria-labelledby="fo-tab-date" hidden>
+            <p class="ot-find-desc">
+                Filter objects by observation date range.
+            </p>
+            <div class="ot-find-panel__grid">
+                <label class="ot-find-field">
+                    <span class="ot-find-field__label">First observed (from)</span>
+                    <input id="fo-first-date" class="ot-find-input" type="date">
+                </label>
+                <label class="ot-find-field">
+                    <span class="ot-find-field__label">Last observed (to)</span>
+                    <input id="fo-last-date" class="ot-find-input" type="date">
+                </label>
+                <div class="ot-find-actions">
+                    <button id="fo-find-date" class="ari-btn ari-btn--sm ari-btn--secondary"
+                            type="button">
+                        <i class="fa-solid fa-calendar"></i> Filter
+                    </button>
+                    <button id="fo-clear-find-date" class="ari-btn ari-btn--sm ari-btn--secondary"
+                            type="button">
+                        <i class="fa-solid fa-eraser"></i> Clear
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        {# Advanced panel #}
+        <div id="fo-panel-advanced" class="ot-find-tab-panel"
+             role="tabpanel" aria-labelledby="fo-tab-advanced" hidden>
+            <p class="ot-find-desc">
+                Advanced property-based search.
+            </p>
+            <div class="ot-find-panel__grid">
+                <label class="ot-find-field">
+                    <span class="ot-find-field__label">Property</span>
+                    <input id="fo-adv-property" class="ot-find-input" type="text"
+                           placeholder="e.g. OBJNAME, RA_DEG, MAG">
+                </label>
+                <label class="ot-find-field">
+                    <span class="ot-find-field__label">Value</span>
+                    <input id="fo-adv-value" class="ot-find-input" type="text"
+                           placeholder="e.g. 50 (for numeric) or text">
+                </label>
+                <div class="ot-find-actions">
+                    <button id="fo-find-advanced" class="ari-btn ari-btn--sm ari-btn--secondary"
+                            type="button">
+                        <i class="fa-solid fa-sliders"></i> Search
+                    </button>
+                    <button id="fo-clear-find-adv" class="ari-btn ari-btn--sm ari-btn--secondary"
+                            type="button">
+                        <i class="fa-solid fa-eraser"></i> Clear
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        {# Results container #}
+        <div id="fo-results" class="ari-astro-results" style="display: none;">
+            <div id="fo-results-content"></div>
+        </div>
+        <div id="fo-loading" style="display: none; text-align: center; padding: 2rem;">
+            <i class="fa-solid fa-spinner fa-spin"></i> Searching...
+        </div>
+        <div id="fo-error" style="display: none; padding: 1rem; background: #fee; color: #c33; border-radius: 4px;"></div>
+    </div>
+</details>
+
+{# Section 2: Resolve Target #}
+<details class="ari-astro-section at-section-card" id="astro-section-resolve-target">
+    <summary class="ari-astro-section__header at-section-card__header">
+        <div class="ari-astro-section__header-left">
+            <i class="fa-solid fa-chevron-down ari-astro-section__chevron"></i>
+            <i class="fa-solid fa-bullseye"></i>
+            <span class="ari-astro-section__title">Resolve Target</span>
+        </div>
+        <button class="ari-astro-section__pin-btn" type="button"
+                title="Pin/unpin this section"
+                data-section-id="resolve-target">
+            <i class="fa-solid fa-thumbtack"></i>
+        </button>
+    </summary>
+    <div class="ari-astro-section__body at-section-card__body">
+        <div style="text-align: center; padding: 2rem; color: var(--ari-text-muted);">
+            <i class="fa-solid fa-hourglass-end" style="font-size: 2rem; opacity: 0.5;"></i>
+            <p style="margin-top: 1rem;">Coming soon...</p>
+        </div>
+    </div>
+</details>
+
+{# Section 3: Finder Chart #}
+<details class="ari-astro-section at-section-card" id="astro-section-finder-chart">
+    <summary class="ari-astro-section__header at-section-card__header">
+        <div class="ari-astro-section__header-left">
+            <i class="fa-solid fa-chevron-down ari-astro-section__chevron"></i>
+            <i class="fa-solid fa-star"></i>
+            <span class="ari-astro-section__title">Finder Chart</span>
+        </div>
+        <button class="ari-astro-section__pin-btn" type="button"
+                title="Pin/unpin this section"
+                data-section-id="finder-chart">
+            <i class="fa-solid fa-thumbtack"></i>
+        </button>
+    </summary>
+    <div class="ari-astro-section__body at-section-card__body">
+        <div style="text-align: center; padding: 2rem; color: var(--ari-text-muted);">
+            <i class="fa-solid fa-hourglass-end" style="font-size: 2rem; opacity: 0.5;"></i>
+            <p style="margin-top: 1rem;">Coming soon...</p>
+        </div>
+    </div>
+</details>
+
+<script src="{{ url_for('static', filename='js/astrometrics.js') }}"></script>
+{% endblock %}

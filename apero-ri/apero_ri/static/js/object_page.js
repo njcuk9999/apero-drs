@@ -18,6 +18,9 @@
     var finderLoading = document.getElementById('op-finder-loading');
     var finderError = document.getElementById('op-finder-error');
     var finderImages = document.getElementById('op-finder-images');
+    var finderLogWrap = document.getElementById('op-finder-log-wrap');
+    var finderLogPre = document.getElementById('op-finder-log');
+    var finderRegen = document.getElementById('op-finder-regen');
     var tessGenerateBtn = document.getElementById('op-tess-generate-btn');
     var tessLoading = document.getElementById('op-tess-loading');
     var tessError = document.getElementById('op-tess-error');
@@ -29,6 +32,7 @@
     var tessDlLc = document.getElementById('op-tess-dl-lc');
     var tessDlPng = document.getElementById('op-tess-dl-png');
     var tessRegen = document.getElementById('op-tess-regen');
+    var tessDataFiles = document.getElementById('op-tess-data-files');
     var tessLogWrap = document.getElementById('op-tess-log-wrap');
     var tessLogPre = document.getElementById('op-tess-log');
     var lblSections = document.getElementById('op-lbl-sections');
@@ -1665,41 +1669,141 @@
     }
 
     /* ------------------------------------------------------------------
-       Finder chart generation (on-demand)
+       Finder chart generation (on-demand, with SSE streaming)
     ------------------------------------------------------------------ */
-    function loadFinderCharts() {
-        var url = cfg.finderChartApiUrl;
-        if (!url) return;
-        if (finderGenerateBtn) finderGenerateBtn.style.display = 'none';
-        if (finderLoading) finderLoading.style.display = '';
-        if (finderError) finderError.style.display = 'none';
-        if (finderImages) finderImages.style.display = 'none';
+    function _finderResetUi() {
+        if (finderGenerateBtn) {
+            finderGenerateBtn.style.display = 'none';
+        }
+        if (finderLoading) {
+            finderLoading.style.display = '';
+        }
+        if (finderError) {
+            finderError.style.display = 'none';
+        }
+        if (finderImages) {
+            finderImages.style.display = 'none';
+        }
+        if (finderLogWrap) {
+            finderLogWrap.style.display = 'none';
+        }
+        if (finderRegen) {
+            finderRegen.style.display = 'none';
+        }
+    }
 
-        var params = '?profile_id=' + encodeURIComponent(cfg.profileId)
-            + '&objname=' + encodeURIComponent(cfg.objname);
-        fetch(url + params)
+    function _finderShowError(msg) {
+        if (finderLoading) {
+            finderLoading.style.display = 'none';
+        }
+        if (finderError) {
+            finderError.textContent = msg;
+            finderError.style.display = '';
+        }
+        if (finderGenerateBtn) {
+            finderGenerateBtn.style.display = '';
+        }
+        if (finderRegen) {
+            finderRegen.style.display = '';
+        }
+    }
+
+    function _finderHandleResult(data) {
+        if (finderLoading) {
+            finderLoading.style.display = 'none';
+        }
+        if (!data || !data.success) {
+            _finderShowError(
+                (data && data.error)
+                    ? data.error
+                    : 'Failed to generate finder charts.'
+            );
+            return;
+        }
+        renderFinderImages(
+            data.images || [],
+            data.bands || [],
+            data.titles || []
+        );
+        if (finderRegen) {
+            finderRegen.style.display = '';
+        }
+    }
+
+    function _finderAppendLog(text) {
+        if (!finderLogPre) return;
+        finderLogPre.textContent += text;
+        finderLogPre.scrollTop = finderLogPre.scrollHeight;
+    }
+
+    /**
+     * Open an EventSource to stream finder chart console
+     * output in real-time.
+     */
+    function _finderStreamGenerate(url) {
+        // show the console output panel immediately
+        if (finderLogWrap) {
+            finderLogWrap.style.display = '';
+            finderLogWrap.open = true;
+        }
+        if (finderLogPre) finderLogPre.textContent = '';
+
+        var source = new EventSource(url);
+
+        source.onmessage = function (e) {
+            var msg;
+            try { msg = JSON.parse(e.data); }
+            catch (_) { return; }
+
+            if (msg.type === 'log') {
+                _finderAppendLog(msg.text || '');
+            } else if (msg.type === 'done') {
+                source.close();
+                _finderHandleResult(msg.result);
+            } else if (msg.type === 'error') {
+                source.close();
+                _finderShowError(
+                    msg.error || 'Generation failed.'
+                );
+            }
+        };
+
+        source.onerror = function () {
+            source.close();
+            _finderShowError(
+                'Lost connection to server.'
+            );
+        };
+    }
+
+    function loadFinderCharts(force) {
+        var streamUrl = cfg.finderChartStreamUrl;
+        var fetchUrl = cfg.finderChartApiUrl;
+        if (!fetchUrl) return;
+        _finderResetUi();
+
+        var params = '?profile_id='
+            + encodeURIComponent(cfg.profileId)
+            + '&objname='
+            + encodeURIComponent(cfg.objname);
+        if (force) params += '&_ts=' + Date.now();
+
+        // use SSE streaming for fresh generation
+        if (streamUrl
+            && (force || !cfg.finderChartCached)) {
+            _finderStreamGenerate(streamUrl + params);
+            return;
+        }
+        // fall back to simple fetch (cached results)
+        fetch(fetchUrl + params)
             .then(function (r) { return r.json(); })
             .then(function (data) {
-                if (finderLoading) finderLoading.style.display = 'none';
-                if (!data || !data.success) {
-                    if (finderError) {
-                        finderError.textContent = data && data.error
-                            ? data.error : 'Failed to generate finder charts.';
-                        finderError.style.display = '';
-                    }
-                    if (finderGenerateBtn) finderGenerateBtn.style.display = '';
-                    return;
-                }
-                renderFinderImages(data.images || [], data.bands || [],
-                                   data.titles || []);
+                _finderHandleResult(data);
             })
             .catch(function (err) {
-                if (finderLoading) finderLoading.style.display = 'none';
-                if (finderError) {
-                    finderError.textContent = 'Network error: ' + String(err);
-                    finderError.style.display = '';
-                }
-                if (finderGenerateBtn) finderGenerateBtn.style.display = '';
+                _finderShowError(
+                    'Network error: ' + String(err)
+                );
             });
     }
 
@@ -1742,6 +1846,7 @@
         if (tessError) tessError.style.display = 'none';
         if (tessViewer) tessViewer.style.display = 'none';
         if (tessLogWrap) tessLogWrap.style.display = 'none';
+        if (tessDataFiles) tessDataFiles.style.display = 'none';
     }
 
     function _tessShowError(msg) {
@@ -1771,6 +1876,7 @@
         tessSectors = data.sectors || [];
         tessIdx = 0;
         renderTessSector();
+        renderTessDataFiles(data.data_files || []);
         showTessLog(data.console_log || '');
     }
 
@@ -1946,6 +2052,77 @@
         tessRegen.addEventListener('click', function () {
             loadTessRotation(true);
         });
+    }
+
+    /**
+     * Render download links for TESS data files
+     * (light curves, periodograms, etc.).
+     */
+    function renderTessDataFiles(files) {
+        if (!tessDataFiles) return;
+        // always include periods.ecsv
+        var all = ['periods.ecsv'].concat(files || []);
+        // deduplicate
+        var seen = {};
+        var unique = [];
+        for (var i = 0; i < all.length; i++) {
+            if (!seen[all[i]]) {
+                seen[all[i]] = true;
+                unique.push(all[i]);
+            }
+        }
+        if (!unique.length) {
+            tessDataFiles.style.display = 'none';
+            return;
+        }
+        var baseUrl = cfg.tessRotationDataApiUrl;
+        if (!baseUrl) {
+            tessDataFiles.style.display = 'none';
+            return;
+        }
+        var params = '?profile_id='
+            + encodeURIComponent(cfg.profileId)
+            + '&objname='
+            + encodeURIComponent(cfg.objname)
+            + '&filename=';
+        // label mapping for known prefixes
+        var html = '<div style="font-size:0.84rem;'
+            + 'font-weight:600;color:var(--ari-text-muted'
+            + ',#6a737d);margin-bottom:0.35rem;">'
+            + '<i class="fa-solid fa-file-csv"></i> '
+            + 'Data Products</div>'
+            + '<div style="display:flex;flex-wrap:wrap;'
+            + 'gap:0.4rem;">';
+        for (var j = 0; j < unique.length; j++) {
+            var fname = unique[j];
+            var label = _tessFileLabel(fname);
+            var href = baseUrl + params
+                + encodeURIComponent(fname);
+            html += '<a href="' + escHtml(href)
+                + '" class="ari-btn ari-btn--sm '
+                + 'ari-btn--secondary" '
+                + 'title="Download ' + escHtml(fname)
+                + '" download>'
+                + '<i class="fa-solid fa-download">'
+                + '</i> ' + escHtml(label) + '</a>';
+        }
+        html += '</div>';
+        tessDataFiles.innerHTML = html;
+        tessDataFiles.style.display = '';
+    }
+
+    /** Human-friendly label for a tessilator file. */
+    function _tessFileLabel(fname) {
+        if (fname === 'periods.ecsv') {
+            return 'Periods (ECSV)';
+        }
+        if (fname.indexOf('ap_') === 0) {
+            return 'Light Curve (' + fname + ')';
+        }
+        if (fname.indexOf('pg_') === 0) {
+            return 'Periodogram (' + fname + ')';
+        }
+        return fname;
     }
 
     function showTessLog(text) {
@@ -2937,10 +3114,21 @@
         }
         if (finderGenerateBtn) {
             if (cfg.finderChartCached) {
-                loadFinderCharts();
+                loadFinderCharts(false);
             } else {
-                finderGenerateBtn.addEventListener('click', loadFinderCharts);
+                finderGenerateBtn.addEventListener(
+                    'click', function () {
+                        loadFinderCharts(false);
+                    }
+                );
             }
+        }
+        if (finderRegen) {
+            finderRegen.addEventListener(
+                'click', function () {
+                    loadFinderCharts(true);
+                }
+            );
         }
         if (tessGenerateBtn) {
             if (cfg.tessRotationCached) {

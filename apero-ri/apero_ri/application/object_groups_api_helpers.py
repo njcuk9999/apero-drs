@@ -434,6 +434,94 @@ def api_object_groups_add_objects_bulk(app):
     )
 
 
+def api_object_groups_add_objects_json(app):
+    """POST  bulk-add objects from a JSON list of names.
+
+    Expected JSON body::
+
+        {
+            "profile_id": "<str>",
+            "group": "<str>",
+            "objnames": ["OBJ1", "OBJ2", ...]
+        }
+
+    Objects that cannot be resolved are reported in
+    ``not_found``.  Objects already in the group are
+    silently counted as ``skipped``.
+    """
+    user_info = get_effective_user(session)
+    if not user_info:
+        return jsonify(
+            success=False, error='Unauthorized'
+        ), 401
+
+    body = request.get_json(silent=True) or {}
+    profile_id = str(
+        body.get('profile_id', '')
+    ).strip()
+    group_name = str(
+        body.get('group', '')
+    ).strip()
+    objnames = body.get('objnames', [])
+
+    if not profile_id or not group_name:
+        return jsonify(
+            success=False,
+            error='profile_id and group required',
+        ), 400
+    if not isinstance(objnames, list) or not objnames:
+        return jsonify(
+            success=False,
+            error='objnames must be a non-empty list',
+        ), 400
+    # Cap at 5000 to prevent abuse
+    if len(objnames) > 5000:
+        return jsonify(
+            success=False,
+            error='Too many objects (max 5000)',
+        ), 400
+
+    profile = _resolve_profile(
+        app, user_info, profile_id
+    )
+    if not profile:
+        return jsonify(
+            success=False, error='Profile not found'
+        ), 404
+
+    username = user_info.get('username', '')
+    added = 0
+    skipped = 0
+    not_found = []
+
+    for raw_name in objnames:
+        name = str(raw_name).strip()
+        if not name:
+            continue
+        # Resolve through alias lookup
+        objname, _nick, error, _cand = (
+            _resolve_query(app, profile, name)
+        )
+        if error or objname is None:
+            not_found.append(name)
+            continue
+        err = og.add_object_to_group(
+            profile_id, group_name,
+            objname, username,
+        )
+        if err:
+            skipped += 1
+        else:
+            added += 1
+
+    return jsonify(
+        success=True,
+        added=added,
+        skipped=skipped,
+        not_found=not_found,
+    )
+
+
 def api_object_groups_remove_object(app):
     """POST  remove an object from a group (monitor only)."""
     user_info = get_effective_user(session)

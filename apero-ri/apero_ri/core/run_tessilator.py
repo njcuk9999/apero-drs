@@ -127,10 +127,17 @@ def get_tess_cached(
     if not sectors:
         return None
 
+    # Collect list of downloadable data files
+    data_files = []
+    for fname in meta.get('data_files', []):
+        if (d / fname).exists():
+            data_files.append(fname)
+
     return dict(
         success=True,
         objname=meta.get('objname', objname),
         sectors=sectors,
+        data_files=data_files,
         cached_at=meta.get('cached_at', ''),
         console_log=meta.get('console_log', ''),
     )
@@ -143,6 +150,39 @@ def get_tess_lc_csv_path(
     """Return the path to a cached period ECSV, or *None*."""
     d = tess_cache_dir(cache_root, instrument, objname)
     p = d / 'periods.ecsv'
+    if p.exists():
+        return p
+    return None
+
+
+def get_tess_data_file_path(
+    cache_root: Path, instrument: str,
+    objname: str, filename: str,
+) -> Optional[Path]:
+    """Return path to a cached TESS data file, or *None*.
+
+    Only serves files listed in ``meta.json['data_files']``
+    to prevent arbitrary file access.
+    """
+    import os
+    d = tess_cache_dir(cache_root, instrument, objname)
+    meta_path = d / 'meta.json'
+    if not meta_path.exists():
+        return None
+    try:
+        with open(meta_path, 'r') as fh:
+            meta = json.load(fh)
+    except Exception:
+        return None
+    # only allow files explicitly listed in metadata
+    allowed = set(meta.get('data_files', []))
+    # also allow periods.ecsv
+    allowed.add('periods.ecsv')
+    # sanitise: basename only, no path traversal
+    safe_name = os.path.basename(filename)
+    if safe_name not in allowed:
+        return None
+    p = d / safe_name
     if p.exists():
         return p
     return None
@@ -429,21 +469,22 @@ def _collect_results(
 ) -> Dict[str, Any]:
     """Scan *work_dir* for tessilator output files.
 
-    tessilator writes PNG plots and ``.ecsv`` period tables
-    directly in the working directory.  The naming convention
-    is ``<name>_<sector04d>_<camera>_<ccd>.png``.
+    tessilator writes PNG plots, ``.ecsv`` period tables,
+    and per-sector light-curve CSVs directly in the working
+    directory.  All CSV/ECSV products are preserved so they
+    can be offered as downloads in the UI.
     """
     sectors: List[Dict[str, Any]] = []
 
     # Discover PNG plots (one combined plot per sector)
     png_files = sorted(work_dir.glob('*.png'))
 
-    # tessilator writes a single periods ECSV for the
-    # whole run (filename starts with 'periods_').
+    # Discover all CSV/ECSV data products
     ecsv_files = (
         list(work_dir.glob('*.ecsv'))
         + list(work_dir.glob('*.csv'))
     )
+    # Identify the single periods file
     periods_file = None
     for ef in ecsv_files:
         if ef.name.startswith('periods_'):
@@ -452,8 +493,14 @@ def _collect_results(
     if periods_file is None and ecsv_files:
         periods_file = ecsv_files[0]
 
+    # Collect all extra data files (light curves, etc.)
+    extra_files: List[Path] = []
+    for ef in ecsv_files:
+        if ef == periods_file:
+            continue
+        extra_files.append(ef)
+
     # Parse sector number from PNG filenames.
-    # tessilator names: ``<name>_<sector>_<cam>_<ccd>.png``
     sector_pngs = _group_by_sector(png_files)
 
     all_sectors = sorted(sector_pngs.keys())
@@ -483,6 +530,9 @@ def _collect_results(
                 str(periods_file)
                 if periods_file else ''
             ),
+            _extra_paths=[
+                str(f) for f in extra_files
+            ],
         )
 
     for sec in all_sectors:
@@ -513,6 +563,9 @@ def _collect_results(
             str(periods_file)
             if periods_file else ''
         ),
+        _extra_paths=[
+            str(f) for f in extra_files
+        ],
     )
 
 
@@ -568,12 +621,23 @@ def _store_to_cache(
     if src_periods and Path(src_periods).exists():
         shutil.copy2(src_periods, d / 'periods.ecsv')
 
+    # Copy all extra data files (light curves, etc.)
+    # preserving their original filenames.
+    data_files: List[str] = []
+    for src in result.get('_extra_paths', []):
+        src_path = Path(src)
+        if src_path.exists():
+            dest_name = src_path.name
+            shutil.copy2(src_path, d / dest_name)
+            data_files.append(dest_name)
+
     meta = dict(
         objname=objname,
         cached_at=datetime.now(
             timezone.utc
         ).isoformat(),
         sectors=meta_sectors,
+        data_files=data_files,
         console_log=result.get('console_log', ''),
     )
     with open(d / 'meta.json', 'w') as fh:
@@ -582,5 +646,8 @@ def _store_to_cache(
     # Remove internal path keys from the result dict
     # so the API response does not leak server paths.
     result.pop('_periods_path', None)
+    result.pop('_extra_paths', None)
+    # Attach the list of downloadable data files
+    result['data_files'] = data_files
     for entry in result.get('sectors', []):
         entry.pop('_png_path', None)

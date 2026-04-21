@@ -72,19 +72,20 @@
 
     <!-- Groups section -->
     <div class="ari-user-detail__section">
-        <h3><i class="fa-solid fa-users-gear"></i> Groups</h3>
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:0.4rem;">
+            <h3 style="margin:0;"><i class="fa-solid fa-users-gear"></i> Groups</h3>
+            <button id="btn-save-groups-top" class="ari-btn ari-btn--primary ari-btn--sm" style="display:none;">
+                <i class="fa-solid fa-floppy-disk"></i> Save Groups
+            </button>
+        </div>
         <div id="detail-groups" class="ari-toggle-cards"></div>
         <div id="groups-no-perm" class="ari-user-detail__no-perm" style="display:none;">
             <i class="fa-solid fa-lock"></i> You do not have permission to manage any groups.
         </div>
-    </div>
-
-    <!-- Instruments section -->
-    <div class="ari-user-detail__section">
-        <h3><i class="fa-solid fa-satellite-dish"></i> Instruments</h3>
-        <div id="detail-instruments" class="ari-toggle-cards"></div>
-        <div id="instruments-no-perm" class="ari-user-detail__no-perm" style="display:none;">
-            <i class="fa-solid fa-lock"></i> You do not have permission to manage instruments for this user.
+        <div id="btn-save-groups-bottom-wrap" style="display:none;text-align:right;margin-top:0.5rem;">
+            <button id="btn-save-groups-bottom" class="ari-btn ari-btn--primary ari-btn--sm">
+                <i class="fa-solid fa-floppy-disk"></i> Save Groups
+            </button>
         </div>
     </div>
 

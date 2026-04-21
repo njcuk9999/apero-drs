@@ -154,6 +154,16 @@
                     </div>
                     <div id="op-finder-error" style="display:none;" class="at-muted-hint"></div>
                     <div id="op-finder-images" style="display:none;"></div>
+                    <button id="op-finder-regen" class="ari-btn ari-btn--sm ari-btn--secondary" title="Re-generate finder charts (clears cache)" style="display:none;margin-top:0.6rem;">
+                        <i class="fa-solid fa-arrows-rotate"></i> Regenerate
+                    </button>
+                    <!-- Console log (collapsible) -->
+                    <details id="op-finder-log-wrap" style="display:none;margin-top:0.7rem;">
+                        <summary style="cursor:pointer;font-size:0.84rem;font-weight:600;color:var(--ari-text-muted,#6a737d);">
+                            <i class="fa-solid fa-terminal"></i> Console Output
+                        </summary>
+                        <pre id="op-finder-log" style="margin-top:0.4rem;max-height:18rem;overflow:auto;font-size:0.78rem;line-height:1.45;background:var(--ari-surface-muted,#f6f8fa);border:1px solid var(--op-border,#d6d9de);border-radius:0.35rem;padding:0.6rem 0.75rem;white-space:pre-wrap;word-break:break-word;"></pre>
+                    </details>
                 </div>
             </div>
         </div>
@@ -195,6 +205,8 @@
                             </button>
                         </div>
                         <img id="op-tess-img" alt="TESS rotation plot" style="width:100%;max-width:800px;border-radius:0.4rem;border:1px solid var(--op-border,#d6d9de);">
+                        <!-- Data file download links -->
+                        <div id="op-tess-data-files" style="display:none;margin-top:0.7rem;"></div>
                     </div>
                     <!-- Console log (collapsible) -->
                     <details id="op-tess-log-wrap" style="display:none;margin-top:0.7rem;">
@@ -882,9 +894,11 @@ window.ARI_OBJECT_PAGE = {
     objectPlotsApiUrl: '/api/data-portal/object-plots',
     objectLblPlotsApiUrl: '/api/data-portal/object-lbl-plots',
     finderChartApiUrl: '/api/data-portal/finder-chart',
+    finderChartStreamUrl: '/api/data-portal/finder-chart-stream',
     finderChartCached: {{ (finder_chart_cached | default(false)) | tojson }},
     tessRotationApiUrl: '/api/data-portal/tess-rotation',
     tessRotationLcApiUrl: '/api/data-portal/tess-rotation-lc',
+    tessRotationDataApiUrl: '/api/data-portal/tess-rotation-data',
     tessRotationStreamUrl: '/api/data-portal/tess-rotation-stream',
     tessRotationCached: {{ (tess_rotation_cached | default(false)) | tojson }},
     debugPlotsApiUrl: '/api/data-portal/debug-plots',

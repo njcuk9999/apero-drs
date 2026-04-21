@@ -402,6 +402,7 @@ def construct_query(rparams):
         astrom.PLX_SOURCE AS `Plx source`,
         astrom.RV AS `RV [km/s]`,
         astrom.RV_SOURCE AS `RV source`,
+        astrom.EPOCH AS `EPOCH [JD]`,
         findex.DPRTYPE AS DPRTYPE,
         findex.RUN_ID AS RUN_ID,
         findex.PI_NAMES AS PI_NAMES,
@@ -494,6 +495,17 @@ def meta_columns():
             advanced_search=False,
         )
     # -------------------------------------------------------------------------
+    # Run ID (comma-separated list of run IDs per object)
+    cols['Run ID'] = dict(
+        sortable=True,
+        filterable=True,
+        removable=True,
+        default=False,
+        coltype='string',
+        hidden=False,
+        advanced_search=True,
+    )
+    # -------------------------------------------------------------------------
     # dprtype
     cols["DPRTYPE"] = dict(
         sortable=True,
@@ -529,8 +541,8 @@ def meta_columns():
         "PMDE source",
         "Plx source",
         "RV source",
+        "EPOCH [JD]",
         "ALL_DPRTYPES",
-        "RUN_IDS",
         "PI_NAMES",
     ]
     hcoltypes = [
@@ -543,8 +555,7 @@ def meta_columns():
         "string",
         "string",
         "string",
-        "string",
-        "string",
+        "number",
         "string",
         "string",
     ]

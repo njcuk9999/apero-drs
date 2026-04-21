@@ -1196,6 +1196,39 @@ def ariapp_api_user_favourite_objects_toggle(self):
         ]
         is_favourite = False
     else:
+        # Adding — verify the user can see this object
+        _ufh = user_favourites_api_helpers
+        prof, instrument = _ufh._get_profile_info(
+            self, profile_id, user_info,
+        )
+        if not prof:
+            return (
+                jsonify(
+                    success=False,
+                    error='Profile not found',
+                ),
+                404,
+            )
+        base_dir = Path(
+            self.args.data_dir
+            or str(Path.home() / '.ari')
+        )
+        rows = _ufh._load_object_table(
+            base_dir, instrument, profile_id,
+        )
+        if not _ufh._is_object_accessible(
+            self, user_info, instrument, rows, objname,
+        ):
+            return (
+                jsonify(
+                    success=False,
+                    error=(
+                        'Object not found or not'
+                        ' accessible for this user.'
+                    ),
+                ),
+                404,
+            )
         # Add to default section
         default_sec = next(
             (s for s in sections if s.get("name") == "default"), None
@@ -3129,7 +3162,7 @@ def ariapp_build_finder_max_payload(
     self, profile, objname, obj_props, preset, band_idx
 ):
     """Build the plot_payload dict for a finder chart maximize page."""
-    from apero_ri.plots.plot_find import generate_finder_charts
+    from apero_ri.core.object_finder import generate_finder_charts
 
     result = generate_finder_charts(obj_props, preset)
     if not result.get("success") or not result.get("images"):

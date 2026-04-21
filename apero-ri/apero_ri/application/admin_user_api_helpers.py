@@ -66,6 +66,24 @@ def api_user_search(app):
         or editor_is_admin
     )
 
+    # Build group categories: Global + per-instrument sections.
+    # Groups with a dot suffix matching a known instrument are
+    # filed under that instrument; everything else is "Global".
+    instrument_set = set(all_instruments)
+    group_categories = dict()
+    group_categories['Global'] = []
+    for inst in all_instruments:
+        group_categories[inst] = []
+    for g in all_groups:
+        parts = g.rsplit('.', 1)
+        has_inst = (
+            len(parts) == 2 and parts[1] in instrument_set
+        )
+        if has_inst:
+            group_categories[parts[1]].append(g)
+        else:
+            group_categories['Global'].append(g)
+
     return jsonify(
         success=True,
         users=results,
@@ -73,9 +91,12 @@ def api_user_search(app):
         can_add_groups=sorted(can_add),
         inherited_map=inherited_map,
         all_instruments=all_instruments,
+        group_categories=group_categories,
         editor_instruments=editor_instruments,
         can_add_instrument=can_add_instrument,
-        can_add_instrument_groups=sorted(can_manage_instrument_groups),
+        can_add_instrument_groups=sorted(
+            can_manage_instrument_groups
+        ),
         editor_username=user_info["username"],
         editor_is_admin=editor_is_admin,
         editor_is_super_admin=editor_is_super_admin,

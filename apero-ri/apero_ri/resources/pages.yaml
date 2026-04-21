@@ -67,6 +67,17 @@ home.admin_portal:
     top-level: True
     show: True
 
+home.astrometrics:
+  label: Astrometrics
+  parent: home
+  view-permission: view.data_portal
+  icon: fa-solid fa-compass
+  quick-nav: True
+  side-nav:
+    pinned: True
+    top-level: True
+    show: True
+
 home.user_portal:
   label: User Portal
   parent: home

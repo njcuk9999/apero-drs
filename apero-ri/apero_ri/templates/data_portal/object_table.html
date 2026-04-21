@@ -80,6 +80,11 @@
                     aria-controls="fo-panel-advanced">
                 Advanced
             </button>
+            <button id="fo-tab-group" class="ot-find-tab"
+                    type="button" role="tab" aria-selected="false"
+                    aria-controls="fo-panel-group">
+                Group
+            </button>
         </div>
 
         <div id="fo-panel-name" class="ot-find-tab-panel ot-find-tab-panel--active"
@@ -190,6 +195,33 @@
             </div>
         </div>
 
+        <div id="fo-panel-group" class="ot-find-tab-panel"
+             role="tabpanel" aria-labelledby="fo-tab-group" hidden>
+            <p class="ot-find-desc">
+                Filter the table by an object group.
+            </p>
+            <div class="ot-find-panel__grid">
+                <label class="ot-find-field">
+                    <span class="ot-find-field__label">Group</span>
+                    <select id="fo-group-select" class="ot-find-select">
+                        <option value="">Loading groups&hellip;</option>
+                    </select>
+                </label>
+                <div class="ot-find-actions">
+                    <button id="fo-group-apply"
+                            class="ari-btn ari-btn--sm ari-btn--secondary"
+                            type="button">
+                        <i class="fa-solid fa-filter"></i> Apply
+                    </button>
+                    <button id="fo-group-clear"
+                            class="ari-btn ari-btn--sm ari-btn--secondary"
+                            type="button">
+                        <i class="fa-solid fa-eraser"></i> Clear
+                    </button>
+                </div>
+            </div>
+        </div>
+
         <div id="fo-status" class="ot-find-status" aria-live="polite">
             Expand this panel to find objects by name or coordinates.
         </div>
@@ -236,6 +268,12 @@
         <button id="ot-btn-clear-filters" class="ari-btn ari-btn--sm ari-btn--secondary"
                 title="Clear all column filters">
             <i class="fa-solid fa-filter-circle-xmark"></i> Clear Filters
+        </button>
+
+        <button id="ot-btn-send-to-group"
+                class="ari-btn ari-btn--sm ari-btn--secondary"
+                title="Add filtered objects to an object group">
+            <i class="fa-solid fa-share-from-square"></i> Send to Group
         </button>
     </div>
 
@@ -302,6 +340,58 @@
     </div>
 </div>
 
+{# ── Send to Group overlay ──────────────────────────────────────── #}
+<div id="stg-overlay" class="stg-overlay" style="display:none;">
+    <div class="stg-overlay__backdrop" id="stg-backdrop"></div>
+    <div class="stg-overlay__dialog">
+        <div class="stg-overlay__header">
+            <h3>
+                <i class="fa-solid fa-share-from-square"></i>
+                Send to Group
+            </h3>
+            <button id="stg-close" class="stg-overlay__close"
+                    title="Close">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+        <div class="stg-overlay__body">
+            <p id="stg-count" class="stg-count"></p>
+            <label class="ot-find-field">
+                <span class="ot-find-field__label">
+                    Choose a group
+                </span>
+                <select id="stg-group-select"
+                        class="ot-find-select">
+                    <option value="">Loading&hellip;</option>
+                </select>
+            </label>
+            <div class="stg-new-group">
+                <label class="ot-find-field">
+                    <span class="ot-find-field__label">
+                        Or create a new group
+                    </span>
+                    <input id="stg-new-name"
+                           class="ot-find-input" type="text"
+                           placeholder="New group name">
+                </label>
+                <button id="stg-create-btn"
+                        class="ari-btn ari-btn--sm ari-btn--secondary"
+                        type="button">
+                    <i class="fa-solid fa-plus"></i> Create
+                </button>
+            </div>
+        </div>
+        <div class="stg-overlay__footer">
+            <span id="stg-status" class="stg-status"></span>
+            <button id="stg-send-btn"
+                    class="ari-btn ari-btn--sm ari-btn--primary"
+                    type="button">
+                <i class="fa-solid fa-paper-plane"></i> Send
+            </button>
+        </div>
+    </div>
+</div>
+
 {# ── JS config ─────────────────────────────────────────────────── #}
 <script>
 window.ARI_OBJ_TABLE = {
@@ -309,7 +399,8 @@ window.ARI_OBJ_TABLE = {
     profileId: {{ profile.profile_id | tojson }},
     instrument: {{ profile.instrument | tojson }},
     minNameChars: 1,
+    groupsApiBase: '/api/data-portal/object-groups',
 };
 </script>
-<script src="{{ url_for('static', filename='js/object_table.js', v='20260403b') }}" defer></script>
+<script src="{{ url_for('static', filename='js/object_table.js', v='20260420') }}" defer></script>
 {% endblock %}

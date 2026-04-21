@@ -108,6 +108,36 @@ def _get_profile_info(app, profile_id: str, user_info: Dict):
     return None, None
 
 
+def _is_object_accessible(
+    app, user_info: Dict, instrument: str,
+    rows: Optional[List[Dict]], objname: str
+) -> bool:
+    """Check whether *objname* is accessible to the user.
+
+    An object is accessible when at least one of its RUN_ID
+    values overlaps with the user's science-group run IDs.
+    When *rows* is ``None`` (no object table on disk) we
+    conservatively return ``True`` so the legacy literal-name
+    path still works.
+    """
+    if rows is None:
+        return True
+    accessible_rids = app._get_user_accessible_run_ids(
+        user_info, instrument,
+    )
+    for row in rows:
+        name = str(row.get('OBJNAME', '') or '')
+        if name.strip().upper() != objname.strip().upper():
+            continue
+        raw = str(row.get('RUN_ID', '') or '')
+        row_rids = {
+            r.strip() for r in raw.split(',') if r.strip()
+        }
+        if row_rids & accessible_rids:
+            return True
+    return False
+
+
 # ---------------------------------------------------------------------------
 # Existing: reorder (now delegates to sections/save internally)
 # ---------------------------------------------------------------------------
@@ -524,6 +554,21 @@ def api_user_favourite_objects_add(app):
         # No object table: treat query as literal APERO name
         objname = query
 
+    # ---- access check: user must be able to see this object ----
+    if not _is_object_accessible(
+        app, user_info, instrument, rows, objname,
+    ):
+        return (
+            jsonify(
+                success=False,
+                error=(
+                    'Object not found or not accessible'
+                    ' for this user.'
+                ),
+            ),
+            404,
+        )
+
     payload = ud.get_profile_fav_sections(username, profile_id)
     sections = payload.get("sections", [])
     if not isinstance(sections, list):
@@ -681,6 +726,13 @@ def api_user_favourite_objects_add_bulk(app):
                 objname = partial[0]
         else:
             objname = query
+
+        # Access check: skip objects the user cannot see
+        if not _is_object_accessible(
+            app, user_info, instrument, rows, objname,
+        ):
+            results['not_found'].append(query)
+            continue
 
         existing_sec = _find_object_in_sections(sections, objname)
         if existing_sec is not None:

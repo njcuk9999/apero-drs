@@ -34,6 +34,7 @@ from apero_ri.application import (
     apero_profiles_api_helpers,
 )
 from apero_ri.application import ariapp_impls as _impls
+from apero_ri.application import astrometrics_api_helpers
 from apero_ri.application import (
     async_task_helpers,
     async_tasks_api_helpers,
@@ -643,6 +644,12 @@ class ARIApp(Flask):
             .api_object_groups_add_objects_bulk(self)
         )
 
+    def _api_object_groups_add_objects_json(self):
+        return (
+            object_groups_api_helpers
+            .api_object_groups_add_objects_json(self)
+        )
+
     def _api_object_groups_remove_object(self):
         return (
             object_groups_api_helpers
@@ -897,6 +904,9 @@ class ARIApp(Flask):
     def _api_object_table(self):
         return data_portal_api_helpers.api_object_table(self)
 
+    def _api_astrometrics_find_object(self):
+        return astrometrics_api_helpers.api_astrometrics_find_object(self)
+
     def _ri_obs_table_view(self, profile_id):
         kwargs = dict(profile_id=profile_id)
         return data_portal_view_helpers.ri_obs_table_view(self, **kwargs)
@@ -943,6 +953,12 @@ class ARIApp(Flask):
     def _api_finder_chart(self):
         return data_portal_api_helpers.api_finder_chart(self)
 
+    def _api_finder_chart_stream(self):
+        return (
+            data_portal_api_helpers
+            .api_finder_chart_stream(self)
+        )
+
     def _api_tess_rotation(self):
         return data_portal_api_helpers.api_tess_rotation(
             self
@@ -957,6 +973,12 @@ class ARIApp(Flask):
         return (
             data_portal_api_helpers
             .api_tess_rotation_stream(self)
+        )
+
+    def _api_tess_rotation_data(self):
+        return (
+            data_portal_api_helpers
+            .api_tess_rotation_data(self)
         )
 
     def _api_debug_plots(self):

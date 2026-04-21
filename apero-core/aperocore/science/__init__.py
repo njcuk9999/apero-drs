@@ -10,6 +10,8 @@ Created on 2025-11-25 at 09:40
 @author: cook
 """
 
+import matplotlib
+matplotlib.use('Agg')
 import numpy as np
 import matplotlib.pyplot as plt
 from astropy.io import fits

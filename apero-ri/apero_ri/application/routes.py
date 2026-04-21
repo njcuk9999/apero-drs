@@ -992,6 +992,11 @@ def register_data_portal_routes(app):
         app._api_object_table,
     )
     app.add_url_rule(
+        "/api/astrometrics/find-object",
+        "api_astrometrics_find_object",
+        app._api_astrometrics_find_object,
+    )
+    app.add_url_rule(
         "/data_portal/<profile_id>/observation-table",
         "ri_observation_table",
         app._ri_obs_table_view,
@@ -1224,6 +1229,11 @@ def register_data_portal_routes(app):
         app._api_finder_chart,
     )
     app.add_url_rule(
+        "/api/data-portal/finder-chart-stream",
+        "api_finder_chart_stream",
+        app._api_finder_chart_stream,
+    )
+    app.add_url_rule(
         "/api/data-portal/tess-rotation",
         "api_tess_rotation",
         app._api_tess_rotation,
@@ -1237,6 +1247,11 @@ def register_data_portal_routes(app):
         "/api/data-portal/tess-rotation-stream",
         "api_tess_rotation_stream",
         app._api_tess_rotation_stream,
+    )
+    app.add_url_rule(
+        "/api/data-portal/tess-rotation-data",
+        "api_tess_rotation_data",
+        app._api_tess_rotation_data,
     )
 
     # Object comments API routes
@@ -1308,6 +1323,13 @@ def register_data_portal_routes(app):
         "/api/data-portal/object-groups/add-objects-bulk",
         "api_object_groups_add_objects_bulk",
         app._api_object_groups_add_objects_bulk,
+        methods=["POST"],
+    )
+    app.add_url_rule(
+        "/api/data-portal/object-groups"
+        "/add-objects-json",
+        "api_object_groups_add_objects_json",
+        app._api_object_groups_add_objects_json,
         methods=["POST"],
     )
     app.add_url_rule(

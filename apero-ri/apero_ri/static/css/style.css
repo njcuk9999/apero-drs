@@ -3402,6 +3402,20 @@ body.ari-up-wide-page .ari-doc-main {
 }
 
 /* Encompassed — greyed out with special styling */
+/* Ghost — no permission, not currently assigned; de-emphasised */
+.ari-toggle-card--ghost {
+    background: #f2f2f2;
+    color: #bbb;
+    border-color: #e0e0e0;
+    cursor: not-allowed;
+    opacity: 0.5;
+}
+
+.ari-toggle-card--ghost .ari-toggle-card__icon {
+    color: #ccc;
+}
+
+/* Encompassed — greyed out with special styling */
 .ari-toggle-card--encompassed {
     background: #d8d8e8;
     color: #777;
@@ -5931,6 +5945,78 @@ details.ot-howto[open] .ot-howto__chevron {
     gap: 0.45rem;
     align-items: center;
     flex-wrap: wrap;
+}
+
+/* ── Send to Group overlay ── */
+.stg-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 9000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.stg-overlay__backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.45);
+}
+.stg-overlay__dialog {
+    position: relative;
+    background: var(--ari-card-bg, #fff);
+    border-radius: 0.5rem;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
+    width: 90%;
+    max-width: 420px;
+    padding: 1.2rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.8rem;
+}
+.stg-overlay__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+.stg-overlay__header h3 {
+    margin: 0;
+    font-size: 1rem;
+}
+.stg-overlay__close {
+    background: none;
+    border: none;
+    font-size: 1.1rem;
+    cursor: pointer;
+    color: var(--ari-text-muted, #666);
+}
+.stg-overlay__body {
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+}
+.stg-count {
+    margin: 0;
+    font-size: 0.85rem;
+    color: var(--ari-text-muted, #555);
+}
+.stg-new-group {
+    display: flex;
+    gap: 0.5rem;
+    align-items: flex-end;
+}
+.stg-new-group .ot-find-field {
+    flex: 1;
+}
+.stg-overlay__footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+}
+.stg-status {
+    font-size: 0.82rem;
+    color: var(--ari-text-muted, #666);
+    flex: 1;
 }
 
 /* ── Toolbar ── */
@@ -10228,6 +10314,10 @@ button.ari-rp-section-card:hover {
     border-color: #58a6ff;
     color: #79b8ff;
 }
+[data-theme="dark"] .stg-overlay__dialog {
+    background: #161b22;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
+}
 
 /* ── Download basket rows ── */
 [data-theme="dark"] .bk-row--odd  td { background: #161b22; }
@@ -10819,6 +10909,392 @@ button.ari-rp-section-card:hover {
 [data-theme="dark"] .ari-ae-callout span,
 [data-theme="dark"] .ari-ae-callout div {
     color: #c9d1d9 !important;
+}
+
+/* ==========================================================================
+   Astrometrics page — sections, search, results
+   ========================================================================== */
+
+    .ari-astro-search-bar {
+        display: flex;
+        gap: 1rem;
+        margin-bottom: 2rem;
+        padding: 0 1rem;
+    }
+
+    .ari-search-input {
+        flex: 1;
+        padding: 0.75rem 1rem;
+        border: 1px solid var(--ari-border);
+        border-radius: var(--ari-border-radius);
+        font-size: 1rem;
+        background: var(--ari-card-bg);
+        color: var(--ari-text);
+    }
+
+    .ari-search-input:focus {
+        outline: none;
+        border-color: var(--ari-primary);
+        box-shadow: 0 0 0 3px rgba(51, 102, 153, 0.1);
+    }
+
+    .ari-astro-section {
+        background: #eaf4ff;
+        border: 1px solid #c9dff7;
+        border-radius: var(--ari-border-radius);
+        margin-bottom: 1.5rem;
+        overflow: hidden;
+    }
+
+    .ari-astro-section::marker {
+        content: '';
+    }
+
+    .ari-astro-section__header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 1rem;
+        cursor: pointer;
+        user-select: none;
+        font-weight: 600;
+        color: var(--ari-primary);
+        background: #dceeff;
+        border-bottom: 1px solid #c2dbf5;
+        transition: background 0.2s ease;
+    }
+
+    .ari-astro-section[open] > .ari-astro-section__header {
+        background: #dceeff;
+        border-bottom-color: #c2dbf5;
+    }
+
+    .ari-astro-section__header:hover {
+        background: #dceeff;
+    }
+
+    .ari-astro-section__header-left {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        flex: 1;
+    }
+
+    .ari-astro-section__chevron {
+        display: inline-block;
+        transition: transform 0.2s ease;
+        color: var(--ari-primary);
+    }
+
+    .ari-astro-section[open] > .ari-astro-section__header .ari-astro-section__chevron {
+        transform: rotate(180deg);
+    }
+
+    .ari-astro-section__title {
+        font-size: 1.1rem;
+    }
+
+    .ari-astro-section__pin-btn {
+        background: none;
+        border: none;
+        cursor: pointer;
+        padding: 0.5rem;
+        color: var(--ari-text-muted);
+        transition: color 0.2s ease;
+        font-size: 0.9rem;
+    }
+
+    .ari-astro-section__pin-btn:hover {
+        color: var(--ari-primary);
+    }
+
+    .ari-astro-section__pin-btn--pinned {
+        color: var(--ari-primary);
+    }
+
+    .ari-astro-section__body {
+        padding: 1.5rem;
+        background: #eff7ff;
+    }
+
+    .ari-find-tabs {
+        display: flex;
+        gap: 0.5rem;
+        margin-bottom: 1.5rem;
+        border-bottom: 2px solid var(--ari-border);
+        flex-wrap: wrap;
+    }
+
+    .ari-find-tab {
+        background: none;
+        border: none;
+        padding: 0.75rem 1rem;
+        cursor: pointer;
+        font-size: 0.95rem;
+        color: var(--ari-text-muted);
+        transition: all 0.2s ease;
+        border-bottom: 3px solid transparent;
+        margin-bottom: -2px;
+    }
+
+    .ari-find-tab:hover {
+        color: var(--ari-primary);
+    }
+
+    .ari-find-tab--active {
+        color: var(--ari-primary);
+        border-bottom-color: var(--ari-primary);
+        font-weight: 600;
+    }
+
+    .ari-find-tab-panel {
+        display: none;
+    }
+
+    .ari-find-tab-panel--active {
+        display: block;
+    }
+
+    .ari-find-desc {
+        font-size: 0.9rem;
+        color: var(--ari-text-muted);
+        margin-bottom: 1rem;
+    }
+
+    .ari-find-panel__grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 1rem;
+        margin-bottom: 1rem;
+    }
+
+    .ari-find-field {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    .ari-find-field__label {
+        font-size: 0.85rem;
+        font-weight: 600;
+        color: var(--ari-text);
+    }
+
+    .ari-find-input,
+    .ari-find-select {
+        padding: 0.6rem 0.75rem;
+        border: 1px solid var(--ari-border);
+        border-radius: 4px;
+        font-size: 0.95rem;
+        background: var(--ari-card-bg);
+        color: var(--ari-text);
+    }
+
+    .ari-find-input:focus,
+    .ari-find-select:focus {
+        outline: none;
+        border-color: var(--ari-primary);
+        box-shadow: 0 0 0 2px rgba(51, 102, 153, 0.1);
+    }
+
+    .ari-find-actions {
+        display: flex;
+        gap: 0.5rem;
+        grid-column: 1 / -1;
+    }
+
+    .ari-astro-results {
+        margin-top: 2rem;
+        padding-top: 1.5rem;
+        border-top: 1px solid var(--ari-border);
+    }
+
+    .ari-astro-results__heading {
+        font-size: 0.95rem;
+        font-weight: 600;
+        color: var(--ari-text);
+        margin-bottom: 1rem;
+        padding: 0.75rem 1rem;
+        background: #f9f9f9;
+        border-left: 3px solid var(--ari-primary);
+    }
+
+.ari-astro-profile-card {
+    border: 1px solid var(--ari-border);
+    border-radius: var(--ari-border-radius);
+    background: var(--ari-card-bg);
+    margin-bottom: 1rem;
+    overflow: hidden;
+}
+
+.ari-astro-profile-card__header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 0.8rem;
+    padding: 0.65rem 0.85rem;
+    background: #f7f9fc;
+    border-bottom: 1px solid var(--ari-border);
+    flex-wrap: wrap;
+}
+
+.ari-astro-profile-card__title {
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: var(--ari-primary);
+    letter-spacing: 0.02em;
+}
+
+.ari-astro-profile-card__meta {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    flex-wrap: wrap;
+}
+
+.ari-astro-profile-card__meta-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--ari-text-muted);
+    background: #ffffff;
+    border: 1px solid var(--ari-border);
+    border-radius: 999px;
+    padding: 0.2rem 0.55rem;
+}
+
+.ari-astro-profile-card__body {
+    padding: 0.8rem;
+}
+
+.ari-astro-result-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 0.55rem;
+}
+
+.ari-astro-result-card {
+    background: var(--ari-card-bg);
+    border: 1px solid var(--ari-border);
+    border-radius: 6px;
+    padding: 0.7rem 0.85rem;
+    transition: all 0.2s ease;
+    cursor: pointer;
+}
+
+.ari-astro-result-card:hover {
+    border-color: var(--ari-primary);
+    box-shadow: 0 2px 8px rgba(51, 102, 153, 0.15);
+    transform: translateY(-1px);
+}
+
+.ari-astro-result__summary {
+    display: flex;
+    align-items: baseline;
+    gap: 0.35rem;
+    min-width: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.ari-astro-result__name {
+    font-weight: 600;
+    color: var(--ari-primary);
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.ari-astro-result__coords {
+    font-size: 0.85rem;
+    color: var(--ari-text-muted);
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Dark theme adjustments */
+    [data-theme="dark"] .ari-astro-section {
+        background: #0d1117;
+        border-color: #30363d;
+    }
+
+    [data-theme="dark"] .ari-astro-section__header {
+        color: #58a6ff;
+        border-bottom-color: #30363d;
+    }
+
+    [data-theme="dark"] .ari-astro-section[open] > .ari-astro-section__header {
+        background: #161b22;
+        border-bottom-color: #58a6ff;
+    }
+
+    [data-theme="dark"] .ari-astro-section__header:hover {
+        background: #161b22;
+    }
+
+    [data-theme="dark"] .ari-find-input,
+    [data-theme="dark"] .ari-find-select {
+        background: #0d1117;
+        color: #c9d1d9;
+        border-color: #30363d;
+    }
+
+    [data-theme="dark"] .ari-find-input:focus,
+    [data-theme="dark"] .ari-find-select:focus {
+        border-color: #58a6ff;
+    }
+
+[data-theme="dark"] .ari-astro-results__heading {
+    background: #161b22;
+    color: #c9d1d9;
+    border-left-color: #58a6ff;
+}
+
+[data-theme="dark"] .ari-astro-profile-card {
+    background: #0d1117;
+    border-color: #30363d;
+}
+
+[data-theme="dark"] .ari-astro-profile-card__header {
+    background: #161b22;
+    border-bottom-color: #30363d;
+}
+
+[data-theme="dark"] .ari-astro-profile-card__title {
+    color: #79b8ff;
+}
+
+[data-theme="dark"] .ari-astro-profile-card__meta-item {
+    background: #0d1117;
+    border-color: #30363d;
+    color: #8b949e;
+}
+
+[data-theme="dark"] .ari-astro-result-card {
+        background: #0d1117;
+        border-color: #30363d;
+        color: #c9d1d9;
+    }
+
+    [data-theme="dark"] .ari-astro-result-card:hover {
+        border-color: #58a6ff;
+        box-shadow: 0 2px 8px rgba(88, 166, 255, 0.2);
+    }
+
+    [data-theme="dark"] .ari-astro-result__name {
+        color: #79b8ff;
+    }
+
+    [data-theme="dark"] .ari-astro-result__coords,
+    [data-theme="dark"] .ari-astro-result__aliases {
+        color: #8b949e;
+    }
+
+[data-theme="dark"] .ari-astro-result__profile {
+    color: #f0883e;
+    border-top-color: #30363d;
 }
 
 
