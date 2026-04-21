@@ -1666,7 +1666,8 @@ class SQLiteDatabase(Database):
         try:
             conargs = dict(func=func_name, kind='_TO_SQL:SQLiteDatabase')
             with closing(self.connection(**conargs)) as tmpconn:
-                df.to_sql(table, tmpconn, if_exists=if_exists, index=index)
+                df.to_sql(table, tmpconn, if_exists=if_exists, index=index,
+                          chunksize=1000)
                 tmpconn.close()
             # pandas removes uniqueness of columns - need to readd this
             #   constraint if unique_cols is not None
@@ -2493,7 +2494,8 @@ class MySQLDatabase(Database):
         try:
             conargs = dict(func=func_name, kind='TO_SQL:SQLALCHEMY')
             with closing(self.connection(connect_kind='sqlalchemy', **conargs)) as dconn:
-                df.to_sql(table, dconn, if_exists=if_exists, index=index)
+                df.to_sql(table, dconn, if_exists=if_exists, index=index,
+                          chunksize=1000)
                 dconn.close()
                 # pandas removes uniqueness of columns - need to readd this
                 #   constraint if unique_cols is not None
