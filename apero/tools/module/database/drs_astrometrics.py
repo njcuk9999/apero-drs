@@ -1037,7 +1037,10 @@ def check_database(params: ParamDict):
     WLOG(params, 'info', 'Accessing full local object database...')
     # get the full table
     atable = objdbm.get_entries()
-
+    # print number of entries found
+    msg = '\tFound {0} entries'
+    margs = [len(atable)]
+    WLOG(params, 'info', msg.format(*margs))
     # get an array of all sky coordinates
     skycoords = SkyCoord(atable['RA_DEG'], atable['DEC_DEG'], unit='deg')
 

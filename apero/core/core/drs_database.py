@@ -3649,7 +3649,7 @@ def get_google_sheet(params: ParamDict, sheet_id: str, worksheet: int = 0,
     # set function name
     func_name = display_func('get_google_sheet', __NAME__)
     # construct url for worksheet
-    url = GOOGLE_BASE_URL.format(sheet_id, worksheet)
+    url = str(GOOGLE_BASE_URL).format(sheet_id, worksheet)
     # deal with table existing
     if url in GOOGLE_TABLES and cached:
         return GOOGLE_TABLES[url]
@@ -3670,7 +3670,7 @@ def get_google_sheet(params: ParamDict, sheet_id: str, worksheet: int = 0,
         while tries < 10:
             # try to open table
             try:
-                table = Table.read(rawdata.text, format='ascii')
+                table = Table.read(rawdata.text, format='ascii.basic')
                 break
             # if this fails try again (but with a limit
             except InconsistentTableError as _:
