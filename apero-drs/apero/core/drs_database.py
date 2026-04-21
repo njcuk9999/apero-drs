@@ -3687,7 +3687,7 @@ def get_google_sheet(params: ParamDict, sheet_id: str, worksheet: int = 0,
             # try to open table
             try:
                 table = drs_io.no_mask_table(Table.read(rawdata.text,
-                                                        format='ascii'))
+                                                        format='ascii.basic'))
                 break
             # if this fails try again (but with a limit
             except InconsistentTableError as _:
