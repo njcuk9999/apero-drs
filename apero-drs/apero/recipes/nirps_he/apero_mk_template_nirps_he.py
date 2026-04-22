@@ -19,6 +19,7 @@ from aperocore.constants import param_functions
 from aperocore.constants import load_functions
 from aperocore import drs_lang
 from apero.core import drs_database
+from apero.core import drs_astrometrics
 from apero.core import drs_file
 from aperocore.core import drs_log
 from apero.utils import drs_recipe
@@ -102,13 +103,11 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
     mainname = __NAME__ + '._main()'
     # get the object name
     objname = params['INPUTS']['OBJNAME']
-    # need to convert object to drs object name
-    pconst = load_functions.load_pconfig(select.INSTRUMENTS)
-    # load object database
-    objdbm = drs_database.AstrometricDatabase(params, recipe.shortname)
+    # load object database (yaml-backed)
+    objdbm = drs_astrometrics.AstrometricDatabase(params, recipe.shortname)
     objdbm.load_db()
     # get clean / alias-safe version of object name
-    objname, _ = objdbm.find_objname(pconst, objname)
+    objname, _ = objdbm.find_objname(objname)
     # get the filetype (this is overwritten from user inputs if defined)
     filetype = params['INPUTS']['FILETYPE']
     # get the fiber type required

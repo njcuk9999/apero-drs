@@ -60,6 +60,7 @@
 }
 #at-edit-modal #edit-task-info-row,
 #at-edit-modal #edit-backup-fields,
+#at-edit-modal #edit-assets-fields,
 #at-edit-modal #edit-mp-fields,
 #at-edit-modal #edit-local-sync-fields {
     border: 1px solid var(--ari-border, #d6d9de);
@@ -68,6 +69,7 @@
     padding: 0.75rem;
 }
 #at-edit-modal #edit-backup-fields,
+#at-edit-modal #edit-assets-fields,
 #at-edit-modal #edit-mp-fields,
 #at-edit-modal #edit-local-sync-fields {
     display: grid;
@@ -111,6 +113,7 @@
 }
 [data-theme="dark"] #at-edit-modal #edit-task-info-row,
 [data-theme="dark"] #at-edit-modal #edit-backup-fields,
+[data-theme="dark"] #at-edit-modal #edit-assets-fields,
 [data-theme="dark"] #at-edit-modal #edit-mp-fields,
 [data-theme="dark"] #at-edit-modal #edit-local-sync-fields {
     background: #1c2128;
@@ -502,6 +505,21 @@
                         <label for="edit-weekly-copies">Weekly copies to keep</label>
                         <input type="number" id="edit-weekly-copies" class="ari-ap-input"
                                min="0" step="1" value="4">
+                    </div>
+                </div>
+                <div id="edit-assets-fields" style="display:none;">
+                    <div class="ari-ap-form__field">
+                        <label for="edit-asset-servers">Asset servers</label>
+                        <textarea id="edit-asset-servers" class="ari-ap-input" rows="3"
+                                  placeholder="https://example.com/drs-assets/&#10;(one URL per line)"></textarea>
+                        <div class="at-muted-hint">One base URL per line. Tried in order until one succeeds. Task will verify accessibility on each run.</div>
+                    </div>
+                    <div class="ari-ap-form__field">
+                        <label for="edit-assets-mode">Mode</label>
+                        <select id="edit-assets-mode" class="ari-ap-input">
+                            <option value="sync">sync &#8212; check checksums, download only if changed</option>
+                            <option value="upload">upload &#8212; push local assets to remote server</option>
+                        </select>
                     </div>
                 </div>
                 <div id="edit-local-sync-fields" style="display:none;">

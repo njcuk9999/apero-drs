@@ -580,9 +580,9 @@ def _run_sync_source_override(
             errors.append(f"{rel}: {exc}")
 
     tlog(
-        f"sync_source: copied {
-            len(synced)} files, skipped {skipped}, errors {
-            len(errors)}.")
+        f"sync_source: copied {len(synced)} files, "
+        f"skipped {skipped}, errors {len(errors)}."
+    )
 
     instance.output_files = synced
     instance.info = (
@@ -1056,6 +1056,32 @@ def _scheduler_poll(local_data_dir: str) -> None:
                     merged_cfg["daily_copies"] = max(0, daily_copies)
                     merged_cfg["weekly_copies"] = max(0, weekly_copies)
 
+                if task_key == "APERO_SYNC_ASSETS":
+                    raw_srv = task_cfg.get("asset_servers")
+                    if isinstance(raw_srv, list):
+                        merged_cfg["asset_servers"] = [
+                            str(s).strip()
+                            for s in raw_srv
+                            if str(s).strip()
+                        ]
+                    else:
+                        merged_cfg["asset_servers"] = []
+                    mode_val = str(
+                        task_cfg.get("mode") or "sync"
+                    ).strip().lower()
+                    merged_cfg["mode"] = (
+                        mode_val
+                        if mode_val in ("sync", "upload")
+                        else "sync"
+                    )
+                    chk = str(
+                        task_cfg.get("checksum_file") or "checksums.yaml"
+                    ).strip()
+                    merged_cfg["checksum_file"] = chk or "checksums.yaml"
+                    merged_cfg["force_download"] = bool(
+                        task_cfg.get("force_download", False)
+                    )
+
                 for field in [
                     "last_run",
                     "run_count",
@@ -1173,8 +1199,8 @@ def shutdown_background_services(
             continue
         if _debug:
             print(
-                f'[task_runner] Joining thread "{
-                    thread.name}" (timeout={join_timeout}s)...',
+                f'[task_runner] Joining thread "{thread.name}"'
+                f' (timeout={join_timeout}s)...',
                 file=_sys.stderr,
                 flush=True,
             )

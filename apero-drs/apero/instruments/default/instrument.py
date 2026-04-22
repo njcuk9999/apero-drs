@@ -24,6 +24,7 @@ from aperocore.core import drs_db
 from aperocore.core import drs_misc
 from aperocore.core import drs_text
 from apero.base import base as apero_base
+from apero.core import drs_astrometrics
 
 # =============================================================================
 # Define variables
@@ -1433,31 +1434,17 @@ class Instrument:
 # =============================================================================
 def clean_object(rawobjname: str) -> str:
     """
-    Clean a 'rawobjname' to allow it to be consistent
+    Clean a 'rawobjname' to allow it to be consistent.
+
+    Thin delegation to :func:`apero.core.drs_astrometrics.clean_object` so
+    there is one canonical implementation across the DRS.
 
     :param rawobjname: str, the raw object name to clean
 
     :return: str, the cleaned object name
     """
-    # if raw object name contains null text - return Null string
-    if drs_text.null_text(rawobjname, NULL_TEXT):
-        return 'Null'
-    # strip spaces off raw object
-    objectname = rawobjname.strip()
-    # replace + and - with "p" and "m"
-    objectname = objectname.replace('+', 'p')
-    objectname = objectname.replace('-', 'm')
-    # now remove bad characters
-    for bad_char in BAD_OBJ_CHARS:
-        objectname = objectname.replace(bad_char, '_')
-    objectname = objectname.upper()
-    # deal with multiple underscores in a row
-    while '__' in objectname:
-        objectname = objectname.replace('__', '_')
-    # strip leading / trailing '_'
-    objectname = objectname.strip('_')
-    # return cleaned object name
-    return objectname
+    # delegate to the canonical core implementation
+    return drs_astrometrics.clean_object(rawobjname)
 
 
 def get_sun_altitude(params: Any, header: Any, hdict: Any) -> Tuple[Any, Any]:

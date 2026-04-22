@@ -25,6 +25,7 @@ from aperocore.constants import constant_functions
 from aperocore import drs_lang
 from apero.core import drs_argument
 from apero.core import drs_database
+from apero.core import drs_astrometrics
 from aperocore.core import drs_exceptions
 from aperocore.core import drs_base_classes as base_class
 from aperocore.core import drs_misc
@@ -1276,8 +1277,8 @@ class DrsRecipe(object):
                                  self.class_name)
         # get parameters
         params = self.params
-        # load object database
-        objdbm = drs_database.AstrometricDatabase(params, self.shortname)
+        # load object database (yaml-backed)
+        objdbm = drs_astrometrics.AstrometricDatabase(params, self.shortname)
         objdbm.load_db()
         # load pseudo constants
         pconst = load_functions.load_pconfig(select.INSTRUMENTS)
@@ -1312,8 +1313,8 @@ class DrsRecipe(object):
                             # make sure there are no white spaces
                             value = np.char.strip(value)
                             # deal with object name cleaning
-                            value, _ = objdbm.find_objnames(pconst, value,
-                                                            allow_empty=True)
+                            value, _ = objdbm.find_objnames(
+                                value, allow_empty=True)
                         # need to filter list by tstars and ostars
                         # (if not in either list means they are not on disk)
                         all_objs = list(ostars) + list(tstars)

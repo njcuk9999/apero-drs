@@ -21,6 +21,7 @@ from aperocore.constants import param_functions
 from aperocore.constants import load_functions
 from aperocore import drs_lang
 from apero.core import drs_database
+from apero.core import drs_astrometrics
 from aperocore.core import drs_log
 from aperocore.core import drs_misc
 from apero.utils import drs_recipe
@@ -91,8 +92,8 @@ def add_file_reject(params: ParamDict, recipe: DrsRecipe, raw_identifier: str):
     identifier_column = np.array(dataframe['IDENTIFIER']).astype(str)
     # get the raw directory
     rawdir = params['PATH.RAW']
-    # get astrometric database
-    objdbm = drs_database.AstrometricDatabase(params, recipe.shortname)
+    # get astrometric database (yaml-backed)
+    objdbm = drs_astrometrics.AstrometricDatabase(params, recipe.shortname)
     # load astrometric database
     objdbm.load_db()
     # ----------------------------------------------------------------------
@@ -369,8 +370,8 @@ def update_from_obsdir(params: ParamDict, recipe: DrsRecipe, obsdir: str) -> str
                                   targs=eargs)
     # construct path to obsdir
     rawpath = os.path.join(rawdir, obsdir)
-    # get the object database
-    objdbm = drs_database.AstrometricDatabase(params, recipe.shortname)
+    # get the object database (yaml-backed)
+    objdbm = drs_astrometrics.AstrometricDatabase(params, recipe.shortname)
     # load object database
     objdbm.load_db()
     # ----------------------------------------------------------------------

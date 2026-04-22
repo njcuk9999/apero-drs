@@ -20,6 +20,7 @@ from aperocore.base import base
 from aperocore.constants import param_functions
 from aperocore import drs_lang
 from apero.core import drs_database
+from apero.core import drs_astrometrics
 from aperocore.core import drs_log
 from aperocore.core import drs_text
 from aperocore.core import drs_misc
@@ -170,8 +171,9 @@ class Trigger:
         # start log database
         self.logdbm = drs_database.LogDatabase(params, recipe.shortname)
         self.logdbm.load_db()
-        # start object database
-        self.objdbm = drs_database.AstrometricDatabase(params, recipe.shortname)
+        # start object database (yaml-backed)
+        self.objdbm = drs_astrometrics.AstrometricDatabase(params,
+                                                           recipe.shortname)
         self.objdbm.load_db()
 
     def __call__(self):

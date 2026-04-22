@@ -3374,6 +3374,14 @@ CDict.add('GAIA_URL', value=None, dtype=str,
           description=('Define the TAP Gaia URL (for use in '
                        'crossmatching to Gaia via astroquery)'))
 
+# Define the VizieR TAP url (for crossmatching to Gaia DR2/DR3/EDR3 and
+#   AllWISE photometry via VizieR)
+CDict.add('VIZIER_TAPURL', value=None, dtype=str, source=__NAME__,
+          group=cgroup,
+          description=('Define the VizieR TAP url (for '
+                       'crossmatching to Gaia DR2/DR3/EDR3 and '
+                       'AllWISE photometry via VizieR)'))
+
 # Define the google sheet to use for crossmatch (may be set to a directory for
 #   completely offline reduction)
 CDict.add('GSHEET_URL', value=None,

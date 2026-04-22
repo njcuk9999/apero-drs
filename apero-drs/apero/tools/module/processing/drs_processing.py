@@ -32,6 +32,7 @@ from aperocore import drs_lang
 from aperocore.core.drs_base_classes import Printer
 from apero.core import drs_argument
 from apero.core import drs_database
+from apero.core import drs_astrometrics
 from aperocore.core import drs_exceptions
 from aperocore.core import drs_base_classes as base_class
 from aperocore.core import drs_misc
@@ -3292,14 +3293,12 @@ def _linear_headerfix(params, obs_dirs, shortname,
         job_msg = ' [{0}/{1}] '.format(job, total_jobs)
     else:
         job_msg = ''
-    # load the object database
-    objdbm = drs_database.AstrometricDatabase(params, shortname)
+    # load the object database (yaml-backed)
+    objdbm = drs_astrometrics.AstrometricDatabase(params, shortname)
     objdbm.load_db()
-    # Pre-load all object names + aliases into the module-level
-    # _ASTROM_CLEANED_MAP so that find_objname() resolves every raw header
-    # object name with an O(1) dict look-up instead of 1–3 MySQL connections
-    # per unique name.  Cost: 2 connections once per worker process.
-    objdbm.warm_cache(objdbm.pconst)
+    # warm_cache is now a no-op shim (yaml lookups are already in-memory);
+    # kept here as a marker for the legacy fork-pool pre-load behaviour
+    objdbm.warm_cache()
     # construct the index database instance
     findexdbm = drs_database.FileIndexDatabase(params, shortname)
     findexdbm.load_db()
@@ -4463,8 +4462,8 @@ def _get_filters(params: ParamDict, srecipe: DrsRecipe,
     func_name = __NAME__ + '._get_filters()'
     # get pseudo constatns
     pconst = load_functions.load_pconfig(select.INSTRUMENTS)
-    # need to load object database
-    objdbm = drs_database.AstrometricDatabase(params, srecipe.shortname)
+    # need to load object database (yaml-backed)
+    objdbm = drs_astrometrics.AstrometricDatabase(params, srecipe.shortname)
     objdbm.load_db()
     # set up filter storage
     filters = dict()
@@ -4519,7 +4518,7 @@ def _get_filters(params: ParamDict, srecipe: DrsRecipe,
                 user_filter = list(user_filter)
                 # note we need to update this list to match
                 # the cleaning that is done in preprocessing
-                clist, _ = objdbm.find_objnames(pconst, user_filter,
+                clist, _ = objdbm.find_objnames(user_filter,
                                                 allow_empty=True)
                 # add cleaned obj list to filters
                 filters[key] = list(np.unique(clist))

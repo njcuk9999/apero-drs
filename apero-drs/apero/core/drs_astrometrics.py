@@ -1,56 +1,2542 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-APERO Output file functionality
+APERO astrometric "database" (yaml-backed, no SQL)
 
-Created on 2019-03-21 at 18:35
+A drop-in replacement for ``drs_database.AstrometricDatabase`` that emulates
+an astrometric database from a directory of per-object yaml files living
+under ``params['DRS_DATA_ASSETS']/astrometrics``.
+
+Design goals:
+    1. As fast as possible (in-memory cache, lazy load, mtime invalidation).
+    2. No SQL / no DatabaseManager dependency.
+    3. Multiprocessing-safe (picklable instances, file locking on writes).
+    4. No imports from anywhere in ``apero`` (apero-drs); only ``aperocore``
+       so this module can be used freely throughout apero-drs without
+       circular imports.
+
+Created on 2026-04-21
 
 @author: cook
+
+import rules:
+    only from
+    - aperocore.*
+    - python stdlib + yaml + numpy
 """
 import os
-from typing import Any, Optional, Tuple, Union
+import string
+import tempfile
+import time
+import warnings
+import math
+from typing import Any, Dict, List, Optional, Tuple, Union
+
+import numpy as np
+import yaml
 
 from aperocore.base import base
 from aperocore.constants import param_functions
-from aperocore.core import drs_exceptions
-from aperocore.core import drs_misc
-from apero.base import base as apero_base
 from aperocore.core import drs_log
+from aperocore.core import drs_misc
+from aperocore.core import drs_text
+
+# fcntl is POSIX-only; on Windows we silently fall back to lock-file polling
+try:
+    import fcntl as _fcntl
+except ImportError:  # pragma: no cover - Windows fallback
+    _fcntl = None
 
 # =============================================================================
 # Define variables
 # =============================================================================
-__NAME__ = 'core.core.drs_out_file.py'
+__NAME__ = 'core.drs_astrometrics.py'
 __INSTRUMENT__ = 'None'
-__PACKAGE__ = apero_base.__PACKAGE__
-__version__ = apero_base.__version__
-__authors__ = apero_base.__authors__
-__date__ = apero_base.__date__
-__release__ = apero_base.__release__
-# get exceptions
-AperoCodedException = drs_log.AperoCodedException
-# get parameter dictionary
+__PACKAGE__ = base.__PACKAGE__
+__version__ = base.__version__
+__authors__ = base.__authors__
+__date__ = base.__date__
+__release__ = base.__release__
+# get astropy time from aperocore base
+Time = base.Time
+# get ParamDict
 ParamDict = param_functions.ParamDict
+# get exceptions / warnings
+AperoCodedException = drs_log.AperoCodedException
+AperoCodedWarning = drs_log.AperoCodedWarning
 # get display func
 display_func = drs_misc.display_func
+# get Logging function
+WLOG = drs_log.wlog
+# define bad characters for objects (alpha numeric + "_") - replicated from
+#   apero/instruments/default/instrument.py so this module has no apero-drs
+#   dependency
+BAD_OBJ_CHARS = [' '] + list(string.punctuation.replace('_', ''))
+# define null text values (anything matching is treated as a null entry)
+NULL_TEXT = ['', 'None', 'Null', 'NULL', 'null', 'nan', 'NaN', 'inf']
+# reserved object names that are never resolved against the catalogue
+RESERVED_OBJ_NAMES = ['CALIB', 'SKY', 'TEST']
+# subdirectory under DRS_DATA_ASSETS that holds the per-object yaml files
+ASTROM_SUBDIR = 'astrometrics'
+# yaml file extension we recognise
+YAML_EXT = '.yaml'
+# name of the lock-file directory (sub of ASTROM_SUBDIR)
+LOCK_SUBDIR = '.locks'
+# keys in the yaml that are searched (in order) when resolving a name
+NAME_KEYS = ['APERO_NAME', 'ORIGINAL_NAME', 'SIMBAD_NAME']
+# key in the yaml that holds aliases
+ALIAS_KEY = 'ALIASES'
+# the key whose value is the canonical APERO name returned to callers
+APERO_NAME_KEY = 'APERO_NAME'
+# -----------------------------------------------------------------------------
+# Mapping of legacy SQL column names -> extractor callables that pull the
+# equivalent value out of a yaml entry dict. This lets old callers do e.g.
+# ``get_entries('OBJNAME, ALIASES')`` or ``get_entries('TEFF', ...)`` and
+# still get sensible results from the new yaml schema.
+# -----------------------------------------------------------------------------
+def _nested_value(entry: Dict[str, Any], key: str) -> Any:
+    """Return ``entry[key]['value']`` if nested, else ``entry[key]``."""
+    val = entry.get(key)
+    if isinstance(val, dict):
+        return val.get('value')
+    return val
 
 
-# =============================================================================
-# Define class
-# =============================================================================
+def _nested_source(entry: Dict[str, Any], key: str) -> Any:
+    """Return ``entry[key]['source']`` if nested, else ``None``."""
+    val = entry.get(key)
+    if isinstance(val, dict):
+        return val.get('source')
+    return None
+
+
+# legacy_col -> callable(entry_dict) -> value
+LEGACY_COL_MAP: Dict[str, Any] = dict()
+LEGACY_COL_MAP['OBJNAME'] = lambda e: e.get(APERO_NAME_KEY)
+LEGACY_COL_MAP['ORIGINAL_NAME'] = lambda e: e.get('ORIGINAL_NAME')
+LEGACY_COL_MAP['ALIASES'] = lambda e: e.get('ALIASES')
+LEGACY_COL_MAP['RA_DEG'] = lambda e: _nested_value(e, 'RA')
+LEGACY_COL_MAP['RA_SOURCE'] = lambda e: _nested_source(e, 'RA')
+LEGACY_COL_MAP['DEC_DEG'] = lambda e: _nested_value(e, 'DEC')
+LEGACY_COL_MAP['DEC_SOURCE'] = lambda e: _nested_source(e, 'DEC')
+LEGACY_COL_MAP['EPOCH'] = lambda e: e.get('EPOCH')
+LEGACY_COL_MAP['PMRA'] = lambda e: _nested_value(e, 'PMRA')
+LEGACY_COL_MAP['PMRA_SOURCE'] = lambda e: _nested_source(e, 'PMRA')
+LEGACY_COL_MAP['PMDE'] = lambda e: _nested_value(e, 'PMDE')
+LEGACY_COL_MAP['PMDE_SOURCE'] = lambda e: _nested_source(e, 'PMDE')
+LEGACY_COL_MAP['PLX'] = lambda e: _nested_value(e, 'PLX')
+LEGACY_COL_MAP['PLX_SOURCE'] = lambda e: _nested_source(e, 'PLX')
+LEGACY_COL_MAP['RV'] = lambda e: _nested_value(e, 'RV')
+LEGACY_COL_MAP['RV_SOURCE'] = lambda e: _nested_source(e, 'RV')
+LEGACY_COL_MAP['TEFF'] = lambda e: _nested_value(e, 'TEFF')
+LEGACY_COL_MAP['TEFF_SOURCE'] = lambda e: _nested_source(e, 'TEFF')
+LEGACY_COL_MAP['SP_TYPE'] = lambda e: _nested_value(e, 'SPT')
+LEGACY_COL_MAP['SP_TYPE_SOURCE'] = lambda e: _nested_source(e, 'SPT')
+# legacy callers use SP_SOURCE (no _TYPE_) for the spectral-type source
+LEGACY_COL_MAP['SP_SOURCE'] = lambda e: _nested_source(e, 'SPT')
+LEGACY_COL_MAP['NOTES'] = lambda e: e.get('NOTES')
+LEGACY_COL_MAP['USED'] = lambda e: 1
+# DATE_ADDED has no native yaml field; expose as None for parity
+LEGACY_COL_MAP['DATE_ADDED'] = lambda e: None
+# legacy KEYWORDS column has no yaml equivalent (NO_PM filter is dropped)
+LEGACY_COL_MAP['KEYWORDS'] = lambda e: None
+
+
+def legacy_view(entry: Optional[Dict[str, Any]]
+                ) -> Optional[Dict[str, Any]]:
+    """
+    Flatten a yaml entry dict into a dict of ``{legacy_sql_column: value}``
+    using :data:`LEGACY_COL_MAP`. Useful for callers that were written
+    against the old SQL schema.
+
+    :param entry: dict (yaml entry) or None
+    :return: dict mapping every key in ``LEGACY_COL_MAP`` to its value, or
+             None if ``entry`` is None.
+    """
+    # propagate None so callers can do ``if legacy is None: ...``
+    if entry is None:
+        return None
+    # apply every extractor in the legacy column map
+    out: Dict[str, Any] = dict()
+    for col, getter in LEGACY_COL_MAP.items():
+        out[col] = getter(entry)
+    return out
+# -----------------------------------------------------------------------------
+# Module-level caches: shared by all AstrometricDatabase instances within a
+# process, keyed by the absolute path of the astrometrics directory. On a
+# fork-based multiprocessing pool these are inherited copy-on-write; on
+# spawn-based pools each worker rebuilds them lazily.
+# -----------------------------------------------------------------------------
+# {astro_path -> {cleaned_name -> APERO_NAME}}
+_NAME_INDEX: Dict[str, Dict[str, str]] = dict()
+# {astro_path -> {APERO_NAME -> entry_dict}}
+_ENTRY_CACHE: Dict[str, Dict[str, Dict[str, Any]]] = dict()
+# {astro_path -> {filename -> mtime}} (used for invalidation)
+_MTIME_CACHE: Dict[str, Dict[str, float]] = dict()
+# {astro_path -> directory mtime when last scanned} (cheap freshness check)
+_DIR_MTIME: Dict[str, float] = dict()
+# {(astro_path, raw_input_name) -> (apero_name, found_flag)} resolution cache
+_RESOLVE_CACHE: Dict[Tuple[str, str], Tuple[str, int]] = dict()
+
 
 # =============================================================================
 # Define worker functions
 # =============================================================================
+def clean_object(rawobjname: Union[str, None]) -> str:
+    """
+    Clean a raw object name to a canonical comparable form.
+
+    Replicated from ``apero/instruments/default/instrument.py:clean_object``
+    so this module has no apero-drs dependency. Behaviour is intentionally
+    identical:
+        - ``None`` / null-like  -> ``'Null'``
+        - strip whitespace
+        - replace ``+`` -> ``p`` and ``-`` -> ``m``
+        - replace any character in :data:`BAD_OBJ_CHARS` with ``_``
+        - upper-case
+        - collapse repeated underscores and strip leading/trailing ``_``
+
+    :param rawobjname: str or None, the raw object name to clean
+
+    :return: str, the cleaned object name (or ``'Null'``)
+    """
+    # null / None handling - mirror drs_text.null_text behaviour
+    if rawobjname is None:
+        return 'Null'
+    # cast to string defensively (yaml may give us ints, etc.)
+    rawobjname = str(rawobjname)
+    # null text comparison
+    if drs_text.null_text(rawobjname, NULL_TEXT):
+        return 'Null'
+    # strip whitespace from outside
+    objectname = rawobjname.strip()
+    # replace sign characters
+    objectname = objectname.replace('+', 'p')
+    objectname = objectname.replace('-', 'm')
+    # replace bad characters with underscores
+    for bad_char in BAD_OBJ_CHARS:
+        objectname = objectname.replace(bad_char, '_')
+    # force upper case
+    objectname = objectname.upper()
+    # collapse multiple underscores
+    while '__' in objectname:
+        objectname = objectname.replace('__', '_')
+    # strip leading / trailing underscores
+    objectname = objectname.strip('_')
+    # return cleaned name
+    return objectname
+
+
+def _is_null(value: Any) -> bool:
+    """
+    Return True if ``value`` should be treated as missing/null.
+
+    :param value: anything from a yaml file
+    :return: bool
+    """
+    # explicit None
+    if value is None:
+        return True
+    # delegate to drs_text for strings
+    if isinstance(value, str):
+        return drs_text.null_text(value, NULL_TEXT)
+    # everything else (numbers, lists, dicts) is non-null
+    return False
+
+
+def _safe_filename(apero_name: str) -> str:
+    """
+    Convert an APERO_NAME into a safe yaml filename (no path separators).
+
+    :param apero_name: str, the canonical APERO name
+    :return: str, the filename (without directory) e.g. ``"GL699.yaml"``
+    """
+    # the cleaned APERO name is already filesystem-safe by construction
+    safe = clean_object(apero_name)
+    # protect against an empty / null name
+    if safe in ('', 'Null'):
+        emsg = ('Cannot build filename from null/empty APERO name '
+                '({0!r})').format(apero_name)
+        raise AperoCodedException(None, message=emsg)
+    # append the extension
+    return safe + YAML_EXT
+
+
+# =============================================================================
+# SIMBAD / Gaia / VizieR resolution helpers (used by resolve_target)
+# -----------------------------------------------------------------------------
+# Ported (and lightly re-styled) from
+# ``apero-utils/general/apero_astrometrics2/resolve_against_simbad.py`` so
+# that this module remains the single source of truth for astrometric
+# catalogue resolution. All network calls go through plain urllib (no
+# astroquery dependency); astropy is imported lazily inside the
+# coordinate-propagation helper so the rest of the module remains usable
+# even if astropy is not installed.
+# =============================================================================
+# TAP endpoints
+# Default TAP endpoints (used when no per-call URL is supplied; the
+# AstrometricDatabase class overrides these from params - see
+# `SIMBAD_TAPURL`, `GAIA_URL`, `VIZIER_TAPURL` constants in
+# apero/instruments/default/constants.py).
+SIMBAD_TAP = 'https://simbad.cds.unistra.fr/simbad/sim-tap/sync'
+GAIA_TAP = 'https://gea.esac.esa.int/tap-server/tap/sync'
+VIZIER_TAP = 'https://tapvizier.cds.unistra.fr/TAPVizieR/tap/sync'
+
+
+def _to_sync_url(url: Optional[str], default: str) -> str:
+    '''
+    Normalise a TAP base URL into its synchronous query endpoint.
+
+    Accepts either ``.../tap`` (or ``.../sim-tap``) or already
+    ``.../tap/sync``; ``None`` falls back to ``default``.
+
+    :param url: str or None, the user-supplied TAP URL
+    :param default: str, the fallback synchronous endpoint
+    :return: str, a URL ending in ``/sync``
+    '''
+    # null / empty -> default
+    if url is None or str(url).strip() in ('', 'None', 'NULL'):
+        return default
+    s = str(url).rstrip('/')
+    # already a sync endpoint
+    if s.endswith('/sync'):
+        return s
+    return s + '/sync'
+# physical / geometric constants
+OBLIQUITY_DEG = 23.4392911
+EARTH_ORBITAL_SPEED_KMS = 29.79
+TELLURIC_THRESHOLD_KMS = 5.0
+# month length / name tables for telluric-window labels
+NON_LEAP_MONTH_LENGTHS = [31, 28, 31, 30, 31, 30,
+                          31, 31, 30, 31, 30, 31]
+NON_LEAP_MONTH_NAMES = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+                        'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+# ICRS -> galactic rotation matrix (J2000)
+EQUATORIAL_TO_GALACTIC_MATRIX = [
+    [-0.0548755604, -0.8734370902, -0.4838350155],
+    [0.4941094279, -0.44482963, 0.7469822445],
+    [-0.867666149, -0.1980763734, 0.4559837762],
+]
+# default user-agent for TAP HTTP requests
+_TAP_USER_AGENT = 'apero-astrometrics/1.0'
+
+
+# -----------------------------------------------------------------------------
+# Small value-normalisation helpers
+# -----------------------------------------------------------------------------
+def _nv(value: Any) -> Any:
+    """
+    Return ``None`` for empty / null-like values, else the stripped string.
+
+    :param value: any value (typically a TAP cell)
+    :return: stripped string or ``None``
+    """
+    # explicit None short-circuit
+    if value is None:
+        return None
+    # strip whitespace and detect null sentinels
+    s = str(value).strip()
+    if s == '' or s.lower() in {'none', 'null', 'nan'}:
+        return None
+    return s
+
+
+def _pf(value: Any) -> Optional[float]:
+    """
+    Parse-float helper. Returns ``None`` for null / non-numeric values.
+
+    :param value: any value
+    :return: float or ``None``
+    """
+    # use _nv to normalise null-like inputs
+    s = _nv(value)
+    if s is None:
+        return None
+    # try-cast to float
+    try:
+        return float(s)
+    except (TypeError, ValueError):
+        return None
+
+
+# -----------------------------------------------------------------------------
+# Low-level TAP helpers (synchronous, plain urllib)
+# -----------------------------------------------------------------------------
+def _tap_get(endpoint: str, adql: str, fmt: str = 'json',
+             timeout: int = 30, request_key: str = 'request',
+             lang_key: str = 'lang', format_key: str = 'format',
+             query_key: str = 'query') -> Optional[bytes]:
+    """
+    Issue a synchronous TAP query and return the raw response bytes.
+
+    :param endpoint: str, TAP endpoint URL
+    :param adql: str, the ADQL query
+    :param fmt: str, result format (``'json'`` or ``'csv'``)
+    :param timeout: int, request timeout in seconds
+    :param request_key: str, query-string key for the ``doQuery`` action
+    :param lang_key: str, query-string key for the ADQL language tag
+    :param format_key: str, query-string key for the response format
+    :param query_key: str, query-string key for the ADQL itself
+
+    :return: raw bytes from the TAP service, or ``None`` on failure
+    """
+    # lazy import of urllib pieces (stdlib, but keep grouped here)
+    from urllib.parse import quote_plus
+    from urllib.request import urlopen, Request
+    from urllib.error import URLError, HTTPError
+    # assemble the GET parameter string
+    params_str = (
+        '{0}=doQuery&{1}=adql&{2}={3}&{4}={5}'
+    ).format(request_key, lang_key, format_key, fmt,
+             query_key, quote_plus(adql))
+    url = '{0}?{1}'.format(endpoint, params_str)
+    # build and dispatch the HTTP request
+    req = Request(url, headers={'User-Agent': _TAP_USER_AGENT})
+    try:
+        with urlopen(req, timeout=timeout) as resp:
+            return resp.read()
+    except (HTTPError, URLError, OSError):
+        # network errors are non-fatal: return None and let caller decide
+        return None
+
+
+def _simbad_json(adql: str, timeout: int = 30,
+                 url: Optional[str] = None) -> Optional[dict]:
+    """
+    Run an ADQL query against the SIMBAD TAP and return parsed JSON.
+
+    :param adql: str, the ADQL query
+    :param timeout: int, request timeout in seconds
+    :param url: optional TAP base or sync URL; defaults to
+                :data:`SIMBAD_TAP`.
+    :return: parsed JSON dict, or ``None`` on failure
+    """
+    import json
+    # resolve endpoint
+    endpoint = _to_sync_url(url, SIMBAD_TAP)
+    # fetch raw bytes
+    raw = _tap_get(endpoint, adql, fmt='json', timeout=timeout)
+    if raw is None:
+        return None
+    # parse JSON
+    try:
+        return json.loads(raw)
+    except Exception:
+        return None
+
+
+def _vizier_json(adql: str, timeout: int = 30,
+                 url: Optional[str] = None) -> Optional[dict]:
+    """
+    Run an ADQL query against the VizieR TAP and return parsed JSON.
+
+    VizieR TAP requires uppercase parameter keys.
+
+    :param adql: str, the ADQL query
+    :param timeout: int, request timeout in seconds
+    :param url: optional TAP base or sync URL; defaults to
+                :data:`VIZIER_TAP`.
+    :return: parsed JSON dict, or ``None`` on failure
+    """
+    import json
+    # resolve endpoint
+    endpoint = _to_sync_url(url, VIZIER_TAP)
+    # fetch raw bytes (with uppercase param keys for VizieR)
+    raw = _tap_get(endpoint, adql, fmt='json', timeout=timeout,
+                   request_key='REQUEST', lang_key='LANG',
+                   format_key='FORMAT', query_key='QUERY')
+    if raw is None:
+        return None
+    try:
+        return json.loads(raw)
+    except Exception:
+        return None
+
+
+def _gaia_csv(adql: str, timeout: int = 30,
+              url: Optional[str] = None
+              ) -> Optional[List[Dict[str, str]]]:
+    """
+    Run an ADQL query against the Gaia TAP (CSV) and return list of dicts.
+
+    :param adql: str, the ADQL query
+    :param timeout: int, request timeout in seconds
+    :param url: optional TAP base or sync URL; defaults to
+                :data:`GAIA_TAP`.
+    :return: list of dict rows, or ``None`` on failure
+    """
+    import csv
+    import io
+    # resolve endpoint
+    endpoint = _to_sync_url(url, GAIA_TAP)
+    # fetch raw bytes
+    raw = _tap_get(endpoint, adql, fmt='csv', timeout=timeout)
+    if raw is None:
+        return None
+    # decode and parse as CSV
+    try:
+        text = raw.decode('utf-8', errors='replace')
+        reader = csv.DictReader(io.StringIO(text))
+        return list(reader)
+    except Exception:
+        return None
+
+
+# -----------------------------------------------------------------------------
+# Geometry helpers
+# -----------------------------------------------------------------------------
+def _sep_arcsec(ra1: float, dec1: float,
+                ra2: float, dec2: float) -> float:
+    """
+    Angular separation between two ICRS positions, in arcseconds.
+
+    :param ra1: float, RA of point 1 (deg)
+    :param dec1: float, Dec of point 1 (deg)
+    :param ra2: float, RA of point 2 (deg)
+    :param dec2: float, Dec of point 2 (deg)
+    :return: float, separation in arcseconds
+    """
+    # convert all four inputs to radians
+    r1, d1, r2, d2 = map(math.radians, (ra1, dec1, ra2, dec2))
+    # spherical-law-of-cosines
+    cos_sep = (math.sin(d1) * math.sin(d2)
+               + math.cos(d1) * math.cos(d2) * math.cos(r1 - r2))
+    cos_sep = max(-1.0, min(1.0, cos_sep))
+    return math.degrees(math.acos(cos_sep)) * 3600.0
+
+
+def _propagate(ra_deg: float, dec_deg: float,
+               pmra: Optional[float], pmdec: Optional[float],
+               dt_yr: float) -> Tuple[float, float]:
+    """
+    Apply a simple proper-motion-only displacement to ICRS coordinates.
+
+    :param ra_deg: float, RA at the reference epoch (deg)
+    :param dec_deg: float, Dec at the reference epoch (deg)
+    :param pmra: float or None, RA proper motion (mas/yr, with cos(dec))
+    :param pmdec: float or None, Dec proper motion (mas/yr)
+    :param dt_yr: float, time interval in Julian years
+    :return: tuple, (RA, Dec) in degrees at the new epoch
+    """
+    # if proper motions are missing, return inputs unchanged
+    if pmra is None or pmdec is None:
+        return ra_deg, dec_deg
+    # cos(dec) factor for the RA displacement
+    cos_dec = math.cos(math.radians(dec_deg))
+    if abs(cos_dec) < 1e-8:
+        return ra_deg, dec_deg
+    # apply the displacement (mas -> deg)
+    new_ra = (ra_deg + (pmra * dt_yr) / (3.6e6 * cos_dec)) % 360.0
+    new_dec = max(-90.0, min(90.0, dec_deg + (pmdec * dt_yr) / 3.6e6))
+    return new_ra, new_dec
+
+
+def _jd_to_jyear(epoch_jd: Optional[float]) -> Optional[float]:
+    """
+    Convert a Julian Date to a Julian year (using astropy if available).
+
+    :param epoch_jd: float or None, Julian Date
+    :return: float or None, Julian year
+    """
+    if epoch_jd is None:
+        return None
+    try:
+        # lazy import - astropy may not be installed in minimal envs
+        from astropy.time import Time as _AT
+        return float(_AT(epoch_jd, format='jd').jyear)
+    except Exception:
+        return None
+
+
+def _propagate_to_epoch(ra_deg: Optional[float],
+                        dec_deg: Optional[float],
+                        pmra: Optional[float],
+                        pmdec: Optional[float],
+                        source_epoch_jyear: Optional[float],
+                        target_epoch_jyear: float,
+                        plx_mas: Optional[float] = None,
+                        rv_kms: Optional[float] = None,
+                        ) -> Tuple[Optional[float], Optional[float]]:
+    """
+    Propagate ICRS coordinates between epochs (astropy with safe fallback).
+
+    :param ra_deg: float or None, source RA (deg)
+    :param dec_deg: float or None, source Dec (deg)
+    :param pmra: float or None, RA pm (mas/yr, with cos(dec))
+    :param pmdec: float or None, Dec pm (mas/yr)
+    :param source_epoch_jyear: float or None, source epoch (Julian year)
+    :param target_epoch_jyear: float, target epoch (Julian year)
+    :param plx_mas: float or None, parallax (mas)
+    :param rv_kms: float or None, radial velocity (km/s)
+    :return: (RA, Dec) at the target epoch, or inputs if propagation fails
+    """
+    # propagation only meaningful with both coordinates
+    if ra_deg is None or dec_deg is None:
+        return ra_deg, dec_deg
+    # need PMs and a source epoch to propagate
+    if pmra is None or pmdec is None or source_epoch_jyear is None:
+        return ra_deg, dec_deg
+    # try the full astropy space-motion path
+    try:
+        from astropy import units as _u
+        from astropy.coordinates import SkyCoord as _SC
+        from astropy.time import Time as _AT
+        # build kwargs for SkyCoord
+        kwargs: Dict[str, Any] = dict()
+        kwargs['pm_ra_cosdec'] = pmra * _u.mas / _u.yr
+        kwargs['pm_dec'] = pmdec * _u.mas / _u.yr
+        kwargs['obstime'] = _AT(source_epoch_jyear, format='jyear')
+        # add distance if parallax is sane
+        if plx_mas is not None and plx_mas > 0:
+            kwargs['distance'] = (1000.0 / plx_mas) * _u.pc
+        # add radial velocity if available
+        if rv_kms is not None:
+            kwargs['radial_velocity'] = rv_kms * _u.km / _u.s
+        # construct the SkyCoord
+        coord = _SC(ra=ra_deg * _u.deg, dec=dec_deg * _u.deg,
+                    frame='icrs', **kwargs)
+        # propagate to the target epoch
+        moved = coord.apply_space_motion(
+            new_obstime=_AT(target_epoch_jyear, format='jyear'))
+        return float(moved.ra.deg), float(moved.dec.deg)
+    except Exception:
+        # fallback to simple PM-only propagation
+        dt_yr = target_epoch_jyear - source_epoch_jyear
+        return _propagate(ra_deg, dec_deg, pmra, pmdec, dt_yr)
+
+
+def _set_if_none(d: dict, key: str, value: Any) -> None:
+    """Set ``d[key] = value`` only if the existing slot is ``None``."""
+    if d.get(key) is None and value is not None:
+        d[key] = value
+
+
+def _format_ra_hms(ra_deg: Optional[float]) -> Optional[str]:
+    """Format an RA in degrees as ``HH:MM:SS.SSS``."""
+    if ra_deg is None:
+        return None
+    # convert to total seconds-of-time
+    total_seconds = (ra_deg % 360.0) * 240.0
+    hours = int(total_seconds // 3600)
+    minutes = int((total_seconds % 3600) // 60)
+    seconds = total_seconds - 3600 * hours - 60 * minutes
+    # carry handling near the second boundary
+    if seconds >= 59.995:
+        seconds = 0.0
+        minutes += 1
+    if minutes >= 60:
+        minutes = 0
+        hours = (hours + 1) % 24
+    return '{0:02d}:{1:02d}:{2:06.3f}'.format(hours, minutes, seconds)
+
+
+def _format_dec_dms(dec_deg: Optional[float]) -> Optional[str]:
+    """Format a Dec in degrees as ``+DD:MM:SS.SS``."""
+    if dec_deg is None:
+        return None
+    sign = '+' if dec_deg >= 0 else '-'
+    total_arcsec = abs(dec_deg) * 3600.0
+    degrees = int(total_arcsec // 3600)
+    minutes = int((total_arcsec % 3600) // 60)
+    seconds = total_arcsec - 3600 * degrees - 60 * minutes
+    # carry handling
+    if seconds >= 59.995:
+        seconds = 0.0
+        minutes += 1
+    if minutes >= 60:
+        minutes = 0
+        degrees += 1
+    return '{0}{1:02d}:{2:02d}:{3:05.2f}'.format(sign, degrees,
+                                                 minutes, seconds)
+
+
+def _galactic_from_radec(ra_deg: Optional[float],
+                         dec_deg: Optional[float]
+                         ) -> Tuple[Optional[float], Optional[float]]:
+    """Convert ICRS (RA, Dec) to Galactic (l, b), both in degrees."""
+    if ra_deg is None or dec_deg is None:
+        return None, None
+    ra_r = math.radians(ra_deg)
+    dec_r = math.radians(dec_deg)
+    # equatorial unit vector
+    eq_vec = [math.cos(dec_r) * math.cos(ra_r),
+              math.cos(dec_r) * math.sin(ra_r),
+              math.sin(dec_r)]
+    # rotate via the equatorial -> galactic matrix
+    gal_vec = [sum(EQUATORIAL_TO_GALACTIC_MATRIX[i][j] * eq_vec[j]
+                   for j in range(3)) for i in range(3)]
+    gal_lon = math.degrees(math.atan2(gal_vec[1], gal_vec[0])) % 360.0
+    gal_lat = math.degrees(
+        math.asin(max(-1.0, min(1.0, gal_vec[2]))))
+    return gal_lon, gal_lat
+
+
+def _ecliptic_from_radec(ra_deg: Optional[float],
+                         dec_deg: Optional[float]
+                         ) -> Tuple[Optional[float], Optional[float]]:
+    """Convert ICRS (RA, Dec) to ecliptic (lon, lat), both in degrees."""
+    if ra_deg is None or dec_deg is None:
+        return None, None
+    ra_r = math.radians(ra_deg)
+    dec_r = math.radians(dec_deg)
+    eps_r = math.radians(OBLIQUITY_DEG)
+    # rotation about the x-axis
+    sin_beta = (math.sin(dec_r) * math.cos(eps_r)
+                - math.cos(dec_r) * math.sin(eps_r) * math.sin(ra_r))
+    beta_r = math.asin(max(-1.0, min(1.0, sin_beta)))
+    y = (math.sin(ra_r) * math.cos(eps_r)
+         + math.tan(dec_r) * math.sin(eps_r))
+    x = math.cos(ra_r)
+    lambda_r = math.atan2(y, x)
+    return math.degrees(lambda_r) % 360.0, math.degrees(beta_r)
+
+
+def _doy_label(day_index: int) -> str:
+    """Return a ``'MMM DD'`` label for a 0-based day-of-year index."""
+    day_number = day_index + 1
+    remaining = day_number
+    for month_name, month_length in zip(NON_LEAP_MONTH_NAMES,
+                                        NON_LEAP_MONTH_LENGTHS):
+        if remaining <= month_length:
+            return '{0} {1:02d}'.format(month_name, remaining)
+        remaining -= month_length
+    return 'Dec 31'
+
+
+def _telluric_windows(ra_deg: Optional[float], dec_deg: Optional[float],
+                      rv_kms: Optional[float]) -> Optional[str]:
+    """
+    Return a human-readable summary of the days of the year in which the
+    object's RV (after barycentric correction) is within
+    :data:`TELLURIC_THRESHOLD_KMS` of zero.
+    """
+    ecl_lon_deg, ecl_lat_deg = _ecliptic_from_radec(ra_deg, dec_deg)
+    if ecl_lon_deg is None or ecl_lat_deg is None or rv_kms is None:
+        return None
+    # build a per-day boolean array of "flagged" days
+    flagged = []
+    for day_index in range(365):
+        sun_lon_deg = ((day_index + 1) - 80.0) * 360.0 / 365.0
+        vbary = (EARTH_ORBITAL_SPEED_KMS
+                 * math.cos(math.radians(ecl_lat_deg))
+                 * math.sin(math.radians(sun_lon_deg - ecl_lon_deg)))
+        flagged.append(abs(rv_kms + vbary) < TELLURIC_THRESHOLD_KMS)
+    # collapse runs into (start, end) tuples
+    ranges: List[Tuple[int, int]] = []
+    start = None
+    for day_index, is_flagged in enumerate(flagged):
+        if is_flagged and start is None:
+            start = day_index
+        elif not is_flagged and start is not None:
+            ranges.append((start, day_index - 1))
+            start = None
+    if start is not None:
+        ranges.append((start, 364))
+    # merge a wrap-around window across year boundary
+    if len(ranges) > 1 and flagged[0] and flagged[-1]:
+        first_start, first_end = ranges[0]
+        last_start, _ = ranges[-1]
+        ranges = [(last_start, first_end)] + ranges[1:-1]
+    # nothing flagged
+    if not ranges:
+        return 'always > 5 km/s'
+    # human-readable output
+    parts = []
+    for r0, r1 in ranges:
+        if r0 == r1:
+            parts.append(_doy_label(r0))
+        else:
+            parts.append('{0} to {1}'.format(_doy_label(r0),
+                                             _doy_label(r1)))
+    return '; '.join(parts)
+
+
+def _absolute_mag(apparent_mag: Optional[float],
+                  parallax_mas: Optional[float]) -> Optional[float]:
+    """Return absolute magnitude from apparent mag + parallax (mas)."""
+    if apparent_mag is None or parallax_mas is None or parallax_mas <= 0:
+        return None
+    distance_pc = 1000.0 / parallax_mas
+    return apparent_mag - 5.0 * math.log10(distance_pc) + 5.0
+
+
+def _teff_from_gaia_colors(gbp: Optional[float], grp: Optional[float],
+                           jmag: Optional[float], hmag: Optional[float]
+                           ) -> Tuple[Optional[float], Optional[float]]:
+    """
+    Mann+2015 Teff from Gaia BP-RP and 2MASS J-H (M-dwarf calibration).
+
+    :return: ``(TEFF_GAIA_JH, TEFF_GAIA)`` (either may be ``None``)
+    """
+    # need both Gaia magnitudes
+    if gbp is None or grp is None:
+        return None, None
+    col = gbp - grp
+    # calibration validity window
+    if col < 1.5 or col > 4.5:
+        return None, None
+    # variant including J-H if available
+    teff_gaia_jh = None
+    if jmag is not None and hmag is not None:
+        jh = jmag - hmag
+        a, b, c = 3.172, -2.475, 1.082
+        d, e = -0.2231, 0.01738
+        f, g = 0.08776, 0.04355
+        teff_gaia_jh = round(3500.0 * (a + b * col + c * col**2
+                                       + d * col**3 + e * col**4
+                                       + f * jh + g * jh**2), 1)
+    # BP-RP only variant
+    a2, b2, c2 = 3.245, -2.4309, 1.043
+    d2, e2 = -0.2127, 0.01649
+    teff_gaia = round(3500.0 * (a2 + b2 * col + c2 * col**2
+                                + d2 * col**3 + e2 * col**4), 1)
+    return teff_gaia_jh, teff_gaia
+
+
+def _derive_fields(yaml_data: Dict[str, Any]) -> None:
+    """
+    Populate derived fields on ``yaml_data`` in-place. Only fills entries
+    whose current value is ``None``.
+
+    Mirrors :func:`derive_fields` in
+    ``apero-utils/general/apero_astrometrics2/resolve_against_simbad.py``.
+    """
+    # extract raw scalars
+    ra = _pf(yaml_data.get('RA', dict()).get('value'))
+    dec = _pf(yaml_data.get('DEC', dict()).get('value'))
+    plx = _pf(yaml_data.get('PLX', dict()).get('value'))
+    pmra = _pf(yaml_data.get('PMRA', dict()).get('value'))
+    pmde = _pf(yaml_data.get('PMDE', dict()).get('value'))
+    rv = _pf(yaml_data.get('RV', dict()).get('value'))
+    # photometry
+    gmag = _pf(yaml_data.get('G_MAG', dict()).get('value'))
+    gbp = _pf(yaml_data.get('GBP_MAG', dict()).get('value'))
+    grp = _pf(yaml_data.get('GRP_MAG', dict()).get('value'))
+    jmag = _pf(yaml_data.get('J_MAG', dict()).get('value'))
+    hmag = _pf(yaml_data.get('H_MAG', dict()).get('value'))
+    kmag = _pf(yaml_data.get('KS_MAG', dict()).get('value'))
+    w1 = _pf(yaml_data.get('W1_MAG', dict()).get('value'))
+    w2 = _pf(yaml_data.get('W2_MAG', dict()).get('value'))
+    # propagate stored RA/DEC back to J2000 if EPOCH is non-J2000 + Gaia
+    epoch_jd = _pf(yaml_data.get('EPOCH'))
+    epoch_jyear = _jd_to_jyear(epoch_jd)
+    ra_coord = ra
+    dec_coord = dec
+    ra_source = _nv(yaml_data.get('RA', dict()).get('source'))
+    is_gaia_epoch_coord = (ra_source is not None
+                           and 'GAIA' in ra_source.upper())
+    cond_propagate = (ra is not None and dec is not None
+                      and pmra is not None and pmde is not None
+                      and is_gaia_epoch_coord
+                      and epoch_jyear is not None
+                      and epoch_jd is not None
+                      and abs(epoch_jd - 2451545.0) > 1.0)
+    if cond_propagate:
+        ra_coord, dec_coord = _propagate_to_epoch(
+            ra_deg=ra, dec_deg=dec, pmra=pmra, pmdec=pmde,
+            source_epoch_jyear=epoch_jyear,
+            target_epoch_jyear=2000.0,
+            plx_mas=plx, rv_kms=rv)
+    # J2000 coordinate fields
+    if yaml_data.get('RA_J2000_DEG') is None:
+        yaml_data['RA_J2000_DEG'] = ra_coord
+    if yaml_data.get('DEC_J2000_DEG') is None:
+        yaml_data['DEC_J2000_DEG'] = dec_coord
+    # sexagesimal forms
+    if yaml_data.get('RA_HMS') is None:
+        yaml_data['RA_HMS'] = _format_ra_hms(ra_coord)
+    if yaml_data.get('DEC_DMS') is None:
+        yaml_data['DEC_DMS'] = _format_dec_dms(dec_coord)
+    # galactic coordinates
+    gal_l, gal_b = _galactic_from_radec(ra_coord, dec_coord)
+    if yaml_data.get('GALACTIC_LON') is None:
+        yaml_data['GALACTIC_LON'] = gal_l
+    if yaml_data.get('GALACTIC_LAT') is None:
+        yaml_data['GALACTIC_LAT'] = gal_b
+    # ecliptic coordinates
+    ecl_l, ecl_b = _ecliptic_from_radec(ra_coord, dec_coord)
+    if yaml_data.get('ECLIPTIC_LON') is None:
+        yaml_data['ECLIPTIC_LON'] = ecl_l
+    if yaml_data.get('ECLIPTIC_LAT') is None:
+        yaml_data['ECLIPTIC_LAT'] = ecl_b
+    # telluric RV-amplitude limits and windows
+    if rv is not None and ecl_b is not None:
+        vbary_amp = (EARTH_ORBITAL_SPEED_KMS
+                     * math.cos(math.radians(ecl_b)))
+        if yaml_data.get('TELLURIC_VSYS_PLUS_VBARY_MIN') is None:
+            yaml_data['TELLURIC_VSYS_PLUS_VBARY_MIN'] = rv - vbary_amp
+        if yaml_data.get('TELLURIC_VSYS_PLUS_VBARY_MAX') is None:
+            yaml_data['TELLURIC_VSYS_PLUS_VBARY_MAX'] = rv + vbary_amp
+        if yaml_data.get('TELLURIC_LIMIT_WINDOWS') is None:
+            yaml_data['TELLURIC_LIMIT_WINDOWS'] = _telluric_windows(
+                ra_coord, dec_coord, rv)
+    # tangential / 3D space velocities
+    if (plx is not None and plx > 0
+            and pmra is not None and pmde is not None):
+        mu_tot = math.sqrt(pmra**2 + pmde**2)
+        d_pc = 1000.0 / plx
+        v_sky = 4.74047 * d_pc * mu_tot / 1000.0
+        if yaml_data.get('V_SKY') is None:
+            yaml_data['V_SKY'] = v_sky
+        if rv is not None and yaml_data.get('V3D') is None:
+            yaml_data['V3D'] = math.sqrt(v_sky**2 + rv**2)
+    # UVW Galactic velocities (Johnson & Soderblom convention)
+    have_all = all(v is not None for v in
+                   (ra_coord, dec_coord, plx, pmra, pmde, rv))
+    if have_all and plx > 0:
+        ra_r = math.radians(ra_coord)
+        dec_r = math.radians(dec_coord)
+        d_pc = 1000.0 / plx
+        k = 4.74047
+        cos_ra = math.cos(ra_r)
+        sin_ra = math.sin(ra_r)
+        cos_dec = math.cos(dec_r)
+        sin_dec = math.sin(dec_r)
+        a_matrix = [
+            [-sin_ra, -cos_ra * sin_dec, cos_ra * cos_dec],
+            [cos_ra, -sin_ra * sin_dec, sin_ra * cos_dec],
+            [0.0, cos_dec, sin_dec],
+        ]
+        velocity_components = [
+            k * d_pc * pmra / 1000.0,
+            k * d_pc * pmde / 1000.0,
+            rv,
+        ]
+        v_eq = [sum(a_matrix[i][j] * velocity_components[j]
+                    for j in range(3)) for i in range(3)]
+        u_v = sum(EQUATORIAL_TO_GALACTIC_MATRIX[0][j] * v_eq[j]
+                  for j in range(3))
+        v_v = sum(EQUATORIAL_TO_GALACTIC_MATRIX[1][j] * v_eq[j]
+                  for j in range(3))
+        w_v = sum(EQUATORIAL_TO_GALACTIC_MATRIX[2][j] * v_eq[j]
+                  for j in range(3))
+        if yaml_data.get('U') is None:
+            yaml_data['U'] = u_v
+        if yaml_data.get('V') is None:
+            yaml_data['V'] = v_v
+        if yaml_data.get('W') is None:
+            yaml_data['W'] = w_v
+    # absolute magnitudes
+    if yaml_data.get('AMAG_G') is None:
+        yaml_data['AMAG_G'] = _absolute_mag(gmag, plx)
+    if yaml_data.get('AMAG_KS') is None:
+        yaml_data['AMAG_KS'] = _absolute_mag(kmag, plx)
+    # Gaia-color Teff relations
+    teff_gaia_jh, teff_gaia = _teff_from_gaia_colors(gbp, grp, jmag, hmag)
+    if yaml_data.get('TEFF_GAIA_JH') is None:
+        yaml_data['TEFF_GAIA_JH'] = teff_gaia_jh
+    if yaml_data.get('TEFF_GAIA') is None:
+        yaml_data['TEFF_GAIA'] = teff_gaia
+    # photometric [Fe/H] (Duque-Arribas) for M-dwarf candidates
+    m_ks = _absolute_mag(kmag, plx)
+    m_g = _absolute_mag(gmag, plx)
+    spt = _nv(yaml_data.get('SPT', dict()).get('value'))
+    is_m_candidate = ((m_g is not None and 7.5 <= m_g <= 16.5)
+                      or (spt is not None and spt.upper().startswith('M')))
+    if (is_m_candidate and all(v is not None
+                               for v in (m_ks, gbp, grp, w1, w2))):
+        x = w1 - w2
+        denom = 0.618 + 0.960 * x
+        if abs(denom) > 1e-9:
+            feh_num = ((gbp - grp) - 0.596 - 2.336 * x
+                       - 0.498 * (x ** 2) - 0.254 * m_ks)
+            yaml_data['FE_H'] = feh_num / denom
+    # Gaia-derived Fe/H fallback
+    if yaml_data.get('FE_H') is None:
+        feh_gaia = _pf(yaml_data.get('GAIA_MH_GSPPHOT'))
+        if feh_gaia is not None:
+            yaml_data['FE_H'] = feh_gaia
+    # Mann+2015 + Delfosse+2000 radius/mass for M-dwarf candidates
+    if m_ks is not None and is_m_candidate:
+        if yaml_data.get('R_STAR_MKS') is None:
+            r_star = (1.9515 - 0.3520 * m_ks
+                      + 0.01680 * (m_ks ** 2))
+            if r_star > 0:
+                yaml_data['R_STAR_MKS'] = r_star
+        if (yaml_data.get('R_STAR_MKS_FEH') is None
+                and yaml_data.get('FE_H') is not None):
+            feh = _pf(yaml_data.get('FE_H'))
+            if feh is not None:
+                r_star_feh = (1.9305 - 0.3466 * m_ks
+                              + 0.01647 * (m_ks ** 2)
+                              + 0.04458 * feh)
+                if r_star_feh > 0:
+                    yaml_data['R_STAR_MKS_FEH'] = r_star_feh
+        if yaml_data.get('MASS_STAR_MANN15') is None:
+            m_star = (0.5858 + 0.3872 * m_ks
+                      - 0.1217 * (m_ks ** 2)
+                      + 0.0106 * (m_ks ** 3)
+                      - 2.7262e-4 * (m_ks ** 4))
+            if m_star > 0:
+                yaml_data['MASS_STAR_MANN15'] = m_star
+        if (yaml_data.get('MASS_STAR_DELFOSSE00') is None
+                and 4.5 <= m_ks <= 9.5):
+            log_m_del = 1e-3 * (1.8 + 6.12 * m_ks
+                                + 13.205 * m_ks**2
+                                - 6.2315 * m_ks**3
+                                + 0.37529 * m_ks**4)
+            yaml_data['MASS_STAR_DELFOSSE00'] = 10.0 ** log_m_del
+    # for non-M candidates fall back to Gaia FLAME outputs
+    if not is_m_candidate:
+        feh_gaia = _pf(yaml_data.get('GAIA_MH_GSPPHOT'))
+        yaml_data['FE_H'] = feh_gaia
+        for key in ('R_STAR_MKS', 'R_STAR_MKS_FEH',
+                    'MASS_STAR_MANN15', 'MASS_STAR_DELFOSSE00'):
+            if yaml_data.get(key) is not None:
+                yaml_data[key] = None
+    # logg derivation
+    mass_for_logg = _pf(yaml_data.get('MASS_STAR_MANN15'))
+    radius_for_logg = _pf(yaml_data.get('R_STAR_MKS'))
+    if not is_m_candidate:
+        if mass_for_logg is None:
+            mass_for_logg = _pf(yaml_data.get('GAIA_MASS_FLAME'))
+        if radius_for_logg is None:
+            radius_for_logg = _pf(yaml_data.get('GAIA_RADIUS_FLAME'))
+    else:
+        if radius_for_logg is None:
+            radius_for_logg = _pf(yaml_data.get('R_STAR_MKS_FEH'))
+    cond_logg = (yaml_data.get('LOG_G') is None
+                 and mass_for_logg is not None
+                 and radius_for_logg is not None
+                 and mass_for_logg > 0 and radius_for_logg > 0)
+    if cond_logg:
+        yaml_data['LOG_G'] = (4.438 + math.log10(mass_for_logg)
+                              - 2.0 * math.log10(radius_for_logg))
+    # luminosity derivation
+    teff_for_l = _pf(yaml_data.get('TEFF_GAIA_JH'))
+    if teff_for_l is None:
+        teff_for_l = _pf(yaml_data.get('TEFF_GAIA'))
+    if teff_for_l is None:
+        teff_for_l = _pf(yaml_data.get('TEFF', dict()).get('value'))
+    if is_m_candidate:
+        radius_for_l = _pf(yaml_data.get('R_STAR_MKS'))
+        if radius_for_l is None:
+            radius_for_l = radius_for_logg
+        if (radius_for_l is not None and teff_for_l is not None
+                and teff_for_l > 0):
+            yaml_data['L_STAR'] = ((radius_for_l ** 2)
+                                   * (teff_for_l / 5778.0) ** 4)
+    else:
+        lum_gaia = _pf(yaml_data.get('GAIA_LUM_FLAME'))
+        if lum_gaia is not None:
+            yaml_data['L_STAR'] = lum_gaia
+    # FLAME re-derivation for non-M targets
+    if not is_m_candidate:
+        mass_gaia = _pf(yaml_data.get('GAIA_MASS_FLAME'))
+        radius_gaia = _pf(yaml_data.get('GAIA_RADIUS_FLAME'))
+        lum_gaia = _pf(yaml_data.get('GAIA_LUM_FLAME'))
+        if (mass_gaia is not None and radius_gaia is not None
+                and mass_gaia > 0 and radius_gaia > 0):
+            yaml_data['LOG_G'] = (4.438 + math.log10(mass_gaia)
+                                  - 2.0 * math.log10(radius_gaia))
+        if lum_gaia is not None:
+            yaml_data['L_STAR'] = lum_gaia
+
+
+# -----------------------------------------------------------------------------
+# Schema scaffolding
+# -----------------------------------------------------------------------------
+def _full_resolve_schema(d: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    Ensure every expected top-level key exists on ``d`` (None if absent).
+    Mirrors ``_full_schema`` in resolve_against_simbad.py.
+    """
+    # top-level scalars
+    for top in ('APERO_NAME', 'ORIGINAL_NAME', 'SIMBAD_NAME',
+                'APERO_CLASS', 'EPOCH'):
+        d.setdefault(top, None)
+    # value+source+units blocks
+    blocks_with_units = [
+        ('RA', 'deg'), ('DEC', 'deg'),
+        ('PMRA', 'mas/yr'), ('PMDE', 'mas/yr'),
+        ('PLX', 'mas'), ('RV', 'km/s'),
+        ('TEFF', 'K'),
+    ]
+    for block, units in blocks_with_units:
+        sub = d.setdefault(block, dict())
+        sub.setdefault('value', None)
+        sub.setdefault('source', None)
+        sub.setdefault('units', units)
+    # value+source blocks
+    for block in ('SPT',):
+        sub = d.setdefault(block, dict())
+        sub.setdefault('value', None)
+        sub.setdefault('source', None)
+    # vsini block (extra err key)
+    vsini = d.setdefault('VSINI', dict())
+    for k in ('value', 'err', 'source'):
+        vsini.setdefault(k, None)
+    vsini.setdefault('units', 'km/s')
+    # photometry blocks
+    for block in ('G_MAG', 'GBP_MAG', 'GRP_MAG',
+                  'J_MAG', 'H_MAG', 'KS_MAG',
+                  'W1_MAG', 'W2_MAG', 'W3_MAG', 'W4_MAG'):
+        sub = d.setdefault(block, dict())
+        sub.setdefault('value', None)
+        sub.setdefault('source', None)
+    # plain top-level lists/strings
+    for k in ('KEYWORDS', 'ALIASES'):
+        d.setdefault(k, None)
+    d.setdefault('NOTES', None)
+    # Gaia-derived extras
+    for k in ('GAIA_SOURCE_ID',
+              'GAIA_TEFF_GSPPHOT', 'GAIA_LOGG_GSPPHOT',
+              'GAIA_MH_GSPPHOT',
+              'GAIA_RADIUS_FLAME', 'GAIA_LUM_FLAME', 'GAIA_MASS_FLAME'):
+        d.setdefault(k, None)
+    # derived fields filled by _derive_fields
+    derived_keys = (
+        'RA_HMS', 'DEC_DMS', 'RA_J2000_DEG', 'DEC_J2000_DEG',
+        'GALACTIC_LON', 'GALACTIC_LAT',
+        'ECLIPTIC_LON', 'ECLIPTIC_LAT',
+        'TELLURIC_VSYS_PLUS_VBARY_MIN',
+        'TELLURIC_VSYS_PLUS_VBARY_MAX', 'TELLURIC_LIMIT_WINDOWS',
+        'V_SKY', 'V3D', 'U', 'V', 'W',
+        'AMAG_G', 'AMAG_KS',
+        'TEFF_GAIA_JH', 'TEFF_GAIA',
+        'FE_H', 'R_STAR_MKS', 'R_STAR_MKS_FEH', 'MASS_STAR_MANN15',
+        'MASS_STAR_DELFOSSE00', 'LOG_G', 'L_STAR',
+    )
+    for k in derived_keys:
+        d.setdefault(k, None)
+    return d
+
+
+# -----------------------------------------------------------------------------
+# Merge helpers
+# -----------------------------------------------------------------------------
+def _merge_scalar(yaml_data: dict, yaml_block: str,
+                  simbad: dict, simbad_key: str, source: str) -> None:
+    """Merge a value+source scalar from simbad into yaml_data[yaml_block]."""
+    block = yaml_data[yaml_block]
+    if block.get('value') is None:
+        val = _pf(simbad.get(simbad_key))
+        if val is not None:
+            block['value'] = val
+            block['source'] = source
+
+
+def _merge_mag(yaml_data: dict, yaml_block: str,
+               simbad: dict, simbad_key: str, source: str) -> None:
+    """Merge a value+source magnitude from simbad into yaml_data[block]."""
+    block = yaml_data.get(yaml_block)
+    if not isinstance(block, dict):
+        yaml_data[yaml_block] = dict(value=None, source=None)
+        block = yaml_data[yaml_block]
+    if block.get('value') is None:
+        val = _pf(simbad.get(simbad_key))
+        if val is not None:
+            block['value'] = val
+            block['source'] = source
+
+
+def _update_yaml_from_simbad(yaml_data: Dict[str, Any],
+                             simbad: Dict[str, Any]
+                             ) -> Dict[str, Any]:
+    """
+    Merge a :func:`_resolve_from_name` result into ``yaml_data``, filling
+    only ``None`` values, then call :func:`_derive_fields`.
+
+    :param yaml_data: dict, the destination yaml entry (modified in-place)
+    :param simbad: dict, the result from :func:`_resolve_from_name`
+    :return: ``yaml_data`` (same instance)
+    """
+    # ensure full schema
+    _full_resolve_schema(yaml_data)
+    # SIMBAD canonical name
+    if yaml_data.get('SIMBAD_NAME') is None:
+        yaml_data['SIMBAD_NAME'] = simbad.get('simbad_main_id')
+    # astrometry scalars
+    _merge_scalar(yaml_data, 'RA', simbad, 'ra_deg', 'SIMBAD')
+    _merge_scalar(yaml_data, 'DEC', simbad, 'dec_deg', 'SIMBAD')
+    _merge_scalar(yaml_data, 'PLX', simbad, 'parallax_mas', 'SIMBAD')
+    _merge_scalar(yaml_data, 'PMRA', simbad, 'pmra_masyr', 'SIMBAD')
+    _merge_scalar(yaml_data, 'PMDE', simbad, 'pmdec_masyr', 'SIMBAD')
+    _merge_scalar(yaml_data, 'RV', simbad, 'rv_kms', 'SIMBAD')
+    # Teff: prefer Gaia GSP-Phot, else SIMBAD median teff measurements
+    if yaml_data['TEFF']['value'] is None:
+        gaia_teff = _pf(simbad.get('gaia_teff_gspphot'))
+        simbad_teff = _pf(simbad.get('teff_simbad'))
+        if gaia_teff is not None:
+            yaml_data['TEFF']['value'] = gaia_teff
+            yaml_data['TEFF']['source'] = 'Gaia DR3 GSP-Phot'
+        elif simbad_teff is not None:
+            yaml_data['TEFF']['value'] = simbad_teff
+            yaml_data['TEFF']['source'] = 'SIMBAD mes_teff'
+    # spectral type
+    if (yaml_data['SPT']['value'] is None
+            and _nv(simbad.get('sp_type')) is not None):
+        yaml_data['SPT']['value'] = simbad['sp_type']
+        yaml_data['SPT']['source'] = 'SIMBAD'
+    # photometry
+    _merge_mag(yaml_data, 'G_MAG', simbad, 'G_mag', 'SIMBAD/Gaia')
+    _merge_mag(yaml_data, 'J_MAG', simbad, 'J_mag', 'SIMBAD/2MASS')
+    _merge_mag(yaml_data, 'H_MAG', simbad, 'H_mag', 'SIMBAD/2MASS')
+    _merge_mag(yaml_data, 'KS_MAG', simbad, 'K_mag', 'SIMBAD/2MASS')
+    _merge_mag(yaml_data, 'GBP_MAG', simbad, 'GBP_mag', 'Gaia VizieR')
+    _merge_mag(yaml_data, 'GRP_MAG', simbad, 'GRP_mag', 'Gaia VizieR')
+    _merge_mag(yaml_data, 'W1_MAG', simbad, 'W1_mag', 'AllWISE')
+    _merge_mag(yaml_data, 'W2_MAG', simbad, 'W2_mag', 'AllWISE')
+    _merge_mag(yaml_data, 'W3_MAG', simbad, 'W3_mag', 'AllWISE')
+    _merge_mag(yaml_data, 'W4_MAG', simbad, 'W4_mag', 'AllWISE')
+    # Gaia extra scalar fields
+    extra_keys = [
+        ('GAIA_TEFF_GSPPHOT', 'gaia_teff_gspphot'),
+        ('GAIA_LOGG_GSPPHOT', 'gaia_logg_gspphot'),
+        ('GAIA_MH_GSPPHOT', 'gaia_mh_gspphot'),
+        ('GAIA_RADIUS_FLAME', 'gaia_radius_flame'),
+        ('GAIA_LUM_FLAME', 'gaia_lum_flame'),
+        ('GAIA_MASS_FLAME', 'gaia_mass_flame'),
+    ]
+    for yaml_key, src_key in extra_keys:
+        if (yaml_data.get(yaml_key) is None
+                and _nv(simbad.get(src_key)) is not None):
+            v = _pf(simbad[src_key])
+            yaml_data[yaml_key] = v if v is not None else simbad[src_key]
+    # Gaia source id - keep as string to avoid scientific notation
+    if (yaml_data.get('GAIA_SOURCE_ID') is None
+            and _nv(simbad.get('gaia_source_id')) is not None):
+        yaml_data['GAIA_SOURCE_ID'] = str(simbad.get('gaia_source_id'))
+    # finally compute all derived fields
+    _derive_fields(yaml_data)
+    return yaml_data
+
+
+# -----------------------------------------------------------------------------
+# WISE designation helpers
+# -----------------------------------------------------------------------------
+def _escape_simbad(name: str) -> str:
+    """Escape a string for use inside a single-quoted ADQL literal."""
+    return name.replace("'", "''")
+
+
+def _extract_wisea_designation(identifier: Any) -> Optional[str]:
+    """Return the bare AllWISE designation or None for non-WISEA inputs."""
+    sval = _nv(identifier)
+    if sval is None:
+        return None
+    if sval.startswith('WISEA '):
+        return sval.replace('WISEA ', '', 1).strip()
+    return None
+
+
+def _fetch_wise_by_designation(designation: str,
+                               vizier_url: Optional[str] = None
+                               ) -> Optional[Tuple[Any, ...]]:
+    """Fetch one AllWISE row by its designation via VizieR."""
+    safe = designation.replace("'", "''")
+    # build query - intentionally uses double quotes inside the string
+    adql = (
+        'SELECT TOP 1 "AllWISE", W1mag, e_W1mag, W2mag, e_W2mag, '
+        'W3mag, e_W3mag, W4mag, e_W4mag, RAJ2000, DEJ2000 '
+        'FROM "II/328/allwise" '
+        'WHERE "AllWISE" = \'{0}\''
+    ).format(safe)
+    payload = _vizier_json(adql, url=vizier_url)
+    if payload is None:
+        return None
+    rows = payload.get('data', [])
+    if not rows:
+        return None
+    row = rows[0]
+    if len(row) < 11:
+        return None
+    return tuple(row)
+
+
+# -----------------------------------------------------------------------------
+# Top-level resolver
+# -----------------------------------------------------------------------------
+def _resolve_from_name(name: str,
+                       simbad_url: Optional[str] = None,
+                       gaia_url: Optional[str] = None,
+                       vizier_url: Optional[str] = None
+                       ) -> Optional[Dict[str, Any]]:
+    """
+    Query SIMBAD/Gaia/VizieR for ``name`` and return a normalised dict.
+
+    All keys may be ``None``. Caller must merge the result into a yaml
+    entry via :func:`_update_yaml_from_simbad`.
+
+    :param name: str, the target name to resolve
+    :param simbad_url: optional override for the SIMBAD TAP endpoint;
+                       defaults to module-level :data:`SIMBAD_TAP`.
+    :param gaia_url: optional override for the Gaia TAP endpoint.
+    :param vizier_url: optional override for the VizieR TAP endpoint.
+    :return: dict of normalised SIMBAD/Gaia/VizieR results, or ``None``
+             if SIMBAD did not return anything for ``name``.
+    """
+    # escape the name for ADQL string literals
+    safe = _escape_simbad(name)
+    # ----- 1. core SIMBAD query -----
+    adql = (
+        'SELECT TOP 1 b.main_id, b.ra, b.dec, b.plx_value, b.pmra, '
+        'b.pmdec, b.rvz_radvel, b.sp_type, b.otype_txt, '
+        'f.G, f.J, f.H, f.K '
+        'FROM ident i JOIN basic b ON i.oidref = b.oid '
+        'LEFT JOIN allfluxes f ON b.oid = f.oidref '
+        'WHERE i.id = \'{0}\''
+    ).format(safe)
+    payload = _simbad_json(adql, url=simbad_url)
+    if payload is None:
+        return None
+    rows = payload.get('data', [])
+    if not rows:
+        return None
+    row = rows[0]
+    keys = ['simbad_main_id', 'ra_deg', 'dec_deg', 'parallax_mas',
+            'pmra_masyr', 'pmdec_masyr', 'rv_kms',
+            'sp_type', 'otype_txt',
+            'G_mag', 'J_mag', 'H_mag', 'K_mag']
+    result: Dict[str, Any] = {k: _nv(v) for k, v in zip(keys, row)}
+    # null-fill all optional keys
+    optional_keys = ('GBP_mag', 'GBP_err', 'GRP_mag', 'GRP_err',
+                     'W1_mag', 'W1_err', 'W2_mag', 'W2_err',
+                     'W3_mag', 'W3_err', 'W4_mag', 'W4_err',
+                     'gaia_source_id',
+                     'gaia_teff_gspphot', 'gaia_logg_gspphot',
+                     'gaia_mh_gspphot',
+                     'gaia_radius_flame', 'gaia_lum_flame',
+                     'gaia_mass_flame', 'teff_simbad')
+    for k in optional_keys:
+        result.setdefault(k, None)
+    # ----- 2. SIMBAD Teff median from mesFe_h -----
+    adql_teff = (
+        'SELECT TOP 10 m.teff FROM mesFe_h m '
+        'JOIN ident i ON m.oidref = i.oidref '
+        'WHERE i.id = \'{0}\' AND m.teff IS NOT NULL'
+    ).format(safe)
+    teff_p = _simbad_json(adql_teff, url=simbad_url)
+    if teff_p:
+        teffs = [_pf(r[0]) for r in teff_p.get('data', [])
+                 if _pf(r[0]) is not None]
+        if teffs:
+            result['teff_simbad'] = sorted(teffs)[len(teffs) // 2]
+    # ----- 3. Gaia identifier via SIMBAD cross-match -----
+    adql_idents = (
+        'SELECT i2.id FROM ident i '
+        'JOIN ident i2 ON i.oidref = i2.oidref '
+        'WHERE i.id = \'{0}\' AND ('
+        "i2.id LIKE 'Gaia DR3 %' OR i2.id LIKE 'Gaia EDR3 %' "
+        "OR i2.id LIKE 'Gaia DR2 %' OR i2.id LIKE 'WISEA %')"
+    ).format(safe)
+    idents_p = _simbad_json(adql_idents, url=simbad_url)
+    gaia_release: Optional[str] = None
+    gaia_source_id: Optional[str] = None
+    wise_designation: Optional[str] = None
+    if idents_p:
+        prefixes = (('Gaia DR3 ', 'dr3'),
+                    ('Gaia EDR3 ', 'edr3'),
+                    ('Gaia DR2 ', 'dr2'))
+        for irow in idents_p.get('data', []):
+            ident_val = _nv(irow[0]) if irow else None
+            if ident_val is None:
+                continue
+            for prefix, rel in prefixes:
+                if ident_val.startswith(prefix):
+                    candidate = ident_val[len(prefix):].strip()
+                    if candidate.isdigit():
+                        gaia_source_id = candidate
+                        gaia_release = rel
+                        break
+            if wise_designation is None:
+                wise_designation = _extract_wisea_designation(ident_val)
+            if (gaia_source_id is not None
+                    and wise_designation is not None):
+                break
+    result['gaia_source_id'] = gaia_source_id
+    # ----- 4. Gaia BP/RP + PMs from VizieR -----
+    ra_deg = _pf(result['ra_deg'])
+    dec_deg = _pf(result['dec_deg'])
+    simbad_ra_deg = ra_deg
+    simbad_dec_deg = dec_deg
+    simbad_pmra = _pf(result.get('pmra_masyr'))
+    simbad_pmdec = _pf(result.get('pmdec_masyr'))
+    simbad_plx = _pf(result.get('parallax_mas'))
+    simbad_rv = _pf(result.get('rv_kms'))
+    gaia_ref_epoch: Optional[float] = None
+    if gaia_source_id is not None:
+        if gaia_release == 'dr2':
+            adql_gaia = (
+                'SELECT TOP 1 phot_bp_mean_mag, phot_rp_mean_mag, '
+                'phot_bp_mean_mag_error, phot_rp_mean_mag_error, '
+                'ra, dec, pmra, pmdec '
+                'FROM "I/345/gaia2" WHERE source_id = {0}'
+            ).format(gaia_source_id)
+        else:
+            table_map = dict()
+            table_map['dr3'] = '"I/355/gaiadr3"'
+            table_map['edr3'] = '"I/350/gaiaedr3"'
+            table = table_map.get(gaia_release or 'dr3',
+                                  '"I/355/gaiadr3"')
+            adql_gaia = (
+                'SELECT TOP 1 BPmag, RPmag, e_BPmag, e_RPmag, '
+                'RA_ICRS, DE_ICRS, pmRA, pmDE '
+                'FROM {0} WHERE Source = {1}'
+            ).format(table, gaia_source_id)
+        gaia_p = _vizier_json(adql_gaia, url=vizier_url)
+        if gaia_p:
+            gdata = gaia_p.get('data', [])
+            if gdata:
+                gv = gdata[0]
+                _set_if_none(result, 'GBP_mag',
+                             _nv(gv[0]) if len(gv) > 0 else None)
+                _set_if_none(result, 'GRP_mag',
+                             _nv(gv[1]) if len(gv) > 1 else None)
+                _set_if_none(result, 'GBP_err',
+                             _nv(gv[2]) if len(gv) > 2 else None)
+                _set_if_none(result, 'GRP_err',
+                             _nv(gv[3]) if len(gv) > 3 else None)
+                # prefer Gaia astrometry as the WISE-propagation anchor
+                ra_gaia = _pf(gv[4]) if len(gv) > 4 else None
+                dec_gaia = _pf(gv[5]) if len(gv) > 5 else None
+                if ra_gaia is not None:
+                    ra_deg = ra_gaia
+                if dec_gaia is not None:
+                    dec_deg = dec_gaia
+                if gaia_release in {'dr3', 'edr3'}:
+                    gaia_ref_epoch = 2016.0
+                elif gaia_release == 'dr2':
+                    gaia_ref_epoch = 2015.5
+                _set_if_none(result, 'pmra_masyr',
+                             _nv(gv[6]) if len(gv) > 6 else None)
+                _set_if_none(result, 'pmdec_masyr',
+                             _nv(gv[7]) if len(gv) > 7 else None)
+    # positional fallback for BP/RP if source-id lookup missed
+    gaia_query_ra = ra_deg
+    gaia_query_dec = dec_deg
+    if (gaia_ref_epoch is None and simbad_ra_deg is not None
+            and simbad_dec_deg is not None):
+        gaia_query_ra, gaia_query_dec = _propagate_to_epoch(
+            ra_deg=simbad_ra_deg, dec_deg=simbad_dec_deg,
+            pmra=simbad_pmra, pmdec=simbad_pmdec,
+            source_epoch_jyear=2000.0,
+            target_epoch_jyear=2016.0,
+            plx_mas=simbad_plx, rv_kms=simbad_rv)
+    cond_pos = ((result.get('GBP_mag') is None
+                 or result.get('GRP_mag') is None)
+                and gaia_query_ra is not None
+                and gaia_query_dec is not None)
+    if cond_pos:
+        adql_pos = (
+            'SELECT TOP 10 RA_ICRS, DE_ICRS, BPmag, RPmag, '
+            'e_BPmag, e_RPmag '
+            'FROM "I/355/gaiadr3" WHERE 1 = CONTAINS('
+            "POINT('ICRS', RA_ICRS, DE_ICRS), "
+            "CIRCLE('ICRS', {0}, {1}, 0.0005))"
+        ).format(gaia_query_ra, gaia_query_dec)
+        gaia_pos_p = _vizier_json(adql_pos, url=vizier_url)
+        if gaia_pos_p:
+            best_gaia: Optional[Tuple[float, list]] = None
+            for gv in gaia_pos_p.get('data', []):
+                if len(gv) < 4:
+                    continue
+                rra, rdec = _pf(gv[0]), _pf(gv[1])
+                if rra is None or rdec is None:
+                    continue
+                dist = _sep_arcsec(gaia_query_ra, gaia_query_dec,
+                                   rra, rdec)
+                if best_gaia is None or dist < best_gaia[0]:
+                    best_gaia = (dist, gv)
+            if best_gaia:
+                gv = best_gaia[1]
+                ra_gaia = _pf(gv[0]) if len(gv) > 0 else None
+                dec_gaia = _pf(gv[1]) if len(gv) > 1 else None
+                if ra_gaia is not None:
+                    ra_deg = ra_gaia
+                if dec_gaia is not None:
+                    dec_deg = dec_gaia
+                gaia_ref_epoch = 2016.0
+                _set_if_none(result, 'GBP_mag',
+                             _nv(gv[2]) if len(gv) > 2 else None)
+                _set_if_none(result, 'GRP_mag',
+                             _nv(gv[3]) if len(gv) > 3 else None)
+                _set_if_none(result, 'GBP_err',
+                             _nv(gv[4]) if len(gv) > 4 else None)
+                _set_if_none(result, 'GRP_err',
+                             _nv(gv[5]) if len(gv) > 5 else None)
+    # ----- 5. Gaia DR3 astrophysical parameters -----
+    if gaia_source_id is not None:
+        adql_astro = (
+            'SELECT TOP 1 teff_gspphot, logg_gspphot, mh_gspphot, '
+            'radius_flame, lum_flame, mass_flame '
+            'FROM gaiadr3.astrophysical_parameters '
+            'WHERE source_id = {0}'
+        ).format(gaia_source_id)
+        astro_rows = _gaia_csv(adql_astro, url=gaia_url)
+        if astro_rows:
+            ar = astro_rows[0]
+            _set_if_none(result, 'gaia_teff_gspphot',
+                         _nv(ar.get('teff_gspphot')))
+            _set_if_none(result, 'gaia_logg_gspphot',
+                         _nv(ar.get('logg_gspphot')))
+            _set_if_none(result, 'gaia_mh_gspphot',
+                         _nv(ar.get('mh_gspphot')))
+            _set_if_none(result, 'gaia_radius_flame',
+                         _nv(ar.get('radius_flame')))
+            _set_if_none(result, 'gaia_lum_flame',
+                         _nv(ar.get('lum_flame')))
+            _set_if_none(result, 'gaia_mass_flame',
+                         _nv(ar.get('mass_flame')))
+    # ----- 6. AllWISE photometry -----
+    pmra_v = _pf(result.get('pmra_masyr'))
+    pmdec_v = _pf(result.get('pmdec_masyr'))
+    if wise_designation is not None:
+        wise_row = _fetch_wise_by_designation(wise_designation,
+                                              vizier_url=vizier_url)
+        if wise_row is not None:
+            _set_if_none(result, 'W1_mag', _nv(wise_row[1]))
+            _set_if_none(result, 'W1_err', _nv(wise_row[2]))
+            _set_if_none(result, 'W2_mag', _nv(wise_row[3]))
+            _set_if_none(result, 'W2_err', _nv(wise_row[4]))
+            _set_if_none(result, 'W3_mag', _nv(wise_row[5]))
+            _set_if_none(result, 'W3_err', _nv(wise_row[6]))
+            _set_if_none(result, 'W4_mag', _nv(wise_row[7]))
+            _set_if_none(result, 'W4_err', _nv(wise_row[8]))
+    cond_wise_pos = ((result.get('W1_mag') is None
+                      or result.get('W2_mag') is None)
+                     and ra_deg is not None and dec_deg is not None)
+    if cond_wise_pos:
+        if (gaia_ref_epoch is not None and pmra_v is not None
+                and pmdec_v is not None):
+            # propagate Gaia coords to AllWISE epoch (~2010.5)
+            dt_yr = 2010.5 - gaia_ref_epoch
+            mu_tot = math.sqrt(pmra_v ** 2 + pmdec_v ** 2)
+            radius = max(20.0, min(300.0,
+                                   abs(dt_yr) * mu_tot / 1000.0 + 12.0))
+            ra_wise, dec_wise = _propagate_to_epoch(
+                ra_deg=ra_deg, dec_deg=dec_deg,
+                pmra=pmra_v, pmdec=pmdec_v,
+                source_epoch_jyear=gaia_ref_epoch,
+                target_epoch_jyear=2010.5,
+                plx_mas=simbad_plx, rv_kms=simbad_rv)
+        elif (simbad_ra_deg is not None
+              and simbad_dec_deg is not None):
+            ra_wise, dec_wise = _propagate_to_epoch(
+                ra_deg=simbad_ra_deg, dec_deg=simbad_dec_deg,
+                pmra=simbad_pmra, pmdec=simbad_pmdec,
+                source_epoch_jyear=2000.0,
+                target_epoch_jyear=2010.5,
+                plx_mas=simbad_plx, rv_kms=simbad_rv)
+            if (simbad_pmra is not None
+                    and simbad_pmdec is not None):
+                mu_tot = math.sqrt(simbad_pmra ** 2
+                                   + simbad_pmdec ** 2)
+                radius = max(20.0, min(300.0,
+                                       abs(2010.5 - 2000.0)
+                                       * mu_tot / 1000.0 + 12.0))
+            else:
+                radius = 30.0
+        else:
+            radius = 30.0
+            ra_wise, dec_wise = ra_deg, dec_deg
+        adql_wise = (
+            'SELECT TOP 10 RAJ2000, DEJ2000, W1mag, e_W1mag, '
+            'W2mag, e_W2mag, W3mag, e_W3mag, W4mag, e_W4mag '
+            'FROM "II/328/allwise" WHERE 1 = CONTAINS('
+            "POINT('ICRS', RAJ2000, DEJ2000), "
+            "CIRCLE('ICRS', {0}, {1}, {2}/3600.0))"
+        ).format(ra_wise, dec_wise, radius)
+        wise_p = _vizier_json(adql_wise, url=vizier_url)
+        if wise_p:
+            best_wise: Optional[Tuple[float, list]] = None
+            for wv in wise_p.get('data', []):
+                if len(wv) < 6:
+                    continue
+                wra, wdec = _pf(wv[0]), _pf(wv[1])
+                if wra is None or wdec is None:
+                    continue
+                dist = _sep_arcsec(ra_wise, dec_wise, wra, wdec)
+                if best_wise is None or dist < best_wise[0]:
+                    best_wise = (dist, wv)
+            if best_wise:
+                wv = best_wise[1]
+                _set_if_none(result, 'W1_mag',
+                             _nv(wv[2]) if len(wv) > 2 else None)
+                _set_if_none(result, 'W1_err',
+                             _nv(wv[3]) if len(wv) > 3 else None)
+                _set_if_none(result, 'W2_mag',
+                             _nv(wv[4]) if len(wv) > 4 else None)
+                _set_if_none(result, 'W2_err',
+                             _nv(wv[5]) if len(wv) > 5 else None)
+                _set_if_none(result, 'W3_mag',
+                             _nv(wv[6]) if len(wv) > 6 else None)
+                _set_if_none(result, 'W3_err',
+                             _nv(wv[7]) if len(wv) > 7 else None)
+                _set_if_none(result, 'W4_mag',
+                             _nv(wv[8]) if len(wv) > 8 else None)
+                _set_if_none(result, 'W4_err',
+                             _nv(wv[9]) if len(wv) > 9 else None)
+    return result
+
+
+# =============================================================================
+# File-locking helper
+# =============================================================================
+class _FileLock:
+    """
+    Cross-platform best-effort file lock.
+
+    On POSIX uses ``fcntl.flock`` on a sidecar ``*.lock`` file. On platforms
+    without ``fcntl`` falls back to spinning on ``O_EXCL`` creation of a
+    sentinel file. Either way the lock is released on context exit.
+    """
+    # lock acquisition timeout (seconds)
+    DEFAULT_TIMEOUT = 30.0
+    # spin-wait sleep between attempts (seconds)
+    SLEEP_INTERVAL = 0.05
+
+    def __init__(self, lockpath: str,
+                 timeout: float = DEFAULT_TIMEOUT) -> None:
+        """
+        :param lockpath: str, full path to the lock file (will be created)
+        :param timeout: float, how long to wait before raising
+        """
+        # path of the lock-file used as the mutex
+        self.lockpath = lockpath
+        # acquisition timeout
+        self.timeout = timeout
+        # the open file handle (for fcntl path) or fd (for fallback)
+        self._fh = None
+        # whether we are using the fallback spin-wait path
+        self._fallback = _fcntl is None
+
+    def __enter__(self) -> '_FileLock':
+        """Acquire the lock, blocking up to ``self.timeout`` seconds."""
+        # ensure the parent directory of the lock file exists
+        os.makedirs(os.path.dirname(self.lockpath), exist_ok=True)
+        # start time for timeout accounting
+        start = time.time()
+        # POSIX path: open the lock file and flock() it
+        if not self._fallback:
+            # open the sidecar file (create if missing)
+            self._fh = open(self.lockpath, 'a+')
+            # spin until LOCK_EX succeeds or we time out
+            while True:
+                try:
+                    _fcntl.flock(self._fh.fileno(),
+                                 _fcntl.LOCK_EX | _fcntl.LOCK_NB)
+                    return self
+                except (BlockingIOError, OSError):
+                    if (time.time() - start) > self.timeout:
+                        self._fh.close()
+                        emsg = 'Timeout acquiring lock {0}'.format(
+                            self.lockpath)
+                        raise AperoCodedException(None, message=emsg)
+                    time.sleep(self.SLEEP_INTERVAL)
+        # Fallback path: O_EXCL spin-wait
+        while True:
+            try:
+                fd = os.open(self.lockpath,
+                             os.O_CREAT | os.O_EXCL | os.O_WRONLY)
+                # write our pid for debugging then keep fd open
+                os.write(fd, str(os.getpid()).encode('utf-8'))
+                self._fh = fd
+                return self
+            except FileExistsError:
+                if (time.time() - start) > self.timeout:
+                    emsg = 'Timeout acquiring lock {0}'.format(self.lockpath)
+                    raise AperoCodedException(None, message=emsg)
+                time.sleep(self.SLEEP_INTERVAL)
+
+    def __exit__(self, exc_type, exc_val, exc_tb) -> None:
+        """Release the lock and clean up."""
+        # POSIX path
+        if not self._fallback and self._fh is not None:
+            try:
+                _fcntl.flock(self._fh.fileno(), _fcntl.LOCK_UN)
+            finally:
+                self._fh.close()
+                self._fh = None
+            return
+        # Fallback path
+        if self._fallback and self._fh is not None:
+            try:
+                os.close(self._fh)
+            finally:
+                self._fh = None
+                # remove the sentinel file so others can acquire
+                try:
+                    os.remove(self.lockpath)
+                except OSError:
+                    pass
+
+
+# =============================================================================
+# Define the AstrometricDatabase class
+# =============================================================================
+class AstrometricDatabase:
+    """
+    Yaml-backed astrometric "database" with a call-surface compatible with
+    the legacy ``drs_database.AstrometricDatabase`` (where it makes sense).
+
+    Each object lives in its own yaml file under
+    ``params['DRS_DATA_ASSETS']/astrometrics/<APERO_NAME>.yaml``; the file
+    layout matches the example in
+    ``vscode_share/astrometric_example.yaml``.
+
+    The class is **picklable** (state is just simple python objects) so it
+    can be passed through multiprocessing pools, and module-level caches
+    survive across forks.
+    """
+    # class-level identifier used in error messages
+    classname = 'AstrometricDatabase'
+
+    def __init__(self, params: ParamDict,
+                 shortname: Optional[str] = None) -> None:
+        """
+        Construct the astrometric database.
+
+        :param params: ParamDict, the apero parameter dictionary - only
+                       ``params['DRS_DATA_ASSETS']`` is used.
+        :param shortname: str or None, the calling recipe shortname (kept
+                          for parity with the old API; used only in log /
+                          notes messages).
+        """
+        # set function name (display only)
+        # _ = display_func('__init__', __NAME__, self.classname)
+        # store the parameter dict
+        self.params = params
+        # store the recipe shortname for log messages
+        self.shortname = shortname or 'None'
+        # base assets path from params (may not exist on disk yet)
+        assets_root = str(params['DRS_DATA_ASSETS'])
+        # absolute path to the astrometrics directory
+        self.path = os.path.abspath(os.path.join(assets_root, ASTROM_SUBDIR))
+        # absolute path to the lock directory
+        self.lockdir = os.path.join(self.path, LOCK_SUBDIR)
+        # parity attributes with the legacy API (unused but read by callers)
+        self.name = 'astrom'
+        self.kind = 'astrom'
+        # try to record the instrument name (best-effort)
+        try:
+            self.instrument = str(params['INSTRUMENT'])
+        except Exception:
+            self.instrument = 'None'
+        # legacy attribute kept as None for callers that expected the old
+        # SQL-backed manager to expose pconst / database handles
+        self.pconst = None
+        self.database = None
+        # TAP endpoints (read from params; fall back to module defaults)
+        self.simbad_url = self._read_param('SIMBAD_TAPURL', SIMBAD_TAP)
+        self.gaia_url = self._read_param('GAIA_URL', GAIA_TAP)
+        self.vizier_url = self._read_param('VIZIER_TAPURL', VIZIER_TAP)
+
+    def _read_param(self, key: str, default: str) -> str:
+        '''Best-effort param lookup that tolerates missing keys.'''
+        try:
+            value = self.params[key]
+        except Exception:
+            return default
+        if value is None or str(value).strip() in ('', 'None', 'NULL'):
+            return default
+        return str(value)
+
+    # -------------------------------------------------------------------------
+    # Pickle support
+    # -------------------------------------------------------------------------
+    def __getstate__(self) -> dict:
+        """Return picklable state (everything in __dict__ already is)."""
+        return dict(self.__dict__)
+
+    def __setstate__(self, state: dict) -> None:
+        """Restore pickled state."""
+        self.__dict__.update(state)
+
+    # -------------------------------------------------------------------------
+    # Compatibility no-op
+    # -------------------------------------------------------------------------
+    def load_db(self) -> None:
+        """
+        Compatibility shim for callers that used to do ``objdbm.load_db()``
+        on the old SQL-backed class. Triggers a (cached) directory scan.
+        """
+        # ensure the index is populated (cheap if already loaded)
+        self._ensure_loaded()
+
+    def warm_cache(self, *args: Any, **kwargs: Any) -> None:
+        """
+        Compatibility shim for the legacy SQL class which used to pre-load
+        the full table to avoid per-object SQL round-trips. The yaml-backed
+        implementation already lazy-loads everything in :meth:`_ensure_loaded`
+        so this call is now equivalent to :meth:`load_db`.
+        """
+        # accept and ignore any args (legacy was warm_cache(pconst))
+        _ = args, kwargs
+        self._ensure_loaded()
+
+    # -------------------------------------------------------------------------
+    # Index loading / cache management
+    # -------------------------------------------------------------------------
+    def _ensure_loaded(self, force: bool = False) -> None:
+        """
+        Make sure the in-memory index for ``self.path`` is up to date.
+
+        Uses two cheap freshness checks before doing any I/O:
+            1. directory mtime - if unchanged we trust the in-memory cache
+            2. per-file mtime  - only re-read yaml files that changed
+
+        :param force: bool, if True ignore caches and re-scan from disk
+        """
+        # if the directory does not exist yet, init empty caches and return
+        if not os.path.isdir(self.path):
+            _NAME_INDEX.setdefault(self.path, dict())
+            _ENTRY_CACHE.setdefault(self.path, dict())
+            _MTIME_CACHE.setdefault(self.path, dict())
+            _DIR_MTIME[self.path] = -1.0
+            return
+        # current directory mtime
+        try:
+            dir_mtime = os.path.getmtime(self.path)
+        except OSError:
+            dir_mtime = -1.0
+        # cheap path: if dir mtime unchanged and not forcing, we're done
+        if (not force
+                and self.path in _DIR_MTIME
+                and _DIR_MTIME[self.path] == dir_mtime
+                and self.path in _NAME_INDEX):
+            return
+        # ensure cache slots exist for this path
+        name_index = _NAME_INDEX.setdefault(self.path, dict())
+        entries = _ENTRY_CACHE.setdefault(self.path, dict())
+        mtimes = _MTIME_CACHE.setdefault(self.path, dict())
+        # set of yaml files currently on disk
+        disk_files = set()
+        # track if anything changed (so we can decide whether to invalidate)
+        any_changes = False
+        # iterate over directory entries (no recursion - flat layout)
+        for fname in os.listdir(self.path):
+            # only consider .yaml files (skip .locks, hidden, etc.)
+            if not fname.endswith(YAML_EXT):
+                continue
+            # skip dotfiles (tmp files etc.)
+            if fname.startswith('.'):
+                continue
+            # full path
+            fpath = os.path.join(self.path, fname)
+            # skip directories that happen to end in .yaml
+            if not os.path.isfile(fpath):
+                continue
+            # remember we saw this file
+            disk_files.add(fname)
+            # fetch current mtime
+            try:
+                fmtime = os.path.getmtime(fpath)
+            except OSError:
+                continue
+            # skip files that have not changed since last load
+            if (not force
+                    and fname in mtimes
+                    and mtimes[fname] == fmtime):
+                continue
+            # (re)load this yaml file
+            try:
+                entry = self._read_yaml(fpath)
+            except Exception as exc:
+                # log a warning but do not crash - one bad file should not
+                # break the whole catalogue
+                wmsg = 'Skipping unreadable astrometric yaml: {0} ({1})'
+                warnings.warn(wmsg.format(fpath, exc))
+                continue
+            # the canonical APERO name is required
+            apero_name = entry.get(APERO_NAME_KEY)
+            if _is_null(apero_name):
+                wmsg = ('Astrometric yaml {0} has no APERO_NAME - '
+                        'skipping').format(fpath)
+                warnings.warn(wmsg)
+                continue
+            # store the entry keyed by the canonical name
+            entries[str(apero_name)] = entry
+            # remember mtime so we don't reload next time
+            mtimes[fname] = fmtime
+            # add every searchable key into the name index
+            self._index_entry(name_index, str(apero_name), entry)
+            any_changes = True
+        # detect deletions on disk (files we cached but no longer exist)
+        deleted = [f for f in mtimes if f not in disk_files]
+        if deleted:
+            # cheapest correct option: nuke caches for this path and rebuild
+            _NAME_INDEX[self.path] = dict()
+            _ENTRY_CACHE[self.path] = dict()
+            _MTIME_CACHE[self.path] = dict()
+            _DIR_MTIME[self.path] = -1.0
+            self._invalidate_resolve_cache()
+            self._ensure_loaded(force=True)
+            return
+        # remember the directory mtime for the cheap freshness check
+        _DIR_MTIME[self.path] = dir_mtime
+        # only invalidate the per-name resolution cache if we actually
+        # picked up new/changed entries
+        if any_changes:
+            self._invalidate_resolve_cache()
+
+    def _index_entry(self, name_index: Dict[str, str],
+                     apero_name: str, entry: Dict[str, Any]) -> None:
+        """
+        Add an entry's searchable keys into ``name_index``.
+
+        :param name_index: dict, the mutable cleaned-name -> APERO_NAME map
+        :param apero_name: str, the canonical APERO name
+        :param entry: dict, the loaded yaml entry
+        """
+        # always index the cleaned APERO name itself
+        cleaned = clean_object(apero_name)
+        if cleaned and cleaned != 'Null':
+            name_index[cleaned] = apero_name
+        # index the other primary name keys
+        for key in NAME_KEYS:
+            if key == APERO_NAME_KEY:
+                continue
+            value = entry.get(key)
+            if _is_null(value):
+                continue
+            cleaned = clean_object(value)
+            if cleaned and cleaned != 'Null':
+                # do not overwrite an existing primary mapping
+                name_index.setdefault(cleaned, apero_name)
+        # index every alias (if any)
+        aliases = entry.get(ALIAS_KEY)
+        if isinstance(aliases, str):
+            # tolerate pipe-delimited strings (legacy db format)
+            aliases = aliases.split('|')
+        if isinstance(aliases, (list, tuple)):
+            for alias in aliases:
+                if _is_null(alias):
+                    continue
+                cleaned = clean_object(alias)
+                if cleaned and cleaned != 'Null':
+                    name_index.setdefault(cleaned, apero_name)
+
+    @staticmethod
+    def _invalidate_resolve_cache() -> None:
+        """Clear the per-process name resolution cache."""
+        # simple wholesale clear is fine - it only stores name lookups
+        _RESOLVE_CACHE.clear()
+
+    @staticmethod
+    def _read_yaml(fpath: str) -> Dict[str, Any]:
+        """
+        Read a yaml file and return its top-level dict.
+
+        :param fpath: str, absolute path to the yaml file
+        :return: dict, the parsed yaml content
+        """
+        # open with explicit utf-8 encoding (yaml files contain unicode)
+        with open(fpath, 'r', encoding='utf-8') as f:
+            data = yaml.safe_load(f)
+        # ensure we return a dict even for empty files
+        if data is None:
+            return dict()
+        if not isinstance(data, dict):
+            emsg = 'Astrometric yaml {0} is not a mapping'.format(fpath)
+            raise AperoCodedException(None, message=emsg)
+        return data
+
+    @staticmethod
+    def _write_yaml(fpath: str, data: Dict[str, Any]) -> None:
+        """
+        Atomically write ``data`` to ``fpath`` as yaml.
+
+        Uses a tmp-file + ``os.replace`` so a crash mid-write cannot leave
+        a half-written yaml on disk.
+
+        :param fpath: str, target file path
+        :param data: dict, the data to dump
+        """
+        # write to a tmp file alongside the target so os.replace is atomic
+        target_dir = os.path.dirname(fpath)
+        os.makedirs(target_dir, exist_ok=True)
+        # delete=False semantics via mkstemp - we control unlink ourselves
+        fd, tmppath = tempfile.mkstemp(prefix='.astrom_', suffix=YAML_EXT,
+                                       dir=target_dir)
+        try:
+            with os.fdopen(fd, 'w', encoding='utf-8') as f:
+                yaml.safe_dump(data, f, default_flow_style=False,
+                               sort_keys=False, allow_unicode=True)
+            # atomic rename onto the final filename
+            os.replace(tmppath, fpath)
+        except Exception:
+            # clean up the tmp file if anything went wrong
+            try:
+                os.remove(tmppath)
+            except OSError:
+                pass
+            raise
+
+    # -------------------------------------------------------------------------
+    # Public API: name resolution
+    # -------------------------------------------------------------------------
+    def find_objname(self, objname: Optional[Any] = None,
+                     return_flag: bool = False
+                     ) -> Tuple[str, Union[bool, int]]:
+        """
+        Resolve ``objname`` against the catalogue and return the canonical
+        ``APERO_NAME`` used by the DRS.
+
+        Lookup order (after cleaning ``objname``):
+            1. matches a cleaned ``APERO_NAME``                -> flag = 1
+            2. matches a cleaned ``ORIGINAL_NAME`` /
+               ``SIMBAD_NAME`` / any alias                     -> flag = 2
+            3. not found                                       -> flag = 0
+
+        :param objname: str, the raw object name from a header
+        :param return_flag: bool, if True returns the int flag, else a bool
+
+        :return: ``(name, flag)`` or ``(name, found_bool)``
+        """
+        # _ = display_func('find_objname', __NAME__, self.classname)
+        # guard against a missing input
+        if objname is None:
+            if return_flag:
+                return '', 0
+            return '', False
+        # cast to string defensively
+        raw = str(objname)
+        # per-process cache key (path + raw input)
+        cache_key = (self.path, raw)
+        # fast path: hit in resolution cache
+        if cache_key in _RESOLVE_CACHE:
+            cobj, found = _RESOLVE_CACHE[cache_key]
+            if return_flag:
+                return cobj, found
+            return cobj, found > 0
+        # reserved object names (CALIB / SKY / TEST) bypass the catalogue
+        if raw in RESERVED_OBJ_NAMES:
+            _RESOLVE_CACHE[cache_key] = (raw, 1)
+            if return_flag:
+                return raw, 1
+            return raw, True
+        # clean the input name into the comparable form
+        cleaned = clean_object(raw)
+        # null inputs short-circuit (can't resolve)
+        if cleaned == 'Null':
+            _RESOLVE_CACHE[cache_key] = ('', 0)
+            if return_flag:
+                return '', 0
+            return '', False
+        # also short-circuit reserved names after cleaning
+        if cleaned in RESERVED_OBJ_NAMES:
+            _RESOLVE_CACHE[cache_key] = (cleaned, 1)
+            if return_flag:
+                return cleaned, 1
+            return cleaned, True
+        # ensure the name index is loaded (and fresh)
+        self._ensure_loaded()
+        # grab the index for this path (always present after _ensure_loaded)
+        name_index = _NAME_INDEX.get(self.path, dict())
+        entries = _ENTRY_CACHE.get(self.path, dict())
+        # try to look up the cleaned name
+        if cleaned in name_index:
+            apero_name = name_index[cleaned]
+            # decide if it was a primary or alias hit
+            if cleaned == clean_object(apero_name):
+                flag = 1
+            else:
+                flag = 2
+            # sanity check: entry exists too
+            if apero_name not in entries:
+                flag = 0
+                apero_name = cleaned
+        else:
+            # not found - return the cleaned name for downstream consistency
+            apero_name = cleaned
+            flag = 0
+        # cache the resolution for this raw input
+        _RESOLVE_CACHE[cache_key] = (apero_name, flag)
+        # return in the requested form
+        if return_flag:
+            return apero_name, flag
+        return apero_name, flag > 0
+
+    def find_objnames(self,
+                      objnames: Union[List[str], np.ndarray, str],
+                      allow_empty: bool = True,
+                      listname: Optional[str] = None
+                      ) -> Tuple[List[str], List[str]]:
+        """
+        Resolve a list of object names. Thin wrapper around
+        :meth:`find_objname`.
+
+        :param objnames: list/array/str, the raw names to resolve
+        :param allow_empty: bool, if False raise when no names resolve
+        :param listname: str, name of the input list (for error messages)
+
+        :return: ``(found_apero_names, missing_raw_names)``
+        """
+        func_name = display_func('find_objnames', __NAME__, self.classname)
+        # accept a single string for convenience
+        if isinstance(objnames, str):
+            objnames = [objnames]
+        # accept anything iterable that is not already list/ndarray
+        if not isinstance(objnames, (list, np.ndarray)):
+            objnames = list(objnames)
+        # storage for results
+        found_names: List[str] = []
+        missing_names: List[str] = []
+        # iterate and resolve one-by-one (cache makes repeats free)
+        for objname in objnames:
+            apero_name, found = self.find_objname(objname)
+            if found:
+                found_names.append(apero_name)
+            else:
+                missing_names.append(str(objname))
+        # raise if caller requires at least one resolution
+        if len(found_names) == 0 and not allow_empty:
+            label = listname if listname is not None else func_name
+            emsg = ('No objects found in astrometric catalogue.'
+                    '\n\tPlease add objects under {0}'
+                    '\n\tListname={1}'
+                    '\n\tObjnames: "{2}"')
+            eargs = [self.path, label,
+                     ', '.join(str(n) for n in objnames)]
+            raise AperoCodedException(None, message=emsg.format(*eargs),
+                                      targs=eargs)
+        # return the two lists
+        return found_names, missing_names
+
+    # -------------------------------------------------------------------------
+    # Public API: get / iterate entries
+    # -------------------------------------------------------------------------
+    def get_entries(self, columns: str = '*',
+                    nentries: Optional[int] = None,
+                    condition: Optional[Any] = None
+                    ) -> Union[List[Dict[str, Any]], Dict[str, Any], None]:
+        """
+        Return a slice of the catalogue.
+
+        :param columns: str, ``'*'`` returns the full entry dicts, otherwise
+                        a comma-separated list of top-level keys to keep.
+        :param nentries: int or None, limit the number of returned entries
+                         (returns a single entry / None if ``nentries == 1``)
+        :param condition: callable or None,
+                          ``condition(entry_dict) -> bool`` predicate to
+                          filter entries. (We accept a callable rather than
+                          an SQL string because there is no SQL here.)
+                          ``None`` means no filtering.
+
+        :return: list of dicts, a single dict (``nentries == 1``) or
+                 ``None`` if there are no matches.
+        """
+        # _ = display_func('get_entries', __NAME__, self.classname)
+        # ensure caches are populated and fresh
+        self._ensure_loaded()
+        # grab the entry dict for this path
+        entries = _ENTRY_CACHE.get(self.path, dict())
+        # parse the columns request
+        if columns == '*' or columns is None:
+            wanted_cols: Optional[List[str]] = None
+        else:
+            wanted_cols = [c.strip() for c in str(columns).split(',')
+                           if c.strip()]
+        # accept old-style SQL strings only as a soft warning - we cannot
+        # honour them, but we also should not silently ignore them
+        if isinstance(condition, str):
+            wmsg = ('AstrometricDatabase.get_entries received an SQL-style '
+                    'condition string ({0!r}); ignoring. Pass a callable '
+                    'instead.').format(condition)
+            warnings.warn(wmsg)
+            condition = None
+        # build the filtered/projected output list
+        out: List[Dict[str, Any]] = []
+        for apero_name, entry in entries.items():
+            # apply the predicate if given
+            if condition is not None and not condition(entry):
+                continue
+            # project columns if requested (with legacy column aliasing)
+            if wanted_cols is None:
+                row = dict(entry)
+            else:
+                row = dict()
+                for col in wanted_cols:
+                    # try a legacy alias first, then a direct yaml key
+                    if col in LEGACY_COL_MAP:
+                        row[col] = LEGACY_COL_MAP[col](entry)
+                    else:
+                        row[col] = entry.get(col)
+            # always keep the canonical name accessible
+            row.setdefault(APERO_NAME_KEY, apero_name)
+            out.append(row)
+            # respect nentries limit early
+            if nentries is not None and len(out) >= nentries:
+                break
+        # honour the legacy nentries == 1 convention
+        if nentries == 1:
+            return out[0] if out else None
+        # return list (possibly empty)
+        return out
+
+    def get_entry(self, name: str) -> Optional[Dict[str, Any]]:
+        """
+        Return the full yaml entry for any name (APERO_NAME, ORIGINAL_NAME,
+        SIMBAD_NAME, or alias). The name is resolved via
+        :meth:`find_objname` first.
+
+        :param name: str, any name that can identify the object
+        :return: dict or None if not found
+        """
+        # ensure caches are loaded
+        self._ensure_loaded()
+        # resolve the input to a canonical APERO_NAME first
+        apero_name, found = self.find_objname(name)
+        if not found:
+            return None
+        # direct lookup against the entry cache
+        entries = _ENTRY_CACHE.get(self.path, dict())
+        return entries.get(apero_name)
+
+    def count(self, condition: Optional[Any] = None) -> int:
+        """
+        Count the catalogue entries (optionally filtered by ``condition``).
+
+        :param condition: callable or None, see :meth:`get_entries`
+        :return: int
+        """
+        # ensure caches are loaded
+        self._ensure_loaded()
+        entries = _ENTRY_CACHE.get(self.path, dict())
+        # no condition - cheap len()
+        if condition is None or isinstance(condition, str):
+            return len(entries)
+        # predicate path
+        return sum(1 for e in entries.values() if condition(e))
+
+    # -------------------------------------------------------------------------
+    # Public API: write entries
+    # -------------------------------------------------------------------------
+    def add_entry(self, entry: Dict[str, Any],
+                  overwrite: bool = True,
+                  merge: bool = True) -> str:
+        """
+        Add (or update) a single entry in the catalogue.
+
+        The entry **must** contain an ``APERO_NAME`` key; the yaml file on
+        disk is named after the cleaned form of that name. The write is
+        protected by a per-file lock so concurrent processes can safely
+        call this method.
+
+        :param entry: dict, the new/updated entry. Must contain
+                      ``APERO_NAME``.
+        :param overwrite: bool, if False and the file already exists, raise.
+        :param merge: bool, if True merge with the existing on-disk entry
+                      (new keys replace old keys); if False replace the
+                      entry wholesale.
+
+        :return: str, the absolute path of the yaml file that was written
+        """
+        # validate input early
+        if not isinstance(entry, dict):
+            emsg = 'add_entry() expects a dict, got {0}'
+            raise AperoCodedException(
+                None, message=emsg.format(type(entry).__name__))
+        # extract & validate the APERO_NAME
+        apero_name = entry.get(APERO_NAME_KEY)
+        if _is_null(apero_name):
+            emsg = 'add_entry() entry missing required key "{0}"'
+            raise AperoCodedException(
+                None, message=emsg.format(APERO_NAME_KEY))
+        # build the on-disk file path
+        fname = _safe_filename(str(apero_name))
+        fpath = os.path.join(self.path, fname)
+        # build the lock-file path
+        lockpath = os.path.join(self.lockdir, fname + '.lock')
+        # ensure the catalogue directory exists
+        os.makedirs(self.path, exist_ok=True)
+        # acquire the per-file lock for the write window
+        with _FileLock(lockpath):
+            # decide what to write based on existence + flags
+            if os.path.isfile(fpath):
+                if not overwrite:
+                    emsg = 'Astrometric entry already exists: {0}'
+                    raise AperoCodedException(None,
+                                              message=emsg.format(fpath))
+                # merge with existing on-disk entry (entry overrides existing)
+                if merge:
+                    try:
+                        existing = self._read_yaml(fpath)
+                    except Exception:
+                        existing = dict()
+                    existing.update(entry)
+                    final = existing
+                else:
+                    final = dict(entry)
+            else:
+                final = dict(entry)
+            # add a NOTES timestamp if none present (mirrors legacy behaviour)
+            if 'NOTES' not in final or _is_null(final.get('NOTES')):
+                final['NOTES'] = ('Added on {0} by drs_astrometrics '
+                                  '(shortname={1})').format(
+                    Time.now().iso, self.shortname)
+            # do the atomic write
+            self._write_yaml(fpath, final)
+        # invalidate any in-memory caches for this path so next read sees it
+        _DIR_MTIME.pop(self.path, None)
+        if self.path in _MTIME_CACHE:
+            _MTIME_CACHE[self.path].pop(fname, None)
+        self._invalidate_resolve_cache()
+        # return the path that was written (useful for callers/logging)
+        return fpath
+
+    def add_entries(self, entries: List[Dict[str, Any]],
+                    overwrite: bool = True,
+                    merge: bool = True) -> List[str]:
+        """
+        Add (or update) a list of entries in the catalogue.
+
+        Each entry **must** contain an ``APERO_NAME`` key. Entries are
+        written one-by-one via :meth:`add_entry` (so each acquires its own
+        per-file lock independently).
+
+        :param entries: list of dicts, the new/updated entries.
+        :param overwrite: bool, see :meth:`add_entry`
+        :param merge: bool, see :meth:`add_entry`
+
+        :return: list of str, the absolute paths of the yaml files written.
+        """
+        # validate input early
+        if not isinstance(entries, (list, tuple)):
+            emsg = 'add_entries() expects a list of dicts, got {0}'
+            raise AperoCodedException(
+                None, message=emsg.format(type(entries).__name__))
+        # write each entry in turn and collect the resulting paths
+        out_paths: List[str] = []
+        for entry in entries:
+            out_paths.append(self.add_entry(entry, overwrite=overwrite,
+                                            merge=merge))
+        return out_paths
+
+    # -------------------------------------------------------------------------
+    # Remote resolution + archive refresh
+    # -------------------------------------------------------------------------
+    def resolve_target(self, name: str,
+                       aliases: Optional[List[str]] = None,
+                       apero_name: Optional[str] = None,
+                       original_name: Optional[str] = None,
+                       apero_class: Optional[str] = None,
+                       epoch_jd: float = 2451545.0,
+                       ) -> Optional[Dict[str, Any]]:
+        """
+        Resolve a free-form target name into a fully-populated yaml entry
+        dict by querying SIMBAD / Gaia / VizieR.
+
+        The returned dict has the same schema as the on-disk yaml files
+        (see :data:`LEGACY_COL_MAP` / ``vscode_share/astrometric_example``)
+        and is suitable for passing straight to :meth:`add_entry`.
+
+        :param name: str, the user-supplied target name (will be sent to
+                     SIMBAD; aliases are tried as fallbacks if given).
+        :param aliases: optional list of fall-back names to try if SIMBAD
+                        does not recognise ``name``.
+        :param apero_name: optional override for the entry's
+                          ``APERO_NAME``. Defaults to
+                          ``clean_object(name)``.
+        :param original_name: optional override for ``ORIGINAL_NAME``
+                              (defaults to ``name``).
+        :param apero_class: optional value for ``APERO_CLASS``.
+        :param epoch_jd: float, the EPOCH (Julian Date) to record on the
+                         entry. Defaults to J2000 (JD 2451545.0) which is
+                         the SIMBAD reference epoch.
+
+        :return: dict (yaml entry) or ``None`` if no resolver succeeded.
+        """
+        # build the base entry shell
+        entry: Dict[str, Any] = dict()
+        entry['APERO_NAME'] = apero_name or clean_object(name)
+        entry['ORIGINAL_NAME'] = original_name or name
+        if apero_class is not None:
+            entry['APERO_CLASS'] = apero_class
+        entry['EPOCH'] = epoch_jd
+        if aliases:
+            # store aliases as a clean list
+            entry['ALIASES'] = [str(a) for a in aliases if _nv(a)]
+        # ensure full schema scaffolding (so merge helpers see all keys)
+        _full_resolve_schema(entry)
+        # try the primary name first
+        simbad = _resolve_from_name(name,
+                                    simbad_url=self.simbad_url,
+                                    gaia_url=self.gaia_url,
+                                    vizier_url=self.vizier_url)
+        # alias fallbacks (cap at 5 like the upstream tool)
+        if simbad is None and aliases:
+            for alias in list(aliases)[:5]:
+                a = _nv(alias)
+                if a and a != name:
+                    simbad = _resolve_from_name(
+                        a,
+                        simbad_url=self.simbad_url,
+                        gaia_url=self.gaia_url,
+                        vizier_url=self.vizier_url)
+                    if simbad is not None:
+                        break
+        # nothing found - bail out
+        if simbad is None:
+            return None
+        # merge SIMBAD / Gaia / WISE results into the entry
+        _update_yaml_from_simbad(entry, simbad)
+        return entry
+
+    def update_archive(self, overwrite_existing: bool = False,
+                       limit: Optional[int] = None,
+                       delay_s: float = 0.3) -> Dict[str, int]:
+        """
+        Refresh the on-disk archive by re-resolving each entry against
+        SIMBAD / Gaia / VizieR.
+
+        For every yaml file under :attr:`path`:
+            - if it is already fully resolved and ``overwrite_existing``
+              is False, only derived fields are recomputed;
+            - otherwise the entry is re-queried and merged in-place.
+
+        :param overwrite_existing: bool, if True, re-query SIMBAD even
+                                   for already-resolved entries.
+        :param limit: int or None, process at most this many files.
+        :param delay_s: float, sleep between queries (seconds) to be
+                        polite to TAP servers.
+
+        :return: dict with keys 'resolved', 'failed', 'skipped' (counts).
+        """
+        # ensure caches are loaded so we can iterate entries by name
+        self._ensure_loaded()
+        # flat list of (apero_name, entry) sorted by name for stability
+        entries = _ENTRY_CACHE.get(self.path, dict())
+        names = sorted(entries.keys())
+        if limit is not None:
+            names = names[:limit]
+        # accumulators
+        resolved = 0
+        failed = 0
+        skipped = 0
+        # iterate
+        for idx, apero_name in enumerate(names):
+            entry = dict(entries[apero_name])
+            # ensure the entry has the full schema
+            _full_resolve_schema(entry)
+            # decide whether to re-query
+            already = (entry.get('SIMBAD_NAME') is not None
+                       and not overwrite_existing)
+            if already:
+                # just refresh derived fields and write back
+                _derive_fields(entry)
+                self.add_entry(entry, overwrite=True, merge=False)
+                skipped += 1
+                continue
+            # pick the best name to send to SIMBAD
+            search_name = None
+            for key in ('SIMBAD_NAME', 'ORIGINAL_NAME', 'APERO_NAME'):
+                v = _nv(entry.get(key))
+                if v is not None:
+                    search_name = v
+                    break
+            if search_name is None:
+                skipped += 1
+                continue
+            # collect aliases for fallbacks
+            aliases = entry.get('ALIASES') or []
+            if isinstance(aliases, str):
+                aliases = [aliases]
+            # resolve via SIMBAD/Gaia
+            simbad = _resolve_from_name(search_name,
+                                        simbad_url=self.simbad_url,
+                                        gaia_url=self.gaia_url,
+                                        vizier_url=self.vizier_url)
+            if simbad is None:
+                for alias in list(aliases)[:5]:
+                    a = _nv(alias)
+                    if a and a != search_name:
+                        simbad = _resolve_from_name(
+                            a,
+                            simbad_url=self.simbad_url,
+                            gaia_url=self.gaia_url,
+                            vizier_url=self.vizier_url)
+                        if simbad is not None:
+                            break
+            # merge or fail
+            if simbad is None:
+                _derive_fields(entry)
+                self.add_entry(entry, overwrite=True, merge=False)
+                failed += 1
+            else:
+                _update_yaml_from_simbad(entry, simbad)
+                self.add_entry(entry, overwrite=True, merge=False)
+                resolved += 1
+            # rate-limit between TAP queries
+            if delay_s > 0 and idx + 1 < len(names):
+                time.sleep(delay_s)
+        # return counts
+        out = dict()
+        out['resolved'] = resolved
+        out['failed'] = failed
+        out['skipped'] = skipped
+        return out
+
 
 # =============================================================================
 # Start of code
 # =============================================================================
-# Main code here
 if __name__ == "__main__":
     # ----------------------------------------------------------------------
-    # print 'Hello World!'
-    print("Hello World!")
+    # Tiny self-test that exercises the public API against a temporary
+    # astrometrics directory. Useful for sanity-checking edits to this
+    # module without needing a full apero environment.
+    # ----------------------------------------------------------------------
+    import shutil
+
+    # build an isolated workspace under the system tmpdir
+    _tmp_root = tempfile.mkdtemp(prefix='drs_astrom_selftest_')
+    try:
+        # fake the bits of params that we use
+        _params = ParamDict()
+        _params['DRS_DATA_ASSETS'] = _tmp_root
+        # construct the database (directory does not exist yet)
+        _db = AstrometricDatabase(_params, shortname='SELFTEST')
+        # add a single entry
+        _db.add_entry({
+            'APERO_NAME': 'GL699',
+            'ORIGINAL_NAME': "Barnard's Star",
+            'SIMBAD_NAME': 'GJ 699',
+            'ALIASES': ['Barnard', 'BD+04 3561a', 'HIP 87937'],
+            'RA': {'value': 269.452, 'source': 'Gaia DR3', 'units': 'deg'},
+            'DEC': {'value': 4.668, 'source': 'Gaia DR3', 'units': 'deg'},
+            'TEFF': {'value': 3134.0, 'source': 'Gaia DR3', 'units': 'K'},
+        })
+        # add a list of entries
+        _db.add_entries([
+            {'APERO_NAME': '10LAC',
+             'ORIGINAL_NAME': '* 10 Lac',
+             'SIMBAD_NAME': '*  10 Lac',
+             'ALIASES': ['HD 214680', 'HR 8622'],
+             'TEFF': {'value': 35200.0, 'source': '2018A&A',
+                      'units': 'K'}},
+        ])
+        # resolve via APERO_NAME
+        print('GL699            ->', _db.find_objname('GL699'))
+        # resolve via SIMBAD_NAME
+        print("GJ 699           ->", _db.find_objname('GJ 699'))
+        # resolve via ORIGINAL_NAME (whitespace tolerated)
+        print("Barnard's Star   ->", _db.find_objname("Barnard's Star"))
+        # resolve via alias
+        print('HD 214680        ->', _db.find_objname('HD 214680'))
+        # unknown
+        print('UNKNOWN_TARGET   ->', _db.find_objname('UNKNOWN_TARGET'))
+        # find_objnames batch
+        print('batch ->', _db.find_objnames(
+            ['GL699', 'HR 8622', 'BOGUS'], allow_empty=True))
+        # get_entries with legacy column aliasing
+        print('count ->', _db.count())
+        print('all   ->', [e['APERO_NAME'] for e in _db.get_entries()])
+        print('proj  ->',
+              _db.get_entries(columns='OBJNAME, ALIASES'))
+        print('TEFF  ->', _db.get_entries(columns='OBJNAME, TEFF'))
+        # get_entry by alias (must resolve)
+        print('get_entry HR 8622 APERO_NAME ->',
+              _db.get_entry('HR 8622').get('APERO_NAME'))
+        # update existing entry (merge)
+        _db.add_entry({'APERO_NAME': 'GL699',
+                       'RV': {'value': -110.5, 'source': 'test'}})
+        print('updated GL699 RV ->',
+              _db.get_entry('GL699').get('RV'))
+    finally:
+        # clean up
+        shutil.rmtree(_tmp_root, ignore_errors=True)
 
 # =============================================================================
 # End of code

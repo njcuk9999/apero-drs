@@ -22,6 +22,7 @@ from tqdm import tqdm
 from aperocore.base import base
 from aperocore.constants import param_functions
 from apero.core import drs_database
+from apero.core import drs_astrometrics
 from aperocore.core import drs_log
 from aperocore.core import drs_misc
 from aperocore.core import drs_text
@@ -528,16 +529,15 @@ def upload(params: ParamDict) -> None:
 # -----------------------------------------------------------------------------
 def _get_object_table(params: ParamDict) -> pd.DataFrame:
     # -------------------------------------------------------------------------
-    # set up condition for filtering
+    # set up condition for filtering (callable predicate over yaml entry)
     condition = None
     # deal with filtering by object
     if params['TOOLS.ARI.FILTER_OBJECTS']:
         if isinstance(params['TOOLS.ARI.FILTER_OBJECTS_LIST'], list):
-            subconditions = []
-            for objname in params['TOOLS.ARI.FILTER_OBJECTS_LIST']:
-                subconditions.append(f'OBJNAME="{objname}"')
-            condition = ' OR '.join(subconditions)
-            condition = f'({condition})'
+            # build a fast set of allowed APERO names
+            filter_set = set(params['TOOLS.ARI.FILTER_OBJECTS_LIST'])
+            # predicate matches APERO_NAME against the allowed set
+            condition = lambda e: e.get('APERO_NAME') in filter_set
         else:
             wmsg = 'filter objects is not a list. Skipping filtering.'
             WLOG(params, 'warning', wmsg, sublevel=1)
@@ -545,13 +545,14 @@ def _get_object_table(params: ParamDict) -> pd.DataFrame:
     # log progress
     WLOG(params, '', 'Loading objects from astrometric database')
     # -------------------------------------------------------------------------
-    # get the astrometric database from apero
-    astrodbm = drs_database.AstrometricDatabase(params, shortname='ARI')
+    # get the astrometric database from apero (yaml-backed)
+    astrodbm = drs_astrometrics.AstrometricDatabase(params,
+                                                    shortname='ARI')
     astrodbm.load_db()
     # -------------------------------------------------------------------------
-    # log that we are loading
-    # get the object table from the astrometric database
-    object_table = astrodbm.get_entries(condition=condition)
+    # get the object table (list of dicts) and convert to DataFrame so the
+    # rest of the ARI pipeline can keep using pandas semantics
+    object_table = pd.DataFrame(astrodbm.get_entries(condition=condition))
     # return the object_table
     return object_table
 

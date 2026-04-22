@@ -27,6 +27,7 @@ from aperocore.constants import param_functions
 from aperocore.constants import load_functions
 from aperocore import drs_lang
 from apero.core import drs_database
+from apero.core import drs_astrometrics
 from aperocore.core import drs_log
 from aperocore.core import drs_text
 from apero.core import drs_file
@@ -120,9 +121,9 @@ def basic_filter(params: ParamDict, recipe: DrsRecipe, kw_objnames: List[str],
     WLOG(params, '', textentry('40-509-00001', args='file index'))
     findexdb = drs_database.FileIndexDatabase(params, recipe.shortname)
     findexdb.load_db()
-    # load object database
+    # load object database (yaml-backed)
     WLOG(params, '', textentry('40-509-00001', args='astrometric'))
-    objdbm = drs_database.AstrometricDatabase(params, recipe.shortname)
+    objdbm = drs_astrometrics.AstrometricDatabase(params, recipe.shortname)
     objdbm.load_db()
     # load log database
     WLOG(params, '', textentry('40-509-00001', args='log'))
@@ -211,7 +212,7 @@ def basic_filter(params: ParamDict, recipe: DrsRecipe, kw_objnames: List[str],
     # loop around input object names
     for kw_objname in kw_objnames:
         # clean object name (as best we can)
-        clean_obj_name, _ = objdbm.find_objname(pconst, kw_objname)
+        clean_obj_name, _ = objdbm.find_objname(kw_objname)
         WLOG(params, '', textentry('40-509-00002', args=[clean_obj_name]))
         # write condition for this object
         if drs_text.null_text(kw_objname, ['None', '', 'Null']):
@@ -418,7 +419,7 @@ def calib_filter(params: ParamDict, recipe: DrsRecipe,
     calibdb.load_db()
     # load object database
     WLOG(params, '', textentry('40-509-00001', args='astrometric'))
-    objdbm = drs_database.AstrometricDatabase(params, recipe.shortname)
+    objdbm = drs_astrometrics.AstrometricDatabase(params, recipe.shortname)
     objdbm.load_db()
     # load log database
     WLOG(params, '', textentry('40-509-00001', args='log'))
@@ -528,7 +529,7 @@ def tellu_filter(params: ParamDict,  recipe: DrsRecipe,
     telludb.load_db()
     # load object database
     WLOG(params, '', textentry('40-509-00001', args='astrometric'))
-    objdbm = drs_database.AstrometricDatabase(params, recipe.shortname)
+    objdbm = drs_astrometrics.AstrometricDatabase(params, recipe.shortname)
     objdbm.load_db()
     # load log database
     WLOG(params, '', textentry('40-509-00001', args='log'))
@@ -558,7 +559,7 @@ def tellu_filter(params: ParamDict,  recipe: DrsRecipe,
     # loop around objects
     for objname in kw_objnames:
         # clean object name (as best we can)
-        clean_obj_name, _ = objdbm.find_objname(pconst, objname)
+        clean_obj_name, _ = objdbm.find_objname(objname)
         # storage for inpaths
         inpaths, run_ids = [], []
         # loop around keys

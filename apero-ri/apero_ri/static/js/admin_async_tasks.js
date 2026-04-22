@@ -131,6 +131,9 @@
     var editBackupFields= document.getElementById('edit-backup-fields');
     var editDailyCopies = document.getElementById('edit-daily-copies');
     var editWeeklyCopies= document.getElementById('edit-weekly-copies');
+    var editAssetsFields= document.getElementById('edit-assets-fields');
+    var editAssetServers= document.getElementById('edit-asset-servers');
+    var editAssetsMode  = document.getElementById('edit-assets-mode');
     var editMpFields    = document.getElementById('edit-mp-fields');
     var editNcores      = document.getElementById('edit-ncores');
     var editMpBackend   = document.getElementById('edit-mp-backend');
@@ -181,6 +184,7 @@
     var btnTaskLogCopy = document.getElementById('btn-task-log-copy');
 
     var BACKUP_TASK_KEY = 'ARI_LOCAL_DATA_BACKUP';
+    var ASSETS_TASK_KEY = 'APERO_SYNC_ASSETS';
     var currentInfoText = '';
     var currentErrorText = '';
     var currentTaskLogText = '';
@@ -1377,6 +1381,15 @@
         editFrequency.value = task.frequency || 24;
         editDailyCopies.value = task.daily_copies || 0;
         editWeeklyCopies.value = task.weekly_copies || 0;
+        if (editAssetServers) {
+            var srvList = task.asset_servers || [];
+            editAssetServers.value = Array.isArray(srvList)
+                ? srvList.join('\n')
+                : String(srvList || '');
+        }
+        if (editAssetsMode) {
+            editAssetsMode.value = String(task.mode || 'sync');
+        }
         editNcores.value = task.ncores || 1;
         editMpBackend.value = task.mp_backend || 'threads';
         editMpStartMethod.value = task.mp_start_method || 'default';
@@ -1512,6 +1525,8 @@
             editTaskInfoRow.style.display = 'none';
         }
         editBackupFields.style.display = isBackup ? '' : 'none';
+        var isAssets = key === ASSETS_TASK_KEY;
+        if (editAssetsFields) editAssetsFields.style.display = isAssets ? '' : 'none';
 
         if (editLocalSyncFields) {
             editLocalSyncFields.style.display = key ? '' : 'none';
@@ -1661,6 +1676,13 @@
             active: editActive.checked,
             filters: {},
         };
+        if (taskKey === ASSETS_TASK_KEY) {
+            var rawServers = editAssetServers ? editAssetServers.value.trim() : '';
+            payload.asset_servers = rawServers
+                ? rawServers.split(/\r?\n/).map(function (s) { return s.trim(); }).filter(Boolean)
+                : [];
+            payload.assets_mode = editAssetsMode ? editAssetsMode.value : 'sync';
+        }
         Object.keys(editFilterInputs || {}).forEach(function (keyName) {
             var inputEl = editFilterInputs[keyName];
             if (!inputEl) return;

@@ -132,6 +132,26 @@ MULTI_PROCESS = dict()
 LOCAL_TASK = dict()
 FILTERS = dict()
 
+# APERO_SYNC_ASSETS
+_entry = _register_task(
+    "APERO_SYNC_ASSETS",
+    "apero_assets_sync",
+    "AperoAssetsSyncTask",
+    "GLOBAL",
+)
+TASK_LIST["APERO_SYNC_ASSETS"] = _entry["task_cls"]
+P_LIST["APERO_SYNC_ASSETS"] = _entry["param_list"]
+AP_LIST["APERO_SYNC_ASSETS"] = _entry["ap_list"]
+FREQ["APERO_SYNC_ASSETS"] = _entry["frequency"]
+ENABLED["APERO_SYNC_ASSETS"] = _entry["enabled"]
+TYPE["APERO_SYNC_ASSETS"] = _entry["task_type"]
+USE_SUBPROCESS["APERO_SYNC_ASSETS"] = _entry["use_subprocess"]
+MULTI_PROCESS["APERO_SYNC_ASSETS"] = _entry["multi_process"]
+LOCAL_TASK["APERO_SYNC_ASSETS"] = bool(
+    getattr(_entry["task_cls"], "LOCAL_TASK", False)
+)
+FILTERS["APERO_SYNC_ASSETS"] = _entry["filters"]
+
 # ARI_LOCAL_DATA_BACKUP
 _entry = _register_task(
     "ARI_LOCAL_DATA_BACKUP",

@@ -20,6 +20,7 @@ from aperocore.constants import load_functions
 from aperocore import drs_lang
 from aperocore import math as mp
 from apero.core import drs_database
+from apero.core import drs_astrometrics
 from apero.core import drs_file
 from aperocore.core import drs_log
 from aperocore.core import drs_misc
@@ -349,17 +350,17 @@ def check_files(params: ParamDict, shortname: str,
         objname = 'None'
     # clean (capitalize and remove white spaces)
     dprtype = drs_text.clean_strings(dprtype)
-    # load object database
-    objdbm = drs_database.AstrometricDatabase(params, shortname)
+    # load object database (yaml-backed)
+    objdbm = drs_astrometrics.AstrometricDatabase(params, shortname)
     objdbm.load_db()
     # get clean / alias-safe version of object name
-    objname, _ = objdbm.find_objname(pconst, objname)
+    objname, _ = objdbm.find_objname(objname)
     # get inputs
     dprtype_inputs = params['INPUTS']['DPRTYPE'].split(',')
     objname_inputs = params['INPUTS']['OBJNAME'].split(',')
     # clean (capitalize and remove white spaces)
     dprtype_inputs = drs_text.clean_strings(dprtype_inputs)
-    objname_inputs, _ = objdbm.find_objnames(pconst, objname_inputs,
+    objname_inputs, _ = objdbm.find_objnames(objname_inputs,
                                              allow_empty=True)
     # ----------------------------------------------------------------------
     # log checking file info

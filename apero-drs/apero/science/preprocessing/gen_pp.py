@@ -21,6 +21,7 @@ from astropy.coordinates import SkyCoord, Distance
 
 from apero.base import base as apero_base
 from apero.core import drs_database
+from apero.core import drs_astrometrics
 from apero.instruments import select
 from apero.instruments.default import instrument as instrument_mod
 from apero.io import drs_fits
@@ -55,7 +56,7 @@ display_func = drs_misc.display_func
 # Get the text types
 textentry = drs_lang.textentry
 # Get database
-ObjectDatabase = drs_database.AstrometricDatabase
+ObjectDatabase = drs_astrometrics.AstrometricDatabase
 # get param dict
 ParamDict = param_functions.ParamDict
 Instrument = instrument_mod.Instrument
@@ -116,64 +117,65 @@ def resolve_target(params: ParamDict, pconst: Instrument, shortname: str,
             raise AperoCodedException(params, '00-010-00012', targs=eargs)
     # -------------------------------------------------------------------------
     # find correct name in the database (via objname or aliases)
-    correct_objname, found = database.find_objname(pconst, objname)
+    correct_objname, found = database.find_objname(objname)
     # -------------------------------------------------------------------------
-    # update the sql object condition
-    sql_obj_cond = 'OBJNAME="{0}"'.format(correct_objname)
-    # get the full entry for this cobjname
-    table = database.get_entries('*', condition=sql_obj_cond)
+    # get the full yaml entry for this cleaned objname (resolves any name)
+    entry = database.get_entry(correct_objname)
+    # flatten the yaml entry into a {legacy_col: value} dict so the existing
+    # extraction logic below keeps working unchanged. Returns None if entry
+    # was not found.
+    legacy = drs_astrometrics.legacy_view(entry)
     # -------------------------------------------------------------------------
-    # remove entries that have NO_PM in the keywords
-    no_pm_mask = table['KEYWORDS'].str.contains('NO_PM', na=False)
-    table = table[~no_pm_mask]
-    # -------------------------------------------------------------------------
-    # check if key columns have null values - if they do remove these rows
-    #   from the table
-    if len(table) != 0:
-        nullmask = np.zeros(len(table), dtype=bool)
-        # loop around columns and look for nulls
+    # check if key columns have null values - if they do treat the entry as
+    #   missing (matches the old behaviour where NULL OBJNAME/RA/DEC/PMRA/
+    #   PMDE/EPOCH would drop the row)
+    if legacy is not None:
+        # if any of the required columns is null, drop the entry entirely
         for col in NON_NULL_OBJ_COLS:
-            nullmask |= table[col].isnull()
-        # filter table
-        table = pd.DataFrame(table[~nullmask])
+            if drs_text.null_text(legacy.get(col), ['None', '', 'Null']):
+                legacy = None
+                break
     # -------------------------------------------------------------------------
-    # now re-test table length and then use from table
-    if len(table) != 0:
+    # now extract values from the legacy dict (or fall through to header)
+    if legacy is not None:
         # ---------------------------------------------------------------------
-        # try to use table
+        # try to use the yaml entry
         try:
             # get properties from parameters
             # object name is the cleaned object name
-            objname = str(table['OBJNAME'].iloc[0])
-            original_name = str(table['ORIGINAL_NAME'].iloc[0])
+            objname = str(legacy['OBJNAME'])
+            original_name = str(legacy['ORIGINAL_NAME'])
             # right ascension and declination in degrees
-            ra_deg = float(table['RA_DEG'].iloc[0])
-            ra_source = str(table['RA_SOURCE'].iloc[0])
-            dec_deg = float(table['DEC_DEG'].iloc[0])
-            dec_source = str(table['DEC_SOURCE'].iloc[0])
+            ra_deg = float(legacy['RA_DEG'])
+            ra_source = str(legacy['RA_SOURCE'])
+            dec_deg = float(legacy['DEC_DEG'])
+            dec_source = str(legacy['DEC_SOURCE'])
             # epoch in JD
-            epoch = float(table['EPOCH'].iloc[0])
+            epoch = float(legacy['EPOCH'])
             # pmra and pmde in mas/yr
-            pmra = float(table['PMRA'].iloc[0])
-            pmra_source = str(table['PMRA_SOURCE'].iloc[0])
-            pmde = float(table['PMDE'].iloc[0])
-            pmde_source = str(table['PMDE_SOURCE'].iloc[0])
+            pmra = float(legacy['PMRA'])
+            pmra_source = str(legacy['PMRA_SOURCE'])
+            pmde = float(legacy['PMDE'])
+            pmde_source = str(legacy['PMDE_SOURCE'])
             # parallax in mas (may not be present)
-            plx = float(_target_set_value(table, 'PLX', null_value=np.nan))
-            plx_source = str(table['PLX_SOURCE'].iloc[0])
+            plx_val = legacy.get('PLX')
+            plx = float(plx_val) if plx_val is not None else np.nan
+            plx_source = str(legacy.get('PLX_SOURCE') or '')
             # RV in km/s (may not be present)
-            rv = float(_target_set_value(table, 'RV', null_value=np.nan))
-            rv_source = str(table['RV_SOURCE'].iloc[0])
+            rv_val = legacy.get('RV')
+            rv = float(rv_val) if rv_val is not None else np.nan
+            rv_source = str(legacy.get('RV_SOURCE') or '')
             # Teff in K (may not be present)
-            teff = float(_target_set_value(table, 'TEFF', null_value=np.nan))
-            teff_source = str(table['TEFF_SOURCE'].iloc[0])
+            teff_val = legacy.get('TEFF')
+            teff = float(teff_val) if teff_val is not None else np.nan
+            teff_source = str(legacy.get('TEFF_SOURCE') or '')
             # spectral type (may not be present)
-            sp_type = str(table['SP_TYPE'].iloc[0])
-            sp_source = str(table['SP_SOURCE'].iloc[0])
-            # data source is "database" and no date is the date the database
-            #   was last updated (times added when database downloaded last)
+            sp_type = str(legacy.get('SP_TYPE') or '')
+            sp_source = str(legacy.get('SP_SOURCE') or '')
+            # data source is "database" and the data_date column has no yaml
+            # equivalent yet (DATE_ADDED is not stored)
             data_source = 'database'
-            data_date = str(table['DATE_ADDED'].iloc[0])
+            data_date = str(legacy.get('DATE_ADDED') or '')
             # mark resolved as complete
             resolved = True
 
@@ -447,7 +449,7 @@ def get_obj_reject_list(params: ParamDict) -> np.ndarray:
             # loop around invidiual alias names
             for alias in aliaslist.split('|'):
                 # clean alias name and add to reject list
-                reject_objs.append(pconst.DRS_OBJ_NAME(alias))
+                reject_objs.append(drs_astrometrics.clean_object(alias))
         # return any unique rows in reject object list
         return np.unique(reject_objs)
     # else if we have no objects to reject just return an empty array

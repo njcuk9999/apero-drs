@@ -35,11 +35,14 @@ def api_async_tasks_save(app):
     has_mp_backend = "mp_backend" in data
     has_mp_start_method = "mp_start_method" in data or "mp_start_methd" in data
     has_sync_source = "sync_source" in data
+    has_asset_servers = "asset_servers" in data
 
     ncores = None
     mp_backend = None
     mp_start_method = None
     sync_source = None
+    asset_servers = None
+    assets_mode = None
 
     if not instrument or not task_id:
         return jsonify(success=False, error="Missing fields"), 400
@@ -85,6 +88,25 @@ def api_async_tasks_save(app):
     if has_sync_source:
         sync_source = str(data.get("sync_source", "") or "").strip()
 
+    if has_asset_servers:
+        raw_srv = data.get("asset_servers")
+        if isinstance(raw_srv, list):
+            asset_servers = [
+                str(s).strip() for s in raw_srv if str(s).strip()
+            ]
+        elif isinstance(raw_srv, str):
+            asset_servers = [
+                s.strip() for s in raw_srv.splitlines() if s.strip()
+            ]
+        else:
+            asset_servers = []
+        assets_mode_raw = (
+            str(data.get("assets_mode") or "sync").strip().lower()
+        )
+        if assets_mode_raw not in ("sync", "upload"):
+            assets_mode_raw = "sync"
+        assets_mode = assets_mode_raw
+
     all_tasks = load_async_tasks()
     inst_tasks, _ = app._merge_async_task_catalog(instrument, all_tasks)
     from apero_ri import tasks as task_module
@@ -119,6 +141,11 @@ def api_async_tasks_save(app):
         if task_key == "ARI_LOCAL_DATA_BACKUP":
             t["daily_copies"] = daily_copies
             t["weekly_copies"] = weekly_copies
+        if task_key == "APERO_SYNC_ASSETS":
+            if asset_servers is not None:
+                t["asset_servers"] = asset_servers
+            if assets_mode is not None:
+                t["mode"] = assets_mode
 
         supports_mp = bool(task_module.MULTI_PROCESS.get(task_key, False))
         supports_local_task = bool(task_module.LOCAL_TASK.get(task_key, False))
@@ -364,11 +391,11 @@ def api_async_tasks_task_list(app):
     try:
         from apero_ri import tasks as task_module
     except Exception:
+        _tb = traceback.format_exc()
         return (
             jsonify(
                 success=False,
-                error=f"Failed to import task catalog:\n{
-                    traceback.format_exc()}",
+                error=f"Failed to import task catalog:\n{_tb}",
             ),
             200,
         )

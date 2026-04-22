@@ -17,6 +17,7 @@ from astropy.table import Table, vstack, MaskedColumn
 
 from apero.base import base as apero_base
 from apero.core import drs_database
+from apero.core import drs_astrometrics
 from apero.instruments import select
 from apero.instruments.default import instrument as instrument_mod
 from apero.utils import drs_recipe
@@ -250,7 +251,7 @@ def list_databases(params: ParamDict,
     telludbm = drs_database.TelluricDatabase(params, shortname, pconst)
     findexdbm = drs_database.FileIndexDatabase(params, shortname, pconst)
     logdbm = drs_database.LogDatabase(params, shortname, pconst)
-    objectdbm = drs_database.AstrometricDatabase(params, shortname, pconst)
+    objectdbm = drs_astrometrics.AstrometricDatabase(params, shortname)
     rejectdbm = drs_database.RejectDatabase(params, shortname, pconst)
     # add to storage
     databases['calib'] = calibdbm
@@ -492,57 +493,47 @@ def create_log_database(params: ParamDict, pconst: Instrument,
 # =============================================================================
 def create_object_database(params: ParamDict, pconst: Instrument,
                            databases: Dict[str, DatabaseM],
-                           verbose: bool = False) -> Database:
+                           verbose: bool = False) -> 'DatabaseM':
     """
-    Setup for the calibration database
+    Setup for the astrometric (object) database.
+
+    The astrometric catalogue is now yaml-backed (one file per object
+    under DRS_DATA_ASSETS/astrometrics) so there is no SQL table to
+    create. This function only ensures the directory exists and then
+    populates it via :func:`update_object_database`.
 
     :param params: ParamDict, the parameter dictionary of constants
-    :param pconst: Pseudo constants
+    :param pconst: Pseudo constants (unused, kept for API parity)
     :param databases: dictionary of database managers
     :param verbose: bool, if True print more messages
 
-    :returns: database - the telluric database
+    :returns: the (yaml-backed) astrometric database manager.
     """
-    # get columns and ctypes from pconst
-    objdb_cols = pconst.ASTROMETRIC_DB_COLUMNS()
-    # -------------------------------------------------------------------------
-    # construct directory
+    # unused kwargs (kept for API parity with the other create_* funcs)
+    _ = pconst
+    # the yaml-backed manager from the databases dict
     objectdbm = databases['astrom']
-    # -------------------------------------------------------------------------
-    # make database
-    objectdb = drs_db.AperoDatabase(objectdbm.dburl,
-                                    tablename=objectdbm.dbtable,
-                                    connect_args=objectdbm.connect_args)
-    # -------------------------------------------------------------------------
-    # remove table if it already exists
-    if objectdb.tablename in objectdb.get_tables():
-        objectdb.backup()
-        objectdb.delete_table(objectdb.tablename)
-        if verbose:
-            WLOG(params, '', 'Deleted astrometric database')
-    # add main table
-    objectdb.add_table(objectdb.tablename,
-                       columns=objdb_cols.columns,
-                       indexes=objdb_cols.indexes,
-                       uniques=objdb_cols.uniques)
+    # ensure the on-disk directory exists
+    objectdbm._ensure_loaded()
     if verbose:
-        WLOG(params, '', 'Created astrometric database')
+        WLOG(params, '', 'Astrometric database is yaml-backed (no SQL '
+             'table to create)')
     # ---------------------------------------------------------------------
-    # update object database from google sheet(s)
+    # update object database from google sheet(s) / archive
     update_object_database(params)
     # -------------------------------------------------------------------------
-    return objectdb
+    return objectdbm
 
 
 def object_db_populated(params: ParamDict, shortname: str) -> bool:
     """
-    Check that object database is populated
+    Check that the (yaml-backed) astrometric database is populated.
     """
-    # need to load database
-    objdbm = drs_database.AstrometricDatabase(params, shortname)
+    # load the yaml-backed database manager
+    objdbm = drs_astrometrics.AstrometricDatabase(params, shortname)
     objdbm.load_db()
-    # count rows in database
-    count = objdbm.database.count()
+    # count entries on disk
+    count = objdbm.count()
     # return a boolean for object database populated
     return count > 0
 

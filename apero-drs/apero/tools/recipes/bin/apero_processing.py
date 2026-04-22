@@ -14,6 +14,7 @@ import traceback
 
 from aperocore import drs_lang
 from apero.core import drs_database
+from apero.core import drs_astrometrics
 from aperocore.core import drs_log
 from apero.utils import drs_startup
 from apero.tools.module.database import manage_databases
@@ -34,7 +35,7 @@ __release__ = apero_base.__release__
 WLOG = drs_log.wlog
 # Get index database
 FileIndexDatabase = drs_database.FileIndexDatabase
-AstrometricDatabase = drs_database.AstrometricDatabase
+AstrometricDatabase = drs_astrometrics.AstrometricDatabase
 # get text entry instance
 textentry = drs_lang.textentry
 

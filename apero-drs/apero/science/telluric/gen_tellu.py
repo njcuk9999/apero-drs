@@ -26,6 +26,7 @@ from aperocore import drs_lang
 from aperocore import math as mp
 from aperocore.core import drs_misc
 from apero.core import drs_database
+from apero.core import drs_astrometrics
 from apero.core import drs_file
 from apero.utils import drs_recipe
 from aperocore.core import drs_log
@@ -98,10 +99,8 @@ def get_tellu_include_list(params: ParamDict, recipe: DrsRecipe,
                            all_objects: Optional[List[str]] = None
                            ) -> List[str]:
     func_name = __NAME__ + '.get_whitelist()'
-    # get pseudo constants
-    pconst = load_functions.load_pconfig(select.INSTRUMENTS)
-    # get object database
-    objdbm = drs_database.AstrometricDatabase(params, recipe.shortname)
+    # get object database (yaml-backed)
+    objdbm = drs_astrometrics.AstrometricDatabase(params, recipe.shortname)
     objdbm.load_db()
     # get parameters from params/kwargs
     assetdir = pcheck(params, 'PATH.ASSETS', 'assetsdir', func=func_name,
@@ -116,7 +115,7 @@ def get_tellu_include_list(params: ParamDict, recipe: DrsRecipe,
     whitelist = drs_data.load_text_file(params, whitelistfile, func_name,
                                         dtype=str)
     # must clean names
-    whitelist, _ = objdbm.find_objnames(pconst, whitelist, allow_empty=True)
+    whitelist, _ = objdbm.find_objnames(whitelist, allow_empty=True)
 
     # deal with all objects filter
     if all_objects is not None:
@@ -132,10 +131,8 @@ def get_tellu_exclude_list(params: ParamDict, recipe: DrsRecipe,
                            tellu_exclude_file: Union[str, None] = None
                            ) -> Tuple[List[str], str]:
     func_name = __NAME__ + '.get_blacklist()'
-    # get pseudo constants
-    pconst = load_functions.load_pconfig(select.INSTRUMENTS)
-    # get object database
-    objdbm = drs_database.AstrometricDatabase(params, recipe.shortname)
+    # get object database (yaml-backed)
+    objdbm = drs_astrometrics.AstrometricDatabase(params, recipe.shortname)
     objdbm.load_db()
     # get parameters from params/kwargs
     assetdir = pcheck(params, 'PATH.ASSETS', 'assetsdir', func=func_name,
@@ -150,7 +147,7 @@ def get_tellu_exclude_list(params: ParamDict, recipe: DrsRecipe,
     blacklist = drs_data.load_text_file(params, blacklistfile, func_name,
                                         dtype=str)
     # must clean names and deal with aliases
-    blacklist, _ = objdbm.find_objnames(pconst, blacklist, allow_empty=True)
+    blacklist, _ = objdbm.find_objnames(blacklist, allow_empty=True)
     # return the whitelist
     return blacklist, blacklistfile
 

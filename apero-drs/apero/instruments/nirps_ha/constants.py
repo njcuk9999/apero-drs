@@ -1624,6 +1624,11 @@ CDict.set('GAIA_URL',
           value='https://gea.esac.esa.int/tap-server/tap',
           source=__NAME__, group=cgroup)
 
+# Define the VizieR TAP url
+CDict.set('VIZIER_TAPURL',
+          value='https://tapvizier.cds.unistra.fr/TAPVizieR/tap',
+          source=__NAME__, group=cgroup)
+
 # Define the google sheet to use for crossmatch (may be set to a directory for
 # completely offline reduction)
 CDict.set('GSHEET_URL',
