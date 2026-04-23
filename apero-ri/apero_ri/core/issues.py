@@ -280,6 +280,7 @@ def update_issue(
                 break
         if target is None:
             return None
+        old_assignee = target.get('assigned_to')
         if status:
             target['status'] = status
         if assigned_to is not None:
@@ -293,4 +294,14 @@ def update_issue(
                     timezone.utc).isoformat(timespec='seconds'),
             })
         _save(data_dir, issues)
+        new_assignee = target.get('assigned_to')
+        # Sync the assignee's user-portal todo list.
+        try:
+            from apero_ri.core import user_data as _ud
+            if old_assignee and old_assignee != new_assignee:
+                _ud.remove_issue_todo(old_assignee, target['id'])
+            if new_assignee:
+                _ud.upsert_issue_todo(new_assignee, target)
+        except Exception:
+            pass
         return target

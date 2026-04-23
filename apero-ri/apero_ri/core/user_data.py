@@ -1377,6 +1377,69 @@ def reorder_todo_items(username: str, ordered_ids: List[str]) -> List[Dict]:
 
 
 # =============================================================================
+# Issue-linked todo helpers
+# =============================================================================
+ISSUE_TODO_PROJECT = "monitor.issues"
+
+
+def _issue_todo_id(issue_id: Any) -> str:
+    return f"issue-{issue_id}"
+
+
+def _issue_todo_tag(issue: Dict) -> str:
+    kind = str(issue.get("kind") or "issue").strip() or "issue"
+    typ = str(issue.get("type") or "").strip()
+    return f"{kind}.{typ}" if typ else kind
+
+
+def upsert_issue_todo(username: str, issue: Dict) -> Optional[Dict]:
+    """Create or update a todo item that mirrors a monitor issue.
+
+    The todo uses a deterministic id (``issue-<id>``), the
+    ``monitor.issues`` project, a ``{kind}.{type}`` tag, and a
+    small size. Status maps to ``done`` for resolved/invalid
+    issues, otherwise ``todo``.
+    """
+    if not username:
+        return None
+    issue_id = issue.get("id")
+    if issue_id is None:
+        return None
+    status = str(issue.get("status") or "open").lower()
+    todo_status = "done" if status in {"resolved", "invalid"} \
+        else "todo"
+    title_src = str(issue.get("title") or "").strip()
+    if not title_src:
+        bits = []
+        if issue.get("apero_name"):
+            bits.append(f"Object: {issue.get('apero_name')}")
+        if issue.get("field"):
+            bits.append(f"Field: {issue.get('field')}")
+        if issue.get("reason"):
+            bits.append(str(issue.get("reason"))[:80])
+        title_src = " ".join(bits) or "(no title)"
+    title = f"#{issue_id} \u2014 {title_src}"
+    item = {
+        "id": _issue_todo_id(issue_id),
+        "title": title,
+        "status": todo_status,
+        "size": "sm",
+        "priority": 0,
+        "projects": [ISSUE_TODO_PROJECT],
+        "tags": [_issue_todo_tag(issue)],
+        "comments": str(issue.get("reason") or ""),
+        "link_url": str(issue.get("origin_url") or ""),
+    }
+    return save_todo_item(username, item)
+
+
+def remove_issue_todo(username: str, issue_id: Any) -> bool:
+    if not username or issue_id is None:
+        return False
+    return delete_todo_item(username, _issue_todo_id(issue_id))
+
+
+# =============================================================================
 # Start of code
 # =============================================================================
 if __name__ == "__main__":
