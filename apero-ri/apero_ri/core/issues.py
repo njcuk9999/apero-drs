@@ -133,6 +133,10 @@ def _ensure_title(it: Dict[str, Any]) -> None:
         it['origin_url'] = ''
     if 'assigned_to' not in it:
         it['assigned_to'] = None
+    if 'label' not in it:
+        it['label'] = ''
+    if 'action' not in it:
+        it['action'] = ''
 
 
 def list_issues(
@@ -144,6 +148,7 @@ def list_issues(
         type_: Optional[str] = None,
         created_by: Optional[str] = None,
         assigned_to: Optional[str] = None,
+        label: Optional[str] = None,
 ) -> List[Dict[str, Any]]:
     """List issues filtered by visibility, status, instrument, kind.
 
@@ -173,6 +178,8 @@ def list_issues(
             continue
         _ensure_title(it)
         if type_ and (it.get('type') or '') != type_:
+            continue
+        if label and (it.get('label') or '') != label:
             continue
         if created_by and (it.get('created_by') or '') != created_by:
             continue
@@ -205,6 +212,9 @@ def create_issue(
         title: Optional[str] = None,
         type_: Optional[str] = None,
         origin_url: Optional[str] = None,
+        label: Optional[str] = None,
+        action: Optional[str] = None,
+        dedupe_key: Optional[str] = None,
 ) -> Dict[str, Any]:
     """Append a new issue to the store and return it.
 
@@ -219,10 +229,37 @@ def create_issue(
     :param instrument: str or None, instrument scope
     :param profile_id: str or None, profile scope
     :param visibility: ``'public'``, ``'monitor'`` or ``'admin'``
-    :return: the created issue dict (with ``id`` assigned)
+    :param title: optional one-line summary
+    :param type_: optional sub-category (e.g. ``'variable flag'``)
+    :param origin_url: optional URL the user was on when filing
+    :param label: optional label/category (e.g.
+                  ``'astrometric-verify'``); used by the issues
+                  page label filter
+    :param action: optional short hint (e.g.
+                  ``'Verify on resolver page'``) shown in the
+                  Action column on the issues list
+    :param dedupe_key: optional key; if provided, an existing OPEN
+                      issue with the same ``label`` + matching
+                      ``apero_name`` + ``instrument`` + ``field``
+                      will be returned instead of creating a duplicate
+    :return: the created (or existing) issue dict
     """
     with _LOCK:
         issues = _load(data_dir)
+        # de-dupe: if a label+apero_name+instrument+field combo
+        # already has an open issue, return it instead of creating a
+        # duplicate. This makes the scanner idempotent.
+        if dedupe_key and label:
+            for it in issues:
+                if (it.get('label') == label
+                        and it.get('status') == 'open'
+                        and (it.get('apero_name') or '')
+                        == (apero_name or '')
+                        and (it.get('instrument') or '')
+                        == (instrument or '')
+                        and (it.get('field') or '')
+                        == (field or '')):
+                    return it
         next_id = (max((it.get('id') or 0)
                        for it in issues) + 1) if issues else 1
         issue = {
@@ -235,6 +272,8 @@ def create_issue(
             'type': str(type_ or ''),
             'title': str(title or '').strip() or None,
             'origin_url': str(origin_url or '') or None,
+            'label': str(label or ''),
+            'action': str(action or ''),
             'apero_name': apero_name,
             'field': field,
             'value': value,
