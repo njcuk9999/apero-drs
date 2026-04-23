@@ -126,10 +126,10 @@ def update_database(params: ParamDict, recipe: DrsRecipe, dbkind: str):
 
     if dbkind in ['astrom', 'all']:
         WLOG(params, 'info', params['LOG.HEADER'], colour='magenta')
-        WLOG(params, 'info', textentry('40-006-00007', args=['object']),
+        WLOG(params, 'info', textentry('40-006-00007', args=['astrometric']),
              colour='magenta')
         WLOG(params, 'info', params['LOG.HEADER'], colour='magenta')
-        manage_databases.update_object_database(params)
+        manage_databases.validate_astrometric_yaml_archive(params)
 
     if dbkind in ['reject', 'all']:
         WLOG(params, 'info', params['LOG.HEADER'], colour='magenta')
