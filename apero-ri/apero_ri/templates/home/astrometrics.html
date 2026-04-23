@@ -300,11 +300,13 @@
                         Look up a target in the APERO astrometric
                         database ({{ astrometrics_star_count or '?' }}
                         stars, vetted by the APERO team).
-                        <br>
+                    </p>
+                    <p class="ari-section-intro">
                         If the target is not yet in the database,
                         use "Resolve online" to query external
                         services.
-                        <br>
+                    </p>
+                    <p class="ari-section-intro">
                         Any user can flag a value that looks wrong.
                     </p>
 
@@ -506,6 +508,6 @@
     window.AperoRI = window.AperoRI || {};
     window.AperoRI.userPerms = {{ (user_permissions|list)|tojson }};
 </script>
-<script src="{{ url_for('static', filename='js/target_info_render.js', v='20260422c') }}"></script>
-<script src="{{ url_for('static', filename='js/astrometrics.js', v='20260422c') }}"></script>
+<script src="{{ url_for('static', filename='js/target_info_render.js', v='20260422i') }}"></script>
+<script src="{{ url_for('static', filename='js/astrometrics.js', v='20260422i') }}"></script>
 {% endblock %}

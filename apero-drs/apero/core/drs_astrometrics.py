@@ -246,6 +246,68 @@ def clean_object(rawobjname: Union[str, None]) -> str:
     return objectname
 
 
+def name_search_variants(rawobjname: Union[str, None]) -> List[str]:
+    """Return ordered candidate variants of a name for fuzzy lookup.
+
+    Used by :func:`find_by_name` (and the index builder) so that a
+    raw user-typed name resolves to the same entry regardless of
+    whitespace, sign characters or underscore conventions.
+
+    Variants explore the cross-product of:
+        - whitespace -> ``'_'`` or removed
+        - ``+``      -> ``'P'`` or removed
+        - ``-``      -> ``'M'`` or removed
+        - underscores collapsed-or-removed (each variant emitted
+          twice: once with single ``_`` separators, once with no
+          ``_`` at all)
+
+    All variants are upper-cased and have any other punctuation
+    replaced by ``_`` (then collapsed). The canonical
+    :func:`clean_object` result is always first in the list.
+
+    :param rawobjname: str or None, the raw user-supplied name
+    :return: list[str], deduplicated ordered list of variants
+             (empty list if the name is null/empty)
+    """
+    if rawobjname is None:
+        return []
+    raw = str(rawobjname).strip()
+    if not raw or drs_text.null_text(raw, NULL_TEXT):
+        return []
+    # replace any punctuation EXCEPT whitespace, +, -, _ with '_'
+    keep = {' ', '\t', '+', '-', '_'}
+    norm_chars = []
+    for ch in raw:
+        if ch in BAD_OBJ_CHARS and ch not in keep:
+            norm_chars.append('_')
+        else:
+            norm_chars.append(ch)
+    norm = ''.join(norm_chars)
+    # build cross-product
+    seen: List[str] = []
+    canonical = clean_object(rawobjname)
+    if canonical and canonical != 'Null':
+        seen.append(canonical)
+    for ws in ('_', ''):
+        for plus in ('P', ''):
+            for minus in ('M', ''):
+                v = norm
+                # whitespace -> ws
+                v = v.replace(' ', ws).replace('\t', ws)
+                v = v.replace('+', plus).replace('-', minus)
+                v = v.upper()
+                while '__' in v:
+                    v = v.replace('__', '_')
+                v = v.strip('_')
+                if v and v not in seen:
+                    seen.append(v)
+                # also try the same variant with all '_' removed
+                v_no = v.replace('_', '')
+                if v_no and v_no not in seen:
+                    seen.append(v_no)
+    return seen
+
+
 def _is_null(value: Any) -> bool:
     """
     Return True if ``value`` should be treated as missing/null.
@@ -1898,21 +1960,23 @@ class AstrometricDatabase:
         :param apero_name: str, the canonical APERO name
         :param entry: dict, the loaded yaml entry
         """
-        # always index the cleaned APERO name itself
-        cleaned = clean_object(apero_name)
-        if cleaned and cleaned != 'Null':
-            name_index[cleaned] = apero_name
-        # index the other primary name keys
+        def _index(value: Any, primary: bool) -> None:
+            for variant in name_search_variants(value):
+                if primary:
+                    name_index[variant] = apero_name
+                else:
+                    name_index.setdefault(variant, apero_name)
+
+        # always index the cleaned APERO name itself (primary)
+        _index(apero_name, True)
+        # index the other primary name keys (do not overwrite primary)
         for key in NAME_KEYS:
             if key == APERO_NAME_KEY:
                 continue
             value = entry.get(key)
             if _is_null(value):
                 continue
-            cleaned = clean_object(value)
-            if cleaned and cleaned != 'Null':
-                # do not overwrite an existing primary mapping
-                name_index.setdefault(cleaned, apero_name)
+            _index(value, False)
         # index every alias (if any)
         aliases = entry.get(ALIAS_KEY)
         if isinstance(aliases, str):
@@ -1922,9 +1986,7 @@ class AstrometricDatabase:
             for alias in aliases:
                 if _is_null(alias):
                     continue
-                cleaned = clean_object(alias)
-                if cleaned and cleaned != 'Null':
-                    name_index.setdefault(cleaned, apero_name)
+                _index(alias, False)
 
     @staticmethod
     def _invalidate_resolve_cache() -> None:
@@ -2044,11 +2106,19 @@ class AstrometricDatabase:
         # grab the index for this path (always present after _ensure_loaded)
         name_index = _NAME_INDEX.get(self.path, dict())
         entries = _ENTRY_CACHE.get(self.path, dict())
-        # try to look up the cleaned name
-        if cleaned in name_index:
-            apero_name = name_index[cleaned]
+        # try to look up via the variant list (whitespace / sign / _
+        # tolerant); the canonical clean_object value is the first
+        # variant so behaviour for already-clean names is unchanged.
+        apero_name: Optional[str] = None
+        hit_variant: Optional[str] = None
+        for variant in name_search_variants(raw):
+            if variant in name_index:
+                apero_name = name_index[variant]
+                hit_variant = variant
+                break
+        if apero_name is not None:
             # decide if it was a primary or alias hit
-            if cleaned == clean_object(apero_name):
+            if hit_variant == clean_object(apero_name):
                 flag = 1
             else:
                 flag = 2
@@ -2612,19 +2682,20 @@ def _build_name_index(
         _DIR_NAME_INDEX[astrom_dir] = (sig, disk)
         return disk
     index: Dict[str, str] = {}
+
+    def _index(value: Any, apero_name: str) -> None:
+        for variant in name_search_variants(value):
+            index.setdefault(variant, apero_name)
+
     for apero_name, entry in load_all_entries(astrom_dir):
-        cleaned = clean_object(apero_name)
-        if cleaned and cleaned != 'Null':
-            index[cleaned] = apero_name
+        _index(apero_name, apero_name)
         for key in NAME_KEYS:
             if key == APERO_NAME_KEY:
                 continue
             value = entry.get(key)
             if _is_null(value):
                 continue
-            cleaned = clean_object(value)
-            if cleaned and cleaned != 'Null':
-                index.setdefault(cleaned, apero_name)
+            _index(value, apero_name)
         aliases = entry.get(ALIAS_KEY)
         if isinstance(aliases, str):
             aliases = aliases.split('|')
@@ -2632,15 +2703,16 @@ def _build_name_index(
             for alias in aliases:
                 if _is_null(alias):
                     continue
-                cleaned = clean_object(alias)
-                if cleaned and cleaned != 'Null':
-                    index.setdefault(cleaned, apero_name)
+                _index(alias, apero_name)
     _DIR_NAME_INDEX[astrom_dir] = (sig, index)
     _persist_name_index(astrom_dir, sig, index)
     return index
 
 
 _NAME_INDEX_FILE = '.name_index.json'
+# Bump when the indexing strategy changes so old on-disk caches are
+# invalidated automatically (current: variant-based fuzzy index).
+_NAME_INDEX_VERSION = 2
 
 
 def _name_index_path(astrom_dir: str) -> str:
@@ -2665,6 +2737,8 @@ def _load_persisted_name_index(
         return None
     if not isinstance(data, dict):
         return None
+    if data.get('version') != _NAME_INDEX_VERSION:
+        return None
     if data.get('signature') != signature:
         return None
     idx = data.get('index')
@@ -2684,7 +2758,8 @@ def _persist_name_index(
     """
     fpath = _name_index_path(astrom_dir)
     tmp = fpath + '.tmp'
-    payload = {'signature': signature, 'count': len(index),
+    payload = {'version': _NAME_INDEX_VERSION,
+               'signature': signature, 'count': len(index),
                'index': index}
     try:
         with open(tmp, 'w', encoding='utf-8') as fh:
@@ -2709,11 +2784,12 @@ def find_by_name(
     """
     if not name:
         return None
-    cleaned = clean_object(name)
-    if not cleaned or cleaned == 'Null':
-        return None
     index = _build_name_index(astrom_dir)
-    apero_name = index.get(cleaned)
+    apero_name: Optional[str] = None
+    for variant in name_search_variants(name):
+        apero_name = index.get(variant)
+        if apero_name is not None:
+            break
     if apero_name is None:
         return None
     # fast path: the on-disk file follows _safe_filename(apero_name)

@@ -274,10 +274,8 @@
 
     function wrapSection(section, icon, kind, body) {
         var collapsed = readBool(LS_COLLAPSE_PREFIX + section.id);
-        var pinned = readBool(LS_PIN_PREFIX + section.id);
         var classes = ["ari-tinfo-section"];
         if (collapsed) classes.push("ari-tinfo-section--collapsed");
-        if (pinned) classes.push("ari-tinfo-section--pinned");
         var chartAttr = "";
         if (kind === "chart") {
             chartAttr = ' data-chart-type="'
@@ -296,11 +294,6 @@
             + ' ari-tinfo-section__icon"></i>'
             + '<span class="ari-tinfo-section__title">'
             + escapeHtml(section.title) + "</span>"
-            + '<button type="button" class="ari-tinfo-pin-btn"'
-            + ' data-section-pin'
-            + ' title="' + (pinned ? "Unpin" : "Pin to top") + '">'
-            + '<i class="fa-solid fa-thumbtack"></i>'
-            + "</button>"
             + "</header>"
             + '<div class="ari-tinfo-section__body">' + body + "</div>"
             + "</section>";

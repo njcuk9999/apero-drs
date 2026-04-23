@@ -11426,6 +11426,26 @@ button.ari-rp-section-card:hover {
     background: var(--ari-bg-card, #fff);
     overflow: hidden;
 }
+/* When the shared target-info renderer is used as a single-section
+   embed inside a dedicated page-level card (SED, HR Diagram on the
+   data-portal object page), hide the inner section chrome so we
+   don't show the same title twice. */
+#op-target-sed .ari-tinfo-section,
+#op-target-hr-diagram .ari-tinfo-section,
+#op-target-status .ari-tinfo-section {
+    border: none;
+    background: transparent;
+}
+#op-target-sed .ari-tinfo-section__header,
+#op-target-hr-diagram .ari-tinfo-section__header,
+#op-target-status .ari-tinfo-section__header {
+    display: none;
+}
+#op-target-sed .ari-tinfo-section__body,
+#op-target-hr-diagram .ari-tinfo-section__body,
+#op-target-status .ari-tinfo-section__body {
+    padding: 0;
+}
 .ari-tinfo-section__header {
     display: flex;
     align-items: center;

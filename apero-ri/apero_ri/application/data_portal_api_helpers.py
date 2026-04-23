@@ -1603,21 +1603,29 @@ def api_object_page(app):
         entry = _dra.find_by_name(str(astrom_dir), objname)
         if entry:
             apero_name = entry.get("APERO_NAME", objname)
-            # main Target Information card: only SED chart inline;
-            # HR Diagram and Status are rendered as their own page-
-            # level cards (see hr_diagram / status payloads below).
+            # main Target Information card: keep all data sections
+            # (incl. Status). SED and HR Diagram are rendered as
+            # their own page-level cards (see payloads below).
             shared_payload = _build_ti(
                 entry,
                 obj_row=obj_row,
-                include_charts=True,
-                chart_ids=['sed'],
-                exclude_ids=['hr_diagram', 'status'],
+                include_charts=False,
+                exclude_ids=['sed', 'hr_diagram'],
             )
             shared_payload["apero_name"] = apero_name
             sections["target_info"] = shared_payload
 
             # standalone single-section payloads used by the
-            # dedicated HR Diagram + Status cards on the page.
+            # dedicated SED and HR Diagram cards on the page.
+            sed_payload = _build_ti(
+                entry,
+                obj_row=obj_row,
+                include_charts=True,
+                only_ids=['sed'],
+            )
+            sed_payload["apero_name"] = apero_name
+            sections["target_sed"] = sed_payload
+
             hr_payload = _build_ti(
                 entry,
                 obj_row=obj_row,
@@ -1626,15 +1634,6 @@ def api_object_page(app):
             )
             hr_payload["apero_name"] = apero_name
             sections["target_hr_diagram"] = hr_payload
-
-            status_payload = _build_ti(
-                entry,
-                obj_row=obj_row,
-                include_charts=False,
-                only_ids=['status'],
-            )
-            status_payload["apero_name"] = apero_name
-            sections["target_status"] = status_payload
     except Exception:  # noqa: BLE001
         # Fall back silently to the legacy target_info dict if the
         # shared payload cannot be built (e.g. astrometric yaml

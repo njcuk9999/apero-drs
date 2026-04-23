@@ -509,22 +509,16 @@ TARGET_INFO_SECTIONS: List[Dict[str, Any]] = [
         'build': _build_telluric,
     },
     {
-        'id': 'finder_chart',
-        'title': 'Finder Chart',
-        'icon': 'fa-solid fa-crosshairs',
-        'kind': 'chart',
-        'chart_type': CHART_FINDER,
-        'chart_id': 'op-finder-chart',
-        'description': None,
-    },
-    {
-        'id': 'rotation',
-        'title': 'TESS Rotation Periods',
-        'icon': 'fa-solid fa-arrows-rotate',
-        'kind': 'chart',
-        'chart_type': CHART_ROTATION,
-        'chart_id': 'op-tess-rotation',
-        'description': None,
+        'id': 'status',
+        'title': 'Status',
+        'icon': 'fa-solid fa-circle-info',
+        'kind': 'data',
+        'description': (
+            'Provenance metadata for this catalogue entry: when it was '
+            'first created, when it was last edited, by whom, and the '
+            'current vetting status (checked / pending / error).'
+        ),
+        'build': _build_status,
     },
     {
         'id': 'sed',
@@ -545,16 +539,22 @@ TARGET_INFO_SECTIONS: List[Dict[str, Any]] = [
         'description': None,
     },
     {
-        'id': 'status',
-        'title': 'Status',
-        'icon': 'fa-solid fa-circle-info',
-        'kind': 'data',
-        'description': (
-            'Provenance metadata for this catalogue entry: when it was '
-            'first created, when it was last edited, by whom, and the '
-            'current vetting status (checked / pending / error).'
-        ),
-        'build': _build_status,
+        'id': 'finder_chart',
+        'title': 'Finder Chart',
+        'icon': 'fa-solid fa-crosshairs',
+        'kind': 'chart',
+        'chart_type': CHART_FINDER,
+        'chart_id': 'op-finder-chart',
+        'description': None,
+    },
+    {
+        'id': 'rotation',
+        'title': 'TESS Rotation Periods',
+        'icon': 'fa-solid fa-arrows-rotate',
+        'kind': 'chart',
+        'chart_type': CHART_ROTATION,
+        'chart_id': 'op-tess-rotation',
+        'description': None,
     },
 ]
 

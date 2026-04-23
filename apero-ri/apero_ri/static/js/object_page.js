@@ -3128,9 +3128,9 @@
                 updatePlotMaxLinks();
                 renderTarget(s.target_info || {});
                 renderTargetSubsection(
-                    'op-target-hr-diagram', s.target_hr_diagram);
+                    'op-target-sed', s.target_sed);
                 renderTargetSubsection(
-                    'op-target-status', s.target_status);
+                    'op-target-hr-diagram', s.target_hr_diagram);
                 renderSpectrum(s.spectrum || {});
                 renderLbl(s.lbl || {});
                 renderCcf(s.ccf || {});
