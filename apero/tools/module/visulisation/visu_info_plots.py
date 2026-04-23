@@ -240,6 +240,11 @@ def plot_spectrum(params: ParamDict, filename: str,
         # get parameters for each dataset to plot
         x = dataset[label]['x']
         y = dataset[label]['y']
+        # skip plotting if we don't have any points
+        mask = np.isfinite(x) & np.isfinite(y)
+        if np.sum(mask) == 0:
+            continue
+        # get plot kwargs from dataset kwargs
         pkwargs = dataset[label]['kwargs']
         # plot the main plot
         frames['MAIN'].plot(x, y, **pkwargs, label=label)
@@ -268,6 +273,11 @@ def plot_spectrum_thumbnail(params: ParamDict, filename: str,
         # get parameters for each dataset to plot
         x = dataset[label]['x']
         y = dataset[label]['y']
+        # skip plotting if we don't have any points
+        mask = np.isfinite(x) & np.isfinite(y)
+        if np.sum(mask) == 0:
+            continue
+        # get plot kwargs from dataset kwargs
         pkwargs = dataset[label]['kwargs']
         frame.plot(x, y, **pkwargs)
     # force a tight layout for thumbnails
@@ -671,7 +681,13 @@ def post_drs_post_s(params: ParamDict, filename: str, identity: str = ''):
     # get columns from table
     wave = np.array(table['Wave'])
     spectrum = np.array(table['Flux{0}'.format(fiber)])
-    tcorr = np.array(table['Flux{0}TelluCorrected'.format(fiber)])
+    # note tcorr may not be present (if it failed QC)
+    tcorr_key = 'Flux{0}TelluCorrected'.format(fiber)
+    if tcorr_key in table:
+        tcorr = np.array(table[tcorr_key])
+    # if we don't have any tcorr data then just fill with nans
+    else:
+        tcorr = np.full_like(spectrum, np.nan)
     # set up dataset
     dataset = dict()
     dataset['Extracted 1D Spectrum'] = {
