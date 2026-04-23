@@ -6,7 +6,7 @@
 {% block extra_head %}
 {{ super() }}
 <link rel="stylesheet"
-      href="{{ url_for('static', filename='css/monitor_issues.css') }}?v=20260423b">
+      href="{{ url_for('static', filename='css/monitor_issues.css') }}?v=20260423d">
 {% endblock %}
 
 {% block doc_content %}
@@ -44,9 +44,22 @@
         </label>
         <select id="issues-filter-kind" class="mi-select">
             <option value="">All</option>
+            <option value="astrometric">Astrometric</option>
+            <option value="ari">ARI</option>
             <option value="flag">Flag</option>
             <option value="target_request">Target request</option>
             <option value="other">Other</option>
+        </select>
+    </div>
+    <div class="mi-toolbar__group">
+        <label for="issues-filter-type" class="mi-toolbar__label">
+            Type
+        </label>
+        <select id="issues-filter-type" class="mi-select">
+            <option value="">All</option>
+            <option value="variable flag">Variable flag</option>
+            <option value="new object">New object</option>
+            <option value="page">Page</option>
         </select>
     </div>
     <div class="mi-toolbar__group">
@@ -74,9 +87,8 @@
                     <th class="mi-col-created">Created</th>
                     <th class="mi-col-by">By</th>
                     <th class="mi-col-kind">Kind</th>
-                    <th class="mi-col-object">Object</th>
-                    <th>Field</th>
-                    <th>Value</th>
+                    <th class="mi-col-kind">Type</th>
+                    <th>Title</th>
                     <th class="mi-col-reason">Reason</th>
                     <th class="mi-col-status">Status</th>
                     <th class="mi-col-actions">Actions</th>
@@ -84,7 +96,7 @@
             </thead>
             <tbody id="issues-tbody">
                 <tr>
-                    <td colspan="10">
+                    <td colspan="9">
                         <div class="mi-empty">
                             <i class="fa-solid fa-spinner fa-spin"></i>
                             <p class="mi-empty__msg">Loading issues…</p>
@@ -115,8 +127,10 @@
 
     function kindClass(kind) {
         const k = String(kind || '').toLowerCase();
-        if (k === 'flag' || k === 'target_request' || k === 'other') {
-            return 'mi-kind--' + k;
+        const known = ['flag', 'target_request', 'other',
+                       'astrometric', 'ari'];
+        if (known.indexOf(k) !== -1) {
+            return 'mi-kind--' + k.replace(/[^a-z0-9_-]/g, '');
         }
         return '';
     }
@@ -134,27 +148,43 @@
         return '';
     }
 
+    function synthesiseTitle(it) {
+        if (it.title) return String(it.title);
+        const bits = [];
+        if (it.apero_name) bits.push('Object: ' + it.apero_name);
+        if (it.field) bits.push('Field: ' + it.field);
+        if (it.value !== null && it.value !== undefined
+                && it.value !== '') {
+            const v = (typeof it.value === 'object')
+                ? JSON.stringify(it.value) : String(it.value);
+            bits.push('value: ' + v);
+        }
+        return bits.length ? bits.join(' ')
+            : (it.reason ? String(it.reason).slice(0, 80) : '');
+    }
+
     function renderRow(it) {
         const tr = document.createElement('tr');
         const rc = rowClass(it.status);
         if (rc) tr.classList.add(rc);
-        const valStr = it.value == null ? ''
-            : (typeof it.value === 'object'
-                ? JSON.stringify(it.value) : String(it.value));
-        const apero = it.apero_name || '';
-        const objCell = apero
-            ? `<a href="#" class="mi-link" data-apero="${
-                escapeHtml(apero)}">${escapeHtml(apero)}</a>`
+        const titleStr = synthesiseTitle(it);
+        const titleCell = titleStr
+            ? escapeHtml(titleStr)
             : '<span style="color:var(--ari-text-muted);">—</span>';
-        const valCell = valStr
-            ? `<code>${escapeHtml(valStr)}</code>`
-            : '<span style="color:var(--ari-text-muted);">—</span>';
-        const fieldCell = it.field
-            ? `<code>${escapeHtml(it.field)}</code>`
+        const typeCell = it.type
+            ? escapeHtml(it.type)
             : '<span style="color:var(--ari-text-muted);">—</span>';
         const reasonCell = it.reason
             ? escapeHtml(it.reason)
             : '<span style="color:var(--ari-text-muted);">—</span>';
+        const goBtn = it.origin_url
+            ? ('<a class="mi-btn mi-btn--xs mi-btn--ghost"'
+                + ' href="' + escapeHtml(it.origin_url) + '"'
+                + ' target="_blank" rel="noopener"'
+                + ' title="Open the page where this was flagged">'
+                + '<i class="fa-solid fa-up-right-from-square"></i>'
+                + ' Go</a>')
+            : '';
         tr.innerHTML = `
             <td class="mi-col-id">#${it.id}</td>
             <td class="mi-col-created">${
@@ -171,9 +201,8 @@
                     ${escapeHtml(it.kind||'')}
                 </span>
             </td>
-            <td class="mi-col-object">${objCell}</td>
-            <td class="mi-cell-value">${fieldCell}</td>
-            <td class="mi-cell-value">${valCell}</td>
+            <td class="mi-col-kind">${typeCell}</td>
+            <td class="mi-cell-title">${titleCell}</td>
             <td class="mi-col-reason">${reasonCell}</td>
             <td class="mi-col-status">
                 <span class="mi-badge ${statusClass(it.status)}">
@@ -181,6 +210,7 @@
                 </span>
             </td>
             <td class="mi-col-actions">
+                ${goBtn}
                 <button class="mi-btn mi-btn--xs"
                     data-action="resolve" data-id="${it.id}"
                     title="Mark as resolved">
@@ -202,20 +232,20 @@
 
     function renderEmpty() {
         tbody.innerHTML = `
-            <tr><td colspan="10">
+            <tr><td colspan="9">
                 <div class="mi-empty">
                     <i class="fa-solid fa-inbox"></i>
                     <p class="mi-empty__title">No issues match
                         these filters</p>
                     <p class="mi-empty__msg">Try clearing the
-                        status or kind filters.</p>
+                        status, kind, or type filters.</p>
                 </div>
             </td></tr>`;
     }
 
     function renderError(msg) {
         tbody.innerHTML = `
-            <tr><td colspan="10">
+            <tr><td colspan="9">
                 <div class="mi-empty">
                     <i class="fa-solid fa-triangle-exclamation"
                         style="color: var(--ari-danger);"></i>
@@ -301,204 +331,12 @@
     refreshBtn.addEventListener('click', load);
     fStatus.addEventListener('change', load);
     fKind.addEventListener('change', load);
+    if (fType) fType.addEventListener('change', load);
     let instTimer = null;
     fInst.addEventListener('input', () => {
         if (instTimer) clearTimeout(instTimer);
         instTimer = setTimeout(load, 350);
     });
-
-    load();
-})();
-</script>
-{% endblock %}
-{% extends "general/sidebar_base.html" %}
-{% block title %}APERO RI – Issues{% endblock %}
-
-{% block doc_content %}
-<div class="ari-page-header">
-    <h1><i class="{{ page_icon }}"></i> {{ page_label }}</h1>
-    <p style="color: var(--ari-text-muted);">
-        Manage user-reported flags and target requests.
-    </p>
-</div>
-
-<div class="ari-issues-toolbar"
-     style="display: flex; gap: 0.5rem; flex-wrap: wrap;
-            margin-bottom: 1rem;">
-    <select id="issues-filter-status" class="ari-input">
-        <option value="">All statuses</option>
-        <option value="open" selected>Open</option>
-        <option value="resolved">Resolved</option>
-        <option value="invalid">Invalid</option>
-    </select>
-    <select id="issues-filter-kind" class="ari-input">
-        <option value="">All kinds</option>
-        <option value="flag">Flag</option>
-        <option value="target_request">Target request</option>
-        <option value="other">Other</option>
-    </select>
-    <input id="issues-filter-instrument" class="ari-input"
-           placeholder="Instrument (optional)" />
-    <button id="issues-refresh" class="ari-btn ari-btn--primary">
-        <i class="fa-solid fa-rotate"></i> Refresh
-    </button>
-</div>
-
-<div id="issues-status" style="margin-bottom: 0.5rem;
-     color: var(--ari-text-muted);"></div>
-
-<div id="issues-table-wrap" class="ari-table-wrap">
-    <table class="ari-table" id="issues-table">
-        <thead>
-            <tr>
-                <th>ID</th>
-                <th>Created</th>
-                <th>By</th>
-                <th>Kind</th>
-                <th>Object</th>
-                <th>Field</th>
-                <th>Value</th>
-                <th>Reason</th>
-                <th>Status</th>
-                <th>Actions</th>
-            </tr>
-        </thead>
-        <tbody id="issues-tbody">
-            <tr><td colspan="10" style="text-align: center;
-                color: var(--ari-text-muted);">
-                Loading...
-            </td></tr>
-        </tbody>
-    </table>
-</div>
-
-<script>
-(function () {
-    'use strict';
-    const VISIBILITY = {{ visibility|tojson }};
-    const tbody = document.getElementById('issues-tbody');
-    const statusEl = document.getElementById('issues-status');
-    const fStatus = document.getElementById('issues-filter-status');
-    const fKind = document.getElementById('issues-filter-kind');
-    const fInst = document.getElementById('issues-filter-instrument');
-    const refreshBtn = document.getElementById('issues-refresh');
-
-    function escapeHtml(s) {
-        return String(s == null ? '' : s)
-            .replace(/&/g, '&amp;').replace(/</g, '&lt;')
-            .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
-    }
-
-    function renderRow(it) {
-        const tr = document.createElement('tr');
-        const valStr = it.value == null ? ''
-            : (typeof it.value === 'object'
-                ? JSON.stringify(it.value) : String(it.value));
-        const apero = it.apero_name || '';
-        const objLink = apero
-            ? `<a href="#" class="ari-link" data-apero="${
-                escapeHtml(apero)}">${escapeHtml(apero)}</a>`
-            : '';
-        tr.innerHTML = `
-            <td>${it.id}</td>
-            <td>${escapeHtml((it.created_at||'').slice(0, 19))}</td>
-            <td>${escapeHtml(it.created_by||'')}</td>
-            <td>${escapeHtml(it.kind||'')}</td>
-            <td>${objLink}</td>
-            <td>${escapeHtml(it.field||'')}</td>
-            <td><code>${escapeHtml(valStr)}</code></td>
-            <td>${escapeHtml(it.reason||'')}</td>
-            <td><span class="ari-badge ari-badge--${
-                escapeHtml(it.status||'open')}">${
-                escapeHtml(it.status||'open')}</span></td>
-            <td>
-                <button class="ari-btn ari-btn--xs"
-                    data-action="resolve" data-id="${it.id}">
-                    Resolve
-                </button>
-                <button class="ari-btn ari-btn--xs"
-                    data-action="invalid" data-id="${it.id}">
-                    Invalid
-                </button>
-                <button class="ari-btn ari-btn--xs"
-                    data-action="reopen" data-id="${it.id}">
-                    Reopen
-                </button>
-            </td>`;
-        return tr;
-    }
-
-    async function load() {
-        statusEl.textContent = 'Loading...';
-        const params = new URLSearchParams();
-        if (fStatus.value) params.set('status', fStatus.value);
-        if (fKind.value) params.set('kind', fKind.value);
-        if (fInst.value.trim()) {
-            params.set('instrument', fInst.value.trim());
-        }
-        try {
-            const resp = await fetch(
-                '/api/issues/list?' + params.toString());
-            const data = await resp.json();
-            if (!data.success) {
-                statusEl.textContent = 'Error: '
-                    + (data.error || 'unknown');
-                tbody.innerHTML = '';
-                return;
-            }
-            tbody.innerHTML = '';
-            (data.issues || []).forEach(it => {
-                tbody.appendChild(renderRow(it));
-            });
-            if (!data.issues || data.issues.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="10"
-                    style="text-align: center;
-                    color: var(--ari-text-muted);">
-                    No issues match these filters.
-                </td></tr>`;
-            }
-            statusEl.textContent = `${data.issues.length
-                } issue(s) | visibility: ${VISIBILITY}`;
-        } catch (err) {
-            statusEl.textContent = 'Error: ' + err.message;
-        }
-    }
-
-    async function update(id, status) {
-        const note = window.prompt(
-            'Optional note (leave blank to skip):', '');
-        try {
-            const resp = await fetch('/api/issues/update', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({id: id, status: status,
-                                      note: note || undefined})
-            });
-            const data = await resp.json();
-            if (!data.success) {
-                alert('Error: ' + (data.error || 'unknown'));
-            } else {
-                load();
-            }
-        } catch (err) {
-            alert('Error: ' + err.message);
-        }
-    }
-
-    tbody.addEventListener('click', (ev) => {
-        const btn = ev.target.closest('button[data-action]');
-        if (!btn) return;
-        const id = parseInt(btn.dataset.id, 10);
-        const map = {resolve: 'resolved',
-                     invalid: 'invalid',
-                     reopen: 'open'};
-        update(id, map[btn.dataset.action]);
-    });
-
-    refreshBtn.addEventListener('click', load);
-    fStatus.addEventListener('change', load);
-    fKind.addEventListener('change', load);
-    fInst.addEventListener('change', load);
 
     load();
 })();
