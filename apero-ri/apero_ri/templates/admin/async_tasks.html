@@ -509,17 +509,12 @@
                 </div>
                 <div id="edit-assets-fields" style="display:none;">
                     <div class="ari-ap-form__field">
-                        <label for="edit-asset-servers">Asset servers</label>
-                        <textarea id="edit-asset-servers" class="ari-ap-input" rows="3"
-                                  placeholder="https://example.com/drs-assets/&#10;(one URL per line)"></textarea>
-                        <div class="at-muted-hint">One base URL per line. Tried in order until one succeeds. Task will verify accessibility on each run.</div>
-                    </div>
-                    <div class="ari-ap-form__field">
                         <label for="edit-assets-mode">Mode</label>
                         <select id="edit-assets-mode" class="ari-ap-input">
                             <option value="sync">sync &#8212; check checksums, download only if changed</option>
                             <option value="upload">upload &#8212; push local assets to remote server</option>
                         </select>
+                        <div class="at-muted-hint">Servers and checksums are read from the installed apero package automatically.</div>
                     </div>
                 </div>
                 <div id="edit-local-sync-fields" style="display:none;">

@@ -907,6 +907,34 @@ class ARIApp(Flask):
     def _api_astrometrics_find_object(self):
         return astrometrics_api_helpers.api_astrometrics_find_object(self)
 
+    def _api_astrometrics_resolve_by_name(self):
+        return astrometrics_api_helpers.api_astrometrics_resolve_by_name(
+            self
+        )
+
+    def _api_astrometrics_resolve_by_coords(self):
+        return astrometrics_api_helpers.api_astrometrics_resolve_by_coords(
+            self
+        )
+
+    def _api_astrometrics_resolve_by_filter(self):
+        return astrometrics_api_helpers.api_astrometrics_resolve_by_filter(
+            self
+        )
+
+    def _api_astrometrics_columns(self):
+        return astrometrics_api_helpers.api_astrometrics_columns(self)
+
+    def _api_astrometrics_update_field(self):
+        return astrometrics_api_helpers.api_astrometrics_update_field(
+            self
+        )
+
+    def _api_astrometrics_upload_yaml(self):
+        return astrometrics_api_helpers.api_astrometrics_upload_yaml(
+            self
+        )
+
     def _ri_obs_table_view(self, profile_id):
         kwargs = dict(profile_id=profile_id)
         return data_portal_view_helpers.ri_obs_table_view(self, **kwargs)

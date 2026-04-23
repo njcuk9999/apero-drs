@@ -198,6 +198,26 @@ def _join_unique(values: Iterable[Any]) -> Optional[str]:
     return ", ".join(ordered) if ordered else None
 
 
+def _unique_list(values: Iterable[Any]) -> List[str]:
+    """Return ordered unique non-empty string values as a list.
+
+    Sibling of :func:`_join_unique` used when the renderer needs the
+    raw list (so it can render chips with a filter for >5 entries).
+    """
+    seen: set = set()
+    ordered: List[str] = []
+    for value in values:
+        sval = str(value).strip() if value is not None else ""
+        if not sval or sval.lower() in ("none", "null"):
+            continue
+        skey = sval.lower()
+        if skey in seen:
+            continue
+        seen.add(skey)
+        ordered.append(sval)
+    return ordered
+
+
 def _min_time(rows: Iterable[Dict[str, Any]], key: str) -> Optional[str]:
     """
     Return the lexicographically smallest time string for *key* across
@@ -707,24 +727,25 @@ def build_object_page_stats(
             obj_row, ["RV source", "RV_SOURCE"]
         ),
         "aliases": _first_present(obj_row, ["ALIASES", "ALIASES_STR"]),
-        "object_names_in_headers": _join_unique(
-            [
-                obj_row.get("OBJNAME"),
-                *[r.get("OBJNAME") for r in htable_rows_acc],
-                *[r.get("PP_OBJECT") for r in htable_rows_acc],
-                *[r.get("EXT_OBJECT") for r in htable_rows_acc],
-            ]
-        ),
-        "ob_names_in_headers": _join_unique(
-            r.get("PP_VERSION") for r in htable_rows_acc
-        ),
-        "pi_names_in_headers": _join_unique(
-            r.get("PP_PI_NAME") for r in htable_rows_acc
-        ),
-        "project_run_names_in_headers": _join_unique(
-            r.get("PP_PROG_ID") for r in htable_rows_acc
-        ),
     }
+    # -------------------------------------------------------------------------
+    # header-derived lists (shared between target & spectrum tabs); kept as
+    # plain Python lists so the renderer can chip+filter when len > 5.
+    _hdr_object_names = _unique_list([
+        obj_row.get("OBJNAME"),
+        *[r.get("OBJNAME") for r in htable_rows_acc],
+        *[r.get("PP_OBJECT") for r in htable_rows_acc],
+        *[r.get("EXT_OBJECT") for r in htable_rows_acc],
+    ])
+    _hdr_ob_names = _unique_list(
+        r.get("PP_OBNAME") for r in htable_rows_acc
+    )
+    _hdr_pi_names = _unique_list(
+        r.get("PP_PI_NAME") for r in htable_rows_acc
+    )
+    _hdr_run_ids = _unique_list(
+        r.get("PP_PROG_ID") for r in htable_rows_acc
+    )
     # -------------------------------------------------------------------------
     # QC counts per file kind
     raw_stats = _qc_counts(raw_rows)
@@ -791,6 +812,11 @@ def build_object_page_stats(
             _nanmedian(r.get("EXT_H") for r in htable_rows_acc),
             ndp=2,
         ),
+        # header-derived names: lists -> chip+filter UI when len > 5
+        "object_names_in_headers": _hdr_object_names,
+        "ob_names_in_headers": _hdr_ob_names,
+        "pi_names_in_headers": _hdr_pi_names,
+        "project_run_names_in_headers": _hdr_run_ids,
     }
     # -------------------------------------------------------------------------
     # LBL: build per-flavor stats from individual LBL_RDB files
@@ -1639,24 +1665,23 @@ def build_object_page_stats(
             obj_row, ["RV source", "RV_SOURCE"]
         ),
         "aliases": _first_present(obj_row, ["ALIASES", "ALIASES_STR"]),
-        "object_names_in_headers": _join_unique(
-            [
-                obj_row.get("OBJNAME"),
-                *[r.get("OBJNAME") for r in htable_rows_acc],
-                *[r.get("PP_OBJECT") for r in htable_rows_acc],
-                *[r.get("EXT_OBJECT") for r in htable_rows_acc],
-            ]
-        ),
-        "ob_names_in_headers": _join_unique(
-            r.get("PP_VERSION") for r in htable_rows_acc
-        ),
-        "pi_names_in_headers": _join_unique(
-            r.get("PP_PI_NAME") for r in htable_rows_acc
-        ),
-        "project_run_names_in_headers": _join_unique(
-            r.get("PP_PROG_ID") for r in htable_rows_acc
-        ),
     }
+    # header-derived lists, kept as lists for chip+filter rendering
+    _hdr_object_names = _unique_list([
+        obj_row.get("OBJNAME"),
+        *[r.get("OBJNAME") for r in htable_rows_acc],
+        *[r.get("PP_OBJECT") for r in htable_rows_acc],
+        *[r.get("EXT_OBJECT") for r in htable_rows_acc],
+    ])
+    _hdr_ob_names = _unique_list(
+        r.get("PP_OBNAME") for r in htable_rows_acc
+    )
+    _hdr_pi_names = _unique_list(
+        r.get("PP_PI_NAME") for r in htable_rows_acc
+    )
+    _hdr_run_ids = _unique_list(
+        r.get("PP_PROG_ID") for r in htable_rows_acc
+    )
 
     raw_stats = _qc_counts(raw_rows)
     pp_stats = _qc_counts(pp_rows)
@@ -1719,6 +1744,11 @@ def build_object_page_stats(
         "median_snr_h": _format_number(
             _nanmedian(r.get("EXT_H") for r in htable_rows_acc), ndp=2
         ),
+        # header-derived names: lists -> chip+filter UI when len > 5
+        "object_names_in_headers": _hdr_object_names,
+        "ob_names_in_headers": _hdr_ob_names,
+        "pi_names_in_headers": _hdr_pi_names,
+        "project_run_names_in_headers": _hdr_run_ids,
     }
 
     # ------------------------------------------------------------------

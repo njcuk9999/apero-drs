@@ -21,34 +21,34 @@
 {# ------------------------------------------------------------------ #}
 {# Vertical tab strip + tab panels                                     #}
 {# ------------------------------------------------------------------ #}
-<div class="ari-astro-tabs ari-htabs">
-    <nav class="ari-htabs__rail" role="tablist"
+<div class="ari-astro-tabs ari-vtabs">
+    <nav class="ari-vtabs__rail" role="tablist"
          aria-label="Astrometrics sections">
-        <button class="ari-htab ari-htab--active"
+        <button class="ari-vtab ari-vtab--active"
                 type="button" role="tab"
                 aria-selected="true"
-                data-htab="find-existing"
+                data-vtab="find-existing"
                 aria-controls="astro-tab-find-existing">
             <i class="fa-solid fa-magnifying-glass"></i>
             <span>Find object in data portal</span>
         </button>
-        <button class="ari-htab"
+        <button class="ari-vtab"
                 type="button" role="tab"
                 aria-selected="false"
-                data-htab="resolve-target"
+                data-vtab="resolve-target"
                 aria-controls="astro-tab-resolve-target">
             <i class="fa-solid fa-bullseye"></i>
             <span>Resolve target</span>
         </button>
     </nav>
 
-    <div class="ari-htab-panels">
+    <div class="ari-vtabs__panels">
 
         {# ---------------------------------------------------------- #}
         {# Tab 1: Find object already in the data portal               #}
         {# ---------------------------------------------------------- #}
         <section id="astro-tab-find-existing"
-                 class="ari-htab-panel ari-htab-panel--active"
+                 class="ari-vtab-panel ari-vtab-panel--active"
                  role="tabpanel" aria-labelledby="find-existing">
             <div class="at-section-card" id="astro-section-find-object">
                 <header class="at-section-card__header">
@@ -64,6 +64,13 @@
                         available in the data portal. Searches are
                         scoped to the profiles you have access to.
                     </p>
+
+                    {# Filter bar (kept) #}
+                    <div class="ari-astro-search-bar">
+                        <input type="text" id="astro-search-filter"
+                               class="ari-search-input"
+                               placeholder="Filter results...">
+                    </div>
 
                     {# Sub-tabs: name / coords / date / advanced #}
                     <div class="ot-find-tabs" role="tablist"
@@ -284,7 +291,7 @@
         {# Tab 2: Resolve target                                       #}
         {# ---------------------------------------------------------- #}
         <section id="astro-tab-resolve-target"
-                 class="ari-htab-panel"
+                 class="ari-vtab-panel"
                  role="tabpanel" aria-labelledby="resolve-target"
                  hidden>
             <div class="at-section-card"
@@ -298,14 +305,12 @@
                 <div class="at-section-card__body">
                     <p class="ari-section-intro">
                         Look up a target in the APERO astrometric
-                        database ({{ astrometrics_star_count or '?' }}
-                        stars, vetted by the APERO team).
-                        <br>
-                        If the target is not yet in the database,
-                        use "Resolve online" to query external
-                        services.
-                        <br>
-                        Any user can flag a value that looks wrong.
+                        database (1700+ stars, vetted by the APERO
+                        team). If the target is not yet in the
+                        database, use "Resolve online" to query
+                        external services. Moderators can edit any
+                        value and any user can flag a value that
+                        looks wrong.
                     </p>
 
                     {# Sub-tabs #}
@@ -481,6 +486,14 @@
                                 <span id="rt-target-name">--</span>
                             </h2>
                             <div class="ari-target-info__actions">
+                                <button id="rt-target-edit"
+                                        class="ari-btn ari-btn--sm ari-btn--secondary"
+                                        type="button"
+                                        data-perm="manage.astrometrics"
+                                        hidden>
+                                    <i class="fa-solid fa-pen"></i>
+                                    Edit
+                                </button>
                                 <button id="rt-target-upload"
                                         class="ari-btn ari-btn--sm ari-btn--secondary"
                                         type="button"
@@ -501,11 +514,6 @@
     </div>
 </div>
 
-<script>
-    // expose user permissions for in-page perm-gated UI elements
-    window.AperoRI = window.AperoRI || {};
-    window.AperoRI.userPerms = {{ (user_permissions|list)|tojson }};
-</script>
-<script src="{{ url_for('static', filename='js/target_info_render.js', v='20260422c') }}"></script>
-<script src="{{ url_for('static', filename='js/astrometrics.js', v='20260422c') }}"></script>
+<script src="{{ url_for('static', filename='js/target_info_render.js') }}"></script>
+<script src="{{ url_for('static', filename='js/astrometrics.js') }}"></script>
 {% endblock %}

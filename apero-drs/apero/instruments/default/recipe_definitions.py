@@ -109,7 +109,7 @@ out_recipe = DrsRecipe(__INSTRUMENT__)
 # -----------------------------------------------------------------------------
 # apero_ri.py
 # -----------------------------------------------------------------------------
-ari.name = 'apero_ri.py'
+ari.name = 'apero_ari.py'
 ari.path = 'apero.tools.recipes.bin'
 ari.shortname = 'ARI'
 ari.instrument = __INSTRUMENT__

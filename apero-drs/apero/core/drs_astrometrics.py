@@ -25,6 +25,7 @@ import rules:
     - python stdlib + yaml + numpy
 """
 import os
+import json
 import string
 import tempfile
 import time
@@ -88,6 +89,24 @@ NAME_KEYS = ['APERO_NAME', 'ORIGINAL_NAME', 'SIMBAD_NAME']
 ALIAS_KEY = 'ALIASES'
 # the key whose value is the canonical APERO name returned to callers
 APERO_NAME_KEY = 'APERO_NAME'
+# ----------------------------------------------------------------------------
+# Provenance / status metadata keys (added on every entry; back-filled for
+# legacy entries the first time they are touched). All five live at the
+# top level of the yaml as plain scalars.
+# ----------------------------------------------------------------------------
+META_FIRST_UPDATED = 'FIRST_UPDATED'   # ISO date the entry was created
+META_FIRST_AUTHOR = 'FIRST_AUTHOR'     # user that first created the entry
+META_LAST_EDIT = 'LAST_EDIT'           # ISO date of the most recent edit
+META_LAST_AUTHOR = 'LAST_AUTHOR'       # user that made the most recent edit
+META_STATUS = 'STATUS'                 # one of STATUS_VALUES
+META_KEYS = (META_FIRST_UPDATED, META_FIRST_AUTHOR,
+             META_LAST_EDIT, META_LAST_AUTHOR, META_STATUS)
+# allowed values for META_STATUS
+STATUS_VALUES = ('checked', 'pending', 'error')
+# default status assigned to a freshly-added or back-filled entry
+DEFAULT_STATUS = 'pending'
+# default author used when no author is supplied (e.g. backfill, migration)
+DEFAULT_AUTHOR = 'njcuk9999'
 # -----------------------------------------------------------------------------
 # Mapping of legacy SQL column names -> extractor callables that pull the
 # equivalent value out of a yaml entry dict. This lets old callers do e.g.
@@ -2266,6 +2285,8 @@ class AstrometricDatabase:
                 final['NOTES'] = ('Added on {0} by drs_astrometrics '
                                   '(shortname={1})').format(
                     Time.now().iso, self.shortname)
+            # populate / refresh provenance metadata
+            _stamp_metadata(final, author=DEFAULT_AUTHOR)
             # do the atomic write
             self._write_yaml(fpath, final)
         # invalidate any in-memory caches for this path so next read sees it
@@ -2467,6 +2488,627 @@ class AstrometricDatabase:
         out['failed'] = failed
         out['skipped'] = skipped
         return out
+
+
+# =============================================================================
+# Path-based helpers (no ParamDict required)
+# =============================================================================
+# These are intentionally decoupled from ``AstrometricDatabase`` and the
+# apero ParamDict so that callers (e.g. apero-ri) can search the yaml
+# directory directly with no apero runtime initialisation.
+#
+# The functions below take a directory path and return plain python data.
+# Results are mtime-cached per-process for speed.
+
+# per-process cache: astrom_dir -> (mtime_signature, list[(apero_name, entry)])
+_DIR_CACHE: Dict[str, Tuple[float, List[Tuple[str, Dict[str, Any]]]]] = {}
+# per-process cache: astrom_dir -> (mtime_signature, name_index)
+_DIR_NAME_INDEX: Dict[str, Tuple[float, Dict[str, str]]] = {}
+
+
+def _dir_mtime_signature(astrom_dir: str) -> float:
+    """Return a signature that changes when any *.yaml in the dir changes.
+
+    Computed as ``max(yaml mtime) + n_yaml * 1e-6``. We deliberately
+    avoid using the directory's own mtime so that our cache files
+    written into the same directory do not invalidate the signature.
+
+    :param astrom_dir: str, directory containing ``*.yaml`` astrometric
+                       entries
+    :return: float, a signature value (not interpretable as a real time)
+    """
+    if not os.path.isdir(astrom_dir):
+        return -1.0
+    max_mtime = 0.0
+    n_yaml = 0
+    try:
+        with os.scandir(astrom_dir) as it:
+            for ent in it:
+                if not ent.name.endswith(YAML_EXT):
+                    continue
+                try:
+                    st = ent.stat()
+                except OSError:
+                    continue
+                if st.st_mtime > max_mtime:
+                    max_mtime = st.st_mtime
+                n_yaml += 1
+    except OSError:
+        return -1.0
+    return max_mtime + n_yaml * 1e-6
+
+
+def iter_yaml_files(astrom_dir: str) -> List[str]:
+    """List the absolute paths of every ``*.yaml`` file in ``astrom_dir``.
+
+    :param astrom_dir: str, directory to scan (non-recursive)
+    :return: list of absolute file paths, sorted alphabetically
+    """
+    if not os.path.isdir(astrom_dir):
+        return []
+    out: List[str] = []
+    for fn in sorted(os.listdir(astrom_dir)):
+        if not fn.endswith(YAML_EXT):
+            continue
+        out.append(os.path.abspath(os.path.join(astrom_dir, fn)))
+    return out
+
+
+def load_all_entries(
+        astrom_dir: str,
+        use_cache: bool = True,
+) -> List[Tuple[str, Dict[str, Any]]]:
+    """Load every astrometric yaml entry from ``astrom_dir``.
+
+    :param astrom_dir: str, directory containing ``*.yaml`` entries
+    :param use_cache: bool, when True (default) re-use a per-process
+                     cached copy if no yaml file has changed
+    :return: list of ``(apero_name, entry_dict)`` tuples
+    """
+    sig = _dir_mtime_signature(astrom_dir)
+    if use_cache:
+        cached = _DIR_CACHE.get(astrom_dir)
+        if cached is not None and cached[0] == sig:
+            return cached[1]
+    out: List[Tuple[str, Dict[str, Any]]] = []
+    for fpath in iter_yaml_files(astrom_dir):
+        try:
+            entry = AstrometricDatabase._read_yaml(fpath)
+        except Exception:
+            # skip malformed yaml files rather than failing the whole load
+            continue
+        apero_name = entry.get(APERO_NAME_KEY)
+        if not apero_name:
+            # fall back to the filename stem if the file lacks APERO_NAME
+            apero_name = os.path.splitext(os.path.basename(fpath))[0]
+        out.append((str(apero_name), entry))
+    if use_cache:
+        _DIR_CACHE[astrom_dir] = (sig, out)
+    return out
+
+
+def _build_name_index(
+        astrom_dir: str,
+) -> Dict[str, str]:
+    """Build a cleaned-name -> APERO_NAME map for ``astrom_dir``.
+
+    Includes APERO_NAME, ORIGINAL_NAME, SIMBAD_NAME and every alias.
+    Uses two cache tiers:
+      1. an in-process cache (``_DIR_NAME_INDEX``)
+      2. a JSON file on disk at ``<astrom_dir>/.name_index.json``
+         keyed by the directory's mtime signature; this lets the index
+         survive process restarts and skip parsing 1000+ yaml files.
+
+    :param astrom_dir: str, directory containing astrometric yaml files
+    :return: dict mapping cleaned name strings to canonical APERO_NAME
+    """
+    sig = _dir_mtime_signature(astrom_dir)
+    cached = _DIR_NAME_INDEX.get(astrom_dir)
+    if cached is not None and cached[0] == sig:
+        return cached[1]
+    # try disk cache
+    disk = _load_persisted_name_index(astrom_dir, sig)
+    if disk is not None:
+        _DIR_NAME_INDEX[astrom_dir] = (sig, disk)
+        return disk
+    index: Dict[str, str] = {}
+    for apero_name, entry in load_all_entries(astrom_dir):
+        cleaned = clean_object(apero_name)
+        if cleaned and cleaned != 'Null':
+            index[cleaned] = apero_name
+        for key in NAME_KEYS:
+            if key == APERO_NAME_KEY:
+                continue
+            value = entry.get(key)
+            if _is_null(value):
+                continue
+            cleaned = clean_object(value)
+            if cleaned and cleaned != 'Null':
+                index.setdefault(cleaned, apero_name)
+        aliases = entry.get(ALIAS_KEY)
+        if isinstance(aliases, str):
+            aliases = aliases.split('|')
+        if isinstance(aliases, (list, tuple)):
+            for alias in aliases:
+                if _is_null(alias):
+                    continue
+                cleaned = clean_object(alias)
+                if cleaned and cleaned != 'Null':
+                    index.setdefault(cleaned, apero_name)
+    _DIR_NAME_INDEX[astrom_dir] = (sig, index)
+    _persist_name_index(astrom_dir, sig, index)
+    return index
+
+
+_NAME_INDEX_FILE = '.name_index.json'
+
+
+def _name_index_path(astrom_dir: str) -> str:
+    return os.path.join(astrom_dir, _NAME_INDEX_FILE)
+
+
+def _load_persisted_name_index(
+        astrom_dir: str,
+        signature: float,
+) -> Optional[Dict[str, str]]:
+    """Return on-disk cleaned-name -> APERO_NAME map if signature matches.
+
+    :param astrom_dir: str, directory containing astrometric yaml files
+    :param signature: float, the current dir-mtime signature
+    :return: dict if cache is fresh, otherwise ``None``
+    """
+    fpath = _name_index_path(astrom_dir)
+    try:
+        with open(fpath, 'r', encoding='utf-8') as fh:
+            data = json.load(fh)
+    except (OSError, ValueError):
+        return None
+    if not isinstance(data, dict):
+        return None
+    if data.get('signature') != signature:
+        return None
+    idx = data.get('index')
+    if not isinstance(idx, dict):
+        return None
+    return {str(k): str(v) for k, v in idx.items()}
+
+
+def _persist_name_index(
+        astrom_dir: str,
+        signature: float,
+        index: Dict[str, str],
+) -> None:
+    """Write the cleaned-name index to disk atomically.
+
+    Failures are silent: the in-process cache still works.
+    """
+    fpath = _name_index_path(astrom_dir)
+    tmp = fpath + '.tmp'
+    payload = {'signature': signature, 'count': len(index),
+               'index': index}
+    try:
+        with open(tmp, 'w', encoding='utf-8') as fh:
+            json.dump(payload, fh)
+        os.replace(tmp, fpath)
+    except OSError:
+        try:
+            os.remove(tmp)
+        except OSError:
+            pass
+
+
+def find_by_name(
+        astrom_dir: str,
+        name: str,
+) -> Optional[Dict[str, Any]]:
+    """Look up an astrometric entry by name or alias.
+
+    :param astrom_dir: str, directory containing astrometric yaml files
+    :param name: str, the (possibly raw) object name to resolve
+    :return: the matching entry dict, or None if no match was found
+    """
+    if not name:
+        return None
+    cleaned = clean_object(name)
+    if not cleaned or cleaned == 'Null':
+        return None
+    index = _build_name_index(astrom_dir)
+    apero_name = index.get(cleaned)
+    if apero_name is None:
+        return None
+    # fast path: the on-disk file follows _safe_filename(apero_name)
+    fpath = os.path.join(astrom_dir, _safe_filename(apero_name))
+    if os.path.isfile(fpath):
+        try:
+            return AstrometricDatabase._read_yaml(fpath)
+        except Exception:  # noqa: BLE001
+            pass
+    # fallback: scan all entries (handles legacy filenames)
+    for an, entry in load_all_entries(astrom_dir):
+        if an == apero_name:
+            return entry
+    return None
+
+
+def find_by_coords(
+        astrom_dir: str,
+        ra_deg: float,
+        dec_deg: float,
+        radius_arcsec: float,
+        ra_key: str = 'RA',
+        dec_key: str = 'DEC',
+        max_results: int = 50,
+) -> List[Tuple[Dict[str, Any], float]]:
+    """Find every entry within ``radius_arcsec`` of (``ra_deg``, ``dec_deg``).
+
+    Uses the ``RA`` / ``DEC`` blocks from each yaml entry (which carry
+    a ``value`` sub-key per the schema). Results are sorted by ascending
+    angular separation.
+
+    :param astrom_dir: str, directory containing astrometric yaml files
+    :param ra_deg: float, target right ascension in degrees
+    :param dec_deg: float, target declination in degrees
+    :param radius_arcsec: float, maximum angular separation to include
+    :param ra_key: str, top-level yaml key to read RA from (default RA)
+    :param dec_key: str, top-level yaml key to read DEC from (default DEC)
+    :param max_results: int, hard cap on number of returned matches
+    :return: list of ``(entry, separation_arcsec)`` tuples, ascending
+    """
+    matches: List[Tuple[Dict[str, Any], float]] = []
+    for _apero_name, entry in load_all_entries(astrom_dir):
+        ra_val = _nested_value(entry, ra_key)
+        dec_val = _nested_value(entry, dec_key)
+        ra_f = _pf(ra_val)
+        dec_f = _pf(dec_val)
+        if ra_f is None or dec_f is None:
+            continue
+        sep = _sep_arcsec(ra_deg, dec_deg, ra_f, dec_f)
+        if sep <= radius_arcsec:
+            matches.append((entry, sep))
+    matches.sort(key=lambda pair: pair[1])
+    return matches[:max_results]
+
+
+def list_columns(astrom_dir: str) -> List[str]:
+    """Return the union of top-level keys present across all yaml entries.
+
+    Useful for populating an "advanced search" dropdown in a UI.
+
+    :param astrom_dir: str, directory containing astrometric yaml files
+    :return: alphabetically sorted list of unique key names
+    """
+    keys: set = set()
+    for _apero_name, entry in load_all_entries(astrom_dir):
+        if isinstance(entry, dict):
+            keys.update(entry.keys())
+    return sorted(keys)
+
+
+def find_by_filter(
+        astrom_dir: str,
+        column: str,
+        value: Any,
+        match: str = 'auto',
+        max_results: int = 200,
+) -> List[Dict[str, Any]]:
+    """Return every entry whose ``column`` matches ``value``.
+
+    For numeric columns the comparison is exact-equality on the floated
+    ``value`` sub-key. For string columns ``match='substring'`` (the
+    default for non-numeric values) does a case-insensitive substring
+    match; ``match='exact'`` requires equality after ``clean_object``.
+
+    :param astrom_dir: str, directory containing astrometric yaml files
+    :param column: str, top-level yaml key to filter on
+    :param value: search value (string or numeric)
+    :param match: str, ``'auto'``, ``'exact'``, ``'substring'``, or
+                 ``'numeric'``; ``'auto'`` picks numeric for floats/ints
+                 and substring for strings
+    :param max_results: int, hard cap on number of returned matches
+    :return: list of matching entry dicts
+    """
+    if match == 'auto':
+        if isinstance(value, (int, float)) and not isinstance(value, bool):
+            match = 'numeric'
+        else:
+            try:
+                float(str(value))
+                match = 'numeric'
+            except (TypeError, ValueError):
+                match = 'substring'
+    needle = None
+    if match == 'numeric':
+        try:
+            needle = float(value)
+        except (TypeError, ValueError):
+            return []
+    elif match == 'exact':
+        needle = clean_object(str(value))
+    else:  # substring
+        needle = str(value).strip().lower()
+        if not needle:
+            return []
+    out: List[Dict[str, Any]] = []
+    for _apero_name, entry in load_all_entries(astrom_dir):
+        if column not in entry:
+            continue
+        candidate = _nested_value(entry, column)
+        if candidate is None:
+            # also try the raw key (e.g. APERO_NAME stored as plain string)
+            candidate = entry.get(column)
+        if _is_null(candidate):
+            continue
+        if match == 'numeric':
+            cf = _pf(candidate)
+            if cf is None:
+                continue
+            if abs(cf - needle) <= max(abs(needle), 1.0) * 1e-9:
+                out.append(entry)
+        elif match == 'exact':
+            if clean_object(str(candidate)) == needle:
+                out.append(entry)
+        else:  # substring
+            if isinstance(candidate, (list, tuple)):
+                hay = ' '.join(str(v) for v in candidate).lower()
+            else:
+                hay = str(candidate).lower()
+            if needle in hay:
+                out.append(entry)
+        if len(out) >= max_results:
+            break
+    return out
+
+
+# =============================================================================
+# Provenance metadata + path-based write helpers
+# -----------------------------------------------------------------------------
+# These helpers let callers (apero-ri) edit / upload yaml entries directly
+# without instantiating ``AstrometricDatabase``. They also stamp the five
+# provenance keys (FIRST_UPDATED, FIRST_AUTHOR, LAST_EDIT, LAST_AUTHOR,
+# STATUS) consistently for both writes via ``add_entry`` and direct edits.
+# =============================================================================
+def _today_iso() -> str:
+    """Return today's UTC date as an ISO string (YYYY-MM-DD)."""
+    try:
+        return Time.now().iso.split(' ')[0]
+    except Exception:
+        from datetime import datetime, timezone
+        return datetime.now(timezone.utc).strftime('%Y-%m-%d')
+
+
+def _stamp_metadata(entry: Dict[str, Any],
+                    author: Optional[str] = None) -> None:
+    """Populate / refresh provenance metadata on ``entry`` in-place.
+
+    - ``FIRST_UPDATED`` / ``FIRST_AUTHOR`` are only set if missing.
+    - ``LAST_EDIT`` / ``LAST_AUTHOR`` are always refreshed.
+    - ``STATUS`` defaults to ``'pending'`` only if missing or invalid.
+
+    :param entry: dict, the yaml entry (modified in place)
+    :param author: str or None, the author to record (defaults to
+                   :data:`DEFAULT_AUTHOR`)
+    :return: None
+    """
+    if not isinstance(entry, dict):
+        return
+    who = (str(author).strip()
+           if author and str(author).strip() else DEFAULT_AUTHOR)
+    today = _today_iso()
+    # FIRST_* only set if missing / null
+    if _is_null(entry.get(META_FIRST_UPDATED)):
+        entry[META_FIRST_UPDATED] = today
+    if _is_null(entry.get(META_FIRST_AUTHOR)):
+        entry[META_FIRST_AUTHOR] = who
+    # LAST_* always refreshed
+    entry[META_LAST_EDIT] = today
+    entry[META_LAST_AUTHOR] = who
+    # STATUS default
+    cur = entry.get(META_STATUS)
+    if _is_null(cur) or str(cur).strip().lower() not in STATUS_VALUES:
+        entry[META_STATUS] = DEFAULT_STATUS
+
+
+def _set_nested(entry: Dict[str, Any], key: str, value: Any) -> None:
+    """Set ``key`` on ``entry`` honouring the {value, source, units} schema.
+
+    If the existing value at ``key`` is a dict containing a ``value``
+    sub-key, only the ``value`` sub-key is replaced (preserving source /
+    units). Otherwise the top-level key is set wholesale.
+
+    :param entry: dict, the yaml entry (modified in place)
+    :param key: str, top-level key to set
+    :param value: any, the new value
+    """
+    cur = entry.get(key)
+    if isinstance(cur, dict) and 'value' in cur:
+        cur['value'] = value
+        return
+    entry[key] = value
+
+
+def _invalidate_dir_caches(astrom_dir: str) -> None:
+    """Drop every per-process cache for ``astrom_dir`` after a write."""
+    _DIR_CACHE.pop(astrom_dir, None)
+    _DIR_NAME_INDEX.pop(astrom_dir, None)
+    _DIR_MTIME.pop(astrom_dir, None)
+    _MTIME_CACHE.pop(astrom_dir, None)
+    _RESOLVE_CACHE.clear()
+
+
+def update_entry_field(
+        astrom_dir: str,
+        apero_name: str,
+        key: str,
+        value: Any,
+        author: Optional[str] = None,
+) -> Dict[str, Any]:
+    """Update a single field on the entry identified by ``apero_name``.
+
+    Honours the ``{value, source, units}`` schema: if the existing field
+    is such a mapping, only the ``value`` sub-key is replaced.
+
+    A change to ``APERO_NAME`` triggers a rename of the underlying yaml
+    file (atomic ``os.replace`` after writing the new file). The five
+    provenance keys are refreshed automatically.
+
+    :param astrom_dir: str, directory containing astrometric yaml files
+    :param apero_name: str, the canonical APERO name of the entry to edit
+    :param key: str, top-level yaml key to update
+    :param value: any, the new value
+    :param author: str or None, user making the edit (recorded in
+                   ``LAST_AUTHOR``)
+    :return: dict, the updated entry
+    """
+    if not apero_name:
+        emsg = 'update_entry_field: apero_name is required'
+        raise AperoCodedException(None, message=emsg)
+    if not key:
+        emsg = 'update_entry_field: key is required'
+        raise AperoCodedException(None, message=emsg)
+    fname = _safe_filename(str(apero_name))
+    fpath = os.path.join(astrom_dir, fname)
+    if not os.path.isfile(fpath):
+        emsg = 'update_entry_field: no entry for {0!r} ({1})'
+        raise AperoCodedException(
+            None, message=emsg.format(apero_name, fpath))
+    entry = AstrometricDatabase._read_yaml(fpath)
+    # detect APERO_NAME rename
+    rename_to: Optional[str] = None
+    if key == APERO_NAME_KEY:
+        cleaned = clean_object(str(value)) if value is not None else ''
+        if cleaned in ('', 'Null'):
+            emsg = 'update_entry_field: invalid new APERO_NAME {0!r}'
+            raise AperoCodedException(
+                None, message=emsg.format(value))
+        if cleaned != clean_object(apero_name):
+            rename_to = cleaned
+    # apply the edit
+    _set_nested(entry, key, value)
+    # also keep raw APERO_NAME consistent on rename
+    if rename_to is not None:
+        entry[APERO_NAME_KEY] = rename_to
+    # refresh provenance
+    _stamp_metadata(entry, author=author)
+    # write to (possibly new) target then remove old file on rename
+    if rename_to is not None:
+        new_fpath = os.path.join(astrom_dir, rename_to + YAML_EXT)
+        if os.path.isfile(new_fpath):
+            emsg = ('update_entry_field: cannot rename {0} -> {1} '
+                    '(target already exists)')
+            raise AperoCodedException(
+                None, message=emsg.format(apero_name, rename_to))
+        AstrometricDatabase._write_yaml(new_fpath, entry)
+        try:
+            os.remove(fpath)
+        except OSError:
+            pass
+    else:
+        AstrometricDatabase._write_yaml(fpath, entry)
+    _invalidate_dir_caches(astrom_dir)
+    return entry
+
+
+def upload_entry(
+        astrom_dir: str,
+        entry: Dict[str, Any],
+        author: Optional[str] = None,
+        overwrite: bool = False,
+) -> Tuple[str, Dict[str, Any]]:
+    """Write a freshly-uploaded yaml entry to disk under ``astrom_dir``.
+
+    The entry must contain a valid ``APERO_NAME``. By default the call
+    fails if a file already exists for that name (use ``overwrite=True``
+    to replace).
+
+    :param astrom_dir: str, directory containing astrometric yaml files
+    :param entry: dict, the parsed yaml content to write
+    :param author: str or None, the uploading user (defaults to
+                   :data:`DEFAULT_AUTHOR`)
+    :param overwrite: bool, if True allow replacing an existing entry
+    :return: tuple of (yaml file path, stamped entry dict)
+    """
+    if not isinstance(entry, dict):
+        emsg = 'upload_entry: expected dict, got {0}'
+        raise AperoCodedException(
+            None, message=emsg.format(type(entry).__name__))
+    apero_name = entry.get(APERO_NAME_KEY)
+    if _is_null(apero_name):
+        emsg = 'upload_entry: entry missing required key {0!r}'
+        raise AperoCodedException(
+            None, message=emsg.format(APERO_NAME_KEY))
+    fname = _safe_filename(str(apero_name))
+    fpath = os.path.join(astrom_dir, fname)
+    if os.path.isfile(fpath) and not overwrite:
+        emsg = 'upload_entry: entry already exists for {0!r} ({1})'
+        raise AperoCodedException(
+            None, message=emsg.format(apero_name, fpath))
+    os.makedirs(astrom_dir, exist_ok=True)
+    _stamp_metadata(entry, author=author)
+    AstrometricDatabase._write_yaml(fpath, entry)
+    _invalidate_dir_caches(astrom_dir)
+    return fpath, entry
+
+
+def backfill_metadata(
+        astrom_dir: str,
+        author: Optional[str] = None,
+        dry_run: bool = False,
+) -> Dict[str, int]:
+    """Populate the five provenance keys on every yaml in ``astrom_dir``.
+
+    Existing values for any of the five keys are preserved; only missing
+    or invalid keys are written. Useful as a one-shot migration after
+    introducing the metadata schema.
+
+    :param astrom_dir: str, directory containing astrometric yaml files
+    :param author: str or None, author to record on entries that need
+                   FIRST_AUTHOR / LAST_AUTHOR backfilled (defaults to
+                   :data:`DEFAULT_AUTHOR`)
+    :param dry_run: bool, if True, do not write files; just count
+    :return: dict with counts ``{'scanned', 'updated', 'unchanged'}``
+    """
+    counts = {'scanned': 0, 'updated': 0, 'unchanged': 0}
+    if not os.path.isdir(astrom_dir):
+        return counts
+    who = (str(author).strip()
+           if author and str(author).strip() else DEFAULT_AUTHOR)
+    today = _today_iso()
+    for fpath in iter_yaml_files(astrom_dir):
+        counts['scanned'] += 1
+        try:
+            entry = AstrometricDatabase._read_yaml(fpath)
+        except Exception:
+            continue
+        changed = False
+        # FIRST_*: only fill if missing
+        if _is_null(entry.get(META_FIRST_UPDATED)):
+            entry[META_FIRST_UPDATED] = today
+            changed = True
+        if _is_null(entry.get(META_FIRST_AUTHOR)):
+            entry[META_FIRST_AUTHOR] = who
+            changed = True
+        # LAST_*: only fill if missing (don't overwrite real edits)
+        if _is_null(entry.get(META_LAST_EDIT)):
+            entry[META_LAST_EDIT] = today
+            changed = True
+        if _is_null(entry.get(META_LAST_AUTHOR)):
+            entry[META_LAST_AUTHOR] = who
+            changed = True
+        # STATUS: default to pending if missing/invalid
+        cur = entry.get(META_STATUS)
+        if (_is_null(cur)
+                or str(cur).strip().lower() not in STATUS_VALUES):
+            entry[META_STATUS] = DEFAULT_STATUS
+            changed = True
+        if changed:
+            counts['updated'] += 1
+            if not dry_run:
+                AstrometricDatabase._write_yaml(fpath, entry)
+        else:
+            counts['unchanged'] += 1
+    if not dry_run and counts['updated']:
+        _invalidate_dir_caches(astrom_dir)
+    return counts
 
 
 # =============================================================================

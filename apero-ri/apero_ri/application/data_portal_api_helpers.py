@@ -1587,6 +1587,60 @@ def api_object_page(app):
     )
     labels = sections.pop("labels", {})
 
+    # ------------------------------------------------------------
+    # Replace the legacy target_info dict with the shared
+    # target-info payload sourced from the apero astrometric YAML
+    # database (Phase 1 of the astrometrics rebuild).  The shared
+    # JS renderer recognises a {sections: [...]} payload and falls
+    # back to the legacy renderer if absent.
+    # ------------------------------------------------------------
+    try:
+        from apero.core import drs_astrometrics as _dra
+        from apero_ri.components.target_info_sections import (
+            build_target_info_payload as _build_ti,
+        )
+        astrom_dir = base_dir / "apero-assets" / "astrometrics"
+        entry = _dra.find_by_name(str(astrom_dir), objname)
+        if entry:
+            apero_name = entry.get("APERO_NAME", objname)
+            # main Target Information card: only SED chart inline;
+            # HR Diagram and Status are rendered as their own page-
+            # level cards (see hr_diagram / status payloads below).
+            shared_payload = _build_ti(
+                entry,
+                obj_row=obj_row,
+                include_charts=True,
+                chart_ids=['sed'],
+                exclude_ids=['hr_diagram', 'status'],
+            )
+            shared_payload["apero_name"] = apero_name
+            sections["target_info"] = shared_payload
+
+            # standalone single-section payloads used by the
+            # dedicated HR Diagram + Status cards on the page.
+            hr_payload = _build_ti(
+                entry,
+                obj_row=obj_row,
+                include_charts=True,
+                only_ids=['hr_diagram'],
+            )
+            hr_payload["apero_name"] = apero_name
+            sections["target_hr_diagram"] = hr_payload
+
+            status_payload = _build_ti(
+                entry,
+                obj_row=obj_row,
+                include_charts=False,
+                only_ids=['status'],
+            )
+            status_payload["apero_name"] = apero_name
+            sections["target_status"] = status_payload
+    except Exception:  # noqa: BLE001
+        # Fall back silently to the legacy target_info dict if the
+        # shared payload cannot be built (e.g. astrometric yaml
+        # directory missing).
+        pass
+
     return jsonify(
         success=True,
         object_name=obj_row.get("OBJNAME", objname),

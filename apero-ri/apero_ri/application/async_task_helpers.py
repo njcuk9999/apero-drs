@@ -117,21 +117,10 @@ def merge_async_task_catalog(
             merged_cfg["weekly_copies"] = max(0, weekly_copies)
 
         if task_key == "APERO_SYNC_ASSETS":
-            raw_srv = task_cfg.get("asset_servers")
-            if isinstance(raw_srv, list):
-                merged_cfg["asset_servers"] = [
-                    str(s).strip() for s in raw_srv if str(s).strip()
-                ]
-            else:
-                merged_cfg["asset_servers"] = []
             mode_val = str(task_cfg.get("mode") or "sync").strip().lower()
             merged_cfg["mode"] = (
                 mode_val if mode_val in ("sync", "upload") else "sync"
             )
-            chk = str(
-                task_cfg.get("checksum_file") or "checksums.yaml"
-            ).strip()
-            merged_cfg["checksum_file"] = chk or "checksums.yaml"
             merged_cfg["force_download"] = bool(
                 task_cfg.get("force_download", False)
             )

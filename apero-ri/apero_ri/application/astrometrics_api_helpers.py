@@ -309,3 +309,410 @@ def api_astrometrics_find_object(app):
                 results[profile_id] = objects
 
     return jsonify(success=True, results=results, profiles=profiles)
+
+
+# =============================================================================
+# Astrometric-database resolve helpers
+# =============================================================================
+# These endpoints serve the "Resolve Target" tab on the astrometrics page
+# and the shared target-info component used by the data-portal object
+# page.  They read directly from the apero astrometric YAML database
+# under ``<data_dir>/apero-assets/astrometrics``.
+
+
+def _astrom_dir(app) -> Path:
+    """Return the on-disk path to the astrometric YAML database.
+
+    :param app: the ARI application object
+    :return: pathlib.Path to ``<data_dir>/apero-assets/astrometrics``
+    """
+    base_dir = Path(app.args.data_dir or str(Path.home() / ".ari"))
+    return base_dir / "apero-assets" / "astrometrics"
+
+
+def _check_view_perm(app):
+    """Check that the caller has ``view.data_portal`` permission.
+
+    :param app: the ARI application object
+    :return: tuple ``(user_info, error_response)``; the error_response
+             is ``None`` when the caller is authorised, otherwise it is
+             a Flask response tuple ready to be returned by the caller.
+    """
+    user_info = app._get_api_user()
+    if user_info:
+        perms = resolve_user_permissions(
+            user_info["groups"], app.ari_groups
+        )
+    else:
+        perms = get_public_permissions()
+    if "view.data_portal" not in perms:
+        return user_info, (
+            jsonify(success=False, error="Unauthorized"), 401
+        )
+    return user_info, None
+
+
+def _build_payload(entry):
+    """Build the shared target-info payload for an astrometric entry.
+
+    Imported lazily to keep the top-level import graph small.
+
+    :param entry: dict, the loaded astrometric YAML entry, or None
+    :return: dict ``{sections: [...]}``
+    """
+    from apero_ri.components.target_info_sections import (
+        build_target_info_payload,
+    )
+    if not entry:
+        return {"sections": []}
+    return build_target_info_payload(entry)
+
+
+def api_astrometrics_resolve_by_name(app):
+    """Resolve a single target by APERO/SIMBAD name or alias.
+
+    Query string parameters:
+        name (required) - the search string
+
+    :param app: the ARI application object
+    :return: Flask JSON response with keys ``success``, ``apero_name``,
+             ``payload`` (the shared target-info payload), and
+             ``raw`` (the full YAML entry as a dict).  When no match is
+             found, ``success`` is True and ``apero_name`` is None.
+    """
+    from apero.core import drs_astrometrics as dra
+
+    _, err = _check_view_perm(app)
+    if err is not None:
+        return err
+
+    name = (request.args.get("name") or "").strip()
+    if not name:
+        return jsonify(success=False, error="Missing 'name'"), 400
+
+    try:
+        entry = dra.find_by_name(str(_astrom_dir(app)), name)
+    except Exception as exc:  # noqa: BLE001
+        return jsonify(success=False, error=str(exc)), 500
+
+    if not entry:
+        return jsonify(success=True, apero_name=None,
+                       payload={"sections": []}, raw=None)
+
+    return jsonify(
+        success=True,
+        apero_name=entry.get("APERO_NAME"),
+        payload=_build_payload(entry),
+        raw=entry,
+    )
+
+
+def api_astrometrics_resolve_by_coords(app):
+    """Resolve targets by sky coordinates within a search radius.
+
+    Query string parameters:
+        ra      (required, deg)      - right ascension in degrees
+        dec     (required, deg)      - declination in degrees
+        radius  (optional, arcsec)   - search radius (default 60)
+        max     (optional, int)      - maximum results (default 50)
+
+    :param app: the ARI application object
+    :return: Flask JSON response with ``success`` and ``matches``,
+             where ``matches`` is a list of
+             ``{apero_name, separation_arcsec, payload}`` dicts ordered
+             by ascending separation.
+    """
+    from apero.core import drs_astrometrics as dra
+
+    _, err = _check_view_perm(app)
+    if err is not None:
+        return err
+
+    try:
+        ra_deg = float(request.args.get("ra", "").strip())
+        dec_deg = float(request.args.get("dec", "").strip())
+    except ValueError:
+        return jsonify(success=False,
+                       error="Invalid 'ra' / 'dec'"), 400
+
+    radius_arcsec = request.args.get("radius", "60").strip() or "60"
+    max_results = request.args.get("max", "50").strip() or "50"
+    try:
+        radius = float(radius_arcsec)
+        n_max = max(1, int(max_results))
+    except ValueError:
+        return jsonify(success=False,
+                       error="Invalid 'radius' / 'max'"), 400
+
+    try:
+        hits = dra.find_by_coords(
+            str(_astrom_dir(app)),
+            ra_deg=ra_deg, dec_deg=dec_deg,
+            radius_arcsec=radius, max_results=n_max,
+        )
+    except Exception as exc:  # noqa: BLE001
+        return jsonify(success=False, error=str(exc)), 500
+
+    matches = []
+    for entry, sep_arcsec in hits:
+        matches.append({
+            "apero_name": entry.get("APERO_NAME"),
+            "separation_arcsec": sep_arcsec,
+            "payload": _build_payload(entry),
+        })
+
+    return jsonify(success=True, matches=matches,
+                   ra=ra_deg, dec=dec_deg, radius_arcsec=radius)
+
+
+def api_astrometrics_resolve_by_filter(app):
+    """Resolve targets by an arbitrary column-value filter.
+
+    Query string parameters:
+        column   (required) - the YAML key to filter on
+        value    (required) - the value to match
+        match    (optional) - one of ``exact``, ``substring``,
+                              ``glob``, ``regex``, ``ge``, ``le``,
+                              ``gt``, ``lt`` or ``auto`` (default).
+        max      (optional, int) - maximum results (default 200)
+
+    :param app: the ARI application object
+    :return: Flask JSON response with ``success`` and ``matches``
+             (list of ``{apero_name, payload}`` dicts).
+    """
+    from apero.core import drs_astrometrics as dra
+
+    _, err = _check_view_perm(app)
+    if err is not None:
+        return err
+
+    column = (request.args.get("column") or "").strip()
+    value = request.args.get("value")
+    match_mode = (request.args.get("match") or "auto").strip()
+    if not column or value is None:
+        return jsonify(success=False,
+                       error="Missing 'column' / 'value'"), 400
+
+    try:
+        n_max = max(1, int(request.args.get("max", "200")))
+    except ValueError:
+        return jsonify(success=False, error="Invalid 'max'"), 400
+
+    try:
+        hits = dra.find_by_filter(
+            str(_astrom_dir(app)),
+            column=column, value=value,
+            match=match_mode, max_results=n_max,
+        )
+    except Exception as exc:  # noqa: BLE001
+        return jsonify(success=False, error=str(exc)), 500
+
+    matches = []
+    for entry in hits:
+        matches.append({
+            "apero_name": entry.get("APERO_NAME"),
+            "payload": _build_payload(entry),
+        })
+
+    return jsonify(success=True, matches=matches,
+                   column=column, value=value, match=match_mode)
+
+
+def api_astrometrics_columns(app):
+    """List the union of YAML keys across all astrometric entries.
+
+    Used to populate the column dropdown of the advanced (filter)
+    resolve form on the astrometrics page.
+
+    :param app: the ARI application object
+    :return: Flask JSON response with ``success`` and ``columns``
+             (sorted list of strings).
+    """
+    from apero.core import drs_astrometrics as dra
+
+    _, err = _check_view_perm(app)
+    if err is not None:
+        return err
+
+    try:
+        cols = dra.list_columns(str(_astrom_dir(app)))
+    except Exception as exc:  # noqa: BLE001
+        return jsonify(success=False, error=str(exc)), 500
+
+    return jsonify(success=True, columns=cols)
+
+
+# =============================================================================
+# Edit / upload endpoints (moderator+ / monitor+)
+# =============================================================================
+def _check_perm(app, perm):
+    """Return ``(user_info, err)`` enforcing a single named permission.
+
+    :param app: the ARI application object
+    :param perm: str, the permission string the caller must hold
+    :return: tuple ``(user_info, err)`` where ``err`` is None on
+             success or a Flask response tuple to return otherwise.
+    """
+    user_info = app._get_api_user()
+    if not user_info:
+        return None, (
+            jsonify(success=False, error="Login required"), 401
+        )
+    perms = resolve_user_permissions(
+        user_info["groups"], app.ari_groups
+    )
+    if perm not in perms:
+        return user_info, (
+            jsonify(success=False,
+                    error="Forbidden (need {0})".format(perm)),
+            403,
+        )
+    return user_info, None
+
+
+def _coerce_value(raw):
+    """Best-effort coercion of a JSON-supplied value.
+
+    - Empty string / None -> None
+    - "true" / "false" (case-insensitive) -> bool
+    - All-numeric strings -> float (or int when no decimal point)
+    - Otherwise -> the original value unchanged
+    """
+    if raw is None:
+        return None
+    if isinstance(raw, (int, float, bool, list, dict)):
+        return raw
+    s = str(raw).strip()
+    if s == "" or s.lower() in ("none", "null"):
+        return None
+    low = s.lower()
+    if low == "true":
+        return True
+    if low == "false":
+        return False
+    try:
+        if "." in s or "e" in low:
+            return float(s)
+        return int(s)
+    except ValueError:
+        return s
+
+
+def api_astrometrics_update_field(app):
+    """POST one field update to an existing astrometric YAML entry.
+
+    JSON body:
+        apero_name (required) - canonical name of the entry
+        key        (required) - top-level YAML key to update
+        value      (required) - new value (any JSON-serialisable type)
+
+    Required permission: ``manage.astrometrics`` (moderator+).
+    A change to ``APERO_NAME`` triggers an atomic file rename via
+    :func:`apero.core.drs_astrometrics.update_entry_field`.
+
+    :param app: the ARI application object
+    :return: Flask JSON response with the updated entry on success
+    """
+    from apero.core import drs_astrometrics as dra
+
+    user_info, err = _check_perm(app, "manage.astrometrics")
+    if err is not None:
+        return err
+
+    body = request.get_json(silent=True) or {}
+    apero_name = (body.get("apero_name") or "").strip()
+    key = (body.get("key") or "").strip()
+    if not apero_name or not key:
+        return jsonify(success=False,
+                       error="Missing 'apero_name' / 'key'"), 400
+    raw_value = body.get("value")
+    new_value = _coerce_value(raw_value)
+    author = user_info.get("username") or "unknown"
+
+    try:
+        entry = dra.update_entry_field(
+            astrom_dir=str(_astrom_dir(app)),
+            apero_name=apero_name,
+            key=key, value=new_value,
+            author=author,
+        )
+    except Exception as exc:  # noqa: BLE001
+        return jsonify(success=False, error=str(exc)), 400
+
+    new_apero = entry.get("APERO_NAME", apero_name)
+    return jsonify(
+        success=True,
+        apero_name=new_apero,
+        renamed=(new_apero != apero_name),
+        payload=_build_payload(entry),
+    )
+
+
+def api_astrometrics_upload_yaml(app):
+    """POST a brand-new astrometric YAML entry.
+
+    JSON body either:
+        entry      (required, dict) - the parsed YAML content, or
+        yaml_text  (required, str)  - raw YAML text to be parsed
+
+    Required permission: ``upload.astrometrics`` (monitor+).
+    By default the call fails if a file already exists for the
+    target ``APERO_NAME``; pass ``overwrite: true`` to replace it
+    (only honoured when the caller also has ``manage.astrometrics``).
+
+    :param app: the ARI application object
+    :return: Flask JSON response with the stored entry on success
+    """
+    from apero.core import drs_astrometrics as dra
+
+    user_info, err = _check_perm(app, "upload.astrometrics")
+    if err is not None:
+        return err
+
+    body = request.get_json(silent=True) or {}
+    entry = body.get("entry")
+    if entry is None:
+        text = body.get("yaml_text")
+        if not text:
+            return jsonify(success=False,
+                           error="Missing 'entry' / 'yaml_text'"), 400
+        try:
+            import yaml as _yaml
+            entry = _yaml.safe_load(text)
+        except Exception as exc:  # noqa: BLE001
+            return jsonify(success=False,
+                           error="YAML parse error: {0}".format(exc)
+                           ), 400
+    if not isinstance(entry, dict):
+        return jsonify(success=False,
+                       error="entry must be a YAML mapping"), 400
+
+    overwrite_req = bool(body.get("overwrite"))
+    if overwrite_req:
+        # only moderators can replace existing entries
+        perms = resolve_user_permissions(
+            user_info["groups"], app.ari_groups
+        )
+        if "manage.astrometrics" not in perms:
+            return jsonify(
+                success=False,
+                error=("'overwrite' requires manage.astrometrics "
+                       "permission"),
+            ), 403
+
+    author = user_info.get("username") or "unknown"
+    try:
+        fpath, stamped = dra.upload_entry(
+            str(_astrom_dir(app)), entry,
+            author=author, overwrite=overwrite_req,
+        )
+    except Exception as exc:  # noqa: BLE001
+        return jsonify(success=False, error=str(exc)), 400
+
+    return jsonify(
+        success=True,
+        apero_name=stamped.get("APERO_NAME"),
+        path=str(fpath),
+        payload=_build_payload(stamped),
+    )
+

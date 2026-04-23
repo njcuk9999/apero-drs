@@ -240,6 +240,20 @@ def make_page_view(app, page_id: str, package_dir: Path):
         if page_id == "home.admin_portal.backup_settings":
             context.update(app._build_admin_backup_context(perms))
 
+        if page_id == "home.astrometrics":
+            try:
+                from pathlib import Path as _Path
+                _astro = _Path(
+                    app.args.data_dir or str(_Path.home() / ".ari")
+                ) / "apero-assets" / "astrometrics"
+                _n = sum(
+                    1 for _p in _astro.glob("*.yaml")
+                    if not _p.name.startswith(".")
+                )
+                context["astrometrics_star_count"] = _n
+            except Exception:  # noqa: BLE001
+                context["astrometrics_star_count"] = None
+
         if page_id == "home.admin_portal.sshfs_management":
             context.update(app._build_admin_sshfs_context(perms))
 

@@ -134,7 +134,17 @@
                 </button>
             </div>
             <div class="at-section-card__body">
-                <div id="op-target-grid" class="op-kv-grid"></div>
+                {# Shared target-info component (data sections only;
+                   chart sections are rendered by the dedicated
+                   finder/tess cards below). #}
+                <div id="op-target-info-shared"
+                     class="ari-target-info__sections"></div>
+                {# Legacy hidden grid kept temporarily so any other
+                   feature still reading from it does not break;
+                   drained by object_page.js when the new payload is
+                   present. #}
+                <div id="op-target-grid" class="op-kv-grid"
+                     hidden></div>
             </div>
         </div>
         <div class="at-section-card" data-op-section-id="target.finder_chart">
@@ -165,6 +175,15 @@
                         <pre id="op-finder-log" style="margin-top:0.4rem;max-height:18rem;overflow:auto;font-size:0.78rem;line-height:1.45;background:var(--ari-surface-muted,#f6f8fa);border:1px solid var(--op-border,#d6d9de);border-radius:0.35rem;padding:0.6rem 0.75rem;white-space:pre-wrap;word-break:break-word;"></pre>
                     </details>
                 </div>
+            </div>
+        </div>
+        <div class="at-section-card" data-op-section-id="target.hr_diagram">
+            <div class="at-section-card__header">
+                <span><i class="fa-solid fa-star-half-stroke"></i> HR Diagram</span>
+            </div>
+            <div class="at-section-card__body">
+                <div id="op-target-hr-diagram"
+                     class="ari-target-info__sections"></div>
             </div>
         </div>
         <div class="at-section-card" data-op-section-id="target.tess_rotation">
@@ -216,6 +235,15 @@
                         <pre id="op-tess-log" style="margin-top:0.4rem;max-height:18rem;overflow:auto;font-size:0.78rem;line-height:1.45;background:var(--ari-surface-muted,#f6f8fa);border:1px solid var(--op-border,#d6d9de);border-radius:0.35rem;padding:0.6rem 0.75rem;white-space:pre-wrap;word-break:break-word;"></pre>
                     </details>
                 </div>
+            </div>
+        </div>
+        <div class="at-section-card" data-op-section-id="target.status">
+            <div class="at-section-card__header">
+                <span><i class="fa-solid fa-circle-info"></i> Status</span>
+            </div>
+            <div class="at-section-card__body">
+                <div id="op-target-status"
+                     class="ari-target-info__sections"></div>
             </div>
         </div>
     </section>
@@ -943,7 +971,13 @@ window.ARI_BASKET_CFG = {
 </script>
 <script src="https://cdn.bokeh.org/bokeh/release/bokeh-3.8.2.min.js"></script>
 <script src="https://cdn.bokeh.org/bokeh/release/bokeh-widgets-3.8.2.min.js"></script>
-<script src="{{ url_for('static', filename='js/object_page.js', v='20260410g') }}" defer></script>
+<script>
+    // expose user permissions for in-page perm-gated UI elements
+    window.AperoRI = window.AperoRI || {};
+    window.AperoRI.userPerms = {{ (user_permissions|list)|tojson }};
+</script>
+<script src="{{ url_for('static', filename='js/target_info_render.js', v='20260422c') }}"></script>
+<script src="{{ url_for('static', filename='js/object_page.js', v='20260422c') }}" defer></script>
 <script>
 /* Plot-type constants – generated from Python; consumed by file_browser.js */
 window.ARI_PLOTABLE_OUTPUTS = {{ plotable_output_types | tojson }};

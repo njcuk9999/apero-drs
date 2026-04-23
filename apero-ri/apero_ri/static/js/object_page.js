@@ -1647,8 +1647,43 @@
         bindListFilters(container);
     }
 
+    function renderTargetSubsection(hostId, payload) {
+        // Render a single shared target-info section into its own
+        // page-level card body (HR Diagram, Status). Hides the host's
+        // surrounding card if no payload / no sections so the page
+        // stays clean for entries without that data.
+        var host = document.getElementById(hostId);
+        if (!host) return;
+        if (!payload || !Array.isArray(payload.sections)
+                || payload.sections.length === 0
+                || !window.AperoTargetInfo) {
+            host.innerHTML = '';
+            return;
+        }
+        window.AperoTargetInfo.render(host, payload, {
+            apero_name: payload.apero_name,
+            userPerms: (window.AperoRI
+                && window.AperoRI.userPerms) || []
+        });
+    }
+
     function renderTarget(target) {
-        var rows = [
+        // New shared-component payload: {sections: [...]} -- delegate
+        // to AperoTargetInfo if present.
+        if (target && Array.isArray(target.sections)
+                && window.AperoTargetInfo) {
+            var host = document.getElementById(
+                'op-target-info-shared');
+            if (host) {
+                window.AperoTargetInfo.render(host, target, {
+                    apero_name: target.apero_name
+                        || target.object_name,
+                    userPerms: (window.AperoRI
+                        && window.AperoRI.userPerms) || []
+                });
+                return;
+            }
+        }        var rows = [
             ['Target Name', target.object_name],
             ['RA', valOrDash(target.ra_deg) + ' [deg] (' + valOrDash(target.ra_source) + ')'],
             ['Dec', valOrDash(target.dec_deg) + ' [deg] (' + valOrDash(target.dec_source) + ')'],
@@ -2294,8 +2329,26 @@
     }());
 
     function renderSpectrum(spec) {
+        // helper: wrap a header-derived list into a row that the kv
+        // renderer will turn into chips + filter when len > 5.
+        function listRow(label, arr) {
+            var lst = Array.isArray(arr) ? arr : [];
+            return {
+                label: label,
+                value: lst.join('|'),
+                filterable: lst.length > 0
+            };
+        }
         var rows = [
             ['DPRTYPES', spec.dprtypes],
+            listRow('OBJECT name(s) in headers',
+                    spec.object_names_in_headers),
+            listRow('OB Name(s) in headers',
+                    spec.ob_names_in_headers),
+            listRow('PI Name(s) in headers',
+                    spec.pi_names_in_headers),
+            listRow('Project / Run ID(s) in headers',
+                    spec.project_run_names_in_headers),
             ['Total number raw files', spec.raw_total],
             ['Number of rejected files', spec.raw_rejected],
             ['First raw files', spec.raw_first_mid],
@@ -3074,6 +3127,10 @@
                 }
                 updatePlotMaxLinks();
                 renderTarget(s.target_info || {});
+                renderTargetSubsection(
+                    'op-target-hr-diagram', s.target_hr_diagram);
+                renderTargetSubsection(
+                    'op-target-status', s.target_status);
                 renderSpectrum(s.spectrum || {});
                 renderLbl(s.lbl || {});
                 renderCcf(s.ccf || {});

@@ -132,7 +132,6 @@
     var editDailyCopies = document.getElementById('edit-daily-copies');
     var editWeeklyCopies= document.getElementById('edit-weekly-copies');
     var editAssetsFields= document.getElementById('edit-assets-fields');
-    var editAssetServers= document.getElementById('edit-asset-servers');
     var editAssetsMode  = document.getElementById('edit-assets-mode');
     var editMpFields    = document.getElementById('edit-mp-fields');
     var editNcores      = document.getElementById('edit-ncores');
@@ -1381,12 +1380,6 @@
         editFrequency.value = task.frequency || 24;
         editDailyCopies.value = task.daily_copies || 0;
         editWeeklyCopies.value = task.weekly_copies || 0;
-        if (editAssetServers) {
-            var srvList = task.asset_servers || [];
-            editAssetServers.value = Array.isArray(srvList)
-                ? srvList.join('\n')
-                : String(srvList || '');
-        }
         if (editAssetsMode) {
             editAssetsMode.value = String(task.mode || 'sync');
         }
@@ -1677,10 +1670,6 @@
             filters: {},
         };
         if (taskKey === ASSETS_TASK_KEY) {
-            var rawServers = editAssetServers ? editAssetServers.value.trim() : '';
-            payload.asset_servers = rawServers
-                ? rawServers.split(/\r?\n/).map(function (s) { return s.trim(); }).filter(Boolean)
-                : [];
             payload.assets_mode = editAssetsMode ? editAssetsMode.value : 'sync';
         }
         Object.keys(editFilterInputs || {}).forEach(function (keyName) {

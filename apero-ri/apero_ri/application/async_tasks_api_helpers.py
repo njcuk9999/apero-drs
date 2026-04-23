@@ -35,13 +35,12 @@ def api_async_tasks_save(app):
     has_mp_backend = "mp_backend" in data
     has_mp_start_method = "mp_start_method" in data or "mp_start_methd" in data
     has_sync_source = "sync_source" in data
-    has_asset_servers = "asset_servers" in data
+    has_assets_mode = "assets_mode" in data
 
     ncores = None
     mp_backend = None
     mp_start_method = None
     sync_source = None
-    asset_servers = None
     assets_mode = None
 
     if not instrument or not task_id:
@@ -88,18 +87,7 @@ def api_async_tasks_save(app):
     if has_sync_source:
         sync_source = str(data.get("sync_source", "") or "").strip()
 
-    if has_asset_servers:
-        raw_srv = data.get("asset_servers")
-        if isinstance(raw_srv, list):
-            asset_servers = [
-                str(s).strip() for s in raw_srv if str(s).strip()
-            ]
-        elif isinstance(raw_srv, str):
-            asset_servers = [
-                s.strip() for s in raw_srv.splitlines() if s.strip()
-            ]
-        else:
-            asset_servers = []
+    if has_assets_mode:
         assets_mode_raw = (
             str(data.get("assets_mode") or "sync").strip().lower()
         )
@@ -142,8 +130,6 @@ def api_async_tasks_save(app):
             t["daily_copies"] = daily_copies
             t["weekly_copies"] = weekly_copies
         if task_key == "APERO_SYNC_ASSETS":
-            if asset_servers is not None:
-                t["asset_servers"] = asset_servers
             if assets_mode is not None:
                 t["mode"] = assets_mode
 

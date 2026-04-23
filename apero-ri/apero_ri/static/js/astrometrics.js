@@ -536,3 +536,315 @@
         return div.innerHTML;
     }
 })();
+
+/* ============================================================== */
+/* Vertical tabs + Resolve-target tab wiring                       */
+/* ============================================================== */
+(function () {
+    'use strict';
+
+    /* Vertical tab strip */
+    var vtabs = document.querySelectorAll('.ari-htab');
+    var vpanels = document.querySelectorAll('.ari-htab-panel');
+    vtabs.forEach(function (tab) {
+        tab.addEventListener('click', function () {
+            var key = this.getAttribute('data-htab');
+            vtabs.forEach(function (t) {
+                t.classList.toggle(
+                    'ari-htab--active',
+                    t.getAttribute('data-htab') === key);
+                t.setAttribute(
+                    'aria-selected',
+                    t.getAttribute('data-htab') === key
+                        ? 'true' : 'false');
+            });
+            vpanels.forEach(function (p) {
+                if (p.id === 'astro-tab-' + key) {
+                    p.removeAttribute('hidden');
+                    p.classList.add('ari-htab-panel--active');
+                } else {
+                    p.setAttribute('hidden', '');
+                    p.classList.remove('ari-htab-panel--active');
+                }
+            });
+        });
+    });
+
+    /* Resolve-target sub-tabs */
+    var rtTabs = document.querySelectorAll(
+        '#astro-tab-resolve-target .ot-find-tab');
+    rtTabs.forEach(function (tab) {
+        tab.addEventListener('click', function () {
+            var ctrlId = this.getAttribute('aria-controls');
+            rtTabs.forEach(function (t) {
+                t.classList.toggle(
+                    'ot-find-tab--active',
+                    t === this);
+                t.setAttribute(
+                    'aria-selected',
+                    t === this ? 'true' : 'false');
+            }, this);
+            document.querySelectorAll(
+                '#astro-tab-resolve-target .ot-find-tab-panel'
+            ).forEach(function (p) {
+                if (p.id === ctrlId) {
+                    p.classList.add('ot-find-tab-panel--active');
+                    p.removeAttribute('hidden');
+                } else {
+                    p.classList.remove('ot-find-tab-panel--active');
+                    p.setAttribute('hidden', '');
+                }
+            });
+        });
+    });
+
+    /* DOM refs (resolve-target) */
+    var rtLoading = document.getElementById('rt-loading');
+    var rtError = document.getElementById('rt-error');
+    var rtPicker = document.getElementById('rt-picker');
+    var rtPickerList = document.getElementById('rt-picker-list');
+    var rtTargetInfo = document.getElementById('rt-target-info');
+    var rtTargetName = document.getElementById('rt-target-name');
+    var rtSections = document.getElementById(
+        'rt-target-info-sections');
+
+    function _showLoading(on) {
+        if (!rtLoading) return;
+        rtLoading.style.display = on ? 'block' : 'none';
+    }
+    function _showError(msg) {
+        if (!rtError) return;
+        if (msg) {
+            rtError.textContent = msg;
+            rtError.style.display = 'block';
+        } else {
+            rtError.textContent = '';
+            rtError.style.display = 'none';
+        }
+    }
+    function _resetUi() {
+        _showError(null);
+        if (rtPicker) rtPicker.style.display = 'none';
+        if (rtPickerList) rtPickerList.innerHTML = '';
+        if (rtTargetInfo) rtTargetInfo.style.display = 'none';
+        if (rtSections) rtSections.innerHTML = '';
+    }
+    function _showTarget(apero_name, payload) {
+        if (rtTargetName) {
+            rtTargetName.textContent = apero_name || 'Unknown';
+        }
+        if (rtTargetInfo) rtTargetInfo.style.display = 'block';
+        if (rtSections && window.AperoTargetInfo) {
+            window.AperoTargetInfo.render(rtSections, payload, {
+                apero_name: apero_name,
+                userPerms: (window.AperoRI
+                    && window.AperoRI.userPerms) || []
+            });
+        }
+    }
+
+    function _showPicker(matches) {
+        if (!rtPicker || !rtPickerList) return;
+        rtPickerList.innerHTML = '';
+        matches.forEach(function (m) {
+            var li = document.createElement('li');
+            var btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = 'ari-astro-picker__item';
+            var label = m.apero_name || '(unnamed)';
+            var sep = '';
+            if (typeof m.separation_arcsec === 'number') {
+                sep = ' <span class="ari-tinfo-source">'
+                    + m.separation_arcsec.toFixed(2)
+                    + ' arcsec</span>';
+            }
+            btn.innerHTML = '<span><i class="fa-solid fa-star"></i>'
+                + ' ' + label + '</span>' + sep;
+            btn.addEventListener('click', function () {
+                _showTarget(m.apero_name, m.payload);
+                rtPicker.style.display = 'none';
+            });
+            li.appendChild(btn);
+            rtPickerList.appendChild(li);
+        });
+        rtPicker.style.display = 'block';
+    }
+
+    function _fetchJson(url) {
+        return fetch(url, { credentials: 'same-origin' })
+            .then(function (resp) {
+                if (!resp.ok) {
+                    throw new Error('HTTP ' + resp.status);
+                }
+                return resp.json();
+            });
+    }
+
+    function _resolveByName() {
+        var input = document.getElementById('rt-name-query');
+        var name = input ? input.value.trim() : '';
+        if (!name) {
+            _showError('Enter a target name');
+            return;
+        }
+        _resetUi();
+        _showLoading(true);
+        _fetchJson('/api/astrometrics/resolve-by-name'
+            + '?name=' + encodeURIComponent(name))
+            .then(function (data) {
+                _showLoading(false);
+                if (!data.success) {
+                    _showError(data.error || 'Resolve failed');
+                    return;
+                }
+                if (!data.apero_name) {
+                    _showError('"' + name + '" not found in the '
+                        + 'APERO astrometric database. Try '
+                        + '"Resolve online" once that is available.');
+                    return;
+                }
+                _showTarget(data.apero_name, data.payload);
+            })
+            .catch(function (err) {
+                _showLoading(false);
+                _showError(String(err));
+            });
+    }
+
+    function _resolveByCoords() {
+        var raEl = document.getElementById('rt-ra');
+        var decEl = document.getElementById('rt-dec');
+        var radEl = document.getElementById('rt-radius');
+        var ra = raEl ? raEl.value.trim() : '';
+        var dec = decEl ? decEl.value.trim() : '';
+        var rad = radEl ? (radEl.value || '60') : '60';
+        if (!ra || !dec) {
+            _showError('Enter RA and Dec in degrees');
+            return;
+        }
+        _resetUi();
+        _showLoading(true);
+        var url = '/api/astrometrics/resolve-by-coords'
+            + '?ra=' + encodeURIComponent(ra)
+            + '&dec=' + encodeURIComponent(dec)
+            + '&radius=' + encodeURIComponent(rad);
+        _fetchJson(url)
+            .then(function (data) {
+                _showLoading(false);
+                if (!data.success) {
+                    _showError(data.error || 'Resolve failed');
+                    return;
+                }
+                var matches = data.matches || [];
+                if (!matches.length) {
+                    _showError('No targets within '
+                        + (data.radius_arcsec || rad)
+                        + ' arcsec of (' + ra + ', ' + dec + ').');
+                    return;
+                }
+                if (matches.length === 1) {
+                    _showTarget(matches[0].apero_name,
+                                matches[0].payload);
+                } else {
+                    _showPicker(matches);
+                }
+            })
+            .catch(function (err) {
+                _showLoading(false);
+                _showError(String(err));
+            });
+    }
+
+    function _resolveByFilter() {
+        var colEl = document.getElementById('rt-adv-column');
+        var matchEl = document.getElementById('rt-adv-match');
+        var valEl = document.getElementById('rt-adv-value');
+        var col = colEl ? colEl.value.trim() : '';
+        var matchMode = matchEl ? matchEl.value : 'auto';
+        var val = valEl ? valEl.value : '';
+        if (!col) {
+            _showError('Pick a column to filter on');
+            return;
+        }
+        _resetUi();
+        _showLoading(true);
+        var url = '/api/astrometrics/resolve-by-filter'
+            + '?column=' + encodeURIComponent(col)
+            + '&match=' + encodeURIComponent(matchMode)
+            + '&value=' + encodeURIComponent(val);
+        _fetchJson(url)
+            .then(function (data) {
+                _showLoading(false);
+                if (!data.success) {
+                    _showError(data.error || 'Filter failed');
+                    return;
+                }
+                var matches = data.matches || [];
+                if (!matches.length) {
+                    _showError('No matches.');
+                    return;
+                }
+                if (matches.length === 1) {
+                    _showTarget(matches[0].apero_name,
+                                matches[0].payload);
+                } else {
+                    _showPicker(matches);
+                }
+            })
+            .catch(function (err) {
+                _showLoading(false);
+                _showError(String(err));
+            });
+    }
+
+    function _populateColumns() {
+        var sel = document.getElementById('rt-adv-column');
+        if (!sel) return;
+        _fetchJson('/api/astrometrics/columns')
+            .then(function (data) {
+                if (!data.success) return;
+                sel.innerHTML = '';
+                (data.columns || []).forEach(function (col) {
+                    var opt = document.createElement('option');
+                    opt.value = col;
+                    opt.textContent = col;
+                    sel.appendChild(opt);
+                });
+            })
+            .catch(function () {
+                sel.innerHTML = '<option value="">'
+                    + '(failed to load columns)</option>';
+            });
+    }
+
+    /* Bind buttons */
+    var btnName = document.getElementById('rt-resolve-name');
+    if (btnName) btnName.addEventListener('click', _resolveByName);
+    var nameInput = document.getElementById('rt-name-query');
+    if (nameInput) {
+        nameInput.addEventListener('keydown', function (e) {
+            if (e.key === 'Enter') _resolveByName();
+        });
+    }
+    var btnCoords = document.getElementById('rt-resolve-coords');
+    if (btnCoords) {
+        btnCoords.addEventListener('click', _resolveByCoords);
+    }
+    var btnFilter = document.getElementById('rt-resolve-filter');
+    if (btnFilter) {
+        btnFilter.addEventListener('click', _resolveByFilter);
+    }
+
+    /* Populate column dropdown lazily on first resolve-target tab
+       activation */
+    var advTab = document.getElementById('rt-tab-advanced');
+    if (advTab) {
+        var loaded = false;
+        advTab.addEventListener('click', function () {
+            if (!loaded) {
+                _populateColumns();
+                loaded = true;
+            }
+        });
+    }
+}());

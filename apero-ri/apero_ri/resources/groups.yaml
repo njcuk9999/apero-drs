@@ -87,6 +87,8 @@ moderator.SPIROU:
     - manage.admin.links.SPIROU
     # vault: shared secret/credential store for admin portal users
     - manage.admin.vault
+    # astrometric catalogue: edit / rename existing yaml entries
+    - manage.astrometrics
   groups:
     - monitor.SPIROU
 
@@ -114,6 +116,8 @@ moderator.NIRPS:
     - manage.admin.links.NIRPS
     # vault: shared secret/credential store for admin portal users
     - manage.admin.vault
+    # astrometric catalogue: edit / rename existing yaml entries
+    - manage.astrometrics
   groups:
     - monitor.NIRPS
 
@@ -151,12 +155,15 @@ developer.NIRPS:
 monitor.SPIROU:
   permissions:
       - view.monitor_portal.SPIROU
+      # astrometric catalogue: upload brand-new yaml entries
+      - upload.astrometrics
   groups:
     - general.SPIROU
 
 monitor.NIRPS:
   permissions:
       - view.monitor_portal.NIRPS
+      - upload.astrometrics
   groups:
     - general.NIRPS
 

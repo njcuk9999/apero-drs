@@ -25,7 +25,7 @@ from apero.base import base as apero_base
 # =============================================================================
 # Define variables
 # =============================================================================
-__NAME__ = 'apero_ri.py'
+__NAME__ = 'apero_ari.py'
 __INSTRUMENT__ = 'None'
 __PACKAGE__ = apero_base.__PACKAGE__
 __version__ = apero_base.__version__

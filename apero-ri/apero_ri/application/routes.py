@@ -997,6 +997,38 @@ def register_data_portal_routes(app):
         app._api_astrometrics_find_object,
     )
     app.add_url_rule(
+        "/api/astrometrics/resolve-by-name",
+        "api_astrometrics_resolve_by_name",
+        app._api_astrometrics_resolve_by_name,
+    )
+    app.add_url_rule(
+        "/api/astrometrics/resolve-by-coords",
+        "api_astrometrics_resolve_by_coords",
+        app._api_astrometrics_resolve_by_coords,
+    )
+    app.add_url_rule(
+        "/api/astrometrics/resolve-by-filter",
+        "api_astrometrics_resolve_by_filter",
+        app._api_astrometrics_resolve_by_filter,
+    )
+    app.add_url_rule(
+        "/api/astrometrics/columns",
+        "api_astrometrics_columns",
+        app._api_astrometrics_columns,
+    )
+    app.add_url_rule(
+        "/api/astrometrics/update-field",
+        "api_astrometrics_update_field",
+        app._api_astrometrics_update_field,
+        methods=["POST"],
+    )
+    app.add_url_rule(
+        "/api/astrometrics/upload-yaml",
+        "api_astrometrics_upload_yaml",
+        app._api_astrometrics_upload_yaml,
+        methods=["POST"],
+    )
+    app.add_url_rule(
         "/data_portal/<profile_id>/observation-table",
         "ri_observation_table",
         app._ri_obs_table_view,

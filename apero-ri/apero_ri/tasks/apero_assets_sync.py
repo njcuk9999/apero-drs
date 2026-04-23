@@ -1,30 +1,28 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-APERO RI – GLOBAL async task: sync the APERO assets directory.
+APERO RI - GLOBAL async task: sync the APERO assets directory.
 
 The task manages ``{LOCAL_DATA_DIR}/apero-assets/`` which mirrors the
 remote APERO data-assets bundle (calibration files, static tables, etc.)
 used by the ARI UI for "get" (download) and "set" (upload) operations.
 
 Workflow (default ``mode='sync'``):
-  1. Download the remote ``checksums.yaml`` from the first reachable server.
-  2. Compare every listed file against the local copy (MD-5 hash).
-  3. If anything is missing or stale, download the versioned tar file and
-     extract it into ``apero-assets/``.
-  4. Write a local ``checksums.yaml`` so the next run can skip the download
-     when nothing has changed.
+  1. Read ``checksums.yaml`` from the installed apero package
+     (``apero/data/checksums.yaml``).  This file contains the server
+     list, the tar filename and per-file MD5 hashes.
+  2. Compare every listed file against the local copy in
+     ``{LOCAL_DATA_DIR}/apero-assets/``.
+  3. If anything is missing or stale (or ``force_download=True``),
+     download the versioned tar file from the first reachable server
+     listed in the checksum YAML and extract it.
 
 Workflow (``mode='upload'``):
-  1. Index all files under ``TASK_CONFIG['local_indir']`` and build a fresh
-     ``checksums.yaml`` + versioned tar file.
+  1. Index all files under ``TASK_CONFIG['local_indir']`` and build a
+     fresh ``checksums.yaml`` + versioned tar file.
   2. Upload both via rsync to the configured SSH host.
 
 Task config keys (all optional, set in ``async_tasks.yaml``):
-  ``asset_servers``   list of base URL strings (trailing slash optional).
-                      Each is tried in turn until one is reachable.
-  ``checksum_file``   filename of the remote checksum YAML
-                      (default ``'checksums.yaml'``).
   ``force_download``  bool: re-extract even if checksums match.
   ``mode``            ``'sync'`` (default) or ``'upload'``.
   ``local_indir``     source directory for upload mode.
@@ -40,7 +38,6 @@ Created on 2026-04-22
 
 import hashlib
 import os
-import shutil
 import tarfile as _tarfile
 import tempfile
 import time
@@ -129,6 +126,19 @@ def _save_yaml(data: Dict[str, Any], path: Path) -> None:
         raise
 
 
+def _get_apero_checksums_path() -> Optional[Path]:
+    """
+    Return the path to ``apero/data/checksums.yaml`` inside the installed
+    apero package, or None if the package is not importable.
+    """
+    try:
+        import apero as _apero_pkg
+        p = Path(_apero_pkg.__file__).parent / 'data' / CHECKSUM_FILE
+        return p if p.exists() else None
+    except ImportError:
+        return None
+
+
 def _fetch_url_bytes(url: str, timeout: int = HTTP_TIMEOUT,
                      max_bytes: int = MAX_TAR_BYTES) -> Optional[bytes]:
     """
@@ -152,68 +162,52 @@ def _fetch_url_bytes(url: str, timeout: int = HTTP_TIMEOUT,
         return None
 
 
-def _fetch_remote_checksum(
-        servers: List[str],
-        checksum_file: str) -> Optional[Dict[str, Any]]:
-    """
-    Try each URL in ``servers`` and return the parsed checksum YAML dict.
-
-    :param servers: list of base URL strings (tried in order)
-    :param checksum_file: filename of the checksum YAML on the server
-    :return: parsed dict or None if no server was reachable
-    """
-    if not _HAS_YAML:
-        return None
-    for server in servers:
-        base = server.rstrip('/')
-        url = f'{base}/{checksum_file}'
-        data = _fetch_url_bytes(url, timeout=30, max_bytes=10_000_000)
-        if data is None:
-            continue
-        try:
-            result = _yaml.safe_load(data.decode('utf-8', errors='replace'))
-            if isinstance(result, dict):
-                return result
-        except Exception:
-            continue
-    return None
-
-
 def _probe_servers(
         servers: List[str],
-        checksum_file: str,
+        tar_filename: str,
         tlog) -> List[str]:
     """
-    Test each server with a small request for the checksum file header.
+    Test each server by sending a HEAD request for ``tar_filename``.
+
+    Uses HEAD rather than a partial GET so that the Content-Length of the
+    tar file (which can be hundreds of MB) does not trigger the size guard
+    inside ``_fetch_url_bytes``.
 
     :param servers: list of base URL strings to test
-    :param checksum_file: filename used to build the probe URL
+    :param tar_filename: basename of the tar file to probe for
     :param tlog: log callable
     :return: list of base URL strings that responded successfully
     """
     reachable: List[str] = []
     for server in servers:
         base = server.rstrip('/')
-        url = f'{base}/{checksum_file}'
-        data = _fetch_url_bytes(url, timeout=10, max_bytes=512)
-        if data is not None:
-            reachable.append(server)
-            tlog(f'  {server}: accessible')
-        else:
-            tlog(f'  {server}: unreachable')
+        url = f'{base}/{tar_filename}'
+        req = Request(url, method='HEAD',
+                      headers={'User-Agent': _HTTP_AGENT})
+        try:
+            with urlopen(req, timeout=10) as resp:
+                if resp.status < 400:
+                    reachable.append(server)
+                    tlog(f'  {server}: accessible'
+                         f' (HTTP {resp.status})')
+                else:
+                    tlog(f'  {server}: unreachable'
+                         f' (HTTP {resp.status})')
+        except (URLError, OSError) as exc:
+            tlog(f'  {server}: unreachable ({exc})')
     return reachable
 
 
 def _check_assets(assets_dir: Path,
-                  remote_checksums: Dict[str, Any]) -> List[str]:
+                  pkg_checksums: Dict[str, Any]) -> List[str]:
     """
-    Compare local files against ``remote_checksums['data']``.
+    Compare local files against ``pkg_checksums['data']``.
 
     :param assets_dir: the local apero-assets directory
-    :param remote_checksums: parsed checksum YAML from the server
+    :param pkg_checksums: parsed checksums YAML from the apero package
     :return: list of relative paths that are missing or stale
     """
-    data = remote_checksums.get('data') or {}
+    data = pkg_checksums.get('data') or {}
     stale: List[str] = []
     for rel_path, expected_hash in data.items():
         local_path = assets_dir / rel_path
@@ -418,13 +412,6 @@ class AperoAssetsSyncTask(apero_async.AperoAsyncTask):
 
         # read task config
         mode = str(task_cfg.get('mode') or 'sync').strip().lower()
-        raw_servers = task_cfg.get('asset_servers') or []
-        if isinstance(raw_servers, str):
-            raw_servers = [raw_servers]
-        servers: List[str] = [str(s).strip() for s in raw_servers if s]
-        checksum_file = str(
-            task_cfg.get('checksum_file') or CHECKSUM_FILE
-        ).strip()
         force_download = bool(task_cfg.get('force_download', False))
 
         # ---- reset info -----------------------------------------------------
@@ -440,11 +427,23 @@ class AperoAssetsSyncTask(apero_async.AperoAsyncTask):
         # UPLOAD mode: push local assets to remote server
         # =====================================================================
         if mode == 'upload':
+            # servers for upload come from the package checksums.yaml
+            _upload_pkg_path = _get_apero_checksums_path()
+            _upload_pkg_chk = (
+                _load_yaml(_upload_pkg_path)
+                if _upload_pkg_path else None
+            )
+            _upload_servers: List[str] = []
+            if _upload_pkg_chk:
+                _raw = _upload_pkg_chk.get('setup', {}).get('servers') or []
+                _upload_servers = [
+                    str(s).strip() for s in _raw if str(s).strip()
+                ]
             self._run_upload(
                 task_cfg=task_cfg,
                 assets_dir=assets_dir,
-                servers=servers,
-                checksum_file=checksum_file,
+                servers=_upload_servers,
+                checksum_file=CHECKSUM_FILE,
                 tlog=tlog,
                 stop_event=stop_event,
             )
@@ -453,22 +452,69 @@ class AperoAssetsSyncTask(apero_async.AperoAsyncTask):
             return
 
         # =====================================================================
-        # SYNC mode: check and download if changed
+        # SYNC mode: read package-bundled checksums.yaml
         # =====================================================================
-        if not servers:
+        pkg_chk_path = _get_apero_checksums_path()
+        if pkg_chk_path is None:
             msg = (
-                'No asset_servers configured in TASK_CONFIG. '
-                'Set TASK_CONFIG.asset_servers to a list of base URLs.'
+                'Cannot find apero package checksums.yaml. '
+                'Ensure the apero package is installed and importable.'
             )
-            tlog(f'WARNING: {msg}')
-            self.info += f'\n**WARNING**: {msg}\n'
+            tlog(f'ERROR: {msg}')
+            self.info += f'\n**ERROR**: {msg}\n'
             self.progress = 1.0
             return
 
+        tlog(f'Reading package checksums: {pkg_chk_path}')
+        pkg_chk = _load_yaml(pkg_chk_path)
+        if not pkg_chk:
+            msg = f'Failed to load {pkg_chk_path}'
+            tlog(f'ERROR: {msg}')
+            self.info += f'\n**ERROR**: {msg}\n'
+            self.progress = 1.0
+            return
+
+        # extract metadata from the package checksums
+        setup_info = pkg_chk.get('setup') or {}
+        pkg_version = str(setup_info.get('version') or 'unknown')
+        pkg_ts = str(setup_info.get('humantime') or 'unknown')
+        tar_filename = str(setup_info.get('tarfile') or '').strip()
+        servers: List[str] = [
+            str(s).strip()
+            for s in (setup_info.get('servers') or [])
+            if str(s).strip()
+        ]
+
         self.info += (
-            f'**Servers**: {", ".join(servers[:3])}'
-            f'{"…" if len(servers) > 3 else ""}  \n'
+            f'**Package version**: `{pkg_version}`  \n'
+            f'**Package timestamp**: {pkg_ts}  \n'
         )
+        tlog(
+            f'Package checksums: version={pkg_version}, '
+            f'ts={pkg_ts}, tar={tar_filename}.'
+        )
+
+        if not tar_filename:
+            msg = 'Package checksums.yaml has no tarfile entry.'
+            tlog(f'ERROR: {msg}')
+            self.info += f'\n**ERROR**: {msg}\n'
+            self.progress = 1.0
+            return
+
+        if not servers:
+            msg = 'Package checksums.yaml has no servers listed.'
+            tlog(f'ERROR: {msg}')
+            self.info += f'\n**ERROR**: {msg}\n'
+            self.progress = 1.0
+            return
+
+        _srv_preview = ', '.join(servers[:3])
+        _srv_more = '...' if len(servers) > 3 else ''
+        self.info += (
+            f'**Servers**: {_srv_preview}{_srv_more}  \n'
+        )
+
+        self.progress = 0.1
 
         if stop_event is not None and stop_event.is_set():
             tlog('Cancellation requested. Exiting.')
@@ -476,7 +522,7 @@ class AperoAssetsSyncTask(apero_async.AperoAsyncTask):
 
         # ---- probe server accessibility ------------------------------------
         tlog('Probing server accessibility...')
-        reachable = _probe_servers(servers, checksum_file, tlog)
+        reachable = _probe_servers(servers, tar_filename, tlog)
         if reachable:
             self.info += (
                 '**Accessible**: '
@@ -484,69 +530,41 @@ class AperoAssetsSyncTask(apero_async.AperoAsyncTask):
             )
         else:
             self.info += (
-                '**WARNING**: none of the configured servers are '
-                'currently reachable.  \n'
+                '**WARNING**: none of the servers listed in the package '
+                'checksums.yaml are currently reachable.  \n'
             )
+
+        self.progress = 0.2
 
         if stop_event is not None and stop_event.is_set():
             tlog('Cancellation requested after probe. Exiting.')
             return
 
-        # ---- fetch remote checksum -----------------------------------------
-        tlog(f'Fetching remote checksum: {checksum_file}')
-        remote_chk = _fetch_remote_checksum(servers, checksum_file)
-
-        if remote_chk is None:
-            msg = (
-                'Could not fetch remote checksum YAML from any configured '
-                'server. Assets are not updated.'
-            )
-            tlog(f'WARNING: {msg}')
-            self.info += f'\n**WARNING**: {msg}\n'
-            self.progress = 1.0
-            return
-
-        # remote version info for reporting
-        setup_info = remote_chk.get('setup') or {}
-        remote_version = str(setup_info.get('version') or 'unknown')
-        remote_ts = str(setup_info.get('humantime') or 'unknown')
-        tar_filename = str(setup_info.get('tarfile') or '').strip()
-        self.info += (
-            f'**Remote version**: `{remote_version}`  \n'
-            f'**Remote timestamp**: {remote_ts}  \n'
-        )
-        tlog(
-            f'Remote checksum: version={remote_version}, '
-            f'ts={remote_ts}, tar={tar_filename}.'
-        )
-
-        self.progress = 0.2
-
-        if stop_event is not None and stop_event.is_set():
-            tlog('Cancellation requested after checksum fetch. Exiting.')
-            return
-
-        # ---- compare checksums ----------------------------------------------
+        # ---- compare checksums against local assets ------------------------
         if force_download:
             stale: List[str] = list(
-                (remote_chk.get('data') or {}).keys()
+                (pkg_chk.get('data') or {}).keys()
             )
-            tlog(f'force_download=True: marking all {len(stale)} files stale.')
+            tlog(
+                f'force_download=True: marking all {len(stale)} files stale.'
+            )
         else:
-            stale = _check_assets(assets_dir, remote_chk)
+            stale = _check_assets(assets_dir, pkg_chk)
+            n_total = len(pkg_chk.get('data') or {})
             tlog(
                 f'Checksum comparison: {len(stale)} file(s) missing/stale '
-                f'out of {len(remote_chk.get("data") or {})}.'
+                f'out of {n_total}.'
             )
 
         self.progress = 0.3
 
         if not stale:
             tlog('Assets are up-to-date. Nothing to download.')
-            self.info += '\n### Status\nAssets are **up-to-date**. No download needed.\n'
-            # persist the remote checksum YAML locally for offline checks
-            _save_yaml(remote_chk, assets_dir / checksum_file)
-            self.output_files = [str(assets_dir / checksum_file)]
+            self.info += (
+                '\n### Status\nAssets are **up-to-date**. '
+                'No download needed.\n'
+            )
+            self.output_files = [str(pkg_chk_path)]
             self.progress = 1.0
             tlog('APERO_SYNC_ASSETS completed (no download needed).')
             return
@@ -559,23 +577,13 @@ class AperoAssetsSyncTask(apero_async.AperoAsyncTask):
             for rel in stale[:5]:
                 self.info += f'- `{rel}`\n'
             if len(stale) > 5:
-                self.info += f'- …and {len(stale) - 5} more\n'
+                self.info += f'- ...and {len(stale) - 5} more\n'
 
         if stop_event is not None and stop_event.is_set():
             tlog('Cancellation requested before download. Exiting.')
             return
 
-        # ---- download and extract tar file ----------------------------------
-        if not tar_filename:
-            msg = (
-                'Remote checksum YAML has no tarfile entry. '
-                'Cannot download assets tar.'
-            )
-            tlog(f'ERROR: {msg}')
-            self.info += f'\n**ERROR**: {msg}\n'
-            self.progress = 1.0
-            return
-
+        # ---- download and extract tar file ---------------------------------
         self.progress = 0.4
         ok = _download_and_extract(
             servers=servers,
@@ -587,22 +595,19 @@ class AperoAssetsSyncTask(apero_async.AperoAsyncTask):
         self.progress = 0.9
 
         if ok:
-            # save the remote checksum YAML locally so the next run
-            # can compare without a network round-trip
-            _save_yaml(remote_chk, assets_dir / checksum_file)
-            n_files = len(remote_chk.get('data') or {})
+            n_files = len(pkg_chk.get('data') or {})
             self.info += (
                 f'\n### Download\n'
                 f'Extracted `{tar_filename}` '
                 f'({n_files} file(s) indexed).\n'
             )
-            self.output_files = [str(assets_dir / checksum_file)]
+            self.output_files = [str(pkg_chk_path)]
             tlog(
                 f'APERO_SYNC_ASSETS completed: '
                 f'extracted {tar_filename} ({n_files} files).'
             )
         else:
-            self.info += f'\n**ERROR**: download/extraction failed.\n'
+            self.info += '\n**ERROR**: download/extraction failed.\n'
             tlog('APERO_SYNC_ASSETS failed: download/extraction error.')
             raise RuntimeError(
                 'APERO assets sync failed: could not download or extract '
