@@ -116,6 +116,7 @@
     const statusEl = document.getElementById('issues-status');
     const fStatus = document.getElementById('issues-filter-status');
     const fKind = document.getElementById('issues-filter-kind');
+    const fType = document.getElementById('issues-filter-type');
     const fInst = document.getElementById('issues-filter-instrument');
     const refreshBtn = document.getElementById('issues-refresh');
 
@@ -264,6 +265,7 @@
         const params = new URLSearchParams();
         if (fStatus.value) params.set('status', fStatus.value);
         if (fKind.value) params.set('kind', fKind.value);
+        if (fType && fType.value) params.set('type', fType.value);
         if (fInst.value.trim()) {
             params.set('instrument', fInst.value.trim());
         }
