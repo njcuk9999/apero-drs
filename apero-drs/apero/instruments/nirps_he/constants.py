@@ -1610,22 +1610,7 @@ CDict.set('PLT_BINU', value=20, source=__NAME__, group=cgroup)
 # OBJ.LIST: OBJECT LIST SETTINGS
 # =============================================================================
 cgroup = 'OBJ.LIST'
-# Define the SIMBAD TAP url
-CDict.set('SIMBAD_TAPURL',
-          value='http://simbad.cds.unistra.fr/simbad/sim-tap',
-          source=__NAME__, group=cgroup)
-
-# Define the TAP Gaia URL (for use in crossmatching to Gaia via astroquery)
-CDict.set('GAIA_URL',
-          value='https://gea.esac.esa.int/tap-server/tap',
-          source=__NAME__, group=cgroup)
-
-# Define the VizieR TAP url
-CDict.set('VIZIER_TAPURL',
-          value='https://tapvizier.cds.unistra.fr/TAPVizieR/tap',
-          source=__NAME__, group=cgroup)
-
-
+ 
 # Define the bad list header key
 CDict.set('REJECT_DRS_HKEY', value=None, source=__NAME__, group=cgroup)
 
@@ -1634,40 +1619,6 @@ CDict.set('REJECT_VALCOL', value='IDENTIFIER', source=__NAME__, group=cgroup)
 
 # Define the bad list google spreadsheet mask column for preprocessing
 CDict.set('REJECT_MASKCOL', value='PP', source=__NAME__, group=cgroup)
-
-
-
-# Define whether to resolve from local database (via drs_database / drs_db)
-CDict.set('RESOLVE_FROM_DB', value=True, source=__NAME__, group=cgroup)
-
-# Define whether to resolve from gaia id (via TapPlus to Gaia) if False
-# ra/dec/pmra/pmde/plx will always come from header
-CDict.set('RESOLVE_FROM_GAIAID', value=True, source=__NAME__, group=cgroup)
-
-# Define whether to get Gaia ID / Teff / RV from google sheets if False
-# will try to resolve if gaia ID given otherwise will use ra/dec if
-# OBJ_LIST_RESOLVE_FROM_COORDS = True else will default to header values
-CDict.set('RESOLVE_FROM_GLIST', value=True, source=__NAME__, group=cgroup)
-
-# Define whether to get Gaia ID from header RA and Dec (basically if all other
-# option fails) - WARNING - this is a crossmatch so may lead to a bad
-# identification of the gaia id - not recommended
-CDict.set('RESOLVE_FROM_COORDS', value=False, source=__NAME__, group=cgroup)
-
-# Define the gaia epoch to use in the gaia query
-CDict.set('GAIA_EPOCH', value=2015.5, source=__NAME__, group=cgroup)
-
-# Define the radius for crossmatching objects (in both lookup table and query)
-# measured in arc sec (only used if OBJ_LIST_RESOLVE_FROM_COORDS = True)
-CDict.set('CM_RADIUS', value=180.0, source=__NAME__, group=cgroup)
-
-# Define the gaia parallax limit for using gaia point meansure in mas
-# (only used if OBJ_LIST_RESOLVE_FROM_COORDS = True)
-CDict.set('GAIA_PLX_LIM', value=0.5, source=__NAME__, group=cgroup)
-
-# Define the gaia magnitude cut (rp mag) to use in the gaia query
-# (only used if OBJ_LIST_RESOLVE_FROM_COORDS = True)
-CDict.set('GAIA_MAGCUT', value=15.0, source=__NAME__, group=cgroup)
 
 # Define the google sheet to use for update the reject list
 CDict.set('RLIST_GSHEET_URL',
@@ -1681,20 +1632,6 @@ CDict.set('RLIST_GSHEET_MAINLIST_ID', value='1847598400',
 # Define the google sheet name to use for the reject list
 CDict.set('RLIST_GSHEET_SHEETNAME', value='NIRPS_HE', source=__NAME__, group=cgroup)
 
-# gaia col name in google sheet
-CDict.set('GAIA_COLNAME', value='GAIADR2ID', source=__NAME__, group=cgroup)
-# alias col name in google sheet
-CDict.set('ALIAS_COLNAME', value='ALIASES', source=__NAME__, group=cgroup)
-# rv col name in google sheet
-CDict.set('RV_COLNAME', value='RV', source=__NAME__, group=cgroup)
-CDict.set('RVREF_COLNAME', value='RV_REF', source=__NAME__, group=cgroup)
-# teff col name in google sheet
-CDict.set('TEFF_COLNAME', value='TEFF', source=__NAME__, group=cgroup)
-CDict.set('TEFFREFF_COLNAME', value='TEFF_REF', source=__NAME__, group=cgroup)
-# Reject like google columns
-CDict.set('REJECT_IDENT_COLNAME', value='ODOMETER', source=__NAME__, group=cgroup)
-CDict.set('REJECT_PP_COLNAME', value='PP', source=__NAME__, group=cgroup)
-CDict.set('REJECT_RV_COLNAME', value='RV', source=__NAME__, group=cgroup)
 
 # =============================================================================
 # OBJECT: SKY CORR SETTINGS

@@ -103,6 +103,33 @@ CDict.add('AREL_GSHEET_LCOL', value=None, dtype=str, source=__NAME__,
                       'lbl release date')
 
 # =============================================================================
+# ASTROMETRIC DATABASE SETTINGS
+# =============================================================================
+cgroup = 'ASTROM'
+CDict.add_group(cgroup, description='ASTROMETRIC DATABASE SETTINGS')
+
+# Define the SIMBAD TAP URL for astrometric resolution
+CDict.add('SIMBAD_TAPURL',
+          value='https://simbad.cds.unistra.fr/simbad/sim-tap/sync',
+          dtype=str, source=__NAME__, group=cgroup,
+          description='Define the SIMBAD TAP endpoint URL for '
+                      'astrometric resolution')
+
+# Define the Gaia TAP URL for astrometric resolution
+CDict.add('GAIA_URL',
+          value='https://gea.esac.esa.int/tap-server/tap/sync',
+          dtype=str, source=__NAME__, group=cgroup,
+          description='Define the Gaia TAP endpoint URL for '
+                      'astrometric resolution')
+
+# Define the VizieR TAP URL for astrometric resolution
+CDict.add('VIZIER_TAPURL',
+          value='https://tapvizier.cds.unistra.fr/TAPVizieR/tap/sync',
+          dtype=str, source=__NAME__, group=cgroup,
+          description='Define the VizieR TAP endpoint URL for '
+                      'astrometric resolution')
+
+# =============================================================================
 # COMMON IMAGE SETTINGS
 # =============================================================================
 cgroup = 'IMAGE'
@@ -3363,26 +3390,7 @@ cgroup = 'OBJ.LIST'
 CDict.add_group(cgroup, description='CALIBRATION.WAVE_NIGHT: '
                                     'CALIBRATION: WAVE NIGHT SETTINGS')
 
-# Define the SIMBAD TAP url
-CDict.add('SIMBAD_TAPURL', value=None, dtype=str, source=__NAME__,
-          group=cgroup,
-          description='Define the SIMBAD TAP url')
-
-# Define the TAP Gaia URL (for use in crossmatching to Gaia via astroquery)
-CDict.add('GAIA_URL', value=None, dtype=str,
-          source=__NAME__, group=cgroup,
-          description=('Define the TAP Gaia URL (for use in '
-                       'crossmatching to Gaia via astroquery)'))
-
-# Define the VizieR TAP url (for crossmatching to Gaia DR2/DR3/EDR3 and
-#   AllWISE photometry via VizieR)
-CDict.add('VIZIER_TAPURL', value=None, dtype=str, source=__NAME__,
-          group=cgroup,
-          description=('Define the VizieR TAP url (for '
-                       'crossmatching to Gaia DR2/DR3/EDR3 and '
-                       'AllWISE photometry via VizieR)'))
-
-
+ 
 # Define the bad list header key
 CDict.add('REJECT_DRS_HKEY', value=None, dtype=str,
           source=__NAME__, group=cgroup,
@@ -3400,88 +3408,6 @@ CDict.add('REJECT_MASKCOL', value=None, dtype=str,
           description='Define the bad list google '
                       'spreadsheet mask column for '
                       'preprocessing')
-
-
-
-# Define whether to resolve from local database (via drs_database / drs_db)
-CDict.add('RESOLVE_FROM_DB',
-          value=None, dtype=bool, source=__NAME__,
-          group=cgroup,
-          description=('Define whether to resolve '
-                       'from local database '
-                       '(via drs_database / '
-                       'drs_db)'))
-
-# Define whether to resolve from gaia id (via TapPlus to Gaia) if False
-#    ra/dec/pmra/pmde/plx will always come from header
-CDict.add('RESOLVE_FROM_GAIAID',
-          value=None, dtype=bool, source=__NAME__,
-          group=cgroup,
-          description=('Define whether to resolve '
-                       'from gaia id (via TapPlus '
-                       'to Gaia) if False ra/dec/'
-                       'pmra/pmde/plx will always '
-                       'come from header'))
-
-# Define whether to get Gaia ID / Teff / RV from google sheets if False
-#    will try to resolve if gaia ID given otherwise will use ra/dec if
-#    OBJ_LIST_RESOLVE_FROM_COORDS = True else will default to header values
-CDict.add('RESOLVE_FROM_GLIST',
-          value=None, dtype=bool, source=__NAME__,
-          group=cgroup,
-          description=('Define whether to get Gaia '
-                       'ID / Teff / RV from google '
-                       'sheets if False will try to '
-                       'resolve if gaia ID given '
-                       'otherwise will use ra/dec if '
-                       'OBJ_LIST_RESOLVE_FROM_COORDS '
-                       '= True else will default to '
-                       'header values'))
-
-# Define whether to get Gaia ID from header RA and Dec (basically if all other
-#    option fails) - WARNING - this is a crossmatch so may lead to a bad
-#    identification of the gaia id - not recommended
-CDict.add('RESOLVE_FROM_COORDS',
-          value=None, dtype=bool, source=__NAME__,
-          group=cgroup,
-          description=('Define whether to get '
-                       'Gaia ID from header RA '
-                       'and Dec (basically if all '
-                       'other option fails) - '
-                       'WARNING - this is a '
-                       'crossmatch so may lead to a '
-                       'bad identification of the '
-                       'gaia id - not recommended'))
-
-# Define the gaia epoch to use in the gaia query
-CDict.add('GAIA_EPOCH', value=None, dtype=float,
-          source=__NAME__, minimum=2000.0, maximum=2100.0,
-          group=cgroup,
-          description=('Define the gaia epoch to use in '
-                       'the gaia query'))
-
-# Define the radius for crossmatching objects (in both lookup table and query)
-#   in arcseconds
-CDict.add('CM_RADIUS', value=None,
-          dtype=float, source=__NAME__, minimum=0.0,
-          group=cgroup,
-          description=('Define the radius for '
-                       'crossmatching objects (in '
-                       'both lookup table and '
-                       'query) in arcseconds'))
-
-# Define the gaia parallax limit for using gaia point
-CDict.add('GAIA_PLX_LIM', value=None, dtype=float,
-          source=__NAME__, minimum=0.0, group=cgroup,
-          description=('Define the gaia parallax limit '
-                       'for using gaia point'))
-
-# Define the gaia magnitude cut to use in the gaia query
-CDict.add('GAIA_MAGCUT', value=None, dtype=float,
-          source=__NAME__, minimum=10.0, maximum=25.0,
-          group=cgroup,
-          description=('Define the gaia magnitude cut to '
-                       'use in the gaia query'))
 
 # Define the google sheet to use for update the reject list
 CDict.add('RLIST_GSHEET_URL', value=None,
@@ -3503,37 +3429,6 @@ CDict.add('RLIST_GSHEET_SHEETNAME',
           description='Define the google sheet name'
                       ' to use for the reject list')
 
-# gaia col name in google sheet
-CDict.add('GAIA_COLNAME', value=None, dtype=str,
-          source=__NAME__, group=cgroup,
-          description='gaia col name in google sheet')
-# alias col name in google sheet
-CDict.add('ALIAS_COLNAME', value=None, dtype=str,
-          source=__NAME__, group=cgroup,
-          description='alias col name in google sheet')
-# rv col name in google sheet
-CDict.add('RV_COLNAME', value=None, dtype=str,
-          source=__NAME__, group=cgroup,
-          description='rv col name in google sheet')
-CDict.add('RVREF_COLNAME', value=None, dtype=str,
-          source=__NAME__, group=cgroup, description='')
-# teff col name in google sheet
-CDict.add('TEFF_COLNAME', value=None, dtype=str,
-          source=__NAME__, group=cgroup,
-          description='teff col name in google sheet')
-CDict.add('TEFFREFF_COLNAME', value=None, dtype=str,
-          source=__NAME__, group=cgroup,
-          description='teff source reference col name in google sheet')
-# Reject like google columns
-CDict.add('REJECT_IDENT_COLNAME', value=None, dtype=str,
-          source=__NAME__, group=cgroup,
-          description='Reject "idenfier" col name in  google sheet')
-CDict.add('REJECT_PP_COLNAME', value=None, dtype=str,
-          source=__NAME__, group=cgroup,
-          description='Reject "pp" col name in google sheet')
-CDict.add('REJECT_RV_COLNAME', value=None, dtype=str,
-          source=__NAME__, group=cgroup,
-          description='Reject "rv" col name in google sheet')
 
 # =============================================================================
 # OBJECT: SKY CORR SETTINGS
