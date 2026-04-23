@@ -454,3 +454,75 @@ body.ari-issues-page .ari-doc-main {
         min-width: 6rem;
     }
 }
+
+/* ----- Compact mode + dual horizontal scrollbars ----- */
+.mi-table--compact {
+    font-size: 0.82rem;
+}
+
+.mi-table--compact thead th {
+    padding: 0.45rem 0.6rem;
+    font-size: 0.68rem;
+}
+
+.mi-table--compact tbody td {
+    padding: 0.45rem 0.6rem;
+}
+
+.mi-table-scroll-top {
+    overflow-x: auto;
+    overflow-y: hidden;
+    width: 100%;
+    height: 14px;
+    border-bottom: 1px solid var(--ari-border);
+    background: #f6f8fa;
+}
+
+.mi-table-scroll-top__inner {
+    height: 1px;
+    width: 100%;
+}
+
+.mi-user--created i,
+.mi-user--assigned i {
+    color: var(--ari-accent, #2f6feb);
+}
+
+.mi-user--unassigned {
+    color: var(--ari-text-muted);
+    font-style: italic;
+}
+
+.mi-user--unassigned i {
+    color: var(--ari-text-muted);
+}
+
+.mi-user + br + .mi-user {
+    margin-top: 0.15rem;
+}
+
+/* Assign overlay */
+.mi-assign-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.45);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+}
+
+.mi-assign-overlay__panel {
+    background: #fff;
+    border-radius: 8px;
+    padding: 1rem 1.2rem;
+    min-width: 18rem;
+    max-width: 90vw;
+    box-shadow: 0 14px 40px rgba(0, 0, 0, 0.25);
+}
+
+.mi-assign-overlay__title {
+    margin: 0 0 0.6rem;
+    font-size: 1rem;
+    color: var(--ari-text);
+}

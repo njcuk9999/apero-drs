@@ -757,15 +757,30 @@ def _safe_name(name: str) -> str:
 def _resolve_yaml_entry(app, name: str):
     """Resolve a name to its astrometric YAML entry.
 
+    Tries the on-disk APERO astrometric store first; if no match is
+    found, falls back to the per-user transient store populated by
+    ``api_astrometrics_resolve_online_*`` so that SED / HR / finder
+    plots still work for a freshly-resolved-online target that has
+    not yet been persisted.
+
     :param app: ARI application instance
     :param name: str, target name (any alias)
     :return: dict yaml entry or None
     """
     from apero.core import drs_astrometrics as dra
+    from apero_ri.core import transient_astrometrics as tastro
     try:
-        return dra.find_by_name(str(_astrom_dir(app)), name)
+        entry = dra.find_by_name(str(_astrom_dir(app)), name)
     except Exception:  # noqa: BLE001
-        return None
+        entry = None
+    if entry:
+        return entry
+    try:
+        user_info = app._get_api_user()
+    except Exception:  # noqa: BLE001
+        user_info = None
+    username = (user_info or {}).get('username') if user_info else None
+    return tastro.get(username, name)
 
 
 def api_astrometrics_sed(app):
@@ -921,6 +936,13 @@ def api_astrometrics_resolve_online_by_name(app):
     Returns a yaml-shaped entry dict (NOT yet stored) so the
     front-end can offer to upload it as a new astrometric entry.
 
+    The resolved entry is also placed in a per-user, time-limited
+    in-memory store via
+    :mod:`apero_ri.core.transient_astrometrics`, so that subsequent
+    calls to ``/api/astrometrics/sed``, ``/hr-diagram`` etc. for
+    the same name can render plots without the entry ever touching
+    the on-disk APERO astrometric database.
+
     Query string parameters:
         name (required) - target name (any alias)
 
@@ -930,8 +952,9 @@ def api_astrometrics_resolve_online_by_name(app):
              payload), ``error``.
     """
     from apero.core import drs_astrometrics as dra
+    from apero_ri.core import transient_astrometrics as tastro
 
-    _, err = _check_view_perm(app)
+    user_info, err = _check_view_perm(app)
     if err is not None:
         return err
     name = (request.args.get('name') or '').strip()
@@ -948,12 +971,18 @@ def api_astrometrics_resolve_online_by_name(app):
         return jsonify(success=True, apero_name=None,
                        entry=None, payload={"sections": []})
 
+    # Stash in the per-user transient store so SED / HR / finder
+    # endpoints can locate the entry by name on follow-up requests.
+    username = (user_info or {}).get('username') if user_info else None
+    tastro.put(username, name, entry)
+
     return jsonify(
         success=True,
         apero_name=entry.get('APERO_NAME')
         or entry.get('SIMBAD_NAME') or name,
         entry=entry,
         payload=_build_payload(entry),
+        transient=True,
     )
 
 
@@ -1001,8 +1030,9 @@ def api_astrometrics_resolve_online_by_coords(app):
              (list of candidate yaml-shaped entries), ``error``.
     """
     from apero.core import drs_astrometrics as dra
+    from apero_ri.core import transient_astrometrics as tastro
 
-    _, err = _check_view_perm(app)
+    user_info, err = _check_view_perm(app)
     if err is not None:
         return err
     try:
@@ -1030,15 +1060,22 @@ def api_astrometrics_resolve_online_by_coords(app):
         return jsonify(success=False, error=str(exc)), 500
     rows = _tap_rows_from_json(raw)
     matches = []
+    username = (user_info or {}).get('username') if user_info else None
     for row in (rows or [])[:25]:
         nm = row.get('main_id') or ''
         entry = _row_to_entry(row, nm)
+        # transient-store every match so the user can render plots
+        # for whichever they pick from the picker.
+        try:
+            tastro.put(username, nm, entry)
+        except Exception:  # noqa: BLE001
+            pass
         matches.append({
             'apero_name': entry.get('APERO_NAME'),
             'entry': entry,
             'payload': _build_payload(entry),
         })
-    return jsonify(success=True, matches=matches)
+    return jsonify(success=True, matches=matches, transient=True)
 
 
 def _tap_rows_from_json(raw):

@@ -483,11 +483,17 @@
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
             body: JSON.stringify({
-                kind: 'flag',
+                kind: 'astrometric',
+                type: 'variable flag',
+                title: 'Object: ' + (apero || '?')
+                    + ' Field: ' + key
+                    + ' value: ' + current,
                 reason: reason,
                 apero_name: apero || null,
                 field: key,
                 value: current,
+                origin_url: window.location.pathname
+                    + window.location.search,
                 visibility: 'monitor'
             })
         }).then(function (r) {

@@ -47,6 +47,17 @@
 		return !!resolveApiContext(meta);
 	}
 
+	function shouldEnableIssue(meta) {
+		if (!meta || !meta.loggedIn || !meta.pageId) {
+			return false;
+		}
+		if (meta.pageId === 'home.login'
+				|| meta.pageId === 'home.logout') {
+			return false;
+		}
+		return true;
+	}
+
 	function shouldEnableFavourite(meta) {
 		if (!meta || !meta.loggedIn) {
 			return false;
@@ -662,12 +673,162 @@
 		document.body.classList.add('ari-modal-open');
 	}
 
+	function createPageIssueModal() {
+		var existing = document.getElementById('ari-page-issue-modal');
+		if (existing) return existing;
+		var modal = document.createElement('div');
+		modal.id = 'ari-page-issue-modal';
+		modal.className = 'ari-api-modal';
+		modal.style.display = 'none';
+		modal.innerHTML = '' +
+			'<div class="ari-api-modal__backdrop"' +
+			' data-issue-close="1"></div>' +
+			'<div class="ari-api-modal__panel" role="dialog"' +
+			' aria-modal="true"' +
+			' aria-labelledby="ari-page-issue-modal-title">' +
+			'  <div class="ari-api-modal__header">' +
+			'    <h3 id="ari-page-issue-modal-title">' +
+			'Report an issue with this page</h3>' +
+			'    <div class="ari-api-modal__actions">' +
+			'      <button type="button"' +
+			' class="ari-btn ari-btn--sm ari-btn--secondary"' +
+			' data-issue-close="1">' +
+			'<i class="fa-solid fa-xmark"></i></button>' +
+			'    </div>' +
+			'  </div>' +
+			'  <div class="ari-api-modal__body">' +
+			'    <p class="ari-api-modal__note">This issue will be' +
+			' filed against the current page' +
+			' (<code id="ari-page-issue-url"></code>) and visible' +
+			' to monitors.</p>' +
+			'    <label for="ari-page-issue-title"' +
+			' class="ari-api-modal__desc">Title</label>' +
+			'    <input id="ari-page-issue-title" type="text"' +
+			' style="width:100%;padding:0.4rem 0.55rem;margin:' +
+			'0.25rem 0 0.7rem;border:1px solid rgba(0,0,0,0.18);' +
+			'border-radius:6px;" placeholder="Brief summary"' +
+			' />' +
+			'    <label for="ari-page-issue-reason"' +
+			' class="ari-api-modal__desc">Description</label>' +
+			'    <textarea id="ari-page-issue-reason" rows="5"' +
+			' style="width:100%;padding:0.4rem 0.55rem;margin:' +
+			'0.25rem 0 0.7rem;border:1px solid rgba(0,0,0,0.18);' +
+			'border-radius:6px;font:inherit;"' +
+			' placeholder="Describe the problem (optional if a' +
+			' title is given)"></textarea>' +
+			'    <div id="ari-page-issue-status"' +
+			' style="min-height:1.2em;font-size:0.85rem;' +
+			'color:var(--ari-text-muted);"></div>' +
+			'    <div style="display:flex;gap:0.5rem;' +
+			'justify-content:flex-end;margin-top:0.6rem;">' +
+			'      <button type="button"' +
+			' class="ari-btn ari-btn--sm ari-btn--secondary"' +
+			' data-issue-close="1">Cancel</button>' +
+			'      <button type="button"' +
+			' class="ari-btn ari-btn--sm ari-btn--primary"' +
+			' id="ari-page-issue-submit">' +
+			'<i class="fa-solid fa-paper-plane"></i>' +
+			' Submit</button>' +
+			'    </div>' +
+			'  </div>' +
+			'</div>';
+		document.body.appendChild(modal);
+		modal.addEventListener('click', function (ev) {
+			var t = ev.target;
+			if (!(t instanceof Element)) return;
+			if (t.getAttribute('data-issue-close') === '1') {
+				modal.style.display = 'none';
+				document.body.classList.remove('ari-modal-open');
+			}
+		});
+		document.addEventListener('keydown', function (ev) {
+			if (ev.key === 'Escape'
+					&& modal.style.display !== 'none') {
+				modal.style.display = 'none';
+				document.body.classList.remove('ari-modal-open');
+			}
+		});
+		return modal;
+	}
+
+	function showPageIssueModal(meta) {
+		var modal = createPageIssueModal();
+		var urlEl = modal.querySelector('#ari-page-issue-url');
+		var titleEl = modal.querySelector('#ari-page-issue-title');
+		var reasonEl = modal.querySelector(
+			'#ari-page-issue-reason');
+		var statusEl = modal.querySelector(
+			'#ari-page-issue-status');
+		var submitBtn = modal.querySelector(
+			'#ari-page-issue-submit');
+		var pageLabel = normalizePageLabel(meta);
+		var url = window.location.pathname + window.location.search;
+		urlEl.textContent = url;
+		titleEl.value = '';
+		reasonEl.value = '';
+		statusEl.textContent = '';
+		titleEl.placeholder = 'Issue with: ' + pageLabel;
+		submitBtn.disabled = false;
+		modal.style.display = '';
+		document.body.classList.add('ari-modal-open');
+		window.setTimeout(function () { titleEl.focus(); }, 30);
+		submitBtn.onclick = async function () {
+			var title = String(titleEl.value || '').trim();
+			var reason = String(reasonEl.value || '').trim();
+			if (!title && !reason) {
+				statusEl.textContent =
+					'Please enter a title or a description.';
+				return;
+			}
+			submitBtn.disabled = true;
+			statusEl.textContent = 'Submitting…';
+			try {
+				var resp = await fetch('/api/issues/create', {
+					method: 'POST',
+					headers: {
+						'Content-Type': 'application/json'
+					},
+					body: JSON.stringify({
+						kind: 'ari',
+						type: 'page',
+						title: title || ('Issue with: '
+							+ pageLabel),
+						reason: reason || title
+							|| ('Issue with: ' + pageLabel),
+						origin_url: url,
+						visibility: 'monitor'
+					})
+				});
+				var data = await resp.json();
+				if (!data.success) {
+					statusEl.textContent = 'Error: '
+						+ (data.error || 'unknown');
+					submitBtn.disabled = false;
+					return;
+				}
+				statusEl.textContent =
+					'Submitted (issue #' + data.issue.id + ').';
+				window.setTimeout(function () {
+					modal.style.display = 'none';
+					document.body.classList.remove(
+						'ari-modal-open');
+				}, 900);
+			} catch (err) {
+				statusEl.textContent = 'Error: '
+					+ (err.message || 'network');
+				submitBtn.disabled = false;
+			}
+		};
+	}
+
 	document.addEventListener('DOMContentLoaded', async function () {
 		var meta = window.ARI_PAGE_META || null;
 		var enablePins = shouldEnablePins(meta);
 		var enableApi = shouldEnableApi(meta);
 		var enableFavourite = shouldEnableFavourite(meta);
-		if (!enablePins && !enableApi && !enableFavourite) {
+		var enableIssue = shouldEnableIssue(meta);
+		if (!enablePins && !enableApi && !enableFavourite
+				&& !enableIssue) {
 			return;
 		}
 
@@ -695,6 +856,21 @@
 				showApiModal(buildApiExample(meta));
 			});
 			group.appendChild(apiBtn);
+		}
+
+		if (enableIssue) {
+			var issueBtn = document.createElement('button');
+			issueBtn.type = 'button';
+			issueBtn.className =
+				'ari-page-pin-fab ari-page-issue-fab';
+			issueBtn.title = 'Report an issue with this page';
+			issueBtn.setAttribute('aria-label', issueBtn.title);
+			issueBtn.innerHTML = iconSpan(
+				'<i class="fa-solid fa-circle-exclamation"></i>');
+			issueBtn.addEventListener('click', function () {
+				showPageIssueModal(meta);
+			});
+			group.appendChild(issueBtn);
 		}
 
 		if (enableFavourite) {

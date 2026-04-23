@@ -1066,6 +1066,11 @@ def register_data_portal_routes(app):
         methods=["POST"],
     )
     app.add_url_rule(
+        "/api/issues/users",
+        "api_issues_users",
+        app._api_issues_users,
+    )
+    app.add_url_rule(
         "/monitor_portal/issues",
         "monitor_issues_view",
         app._monitor_issues_view,

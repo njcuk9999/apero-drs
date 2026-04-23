@@ -312,6 +312,20 @@ a:hover {
     font-size: 0.95rem;
 }
 
+.ari-page-issue-fab {
+    color: #b1413a;
+}
+
+.ari-page-issue-fab:hover,
+.ari-page-issue-fab:focus,
+.ari-page-issue-fab:focus-visible {
+    color: #8e2f29;
+}
+
+.ari-page-issue-fab .ari-page-pin-fab__icon {
+    font-size: 0.95rem;
+}
+
 .ari-page-favourite-fab {
     color: #a57b1a;
 }

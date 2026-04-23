@@ -629,6 +629,46 @@
         if (rtTargetInfo) rtTargetInfo.style.display = 'none';
         if (rtSections) rtSections.innerHTML = '';
     }
+
+    /* "Resolve online" buttons stay hidden until a local Resolve
+       attempt has confirmed the target is not in the on-disk APERO
+       astrometric database -- that way the user is nudged to use
+       the curated database first. ``failedFor`` tracks the last
+       name the user tried locally so we only re-hide the buttons
+       when they switch to a fresh query. */
+    var failedFor = null;
+    function _onlineButtons() {
+        return [
+            document.getElementById('rt-resolve-online-name'),
+            document.getElementById('rt-resolve-online-coords')
+        ].filter(function (el) { return !!el; });
+    }
+    function _hideOnlineButtons() {
+        _onlineButtons().forEach(function (b) {
+            b.hidden = true;
+            b.style.display = 'none';
+        });
+        failedFor = null;
+    }
+    function _showOnlineButtons(name) {
+        failedFor = (name || '').trim() || null;
+        _onlineButtons().forEach(function (b) {
+            b.hidden = false;
+            b.style.display = '';
+        });
+    }
+    _hideOnlineButtons();
+    var nameQueryEl = document.getElementById('rt-name-query');
+    if (nameQueryEl) {
+        nameQueryEl.addEventListener('input', function () {
+            // re-hide as soon as the user types something different
+            // from the value that triggered the previous failure
+            if (failedFor != null
+                    && this.value.trim() !== failedFor) {
+                _hideOnlineButtons();
+            }
+        });
+    }
     function _showTarget(apero_name, payload) {
         if (rtTargetName) {
             rtTargetName.textContent = apero_name || 'Unknown';
@@ -688,6 +728,7 @@
             return;
         }
         _resetUi();
+        _hideOnlineButtons();
         _showLoading(true);
         _fetchJson('/api/astrometrics/resolve-by-name'
             + '?name=' + encodeURIComponent(name))
@@ -698,9 +739,13 @@
                     return;
                 }
                 if (!data.apero_name) {
+                    // Reveal the "Resolve online" buttons now that
+                    // the local lookup has confirmed the target is
+                    // not in the APERO astrometric database.
+                    _showOnlineButtons(name);
                     _showError('"' + name + '" not found in the '
-                        + 'APERO astrometric database. Try '
-                        + '"Resolve online" once that is available.');
+                        + 'APERO astrometric database. Use '
+                        + '"Resolve online" to query SIMBAD.');
                     return;
                 }
                 _showTarget(data.apero_name, data.payload);
@@ -916,34 +961,40 @@
         btn.type = 'button';
         btn.className = 'ari-btn ari-btn--xs ari-btn--primary';
         btn.innerHTML = '<i class="fa-solid fa-plus"></i>'
-            + ' Request this target be added';
+            + ' Flag as new object';
         btn.style.marginLeft = '0.5rem';
         btn.addEventListener('click', function () {
-            _requestTargetAdd(name);
+            _flagNewObject(name);
         });
         rtError.appendChild(span);
         rtError.appendChild(btn);
         rtError.style.display = 'block';
     }
 
-    function _requestTargetAdd(name) {
+    function _flagNewObject(name) {
         var reason = window.prompt(
-            'Why should "' + name + '" be added?\n'
+            'Why should "' + name + '" be added to the APERO '
+            + 'astrometric database?\n'
             + '(Optional notes for the moderator.)', '');
         if (reason === null) return;
+        var origin = window.location.pathname
+            + '?resolve=' + encodeURIComponent(name);
         fetch('/api/issues/create', {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
             body: JSON.stringify({
-                kind: 'target_request',
+                kind: 'astrometric',
+                type: 'new object',
+                title: 'New object request: ' + name,
                 reason: reason || ('Add target: ' + name),
                 apero_name: name,
+                origin_url: origin,
                 visibility: 'monitor'
             })
         }).then(function (r) { return r.json(); })
         .then(function (data) {
             if (data && data.success) {
-                window.alert('Target request #'
+                window.alert('New-object request #'
                     + data.issue.id + ' filed.');
             } else {
                 window.alert('Failed to file request: '

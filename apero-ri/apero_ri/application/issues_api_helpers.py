@@ -21,6 +21,7 @@ from flask import jsonify, request
 from apero_ri.core.auth import (
     get_accessible_profiles,
     get_public_permissions,
+    load_users,
 )
 from apero_ri.core.issues import (
     create_issue,
@@ -83,9 +84,16 @@ def api_issues_list(app):
     instrument = (request.args.get('instrument') or '').strip(
     ) or None
     kind = (request.args.get('kind') or '').strip() or None
+    type_ = (request.args.get('type') or '').strip() or None
+    created_by = (request.args.get('created_by') or '').strip(
+    ) or None
+    assigned_to = (request.args.get('assigned_to') or '').strip(
+    ) or None
     issues = list_issues(
         _data_dir(app), visibility=visibility,
-        status=status, instrument=instrument, kind=kind)
+        status=status, instrument=instrument, kind=kind,
+        type_=type_, created_by=created_by,
+        assigned_to=assigned_to)
     return jsonify(success=True, issues=issues,
                    visibility=visibility)
 
@@ -114,13 +122,20 @@ def api_issues_create(app):
                        error='Unauthorized'), 401
     body = request.get_json(silent=True) or {}
     kind = (body.get('kind') or '').strip()
-    if kind not in ('flag', 'target_request', 'other'):
+    if kind not in ('astrometric', 'flag', 'target_request',
+                    'ari', 'other'):
         return jsonify(success=False,
                        error="Invalid 'kind'"), 400
     reason = (body.get('reason') or '').strip()
     if not reason:
-        return jsonify(success=False,
-                       error="Missing 'reason'"), 400
+        # allow an empty reason if a title is given (e.g. simple
+        # "new object" requests where the title is self-explanatory)
+        title_str = (body.get('title') or '').strip()
+        if title_str:
+            reason = title_str
+        else:
+            return jsonify(success=False,
+                           error="Missing 'reason'"), 400
     visibility = (body.get('visibility')
                   or 'public').strip()
     if visibility not in ('public', 'monitor', 'admin'):
@@ -140,6 +155,9 @@ def api_issues_create(app):
         instrument=body.get('instrument'),
         profile_id=body.get('profile_id'),
         visibility=visibility,
+        title=body.get('title'),
+        type_=body.get('type'),
+        origin_url=body.get('origin_url'),
     )
     return jsonify(success=True, issue=issue)
 
@@ -172,14 +190,82 @@ def api_issues_update(app):
                        error="Invalid 'id'"), 400
     status = body.get('status')
     note = body.get('note')
-    if not status and not note:
+    assigned_to = body.get('assigned_to')
+    if (status is None and not note
+            and assigned_to is None):
         return jsonify(success=False,
                        error='Nothing to update'), 400
     issue = update_issue(
         _data_dir(app), issue_id,
         status=status, note=note,
-        author=user_info.get('username'))
+        author=user_info.get('username'),
+        assigned_to=assigned_to)
     if not issue:
         return jsonify(success=False,
                        error='Issue not found'), 404
     return jsonify(success=True, issue=issue)
+
+
+def api_issues_users(app):
+    """List users that an issue can be assigned to.
+
+    Returns the set of users whose resolved permissions grant
+    at least monitor-level visibility (i.e. anyone who can act on
+    issues). Optional ``?instrument=`` arg further restricts to
+    monitors of a specific instrument.
+    """
+    user_info = app._get_api_user()
+    if not user_info:
+        return jsonify(success=False,
+                       error='Login required'), 401
+    perms = resolve_user_permissions(
+        user_info['groups'], app.ari_groups)
+    pset = set(perms or ())
+    has_monitor = ('manage.astrometrics' in pset
+                   or any(_is_monitor_perm(p) for p in pset))
+    if not has_monitor:
+        return jsonify(success=False,
+                       error='Monitor access required'), 403
+    instrument = (request.args.get('instrument') or '').strip()
+    inst_upper = instrument.upper() if instrument else ''
+    out = []
+    for username, udata in load_users().items():
+        if not isinstance(udata, dict):
+            continue
+        groups = udata.get('groups') or []
+        try:
+            uperms = resolve_user_permissions(
+                groups, app.ari_groups)
+        except Exception:
+            continue
+        upset = set(uperms or ())
+        is_admin = 'manage.astrometrics' in upset
+        is_monitor = any(_is_monitor_perm(p) for p in upset)
+        if not (is_admin or is_monitor):
+            continue
+        if inst_upper:
+            # require either a global monitor perm or one
+            # scoped to this instrument
+            ok = is_admin
+            if not ok:
+                for p in upset:
+                    if not _is_monitor_perm(p):
+                        continue
+                    if '.' not in p:
+                        ok = True
+                        break
+                    suffix = p.rsplit('.', 1)[-1].upper()
+                    if suffix in ('MONITOR', 'MONITOR_PORTAL'):
+                        ok = True
+                        break
+                    if suffix == inst_upper:
+                        ok = True
+                        break
+            if not ok:
+                continue
+        out.append({
+            'username': username,
+            'level': 'admin' if is_admin else 'monitor',
+        })
+    out.sort(key=lambda u: u['username'].lower())
+    return jsonify(success=True, users=out)

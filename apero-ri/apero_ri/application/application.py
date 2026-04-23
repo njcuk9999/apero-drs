@@ -967,6 +967,10 @@ class ARIApp(Flask):
         from apero_ri.application import issues_api_helpers as ih
         return ih.api_issues_update(self)
 
+    def _api_issues_users(self):
+        from apero_ri.application import issues_api_helpers as ih
+        return ih.api_issues_users(self)
+
     def _monitor_issues_view(self):
         from apero_ri.application import monitor_view_helpers as mvh
         return mvh.monitor_issues_view(self)
