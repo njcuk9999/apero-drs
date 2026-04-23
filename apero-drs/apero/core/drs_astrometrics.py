@@ -102,11 +102,38 @@ META_STATUS = 'STATUS'                 # one of STATUS_VALUES
 META_KEYS = (META_FIRST_UPDATED, META_FIRST_AUTHOR,
              META_LAST_EDIT, META_LAST_AUTHOR, META_STATUS)
 # allowed values for META_STATUS
-STATUS_VALUES = ('checked', 'pending', 'error')
+# - 'verified' : monitor-verified, ready for production use
+# - 'pending'  : auto-resolved or hand-edited, awaits human verification
+# - 'rejected' : explicitly excluded from the astrometric database
+# - 'checked'  : legacy synonym of 'verified' (back-compat only)
+# - 'error'    : entry has known problems
+STATUS_VALUES = ('verified', 'pending', 'rejected',
+                 'checked', 'error')
+# canonical status names (used as on-disk subdirectory names too)
+STATUS_VERIFIED = 'verified'
+STATUS_PENDING = 'pending'
+STATUS_REJECTED = 'rejected'
+# subset that maps 1:1 to a sub-directory under ASTROM_SUBDIR
+STATUS_SUBDIRS = (STATUS_VERIFIED, STATUS_PENDING, STATUS_REJECTED)
+# legacy status -> canonical status (for back-compat status reads)
+STATUS_ALIASES: Dict[str, str] = {'checked': STATUS_VERIFIED}
 # default status assigned to a freshly-added or back-filled entry
-DEFAULT_STATUS = 'pending'
+DEFAULT_STATUS = STATUS_PENDING
 # default author used when no author is supplied (e.g. backfill, migration)
 DEFAULT_AUTHOR = 'njcuk9999'
+
+# ----------------------------------------------------------------------------
+# Required-field schema (used by validation + auto-issue creation).
+# An entry is "complete" iff all of REQUIRED_FIELDS_STAR are present
+# (non-null) OR PMRA/PMDE may be absent when ``NO_PM`` is True.
+# ----------------------------------------------------------------------------
+# top-level boolean key: when True, missing PMRA/PMDE is allowed
+NO_PM_KEY = 'NO_PM'
+# fields a stellar astrometric entry must define before being saved
+REQUIRED_FIELDS_STAR = ('APERO_NAME', 'RA', 'DEC',
+                        'PMRA', 'PMDE', 'PLX', 'TEFF')
+# subset whose absence may be excused by NO_PM=True
+REQUIRED_FIELDS_PM = ('PMRA', 'PMDE')
 # -----------------------------------------------------------------------------
 # Mapping of legacy SQL column names -> extractor callables that pull the
 # equivalent value out of a yaml entry dict. This lets old callers do e.g.
@@ -356,9 +383,9 @@ def _safe_filename(apero_name: str) -> str:
 # =============================================================================
 # TAP endpoints
 # Default TAP endpoints (used when no per-call URL is supplied; the
-# AstrometricDatabase class overrides these from params['SIMBAD_TAPURL'],
-# params['GAIA_URL'], params['VIZIER_TAPURL']; also stored as module
-# globals for direct use when not accessing via apero-drs).
+# AstrometricDatabase class overrides these from params - see
+# `SIMBAD_TAPURL`, `GAIA_URL`, `VIZIER_TAPURL` constants in
+# apero/instruments/default/constants.py).
 SIMBAD_TAP = 'https://simbad.cds.unistra.fr/simbad/sim-tap/sync'
 GAIA_TAP = 'https://gea.esac.esa.int/tap-server/tap/sync'
 VIZIER_TAP = 'https://tapvizier.cds.unistra.fr/TAPVizieR/tap/sync'
@@ -1831,7 +1858,7 @@ class AstrometricDatabase:
         # store the recipe shortname for log messages
         self.shortname = shortname or 'None'
         # base assets path from params (may not exist on disk yet)
-        assets_root = str(params['PATH.ASSETS'])
+        assets_root = str(params['DRS_DATA_ASSETS'])
         # absolute path to the astrometrics directory
         self.path = os.path.abspath(os.path.join(assets_root, ASTROM_SUBDIR))
         # absolute path to the lock directory
@@ -2672,6 +2699,80 @@ def iter_yaml_files(astrom_dir: str) -> List[str]:
             continue
         out.append(os.path.abspath(os.path.join(astrom_dir, fn)))
     return out
+
+
+def astrom_status_dir(astrom_root: str, status: str) -> str:
+    """Return ``<astrom_root>/<status>/`` for one of STATUS_SUBDIRS.
+
+    The result is *always* returned (no existence check); callers are
+    expected to ``os.makedirs(..., exist_ok=True)`` if they need it.
+
+    :param astrom_root: str, the top-level astrometrics directory (the
+                        parent of ``verified``/``pending``/``rejected``)
+    :param status: str, one of STATUS_SUBDIRS (or a STATUS_ALIASES key)
+    :return: absolute path of the status sub-directory
+    """
+    canonical = STATUS_ALIASES.get(status, status)
+    if canonical not in STATUS_SUBDIRS:
+        emsg = ('Unknown astrometric status {0!r}; '
+                'expected one of {1}')
+        raise ValueError(emsg.format(status, STATUS_SUBDIRS))
+    return os.path.abspath(os.path.join(astrom_root, canonical))
+
+
+def find_yaml_in_status_dirs(
+        astrom_root: str, apero_name: str,
+) -> Optional[Tuple[str, str]]:
+    """Locate the on-disk yaml for ``apero_name`` across status sub-dirs.
+
+    Searches verified, pending, then rejected. Falls back to the
+    legacy flat layout (``<astrom_root>/<APERO_NAME>.yaml``) so old
+    archives keep working.
+
+    :param astrom_root: str, the top-level astrometrics directory
+    :param apero_name: str, the APERO_NAME of the entry
+    :return: ``(yaml_path, status)`` tuple if found, else None
+    """
+    fname = _safe_filename(str(apero_name))
+    for status in STATUS_SUBDIRS:
+        path = os.path.join(astrom_root, status, fname)
+        if os.path.isfile(path):
+            return os.path.abspath(path), status
+    # legacy flat-layout fallback
+    legacy = os.path.join(astrom_root, fname)
+    if os.path.isfile(legacy):
+        return os.path.abspath(legacy), STATUS_VERIFIED
+    return None
+
+
+def validate_required_fields(
+        entry: Dict[str, Any],
+        required: Tuple[str, ...] = REQUIRED_FIELDS_STAR,
+) -> List[str]:
+    """Return the list of REQUIRED fields missing/null on ``entry``.
+
+    PMRA/PMDE are not flagged as missing when ``entry[NO_PM_KEY]`` is
+    truthy (the explicit "no proper-motion known" escape hatch).
+
+    :param entry: dict, the yaml entry to validate
+    :param required: tuple of required field names; defaults to
+                     :data:`REQUIRED_FIELDS_STAR`
+    :return: list of missing field names (empty if entry is complete)
+    """
+    if not isinstance(entry, dict):
+        return list(required)
+    no_pm = bool(entry.get(NO_PM_KEY))
+    missing: List[str] = []
+    for key in required:
+        if no_pm and key in REQUIRED_FIELDS_PM:
+            continue
+        if key in (APERO_NAME_KEY, 'EPOCH'):
+            value = entry.get(key)
+        else:
+            value = _nested_value(entry, key)
+        if _is_null(value):
+            missing.append(key)
+    return missing
 
 
 def load_all_entries(
