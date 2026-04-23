@@ -26,6 +26,7 @@ import rules:
 """
 import os
 import json
+import re
 import string
 import tempfile
 import time
@@ -1378,6 +1379,100 @@ def _fetch_wise_by_designation(designation: str,
     return tuple(row)
 
 
+# regex matching Gaia DR2/EDR3/DR3 source-id names
+_GAIA_NAME_RE = re.compile(
+    r'^\s*Gaia\s+(DR2|EDR3|DR3)\s+(\d+)\s*$', re.IGNORECASE)
+
+
+def _parse_gaia_name(name: str
+                     ) -> Optional[Tuple[str, str]]:
+    """Return ``(release, source_id)`` if ``name`` parses as a Gaia
+    designation, else ``None``."""
+    if not name:
+        return None
+    m = _GAIA_NAME_RE.match(name)
+    if not m:
+        return None
+    rel = m.group(1).lower()
+    return rel, m.group(2)
+
+
+def _resolve_from_gaia_name(name: str,
+                            vizier_url: Optional[str] = None
+                            ) -> Optional[Dict[str, Any]]:
+    """SIMBAD-fail fallback: resolve a ``Gaia DRx <id>`` name directly
+    via VizieR.
+
+    Returns a dict with the same shape as :func:`_resolve_from_name`
+    (subset of keys; many will be ``None``). Used when SIMBAD knows
+    nothing about ``name`` but the user supplied a Gaia source id.
+
+    :param name: str, candidate name (e.g. ``"Gaia DR3 1234567890"``)
+    :param vizier_url: optional override for the VizieR TAP endpoint
+    :return: normalised result dict, or ``None`` if not a Gaia name or
+             not found.
+    """
+    parsed = _parse_gaia_name(name)
+    if parsed is None:
+        return None
+    release, source_id = parsed
+    table_map = {'dr3': '"I/355/gaiadr3"',
+                 'edr3': '"I/350/gaiaedr3"',
+                 'dr2': '"I/345/gaia2"'}
+    table = table_map.get(release, '"I/355/gaiadr3"')
+    if release == 'dr2':
+        adql = (
+            'SELECT TOP 1 RA_ICRS, DE_ICRS, Plx, pmRA, pmDE, RV, '
+            'BPmag, RPmag, e_BPmag, e_RPmag '
+            'FROM {0} WHERE Source = {1}'
+        ).format(table, source_id)
+    else:
+        adql = (
+            'SELECT TOP 1 RA_ICRS, DE_ICRS, Plx, pmRA, pmDE, RVDR2, '
+            'BPmag, RPmag, e_BPmag, e_RPmag '
+            'FROM {0} WHERE Source = {1}'
+        ).format(table, source_id)
+    payload = _vizier_json(adql, url=vizier_url)
+    if payload is None:
+        return None
+    rows = payload.get('data', [])
+    if not rows:
+        return None
+    row = rows[0]
+    if len(row) < 5:
+        return None
+    # build a minimal result dict matching _resolve_from_name's schema
+    result: Dict[str, Any] = {
+        'simbad_main_id': 'Gaia {0} {1}'.format(release.upper(),
+                                                source_id),
+        'ra_deg': _nv(row[0]),
+        'dec_deg': _nv(row[1]),
+        'parallax_mas': _nv(row[2]) if len(row) > 2 else None,
+        'pmra_masyr': _nv(row[3]) if len(row) > 3 else None,
+        'pmdec_masyr': _nv(row[4]) if len(row) > 4 else None,
+        'rv_kms': _nv(row[5]) if len(row) > 5 else None,
+        'sp_type': None,
+        'otype_txt': None,
+        'G_mag': None, 'J_mag': None, 'H_mag': None, 'K_mag': None,
+        'GBP_mag': _nv(row[6]) if len(row) > 6 else None,
+        'GRP_mag': _nv(row[7]) if len(row) > 7 else None,
+        'GBP_err': _nv(row[8]) if len(row) > 8 else None,
+        'GRP_err': _nv(row[9]) if len(row) > 9 else None,
+        'W1_mag': None, 'W1_err': None,
+        'W2_mag': None, 'W2_err': None,
+        'W3_mag': None, 'W3_err': None,
+        'W4_mag': None, 'W4_err': None,
+        'gaia_source_id': source_id,
+        'gaia_teff_gspphot': None, 'gaia_logg_gspphot': None,
+        'gaia_mh_gspphot': None,
+        'gaia_radius_flame': None, 'gaia_lum_flame': None,
+        'gaia_mass_flame': None,
+        'teff_simbad': None,
+        'aliases': [],
+    }
+    return result
+
+
 # -----------------------------------------------------------------------------
 # Top-level resolver
 # -----------------------------------------------------------------------------
@@ -1413,10 +1508,12 @@ def _resolve_from_name(name: str,
     ).format(safe)
     payload = _simbad_json(adql, url=simbad_url)
     if payload is None:
-        return None
+        # SIMBAD unreachable: try Gaia by-name as a last resort
+        return _resolve_from_gaia_name(name, vizier_url=vizier_url)
     rows = payload.get('data', [])
     if not rows:
-        return None
+        # SIMBAD returned no match: try Gaia by-name as a last resort
+        return _resolve_from_gaia_name(name, vizier_url=vizier_url)
     row = rows[0]
     keys = ['simbad_main_id', 'ra_deg', 'dec_deg', 'parallax_mas',
             'pmra_masyr', 'pmdec_masyr', 'rv_kms',
@@ -2371,7 +2468,9 @@ class AstrometricDatabase:
     # -------------------------------------------------------------------------
     def add_entry(self, entry: Dict[str, Any],
                   overwrite: bool = True,
-                  merge: bool = True) -> str:
+                  merge: bool = True,
+                  skip_validation: bool = False,
+                  allow_rejected: bool = False) -> str:
         """
         Add (or update) a single entry in the catalogue.
 
@@ -2386,6 +2485,13 @@ class AstrometricDatabase:
         :param merge: bool, if True merge with the existing on-disk entry
                       (new keys replace old keys); if False replace the
                       entry wholesale.
+        :param skip_validation: bool, if True bypass the
+                               :data:`REQUIRED_FIELDS_STAR` check
+                               (used by migration / back-fill scripts).
+        :param allow_rejected: bool, if True allow writing even when the
+                              same APERO_NAME appears in the
+                              ``rejected/`` sub-directory (default: refuse
+                              and raise).
 
         :return: str, the absolute path of the yaml file that was written
         """
@@ -2400,6 +2506,19 @@ class AstrometricDatabase:
             emsg = 'add_entry() entry missing required key "{0}"'
             raise AperoCodedException(
                 None, message=emsg.format(APERO_NAME_KEY))
+        # refuse to write objects that exist in the rejected/ sub-dir
+        # (unless explicitly allowed by the caller)
+        if not allow_rejected:
+            astrom_root = os.path.dirname(os.path.abspath(self.path))
+            existing = find_yaml_in_status_dirs(astrom_root,
+                                                str(apero_name))
+            if existing is not None and existing[1] == STATUS_REJECTED:
+                emsg = ('Astrometric entry "{0}" is on the reject list '
+                        '({1}); refusing to add. Pass '
+                        'allow_rejected=True to override.')
+                raise AperoCodedException(
+                    None,
+                    message=emsg.format(apero_name, existing[0]))
         # build the on-disk file path
         fname = _safe_filename(str(apero_name))
         fpath = os.path.join(self.path, fname)
@@ -2432,6 +2551,20 @@ class AstrometricDatabase:
                 final['NOTES'] = ('Added on {0} by drs_astrometrics '
                                   '(shortname={1})').format(
                     Time.now().iso, self.shortname)
+            # enforce required-fields contract before writing (unless
+            # the caller is intentionally back-filling / migrating)
+            if not skip_validation:
+                missing = validate_required_fields(final)
+                if missing:
+                    emsg = ('Astrometric entry "{0}" is missing required '
+                            'field(s): {1}. Set them on the entry, or '
+                            'set NO_PM=True if no proper motion is '
+                            'known, or pass skip_validation=True to '
+                            'bypass.')
+                    raise AperoCodedException(
+                        None,
+                        message=emsg.format(apero_name,
+                                            ', '.join(missing)))
             # populate / refresh provenance metadata
             _stamp_metadata(final, author=DEFAULT_AUTHOR)
             # do the atomic write
@@ -2446,7 +2579,9 @@ class AstrometricDatabase:
 
     def add_entries(self, entries: List[Dict[str, Any]],
                     overwrite: bool = True,
-                    merge: bool = True) -> List[str]:
+                    merge: bool = True,
+                    skip_validation: bool = False,
+                    allow_rejected: bool = False) -> List[str]:
         """
         Add (or update) a list of entries in the catalogue.
 
@@ -2457,6 +2592,8 @@ class AstrometricDatabase:
         :param entries: list of dicts, the new/updated entries.
         :param overwrite: bool, see :meth:`add_entry`
         :param merge: bool, see :meth:`add_entry`
+        :param skip_validation: bool, see :meth:`add_entry`
+        :param allow_rejected: bool, see :meth:`add_entry`
 
         :return: list of str, the absolute paths of the yaml files written.
         """
@@ -2468,8 +2605,10 @@ class AstrometricDatabase:
         # write each entry in turn and collect the resulting paths
         out_paths: List[str] = []
         for entry in entries:
-            out_paths.append(self.add_entry(entry, overwrite=overwrite,
-                                            merge=merge))
+            out_paths.append(self.add_entry(
+                entry, overwrite=overwrite, merge=merge,
+                skip_validation=skip_validation,
+                allow_rejected=allow_rejected))
         return out_paths
 
     # -------------------------------------------------------------------------
@@ -2584,7 +2723,8 @@ class AstrometricDatabase:
             if already:
                 # just refresh derived fields and write back
                 _derive_fields(entry)
-                self.add_entry(entry, overwrite=True, merge=False)
+                self.add_entry(entry, overwrite=True, merge=False,
+                               skip_validation=True)
                 skipped += 1
                 continue
             # pick the best name to send to SIMBAD
@@ -2620,11 +2760,13 @@ class AstrometricDatabase:
             # merge or fail
             if simbad is None:
                 _derive_fields(entry)
-                self.add_entry(entry, overwrite=True, merge=False)
+                self.add_entry(entry, overwrite=True, merge=False,
+                               skip_validation=True)
                 failed += 1
             else:
                 _update_yaml_from_simbad(entry, simbad)
-                self.add_entry(entry, overwrite=True, merge=False)
+                self.add_entry(entry, overwrite=True, merge=False,
+                               skip_validation=True)
                 resolved += 1
             # rate-limit between TAP queries
             if delay_s > 0 and idx + 1 < len(names):
