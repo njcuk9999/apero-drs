@@ -1182,67 +1182,6 @@ class Instrument:
         self.logdb_cols = log_columns
         return log_columns
 
-    def ASTROMETRIC_DB_COLUMNS(self) -> DatabaseColumns:
-        """
-        Define the columns use in the object database
-        :return: list of columns (strings)
-        """
-        # set function name
-        # _ = display_func('ASTROMETRIC_DB_COLUMNS', __NAME__,
-        #                  self.class_name)
-        # check for pre-existing values
-        if self.objdb_cols is not None:
-            return self.objdb_cols
-        # set columns
-        obj_columns = DatabaseColumns()
-        obj_columns.add(name='OBJNAME', datatype=sqlalchemy.String(80),
-                        is_index=True, is_unique=True)
-        obj_columns.add(name='ORIGINAL_NAME', datatype=sqlalchemy.String(80))
-        obj_columns.add(name='ALIASES', datatype=sqlalchemy.Text)
-        obj_columns.add(name='RA_DEG', datatype=LONG_FLOAT)
-        obj_columns.add(name='RA_SOURCE', datatype=sqlalchemy.String(80))
-        obj_columns.add(name='DEC_DEG', datatype=LONG_FLOAT)
-        obj_columns.add(name='DEC_SOURCE', datatype=sqlalchemy.String(80))
-        obj_columns.add(name='EPOCH', datatype=LONG_FLOAT)
-        obj_columns.add(name='PMRA', datatype=LONG_FLOAT)
-        obj_columns.add(name='PMRA_SOURCE', datatype=sqlalchemy.String(80))
-        obj_columns.add(name='PMDE', datatype=LONG_FLOAT)
-        obj_columns.add(name='PMDE_SOURCE', datatype=sqlalchemy.String(80))
-        obj_columns.add(name='PLX', datatype=LONG_FLOAT)
-        obj_columns.add(name='PLX_SOURCE', datatype=sqlalchemy.String(80))
-        obj_columns.add(name='RV', datatype=LONG_FLOAT)
-        obj_columns.add(name='RV_SOURCE', datatype=sqlalchemy.String(80))
-        obj_columns.add(name='TEFF', datatype=SHORT_FLOAT)
-        obj_columns.add(name='TEFF_SOURCE', datatype=sqlalchemy.String(80))
-        obj_columns.add(name='SP_TYPE', datatype=sqlalchemy.String(80))
-        obj_columns.add(name='SP_SOURCE', datatype=sqlalchemy.String(80))
-        obj_columns.add(name='VSINI', datatype=LONG_FLOAT)
-        obj_columns.add(name='VSINI_ERR', datatype=LONG_FLOAT)
-        obj_columns.add(name='VSINI_SOURCE', datatype=sqlalchemy.String(80))
-        obj_columns.add(name='UMAG', datatype=LONG_FLOAT)
-        obj_columns.add(name='UMAG_SOURCE', datatype=sqlalchemy.String(80))
-        obj_columns.add(name='GMAG', datatype=LONG_FLOAT)
-        obj_columns.add(name='GMAG_SOURCE', datatype=sqlalchemy.String(80))
-        obj_columns.add(name='RMAG', datatype=LONG_FLOAT)
-        obj_columns.add(name='RMAG_SOURCE', datatype=sqlalchemy.String(80))
-        obj_columns.add(name='IMAG', datatype=LONG_FLOAT)
-        obj_columns.add(name='IMAG_SOURCE', datatype=sqlalchemy.String(80))
-        obj_columns.add(name='ZMAG', datatype=LONG_FLOAT)
-        obj_columns.add(name='ZMAG_SOURCE', datatype=sqlalchemy.String(80))
-        obj_columns.add(name='JMAG', datatype=LONG_FLOAT)
-        obj_columns.add(name='JMAG_SOURCE', datatype=sqlalchemy.String(80))
-        obj_columns.add(name='HMAG', datatype=LONG_FLOAT)
-        obj_columns.add(name='HMAG_SOURCE', datatype=sqlalchemy.String(80))
-        obj_columns.add(name='KMAG', datatype=LONG_FLOAT)
-        obj_columns.add(name='KMAG_SOURCE', datatype=sqlalchemy.String(80))
-        obj_columns.add(name='NOTES', datatype=sqlalchemy.Text)
-        obj_columns.add(name='USED', datatype=sqlalchemy.Integer)
-        obj_columns.add(name='KEYWORDS', datatype=sqlalchemy.Text)
-        obj_columns.add(name='DATE_ADDED', datatype=sqlalchemy.String(30))
-        # return columns and ctypes
-        self.objdb_cols = obj_columns
-        return obj_columns
-
     def GET_EPOCH(self, params, header):
         """
         Get the EPOCH in JD from a input header file (instrument specific)

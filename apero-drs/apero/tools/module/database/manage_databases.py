@@ -538,28 +538,16 @@ def object_db_populated(params: ParamDict, shortname: str) -> bool:
     return count > 0
 
 
-def update_object_database(params: ParamDict, log: bool = True):
-    """
-    Validate the yaml-backed astrometric archive.
-
-    :param params: ParamDict, the parameter dictionary of constants
-    :param log: bool, if True logs update
-
-    :return: None
-    """
-    # Compatibility shim: object database is yaml-backed and no longer synced
-    # from sheets here. We only validate archive readability.
-    validate_astrometric_yaml_archive(params, shortname='MAN_DB', log=log)
-
-
 def validate_astrometric_yaml_archive(params: ParamDict,
                                       shortname: str = 'MAN_DB',
                                       log: bool = True) -> Dict[str, int]:
     """
     Validate readability of yaml-backed astrometric entries on disk.
 
-    This assumes ``apero-assets/astrometrics`` already exists and is the
-    source of truth.
+    Before validating yaml readability we synchronise the local assets from
+    the packaged defaults (and remote tar, if needed), mirroring the
+    ``reset_assets`` logic for the ``astrometrics`` directory but without
+    deleting the existing directory content first.
 
     :param params: ParamDict, the parameter dictionary of constants
     :param shortname: str, recipe shortname used for manager construction
@@ -567,6 +555,25 @@ def validate_astrometric_yaml_archive(params: ParamDict,
 
     :return: dict with ``total``, ``valid`` and ``invalid`` counts
     """
+    # keep setup imports local to avoid circular imports at module load time
+    from apero.tools.module.setup import drs_assets
+    from apero.tools.module.setup import drs_reset
+    from apero.utils import drs_data
+    # ---------------------------------------------------------------------
+    # ensure local assets are current before validating yaml files
+    update_assets = drs_assets.check_local_assets(params)
+    if update_assets:
+        drs_assets.update_local_assets(params)
+    # copy default astrometric yaml files back into PATH.ASSETS/astrometrics
+    # without emptying first (non-destructive reset behavior)
+    reset_name = 'astrometric assets'
+    asset_path = os.path.join(params['PATH.ASSETS'], 'astrometrics')
+    reset_relpath = os.path.join(params['IPATH.RESET_ASSETS'], 'astrometrics')
+    reset_abspath = drs_data.construct_path(params, '', str(reset_relpath))
+    drs_reset.reset_dbdir(params, reset_name, asset_path, reset_abspath,
+                          log=log, empty_first=False,
+                          relative_path='astrometrics')
+    # ---------------------------------------------------------------------
     # build manager and ensure path exists
     objdbm = drs_astrometrics.AstrometricDatabase(params, shortname)
     objdbm._ensure_loaded()

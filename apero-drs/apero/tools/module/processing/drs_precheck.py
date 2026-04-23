@@ -733,7 +733,7 @@ def obj_check(params: ParamDict, recipe: DrsRecipe,
         if log:
             WLOG(params, '', textentry('40-503-00039'))
         # update database
-        manage_databases.update_object_database(params, log=False)
+        manage_databases.validate_astrometric_yaml_archive(params, log=False)
     # ---------------------------------------------------------------------
     # load the object database after updating
     objdbm = ObjectDatabase(params, recipe.shortname)

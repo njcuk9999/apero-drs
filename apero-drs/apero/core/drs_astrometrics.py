@@ -356,9 +356,9 @@ def _safe_filename(apero_name: str) -> str:
 # =============================================================================
 # TAP endpoints
 # Default TAP endpoints (used when no per-call URL is supplied; the
-# AstrometricDatabase class overrides these from params - see
-# `SIMBAD_TAPURL`, `GAIA_URL`, `VIZIER_TAPURL` constants in
-# apero/instruments/default/constants.py).
+# AstrometricDatabase class overrides these from params['SIMBAD_TAPURL'],
+# params['GAIA_URL'], params['VIZIER_TAPURL']; also stored as module
+# globals for direct use when not accessing via apero-drs).
 SIMBAD_TAP = 'https://simbad.cds.unistra.fr/simbad/sim-tap/sync'
 GAIA_TAP = 'https://gea.esac.esa.int/tap-server/tap/sync'
 VIZIER_TAP = 'https://tapvizier.cds.unistra.fr/TAPVizieR/tap/sync'

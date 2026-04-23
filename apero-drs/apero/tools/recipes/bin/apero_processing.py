@@ -126,7 +126,7 @@ def __main__(recipe, params):
                                                            recipe.shortname)
         # update the database if required
         if params['UPDATE_OBJ_DATABASE'] or not has_entries:
-            manage_databases.update_object_database(params)
+            manage_databases.validate_astrometric_yaml_archive(params)
         # load the object database
         objdbm = AstrometricDatabase(params, recipe.shortname)
         objdbm.load_db()
