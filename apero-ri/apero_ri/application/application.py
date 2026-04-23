@@ -935,6 +935,42 @@ class ARIApp(Flask):
             self
         )
 
+    def _api_astrometrics_sed(self):
+        return astrometrics_api_helpers.api_astrometrics_sed(self)
+
+    def _api_astrometrics_hr(self):
+        return astrometrics_api_helpers.api_astrometrics_hr(self)
+
+    def _api_astrometrics_resolve_online_by_name(self):
+        return (
+            astrometrics_api_helpers
+            .api_astrometrics_resolve_online_by_name(self))
+
+    def _api_astrometrics_resolve_online_by_coords(self):
+        return (
+            astrometrics_api_helpers
+            .api_astrometrics_resolve_online_by_coords(self))
+
+    # -----------------------------------------------------------------
+    # Issues subsystem
+    # -----------------------------------------------------------------
+
+    def _api_issues_list(self):
+        from apero_ri.application import issues_api_helpers as ih
+        return ih.api_issues_list(self)
+
+    def _api_issues_create(self):
+        from apero_ri.application import issues_api_helpers as ih
+        return ih.api_issues_create(self)
+
+    def _api_issues_update(self):
+        from apero_ri.application import issues_api_helpers as ih
+        return ih.api_issues_update(self)
+
+    def _monitor_issues_view(self):
+        from apero_ri.application import monitor_view_helpers as mvh
+        return mvh.monitor_issues_view(self)
+
     def _ri_obs_table_view(self, profile_id):
         kwargs = dict(profile_id=profile_id)
         return data_portal_view_helpers.ri_obs_table_view(self, **kwargs)

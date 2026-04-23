@@ -1029,6 +1029,48 @@ def register_data_portal_routes(app):
         methods=["POST"],
     )
     app.add_url_rule(
+        "/api/astrometrics/sed",
+        "api_astrometrics_sed",
+        app._api_astrometrics_sed,
+    )
+    app.add_url_rule(
+        "/api/astrometrics/hr-diagram",
+        "api_astrometrics_hr",
+        app._api_astrometrics_hr,
+    )
+    app.add_url_rule(
+        "/api/astrometrics/resolve-online-by-name",
+        "api_astrometrics_resolve_online_by_name",
+        app._api_astrometrics_resolve_online_by_name,
+    )
+    app.add_url_rule(
+        "/api/astrometrics/resolve-online-by-coords",
+        "api_astrometrics_resolve_online_by_coords",
+        app._api_astrometrics_resolve_online_by_coords,
+    )
+    app.add_url_rule(
+        "/api/issues/list",
+        "api_issues_list",
+        app._api_issues_list,
+    )
+    app.add_url_rule(
+        "/api/issues/create",
+        "api_issues_create",
+        app._api_issues_create,
+        methods=["POST"],
+    )
+    app.add_url_rule(
+        "/api/issues/update",
+        "api_issues_update",
+        app._api_issues_update,
+        methods=["POST"],
+    )
+    app.add_url_rule(
+        "/monitor_portal/issues",
+        "monitor_issues_view",
+        app._monitor_issues_view,
+    )
+    app.add_url_rule(
         "/data_portal/<profile_id>/observation-table",
         "ri_observation_table",
         app._ri_obs_table_view,

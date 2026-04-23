@@ -232,6 +232,38 @@ def generate_finder_charts(
     objname = objdict['OBJNAME']
     # find the Gaia source closest to our target
     closest = int(np.argmin(gaia_sources['separation']))
+    # seed primary-target magnitudes from the source yaml/table
+    # when the catalogue cross-match returned NaN (e.g. when
+    # the 2MASS query timed out).  Falls back gracefully to the
+    # catalogue value when present.
+    def _pick_mag(cat_arr, key):
+        cat_v = cat_arr[closest] if len(cat_arr) else float('nan')
+        if isinstance(cat_v, float) and not np.isnan(cat_v):
+            return cat_v
+        seed_v = obj_props.get(key)
+        try:
+            seed_f = float(seed_v) if seed_v is not None else None
+        except (ValueError, TypeError):
+            seed_f = None
+        if seed_f is not None and np.isfinite(seed_f):
+            cat_arr[closest] = seed_f
+            return seed_f
+        return cat_v
+
+    gmag_show = _pick_mag(gaia_sources['G'], 'G_MAG')
+    jmag_show = _pick_mag(gaia_sources['J'], 'J_MAG')
+    _pick_mag(gaia_sources['H'], 'H_MAG')
+    _pick_mag(gaia_sources['K'], 'KS_MAG')
+
+    def _fmt_mag(v):
+        try:
+            f = float(v)
+            if np.isnan(f):
+                return 'n/a'
+            return f'{f:.2f}'
+        except (ValueError, TypeError):
+            return 'n/a'
+
     # build the super-title used on each panel
     suptitle = (
         f'Object: {objname}\n'
@@ -239,8 +271,8 @@ def generate_finder_charts(
         f'RA: {obs_coords.ra.to_string(uu.hourangle, sep=":")}'
         f'   Dec: '
         f'{obs_coords.dec.to_string(uu.deg, sep=":")}\n'
-        f'Gmag: {gaia_sources["G"][closest]:.2f}   '
-        f'Jmag: {gaia_sources["J"][closest]:.2f}'
+        f'Gmag: {_fmt_mag(gmag_show)}   '
+        f'Jmag: {_fmt_mag(jmag_show)}'
     )
     for band in bands:
         tb = _time.monotonic()

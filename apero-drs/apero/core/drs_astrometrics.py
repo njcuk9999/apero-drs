@@ -2714,8 +2714,28 @@ _NAME_INDEX_FILE = '.name_index.json'
 # invalidated automatically (current: variant-based fuzzy index).
 _NAME_INDEX_VERSION = 2
 
+# Optional override: when the environment variable
+# ``APERO_ASTROMETRICS_INDEX_DIR`` is set, the persisted
+# cleaned-name index is written there (one JSON per astrom_dir,
+# named by sha1 of the directory path) rather than inside the
+# astrometrics yaml directory itself. This keeps the yaml
+# directory pristine for upload/distribution. APERO RI sets this
+# at startup so the default ``apero-assets/astrometrics`` folder
+# stays clean.
+_NAME_INDEX_DIR_ENV = 'APERO_ASTROMETRICS_INDEX_DIR'
+
 
 def _name_index_path(astrom_dir: str) -> str:
+    override = os.environ.get(_NAME_INDEX_DIR_ENV)
+    if override:
+        try:
+            os.makedirs(override, exist_ok=True)
+        except OSError:
+            return os.path.join(astrom_dir, _NAME_INDEX_FILE)
+        import hashlib
+        digest = hashlib.sha1(
+            os.path.abspath(astrom_dir).encode('utf-8')).hexdigest()
+        return os.path.join(override, 'name_index_{0}.json'.format(digest))
     return os.path.join(astrom_dir, _NAME_INDEX_FILE)
 
 

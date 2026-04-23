@@ -118,6 +118,15 @@ class PlotClass:
           ``<div>`` (set in
           ``apero_ri/templates/data_portal/object_page.html``).
 
+    yflip : bool
+        If ``True`` the y-axis is flipped (smallest value at the top,
+        largest at the bottom).  Currently used by the HR diagram so
+        that brighter (smaller absolute magnitude) stars sit at the
+        top.  Builders consult this flag via
+        ``OBJ_PLOTS[<key>].yflip`` and apply
+        ``fig.y_range.flipped = True`` immediately after constructing
+        the Bokeh figure.
+
     full_screen : bool
         ``True`` if a maximise / full-screen button should be rendered
         for this plot.  The button links to the route defined as
@@ -151,6 +160,9 @@ class PlotClass:
         # Suppression is enforced via data-op-nozoom="1" on the wrapper
         # <div> in object_page.html + ensureYAxisControl in object_page.js.
         self.yaxiszoom: List = [3, 5, 10, "full"]
+        # Flip the y-axis (smaller value at top).  Builders should
+        # apply fig.y_range.flipped = True early when this is set.
+        self.yflip: bool = False
         self.full_screen: bool = False
         # "auto"     – loaded automatically on tab open
         # "generate" – user must click a generate button
@@ -284,8 +296,43 @@ _lbl.full_screen = True
 _lbl.load = "auto"
 _lbl.section = "lbl"
 
+# SED plot ----------------------------------------------------------------
+_sed = PlotClass()
+_sed.title = "Spectral Energy Distribution"
+_sed.description = (
+    "SED built from Gaia BP/G/RP, 2MASS J/H/Ks and AllWISE "
+    "W1/W2/W3 photometry stored in the astrometric YAML entry."
+    " A blackbody curve at the catalogued Teff is overlaid for"
+    " context."
+)
+_sed.plot_key = "sed"
+_sed.div_id = "op-sed-plot-div"
+# log-log axes - sigma-clipped y-zoom would be misleading.
+_sed.yaxiszoom = []
+_sed.full_screen = True
+_sed.load = "auto"
+_sed.section = "target_info"
+
+# HR diagram plot ---------------------------------------------------------
+_hr = PlotClass()
+_hr.title = "HR Diagram"
+_hr.description = (
+    "Hertzsprung-Russell diagram (Teff vs absolute Gaia G mag)"
+    " with the local 20-pc Gaia neighborhood as a faint backdrop"
+    " and the Pecaut & Mamajek MS reference."
+)
+_hr.plot_key = "hr"
+_hr.div_id = "op-hr-plot-div"
+_hr.yaxiszoom = []
+_hr.yflip = True
+_hr.full_screen = True
+_hr.load = "auto"
+_hr.section = "target_info"
+
 # Public object-plot registry (insertion-ordered)
 OBJ_PLOTS: Dict[str, PlotClass] = {
+    "sed": _sed,
+    "hr": _hr,
     "snr": _snr,
     "berv": _berv,
     "spec": _spec,

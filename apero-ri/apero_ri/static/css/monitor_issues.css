@@ -1,0 +1,454 @@
+/* =========================================================================
+   APERO RI - Monitor Portal: Issues page
+   GitHub-style cards/tables, full-bleed layout.
+   ========================================================================= */
+
+/* Let the issues page span the whole content area instead of being
+   capped at the global 1200px. */
+body.ari-issues-page .ari-main {
+    max-width: none;
+    padding: 1.25rem 1.5rem 2rem;
+}
+
+/* Header strip ---------------------------------------------------------- */
+.mi-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    flex-wrap: wrap;
+    margin-bottom: 1rem;
+}
+
+.mi-header__title {
+    margin: 0;
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: var(--ari-text);
+    display: flex;
+    align-items: center;
+    gap: 0.55rem;
+}
+
+.mi-header__title i {
+    color: var(--ari-primary);
+}
+
+.mi-header__sub {
+    margin: 0.15rem 0 0;
+    color: var(--ari-text-muted);
+    font-size: 0.92rem;
+}
+
+.mi-header__visibility {
+    font-size: 0.78rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    background: var(--ari-primary);
+    color: #fff;
+    padding: 0.2rem 0.55rem;
+    border-radius: 999px;
+    font-weight: 600;
+}
+
+/* Toolbar (filters) ----------------------------------------------------- */
+.mi-toolbar {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    flex-wrap: wrap;
+    background: var(--ari-card-bg);
+    border: 1px solid var(--ari-border);
+    border-radius: var(--ari-border-radius);
+    padding: 0.65rem 0.85rem;
+    margin-bottom: 1rem;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+}
+
+.mi-toolbar__group {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    flex-wrap: wrap;
+}
+
+.mi-toolbar__label {
+    font-size: 0.78rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--ari-text-muted);
+    font-weight: 600;
+}
+
+.mi-toolbar__spacer {
+    flex: 1 1 auto;
+}
+
+.mi-input,
+.mi-select {
+    appearance: none;
+    -webkit-appearance: none;
+    background: #fff;
+    border: 1px solid var(--ari-border);
+    border-radius: 6px;
+    padding: 0.4rem 0.7rem;
+    font-size: 0.9rem;
+    color: var(--ari-text);
+    line-height: 1.2;
+    min-width: 8rem;
+    transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.mi-input:focus,
+.mi-select:focus {
+    outline: none;
+    border-color: var(--ari-primary);
+    box-shadow: 0 0 0 3px rgba(51, 102, 153, 0.18);
+}
+
+.mi-select {
+    background-image:
+        linear-gradient(45deg, transparent 50%, var(--ari-text-muted) 50%),
+        linear-gradient(135deg, var(--ari-text-muted) 50%, transparent 50%);
+    background-position:
+        calc(100% - 14px) 50%,
+        calc(100% - 9px) 50%;
+    background-size: 5px 5px, 5px 5px;
+    background-repeat: no-repeat;
+    padding-right: 1.6rem;
+}
+
+.mi-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    background: #fff;
+    border: 1px solid var(--ari-border);
+    border-radius: 6px;
+    padding: 0.4rem 0.75rem;
+    font-size: 0.88rem;
+    font-weight: 500;
+    color: var(--ari-text);
+    cursor: pointer;
+    transition: background 0.12s, border-color 0.12s, color 0.12s;
+    line-height: 1.2;
+}
+
+.mi-btn:hover {
+    background: #f3f5f8;
+    border-color: #c4cad1;
+}
+
+.mi-btn--primary {
+    background: var(--ari-primary);
+    border-color: var(--ari-primary-dark);
+    color: #fff;
+}
+
+.mi-btn--primary:hover {
+    background: var(--ari-primary-dark);
+    color: #fff;
+}
+
+.mi-btn--xs {
+    padding: 0.22rem 0.55rem;
+    font-size: 0.78rem;
+    border-radius: 4px;
+}
+
+.mi-btn--ghost {
+    background: transparent;
+    border-color: transparent;
+    color: var(--ari-primary);
+    padding: 0.25rem 0.5rem;
+}
+
+.mi-btn--ghost:hover {
+    background: rgba(51, 102, 153, 0.1);
+}
+
+.mi-btn--danger {
+    color: var(--ari-danger);
+    border-color: #e3b6b8;
+}
+
+.mi-btn--danger:hover {
+    background: #fdecec;
+    border-color: var(--ari-danger);
+}
+
+/* Status / count strip ------------------------------------------------- */
+.mi-status {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    color: var(--ari-text-muted);
+    font-size: 0.85rem;
+    margin-bottom: 0.6rem;
+    min-height: 1.2rem;
+}
+
+.mi-status__pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    padding: 0.1rem 0.55rem;
+    background: rgba(51, 102, 153, 0.08);
+    color: var(--ari-primary-dark);
+    border-radius: 999px;
+    font-weight: 600;
+    font-size: 0.78rem;
+}
+
+/* Issues card / table -------------------------------------------------- */
+.mi-card {
+    background: var(--ari-card-bg);
+    border: 1px solid var(--ari-border);
+    border-radius: var(--ari-border-radius);
+    overflow: hidden;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+}
+
+.mi-table-wrap {
+    overflow-x: auto;
+    width: 100%;
+}
+
+.mi-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    font-size: 0.92rem;
+}
+
+.mi-table thead th {
+    position: sticky;
+    top: 0;
+    background: #f6f8fa;
+    border-bottom: 1px solid var(--ari-border);
+    text-align: left;
+    padding: 0.6rem 0.85rem;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--ari-text-muted);
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.mi-table tbody td {
+    padding: 0.7rem 0.85rem;
+    border-bottom: 1px solid #eef0f3;
+    vertical-align: top;
+    color: var(--ari-text);
+}
+
+.mi-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+.mi-table tbody tr:hover {
+    background: #fafbfc;
+}
+
+.mi-table tbody tr.mi-row--resolved,
+.mi-table tbody tr.mi-row--invalid {
+    color: var(--ari-text-muted);
+}
+
+.mi-table tbody tr.mi-row--resolved td,
+.mi-table tbody tr.mi-row--invalid td {
+    background: #fbfcfd;
+}
+
+.mi-table .mi-col-id {
+    width: 4.5rem;
+    color: var(--ari-text-muted);
+    font-variant-numeric: tabular-nums;
+    font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+    font-size: 0.85rem;
+}
+
+.mi-table .mi-col-created {
+    width: 11rem;
+    white-space: nowrap;
+    color: var(--ari-text-muted);
+    font-variant-numeric: tabular-nums;
+    font-size: 0.85rem;
+}
+
+.mi-table .mi-col-by {
+    width: 9rem;
+    white-space: nowrap;
+}
+
+.mi-table .mi-col-kind {
+    width: 8rem;
+}
+
+.mi-table .mi-col-object {
+    width: 10rem;
+    white-space: nowrap;
+}
+
+.mi-table .mi-col-status {
+    width: 6.5rem;
+    white-space: nowrap;
+}
+
+.mi-table .mi-col-actions {
+    width: 14rem;
+    white-space: nowrap;
+}
+
+.mi-table .mi-col-reason {
+    min-width: 14rem;
+}
+
+.mi-cell-value code {
+    background: #f5f6f8;
+    border: 1px solid #eaecef;
+    border-radius: 4px;
+    padding: 0.05rem 0.35rem;
+    font-size: 0.82rem;
+    color: #24292f;
+    font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+    word-break: break-all;
+}
+
+.mi-link {
+    color: var(--ari-primary);
+    font-weight: 500;
+    text-decoration: none;
+}
+
+.mi-link:hover {
+    color: var(--ari-primary-dark);
+    text-decoration: underline;
+}
+
+.mi-user {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    color: var(--ari-text);
+    font-weight: 500;
+}
+
+.mi-user i {
+    color: var(--ari-text-muted);
+}
+
+/* Kind chips ----------------------------------------------------------- */
+.mi-kind {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    padding: 0.15rem 0.55rem;
+    border-radius: 999px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    text-transform: capitalize;
+    background: #eef2f7;
+    color: #2c4a6b;
+    border: 1px solid #d6deea;
+}
+
+.mi-kind--flag {
+    background: #fdecea;
+    color: #8a1f1f;
+    border-color: #f3c1bf;
+}
+
+.mi-kind--target_request {
+    background: #e6f4ea;
+    color: #1f6b3a;
+    border-color: #b9dfc6;
+}
+
+.mi-kind--other {
+    background: #f0eafc;
+    color: #4f3b8a;
+    border-color: #d4c6f0;
+}
+
+/* Status badges (GitHub-like pills) ------------------------------------ */
+.mi-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.18rem 0.65rem;
+    border-radius: 999px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    text-transform: capitalize;
+    line-height: 1.1;
+    border: 1px solid transparent;
+}
+
+.mi-badge::before {
+    content: "";
+    width: 0.45rem;
+    height: 0.45rem;
+    border-radius: 50%;
+    background: currentColor;
+}
+
+.mi-badge--open {
+    background: #e6f4ea;
+    color: #1f6b3a;
+    border-color: #b9dfc6;
+}
+
+.mi-badge--resolved {
+    background: #ede4ff;
+    color: #5e3aa0;
+    border-color: #d3c3f3;
+}
+
+.mi-badge--invalid {
+    background: #f1f3f5;
+    color: #555c66;
+    border-color: #d8dde2;
+}
+
+/* Empty / loading state ------------------------------------------------ */
+.mi-empty {
+    padding: 3rem 1rem;
+    text-align: center;
+    color: var(--ari-text-muted);
+}
+
+.mi-empty i {
+    display: block;
+    font-size: 2.4rem;
+    color: #c5cdd6;
+    margin-bottom: 0.6rem;
+}
+
+.mi-empty__title {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--ari-text);
+    margin: 0 0 0.25rem;
+}
+
+.mi-empty__msg {
+    margin: 0;
+    font-size: 0.9rem;
+}
+
+/* Responsive ----------------------------------------------------------- */
+@media (max-width: 760px) {
+    .mi-table .mi-col-created,
+    .mi-table .mi-col-by {
+        display: none;
+    }
+    .mi-toolbar {
+        padding: 0.5rem;
+    }
+    .mi-input,
+    .mi-select {
+        min-width: 6rem;
+    }
+}

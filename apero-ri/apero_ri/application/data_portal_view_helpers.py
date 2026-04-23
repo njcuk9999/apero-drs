@@ -945,6 +945,39 @@ def ri_object_plot_max_view(app, profile_id, objname, plot_key):
         plot_payload = build_ts_airmass_plot_components(
             htable_rows, _ftable_ext, preset)
         display_name = 'Airmass per Night'
+    elif safe_key in {'sed', 'hr'}:
+        from apero_ri.plots.plot_obj_targetinfo import (
+            build_sed_plot_json, build_hr_plot_json,
+            load_or_query_20pc_neighborhood,
+        )
+        from apero.core import drs_astrometrics as _dra
+        from pathlib import Path as _Path
+        try:
+            base_dir = _Path(
+                app.args.data_dir or str(_Path.home() / '.ari'))
+        except Exception:
+            base_dir = _Path('.')
+        astrom_dir = base_dir / 'apero-assets' / 'astrometrics'
+        try:
+            yaml_entry = _dra.find_by_name(
+                str(astrom_dir), objname)
+        except Exception:
+            yaml_entry = None
+        if safe_key == 'sed':
+            plot_payload = build_sed_plot_json(yaml_entry)
+            display_name = 'Spectral Energy Distribution'
+        else:
+            try:
+                nb_cache = (
+                    base_dir / 'cache' / '_shared'
+                    / 'gaia_20pc' / 'neighborhood.json')
+                neighborhood = load_or_query_20pc_neighborhood(
+                    cache_path=str(nb_cache))
+            except Exception:
+                neighborhood = []
+            plot_payload = build_hr_plot_json(
+                yaml_entry, neighborhood=neighborhood)
+            display_name = 'HR Diagram'
     elif safe_key == 'lbl':
         from apero_ri.plots.plot_objects import build_lbl_plot_components
         lbl_file = str(request.args.get('lbl_file', '')).strip()

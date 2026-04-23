@@ -31,6 +31,17 @@ def main():
     args = _get_arguments()
     data_dir = resolve_local_data_dir(args.data_dir)
     os.environ["ARI_DIR"] = str(data_dir)
+    # Keep apero-assets clean: redirect drs_astrometrics' on-disk
+    # name-index cache out of <data_dir>/apero-assets/astrometrics/
+    # into a sibling cache directory. This prevents .name_index.json
+    # from polluting the assets bundle that gets uploaded.
+    _idx_cache = data_dir / "cache" / "astrometrics_index"
+    try:
+        _idx_cache.mkdir(parents=True, exist_ok=True)
+    except OSError:
+        pass
+    os.environ.setdefault(
+        "APERO_ASTROMETRICS_INDEX_DIR", str(_idx_cache))
     if not can_start_main_app(data_dir):
         print(
             "APERO RI setup has not been completed for this installation.",

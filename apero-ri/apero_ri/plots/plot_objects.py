@@ -62,5 +62,14 @@ from apero_ri.plots.plot_obj_timeseries import (
 )
 
 # =============================================================================
+# Re-export target-info builders (interactive SED + HR diagram)
+# =============================================================================
+from apero_ri.plots.plot_obj_targetinfo import (
+    build_hr_plot_json,
+    build_sed_plot_json,
+    load_or_query_20pc_neighborhood,
+)
+
+# =============================================================================
 # End of code
 # =============================================================================

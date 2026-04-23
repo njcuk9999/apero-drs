@@ -11524,10 +11524,6 @@ button.ari-rp-section-card:hover {
     border-radius: 4px;
     overflow: hidden;
 }
-/* keep the legacy two-column grid class as a thin wrapper for any
-   downstream caller still using {.ari-tinfo-grid > .ari-tinfo-grid__row} */
-.ari-tinfo-grid { display: flex; flex-direction: column; }
-
 .ari-tinfo-row {
     display: flex;
     flex-wrap: wrap;
@@ -11728,21 +11724,18 @@ button.ari-rp-section-card:hover {
     background: #1f242b;
     border-bottom-color: #30363d;
 }
-[data-theme="dark"] .ari-tinfo-grid {
-    border-color: #30363d;
-}
-[data-theme="dark"] .ari-tinfo-grid__row {
-    border-bottom-color: #30363d;
-}
 /* darker yellow / orange tints for contrast in dark theme */
-[data-theme="dark"] .ari-tinfo-grid__row:nth-child(odd) {
+[data-theme="dark"] .ari-tinfo-row {
+    border-bottom-color: rgba(255,255,255,0.06);
+}
+[data-theme="dark"] .ari-tinfo-row:nth-child(odd) {
     background: #2a2418;
 }
-[data-theme="dark"] .ari-tinfo-grid__row:nth-child(even) {
+[data-theme="dark"] .ari-tinfo-row:nth-child(even) {
     background: #2e2516;
 }
-[data-theme="dark"] .ari-tinfo-grid__label { color: #c9d1d9; }
-[data-theme="dark"] .ari-tinfo-grid__value { color: #e6edf3; }
+[data-theme="dark"] .ari-tinfo-row__label { color: #c9d1d9; }
+[data-theme="dark"] .ari-tinfo-row__value { color: #e6edf3; }
 [data-theme="dark"] .ari-tinfo-cites {
     background: #161b22;
     border-top-color: #30363d;

@@ -48,7 +48,7 @@ home.data_portal:
 home.monitor_portal:
   label: Monitor Portal
   parent: home
-  view-permission: view.monitor_portal
+  view-permission: monitor
   icon: fa-solid fa-chart-line
   quick-nav: True
   side-nav:
@@ -581,6 +581,26 @@ home.admin_portal.vault:
   parent: home.admin_portal
   view-permission: manage.admin.vault
   icon: fa-solid fa-vault
+  quick-nav: False
+  side-nav:
+    pinned: False
+    top-level: False
+    show: True
+
+# ==============================================================================
+# APERO RI: Monitor Portal Pages
+# ==============================================================================
+# Note: monitor portal pages currently use the umbrella `monitor`
+# permission (matched by prefix against per-instrument groups
+# such as `monitor.SPIROU` / `monitor.NIRPS`). If per-instrument
+# (per-APERO-profile) issue permissions are needed in the future,
+# split this into `view.monitor_portal.issues.{INSTRUMENT}` style
+# entries similar to the data-portal `{apero_profile}` pattern.
+home.monitor_portal.issues:
+  label: Issues
+  parent: home.monitor_portal
+  view-permission: monitor
+  icon: fa-solid fa-triangle-exclamation
   quick-nav: False
   side-nav:
     pinned: False

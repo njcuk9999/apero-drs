@@ -154,6 +154,7 @@ developer.NIRPS:
 # ==============================================================================
 monitor.SPIROU:
   permissions:
+      - monitor.SPIROU
       - view.monitor_portal.SPIROU
       # astrometric catalogue: upload brand-new yaml entries
       - upload.astrometrics
@@ -162,6 +163,7 @@ monitor.SPIROU:
 
 monitor.NIRPS:
   permissions:
+      - monitor.NIRPS
       - view.monitor_portal.NIRPS
       - upload.astrometrics
   groups:

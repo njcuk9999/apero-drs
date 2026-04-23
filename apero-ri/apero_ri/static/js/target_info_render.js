@@ -39,6 +39,26 @@
 (function () {
     "use strict";
 
+    // -----------------------------------------------------------------
+    // PHASE 2 ANTI-REVERT GUARD.
+    // If this file ever gets accidentally duplicated (a recurring
+    // bug where the legacy plain-text renderer was appended to the
+    // end of the file and overwrote window.AperoTargetInfo with a
+    // white-text fallback), the second IIFE will hit this guard and
+    // bail out immediately, leaving the rich card renderer in place.
+    // DO NOT REMOVE. See /memories/repo for context.
+    // -----------------------------------------------------------------
+    if (window.__AperoTargetInfoLoaded) {
+        if (window.console && window.console.warn) {
+            window.console.warn(
+                "AperoTargetInfo: duplicate target_info_render.js " +
+                "load detected; ignoring (keeping rich renderer)."
+            );
+        }
+        return;
+    }
+    window.__AperoTargetInfoLoaded = true;
+
     var FA_DEFAULT_DATA_ICON = "fa-solid fa-table-list";
     var FA_DEFAULT_CHART_ICON = "fa-solid fa-chart-area";
     var FILTER_THRESHOLD = 5;
@@ -256,20 +276,46 @@
         var icon = section.icon || FA_DEFAULT_CHART_ICON;
         var chartId = section.chart_id
             || ("chart-" + (section.id || "x"));
+        var ctype = section.chart_type || "";
         var desc = "";
         if (section.description) {
             desc = '<p class="ari-tinfo-section__desc">'
                 + escapeHtml(section.description) + "</p>";
         }
-        var body = desc
+        // No "Generate" button: charts auto-render on mount
+        // (see bindDefaultChartActions). The status/error
+        // affordances are still present so the renderer can
+        // surface progress and errors inline.
+        var widget = ''
             + '<div class="ari-tinfo-chart"'
-            + ' id="' + escapeHtml(chartId) + '">'
-            + '<div class="ari-tinfo-chart__placeholder">'
-            + '<i class="' + escapeHtml(icon) + '"></i>'
-            + '<span>Interactive plot coming in Phase&nbsp;2</span>'
+            + ' id="' + escapeHtml(chartId) + '"'
+            + ' data-chart-type="' + escapeHtml(ctype) + '">'
+            + '<div class="ari-tinfo-chart__controls"'
+            + ' style="display:flex; gap:0.5rem;'
+            + ' align-items:center; margin-bottom:0.5rem;">'
+            + '<span class="ari-tinfo-chart__status"'
+            + ' data-chart-status'
+            + ' style="color:var(--ari-text-muted);"></span>'
             + "</div>"
+            + '<div class="ari-tinfo-chart__error"'
+            + ' data-chart-error'
+            + ' style="display:none; color:var(--ari-danger);'
+            + ' margin-bottom:0.5rem;"></div>'
+            + '<div class="ari-tinfo-chart__images"'
+            + ' data-chart-images'
+            + ' style="display:block; width:100%;"></div>'
+            + '<details class="ari-tinfo-chart__log-wrap"'
+            + ' data-chart-log-wrap style="display:none;'
+            + ' margin-top:0.5rem;">'
+            + '<summary>Log</summary>'
+            + '<pre data-chart-log style="max-height:240px;'
+            + ' overflow:auto; white-space:pre-wrap;'
+            + ' background:var(--ari-bg-soft);'
+            + ' padding:0.5rem; border-radius:4px;'
+            + ' font-size:12px;"></pre>'
+            + "</details>"
             + "</div>";
-        return wrapSection(section, icon, "chart", body);
+        return wrapSection(section, icon, "chart", desc + widget);
     }
 
     function wrapSection(section, icon, kind, body) {
@@ -395,10 +441,53 @@
             if (typeof opts.onFlag === "function") {
                 opts.onFlag(key, rowEl, btn);
             } else {
-                window.alert(
-                    "Flagging issues will arrive in Phase 2 "
-                    + "(field: " + key + ")");
+                _defaultFlagIssue(key, rowEl, opts);
             }
+        });
+    }
+
+    function _defaultFlagIssue(key, rowEl, opts) {
+        var apero = (opts && opts.apero_name) || '';
+        var valueSpan = rowEl
+            ? rowEl.querySelector('.ari-tinfo-value')
+            : null;
+        var current = valueSpan
+            ? valueSpan.innerText.replace(/\s+/g, ' ').trim()
+            : '';
+        var reason = window.prompt(
+            'Why is the value of "' + key + '" wrong?\n'
+            + 'Current value: ' + current + '\n\n'
+            + '(Issue will be reviewed by a moderator.)',
+            '');
+        if (reason === null) return;
+        reason = String(reason).trim();
+        if (!reason) {
+            window.alert('Flag cancelled (empty reason).');
+            return;
+        }
+        fetch('/api/issues/create', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+                kind: 'flag',
+                reason: reason,
+                apero_name: apero || null,
+                field: key,
+                value: current,
+                visibility: 'monitor'
+            })
+        }).then(function (r) {
+            return r.json();
+        }).then(function (data) {
+            if (data && data.success) {
+                window.alert('Issue #' + data.issue.id
+                    + ' filed. Thank you!');
+            } else {
+                window.alert('Failed to file issue: '
+                    + ((data && data.error) || 'unknown'));
+            }
+        }).catch(function (err) {
+            window.alert('Failed to file issue: ' + err);
         });
     }
 
@@ -518,7 +607,208 @@
                     opts.mountChartsCb(sec.id, host, sec.chart_type);
                 }
             });
+        } else {
+            bindDefaultChartActions(container, opts);
         }
+    }
+
+    var CHART_API = {
+        finder: "/api/data-portal/finder-chart",
+        rotation: "/api/data-portal/tess-rotation",
+        sed: "/api/astrometrics/sed",
+        hr_diagram: "/api/astrometrics/hr-diagram"
+    };
+
+    function setChartStatus(host, msg) {
+        var el = host.querySelector('[data-chart-status]');
+        if (el) el.textContent = msg || '';
+    }
+
+    function setChartError(host, msg) {
+        var el = host.querySelector('[data-chart-error]');
+        if (!el) return;
+        if (msg) {
+            el.textContent = msg;
+            el.style.display = '';
+        } else {
+            el.textContent = '';
+            el.style.display = 'none';
+        }
+    }
+
+    /**
+     * Inject a Bokeh {script, div} payload into the chart host.
+     * The div is written first, then the script is evaluated so
+     * Bokeh.embed.embed_item targets the now-present root id.
+     */
+    function renderChartBokeh(host, payload) {
+        var box = host.querySelector('[data-chart-images]');
+        if (!box) return;
+        // Force the host to a block-level full-width container
+        // so Bokeh's stretch_width sizing mode can compute a
+        // non-zero width. Without this the embed lays out at 0
+        // px and the x-axis collapses ("no x-extent").
+        box.style.display = 'block';
+        box.style.width = '100%';
+        box.innerHTML = '';
+        var div = String(payload.div || '');
+        var script = String(payload.script || '');
+        if (!div && !script) {
+            box.innerHTML = '<p style="color:'
+                + 'var(--ari-text-muted);">No plot returned.</p>';
+            return;
+        }
+        var wrap = document.createElement('div');
+        wrap.style.width = '100%';
+        wrap.style.display = 'block';
+        wrap.innerHTML = div;
+        box.appendChild(wrap);
+        if (script) {
+            // Strip the surrounding <script> wrapper and execute
+            // inline so Bokeh sees the freshly inserted root.
+            var m = script.match(
+                /<script[^>]*>([\s\S]*?)<\/script>/i);
+            var code = m ? m[1] : script;
+            try {
+                // eslint-disable-next-line no-new-func
+                (new Function(code))();
+            } catch (err) {
+                setChartError(host,
+                    'Bokeh embed failed: '
+                        + (err && err.message ? err.message : err));
+            }
+        }
+    }
+
+    function renderChartImages(host, payload) {
+        var box = host.querySelector('[data-chart-images]');
+        if (!box) return;
+        box.innerHTML = '';
+        var imgs = [];
+        if (payload && Array.isArray(payload.images)) {
+            payload.images.forEach(function (b64, idx) {
+                var t = (payload.titles && payload.titles[idx])
+                    || (payload.bands && payload.bands[idx])
+                    || '';
+                imgs.push({src: b64, title: t});
+            });
+        } else if (payload && payload.image) {
+            imgs.push({src: payload.image,
+                       title: payload.title || ''});
+        } else if (payload && Array.isArray(payload.sectors)) {
+            payload.sectors.forEach(function (s) {
+                if (s && s.image) {
+                    imgs.push({
+                        src: s.image,
+                        title: 'Sector ' + (s.sector || '?')
+                    });
+                }
+            });
+        }
+        if (!imgs.length) {
+            box.innerHTML = '<p style="color:'
+                + 'var(--ari-text-muted);">No image returned.</p>';
+            return;
+        }
+        imgs.forEach(function (im) {
+            var fig = document.createElement('figure');
+            fig.style.margin = '0';
+            fig.style.maxWidth = '480px';
+            var img = document.createElement('img');
+            var src = im.src || '';
+            if (src && !src.startsWith('data:')) {
+                src = 'data:image/png;base64,' + src;
+            }
+            img.src = src;
+            img.style.maxWidth = '100%';
+            img.style.height = 'auto';
+            img.style.border = '1px solid var(--ari-border)';
+            img.style.borderRadius = '4px';
+            fig.appendChild(img);
+            if (im.title) {
+                var cap = document.createElement('figcaption');
+                cap.style.fontSize = '12px';
+                cap.style.color = 'var(--ari-text-muted)';
+                cap.style.textAlign = 'center';
+                cap.textContent = im.title;
+                fig.appendChild(cap);
+            }
+            box.appendChild(fig);
+        });
+    }
+
+    function appendChartLog(host, text) {
+        if (!text) return;
+        var wrap = host.querySelector('[data-chart-log-wrap]');
+        var pre = host.querySelector('[data-chart-log]');
+        if (!pre || !wrap) return;
+        wrap.style.display = '';
+        pre.textContent += String(text);
+        pre.scrollTop = pre.scrollHeight;
+    }
+
+    function runChartFetch(host, ctype, opts) {
+        var name = (opts && opts.apero_name) || '';
+        if (!name) {
+            setChartError(host, 'No target name available.');
+            return;
+        }
+        var url = CHART_API[ctype];
+        if (!url) {
+            setChartError(host, 'Unknown chart type: ' + ctype);
+            return;
+        }
+        setChartError(host, '');
+        setChartStatus(host, 'Generating...');
+        var qs = '?name=' + encodeURIComponent(name)
+            + '&_ts=' + Date.now();
+        var btn = host.querySelector('[data-chart-action="run"]');
+        if (btn) btn.disabled = true;
+        fetch(url + qs).then(function (r) {
+            return r.json();
+        }).then(function (data) {
+            if (!data || data.success === false) {
+                setChartError(host,
+                    (data && data.error) || 'Failed.');
+                setChartStatus(host, '');
+                return;
+            }
+            // Bokeh payload (shared with object-page builders)
+            // takes precedence over legacy image payload.
+            if (data.script || data.div) {
+                renderChartBokeh(host, data);
+            } else {
+                renderChartImages(host, data);
+            }
+            if (data.log) appendChartLog(host, data.log);
+            setChartStatus(host, 'Done.');
+        }).catch(function (err) {
+            setChartError(host,
+                'Network error: ' + (err && err.message
+                    ? err.message : err));
+            setChartStatus(host, '');
+        }).then(function () {
+            if (btn) btn.disabled = false;
+        });
+    }
+
+    function bindDefaultChartActions(container, opts) {
+        // Auto-fetch every chart-section host as soon as it is
+        // bound. There is no "Generate" button anymore -- the
+        // chart renders on its own on page load (matching the
+        // data-portal object page behaviour).
+        var hosts = container.querySelectorAll(
+            '.ari-tinfo-chart[data-chart-type]');
+        hosts.forEach(function (host) {
+            var ctype = host.getAttribute('data-chart-type');
+            if (!ctype) return;
+            // Defer to the next animation frame so the host is
+            // measurable (Bokeh stretch_width needs a non-zero
+            // container width to compute the x range).
+            window.requestAnimationFrame(function () {
+                runChartFetch(host, ctype, opts);
+            });
+        });
     }
 
     window.AperoTargetInfo = {

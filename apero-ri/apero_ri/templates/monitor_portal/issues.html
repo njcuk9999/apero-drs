@@ -1,0 +1,313 @@
+{% extends "general/sidebar_base.html" %}
+{% block title %}APERO RI – Issues{% endblock %}
+
+{% block body_class %}ari-has-sidebar ari-issues-page{% endblock %}
+
+{% block extra_head %}
+{{ super() }}
+<link rel="stylesheet"
+      href="{{ url_for('static', filename='css/monitor_issues.css') }}?v=20260423a">
+{% endblock %}
+
+{% block doc_content %}
+<div class="mi-header">
+    <div>
+        <h1 class="mi-header__title">
+            <i class="{{ page_icon }}"></i> {{ page_label }}
+        </h1>
+        <p class="mi-header__sub">
+            User-reported flags and target requests across the
+            monitored APERO profiles.
+        </p>
+    </div>
+    <span class="mi-header__visibility"
+          title="Your issue visibility scope">
+        <i class="fa-solid fa-eye"></i> {{ visibility }}
+    </span>
+</div>
+
+<div class="mi-toolbar" role="search" aria-label="Issue filters">
+    <div class="mi-toolbar__group">
+        <label for="issues-filter-status" class="mi-toolbar__label">
+            Status
+        </label>
+        <select id="issues-filter-status" class="mi-select">
+            <option value="">All</option>
+            <option value="open" selected>Open</option>
+            <option value="resolved">Resolved</option>
+            <option value="invalid">Invalid</option>
+        </select>
+    </div>
+    <div class="mi-toolbar__group">
+        <label for="issues-filter-kind" class="mi-toolbar__label">
+            Kind
+        </label>
+        <select id="issues-filter-kind" class="mi-select">
+            <option value="">All</option>
+            <option value="flag">Flag</option>
+            <option value="target_request">Target request</option>
+            <option value="other">Other</option>
+        </select>
+    </div>
+    <div class="mi-toolbar__group">
+        <label for="issues-filter-instrument"
+               class="mi-toolbar__label">
+            Instrument
+        </label>
+        <input id="issues-filter-instrument" class="mi-input"
+               placeholder="e.g. NIRPS or SPIROU" />
+    </div>
+    <div class="mi-toolbar__spacer"></div>
+    <button id="issues-refresh" class="mi-btn mi-btn--primary">
+        <i class="fa-solid fa-rotate"></i> Refresh
+    </button>
+</div>
+
+<div id="issues-status" class="mi-status"></div>
+
+<div class="mi-card">
+    <div class="mi-table-wrap">
+        <table class="mi-table" id="issues-table">
+            <thead>
+                <tr>
+                    <th class="mi-col-id">#</th>
+                    <th class="mi-col-created">Created</th>
+                    <th class="mi-col-by">By</th>
+                    <th class="mi-col-kind">Kind</th>
+                    <th class="mi-col-object">Object</th>
+                    <th>Field</th>
+                    <th>Value</th>
+                    <th class="mi-col-reason">Reason</th>
+                    <th class="mi-col-status">Status</th>
+                    <th class="mi-col-actions">Actions</th>
+                </tr>
+            </thead>
+            <tbody id="issues-tbody">
+                <tr>
+                    <td colspan="10">
+                        <div class="mi-empty">
+                            <i class="fa-solid fa-spinner fa-spin"></i>
+                            <p class="mi-empty__msg">Loading issues…</p>
+                        </div>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+(function () {
+    'use strict';
+    const VISIBILITY = {{ visibility|tojson }};
+    const tbody = document.getElementById('issues-tbody');
+    const statusEl = document.getElementById('issues-status');
+    const fStatus = document.getElementById('issues-filter-status');
+    const fKind = document.getElementById('issues-filter-kind');
+    const fInst = document.getElementById('issues-filter-instrument');
+    const refreshBtn = document.getElementById('issues-refresh');
+
+    function escapeHtml(s) {
+        return String(s == null ? '' : s)
+            .replace(/&/g, '&amp;').replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
+
+    function kindClass(kind) {
+        const k = String(kind || '').toLowerCase();
+        if (k === 'flag' || k === 'target_request' || k === 'other') {
+            return 'mi-kind--' + k;
+        }
+        return '';
+    }
+
+    function statusClass(status) {
+        const s = String(status || 'open').toLowerCase();
+        return 'mi-badge--' + s;
+    }
+
+    function rowClass(status) {
+        const s = String(status || 'open').toLowerCase();
+        if (s === 'resolved' || s === 'invalid') {
+            return 'mi-row--' + s;
+        }
+        return '';
+    }
+
+    function renderRow(it) {
+        const tr = document.createElement('tr');
+        const rc = rowClass(it.status);
+        if (rc) tr.classList.add(rc);
+        const valStr = it.value == null ? ''
+            : (typeof it.value === 'object'
+                ? JSON.stringify(it.value) : String(it.value));
+        const apero = it.apero_name || '';
+        const objCell = apero
+            ? `<a href="#" class="mi-link" data-apero="${
+                escapeHtml(apero)}">${escapeHtml(apero)}</a>`
+            : '<span style="color:var(--ari-text-muted);">—</span>';
+        const valCell = valStr
+            ? `<code>${escapeHtml(valStr)}</code>`
+            : '<span style="color:var(--ari-text-muted);">—</span>';
+        const fieldCell = it.field
+            ? `<code>${escapeHtml(it.field)}</code>`
+            : '<span style="color:var(--ari-text-muted);">—</span>';
+        const reasonCell = it.reason
+            ? escapeHtml(it.reason)
+            : '<span style="color:var(--ari-text-muted);">—</span>';
+        tr.innerHTML = `
+            <td class="mi-col-id">#${it.id}</td>
+            <td class="mi-col-created">${
+                escapeHtml((it.created_at||'').slice(0, 19)
+                    .replace('T', ' '))}</td>
+            <td class="mi-col-by">
+                <span class="mi-user">
+                    <i class="fa-solid fa-user"></i>
+                    ${escapeHtml(it.created_by||'anonymous')}
+                </span>
+            </td>
+            <td class="mi-col-kind">
+                <span class="mi-kind ${kindClass(it.kind)}">
+                    ${escapeHtml(it.kind||'')}
+                </span>
+            </td>
+            <td class="mi-col-object">${objCell}</td>
+            <td class="mi-cell-value">${fieldCell}</td>
+            <td class="mi-cell-value">${valCell}</td>
+            <td class="mi-col-reason">${reasonCell}</td>
+            <td class="mi-col-status">
+                <span class="mi-badge ${statusClass(it.status)}">
+                    ${escapeHtml(it.status||'open')}
+                </span>
+            </td>
+            <td class="mi-col-actions">
+                <button class="mi-btn mi-btn--xs"
+                    data-action="resolve" data-id="${it.id}"
+                    title="Mark as resolved">
+                    <i class="fa-solid fa-check"></i> Resolve
+                </button>
+                <button class="mi-btn mi-btn--xs mi-btn--danger"
+                    data-action="invalid" data-id="${it.id}"
+                    title="Mark as invalid">
+                    <i class="fa-solid fa-xmark"></i> Invalid
+                </button>
+                <button class="mi-btn mi-btn--xs mi-btn--ghost"
+                    data-action="reopen" data-id="${it.id}"
+                    title="Reopen issue">
+                    <i class="fa-solid fa-rotate-left"></i> Reopen
+                </button>
+            </td>`;
+        return tr;
+    }
+
+    function renderEmpty() {
+        tbody.innerHTML = `
+            <tr><td colspan="10">
+                <div class="mi-empty">
+                    <i class="fa-solid fa-inbox"></i>
+                    <p class="mi-empty__title">No issues match
+                        these filters</p>
+                    <p class="mi-empty__msg">Try clearing the
+                        status or kind filters.</p>
+                </div>
+            </td></tr>`;
+    }
+
+    function renderError(msg) {
+        tbody.innerHTML = `
+            <tr><td colspan="10">
+                <div class="mi-empty">
+                    <i class="fa-solid fa-triangle-exclamation"
+                        style="color: var(--ari-danger);"></i>
+                    <p class="mi-empty__title">Failed to load
+                        issues</p>
+                    <p class="mi-empty__msg">${escapeHtml(msg)}</p>
+                </div>
+            </td></tr>`;
+    }
+
+    async function load() {
+        statusEl.innerHTML = `
+            <span class="mi-status__pill">
+                <i class="fa-solid fa-spinner fa-spin"></i> Loading
+            </span>`;
+        const params = new URLSearchParams();
+        if (fStatus.value) params.set('status', fStatus.value);
+        if (fKind.value) params.set('kind', fKind.value);
+        if (fInst.value.trim()) {
+            params.set('instrument', fInst.value.trim());
+        }
+        try {
+            const resp = await fetch(
+                '/api/issues/list?' + params.toString());
+            const data = await resp.json();
+            if (!data.success) {
+                renderError(data.error || 'unknown error');
+                statusEl.textContent = '';
+                return;
+            }
+            tbody.innerHTML = '';
+            (data.issues || []).forEach(it => {
+                tbody.appendChild(renderRow(it));
+            });
+            const n = (data.issues || []).length;
+            if (n === 0) {
+                renderEmpty();
+            }
+            statusEl.innerHTML = `
+                <span class="mi-status__pill">
+                    <i class="fa-solid fa-list"></i>
+                    ${n} issue${n === 1 ? '' : 's'}
+                </span>
+                <span>visibility scope:
+                    <strong>${escapeHtml(VISIBILITY)}</strong></span>`;
+        } catch (err) {
+            renderError(err.message);
+            statusEl.textContent = '';
+        }
+    }
+
+    async function update(id, status) {
+        const note = window.prompt(
+            'Optional note (leave blank to skip):', '');
+        try {
+            const resp = await fetch('/api/issues/update', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({id: id, status: status,
+                                      note: note || undefined})
+            });
+            const data = await resp.json();
+            if (!data.success) {
+                alert('Error: ' + (data.error || 'unknown'));
+            } else {
+                load();
+            }
+        } catch (err) {
+            alert('Error: ' + err.message);
+        }
+    }
+
+    tbody.addEventListener('click', (ev) => {
+        const btn = ev.target.closest('button[data-action]');
+        if (!btn) return;
+        const id = parseInt(btn.dataset.id, 10);
+        const map = {resolve: 'resolved',
+                     invalid: 'invalid',
+                     reopen: 'open'};
+        update(id, map[btn.dataset.action]);
+    });
+
+    refreshBtn.addEventListener('click', load);
+    fStatus.addEventListener('change', load);
+    fKind.addEventListener('change', load);
+    let instTimer = null;
+    fInst.addEventListener('input', () => {
+        if (instTimer) clearTimeout(instTimer);
+        instTimer = setTimeout(load, 350);
+    });
+
+    load();
+})();
+</script>
+{% endblock %}

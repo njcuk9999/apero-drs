@@ -835,6 +835,136 @@
         btnFilter.addEventListener('click', _resolveByFilter);
     }
 
+    function _resolveOnlineByName() {
+        var input = document.getElementById('rt-name-query');
+        var name = input ? input.value.trim() : '';
+        if (!name) {
+            _showError('Enter a target name');
+            return;
+        }
+        _resetUi();
+        _showLoading(true);
+        _fetchJson('/api/astrometrics/resolve-online-by-name'
+            + '?name=' + encodeURIComponent(name))
+            .then(function (data) {
+                _showLoading(false);
+                if (!data.success) {
+                    _showError(data.error || 'Resolve failed');
+                    return;
+                }
+                if (!data.apero_name) {
+                    _showNotFoundRequest(name);
+                    return;
+                }
+                _showTarget(data.apero_name, data.payload);
+            })
+            .catch(function (err) {
+                _showLoading(false);
+                _showError(String(err));
+            });
+    }
+
+    function _resolveOnlineByCoords() {
+        var raEl = document.getElementById('rt-ra');
+        var decEl = document.getElementById('rt-dec');
+        var radEl = document.getElementById('rt-radius');
+        var ra = raEl ? raEl.value.trim() : '';
+        var dec = decEl ? decEl.value.trim() : '';
+        var rad = radEl ? (radEl.value || '60') : '60';
+        if (!ra || !dec) {
+            _showError('Enter RA and Dec in degrees');
+            return;
+        }
+        _resetUi();
+        _showLoading(true);
+        _fetchJson('/api/astrometrics/resolve-online-by-coords'
+            + '?ra=' + encodeURIComponent(ra)
+            + '&dec=' + encodeURIComponent(dec)
+            + '&radius=' + encodeURIComponent(rad))
+            .then(function (data) {
+                _showLoading(false);
+                if (!data.success) {
+                    _showError(data.error || 'Resolve failed');
+                    return;
+                }
+                var matches = data.matches || [];
+                if (!matches.length) {
+                    _showError('No SIMBAD targets within '
+                        + rad + ' arcsec.');
+                    return;
+                }
+                if (matches.length === 1) {
+                    _showTarget(matches[0].apero_name,
+                                matches[0].payload);
+                } else {
+                    _showPicker(matches);
+                }
+            })
+            .catch(function (err) {
+                _showLoading(false);
+                _showError(String(err));
+            });
+    }
+
+    function _showNotFoundRequest(name) {
+        if (!rtError) return;
+        rtError.innerHTML = '';
+        var span = document.createElement('span');
+        span.textContent = '"' + name + '" was not found '
+            + 'online. ';
+        var btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'ari-btn ari-btn--xs ari-btn--primary';
+        btn.innerHTML = '<i class="fa-solid fa-plus"></i>'
+            + ' Request this target be added';
+        btn.style.marginLeft = '0.5rem';
+        btn.addEventListener('click', function () {
+            _requestTargetAdd(name);
+        });
+        rtError.appendChild(span);
+        rtError.appendChild(btn);
+        rtError.style.display = 'block';
+    }
+
+    function _requestTargetAdd(name) {
+        var reason = window.prompt(
+            'Why should "' + name + '" be added?\n'
+            + '(Optional notes for the moderator.)', '');
+        if (reason === null) return;
+        fetch('/api/issues/create', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+                kind: 'target_request',
+                reason: reason || ('Add target: ' + name),
+                apero_name: name,
+                visibility: 'monitor'
+            })
+        }).then(function (r) { return r.json(); })
+        .then(function (data) {
+            if (data && data.success) {
+                window.alert('Target request #'
+                    + data.issue.id + ' filed.');
+            } else {
+                window.alert('Failed to file request: '
+                    + ((data && data.error) || 'unknown'));
+            }
+        }).catch(function (err) {
+            window.alert('Failed to file request: ' + err);
+        });
+    }
+
+    var btnOnName = document.getElementById('rt-resolve-online-name');
+    if (btnOnName) {
+        btnOnName.addEventListener('click', _resolveOnlineByName);
+    }
+    var btnOnCoords = document.getElementById(
+        'rt-resolve-online-coords');
+    if (btnOnCoords) {
+        btnOnCoords.addEventListener(
+            'click', _resolveOnlineByCoords);
+    }
+
     /* Populate column dropdown lazily on first resolve-target tab
        activation */
     var advTab = document.getElementById('rt-tab-advanced');

@@ -134,35 +134,47 @@
                 </button>
             </div>
             <div class="at-section-card__body">
-                {# Shared target-info component (data sections only;
-                   chart sections are rendered by the dedicated
-                   finder/tess cards below). #}
+                {# Shared target-info component (filterable card
+                   sections). This is the ONLY renderer for target
+                   info -- there is no plain-text fallback. #}
                 <div id="op-target-info-shared"
                      class="ari-target-info__sections"></div>
-                {# Legacy hidden grid kept temporarily so any other
-                   feature still reading from it does not break;
-                   drained by object_page.js when the new payload is
-                   present. #}
-                <div id="op-target-grid" class="op-kv-grid"
-                     hidden></div>
             </div>
         </div>
         <div class="at-section-card" data-op-section-id="target.sed">
             <div class="at-section-card__header">
                 <span><i class="fa-solid fa-chart-area"></i> Spectral Energy Distribution</span>
+                <a id="op-sed-plot-max-link"
+                   href="{{ url_for('ri_object_plot_max', profile_id=profile.profile_id, objname=objname, plot_key='sed') }}"
+                   class="ari-btn ari-btn--sm ari-btn--secondary op-plot-max-btn"
+                   title="Maximize plot" style="margin-left:auto;">
+                    <i class="fa-solid fa-maximize"></i>
+                </a>
             </div>
             <div class="at-section-card__body">
-                <div id="op-target-sed"
-                     class="ari-target-info__sections"></div>
+                <div id="op-sed-plot-div" data-op-nozoom="1"
+                     class="op-plot-host"
+                     style="min-height:420px;"></div>
+                {# Legacy AperoTargetInfo host kept (hidden) so any
+                   stray references no-op silently. #}
+                <div id="op-target-sed" hidden></div>
             </div>
         </div>
         <div class="at-section-card" data-op-section-id="target.hr_diagram">
             <div class="at-section-card__header">
                 <span><i class="fa-solid fa-star-half-stroke"></i> HR Diagram</span>
+                <a id="op-hr-plot-max-link"
+                   href="{{ url_for('ri_object_plot_max', profile_id=profile.profile_id, objname=objname, plot_key='hr') }}"
+                   class="ari-btn ari-btn--sm ari-btn--secondary op-plot-max-btn"
+                   title="Maximize plot" style="margin-left:auto;">
+                    <i class="fa-solid fa-maximize"></i>
+                </a>
             </div>
             <div class="at-section-card__body">
-                <div id="op-target-hr-diagram"
-                     class="ari-target-info__sections"></div>
+                <div id="op-hr-plot-div" data-op-nozoom="1"
+                     class="op-plot-host"
+                     style="min-height:480px;"></div>
+                <div id="op-target-hr-diagram" hidden></div>
             </div>
         </div>
         <div class="at-section-card" data-op-section-id="target.finder_chart">
@@ -976,8 +988,8 @@ window.ARI_BASKET_CFG = {
     window.AperoRI = window.AperoRI || {};
     window.AperoRI.userPerms = {{ (user_permissions|list)|tojson }};
 </script>
-<script src="{{ url_for('static', filename='js/target_info_render.js', v='20260422c') }}"></script>
-<script src="{{ url_for('static', filename='js/object_page.js', v='20260422c') }}" defer></script>
+<script src="{{ url_for('static', filename='js/target_info_render.js', v='20260423k') }}"></script>
+<script src="{{ url_for('static', filename='js/object_page.js', v='20260423h') }}" defer></script>
 <script>
 /* Plot-type constants – generated from Python; consumed by file_browser.js */
 window.ARI_PLOTABLE_OUTPUTS = {{ plotable_output_types | tojson }};

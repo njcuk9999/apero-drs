@@ -3,6 +3,13 @@
 
 {% block body_class %}ari-has-sidebar ari-astro-page{% endblock %}
 
+{% block extra_head %}
+{{ super() }}
+<link rel="stylesheet"
+      href="https://cdn.bokeh.org/bokeh/release/bokeh-3.8.2.min.css"
+      type="text/css">
+{% endblock %}
+
 {% block doc_content %}
 <div class="ari-page-header">
     <h1>
@@ -356,8 +363,8 @@
                                 </button>
                                 <button id="rt-resolve-online-name"
                                         class="ari-btn ari-btn--sm ari-btn--secondary"
-                                        type="button" disabled
-                                        title="Online resolution will be added in a later phase">
+                                        type="button"
+                                        title="Resolve via SIMBAD/Gaia/VizieR (online)">
                                     <i class="fa-solid fa-cloud-arrow-down"></i>
                                     Resolve online
                                 </button>
@@ -397,8 +404,8 @@
                                 </button>
                                 <button id="rt-resolve-online-coords"
                                         class="ari-btn ari-btn--sm ari-btn--secondary"
-                                        type="button" disabled
-                                        title="Online resolution will be added in a later phase">
+                                        type="button"
+                                        title="SIMBAD cone search (online)">
                                     <i class="fa-solid fa-cloud-arrow-down"></i>
                                     Resolve online
                                 </button>
@@ -508,6 +515,8 @@
     window.AperoRI = window.AperoRI || {};
     window.AperoRI.userPerms = {{ (user_permissions|list)|tojson }};
 </script>
-<script src="{{ url_for('static', filename='js/target_info_render.js', v='20260422i') }}"></script>
-<script src="{{ url_for('static', filename='js/astrometrics.js', v='20260422i') }}"></script>
+<script src="https://cdn.bokeh.org/bokeh/release/bokeh-3.8.2.min.js"></script>
+<script src="https://cdn.bokeh.org/bokeh/release/bokeh-widgets-3.8.2.min.js"></script>
+<script src="{{ url_for('static', filename='js/target_info_render.js', v='20260423k') }}"></script>
+<script src="{{ url_for('static', filename='js/astrometrics.js', v='20260423a') }}"></script>
 {% endblock %}

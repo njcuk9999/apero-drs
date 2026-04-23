@@ -11,7 +11,6 @@
     var errorEl = document.getElementById('op-error');
     var updatedEl = document.getElementById('op-last-updated');
 
-    var targetGrid = document.getElementById('op-target-grid');
     var spectrumGrid = document.getElementById('op-spectrum-grid');
     var finderChartEl = document.getElementById('op-finder-chart');
     var finderGenerateBtn = document.getElementById('op-finder-generate-btn');
@@ -88,6 +87,7 @@
         ccf_rv: 'idle',
         ccf_profile: 'idle',
         time_series: 'idle',
+        target_info: 'idle',
     };
     var lblPlotsState     = 'idle';   // idle | loading | loaded
     var debugPlotsState   = 'idle';   // idle | loading | loaded
@@ -585,6 +585,7 @@
     function ensurePlotsForTab(tabKey) {
         var key = String(tabKey || '').trim();
         if (key === 'all') {
+            loadObjectPlots('target_info');
             loadObjectPlots('spectrum');
             loadObjectPlots('ccf_rv');
             loadObjectPlots('ccf_profile');
@@ -592,6 +593,9 @@
             if (lblPlotsState === 'idle') loadLblPlots();
             if (debugPlotsState === 'idle') loadDebugPlots();
             return;
+        }
+        if (key === 'target_info') {
+            loadObjectPlots('target_info');
         }
         if (key === 'spectrum') {
             loadObjectPlots('spectrum');
@@ -651,6 +655,11 @@
         if (key === 'ts_snr' || key === 'ts_airmass') {
             setPlotReloading(key, true);
             loadObjectPlots('time_series', true, key);
+            return;
+        }
+        if (key === 'sed' || key === 'hr') {
+            setPlotReloading(key, true);
+            loadObjectPlots('target_info', true, key);
             return;
         }
         if (key === 'lbl') {
@@ -1064,7 +1073,42 @@
 
         var existing = header.querySelector('.op-section-controls');
         if (existing) {
-            existing.remove();
+            // Already initialised. Make sure the static maximize
+            // anchor and CSV button (which the surrounding code
+            // may have re-created in the header during a section
+            // re-render) are absorbed into the controls group, but
+            // do NOT tear the whole controls group down — that
+            // race used to delete the maximize / CSV buttons on
+            // every UI refresh.
+            var strayCsv = header.querySelector(
+                ':scope > button[id^="op-download-"][id$="-csv"], '
+                + ':scope > button.op-section-btn--csv');
+            if (strayCsv) {
+                strayCsv.classList.remove('ari-btn--sm');
+                strayCsv.classList.remove('ari-btn--secondary');
+                strayCsv.classList.remove('ari-btn');
+                strayCsv.classList.add('op-section-btn');
+                strayCsv.classList.add('op-section-btn--csv');
+                existing.appendChild(strayCsv);
+            }
+            var strayMax = header.querySelector(
+                ':scope > .op-plot-max-btn');
+            if (strayMax) {
+                strayMax.classList.remove('ari-btn--sm');
+                strayMax.classList.remove('ari-btn--secondary');
+                strayMax.classList.remove('ari-btn');
+                strayMax.classList.add('op-section-btn');
+                // Insert max button before pin/toggle so order
+                // stays: [max] [pin] [toggle] [csv]
+                var pinExisting = existing.querySelector(
+                    '.op-section-btn--pin');
+                if (pinExisting) {
+                    existing.insertBefore(strayMax, pinExisting);
+                } else {
+                    existing.appendChild(strayMax);
+                }
+            }
+            return;
         }
 
         var titleSpan = header.querySelector('span');
@@ -1647,60 +1691,51 @@
         bindListFilters(container);
     }
 
-    function renderTargetSubsection(hostId, payload) {
-        // Render a single shared target-info section into its own
-        // page-level card body (HR Diagram, Status). Hides the host's
-        // surrounding card if no payload / no sections so the page
-        // stays clean for entries without that data.
-        var host = document.getElementById(hostId);
+    function renderTarget(target) {
+        // Target info is rendered EXCLUSIVELY by the shared
+        // AperoTargetInfo component (filterable card sections).
+        // There is no plain-text / kv-grid fallback: if the
+        // payload is missing or the renderer is not loaded the
+        // section stays empty rather than reverting to the legacy
+        // grid. See /memories/repo for context on why.
+        var host = document.getElementById('op-target-info-shared');
         if (!host) return;
-        if (!payload || !Array.isArray(payload.sections)
-                || payload.sections.length === 0
-                || !window.AperoTargetInfo) {
+        if (!window.AperoTargetInfo
+                || typeof window.AperoTargetInfo.render !== 'function') {
+            if (window.console && window.console.error) {
+                window.console.error(
+                    'AperoTargetInfo missing - target info will not '
+                    + 'render. Check target_info_render.js loaded.'
+                );
+            }
             host.innerHTML = '';
             return;
         }
-        window.AperoTargetInfo.render(host, payload, {
-            apero_name: payload.apero_name,
+        if (!target || !Array.isArray(target.sections)
+                || target.sections.length === 0) {
+            // Surface server-side build errors (no silent blanks).
+            if (target && target.error) {
+                host.innerHTML =
+                    '<div class="ari-alert ari-alert--error" '
+                    + 'style="padding:0.75rem 1rem;border:1px solid '
+                    + 'var(--ari-danger,#d73a49);border-radius:6px;'
+                    + 'background:#fff5f5;color:#86181d;">'
+                    + '<strong>Target Information build failed:</strong> '
+                    + String(target.error)
+                        .replace(/&/g,'&amp;')
+                        .replace(/</g,'&lt;')
+                        .replace(/>/g,'&gt;')
+                    + '</div>';
+            } else {
+                host.innerHTML = '';
+            }
+            return;
+        }
+        window.AperoTargetInfo.render(host, target, {
+            apero_name: target.apero_name || target.object_name,
             userPerms: (window.AperoRI
                 && window.AperoRI.userPerms) || []
         });
-    }
-
-    function renderTarget(target) {
-        // New shared-component payload: {sections: [...]} -- delegate
-        // to AperoTargetInfo if present.
-        if (target && Array.isArray(target.sections)
-                && window.AperoTargetInfo) {
-            var host = document.getElementById(
-                'op-target-info-shared');
-            if (host) {
-                window.AperoTargetInfo.render(host, target, {
-                    apero_name: target.apero_name
-                        || target.object_name,
-                    userPerms: (window.AperoRI
-                        && window.AperoRI.userPerms) || []
-                });
-                return;
-            }
-        }        var rows = [
-            ['Target Name', target.object_name],
-            ['RA', valOrDash(target.ra_deg) + ' [deg] (' + valOrDash(target.ra_source) + ')'],
-            ['Dec', valOrDash(target.dec_deg) + ' [deg] (' + valOrDash(target.dec_source) + ')'],
-            ['Teff', valOrDash(target.teff_k) + ' [K] (' + valOrDash(target.teff_source) + ')'],
-            ['Spectral Type', valOrDash(target.spectral_type) + ' (' + valOrDash(target.spectral_type_source) + ')'],
-            ['Proper Motion (RA)', valOrDash(target.pmra) + ' [mas/yr]'],
-            ['Proper Motion (Dec)', valOrDash(target.pmdec) + ' [mas/yr]'],
-            ['Parallax', valOrDash(target.parallax) + ' [mas]'],
-            ['Radial Velocity', valOrDash(target.radial_velocity) + ' [km/s] (' + valOrDash(target.radial_velocity_source) + ')'],
-            { label: 'Aliases', value: target.aliases, filterable: true },
-            { label: 'OBJECT name(s) in headers', value: target.object_names_in_headers, filterable: true },
-            { label: getLabel('target_info.ob_names_in_headers', 'OB Name(s) in headers'), value: target.ob_names_in_headers, filterable: true },
-            { label: getLabel('target_info.pi_names_in_headers', 'PI name(s) in header'), value: target.pi_names_in_headers, filterable: true },
-            { label: 'Project/Run name(s) in headers', value: target.project_run_names_in_headers, filterable: true }
-        ];
-
-        renderKvGrid(targetGrid, rows);
     }
 
     /* ------------------------------------------------------------------
@@ -2677,6 +2712,16 @@
         embedOrDefer('op-snr-plot-div', payload, 'No SNR data available.');
     }
 
+    function renderSedPlot(payload) {
+        embedOrDefer('op-sed-plot-div', payload,
+            'SED unavailable for this target.');
+    }
+
+    function renderHrPlot(payload) {
+        embedOrDefer('op-hr-plot-div', payload,
+            'HR diagram unavailable for this target.');
+    }
+
     function renderBervPlot(payload) {
         embedOrDefer('op-berv-plot-div', payload, 'No BERV data available.');
     }
@@ -3010,6 +3055,9 @@
                 } else if (group === 'time_series') {
                     renderTsSnrPlot(data.ts_snr || null);
                     renderTsAirmassPlot(data.ts_airmass || null);
+                } else if (group === 'target_info') {
+                    renderSedPlot(data.sed || null);
+                    renderHrPlot(data.hr || null);
                 }
                 var updated = payloadUpdatedDateLabel(data) || currentUtcDateLabel();
                 if (group === 'spectrum') {
@@ -3020,6 +3068,8 @@
                     setPlotLastUpdated('ccf_profile', updated);
                 } else if (group === 'time_series') {
                     ['ts_snr', 'ts_airmass'].forEach(function (k) { setPlotLastUpdated(k, updated); });
+                } else if (group === 'target_info') {
+                    ['sed', 'hr'].forEach(function (k) { setPlotLastUpdated(k, updated); });
                 } else {
                     setGroupLastUpdated(group);
                 }
@@ -3127,10 +3177,6 @@
                 }
                 updatePlotMaxLinks();
                 renderTarget(s.target_info || {});
-                renderTargetSubsection(
-                    'op-target-sed', s.target_sed);
-                renderTargetSubsection(
-                    'op-target-hr-diagram', s.target_hr_diagram);
                 renderSpectrum(s.spectrum || {});
                 renderLbl(s.lbl || {});
                 renderCcf(s.ccf || {});

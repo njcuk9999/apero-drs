@@ -716,3 +716,383 @@ def api_astrometrics_upload_yaml(app):
         payload=_build_payload(stamped),
     )
 
+
+# =============================================================
+# SED + HR diagram (yaml-only, shared between both pages)
+# =============================================================
+
+def _shared_cache_dir(app, kind: str) -> Path:
+    """Return the shared cache dir for a yaml-based artefact.
+
+    The directory layout ``<cache_root>/_shared/<kind>/`` is keyed
+    only by canonical APERO_NAME so the data-portal object page
+    and the resolve target page hit the same cache entries.
+
+    :param app: ARI application instance
+    :param kind: artefact kind (``sed`` or ``hr``)
+    :return: pathlib.Path (created on demand)
+    """
+    from apero_ri.core.plot_cache import (
+        load_cache_config, resolve_cache_root,
+    )
+    base_dir = Path(
+        app.args.data_dir or str(Path.home() / ".ari"))
+    cfg = load_cache_config(base_dir)
+    root = resolve_cache_root(base_dir, cfg)
+    out = root / '_shared' / kind
+    out.mkdir(parents=True, exist_ok=True)
+    return out
+
+
+def _safe_name(name: str) -> str:
+    """Return a filename-safe variant of *name* for use as a key.
+
+    :param name: str, the input name
+    :return: str, slug suitable for a filename
+    """
+    return re.sub(r'[^A-Za-z0-9._+-]+', '_',
+                  str(name)).strip('_') or 'unknown'
+
+
+def _resolve_yaml_entry(app, name: str):
+    """Resolve a name to its astrometric YAML entry.
+
+    :param app: ARI application instance
+    :param name: str, target name (any alias)
+    :return: dict yaml entry or None
+    """
+    from apero.core import drs_astrometrics as dra
+    try:
+        return dra.find_by_name(str(_astrom_dir(app)), name)
+    except Exception:  # noqa: BLE001
+        return None
+
+
+def api_astrometrics_sed(app):
+    """Generate (or return cached) SED plot for a target.
+
+    Query string parameters:
+        name (required) - target name (any alias).
+        _ts  (optional) - if present, force a regeneration.
+
+    :param app: ARI application instance
+    :return: Flask JSON response with ``success``, ``image``,
+             ``apero_name``, ``error``.
+    """
+    _, err = _check_view_perm(app)
+    if err is not None:
+        return err
+    name = (request.args.get('name') or '').strip()
+    if not name:
+        return jsonify(success=False,
+                       error="Missing 'name'"), 400
+    entry = _resolve_yaml_entry(app, name)
+    if not entry:
+        return jsonify(success=False,
+                       error=f'No entry for {name!r}'), 404
+    apero_name = entry.get('APERO_NAME') or name
+    safe = _safe_name(apero_name)
+    cdir = _shared_cache_dir(app, 'sed')
+    cpath = cdir / f'{safe}.json'
+    force = bool((request.args.get('_ts') or '').strip())
+    if not force and cpath.exists():
+        try:
+            with cpath.open('r', encoding='utf-8') as fh:
+                cached = _json.load(fh)
+            cached['apero_name'] = apero_name
+            return jsonify(**cached)
+        except Exception:  # noqa: BLE001
+            pass
+    from apero_ri.plots.plot_obj_targetinfo import (
+        build_sed_plot_json,
+    )
+    payload = build_sed_plot_json(entry)
+    # Adapt builder payload {has_plot, script, div, message}
+    # into the API contract {success, has_plot, script, div,
+    # error, apero_name}.
+    if payload.get('has_plot'):
+        result = {
+            'success': True,
+            'has_plot': True,
+            'script': payload.get('script', ''),
+            'div': payload.get('div', ''),
+            'message': payload.get('message', ''),
+        }
+    else:
+        result = {
+            'success': True,
+            'has_plot': False,
+            'message': payload.get('message', ''),
+            'error': payload.get('message', ''),
+        }
+    result['apero_name'] = apero_name
+    if result.get('success'):
+        try:
+            with cpath.open('w', encoding='utf-8') as fh:
+                _json.dump(result, fh)
+        except Exception:  # noqa: BLE001
+            pass
+    return jsonify(**result)
+
+
+def api_astrometrics_hr(app):
+    """Generate (or return cached) HR diagram for a target.
+
+    Query string parameters:
+        name (required) - target name (any alias).
+        _ts  (optional) - if present, force a regeneration.
+
+    :param app: ARI application instance
+    :return: Flask JSON response with ``success``, ``image``,
+             ``apero_name``, ``error``.
+    """
+    _, err = _check_view_perm(app)
+    if err is not None:
+        return err
+    name = (request.args.get('name') or '').strip()
+    if not name:
+        return jsonify(success=False,
+                       error="Missing 'name'"), 400
+    entry = _resolve_yaml_entry(app, name)
+    if not entry:
+        return jsonify(success=False,
+                       error=f'No entry for {name!r}'), 404
+    apero_name = entry.get('APERO_NAME') or name
+    safe = _safe_name(apero_name)
+    cdir = _shared_cache_dir(app, 'hr')
+    cpath = cdir / f'{safe}.json'
+    force = bool((request.args.get('_ts') or '').strip())
+    if not force and cpath.exists():
+        try:
+            with cpath.open('r', encoding='utf-8') as fh:
+                cached = _json.load(fh)
+            cached['apero_name'] = apero_name
+            return jsonify(**cached)
+        except Exception:  # noqa: BLE001
+            pass
+    from apero_ri.plots.plot_obj_targetinfo import (
+        build_hr_plot_json,
+        load_or_query_20pc_neighborhood,
+    )
+    # Use the same shared 20-pc Gaia backdrop cache the
+    # object-page uses, so both pages render identical HR.
+    try:
+        base_dir = Path(
+            app.args.data_dir or str(Path.home() / '.ari'))
+        nb_cache = (base_dir / 'cache' / '_shared'
+                    / 'gaia_20pc' / 'neighborhood.json')
+        neighborhood = load_or_query_20pc_neighborhood(
+            cache_path=str(nb_cache))
+    except Exception:  # noqa: BLE001
+        neighborhood = []
+    payload = build_hr_plot_json(entry, neighborhood=neighborhood)
+    if payload.get('has_plot'):
+        result = {
+            'success': True,
+            'has_plot': True,
+            'script': payload.get('script', ''),
+            'div': payload.get('div', ''),
+            'message': payload.get('message', ''),
+        }
+    else:
+        result = {
+            'success': True,
+            'has_plot': False,
+            'message': payload.get('message', ''),
+            'error': payload.get('message', ''),
+        }
+    result['apero_name'] = apero_name
+    if result.get('success'):
+        try:
+            with cpath.open('w', encoding='utf-8') as fh:
+                _json.dump(result, fh)
+        except Exception:  # noqa: BLE001
+            pass
+    return jsonify(**result)
+
+
+# =============================================================
+# Resolve online (SIMBAD / Vizier) - delegates to drs_astrometrics
+# =============================================================
+
+def api_astrometrics_resolve_online_by_name(app):
+    """Query SIMBAD/Gaia/Vizier for a name and return parameters.
+
+    Returns a yaml-shaped entry dict (NOT yet stored) so the
+    front-end can offer to upload it as a new astrometric entry.
+
+    Query string parameters:
+        name (required) - target name (any alias)
+
+    :param app: ARI application instance
+    :return: Flask JSON response with ``success``, ``apero_name``,
+             ``entry`` (yaml-shaped), ``payload`` (target-info
+             payload), ``error``.
+    """
+    from apero.core import drs_astrometrics as dra
+
+    _, err = _check_view_perm(app)
+    if err is not None:
+        return err
+    name = (request.args.get('name') or '').strip()
+    if not name:
+        return jsonify(success=False,
+                       error="Missing 'name'"), 400
+
+    try:
+        entry = _resolve_online_using_drs(name)
+    except Exception as exc:  # noqa: BLE001
+        return jsonify(success=False, error=str(exc)), 500
+
+    if not entry:
+        return jsonify(success=True, apero_name=None,
+                       entry=None, payload={"sections": []})
+
+    return jsonify(
+        success=True,
+        apero_name=entry.get('APERO_NAME')
+        or entry.get('SIMBAD_NAME') or name,
+        entry=entry,
+        payload=_build_payload(entry),
+    )
+
+
+def _resolve_online_using_drs(name):
+    """Use ``drs_astrometrics`` low-level helpers to build a yaml entry.
+
+    Calls ``_resolve_from_name`` (SIMBAD + Gaia + VizieR), then folds
+    the result into a fully-shaped yaml dict via
+    ``_update_yaml_from_simbad``.
+
+    :param name: str, the target identifier
+    :return: dict yaml entry or None
+    """
+    from apero.core import drs_astrometrics as dra
+
+    simbad = dra._resolve_from_name(
+        name,
+        simbad_url=dra.SIMBAD_TAP,
+        gaia_url=dra.GAIA_TAP,
+        vizier_url=dra.VIZIER_TAP,
+    )
+    if simbad is None:
+        return None
+    entry = {
+        'APERO_NAME': dra.clean_object(name),
+        'ORIGINAL_NAME': name,
+        'APERO_CLASS': 'STAR',
+        'EPOCH': 2451545.0,
+    }
+    dra._full_resolve_schema(entry)
+    dra._update_yaml_from_simbad(entry, simbad)
+    return entry
+
+
+def api_astrometrics_resolve_online_by_coords(app):
+    """SIMBAD cone-search by sky coordinates.
+
+    Query string parameters:
+        ra      (required, deg)
+        dec     (required, deg)
+        radius  (optional, arcsec, default 60)
+
+    :param app: ARI application instance
+    :return: Flask JSON response with ``success``, ``matches``
+             (list of candidate yaml-shaped entries), ``error``.
+    """
+    from apero.core import drs_astrometrics as dra
+
+    _, err = _check_view_perm(app)
+    if err is not None:
+        return err
+    try:
+        ra = float((request.args.get('ra') or '').strip())
+        dec = float((request.args.get('dec') or '').strip())
+    except ValueError:
+        return jsonify(success=False,
+                       error="Invalid 'ra' / 'dec'"), 400
+    radius_arcsec = float(
+        (request.args.get('radius') or '60').strip() or 60.0)
+    # SIMBAD ADQL cone search via the basic_data table
+    adql = (
+        "SELECT TOP 25 main_id, ra, dec, "
+        "pmra, pmdec, plx_value, rvz_radvel, sp_type, "
+        "DISTANCE(POINT('ICRS', ra, dec), "
+        f"POINT('ICRS', {ra}, {dec})) AS sep "
+        "FROM basic "
+        "WHERE 1=CONTAINS(POINT('ICRS', ra, dec), "
+        f"CIRCLE('ICRS', {ra}, {dec}, "
+        f"{radius_arcsec / 3600.0})) "
+        "ORDER BY sep ASC")
+    try:
+        raw = dra._simbad_json(adql)
+    except Exception as exc:  # noqa: BLE001
+        return jsonify(success=False, error=str(exc)), 500
+    rows = _tap_rows_from_json(raw)
+    matches = []
+    for row in (rows or [])[:25]:
+        nm = row.get('main_id') or ''
+        entry = _row_to_entry(row, nm)
+        matches.append({
+            'apero_name': entry.get('APERO_NAME'),
+            'entry': entry,
+            'payload': _build_payload(entry),
+        })
+    return jsonify(success=True, matches=matches)
+
+
+def _tap_rows_from_json(raw):
+    """Convert a TAP JSON response (column/data form) to row dicts.
+
+    :param raw: the parsed JSON from ``_simbad_json`` / ``_vizier_json``
+    :return: list of dict rows (possibly empty)
+    """
+    if not isinstance(raw, dict):
+        return []
+    cols = raw.get('metadata') or raw.get('columns') or []
+    names = []
+    for c in cols:
+        if isinstance(c, dict):
+            names.append(c.get('name') or c.get('id'))
+        else:
+            names.append(str(c))
+    data = raw.get('data') or []
+    out = []
+    for row in data:
+        if not isinstance(row, list):
+            continue
+        out.append({names[i] if i < len(names) else f'col{i}':
+                    row[i] for i in range(len(row))})
+    return out
+
+
+def _row_to_entry(row, name):
+    """Convert a SIMBAD row dict to a yaml-shaped entry."""
+    from apero.core import drs_astrometrics as dra
+
+    out = {
+        'APERO_NAME': str(name).upper().replace(' ', ''),
+        'ORIGINAL_NAME': name,
+        'SIMBAD_NAME': row.get('main_id'),
+        'APERO_CLASS': 'STAR',
+    }
+    for src_k, dst_k, units in [
+        ('ra', 'RA', 'deg'),
+        ('dec', 'DEC', 'deg'),
+        ('pmra', 'PMRA', 'mas/yr'),
+        ('pmdec', 'PMDE', 'mas/yr'),
+        ('plx_value', 'PLX', 'mas'),
+        ('rvz_radvel', 'RV', 'km/s'),
+    ]:
+        v = dra._pf(row.get(src_k))
+        if v is not None:
+            out[dst_k] = {'value': v, 'source': 'SIMBAD',
+                          'units': units}
+    spt = row.get('sp_type')
+    if spt:
+        out['SPT'] = {'value': spt, 'source': 'SIMBAD'}
+    out['EPOCH'] = 2457388.5
+    out['ALIASES'] = [name]
+    return out
+
+

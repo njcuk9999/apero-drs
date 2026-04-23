@@ -481,6 +481,115 @@ def api_filename_plot(app):
     return jsonify(success=True, **result)
 
 
+def _resolve_target_context(app, user_info, accessible):
+    """Resolve target context from either ``(profile_id, objname)`` or
+    ``name=``.
+
+    When ``name=`` is provided the astrometric YAML database is
+    consulted via :func:`drs_astrometrics.find_by_name` and the
+    user's first accessible profile is used to source the
+    instrument-specific finder/TESS configuration.  The cache key
+    is the canonical APERO_NAME, so cache entries are shared with
+    object-page lookups for the same target.
+
+    :param app: ARIApp instance
+    :param user_info: dict or None - the result of ``_get_api_user``
+    :param accessible: list of accessible profile dicts
+    :return: tuple ``(ok, payload)`` where ``ok`` is bool; on
+             success ``payload`` is a dict with keys
+             ``instrument``, ``profile_id``, ``profile``,
+             ``profile_data``, ``objname``, ``obj_props``,
+             ``preset``, ``yaml_entry`` (None for legacy mode).
+             On failure ``payload`` is a Flask response tuple.
+    """
+    name_arg = (request.args.get('name') or '').strip()
+    profile_id = (request.args.get('profile_id') or '').strip()
+    objname = (request.args.get('objname') or '').strip()
+
+    if name_arg:
+        # YAML-resolved mode (resolve target page).  Uses the
+        # caller's first accessible profile as the source of the
+        # instrument-specific finder/TESS configuration.
+        from apero.core import drs_astrometrics as dra
+        from apero_ri.core.yaml_obj_props import yaml_to_obj_props
+
+        base_dir = Path(
+            app.args.data_dir or str(Path.home() / '.ari'))
+        astrom_dir = (
+            base_dir / 'apero-assets' / 'astrometrics')
+        try:
+            entry = dra.find_by_name(str(astrom_dir), name_arg)
+        except Exception as exc:  # noqa: BLE001
+            return False, (jsonify(
+                success=False,
+                error=f'Astrometric lookup failed: {exc}'), 500)
+        if not entry:
+            return False, (jsonify(
+                success=False,
+                error=f'No astrometric entry for {name_arg!r}'),
+                404)
+        if not accessible:
+            return False, (jsonify(
+                success=False,
+                error='No accessible profile'), 403)
+        profile = accessible[0]
+        profile_id = profile['profile_id']
+        instrument = profile['instrument']
+        profile_data = profile.get('data') or {}
+        instrument_profile_file = str(
+            profile_data.get('APERO_INSTRUMENT_PROFILE', '')
+            or profile_data.get('apero_instrument_profile', '')
+            or '').strip()
+        preset = load_object_preset(instrument_profile_file)
+        obj_props = yaml_to_obj_props(entry)
+        objname = (entry.get('APERO_NAME')
+                   or obj_props.get('OBJNAME') or name_arg)
+        return True, dict(
+            instrument=instrument,
+            profile_id=profile_id,
+            profile=profile,
+            profile_data=profile_data,
+            objname=objname,
+            obj_props=obj_props,
+            preset=preset,
+            yaml_entry=entry,
+        )
+
+    # Legacy (object-page) mode
+    if not profile_id or not objname:
+        return False, (jsonify(
+            success=False,
+            error='Missing profile_id/objname or name'), 400)
+    profile = next(
+        (p for p in accessible
+         if p['profile_id'] == profile_id), None)
+    if not profile:
+        return False, (jsonify(
+            success=False, error='Profile not found'), 404)
+    instrument = profile['instrument']
+    profile_data = profile.get('data') or {}
+    instrument_profile_file = str(
+        profile_data.get('APERO_INSTRUMENT_PROFILE', '')
+        or profile_data.get('apero_instrument_profile', '')
+        or '').strip()
+    base_dir = Path(
+        app.args.data_dir or str(Path.home() / '.ari'))
+    objects_dir = (base_dir / 'tasks' / instrument
+                   / profile_id / 'objects')
+    obj_props = load_object_table_row(objects_dir, objname)
+    preset = load_object_preset(instrument_profile_file)
+    return True, dict(
+        instrument=instrument,
+        profile_id=profile_id,
+        profile=profile,
+        profile_data=profile_data,
+        objname=objname,
+        obj_props=obj_props,
+        preset=preset,
+        yaml_entry=None,
+    )
+
+
 def api_finder_chart(app):
     """Generate finder charts on demand (called via AJAX)."""
     user_info = app._get_api_user()
@@ -491,36 +600,18 @@ def api_finder_chart(app):
     if "view.data_portal" not in perms:
         return jsonify(success=False, error="Unauthorized"), 401
 
-    profile_id = request.args.get("profile_id", "").strip()
-    objname = request.args.get("objname", "").strip()
-    force_regen = bool(str(request.args.get("_ts", "")).strip())
-    if not profile_id or not objname:
-        return (
-            jsonify(success=False, error="Missing profile_id or objname"),
-            400,
-        )
-    force_regen = bool(str(request.args.get("_ts", "")).strip())
-
     accessible = get_accessible_profiles(user_info, app.ari_groups)
-    profile = next(
-        (p for p in accessible if p["profile_id"] == profile_id), None
-    )
-    if not profile:
-        return jsonify(success=False, error="Profile not found"), 404
-
-    instrument = profile["instrument"]
-    profile_data = profile.get("data") or {}
-    instrument_profile_file = str(
-        profile_data.get("APERO_INSTRUMENT_PROFILE", "")
-        or profile_data.get("apero_instrument_profile", "")
-        or ""
-    ).strip()
-
+    ok, ctx = _resolve_target_context(app, user_info, accessible)
+    if not ok:
+        return ctx
+    instrument = ctx['instrument']
+    profile_id = ctx['profile_id']
+    profile_data = ctx['profile_data']
+    objname = ctx['objname']
+    obj_props = ctx['obj_props']
+    preset = ctx['preset']
     base_dir = Path(app.args.data_dir or str(Path.home() / ".ari"))
-    objects_dir = base_dir / "tasks" / instrument / profile_id / "objects"
-
-    obj_props = load_object_table_row(objects_dir, objname)
-    preset = load_object_preset(instrument_profile_file)
+    force_regen = bool(str(request.args.get("_ts", "")).strip())
 
     from apero_ri.core.plot_cache import (
         _db_fingerprint_matches,
@@ -579,9 +670,9 @@ def api_finder_chart_stream(app):
     """SSE endpoint: stream finder chart generation live.
 
     Each event is a JSON object with a ``type`` field:
-      - ``log``   – a line of console output
-      - ``done``  – final result (images, bands, …)
-      - ``error`` – something went wrong
+      - ``log``   - a line of console output
+      - ``done``  - final result (images, bands, ...)
+      - ``error`` - something went wrong
     """
     user_info = app._get_api_user()
     if user_info:
@@ -595,50 +686,18 @@ def api_finder_chart_stream(app):
             success=False, error='Unauthorized'
         ), 401
 
-    profile_id = request.args.get(
-        'profile_id', ''
-    ).strip()
-    objname = request.args.get(
-        'objname', ''
-    ).strip()
-    if not profile_id or not objname:
-        return jsonify(
-            success=False,
-            error='Missing profile_id or objname',
-        ), 400
-
-    accessible = get_accessible_profiles(
-        user_info, app.ari_groups
-    )
-    profile = next(
-        (p for p in accessible
-         if p['profile_id'] == profile_id), None
-    )
-    if not profile:
-        return jsonify(
-            success=False, error='Profile not found'
-        ), 404
-
-    instrument = profile['instrument']
-    profile_data = profile.get('data') or {}
-    instrument_profile_file = str(
-        profile_data.get(
-            'APERO_INSTRUMENT_PROFILE', ''
-        )
-        or profile_data.get(
-            'apero_instrument_profile', ''
-        )
-        or ''
-    ).strip()
-
+    accessible = get_accessible_profiles(user_info, app.ari_groups)
+    ok, ctx = _resolve_target_context(app, user_info, accessible)
+    if not ok:
+        return ctx
+    instrument = ctx['instrument']
+    profile_id = ctx['profile_id']
+    profile_data = ctx['profile_data']
+    objname = ctx['objname']
+    obj_props = ctx['obj_props']
+    preset = ctx['preset']
     base_dir = Path(
-        app.args.data_dir
-        or str(Path.home() / '.ari')
-    )
-    objects_dir = (
-        base_dir / 'tasks' / instrument
-        / profile_id / 'objects'
-    )
+        app.args.data_dir or str(Path.home() / '.ari'))
 
     from apero_ri.core.plot_cache import (
         _db_fingerprint_matches,
@@ -687,13 +746,6 @@ def api_finder_chart_stream(app):
                     stream_with_context(_cached()),
                     mimetype='text/event-stream',
                 )
-
-    obj_props = load_object_table_row(
-        objects_dir, objname
-    )
-    preset = load_object_preset(
-        instrument_profile_file
-    )
 
     # shared queue for real-time log lines
     log_q = queue.Queue()
@@ -1174,6 +1226,7 @@ def api_object_plots(app):
         "ccf_rv",
         "ccf_profile",
         "time_series",
+        "target_info",
     }
     if plot_group not in valid_groups:
         return (
@@ -1330,10 +1383,13 @@ def api_object_plots(app):
         build_berv_plot_json,
         build_ccf_profile_plot_json,
         build_ccf_rv_plot_json,
+        build_hr_plot_json,
+        build_sed_plot_json,
         build_snr_plot_json,
         build_spec_plot_json,
         build_ts_airmass_plot_json,
         build_ts_snr_plot_json,
+        load_or_query_20pc_neighborhood,
     )
 
     _no_plot = {"has_plot": False, "message": "Plot build failed"}
@@ -1420,6 +1476,35 @@ def api_object_plots(app):
             lambda: build_ts_airmass_plot_json(
                 htable_rows, ftable_ext_rows, preset
             ),
+        )
+    if plot_group in {"all", "target_info"}:
+        # Resolve the astrometric YAML entry for this target.
+        # SED + HR plots are interactive Bokeh figures driven by
+        # the photometry / Teff / parallax stored in the entry.
+        try:
+            from apero.core import drs_astrometrics as _dra
+            astrom_dir = base_dir / "apero-assets" / "astrometrics"
+            yaml_entry = _dra.find_by_name(
+                str(astrom_dir), objname)
+        except Exception:
+            yaml_entry = None
+        # 20-pc Gaia neighborhood (cached)
+        try:
+            nb_cache = (
+                base_dir / "cache" / "_shared"
+                / "gaia_20pc" / "neighborhood.json")
+            neighborhood = load_or_query_20pc_neighborhood(
+                cache_path=str(nb_cache))
+        except Exception:
+            neighborhood = []
+        result["sed"] = _timed_build(
+            "sed",
+            lambda: build_sed_plot_json(yaml_entry),
+        )
+        result["hr"] = _timed_build(
+            "hr",
+            lambda: build_hr_plot_json(
+                yaml_entry, neighborhood=neighborhood),
         )
     result["updated_at"] = datetime.now(timezone.utc).isoformat()
     result["server_timings_ms"] = timings_ms
@@ -1588,11 +1673,12 @@ def api_object_page(app):
     labels = sections.pop("labels", {})
 
     # ------------------------------------------------------------
-    # Replace the legacy target_info dict with the shared
-    # target-info payload sourced from the apero astrometric YAML
-    # database (Phase 1 of the astrometrics rebuild).  The shared
-    # JS renderer recognises a {sections: [...]} payload and falls
-    # back to the legacy renderer if absent.
+    # Target Information shared payload (single source of truth).
+    # The shared component in apero_ri.components.target_info_sections
+    # is the ONLY supported renderer -- there is no legacy plain-text
+    # fallback.  If the build fails we emit an empty {sections: []}
+    # payload carrying an `error` field so the front-end can surface
+    # the failure instead of silently rendering nothing.
     # ------------------------------------------------------------
     try:
         from apero.core import drs_astrometrics as _dra
@@ -1601,44 +1687,71 @@ def api_object_page(app):
         )
         astrom_dir = base_dir / "apero-assets" / "astrometrics"
         entry = _dra.find_by_name(str(astrom_dir), objname)
-        if entry:
-            apero_name = entry.get("APERO_NAME", objname)
-            # main Target Information card: keep all data sections
-            # (incl. Status). SED and HR Diagram are rendered as
-            # their own page-level cards (see payloads below).
-            shared_payload = _build_ti(
-                entry,
-                obj_row=obj_row,
-                include_charts=False,
-                exclude_ids=['sed', 'hr_diagram'],
+        if not entry:
+            raise RuntimeError(
+                "No astrometric YAML entry found for "
+                f"{objname!r} in {astrom_dir}"
             )
-            shared_payload["apero_name"] = apero_name
-            sections["target_info"] = shared_payload
+        apero_name = entry.get("APERO_NAME", objname)
+        # main Target Information card: keep all data sections
+        # (incl. Status). SED and HR Diagram are rendered as
+        # their own page-level cards (see payloads below).
+        shared_payload = _build_ti(
+            entry,
+            obj_row=obj_row,
+            include_charts=False,
+            exclude_ids=['sed', 'hr_diagram'],
+        )
+        shared_payload["apero_name"] = apero_name
+        sections["target_info"] = shared_payload
 
-            # standalone single-section payloads used by the
-            # dedicated SED and HR Diagram cards on the page.
-            sed_payload = _build_ti(
-                entry,
-                obj_row=obj_row,
-                include_charts=True,
-                only_ids=['sed'],
-            )
-            sed_payload["apero_name"] = apero_name
-            sections["target_sed"] = sed_payload
+        # standalone single-section payloads used by the
+        # dedicated SED and HR Diagram cards on the page.
+        sed_payload = _build_ti(
+            entry,
+            obj_row=obj_row,
+            include_charts=True,
+            only_ids=['sed'],
+        )
+        sed_payload["apero_name"] = apero_name
+        sections["target_sed"] = sed_payload
 
-            hr_payload = _build_ti(
-                entry,
-                obj_row=obj_row,
-                include_charts=True,
-                only_ids=['hr_diagram'],
-            )
-            hr_payload["apero_name"] = apero_name
-            sections["target_hr_diagram"] = hr_payload
-    except Exception:  # noqa: BLE001
-        # Fall back silently to the legacy target_info dict if the
-        # shared payload cannot be built (e.g. astrometric yaml
-        # directory missing).
-        pass
+        hr_payload = _build_ti(
+            entry,
+            obj_row=obj_row,
+            include_charts=True,
+            only_ids=['hr_diagram'],
+        )
+        hr_payload["apero_name"] = apero_name
+        sections["target_hr_diagram"] = hr_payload
+    except Exception as _ti_exc:  # noqa: BLE001
+        # Loud failure: log full traceback and emit an explicit
+        # empty payload with an `error` so the user sees the real
+        # cause instead of a silently-blank Target Information
+        # card.  No legacy plain-text fallback is permitted.
+        app.logger.exception(
+            "Target Information build FAILED for profile=%s "
+            "object=%s: %s",
+            profile_id, objname, _ti_exc,
+        )
+        sections["target_info"] = {
+            "sections": [],
+            "error": (
+                "Target Information build failed: "
+                + str(_ti_exc)
+            ),
+            "apero_name": objname,
+        }
+        sections["target_sed"] = {
+            "sections": [],
+            "error": str(_ti_exc),
+            "apero_name": objname,
+        }
+        sections["target_hr_diagram"] = {
+            "sections": [],
+            "error": str(_ti_exc),
+            "apero_name": objname,
+        }
 
     return jsonify(
         success=True,
@@ -1792,32 +1905,17 @@ def api_tess_rotation(app):
             success=False, error='Unauthorized'
         ), 401
 
-    profile_id = request.args.get(
-        'profile_id', ''
-    ).strip()
-    objname = request.args.get('objname', '').strip()
-    if not profile_id or not objname:
-        return jsonify(
-            success=False,
-            error='Missing profile_id or objname',
-        ), 400
-
     accessible = get_accessible_profiles(
-        user_info, app.ari_groups
-    )
-    profile = next(
-        (p for p in accessible
-         if p['profile_id'] == profile_id), None
-    )
-    if not profile:
-        return jsonify(
-            success=False, error='Profile not found'
-        ), 404
-
-    instrument = profile['instrument']
+        user_info, app.ari_groups)
+    ok, ctx = _resolve_target_context(
+        app, user_info, accessible)
+    if not ok:
+        return ctx
+    instrument = ctx['instrument']
+    objname = ctx['objname']
+    obj_props = ctx['obj_props']
     base_dir = Path(
-        app.args.data_dir or str(Path.home() / '.ari')
-    )
+        app.args.data_dir or str(Path.home() / '.ari'))
 
     from apero_ri.core.plot_cache import (
         is_cache_enabled,
@@ -1844,14 +1942,7 @@ def api_tess_rotation(app):
             return jsonify(**hit)
 
     # Gather all known aliases for this object
-    objects_dir = (
-        base_dir / 'tasks' / instrument
-        / profile_id / 'objects'
-    )
-    obj_row = load_object_table_row(objects_dir, objname)
-    aliases_raw = str(
-        obj_row.get('ALIASES', '') or ''
-    )
+    aliases_raw = str(obj_props.get('ALIASES', '') or '')
     aliases = [
         a.strip() for a in aliases_raw.split('|')
         if a.strip()
@@ -2042,31 +2133,15 @@ def api_tess_rotation_stream(app):
             success=False, error='Unauthorized'
         ), 401
 
-    profile_id = request.args.get(
-        'profile_id', ''
-    ).strip()
-    objname = request.args.get(
-        'objname', ''
-    ).strip()
-    if not profile_id or not objname:
-        return jsonify(
-            success=False,
-            error='Missing profile_id or objname',
-        ), 400
-
     accessible = get_accessible_profiles(
-        user_info, app.ari_groups
-    )
-    profile = next(
-        (p for p in accessible
-         if p['profile_id'] == profile_id), None
-    )
-    if not profile:
-        return jsonify(
-            success=False, error='Profile not found'
-        ), 404
-
-    instrument = profile['instrument']
+        user_info, app.ari_groups)
+    ok, ctx = _resolve_target_context(
+        app, user_info, accessible)
+    if not ok:
+        return ctx
+    instrument = ctx['instrument']
+    objname = ctx['objname']
+    obj_props = ctx['obj_props']
     base_dir = Path(
         app.args.data_dir
         or str(Path.home() / '.ari')
@@ -2106,16 +2181,7 @@ def api_tess_rotation_stream(app):
             )
 
     # Gather aliases
-    objects_dir = (
-        base_dir / 'tasks' / instrument
-        / profile_id / 'objects'
-    )
-    obj_row = load_object_table_row(
-        objects_dir, objname
-    )
-    aliases_raw = str(
-        obj_row.get('ALIASES', '') or ''
-    )
+    aliases_raw = str(obj_props.get('ALIASES', '') or '')
     aliases = [
         a.strip() for a in aliases_raw.split('|')
         if a.strip()
