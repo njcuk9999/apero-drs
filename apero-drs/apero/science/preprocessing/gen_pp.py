@@ -18,6 +18,7 @@ import pandas as pd
 from astropy import units as uu
 from astropy.coordinates import EarthLocation, AltAz, ICRS
 from astropy.coordinates import SkyCoord, Distance
+from astropy.table import Table
 
 from apero.base import base as apero_base
 from apero.core import drs_database
@@ -34,6 +35,7 @@ from aperocore.constants import param_functions
 from aperocore.core import drs_log
 from aperocore.core import drs_misc
 from aperocore.core import drs_text
+from aperocore.io import drs_io
 
 # =============================================================================
 # Define variables
@@ -416,15 +418,18 @@ def get_obj_reject_list(params: ParamDict) -> np.ndarray:
 
     :return: np.array 1D, the list of reject object names
     """
-    # get psuedo constants
-    pconst = load_functions.load_pconfig(select.INSTRUMENTS)
     # get parameters from params
-    gsheet_url = params['OBJ.LIST.GSHEET_URL']
-    reject_id = params['OBJ.LIST.GSHEET_REJECTLIST_ID']
-    # get reject list google sheets
+    gsheet_url = params['OBJ.LIST.RLIST_GSHEET_URL']
+    reject_id = params['OBJ.LIST.RLIST_GSHEET_MAINLIST_ID']
+    # get reject list from configured source
     try:
-        rejecttable = drs_database.get_google_sheet(params, gsheet_url,
-                                                    reject_id)
+        if os.path.exists(gsheet_url):
+            mainpath = os.path.join(gsheet_url, reject_id)
+            rejecttable = drs_io.no_mask_table(Table.read(mainpath,
+                                                          format='csv'))
+        else:
+            rejecttable = drs_database.get_google_sheet(params, gsheet_url,
+                                                        reject_id)
     # any exception here should return a warning and a empty array
     except Exception as e:
         # warning msg: Cannot read reject list {0}. Skipping rejection

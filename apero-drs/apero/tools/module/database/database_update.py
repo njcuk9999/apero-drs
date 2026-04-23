@@ -24,6 +24,7 @@ from aperocore.core import drs_misc
 from aperocore.core import drs_text
 from aperocore.constants import load_functions
 from aperocore.constants import param_functions
+from apero.core import drs_astrometrics
 from apero.core import drs_database
 from apero.core import drs_file
 from aperocore.core import drs_log
@@ -642,7 +643,7 @@ def _index_update_blocks(params: ParamDict, shortname: str,
     findexdbm = drs_database.FileIndexDatabase(params, shortname)
     findexdbm.load_db()
     # get astrometric database
-    astromdb = drs_database.AstrometricDatabase(params, shortname)
+    astromdb = drs_astrometrics.AstrometricDatabase(params, shortname)
     astromdb.load_db()
     # loop around block kinds (with the indexing filter)
     for block_kind in block_kinds:
@@ -674,7 +675,7 @@ def _index_update_blocks_batch(params: ParamDict, shortname: str,
     findexdbm = drs_database.FileIndexDatabase(params, shortname)
     findexdbm.load_db()
     # get astrometric database
-    astromdb = drs_database.AstrometricDatabase(params, shortname)
+    astromdb = drs_astrometrics.AstrometricDatabase(params, shortname)
     astromdb.load_db()
     # start a message if batch_idx and total_batches given
     if (batch_idx is not None) and (total_batches is not None):

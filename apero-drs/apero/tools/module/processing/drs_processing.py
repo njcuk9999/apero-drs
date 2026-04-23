@@ -4373,7 +4373,7 @@ def _check_runtable(params, runtable, recipemod):
 
 def _find_special_targets(params: ParamDict, pconst,
                           object_list: List[str], special_name: str,
-                          objdbm: drs_database.AstrometricDatabase,
+                          objdbm: drs_astrometrics.AstrometricDatabase,
                           ) -> List[str]:
     """
     Find special targets (i.e. telluric targets or science targets) in the
@@ -4397,7 +4397,7 @@ def _find_special_targets(params: ParamDict, pconst,
         if len(FOUND_SPECIAL_DICT[special_name]) > 0:
             return FOUND_SPECIAL_DICT[special_name]
     # Other wise make found / missing list
-    found_list, missing_list = objdbm.find_objnames(pconst, object_list,
+    found_list, missing_list = objdbm.find_objnames(object_list,
                                                     allow_empty=False,
                                                     listname=special_name)
     # -------------------------------------------------------------------------

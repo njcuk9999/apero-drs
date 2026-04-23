@@ -221,7 +221,7 @@ class Instrument:
         object names - use:
             objdbm = drs_database.ObjectDatabase(params)
             objdbm.load_db()
-            objdbm.find_objname(pconst, objname)
+            objdbm.find_objname(objname)
         instead to deal with aliases
 
         :param objname: str, input object name

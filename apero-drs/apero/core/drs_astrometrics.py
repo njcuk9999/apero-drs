@@ -180,6 +180,125 @@ def legacy_view(entry: Optional[Dict[str, Any]]
     for col, getter in LEGACY_COL_MAP.items():
         out[col] = getter(entry)
     return out
+
+
+def _legacy_value(row: Dict[str, Any], key: str,
+                  default: Any = None) -> Any:
+    """Extract a legacy-row value with null/masked handling."""
+    if key not in row:
+        return default
+    value = row.get(key)
+    if np.ma.is_masked(value):
+        return default
+    if value is None:
+        return default
+    if isinstance(value, str) and drs_text.null_text(value, NULL_TEXT):
+        return default
+    if isinstance(value, (float, np.floating)) and not np.isfinite(value):
+        return default
+    return value
+
+
+def _legacy_add_nested(entry: Dict[str, Any], row: Dict[str, Any],
+                       out_key: str, value_key: str,
+                       source_key: str) -> None:
+    """Add a yaml nested {value, source} block from legacy row keys."""
+    value = _legacy_value(row, value_key)
+    source = _legacy_value(row, source_key)
+    if value is None and source is None:
+        return
+    block: Dict[str, Any] = dict()
+    if value is not None:
+        block['value'] = value
+    if source is not None:
+        block['source'] = source
+    entry[out_key] = block
+
+
+def legacy_row_to_entry(row: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+    """Convert one legacy SQL-style astrometric row into yaml format."""
+    if not isinstance(row, dict):
+        return None
+    raw_obj = _legacy_value(row, 'OBJNAME')
+    apero_name = clean_object(raw_obj)
+    if apero_name in ['', 'Null']:
+        return None
+    entry: Dict[str, Any] = {APERO_NAME_KEY: apero_name}
+    original = _legacy_value(row, 'ORIGINAL_NAME', default=raw_obj)
+    if original is not None:
+        entry['ORIGINAL_NAME'] = str(original)
+    simbad_name = _legacy_value(row, 'SIMBAD_NAME')
+    if simbad_name is not None:
+        entry['SIMBAD_NAME'] = str(simbad_name)
+    aliases = _legacy_value(row, 'ALIASES')
+    if aliases is not None:
+        if isinstance(aliases, str):
+            alias_list = [a.strip() for a in aliases.split('|') if a.strip()]
+        elif isinstance(aliases, list):
+            alias_list = [str(a).strip() for a in aliases if str(a).strip()]
+        else:
+            alias_list = [str(aliases).strip()]
+        if len(alias_list) > 0:
+            entry['ALIASES'] = alias_list
+    epoch = _legacy_value(row, 'EPOCH')
+    if epoch is not None:
+        entry['EPOCH'] = epoch
+    _legacy_add_nested(entry, row, 'RA', 'RA_DEG', 'RA_SOURCE')
+    _legacy_add_nested(entry, row, 'DEC', 'DEC_DEG', 'DEC_SOURCE')
+    _legacy_add_nested(entry, row, 'PMRA', 'PMRA', 'PMRA_SOURCE')
+    _legacy_add_nested(entry, row, 'PMDE', 'PMDE', 'PMDE_SOURCE')
+    _legacy_add_nested(entry, row, 'PLX', 'PLX', 'PLX_SOURCE')
+    _legacy_add_nested(entry, row, 'RV', 'RV', 'RV_SOURCE')
+    _legacy_add_nested(entry, row, 'TEFF', 'TEFF', 'TEFF_SOURCE')
+    _legacy_add_nested(entry, row, 'SPT', 'SP_TYPE', 'SP_TYPE_SOURCE')
+    notes = _legacy_value(row, 'NOTES')
+    if notes is not None:
+        entry['NOTES'] = str(notes)
+    return entry
+
+
+def legacy_rows_to_entries(rows: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    """Convert legacy row dicts into deduplicated yaml entry dicts."""
+    out: Dict[str, Dict[str, Any]] = dict()
+    for row in rows:
+        entry = legacy_row_to_entry(row)
+        if entry is None:
+            continue
+        apero_name = str(entry[APERO_NAME_KEY])
+        out[apero_name] = entry
+    return list(out.values())
+
+
+def replace_entries_from_legacy_rows(astrom_dir: str,
+                                     rows: List[Dict[str, Any]],
+                                     author: Optional[str] = None
+                                     ) -> Dict[str, int]:
+    """Replace yaml archive entries using legacy SQL-style rows."""
+    entries = legacy_rows_to_entries(rows)
+    keep_files = set()
+    for entry in entries:
+        keep_files.add(_safe_filename(str(entry[APERO_NAME_KEY])))
+    os.makedirs(astrom_dir, exist_ok=True)
+    removed = 0
+    for name in os.listdir(astrom_dir):
+        if not name.endswith(YAML_EXT):
+            continue
+        if name == 'reject_list.yaml':
+            continue
+        if name in keep_files:
+            continue
+        fpath = os.path.join(astrom_dir, name)
+        if not os.path.isfile(fpath):
+            continue
+        try:
+            os.remove(fpath)
+            removed += 1
+        except OSError:
+            pass
+    for entry in entries:
+        upload_entry(astrom_dir, entry, author=author, overwrite=True)
+    _invalidate_dir_caches(astrom_dir)
+    return {'written': len(entries), 'removed': removed}
 # -----------------------------------------------------------------------------
 # Module-level caches: shared by all AstrometricDatabase instances within a
 # process, keyed by the absolute path of the astrometrics directory. On a
@@ -1781,7 +1900,7 @@ class AstrometricDatabase:
         # store the recipe shortname for log messages
         self.shortname = shortname or 'None'
         # base assets path from params (may not exist on disk yet)
-        assets_root = str(params['DRS_DATA_ASSETS'])
+        assets_root = str(params['PATH.ASSETS'])
         # absolute path to the astrometrics directory
         self.path = os.path.abspath(os.path.join(assets_root, ASTROM_SUBDIR))
         # absolute path to the lock directory

@@ -19,7 +19,7 @@ from aperocore.base import base
 from aperocore.constants import param_functions
 from aperocore.constants import load_functions
 from aperocore import drs_lang
-from apero.core import drs_database
+from apero.core import drs_astrometrics
 from apero.core import drs_file
 from aperocore.core import drs_log
 from apero.instruments.spirou import file_definitions
@@ -53,7 +53,7 @@ textentry = drs_lang.textentry
 # Raw prefix
 RAW_PREFIX = file_definitions.raw_prefix
 # get the object database
-ObjectDatabase = drs_database.AstrometricDatabase
+ObjectDatabase = drs_astrometrics.AstrometricDatabase
 
 
 # =============================================================================

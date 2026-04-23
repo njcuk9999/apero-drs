@@ -1629,21 +1629,6 @@ CDict.set('VIZIER_TAPURL',
           value='https://tapvizier.cds.unistra.fr/TAPVizieR/tap',
           source=__NAME__, group=cgroup)
 
-# Define the google sheet to use for crossmatch (may be set to a directory for
-# completely offline reduction)
-CDict.set('GSHEET_URL',
-          value='1dOogfEwC7wAagjVFdouB1Y1JdF9Eva4uDW6CTZ8x2FM', source=__NAME__, group=cgroup)
-
-# Define the google sheet objname list main list id number (may be set to a
-# csv file for completely offline reduction)
-CDict.set('GSHEET_MAINLIST_ID', value='0', source=__NAME__, group=cgroup)
-
-# Define the google sheet objname list pending list id number (may be set to a
-# csv file for completely offline reduction)
-CDict.set('GSHEET_PENDLIST_ID', value='623506317', source=__NAME__, group=cgroup)
-
-# Define the google sheet objname list reject list id number
-CDict.set('GSHEET_REJECTLIST_ID', value='2006484513', source=__NAME__, group=cgroup)
 
 # Define the bad list header key
 CDict.set('REJECT_DRS_HKEY', value=None, source=__NAME__, group=cgroup)
@@ -1654,16 +1639,6 @@ CDict.set('REJECT_VALCOL', value='IDENTIFIER', source=__NAME__, group=cgroup)
 # Define the bad list google spreadsheet mask column for preprocessing
 CDict.set('REJECT_MASKCOL', value='PP', source=__NAME__, group=cgroup)
 
-# Define the google sheet bibcode id number
-CDict.set('GSHEET_BIBCODE_UD', value='956956617', source=__NAME__, group=cgroup)
-
-# Define the google sheet user url object list (None for no user list)
-# (may be set to a directory for completely offline reduction)
-CDict.set('GSHEET_USER_URL', value='None', source=__NAME__, group=cgroup)
-
-# Define the google sheet user id object list id number (may be set to a
-# csv file for completely offline reduction)
-CDict.set('GSHEET_USER_ID', value='0', source=__NAME__, group=cgroup)
 
 # Define whether to resolve from local database (via drs_database / drs_db)
 CDict.set('RESOLVE_FROM_DB', value=True, source=__NAME__, group=cgroup)
@@ -1711,8 +1686,6 @@ CDict.set('RLIST_GSHEET_SHEETNAME', value='NIRPS_HA', source=__NAME__, group=cgr
 
 # gaia col name in google sheet
 CDict.set('GAIA_COLNAME', value='GAIADR2ID', source=__NAME__, group=cgroup)
-# object col name in google sheet
-CDict.set('OBJ_COLNAME', value='OBJNAME', source=__NAME__, group=cgroup)
 # alias col name in google sheet
 CDict.set('ALIAS_COLNAME', value='ALIASES', source=__NAME__, group=cgroup)
 # rv col name in google sheet

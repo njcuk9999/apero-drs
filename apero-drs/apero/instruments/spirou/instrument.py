@@ -256,7 +256,7 @@ class Spirou(instrument_mod.Instrument):
         object names - use:
             objdbm = drs_database.ObjectDatabase(params)
             objdbm.load_db()
-            objdbm.find_objname(pconst, objname)
+            objdbm.find_objname(objname)
         instead to deal with aliases
 
         :param objname: str, input object name
@@ -967,7 +967,7 @@ def constuct_objname(params: Union[ParamDict, None], pconst, header,
     # -------------------------------------------------------------------------
     if check_aliases and objdbm is not None:
         # get clean / alias-safe version of object name
-        objectname, _ = objdbm.find_objname(pconst, rawobjname)
+        objectname, _ = objdbm.find_objname(rawobjname)
     else:
         objectname = instrument_mod.clean_object(rawobjname)
     # -------------------------------------------------------------------------

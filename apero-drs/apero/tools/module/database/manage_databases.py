@@ -9,11 +9,11 @@ Created on 2020-08-2020-08-18 17:13
 """
 import os
 import shutil
-from typing import Dict, List, Literal, Union
+from typing import Any, Dict, List, Literal, Union
 
 import numpy as np
 import pandas as pd
-from astropy.table import Table, vstack, MaskedColumn
+from astropy.table import Table, MaskedColumn
 
 from apero.base import base as apero_base
 from apero.core import drs_database
@@ -27,7 +27,6 @@ from aperocore.constants import load_functions
 from aperocore.constants import param_functions
 from aperocore.core import drs_db
 from aperocore.core import drs_log
-from aperocore.core import drs_text
 from aperocore.io import drs_io
 
 # =============================================================================
@@ -499,8 +498,8 @@ def create_object_database(params: ParamDict, pconst: Instrument,
 
     The astrometric catalogue is now yaml-backed (one file per object
     under DRS_DATA_ASSETS/astrometrics) so there is no SQL table to
-    create. This function only ensures the directory exists and then
-    populates it via :func:`update_object_database`.
+    create. This function only ensures the directory exists and validates
+    that entries are readable.
 
     :param params: ParamDict, the parameter dictionary of constants
     :param pconst: Pseudo constants (unused, kept for API parity)
@@ -519,9 +518,10 @@ def create_object_database(params: ParamDict, pconst: Instrument,
         WLOG(params, '', 'Astrometric database is yaml-backed (no SQL '
              'table to create)')
     # ---------------------------------------------------------------------
-    # update object database from google sheet(s) / archive
-    update_object_database(params)
-    # -------------------------------------------------------------------------
+    # validate yaml-backed archive readability
+    validate_astrometric_yaml_archive(params, shortname='MAN_DB',
+                                      log=verbose)
+    # ---------------------------------------------------------------------
     return objectdbm
 
 
@@ -538,156 +538,77 @@ def object_db_populated(params: ParamDict, shortname: str) -> bool:
     return count > 0
 
 
-def get_object_database(params: ParamDict, log: bool = True) -> Table:
-    """
-    Get the object database from google sheet (or file)
-    and combine with pending / user table if required and found
-
-    :param params: ParamDict, parameter dictionary of constants
-    :param log: whether to log table read
-
-    :return: astropy table, the object database
-    """
-    # set function name
-    func_name = __NAME__ + '.get_object_database()'
-    # get parameters from params
-    gsheet_url = params['OBJ.LIST.GSHEET_URL']
-    main_id = params['OBJ.LIST.GSHEET_MAINLIST_ID']
-    pending_id = params['OBJ.LIST.GSHEET_PENDLIST_ID']
-    user_url = params['OBJ.LIST.GSHEET_USER_URL']
-    user_id = params['OBJ.LIST.GSHEET_USER_ID']
-    # object col name in google sheet
-    gl_objcol = params['OBJ.LIST.OBJ_COLNAME']
-    # -------------------------------------------------------------------------
-    # load pseudo constants
-    pconst = load_functions.load_pconfig(select.INSTRUMENTS)
-    # get object database column data types
-    obj_data_types = dict()
-    astrom_cols = pconst.ASTROMETRIC_DB_COLUMNS()
-    # loop around columns and get data type
-    for col in astrom_cols.columns:
-        obj_data_types[col.name] = astrom_cols.get_datatype(col.name)
-    # -------------------------------------------------------------------------
-    # print that we are updating object database
-    if log:
-        WLOG(params, 'info', textentry('40-503-00039'))
-    # -------------------------------------------------------------------------
-    # deal with gsheet_url being local csv file
-    if os.path.exists(gsheet_url):
-        mainpath = os.path.join(gsheet_url, main_id)
-        pendpath = os.path.join(gsheet_url, pending_id)
-        try:
-            maintable = drs_io.no_mask_table(Table.read(mainpath, format='csv'))
-        except Exception as e:
-            # error msg: if OBJ_LIST_GOOGLE_SHEET_URL is local directory
-            #            main_id must be a valid csv file.
-            eargs = [mainpath, type(e), str(e), func_name]
-            raise AperoCodedException(params, '09-002-00005', targs=eargs)
-        # noinspection PyBroadException
-        try:
-            pendtable = drs_io.no_mask_table(Table.read(pendpath, format='csv'))
-        except Exception as _:
-            pendtable = Table()
-    else:
-        # get google sheets
-        maintable = drs_database.get_google_sheet(params, gsheet_url, main_id)
-        pendtable = drs_database.get_google_sheet(params, gsheet_url,
-                                                  pending_id)
-    # force types in main table and pend table (so we can join them)
-    maintable = _force_column_dtypes(maintable, obj_data_types)
-    pendtable = _force_column_dtypes(pendtable, obj_data_types)
-    # -------------------------------------------------------------------------
-    # get the user table if defined
-    if not drs_text.null_text(user_url, ['None', 'Null', '']):
-        if os.path.exists(user_url):
-            userpath = os.path.join(user_url, user_id)
-            # noinspection PyBroadException
-            try:
-                usertable = drs_io.no_mask_table(Table.read(userpath,
-                                                            format='csv'))
-            except Exception as _:
-                usertable = Table()
-        else:
-            usertable = drs_database.get_google_sheet(params, user_url, user_id)
-    else:
-        usertable = Table()
-    # force types in user table
-    if len(usertable) > 0:
-        usertable = _force_column_dtypes(usertable, obj_data_types)
-    # -------------------------------------------------------------------------
-    # update main table with other tables (if we have entries in the pending
-    #   table) and if those object name column not already in main table
-    for _table in [pendtable, usertable]:
-        # only do this if this table has some entries
-        if len(_table) != 0:
-            # make sure we have the object name column
-            if gl_objcol in _table.colnames:
-                # we can't keep duplicates in the _table drop them and keep most
-                # recent (lowest in list)
-                _table = _drop_duplicates(_table, gl_objcol)
-                # create a mask of valies not in the main table
-                pmask = ~np.isin(_table[gl_objcol], maintable[gl_objcol])
-                # add new columns to main table
-                maintable = vstack([maintable, _table[pmask]])
-    # return the main table
-    return maintable
-
-
 def update_object_database(params: ParamDict, log: bool = True):
     """
-    Update the local object database - note this overwrites all entries in the
-    local database
-
-    By default this uses a googlesheet URL (OBJ_LIST_GOOGLE_SHEET_URL)
-    + workbook ids to populate the object database
-    (OBJ_LIST_GSHEET_MAIN_LIST_ID + OBJ_LIST_GSHEET_PEND_LIST_ID)
-
-    however if OBJ_LIST_GOOGLE_SHEET_URL is a local directory one can set the
-    OBJ_LIST_GSHEET_MAIN_LIST_ID + OBJ_LIST_GSHEET_PEND_LIST_ID to csv
-    files for a complete offline reduction
+    Validate the yaml-backed astrometric archive.
 
     :param params: ParamDict, the parameter dictionary of constants
     :param log: bool, if True logs update
 
-    :return: None, updates local object database
+    :return: None
     """
-    # get pconst
-    pconst = load_functions.load_pconfig(select.INSTRUMENTS)
-    # get list of databases
-    databases = list_databases(params, 'MAN_DB')
-    # get the object database (combined with pending + user table)
-    maintable = get_object_database(params, log=log)
-    # -------------------------------------------------------------------------
-    # convert main table to a pandas dataframe
-    df = maintable.to_pandas()
-    # add a date added column
-    df['DATE_ADDED'] = np.full(len(df), base.__now__.iso)
-    # -------------------------------------------------------------------------
-    # get columns and ctypes from pconst
-    objdb_cols = pconst.ASTROMETRIC_DB_COLUMNS()
-    # -------------------------------------------------------------------------
-    # construct directory
-    objectdbm = databases['astrom']
-    # -------------------------------------------------------------------------
-    # make database
-    objectdb = drs_db.AperoDatabase(objectdbm.dburl,
-                                    tablename=objectdbm.dbtable,
-                                    connect_args=objectdbm.connect_args)
-    # -------------------------------------------------------------------------
-    # remove table if it already exists
-    if objectdb.tablename in objectdb.get_tables():
-        objectdb.backup()
-        objectdb.delete_table(objectdb.tablename)
-    # add main table
-    objectdb.add_table(objectdb.tablename,
-                       columns=objdb_cols.columns,
-                       indexes=objdb_cols.indexes,
-                       uniques=objdb_cols.uniques)
-    # ---------------------------------------------------------------------
-    # add rows from pandas dataframe
-    objectdb.add_from_pandas(df, tablename=objectdb.tablename)
-    # ---------------------------------------------------------------------
-    drs_database.db_push(params)
+    # Compatibility shim: object database is yaml-backed and no longer synced
+    # from sheets here. We only validate archive readability.
+    validate_astrometric_yaml_archive(params, shortname='MAN_DB', log=log)
+
+
+def validate_astrometric_yaml_archive(params: ParamDict,
+                                      shortname: str = 'MAN_DB',
+                                      log: bool = True) -> Dict[str, int]:
+    """
+    Validate readability of yaml-backed astrometric entries on disk.
+
+    This assumes ``apero-assets/astrometrics`` already exists and is the
+    source of truth.
+
+    :param params: ParamDict, the parameter dictionary of constants
+    :param shortname: str, recipe shortname used for manager construction
+    :param log: bool, if True logs validation summary/errors
+
+    :return: dict with ``total``, ``valid`` and ``invalid`` counts
+    """
+    # build manager and ensure path exists
+    objdbm = drs_astrometrics.AstrometricDatabase(params, shortname)
+    objdbm._ensure_loaded()
+    astrom_dir = objdbm.path
+    # gather yaml files (exclude reject list)
+    yaml_files = []
+    for name in sorted(os.listdir(astrom_dir)):
+        if not name.endswith('.yaml'):
+            continue
+        if name == 'reject_list.yaml':
+            continue
+        yaml_files.append(os.path.join(astrom_dir, name))
+    # validate files one-by-one
+    bad_files = []
+    for yfile in yaml_files:
+        try:
+            entry = drs_astrometrics.AstrometricDatabase._read_yaml(yfile)
+            if not isinstance(entry, dict):
+                raise TypeError('entry is not a dict')
+            apero_name = entry.get('APERO_NAME', None)
+            cleaned = drs_astrometrics.clean_object(apero_name)
+            if cleaned in ['Null', '']:
+                emsg = 'entry missing valid APERO_NAME'
+                raise ValueError(emsg)
+        except Exception as e:
+            bad_files.append((yfile, type(e).__name__, str(e)))
+    # summary counts
+    total = len(yaml_files)
+    invalid = len(bad_files)
+    valid = total - invalid
+    # log summary and fail on invalid entries
+    if log:
+        msg = 'Astrometric yaml validation: total={0} valid={1} invalid={2}'
+        WLOG(params, 'info', msg.format(total, valid, invalid))
+    if invalid > 0:
+        yfile, etype, emsg = bad_files[0]
+        eargs = [yfile, etype, emsg]
+        full = ('Invalid astrometric yaml entry in {0} (error {1}: {2}). '
+                'Fix yaml files under DRS_DATA_ASSETS/astrometrics.')
+        raise AperoCodedException(params, message=full.format(*eargs),
+                                  targs=eargs)
+    return dict(total=total, valid=valid, invalid=invalid)
 
 
 # =============================================================================
@@ -900,22 +821,6 @@ def _force_column_dtypes(table: Table, coltype: Dict[str, type]) -> Table:
     # return the new table
     return table
 
-
-def _drop_duplicates(table: Table, column: str, keep: str = 'last'):
-    """
-    Drop duplicates in an astropy table
-
-    :param table: astropy table
-    :param column: column that is unique
-    :param keep: str, value to keep ('last', 'first')
-    :return:
-    """
-    # convert table to dataframe
-    df = table.to_pandas()
-    # remove duplicates
-    df = df.drop_duplicates(subset=column, keep=keep)
-    # convert back to astropy table
-    return Table.from_pandas(df)
 
 
 # =============================================================================

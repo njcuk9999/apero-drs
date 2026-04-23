@@ -3382,35 +3382,6 @@ CDict.add('VIZIER_TAPURL', value=None, dtype=str, source=__NAME__,
                        'crossmatching to Gaia DR2/DR3/EDR3 and '
                        'AllWISE photometry via VizieR)'))
 
-# Define the google sheet to use for crossmatch (may be set to a directory for
-#   completely offline reduction)
-CDict.add('GSHEET_URL', value=None,
-          dtype=str, source=__NAME__, group=cgroup,
-          description=('Define the google sheet to use '
-                       'for crossmatch'))
-
-# Define the google sheet objname list main list id number (may be set to a
-#     csv file for completely offline reduction)
-CDict.add('GSHEET_MAINLIST_ID', value=None,
-          dtype=str, source=__NAME__, group=cgroup,
-          description='Define the google sheet objname '
-                      'list main list id number')
-
-# Define the google sheet objname list pending list id number (may be set to a
-# #     csv file for completely offline reduction)
-CDict.add('GSHEET_PENDLIST_ID', value=None,
-          dtype=str, source=__NAME__, group=cgroup,
-          description='Define the google sheet '
-                      'objname list pending list '
-                      'id number')
-
-# Define the google sheet objname list reject list id number
-CDict.add('GSHEET_REJECTLIST_ID',
-          value=None, dtype=str, source=__NAME__,
-          group=cgroup,
-          description='Define the google sheet '
-                      'objname list reject list '
-                      'id number')
 
 # Define the bad list header key
 CDict.add('REJECT_DRS_HKEY', value=None, dtype=str,
@@ -3431,27 +3402,6 @@ CDict.add('REJECT_MASKCOL', value=None, dtype=str,
                       'preprocessing')
 
 
-# Define the google sheet bibcode id number
-CDict.add('GSHEET_BIBCODE_UD',
-          value=None, dtype=str, source=__NAME__,
-          group=cgroup,
-          description='Define the google sheet '
-                      'bibcode id number')
-
-# Define the google sheet user url object list (None for no user list)
-#     (may be set to a directory for completely offline reduction)
-CDict.add('GSHEET_USER_URL', value=None,
-          dtype=str, source=__NAME__, group=cgroup,
-          description='Define the google sheet user url '
-                      'object list (None for no user '
-                      'list)')
-
-# Define the google sheet user id object list id number (may be set to a
-#      csv file for completely offline reduction)
-CDict.add('GSHEET_USER_ID', value=None,
-          dtype=str, source=__NAME__, group=cgroup,
-          description='Define the google sheet user id '
-                      'object list id number')
 
 # Define whether to resolve from local database (via drs_database / drs_db)
 CDict.add('RESOLVE_FROM_DB',
@@ -3557,10 +3507,6 @@ CDict.add('RLIST_GSHEET_SHEETNAME',
 CDict.add('GAIA_COLNAME', value=None, dtype=str,
           source=__NAME__, group=cgroup,
           description='gaia col name in google sheet')
-# object col name in google sheet
-CDict.add('OBJ_COLNAME', value=None, dtype=str,
-          source=__NAME__, group=cgroup,
-          description='object col name in google sheet')
 # alias col name in google sheet
 CDict.add('ALIAS_COLNAME', value=None, dtype=str,
           source=__NAME__, group=cgroup,

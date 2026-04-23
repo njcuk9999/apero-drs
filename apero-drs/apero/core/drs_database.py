@@ -35,6 +35,7 @@ from astropy.table import Table
 from pandasql import sqldf
 
 from apero.base import base as apero_base
+from apero.core import drs_astrometrics
 from apero.core import drs_file
 from apero.instruments import select
 from apero.io import drs_fits
@@ -80,6 +81,8 @@ WLOG = drs_log.wlog
 # get drs header
 DrsHeader = drs_file.Header
 FitsHeader = drs_file.FitsHeader
+# keep legacy API path drs_database.AstrometricDatabase working
+AstrometricDatabase = drs_astrometrics.AstrometricDatabase
 # get file types
 DrsInputFile = drs_file.DrsInputFile
 DrsFitsFile = drs_file.DrsFitsFile
