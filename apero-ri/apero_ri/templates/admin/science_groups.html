@@ -54,6 +54,21 @@
         Select a science group above to manage its run IDs and users.
     </div>
 
+    <!-- Top action bar (mirrors bottom #sg-actions). Shown only
+         while a group is selected so users can save/delete from
+         the top of the editor as well. -->
+    <div id="sg-actions-top" class="ari-sg-actions ari-sg-detail-section"
+         style="display:none; margin-bottom:0.6rem;">
+        <button id="btn-save-group-top" class="ari-btn ari-btn--primary"
+                disabled>
+            <i class="fa-solid fa-floppy-disk"></i> Save
+        </button>
+        <button id="btn-delete-group-top" class="ari-btn ari-btn--danger"
+                disabled>
+            <i class="fa-solid fa-trash"></i> Delete Group
+        </button>
+    </div>
+
     <!-- Run IDs transfer section (hidden until group selected) -->
     <div id="runid-section" class="ari-sg-section ari-sg-detail-section" style="display:none;">
         <div class="ari-sg-section__header">
@@ -212,5 +227,5 @@ window.ARI_SCI_GROUPS = {
     instruments: {{ instruments|tojson }}
 };
 </script>
-<script src="{{ url_for('static', filename='js/admin_science_groups.js') }}"></script>
+<script src="{{ url_for('static', filename='js/admin_science_groups.js') }}?v=20260423n"></script>
 {% endblock %}

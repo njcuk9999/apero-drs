@@ -282,10 +282,23 @@
             desc = '<p class="ari-tinfo-section__desc">'
                 + escapeHtml(section.description) + "</p>";
         }
-        // No "Generate" button: charts auto-render on mount
-        // (see bindDefaultChartActions). The status/error
-        // affordances are still present so the renderer can
-        // surface progress and errors inline.
+        // SED and HR auto-render on mount (data-portal parity).
+        // Finder/rotation are slow + heavy: keep the explicit
+        // Generate button so the user can opt in.
+        var autoRender = (ctype === 'sed' || ctype === 'hr_diagram');
+        var btnHtml = '';
+        if (!autoRender) {
+            var btnLabel = ({
+                finder: 'Generate finder chart',
+                rotation: 'Generate TESS rotation'
+            })[ctype] || 'Generate';
+            btnHtml = ''
+                + '<button type="button"'
+                + ' class="ari-btn ari-btn--primary"'
+                + ' data-chart-action="run">'
+                + '<i class="' + escapeHtml(icon) + '"></i> '
+                + escapeHtml(btnLabel) + '</button>';
+        }
         var widget = ''
             + '<div class="ari-tinfo-chart"'
             + ' id="' + escapeHtml(chartId) + '"'
@@ -293,6 +306,7 @@
             + '<div class="ari-tinfo-chart__controls"'
             + ' style="display:flex; gap:0.5rem;'
             + ' align-items:center; margin-bottom:0.5rem;">'
+            + btnHtml
             + '<span class="ari-tinfo-chart__status"'
             + ' data-chart-status'
             + ' style="color:var(--ari-text-muted);"></span>'
@@ -683,6 +697,12 @@
     function renderChartImages(host, payload) {
         var box = host.querySelector('[data-chart-images]');
         if (!box) return;
+        // Raster images (finder bands, TESS sectors) lay out
+        // horizontally with wrap. The Bokeh path overrides this
+        // back to display:block so stretch_width works.
+        box.style.display = 'flex';
+        box.style.flexWrap = 'wrap';
+        box.style.gap = '0.75rem';
         box.innerHTML = '';
         var imgs = [];
         if (payload && Array.isArray(payload.images)) {
@@ -781,7 +801,7 @@
                 renderChartImages(host, data);
             }
             if (data.log) appendChartLog(host, data.log);
-            setChartStatus(host, 'Done.');
+            setChartStatus(host, '');
         }).catch(function (err) {
             setChartError(host,
                 'Network error: ' + (err && err.message
@@ -793,22 +813,260 @@
     }
 
     function bindDefaultChartActions(container, opts) {
-        // Auto-fetch every chart-section host as soon as it is
-        // bound. There is no "Generate" button anymore -- the
-        // chart renders on its own on page load (matching the
-        // data-portal object page behaviour).
+        // Two behaviours:
+        //   - sed / hr_diagram: auto-fetch on mount (no button).
+        //   - finder / rotation: wait for the user to click the
+        //     Generate button (slow, heavy queries).
         var hosts = container.querySelectorAll(
             '.ari-tinfo-chart[data-chart-type]');
         hosts.forEach(function (host) {
             var ctype = host.getAttribute('data-chart-type');
             if (!ctype) return;
-            // Defer to the next animation frame so the host is
-            // measurable (Bokeh stretch_width needs a non-zero
-            // container width to compute the x range).
+            var btn = host.querySelector(
+                '[data-chart-action="run"]');
+            if (btn) {
+                btn.addEventListener('click', function () {
+                    runChartFetch(host, ctype, opts);
+                });
+                return;
+            }
+            // No button => auto-render. Defer to the next frame
+            // so the host has a measurable width (Bokeh
+            // stretch_width needs non-zero width).
             window.requestAnimationFrame(function () {
                 runChartFetch(host, ctype, opts);
             });
         });
+    }
+
+    // Freeze the public API so a stray duplicate IIFE that
+    // reassigns window.AperoTargetInfo is silently rejected
+    // (writable:false). Runtime backstop for the recurring
+    // "legacy plain-text renderer reappears" bug.
+    var __api = Object.freeze({
+        render: render,
+        applyPermissionVisibility: applyPermissionVisibility,
+    });
+    try {
+        Object.defineProperty(window, "AperoTargetInfo", {
+            value: __api,
+            writable: false,
+            configurable: false,
+            enumerable: true,
+        });
+    } catch (e) {
+        window.AperoTargetInfo = __api;
+    }
+}());
+// === END OF FILE === apero_ri target_info_render.js sentinel.
+// DO NOT APPEND ANY CODE BELOW THIS LINE. The legacy plain-text
+// renderer must NEVER come back. See
+// /memories/repo/target-info-render-no-duplicate.md and
+// apero-ri/tests/test_target_info_render_invariants.py for the
+// invariants enforced by CI.
+/* eslint-disable no-undef */
+/**
+ * APERO RI - shared target-info section renderer.
+ *
+ * Renders the JSON payload produced by
+ * apero_ri/components/target_info_sections.py into a container.
+ * Used by the astrometrics page (Resolve target tab) and by the
+ * data-portal object page (Target info tab).
+ *
+ * Public API exposed on window.AperoTargetInfo:
+ *   render(container, payload, opts)
+ *     container : HTMLElement -- where to place the rendered sections
+ *     payload   : object with .sections (list of section dicts)
+ *     opts      : { mountChartsCb: function(sectionId, hostEl, type) }
+ *                 -- optional callback invoked once each chart card is
+ *                    inserted, so the caller can lazy-mount its plot.
+ */
+(function () {
+    "use strict";
+
+    var FA_DEFAULT_DATA_ICON = "fa-solid fa-table-list";
+    var FA_DEFAULT_CHART_ICON = "fa-solid fa-chart-area";
+
+    function escapeHtml(value) {
+        if (value === null || value === undefined) {
+            return "";
+        }
+        return String(value)
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#39;");
+    }
+
+    function isMissing(v) {
+        if (v === null || v === undefined) return true;
+        if (typeof v === "string" && v.trim() === "") return true;
+        if (typeof v === "number" && !isFinite(v)) return true;
+        return false;
+    }
+
+    function formatValue(row) {
+        var v = row.value;
+        if (isMissing(v)) {
+            return { html: "<em>no data</em>", missing: true };
+        }
+        if (Array.isArray(v)) {
+            var parts = v.map(function (item) {
+                return escapeHtml(item);
+            });
+            return { html: parts.join(", "), missing: false };
+        }
+        if (typeof v === "number" && row.precision !== null
+                && row.precision !== undefined) {
+            try {
+                return { html: escapeHtml(v.toFixed(row.precision)),
+                         missing: false };
+            } catch (_) { /* fall through */ }
+        }
+        return { html: escapeHtml(v), missing: false };
+    }
+
+    function makeRowHtml(row) {
+        var fmt = formatValue(row);
+        var labelHtml = escapeHtml(row.label || row.key || "");
+        if (row.citation_text) {
+            labelHtml += ' <span class="ari-tinfo-cite" title="'
+                + escapeHtml(row.citation_text) + '">[?]</span>';
+        }
+        var valueClass = "ari-tinfo-grid__value";
+        if (fmt.missing) {
+            valueClass += " ari-tinfo-grid__value--null";
+        }
+        var inner = fmt.html;
+        if (row.units && !fmt.missing) {
+            inner += ' <span class="ari-tinfo-source">'
+                + escapeHtml(row.units) + "</span>";
+        }
+        if (row.source) {
+            inner += ' <span class="ari-tinfo-source" title="Source">('
+                + escapeHtml(row.source) + ")</span>";
+        }
+        var actions = "";
+        if (row.flaggable) {
+            actions += '<button type="button"'
+                + ' class="ari-tinfo-flag-btn"'
+                + ' data-flag-key="' + escapeHtml(row.key || "") + '"'
+                + ' title="Flag this value as wrong">'
+                + '<i class="fa-solid fa-flag"></i></button>';
+        }
+        if (row.editable) {
+            actions += '<button type="button"'
+                + ' class="ari-tinfo-edit-btn"'
+                + ' data-edit-key="' + escapeHtml(row.key || "") + '"'
+                + ' data-perm="manage.astrometrics" hidden'
+                + ' title="Edit this value (moderators only)">'
+                + '<i class="fa-solid fa-pen"></i></button>';
+        }
+        return ''
+            + '<div class="ari-tinfo-grid__label">' + labelHtml
+            + '</div>'
+            + '<div class="' + valueClass + '">'
+            + inner + actions
+            + '</div>';
+    }
+
+    function renderDataSection(section) {
+        var icon = section.icon || FA_DEFAULT_DATA_ICON;
+        var rows = section.rows || [];
+        var rowsHtml = rows.map(makeRowHtml).join("");
+        var desc = "";
+        if (section.description) {
+            desc = '<p class="ari-tinfo-section__desc">'
+                + escapeHtml(section.description) + "</p>";
+        }
+        return ''
+            + '<section class="ari-tinfo-section"'
+            + ' data-section-id="' + escapeHtml(section.id) + '"'
+            + ' data-section-kind="data">'
+            + '<h3 class="ari-tinfo-section__header">'
+            + '<i class="' + escapeHtml(icon) + '"></i>'
+            + '<span>' + escapeHtml(section.title) + "</span>"
+            + "</h3>"
+            + desc
+            + '<div class="ari-tinfo-grid">' + rowsHtml + "</div>"
+            + "</section>";
+    }
+
+    function renderChartSection(section) {
+        var icon = section.icon || FA_DEFAULT_CHART_ICON;
+        var chartId = section.chart_id
+            || ("chart-" + (section.id || "x"));
+        var desc = "";
+        if (section.description) {
+            desc = '<p class="ari-tinfo-section__desc">'
+                + escapeHtml(section.description) + "</p>";
+        }
+        return ''
+            + '<section class="ari-tinfo-section"'
+            + ' data-section-id="' + escapeHtml(section.id) + '"'
+            + ' data-section-kind="chart"'
+            + ' data-chart-type="' + escapeHtml(
+                section.chart_type || "") + '">'
+            + '<h3 class="ari-tinfo-section__header">'
+            + '<i class="' + escapeHtml(icon) + '"></i>'
+            + '<span>' + escapeHtml(section.title) + "</span>"
+            + "</h3>"
+            + desc
+            + '<div class="ari-tinfo-chart"'
+            + ' id="' + escapeHtml(chartId) + '">'
+            + '<i class="fa-solid fa-spinner fa-spin"></i>'
+            + " Loading..."
+            + "</div>"
+            + "</section>";
+    }
+
+    function applyPermissionVisibility(container, perms) {
+        if (!container || !perms) return;
+        var nodes = container.querySelectorAll("[data-perm]");
+        nodes.forEach(function (el) {
+            var needed = el.getAttribute("data-perm");
+            if (perms.indexOf(needed) >= 0) {
+                el.removeAttribute("hidden");
+            } else {
+                el.setAttribute("hidden", "");
+            }
+        });
+    }
+
+    function render(container, payload, opts) {
+        if (!container) return;
+        opts = opts || {};
+        var sections = (payload && payload.sections) || [];
+        if (!sections.length) {
+            container.innerHTML = '<p class="ari-section-intro">'
+                + "No target information available." + "</p>";
+            return;
+        }
+        var html = "";
+        sections.forEach(function (sec) {
+            if (sec.kind === "data") {
+                html += renderDataSection(sec);
+            } else if (sec.kind === "chart") {
+                html += renderChartSection(sec);
+            }
+        });
+        container.innerHTML = html;
+
+        if (opts.userPerms) {
+            applyPermissionVisibility(container, opts.userPerms);
+        }
+        if (typeof opts.mountChartsCb === "function") {
+            sections.forEach(function (sec) {
+                if (sec.kind !== "chart") return;
+                var hostId = sec.chart_id;
+                if (!hostId) return;
+                var host = document.getElementById(hostId);
+                if (host) {
+                    opts.mountChartsCb(sec.id, host, sec.chart_type);
+                }
+            });
+        }
     }
 
     window.AperoTargetInfo = {

@@ -1055,6 +1055,21 @@ def _scheduler_poll(local_data_dir: str) -> None:
                         weekly_copies = 4
                     merged_cfg["daily_copies"] = max(0, daily_copies)
                     merged_cfg["weekly_copies"] = max(0, weekly_copies)
+                    from apero_ri.tasks.apero_backup import (
+                        DEFAULT_BACKUP_MAX_SIZE_MB,
+                    )
+                    try:
+                        backup_max_mb = float(
+                            task_cfg.get(
+                                "backup_max_size_mb",
+                                DEFAULT_BACKUP_MAX_SIZE_MB,
+                            )
+                        )
+                    except (TypeError, ValueError):
+                        backup_max_mb = float(DEFAULT_BACKUP_MAX_SIZE_MB)
+                    if backup_max_mb <= 0:
+                        backup_max_mb = float(DEFAULT_BACKUP_MAX_SIZE_MB)
+                    merged_cfg["backup_max_size_mb"] = backup_max_mb
 
                 if task_key == "APERO_SYNC_ASSETS":
                     mode_val = str(

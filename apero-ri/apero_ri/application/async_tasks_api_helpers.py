@@ -31,6 +31,8 @@ def api_async_tasks_save(app):
     active = bool(data.get("active", True))
     daily_copies = int(data.get("daily_copies", 0) or 0)
     weekly_copies = int(data.get("weekly_copies", 0) or 0)
+    has_backup_max_size_mb = "backup_max_size_mb" in data
+    backup_max_size_mb = None
     has_ncores = "ncores" in data
     has_mp_backend = "mp_backend" in data
     has_mp_start_method = "mp_start_method" in data or "mp_start_methd" in data
@@ -54,6 +56,25 @@ def api_async_tasks_save(app):
             ),
             400,
         )
+    if has_backup_max_size_mb:
+        try:
+            backup_max_size_mb = float(data.get("backup_max_size_mb"))
+        except (TypeError, ValueError):
+            return (
+                jsonify(
+                    success=False,
+                    error="backup_max_size_mb must be a number",
+                ),
+                400,
+            )
+        if backup_max_size_mb <= 0:
+            return (
+                jsonify(
+                    success=False,
+                    error="backup_max_size_mb must be > 0",
+                ),
+                400,
+            )
     if has_ncores:
         try:
             ncores = int(data.get("ncores"))
@@ -129,6 +150,8 @@ def api_async_tasks_save(app):
         if task_key == "ARI_LOCAL_DATA_BACKUP":
             t["daily_copies"] = daily_copies
             t["weekly_copies"] = weekly_copies
+            if backup_max_size_mb is not None:
+                t["backup_max_size_mb"] = backup_max_size_mb
         if task_key == "APERO_SYNC_ASSETS":
             if assets_mode is not None:
                 t["mode"] = assets_mode

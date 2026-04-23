@@ -6,7 +6,7 @@
 {% block extra_head %}
 {{ super() }}
 <link rel="stylesheet"
-      href="{{ url_for('static', filename='css/monitor_issues.css') }}?v=20260423a">
+      href="{{ url_for('static', filename='css/monitor_issues.css') }}?v=20260423b">
 {% endblock %}
 
 {% block doc_content %}
@@ -306,6 +306,199 @@
         if (instTimer) clearTimeout(instTimer);
         instTimer = setTimeout(load, 350);
     });
+
+    load();
+})();
+</script>
+{% endblock %}
+{% extends "general/sidebar_base.html" %}
+{% block title %}APERO RI – Issues{% endblock %}
+
+{% block doc_content %}
+<div class="ari-page-header">
+    <h1><i class="{{ page_icon }}"></i> {{ page_label }}</h1>
+    <p style="color: var(--ari-text-muted);">
+        Manage user-reported flags and target requests.
+    </p>
+</div>
+
+<div class="ari-issues-toolbar"
+     style="display: flex; gap: 0.5rem; flex-wrap: wrap;
+            margin-bottom: 1rem;">
+    <select id="issues-filter-status" class="ari-input">
+        <option value="">All statuses</option>
+        <option value="open" selected>Open</option>
+        <option value="resolved">Resolved</option>
+        <option value="invalid">Invalid</option>
+    </select>
+    <select id="issues-filter-kind" class="ari-input">
+        <option value="">All kinds</option>
+        <option value="flag">Flag</option>
+        <option value="target_request">Target request</option>
+        <option value="other">Other</option>
+    </select>
+    <input id="issues-filter-instrument" class="ari-input"
+           placeholder="Instrument (optional)" />
+    <button id="issues-refresh" class="ari-btn ari-btn--primary">
+        <i class="fa-solid fa-rotate"></i> Refresh
+    </button>
+</div>
+
+<div id="issues-status" style="margin-bottom: 0.5rem;
+     color: var(--ari-text-muted);"></div>
+
+<div id="issues-table-wrap" class="ari-table-wrap">
+    <table class="ari-table" id="issues-table">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Created</th>
+                <th>By</th>
+                <th>Kind</th>
+                <th>Object</th>
+                <th>Field</th>
+                <th>Value</th>
+                <th>Reason</th>
+                <th>Status</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody id="issues-tbody">
+            <tr><td colspan="10" style="text-align: center;
+                color: var(--ari-text-muted);">
+                Loading...
+            </td></tr>
+        </tbody>
+    </table>
+</div>
+
+<script>
+(function () {
+    'use strict';
+    const VISIBILITY = {{ visibility|tojson }};
+    const tbody = document.getElementById('issues-tbody');
+    const statusEl = document.getElementById('issues-status');
+    const fStatus = document.getElementById('issues-filter-status');
+    const fKind = document.getElementById('issues-filter-kind');
+    const fInst = document.getElementById('issues-filter-instrument');
+    const refreshBtn = document.getElementById('issues-refresh');
+
+    function escapeHtml(s) {
+        return String(s == null ? '' : s)
+            .replace(/&/g, '&amp;').replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
+
+    function renderRow(it) {
+        const tr = document.createElement('tr');
+        const valStr = it.value == null ? ''
+            : (typeof it.value === 'object'
+                ? JSON.stringify(it.value) : String(it.value));
+        const apero = it.apero_name || '';
+        const objLink = apero
+            ? `<a href="#" class="ari-link" data-apero="${
+                escapeHtml(apero)}">${escapeHtml(apero)}</a>`
+            : '';
+        tr.innerHTML = `
+            <td>${it.id}</td>
+            <td>${escapeHtml((it.created_at||'').slice(0, 19))}</td>
+            <td>${escapeHtml(it.created_by||'')}</td>
+            <td>${escapeHtml(it.kind||'')}</td>
+            <td>${objLink}</td>
+            <td>${escapeHtml(it.field||'')}</td>
+            <td><code>${escapeHtml(valStr)}</code></td>
+            <td>${escapeHtml(it.reason||'')}</td>
+            <td><span class="ari-badge ari-badge--${
+                escapeHtml(it.status||'open')}">${
+                escapeHtml(it.status||'open')}</span></td>
+            <td>
+                <button class="ari-btn ari-btn--xs"
+                    data-action="resolve" data-id="${it.id}">
+                    Resolve
+                </button>
+                <button class="ari-btn ari-btn--xs"
+                    data-action="invalid" data-id="${it.id}">
+                    Invalid
+                </button>
+                <button class="ari-btn ari-btn--xs"
+                    data-action="reopen" data-id="${it.id}">
+                    Reopen
+                </button>
+            </td>`;
+        return tr;
+    }
+
+    async function load() {
+        statusEl.textContent = 'Loading...';
+        const params = new URLSearchParams();
+        if (fStatus.value) params.set('status', fStatus.value);
+        if (fKind.value) params.set('kind', fKind.value);
+        if (fInst.value.trim()) {
+            params.set('instrument', fInst.value.trim());
+        }
+        try {
+            const resp = await fetch(
+                '/api/issues/list?' + params.toString());
+            const data = await resp.json();
+            if (!data.success) {
+                statusEl.textContent = 'Error: '
+                    + (data.error || 'unknown');
+                tbody.innerHTML = '';
+                return;
+            }
+            tbody.innerHTML = '';
+            (data.issues || []).forEach(it => {
+                tbody.appendChild(renderRow(it));
+            });
+            if (!data.issues || data.issues.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="10"
+                    style="text-align: center;
+                    color: var(--ari-text-muted);">
+                    No issues match these filters.
+                </td></tr>`;
+            }
+            statusEl.textContent = `${data.issues.length
+                } issue(s) | visibility: ${VISIBILITY}`;
+        } catch (err) {
+            statusEl.textContent = 'Error: ' + err.message;
+        }
+    }
+
+    async function update(id, status) {
+        const note = window.prompt(
+            'Optional note (leave blank to skip):', '');
+        try {
+            const resp = await fetch('/api/issues/update', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({id: id, status: status,
+                                      note: note || undefined})
+            });
+            const data = await resp.json();
+            if (!data.success) {
+                alert('Error: ' + (data.error || 'unknown'));
+            } else {
+                load();
+            }
+        } catch (err) {
+            alert('Error: ' + err.message);
+        }
+    }
+
+    tbody.addEventListener('click', (ev) => {
+        const btn = ev.target.closest('button[data-action]');
+        if (!btn) return;
+        const id = parseInt(btn.dataset.id, 10);
+        const map = {resolve: 'resolved',
+                     invalid: 'invalid',
+                     reopen: 'open'};
+        update(id, map[btn.dataset.action]);
+    });
+
+    refreshBtn.addEventListener('click', load);
+    fStatus.addEventListener('change', load);
+    fKind.addEventListener('change', load);
+    fInst.addEventListener('change', load);
 
     load();
 })();

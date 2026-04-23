@@ -4,8 +4,10 @@
    ========================================================================= */
 
 /* Let the issues page span the whole content area instead of being
-   capped at the global 1200px. */
-body.ari-issues-page .ari-main {
+   capped at the global 1200px. The sidebar_base.html template wraps
+   content in .ari-doc-main (NOT .ari-main), so the override must
+   target that class. */
+body.ari-issues-page .ari-doc-main {
     max-width: none;
     padding: 1.25rem 1.5rem 2rem;
 }

@@ -221,29 +221,47 @@
                         </button>
                     </div>
                 </div>
-                <div class="at-section-card__body at-summary-grid">
-                    <div class="at-sg-item">
-                        <span class="at-detail__label">Task key</span>
-                        <span id="det-task-key" class="at-detail__value--code"></span>
+                <div class="at-section-card__body">
+                    <div class="at-kv-list" id="det-kv-list">
+                        <div class="at-kv-row">
+                            <span class="at-kv-row__label">Task key</span>
+                            <span id="det-task-key" class="at-kv-row__value at-kv-row__value--code"></span>
+                        </div>
+                        <div class="at-kv-row">
+                            <span class="at-kv-row__label">Frequency</span>
+                            <span id="det-frequency" class="at-kv-row__value"></span>
+                        </div>
+                        <div class="at-kv-row" id="det-parallel-row" style="display:none;">
+                            <span class="at-kv-row__label">Parallel config</span>
+                            <span id="det-parallel" class="at-kv-row__value"></span>
+                        </div>
+                        <div class="at-kv-row" id="det-sync-mode-row" style="display:none;">
+                            <span class="at-kv-row__label">Sync mode</span>
+                            <span id="det-sync-mode" class="at-kv-row__value"></span>
+                        </div>
+                        <div class="at-kv-row" id="det-backup-retention-row" style="display:none;">
+                            <span class="at-kv-row__label">Backup retention</span>
+                            <span id="det-backup-retention" class="at-kv-row__value"></span>
+                        </div>
+                        <div class="at-kv-row" id="det-backup-max-size-row" style="display:none;">
+                            <span class="at-kv-row__label">Max archive input size</span>
+                            <span id="det-backup-max-size" class="at-kv-row__value"></span>
+                        </div>
+                        <div class="at-kv-row">
+                            <span class="at-kv-row__label">Description</span>
+                            <span id="det-description" class="at-kv-row__value"></span>
+                        </div>
+                        <div class="at-kv-row">
+                            <span class="at-kv-row__label">Last run</span>
+                            <span id="det-last-run" class="at-kv-row__value"></span>
+                        </div>
+                        <div class="at-kv-row">
+                            <span class="at-kv-row__label">Times run</span>
+                            <span id="det-run-count" class="at-kv-row__value">0</span>
+                        </div>
                     </div>
-                    <div class="at-sg-item">
-                        <span class="at-detail__label">Frequency</span>
-                        <span id="det-frequency"></span>
-                    </div>
-                    <div class="at-sg-item" id="det-parallel-row" style="display:none;">
-                        <span class="at-detail__label">Parallel config</span>
-                        <span id="det-parallel"></span>
-                    </div>
-                    <div class="at-sg-item" id="det-sync-mode-row" style="display:none;">
-                        <span class="at-detail__label">Sync mode</span>
-                        <span id="det-sync-mode"></span>
-                    </div>
-                    <div class="at-sg-item at-sg-item--wide">
-                        <span class="at-detail__label">Description</span>
-                        <span id="det-description"></span>
-                    </div>
-                    <div class="at-sg-item at-sg-item--wide"
-                         id="det-filters-warning" style="display:none;">
+
+                    <div id="det-filters-warning" class="at-after-kv-block" style="display:none;">
                         <div class="at-filters-warning">
                             <div class="at-filters-warning__title">
                                 <i class="fa-solid fa-triangle-exclamation"></i>
@@ -253,17 +271,10 @@
                                 class="at-filters-warning__list"></ul>
                         </div>
                     </div>
-                    <div class="at-sg-item">
-                        <span class="at-detail__label">Last run</span>
-                        <span id="det-last-run"></span>
-                    </div>
-                    <div class="at-sg-item">
-                        <span class="at-detail__label">Times run</span>
-                        <span id="det-run-count">0</span>
-                    </div>
+
                     <!-- Progress bar (shown while running or queued) -->
-                    <div id="det-progress-row" class="at-sg-item at-sg-item--wide" style="display:none;">
-                        <span class="at-detail__label">Progress</span>
+                    <div id="det-progress-row" class="at-progress-line" style="display:none;">
+                        <span class="at-kv-row__label">Progress</span>
                         <div class="at-progress-wrap">
                             <div class="at-progress-bar">
                                 <div id="det-progress-fill" class="at-progress-bar__fill" style="width:0%;"></div>
@@ -271,8 +282,8 @@
                             <span id="det-progress-pct" class="at-progress-pct">0%</span>
                         </div>
                     </div>
-                    <div id="det-subprogress-row" class="at-sg-item at-sg-item--wide" style="display:none;">
-                        <span class="at-detail__label">Subprogress</span>
+                    <div id="det-subprogress-row" class="at-progress-line" style="display:none;">
+                        <span class="at-kv-row__label">Subprogress</span>
                         <div class="at-progress-wrap">
                             <div class="at-progress-bar">
                                 <div id="det-subprogress-fill" class="at-progress-bar__fill at-progress-bar__fill--sub" style="width:0%;"></div>
@@ -280,7 +291,8 @@
                             <span id="det-subprogress-pct" class="at-progress-pct">0%</span>
                         </div>
                     </div>
-                    <div class="at-sg-item at-run-row">
+
+                    <div class="at-actions-row">
                         <button id="det-btn-run-now" class="ari-btn ari-btn--primary">
                             <i class="fa-solid fa-play"></i> Run Now
                         </button>
@@ -506,6 +518,12 @@
                         <input type="number" id="edit-weekly-copies" class="ari-ap-input"
                                min="0" step="1" value="4">
                     </div>
+                    <div class="ari-ap-form__field">
+                        <label for="edit-backup-max-size-mb">Max archive input size (MB)</label>
+                        <input type="number" id="edit-backup-max-size-mb" class="ari-ap-input"
+                               min="1" step="1" value="1024">
+                        <div class="at-muted-hint">Backups whose estimated input exceeds this size are skipped. Default 1024 MB (1 GiB).</div>
+                    </div>
                 </div>
                 <div id="edit-assets-fields" style="display:none;">
                     <div class="ari-ap-form__field">
@@ -718,5 +736,5 @@ window.ARI_ASYNC_TASKS = {
     }
 };
 </script>
-    <script src="{{ url_for('static', filename='js/admin_async_tasks.js', v='20260408-1') }}"></script>
+    <script src="{{ url_for('static', filename='js/admin_async_tasks.js', v='20260423p') }}"></script>
 {% endblock %}

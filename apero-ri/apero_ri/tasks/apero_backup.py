@@ -21,10 +21,21 @@ ARI_DIR = Path.home() / ".ari"
 PARAM_LIST = ["LOCAL_DATA_DIR", "INSTRUMENT", "TASK_CONFIG"]
 # Set the list of APERO profile parameters that this task depends on (if any)
 APERO_PROFILE_PARAM_LIST: List[str] = []
-# Maximum allowed size for one backup archive input (bytes)
+# Maximum allowed size for one backup archive input (bytes).
+# This is the default; the runtime value can be overridden per-task
+# via the admin UI (TASK_CONFIG["backup_max_size_mb"]).
 BACKUP_MAX_SIZE = 1024**3
+# Default cap (in MB) exposed in the admin UI.
+DEFAULT_BACKUP_MAX_SIZE_MB = BACKUP_MAX_SIZE // (1024 * 1024)
 # Top-level directories in LOCAL_DATA_DIR to exclude from backups by default.
-DEFAULT_EXCLUDE_DIRS = ("backups", "tasks", "download", "downloads", "secret")
+DEFAULT_EXCLUDE_DIRS = (
+    "backups",
+    "tasks",
+    "download",
+    "downloads",
+    "secret",
+    "apero-assets",
+)
 # Specific secret-bearing config files that should not be archived.
 DEFAULT_EXCLUDE_PATHS = (
     "admin/general/apero_profiles.yaml",
@@ -115,17 +126,32 @@ class AperoLocalDataBackupTask(apero_async.AperoAsyncTask):
         estimated_size = self._estimate_archive_input_size(
             local_data_dir, exclude_dirs, exclude_paths
         )
+        # Resolve the effective per-run cap. Admins can override the
+        # module default from the admin_portal/async_tasks UI by
+        # setting TASK_CONFIG["backup_max_size_mb"] (MB). Values
+        # <= 0 fall back to the default.
+        try:
+            cfg_max_mb = float(
+                task_cfg.get(
+                    "backup_max_size_mb", DEFAULT_BACKUP_MAX_SIZE_MB
+                )
+            )
+        except (TypeError, ValueError):
+            cfg_max_mb = float(DEFAULT_BACKUP_MAX_SIZE_MB)
+        if cfg_max_mb <= 0:
+            cfg_max_mb = float(DEFAULT_BACKUP_MAX_SIZE_MB)
+        effective_max_size = int(cfg_max_mb * 1024 * 1024)
         tlog(
             "Estimated archive input size: "
             f"{self._format_bytes(estimated_size)} "
-            f"(limit={self._format_bytes(BACKUP_MAX_SIZE)})."
+            f"(limit={self._format_bytes(effective_max_size)})."
         )
-        if estimated_size > BACKUP_MAX_SIZE:
+        if estimated_size > effective_max_size:
             warning_msg = (
                 "Backup skipped: estimated archive input size "
                 f"({self._format_bytes(estimated_size)}) "
                 "exceeds BACKUP_MAX_SIZE "
-                f"({self._format_bytes(BACKUP_MAX_SIZE)})."
+                f"({self._format_bytes(effective_max_size)})."
             )
             print(f"WARNING: {warning_msg}")
             tlog(f"WARNING: {warning_msg}")

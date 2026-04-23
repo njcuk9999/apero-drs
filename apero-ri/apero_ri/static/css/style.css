@@ -5587,6 +5587,92 @@ body.ari-sg-page .ari-doc-main {
     grid-column: 1 / -1;
 }
 
+/* ------------------------------------------------------------------
+   Task summary card-list view (one row per variable, alternating
+   background, single line with ellipsis for long values).
+   ------------------------------------------------------------------ */
+.at-kv-list {
+    display: flex;
+    flex-direction: column;
+    border: 1px solid var(--ari-border, #d0d0d0);
+    border-radius: 6px;
+    overflow: hidden;
+    background: #fff;
+}
+
+.at-kv-row {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.45rem 0.85rem;
+    font-size: 0.9rem;
+    line-height: 1.35;
+    min-width: 0;
+    border-bottom: 1px solid #ececf2;
+}
+
+.at-kv-row:last-child {
+    border-bottom: 0;
+}
+
+.at-kv-row.at-kv-row--alt {
+    background: #f5f7fb;
+}
+
+.at-kv-row__label {
+    flex: 0 0 auto;
+    min-width: 11rem;
+    font-weight: 600;
+    color: #4a4a4a;
+}
+
+.at-kv-row__label::after {
+    content: ":";
+    margin-left: 0;
+}
+
+.at-kv-row__value {
+    flex: 1 1 auto;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    color: #1f1f1f;
+}
+
+.at-kv-row__value--code {
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 0.85rem;
+    color: #2a2a4a;
+}
+
+.at-after-kv-block {
+    margin-top: 0.85rem;
+}
+
+.at-progress-line {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-top: 0.65rem;
+    padding: 0.35rem 0.85rem;
+    font-size: 0.9rem;
+}
+
+.at-progress-line .at-kv-row__label {
+    min-width: 11rem;
+    flex: 0 0 auto;
+}
+
+.at-actions-row {
+    display: flex;
+    flex-wrap: nowrap;
+    gap: 0.5rem;
+    margin-top: 0.9rem;
+    padding-top: 0.75rem;
+    border-top: 1px solid var(--ari-border, #d0d0d0);
+}
+
 /* Muted placeholder text (e.g. "No info yet") */
 .at-muted-hint {
     color: var(--ari-text-muted, #9e9e9e);

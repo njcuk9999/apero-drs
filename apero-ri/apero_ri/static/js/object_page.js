@@ -301,13 +301,32 @@
         return html;
     }
 
+    // True if the plot opted out of the y-axis zoom widget.
+    // Historically only the WRAPPER (parentElement) was checked,
+    // which silently broke plots that put data-op-nozoom="1"
+    // directly on the plot div itself (e.g. the SED and HR
+    // diagram on the data-portal object page). When the opt-out
+    // is missed, applyYAxisZoom() rewrites y_range.start/end and
+    // clobbers the figure's flipped=True state -- which is why
+    // the HR y-axis was correct only after a Bokeh reset click.
+    function _isNozoom(plotDiv) {
+        if (!plotDiv) return false;
+        if (plotDiv.getAttribute &&
+                plotDiv.getAttribute('data-op-nozoom') === '1') {
+            return true;
+        }
+        var p = plotDiv.parentElement;
+        return !!(p && p.getAttribute('data-op-nozoom') === '1');
+    }
+
     function ensureYAxisControl(divId) {
         var plotDiv = document.getElementById(divId);
         if (!plotDiv) return;
         var host = plotDiv.parentElement;
         if (!host) return;
-        // Parent wrapper with data-op-nozoom="1" opts this plot out entirely.
-        if (host.getAttribute('data-op-nozoom') === '1') return;
+        // Wrapper OR plot div itself with data-op-nozoom="1"
+        // opts this plot out entirely.
+        if (_isNozoom(plotDiv)) return;
         if (host.querySelector('.op-yzoom-control[data-op-target="' + divId + '"]')) return;
 
         var bar = document.createElement('div');
@@ -351,7 +370,7 @@
         if (!plotDiv) return;
         var host = plotDiv.parentElement;
         if (!host) return;
-        if (host.getAttribute('data-op-nozoom') !== '1') return;
+        if (!_isNozoom(plotDiv)) return;
         var _sel = '.op-yzoom-control[data-op-target="'
             + divId + '"]';
         if (host.querySelector(_sel)) return;
@@ -397,10 +416,7 @@
             }
         }
         // Re-apply sigma zoom for plots that have a zoom dropdown.
-        var hostEl = plotDiv.parentElement;
-        var isNozoom = hostEl
-            && hostEl.getAttribute('data-op-nozoom') === '1';
-        if (!isNozoom) {
+        if (!_isNozoom(plotDiv)) {
             setTimeout(function () { applyYAxisZoom(divId); }, 80);
         }
     }
@@ -491,8 +507,7 @@
         // For nozoom plots add a reset-only control bar, then leave
         // Bokeh's own auto-range completely untouched.
         var _pel = document.getElementById(divId);
-        var _hel = _pel && _pel.parentElement;
-        if (_hel && _hel.getAttribute('data-op-nozoom') === '1') {
+        if (_isNozoom(_pel)) {
             ensureYAxisResetControl(divId);
             return;
         }

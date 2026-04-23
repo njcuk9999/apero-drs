@@ -237,8 +237,6 @@ def _make_sed_figure(
 
     # Blackbody overlay: weighted chi^2 fit over a Teff grid
     # (starometer-style), independent of the YAML Teff value.
-    # The catalogue Teff (if any) is shown as a secondary dotted
-    # curve for comparison.
     fit_teff, fit_scale, _chi2 = _fit_blackbody(lams, fluxes)
     lam_grid = np.logspace(np.log10(0.3), np.log10(30.0), 400)
     if fit_teff is not None and fit_scale is not None:
@@ -246,45 +244,33 @@ def _make_sed_figure(
         fig.line(
             lam_grid, bb_fit,
             line_color='#222222', line_width=2.2, alpha=0.95,
-            legend_label=(
-                'Blackbody fit (Teff={0:.0f} K)'.format(fit_teff)
-            ),
-        )
-    if teff is not None and teff > 0 and (
-            fit_teff is None
-            or abs(teff - fit_teff) > 50.0):
-        bnu_cat = _planck_jy(lam_grid, teff)
-        bnu_at_data = _planck_jy(lams, teff)
-        ok = (bnu_at_data > 0) & np.isfinite(fluxes)
-        scale_cat = (
-            float(np.median(fluxes[ok] / bnu_at_data[ok]))
-            if ok.any() else 1.0
-        )
-        fig.line(
-            lam_grid, bnu_cat * scale_cat,
-            line_color='#888888', line_width=1.5,
-            line_dash='dotted', alpha=0.85,
-            legend_label=(
-                'Catalogue Teff={0:.0f} K'.format(teff)
-            ),
+            legend_label='Blackbody fit',
         )
 
-    # Photometry points (coloured + outlined)
-    fig.scatter('lam', 'flux', source=src, size=11,
-                fill_color='color', line_color='black',
-                line_width=0.8, marker='circle',
-                legend_label='Bands')
+    # Photometry points (coloured + outlined). Tagged so the
+    # hover tool only fires on the bands (not on the blackbody
+    # line, which has no per-point metadata to display).
+    band_renderer = fig.scatter(
+        'lam', 'flux', source=src, size=11,
+        fill_color='color', line_color='black',
+        line_width=0.8, marker='circle',
+        legend_label='Bands',
+    )
 
-    # Crosshair + hover
+    # Crosshair + hover (hover scoped to the band points only).
     fig.add_tools(CrosshairTool(dimensions='both',
                                 line_color='#555555',
                                 line_alpha=0.5))
-    fig.add_tools(HoverTool(tooltips=[
-        ('Band', '@label'),
-        ('λ [μm]', '@lam{0.000}'),
-        ('mag', '@mag{0.00}'),
-        ('Fν [Jy]', '@flux{0.0000}'),
-    ], mode='mouse'))
+    fig.add_tools(HoverTool(
+        renderers=[band_renderer],
+        tooltips=[
+            ('Band', '@label'),
+            ('λ [μm]', '@lam{0.000}'),
+            ('mag', '@mag{0.00}'),
+            ('Fν [Jy]', '@flux{0.0000}'),
+        ],
+        mode='mouse',
+    ))
 
     fig.legend.click_policy = 'hide'
     fig.legend.location = 'bottom_left'

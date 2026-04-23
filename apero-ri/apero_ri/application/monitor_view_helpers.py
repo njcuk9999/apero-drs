@@ -67,8 +67,9 @@ def monitor_issues_view(app):
     visibility = 'admin' if 'manage.astrometrics' in perms \
         else 'monitor'
 
+    page_id = 'home.monitor_portal.issues'
     context = {
-        'page_id': 'home.monitor_portal.issues',
+        'page_id': page_id,
         'page_label': 'Issues',
         'page_icon': 'fa-solid fa-flag',
         'sidebar_root': 'home.monitor_portal',
@@ -77,5 +78,17 @@ def monitor_issues_view(app):
         'sidebar_url': '/monitor_portal',
         'visibility': visibility,
     }
+    # Build the sidebar/nav tree the same way other pages do so the
+    # sidebar_base.html template renders a populated navbar instead
+    # of a blank shell.
+    try:
+        context.update(
+            app._build_sidebar_context(page_id, perms, user_info)
+        )
+    except Exception:
+        # If sidebar construction fails for any reason, still render
+        # the page with the previously-set static defaults rather
+        # than 500'ing.
+        pass
     return render_template('monitor_portal/issues.html',
                            **context)

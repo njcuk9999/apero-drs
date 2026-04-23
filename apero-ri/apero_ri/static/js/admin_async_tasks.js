@@ -57,6 +57,15 @@
     var detParallel     = document.getElementById('det-parallel');
     var detSyncModeRow  = document.getElementById('det-sync-mode-row');
     var detSyncMode     = document.getElementById('det-sync-mode');
+    var detBackupRetentionRow = document.getElementById(
+        'det-backup-retention-row');
+    var detBackupRetention    = document.getElementById(
+        'det-backup-retention');
+    var detBackupMaxSizeRow   = document.getElementById(
+        'det-backup-max-size-row');
+    var detBackupMaxSize      = document.getElementById(
+        'det-backup-max-size');
+    var detKvList       = document.getElementById('det-kv-list');
     var detProgressRow  = document.getElementById('det-progress-row');
     var detProgressFill = document.getElementById('det-progress-fill');
     var detProgressPct  = document.getElementById('det-progress-pct');
@@ -131,6 +140,8 @@
     var editBackupFields= document.getElementById('edit-backup-fields');
     var editDailyCopies = document.getElementById('edit-daily-copies');
     var editWeeklyCopies= document.getElementById('edit-weekly-copies');
+    var editBackupMaxSizeMb = document.getElementById(
+        'edit-backup-max-size-mb');
     var editAssetsFields= document.getElementById('edit-assets-fields');
     var editAssetsMode  = document.getElementById('edit-assets-mode');
     var editMpFields    = document.getElementById('edit-mp-fields');
@@ -526,6 +537,25 @@
     /* -----------------------------------------------------------------------
        Detail panel
     ----------------------------------------------------------------------- */
+    function restripeKvList() {
+        if (!detKvList) return;
+        var rows = detKvList.querySelectorAll('.at-kv-row');
+        var i = 0;
+        rows.forEach(function (row) {
+            // Skip rows hidden via inline display:none
+            if (row.style.display === 'none') {
+                row.classList.remove('at-kv-row--alt');
+                return;
+            }
+            if (i % 2 === 1) {
+                row.classList.add('at-kv-row--alt');
+            } else {
+                row.classList.remove('at-kv-row--alt');
+            }
+            i += 1;
+        });
+    }
+
     function showDetail(task) {
         if (!task) {
             detailCard.style.display = 'none';
@@ -573,6 +603,42 @@
             }
         }
 
+        // Backup-task specific rows (retention + max archive size)
+        var isBackupTask = (task.task_key === BACKUP_TASK_KEY);
+        if (detBackupRetentionRow && detBackupRetention) {
+            if (isBackupTask) {
+                var dc = parseInt(task.daily_copies, 10);
+                var wc = parseInt(task.weekly_copies, 10);
+                if (!isFinite(dc)) dc = 0;
+                if (!isFinite(wc)) wc = 0;
+                detBackupRetention.textContent =
+                    dc + ' daily, ' + wc + ' weekly';
+                detBackupRetentionRow.style.display = '';
+            } else {
+                detBackupRetention.textContent = '';
+                detBackupRetentionRow.style.display = 'none';
+            }
+        }
+        if (detBackupMaxSizeRow && detBackupMaxSize) {
+            if (isBackupTask) {
+                var maxMb = parseFloat(task.backup_max_size_mb);
+                if (!isFinite(maxMb) || maxMb <= 0) {
+                    maxMb = 1024;
+                }
+                var maxMbStr = (maxMb % 1 === 0)
+                    ? String(maxMb)
+                    : maxMb.toFixed(2).replace(/\.?0+$/, '');
+                detBackupMaxSize.textContent = maxMbStr + ' MB';
+                detBackupMaxSize.title = maxMbStr + ' MB ('
+                    + (maxMb / 1024).toFixed(2) + ' GiB)';
+                detBackupMaxSizeRow.style.display = '';
+            } else {
+                detBackupMaxSize.textContent = '';
+                detBackupMaxSize.title = '';
+                detBackupMaxSizeRow.style.display = 'none';
+            }
+        }
+
         if (detFiltersWarning && detFiltersWarningList) {
             var rawFilters = (task.filters && typeof task.filters === 'object')
                 ? task.filters
@@ -601,6 +667,7 @@
             'fa-solid ' + (isActive ? 'fa-toggle-on' : 'fa-toggle-off');
         detBtnToggle.title = isActive ? 'Deactivate task' : 'Activate task';
 
+        restripeKvList();
         updateDetailRuntime();
     }
 
@@ -1380,6 +1447,16 @@
         editFrequency.value = task.frequency || 24;
         editDailyCopies.value = task.daily_copies || 0;
         editWeeklyCopies.value = task.weekly_copies || 0;
+        if (editBackupMaxSizeMb) {
+            var maxMb = parseFloat(task.backup_max_size_mb);
+            if (!isFinite(maxMb) || maxMb <= 0) {
+                maxMb = 1024;
+            }
+            // Render integers without trailing zeros for whole MB.
+            editBackupMaxSizeMb.value = (maxMb % 1 === 0)
+                ? String(parseInt(maxMb, 10))
+                : String(maxMb);
+        }
         if (editAssetsMode) {
             editAssetsMode.value = String(task.mode || 'sync');
         }
@@ -1639,6 +1716,10 @@
         var frequency = parseFloat(editFrequency.value);
         var dailyCopies = parseInt(editDailyCopies.value, 10) || 0;
         var weeklyCopies = parseInt(editWeeklyCopies.value, 10) || 0;
+        var backupMaxSizeMb = null;
+        if (editBackupMaxSizeMb) {
+            backupMaxSizeMb = parseFloat(editBackupMaxSizeMb.value);
+        }
         var ncores = parseInt(editNcores.value, 10) || 1;
         var mpBackend = (editMpBackend.value || 'threads').trim();
         var mpStartMethod = (editMpStartMethod.value || 'default').trim();
@@ -1650,6 +1731,12 @@
         if (taskKey === BACKUP_TASK_KEY && dailyCopies + weeklyCopies <= 0) {
             showToast('Backup task needs at least one retained daily or weekly copy.', 'error');
             return;
+        }
+        if (taskKey === BACKUP_TASK_KEY) {
+            if (!isFinite(backupMaxSizeMb) || backupMaxSizeMb <= 0) {
+                showToast('Max archive input size (MB) must be a positive number.', 'error');
+                return;
+            }
         }
         if (supportsLocalTask && !syncMode) {
             showToast('Please choose a Sync mode.', 'error');
@@ -1669,6 +1756,10 @@
             active: editActive.checked,
             filters: {},
         };
+        if (taskKey === BACKUP_TASK_KEY && isFinite(backupMaxSizeMb)
+                && backupMaxSizeMb > 0) {
+            payload.backup_max_size_mb = backupMaxSizeMb;
+        }
         if (taskKey === ASSETS_TASK_KEY) {
             payload.assets_mode = editAssetsMode ? editAssetsMode.value : 'sync';
         }

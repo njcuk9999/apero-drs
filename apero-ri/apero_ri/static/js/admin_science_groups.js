@@ -132,12 +132,16 @@
         selectPrompt.style.display = 'none';
         runidSection.style.display = '';
         userSection.style.display = '';
+        var topBar = document.getElementById('sg-actions-top');
+        if (topBar) topBar.style.display = 'flex';
     }
 
     function hideDetailSections() {
         selectPrompt.style.display = '';
         runidSection.style.display = 'none';
         userSection.style.display = 'none';
+        var topBar = document.getElementById('sg-actions-top');
+        if (topBar) topBar.style.display = 'none';
     }
 
     /* -- Instrument tabs ------------------------------------------------- */
@@ -164,8 +168,10 @@
     }
 
     function selectInstrument(inst) {
+        if (!confirmDiscard()) return;
         currentInstrument = inst;
         currentGroup = null;
+        markClean();
         var tabs = tabsContainer.querySelectorAll('.ari-sg-tab');
         tabs.forEach(function (t) {
             t.classList.toggle('ari-sg-tab--active', t.textContent === inst);
@@ -179,9 +185,15 @@
     /* -- Group list ------------------------------------------------------ */
     function loadGroupList() {
         groupList.innerHTML = '<div class="ari-sg-loading">Loading...</div>';
-        fetch(cfg.listUrl + '?instrument=' + encodeURIComponent(currentInstrument))
+        // Capture the instrument the request was issued for. If the
+        // user switches tabs before the response arrives, discard the
+        // stale payload so groups from one instrument never bleed
+        // into another.
+        var requestedInstrument = currentInstrument;
+        fetch(cfg.listUrl + '?instrument=' + encodeURIComponent(requestedInstrument))
             .then(function (r) { return r.json(); })
             .then(function (data) {
+                if (requestedInstrument !== currentInstrument) return;
                 if (!data.success) {
                     groupList.innerHTML = '<div class="ari-sg-error">' +
                         escapeHtml(data.error || 'Error') + '</div>';
@@ -198,15 +210,18 @@
                 renderGroupList('');
             })
             .catch(function () {
+                if (requestedInstrument !== currentInstrument) return;
                 groupList.innerHTML = '<div class="ari-sg-error">Failed to load</div>';
             });
     }
 
     function refreshScienceHealthBanner() {
         if (!currentInstrument) return;
-        fetch(cfg.listUrl + '?instrument=' + encodeURIComponent(currentInstrument))
+        var requestedInstrument = currentInstrument;
+        fetch(cfg.listUrl + '?instrument=' + encodeURIComponent(requestedInstrument))
             .then(function (r) { return r.json(); })
             .then(function (data) {
+                if (requestedInstrument !== currentInstrument) return;
                 if (!data.success) return;
                 allGroups = data.groups || [];
                 allRunIds = data.run_ids || [];
@@ -252,28 +267,41 @@
 
     /* -- Select a group -------------------------------------------------- */
     function selectGroup(name) {
+        if (currentGroup && name !== currentGroup && !confirmDiscard()) {
+            return;
+        }
         currentGroup = name;
         var items = groupList.querySelectorAll('.ari-sg-item');
         items.forEach(function (it) {
             it.classList.toggle('ari-sg-item--active',
                 it.textContent.trim() === name);
         });
-        btnSave.disabled = false;
-        btnDelete.disabled = isAllGroupName(name);
+        // Save stays disabled until something actually changes.
+        markClean();
         btnAddAllRunIds.disabled = isAllGroupName(name);
 
-        fetch(cfg.getUrl + '?instrument=' + encodeURIComponent(currentInstrument) +
-              '&name=' + encodeURIComponent(name))
+        // Capture instrument+group identity at fetch time so that a
+        // stale response from a previous tab/group click cannot
+        // clobber the current selection.
+        var requestedInstrument = currentInstrument;
+        var requestedGroup = name;
+        fetch(cfg.getUrl + '?instrument=' + encodeURIComponent(requestedInstrument) +
+              '&name=' + encodeURIComponent(requestedGroup))
             .then(function (r) { return r.json(); })
             .then(function (data) {
+                if (requestedInstrument !== currentInstrument) return;
+                if (requestedGroup !== currentGroup) return;
                 if (!data.success) return;
                 selectedRunIds = data.group.run_ids || [];
                 selectedUsers = data.group.users || [];
                 showDetailSections();
                 refreshTransfer('runid');
                 refreshTransfer('user');
+                markClean();
             })
             .catch(function () {
+                if (requestedInstrument !== currentInstrument) return;
+                if (requestedGroup !== currentGroup) return;
                 showToast('Failed to load group details', 'error');
             });
     }
@@ -292,8 +320,8 @@
         runidAddedCount.textContent = '0';
         userAvailCount.textContent = '0';
         userAddedCount.textContent = '0';
-        btnSave.disabled = true;
-        btnDelete.disabled = true;
+        dirty = false;
+        setSaveButtonsState();
         btnAddAllRunIds.disabled = false;
         groupFilter.value = '';
         runidAvailFilter.value = '';
@@ -496,7 +524,7 @@
             arr.push(item);
         }
         refreshTransfer(type);
-        autoSave();
+        markDirty();
     }
 
     function removeSelection(type, item) {
@@ -510,7 +538,7 @@
             selectedUsers = selectedUsers.filter(function (x) { return x !== item; });
         }
         refreshTransfer(type);
-        autoSave();
+        markDirty();
     }
 
     function addAllSelections(type) {
@@ -537,7 +565,7 @@
         var label = (type === 'runid') ? 'run IDs' : 'users';
         var ok = window.confirm(
             'Add all available ' + label + ' (' + toAdd.length + ') to group "' +
-            currentGroup + '"?'
+            currentGroup + '"? You will still need to click Save to persist.'
         );
         if (!ok) return;
 
@@ -548,17 +576,57 @@
         }
 
         refreshTransfer(type);
-        saveGroup();
+        markDirty();
     }
 
-    /* -- Auto-save (debounced) ------------------------------------------- */
-    var _autoSaveTimer = null;
-    function autoSave() {
-        clearTimeout(_autoSaveTimer);
-        _autoSaveTimer = setTimeout(function () {
-            saveGroup();
-        }, 400);
+    /* -- Dirty tracking + unsaved-changes guard -------------------------- */
+    var dirty = false;
+
+    function setSaveButtonsState() {
+        // Enable/disable both top and bottom Save/Delete clones to
+        // reflect the current dirty / group-loaded state.
+        var saveBtns = document.querySelectorAll(
+            '#btn-save-group, #btn-save-group-top');
+        var deleteBtns = document.querySelectorAll(
+            '#btn-delete-group, #btn-delete-group-top');
+        saveBtns.forEach(function (b) {
+            b.disabled = !(currentGroup && dirty);
+        });
+        deleteBtns.forEach(function (b) {
+            b.disabled = !currentGroup || isAllGroupName(currentGroup);
+        });
     }
+
+    function markDirty() {
+        dirty = true;
+        setSaveButtonsState();
+    }
+
+    function markClean() {
+        dirty = false;
+        setSaveButtonsState();
+    }
+
+    // Returns true if it is safe to navigate away from / replace
+    // the current group editor state (no unsaved changes, or the
+    // user explicitly confirmed discarding them).
+    function confirmDiscard() {
+        if (!dirty) return true;
+        return window.confirm(
+            'You have unsaved changes to "' + (currentGroup || '?') +
+            '". Discard them?'
+        );
+    }
+
+    window.addEventListener('beforeunload', function (e) {
+        if (!dirty) return;
+        // Setting returnValue triggers the browser's native
+        // "Leave site?" prompt. The exact message is fixed by
+        // modern browsers but the prompt itself shows up.
+        e.preventDefault();
+        e.returnValue = '';
+        return '';
+    });
 
     function updateCounts(type) {
         var s = getState(type);
@@ -572,7 +640,9 @@
     /* -- Save ------------------------------------------------------------ */
     function saveGroup() {
         if (!currentInstrument || !currentGroup) return;
-        btnSave.disabled = true;
+        var saveBtns = document.querySelectorAll(
+            '#btn-save-group, #btn-save-group-top');
+        saveBtns.forEach(function (b) { b.disabled = true; });
         fetch(cfg.saveUrl, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -585,7 +655,6 @@
         })
         .then(function (r) { return r.json(); })
         .then(function (data) {
-            btnSave.disabled = false;
             if (data.success) {
                 if (data.group && typeof data.group === 'object') {
                     selectedRunIds = data.group.run_ids || [];
@@ -593,14 +662,16 @@
                     refreshTransfer('runid');
                     refreshTransfer('user');
                 }
+                markClean();
                 showToast('Saved "' + currentGroup + '"', 'success');
                 refreshScienceHealthBanner();
             } else {
+                setSaveButtonsState();
                 showToast(data.error || 'Save failed', 'error');
             }
         })
         .catch(function () {
-            btnSave.disabled = false;
+            setSaveButtonsState();
             showToast('Save failed', 'error');
         });
     }
@@ -649,7 +720,18 @@
     }
 
     /* -- Create group ---------------------------------------------------- */
+    // Instrument captured when the create modal was opened. Using
+    // this (instead of currentInstrument) means the create request
+    // always targets the tab the user was on when they opened the
+    // dialog, even if a stray click changes tabs while it is open.
+    var createModalInstrument = null;
+
     function openCreateModal() {
+        if (!currentInstrument) {
+            showToast('Select an instrument first', 'warning');
+            return;
+        }
+        createModalInstrument = currentInstrument;
         newGroupName.value = '';
         createError.style.display = 'none';
         createModal.style.display = 'flex';
@@ -658,6 +740,7 @@
 
     function closeCreateModal() {
         createModal.style.display = 'none';
+        createModalInstrument = null;
     }
 
     function doCreate() {
@@ -667,24 +750,48 @@
             createError.style.display = 'block';
             return;
         }
+        var targetInstrument = createModalInstrument || currentInstrument;
+        if (!targetInstrument) {
+            createError.textContent = 'No instrument selected.';
+            createError.style.display = 'block';
+            return;
+        }
         btnConfirmCreate.disabled = true;
         fetch(cfg.createUrl, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-                instrument: currentInstrument,
+                instrument: targetInstrument,
                 name: name
             })
         })
-        .then(function (r) { return r.json(); })
-        .then(function (data) {
+        .then(function (r) {
+            return r.json().then(function (body) {
+                return { status: r.status, body: body };
+            });
+        })
+        .then(function (resp) {
             btnConfirmCreate.disabled = false;
+            var data = resp.body || {};
             if (data.success) {
                 closeCreateModal();
-                showToast('Created "' + name + '"', 'success');
-                loadGroupList();
+                showToast('Created "' + name + '" in ' + targetInstrument,
+                          'success');
+                if (targetInstrument === currentInstrument) {
+                    loadGroupList();
+                }
             } else {
-                createError.textContent = data.error || 'Failed';
+                var msg = data.error || 'Failed';
+                if (resp.status === 409) {
+                    msg = '"' + name + '" already exists in ' +
+                          targetInstrument + '.';
+                    // Refresh so the user can see the existing entry
+                    // in this instrument's list.
+                    if (targetInstrument === currentInstrument) {
+                        loadGroupList();
+                    }
+                }
+                createError.textContent = msg;
                 createError.style.display = 'block';
             }
         })
@@ -723,6 +830,7 @@
             if (data.success) {
                 closeDeleteModal();
                 showToast('Deleted "' + currentGroup + '"', 'success');
+                markClean();
                 clearDetail();
                 loadGroupList();
             } else {
@@ -766,6 +874,17 @@
     btnAddGroup.addEventListener('click', openCreateModal);
     btnSave.addEventListener('click', saveGroup);
     btnDelete.addEventListener('click', openDeleteModal);
+    // Top-bar clones (added by template) bind to the same
+    // handlers so users can save/delete from either end of the
+    // editor without scrolling.
+    var btnSaveTop = document.getElementById('btn-save-group-top');
+    if (btnSaveTop) {
+        btnSaveTop.addEventListener('click', saveGroup);
+    }
+    var btnDeleteTop = document.getElementById('btn-delete-group-top');
+    if (btnDeleteTop) {
+        btnDeleteTop.addEventListener('click', openDeleteModal);
+    }
     if (btnRefreshRunIds) {
         btnRefreshRunIds.addEventListener('click', refreshRunIds);
     }
