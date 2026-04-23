@@ -860,7 +860,9 @@ def clean_ascii_text(text: str) -> str:
     text = text.replace('\n', ' ').replace('\t', ' ')
     # Keep only printable ASCII characters
     printable = set(string.printable)
-    return ''.join(ch for ch in text if ch in printable)
+    newtext = ''.join(ch for ch in text if ch in printable)
+    # force all other to ignore
+    return newtext.encode('ascii', 'ignore').decode('ascii')
 
 
 def clean_fits_table_column(table: Table, colname: str):
