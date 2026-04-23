@@ -6,7 +6,7 @@
 {% block extra_head %}
 {{ super() }}
 <link rel="stylesheet"
-      href="{{ url_for('static', filename='css/monitor_issues.css') }}?v=20260423e">
+      href="{{ url_for('static', filename='css/monitor_issues.css') }}?v=20260423f">
 {% endblock %}
 
 {% block doc_content %}
@@ -63,6 +63,24 @@
         </select>
     </div>
     <div class="mi-toolbar__group">
+        <label for="issues-filter-label"
+               class="mi-toolbar__label">
+            Label
+        </label>
+        <select id="issues-filter-label" class="mi-select">
+            <option value="">All</option>
+            <option value="astrometric-verify">
+                astrometric-verify
+            </option>
+            <option value="astrometric-missing">
+                astrometric-missing
+            </option>
+            <option value="astrometrics-missing-required">
+                astrometrics-missing-required
+            </option>
+        </select>
+    </div>
+    <div class="mi-toolbar__group">
         <label for="issues-filter-instrument"
                class="mi-toolbar__label">
             Instrument
@@ -114,13 +132,14 @@
                     <th class="mi-col-kind">Type</th>
                     <th>Title</th>
                     <th class="mi-col-reason">Reason</th>
+                    <th class="mi-col-action">Action</th>
                     <th class="mi-col-status">Status</th>
                     <th class="mi-col-actions">Actions</th>
                 </tr>
             </thead>
             <tbody id="issues-tbody">
                 <tr>
-                    <td colspan="9">
+                    <td colspan="10">
                         <div class="mi-empty">
                             <i class="fa-solid fa-spinner fa-spin"></i>
                             <p class="mi-empty__msg">Loading issues…</p>
@@ -142,6 +161,7 @@
     const fKind = document.getElementById('issues-filter-kind');
     const fType = document.getElementById('issues-filter-type');
     const fInst = document.getElementById('issues-filter-instrument');
+    const fLabel = document.getElementById('issues-filter-label');
     const fUser = document.getElementById('issues-filter-user');
     const fUserRole = document.getElementById(
         'issues-filter-user-role');
@@ -279,6 +299,9 @@
         const reasonCell = it.reason
             ? escapeHtml(it.reason)
             : '<span style="color:var(--ari-text-muted);">\u2014</span>';
+        const actionCell = it.action
+            ? escapeHtml(it.action)
+            : '<span style="color:var(--ari-text-muted);">\u2014</span>';
         const goBtn = it.origin_url
             ? ('<a class="mi-btn mi-btn--xs mi-btn--ghost"'
                 + ' href="' + escapeHtml(it.origin_url) + '"'
@@ -304,6 +327,7 @@
             + '<td class="mi-col-kind">' + typeCell + '</td>'
             + '<td class="mi-cell-title">' + titleCell + '</td>'
             + '<td class="mi-col-reason">' + reasonCell + '</td>'
+            + '<td class="mi-col-action">' + actionCell + '</td>'
             + '<td class="mi-col-status">'
             + '<span class="mi-badge ' + statusClass(it.status)
             + '">' + escapeHtml(it.status||'open') + '</span></td>'
@@ -326,7 +350,7 @@
     }
 
     function renderEmpty() {
-        tbody.innerHTML = '<tr><td colspan="9">'
+        tbody.innerHTML = '<tr><td colspan="10">'
             + '<div class="mi-empty">'
             + '<i class="fa-solid fa-inbox"></i>'
             + '<p class="mi-empty__title">'
@@ -337,7 +361,7 @@
     }
 
     function renderError(msg) {
-        tbody.innerHTML = '<tr><td colspan="9">'
+        tbody.innerHTML = '<tr><td colspan="10">'
             + '<div class="mi-empty">'
             + '<i class="fa-solid fa-triangle-exclamation"'
             + ' style="color: var(--ari-danger);"></i>'
@@ -354,6 +378,9 @@
         const params = new URLSearchParams();
         if (fStatus.value) params.set('status', fStatus.value);
         if (fKind.value) params.set('kind', fKind.value);
+        if (fLabel && fLabel.value) {
+            params.set('label', fLabel.value);
+        }
         if (fType && fType.value) {
             params.set('type', fType.value);
         }
@@ -486,6 +513,7 @@
     refreshBtn.addEventListener('click', load);
     fStatus.addEventListener('change', load);
     fKind.addEventListener('change', load);
+    if (fLabel) fLabel.addEventListener('change', load);
     if (fType) fType.addEventListener('change', load);
     if (fUserRole) fUserRole.addEventListener('change', load);
     let userTimer = null;

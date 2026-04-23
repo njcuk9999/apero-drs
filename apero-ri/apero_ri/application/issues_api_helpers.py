@@ -89,11 +89,12 @@ def api_issues_list(app):
     ) or None
     assigned_to = (request.args.get('assigned_to') or '').strip(
     ) or None
+    label = (request.args.get('label') or '').strip() or None
     issues = list_issues(
         _data_dir(app), visibility=visibility,
         status=status, instrument=instrument, kind=kind,
         type_=type_, created_by=created_by,
-        assigned_to=assigned_to)
+        assigned_to=assigned_to, label=label)
     return jsonify(success=True, issues=issues,
                    visibility=visibility)
 

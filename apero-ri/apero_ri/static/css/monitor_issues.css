@@ -307,6 +307,10 @@ body.ari-issues-page .ari-doc-main {
     min-width: 14rem;
 }
 
+.mi-table .mi-col-action {
+    min-width: 14rem;
+}
+
 .mi-cell-value code {
     background: #f5f6f8;
     border: 1px solid #eaecef;
