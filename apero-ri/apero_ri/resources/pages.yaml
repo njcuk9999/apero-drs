@@ -309,6 +309,39 @@ home.user_portal.support:
     top-level: False
     show: True
 
+home.user_portal.users:
+  label: Users
+  parent: home.user_portal
+  view-permission: view.home
+  icon: fa-solid fa-users
+  quick-nav: False
+  side-nav:
+    pinned: False
+    top-level: False
+    show: True
+
+home.user_portal.messages:
+  label: Messages
+  parent: home.user_portal
+  view-permission: view.home
+  icon: fa-solid fa-envelope
+  quick-nav: False
+  side-nav:
+    pinned: False
+    top-level: False
+    show: True
+
+home.user_portal.notifications:
+  label: Notifications
+  parent: home.user_portal
+  view-permission: view.home
+  icon: fa-solid fa-bell
+  quick-nav: False
+  side-nav:
+    pinned: False
+    top-level: False
+    show: True
+
 home.user_portal.links:
   label: My Links
   parent: home.user_portal

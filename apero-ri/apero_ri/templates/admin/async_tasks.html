@@ -247,6 +247,14 @@
                             <span class="at-kv-row__label">Max archive input size</span>
                             <span id="det-backup-max-size" class="at-kv-row__value"></span>
                         </div>
+                        <div class="at-kv-row" id="det-backup-exclude-dirs-row" style="display:none;">
+                            <span class="at-kv-row__label">Excluded directories</span>
+                            <span id="det-backup-exclude-dirs" class="at-kv-row__value"></span>
+                        </div>
+                        <div class="at-kv-row" id="det-backup-exclude-paths-row" style="display:none;">
+                            <span class="at-kv-row__label">Excluded files</span>
+                            <span id="det-backup-exclude-paths" class="at-kv-row__value"></span>
+                        </div>
                         <div class="at-kv-row">
                             <span class="at-kv-row__label">Description</span>
                             <span id="det-description" class="at-kv-row__value"></span>
@@ -521,8 +529,51 @@
                     <div class="ari-ap-form__field">
                         <label for="edit-backup-max-size-mb">Max archive input size (MB)</label>
                         <input type="number" id="edit-backup-max-size-mb" class="ari-ap-input"
-                               min="1" step="1" value="1024">
-                        <div class="at-muted-hint">Backups whose estimated input exceeds this size are skipped. Default 1024 MB (1 GiB).</div>
+                               min="1" step="any">
+                        <div class="at-muted-hint">
+                            Backups whose estimated input exceeds this size are skipped.
+                            Default 1024 MB (1 GiB).
+                            <span id="edit-backup-max-size-saved"
+                                  class="at-muted-hint__saved"></span>
+                        </div>
+                    </div>
+                    <div class="ari-ap-form__field">
+                        <label for="edit-backup-exclude-dirs">
+                            Excluded top-level directories
+                        </label>
+                        <textarea id="edit-backup-exclude-dirs"
+                                  class="ari-ap-input"
+                                  rows="4"
+                                  placeholder="One directory name per line"
+                                  ></textarea>
+                        <div class="at-muted-hint">
+                            Top-level entries in <code>LOCAL_DATA_DIR</code>
+                            with these names are skipped entirely
+                            (subtree pruned). One name per line.
+                            Built-in defaults are applied when this list
+                            is empty:
+                            <span id="edit-backup-exclude-dirs-default"
+                                  class="at-muted-hint__saved"></span>
+                        </div>
+                    </div>
+                    <div class="ari-ap-form__field">
+                        <label for="edit-backup-exclude-paths">
+                            Excluded files (relative paths)
+                        </label>
+                        <textarea id="edit-backup-exclude-paths"
+                                  class="ari-ap-input"
+                                  rows="3"
+                                  placeholder="One relative path per line"
+                                  ></textarea>
+                        <div class="at-muted-hint">
+                            Specific files (relative to
+                            <code>LOCAL_DATA_DIR</code>) that should
+                            never be archived (e.g. secret-bearing
+                            configs). Built-in defaults are applied
+                            when this list is empty:
+                            <span id="edit-backup-exclude-paths-default"
+                                  class="at-muted-hint__saved"></span>
+                        </div>
                     </div>
                 </div>
                 <div id="edit-assets-fields" style="display:none;">

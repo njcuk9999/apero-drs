@@ -129,6 +129,20 @@ def merge_async_task_catalog(
             if backup_max_mb <= 0:
                 backup_max_mb = float(DEFAULT_BACKUP_MAX_SIZE_MB)
             merged_cfg["backup_max_size_mb"] = backup_max_mb
+            # Pass through admin-customised exclude lists (the
+            # backup task itself falls back to the apero_backup
+            # module's DEFAULT_EXCLUDE_* tuples when these are
+            # missing or empty).
+            for _key in ("exclude_dirs", "exclude_paths"):
+                _val = task_cfg.get(_key)
+                if isinstance(_val, list):
+                    cleaned = []
+                    for _item in _val:
+                        _s = str(_item or "").strip()
+                        if _s and _s not in cleaned:
+                            cleaned.append(_s)
+                    if cleaned:
+                        merged_cfg[_key] = cleaned
 
         if task_key == "APERO_SYNC_ASSETS":
             mode_val = str(task_cfg.get("mode") or "sync").strip().lower()

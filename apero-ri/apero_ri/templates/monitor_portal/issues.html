@@ -6,7 +6,7 @@
 {% block extra_head %}
 {{ super() }}
 <link rel="stylesheet"
-      href="{{ url_for('static', filename='css/monitor_issues.css') }}?v=20260423f">
+      href="{{ url_for('static', filename='css/monitor_issues.css') }}?v=20260424d">
 {% endblock %}
 
 {% block doc_content %}
@@ -60,6 +60,24 @@
             <option value="variable flag">Variable flag</option>
             <option value="new object">New object</option>
             <option value="page">Page</option>
+        </select>
+    </div>
+    <div class="mi-toolbar__group">
+        <label for="issues-filter-label"
+               class="mi-toolbar__label">
+            Label
+        </label>
+        <select id="issues-filter-label" class="mi-select">
+            <option value="">All</option>
+            <option value="astrometric-verify">
+                astrometric-verify
+            </option>
+            <option value="astrometric-missing">
+                astrometric-missing
+            </option>
+            <option value="astrometrics-missing-required">
+                astrometrics-missing-required
+            </option>
         </select>
     </div>
     <div class="mi-toolbar__group">
@@ -159,70 +177,13 @@
     const statusEl = document.getElementById('issues-status');
     const fStatus = document.getElementById('issues-filter-status');
     const fKind = document.getElementById('issues-filter-kind');
-    const fType = document.getElementById('issues-filter-type');
     const fInst = document.getElementById('issues-filter-instrument');
-    const fLabel = document.getElementById('issues-filter-label');
-    const fUser = document.getElementById('issues-filter-user');
-    const fUserRole = document.getElementById(
-        'issues-filter-user-role');
-    const userList = document.getElementById('issues-user-list');
     const refreshBtn = document.getElementById('issues-refresh');
-    const scrollTop = document.getElementById('issues-scroll-top');
-    const scrollTopInner = scrollTop
-        ? scrollTop.querySelector('.mi-table-scroll-top__inner')
-        : null;
-    const scrollBottom = document.getElementById(
-        'issues-scroll-bottom');
-    const tableEl = document.getElementById('issues-table');
-    let assignableUsers = [];
 
     function escapeHtml(s) {
         return String(s == null ? '' : s)
             .replace(/&/g, '&amp;').replace(/</g, '&lt;')
             .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
-    }
-
-    function syncTopScrollWidth() {
-        if (!scrollTopInner || !tableEl) return;
-        scrollTopInner.style.width = tableEl.scrollWidth + 'px';
-    }
-
-    if (scrollTop && scrollBottom) {
-        let lock = false;
-        scrollTop.addEventListener('scroll', () => {
-            if (lock) return;
-            lock = true;
-            scrollBottom.scrollLeft = scrollTop.scrollLeft;
-            lock = false;
-        });
-        scrollBottom.addEventListener('scroll', () => {
-            if (lock) return;
-            lock = true;
-            scrollTop.scrollLeft = scrollBottom.scrollLeft;
-            lock = false;
-        });
-        window.addEventListener('resize', syncTopScrollWidth);
-    }
-
-    async function loadAssignableUsers() {
-        try {
-            const inst = (fInst.value || '').trim();
-            const url = inst
-                ? '/api/issues/users?instrument='
-                  + encodeURIComponent(inst)
-                : '/api/issues/users';
-            const resp = await fetch(url);
-            const data = await resp.json();
-            if (data && data.success) {
-                assignableUsers = data.users || [];
-                if (userList) {
-                    userList.innerHTML = assignableUsers
-                        .map(u => '<option value="'
-                            + escapeHtml(u.username) + '">')
-                        .join('');
-                }
-            }
-        } catch (err) { /* ignore */ }
     }
 
     function kindClass(kind) {
@@ -263,28 +224,6 @@
             : (it.reason ? String(it.reason).slice(0, 80) : '');
     }
 
-    function userCell(it) {
-        const created = escapeHtml(it.created_by || 'anonymous');
-        const assignee = (it.assigned_to || '').trim();
-        const assignedHtml = assignee
-            ? ('<span class="mi-user mi-user--assigned"'
-               + ' title="Assigned to ' + escapeHtml(assignee)
-               + '">'
-               + '<i class="fa-solid fa-user-tag"></i> '
-               + escapeHtml(assignee) + '</span>')
-            : ('<span class="mi-user mi-user--unassigned"'
-               + ' title="Unassigned">'
-               + '<i class="fa-regular fa-user"></i>'
-               + ' unassigned</span>');
-        return ''
-            + '<span class="mi-user mi-user--created"'
-            + ' title="Created by ' + created + '">'
-            + '<i class="fa-solid fa-pen-to-square"></i> '
-            + created + '</span>'
-            + '<br>'
-            + assignedHtml;
-    }
-
     function renderRow(it) {
         const tr = document.createElement('tr');
         const rc = rowClass(it.status);
@@ -292,16 +231,16 @@
         const titleStr = synthesiseTitle(it);
         const titleCell = titleStr
             ? escapeHtml(titleStr)
-            : '<span style="color:var(--ari-text-muted);">\u2014</span>';
+            : '<span style="color:var(--ari-text-muted);">—</span>';
         const typeCell = it.type
             ? escapeHtml(it.type)
-            : '<span style="color:var(--ari-text-muted);">\u2014</span>';
+            : '<span style="color:var(--ari-text-muted);">—</span>';
         const reasonCell = it.reason
             ? escapeHtml(it.reason)
-            : '<span style="color:var(--ari-text-muted);">\u2014</span>';
+            : '<span style="color:var(--ari-text-muted);">—</span>';
         const actionCell = it.action
             ? escapeHtml(it.action)
-            : '<span style="color:var(--ari-text-muted);">\u2014</span>';
+            : '<span style="color:var(--ari-text-muted);">—</span>';
         const goBtn = it.origin_url
             ? ('<a class="mi-btn mi-btn--xs mi-btn--ghost"'
                 + ' href="' + escapeHtml(it.origin_url) + '"'
@@ -310,93 +249,100 @@
                 + '<i class="fa-solid fa-up-right-from-square"></i>'
                 + ' Go</a>')
             : '';
-        const assignBtn = '<button class="mi-btn mi-btn--xs'
-            + ' mi-btn--ghost" data-action="assign"'
-            + ' data-id="' + it.id + '"'
-            + ' title="Assign user">'
-            + '<i class="fa-solid fa-user-plus"></i></button>';
-        tr.innerHTML = ''
-            + '<td class="mi-col-id">#' + it.id + '</td>'
-            + '<td class="mi-col-created">'
-            + escapeHtml((it.created_at||'').slice(0, 19)
-                .replace('T', ' ')) + '</td>'
-            + '<td class="mi-col-by">' + userCell(it) + '</td>'
-            + '<td class="mi-col-kind">'
-            + '<span class="mi-kind ' + kindClass(it.kind) + '">'
-            + escapeHtml(it.kind||'') + '</span></td>'
-            + '<td class="mi-col-kind">' + typeCell + '</td>'
-            + '<td class="mi-cell-title">' + titleCell + '</td>'
-            + '<td class="mi-col-reason">' + reasonCell + '</td>'
-            + '<td class="mi-col-action">' + actionCell + '</td>'
-            + '<td class="mi-col-status">'
-            + '<span class="mi-badge ' + statusClass(it.status)
-            + '">' + escapeHtml(it.status||'open') + '</span></td>'
-            + '<td class="mi-col-actions">'
-            + goBtn + assignBtn
-            + '<button class="mi-btn mi-btn--xs"'
-            + ' data-action="resolve" data-id="' + it.id + '"'
-            + ' title="Mark as resolved">'
-            + '<i class="fa-solid fa-check"></i></button>'
-            + '<button class="mi-btn mi-btn--xs mi-btn--danger"'
-            + ' data-action="invalid" data-id="' + it.id + '"'
-            + ' title="Mark as invalid">'
-            + '<i class="fa-solid fa-xmark"></i></button>'
-            + '<button class="mi-btn mi-btn--xs mi-btn--ghost"'
-            + ' data-action="reopen" data-id="' + it.id + '"'
-            + ' title="Reopen issue">'
-            + '<i class="fa-solid fa-rotate-left"></i></button>'
-            + '</td>';
+        tr.innerHTML = `
+            <td class="mi-col-id">#${it.id}</td>
+            <td class="mi-col-created">${
+                escapeHtml((it.created_at||'').slice(0, 19)
+                    .replace('T', ' '))}</td>
+            <td class="mi-col-by">
+                <span class="mi-user">
+                    <i class="fa-solid fa-user"></i>
+                    ${escapeHtml(it.created_by||'anonymous')}
+                </span>
+            </td>
+            <td class="mi-col-kind">
+                <span class="mi-kind ${kindClass(it.kind)}">
+                    ${escapeHtml(it.kind||'')}
+                </span>
+            </td>
+            <td class="mi-col-kind">${typeCell}</td>
+            <td class="mi-cell-title">${titleCell}</td>
+            <td class="mi-col-reason">${reasonCell}</td>
+            <td class="mi-col-action">${actionCell}</td>
+            <td class="mi-col-status">
+                <span class="mi-badge ${statusClass(it.status)}">
+                    ${escapeHtml(it.status||'open')}
+                </span>
+            </td>
+            <td class="mi-col-actions">
+                ${goBtn}
+                <button class="mi-btn mi-btn--xs"
+                    data-action="resolve" data-id="${it.id}"
+                    title="Mark as resolved">
+                    <i class="fa-solid fa-check"></i> Resolve
+                </button>
+                <button class="mi-btn mi-btn--xs mi-btn--danger"
+                    data-action="invalid" data-id="${it.id}"
+                    title="Mark as invalid">
+                    <i class="fa-solid fa-xmark"></i> Invalid
+                </button>
+                <button class="mi-btn mi-btn--xs mi-btn--ghost"
+                    data-action="reopen" data-id="${it.id}"
+                    title="Reopen issue">
+                    <i class="fa-solid fa-rotate-left"></i> Reopen
+                </button>
+                ${VISIBILITY === 'admin'
+                    ? `<button class="mi-btn mi-btn--xs mi-btn--ghost"
+                        data-action="edit" data-id="${it.id}"
+                        title="Edit issue (admin)">
+                        <i class="fa-solid fa-pen"></i> Edit
+                    </button>
+                    <button class="mi-btn mi-btn--xs mi-btn--danger"
+                        data-action="delete" data-id="${it.id}"
+                        title="Delete issue (admin)">
+                        <i class="fa-solid fa-trash"></i> Delete
+                    </button>`
+                    : ''}
+            </td>`;
         return tr;
     }
 
     function renderEmpty() {
-        tbody.innerHTML = '<tr><td colspan="10">'
-            + '<div class="mi-empty">'
-            + '<i class="fa-solid fa-inbox"></i>'
-            + '<p class="mi-empty__title">'
-            + 'No issues match these filters</p>'
-            + '<p class="mi-empty__msg">Try clearing the'
-            + ' status, kind, or user filters.</p>'
-            + '</div></td></tr>';
+        tbody.innerHTML = `
+            <tr><td colspan="10">
+                <div class="mi-empty">
+                    <i class="fa-solid fa-inbox"></i>
+                    <p class="mi-empty__title">No issues match
+                        these filters</p>
+                    <p class="mi-empty__msg">Try clearing the
+                        status, kind, or type filters.</p>
+                </div>
+            </td></tr>`;
     }
 
     function renderError(msg) {
-        tbody.innerHTML = '<tr><td colspan="10">'
-            + '<div class="mi-empty">'
-            + '<i class="fa-solid fa-triangle-exclamation"'
-            + ' style="color: var(--ari-danger);"></i>'
-            + '<p class="mi-empty__title">'
-            + 'Failed to load issues</p>'
-            + '<p class="mi-empty__msg">' + escapeHtml(msg)
-            + '</p></div></td></tr>';
+        tbody.innerHTML = `
+            <tr><td colspan="10">
+                <div class="mi-empty">
+                    <i class="fa-solid fa-triangle-exclamation"
+                        style="color: var(--ari-danger);"></i>
+                    <p class="mi-empty__title">Failed to load
+                        issues</p>
+                    <p class="mi-empty__msg">${escapeHtml(msg)}</p>
+                </div>
+            </td></tr>`;
     }
 
     async function load() {
-        statusEl.innerHTML = '<span class="mi-status__pill">'
-            + '<i class="fa-solid fa-spinner fa-spin"></i>'
-            + ' Loading</span>';
+        statusEl.innerHTML = `
+            <span class="mi-status__pill">
+                <i class="fa-solid fa-spinner fa-spin"></i> Loading
+            </span>`;
         const params = new URLSearchParams();
         if (fStatus.value) params.set('status', fStatus.value);
         if (fKind.value) params.set('kind', fKind.value);
-        if (fLabel && fLabel.value) {
-            params.set('label', fLabel.value);
-        }
-        if (fType && fType.value) {
-            params.set('type', fType.value);
-        }
         if (fInst.value.trim()) {
             params.set('instrument', fInst.value.trim());
-        }
-        const role = fUserRole ? fUserRole.value : 'any';
-        const userVal = fUser ? fUser.value.trim() : '';
-        if (role === 'unassigned') {
-            params.set('assigned_to', '__none__');
-        } else if (userVal) {
-            if (role === 'created_by') {
-                params.set('created_by', userVal);
-            } else if (role === 'assigned_to') {
-                params.set('assigned_to', userVal);
-            }
         }
         try {
             const resp = await fetch(
@@ -407,39 +353,41 @@
                 statusEl.textContent = '';
                 return;
             }
-            let issues = data.issues || [];
-            if (role === 'any' && userVal) {
-                const lc = userVal.toLowerCase();
-                issues = issues.filter(it =>
-                    String(it.created_by||'').toLowerCase() === lc
-                    || String(it.assigned_to||'').toLowerCase()
-                       === lc);
-            }
             tbody.innerHTML = '';
-            issues.forEach(it => {
+            (data.issues || []).forEach(it => {
                 tbody.appendChild(renderRow(it));
             });
-            const n = issues.length;
-            if (n === 0) renderEmpty();
-            statusEl.innerHTML = '<span class="mi-status__pill">'
-                + '<i class="fa-solid fa-list"></i> ' + n
-                + ' issue' + (n === 1 ? '' : 's') + '</span>'
-                + '<span>visibility scope: <strong>'
-                + escapeHtml(VISIBILITY) + '</strong></span>';
-            window.requestAnimationFrame(syncTopScrollWidth);
+            const n = (data.issues || []).length;
+            if (n === 0) {
+                renderEmpty();
+            }
+            // expose by id for admin edit prompt
+            window._issuesById = {};
+            (data.issues || []).forEach(it => {
+                window._issuesById[it.id] = it;
+            });
+            statusEl.innerHTML = `
+                <span class="mi-status__pill">
+                    <i class="fa-solid fa-list"></i>
+                    ${n} issue${n === 1 ? '' : 's'}
+                </span>
+                <span>visibility scope:
+                    <strong>${escapeHtml(VISIBILITY)}</strong></span>`;
         } catch (err) {
             renderError(err.message);
             statusEl.textContent = '';
         }
     }
 
-    async function update(id, payload) {
+    async function update(id, status) {
+        const note = window.prompt(
+            'Optional note (leave blank to skip):', '');
         try {
             const resp = await fetch('/api/issues/update', {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify(
-                    Object.assign({id: id}, payload))
+                body: JSON.stringify({id: id, status: status,
+                                      note: note || undefined})
             });
             const data = await resp.json();
             if (!data.success) {
@@ -452,87 +400,70 @@
         }
     }
 
-    function openAssignModal(issueId) {
-        const overlay = document.createElement('div');
-        overlay.className = 'mi-assign-overlay';
-        const opts = ['<option value="">(unassigned)</option>']
-            .concat(assignableUsers.map(u =>
-                '<option value="' + escapeHtml(u.username) + '">'
-                + escapeHtml(u.username) + ' ('
-                + escapeHtml(u.level) + ')</option>')).join('');
-        overlay.innerHTML = '<div class="mi-assign-overlay__panel">'
-            + '<h3 class="mi-assign-overlay__title">'
-            + 'Assign issue #' + issueId + '</h3>'
-            + '<label for="mi-assign-select"'
-            + ' class="mi-toolbar__label">User</label>'
-            + '<select id="mi-assign-select" class="mi-select"'
-            + ' style="width:100%;margin:0.3rem 0 0.7rem;">'
-            + opts + '</select>'
-            + '<div style="display:flex;gap:0.5rem;'
-            + 'justify-content:flex-end;">'
-            + '<button class="mi-btn mi-btn--xs"'
-            + ' data-assign-cancel>Cancel</button>'
-            + '<button class="mi-btn mi-btn--xs mi-btn--primary"'
-            + ' data-assign-ok>Save</button>'
-            + '</div></div>';
-        document.body.appendChild(overlay);
-        const close = () => overlay.remove();
-        overlay.addEventListener('click', (ev) => {
-            if (ev.target === overlay) close();
-        });
-        overlay.querySelector('[data-assign-cancel]')
-            .addEventListener('click', close);
-        overlay.querySelector('[data-assign-ok]')
-            .addEventListener('click', () => {
-                const sel = overlay.querySelector(
-                    '#mi-assign-select');
-                const v = sel ? sel.value : '';
-                close();
-                update(issueId, {assigned_to: v});
-            });
-    }
-
     tbody.addEventListener('click', (ev) => {
         const btn = ev.target.closest('button[data-action]');
         if (!btn) return;
         const id = parseInt(btn.dataset.id, 10);
         const action = btn.dataset.action;
-        if (action === 'assign') {
-            openAssignModal(id);
-            return;
-        }
+        if (action === 'delete') { adminDelete(id); return; }
+        if (action === 'edit')   { adminEdit(id);   return; }
         const map = {resolve: 'resolved',
                      invalid: 'invalid',
                      reopen: 'open'};
-        const note = window.prompt(
-            'Optional note (leave blank to skip):', '');
-        update(id, {status: map[action],
-                    note: note || undefined});
+        update(id, map[action]);
     });
+
+    async function adminDelete(id) {
+        if (!window.confirm(
+            'PERMANENTLY delete issue #' + id + '? '
+            + 'This cannot be undone.')) return;
+        try {
+            const resp = await fetch('/api/issues/delete', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({id: id}),
+            });
+            const j = await resp.json();
+            if (j && j.success) { load(); }
+            else { alert((j && j.error) || 'Delete failed'); }
+        } catch (e) { alert('Network error: ' + e.message); }
+    }
+
+    async function adminEdit(id) {
+        const cur = (window._issuesById || {})[id] || {};
+        const title = window.prompt(
+            'Edit title (blank = unchanged):',
+            cur.title || '');
+        if (title === null) return;
+        const reason = window.prompt(
+            'Edit reason / body (blank = unchanged):',
+            cur.reason || '');
+        if (reason === null) return;
+        const payload = {id: id};
+        if (title !== '') payload.title = title;
+        if (reason !== '') payload.reason = reason;
+        if (Object.keys(payload).length === 1) return;
+        try {
+            const resp = await fetch('/api/issues/edit', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(payload),
+            });
+            const j = await resp.json();
+            if (j && j.success) { load(); }
+            else { alert((j && j.error) || 'Edit failed'); }
+        } catch (e) { alert('Network error: ' + e.message); }
+    }
 
     refreshBtn.addEventListener('click', load);
     fStatus.addEventListener('change', load);
     fKind.addEventListener('change', load);
-    if (fLabel) fLabel.addEventListener('change', load);
-    if (fType) fType.addEventListener('change', load);
-    if (fUserRole) fUserRole.addEventListener('change', load);
-    let userTimer = null;
-    if (fUser) {
-        fUser.addEventListener('input', () => {
-            if (userTimer) clearTimeout(userTimer);
-            userTimer = setTimeout(load, 300);
-        });
-    }
     let instTimer = null;
     fInst.addEventListener('input', () => {
         if (instTimer) clearTimeout(instTimer);
-        instTimer = setTimeout(() => {
-            loadAssignableUsers();
-            load();
-        }, 350);
+        instTimer = setTimeout(load, 350);
     });
 
-    loadAssignableUsers();
     load();
 })();
 </script>

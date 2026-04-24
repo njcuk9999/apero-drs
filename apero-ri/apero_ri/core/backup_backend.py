@@ -758,12 +758,36 @@ def _build_google_drive_service(cfg: Dict[str, Any]):
     )
     if not credentials.valid:
         if credentials.expired and credentials.refresh_token:
-            credentials.refresh(Request())
-            save_gdrive_oauth_token(cfg, json.loads(credentials.to_json()))
+            try:
+                credentials.refresh(Request())
+                save_gdrive_oauth_token(
+                    cfg, json.loads(credentials.to_json())
+                )
+            except Exception as _ref_exc:
+                # Refresh token revoked or expired (common when the
+                # Google Cloud app is in Testing mode — Google revokes
+                # refresh tokens after 7 days — or when the OAuth
+                # client secret was recreated).  Delete the stale
+                # token so the status card shows "not connected".
+                _token_p = get_gdrive_oauth_token_path(cfg)
+                try:
+                    _token_p.unlink(missing_ok=True)
+                except Exception:
+                    pass
+                raise RuntimeError(
+                    "Google OAuth refresh token has expired or been "
+                    "revoked (invalid_grant). This usually means either "
+                    "(a) your Google Cloud OAuth app is still in "
+                    "Testing mode — Google revokes refresh tokens after "
+                    "7 days in that mode; publish the app to avoid "
+                    "this — or (b) the client secret was recreated "
+                    "after the last token was issued. "
+                    "Click 'Connect Google account' to re-authorize."
+                ) from _ref_exc
         else:
             raise RuntimeError(
-                "Google OAuth token is invalid or expired; reconnect "
-                "Google account."
+                "Google OAuth token is invalid or expired. "
+                "Click 'Connect Google account' to re-authorize."
             )
 
     return build("drive", "v3", credentials=credentials, cache_discovery=False)

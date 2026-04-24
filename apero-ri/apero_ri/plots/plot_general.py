@@ -197,6 +197,13 @@ def plot_to_json_item(fig: Any, target_id: str) -> Dict[str, Any]:
     :return: dict, the JSON-serialisable item payload
     :rtype: dict
     """
+    try:
+        from apero_ri.plots.bokeh_theme import (
+            apply_theme_to_layout, get_request_theme,
+        )
+        apply_theme_to_layout(fig, get_request_theme())
+    except Exception:  # noqa: BLE001
+        pass
     return json_item(fig, target_id)
 
 
@@ -211,6 +218,13 @@ def plot_to_components(fig: Any) -> Tuple[str, str]:
                     2. div:    str, the target <div> block
     :rtype: tuple[str, str]
     """
+    try:
+        from apero_ri.plots.bokeh_theme import (
+            apply_theme_to_layout, get_request_theme,
+        )
+        apply_theme_to_layout(fig, get_request_theme())
+    except Exception:  # noqa: BLE001
+        pass
     return components(fig)
 
 

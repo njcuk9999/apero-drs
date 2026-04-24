@@ -11,8 +11,18 @@
 
     function applyTheme(theme) {
         if (VALID_THEMES.indexOf(theme) === -1) theme = 'default';
+        var prev = document.documentElement.getAttribute('data-theme')
+            || 'default';
         document.documentElement.setAttribute('data-theme', theme);
         try { localStorage.setItem(STORAGE_KEY, theme); } catch (e) {}
+        if (prev !== theme) {
+            try {
+                document.dispatchEvent(new CustomEvent(
+                    'ari:theme-change',
+                    { detail: { theme: theme, previous: prev } }
+                ));
+            } catch (e) {}
+        }
     }
 
     function saveTheme(theme) {

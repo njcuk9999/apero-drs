@@ -344,3 +344,34 @@ def update_issue(
         except Exception:
             pass
         return target
+
+
+def delete_issue(
+        data_dir: Path, issue_id: int
+) -> Optional[Dict[str, Any]]:
+    """Hard-delete an issue from the store.
+
+    Intended for admin/super-admin cleanup of test/erroneous
+    entries. Also removes any todo entry for the assignee.
+    Returns the deleted issue dict, or None if not found.
+    """
+    with _LOCK:
+        issues = _load(data_dir)
+        target = None
+        new_issues = []
+        for it in issues:
+            if it.get('id') == issue_id and target is None:
+                target = it
+                continue
+            new_issues.append(it)
+        if target is None:
+            return None
+        _save(data_dir, new_issues)
+        try:
+            from apero_ri.core import user_data as _ud
+            assignee = target.get('assigned_to')
+            if assignee:
+                _ud.remove_issue_todo(assignee, target['id'])
+        except Exception:
+            pass
+        return target

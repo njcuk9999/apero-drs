@@ -65,6 +65,14 @@
         'det-backup-max-size-row');
     var detBackupMaxSize      = document.getElementById(
         'det-backup-max-size');
+    var detBackupExcludeDirsRow = document.getElementById(
+        'det-backup-exclude-dirs-row');
+    var detBackupExcludeDirs    = document.getElementById(
+        'det-backup-exclude-dirs');
+    var detBackupExcludePathsRow = document.getElementById(
+        'det-backup-exclude-paths-row');
+    var detBackupExcludePaths    = document.getElementById(
+        'det-backup-exclude-paths');
     var detKvList       = document.getElementById('det-kv-list');
     var detProgressRow  = document.getElementById('det-progress-row');
     var detProgressFill = document.getElementById('det-progress-fill');
@@ -142,6 +150,16 @@
     var editWeeklyCopies= document.getElementById('edit-weekly-copies');
     var editBackupMaxSizeMb = document.getElementById(
         'edit-backup-max-size-mb');
+    var editBackupMaxSizeSaved = document.getElementById(
+        'edit-backup-max-size-saved');
+    var editBackupExcludeDirs = document.getElementById(
+        'edit-backup-exclude-dirs');
+    var editBackupExcludePaths = document.getElementById(
+        'edit-backup-exclude-paths');
+    var editBackupExcludeDirsDefault = document.getElementById(
+        'edit-backup-exclude-dirs-default');
+    var editBackupExcludePathsDefault = document.getElementById(
+        'edit-backup-exclude-paths-default');
     var editAssetsFields= document.getElementById('edit-assets-fields');
     var editAssetsMode  = document.getElementById('edit-assets-mode');
     var editMpFields    = document.getElementById('edit-mp-fields');
@@ -638,6 +656,32 @@
                 detBackupMaxSizeRow.style.display = 'none';
             }
         }
+        // Backup exclude lists. Display the effective list:
+        // admin override if set, otherwise the built-in defaults.
+        var renderExcludeRow = function (rowEl, valEl, override, defaults) {
+            if (!rowEl || !valEl) return;
+            if (!isBackupTask) {
+                valEl.textContent = '';
+                valEl.title = '';
+                rowEl.style.display = 'none';
+                return;
+            }
+            var ov = Array.isArray(override) ? override : [];
+            var df = Array.isArray(defaults) ? defaults : [];
+            var effective = ov.length ? ov : df;
+            var suffix = ov.length ? ' (custom)' : ' (default)';
+            valEl.textContent = (effective.length
+                ? effective.join(', ')
+                : '(none)') + suffix;
+            valEl.title = effective.join('\n');
+            rowEl.style.display = '';
+        };
+        renderExcludeRow(
+            detBackupExcludeDirsRow, detBackupExcludeDirs,
+            task.exclude_dirs, task.default_exclude_dirs);
+        renderExcludeRow(
+            detBackupExcludePathsRow, detBackupExcludePaths,
+            task.exclude_paths, task.default_exclude_paths);
 
         if (detFiltersWarning && detFiltersWarningList) {
             var rawFilters = (task.filters && typeof task.filters === 'object')
@@ -1456,6 +1500,45 @@
             editBackupMaxSizeMb.value = (maxMb % 1 === 0)
                 ? String(parseInt(maxMb, 10))
                 : String(maxMb);
+            // Make the on-disk value visible so the admin can tell
+            // that the field reflects the persisted value (not a
+            // stale HTML default).
+            if (editBackupMaxSizeSaved) {
+                editBackupMaxSizeSaved.textContent =
+                    ' Currently saved: '
+                    + ((maxMb % 1 === 0)
+                        ? String(parseInt(maxMb, 10))
+                        : String(maxMb))
+                    + ' MB.';
+            }
+        }
+        // Populate exclude lists + show the built-in defaults so
+        // the admin knows what kicks in when the override is empty.
+        if (editBackupExcludeDirs) {
+            var excDirs = Array.isArray(task.exclude_dirs)
+                ? task.exclude_dirs
+                : [];
+            editBackupExcludeDirs.value = excDirs.join('\n');
+        }
+        if (editBackupExcludePaths) {
+            var excPaths = Array.isArray(task.exclude_paths)
+                ? task.exclude_paths
+                : [];
+            editBackupExcludePaths.value = excPaths.join('\n');
+        }
+        if (editBackupExcludeDirsDefault) {
+            var defDirs = Array.isArray(task.default_exclude_dirs)
+                ? task.default_exclude_dirs
+                : [];
+            editBackupExcludeDirsDefault.textContent =
+                defDirs.length ? defDirs.join(', ') : '(none)';
+        }
+        if (editBackupExcludePathsDefault) {
+            var defPaths = Array.isArray(task.default_exclude_paths)
+                ? task.default_exclude_paths
+                : [];
+            editBackupExcludePathsDefault.textContent =
+                defPaths.length ? defPaths.join(', ') : '(none)';
         }
         if (editAssetsMode) {
             editAssetsMode.value = String(task.mode || 'sync');
@@ -1759,6 +1842,23 @@
         if (taskKey === BACKUP_TASK_KEY && isFinite(backupMaxSizeMb)
                 && backupMaxSizeMb > 0) {
             payload.backup_max_size_mb = backupMaxSizeMb;
+        }
+        if (taskKey === BACKUP_TASK_KEY) {
+            // Always send the exclude lists (even if empty) so an
+            // admin can remove a previously-set override and revert
+            // to the built-in defaults.
+            var splitLines = function (el) {
+                if (!el) return [];
+                var raw = String(el.value || '').split(/\r?\n/);
+                var out = [];
+                for (var i = 0; i < raw.length; i++) {
+                    var s = raw[i].trim();
+                    if (s && out.indexOf(s) === -1) out.push(s);
+                }
+                return out;
+            };
+            payload.exclude_dirs = splitLines(editBackupExcludeDirs);
+            payload.exclude_paths = splitLines(editBackupExcludePaths);
         }
         if (taskKey === ASSETS_TASK_KEY) {
             payload.assets_mode = editAssetsMode ? editAssetsMode.value : 'sync';

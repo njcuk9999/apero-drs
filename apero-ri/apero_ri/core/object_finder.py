@@ -16,7 +16,9 @@ Created on 2026-04-20
 from __future__ import annotations
 
 import base64
+import concurrent.futures as _futures
 import io
+import threading
 import time as _time
 import warnings
 from typing import Any, Callable, Dict, List, Optional, Tuple
@@ -88,6 +90,37 @@ _SOURCE_EPOCH_MAP = {
 }
 # Fallback when no source is recognised
 _DEFAULT_EPOCH_DECYR = 2016.0
+
+# ------------------------------------------------------------------
+# In-memory catalog cache
+# Keyed by rounded query parameters; 24-hour TTL.
+# Prevents redundant TAP round-trips when the same object is
+# viewed multiple times (e.g. after the rendered-image cache
+# expires but the sky position hasn't changed).
+# ------------------------------------------------------------------
+_CAT_LOCK = threading.Lock()
+_CAT_STORE: Dict[tuple, Any] = {}
+_CAT_TTL = 86400.0  # seconds (24 h)
+
+
+def _cat_get(key: tuple) -> Any:
+    """Return cached catalog data, or None if stale/absent."""
+    with _CAT_LOCK:
+        entry = _CAT_STORE.get(key)
+    if entry is None:
+        return None
+    ts, data = entry
+    if _time.monotonic() - ts > _CAT_TTL:
+        with _CAT_LOCK:
+            _CAT_STORE.pop(key, None)
+        return None
+    return data
+
+
+def _cat_put(key: tuple, data: Any) -> None:
+    """Store *data* under *key* in the catalog cache."""
+    with _CAT_LOCK:
+        _CAT_STORE[key] = (_time.monotonic(), data)
 
 
 # ============================================================
@@ -166,42 +199,92 @@ def generate_finder_charts(
         f'{obs_time.iso}\n'
     )
     # ---------------------------------------------------------
-    # fetch catalogue data
+    # fetch catalogue data (Gaia + 2MASS in parallel)
     # ---------------------------------------------------------
-    _log('[finder] Querying Gaia DR3 catalogue ...\n')
+    ir_bands = {'J', 'H', 'K'}
+    need_2mass = bool(ir_bands.intersection(bands))
+    tmass_radius = fcfg['radius'].get(
+        'J', fcfg['radius']['G']
+    )
     t1 = _time.monotonic()
-    try:
-        gaia_sources = _get_gaia_sources(
-            obs_coords, obs_time,
-            fcfg['radius']['G'], fcfg['max_pm'],
+    if need_2mass:
+        _log(
+            '[finder] Querying Gaia DR3 and 2MASS '
+            'catalogues in parallel ...\n'
         )
-    except Exception as exc:
-        _log(f'[finder] ERROR: Gaia query failed: {exc}\n')
-        return dict(
-            success=False, images=[], bands=[],
-            title='', titles=[],
-            error=f'Gaia query failed: {exc}',
+        with _futures.ThreadPoolExecutor(
+            max_workers=2
+        ) as _pool:
+            _gaia_fut = _pool.submit(
+                _get_gaia_sources,
+                obs_coords, obs_time,
+                fcfg['radius']['G'], fcfg['max_pm'],
+            )
+            _tmass_fut = _pool.submit(
+                _query_2mass_table,
+                obs_coords, obs_time,
+                tmass_radius, fcfg['max_pm'],
+            )
+            try:
+                gaia_sources = _gaia_fut.result()
+            except Exception as exc:
+                _log(
+                    f'[finder] ERROR: Gaia query '
+                    f'failed: {exc}\n'
+                )
+                return dict(
+                    success=False, images=[],
+                    bands=[], title='', titles=[],
+                    error=f'Gaia query failed: {exc}',
+                )
+            try:
+                _prefetched_tmass = _tmass_fut.result(
+                    timeout=120
+                )
+            except Exception as exc:
+                dt_fail = _time.monotonic() - t1
+                _log(
+                    f'[finder] 2MASS query failed '
+                    f'({dt_fail:.1f}s): {exc}\n'
+                )
+                _prefetched_tmass = None
+    else:
+        _log(
+            '[finder] Querying Gaia DR3 catalogue ...\n'
         )
+        try:
+            gaia_sources = _get_gaia_sources(
+                obs_coords, obs_time,
+                fcfg['radius']['G'], fcfg['max_pm'],
+            )
+        except Exception as exc:
+            _log(
+                f'[finder] ERROR: Gaia query '
+                f'failed: {exc}\n'
+            )
+            return dict(
+                success=False, images=[], bands=[],
+                title='', titles=[],
+                error=f'Gaia query failed: {exc}',
+            )
+        _prefetched_tmass = None
     n_gaia = len(gaia_sources.get('ra', []))
     dt1 = _time.monotonic() - t1
     _log(
-        f'[finder] Gaia query returned {n_gaia} '
-        f'sources ({dt1:.1f}s)\n'
+        f'[finder] Catalogue queries complete: '
+        f'{n_gaia} Gaia sources ({dt1:.1f}s)\n'
     )
-    # get 2MASS photometry for infrared bands
-    ir_bands = {'J', 'H', 'K'}
-    if ir_bands.intersection(bands):
-        _log('[finder] Querying 2MASS catalogue ...\n')
+    # cross-match 2MASS photometry
+    if need_2mass:
         t2 = _time.monotonic()
         try:
             _fill_2mass(
                 gaia_sources, obs_coords, obs_time,
-                fcfg['radius'].get(
-                    'J', fcfg['radius']['G']
-                ),
+                tmass_radius,
                 fcfg['max_pm'],
                 fcfg['sigma_limit'],
                 fcfg['mag_limit'],
+                _table=_prefetched_tmass,
             )
             dt2 = _time.monotonic() - t2
             n_matched = int(np.sum(
@@ -215,7 +298,7 @@ def generate_finder_charts(
         except Exception as exc:
             dt2 = _time.monotonic() - t2
             _log(
-                f'[finder] 2MASS query failed '
+                f'[finder] 2MASS cross-match failed '
                 f'({dt2:.1f}s): {exc}\n'
             )
     # ---------------------------------------------------------
@@ -520,6 +603,16 @@ def _get_gaia_sources(
     # widen search radius for proper motion
     search = abs(delta_time_now * max_pm).to(uu.deg)
     radius = radius.to(uu.deg) + search
+    # check in-memory cache before hitting the TAP server
+    _gaia_key = (
+        'gaia',
+        round(coords.ra.deg, 3),
+        round(coords.dec.deg, 3),
+        round(radius.value, 4),
+    )
+    _cached_gaia = _cat_get(_gaia_key)
+    if _cached_gaia is not None:
+        return _cached_gaia
     # run TAP query
     gaia = TapPlus(url=GAIA_URL)
     gaia_query = GAIA_QUERY.format(
@@ -581,7 +674,7 @@ def _get_gaia_sources(
         np.isnan(plx_arr) | (plx_arr <= 0),
         np.nan, plx_arr,
     )
-    return {
+    result = {
         'gaia_id': np.array(table['source_id']),
         'ra': curr.ra.deg,
         'dec': curr.dec.deg,
@@ -604,6 +697,8 @@ def _get_gaia_sources(
         'parallax': plx_out,
         'separation': sep.deg,
     }
+    _cat_put(_gaia_key, result)
+    return result
 
 
 def _filled_float(
@@ -624,6 +719,58 @@ def _filled_float(
     return arr
 
 
+# ---- 2MASS query (cached, parallelisable) ------------------
+def _query_2mass_table(
+    obs_coords: SkyCoord,
+    obs_time: Time,
+    radius: Any,
+    max_pm: Any,
+) -> Any:
+    """Query 2MASS TAP and return the raw result table.
+
+    Results are cached in memory for 24 h so repeated views
+    of the same object skip the network round-trip entirely.
+    """
+    tmass_time = Time(TMASS_EPOCH, format='decimalyear')
+    with warnings.catch_warnings(record=True) as _:
+        dt_2mass = (
+            (tmass_time.jd - obs_time.jd) * uu.day
+        )
+    obs_copy = SkyCoord(obs_coords)
+    with warnings.catch_warnings(record=True) as _:
+        tmass_center = obs_copy.apply_space_motion(
+            dt=dt_2mass
+        )
+    search = abs(dt_2mass * max_pm).to(uu.deg)
+    r = radius.to(uu.deg) + search
+    _tmass_key = (
+        '2mass',
+        round(tmass_center.ra.deg, 3),
+        round(tmass_center.dec.deg, 3),
+        round(r.value, 4),
+    )
+    _cached_tm = _cat_get(_tmass_key)
+    if _cached_tm is not None:
+        return _cached_tm
+    tmass_query = TMASS_QUERY.format(
+        TMASS_COLS=TMASS_COLS,
+        ra=tmass_center.ra.deg,
+        dec=tmass_center.dec.deg,
+        radius=r.value,
+    )
+    tmass = TapPlus(url=TMASS_URL)
+    job0 = tmass.launch_job(tmass_query)
+    table0 = job0.get_results()
+    del job0
+    if len(table0) == 2000:
+        tmass2 = TapPlus(url=TMASS_URL)
+        job2 = tmass2.launch_job_async(tmass_query)
+        table0 = job2.get_results()
+        del job2
+    _cat_put(_tmass_key, table0)
+    return table0
+
+
 # ---- 2MASS fill --------------------------------------------
 def _fill_2mass(
     gaia_sources: Dict[str, np.ndarray],
@@ -633,38 +780,20 @@ def _fill_2mass(
     max_pm: Any,
     sigma_limit: Dict[str, float],
     mag_limit: float,
+    _table: Any = None,
 ) -> None:
-    """Cross-match Gaia sources with 2MASS photometry."""
-    tmass = TapPlus(url=TMASS_URL)
-    tmass_time = Time(TMASS_EPOCH, format='decimalyear')
-    with warnings.catch_warnings(record=True) as _:
-        dt_2mass = (
-            (tmass_time.jd - obs_time.jd) * uu.day
+    """Cross-match Gaia sources with 2MASS photometry.
+
+    If *_table* is supplied it is used directly (pre-fetched
+    by the caller, e.g. via a concurrent query), otherwise
+    ``_query_2mass_table`` is called here.
+    """
+    if _table is not None:
+        table0 = _table
+    else:
+        table0 = _query_2mass_table(
+            obs_coords, obs_time, radius, max_pm
         )
-    # propagate target position to 2MASS epoch
-    obs_copy = SkyCoord(obs_coords)
-    with warnings.catch_warnings(record=True) as _:
-        tmass_center = obs_copy.apply_space_motion(
-            dt=dt_2mass
-        )
-    # widen search for proper motion
-    search = abs(dt_2mass * max_pm).to(uu.deg)
-    r = radius.to(uu.deg) + search
-    # query 2MASS
-    tmass_query = TMASS_QUERY.format(
-        TMASS_COLS=TMASS_COLS,
-        ra=tmass_center.ra.deg,
-        dec=tmass_center.dec.deg,
-        radius=r.value,
-    )
-    job0 = tmass.launch_job(tmass_query)
-    table0 = job0.get_results()
-    del job0
-    if len(table0) == 2000:
-        tmass2 = TapPlus(url=TMASS_URL)
-        job2 = tmass2.launch_job_async(tmass_query)
-        table0 = job2.get_results()
-        del job2
     if len(table0) == 0:
         return
     # rename generic col_N columns when present

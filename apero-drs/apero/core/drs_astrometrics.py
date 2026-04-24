@@ -37,6 +37,14 @@ from typing import Any, Dict, List, Optional, Tuple, Union
 import numpy as np
 import yaml
 
+# Prefer the libyaml-backed C loader when available — ~7× faster than
+# the pure-Python SafeLoader on a 1k+ yaml directory scan, which
+# dominates ARI's astrometric-database list endpoint.
+try:
+    _YAML_SAFE_LOADER = yaml.CSafeLoader  # type: ignore[attr-defined]
+except AttributeError:  # pragma: no cover - libyaml not built
+    _YAML_SAFE_LOADER = yaml.SafeLoader
+
 from aperocore.base import base
 from aperocore.constants import param_functions
 from aperocore.core import drs_log
@@ -2178,7 +2186,7 @@ class AstrometricDatabase:
         """
         # open with explicit utf-8 encoding (yaml files contain unicode)
         with open(fpath, 'r', encoding='utf-8') as f:
-            data = yaml.safe_load(f)
+            data = yaml.load(f, Loader=_YAML_SAFE_LOADER)
         # ensure we return a dict even for empty files
         if data is None:
             return dict()
@@ -2802,6 +2810,11 @@ def _dir_mtime_signature(astrom_dir: str) -> float:
     avoid using the directory's own mtime so that our cache files
     written into the same directory do not invalidate the signature.
 
+    Includes yamls in the canonical status sub-directories
+    (``verified``/``pending``/``rejected``) when ``astrom_dir`` is the
+    top-level astrometrics root, so callers that pass the root see a
+    signature that changes when any sub-dir changes.
+
     :param astrom_dir: str, directory containing ``*.yaml`` astrometric
                        entries
     :return: float, a signature value (not interpretable as a real time)
@@ -2810,35 +2823,72 @@ def _dir_mtime_signature(astrom_dir: str) -> float:
         return -1.0
     max_mtime = 0.0
     n_yaml = 0
-    try:
-        with os.scandir(astrom_dir) as it:
-            for ent in it:
-                if not ent.name.endswith(YAML_EXT):
-                    continue
-                try:
-                    st = ent.stat()
-                except OSError:
-                    continue
-                if st.st_mtime > max_mtime:
-                    max_mtime = st.st_mtime
-                n_yaml += 1
-    except OSError:
-        return -1.0
+    scan_dirs = [astrom_dir]
+    for sub in STATUS_SUBDIRS:
+        sub_path = os.path.join(astrom_dir, sub)
+        if os.path.isdir(sub_path):
+            scan_dirs.append(sub_path)
+    for d in scan_dirs:
+        try:
+            with os.scandir(d) as it:
+                for ent in it:
+                    if not ent.name.endswith(YAML_EXT):
+                        continue
+                    try:
+                        st = ent.stat()
+                    except OSError:
+                        continue
+                    if st.st_mtime > max_mtime:
+                        max_mtime = st.st_mtime
+                    n_yaml += 1
+        except OSError:
+            continue
     return max_mtime + n_yaml * 1e-6
 
 
 def iter_yaml_files(astrom_dir: str) -> List[str]:
     """List the absolute paths of every ``*.yaml`` file in ``astrom_dir``.
 
-    :param astrom_dir: str, directory to scan (non-recursive)
+    Includes yamls in the canonical status sub-directories
+    (``verified``/``pending``/``rejected``) when ``astrom_dir`` is the
+    top-level astrometrics root, so this transparently spans the new
+    on-disk layout. Sub-dir scanning is skipped when ``astrom_dir`` is
+    *itself* one of the status sub-dirs (avoids infinite recursion-like
+    layouts and keeps targeted scans fast).
+
+    :param astrom_dir: str, directory to scan (non-recursive within
+                       each tier)
     :return: list of absolute file paths, sorted alphabetically
     """
     if not os.path.isdir(astrom_dir):
         return []
     out: List[str] = []
+    seen: set = set()
+    base = os.path.basename(os.path.normpath(astrom_dir)).lower()
+    # Only descend into status sub-dirs when the caller passed the
+    # top-level root (i.e. not a status sub-dir itself). Sub-dir
+    # entries take priority: if the same basename also exists at the
+    # top level (legacy / partial-migration leftover) the top-level
+    # copy is dropped so callers see exactly one entry per name.
+    if base not in STATUS_SUBDIRS:
+        for sub in STATUS_SUBDIRS:
+            sub_path = os.path.join(astrom_dir, sub)
+            if not os.path.isdir(sub_path):
+                continue
+            for fn in sorted(os.listdir(sub_path)):
+                if not fn.endswith(YAML_EXT):
+                    continue
+                if fn in seen:
+                    continue
+                seen.add(fn)
+                out.append(os.path.abspath(
+                    os.path.join(sub_path, fn)))
     for fn in sorted(os.listdir(astrom_dir)):
         if not fn.endswith(YAML_EXT):
             continue
+        if fn in seen:
+            continue
+        seen.add(fn)
         out.append(os.path.abspath(os.path.join(astrom_dir, fn)))
     return out
 
@@ -3106,12 +3156,18 @@ def find_by_name(
     if apero_name is None:
         return None
     # fast path: the on-disk file follows _safe_filename(apero_name)
-    fpath = os.path.join(astrom_dir, _safe_filename(apero_name))
-    if os.path.isfile(fpath):
-        try:
-            return AstrometricDatabase._read_yaml(fpath)
-        except Exception:  # noqa: BLE001
-            pass
+    fname = _safe_filename(apero_name)
+    candidates = [os.path.join(astrom_dir, fname)]
+    base = os.path.basename(os.path.normpath(astrom_dir)).lower()
+    if base not in STATUS_SUBDIRS:
+        for sub in STATUS_SUBDIRS:
+            candidates.append(os.path.join(astrom_dir, sub, fname))
+    for fpath in candidates:
+        if os.path.isfile(fpath):
+            try:
+                return AstrometricDatabase._read_yaml(fpath)
+            except Exception:  # noqa: BLE001
+                pass
     # fallback: scan all entries (handles legacy filenames)
     for an, entry in load_all_entries(astrom_dir):
         if an == apero_name:
@@ -3436,6 +3492,67 @@ def upload_entry(
     AstrometricDatabase._write_yaml(fpath, entry)
     _invalidate_dir_caches(astrom_dir)
     return fpath, entry
+
+
+def set_status(
+        astrom_root: str,
+        apero_name: str,
+        new_status: str,
+        author: Optional[str] = None,
+) -> Tuple[str, str, Dict[str, Any]]:
+    """Move an entry between status sub-directories and refresh metadata.
+
+    Locates the entry across ``verified``/``pending``/``rejected`` (with
+    a flat-layout fallback), rewrites it with ``STATUS=new_status`` and
+    refreshed ``LAST_EDIT``/``LAST_AUTHOR``, atomically writes it under
+    ``<astrom_root>/<new_status>/`` and removes the old file when the
+    on-disk path changes. Per-process caches for both directories are
+    invalidated.
+
+    :param astrom_root: str, top-level astrometrics directory (parent
+                        of ``verified``/``pending``/``rejected``)
+    :param apero_name: str, canonical APERO_NAME of the entry
+    :param new_status: str, one of ``STATUS_SUBDIRS`` (or a key of
+                       ``STATUS_ALIASES``); the target sub-dir/STATUS
+    :param author: str or None, the user driving the change (recorded
+                   on ``LAST_AUTHOR``)
+    :return: tuple of ``(new_yaml_path, old_status, stamped_entry)``
+    """
+    if not apero_name:
+        emsg = 'set_status: apero_name is required'
+        raise AperoCodedException(None, message=emsg)
+    canonical = STATUS_ALIASES.get(new_status, new_status)
+    if canonical not in STATUS_SUBDIRS:
+        emsg = ('set_status: unknown status {0!r}; '
+                'expected one of {1}')
+        raise AperoCodedException(
+            None, message=emsg.format(new_status, STATUS_SUBDIRS))
+    found = find_yaml_in_status_dirs(astrom_root, apero_name)
+    if found is None:
+        emsg = 'set_status: no yaml found for {0!r} under {1}'
+        raise AperoCodedException(
+            None, message=emsg.format(apero_name, astrom_root))
+    old_path, old_status = found
+    entry = AstrometricDatabase._read_yaml(old_path)
+    # apply new STATUS *before* stamping so _stamp_metadata accepts it
+    entry[META_STATUS] = canonical
+    _stamp_metadata(entry, author=author)
+    # ensure STATUS survives _stamp_metadata's default-only logic
+    entry[META_STATUS] = canonical
+    target_dir = astrom_status_dir(astrom_root, canonical)
+    fname = _safe_filename(str(apero_name))
+    new_path = os.path.abspath(os.path.join(target_dir, fname))
+    os.makedirs(target_dir, exist_ok=True)
+    AstrometricDatabase._write_yaml(new_path, entry)
+    if os.path.abspath(old_path) != new_path:
+        try:
+            os.remove(old_path)
+        except OSError:
+            pass
+        _invalidate_dir_caches(os.path.dirname(old_path))
+    _invalidate_dir_caches(target_dir)
+    _invalidate_dir_caches(astrom_root)
+    return new_path, old_status, entry
 
 
 def backfill_metadata(

@@ -245,6 +245,13 @@ def api_file_browser(app):
     )
     total_m = len(all_rows)
 
+    # Backfill missing KW_RUN_ID/KW_PI_NAME on LBL rows from non-LBL rows
+    # in the same set; without this, instruments where LBL files lack
+    # those header keys (e.g. NIRPS) would have all LBL rows stripped by
+    # filter_accessible_rows below, so the file browser would return zero
+    # LBL files even though the data exists on disk.
+    all_rows = bk.backfill_lbl_run_ids(all_rows)
+
     accessible_rows = bk.filter_accessible_rows(
         all_rows,
         accessible_run_ids,

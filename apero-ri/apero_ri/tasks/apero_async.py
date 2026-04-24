@@ -946,10 +946,18 @@ def save_results(
         "rows": results,
     }
 
-    with path.open("w", encoding="utf-8") as fobj:
+    # Atomic write: dump to a sibling tmp file then os.replace, so a
+    # concurrent reader (or a crash mid-dump) cannot observe a
+    # partially-written / corrupt JSON. Past corruption like
+    # `"KEY:: value` lines in qc_stats_*.json was caused by overlapping
+    # writes to the same path.
+    tmp_path = path.with_name(path.name + ".tmp")
+    with tmp_path.open("w", encoding="utf-8") as fobj:
         json.dump(
-            payload, fobj, ensure_ascii=False, indent=2, default=_json_default
+            payload, fobj, ensure_ascii=False, indent=2,
+            default=_json_default,
         )
+    os.replace(tmp_path, path)
 
 
 # =============================================================================

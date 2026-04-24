@@ -230,6 +230,20 @@
 			return ctx;
 		}
 
+		if (window.ARI_ASTROMETRICS) {
+			ctx.pageType = 'astrometrics';
+			ctx.profileId = String(
+				window.ARI_ASTROMETRICS.profileId || '');
+			ctx.instrument = String(
+				window.ARI_ASTROMETRICS.instrument || '');
+			var activeTab = document.querySelector(
+				'.ari-htab.ari-htab--active');
+			ctx.tab = activeTab
+				? String(activeTab.getAttribute('data-htab') || '')
+				: '';
+			return ctx;
+		}
+
 		var parts = pageId.split('.');
 		if (parts.length >= 4 && parts[0] === 'home' && parts[1] === 'data_portal') {
 			ctx.profileId = parts[2] || '';
@@ -570,6 +584,126 @@
 		return out;
 	}
 
+	function buildAstrometricsExample(ctx) {
+		var tab = String(ctx.tab || 'find-existing');
+		var base = String(ctx.baseUrl || '');
+		// Astrometrics endpoints are profile-agnostic; the page
+		// reads/writes the shared on-disk DB at server-side.
+		// Snippets use plain `requests` because ari_api does not
+		// (yet) expose astrometrics methods.
+		var introCommon = [
+			'import requests',
+			'',
+			'# All astrometrics API calls require an authenticated',
+			'# ARI session. Replace the cookie value below with',
+			'# the value of the "session" cookie from your browser.',
+			'SESSION = ' + quotePy('<paste your ari session cookie>'),
+			'BASE = ' + quotePy(base),
+			'COOKIES = {"session": SESSION}',
+			'',
+		];
+
+		if (tab === 'find-existing') {
+			return {
+				title: 'Astrometrics API: find object in data portal',
+				description: 'Find observations of a target across the profiles you have access to.',
+				code: introCommon.concat([
+					'r = requests.get(',
+					'    BASE + "/api/astrometrics/find-object",',
+					'    params={"name": "PROXIMA"},',
+					'    cookies=COOKIES,',
+					')',
+					'r.raise_for_status()',
+					'data = r.json()',
+					'print("matches:", data.get("count"))',
+					'for row in data.get("rows", []):',
+					'    print(row)',
+				]).join('\n'),
+			};
+		}
+
+		if (tab === 'resolve-target') {
+			return {
+				title: 'Astrometrics API: resolve target by name',
+				description: 'Look up an entry in the curated APERO astrometric database. The response includes the entry status (verified / pending / rejected).',
+				code: introCommon.concat([
+					'r = requests.get(',
+					'    BASE + "/api/astrometrics/resolve-by-name",',
+					'    params={"name": "PROXIMA"},',
+					'    cookies=COOKIES,',
+					')',
+					'r.raise_for_status()',
+					'payload = r.json()',
+					'print("status:", payload.get("status"))',
+					'print("apero_name:", payload.get("apero_name"))',
+					'if payload.get("status") == "rejected":',
+					'    print("WARNING: name is on the rejection list")',
+				]).join('\n'),
+			};
+		}
+
+		if (tab === 'astrom-db') {
+			return {
+				title: 'Astrometrics API: full database snapshot',
+				description: 'Pull every row of the astrometric database (one summary row per APERO_NAME).',
+				code: introCommon.concat([
+					'r = requests.get(',
+					'    BASE + "/api/astrometrics/list-all",',
+					'    cookies=COOKIES,',
+					')',
+					'r.raise_for_status()',
+					'data = r.json()',
+					'print("entries:", data.get("count"))',
+					'rows = data.get("rows", [])',
+					'pending = [row for row in rows',
+					'           if row.get("STATUS") == "pending"]',
+					'print("pending:", len(pending))',
+				]).join('\n'),
+			};
+		}
+
+		if (tab === 'rejected') {
+			return {
+				title: 'Astrometrics API: rejected object names',
+				description: 'List all entries on the rejection list, then add a new one.',
+				code: introCommon.concat([
+					'# List currently-rejected names',
+					'r = requests.get(',
+					'    BASE + "/api/astrometrics/list-rejected",',
+					'    cookies=COOKIES,',
+					')',
+					'r.raise_for_status()',
+					'print("rejected:", r.json().get("count"))',
+					'',
+					'# Add a new rejection (requires monitor perm)',
+					'r = requests.post(',
+					'    BASE + "/api/astrometrics/add-rejected",',
+					'    json={',
+					'        "apero_name": "MY_BAD_NAME",',
+					'        "aliases": ["badname", "BAD_NAME"],',
+					'        "notes": "added via API example",',
+					'    },',
+					'    cookies=COOKIES,',
+					')',
+					'print(r.status_code, r.json())',
+				]).join('\n'),
+			};
+		}
+
+		// fallback: list-all
+		return {
+			title: 'Astrometrics API',
+			description: 'Generic astrometrics REST snippet.',
+			code: introCommon.concat([
+				'r = requests.get(',
+				'    BASE + "/api/astrometrics/list-all",',
+				'    cookies=COOKIES,',
+				')',
+				'print(r.status_code, r.json().get("count"))',
+			]).join('\n'),
+		};
+	}
+
 	function buildApiExample(meta) {
 		var ctx = resolveApiContext(meta);
 		if (!ctx) {
@@ -579,6 +713,7 @@
 		if (ctx.pageType === 'obs_table') return buildObsTableExample(ctx);
 		if (ctx.pageType === 'basket') return buildBasketExample(ctx);
 		if (ctx.pageType === 'object_page') return buildObjectPageExample(ctx);
+		if (ctx.pageType === 'astrometrics') return buildAstrometricsExample(ctx);
 		return null;
 	}
 

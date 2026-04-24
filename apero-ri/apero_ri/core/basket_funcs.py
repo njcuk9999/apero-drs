@@ -828,6 +828,115 @@ def filter_accessible_rows(
     ]
 
 
+def backfill_lbl_run_ids(
+    rows: List[Dict[str, Any]],
+    extra_sources: Optional[List[List[Dict[str, Any]]]] = None,
+) -> List[Dict[str, Any]]:
+    """Backfill missing KW_RUN_ID/KW_PI_NAME on LBL rows.
+
+    LBL output files often lack KW_RUN_ID / KW_PI_NAME header keys, so
+    when they are mixed into a combined ftable (e.g. ``ftable_all``) the
+    access-control filter would strip them. This helper looks up matching
+    non-LBL rows by IDENTIFIER (preferred), FILENAME, then OBS_DIR
+    (fallback) and copies their KW_RUN_ID / KW_PI_NAME onto LBL rows
+    that are missing those values.
+
+    ``extra_sources`` is an optional list of additional row lists to use
+    as donor sources (e.g. rows loaded from a sibling
+    ``ftable_lbl_rdb_*.json`` file which is already backfilled). Donor
+    rows from ``rows`` itself take precedence over extra_sources.
+
+    Returns a new list of rows; the input list is not mutated.
+    """
+    if not isinstance(rows, list) or not rows:
+        return rows
+
+    by_identifier: Dict[str, Dict[str, str]] = {}
+    by_filename: Dict[str, Dict[str, str]] = {}
+    by_obs_dir: Dict[str, Dict[str, str]] = {}
+    has_missing_lbl = False
+
+    def _ingest(source_rows, lbl_ok: bool):
+        for r in source_rows or []:
+            if not isinstance(r, dict):
+                continue
+            block_kind = (
+                str(r.get("BLOCK_KIND", "") or "").strip().lower()
+            )
+            run_id = str(r.get("KW_RUN_ID", "") or "").strip()
+            pi_name = str(r.get("KW_PI_NAME", "") or "").strip()
+            if block_kind == "lbl" and not lbl_ok:
+                continue
+            if not (run_id or pi_name):
+                continue
+            payload = {"KW_RUN_ID": run_id, "KW_PI_NAME": pi_name}
+            ident = str(r.get("IDENTIFIER", "") or "").strip()
+            fname = str(r.get("FILENAME", "") or "").strip()
+            obs_dir = str(r.get("OBS_DIR", "") or "").strip()
+            if ident and ident not in by_identifier:
+                by_identifier[ident] = payload
+            if fname and fname not in by_filename:
+                by_filename[fname] = payload
+            if obs_dir and obs_dir not in by_obs_dir:
+                by_obs_dir[obs_dir] = payload
+
+    # Detect missing LBL rows in primary set
+    for r in rows:
+        if not isinstance(r, dict):
+            continue
+        if str(r.get("BLOCK_KIND", "") or "").strip().lower() != "lbl":
+            continue
+        run_id = str(r.get("KW_RUN_ID", "") or "").strip()
+        pi_name = str(r.get("KW_PI_NAME", "") or "").strip()
+        if not run_id or not pi_name:
+            has_missing_lbl = True
+            break
+
+    if not has_missing_lbl:
+        return rows
+
+    # Donor priority: non-LBL rows in primary set first
+    _ingest(rows, lbl_ok=False)
+    # Then extra sources (which may contain backfilled LBL rows)
+    for src_list in extra_sources or []:
+        _ingest(src_list, lbl_ok=True)
+
+    if not by_identifier and not by_filename and not by_obs_dir:
+        return rows
+
+    patched: List[Dict[str, Any]] = []
+    for r in rows:
+        if not isinstance(r, dict):
+            patched.append(r)
+            continue
+        if str(r.get("BLOCK_KIND", "") or "").strip().lower() != "lbl":
+            patched.append(r)
+            continue
+        run_id = str(r.get("KW_RUN_ID", "") or "").strip()
+        pi_name = str(r.get("KW_PI_NAME", "") or "").strip()
+        if run_id and pi_name:
+            patched.append(r)
+            continue
+        ident = str(r.get("IDENTIFIER", "") or "").strip()
+        fname = str(r.get("FILENAME", "") or "").strip()
+        obs_dir = str(r.get("OBS_DIR", "") or "").strip()
+        src = (
+            by_identifier.get(ident)
+            or by_filename.get(fname)
+            or by_obs_dir.get(obs_dir)
+        )
+        if not src:
+            patched.append(r)
+            continue
+        new_row = dict(r)
+        if not run_id and src.get("KW_RUN_ID"):
+            new_row["KW_RUN_ID"] = src["KW_RUN_ID"]
+        if not pi_name and src.get("KW_PI_NAME"):
+            new_row["KW_PI_NAME"] = src["KW_PI_NAME"]
+        patched.append(new_row)
+    return patched
+
+
 def apply_preset_filter(
     rows: List[Dict[str, Any]], preset: str
 ) -> List[Dict[str, Any]]:
@@ -841,6 +950,7 @@ def apply_preset_filter(
       'polar'   – DRS_POST_P  block=out  QC=1
       'ccfrv'   – DRS_POST_V  block=out  QC=1
       'rdb'     – LBL_RDB%    block=lbl  (no QC filter)
+      'lbl'     – any block=lbl product (no QC filter)
             'none'    – no preset filter (return all accessible rows)
       'default' – block=out  QC=1
     """
@@ -902,6 +1012,10 @@ def apply_preset_filter(
             if r.get("BLOCK_KIND") == "lbl"
             and "LBL_RDB" in str(r.get("KW_OUTPUT", "") or "")
         ]
+    elif preset == "lbl":
+        # All LBL products (no QC filter — LBL outputs do not
+        # populate PASSED_ALL_QC).
+        return [r for r in rows if r.get("BLOCK_KIND") == "lbl"]
     else:  # 'default' or anything else
         return [r for r in rows if r.get("BLOCK_KIND") == "out" and _qc(r)]
 

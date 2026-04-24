@@ -16,6 +16,8 @@ from __future__ import annotations
 
 import json
 import math
+import os
+import re
 import statistics
 from datetime import timedelta, timezone
 from pathlib import Path
@@ -46,6 +48,93 @@ __release__ = base.__release__
 # =============================================================================
 # Define private helper functions
 # =============================================================================
+def _recover_rows_payload(text: str) -> Optional[Dict[str, Any]]:
+    """
+    Best-effort recovery for a partially-corrupt qc_stats JSON blob.
+
+    Attempts to split the content of the top-level ``"rows"`` array
+    into individual ``{ ... }`` objects by brace-depth, parse each
+    in isolation, and drop the ones that fail. The surrounding
+    payload (``generated_at``, ``metadata``, ...) is reconstructed
+    with the recovered rows list.
+
+    :param text: str, raw JSON file content (already preprocessed with
+                 the cheap regex fix-ups)
+
+    :return: dict payload on success, or None if recovery fails
+    """
+    try:
+        start = text.index('"rows"')
+        bracket = text.index('[', start)
+    except ValueError:
+        return None
+    # walk the array and collect top-level objects
+    depth = 0
+    in_str = False
+    esc = False
+    chunks: List[str] = []
+    buf: List[str] = []
+    end_idx = -1
+    for i in range(bracket + 1, len(text)):
+        ch = text[i]
+        if esc:
+            buf.append(ch)
+            esc = False
+            continue
+        if ch == '\\' and in_str:
+            buf.append(ch)
+            esc = True
+            continue
+        if ch == '"':
+            in_str = not in_str
+            buf.append(ch)
+            continue
+        if in_str:
+            buf.append(ch)
+            continue
+        if ch == '{':
+            depth += 1
+            buf.append(ch)
+            continue
+        if ch == '}':
+            depth -= 1
+            buf.append(ch)
+            if depth == 0:
+                chunks.append(''.join(buf).strip())
+                buf = []
+            continue
+        if ch == ']' and depth == 0:
+            end_idx = i
+            break
+        if depth > 0:
+            buf.append(ch)
+    if end_idx < 0:
+        return None
+    rows: List[Dict[str, Any]] = []
+    for chunk in chunks:
+        chunk = chunk.strip().rstrip(',').strip()
+        if not chunk:
+            continue
+        try:
+            obj = json.loads(chunk)
+        except json.JSONDecodeError:
+            continue
+        if isinstance(obj, dict):
+            rows.append(obj)
+    # try to recover the metadata prefix (before "rows")
+    head = text[:start].rstrip().rstrip(',')
+    if not head.endswith('{'):
+        # give up on metadata; return a minimal payload
+        return {"rows": rows}
+    try:
+        prefix = json.loads(head + '"rows": [] }')
+    except json.JSONDecodeError:
+        return {"rows": rows}
+    prefix['rows'] = rows
+    prefix['row_count'] = len(rows)
+    return prefix
+
+
 def _load_rows(path: Path) -> Tuple[List[Dict[str, Any]], str]:
     """
     Load rows from a qc_stats JSON file.
@@ -65,7 +154,46 @@ def _load_rows(path: Path) -> Tuple[List[Dict[str, Any]], str]:
     try:
         with open(path, "r", encoding="utf-8") as fio:
             payload = json.load(fio)
-    except Exception as exc:
+    except json.JSONDecodeError as exc:
+        # Self-heal known historical corruption patterns in
+        # qc_stats_*.json produced by overlapping non-atomic writes
+        # from earlier versions, e.g.:
+        #   * `"KW_FOO:: 1.234,`  (missing closing quote)
+        #   * `"KW_FOO":: 1.234,` (extra colon after closing quote)
+        #   * `""KW_FOO": 1.234,` (duplicated opening quote)
+        # First try simple regex fixes; if that still fails, fall back
+        # to a row-level recovery that drops every ``{ ... }`` block
+        # under ``rows`` that individually fails to parse. On success,
+        # rewrite the file atomically so the cost is paid once.
+        try:
+            with open(path, "r", encoding="utf-8") as fio:
+                raw = fio.read()
+            patched = re.sub(
+                r'"([A-Za-z_][A-Za-z0-9_]*)"?:: ',
+                r'"\1": ',
+                raw,
+            )
+            patched = re.sub(
+                r'""([A-Za-z_][A-Za-z0-9_]*)":',
+                r'"\1":',
+                patched,
+            )
+            payload = None
+            try:
+                payload = json.loads(patched)
+            except json.JSONDecodeError:
+                payload = _recover_rows_payload(patched)
+            if payload is None:
+                return [], f"Failed to read {path.name}: {exc}"
+            tmp = path.with_name(path.name + ".tmp")
+            with open(tmp, "w", encoding="utf-8") as fio:
+                json.dump(payload, fio, ensure_ascii=False, indent=2)
+            os.replace(tmp, path)
+        except Exception as exc2:  # noqa: BLE001
+            return [], f"Failed to read {path.name}: {exc2}"
+        except Exception as exc2:  # noqa: BLE001
+            return [], f"Failed to read {path.name}: {exc2}"
+    except Exception as exc:  # noqa: BLE001
         return [], f"Failed to read {path.name}: {exc}"
     rows = payload.get("rows", [])
     if not isinstance(rows, list):

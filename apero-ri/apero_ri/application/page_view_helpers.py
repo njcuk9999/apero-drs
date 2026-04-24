@@ -250,9 +250,27 @@ def make_page_view(app, page_id: str, package_dir: Path):
                     1 for _p in _astro.glob("*.yaml")
                     if not _p.name.startswith(".")
                 )
+                # also count entries inside status sub-dirs so the
+                # page header reflects all (verified+pending+rejected)
+                for _sub in ("verified", "pending", "rejected"):
+                    _sub_dir = _astro / _sub
+                    if _sub_dir.is_dir():
+                        _n += sum(
+                            1 for _p in _sub_dir.glob("*.yaml")
+                            if not _p.name.startswith(".")
+                        )
                 context["astrometrics_star_count"] = _n
             except Exception:  # noqa: BLE001
                 context["astrometrics_star_count"] = None
+            # gate the "Rejected object names" tab on monitor perm
+            try:
+                from apero_ri.application.astrometrics_api_helpers \
+                    import _has_monitor_perm as _hmp
+                context["astrometrics_can_manage_rejects"] = bool(
+                    _hmp(perms, "")
+                )
+            except Exception:  # noqa: BLE001
+                context["astrometrics_can_manage_rejects"] = False
 
         if page_id == "home.admin_portal.sshfs_management":
             context.update(app._build_admin_sshfs_context(perms))

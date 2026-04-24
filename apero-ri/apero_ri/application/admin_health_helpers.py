@@ -198,14 +198,45 @@ def build_admin_card_health_uncached(app, user_info, perms) -> Dict[str, Any]:
     if "view.admin" in perms:
         try:
             backup_cfg = bb.load_backup_config()
+            methods = bb.get_backup_methods(backup_cfg, enabled_only=False)
+            active_id = str(
+                backup_cfg.get("active_method_id", "") or ""
+            ).strip()
+            active_method = None
+            for method in methods:
+                if str(method.get("id", "")) == active_id:
+                    active_method = method
+                    break
+            if active_method is None and methods:
+                active_method = methods[0]
+
+            active_enabled = bool(active_method.get("enabled", False))
+            active_provider = str(
+                active_method.get("provider", "local_only") or "local_only"
+            ).strip()
+            cloud_providers = {"gdrive_oauth", "s3", "ssh_rsync", "local_copy"}
             if (
-                not backup_cfg.get("enabled", False)
-                or backup_cfg.get("provider", "local_only") == "local_only"
+                not active_enabled
+                or active_provider not in cloud_providers
             ):
+                msg = "Cloud backup mirror is not enabled (local backups only)."
+                method_name = str(
+                    active_method.get("name", "")
+                    or active_method.get("id", "active method")
+                ).strip()
+                if not active_enabled:
+                    msg = (
+                        "Cloud backup mirror is not enabled (local backups "
+                        f"only). Active method '{method_name}' is disabled."
+                    )
+                elif active_provider == "local_only":
+                    msg = (
+                        "Cloud backup mirror is not enabled (local backups "
+                        "only). Active method is configured as local-only."
+                    )
                 health["home.admin_portal.backup_settings"] = {
                     "status": "warning",
-                    "message": "Cloud backup mirror is not"
-                    "enabled (local backups only).",
+                    "message": msg,
 
                 }
             else:
@@ -540,8 +571,8 @@ def build_admin_health_rows(app, health: dict) -> list:
             "ok": "Cloud backup is properly configured and"
             "connection check succeeds.",
 
-            "warning": "Cloud backup mirror is not enabled (local"
-            "backups only).",
+            "warning": "Cloud backup mirror is not enabled "
+            "(local backups only).",
 
             "error": "Cloud backup test failed.",
         },

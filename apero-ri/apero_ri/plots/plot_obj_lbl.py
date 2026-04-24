@@ -282,7 +282,7 @@ def _make_lbl_rv_figure(
     :return: Bokeh figure object
     :rtype: bokeh.plotting.figure
     """
-    from bokeh.models import Whisker
+    from bokeh.models import TeeHead, Whisker
 
     fig = make_time_figure(
         f"LBL Radial Velocity \u2014 {flavor_id}", height=height
@@ -327,6 +327,12 @@ def _make_lbl_rv_figure(
                 lower="lower",
                 line_color="green",
                 line_alpha=0.7,
+                upper_head=TeeHead(
+                    line_color="green", line_alpha=0.7, size=6
+                ),
+                lower_head=TeeHead(
+                    line_color="green", line_alpha=0.7, size=6
+                ),
             )
         )
     if np.any(reset_mask):
@@ -356,6 +362,16 @@ def _make_lbl_rv_figure(
                 lower="lower",
                 line_color="mediumpurple",
                 line_alpha=0.7,
+                upper_head=TeeHead(
+                    line_color="mediumpurple",
+                    line_alpha=0.7,
+                    size=6,
+                ),
+                lower_head=TeeHead(
+                    line_color="mediumpurple",
+                    line_alpha=0.7,
+                    size=6,
+                ),
             )
         )
     # -------------------------------------------------------------------------
@@ -583,7 +599,11 @@ def _make_lbl_wave_figure(
         whisk.upper_head.line_alpha = 0.5
         whisk.lower_head.line_alpha = 0.5
         fig.add_layout(whisk)
-    # overall vrad as black points (drawn last so it remains on top)
+    # overall vrad as foreground points (drawn last so it remains on top).
+    # Use a theme-aware foreground colour so it stays visible on the
+    # near-black dark theme background (was hardcoded "black").
+    from apero_ri.plots.bokeh_theme import fg_glyph_color
+    fg = fg_glyph_color()
     src_ov = ColumnDataSource(
         dict(
             x=dts_ms,
@@ -597,7 +617,7 @@ def _make_lbl_wave_figure(
         "y",
         source=src_ov,
         size=5,
-        color="black",
+        color=fg,
         alpha=0.55,
         marker="circle",
         legend_label="Overall vrad",
@@ -608,11 +628,11 @@ def _make_lbl_wave_figure(
         base="x",
         upper="upper",
         lower="lower",
-        line_color="black",
+        line_color=fg,
         line_alpha=0.55,
     )
-    whisk_ov.upper_head.line_color = "black"
-    whisk_ov.lower_head.line_color = "black"
+    whisk_ov.upper_head.line_color = fg
+    whisk_ov.lower_head.line_color = fg
     whisk_ov.upper_head.line_alpha = 0.55
     whisk_ov.lower_head.line_alpha = 0.55
     fig.add_layout(whisk_ov)

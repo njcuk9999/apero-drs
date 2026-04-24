@@ -2242,6 +2242,13 @@
 
         var params = '?profile_id=' + encodeURIComponent(cfg.profileId)
             + '&objname=' + encodeURIComponent(cfg.objname);
+        // Forward the active ARI theme so server-side Bokeh and
+        // matplotlib figures render with the correct palette.
+        try {
+            var _theme = (document.documentElement.getAttribute(
+                'data-theme') || 'default');
+            params += '&theme=' + encodeURIComponent(_theme);
+        } catch (_e) { /* ignore */ }
         if (forceReload) {
             params += '&_ts=' + encodeURIComponent(String(Date.now()));
         }
@@ -2331,6 +2338,11 @@
                 var url = (cfg.tcorrMapGenerateApiUrl || '')
                     + '?profile_id=' + encodeURIComponent(cfg.profileId)
                     + '&objname=' + encodeURIComponent(cfg.objname);
+                try {
+                    var _theme = (document.documentElement.getAttribute(
+                        'data-theme') || 'default');
+                    url += '&theme=' + encodeURIComponent(_theme);
+                } catch (_e) { /* ignore */ }
                 fetch(url)
                     .then(function (r) { return r.json(); })
                     .then(function (data) {
@@ -2515,9 +2527,20 @@
                 '<div class="at-section-card__header">'
                 + '<span><i class="fa-solid fa-chart-line"></i> LBL Velocity Plot -- '
                 + flavorId + '</span>'
+                + '<button type="button" data-op-download="lbl" '
+                + 'data-op-lbl-format="zip" '
+                + 'class="ari-btn ari-btn--sm ari-btn--secondary op-plot-dl-btn" '
+                + 'title="Download all LBL files for this object (zip)" '
+                + 'style="margin-left:auto;">'
+                + '<i class="fa-solid fa-download"></i></button>'
+                + '<button type="button" data-op-download="lbl" '
+                + 'data-op-lbl-format="tar" '
+                + 'class="ari-btn ari-btn--sm ari-btn--secondary op-plot-dl-btn" '
+                + 'title="Download all LBL files for this object (tar.gz)">'
+                + '<i class="fa-solid fa-file-zipper"></i></button>'
                 + '<a href="' + lblMaxHref + '" '
                 + 'class="ari-btn ari-btn--sm ari-btn--secondary op-plot-max-btn" '
-                + 'title="Maximize plot" style="margin-left:auto;">'
+                + 'title="Maximize plot">'
                 + '<i class="fa-solid fa-maximize"></i></a>'
                 + '</div>'
                 + '<div class="at-section-card__body">'
@@ -2927,6 +2950,11 @@
         }
         var params = '?profile_id=' + encodeURIComponent(cfg.profileId)
             + '&objname=' + encodeURIComponent(cfg.objname);
+        try {
+            var _theme = (document.documentElement.getAttribute(
+                'data-theme') || 'default');
+            params += '&theme=' + encodeURIComponent(_theme);
+        } catch (_e) { /* ignore */ }
         if (forceReload) {
             params += '&_ts=' + encodeURIComponent(String(Date.now()));
         }
@@ -3011,6 +3039,47 @@
         }
     }
 
+    function triggerObjectDownload(kind, lblFormat) {
+        var url = cfg.objectDownloadApiUrl
+            || '/api/data-portal/object-download';
+        var params = '?profile_id=' + encodeURIComponent(cfg.profileId)
+            + '&objname=' + encodeURIComponent(cfg.objname)
+            + '&kind=' + encodeURIComponent(kind);
+        if (vsysMs !== null && vsysMs !== undefined) {
+            params += '&vsys_ms=' + encodeURIComponent(String(vsysMs));
+        }
+        if (kind === 'ccf_profile') {
+            if (ccfRangeFilter.mjdStart !== null
+                    && ccfRangeFilter.mjdStart !== undefined) {
+                params += '&ccf_mjd_start='
+                    + encodeURIComponent(String(ccfRangeFilter.mjdStart));
+            }
+            if (ccfRangeFilter.mjdEnd !== null
+                    && ccfRangeFilter.mjdEnd !== undefined) {
+                params += '&ccf_mjd_end='
+                    + encodeURIComponent(String(ccfRangeFilter.mjdEnd));
+            }
+            if (ccfRangeFilter.nobs !== null
+                    && ccfRangeFilter.nobs !== undefined) {
+                params += '&ccf_nobs='
+                    + encodeURIComponent(String(ccfRangeFilter.nobs));
+            }
+        }
+        if (kind === 'lbl' && lblFormat) {
+            params += '&format=' + encodeURIComponent(lblFormat);
+        }
+        // Trigger a real browser download via a hidden anchor; lets
+        // the server set Content-Disposition / filename.
+        var a = document.createElement('a');
+        a.href = url + params;
+        a.rel = 'noopener';
+        document.body.appendChild(a);
+        a.click();
+        setTimeout(function () {
+            try { document.body.removeChild(a); } catch (e) {}
+        }, 0);
+    }
+
     function loadObjectPlots(plotGroup, forceReload, activePlotKey) {
         var group = String(plotGroup || 'spectrum').trim().toLowerCase();
         if (!(group in objectPlotsState)) {
@@ -3033,6 +3102,13 @@
         var params = '?profile_id=' + encodeURIComponent(cfg.profileId)
             + '&objname=' + encodeURIComponent(cfg.objname)
             + '&plot_group=' + encodeURIComponent(group);
+        // Forward the active ARI theme so server-side Bokeh figures
+        // are themed to match the page chrome.
+        try {
+            var _theme = (document.documentElement.getAttribute(
+                'data-theme') || 'default');
+            params += '&theme=' + encodeURIComponent(_theme);
+        } catch (_e) { /* ignore */ }
         if (vsysMs !== null && vsysMs !== undefined) {
             params += '&vsys_ms=' + encodeURIComponent(String(vsysMs));
         }
@@ -3259,11 +3335,141 @@
                 );
             }
         }
+        wireVerifyBanner();
+        // Delegated download-button handler for plot CSV/zip downloads.
+        document.addEventListener('click', function (evt) {
+            var btn = evt.target && evt.target.closest
+                ? evt.target.closest('[data-op-download]')
+                : null;
+            if (!btn) return;
+            evt.preventDefault();
+            triggerObjectDownload(
+                btn.getAttribute('data-op-download'),
+                btn.getAttribute('data-op-lbl-format') || ''
+            );
+        });
         loadSectionPrefs().finally(function () {
             refreshSectionsUi();
             loadData();
         });
     }
 
+    function _hasMonitorPerm(perms, instrument) {
+        if (!Array.isArray(perms)) return false;
+        if (perms.indexOf('manage.astrometrics') !== -1) return true;
+        var inst = String(instrument || '').trim().toLowerCase();
+        if (!inst) return false;
+        var prefixes = [
+            'monitor.', 'view.monitor_portal.', 'view.monitor.'
+        ];
+        for (var i = 0; i < perms.length; i++) {
+            var p = String(perms[i] || '').toLowerCase();
+            if (p === 'monitor') return true;
+            for (var k = 0; k < prefixes.length; k++) {
+                var pre = prefixes[k];
+                if (p.indexOf(pre) === 0) {
+                    var tail = p.substring(pre.length);
+                    if (tail === inst || tail === 'all') return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    function wireVerifyBanner() {
+        var banner = document.getElementById('op-verify-banner');
+        var btn = document.getElementById('op-verify-btn');
+        if (!banner || !btn) return;
+        var perms = (window.AperoRI && window.AperoRI.userPerms) || [];
+        var instrument = banner.getAttribute('data-instrument') || '';
+        var hasPerm = _hasMonitorPerm(perms, instrument);
+        var name = String(cfg.objname || '').trim();
+        if (!name) return;
+        var url = '/api/astrometrics/status?name='
+            + encodeURIComponent(name);
+        fetch(url, { credentials: 'same-origin' })
+            .then(function (r) { return r.json(); })
+            .catch(function () { return null; })
+            .then(function (data) {
+                if (!data || !data.success) return;
+                var status = String(data.status || '').toLowerCase();
+                if (status !== 'pending') return;
+                var aperoName = data.apero_name || name;
+                banner.setAttribute('data-apero-name', aperoName);
+                banner.style.display = '';
+                if (hasPerm) {
+                    btn.hidden = false;
+                    btn.addEventListener('click', function () {
+                        _onVerifyClick(banner, btn, aperoName,
+                                       instrument);
+                    });
+                }
+            });
+    }
+
+    function _onVerifyClick(banner, btn, aperoName, instrument) {
+        var msg = ('You must have checked all the parameters and '
+                   + 'see that they look suitable.\n\nMark '
+                   + aperoName + ' as VERIFIED?');
+        if (!window.confirm(msg)) return;
+        btn.disabled = true;
+        var origHtml = btn.innerHTML;
+        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin">'
+            + '</i> Verifying...';
+        fetch('/api/astrometrics/verify', {
+            method: 'POST',
+            credentials: 'same-origin',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                apero_name: aperoName,
+                instrument: instrument
+            })
+        }).then(function (r) {
+            return r.json().then(function (j) {
+                return { ok: r.ok, json: j };
+            });
+        }).then(function (res) {
+            if (!res.ok || !res.json || !res.json.success) {
+                var err = (res.json && res.json.error)
+                    || 'Verify failed';
+                window.alert('Verify failed: ' + err);
+                btn.disabled = false;
+                btn.innerHTML = origHtml;
+                return;
+            }
+            banner.style.display = 'none';
+            // refresh target_info so any cached payload is rebuilt
+            try { loadObjectPlots('target_info', true); }
+            catch (e) { /* non-fatal */ }
+        }).catch(function (err) {
+            window.alert('Verify failed: ' + err);
+            btn.disabled = false;
+            btn.innerHTML = origHtml;
+        });
+    }
+
     init();
+
+    // ------------------------------------------------------------------
+    // Theme-change reload: when the user toggles dark/light/default the
+    // server-rendered Bokeh figures need to be rebuilt with the new
+    // palette. Invalidate every plot group's state and re-trigger the
+    // currently-visible groups.
+    // ------------------------------------------------------------------
+    window.addEventListener('ari:theme-change', function () {
+        try {
+            Object.keys(objectPlotsState).forEach(function (g) {
+                objectPlotsState[g] = 'idle';
+            });
+            embeddedPlots = {};
+            pendingPlotEmbeds = {};
+            // Re-fetch every group; loadObjectPlots will no-op for
+            // groups that have already been loaded with the prior
+            // theme (state is now 'idle' so they reload).
+            ['spectrum', 'ccf_rv', 'ccf_profile',
+             'time_series', 'target_info'].forEach(function (g) {
+                try { loadObjectPlots(g, true); } catch (_e) {}
+            });
+        } catch (_err) { /* non-fatal */ }
+    });
 })();

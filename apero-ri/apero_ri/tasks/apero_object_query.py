@@ -1238,6 +1238,18 @@ def _file_col_cmd(aparams, rquery, apero_profile_name, objname, fkind, outputs):
         tfits_rows = outputs.get("results", {}).get("tfits", [])
         results = _backfill_lbl_security_fields(results, all_rows, tfits_rows)
 
+    # The combined "all" ftable also contains LBL rows that may be
+    # missing KW_RUN_ID / KW_PI_NAME for the same reason. Backfill those
+    # in-place from the non-LBL rows in the same result set so downstream
+    # consumers (e.g. file browser access filtering) don't strip them.
+    # Note: this runs before lbl/lbl_rdb queries (see queries dict order),
+    # so we only have the in-set non-LBL rows as donors here, which is
+    # enough for any LBL file whose source identifier appears in "all".
+    if fkind == "all" and isinstance(results, list) and results:
+        from apero_ri.core.basket_funcs import backfill_lbl_run_ids
+
+        results = backfill_lbl_run_ids(results)
+
     end = time.time()
     # ---------------------------------------------------------------------
     # time now

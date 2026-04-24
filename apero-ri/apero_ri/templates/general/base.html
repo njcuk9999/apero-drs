@@ -14,7 +14,10 @@
 
     <!-- ARI stylesheet -->
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css', v='20260422c') }}">
-    <!-- Immediate theme application (before any render) -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/mobile_overrides.css', v='20260424a') }}">
+    {% if logged_in %}
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/user_portal_messaging.css', v='20260424a') }}">
+    {% endif %}    <!-- Immediate theme application (before any render) -->
     <script>(function(){
         var ls=localStorage.getItem('ari-theme');
         if(ls&&['light','dark','default'].indexOf(ls)>-1){
@@ -51,6 +54,35 @@
 
             <!-- Login / Logout link -->
             {% if logged_in %}
+            <span class="ari-notif-wrap"
+                  style="position:relative; display:inline-block;">
+                <button type="button" class="ari-notif-bell ari-nav__link"
+                        id="ari-notif-bell"
+                        title="Notifications"
+                        aria-label="Notifications">
+                    <i class="fa-solid fa-bell"></i>
+                    <span class="ari-notif-badge"
+                          id="ari-notif-badge"></span>
+                </button>
+                <div class="ari-notif-panel" id="ari-notif-panel"
+                     role="dialog" aria-label="Notifications">
+                    <div class="ari-notif-panel__header">
+                        <strong>Notifications</strong>
+                        <a href="/user_portal/notifications"
+                           class="ari-btn ari-btn--small">Manage</a>
+                    </div>
+                    <div class="ari-notif-panel__list"
+                         id="ari-notif-panel-list">
+                        <div class="upm-empty">Loading...</div>
+                    </div>
+                    <div class="ari-notif-panel__footer">
+                        <a href="/user_portal/messages">
+                            <i class="fa-solid fa-envelope"></i>
+                            Messages
+                        </a>
+                    </div>
+                </div>
+            </span>
             <a href="{{ url_for('logout') }}" class="ari-nav__link" title="Logout">
                 <i class="fa-solid fa-right-from-bracket"></i>
             </a>
@@ -206,6 +238,9 @@
     }());
     </script>
     <script src="{{ url_for('static', filename='js/theme.js') }}" defer></script>
+    {% if logged_in %}
+    <script src="{{ url_for('static', filename='js/notifications_bell.js', v='20260424a') }}" defer></script>
+    {% endif %}
     {% block extra_scripts %}{% endblock %}
 </body>
 </html>

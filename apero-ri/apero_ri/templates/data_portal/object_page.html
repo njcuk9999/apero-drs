@@ -44,6 +44,26 @@
     font-size: 0.85em;
     margin: 0.15rem;
 }
+.op-verify-banner {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+    padding: 0.7rem 1rem;
+    margin-bottom: 0.75rem;
+    border: 1px solid #f0c36d;
+    background: #fff8e1;
+    color: #5a4500;
+    border-radius: 0.5rem;
+}
+.op-verify-banner__msg {
+    flex: 1 1 auto;
+    min-width: 240px;
+}
+.op-verify-banner i.fa-triangle-exclamation {
+    color: #c08400;
+    margin-right: 0.35rem;
+}
 </style>
 {% endblock %}
 
@@ -123,6 +143,25 @@
     </section>
 
     <section id="op-tab-target_info" class="op-tab-panel">
+        <div id="op-verify-banner"
+             class="op-verify-banner"
+             style="display:none;"
+             data-apero-name=""
+             data-instrument="{{ profile.instrument }}">
+            <div class="op-verify-banner__msg">
+                <i class="fa-solid fa-triangle-exclamation"></i>
+                This astrometric entry is
+                <strong>pending verification</strong>.
+                Please review every field below before marking it as
+                verified.
+            </div>
+            <button id="op-verify-btn" type="button"
+                    class="ari-btn ari-btn--sm ari-btn--primary"
+                    hidden>
+                <i class="fa-solid fa-circle-check"></i>
+                Mark as verified
+            </button>
+        </div>
         <div class="at-section-card" data-op-section-id="target.info">
             <div class="at-section-card__header">
                 <span><i class="fa-solid fa-bullseye"></i> Target Information</span>
@@ -278,11 +317,16 @@
         <div class="at-section-card" data-op-section-id="spectrum.snr_plot">
             <div class="at-section-card__header">
                 <span><i class="fa-solid fa-chart-line"></i> Signal to Noise Ratio Plot</span>
+                <button type="button" data-op-download="snr"
+                        class="ari-btn ari-btn--sm ari-btn--secondary op-plot-dl-btn"
+                        title="Download CSV"
+                        style="margin-left:auto;">
+                    <i class="fa-solid fa-download"></i>
+                </button>
                 <a id="op-snr-plot-max-link"
                    href="/data_portal/{{ profile.profile_id }}/object-plot-max/{{ objname }}/snr"
                    class="ari-btn ari-btn--sm ari-btn--secondary op-plot-max-btn"
-                   title="Maximize plot"
-                   style="margin-left:auto;">
+                   title="Maximize plot">
                     <i class="fa-solid fa-maximize"></i>
                 </a>
             </div>
@@ -298,11 +342,16 @@
         <div class="at-section-card" data-op-section-id="spectrum.berv_coverage_plot">
             <div class="at-section-card__header">
                 <span><i class="fa-solid fa-chart-area"></i> BERV Coverage Plot</span>
+                <button type="button" data-op-download="berv"
+                        class="ari-btn ari-btn--sm ari-btn--secondary op-plot-dl-btn"
+                        title="Download CSV"
+                        style="margin-left:auto;">
+                    <i class="fa-solid fa-download"></i>
+                </button>
                 <a id="op-berv-plot-max-link"
                    href="/data_portal/{{ profile.profile_id }}/object-plot-max/{{ objname }}/berv"
                    class="ari-btn ari-btn--sm ari-btn--secondary op-plot-max-btn"
-                   title="Maximize plot"
-                   style="margin-left:auto;">
+                   title="Maximize plot">
                     <i class="fa-solid fa-maximize"></i>
                 </a>
             </div>
@@ -318,10 +367,16 @@
         <div class="at-section-card" data-op-section-id="spectrum.telluric_corrected_plot">
             <div class="at-section-card__header">
                 <span><i class="fa-solid fa-chart-column"></i> Median Spectrum Plot</span>
+                <button type="button" data-op-download="spec"
+                        class="ari-btn ari-btn--sm ari-btn--secondary op-plot-dl-btn"
+                        title="Download CSV (wavelength + median flux)"
+                        style="margin-left:auto;">
+                    <i class="fa-solid fa-download"></i>
+                </button>
                 <a id="op-spec-plot-max-link"
                    href="{{ url_for('ri_object_plot_max', profile_id=profile.profile_id, objname=objname, plot_key='spec') }}"
                    class="ari-btn ari-btn--sm ari-btn--secondary op-plot-max-btn"
-                   title="Maximize plot" style="margin-left:auto;">
+                   title="Maximize plot">
                     <i class="fa-solid fa-maximize"></i>
                 </a>
             </div>
@@ -360,10 +415,16 @@
         <div class="at-section-card" data-op-section-id="ccf.rv_plot">
             <div class="at-section-card__header">
                 <span><i class="fa-solid fa-chart-line"></i> CCF RV vs Time</span>
+                <button type="button" data-op-download="ccf_rv"
+                        class="ari-btn ari-btn--sm ari-btn--secondary op-plot-dl-btn"
+                        title="Download CSV"
+                        style="margin-left:auto;">
+                    <i class="fa-solid fa-download"></i>
+                </button>
                 <a id="op-ccf-rv-plot-max-link"
                    href="{{ url_for('ri_object_plot_max', profile_id=profile.profile_id, objname=objname, plot_key='ccf_rv') }}"
                    class="ari-btn ari-btn--sm ari-btn--secondary op-plot-max-btn"
-                   title="Maximize plot" style="margin-left:auto;">
+                   title="Maximize plot">
                     <i class="fa-solid fa-maximize"></i>
                 </a>
             </div>
@@ -379,10 +440,16 @@
         <div class="at-section-card" data-op-section-id="ccf.profile_plot">
             <div class="at-section-card__header">
                 <span><i class="fa-solid fa-wave-square"></i> Median CCF Profile</span>
+                <button type="button" data-op-download="ccf_profile"
+                        class="ari-btn ari-btn--sm ari-btn--secondary op-plot-dl-btn"
+                        title="Download CSV (rv, median, 1σ, 2σ, fit, residual)"
+                        style="margin-left:auto;">
+                    <i class="fa-solid fa-download"></i>
+                </button>
                 <a id="op-ccf-profile-plot-max-link"
                    href="{{ url_for('ri_object_plot_max', profile_id=profile.profile_id, objname=objname, plot_key='ccf_profile') }}"
                    class="ari-btn ari-btn--sm ari-btn--secondary op-plot-max-btn"
-                   title="Maximize plot" style="margin-left:auto;">
+                   title="Maximize plot">
                     <i class="fa-solid fa-maximize"></i>
                 </a>
             </div>
@@ -464,11 +531,16 @@
         <div class="at-section-card" data-op-section-id="time_series.snr_plot">
             <div class="at-section-card__header">
                 <span><i class="fa-solid fa-chart-line"></i> SNR per Night</span>
+                <button type="button" data-op-download="ts_snr"
+                        class="ari-btn ari-btn--sm ari-btn--secondary op-plot-dl-btn"
+                        title="Download CSV"
+                        style="margin-left:auto;">
+                    <i class="fa-solid fa-download"></i>
+                </button>
                 <a id="op-ts-snr-plot-max-link"
                    href="{{ url_for('ri_object_plot_max', profile_id=profile.profile_id, objname=objname, plot_key='ts_snr') }}"
                    class="ari-btn ari-btn--sm ari-btn--secondary op-plot-max-btn"
-                   title="Maximize plot"
-                   style="margin-left:auto;">
+                   title="Maximize plot">
                     <i class="fa-solid fa-maximize"></i>
                 </a>
             </div>
@@ -485,11 +557,16 @@
         <div class="at-section-card" data-op-section-id="time_series.airmass_plot">
             <div class="at-section-card__header">
                 <span><i class="fa-solid fa-cloud-sun"></i> Airmass per Night</span>
+                <button type="button" data-op-download="ts_airmass"
+                        class="ari-btn ari-btn--sm ari-btn--secondary op-plot-dl-btn"
+                        title="Download CSV"
+                        style="margin-left:auto;">
+                    <i class="fa-solid fa-download"></i>
+                </button>
                 <a id="op-ts-airmass-plot-max-link"
                    href="{{ url_for('ri_object_plot_max', profile_id=profile.profile_id, objname=objname, plot_key='ts_airmass') }}"
                    class="ari-btn ari-btn--sm ari-btn--secondary op-plot-max-btn"
-                   title="Maximize plot"
-                   style="margin-left:auto;">
+                   title="Maximize plot">
                     <i class="fa-solid fa-maximize"></i>
                 </a>
             </div>
@@ -547,6 +624,8 @@
                             data-preset="ccfrv">CCF RV</button>
                     <button class="ari-btn ari-btn--sm ari-btn--secondary fb-preset-btn"
                             data-preset="rdb">rdb</button>
+                    <button class="ari-btn ari-btn--sm ari-btn--secondary fb-preset-btn"
+                            data-preset="lbl">All LBL products</button>
                 </div>
 
                 {# Toolbar #}
@@ -933,6 +1012,7 @@ window.ARI_OBJECT_PAGE = {
     apiUrl: {{ api_url | tojson }},
     objectPlotsApiUrl: '/api/data-portal/object-plots',
     objectLblPlotsApiUrl: '/api/data-portal/object-lbl-plots',
+    objectDownloadApiUrl: '/api/data-portal/object-download',
     finderChartApiUrl: '/api/data-portal/finder-chart',
     finderChartStreamUrl: '/api/data-portal/finder-chart-stream',
     finderChartCached: {{ (finder_chart_cached | default(false)) | tojson }},
@@ -988,8 +1068,8 @@ window.ARI_BASKET_CFG = {
     window.AperoRI = window.AperoRI || {};
     window.AperoRI.userPerms = {{ (user_permissions|list)|tojson }};
 </script>
-<script src="{{ url_for('static', filename='js/target_info_render.js', v='20260423n') }}"></script>
-<script src="{{ url_for('static', filename='js/object_page.js', v='20260423m') }}" defer></script>
+<script src="{{ url_for('static', filename='js/target_info_render.js', v='20260424e') }}"></script>
+<script src="{{ url_for('static', filename='js/object_page.js', v='20260424g') }}" defer></script>
 <script>
 /* Plot-type constants – generated from Python; consumed by file_browser.js */
 window.ARI_PLOTABLE_OUTPUTS = {{ plotable_output_types | tojson }};

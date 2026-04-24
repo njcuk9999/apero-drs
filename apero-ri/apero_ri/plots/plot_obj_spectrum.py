@@ -804,13 +804,17 @@ def _make_spec_band_figure(
     )
     mask = (wave >= xlim[0]) & (wave <= xlim[1])
     w_m = wave[mask]
+    # Theme-aware foreground colour for the "Extracted" line (was
+    # hardcoded "black", invisible on the dark theme).
+    from apero_ri.plots.bokeh_theme import fg_glyph_color
+    fg = fg_glyph_color()
     # -------------------------------------------------------------------------
     if ext_flux is not None:
         ef_m = np.where(np.isfinite(ext_flux[mask]), ext_flux[mask], np.nan)
         fig.line(
             w_m,
             ef_m,
-            line_color="black",
+            line_color=fg,
             line_width=0.8,
             alpha=0.9,
             legend_label="Extracted",

@@ -52,6 +52,7 @@ from apero_ri.application import routes as app_routes
 from apero_ri.application import sci_groups_api_helpers
 from apero_ri.application import (
     object_comments_api_helpers,
+    object_download_helpers,
     object_groups_api_helpers,
 )
 from apero_ri.application import sidebar as app_sidebar
@@ -925,6 +926,21 @@ class ARIApp(Flask):
     def _api_astrometrics_columns(self):
         return astrometrics_api_helpers.api_astrometrics_columns(self)
 
+    def _api_astrometrics_list_all(self):
+        return astrometrics_api_helpers.api_astrometrics_list_all(self)
+
+    def _api_astrometrics_list_rejected(self):
+        return (astrometrics_api_helpers
+                .api_astrometrics_list_rejected(self))
+
+    def _api_astrometrics_add_rejected(self):
+        return (astrometrics_api_helpers
+                .api_astrometrics_add_rejected(self))
+
+    def _api_astrometrics_add_manual(self):
+        return (astrometrics_api_helpers
+                .api_astrometrics_add_manual(self))
+
     def _api_astrometrics_update_field(self):
         return astrometrics_api_helpers.api_astrometrics_update_field(
             self
@@ -934,6 +950,12 @@ class ARIApp(Flask):
         return astrometrics_api_helpers.api_astrometrics_upload_yaml(
             self
         )
+
+    def _api_astrometrics_status(self):
+        return astrometrics_api_helpers.api_astrometrics_status(self)
+
+    def _api_astrometrics_verify(self):
+        return astrometrics_api_helpers.api_astrometrics_verify(self)
 
     def _api_astrometrics_sed(self):
         return astrometrics_api_helpers.api_astrometrics_sed(self)
@@ -971,6 +993,77 @@ class ARIApp(Flask):
         from apero_ri.application import issues_api_helpers as ih
         return ih.api_issues_users(self)
 
+    def _api_issues_delete(self):
+        from apero_ri.application import issues_api_helpers as ih
+        return ih.api_issues_delete(self)
+
+    def _api_issues_edit(self):
+        from apero_ri.application import issues_api_helpers as ih
+        return ih.api_issues_edit(self)
+
+    # -----------------------------------------------------------------
+    # Notifications + messaging subsystem
+    # -----------------------------------------------------------------
+    def _api_notifications_list(self):
+        from apero_ri.application import notifications_api_helpers as nh
+        return nh.api_notifications_list(self)
+
+    def _api_notifications_unread_count(self):
+        from apero_ri.application import notifications_api_helpers as nh
+        return nh.api_notifications_unread_count(self)
+
+    def _api_notifications_mark_read(self):
+        from apero_ri.application import notifications_api_helpers as nh
+        return nh.api_notifications_mark_read(self)
+
+    def _api_notifications_dismiss(self):
+        from apero_ri.application import notifications_api_helpers as nh
+        return nh.api_notifications_dismiss(self)
+
+    def _api_notification_prefs_get(self):
+        from apero_ri.application import notifications_api_helpers as nh
+        return nh.api_notification_prefs_get(self)
+
+    def _api_notification_prefs_save(self):
+        from apero_ri.application import notifications_api_helpers as nh
+        return nh.api_notification_prefs_save(self)
+
+    def _api_messages_list(self):
+        from apero_ri.application import notifications_api_helpers as nh
+        return nh.api_messages_list(self)
+
+    def _api_messages_send(self):
+        from apero_ri.application import notifications_api_helpers as nh
+        return nh.api_messages_send(self)
+
+    def _api_messages_get(self, mid):
+        from apero_ri.application import notifications_api_helpers as nh
+        return nh.api_messages_get(self, mid)
+
+    def _api_messages_delete(self, mid):
+        from apero_ri.application import notifications_api_helpers as nh
+        return nh.api_messages_delete(self, mid)
+
+    def _api_messages_flag_as_issue(self, mid):
+        from apero_ri.application import notifications_api_helpers as nh
+        return nh.api_messages_flag_as_issue(self, mid)
+
+    def _api_users_directory(self):
+        from apero_ri.application import notifications_api_helpers as nh
+        return nh.api_users_directory(self)
+
+    def _user_portal_users_view(self):
+        from apero_ri.application import user_portal_view_helpers as uvh
+        return uvh.user_portal_users_view(self)
+
+    def _user_portal_messages_view(self):
+        from apero_ri.application import user_portal_view_helpers as uvh
+        return uvh.user_portal_messages_view(self)
+
+    def _user_portal_notifications_view(self):
+        from apero_ri.application import user_portal_view_helpers as uvh
+        return uvh.user_portal_notifications_view(self)
+
     def _monitor_issues_view(self):
         from apero_ri.application import monitor_view_helpers as mvh
         return mvh.monitor_issues_view(self)
@@ -1002,6 +1095,9 @@ class ARIApp(Flask):
 
     def _api_object_plots(self):
         return data_portal_api_helpers.api_object_plots(self)
+
+    def _api_object_download(self):
+        return object_download_helpers.api_object_download(self)
 
     def _api_object_lbl_plots(self):
         return data_portal_api_helpers.api_object_lbl_plots(self)

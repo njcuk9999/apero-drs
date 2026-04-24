@@ -152,6 +152,28 @@ def api_async_tasks_save(app):
             t["weekly_copies"] = weekly_copies
             if backup_max_size_mb is not None:
                 t["backup_max_size_mb"] = backup_max_size_mb
+            # Optional admin-customised exclude lists. The keys are
+            # only touched when the request explicitly contains them
+            # (so other code paths like toggle/reorder don't lose
+            # the customisation). An EMPTY list is honoured and
+            # means "remove the override / fall back to defaults".
+            for _ek in ("exclude_dirs", "exclude_paths"):
+                if _ek in data:
+                    raw = data.get(_ek) or []
+                    if not isinstance(raw, list):
+                        return jsonify(
+                            success=False,
+                            error="{0} must be a list".format(_ek),
+                        ), 400
+                    cleaned = []
+                    for item in raw:
+                        s = str(item or "").strip()
+                        if s and s not in cleaned:
+                            cleaned.append(s)
+                    if cleaned:
+                        t[_ek] = cleaned
+                    else:
+                        t.pop(_ek, None)
         if task_key == "APERO_SYNC_ASSETS":
             if assets_mode is not None:
                 t["mode"] = assets_mode
@@ -385,6 +407,17 @@ def api_async_tasks_global_list(app):
         entry["instrument"] = global_scope
         task_key = entry.get("task_key", "")
         entry["local_task"] = bool(task_module.LOCAL_TASK.get(task_key, False))
+        if task_key == "ARI_LOCAL_DATA_BACKUP":
+            try:
+                from apero_ri.tasks.apero_backup import (
+                    DEFAULT_EXCLUDE_DIRS as _DED,
+                    DEFAULT_EXCLUDE_PATHS as _DEP,
+                )
+                entry["default_exclude_dirs"] = list(_DED)
+                entry["default_exclude_paths"] = list(_DEP)
+            except Exception:  # noqa: BLE001
+                entry["default_exclude_dirs"] = []
+                entry["default_exclude_paths"] = []
         result.append(entry)
 
     queue_status = task_runner.get_status()

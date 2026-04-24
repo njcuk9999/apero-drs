@@ -226,7 +226,7 @@ body.ari-issues-page .ari-doc-main {
 .mi-table thead th {
     position: sticky;
     top: 0;
-    background: #f6f8fa;
+    background: var(--ari-bg-hover, var(--ari-bg, #f6f8fa));
     border-bottom: 1px solid var(--ari-border);
     text-align: left;
     padding: 0.6rem 0.85rem;
@@ -479,7 +479,7 @@ body.ari-issues-page .ari-doc-main {
     width: 100%;
     height: 14px;
     border-bottom: 1px solid var(--ari-border);
-    background: #f6f8fa;
+    background: var(--ari-bg-hover, var(--ari-bg, #f6f8fa));
 }
 
 .mi-table-scroll-top__inner {
@@ -529,4 +529,162 @@ body.ari-issues-page .ari-doc-main {
     margin: 0 0 0.6rem;
     font-size: 1rem;
     color: var(--ari-text);
+}
+
+/* =========================================================================
+   Dark theme overrides
+   ------------------------------------------------------------------------
+   The base styles above hardcode several light backgrounds (#fff,
+   #f6f8fa, #fafbfc, #fbfcfd, ...), light hover tints, and light pill
+   colours that are unreadable on a dark background. Override them so
+   the Issues page picks up the same palette as the rest of the dark
+   theme (see [data-theme="dark"] block in style.css).
+   ========================================================================= */
+[data-theme="dark"] .mi-input,
+[data-theme="dark"] .mi-select,
+[data-theme="dark"] .mi-btn {
+    background: var(--ari-surface-muted, #1c2128);
+    border-color: var(--ari-border);
+    color: var(--ari-text);
+}
+
+[data-theme="dark"] .mi-select {
+    background-image:
+        linear-gradient(45deg, transparent 50%,
+                        var(--ari-text-muted) 50%),
+        linear-gradient(135deg, var(--ari-text-muted) 50%, transparent 50%);
+    background-position:
+        calc(100% - 14px) 50%,
+        calc(100% - 9px) 50%;
+    background-size: 5px 5px, 5px 5px;
+    background-repeat: no-repeat;
+}
+
+[data-theme="dark"] .mi-select option {
+    background: var(--ari-card-bg);
+    color: var(--ari-text);
+}
+
+[data-theme="dark"] .mi-btn:hover {
+    background: var(--ari-surface-alt, #21262d);
+    border-color: var(--ari-primary);
+}
+
+[data-theme="dark"] .mi-btn--primary,
+[data-theme="dark"] .mi-btn--primary:hover {
+    background: var(--ari-primary);
+    border-color: var(--ari-primary-dark);
+    color: #0d1117;
+}
+
+[data-theme="dark"] .mi-btn--ghost {
+    background: transparent;
+    border-color: transparent;
+    color: var(--ari-primary);
+}
+
+[data-theme="dark"] .mi-btn--ghost:hover {
+    background: rgba(88, 166, 255, 0.12);
+}
+
+[data-theme="dark"] .mi-btn--danger {
+    color: var(--ari-danger);
+    border-color: rgba(248, 81, 73, 0.45);
+}
+
+[data-theme="dark"] .mi-btn--danger:hover {
+    background: rgba(248, 81, 73, 0.12);
+    border-color: var(--ari-danger);
+}
+
+[data-theme="dark"] .mi-status__pill {
+    background: rgba(88, 166, 255, 0.12);
+    color: var(--ari-primary-light, var(--ari-primary));
+}
+
+[data-theme="dark"] .mi-card {
+    background: var(--ari-card-bg);
+    border-color: var(--ari-border);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+}
+
+[data-theme="dark"] .mi-table thead th {
+    background: var(--ari-surface-muted, #1c2128);
+    border-bottom: 1px solid var(--ari-border);
+    color: var(--ari-text-muted);
+}
+
+[data-theme="dark"] .mi-table tbody td {
+    border-bottom: 1px solid var(--ari-border);
+    color: var(--ari-text);
+}
+
+[data-theme="dark"] .mi-table tbody tr:hover {
+    background: rgba(88, 166, 255, 0.06);
+}
+
+[data-theme="dark"] .mi-table tbody tr.mi-row--resolved td,
+[data-theme="dark"] .mi-table tbody tr.mi-row--invalid td {
+    background: var(--ari-surface-muted, #1c2128);
+    color: var(--ari-text-muted);
+}
+
+[data-theme="dark"] .mi-cell-value code {
+    background: var(--ari-surface-muted, #1c2128);
+    border-color: var(--ari-border);
+    color: var(--ari-text);
+}
+
+[data-theme="dark"] .mi-toolbar {
+    background: var(--ari-card-bg);
+    border-color: var(--ari-border);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+}
+
+/* Kind chips ----------------------------------------------------------- */
+[data-theme="dark"] .mi-kind {
+    background: rgba(88, 166, 255, 0.12);
+    color: var(--ari-primary-light, var(--ari-primary));
+    border-color: rgba(88, 166, 255, 0.35);
+}
+
+[data-theme="dark"] .mi-kind--flag {
+    background: rgba(248, 81, 73, 0.15);
+    color: #ffb3ad;
+    border-color: rgba(248, 81, 73, 0.4);
+}
+
+[data-theme="dark"] .mi-kind--target_request {
+    background: rgba(63, 185, 80, 0.14);
+    color: #7ee787;
+    border-color: rgba(63, 185, 80, 0.4);
+}
+
+[data-theme="dark"] .mi-kind--other {
+    background: rgba(187, 128, 255, 0.14);
+    color: #d2a8ff;
+    border-color: rgba(187, 128, 255, 0.4);
+}
+
+/* Status badges -------------------------------------------------------- */
+[data-theme="dark"] .mi-badge--open {
+    background: rgba(63, 185, 80, 0.14);
+    color: #7ee787;
+    border-color: rgba(63, 185, 80, 0.4);
+}
+
+[data-theme="dark"] .mi-badge--resolved {
+    background: rgba(187, 128, 255, 0.14);
+    color: #d2a8ff;
+    border-color: rgba(187, 128, 255, 0.4);
+}
+
+[data-theme="dark"] .mi-badge--invalid {
+    background: var(--ari-surface-alt, #21262d);
+    color: var(--ari-text-muted);
+    border-color: var(--ari-border);
+}
+
+[data-theme="dark"] .mi-empty i {
+    color: var(--ari-border);
 }

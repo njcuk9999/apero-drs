@@ -1017,6 +1017,28 @@ def register_data_portal_routes(app):
         app._api_astrometrics_columns,
     )
     app.add_url_rule(
+        "/api/astrometrics/list-all",
+        "api_astrometrics_list_all",
+        app._api_astrometrics_list_all,
+    )
+    app.add_url_rule(
+        "/api/astrometrics/list-rejected",
+        "api_astrometrics_list_rejected",
+        app._api_astrometrics_list_rejected,
+    )
+    app.add_url_rule(
+        "/api/astrometrics/add-rejected",
+        "api_astrometrics_add_rejected",
+        app._api_astrometrics_add_rejected,
+        methods=["POST"],
+    )
+    app.add_url_rule(
+        "/api/astrometrics/add-manual",
+        "api_astrometrics_add_manual",
+        app._api_astrometrics_add_manual,
+        methods=["POST"],
+    )
+    app.add_url_rule(
         "/api/astrometrics/update-field",
         "api_astrometrics_update_field",
         app._api_astrometrics_update_field,
@@ -1026,6 +1048,17 @@ def register_data_portal_routes(app):
         "/api/astrometrics/upload-yaml",
         "api_astrometrics_upload_yaml",
         app._api_astrometrics_upload_yaml,
+        methods=["POST"],
+    )
+    app.add_url_rule(
+        "/api/astrometrics/status",
+        "api_astrometrics_status",
+        app._api_astrometrics_status,
+    )
+    app.add_url_rule(
+        "/api/astrometrics/verify",
+        "api_astrometrics_verify",
+        app._api_astrometrics_verify,
         methods=["POST"],
     )
     app.add_url_rule(
@@ -1069,6 +1102,103 @@ def register_data_portal_routes(app):
         "/api/issues/users",
         "api_issues_users",
         app._api_issues_users,
+    )
+    app.add_url_rule(
+        "/api/issues/delete",
+        "api_issues_delete",
+        app._api_issues_delete,
+        methods=["POST"],
+    )
+    app.add_url_rule(
+        "/api/issues/edit",
+        "api_issues_edit",
+        app._api_issues_edit,
+        methods=["POST"],
+    )
+    # ---------------------------------------------------------------
+    # Notifications + messages + users directory
+    # ---------------------------------------------------------------
+    app.add_url_rule(
+        "/api/notifications/list",
+        "api_notifications_list",
+        app._api_notifications_list,
+    )
+    app.add_url_rule(
+        "/api/notifications/unread-count",
+        "api_notifications_unread_count",
+        app._api_notifications_unread_count,
+    )
+    app.add_url_rule(
+        "/api/notifications/mark-read",
+        "api_notifications_mark_read",
+        app._api_notifications_mark_read,
+        methods=["POST"],
+    )
+    app.add_url_rule(
+        "/api/notifications/dismiss",
+        "api_notifications_dismiss",
+        app._api_notifications_dismiss,
+        methods=["POST"],
+    )
+    app.add_url_rule(
+        "/api/notifications/prefs",
+        "api_notification_prefs_get",
+        app._api_notification_prefs_get,
+    )
+    app.add_url_rule(
+        "/api/notifications/prefs/save",
+        "api_notification_prefs_save",
+        app._api_notification_prefs_save,
+        methods=["POST"],
+    )
+    app.add_url_rule(
+        "/api/messages/list",
+        "api_messages_list",
+        app._api_messages_list,
+    )
+    app.add_url_rule(
+        "/api/messages/send",
+        "api_messages_send",
+        app._api_messages_send,
+        methods=["POST"],
+    )
+    app.add_url_rule(
+        "/api/messages/<mid>",
+        "api_messages_get",
+        app._api_messages_get,
+    )
+    app.add_url_rule(
+        "/api/messages/<mid>/delete",
+        "api_messages_delete",
+        app._api_messages_delete,
+        methods=["POST"],
+    )
+    app.add_url_rule(
+        "/api/messages/<mid>/flag-as-issue",
+        "api_messages_flag_as_issue",
+        app._api_messages_flag_as_issue,
+        methods=["POST"],
+    )
+    app.add_url_rule(
+        "/api/users/directory",
+        "api_users_directory",
+        app._api_users_directory,
+    )
+    # User-portal pages for the new features
+    app.add_url_rule(
+        "/user_portal/users",
+        "user_portal_users_view",
+        app._user_portal_users_view,
+    )
+    app.add_url_rule(
+        "/user_portal/messages",
+        "user_portal_messages_view",
+        app._user_portal_messages_view,
+    )
+    app.add_url_rule(
+        "/user_portal/notifications",
+        "user_portal_notifications_view",
+        app._user_portal_notifications_view,
     )
     app.add_url_rule(
         "/monitor_portal/issues",
@@ -1231,6 +1361,11 @@ def register_data_portal_routes(app):
         "/api/data-portal/object-plots",
         "api_object_plots",
         app._api_object_plots,
+    )
+    app.add_url_rule(
+        "/api/data-portal/object-download",
+        "api_object_download",
+        app._api_object_download,
     )
     app.add_url_rule(
         "/api/data-portal/object-lbl-plots",

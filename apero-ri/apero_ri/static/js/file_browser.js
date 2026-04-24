@@ -90,7 +90,8 @@
     // Always add these after polar (or instead of)
     FB_PRESETS.push(
         { id: 'ccfrv',    label: 'CCF RV',                        preset: 'ccfrv'   },
-        { id: 'rdb',      label: 'rdb',                           preset: 'rdb'     }
+        { id: 'rdb',      label: 'rdb',                           preset: 'rdb'     },
+        { id: 'lbl',      label: 'All LBL products',              preset: 'lbl'     }
     );
     var fbActivePreset = 'default';
 

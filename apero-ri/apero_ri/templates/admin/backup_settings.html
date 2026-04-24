@@ -494,6 +494,7 @@
 <script>
 var AB_PROVIDERS = {{ providers_json | safe }};
 var AB_CAN_MANAGE = {{ can_manage | tojson }};
+var AB_OAUTH_INSECURE = {{ oauth_insecure_warning | tojson }};
 var AB_CFG = {{ backup_cfg | tojson }};
 var AB_INVENTORY = {{ backup_inventory | tojson }};
 
@@ -1231,6 +1232,14 @@ function abCollectPayload() {
 
 async function abConnectGoogleOauth() {
     if (!AB_CAN_MANAGE) return;
+    if (AB_OAUTH_INSECURE) {
+        const msg = 'Warning: this page is served over HTTP, not HTTPS.\n\n' +
+            'Google OAuth requires a secure connection. The callback will fail\n' +
+            'unless you restart the server with ARI_ALLOW_INSECURE_OAUTH=1\n' +
+            '(safe only on a private/trusted network).\n\n' +
+            'Continue anyway?';
+        if (!window.confirm(msg)) return;
+    }
     abSetMsg('abSaveMsg', 'Opening Google consent screen...', true);
     const popup = window.open('/api/admin/backups/oauth/start', 'abGoogleOauth', 'width=640,height=760');
     if (!popup) {

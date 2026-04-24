@@ -25,6 +25,7 @@ from apero_ri.core.auth import (
 )
 from apero_ri.core.issues import (
     create_issue,
+    delete_issue,
     list_issues,
     update_issue,
 )
@@ -270,3 +271,126 @@ def api_issues_users(app):
         })
     out.sort(key=lambda u: u['username'].lower())
     return jsonify(success=True, users=out)
+
+
+def _is_admin_or_super(perms) -> bool:
+    """True if the caller can fully edit/delete issues."""
+    pset = set(perms or ())
+    if 'manage.astrometrics' in pset:
+        return True
+    for p in pset:
+        if p == 'super_admin' or p.startswith('manage.group.super_admin'):
+            return True
+        if p == 'admin' or p.startswith('manage.group.admin'):
+            return True
+        if p.startswith('manage.instrument.') and (
+                p.endswith('.super_admin') or p.endswith('.admin')):
+            return True
+    return False
+
+
+def api_issues_delete(app):
+    """Hard-delete an issue. Admin / super-admin only.
+
+    JSON body: {"id": <int>}
+    """
+    user_info = app._get_api_user()
+    if not user_info:
+        return jsonify(success=False, error='Login required'), 401
+    perms = resolve_user_permissions(
+        user_info['groups'], app.ari_groups)
+    if not _is_admin_or_super(perms):
+        return jsonify(
+            success=False,
+            error='Admin / super-admin access required'), 403
+    body = request.get_json(silent=True) or {}
+    try:
+        issue_id = int(body.get('id'))
+    except (TypeError, ValueError):
+        return jsonify(success=False, error="Invalid 'id'"), 400
+    deleted = delete_issue(_data_dir(app), issue_id)
+    if not deleted:
+        return jsonify(success=False, error='Issue not found'), 404
+    return jsonify(success=True, deleted=deleted)
+
+
+def api_issues_edit(app):
+    """Edit core fields of an issue. Admin / super-admin only.
+
+    Unlike :func:`api_issues_update` (which monitors can use to set
+    status / append notes), this endpoint can rewrite the title,
+    body (reason), kind, type, label, action and visibility — used
+    to clean up tests or correct mistaken filings.
+
+    JSON body keys (all optional except ``id``):
+        id, title, reason, kind, type, label, action, visibility
+    """
+    user_info = app._get_api_user()
+    if not user_info:
+        return jsonify(success=False, error='Login required'), 401
+    perms = resolve_user_permissions(
+        user_info['groups'], app.ari_groups)
+    if not _is_admin_or_super(perms):
+        return jsonify(
+            success=False,
+            error='Admin / super-admin access required'), 403
+    body = request.get_json(silent=True) or {}
+    try:
+        issue_id = int(body.get('id'))
+    except (TypeError, ValueError):
+        return jsonify(success=False, error="Invalid 'id'"), 400
+    # Direct file mutation: load, patch, save (mirrors update_issue
+    # but for fields the monitor endpoint doesn't expose).
+    from apero_ri.core import issues as _issues
+    with _issues._LOCK:
+        all_issues = _issues._load(_data_dir(app))
+        target = None
+        for it in all_issues:
+            if it.get('id') == issue_id:
+                target = it
+                break
+        if target is None:
+            return jsonify(success=False, error='Not found'), 404
+        for key in ('title', 'reason', 'kind', 'type',
+                    'label', 'action', 'visibility'):
+            if key in body and body[key] is not None:
+                target[key] = str(body[key])
+        # apero_name + field + value editable too (correct typos)
+        for key in ('apero_name', 'field', 'value'):
+            if key in body:
+                target[key] = body[key]
+        _issues._save(_data_dir(app), all_issues)
+    return jsonify(success=True, issue=target)
+
+
+def create_issue_internal(
+    kind: str,
+    title: str = '',
+    body: str = '',
+    created_by: str = 'system',
+    meta=None,
+):
+    """Programmatic issue creation (used by the message flag flow).
+
+    Returns the created issue's ``id`` as a string, or ``None`` on
+    failure. Reads ``ARI_DIR`` from the environment because there is
+    no ``app`` context here.
+    """
+    try:
+        from pathlib import Path as _P
+        data_dir = _P.home() / '.ari'
+        meta = meta or {}
+        issue = create_issue(
+            data_dir,
+            kind=str(kind or 'flag'),
+            reason=str(body or ''),
+            created_by=str(created_by or 'system'),
+            title=str(title or '')[:200] or None,
+            type_=str(meta.get('source') or 'message'),
+            origin_url=str(meta.get('origin_url') or '') or None,
+            label='message-flag',
+            visibility='monitor',
+        )
+        return str(issue.get('id')) if issue else None
+    except Exception:  # noqa: BLE001
+        return None

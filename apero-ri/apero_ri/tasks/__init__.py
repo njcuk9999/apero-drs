@@ -249,6 +249,26 @@ LOCAL_TASK["APERO_QC_STATS"] = bool(
 )
 FILTERS["APERO_QC_STATS"] = _entry["filters"]
 
+# FAV_OBJECT_WATCHER
+_entry = _register_task(
+    "FAV_OBJECT_WATCHER",
+    "fav_object_watcher",
+    "FavObjectWatcherTask",
+    "GLOBAL",
+)
+TASK_LIST["FAV_OBJECT_WATCHER"] = _entry["task_cls"]
+P_LIST["FAV_OBJECT_WATCHER"] = _entry["param_list"]
+AP_LIST["FAV_OBJECT_WATCHER"] = _entry["ap_list"]
+FREQ["FAV_OBJECT_WATCHER"] = _entry["frequency"]
+ENABLED["FAV_OBJECT_WATCHER"] = _entry["enabled"]
+TYPE["FAV_OBJECT_WATCHER"] = _entry["task_type"]
+USE_SUBPROCESS["FAV_OBJECT_WATCHER"] = _entry["use_subprocess"]
+MULTI_PROCESS["FAV_OBJECT_WATCHER"] = _entry["multi_process"]
+LOCAL_TASK["FAV_OBJECT_WATCHER"] = bool(
+    getattr(_entry["task_cls"], "LOCAL_TASK", False)
+)
+FILTERS["FAV_OBJECT_WATCHER"] = _entry["filters"]
+
 # =============================================================================
 # Start of code
 # =============================================================================

@@ -19,7 +19,7 @@ import uuid
 from datetime import datetime, timedelta, timezone
 from email.message import EmailMessage
 from pathlib import Path
-from typing import Any, List, Optional
+from typing import Any, Dict, List, Optional
 
 import yaml
 from apero_ri.application import (
@@ -89,6 +89,279 @@ __NAME__ = "apero_ri.application.application"
 PACKAGE_DIR = Path(__file__).parent.parent
 TEMPLATE_DIR = PACKAGE_DIR / "templates"
 STATIC_DIR = PACKAGE_DIR / "static"
+
+
+def _heal_duplicated_template(text: str) -> Optional[str]:
+    """Best-effort repair of a duplicated/corrupted Jinja template.
+
+    A specific corruption keeps recurring on this codebase: a stale
+    editor buffer saves a file that contains its full prior content
+    appended after the current content, so the file ends up with two
+    ``{% extends ... %}`` tags and duplicate top-level ``{% block %}``
+    declarations. Jinja then refuses to compile and the page 500s.
+
+    Heuristic:
+      * If two or more ``{% extends ... %}`` tags are present, treat the
+        text from the *second* one onwards as garbage and discard it.
+      * Otherwise, if any top-level block name appears more than once,
+        keep the first occurrence and drop subsequent duplicates.
+
+    Returns the healed text, or None if no repair was possible / needed.
+    """
+    extends_re = re.compile(r"{%-?\s*extends\b[^%]*%}")
+    block_open_re = re.compile(
+        r"{%-?\s*block\s+([A-Za-z_][\w]*)\s*-?%}")
+    block_close_re = re.compile(r"{%-?\s*endblock\b[^%]*%}")
+    extends_hits = list(extends_re.finditer(text))
+    healed = None
+    if len(extends_hits) >= 2:
+        cut = extends_hits[1].start()
+        healed = text[:cut].rstrip() + "\n"
+    candidate = healed if healed is not None else text
+    # Now drop duplicate top-level blocks (depth-aware).
+    seen = set()
+    out: List[str] = []
+    i = 0
+    depth = 0
+    n = len(candidate)
+    while i < n:
+        m_open = block_open_re.match(candidate, i)
+        m_close = block_close_re.match(candidate, i) if depth else None
+        if m_open and depth == 0:
+            name = m_open.group(1)
+            # Walk forward to the matching {% endblock %} to grab the
+            # whole block. Track nested {% block %}.
+            j = m_open.end()
+            d2 = 1
+            while j < n and d2 > 0:
+                no = block_open_re.match(candidate, j)
+                nc = block_close_re.match(candidate, j)
+                if no:
+                    d2 += 1
+                    j = no.end()
+                elif nc:
+                    d2 -= 1
+                    j = nc.end()
+                else:
+                    j += 1
+            if name in seen:
+                # Skip this duplicate block entirely.
+                healed = healed if healed is not None else text
+                i = j
+                # also swallow a trailing newline so we don't leave a gap
+                if i < n and candidate[i] == '\n':
+                    i += 1
+                continue
+            seen.add(name)
+            out.append(candidate[i:j])
+            i = j
+            continue
+        out.append(candidate[i])
+        i += 1
+    final = ''.join(out)
+    if healed is None and final == text:
+        return None
+    return final
+
+
+def _install_self_healing_loader(loader):
+    """Wrap a Jinja loader so ``get_source`` runs through the healer.
+
+    We monkey-patch the bound ``get_source`` on the loader instance
+    rather than subclassing because Flask has already constructed the
+    loader for us. Jinja's ``BaseLoader.load`` calls
+    ``self.get_source(env, template)``, so monkey-patching the bound
+    method is enough — and avoids the wrapper-class pitfall where
+    ``load`` (inherited from the unwrapped inner) bypasses the
+    wrapper's ``get_source``.
+    """
+    if getattr(loader, "_apero_ri_self_healing", False):
+        return loader
+    original = loader.get_source
+
+    def get_source(environment, template):
+        source, filename, uptodate = original(environment, template)
+        healed = _heal_duplicated_template(source)
+        if healed is None or healed == source:
+            return source, filename, uptodate
+        import sys as _sys
+        print(
+            f"[apero_ri] AUTO-HEAL: repaired duplicated template "
+            f"{template!r} (size {len(source)} -> {len(healed)} "
+            f"bytes); rewriting on disk.",
+            file=_sys.stderr,
+            flush=True,
+        )
+        if filename:
+            try:
+                p = Path(filename)
+                tmp = p.with_name(p.name + ".heal-tmp")
+                with open(tmp, "w", encoding="utf-8") as fio:
+                    fio.write(healed)
+                os.replace(tmp, p)
+            except OSError as exc:
+                print(
+                    f"[apero_ri] AUTO-HEAL: failed to rewrite "
+                    f"{filename}: {exc}",
+                    file=_sys.stderr,
+                    flush=True,
+                )
+        return healed, filename, uptodate
+
+    loader.get_source = get_source
+    loader._apero_ri_self_healing = True
+    return loader
+
+
+def _check_template_duplicate_blocks(template_dir: Path) -> List[str]:
+    """Scan every Jinja template for duplicate ``{% block <name> %}``.
+
+    Jinja raises ``TemplateAssertionError: block '<name>' defined twice``
+    only at render time, so a corrupted template (e.g. accidentally
+    duplicated content from an editor or codegen accident) goes
+    undetected until a user hits that page. We catch this at server
+    startup by scanning all .html templates and reporting offenders, so
+    the bug is visible in the boot log instead of only on a 500 page.
+
+    Returns a list of human-readable messages describing each offender.
+    """
+    import re as _re
+
+    block_re = _re.compile(r"{%-?\s*block\s+([A-Za-z_][\w]*)\s*-?%}")
+    bad: List[str] = []
+    if not template_dir.is_dir():
+        return bad
+    for path in sorted(template_dir.rglob("*.html")):
+        try:
+            text = path.read_text(encoding="utf-8", errors="replace")
+        except OSError:
+            continue
+        seen: Dict[str, int] = {}
+        for m in block_re.finditer(text):
+            name = m.group(1)
+            seen[name] = seen.get(name, 0) + 1
+        dups = [n for n, c in seen.items() if c > 1]
+        if dups:
+            try:
+                rel = path.relative_to(template_dir)
+            except ValueError:
+                rel = path
+            bad.append(
+                f"{rel}: duplicate block(s) {dups}"
+            )
+    return bad
+
+
+# Identifiers we know are browser/Jinja-provided globals and should
+# never be flagged as "undefined" by the inline-script lint below.
+_JS_GLOBAL_IDENTS: frozenset = frozenset({
+    "window", "document", "console", "navigator", "location",
+    "localStorage", "sessionStorage", "history", "fetch", "alert",
+    "confirm", "prompt", "Math", "Date", "JSON", "Number", "String",
+    "Boolean", "Array", "Object", "Map", "Set", "Promise", "Error",
+    "URL", "URLSearchParams", "FormData", "Blob", "File",
+    "setTimeout", "clearTimeout", "setInterval", "clearInterval",
+    "requestAnimationFrame", "cancelAnimationFrame",
+    "Bokeh", "bootstrap", "jQuery", "$", "io", "performance",
+    "CustomEvent", "Event", "MutationObserver", "IntersectionObserver",
+    "encodeURIComponent", "decodeURIComponent", "atob", "btoa",
+    "parseInt", "parseFloat", "isNaN", "isFinite",
+})
+
+
+def _check_template_inline_js(template_dir: Path) -> List[str]:
+    """Static lint for undefined-identifier bugs in inline ``<script>``.
+
+    JavaScript ``ReferenceError`` (e.g. ``fType is not defined``) only
+    surfaces when the user opens the page. This scans every inline
+    ``<script>`` block in every Jinja template and, for each usage of
+    the form ``IDENT.addEventListener(``, verifies ``IDENT`` is either
+    declared locally (``const/let/var``, ``function``, function
+    parameter) or is a known browser global. Anything else is flagged
+    so it shows up in the boot log instead of a user-visible crash.
+
+    The lint is deliberately narrow: it only looks at the
+    ``.addEventListener`` usage pattern (the shape that has repeatedly
+    regressed on the Issues page) so it almost never produces false
+    positives across unrelated templates.
+    """
+    import re as _re
+
+    script_re = _re.compile(
+        r"<script\b[^>]*>(.*?)</script>", _re.DOTALL | _re.IGNORECASE)
+    # Skip scripts that are modules or external (have a src=).
+    src_attr_re = _re.compile(r"<script\b[^>]*\bsrc\s*=", _re.IGNORECASE)
+    decl_re = _re.compile(
+        r"\b(?:const|let|var)\s+([A-Za-z_$][\w$]*)")
+    func_re = _re.compile(
+        r"\bfunction\s+([A-Za-z_$][\w$]*)\s*\(([^)]*)\)")
+    # Anonymous functions: ``function (x, y) {``. No name, but params
+    # are declarations inside the closure.
+    anon_func_re = _re.compile(
+        r"\bfunction\s*\(([^)]*)\)")
+    arrow_params_re = _re.compile(
+        r"\(([^)]*)\)\s*=>")
+    # Single-arg arrow funcs: ``x => ...`` with no parens.
+    arrow_single_re = _re.compile(
+        r"(?<![\w$])([A-Za-z_$][\w$]*)\s*=>")
+    class_re = _re.compile(r"\bclass\s+([A-Za-z_$][\w$]*)")
+    listener_re = _re.compile(
+        r"\b([A-Za-z_$][\w$]*)\s*\.\s*addEventListener\s*\(")
+    ident_re = _re.compile(r"[A-Za-z_$][\w$]*")
+
+    bad: List[str] = []
+    if not template_dir.is_dir():
+        return bad
+    for path in sorted(template_dir.rglob("*.html")):
+        try:
+            text = path.read_text(encoding="utf-8", errors="replace")
+        except OSError:
+            continue
+        # Re-locate each <script> block and skip external ones.
+        for m in script_re.finditer(text):
+            head_start = max(0, m.start() - 200)
+            head = text[head_start:m.start() + 8]
+            if src_attr_re.search(head):
+                continue
+            body = m.group(1)
+            declared = set()
+            for dm in decl_re.finditer(body):
+                declared.add(dm.group(1))
+            for fm in func_re.finditer(body):
+                declared.add(fm.group(1))
+                for p in ident_re.findall(fm.group(2) or ""):
+                    declared.add(p)
+            for fm in anon_func_re.finditer(body):
+                for p in ident_re.findall(fm.group(1) or ""):
+                    declared.add(p)
+            for am in arrow_params_re.finditer(body):
+                for p in ident_re.findall(am.group(1) or ""):
+                    declared.add(p)
+            for am in arrow_single_re.finditer(body):
+                declared.add(am.group(1))
+            for cm in class_re.finditer(body):
+                declared.add(cm.group(1))
+            undefined: List[str] = []
+            for lm in listener_re.finditer(body):
+                name = lm.group(1)
+                if name in declared:
+                    continue
+                if name in _JS_GLOBAL_IDENTS:
+                    continue
+                if name not in undefined:
+                    undefined.append(name)
+            if undefined:
+                try:
+                    rel = path.relative_to(template_dir)
+                except ValueError:
+                    rel = path
+                bad.append(
+                    f"{rel}: inline <script> uses undefined "
+                    f"identifier(s) {undefined} with "
+                    f".addEventListener(...)"
+                )
+    return bad
+
 
 
 def ariapp_run(self, host, port, debug, **kwargs):
@@ -211,6 +484,77 @@ def ariapp_init(self, **kwargs):
         static_folder=str(STATIC_DIR),
         **kwargs,
     )
+    # Install a self-healing wrapper around Flask's Jinja loader so a
+    # template that was accidentally saved with duplicated content
+    # (extra {% extends %} + duplicate blocks — a recurring stale-
+    # editor-buffer corruption) is auto-repaired on load instead of
+    # 500-ing the page. The wrapper rewrites the on-disk file once.
+    if self.jinja_loader is not None:
+        _install_self_healing_loader(self.jinja_loader)
+    # Sanity: scan templates for duplicate {% block ... %} declarations
+    # right now (boot time). If found, attempt the same auto-heal so
+    # the file is fixed before any request hits Jinja.
+    try:
+        _bad_tpls = _check_template_duplicate_blocks(TEMPLATE_DIR)
+    except Exception:
+        _bad_tpls = []
+    if _bad_tpls:
+        import sys as _sys
+
+        print(
+            "[apero_ri] WARNING: Jinja templates with duplicate "
+            "{% block %} declarations detected — attempting auto-heal:",
+            file=_sys.stderr,
+            flush=True,
+        )
+        for _line in _bad_tpls:
+            print(f"  - {_line}", file=_sys.stderr, flush=True)
+        for _path in sorted(TEMPLATE_DIR.rglob("*.html")):
+            try:
+                _txt = _path.read_text(
+                    encoding="utf-8", errors="replace")
+            except OSError:
+                continue
+            _healed = _heal_duplicated_template(_txt)
+            if _healed is None or _healed == _txt:
+                continue
+            try:
+                _tmp = _path.with_name(_path.name + ".heal-tmp")
+                with open(_tmp, "w", encoding="utf-8") as _fio:
+                    _fio.write(_healed)
+                os.replace(_tmp, _path)
+                print(
+                    f"[apero_ri] AUTO-HEAL: rewrote {_path}",
+                    file=_sys.stderr,
+                    flush=True,
+                )
+            except OSError as _exc:
+                print(
+                    f"[apero_ri] AUTO-HEAL: failed to rewrite "
+                    f"{_path}: {_exc}",
+                    file=_sys.stderr,
+                    flush=True,
+                )
+    # Sanity: scan inline <script> blocks for undefined identifiers
+    # used with .addEventListener(...). These throw ReferenceError in
+    # the browser only when a user opens the page, so catch them here.
+    try:
+        _bad_js = _check_template_inline_js(TEMPLATE_DIR)
+    except Exception:
+        _bad_js = []
+    if _bad_js:
+        import sys as _sys
+
+        print(
+            "[apero_ri] WARNING: Jinja templates with inline <script> "
+            "blocks that reference undeclared identifiers in "
+            ".addEventListener(...) — these pages will throw "
+            "ReferenceError in the browser until fixed:",
+            file=_sys.stderr,
+            flush=True,
+        )
+        for _line in _bad_js:
+            print(f"  - {_line}", file=_sys.stderr, flush=True)
     # Parse command-line arguments
     self.args = self._get_arguments()
     os.environ["ARI_DIR"] = str(
@@ -2929,13 +3273,25 @@ def ariapp_build_admin_backup_context(self, perms):
         method_id=cfg.get("active_method_id"),
     )
 
+    from flask import request as _req
+    _is_https = _req.is_secure or _req.headers.get(
+        "X-Forwarded-Proto", ""
+    ).lower() == "https"
+    _insecure_ok = bool(
+        os.environ.get("ARI_ALLOW_INSECURE_OAUTH", "")
+    )
+    oauth_insecure_warning = (
+        not _is_https and not _insecure_ok
+    )
+
     return {
         "backup_cfg": cfg,
         "providers": providers,
         "providers_json": _json.dumps(providers),
         "current_provider": current_provider,
-        "can_manage": "manage.admin.backup" in perms,
+        "can_manage": "manage.admin.backup_setup" in perms,
         "backup_inventory": inventory,
+        "oauth_insecure_warning": oauth_insecure_warning,
     }
 
 

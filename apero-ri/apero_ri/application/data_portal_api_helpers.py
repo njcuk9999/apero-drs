@@ -25,6 +25,61 @@ from flask import (
 )
 
 
+# In-process TTL cache for api_object_page responses. Keyed by
+# (profile_id, objname_lower, rid_tag); value is
+# (expires_at_epoch, payload_dict). Page data changes only when
+# the underlying object_table.json or astrometric YAMLs change,
+# so a 60-second TTL is safe and dramatically speeds up rapid
+# back-and-forth navigation between objects.
+_OBJECT_PAGE_CACHE = {}
+_OBJECT_PAGE_CACHE_LOCK = threading.Lock()
+_OBJECT_PAGE_CACHE_TTL = 60.0  # seconds
+
+
+def _object_page_cache_get(key):
+    with _OBJECT_PAGE_CACHE_LOCK:
+        hit = _OBJECT_PAGE_CACHE.get(key)
+        if hit is None:
+            return None
+        expires_at, payload = hit
+        if expires_at < time.time():
+            _OBJECT_PAGE_CACHE.pop(key, None)
+            return None
+        return payload
+
+
+def _set_request_theme_from_args() -> str:
+    """Read ?theme=... from the request and set the thread-local
+    Bokeh theme so every plot built within this request uses it.
+
+    Returns the normalised theme string ('default'|'light'|'dark') so
+    callers can fold it into cache keys (otherwise dark/light requests
+    would serve each other's cached white-background plots).
+    """
+    try:
+        from apero_ri.plots.bokeh_theme import (
+            set_request_theme, normalise_theme,
+        )
+    except Exception:  # noqa: BLE001
+        return "default"
+    raw = request.args.get("theme", "default")
+    theme = normalise_theme(raw)
+    try:
+        set_request_theme(theme)
+    except Exception:  # noqa: BLE001
+        pass
+    return theme
+
+
+def _object_page_cache_set(key, payload):
+    with _OBJECT_PAGE_CACHE_LOCK:
+        # Bound the cache (LRU-style by simple eviction)
+        if len(_OBJECT_PAGE_CACHE) > 256:
+            _OBJECT_PAGE_CACHE.clear()
+        _OBJECT_PAGE_CACHE[key] = (
+            time.time() + _OBJECT_PAGE_CACHE_TTL, payload)
+
+
 def api_ri_profile_health(app):
     """Run database and path health checks for a profile."""
     user_info = app._require_user()
@@ -89,6 +144,11 @@ def api_debug_plots(app):
         perms = get_public_permissions()
     if "view.data_portal" not in perms:
         return jsonify(success=False, error="Unauthorized"), 401
+    # Apply requested theme to every Bokeh figure built in this request
+    # and fold the theme into the cache key so dark/light don't pollute
+    # each other's cached payloads (a cached light plot served on the
+    # dark theme is the most common cause of "white background").
+    theme = _set_request_theme_from_args()
 
     profile_id = request.args.get("profile_id", "").strip()
     objname = request.args.get("objname", "").strip()
@@ -122,7 +182,7 @@ def api_debug_plots(app):
     from apero_ri.core.plot_cache import check_and_serve
 
     rid_tag = app._rid_cache_tag(accessible_run_ids)
-    cache_key = f"{objname}__{rid_tag}"
+    cache_key = f"{objname}__{rid_tag}__{theme}"
     if not force_regen:
         cached = check_and_serve(
             base_dir,
@@ -207,6 +267,9 @@ def api_tcorr_map_generate(app):
         perms = get_public_permissions()
     if "view.data_portal" not in perms:
         return jsonify(success=False, error="Unauthorized"), 401
+    # Pick up theme so the matplotlib telluric map renders with the
+    # right palette (see plot_debug._render_mpl_to_b64).
+    _set_request_theme_from_args()
 
     profile_id = request.args.get("profile_id", "").strip()
     objname = request.args.get("objname", "").strip()
@@ -278,6 +341,7 @@ def api_object_lbl_plots(app):
 
     if "view.data_portal" not in perms:
         return jsonify(success=False, error="Unauthorized"), 401
+    theme = _set_request_theme_from_args()
 
     profile_id = request.args.get("profile_id", "").strip()
     objname = request.args.get("objname", "").strip()
@@ -314,7 +378,7 @@ def api_object_lbl_plots(app):
     from apero_ri.core.plot_cache import check_and_serve
 
     rid_tag = app._rid_cache_tag(accessible_run_ids)
-    cache_key = f"{objname}__{rid_tag}"
+    cache_key = f"{objname}__{rid_tag}__{theme}"
     if not force_regen:
         cached = check_and_serve(
             base_dir,
@@ -1214,6 +1278,15 @@ def api_object_plots(app):
     if "view.data_portal" not in perms:
         return jsonify(success=False, error="Unauthorized"), 401
 
+    # Apply the requested theme (default/light/dark) to every Bokeh
+    # figure built within this request via the thread-local set in
+    # apero_ri.plots.bokeh_theme.
+    try:
+        from apero_ri.plots.bokeh_theme import set_request_theme
+        set_request_theme(request.args.get("theme", "default"))
+    except Exception:  # noqa: BLE001
+        pass
+
     profile_id = request.args.get("profile_id", "").strip()
     objname = request.args.get("objname", "").strip()
     plot_group = (
@@ -1325,6 +1398,13 @@ def api_object_plots(app):
         cache_key += f"__ccfnobs_{int(ccf_nobs)}"
     if plot_group in {"all", "time_series"}:
         cache_key += "__tsaxis_v2"
+    # Fold the active theme into the cache key so dark/light don't
+    # serve each other's cached light-bg payloads.
+    try:
+        from apero_ri.plots.bokeh_theme import get_request_theme
+        cache_key += f"__th_{get_request_theme()}"
+    except Exception:  # noqa: BLE001
+        pass
     if not force_regen:
         cached = check_and_serve(
             base_dir,
@@ -1400,8 +1480,28 @@ def api_object_plots(app):
         ok = True
         try:
             payload = func()
-        except Exception:
-            payload = dict(_no_plot)
+        except Exception as _exc:
+            # Surface the exception details so that "Plot build failed"
+            # is debuggable from the response and the server log
+            # (previously the traceback was silently swallowed).
+            import traceback as _tb
+            _tb_str = _tb.format_exc()
+            try:
+                app.logger.exception(
+                    "OBJECT_PLOTS build EXCEPTION profile=%s object=%s "
+                    "group=%s plot=%s err=%s",
+                    profile_id, objname, plot_group, name, _exc,
+                )
+            except Exception:
+                pass
+            payload = {
+                "has_plot": False,
+                "message": (
+                    f"Plot build failed: {type(_exc).__name__}: {_exc}"
+                ),
+                "error": str(_exc),
+                "traceback": _tb_str,
+            }
             ok = False
         dt_ms = (time.perf_counter() - t0) * 1000.0
         timings_ms[name] = round(dt_ms, 2)
@@ -1594,6 +1694,13 @@ def api_object_page(app):
     instrument = profile["instrument"]
     accessible_run_ids = app._get_user_accessible_run_ids(user_info, instrument)
 
+    # ---- TTL cache lookup -------------------------------------
+    rid_tag = app._rid_cache_tag(accessible_run_ids)
+    cache_key = (profile_id, objname.lower(), rid_tag)
+    cached = _object_page_cache_get(cache_key)
+    if cached is not None:
+        return jsonify(**cached)
+
     tasks_dir = base_dir / "tasks" / instrument
     profile_dir = tasks_dir / profile_id
     object_table_path = profile_dir / "object_table.json"
@@ -1753,7 +1860,7 @@ def api_object_page(app):
             "apero_name": objname,
         }
 
-    return jsonify(
+    response_payload = dict(
         success=True,
         object_name=obj_row.get("OBJNAME", objname),
         profile_id=profile_id,
@@ -1761,6 +1868,8 @@ def api_object_page(app):
         sections=sections,
         labels=labels,
     )
+    _object_page_cache_set(cache_key, response_payload)
+    return jsonify(**response_payload)
 
 
 def api_obs_table(app):

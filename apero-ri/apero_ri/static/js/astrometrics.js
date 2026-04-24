@@ -607,6 +607,8 @@
     var rtTargetName = document.getElementById('rt-target-name');
     var rtSections = document.getElementById(
         'rt-target-info-sections');
+    var rtVerifyBanner = document.getElementById('rt-verify-banner');
+    var rtVerifyBtn = document.getElementById('rt-target-verify');
 
     function _showLoading(on) {
         if (!rtLoading) return;
@@ -628,6 +630,102 @@
         if (rtPickerList) rtPickerList.innerHTML = '';
         if (rtTargetInfo) rtTargetInfo.style.display = 'none';
         if (rtSections) rtSections.innerHTML = '';
+        if (rtVerifyBanner) rtVerifyBanner.style.display = 'none';
+        if (rtVerifyBtn) {
+            rtVerifyBtn.hidden = true;
+            rtVerifyBtn.disabled = false;
+        }
+    }
+
+    function _hasAnyMonitorPerm(perms) {
+        if (!Array.isArray(perms)) return false;
+        if (perms.indexOf('manage.astrometrics') !== -1) return true;
+        var prefixes = [
+            'monitor.', 'view.monitor_portal.', 'view.monitor.'
+        ];
+        for (var i = 0; i < perms.length; i++) {
+            var p = String(perms[i] || '').toLowerCase();
+            if (p === 'monitor') return true;
+            for (var k = 0; k < prefixes.length; k++) {
+                if (p.indexOf(prefixes[k]) === 0) return true;
+            }
+        }
+        return false;
+    }
+
+    function _wireVerifyButton(aperoName) {
+        if (!rtVerifyBtn) return;
+        // replace handler each time so we always target the
+        // currently-displayed entry
+        var fresh = rtVerifyBtn.cloneNode(true);
+        rtVerifyBtn.parentNode.replaceChild(fresh, rtVerifyBtn);
+        rtVerifyBtn = fresh;
+        rtVerifyBtn.addEventListener('click', function () {
+            var msg = ('You must have checked all the parameters '
+                + 'and see that they look suitable.\n\nMark '
+                + aperoName + ' as VERIFIED?');
+            if (!window.confirm(msg)) return;
+            rtVerifyBtn.disabled = true;
+            var orig = rtVerifyBtn.innerHTML;
+            rtVerifyBtn.innerHTML = '<i class="fa-solid fa-spinner '
+                + 'fa-spin"></i> Verifying...';
+            fetch('/api/astrometrics/verify', {
+                method: 'POST',
+                credentials: 'same-origin',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    apero_name: aperoName,
+                    instrument: ''
+                })
+            }).then(function (r) {
+                return r.json().then(function (j) {
+                    return { ok: r.ok, json: j };
+                });
+            }).then(function (res) {
+                if (!res.ok || !res.json || !res.json.success) {
+                    var err = (res.json && res.json.error)
+                        || 'Verify failed';
+                    window.alert('Verify failed: ' + err);
+                    rtVerifyBtn.disabled = false;
+                    rtVerifyBtn.innerHTML = orig;
+                    return;
+                }
+                if (rtVerifyBanner) {
+                    rtVerifyBanner.style.display = 'none';
+                }
+                rtVerifyBtn.hidden = true;
+            }).catch(function (err) {
+                window.alert('Verify failed: ' + err);
+                rtVerifyBtn.disabled = false;
+                rtVerifyBtn.innerHTML = orig;
+            });
+        });
+    }
+
+    function _refreshVerifyBanner(aperoName) {
+        if (!aperoName) return;
+        if (rtVerifyBanner) rtVerifyBanner.style.display = 'none';
+        if (rtVerifyBtn) rtVerifyBtn.hidden = true;
+        var url = '/api/astrometrics/status?name='
+            + encodeURIComponent(aperoName);
+        fetch(url, { credentials: 'same-origin' })
+            .then(function (r) { return r.json(); })
+            .catch(function () { return null; })
+            .then(function (data) {
+                if (!data || !data.success) return;
+                var status = String(data.status || '').toLowerCase();
+                if (status !== 'pending') return;
+                if (rtVerifyBanner) {
+                    rtVerifyBanner.style.display = '';
+                }
+                var perms = (window.AperoRI
+                    && window.AperoRI.userPerms) || [];
+                if (_hasAnyMonitorPerm(perms) && rtVerifyBtn) {
+                    rtVerifyBtn.hidden = false;
+                    _wireVerifyButton(
+                        data.apero_name || aperoName);
+                }
+            });
     }
 
     /* "Resolve online" buttons stay hidden until a local Resolve
@@ -681,6 +779,54 @@
                     && window.AperoRI.userPerms) || []
             });
         }
+        _refreshVerifyBanner(apero_name);
+    }
+
+    function _showRejectionBanner(data) {
+        // If the resolve-by-name response indicates the entry is
+        // currently on the rejection list, prepend a red banner to
+        // the resolved target panel so the monitor knows this name
+        // will be ignored by the data portal and observations will
+        // fall back to FITS header values.
+        if (!rtSections) return;
+        if (!data || (data.status || '').toLowerCase() !== 'rejected'
+        ) {
+            return;
+        }
+        var notes = '';
+        var aliases = [];
+        if (data.raw && typeof data.raw === 'object') {
+            notes = data.raw.NOTES || '';
+            aliases = data.raw.ALIASES || [];
+            if (typeof aliases === 'string') aliases = [aliases];
+        }
+        var banner = document.createElement('div');
+        banner.className = 'ari-banner ari-banner--danger';
+        var html = '<i class="fa-solid fa-ban"></i> '
+            + '<strong>This name is on the rejection list.</strong> '
+            + 'Observations using this object name (or any alias) '
+            + 'are excluded from the data portal and will fall back '
+            + 'to FITS header values.';
+        if (notes) {
+            html += '<div class="ari-banner__detail">'
+                + '<strong>Notes:</strong> '
+                + String(notes).replace(/[<>&]/g, function (c) {
+                    return ({'<': '&lt;', '>': '&gt;',
+                             '&': '&amp;'})[c];
+                }) + '</div>';
+        }
+        if (aliases && aliases.length) {
+            html += '<div class="ari-banner__detail">'
+                + '<strong>Also rejected:</strong> '
+                + aliases.map(function (a) {
+                    return String(a).replace(/[<>&]/g, function (c) {
+                        return ({'<': '&lt;', '>': '&gt;',
+                                 '&': '&amp;'})[c];
+                    });
+                }).join(', ') + '</div>';
+        }
+        banner.innerHTML = html;
+        rtSections.insertBefore(banner, rtSections.firstChild);
     }
 
     function _showPicker(matches) {
@@ -749,6 +895,7 @@
                     return;
                 }
                 _showTarget(data.apero_name, data.payload);
+                _showRejectionBanner(data);
             })
             .catch(function (err) {
                 _showLoading(false);
@@ -1028,4 +1175,464 @@
             }
         });
     }
+}());
+
+
+/* ============================================================== */
+/* Astrometric database tab                                        */
+/* ============================================================== */
+(function () {
+    'use strict';
+    var loaded = false;
+    var dt = null;
+
+    function _esc(s) {
+        return String(s == null ? '' : s)
+            .replace(/&/g, '&amp;').replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
+
+    function _fmt_number(v, digits) {
+        if (v === null || v === undefined || v === '') return '';
+        var n = Number(v);
+        if (!isFinite(n)) return String(v);
+        return n.toFixed(digits);
+    }
+
+    function _open_resolve_target(aperoName) {
+        // Switch to the Resolve-target tab, then to its "by name"
+        // sub-tab, fill the name input and trigger Resolve.
+        var tab = document.querySelector(
+            '.ari-htab[data-htab="resolve-target"]');
+        if (tab) tab.click();
+        var subTab = document.querySelector(
+            '#astro-tab-resolve-target '
+            + '.ot-find-tab[aria-controls="rt-tab-name"]');
+        if (subTab) subTab.click();
+        var input = document.getElementById('rt-name-query');
+        if (input) {
+            input.value = aperoName;
+        }
+        var btn = document.getElementById('rt-resolve-name');
+        if (btn) {
+            // Defer click to allow tab CSS transition to apply
+            setTimeout(function () { btn.click(); }, 30);
+        }
+    }
+
+    function _build_columns() {
+        return [
+            {
+                key: 'APERO_NAME',
+                label: 'APERO_NAME',
+                filter: 'text',
+                render: function (val) {
+                    if (!val) return '';
+                    var a = document.createElement('a');
+                    a.href = '#';
+                    a.className = 'ari-link';
+                    a.textContent = val;
+                    a.addEventListener('click', function (ev) {
+                        ev.preventDefault();
+                        _open_resolve_target(val);
+                    });
+                    return a;
+                }
+            },
+            { key: 'APERO_CLASS', label: 'APERO_CLASS' },
+            {
+                key: 'RA', label: 'RA', type: 'number',
+                render: function (v) { return _fmt_number(v, 5); }
+            },
+            {
+                key: 'DEC', label: 'Dec', type: 'number',
+                render: function (v) { return _fmt_number(v, 5); }
+            },
+            {
+                key: 'TEFF', label: 'Teff', type: 'number',
+                render: function (v) { return _fmt_number(v, 0); }
+            },
+            { key: 'SPT', label: 'Spectral Type' },
+            {
+                key: 'STATUS', label: 'Status',
+                render: function (v) {
+                    var s = String(v || '').toLowerCase();
+                    if (!s) return '';
+                    return '<span class="ari-dt__status '
+                        + 'ari-dt__status--' + _esc(s) + '">'
+                        + _esc(s) + '</span>';
+                }
+            },
+            { key: 'KEYWORDS', label: 'Keywords' },
+            { key: 'NOTES', label: 'Notes' }
+        ];
+    }
+
+    function _load() {
+        var tableEl = document.getElementById('adb-table');
+        var statusEl = document.getElementById('adb-status');
+        var countEl = document.getElementById('adb-count');
+        if (!tableEl) return;
+        if (statusEl) {
+            statusEl.innerHTML = '<i class="fa-solid fa-spinner '
+                + 'fa-spin"></i> Loading astrometric database...';
+        }
+        fetch('/api/astrometrics/list-all',
+              { credentials: 'same-origin' })
+            .then(function (r) { return r.json(); })
+            .then(function (data) {
+                if (!data || !data.success) {
+                    if (statusEl) {
+                        statusEl.textContent = 'Failed to load: '
+                            + ((data && data.error) || 'unknown');
+                    }
+                    return;
+                }
+                if (statusEl) statusEl.textContent = '';
+                if (!window.AriDataTable) {
+                    if (statusEl) {
+                        statusEl.textContent = 'AriDataTable not '
+                            + 'loaded (script order issue).';
+                    }
+                    return;
+                }
+                dt = window.AriDataTable.create({
+                    table: tableEl,
+                    columns: _build_columns(),
+                    rows: data.rows || [],
+                    dropdownThreshold: 10,
+                    emptyMsg: 'No astrometric entries match.',
+                    onRender: function (rendered, all) {
+                        if (countEl) {
+                            countEl.textContent = rendered.length
+                                + ' / ' + all.length + ' entries';
+                        }
+                    }
+                });
+            })
+            .catch(function (err) {
+                if (statusEl) {
+                    statusEl.textContent = 'Failed to load: ' + err;
+                }
+            });
+    }
+
+    var dbTab = document.querySelector(
+        '.ari-htab[data-htab="astrom-db"]');
+    if (dbTab) {
+        dbTab.addEventListener('click', function () {
+            if (!loaded) {
+                loaded = true;
+                _load();
+            }
+        });
+    }
+}());
+
+
+// ===========================================================
+// Rejected object names tab (monitor-gated; renders cards +
+// modal "add rejection" form posting to /api/astrometrics/add-
+// rejected). Tab is only present in DOM when the server-side
+// page-view helper sets `astrometrics_can_manage_rejects=true`.
+// ===========================================================
+(function () {
+    'use strict';
+    var rejTab = document.querySelector(
+        '.ari-htab[data-htab="rejected"]');
+    if (!rejTab) return;
+    var loaded = false;
+
+    function _esc(s) {
+        return String(s == null ? '' : s).replace(
+            /[<>&"]/g, function (c) {
+                return ({'<': '&lt;', '>': '&gt;',
+                         '&': '&amp;',
+                         '"': '&quot;'})[c];
+            });
+    }
+
+    function _renderCards(rows) {
+        var host = document.getElementById('rej-cards');
+        var cnt = document.getElementById('rej-count');
+        if (cnt) cnt.textContent = rows.length + ' rejected';
+        if (!host) return;
+        host.innerHTML = '';
+
+        // Always-first "Add" card
+        var addCard = document.createElement('div');
+        addCard.className = 'rej-card rej-card--add';
+        addCard.innerHTML = '<div class="rej-card__add-inner">'
+            + '<i class="fa-solid fa-plus"></i>'
+            + '<span>Add a new rejected name</span>'
+            + '</div>';
+        addCard.addEventListener('click', _openAddOverlay);
+        host.appendChild(addCard);
+
+        rows.forEach(function (row) {
+            var card = document.createElement('div');
+            card.className = 'rej-card';
+            var aliases = (row.ALIASES || []).map(_esc).join(', ');
+            var html = '<header class="rej-card__head">'
+                + '<i class="fa-solid fa-ban"></i>'
+                + '<span class="rej-card__name">'
+                + _esc(row.APERO_NAME) + '</span>'
+                + '</header>';
+            if (aliases) {
+                html += '<div class="rej-card__field">'
+                    + '<span class="rej-card__label">Aliases:</span>'
+                    + ' ' + aliases + '</div>';
+            }
+            if (row.NOTES) {
+                html += '<div class="rej-card__field">'
+                    + '<span class="rej-card__label">Notes:</span>'
+                    + ' ' + _esc(row.NOTES) + '</div>';
+            }
+            html += '<footer class="rej-card__meta">'
+                + 'added by <strong>' + _esc(row.FIRST_AUTHOR)
+                + '</strong>';
+            if (row.FIRST_UPDATED) {
+                html += ' on ' + _esc(row.FIRST_UPDATED);
+            }
+            html += '</footer>';
+            card.innerHTML = html;
+            host.appendChild(card);
+        });
+    }
+
+    function _load() {
+        var statusEl = document.getElementById('rej-status');
+        if (statusEl) {
+            statusEl.innerHTML = '<i class="fa-solid fa-spinner '
+                + 'fa-spin"></i> Loading rejected names...';
+        }
+        fetch('/api/astrometrics/list-rejected',
+              { credentials: 'same-origin' })
+            .then(function (r) { return r.json(); })
+            .then(function (data) {
+                if (!data || !data.success) {
+                    if (statusEl) {
+                        statusEl.textContent = 'Failed to load: '
+                            + ((data && data.error) || 'unknown');
+                    }
+                    return;
+                }
+                if (statusEl) statusEl.textContent = '';
+                _renderCards(data.rows || []);
+            })
+            .catch(function (err) {
+                if (statusEl) {
+                    statusEl.textContent = 'Failed to load: ' + err;
+                }
+            });
+    }
+
+    function _openAddOverlay() {
+        var ov = document.getElementById('rej-add-overlay');
+        if (!ov) return;
+        ov.hidden = false;
+        var nameEl = document.getElementById('rej-add-name');
+        if (nameEl) {
+            nameEl.value = '';
+            nameEl.focus();
+        }
+        var alEl = document.getElementById('rej-add-aliases');
+        if (alEl) alEl.value = '';
+        var ntEl = document.getElementById('rej-add-notes');
+        if (ntEl) ntEl.value = '';
+        var st = document.getElementById('rej-add-status');
+        if (st) st.textContent = '';
+    }
+    function _closeAddOverlay() {
+        var ov = document.getElementById('rej-add-overlay');
+        if (ov) ov.hidden = true;
+    }
+
+    function _submitAdd() {
+        var nameEl = document.getElementById('rej-add-name');
+        var alEl = document.getElementById('rej-add-aliases');
+        var ntEl = document.getElementById('rej-add-notes');
+        var st = document.getElementById('rej-add-status');
+        var name = nameEl ? nameEl.value.trim() : '';
+        if (!name) {
+            if (st) st.textContent = 'Object name is required.';
+            return;
+        }
+        var aliases = (alEl ? alEl.value : '')
+            .split(/\r?\n/)
+            .map(function (s) { return s.trim(); })
+            .filter(function (s) { return s.length > 0; });
+        var notes = ntEl ? ntEl.value.trim() : '';
+        if (st) {
+            st.innerHTML = '<i class="fa-solid fa-spinner '
+                + 'fa-spin"></i> Saving...';
+        }
+        fetch('/api/astrometrics/add-rejected', {
+            method: 'POST',
+            credentials: 'same-origin',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                apero_name: name,
+                aliases: aliases,
+                notes: notes
+            })
+        }).then(function (r) {
+            return r.json().then(function (j) {
+                return { ok: r.ok, body: j };
+            });
+        }).then(function (res) {
+            if (!res.body || !res.body.success) {
+                if (st) {
+                    st.textContent = 'Failed: '
+                        + ((res.body && res.body.error)
+                           || ('HTTP error'));
+                }
+                return;
+            }
+            _closeAddOverlay();
+            _load();
+        }).catch(function (err) {
+            if (st) st.textContent = 'Failed: ' + err;
+        });
+    }
+
+    rejTab.addEventListener('click', function () {
+        if (!loaded) {
+            loaded = true;
+            _load();
+        }
+    });
+
+    // overlay close handlers (delegated so they survive any later
+    // re-render of the panel body)
+    document.addEventListener('click', function (ev) {
+        var t = ev.target;
+        if (!t) return;
+        if (t.closest && t.closest('[data-rej-overlay-close]')) {
+            _closeAddOverlay();
+        }
+    });
+    var saveBtn = document.getElementById('rej-add-save');
+    if (saveBtn) saveBtn.addEventListener('click', _submitAdd);
+}());
+
+
+// ===========================================================
+// Add manually tab (monitor-gated; posts to
+// /api/astrometrics/add-manual). Tab is only present in DOM
+// when the server-side page-view helper sets
+// `astrometrics_can_manage_rejects=true`.
+// ===========================================================
+(function () {
+    'use strict';
+    var amTab = document.querySelector(
+        '.ari-htab[data-htab="add-manually"]');
+    if (!amTab) return;
+
+    function _val(id) {
+        var el = document.getElementById(id);
+        return el ? String(el.value || '').trim() : '';
+    }
+    function _checked(id) {
+        var el = document.getElementById(id);
+        return !!(el && el.checked);
+    }
+    function _setStatus(id, html) {
+        var el = document.getElementById(id);
+        if (el) el.innerHTML = html;
+    }
+    function _aliasesFromTextarea(id) {
+        return _val(id).split(/\r?\n/)
+            .map(function (s) { return s.trim(); })
+            .filter(function (s) { return s.length > 0; });
+    }
+
+    // ---- Add-manual-target form ----
+    var _MANUAL_NUMERIC = [
+        ['am-man-ra', 'ra'],
+        ['am-man-dec', 'dec'],
+        ['am-man-epoch', 'epoch'],
+        ['am-man-pmra', 'pmra'],
+        ['am-man-pmde', 'pmde'],
+        ['am-man-plx', 'plx'],
+        ['am-man-rv', 'rv'],
+        ['am-man-teff', 'teff']
+    ];
+
+    function _submitManual() {
+        var name = _val('am-man-name');
+        if (!name) {
+            _setStatus('am-man-status',
+                'APERO_NAME is required.');
+            return;
+        }
+        var payload = {
+            apero_name: name,
+            apero_class: _val('am-man-class') || 'STAR',
+            original_name: _val('am-man-orig'),
+            simbad_name: _val('am-man-simbad'),
+            spt: _val('am-man-spt'),
+            gaia_source_id: _val('am-man-gaia'),
+            aliases: _aliasesFromTextarea('am-man-aliases'),
+            notes: _val('am-man-notes'),
+            no_pm: _checked('am-man-nopm')
+        };
+        // numeric fields: only include keys that the user actually
+        // typed something into (so the server can leave them
+        // unset rather than store explicit nulls)
+        for (var i = 0; i < _MANUAL_NUMERIC.length; i++) {
+            var pair = _MANUAL_NUMERIC[i];
+            var raw = _val(pair[0]);
+            if (raw !== '') payload[pair[1]] = raw;
+        }
+        // strip empty optional strings to keep the on-disk yaml
+        // clean
+        ['original_name', 'simbad_name', 'spt',
+         'gaia_source_id', 'notes'].forEach(function (k) {
+            if (!payload[k]) delete payload[k];
+        });
+        _setStatus('am-man-status',
+            '<i class="fa-solid fa-spinner fa-spin"></i> '
+            + 'Saving...');
+        fetch('/api/astrometrics/add-manual', {
+            method: 'POST',
+            credentials: 'same-origin',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        }).then(function (r) {
+            return r.json().then(function (j) {
+                return { ok: r.ok, body: j };
+            });
+        }).then(function (res) {
+            if (!res.body || !res.body.success) {
+                _setStatus('am-man-status',
+                    'Failed: ' + ((res.body && res.body.error)
+                                  || 'HTTP error'));
+                return;
+            }
+            _setStatus('am-man-status',
+                '<i class="fa-solid fa-check"></i> '
+                + 'Created pending entry for "'
+                + name + '".');
+            // reset all manual-form inputs
+            ['am-man-name', 'am-man-orig', 'am-man-simbad',
+             'am-man-ra', 'am-man-dec', 'am-man-epoch',
+             'am-man-pmra', 'am-man-pmde', 'am-man-plx',
+             'am-man-rv', 'am-man-teff', 'am-man-spt',
+             'am-man-gaia', 'am-man-aliases', 'am-man-notes']
+                .forEach(function (id) {
+                    var el = document.getElementById(id);
+                    if (el) el.value = '';
+                });
+            var nopm = document.getElementById('am-man-nopm');
+            if (nopm) nopm.checked = false;
+            var cls = document.getElementById('am-man-class');
+            if (cls) cls.value = 'STAR';
+        }).catch(function (err) {
+            _setStatus('am-man-status', 'Failed: ' + err);
+        });
+    }
+
+    var manBtn = document.getElementById('am-man-save');
+    if (manBtn) manBtn.addEventListener('click', _submitManual);
 }());

@@ -27,6 +27,7 @@ from __future__ import annotations
 
 import threading
 import time
+import warnings
 from collections import OrderedDict
 from datetime import datetime, timezone
 from os import path as op
@@ -42,6 +43,8 @@ from apero_ri.plots.plot_general import (
     resolve_file_path as _resolve_file_path,
     sci_header_label,
 )
+from apero_ri.plots.bokeh_theme import fg_glyph_color
+from astropy.time import Time
 from bokeh.models import (
     ColumnDataSource,
     CrosshairTool,
@@ -66,6 +69,12 @@ _CCF_FILE_CACHE: OrderedDict[str, Tuple[float, np.ndarray, np.ndarray]] = (
     OrderedDict()
 )
 _CCF_FILE_CACHE_LOCK = threading.Lock()
+
+# Stash the most recent failed _load_ccf_data summary so callers
+# (which only see a None return on failure) can surface diagnostic
+# counters in the user-facing error message. Updated on every
+# failed call; not request-scoped — best-effort diagnostics only.
+_LAST_CCF_FAILURE_SUMMARY: Optional[Dict[str, Any]] = None
 
 
 def _decimate_ccf_grid(
@@ -284,24 +293,51 @@ def _load_ccf_data(
     dv_ms_list: List[float] = []
     sdv_ms_list: List[float] = []
 
+    # Per-failure-mode counters surfaced in summary so the front-end
+    # can diagnose "No CCF profile data could be loaded" without
+    # needing server-side log access.
+    fail_counts = {
+        "no_path": 0,
+        "no_htable_dv": 0,
+        "no_datetime": 0,
+        "fits_read_failed": 0,
+        "exception": 0,
+    }
+    last_failure_path: Optional[str] = None
+    last_failure_reason: Optional[str] = None
+
     for mjd_val, row in selected_rows:
         path = _resolve_file_path(row, paths)
         if path is None:
+            fail_counts["no_path"] += 1
+            last_failure_reason = (
+                "no file path could be resolved for row")
             continue
         ident = str(row.get("IDENTIFIER", "") or "").strip()
         ht_row = ht_by_id.get(ident, {})
         raw_dv = ht_row.get("CCF_DV")
         raw_sdv = ht_row.get("CCF_SDV")
         if raw_dv is None or raw_sdv is None:
+            fail_counts["no_htable_dv"] += 1
+            last_failure_path = str(path)
+            last_failure_reason = (
+                "missing CCF_DV / CCF_SDV in htable")
             continue
         try:
             dv_ms_val = float(raw_dv) * 1000.0  # km/s → m/s
             sdv_ms_val = float(raw_sdv)  # already m/s
             dt = mjd_to_datetime(float(mjd_val))
             if dt is None:
+                fail_counts["no_datetime"] += 1
+                last_failure_path = str(path)
+                last_failure_reason = "mjd_to_datetime returned None"
                 continue
             read_out = _read_ccf_row_cached(str(path))
             if read_out is None:
+                fail_counts["fits_read_failed"] += 1
+                last_failure_path = str(path)
+                last_failure_reason = (
+                    "_read_ccf_row_cached returned None")
                 continue
             rv_file, ccf_row = read_out
             if rv_vec is None:
@@ -313,12 +349,28 @@ def _load_ccf_data(
             datetimes_list.append(dt)
             dv_ms_list.append(dv_ms_val)
             sdv_ms_list.append(sdv_ms_val)
-        except Exception:
+        except Exception as _ccf_exc:  # noqa: BLE001
+            fail_counts["exception"] += 1
+            last_failure_path = str(path)
+            last_failure_reason = (
+                "exception while loading: "
+                + type(_ccf_exc).__name__ + ': '
+                + str(_ccf_exc)[:160])
             continue
 
     summary["loaded_total"] = int(len(all_ccf_rows))
+    summary["fail_counts"] = fail_counts
+    summary["last_failure_path"] = last_failure_path
+    summary["last_failure_reason"] = last_failure_reason
 
     if rv_vec is None or len(all_ccf_rows) == 0:
+        # Stash the summary so the caller (which only gets None back)
+        # can still surface the diagnostic counters in its error
+        # response. Indexed by id() of the input list to avoid
+        # cross-talk between concurrent requests for different
+        # objects (good-enough; not 100% race-proof).
+        global _LAST_CCF_FAILURE_SUMMARY
+        _LAST_CCF_FAILURE_SUMMARY = summary
         return None
 
     all_ccf = np.array(all_ccf_rows)
@@ -349,40 +401,84 @@ def _fit_ccf_gaussian(
     :return: tuple (has_fit, fit_array, xlim)
     :rtype: tuple[bool, numpy.ndarray, list[float]]
     """
+    finite_rv = np.isfinite(rv_vec)
+    if np.any(finite_rv):
+        default_xlim = [
+            float(np.nanmin(rv_vec[finite_rv])),
+            float(np.nanmax(rv_vec[finite_rv])),
+        ]
+    else:
+        default_xlim = [-1.0, 1.0]
+
     try:
         from scipy.optimize import curve_fit
     except ImportError:
-        return (
-            False,
-            np.full(len(rv_vec), np.nan),
-            [float(rv_vec.min()), float(rv_vec.max())],
-        )
+        return False, np.full(len(rv_vec), np.nan), default_xlim
 
-    amp0 = 1.0 - float(med_ccf[np.argmin(med_ccf)])
-    pos0 = float(rv_vec[np.argmin(med_ccf)])
-    guess = [-amp0, pos0, 4.0, 1.0]
+    finite = np.isfinite(rv_vec) & np.isfinite(med_ccf)
+    if np.count_nonzero(finite) < 7:
+        return False, np.full(len(rv_vec), np.nan), default_xlim
+
+    x_fit = np.array(rv_vec[finite], dtype=float)
+    y_fit = np.array(med_ccf[finite], dtype=float)
+    order = np.argsort(x_fit)
+    x_fit = x_fit[order]
+    y_fit = y_fit[order]
+
+    idx_min = int(np.argmin(y_fit))
+    pos0 = float(x_fit[idx_min])
+    dc0 = float(np.nanpercentile(y_fit, 90.0))
+    depth0 = max(dc0 - float(y_fit[idx_min]), 1e-4)
+    amp0 = -depth0
+
+    x_span = float(x_fit[-1] - x_fit[0])
+    sig0 = max(x_span / 25.0, 0.5)
+    half_win = max(8.0 * sig0, 5.0)
+    win = (x_fit >= pos0 - half_win) & (x_fit <= pos0 + half_win)
+    if np.count_nonzero(win) >= 7:
+        x_use = x_fit[win]
+        y_use = y_fit[win]
+    else:
+        x_use = x_fit
+        y_use = y_fit
+
+    x_lo = float(x_use[0])
+    x_hi = float(x_use[-1])
+    y_lo = float(np.nanmin(y_use))
+    y_hi = float(np.nanmax(y_use))
+    y_span = max(y_hi - y_lo, 1e-4)
+    amp_bound = max(5.0 * depth0, y_span)
+    sig_low = max((x_hi - x_lo) / 1000.0, 1e-3)
+    sig_high = max((x_hi - x_lo), sig_low * 10.0)
+    bounds = (
+        [-amp_bound, x_lo, sig_low, y_lo - 0.25 * y_span],
+        [-1e-9, x_hi, sig_high, y_hi + 0.25 * y_span],
+    )
+    guess = [amp0, pos0, sig0, dc0]
+
     try:
         with warnings.catch_warnings():
-            warnings.simplefilter("ignore")
+            warnings.simplefilter('ignore')
             coeffs, _ = curve_fit(
                 _gauss_fn,
-                rv_vec,
-                med_ccf,
+                x_use,
+                y_use,
                 p0=guess,
-                maxfev=5000,
+                bounds=bounds,
+                maxfev=20000,
             )
         fit = _gauss_fn(rv_vec, *coeffs)
-        xlim: List[float] = [
-            coeffs[1] - abs(coeffs[2]) * 20,
-            coeffs[1] + abs(coeffs[2]) * 20,
+        sig = max(abs(float(coeffs[2])), sig_low)
+        c0 = float(coeffs[1])
+        xlim = [
+            max(default_xlim[0], c0 - 20.0 * sig),
+            min(default_xlim[1], c0 + 20.0 * sig),
         ]
+        if xlim[1] <= xlim[0]:
+            xlim = default_xlim
         return True, fit, xlim
     except Exception:
-        return (
-            False,
-            np.full(len(rv_vec), np.nan),
-            [float(rv_vec.min()), float(rv_vec.max())],
-        )
+        return False, np.full(len(rv_vec), np.nan), default_xlim
 
 
 def _make_ccf_rv_figure(
@@ -527,6 +623,8 @@ def _make_ccf_profile_figure(
     from bokeh.plotting import figure as bk_figure
 
     limmask = (rv_vec >= xlim[0]) & (rv_vec <= xlim[1])
+    if np.count_nonzero(limmask) < 3:
+        limmask = np.isfinite(rv_vec)
     rv_m = rv_vec[limmask]
 
     fig = bk_figure(
@@ -614,7 +712,7 @@ def _make_ccf_profile_figure(
     fig.line(
         rv_m,
         med_ccf[limmask],
-        line_color="black",
+        line_color=fg_glyph_color(),
         line_width=1.5,
         legend_label="Median CCF",
     )
@@ -698,97 +796,115 @@ def _make_ccf_residuals_figure(
     # -------------------------------------------------------------------------
     if has_fit:
         f_m = fit[limmask]
-        src_2 = ColumnDataSource(
-            dict(
-                x=rv_m,
-                upper=y2_2sig[limmask] - f_m,
-                lower=y1_2sig[limmask] - f_m,
-            )
-        )
-        src_1 = ColumnDataSource(
-            dict(
-                x=rv_m,
-                upper=y2_1sig[limmask] - f_m,
-                lower=y1_1sig[limmask] - f_m,
-            )
-        )
-        fig.add_layout(
-            Band(
-                base="x",
-                upper="upper",
-                lower="lower",
-                source=src_2,
-                fill_color="orange",
-                fill_alpha=0.4,
-            )
-        )
-        fig.add_layout(
-            Band(
-                base="x",
-                upper="upper",
-                lower="lower",
-                source=src_1,
-                fill_color="red",
-                fill_alpha=0.4,
-            )
-        )
-        # legend proxy quads for bands (on hidden extra ranges)
-        fig.extra_x_ranges["_proxy"] = Range1d(start=0, end=1)
-        fig.extra_y_ranges["_proxy"] = Range1d(start=0, end=1)
-        fig.quad(
-            left=[5],
-            right=[6],
-            top=[6],
-            bottom=[5],
-            fill_color="orange",
-            fill_alpha=0.4,
-            line_color=None,
-            legend_label="2σ band",
-            x_range_name="_proxy",
-            y_range_name="_proxy",
-        )
-        fig.quad(
-            left=[5],
-            right=[6],
-            top=[6],
-            bottom=[5],
-            fill_color="red",
-            fill_alpha=0.4,
-            line_color=None,
-            legend_label="1σ band",
-            x_range_name="_proxy",
-            y_range_name="_proxy",
-        )
-        fig.line(
-            rv_m,
-            med_ccf[limmask] - f_m,
-            line_color="black",
-            line_width=1.2,
-            legend_label="Median residual",
-        )
-        # initial zoom to 2σ residual envelope with 10% padding
-        res_lo = float(np.nanmin(y1_2sig[limmask] - f_m))
-        res_hi = float(np.nanmax(y2_2sig[limmask] - f_m))
-        res_pad = 0.1 * (res_hi - res_lo) if res_hi > res_lo else 0.01
-        fig.y_range = Range1d(start=res_lo - res_pad, end=res_hi + res_pad)
-        x_pad = (
-            0.02 * (float(rv_m[-1]) - float(rv_m[0])) if len(rv_m) > 1 else 1.0
-        )
-        fig.x_range = Range1d(
-            start=float(rv_m[0]) - x_pad, end=float(rv_m[-1]) + x_pad
-        )
-        fig.legend.location = "top_right"
+        residual_label = 'Median residual'
     else:
-        fig.text(
-            x=[0.5],
-            y=[0.5],
-            text=["No Gaussian fit available"],
-            text_font_size="12pt",
-            text_color="gray",
-            text_align="center",
-            x_units="screen",
-            y_units="screen",
+        f_m = med_ccf[limmask]
+        residual_label = 'Residual vs median CCF'
+        from bokeh.models import Label as _BkLabel
+
+        fig.add_layout(
+            _BkLabel(
+                x=20,
+                y=20,
+                x_units='screen',
+                y_units='screen',
+                text='Gaussian fit unavailable: showing residuals vs median',
+                text_font_size='10pt',
+                text_color='gray',
+            )
         )
+
+    src_2 = ColumnDataSource(
+        dict(
+            x=rv_m,
+            upper=y2_2sig[limmask] - f_m,
+            lower=y1_2sig[limmask] - f_m,
+        )
+    )
+    src_1 = ColumnDataSource(
+        dict(
+            x=rv_m,
+            upper=y2_1sig[limmask] - f_m,
+            lower=y1_1sig[limmask] - f_m,
+        )
+    )
+    fig.add_layout(
+        Band(
+            base='x',
+            upper='upper',
+            lower='lower',
+            source=src_2,
+            fill_color='orange',
+            fill_alpha=0.4,
+        )
+    )
+    fig.add_layout(
+        Band(
+            base='x',
+            upper='upper',
+            lower='lower',
+            source=src_1,
+            fill_color='red',
+            fill_alpha=0.4,
+        )
+    )
+    # legend proxy quads for bands (on hidden extra ranges)
+    fig.extra_x_ranges['_proxy'] = Range1d(start=0, end=1)
+    fig.extra_y_ranges['_proxy'] = Range1d(start=0, end=1)
+    fig.quad(
+        left=[5],
+        right=[6],
+        top=[6],
+        bottom=[5],
+        fill_color='orange',
+        fill_alpha=0.4,
+        line_color=None,
+        legend_label='2σ band',
+        x_range_name='_proxy',
+        y_range_name='_proxy',
+    )
+    fig.quad(
+        left=[5],
+        right=[6],
+        top=[6],
+        bottom=[5],
+        fill_color='red',
+        fill_alpha=0.4,
+        line_color=None,
+        legend_label='1σ band',
+        x_range_name='_proxy',
+        y_range_name='_proxy',
+    )
+    fig.line(
+        rv_m,
+        med_ccf[limmask] - f_m,
+        line_color=fg_glyph_color(),
+        line_width=1.2,
+        legend_label=residual_label,
+    )
+    # initial zoom to 2σ residual envelope with 10% padding
+    with np.errstate(all='ignore'):
+        res_lo_a = np.nanmin(y1_2sig[limmask] - f_m)
+        res_hi_a = np.nanmax(y2_2sig[limmask] - f_m)
+    if (
+        not np.isfinite(res_lo_a)
+        or not np.isfinite(res_hi_a)
+        or res_hi_a <= res_lo_a
+    ):
+        res_lo, res_hi = -1.0, 1.0
+    else:
+        res_lo, res_hi = float(res_lo_a), float(res_hi_a)
+    res_pad = 0.1 * (res_hi - res_lo) if res_hi > res_lo else 0.01
+    fig.y_range = Range1d(start=res_lo - res_pad, end=res_hi + res_pad)
+    if len(rv_m) > 1 and np.isfinite(rv_m[0]) and np.isfinite(rv_m[-1]):
+        x_pad = 0.02 * (float(rv_m[-1]) - float(rv_m[0]))
+        fig.x_range = Range1d(
+            start=float(rv_m[0]) - x_pad,
+            end=float(rv_m[-1]) + x_pad,
+        )
+    else:
+        fig.x_range = Range1d(start=float(xlim[0]), end=float(xlim[1]))
+    fig.legend.location = 'top_right'
     fig.grid.grid_line_color = "lightgray"
     fig.grid.grid_line_dash = "dashed"
     return fig
@@ -915,7 +1031,7 @@ def _make_ccf_spread_figure(
     fig.line(
         rv_m,
         np.zeros(len(rv_m)),
-        line_color="black",
+        line_color=fg_glyph_color(),
         line_width=1.2,
         legend_label="Median (zero)",
     )
@@ -1218,25 +1334,66 @@ def _build_ccf_profile_layout(
     )
     load_ms = (time.perf_counter() - t_load0) * 1000.0
     if result is None:
-        return (
-            None,
-            "No CCF profile data could be loaded.",
-            {
-                "max_files": int(max(1, ccf_nobs)),
-                "sampling_mode": "all",
-                "selected_total": 0,
-                "loaded_total": 0,
-                "in_range_total": 0,
-                "ccf_mjd_start": ccf_mjd_start,
-                "ccf_mjd_end": ccf_mjd_end,
-                "timings_ms": {
-                    "load_data": round(load_ms, 2),
-                    "stats_fit": 0.0,
-                    "build_figures": 0.0,
-                    "total": round(load_ms, 2),
-                },
+        diag = _LAST_CCF_FAILURE_SUMMARY or {}
+        fc = diag.get("fail_counts") or {}
+        # Compose a user-actionable message
+        bits = []
+        if diag.get("total_rows", 0) == 0:
+            bits.append("no CCF rows in ftable")
+        elif diag.get("rows_with_mid_obs_time", 0) == 0:
+            bits.append("no rows had a parseable MID_OBS_TIME")
+        elif diag.get("in_range_total", 0) == 0:
+            bits.append("no rows fall within the selected MJD range")
+        elif fc.get("no_path", 0) > 0 and (
+                fc.get("no_path", 0) == diag.get("selected_total", -1)):
+            bits.append(
+                "every CCF file path failed to resolve (check "
+                "PATH_RED / PATH_OUT in the profile config)")
+        elif fc.get("no_htable_dv", 0) > 0:
+            bits.append(
+                "all selected rows are missing CCF_DV/CCF_SDV in "
+                "the htable")
+        elif fc.get("fits_read_failed", 0) > 0:
+            bits.append(
+                str(fc.get("fits_read_failed"))
+                + " CCF FITS file(s) failed to read")
+        elif fc.get("exception", 0) > 0:
+            bits.append(
+                str(fc.get("exception")) + " row(s) raised an "
+                "exception during load — last: "
+                + str(diag.get("last_failure_reason") or "?"))
+        msg = "No CCF profile data could be loaded."
+        if bits:
+            msg += " Reason: " + "; ".join(bits) + "."
+        full_summary = {
+            "max_files": int(max(1, ccf_nobs)),
+            "sampling_mode": "all",
+            "selected_total": 0,
+            "loaded_total": 0,
+            "in_range_total": 0,
+            "ccf_mjd_start": ccf_mjd_start,
+            "ccf_mjd_end": ccf_mjd_end,
+            "timings_ms": {
+                "load_data": round(load_ms, 2),
+                "stats_fit": 0.0,
+                "build_figures": 0.0,
+                "total": round(load_ms, 2),
             },
-        )
+        }
+        # Attach the diagnostic counters for the front-end to inspect
+        full_summary.update({
+            "diagnostic": {
+                "fail_counts": fc,
+                "last_failure_path": diag.get("last_failure_path"),
+                "last_failure_reason": diag.get("last_failure_reason"),
+                "total_rows": diag.get("total_rows"),
+                "rows_with_mid_obs_time": diag.get(
+                    "rows_with_mid_obs_time"),
+                "in_range_total": diag.get("in_range_total"),
+                "selected_total": diag.get("selected_total"),
+            },
+        })
+        return None, msg, full_summary
 
     rv_vec, all_ccf, _datetimes, _dv_ms, _sdv_ms, summary = result
     rv_used, ccf_used, rv_points_orig, rv_points_used = _decimate_ccf_grid(

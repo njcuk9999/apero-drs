@@ -733,7 +733,16 @@ def _build_tcorr_map(
     binary_cmap = ListedColormap(["orange", "purple"])
     gridspec_kw = {"width_ratios": [40, 1, 1, 1], "height_ratios": [1, 1]}
     fig = plt.figure(figsize=(12, 12))
-    fig.set_facecolor("white")
+    # Theme-aware face/edge colours so the matplotlib telluric map
+    # matches the page chrome on the dark theme (was hardcoded white).
+    from apero_ri.plots.bokeh_theme import (
+        get_request_theme, theme_palette,
+    )
+    _palette = theme_palette(get_request_theme())
+    _bg = _palette["bg"]
+    _fg = _palette["text"]
+    _grid = _palette["grid"]
+    fig.set_facecolor(_bg)
     gs = gridspec.GridSpec(2, 4, **gridspec_kw)
     main_1 = fig.add_subplot(gs[0, 0])
     main_2 = fig.add_subplot(gs[1, 0])
@@ -815,7 +824,19 @@ def _build_tcorr_map(
     fig.subplots_adjust(
         hspace=0.15, wspace=0.01, left=0.1, right=0.9, bottom=0.05, top=0.9
     )
-    fig.suptitle(f"Telluric Map [{objname}]")
+    fig.suptitle(f"Telluric Map [{objname}]", color=_fg)
+    # Theme each axes: face colour, tick/spine/label colour.
+    for _ax in (main_1, main_2, qcc_1, qcc_2, cb_1, cb_2):
+        try:
+            _ax.set_facecolor(_bg)
+            _ax.tick_params(colors=_fg, which="both")
+            for _sp in _ax.spines.values():
+                _sp.set_color(_grid)
+            _ax.xaxis.label.set_color(_fg)
+            _ax.yaxis.label.set_color(_fg)
+            _ax.title.set_color(_fg)
+        except Exception:  # noqa: BLE001
+            pass
     return _fig_to_base64(fig)
 
 
