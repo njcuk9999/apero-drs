@@ -736,6 +736,7 @@
                                 <span id="rt-target-name">--</span>
                             </h2>
                             <div class="ari-target-info__actions">
+                                {% if astrometrics_can_manage_rejects %}
                                 <button id="rt-target-verify"
                                         class="ari-btn ari-btn--sm ari-btn--primary"
                                         type="button"
@@ -747,11 +748,11 @@
                                 <button id="rt-target-upload"
                                         class="ari-btn ari-btn--sm ari-btn--secondary"
                                         type="button"
-                                        data-perm="manage.astrometrics"
                                         hidden>
                                     <i class="fa-solid fa-upload"></i>
                                     Upload yaml
                                 </button>
+                                {% endif %}
                             </div>
                         </header>
                         <div id="rt-verify-banner"

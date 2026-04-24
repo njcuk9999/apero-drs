@@ -179,3 +179,22 @@ Before declaring the change done:
 7. `Jinja2` parse passes on any new template.
 8. The new page is reachable from at least one card or sidebar
    entry — orphan pages are not allowed.
+
+## 7. ARI API integration rule
+
+When implementing or changing API calls for ARI pages/features,
+use and extend `apero-ri/apero_ri/ari_api/` helpers instead of
+making direct `requests` calls from page logic.
+
+**Hard rules:**
+
+- For ARI-internal API access, route calls through
+  `apero-ri/apero_ri/ari_api/` helper modules.
+- If an endpoint is not supported yet, add/extend helper
+  functions in `apero-ri/apero_ri/ari_api/` rather than embedding
+  ad-hoc `requests.get(...)` / `requests.post(...)` calls in page
+  controllers, templates, or front-end scripts.
+- Keep auth/session/header handling centralized in
+  `apero-ri/apero_ri/ari_api/` to avoid duplicated transport logic.
+- Refactors that touch API usage should migrate existing direct
+  `requests` usage to `apero-ri/apero_ri/ari_api/` when practical.

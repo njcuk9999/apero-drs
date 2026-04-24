@@ -609,6 +609,7 @@
         'rt-target-info-sections');
     var rtVerifyBanner = document.getElementById('rt-verify-banner');
     var rtVerifyBtn = document.getElementById('rt-target-verify');
+    var rtUploadBtn = document.getElementById('rt-target-upload');
 
     function _showLoading(on) {
         if (!rtLoading) return;
@@ -635,6 +636,10 @@
             rtVerifyBtn.hidden = true;
             rtVerifyBtn.disabled = false;
         }
+        if (rtUploadBtn) {
+            rtUploadBtn.hidden = true;
+            rtUploadBtn.disabled = false;
+        }
     }
 
     function _hasAnyMonitorPerm(perms) {
@@ -651,6 +656,51 @@
             }
         }
         return false;
+    }
+
+    function _wireUploadButton(aperoName, entry) {
+        if (!rtUploadBtn) return;
+        var fresh = rtUploadBtn.cloneNode(true);
+        rtUploadBtn.parentNode.replaceChild(fresh, rtUploadBtn);
+        rtUploadBtn = fresh;
+        rtUploadBtn.addEventListener('click', function () {
+            if (!window.confirm(
+                    'Upload this SIMBAD-resolved entry for "'
+                    + aperoName + '" to the APERO astrometric '
+                    + 'database as a pending entry?')) {
+                return;
+            }
+            rtUploadBtn.disabled = true;
+            var orig = rtUploadBtn.innerHTML;
+            rtUploadBtn.innerHTML = '<i class="fa-solid fa-spinner'
+                + ' fa-spin"></i> Uploading...';
+            fetch('/api/astrometrics/upload-yaml', {
+                method: 'POST',
+                credentials: 'same-origin',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ entry: entry })
+            }).then(function (r) {
+                return r.json().then(function (j) {
+                    return { ok: r.ok, json: j };
+                });
+            }).then(function (res) {
+                if (!res.ok || !res.json || !res.json.success) {
+                    var err = (res.json && res.json.error)
+                        || 'Upload failed';
+                    window.alert('Upload failed: ' + err);
+                    rtUploadBtn.disabled = false;
+                    rtUploadBtn.innerHTML = orig;
+                    return;
+                }
+                rtUploadBtn.hidden = true;
+                window.alert('Uploaded as pending entry "'
+                    + (res.json.apero_name || aperoName) + '".');
+            }).catch(function (err) {
+                window.alert('Upload failed: ' + err);
+                rtUploadBtn.disabled = false;
+                rtUploadBtn.innerHTML = orig;
+            });
+        });
     }
 
     function _wireVerifyButton(aperoName) {
@@ -767,7 +817,7 @@
             }
         });
     }
-    function _showTarget(apero_name, payload) {
+    function _showTarget(apero_name, payload, opts) {
         if (rtTargetName) {
             rtTargetName.textContent = apero_name || 'Unknown';
         }
@@ -778,6 +828,17 @@
                 userPerms: (window.AperoRI
                     && window.AperoRI.userPerms) || []
             });
+        }
+        // Show the upload button only for transient (online-resolved)
+        // entries — and only for monitors.
+        var entry = opts && opts.entry;
+        if (entry && rtUploadBtn) {
+            var perms = (window.AperoRI
+                && window.AperoRI.userPerms) || [];
+            if (_hasAnyMonitorPerm(perms)) {
+                rtUploadBtn.hidden = false;
+                _wireUploadButton(apero_name, entry);
+            }
         }
         _refreshVerifyBanner(apero_name);
     }
@@ -847,7 +908,8 @@
             btn.innerHTML = '<span><i class="fa-solid fa-star"></i>'
                 + ' ' + label + '</span>' + sep;
             btn.addEventListener('click', function () {
-                _showTarget(m.apero_name, m.payload);
+                _showTarget(m.apero_name, m.payload,
+                            m.entry ? { entry: m.entry } : null);
                 rtPicker.style.display = 'none';
             });
             li.appendChild(btn);
@@ -1048,7 +1110,8 @@
                     _showNotFoundRequest(name);
                     return;
                 }
-                _showTarget(data.apero_name, data.payload);
+                _showTarget(data.apero_name, data.payload,
+                            { entry: data.entry });
             })
             .catch(function (err) {
                 _showLoading(false);
@@ -1101,28 +1164,69 @@
     function _showNotFoundRequest(name) {
         if (!rtError) return;
         rtError.innerHTML = '';
+        var perms = (window.AperoRI
+            && window.AperoRI.userPerms) || [];
+        var isMonitor = _hasAnyMonitorPerm(perms);
+
         var span = document.createElement('span');
-        span.textContent = '"' + name + '" was not found '
-            + 'online. ';
-        var btn = document.createElement('button');
-        btn.type = 'button';
-        btn.className = 'ari-btn ari-btn--xs ari-btn--primary';
-        btn.innerHTML = '<i class="fa-solid fa-plus"></i>'
-            + ' Flag as new object';
-        btn.style.marginLeft = '0.5rem';
-        btn.addEventListener('click', function () {
-            _flagNewObject(name);
-        });
+        span.textContent = '"' + name + '" was not found online. ';
         rtError.appendChild(span);
-        rtError.appendChild(btn);
+
+        if (isMonitor) {
+            var link = document.createElement('a');
+            link.href = '#';
+            link.className = 'ari-link';
+            link.style.marginLeft = '0.5rem';
+            link.textContent = 'Open Add manually mode';
+            link.addEventListener('click', function (ev) {
+                ev.preventDefault();
+                _openAddManually(name);
+            });
+            rtError.appendChild(link);
+        } else {
+            var btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = 'ari-btn ari-btn--xs ari-btn--primary';
+            btn.innerHTML = '<i class="fa-solid fa-flag"></i>'
+                + ' Request manual object';
+            btn.style.marginLeft = '0.5rem';
+            btn.addEventListener('click', function () {
+                _requestManualObject(name);
+            });
+            rtError.appendChild(btn);
+        }
+
+        var hint = document.createElement('div');
+        hint.className = 'ari-tinfo-source';
+        hint.style.marginTop = '0.5rem';
+        if (isMonitor) {
+            hint.textContent = 'Suggestion: use Add manually to add '
+                + 'this target.';
+        } else {
+            hint.textContent = 'Suggestion: request a manual object '
+                + 'entry for monitor review.';
+        }
+        rtError.appendChild(hint);
         rtError.style.display = 'block';
     }
 
-    function _flagNewObject(name) {
+    function _openAddManually(name) {
+        var tab = document.querySelector(
+            '.ari-htab[data-htab="add-manually"]');
+        if (!tab) return;
+        tab.click();
+        var input = document.getElementById('am-man-name');
+        if (input) {
+            input.value = name || '';
+            input.focus();
+        }
+    }
+
+    function _requestManualObject(name) {
         var reason = window.prompt(
-            'Why should "' + name + '" be added to the APERO '
-            + 'astrometric database?\n'
-            + '(Optional notes for the moderator.)', '');
+            'Target "' + name + '" was not found online.\n\n'
+            + 'Add optional notes for the monitor (why this should '
+            + 'be added manually):', '');
         if (reason === null) return;
         var origin = window.location.pathname
             + '?resolve=' + encodeURIComponent(name);
@@ -1131,9 +1235,9 @@
             headers: {'Content-Type': 'application/json'},
             body: JSON.stringify({
                 kind: 'astrometric',
-                type: 'new object',
-                title: 'New object request: ' + name,
-                reason: reason || ('Add target: ' + name),
+                type: 'request.manual object',
+                title: 'Manual object request: ' + name,
+                reason: reason || ('Request manual object: ' + name),
                 apero_name: name,
                 origin_url: origin,
                 visibility: 'monitor'
@@ -1141,8 +1245,9 @@
         }).then(function (r) { return r.json(); })
         .then(function (data) {
             if (data && data.success) {
-                window.alert('New-object request #'
-                    + data.issue.id + ' filed.');
+                _openAddManually(name);
+                window.alert('Manual-object request #'
+                    + data.issue.id + ' filed for monitor review.');
             } else {
                 window.alert('Failed to file request: '
                     + ((data && data.error) || 'unknown'));

@@ -26,8 +26,15 @@ Quick start::
     obj = profile.get_object('GL699')
     info = obj.target_info()               # pandas DataFrame
     obj.get_data('/tmp/GL699_data')        # download files
+
+    # Access the astrometric database
+    from apero_ri.ari_api import astrometrics as astro
+    entry = astro.resolve_by_name('GL699')
+    rows  = astro.list_all(fmt='pandas')
+    online = astro.resolve_online_by_name('Proxima Centauri')
 """
 
+from apero_ri.ari_api import astrometrics
 from apero_ri.ari_api.client import (
     AperoObject,
     AperoProfile,
@@ -42,4 +49,5 @@ __all__ = [
     "list_profiles_detailed",
     "AperoProfile",
     "AperoObject",
+    "astrometrics",
 ]
