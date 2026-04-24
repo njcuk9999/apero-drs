@@ -236,11 +236,26 @@
 				window.ARI_ASTROMETRICS.profileId || '');
 			ctx.instrument = String(
 				window.ARI_ASTROMETRICS.instrument || '');
+			ctx.subtab = '';
 			var activeTab = document.querySelector(
 				'.ari-htab.ari-htab--active');
 			ctx.tab = activeTab
 				? String(activeTab.getAttribute('data-htab') || '')
 				: '';
+			if (ctx.tab === 'find-existing') {
+				var findSub = document.querySelector(
+					'#astro-tab-find-existing .ot-find-tab--active');
+				ctx.subtab = findSub
+					? String(findSub.id || '')
+					: '';
+			}
+			if (ctx.tab === 'resolve-target') {
+				var rtSub = document.querySelector(
+					'#astro-tab-resolve-target .ot-find-tab--active');
+				ctx.subtab = rtSub
+					? String(rtSub.id || '')
+					: '';
+			}
 			return ctx;
 		}
 
@@ -586,106 +601,184 @@
 
 	function buildAstrometricsExample(ctx) {
 		var tab = String(ctx.tab || 'find-existing');
-		var base = String(ctx.baseUrl || '');
-		// Astrometrics endpoints are profile-agnostic; the page
-		// reads/writes the shared on-disk DB at server-side.
-		// Snippets use plain `requests` because ari_api does not
-		// (yet) expose astrometrics methods.
+		var subtab = String(ctx.subtab || '');
 		var introCommon = [
-			'import requests',
+			'from apero_ri import ari_api',
+			'from apero_ri.ari_api import astrometrics as astro',
 			'',
-			'# All astrometrics API calls require an authenticated',
-			'# ARI session. Replace the cookie value below with',
-			'# the value of the "session" cookie from your browser.',
-			'SESSION = ' + quotePy('<paste your ari session cookie>'),
-			'BASE = ' + quotePy(base),
-			'COOKIES = {"session": SESSION}',
+			'# Requires one-time configure:',
+			'# ari_api.configure(server=..., token=...)',
 			'',
 		];
 
 		if (tab === 'find-existing') {
+			if (subtab === 'fo-tab-coords') {
+				return {
+					title: 'Astrometrics API: Find Existing (By Coordinates)',
+					description: 'Filter the object table by sky-position '
+						+ 'window in pandas (profile-scoped search).',
+					code: introCommon.concat([
+						'profile = ari_api.AperoProfile('
+							+ quotePy(ctx.profileId || '<profile_id>') + ')',
+						'df = profile.get_object_table(fmt=' + quotePy('pandas')
+							+ ')',
+						'',
+						'ra0, dec0, radius_deg = 339.815, 39.05, 60 / 3600.0',
+						'match = (',
+							'(df[' + quotePy('RA [Deg]') + '] - ra0).abs() '
+							+ '<= radius_deg',
+							') & (',
+							'(df[' + quotePy('Dec [Deg]') + '] - dec0).abs() '
+							+ '<= radius_deg',
+							')',
+						'print(df.loc[match, [' + quotePy('OBJNAME') + ']].head())',
+					]).join('\n'),
+				};
+			}
+			if (subtab === 'fo-tab-date') {
+				return {
+					title: 'Astrometrics API: Find Existing (By Date)',
+					description: 'Filter the object table by date bounds in '
+						+ 'pandas (profile-scoped search).',
+					code: introCommon.concat([
+						'profile = ari_api.AperoProfile('
+							+ quotePy(ctx.profileId || '<profile_id>') + ')',
+						'df = profile.get_object_table(fmt=' + quotePy('pandas')
+							+ ')',
+						'',
+						'start = ' + quotePy('2024-01-01'),
+						'end = ' + quotePy('2024-12-31'),
+						'obs = df[' + quotePy('DATE-OBS')
+							+ '].astype(str)',
+						'print(df[(obs >= start) & (obs <= end)].head())',
+					]).join('\n'),
+				};
+			}
+			if (subtab === 'fo-tab-advanced') {
+				return {
+					title: 'Astrometrics API: Find Existing (Advanced)',
+					description: 'Apply a column/value filter over the object '
+						+ 'table in pandas.',
+					code: introCommon.concat([
+						'profile = ari_api.AperoProfile('
+							+ quotePy(ctx.profileId || '<profile_id>') + ')',
+						'df = profile.get_object_table(fmt=' + quotePy('pandas')
+							+ ')',
+						'',
+						'col, value = ' + quotePy('OBJNAME') + ', '
+							+ quotePy('PROX'),
+						'print(df[df[col].astype(str).str.contains(',
+							'value, case=False, na=False)].head())',
+					]).join('\n'),
+				};
+			}
 			return {
-				title: 'Astrometrics API: find object in data portal',
-				description: 'Find observations of a target across the profiles you have access to.',
+				title: 'Astrometrics API: Find Existing (By Name)',
+				description: 'Search object names in the profile object '
+					+ 'table via the ARI client.',
 				code: introCommon.concat([
-					'r = requests.get(',
-					'    BASE + "/api/astrometrics/find-object",',
-					'    params={"name": "PROXIMA"},',
-					'    cookies=COOKIES,',
-					')',
-					'r.raise_for_status()',
-					'data = r.json()',
-					'print("matches:", data.get("count"))',
-					'for row in data.get("rows", []):',
-					'    print(row)',
+					'profile = ari_api.AperoProfile('
+						+ quotePy(ctx.profileId || '<profile_id>') + ')',
+					'df = profile.get_object_table(fmt=' + quotePy('pandas')
+						+ ')',
+					'query = ' + quotePy('PROXIMA'),
+					'obj_col = ' + quotePy('OBJNAME'),
+					'mask = df[obj_col].astype(str).str.contains(',
+						'query, case=False, na=False)',
+					'print(df.loc[mask].head())',
 				]).join('\n'),
 			};
 		}
 
 		if (tab === 'resolve-target') {
+			if (subtab === 'rt-tab-coords') {
+				return {
+					title: 'Astrometrics API: Resolve Target (By Coordinates)',
+					description: 'Resolve nearest catalog matches by sky '
+						+ 'coordinates and radius.',
+					code: introCommon.concat([
+						'res = astro.resolve_by_coords(',
+							'ra=339.815, dec=39.05, radius_arcsec=60,',
+						')',
+						'for hit in res.get(' + quotePy('matches') + ', []):',
+							'print(hit.get(' + quotePy('apero_name') + '),',
+							'      hit.get('
+								+ quotePy('separation_arcsec') + '))',
+					]).join('\n'),
+				};
+			}
+			if (subtab === 'rt-tab-advanced') {
+				return {
+					title: 'Astrometrics API: Resolve Target (Advanced)',
+					description: 'Resolve targets by an arbitrary column/value '
+						+ 'filter.',
+					code: introCommon.concat([
+						'matches = astro.resolve_by_filter(',
+							'column=' + quotePy('TEFF') + ',',
+							'value=' + quotePy('5000') + ',',
+							'match=' + quotePy('ge') + ',',
+						')',
+						'print(' + quotePy('Matches:') + ',',
+							'len(matches.get(' + quotePy('matches') + ', [])))',
+					]).join('\n'),
+				};
+			}
 			return {
-				title: 'Astrometrics API: resolve target by name',
-				description: 'Look up an entry in the curated APERO astrometric database. The response includes the entry status (verified / pending / rejected).',
+				title: 'Astrometrics API: Resolve Target (By Name)',
+				description: 'Resolve an object in the curated APERO '
+					+ 'astrometric catalog by name/alias.',
 				code: introCommon.concat([
-					'r = requests.get(',
-					'    BASE + "/api/astrometrics/resolve-by-name",',
-					'    params={"name": "PROXIMA"},',
-					'    cookies=COOKIES,',
-					')',
-					'r.raise_for_status()',
-					'payload = r.json()',
-					'print("status:", payload.get("status"))',
-					'print("apero_name:", payload.get("apero_name"))',
-					'if payload.get("status") == "rejected":',
-					'    print("WARNING: name is on the rejection list")',
+					'payload = astro.resolve_by_name(' + quotePy('PROXIMA')
+						+ ')',
+					'print(' + quotePy('status:') + ', payload.get('
+						+ quotePy('status') + '))',
+					'print(' + quotePy('apero_name:') + ', payload.get('
+						+ quotePy('apero_name') + '))',
 				]).join('\n'),
 			};
 		}
 
 		if (tab === 'astrom-db') {
 			return {
-				title: 'Astrometrics API: full database snapshot',
-				description: 'Pull every row of the astrometric database (one summary row per APERO_NAME).',
+				title: 'Astrometrics API: Astrometric Database',
+				description: 'Pull the astrometric database snapshot and '
+					+ 'inspect status counts.',
 				code: introCommon.concat([
-					'r = requests.get(',
-					'    BASE + "/api/astrometrics/list-all",',
-					'    cookies=COOKIES,',
+					'df = astro.list_all(fmt=' + quotePy('pandas') + ')',
+					'print(' + quotePy('entries:') + ', len(df))',
+					'if ' + quotePy('STATUS') + ' in df.columns:',
+						'print(df[' + quotePy('STATUS') + '].value_counts())',
+				]).join('\n'),
+			};
+		}
+
+		if (tab === 'add-manually') {
+			return {
+				title: 'Astrometrics API: Add Manually Workflow',
+				description: 'Programmatically file a manual-object request '
+					+ 'for monitor review.',
+				code: introCommon.concat([
+					'req = astro.request_manual_object(',
+						quotePy('MY_NEW_TARGET') + ',',
+						'notes=' + quotePy('Not in SIMBAD; add manually')
+							+ ',',
 					')',
-					'r.raise_for_status()',
-					'data = r.json()',
-					'print("entries:", data.get("count"))',
-					'rows = data.get("rows", [])',
-					'pending = [row for row in rows',
-					'           if row.get("STATUS") == "pending"]',
-					'print("pending:", len(pending))',
+					'print(req)',
 				]).join('\n'),
 			};
 		}
 
 		if (tab === 'rejected') {
 			return {
-				title: 'Astrometrics API: rejected object names',
-				description: 'List all entries on the rejection list, then add a new one.',
+				title: 'Astrometrics API: Rejected Object Names',
+				description: 'Inspect rejected entries from the astrometric '
+					+ 'database snapshot.',
 				code: introCommon.concat([
-					'# List currently-rejected names',
-					'r = requests.get(',
-					'    BASE + "/api/astrometrics/list-rejected",',
-					'    cookies=COOKIES,',
-					')',
-					'r.raise_for_status()',
-					'print("rejected:", r.json().get("count"))',
-					'',
-					'# Add a new rejection (requires monitor perm)',
-					'r = requests.post(',
-					'    BASE + "/api/astrometrics/add-rejected",',
-					'    json={',
-					'        "apero_name": "MY_BAD_NAME",',
-					'        "aliases": ["badname", "BAD_NAME"],',
-					'        "notes": "added via API example",',
-					'    },',
-					'    cookies=COOKIES,',
-					')',
-					'print(r.status_code, r.json())',
+					'df = astro.list_all(fmt=' + quotePy('pandas') + ')',
+					'rej = df[df[' + quotePy('STATUS') + '].astype(str)',
+						'.str.lower() == ' + quotePy('rejected') + ']',
+					'print(' + quotePy('rejected entries:') + ', len(rej))',
+					'print(rej[[' + quotePy('APERO_NAME') + ']].head())',
 				]).join('\n'),
 			};
 		}
@@ -693,15 +786,20 @@
 		// fallback: list-all
 		return {
 			title: 'Astrometrics API',
-			description: 'Generic astrometrics REST snippet.',
+			description: 'Generic astrometrics client snippet.',
 			code: introCommon.concat([
-				'r = requests.get(',
-				'    BASE + "/api/astrometrics/list-all",',
-				'    cookies=COOKIES,',
-				')',
-				'print(r.status_code, r.json().get("count"))',
+				'df = astro.list_all(fmt=' + quotePy('pandas') + ')',
+				'print(' + quotePy('entries:') + ', len(df))',
 			]).join('\n'),
 		};
+	}
+
+	function getApiButtonTitle(meta) {
+		var example = buildApiExample(meta);
+		if (!example) {
+			return 'API examples for this page';
+		}
+		return String(example.title || 'API examples for this page');
 	}
 
 	function buildApiExample(meta) {
@@ -756,7 +854,7 @@
 		modal.addEventListener('click', function (ev) {
 			var t = ev.target;
 			if (!(t instanceof Element)) return;
-			if (t.getAttribute('data-api-close') === '1') {
+			if (t.closest('[data-api-close="1"]')) {
 				modal.style.display = 'none';
 				document.body.classList.remove('ari-modal-open');
 			}
@@ -794,7 +892,31 @@
 
 		copyBtn.onclick = function () {
 			var labelBefore = copyBtn.innerHTML;
-			navigator.clipboard.writeText(code).then(function () {
+			var copyPromise;
+			if (navigator.clipboard
+					&& typeof navigator.clipboard.writeText === 'function') {
+				copyPromise = navigator.clipboard.writeText(code);
+			} else {
+				copyPromise = new Promise(function (resolve, reject) {
+					var ta = document.createElement('textarea');
+					ta.value = code;
+					ta.style.position = 'fixed';
+					ta.style.left = '-9999px';
+					document.body.appendChild(ta);
+					ta.focus();
+					ta.select();
+					var ok = false;
+					try {
+						ok = document.execCommand('copy');
+					} catch (err) {
+						ok = false;
+					}
+					document.body.removeChild(ta);
+					if (ok) resolve();
+					else reject(new Error('copy failed'));
+				});
+			}
+			copyPromise.then(function () {
 				copyBtn.innerHTML = '<i class="fa-solid fa-check"></i> Copied';
 				window.setTimeout(function () {
 					copyBtn.innerHTML = labelBefore;
@@ -984,13 +1106,24 @@
 			var apiBtn = document.createElement('button');
 			apiBtn.type = 'button';
 			apiBtn.className = 'ari-page-pin-fab ari-page-api-fab';
-			apiBtn.title = 'API examples for this page';
+			apiBtn.title = getApiButtonTitle(meta);
 			apiBtn.setAttribute('aria-label', apiBtn.title);
 			apiBtn.innerHTML = iconSpan('<i class="fa-solid fa-code"></i>');
 			apiBtn.addEventListener('click', function () {
 				showApiModal(buildApiExample(meta));
 			});
 			group.appendChild(apiBtn);
+
+			function refreshApiButtonLabel() {
+				apiBtn.title = getApiButtonTitle(meta);
+				apiBtn.setAttribute('aria-label', apiBtn.title);
+			}
+			document.querySelectorAll('.ari-htab, .ot-find-tab')
+				.forEach(function (btn) {
+					btn.addEventListener('click', function () {
+						window.setTimeout(refreshApiButtonLabel, 0);
+					});
+				});
 		}
 
 		if (enableIssue) {
