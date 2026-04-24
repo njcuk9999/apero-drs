@@ -1404,7 +1404,10 @@ def ariapp_api_admin_backups_oauth_start(self):
     user_info, perms = self._require_admin_backup_perm()
     if not user_info:
         return jsonify(ok=False, error="Unauthorized"), 401
-    if "manage.admin.backup" not in (perms or set()):
+    if (
+        "manage.admin.backup_setup" not in (perms or set())
+        and "manage.admin.backup" not in (perms or set())
+    ):
         return jsonify(ok=False, error="Insufficient permissions"), 403
 
     cfg = bb.load_backup_config()
@@ -2498,7 +2501,10 @@ def ariapp_api_admin_backups_delete_all(self):
     user_info, perms = self._require_admin_backup_perm()
     if not user_info:
         return jsonify(success=False, error="Unauthorized"), 401
-    if "manage.admin.backup" not in (perms or set()):
+    if (
+        "manage.admin.backup_setup" not in (perms or set())
+        and "manage.admin.backup" not in (perms or set())
+    ):
         return jsonify(success=False, error="Insufficient permissions"), 403
 
     body = request.get_json() or {}
@@ -2650,7 +2656,10 @@ def ariapp_api_admin_backups_delete(self):
     user_info, perms = self._require_admin_backup_perm()
     if not user_info:
         return jsonify(success=False, error="Unauthorized"), 401
-    if "manage.admin.backup" not in (perms or set()):
+    if (
+        "manage.admin.backup_setup" not in (perms or set())
+        and "manage.admin.backup" not in (perms or set())
+    ):
         return jsonify(success=False, error="Insufficient permissions"), 403
 
     body = request.get_json() or {}
@@ -2944,7 +2953,10 @@ def ariapp_api_admin_backups_download(self):
     user_info, perms = self._require_admin_backup_perm()
     if not user_info:
         return jsonify(success=False, error="Unauthorized"), 401
-    if "manage.admin.backup" not in (perms or set()):
+    if (
+        "manage.admin.backup_setup" not in (perms or set())
+        and "manage.admin.backup" not in (perms or set())
+    ):
         return jsonify(success=False, error="Insufficient permissions"), 403
 
     body = request.get_json() or {}
@@ -3289,7 +3301,10 @@ def ariapp_build_admin_backup_context(self, perms):
         "providers": providers,
         "providers_json": _json.dumps(providers),
         "current_provider": current_provider,
-        "can_manage": "manage.admin.backup_setup" in perms,
+        "can_manage": (
+            "manage.admin.backup_setup" in perms
+            or "manage.admin.backup" in perms
+        ),
         "backup_inventory": inventory,
         "oauth_insecure_warning": oauth_insecure_warning,
     }
@@ -3644,7 +3659,10 @@ def ariapp_api_admin_backups_sync_from_cloud(self):
     user_info, perms = self._require_admin_backup_perm()
     if not user_info:
         return jsonify(success=False, error="Unauthorized"), 401
-    if "manage.admin.backup" not in (perms or set()):
+    if (
+        "manage.admin.backup_setup" not in (perms or set())
+        and "manage.admin.backup" not in (perms or set())
+    ):
         return jsonify(success=False, error="Insufficient permissions"), 403
 
     cfg = bb.load_backup_config()
@@ -4412,7 +4430,10 @@ def ariapp_api_admin_backups_sync(self):
     user_info, perms = self._require_admin_backup_perm()
     if not user_info:
         return jsonify(success=False, error="Unauthorized"), 401
-    if "manage.admin.backup" not in (perms or set()):
+    if (
+        "manage.admin.backup_setup" not in (perms or set())
+        and "manage.admin.backup" not in (perms or set())
+    ):
         return jsonify(success=False, error="Insufficient permissions"), 403
 
     cfg = bb.load_backup_config()
@@ -5291,7 +5312,10 @@ def ariapp_api_admin_backups_test_backup(self):
     user_info, perms = self._require_admin_backup_perm()
     if not user_info:
         return jsonify(ok=False, error="Unauthorized"), 401
-    if "manage.admin.backup" not in (perms or set()):
+    if (
+        "manage.admin.backup_setup" not in (perms or set())
+        and "manage.admin.backup" not in (perms or set())
+    ):
         return jsonify(ok=False, error="Insufficient permissions"), 403
 
     body = request.get_json(silent=True) or {}
