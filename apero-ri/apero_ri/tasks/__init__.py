@@ -100,6 +100,9 @@ def _register_task(
         )
         outdict["multi_process"] = bool(getattr(module, "MULTI_PROCESS", False))
         outdict["filters"] = list(getattr(module, "FILTERS", []) or [])
+
+        outdict["local_task"] = bool(getattr(module, "LOCAL_TASK", False) or False)
+
         return outdict
 
     except Exception:
@@ -115,6 +118,7 @@ def _register_task(
         outdict["use_subprocess"] = False
         outdict["multi_process"] = False
         outdict["filters"] = []
+        outdict["local_task"] = False
         return outdict
 
 
@@ -147,9 +151,7 @@ ENABLED["APERO_SYNC_ASSETS"] = _entry["enabled"]
 TYPE["APERO_SYNC_ASSETS"] = _entry["task_type"]
 USE_SUBPROCESS["APERO_SYNC_ASSETS"] = _entry["use_subprocess"]
 MULTI_PROCESS["APERO_SYNC_ASSETS"] = _entry["multi_process"]
-LOCAL_TASK["APERO_SYNC_ASSETS"] = bool(
-    getattr(_entry["task_cls"], "LOCAL_TASK", False)
-)
+LOCAL_TASK["APERO_SYNC_ASSETS"] = _entry["local_task"]
 FILTERS["APERO_SYNC_ASSETS"] = _entry["filters"]
 
 # ARI_LOCAL_DATA_BACKUP
@@ -167,9 +169,7 @@ ENABLED["ARI_LOCAL_DATA_BACKUP"] = _entry["enabled"]
 TYPE["ARI_LOCAL_DATA_BACKUP"] = _entry["task_type"]
 USE_SUBPROCESS["ARI_LOCAL_DATA_BACKUP"] = _entry["use_subprocess"]
 MULTI_PROCESS["ARI_LOCAL_DATA_BACKUP"] = _entry["multi_process"]
-LOCAL_TASK["ARI_LOCAL_DATA_BACKUP"] = bool(
-    getattr(_entry["task_cls"], "LOCAL_TASK", False)
-)
+LOCAL_TASK["ARI_LOCAL_DATA_BACKUP"] = _entry["local_task"]
 FILTERS["ARI_LOCAL_DATA_BACKUP"] = _entry["filters"]
 
 # APERO_OBJECT_TABLE
@@ -187,9 +187,7 @@ ENABLED["APERO_OBJECT_TABLE"] = _entry["enabled"]
 TYPE["APERO_OBJECT_TABLE"] = _entry["task_type"]
 USE_SUBPROCESS["APERO_OBJECT_TABLE"] = _entry["use_subprocess"]
 MULTI_PROCESS["APERO_OBJECT_TABLE"] = _entry["multi_process"]
-LOCAL_TASK["APERO_OBJECT_TABLE"] = bool(
-    getattr(_entry["task_cls"], "LOCAL_TASK", False)
-)
+LOCAL_TASK["APERO_OBJECT_TABLE"] = _entry["local_task"]
 FILTERS["APERO_OBJECT_TABLE"] = _entry["filters"]
 
 # APERO_OBS_TABLE
@@ -207,9 +205,7 @@ ENABLED["APERO_OBS_TABLE"] = _entry["enabled"]
 TYPE["APERO_OBS_TABLE"] = _entry["task_type"]
 USE_SUBPROCESS["APERO_OBS_TABLE"] = _entry["use_subprocess"]
 MULTI_PROCESS["APERO_OBS_TABLE"] = _entry["multi_process"]
-LOCAL_TASK["APERO_OBS_TABLE"] = bool(
-    getattr(_entry["task_cls"], "LOCAL_TASK", False)
-)
+LOCAL_TASK["APERO_OBS_TABLE"] = _entry["local_task"]
 FILTERS["APERO_OBS_TABLE"] = _entry["filters"]
 
 # APERO_OBJECT_QUERY
@@ -227,9 +223,7 @@ ENABLED["APERO_OBJECT_QUERY"] = _entry["enabled"]
 TYPE["APERO_OBJECT_QUERY"] = _entry["task_type"]
 USE_SUBPROCESS["APERO_OBJECT_QUERY"] = _entry["use_subprocess"]
 MULTI_PROCESS["APERO_OBJECT_QUERY"] = _entry["multi_process"]
-LOCAL_TASK["APERO_OBJECT_QUERY"] = bool(
-    getattr(_entry["task_cls"], "LOCAL_TASK", False)
-)
+LOCAL_TASK["APERO_OBJECT_QUERY"] = _entry["local_task"]
 FILTERS["APERO_OBJECT_QUERY"] = _entry["filters"]
 
 # APERO_QC_STATS
@@ -244,9 +238,7 @@ ENABLED["APERO_QC_STATS"] = _entry["enabled"]
 TYPE["APERO_QC_STATS"] = _entry["task_type"]
 USE_SUBPROCESS["APERO_QC_STATS"] = _entry["use_subprocess"]
 MULTI_PROCESS["APERO_QC_STATS"] = _entry["multi_process"]
-LOCAL_TASK["APERO_QC_STATS"] = bool(
-    getattr(_entry["task_cls"], "LOCAL_TASK", False)
-)
+LOCAL_TASK["APERO_QC_STATS"] = _entry["local_task"]
 FILTERS["APERO_QC_STATS"] = _entry["filters"]
 
 # FAV_OBJECT_WATCHER
@@ -264,9 +256,7 @@ ENABLED["FAV_OBJECT_WATCHER"] = _entry["enabled"]
 TYPE["FAV_OBJECT_WATCHER"] = _entry["task_type"]
 USE_SUBPROCESS["FAV_OBJECT_WATCHER"] = _entry["use_subprocess"]
 MULTI_PROCESS["FAV_OBJECT_WATCHER"] = _entry["multi_process"]
-LOCAL_TASK["FAV_OBJECT_WATCHER"] = bool(
-    getattr(_entry["task_cls"], "LOCAL_TASK", False)
-)
+LOCAL_TASK["FAV_OBJECT_WATCHER"] = _entry["local_task"]
 FILTERS["FAV_OBJECT_WATCHER"] = _entry["filters"]
 
 # =============================================================================
