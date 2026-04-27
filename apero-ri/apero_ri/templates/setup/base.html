@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}APERO RI Setup{% endblock %}</title>
+    <link rel="icon" href="{{ url_for('static', filename='images/favicon.ico') }}" type="image/x-icon">
+    <link rel="stylesheet"
+          href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
+          integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA=="
+          crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <style>
+        /* ── Setup wizard tab bar ── */
+        .setup-tabs {
+            display: flex;
+            gap: 0;
+            border-bottom: 2px solid var(--ari-border);
+            margin-bottom: 1.5rem;
+            flex-wrap: wrap;
+        }
+        .setup-tab {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.75rem 1.4rem;
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: var(--ari-text-muted);
+            text-decoration: none;
+            border-bottom: 3px solid transparent;
+            margin-bottom: -2px;
+            cursor: default;
+            user-select: none;
+            transition: color 0.15s, border-color 0.15s;
+        }
+        .setup-tab i { font-size: 1rem; }
+        .setup-tab .setup-tab__num {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 1.5rem;
+            height: 1.5rem;
+            border-radius: 50%;
+            font-size: 0.8rem;
+            font-weight: 700;
+            background: var(--ari-border);
+            color: var(--ari-text-muted);
+        }
+        /* Clickable (unlocked) tab */
+        .setup-tab--unlocked {
+            cursor: pointer;
+            color: var(--ari-text);
+        }
+        .setup-tab--unlocked:hover {
+            color: var(--ari-primary);
+            border-bottom-color: var(--ari-primary-light);
+        }
+        .setup-tab--unlocked .setup-tab__num {
+            background: var(--ari-primary-light);
+            color: #fff;
+        }
+        /* Active tab */
+        .setup-tab--active {
+            color: var(--ari-primary);
+            border-bottom-color: var(--ari-primary);
+            cursor: default;
+        }
+        .setup-tab--active .setup-tab__num {
+            background: var(--ari-primary);
+            color: #fff;
+        }
+        /* Locked (greyed out) tab */
+        .setup-tab--locked {
+            opacity: 0.45;
+            pointer-events: none;
+        }
+        /* Completed checkmark on number badge */
+        .setup-tab--done .setup-tab__num {
+            background: #49a34f;
+            color: #fff;
+        }
+
+        /* ── Setup panels ── */
+        .setup-panel {
+            max-width: 100%;
+        }
+        .setup-panel .ari-login-box {
+            max-width: 480px;
+        }
+        .setup-notes {
+            max-width: 100%;
+            margin: 0 0 1.5rem 0;
+            background: var(--ari-card-bg);
+            border: 1px solid var(--ari-border);
+            border-radius: var(--ari-border-radius);
+            padding: 1.5rem 2rem;
+        }
+        .setup-notes h3 {
+            color: var(--ari-primary);
+            margin: 0 0 0.5rem 0;
+            font-size: 1.1rem;
+        }
+        .setup-notes ul {
+            margin: 0;
+            padding-left: 1.5rem;
+            line-height: 1.7;
+        }
+
+        /* ── Test mode banner ── */
+        .setup-test-banner {
+            background: #fff3cd;
+            border: 1px solid #ffecb5;
+            border-radius: var(--ari-border-radius);
+            padding: 0.6rem 1.2rem;
+            margin-bottom: 1rem;
+            font-weight: 600;
+            color: #664d03;
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+<body>
+    <header class="ari-header">
+        <div class="ari-header__logo">
+            <span>APERO RI Setup</span>
+        </div>
+        <div class="ari-header__spacer"></div>
+    </header>
+
+    <main class="ari-main">
+        {% if test_mode %}
+        <div class="setup-test-banner">
+            <i class="fa-solid fa-flask-vial"></i>
+            TEST MODE &mdash; nothing will be written to disk.
+        </div>
+        {% endif %}
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+        {% for category, message in messages %}
+        <div class="ari-flash ari-flash--{{ category }}">
+            <i class="fa-solid fa-circle-info"></i>
+            {{ message }}
+        </div>
+        {% endfor %}
+        {% endif %}
+        {% endwith %}
+
+        {# ── Tab bar ── #}
+        {% set steps = [
+            ('setup_welcome',  'Data Directory', 'fa-solid fa-folder-tree'),
+            ('setup_email',    'Email',    'fa-solid fa-envelope'),
+            ('setup_admin',    'Admin',    'fa-solid fa-user-shield'),
+            ('setup_complete', 'Complete', 'fa-solid fa-flag-checkered'),
+        ] %}
+
+        <nav class="setup-tabs" aria-label="Setup steps">
+        {% for route, label, icon in steps %}
+            {% set step_num = loop.index %}
+            {% set is_active = (active_step == route) %}
+            {% set is_done = (step_num <= completed_step) %}
+            {% set is_unlocked = (step_num <= completed_step + 1) %}
+            {% if is_active %}
+            <span class="setup-tab setup-tab--active"
+                  aria-current="step">
+                <span class="setup-tab__num">{{ step_num }}</span>
+                <i class="{{ icon }}"></i> {{ label }}
+            </span>
+            {% elif is_done %}
+            <a href="{{ url_for(route) }}"
+               class="setup-tab setup-tab--unlocked setup-tab--done">
+                <span class="setup-tab__num"><i class="fa-solid fa-check"></i></span>
+                <i class="{{ icon }}"></i> {{ label }}
+            </a>
+            {% elif is_unlocked %}
+            <a href="{{ url_for(route) }}"
+               class="setup-tab setup-tab--unlocked">
+                <span class="setup-tab__num">{{ step_num }}</span>
+                <i class="{{ icon }}"></i> {{ label }}
+            </a>
+            {% else %}
+            <span class="setup-tab setup-tab--locked">
+                <span class="setup-tab__num">{{ step_num }}</span>
+                <i class="{{ icon }}"></i> {{ label }}
+            </span>
+            {% endif %}
+        {% endfor %}
+        </nav>
+
+        <div class="setup-panel">
+            {% block content %}{% endblock %}
+        </div>
+    </main>
+</body>
+</html>

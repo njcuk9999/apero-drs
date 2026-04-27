@@ -1,0 +1,131 @@
+{% extends "general/sidebar_base.html" %}
+{% block title %}APERO RI – Themes{% endblock %}
+
+{% block doc_content %}
+<div class="ari-page-header">
+    <h1><i class="fa-solid fa-palette"></i> Themes</h1>
+</div>
+
+<p style="color:var(--ari-text-muted);margin-bottom:1.5rem;">
+    Choose your preferred appearance. Changes apply immediately and are saved
+    to your account.
+</p>
+
+<div class="ari-theme-cards">
+
+    <button type="button"
+            class="ari-theme-card"
+            data-theme-id="default"
+            onclick="ariSelectTheme('default')">
+        <div class="ari-theme-card__preview ari-theme-card__preview--default">
+            <div class="atcp-header"></div>
+            <div class="atcp-body">
+                <div class="atcp-sidebar"></div>
+                <div class="atcp-main">
+                    <div class="atcp-card"></div>
+                    <div class="atcp-card atcp-card--sm"></div>
+                </div>
+            </div>
+        </div>
+        <div class="ari-theme-card__label">
+            <span class="ari-theme-card__name">Default</span>
+            <span class="ari-theme-card__desc">Dark header &amp; sidebar,
+                light content</span>
+            <span class="ari-theme-card__tick"
+                  id="tick-default">&#10003;</span>
+        </div>
+    </button>
+
+    <button type="button"
+            class="ari-theme-card"
+            data-theme-id="light"
+            onclick="ariSelectTheme('light')">
+        <div class="ari-theme-card__preview ari-theme-card__preview--light">
+            <div class="atcp-header"></div>
+            <div class="atcp-body">
+                <div class="atcp-sidebar"></div>
+                <div class="atcp-main">
+                    <div class="atcp-card"></div>
+                    <div class="atcp-card atcp-card--sm"></div>
+                </div>
+            </div>
+        </div>
+        <div class="ari-theme-card__label">
+            <span class="ari-theme-card__name">Light</span>
+            <span class="ari-theme-card__desc">Light header &amp; sidebar,
+                light content</span>
+            <span class="ari-theme-card__tick" id="tick-light">&#10003;</span>
+        </div>
+    </button>
+
+    <button type="button"
+            class="ari-theme-card"
+            data-theme-id="dark"
+            onclick="ariSelectTheme('dark')">
+        <div class="ari-theme-card__preview ari-theme-card__preview--dark">
+            <div class="atcp-header"></div>
+            <div class="atcp-body">
+                <div class="atcp-sidebar"></div>
+                <div class="atcp-main">
+                    <div class="atcp-card"></div>
+                    <div class="atcp-card atcp-card--sm"></div>
+                </div>
+            </div>
+        </div>
+        <div class="ari-theme-card__label">
+            <span class="ari-theme-card__name">Dark</span>
+            <span class="ari-theme-card__desc">Dark header, sidebar &amp;
+                content</span>
+            <span class="ari-theme-card__tick" id="tick-dark">&#10003;</span>
+        </div>
+    </button>
+
+</div>
+
+<p id="theme-saved-msg"
+   style="display:none;color:var(--ari-success);margin-top:1rem;">
+    <i class="fa-solid fa-check-circle"></i> Theme saved.
+</p>
+
+<script>
+(function () {
+    var THEMES = ['default', 'light', 'dark'];
+
+    function getCurrentTheme() {
+        return document.documentElement.getAttribute('data-theme') || 'default';
+    }
+
+    function markActive(theme) {
+        THEMES.forEach(function (t) {
+            var card = document.querySelector(
+                '.ari-theme-card[data-theme-id="' + t + '"]'
+            );
+            var tick = document.getElementById('tick-' + t);
+            if (!card) return;
+            if (t === theme) {
+                card.classList.add('ari-theme-card--active');
+                if (tick) tick.style.opacity = '1';
+            } else {
+                card.classList.remove('ari-theme-card--active');
+                if (tick) tick.style.opacity = '0';
+            }
+        });
+    }
+
+    window.ariSelectTheme = function (theme) {
+        if (THEMES.indexOf(theme) === -1) return;
+        /* Apply immediately and save */
+        if (window.ariSetTheme) window.ariSetTheme(theme);
+        markActive(theme);
+        var msg = document.getElementById('theme-saved-msg');
+        if (msg) {
+            msg.style.display = 'block';
+            setTimeout(function () { msg.style.display = 'none'; }, 2000);
+        }
+    };
+
+    /* Highlight current selection on page load */
+    markActive(getCurrentTheme());
+}());
+</script>
+{% endblock %}

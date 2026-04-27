@@ -1,0 +1,231 @@
+{% extends "general/sidebar_base.html" %}
+{% block title %}APERO RI – Manage Science Groups{% endblock %}
+{% block body_class %}ari-has-sidebar ari-sg-page{% endblock %}
+
+{% block doc_content %}
+<div class="ari-page-header">
+    <h1><i class="{{ page_icon }}"></i> {{ page_label }}</h1>
+</div>
+
+<div id="sg-health" class="ari-ap-status ari-ap-status--info" style="margin-bottom:0.8rem;">
+    <div id="sg-health-headline" class="ari-ap-status__headline">
+        <i class="fa-solid fa-circle-info"></i>
+        Select an instrument to evaluate science-group user assignment health.
+    </div>
+    <div id="sg-health-details" style="margin-top:0.4rem;"></div>
+</div>
+
+<!-- Instrument tabs -->
+<div id="instrument-tabs" class="ari-sg-tabs"></div>
+
+<!-- Main layout: stacked full-width sections -->
+<div id="sg-workspace" class="ari-sg-workspace" style="display:none;">
+
+    <!-- Toolbar: Refresh Run IDs -->
+    <div style="display:flex; gap:8px; margin-bottom:12px;">
+        <button id="btn-refresh-runids" class="ari-btn ari-btn--secondary ari-btn--sm"
+                title="Re-scan object tables and refresh available run IDs (only All auto-syncs)">
+            <i class="fa-solid fa-rotate"></i> Refresh Run IDs
+        </button>
+    </div>
+
+    <!-- Science Groups section -->
+    <div class="ari-sg-section">
+        <div class="ari-sg-section__header">
+            <h3><i class="fa-solid fa-layer-group"></i> Science Groups</h3>
+            <button id="btn-add-group" class="ari-btn ari-btn--primary ari-btn--sm"
+                    title="Add science group">
+                <i class="fa-solid fa-plus"></i> New Group
+            </button>
+        </div>
+        <div class="ari-sg-filter">
+            <div class="ari-user-search__input-wrap">
+                <i class="fa-solid fa-magnifying-glass ari-user-search__icon"></i>
+                <input type="text" id="group-filter" class="ari-user-search__input"
+                       placeholder="Filter groups..." autocomplete="off">
+            </div>
+        </div>
+        <div id="group-list" class="ari-sg-scrollable"></div>
+    </div>
+
+    <!-- Prompt to select a group (shown when no group is active) -->
+    <div id="sg-select-prompt" class="ari-sg-select-prompt">
+        <i class="fa-solid fa-arrow-pointer"></i>
+        Select a science group above to manage its run IDs and users.
+    </div>
+
+    <!-- Top action bar (mirrors bottom #sg-actions). Shown only
+         while a group is selected so users can save/delete from
+         the top of the editor as well. -->
+    <div id="sg-actions-top" class="ari-sg-actions ari-sg-detail-section"
+         style="display:none; margin-bottom:0.6rem;">
+        <button id="btn-save-group-top" class="ari-btn ari-btn--primary"
+                disabled>
+            <i class="fa-solid fa-floppy-disk"></i> Save
+        </button>
+        <button id="btn-delete-group-top" class="ari-btn ari-btn--danger"
+                disabled>
+            <i class="fa-solid fa-trash"></i> Delete Group
+        </button>
+    </div>
+
+    <!-- Run IDs transfer section (hidden until group selected) -->
+    <div id="runid-section" class="ari-sg-section ari-sg-detail-section" style="display:none;">
+        <div class="ari-sg-section__header">
+            <h3><i class="fa-solid fa-hashtag"></i> Run IDs</h3>
+            <span id="runid-count" class="ari-sg-count">0</span>
+            <button id="btn-add-all-runids" class="ari-btn ari-btn--secondary ari-btn--sm"
+                    title="Add all available run IDs to this group">
+                <i class="fa-solid fa-plus"></i> Add All
+            </button>
+        </div>
+        <div class="ari-sg-transfer">
+            <!-- Left pane: available (not added) -->
+            <div class="ari-sg-transfer__pane">
+                <div class="ari-sg-transfer__pane-header">
+                    <h4>Available</h4>
+                    <span id="runid-avail-count" class="ari-sg-transfer__badge">0</span>
+                </div>
+                <div class="ari-sg-filter">
+                    <div class="ari-user-search__input-wrap">
+                        <i class="fa-solid fa-magnifying-glass ari-user-search__icon"></i>
+                        <input type="text" id="runid-avail-filter" class="ari-user-search__input"
+                               placeholder="Filter available..." autocomplete="off">
+                    </div>
+                </div>
+                <div id="runid-available" class="ari-sg-transfer__list"></div>
+            </div>
+            <!-- Right pane: added -->
+            <div class="ari-sg-transfer__pane ari-sg-transfer__pane--added">
+                <div class="ari-sg-transfer__pane-header">
+                    <h4>Added</h4>
+                    <span id="runid-added-count" class="ari-sg-transfer__badge">0</span>
+                </div>
+                <div class="ari-sg-filter">
+                    <div class="ari-user-search__input-wrap">
+                        <i class="fa-solid fa-magnifying-glass ari-user-search__icon"></i>
+                        <input type="text" id="runid-added-filter" class="ari-user-search__input"
+                               placeholder="Filter added..." autocomplete="off">
+                    </div>
+                </div>
+                <div id="runid-added" class="ari-sg-transfer__list"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Users transfer section (hidden until group selected) -->
+    <div id="user-section" class="ari-sg-section ari-sg-detail-section" style="display:none;">
+        <div class="ari-sg-section__header">
+            <h3><i class="fa-solid fa-users"></i> Users</h3>
+            <span id="user-count" class="ari-sg-count">0</span>
+            <button id="btn-add-all-users" class="ari-btn ari-btn--secondary ari-btn--sm"
+                    title="Add all available users to this group">
+                <i class="fa-solid fa-plus"></i> Add All
+            </button>
+        </div>
+        <div class="ari-sg-transfer">
+            <!-- Left pane: available (not added) -->
+            <div class="ari-sg-transfer__pane">
+                <div class="ari-sg-transfer__pane-header">
+                    <h4>Available</h4>
+                    <span id="user-avail-count" class="ari-sg-transfer__badge">0</span>
+                </div>
+                <div class="ari-sg-filter">
+                    <div class="ari-user-search__input-wrap">
+                        <i class="fa-solid fa-magnifying-glass ari-user-search__icon"></i>
+                        <input type="text" id="user-avail-filter" class="ari-user-search__input"
+                               placeholder="Filter available..." autocomplete="off">
+                    </div>
+                </div>
+                <div id="user-available" class="ari-sg-transfer__list"></div>
+            </div>
+            <!-- Right pane: added -->
+            <div class="ari-sg-transfer__pane ari-sg-transfer__pane--added">
+                <div class="ari-sg-transfer__pane-header">
+                    <h4>Added</h4>
+                    <span id="user-added-count" class="ari-sg-transfer__badge">0</span>
+                </div>
+                <div class="ari-sg-filter">
+                    <div class="ari-user-search__input-wrap">
+                        <i class="fa-solid fa-magnifying-glass ari-user-search__icon"></i>
+                        <input type="text" id="user-added-filter" class="ari-user-search__input"
+                               placeholder="Filter added..." autocomplete="off">
+                    </div>
+                </div>
+                <div id="user-added" class="ari-sg-transfer__list"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Action bar -->
+<div id="sg-actions" class="ari-sg-actions" style="display:none;">
+    <button id="btn-save-group" class="ari-btn ari-btn--primary" disabled>
+        <i class="fa-solid fa-floppy-disk"></i> Save
+    </button>
+    <button id="btn-delete-group" class="ari-btn ari-btn--danger" disabled>
+        <i class="fa-solid fa-trash"></i> Delete Group
+    </button>
+</div>
+
+<!-- Empty state (no instruments) -->
+<div id="sg-empty" class="ari-sg-empty" style="display:none;">
+    <i class="fa-solid fa-circle-info"></i>
+    You don't have access to any instruments.
+</div>
+
+<!-- Create group modal -->
+<div id="create-modal" class="ari-modal-backdrop" style="display:none;">
+    <div class="ari-modal">
+        <div class="ari-modal__header">
+            <i class="fa-solid fa-plus"></i> New Science Group
+        </div>
+        <div class="ari-modal__body">
+            <label for="new-group-name" style="font-weight:500;">Group name</label>
+            <input type="text" id="new-group-name" class="ari-sg-filter__input"
+                   placeholder="e.g. planet_survey_1" style="margin-top:0.5rem;"
+                   autocomplete="off">
+            <div id="create-error" class="ari-sg-error" style="display:none;"></div>
+        </div>
+        <div class="ari-modal__footer">
+            <button id="btn-cancel-create" class="ari-btn ari-btn--secondary">Cancel</button>
+            <button id="btn-confirm-create" class="ari-btn ari-btn--primary">Create</button>
+        </div>
+    </div>
+</div>
+
+<!-- Delete confirmation modal -->
+<div id="delete-modal" class="ari-modal-backdrop" style="display:none;">
+    <div class="ari-modal">
+        <div class="ari-modal__header">
+            <i class="fa-solid fa-triangle-exclamation"></i> Confirm Deletion
+        </div>
+        <div class="ari-modal__body">
+            Delete science group <strong id="delete-modal-name"></strong>?
+            This action cannot be undone.
+        </div>
+        <div class="ari-modal__footer">
+            <button id="btn-cancel-delete" class="ari-btn ari-btn--secondary">Cancel</button>
+            <button id="btn-confirm-delete" class="ari-btn ari-btn--danger">Delete</button>
+        </div>
+    </div>
+</div>
+
+<!-- Toast notification -->
+<div id="toast" class="ari-toast" style="display:none;"></div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+window.ARI_SCI_GROUPS = {
+    listUrl: {{ url_for('api_sci_groups_list')|tojson }},
+    getUrl: {{ url_for('api_sci_groups_get')|tojson }},
+    saveUrl: {{ url_for('api_sci_groups_save')|tojson }},
+    createUrl: {{ url_for('api_sci_groups_create')|tojson }},
+    deleteUrl: {{ url_for('api_sci_groups_delete')|tojson }},
+    refreshRunIdsUrl: {{ url_for('api_sci_groups_refresh_run_ids')|tojson }},
+    instruments: {{ instruments|tojson }}
+};
+</script>
+<script src="{{ url_for('static', filename='js/admin_science_groups.js') }}?v=20260423n"></script>
+{% endblock %}

@@ -1,0 +1,209 @@
+# Permission groups and their permissions. 
+# Groups can be nested, meaning that if a user is in group A, and group A 
+# is in group B, then the user is also in group B and inherits all of 
+# its permissions.
+#
+# Current permissions categories:
+# - manange    // normally acess to a management page or a user/group
+#                  within a page
+# - login_as   // to allow logging in as another user in a specific group
+# - view       // to allow viewing a specific page or section of the app
+# - edit       // to allow editing a specific page or section of the app
+
+# ==============================================================================
+# Super Admin group
+# ==============================================================================
+super_admin:
+  permissions:
+    # full user/group/instrument management including admin-level accounts
+    - add.instrument
+    - manage.group.super_admin
+    - manage.group.admin
+    - manage.instrument.super_admin
+    - manage.instrument.admin
+    - login_as.super_admin
+    - login_as.admin
+  groups:
+    - admin
+
+# ==============================================================================
+# Admin group
+# ==============================================================================
+admin:
+  permissions:
+    # can they manage apero profiles
+    - manage.apero_profile
+    # which groups can they manage
+    - manage.group.moderator.SPIROU
+    - manage.group.developer.SPIROU
+    - manage.group.moderator.NIRPS
+    - manage.group.developer.NIRPS
+    # which instruments can they manage
+    - manage.instrument.SPIROU
+    - manage.instrument.NIRPS
+    # which groups can they login as
+    - login_as.moderator
+    - login_as.developer
+    # which documentation pages can they edit?
+    - edit.doc.overview
+    - edit.doc.install
+    - edit.doc.api
+    # admin-only feature management (not available to moderator/developer)
+    - manage.admin.email_setup
+    - manage.admin.backup_setup
+    - manage.admin.sshfs_setup
+    - manage.admin.database_setup
+    - manage.admin.user_db_access
+  groups:
+    - moderator.SPIROU
+    - moderator.NIRPS
+    - developer.SPIROU
+    - developer.NIRPS
+
+# ==============================================================================
+# Moderator group - manager level access to add/change users
+# ==============================================================================
+# --- SPIROU instrument-scoped groups ---
+moderator.SPIROU:
+  permissions:
+    # can they manage science groups
+    - manage.sci_group.SPIROU
+    # can they view the admin section
+    - view.admin
+    # which groups can they manage
+    - manage.group.monitor.SPIROU
+    - manage.group.general.SPIROU
+    - manage.group.public
+    # which instruments can they manage
+    - manage.instrument.SPIROU
+    # which groups can they login as
+    - login_as.monitor.SPIROU
+    - login_as.general.SPIROU
+    - login_as.public
+    # can they view/manage instrument calendar and links
+    - view.admin.calendar
+    - manage.admin.calendar.SPIROU
+    - view.admin.links
+    - manage.admin.links.SPIROU
+    # vault: shared secret/credential store for admin portal users
+    - manage.admin.vault
+    # astrometric catalogue: edit / rename existing yaml entries
+    - manage.astrometrics
+  groups:
+    - monitor.SPIROU
+
+# --- NIRPS instrument-scoped groups ---
+moderator.NIRPS:
+  permissions:
+    # can they manage science groups
+    - manage.sci_group.NIRPS
+    # can they view the admin section
+    - view.admin
+    # which groups can they manage
+    - manage.group.monitor.NIRPS
+    - manage.group.general.NIRPS
+    - manage.group.public
+    # which instruments can they manage
+    - manage.instrument.NIRPS
+    # which groups can they login as
+    - login_as.monitor.NIRPS
+    - login_as.general.NIRPS
+    - login_as.public
+    # can they view/manage instrument calendar and links
+    - view.admin.calendar
+    - manage.admin.calendar.NIRPS
+    - view.admin.links
+    - manage.admin.links.NIRPS
+    # vault: shared secret/credential store for admin portal users
+    - manage.admin.vault
+    # astrometric catalogue: edit / rename existing yaml entries
+    - manage.astrometrics
+  groups:
+    - monitor.NIRPS
+
+# ==============================================================================
+# Developer group - access to edit documentation and instrument information
+# ==============================================================================
+developer.SPIROU:
+  permissions:
+    # which documentation pages can they edit?
+    - edit.doc.SPIROU
+    # can they view/manage instrument calendar and links
+    - view.admin.calendar
+    - manage.admin.calendar.SPIROU
+    - view.admin.links
+    - manage.admin.links.SPIROU
+  groups:
+    - monitor.SPIROU
+
+developer.NIRPS:
+  permissions:
+    # which documentation pages can they edit?
+    - edit.doc.NIRPS
+    # can they view/manage instrument calendar and links
+    - view.admin.calendar
+    - manage.admin.calendar.NIRPS
+    - view.admin.links
+    - manage.admin.links.NIRPS
+  groups:
+    - monitor.NIRPS
+
+
+# ==============================================================================
+# Monitor group - access to monitoring tools
+# ==============================================================================
+monitor.SPIROU:
+  permissions:
+      - monitor.SPIROU
+      - view.monitor_portal.SPIROU
+      # astrometric catalogue: upload brand-new yaml entries
+      - upload.astrometrics
+  groups:
+    - general.SPIROU
+
+monitor.NIRPS:
+  permissions:
+      - monitor.NIRPS
+      - view.monitor_portal.NIRPS
+      - upload.astrometrics
+  groups:
+    - general.NIRPS
+
+# ==============================================================================
+# User group - access to data portal and documentation
+# ==============================================================================
+general.SPIROU:
+  permissions: []
+  groups:
+    - public
+
+general.NIRPS:
+  permissions: []
+  groups:
+    - public
+
+# ==============================================================================
+# Public group - no login required, just access to view documentation
+# ==============================================================================
+public:
+  permissions:
+    # can view the data portal
+    - view.data_portal
+    # can they view the home page
+    - view.home
+    # can they view documentation
+    - view.doc
+  groups:
+    - None
+
+# ==============================================================================
+# Instrument-scoped groups (inherits from base group, paired with
+# user.instruments field to restrict which profiles are visible)
+# ==============================================================================
+
+
+
+
+
+
+

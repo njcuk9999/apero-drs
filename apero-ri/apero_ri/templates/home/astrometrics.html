@@ -1,0 +1,1159 @@
+{% extends "general/sidebar_base.html" %}
+{% block title %}APERO RI – Astrometrics{% endblock %}
+
+{% block body_class %}ari-has-sidebar ari-astro-page{% endblock %}
+
+{% block extra_head %}
+{{ super() }}
+<link rel="stylesheet"
+      href="https://cdn.bokeh.org/bokeh/release/bokeh-3.8.2.min.css"
+      type="text/css">
+<link rel="stylesheet"
+      href="{{ url_for('static', filename='css/ari_data_table.css', v='20260424e') }}">
+<style>
+.rt-verify-banner {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.6rem 0.9rem;
+    margin: 0.5rem 0 0.75rem 0;
+    border: 1px solid #f0c36d;
+    background: #fff8e1;
+    color: #5a4500;
+    border-radius: 0.5rem;
+}
+.rt-verify-banner i.fa-triangle-exclamation {
+    color: #c08400;
+}
+
+/* Resolve-target rejection banner (rendered by JS) */
+.ari-banner {
+    padding: 0.75rem 1rem;
+    margin: 0 0 0.9rem 0;
+    border-radius: 0.5rem;
+    border: 1px solid var(--ari-border, #ccc);
+    background: var(--ari-card-bg, #fafafa);
+    line-height: 1.4;
+}
+.ari-banner--danger {
+    border-color: #f5b8b1;
+    background: #fdecea;
+    color: #7a1f17;
+}
+.ari-banner--danger i.fa-ban { color: #c0392b; }
+.ari-banner__detail {
+    margin-top: 0.35rem;
+    font-size: 0.88rem;
+}
+
+/* Rejected-names tab: card grid + overlay */
+.rej-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fill,
+                                  minmax(240px, 1fr));
+    gap: 0.75rem;
+    margin-top: 0.5rem;
+}
+.rej-card {
+    background: var(--ari-card-bg, #fff);
+    border: 1px solid var(--ari-border, #ddd);
+    border-radius: 0.5rem;
+    padding: 0.7rem 0.85rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+    transition: box-shadow 0.15s, transform 0.15s;
+}
+.rej-card:hover {
+    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.10);
+}
+.rej-card__head {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-weight: 600;
+    color: #922b21;
+}
+.rej-card__name { font-family: monospace; }
+.rej-card__field { font-size: 0.85rem; }
+.rej-card__label { color: var(--ari-text-muted, #57606a); }
+.rej-card__meta {
+    margin-top: auto;
+    font-size: 0.75rem;
+    color: var(--ari-text-muted, #57606a);
+}
+.rej-card--add {
+    cursor: pointer;
+    border-style: dashed;
+    background: var(--ari-bg, #f4f6ff);
+    color: var(--ari-primary, #3f51b5);
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    min-height: 110px;
+}
+.rej-card--add:hover {
+    background: var(--ari-primary-light, #e8eaf6);
+}
+.rej-card__add-inner {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.4rem;
+    font-weight: 600;
+}
+.rej-card__add-inner i { font-size: 1.6rem; }
+
+/* lightweight overlay (modal) */
+.ari-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.ari-overlay[hidden] { display: none; }
+.ari-overlay__backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.45);
+}
+.ari-overlay__panel {
+    position: relative;
+    background: var(--ari-card-bg, #fff);
+    color: var(--ari-text, #222);
+    border-radius: 0.5rem;
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.25);
+    width: min(560px, 92vw);
+    max-height: 86vh;
+    display: flex;
+    flex-direction: column;
+}
+.ari-overlay__header,
+.ari-overlay__footer {
+    display: flex;
+    align-items: center;
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid var(--ari-border, #eee);
+}
+.ari-overlay__footer {
+    border-top: 1px solid var(--ari-border, #eee);
+    border-bottom: none;
+    justify-content: flex-end;
+    gap: 0.5rem;
+}
+.ari-overlay__header h3 {
+    margin: 0;
+    font-size: 1.05rem;
+    flex: 1;
+}
+.ari-overlay__close {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--ari-text-muted, #57606a);
+    font-size: 1.1rem;
+}
+.ari-overlay__body {
+    padding: 1rem;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+/* Astrometric database tab: keep the table card spanning the full
+ * page width regardless of how many rows / columns the current
+ * filter produces. The default ``.ari-card`` has
+ * ``align-items: center`` which lets the inner ``.ari-card__body``
+ * collapse to its content width, making the table appear centred
+ * when subsets are selected. Force a stretch layout for the
+ * astrom-db card only so it always fills the panel. */
+#astro-tab-astrom-db .ari-card {
+    align-items: stretch;
+    width: 100%;
+}
+#astro-tab-astrom-db .ari-card__body { width: 100%; }
+#astro-tab-astrom-db .ari-dt-wrap { width: 100%; }
+#astro-tab-astrom-db .ari-dt { width: 100%; }
+
+/* Add-manually tab: side-by-side cards on wide screens, stacked on
+ * narrow screens. The cards inherit ``.ari-card`` (which by default
+ * is centered) so we override align-items to stretch and force the
+ * inner body to use 100% width / left alignment so form fields fill
+ * the card. */
+#astro-tab-add-manually .am-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
+    gap: 1rem;
+    width: 100%;
+}
+#astro-tab-add-manually .ari-card {
+    align-items: stretch;
+    text-align: left;
+}
+#astro-tab-add-manually .ari-card__body {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 0.65rem;
+    align-items: stretch;
+}
+#astro-tab-add-manually .am-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 0.65rem;
+}
+#astro-tab-add-manually .am-checkbox {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+}
+#astro-tab-add-manually .am-checkbox span {
+    font-size: 0.85rem;
+    color: var(--ari-text-muted, #57606a);
+}
+</style>
+{% endblock %}
+
+{% block doc_content %}
+<div class="ari-page-header ari-page-header--full">
+    <h1>
+        <i class="{{ page_icon }}"></i>
+        Astrometrics
+    </h1>
+    <p class="ari-page-intro">
+        This page gives access to the APERO astrometric database.
+        Note that only objects already added to our database are
+        resolvable by coordinates here; for any other target, use
+        the "Resolve online" button (under the Resolve target tab)
+        which will query SIMBAD, Vizier and other public services.
+    </p>
+    <p class="ari-page-intro">
+        <strong>Rejected and unknown targets:</strong> any object
+        name that has been added to the rejection list (see the
+        "Rejected object names" tab) is excluded from the data
+        portal. Targets with no astrometric entry &mdash; and any
+        observation whose object name resolves to a rejected name
+        &mdash; fall back to the values found in the FITS header
+        (RA / Dec / PMRA / PMDE / OBJECT etc.) at reduction time
+        rather than to a curated entry.
+    </p>
+</div>
+
+{# ------------------------------------------------------------------ #}
+{# Vertical tab strip + tab panels                                     #}
+{# ------------------------------------------------------------------ #}
+<div class="ari-astro-tabs ari-htabs">
+    <nav class="ari-htabs__rail" role="tablist"
+         aria-label="Astrometrics sections">
+        <button class="ari-htab ari-htab--active"
+                type="button" role="tab"
+                aria-selected="true"
+                data-htab="find-existing"
+                aria-controls="astro-tab-find-existing">
+            <i class="fa-solid fa-magnifying-glass"></i>
+            <span>Find object in data portal</span>
+        </button>
+        <button class="ari-htab"
+                type="button" role="tab"
+                aria-selected="false"
+                data-htab="resolve-target"
+                aria-controls="astro-tab-resolve-target">
+            <i class="fa-solid fa-bullseye"></i>
+            <span>Resolve target</span>
+        </button>
+        <button class="ari-htab"
+                type="button" role="tab"
+                aria-selected="false"
+                data-htab="astrom-db"
+                aria-controls="astro-tab-astrom-db">
+            <i class="fa-solid fa-table"></i>
+            <span>Astrometric database</span>
+        </button>
+        {% if astrometrics_can_manage_rejects %}
+        <button class="ari-htab"
+                type="button" role="tab"
+                aria-selected="false"
+                data-htab="add-manually"
+                aria-controls="astro-tab-add-manually">
+            <i class="fa-solid fa-pen-to-square"></i>
+            <span>Add manually</span>
+        </button>
+        <button class="ari-htab"
+                type="button" role="tab"
+                aria-selected="false"
+                data-htab="rejected"
+                aria-controls="astro-tab-rejected">
+            <i class="fa-solid fa-ban"></i>
+            <span>Rejected object names</span>
+        </button>
+        {% endif %}
+    </nav>
+
+    <div class="ari-htab-panels">
+
+        {# ---------------------------------------------------------- #}
+        {# Tab 1: Find object already in the data portal               #}
+        {# ---------------------------------------------------------- #}
+        <section id="astro-tab-find-existing"
+                 class="ari-htab-panel ari-htab-panel--active"
+                 role="tabpanel" aria-labelledby="find-existing">
+            <div class="at-section-card" id="astro-section-find-object">
+                <header class="at-section-card__header">
+                    <h2>
+                        <i class="fa-solid fa-magnifying-glass"></i>
+                        Find object already in the data portal
+                    </h2>
+                </header>
+                <div class="at-section-card__body">
+                    <p class="ari-section-intro">
+                        Use this to locate objects whose data has
+                        already been processed and is currently
+                        available in the data portal. Searches are
+                        scoped to the profiles you have access to.
+                    </p>
+
+                    {# Sub-tabs: name / coords / date / advanced #}
+                    <div class="ot-find-tabs" role="tablist"
+                         aria-label="Find object mode">
+                        <button id="fo-tab-name"
+                                class="ot-find-tab ot-find-tab--active"
+                                type="button" role="tab"
+                                aria-selected="true"
+                                aria-controls="fo-panel-name">
+                            Find by name
+                        </button>
+                        <button id="fo-tab-coords" class="ot-find-tab"
+                                type="button" role="tab"
+                                aria-selected="false"
+                                aria-controls="fo-panel-coords">
+                            Find by coordinates
+                        </button>
+                        <button id="fo-tab-date" class="ot-find-tab"
+                                type="button" role="tab"
+                                aria-selected="false"
+                                aria-controls="fo-panel-date">
+                            Date
+                        </button>
+                        <button id="fo-tab-advanced" class="ot-find-tab"
+                                type="button" role="tab"
+                                aria-selected="false"
+                                aria-controls="fo-panel-advanced">
+                            Advanced
+                        </button>
+                    </div>
+
+                    {# By-name #}
+                    <div id="fo-panel-name"
+                         class="ot-find-tab-panel ot-find-tab-panel--active"
+                         role="tabpanel" aria-labelledby="fo-tab-name">
+                        <p class="ot-find-desc">
+                            Search for an object by name or alias.
+                        </p>
+                        <div class="ot-find-panel__grid">
+                            <label class="ot-find-field">
+                                <span class="ot-find-field__label">Object / alias</span>
+                                <input id="fo-name-query"
+                                       class="ot-find-input"
+                                       type="text"
+                                       placeholder="Type object name">
+                            </label>
+                            <div class="ot-find-actions">
+                                <button id="fo-find-name"
+                                        class="ari-btn ari-btn--sm ari-btn--secondary"
+                                        type="button">
+                                    <i class="fa-solid fa-search"></i>
+                                    Search
+                                </button>
+                                <button id="fo-clear-find-name"
+                                        class="ari-btn ari-btn--sm ari-btn--secondary"
+                                        type="button">
+                                    <i class="fa-solid fa-eraser"></i>
+                                    Clear
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    {# By-coords #}
+                    <div id="fo-panel-coords" class="ot-find-tab-panel"
+                         role="tabpanel"
+                         aria-labelledby="fo-tab-coords" hidden>
+                        <p class="ot-find-desc">
+                            Search for objects within a radius of
+                            given coordinates.
+                        </p>
+                        <div class="ot-find-panel__grid">
+                            <label class="ot-find-field ot-find-field--unit">
+                                <span class="ot-find-field__label">Coordinate format</span>
+                                <select id="fo-coord-format"
+                                        class="ot-find-select">
+                                    <option value="deg" selected>Deg</option>
+                                    <option value="hms">HH:MM:SS / DD:MM:SS</option>
+                                </select>
+                            </label>
+                            <label class="ot-find-field">
+                                <span id="fo-ra-label"
+                                      class="ot-find-field__label">RA [deg]</span>
+                                <input id="fo-ra"
+                                       class="ot-find-input" type="text"
+                                       placeholder="e.g. 328.1243">
+                            </label>
+                            <label class="ot-find-field">
+                                <span id="fo-dec-label"
+                                      class="ot-find-field__label">Dec [deg]</span>
+                                <input id="fo-dec"
+                                       class="ot-find-input" type="text"
+                                       placeholder="e.g. 28.7933">
+                            </label>
+                            <label class="ot-find-field">
+                                <span class="ot-find-field__label">Separation</span>
+                                <input id="fo-sep"
+                                       class="ot-find-input" type="number"
+                                       step="any" min="0"
+                                       placeholder="e.g. 30">
+                            </label>
+                            <label class="ot-find-field ot-find-field--unit">
+                                <span class="ot-find-field__label">Unit</span>
+                                <select id="fo-unit"
+                                        class="ot-find-select">
+                                    <option value="arcsec" selected>arcsec</option>
+                                    <option value="arcmin">arcmin</option>
+                                    <option value="deg">deg</option>
+                                </select>
+                            </label>
+                            <div class="ot-find-actions">
+                                <button id="fo-find-coords"
+                                        class="ari-btn ari-btn--sm ari-btn--secondary"
+                                        type="button">
+                                    <i class="fa-solid fa-crosshairs"></i>
+                                    Find
+                                </button>
+                                <button id="fo-clear-find-coords"
+                                        class="ari-btn ari-btn--sm ari-btn--secondary"
+                                        type="button">
+                                    <i class="fa-solid fa-eraser"></i>
+                                    Clear
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    {# Date #}
+                    <div id="fo-panel-date" class="ot-find-tab-panel"
+                         role="tabpanel"
+                         aria-labelledby="fo-tab-date" hidden>
+                        <p class="ot-find-desc">
+                            Filter objects by observation date range.
+                        </p>
+                        <div class="ot-find-panel__grid">
+                            <label class="ot-find-field">
+                                <span class="ot-find-field__label">First observed (from)</span>
+                                <input id="fo-first-date"
+                                       class="ot-find-input" type="date">
+                            </label>
+                            <label class="ot-find-field">
+                                <span class="ot-find-field__label">Last observed (to)</span>
+                                <input id="fo-last-date"
+                                       class="ot-find-input" type="date">
+                            </label>
+                            <div class="ot-find-actions">
+                                <button id="fo-find-date"
+                                        class="ari-btn ari-btn--sm ari-btn--secondary"
+                                        type="button">
+                                    <i class="fa-solid fa-calendar"></i>
+                                    Filter
+                                </button>
+                                <button id="fo-clear-find-date"
+                                        class="ari-btn ari-btn--sm ari-btn--secondary"
+                                        type="button">
+                                    <i class="fa-solid fa-eraser"></i>
+                                    Clear
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    {# Advanced #}
+                    <div id="fo-panel-advanced"
+                         class="ot-find-tab-panel" role="tabpanel"
+                         aria-labelledby="fo-tab-advanced" hidden>
+                        <p class="ot-find-desc">
+                            Advanced property-based search.
+                        </p>
+                        <div class="ot-find-panel__grid">
+                            <label class="ot-find-field">
+                                <span class="ot-find-field__label">Property</span>
+                                <input id="fo-adv-property"
+                                       class="ot-find-input" type="text"
+                                       placeholder="e.g. OBJNAME, RA_DEG, MAG">
+                            </label>
+                            <label class="ot-find-field">
+                                <span class="ot-find-field__label">Value</span>
+                                <input id="fo-adv-value"
+                                       class="ot-find-input" type="text"
+                                       placeholder="e.g. 50 (numeric) or text">
+                            </label>
+                            <div class="ot-find-actions">
+                                <button id="fo-find-advanced"
+                                        class="ari-btn ari-btn--sm ari-btn--secondary"
+                                        type="button">
+                                    <i class="fa-solid fa-sliders"></i>
+                                    Search
+                                </button>
+                                <button id="fo-clear-find-adv"
+                                        class="ari-btn ari-btn--sm ari-btn--secondary"
+                                        type="button">
+                                    <i class="fa-solid fa-eraser"></i>
+                                    Clear
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    {# Find results #}
+                    <div id="fo-results" class="ari-astro-results"
+                         style="display: none;">
+                        <div id="fo-results-content"></div>
+                    </div>
+                    <div id="fo-loading"
+                         style="display: none; text-align: center; padding: 2rem;">
+                        <i class="fa-solid fa-spinner fa-spin"></i>
+                        Searching...
+                    </div>
+                    <div id="fo-error"
+                         style="display: none; padding: 1rem; background: #fee; color: #c33; border-radius: 4px;">
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        {# ---------------------------------------------------------- #}
+        {# Tab 2: Resolve target                                       #}
+        {# ---------------------------------------------------------- #}
+        <section id="astro-tab-resolve-target"
+                 class="ari-htab-panel"
+                 role="tabpanel" aria-labelledby="resolve-target"
+                 hidden>
+            <div class="at-section-card"
+                 id="astro-section-resolve-target">
+                <header class="at-section-card__header">
+                    <h2>
+                        <i class="fa-solid fa-bullseye"></i>
+                        Resolve target
+                    </h2>
+                </header>
+                <div class="at-section-card__body">
+                    <p class="ari-section-intro">
+                        Look up a target in the APERO astrometric
+                        database ({{ astrometrics_star_count or '?' }}
+                        stars, vetted by the APERO team).
+                    </p>
+                    <p class="ari-section-intro">
+                        If the target is not yet in the database,
+                        use "Resolve online" to query external
+                        services.
+                    </p>
+                    <p class="ari-section-intro">
+                        Any user can flag a value that looks wrong.
+                    </p>
+
+                    {# Sub-tabs #}
+                    <div class="ot-find-tabs" role="tablist"
+                         aria-label="Resolve target mode">
+                        <button id="rt-tab-name"
+                                class="ot-find-tab ot-find-tab--active"
+                                type="button" role="tab"
+                                aria-selected="true"
+                                aria-controls="rt-panel-name">
+                            By name
+                        </button>
+                        <button id="rt-tab-coords" class="ot-find-tab"
+                                type="button" role="tab"
+                                aria-selected="false"
+                                aria-controls="rt-panel-coords">
+                            By coordinates
+                        </button>
+                        <button id="rt-tab-advanced"
+                                class="ot-find-tab"
+                                type="button" role="tab"
+                                aria-selected="false"
+                                aria-controls="rt-panel-advanced">
+                            Advanced
+                        </button>
+                    </div>
+
+                    {# By name #}
+                    <div id="rt-panel-name"
+                         class="ot-find-tab-panel ot-find-tab-panel--active"
+                         role="tabpanel" aria-labelledby="rt-tab-name">
+                        <div class="ot-find-panel__grid">
+                            <label class="ot-find-field">
+                                <span class="ot-find-field__label">Target name or alias</span>
+                                <input id="rt-name-query"
+                                       class="ot-find-input"
+                                       type="text"
+                                       placeholder="e.g. GJ 300, HD 214680, 10LAC">
+                            </label>
+                            <div class="ot-find-actions">
+                                <button id="rt-resolve-name"
+                                        class="ari-btn ari-btn--sm ari-btn--primary"
+                                        type="button">
+                                    <i class="fa-solid fa-bullseye"></i>
+                                    Resolve
+                                </button>
+                                <button id="rt-resolve-online-name"
+                                        class="ari-btn ari-btn--sm ari-btn--secondary"
+                                        type="button"
+                                        title="Resolve via SIMBAD/Gaia/VizieR (online)">
+                                    <i class="fa-solid fa-cloud-arrow-down"></i>
+                                    Resolve online
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    {# By coords #}
+                    <div id="rt-panel-coords" class="ot-find-tab-panel"
+                         role="tabpanel"
+                         aria-labelledby="rt-tab-coords" hidden>
+                        <div class="ot-find-panel__grid">
+                            <label class="ot-find-field">
+                                <span class="ot-find-field__label">RA [deg]</span>
+                                <input id="rt-ra"
+                                       class="ot-find-input" type="text"
+                                       placeholder="e.g. 339.815">
+                            </label>
+                            <label class="ot-find-field">
+                                <span class="ot-find-field__label">Dec [deg]</span>
+                                <input id="rt-dec"
+                                       class="ot-find-input" type="text"
+                                       placeholder="e.g. 39.05">
+                            </label>
+                            <label class="ot-find-field">
+                                <span class="ot-find-field__label">Radius [arcsec]</span>
+                                <input id="rt-radius"
+                                       class="ot-find-input" type="number"
+                                       step="any" min="0" value="60">
+                            </label>
+                            <div class="ot-find-actions">
+                                <button id="rt-resolve-coords"
+                                        class="ari-btn ari-btn--sm ari-btn--primary"
+                                        type="button">
+                                    <i class="fa-solid fa-crosshairs"></i>
+                                    Resolve
+                                </button>
+                                <button id="rt-resolve-online-coords"
+                                        class="ari-btn ari-btn--sm ari-btn--secondary"
+                                        type="button"
+                                        title="SIMBAD cone search (online)">
+                                    <i class="fa-solid fa-cloud-arrow-down"></i>
+                                    Resolve online
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    {# Advanced (column filter) #}
+                    <div id="rt-panel-advanced"
+                         class="ot-find-tab-panel" role="tabpanel"
+                         aria-labelledby="rt-tab-advanced" hidden>
+                        <div class="ot-find-panel__grid">
+                            <label class="ot-find-field">
+                                <span class="ot-find-field__label">Column</span>
+                                <select id="rt-adv-column"
+                                        class="ot-find-select">
+                                    <option value="">Loading columns...</option>
+                                </select>
+                            </label>
+                            <label class="ot-find-field ot-find-field--unit">
+                                <span class="ot-find-field__label">Match</span>
+                                <select id="rt-adv-match"
+                                        class="ot-find-select">
+                                    <option value="auto" selected>auto</option>
+                                    <option value="exact">exact</option>
+                                    <option value="substring">substring</option>
+                                    <option value="glob">glob</option>
+                                    <option value="regex">regex</option>
+                                    <option value="ge">&ge;</option>
+                                    <option value="le">&le;</option>
+                                    <option value="gt">&gt;</option>
+                                    <option value="lt">&lt;</option>
+                                </select>
+                            </label>
+                            <label class="ot-find-field">
+                                <span class="ot-find-field__label">Value</span>
+                                <input id="rt-adv-value"
+                                       class="ot-find-input" type="text"
+                                       placeholder="e.g. 5000">
+                            </label>
+                            <div class="ot-find-actions">
+                                <button id="rt-resolve-filter"
+                                        class="ari-btn ari-btn--sm ari-btn--primary"
+                                        type="button">
+                                    <i class="fa-solid fa-sliders"></i>
+                                    Resolve
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    {# Status / error / loading #}
+                    <div id="rt-loading"
+                         style="display: none; text-align: center; padding: 1rem;">
+                        <i class="fa-solid fa-spinner fa-spin"></i>
+                        Resolving...
+                    </div>
+                    <div id="rt-error"
+                         style="display: none; padding: 1rem; background: #fee; color: #c33; border-radius: 4px;">
+                    </div>
+
+                    {# Multi-match picker (shown for coord / filter
+                       searches that return >1 hit) #}
+                    <div id="rt-picker"
+                         class="ari-astro-results"
+                         style="display: none;">
+                        <h3 class="ari-astro-results__heading">
+                            Matches
+                        </h3>
+                        <ul id="rt-picker-list"
+                            class="ari-astro-picker"></ul>
+                    </div>
+
+                    {# Resolved target -- shared section renderer
+                       writes its output here #}
+                    <div id="rt-target-info"
+                         class="ari-target-info"
+                         style="display: none;">
+                        <header class="ari-target-info__header">
+                            <h2>
+                                <i class="fa-solid fa-star"></i>
+                                <span id="rt-target-name">--</span>
+                            </h2>
+                            <div class="ari-target-info__actions">
+                                {% if astrometrics_can_manage_rejects %}
+                                <button id="rt-target-verify"
+                                        class="ari-btn ari-btn--sm ari-btn--primary"
+                                        type="button"
+                                        title="Mark this entry as verified"
+                                        hidden>
+                                    <i class="fa-solid fa-circle-check"></i>
+                                    Mark as verified
+                                </button>
+                                <button id="rt-target-upload"
+                                        class="ari-btn ari-btn--sm ari-btn--secondary"
+                                        type="button"
+                                        hidden>
+                                    <i class="fa-solid fa-upload"></i>
+                                    Upload yaml
+                                </button>
+                                {% endif %}
+                            </div>
+                        </header>
+                        <div id="rt-verify-banner"
+                             class="rt-verify-banner"
+                             style="display:none;">
+                            <i class="fa-solid fa-triangle-exclamation"></i>
+                            This astrometric entry is
+                            <strong>pending verification</strong>.
+                            Please review every field below before
+                            marking it as verified.
+                        </div>
+                        <div id="rt-target-info-sections"
+                             class="ari-target-info__sections"></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        {# ---------------------------------------------------------- #}
+        {# Tab 3: Astrometric database (browse all entries)            #}
+        {# ---------------------------------------------------------- #}
+        <section id="astro-tab-astrom-db"
+                 class="ari-htab-panel"
+                 role="tabpanel" aria-labelledby="astrom-db" hidden>
+            <div class="ari-card">
+                <div class="ari-card__header">
+                    <h2 class="ari-card__title">
+                        <i class="fa-solid fa-table"></i>
+                        Astrometric database
+                    </h2>
+                    <span id="adb-count" class="ari-dt__count"></span>
+                </div>
+                <div class="ari-card__body">
+                    <div id="adb-status" class="ari-dt__count"></div>
+                    <div class="ari-dt-wrap">
+                        <table id="adb-table" class="ari-dt"></table>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        {% if astrometrics_can_manage_rejects %}
+        {# ---------------------------------------------------------- #}
+        {# Tab 4 (monitor-gated): Add manually                         #}
+        {#                                                             #}
+        {# Two side-by-side forms: add a rejected name, or add a       #}
+        {# completely manual astrometric target (all fields optional). #}
+        {# Used as a last-resort entry point when SIMBAD / Vizier /    #}
+        {# the existing fall-back resolvers all fail. Rendered only    #}
+        {# when ``astrometrics_can_manage_rejects`` is True            #}
+        {# (monitor.{INSTRUMENT} or higher).                           #}
+        {# ---------------------------------------------------------- #}
+        <section id="astro-tab-add-manually"
+                 class="ari-htab-panel"
+                 role="tabpanel" aria-labelledby="add-manually" hidden>
+
+            <div class="am-grid">
+
+                {# ---- Add manual target ---- #}
+                <div class="ari-card">
+                    <div class="ari-card__header">
+                        <h2 class="ari-card__title">
+                            <i class="fa-solid fa-star"></i>
+                            Add manual target
+                        </h2>
+                    </div>
+                    <div class="ari-card__body">
+                        <p class="ari-section-intro">
+                            Add a brand-new astrometric entry. Use
+                            this only when SIMBAD / Vizier / the
+                            online resolvers cannot find the target.
+                            All numeric fields are optional and
+                            default to <code>None</code>; fill in
+                            whatever you have. The new entry is
+                            written under <code>pending/</code> and
+                            must be verified before it is used in
+                            production.
+                        </p>
+
+                        <div class="am-row">
+                            <label class="ot-find-field">
+                                <span class="ot-find-field__label">
+                                    APERO_NAME (required)
+                                </span>
+                                <input id="am-man-name"
+                                       class="ot-find-input"
+                                       type="text"
+                                       placeholder="e.g. PROXIMA">
+                            </label>
+                            <label class="ot-find-field">
+                                <span class="ot-find-field__label">
+                                    APERO_CLASS
+                                </span>
+                                <select id="am-man-class"
+                                        class="ot-find-input">
+                                    <option value="STAR" selected>
+                                        STAR
+                                    </option>
+                                    <option value="PLANET">
+                                        PLANET
+                                    </option>
+                                    <option value="GALAXY">
+                                        GALAXY
+                                    </option>
+                                    <option value="CALIB">
+                                        CALIB
+                                    </option>
+                                    <option value="OTHER">
+                                        OTHER
+                                    </option>
+                                </select>
+                            </label>
+                        </div>
+
+                        <div class="am-row">
+                            <label class="ot-find-field">
+                                <span class="ot-find-field__label">
+                                    Original name
+                                </span>
+                                <input id="am-man-orig"
+                                       class="ot-find-input"
+                                       type="text"
+                                       placeholder="(defaults to APERO_NAME)">
+                            </label>
+                            <label class="ot-find-field">
+                                <span class="ot-find-field__label">
+                                    SIMBAD name
+                                </span>
+                                <input id="am-man-simbad"
+                                       class="ot-find-input"
+                                       type="text">
+                            </label>
+                        </div>
+
+                        <div class="am-row">
+                            <label class="ot-find-field">
+                                <span class="ot-find-field__label">
+                                    RA [deg]
+                                </span>
+                                <input id="am-man-ra"
+                                       class="ot-find-input"
+                                       type="text"
+                                       placeholder="None"
+                                       inputmode="decimal">
+                            </label>
+                            <label class="ot-find-field">
+                                <span class="ot-find-field__label">
+                                    Dec [deg]
+                                </span>
+                                <input id="am-man-dec"
+                                       class="ot-find-input"
+                                       type="text"
+                                       placeholder="None"
+                                       inputmode="decimal">
+                            </label>
+                            <label class="ot-find-field">
+                                <span class="ot-find-field__label">
+                                    Epoch [JD]
+                                </span>
+                                <input id="am-man-epoch"
+                                       class="ot-find-input"
+                                       type="text"
+                                       placeholder="None"
+                                       inputmode="decimal">
+                            </label>
+                        </div>
+
+                        <div class="am-row">
+                            <label class="ot-find-field">
+                                <span class="ot-find-field__label">
+                                    PMRA [mas/yr]
+                                </span>
+                                <input id="am-man-pmra"
+                                       class="ot-find-input"
+                                       type="text"
+                                       placeholder="None"
+                                       inputmode="decimal">
+                            </label>
+                            <label class="ot-find-field">
+                                <span class="ot-find-field__label">
+                                    PMDE [mas/yr]
+                                </span>
+                                <input id="am-man-pmde"
+                                       class="ot-find-input"
+                                       type="text"
+                                       placeholder="None"
+                                       inputmode="decimal">
+                            </label>
+                            <label class="ot-find-field am-checkbox">
+                                <input id="am-man-nopm"
+                                       type="checkbox">
+                                <span>NO_PM (object has no proper
+                                    motion)</span>
+                            </label>
+                        </div>
+
+                        <div class="am-row">
+                            <label class="ot-find-field">
+                                <span class="ot-find-field__label">
+                                    Plx [mas]
+                                </span>
+                                <input id="am-man-plx"
+                                       class="ot-find-input"
+                                       type="text"
+                                       placeholder="None"
+                                       inputmode="decimal">
+                            </label>
+                            <label class="ot-find-field">
+                                <span class="ot-find-field__label">
+                                    RV [km/s]
+                                </span>
+                                <input id="am-man-rv"
+                                       class="ot-find-input"
+                                       type="text"
+                                       placeholder="None"
+                                       inputmode="decimal">
+                            </label>
+                            <label class="ot-find-field">
+                                <span class="ot-find-field__label">
+                                    Teff [K]
+                                </span>
+                                <input id="am-man-teff"
+                                       class="ot-find-input"
+                                       type="text"
+                                       placeholder="None"
+                                       inputmode="decimal">
+                            </label>
+                        </div>
+
+                        <div class="am-row">
+                            <label class="ot-find-field">
+                                <span class="ot-find-field__label">
+                                    Spectral type
+                                </span>
+                                <input id="am-man-spt"
+                                       class="ot-find-input"
+                                       type="text"
+                                       placeholder="None">
+                            </label>
+                            <label class="ot-find-field">
+                                <span class="ot-find-field__label">
+                                    Gaia source ID
+                                </span>
+                                <input id="am-man-gaia"
+                                       class="ot-find-input"
+                                       type="text"
+                                       placeholder="None">
+                            </label>
+                        </div>
+
+                        <label class="ot-find-field">
+                            <span class="ot-find-field__label">
+                                Aliases (one per line)
+                            </span>
+                            <textarea id="am-man-aliases"
+                                      class="ot-find-input"
+                                      rows="3"></textarea>
+                        </label>
+                        <label class="ot-find-field">
+                            <span class="ot-find-field__label">
+                                Notes
+                            </span>
+                            <textarea id="am-man-notes"
+                                      class="ot-find-input"
+                                      rows="2"></textarea>
+                        </label>
+
+                        <div id="am-man-status"
+                             class="ari-dt__count"></div>
+                        <div>
+                            <button id="am-man-save"
+                                    type="button"
+                                    class="ari-btn ari-btn--primary">
+                                <i class="fa-solid fa-plus"></i>
+                                Add manual target
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </section>
+        {% endif %}
+
+        {% if astrometrics_can_manage_rejects %}
+        {# ---------------------------------------------------------- #}
+        {# Tab 4: Rejected object names (monitor-gated)                #}
+        {# ---------------------------------------------------------- #}
+        <section id="astro-tab-rejected"
+                 class="ari-htab-panel"
+                 role="tabpanel" aria-labelledby="rejected" hidden>
+            <div class="ari-card">
+                <div class="ari-card__header">
+                    <h2 class="ari-card__title">
+                        <i class="fa-solid fa-ban"></i>
+                        Rejected object names
+                    </h2>
+                    <span id="rej-count" class="ari-dt__count"></span>
+                </div>
+                <div class="ari-card__body">
+                    <p class="ari-section-intro">
+                        These names &mdash; and any of their listed
+                        aliases &mdash; are excluded from the data
+                        portal. Any incoming observation whose object
+                        name resolves to one of these entries falls
+                        back to the FITS header values rather than to
+                        a curated astrometric record. Use the card
+                        below to add a new rejected name; existing
+                        entries are managed via the standard
+                        astrometric database tools.
+                    </p>
+                    <div id="rej-status" class="ari-dt__count"></div>
+                    <div id="rej-cards" class="rej-cards"></div>
+                </div>
+            </div>
+        </section>
+
+        {# Add-rejection overlay #}
+        <div id="rej-add-overlay" class="ari-overlay" hidden>
+            <div class="ari-overlay__backdrop"
+                 data-rej-overlay-close></div>
+            <div class="ari-overlay__panel">
+                <header class="ari-overlay__header">
+                    <h3>
+                        <i class="fa-solid fa-ban"></i>
+                        Add a rejected object name
+                    </h3>
+                    <button type="button"
+                            class="ari-overlay__close"
+                            data-rej-overlay-close>
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                </header>
+                <div class="ari-overlay__body">
+                    <label class="ot-find-field">
+                        <span class="ot-find-field__label">
+                            Object name to reject
+                            (used as APERO_NAME)
+                        </span>
+                        <input id="rej-add-name"
+                               class="ot-find-input"
+                               type="text"
+                               placeholder="e.g. CALIBRATION">
+                    </label>
+                    <label class="ot-find-field">
+                        <span class="ot-find-field__label">
+                            Aliases (one per line, also rejected)
+                        </span>
+                        <textarea id="rej-add-aliases"
+                                  class="ot-find-input"
+                                  rows="4"
+                                  placeholder="e.g. cal&#10;CAL"
+                                  ></textarea>
+                    </label>
+                    <label class="ot-find-field">
+                        <span class="ot-find-field__label">
+                            Notes (why is this name rejected?)
+                        </span>
+                        <textarea id="rej-add-notes"
+                                  class="ot-find-input"
+                                  rows="3"></textarea>
+                    </label>
+                    <div id="rej-add-status"
+                         class="ari-dt__count"></div>
+                </div>
+                <footer class="ari-overlay__footer">
+                    <button type="button"
+                            class="ari-btn ari-btn--secondary"
+                            data-rej-overlay-close>
+                        Cancel
+                    </button>
+                    <button id="rej-add-save" type="button"
+                            class="ari-btn ari-btn--primary">
+                        <i class="fa-solid fa-plus"></i>
+                        Add rejection
+                    </button>
+                </footer>
+            </div>
+        </div>
+        {% endif %}
+
+    </div>
+</div>
+
+<script>
+    // expose user permissions for in-page perm-gated UI elements
+    window.AperoRI = window.AperoRI || {};
+    window.AperoRI.userPerms = {{ (user_permissions|list)|tojson }};
+    // Mark this page as an astrometrics surface so page_pins.js
+    // recognises it and shows the "ARI API" button. The page is
+    // profile-agnostic (it always operates on the shared on-disk
+    // astrometric DB) so profile_id / instrument are intentionally
+    // empty - they are used only for example-snippet flavour.
+    window.ARI_ASTROMETRICS = {
+        profileId: '',
+        instrument: ''
+    };
+</script>
+<script src="https://cdn.bokeh.org/bokeh/release/bokeh-3.8.2.min.js"></script>
+<script src="https://cdn.bokeh.org/bokeh/release/bokeh-widgets-3.8.2.min.js"></script>
+<script src="{{ url_for('static', filename='js/target_info_render.js', v='20260424e') }}"></script>
+<script src="{{ url_for('static', filename='js/ari_data_table.js', v='20260424c') }}"></script>
+<script src="{{ url_for('static', filename='js/astrometrics.js', v='20260424e') }}"></script>
+{% endblock %}

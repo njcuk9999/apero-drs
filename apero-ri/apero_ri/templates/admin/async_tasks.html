@@ -1,0 +1,791 @@
+{% extends "general/sidebar_base.html" %}
+{% block title %}APERO RI – Async Tasks{% endblock %}
+
+{% block extra_head %}
+<!-- marked.js for client-side markdown rendering (served locally) -->
+<script src="{{ url_for('static', filename='js/marked.min.js') }}"></script>
+<style>
+.at-instrument-picker {
+    margin: 0.75rem 0 1rem 0;
+}
+.at-instrument-picker__cards {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+.at-instrument-card {
+    border: 1px solid var(--ari-line, #d6d9de);
+    background: var(--ari-panel, #ffffff);
+    color: inherit;
+    border-radius: 0.5rem;
+    padding: 0.5rem 0.8rem;
+    cursor: pointer;
+    font-weight: 600;
+}
+.at-instrument-card--active {
+    border-color: var(--ari-primary, #0b66c3);
+    box-shadow: inset 0 0 0 1px var(--ari-primary, #0b66c3);
+}
+
+/* Edit Task modal readability improvements */
+#at-edit-modal .ari-modal {
+    width: min(92vw, 760px);
+    max-width: 760px;
+}
+#at-edit-modal .ari-modal__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+}
+#at-edit-modal .ari-modal__header h3 {
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    color: var(--ari-text-main, #1f2937);
+}
+#at-edit-modal .ari-modal__close {
+    margin-left: 0;
+    flex: 0 0 auto;
+}
+#at-edit-modal .ari-modal__body {
+    display: grid;
+    gap: 0.9rem;
+    max-height: 72vh;
+    overflow: auto;
+}
+#at-edit-modal .ari-ap-form__field {
+    margin: 0;
+}
+#at-edit-modal #edit-task-info-row,
+#at-edit-modal #edit-backup-fields,
+#at-edit-modal #edit-assets-fields,
+#at-edit-modal #edit-mp-fields,
+#at-edit-modal #edit-local-sync-fields {
+    border: 1px solid var(--ari-border, #d6d9de);
+    border-radius: 8px;
+    background: var(--ari-panel, #f9fafb);
+    padding: 0.75rem;
+}
+#at-edit-modal #edit-backup-fields,
+#at-edit-modal #edit-assets-fields,
+#at-edit-modal #edit-mp-fields,
+#at-edit-modal #edit-local-sync-fields {
+    display: grid;
+    gap: 0.75rem;
+}
+#at-edit-modal #edit-run-count {
+    padding: 0.4rem 0.6rem;
+    border: 1px solid var(--ari-border, #d6d9de);
+    border-radius: 6px;
+    background: var(--ari-panel, #ffffff);
+}
+.at-edit-tabs {
+    display: flex;
+    gap: 0.5rem;
+    border-bottom: 1px solid var(--ari-border, #d6d9de);
+    padding-bottom: 0.5rem;
+    margin-bottom: 0.25rem;
+}
+.at-edit-tab {
+    border: 1px solid var(--ari-border, #d6d9de);
+    background: var(--ari-panel, #ffffff);
+    border-radius: 6px;
+    padding: 0.35rem 0.65rem;
+    cursor: pointer;
+    font-weight: 600;
+}
+.at-edit-tab--active {
+    border-color: var(--ari-primary, #0b66c3);
+    color: var(--ari-primary, #0b66c3);
+}
+.at-edit-tab-pane { display: none; }
+.at-edit-tab-pane--active { display: grid; gap: 0.9rem; }
+[data-theme="dark"] .at-instrument-card {
+    background: #1c2128;
+    border-color: #30363d;
+}
+[data-theme="dark"] .at-edit-tab {
+    background: #1c2128;
+    border-color: #30363d;
+    color: #c9d1d9;
+}
+[data-theme="dark"] #at-edit-modal #edit-task-info-row,
+[data-theme="dark"] #at-edit-modal #edit-backup-fields,
+[data-theme="dark"] #at-edit-modal #edit-assets-fields,
+[data-theme="dark"] #at-edit-modal #edit-mp-fields,
+[data-theme="dark"] #at-edit-modal #edit-local-sync-fields {
+    background: #1c2128;
+    border-color: #30363d;
+}
+</style>
+{% endblock %}
+
+{% block doc_content %}
+<div class="ari-page-header">
+    <h1><i class="{{ page_icon }}"></i> {{ page_label }}</h1>
+</div>
+
+<!-- ====================================================================== -->
+<!-- Top-level tabs                                                          -->
+<!-- ====================================================================== -->
+<div id="at-tabs" class="ari-sg-tabs"></div>
+
+<div id="at-instrument-picker" class="at-instrument-picker" style="display:none;">
+    <div class="ari-sg-section__header" style="padding:0 0 0.5rem 0;">
+        <h3><i class="fa-solid fa-satellite-dish"></i> Instruments</h3>
+    </div>
+    <div id="at-instrument-cards" class="at-instrument-picker__cards"></div>
+</div>
+
+<!-- ====================================================================== -->
+<!-- Instrument workspace                                                    -->
+<!-- ====================================================================== -->
+<div id="at-instrument-workspace" style="display:none;">
+
+    <!-- Toolbar -->
+    <div class="at-toolbar">
+        <button id="btn-run-all" class="ari-btn ari-btn--primary">
+            <i class="fa-solid fa-play"></i> Run All
+        </button>
+        <button id="btn-force-run-all" class="ari-btn ari-btn--secondary">
+            <i class="fa-solid fa-bolt"></i> Force Run All
+        </button>
+        <span id="at-running-badge" class="at-running-badge" style="display:none;">
+            <i class="fa-solid fa-circle-notch fa-spin"></i> Running…
+        </span>
+    </div>
+
+    <!-- Two-column task lists -->
+    <div class="at-lists-row">
+
+        <!-- Active tasks -->
+        <div class="ari-sg-section">
+            <div class="ari-sg-section__header">
+                <h3><i class="fa-solid fa-toggle-on"></i> Active Tasks</h3>
+                <span id="active-count" class="ari-sg-count">0</span>
+            </div>
+            <div id="active-task-list" class="at-task-list">
+                <div class="ari-sg-empty-small">No active tasks</div>
+            </div>
+        </div>
+
+        <!-- Inactive tasks -->
+        <div class="ari-sg-section">
+            <div class="ari-sg-section__header">
+                <h3><i class="fa-solid fa-toggle-off"></i> Inactive Tasks</h3>
+                <span id="inactive-count" class="ari-sg-count">0</span>
+            </div>
+            <div id="inactive-task-list" class="at-task-list">
+                <div class="ari-sg-empty-small">No inactive tasks</div>
+            </div>
+        </div>
+
+    </div><!-- /at-lists-row -->
+
+    <!-- Full-width detail area -->
+    <div id="at-detail-area">
+
+        <!-- Empty state -->
+        <div id="at-detail-empty" class="at-detail-empty">
+            <i class="fa-solid fa-arrow-up"></i>
+            <span>Select a task above to view details</span>
+        </div>
+
+        <!-- Detail sections (hidden until a task is selected) -->
+        <div id="at-detail" style="display:none;">
+
+            <!-- ── Section 1: Summary ── -->
+            <div class="at-section-card">
+                <div class="at-section-card__header">
+                    <div class="at-detail__name-area">
+                        <span class="at-detail__name" id="det-name"></span>
+                        <span class="at-status-badge" id="det-status-badge"></span>
+                    </div>
+                    <div class="at-detail__btns">
+                        <button id="det-btn-toggle"
+                                class="ari-btn ari-btn--sm ari-btn--secondary"
+                                title="Toggle active / inactive">
+                            <i class="fa-solid fa-toggle-on"></i>
+                        </button>
+                        <button id="det-btn-edit"
+                                class="ari-btn ari-btn--sm ari-btn--secondary"
+                                title="Edit task">
+                            <i class="fa-solid fa-pen"></i>
+                        </button>
+                        <button id="det-btn-delete"
+                                class="ari-btn ari-btn--sm ari-btn--danger"
+                                title="Delete task">
+                            <i class="fa-solid fa-trash"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="at-section-card__body">
+                    <div class="at-kv-list" id="det-kv-list">
+                        <div class="at-kv-row">
+                            <span class="at-kv-row__label">Task key</span>
+                            <span id="det-task-key" class="at-kv-row__value at-kv-row__value--code"></span>
+                        </div>
+                        <div class="at-kv-row">
+                            <span class="at-kv-row__label">Frequency</span>
+                            <span id="det-frequency" class="at-kv-row__value"></span>
+                        </div>
+                        <div class="at-kv-row" id="det-parallel-row" style="display:none;">
+                            <span class="at-kv-row__label">Parallel config</span>
+                            <span id="det-parallel" class="at-kv-row__value"></span>
+                        </div>
+                        <div class="at-kv-row" id="det-sync-mode-row" style="display:none;">
+                            <span class="at-kv-row__label">Sync mode</span>
+                            <span id="det-sync-mode" class="at-kv-row__value"></span>
+                        </div>
+                        <div class="at-kv-row" id="det-backup-retention-row" style="display:none;">
+                            <span class="at-kv-row__label">Backup retention</span>
+                            <span id="det-backup-retention" class="at-kv-row__value"></span>
+                        </div>
+                        <div class="at-kv-row" id="det-backup-max-size-row" style="display:none;">
+                            <span class="at-kv-row__label">Max archive input size</span>
+                            <span id="det-backup-max-size" class="at-kv-row__value"></span>
+                        </div>
+                        <div class="at-kv-row" id="det-backup-exclude-dirs-row" style="display:none;">
+                            <span class="at-kv-row__label">Excluded directories</span>
+                            <span id="det-backup-exclude-dirs" class="at-kv-row__value"></span>
+                        </div>
+                        <div class="at-kv-row" id="det-backup-exclude-paths-row" style="display:none;">
+                            <span class="at-kv-row__label">Excluded files</span>
+                            <span id="det-backup-exclude-paths" class="at-kv-row__value"></span>
+                        </div>
+                        <div class="at-kv-row">
+                            <span class="at-kv-row__label">Description</span>
+                            <span id="det-description" class="at-kv-row__value"></span>
+                        </div>
+                        <div class="at-kv-row">
+                            <span class="at-kv-row__label">Last run</span>
+                            <span id="det-last-run" class="at-kv-row__value"></span>
+                        </div>
+                        <div class="at-kv-row">
+                            <span class="at-kv-row__label">Times run</span>
+                            <span id="det-run-count" class="at-kv-row__value">0</span>
+                        </div>
+                    </div>
+
+                    <div id="det-filters-warning" class="at-after-kv-block" style="display:none;">
+                        <div class="at-filters-warning">
+                            <div class="at-filters-warning__title">
+                                <i class="fa-solid fa-triangle-exclamation"></i>
+                                Filters are applied to this task
+                            </div>
+                            <ul id="det-filters-warning-list"
+                                class="at-filters-warning__list"></ul>
+                        </div>
+                    </div>
+
+                    <!-- Progress bar (shown while running or queued) -->
+                    <div id="det-progress-row" class="at-progress-line" style="display:none;">
+                        <span class="at-kv-row__label">Progress</span>
+                        <div class="at-progress-wrap">
+                            <div class="at-progress-bar">
+                                <div id="det-progress-fill" class="at-progress-bar__fill" style="width:0%;"></div>
+                            </div>
+                            <span id="det-progress-pct" class="at-progress-pct">0%</span>
+                        </div>
+                    </div>
+                    <div id="det-subprogress-row" class="at-progress-line" style="display:none;">
+                        <span class="at-kv-row__label">Subprogress</span>
+                        <div class="at-progress-wrap">
+                            <div class="at-progress-bar">
+                                <div id="det-subprogress-fill" class="at-progress-bar__fill at-progress-bar__fill--sub" style="width:0%;"></div>
+                            </div>
+                            <span id="det-subprogress-pct" class="at-progress-pct">0%</span>
+                        </div>
+                    </div>
+
+                    <div class="at-actions-row">
+                        <button id="det-btn-run-now" class="ari-btn ari-btn--primary">
+                            <i class="fa-solid fa-play"></i> Run Now
+                        </button>
+                        <button id="det-btn-force-run" class="ari-btn ari-btn--secondary">
+                            <i class="fa-solid fa-bolt"></i> Force Run
+                        </button>
+                        <button id="det-btn-stop" class="ari-btn ari-btn--danger" style="display:none;">
+                            <i class="fa-solid fa-stop"></i> Stop
+                        </button>
+                        <button id="det-btn-view-log" class="ari-btn ari-btn--secondary">
+                            <i class="fa-solid fa-file-lines"></i> View Log
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ── Section 2: Info ── -->
+            <div class="at-section-card" id="det-info-section">
+                <div class="at-section-card__header">
+                    <span><i class="fa-solid fa-circle-info"></i> Info</span>
+                    <button id="det-btn-toggle-info"
+                            class="ari-btn ari-btn--sm ari-btn--secondary"
+                            title="Collapse/Expand info"
+                            style="margin-left:0.5rem;">
+                        <i class="fa-solid fa-chevron-up"></i>
+                    </button>
+                    <button id="det-btn-copy-info"
+                            class="ari-btn ari-btn--sm ari-btn--secondary"
+                            title="Copy info to clipboard"
+                            style="margin-left:auto;">
+                        <i class="fa-solid fa-copy"></i> Copy
+                    </button>
+                </div>
+                <div id="det-info-body" class="at-section-card__body">
+                    <div id="det-info" class="at-info-md" style="display:none;"></div>
+                    <div id="det-info-empty" class="at-muted-hint">No info yet — run the task to generate output.</div>
+                </div>
+            </div>
+
+            <!-- ── Section 3: Error (hidden when no error) ── -->
+            <div class="at-section-card at-section-card--error" id="det-error-section" style="display:none;">
+                <div class="at-section-card__header">
+                    <span><i class="fa-solid fa-circle-xmark"></i> Error</span>
+                    <button id="det-btn-toggle-error"
+                            class="ari-btn ari-btn--sm ari-btn--secondary"
+                            title="Collapse/Expand error"
+                            style="margin-left:0.5rem;">
+                        <i class="fa-solid fa-chevron-up"></i>
+                    </button>
+                    <button id="det-btn-copy-error"
+                            class="ari-btn ari-btn--sm ari-btn--secondary"
+                            title="Copy error to clipboard"
+                            style="margin-left:auto;">
+                        <i class="fa-solid fa-copy"></i> Copy
+                    </button>
+                </div>
+                <div id="det-error-body" class="at-section-card__body">
+                    <pre id="det-error" class="at-error-pre"></pre>
+                </div>
+            </div>
+
+            <!-- ── Section 4: Params (hidden when unavailable) ── -->
+            <div class="at-section-card" id="det-params-section" style="display:none;">
+                <div class="at-section-card__header">
+                    <span><i class="fa-solid fa-sliders"></i> Params</span>
+                    <button id="det-btn-toggle-params"
+                            class="ari-btn ari-btn--sm ari-btn--secondary"
+                            title="Collapse/Expand params"
+                            style="margin-left:auto;">
+                        <i class="fa-solid fa-chevron-up"></i>
+                    </button>
+                </div>
+                <div id="det-params-body" class="at-section-card__body">
+                    <nav id="det-params-breadcrumb" class="at-px-breadcrumb"></nav>
+                    <div id="det-params-explorer" class="at-px-explorer"></div>
+                </div>
+            </div>
+
+            <!-- ── Section 5: Output Files ── -->
+            <div class="at-section-card" id="det-files-section" style="display:none;">
+                <div class="at-section-card__header">
+                    <span><i class="fa-solid fa-file-code"></i> Output Files</span>
+                    <button id="det-btn-purge-files"
+                            class="ari-btn ari-btn--sm ari-btn--danger"
+                            title="Delete output files for this task"
+                            style="margin-left:auto;">
+                        <i class="fa-solid fa-trash-can"></i> Purge Files
+                    </button>
+                </div>
+                <div class="at-section-card__body">
+                    <ul id="det-output-files" class="at-file-list"></ul>
+                    <div class="at-muted-hint">Showing a short preview per file type. Preview shows the first 50 lines only.</div>
+                </div>
+            </div>
+
+        </div><!-- /at-detail -->
+    </div><!-- /at-detail-area -->
+</div><!-- /at-instrument-workspace -->
+
+<!-- ====================================================================== -->
+<!-- Queue tab workspace                                                     -->
+<!-- ====================================================================== -->
+<div id="at-queue-workspace" style="display:none;">
+    <div class="ari-sg-section">
+        <div class="ari-sg-section__header">
+            <h3><i class="fa-solid fa-layer-group"></i> Current Queue</h3>
+            <button id="btn-stop-all" class="ari-btn ari-btn--danger ari-btn--sm">
+                <i class="fa-solid fa-stop"></i> Clear Queue
+            </button>
+            <button id="btn-kill-all" class="ari-btn ari-btn--danger ari-btn--sm"
+                    title="Immediately interrupt running task and clear all queued tasks">
+                <i class="fa-solid fa-skull-crossbones"></i> Kill All
+            </button>
+        </div>
+
+        <!-- Running task summary -->
+        <div id="queue-running" class="at-queue-running" style="display:none;">
+            <div class="at-queue-running__header">
+                <i class="fa-solid fa-circle-notch fa-spin"></i>
+                <strong>Running:</strong>
+                <span id="queue-running-name"></span>
+                <span id="queue-running-instrument" class="at-queue-instrument"></span>
+                <button id="queue-btn-stop" class="ari-btn ari-btn--sm ari-btn--danger" style="margin-left:auto;">
+                    <i class="fa-solid fa-stop"></i> Stop
+                </button>
+                <button id="queue-btn-view-log" class="ari-btn ari-btn--sm ari-btn--secondary">
+                    <i class="fa-solid fa-file-lines"></i> View Log
+                </button>
+            </div>
+            <div class="at-progress-wrap">
+                <div class="at-progress-bar">
+                    <div id="queue-progress-fill"
+                         class="at-progress-bar__fill"
+                         style="width:0%;"></div>
+                </div>
+                <span id="queue-progress-pct" class="at-progress-pct">0%</span>
+            </div>
+            <div id="queue-subprogress-row" class="at-progress-wrap" style="display:none; margin-top:0.35rem;">
+                <div class="at-progress-bar">
+                    <div id="queue-subprogress-fill"
+                         class="at-progress-bar__fill at-progress-bar__fill--sub"
+                         style="width:0%;"></div>
+                </div>
+                <span id="queue-subprogress-pct" class="at-progress-pct">0%</span>
+            </div>
+            <div id="queue-running-info" class="at-info-md at-queue-info"></div>
+        </div>
+
+        <!-- Pending list -->
+        <div id="queue-pending-list" class="at-queue-list">
+            <div class="ari-sg-empty-small">Queue is empty</div>
+        </div>
+
+        <div class="ari-sg-section__header" style="margin-top:1rem;">
+            <h3><i class="fa-solid fa-clock-rotate-left"></i> Recent History</h3>
+            <div style="display:flex;align-items:center;gap:0.5rem;">
+                <span class="ari-sg-count">50</span>
+                <button id="btn-clear-history" class="ari-btn ari-btn--secondary ari-btn--sm">
+                    <i class="fa-solid fa-trash-can"></i> Clear Recent History
+                </button>
+            </div>
+        </div>
+        <div id="queue-history-list" class="at-queue-list">
+            <div class="ari-sg-empty-small">No recent history yet</div>
+        </div>
+    </div>
+</div>
+
+<!-- ====================================================================== -->
+<!-- No instruments configured                                               -->
+<!-- ====================================================================== -->
+<div id="at-no-instruments" class="ari-sg-empty" style="display:none;">
+    <i class="fa-solid fa-circle-info"></i> No instruments configured.
+</div>
+
+<!-- ====================================================================== -->
+<!-- Add / Edit modal                                                        -->
+<!-- ====================================================================== -->
+<div id="at-edit-modal" class="ari-modal-backdrop" style="display:none;">
+    <div class="ari-modal">
+        <div class="ari-modal__header">
+            <h3 id="edit-modal-title"><i class="fa-solid fa-plus"></i> Add Task</h3>
+            <button class="ari-modal__close" id="btn-edit-modal-close">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+        <div class="ari-modal__body">
+            <div class="at-edit-tabs">
+                <button type="button" id="edit-tab-run" class="at-edit-tab at-edit-tab--active">Run</button>
+                <button type="button" id="edit-tab-filters" class="at-edit-tab">Filters</button>
+            </div>
+
+            <div id="edit-pane-run" class="at-edit-tab-pane at-edit-tab-pane--active">
+                <div class="ari-ap-form__field">
+                    <label for="edit-task-key">Task <span class="ari-required">*</span></label>
+                    <select id="edit-task-key" class="ari-ap-input">
+                        <option value="">— select a task —</option>
+                    </select>
+                </div>
+                <div class="ari-ap-form__field" id="edit-task-info-row" style="display:none;">
+                    <div class="at-task-class-info">
+                        <span class="at-detail__label">Name:</span>
+                        <span id="edit-task-name"></span>
+                    </div>
+                    <div class="at-task-class-info">
+                        <span class="at-detail__label">Description:</span>
+                        <span id="edit-task-desc"></span>
+                    </div>
+                </div>
+                <div class="ari-ap-form__field">
+                    <label for="edit-frequency">Frequency (hours) <span class="ari-required">*</span></label>
+                    <input type="number" id="edit-frequency" class="ari-ap-input"
+                           placeholder="e.g. 24" min="0.5" step="0.5" value="24">
+                </div>
+                <div id="edit-backup-fields" style="display:none;">
+                    <div class="ari-ap-form__field">
+                        <label for="edit-daily-copies">Daily copies to keep</label>
+                        <input type="number" id="edit-daily-copies" class="ari-ap-input"
+                               min="0" step="1" value="7">
+                    </div>
+                    <div class="ari-ap-form__field">
+                        <label for="edit-weekly-copies">Weekly copies to keep</label>
+                        <input type="number" id="edit-weekly-copies" class="ari-ap-input"
+                               min="0" step="1" value="4">
+                    </div>
+                    <div class="ari-ap-form__field">
+                        <label for="edit-backup-max-size-mb">Max archive input size (MB)</label>
+                        <input type="number" id="edit-backup-max-size-mb" class="ari-ap-input"
+                               min="1" step="any">
+                        <div class="at-muted-hint">
+                            Backups whose estimated input exceeds this size are skipped.
+                            Default 1024 MB (1 GiB).
+                            <span id="edit-backup-max-size-saved"
+                                  class="at-muted-hint__saved"></span>
+                        </div>
+                    </div>
+                    <div class="ari-ap-form__field">
+                        <label for="edit-backup-exclude-dirs">
+                            Excluded top-level directories
+                        </label>
+                        <textarea id="edit-backup-exclude-dirs"
+                                  class="ari-ap-input"
+                                  rows="4"
+                                  placeholder="One directory name per line"
+                                  ></textarea>
+                        <div class="at-muted-hint">
+                            Top-level entries in <code>LOCAL_DATA_DIR</code>
+                            with these names are skipped entirely
+                            (subtree pruned). One name per line.
+                            Built-in defaults are applied when this list
+                            is empty:
+                            <span id="edit-backup-exclude-dirs-default"
+                                  class="at-muted-hint__saved"></span>
+                        </div>
+                    </div>
+                    <div class="ari-ap-form__field">
+                        <label for="edit-backup-exclude-paths">
+                            Excluded files (relative paths)
+                        </label>
+                        <textarea id="edit-backup-exclude-paths"
+                                  class="ari-ap-input"
+                                  rows="3"
+                                  placeholder="One relative path per line"
+                                  ></textarea>
+                        <div class="at-muted-hint">
+                            Specific files (relative to
+                            <code>LOCAL_DATA_DIR</code>) that should
+                            never be archived (e.g. secret-bearing
+                            configs). Built-in defaults are applied
+                            when this list is empty:
+                            <span id="edit-backup-exclude-paths-default"
+                                  class="at-muted-hint__saved"></span>
+                        </div>
+                    </div>
+                </div>
+                <div id="edit-assets-fields" style="display:none;">
+                    <div class="ari-ap-form__field">
+                        <label for="edit-assets-mode">Mode</label>
+                        <select id="edit-assets-mode" class="ari-ap-input">
+                            <option value="sync">sync &#8212; check checksums, download only if changed</option>
+                            <option value="upload">upload &#8212; push local assets to remote server</option>
+                        </select>
+                        <div class="at-muted-hint">Servers and checksums are read from the installed apero package automatically.</div>
+                    </div>
+                </div>
+                <div id="edit-local-sync-fields" style="display:none;">
+                    <div class="ari-ap-form__field" id="edit-sync-mode-row" style="display:none;">
+                        <label for="edit-sync-mode">Sync mode</label>
+                        <select id="edit-sync-mode" class="ari-ap-input">
+                            <option value="run_server">Run on server</option>
+                            <option value="fetch_precomputed">Fetch pre-computed</option>
+                        </select>
+                    </div>
+                    <div class="ari-ap-form__field" id="edit-sync-source-field" style="display:none;">
+                        <label for="edit-sync-source">Sync Source Path <span id="edit-sync-source-required" class="ari-required" style="display:none;">*</span></label>
+                        <input type="text" id="edit-sync-source" class="ari-ap-input"
+                               placeholder="/path/to/prebuilt/.ari">
+                        <div class="at-muted-hint">
+                            Required when Sync mode is set to Fetch pre-computed.
+                            Save with this path, then use Run Now (or Run All) to sync files instead of running the task.
+                            You can use either a root containing tasks/ (for example ~/.ari) or a direct tasks/&lt;instrument&gt; directory.
+                        </div>
+                    </div>
+                </div>
+                <div id="edit-mp-fields" style="display:none;">
+                    <div class="ari-ap-form__field">
+                        <label for="edit-ncores">NCORES</label>
+                        <input type="number" id="edit-ncores" class="ari-ap-input"
+                               min="1" step="1" value="1">
+                    </div>
+                    <div class="ari-ap-form__field">
+                        <label for="edit-mp-backend">Parallel backend</label>
+                        <select id="edit-mp-backend" class="ari-ap-input">
+                            <option value="threads">threads</option>
+                            <option value="processes">processes</option>
+                        </select>
+                    </div>
+                    <div class="ari-ap-form__field">
+                        <label for="edit-mp-start-method">Process start method</label>
+                        <select id="edit-mp-start-method" class="ari-ap-input">
+                            <option value="default">default</option>
+                            <option value="spawn">spawn</option>
+                            <option value="fork">fork</option>
+                            <option value="forkserver">forkserver</option>
+                        </select>
+                    </div>
+                    <div class="ari-ap-form__field" id="edit-mp-warn" style="display:none;">
+                        <div class="at-muted-hint"></div>
+                    </div>
+                </div>
+                <div class="ari-ap-form__field" id="edit-run-count-row" style="display:none;">
+                    <label for="edit-run-count">Times run</label>
+                    <div id="edit-run-count" class="at-detail__value--code" aria-live="polite">0</div>
+                </div>
+                <div class="ari-ap-form__field">
+                    <label>
+                        <input type="checkbox" id="edit-active" checked>
+                        Active (will be included in Run All)
+                    </label>
+                </div>
+            </div>
+
+            <div id="edit-pane-filters" class="at-edit-tab-pane">
+                <div class="at-muted-hint">Configure optional per-task filters. Leave blank to disable a filter.</div>
+                <div id="edit-filters-empty" class="at-muted-hint">No filters available for this task.</div>
+                <div id="edit-filters-container"></div>
+            </div>
+        </div>
+        <div class="ari-modal__footer">
+            <button id="btn-edit-cancel" class="ari-btn ari-btn--secondary">Cancel</button>
+            <button id="btn-edit-save" class="ari-btn ari-btn--primary">
+                <i class="fa-solid fa-floppy-disk"></i> Save
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- ====================================================================== -->
+<!-- Delete confirm modal                                                    -->
+<!-- ====================================================================== -->
+<div id="at-delete-modal" class="ari-modal-backdrop" style="display:none;">
+    <div class="ari-modal ari-modal--sm">
+        <div class="ari-modal__header">
+            <h3><i class="fa-solid fa-trash"></i> Delete Task</h3>
+        </div>
+        <div class="ari-modal__body">
+            <p>Delete task <strong id="delete-modal-name"></strong>? This cannot be undone.</p>
+        </div>
+        <div class="ari-modal__footer">
+            <button id="btn-delete-cancel" class="ari-btn ari-btn--secondary">Cancel</button>
+            <button id="btn-delete-confirm" class="ari-btn ari-btn--danger">
+                <i class="fa-solid fa-trash"></i> Delete
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- ====================================================================== -->
+<!-- Run All confirm modal (when queue is not empty)                         -->
+<!-- ====================================================================== -->
+<div id="at-runall-modal" class="ari-modal-backdrop" style="display:none;">
+    <div class="ari-modal ari-modal--sm">
+        <div class="ari-modal__header">
+            <h3><i class="fa-solid fa-play"></i> Run All</h3>
+        </div>
+        <div class="ari-modal__body">
+            <p>There are tasks currently in the queue or running.</p>
+            <p>How would you like to proceed?</p>
+        </div>
+        <div class="ari-modal__footer" style="flex-direction:column;gap:0.5rem;">
+            <button id="btn-runall-replace" class="ari-btn ari-btn--danger" style="width:100%;">
+                <i class="fa-solid fa-stop"></i> Stop current tasks &amp; run these
+            </button>
+            <button id="btn-runall-add" class="ari-btn ari-btn--primary" style="width:100%;">
+                <i class="fa-solid fa-layer-group"></i> Add to current queue
+            </button>
+            <button id="btn-runall-cancel" class="ari-btn ari-btn--secondary" style="width:100%;">
+                Cancel
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- ====================================================================== -->
+<!-- Toast notification                                                      -->
+<!-- ====================================================================== -->
+<div id="at-toast" class="ari-toast" style="display:none;"></div>
+
+<!-- ====================================================================== -->
+<!-- Live task log modal                                                     -->
+<!-- ====================================================================== -->
+<div id="at-task-log-modal" class="ari-modal-backdrop" style="display:none;">
+    <div class="ari-modal ari-modal--wide ari-modal--task-log">
+        <div class="ari-modal__header">
+            <i class="fa-solid fa-file-lines"></i>&nbsp;<span id="task-log-modal-title">Task Log</span>
+            <button class="ari-modal__close" id="btn-task-log-close-x">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+        <div class="ari-modal__body">
+            <div style="display:flex;gap:0.5rem;justify-content:flex-end;margin-bottom:0.5rem;">
+                <button id="btn-task-log-refresh" class="ari-btn ari-btn--sm ari-btn--secondary">
+                    <i class="fa-solid fa-rotate"></i> Refresh
+                </button>
+                <button id="btn-task-log-copy" class="ari-btn ari-btn--sm ari-btn--secondary">
+                    <i class="fa-solid fa-copy"></i> Copy
+                </button>
+            </div>
+            <pre id="task-log-modal-content" class="at-error-pre" style="max-height:65vh;overflow:auto;white-space:pre-wrap;"></pre>
+        </div>
+        <div class="ari-modal__footer">
+            <button id="btn-task-log-close" class="ari-btn ari-btn--secondary">Close</button>
+        </div>
+    </div>
+</div>
+
+<!-- ====================================================================== -->
+<!-- File table viewer modal                                                 -->
+<!-- ====================================================================== -->
+<div id="at-file-modal" class="ari-modal-backdrop" style="display:none;">
+    <div class="ari-modal ari-modal--wide">
+        <div class="ari-modal__header">
+            <i class="fa-solid fa-file-lines"></i>&nbsp;<span id="file-modal-title">File Preview</span>
+            <button class="ari-modal__close" id="btn-file-modal-close">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+        <div class="ari-modal__body" style="padding:0;">
+            <div id="file-modal-content" class="at-file-preview-wrap">
+                <div class="ari-sg-loading" style="padding:1.5rem;">Loading…</div>
+            </div>
+        </div>
+        <div class="ari-modal__footer">
+            <button id="btn-file-modal-ok" class="ari-btn ari-btn--secondary">Close</button>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+window.ARI_ASYNC_TASKS = {
+    instruments: {{ instruments | tojson }},
+    urls: {
+        globalList: '{{ url_for("api_async_tasks_global_list") }}',
+        list:     '{{ url_for("api_async_tasks_list") }}',
+        taskList: '{{ url_for("api_async_tasks_task_list") }}',
+        save:     '{{ url_for("api_async_tasks_save") }}',
+        delete:   '{{ url_for("api_async_tasks_delete") }}',
+        reorder:  '{{ url_for("api_async_tasks_reorder") }}',
+        toggle:   '{{ url_for("api_async_tasks_toggle") }}',
+        runNow:   '{{ url_for("api_async_tasks_run_now") }}',
+        runAll:   '{{ url_for("api_async_tasks_run_all") }}',
+        stop:     '{{ url_for("api_async_tasks_stop") }}',
+        killAll:  '{{ url_for("api_async_tasks_kill_all") }}',
+        clearHistory: '{{ url_for("api_async_tasks_clear_history") }}',
+        status:   '{{ url_for("api_async_tasks_status") }}',
+        taskLog:  '{{ url_for("api_async_tasks_task_log") }}',
+        cancelTask: '{{ url_for("api_async_tasks_cancel_task") }}',
+        readFile: '{{ url_for("api_async_tasks_read_file") }}',
+        downloadFile: '{{ url_for("api_async_tasks_download_file") }}',
+        purgeFiles: '/api/admin/async-tasks/purge-files',
+    }
+};
+</script>
+    <script src="{{ url_for('static', filename='js/admin_async_tasks.js', v='20260423p') }}"></script>
+{% endblock %}
