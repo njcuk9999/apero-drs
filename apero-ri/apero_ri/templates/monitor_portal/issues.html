@@ -6,7 +6,7 @@
 {% block extra_head %}
 {{ super() }}
 <link rel="stylesheet"
-      href="{{ url_for('static', filename='css/monitor_issues.css') }}?v=20260424d">
+      href="{{ url_for('static', filename='css/monitor_issues.css') }}?v=20260427a">
 {% endblock %}
 
 {% block doc_content %}
@@ -175,9 +175,12 @@
     const VISIBILITY = {{ visibility|tojson }};
     const tbody = document.getElementById('issues-tbody');
     const statusEl = document.getElementById('issues-status');
-    const fStatus = document.getElementById('issues-filter-status');
-    const fKind = document.getElementById('issues-filter-kind');
-    const fInst = document.getElementById('issues-filter-instrument');
+    const fStatus   = document.getElementById('issues-filter-status');
+    const fKind     = document.getElementById('issues-filter-kind');
+    const fInst     = document.getElementById('issues-filter-instrument');
+    const fUser     = document.getElementById('issues-filter-user');
+    const fUserRole = document.getElementById('issues-filter-user-role');
+    const userList  = document.getElementById('issues-user-list');
     const refreshBtn = document.getElementById('issues-refresh');
 
     function escapeHtml(s) {
@@ -247,7 +250,7 @@
                 + ' target="_blank" rel="noopener"'
                 + ' title="Open the page where this was flagged">'
                 + '<i class="fa-solid fa-up-right-from-square"></i>'
-                + ' Go</a>')
+                + '</a>')
             : '';
         tr.innerHTML = `
             <td class="mi-col-id">#${it.id}</td>
@@ -255,10 +258,17 @@
                 escapeHtml((it.created_at||'').slice(0, 19)
                     .replace('T', ' '))}</td>
             <td class="mi-col-by">
-                <span class="mi-user">
+                <span class="mi-user mi-user--created">
                     <i class="fa-solid fa-user"></i>
                     ${escapeHtml(it.created_by||'anonymous')}
-                </span>
+                </span><br>
+                ${it.assigned_to
+                    ? '<span class="mi-user mi-user--assigned">'
+                        + '<i class="fa-solid fa-user-check"></i> '
+                        + escapeHtml(it.assigned_to) + '</span>'
+                    : '<span class="mi-user mi-user--unassigned">'
+                        + '<i class="fa-solid fa-user-slash"></i>'
+                        + ' unassigned</span>'}
             </td>
             <td class="mi-col-kind">
                 <span class="mi-kind ${kindClass(it.kind)}">
@@ -279,28 +289,34 @@
                 <button class="mi-btn mi-btn--xs"
                     data-action="resolve" data-id="${it.id}"
                     title="Mark as resolved">
-                    <i class="fa-solid fa-check"></i> Resolve
+                    <i class="fa-solid fa-check"></i>
                 </button>
                 <button class="mi-btn mi-btn--xs mi-btn--danger"
                     data-action="invalid" data-id="${it.id}"
                     title="Mark as invalid">
-                    <i class="fa-solid fa-xmark"></i> Invalid
+                    <i class="fa-solid fa-xmark"></i>
                 </button>
                 <button class="mi-btn mi-btn--xs mi-btn--ghost"
                     data-action="reopen" data-id="${it.id}"
                     title="Reopen issue">
-                    <i class="fa-solid fa-rotate-left"></i> Reopen
+                    <i class="fa-solid fa-rotate-left"></i>
                 </button>
+                ${VISIBILITY !== 'public'
+                    ? `<button class="mi-btn mi-btn--xs mi-btn--ghost"
+                        data-action="assign" data-id="${it.id}"
+                        title="Assign issue">
+                        <i class="fa-solid fa-user-plus"></i>
+                    </button>` : ''}
                 ${VISIBILITY === 'admin'
                     ? `<button class="mi-btn mi-btn--xs mi-btn--ghost"
                         data-action="edit" data-id="${it.id}"
                         title="Edit issue (admin)">
-                        <i class="fa-solid fa-pen"></i> Edit
+                        <i class="fa-solid fa-pen"></i>
                     </button>
                     <button class="mi-btn mi-btn--xs mi-btn--danger"
                         data-action="delete" data-id="${it.id}"
                         title="Delete issue (admin)">
-                        <i class="fa-solid fa-trash"></i> Delete
+                        <i class="fa-solid fa-trash"></i>
                     </button>`
                     : ''}
             </td>`;
@@ -353,19 +369,45 @@
                 statusEl.textContent = '';
                 return;
             }
-            tbody.innerHTML = '';
-            (data.issues || []).forEach(it => {
-                tbody.appendChild(renderRow(it));
-            });
-            const n = (data.issues || []).length;
-            if (n === 0) {
-                renderEmpty();
-            }
-            // expose by id for admin edit prompt
+            // expose by id for admin edit / assign prompt
             window._issuesById = {};
             (data.issues || []).forEach(it => {
                 window._issuesById[it.id] = it;
             });
+            // client-side user / role filter
+            const userVal = (fUser ? fUser.value : '').trim()
+                                                       .toLowerCase();
+            const roleVal = fUserRole ? fUserRole.value : '';
+            let toRender = (data.issues || []);
+            if (roleVal === 'unassigned') {
+                toRender = toRender.filter(
+                    it => !it.assigned_to);
+            } else if (userVal) {
+                if (roleVal === 'created_by') {
+                    toRender = toRender.filter(it =>
+                        (it.created_by||'').toLowerCase()
+                        === userVal);
+                } else if (roleVal === 'assigned_to') {
+                    toRender = toRender.filter(it =>
+                        (it.assigned_to||'').toLowerCase()
+                        === userVal);
+                } else {
+                    // 'any' or default: created or assigned
+                    toRender = toRender.filter(it =>
+                        (it.created_by||'').toLowerCase()
+                            === userVal
+                        || (it.assigned_to||'').toLowerCase()
+                            === userVal);
+                }
+            }
+            tbody.innerHTML = '';
+            toRender.forEach(it => {
+                tbody.appendChild(renderRow(it));
+            });
+            const n = toRender.length;
+            if (n === 0) {
+                renderEmpty();
+            }
             statusEl.innerHTML = `
                 <span class="mi-status__pill">
                     <i class="fa-solid fa-list"></i>
@@ -407,6 +449,7 @@
         const action = btn.dataset.action;
         if (action === 'delete') { adminDelete(id); return; }
         if (action === 'edit')   { adminEdit(id);   return; }
+        if (action === 'assign') { adminAssign(id); return; }
         const map = {resolve: 'resolved',
                      invalid: 'invalid',
                      reopen: 'open'};
@@ -463,8 +506,104 @@
         if (instTimer) clearTimeout(instTimer);
         instTimer = setTimeout(load, 350);
     });
+    if (fUser) {
+        let userTimer = null;
+        fUser.addEventListener('input', () => {
+            if (userTimer) clearTimeout(userTimer);
+            userTimer = setTimeout(load, 350);
+        });
+    }
+    if (fUserRole) fUserRole.addEventListener('change', load);
+
+    async function loadUsers() {
+        try {
+            const resp = await fetch('/api/issues/users');
+            if (!resp.ok) return;
+            const data = await resp.json();
+            if (!data.success || !userList) return;
+            userList.innerHTML = '';
+            (data.users || []).forEach(u => {
+                const opt = document.createElement('option');
+                opt.value = u.username;
+                userList.appendChild(opt);
+            });
+        } catch (_) {}
+    }
+
+    async function adminAssign(id) {
+        let users = [];
+        try {
+            const resp = await fetch('/api/issues/users');
+            if (resp.ok) {
+                const data = await resp.json();
+                if (data.success) users = data.users || [];
+            }
+        } catch (_) {}
+        const cur = (window._issuesById || {})[id] || {};
+        const curAssignee = cur.assigned_to || '';
+        const overlay = document.createElement('div');
+        overlay.className = 'mi-assign-overlay';
+        const opts = users.map(u =>
+            `<option value="${escapeHtml(u.username)}">`)
+            .join('');
+        overlay.innerHTML = `
+            <div class="mi-assign-overlay__panel">
+                <p class="mi-assign-overlay__title">
+                    Assign issue #${id}
+                </p>
+                <input id="mi-assign-input" class="mi-input"
+                       list="mi-assign-datalist"
+                       placeholder="username (blank to unassign)"
+                       value="${escapeHtml(curAssignee)}"
+                       style="width:100%;margin-bottom:0.6rem;">
+                <datalist id="mi-assign-datalist">
+                    ${opts}
+                </datalist>
+                <div style="display:flex;gap:0.5rem;
+                            justify-content:flex-end;">
+                    <button class="mi-btn mi-btn--ghost"
+                            id="mi-assign-cancel">Cancel</button>
+                    <button class="mi-btn mi-btn--primary"
+                            id="mi-assign-confirm">Assign</button>
+                </div>
+            </div>`;
+        document.body.appendChild(overlay);
+        const input = overlay.querySelector('#mi-assign-input');
+        input.focus();
+        overlay.querySelector('#mi-assign-cancel')
+            .addEventListener('click', () => overlay.remove());
+        overlay.addEventListener('click', (e) => {
+            if (e.target === overlay) overlay.remove();
+        });
+        overlay.querySelector('#mi-assign-confirm')
+            .addEventListener('click', async () => {
+                const username = input.value.trim();
+                overlay.remove();
+                try {
+                    const resp = await fetch(
+                        '/api/issues/update', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'},
+                        body: JSON.stringify({
+                            id: id,
+                            assigned_to: username || ''})
+                    });
+                    const data = await resp.json();
+                    if (!data.success) {
+                        alert('Error: '
+                              + (data.error || 'unknown'));
+                    } else {
+                        load();
+                    }
+                } catch (err) {
+                    alert('Error: ' + err.message);
+                }
+            });
+    }
 
     load();
+    loadUsers();
 })();
 </script>
 {% endblock %}
