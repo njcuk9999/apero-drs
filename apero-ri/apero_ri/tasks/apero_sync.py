@@ -385,10 +385,14 @@ def _build_logger(verbose: bool, log_file: Optional[str] = None):
 # =============================================================================
 def _cli_main(argv: Optional[List[str]] = None) -> None:
     """
-    Minimal CLI: 
-    
+    Minimal CLI:
+
     ``python -m apero_ri.tasks.apero_sync TASK_KEY params.yaml``.
-    
+
+    Optional multiprocessing overrides mirror async task settings:
+
+    ``--ncores``, ``--mp-backend``, ``--mp-start-method``.
+
     """
     import argparse
     import yaml
@@ -419,6 +423,21 @@ def _cli_main(argv: Optional[List[str]] = None) -> None:
         '--quiet', action='store_true',
         help='Suppress stdout progress messages.',
     )
+    parser.add_argument(
+        '--ncores', type=int, default=None,
+        help=('Override TASK_CONFIG.ncores for this run '
+              '(must be >= 1).'),
+    )
+    parser.add_argument(
+        '--mp-backend', default=None,
+        choices=['threads', 'processes'],
+        help='Override TASK_CONFIG.mp_backend for this run.',
+    )
+    parser.add_argument(
+        '--mp-start-method', default=None,
+        choices=['default', 'spawn', 'fork', 'forkserver'],
+        help='Override TASK_CONFIG.mp_start_method for this run.',
+    )
     args = parser.parse_args(argv)
 
     if args.list_local_tasks:
@@ -441,6 +460,22 @@ def _cli_main(argv: Optional[List[str]] = None) -> None:
     if not isinstance(params, dict):
         print(f'ERROR: params YAML must be a dict.', file=sys.stderr)
         sys.exit(1)
+
+    if args.ncores is not None and args.ncores <= 0:
+        parser.error('--ncores must be >= 1')
+
+    # Merge CLI multiprocessing overrides into TASK_CONFIG so local runs
+    # can use the same parallel controls as scheduled async tasks.
+    task_config = params.get('TASK_CONFIG', {})
+    if not isinstance(task_config, dict):
+        task_config = {}
+    if args.ncores is not None:
+        task_config['ncores'] = int(args.ncores)
+    if args.mp_backend is not None:
+        task_config['mp_backend'] = args.mp_backend
+    if args.mp_start_method is not None:
+        task_config['mp_start_method'] = args.mp_start_method
+    params['TASK_CONFIG'] = task_config
 
     # Delegate to run() with the parsed arguments.
     result = run(args.task_key, params, verbose=not args.quiet,
