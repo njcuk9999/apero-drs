@@ -1,0 +1,231 @@
+{% extends "general/base.html" %}
+{% block body_class %}ari-has-sidebar{% endblock %}
+
+{% block content %}
+<div class="ari-doc-layout">
+    <!-- ================================================================ -->
+    <!-- Sidebar                                                          -->
+    <!-- ================================================================ -->
+    <aside class="ari-sidebar" id="ari-sidebar">
+        <!-- Pinned pages -->
+        {% if sidebar_tree is defined %}
+        <div class="ari-sidebar__section ari-sidebar__section--pins">
+            <div class="ari-sidebar__pins" aria-label="Pinned pages">
+                {% for item in sidebar_tree %}
+                {% if item.pinned|default(false) %}
+                {% if item.url and not (item.disabled|default(false)) %}
+                <a href="{{ item.url }}{% if current_version is defined %}?v={{ current_version }}{% endif %}"
+                   class="ari-sidebar__heading ari-sidebar__heading--pin{% if item.active %} ari-sidebar__heading--pin-active{% endif %}">
+                    <i class="{{ item.icon }}"></i>
+                    <span>{{ item.label }}</span>
+                </a>
+                {% endif %}
+                {% endif %}
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Version selector — only shown for doc pages -->
+        {% if doc_versions is defined and doc_versions|length > 0 %}
+        <div class="ari-sidebar__section">
+            <div class="ari-sidebar__version">
+                <label for="sidebar-version">
+                    <i class="fa-solid fa-code-branch"></i> Version
+                </label>
+                <select id="sidebar-version" class="ari-sidebar__version-select"
+                        onchange="ARI.switchVersion(this.value)">
+                    {% for v in doc_versions %}
+                    <option value="{{ v.id }}"
+                            {% if current_version is defined and v.id == current_version %}selected{% endif %}>
+                        {{ v.name }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Edit button — only for editable doc leaf pages -->
+        {% if can_edit is defined and can_edit and doc_ref is defined and current_version is defined %}
+        <div class="ari-sidebar__section">
+            <a href="{{ url_for('doc_edit', page_ref=doc_ref) }}?v={{ current_version }}"
+               class="ari-sidebar__edit-btn">
+                <i class="fa-solid fa-pen-to-square"></i> Edit this page
+            </a>
+        </div>
+        {% endif %}
+
+        <!-- Navigation tree -->
+        {% if sidebar_tree is defined %}
+        <div class="ari-sidebar__section">
+            <a href="{{ sidebar_url }}" class="ari-sidebar__heading">
+                <i class="{{ sidebar_icon }}"></i> {{ sidebar_label }}
+            </a>
+            <nav class="ari-sidebar__nav" aria-label="Section navigation">
+                {% for item in sidebar_tree %}
+                {% if not item.pinned|default(false) %}
+                {% set item_classes = 'ari-sidebar__link' %}
+                {% if item.active %}
+                {% set item_classes = item_classes + ' ari-sidebar__link--active' %}
+                {% endif %}
+                {% if item.fav_child|default(false) and item.fav_hidden|default(false) %}
+                {% set item_classes = item_classes + ' ari-sidebar__link--fav-hidden' %}
+                {% endif %}
+
+                {% if item.url and not (item.disabled|default(false)) %}
+                <a href="{{ item.url }}{% if current_version is defined %}?v={{ current_version }}{% endif %}"
+                   class="{{ item_classes }}"
+                   data-page-id="{{ item.id }}"
+                   {% if item.fav_toggle|default(false) %}data-fav-toggle="{{ item.fav_group }}" aria-expanded="{{ 'true' if item.fav_expanded|default(false) else 'false' }}"{% endif %}
+                   {% if item.fav_child|default(false) %}data-fav-group="{{ item.fav_group }}"{% endif %}
+                   style="padding-left: {{ 0.75 + item.depth * 1.0 }}rem;">
+                    {% if item.fav_toggle|default(false) %}
+                    <i class="fa-solid fa-chevron-right ari-sidebar__fav-caret"></i>
+                    {% endif %}
+                    <i class="{{ item.icon }}"></i>
+                    <span>{{ item.label }}</span>
+                </a>
+                {% elif item.fav_toggle|default(false) %}
+                <button type="button"
+                        class="ari-sidebar__fav-toggle"
+                        data-fav-toggle="{{ item.fav_group }}"
+                        aria-expanded="{{ 'true' if item.fav_expanded|default(false) else 'false' }}"
+                        style="padding-left: {{ 0.75 + item.depth * 1.0 }}rem;">
+                    <span class="{{ item_classes }}" data-page-id="{{ item.id }}">
+                        <i class="fa-solid fa-chevron-right ari-sidebar__fav-caret"></i>
+                        <i class="{{ item.icon }}"></i>
+                        <span>{{ item.label }}</span>
+                    </span>
+                </button>
+                {% else %}
+                <span class="{{ item_classes }} ari-sidebar__link--disabled"
+                      data-page-id="{{ item.id }}"
+                      {% if item.fav_child|default(false) %}data-fav-group="{{ item.fav_group }}"{% endif %}
+                      style="padding-left: {{ 0.75 + item.depth * 1.0 }}rem;">
+                    <i class="{{ item.icon }}"></i>
+                    <span>{{ item.label }}</span>
+                </span>
+                {% endif %}
+                {% endif %}
+                {% endfor %}
+            </nav>
+        </div>
+        {% endif %}
+    </aside>
+
+    <!-- ================================================================ -->
+    <!-- Main content area                                                -->
+    <!-- ================================================================ -->
+    <div class="ari-doc-main">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+{% block extra_scripts %}{{ super() }}
+<script>
+(function () {
+    'use strict';
+    document.querySelectorAll('[data-fav-toggle]').forEach(function (btn) {
+        var group = String(btn.getAttribute('data-fav-toggle') || '').trim();
+        if (!group) return;
+        var toggle = function (forceState) {
+            var expanded = String(btn.getAttribute('aria-expanded') || '') === 'true';
+            if (typeof forceState === 'boolean') {
+                expanded = !!forceState;
+            } else {
+                expanded = !expanded;
+            }
+            btn.setAttribute('aria-expanded', expanded ? 'true' : 'false');
+            document.querySelectorAll('.ari-sidebar__link[data-fav-group="' + group + '"]').forEach(function (row) {
+                row.classList.toggle('ari-sidebar__link--fav-hidden', !expanded);
+            });
+        };
+        toggle(String(btn.getAttribute('aria-expanded') || '') === 'true');
+        btn.addEventListener('click', function (ev) {
+            ev.preventDefault();
+            toggle();
+        });
+    });
+}());
+</script>
+<script>
+(function () {
+    'use strict';
+    function initAdminInfoPanels() {
+        document.querySelectorAll('details.ari-admin-info[id]').forEach(function (el) {
+            var key = 'ari-admin-info-' + el.id;
+            var saved = null;
+            try { saved = localStorage.getItem(key); } catch (_) { saved = null; }
+            // Default to collapsed unless user explicitly opened it.
+            if (saved === '1') {
+                el.setAttribute('open', 'open');
+            } else {
+                el.removeAttribute('open');
+            }
+            el.addEventListener('toggle', function () {
+                try { localStorage.setItem(key, el.open ? '1' : '0'); } catch (_) {}
+            });
+        });
+    }
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initAdminInfoPanels);
+    } else {
+        initAdminInfoPanels();
+    }
+}());
+</script>
+{% endblock %}
+        {% if messages %}
+        {% for category, message in messages %}
+        <div class="ari-flash ari-flash--{{ category }}">
+            <i class="fa-solid fa-circle-info"></i>
+            {{ message }}
+        </div>
+        {% endfor %}
+        {% endif %}
+        {% endwith %}
+
+        {% if page_id is defined and page_id.startswith('home.admin_portal') %}
+        <details class="ari-admin-info ot-howto" id="{{ page_id|replace('.', '-') }}-info" style="margin-bottom:0.9rem; border:1px solid var(--ari-border,#d6d6d6); border-radius:0.5rem; background:var(--ari-surface-muted,#fafafa);">
+            <summary style="cursor:pointer; font-weight:700; padding:0.65rem 0.85rem; list-style:none; display:flex; align-items:center; gap:0.45rem;">
+                <i class="fa-solid fa-circle-info"></i>
+                Information
+            </summary>
+            <div style="padding:0.15rem 0.9rem 0.9rem 0.9rem; font-size:0.92em; line-height:1.6; color:var(--ari-text,#242424);">
+                {% if page_id == 'home.admin_portal.database_setup' %}
+                <p>Define reusable local and DB SSH tunnel database connections that APERO profiles reference. Use Local for direct connections and DB SSH Tunnel for connections routed through an SSH gateway.</p>
+                {% elif page_id == 'home.admin_portal.apero_profiles' %}
+                <p>Create and maintain APERO profiles that drive paths, table names, and science settings. Database definitions are managed separately in Database Setup to keep forms simple.</p>
+                {% elif page_id == 'home.admin_portal.sshfs_management' %}
+                <p>Configure and monitor SSHFS mounts used by data paths on this server. Use SSH config mode to reference host aliases from <code>~/.ssh/config</code>.</p>
+                {% elif page_id == 'home.admin_portal.async_tasks' %}
+                <p>Schedule and monitor automated background tasks. Set cadence, inspect logs, and pause/resume execution as needed.</p>
+                {% elif page_id == 'home.admin_portal.user_db_access' %}
+                <p>Control group-level database table permissions across science groups and profiles. Grant minimum required access to balance security and usability.</p>
+                {% elif page_id == 'home.admin_portal.science_groups' %}
+                <p>Define science groups and manage run-ID membership for access control and profile visibility. Use refresh to rescan available run IDs from object tables.</p>
+                {% elif page_id == 'home.admin_portal.email' %}
+                <p>Configure outbound email service for alerts and notifications. Test your settings before enabling automated sends.</p>
+                {% elif page_id == 'home.admin_portal.backup_settings' %}
+                <p>Configure backup destinations and schedules. Validate credentials and paths first, then enable recurring backups.</p>
+                {% elif page_id == 'home.admin_portal.cache_settings' %}
+                <p>Tune plot and data cache behavior to balance performance and storage usage. Use conservative limits on constrained disks.</p>
+                {% elif page_id == 'home.admin_portal.download_management' %}
+                <p>Manage shared download jobs and storage cleanup. Review old downloads regularly to prevent unnecessary disk usage.</p>
+                {% elif page_id == 'home.admin_portal.calendar' %}
+                <p>Manage admin calendar entries for team coordination. Keep event metadata clear for easy filtering and search.</p>
+                {% elif page_id == 'home.admin_portal.links' %}
+                <p>Maintain shared links for team resources and operations. Use descriptive labels and remove stale links regularly.</p>
+                {% elif page_id == 'home.admin_portal.health_status' %}
+                <p>Review system health checks across admin subsystems. Warnings indicate incomplete setup; errors require immediate attention.</p>
+                {% elif page_id == 'home.admin_portal' %}
+                <p>Admin Portal overview. Use the health cards to identify setup gaps, then open each section to configure and test.</p>
+                {% else %}
+                <p>This page controls operational settings. Make one change at a time and test before saving.</p>
+                {% endif %}
+            </div>
+        </details>
+        {% endif %}
+
+        {% block doc_content %}{% endblock %}
+    </div>
+</div>
+{% endblock %}

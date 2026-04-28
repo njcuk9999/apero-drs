@@ -1,0 +1,17 @@
+{% extends "general/sidebar_base.html" %}
+{% block title %}APERO RI – {{ page_label }}{% endblock %}
+
+{% block doc_content %}
+<div class="ari-page-header">
+    <h1><i class="{{ page_icon }}"></i> {{ page_label }}</h1>
+    <p class="ari-page-subtitle">
+        Manage pages you pinned from their page titles.
+    </p>
+</div>
+
+<div id="pinned-pages-list" class="ari-pinned-list"></div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="{{ url_for('static', filename='js/pinned_pages.js') }}"></script>
+{% endblock %}

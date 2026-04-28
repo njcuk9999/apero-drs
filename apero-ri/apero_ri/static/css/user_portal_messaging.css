@@ -1,0 +1,349 @@
+/* ARI - User-portal messaging + notifications styling
+ * Theme-aware (uses --ari-* CSS vars set in style.css and
+ * mobile_overrides.css for [data-theme="dark"]).
+ * Mobile-first; tap targets >=44px on small screens.
+ */
+
+.upm-page,
+.upn-page {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+/* ---------------- Toolbar / search bar ---------------- */
+.upm-toolbar {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+    flex-wrap: wrap;
+}
+.upm-toolbar .ari-input {
+    flex: 1 1 220px;
+    min-width: 0;
+}
+.upm-count {
+    color: var(--ari-text-muted, #6b7785);
+    font-size: 0.875rem;
+}
+
+/* ---------------- Tabs (inbox / sent) ---------------- */
+.upm-tabs {
+    display: flex;
+    gap: 0.25rem;
+    flex-wrap: wrap;
+    align-items: center;
+    border-bottom: 1px solid var(--ari-border, #d0d7de);
+    padding-bottom: 0.25rem;
+}
+.upm-tab {
+    background: none;
+    border: 1px solid transparent;
+    border-bottom: none;
+    padding: 0.5rem 1rem;
+    cursor: pointer;
+    color: var(--ari-text, #1f2328);
+    border-radius: 6px 6px 0 0;
+    font-weight: 500;
+    min-height: 44px;
+}
+.upm-tab.is-active {
+    background: var(--ari-card-bg, #fff);
+    border-color: var(--ari-border, #d0d7de);
+    color: var(--ari-accent, #0969da);
+}
+.upm-tab-badge {
+    display: inline-block;
+    margin-left: 0.4rem;
+    background: var(--ari-accent, #0969da);
+    color: #fff;
+    border-radius: 999px;
+    padding: 0 0.5rem;
+    font-size: 0.75rem;
+    min-width: 1.5em;
+    text-align: center;
+}
+.upm-tab-badge:empty { display: none; }
+.upm-tab-action { margin-left: auto; }
+
+/* ---------------- Mailbox / list ---------------- */
+.upm-mailbox {
+    display: flex;
+    flex-direction: column;
+    border: 1px solid var(--ari-border, #d0d7de);
+    border-radius: 6px;
+    overflow: hidden;
+    background: var(--ari-card-bg, #fff);
+}
+.upm-row {
+    display: grid;
+    grid-template-columns: 14rem 1fr auto;
+    gap: 0.75rem;
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid var(--ari-border, #d0d7de);
+    cursor: pointer;
+    align-items: baseline;
+    color: var(--ari-text, #1f2328);
+    min-height: 44px;
+}
+.upm-row:hover {
+    background: var(--ari-bg, #f6f8fa);
+}
+.upm-row:last-child { border-bottom: none; }
+.upm-row.is-unread { font-weight: 600; }
+.upm-row__who { color: var(--ari-text-muted, #6b7785); }
+.upm-row.is-unread .upm-row__who,
+.upm-row.is-unread .upm-row__subject { color: var(--ari-text); }
+.upm-row__subject { overflow: hidden; text-overflow: ellipsis; }
+.upm-row__date {
+    color: var(--ari-text-muted, #6b7785);
+    font-size: 0.8125rem;
+    white-space: nowrap;
+}
+.upm-empty {
+    padding: 2rem 1rem;
+    text-align: center;
+    color: var(--ari-text-muted, #6b7785);
+}
+
+/* ---------------- Compose / view modal ---------------- */
+.upm-modal .ari-modal__content {
+    width: min(640px, 96vw);
+    max-height: 90vh;
+    overflow-y: auto;
+    background: var(--ari-card-bg, #fff);
+    color: var(--ari-text);
+    border: 1px solid var(--ari-border, #d0d7de);
+    border-radius: 8px;
+}
+.upm-send-form {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    padding: 1rem;
+}
+.ari-form-row {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+.ari-form-row > span {
+    font-weight: 500;
+    color: var(--ari-text-muted, #6b7785);
+    font-size: 0.875rem;
+}
+.upm-form-actions {
+    display: flex;
+    gap: 0.5rem;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+}
+.upm-form-status {
+    min-height: 1.25rem;
+    color: var(--ari-text-muted, #6b7785);
+    font-size: 0.875rem;
+}
+.upm-form-status.is-error { color: #cf222e; }
+.upm-form-status.is-success { color: #1a7f37; }
+
+.upm-view-meta {
+    padding: 0.5rem 1rem;
+    color: var(--ari-text-muted, #6b7785);
+    font-size: 0.875rem;
+    border-bottom: 1px solid var(--ari-border, #d0d7de);
+}
+.upm-view-body {
+    padding: 1rem;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+}
+.upm-view-actions {
+    padding: 0.75rem 1rem;
+    border-top: 1px solid var(--ari-border, #d0d7de);
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+}
+
+/* ---------------- Notifications page ---------------- */
+.upn-section {
+    background: var(--ari-card-bg, #fff);
+    border: 1px solid var(--ari-border, #d0d7de);
+    border-radius: 8px;
+    padding: 1rem;
+}
+.upn-section__header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-bottom: 0.75rem;
+}
+.upn-section__header h2 {
+    font-size: 1.1rem;
+    margin: 0;
+}
+.upn-section__actions {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+.upn-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+.upn-item {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    gap: 0.75rem;
+    padding: 0.75rem;
+    border: 1px solid var(--ari-border, #d0d7de);
+    border-radius: 6px;
+    align-items: start;
+}
+.upn-item.is-unread {
+    border-left: 3px solid var(--ari-accent, #0969da);
+}
+.upn-item__chan {
+    font-size: 1.25rem;
+    color: var(--ari-text-muted, #6b7785);
+}
+.upn-item__title { font-weight: 600; }
+.upn-item__body {
+    color: var(--ari-text-muted, #6b7785);
+    font-size: 0.875rem;
+    margin-top: 0.25rem;
+}
+.upn-item__date {
+    font-size: 0.75rem;
+    color: var(--ari-text-muted, #6b7785);
+    white-space: nowrap;
+}
+.upn-item__actions {
+    grid-column: 1 / -1;
+    display: flex;
+    gap: 0.25rem;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+    margin-top: 0.25rem;
+}
+
+.upn-prefs-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 0.5rem;
+}
+.upn-pref {
+    border: 1px solid var(--ari-border, #d0d7de);
+    border-radius: 6px;
+    padding: 0.75rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+.upn-pref__name { font-weight: 600; text-transform: capitalize; }
+.upn-pref__row {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+.upn-browser-perm {
+    margin-top: 1rem;
+    padding: 0.75rem;
+    border: 1px dashed var(--ari-border, #d0d7de);
+    border-radius: 6px;
+}
+
+/* ---------------- Users directory table ---------------- */
+.upm-table th,
+.upm-table td {
+    padding: 0.5rem 0.75rem;
+}
+.upm-actions-col { width: 1%; white-space: nowrap; }
+
+/* ---------------- Header bell ---------------- */
+.ari-notif-bell {
+    position: relative;
+    background: none;
+    border: none;
+    color: inherit;
+    cursor: pointer;
+    padding: 0.4rem 0.55rem;
+    border-radius: 6px;
+    line-height: 1;
+}
+.ari-notif-bell:hover { background: rgba(127, 127, 127, 0.15); }
+.ari-notif-badge {
+    position: absolute;
+    top: -2px;
+    right: -2px;
+    background: #cf222e;
+    color: #fff;
+    font-size: 0.65rem;
+    line-height: 1;
+    border-radius: 999px;
+    min-width: 1.1rem;
+    padding: 2px 4px;
+    text-align: center;
+}
+.ari-notif-badge:empty { display: none; }
+
+.ari-notif-panel {
+    position: absolute;
+    top: calc(100% + 0.5rem);
+    right: 0;
+    width: min(360px, 92vw);
+    max-height: 70vh;
+    overflow-y: auto;
+    background: var(--ari-card-bg, #fff);
+    color: var(--ari-text);
+    border: 1px solid var(--ari-border, #d0d7de);
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    z-index: 2000;
+    display: none;
+}
+.ari-notif-panel.is-open { display: block; }
+.ari-notif-panel__header {
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid var(--ari-border, #d0d7de);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+.ari-notif-panel__list {
+    display: flex;
+    flex-direction: column;
+}
+.ari-notif-panel__item {
+    padding: 0.6rem 1rem;
+    border-bottom: 1px solid var(--ari-border, #d0d7de);
+    cursor: pointer;
+    text-decoration: none;
+    color: inherit;
+    display: block;
+}
+.ari-notif-panel__item:hover { background: var(--ari-bg, #f6f8fa); }
+.ari-notif-panel__item.is-unread {
+    background: rgba(9, 105, 218, 0.06);
+}
+.ari-notif-panel__title { font-weight: 600; }
+.ari-notif-panel__body {
+    color: var(--ari-text-muted, #6b7785);
+    font-size: 0.85rem;
+}
+.ari-notif-panel__footer {
+    padding: 0.5rem 1rem;
+    border-top: 1px solid var(--ari-border, #d0d7de);
+    text-align: center;
+}
+
+@media (max-width: 600px) {
+    .upm-row {
+        grid-template-columns: 1fr;
+    }
+    .upm-row__date { text-align: left; }
+}

@@ -1,0 +1,1717 @@
+{% extends "general/sidebar_base.html" %}
+{% block title %}APERO RI – Backup Settings{% endblock %}
+
+{% block doc_content %}
+<div class="ari-up-shell">
+<div class="ari-page-header">
+    <h1><i class="fa-solid fa-cloud-arrow-up"></i> Backup Settings</h1>
+</div>
+
+{% if not can_manage %}
+<div class="ari-ae-readonly-notice">
+    <i class="fa-solid fa-circle-info"></i>
+    You have view-only access to backup settings.
+</div>
+{% endif %}
+
+<div class="ari-ae-status-card" id="abStatusCard">
+    <div class="ari-ae-status-icon" id="abStatusIcon">
+        <i class="fa-solid fa-spinner fa-spin"></i>
+    </div>
+    <div class="ari-ae-status-body">
+        <span class="ari-ae-status-title" id="abStatusTitle">Checking cloud backup connection...</span>
+        <span class="ari-ae-status-detail" id="abStatusDetail"></span>
+    </div>
+    <button class="ari-btn ari-btn--secondary ari-btn--sm ari-ae-status-action" id="abBtnTest"
+            onclick="abTestConnection()">
+        <i class="fa-solid fa-plug-circle-check"></i> Test connection
+    </button>
+    {% if can_manage %}
+    <button class="ari-btn ari-btn--secondary ari-btn--sm ari-ae-status-action" id="abBtnTestBackup"
+            onclick="abTestBackup()">
+        <i class="fa-solid fa-vial-circle-check"></i> Test backup
+    </button>
+    {% endif %}
+</div>
+
+<div class="ari-ab-tabs" role="tablist" aria-label="Backup tabs">
+    <button id="abTabSetup" class="ari-ab-tab ari-ab-tab--active" role="tab"
+            aria-selected="true" onclick="abSelectTab('setup')">
+        <i class="fa-solid fa-sliders"></i> Setup
+    </button>
+    <button id="abTabBackups" class="ari-ab-tab" role="tab"
+            aria-selected="false" onclick="abSelectTab('backups')">
+        <i class="fa-solid fa-database"></i> Backups
+    </button>
+    <button id="abTabRestore" class="ari-ab-tab" role="tab"
+            aria-selected="false" onclick="abSelectTab('restore')">
+        <i class="fa-solid fa-arrow-rotate-left"></i> Restore
+    </button>
+</div>
+
+<div id="abPanelSetup" class="ari-ab-panel">
+    <div class="ari-ae-section">
+        <h2 class="ari-ae-section-title">
+            <i class="fa-solid fa-cloud"></i> Cloud provider
+        </h2>
+
+        <div class="ari-ae-field" style="margin-bottom:12px;">
+            <label class="ari-ae-label">Backup methods</label>
+            <div id="abMethodCards" class="ab-method-cards"></div>
+            <input type="hidden" id="abMethodSelect">
+        </div>
+
+        <fieldset id="abSetupFieldset" style="border:0; padding:0; margin:0;" disabled>
+        <div class="ari-ae-field ari-ae-field--inline" style="margin-bottom:12px;">
+            <label class="ari-ae-label" for="abMethodEnabled">Enable selected method</label>
+            <label class="ari-ae-switch">
+                <input type="checkbox" id="abMethodEnabled"
+                       {% if not can_manage %}disabled{% endif %}>
+                <span class="ari-ae-switch-track"></span>
+            </label>
+        </div>
+
+        <div class="ari-ae-field" style="margin-bottom:12px;">
+            <label class="ari-ae-label" for="abMethodName">Method name</label>
+            <input type="text" id="abMethodName" class="ari-ae-input"
+                   placeholder="e.g. Nightly offsite backup"
+                   {% if not can_manage %}readonly{% endif %}>
+        </div>
+
+        <div class="ari-ae-provider-grid" id="abProviderGrid">
+            {% for key, prov in providers.items() %}
+            <button type="button"
+                    class="ari-ae-provider-btn{% if key == current_provider %} ari-ae-provider-btn--active{% endif %}"
+                    data-provider="{{ key }}"
+                    onclick="abSelectProvider('{{ key }}')"
+                    {% if not can_manage %}disabled{% endif %}>
+                {% if key == 'gdrive_oauth' %}<i class="fa-brands fa-google-drive"></i>
+                {% elif key == 's3' %}<i class="fa-brands fa-aws"></i>
+                {% elif key == 'ssh_rsync' %}<i class="fa-solid fa-network-wired"></i>
+                {% elif key == 'local_copy' %}<i class="fa-solid fa-folder-tree"></i>
+                {% else %}<i class="fa-solid fa-hard-drive"></i>{% endif %}
+                {{ prov.label }}
+            </button>
+            {% endfor %}
+        </div>
+    </div>
+
+    <div class="ari-ae-section">
+        <h2 class="ari-ae-section-title">
+            <i class="fa-solid fa-key"></i> Credentials &amp; connection
+        </h2>
+
+        <form id="abForm" class="ari-ae-form" onsubmit="abSave(event)">
+            <div class="ari-ae-field ari-ae-field--inline">
+                <label class="ari-ae-label" for="abEnabled">Enable cloud mirror</label>
+                <label class="ari-ae-switch">
+                    <input type="checkbox" id="abEnabled" name="enabled"
+                           {% if backup_cfg.get('enabled') %}checked{% endif %}
+                           {% if not can_manage %}disabled{% endif %}>
+                    <span class="ari-ae-switch-track"></span>
+                </label>
+            </div>
+
+            <div id="abGdriveFields">
+                <div class="ari-ae-field">
+                    <label class="ari-ae-label">Google Drive setup guide</label>
+                    <ol class="ari-ae-hint" style="margin:4px 0 0 0; padding-left:1.4em; line-height:1.8;">
+                        <li>Create or select your <strong>Google Cloud project</strong> in <strong>console.cloud.google.com</strong>.</li>
+                        <li>Open <strong>Google Auth Platform</strong> (or <strong>OAuth consent screen</strong>) → <strong>Audience</strong> and add your Google account under <strong>Test users</strong> while the app is in testing.</li>
+                        <li>Go to <strong>APIs &amp; Services</strong> → <strong>Credentials</strong>.</li>
+                        <li>Create an <strong>OAuth 2.0 Client ID</strong> (Application type: <em>Web application</em>).</li>
+                        <li>Under <strong>Authorized redirect URIs</strong>, add the exact callback URL shown below and save.<br>
+                            <em>Note: Google can take a few minutes (and sometimes up to a few hours) to propagate new redirect URIs.</em></li>
+                        <li>Click <strong>Download JSON</strong>, then upload it using the Upload JSON button below.</li>
+                        <li>Enter the Google Drive folder ID, then click <strong>Connect Google account</strong>.</li>
+                    </ol>
+                </div>
+                {% if can_manage %}
+                <div class="ari-ae-field">
+                    <label class="ari-ae-label">Google Cloud Console redirect URI</label>
+                    <div style="display:flex; gap:8px; align-items:center;">
+                        <input type="text" class="ari-ae-input" readonly
+                               id="abOauthCallbackUri"
+                               value="{{ request.host_url.rstrip('/') }}/api/admin/backups/oauth/callback">
+                        <button type="button" class="ari-btn ari-btn--secondary ari-btn--sm"
+                                onclick="navigator.clipboard.writeText(document.getElementById('abOauthCallbackUri').value).then(()=>abSetMsg('abSaveMsg','Callback URI copied.',true))">
+                            <i class="fa-solid fa-copy"></i>
+                        </button>
+                    </div>
+                    <span class="ari-ae-hint">Add this exact URL as an authorized redirect URI (step 5 above).</span>
+                </div>
+                {% endif %}
+                <div class="ari-ae-field">
+                    <label class="ari-ae-label" for="abGdriveKeyFile">
+                        OAuth client secret JSON file
+                        <span class="ari-ae-hint">Download from Google Cloud OAuth credentials and upload it here; APERO stores uploaded credentials under LOCAL_DATA_DIR/secret.</span>
+                    </label>
+                    <input type="text" id="abGdriveKeyFile" name="gdrive_oauth_client_secret_file"
+                           class="ari-ae-input" placeholder="/path/to/LOCAL_DATA_DIR/secret/gdrive_oauth_client_secret.json"
+                           value="{{ backup_cfg.get('gdrive_oauth_client_secret_file', '') }}"
+                           {% if not can_manage %}readonly{% endif %}>
+                    {% if can_manage %}
+                    <div style="display:flex; gap:8px; align-items:center; margin-top:8px;">
+                        <input type="file" id="abGdriveJsonUpload" accept=".json,application/json" class="ari-ae-input">
+                        <button type="button" class="ari-btn ari-btn--secondary ari-btn--sm"
+                                onclick="abUploadJson('abGdriveJsonUpload', 'gdrive_oauth_client_secret_file', 'abGdriveKeyFile')">
+                            <i class="fa-solid fa-upload"></i> Upload JSON
+                        </button>
+                    </div>
+                    {% endif %}
+                </div>
+                <div class="ari-ae-field">
+                    <label class="ari-ae-label" for="abGdriveTokenFile">
+                        OAuth token file (managed automatically)
+                        <span class="ari-ae-hint">This is created after you click Connect Google account and stored under LOCAL_DATA_DIR/secret.</span>
+                    </label>
+                    <input type="text" id="abGdriveTokenFile" name="gdrive_oauth_token_file"
+                           class="ari-ae-input" placeholder="/path/to/LOCAL_DATA_DIR/secret/gdrive_oauth_token.json"
+                           value="{{ backup_cfg.get('gdrive_oauth_token_file', '') }}"
+                           readonly>
+                </div>
+                <div class="ari-ae-field">
+                    <label class="ari-ae-label" for="abGdriveFolderId">
+                        Google Drive folder ID
+                        <span class="ari-ae-hint">Use a folder in the Google account you connect below (step 7 above).</span>
+                    </label>
+                    <input type="text" id="abGdriveFolderId" name="gdrive_folder_id"
+                           class="ari-ae-input" placeholder="1AbCdEf..."
+                           value="{{ backup_cfg.get('gdrive_folder_id', '') }}"
+                           {% if not can_manage %}readonly{% endif %}>
+                </div>
+                {% if can_manage %}
+                <div class="ari-ae-field">
+                    <button type="button" class="ari-btn ari-btn--secondary ari-btn--sm"
+                            onclick="abConnectGoogleOauth()">
+                        <i class="fa-brands fa-google"></i> Connect Google account
+                    </button>
+                </div>
+                {% endif %}
+            </div>
+
+            <div id="abS3Fields" style="display:none;">
+                <div class="ari-ae-field">
+                    <label class="ari-ae-label" for="abS3Bucket">S3 bucket</label>
+                    <input type="text" id="abS3Bucket" name="s3_bucket" class="ari-ae-input"
+                           value="{{ backup_cfg.get('s3_bucket', '') }}"
+                           {% if not can_manage %}readonly{% endif %}>
+                </div>
+                <div class="ari-ae-field ari-ae-field--row">
+                    <div class="ari-ae-subfield">
+                        <label class="ari-ae-label" for="abS3Prefix">Prefix</label>
+                        <input type="text" id="abS3Prefix" name="s3_prefix" class="ari-ae-input"
+                               value="{{ backup_cfg.get('s3_prefix', 'apero/backups') }}"
+                               {% if not can_manage %}readonly{% endif %}>
+                    </div>
+                    <div class="ari-ae-subfield">
+                        <label class="ari-ae-label" for="abS3Region">Region</label>
+                        <input type="text" id="abS3Region" name="s3_region" class="ari-ae-input"
+                               value="{{ backup_cfg.get('s3_region', '') }}"
+                               {% if not can_manage %}readonly{% endif %}>
+                    </div>
+                </div>
+                <div class="ari-ae-field">
+                    <label class="ari-ae-label" for="abS3Endpoint">
+                        Custom endpoint URL (optional)
+                        <span class="ari-ae-hint">Leave blank for AWS S3. Set this for S3-compatible storage.</span>
+                    </label>
+                    <input type="text" id="abS3Endpoint" name="s3_endpoint_url" class="ari-ae-input"
+                           value="{{ backup_cfg.get('s3_endpoint_url', '') }}"
+                           {% if not can_manage %}readonly{% endif %}>
+                </div>
+                <div class="ari-ae-field ari-ae-field--row">
+                    <div class="ari-ae-subfield">
+                        <label class="ari-ae-label" for="abS3Key">Access key ID</label>
+                        <input type="text" id="abS3Key" name="s3_access_key_id" class="ari-ae-input"
+                               value="{{ backup_cfg.get('s3_access_key_id', '') }}"
+                               autocomplete="username"
+                               {% if not can_manage %}readonly{% endif %}>
+                    </div>
+                    <div class="ari-ae-subfield">
+                        <label class="ari-ae-label" for="abS3Secret">
+                            Secret access key
+                            <span class="ari-ae-hint">Leave blank to keep the existing secret.</span>
+                        </label>
+                        <input type="password" id="abS3Secret" name="s3_secret_access_key" class="ari-ae-input"
+                               placeholder="Leave blank to keep current"
+                               autocomplete="current-password"
+                               {% if not can_manage %}readonly{% endif %}>
+                    </div>
+                </div>
+                <div class="ari-ae-field">
+                    <label class="ari-ae-label" for="abS3CredFile">
+                        S3 credentials JSON file (optional)
+                        <span class="ari-ae-hint">If key fields are blank, APERO RI can read credentials from this JSON file path.</span>
+                    </label>
+                    <input type="text" id="abS3CredFile" name="s3_credentials_file" class="ari-ae-input"
+                           placeholder="/path/to/aws-credentials.json"
+                           value="{{ backup_cfg.get('s3_credentials_file', '') }}"
+                           {% if not can_manage %}readonly{% endif %}>
+                    {% if can_manage %}
+                    <div style="display:flex; gap:8px; align-items:center; margin-top:8px;">
+                        <input type="file" id="abS3JsonUpload" accept=".json,application/json" class="ari-ae-input">
+                        <button type="button" class="ari-btn ari-btn--secondary ari-btn--sm"
+                                onclick="abUploadJson('abS3JsonUpload', 's3_credentials_file', 'abS3CredFile')">
+                            <i class="fa-solid fa-upload"></i> Upload JSON
+                        </button>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div id="abRsyncFields" style="display:none;">
+                <div class="ari-ae-field">
+                    <label class="ari-ae-label" for="abRsyncTarget">SSH target (user@host)</label>
+                    <input type="text" id="abRsyncTarget" name="rsync_ssh_target" class="ari-ae-input"
+                           placeholder="user@example.com"
+                           value="{{ backup_cfg.get('rsync_ssh_target', '') }}"
+                           {% if not can_manage %}readonly{% endif %}>
+                </div>
+                <div class="ari-ae-field">
+                    <label class="ari-ae-label" for="abRsyncRemoteDir">Remote backup directory</label>
+                    <input type="text" id="abRsyncRemoteDir" name="rsync_remote_dir" class="ari-ae-input"
+                           placeholder="/srv/apero/backups"
+                           value="{{ backup_cfg.get('rsync_remote_dir', '') }}"
+                           {% if not can_manage %}readonly{% endif %}>
+                </div>
+                <div class="ari-ae-field ari-ae-field--row">
+                    <div class="ari-ae-subfield">
+                        <label class="ari-ae-label" for="abRsyncKey">SSH key path (optional)</label>
+                        <input type="text" id="abRsyncKey" name="rsync_ssh_key" class="ari-ae-input"
+                               placeholder="~/.ssh/id_ed25519"
+                               value="{{ backup_cfg.get('rsync_ssh_key', '') }}"
+                               {% if not can_manage %}readonly{% endif %}>
+                    </div>
+                    <div class="ari-ae-subfield">
+                        <label class="ari-ae-label" for="abRsyncPort">SSH port (optional)</label>
+                        <input type="text" id="abRsyncPort" name="rsync_port" class="ari-ae-input"
+                               placeholder="22"
+                               value="{{ backup_cfg.get('rsync_port', '') }}"
+                               {% if not can_manage %}readonly{% endif %}>
+                    </div>
+                </div>
+                <div class="ari-ae-field">
+                    <label class="ari-ae-label" for="abRsyncExtra">Extra rsync options (optional)</label>
+                    <input type="text" id="abRsyncExtra" name="rsync_extra_opts" class="ari-ae-input"
+                           placeholder="--compress-level=6"
+                           value="{{ backup_cfg.get('rsync_extra_opts', '') }}"
+                           {% if not can_manage %}readonly{% endif %}>
+                </div>
+            </div>
+
+            <div id="abLocalCopyFields" style="display:none;">
+                <div class="ari-ae-field">
+                    <label class="ari-ae-label" for="abLocalMirrorDir">Local mirror directory path</label>
+                    <div style="display:flex; gap:8px; align-items:center;">
+                        <input type="text" id="abLocalMirrorDir" name="local_mirror_dir" class="ari-ae-input"
+                               placeholder="/mnt/backup/apero_backups"
+                               value="{{ backup_cfg.get('local_mirror_dir', '') }}"
+                               {% if not can_manage %}readonly{% endif %}>
+                        <button type="button" class="ari-btn ari-btn--secondary ari-btn--sm"
+                                onclick="abBrowseLocalMirror()">
+                            <i class="fa-solid fa-folder-open"></i> Browse
+                        </button>
+                        <button type="button" class="ari-btn ari-btn--secondary ari-btn--sm"
+                                onclick="abTestLocalMirrorDir()">
+                            <i class="fa-solid fa-vial-circle-check"></i> Test
+                        </button>
+                    </div>
+                    <span class="ari-ae-hint">This method mirrors backup files to another local path (e.g. another disk or mounted volume).</span>
+                    <span id="abLocalMirrorMsg" class="ari-ae-save-msg"></span>
+                </div>
+            </div>
+
+            {% if can_manage %}
+            <div class="ari-ae-form-actions">
+                <button type="submit" class="ari-btn ari-btn--primary" id="abBtnSave">
+                    <i class="fa-solid fa-floppy-disk"></i> Save settings
+                </button>
+                <button type="button" class="ari-btn ari-btn--secondary" id="abBtnSync" onclick="abRunSync()">
+                    <i class="fa-solid fa-arrows-rotate"></i> Sync now
+                </button>
+                <span class="ari-ae-save-msg" id="abSaveMsg"></span>
+            </div>
+            {% endif %}
+        </form>
+    </div>
+    </fieldset>
+</div>
+
+<div id="abPanelBackups" class="ari-ab-panel ari-up-panel--hidden">
+    <div class="ari-ae-section">
+        <h2 class="ari-ae-section-title">
+            <i class="fa-solid fa-box-archive"></i> Backup inventory
+        </h2>
+
+        <div class="ari-ab-toolbar">
+            <div id="abInventoryMethodTabs" class="ari-ab-tabs" style="margin-right:auto;"></div>
+            <button class="ari-btn ari-btn--secondary ari-btn--sm" onclick="abLoadInventory()">
+                <i class="fa-solid fa-rotate"></i> Refresh
+            </button>
+            {% if can_manage %}
+            <button class="ari-btn ari-btn--ghost ari-btn--sm" onclick="abDeleteAll('daily', 'both')">
+                Delete all daily (local + cloud)
+            </button>
+            <button class="ari-btn ari-btn--ghost ari-btn--sm" onclick="abDeleteAll('weekly', 'both')">
+                Delete all weekly (local + cloud)
+            </button>
+            <button class="ari-btn ari-btn--ghost ari-btn--sm" onclick="abDeleteAll('all', 'both')">
+                Delete all backups (local + cloud)
+            </button>
+            {% endif %}
+            <span class="ari-ae-save-msg" id="abInventoryMsg"></span>
+        </div>
+
+        <div class="ari-ab-summary" id="abSummary"></div>
+
+        <div class="ari-ab-table-wrap">
+            <table class="ari-ab-table" id="abTable">
+                <thead>
+                    <tr>
+                        <th>Period</th>
+                        <th>Backup file</th>
+                        <th>Local</th>
+                        <th>Cloud</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="abTableBody"></tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<div id="abPanelRestore" class="ari-ab-panel ari-up-panel--hidden">
+    <div class="ari-ae-section">
+        <h2 class="ari-ae-section-title">
+            <i class="fa-solid fa-arrow-rotate-left"></i> Restore backups
+        </h2>
+
+        <div class="ari-ab-toolbar">
+            <span class="ari-ae-save-msg" id="abRestoreMsg"></span>
+        </div>
+
+        <div class="ari-ae-field">
+            <p style="margin:0 0 12px 0; font-size:0.95em; color:#666;">
+                Sometimes you need to restore from a backup: when recovering from data loss, testing a backup, or setting up a new server from cloud backups.
+            </p>
+        </div>
+
+        <div class="ari-ae-options" style="display:flex; gap:16px; margin-bottom:20px;">
+            <label style="display:flex; align-items:center; gap:8px; cursor:pointer;">
+                <input type="radio" name="abRestoreMode" value="download" checked onchange="abSelectRestoreMode('download')">
+                <span><strong>Download a backup</strong> from cloud to local</span>
+            </label>
+            <label style="display:flex; align-items:center; gap:8px; cursor:pointer;">
+                <input type="radio" name="abRestoreMode" value="sync-from-cloud" onchange="abSelectRestoreMode('sync-from-cloud')">
+                <span><strong>Pull all from cloud</strong> (sync cloud → local)</span>
+            </label>
+        </div>
+
+        <div id="abRestoreDownloadMode">
+            <div class="ari-ae-field">
+                <label class="ari-ae-label">Select a backup to download from cloud</label>
+                <select id="abRestoreBackupSelect" class="ari-ae-input" style="padding:8px;">
+                    <option value="">-- Loading backups from cloud --</option>
+                </select>
+                <span class="ari-ae-hint">This will download the selected cloud backup to your local backups directory.</span>
+            </div>
+            <div class="ari-ae-field">
+                {% if can_manage %}
+                <button type="button" class="ari-btn ari-btn--primary" onclick="abDownloadBackup()">
+                    <i class="fa-solid fa-download"></i> Download backup
+                </button>
+                {% else %}
+                <p style="color:#999; font-size:0.9em;">You need admin permissions to restore backups.</p>
+                {% endif %}
+            </div>
+        </div>
+
+        <div id="abRestoreSyncMode" style="display:none;">
+            <div class="ari-ae-field">
+                <p style="margin:0 0 12px 0; font-size:0.95em;">
+                    This will synchronize <strong>all cloud backups</strong> to your local backups directory, filling in any that don't exist locally. 
+                    Useful when setting up a new server or recovering lost local backups.
+                </p>
+            </div>
+            <div class="ari-ae-field">
+                {% if can_manage %}
+                <button type="button" class="ari-btn ari-btn--primary" onclick="abSyncFromCloud()">
+                    <i class="fa-solid fa-cloud-arrow-down"></i> Pull all from cloud
+                </button>
+                {% else %}
+                <p style="color:#999; font-size:0.9em;">You need admin permissions to restore backups.</p>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="ari-ab-table-wrap" style="margin-top:20px;">
+            <table class="ari-ab-table" id="abRestoreTable">
+                <thead>
+                    <tr>
+                        <th>Period</th>
+                        <th>Backup file</th>
+                        <th>Cloud size</th>
+                        <th>Local exists?</th>
+                    </tr>
+                </thead>
+                <tbody id="abRestoreTableBody"></tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<div id="abBrowseModal" class="ari-modal-backdrop" style="display:none;">
+    <div class="ari-modal ari-modal--wide">
+        <div class="ari-modal__header">
+            <i class="fa-solid fa-folder-open"></i> Browse Server Directory
+        </div>
+        <div class="ari-modal__body">
+            <div class="ari-ap-browser">
+                <div class="ari-ap-browser__path">
+                    <label for="abBrowsePathInput">Current path:</label>
+                    <input type="text" id="abBrowsePathInput" class="ari-ap-input" value="/" autocomplete="off">
+                    <button id="abBtnBrowseGo" type="button" class="ari-btn ari-btn--secondary ari-btn--sm">Go</button>
+                </div>
+                <div id="abBrowseStatus" class="ari-ap-browser__status" style="display:none;"></div>
+                <div id="abBrowseList" class="ari-ap-browser__list"></div>
+            </div>
+        </div>
+        <div class="ari-modal__footer">
+            <button id="abBtnBrowseCancel" type="button" class="ari-btn ari-btn--secondary">Cancel</button>
+            <button id="abBtnBrowseSelect" type="button" class="ari-btn ari-btn--primary">
+                <i class="fa-solid fa-check"></i> Select This Directory
+            </button>
+        </div>
+    </div>
+</div>
+
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+var AB_PROVIDERS = {{ providers_json | safe }};
+var AB_CAN_MANAGE = {{ can_manage | tojson }};
+var AB_OAUTH_INSECURE = {{ oauth_insecure_warning | tojson }};
+var AB_CFG = {{ backup_cfg | tojson }};
+var AB_INVENTORY = {{ backup_inventory | tojson }};
+
+var abCurrentProvider = AB_CFG.provider || '{{ current_provider }}' || 'local_only';
+var abMethods = [];
+var abActiveMethodId = '';
+var abInventoryMethodId = 'default';
+var abCurrentBrowsePath = '/';
+var abLastBrowsePath = '/';
+var abBrowseTargetId = 'abLocalMirrorDir';
+
+function abEl(id) {
+    return document.getElementById(id);
+}
+
+function abSetInputValue(id, value) {
+    var el = abEl(id);
+    if (el) el.value = value == null ? '' : String(value);
+}
+
+function abGetInputValue(id) {
+    var el = abEl(id);
+    return el ? String(el.value || '') : '';
+}
+
+function abSetChecked(id, checked) {
+    var el = abEl(id);
+    if (el) el.checked = !!checked;
+}
+
+function abGetChecked(id) {
+    var el = abEl(id);
+    return el ? !!el.checked : false;
+}
+
+function abEscapeHtml(str) {
+    var div = document.createElement('div');
+    div.appendChild(document.createTextNode(str == null ? '' : String(str)));
+    return div.innerHTML;
+}
+
+function abNewMethodId() {
+    return 'method_' + String(Date.now()) + '_' + String(Math.floor(Math.random() * 1000));
+}
+
+function abLegacyMethodFromCfg() {
+    return {
+        id: 'default',
+        name: 'Local (built-in)',
+        enabled: true,
+        provider: 'local_only',
+        gdrive_oauth_client_secret_file: AB_CFG.gdrive_oauth_client_secret_file || '',
+        gdrive_oauth_token_file: AB_CFG.gdrive_oauth_token_file || '',
+        gdrive_folder_id: AB_CFG.gdrive_folder_id || '',
+        s3_bucket: AB_CFG.s3_bucket || '',
+        s3_prefix: AB_CFG.s3_prefix || 'apero/backups',
+        s3_region: AB_CFG.s3_region || '',
+        s3_endpoint_url: AB_CFG.s3_endpoint_url || '',
+        s3_access_key_id: AB_CFG.s3_access_key_id || '',
+        s3_credentials_file: AB_CFG.s3_credentials_file || '',
+        rsync_ssh_target: AB_CFG.rsync_ssh_target || '',
+        rsync_remote_dir: AB_CFG.rsync_remote_dir || '',
+        rsync_ssh_key: AB_CFG.rsync_ssh_key || '',
+        rsync_port: AB_CFG.rsync_port || '',
+        rsync_extra_opts: AB_CFG.rsync_extra_opts || '',
+        local_mirror_dir: AB_CFG.local_mirror_dir || '',
+    };
+}
+
+function abEnsureMethods() {
+    const raw = Array.isArray(AB_CFG.backup_methods) ? AB_CFG.backup_methods : [];
+    if (raw.length) {
+        abMethods = raw.map((m, idx) => ({
+            id: String((m && m.id) || `method_${idx + 1}`),
+            name: String((m && m.name) || `Method ${idx + 1}`),
+            enabled: !!(m && m.enabled),
+            provider: String((m && m.provider) || 'local_only'),
+            gdrive_oauth_client_secret_file: String((m && m.gdrive_oauth_client_secret_file) || ''),
+            gdrive_oauth_token_file: String((m && m.gdrive_oauth_token_file) || ''),
+            gdrive_folder_id: String((m && m.gdrive_folder_id) || ''),
+            s3_bucket: String((m && m.s3_bucket) || ''),
+            s3_prefix: String((m && m.s3_prefix) || 'apero/backups'),
+            s3_region: String((m && m.s3_region) || ''),
+            s3_endpoint_url: String((m && m.s3_endpoint_url) || ''),
+            s3_access_key_id: String((m && m.s3_access_key_id) || ''),
+            s3_credentials_file: String((m && m.s3_credentials_file) || ''),
+            rsync_ssh_target: String((m && m.rsync_ssh_target) || ''),
+            rsync_remote_dir: String((m && m.rsync_remote_dir) || ''),
+            rsync_ssh_key: String((m && m.rsync_ssh_key) || ''),
+            rsync_port: String((m && m.rsync_port) || ''),
+            rsync_extra_opts: String((m && m.rsync_extra_opts) || ''),
+            local_mirror_dir: String((m && m.local_mirror_dir) || ''),
+        }));
+    } else {
+        abMethods = [abLegacyMethodFromCfg()];
+    }
+    if (!abMethods.length) {
+        abMethods = [abLegacyMethodFromCfg()];
+    }
+    var dflt = abMethods.find(function (m) { return m.id === 'default'; });
+    if (!dflt) {
+        abMethods.unshift(abLegacyMethodFromCfg());
+    } else {
+        dflt.name = 'Local (built-in)';
+        dflt.provider = 'local_only';
+        dflt.enabled = true;
+    }
+    abMethods = abMethods.sort(function (a, b) {
+        if (a.id === 'default') return -1;
+        if (b.id === 'default') return 1;
+        return 0;
+    });
+    const preferred = String(AB_CFG.active_method_id || '').trim();
+    if (preferred && abMethods.some(m => m.id === preferred)) {
+        abActiveMethodId = preferred;
+    } else {
+        abActiveMethodId = abMethods.length ? abMethods[0].id : '';
+    }
+    if (!abInventoryMethodId
+            || !abMethods.some(function (m) {
+                return String(m.id || '') === String(abInventoryMethodId || '');
+            })) {
+        abInventoryMethodId = 'default';
+    }
+}
+
+function abCurrentMethod() {
+    return abMethods.find(m => m.id === abActiveMethodId) || null;
+}
+
+function abSetSetupEnabled(enabled) {
+    var fs = abEl('abSetupFieldset');
+    if (fs) fs.disabled = !enabled;
+}
+
+function abMethodProviderLabel(method) {
+    var provider = String((method && method.provider) || 'local_only').trim();
+    if (AB_PROVIDERS && AB_PROVIDERS[provider]
+            && AB_PROVIDERS[provider].label) {
+        return String(AB_PROVIDERS[provider].label);
+    }
+    return provider;
+}
+
+function abRenderMethodSelect() {
+    const sel = document.getElementById('abMethodSelect');
+    if (!sel) return;
+    if (!abMethods.length) {
+        abMethods = [abLegacyMethodFromCfg()];
+    }
+    sel.innerHTML = '';
+    abMethods.forEach(m => {
+        const opt = document.createElement('option');
+        opt.value = m.id;
+        var provider = String(m.provider || 'local_only').trim();
+        var providerLabel = provider;
+        if (AB_PROVIDERS && AB_PROVIDERS[provider]
+                && AB_PROVIDERS[provider].label) {
+            providerLabel = String(AB_PROVIDERS[provider].label);
+        }
+        opt.textContent = m.name + ' - ' + providerLabel
+            + (m.enabled ? '' : ' (disabled)');
+        sel.appendChild(opt);
+    });
+    if (!abActiveMethodId || !abMethods.some(m => m.id === abActiveMethodId)) {
+        abActiveMethodId = abMethods[0].id;
+    }
+    sel.value = abActiveMethodId;
+}
+
+function abSelectMethodCard(methodId) {
+    var mid = String(methodId || '').trim();
+    if (!mid || !abMethods.some(function (m) { return m.id === mid; })) return;
+    abPersistCurrentMethodFromForm();
+    abActiveMethodId = mid;
+    abInventoryMethodId = mid;
+    abRenderMethodCards();
+    abRenderInventoryMethodTabs();
+    abLoadMethodIntoForm(abCurrentMethod());
+    abSetSetupEnabled(true);
+}
+
+function abRenderMethodCards() {
+    var wrap = abEl('abMethodCards');
+    if (!wrap) return;
+    wrap.innerHTML = '';
+
+    var addCard = document.createElement('button');
+    addCard.type = 'button';
+    addCard.className = 'ab-method-card ab-method-card--add';
+    addCard.innerHTML = '<i class="fa-solid fa-plus"></i><span>Add method</span>';
+    addCard.disabled = !AB_CAN_MANAGE;
+    addCard.addEventListener('click', function () {
+        abAddMethod();
+    });
+    wrap.appendChild(addCard);
+
+    abMethods.forEach(function (method) {
+        var mid = String(method.id || '');
+        var isActive = (mid === abActiveMethodId);
+        var isDefault = (mid === 'default');
+        var isEnabled = !!method.enabled;
+
+        var card = document.createElement('div');
+        card.className = 'ab-method-card'
+            + (isEnabled ? ' ab-method-card--enabled' : ' ab-method-card--disabled')
+            + (isActive ? ' ab-method-card--active' : '');
+
+        var body = document.createElement('button');
+        body.type = 'button';
+        body.className = 'ab-method-card__body';
+        body.addEventListener('click', function () {
+            abSelectMethodCard(mid);
+        });
+        body.innerHTML = ''
+            + '<span class="ab-method-card__title">' + String(method.name || mid) + '</span>'
+            + '<span class="ab-method-card__meta">' + abMethodProviderLabel(method)
+            + (method.enabled ? '' : ' (disabled)') + '</span>';
+
+        var actions = document.createElement('div');
+        actions.className = 'ab-method-card__actions';
+
+        var editBtn = document.createElement('button');
+        editBtn.type = 'button';
+        editBtn.className = 'ari-btn ari-btn--ghost ari-btn--sm';
+        editBtn.title = 'Edit method';
+        editBtn.innerHTML = '<i class="fa-solid fa-pen"></i>';
+        editBtn.addEventListener('click', function (ev) {
+            ev.stopPropagation();
+            abSelectMethodCard(mid);
+            var nameEl = abEl('abMethodName');
+            if (nameEl && !nameEl.readOnly) nameEl.focus();
+        });
+
+        var delBtn = document.createElement('button');
+        delBtn.type = 'button';
+        delBtn.className = 'ari-btn ari-btn--ghost ari-btn--sm';
+        delBtn.title = 'Delete method';
+        delBtn.innerHTML = '<i class="fa-solid fa-trash"></i>';
+        delBtn.disabled = isDefault || !AB_CAN_MANAGE;
+        delBtn.addEventListener('click', function (ev) {
+            ev.stopPropagation();
+            abDeleteMethodById(mid);
+        });
+
+        actions.appendChild(editBtn);
+        actions.appendChild(delBtn);
+        card.appendChild(body);
+        card.appendChild(actions);
+        wrap.appendChild(card);
+    });
+}
+
+function abLoadMethodIntoForm(method) {
+    if (!method) return;
+    abSetInputValue('abMethodName', method.name || '');
+    abSetChecked('abMethodEnabled', !!method.enabled);
+    abSetChecked('abEnabled', !!method.enabled);
+
+    abCurrentProvider = method.provider || 'local_only';
+    abSetInputValue('abGdriveKeyFile', method.gdrive_oauth_client_secret_file || '');
+    abSetInputValue('abGdriveTokenFile', method.gdrive_oauth_token_file || '');
+    abSetInputValue('abGdriveFolderId', method.gdrive_folder_id || '');
+
+    abSetInputValue('abS3Bucket', method.s3_bucket || '');
+    abSetInputValue('abS3Prefix', method.s3_prefix || 'apero/backups');
+    abSetInputValue('abS3Region', method.s3_region || '');
+    abSetInputValue('abS3Endpoint', method.s3_endpoint_url || '');
+    abSetInputValue('abS3Key', method.s3_access_key_id || '');
+    abSetInputValue('abS3CredFile', method.s3_credentials_file || '');
+
+    abSetInputValue('abRsyncTarget', method.rsync_ssh_target || '');
+    abSetInputValue('abRsyncRemoteDir', method.rsync_remote_dir || '');
+    abSetInputValue('abRsyncKey', method.rsync_ssh_key || '');
+    abSetInputValue('abRsyncPort', method.rsync_port || '');
+    abSetInputValue('abRsyncExtra', method.rsync_extra_opts || '');
+    abSetInputValue('abLocalMirrorDir', method.local_mirror_dir || '');
+
+    var isDefault = String(method.id || '') === 'default';
+    var nameEl = abEl('abMethodName');
+    if (nameEl) nameEl.readOnly = isDefault || !AB_CAN_MANAGE;
+    var methodEnabledEl = abEl('abMethodEnabled');
+    if (methodEnabledEl) methodEnabledEl.disabled = isDefault || !AB_CAN_MANAGE;
+    var globalEnabledEl = abEl('abEnabled');
+    if (globalEnabledEl) globalEnabledEl.disabled = isDefault || !AB_CAN_MANAGE;
+    document.querySelectorAll('button[onclick="abDeleteMethod()"]').forEach(function (btn) {
+        btn.disabled = isDefault || !AB_CAN_MANAGE;
+    });
+
+    abSelectProvider(abCurrentProvider);
+}
+
+function abPersistCurrentMethodFromForm() {
+    const method = abCurrentMethod();
+    if (!method) return;
+    method.name = (abGetInputValue('abMethodName') || '').trim() || method.id;
+    method.enabled = abGetChecked('abMethodEnabled');
+    method.provider = abCurrentProvider;
+
+    method.gdrive_oauth_client_secret_file = abGetInputValue('abGdriveKeyFile').trim();
+    method.gdrive_oauth_token_file = abGetInputValue('abGdriveTokenFile').trim();
+    method.gdrive_folder_id = abGetInputValue('abGdriveFolderId').trim();
+
+    method.s3_bucket = abGetInputValue('abS3Bucket').trim();
+    method.s3_prefix = abGetInputValue('abS3Prefix').trim();
+    method.s3_region = abGetInputValue('abS3Region').trim();
+    method.s3_endpoint_url = abGetInputValue('abS3Endpoint').trim();
+    method.s3_access_key_id = abGetInputValue('abS3Key').trim();
+    method.s3_credentials_file = abGetInputValue('abS3CredFile').trim();
+
+    method.rsync_ssh_target = abGetInputValue('abRsyncTarget').trim();
+    method.rsync_remote_dir = abGetInputValue('abRsyncRemoteDir').trim();
+    method.rsync_ssh_key = abGetInputValue('abRsyncKey').trim();
+    method.rsync_port = abGetInputValue('abRsyncPort').trim();
+    method.rsync_extra_opts = abGetInputValue('abRsyncExtra').trim();
+    method.local_mirror_dir = abGetInputValue('abLocalMirrorDir').trim();
+
+    if (String(method.id || '') === 'default') {
+        method.name = 'Local (built-in)';
+        method.provider = 'local_only';
+        method.enabled = true;
+    }
+}
+
+function abSelectMethod(methodId) {
+    abSelectMethodCard(methodId);
+}
+
+function abAddMethod() {
+    if (!AB_CAN_MANAGE) return;
+    abPersistCurrentMethodFromForm();
+    const newMethod = {
+        ...abLegacyMethodFromCfg(),
+        id: abNewMethodId(),
+        name: 'New backup method',
+        enabled: false,
+        provider: 'local_only',
+        gdrive_oauth_client_secret_file: '',
+        gdrive_oauth_token_file: '',
+        gdrive_folder_id: '',
+        s3_bucket: '',
+        s3_prefix: 'apero/backups',
+        s3_region: '',
+        s3_endpoint_url: '',
+        s3_access_key_id: '',
+        s3_credentials_file: '',
+        rsync_ssh_target: '',
+        rsync_remote_dir: '',
+        rsync_ssh_key: '',
+        rsync_port: '',
+        rsync_extra_opts: '',
+        local_mirror_dir: '',
+    };
+    abMethods.push(newMethod);
+    abActiveMethodId = newMethod.id;
+    abInventoryMethodId = newMethod.id;
+    abRenderMethodSelect();
+    abRenderMethodCards();
+    abRenderInventoryMethodTabs();
+    abLoadMethodIntoForm(newMethod);
+    abSetSetupEnabled(true);
+}
+
+function abDeleteMethod() {
+    if (!AB_CAN_MANAGE) return;
+    if (abMethods.length <= 1) {
+        abSetMsg('abSaveMsg', 'At least one backup method must remain.', false);
+        return;
+    }
+    const cur = abCurrentMethod();
+    if (!cur) return;
+    if (String(cur.id || '') === 'default') {
+        abSetMsg('abSaveMsg', 'Built-in local method cannot be removed.', false);
+        return;
+    }
+    if (!confirm(`Remove backup method "${cur.name}"?`)) return;
+    abMethods = abMethods.filter(m => m.id !== cur.id);
+    abActiveMethodId = abMethods[0].id;
+    abRenderMethodSelect();
+    abRenderMethodCards();
+    if (abInventoryMethodId === cur.id) {
+        abInventoryMethodId = 'default';
+    }
+    abRenderInventoryMethodTabs();
+    abLoadMethodIntoForm(abCurrentMethod());
+}
+
+function abDeleteMethodById(methodId) {
+    var mid = String(methodId || '').trim();
+    if (!mid) return;
+    var prev = abActiveMethodId;
+    abActiveMethodId = mid;
+    abDeleteMethod();
+    if (prev && prev !== mid && abMethods.some(function (m) { return m.id === prev; })) {
+        abActiveMethodId = prev;
+    }
+}
+
+function abSetMsg(id, text, ok = true) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.textContent = text || '';
+    el.classList.remove('ari-ae-save-msg--ok', 'ari-ae-save-msg--err');
+    if (!text) return;
+    el.classList.add(ok ? 'ari-ae-save-msg--ok' : 'ari-ae-save-msg--err');
+}
+
+function abSelectTab(tab) {
+    const tabs = ['setup', 'backups', 'restore'];
+    tabs.forEach(t => {
+        const btn = document.getElementById(`abTab${t.charAt(0).toUpperCase() + t.slice(1)}`);
+        const panel = document.getElementById(`abPanel${t.charAt(0).toUpperCase() + t.slice(1)}`);
+        const isActive = (t === tab);
+        if (btn) {
+            btn.classList.toggle('ari-ab-tab--active', isActive);
+            btn.setAttribute('aria-selected', isActive ? 'true' : 'false');
+        }
+        if (panel) {
+            panel.classList.toggle('ari-up-panel--hidden', !isActive);
+        }
+    });
+    if (tab === 'restore') {
+        abLoadRestoreInventory();
+    }
+}
+
+function abRenderInventoryMethodTabs() {
+    var wrap = abEl('abInventoryMethodTabs');
+    if (!wrap) return;
+    wrap.innerHTML = '';
+
+    var tabs = abMethods.slice();
+    if (!tabs.length) tabs = [abLegacyMethodFromCfg()];
+
+    if (!abInventoryMethodId || !tabs.some(function (m) {
+        return String(m.id || '') === String(abInventoryMethodId || '');
+    })) {
+        abInventoryMethodId = 'default';
+    }
+
+    tabs.forEach(function (method) {
+        var mid = String(method.id || '');
+        var btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'ari-ab-tab' + (mid === abInventoryMethodId
+            ? ' ari-ab-tab--active' : '');
+        btn.textContent = String(method.name || mid);
+        btn.addEventListener('click', function () {
+            abInventoryMethodId = mid;
+            abRenderInventoryMethodTabs();
+            abLoadInventory();
+        });
+        wrap.appendChild(btn);
+    });
+}
+
+function abSelectProvider(key) {
+    var current = abCurrentMethod();
+    if (current && String(current.id || '') === 'default') {
+        key = 'local_only';
+    }
+    abCurrentProvider = key;
+    document.querySelectorAll('#abProviderGrid .ari-ae-provider-btn').forEach(btn => {
+        btn.classList.toggle('ari-ae-provider-btn--active', btn.dataset.provider === key);
+    });
+
+    var gdrive = abEl('abGdriveFields');
+    var s3 = abEl('abS3Fields');
+    var rsync = abEl('abRsyncFields');
+    var localCopy = abEl('abLocalCopyFields');
+    if (gdrive) gdrive.style.display = (key === 'gdrive_oauth') ? '' : 'none';
+    if (s3) s3.style.display = (key === 's3') ? '' : 'none';
+    if (rsync) rsync.style.display = (key === 'ssh_rsync') ? '' : 'none';
+    if (localCopy) localCopy.style.display = (key === 'local_copy') ? '' : 'none';
+    const method = abCurrentMethod();
+    if (method) {
+        method.provider = key;
+    }
+    abRenderMethodCards();
+    var isDefault = method && String(method.id || '') === 'default';
+    document.querySelectorAll('#abProviderGrid .ari-ae-provider-btn').forEach(function (btn) {
+        if (!AB_CAN_MANAGE) {
+            btn.disabled = true;
+        } else {
+            btn.disabled = !!isDefault;
+        }
+    });
+}
+
+function abRenderStatus(ok, detail, error) {
+    const card = document.getElementById('abStatusCard');
+    const icon = document.getElementById('abStatusIcon');
+    const title = document.getElementById('abStatusTitle');
+    const text = document.getElementById('abStatusDetail');
+    card.classList.remove('ari-ae-status-card--checking', 'ari-ae-status-card--ok', 'ari-ae-status-card--error');
+
+    if (ok) {
+        card.classList.add('ari-ae-status-card--ok');
+        icon.innerHTML = '<i class="fa-solid fa-circle-check"></i>';
+        title.textContent = 'Cloud backup connection is healthy';
+        text.textContent = detail || '';
+    } else {
+        card.classList.add('ari-ae-status-card--error');
+        icon.innerHTML = '<i class="fa-solid fa-circle-xmark"></i>';
+        title.textContent = 'Cloud backup connection failed';
+        text.textContent = error || 'Unknown error';
+    }
+}
+
+async function abTestConnection() {
+    const card = document.getElementById('abStatusCard');
+    card.classList.remove('ari-ae-status-card--ok', 'ari-ae-status-card--error');
+    card.classList.add('ari-ae-status-card--checking');
+    document.getElementById('abStatusIcon').innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
+    document.getElementById('abStatusTitle').textContent = 'Checking cloud backup connection...';
+    document.getElementById('abStatusDetail').textContent = '';
+
+    try {
+        const mid = encodeURIComponent(String(abActiveMethodId || ''));
+        const res = await fetch('/api/admin/backups/test?method_id=' + mid);
+        const data = await res.json();
+        if (!res.ok) {
+            abRenderStatus(false, '', data.error || 'Request failed.');
+            return;
+        }
+        const query = (data.query_ms || data.query_ms === 0) ? `Query time: ${data.query_ms} ms.` : '';
+        abRenderStatus(!!data.ok, `${data.detail || ''} ${query}`.trim(), data.error || '');
+    } catch (_) {
+        abRenderStatus(false, '', 'Could not reach backup test endpoint.');
+    }
+}
+
+async function abTestBackup() {
+    if (!AB_CAN_MANAGE) return;
+    abSetMsg('abSaveMsg', 'Running backup probe (write/read/delete)...', true);
+    try {
+        const res = await fetch('/api/admin/backups/test-backup', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ method_id: abActiveMethodId }),
+        });
+        const data = await res.json();
+        if (!res.ok) {
+            abSetMsg('abSaveMsg', data.error || 'Backup probe failed.', false);
+            return;
+        }
+        const query = (data.query_ms || data.query_ms === 0) ? ` (${data.query_ms} ms)` : '';
+        if (data.ok) {
+            abSetMsg('abSaveMsg', `Backup probe succeeded${query}.`, true);
+            await abLoadInventory();
+            await abTestConnection();
+        } else {
+            abSetMsg('abSaveMsg', data.error || 'Backup probe failed.', false);
+            await abTestConnection();
+        }
+    } catch (_) {
+        abSetMsg('abSaveMsg', 'Backup probe failed.', false);
+    }
+}
+
+async function abTestLocalMirrorDir() {
+    var path = abGetInputValue('abLocalMirrorDir').trim();
+    if (!path) {
+        abSetMsg('abLocalMirrorMsg', 'Enter a directory path first.', false);
+        return;
+    }
+    abSetMsg('abLocalMirrorMsg', 'Testing directory...', true);
+    try {
+        var res = await fetch('/api/admin/backups/validate-dir?path='
+            + encodeURIComponent(path));
+        var text = await res.text();
+        var data = {};
+        try {
+            data = JSON.parse(text || '{}');
+        } catch (_) {
+            data = { success: false, error: ('Unexpected response (' + res.status + '): ' + (text || '').slice(0, 180)) };
+        }
+        if (!res.ok || !data.success) {
+            abSetMsg('abLocalMirrorMsg', data.error || 'Directory test failed.', false);
+            return;
+        }
+        abSetMsg('abLocalMirrorMsg', data.message || 'Directory check complete.', !!data.ok);
+    } catch (_) {
+        abSetMsg('abLocalMirrorMsg', 'Directory test failed.', false);
+    }
+}
+
+function abSetBrowseStatus(ok, message) {
+    var status = abEl('abBrowseStatus');
+    if (!status) return;
+    if (!message) {
+        status.style.display = 'none';
+        status.textContent = '';
+        status.className = 'ari-ap-browser__status';
+        return;
+    }
+    status.style.display = 'block';
+    status.className = 'ari-ap-browser__status ' + (ok
+        ? 'ari-ap-browser__status--valid'
+        : 'ari-ap-browser__status--invalid');
+    status.innerHTML = (ok
+        ? '<i class="fa-solid fa-circle-check"></i> '
+        : '<i class="fa-solid fa-circle-xmark"></i> ') + abEscapeHtml(message);
+}
+
+function abOpenBrowseModal(targetFieldId) {
+    abBrowseTargetId = String(targetFieldId || 'abLocalMirrorDir');
+    var inputEl = abEl(abBrowseTargetId);
+    var startPath = String(abLastBrowsePath || '').trim()
+        || String((inputEl && inputEl.value) || '').trim()
+        || '/';
+    abCurrentBrowsePath = startPath;
+    abSetInputValue('abBrowsePathInput', startPath);
+    var modal = abEl('abBrowseModal');
+    if (modal) modal.style.display = 'flex';
+    var selectBtn = abEl('abBtnBrowseSelect');
+    if (selectBtn) selectBtn.disabled = false;
+    abBrowseTo(startPath);
+}
+
+function abCloseBrowseModal() {
+    var modal = abEl('abBrowseModal');
+    if (modal) modal.style.display = 'none';
+}
+
+async function abBrowseTo(path) {
+    var list = abEl('abBrowseList');
+    var selectBtn = abEl('abBtnBrowseSelect');
+    if (!list) return;
+    list.innerHTML = '<div class="ari-sg-loading">Loading...</div>';
+    abSetBrowseStatus(false, '');
+
+    try {
+        var res = await fetch('/api/admin/backups/browse?path=' + encodeURIComponent(path || '/'));
+        var text = await res.text();
+        var data = {};
+        try {
+            data = JSON.parse(text || '{}');
+        } catch (_) {
+            data = { success: false, error: ('Unexpected response (' + res.status + '): ' + (text || '').slice(0, 180)) };
+        }
+
+        if (!res.ok || !data.success) {
+            list.innerHTML = '<div class="ari-sg-error">' + abEscapeHtml(String(data.error || 'Browse failed')) + '</div>';
+            abSetBrowseStatus(false, String(data.error || 'Could not load directories.'));
+            if (selectBtn) selectBtn.disabled = true;
+            return;
+        }
+
+        abCurrentBrowsePath = String(data.path || '/');
+        abLastBrowsePath = abCurrentBrowsePath;
+        abSetInputValue('abBrowsePathInput', abCurrentBrowsePath);
+        abSetBrowseStatus(true, 'Directory exists');
+        if (selectBtn) selectBtn.disabled = false;
+
+        list.innerHTML = '';
+        var dirs = Array.isArray(data.dirs) ? data.dirs : [];
+        var parent = String(data.parent || '/');
+
+        if (abCurrentBrowsePath !== '/') {
+            var upItem = document.createElement('div');
+            upItem.className = 'ari-ap-browser__item ari-ap-browser__item--parent';
+            upItem.innerHTML = '<i class="fa-solid fa-arrow-up"></i> ..';
+            upItem.addEventListener('click', function () {
+                abBrowseTo(parent || '/');
+            });
+            list.appendChild(upItem);
+        }
+
+        if (!dirs.length) {
+            var empty = document.createElement('div');
+            empty.className = 'ari-sg-empty-small';
+            empty.textContent = 'No subdirectories';
+            list.appendChild(empty);
+            return;
+        }
+
+        dirs.forEach(function (dname) {
+            var item = document.createElement('div');
+            item.className = 'ari-ap-browser__item';
+            item.innerHTML = '<i class="fa-solid fa-folder"></i> ' + abEscapeHtml(String(dname));
+            item.addEventListener('click', function () {
+                var base = abCurrentBrowsePath.replace(/\/$/, '') || '/';
+                var next = (base === '/' ? '' : base) + '/' + String(dname);
+                abBrowseTo(next);
+            });
+            list.appendChild(item);
+        });
+    } catch (_) {
+        list.innerHTML = '<div class="ari-sg-error">Failed to browse</div>';
+        abSetBrowseStatus(false, 'Could not load directories.');
+        if (selectBtn) selectBtn.disabled = true;
+    }
+}
+
+function abSelectBrowsePath() {
+    var target = abEl(abBrowseTargetId);
+    if (target) {
+        target.value = String(abCurrentBrowsePath || '/');
+        abSetMsg('abLocalMirrorMsg', 'Selected directory.', true);
+    }
+    abCloseBrowseModal();
+}
+
+function abBrowseLocalMirror() {
+    abOpenBrowseModal('abLocalMirrorDir');
+}
+
+function abCollectPayload() {
+    abPersistCurrentMethodFromForm();
+    const active = abCurrentMethod() || {};
+    return {
+        provider: active.provider || abCurrentProvider,
+        enabled: !!active.enabled,
+        gdrive_oauth_client_secret_file: active.gdrive_oauth_client_secret_file || '',
+        gdrive_oauth_token_file: active.gdrive_oauth_token_file || '',
+        gdrive_folder_id: active.gdrive_folder_id || '',
+        s3_bucket: active.s3_bucket || '',
+        s3_prefix: active.s3_prefix || '',
+        s3_region: active.s3_region || '',
+        s3_endpoint_url: active.s3_endpoint_url || '',
+        s3_access_key_id: active.s3_access_key_id || '',
+        s3_secret_access_key: abGetInputValue('abS3Secret'),
+        s3_credentials_file: active.s3_credentials_file || '',
+        rsync_ssh_target: active.rsync_ssh_target || '',
+        rsync_remote_dir: active.rsync_remote_dir || '',
+        rsync_ssh_key: active.rsync_ssh_key || '',
+        rsync_port: active.rsync_port || '',
+        rsync_extra_opts: active.rsync_extra_opts || '',
+        local_mirror_dir: active.local_mirror_dir || '',
+        active_method_id: abActiveMethodId,
+        backup_methods: abMethods,
+    };
+}
+
+async function abConnectGoogleOauth() {
+    if (!AB_CAN_MANAGE) return;
+    if (AB_OAUTH_INSECURE) {
+        const msg = 'Warning: this page is served over HTTP, not HTTPS.\n\n' +
+            'Google OAuth requires a secure connection. The callback will fail\n' +
+            'unless you restart the server with ARI_ALLOW_INSECURE_OAUTH=1\n' +
+            '(safe only on a private/trusted network).\n\n' +
+            'Continue anyway?';
+        if (!window.confirm(msg)) return;
+    }
+    abSetMsg('abSaveMsg', 'Opening Google consent screen...', true);
+    const popup = window.open('/api/admin/backups/oauth/start', 'abGoogleOauth', 'width=640,height=760');
+    if (!popup) {
+        abSetMsg('abSaveMsg', 'Popup blocked. Allow popups and retry.', false);
+        return;
+    }
+
+    const start = Date.now();
+    const timer = setInterval(async () => {
+        if (!popup || popup.closed) {
+            clearInterval(timer);
+            await abTestConnection();
+            abSetMsg('abSaveMsg', 'Google OAuth flow closed. Refreshing settings...', true);
+            window.location.reload();
+            return;
+        }
+        if (Date.now() - start > 180000) {
+            clearInterval(timer);
+            abSetMsg('abSaveMsg', 'Google OAuth still open. Complete consent in popup window.', true);
+        }
+    }, 1000);
+}
+
+async function abUploadJson(fileInputId, targetField, outputInputId) {
+    if (!AB_CAN_MANAGE) return;
+
+    const fileInput = document.getElementById(fileInputId);
+    const outputInput = document.getElementById(outputInputId);
+    const file = (fileInput && fileInput.files && fileInput.files.length) ? fileInput.files[0] : null;
+    if (!file) {
+        abSetMsg('abSaveMsg', 'Select a JSON file first.', false);
+        return;
+    }
+
+    abSetMsg('abSaveMsg', 'Uploading JSON file...', true);
+    const formData = new FormData();
+    formData.append('target_field', targetField);
+    formData.append('file', file);
+
+    try {
+        const res = await fetch('/api/admin/backups/upload-json', {
+            method: 'POST',
+            body: formData,
+        });
+        const data = await res.json();
+        if (!res.ok || !data.success) {
+            abSetMsg('abSaveMsg', data.error || 'Upload failed.', false);
+            return;
+        }
+        if (outputInput) {
+            outputInput.value = data.stored_path || '';
+        }
+        if (fileInput) {
+            fileInput.value = '';
+        }
+        // Auto-save so the new path is immediately persisted to backup.yaml.
+        abSetMsg('abSaveMsg', 'Upload complete. Saving...', true);
+        await abSaveSettings();
+    } catch (_) {
+        abSetMsg('abSaveMsg', 'Upload failed.', false);
+    }
+}
+
+async function abSaveSettings() {
+    try {
+        const res = await fetch('/api/admin/backups/save', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(abCollectPayload()),
+        });
+        const data = await res.json();
+        if (!res.ok || !data.success) {
+            abSetMsg('abSaveMsg', data.error || 'Save failed.', false);
+            return;
+        }
+        abSetInputValue('abS3Secret', '');
+        abSetMsg('abSaveMsg', 'Settings saved.', true);
+        await abTestConnection();
+        await abLoadInventory();
+    } catch (_) {
+        abSetMsg('abSaveMsg', 'Save failed.', false);
+    }
+}
+
+async function abSave(event) {
+    event.preventDefault();
+    if (!AB_CAN_MANAGE) return;
+    abSetMsg('abSaveMsg', 'Saving...', true);
+    await abSaveSettings();
+}
+
+async function abRunSync() {
+    if (!AB_CAN_MANAGE) return;
+    abSetMsg('abSaveMsg', 'Running sync...', true);
+    try {
+        const res = await fetch('/api/admin/backups/sync', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ method_id: abActiveMethodId }),
+        });
+        const data = await res.json();
+        if (!res.ok || !data.success) {
+            abSetMsg('abSaveMsg', data.error || 'Sync failed.', false);
+            return;
+        }
+        const row = data.data || {};
+        if (row.ok) {
+            const uploaded = Number(row.uploaded || 0);
+            const updated = Number(row.updated || 0);
+            const deleted = Number(row.deleted || 0);
+            const cloudTotalCount = Number(row.cloud_total_count || 0);
+            abSetMsg(
+                'abSaveMsg',
+                `Sync complete. Uploaded ${uploaded}, updated ${updated}, deleted ${deleted}. Cloud now has ${cloudTotalCount} backup file(s).`,
+                true
+            );
+        } else {
+            abSetMsg('abSaveMsg', row.warning || 'Sync finished with warnings.', false);
+        }
+        await abLoadInventory();
+        await abTestConnection();
+    } catch (_) {
+        abSetMsg('abSaveMsg', 'Sync failed.', false);
+    }
+}
+
+function abFormatBytes(size) {
+    const units = ['B', 'KB', 'MB', 'GB', 'TB'];
+    let val = Number(size || 0);
+    let idx = 0;
+    while (val >= 1024 && idx < units.length - 1) {
+        val /= 1024;
+        idx += 1;
+    }
+    return `${val.toFixed(2)} ${units[idx]}`;
+}
+
+function abRenderInventory(data) {
+    const summary = document.getElementById('abSummary');
+    if (!summary) return;
+    const rows = Array.isArray(data.rows) ? data.rows : [];
+    const cloudExtra = data.cloud_ok
+        ? `Cloud: ${data.cloud_total_count} file(s), ${abFormatBytes(data.cloud_total_bytes)}${(data.query_ms || data.query_ms === 0) ? `, query ${data.query_ms} ms` : ''}`
+        : `Cloud: unavailable (${data.cloud_error || 'not configured'})`;
+    summary.innerHTML = `
+        <span><strong>Local:</strong> ${data.local_total_count} file(s), ${abFormatBytes(data.local_total_bytes)}</span>
+        <span><strong>Cloud provider:</strong> ${data.provider || 'n/a'}</span>
+        <span>${cloudExtra}</span>
+    `;
+    if ((data.provider || '') === 'ssh_rsync') {
+        summary.innerHTML += '<span><strong>Note:</strong> Remote file listing is not available for SSH/rsync methods.</span>';
+    }
+
+    const tbody = document.getElementById('abTableBody');
+    if (!tbody) return;
+    if (!rows.length) {
+        tbody.innerHTML = '<tr><td colspan="5" class="ari-ab-empty">No backups found.</td></tr>';
+        return;
+    }
+
+    tbody.innerHTML = rows.map(row => {
+        const localText = row.local_exists ? abFormatBytes(row.local_size_bytes) : '-';
+        const cloudText = row.cloud_exists ? abFormatBytes(row.cloud_size_bytes) : '-';
+        const delLocal = AB_CAN_MANAGE && row.local_exists
+            ? `<button class="ari-btn ari-btn--ghost ari-btn--sm" onclick="abDeleteOne('${row.relative_path}', 'local')">Delete local</button>`
+            : '';
+        const delCloud = AB_CAN_MANAGE && row.cloud_exists
+            ? `<button class="ari-btn ari-btn--ghost ari-btn--sm" onclick="abDeleteOne('${row.relative_path}', 'cloud')">Delete cloud</button>`
+            : '';
+        const delBoth = AB_CAN_MANAGE && (row.local_exists || row.cloud_exists)
+            ? `<button class="ari-btn ari-btn--secondary ari-btn--sm" onclick="abDeleteOne('${row.relative_path}', 'both')">Delete both</button>`
+            : '';
+
+        return `
+            <tr>
+                <td>${row.period}</td>
+                <td><span class="ari-ab-file">${row.name}</span></td>
+                <td>${localText}</td>
+                <td>${cloudText}</td>
+                <td class="ari-ab-actions">${delLocal}${delCloud}${delBoth}</td>
+            </tr>
+        `;
+    }).join('');
+}
+
+async function abLoadInventory() {
+    abSetMsg('abInventoryMsg', 'Refreshing...', true);
+    try {
+        const mid = encodeURIComponent(String(abInventoryMethodId || abActiveMethodId || ''));
+        const res = await fetch('/api/admin/backups/list?method_id=' + mid);
+        const data = await res.json();
+        if (!res.ok || !data.success) {
+            abSetMsg('abInventoryMsg', data.error || 'Could not load backups.', false);
+            return;
+        }
+        abRenderInventory(data.data || {});
+        abSetMsg('abInventoryMsg', 'Updated.', true);
+    } catch (_) {
+        abSetMsg('abInventoryMsg', 'Could not load backups.', false);
+    }
+}
+
+async function abDeleteOne(relativePath, target) {
+    if (!AB_CAN_MANAGE) return;
+    if (!confirm(`Delete ${relativePath} from ${target}?`)) return;
+    try {
+        const res = await fetch('/api/admin/backups/delete', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ relative_path: relativePath, target, method_id: abInventoryMethodId || abActiveMethodId }),
+        });
+        const data = await res.json();
+        if (!res.ok || !data.success) {
+            abSetMsg('abInventoryMsg', data.error || 'Delete failed.', false);
+            return;
+        }
+        await abLoadInventory();
+    } catch (_) {
+        abSetMsg('abInventoryMsg', 'Delete failed.', false);
+    }
+}
+
+async function abDeleteAll(period, target) {
+    if (!AB_CAN_MANAGE) return;
+    if (!confirm(`Delete ${period} backups from ${target}?`)) return;
+    try {
+        const res = await fetch('/api/admin/backups/delete-all', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ period, target, method_id: abInventoryMethodId || abActiveMethodId }),
+        });
+        const data = await res.json();
+        if (!res.ok || !data.success) {
+            abSetMsg('abInventoryMsg', data.error || 'Delete-all failed.', false);
+            return;
+        }
+        await abLoadInventory();
+    } catch (_) {
+        abSetMsg('abInventoryMsg', 'Delete-all failed.', false);
+    }
+}
+
+function abSelectRestoreMode(mode) {
+    document.getElementById('abRestoreDownloadMode').style.display = (mode === 'download') ? '' : 'none';
+    document.getElementById('abRestoreSyncMode').style.display = (mode === 'sync-from-cloud') ? '' : 'none';
+}
+
+async function abLoadRestoreInventory() {
+    abSetMsg('abRestoreMsg', 'Loading cloud backups...', true);
+    try {
+        const mid = encodeURIComponent(String(abActiveMethodId || ''));
+        const res = await fetch('/api/admin/backups/list?method_id=' + mid);
+        const data = await res.json();
+        if (!res.ok || !data.success) {
+            abSetMsg('abRestoreMsg', data.error || 'Failed to load inventory.', false);
+            return;
+        }
+        const inv = data.data || {};
+        
+        // Check if cloud has any backups at all
+        const cloudBackups = (inv.daily || []).concat(inv.weekly || []);
+        if (cloudBackups.length === 0) {
+            abSetMsg('abRestoreMsg', 'No backups found in cloud. Ensure your cloud provider is configured and backups have been created.', false);
+            document.getElementById('abRestoreTableBody').innerHTML = '';
+            const select = document.getElementById('abRestoreBackupSelect');
+            if (select) {
+                select.innerHTML = '<option value="">-- No cloud backups available --</option>';
+            }
+            return;
+        }
+        
+        _abRenderRestoreInventory(inv);
+        _abPopulateRestoreSelect(inv);
+        abSetMsg('abRestoreMsg', '', true);
+    } catch (_) {
+        abSetMsg('abRestoreMsg', 'Failed to load inventory.', false);
+    }
+}
+
+function _abRenderRestoreInventory(inv) {
+    const tbody = document.getElementById('abRestoreTableBody');
+    if (!tbody) return;
+    tbody.innerHTML = '';
+
+    const rows = [];
+    for (const period of ['daily', 'weekly']) {
+        const backups = inv[period] || [];
+        for (const backup of backups) {
+            rows.push({
+                period: period,
+                file: backup.file || '',
+                cloud_size: backup.cloud_size_bytes || 0,
+                local_exists: !!(backup.local_mtime),
+            });
+        }
+    }
+
+    if (rows.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; padding:12px; color:#999;">No backups found in cloud.</td></tr>';
+        return;
+    }
+
+    for (const row of rows) {
+        const tr = document.createElement('tr');
+        const cloudSizeStr = row.cloud_size > 0 ? (row.cloud_size / (1024 * 1024)).toFixed(1) + ' MB' : '--';
+        const localStr = row.local_exists ? '<i class="fa-solid fa-check" style="color:green;"></i> Yes' : '<i class="fa-solid fa-xmark" style="color:#ccc;"></i> No';
+        tr.innerHTML = `
+            <td>${row.period}</td>
+            <td><code style="font-size:0.85em;">${row.file}</code></td>
+            <td>${cloudSizeStr}</td>
+            <td>${localStr}</td>
+        `;
+        tbody.appendChild(tr);
+    }
+}
+
+function _abPopulateRestoreSelect(inv) {
+    const select = document.getElementById('abRestoreBackupSelect');
+    if (!select) return;
+
+    const options = [];
+    for (const period of ['daily', 'weekly']) {
+        const backups = inv[period] || [];
+        for (const backup of backups) {
+            if (!backup.local_exists && backup.file) {
+                options.push({
+                    label: `${period}: ${backup.file}`,
+                    value: backup.relative_path || '',
+                    size: backup.cloud_size_bytes || 0,
+                });
+            }
+        }
+    }
+
+    select.innerHTML = '';
+    if (options.length === 0) {
+        const opt = document.createElement('option');
+        opt.value = '';
+        opt.textContent = '-- No new backups to download (all are local) --';
+        select.appendChild(opt);
+    } else {
+        const opt0 = document.createElement('option');
+        opt0.value = '';
+        opt0.textContent = '-- Select a backup to download --';
+        select.appendChild(opt0);
+        for (const opt of options) {
+            const el = document.createElement('option');
+            el.value = opt.value;
+            el.textContent = `${opt.label} (${(opt.size / (1024 * 1024)).toFixed(1)} MB)`;
+            select.appendChild(el);
+        }
+    }
+}
+
+async function abDownloadBackup() {
+    if (!AB_CAN_MANAGE) return;
+    const select = document.getElementById('abRestoreBackupSelect');
+    const rel_path = (select && select.value) || '';
+    if (!rel_path) {
+        abSetMsg('abRestoreMsg', 'Select a backup to download.', false);
+        return;
+    }
+    abSetMsg('abRestoreMsg', 'Downloading backup...', true);
+    try {
+        const res = await fetch('/api/admin/backups/download', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ relative_path: rel_path, method_id: abActiveMethodId }),
+        });
+        const data = await res.json();
+        if (!res.ok || !data.success) {
+            abSetMsg('abRestoreMsg', data.error || 'Download failed.', false);
+            return;
+        }
+        abSetMsg('abRestoreMsg', 'Backup downloaded successfully.', true);
+        await abLoadRestoreInventory();
+    } catch (_) {
+        abSetMsg('abRestoreMsg', 'Download failed.', false);
+    }
+}
+
+async function abSyncFromCloud() {
+    if (!AB_CAN_MANAGE) return;
+    abSetMsg('abRestoreMsg', 'Syncing all backups from cloud...', true);
+    try {
+        const res = await fetch('/api/admin/backups/sync-from-cloud', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ method_id: abActiveMethodId }),
+        });
+        const data = await res.json();
+        if (!res.ok || !data.success) {
+            abSetMsg('abRestoreMsg', data.error || 'Sync failed.', false);
+            return;
+        }
+        const msg = `Sync complete. Downloaded ${data.downloaded || 0} backup(s).`;
+        abSetMsg('abRestoreMsg', msg, true);
+        await abLoadRestoreInventory();
+    } catch (_) {
+        abSetMsg('abRestoreMsg', 'Sync failed.', false);
+    }
+}
+
+(function initBackupPage() {
+    abEnsureMethods();
+    abActiveMethodId = '';
+    abRenderMethodSelect();
+    abRenderMethodCards();
+    abRenderInventoryMethodTabs();
+    abSetSetupEnabled(false);
+
+    const globalEnable = abEl('abEnabled');
+    const methodEnable = abEl('abMethodEnabled');
+    if (globalEnable && methodEnable) {
+        globalEnable.addEventListener('change', function () {
+            methodEnable.checked = !!globalEnable.checked;
+            const method = abCurrentMethod();
+            if (method) method.enabled = !!globalEnable.checked;
+            abRenderMethodCards();
+        });
+        methodEnable.addEventListener('change', function () {
+            globalEnable.checked = !!methodEnable.checked;
+            const method = abCurrentMethod();
+            if (method) method.enabled = !!methodEnable.checked;
+            abRenderMethodCards();
+        });
+    }
+
+    const nameInput = abEl('abMethodName');
+    if (nameInput) {
+        nameInput.addEventListener('input', function () {
+            const method = abCurrentMethod();
+            if (!method) return;
+            method.name = (nameInput.value || '').trim() || method.id;
+            abRenderMethodSelect();
+            abRenderMethodCards();
+        });
+    }
+
+    var browseGo = abEl('abBtnBrowseGo');
+    var browsePathInput = abEl('abBrowsePathInput');
+    var browseCancel = abEl('abBtnBrowseCancel');
+    var browseSelect = abEl('abBtnBrowseSelect');
+    var browseModal = abEl('abBrowseModal');
+
+    if (browseGo && browsePathInput) {
+        browseGo.addEventListener('click', function () {
+            abBrowseTo(String(browsePathInput.value || '/').trim() || '/');
+        });
+        browsePathInput.addEventListener('keydown', function (evt) {
+            if (evt.key === 'Enter') {
+                evt.preventDefault();
+                abBrowseTo(String(browsePathInput.value || '/').trim() || '/');
+            }
+        });
+    }
+    if (browseCancel) {
+        browseCancel.addEventListener('click', abCloseBrowseModal);
+    }
+    if (browseSelect) {
+        browseSelect.addEventListener('click', abSelectBrowsePath);
+    }
+    if (browseModal) {
+        browseModal.addEventListener('click', function (evt) {
+            if (evt.target === browseModal) {
+                abCloseBrowseModal();
+            }
+        });
+    }
+
+    abLoadInventory();
+    abTestConnection();
+}());
+</script>
+{% endblock %}

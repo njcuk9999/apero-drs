@@ -1,0 +1,140 @@
+{% extends "setup/base.html" %}
+{% block title %}APERO RI Setup - Data Directory{% endblock %}
+
+{% block content %}
+<div class="setup-notes">
+    <h3><i class="fa-solid fa-circle-info"></i> Local Data Directory</h3>
+    <ul>
+        <li>This directory stores APERO RI runtime data (users, tasks, logs, admin config).</li>
+        <li>You can accept the default path, type a custom path, or browse server directories.</li>
+        <li>If the directory does not exist yet, setup will create the required layout.</li>
+    </ul>
+</div>
+
+<div class="ari-login-box" style="max-width: 640px;">
+    <h2><i class="fa-solid fa-folder-tree"></i> Choose Local Data Directory</h2>
+    <p>Set the directory used for this APERO RI installation.</p>
+
+    <form method="POST" action="{{ url_for('setup_welcome') }}">
+        <div class="ari-form-group">
+            <label for="local_data_dir">Local APERO RI data directory</label>
+            <div style="display:flex; gap:0.5rem; align-items:stretch;">
+                <input type="text" id="local_data_dir" name="local_data_dir"
+                       value="{{ selected_dir or local_data_dir }}"
+                       placeholder="{{ local_data_dir }}" style="flex:1;">
+                <button type="button" id="browse-btn" class="ari-btn" style="white-space:nowrap;">
+                    <i class="fa-solid fa-folder-open"></i> Browse
+                </button>
+            </div>
+            <small style="color:var(--ari-text-muted);">Default: {{ local_data_dir }}</small>
+        </div>
+
+        <button type="submit" class="ari-btn ari-btn--primary ari-btn--block">
+            <i class="fa-solid fa-arrow-right"></i> Save Directory &amp; Continue
+        </button>
+    </form>
+</div>
+
+<div id="dir-browser" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.35); z-index:2000;">
+    <div style="max-width:760px; margin:8vh auto; background:#fff; border-radius:12px; border:1px solid var(--ari-border); box-shadow:0 18px 45px rgba(0,0,0,0.22); overflow:hidden;">
+        <div style="padding:0.9rem 1rem; border-bottom:1px solid var(--ari-border); display:flex; align-items:center; justify-content:space-between;">
+            <strong><i class="fa-solid fa-folder-tree"></i> Browse Directories</strong>
+            <button type="button" id="browse-close" class="ari-btn" style="padding:0.35rem 0.6rem;">Close</button>
+        </div>
+        <div style="padding:0.9rem 1rem; border-bottom:1px solid var(--ari-border); display:flex; gap:0.4rem;">
+            <input type="text" id="browse-path" style="flex:1;" value="{{ selected_dir or local_data_dir }}">
+            <button type="button" id="browse-go" class="ari-btn">Go</button>
+            <button type="button" id="browse-up" class="ari-btn">Up</button>
+        </div>
+        <div id="browse-list" style="max-height:48vh; overflow:auto; padding:0.5rem 0;"></div>
+        <div style="padding:0.9rem 1rem; border-top:1px solid var(--ari-border); display:flex; justify-content:flex-end; gap:0.5rem;">
+            <button type="button" id="browse-select" class="ari-btn ari-btn--primary">Use This Directory</button>
+        </div>
+    </div>
+</div>
+
+<script>
+(function () {
+    var modal = document.getElementById('dir-browser');
+    var openBtn = document.getElementById('browse-btn');
+    var closeBtn = document.getElementById('browse-close');
+    var goBtn = document.getElementById('browse-go');
+    var upBtn = document.getElementById('browse-up');
+    var selectBtn = document.getElementById('browse-select');
+    var listEl = document.getElementById('browse-list');
+    var pathEl = document.getElementById('browse-path');
+    var inputEl = document.getElementById('local_data_dir');
+
+    function esc(text) {
+        return String(text || '')
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;');
+    }
+
+    function loadPath(path) {
+        var url = '{{ url_for("setup_browse_dirs") }}?path=' + encodeURIComponent(path || '');
+        fetch(url)
+            .then(function (r) { return r.json(); })
+            .then(function (data) {
+                if (!data || !data.success) {
+                    return;
+                }
+                pathEl.value = data.path || pathEl.value;
+                var html = '';
+                if (data.parent && data.parent !== data.path) {
+                    html += '<button type="button" class="dir-row" data-path="' + esc(data.parent) + '" style="display:block; width:100%; text-align:left; padding:0.45rem 1rem; border:none; background:transparent; cursor:pointer;">'
+                        + '<i class="fa-solid fa-arrow-up"></i> ..</button>';
+                }
+                (data.dirs || []).forEach(function (item) {
+                    html += '<button type="button" class="dir-row" data-path="' + esc(item.path) + '" style="display:block; width:100%; text-align:left; padding:0.45rem 1rem; border:none; background:transparent; cursor:pointer;">'
+                        + '<i class="fa-regular fa-folder"></i> ' + esc(item.name) + '</button>';
+                });
+                if (!html) {
+                    html = '<div style="padding:0.6rem 1rem; color:var(--ari-text-muted);">No subdirectories found.</div>';
+                }
+                listEl.innerHTML = html;
+                listEl.querySelectorAll('.dir-row').forEach(function (btn) {
+                    btn.addEventListener('click', function () {
+                        loadPath(btn.getAttribute('data-path') || '');
+                    });
+                });
+            });
+    }
+
+    function openBrowser() {
+        modal.style.display = 'block';
+        loadPath(pathEl.value || inputEl.value || '{{ local_data_dir }}');
+    }
+
+    openBtn.addEventListener('click', openBrowser);
+    closeBtn.addEventListener('click', function () {
+        modal.style.display = 'none';
+    });
+    goBtn.addEventListener('click', function () {
+        loadPath(pathEl.value);
+    });
+    upBtn.addEventListener('click', function () {
+        var p = pathEl.value || '';
+        var parent = '/';
+        if (p.length > 1) {
+            var trimmed = p.replace(/\/+$/, '');
+            var idx = trimmed.lastIndexOf('/');
+            parent = idx > 0 ? trimmed.slice(0, idx) : '/';
+        }
+        loadPath(parent);
+    });
+    selectBtn.addEventListener('click', function () {
+        inputEl.value = pathEl.value;
+        modal.style.display = 'none';
+    });
+    modal.addEventListener('click', function (evt) {
+        if (evt.target === modal) {
+            modal.style.display = 'none';
+        }
+    });
+})();
+</script>
+{% endblock %}

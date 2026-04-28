@@ -1,0 +1,133 @@
+{% extends "general/sidebar_base.html" %}
+{% block title %}APERO RI – User Management{% endblock %}
+
+{% block doc_content %}
+<div class="ari-page-header">
+    <h1><i class="{{ page_icon }}"></i> {{ page_label }}</h1>
+</div>
+
+<!-- =====================================================================
+     Tab bar
+     ===================================================================== -->
+<div class="ari-sg-tabs" role="tablist" aria-label="User management sections">
+    <button id="um-tab-new" class="ari-sg-tab ari-sg-tab--active" role="tab"
+            aria-selected="true" aria-controls="um-new">
+        <i class="fa-solid fa-user-plus"></i> New Members
+        <span class="ari-um-badge" id="um-new-badge">0</span>
+    </button>
+    <button id="um-tab-current" class="ari-sg-tab" role="tab"
+            aria-selected="false" aria-controls="um-current">
+        <i class="fa-solid fa-users"></i> Current Members
+        <span class="ari-um-badge ari-um-badge--current" id="um-current-badge">0</span>
+    </button>
+</div>
+
+<!-- =====================================================================
+     New Members panel
+     ===================================================================== -->
+<div id="um-new" class="ari-um-panel" role="tabpanel">
+    <div id="um-new-banner" class="ari-um-new-banner" style="display:none;">
+        <i class="fa-solid fa-triangle-exclamation"></i>
+        Warning: <strong><span id="um-new-count">0</span> user(s)</strong>
+        have registered and are awaiting instrument and group assignment.
+    </div>
+    <div id="um-new-results" class="ari-user-results"></div>
+    <div id="um-new-empty" class="ari-sg-empty" style="display:none;">
+        <i class="fa-solid fa-circle-check"></i> No new members waiting.
+    </div>
+</div>
+
+<!-- =====================================================================
+     Current Members panel
+     ===================================================================== -->
+<div id="um-current" class="ari-um-panel" role="tabpanel" style="display:none;">
+    <div class="ari-user-search">
+        <div class="ari-user-search__input-wrap">
+            <i class="fa-solid fa-magnifying-glass ari-user-search__icon"></i>
+            <input type="text" id="user-search" class="ari-user-search__input"
+                   placeholder="Filter by username…" autocomplete="off">
+        </div>
+    </div>
+    <div id="um-group-filter" class="ari-um-filter-pills"></div>
+    <div id="search-status" class="ari-user-search__status"></div>
+    <div id="um-current-results" class="ari-user-results"></div>
+</div>
+
+<!-- =====================================================================
+     Shared: User detail panel
+     ===================================================================== -->
+<div id="user-detail" class="ari-user-detail" style="display:none;">
+    <div class="ari-user-detail__header">
+        <div class="ari-user-detail__avatar" id="detail-avatar">
+            <i class="fa-solid fa-user"></i>
+        </div>
+        <div class="ari-user-detail__info">
+            <h2 id="detail-username"></h2>
+            <span id="detail-groups-summary" class="ari-user-detail__groups-summary"></span>
+        </div>
+        <button id="btn-close-detail" class="ari-user-detail__close" title="Close">
+            <i class="fa-solid fa-xmark"></i>
+        </button>
+    </div>
+
+    <!-- Groups section -->
+    <div class="ari-user-detail__section">
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:0.4rem;">
+            <h3 style="margin:0;"><i class="fa-solid fa-users-gear"></i> Groups</h3>
+            <button id="btn-save-groups-top" class="ari-btn ari-btn--primary ari-btn--sm" style="display:none;">
+                <i class="fa-solid fa-floppy-disk"></i> Save Groups
+            </button>
+        </div>
+        <div id="detail-groups" class="ari-toggle-cards"></div>
+        <div id="groups-no-perm" class="ari-user-detail__no-perm" style="display:none;">
+            <i class="fa-solid fa-lock"></i> You do not have permission to manage any groups.
+        </div>
+        <div id="btn-save-groups-bottom-wrap" style="display:none;text-align:right;margin-top:0.5rem;">
+            <button id="btn-save-groups-bottom" class="ari-btn ari-btn--primary ari-btn--sm">
+                <i class="fa-solid fa-floppy-disk"></i> Save Groups
+            </button>
+        </div>
+    </div>
+
+    <!-- Danger zone -->
+    <div class="ari-user-detail__section ari-user-detail__danger" id="danger-zone" style="display:none;">
+        <h3><i class="fa-solid fa-triangle-exclamation"></i> Danger Zone</h3>
+        <p>Permanently remove this user account.</p>
+        <button id="btn-delete-user" class="ari-btn ari-btn--danger">
+            <i class="fa-solid fa-trash"></i> Delete User
+        </button>
+    </div>
+</div>
+
+<!-- Delete confirmation modal -->
+<div id="delete-modal" class="ari-modal-backdrop" style="display:none;">
+    <div class="ari-modal">
+        <div class="ari-modal__header">
+            <i class="fa-solid fa-triangle-exclamation"></i> Confirm Deletion
+        </div>
+        <div class="ari-modal__body">
+            Are you sure you want to delete user <strong id="delete-modal-user"></strong>?
+            This action cannot be undone.
+        </div>
+        <div class="ari-modal__footer">
+            <button id="btn-cancel-delete" class="ari-btn ari-btn--secondary">Cancel</button>
+            <button id="btn-confirm-delete" class="ari-btn ari-btn--danger">Delete</button>
+        </div>
+    </div>
+</div>
+
+<!-- Toast notification -->
+<div id="toast" class="ari-toast" style="display:none;"></div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+window.ARI_ADMIN = {
+    searchUrl: {{ url_for('api_user_search')|tojson }},
+    updateGroupsUrl: {{ url_for('api_user_update_groups')|tojson }},
+    updateInstrumentsUrl: {{ url_for('api_user_update_instruments')|tojson }},
+    deleteUrl: {{ url_for('api_user_delete')|tojson }}
+};
+</script>
+<script src="{{ url_for('static', filename='js/admin_users.js') }}"></script>
+{% endblock %}

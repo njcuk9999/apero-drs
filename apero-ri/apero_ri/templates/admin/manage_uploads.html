@@ -1,0 +1,219 @@
+{% extends "general/sidebar_base.html" %}
+{% block title %}APERO RI – Manage Uploads{% endblock %}
+
+{% block doc_content %}
+<div class="ari-page-header">
+    <h1><i class="{{ page_icon }}"></i> {{ page_label }}</h1>
+</div>
+
+<!-- Tab bar -->
+<div class="ari-sg-tabs" role="tablist" aria-label="Upload management">
+    <button id="mu-tab-manage" class="ari-sg-tab ari-sg-tab--active"
+            role="tab" aria-selected="true" aria-controls="mu-manage">
+        <i class="fa-solid fa-folder-gear"></i> Manage
+    </button>
+    <button id="mu-tab-quota" class="ari-sg-tab" role="tab"
+            aria-selected="false" aria-controls="mu-quota">
+        <i class="fa-solid fa-chart-pie"></i> Quota
+    </button>
+</div>
+
+<!-- ================================================================
+     Manage tab
+     ================================================================ -->
+<div id="mu-manage" class="mu-panel">
+
+    <div class="mu-manage-toolbar">
+        <button id="mu-add-btn" class="ari-btn ari-btn--primary">
+            <i class="fa-solid fa-plus"></i> Add Directory
+        </button>
+    </div>
+
+    <div id="mu-dir-list" class="mu-dir-grid"></div>
+
+    <div id="mu-dir-empty" class="ari-sg-empty" style="display:none;">
+        <i class="fa-solid fa-folder-open"></i>
+        No upload directories configured yet.
+    </div>
+
+</div>
+
+<!-- ================================================================
+     Quota tab
+     ================================================================ -->
+<div id="mu-quota" class="mu-panel" style="display:none;">
+    <div id="mu-quota-body"></div>
+    <div id="mu-quota-empty" class="ari-sg-empty" style="display:none;">
+        <i class="fa-solid fa-database"></i>
+        No upload directories configured.
+    </div>
+</div>
+
+<!-- ================================================================
+     Add / Edit modal
+     ================================================================ -->
+<div id="mu-modal-overlay" class="ari-modal-overlay" style="display:none;"
+     aria-modal="true" role="dialog" aria-labelledby="mu-modal-title">
+    <div class="ari-modal ari-modal--mu">
+        <div class="ari-modal__header ari-modal__header--normal">
+            <h2 id="mu-modal-title">
+                <i class="fa-solid fa-folder-plus"></i>
+                <span id="mu-modal-title-text">Add Directory</span>
+            </h2>
+            <button class="ari-modal__close" id="mu-modal-close"
+                    title="Close" aria-label="Close">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+        <div class="ari-modal__body">
+
+            <input type="hidden" id="mu-edit-id">
+
+            <div class="ari-form-group">
+                <label for="mu-name">Name</label>
+                <input type="text" id="mu-name" class="ari-form-control"
+                       placeholder="e.g. Science Uploads" maxlength="80"
+                       autocomplete="off">
+            </div>
+
+            <div class="ari-form-group">
+                <label for="mu-path">
+                    Directory path on disk
+                </label>
+                <div class="ari-ap-path-row">
+                    <input type="text" id="mu-path"
+                           class="ari-form-control ari-ap-input--path"
+                           placeholder="/data/uploads/science"
+                           autocomplete="off">
+                    <button type="button" id="mu-browse-btn"
+                            class="ari-btn ari-btn--secondary ari-btn--sm">
+                        <i class="fa-solid fa-folder-open"></i> Browse
+                    </button>
+                </div>
+                <small class="ari-form-hint">
+                    Absolute path. Directory is created automatically.
+                </small>
+            </div>
+
+            <div class="ari-form-group">
+                <label for="mu-type">Type</label>
+                <select id="mu-type" class="ari-form-control">
+                    <option value="per_user">
+                        Per-user (files stored in a user subdirectory)
+                    </option>
+                    <option value="global">
+                        Global (all files in one shared directory)
+                    </option>
+                </select>
+            </div>
+
+            <div class="ari-form-group">
+                <label for="mu-quota">Quota (GB)</label>
+                <input type="number" id="mu-quota" class="ari-form-control"
+                       step="0.1" min="0.1" max="10000" value="1.0">
+                <small class="ari-form-hint">
+                    Per-user limit for <em>per-user</em> directories;
+                    total cap for <em>global</em> directories.
+                </small>
+            </div>
+
+            <div class="ari-form-group">
+                <label>Allowed groups</label>
+                <div id="mu-groups-wrap" class="mu-groups-cards">
+                    <!-- group cards injected by JS -->
+                </div>
+                <small class="ari-form-hint">
+                    Groups whose members may upload to this directory.
+                </small>
+            </div>
+
+            <div id="mu-modal-error" class="ari-alert ari-alert--danger"
+                 style="display:none;"></div>
+
+            <div class="ari-modal__footer">
+                <button id="mu-modal-save" class="ari-btn ari-btn--primary">
+                    <i class="fa-solid fa-floppy-disk"></i> Save
+                </button>
+                <button id="mu-modal-cancel"
+                        class="ari-btn ari-btn--secondary">
+                    Cancel
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Delete confirm modal -->
+<div id="mu-confirm-overlay" class="ari-modal-overlay"
+     style="display:none;" aria-modal="true" role="dialog">
+    <div class="ari-modal ari-modal--confirm">
+        <div class="ari-modal__header ari-modal__header--normal">
+            <h2><i class="fa-solid fa-triangle-exclamation"></i>
+                Remove Directory</h2>
+            <button class="ari-modal__close" id="mu-confirm-close"
+                    title="Close" aria-label="Close">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+        <div class="ari-modal__body">
+            <p>Remove the directory configuration
+                <strong id="mu-confirm-name"></strong>?</p>
+            <p class="mu-confirm-note">
+                <i class="fa-solid fa-circle-info"></i>
+                This only removes the configuration entry.
+                Files on disk are <strong>not</strong> deleted.
+            </p>
+            <div class="ari-modal__footer">
+                <button id="mu-confirm-yes"
+                        class="ari-btn ari-btn--danger">
+                    <i class="fa-solid fa-trash"></i> Remove
+                </button>
+                <button id="mu-confirm-no"
+                        class="ari-btn ari-btn--secondary">
+                    Cancel
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- File browser modal -->
+<div id="mu-browse-modal" class="ari-modal-backdrop" style="display:none;">
+    <div class="ari-modal" style="max-width:560px;width:95%;">
+        <div class="ari-modal__header ari-modal__header--normal">
+            <h2><i class="fa-solid fa-folder-open"></i> Browse Directory</h2>
+            <button class="ari-modal__close" id="mu-browse-cancel-x"
+                    title="Close" aria-label="Close">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+        <div class="ari-modal__body">
+            <div class="ari-ap-browser">
+                <div class="ari-ap-browser__path">
+                    <input type="text" id="mu-browse-path-input"
+                           class="ari-ap-input">
+                    <button id="mu-browse-go"
+                            class="ari-btn ari-btn--secondary ari-btn--sm">
+                        Go
+                    </button>
+                </div>
+                <div id="mu-browse-status" class="ari-ap-browser__status"
+                     style="display:none;"></div>
+                <div id="mu-browse-list" class="ari-ap-browser__list"></div>
+            </div>
+        </div>
+        <div class="ari-modal__footer">
+            <button id="mu-browse-select"
+                    class="ari-btn ari-btn--primary">Select</button>
+            <button id="mu-browse-cancel"
+                    class="ari-btn ari-btn--secondary">Cancel</button>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="{{ url_for('static',
+    filename='js/manage_uploads.js') }}?v=20260520a" defer></script>
+{% endblock %}

@@ -1,0 +1,474 @@
+{% extends "general/sidebar_base.html" %}
+{% block title %}APERO RI – Email Settings{% endblock %}
+
+{% block doc_content %}
+<div class="ari-up-shell">
+<div class="ari-page-header">
+    <h1><i class="fa-solid fa-envelope-open-text"></i> Email Settings</h1>
+</div>
+
+{% if not can_manage %}
+<div class="ari-ae-readonly-notice">
+    <i class="fa-solid fa-circle-info"></i>
+    You have view-only access to email settings.
+</div>
+{% endif %}
+
+<!-- =====================================================================
+     Status card
+     ================================================================== -->
+<div class="ari-ae-status-card" id="aeStatusCard">
+    <div class="ari-ae-status-icon" id="aeStatusIcon">
+        <i class="fa-solid fa-spinner fa-spin"></i>
+    </div>
+    <div class="ari-ae-status-body">
+        <span class="ari-ae-status-title" id="aeStatusTitle">Checking connection…</span>
+        <span class="ari-ae-status-detail" id="aeStatusDetail"></span>
+    </div>
+    {% if can_manage %}
+    <button class="ari-btn ari-btn--secondary ari-btn--sm ari-ae-status-action" id="aeBtnTest"
+            onclick="aeTestConnection()">
+        <i class="fa-solid fa-plug-circle-check"></i> Test connection
+    </button>
+    {% endif %}
+</div>
+
+<!-- =====================================================================
+     Provider selector
+     ================================================================== -->
+<div class="ari-ae-section">
+    <h2 class="ari-ae-section-title">
+        <i class="fa-solid fa-server"></i> Email provider
+    </h2>
+
+    <div class="ari-ae-provider-grid" id="aeProviderGrid">
+        {% for key, prov in providers.items() %}
+        <button type="button"
+                class="ari-ae-provider-btn{% if key == current_provider %} ari-ae-provider-btn--active{% endif %}"
+                data-provider="{{ key }}"
+                onclick="aeSelectProvider('{{ key }}')"
+                {% if not can_manage %}disabled{% endif %}>
+            {% if key == 'gmail' %}<i class="fa-brands fa-google"></i>
+            {% elif key in ('outlook', 'office365') %}<i class="fa-brands fa-microsoft"></i>
+            {% elif key == 'yahoo' %}<i class="fa-brands fa-yahoo"></i>
+            {% elif key == 'log' %}<i class="fa-solid fa-file-lines"></i>
+            {% else %}<i class="fa-solid fa-gears"></i>{% endif %}
+            {{ prov.label }}
+        </button>
+        {% endfor %}
+    </div>
+</div>
+
+<!-- =====================================================================
+     Setup walkthrough (shown when a provider with help_steps is selected)
+     ================================================================== -->
+<div class="ari-ae-section" id="aeWalkthroughSection" style="display:none;">
+    <h2 class="ari-ae-section-title">
+        <i class="fa-solid fa-circle-question"></i> Setup guide
+        <a id="aeHelpUrl" href="#" target="_blank" rel="noopener" class="ari-ae-help-link">
+            Official documentation <i class="fa-solid fa-arrow-up-right-from-square fa-xs"></i>
+        </a>
+    </h2>
+    <ol class="ari-ae-steps" id="aeStepsList"></ol>
+</div>
+
+<!-- =====================================================================
+     Credentials form
+     ================================================================== -->
+<div class="ari-ae-section" id="aeCredSection">
+    <h2 class="ari-ae-section-title">
+        <i class="fa-solid fa-key"></i> Credentials &amp; connection
+    </h2>
+
+    <form id="aeForm" class="ari-ae-form" onsubmit="aeSave(event)">
+        <!-- Enabled toggle -->
+        <div class="ari-ae-field ari-ae-field--inline">
+            <label class="ari-ae-label" for="aeEnabled">Enable email delivery</label>
+            <label class="ari-ae-switch">
+                <input type="checkbox" id="aeEnabled" name="enabled"
+                       {% if email_cfg.get('enabled') %}checked{% endif %}
+                       {% if not can_manage %}disabled{% endif %}>
+                <span class="ari-ae-switch-track"></span>
+            </label>
+        </div>
+
+        <!-- From address -->
+        <div class="ari-ae-field">
+            <label class="ari-ae-label" for="aeFromAddress">
+                From / account email address
+                <span class="ari-ae-hint">The address emails are sent from (also used as SMTP login for most providers).</span>
+            </label>
+            <input type="email" id="aeFromAddress" name="from_address"
+                   class="ari-ae-input" placeholder="you@example.com"
+                   value="{{ email_cfg.get('from_address', '') }}"
+                   {% if not can_manage %}readonly{% endif %}>
+        </div>
+
+        <!-- SMTP host -->
+        <div class="ari-ae-field" id="aeSmtpHostField">
+            <label class="ari-ae-label" for="aeSmtpHost">SMTP host</label>
+            <input type="text" id="aeSmtpHost" name="smtp_host"
+                   class="ari-ae-input"
+                   value="{{ email_cfg.get('smtp_host', '') }}"
+                   {% if not can_manage %}readonly{% endif %}>
+        </div>
+
+        <!-- SMTP port + SSL/TLS flags -->
+        <div class="ari-ae-field ari-ae-field--row" id="aeSmtpPortField">
+            <div class="ari-ae-subfield">
+                <label class="ari-ae-label" for="aeSmtpPort">Port</label>
+                <input type="number" id="aeSmtpPort" name="smtp_port"
+                       class="ari-ae-input ari-ae-input--short" min="1" max="65535"
+                       value="{{ email_cfg.get('smtp_port', 587) }}"
+                       {% if not can_manage %}readonly{% endif %}>
+            </div>
+            <div class="ari-ae-subfield">
+                <label class="ari-ae-label">Encryption</label>
+                <div class="ari-ae-checks">
+                    <label class="ari-ae-check">
+                        <input type="checkbox" id="aeSmtpSsl" name="smtp_ssl"
+                               {% if email_cfg.get('smtp_ssl') %}checked{% endif %}
+                               {% if not can_manage %}disabled{% endif %}
+                               onchange="aeOnSslChange()">
+                        SSL/TLS (port 465)
+                    </label>
+                    <label class="ari-ae-check">
+                        <input type="checkbox" id="aeSmtpTls" name="smtp_tls"
+                               {% if email_cfg.get('smtp_tls') %}checked{% endif %}
+                               {% if not can_manage %}disabled{% endif %}>
+                        STARTTLS (port 587)
+                    </label>
+                </div>
+            </div>
+        </div>
+
+        <!-- SMTP user -->
+        <div class="ari-ae-field" id="aeSmtpUserField">
+            <label class="ari-ae-label" for="aeSmtpUser">
+                SMTP username
+                <span class="ari-ae-hint">Usually the same as your email address.</span>
+            </label>
+            <input type="email" id="aeSmtpUser" name="smtp_user"
+                   class="ari-ae-input"
+                   value="{{ email_cfg.get('smtp_user', '') }}"
+                   {% if not can_manage %}readonly{% endif %}>
+        </div>
+
+        <!-- Password -->
+        {% if can_manage %}
+        <div class="ari-ae-field" id="aePasswordField">
+            <label class="ari-ae-label" for="aePassword">
+                SMTP password / app password
+                <span class="ari-ae-hint">
+                    Leave blank to keep the existing password.
+                    {% if email_cfg.get('smtp_password_enc') %}
+                    <span class="ari-ae-pw-set"><i class="fa-solid fa-check-circle"></i> Password is currently set.</span>
+                    {% else %}
+                    <span class="ari-ae-pw-missing"><i class="fa-solid fa-triangle-exclamation"></i> No password saved yet.</span>
+                    {% endif %}
+                </span>
+            </label>
+            <div class="ari-ae-pw-row">
+                <input type="password" id="aePassword" name="smtp_password"
+                       class="ari-ae-input" placeholder="Leave blank to keep current"
+                       autocomplete="new-password">
+                <button type="button" class="ari-ae-pw-toggle"
+                        onclick="aeTogglePw()" title="Show/hide password">
+                    <i class="fa-solid fa-eye" id="aePwEyeIcon"></i>
+                </button>
+            </div>
+        </div>
+        {% else %}
+        <div class="ari-ae-field">
+            <label class="ari-ae-label">SMTP password</label>
+            <p class="ari-ae-readonly-value">
+                {% if email_cfg.get('smtp_password_enc') %}
+                <i class="fa-solid fa-check-circle" style="color:var(--ari-success,#27ae60)"></i> Password is set (hidden)
+                {% else %}
+                <i class="fa-solid fa-triangle-exclamation" style="color:var(--ari-warning,#e67e22)"></i> Not set
+                {% endif %}
+            </p>
+        </div>
+        {% endif %}
+
+        {% if can_manage %}
+        <div class="ari-ae-form-actions">
+            <button type="submit" class="ari-btn ari-btn--primary" id="aeBtnSave">
+                <i class="fa-solid fa-floppy-disk"></i> Save settings
+            </button>
+            <span class="ari-ae-save-msg" id="aeSaveMsg"></span>
+        </div>
+        {% endif %}
+    </form>
+</div>
+
+<!-- =====================================================================
+     Send a test email
+     ================================================================== -->
+{% if can_manage %}
+<div class="ari-ae-section">
+    <h2 class="ari-ae-section-title">
+        <i class="fa-solid fa-paper-plane"></i> Send a test email
+    </h2>
+    <p class="ari-ae-hint" style="margin:0 0 .75rem">
+        Send a test message to verify delivery end-to-end.
+    </p>
+    <div class="ari-ae-test-row">
+        <input type="email" id="aeTestRecipient" class="ari-ae-input"
+               placeholder="recipient@example.com" style="max-width:320px;">
+        <button class="ari-btn ari-btn--secondary" onclick="aeSendTestEmail()">
+            <i class="fa-solid fa-envelope"></i> Send test
+        </button>
+        <span class="ari-ae-save-msg" id="aeTestMsg"></span>
+    </div>
+</div>
+{% endif %}
+
+</div>{# end ari-up-shell #}
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+// Provider metadata injected from Python
+const AE_PROVIDERS = {{ providers_json | safe }};
+const AE_CAN_MANAGE = {{ 'true' if can_manage else 'false' }};
+
+// ── Provider selection ──────────────────────────────────────────────────────
+function aeSelectProvider(key) {
+    if (!AE_CAN_MANAGE) return;
+    document.querySelectorAll('.ari-ae-provider-btn').forEach(b => {
+        b.classList.toggle('ari-ae-provider-btn--active', b.dataset.provider === key);
+    });
+
+    const prov = AE_PROVIDERS[key];
+    if (!prov) return;
+
+    // Fill server defaults
+    if (key !== 'log') {
+        const host = document.getElementById('aeSmtpHost');
+        const port = document.getElementById('aeSmtpPort');
+        const ssl  = document.getElementById('aeSmtpSsl');
+        const tls  = document.getElementById('aeSmtpTls');
+        if (host && prov.smtp_host) host.value = prov.smtp_host;
+        if (port && prov.smtp_port) port.value = prov.smtp_port;
+        if (ssl) ssl.checked = !!prov.smtp_ssl;
+        if (tls) tls.checked = !!prov.smtp_tls;
+    }
+
+    // Show/hide cred fields for log mode
+    const isLog = (key === 'log');
+    ['aeSmtpHostField','aeSmtpPortField','aeSmtpUserField','aePasswordField'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.style.display = isLog ? 'none' : '';
+    });
+
+    // Walkthrough
+    const section = document.getElementById('aeWalkthroughSection');
+    const steps   = document.getElementById('aeStepsList');
+    const link    = document.getElementById('aeHelpUrl');
+    if (prov.help_steps && prov.help_steps.length && key !== 'custom') {
+        section.style.display = '';
+        steps.innerHTML = prov.help_steps.map(s => `<li>${s}</li>`).join('');
+        if (link && prov.help_url) {
+            link.href = prov.help_url;
+            link.style.display = '';
+        } else if (link) {
+            link.style.display = 'none';
+        }
+    } else {
+        section.style.display = 'none';
+    }
+
+    // Store provider so save picks it up
+    document.getElementById('aeForm')._provider = key;
+}
+
+// ── SSL change: mutually exclusive with STARTTLS ────────────────────────────
+function aeOnSslChange() {
+    const ssl = document.getElementById('aeSmtpSsl');
+    const tls = document.getElementById('aeSmtpTls');
+    if (!ssl || !tls) return;
+    if (ssl.checked) tls.checked = false;
+}
+
+// ── Toggle password visibility ──────────────────────────────────────────────
+function aeTogglePw() {
+    const inp  = document.getElementById('aePassword');
+    const icon = document.getElementById('aePwEyeIcon');
+    if (!inp) return;
+    if (inp.type === 'password') {
+        inp.type = 'text';
+        icon.className = 'fa-solid fa-eye-slash';
+    } else {
+        inp.type = 'password';
+        icon.className = 'fa-solid fa-eye';
+    }
+}
+
+// ── Save settings ───────────────────────────────────────────────────────────
+async function aeSave(evt) {
+    evt.preventDefault();
+    if (!AE_CAN_MANAGE) return;
+
+    const form = document.getElementById('aeForm');
+    const activeBtn = document.querySelector('.ari-ae-provider-btn--active');
+    const provider = (activeBtn ? activeBtn.dataset.provider : null)
+                     || form._provider || 'custom';
+
+    const payload = {
+        provider: provider,
+        enabled: document.getElementById('aeEnabled').checked,
+        from_address: document.getElementById('aeFromAddress').value.trim(),
+        smtp_host: (document.getElementById('aeSmtpHost') || {}).value?.trim() || '',
+        smtp_port: parseInt((document.getElementById('aeSmtpPort') || {}).value || '587', 10),
+        smtp_ssl:  (document.getElementById('aeSmtpSsl') || {}).checked || false,
+        smtp_tls:  (document.getElementById('aeSmtpTls') || {}).checked || false,
+        smtp_user: (document.getElementById('aeSmtpUser') || {}).value?.trim() || '',
+    };
+
+    const pw = (document.getElementById('aePassword') || {}).value;
+    if (pw) payload.smtp_password = pw;
+
+    const msg = document.getElementById('aeSaveMsg');
+    msg.textContent = 'Saving…';
+    msg.className = 'ari-ae-save-msg';
+
+    try {
+        const res = await fetch('/api/admin/email/save', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(payload),
+        });
+        const data = await res.json();
+        if (data.success) {
+            msg.textContent = '✓ Saved';
+            msg.className = 'ari-ae-save-msg ari-ae-save-msg--ok';
+            // Clear password field after save
+            const pw = document.getElementById('aePassword');
+            if (pw) pw.value = '';
+            // Re-run connection test
+            setTimeout(aeTestConnection, 400);
+        } else {
+            msg.textContent = 'Error: ' + (data.error || 'Unknown error');
+            msg.className = 'ari-ae-save-msg ari-ae-save-msg--err';
+        }
+    } catch(e) {
+        msg.textContent = 'Request failed: ' + e;
+        msg.className = 'ari-ae-save-msg ari-ae-save-msg--err';
+    }
+}
+
+// ── Test connection ─────────────────────────────────────────────────────────
+async function aeTestConnection() {
+    const card  = document.getElementById('aeStatusCard');
+    const icon  = document.getElementById('aeStatusIcon');
+    const title = document.getElementById('aeStatusTitle');
+    const detail= document.getElementById('aeStatusDetail');
+
+    icon.innerHTML  = '<i class="fa-solid fa-spinner fa-spin"></i>';
+    title.textContent = 'Checking connection…';
+    detail.textContent = '';
+    card.className = 'ari-ae-status-card ari-ae-status-card--checking';
+
+    try {
+        const res  = await fetch('/api/admin/email/test');
+        const data = await res.json();
+        if (data.ok) {
+            icon.innerHTML  = '<i class="fa-solid fa-circle-check"></i>';
+            title.textContent = 'Connection OK';
+            detail.textContent = data.detail || '';
+            card.className = 'ari-ae-status-card ari-ae-status-card--ok';
+            _aePatchHealth('ok', '');
+        } else {
+            icon.innerHTML  = '<i class="fa-solid fa-triangle-exclamation"></i>';
+            title.textContent = 'Connection problem';
+            detail.textContent = data.error || 'Unknown error';
+            card.className = 'ari-ae-status-card ari-ae-status-card--error';
+            _aePatchHealth('error', data.error || 'SMTP connection failed.');
+        }
+    } catch(e) {
+        icon.innerHTML  = '<i class="fa-solid fa-triangle-exclamation"></i>';
+        title.textContent = 'Could not reach server';
+        detail.textContent = String(e);
+        card.className = 'ari-ae-status-card ari-ae-status-card--error';
+    }
+}
+
+// Push the test result into the admin-portal health cache so the
+// health panel reflects it without waiting for the next full refresh.
+async function _aePatchHealth(status, message) {
+    try {
+        await fetch('/api/admin/health/patch', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+                key: 'home.admin_portal.email',
+                status,
+                message,
+            }),
+        });
+    } catch(_) { /* best-effort; ignore network errors */ }
+}
+
+// ── Send test email ─────────────────────────────────────────────────────────
+async function aeSendTestEmail() {
+    const to  = document.getElementById('aeTestRecipient').value.trim();
+    const msg = document.getElementById('aeTestMsg');
+    if (!to) { msg.textContent = 'Enter a recipient address first.'; return; }
+
+    msg.textContent = 'Sending…';
+    msg.className = 'ari-ae-save-msg';
+
+    try {
+        const res  = await fetch('/api/admin/email/send-test', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({to}),
+        });
+        const data = await res.json();
+        if (data.success) {
+            msg.textContent = '✓ Test email sent!';
+            msg.className = 'ari-ae-save-msg ari-ae-save-msg--ok';
+        } else {
+            msg.textContent = 'Failed: ' + (data.error || 'Unknown error');
+            msg.className = 'ari-ae-save-msg ari-ae-save-msg--err';
+        }
+    } catch(e) {
+        msg.textContent = 'Request failed: ' + e;
+        msg.className = 'ari-ae-save-msg ari-ae-save-msg--err';
+    }
+}
+
+// ── Init ────────────────────────────────────────────────────────────────────
+(function init() {
+    // Trigger provider walkthrough for the current selection
+    const activeBtn = document.querySelector('.ari-ae-provider-btn--active');
+    if (activeBtn) {
+        const key = activeBtn.dataset.provider;
+        const prov = AE_PROVIDERS[key];
+        if (prov) {
+            // Don't overwrite existing values, just show steps
+            const section = document.getElementById('aeWalkthroughSection');
+            const steps   = document.getElementById('aeStepsList');
+            const link    = document.getElementById('aeHelpUrl');
+            if (prov.help_steps && prov.help_steps.length && key !== 'custom' && key !== 'log') {
+                section.style.display = '';
+                steps.innerHTML = prov.help_steps.map(s => `<li>${s}</li>`).join('');
+                if (link && prov.help_url) {
+                    link.href = prov.help_url; link.style.display = '';
+                }
+            }
+            // Hide creds for log mode
+            if (key === 'log') {
+                ['aeSmtpHostField','aeSmtpPortField','aeSmtpUserField','aePasswordField'].forEach(id => {
+                    const el = document.getElementById(id);
+                    if (el) el.style.display = 'none';
+                });
+            }
+        }
+    }
+
+    aeTestConnection();
+})();
+</script>
+{% endblock %}

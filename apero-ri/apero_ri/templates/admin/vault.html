@@ -1,0 +1,458 @@
+{% extends "general/sidebar_base.html" %}
+{% block title %}APERO RI – Vault{% endblock %}
+{% block body_class %}ari-has-sidebar{% endblock %}
+
+{% block doc_content %}
+<style>
+.vault-card {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    background: var(--ari-surface, #fff);
+    border: 1px solid var(--ari-border, #e0e0e0);
+    border-radius: 8px;
+    padding: 10px 14px;
+    margin-bottom: 8px;
+}
+.vault-card--add {
+    border-style: dashed;
+    background: var(--ari-surface-alt, #f9f9f9);
+    color: var(--ari-text-muted, #888);
+    justify-content: flex-start;
+    transition: background 0.15s;
+}
+.vault-card--add:hover {
+    background: var(--ari-surface, #fff);
+}
+.vault-cards {
+    display: flex;
+    flex-direction: column;
+}
+.vault-title-cell {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    overflow: hidden;
+}
+.vault-title-text {
+    font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.vault-meta {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    flex-shrink: 0;
+    flex-wrap: wrap;
+}
+.vault-date {
+    font-size: 0.8rem;
+    color: var(--ari-text-muted, #888);
+    white-space: nowrap;
+}
+</style>
+
+<div class="ari-page-header"
+     style="display:flex; align-items:center;
+            justify-content:space-between;
+            flex-wrap:wrap; gap:0.5rem;">
+    <h1><i class="{{ page_icon }}"></i> {{ page_label }}</h1>
+    {% if vault_sections %}
+    <div style="display:flex;gap:0.5rem;flex-wrap:wrap;">
+        <button class="ari-btn ari-btn--secondary ari-btn--sm"
+                onclick="vaultOpenExport();">
+            <i class="fa-solid fa-file-export"></i>
+            Export
+        </button>
+        {% if can_manage %}
+        <button class="ari-btn ari-btn--secondary ari-btn--sm"
+                onclick="vaultOpenImport();">
+            <i class="fa-solid fa-file-import"></i>
+            Import
+        </button>
+        {% endif %}
+    </div>
+    {% endif %}
+</div>
+
+<p class="ari-ae-help-text" style="margin-bottom:1rem;">
+    Securely store passwords, tokens, and other sensitive information
+    for admin-level staff. Entries are scoped by access level and the
+    information is only revealed on request.
+</p>
+
+<div id="vault-msg" class="ari-ae-save-msg" style="display:none;"></div>
+
+<!-- Search + sort toolbar -->
+<div class="ari-ud-toolbar" style="margin-bottom:1.4rem; flex-wrap:wrap;">
+    <input type="text" id="vault-search"
+           class="ari-form-control"
+           placeholder="Search by title…"
+           style="max-width:320px; flex:1 1 200px;"
+           autocomplete="off">
+    <select id="vault-sort" class="ari-ud-select"
+            style="min-width:210px;">
+        <option value="modified_desc">
+            Last Modified (newest first)
+        </option>
+        <option value="modified_asc">
+            Last Modified (oldest first)
+        </option>
+        <option value="title_asc">Title (A → Z)</option>
+        <option value="title_desc">Title (Z → A)</option>
+    </select>
+</div>
+
+{% if vault_sections %}
+<div id="vault-container">
+{% for section in vault_sections %}
+<div class="ari-ae-section"
+     id="vault-section-{{ section.level }}"
+     data-level="{{ section.level }}">
+    <h2 class="ari-ae-section-title">
+        <i class="fa-solid {{ section.icon }}"></i>
+        {{ section.label }}
+    </h2>
+    <div class="vault-cards"
+         id="vault-cards-{{ section.level }}">
+        {% if section.can_manage %}
+        <div class="vault-card vault-card--add"
+             onclick="vaultOpenAdd('{{ section.level }}')"
+             style="cursor:pointer;">
+            <i class="fa-solid fa-plus"
+               style="font-size:1rem;"></i>
+            <span>Add entry…</span>
+        </div>
+        {% endif %}
+        <div id="vault-entries-{{ section.level }}"></div>
+    </div>
+</div>
+{% endfor %}
+</div>
+{% else %}
+<div class="ari-sg-empty">
+    <i class="fa-solid fa-vault"></i>
+    <p>No vault sections available for your account.</p>
+</div>
+{% endif %}
+
+<!-- ======================================================= -->
+<!-- Add / Edit overlay                                        -->
+<!-- ======================================================= -->
+<div id="vault-edit-overlay" class="ari-modal-overlay"
+     style="display:none;" aria-modal="true" role="dialog">
+    <div class="ari-modal" style="max-width:520px;width:95%;">
+        <div class="ari-modal__header ari-modal__header--normal">
+            <h2 id="vault-edit-heading">
+                <i class="fa-solid fa-vault"></i> Add Entry
+            </h2>
+            <button class="ari-modal__close"
+                    id="vault-edit-close"
+                    title="Close" aria-label="Close">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+        <div class="ari-modal__body">
+            <input type="hidden" id="vault-edit-id">
+            <div class="ari-form-group">
+                <label for="vault-edit-name">Title</label>
+                <input type="text" id="vault-edit-name"
+                       class="ari-form-control"
+                       placeholder="e.g. Database root password"
+                       maxlength="200" autocomplete="off">
+            </div>
+            <div class="ari-form-group">
+                <label for="vault-edit-level">
+                    Access level
+                </label>
+                <select id="vault-edit-level"
+                        class="ari-form-control">
+                    {% for section in vault_sections %}
+                    {% if section.can_manage %}
+                    <option value="{{ section.level }}">
+                        {{ section.label }}
+                    </option>
+                    {% endif %}
+                    {% endfor %}
+                </select>
+                <small class="ari-form-hint">
+                    Controls who can see this entry.
+                </small>
+            </div>
+            <div class="ari-form-group">
+                <label for="vault-edit-info">
+                    Information
+                </label>
+                <textarea id="vault-edit-info"
+                          class="ari-form-control"
+                          rows="7"
+                          placeholder="Passwords, API tokens, notes…"
+                          style="font-family:monospace;
+                                 resize:vertical;
+                                 width:100%;
+                                 box-sizing:border-box;"></textarea>
+                <small class="ari-form-hint">
+                    <strong>Never</strong> shown on the card.<br>
+                    Only visible when View is clicked.
+                </small>
+            </div>
+            <div id="vault-edit-error"
+                 class="ari-alert ari-alert--danger"
+                 style="display:none;"></div>
+            <div class="ari-modal__footer">
+                <button id="vault-edit-save"
+                        class="ari-btn ari-btn--primary">
+                    <i class="fa-solid fa-floppy-disk"></i>
+                    Save
+                </button>
+                <button id="vault-edit-cancel"
+                        class="ari-btn ari-btn--secondary">
+                    Cancel
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ======================================================= -->
+<!-- View information overlay                                  -->
+<!-- ======================================================= -->
+<div id="vault-view-overlay" class="ari-modal-overlay"
+     style="display:none;" aria-modal="true" role="dialog">
+    <div class="ari-modal" style="max-width:560px;width:95%;">
+        <div class="ari-modal__header ari-modal__header--normal">
+            <h2>
+                <i class="fa-solid fa-eye"></i>
+                <span id="vault-view-name"></span>
+            </h2>
+            <button class="ari-modal__close"
+                    id="vault-view-close"
+                    title="Close" aria-label="Close">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+        <div class="ari-modal__body">
+            <div style="margin-bottom:0.8rem;
+                        font-size:0.85rem;
+                        color:var(--ari-text-muted,#666);">
+                <span id="vault-view-badge"
+                      class="ari-health-badge
+                             ari-health-badge--ok"
+                      style="margin-right:0.5rem;"></span>
+                Modified:
+                <span id="vault-view-modified"></span>
+                &nbsp;·&nbsp;
+                Created by:
+                <span id="vault-view-creator"></span>
+            </div>
+            <label style="font-size:0.85rem; font-weight:600;
+                          display:block; margin-bottom:0.4rem;">
+                Information
+            </label>
+            <pre id="vault-view-info"
+                 style="background:var(--ari-surface-alt,#f5f5f5);
+                        border-radius:6px; padding:12px 14px;
+                        white-space:pre-wrap;
+                        word-break:break-all;
+                        font-family:monospace;
+                        font-size:0.875rem;
+                        max-height:380px;
+                        overflow-y:auto;
+                        margin:0;
+                        border:1px solid
+                          var(--ari-border,#e0e0e0);"></pre>
+            <div class="ari-modal__footer"
+                 style="margin-top:1rem;">
+                <button id="vault-view-close-btn"
+                        class="ari-btn ari-btn--secondary">
+                    Close
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ======================================================= -->
+<!-- Delete confirm overlay                                    -->
+<!-- ======================================================= -->
+<div id="vault-del-overlay" class="ari-modal-overlay"
+     style="display:none;" aria-modal="true" role="dialog">
+    <div class="ari-modal" style="max-width:400px;width:95%;">
+        <div class="ari-modal__header ari-modal__header--danger">
+            <h2>
+                <i class="fa-solid fa-trash"></i>
+                Delete Entry
+            </h2>
+            <button class="ari-modal__close"
+                    id="vault-del-close"
+                    title="Close" aria-label="Close">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+        <div class="ari-modal__body">
+            <p>
+                Delete
+                <strong id="vault-del-name"></strong>?
+                This cannot be undone.
+            </p>
+            <input type="hidden" id="vault-del-id">
+            <div class="ari-modal__footer">
+                <button id="vault-del-confirm"
+                        class="ari-btn ari-btn--danger">
+                    <i class="fa-solid fa-trash"></i>
+                    Delete
+                </button>
+                <button id="vault-del-cancel"
+                        class="ari-btn ari-btn--secondary">
+                    Cancel
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ======================================================= -->
+<!-- Export overlay                                            -->
+<!-- ======================================================= -->
+<div id="vault-export-overlay" class="ari-modal-overlay"
+     style="display:none;" aria-modal="true" role="dialog">
+    <div class="ari-modal" style="max-width:440px;width:95%;">
+        <div class="ari-modal__header ari-modal__header--normal">
+            <h2>
+                <i class="fa-solid fa-file-export"></i>
+                Export Vault
+            </h2>
+            <button class="ari-modal__close"
+                    id="vault-export-close"
+                    title="Close" aria-label="Close">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+        <div class="ari-modal__body">
+            <p style="font-size:0.875rem;
+                      color:var(--ari-text-muted,#666);
+                      margin-bottom:1rem;">
+                Exports all vault entries you have access to.
+                The information fields are encrypted with your
+                passphrase &mdash; keep it safe, you will need
+                it to import.
+            </p>
+            <div class="ari-form-group">
+                <label for="vault-export-passphrase">
+                    Passphrase
+                </label>
+                <input type="password"
+                       id="vault-export-passphrase"
+                       class="ari-form-control"
+                       placeholder="Choose a strong passphrase"
+                       autocomplete="new-password">
+            </div>
+            <div class="ari-form-group">
+                <label for="vault-export-confirm">
+                    Confirm passphrase
+                </label>
+                <input type="password"
+                       id="vault-export-confirm"
+                       class="ari-form-control"
+                       placeholder="Re-enter passphrase"
+                       autocomplete="new-password">
+            </div>
+            <div id="vault-export-error"
+                 class="ari-alert ari-alert--danger"
+                 style="display:none;"></div>
+            <div class="ari-modal__footer">
+                <button id="vault-export-btn"
+                        class="ari-btn ari-btn--primary">
+                    <i class="fa-solid fa-download"></i>
+                    Download Export
+                </button>
+                <button id="vault-export-cancel"
+                        class="ari-btn ari-btn--secondary">
+                    Cancel
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ======================================================= -->
+<!-- Import overlay                                            -->
+<!-- ======================================================= -->
+<div id="vault-import-overlay" class="ari-modal-overlay"
+     style="display:none;" aria-modal="true" role="dialog">
+    <div class="ari-modal" style="max-width:440px;width:95%;">
+        <div class="ari-modal__header ari-modal__header--normal">
+            <h2>
+                <i class="fa-solid fa-file-import"></i>
+                Import Vault
+            </h2>
+            <button class="ari-modal__close"
+                    id="vault-import-close"
+                    title="Close" aria-label="Close">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+        <div class="ari-modal__body">
+            <p style="font-size:0.875rem;
+                      color:var(--ari-text-muted,#666);
+                      margin-bottom:1rem;">
+                Import a vault export file. Entries you cannot
+                manage or that share an existing ID are skipped.
+            </p>
+            <div class="ari-form-group">
+                <label for="vault-import-file">
+                    Export file
+                </label>
+                <input type="file"
+                       id="vault-import-file"
+                       class="ari-form-control"
+                       accept=".yaml,.yml">
+            </div>
+            <div class="ari-form-group">
+                <label for="vault-import-passphrase">
+                    Passphrase
+                </label>
+                <input type="password"
+                       id="vault-import-passphrase"
+                       class="ari-form-control"
+                       placeholder="Passphrase used during export"
+                       autocomplete="current-password">
+            </div>
+            <div id="vault-import-error"
+                 class="ari-alert ari-alert--danger"
+                 style="display:none;"></div>
+            <div class="ari-modal__footer">
+                <button id="vault-import-btn"
+                        class="ari-btn ari-btn--primary">
+                    <i class="fa-solid fa-upload"></i>
+                    Import
+                </button>
+                <button id="vault-import-cancel"
+                        class="ari-btn ari-btn--secondary">
+                    Cancel
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+window.ARI_VAULT = {
+    listUrl:   {{ url_for('api_admin_vault_list')|tojson }},
+    addUrl:    {{ url_for('api_admin_vault_add')|tojson }},
+    updateUrl: {{ url_for('api_admin_vault_update')|tojson }},
+    deleteUrl: {{ url_for('api_admin_vault_delete')|tojson }},
+    getUrl:    {{ url_for('api_admin_vault_get')|tojson }},
+    exportUrl: {{ url_for('api_admin_vault_export')|tojson }},
+    importUrl: {{ url_for('api_admin_vault_import')|tojson }},
+    canManage: {{ can_manage|tojson }},
+    sections:  {{ vault_sections|tojson }},
+};
+</script>
+<script src="{{ url_for('static', filename='js/admin_vault.js') }}">
+</script>
+{% endblock %}

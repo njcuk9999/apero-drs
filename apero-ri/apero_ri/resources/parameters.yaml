@@ -1,0 +1,23 @@
+# supported ARI instruments
+instruments:
+  value:
+    - SPIROU
+    - NIRPS
+
+# specific information on the instruments
+spirou:
+  homepage: https://www.cfht.hawaii.edu/Instruments/SPIRou/
+nirps:
+  homepage: https://www.astro.umontreal.ca/nirps
+
+# publications for the /home page
+publications:
+  cook2022:
+    title: "APERO: A PipelinE to Reduce Observations – Demonstration with SPIRou"
+    paper-url: https://iopscience.iop.org/article/10.1088/1538-3873/ac9e74
+  artigau2022:
+    title: "Line-by-line Velocity Measurements: an Outlier-resistant Method for Precision Velocimetry"
+    paper-url: https://iopscience.iop.org/article/10.3847/1538-3881/ac7ce6
+  artigau2024:
+    title: "Measuring Sub-Kelvin Variations in Stellar Temperature with High-resolution Spectroscopy"
+    paper-url: https://ui.adsabs.harvard.edu/abs/2024AJ....168..252A/abstract

@@ -1,0 +1,129 @@
+{% extends "general/sidebar_base.html" %}
+{% block title %}APERO RI – Home{% endblock %}
+
+{% block doc_content %}
+<div class="ari-page-header">
+    <h1><i class="{{ page_icon }}"></i> {{ page_label }}</h1>
+</div>
+
+{% if logged_in %}
+<p class="ari-welcome-message">
+    Welcome, <strong>{{ welcome_name }}</strong>.
+    {% if last_login %}
+    Last login: {{ last_login[:19] | replace('T', ' ') }} UTC.
+    {% endif %}
+</p>
+{% endif %}
+
+<div class="ari-home-hero">
+    <div class="ari-home-hero__body">
+        <p class="ari-home-hero__text">APERO is a pipeline designed to reduce astrophysical observations (specifically from echelle spectrographs). This is the APERO data portal where you can view documentation, install and with permission access some of our reductions.</p>
+
+        <div class="ari-home-hero__columns">
+            {% if instruments %}
+            <div class="ari-home-hero__col">
+                <h4><i class="fa-solid fa-satellite-dish"></i> Supported Instruments</h4>
+                <ul>
+                    {% for inst in instruments %}
+                    <li>
+                        {% if inst.homepage %}
+                        <a href="{{ inst.homepage }}" target="_blank" rel="noopener">{{ inst.name }}</a>
+                        {% else %}
+                        {{ inst.name }}
+                        {% endif %}
+                    </li>
+                    {% endfor %}
+                </ul>
+            </div>
+            {% endif %}
+
+            {% if publications %}
+            <div class="ari-home-hero__col">
+                <h4><i class="fa-solid fa-book-open"></i> Publications</h4>
+                <ul>
+                    {% for pub in publications %}
+                    <li>
+                        {% if pub.url %}
+                        <a href="{{ pub.url }}" target="_blank" rel="noopener">{{ pub.title }}</a>
+                        {% else %}
+                        {{ pub.title }}
+                        {% endif %}
+                    </li>
+                    {% endfor %}
+                </ul>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    <p class="ari-home-hero__updated">Last updated March 2026</p>
+</div>
+
+{% if cards %}
+<h3 class="ari-home-section-heading"><i class="fa-solid fa-compass"></i> Site Content</h3>
+<div class="ari-cards">
+    {% for card in cards %}
+    <a href="{{ card.url }}" class="ari-card">
+        <div class="ari-card__icon">
+            <i class="{{ card.icon }}"></i>
+        </div>
+        <span class="ari-card__label">{{ card.label }}</span>
+    </a>
+    {% endfor %}
+</div>
+{% else %}
+<p style="color: var(--ari-text-muted);">No sections available with your
+current permissions.</p>
+{% endif %}
+
+{% if login_modal_open|default(false) and not logged_in %}
+<div class="ari-modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="ari-login-modal-title">
+    <div class="ari-modal ari-modal--login">
+        <div class="ari-modal__header" id="ari-login-modal-title">
+            <i class="fa-solid fa-right-to-bracket"></i> Login
+        </div>
+        <div class="ari-modal__body">
+            <div class="ari-login-box ari-login-box--modal">
+                <h2><i class="fa-solid fa-right-to-bracket"></i> Sign In</h2>
+                <form method="POST" action="{{ url_for('login') }}">
+                    <div class="ari-form-group">
+                        <label for="username">Username</label>
+                        <input type="text" id="username" name="username"
+                               value="{{ last_username|default('') }}"
+                               autocomplete="username" autocapitalize="none"
+                               spellcheck="false" required autofocus>
+                    </div>
+                    <div class="ari-form-group">
+                        <label for="password">Password</label>
+                        <input type="password" id="password" name="password"
+                               autocomplete="current-password" required>
+                    </div>
+                    <div class="ari-form-group ari-form-check">
+                        <label>
+                            <input type="checkbox" name="remember" value="1" checked>
+                            <span>Remember me</span>
+                        </label>
+                    </div>
+                    <button type="submit" class="ari-btn ari-btn--primary ari-btn--block">
+                        <i class="fa-solid fa-right-to-bracket"></i>
+                        Login
+                    </button>
+                    <a href="{{ url_for('forgot_password') }}"
+                       style="display:block; margin-top:0.55rem; text-align:center; text-decoration:none; color:var(--ari-primary);">
+                        <i class="fa-solid fa-key"></i>
+                        Forgot password?
+                    </a>
+                    <a href="{{ url_for('register') }}" class="ari-btn ari-btn--secondary ari-btn--block"
+                       style="margin-top:0.55rem; text-align:center; text-decoration:none;">
+                        <i class="fa-solid fa-user-plus"></i>
+                        Register New Account
+                    </a>
+                </form>
+            </div>
+        </div>
+        <div class="ari-modal__footer">
+            <a href="{{ url_for('home') }}" class="ari-btn ari-btn--secondary">Close</a>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

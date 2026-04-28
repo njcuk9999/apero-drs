@@ -1,0 +1,85 @@
+{% extends "setup/base.html" %}
+{% block title %}APERO RI Setup – Initial Admin{% endblock %}
+
+{% block content %}
+<div class="setup-notes">
+    <h3><i class="fa-solid fa-circle-info"></i> Notes</h3>
+    <ul>
+        <li>This account will have full administrator privileges &mdash; it can manage all users, instruments, and system settings.</li>
+        <li>A 6-digit verification code will be sent to the primary email address to confirm delivery is working.</li>
+        <li>Additional users will self-register after initial setup; you can promote them to admin later.</li>
+    </ul>
+</div>
+
+<div class="ari-login-box">
+    <h2><i class="fa-solid fa-user-shield"></i> Initial Admin Account</h2>
+    <p>Create the verified administrator who will manage the installation.</p>
+    {% if existing_user %}
+    <p>An existing admin profile was detected. You can keep its current password by leaving the password fields blank.</p>
+    {% endif %}
+
+    <form method="POST" action="{{ url_for('setup_admin') }}">
+        <input type="hidden" name="action" value="send_code">
+        <div class="ari-form-group">
+            <label for="username">Username</label>
+            <input type="text" id="username" name="username"
+                   value="{{ form_data.username or '' }}" required>
+        </div>
+        <div class="ari-form-group">
+            <label for="first_names">First name(s)</label>
+            <input type="text" id="first_names" name="first_names"
+                   value="{{ form_data.first_names or '' }}" required>
+        </div>
+        <div class="ari-form-group">
+            <label for="last_name">Last name</label>
+            <input type="text" id="last_name" name="last_name"
+                   value="{{ form_data.last_name or '' }}" required>
+        </div>
+        <div class="ari-form-group">
+            <label for="emails">Email addresses</label>
+            <input type="text" id="emails" name="emails"
+                   value="{{ form_data.emails or '' }}"
+                   placeholder="primary@example.com, secondary@example.com" required>
+            <small style="color:var(--ari-text-muted);">The first email is treated as primary.</small>
+        </div>
+        <div class="ari-form-group">
+            <label for="institutions">Institutions</label>
+            <input type="text" id="institutions" name="institutions"
+                   value="{{ form_data.institutions or '' }}"
+                   placeholder="University A, Observatory B" required>
+            <small style="color:var(--ari-text-muted);">The first institution is treated as primary.</small>
+        </div>
+        <div class="ari-form-group">
+            <label for="password">Password</label>
+            <input type="password" id="password" name="password"
+                   placeholder="{% if existing_user %}Leave blank to keep existing{% else %}Minimum 8 characters{% endif %}">
+        </div>
+        <div class="ari-form-group">
+            <label for="password_confirm">Confirm password</label>
+            <input type="password" id="password_confirm" name="password_confirm">
+        </div>
+        <button type="submit" class="ari-btn ari-btn--primary ari-btn--block">
+            <i class="fa-solid fa-paper-plane"></i> Send Verification Code
+        </button>
+    </form>
+</div>
+
+{% if pending_verification %}
+<div class="ari-login-box" style="margin-top:1rem;">
+    <h2><i class="fa-solid fa-shield-check"></i> Verify Email</h2>
+    <p>Enter the 6-digit code sent to <strong>{{ form_data.primary_email or form_data.emails }}</strong>.</p>
+    <form method="POST" action="{{ url_for('setup_admin') }}">
+        <input type="hidden" name="action" value="verify_code">
+        <div class="ari-form-group">
+            <label for="verification_code">Verification code</label>
+            <input type="text" id="verification_code" name="verification_code"
+                   maxlength="6" inputmode="numeric" pattern="[0-9]*" required
+                   style="font-size:1.3rem; letter-spacing:0.3rem; text-align:center;">
+        </div>
+        <button type="submit" class="ari-btn ari-btn--primary ari-btn--block">
+            <i class="fa-solid fa-check"></i> Verify &amp; Complete Setup
+        </button>
+    </form>
+</div>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,476 @@
+{% extends "general/sidebar_base.html" %}
+{% block title %}APERO RI – Download Management{% endblock %}
+
+{% block doc_content %}
+<style>
+.dm-card {
+    background: #fff;
+    border: 1px solid var(--card-border, #d6d9de);
+    border-radius: 0.6rem;
+    padding: 1.2rem 1.4rem;
+    margin-bottom: 1rem;
+}
+.dm-card h2 {
+    font-size: 1rem;
+    margin: 0 0 0.8rem 0;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+.dm-tabs {
+    display: flex;
+    gap: 0;
+    border-bottom: 2px solid #d6d9de;
+    margin-bottom: 1.2rem;
+}
+.dm-tab {
+    padding: 0.55rem 1.2rem;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 0.9rem;
+    border: none;
+    background: none;
+    color: var(--op-muted, #5f6b78);
+    border-bottom: 2px solid transparent;
+    margin-bottom: -2px;
+    transition: color .2s, border-color .2s;
+}
+.dm-tab:hover { color: var(--op-primary, #0b66c3); }
+.dm-tab.dm-tab--active {
+    color: var(--op-primary, #0b66c3);
+    border-bottom-color: var(--op-primary, #0b66c3);
+}
+.dm-tab-content { display: none; }
+.dm-tab-content.dm-tab-content--active { display: block; }
+.dm-summary-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 0.8rem;
+    margin-bottom: 1rem;
+}
+.dm-stat-box {
+    background: var(--op-bg, #f4f7fb);
+    border: 1px solid var(--card-border, #d6d9de);
+    border-radius: 0.45rem;
+    padding: 0.7rem 0.9rem;
+    text-align: center;
+}
+.dm-stat-box .dm-stat-val {
+    display: block;
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: var(--op-primary, #0b66c3);
+}
+.dm-stat-box .dm-stat-lbl {
+    display: block;
+    font-size: 0.78rem;
+    color: var(--op-muted, #5f6b78);
+    margin-top: 0.15rem;
+}
+.dm-setting-row {
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+    margin-bottom: 0.7rem;
+    flex-wrap: wrap;
+}
+.dm-setting-row label {
+    font-weight: 600;
+    min-width: 180px;
+    font-size: 0.88rem;
+}
+.dm-setting-row input[type="number"] {
+    width: 100px;
+    padding: 0.35rem 0.5rem;
+    border: 1px solid #ccc;
+    border-radius: 0.35rem;
+    font-size: 0.88rem;
+}
+.dm-setting-row .dm-unit {
+    font-size: 0.82rem;
+    color: var(--op-muted, #5f6b78);
+}
+.dm-user-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.85rem;
+    margin-top: 0.5rem;
+}
+.dm-user-table th,
+.dm-user-table td {
+    text-align: left;
+    padding: 0.4rem 0.7rem;
+    border-bottom: 1px solid #e8eaed;
+}
+.dm-user-table th {
+    font-weight: 600;
+    color: var(--op-muted, #5f6b78);
+    cursor: pointer;
+    user-select: none;
+    white-space: nowrap;
+}
+.dm-user-table th:hover { color: var(--op-primary, #0b66c3); }
+.dm-user-table td:nth-child(2),
+.dm-user-table td:nth-child(3),
+.dm-user-table th:nth-child(2),
+.dm-user-table th:nth-child(3) { text-align: right; }
+.dm-user-table tr:hover td { background: #f7f9fc; }
+.dm-empty {
+    color: var(--op-muted, #5f6b78);
+    font-size: 0.9rem;
+    padding: 1rem 0;
+    text-align: center;
+}
+.dm-toast {
+    position: fixed;
+    bottom: 1.5rem;
+    right: 1.5rem;
+    background: #333;
+    color: #fff;
+    padding: 0.6rem 1.2rem;
+    border-radius: 0.4rem;
+    font-size: 0.88rem;
+    z-index: 999;
+    opacity: 0;
+    transition: opacity 0.3s;
+    pointer-events: none;
+}
+.dm-toast.dm-show { opacity: 1; pointer-events: auto; }
+.dm-btn-row {
+    display: flex;
+    gap: 0.6rem;
+    margin-top: 0.8rem;
+    flex-wrap: wrap;
+}
+[data-theme="dark"] .dm-card {
+    background: #161b22;
+    border-color: #30363d;
+}
+[data-theme="dark"] .dm-tabs {
+    border-bottom-color: #30363d;
+}
+[data-theme="dark"] .dm-stat-box {
+    background: #1c2128;
+    border-color: #30363d;
+}
+[data-theme="dark"] .dm-setting-row input[type="number"] {
+    background: #0d1117;
+    border-color: #30363d;
+    color: #e6edf3;
+}
+[data-theme="dark"] .dm-user-table th,
+[data-theme="dark"] .dm-user-table td {
+    border-bottom-color: #21262d;
+}
+[data-theme="dark"] .dm-user-table tr:hover td { background: #1c2128; }
+[data-theme="dark"] .dm-toast {
+    background: #21262d;
+    color: #e6edf3;
+    border: 1px solid #30363d;
+}
+</style>
+
+<div class="ari-up-shell">
+<div class="ari-page-header">
+    <h1><i class="fa-solid fa-gauge-high"></i> Download Management</h1>
+    <p class="ari-page-subtitle">Monitor and configure download rate limits and usage for API and Download Basket.</p>
+</div>
+
+{% if not can_manage %}
+<div class="ari-ae-readonly-notice">
+    <i class="fa-solid fa-circle-info"></i>
+    You have view-only access to download management.
+</div>
+{% endif %}
+
+<!-- Tabs -->
+<div class="dm-tabs">
+    <button class="dm-tab dm-tab--active" data-tab="api">
+        <i class="fa-solid fa-plug"></i>&nbsp; API
+    </button>
+    <button class="dm-tab" data-tab="basket">
+        <i class="fa-solid fa-basket-shopping"></i>&nbsp; Download Basket
+    </button>
+</div>
+
+<!-- ================================================================ -->
+<!-- API Tab -->
+<!-- ================================================================ -->
+<div class="dm-tab-content dm-tab-content--active" id="dm-tab-api">
+
+<!-- Settings -->
+<div class="dm-card">
+    <h2><i class="fa-solid fa-sliders"></i> API Rate Limit</h2>
+    <div class="dm-setting-row">
+        <label for="dm-api-rate">Minimum wait between downloads</label>
+        <input type="number" id="dm-api-rate" min="0" step="0.5"
+               value="{{ settings.api_rate_limit_seconds }}">
+        <span class="dm-unit">seconds</span>
+    </div>
+    {% if can_manage %}
+    <div class="dm-btn-row">
+        <button class="ari-btn ari-btn--primary ari-btn--sm" onclick="dmSaveSettings()">
+            <i class="fa-solid fa-floppy-disk"></i> Save
+        </button>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Usage overview -->
+<div class="dm-card">
+    <h2><i class="fa-solid fa-chart-pie"></i> API Usage Overview</h2>
+    <div class="dm-summary-grid">
+        <div class="dm-stat-box">
+            <span class="dm-stat-val" id="dm-api-users">{{ api_usage | length }}</span>
+            <span class="dm-stat-lbl">Users with API usage</span>
+        </div>
+        <div class="dm-stat-box">
+            <span class="dm-stat-val" id="dm-api-total-bytes">{{ api_total_size }}</span>
+            <span class="dm-stat-lbl">Total downloaded</span>
+        </div>
+        <div class="dm-stat-box">
+            <span class="dm-stat-val" id="dm-api-total-files">{{ api_total_files }}</span>
+            <span class="dm-stat-lbl">Total files served</span>
+        </div>
+    </div>
+</div>
+
+<!-- User table -->
+<div class="dm-card">
+    <h2><i class="fa-solid fa-users"></i> API Users</h2>
+    {% if api_usage %}
+    <table class="dm-user-table" id="dm-api-table">
+        <thead>
+            <tr>
+                <th data-sort="username">Username <i class="fa-solid fa-sort"></i></th>
+                <th data-sort="total_bytes">Downloaded <i class="fa-solid fa-sort"></i></th>
+                <th data-sort="total_files">Files <i class="fa-solid fa-sort"></i></th>
+                <th data-sort="last_download_at">Last Download <i class="fa-solid fa-sort"></i></th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+        {% for u in api_usage %}
+            <tr data-username="{{ u.username }}"
+                data-total-bytes="{{ u.total_bytes }}"
+                data-total-files="{{ u.total_files }}"
+                data-last="{{ u.last_download_at }}">
+                <td>{{ u.username }}</td>
+                <td>{{ u.total_size_fmt }}</td>
+                <td>{{ u.total_files }}</td>
+                <td>{{ u.last_download_fmt }}</td>
+                <td style="text-align:center;">
+                    {% if can_manage %}
+                    <button class="ari-btn ari-btn--sm" style="padding:0.15rem 0.4rem;font-size:0.78rem;color:#c0392b;background:none;border:none;cursor:pointer;"
+                            title="Reset counters for {{ u.username }}"
+                            onclick="dmResetUser('{{ u.username }}', 'api')">
+                        <i class="fa-solid fa-rotate-left"></i>
+                    </button>
+                    {% endif %}
+                </td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <div class="dm-empty"><i class="fa-solid fa-circle-info"></i> No API usage recorded yet.</div>
+    {% endif %}
+</div>
+</div>
+
+<!-- ================================================================ -->
+<!-- Download Basket Tab -->
+<!-- ================================================================ -->
+<div class="dm-tab-content" id="dm-tab-basket">
+
+<!-- Settings -->
+<div class="dm-card">
+    <h2><i class="fa-solid fa-sliders"></i> Basket Settings</h2>
+    <div class="dm-setting-row">
+        <label for="dm-basket-rate">Minimum wait between downloads</label>
+        <input type="number" id="dm-basket-rate" min="0" step="0.5"
+               value="{{ settings.basket_rate_limit_seconds }}">
+        <span class="dm-unit">seconds</span>
+    </div>
+    <div class="dm-setting-row">
+        <label for="dm-basket-max">Max archive size per compilation</label>
+        <input type="number" id="dm-basket-max" min="0.1" step="0.5"
+               value="{{ settings.basket_max_archive_gb }}">
+        <span class="dm-unit">GB</span>
+    </div>
+    {% if can_manage %}
+    <div class="dm-btn-row">
+        <button class="ari-btn ari-btn--primary ari-btn--sm" onclick="dmSaveSettings()">
+            <i class="fa-solid fa-floppy-disk"></i> Save
+        </button>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Usage overview -->
+<div class="dm-card">
+    <h2><i class="fa-solid fa-chart-pie"></i> Basket Usage Overview</h2>
+    <div class="dm-summary-grid">
+        <div class="dm-stat-box">
+            <span class="dm-stat-val" id="dm-basket-users">{{ basket_usage | length }}</span>
+            <span class="dm-stat-lbl">Users with basket usage</span>
+        </div>
+        <div class="dm-stat-box">
+            <span class="dm-stat-val" id="dm-basket-total-bytes">{{ basket_total_size }}</span>
+            <span class="dm-stat-lbl">Total downloaded</span>
+        </div>
+        <div class="dm-stat-box">
+            <span class="dm-stat-val" id="dm-basket-total-files">{{ basket_total_files }}</span>
+            <span class="dm-stat-lbl">Total files served</span>
+        </div>
+    </div>
+</div>
+
+<!-- User table -->
+<div class="dm-card">
+    <h2><i class="fa-solid fa-users"></i> Basket Users</h2>
+    {% if basket_usage %}
+    <table class="dm-user-table" id="dm-basket-table">
+        <thead>
+            <tr>
+                <th data-sort="username">Username <i class="fa-solid fa-sort"></i></th>
+                <th data-sort="total_bytes">Downloaded <i class="fa-solid fa-sort"></i></th>
+                <th data-sort="total_files">Files <i class="fa-solid fa-sort"></i></th>
+                <th data-sort="last_download_at">Last Download <i class="fa-solid fa-sort"></i></th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+        {% for u in basket_usage %}
+            <tr data-username="{{ u.username }}"
+                data-total-bytes="{{ u.total_bytes }}"
+                data-total-files="{{ u.total_files }}"
+                data-last="{{ u.last_download_at }}">
+                <td>{{ u.username }}</td>
+                <td>{{ u.total_size_fmt }}</td>
+                <td>{{ u.total_files }}</td>
+                <td>{{ u.last_download_fmt }}</td>
+                <td style="text-align:center;">
+                    {% if can_manage %}
+                    <button class="ari-btn ari-btn--sm" style="padding:0.15rem 0.4rem;font-size:0.78rem;color:#c0392b;background:none;border:none;cursor:pointer;"
+                            title="Reset counters for {{ u.username }}"
+                            onclick="dmResetUser('{{ u.username }}', 'basket')">
+                        <i class="fa-solid fa-rotate-left"></i>
+                    </button>
+                    {% endif %}
+                </td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <div class="dm-empty"><i class="fa-solid fa-circle-info"></i> No basket usage recorded yet.</div>
+    {% endif %}
+</div>
+</div>
+
+</div><!-- ari-up-shell -->
+
+<div class="dm-toast" id="dmToast"></div>
+
+<script>
+var CAN_MANAGE = {{ can_manage | tojson }};
+var DM_URLS = {
+    saveSettings: {{ url_for('api_admin_dm_save_settings') | tojson }},
+    resetUser:    {{ url_for('api_admin_dm_reset_user') | tojson }},
+};
+
+/* ---- Toast ---- */
+function dmToast(msg, ms) {
+    var el = document.getElementById('dmToast');
+    el.textContent = msg;
+    el.classList.add('dm-show');
+    clearTimeout(el._tid);
+    el._tid = setTimeout(function(){ el.classList.remove('dm-show'); }, ms || 3000);
+}
+
+/* ---- Tabs ---- */
+document.querySelectorAll('.dm-tab').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+        document.querySelectorAll('.dm-tab').forEach(function(b){ b.classList.remove('dm-tab--active'); });
+        document.querySelectorAll('.dm-tab-content').forEach(function(c){ c.classList.remove('dm-tab-content--active'); });
+        btn.classList.add('dm-tab--active');
+        document.getElementById('dm-tab-' + btn.dataset.tab).classList.add('dm-tab-content--active');
+    });
+});
+
+/* ---- Save settings ---- */
+function dmSaveSettings() {
+    if (!CAN_MANAGE) return;
+    var body = {
+        api_rate_limit_seconds: parseFloat(document.getElementById('dm-api-rate').value) || 0,
+        basket_rate_limit_seconds: parseFloat(document.getElementById('dm-basket-rate').value) || 0,
+        basket_max_archive_gb: parseFloat(document.getElementById('dm-basket-max').value) || 5,
+    };
+    fetch(DM_URLS.saveSettings, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify(body)
+    })
+    .then(function(r){ return r.json(); })
+    .then(function(d){
+        if (d.success) dmToast('Settings saved');
+        else dmToast('Error: ' + (d.error || 'unknown'));
+    })
+    .catch(function(){ dmToast('Network error'); });
+}
+
+/* ---- Reset user ---- */
+function dmResetUser(username, category) {
+    if (!CAN_MANAGE) return;
+    if (!confirm('Reset download counters for ' + username + ' (' + category + ')?')) return;
+    fetch(DM_URLS.resetUser, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({username: username, category: category})
+    })
+    .then(function(r){ return r.json(); })
+    .then(function(d){
+        if (d.success) {
+            dmToast('Counters reset for ' + username);
+            setTimeout(function(){ location.reload(); }, 600);
+        } else {
+            dmToast('Error: ' + (d.error || 'unknown'));
+        }
+    })
+    .catch(function(){ dmToast('Network error'); });
+}
+
+/* ---- Sortable tables ---- */
+document.querySelectorAll('.dm-user-table th[data-sort]').forEach(function(th) {
+    th.addEventListener('click', function() {
+        var table = th.closest('table');
+        var tbody = table.querySelector('tbody');
+        var rows = Array.from(tbody.querySelectorAll('tr'));
+        var key = th.dataset.sort;
+        var asc = th._sortDir !== 'asc';
+        th._sortDir = asc ? 'asc' : 'desc';
+        rows.sort(function(a, b) {
+            var av, bv;
+            if (key === 'username') {
+                av = a.dataset.username || '';
+                bv = b.dataset.username || '';
+                return asc ? av.localeCompare(bv) : bv.localeCompare(av);
+            } else if (key === 'total_bytes') {
+                av = parseInt(a.dataset.totalBytes || '0', 10);
+                bv = parseInt(b.dataset.totalBytes || '0', 10);
+            } else if (key === 'total_files') {
+                av = parseInt(a.dataset.totalFiles || '0', 10);
+                bv = parseInt(b.dataset.totalFiles || '0', 10);
+            } else if (key === 'last_download_at') {
+                av = a.dataset.last || '';
+                bv = b.dataset.last || '';
+                return asc ? av.localeCompare(bv) : bv.localeCompare(av);
+            }
+            return asc ? av - bv : bv - av;
+        });
+        rows.forEach(function(r){ tbody.appendChild(r); });
+    });
+});
+</script>
+{% endblock %}

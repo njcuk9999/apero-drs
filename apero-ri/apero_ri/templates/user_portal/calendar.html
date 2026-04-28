@@ -1,0 +1,207 @@
+{% extends "general/sidebar_base.html" %}
+{% block body_class %}ari-has-sidebar ari-up-wide-page{% endblock %}
+{% block title %}APERO RI – {{ page_label }}{% endblock %}
+
+{% block doc_content %}
+<div class="ari-page-header">
+    <h1><i class="{{ page_icon }}"></i> {{ page_label }}</h1>
+    <p class="ari-page-subtitle">Personal events and instrument milestones.</p>
+</div>
+
+<div class="ari-ud-toolbar">
+    <button class="ari-btn ari-btn--primary ari-btn--sm" id="cal-add-btn">
+        <i class="fa-solid fa-plus"></i> New Event
+    </button>
+    {% if instruments %}
+    <select id="cal-instr-select" class="ari-ud-select">
+        <option value="__all__" selected>— All events (personal + instruments) —</option>
+        <option value="">— Personal events only —</option>
+        {% for instr in instruments %}
+        <option value="{{ instr }}">{{ instr }} (include instrument events)</option>
+        {% endfor %}
+    </select>
+    {% endif %}
+    <div class="ari-cal-tz-pref" style="display:flex;align-items:center;gap:6px;">
+        <label for="cal-tz-pref" style="font-size:.82rem;white-space:nowrap;color:var(--ari-text-secondary,#aaa);">
+            <i class="fa-solid fa-globe"></i> My timezone
+        </label>
+        <select id="cal-tz-pref" class="ari-ud-select" style="min-width:160px;font-size:.82rem;"></select>
+    </div>
+    <div class="ari-cal-nav">
+        <button class="ari-btn ari-btn--secondary ari-btn--sm" id="cal-prev"><i class="fa-solid fa-chevron-left"></i></button>
+        <span id="cal-month-label" class="ari-cal-month-label"></span>
+        <button class="ari-btn ari-btn--secondary ari-btn--sm" id="cal-next"><i class="fa-solid fa-chevron-right"></i></button>
+        <button class="ari-btn ari-btn--secondary ari-btn--sm" id="cal-today">Today</button>
+    </div>
+</div>
+
+<div class="ari-cal-layout">
+    <div class="ari-cal-main-panel">
+        <div id="cal-grid" class="ari-cal-grid"></div>
+    </div>
+    <aside class="ari-cal-side-panel">
+        <div class="ari-cal-side-panel__header">
+            <div>
+                <h3 class="ari-cal-side-panel__title">Events This Month</h3>
+                <div class="ari-cal-side-panel__subtitle" id="cal-list-subtitle"></div>
+            </div>
+            <label class="ari-cal-list-per-page-label" for="cal-list-per-page">
+                Show
+                <select id="cal-list-per-page" class="ari-ud-select ari-cal-list-per-page">
+                    <option value="5">5</option>
+                    <option value="8" selected>8</option>
+                    <option value="12">12</option>
+                    <option value="20">20</option>
+                </select>
+            </label>
+        </div>
+        <div id="cal-event-list" class="ari-cal-event-list"></div>
+        <div class="ari-cal-list-pager">
+            <button class="ari-btn ari-btn--secondary ari-btn--sm" id="cal-list-prev">Prev</button>
+            <span id="cal-list-page-info" class="ari-cal-list-page-info">Page 1 of 1</span>
+            <button class="ari-btn ari-btn--secondary ari-btn--sm" id="cal-list-next">Next</button>
+        </div>
+
+        <!-- ICS / External Calendars -->
+        <div class="ari-cal-ics-section">
+            <h4 class="ari-cal-ics-title">
+                <i class="fa-solid fa-link"></i> External Calendars
+            </h4>
+            <div id="cal-ics-feed-list" class="ari-cal-ics-list">
+                {% for feed in ics_feeds %}
+                <div class="ari-cal-ics-item" data-feed-id="{{ feed.id }}"
+                     data-feed-name="{{ feed.name | e }}"
+                     data-feed-color="{{ feed.color }}">
+                    <span class="ari-cal-ics-dot" style="background:{{ feed.color }};"></span>
+                    <span class="ari-cal-ics-name" title="{{ feed.url }}">{{ feed.name }}</span>
+                    <span class="ari-cal-ics-meta">
+                        {% if feed.last_synced %}{{ feed.last_synced }}{% else %}never{% endif %}
+                    </span>
+                    {% if feed.last_error %}
+                    <span class="ari-cal-ics-err" title="{{ feed.last_error }}">
+                        <i class="fa-solid fa-triangle-exclamation"></i>
+                    </span>
+                    {% endif %}
+                    <button class="ari-btn ari-btn--secondary ari-btn--sm ari-cal-ics-btn-edit"
+                            data-feed-id="{{ feed.id }}" title="Edit name / colour">
+                        <i class="fa-solid fa-pencil"></i>
+                    </button>
+                    <button class="ari-btn ari-btn--secondary ari-btn--sm ari-cal-ics-btn-refresh"
+                            data-feed-id="{{ feed.id }}" title="Refresh now">
+                        <i class="fa-solid fa-rotate"></i>
+                    </button>
+                    <button class="ari-btn ari-btn--danger ari-btn--sm ari-cal-ics-btn-delete"
+                            data-feed-id="{{ feed.id }}" title="Remove feed">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                </div>
+                {% else %}
+                <p class="ari-cal-ics-empty" id="cal-ics-empty">No external calendars linked.</p>
+                {% endfor %}
+            </div>
+            <details class="ari-cal-ics-add-wrap">
+                <summary class="ari-cal-ics-add-toggle">
+                    <i class="fa-solid fa-plus"></i> Link external calendar (.ics)
+                </summary>
+                <form class="ari-cal-ics-add-form" id="cal-ics-add-form">
+                    <div class="ari-form-group">
+                        <label>Name</label>
+                        <input type="text" id="cal-ics-name" placeholder="e.g. Telescope Schedule" required>
+                    </div>
+                    <div class="ari-form-group">
+                        <label>ICS URL</label>
+                        <input type="url" id="cal-ics-url" placeholder="https://…/calendar.ics" required>
+                    </div>
+                    <div class="ari-form-group">
+                        <label>Colour</label>
+                        <input type="color" id="cal-ics-color" value="#4a90d9">
+                    </div>
+                    <button type="submit" class="ari-btn ari-btn--primary ari-btn--sm">
+                        Add &amp; Sync
+                    </button>
+                </form>
+            </details>
+        </div>
+    </aside>
+</div>
+
+<!-- Event modal -->
+<div id="cal-modal" class="ari-ud-modal" style="display:none;">
+    <div class="ari-ud-modal-box">
+        <h3 id="cal-modal-title">New Event</h3>
+        <div class="ari-form-group">
+            <label>Title</label>
+            <input type="text" id="cal-modal-event-title" placeholder="Event title">
+        </div>
+        <div class="ari-form-group">
+            <label>Date</label>
+            <input type="date" id="cal-modal-date">
+        </div>
+        <div class="ari-form-group">
+            <label>Time (optional)</label>
+            <input type="time" id="cal-modal-time">
+        </div>
+        <div class="ari-form-group">
+            <label>Timezone</label>
+            <select id="cal-modal-timezone" class="ari-ud-select"></select>
+        </div>
+        <div class="ari-form-group">
+            <label>Category</label>
+            <select id="cal-modal-category">
+                <option value="personal">Personal</option>
+                <option value="work">Work</option>
+                <option value="observation">Observation</option>
+                <option value="deadline">Deadline</option>
+                <option value="other">Other</option>
+            </select>
+        </div>
+        <div class="ari-form-group">
+            <label>Recurrence</label>
+            <select id="cal-modal-recurrence">
+                <option value="none">None</option>
+                <option value="daily">Daily</option>
+                <option value="weekly">Weekly</option>
+                <option value="monthly">Monthly</option>
+                <option value="yearly">Yearly</option>
+            </select>
+        </div>
+        <div class="ari-form-group">
+            <label>Status</label>
+            <select id="cal-modal-status">
+                <option value="confirmed">Confirmed</option>
+                <option value="tentative">Tentative</option>
+            </select>
+        </div>
+        <div class="ari-form-group">
+            <label>Colour</label>
+            <input type="color" id="cal-modal-color" class="ari-cal-color-input" value="#4a90d9">
+        </div>
+        <div class="ari-ud-modal-actions">
+            <button class="ari-btn ari-btn--primary" id="cal-modal-save">Save</button>
+            <button class="ari-btn ari-btn--danger" id="cal-modal-delete" style="display:none;">Delete</button>
+            <button class="ari-btn ari-btn--secondary" id="cal-modal-cancel">Cancel</button>
+        </div>
+    </div>
+</div>
+
+<div id="cal-toast" class="ari-toast" style="display:none;"></div>
+
+<script>
+window.ARI_CALENDAR = {
+    listUrl: {{ url_for('api_user_calendar_list')|tojson }},
+    saveUrl: {{ url_for('api_user_calendar_save')|tojson }},
+    deleteUrl: {{ url_for('api_user_calendar_delete')|tojson }},
+    prefsGetUrl: {{ url_for('api_user_prefs_get')|tojson }},
+    prefsSaveUrl: {{ url_for('api_user_prefs_save')|tojson }},
+    userTimezone: {{ (user_timezone or 'UTC')|tojson }},
+    icsListUrl: {{ url_for('api_user_ics_list')|tojson }},
+    icsAddUrl: {{ url_for('api_user_ics_add')|tojson }},
+    icsDeleteUrl: {{ url_for('api_user_ics_delete')|tojson }},
+    icsRefreshUrl: {{ url_for('api_user_ics_refresh')|tojson }},
+    icsEditUrl: {{ url_for('api_user_ics_edit')|tojson }},
+};
+</script>
+<script src="{{ url_for('static', filename='js/tz_common.js') }}"></script>
+<script src="{{ url_for('static', filename='js/user_calendar.js') }}"></script>
+<script src="{{ url_for('static', filename='js/cal_ics.js') }}"></script>
+{% endblock %}
