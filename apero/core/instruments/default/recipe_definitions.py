@@ -107,9 +107,9 @@ pp_recipe = drs_recipe(__INSTRUMENT__)
 out_recipe = drs_recipe(__INSTRUMENT__)
 
 # -----------------------------------------------------------------------------
-# apero_ri.py
+# apero_ari.py
 # -----------------------------------------------------------------------------
-ari.name = 'apero_ri.py'
+ari.name = 'apero_ari.py'
 ari.shortname = 'ARI'
 ari.instrument = __INSTRUMENT__
 ari.description = 'Run the ARI (APERO reduction interface)'
