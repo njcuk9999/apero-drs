@@ -24,7 +24,7 @@ from apero.tools.module.ari import ari_pages as arip
 # =============================================================================
 # Define variables
 # =============================================================================
-__NAME__ = 'apero_ri.py'
+__NAME__ = 'apero_ari.py'
 __INSTRUMENT__ = 'None'
 __PACKAGE__ = base.__PACKAGE__
 __version__ = base.__version__
