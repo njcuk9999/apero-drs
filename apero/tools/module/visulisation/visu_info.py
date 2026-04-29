@@ -198,7 +198,7 @@ def _use_multiprocessing_identify(params: ParamDict, all_files: List[str]) -> bo
     if len(all_files) == 0:
         return False
     cores = drs_utils.get_cores(params)
-    mode = str(params['REPROCESS_MP_FINDEX']).lower()
+    mode = str(params['VISU_MP_MODE']).lower()
     return mode in ['pathos', 'pool', 'process'] and cores > 1
 
 
@@ -212,7 +212,7 @@ def _collect_valid_files_mp(params: ParamDict, all_files: List[str],
     if len(all_files) == 0:
         return [], []
     cores = drs_utils.get_cores(params)
-    mode = str(params['REPROCESS_MP_FINDEX']).lower()
+    mode = str(params['VISU_MP_MODE']).lower()
     if mode == 'pathos' and cores > 1:
         return _multi_process_identify_pathos(params, all_files, cores, source)
     elif mode == 'pool' and cores > 1:
@@ -344,7 +344,8 @@ def _split_plot_groups(valid_identity: List[str], valid_files: List[str],
 
 def _multi_generate_plots(params: ParamDict, valid_identity: List[str],
                           valid_files: List[str], job: int = None,
-                          total_jobs: int = None, source: str = 'files') -> None:
+                          total_jobs: int = None, source: str = 'files',
+                          verbose: bool = True) -> None:
     if (job is not None) and (total_jobs is not None):
         label = '{0} [{1}/{2}]'.format(source, job, total_jobs)
     else:
@@ -352,7 +353,7 @@ def _multi_generate_plots(params: ParamDict, valid_identity: List[str],
     iterator = zip(valid_identity, valid_files)
     for identity, filename in tqdm(iterator, total=len(valid_files),
                                    desc='Plot ' + label, leave=False):
-        generate_info_plot(params, identity, filename)
+        generate_info_plot(params, identity, filename, verbose=verbose)
 
 
 def _generate_info_plots_mp(params: ParamDict, valid_identity: List[str],
@@ -360,7 +361,7 @@ def _generate_info_plots_mp(params: ParamDict, valid_identity: List[str],
     if len(valid_files) == 0:
         return
     cores = drs_utils.get_cores(params)
-    mode = str(params['REPROCESS_MP_FINDEX']).lower()
+    mode = str(params['VISU_MP_MODE']).lower()
     if mode == 'pathos' and cores > 1:
         _multi_process_plot_pathos(params, valid_identity, valid_files,
                                    cores, source)
@@ -383,14 +384,14 @@ def _multi_process_plot_pathos(params: ParamDict, valid_identity: List[str],
     except ImportError:
         WLOG(params, 'warning', 'pathos not available; using serial plotting')
         _multi_generate_plots(params, valid_identity, valid_files,
-                              source=source)
+                              source=source, verbose=False)
         return
 
     grouped = _split_plot_groups(valid_identity, valid_files, cores)
     params_per_process = []
     for g_it, (group_identity, group_files) in enumerate(grouped):
         params_per_process.append([params, group_identity, group_files,
-                                   g_it + 1, len(grouped), source])
+                                   g_it + 1, len(grouped), source, False])
     params_per_process2 = list(zip(*params_per_process))
     pool = Pool(ncpus=min(cores, len(grouped)), maxtasksperchild=1)
     pool.map(_multi_generate_plots, *params_per_process2)
@@ -407,7 +408,7 @@ def _multi_process_plot_pool(params: ParamDict, valid_identity: List[str],
     params_per_process = []
     for g_it, (group_identity, group_files) in enumerate(grouped):
         params_per_process.append([params, group_identity, group_files,
-                                   g_it + 1, len(grouped), source])
+                                   g_it + 1, len(grouped), source, False])
     with get_context('spawn').Pool(min(cores, len(grouped)),
                                    maxtasksperchild=1) as pool:
         pool.starmap(_multi_generate_plots, params_per_process)
@@ -415,9 +416,10 @@ def _multi_process_plot_pool(params: ParamDict, valid_identity: List[str],
 
 def _process_plot_wrapper(params: ParamDict, valid_identity: List[str],
                           valid_files: List[str], job: int, total_jobs: int,
-                          source: str) -> None:
+                          source: str, verbose: bool = True) -> None:
     _multi_generate_plots(params, valid_identity, valid_files,
-                          job=job, total_jobs=total_jobs, source=source)
+                          job=job, total_jobs=total_jobs, source=source,
+                          verbose=verbose)
 
 
 def _multi_process_plot_process(params: ParamDict, valid_identity: List[str],
@@ -429,7 +431,7 @@ def _multi_process_plot_process(params: ParamDict, valid_identity: List[str],
     jobs = []
     for g_it, (group_identity, group_files) in enumerate(grouped):
         args = [params, group_identity, group_files, g_it + 1, len(grouped),
-                source]
+                source, False]
         process = Process(target=_process_plot_wrapper, args=args)
         process.start()
         jobs.append(process)
@@ -539,7 +541,8 @@ def identify_via_file_definition(params: ParamDict, filename: str) -> Optional[s
 # =============================================================================
 # Plotting functions
 # =============================================================================
-def generate_info_plot(params: ParamDict, identity: str, filename: str):
+def generate_info_plot(params: ParamDict, identity: str, filename: str,
+                       verbose: bool = True):
     """
     Generate an info plot based on identity and filename
 
@@ -555,22 +558,23 @@ def generate_info_plot(params: ParamDict, identity: str, filename: str):
     # if identity is known generate plot
     if identity in KNOWN_IDENTITIES:
         # log that we are generating info plot
-        WLOG(params, '',
-             f'Generating info plot for file: {filename}')
+        if verbose:
+            WLOG(params, '', f'Generating info plot for file: {filename}')
         # get plot function
         plot_func = KNOWN_IDENTITIES[identity]
         # if plot function is not defined then we return
         if plot_func is None:
             if identity not in NO_FUNC_IDENTITIES:
-                WLOG(params, 'warning',
-                     f'No plot function for {identity}')
+                if verbose:
+                    WLOG(params, 'warning', f'No plot function for {identity}')
                 NO_FUNC_IDENTITIES.append(identity)
             return
         # otherwise call the plot function
         if params['INPUTS'].get('TEST', False):
-            WLOG(params, 'info',
-                 f'Test mode: would have generated plot for {filename} '
-                 f'using {str(plot_func)}')
+            if verbose:
+                WLOG(params, 'info',
+                     f'Test mode: would have generated plot for {filename} '
+                     f'using {str(plot_func)}')
             return
         else:
             plot_func(params, filename, identity)
@@ -578,8 +582,8 @@ def generate_info_plot(params: ParamDict, identity: str, filename: str):
     else:
 
         if identity not in UNKNOWN_IDENTITIES:
-            WLOG(params, 'warning',
-                 f'Unknown identity: {identity}')
+            if verbose:
+                WLOG(params, 'warning', f'Unknown identity: {identity}')
             UNKNOWN_IDENTITIES.append(identity)
         return
 

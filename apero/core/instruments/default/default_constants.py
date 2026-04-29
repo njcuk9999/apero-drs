@@ -401,7 +401,7 @@ __all__ = [
     'ARI_FINDING_CHARTS', 'ARI_CAL_ORDERS', 'ARI_RESET_DICT',
     # visualization constants
     'INFO_VISU_Z1', 'INFO_VISU_Z2', 'INFO_VISU_Z3',
-    'INFO_VISU_EXT_ORDER',
+    'INFO_VISU_EXT_ORDER', 'VISU_MP_MODE',
 ]
 
 # set name
@@ -6053,6 +6053,16 @@ INFO_VISU_Z3= Const('INFO_VISU_Z3', value=None, dtype=str,
 INFO_VISU_EXT_ORDER = Const('INFO_VISU_EXT_ORDER', value=None, dtype=int,
                             source=__NAME__, group=cgroup,
                             description='Plot order for LBL etc in info plots')
+
+# Define whether to use multiprocess "pool" or "process" or use "linear"
+#     mode when running visualization info plots
+VISU_MP_MODE= Const('VISU_MP_MODE', value='process', dtype=str,
+                    source=__NAME__, group=cgroup,
+                    user=True, active=True,
+                    options=['linear', 'pool', 'process', 'pathos'],
+                    description='Define whether to use multiprocess '
+                                '"pool" or "process" or use "linear" '
+                                'mode when running visualization info plots')
 
 # =============================================================================
 #  End of configuration file
