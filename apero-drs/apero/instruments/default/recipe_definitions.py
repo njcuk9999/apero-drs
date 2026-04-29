@@ -760,6 +760,8 @@ visulise.set_kwarg(name='--infopath', dtype=str, default='None',
                            '--path. If --infopath is not plots will save to '
                            '--path/{path to file} '
                            '(i.e. where the files are found).')
+visulise.set_kwarg(name='--core', dtype=int, default=1,
+                   helpstr='Number of cores to use')
 visulise.description_file = None
 
 # -----------------------------------------------------------------------------
