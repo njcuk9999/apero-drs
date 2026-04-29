@@ -564,8 +564,9 @@ def lbl_trumpet_plot(frame, wavemap: np.ndarray, y: np.ndarray,
                    marker='o', alpha=0.5, color=on_color,
                    label=mask_on_label, ls='None')
     # set limits to 5 sigma away from median
-    median = np.nanmedian(y)
-    low, high = np.nanpercentile(y, [low_percentile, high_percentile])
+    with warnings.catch_warnings(record=True) as _:
+        median = np.nanmedian(y)
+        low, high = np.nanpercentile(y, [low_percentile, high_percentile])
     frame.set(ylim=[low, high])
     # plot the median line
     frame.axhline(median, color='red', ls='--',
@@ -751,7 +752,8 @@ def post_drs_post_v(params: ParamDict, filename: str, identity: str = ''):
         # get the combined CCF for this file
         ccf_row = np.asarray(table['CCF{0:02d}'.format(row)], dtype=float)
         # normalize ccf
-        ccf_row = ccf_row / np.nanmedian(ccf_row)
+        with warnings.catch_warnings(record=True) as _:
+            ccf_row = ccf_row / np.nanmedian(ccf_row)
         # push into vector
         all_ccf[row] = ccf_row
     # -----------------------------------------------------------------
@@ -772,7 +774,8 @@ def post_drs_post_v(params: ParamDict, filename: str, identity: str = ''):
         # y2 1sig is the 84th percentile of all ccfs
         ccf_props['y2_2sig'] = np.nanpercentile(all_ccf, upper_sig2, axis=0)
         # med ccf is the median ccf (50th percentile)
-        ccf_props['med_ccf'] = np.nanmedian(all_ccf, axis=0)
+        with warnings.catch_warnings(record=True) as _:
+            ccf_props['med_ccf'] = np.nanmedian(all_ccf, axis=0)
         # get other properties using the ari core function
         ccf_props = ari_core.fit_ccf(ccf_props)
     # plot ccf
