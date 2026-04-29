@@ -583,7 +583,16 @@ def generate_info_plot(params: ParamDict, identity: str, filename: str,
                      f'using {str(plot_func)}')
             return
         else:
-            plot_func(params, filename, identity)
+            # catch errors
+            try:
+                plot_func(params, filename, identity)
+            except Exception as e:
+                emsg = ('Error rendering {0} [{1}]'
+                        '\n\t Filename = {2} \n\t {3}: {4}')
+                eargs = [str(plot_func), identity, filename,
+                         type(e), str(e)]
+                raise AperoCodedException(params, None, targs=eargs,
+                                          message=emsg.format(*eargs))
     # else
     else:
 
