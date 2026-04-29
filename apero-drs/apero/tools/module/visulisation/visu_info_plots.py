@@ -661,7 +661,7 @@ def post_drs_post_s(params: ParamDict, filename: str, identity: str = ''):
     wave = np.array(table['Wave'])
     spectrum = np.array(table['Flux{0}'.format(fiber)])
     tcorr_key = 'Flux{0}TelluCorrected'.format(fiber)
-    if tcorr_key in table:
+    if tcorr_key in table.colnames:
         tcorr = np.array(table[tcorr_key])
     # if we don't have any tcorr data then just fill with nans
     else:
