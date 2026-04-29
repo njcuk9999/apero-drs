@@ -184,11 +184,15 @@ def find_teff(params: ParamDict, objname: str) -> float:
 
     :return: float, the teff of this object in K
     """
+    # get the pseduo constants
+    pconst = constants.pload()
     # get the astrometric database
     astromdbm = drs_database.AstrometricDatabase(params)
+    # make sure we have the correct object name (i.e. not an alias)
+    cobjname = astromdbm.find_objname(pconst, objname)
     # get the teff from the database
     teff = astromdbm.get_entries('TEFF',
-                                 condition='OBJNAME="{0}"'.format(objname),
+                                 condition='OBJNAME="{0}"'.format(cobjname),
                                  nentries=1)
     # try to convert to a float (may be a null)
     try:
