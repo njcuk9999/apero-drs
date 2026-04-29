@@ -557,6 +557,10 @@ def generate_info_plot(params: ParamDict, identity: str, filename: str,
     """
     global UNKNOWN_IDENTITIES
     global NO_FUNC_IDENTITIES
+    # set func_name
+    func_name = f'{__NAME__}.generate_info_plot()'
+    # temporary parameter for verboseness
+    params.set('__VISU_VERBOSE', value=verbose, source=func_name)
     # if identity is known generate plot
     if identity in KNOWN_IDENTITIES:
         # log that we are generating info plot

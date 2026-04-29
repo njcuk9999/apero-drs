@@ -109,8 +109,9 @@ def plotend(params: ParamDict, filename: str, thumbnail: bool = False):
             else:
                 savename = filename + ext
             # print progress
-            msg = '\tSaving plot to {0}'
-            WLOG(params, '', msg.format(savename))
+            if params.get('__VISU_VERBOSE', True):
+                msg = '\tSaving plot to {0}'
+                WLOG(params, '', msg.format(savename))
             # save file to disk
             plt.savefig(savename)
         plt.close()
