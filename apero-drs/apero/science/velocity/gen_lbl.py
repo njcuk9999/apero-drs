@@ -264,6 +264,7 @@ def find_teff(params: ParamDict, shortname: str, objname: str) -> float:
     astromdbm = drs_astrometrics.AstrometricDatabase(params, shortname)
     # resolve the entry by any name and pull TEFF from the yaml schema
     entry = astromdbm.get_entry(objname)
+    # deal with no etff
     if entry is None:
         teff = None
     else:
