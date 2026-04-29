@@ -5843,6 +5843,16 @@ CDict.add('Z3', value=None, dtype=list, dtypei=float,
 CDict.add('EXT_ORDER', value=None, dtype=int, source=__NAME__, group=cgroup,
           description='Plot order for LBL etc in info plots')
 
+# Define whether to use multiprocess "pool" or "process" or use "linear"
+#     mode when running visualization info plots
+CDict.add('MP_MODE', value='process', dtype=str,
+          source=__NAME__, group=cgroup,
+          user=True, active=True,
+          options=['linear', 'pool', 'process', 'pathos'],
+          description='Define whether to use multiprocess '
+                      '"pool" or "process" or use "linear" '
+                      'mode when running visualization info plots')
+
 # =============================================================================
 #  End of configuration file
 # =============================================================================
