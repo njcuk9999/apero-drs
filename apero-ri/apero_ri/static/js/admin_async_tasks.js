@@ -15,6 +15,7 @@
     var currentInstrument = null;
     var currentView = 'instruments';
     var allTasks = [];          // task configs for currentInstrument
+    var currentProfileNames = [];
     var taskClasses = [];       // available task classes from server
     var selectedTaskId = null;
     var editingTaskId = null;   // null = add, string = edit
@@ -168,11 +169,12 @@
     var editMpStartMethod = document.getElementById('edit-mp-start-method');
     var editMpWarn      = document.getElementById('edit-mp-warn');
     var editLocalSyncFields = document.getElementById('edit-local-sync-fields');
-    var editSyncModeRow = document.getElementById('edit-sync-mode-row');
-    var editSyncMode    = document.getElementById('edit-sync-mode');
-    var editSyncSourceField = document.getElementById('edit-sync-source-field');
-    var editSyncSourceRequired = document.getElementById('edit-sync-source-required');
-    var editSyncSource  = document.getElementById('edit-sync-source');
+    var editSyncProfilesEmpty = document.getElementById(
+        'edit-sync-profiles-empty');
+    var editSyncProfilesWrap = document.getElementById(
+        'edit-sync-profiles-wrap');
+    var editSyncProfilesBody = document.getElementById(
+        'edit-sync-profiles-body');
     var editRunCountRow = document.getElementById('edit-run-count-row');
     var editRunCount    = document.getElementById('edit-run-count');
     var editActive      = document.getElementById('edit-active');
@@ -211,6 +213,21 @@
     var btnTaskLogRefresh = document.getElementById('btn-task-log-refresh');
     var btnTaskLogCopy = document.getElementById('btn-task-log-copy');
 
+    var syncBrowseModal = document.getElementById('at-sync-browse-modal');
+    var syncBrowsePathInput = document.getElementById(
+        'sync-browse-path-input');
+    var syncBrowseStatus = document.getElementById('sync-browse-status');
+    var syncBrowseList = document.getElementById('sync-browse-list');
+    var btnSyncBrowseGo = document.getElementById('btn-sync-browse-go');
+    var btnSyncBrowseClose = document.getElementById(
+        'btn-sync-browse-close');
+    var btnSyncBrowseCloseX = document.getElementById(
+        'btn-sync-browse-close-x');
+    var btnSyncBrowseSelect = document.getElementById(
+        'btn-sync-browse-select');
+    var syncBrowsePath = '/';
+    var syncBrowseTargetInput = null;
+
     var BACKUP_TASK_KEY = 'ARI_LOCAL_DATA_BACKUP';
     var ASSETS_TASK_KEY = 'APERO_SYNC_ASSETS';
     var currentInfoText = '';
@@ -248,6 +265,7 @@
         bindRunAll();
         bindFileModal();
         bindTaskLogModal();
+        bindSyncBrowseModal();
         bindSectionToggles();
 
         if (instruments.length === 0) {
@@ -365,6 +383,9 @@
             .then(function (data) {
                 if (!data.success) { showToast('Failed to load tasks: ' + data.error, 'error'); return; }
                 allTasks = data.tasks || [];
+                currentProfileNames = Array.isArray(data.profile_names)
+                    ? data.profile_names
+                    : [];
                 renderTaskLists();
                 updateRunningBadge(data.queue);
                 if (selectedTaskId) {
@@ -608,12 +629,30 @@
         if (detSyncModeRow && detSyncMode) {
             var supportsLocalTask = !!cls.local_task
                 || !!task.local_task
-                || ('sync_source' in task);
+                || ('sync_source' in task)
+                || ('sync_profiles' in task);
             if (supportsLocalTask) {
-                var syncSource = String(task.sync_source || '').trim();
-                detSyncMode.textContent = syncSource
-                    ? ('Sync from: ' + syncSource)
-                    : 'Run task (no sync source set)';
+                var syncProfiles = getTaskSyncProfiles(task);
+                var fetchNames = Object.keys(syncProfiles);
+                var legacySync = String(task.sync_source || '').trim();
+                if (fetchNames.length) {
+                    var totalProfiles = currentProfileNames.length
+                        || fetchNames.length;
+                    var runCount = Math.max(
+                        totalProfiles - fetchNames.length,
+                        0
+                    );
+                    detSyncMode.textContent = fetchNames.length
+                        + ' profile(s) fetch pre-computed'
+                        + (runCount
+                            ? '; ' + runCount + ' run on server'
+                            : '');
+                } else if (legacySync) {
+                    detSyncMode.textContent = 'Legacy sync source: '
+                        + legacySync;
+                } else {
+                    detSyncMode.textContent = 'All profiles run on server';
+                }
                 detSyncModeRow.style.display = '';
             } else {
                 detSyncMode.textContent = '';
@@ -1546,22 +1585,7 @@
         editNcores.value = task.ncores || 1;
         editMpBackend.value = task.mp_backend || 'threads';
         editMpStartMethod.value = task.mp_start_method || 'default';
-        if (editSyncSource) {
-            editSyncSource.value = String(task.sync_source || '');
-        }
-        if (editSyncMode) {
-            var taskKey = String(task.task_key || '').trim();
-            var supportsLocalTask = !!task.local_task
-                || ('sync_source' in task)
-                || taskKey === 'APERO_OBJECT_QUERY';
-            if (!supportsLocalTask) {
-                editSyncMode.value = 'run_server';
-            } else {
-                editSyncMode.value = String(task.sync_source || '').trim()
-                    ? 'fetch_precomputed'
-                    : '';
-            }
-        }
+        renderSyncProfiles(task);
         editRunCount.textContent = task.runtime ? (task.runtime.run_count || 0) : 0;
         editActive.checked = task.active !== false;
         selectEditTab('run');
@@ -1644,6 +1668,287 @@
         });
     }
 
+    function getTaskSyncProfiles(task) {
+        var out = {};
+        if (task && task.sync_profiles
+                && typeof task.sync_profiles === 'object') {
+            Object.keys(task.sync_profiles).forEach(function (profileName) {
+                var entry = task.sync_profiles[profileName];
+                if (!entry || typeof entry !== 'object') return;
+                var mode = String(entry.mode || 'run_server').trim();
+                var syncSource = String(
+                    entry.sync_source || ''
+                ).trim();
+                if (mode === 'fetch_precomputed' && syncSource) {
+                    out[profileName] = {
+                        mode: 'fetch_precomputed',
+                        sync_source: syncSource,
+                    };
+                }
+            });
+        }
+        if (Object.keys(out).length === 0) {
+            var legacySync = String(task && task.sync_source || '').trim();
+            if (legacySync) {
+                currentProfileNames.forEach(function (profileName) {
+                    out[profileName] = {
+                        mode: 'fetch_precomputed',
+                        sync_source: legacySync,
+                    };
+                });
+            }
+        }
+        return out;
+    }
+
+    function updateSyncProfileRow(row) {
+        if (!row) return;
+        var modeEl = row.querySelector('select[data-role="mode"]');
+        var pathEl = row.querySelector('input[data-role="path"]');
+        var browseBtn = row.querySelector('button[data-role="browse"]');
+        var aliasEl = row.querySelector('[data-role="alias"]');
+        var mode = modeEl ? String(modeEl.value || '').trim() : 'run_server';
+        var enabled = (mode === 'fetch_precomputed');
+        if (pathEl) pathEl.disabled = !enabled;
+        if (browseBtn) browseBtn.disabled = !enabled;
+        if (aliasEl) {
+            var profileName = row.dataset.profile || '';
+            var syncPath = pathEl ? String(pathEl.value || '').trim() : '';
+            var baseName = syncPath.replace(/\/+$/, '').split('/').pop() || '';
+            aliasEl.textContent = (enabled && syncPath && baseName
+                    && baseName !== profileName)
+                ? ('Selected task directory: ' + baseName)
+                : '';
+        }
+    }
+
+    function renderSyncProfiles(task) {
+        if (!editSyncProfilesBody || !editSyncProfilesWrap
+                || !editSyncProfilesEmpty) {
+            return;
+        }
+        var syncProfiles = getTaskSyncProfiles(task || {});
+        editSyncProfilesBody.innerHTML = '';
+        if (!currentProfileNames.length) {
+            editSyncProfilesWrap.style.display = 'none';
+            editSyncProfilesEmpty.style.display = '';
+            return;
+        }
+
+        editSyncProfilesWrap.style.display = '';
+        editSyncProfilesEmpty.style.display = 'none';
+        currentProfileNames.forEach(function (profileName) {
+            var entry = syncProfiles[profileName] || {};
+            var mode = entry.sync_source
+                ? 'fetch_precomputed'
+                : 'run_server';
+            var syncSource = String(entry.sync_source || '');
+            var row = document.createElement('tr');
+            row.dataset.profile = profileName;
+            row.innerHTML = ''
+                + '<td><strong>' + esc(profileName) + '</strong></td>'
+                + '<td>'
+                + '<select class="ari-ap-input" data-role="mode">'
+                + '<option value="run_server">Run on server</option>'
+                + '<option value="fetch_precomputed">'
+                + 'Fetch pre-computed</option>'
+                + '</select></td>'
+                + '<td>'
+                + '<div class="at-sync-profiles__path-wrap">'
+                + '<input type="text" class="ari-ap-input"'
+                + ' data-role="path"'
+                + ' placeholder="/path/to/precomputed/profile"'
+                + ' value="' + esc(syncSource) + '">'
+                + '<button type="button"'
+                + ' class="ari-btn ari-btn--secondary"'
+                + ' data-role="browse">'
+                + '<i class="fa-solid fa-folder-open"></i> Browse'
+                + '</button></div>'
+                + '<div class="at-sync-profiles__alias"'
+                + ' data-role="alias"></div></td>';
+            editSyncProfilesBody.appendChild(row);
+
+            var modeEl = row.querySelector('select[data-role="mode"]');
+            var pathEl = row.querySelector('input[data-role="path"]');
+            var browseBtn = row.querySelector('button[data-role="browse"]');
+            modeEl.value = mode;
+            modeEl.addEventListener('change', function () {
+                updateSyncProfileRow(row);
+                onTaskKeyChange();
+            });
+            pathEl.addEventListener('input', function () {
+                updateSyncProfileRow(row);
+            });
+            browseBtn.addEventListener('click', function () {
+                openSyncBrowseModal(pathEl);
+            });
+            updateSyncProfileRow(row);
+        });
+    }
+
+    function collectSyncProfiles(validate) {
+        var out = {};
+        var anyRunOnServer = !currentProfileNames.length;
+        var anyFetch = false;
+        var rows = editSyncProfilesBody
+            ? editSyncProfilesBody.querySelectorAll('tr[data-profile]')
+            : [];
+        rows.forEach(function (row) {
+            var profileName = row.dataset.profile || '';
+            var modeEl = row.querySelector('select[data-role="mode"]');
+            var pathEl = row.querySelector('input[data-role="path"]');
+            var mode = modeEl ? String(modeEl.value || '').trim() : '';
+            var syncSource = pathEl ? String(pathEl.value || '').trim() : '';
+            if (mode === 'fetch_precomputed') {
+                anyFetch = true;
+                if (validate && !syncSource) {
+                    throw new Error(
+                        'Pre-computed directory is required for '
+                        + profileName + '.'
+                    );
+                }
+                if (syncSource) {
+                    out[profileName] = {
+                        mode: 'fetch_precomputed',
+                        sync_source: syncSource,
+                    };
+                }
+            } else {
+                anyRunOnServer = true;
+            }
+        });
+        return {
+            profiles: out,
+            anyRunOnServer: anyRunOnServer,
+            anyFetch: anyFetch,
+        };
+    }
+
+    function openSyncBrowseModal(targetInput) {
+        if (!syncBrowseModal || !syncBrowsePathInput) return;
+        syncBrowseTargetInput = targetInput || null;
+        syncBrowsePath = targetInput
+            ? String(targetInput.value || '').trim() || '/'
+            : '/';
+        syncBrowsePathInput.value = syncBrowsePath;
+        syncBrowseModal.style.display = 'flex';
+        browseSyncDirectory(syncBrowsePath);
+    }
+
+    function closeSyncBrowseModal() {
+        if (!syncBrowseModal) return;
+        syncBrowseModal.style.display = 'none';
+        syncBrowseTargetInput = null;
+    }
+
+    function browseSyncDirectory(path) {
+        if (!syncBrowseList || !syncBrowseStatus) return;
+        syncBrowseList.innerHTML = ''
+            + '<div class="ari-sg-loading">Loading...</div>';
+        syncBrowseStatus.style.display = 'none';
+        fetch(urls.browseProfiles + '?path=' + encodeURIComponent(path))
+            .then(function (r) { return r.json(); })
+            .then(function (data) {
+                if (!data.success) {
+                    syncBrowseList.innerHTML = '<div class="ari-sg-error">'
+                        + esc(data.error || 'Browse failed')
+                        + '</div>';
+                    return;
+                }
+                syncBrowsePath = data.path;
+                syncBrowsePathInput.value = data.path;
+                syncBrowseStatus.className = 'ari-ap-browser__status '
+                    + 'ari-ap-browser__status--valid';
+                syncBrowseStatus.innerHTML = ''
+                    + '<i class="fa-solid fa-circle-check"></i>'
+                    + ' Directory exists';
+                syncBrowseStatus.style.display = 'block';
+                syncBrowseList.innerHTML = '';
+
+                if (data.path !== '/') {
+                    var parent = data.path.replace(/\/[^\/]+\/?$/, '') || '/';
+                    var upItem = document.createElement('div');
+                    upItem.className = 'ari-ap-browser__item '
+                        + 'ari-ap-browser__item--parent';
+                    upItem.innerHTML = ''
+                        + '<i class="fa-solid fa-arrow-up"></i> ..';
+                    upItem.addEventListener('click', function () {
+                        browseSyncDirectory(parent);
+                    });
+                    syncBrowseList.appendChild(upItem);
+                }
+
+                if (!(data.dirs || []).length) {
+                    syncBrowseList.innerHTML = ''
+                        + '<div class="ari-sg-empty-small">'
+                        + 'No subdirectories</div>';
+                    return;
+                }
+
+                (data.dirs || []).forEach(function (dirname) {
+                    var item = document.createElement('div');
+                    item.className = 'ari-ap-browser__item';
+                    item.innerHTML = '<i class="fa-solid fa-folder"></i> '
+                        + esc(dirname);
+                    item.addEventListener('click', function () {
+                        var nextPath = data.path.replace(/\/$/, '')
+                            + '/' + dirname;
+                        browseSyncDirectory(nextPath);
+                    });
+                    syncBrowseList.appendChild(item);
+                });
+            })
+            .catch(function () {
+                syncBrowseList.innerHTML = '<div class="ari-sg-error">'
+                    + 'Failed to browse</div>';
+            });
+    }
+
+    function bindSyncBrowseModal() {
+        if (!syncBrowseModal || !syncBrowsePathInput
+                || !btnSyncBrowseSelect) {
+            return;
+        }
+        function goToPath() {
+            browseSyncDirectory(
+                String(syncBrowsePathInput.value || '').trim() || '/'
+            );
+        }
+        if (btnSyncBrowseGo) {
+            btnSyncBrowseGo.addEventListener('click', goToPath);
+        }
+        syncBrowsePathInput.addEventListener('keydown', function (event) {
+            if (event.key === 'Enter') {
+                event.preventDefault();
+                goToPath();
+            }
+        });
+        btnSyncBrowseSelect.addEventListener('click', function () {
+            if (syncBrowseTargetInput) {
+                syncBrowseTargetInput.value = syncBrowsePath;
+                updateSyncProfileRow(
+                    syncBrowseTargetInput.closest('tr[data-profile]')
+                );
+            }
+            closeSyncBrowseModal();
+        });
+        if (btnSyncBrowseClose) {
+            btnSyncBrowseClose.addEventListener(
+                'click', closeSyncBrowseModal
+            );
+        }
+        if (btnSyncBrowseCloseX) {
+            btnSyncBrowseCloseX.addEventListener(
+                'click', closeSyncBrowseModal
+            );
+        }
+        syncBrowseModal.addEventListener('click', function (event) {
+            if (event.target === syncBrowseModal) {
+                closeSyncBrowseModal();
+            }
+        });
+    }
+
     function onTaskKeyChange() {
         var key = editTaskKey.value;
         var cls = taskClasses.find(function (c) { return c.key === key; });
@@ -1658,18 +1963,9 @@
         var supportsLocalTask = !!(cls && cls.local_task)
             || !!currentTask.local_task
             || ('sync_source' in currentTask)
+            || ('sync_profiles' in currentTask)
             || key === 'APERO_OBJECT_QUERY';
-        var inferredMode = (editSyncSource && String(editSyncSource.value || '').trim())
-            ? 'fetch_precomputed'
-            : 'run_server';
-        var selectedMode = editSyncMode
-            ? String(editSyncMode.value || '').trim()
-            : '';
-        if (!supportsLocalTask) {
-            selectedMode = 'run_server';
-        } else if (selectedMode !== 'run_server' && selectedMode !== 'fetch_precomputed') {
-            selectedMode = '';
-        }
+        var syncState = collectSyncProfiles(false);
         if (cls) {
             editTaskInfoRow.style.display = '';
             editTaskName.textContent = cls.name;
@@ -1682,41 +1978,14 @@
         if (editAssetsFields) editAssetsFields.style.display = isAssets ? '' : 'none';
 
         if (editLocalSyncFields) {
-            editLocalSyncFields.style.display = key ? '' : 'none';
-        }
-        if (editSyncModeRow && editSyncMode) {
-            if (key) {
-                if (supportsLocalTask) {
-                    editSyncMode.disabled = false;
-                    editSyncMode.innerHTML = ''
-                        + '<option value="">Select mode</option>'
-                        + '<option value="run_server">Run on server</option>'
-                        + '<option value="fetch_precomputed">Fetch pre-computed</option>';
-                } else {
-                    editSyncMode.disabled = true;
-                    editSyncMode.innerHTML = '<option value="run_server">Run on server</option>';
-                }
-                editSyncMode.value = selectedMode;
-                editSyncModeRow.style.display = '';
-            } else {
-                editSyncModeRow.style.display = 'none';
-            }
+            editLocalSyncFields.style.display = supportsLocalTask ? '' : 'none';
         }
 
-        var runOnServer = (selectedMode === 'run_server');
-        editMpFields.style.display = (supportsMp && runOnServer) ? '' : 'none';
-        if (editSyncSourceField) {
-            var showSyncSource = !!(supportsLocalTask && selectedMode === 'fetch_precomputed');
-            editSyncSourceField.style.display = showSyncSource ? '' : 'none';
-            if (editSyncSource) {
-                editSyncSource.required = showSyncSource;
-            }
-            if (editSyncSourceRequired) {
-                editSyncSourceRequired.style.display = showSyncSource ? '' : 'none';
-            }
-        }
+        editMpFields.style.display = (supportsMp && syncState.anyRunOnServer)
+            ? ''
+            : 'none';
 
-        if (supportsMp && runOnServer) {
+        if (supportsMp && syncState.anyRunOnServer) {
             renderNcoresWarning();
         }
         editRunCountRow.style.display = editingTaskId ? '' : 'none';
@@ -1758,9 +2027,6 @@
         if (editNcores) {
             editNcores.addEventListener('input', renderNcoresWarning);
         }
-        if (editSyncMode) {
-            editSyncMode.addEventListener('change', onTaskKeyChange);
-        }
         // Close on backdrop click
         editModal.addEventListener('click', function (e) {
             if (e.target === editModal) closeEditModal();
@@ -1786,16 +2052,9 @@
         var supportsLocalTask = !!cls.local_task
             || !!currentTask.local_task
             || ('sync_source' in currentTask)
+            || ('sync_profiles' in currentTask)
             || taskKey === 'APERO_OBJECT_QUERY';
-        var syncMode = editSyncMode
-            ? String(editSyncMode.value || '').trim()
-            : '';
-        if (!supportsLocalTask) {
-            syncMode = 'run_server';
-        } else if (syncMode !== 'run_server' && syncMode !== 'fetch_precomputed') {
-            syncMode = '';
-        }
-        var runOnServer = (syncMode === 'run_server');
+        var syncState;
         var frequency = parseFloat(editFrequency.value);
         var dailyCopies = parseInt(editDailyCopies.value, 10) || 0;
         var weeklyCopies = parseInt(editWeeklyCopies.value, 10) || 0;
@@ -1806,11 +2065,19 @@
         var ncores = parseInt(editNcores.value, 10) || 1;
         var mpBackend = (editMpBackend.value || 'threads').trim();
         var mpStartMethod = (editMpStartMethod.value || 'default').trim();
-        var syncSource = editSyncSource ? String(editSyncSource.value || '').trim() : '';
+        try {
+            syncState = collectSyncProfiles(true);
+        } catch (err) {
+            showToast(err.message, 'error');
+            return;
+        }
         if (!taskKey) { showToast('Missing task key.', 'error'); return; }
         if (isNaN(frequency) || frequency <= 0) { showToast('Frequency must be a positive number of hours.', 'error'); return; }
         if (dailyCopies < 0 || weeklyCopies < 0) { showToast('Backup copy counts must be non-negative.', 'error'); return; }
-        if (supportsMp && runOnServer && ncores <= 0) { showToast('NCORES must be >= 1.', 'error'); return; }
+        if (supportsMp && syncState.anyRunOnServer && ncores <= 0) {
+            showToast('NCORES must be >= 1.', 'error');
+            return;
+        }
         if (taskKey === BACKUP_TASK_KEY && dailyCopies + weeklyCopies <= 0) {
             showToast('Backup task needs at least one retained daily or weekly copy.', 'error');
             return;
@@ -1821,15 +2088,6 @@
                 return;
             }
         }
-        if (supportsLocalTask && !syncMode) {
-            showToast('Please choose a Sync mode.', 'error');
-            return;
-        }
-        if (supportsLocalTask && !runOnServer && !syncSource) {
-            showToast('Sync Source Path is required when Fetch pre-computed is selected.', 'error');
-            return;
-        }
-
         var payload = {
             instrument: currentInstrument,
             task_key: taskKey,
@@ -1868,13 +2126,13 @@
             if (!inputEl) return;
             payload.filters[keyName] = String(inputEl.value || '').trim();
         });
-        if (supportsMp && runOnServer) {
+        if (supportsMp && syncState.anyRunOnServer) {
             payload.ncores = ncores;
             payload.mp_backend = mpBackend;
             payload.mp_start_method = mpStartMethod;
         }
         if (supportsLocalTask) {
-            payload.sync_source = runOnServer ? '' : syncSource;
+            payload.sync_profiles = syncState.profiles;
         }
         payload.id = editingTaskId;
 

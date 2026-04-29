@@ -52,6 +52,28 @@ def task_keys_for_scope(instrument: str) -> List[str]:
     return keys
 
 
+def normalize_sync_profiles(raw: Any) -> Dict[str, Dict[str, str]]:
+    """Normalize per-profile sync settings from task config."""
+    out: Dict[str, Dict[str, str]] = {}
+    if not isinstance(raw, dict):
+        return out
+
+    for profile_name, entry in raw.items():
+        pname = str(profile_name or "").strip()
+        if not pname or not isinstance(entry, dict):
+            continue
+
+        mode = str(entry.get("mode", "run_server") or "run_server")
+        mode = mode.strip().lower()
+        if mode not in ["run_server", "fetch_precomputed"]:
+            mode = "run_server"
+        sync_source = str(entry.get("sync_source", "") or "").strip()
+        if mode == "run_server" and not sync_source:
+            continue
+        out[pname] = dict(mode=mode, sync_source=sync_source)
+    return out
+
+
 def merge_async_task_catalog(
     instrument: str, all_tasks: Dict[str, Any]
 ) -> Tuple[List[Dict[str, Any]], bool]:
@@ -213,8 +235,16 @@ def merge_async_task_catalog(
             merged_cfg["sync_source"] = str(
                 task_cfg.get("sync_source", "") or ""
             ).strip()
+            sync_profiles = normalize_sync_profiles(
+                task_cfg.get("sync_profiles", {})
+            )
+            if sync_profiles:
+                merged_cfg["sync_profiles"] = sync_profiles
+            else:
+                merged_cfg.pop("sync_profiles", None)
         else:
             merged_cfg.pop("sync_source", None)
+            merged_cfg.pop("sync_profiles", None)
 
         for field in [
             "last_run",
