@@ -141,7 +141,7 @@ def process_wildcards(params: ParamDict, path: str):
     else:
         for identity, filename in tqdm(zip(valid_identity, valid_files),
                                        total=len(valid_files),
-                                       desc='Plot wildcards', leave=False):
+                                       desc='Plot wildcards'):
             generate_info_plot(params, identity, filename)
     # return here
     return
@@ -192,7 +192,7 @@ def process_directory(params: ParamDict, path: str):
     else:
         for identity, filename in tqdm(zip(valid_identity, valid_files),
                                        total=len(valid_files),
-                                       desc='Plot directory', leave=False):
+                                       desc='Plot directory'):
             generate_info_plot(params, identity, filename)
     # -------------------------------------------------------------------------
     return
@@ -244,7 +244,7 @@ def _multi_identify(params: ParamDict, all_files: List[str],
     else:
         label = source
     valid_files, valid_identity = [], []
-    for filename in tqdm(all_files, desc='Identify ' + label, leave=False):
+    for filename in tqdm(all_files, desc='Identify ' + label):
         identity = identify_file(params, filename)
         if identity is not None:
             valid_files.append(filename)
@@ -356,7 +356,7 @@ def _multi_generate_plots(params: ParamDict, valid_identity: List[str],
         label = source
     iterator = zip(valid_identity, valid_files)
     for identity, filename in tqdm(iterator, total=len(valid_files),
-                                   desc='Plot ' + label, leave=False):
+                                   desc='Plot ' + label):
         generate_info_plot(params, identity, filename, verbose=verbose)
 
 
