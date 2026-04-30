@@ -429,20 +429,22 @@
             }
         });
 
-        // edit button click
-        container.addEventListener("click", function (ev) {
-            var btn = ev.target.closest(".ari-tinfo-edit-btn");
-            if (!btn) return;
-            ev.stopPropagation();
-            ev.preventDefault();
-            var key = btn.getAttribute("data-edit-key");
-            var rowEl = btn.closest("[data-row-key]");
-            if (typeof opts.onEdit === "function") {
-                opts.onEdit(key, rowEl, btn);
-            } else {
-                _defaultInlineEdit(container, key, rowEl, opts);
-            }
-        });
+        // edit button click (only if editing is enabled)
+        if (!opts.disableInlineEdit) {
+            container.addEventListener("click", function (ev) {
+                var btn = ev.target.closest(".ari-tinfo-edit-btn");
+                if (!btn) return;
+                ev.stopPropagation();
+                ev.preventDefault();
+                var key = btn.getAttribute("data-edit-key");
+                var rowEl = btn.closest("[data-row-key]");
+                if (typeof opts.onEdit === "function") {
+                    opts.onEdit(key, rowEl, btn);
+                } else {
+                    _defaultInlineEdit(container, key, rowEl, opts);
+                }
+            });
+        }
 
         // flag button click
         container.addEventListener("click", function (ev) {
@@ -592,6 +594,14 @@
         });
     }
 
+    function hideInlineEditButtons(container) {
+        if (!container) return;
+        var btns = container.querySelectorAll(".ari-tinfo-edit-btn");
+        btns.forEach(function (btn) {
+            btn.setAttribute("hidden", "");
+        });
+    }
+
     function render(container, payload, opts) {
         if (!container) return;
         opts = opts || {};
@@ -616,6 +626,9 @@
 
         if (opts.userPerms) {
             applyPermissionVisibility(container, opts.userPerms);
+        }
+        if (opts.disableInlineEdit) {
+            hideInlineEditButtons(container);
         }
         if (typeof opts.mountChartsCb === "function") {
             sections.forEach(function (sec) {
@@ -852,6 +865,7 @@
     var __api = Object.freeze({
         render: render,
         applyPermissionVisibility: applyPermissionVisibility,
+        hideInlineEditButtons: hideInlineEditButtons,
     });
     try {
         Object.defineProperty(window, "AperoTargetInfo", {

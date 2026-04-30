@@ -1033,9 +1033,27 @@ def register_data_portal_routes(app):
         methods=["POST"],
     )
     app.add_url_rule(
+        "/api/astrometrics/update-rejected",
+        "api_astrometrics_update_rejected",
+        app._api_astrometrics_update_rejected,
+        methods=["POST"],
+    )
+    app.add_url_rule(
+        "/api/astrometrics/delete-rejected",
+        "api_astrometrics_delete_rejected",
+        app._api_astrometrics_delete_rejected,
+        methods=["POST"],
+    )
+    app.add_url_rule(
         "/api/astrometrics/add-manual",
         "api_astrometrics_add_manual",
         app._api_astrometrics_add_manual,
+        methods=["POST"],
+    )
+    app.add_url_rule(
+        "/api/astrometrics/recompute-manual",
+        "api_astrometrics_recompute_manual",
+        app._api_astrometrics_recompute_manual,
         methods=["POST"],
     )
     app.add_url_rule(

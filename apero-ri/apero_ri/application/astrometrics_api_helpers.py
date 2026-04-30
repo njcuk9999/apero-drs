@@ -331,6 +331,42 @@ def _astrom_dir(app) -> Path:
     return base_dir / "apero-assets" / "astrometrics"
 
 
+def _entry_status_from_path(
+        dra,
+        astrom_root: str,
+        yaml_path: str,
+        entry,
+        apero_name: str,
+):
+    """Infer entry status from path, then yaml STATUS, then lookup.
+
+    :param dra: imported ``drs_astrometrics`` module
+    :param astrom_root: str, root astrometrics directory
+    :param yaml_path: str, full path to the yaml file
+    :param entry: dict, parsed yaml entry
+    :param apero_name: str, canonical APERO name for fallback lookup
+    :return: lower-case status string
+    """
+    parent = Path(yaml_path).parent.name.lower()
+    if parent in dra.STATUS_SUBDIRS:
+        return parent
+    raw_status = None
+    if isinstance(entry, dict):
+        raw_status = entry.get('STATUS')
+    if raw_status:
+        status = str(raw_status).strip().lower()
+        if status in dra.STATUS_SUBDIRS:
+            return status
+    try:
+        found = dra.find_yaml_in_status_dirs(astrom_root, apero_name)
+        if found is not None and found[1] in dra.STATUS_SUBDIRS:
+            return found[1]
+    except Exception:  # noqa: BLE001
+        pass
+    # Legacy flat-layout files are treated as verified.
+    return dra.STATUS_VERIFIED
+
+
 def _check_view_perm(app):
     """Check that the caller has ``view.data_portal`` permission.
 
@@ -422,6 +458,7 @@ def api_astrometrics_resolve_by_name(app):
         success=True,
         apero_name=entry.get("APERO_NAME"),
         payload=_build_payload(entry),
+        entry=entry,
         raw=entry,
         status=status,
     )
@@ -479,6 +516,7 @@ def api_astrometrics_resolve_by_coords(app):
             "apero_name": entry.get("APERO_NAME"),
             "separation_arcsec": sep_arcsec,
             "payload": _build_payload(entry),
+            "entry": entry,
         })
 
     return jsonify(success=True, matches=matches,
@@ -532,6 +570,7 @@ def api_astrometrics_resolve_by_filter(app):
         matches.append({
             "apero_name": entry.get("APERO_NAME"),
             "payload": _build_payload(entry),
+            "entry": entry,
         })
 
     return jsonify(success=True, matches=matches,
@@ -596,7 +635,7 @@ def api_astrometrics_list_all(app):
                 cached = _json.load(fp)
             if (isinstance(cached, dict)
                     and cached.get('sig') == sig
-                    and cached.get('version') == 1
+                    and cached.get('version') == 2
                     and isinstance(cached.get('rows'), list)):
                 rows = cached['rows']
                 return jsonify(success=True, rows=rows,
@@ -604,29 +643,23 @@ def api_astrometrics_list_all(app):
         except (OSError, ValueError):
             pass
 
-    try:
-        entries = dra.load_all_entries(astrom_root)
-    except Exception as exc:  # noqa: BLE001
-        return jsonify(success=False, error=str(exc)), 500
-
     rows = []
-    for apero_name, entry in entries:
+    for fpath in dra.iter_yaml_files(astrom_root):
+        try:
+            entry = dra.AstrometricDatabase._read_yaml(fpath)
+        except Exception:  # noqa: BLE001
+            continue
         if not isinstance(entry, dict):
             continue
+        apero_name = entry.get('APERO_NAME')
+        if not apero_name:
+            apero_name = Path(fpath).stem
         ra_block = entry.get("RA") or {}
         dec_block = entry.get("DEC") or {}
         teff_block = entry.get("TEFF") or {}
         spt_block = entry.get("SPT") or {}
-        status = entry.get("STATUS")
-        if status:
-            status = str(status).strip().lower() or None
-        if not status:
-            try:
-                found = dra.find_yaml_in_status_dirs(
-                    astrom_root, apero_name)
-                status = found[1] if found is not None else None
-            except Exception:  # noqa: BLE001
-                status = None
+        status = _entry_status_from_path(
+            dra, astrom_root, fpath, entry, str(apero_name))
         rows.append({
             "APERO_NAME": apero_name,
             "APERO_CLASS": entry.get("APERO_CLASS") or "",
@@ -638,7 +671,7 @@ def api_astrometrics_list_all(app):
                      if isinstance(teff_block, dict) else teff_block),
             "SPT": (spt_block.get("value")
                     if isinstance(spt_block, dict) else spt_block),
-            "STATUS": status or "",
+            "STATUS": status,
             "KEYWORDS": entry.get("KEYWORDS") or "",
             "NOTES": entry.get("NOTES") or "",
         })
@@ -650,7 +683,7 @@ def api_astrometrics_list_all(app):
         try:
             tmp_path = cache_path + '.tmp'
             with open(tmp_path, 'w', encoding='utf-8') as fp:
-                _json.dump({'version': 1, 'sig': sig, 'rows': rows},
+                _json.dump({'version': 2, 'sig': sig, 'rows': rows},
                            fp)
             os.replace(tmp_path, cache_path)
         except OSError:
@@ -728,8 +761,8 @@ def api_astrometrics_add_rejected(app):
 
     Refuses to overwrite an existing rejected/<NAME>.yaml so monitors
     can't silently clobber an earlier rejection note. Removing or
-    editing an entry is a manage.astrometrics-only operation handled
-    via the standard upload/edit endpoints.
+    editing an existing rejected entry is exposed via dedicated
+    manage.astrometrics-only endpoints.
 
     :param app: the ARI application object
     :return: Flask JSON response with the created entry on success
@@ -830,6 +863,158 @@ def api_astrometrics_add_rejected(app):
     )
 
 
+def api_astrometrics_update_rejected(app):
+    """Edit an existing entry in the ``rejected/`` list.
+
+    JSON body:
+        old_apero_name (required, str) - current canonical name
+        apero_name     (required, str) - new canonical name
+        aliases        (optional, list)
+        notes          (optional, str)
+
+    Required permission: ``manage.astrometrics``.
+
+    :param app: the ARI application object
+    :return: Flask JSON response with updated entry on success
+    """
+    from apero.core import drs_astrometrics as dra
+    import datetime as _dt
+    import yaml as _yaml
+
+    user_info, err = _check_perm(app, "manage.astrometrics")
+    if err is not None:
+        return err
+
+    body = request.get_json(silent=True) or {}
+    old_name = (body.get('old_apero_name') or '').strip()
+    apero_name = (body.get('apero_name') or '').strip()
+    if not old_name or not apero_name:
+        return jsonify(
+            success=False,
+            error=("Missing 'old_apero_name' / 'apero_name'"),
+        ), 400
+
+    raw_aliases = body.get('aliases') or []
+    if isinstance(raw_aliases, str):
+        raw_aliases = [raw_aliases]
+    aliases = []
+    for alias in raw_aliases:
+        text = str(alias or '').strip()
+        if text:
+            aliases.append(text)
+    notes = (body.get('notes') or '').strip()
+
+    astrom_root = _astrom_dir(app)
+    rej_dir = astrom_root / dra.STATUS_REJECTED
+    src = rej_dir / dra._safe_filename(old_name)
+    dst = rej_dir / dra._safe_filename(apero_name)
+    if not src.is_file():
+        return jsonify(
+            success=False,
+            error=("No rejected entry for '{0}'"
+                   ).format(old_name),
+        ), 404
+    if src != dst and dst.is_file():
+        return jsonify(
+            success=False,
+            error=("A rejected entry for '{0}' already exists"
+                   ).format(apero_name),
+        ), 409
+
+    try:
+        existing = dra.AstrometricDatabase._read_yaml(str(src)) or {}
+    except Exception as exc:  # noqa: BLE001
+        return jsonify(success=False, error=str(exc)), 400
+
+    author = user_info.get('username') or 'unknown'
+    now = _dt.datetime.utcnow().isoformat(timespec='seconds')
+    entry = dict(existing)
+    entry['APERO_NAME'] = apero_name
+    entry['ORIGINAL_NAME'] = (
+        str(entry.get('ORIGINAL_NAME') or '').strip() or apero_name
+    )
+    entry['APERO_CLASS'] = 'REJECTED'
+    entry['ALIASES'] = aliases
+    entry['NOTES'] = notes
+    entry['STATUS'] = dra.STATUS_REJECTED
+    if not entry.get('FIRST_UPDATED'):
+        entry['FIRST_UPDATED'] = now
+    if not entry.get('FIRST_AUTHOR'):
+        entry['FIRST_AUTHOR'] = author
+    entry['LAST_EDIT'] = now
+    entry['LAST_AUTHOR'] = author
+
+    try:
+        tmp = dst.with_suffix(dst.suffix + '.tmp')
+        with tmp.open('w', encoding='utf-8') as out:
+            _yaml.safe_dump(entry, out, sort_keys=False,
+                            default_flow_style=False,
+                            allow_unicode=True)
+        os.replace(str(tmp), str(dst))
+        if src != dst and src.is_file():
+            src.unlink()
+    except Exception as exc:  # noqa: BLE001
+        return jsonify(success=False, error=str(exc)), 500
+
+    try:
+        dra._invalidate_dir_caches(str(astrom_root))
+    except Exception:  # noqa: BLE001
+        pass
+
+    return jsonify(
+        success=True,
+        apero_name=apero_name,
+        path=str(dst),
+        entry=entry,
+    )
+
+
+def api_astrometrics_delete_rejected(app):
+    """Delete an existing entry from the ``rejected/`` list.
+
+    JSON body:
+        apero_name (required, str) - canonical name to delete
+
+    Required permission: ``manage.astrometrics``.
+
+    :param app: the ARI application object
+    :return: Flask JSON response on success
+    """
+    from apero.core import drs_astrometrics as dra
+
+    _, err = _check_perm(app, "manage.astrometrics")
+    if err is not None:
+        return err
+
+    body = request.get_json(silent=True) or {}
+    apero_name = (body.get('apero_name') or '').strip()
+    if not apero_name:
+        return jsonify(success=False,
+                       error="Missing 'apero_name'"), 400
+
+    astrom_root = _astrom_dir(app)
+    rej_dir = astrom_root / dra.STATUS_REJECTED
+    target = rej_dir / dra._safe_filename(apero_name)
+    if not target.is_file():
+        return jsonify(
+            success=False,
+            error=("No rejected entry for '{0}'"
+                   ).format(apero_name),
+        ), 404
+
+    try:
+        target.unlink()
+    except Exception as exc:  # noqa: BLE001
+        return jsonify(success=False, error=str(exc)), 500
+
+    try:
+        dra._invalidate_dir_caches(str(astrom_root))
+    except Exception:  # noqa: BLE001
+        pass
+
+    return jsonify(success=True, apero_name=apero_name)
+
+
 # Numeric astrometric fields that the manual-add form may set; each
 # one is stored under the standard ``{value, source, units}`` schema
 # (units are filled in from this map only if the caller does not
@@ -843,6 +1028,65 @@ _MANUAL_FIELD_UNITS = {
     'RV': 'km/s',
     'TEFF': 'K',
 }
+_MANUAL_EXTRA_NUMERIC_UNITS = {
+    'RA_J2000_DEG': 'deg',
+    'DEC_J2000_DEG': 'deg',
+    'GALACTIC_LON': 'deg',
+    'GALACTIC_LAT': 'deg',
+    'ECLIPTIC_LON': 'deg',
+    'ECLIPTIC_LAT': 'deg',
+    'V_SKY': 'km/s',
+    'V3D': 'km/s',
+    'U': 'km/s',
+    'V': 'km/s',
+    'W': 'km/s',
+    'G_MAG': 'mag',
+    'GBP_MAG': 'mag',
+    'GRP_MAG': 'mag',
+    'J_MAG': 'mag',
+    'H_MAG': 'mag',
+    'KS_MAG': 'mag',
+    'W1_MAG': 'mag',
+    'W2_MAG': 'mag',
+    'W3_MAG': 'mag',
+    'W4_MAG': 'mag',
+    'FE_H': 'dex',
+    'GAIA_MH_GSPPHOT': 'dex',
+    'R_STAR_MKS': 'Rsun',
+    'R_STAR_MKS_FEH': 'Rsun',
+    'GAIA_RADIUS_FLAME': 'Rsun',
+    'MASS_STAR_MANN15': 'Msun',
+    'MASS_STAR_DELFOSSE00': 'Msun',
+    'GAIA_MASS_FLAME': 'Msun',
+    'LOG_G': 'cgs',
+    'GAIA_LOGG_GSPPHOT': 'cgs',
+    'L_STAR': 'Lsun',
+    'GAIA_LUM_FLAME': 'Lsun',
+    'VSINI': 'km/s',
+    'TEFF_GAIA_JH': 'K',
+    'TEFF_GAIA': 'K',
+    'GAIA_TEFF_GSPPHOT': 'K',
+    'TELLURIC_VSYS_PLUS_VBARY_MIN': 'km/s',
+    'TELLURIC_VSYS_PLUS_VBARY_MAX': 'km/s',
+}
+_MANUAL_RESERVED_KEYS = {
+    'APERO_NAME', 'ORIGINAL_NAME', 'SIMBAD_NAME', 'APERO_CLASS',
+    'RA', 'DEC', 'PMRA', 'PMDE', 'PLX', 'RV', 'TEFF', 'EPOCH',
+    'SPT', 'GAIA_SOURCE_ID', 'NO_PM', 'ALIASES', 'NOTES', 'STATUS',
+    'FIRST_UPDATED', 'FIRST_AUTHOR', 'LAST_EDIT', 'LAST_AUTHOR',
+}
+_MANUAL_DERIVED_KEYS = (
+    'RA_HMS', 'DEC_DMS', 'RA_J2000_DEG', 'DEC_J2000_DEG',
+    'GALACTIC_LON', 'GALACTIC_LAT',
+    'ECLIPTIC_LON', 'ECLIPTIC_LAT',
+    'TELLURIC_VSYS_PLUS_VBARY_MIN',
+    'TELLURIC_VSYS_PLUS_VBARY_MAX', 'TELLURIC_LIMIT_WINDOWS',
+    'V_SKY', 'V3D', 'U', 'V', 'W',
+    'AMAG_G', 'AMAG_KS',
+    'TEFF_GAIA_JH', 'TEFF_GAIA',
+    'FE_H', 'R_STAR_MKS', 'R_STAR_MKS_FEH', 'MASS_STAR_MANN15',
+    'MASS_STAR_DELFOSSE00', 'LOG_G', 'L_STAR',
+)
 # Plain top-level scalar fields the manual-add form may set
 _MANUAL_SCALAR_FIELDS = ('EPOCH', 'SPT', 'GAIA_SOURCE_ID')
 
@@ -867,6 +1111,92 @@ def _coerce_optional_float(raw):
             "expected a number or blank, got {0!r}".format(raw))
 
 
+def _apply_manual_extra_fields(entry, extra_fields):
+    """Apply optional extra_fields values onto a manual target entry.
+
+    :param entry: dict, mutable yaml entry being built
+    :param extra_fields: mapping of yaml_key -> raw form value
+    :raises ValueError: on invalid key names or invalid numeric values
+    """
+    if extra_fields is None:
+        return
+    if not isinstance(extra_fields, dict):
+        raise ValueError("'extra_fields' must be an object")
+
+    for raw_key, raw_val in extra_fields.items():
+        yaml_key = str(raw_key or '').strip().upper()
+        if not yaml_key:
+            continue
+        if not re.match(r'^[A-Z0-9_]+$', yaml_key):
+            raise ValueError(
+                "Invalid extra field key {0!r}".format(raw_key)
+            )
+        if yaml_key in _MANUAL_RESERVED_KEYS:
+            continue
+
+        sval = '' if raw_val is None else str(raw_val).strip()
+        if sval == '':
+            continue
+
+        if yaml_key in _MANUAL_EXTRA_NUMERIC_UNITS:
+            try:
+                fval = _coerce_optional_float(sval)
+            except ValueError as exc:
+                raise ValueError(
+                    "Field {0!r}: {1}".format(yaml_key, exc)
+                )
+            if fval is None:
+                continue
+            entry[yaml_key] = {
+                'value': fval,
+                'source': 'manual',
+                'units': _MANUAL_EXTRA_NUMERIC_UNITS.get(yaml_key),
+            }
+            continue
+
+        entry[yaml_key] = sval
+
+
+def _normalize_manual_entry_for_recompute(entry, dra):
+    """Normalize block/scalar types before running DRS derivations.
+
+    :param entry: dict, mutable entry
+    :param dra: imported drs_astrometrics module
+    """
+    dra._full_resolve_schema(entry)
+
+    # SPT must be a value/source block for _derive_fields.
+    spt = entry.get('SPT')
+    if isinstance(spt, str):
+        entry['SPT'] = dict(value=spt, source='manual')
+    elif spt is None:
+        entry['SPT'] = dict(value=None, source=None)
+
+    # Convert plain scalar photometry inputs to value/source blocks.
+    for key in ('G_MAG', 'GBP_MAG', 'GRP_MAG',
+                'J_MAG', 'H_MAG', 'KS_MAG',
+                'W1_MAG', 'W2_MAG', 'W3_MAG', 'W4_MAG'):
+        val = entry.get(key)
+        if isinstance(val, dict):
+            continue
+        if val is None:
+            entry[key] = dict(value=None, source=None)
+        else:
+            entry[key] = dict(value=val, source='manual')
+
+
+def _recompute_manual_fields(entry, dra):
+    """Force-refresh derived fields in a manual entry.
+
+    :param entry: dict, mutable yaml entry
+    :param dra: imported drs_astrometrics module
+    """
+    _normalize_manual_entry_for_recompute(entry, dra)
+    for key in _MANUAL_DERIVED_KEYS:
+        entry[key] = None
+    dra._derive_fields(entry)
+
+
 def api_astrometrics_add_manual(app):
     """Manually add a new astrometric entry under ``pending/``.
 
@@ -886,6 +1216,11 @@ def api_astrometrics_add_manual(app):
         gaia_source_id (optional, str)
         original_name  (optional, str) - defaults to ``apero_name``
         simbad_name    (optional, str)
+        extra_fields   (optional, object) - additional resolve-target
+                fields as ``{YAML_KEY: value}``
+        allow_update   (optional, bool) - update existing entry when
+                True (default False)
+        original_apero_name (optional, str) - lookup key for edits
 
     Permission: ``manage.astrometrics`` OR any monitor permission
     (``monitor`` / ``monitor.<INST>`` / ``view.monitor.<INST>``).
@@ -919,6 +1254,11 @@ def api_astrometrics_add_manual(app):
     if not apero_name:
         return jsonify(success=False,
                        error="Missing 'apero_name'"), 400
+    allow_update = bool(body.get('allow_update'))
+    original_name_for_edit = (
+        body.get('original_apero_name') or apero_name
+    )
+    original_name_for_edit = str(original_name_for_edit).strip()
     apero_class = (body.get('apero_class') or 'STAR').strip().upper()
     if apero_class == 'REJECTED':
         return jsonify(
@@ -961,31 +1301,68 @@ def api_astrometrics_add_manual(app):
     # refuse if an entry already exists under any status sub-dir
     astrom_root = _astrom_dir(app)
     try:
-        existing = dra.find_by_name(str(astrom_root), apero_name)
+        existing = dra.find_by_name(
+            str(astrom_root), original_name_for_edit
+        )
     except Exception:  # noqa: BLE001
         existing = None
     if existing is not None:
         cur_status = (existing.get('STATUS') or '').lower()
-        return jsonify(
-            success=False,
-            error=("'{0}' already exists with status '{1}'; "
-                   "use the edit endpoints to modify it"
-                   ).format(apero_name, cur_status or 'unknown'),
-        ), 409
+        if allow_update:
+            pass
+        else:
+            return jsonify(
+                success=False,
+                error=("'{0}' already exists with status '{1}'; "
+                       "use the edit endpoints to modify it"
+                       ).format(apero_name, cur_status or 'unknown'),
+            ), 409
+    is_update = existing is not None and allow_update
 
     pending_dir = astrom_root / dra.STATUS_PENDING
     pending_dir.mkdir(parents=True, exist_ok=True)
     fname = dra._safe_filename(apero_name)
     target = pending_dir / fname
-    if target.is_file():
-        return jsonify(
-            success=False,
-            error=("Entry already exists for '{0}' under pending/"
-                   ).format(apero_name),
-        ), 409
+    existing_path = None
+    if is_update:
+        try:
+            found = dra.find_yaml_in_status_dirs(
+                str(astrom_root), original_name_for_edit
+            )
+            if found is not None:
+                existing_path = Path(found[0])
+        except Exception:  # noqa: BLE001
+            existing_path = None
+        if target.is_file() and existing_path is not None:
+            if target.resolve() != existing_path.resolve():
+                return jsonify(
+                    success=False,
+                    error=("Cannot rename '{0}' to '{1}': "
+                           "target already exists").format(
+                               original_name_for_edit,
+                               apero_name,
+                           ),
+                ), 409
+    else:
+        if target.is_file():
+            return jsonify(
+                success=False,
+                error=("Entry already exists for '{0}' under pending/"
+                       ).format(apero_name),
+            ), 409
 
     author = user_info.get("username") or "unknown"
     today = _dt.datetime.utcnow().isoformat(timespec='seconds')
+
+    first_updated = today
+    first_author = author
+    if is_update and isinstance(existing, dict):
+        first_updated = str(existing.get('FIRST_UPDATED') or '').strip()
+        first_author = str(existing.get('FIRST_AUTHOR') or '').strip()
+        if not first_updated:
+            first_updated = today
+        if not first_author:
+            first_author = author
 
     entry = {
         'APERO_NAME': apero_name,
@@ -1021,13 +1398,27 @@ def api_astrometrics_add_manual(app):
                         else 'GAIA_SOURCE_ID')
             entry[yaml_key] = s
 
+    try:
+        _apply_manual_extra_fields(entry, body.get('extra_fields'))
+    except ValueError as exc:
+        return jsonify(success=False, error=str(exc)), 400
+
     if no_pm:
         entry['NO_PM'] = True
+
+    try:
+        _recompute_manual_fields(entry, dra)
+    except Exception as exc:  # noqa: BLE001
+        return jsonify(
+            success=False,
+            error='Failed to recompute derived values: {0}'.format(exc),
+        ), 400
+
     entry['ALIASES'] = aliases
-    entry['NOTES'] = notes or "added manually via ARI"
+    entry['NOTES'] = notes or 'added manually via ARI'
     entry['STATUS'] = dra.STATUS_PENDING
-    entry['FIRST_UPDATED'] = today
-    entry['FIRST_AUTHOR'] = author
+    entry['FIRST_UPDATED'] = first_updated
+    entry['FIRST_AUTHOR'] = first_author
     entry['LAST_EDIT'] = today
     entry['LAST_AUTHOR'] = author
 
@@ -1039,6 +1430,13 @@ def api_astrometrics_add_manual(app):
     except Exception as exc:  # noqa: BLE001
         return jsonify(success=False, error=str(exc)), 500
 
+    if is_update and existing_path is not None:
+        try:
+            if existing_path.resolve() != target.resolve():
+                existing_path.unlink(missing_ok=True)
+        except Exception:  # noqa: BLE001
+            pass
+
     try:
         dra._invalidate_dir_caches(str(astrom_root))
     except Exception:  # noqa: BLE001
@@ -1049,7 +1447,112 @@ def api_astrometrics_add_manual(app):
         apero_name=apero_name,
         path=str(target),
         entry=entry,
+        mode='updated' if is_update else 'created',
     )
+
+
+def api_astrometrics_recompute_manual(app):
+    """Preview recomputed derived fields for a manual-target payload.
+
+    Accepts the same core numeric/scalar payload as add-manual and
+    returns a transient recomputed entry without writing any yaml file.
+
+    :param app: ARI application instance
+    :return: Flask JSON response
+    """
+    from apero.core import drs_astrometrics as dra
+
+    user_info = app._get_api_user()
+    if not user_info:
+        return jsonify(success=False, error='Login required'), 401
+    perms = resolve_user_permissions(
+        user_info['groups'], app.ari_groups
+    )
+    if not _has_monitor_perm(perms, ''):
+        return jsonify(
+            success=False,
+            error='Forbidden (need monitor or manage.astrometrics)',
+        ), 403
+
+    body = request.get_json(silent=True) or {}
+    apero_name = (body.get('apero_name') or '').strip()
+    if not apero_name:
+        return jsonify(success=False,
+                       error="Missing 'apero_name'"), 400
+
+    entry = dict()
+    entry['APERO_NAME'] = apero_name
+    entry['ORIGINAL_NAME'] = (
+        body.get('original_name') or apero_name
+    ).strip()
+    entry['APERO_CLASS'] = (
+        body.get('apero_class') or 'STAR'
+    ).strip().upper()
+
+    simbad_name = (body.get('simbad_name') or '').strip()
+    if simbad_name:
+        entry['SIMBAD_NAME'] = simbad_name
+
+    field_aliases = {
+        'ra': 'RA', 'dec': 'DEC', 'pmra': 'PMRA', 'pmde': 'PMDE',
+        'plx': 'PLX', 'rv': 'RV', 'teff': 'TEFF', 'epoch': 'EPOCH',
+    }
+    for body_key, yaml_key in field_aliases.items():
+        if body_key not in body:
+            continue
+        try:
+            num = _coerce_optional_float(body.get(body_key))
+        except ValueError as exc:
+            return jsonify(
+                success=False,
+                error='Field {0!r}: {1}'.format(yaml_key, exc),
+            ), 400
+        if yaml_key == 'EPOCH':
+            entry['EPOCH'] = num
+            continue
+        entry[yaml_key] = {
+            'value': num,
+            'source': 'manual',
+            'units': _MANUAL_FIELD_UNITS.get(yaml_key),
+        }
+
+    spt = (body.get('spt') or '').strip()
+    if spt:
+        entry['SPT'] = spt
+    gaia_sid = (body.get('gaia_source_id') or '').strip()
+    if gaia_sid:
+        entry['GAIA_SOURCE_ID'] = gaia_sid
+
+    raw_aliases = body.get('aliases') or []
+    if isinstance(raw_aliases, str):
+        raw_aliases = [raw_aliases]
+    aliases = []
+    for alias in raw_aliases:
+        sval = str(alias or '').strip()
+        if sval:
+            aliases.append(sval)
+    entry['ALIASES'] = aliases
+
+    notes = (body.get('notes') or '').strip()
+    if notes:
+        entry['NOTES'] = notes
+    if bool(body.get('no_pm')):
+        entry['NO_PM'] = True
+
+    try:
+        _apply_manual_extra_fields(entry, body.get('extra_fields'))
+    except ValueError as exc:
+        return jsonify(success=False, error=str(exc)), 400
+
+    try:
+        _recompute_manual_fields(entry, dra)
+    except Exception as exc:  # noqa: BLE001
+        return jsonify(
+            success=False,
+            error='Failed to recompute derived values: {0}'.format(exc),
+        ), 400
+
+    return jsonify(success=True, entry=entry)
 
 
 # =============================================================================
@@ -1150,6 +1653,19 @@ def api_astrometrics_update_field(app):
         return jsonify(success=False, error=str(exc)), 400
 
     new_apero = entry.get("APERO_NAME", apero_name)
+    # Any edit to a regular target must go back to pending for review.
+    current_status = str(entry.get('STATUS') or '').strip().lower()
+    if current_status != dra.STATUS_REJECTED:
+        try:
+            _, _, entry = dra.set_status(
+                astrom_root=str(_astrom_dir(app)),
+                apero_name=new_apero,
+                new_status=dra.STATUS_PENDING,
+                author=author,
+            )
+        except Exception as exc:  # noqa: BLE001
+            return jsonify(success=False, error=str(exc)), 400
+
     return jsonify(
         success=True,
         apero_name=new_apero,

@@ -65,6 +65,32 @@
     box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
     transition: box-shadow 0.15s, transform 0.15s;
 }
+.rej-card__actions {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+}
+.rej-card__action {
+    border: 1px solid var(--ari-border, #ddd);
+    background: var(--ari-card-bg, #fff);
+    color: var(--ari-text-muted, #57606a);
+    border-radius: 0.45rem;
+    width: 1.9rem;
+    height: 1.9rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+}
+.rej-card__action:hover {
+    border-color: var(--ari-primary, #3f51b5);
+    color: var(--ari-primary, #3f51b5);
+}
+.rej-card__action--danger:hover {
+    border-color: #c0392b;
+    color: #c0392b;
+}
 .rej-card:hover {
     box-shadow: 0 3px 8px rgba(0, 0, 0, 0.10);
 }
@@ -186,25 +212,52 @@
  * the card. */
 #astro-tab-add-manually .am-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
+    grid-template-columns: 1fr;
     gap: 1rem;
     width: 100%;
 }
-#astro-tab-add-manually .ari-card {
+#astro-tab-add-manually .at-section-card {
     align-items: stretch;
     text-align: left;
 }
-#astro-tab-add-manually .ari-card__body {
+#astro-tab-add-manually .at-section-card__body {
     width: 100%;
     display: flex;
     flex-direction: column;
     gap: 0.65rem;
     align-items: stretch;
 }
+#astro-tab-add-manually .am-manual-card {
+    border-color: #e7bf72;
+    background: #fff6dd;
+}
+#astro-tab-add-manually .am-manual-card > .at-section-card__header {
+    color: #8f5a06;
+    background: #ffe9bf;
+    border-bottom-color: rgba(206, 146, 43, 0.35);
+}
+#astro-tab-add-manually .am-manual-card > .at-section-card__body {
+    background: #fff9ea;
+}
+#astro-tab-add-manually .am-extra-card {
+    border-color: #edc987;
+    background: #fff8e6;
+}
+#astro-tab-add-manually .am-extra-card > .at-section-card__header {
+    color: #8f5a06;
+    background: #ffefcf;
+    border-bottom-color: rgba(206, 146, 43, 0.3);
+}
+#astro-tab-add-manually .am-extra-card > .at-section-card__body {
+    background: #fffdf4;
+}
 #astro-tab-add-manually .am-row {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
     gap: 0.65rem;
+}
+#astro-tab-add-manually #am-man-extra-fields {
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
 }
 #astro-tab-add-manually .am-checkbox {
     display: flex;
@@ -216,6 +269,86 @@
 #astro-tab-add-manually .am-checkbox span {
     font-size: 0.85rem;
     color: var(--ari-text-muted, #57606a);
+}
+#astro-tab-add-manually .am-calc-input {
+    background: #f1f3f5;
+    color: #7a7f86;
+    border-color: #cdd3da;
+    cursor: not-allowed;
+}
+#astro-tab-add-manually .am-calc-label {
+    color: #8a6b2a;
+}
+#astro-tab-add-manually .am-calc-note {
+    font-size: 0.82rem;
+    color: #8f6e2a;
+    margin-top: -0.3rem;
+}
+#astro-tab-add-manually .am-btn-update {
+    background: #d97706;
+    border-color: #b45309;
+    color: #fff;
+}
+#astro-tab-add-manually .am-btn-update:hover {
+    background: #c66d05;
+}
+#astro-tab-add-manually #am-man-pmra:disabled,
+#astro-tab-add-manually #am-man-pmde:disabled {
+    background: #edf1f5;
+    color: #8a9098;
+    border-color: #d2d8de;
+    cursor: not-allowed;
+}
+[data-theme="dark"] #astro-tab-add-manually .am-manual-card {
+    border-color: #7a5d2b;
+    background: #2d2415;
+}
+[data-theme="dark"] #astro-tab-add-manually .am-manual-card
+    > .at-section-card__header {
+    color: #f0d59c;
+    background: #3a2c16;
+    border-bottom-color: #7a5d2b;
+}
+[data-theme="dark"] #astro-tab-add-manually .am-manual-card
+    > .at-section-card__body {
+    background: #2a2214;
+}
+[data-theme="dark"] #astro-tab-add-manually .am-extra-card {
+    border-color: #7a5d2b;
+    background: #2b2315;
+}
+[data-theme="dark"] #astro-tab-add-manually .am-extra-card
+    > .at-section-card__header {
+    color: #f0d59c;
+    background: #3b2d18;
+    border-bottom-color: #7a5d2b;
+}
+[data-theme="dark"] #astro-tab-add-manually .am-extra-card
+    > .at-section-card__body {
+    background: #272011;
+}
+[data-theme="dark"] #astro-tab-add-manually .am-calc-input {
+    background: #1b1f24;
+    color: #9aa4af;
+    border-color: #3a4048;
+}
+[data-theme="dark"] #astro-tab-add-manually .am-calc-label,
+[data-theme="dark"] #astro-tab-add-manually .am-calc-note {
+    color: #d6b878;
+}
+[data-theme="dark"] #astro-tab-add-manually .am-btn-update {
+    background: #b96a08;
+    border-color: #9b5606;
+    color: #fff;
+}
+[data-theme="dark"] #astro-tab-add-manually .am-btn-update:hover {
+    background: #a76007;
+}
+[data-theme="dark"] #astro-tab-add-manually #am-man-pmra:disabled,
+[data-theme="dark"] #astro-tab-add-manually #am-man-pmde:disabled {
+    background: #1c2229;
+    color: #8f99a4;
+    border-color: #37414b;
 }
 </style>
 {% endblock %}
@@ -282,7 +415,7 @@
                 data-htab="add-manually"
                 aria-controls="astro-tab-add-manually">
             <i class="fa-solid fa-pen-to-square"></i>
-            <span>Add manually</span>
+            <span>Add/Edit manual target</span>
         </button>
         <button class="ari-htab"
                 type="button" role="tab"
@@ -736,6 +869,14 @@
                                 <span id="rt-target-name">--</span>
                             </h2>
                             <div class="ari-target-info__actions">
+                                <button id="rt-target-edit"
+                                        class="ari-btn ari-btn--sm ari-btn--secondary"
+                                        type="button"
+                                        title="Edit all target parameters"
+                                        hidden>
+                                    <i class="fa-solid fa-pen-to-square"></i>
+                                    Edit object
+                                </button>
                                 {% if astrometrics_can_manage_rejects %}
                                 <button id="rt-target-verify"
                                         class="ari-btn ari-btn--sm ari-btn--primary"
@@ -812,14 +953,15 @@
             <div class="am-grid">
 
                 {# ---- Add manual target ---- #}
-                <div class="ari-card">
-                    <div class="ari-card__header">
-                        <h2 class="ari-card__title">
+                <div class="at-section-card at-section-card--warning
+                            am-manual-card">
+                    <header class="at-section-card__header">
+                        <h2>
                             <i class="fa-solid fa-star"></i>
-                            Add manual target
+                            Add/Edit manual target
                         </h2>
-                    </div>
-                    <div class="ari-card__body">
+                    </header>
+                    <div class="at-section-card__body">
                         <p class="ari-section-intro">
                             Add a brand-new astrometric entry. Use
                             this only when SIMBAD / Vizier / the
@@ -1020,14 +1162,48 @@
                                       rows="2"></textarea>
                         </label>
 
+                        <div class="at-section-card at-section-card--warning
+                                    am-extra-card"
+                             style="margin-top: 1rem;">
+                            <header class="at-section-card__header">
+                                <h3>
+                                    <i class="fa-solid fa-sliders"></i>
+                                    Additional resolve-target fields
+                                </h3>
+                            </header>
+                            <div class="at-section-card__body">
+                                <p class="ari-section-intro">
+                                    Optional advanced fields shown in
+                                    <strong>Resolve target</strong>.
+                                    Leave blank to skip.
+                                </p>
+                                <p class="am-calc-note">
+                                    Grey fields are calculated from
+                                    editable values. Use
+                                    <strong>Recompute values</strong>
+                                    to preview them; save also
+                                    recomputes.
+                                </p>
+                                <div id="am-man-extra-fields"
+                                     class="am-grid"></div>
+                            </div>
+                        </div>
+
                         <div id="am-man-status"
                              class="ari-dt__count"></div>
                         <div>
+                            <button id="am-man-recompute"
+                                    type="button"
+                                    class="ari-btn ari-btn--ghost"
+                                    style="margin-right:0.5rem;">
+                                <i class="fa-solid fa-rotate"></i>
+                                Recompute values
+                            </button>
                             <button id="am-man-save"
                                     type="button"
                                     class="ari-btn ari-btn--primary">
                                 <i class="fa-solid fa-plus"></i>
-                                Add manual target
+                                Save manual target
                             </button>
                         </div>
                     </div>
@@ -1060,9 +1236,9 @@
                         name resolves to one of these entries falls
                         back to the FITS header values rather than to
                         a curated astrometric record. Use the card
-                        below to add a new rejected name; existing
-                        entries are managed via the standard
-                        astrometric database tools.
+                        below to add a new rejected name. Users with
+                        edit permission can edit or delete rejected
+                        entries directly from the cards.
                     </p>
                     <div id="rej-status" class="ari-dt__count"></div>
                     <div id="rej-cards" class="rej-cards"></div>
@@ -1076,7 +1252,7 @@
                  data-rej-overlay-close></div>
             <div class="ari-overlay__panel">
                 <header class="ari-overlay__header">
-                    <h3>
+                    <h3 id="rej-overlay-title">
                         <i class="fa-solid fa-ban"></i>
                         Add a rejected object name
                     </h3>
@@ -1087,6 +1263,10 @@
                     </button>
                 </header>
                 <div class="ari-overlay__body">
+                      <input id="rej-add-mode" type="hidden"
+                          value="add">
+                      <input id="rej-add-original" type="hidden"
+                          value="">
                     <label class="ot-find-field">
                         <span class="ot-find-field__label">
                             Object name to reject
@@ -1126,8 +1306,10 @@
                     </button>
                     <button id="rej-add-save" type="button"
                             class="ari-btn ari-btn--primary">
-                        <i class="fa-solid fa-plus"></i>
-                        Add rejection
+                        <i class="fa-solid fa-floppy-disk"></i>
+                        <span id="rej-overlay-save-label">
+                            Save rejection
+                        </span>
                     </button>
                 </footer>
             </div>
@@ -1155,5 +1337,5 @@
 <script src="https://cdn.bokeh.org/bokeh/release/bokeh-widgets-3.8.2.min.js"></script>
 <script src="{{ url_for('static', filename='js/target_info_render.js', v='20260424e') }}"></script>
 <script src="{{ url_for('static', filename='js/ari_data_table.js', v='20260424c') }}"></script>
-<script src="{{ url_for('static', filename='js/astrometrics.js', v='20260424e') }}"></script>
+<script src="{{ url_for('static', filename='js/astrometrics.js', v='20260430b') }}"></script>
 {% endblock %}

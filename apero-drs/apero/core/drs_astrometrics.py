@@ -3396,6 +3396,10 @@ def update_entry_field(
     file (atomic ``os.replace`` after writing the new file). The five
     provenance keys are refreshed automatically.
 
+    The lookup supports both layouts:
+    - status sub-directories (``verified``/``pending``/``rejected``)
+    - legacy flat files directly under ``astrom_dir``.
+
     :param astrom_dir: str, directory containing astrometric yaml files
     :param apero_name: str, the canonical APERO name of the entry to edit
     :param key: str, top-level yaml key to update
@@ -3412,6 +3416,10 @@ def update_entry_field(
         raise AperoCodedException(None, message=emsg)
     fname = _safe_filename(str(apero_name))
     fpath = os.path.join(astrom_dir, fname)
+    if not os.path.isfile(fpath):
+        found = find_yaml_in_status_dirs(astrom_dir, apero_name)
+        if found is not None:
+            fpath = found[0]
     if not os.path.isfile(fpath):
         emsg = 'update_entry_field: no entry for {0!r} ({1})'
         raise AperoCodedException(
@@ -3436,7 +3444,8 @@ def update_entry_field(
     _stamp_metadata(entry, author=author)
     # write to (possibly new) target then remove old file on rename
     if rename_to is not None:
-        new_fpath = os.path.join(astrom_dir, rename_to + YAML_EXT)
+        new_fpath = os.path.join(
+            os.path.dirname(fpath), rename_to + YAML_EXT)
         if os.path.isfile(new_fpath):
             emsg = ('update_entry_field: cannot rename {0} -> {1} '
                     '(target already exists)')

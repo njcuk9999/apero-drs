@@ -937,9 +937,21 @@ class ARIApp(Flask):
         return (astrometrics_api_helpers
                 .api_astrometrics_add_rejected(self))
 
+    def _api_astrometrics_update_rejected(self):
+        return (astrometrics_api_helpers
+                .api_astrometrics_update_rejected(self))
+
+    def _api_astrometrics_delete_rejected(self):
+        return (astrometrics_api_helpers
+                .api_astrometrics_delete_rejected(self))
+
     def _api_astrometrics_add_manual(self):
         return (astrometrics_api_helpers
                 .api_astrometrics_add_manual(self))
+
+    def _api_astrometrics_recompute_manual(self):
+        return (astrometrics_api_helpers
+                .api_astrometrics_recompute_manual(self))
 
     def _api_astrometrics_update_field(self):
         return astrometrics_api_helpers.api_astrometrics_update_field(
