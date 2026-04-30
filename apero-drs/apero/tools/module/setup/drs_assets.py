@@ -223,11 +223,22 @@ def check_local_assets(params: ParamDict):
 
 
 def update_local_assets(params: ParamDict, tarfile: str = None):
-    # get path to yaml file
-    _asset_path = params['IPATH.RESET_ASSETS']
-    _data_path = params['IPATH.CDATA']
-    # get the absolute path to the assets dir
-    abs_asset_path = drs_data.construct_path(params, '', _asset_path)
+
+    # get the input directory
+    indir = params['INPUTS']['INDIR']
+    # deal with no input directory
+    if drs_text.null_text(indir, ['None', 'Null', '']):
+        # get path to yaml file
+        _asset_path = params['IPATH.RESET_ASSETS']
+        _data_path = params['IPATH.CDATA']
+        # get the absolute path to the assets dir
+        abs_asset_path = drs_data.construct_path(params, '', _asset_path)
+    else:
+        # set this to the input directory given by the user (if given)
+        abs_asset_path = str(indir)
+        # make sure directory exists
+        if not os.path.exists(abs_asset_path):
+            os.makedirs(abs_asset_path)
     # get the data path
     abs_data_path = drs_data.construct_path(params, '', _data_path)
     # add the checksum filename
