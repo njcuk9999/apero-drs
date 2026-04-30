@@ -188,6 +188,7 @@ def find_teff(params: ParamDict, objname: str) -> float:
     pconst = constants.pload()
     # get the astrometric database
     astromdbm = drs_database.AstrometricDatabase(params)
+    astromdbm.load_db()
     # make sure we have the correct object name (i.e. not an alias)
     cobjname = astromdbm.find_objname(pconst, objname)
     # get the teff from the database
