@@ -190,7 +190,7 @@ def find_teff(params: ParamDict, objname: str) -> float:
     astromdbm = drs_database.AstrometricDatabase(params)
     astromdbm.load_db()
     # make sure we have the correct object name (i.e. not an alias)
-    cobjname = astromdbm.find_objname(pconst, objname)
+    cobjname, _ = astromdbm.find_objname(pconst, objname)
     # get the teff from the database
     teff = astromdbm.get_entries('TEFF',
                                  condition='OBJNAME="{0}"'.format(cobjname),
