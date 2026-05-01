@@ -771,16 +771,6 @@ def create_yamls(params: Any):
     logdb['NAME'] = params.get('LOG_NAME', 'log')
     logdb['TABLE'] = params.get('LOG_DBTABLE', 'log_default')
     database_dict['LOG'] = logdb
-    # add object database
-    astromdb = dict()
-    astromdb['NAME'] = params.get('ASTROM_NAME', 'astrom')
-    astromdb['TABLE'] = params.get('ASTROM_DBTABLE', 'astrom_default')
-    database_dict['ASTROM'] = astromdb
-    # add reject database
-    rejectdb = dict()
-    rejectdb['NAME'] = params.get('REJECT_NAME', 'reject')
-    rejectdb['TABLE'] = params.get('REJECT_DBTABLE', 'reject_default')
-    database_dict['REJECT'] = rejectdb
     # print writing
     msg = '\tWriting database.yaml: {0}'.format(database_path)
     WLOG(None, '', msg, wrap=False)

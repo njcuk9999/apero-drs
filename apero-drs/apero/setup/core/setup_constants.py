@@ -222,8 +222,6 @@ edt_sets = dict()
 edt_sets['CALIB_DBTABLE'] = 'calib_{NAME}_db'
 edt_sets['TELLU_DBTABLE'] = 'tellu_{NAME}_db'
 edt_sets['FINDEX_DBTABLE'] = 'findex_{NAME}_db'
-edt_sets['ASTROM_DBTABLE'] = 'astrom_{NAME}_db'
-edt_sets['REJECT_DBTABLE'] = 'reject_{NAME}_db'
 edt_sets['LOG_DBTABLE'] = 'log_{NAME}_db'
 
 # whether to edit table names
@@ -253,20 +251,6 @@ SARGS['FINDEX_DBTABLE'] = SetupArgument(name='FINDEX_DBTABLE',
                                         dtype='str', depends='EDIT_DBTABLES',
                                         helpstr='The file index table name',
                                         databasename='FINDEX.PROFILE')
-# astrometric table name
-SARGS['ASTROM_DBTABLE'] = SetupArgument(name='ASTROM_DBTABLE',
-                                        argname='--astromtable',
-                                        default_value='astrom',
-                                        dtype='str', depends='EDIT_DBTABLES',
-                                        helpstr='The astrometric table name',
-                                        databasename='ASTROM.PROFILE')
-# the reject table name
-SARGS['REJECT_DBTABLE'] = SetupArgument(name='REJECT_DBTABLE',
-                                        argname='--rejecttable',
-                                        default_value='reject',
-                                        dtype='str', depends='EDIT_DBTABLES',
-                                        helpstr='The reject table name',
-                                        databasename='REJECT.PROFILE')
 # the log table name
 SARGS['LOG_DBTABLE'] = SetupArgument(name='LOG_DBTABLE',
                                      argname='--logtable',

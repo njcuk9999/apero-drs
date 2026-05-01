@@ -235,8 +235,6 @@ class RejectDatabase:
         :param condition: str or None, pandas ``DataFrame.query`` expression
         :return: see above
         """
-        if self.instrument == 'None':
-            return None
         _ensure_loaded(self.path)
         df = _DF_CACHE.get(self.path, pd.DataFrame(columns=CSV_COLUMNS))
         # filter USED = 1

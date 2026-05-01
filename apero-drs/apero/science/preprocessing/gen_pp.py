@@ -518,6 +518,12 @@ def reject_infile(params: ParamDict, recipe: DrsRecipe,
     rejectdbm.load_db()
     # get reject table
     rtable = rejectdbm.get_entries('*')
+    if not isinstance(rtable, pd.DataFrame):
+        return False
+    if mask_col not in list(rtable.columns):
+        return False
+    if value_col not in list(rtable.columns):
+        return False
     # -------------------------------------------------------------------------
     # if we have no entries return False
     if len(rtable[mask_col]) == 0:
@@ -556,6 +562,10 @@ def get_file_reject_list(params: ParamDict, recipe: DrsRecipe,
     rejectdbm.load_db()
     # get reject table
     rtable = rejectdbm.get_entries('*')
+    if not isinstance(rtable, pd.DataFrame):
+        return np.array([])
+    if len(rtable) == 0:
+        return np.array([])
     # deal with bad kind
     if column not in list(rtable.columns):
         # log error
