@@ -607,10 +607,18 @@
                     <div class="ari-ap-form__field">
                         <label for="edit-assets-mode">Mode</label>
                         <select id="edit-assets-mode" class="ari-ap-input">
-                            <option value="sync">sync &#8212; check checksums, download only if changed</option>
-                            <option value="upload">upload &#8212; push local assets to remote server</option>
+                            <option value="remote">remote &#8212; sync via apero_data_checksum.py (update-local then update-remote)</option>
+                            <option value="local">local &#8212; bidirectional newest-wins copy with a local folder</option>
                         </select>
-                        <div class="at-muted-hint">Servers and checksums are read from the installed apero package automatically.</div>
+                        <div class="at-muted-hint">remote uses the installed apero recipe with --indir set to {LOCAL_DATA_DIR}/apero-assets/.</div>
+                    </div>
+                    <div class="ari-ap-form__field" id="edit-assets-local-source-row" style="display:none;">
+                        <label for="edit-assets-local-source">Local source directory</label>
+                        <div style="display:flex; gap:6px; align-items:center;">
+                            <input type="text" id="edit-assets-local-source" class="ari-ap-input" style="flex:1 1 auto;" placeholder="/absolute/path/to/source/apero-assets">
+                            <button type="button" id="edit-assets-local-browse" class="ari-ap-btn ari-ap-btn--secondary">Browse&hellip;</button>
+                        </div>
+                        <div class="at-muted-hint">Files are mirrored newest-wins between this directory and {LOCAL_DATA_DIR}/apero-assets/.</div>
                     </div>
                 </div>
                 <div id="edit-local-sync-fields" style="display:none;">

@@ -166,11 +166,22 @@ def api_async_tasks_save(app):
 
     if has_assets_mode:
         assets_mode_raw = (
-            str(data.get("assets_mode") or "sync").strip().lower()
+            str(data.get("assets_mode") or "remote").strip().lower()
         )
-        if assets_mode_raw not in ("sync", "upload"):
-            assets_mode_raw = "sync"
+        # backwards compatibility: accept legacy values
+        if assets_mode_raw in ("sync", "upload", "remote"):
+            assets_mode_raw = "remote"
+        elif assets_mode_raw == "local":
+            assets_mode_raw = "local"
+        else:
+            assets_mode_raw = "remote"
         assets_mode = assets_mode_raw
+    has_assets_local_source = "assets_local_source_path" in data
+    assets_local_source = None
+    if has_assets_local_source:
+        assets_local_source = str(
+            data.get("assets_local_source_path") or ""
+        ).strip()
 
     all_tasks = load_async_tasks()
     inst_tasks, _ = app._merge_async_task_catalog(instrument, all_tasks)
@@ -233,6 +244,20 @@ def api_async_tasks_save(app):
         if task_key == "APERO_SYNC_ASSETS":
             if assets_mode is not None:
                 t["mode"] = assets_mode
+            if has_assets_local_source:
+                if assets_local_source:
+                    t["local_source_path"] = assets_local_source
+                else:
+                    t.pop("local_source_path", None)
+            if t.get("mode") == "local" and not t.get(
+                    "local_source_path"):
+                return jsonify(
+                    success=False,
+                    error=(
+                        "local mode requires a local source "
+                        "directory path."
+                    ),
+                ), 400
 
         supports_mp = bool(task_module.MULTI_PROCESS.get(task_key, False))
         supports_local_task = bool(task_module.LOCAL_TASK.get(task_key, False))

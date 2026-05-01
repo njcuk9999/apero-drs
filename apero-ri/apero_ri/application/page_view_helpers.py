@@ -271,6 +271,10 @@ def make_page_view(app, page_id: str, package_dir: Path):
                 )
             except Exception:  # noqa: BLE001
                 context["astrometrics_can_manage_rejects"] = False
+            # gate the "History" tab on the dedicated history perm
+            context["astrometrics_can_view_history"] = (
+                "manage.astrometrics.history" in (perms or set())
+            )
 
         if page_id == "home.admin_portal.sshfs_management":
             context.update(app._build_admin_sshfs_context(perms))

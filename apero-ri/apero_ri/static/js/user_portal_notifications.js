@@ -69,7 +69,7 @@
     fetch('/api/notifications/list?limit=100').then(function (r) {
       return r.json();
     }).then(function (j) {
-      renderList((j && j.notifications) || []);
+      renderList((j && (j.items || j.notifications)) || []);
     }).catch(function () {
       listEl.innerHTML = '<div class="upm-empty">'
         + 'Failed to load notifications.</div>';

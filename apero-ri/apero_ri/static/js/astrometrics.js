@@ -857,13 +857,22 @@
                     && window.AperoRI.userPerms) || []
             });
         }
-        // Show edit button for any resolved entry
-        // Handle both opts.entry (online) and opts.raw (local)
+        // Show edit button for any resolved entry — but only when
+        // the user has manage.astrometrics. Without it the backend
+        // would refuse, so the button just confuses people.
         var entry = (opts && (opts.entry || opts.raw)) || null;
+        var _userPermsList = (window.AperoRI
+            && window.AperoRI.userPerms) || [];
+        var canEditAstrom = _userPermsList.indexOf(
+            'manage.astrometrics') !== -1;
         if (entry && rtEditBtn) {
-            rtEditBtn.hidden = false;
-            rtCurrentEntry = entry;
-            _wireEditButton(apero_name, entry);
+            if (canEditAstrom) {
+                rtEditBtn.hidden = false;
+                rtCurrentEntry = entry;
+                _wireEditButton(apero_name, entry);
+            } else {
+                rtEditBtn.hidden = true;
+            }
         }
         // Show the upload button only for transient (online-resolved)
         // entries — and only for monitors.
@@ -1406,7 +1415,13 @@
                         + _esc(s) + '</span>';
                 }
             },
-            { key: 'KEYWORDS', label: 'Keywords' },
+            {
+                key: 'KEYWORDS', label: 'Keywords',
+                render: function (v) {
+                    if (Array.isArray(v)) return v.join(', ');
+                    return v == null ? '' : String(v);
+                }
+            },
             { key: 'NOTES', label: 'Notes' }
         ];
     }
@@ -1485,9 +1500,13 @@
         '.ari-htab[data-htab="rejected"]');
     if (!rejTab) return;
     var loaded = false;
+    // expose internal hook for tab activation re-wiring
+    
     var userPerms = (window.AperoRI && window.AperoRI.userPerms) || [];
     var canEditRejected = userPerms.indexOf(
         'manage.astrometrics') !== -1;
+    var _allRows = [];
+    var _filterText = '';
 
     function _esc(s) {
         return String(s == null ? '' : s).replace(
@@ -1501,7 +1520,15 @@
     function _renderCards(rows) {
         var host = document.getElementById('rej-cards');
         var cnt = document.getElementById('rej-count');
-        if (cnt) cnt.textContent = rows.length + ' rejected';
+        if (cnt) {
+            if (_filterText
+                && rows.length !== _allRows.length) {
+                cnt.textContent = rows.length + ' of '
+                    + _allRows.length + ' rejected';
+            } else {
+                cnt.textContent = rows.length + ' rejected';
+            }
+        }
         if (!host) return;
         host.innerHTML = '';
 
@@ -1518,11 +1545,38 @@
         rows.forEach(function (row) {
             var card = document.createElement('div');
             card.className = 'rej-card';
-            var aliases = (row.ALIASES || []).map(_esc).join(', ');
-            var html = '<header class="rej-card__head">'
+            var aliasArr = (row.ALIASES || []);
+            var aliases = aliasArr.map(_esc).join(', ');
+            var aliasesPlain = aliasArr.join(', ');
+            var html = '<header class="rej-card__head" title="'
+                + _esc(row.APERO_NAME) + '">'
                 + '<i class="fa-solid fa-ban"></i>'
                 + '<span class="rej-card__name">'
-                + _esc(row.APERO_NAME) + '</span>';
+                + _esc(row.APERO_NAME) + '</span>'
+                + '</header>';
+            if (aliases) {
+                html += '<div class="rej-card__field" title="'
+                    + _esc(aliasesPlain) + '">'
+                    + '<span class="rej-card__label">Aliases:</span>'
+                    + ' ' + aliases + '</div>';
+            }
+            if (row.NOTES) {
+                html += '<div class="rej-card__field" title="'
+                    + _esc(String(row.NOTES)) + '">'
+                    + '<span class="rej-card__label">Notes:</span>'
+                    + ' ' + _esc(row.NOTES) + '</div>';
+            }
+            var metaPlain = 'added by ' + (row.FIRST_AUTHOR || '')
+                + (row.FIRST_UPDATED
+                    ? (' on ' + row.FIRST_UPDATED) : '');
+            html += '<div class="rej-card__meta" title="'
+                + _esc(metaPlain) + '">'
+                + 'by <strong>' + _esc(row.FIRST_AUTHOR)
+                + '</strong>';
+            if (row.FIRST_UPDATED) {
+                html += ' ' + _esc(row.FIRST_UPDATED);
+            }
+            html += '</div>';
             html += '<div class="rej-card__actions">'
                 + '<button type="button" class="rej-card__action"'
                 + ' data-rej-open-manual title="Open in Add manually">'
@@ -1539,25 +1593,7 @@
                     + '<i class="fa-solid fa-trash"></i>'
                     + '</button>';
             }
-            html += '</div>'
-                + '</header>';
-            if (aliases) {
-                html += '<div class="rej-card__field">'
-                    + '<span class="rej-card__label">Aliases:</span>'
-                    + ' ' + aliases + '</div>';
-            }
-            if (row.NOTES) {
-                html += '<div class="rej-card__field">'
-                    + '<span class="rej-card__label">Notes:</span>'
-                    + ' ' + _esc(row.NOTES) + '</div>';
-            }
-            html += '<footer class="rej-card__meta">'
-                + 'added by <strong>' + _esc(row.FIRST_AUTHOR)
-                + '</strong>';
-            if (row.FIRST_UPDATED) {
-                html += ' on ' + _esc(row.FIRST_UPDATED);
-            }
-            html += '</footer>';
+            html += '</div>';
             card.innerHTML = html;
             var openBtn = card.querySelector('[data-rej-open-manual]');
             if (openBtn) {
@@ -1626,13 +1662,59 @@
                     return;
                 }
                 if (statusEl) statusEl.textContent = '';
-                _renderCards(data.rows || []);
+                _allRows = data.rows || [];
+                _applyFilter();
             })
             .catch(function (err) {
                 if (statusEl) {
                     statusEl.textContent = 'Failed to load: ' + err;
                 }
             });
+    }
+
+    function _matches(row, q) {
+        if (!q) return true;
+        var name = String(row.APERO_NAME || '').toLowerCase();
+        if (name.indexOf(q) !== -1) return true;
+        var aliases = row.ALIASES || [];
+        for (var i = 0; i < aliases.length; i++) {
+            if (String(aliases[i] || '').toLowerCase()
+                    .indexOf(q) !== -1) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    function _applyFilter() {
+        var q = (_filterText || '').trim().toLowerCase();
+        var rows = !q
+            ? _allRows.slice()
+            : _allRows.filter(function (r) {
+                return _matches(r, q);
+            });
+        _renderCards(rows);
+    }
+
+    function _wireFilter() {
+        var input = document.getElementById('rej-filter-input');
+        var clear = document.getElementById('rej-filter-clear');
+        if (!input || input.dataset.wired) return;
+        input.dataset.wired = '1';
+        input.addEventListener('input', function () {
+            _filterText = input.value || '';
+            if (clear) clear.hidden = !_filterText;
+            _applyFilter();
+        });
+        if (clear) {
+            clear.addEventListener('click', function () {
+                input.value = '';
+                _filterText = '';
+                clear.hidden = true;
+                _applyFilter();
+                input.focus();
+            });
+        }
     }
 
     function _openAddOverlay(row) {
@@ -1778,6 +1860,7 @@
     }
 
     rejTab.addEventListener('click', function () {
+        _wireFilter();
         if (!loaded) {
             loaded = true;
             _load();
@@ -1872,8 +1955,6 @@
     }
 
     var _EXTRA_FIELD_SPECS = [
-        { key: 'KEYWORDS', label: 'Keywords', type: 'text',
-            editable: true },
         { key: 'RA_J2000_DEG', label: 'RA (J2000) [deg]',
             type: 'number', editable: false },
         { key: 'DEC_J2000_DEG', label: 'Dec (J2000) [deg]',
@@ -1968,6 +2049,7 @@
     var _EXTRA_FIELD_IDS = [];
     var _manualOriginalEntry = null;
     var _manualOriginalAperoName = '';
+    var _manualRestoreFlag = '';
 
     function _escapeHtml(s) {
         return String(s == null ? '' : s).replace(/[&<>"']/g,
@@ -2001,6 +2083,9 @@
         out.ALIASES = Array.isArray(payload.aliases)
             ? payload.aliases.join('\n')
             : _toInputString(payload.aliases);
+        out.KEYWORDS = Array.isArray(payload.keywords)
+            ? payload.keywords.join('\n')
+            : _toInputString(payload.keywords);
         out.NOTES = _toInputString(payload.notes);
         out.NO_PM = payload.no_pm ? 'true' : 'false';
         var extra = payload.extra_fields || {};
@@ -2032,6 +2117,9 @@
         var aliases = _entryValue(entry, 'ALIASES');
         out.ALIASES = Array.isArray(aliases)
             ? aliases.join('\n') : _toInputString(aliases);
+        var keywords = _entryValue(entry, 'KEYWORDS');
+        out.KEYWORDS = Array.isArray(keywords)
+            ? keywords.join('\n') : _toInputString(keywords);
         out.NOTES = _toInputString(_entryValue(entry, 'NOTES'));
         out.NO_PM = _entryValue(entry, 'NO_PM') ? 'true' : 'false';
         _EXTRA_FIELD_IDS.forEach(function (pair) {
@@ -2057,6 +2145,96 @@
     }
 
     function _showManualDiffOverlay(changes) {
+        var _LIST_DIFF_KEYS = { ALIASES: 1, KEYWORDS: 1 };
+        function _splitListVal(s) {
+            if (s == null) return [];
+            return String(s).split(/\r?\n/)
+                .map(function (x) { return x.trim(); })
+                .filter(function (x) { return x.length > 0; });
+        }
+        function _chip(text, kind) {
+            var styles = {
+                kept: 'background:#f1f3f5;color:#495057;'
+                    + 'border:1px solid #dee2e6;',
+                removed: 'background:#fdecea;color:#a4221a;'
+                    + 'border:1px solid #f5c2c0;'
+                    + 'text-decoration:line-through;',
+                added: 'background:#e6f4ea;color:#1e7e34;'
+                    + 'border:1px solid #b6dcc1;',
+                edited: 'background:#fff8db;color:#7a5d00;'
+                    + 'border:1px solid #f1d97a;font-style:italic;'
+            };
+            var st = styles[kind] || styles.kept;
+            return '<span style="display:inline-block;'
+                + 'padding:2px 8px;border-radius:10px;margin:2px 3px;'
+                + 'font-size:0.85em;' + st + '">'
+                + _escapeHtml(text || '(empty)') + '</span>';
+        }
+        function _renderListDiff(prevArr, nextArr) {
+            var nextSet = {};
+            nextArr.forEach(function (v) { nextSet[v] = true; });
+            var prevSet = {};
+            prevArr.forEach(function (v) { prevSet[v] = true; });
+            var wasHtml = prevArr.length
+                ? prevArr.map(function (v) {
+                    return _chip(v,
+                        nextSet[v] ? 'kept' : 'removed');
+                }).join('')
+                : '<span style="color:#888;font-style:italic;">'
+                    + '(empty)</span>';
+            var nowHtml = nextArr.length
+                ? nextArr.map(function (v) {
+                    return _chip(v,
+                        prevSet[v] ? 'kept' : 'added');
+                }).join('')
+                : '<span style="color:#888;font-style:italic;">'
+                    + '(empty)</span>';
+            return { was: wasHtml, now: nowHtml };
+        }
+        function _renderScalarDiff(prev, next) {
+            var emptyStyle = 'color:#888;font-style:italic;';
+            var wasHtml = prev
+                ? '<span style="background:#fff8db;color:#7a5d00;'
+                    + 'padding:2px 6px;border-radius:4px;'
+                    + 'font-style:italic;">'
+                    + _escapeHtml(prev).replace(/\n/g, '<br>')
+                    + '</span>'
+                : '<span style="' + emptyStyle + '">(empty)</span>';
+            var nowHtml = next
+                ? '<span style="background:#fff8db;color:#7a5d00;'
+                    + 'padding:2px 6px;border-radius:4px;'
+                    + 'font-style:italic;">'
+                    + _escapeHtml(next).replace(/\n/g, '<br>')
+                    + '</span>'
+                : '<span style="' + emptyStyle + '">(empty)</span>';
+            // pure add → green; pure remove → red strikethrough
+            if (!prev && next) {
+                nowHtml = '<span style="background:#e6f4ea;'
+                    + 'color:#1e7e34;padding:2px 6px;'
+                    + 'border-radius:4px;">'
+                    + _escapeHtml(next).replace(/\n/g, '<br>')
+                    + '</span>';
+            } else if (prev && !next) {
+                wasHtml = '<span style="background:#fdecea;'
+                    + 'color:#a4221a;padding:2px 6px;'
+                    + 'border-radius:4px;'
+                    + 'text-decoration:line-through;">'
+                    + _escapeHtml(prev).replace(/\n/g, '<br>')
+                    + '</span>';
+            }
+            return { was: wasHtml, now: nowHtml };
+        }
+        function _renderDiffCells(c) {
+            var key = String(c.key || '').toUpperCase();
+            if (_LIST_DIFF_KEYS[key]) {
+                return _renderListDiff(
+                    _splitListVal(c.previous),
+                    _splitListVal(c.next));
+            }
+            return _renderScalarDiff(c.previous || '',
+                                     c.next || '');
+        }
+
         return new Promise(function (resolve) {
             var overlay = document.createElement('div');
             overlay.style.position = 'fixed';
@@ -2071,16 +2249,18 @@
             var rows = '';
             if (hasChanges) {
                 rows = changes.map(function (c) {
+                    var cells = _renderDiffCells(c);
                     return '<tr>'
-                        + '<td style="padding:4px 8px;">'
+                        + '<td style="padding:6px 8px;'
+                        + ' vertical-align:top;">'
                         + '<code>' + _escapeHtml(c.key)
                         + '</code></td>'
-                        + '<td style="padding:4px 8px; color:#777;">'
-                        + _escapeHtml(c.previous || '(empty)')
-                        + '</td>'
-                        + '<td style="padding:4px 8px;">'
-                        + _escapeHtml(c.next || '(empty)')
-                        + '</td>'
+                        + '<td style="padding:6px 8px;'
+                        + ' vertical-align:top;">'
+                        + cells.was + '</td>'
+                        + '<td style="padding:6px 8px;'
+                        + ' vertical-align:top;">'
+                        + cells.now + '</td>'
                         + '</tr>';
                 }).join('');
             }
@@ -2249,6 +2429,10 @@
         _setValue('am-man-aliases', Array.isArray(
             entry.ALIASES) ? entry.ALIASES.join('\n')
             : (entry.ALIASES || ''));
+        var kw = _entryValue(entry, 'KEYWORDS');
+        _setValue('am-man-keywords', Array.isArray(kw)
+            ? kw.join('\n')
+            : (kw == null ? '' : String(kw)));
         _setValue('am-man-ra', _entryValue(entry, 'RA', 'ra'));
         _setValue('am-man-dec', _entryValue(entry, 'DEC', 'dec'));
         _setValue('am-man-epoch',
@@ -2309,6 +2493,7 @@
             spt: _val('am-man-spt'),
             gaia_source_id: _val('am-man-gaia'),
             aliases: _aliasesFromTextarea('am-man-aliases'),
+            keywords: _aliasesFromTextarea('am-man-keywords'),
             notes: _val('am-man-notes'),
             no_pm: _checked('am-man-nopm')
         };
@@ -2387,6 +2572,10 @@
             payload.allow_update = true;
             payload.original_apero_name = _manualOriginalAperoName;
         }
+        if (_manualRestoreFlag) {
+            payload.source = 'restore';
+            payload.restore_history_id = _manualRestoreFlag;
+        }
         var changes = isEditMode ? _buildChanges(oldMap, newMap) : [];
 
         function _doSubmit() {
@@ -2399,14 +2588,29 @@
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(payload)
             }).then(function (r) {
-                return r.json().then(function (j) {
-                    return { ok: r.ok, body: j };
+                return r.text().then(function (txt) {
+                    var j = null;
+                    try { j = JSON.parse(txt); }
+                    catch (e) { j = null; }
+                    return { ok: r.ok, status: r.status,
+                             body: j, raw: txt };
                 });
             }).then(function (res) {
                 if (!res.body || !res.body.success) {
-                    _setStatus('am-man-status',
-                        'Failed: ' + ((res.body && res.body.error)
-                                      || 'HTTP error'));
+                    var msg;
+                    if (res.body && res.body.error) {
+                        msg = res.body.error;
+                    } else if (res.status === 401) {
+                        msg = 'Login required (session expired?)';
+                    } else if (res.status === 403) {
+                        msg = 'Forbidden (missing permission)';
+                    } else if (res.status >= 500) {
+                        msg = 'Server error (HTTP ' + res.status
+                            + '). Check server logs.';
+                    } else {
+                        msg = 'HTTP ' + res.status;
+                    }
+                    _setStatus('am-man-status', 'Failed: ' + msg);
                     return;
                 }
                 var mode = (res.body.mode || 'created').toLowerCase();
@@ -2420,7 +2624,8 @@
                  'am-man-ra', 'am-man-dec', 'am-man-epoch',
                  'am-man-pmra', 'am-man-pmde', 'am-man-plx',
                  'am-man-rv', 'am-man-teff', 'am-man-spt',
-                 'am-man-gaia', 'am-man-aliases', 'am-man-notes']
+                 'am-man-gaia', 'am-man-aliases', 'am-man-keywords',
+                 'am-man-notes']
                     .forEach(function (id) {
                         var el = document.getElementById(id);
                         if (el) el.value = '';
@@ -2435,6 +2640,7 @@
                 if (cls) cls.value = 'STAR';
                 _manualOriginalEntry = null;
                 _manualOriginalAperoName = '';
+                _manualRestoreFlag = '';
                 _setManualSubmitMode(false);
                 _toggleNoPmInputs();
             }).catch(function (err) {
@@ -2462,4 +2668,7 @@
     if (manBtn) manBtn.addEventListener('click', _submitManual);
     window.AriManualTargetForm = window.AriManualTargetForm || {};
     window.AriManualTargetForm.prefill = _prefill;
+    window.AriManualTargetForm.flagRestore = function (entryId) {
+        _manualRestoreFlag = String(entryId || '');
+    };
 }());

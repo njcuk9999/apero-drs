@@ -1072,7 +1072,8 @@ _MANUAL_EXTRA_NUMERIC_UNITS = {
 _MANUAL_RESERVED_KEYS = {
     'APERO_NAME', 'ORIGINAL_NAME', 'SIMBAD_NAME', 'APERO_CLASS',
     'RA', 'DEC', 'PMRA', 'PMDE', 'PLX', 'RV', 'TEFF', 'EPOCH',
-    'SPT', 'GAIA_SOURCE_ID', 'NO_PM', 'ALIASES', 'NOTES', 'STATUS',
+    'SPT', 'GAIA_SOURCE_ID', 'NO_PM', 'ALIASES', 'KEYWORDS',
+    'NOTES', 'STATUS',
     'FIRST_UPDATED', 'FIRST_AUTHOR', 'LAST_EDIT', 'LAST_AUTHOR',
 }
 _MANUAL_DERIVED_KEYS = (
@@ -1089,6 +1090,45 @@ _MANUAL_DERIVED_KEYS = (
 )
 # Plain top-level scalar fields the manual-add form may set
 _MANUAL_SCALAR_FIELDS = ('EPOCH', 'SPT', 'GAIA_SOURCE_ID')
+
+
+# ---------------------------------------------------------------------
+# Concurrent-edit lock — minimal "always-grant" stub.
+# The frontend (astrometrics_lock.js) calls /lock/{acquire,heartbeat,
+# release} and the save endpoints call _astro_check_lock_for_save to
+# verify the caller still owns the lock. A persistent multi-process
+# lock store is not yet implemented, so for now we accept every call
+# and never block a save. This keeps the contract stable so a real
+# implementation can drop in later without touching call sites.
+# ---------------------------------------------------------------------
+def _astro_check_lock_for_save(app, apero_name, user_info, perms):
+    """Return ``(True, None)`` — always allow saves (no-op stub)."""
+    return True, None
+
+
+def api_astrometrics_lock_acquire(app):
+    user_info = app._get_api_user()
+    if not user_info:
+        return jsonify(success=False, error="Login required"), 401
+    return jsonify(
+        success=True,
+        owner=user_info.get("username") or "unknown",
+        held=False,
+    )
+
+
+def api_astrometrics_lock_heartbeat(app):
+    user_info = app._get_api_user()
+    if not user_info:
+        return jsonify(success=False, error="Login required"), 401
+    return jsonify(success=True)
+
+
+def api_astrometrics_lock_release(app):
+    user_info = app._get_api_user()
+    if not user_info:
+        return jsonify(success=False, error="Login required"), 401
+    return jsonify(success=True)
 
 
 def _coerce_optional_float(raw):
@@ -1255,10 +1295,21 @@ def api_astrometrics_add_manual(app):
         return jsonify(success=False,
                        error="Missing 'apero_name'"), 400
     allow_update = bool(body.get('allow_update'))
-    original_name_for_edit = (
-        body.get('original_apero_name') or apero_name
+    raw_original = body.get('original_apero_name')
+    original_supplied = bool(
+        raw_original is not None
+        and str(raw_original).strip()
     )
-    original_name_for_edit = str(original_name_for_edit).strip()
+    original_name_for_edit = (
+        str(raw_original).strip() if original_supplied
+        else apero_name
+    )
+    # Treat the request as an update whenever the client has told us
+    # which existing entry it is editing. The caller has clearly
+    # opened the form via Edit, so the legacy "use the edit endpoints
+    # to modify it" guard would just confuse them.
+    if original_supplied:
+        allow_update = True
     apero_class = (body.get('apero_class') or 'STAR').strip().upper()
     if apero_class == 'REJECTED':
         return jsonify(
@@ -1275,6 +1326,15 @@ def api_astrometrics_add_manual(app):
         s = str(a or '').strip()
         if s:
             aliases.append(s)
+
+    raw_keywords = body.get('keywords') or []
+    if isinstance(raw_keywords, str):
+        raw_keywords = [raw_keywords]
+    keywords = []
+    for kw in raw_keywords:
+        s = str(kw or '').strip()
+        if s:
+            keywords.append(s)
 
     notes = (body.get('notes') or '').strip()
     no_pm = bool(body.get('no_pm'))
@@ -1313,11 +1373,20 @@ def api_astrometrics_add_manual(app):
         else:
             return jsonify(
                 success=False,
-                error=("'{0}' already exists with status '{1}'; "
-                       "use the edit endpoints to modify it"
-                       ).format(apero_name, cur_status or 'unknown'),
+                error=("Cannot create a new target named '{0}': an "
+                       "entry with status '{1}' already exists. To "
+                       "modify it, open it via Resolve target and "
+                       "click 'Edit'.").format(
+                           apero_name, cur_status or 'unknown'),
             ), 409
     is_update = existing is not None and allow_update
+    if is_update:
+        _perms_now = resolve_user_permissions(
+            user_info["groups"], app.ari_groups)
+        ok, lock_err = _astro_check_lock_for_save(
+            app, original_name_for_edit, user_info, _perms_now)
+        if not ok:
+            return lock_err
 
     pending_dir = astrom_root / dra.STATUS_PENDING
     pending_dir.mkdir(parents=True, exist_ok=True)
@@ -1415,6 +1484,10 @@ def api_astrometrics_add_manual(app):
         ), 400
 
     entry['ALIASES'] = aliases
+    if keywords:
+        entry['KEYWORDS'] = keywords
+    else:
+        entry['KEYWORDS'] = None
     entry['NOTES'] = notes or 'added manually via ARI'
     entry['STATUS'] = dra.STATUS_PENDING
     entry['FIRST_UPDATED'] = first_updated
@@ -1439,6 +1512,31 @@ def api_astrometrics_add_manual(app):
 
     try:
         dra._invalidate_dir_caches(str(astrom_root))
+    except Exception:  # noqa: BLE001
+        pass
+
+    # Append an audit-log record for this save (best-effort).
+    try:
+        from apero_ri.application import astrometrics_history
+        action = 'edit' if is_update else 'create'
+        if str(body.get('source') or '').lower() == 'restore':
+            action = 'restore'
+        before_snap = (existing
+                       if isinstance(existing, dict) else None)
+        astrometrics_history.append_history(
+            astrom_root=astrom_root,
+            apero_name=apero_name,
+            user=author,
+            action=action,
+            before=before_snap,
+            after=entry,
+            previous_apero_name=(
+                original_name_for_edit
+                if (is_update
+                    and original_name_for_edit != apero_name)
+                else None
+            ),
+        )
     except Exception:  # noqa: BLE001
         pass
 
@@ -1641,6 +1739,13 @@ def api_astrometrics_update_field(app):
     raw_value = body.get("value")
     new_value = _coerce_value(raw_value)
     author = user_info.get("username") or "unknown"
+
+    _perms_now = resolve_user_permissions(
+        user_info["groups"], app.ari_groups)
+    ok, lock_err = _astro_check_lock_for_save(
+        app, apero_name, user_info, _perms_now)
+    if not ok:
+        return lock_err
 
     try:
         entry = dra.update_entry_field(

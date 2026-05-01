@@ -1057,6 +1057,36 @@ def register_data_portal_routes(app):
         methods=["POST"],
     )
     app.add_url_rule(
+        "/api/astrometrics/lock/acquire",
+        "api_astrometrics_lock_acquire",
+        app._api_astrometrics_lock_acquire,
+        methods=["POST"],
+    )
+    app.add_url_rule(
+        "/api/astrometrics/lock/heartbeat",
+        "api_astrometrics_lock_heartbeat",
+        app._api_astrometrics_lock_heartbeat,
+        methods=["POST"],
+    )
+    app.add_url_rule(
+        "/api/astrometrics/lock/release",
+        "api_astrometrics_lock_release",
+        app._api_astrometrics_lock_release,
+        methods=["POST"],
+    )
+    app.add_url_rule(
+        "/api/astrometrics/history/list",
+        "api_astrometrics_history_list",
+        app._api_astrometrics_history_list,
+        methods=["GET"],
+    )
+    app.add_url_rule(
+        "/api/astrometrics/history/get",
+        "api_astrometrics_history_get",
+        app._api_astrometrics_history_get,
+        methods=["GET", "POST"],
+    )
+    app.add_url_rule(
         "/api/astrometrics/update-field",
         "api_astrometrics_update_field",
         app._api_astrometrics_update_field,

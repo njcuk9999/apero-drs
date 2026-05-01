@@ -1300,16 +1300,26 @@ def _scheduler_poll(local_data_dir: str) -> None:
 
                 if task_key == "APERO_SYNC_ASSETS":
                     mode_val = str(
-                        task_cfg.get("mode") or "sync"
+                        task_cfg.get("mode") or "remote"
                     ).strip().lower()
-                    merged_cfg["mode"] = (
-                        mode_val
-                        if mode_val in ("sync", "upload")
-                        else "sync"
-                    )
+                    # backwards compatibility with legacy mode names
+                    if mode_val in ("sync", "upload", "remote"):
+                        mode_val = "remote"
+                    elif mode_val == "local":
+                        mode_val = "local"
+                    else:
+                        mode_val = "remote"
+                    merged_cfg["mode"] = mode_val
                     merged_cfg["force_download"] = bool(
                         task_cfg.get("force_download", False)
                     )
+                    _local_src = str(
+                        task_cfg.get("local_source_path") or ""
+                    ).strip()
+                    if _local_src:
+                        merged_cfg[
+                            "local_source_path"
+                        ] = _local_src
 
                 for field in [
                     "last_run",

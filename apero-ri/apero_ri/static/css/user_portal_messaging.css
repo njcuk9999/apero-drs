@@ -11,6 +11,118 @@
     gap: 1rem;
 }
 
+/* Wide variant: messages page uses full available width so the
+ * two-pane layout can breathe on desktop. */
+.upm-page--wide {
+    width: 100%;
+    max-width: none;
+}
+
+/* ---------------- Two-pane split (list | detail) ---------------- */
+.upm-split {
+    display: flex;
+    gap: 1rem;
+    align-items: stretch;
+    /* Fill the viewport below the header/tabs so the two panes
+     * can scroll independently. */
+    min-height: 0;
+    height: calc(100vh - 220px);
+}
+.upm-list-pane {
+    flex: 0 0 320px;
+    min-width: 0;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+}
+.upm-list-pane .upm-mailbox {
+    flex: 1 1 auto;
+    overflow-y: auto;
+}
+.upm-detail-pane {
+    flex: 1 1 auto;
+    min-width: 0;
+    overflow-y: auto;
+    border: 1px solid var(--ari-border, #d0d7de);
+    border-radius: 6px;
+    background: var(--ari-card-bg, #fff);
+    color: var(--ari-text);
+    padding: 1rem 1.25rem;
+    display: flex;
+    flex-direction: column;
+}
+.upm-detail__placeholder {
+    margin: auto;
+    text-align: center;
+    color: var(--ari-text-muted, #6b7785);
+}
+.upm-detail__placeholder i {
+    font-size: 2.5rem;
+    margin-bottom: 0.5rem;
+    display: block;
+    opacity: 0.5;
+}
+.upm-detail__view {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    flex: 1 1 auto;
+    min-height: 0;
+}
+.upm-detail__header {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    border-bottom: 1px solid var(--ari-border, #d0d7de);
+    padding-bottom: 0.5rem;
+}
+.upm-detail__header h2 {
+    margin: 0;
+    font-size: 1.15rem;
+    line-height: 1.3;
+    word-break: break-word;
+}
+.upm-detail__back {
+    /* Hidden on desktop (no back navigation needed). Shown on
+     * narrow screens where the detail pane covers the list. */
+    display: none;
+}
+.upm-detail-pane .upm-view-meta {
+    color: var(--ari-text-muted, #6b7785);
+    font-size: 0.875rem;
+}
+.upm-detail-pane .upm-view-body {
+    white-space: pre-wrap;
+    word-break: break-word;
+    flex: 1 1 auto;
+    overflow-y: auto;
+    padding: 0.5rem 0;
+    line-height: 1.5;
+}
+.upm-detail-pane .upm-view-actions {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    border-top: 1px solid var(--ari-border, #d0d7de);
+    padding-top: 0.75rem;
+}
+
+@media (max-width: 720px) {
+    .upm-split {
+        flex-direction: column;
+        height: auto;
+    }
+    .upm-list-pane {
+        flex: 1 1 auto;
+    }
+    .upm-list-pane.is-hidden-mobile { display: none; }
+    .upm-detail-pane {
+        min-height: 60vh;
+    }
+    .upm-detail__back { display: inline-flex; }
+}
+
 /* ---------------- Toolbar / search bar ---------------- */
 .upm-toolbar {
     display: flex;
@@ -312,6 +424,12 @@
     border-bottom: 1px solid var(--ari-border, #d0d7de);
     display: flex;
     justify-content: space-between;
+    align-items: center;
+    gap: 0.5rem;
+}
+.ari-notif-panel__header-actions {
+    display: inline-flex;
+    gap: 0.35rem;
     align-items: center;
 }
 .ari-notif-panel__list {

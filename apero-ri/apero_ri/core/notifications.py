@@ -477,7 +477,30 @@ def mark_message_read(username: str, mid: str) -> bool:
                 "WHERE id = ? AND recipient = ? AND read_at IS NULL",
                 (_now(), mid, username),
             )
-            return cur.rowcount > 0
+            changed = cur.rowcount > 0
+            # Also clear (mark read + dismiss) any 'message'
+            # channel notifications that point at this specific
+            # message, so the bell badge / dropdown stops showing
+            # it as soon as the user opens the message. Payload is
+            # stored as a JSON string; match on the literal
+            # ``"message_id": "<mid>"`` substring (mid is a UUID,
+            # so the substring is unique to this message).
+            try:
+                like_pat = '%"message_id": "' + str(mid) + '"%'
+                conn.execute(
+                    "UPDATE notifications SET "
+                    "  read_at = COALESCE(read_at, ?), "
+                    "  dismissed = 1 "
+                    "WHERE username = ? "
+                    "  AND channel = 'message' "
+                    "  AND payload LIKE ?",
+                    (_now(), username, like_pat),
+                )
+            except Exception:
+                # never let notification cleanup break the
+                # message-read operation itself
+                pass
+            return changed
     finally:
         conn.close()
 

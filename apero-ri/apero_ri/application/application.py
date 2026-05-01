@@ -35,6 +35,7 @@ from apero_ri.application import (
 )
 from apero_ri.application import ariapp_impls as _impls
 from apero_ri.application import astrometrics_api_helpers
+from apero_ri.application import astrometrics_history
 from apero_ri.application import (
     async_task_helpers,
     async_tasks_api_helpers,
@@ -946,12 +947,49 @@ class ARIApp(Flask):
                 .api_astrometrics_delete_rejected(self))
 
     def _api_astrometrics_add_manual(self):
-        return (astrometrics_api_helpers
-                .api_astrometrics_add_manual(self))
+        try:
+            return (astrometrics_api_helpers
+                    .api_astrometrics_add_manual(self))
+        except Exception as exc:  # noqa: BLE001
+            import traceback as _tb
+            from flask import jsonify as _jsonify
+            tb = _tb.format_exc()
+            try:
+                from pathlib import Path as _P
+                base = _P(self.args.data_dir
+                          or str(_P.home() / ".ari"))
+                logf = base / "apero_ri_errors.log"
+                with logf.open("a", encoding="utf-8") as fp:
+                    fp.write("\n=== add-manual error ===\n")
+                    fp.write(tb)
+            except Exception:  # noqa: BLE001
+                pass
+            try:
+                self.log.error(
+                    "add-manual unhandled: %s\n%s", exc, tb)
+            except Exception:  # noqa: BLE001
+                pass
+            return _jsonify(
+                success=False,
+                error="Server exception: {0}: {1}".format(
+                    type(exc).__name__, exc),
+            ), 500
 
     def _api_astrometrics_recompute_manual(self):
         return (astrometrics_api_helpers
                 .api_astrometrics_recompute_manual(self))
+
+    def _api_astrometrics_lock_acquire(self):
+        return (astrometrics_api_helpers
+                .api_astrometrics_lock_acquire(self))
+
+    def _api_astrometrics_lock_heartbeat(self):
+        return (astrometrics_api_helpers
+                .api_astrometrics_lock_heartbeat(self))
+
+    def _api_astrometrics_lock_release(self):
+        return (astrometrics_api_helpers
+                .api_astrometrics_lock_release(self))
 
     def _api_astrometrics_update_field(self):
         return astrometrics_api_helpers.api_astrometrics_update_field(
@@ -984,6 +1022,15 @@ class ARIApp(Flask):
         return (
             astrometrics_api_helpers
             .api_astrometrics_resolve_online_by_coords(self))
+
+    # ----- astrometrics edit history -----
+    def _api_astrometrics_history_list(self):
+        return astrometrics_history.api_astrometrics_history_list(
+            self)
+
+    def _api_astrometrics_history_get(self):
+        return astrometrics_history.api_astrometrics_history_get(
+            self)
 
     # -----------------------------------------------------------------
     # Issues subsystem

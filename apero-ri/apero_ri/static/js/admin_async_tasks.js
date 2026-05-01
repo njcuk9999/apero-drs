@@ -163,6 +163,12 @@
         'edit-backup-exclude-paths-default');
     var editAssetsFields= document.getElementById('edit-assets-fields');
     var editAssetsMode  = document.getElementById('edit-assets-mode');
+    var editAssetsLocalSrcRow = document.getElementById(
+        'edit-assets-local-source-row');
+    var editAssetsLocalSrc = document.getElementById(
+        'edit-assets-local-source');
+    var editAssetsLocalBrowse = document.getElementById(
+        'edit-assets-local-browse');
     var editMpFields    = document.getElementById('edit-mp-fields');
     var editNcores      = document.getElementById('edit-ncores');
     var editMpBackend   = document.getElementById('edit-mp-backend');
@@ -1580,8 +1586,21 @@
                 defPaths.length ? defPaths.join(', ') : '(none)';
         }
         if (editAssetsMode) {
-            editAssetsMode.value = String(task.mode || 'sync');
+            var _modeRaw = String(task.mode || 'remote').toLowerCase();
+            if (_modeRaw === 'sync' || _modeRaw === 'upload' ||
+                    _modeRaw === 'remote') {
+                _modeRaw = 'remote';
+            } else if (_modeRaw !== 'local') {
+                _modeRaw = 'remote';
+            }
+            editAssetsMode.value = _modeRaw;
         }
+        if (editAssetsLocalSrc) {
+            editAssetsLocalSrc.value = String(
+                task.local_source_path || ''
+            );
+        }
+        updateAssetsLocalSrcVisibility();
         editNcores.value = task.ncores || 1;
         editMpBackend.value = task.mp_backend || 'threads';
         editMpStartMethod.value = task.mp_start_method || 'default';
@@ -1949,6 +1968,150 @@
         });
     }
 
+    function updateAssetsLocalSrcVisibility() {
+        if (!editAssetsLocalSrcRow) return;
+        var mode = editAssetsMode ? editAssetsMode.value : 'remote';
+        editAssetsLocalSrcRow.style.display =
+            (mode === 'local') ? '' : 'none';
+    }
+
+    if (editAssetsMode) {
+        editAssetsMode.addEventListener(
+            'change', updateAssetsLocalSrcVisibility);
+    }
+    if (editAssetsLocalBrowse) {
+        editAssetsLocalBrowse.addEventListener('click', function (ev) {
+            ev.preventDefault();
+            aatOpenAssetsBrowseModal();
+        });
+    }
+
+    // ---- inline directory browser for assets local-source path ----
+    var aatBrowseModal = null;
+    var aatBrowseList = null;
+    var aatBrowseCurrent = null;
+    var aatBrowseTitle = null;
+
+    function aatEnsureBrowseModal() {
+        if (aatBrowseModal) return;
+        var overlay = document.createElement('div');
+        overlay.id = 'aat-browse-overlay';
+        overlay.style.cssText =
+            'position:fixed; inset:0; background:rgba(0,0,0,0.45);' +
+            ' z-index:10000; display:flex; align-items:center;' +
+            ' justify-content:center;';
+        overlay.style.display = 'none';
+        var box = document.createElement('div');
+        box.style.cssText =
+            'background:var(--ari-card-bg, #fff); color:inherit;' +
+            ' border-radius:6px; padding:12px; width:min(640px, 92vw);' +
+            ' max-height:80vh; display:flex; flex-direction:column;' +
+            ' box-shadow:0 6px 24px rgba(0,0,0,0.25);';
+        box.innerHTML =
+            '<div style="display:flex; justify-content:space-between;' +
+            ' align-items:center; margin-bottom:8px;">' +
+            '<strong>Browse for local source directory</strong>' +
+            '<button type="button" class="ari-ap-btn"' +
+            ' id="aat-browse-close">Close</button></div>' +
+            '<div id="aat-browse-current" style="font-family:monospace;' +
+            ' font-size:12px; padding:4px 6px; background:rgba(0,0,0,0.05);' +
+            ' border-radius:3px; margin-bottom:6px; word-break:break-all;">' +
+            '</div>' +
+            '<div id="aat-browse-list" style="flex:1 1 auto;' +
+            ' overflow:auto; border:1px solid rgba(0,0,0,0.15);' +
+            ' border-radius:3px;"></div>' +
+            '<div style="display:flex; gap:6px; justify-content:flex-end;' +
+            ' margin-top:8px;">' +
+            '<button type="button" class="ari-ap-btn"' +
+            ' id="aat-browse-up">Up</button>' +
+            '<button type="button" class="ari-ap-btn ari-ap-btn--primary"' +
+            ' id="aat-browse-select">Select this directory</button>' +
+            '</div>';
+        overlay.appendChild(box);
+        document.body.appendChild(overlay);
+        aatBrowseModal = overlay;
+        aatBrowseList = box.querySelector('#aat-browse-list');
+        aatBrowseTitle = box.querySelector('#aat-browse-current');
+        box.querySelector('#aat-browse-close').addEventListener(
+            'click', function () { aatBrowseModal.style.display = 'none'; });
+        box.querySelector('#aat-browse-up').addEventListener(
+            'click', function () {
+                aatBrowseTo(aatBrowseCurrent
+                    ? (aatBrowseCurrent.replace(/\/+$/, '')
+                        .split('/').slice(0, -1).join('/') || '/')
+                    : '');
+            });
+        box.querySelector('#aat-browse-select').addEventListener(
+            'click', function () {
+                if (editAssetsLocalSrc && aatBrowseCurrent) {
+                    editAssetsLocalSrc.value = aatBrowseCurrent;
+                }
+                aatBrowseModal.style.display = 'none';
+            });
+    }
+
+    function aatOpenAssetsBrowseModal() {
+        aatEnsureBrowseModal();
+        aatBrowseModal.style.display = 'flex';
+        var startPath =
+            (editAssetsLocalSrc && editAssetsLocalSrc.value) || '';
+        aatBrowseTo(startPath);
+    }
+
+    function aatBrowseTo(path) {
+        var url = '/api/admin/backups/browse';
+        if (path) {
+            url += '?path=' + encodeURIComponent(path);
+        }
+        fetch(url, {credentials: 'same-origin'})
+            .then(function (r) { return r.json(); })
+            .then(function (data) {
+                if (!data || !data.success) {
+                    aatBrowseList.innerHTML =
+                        '<div style="padding:8px; color:red;">' +
+                        (data && data.error ? data.error : 'Failed to list')
+                        + '</div>';
+                    return;
+                }
+                aatBrowseCurrent = data.path || '/';
+                if (aatBrowseTitle) {
+                    aatBrowseTitle.textContent = aatBrowseCurrent;
+                }
+                var dirs = Array.isArray(data.dirs) ? data.dirs : [];
+                if (!dirs.length) {
+                    aatBrowseList.innerHTML =
+                        '<div style="padding:8px; opacity:0.7;">' +
+                        '(no subdirectories)</div>';
+                    return;
+                }
+                var html = '';
+                for (var i = 0; i < dirs.length; i++) {
+                    var d = dirs[i];
+                    var name = (d && d.name) ? d.name : String(d);
+                    var full = (d && d.path) ? d.path :
+                        (aatBrowseCurrent.replace(/\/+$/, '')
+                            + '/' + name);
+                    html += '<div class="aat-browse-item"' +
+                        ' data-path="' + full.replace(/"/g, '&quot;')
+                        + '" style="padding:4px 8px; cursor:pointer;">' +
+                        '\u{1F4C1} ' + name + '</div>';
+                }
+                aatBrowseList.innerHTML = html;
+                Array.prototype.forEach.call(
+                    aatBrowseList.querySelectorAll('.aat-browse-item'),
+                    function (el) {
+                        el.addEventListener('click', function () {
+                            aatBrowseTo(el.getAttribute('data-path'));
+                        });
+                    });
+            })
+            .catch(function (err) {
+                aatBrowseList.innerHTML =
+                    '<div style="padding:8px; color:red;">' +
+                    String(err) + '</div>';
+            });
+    }
+
     function onTaskKeyChange() {
         var key = editTaskKey.value;
         var cls = taskClasses.find(function (c) { return c.key === key; });
@@ -1976,6 +2139,7 @@
         editBackupFields.style.display = isBackup ? '' : 'none';
         var isAssets = key === ASSETS_TASK_KEY;
         if (editAssetsFields) editAssetsFields.style.display = isAssets ? '' : 'none';
+        if (isAssets) updateAssetsLocalSrcVisibility();
 
         if (editLocalSyncFields) {
             editLocalSyncFields.style.display = supportsLocalTask ? '' : 'none';
@@ -2119,7 +2283,14 @@
             payload.exclude_paths = splitLines(editBackupExcludePaths);
         }
         if (taskKey === ASSETS_TASK_KEY) {
-            payload.assets_mode = editAssetsMode ? editAssetsMode.value : 'sync';
+            payload.assets_mode = editAssetsMode
+                ? editAssetsMode.value
+                : 'remote';
+            if (editAssetsLocalSrc) {
+                payload.assets_local_source_path = String(
+                    editAssetsLocalSrc.value || ''
+                ).trim();
+            }
         }
         Object.keys(editFilterInputs || {}).forEach(function (keyName) {
             var inputEl = editFilterInputs[keyName];

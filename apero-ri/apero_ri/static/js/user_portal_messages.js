@@ -16,6 +16,11 @@
   var datalist = document.getElementById('upm-user-list');
 
   var viewModal = document.getElementById('upm-view-modal');
+  var detailEmpty = document.getElementById('upm-detail-empty');
+  var detailView = document.getElementById('upm-detail-view');
+  var detailBack = document.getElementById('upm-detail-back');
+  var listPane = document.getElementById('upm-list-pane');
+  var detailPane = document.getElementById('upm-detail-pane');
   var viewSubject = document.getElementById('upm-view-subject');
   var viewMeta = document.getElementById('upm-view-meta');
   var viewBody = document.getElementById('upm-view-body');
@@ -96,13 +101,28 @@
     fetch('/api/messages/list?box=' + encodeURIComponent(box))
       .then(function (r) { return r.json(); })
       .then(function (j) {
-        renderList(box, (j && j.messages) || []);
+        renderList(
+          box, (j && (j.items || j.messages)) || []);
         refreshUnreadBadge();
       })
       .catch(function () {
         mailbox.innerHTML = '<div class="upm-empty">'
           + 'Failed to load messages.</div>';
       });
+  }
+
+  function showDetail(show) {
+    if (detailView) detailView.hidden = !show;
+    if (detailEmpty) detailEmpty.hidden = !!show;
+    // Mobile: when a message is open we hide the list and show
+    // the detail full-width; when no message is open we show the
+    // list. CSS controls the actual layout via .is-showing-detail.
+    if (detailPane) {
+      detailPane.classList.toggle('is-active', !!show);
+    }
+    if (listPane) {
+      listPane.classList.toggle('is-hidden-mobile', !!show);
+    }
   }
 
   function openMsg(id) {
@@ -131,15 +151,21 @@
         viewBody.textContent = currentMsg.body || '';
         viewStatus.textContent = '';
         viewStatus.className = 'upm-form-status';
-        viewModal.hidden = false;
+        showDetail(true);
         // refresh list to clear unread state
         loadBox(currentBox);
+        // Ask the global bell to refresh: the server clears the
+        // matching 'message' notification when the recipient
+        // opens the message, so the badge can drop right away
+        // instead of waiting for the next 30s poll.
+        try {
+          window.dispatchEvent(new Event('ari:notif-refresh'));
+        } catch (e) { /* IE compat - ignore */ }
       });
   }
 
   function closeAllModals() {
-    sendModal.hidden = true;
-    viewModal.hidden = true;
+    if (sendModal) sendModal.hidden = true;
   }
 
   document.addEventListener('click', function (e) {
@@ -207,7 +233,6 @@
     bodyInput.value = '\n\n---\n'
       + (currentMsg.body || '').split('\n')
         .map(function (l) { return '> ' + l; }).join('\n');
-    viewModal.hidden = true;
     sendModal.hidden = false;
     setTimeout(function () { bodyInput.focus(); }, 50);
   });
@@ -220,7 +245,8 @@
       .then(function (r) { return r.json(); })
       .then(function (j) {
         if (j && j.success) {
-          viewModal.hidden = true;
+          showDetail(false);
+          currentMsg = null;
           loadBox(currentBox);
         } else {
           viewStatus.textContent = (j && j.error)
@@ -251,6 +277,13 @@
         }
       });
   });
+
+  if (detailBack) {
+    detailBack.addEventListener('click', function () {
+      showDetail(false);
+      currentMsg = null;
+    });
+  }
 
   loadUsers();
   loadBox('inbox');

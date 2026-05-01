@@ -167,10 +167,23 @@ def merge_async_task_catalog(
                         merged_cfg[_key] = cleaned
 
         if task_key == "APERO_SYNC_ASSETS":
-            mode_val = str(task_cfg.get("mode") or "sync").strip().lower()
-            merged_cfg["mode"] = (
-                mode_val if mode_val in ("sync", "upload") else "sync"
+            mode_val = (
+                str(task_cfg.get("mode") or "remote").strip().lower()
             )
+            # Backwards compatibility: legacy values "sync"/"upload"
+            # both mean "remote" (download from rsync share). The
+            # only other supported value is "local" (copy from a
+            # local source directory).
+            if mode_val in ("sync", "upload", "remote"):
+                mode_val = "remote"
+            elif mode_val != "local":
+                mode_val = "remote"
+            merged_cfg["mode"] = mode_val
+            local_src = str(
+                task_cfg.get("local_source_path") or ""
+            ).strip()
+            if local_src:
+                merged_cfg["local_source_path"] = local_src
             merged_cfg["force_download"] = bool(
                 task_cfg.get("force_download", False)
             )
