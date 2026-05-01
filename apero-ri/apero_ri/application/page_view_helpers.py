@@ -8,6 +8,7 @@ from apero_ri.core.auth import (
     get_effective_user,
     get_public_permissions,
     load_admin_health_config,
+    user_has_admin_privileges,
 )
 from apero_ri.core.docs import (
     get_default_version,
@@ -274,6 +275,29 @@ def make_page_view(app, page_id: str, package_dir: Path):
             # gate the "History" tab on the dedicated history perm
             context["astrometrics_can_view_history"] = (
                 "manage.astrometrics.history" in (perms or set())
+            )
+            context['astrometrics_can_manage_history'] = (
+                user_has_admin_privileges(
+                    list((user_info or {}).get('groups', []))
+                )
+            )
+
+        if page_id == 'home.monitor_portal.rejection_list':
+            try:
+                from apero_ri.application \
+                    import rejection_list_api_helpers as _rla
+                context['rejection_list_tabs'] = _rla.get_rejection_tabs(
+                    perms
+                )
+            except Exception:  # noqa: BLE001
+                context['rejection_list_tabs'] = []
+            context['rejection_list_can_view_history'] = (
+                'manage.rejection_list.history' in (perms or set())
+            )
+            context['rejection_list_can_manage_history'] = (
+                user_has_admin_privileges(
+                    list((user_info or {}).get('groups', []))
+                )
             )
 
         if page_id == "home.admin_portal.sshfs_management":

@@ -56,6 +56,8 @@ admin:
     - manage.admin.user_db_access
     # astrometric history (read + restore) is admin/mod/dev only
     - manage.astrometrics.history
+    # rejection-list history (read-only global audit log)
+    - manage.rejection_list.history
   groups:
     - moderator.SPIROU
     - moderator.NIRPS
@@ -93,6 +95,8 @@ moderator.SPIROU:
     - manage.astrometrics
     # astrometric catalogue: view + restore historical edits
     - manage.astrometrics.history
+    # rejection-list page: global history tab
+    - manage.rejection_list.history
   groups:
     - monitor.SPIROU
 
@@ -124,6 +128,8 @@ moderator.NIRPS:
     - manage.astrometrics
     # astrometric catalogue: view + restore historical edits
     - manage.astrometrics.history
+    # rejection-list page: global history tab
+    - manage.rejection_list.history
   groups:
     - monitor.NIRPS
 
@@ -141,6 +147,8 @@ developer.SPIROU:
     - manage.admin.links.SPIROU
     # astrometric history (read + restore)
     - manage.astrometrics.history
+    # rejection-list history (read-only global audit log)
+    - manage.rejection_list.history
   groups:
     - monitor.SPIROU
 
@@ -155,6 +163,8 @@ developer.NIRPS:
     - manage.admin.links.NIRPS
     # astrometric history (read + restore)
     - manage.astrometrics.history
+    # rejection-list history (read-only global audit log)
+    - manage.rejection_list.history
   groups:
     - monitor.NIRPS
 

@@ -1470,6 +1470,32 @@
                             <i class="fa-solid fa-xmark"></i>
                         </button>
                     </div>
+                    <div class="hist-toolbar">
+                        <label class="hist-toolbar__per">
+                            <span>per page</span>
+                            <select id="rej-per-page">
+                                <option value="50" selected>50</option>
+                                <option value="100">100</option>
+                                <option value="500">500</option>
+                            </select>
+                        </label>
+                        <div class="hist-toolbar__pager">
+                            <button type="button"
+                                    id="rej-prev"
+                                    class="ari-btn ari-btn--secondary"
+                                    title="Previous page">
+                                <i class="fa-solid fa-chevron-left"></i>
+                            </button>
+                            <span id="rej-page-info"
+                                  class="hist-page-info"></span>
+                            <button type="button"
+                                    id="rej-next"
+                                    class="ari-btn ari-btn--secondary"
+                                    title="Next page">
+                                <i class="fa-solid fa-chevron-right"></i>
+                            </button>
+                        </div>
+                    </div>
                     <div id="rej-cards" class="rej-cards"></div>
                 </div>
             </div>
@@ -1536,6 +1562,15 @@
                                 <i class="fa-solid fa-chevron-right"></i>
                             </button>
                         </div>
+                        {% if astrometrics_can_manage_history %}
+                        <button type="button"
+                                id="hist-clear"
+                                class="ari-btn ari-btn--secondary"
+                                title="Clear all astrometrics history">
+                            <i class="fa-solid fa-trash-can"></i>
+                            Clear history
+                        </button>
+                        {% endif %}
                     </div>
                     <div id="hist-status" class="ari-dt__count"></div>
                     <div id="hist-cards" class="hist-cards"></div>
@@ -1630,14 +1665,17 @@
         profileId: '',
         instrument: ''
     };
+    window.AriAstrometricsHistoryConfig = {
+        canManageHistory: {{ astrometrics_can_manage_history|tojson }}
+    };
 </script>
 <script src="https://cdn.bokeh.org/bokeh/release/bokeh-3.8.2.min.js"></script>
 <script src="https://cdn.bokeh.org/bokeh/release/bokeh-widgets-3.8.2.min.js"></script>
 <script src="{{ url_for('static', filename='js/target_info_render.js', v='20260424e') }}"></script>
 <script src="{{ url_for('static', filename='js/ari_data_table.js', v='20260424c') }}"></script>
 <script src="{{ url_for('static', filename='js/astrometrics_lock.js', v='20260430a') }}"></script>
-<script src="{{ url_for('static', filename='js/astrometrics.js', v='20260430c') }}"></script>
+<script src="{{ url_for('static', filename='js/astrometrics.js', v='20260501a') }}"></script>
 {% if astrometrics_can_view_history %}
-<script src="{{ url_for('static', filename='js/astrometrics_history.js', v='20260430a') }}"></script>
+<script src="{{ url_for('static', filename='js/astrometrics_history.js', v='20260501b') }}"></script>
 {% endif %}
 {% endblock %}

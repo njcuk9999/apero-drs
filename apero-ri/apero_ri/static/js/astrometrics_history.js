@@ -7,6 +7,8 @@
     var histTab = document.querySelector(
         '.ari-htab[data-htab="history"]');
     if (!histTab) return;
+    var cfg = window.AriAstrometricsHistoryConfig || {};
+    var canManageHistory = !!cfg.canManageHistory;
 
     var loaded = false;
     var _state = {
@@ -109,6 +111,11 @@
             + '<button type="button" class="hist-card__btn"'
             + ' data-hist-restore title="Restore in editor">'
             + '<i class="fa-solid fa-rotate-left"></i></button>'
+            + (canManageHistory
+                ? '<button type="button" class="hist-card__btn"'
+                + ' data-hist-delete title="Delete this history entry">'
+                + '<i class="fa-solid fa-trash"></i></button>'
+                : '')
             + '</span>';
         var diffBtn = card.querySelector('[data-hist-diff]');
         if (diffBtn) {
@@ -122,7 +129,82 @@
                 _restore(rec.id, rec.apero_name);
             });
         }
+        var delBtn = card.querySelector('[data-hist-delete]');
+        if (delBtn) {
+            delBtn.addEventListener('click', function () {
+                _deleteEntry(rec.id);
+            });
+        }
         return card;
+    }
+
+    function _deleteEntry(entryId) {
+        if (!canManageHistory) return;
+        if (!window.confirm('Delete this history entry?')) {
+            return;
+        }
+        _setStatus('<i class="fa-solid fa-spinner fa-spin"></i> '
+            + 'Deleting history entry...');
+        fetch('/api/astrometrics/history/delete', {
+            method: 'POST',
+            credentials: 'same-origin',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id: entryId })
+        }).then(function (r) {
+            return r.text().then(function (txt) {
+                var j = null;
+                try { j = JSON.parse(txt); }
+                catch (e) { j = null; }
+                return { ok: r.ok, status: r.status, body: j };
+            });
+        }).then(function (res) {
+            if (!res.body || !res.body.success) {
+                var msg = (res.body && res.body.error)
+                    || ('HTTP ' + res.status);
+                _setStatus('Failed: ' + _esc(msg));
+                return;
+            }
+            _setStatus('<i class="fa-solid fa-check"></i> '
+                + 'History entry deleted.');
+            _load();
+        }).catch(function (err) {
+            _setStatus('Failed: ' + _esc(String(err)));
+        });
+    }
+
+    function _clearAll() {
+        if (!canManageHistory) return;
+        if (!window.confirm('Clear ALL astrometrics history?')) {
+            return;
+        }
+        _setStatus('<i class="fa-solid fa-spinner fa-spin"></i> '
+            + 'Clearing history...');
+        fetch('/api/astrometrics/history/clear', {
+            method: 'POST',
+            credentials: 'same-origin',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({})
+        }).then(function (r) {
+            return r.text().then(function (txt) {
+                var j = null;
+                try { j = JSON.parse(txt); }
+                catch (e) { j = null; }
+                return { ok: r.ok, status: r.status, body: j };
+            });
+        }).then(function (res) {
+            if (!res.body || !res.body.success) {
+                var msg = (res.body && res.body.error)
+                    || ('HTTP ' + res.status);
+                _setStatus('Failed: ' + _esc(msg));
+                return;
+            }
+            _setStatus('<i class="fa-solid fa-check"></i> '
+                + 'History cleared.');
+            _state.page = 1;
+            _load();
+        }).catch(function (err) {
+            _setStatus('Failed: ' + _esc(String(err)));
+        });
     }
 
     function _renderRows(rows) {
@@ -388,6 +470,11 @@
                     _load();
                 }
             });
+        }
+        var clear = document.getElementById('hist-clear');
+        if (clear && !clear.dataset.wired) {
+            clear.dataset.wired = '1';
+            clear.addEventListener('click', _clearAll);
         }
     }
 

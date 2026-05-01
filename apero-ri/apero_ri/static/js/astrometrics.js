@@ -1506,7 +1506,11 @@
     var canEditRejected = userPerms.indexOf(
         'manage.astrometrics') !== -1;
     var _allRows = [];
+    var _filteredRows = [];
     var _filterText = '';
+    var _page = 1;
+    var _perPage = 50;
+    var _pages = 0;
 
     function _esc(s) {
         return String(s == null ? '' : s).replace(
@@ -1520,14 +1524,35 @@
     function _renderCards(rows) {
         var host = document.getElementById('rej-cards');
         var cnt = document.getElementById('rej-count');
+        var info = document.getElementById('rej-page-info');
+        var prev = document.getElementById('rej-prev');
+        var next = document.getElementById('rej-next');
+        var totalFiltered = _filteredRows.length;
         if (cnt) {
             if (_filterText
-                && rows.length !== _allRows.length) {
-                cnt.textContent = rows.length + ' of '
+                && totalFiltered !== _allRows.length) {
+                cnt.textContent = totalFiltered + ' of '
                     + _allRows.length + ' rejected';
             } else {
-                cnt.textContent = rows.length + ' rejected';
+                cnt.textContent = totalFiltered + ' rejected';
             }
+            if (totalFiltered > 0) {
+                cnt.textContent += ' (page ' + _page + ' of '
+                    + _pages + ')';
+            }
+        }
+        if (info) {
+            if (totalFiltered > 0) {
+                info.textContent = _page + ' of ' + _pages;
+            } else {
+                info.textContent = '0 of 0';
+            }
+        }
+        if (prev) {
+            prev.disabled = (_page <= 1 || totalFiltered === 0);
+        }
+        if (next) {
+            next.disabled = (_page >= _pages || totalFiltered === 0);
         }
         if (!host) return;
         host.innerHTML = '';
@@ -1688,12 +1713,24 @@
 
     function _applyFilter() {
         var q = (_filterText || '').trim().toLowerCase();
-        var rows = !q
+        _filteredRows = !q
             ? _allRows.slice()
             : _allRows.filter(function (r) {
                 return _matches(r, q);
             });
-        _renderCards(rows);
+        if (_filteredRows.length === 0) {
+            _page = 1;
+            _pages = 0;
+            _renderCards([]);
+            return;
+        }
+        _pages = Math.ceil(_filteredRows.length / _perPage);
+        if (_page > _pages) {
+            _page = _pages;
+        }
+        var start = (_page - 1) * _perPage;
+        var end = start + _perPage;
+        _renderCards(_filteredRows.slice(start, end));
     }
 
     function _wireFilter() {
@@ -1703,6 +1740,7 @@
         input.dataset.wired = '1';
         input.addEventListener('input', function () {
             _filterText = input.value || '';
+            _page = 1;
             if (clear) clear.hidden = !_filterText;
             _applyFilter();
         });
@@ -1710,9 +1748,46 @@
             clear.addEventListener('click', function () {
                 input.value = '';
                 _filterText = '';
+                _page = 1;
                 clear.hidden = true;
                 _applyFilter();
                 input.focus();
+            });
+        }
+    }
+
+    function _wirePaging() {
+        var per = document.getElementById('rej-per-page');
+        var prev = document.getElementById('rej-prev');
+        var next = document.getElementById('rej-next');
+        if (per && !per.dataset.wired) {
+            per.dataset.wired = '1';
+            per.addEventListener('change', function () {
+                var parsed = parseInt(per.value, 10);
+                if ([50, 100, 500].indexOf(parsed) === -1) {
+                    parsed = 50;
+                }
+                _perPage = parsed;
+                _page = 1;
+                _applyFilter();
+            });
+        }
+        if (prev && !prev.dataset.wired) {
+            prev.dataset.wired = '1';
+            prev.addEventListener('click', function () {
+                if (_page > 1) {
+                    _page -= 1;
+                    _applyFilter();
+                }
+            });
+        }
+        if (next && !next.dataset.wired) {
+            next.dataset.wired = '1';
+            next.addEventListener('click', function () {
+                if (_page < _pages) {
+                    _page += 1;
+                    _applyFilter();
+                }
             });
         }
     }
@@ -1861,6 +1936,7 @@
 
     rejTab.addEventListener('click', function () {
         _wireFilter();
+        _wirePaging();
         if (!loaded) {
             loaded = true;
             _load();

@@ -36,6 +36,7 @@ from apero_ri.application import (
 from apero_ri.application import ariapp_impls as _impls
 from apero_ri.application import astrometrics_api_helpers
 from apero_ri.application import astrometrics_history
+from apero_ri.application import rejection_list_api_helpers
 from apero_ri.application import (
     async_task_helpers,
     async_tasks_api_helpers,
@@ -1031,6 +1032,69 @@ class ARIApp(Flask):
     def _api_astrometrics_history_get(self):
         return astrometrics_history.api_astrometrics_history_get(
             self)
+
+    def _api_astrometrics_history_delete(self):
+        return astrometrics_history.api_astrometrics_history_delete(
+            self)
+
+    def _api_astrometrics_history_clear(self):
+        return astrometrics_history.api_astrometrics_history_clear(
+            self)
+
+    def _api_rejection_list_list(self):
+        return rejection_list_api_helpers.api_rejection_list_list(
+            self
+        )
+
+    def _api_rejection_list_add(self):
+        return rejection_list_api_helpers.api_rejection_list_add(
+            self
+        )
+
+    def _api_rejection_list_update(self):
+        return rejection_list_api_helpers.api_rejection_list_update(
+            self
+        )
+
+    def _api_rejection_list_delete(self):
+        return rejection_list_api_helpers.api_rejection_list_delete(
+            self
+        )
+
+    def _api_rejection_list_upload(self):
+        return rejection_list_api_helpers.api_rejection_list_upload(
+            self
+        )
+
+    def _api_rejection_history_list(self):
+        return rejection_list_api_helpers.api_rejection_history_list(
+            self
+        )
+
+    def _api_rejection_history_get(self):
+        return rejection_list_api_helpers.api_rejection_history_get(
+            self
+        )
+
+    def _api_rejection_history_restore(self):
+        return rejection_list_api_helpers.api_rejection_history_restore(
+            self
+        )
+
+    def _api_rejection_history_resolve(self):
+        return rejection_list_api_helpers.api_rejection_history_resolve(
+            self
+        )
+
+    def _api_rejection_history_delete(self):
+        return rejection_list_api_helpers.api_rejection_history_delete(
+            self
+        )
+
+    def _api_rejection_history_clear(self):
+        return rejection_list_api_helpers.api_rejection_history_clear(
+            self
+        )
 
     # -----------------------------------------------------------------
     # Issues subsystem

@@ -31,6 +31,7 @@ from typing import Iterable, List, Optional, Tuple
 
 from flask import jsonify, request
 
+from apero_ri.core.auth import user_has_admin_privileges
 from apero_ri.core.permissions import resolve_user_permissions
 
 
@@ -63,6 +64,14 @@ def _safe_history_filename(name: str) -> str:
 def _has_history_perm(perms: Iterable[str]) -> bool:
     """Return True if the caller may view/restore astrometrics history."""
     return "manage.astrometrics.history" in set(perms or [])
+
+
+def _has_history_admin(user_info: dict) -> bool:
+    """Return True if the caller is an admin/super_admin."""
+    groups = []
+    if isinstance(user_info, dict):
+        groups = list(user_info.get("groups", []))
+    return user_has_admin_privileges(groups)
 
 
 def _utcnow_iso() -> str:
@@ -234,6 +243,20 @@ def _check_history_perm(app):
     return user_info, perms, None
 
 
+def _check_history_admin(app):
+    """Authorise admin-only history management endpoints."""
+    user_info, perms, err = _check_history_perm(app)
+    if err is not None:
+        return None, set(), err
+    if not _has_history_admin(user_info):
+        return user_info, perms, (
+            jsonify(success=False,
+                    error="Forbidden (admin only)"),
+            403,
+        )
+    return user_info, perms, None
+
+
 def api_astrometrics_history_list(app):
     """List history entries (newest first) with optional filtering.
 
@@ -344,3 +367,55 @@ def api_astrometrics_history_get(app):
     if rec is None:
         return jsonify(success=False, error="Not found"), 404
     return jsonify(success=True, entry=rec)
+
+
+def api_astrometrics_history_delete(app):
+    """Delete one astrometrics history entry by id (admin-only)."""
+    _, _, err = _check_history_admin(app)
+    if err is not None:
+        return err
+    body = request.get_json(silent=True) or {}
+    entry_id = str(body.get("id") or "").strip()
+    if not entry_id:
+        return jsonify(success=False, error="Missing 'id'"), 400
+    astrom_root = _astrom_root(app)
+    fname, idx = _parse_history_id(entry_id)
+    if fname is None or idx is None:
+        return jsonify(success=False, error="Invalid id"), 400
+    if "/" in fname or "\\" in fname or fname.startswith("."):
+        return jsonify(success=False, error="Invalid id"), 400
+    fpath = _history_dir(astrom_root) / fname
+    if not fpath.is_file():
+        return jsonify(success=False, error="Not found"), 404
+    try:
+        with fpath.open("r", encoding="utf-8") as fp:
+            lines = fp.readlines()
+    except OSError:
+        return jsonify(success=False, error="Not found"), 404
+    if idx < 0 or idx >= len(lines):
+        return jsonify(success=False, error="Not found"), 404
+    lines.pop(idx)
+    try:
+        with fpath.open("w", encoding="utf-8") as fp:
+            fp.writelines(lines)
+    except OSError as exc:
+        return jsonify(success=False, error=str(exc)), 500
+    return jsonify(success=True, deleted_id=entry_id)
+
+
+def api_astrometrics_history_clear(app):
+    """Clear all astrometrics history files (admin-only)."""
+    _, _, err = _check_history_admin(app)
+    if err is not None:
+        return err
+    astrom_root = _astrom_root(app)
+    removed = 0
+    hdir = _history_dir(astrom_root)
+    if hdir.is_dir():
+        for fpath in _iter_history_files(astrom_root):
+            try:
+                fpath.unlink(missing_ok=True)
+                removed += 1
+            except OSError:
+                continue
+    return jsonify(success=True, cleared_files=removed)

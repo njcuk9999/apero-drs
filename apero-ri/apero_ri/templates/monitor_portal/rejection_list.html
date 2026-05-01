@@ -1,0 +1,787 @@
+{% extends "general/sidebar_base.html" %}
+{% block title %}APERO RI – Rejection List{% endblock %}
+
+{% block body_class %}ari-has-sidebar ari-rejection-page{% endblock %}
+
+{% block extra_head %}
+{{ super() }}
+<style>
+.rj-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+.rj-header__title {
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 0.55rem;
+}
+.rj-header__sub {
+    margin: 0.35rem 0 0;
+    color: var(--ari-text-muted, #57606a);
+    max-width: 60rem;
+}
+.rj-htabs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+}
+.rj-htab {
+    border: 1px solid var(--ari-border, #d0d7de);
+    background: var(--ari-card-bg, #fff);
+    color: var(--ari-text, #1f2328);
+    border-radius: 999px;
+    padding: 0.45rem 0.9rem;
+    cursor: pointer;
+    font-weight: 600;
+}
+.rj-htab--active {
+    background: #8e1f1f;
+    border-color: #8e1f1f;
+    color: #fff;
+}
+.rj-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.65rem;
+    align-items: center;
+    margin-bottom: 0.8rem;
+}
+.rj-search {
+    flex: 1 1 18rem;
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    border: 1px solid var(--ari-border, #d0d7de);
+    border-radius: 0.45rem;
+    background: var(--ari-card-bg, #fff);
+    padding: 0.35rem 0.65rem;
+}
+.rj-search input {
+    flex: 1 1 auto;
+    border: 0;
+    outline: 0;
+    background: transparent;
+}
+.rj-per-page {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    color: var(--ari-text-muted, #57606a);
+}
+.rj-per-page select {
+    border: 1px solid var(--ari-border, #d0d7de);
+    border-radius: 0.35rem;
+    padding: 0.28rem 0.45rem;
+    background: var(--ari-card-bg, #fff);
+}
+.rj-pager {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    margin-left: auto;
+}
+.rj-page-info {
+    min-width: 7rem;
+    text-align: center;
+    color: var(--ari-text-muted, #57606a);
+    font-size: 0.9rem;
+}
+.rj-sort {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    color: var(--ari-text-muted, #57606a);
+}
+.rj-sort select {
+    border: 1px solid var(--ari-border, #d0d7de);
+    border-radius: 0.35rem;
+    padding: 0.28rem 0.45rem;
+    background: var(--ari-card-bg, #fff);
+}
+.rj-flag-filters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.45rem;
+    align-items: center;
+}
+.rj-flag-filter {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    color: var(--ari-text-muted, #57606a);
+    font-size: 0.9rem;
+}
+.rj-flag-filter select {
+    border: 1px solid var(--ari-border, #d0d7de);
+    border-radius: 0.35rem;
+    padding: 0.28rem 0.45rem;
+    background: var(--ari-card-bg, #fff);
+}
+.rj-count,
+.rj-status {
+    color: var(--ari-text-muted, #57606a);
+    font-size: 0.9rem;
+}
+.rj-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.45rem;
+}
+.rj-card {
+    display: grid;
+    grid-template-columns: minmax(14rem, 22rem) minmax(13rem, 18rem)
+        minmax(0, 1fr) auto;
+    gap: 0.7rem;
+    align-items: start;
+    border: 1px solid var(--ari-border, #d0d7de);
+    border-radius: 0.5rem;
+    background: var(--ari-card-bg, #fff);
+    padding: 0.55rem 0.8rem;
+}
+.rj-card--add {
+    cursor: pointer;
+    border-style: dashed;
+    justify-items: center;
+    text-align: center;
+    color: #8e1f1f;
+}
+.rj-card--add:hover {
+    background: #fff2f2;
+}
+.rj-card__name {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    padding-top: 0.1rem;
+    min-width: 0;
+    font-weight: 700;
+    color: #8e1f1f;
+}
+.rj-card__name span {
+    font-family: monospace;
+    white-space: normal;
+    word-break: break-word;
+}
+.rj-card__flags-col {
+    min-width: 0;
+}
+.rj-card__comment {
+    white-space: normal;
+    word-break: break-word;
+    line-height: 1.35;
+    max-height: 4.05em;
+    overflow: hidden;
+    font-size: 0.92rem;
+}
+.rj-card__flags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem;
+}
+.rj-flag {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.28rem;
+    font-size: 0.78rem;
+    border-radius: 999px;
+    border: 1px solid #d0d7de;
+    padding: 0.12rem 0.45rem;
+    color: #57606a;
+    background: #f6f8fa;
+}
+.rj-flag--on {
+    border-color: #c4382b;
+    background: #fdecea;
+    color: #8e1f1f;
+}
+.rj-card__actions {
+    display: flex;
+    gap: 0.28rem;
+}
+.rj-btn-icon {
+    width: 1.9rem;
+    height: 1.9rem;
+    border-radius: 0.4rem;
+    border: 1px solid var(--ari-border, #d0d7de);
+    background: var(--ari-card-bg, #fff);
+    color: var(--ari-text-muted, #57606a);
+    cursor: pointer;
+}
+.rj-btn-icon:hover {
+    border-color: #8e1f1f;
+    color: #8e1f1f;
+}
+.rj-btn-icon--danger:hover {
+    border-color: #b42318;
+    color: #b42318;
+}
+#rj-list-card,
+#rj-history-card {
+    width: 100%;
+    align-items: stretch;
+}
+#rj-list-card .ari-card__body,
+#rj-history-card .ari-card__body {
+    width: 100%;
+}
+.rj-empty {
+    border: 1px dashed var(--ari-border, #d0d7de);
+    border-radius: 0.5rem;
+    padding: 1.3rem 1rem;
+    text-align: center;
+    color: var(--ari-text-muted, #57606a);
+}
+.rj-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.rj-overlay[hidden] {
+    display: none;
+}
+.rj-overlay__backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.45);
+}
+.rj-overlay__panel {
+    position: relative;
+    width: min(38rem, 94vw);
+    max-height: 88vh;
+    overflow: auto;
+    background: var(--ari-card-bg, #fff);
+    border-radius: 0.6rem;
+    box-shadow: 0 18px 40px rgba(0, 0, 0, 0.28);
+}
+#rj-diff-overlay .rj-overlay__panel {
+    width: min(72rem, 96vw);
+}
+.rj-overlay__header,
+.rj-overlay__footer {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.85rem 1rem;
+}
+.rj-overlay__header {
+    border-bottom: 1px solid var(--ari-border, #d0d7de);
+}
+.rj-overlay__footer {
+    border-top: 1px solid var(--ari-border, #d0d7de);
+    justify-content: flex-end;
+}
+.rj-overlay__body {
+    display: flex;
+    flex-direction: column;
+    gap: 0.8rem;
+    padding: 1rem;
+}
+.rj-overlay__close {
+    margin-left: auto;
+    border: 0;
+    background: transparent;
+    cursor: pointer;
+    color: var(--ari-text-muted, #57606a);
+    font-size: 1rem;
+}
+.rj-form-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 0.75rem;
+}
+.rj-field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+}
+.rj-field input,
+.rj-field textarea,
+.rj-field select {
+    border: 1px solid var(--ari-border, #d0d7de);
+    border-radius: 0.4rem;
+    padding: 0.45rem 0.55rem;
+    background: var(--ari-card-bg, #fff);
+}
+.rj-field--wide {
+    grid-column: 1 / -1;
+}
+.rj-history-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.45rem;
+    margin-top: 0.75rem;
+}
+.rj-history-card {
+    display: grid;
+    grid-template-columns: 11rem 9rem minmax(0, 1fr) auto;
+    gap: 0.6rem;
+    align-items: center;
+    border: 1px solid var(--ari-border, #d0d7de);
+    border-radius: 0.45rem;
+    padding: 0.45rem 0.7rem;
+    background: var(--ari-card-bg, #fff);
+    min-width: 0;
+}
+.rj-history-card__time {
+    font-family: monospace;
+    font-size: 0.82rem;
+    color: var(--ari-text-muted, #57606a);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.rj-history-card__user {
+    font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.rj-history-card__what {
+    min-width: 0;
+    font-size: 0.85rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.rj-history-card__name {
+    font-family: monospace;
+    color: #8e1f1f;
+    margin-right: 0.4rem;
+}
+.rj-history-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 999px;
+    padding: 0.15rem 0.5rem;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    background: #fdecea;
+    color: #8e1f1f;
+}
+.rj-history-badge--action {
+    background: #fff8db;
+    color: #7a5d00;
+}
+.rj-history-fields {
+    display: inline-flex;
+    flex-wrap: wrap;
+    gap: 0.2rem;
+    margin-left: 0.2rem;
+    vertical-align: middle;
+}
+.rj-history-fields span {
+    font-size: 0.75rem;
+    border-radius: 999px;
+    border: 1px solid #d0d7de;
+    padding: 0.1rem 0.4rem;
+    background: #f6f8fa;
+}
+.rj-history-card__actions {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    flex-wrap: nowrap;
+}
+.rj-btn-small {
+    border: 1px solid var(--ari-border, #d0d7de);
+    background: var(--ari-card-bg, #fff);
+    color: var(--ari-text-muted, #57606a);
+    border-radius: 0.4rem;
+    padding: 0.35rem 0.55rem;
+    cursor: pointer;
+    font-size: 0.82rem;
+    font-weight: 600;
+}
+.rj-btn-small:hover {
+    border-color: #8e1f1f;
+    color: #8e1f1f;
+}
+.rj-btn-small[disabled] {
+    opacity: 0.55;
+    cursor: default;
+}
+.rj-diff-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(18rem, 1fr));
+    gap: 0.75rem;
+}
+.rj-diff-card {
+    border: 1px solid var(--ari-border, #d0d7de);
+    border-radius: 0.5rem;
+    padding: 0.75rem;
+    background: var(--ari-card-bg, #fff);
+}
+.rj-diff-card__title {
+    margin: 0 0 0.55rem;
+    font-size: 0.9rem;
+}
+.rj-diff-card__row {
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+}
+.rj-diff-card__label {
+    font-size: 0.78rem;
+    color: var(--ari-text-muted, #57606a);
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+}
+.rj-diff-chip {
+    display: inline-block;
+    padding: 0.28rem 0.45rem;
+    border-radius: 0.35rem;
+    line-height: 1.35;
+    word-break: break-word;
+}
+.rj-diff-chip--neutral {
+    background: #fff8db;
+    color: #7a5d00;
+    font-style: italic;
+}
+.rj-diff-chip--add {
+    background: #e6f4ea;
+    color: #1e7e34;
+}
+.rj-diff-chip--remove {
+    background: #fdecea;
+    color: #a4221a;
+    text-decoration: line-through;
+}
+@media (max-width: 900px) {
+    .rj-card,
+    .rj-history-card {
+        grid-template-columns: 1fr;
+    }
+    .rj-pager {
+        margin-left: 0;
+    }
+    .rj-form-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+    .rj-history-card__actions {
+        justify-content: flex-start;
+        flex-wrap: wrap;
+    }
+}
+@media (max-width: 640px) {
+    .rj-form-grid {
+        grid-template-columns: 1fr;
+    }
+}
+</style>
+{% endblock %}
+
+{% block doc_content %}
+<div class="rj-header">
+    <div>
+        <h1 class="rj-header__title">
+            <i class="{{ page_icon }}"></i> {{ page_label }}
+        </h1>
+        <p class="rj-header__sub">
+            Manage file-level reject identifiers grouped by logical
+            instrument family. The {{ 'History' if
+            rejection_list_can_view_history else 'List' }} view reads the
+            configured mapped reject CSV files under
+            <strong>LOCAL_DATA_DIR/apero-assets</strong>.
+        </p>
+    </div>
+    <div class="rj-count" id="rj-count"></div>
+</div>
+
+{% if rejection_list_tabs %}
+<nav class="rj-htabs" id="rj-tabs" aria-label="Rejection tabs">
+    {% for tab in rejection_list_tabs %}
+    <button type="button"
+            class="rj-htab{% if loop.first %} rj-htab--active{% endif %}"
+            data-rj-tab="{{ tab.key }}">
+        <i class="fa-solid fa-ban"></i>
+        {{ tab.label }}
+    </button>
+    {% endfor %}
+    {% if rejection_list_can_view_history %}
+    <button type="button" class="rj-htab" data-rj-tab="history">
+        <i class="fa-solid fa-clock-rotate-left"></i>
+        History
+    </button>
+    {% endif %}
+</nav>
+
+<div class="ari-card" id="rj-list-card">
+    <div class="ari-card__body">
+        <div class="rj-toolbar">
+            <div class="rj-search">
+                <i class="fa-solid fa-magnifying-glass"></i>
+                <input id="rj-filter-input" type="search"
+                       placeholder="Filter by identifier..."
+                       autocomplete="off">
+            </div>
+            <label class="rj-per-page">
+                <span>per page</span>
+                <select id="rj-per-page">
+                    <option value="50" selected>50</option>
+                    <option value="100">100</option>
+                    <option value="500">500</option>
+                </select>
+            </label>
+            <label class="rj-sort">
+                <span>sort</span>
+                <select id="rj-sort">
+                    <option value="identifier_asc" selected>
+                        Identifier A-Z
+                    </option>
+                    <option value="identifier_desc">
+                        Identifier Z-A
+                    </option>
+                </select>
+            </label>
+            <div class="rj-flag-filters" aria-label="Flag filters">
+                <label class="rj-flag-filter">
+                    <span>PP</span>
+                    <select id="rj-filter-pp">
+                        <option value="" selected>Any</option>
+                        <option value="1">1</option>
+                        <option value="0">0</option>
+                    </select>
+                </label>
+                <label class="rj-flag-filter">
+                    <span>TEL</span>
+                    <select id="rj-filter-tel">
+                        <option value="" selected>Any</option>
+                        <option value="1">1</option>
+                        <option value="0">0</option>
+                    </select>
+                </label>
+                <label class="rj-flag-filter">
+                    <span>RV</span>
+                    <select id="rj-filter-rv">
+                        <option value="" selected>Any</option>
+                        <option value="1">1</option>
+                        <option value="0">0</option>
+                    </select>
+                </label>
+                <label class="rj-flag-filter">
+                    <span>USED</span>
+                    <select id="rj-filter-used">
+                        <option value="" selected>Any</option>
+                        <option value="1">1</option>
+                        <option value="0">0</option>
+                    </select>
+                </label>
+            </div>
+            <button id="rj-open-upload" class="ari-btn ari-btn--secondary"
+                    type="button">
+                <i class="fa-solid fa-upload"></i>
+                Upload CSV
+            </button>
+            <div class="rj-pager">
+                <button id="rj-prev" class="ari-btn ari-btn--secondary"
+                        type="button">
+                    <i class="fa-solid fa-chevron-left"></i>
+                </button>
+                <span class="rj-page-info" id="rj-page-info"></span>
+                <button id="rj-next" class="ari-btn ari-btn--secondary"
+                        type="button">
+                    <i class="fa-solid fa-chevron-right"></i>
+                </button>
+            </div>
+        </div>
+        <div class="rj-status" id="rj-status"></div>
+        <div class="rj-list" id="rj-list"></div>
+    </div>
+</div>
+
+{% if rejection_list_can_view_history %}
+<div class="ari-card" id="rj-history-card" hidden>
+    <div class="ari-card__body">
+        <div class="rj-toolbar">
+            <div class="rj-search">
+                <i class="fa-solid fa-magnifying-glass"></i>
+                <input id="rj-history-filter" type="search"
+                       placeholder="Filter history (instrument/user/action)..."
+                       autocomplete="off">
+            </div>
+            <label class="rj-per-page">
+                <span>per page</span>
+                <select id="rj-history-per-page">
+                    <option value="50" selected>50</option>
+                    <option value="100">100</option>
+                    <option value="500">500</option>
+                </select>
+            </label>
+            <div class="rj-pager">
+                <button id="rj-history-prev"
+                        class="ari-btn ari-btn--secondary"
+                        type="button">
+                    <i class="fa-solid fa-chevron-left"></i>
+                </button>
+                <span class="rj-page-info" id="rj-history-page"></span>
+                <button id="rj-history-next"
+                        class="ari-btn ari-btn--secondary"
+                        type="button">
+                    <i class="fa-solid fa-chevron-right"></i>
+                </button>
+            </div>
+            {% if rejection_list_can_manage_history %}
+            <button id="rj-history-clear"
+                    class="ari-btn ari-btn--secondary"
+                    type="button"
+                    title="Clear all rejection history">
+                <i class="fa-solid fa-trash-can"></i>
+                Clear history
+            </button>
+            {% endif %}
+        </div>
+        <div class="rj-status" id="rj-history-status"></div>
+        <div class="rj-history-list" id="rj-history-list"></div>
+    </div>
+</div>
+{% endif %}
+
+<div class="rj-overlay" id="rj-edit-overlay" hidden>
+    <div class="rj-overlay__backdrop" data-rj-close="edit"></div>
+    <div class="rj-overlay__panel">
+        <div class="rj-overlay__header">
+            <h3 id="rj-edit-title">Add rejection entry</h3>
+            <button class="rj-overlay__close" type="button"
+                    data-rj-close="edit">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+        <div class="rj-overlay__body">
+            <input id="rj-edit-mode" type="hidden" value="add">
+            <input id="rj-edit-original" type="hidden" value="">
+            <div class="rj-form-grid">
+                <label class="rj-field rj-field--wide">
+                    <span>Identifier</span>
+                    <input id="rj-identifier" type="text"
+                           placeholder="e.g. NIRPS_2022-05-08T05_20_05_851.fits">
+                </label>
+                <label class="rj-field">
+                    <span>PP</span>
+                    <select id="rj-pp">
+                        <option value="1" selected>1</option>
+                        <option value="0">0</option>
+                    </select>
+                </label>
+                <label class="rj-field">
+                    <span>TEL</span>
+                    <select id="rj-tel">
+                        <option value="1" selected>1</option>
+                        <option value="0">0</option>
+                    </select>
+                </label>
+                <label class="rj-field">
+                    <span>RV</span>
+                    <select id="rj-rv">
+                        <option value="1" selected>1</option>
+                        <option value="0">0</option>
+                    </select>
+                </label>
+                <label class="rj-field">
+                    <span>USED</span>
+                    <select id="rj-used">
+                        <option value="1" selected>1</option>
+                        <option value="0">0</option>
+                    </select>
+                </label>
+                <label class="rj-field rj-field--wide">
+                    <span>Comment</span>
+                    <textarea id="rj-comment" rows="4"
+                              placeholder="Reason for rejection"></textarea>
+                </label>
+            </div>
+            <div class="rj-status" id="rj-edit-status"></div>
+        </div>
+        <div class="rj-overlay__footer">
+            <button class="ari-btn ari-btn--secondary" type="button"
+                    data-rj-close="edit">Cancel</button>
+            <button class="ari-btn ari-btn--primary" type="button"
+                    id="rj-save">
+                <i class="fa-solid fa-floppy-disk"></i>
+                Save
+            </button>
+        </div>
+    </div>
+</div>
+
+<div class="rj-overlay" id="rj-upload-overlay" hidden>
+    <div class="rj-overlay__backdrop" data-rj-close="upload"></div>
+    <div class="rj-overlay__panel">
+        <div class="rj-overlay__header">
+            <h3>Upload reject CSV</h3>
+            <button class="rj-overlay__close" type="button"
+                    data-rj-close="upload">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+        <div class="rj-overlay__body">
+            <p class="rj-header__sub" style="margin:0; max-width:none;">
+                Required columns:
+                <strong>IDENTIFIER, DATE_ADDED, PP, TEL, RV, USED,
+                COMMENT</strong>. Duplicate identifiers in the upload are
+                collapsed to the last row. Existing identifiers trigger a
+                confirmation step before replacement.
+            </p>
+            <label class="rj-field">
+                <span>CSV file</span>
+                <input id="rj-upload-file" type="file" accept=".csv">
+            </label>
+            <div class="rj-status" id="rj-upload-status"></div>
+        </div>
+        <div class="rj-overlay__footer">
+            <button class="ari-btn ari-btn--secondary" type="button"
+                    data-rj-close="upload">Cancel</button>
+            <button class="ari-btn ari-btn--primary" type="button"
+                    id="rj-upload-submit">
+                <i class="fa-solid fa-upload"></i>
+                Upload
+            </button>
+        </div>
+    </div>
+</div>
+
+<div class="rj-overlay" id="rj-diff-overlay" hidden>
+    <div class="rj-overlay__backdrop" data-rj-close="diff"></div>
+    <div class="rj-overlay__panel">
+        <div class="rj-overlay__header">
+            <h3 id="rj-diff-title">History entry</h3>
+            <button class="rj-overlay__close" type="button"
+                    data-rj-close="diff">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+        <div class="rj-overlay__body" id="rj-diff-body"></div>
+        <div class="rj-overlay__footer">
+            <button class="ari-btn ari-btn--primary" type="button"
+                    data-rj-close="diff">Close</button>
+        </div>
+    </div>
+</div>
+
+<script>
+window.AperoRejectionList = {
+    tabs: {{ rejection_list_tabs|tojson }},
+    canViewHistory: {{ rejection_list_can_view_history|tojson }},
+    canManageHistory: {{ rejection_list_can_manage_history|tojson }}
+};
+</script>
+<script src="{{ url_for('static', filename='js/rejection_list.js', v='20260501j') }}"></script>
+{% else %}
+<div class="ari-card">
+    <div class="ari-card__body">
+        <div class="rj-empty">
+            No rejection-list tabs are visible for this account.
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}
