@@ -63,7 +63,8 @@ textentry = drs_lang.textentry
 DEBUG = False
 # Recipe class
 DrsRecipe = drs_recipe.DrsRecipe
-
+# Define comman asset directories (to copy as well as the instrument specific ones)
+COMMON_ASSET_DIRS = ['core', 'astrometrics']
 
 # =============================================================================
 # Define reset functions
@@ -699,10 +700,8 @@ def reset_assets(params: ParamDict, recipe: DrsRecipe,
     reset_dbdir(params, name, asset_path1, abs_reset_path1, log=log,
                 relative_path='MODULE', backup=True)
     # -------------------------------------------------------------------------
-    # deal with common directories for all instrument
-    common_dirs = ['core', 'astrometrics']
     # loop aroound all common asset dirs
-    for common_dir in common_dirs:
+    for common_dir in COMMON_ASSET_DIRS:
         asset_path2 = os.path.join(params['PATH.ASSETS'], common_dir)
         reset_path2 = os.path.join(params['IPATH.RESET_ASSETS'], common_dir)
         # get reset_path from apero module dir
