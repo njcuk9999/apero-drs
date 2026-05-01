@@ -23,6 +23,7 @@ from astropy.table import Table
 from apero.base import base as apero_base
 from apero.core import drs_database
 from apero.core import drs_astrometrics
+from apero.core import drs_rejection
 from apero.instruments import select
 from apero.instruments.default import instrument as instrument_mod
 from apero.io import drs_fits
@@ -412,54 +413,53 @@ def get_geometric_airmass(ra: float, dec: float, plx: float, pmra: float,
 
 def get_obj_reject_list(params: ParamDict) -> np.ndarray:
     """
-    Get a list of rejected object names from the googlesheet object database
+    Get object names to reject from the local astrometric reject list.
+
+    This reads ``reject_list.yaml`` from the astrometric assets directory
+    and returns the union of object names and aliases (cleaned).
 
     :param params: ParamDict, parameter dictionary of constants
 
     :return: np.array 1D, the list of reject object names
     """
-    # get parameters from params
-    gsheet_url = params['OBJ.LIST.RLIST_GSHEET_URL']
-    reject_id = params['OBJ.LIST.RLIST_GSHEET_MAINLIST_ID']
-    # get reject list from configured source
+    # load the astrometric database to discover the local path
+    objdbm = ObjectDatabase(params, shortname='OBJ-REJECT')
+    objdbm.load_db()
+    reject_path = os.path.join(objdbm.path, 'reject_list.yaml')
+    # no reject list file means no rejected objects
+    if not os.path.exists(reject_path):
+        return np.array([])
+    # read yaml reject list
     try:
-        if os.path.exists(gsheet_url):
-            mainpath = os.path.join(gsheet_url, reject_id)
-            rejecttable = drs_io.no_mask_table(Table.read(mainpath,
-                                                          format='csv'))
-        else:
-            rejecttable = drs_database.get_google_sheet(params, gsheet_url,
-                                                        reject_id)
-    # any exception here should return a warning and a empty array
+        reject_data = drs_astrometrics.AstrometricDatabase._read_yaml(
+            reject_path)
     except Exception as e:
-        # warning msg: Cannot read reject list {0}. Skipping rejection
-        wargs = [GOOGLE_BASE_URL.format(gsheet_url, reject_id),
-                 type(e), str(e)]
-        WLOG(params, 'warning', textentry('10-010-00007', args=wargs),
-             sublevel=3)
-        # return empty array
+        wmsg = 'Cannot read object reject list: {0}. {1}: {2}'
+        wargs = [reject_path, type(e).__name__, str(e)]
+        WLOG(params, 'warning', wmsg.format(*wargs), sublevel=3)
         return np.array([])
-    # if we have reject entries deal with them (and their aliases)
-    if len(rejecttable) > 0:
-        # only keep rows which should be used
-        mask = rejecttable['USED'] == 1
-        # cut down the reject table
-        rejecttable = rejecttable[mask]
-        # start the reject list with all object names in the reject list
-        reject_objs = list(rejecttable['OBJNAME'])
-        # loop around rows in the reject table
-        for row in range(len(rejecttable)):
-            # add all objects in the alias list
-            aliaslist = rejecttable['ALIASES'][row]
-            # loop around invidiual alias names
-            for alias in aliaslist.split('|'):
-                # clean alias name and add to reject list
-                reject_objs.append(drs_astrometrics.clean_object(alias))
-        # return any unique rows in reject object list
-        return np.unique(reject_objs)
-    # else if we have no objects to reject just return an empty array
-    else:
+    objects = reject_data.get('OBJECTS', dict())
+    if not isinstance(objects, dict) or len(objects) == 0:
         return np.array([])
+    reject_objs = []
+    for apero_name, entry in objects.items():
+        clean_name = drs_astrometrics.clean_object(apero_name)
+        if clean_name not in ['', 'Null']:
+            reject_objs.append(clean_name)
+        aliases = ''
+        if isinstance(entry, dict):
+            aliases = entry.get('ALIASES', '')
+        if isinstance(aliases, list):
+            alias_list = aliases
+        else:
+            alias_list = str(aliases).split('|')
+        for alias in alias_list:
+            clean_alias = drs_astrometrics.clean_object(alias)
+            if clean_alias not in ['', 'Null']:
+                reject_objs.append(clean_alias)
+    if len(reject_objs) == 0:
+        return np.array([])
+    return np.unique(np.array(reject_objs, dtype=str))
 
 
 def reject_infile(params: ParamDict, recipe: DrsRecipe,
@@ -514,7 +514,7 @@ def reject_infile(params: ParamDict, recipe: DrsRecipe,
         return False
     # -------------------------------------------------------------------------
     # get reject database
-    rejectdbm = drs_database.RejectDatabase(params, recipe.shortname)
+    rejectdbm = drs_rejection.RejectDatabase(params, recipe.shortname)
     rejectdbm.load_db()
     # get reject table
     rtable = rejectdbm.get_entries('*')
@@ -552,7 +552,7 @@ def get_file_reject_list(params: ParamDict, recipe: DrsRecipe,
     # set function name
     func_name = display_func('get_reject_list', __NAME__)
     # get reject database
-    rejectdbm = drs_database.RejectDatabase(params, recipe.shortname)
+    rejectdbm = drs_rejection.RejectDatabase(params, recipe.shortname)
     rejectdbm.load_db()
     # get reject table
     rtable = rejectdbm.get_entries('*')

@@ -80,8 +80,6 @@ class Instrument:
         self.calibration_cols: Optional[DatabaseColumns] = None
         self.telluric_cols: Optional[DatabaseColumns] = None
         self.logdb_cols: Optional[DatabaseColumns] = None
-        self.objdb_cols: Optional[DatabaseColumns] = None
-        self.rejectdb_cols: Optional[DatabaseColumns] = None
 
     def __getstate__(self) -> dict:
         """
@@ -1014,39 +1012,6 @@ class Instrument:
         index_cols.uniques += ['BLOCK_KIND', 'OBS_DIR', 'FILENAME']
         # return column object
         return index_cols
-
-    def REJECT_DB_COLUMNS(self) -> DatabaseColumns:
-        """
-        Define the columns use in the reject database
-        :return: list of columns (strings)
-        """
-        # set function name
-        # _ = display_func('LOG_DB_COLUMNS', __NAME__,
-        #                  self.class_name)
-        # check for pre-existing values
-        if self.rejectdb_cols is not None:
-            return self.rejectdb_cols
-        # set columns (dictionary form for clarity
-        rejectdb_cols = DatabaseColumns(name_prefix='rlog.')
-        rejectdb_cols.add(name='IDENTIFIER', is_index=True,
-                          datatype=sqlalchemy.String(255),
-                          comment='Identifier column')
-        rejectdb_cols.add(name='PP', datatype=sqlalchemy.Integer,
-                          comment='Whether this file should not be '
-                                  'preprocessed')
-        rejectdb_cols.add(name='TEL', datatype=sqlalchemy.Integer,
-                          comment='Whether this file should be used for '
-                                  'telluric')
-        rejectdb_cols.add(name='RV', datatype=sqlalchemy.Integer,
-                          comment='Whether this file should be used for RV')
-        rejectdb_cols.add(name='USED', datatype=sqlalchemy.Integer,
-                          comment='Whether flags should be used')
-        rejectdb_cols.add(name='DATE_ADDED', datatype=sqlalchemy.String(30))
-        rejectdb_cols.add(name='COMMENT',
-                          datatype=sqlalchemy.TEXT)
-        # return columns and ctypes
-        self.rejectdb_cols = rejectdb_cols
-        return rejectdb_cols
 
     def LOG_DB_COLUMNS(self) -> DatabaseColumns:
         """

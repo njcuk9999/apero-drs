@@ -15,7 +15,7 @@ from aperocore import drs_lang
 from aperocore.core import drs_log
 from apero.utils import drs_startup
 from apero.tools.module.database import drs_astrometrics
-from apero.tools.module.listing import drs_reject
+from apero.core import drs_rejection
 from apero.base import base as apero_base
 
 # =============================================================================
@@ -93,7 +93,7 @@ def __main__(recipe, params):
     # deal with obsdir set (update identifier)
     if obsdir not in ['None', None]:
         # update identifier to include all non-science from this night
-        identifier = drs_reject.update_from_obsdir(params, recipe, obsdir)
+        identifier = drs_rejection.update_from_obsdir(params, recipe, obsdir)
     # ----------------------------------------------------------------------
     # must set either objname or filename
     if objname in ['None', None] and identifier in ['None', None]:
@@ -114,7 +114,7 @@ def __main__(recipe, params):
     # deal with filename set
     if identifier not in ['None', None]:
         # add to file reject list
-        drs_reject.add_file_reject(params, recipe, identifier)
+        drs_rejection.add_file_reject(params, recipe, identifier)
         # return locals
         return locals()
 

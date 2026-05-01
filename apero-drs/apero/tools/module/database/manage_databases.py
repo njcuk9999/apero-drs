@@ -18,6 +18,7 @@ from astropy.table import Table, MaskedColumn
 from apero.base import base as apero_base
 from apero.core import drs_database
 from apero.core import drs_astrometrics
+from apero.core import drs_rejection
 from apero.instruments import select
 from apero.instruments.default import instrument as instrument_mod
 from apero.utils import drs_recipe
@@ -54,16 +55,6 @@ WLOG = drs_log.wlog
 AperoCodedException = drs_log.AperoCodedException
 # get textentry
 textentry = drs_lang.textentry
-# define reject column datatypes (force consistency)
-REJECT_DATA_TYPES = dict()
-REJECT_DATA_TYPES['IDENTIFIER'] = str
-REJECT_DATA_TYPES['PP'] = int
-REJECT_DATA_TYPES['TEL'] = int
-REJECT_DATA_TYPES['RV'] = int
-REJECT_DATA_TYPES['USED'] = int
-REJECT_DATA_TYPES['COMMENT'] = str
-
-
 # =============================================================================
 # Define general functions
 # =============================================================================
@@ -251,7 +242,7 @@ def list_databases(params: ParamDict,
     findexdbm = drs_database.FileIndexDatabase(params, shortname, pconst)
     logdbm = drs_database.LogDatabase(params, shortname, pconst)
     objectdbm = drs_astrometrics.AstrometricDatabase(params, shortname)
-    rejectdbm = drs_database.RejectDatabase(params, shortname, pconst)
+    rejectdbm = drs_rejection.RejectDatabase(params, shortname)
     # add to storage
     databases['calib'] = calibdbm
     databases['tellu'] = telludbm
@@ -623,156 +614,97 @@ def validate_astrometric_yaml_archive(params: ParamDict,
 # =============================================================================
 def create_reject_database(params: ParamDict, pconst: Instrument,
                            databases: Dict[str, DatabaseM],
-                           verbose: bool = False) -> Database:
+                           verbose: bool = False) -> 'DatabaseM':
     """
-    Setup for the reject database
+    Setup for the reject database.
+
+    The reject catalogue is now CSV-backed (a single reject.csv under
+    PATH.ASSETS/reject) so there is no SQL table to create.  This
+    function only ensures the CSV file exists (creating an empty one if
+    necessary) and then returns the RejectDatabase manager.
 
     :param params: ParamDict, the parameter dictionary of constants
-    :param pconst: Pseudo constants
+    :param pconst: Pseudo constants (unused, kept for API parity)
     :param databases: dictionary of database managers
     :param verbose: bool, if True print more messages
 
-    :returns: database - the telluric database
+    :returns: drs_rejection.RejectDatabase manager
     """
-    # get columns and ctypes from pconst
-    rejectdb_cols = pconst.REJECT_DB_COLUMNS()
-    # -------------------------------------------------------------------------
-    # construct directory
+    _ = pconst  # unused (API parity)
     rejectdbm = databases['reject']
-    # -------------------------------------------------------------------------
-    # make database
-    rejectdb = drs_db.AperoDatabase(rejectdbm.dburl,
-                                    tablename=rejectdbm.dbtable,
-                                    connect_args=rejectdbm.connect_args)
-    # -------------------------------------------------------------------------
-    # remove table if it already exists
-    if rejectdb.tablename in rejectdb.get_tables():
-        rejectdb.backup()
-        rejectdb.delete_table(rejectdb.tablename)
+    # ensure the directory and file exist
+    csv_path = rejectdbm.path
+    csv_dir = os.path.dirname(csv_path)
+    if not os.path.isdir(csv_dir):
+        os.makedirs(csv_dir, exist_ok=True)
         if verbose:
-            WLOG(params, '', 'Deleted reject database')
-    # add main table
-    rejectdb.add_table(rejectdb.tablename,
-                       columns=rejectdb_cols.columns,
-                       indexes=rejectdb_cols.indexes,
-                       uniques=rejectdb_cols.uniques)
-    if verbose:
-        WLOG(params, '', 'Created reject database')
-    # ---------------------------------------------------------------------
-    # update object database from google sheet(s)
-    update_reject_database(params)
-    # -------------------------------------------------------------------------
-    return rejectdb
+            WLOG(params, '', 'Created reject directory: {0}'.format(csv_dir))
+    if not os.path.isfile(csv_path):
+        pd.DataFrame(columns=drs_rejection.CSV_COLUMNS).to_csv(
+            csv_path, index=False)
+        if verbose:
+            WLOG(params, '', 'Created empty reject CSV: {0}'.format(csv_path))
+    else:
+        if verbose:
+            WLOG(params, '', 'Reject CSV already exists: {0}'.format(csv_path))
+    # warm the cache
+    rejectdbm.load_db()
+    return rejectdbm
 
 
 def reject_db_populated(params: ParamDict, recipe: DrsRecipe) -> bool:
     """
-    Check that reject database is populated
-    """
-    # need to load database
-    rejectdbm = drs_database.RejectDatabase(params, recipe.shortname)
-    rejectdbm.load_db()
-    # count rows in database
-    count = rejectdbm.database.count()
-    # return a boolean for object database populated
-    return count > 0
-
-
-def update_reject_database(params: ParamDict, log: bool = True):
-    """
-    Update the local reject database - note this overwrites all entries in the
-    local database
-
-    By default this uses a googlesheet URL (REJECT_LIST_GOOGLE_SHEET_URL)
-
-    however if REJECT_LIST_GOOGLE_SHEET_URL is a local directory one can set the
-    REJECT_LIST_GSHEET_MAIN_LIST_ID to a csv file for a complete offline 
-    reduction
+    Check that the reject database has at least one row.
 
     :param params: ParamDict, the parameter dictionary of constants
-    :param log: bool, if True logs update
-
-    :return: None, updates local object database
+    :param recipe: DrsRecipe, the calling recipe
+    :return: bool, True if CSV contains at least one row
     """
-    # get pconst
-    pconst = load_functions.load_pconfig(select.INSTRUMENTS)
-    # get list of databases
-    databases = list_databases(params, 'MAN_DB')
-    # get the object database (combined with pending + user table)
-    maintable = get_reject_database(params, log=log)
-    # -------------------------------------------------------------------------
-    # convert main table to a pandas dataframe
-    df = maintable.to_pandas()
-    # -------------------------------------------------------------------------
-    # get columns and ctypes from pconst
-    rejectdb_cols = pconst.REJECT_DB_COLUMNS()
-    # -------------------------------------------------------------------------
-    # construct directory
-    rejectdbm = databases['reject']
-    # -------------------------------------------------------------------------
-    # make database
-    rejectdb = drs_db.AperoDatabase(rejectdbm.dburl, tablename=rejectdbm.dbtable)
-    # -------------------------------------------------------------------------
-    # remove table if it already exists
-    if rejectdb.tablename in rejectdb.get_tables():
-        rejectdb.backup()
-        rejectdb.delete_table(rejectdb.tablename)
-    # add main table
-    rejectdb.add_table(rejectdb.tablename,
-                       columns=rejectdb_cols.columns,
-                       indexes=rejectdb_cols.indexes,
-                       uniques=rejectdb_cols.uniques)
-    # ---------------------------------------------------------------------
-    # add rows from pandas dataframe
-    rejectdb.add_from_pandas(df)
+    rejectdbm = drs_rejection.RejectDatabase(params, recipe.shortname)
+    rejectdbm.load_db()
+    rtable = rejectdbm.get_entries('*')
+    if rtable is None:
+        return False
+    return len(rtable) > 0
 
 
-def get_reject_database(params: ParamDict, log: bool = True) -> Table:
+def update_reject_database(params: ParamDict, log: bool = True) -> None:
     """
-    Get the reject database from google sheet (or file)
-    and combine with pending / user table if required and found
+    Refresh the in-memory cache for the reject database.
 
-    :param params: ParamDict, parameter dictionary of constants
-    :param log: whether to log table read
+    The CSV is now the single source of truth.  This function only
+    re-reads the CSV into the module-level cache so that any changes
+    made externally (e.g. by another process) are picked up.
 
-    :return: astropy table, the object database
+    :param params: ParamDict, the parameter dictionary of constants
+    :param log: bool, if True logs the update
+    :return: None
     """
-    # set function name
-    func_name = __NAME__ + '.get_reject_database()'
-    # get parameters from params
-    gsheet_url = params['OBJ.LIST.RLIST_GSHEET_URL']
-    main_id = params['OBJ.LIST.RLIST_GSHEET_MAINLIST_ID']
-    # print that we are updating object database
     if log:
         WLOG(params, 'info', textentry('40-503-00046'))
-    # -------------------------------------------------------------------------
-    # load pseudo constants
-    pconst = load_functions.load_pconfig(select.INSTRUMENTS)
-    # get reject database column data types
-    reject_data_types = dict()
-    reject_cols = pconst.REJECT_DB_COLUMNS()
-    # loop around columns and get data type
-    for col in reject_cols.columns:
-        reject_data_types[col.name] = reject_cols.get_datatype(col.name)
-    # -------------------------------------------------------------------------
-    # deal with gsheet_url being local csv file
-    if os.path.exists(gsheet_url):
-        mainpath = os.path.join(gsheet_url, main_id)
-        try:
-            maintable = drs_io.no_mask_table(Table.read(mainpath, format='csv'))
-        except Exception as e:
-            # error msg: if REJECT_LIST_GOOGLE_SHEET_URL is local directory
-            #            main_id must be a valid csv file
-            eargs = [mainpath, type(e), str(e), func_name]
-            raise AperoCodedException(params, '09-002-00006', targs=eargs)
-    else:
-        # get google sheets
-        maintable = drs_database.get_google_sheet(params, gsheet_url, main_id)
-    # force types in main table and pend table (so we can join them)
-    maintable = _force_column_dtypes(maintable, reject_data_types)
-    # -------------------------------------------------------------------------
-    # return the main table
-    return maintable
+    rejectdbm = drs_rejection.RejectDatabase(params, 'MAN_DB')
+    # force a fresh read from disk
+    drs_rejection._ensure_loaded(rejectdbm.path, force=True)
+
+
+def get_reject_database(params: ParamDict,
+                        log: bool = True) -> pd.DataFrame:
+    """
+    Return the full reject table as a pandas DataFrame.
+
+    :param params: ParamDict, parameter dictionary of constants
+    :param log: bool, whether to log the read
+    :return: pd.DataFrame with columns IDENTIFIER, DATE_ADDED, PP, TEL,
+             RV, USED, COMMENT
+    """
+    if log:
+        WLOG(params, 'info', textentry('40-503-00046'))
+    rejectdbm = drs_rejection.RejectDatabase(params, 'MAN_DB')
+    rejectdbm.load_db()
+    rtable = rejectdbm.get_entries('*')
+    if not isinstance(rtable, pd.DataFrame) or len(rtable) == 0:
+        return pd.DataFrame(columns=drs_rejection.CSV_COLUMNS)
+    return rtable
 
 
 # =============================================================================

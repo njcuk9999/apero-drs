@@ -1620,18 +1620,6 @@ CDict.set('REJECT_VALCOL', value='IDENTIFIER', source=__NAME__, group=cgroup)
 # Define the bad list google spreadsheet mask column for preprocessing
 CDict.set('REJECT_MASKCOL', value='PP', source=__NAME__, group=cgroup)
 
-# Define the google sheet to use for update the reject list
-CDict.set('RLIST_GSHEET_URL',
-          value='1gvMp1nHmEcKCUpxsTxkx-5m115mLuQIGHhxJCyVoZCM',
-          source=__NAME__, group=cgroup)
-
-# Define the google sheet id to use for update the reject list
-CDict.set('RLIST_GSHEET_MAINLIST_ID', value='1847598400',
-          source=__NAME__, group=cgroup)
-
-# Define the google sheet name to use for the reject list
-CDict.set('RLIST_GSHEET_SHEETNAME', value='NIRPS_HE', source=__NAME__, group=cgroup)
-
 
 # =============================================================================
 # OBJECT: SKY CORR SETTINGS

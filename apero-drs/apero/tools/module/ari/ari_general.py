@@ -23,6 +23,7 @@ from aperocore.base import base
 from aperocore.constants import param_functions
 from apero.core import drs_database
 from apero.core import drs_astrometrics
+from apero.core import drs_rejection
 from aperocore.core import drs_log
 from aperocore.core import drs_misc
 from aperocore.core import drs_text
@@ -338,7 +339,7 @@ def find_new_objects(params: ParamDict, recipe: DrsRecipe,
     logdbm = drs_database.LogDatabase(params, recipe.shortname)
     logdbm.load_db()
     # get reject database
-    rejectdbm = drs_database.RejectDatabase(params)
+    rejectdbm = drs_rejection.RejectDatabase(params)
     rejectdbm.load_db()
     # get reject table
     reject_table = rejectdbm.get_entries('*')
