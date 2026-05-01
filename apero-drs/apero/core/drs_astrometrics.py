@@ -1963,7 +1963,7 @@ class AstrometricDatabase:
         # store the recipe shortname for log messages
         self.shortname = shortname or 'None'
         # base assets path from params (may not exist on disk yet)
-        assets_root = str(params['DRS_DATA_ASSETS'])
+        assets_root = str(params['PATH.ASSETS'])
         # absolute path to the astrometrics directory
         self.path = os.path.abspath(os.path.join(assets_root, ASTROM_SUBDIR))
         # absolute path to the lock directory
@@ -3642,7 +3642,7 @@ if __name__ == "__main__":
     try:
         # fake the bits of params that we use
         _params = ParamDict()
-        _params['DRS_DATA_ASSETS'] = _tmp_root
+        _params['PATH.ASSETS'] = _tmp_root
         # construct the database (directory does not exist yet)
         _db = AstrometricDatabase(_params, shortname='SELFTEST')
         # add a single entry

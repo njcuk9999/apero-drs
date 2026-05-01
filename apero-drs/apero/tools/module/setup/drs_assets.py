@@ -225,7 +225,7 @@ def check_local_assets(params: ParamDict):
 def update_local_assets(params: ParamDict, tarfile: str = None):
 
     # get the input directory
-    indir = params['INPUTS']['INDIR']
+    indir = params['INPUTS'].get('INDIR', 'None')
     # deal with no input directory
     if drs_text.null_text(indir, ['None', 'Null', '']):
         # get path to yaml file
