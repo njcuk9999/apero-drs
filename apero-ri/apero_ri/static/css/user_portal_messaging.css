@@ -284,7 +284,29 @@
 }
 
 /* ---------------- Compose / view modal ---------------- */
+.upm-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 1400;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+}
+
+.upm-modal[hidden] {
+    display: none !important;
+}
+
+.upm-modal .ari-modal__backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.45);
+}
+
 .upm-modal .ari-modal__content {
+    position: relative;
+    z-index: 1;
     width: min(640px, 96vw);
     max-height: 90vh;
     overflow-y: auto;
@@ -292,6 +314,16 @@
     color: var(--ari-text);
     border: 1px solid var(--ari-border, #d0d7de);
     border-radius: 8px;
+}
+.upm-modal .ari-modal__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+}
+.upm-modal .ari-modal__header h2 {
+    margin: 0;
+    color: var(--ari-text, #1f2328);
 }
 .upm-send-form {
     display: flex;
@@ -308,6 +340,58 @@
     font-weight: 500;
     color: var(--ari-text-muted, #6b7785);
     font-size: 0.875rem;
+}
+.upm-typeahead-wrap {
+    position: relative;
+}
+.upm-typeahead-list {
+    position: absolute;
+    top: calc(100% + 4px);
+    left: 0;
+    right: 0;
+    z-index: 4;
+    background: var(--ari-card-bg, #fff);
+    border: 1px solid var(--ari-border, #d0d7de);
+    border-radius: 8px;
+    max-height: 240px;
+    overflow-y: auto;
+    box-shadow: 0 12px 24px rgba(31, 35, 40, 0.16);
+}
+.upm-typeahead-item {
+    width: 100%;
+    border: none;
+    background: transparent;
+    text-align: left;
+    display: flex;
+    flex-direction: column;
+    gap: 0.08rem;
+    padding: 0.45rem 0.6rem;
+    cursor: pointer;
+}
+.upm-typeahead-item:hover {
+    background: var(--ari-bg, #f6f8fa);
+}
+.upm-typeahead-item__main {
+    font-size: 0.9rem;
+    color: var(--ari-text, #1f2328);
+}
+.upm-typeahead-item__sub {
+    font-size: 0.78rem;
+    color: var(--ari-text-muted, #6b7785);
+}
+.upm-typeahead-empty {
+    padding: 0.55rem 0.65rem;
+    color: var(--ari-text-muted, #6b7785);
+    font-size: 0.82rem;
+}
+.upm-recipient-help {
+    margin-top: 0.35rem;
+    font-size: 0.8rem;
+    color: var(--ari-text-muted, #6b7785);
+}
+.upm-recipient-help a {
+    color: var(--ari-accent, #0969da);
+    text-decoration: underline;
 }
 .upm-form-actions {
     display: flex;

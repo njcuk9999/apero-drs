@@ -86,6 +86,43 @@ body.ari-issues-page .ari-doc-main {
     flex: 1 1 auto;
 }
 
+.mi-user-lookup-wrap {
+    position: relative;
+}
+
+.mi-user-lookup-list {
+    position: absolute;
+    top: calc(100% + 4px);
+    left: 0;
+    right: 0;
+    z-index: 20;
+    max-height: 220px;
+    overflow-y: auto;
+    background: var(--ari-card-bg);
+    border: 1px solid var(--ari-border);
+    border-radius: 8px;
+    box-shadow: 0 8px 24px rgba(31, 35, 40, 0.18);
+}
+
+.mi-user-lookup-item {
+    width: 100%;
+    border: none;
+    background: transparent;
+    text-align: left;
+    padding: 0.4rem 0.55rem;
+    cursor: pointer;
+}
+
+.mi-user-lookup-item:hover {
+    background: var(--ari-bg-hover);
+}
+
+.mi-user-lookup-empty {
+    padding: 0.4rem 0.55rem;
+    color: var(--ari-text-muted);
+    font-size: 0.82rem;
+}
+
 .mi-input,
 .mi-select {
     appearance: none;

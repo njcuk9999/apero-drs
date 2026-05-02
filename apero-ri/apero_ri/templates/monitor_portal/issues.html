@@ -6,7 +6,7 @@
 {% block extra_head %}
 {{ super() }}
 <link rel="stylesheet"
-    href="{{ url_for('static', filename='css/monitor_issues.css') }}?v=20260501a">
+    href="{{ url_for('static', filename='css/monitor_issues.css') }}?v=20260501b">
 {% endblock %}
 
 {% block doc_content %}
@@ -112,10 +112,13 @@
         <label for="issues-filter-user" class="mi-toolbar__label">
             User
         </label>
-        <input id="issues-filter-user" class="mi-input"
-               placeholder="username" list="issues-user-list"
-               style="min-width: 9rem;" />
-        <datalist id="issues-user-list"></datalist>
+        <div class="mi-user-lookup-wrap">
+            <input id="issues-filter-user" class="mi-input"
+                   placeholder="username"
+                   style="min-width: 9rem;" />
+            <div id="issues-user-suggest"
+                 class="mi-user-lookup-list" hidden></div>
+        </div>
     </div>
     <div class="mi-toolbar__group">
         <label for="issues-filter-user-role"
@@ -197,7 +200,7 @@
     const fInst     = document.getElementById('issues-filter-instrument');
     const fUser     = document.getElementById('issues-filter-user');
     const fUserRole = document.getElementById('issues-filter-user-role');
-    const userList  = document.getElementById('issues-user-list');
+    const userSuggest = document.getElementById('issues-user-suggest');
     const refreshBtn = document.getElementById('issues-refresh');
     const msgOverlay = document.getElementById('mi-message-overlay');
     const msgCloseBtn = document.getElementById('mi-message-close');
@@ -205,6 +208,7 @@
     const msgMetaEl = document.getElementById('mi-message-meta');
     const msgBodyEl = document.getElementById('mi-message-body');
     let focusIssueId = null;
+    let issueUsers = [];
 
     try {
         const qs = new URLSearchParams(window.location.search || '');
@@ -615,8 +619,17 @@
     if (fUser) {
         let userTimer = null;
         fUser.addEventListener('input', () => {
+            renderUserSuggest(fUser.value || '');
             if (userTimer) clearTimeout(userTimer);
             userTimer = setTimeout(load, 350);
+        });
+        fUser.addEventListener('focus', () => {
+            renderUserSuggest(fUser.value || '');
+        });
+        fUser.addEventListener('blur', () => {
+            setTimeout(() => {
+                if (userSuggest) userSuggest.hidden = true;
+            }, 120);
         });
     }
     if (fUserRole) fUserRole.addEventListener('change', load);
@@ -637,14 +650,46 @@
             const resp = await fetch('/api/issues/users');
             if (!resp.ok) return;
             const data = await resp.json();
-            if (!data.success || !userList) return;
-            userList.innerHTML = '';
-            (data.users || []).forEach(u => {
-                const opt = document.createElement('option');
-                opt.value = u.username;
-                userList.appendChild(opt);
-            });
+            if (!data.success) return;
+            issueUsers = data.users || [];
         } catch (_) {}
+    }
+
+    function renderUserSuggest(query) {
+        if (!userSuggest) return;
+        const q = String(query || '').trim().toLowerCase();
+        if (!q) {
+            userSuggest.hidden = true;
+            userSuggest.innerHTML = '';
+            return;
+        }
+        const rows = issueUsers.filter(u =>
+            String(u.username || '').toLowerCase().includes(q)
+        ).slice(0, 20);
+        if (!rows.length) {
+            userSuggest.innerHTML = '<div class="mi-user-lookup-empty">'
+                + 'No matching users.</div>';
+            userSuggest.hidden = false;
+            return;
+        }
+        userSuggest.innerHTML = rows.map(u =>
+            '<button type="button" class="mi-user-lookup-item"'
+            + ' data-username="' + escapeHtml(u.username) + '">'
+            + escapeHtml(u.username)
+            + '</button>'
+        ).join('');
+        userSuggest.hidden = false;
+    }
+
+    if (userSuggest) {
+        userSuggest.addEventListener('click', (e) => {
+            const item = e.target.closest('.mi-user-lookup-item');
+            if (!item || !fUser) return;
+            e.preventDefault();
+            fUser.value = item.dataset.username || '';
+            userSuggest.hidden = true;
+            load();
+        });
     }
 
     async function adminAssign(id) {
@@ -660,22 +705,24 @@
         const curAssignee = cur.assigned_to || '';
         const overlay = document.createElement('div');
         overlay.className = 'mi-assign-overlay';
-        const opts = users.map(u =>
-            `<option value="${escapeHtml(u.username)}">`)
-            .join('');
         overlay.innerHTML = `
             <div class="mi-assign-overlay__panel">
                 <p class="mi-assign-overlay__title">
                     Assign issue #${id}
                 </p>
+                <div style="position:relative;">
                 <input id="mi-assign-input" class="mi-input"
-                       list="mi-assign-datalist"
                        placeholder="username (blank to unassign)"
                        value="${escapeHtml(curAssignee)}"
                        style="width:100%;margin-bottom:0.6rem;">
-                <datalist id="mi-assign-datalist">
-                    ${opts}
-                </datalist>
+                <div id="mi-assign-suggest"
+                     style="display:none; position:absolute; left:0;
+                     right:0; top:calc(100% - 0.5rem); z-index:2;
+                     max-height:220px; overflow-y:auto;
+                     background:var(--ari-card-bg); border:1px solid
+                     var(--ari-border); border-radius:8px;
+                     box-shadow:0 8px 20px rgba(0,0,0,0.2);"></div>
+                </div>
                 <div style="display:flex;gap:0.5rem;
                             justify-content:flex-end;">
                     <button class="mi-btn mi-btn--ghost"
@@ -686,7 +733,60 @@
             </div>`;
         document.body.appendChild(overlay);
         const input = overlay.querySelector('#mi-assign-input');
+        const suggest = overlay.querySelector('#mi-assign-suggest');
+        const normalized = (s) => String(s || '').trim().toLowerCase();
+
+        const renderSuggest = (query) => {
+            if (!suggest) return;
+            const q = normalized(query);
+            if (!q) {
+                suggest.style.display = 'none';
+                suggest.innerHTML = '';
+                return;
+            }
+            const rows = users.filter(u =>
+                normalized(u.username).includes(q)
+            ).slice(0, 20);
+            if (!rows.length) {
+                suggest.innerHTML = '<div style="padding:0.45rem 0.55rem;'
+                    + ' color:var(--ari-text-muted); font-size:0.82rem;">'
+                    + 'No matching users.</div>';
+                suggest.style.display = 'block';
+                return;
+            }
+            suggest.innerHTML = rows.map(u =>
+                '<button type="button" class="mi-assign-item"'
+                + ' data-username="' + escapeHtml(u.username) + '"'
+                + ' style="display:block; width:100%; border:none;'
+                + ' background:transparent; text-align:left;'
+                + ' padding:0.42rem 0.55rem; cursor:pointer;">'
+                + escapeHtml(u.username)
+                + '</button>'
+            ).join('');
+            suggest.style.display = 'block';
+        };
+
         input.focus();
+        input.addEventListener('input', () => {
+            renderSuggest(input.value || '');
+        });
+        input.addEventListener('focus', () => {
+            renderSuggest(input.value || '');
+        });
+        input.addEventListener('blur', () => {
+            setTimeout(() => {
+                if (suggest) suggest.style.display = 'none';
+            }, 120);
+        });
+        if (suggest) {
+            suggest.addEventListener('click', (e) => {
+                const item = e.target.closest('.mi-assign-item');
+                if (!item) return;
+                e.preventDefault();
+                input.value = item.dataset.username || '';
+                suggest.style.display = 'none';
+            });
+        }
         overlay.querySelector('#mi-assign-cancel')
             .addEventListener('click', () => overlay.remove());
         overlay.addEventListener('click', (e) => {

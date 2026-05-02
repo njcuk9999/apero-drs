@@ -4,7 +4,7 @@
 {% block extra_head %}
 {{ super() }}
 <link rel="stylesheet"
-    href="{{ url_for('static', filename='css/user_portal_messaging.css', v='20260424a') }}">
+    href="{{ url_for('static', filename='css/user_portal_messaging.css', v='20260501h') }}">
 <link rel="stylesheet"
     href="{{ url_for('static', filename='css/user_portal_user_cards.css', v='20260501a') }}">
 {% endblock %}
@@ -31,7 +31,7 @@
 </div>
 
 <!-- Send-message modal -->
-<div class="ari-modal upm-modal" id="upm-send-modal" hidden>
+<div class="upm-modal" id="upm-send-modal" hidden>
     <div class="ari-modal__backdrop" data-upm-close></div>
     <div class="ari-modal__content">
         <header class="ari-modal__header">

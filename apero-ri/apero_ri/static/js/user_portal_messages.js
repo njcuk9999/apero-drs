@@ -10,10 +10,11 @@
   var sendModal = document.getElementById('upm-send-modal');
   var sendForm = document.getElementById('upm-send-form');
   var recipientInput = document.getElementById('upm-recipient');
+  var recipientQueryInput = document.getElementById('upm-recipient-query');
+  var recipientSuggest = document.getElementById('upm-recipient-suggest');
   var subjectInput = document.getElementById('upm-subject');
   var bodyInput = document.getElementById('upm-body');
   var sendStatus = document.getElementById('upm-send-status');
-  var datalist = document.getElementById('upm-user-list');
 
   var viewModal = document.getElementById('upm-view-modal');
   var detailEmpty = document.getElementById('upm-detail-empty');
@@ -42,6 +43,7 @@
   var pendingOpenMid = null;
   var pendingComposeTo = '';
   var pendingComposeSubject = '';
+  var composeUsers = [];
 
   try {
     var params = new URLSearchParams(window.location.search || '');
@@ -55,13 +57,83 @@
   }
 
   function openComposeModal(recipient, subject, body) {
-    recipientInput.value = recipient || '';
+    setRecipient(recipient || '');
     subjectInput.value = subject || '';
     bodyInput.value = body || '';
     sendStatus.textContent = '';
     sendStatus.className = 'upm-form-status';
     sendModal.hidden = false;
-    setTimeout(function () { recipientInput.focus(); }, 50);
+    setTimeout(function () {
+      if (recipient) {
+        bodyInput.focus();
+      } else if (recipientQueryInput) {
+        recipientQueryInput.focus();
+      }
+    }, 50);
+  }
+
+  function normalized(s) {
+    return String(s == null ? '' : s).trim().toLowerCase();
+  }
+
+  function setRecipient(username) {
+    var uname = String(username || '').trim();
+    if (recipientInput) recipientInput.value = uname;
+    if (!recipientQueryInput) return;
+    if (!uname) {
+      recipientQueryInput.value = '';
+      return;
+    }
+    var found = composeUsers.find(function (u) {
+      return String(u.username || '') === uname;
+    });
+    if (!found) {
+      recipientQueryInput.value = uname;
+      return;
+    }
+    var full = String(found.full_name || '').trim();
+    recipientQueryInput.value = full ? (uname + ' - ' + full) : uname;
+  }
+
+  function hideRecipientSuggestions() {
+    if (!recipientSuggest) return;
+    recipientSuggest.hidden = true;
+    recipientSuggest.innerHTML = '';
+  }
+
+  function renderRecipientSuggestions(query) {
+    if (!recipientSuggest) return;
+    var q = normalized(query);
+    if (!q) {
+      hideRecipientSuggestions();
+      return;
+    }
+    var matches = composeUsers.filter(function (u) {
+      var bag = [u.username, u.full_name, u.first_names,
+                 u.last_name, u.primary_institution,
+                 (u.institutions || []).join(' ')]
+                 .join(' ').toLowerCase();
+      return bag.indexOf(q) !== -1;
+    }).slice(0, 25);
+
+    if (!matches.length) {
+      recipientSuggest.innerHTML = '<div class="upm-typeahead-empty">'
+        + 'No matching users.</div>';
+      recipientSuggest.hidden = false;
+      return;
+    }
+
+    recipientSuggest.innerHTML = matches.map(function (u) {
+      var name = String(u.full_name || '').trim() || 'No name';
+      return '<button type="button" class="upm-typeahead-item"'
+        + ' data-username="' + escapeHtml(u.username) + '">'
+        + '<span class="upm-typeahead-item__main">'
+        + escapeHtml(u.username) + '</span>'
+        + '<span class="upm-typeahead-item__sub">'
+        + escapeHtml(name) + '</span>'
+        + '</button>';
+    }).join('');
+    recipientSuggest.hidden = false;
   }
 
   function escapeHtml(s) {
@@ -98,17 +170,54 @@
     fetch('/api/users/directory').then(function (r) {
       return r.json();
     }).then(function (j) {
-      var users = (j && j.success && j.users) || [];
-      datalist.innerHTML = users.filter(function (u) {
-        return !u.is_self;
-      }).map(function (u) {
-        return '<option value="' + escapeHtml(u.username)
-          + '">' + escapeHtml(
-            [u.first_names, u.last_name].filter(Boolean).join(' '))
-          + '</option>';
-      }).join('');
+      composeUsers = ((j && j.success && j.users) || []).filter(
+        function (u) {
+          return !u.is_self;
+        }
+      );
+      // If compose was prefilled before users loaded, refresh
+      // display label once we have directory metadata.
+      if (pendingComposeTo) {
+        setRecipient(pendingComposeTo);
+      }
     }).catch(function () { /* non-fatal */ });
   }
+
+  if (recipientQueryInput) {
+    recipientQueryInput.addEventListener('input', function () {
+      if (recipientInput) recipientInput.value = '';
+      renderRecipientSuggestions(recipientQueryInput.value);
+    });
+    recipientQueryInput.addEventListener('focus', function () {
+      renderRecipientSuggestions(recipientQueryInput.value);
+    });
+    recipientQueryInput.addEventListener('blur', function () {
+      setTimeout(hideRecipientSuggestions, 120);
+    });
+    recipientQueryInput.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape') hideRecipientSuggestions();
+    });
+  }
+
+  if (recipientSuggest) {
+    recipientSuggest.addEventListener('click', function (e) {
+      var item = e.target.closest('.upm-typeahead-item');
+      if (!item) return;
+      e.preventDefault();
+      setRecipient(item.dataset.username || '');
+      hideRecipientSuggestions();
+      if (subjectInput) subjectInput.focus();
+    });
+  }
+
+  document.addEventListener('click', function (e) {
+    if (!recipientSuggest || recipientSuggest.hidden) return;
+    if (recipientSuggest.contains(e.target)) return;
+    if (recipientQueryInput && recipientQueryInput.contains(e.target)) {
+      return;
+    }
+    hideRecipientSuggestions();
+  });
 
   function renderList(box, msgs) {
     if (!msgs.length) {
@@ -369,6 +478,22 @@
 
   sendForm.addEventListener('submit', function (e) {
     e.preventDefault();
+    if ((!recipientInput || !recipientInput.value)
+        && recipientQueryInput && composeUsers.length) {
+      var query = normalized(recipientQueryInput.value);
+      var exact = composeUsers.find(function (u) {
+        return normalized(u.username) === query;
+      });
+      if (exact) {
+        setRecipient(exact.username);
+      }
+    }
+    if (!recipientInput || !recipientInput.value) {
+      sendStatus.textContent = 'Please select a recipient.';
+      sendStatus.className = 'upm-form-status is-error';
+      if (recipientQueryInput) recipientQueryInput.focus();
+      return;
+    }
     sendStatus.textContent = 'Sending...';
     sendStatus.className = 'upm-form-status';
     fetch('/api/messages/send', {
@@ -400,7 +525,7 @@
     if (!currentMsg) return;
     var other = currentMsg.sender === SELF
       ? currentMsg.recipient : currentMsg.sender;
-    recipientInput.value = other;
+    setRecipient(other);
     subjectInput.value = (currentMsg.subject || '')
       .replace(/^Re:\s*/i, '');
     subjectInput.value = 'Re: ' + subjectInput.value;

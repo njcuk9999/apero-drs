@@ -4,7 +4,7 @@
 {% block extra_head %}
 {{ super() }}
 <link rel="stylesheet"
-    href="{{ url_for('static', filename='css/user_portal_messaging.css', v='20260501d') }}">
+    href="{{ url_for('static', filename='css/user_portal_messaging.css', v='20260501h') }}">
 {% endblock %}
 
 {% block doc_content %}
@@ -118,7 +118,7 @@
 </div>
 
 <!-- Compose modal -->
-<div class="ari-modal upm-modal" id="upm-send-modal" hidden>
+<div class="upm-modal" id="upm-send-modal" hidden>
     <div class="ari-modal__backdrop" data-upm-close></div>
     <div class="ari-modal__content">
         <header class="ari-modal__header">
@@ -131,10 +131,21 @@
         <form id="upm-send-form" class="upm-send-form">
             <label class="ari-form-row">
                 <span>Recipient</span>
-                <input type="text" name="recipient"
-                       id="upm-recipient" class="ari-input"
-                       list="upm-user-list" required>
-                <datalist id="upm-user-list"></datalist>
+                  <div class="upm-typeahead-wrap">
+                      <input type="text" id="upm-recipient-query"
+                          class="ari-input"
+                          placeholder="Type username or name"
+                          autocomplete="off" required>
+                      <input type="hidden" name="recipient"
+                          id="upm-recipient">
+                      <div id="upm-recipient-suggest"
+                        class="upm-typeahead-list" hidden></div>
+                  </div>
+                  <div class="upm-recipient-help">
+                      Need someone else? Browse
+                      <a href="{{ url_for('user_portal_users_view') }}"
+                      target="_blank" rel="noopener">all users</a>.
+                  </div>
             </label>
             <label class="ari-form-row">
                 <span>Subject</span>
@@ -162,5 +173,5 @@
 
 {% block extra_scripts %}
 {{ super() }}
-<script src="{{ url_for('static', filename='js/user_portal_messages.js', v='20260501f') }}"></script>
+<script src="{{ url_for('static', filename='js/user_portal_messages.js', v='20260501h') }}"></script>
 {% endblock %}
