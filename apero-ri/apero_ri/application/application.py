@@ -1167,6 +1167,18 @@ class ARIApp(Flask):
         from apero_ri.application import notifications_api_helpers as nh
         return nh.api_messages_delete(self, mid)
 
+    def _api_messages_mark_unread(self, mid):
+        from apero_ri.application import notifications_api_helpers as nh
+        return nh.api_messages_mark_unread(self, mid)
+
+    def _api_messages_mark_all_read(self):
+        from apero_ri.application import notifications_api_helpers as nh
+        return nh.api_messages_mark_all_read(self)
+
+    def _api_messages_delete_all(self):
+        from apero_ri.application import notifications_api_helpers as nh
+        return nh.api_messages_delete_all(self)
+
     def _api_messages_flag_as_issue(self, mid):
         from apero_ri.application import notifications_api_helpers as nh
         return nh.api_messages_flag_as_issue(self, mid)
@@ -1178,6 +1190,10 @@ class ARIApp(Flask):
     def _user_portal_users_view(self):
         from apero_ri.application import user_portal_view_helpers as uvh
         return uvh.user_portal_users_view(self)
+
+    def _user_portal_user_card_view(self, username):
+        from apero_ri.application import user_portal_view_helpers as uvh
+        return uvh.user_portal_user_card_view(self, username)
 
     def _user_portal_messages_view(self):
         from apero_ri.application import user_portal_view_helpers as uvh

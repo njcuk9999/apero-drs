@@ -561,6 +561,9 @@
                     '<div class="ari-ap-card__hint">' + escapeHtml(statusText) + '</div>' +
                 '</div>' +
                 '<div class="ari-ap-card__actions">' +
+                    '<button class="ari-ap-card__btn ari-ap-card__btn--duplicate" title="Duplicate">' +
+                        '<i class="fa-solid fa-copy"></i>' +
+                    '</button>' +
                     '<button class="ari-ap-card__btn ari-ap-card__btn--edit" title="Edit">' +
                         '<i class="fa-solid fa-pen"></i>' +
                     '</button>' +
@@ -568,6 +571,16 @@
                         '<i class="fa-solid fa-trash"></i>' +
                     '</button>' +
                 '</div>';
+
+            card.querySelector(
+                '.ari-ap-card__btn--duplicate'
+            ).addEventListener('click', function (e) {
+                e.stopPropagation();
+                if (!guardUnsaved()) return;
+                var newName = promptDuplicateName(p.name);
+                if (!newName) return;
+                enterDuplicateMode(p, newName);
+            });
 
             card.querySelector('.ari-ap-card__btn--edit').addEventListener('click', function (e) {
                 e.stopPropagation();
@@ -733,6 +746,115 @@
         );
         syncTunnelVisibility();
         updateWorkflowState();
+    }
+
+    function suggestDuplicateName(sourceName) {
+        var base = String(sourceName || '').trim() || 'profile_copy';
+        var candidate = base + '_copy';
+        var suffix = 2;
+
+        while (profiles.some(function (prof) {
+            return String(prof.name || '') === candidate;
+        })) {
+            candidate = base + '_copy_' + String(suffix);
+            suffix += 1;
+        }
+        return candidate;
+    }
+
+    function promptDuplicateName(sourceName) {
+        var defaultName = suggestDuplicateName(sourceName);
+        var promptMsg = 'Enter new profile name';
+
+        while (true) {
+            var input = window.prompt(promptMsg, defaultName);
+            if (input === null) return null;
+
+            var nextName = String(input || '').trim();
+            if (!nextName) {
+                showToast('Profile name is required', 'error');
+                continue;
+            }
+            if (profiles.some(function (prof) {
+                return String(prof.name || '') === nextName;
+            })) {
+                showToast('A profile with this name already exists', 'error');
+                defaultName = nextName;
+                continue;
+            }
+            return nextName;
+        }
+    }
+
+    function enterDuplicateMode(profile, newName) {
+        editingProfile = null;
+        formDirty = false;
+        dbTestPassed = true;
+        tablesTestPassed = true;
+        pathsTestPassed = true;
+
+        profileNameInput.value = String(newName || '').trim();
+        profileNameInput.disabled = false;
+        profileVersionInput.value = profile.apero_version || '';
+        profileServerInput.value = profile.reduction_server || '';
+
+        if (profileDbSource) {
+            profileDbSource.value = profile.DATABASE_SOURCE || 'local';
+        }
+        if (profileDbDefinitionName) {
+            profileDbDefinitionName.value = profile.DATABASE_SOURCE
+                === 'db_ssh_tunnel'
+                ? (profile.DATABASE_TUNNEL_NAME || '')
+                : (profile.DATABASE_LOCAL_NAME || '');
+        }
+
+        DB_TEXT_FIELDS.forEach(function (f) {
+            dbInputs[f.id].value = profile[f.key] || '';
+        });
+
+        clearTableOptions(false);
+        TABLE_FIELDS.forEach(function (f) {
+            setSingleTableValue(f.id, profile[f.key] || '');
+        });
+
+        PATH_FIELDS.forEach(function (f) {
+            pathInputs[f.id].value = profile[f.key] || '';
+            var vdiv = document.getElementById(f.id + '-validation');
+            if (vdiv) vdiv.style.display = 'none';
+        });
+
+        if (aprofileSelect) {
+            aprofileSelect.value = profile.APERO_INSTRUMENT_PROFILE || '';
+        }
+        updateSciPreview();
+
+        draftGroups = Array.isArray(profile.groups)
+            ? profile.groups.slice()
+            : [];
+
+        dbTestResult.style.display = 'none';
+        tablesTestResult.style.display = 'none';
+        if (pathsTestResult) pathsTestResult.style.display = 'none';
+
+        formTitle.innerHTML = '<i class="fa-solid fa-copy"></i> Duplicate: '
+            + escapeHtml(profile.name)
+            + ' → '
+            + escapeHtml(String(newName || '').trim());
+        formSection.style.display = '';
+        formTitle.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+        renderDraftGroups();
+
+        loadDbDefinitionOptions(
+            profile.DATABASE_SOURCE || 'local',
+            profile.DATABASE_SOURCE === 'db_ssh_tunnel'
+                ? (profile.DATABASE_TUNNEL_NAME || '')
+                : (profile.DATABASE_LOCAL_NAME || '')
+        );
+        syncTunnelVisibility();
+        updateWorkflowState();
+        profileNameInput.focus();
+        profileNameInput.select();
     }
 
     /* -- Path validation (directory exists) ------------------------------ */

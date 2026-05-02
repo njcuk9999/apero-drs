@@ -27,19 +27,71 @@
   var viewStatus = document.getElementById('upm-view-status');
   var viewFlag = document.getElementById('upm-view-flag');
   var viewDelete = document.getElementById('upm-view-delete');
+  var viewMarkUnread = document.getElementById('upm-view-mark-unread');
   var viewReply = document.getElementById('upm-view-reply');
+  var markAllReadBtn = document.getElementById('upm-mark-all-read');
+  var deleteAllBtn = document.getElementById('upm-delete-all');
+  var pageSizeSelect = document.getElementById('upm-page-size');
+  var prevPageBtn = document.getElementById('upm-prev-page');
+  var nextPageBtn = document.getElementById('upm-next-page');
+  var pageInfo = document.getElementById('upm-page-info');
   var currentBox = 'inbox';
   var currentMsg = null;
+  var currentItems = [];
+  var currentPage = 1;
+  var pendingOpenMid = null;
+  var pendingComposeTo = '';
+  var pendingComposeSubject = '';
+
+  try {
+    var params = new URLSearchParams(window.location.search || '');
+    pendingOpenMid = params.get('mid') || params.get('message_id');
+    pendingComposeTo = params.get('compose') || '';
+    pendingComposeSubject = params.get('subject') || '';
+  } catch (e) {
+    pendingOpenMid = null;
+    pendingComposeTo = '';
+    pendingComposeSubject = '';
+  }
+
+  function openComposeModal(recipient, subject, body) {
+    recipientInput.value = recipient || '';
+    subjectInput.value = subject || '';
+    bodyInput.value = body || '';
+    sendStatus.textContent = '';
+    sendStatus.className = 'upm-form-status';
+    sendModal.hidden = false;
+    setTimeout(function () { recipientInput.focus(); }, 50);
+  }
 
   function escapeHtml(s) {
     return String(s == null ? '' : s)
       .replace(/&/g, '&amp;').replace(/</g, '&lt;')
       .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
   }
-  function fmtDate(iso) {
-    if (!iso) return '';
-    try { return new Date(iso).toLocaleString(); }
-    catch (e) { return iso; }
+  function fmtDate(value) {
+    if (value == null || value === '') return '';
+    var parsed = value;
+    if (typeof parsed === 'string') {
+      parsed = parsed.trim();
+      if (!parsed) return '';
+      if (/^-?\d+(\.\d+)?$/.test(parsed)) {
+        parsed = Number(parsed);
+      }
+    }
+    var dt;
+    if (typeof parsed === 'number' && isFinite(parsed)) {
+      if (Math.abs(parsed) < 1e12) {
+        parsed = parsed * 1000;
+      }
+      dt = new Date(parsed);
+    } else {
+      dt = new Date(parsed);
+    }
+    if (isNaN(dt.getTime())) {
+      return String(value);
+    }
+    return dt.toLocaleString();
   }
 
   function loadUsers() {
@@ -68,16 +120,68 @@
       var who = box === 'inbox' ? m.sender : m.recipient;
       var unread = (box === 'inbox' && !m.read_at)
         ? ' is-unread' : '';
+      var subject = m.subject || '(no subject)';
       return '<div class="upm-row' + unread
         + '" data-msg-id="' + escapeHtml(m.id)
         + '" data-box="' + box + '">'
-        + '<div class="upm-row__who">' + escapeHtml(who) + '</div>'
-        + '<div class="upm-row__subject">'
-        + escapeHtml(m.subject || '(no subject)') + '</div>'
+        + '<div class="upm-row__head">'
+        + '<span class="upm-row__who">' + escapeHtml(who)
+        + '</span> / '
+        + '<span class="upm-row__subject">'
+        + escapeHtml(subject) + '</span>'
+        + '</div>'
         + '<div class="upm-row__date">'
         + escapeHtml(fmtDate(m.created_at)) + '</div>'
         + '</div>';
     }).join('');
+  }
+
+  function getPageSize() {
+    var fallback = 10;
+    if (!pageSizeSelect) return fallback;
+    var value = Number(pageSizeSelect.value || fallback);
+    if (!isFinite(value) || value <= 0) return fallback;
+    return value;
+  }
+
+  function getPageCount() {
+    var pageSize = getPageSize();
+    var total = currentItems.length;
+    if (total <= 0) return 1;
+    return Math.max(1, Math.ceil(total / pageSize));
+  }
+
+  function renderCurrentPage() {
+    var total = currentItems.length;
+    var pageSize = getPageSize();
+    var pageCount = getPageCount();
+    currentPage = Math.min(Math.max(currentPage, 1), pageCount);
+    var start = (currentPage - 1) * pageSize;
+    var end = Math.min(start + pageSize, total);
+    var subset = currentItems.slice(start, end);
+    renderList(currentBox, subset);
+    if (prevPageBtn) prevPageBtn.disabled = currentPage <= 1;
+    if (nextPageBtn) nextPageBtn.disabled = currentPage >= pageCount;
+    if (pageInfo) {
+      if (total <= 0) {
+        pageInfo.textContent = '0 messages';
+      } else {
+        pageInfo.textContent = String(start + 1)
+          + '-' + String(end)
+          + ' of ' + String(total);
+      }
+    }
+  }
+
+  function updateBulkButtons(box) {
+    if (markAllReadBtn) {
+      markAllReadBtn.disabled = (box !== 'inbox');
+    }
+    if (deleteAllBtn) {
+      deleteAllBtn.textContent = (box === 'sent')
+        ? 'Delete all sent'
+        : 'Delete all inbox';
+    }
   }
 
   function refreshUnreadBadge() {
@@ -92,6 +196,7 @@
 
   function loadBox(box) {
     currentBox = box;
+    updateBulkButtons(box);
     tabs.forEach(function (t) {
       var on = t.dataset.upmBox === box;
       t.classList.toggle('is-active', on);
@@ -101,14 +206,31 @@
     fetch('/api/messages/list?box=' + encodeURIComponent(box))
       .then(function (r) { return r.json(); })
       .then(function (j) {
-        renderList(
-          box, (j && (j.items || j.messages)) || []);
+        currentItems = (j && (j.items || j.messages)) || [];
+        renderCurrentPage();
         refreshUnreadBadge();
+        if (pendingOpenMid) {
+          var mid = pendingOpenMid;
+          pendingOpenMid = null;
+          openMsg(mid);
+        }
       })
       .catch(function () {
+        currentItems = [];
+        renderCurrentPage();
         mailbox.innerHTML = '<div class="upm-empty">'
           + 'Failed to load messages.</div>';
       });
+  }
+
+  function postJson(url, payload) {
+    return fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload || {}),
+    }).then(function (r) {
+      return r.json();
+    });
   }
 
   function showDetail(show) {
@@ -151,6 +273,12 @@
         viewBody.textContent = currentMsg.body || '';
         viewStatus.textContent = '';
         viewStatus.className = 'upm-form-status';
+        if (viewMarkUnread) {
+          var canMarkUnread = currentMsg.recipient === SELF;
+          viewMarkUnread.hidden = !canMarkUnread;
+          viewMarkUnread.disabled = !canMarkUnread
+            || !currentMsg.read_at;
+        }
         showDetail(true);
         // refresh list to clear unread state
         loadBox(currentBox);
@@ -162,6 +290,36 @@
           window.dispatchEvent(new Event('ari:notif-refresh'));
         } catch (e) { /* IE compat - ignore */ }
       });
+  }
+
+  if (viewMarkUnread) {
+    viewMarkUnread.addEventListener('click', function () {
+      if (!currentMsg) return;
+      viewMarkUnread.disabled = true;
+      fetch('/api/messages/' + encodeURIComponent(currentMsg.id)
+            + '/mark-unread', { method: 'POST' })
+        .then(function (r) { return r.json(); })
+        .then(function (j) {
+          if (!j || !j.success) {
+            viewStatus.textContent = (j && j.error)
+              || 'Mark unread failed.';
+            viewStatus.className = 'upm-form-status is-error';
+            return;
+          }
+          currentMsg.read_at = null;
+          viewMarkUnread.disabled = true;
+          viewStatus.textContent = 'Marked as unread.';
+          viewStatus.className = 'upm-form-status is-success';
+          loadBox(currentBox);
+          try {
+            window.dispatchEvent(new Event('ari:notif-refresh'));
+          } catch (e) { /* ignore */ }
+        })
+        .catch(function () {
+          viewStatus.textContent = 'Mark unread failed.';
+          viewStatus.className = 'upm-form-status is-error';
+        });
+    });
   }
 
   function closeAllModals() {
@@ -179,18 +337,34 @@
 
   tabs.forEach(function (t) {
     t.addEventListener('click', function () {
+      currentPage = 1;
       loadBox(t.dataset.upmBox);
     });
   });
 
+  if (pageSizeSelect) {
+    pageSizeSelect.addEventListener('change', function () {
+      currentPage = 1;
+      renderCurrentPage();
+    });
+  }
+
+  if (prevPageBtn) {
+    prevPageBtn.addEventListener('click', function () {
+      currentPage -= 1;
+      renderCurrentPage();
+    });
+  }
+
+  if (nextPageBtn) {
+    nextPageBtn.addEventListener('click', function () {
+      currentPage += 1;
+      renderCurrentPage();
+    });
+  }
+
   composeBtn.addEventListener('click', function () {
-    recipientInput.value = '';
-    subjectInput.value = '';
-    bodyInput.value = '';
-    sendStatus.textContent = '';
-    sendStatus.className = 'upm-form-status';
-    sendModal.hidden = false;
-    setTimeout(function () { recipientInput.focus(); }, 50);
+    openComposeModal('', '', '');
   });
 
   sendForm.addEventListener('submit', function (e) {
@@ -285,6 +459,61 @@
     });
   }
 
+  if (markAllReadBtn) {
+    markAllReadBtn.addEventListener('click', function () {
+      if (currentBox !== 'inbox') return;
+      markAllReadBtn.disabled = true;
+      postJson('/api/messages/mark-all-read', { box: 'inbox' })
+        .then(function (j) {
+          if (!j || !j.success) {
+            alert((j && j.error) || 'Failed to mark all read.');
+            return;
+          }
+          loadBox(currentBox);
+        })
+        .catch(function () {
+          alert('Failed to mark all read.');
+        })
+        .finally(function () {
+          updateBulkButtons(currentBox);
+        });
+    });
+  }
+
+  if (deleteAllBtn) {
+    deleteAllBtn.addEventListener('click', function () {
+      var target = currentBox === 'sent' ? 'sent' : 'inbox';
+      var question = (target === 'sent')
+        ? 'Delete every message in Sent?'
+        : 'Delete every message in Inbox?';
+      if (!confirm(question)) return;
+      deleteAllBtn.disabled = true;
+      postJson('/api/messages/delete-all', { box: target })
+        .then(function (j) {
+          if (!j || !j.success) {
+            alert((j && j.error) || 'Failed to delete all.');
+            return;
+          }
+          showDetail(false);
+          currentMsg = null;
+          loadBox(currentBox);
+        })
+        .catch(function () {
+          alert('Failed to delete all.');
+        })
+        .finally(function () {
+          updateBulkButtons(currentBox);
+        });
+    });
+  }
+
   loadUsers();
   loadBox('inbox');
+  if (pendingComposeTo) {
+    openComposeModal(
+      pendingComposeTo,
+      pendingComposeSubject,
+      ''
+    );
+  }
 })();

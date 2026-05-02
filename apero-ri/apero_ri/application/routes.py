@@ -1300,6 +1300,24 @@ def register_data_portal_routes(app):
         methods=["POST"],
     )
     app.add_url_rule(
+        "/api/messages/<mid>/mark-unread",
+        "api_messages_mark_unread",
+        app._api_messages_mark_unread,
+        methods=["POST"],
+    )
+    app.add_url_rule(
+        "/api/messages/mark-all-read",
+        "api_messages_mark_all_read",
+        app._api_messages_mark_all_read,
+        methods=["POST"],
+    )
+    app.add_url_rule(
+        "/api/messages/delete-all",
+        "api_messages_delete_all",
+        app._api_messages_delete_all,
+        methods=["POST"],
+    )
+    app.add_url_rule(
         "/api/messages/<mid>/flag-as-issue",
         "api_messages_flag_as_issue",
         app._api_messages_flag_as_issue,
@@ -1315,6 +1333,11 @@ def register_data_portal_routes(app):
         "/user_portal/users",
         "user_portal_users_view",
         app._user_portal_users_view,
+    )
+    app.add_url_rule(
+        "/user_portal/users/<username>",
+        "user_portal_user_card_view",
+        app._user_portal_user_card_view,
     )
     app.add_url_rule(
         "/user_portal/messages",

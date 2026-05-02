@@ -68,16 +68,8 @@
                      role="dialog" aria-label="Notifications">
                     <div class="ari-notif-panel__header">
                         <strong>Notifications</strong>
-                        <span class="ari-notif-panel__header-actions">
-                            <button type="button"
-                                    class="ari-btn ari-btn--small"
-                                    id="ari-notif-clear-all"
-                                    title="Dismiss all notifications">
-                                Clear all
-                            </button>
-                            <a href="/user_portal/notifications"
-                               class="ari-btn ari-btn--small">Manage</a>
-                        </span>
+                        <a href="/user_portal/notifications"
+                           class="ari-btn ari-btn--small">Manage</a>
                     </div>
                     <div class="ari-notif-panel__list"
                          id="ari-notif-panel-list">
@@ -247,7 +239,7 @@
     </script>
     <script src="{{ url_for('static', filename='js/theme.js') }}" defer></script>
     {% if logged_in %}
-    <script src="{{ url_for('static', filename='js/notifications_bell.js', v='20260501a') }}" defer></script>
+    <script src="{{ url_for('static', filename='js/notifications_bell.js', v='20260430a') }}" defer></script>
     {% endif %}
     {% block extra_scripts %}{% endblock %}
 </body>

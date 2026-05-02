@@ -179,8 +179,14 @@
                 + items.length + " entries"
                 + "</span>";
         } else {
-            valueInner = '<span class="ari-tinfo-value">'
-                + fmt.html + "</span>";
+            if (row.value_url && !fmt.missing) {
+                valueInner = '<a class="ari-tinfo-value" href="'
+                    + escapeHtml(row.value_url) + '">'
+                    + fmt.html + "</a>";
+            } else {
+                valueInner = '<span class="ari-tinfo-value">'
+                    + fmt.html + "</span>";
+            }
             if (row.units && !fmt.missing) {
                 valueInner += ' <span class="ari-tinfo-units">'
                     + escapeHtml(row.units) + "</span>";

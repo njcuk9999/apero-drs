@@ -263,6 +263,10 @@ body.ari-issues-page .ari-doc-main {
     background: #fbfcfd;
 }
 
+.mi-table tbody tr.mi-row--focus td {
+    background: #fff6d9;
+}
+
 .mi-table .mi-col-id {
     width: 4.5rem;
     color: var(--ari-text-muted);
@@ -516,8 +520,59 @@ body.ari-issues-page .ari-doc-main {
     z-index: 9999;
 }
 
+.mi-message-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 1300;
+    background: rgba(0, 0, 0, 0.42);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1.2rem;
+}
+
+.mi-message-overlay__panel {
+    width: min(840px, 96vw);
+    max-height: 84vh;
+    overflow: auto;
+    background: #fff;
+    border: 1px solid var(--ari-border);
+    border-radius: 10px;
+    box-shadow: 0 14px 40px rgba(31, 35, 40, 0.24);
+    padding: 1rem 1.1rem;
+}
+
+.mi-message-overlay__head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.8rem;
+    margin-bottom: 0.45rem;
+}
+
+.mi-message-overlay__head h3 {
+    margin: 0;
+}
+
+.mi-message-overlay__meta {
+    color: var(--ari-text-muted);
+    font-size: 0.86rem;
+    margin-bottom: 0.8rem;
+}
+
+.mi-message-overlay__body {
+    white-space: pre-wrap;
+    background: var(--ari-surface-muted);
+    border: 1px solid var(--ari-border);
+    border-radius: 8px;
+    padding: 0.85rem 0.95rem;
+    line-height: 1.45;
+}
+
 .mi-assign-overlay__panel {
     background: #fff;
+    color: var(--ari-text);
+    border: 1px solid var(--ari-border);
     border-radius: 8px;
     padding: 1rem 1.2rem;
     min-width: 18rem;
@@ -629,6 +684,10 @@ body.ari-issues-page .ari-doc-main {
     color: var(--ari-text-muted);
 }
 
+[data-theme="dark"] .mi-table tbody tr.mi-row--focus td {
+    background: rgba(210, 153, 34, 0.18);
+}
+
 [data-theme="dark"] .mi-cell-value code {
     background: var(--ari-surface-muted, #1c2128);
     border-color: var(--ari-border);
@@ -687,4 +746,23 @@ body.ari-issues-page .ari-doc-main {
 
 [data-theme="dark"] .mi-empty i {
     color: var(--ari-border);
+}
+
+[data-theme="dark"] .mi-assign-overlay__panel {
+    background: var(--ari-card-bg);
+    color: var(--ari-text);
+    border-color: var(--ari-border);
+    box-shadow: 0 14px 40px rgba(0, 0, 0, 0.6);
+}
+
+[data-theme="dark"] .mi-message-overlay__panel {
+    background: var(--ari-card-bg);
+    color: var(--ari-text);
+    border-color: var(--ari-border);
+    box-shadow: 0 14px 40px rgba(0, 0, 0, 0.6);
+}
+
+[data-theme="dark"] .mi-message-overlay__body {
+    background: var(--ari-surface-muted, #1c2128);
+    border-color: var(--ari-border);
 }

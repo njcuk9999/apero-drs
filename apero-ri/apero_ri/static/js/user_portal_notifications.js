@@ -29,6 +29,7 @@
   };
 
   function renderList(items) {
+    if (!listEl) return;
     if (!items.length) {
       listEl.innerHTML = '<div class="upm-empty">'
         + 'No notifications.</div>';
@@ -66,6 +67,7 @@
   }
 
   function loadList() {
+    if (!listEl) return;
     fetch('/api/notifications/list?limit=100').then(function (r) {
       return r.json();
     }).then(function (j) {
@@ -77,6 +79,7 @@
   }
 
   function renderPrefs(prefs) {
+    if (!prefsEl) return;
     var channels = ['message', 'calendar', 'issue',
                     'admin_health', 'fav_object'];
     prefsEl.innerHTML = channels.map(function (c) {
@@ -96,6 +99,7 @@
   }
 
   function loadPrefs() {
+    if (!prefsEl) return;
     fetch('/api/notifications/prefs').then(function (r) {
       return r.json();
     }).then(function (j) {
@@ -103,65 +107,75 @@
     });
   }
 
-  prefsEl.addEventListener('change', function (e) {
-    var card = e.target.closest('.upn-pref');
-    if (!card) return;
-    var ch = card.dataset.channel;
-    var enabled = card.querySelector(
-      '[data-pref="enabled"]').checked ? 1 : 0;
-    var popup = card.querySelector(
-      '[data-pref="popup"]').checked ? 1 : 0;
-    statusEl.textContent = 'Saving...';
-    statusEl.className = 'upm-form-status';
-    fetch('/api/notifications/prefs/save', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        channel: ch, enabled: enabled, browser_popups: popup,
-      }),
-    }).then(function (r) { return r.json(); })
-      .then(function (j) {
-        if (j && j.success) {
-          statusEl.textContent = 'Saved.';
-          statusEl.className = 'upm-form-status is-success';
-        } else {
-          statusEl.textContent = (j && j.error) || 'Save failed.';
-          statusEl.className = 'upm-form-status is-error';
-        }
-      });
-  });
+  if (prefsEl) {
+    prefsEl.addEventListener('change', function (e) {
+      var card = e.target.closest('.upn-pref');
+      if (!card) return;
+      var ch = card.dataset.channel;
+      var enabled = card.querySelector(
+        '[data-pref="enabled"]').checked ? 1 : 0;
+      var popup = card.querySelector(
+        '[data-pref="popup"]').checked ? 1 : 0;
+      if (!statusEl) return;
+      statusEl.textContent = 'Saving...';
+      statusEl.className = 'upm-form-status';
+      fetch('/api/notifications/prefs/save', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          channel: ch, enabled: enabled, browser_popups: popup,
+        }),
+      }).then(function (r) { return r.json(); })
+        .then(function (j) {
+          if (j && j.success) {
+            statusEl.textContent = 'Saved.';
+            statusEl.className = 'upm-form-status is-success';
+          } else {
+            statusEl.textContent = (j && j.error) || 'Save failed.';
+            statusEl.className = 'upm-form-status is-error';
+          }
+        });
+    });
+  }
 
-  listEl.addEventListener('click', function (e) {
-    var btn = e.target.closest('button[data-action]');
-    if (!btn) return;
-    var url = btn.dataset.action === 'read'
-      ? '/api/notifications/mark-read'
-      : '/api/notifications/dismiss';
-    fetch(url, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ ids: [btn.dataset.id] }),
-    }).then(loadList);
-  });
+  if (listEl) {
+    listEl.addEventListener('click', function (e) {
+      var btn = e.target.closest('button[data-action]');
+      if (!btn) return;
+      var url = btn.dataset.action === 'read'
+        ? '/api/notifications/mark-read'
+        : '/api/notifications/dismiss';
+      fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ids: [btn.dataset.id] }),
+      }).then(loadList);
+    });
+  }
 
-  markAll.addEventListener('click', function () {
-    fetch('/api/notifications/mark-read', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({}),
-    }).then(loadList);
-  });
+  if (markAll) {
+    markAll.addEventListener('click', function () {
+      fetch('/api/notifications/mark-read', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({}),
+      }).then(loadList);
+    });
+  }
 
-  dismissAll.addEventListener('click', function () {
-    if (!confirm('Dismiss all notifications?')) return;
-    fetch('/api/notifications/dismiss', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({}),
-    }).then(loadList);
-  });
+  if (dismissAll) {
+    dismissAll.addEventListener('click', function () {
+      if (!confirm('Dismiss all notifications?')) return;
+      fetch('/api/notifications/dismiss', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({}),
+      }).then(loadList);
+    });
+  }
 
   function refreshBrowserPerm() {
+    if (!browserStatus || !grantBtn) return;
     if (typeof Notification === 'undefined') {
       browserStatus.textContent = 'not supported';
       grantBtn.disabled = true;
@@ -170,10 +184,12 @@
     browserStatus.textContent = Notification.permission;
     grantBtn.disabled = (Notification.permission === 'granted');
   }
-  grantBtn.addEventListener('click', function () {
-    if (typeof Notification === 'undefined') return;
-    Notification.requestPermission().then(refreshBrowserPerm);
-  });
+  if (grantBtn) {
+    grantBtn.addEventListener('click', function () {
+      if (typeof Notification === 'undefined') return;
+      Notification.requestPermission().then(refreshBrowserPerm);
+    });
+  }
 
   refreshBrowserPerm();
   loadPrefs();

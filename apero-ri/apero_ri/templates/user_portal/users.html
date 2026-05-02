@@ -4,7 +4,9 @@
 {% block extra_head %}
 {{ super() }}
 <link rel="stylesheet"
-      href="{{ url_for('static', filename='css/user_portal_messaging.css', v='20260424a') }}">
+    href="{{ url_for('static', filename='css/user_portal_messaging.css', v='20260424a') }}">
+<link rel="stylesheet"
+    href="{{ url_for('static', filename='css/user_portal_user_cards.css', v='20260501a') }}">
 {% endblock %}
 
 {% block doc_content %}
@@ -17,28 +19,15 @@
         </p>
     </div>
 
-    <div class="upm-toolbar">
+    <div class="upu-toolbar">
         <input type="text"
                id="upm-search"
                class="ari-input"
                placeholder="Filter by username, name, group...">
-        <span class="upm-count" id="upm-count">0 users</span>
+        <span class="upu-count" id="upm-count">0 users</span>
     </div>
 
-    <div class="ari-table-wrap">
-        <table class="ari-dt upm-table" id="upm-users-table">
-            <thead>
-                <tr>
-                    <th>Username</th>
-                    <th>Full name</th>
-                    <th>Email</th>
-                    <th>Groups</th>
-                    <th class="upm-actions-col">Actions</th>
-                </tr>
-            </thead>
-            <tbody></tbody>
-        </table>
-    </div>
+    <div class="upu-users-grid" id="upm-users-grid"></div>
 </div>
 
 <!-- Send-message modal -->
@@ -80,5 +69,5 @@
 
 {% block extra_scripts %}
 {{ super() }}
-<script src="{{ url_for('static', filename='js/user_portal_users.js', v='20260424a') }}"></script>
+<script src="{{ url_for('static', filename='js/user_portal_users.js', v='20260501a') }}"></script>
 {% endblock %}

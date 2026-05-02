@@ -4,7 +4,7 @@
 {% block extra_head %}
 {{ super() }}
 <link rel="stylesheet"
-      href="{{ url_for('static', filename='css/user_portal_messaging.css', v='20260501a') }}">
+    href="{{ url_for('static', filename='css/user_portal_messaging.css', v='20260501d') }}">
 {% endblock %}
 
 {% block doc_content %}
@@ -27,6 +27,18 @@
                 aria-selected="false">
             <i class="fa-solid fa-paper-plane"></i> Sent
         </button>
+        <div class="upm-tab-tools">
+            <button class="ari-btn ari-btn--small" id="upm-mark-all-read"
+                    type="button">
+                <i class="fa-solid fa-envelope-open"></i>
+                Mark all read
+            </button>
+            <button class="ari-btn ari-btn--small ari-btn--danger"
+                    id="upm-delete-all" type="button">
+                <i class="fa-solid fa-trash"></i>
+                Delete all
+            </button>
+        </div>
         <button class="ari-btn ari-btn--primary upm-tab-action"
                 id="upm-compose-btn">
             <i class="fa-solid fa-pen-to-square"></i> Compose
@@ -35,6 +47,25 @@
 
     <div class="upm-split">
         <aside class="upm-list-pane" id="upm-list-pane">
+            <div class="upm-list-controls">
+                <label class="upm-page-size-wrap" for="upm-page-size">
+                    Show
+                    <select id="upm-page-size" class="ari-input upm-page-size">
+                        <option value="5">5</option>
+                        <option value="10" selected>10</option>
+                        <option value="50">50</option>
+                        <option value="100">100</option>
+                    </select>
+                    messages
+                </label>
+                <div class="upm-pager">
+                    <button class="ari-btn ari-btn--small" type="button"
+                            id="upm-prev-page">Previous</button>
+                    <span id="upm-page-info" class="upm-page-info"></span>
+                    <button class="ari-btn ari-btn--small" type="button"
+                            id="upm-next-page">Next</button>
+                </div>
+            </div>
             <div class="upm-mailbox" id="upm-mailbox">
                 <div class="upm-empty">Loading...</div>
             </div>
@@ -67,6 +98,11 @@
                             class="ari-btn ari-btn--danger"
                             id="upm-view-delete">
                         <i class="fa-solid fa-trash"></i> Delete
+                    </button>
+                    <button type="button" class="ari-btn"
+                            id="upm-view-mark-unread">
+                        <i class="fa-regular fa-envelope"></i>
+                        Mark unread
                     </button>
                     <button type="button"
                             class="ari-btn ari-btn--primary"
@@ -126,5 +162,5 @@
 
 {% block extra_scripts %}
 {{ super() }}
-<script src="{{ url_for('static', filename='js/user_portal_messages.js', v='20260501a') }}"></script>
+<script src="{{ url_for('static', filename='js/user_portal_messages.js', v='20260501f') }}"></script>
 {% endblock %}

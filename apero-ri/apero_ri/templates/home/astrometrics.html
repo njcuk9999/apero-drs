@@ -274,18 +274,18 @@
 }
 .hist-card__name {
     font-family: monospace;
-    color: #6f42c1;
+    color: var(--ari-primary, #3f51b5);
     margin-right: 0.4rem;
 }
 .hist-card__field {
     display: inline-block;
-    background: #f1f3f5;
-    border: 1px solid #dee2e6;
+    background: var(--ari-bg-hover, #f1f3f5);
+    border: 1px solid var(--ari-border, #dee2e6);
     border-radius: 0.7rem;
     padding: 0 0.45rem;
     margin: 0 0.15rem;
     font-size: 0.75rem;
-    color: #495057;
+    color: var(--ari-text-muted, #495057);
 }
 .hist-card__action {
     display: inline-block;
@@ -327,7 +327,36 @@
 .hist-card__btn:hover {
     border-color: var(--ari-primary, #3f51b5);
     color: var(--ari-primary, #3f51b5);
-}/* lightweight overlay (modal) */
+}
+[data-theme="dark"] .hist-card__field {
+    background: var(--ari-surface-muted, #1c2128);
+    border-color: var(--ari-border, #30363d);
+    color: var(--ari-text-muted, #8b949e);
+}
+[data-theme="dark"] .hist-card__action--create {
+    background: rgba(63, 185, 80, 0.14);
+    color: #7ee787;
+    border-color: rgba(63, 185, 80, 0.4);
+}
+[data-theme="dark"] .hist-card__action--edit {
+    background: rgba(210, 153, 34, 0.2);
+    color: #f2cc60;
+    border-color: rgba(210, 153, 34, 0.45);
+}
+[data-theme="dark"] .hist-card__action--restore {
+    background: rgba(187, 128, 255, 0.14);
+    color: #d2a8ff;
+    border-color: rgba(187, 128, 255, 0.4);
+}
+[data-theme="dark"] .hist-card__btn {
+    background: var(--ari-card-bg, #161b22);
+    border-color: var(--ari-border, #30363d);
+    color: var(--ari-text-muted, #8b949e);
+}
+[data-theme="dark"] .hist-card__btn:hover {
+    background: var(--ari-surface-muted, #1c2128);
+}
+/* lightweight overlay (modal) */
 .ari-overlay {
     position: fixed;
     inset: 0;
