@@ -315,17 +315,33 @@ def _multi_process_identify_process(params: ParamDict, all_files: List[str],
         process = Process(target=_process_identify_wrapper, args=args)
         process.start()
         jobs.append(process)
-    for proc in jobs:
-        proc.join()
+
+    # Collect results from queue before joining processes (avoid deadlock)
     ordered_results = {}
     for _ in range(len(grouped_files)):
-        group_id, group_result = queue.get()
-        ordered_results[group_id] = group_result
+        try:
+            group_id, group_result = queue.get(timeout=300)  # 5 minute timeout
+            ordered_results[group_id] = group_result
+        except Exception as e:
+            WLOG(params, 'warning', f'Failed to get result from queue: {e}')
+
+    # Now join processes with timeout to avoid hanging
+    for proc in jobs:
+        proc.join(timeout=30)  # 30 second timeout per process
+        if proc.is_alive():
+            emsg = f'Process {proc.pid} did not terminate, terminating forcefully'
+            WLOG(params, 'warning', emsg)
+            proc.terminate()
+            proc.join(timeout=5)
+            if proc.is_alive():
+                proc.kill()
+
     valid_files, valid_identity = [], []
     for g_it in range(1, len(grouped_files) + 1):
-        group_files, group_identity = ordered_results[g_it]
-        valid_files += list(group_files)
-        valid_identity += list(group_identity)
+        if g_it in ordered_results:
+            group_files, group_identity = ordered_results[g_it]
+            valid_files += list(group_files)
+            valid_identity += list(group_identity)
     return valid_files, valid_identity
 
 
@@ -435,8 +451,18 @@ def _multi_process_plot_process(params: ParamDict, valid_identity: List[str],
         process = Process(target=_process_plot_wrapper, args=args)
         process.start()
         jobs.append(process)
+
+    # Join processes with timeout to avoid hanging
     for proc in jobs:
-        proc.join()
+        proc.join(timeout=300)  # 5 minute timeout per process
+        if proc.is_alive():
+            emsg = f'Process {proc.pid} did not terminate, terminating forcefully'
+            WLOG(params, 'warning', emsg)
+            proc.terminate()
+            proc.join(timeout=5)
+            if proc.is_alive():
+                proc.kill()
+
 
 
 # =============================================================================
