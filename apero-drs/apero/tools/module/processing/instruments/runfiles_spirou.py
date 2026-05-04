@@ -63,7 +63,13 @@ def get_runfiles(params: ParamDict) -> List[RunIniFile]:
     mini_run1_spirou.modify('SKIP_LBLMASK_SCI', False)
     mini_run1_spirou.modify('SKIP_LBLCOMPUTE_SCI', False)
     mini_run1_spirou.modify('SKIP_LBLCOMPILE_SCI', False)
+    # mini runs need debug data
+    mini_run1_spirou.modify('DEBUG.OUTFILE.BCKGRD_FILE', True)
+    mini_run1_spirou.modify('DEBUG.OUTFILE.E2DSLL_FILE', True)
+    mini_run1_spirou.modify('DEBUG.OUTFILE.SHAPE_FILES', True)
+    mini_run1_spirou.modify('DEBUG.OUTFILE.UNCORR_EXT_FILES', True)
     run_files.append(mini_run1_spirou)
+
     # mini run 2
     mini_run2_spirou = RunIniFile(params, 'SPIROU', 'mini_run2')
     mini_run2_spirou.rkey('SCIENCE_TARGETS', 'Gl699')
@@ -72,6 +78,11 @@ def get_runfiles(params: ParamDict) -> List[RunIniFile]:
     mini_run2_spirou.modify('SKIP_LBLMASK_SCI', False)
     mini_run2_spirou.modify('SKIP_LBLCOMPUTE_SCI', False)
     mini_run2_spirou.modify('SKIP_LBLCOMPILE_SCI', False)
+    # mini runs need debug data
+    mini_run2_spirou.modify('DEBUG.OUTFILE.BCKGRD_FILE', True)
+    mini_run2_spirou.modify('DEBUG.OUTFILE.E2DSLL_FILE', True)
+    mini_run2_spirou.modify('DEBUG.OUTFILE.SHAPE_FILES', True)
+    mini_run2_spirou.modify('DEBUG.OUTFILE.UNCORR_EXT_FILES', True)
     run_files.append(mini_run2_spirou)
     # quick run
     quick_run_spirou = RunIniFile(params, 'SPIROU', 'quick_run')
