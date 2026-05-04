@@ -16,3 +16,10 @@
   - add AREL_RDELTA, AREL_ADELTA, AREL_LDELTA to default_constants
   - add ARELDATE_GSHEET_URL and ARELDATE_GSHEET_ID to default_constants
   - add ARELDATE_GSHEET_ACOL to default_constants
+
+2026-05-04:
+  - add to runfiles_ilocater.py for mini run:
+      .modify('DEBUG_BACKGROUND_FILE', True)
+      .modify('DEBUG_E2DSLL_FILE', True)
+      .modify('DEBUG_SHAPE_FILES', True)
+      .modify('DEBUG_UNCORR_EXT_FILES', True)

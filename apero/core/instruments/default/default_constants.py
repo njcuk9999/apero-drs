@@ -5048,7 +5048,7 @@ POLAR_LSD_RES_POWER_GUESS = Const('POLAR_LSD_RES_POWER_GUESS', value=None,
 cgroup = 'DEBUG OUTPUT FILE SETTINGS'
 # Whether to save background debug file (large 0.5 GB per file)
 #   one of these per extraction (lots)
-DEBUG_BACKGROUND_FILE = Const('DEBUG_BACKGROUND_FILE', value=True,
+DEBUG_BACKGROUND_FILE = Const('DEBUG_BACKGROUND_FILE', value=False,
                               dtype=bool, source=__NAME__,
                               user=True, active=False, group=cgroup,
                               description='Whether to save background debug '
@@ -5057,7 +5057,7 @@ DEBUG_BACKGROUND_FILE = Const('DEBUG_BACKGROUND_FILE', value=True,
 
 # Whether to save the E2DSLL file (around 0.05 to 0.1 GB per file)
 #   one of these per fiber (lots)
-DEBUG_E2DSLL_FILE = Const('DEBUG_E2DSLL_FILE', value=True,
+DEBUG_E2DSLL_FILE = Const('DEBUG_E2DSLL_FILE', value=False,
                           dtype=bool, source=__NAME__,
                           user=True, active=False, group=cgroup,
                           description='Whether to save the E2DSLL file '
@@ -5066,7 +5066,7 @@ DEBUG_E2DSLL_FILE = Const('DEBUG_E2DSLL_FILE', value=True,
 
 # Whether to save the shape in and out debug files (around 0.1 GB per file)
 #   but only one set of these per night
-DEBUG_SHAPE_FILES = Const('DEBUG_SHAPE_FILES', value=True,
+DEBUG_SHAPE_FILES = Const('DEBUG_SHAPE_FILES', value=False,
                           dtype=bool, source=__NAME__,
                           user=True, active=False, group=cgroup,
                           description='Whether to save the shape in and '
@@ -5076,7 +5076,7 @@ DEBUG_SHAPE_FILES = Const('DEBUG_SHAPE_FILES', value=True,
 
 # Whether to save the uncorrected for FP C fiber leak files
 #      (around 0.01 GB per file) one of these per fiber
-DEBUG_UNCORR_EXT_FILES = Const('DEBUG_UNCORR_EXT_FILES', value=True,
+DEBUG_UNCORR_EXT_FILES = Const('DEBUG_UNCORR_EXT_FILES', value=False,
                                dtype=bool, source=__NAME__,
                                user=True, active=False, group=cgroup,
                                description='Whether to save the uncorrected '

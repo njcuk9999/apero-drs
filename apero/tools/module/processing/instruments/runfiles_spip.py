@@ -62,6 +62,11 @@ def get_runfiles(params: ParamDict) -> List[RunIniFile]:
     mini_run1_spip.modify('SKIP_LBLMASK_SCI', False)
     mini_run1_spip.modify('SKIP_LBLCOMPUTE_SCI', False)
     mini_run1_spip.modify('SKIP_LBLCOMPILE_SCI', False)
+    mini_run1_spip.modify('DEBUG_BACKGROUND_FILE', True)
+    mini_run1_spip.modify('DEBUG_E2DSLL_FILE', True)
+    mini_run1_spip.modify('DEBUG_SHAPE_FILES', True)
+    mini_run1_spip.modify('DEBUG_UNCORR_EXT_FILES', True)
+
     run_files.append(mini_run1_spip)
     # quick run
     quick_run_spip = RunIniFile(params, 'SPIP', 'quick_run')
