@@ -4,7 +4,7 @@
 {% block extra_head %}
 {{ super() }}
 <link rel="stylesheet"
-      href="{{ url_for('static', filename='css/user_portal_messaging.css', v='20260501a') }}">
+    href="{{ url_for('static', filename='css/user_portal_messaging.css', v='20260501h') }}">
 {% endblock %}
 
 {% block doc_content %}
@@ -27,6 +27,18 @@
                 aria-selected="false">
             <i class="fa-solid fa-paper-plane"></i> Sent
         </button>
+        <div class="upm-tab-tools">
+            <button class="ari-btn ari-btn--small" id="upm-mark-all-read"
+                    type="button">
+                <i class="fa-solid fa-envelope-open"></i>
+                Mark all read
+            </button>
+            <button class="ari-btn ari-btn--small ari-btn--danger"
+                    id="upm-delete-all" type="button">
+                <i class="fa-solid fa-trash"></i>
+                Delete all
+            </button>
+        </div>
         <button class="ari-btn ari-btn--primary upm-tab-action"
                 id="upm-compose-btn">
             <i class="fa-solid fa-pen-to-square"></i> Compose
@@ -35,6 +47,25 @@
 
     <div class="upm-split">
         <aside class="upm-list-pane" id="upm-list-pane">
+            <div class="upm-list-controls">
+                <label class="upm-page-size-wrap" for="upm-page-size">
+                    Show
+                    <select id="upm-page-size" class="ari-input upm-page-size">
+                        <option value="5">5</option>
+                        <option value="10" selected>10</option>
+                        <option value="50">50</option>
+                        <option value="100">100</option>
+                    </select>
+                    messages
+                </label>
+                <div class="upm-pager">
+                    <button class="ari-btn ari-btn--small" type="button"
+                            id="upm-prev-page">Previous</button>
+                    <span id="upm-page-info" class="upm-page-info"></span>
+                    <button class="ari-btn ari-btn--small" type="button"
+                            id="upm-next-page">Next</button>
+                </div>
+            </div>
             <div class="upm-mailbox" id="upm-mailbox">
                 <div class="upm-empty">Loading...</div>
             </div>
@@ -68,6 +99,11 @@
                             id="upm-view-delete">
                         <i class="fa-solid fa-trash"></i> Delete
                     </button>
+                    <button type="button" class="ari-btn"
+                            id="upm-view-mark-unread">
+                        <i class="fa-regular fa-envelope"></i>
+                        Mark unread
+                    </button>
                     <button type="button"
                             class="ari-btn ari-btn--primary"
                             id="upm-view-reply">
@@ -82,7 +118,7 @@
 </div>
 
 <!-- Compose modal -->
-<div class="ari-modal upm-modal" id="upm-send-modal" hidden>
+<div class="upm-modal" id="upm-send-modal" hidden>
     <div class="ari-modal__backdrop" data-upm-close></div>
     <div class="ari-modal__content">
         <header class="ari-modal__header">
@@ -95,10 +131,21 @@
         <form id="upm-send-form" class="upm-send-form">
             <label class="ari-form-row">
                 <span>Recipient</span>
-                <input type="text" name="recipient"
-                       id="upm-recipient" class="ari-input"
-                       list="upm-user-list" required>
-                <datalist id="upm-user-list"></datalist>
+                  <div class="upm-typeahead-wrap">
+                      <input type="text" id="upm-recipient-query"
+                          class="ari-input"
+                          placeholder="Type username or name"
+                          autocomplete="off" required>
+                      <input type="hidden" name="recipient"
+                          id="upm-recipient">
+                      <div id="upm-recipient-suggest"
+                        class="upm-typeahead-list" hidden></div>
+                  </div>
+                  <div class="upm-recipient-help">
+                      Need someone else? Browse
+                      <a href="{{ url_for('user_portal_users_view') }}"
+                      target="_blank" rel="noopener">all users</a>.
+                  </div>
             </label>
             <label class="ari-form-row">
                 <span>Subject</span>
@@ -126,5 +173,5 @@
 
 {% block extra_scripts %}
 {{ super() }}
-<script src="{{ url_for('static', filename='js/user_portal_messages.js', v='20260501a') }}"></script>
+<script src="{{ url_for('static', filename='js/user_portal_messages.js', v='20260501h') }}"></script>
 {% endblock %}

@@ -836,6 +836,7 @@ def api_astrometrics_add_rejected(app):
         'ALIASES': aliases,
         'NOTES': notes,
         'STATUS': dra.STATUS_REJECTED,
+        'VERIFIER': 'None',
         'FIRST_UPDATED': today,
         'FIRST_AUTHOR': author,
         'LAST_EDIT': today,
@@ -937,6 +938,7 @@ def api_astrometrics_update_rejected(app):
     entry['ALIASES'] = aliases
     entry['NOTES'] = notes
     entry['STATUS'] = dra.STATUS_REJECTED
+    entry['VERIFIER'] = 'None'
     if not entry.get('FIRST_UPDATED'):
         entry['FIRST_UPDATED'] = now
     if not entry.get('FIRST_AUTHOR'):
@@ -1073,7 +1075,7 @@ _MANUAL_RESERVED_KEYS = {
     'APERO_NAME', 'ORIGINAL_NAME', 'SIMBAD_NAME', 'APERO_CLASS',
     'RA', 'DEC', 'PMRA', 'PMDE', 'PLX', 'RV', 'TEFF', 'EPOCH',
     'SPT', 'GAIA_SOURCE_ID', 'NO_PM', 'ALIASES', 'KEYWORDS',
-    'NOTES', 'STATUS',
+    'NOTES', 'STATUS', 'VERIFIER',
     'FIRST_UPDATED', 'FIRST_AUTHOR', 'LAST_EDIT', 'LAST_AUTHOR',
 }
 _MANUAL_DERIVED_KEYS = (
@@ -1490,6 +1492,7 @@ def api_astrometrics_add_manual(app):
         entry['KEYWORDS'] = None
     entry['NOTES'] = notes or 'added manually via ARI'
     entry['STATUS'] = dra.STATUS_PENDING
+    entry['VERIFIER'] = 'None'
     entry['FIRST_UPDATED'] = first_updated
     entry['FIRST_AUTHOR'] = first_author
     entry['LAST_EDIT'] = today
@@ -2038,6 +2041,16 @@ def api_astrometrics_verify(app):
             astrom_root=astrom_root,
             apero_name=apero_name,
             new_status=dra.STATUS_VERIFIED,
+            author=author,
+        )
+    except Exception as exc:  # noqa: BLE001
+        return jsonify(success=False, error=str(exc)), 400
+    try:
+        entry = dra.update_entry_field(
+            astrom_dir=astrom_root,
+            apero_name=entry.get('APERO_NAME') or apero_name,
+            key='VERIFIER',
+            value=author,
             author=author,
         )
     except Exception as exc:  # noqa: BLE001

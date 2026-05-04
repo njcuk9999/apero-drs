@@ -6,7 +6,7 @@
 {% block extra_head %}
 {{ super() }}
 <link rel="stylesheet"
-      href="{{ url_for('static', filename='css/monitor_issues.css') }}?v=20260427a">
+    href="{{ url_for('static', filename='css/monitor_issues.css') }}?v=20260501b">
 {% endblock %}
 
 {% block doc_content %}
@@ -46,6 +46,7 @@
             <option value="">All</option>
             <option value="astrometric">Astrometric</option>
             <option value="ari">ARI</option>
+            <option value="message">Message</option>
             <option value="flag">Flag</option>
             <option value="target_request">Target request</option>
             <option value="other">Other</option>
@@ -57,6 +58,7 @@
         </label>
         <select id="issues-filter-type" class="mi-select">
             <option value="">All</option>
+            <option value="reported message">Reported message</option>
             <option value="variable flag">Variable flag</option>
             <option value="new object">New object</option>
             <option value="page">Page</option>
@@ -110,10 +112,13 @@
         <label for="issues-filter-user" class="mi-toolbar__label">
             User
         </label>
-        <input id="issues-filter-user" class="mi-input"
-               placeholder="username" list="issues-user-list"
-               style="min-width: 9rem;" />
-        <datalist id="issues-user-list"></datalist>
+        <div class="mi-user-lookup-wrap">
+            <input id="issues-filter-user" class="mi-input"
+                   placeholder="username"
+                   style="min-width: 9rem;" />
+            <div id="issues-user-suggest"
+                 class="mi-user-lookup-list" hidden></div>
+        </div>
     </div>
     <div class="mi-toolbar__group">
         <label for="issues-filter-user-role"
@@ -150,14 +155,13 @@
                     <th class="mi-col-kind">Type</th>
                     <th>Title</th>
                     <th class="mi-col-reason">Reason</th>
-                    <th class="mi-col-action">Action</th>
                     <th class="mi-col-status">Status</th>
                     <th class="mi-col-actions">Actions</th>
                 </tr>
             </thead>
             <tbody id="issues-tbody">
                 <tr>
-                    <td colspan="10">
+                    <td colspan="9">
                         <div class="mi-empty">
                             <i class="fa-solid fa-spinner fa-spin"></i>
                             <p class="mi-empty__msg">Loading issues…</p>
@@ -166,6 +170,22 @@
                 </tr>
             </tbody>
         </table>
+    </div>
+</div>
+
+<div id="mi-message-overlay" class="mi-message-overlay"
+     style="display:none;" aria-hidden="true">
+    <div class="mi-message-overlay__panel" role="dialog"
+         aria-modal="true" aria-labelledby="mi-message-title">
+        <div class="mi-message-overlay__head">
+            <h3 id="mi-message-title">Flagged message</h3>
+            <button id="mi-message-close" class="mi-btn mi-btn--ghost"
+                    type="button" title="Close">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+        <div class="mi-message-overlay__meta" id="mi-message-meta"></div>
+        <div class="mi-message-overlay__body" id="mi-message-body"></div>
     </div>
 </div>
 
@@ -180,8 +200,27 @@
     const fInst     = document.getElementById('issues-filter-instrument');
     const fUser     = document.getElementById('issues-filter-user');
     const fUserRole = document.getElementById('issues-filter-user-role');
-    const userList  = document.getElementById('issues-user-list');
+    const userSuggest = document.getElementById('issues-user-suggest');
     const refreshBtn = document.getElementById('issues-refresh');
+    const msgOverlay = document.getElementById('mi-message-overlay');
+    const msgCloseBtn = document.getElementById('mi-message-close');
+    const msgTitleEl = document.getElementById('mi-message-title');
+    const msgMetaEl = document.getElementById('mi-message-meta');
+    const msgBodyEl = document.getElementById('mi-message-body');
+    let focusIssueId = null;
+    let issueUsers = [];
+
+    try {
+        const qs = new URLSearchParams(window.location.search || '');
+        const raw = qs.get('id') || qs.get('issue_id');
+        const parsed = parseInt(raw, 10);
+        if (Number.isFinite(parsed) && parsed > 0) {
+            focusIssueId = parsed;
+            // Include non-open issues when deep-linking from
+            // notifications.
+            if (fStatus) fStatus.value = '';
+        }
+    } catch (_) {}
 
     function escapeHtml(s) {
         return String(s == null ? '' : s)
@@ -229,8 +268,12 @@
 
     function renderRow(it) {
         const tr = document.createElement('tr');
+        tr.dataset.issueId = String(it.id);
         const rc = rowClass(it.status);
         if (rc) tr.classList.add(rc);
+        if (focusIssueId && Number(it.id) === focusIssueId) {
+            tr.classList.add('mi-row--focus');
+        }
         const titleStr = synthesiseTitle(it);
         const titleCell = titleStr
             ? escapeHtml(titleStr)
@@ -241,17 +284,26 @@
         const reasonCell = it.reason
             ? escapeHtml(it.reason)
             : '<span style="color:var(--ari-text-muted);">—</span>';
-        const actionCell = it.action
-            ? escapeHtml(it.action)
-            : '<span style="color:var(--ari-text-muted);">—</span>';
-        const goBtn = it.origin_url
-            ? ('<a class="mi-btn mi-btn--xs mi-btn--ghost"'
+        const isMessageIssue = String(it.kind || '') === 'message';
+        const goTitle = isMessageIssue
+            ? 'Go to flagged message'
+            : 'Open the page where this was flagged';
+        let goBtn = '';
+        if (isMessageIssue) {
+            goBtn = '<button class="mi-btn mi-btn--xs mi-btn--ghost"'
+                + ' data-action="view-message" data-id="'
+                + String(it.id) + '"'
+                + ' title="' + escapeHtml(goTitle) + '">'
+                + '<i class="fa-solid fa-envelope-open-text"></i>'
+                + '</button>';
+        } else if (it.origin_url) {
+            goBtn = '<a class="mi-btn mi-btn--xs mi-btn--ghost"'
                 + ' href="' + escapeHtml(it.origin_url) + '"'
                 + ' target="_blank" rel="noopener"'
-                + ' title="Open the page where this was flagged">'
+                + ' title="' + escapeHtml(goTitle) + '">'
                 + '<i class="fa-solid fa-up-right-from-square"></i>'
-                + '</a>')
-            : '';
+                + '</a>';
+        }
         tr.innerHTML = `
             <td class="mi-col-id">#${it.id}</td>
             <td class="mi-col-created">${
@@ -278,7 +330,6 @@
             <td class="mi-col-kind">${typeCell}</td>
             <td class="mi-cell-title">${titleCell}</td>
             <td class="mi-col-reason">${reasonCell}</td>
-            <td class="mi-col-action">${actionCell}</td>
             <td class="mi-col-status">
                 <span class="mi-badge ${statusClass(it.status)}">
                     ${escapeHtml(it.status||'open')}
@@ -325,7 +376,7 @@
 
     function renderEmpty() {
         tbody.innerHTML = `
-            <tr><td colspan="10">
+            <tr><td colspan="9">
                 <div class="mi-empty">
                     <i class="fa-solid fa-inbox"></i>
                     <p class="mi-empty__title">No issues match
@@ -338,7 +389,7 @@
 
     function renderError(msg) {
         tbody.innerHTML = `
-            <tr><td colspan="10">
+            <tr><td colspan="9">
                 <div class="mi-empty">
                     <i class="fa-solid fa-triangle-exclamation"
                         style="color: var(--ari-danger);"></i>
@@ -408,13 +459,31 @@
             if (n === 0) {
                 renderEmpty();
             }
+            let focused = false;
+            if (focusIssueId) {
+                const row = tbody.querySelector(
+                    'tr[data-issue-id="' + focusIssueId + '"]');
+                if (row) {
+                    focused = true;
+                    row.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'center'
+                    });
+                }
+            }
             statusEl.innerHTML = `
                 <span class="mi-status__pill">
                     <i class="fa-solid fa-list"></i>
                     ${n} issue${n === 1 ? '' : 's'}
                 </span>
                 <span>visibility scope:
-                    <strong>${escapeHtml(VISIBILITY)}</strong></span>`;
+                    <strong>${escapeHtml(VISIBILITY)}</strong></span>
+                ${focusIssueId
+                    ? `<span>${focused
+                        ? 'focused issue #' + focusIssueId
+                        : 'issue #' + focusIssueId
+                          + ' not in current results'}</span>`
+                    : ''}`;
         } catch (err) {
             renderError(err.message);
             statusEl.textContent = '';
@@ -442,11 +511,52 @@
         }
     }
 
+    function closeMessageOverlay() {
+        if (!msgOverlay) return;
+        msgOverlay.style.display = 'none';
+        msgOverlay.setAttribute('aria-hidden', 'true');
+    }
+
+    function openMessageOverlay(issue) {
+        if (!msgOverlay || !msgTitleEl || !msgBodyEl || !msgMetaEl) return;
+        const safeIssue = issue || {};
+        const label = synthesizeIssueLabel(safeIssue);
+        msgTitleEl.textContent = label;
+        msgBodyEl.textContent = String(safeIssue.reason || '').trim()
+            || '(No message body available.)';
+
+        const metaBits = [];
+        if (safeIssue.id) metaBits.push('Issue #' + String(safeIssue.id));
+        if (safeIssue.created_by) {
+            metaBits.push('Flagged by ' + String(safeIssue.created_by));
+        }
+        if (safeIssue.created_at) {
+            const dt = String(safeIssue.created_at).slice(0, 19)
+                .replace('T', ' ');
+            metaBits.push(dt);
+        }
+        msgMetaEl.textContent = metaBits.join(' • ');
+
+        msgOverlay.style.display = 'flex';
+        msgOverlay.setAttribute('aria-hidden', 'false');
+    }
+
+    function synthesizeIssueLabel(issue) {
+        const rawTitle = String(issue.title || '').trim();
+        if (rawTitle) return rawTitle;
+        return 'Flagged message';
+    }
+
     tbody.addEventListener('click', (ev) => {
         const btn = ev.target.closest('button[data-action]');
         if (!btn) return;
         const id = parseInt(btn.dataset.id, 10);
         const action = btn.dataset.action;
+        if (action === 'view-message') {
+            const issue = (window._issuesById || {})[id] || null;
+            openMessageOverlay(issue);
+            return;
+        }
         if (action === 'delete') { adminDelete(id); return; }
         if (action === 'edit')   { adminEdit(id);   return; }
         if (action === 'assign') { adminAssign(id); return; }
@@ -509,25 +619,77 @@
     if (fUser) {
         let userTimer = null;
         fUser.addEventListener('input', () => {
+            renderUserSuggest(fUser.value || '');
             if (userTimer) clearTimeout(userTimer);
             userTimer = setTimeout(load, 350);
         });
+        fUser.addEventListener('focus', () => {
+            renderUserSuggest(fUser.value || '');
+        });
+        fUser.addEventListener('blur', () => {
+            setTimeout(() => {
+                if (userSuggest) userSuggest.hidden = true;
+            }, 120);
+        });
     }
     if (fUserRole) fUserRole.addEventListener('change', load);
+    if (msgCloseBtn) {
+        msgCloseBtn.addEventListener('click', closeMessageOverlay);
+    }
+    if (msgOverlay) {
+        msgOverlay.addEventListener('click', (e) => {
+            if (e.target === msgOverlay) closeMessageOverlay();
+        });
+    }
+    window.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') closeMessageOverlay();
+    });
 
     async function loadUsers() {
         try {
             const resp = await fetch('/api/issues/users');
             if (!resp.ok) return;
             const data = await resp.json();
-            if (!data.success || !userList) return;
-            userList.innerHTML = '';
-            (data.users || []).forEach(u => {
-                const opt = document.createElement('option');
-                opt.value = u.username;
-                userList.appendChild(opt);
-            });
+            if (!data.success) return;
+            issueUsers = data.users || [];
         } catch (_) {}
+    }
+
+    function renderUserSuggest(query) {
+        if (!userSuggest) return;
+        const q = String(query || '').trim().toLowerCase();
+        if (!q) {
+            userSuggest.hidden = true;
+            userSuggest.innerHTML = '';
+            return;
+        }
+        const rows = issueUsers.filter(u =>
+            String(u.username || '').toLowerCase().includes(q)
+        ).slice(0, 20);
+        if (!rows.length) {
+            userSuggest.innerHTML = '<div class="mi-user-lookup-empty">'
+                + 'No matching users.</div>';
+            userSuggest.hidden = false;
+            return;
+        }
+        userSuggest.innerHTML = rows.map(u =>
+            '<button type="button" class="mi-user-lookup-item"'
+            + ' data-username="' + escapeHtml(u.username) + '">'
+            + escapeHtml(u.username)
+            + '</button>'
+        ).join('');
+        userSuggest.hidden = false;
+    }
+
+    if (userSuggest) {
+        userSuggest.addEventListener('click', (e) => {
+            const item = e.target.closest('.mi-user-lookup-item');
+            if (!item || !fUser) return;
+            e.preventDefault();
+            fUser.value = item.dataset.username || '';
+            userSuggest.hidden = true;
+            load();
+        });
     }
 
     async function adminAssign(id) {
@@ -543,22 +705,24 @@
         const curAssignee = cur.assigned_to || '';
         const overlay = document.createElement('div');
         overlay.className = 'mi-assign-overlay';
-        const opts = users.map(u =>
-            `<option value="${escapeHtml(u.username)}">`)
-            .join('');
         overlay.innerHTML = `
             <div class="mi-assign-overlay__panel">
                 <p class="mi-assign-overlay__title">
                     Assign issue #${id}
                 </p>
+                <div style="position:relative;">
                 <input id="mi-assign-input" class="mi-input"
-                       list="mi-assign-datalist"
                        placeholder="username (blank to unassign)"
                        value="${escapeHtml(curAssignee)}"
                        style="width:100%;margin-bottom:0.6rem;">
-                <datalist id="mi-assign-datalist">
-                    ${opts}
-                </datalist>
+                <div id="mi-assign-suggest"
+                     style="display:none; position:absolute; left:0;
+                     right:0; top:calc(100% - 0.5rem); z-index:2;
+                     max-height:220px; overflow-y:auto;
+                     background:var(--ari-card-bg); border:1px solid
+                     var(--ari-border); border-radius:8px;
+                     box-shadow:0 8px 20px rgba(0,0,0,0.2);"></div>
+                </div>
                 <div style="display:flex;gap:0.5rem;
                             justify-content:flex-end;">
                     <button class="mi-btn mi-btn--ghost"
@@ -569,7 +733,60 @@
             </div>`;
         document.body.appendChild(overlay);
         const input = overlay.querySelector('#mi-assign-input');
+        const suggest = overlay.querySelector('#mi-assign-suggest');
+        const normalized = (s) => String(s || '').trim().toLowerCase();
+
+        const renderSuggest = (query) => {
+            if (!suggest) return;
+            const q = normalized(query);
+            if (!q) {
+                suggest.style.display = 'none';
+                suggest.innerHTML = '';
+                return;
+            }
+            const rows = users.filter(u =>
+                normalized(u.username).includes(q)
+            ).slice(0, 20);
+            if (!rows.length) {
+                suggest.innerHTML = '<div style="padding:0.45rem 0.55rem;'
+                    + ' color:var(--ari-text-muted); font-size:0.82rem;">'
+                    + 'No matching users.</div>';
+                suggest.style.display = 'block';
+                return;
+            }
+            suggest.innerHTML = rows.map(u =>
+                '<button type="button" class="mi-assign-item"'
+                + ' data-username="' + escapeHtml(u.username) + '"'
+                + ' style="display:block; width:100%; border:none;'
+                + ' background:transparent; text-align:left;'
+                + ' padding:0.42rem 0.55rem; cursor:pointer;">'
+                + escapeHtml(u.username)
+                + '</button>'
+            ).join('');
+            suggest.style.display = 'block';
+        };
+
         input.focus();
+        input.addEventListener('input', () => {
+            renderSuggest(input.value || '');
+        });
+        input.addEventListener('focus', () => {
+            renderSuggest(input.value || '');
+        });
+        input.addEventListener('blur', () => {
+            setTimeout(() => {
+                if (suggest) suggest.style.display = 'none';
+            }, 120);
+        });
+        if (suggest) {
+            suggest.addEventListener('click', (e) => {
+                const item = e.target.closest('.mi-assign-item');
+                if (!item) return;
+                e.preventDefault();
+                input.value = item.dataset.username || '';
+                suggest.style.display = 'none';
+            });
+        }
         overlay.querySelector('#mi-assign-cancel')
             .addEventListener('click', () => overlay.remove());
         overlay.addEventListener('click', (e) => {

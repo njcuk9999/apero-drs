@@ -456,6 +456,39 @@
     color: #a4221a;
     text-decoration: line-through;
 }
+[data-theme="dark"] .rj-history-badge {
+    background: rgba(248, 81, 73, 0.16);
+    color: #ffb3ad;
+}
+[data-theme="dark"] .rj-history-badge--action {
+    background: rgba(210, 153, 34, 0.2);
+    color: #f2cc60;
+}
+[data-theme="dark"] .rj-history-fields span {
+    background: var(--ari-surface-muted, #1c2128);
+    border-color: var(--ari-border, #30363d);
+    color: var(--ari-text-muted, #8b949e);
+}
+[data-theme="dark"] .rj-btn-small {
+    background: var(--ari-card-bg, #161b22);
+    border-color: var(--ari-border, #30363d);
+    color: var(--ari-text-muted, #8b949e);
+}
+[data-theme="dark"] .rj-btn-small:hover {
+    background: var(--ari-surface-muted, #1c2128);
+}
+[data-theme="dark"] .rj-diff-chip--neutral {
+    background: rgba(210, 153, 34, 0.2);
+    color: #f2cc60;
+}
+[data-theme="dark"] .rj-diff-chip--add {
+    background: rgba(63, 185, 80, 0.16);
+    color: #7ee787;
+}
+[data-theme="dark"] .rj-diff-chip--remove {
+    background: rgba(248, 81, 73, 0.16);
+    color: #ffb3ad;
+}
 @media (max-width: 900px) {
     .rj-card,
     .rj-history-card {
@@ -488,10 +521,7 @@
         </h1>
         <p class="rj-header__sub">
             Manage file-level reject identifiers grouped by logical
-            instrument family. The {{ 'History' if
-            rejection_list_can_view_history else 'List' }} view reads the
-            configured mapped reject CSV files under
-            <strong>LOCAL_DATA_DIR/apero-assets</strong>.
+            instrument family.
         </p>
     </div>
     <div class="rj-count" id="rj-count"></div>

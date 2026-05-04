@@ -121,34 +121,6 @@
     panel.classList.remove('is-open');
   });
 
-  // "Clear all" button in the dropdown header: dismisses every
-  // notification for the current user.
-  var clearBtn = document.getElementById('ari-notif-clear-all');
-  if (clearBtn) {
-    clearBtn.addEventListener('click', function (e) {
-      e.preventDefault();
-      e.stopPropagation();
-      clearBtn.disabled = true;
-      fetch('/api/notifications/dismiss', {
-        method: 'POST',
-        credentials: 'same-origin',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ids: [] }),
-      }).then(function (r) { return r.json(); })
-        .then(function () {
-          setBadge(0);
-          renderPanel([]);
-          pollUnread();
-        })
-        .catch(function () { /* ignore */ })
-        .then(function () { clearBtn.disabled = false; });
-    });
-  }
-
-  // Allow other pages (e.g. the messages page after a message has
-  // been opened and its matching notification cleared on the
-  // server) to ask the bell to refresh immediately rather than
-  // waiting for the 30s poll.
   window.addEventListener('ari:notif-refresh', function () {
     pollUnread();
   });

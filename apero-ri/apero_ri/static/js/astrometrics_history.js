@@ -297,8 +297,32 @@
             + 'background:rgba(0,0,0,0.45);z-index:2600;'
             + 'display:flex;align-items:center;'
             + 'justify-content:center;';
+        var isDark = document.documentElement
+            && document.documentElement.getAttribute('data-theme')
+                === 'dark';
+        var panelBg = isDark
+            ? 'var(--ari-card-bg, #161b22)'
+            : 'var(--ari-card-bg, #fff)';
+        var panelText = isDark
+            ? 'var(--ari-text, #e6edf3)'
+            : 'var(--ari-text, #1f2328)';
+        var panelBorder = 'var(--ari-border, #d0d7de)';
+        var headText = isDark
+            ? 'var(--ari-text-muted, #8b949e)'
+            : '#555';
+        var changedRowBg = isDark ? 'background:#2f2a1d;' : 'background:#fff8db;';
+        var removedChip = isDark
+            ? 'background:#4b1f24;color:#ffb3ad;'
+            : 'background:#fdecea;color:#a4221a;';
+        var addedChip = isDark
+            ? 'background:#173624;color:#7ee787;'
+            : 'background:#e6f4ea;color:#1e7e34;';
+        var emptyText = isDark ? '<i style="color:#8b949e;">empty</i>'
+            : '<i style="color:#888;">empty</i>';
         var box = document.createElement('div');
-        box.style.cssText = 'background:#fff;border-radius:8px;'
+        box.style.cssText = 'background:' + panelBg + ';color:'
+            + panelText + ';border:1px solid ' + panelBorder
+            + ';border-radius:8px;'
             + 'padding:14px;width:min(1000px,94vw);'
             + 'max-height:88vh;overflow:auto;';
         var before = rec.before || {};
@@ -314,18 +338,18 @@
             var as = (a && typeof a === 'object')
                 ? JSON.stringify(a) : String(a == null ? '' : a);
             var changed = (bs !== as);
-            var bg = changed ? 'background:#fff8db;' : '';
+                        var bg = changed ? changedRowBg : '';
             var bCell = changed && bs
-                ? '<span style="background:#fdecea;color:#a4221a;'
+                                ? '<span style="' + removedChip
                   + 'padding:1px 4px;border-radius:3px;'
                   + 'text-decoration:line-through;">'
                   + _esc(bs) + '</span>'
-                : (bs ? _esc(bs) : '<i style="color:#888;">empty</i>');
+                                : (bs ? _esc(bs) : emptyText);
             var aCell = changed && as
-                ? '<span style="background:#e6f4ea;color:#1e7e34;'
+                                ? '<span style="' + addedChip
                   + 'padding:1px 4px;border-radius:3px;">'
                   + _esc(as) + '</span>'
-                : (as ? _esc(as) : '<i style="color:#888;">empty</i>');
+                                : (as ? _esc(as) : emptyText);
             return '<tr style="' + bg + '">'
                 + '<td style="padding:3px 8px;vertical-align:top;'
                 + 'font-family:monospace;font-size:0.8em;">'
@@ -342,6 +366,7 @@
             + 'History snapshot for '
             + '<code>' + _esc(rec.apero_name) + '</code></h3>'
             + '<div style="font-size:0.85em;color:#555;'
+            + 'color:' + headText + ';'
             + 'margin-bottom:8px;">'
             + _esc(_fmtTime(rec.timestamp)) + ' &middot; '
             + 'by <strong>' + _esc(rec.user) + '</strong> &middot; '
