@@ -4868,7 +4868,7 @@ CDict.add_group(cgroup, description='DEBUG.OUTPUT_FILE: '
 
 # Whether to save background debug file (large 0.5 GB per file)
 #   one of these per extraction (lots)
-CDict.add('BCKGRD_FILE', value=True,
+CDict.add('BCKGRD_FILE', value=False,
           dtype=bool, source=__NAME__,
           user=True, active=False, group=cgroup,
           description='Whether to save background debug '
@@ -4877,7 +4877,7 @@ CDict.add('BCKGRD_FILE', value=True,
 
 # Whether to save the E2DSLL file (around 0.05 to 0.1 GB per file)
 #   one of these per fiber (lots)
-CDict.add('E2DSLL_FILE', value=True,
+CDict.add('E2DSLL_FILE', value=False,
           dtype=bool, source=__NAME__,
           user=True, active=False, group=cgroup,
           description='Whether to save the E2DSLL file '
@@ -4886,7 +4886,7 @@ CDict.add('E2DSLL_FILE', value=True,
 
 # Whether to save the shape in and out debug files (around 0.1 GB per file)
 #   but only one set of these per night
-CDict.add('SHAPE_FILES', value=True,
+CDict.add('SHAPE_FILES', value=False,
           dtype=bool, source=__NAME__,
           user=True, active=False, group=cgroup,
           description='Whether to save the shape in and '
@@ -4896,7 +4896,7 @@ CDict.add('SHAPE_FILES', value=True,
 
 # Whether to save the uncorrected for FP C fiber leak files
 #      (around 0.01 GB per file) one of these per fiber
-CDict.add('UNCORR_EXT_FILES', value=True,
+CDict.add('UNCORR_EXT_FILES', value=False,
           dtype=bool, source=__NAME__,
           user=True, active=False, group=cgroup,
           description='Whether to save the uncorrected '
