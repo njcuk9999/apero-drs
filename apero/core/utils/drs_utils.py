@@ -869,7 +869,7 @@ def find_files(params: ParamDict, block_kind: str, filters: Dict[str, str],
                columns='ABSPATH',
                findexdbm: Union[FileIndexDatabase, None] = None,
                start_date: float = None, end_date: float = None,
-               time_column: str = 'KW_ACQTIME'
+               time_column: str = 'KW_MID_OBS_TIME'
                ) -> Union[np.ndarray, pd.DataFrame]:
     """
     Find a type of files from the file index database using a set of filters
