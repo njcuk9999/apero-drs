@@ -1241,6 +1241,96 @@ def register_data_portal_routes(app):
         app._api_issues_edit,
         methods=["POST"],
     )
+    app.add_url_rule(
+        "/api/monitor-schedule/meta",
+        "api_schedule_meta",
+        app._api_schedule_meta,
+    )
+    app.add_url_rule(
+        "/api/monitor-schedule/entries/list",
+        "api_schedule_entries_list",
+        app._api_schedule_entries_list,
+    )
+    app.add_url_rule(
+        "/api/monitor-schedule/entries/add",
+        "api_schedule_entries_add",
+        app._api_schedule_entries_add,
+        methods=["POST"],
+    )
+    app.add_url_rule(
+        "/api/monitor-schedule/entries/edit",
+        "api_schedule_entries_edit",
+        app._api_schedule_entries_edit,
+        methods=["POST"],
+    )
+    app.add_url_rule(
+        "/api/monitor-schedule/entries/delete",
+        "api_schedule_entries_delete",
+        app._api_schedule_entries_delete,
+        methods=["POST"],
+    )
+    app.add_url_rule(
+        "/api/monitor-schedule/link-user-calendar",
+        "api_schedule_link_user_calendar",
+        app._api_schedule_link_user_calendar,
+        methods=["POST"],
+    )
+    app.add_url_rule(
+        "/api/monitor-schedule/tasks/upsert",
+        "api_schedule_tasks_upsert",
+        app._api_schedule_tasks_upsert,
+        methods=["POST"],
+    )
+    app.add_url_rule(
+        "/api/monitor-schedule/tasks/rename",
+        "api_schedule_tasks_rename",
+        app._api_schedule_tasks_rename,
+        methods=["POST"],
+    )
+    app.add_url_rule(
+        "/api/monitor-schedule/tasks/set-active",
+        "api_schedule_tasks_set_active",
+        app._api_schedule_tasks_set_active,
+        methods=["POST"],
+    )
+    app.add_url_rule(
+        "/api/monitor-schedule/calendar/week",
+        "api_schedule_calendar_week",
+        app._api_schedule_calendar_week,
+    )
+    app.add_url_rule(
+        "/api/monitor-schedule/calendar/month",
+        "api_schedule_calendar_month",
+        app._api_schedule_calendar_month,
+    )
+    app.add_url_rule(
+        "/api/monitor-schedule/calendar/weeks",
+        "api_schedule_calendar_weeks",
+        app._api_schedule_calendar_weeks,
+    )
+    app.add_url_rule(
+        "/api/monitor-schedule/stats",
+        "api_schedule_stats",
+        app._api_schedule_stats,
+    )
+    app.add_url_rule(
+        "/api/monitor-schedule/stats/visibility-set",
+        "api_schedule_stats_visibility_set",
+        app._api_schedule_stats_visibility_set,
+        methods=["POST"],
+    )
+    app.add_url_rule(
+        "/api/monitor-schedule/instrument-settings/set",
+        "api_schedule_instrument_setting_set",
+        app._api_schedule_instrument_setting_set,
+        methods=["POST"],
+    )
+    app.add_url_rule(
+        "/api/monitor-schedule/entries/bulk-add",
+        "api_schedule_entries_bulk_add",
+        app._api_schedule_entries_bulk_add,
+        methods=["POST"],
+    )
     # ---------------------------------------------------------------
     # Notifications + messages + users directory
     # ---------------------------------------------------------------
@@ -1353,6 +1443,11 @@ def register_data_portal_routes(app):
         "/monitor_portal/issues",
         "monitor_issues_view",
         app._monitor_issues_view,
+    )
+    app.add_url_rule(
+        "/monitor_portal/schedule",
+        "monitor_schedule_view",
+        app._monitor_schedule_view,
     )
     app.add_url_rule(
         "/data_portal/<profile_id>/observation-table",

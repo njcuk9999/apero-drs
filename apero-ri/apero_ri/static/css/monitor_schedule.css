@@ -1,0 +1,507 @@
+.ari-schedule-page {
+    --ms-bg: linear-gradient(135deg, #f9f8f3 0%, #eef4f0 100%);
+    --ms-card: #ffffff;
+    --ms-line: #d9e5dc;
+    --ms-text: #1f2a24;
+    --ms-soft: #5b6b62;
+    --ms-accent: #0f766e;
+    --ms-accent-2: #2f7d32;
+    background: var(--ms-bg);
+    color: var(--ms-text);
+}
+
+.ms-head {
+    margin: 0 0 1rem 0;
+}
+
+.ms-title {
+    margin: 0;
+    font-size: 1.7rem;
+    letter-spacing: 0.01em;
+}
+
+.ms-sub {
+    margin: 0.45rem 0 0 0;
+    color: var(--ms-soft);
+}
+
+.ms-tabs,
+.ms-subtabs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-bottom: 0.75rem;
+}
+
+.ms-tabs button,
+.ms-subtabs button {
+    border: 1px solid var(--ms-line);
+    background: #ffffff;
+    color: var(--ms-text);
+    padding: 0.45rem 0.8rem;
+    border-radius: 999px;
+    cursor: pointer;
+}
+
+.ms-tabs button.ms-active,
+.ms-subtabs button.ms-subtab--active {
+    background: linear-gradient(120deg, var(--ms-accent), var(--ms-accent-2));
+    color: #ffffff;
+    border-color: transparent;
+}
+
+.ms-status {
+    min-height: 1.4rem;
+    margin-bottom: 0.5rem;
+    color: var(--ms-soft);
+}
+
+.ms-pane {
+    display: none;
+}
+
+.ms-pane.ms-pane--active {
+    display: block;
+}
+
+.ms-card {
+    background: var(--ms-card);
+    border: 1px solid var(--ms-line);
+    border-radius: 14px;
+    padding: 0.9rem;
+    margin-bottom: 0.9rem;
+    box-shadow: 0 8px 24px rgba(27, 52, 36, 0.06);
+}
+
+.ms-card-head {
+    font-weight: 700;
+    margin-bottom: 0.65rem;
+}
+
+.ms-entries-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 0.8rem;
+}
+
+.ms-form-grid {
+    display: grid;
+    gap: 0.7rem;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.ms-form-grid label {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    font-size: 0.92rem;
+}
+
+.ms-form-grid input,
+.ms-form-grid select,
+.ms-form-grid button {
+    font-size: 0.95rem;
+}
+
+.ms-form-grid input,
+.ms-form-grid select {
+    border: 1px solid var(--ms-line);
+    border-radius: 8px;
+    padding: 0.4rem 0.5rem;
+}
+
+.ms-wide {
+    grid-column: span 2;
+}
+
+.ms-inline {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center;
+    gap: 0.45rem;
+}
+
+.ms-inline-actions {
+    display: flex;
+    align-items: end;
+    gap: 0.5rem;
+}
+
+.ms-inline-actions label {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    font-size: 0.92rem;
+}
+
+.ms-inline-actions select {
+    border: 1px solid var(--ms-line);
+    border-radius: 8px;
+    padding: 0.25rem 0.45rem;
+}
+
+.ms-table-wrap {
+    overflow-x: auto;
+}
+
+.ms-table {
+    width: 100%;
+    border-collapse: collapse;
+    min-width: 800px;
+}
+
+.ms-table th,
+.ms-table td {
+    border-bottom: 1px solid var(--ms-line);
+    text-align: left;
+    padding: 0.45rem;
+    vertical-align: top;
+}
+
+.ms-filter-row input {
+    width: 100%;
+    border: 1px solid var(--ms-line);
+    border-radius: 7px;
+    padding: 0.3rem 0.4rem;
+}
+
+.ms-sort-btn {
+    border: none;
+    background: transparent;
+    padding: 0;
+    cursor: pointer;
+    font-weight: 700;
+    color: inherit;
+}
+
+.ms-add-row td {
+    background: #f5fbf8;
+    text-align: center;
+}
+
+.ms-pagination {
+    margin-top: 0.7rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.7rem;
+}
+
+.ms-calendar-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 0.7rem;
+    margin-bottom: 0.7rem;
+}
+
+.ms-week-label {
+    font-weight: 700;
+}
+
+.ms-calendar-grid {
+    overflow-x: auto;
+}
+
+/* Calendar table: 13-row × 7-col grid */
+.ms-cal-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.82rem;
+    min-width: 600px;
+}
+
+.ms-cal-table th,
+.ms-cal-table td {
+    border: 1px solid var(--ms-line);
+    padding: 0.2rem 0.3rem;
+    vertical-align: top;
+}
+
+.ms-cal-week-th,
+.ms-cal-week-cell {
+    white-space: nowrap;
+    font-size: 0.75rem;
+    color: var(--ms-soft);
+    width: 6.5rem;
+    min-width: 6.5rem;
+}
+
+.ms-cal-day-th {
+    text-align: center;
+    font-weight: 700;
+    background: var(--ms-card);
+    min-width: 4rem;
+}
+
+.ms-cal-day-cell {
+    min-height: 2rem;
+    min-width: 4rem;
+}
+
+.ms-cal-row--overlap .ms-cal-week-cell {
+    opacity: 0.5;
+}
+
+/* Entry chips inside day cells */
+.ms-entry-chip {
+    display: inline-block;
+    border-radius: 3px;
+    padding: 1px 4px;
+    font-size: 0.71rem;
+    line-height: 1.45;
+    margin: 1px 1px;
+    white-space: nowrap;
+    overflow: hidden;
+    max-width: 100%;
+    text-overflow: ellipsis;
+    cursor: default;
+}
+
+.ms-chip-p0 { background: #d4edda; color: #155724; }
+.ms-chip-p1 { background: #cce5ff; color: #004085; }
+.ms-chip-p2 { background: #fff3cd; color: #856404; }
+.ms-chip-p3 { background: #f8d7da; color: #721c24; }
+.ms-chip-p4 { background: #e2d9f3; color: #381d6a; }
+
+/* Old week-box styles kept for legacy compat */
+.ms-day {
+    border: 1px solid var(--ms-line);
+    border-radius: 10px;
+    padding: 0.5rem;
+    background: #fbfdfc;
+}
+
+.ms-day h4 {
+    margin: 0 0 0.4rem 0;
+    font-size: 0.95rem;
+}
+
+.ms-day ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    gap: 0.3rem;
+}
+
+.ms-day li {
+    background: #edf8f2;
+    border-left: 4px solid var(--ms-accent-2);
+    padding: 0.25rem 0.35rem;
+    border-radius: 5px;
+    font-size: 0.85rem;
+}
+
+.ms-week-box {
+    border: 1px solid var(--ms-line);
+    border-radius: 10px;
+    padding: 0.55rem;
+    min-height: 160px;
+}
+
+.ms-week-box:nth-child(5n+1) { background: #fdecec; }
+.ms-week-box:nth-child(5n+2) { background: #ecf7ee; }
+.ms-week-box:nth-child(5n+3) { background: #eaf3fd; }
+.ms-week-box:nth-child(5n+4) { background: #fff8df; }
+.ms-week-box:nth-child(5n+5) { background: #f4eefe; }
+
+.ms-week-box--overlap {
+    opacity: 0.62;
+}
+
+.ms-week-title {
+    margin: 0 0 0.35rem 0;
+    font-weight: 700;
+    font-size: 0.9rem;
+}
+
+.ms-week-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    gap: 0.28rem;
+}
+
+.ms-week-list li {
+    background: rgba(255, 255, 255, 0.72);
+    border-left: 4px solid var(--ms-accent);
+    border-radius: 5px;
+    padding: 0.22rem 0.32rem;
+    font-size: 0.84rem;
+}
+
+.ms-kpis {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.7rem;
+    margin-bottom: 0.8rem;
+}
+
+.ms-kpi {
+    border: 1px solid var(--ms-line);
+    border-radius: 10px;
+    padding: 0.55rem;
+    background: #f8fcfa;
+}
+
+.ms-kpi-label {
+    color: var(--ms-soft);
+    font-size: 0.84rem;
+}
+
+.ms-kpi-value {
+    font-size: 1.3rem;
+    font-weight: 700;
+}
+
+.ms-graph {
+    min-height: 320px;
+}
+
+.ms-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 70;
+}
+
+.ms-overlay-backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(9, 27, 20, 0.45);
+}
+
+.ms-overlay-panel {
+    position: relative;
+    z-index: 2;
+    width: min(780px, 95vw);
+    margin: 4vh auto;
+    background: #ffffff;
+    border-radius: 14px;
+    border: 1px solid var(--ms-line);
+    box-shadow: 0 18px 42px rgba(0, 0, 0, 0.25);
+}
+
+.ms-overlay-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.7rem 0.9rem;
+    border-bottom: 1px solid var(--ms-line);
+}
+
+.ms-overlay-head h3 {
+    margin: 0;
+}
+
+.ms-overlay-head button {
+    border: 1px solid var(--ms-line);
+    background: #fff;
+    border-radius: 8px;
+    padding: 0.25rem 0.45rem;
+    cursor: pointer;
+}
+
+.ms-overlay-body {
+    padding: 0.8rem;
+}
+
+.ms-task-head-grid {
+    margin-bottom: 0.5rem;
+}
+
+#ms-add-who[readonly] {
+    background: #f4f7f5;
+}
+
+.ms-card-list {
+    display: grid;
+    gap: 0.45rem;
+    margin-top: 0.7rem;
+}
+
+.ms-card-row {
+    border: 1px solid var(--ms-line);
+    border-radius: 8px;
+    padding: 0.45rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 0.8rem;
+}
+
+.ms-inline-btns {
+    display: flex;
+    gap: 0.4rem;
+    flex-wrap: wrap;
+}
+
+/* Temporal entry row colours */
+.ms-row--past td {
+    background-color: #f0f0f0;
+    color: #777;
+}
+
+.ms-row--current td {
+    background-color: #fffde7;
+}
+
+.ms-row--future td {
+    background-color: #e3f2fd;
+}
+
+/* Unassigned entries: amber left border on top of temporal colour */
+.ms-row--unassigned td:first-child {
+    border-left: 3px solid #f59e0b;
+}
+
+/* Filter toggle buttons – pressed state */
+.ms-filter-toggle.ms-active {
+    background: var(--ms-accent);
+    color: #ffffff;
+    border-color: var(--ms-accent);
+}
+
+/* Bulk-add task checkbox list */
+.ms-bulk-tasks {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin: 0.75rem 0;
+}
+
+.ms-bulk-tasks label {
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+    cursor: pointer;
+    border: 1px solid var(--ms-line);
+    border-radius: 6px;
+    padding: 0.25rem 0.5rem;
+}
+
+.ms-link {
+    color: var(--ms-accent);
+    background: none;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+}
+
+@media (max-width: 1000px) {
+    .ms-form-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 700px) {
+    .ms-form-grid,
+    .ms-kpis {
+        grid-template-columns: 1fr;
+    }
+    .ms-wide {
+        grid-column: span 1;
+    }
+}
