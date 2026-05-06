@@ -1155,6 +1155,11 @@ def constuct_objname(params: Union[ParamDict, None], header,
     # else just set up blank parameters
     else:
         rawobjname = str(objname)
+    # must be a string
+    if not isinstance(rawobjname, str):
+        rawobjname = None
+    elif rawobjname.upper() in ['', 'NONE', 'NUL']:
+        rawobjname = None
     # ---------------------------------------------------------------------
     # if object name is still None - check KW_OBJECTNAME2
     # ---------------------------------------------------------------------
