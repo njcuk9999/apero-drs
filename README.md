@@ -109,7 +109,7 @@ git clone git@github.com:njcuk9999/lbl.git -b developer
 
 pip install -r apero-drs/requirements_developer.txt
 
-pip install -U -e './lbl'
+pip install -U -e './lbl' -e '.apero-drs/apero-ri/'
 ```
 
 The follow the normal setup instructions for APERO (see documentation)
