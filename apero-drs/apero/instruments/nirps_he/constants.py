@@ -135,7 +135,7 @@ cgroup = 'REF'
 
 # Define the time column (in the database) to use for filtering reference
 # files by (start date and end date format must match this)
-CDict.set('FIND_TIMECOL', value='KW_ACQTIME',
+CDict.set('FIND_TIMECOL', value='KW_MID_OBS_TIME',
           source=__NAME__, group=cgroup, author=base.AUTHORS['NJC'])
 
 # Define the start date for reference calibrations (date format must match
