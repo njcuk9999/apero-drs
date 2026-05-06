@@ -4,6 +4,840 @@ Changelog
 
 (unreleased)
 ------------
+- [APERO.PP] Handle masked arrays in astropy table when retrieving last
+  entry. [Neil Cook]
+- [NIRPS] `REF_FIND_TIME_COL` should be `KW_MID_OBS_TIME`. [Neil Cook]
+- [NIRPS] `REF_FIND_TIME_COL` should be `KW_MID_OBS_TIME`. [Neil Cook]
+
+
+0.8.250 (2026-05-06)
+--------------------
+- [NIRPS] Deal with a null in objname in nirps. [Neil Cook]
+- [NIRPS] Update `REF.FIND_TIMECOL` (should be `KW_MID_OBS_TIME)` [Neil
+  Cook]
+- [NIRPS] Add `KW_ACQTIME` to nirps. [Neil Cook]
+
+
+0.8.249 (2026-05-04)
+--------------------
+- [APERO.PROCESSING] Disable all debug files by default - but enable
+  them in `mini_run` files. [Neil Cook]
+- [APERO.PROCESSING] Disable all debug files by default - but enable
+  them in `mini_run` files. [Neil Cook]
+- Merge remote-tracking branch 'origin/v0.8.121-rejectdb-change' into
+  v0.8.121-rejectdb-change. [Neil Cook]
+- [APERO.ARI2] Enhance user messaging and issue management: add user
+  lookup suggestions, improve modal styling, and update CSS references.
+  [Neil Cook]
+- [APERO.ARI2] Refactor user portal and notifications UI. [Neil Cook]
+
+  - Updated user portal to use a grid layout for user cards instead of a table.
+  - Enhanced user card display with additional information and improved styling.
+  - Added functionality to mark all messages as read and delete all messages in the messaging interface.
+  - Introduced a new user card template for displaying user details.
+  - Improved notification management by simplifying the notification panel.
+  - Updated CSS styles for better responsiveness and dark mode support.
+  - Fixed versioning for various JavaScript and CSS files to ensure proper loading.
+
+
+0.8.248 (2026-05-04)
+--------------------
+- [APERO.VISU] Add timeout handling for process joins in `visu_info` to
+  prevent hanging. [Neil Cook]
+
+
+0.8.247 (2026-05-01)
+--------------------
+- [APERO.ARI2+REJECT] Add rejection list management and pagination
+  features. [Copilot, Neil Cook]
+
+  - Introduced a new rejection list template with a comprehensive layout for managing file-level reject identifiers.
+  - Implemented pagination controls and per-page selection for both rejection list and history views.
+  - Added functionality to clear rejection history if the user has the appropriate permissions.
+  - Enhanced the astrometrics page with pagination controls for rejection history.
+  - Updated JavaScript files to support the new features and ensure proper functionality.
+- [APERO.REJECT] Refactor rejection database handling: remove unused
+  checks and streamline database table settings. [Copilot, Neil Cook]
+- [APERO.REJECT+ASTROM] Update asset path handling in DRS and
+  astrometrics modules to improve directory management. [Neil Cook]
+
+
+0.8.246 (2026-05-01)
+--------------------
+- [APERO.REJECT] Refactor rejection handling in Apero DRS. [Copilot,
+  Neil Cook]
+
+  - Removed reject database columns from the Instrument class and its subclasses.
+  - Eliminated Google Sheets references for reject lists in constants files.
+  - Updated rejection logic to read from a local YAML file instead of Google Sheets.
+  - Refactored functions in `gen_pp.py` to utilize the new rejection handling mechanism.
+  - Removed the `drs_reject` module and integrated its functionality into `drs_rejection`.
+  - Adjusted database management to support CSV-backed reject lists.
+  - Ensured all references to reject handling are consistent across the codebase.
+- [APERO.RESET] move where we define COMMON ASSET DIRS to (global
+  constant) [Neil Cook]
+- [APERO.ARI2] Refactor admin async tasks template to enhance asset
+  synchronization options; update base template for notification
+  management; improve astrometrics layout and add history tab; revamp
+  user portal messaging and notifications for better UX; update
+  versioning for CSS and JS files. [Copilot, Neil Cook]
+
+
+0.8.245 (2026-04-30)
+--------------------
+- Merge remote-tracking branch 'origin/v0.8.121-astrom-change' into
+  v0.8.121-astrom-change. [Neil Cook]
+- Update asset path handling in `update_local_assets` function to support
+  user-defined input directory. [Neil Cook]
+- [aPERO.ARI2] Enhance inline editing functionality and improve UI for
+  astrometrics. [Neil Cook]
+
+  - Added a check to enable or disable inline editing based on opts.disableInlineEdit.
+  - Introduced a new function hideInlineEditButtons to hide edit buttons when inline editing is disabled.
+  - Updated styles for action buttons in the astrometrics template to improve layout and responsiveness.
+  - Refactored card classes for better semantic structure and consistency.
+  - Changed button labels for clarity, including "Add/Edit manual target" and "Save manual target".
+  - Updated JavaScript file reference in the template to the latest version.
+
+
+0.8.244 (2026-04-29)
+--------------------
+- [APERO.VISU] Add error handling for plot function execution in
+  `visu_info`. [Neil Cook]
+- [APERO.VISU] Add error handling for plot function execution in
+  `visu_info`. [Neil Cook]
+- [APERO.VISU] Add warnings handling for median calculations in
+  `visu_info_plots`. [Neil Cook]
+
+
+0.8.243 (2026-04-29)
+--------------------
+- [APERO.VISU] Enhance verbosity control for plot generation logging in
+  `visu_info` and `visu_info_plots`. [Neil Cook]
+- [APERO.VISU] Add `MP_MODE` configuration for visualization processing
+  and enhance plot generation logging. [Neil Cook]
+- [APERO.VISU] Add check for Telluric correction data presence in
+  `visu_info_plots.py`. [Neil Cook]
+
+
+0.8.242 (2026-04-29)
+--------------------
+- Merge remote-tracking branch 'origin/v0.8.121-astrom-change' into
+  v0.8.121-astrom-change. [Neil Cook]
+- Merge remote-tracking branch 'origin/v0.8.121-astrom-change' into
+  v0.8.121-astrom-change. [Neil Cook]
+- [APERO.VISU] Add core count option for multiprocessing in recipe
+  definitions. [Neil Cook]
+- Handle case where entry is not found in astrometric database in
+  `gen_lbl.py`. [Neil Cook]
+- [APERO.VISU] Add multiprocessing support for file identification and
+  plotting in `recipe_definitions.py` and `visu_info.py`. [Neil Cook]
+
+
+0.8.241 (2026-04-29)
+--------------------
+- [APERO.ARI] `(async_tasks)`: add per-profile sync settings and UI
+  enhancements. [Copilot, Neil Cook]
+
+  - Introduced `normalize_sync_profiles` function to normalize sync settings from task config.
+  - Updated `merge_async_task_catalog` to handle new `sync_profiles` configuration.
+  - Enhanced API to validate and normalize sync profiles from client requests.
+  - Added new JavaScript functions to manage sync profiles in the admin interface.
+  - Implemented a modal for browsing sync directories and selecting paths for pre-computed profiles.
+  - Updated HTML templates to accommodate new sync profiles table and browsing functionality.
+  - Refactored task runner to support fetching pre-computed data based on profile configurations.
+
+
+0.8.240 (2026-04-28)
+--------------------
+- [APERO.ARI2] Enhance CLI with multiprocessing options for task
+  execution. [Copilot, Neil Cook]
+- [APERO.ARI2.TASKS] fix `LOCAL_TASK` issue. [Neil Cook]
+- [APERO.ARI2] Update `monitor_issues.css` version and enhance issue
+  filtering functionality. [Neil Cook]
+
+
+0.8.239 (2026-04-24)
+--------------------
+- Update `page_pins.js` version in base.html to 20260424a. [Neil Cook]
+- [APERO.ARI2] Add ARI API integration rules and astrometric database
+  helpers; enhance astrometrics page with upload functionality. [Neil
+  Cook]
+- Refactor permission checks in admin backup API functions for
+  consistency. [Neil Cook]
+
+
+0.8.238 (2026-04-24)
+--------------------
+- [APERO.ARI2] Enhance issue monitoring and user messaging features.
+  [Neil Cook]
+
+  - Updated the issue monitoring page to include a new label filter for better issue categorization.
+  - Refactored JavaScript for improved readability and performance, including the removal of unused code.
+  - Introduced new user messaging and notifications pages, allowing users to send private messages and manage notifications.
+  - Added support for user directory browsing with a search feature to filter users by username, name, or group.
+  - Implemented modals for viewing, composing, and sending messages, enhancing user interaction.
+  - Updated CSS for consistent styling across new user portal features.
+- [ARI.ASTROM3] issues page: label filter dropdown + Action column.
+  [Neil Cook]
+- [ARI.ASTROM3] issue schema: add label/action; new
+  `core.astrometric_scanner` creates verify/missing/missing-required
+  issues (idempotent) [Neil Cook]
+
+
+0.8.237 (2026-04-23)
+--------------------
+- [APERO.ASTROM3] Resolver fallback to Gaia by name; save-time required-
+  fields validation; reject-aware `add_entry`. [Neil Cook]
+- [APERO.ASTROM3] Phase-3 foundation: required-fields constant, `NO_PM`
+  key, status sub-dir helpers. [Neil Cook]
+- Update assets root path to use PATH.ASSETS parameter. [Neil Cook]
+
+
+0.8.236 (2026-04-23)
+--------------------
+- Merge remote-tracking branch 'origin/v0.8.121-astrom-change' into
+  v0.8.121-astrom-change. [Neil Cook]
+- [APERO.ASTROM2] Refactor database update calls to use
+  `validate_astrometric_yaml_archive` for improved asset validation. [Neil
+  Cook]
+- Mirror assigned issues into the assignee's user-portal todo list.
+  [Neil Cook]
+- Add issue assignment, user filters, compact + dual-scroll layout.
+  [Neil Cook]
+
+
+0.8.235 (2026-04-23)
+--------------------
+- [APERO.ARI2] declare fType and wire 'type' query param in monitor
+  issues.html. [Neil Cook]
+- [APERO.ARI2] fix duplicate template body in monitor issues.html (Jinja
+  'block title defined twice') [Neil Cook]
+
+
+0.8.234 (2026-04-23)
+--------------------
+- [APERO.ASTROM2] Add astrometric database settings and update TAP
+  endpoint URLs. [Neil Cook]
+- [APERO.ARI2] Enhance target info rendering and backup task
+  configurations. [Neil Cook]
+
+  - Updated `object_page.js` to improve y-axis zoom handling for plots, ensuring proper opt-out functionality.
+  - Modified `target_info_render.js` to introduce a "Generate" button for specific chart types, enhancing user control over rendering.
+  - Enhanced backup task in `apero_backup.py` to allow dynamic configuration of maximum backup size via the admin UI.
+  - Updated `async_tasks.html` to include new fields for backup retention and maximum archive input size, improving task management.
+  - Added a new issues management page in issues.html, allowing users to filter and manage reported issues effectively.
+  - Updated dependencies in pyproject.toml to point to the latest version of tessilator from GitHub.
+  - Introduced a test suite in `test_target_info_render_invariants.py` to enforce structural invariants on the target info render script, preventing regressions.
+- [APERO.ASTROM] Refactor astrometric database handling to use
+  `drs_astrometrics` and remove deprecated Google Sheets references. [Neil
+  Cook]
+- [APERO.PARAMS] Enhance text cleaning in `drs_text.py` to ignore non-
+  ASCII characters. [Neil Cook]
+
+
+0.8.233 (2026-04-23)
+--------------------
+- [APERO.ARI2] Refactor target info rendering and enhance issue tracking
+  interface. [Neil Cook]
+
+  - Updated `object_page.js` to integrate the new AperoTargetInfo component for rendering target information exclusively, removing legacy grid references.
+  - Enhanced the rendering logic for target info, SED, and HR diagrams, ensuring proper error handling and user feedback.
+  - Introduced a new issues.html template for monitoring user-reported flags and target requests, complete with filtering options and action buttons.
+  - Improved the JavaScript functionality for loading and updating issues, including dynamic filtering and status updates.
+  - Updated references to external Bokeh libraries in astrometrics.html for improved chart rendering.
+  - Cleaned up legacy code and ensured consistent styling across the new issue tracking interface.
+- [APERO.ARI2+astrometrics2] Refactor target info rendering and enhance
+  name search variants for improved fuzzy lookup. [Neil Cook]
+- [APERO.AR2+astrometrics2] Add astrometrics page template and update
+  dependencies. [Neil Cook]
+
+  - Created a new HTML template for the astrometrics page, providing functionality to find existing objects and resolve targets.
+  - Updated the pyproject.toml to modify the dependencies for API and full installations, ensuring compatibility with the new astrometrics features.
+
+
+0.8.232 (2026-04-22)
+--------------------
+- Merge branch 'v0.8.121' into v0.8.121-astrom-change. [Neil Cook]
+- Merge remote-tracking branch 'origin/v0.8.121' into v0.8.121. [Neil
+  Cook]
+- [APERO.ARI2+astrometric update] Add `APERO_SYNC_ASSETS` task for asset
+  synchronization. [Neil Cook]
+
+  - Introduced a new asynchronous task, `APERO_SYNC_ASSETS`, to manage the synchronization of the APERO assets directory.
+  - Implemented functionality to download and extract assets from remote servers based on checksums.
+  - Added support for uploading local assets to remote servers via rsync.
+  - Enhanced async task configuration to include asset server URLs and operational modes (sync/upload).
+  - Updated relevant modules and templates to accommodate the new task, including UI elements for asset server configuration.
+  - Refactored existing code to utilize the new `drs_astrometrics` module for astrometric database access.
+- [APERO.ARI2] Add group filtering functionality to object table and
+  enhance UI. [Neil Cook]
+
+  - Implemented group filtering in the object table with new UI elements for selecting and applying group filters.
+  - Added functionality to send filtered objects to a selected group with an overlay for group management.
+  - Enhanced the object table with new group-related API calls and dropdowns for group selection.
+  - Updated the backend to support new group-related queries and metadata.
+  - Improved user interface in the admin section for managing user groups.
+  - Introduced a new astrometrics page with sections for finding objects, resolving targets, and generating finder charts.
+
+
+0.8.231 (2026-04-22)
+--------------------
+- Update checksums.yaml. [Neil Cook]
+- `Fix(drs_database)`: update table read format to 'ascii.basic' [Neil
+  Cook]
+
+
+0.8.230 (2026-04-20)
+--------------------
+- Merge remote-tracking branch 'origin/v0.8.121' into v0.8.121. [Neil
+  Cook]
+- [APERO:ARI2] Add TESS rotation periods functionality and UI
+  enhancements. [Neil Cook]
+
+  - Implemented TESS rotation periods generation with SSE streaming support in `object_page.js`.
+  - Added UI elements for TESS rotation periods including buttons for generating, navigating, and downloading results.
+  - Introduced comments and object groups sections in `object_page.html` with corresponding API endpoints for managing comments and groups.
+  - Enhanced admin templates with new buttons for killing tasks and managing vault exports/imports.
+  - Updated calendar and links templates to include manageable instruments.
+  - Added new `object_groups.html` template for managing shared object groups.
+  - Improved styling and layout for various UI components across templates.
+  - Added tessilator dependency in pyproject.toml.
+- Merge branch 'v0.8.running' into v0.8.121. [Neil Cook]
+- [POGOS] Refactor parameter handling and output file management; add
+  LaTeX table generation for parameters used in the run. [Neil Cook]
+
+
+0.8.229 (2026-04-20)
+--------------------
+- Merge branch 'v0.8.running' into v0.8.121. [Neil Cook]
+- [APERO] Add a key filter to `snapsnot_table`. [Neil Cook]
+
+
+0.8.228 (2026-04-16)
+--------------------
+- Merge remote-tracking branch 'origin/v0.8.121' into v0.8.121. [Neil
+  Cook]
+- Fix input handling for modes and improve user prompts in demo data
+  loading. [Neil Cook]
+- Add function to determine common prefix from a list of files. [Neil
+  Cook]
+- [APERO.ARI2] feat(calendar): add inline editing for calendar feeds.
+  [Neil Cook]
+
+  - Introduced edit buttons for calendar feeds in both user and admin portals.
+  - Implemented functionality to edit feed names and colors with inline input fields.
+  - Added checks for accessible paths in profile management tasks to prevent errors when paths are unavailable.
+  - Enhanced the admin interface with a vault feature for securely storing sensitive information.
+  - Updated various templates and JavaScript files to support new features and improve user experience.
+
+
+0.8.227 (2026-04-15)
+--------------------
+- [POGOS] Update input handling and file saving logic across multiple
+  modules. [Neil Cook]
+
+  - Added checks for empty modes in `constant_functions.py`
+  - Simplified user input prompts in `load_functions.py`
+  - Enhanced YAML saving functionality in `core.py` and `const_funcs.py` to include instrument mode
+  - Updated README.md to clarify requirements for returning input files
+  - Improved variable naming and comments for better clarity in tso.py
+- Add common prefix handling for output filenames and update parameter
+  keys. [Neil Cook]
+- [APERO.py312] Downgrade numpy after numba downgrade. [Neil Cook]
+
+
+0.8.226 (2026-04-12)
+--------------------
+- [APERO.ARI2] Add plotable output types and frame prefixes to object
+  page scripts. [Neil Cook]
+- [APEOR.ARI2] Enhance user experience with theme selection, external
+  calendar integration, and improved UI components. [Neil Cook]
+
+  - Added theme selection page allowing users to choose between default, light, and dark themes.
+  - Implemented external calendar linking feature with options to add, refresh, and delete ICS feeds.
+  - Introduced upload functionality with modals for file uploads and share links.
+  - Updated `fav_objects.html` to manage sections and add objects with improved UI.
+  - Enhanced `object_page.html` with better download button visibility and plot options.
+  - Integrated Bokeh widgets for improved graphing capabilities in QC graphs.
+  - Updated document editor and page templates to support dynamic theme switching.
+  - Added new JavaScript functionalities for theme management and user uploads.
+  - Updated dependencies in pyproject.toml to include icalendar for ICS feed handling.
+- [APERO.ARI2] minor updates. [Neil Cook]
+
+
+0.8.225 (2026-04-10)
+--------------------
+- Merge remote-tracking branch 'origin/v0.8.121' into v0.8.121. [Neil
+  Cook]
+
+  # Conflicts:
+  #    `apero-ri/apero_ri/tasks/apero_sync.py`
+- `[APERO.KW_DRS_QC]` fix that postprocess products don't have db
+  `KW_DRS_QC`. [Neil Cook]
+- [APERO.ARI2] Add favorite objects management and enhance object page
+  features. [Neil Cook]
+
+  - Introduced `fav_objects.html` and `favourites_objects.html` templates for managing favorite objects with a user-friendly interface.
+  - Updated `object_page.html` to include new API endpoints for favorite object management and improved UI elements for generating telluric maps.
+  - Enhanced `object_plot_max.html` with a new Y-axis sigma zoom control for better data visualization.
+  - Added wave fiber filtering options in `qc_graphs.html` to improve data analysis capabilities.
+  - Updated sidebar navigation in `sidebar_base.html` to support favorite object toggling and improved accessibility.
+  - Minor updates to JavaScript files for better functionality and performance.
+
+
+0.8.224 (2026-04-08)
+--------------------
+- [APERO.ARELDATE] Add support for lbl release date in constants and
+  update related functions for header management. [Neil Cook]
+- Merge remote-tracking branch 'origin/v0.8.121' into v0.8.121. [Neil
+  Cook]
+- [APERO.ARELDATE] Implement functionality to retrieve APERO release
+  date from Google Sheets and add related constants. [Neil Cook]
+
+
+0.8.223 (2026-04-07)
+--------------------
+- [APERO.ARI2] Enhance database setup UI with clearer labels and
+  instructions; add SSH config host suggestions in SSHFS management.
+  [Neil Cook]
+- Merge remote-tracking branch 'origin/v0.8.121' into v0.8.121. [Neil
+  Cook]
+- Merge remote-tracking branch 'origin/v0.8.121' into v0.8.121. [Neil
+  Cook]
+- [APERO.ARELDATE] Update `KW_IRELDATE` datatype to use `LONG_FLOAT` and
+  standardize header column types. [Neil Cook]
+- [APERO.ARI2] Refactor CCF plotting functionality and enhance database
+  setup UI. [Neil Cook]
+
+  - Updated `object_page.js` to introduce separate states and rendering functions for CCF RV and CCF profile plots.
+  - Modified `async_tasks.html` to improve modal readability and added new fields for sync mode in task editing.
+  - Removed outdated `async_tasks_redesigned.html` template.
+  - Enhanced `database_setup.html` with clearer instructions and added support for multiple active DB SSH tunnels.
+  - Updated `object_page.html` to reflect changes in CCF plot rendering and added new links for CCF RV and profile plots.
+
+
+0.8.222 (2026-04-07)
+--------------------
+- [APERO.ARI2] Enhance UI and functionality across various templates.
+  [Neil Cook]
+
+  - Added profile tab navigation in cache settings for better profile management.
+  - Improved SSHFS management UI by removing manual mode and updating button actions to copy mount commands.
+  - Introduced controls for CCF plot date range and sample size in object page.
+  - Embedded object search functionality with tabs for name, coordinates, date, and advanced queries in object table.
+  - Updated script references in base template for versioning.
+
+
+0.8.221 (2026-04-02)
+--------------------
+- [APERO.ARI2] Add refresh run IDs button and functionality to science
+  groups admin page. [Neil Cook]
+
+  Implement manual mode for SSHFS management, allowing users to run commands manually
+
+  feat: Enhance sidebar with admin info panels for better user guidance
+
+  fix: Update setup completion steps for clarity and correct order of operations
+
+  chore: Add `apero_ri_task` script entry point to pyproject.toml
+- [APERO.ARI2] Enhance `object_query_headers` function to handle OSError
+  when checking file paths and reading headers. [Neil Cook]
+- Merge remote-tracking branch 'origin/v0.8.121' into v0.8.121. [Neil
+  Cook]
+- [APERO.cache] Implement `warm_cache` method to pre-load astrometric
+  object names and aliases, reducing MySQL round-trips during lookups.
+  [Neil Cook]
+
+
+0.8.220 (2026-04-02)
+--------------------
+- [APERO.ARI2] Refactor Apero Backup and Object Query Tasks; Introduce
+  Apero Sync Module. [Neil Cook]
+
+  - Fixed indentation issue in `apero_backup.py` to ensure proper logging of backup completion.
+  - Enhanced `apero_object_query.py` by restructuring the `run_job` method for improved clarity and maintainability. Added detailed parameter documentation and refactored profile processing into dedicated methods.
+  - Introduced a new `apero_sync.py` module to allow local execution of APERO tasks without server dependencies, including a CLI interface for task execution.
+  - Updated `apero_profiles.html` to provide clearer instructions regarding SSHFS setup for external paths, including additional notes for specific path fields.
+- Merge remote-tracking branch 'origin/v0.8.121' into v0.8.121. [Neil
+  Cook]
+- Merge remote-tracking branch 'origin/v0.8.121' into v0.8.121. [Neil
+  Cook]
+- `[APERO.release_date]` Implement `get_areldate` function to retrieve APERO
+  release date from Google Sheets or calculate based on raw data. Update
+  relevant files to include release date in output. [Neil Cook]
+
+
+0.8.219 (2026-04-01)
+--------------------
+- [APERO.ARI2] Enhance async tasks UI with additional details and
+  controls. [Neil Cook]
+
+  - Added parallel configuration and subprogress display in async tasks modal.
+  - Introduced buttons for stopping tasks and viewing logs.
+  - Updated task log modal for better user interaction with refresh and copy options.
+  - Modified API endpoints in email management for consistency.
+  - Improved health status page with updated API paths.
+  - Refined SSHFS management interface with enhanced logging and interactive session features.
+  - Updated email setup instructions for clarity on log file location.
+
+
+0.8.218 (2026-03-27)
+--------------------
+- Merge remote-tracking branch 'origin/v0.8.121' into v0.8.121. [Neil
+  Cook]
+- `[APERO.recipe_definitions]` Allow run.ini `eng_seq` to run `EXT_HC2HC2` and
+  `PP_HC2HC2`. [Neil Cook]
+- [APERO.ARI2] Enhance APERO RI user experience and API functionality.
+  [Neil Cook]
+
+  - Added Font Awesome icons to the object plot max close button for improved UI.
+  - Implemented a two-row layout for plots in the object plot max template.
+  - Updated sidebar to display the last object accessed with a more descriptive label.
+  - Changed setup welcome page title and content to focus on data directory setup.
+  - Introduced a directory browsing feature for selecting the local data directory during setup.
+  - Created a new API access page for managing API tokens and viewing download usage.
+  - Added timezone selection to the calendar interface for user preferences.
+  - Updated pyproject.toml to include requests as an optional dependency for API functionality.
+  - Added comprehensive API user guide documentation for programmatic access to APERO data.
+
+
+0.8.217 (2026-03-27)
+--------------------
+- [APERO.processing] Remove redundant index database update logic for
+  test runs in `drs_processing.py`. [Neil Cook]
+- [APERO.ARELDATE] Refactor release date constants: rename
+  `APERO_RELDATE_DELTA` to `AREL_RDELTA`, `AREL_ADELTA`, and `AREL_LDELTA` with
+  updated default values for raw, APERO, and LBL files. [Neil Cook]
+- [APERO.tellu+db] Merge duplicate log entries in `database_update.py` to
+  preserve QC information. And fix pclean file having no `QCC_ALL` value.
+  Add new release date constants. [Neil Cook]
+- [APERO.ARI2] enhance setup process with detailed notes and navigation
+  tabs. [Neil Cook]
+
+
+0.8.216 (2026-03-25)
+--------------------
+- [APERO.RI] Update YAML files and enhance plot handling in the
+  application. [Neil Cook]
+
+  - Corrected LaTeX formatting in SNR labels across multiple YAML files for NIRPS and SPIRou instruments.
+  - Added test mode functionality to the SetupApp class, allowing for email configuration validation without saving.
+  - Improved Bokeh plot embedding in JavaScript files to handle deferred rendering for better performance in hidden tabs.
+  - Updated object page and QC graphs templates to maximize plots without opening new windows, enhancing user experience.
+  - Refactored CSS styles in plot max templates for better layout and responsiveness.
+- [APERO.ARI2] Enhance data portal with new plots and quality control
+  graphs. [Neil Cook]
+
+  - Added SNR, BERV, and Median Spectrum plots to the object page with loading indicators.
+  - Introduced time series plots for SNR and Airmass per night.
+  - Created new templates for object plot max and quality control graphs.
+  - Implemented responsive design for quality control graphs with filtering options.
+  - Added functionality to open plots in a new window for detailed viewing.
+  - Updated sidebar to support last viewed object page navigation.
+  - Included Bokeh library for enhanced plotting capabilities.
+- [APERO.ARI] Refactor SSHFS management page for improved readability
+  and maintainability. [Neil Cook]
+
+
+0.8.215 (2026-03-24)
+--------------------
+- [APERO.ARI] Add SSHFS management page and functionality. [Neil Cook]
+
+  - Introduced a new HTML template for SSHFS management with sections for terminology, setup, SSH keys, and mount status.
+  - Implemented JavaScript functions for managing SSHFS mounts, including adding, editing, deleting, and testing connections.
+  - Enhanced user experience with status messages and dynamic updates based on user actions.
+  - Updated `user_db_access.html` to improve health report handling for user database access.
+  - Added google-auth-oauthlib dependency to pyproject.toml for OAuth support.
+- Feat: add backup settings management and health check functionality.
+  [Neil Cook]
+
+  - Updated groups.yaml to include backup management permissions for moderators and developers.
+  - Added backup settings page in pages.yaml with appropriate permissions and navigation.
+  - Implemented CSS styles for backup settings UI in style.css.
+  - Enhanced `admin_user_db_access.js` to include health check functionality for user DB access rules.
+  - Created `apero_backup.py` to manage local and cloud backup operations, including status reporting.
+  - Developed `backup_settings.html` template for managing backup configurations and displaying status.
+  - Updated `user_db_access.html` to integrate health check button for user DB access diagnostics.
+  - Added necessary dependencies for AWS S3 and Google Drive integration in pyproject.toml.
+- [APERO.ARI2] Update installation instructions in README.md for
+  developer setup. [Neil Cook]
+
+
+0.8.214 (2026-03-23)
+--------------------
+- [APERO.ARI2] Enhance user calendar and notes functionality. [Neil
+  Cook]
+
+  - Implement pagination for event list in user calendar with controls for items per page and navigation buttons.
+  - Add sorting and formatting for events displayed in the calendar.
+  - Refactor user notes template to improve layout and remove unused code.
+  - Update email template buttons to use consistent styling.
+  - Improve accessibility and layout in the data portal basket and user portal templates.
+  - Ensure consistent sidebar styling across user portal pages.
+- [APERI.ARI2] Enhance user experience and functionality across various
+  templates and scripts. [Neil Cook]
+
+  - Updated `user_todo.js` to always render all sections, even when empty, and improved button icons for actions.
+  - Enhanced admin index.html with health status updates and refresh functionality.
+  - Added new share modal in basket.html for sharing download links, including email functionality.
+  - Improved layout and functionality in `data_portal` templates, including new share landing and expired share pages.
+  - Refined notes.html with a two-pane layout for better note management and editing experience.
+  - Updated todo.html to include status selection for new tasks and improved button accessibility.
+- [APERO.ARI2] Add how-to banners and improve user guidance across data
+  portal pages. [Neil Cook]
+
+  - Introduced how-to banners in index, object, observation, profile, and query database pages to assist users in navigating features and functionalities.
+  - Enhanced object and observation tables with detailed instructions on filtering, column visibility, and accessing detailed data.
+  - Added a file browser tab in the object page for improved file management and download capabilities.
+  - Implemented localStorage functionality to persist the open/closed state of how-to banners for a better user experience.
+
+
+0.8.213 (2026-03-21)
+--------------------
+- [APERO.ARI2] Refactor async task parameters handling and UI. [Neil
+  Cook]
+
+  - Introduced a new parameters explorer in the admin async tasks UI to display task and input parameters in a structured format.
+  - Updated JavaScript functions to manage the display and interaction of parameters, allowing for expandable views of complex parameter structures.
+  - Modified backend functions to retrieve database parameters more efficiently, consolidating logic for parameter extraction.
+  - Adjusted various tasks to utilize the new parameter handling methods, ensuring consistency across the application.
+  - Updated HTML templates to reflect changes in parameter management, including the removal of deprecated fields and the addition of new UI elements for parameter exploration.
+- [APERO.ARI2] Add support for external URLs in page definitions and
+  introduce GitHub link. [Neil Cook]
+- [APERO.ARI2] Refactor admin user group handling and enhance user card
+  styling. [Neil Cook]
+
+
+0.8.212 (2026-03-21)
+--------------------
+- [APERO.ARI2] Enhance object page and table functionality. [Neil Cook]
+
+  - Updated CSS styles for task cards and section cards to improve visual hierarchy and user experience.
+  - Introduced new JavaScript file for object page logic, implementing tabbed sections with API-backed content.
+  - Enhanced object table to support new "count" type for file counts, displaying accessible vs total files.
+  - Adjusted backup and object query task frequencies to 6 hours for better resource management.
+  - Improved HTML structure for object page and table templates, adding dynamic content loading and CSV download options.
+- [APERO.ARI] remove backup file. [Neil Cook]
+- Refactor task registration and error handling in `apero_ri`. [Neil Cook]
+
+  - Implemented resilient imports for task modules to prevent Flask crashes on import failures.
+  - Introduced placeholder task classes for failed imports, capturing error messages for the task error panel.
+  - Consolidated task definitions into a single list for easier management and registration.
+  - Enhanced the AperoObjectQueryTask with improved query handling and directory management.
+  - Added new parameters and improved output handling in the object query task.
+  - Updated the admin template to include buttons for copying info and toggling sections.
+  - Removed obsolete JSON file for object table data.
+
+
+0.8.211 (2026-03-20)
+--------------------
+- Refactor AperoObservationTableTask and enhance async tasks UI. [Neil
+  Cook]
+
+  - Updated AperoObservationTableTask to improve parameter handling and query construction.
+  - Introduced helper functions for required parameter checks, sub-command generation, and SQL query construction.
+  - Enhanced metadata handling for column definitions.
+  - Added a new `test_query` method for easier testing of SQL queries.
+  - Redesigned async tasks HTML template for better user experience with instrument selection and task management.
+  - Created a new `async_tasks_redesigned.html` template to separate global and instrument tasks.
+  - Improved styling and layout for task cards and detail panels.
+- [APERO.py312] downgrade numba+numpy (to fix macs) [Neil Cook]
+- Merge remote-tracking branch 'origin/v0.8.121' into v0.8.121. [Neil
+  Cook]
+- [APERO.py312] Problem with numba and macs - downgrade version. [Neil
+  Cook]
+
+
+0.8.210 (2026-03-19)
+--------------------
+- [APERO.ARI2] Add database presets, enhance query UI, and improve
+  health status display. [Neil Cook]
+
+  - Introduced a new YAML file for database query presets, allowing users to easily select predefined queries for raw and e2dsff files.
+  - Updated CSS for the query database interface to improve layout and responsiveness, including a new collapsible design for sections like tables, joins, filters, and presets.
+  - Enhanced JavaScript functionality to support the application of selected presets, dynamically updating the query builder with preset configurations.
+  - Improved the health status display in the admin section to show detailed warning information when applicable, enhancing user awareness of science group assignments.
+  - Added metadata for columns in the AperoObjectTableTask to define sortable, filterable, and removable properties for better data management.
+- Feat: Enhance user experience with new password reset and admin setup
+  features. [Neil Cook]
+
+  - Added a "Forgot Password" page for users to reset their passwords.
+  - Implemented a "Reset Password" page to allow users to set a new password.
+  - Created an "Initial Admin Account" setup page for configuring the first admin user.
+  - Developed an "Email Delivery" setup page for configuring email settings.
+  - Introduced a "Setup Complete" page to confirm successful setup.
+  - Updated the home page to include a modal for login and improved user greeting.
+  - Enhanced sidebar navigation to display pinned items and improved mobile menu.
+  - Refactored user portal links and notes pages for better organization and usability.
+  - Improved the todo list interface with project and tag management features.
+- Refactor object table logic to enhance column metadata handling and
+  improve sorting/filtering capabilities. [Neil Cook]
+
+
+0.8.209 (2026-03-18)
+--------------------
+- [APERO.py312] Problem with numba and macs - downgrade version. [Neil
+  Cook]
+
+
+0.8.208 (2026-03-15)
+--------------------
+- [APERO.ARI2] Enhance APERO RI functionality and UI. [Neil Cook]
+
+  - Added error handling and status indicators for async tasks in `admin_async_tasks.js`.
+  - Improved user interface for group filters in `admin_users.js` with ARIA attributes.
+  - Updated object links in `object_table.js` to direct to the data portal.
+  - Implemented drag-and-drop functionality for reordering pinned pages in `pinned_pages.js`.
+  - Introduced new tasks for generating object and observation tables in tasks directory.
+  - Updated task initialization in `__init__.py` to include new tasks.
+  - Enhanced admin interface for managing APERO profiles with improved status displays.
+  - Modified `async_tasks.html` to reflect changes in task run count display.
+  - Created a new object page template for future content in `object_page.html`.
+  - Improved sidebar navigation with disabled state handling in `sidebar_base.html`.
+  - Updated sidebar cards to reflect status changes with appropriate icons in `sidebar_cards.html`.
+- [APERO.ARI2] [Neil Cook]
+
+  Add user portal templates and features
+
+  - Created user portal home page with a placeholder message.
+  - Removed old monitor index template and added a new monitor portal template.
+  - Implemented account management page with user details and email verification.
+  - Added calendar page for personal events and instrument milestones.
+  - Introduced data access summary page for users to view their data visibility.
+  - Developed links management page for personal bookmarks.
+  - Created notes page with Markdown support for organized note-taking.
+  - Implemented pinned pages management for quick access to important pages.
+  - Added support page with contact information for instrument admins and moderators.
+  - Developed to-do list management page with task details and project organization.
+  - Added JSON file for SPIROU object table data.
+- [APERO.ARI2] Add health check API and UI components for reduction
+  interface profile. [Neil Cook]
+
+
+0.8.207 (2026-03-13)
+--------------------
+- [APERO.ARI2] [Neil Cook]
+
+  feat: Add user management interface and documentation editing features
+
+  - Implemented a new user management page with search functionality and user detail panels.
+  - Removed the old database index template.
+  - Created a base template for documentation pages and added a document editor for markdown files.
+  - Added a new document page template for rendering documentation content.
+  - Updated the documentation index to use the new base template and display available sections.
+  - Changed installation and overview pages to extend the new coming soon template.
+  - Introduced a general base template for consistent layout across the application.
+  - Added reusable card layouts for various sections of the application.
+  - Updated home page to utilize the new card layout and display user-specific information.
+  - Refactored login and user templates to align with the new layout structure.
+  - Created a new reduction interface with instrument filtering and profile cards.
+  - Added profile detail pages for displaying specific reduction profiles.
+  - Updated project dependencies to include Markdown for documentation rendering.
+  - Added installation instructions for different versions of the application in the documentation.
+  - Created a versions.yaml file to manage documentation versions effectively.
+- Add initial structure and files for APERO RI web application. [Neil
+  Cook]
+
+  - Created recipe directory with setup and run scripts.
+  - Added README files for recipes, resources, setup, and static directories.
+  - Implemented basic structure for Python scripts in recipes.
+  - Added YAML configuration files for user groups and page definitions.
+  - Created static assets including CSS, JavaScript, images, and templates.
+  - Established base HTML structure and reusable components for the web interface.
+  - Integrated Font Awesome for icons and established a responsive design.
+  - Set up project metadata in pyproject.toml and `setup.py` for packaging.
+- [APERO.database] add a printout for when updating log database. [Neil
+  Cook]
+
+
+0.8.206 (2026-03-12)
+--------------------
+- [APERO.ref] Add date filtering parameters `(start_date/end_date)` for
+  reference file retrieval in multiple modules. [Neil Cook]
+- [APERO] patch fit tellu bug + `drs_db` error reporting bug + fix
+  `user_keywords.yaml` throwing error. [Neil Cook]
+- [APERO.p12] Update `FLIP_INPUT` constant to boolean and implement safe
+  file removal function in `drs_database.py`. [Neil Cook]
+
+
+0.8.205 (2026-03-01)
+--------------------
+- [APERO.p12] Ensure native-ordered copy of images for median filter in
+  badpix.py. [Neil Cook]
+- [APERO] Refactor image flipping logic to include parameters in
+  `flip_image` calls for consistency across modules. [Neil Cook]
+- [APERO] Refactor `flip_image` function to use ParamDict and improve flip
+  logic; update recipe definitions for consistency. [Neil Cook]
+
+
+0.8.204 (2026-02-28)
+--------------------
+- [APERO.ilocater] merge global changes from ilocater branch. [Neil
+  Cook]
+- [APERO] Update Python version to 3.12 and adjust related dependencies
+  [tested on mini data] [Neil Cook]
+- [POGOS.setup] Refactor demo classes to use new property access methods
+  and update initialization parameters for improved clarity and
+  consistency. [Neil Cook]
+
+
+0.8.203 (2026-02-19)
+--------------------
+- [APERO.ilocater] Updates based on ilocater meeting [not including
+  ilocater itself] [Neil Cook]
+- Refactor import statements for consistency and clarity; update package
+  versions in pyproject.toml. [Neil Cook]
+- [APERO.get] Refactor `get_disk_entries` and related functions to use
+  pandas DataFrame instead of astropy Table for improved data handling
+  and filtering capabilities. [Neil Cook]
+
+
+0.8.202 (2026-02-12)
+--------------------
+- [APERO.processing+database update] Refactor parallel processing in
+  database and DRS modules to use ProcessPool and partial functions for
+  improved performance and readability. [Neil Cook]
+- [APERO.get] Add parallel file copying and disk entry retrieval
+  functions to enhance performance. [Neil Cook]
+- [APERO.wave+slinky] Enhance fplines extraction by including cavity
+  polynomial in relevant functions. [Neil Cook]
+
+
+0.8.201 (2026-02-10)
+--------------------
+- [APERO.wave+slinky]  Update RV threshold and enhance cavity fit
+  calculations in wave processing. [Neil Cook]
+- [APERO.wave+slinky]  Update RV threshold and enhance cavity fit
+  calculations in wave processing. [Neil Cook]
+- [APERO.wave+slinky] Add `drs_io` module to handle masked tables and
+  update table reading across multiple scripts - issue currently with
+  `WAVE_MEAS/WAVE_REF` being 10s m/s - should be sub m/s. [Neil Cook]
+
+
+0.8.200 (2026-02-09)
+--------------------
+- [APERO.wave+slinky] Add `drs_io` module to handle masked tables and
+  update table reading across multiple scripts - issue currently with
+  `WAVE_MEAS/WAVE_REF` being 10s m/s - should be sub m/s. [Neil Cook]
+
+
+0.8.199 (2026-02-06)
+--------------------
+- [APERO.wave] Fix slinky correction source references in wave
+  processing scripts. [Neil Cook]
+- [APERO.slinky+lbl] Update slinky correction source references and
+  modify LBL directory paths in configuration. [Neil Cook]
+- Update slinky correction variable from `SLINKY_EW_COV` to `SLINKY_EW` in
+  wave processing scripts. [Neil Cook]
+- [APERO.go+processing] Add MySQL argument to `apero_go.py` and improve
+  logging in `drs_processing.py`. [Neil Cook]
+- Enhance slinky correction functionality and update related parameters
+  in wave processing. [Neil Cook]
+- [POGOS] Refactor version handling and enhance YAML file listing
+  functionality. [Neil Cook]
+- [POGOS.setup] Add project configuration files and enhance demo data
+  handling. [Neil Cook]
 - [APERO] Update versioning approach and enhance changelog tagging
   functionality. [Neil Cook]
 - [APERO] Change how we version (follow jwst pipeline) and use git tags

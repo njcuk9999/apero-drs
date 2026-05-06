@@ -301,21 +301,17 @@ def remove_backfilled_tags(end_tag):
                       stderr=subprocess.DEVNULL)
 
 
-def main(preview=1, **kwargs):
+def main(**kwargs):
     """
     Main function for apero_changelog.py
 
-    :param preview: bool, if True does not save before previewing if False
-                    saves without previewing
     :param kwargs: any additional keywords
-
-    :type preview: bool
 
     :returns: dictionary of the local space
     :rtype: dict
     """
     # assign function calls (must add positional)
-    fkwargs = dict(preview=preview, **kwargs)
+    fkwargs = dict(**kwargs)
     # ----------------------------------------------------------------------
     # deal with command line inputs / function call inputs
     recipe, params = drs_startup.setup(__NAME__, __INSTRUMENT__, fkwargs)
