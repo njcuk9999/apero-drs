@@ -586,7 +586,8 @@ ALL_POLAR_RHOMB_POS = Const('ALL_POLAR_RHOMB_POS', value=None, dtype=str,
 # Define the time column (in the database) to use for filtering reference
 # files by (start date and end date format must match this)
 REF_FIND_TIME_COL = Const('REF_FIND_TIME_COL', value=None, dtype=str,
-                          source=__NAME__, group=cgroup, active=True, user=True,
+                          source=__NAME__, group=cgroup,
+                          active=False, user=True,
                           description='Define the time column (in the database)'
                                       ' to use for filtering reference files '
                                       'by (start date and end date format must '
