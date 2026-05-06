@@ -863,24 +863,9 @@ def _run_single_object_job(
     worker_pid = os.getpid()
     start_total = time.time()
 
-    # Run raw query first to decide whether full regeneration is required.
-    rparams = _check_required(aparams)
-    scitypes = rparams["SCIENCE_TYPES"]
-    raw_query = _file_col_query(
-        rparams, objname, block_kind="raw", scitype=scitypes
-    )
-    raw_outputs = {"timings": {}, "results": {}}
-    raw_outputs = _file_col_cmd(
-        aparams,
-        raw_query,
-        apero_profile_name,
-        objname=objname,
-        fkind="raw",
-        outputs=raw_outputs,
-    )
-
-    raw_results = raw_outputs.get("results", {}).get("raw", [])
-    current_raw_fp = _extract_raw_last_modified_fingerprint(raw_results)
+    # Run a lightweight change query first to avoid full per-object
+    # result fetches when raw rows did not change.
+    current_raw_fp = _raw_change_fingerprint(aparams, objname)
 
     instrument = aparams.get("INSTRUMENT", "unknown")
     local_dir = (
@@ -958,6 +943,52 @@ def _extract_raw_last_modified_fingerprint(raw_rows: Any) -> str:
     if not values:
         return f"empty:{len(raw_rows)}"
     return f"{max(values)}:{len(values)}"
+
+
+def _raw_change_query(rparams, objname: str) -> str:
+    """Construct a compact per-object raw change fingerprint query."""
+    objname_safe = objname.replace("'", "''")
+    scitype_list = ", ".join([
+        f"'{kind}'" for kind in rparams["SCIENCE_TYPES"]
+    ])
+    query = """
+    SELECT
+        COUNT(*) AS NROWS,
+        MAX(fdb.LAST_MODIFIED) AS MAX_LAST_MODIFIED
+    FROM {FINDEX_TABLENAME} fdb
+    WHERE fdb.KW_OBJNAME = '{OBJNAME}'
+      AND fdb.BLOCK_KIND = 'raw'
+      AND fdb.KW_DPRTYPE IN ({SCITYPES})
+    """
+    return query.format(
+        OBJNAME=objname_safe,
+        SCITYPES=scitype_list,
+        **rparams,
+    )
+
+
+def _raw_change_fingerprint(aparams, objname: str) -> str:
+    """Return a stable raw-change fingerprint from a compact DB query."""
+    rparams = _check_required(aparams)
+    query = _raw_change_query(rparams, objname)
+    db_params = apero_async.get_db_params(aparams)
+    results = apero_async.database_query(db_params, query)
+    if not isinstance(results, list) or len(results) == 0:
+        return "none:0"
+    row = results[0]
+    if not isinstance(row, dict):
+        return "none:0"
+
+    try:
+        nrows = int(row.get("NROWS", 0) or 0)
+    except Exception:
+        nrows = 0
+    max_last_modified = str(
+        row.get("MAX_LAST_MODIFIED", "") or ""
+    ).strip()
+    if nrows <= 0:
+        return "none:0"
+    return f"{max_last_modified}:{nrows}"
 
 
 def _object_state_file(local_dir: Path, objname: str) -> Path:

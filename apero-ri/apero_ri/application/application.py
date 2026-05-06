@@ -35,6 +35,8 @@ from apero_ri.application import (
 )
 from apero_ri.application import ariapp_impls as _impls
 from apero_ri.application import astrometrics_api_helpers
+from apero_ri.application import astrometrics_history
+from apero_ri.application import rejection_list_api_helpers
 from apero_ri.application import (
     async_task_helpers,
     async_tasks_api_helpers,
@@ -937,9 +939,58 @@ class ARIApp(Flask):
         return (astrometrics_api_helpers
                 .api_astrometrics_add_rejected(self))
 
-    def _api_astrometrics_add_manual(self):
+    def _api_astrometrics_update_rejected(self):
         return (astrometrics_api_helpers
-                .api_astrometrics_add_manual(self))
+                .api_astrometrics_update_rejected(self))
+
+    def _api_astrometrics_delete_rejected(self):
+        return (astrometrics_api_helpers
+                .api_astrometrics_delete_rejected(self))
+
+    def _api_astrometrics_add_manual(self):
+        try:
+            return (astrometrics_api_helpers
+                    .api_astrometrics_add_manual(self))
+        except Exception as exc:  # noqa: BLE001
+            import traceback as _tb
+            from flask import jsonify as _jsonify
+            tb = _tb.format_exc()
+            try:
+                from pathlib import Path as _P
+                base = _P(self.args.data_dir
+                          or str(_P.home() / ".ari"))
+                logf = base / "apero_ri_errors.log"
+                with logf.open("a", encoding="utf-8") as fp:
+                    fp.write("\n=== add-manual error ===\n")
+                    fp.write(tb)
+            except Exception:  # noqa: BLE001
+                pass
+            try:
+                self.log.error(
+                    "add-manual unhandled: %s\n%s", exc, tb)
+            except Exception:  # noqa: BLE001
+                pass
+            return _jsonify(
+                success=False,
+                error="Server exception: {0}: {1}".format(
+                    type(exc).__name__, exc),
+            ), 500
+
+    def _api_astrometrics_recompute_manual(self):
+        return (astrometrics_api_helpers
+                .api_astrometrics_recompute_manual(self))
+
+    def _api_astrometrics_lock_acquire(self):
+        return (astrometrics_api_helpers
+                .api_astrometrics_lock_acquire(self))
+
+    def _api_astrometrics_lock_heartbeat(self):
+        return (astrometrics_api_helpers
+                .api_astrometrics_lock_heartbeat(self))
+
+    def _api_astrometrics_lock_release(self):
+        return (astrometrics_api_helpers
+                .api_astrometrics_lock_release(self))
 
     def _api_astrometrics_update_field(self):
         return astrometrics_api_helpers.api_astrometrics_update_field(
@@ -972,6 +1023,78 @@ class ARIApp(Flask):
         return (
             astrometrics_api_helpers
             .api_astrometrics_resolve_online_by_coords(self))
+
+    # ----- astrometrics edit history -----
+    def _api_astrometrics_history_list(self):
+        return astrometrics_history.api_astrometrics_history_list(
+            self)
+
+    def _api_astrometrics_history_get(self):
+        return astrometrics_history.api_astrometrics_history_get(
+            self)
+
+    def _api_astrometrics_history_delete(self):
+        return astrometrics_history.api_astrometrics_history_delete(
+            self)
+
+    def _api_astrometrics_history_clear(self):
+        return astrometrics_history.api_astrometrics_history_clear(
+            self)
+
+    def _api_rejection_list_list(self):
+        return rejection_list_api_helpers.api_rejection_list_list(
+            self
+        )
+
+    def _api_rejection_list_add(self):
+        return rejection_list_api_helpers.api_rejection_list_add(
+            self
+        )
+
+    def _api_rejection_list_update(self):
+        return rejection_list_api_helpers.api_rejection_list_update(
+            self
+        )
+
+    def _api_rejection_list_delete(self):
+        return rejection_list_api_helpers.api_rejection_list_delete(
+            self
+        )
+
+    def _api_rejection_list_upload(self):
+        return rejection_list_api_helpers.api_rejection_list_upload(
+            self
+        )
+
+    def _api_rejection_history_list(self):
+        return rejection_list_api_helpers.api_rejection_history_list(
+            self
+        )
+
+    def _api_rejection_history_get(self):
+        return rejection_list_api_helpers.api_rejection_history_get(
+            self
+        )
+
+    def _api_rejection_history_restore(self):
+        return rejection_list_api_helpers.api_rejection_history_restore(
+            self
+        )
+
+    def _api_rejection_history_resolve(self):
+        return rejection_list_api_helpers.api_rejection_history_resolve(
+            self
+        )
+
+    def _api_rejection_history_delete(self):
+        return rejection_list_api_helpers.api_rejection_history_delete(
+            self
+        )
+
+    def _api_rejection_history_clear(self):
+        return rejection_list_api_helpers.api_rejection_history_clear(
+            self
+        )
 
     # -----------------------------------------------------------------
     # Issues subsystem
@@ -1044,6 +1167,18 @@ class ARIApp(Flask):
         from apero_ri.application import notifications_api_helpers as nh
         return nh.api_messages_delete(self, mid)
 
+    def _api_messages_mark_unread(self, mid):
+        from apero_ri.application import notifications_api_helpers as nh
+        return nh.api_messages_mark_unread(self, mid)
+
+    def _api_messages_mark_all_read(self):
+        from apero_ri.application import notifications_api_helpers as nh
+        return nh.api_messages_mark_all_read(self)
+
+    def _api_messages_delete_all(self):
+        from apero_ri.application import notifications_api_helpers as nh
+        return nh.api_messages_delete_all(self)
+
     def _api_messages_flag_as_issue(self, mid):
         from apero_ri.application import notifications_api_helpers as nh
         return nh.api_messages_flag_as_issue(self, mid)
@@ -1055,6 +1190,10 @@ class ARIApp(Flask):
     def _user_portal_users_view(self):
         from apero_ri.application import user_portal_view_helpers as uvh
         return uvh.user_portal_users_view(self)
+
+    def _user_portal_user_card_view(self, username):
+        from apero_ri.application import user_portal_view_helpers as uvh
+        return uvh.user_portal_user_card_view(self, username)
 
     def _user_portal_messages_view(self):
         from apero_ri.application import user_portal_view_helpers as uvh

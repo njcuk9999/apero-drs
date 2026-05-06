@@ -608,8 +608,10 @@
     var rtSections = document.getElementById(
         'rt-target-info-sections');
     var rtVerifyBanner = document.getElementById('rt-verify-banner');
+    var rtEditBtn = document.getElementById('rt-target-edit');
     var rtVerifyBtn = document.getElementById('rt-target-verify');
     var rtUploadBtn = document.getElementById('rt-target-upload');
+    var rtCurrentEntry = null;
 
     function _showLoading(on) {
         if (!rtLoading) return;
@@ -632,6 +634,10 @@
         if (rtTargetInfo) rtTargetInfo.style.display = 'none';
         if (rtSections) rtSections.innerHTML = '';
         if (rtVerifyBanner) rtVerifyBanner.style.display = 'none';
+        if (rtEditBtn) {
+            rtEditBtn.hidden = true;
+            rtEditBtn.disabled = false;
+        }
         if (rtVerifyBtn) {
             rtVerifyBtn.hidden = true;
             rtVerifyBtn.disabled = false;
@@ -640,6 +646,7 @@
             rtUploadBtn.hidden = true;
             rtUploadBtn.disabled = false;
         }
+        rtCurrentEntry = null;
     }
 
     function _hasAnyMonitorPerm(perms) {
@@ -752,6 +759,26 @@
         });
     }
 
+    function _wireEditButton(aperoName, entry) {
+        if (!rtEditBtn || !entry) return;
+        // replace handler each time
+        var fresh = rtEditBtn.cloneNode(true);
+        rtEditBtn.parentNode.replaceChild(fresh, rtEditBtn);
+        rtEditBtn = fresh;
+        rtEditBtn.addEventListener('click', function () {
+            // Switch to Add-manually tab
+            var tab = document.querySelector(
+                '.ari-htab[data-htab="add-manually"]');
+            if (tab) tab.click();
+            // prefill the form with current entry
+            if (window.AriManualTargetForm
+                    && typeof window.AriManualTargetForm
+                    .prefill === 'function') {
+                window.AriManualTargetForm.prefill(entry);
+            }
+        });
+    }
+
     function _refreshVerifyBanner(aperoName) {
         if (!aperoName) return;
         if (rtVerifyBanner) rtVerifyBanner.style.display = 'none';
@@ -825,13 +852,30 @@
         if (rtSections && window.AperoTargetInfo) {
             window.AperoTargetInfo.render(rtSections, payload, {
                 apero_name: apero_name,
+                disableInlineEdit: true,
                 userPerms: (window.AperoRI
                     && window.AperoRI.userPerms) || []
             });
         }
+        // Show edit button for any resolved entry — but only when
+        // the user has manage.astrometrics. Without it the backend
+        // would refuse, so the button just confuses people.
+        var entry = (opts && (opts.entry || opts.raw)) || null;
+        var _userPermsList = (window.AperoRI
+            && window.AperoRI.userPerms) || [];
+        var canEditAstrom = _userPermsList.indexOf(
+            'manage.astrometrics') !== -1;
+        if (entry && rtEditBtn) {
+            if (canEditAstrom) {
+                rtEditBtn.hidden = false;
+                rtCurrentEntry = entry;
+                _wireEditButton(apero_name, entry);
+            } else {
+                rtEditBtn.hidden = true;
+            }
+        }
         // Show the upload button only for transient (online-resolved)
         // entries — and only for monitors.
-        var entry = opts && opts.entry;
         if (entry && rtUploadBtn) {
             var perms = (window.AperoRI
                 && window.AperoRI.userPerms) || [];
@@ -956,7 +1000,8 @@
                         + '"Resolve online" to query SIMBAD.');
                     return;
                 }
-                _showTarget(data.apero_name, data.payload);
+                _showTarget(data.apero_name, data.payload,
+                            { entry: data.entry });
                 _showRejectionBanner(data);
             })
             .catch(function (err) {
@@ -998,7 +1043,8 @@
                 }
                 if (matches.length === 1) {
                     _showTarget(matches[0].apero_name,
-                                matches[0].payload);
+                                matches[0].payload,
+                                { entry: matches[0].entry });
                 } else {
                     _showPicker(matches);
                 }
@@ -1040,7 +1086,8 @@
                 }
                 if (matches.length === 1) {
                     _showTarget(matches[0].apero_name,
-                                matches[0].payload);
+                                matches[0].payload,
+                                { entry: matches[0].entry });
                 } else {
                     _showPicker(matches);
                 }
@@ -1368,7 +1415,13 @@
                         + _esc(s) + '</span>';
                 }
             },
-            { key: 'KEYWORDS', label: 'Keywords' },
+            {
+                key: 'KEYWORDS', label: 'Keywords',
+                render: function (v) {
+                    if (Array.isArray(v)) return v.join(', ');
+                    return v == null ? '' : String(v);
+                }
+            },
             { key: 'NOTES', label: 'Notes' }
         ];
     }
@@ -1447,6 +1500,17 @@
         '.ari-htab[data-htab="rejected"]');
     if (!rejTab) return;
     var loaded = false;
+    // expose internal hook for tab activation re-wiring
+    
+    var userPerms = (window.AperoRI && window.AperoRI.userPerms) || [];
+    var canEditRejected = userPerms.indexOf(
+        'manage.astrometrics') !== -1;
+    var _allRows = [];
+    var _filteredRows = [];
+    var _filterText = '';
+    var _page = 1;
+    var _perPage = 50;
+    var _pages = 0;
 
     function _esc(s) {
         return String(s == null ? '' : s).replace(
@@ -1460,7 +1524,36 @@
     function _renderCards(rows) {
         var host = document.getElementById('rej-cards');
         var cnt = document.getElementById('rej-count');
-        if (cnt) cnt.textContent = rows.length + ' rejected';
+        var info = document.getElementById('rej-page-info');
+        var prev = document.getElementById('rej-prev');
+        var next = document.getElementById('rej-next');
+        var totalFiltered = _filteredRows.length;
+        if (cnt) {
+            if (_filterText
+                && totalFiltered !== _allRows.length) {
+                cnt.textContent = totalFiltered + ' of '
+                    + _allRows.length + ' rejected';
+            } else {
+                cnt.textContent = totalFiltered + ' rejected';
+            }
+            if (totalFiltered > 0) {
+                cnt.textContent += ' (page ' + _page + ' of '
+                    + _pages + ')';
+            }
+        }
+        if (info) {
+            if (totalFiltered > 0) {
+                info.textContent = _page + ' of ' + _pages;
+            } else {
+                info.textContent = '0 of 0';
+            }
+        }
+        if (prev) {
+            prev.disabled = (_page <= 1 || totalFiltered === 0);
+        }
+        if (next) {
+            next.disabled = (_page >= _pages || totalFiltered === 0);
+        }
         if (!host) return;
         host.innerHTML = '';
 
@@ -1477,32 +1570,103 @@
         rows.forEach(function (row) {
             var card = document.createElement('div');
             card.className = 'rej-card';
-            var aliases = (row.ALIASES || []).map(_esc).join(', ');
-            var html = '<header class="rej-card__head">'
+            var aliasArr = (row.ALIASES || []);
+            var aliases = aliasArr.map(_esc).join(', ');
+            var aliasesPlain = aliasArr.join(', ');
+            var html = '<header class="rej-card__head" title="'
+                + _esc(row.APERO_NAME) + '">'
                 + '<i class="fa-solid fa-ban"></i>'
                 + '<span class="rej-card__name">'
                 + _esc(row.APERO_NAME) + '</span>'
                 + '</header>';
             if (aliases) {
-                html += '<div class="rej-card__field">'
+                html += '<div class="rej-card__field" title="'
+                    + _esc(aliasesPlain) + '">'
                     + '<span class="rej-card__label">Aliases:</span>'
                     + ' ' + aliases + '</div>';
             }
             if (row.NOTES) {
-                html += '<div class="rej-card__field">'
+                html += '<div class="rej-card__field" title="'
+                    + _esc(String(row.NOTES)) + '">'
                     + '<span class="rej-card__label">Notes:</span>'
                     + ' ' + _esc(row.NOTES) + '</div>';
             }
-            html += '<footer class="rej-card__meta">'
-                + 'added by <strong>' + _esc(row.FIRST_AUTHOR)
+            var metaPlain = 'added by ' + (row.FIRST_AUTHOR || '')
+                + (row.FIRST_UPDATED
+                    ? (' on ' + row.FIRST_UPDATED) : '');
+            html += '<div class="rej-card__meta" title="'
+                + _esc(metaPlain) + '">'
+                + 'by <strong>' + _esc(row.FIRST_AUTHOR)
                 + '</strong>';
             if (row.FIRST_UPDATED) {
-                html += ' on ' + _esc(row.FIRST_UPDATED);
+                html += ' ' + _esc(row.FIRST_UPDATED);
             }
-            html += '</footer>';
+            html += '</div>';
+            html += '<div class="rej-card__actions">'
+                + '<button type="button" class="rej-card__action"'
+                + ' data-rej-open-manual title="Open in Add manually">'
+                + '<i class="fa-solid fa-pen-to-square"></i>'
+                + '</button>';
+            if (canEditRejected) {
+                html += '<button type="button" class="rej-card__action"'
+                    + ' data-rej-edit title="Edit rejected entry">'
+                    + '<i class="fa-solid fa-pen"></i>'
+                    + '</button>'
+                    + '<button type="button" '
+                    + 'class="rej-card__action rej-card__action--danger"'
+                    + ' data-rej-delete title="Delete rejected entry">'
+                    + '<i class="fa-solid fa-trash"></i>'
+                    + '</button>';
+            }
+            html += '</div>';
             card.innerHTML = html;
+            var openBtn = card.querySelector('[data-rej-open-manual]');
+            if (openBtn) {
+                openBtn.addEventListener('click', function () {
+                    _openManualEditor(row);
+                });
+            }
+            if (canEditRejected) {
+                var editBtn = card.querySelector('[data-rej-edit]');
+                if (editBtn) {
+                    editBtn.addEventListener('click', function () {
+                        _openAddOverlay(row);
+                    });
+                }
+                var delBtn = card.querySelector('[data-rej-delete]');
+                if (delBtn) {
+                    delBtn.addEventListener('click', function () {
+                        _deleteRejected(row);
+                    });
+                }
+            }
             host.appendChild(card);
         });
+    }
+
+    function _setOverlayMode(mode, row) {
+        var modeEl = document.getElementById('rej-add-mode');
+        var origEl = document.getElementById('rej-add-original');
+        var titleEl = document.getElementById('rej-overlay-title');
+        var saveLabelEl = document.getElementById(
+            'rej-overlay-save-label');
+        if (modeEl) modeEl.value = mode;
+        if (origEl) {
+            origEl.value = (row && row.APERO_NAME)
+                ? String(row.APERO_NAME) : '';
+        }
+        if (titleEl) {
+            titleEl.innerHTML = (mode === 'edit')
+                ? '<i class="fa-solid fa-pen"></i> '
+                    + 'Edit rejected object name'
+                : '<i class="fa-solid fa-ban"></i> '
+                    + 'Add a rejected object name';
+        }
+        if (saveLabelEl) {
+            saveLabelEl.textContent = (mode === 'edit')
+                ? 'Save changes'
+                : 'Save rejection';
+        }
     }
 
     function _load() {
@@ -1523,7 +1687,8 @@
                     return;
                 }
                 if (statusEl) statusEl.textContent = '';
-                _renderCards(data.rows || []);
+                _allRows = data.rows || [];
+                _applyFilter();
             })
             .catch(function (err) {
                 if (statusEl) {
@@ -1532,32 +1697,195 @@
             });
     }
 
-    function _openAddOverlay() {
+    function _matches(row, q) {
+        if (!q) return true;
+        var name = String(row.APERO_NAME || '').toLowerCase();
+        if (name.indexOf(q) !== -1) return true;
+        var aliases = row.ALIASES || [];
+        for (var i = 0; i < aliases.length; i++) {
+            if (String(aliases[i] || '').toLowerCase()
+                    .indexOf(q) !== -1) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    function _applyFilter() {
+        var q = (_filterText || '').trim().toLowerCase();
+        _filteredRows = !q
+            ? _allRows.slice()
+            : _allRows.filter(function (r) {
+                return _matches(r, q);
+            });
+        if (_filteredRows.length === 0) {
+            _page = 1;
+            _pages = 0;
+            _renderCards([]);
+            return;
+        }
+        _pages = Math.ceil(_filteredRows.length / _perPage);
+        if (_page > _pages) {
+            _page = _pages;
+        }
+        var start = (_page - 1) * _perPage;
+        var end = start + _perPage;
+        _renderCards(_filteredRows.slice(start, end));
+    }
+
+    function _wireFilter() {
+        var input = document.getElementById('rej-filter-input');
+        var clear = document.getElementById('rej-filter-clear');
+        if (!input || input.dataset.wired) return;
+        input.dataset.wired = '1';
+        input.addEventListener('input', function () {
+            _filterText = input.value || '';
+            _page = 1;
+            if (clear) clear.hidden = !_filterText;
+            _applyFilter();
+        });
+        if (clear) {
+            clear.addEventListener('click', function () {
+                input.value = '';
+                _filterText = '';
+                _page = 1;
+                clear.hidden = true;
+                _applyFilter();
+                input.focus();
+            });
+        }
+    }
+
+    function _wirePaging() {
+        var per = document.getElementById('rej-per-page');
+        var prev = document.getElementById('rej-prev');
+        var next = document.getElementById('rej-next');
+        if (per && !per.dataset.wired) {
+            per.dataset.wired = '1';
+            per.addEventListener('change', function () {
+                var parsed = parseInt(per.value, 10);
+                if ([50, 100, 500].indexOf(parsed) === -1) {
+                    parsed = 50;
+                }
+                _perPage = parsed;
+                _page = 1;
+                _applyFilter();
+            });
+        }
+        if (prev && !prev.dataset.wired) {
+            prev.dataset.wired = '1';
+            prev.addEventListener('click', function () {
+                if (_page > 1) {
+                    _page -= 1;
+                    _applyFilter();
+                }
+            });
+        }
+        if (next && !next.dataset.wired) {
+            next.dataset.wired = '1';
+            next.addEventListener('click', function () {
+                if (_page < _pages) {
+                    _page += 1;
+                    _applyFilter();
+                }
+            });
+        }
+    }
+
+    function _openAddOverlay(row) {
         var ov = document.getElementById('rej-add-overlay');
         if (!ov) return;
         ov.hidden = false;
+        _setOverlayMode(row ? 'edit' : 'add', row || null);
         var nameEl = document.getElementById('rej-add-name');
         if (nameEl) {
-            nameEl.value = '';
+            nameEl.value = row ? String(row.APERO_NAME || '') : '';
             nameEl.focus();
         }
         var alEl = document.getElementById('rej-add-aliases');
-        if (alEl) alEl.value = '';
+        if (alEl) {
+            alEl.value = row && Array.isArray(row.ALIASES)
+                ? row.ALIASES.join('\n')
+                : '';
+        }
         var ntEl = document.getElementById('rej-add-notes');
-        if (ntEl) ntEl.value = '';
+        if (ntEl) ntEl.value = row ? String(row.NOTES || '') : '';
         var st = document.getElementById('rej-add-status');
         if (st) st.textContent = '';
     }
+
     function _closeAddOverlay() {
         var ov = document.getElementById('rej-add-overlay');
         if (ov) ov.hidden = true;
     }
 
-    function _submitAdd() {
+    function _openManualEditor(row) {
+        var tab = document.querySelector(
+            '.ari-htab[data-htab="add-manually"]');
+        if (tab) tab.click();
+        var helper = window.AriManualTargetForm;
+        if (helper && typeof helper.prefill === 'function') {
+            helper.prefill({
+                APERO_NAME: row.APERO_NAME,
+                APERO_CLASS: 'OTHER',
+                ORIGINAL_NAME: row.ORIGINAL_NAME,
+                ALIASES: row.ALIASES,
+                NOTES: row.NOTES
+            });
+        } else {
+            var nameEl = document.getElementById('am-man-name');
+            if (nameEl) nameEl.value = row.APERO_NAME || '';
+        }
+    }
+
+    function _deleteRejected(row) {
+        var name = String((row && row.APERO_NAME) || '');
+        if (!name) return;
+        if (!window.confirm('Delete rejected entry for "'
+                            + name + '"?')) {
+            return;
+        }
+        var st = document.getElementById('rej-status');
+        if (st) {
+            st.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> '
+                + 'Deleting "' + _esc(name) + '"...';
+        }
+        fetch('/api/astrometrics/delete-rejected', {
+            method: 'POST',
+            credentials: 'same-origin',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ apero_name: name })
+        }).then(function (r) {
+            return r.json().then(function (j) {
+                return { ok: r.ok, body: j };
+            });
+        }).then(function (res) {
+            if (!res.body || !res.body.success) {
+                if (st) {
+                    st.textContent = 'Delete failed: '
+                        + ((res.body && res.body.error)
+                           || 'HTTP error');
+                }
+                return;
+            }
+            if (st) st.textContent = '';
+            _load();
+        }).catch(function (err) {
+            if (st) st.textContent = 'Delete failed: ' + err;
+        });
+    }
+
+    function _submitAddOrEdit() {
         var nameEl = document.getElementById('rej-add-name');
         var alEl = document.getElementById('rej-add-aliases');
         var ntEl = document.getElementById('rej-add-notes');
         var st = document.getElementById('rej-add-status');
+        var mode = 'add';
+        var orig = '';
+        var modeEl = document.getElementById('rej-add-mode');
+        if (modeEl && modeEl.value === 'edit') mode = 'edit';
+        var origEl = document.getElementById('rej-add-original');
+        if (origEl) orig = String(origEl.value || '').trim();
         var name = nameEl ? nameEl.value.trim() : '';
         if (!name) {
             if (st) st.textContent = 'Object name is required.';
@@ -1572,15 +1900,20 @@
             st.innerHTML = '<i class="fa-solid fa-spinner '
                 + 'fa-spin"></i> Saving...';
         }
-        fetch('/api/astrometrics/add-rejected', {
+        var url = (mode === 'edit')
+            ? '/api/astrometrics/update-rejected'
+            : '/api/astrometrics/add-rejected';
+        var body = {
+            apero_name: name,
+            aliases: aliases,
+            notes: notes
+        };
+        if (mode === 'edit') body.old_apero_name = orig;
+        fetch(url, {
             method: 'POST',
             credentials: 'same-origin',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                apero_name: name,
-                aliases: aliases,
-                notes: notes
-            })
+            body: JSON.stringify(body)
         }).then(function (r) {
             return r.json().then(function (j) {
                 return { ok: r.ok, body: j };
@@ -1602,6 +1935,8 @@
     }
 
     rejTab.addEventListener('click', function () {
+        _wireFilter();
+        _wirePaging();
         if (!loaded) {
             loaded = true;
             _load();
@@ -1618,7 +1953,9 @@
         }
     });
     var saveBtn = document.getElementById('rej-add-save');
-    if (saveBtn) saveBtn.addEventListener('click', _submitAdd);
+    if (saveBtn) {
+        saveBtn.addEventListener('click', _submitAddOrEdit);
+    }
 }());
 
 
@@ -1652,6 +1989,559 @@
             .filter(function (s) { return s.length > 0; });
     }
 
+    function _setValue(id, value) {
+        var el = document.getElementById(id);
+        if (!el) return;
+        el.value = _toInputString(value);
+    }
+
+    function _toInputString(value) {
+        if (value === null || value === undefined) return '';
+        if (Array.isArray(value)) {
+            return value.map(function (v) {
+                return _toInputString(v);
+            }).join('\n');
+        }
+        if (typeof value === 'object') {
+            if (Object.prototype.hasOwnProperty.call(value, 'value')) {
+                return _toInputString(value.value);
+            }
+            try {
+                return JSON.stringify(value);
+            } catch (e) {
+                return '';
+            }
+        }
+        return String(value);
+    }
+
+    function _entryValue(entry, key, altKey) {
+        var val = null;
+        if (entry && Object.prototype.hasOwnProperty.call(entry, key)) {
+            val = entry[key];
+        } else if (altKey && entry
+                && Object.prototype.hasOwnProperty.call(entry, altKey)) {
+            val = entry[altKey];
+        }
+        if (val && typeof val === 'object'
+                && Object.prototype.hasOwnProperty.call(val, 'value')) {
+            return val.value;
+        }
+        return val;
+    }
+
+    var _EXTRA_FIELD_SPECS = [
+        { key: 'RA_J2000_DEG', label: 'RA (J2000) [deg]',
+            type: 'number', editable: false },
+        { key: 'DEC_J2000_DEG', label: 'Dec (J2000) [deg]',
+            type: 'number', editable: false },
+        { key: 'RA_HMS', label: 'RA (J2000) HMS', type: 'text',
+            editable: false },
+        { key: 'DEC_DMS', label: 'Dec (J2000) DMS', type: 'text',
+            editable: false },
+        { key: 'GALACTIC_LON', label: 'Galactic longitude l [deg]',
+            type: 'number', editable: false },
+        { key: 'GALACTIC_LAT', label: 'Galactic latitude b [deg]',
+            type: 'number', editable: false },
+        { key: 'ECLIPTIC_LON', label: 'Ecliptic longitude [deg]',
+            type: 'number', editable: false },
+        { key: 'ECLIPTIC_LAT', label: 'Ecliptic latitude [deg]',
+            type: 'number', editable: false },
+        { key: 'V_SKY', label: 'v_sky [km/s]', type: 'number',
+            editable: false },
+        { key: 'V3D', label: 'v_3D [km/s]', type: 'number',
+            editable: false },
+        { key: 'U', label: 'U (galactic) [km/s]', type: 'number',
+            editable: false },
+        { key: 'V', label: 'V (galactic) [km/s]', type: 'number',
+            editable: false },
+        { key: 'W', label: 'W (galactic) [km/s]', type: 'number',
+            editable: false },
+        { key: 'G_MAG', label: 'G [mag]', type: 'number',
+            editable: true },
+        { key: 'GBP_MAG', label: 'G_BP [mag]', type: 'number',
+            editable: true },
+        { key: 'GRP_MAG', label: 'G_RP [mag]', type: 'number',
+            editable: true },
+        { key: 'J_MAG', label: 'J [mag]', type: 'number',
+            editable: true },
+        { key: 'H_MAG', label: 'H [mag]', type: 'number',
+            editable: true },
+        { key: 'KS_MAG', label: 'Ks [mag]', type: 'number',
+            editable: true },
+        { key: 'W1_MAG', label: 'W1 [mag]', type: 'number',
+            editable: true },
+        { key: 'W2_MAG', label: 'W2 [mag]', type: 'number',
+            editable: true },
+        { key: 'W3_MAG', label: 'W3 [mag]', type: 'number',
+            editable: true },
+        { key: 'W4_MAG', label: 'W4 [mag]', type: 'number',
+            editable: true },
+        { key: 'FE_H', label: '[Fe/H] [dex]', type: 'number',
+            editable: false },
+        { key: 'GAIA_MH_GSPPHOT', label: '[M/H] Gaia GSP-Phot [dex]',
+            type: 'number', editable: false },
+        { key: 'R_STAR_MKS', label: 'R* (M_Ks) [Rsun]',
+            type: 'number', editable: false },
+        { key: 'R_STAR_MKS_FEH', label: 'R* (M_Ks+[Fe/H]) [Rsun]',
+            type: 'number', editable: false },
+        { key: 'GAIA_RADIUS_FLAME', label: 'R* Gaia FLAME [Rsun]',
+            type: 'number', editable: false },
+        { key: 'MASS_STAR_MANN15', label: 'M* Mann+15 [Msun]',
+            type: 'number', editable: false },
+        { key: 'MASS_STAR_DELFOSSE00',
+            label: 'M* Delfosse+00 [Msun]', type: 'number',
+            editable: false },
+        { key: 'GAIA_MASS_FLAME', label: 'M* Gaia FLAME [Msun]',
+            type: 'number', editable: false },
+        { key: 'LOG_G', label: 'log g [cgs]', type: 'number',
+            editable: false },
+        { key: 'GAIA_LOGG_GSPPHOT',
+            label: 'log g Gaia GSP-Phot [cgs]', type: 'number',
+            editable: false },
+        { key: 'L_STAR', label: 'L* [Lsun]', type: 'number',
+            editable: false },
+        { key: 'GAIA_LUM_FLAME', label: 'L* Gaia FLAME [Lsun]',
+            type: 'number', editable: false },
+        { key: 'VSINI', label: 'v sin(i) [km/s]', type: 'number',
+            editable: true },
+        { key: 'TEFF_GAIA_JH', label: 'Teff (Gaia+JH) [K]',
+            type: 'number', editable: false },
+        { key: 'TEFF_GAIA', label: 'Teff (Gaia) [K]',
+            type: 'number', editable: false },
+        { key: 'GAIA_TEFF_GSPPHOT',
+            label: 'Teff Gaia GSP-Phot [K]', type: 'number',
+            editable: false },
+        { key: 'TELLURIC_VSYS_PLUS_VBARY_MIN',
+            label: 'Telluric v_sys+v_bary min [km/s]', type: 'number',
+            editable: false },
+        { key: 'TELLURIC_VSYS_PLUS_VBARY_MAX',
+            label: 'Telluric v_sys+v_bary max [km/s]', type: 'number',
+            editable: false },
+        { key: 'TELLURIC_LIMIT_WINDOWS',
+            label: 'Telluric limit windows', type: 'text',
+            editable: false }
+    ];
+    var _EXTRA_FIELD_IDS = [];
+    var _manualOriginalEntry = null;
+    var _manualOriginalAperoName = '';
+    var _manualRestoreFlag = '';
+
+    function _escapeHtml(s) {
+        return String(s == null ? '' : s).replace(/[&<>"']/g,
+            function (ch) {
+                return ({
+                    '&': '&amp;',
+                    '<': '&lt;',
+                    '>': '&gt;',
+                    '"': '&quot;',
+                    "'": '&#39;'
+                })[ch];
+            });
+    }
+
+    function _entryMapFromPayload(payload) {
+        var out = {};
+        out.APERO_NAME = _toInputString(payload.apero_name);
+        out.APERO_CLASS = _toInputString(payload.apero_class);
+        out.ORIGINAL_NAME = _toInputString(payload.original_name);
+        out.SIMBAD_NAME = _toInputString(payload.simbad_name);
+        out.EPOCH = _toInputString(payload.epoch);
+        out.RA = _toInputString(payload.ra);
+        out.DEC = _toInputString(payload.dec);
+        out.PMRA = _toInputString(payload.pmra);
+        out.PMDE = _toInputString(payload.pmde);
+        out.PLX = _toInputString(payload.plx);
+        out.RV = _toInputString(payload.rv);
+        out.TEFF = _toInputString(payload.teff);
+        out.SPT = _toInputString(payload.spt);
+        out.GAIA_SOURCE_ID = _toInputString(payload.gaia_source_id);
+        out.ALIASES = Array.isArray(payload.aliases)
+            ? payload.aliases.join('\n')
+            : _toInputString(payload.aliases);
+        out.KEYWORDS = Array.isArray(payload.keywords)
+            ? payload.keywords.join('\n')
+            : _toInputString(payload.keywords);
+        out.NOTES = _toInputString(payload.notes);
+        out.NO_PM = payload.no_pm ? 'true' : 'false';
+        var extra = payload.extra_fields || {};
+        Object.keys(extra).forEach(function (k) {
+            out[String(k || '').toUpperCase()] = _toInputString(extra[k]);
+        });
+        return out;
+    }
+
+    function _entryMapFromOriginal(entry) {
+        var out = {};
+        if (!entry) return out;
+        out.APERO_NAME = _toInputString(_entryValue(entry, 'APERO_NAME'));
+        out.APERO_CLASS = _toInputString(_entryValue(entry, 'APERO_CLASS'));
+        out.ORIGINAL_NAME = _toInputString(
+            _entryValue(entry, 'ORIGINAL_NAME'));
+        out.SIMBAD_NAME = _toInputString(_entryValue(entry, 'SIMBAD_NAME'));
+        out.EPOCH = _toInputString(_entryValue(entry, 'EPOCH', 'epoch'));
+        out.RA = _toInputString(_entryValue(entry, 'RA', 'ra'));
+        out.DEC = _toInputString(_entryValue(entry, 'DEC', 'dec'));
+        out.PMRA = _toInputString(_entryValue(entry, 'PMRA', 'pmra'));
+        out.PMDE = _toInputString(_entryValue(entry, 'PMDE', 'pmde'));
+        out.PLX = _toInputString(_entryValue(entry, 'PLX', 'plx'));
+        out.RV = _toInputString(_entryValue(entry, 'RV', 'rv'));
+        out.TEFF = _toInputString(_entryValue(entry, 'TEFF', 'teff'));
+        out.SPT = _toInputString(_entryValue(entry, 'SPT'));
+        out.GAIA_SOURCE_ID = _toInputString(
+            _entryValue(entry, 'GAIA_SOURCE_ID'));
+        var aliases = _entryValue(entry, 'ALIASES');
+        out.ALIASES = Array.isArray(aliases)
+            ? aliases.join('\n') : _toInputString(aliases);
+        var keywords = _entryValue(entry, 'KEYWORDS');
+        out.KEYWORDS = Array.isArray(keywords)
+            ? keywords.join('\n') : _toInputString(keywords);
+        out.NOTES = _toInputString(_entryValue(entry, 'NOTES'));
+        out.NO_PM = _entryValue(entry, 'NO_PM') ? 'true' : 'false';
+        _EXTRA_FIELD_IDS.forEach(function (pair) {
+            if (!pair[2]) return;
+            out[pair[1]] = _toInputString(_entryValue(entry, pair[1]));
+        });
+        return out;
+    }
+
+    function _buildChanges(oldMap, newMap) {
+        var keys = {};
+        Object.keys(oldMap || {}).forEach(function (k) { keys[k] = true; });
+        Object.keys(newMap || {}).forEach(function (k) { keys[k] = true; });
+        var out = [];
+        Object.keys(keys).sort().forEach(function (k) {
+            var prev = _toInputString(oldMap[k]);
+            var next = _toInputString(newMap[k]);
+            if (prev !== next) {
+                out.push({ key: k, previous: prev, next: next });
+            }
+        });
+        return out;
+    }
+
+    function _showManualDiffOverlay(changes) {
+        var _LIST_DIFF_KEYS = { ALIASES: 1, KEYWORDS: 1 };
+        function _splitListVal(s) {
+            if (s == null) return [];
+            return String(s).split(/\r?\n/)
+                .map(function (x) { return x.trim(); })
+                .filter(function (x) { return x.length > 0; });
+        }
+        function _chip(text, kind) {
+            var styles = {
+                kept: 'background:#f1f3f5;color:#495057;'
+                    + 'border:1px solid #dee2e6;',
+                removed: 'background:#fdecea;color:#a4221a;'
+                    + 'border:1px solid #f5c2c0;'
+                    + 'text-decoration:line-through;',
+                added: 'background:#e6f4ea;color:#1e7e34;'
+                    + 'border:1px solid #b6dcc1;',
+                edited: 'background:#fff8db;color:#7a5d00;'
+                    + 'border:1px solid #f1d97a;font-style:italic;'
+            };
+            var st = styles[kind] || styles.kept;
+            return '<span style="display:inline-block;'
+                + 'padding:2px 8px;border-radius:10px;margin:2px 3px;'
+                + 'font-size:0.85em;' + st + '">'
+                + _escapeHtml(text || '(empty)') + '</span>';
+        }
+        function _renderListDiff(prevArr, nextArr) {
+            var nextSet = {};
+            nextArr.forEach(function (v) { nextSet[v] = true; });
+            var prevSet = {};
+            prevArr.forEach(function (v) { prevSet[v] = true; });
+            var wasHtml = prevArr.length
+                ? prevArr.map(function (v) {
+                    return _chip(v,
+                        nextSet[v] ? 'kept' : 'removed');
+                }).join('')
+                : '<span style="color:#888;font-style:italic;">'
+                    + '(empty)</span>';
+            var nowHtml = nextArr.length
+                ? nextArr.map(function (v) {
+                    return _chip(v,
+                        prevSet[v] ? 'kept' : 'added');
+                }).join('')
+                : '<span style="color:#888;font-style:italic;">'
+                    + '(empty)</span>';
+            return { was: wasHtml, now: nowHtml };
+        }
+        function _renderScalarDiff(prev, next) {
+            var emptyStyle = 'color:#888;font-style:italic;';
+            var wasHtml = prev
+                ? '<span style="background:#fff8db;color:#7a5d00;'
+                    + 'padding:2px 6px;border-radius:4px;'
+                    + 'font-style:italic;">'
+                    + _escapeHtml(prev).replace(/\n/g, '<br>')
+                    + '</span>'
+                : '<span style="' + emptyStyle + '">(empty)</span>';
+            var nowHtml = next
+                ? '<span style="background:#fff8db;color:#7a5d00;'
+                    + 'padding:2px 6px;border-radius:4px;'
+                    + 'font-style:italic;">'
+                    + _escapeHtml(next).replace(/\n/g, '<br>')
+                    + '</span>'
+                : '<span style="' + emptyStyle + '">(empty)</span>';
+            // pure add → green; pure remove → red strikethrough
+            if (!prev && next) {
+                nowHtml = '<span style="background:#e6f4ea;'
+                    + 'color:#1e7e34;padding:2px 6px;'
+                    + 'border-radius:4px;">'
+                    + _escapeHtml(next).replace(/\n/g, '<br>')
+                    + '</span>';
+            } else if (prev && !next) {
+                wasHtml = '<span style="background:#fdecea;'
+                    + 'color:#a4221a;padding:2px 6px;'
+                    + 'border-radius:4px;'
+                    + 'text-decoration:line-through;">'
+                    + _escapeHtml(prev).replace(/\n/g, '<br>')
+                    + '</span>';
+            }
+            return { was: wasHtml, now: nowHtml };
+        }
+        function _renderDiffCells(c) {
+            var key = String(c.key || '').toUpperCase();
+            if (_LIST_DIFF_KEYS[key]) {
+                return _renderListDiff(
+                    _splitListVal(c.previous),
+                    _splitListVal(c.next));
+            }
+            return _renderScalarDiff(c.previous || '',
+                                     c.next || '');
+        }
+
+        return new Promise(function (resolve) {
+            var overlay = document.createElement('div');
+            overlay.style.position = 'fixed';
+            overlay.style.inset = '0';
+            overlay.style.background = 'rgba(0,0,0,0.45)';
+            overlay.style.zIndex = '2500';
+            overlay.style.display = 'flex';
+            overlay.style.alignItems = 'center';
+            overlay.style.justifyContent = 'center';
+
+            var hasChanges = !!(changes && changes.length);
+            var rows = '';
+            if (hasChanges) {
+                rows = changes.map(function (c) {
+                    var cells = _renderDiffCells(c);
+                    return '<tr>'
+                        + '<td style="padding:6px 8px;'
+                        + ' vertical-align:top;">'
+                        + '<code>' + _escapeHtml(c.key)
+                        + '</code></td>'
+                        + '<td style="padding:6px 8px;'
+                        + ' vertical-align:top;">'
+                        + cells.was + '</td>'
+                        + '<td style="padding:6px 8px;'
+                        + ' vertical-align:top;">'
+                        + cells.now + '</td>'
+                        + '</tr>';
+                }).join('');
+            }
+            var title = hasChanges
+                ? 'Confirm target changes'
+                : 'No changes were made';
+            var body = hasChanges
+                ? '<p style="margin:0 0 8px 0;">Review changes to '
+                    + 'the original target. Unchanged fields are hidden.</p>'
+                    + '<div style="max-height:300px; overflow:auto;">'
+                    + '<table style="width:100%; border-collapse:collapse;">'
+                    + '<thead><tr><th align="left">Field</th>'
+                    + '<th align="left">Was</th><th align="left">Now</th>'
+                    + '</tr></thead><tbody>' + rows + '</tbody></table></div>'
+                : '<p style="margin:0 0 8px 0;">No changes were made. '
+                    + 'You can still confirm to continue.</p>';
+
+            var box = document.createElement('div');
+            box.style.background = '#fff';
+            box.style.borderRadius = '8px';
+            box.style.padding = '14px';
+            box.style.width = 'min(820px, 92vw)';
+            box.style.maxHeight = '86vh';
+            box.style.overflow = 'auto';
+            box.innerHTML = '<h3 style="margin:0 0 8px 0;">'
+                + _escapeHtml(title) + '</h3>' + body
+                + '<div style="display:flex; gap:8px; margin-top:12px;">'
+                + '<button type="button" data-manual-diff-cancel '
+                + 'class="ari-btn ari-btn--secondary">Cancel</button>'
+                + '<button type="button" data-manual-diff-confirm '
+                + 'class="ari-btn ari-btn--primary">Confirm</button>'
+                + '</div>';
+
+            overlay.appendChild(box);
+            document.body.appendChild(overlay);
+
+            function _close(ok) {
+                try {
+                    document.body.removeChild(overlay);
+                } catch (e) {
+                    // ignore
+                }
+                resolve(!!ok);
+            }
+            overlay.addEventListener('click', function (ev) {
+                var t = ev.target;
+                if (!t) return;
+                if (t === overlay || t.closest('[data-manual-diff-cancel]')) {
+                    _close(false);
+                } else if (t.closest('[data-manual-diff-confirm]')) {
+                    _close(true);
+                }
+            });
+        });
+    }
+
+    function _initExtraFieldInputs() {
+        var host = document.getElementById('am-man-extra-fields');
+        if (!host) return;
+        host.innerHTML = '';
+        _EXTRA_FIELD_IDS = [];
+        _EXTRA_FIELD_SPECS.forEach(function (spec) {
+            var id = 'am-man-extra-'
+                + String(spec.key || '').toLowerCase();
+            var editable = (spec.editable !== false);
+            _EXTRA_FIELD_IDS.push([id, spec.key, editable]);
+            var label = document.createElement('label');
+            label.className = 'ot-find-field';
+            var span = document.createElement('span');
+            span.className = 'ot-find-field__label';
+            span.textContent = spec.label;
+            if (!editable) {
+                span.classList.add('am-calc-label');
+            }
+            label.appendChild(span);
+            var input = document.createElement('input');
+            input.id = id;
+            input.className = 'ot-find-input';
+            input.type = 'text';
+            input.placeholder = 'None';
+            if (spec.type === 'number') {
+                input.inputMode = 'decimal';
+            }
+            if (!editable) {
+                input.readOnly = true;
+                input.classList.add('am-calc-input');
+                input.setAttribute('aria-readonly', 'true');
+            }
+            label.appendChild(input);
+            host.appendChild(label);
+        });
+    }
+
+    function _markComputedFieldsPending() {
+        _EXTRA_FIELD_IDS.forEach(function (pair) {
+            var editable = !!pair[2];
+            if (editable) return;
+            var el = document.getElementById(pair[0]);
+            if (!el) return;
+            el.value = 'Recomputed automatically on save';
+        });
+    }
+
+    function _bindComputedDependencies() {
+        var deps = [
+            'am-man-ra', 'am-man-dec', 'am-man-epoch',
+            'am-man-pmra', 'am-man-pmde', 'am-man-plx',
+            'am-man-rv'
+        ];
+        deps.forEach(function (id) {
+            var el = document.getElementById(id);
+            if (!el) return;
+            el.addEventListener('input', _markComputedFieldsPending);
+        });
+    }
+
+    function _setManualSubmitMode(isUpdate) {
+        var btn = document.getElementById('am-man-save');
+        if (!btn) return;
+        if (isUpdate) {
+            btn.classList.remove('ari-btn--primary');
+            btn.classList.add('am-btn-update');
+            btn.innerHTML = '<i class="fa-solid fa-pen-to-square"></i> '
+                + 'Update target';
+            return;
+        }
+        btn.classList.remove('am-btn-update');
+        btn.classList.add('ari-btn--primary');
+        btn.innerHTML = '<i class="fa-solid fa-plus"></i> '
+            + 'Save manual target';
+    }
+
+    function _toggleNoPmInputs() {
+        var noPm = _checked('am-man-nopm');
+        ['am-man-pmra', 'am-man-pmde'].forEach(function (id) {
+            var el = document.getElementById(id);
+            if (!el) return;
+            el.disabled = !!noPm;
+        });
+    }
+
+    function _bindNoPmToggle() {
+        var chk = document.getElementById('am-man-nopm');
+        if (!chk) return;
+        chk.addEventListener('change', function () {
+            _toggleNoPmInputs();
+            _markComputedFieldsPending();
+        });
+        _toggleNoPmInputs();
+    }
+
+    function _prefill(entry) {
+        entry = entry || {};
+        _manualOriginalEntry = JSON.parse(JSON.stringify(entry));
+        _manualOriginalAperoName = _toInputString(
+            _entryValue(entry, 'APERO_NAME'));
+        _setValue('am-man-name', _entryValue(entry, 'APERO_NAME'));
+        _setValue('am-man-orig',
+            _entryValue(entry, 'ORIGINAL_NAME'));
+        _setValue('am-man-simbad',
+            _entryValue(entry, 'SIMBAD_NAME'));
+        _setValue('am-man-spt', _entryValue(entry, 'SPT'));
+        _setValue('am-man-gaia',
+            _entryValue(entry, 'GAIA_SOURCE_ID'));
+        _setValue('am-man-notes', _entryValue(entry, 'NOTES'));
+        _setValue('am-man-aliases', Array.isArray(
+            entry.ALIASES) ? entry.ALIASES.join('\n')
+            : (entry.ALIASES || ''));
+        var kw = _entryValue(entry, 'KEYWORDS');
+        _setValue('am-man-keywords', Array.isArray(kw)
+            ? kw.join('\n')
+            : (kw == null ? '' : String(kw)));
+        _setValue('am-man-ra', _entryValue(entry, 'RA', 'ra'));
+        _setValue('am-man-dec', _entryValue(entry, 'DEC', 'dec'));
+        _setValue('am-man-epoch',
+            _entryValue(entry, 'EPOCH', 'epoch'));
+        _setValue('am-man-pmra',
+            _entryValue(entry, 'PMRA', 'pmra'));
+        _setValue('am-man-pmde',
+            _entryValue(entry, 'PMDE', 'pmde'));
+        _setValue('am-man-plx', _entryValue(entry, 'PLX', 'plx'));
+        _setValue('am-man-rv', _entryValue(entry, 'RV', 'rv'));
+        _setValue('am-man-teff', _entryValue(entry, 'TEFF', 'teff'));
+        var nopm = document.getElementById('am-man-nopm');
+        if (nopm) nopm.checked = !!entry.NO_PM;
+        _EXTRA_FIELD_IDS.forEach(function (pair) {
+            _setValue(pair[0], _entryValue(entry, pair[1]));
+        });
+        var cls = document.getElementById('am-man-class');
+        var nextClass = String(entry.APERO_CLASS || 'STAR');
+        if (cls) {
+            cls.value = nextClass;
+            if (cls.value !== nextClass) cls.value = 'OTHER';
+        }
+        var st = document.getElementById('am-man-status');
+        if (st) {
+            st.innerHTML = '<i class="fa-solid fa-circle-info"></i> '
+                + 'Loaded values. Adjust as needed and save.';
+        }
+        _setManualSubmitMode(!!_manualOriginalAperoName);
+        _toggleNoPmInputs();
+        var nameEl = document.getElementById('am-man-name');
+        if (nameEl) nameEl.focus();
+    }
+
     // ---- Add-manual-target form ----
     var _MANUAL_NUMERIC = [
         ['am-man-ra', 'ra'],
@@ -1664,12 +2554,12 @@
         ['am-man-teff', 'teff']
     ];
 
-    function _submitManual() {
+    function _collectManualPayload() {
         var name = _val('am-man-name');
         if (!name) {
             _setStatus('am-man-status',
                 'APERO_NAME is required.');
-            return;
+            return null;
         }
         var payload = {
             apero_name: name,
@@ -1679,27 +2569,50 @@
             spt: _val('am-man-spt'),
             gaia_source_id: _val('am-man-gaia'),
             aliases: _aliasesFromTextarea('am-man-aliases'),
+            keywords: _aliasesFromTextarea('am-man-keywords'),
             notes: _val('am-man-notes'),
             no_pm: _checked('am-man-nopm')
         };
-        // numeric fields: only include keys that the user actually
-        // typed something into (so the server can leave them
-        // unset rather than store explicit nulls)
         for (var i = 0; i < _MANUAL_NUMERIC.length; i++) {
             var pair = _MANUAL_NUMERIC[i];
+            if (payload.no_pm && (pair[1] === 'pmra'
+                                  || pair[1] === 'pmde')) {
+                continue;
+            }
             var raw = _val(pair[0]);
             if (raw !== '') payload[pair[1]] = raw;
         }
-        // strip empty optional strings to keep the on-disk yaml
-        // clean
+        var extraFields = {};
+        _EXTRA_FIELD_IDS.forEach(function (pair) {
+            if (!pair[2]) return;
+            var raw = _val(pair[0]);
+            if (raw !== '') extraFields[pair[1]] = raw;
+        });
+        if (Object.keys(extraFields).length > 0) {
+            payload.extra_fields = extraFields;
+        }
         ['original_name', 'simbad_name', 'spt',
          'gaia_source_id', 'notes'].forEach(function (k) {
             if (!payload[k]) delete payload[k];
         });
+        return payload;
+    }
+
+    function _applyRecomputedEntry(entry) {
+        if (!entry) return;
+        _EXTRA_FIELD_IDS.forEach(function (pair) {
+            if (pair[2]) return;
+            _setValue(pair[0], _entryValue(entry, pair[1]));
+        });
+    }
+
+    function _recomputeManual() {
+        var payload = _collectManualPayload();
+        if (!payload) return;
         _setStatus('am-man-status',
             '<i class="fa-solid fa-spinner fa-spin"></i> '
-            + 'Saving...');
-        fetch('/api/astrometrics/add-manual', {
+            + 'Recomputing values...');
+        fetch('/api/astrometrics/recompute-manual', {
             method: 'POST',
             credentials: 'same-origin',
             headers: { 'Content-Type': 'application/json' },
@@ -1715,29 +2628,123 @@
                                   || 'HTTP error'));
                 return;
             }
+            _applyRecomputedEntry(res.body.entry);
             _setStatus('am-man-status',
                 '<i class="fa-solid fa-check"></i> '
-                + 'Created pending entry for "'
-                + name + '".');
-            // reset all manual-form inputs
-            ['am-man-name', 'am-man-orig', 'am-man-simbad',
-             'am-man-ra', 'am-man-dec', 'am-man-epoch',
-             'am-man-pmra', 'am-man-pmde', 'am-man-plx',
-             'am-man-rv', 'am-man-teff', 'am-man-spt',
-             'am-man-gaia', 'am-man-aliases', 'am-man-notes']
-                .forEach(function (id) {
-                    var el = document.getElementById(id);
-                    if (el) el.value = '';
-                });
-            var nopm = document.getElementById('am-man-nopm');
-            if (nopm) nopm.checked = false;
-            var cls = document.getElementById('am-man-class');
-            if (cls) cls.value = 'STAR';
+                + 'Computed values refreshed.');
         }).catch(function (err) {
             _setStatus('am-man-status', 'Failed: ' + err);
         });
     }
 
+    function _submitManual() {
+        var payload = _collectManualPayload();
+        if (!payload) return;
+        var name = payload.apero_name;
+        var oldMap = _entryMapFromOriginal(_manualOriginalEntry);
+        var newMap = _entryMapFromPayload(payload);
+        var isEditMode = !!_manualOriginalAperoName;
+        if (isEditMode) {
+            payload.allow_update = true;
+            payload.original_apero_name = _manualOriginalAperoName;
+        }
+        if (_manualRestoreFlag) {
+            payload.source = 'restore';
+            payload.restore_history_id = _manualRestoreFlag;
+        }
+        var changes = isEditMode ? _buildChanges(oldMap, newMap) : [];
+
+        function _doSubmit() {
+            _setStatus('am-man-status',
+                '<i class="fa-solid fa-spinner fa-spin"></i> '
+                + 'Saving (recomputing derived values)...');
+            fetch('/api/astrometrics/add-manual', {
+            method: 'POST',
+            credentials: 'same-origin',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+            }).then(function (r) {
+                return r.text().then(function (txt) {
+                    var j = null;
+                    try { j = JSON.parse(txt); }
+                    catch (e) { j = null; }
+                    return { ok: r.ok, status: r.status,
+                             body: j, raw: txt };
+                });
+            }).then(function (res) {
+                if (!res.body || !res.body.success) {
+                    var msg;
+                    if (res.body && res.body.error) {
+                        msg = res.body.error;
+                    } else if (res.status === 401) {
+                        msg = 'Login required (session expired?)';
+                    } else if (res.status === 403) {
+                        msg = 'Forbidden (missing permission)';
+                    } else if (res.status >= 500) {
+                        msg = 'Server error (HTTP ' + res.status
+                            + '). Check server logs.';
+                    } else {
+                        msg = 'HTTP ' + res.status;
+                    }
+                    _setStatus('am-man-status', 'Failed: ' + msg);
+                    return;
+                }
+                var mode = (res.body.mode || 'created').toLowerCase();
+                var verb = (mode === 'updated') ? 'Updated' : 'Created';
+                _setStatus('am-man-status',
+                    '<i class="fa-solid fa-check"></i> '
+                    + verb + ' pending entry for "'
+                    + name + '".');
+                // reset all manual-form inputs
+                ['am-man-name', 'am-man-orig', 'am-man-simbad',
+                 'am-man-ra', 'am-man-dec', 'am-man-epoch',
+                 'am-man-pmra', 'am-man-pmde', 'am-man-plx',
+                 'am-man-rv', 'am-man-teff', 'am-man-spt',
+                 'am-man-gaia', 'am-man-aliases', 'am-man-keywords',
+                 'am-man-notes']
+                    .forEach(function (id) {
+                        var el = document.getElementById(id);
+                        if (el) el.value = '';
+                    });
+                _EXTRA_FIELD_IDS.forEach(function (pair) {
+                    var el = document.getElementById(pair[0]);
+                    if (el) el.value = '';
+                });
+                var nopm = document.getElementById('am-man-nopm');
+                if (nopm) nopm.checked = false;
+                var cls = document.getElementById('am-man-class');
+                if (cls) cls.value = 'STAR';
+                _manualOriginalEntry = null;
+                _manualOriginalAperoName = '';
+                _manualRestoreFlag = '';
+                _setManualSubmitMode(false);
+                _toggleNoPmInputs();
+            }).catch(function (err) {
+                _setStatus('am-man-status', 'Failed: ' + err);
+            });
+        }
+
+        if (!isEditMode) {
+            _doSubmit();
+            return;
+        }
+        _showManualDiffOverlay(changes).then(function (ok) {
+            if (!ok) return;
+            _doSubmit();
+        });
+    }
+
+    _initExtraFieldInputs();
+    _bindComputedDependencies();
+    _bindNoPmToggle();
+    _setManualSubmitMode(false);
+    var recBtn = document.getElementById('am-man-recompute');
+    if (recBtn) recBtn.addEventListener('click', _recomputeManual);
     var manBtn = document.getElementById('am-man-save');
     if (manBtn) manBtn.addEventListener('click', _submitManual);
+    window.AriManualTargetForm = window.AriManualTargetForm || {};
+    window.AriManualTargetForm.prefill = _prefill;
+    window.AriManualTargetForm.flagRestore = function (entryId) {
+        _manualRestoreFlag = String(entryId || '');
+    };
 }());

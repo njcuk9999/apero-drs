@@ -8,6 +8,7 @@ the existing permission helpers (``_require_user`` etc).
 """
 
 from typing import Any, Dict, List
+from urllib.parse import quote
 
 from flask import jsonify, request
 
@@ -193,6 +194,57 @@ def api_messages_delete(app, mid: str):
     return jsonify(success=True)
 
 
+def api_messages_mark_unread(app, mid: str):
+    user_info = app._require_user()
+    if not user_info:
+        return jsonify(success=False, error='Unauthorized'), 401
+    username = user_info.get('username', '')
+    msg = notif.get_message(username, mid)
+    if not msg:
+        return jsonify(success=False, error='Not found'), 404
+    if msg.get('recipient') != username:
+        return (
+            jsonify(success=False,
+                    error='Only recipient can mark unread'),
+            403,
+        )
+    changed = notif.mark_message_unread(username, mid)
+    unread = notif.count_unread_messages(username)
+    return jsonify(success=True, marked=int(bool(changed)), unread=unread)
+
+
+def api_messages_mark_all_read(app):
+    user_info = app._require_user()
+    if not user_info:
+        return jsonify(success=False, error='Unauthorized'), 401
+    username = user_info.get('username', '')
+    data = request.get_json(silent=True) or {}
+    box = str(data.get('box') or 'inbox').strip().lower()
+    if box != 'inbox':
+        return (
+            jsonify(success=False,
+                    error='Only inbox can be marked read'),
+            400,
+        )
+    marked = notif.mark_all_messages_read(username)
+    unread = notif.count_unread_messages(username)
+    return jsonify(success=True, marked=marked, unread=unread)
+
+
+def api_messages_delete_all(app):
+    user_info = app._require_user()
+    if not user_info:
+        return jsonify(success=False, error='Unauthorized'), 401
+    username = user_info.get('username', '')
+    data = request.get_json(silent=True) or {}
+    box = str(data.get('box') or 'inbox').strip().lower()
+    if box not in ('inbox', 'sent', 'all'):
+        return jsonify(success=False, error='Invalid box'), 400
+    deleted = notif.delete_all_messages(username, box=box)
+    unread = notif.count_unread_messages(username)
+    return jsonify(success=True, deleted=deleted, unread=unread)
+
+
 def api_messages_flag_as_issue(app, mid: str):
     """Flag a message into the monitor-portal issues queue."""
     user_info = app._require_user()
@@ -208,18 +260,21 @@ def api_messages_flag_as_issue(app, mid: str):
         from apero_ri.application import issues_api_helpers as _iah
         creator = getattr(_iah, "create_issue_internal", None)
         if callable(creator):
+            origin = '/user_portal/messages?mid=' + str(mid)
             issue_id = creator(
-                kind="flag",
+                kind='message',
                 title=("Flagged message from "
                        + str(msg.get("sender", ""))),
                 body=str(msg.get("body", "")),
                 created_by=username,
                 meta={
-                    "source": "message",
-                    "message_id": mid,
-                    "sender": msg.get("sender"),
-                    "recipient": msg.get("recipient"),
-                    "subject": msg.get("subject"),
+                    'source': 'message',
+                    'type': 'reported message',
+                    'origin_url': origin,
+                    'message_id': mid,
+                    'sender': msg.get('sender'),
+                    'recipient': msg.get('recipient'),
+                    'subject': msg.get('subject'),
                 },
             )
     except Exception:  # noqa: BLE001
@@ -236,6 +291,19 @@ def api_users_directory(app):
     if not user_info:
         return jsonify(success=False, error="Unauthorized"), 401
     me = user_info.get("username", "")
+    viewer_groups = user_info.get('groups', [])
+    if not isinstance(viewer_groups, list):
+        viewer_groups = []
+    viewer_group_set = {
+        str(group).strip().lower()
+        for group in viewer_groups
+        if str(group).strip()
+    }
+    can_view_contact = bool(
+        viewer_group_set.intersection(
+            {'super_admin', 'admin', 'moderator', 'developer'}
+        )
+    )
     try:
         users = auth.load_users() or {}
     except Exception:  # noqa: BLE001
@@ -244,12 +312,42 @@ def api_users_directory(app):
     for uname, urec in sorted(users.items()):
         if not isinstance(urec, dict):
             continue
+        first_names = str(urec.get("first_names", "")).strip()
+        last_name = str(urec.get("last_name", "")).strip()
+        full_name = " ".join(
+            [x for x in [first_names, last_name] if x]
+        )
+        emails = urec.get("emails", [])
+        if not isinstance(emails, list):
+            emails = []
+        emails = [str(e).strip() for e in emails if str(e).strip()]
+        institutions = urec.get("institutions", [])
+        if not isinstance(institutions, list):
+            institutions = []
+        institutions = [
+            str(inst).strip()
+            for inst in institutions
+            if str(inst).strip()
+        ]
         out.append({
             "username": uname,
-            "first_names": urec.get("first_names", ""),
-            "last_name": urec.get("last_name", ""),
-            "email": urec.get("email", ""),
+            "first_names": first_names,
+            "last_name": last_name,
+            "full_name": full_name,
+            "email": (
+                str(urec.get("primary_email", "")).strip()
+                or str(urec.get("email", "")).strip()
+            ) if can_view_contact else "",
+            "emails": emails if can_view_contact else [],
+            "institutions": institutions,
+            "primary_institution": str(
+                urec.get("primary_institution", "")
+            ).strip(),
+            "last_login": urec.get("last_login"),
             "groups": urec.get("groups", []),
+            "profile_url": "/user_portal/users/"
+            + quote(uname, safe=""),
             "is_self": (uname == me),
+            "can_view_contact": can_view_contact,
         })
     return jsonify(success=True, users=out, me=me)

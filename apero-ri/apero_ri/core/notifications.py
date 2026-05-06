@@ -477,7 +477,63 @@ def mark_message_read(username: str, mid: str) -> bool:
                 "WHERE id = ? AND recipient = ? AND read_at IS NULL",
                 (_now(), mid, username),
             )
-            return cur.rowcount > 0
+            changed = cur.rowcount > 0
+            # Also clear (mark read + dismiss) any 'message'
+            # channel notifications that point at this specific
+            # message, so the bell badge / dropdown stops showing
+            # it as soon as the user opens the message. Payload is
+            # stored as a JSON string; match on the literal
+            # ``"message_id": "<mid>"`` substring (mid is a UUID,
+            # so the substring is unique to this message).
+            try:
+                like_pat = '%"message_id": "' + str(mid) + '"%'
+                conn.execute(
+                    "UPDATE notifications SET "
+                    "  read_at = COALESCE(read_at, ?), "
+                    "  dismissed = 1 "
+                    "WHERE username = ? "
+                    "  AND channel = 'message' "
+                    "  AND payload LIKE ?",
+                    (_now(), username, like_pat),
+                )
+            except Exception:
+                # never let notification cleanup break the
+                # message-read operation itself
+                pass
+            return changed
+    finally:
+        conn.close()
+
+
+def mark_message_unread(username: str, mid: str) -> bool:
+    _init_schema()
+    conn = _connect()
+    try:
+        with conn:
+            cur = conn.execute(
+                "UPDATE messages SET read_at = NULL "
+                "WHERE id = ? AND recipient = ? "
+                "AND deleted_by_recipient = 0 "
+                "AND read_at IS NOT NULL",
+                (mid, username),
+            )
+            changed = cur.rowcount > 0
+            if not changed:
+                return False
+            try:
+                like_pat = '%"message_id": "' + str(mid) + '"%'
+                conn.execute(
+                    "UPDATE notifications SET "
+                    "  read_at = NULL, "
+                    "  dismissed = 0 "
+                    "WHERE username = ? "
+                    "  AND channel = 'message' "
+                    "  AND payload LIKE ?",
+                    (username, like_pat),
+                )
+            except Exception:
+                pass
+            return True
     finally:
         conn.close()
 
@@ -501,6 +557,75 @@ def delete_message(username: str, mid: str) -> bool:
             return cur.rowcount > 0
     finally:
         conn.close()
+
+
+def mark_all_messages_read(username: str) -> int:
+    _init_schema()
+    conn = _connect()
+    try:
+        with conn:
+            cur = conn.execute(
+                'UPDATE messages SET read_at = ? '
+                'WHERE recipient = ? AND deleted_by_recipient = 0 '
+                'AND read_at IS NULL',
+                (_now(), username),
+            )
+            try:
+                conn.execute(
+                    'UPDATE notifications SET '
+                    '  read_at = COALESCE(read_at, ?), '
+                    '  dismissed = 1 '
+                    'WHERE username = ? '
+                    '  AND channel = ? '
+                    '  AND dismissed = 0',
+                    (_now(), username, 'message'),
+                )
+            except Exception:
+                pass
+            return int(cur.rowcount)
+    finally:
+        conn.close()
+
+
+def delete_all_messages(
+    username: str,
+    box: str = 'inbox',
+) -> int:
+    _init_schema()
+    target = str(box or 'inbox').strip().lower()
+    if target not in ('inbox', 'sent', 'all'):
+        return 0
+    conn = _connect()
+    deleted = 0
+    try:
+        with conn:
+            if target in ('inbox', 'all'):
+                cur_in = conn.execute(
+                    'UPDATE messages SET deleted_by_recipient = 1 '
+                    'WHERE recipient = ? AND deleted_by_recipient = 0',
+                    (username,),
+                )
+                deleted += int(cur_in.rowcount)
+                try:
+                    conn.execute(
+                        'UPDATE notifications SET dismissed = 1 '
+                        'WHERE username = ? '
+                        '  AND channel = ? '
+                        '  AND dismissed = 0',
+                        (username, 'message'),
+                    )
+                except Exception:
+                    pass
+            if target in ('sent', 'all'):
+                cur_out = conn.execute(
+                    'UPDATE messages SET deleted_by_sender = 1 '
+                    'WHERE sender = ? AND deleted_by_sender = 0',
+                    (username,),
+                )
+                deleted += int(cur_out.rowcount)
+    finally:
+        conn.close()
+    return deleted
 
 
 def count_unread_messages(username: str) -> int:

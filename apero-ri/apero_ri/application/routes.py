@@ -1033,10 +1033,136 @@ def register_data_portal_routes(app):
         methods=["POST"],
     )
     app.add_url_rule(
+        "/api/astrometrics/update-rejected",
+        "api_astrometrics_update_rejected",
+        app._api_astrometrics_update_rejected,
+        methods=["POST"],
+    )
+    app.add_url_rule(
+        "/api/astrometrics/delete-rejected",
+        "api_astrometrics_delete_rejected",
+        app._api_astrometrics_delete_rejected,
+        methods=["POST"],
+    )
+    app.add_url_rule(
         "/api/astrometrics/add-manual",
         "api_astrometrics_add_manual",
         app._api_astrometrics_add_manual,
         methods=["POST"],
+    )
+    app.add_url_rule(
+        "/api/astrometrics/recompute-manual",
+        "api_astrometrics_recompute_manual",
+        app._api_astrometrics_recompute_manual,
+        methods=["POST"],
+    )
+    app.add_url_rule(
+        "/api/astrometrics/lock/acquire",
+        "api_astrometrics_lock_acquire",
+        app._api_astrometrics_lock_acquire,
+        methods=["POST"],
+    )
+    app.add_url_rule(
+        "/api/astrometrics/lock/heartbeat",
+        "api_astrometrics_lock_heartbeat",
+        app._api_astrometrics_lock_heartbeat,
+        methods=["POST"],
+    )
+    app.add_url_rule(
+        "/api/astrometrics/lock/release",
+        "api_astrometrics_lock_release",
+        app._api_astrometrics_lock_release,
+        methods=["POST"],
+    )
+    app.add_url_rule(
+        "/api/astrometrics/history/list",
+        "api_astrometrics_history_list",
+        app._api_astrometrics_history_list,
+        methods=["GET"],
+    )
+    app.add_url_rule(
+        "/api/astrometrics/history/delete",
+        "api_astrometrics_history_delete",
+        app._api_astrometrics_history_delete,
+        methods=["POST"],
+    )
+    app.add_url_rule(
+        "/api/astrometrics/history/clear",
+        "api_astrometrics_history_clear",
+        app._api_astrometrics_history_clear,
+        methods=["POST"],
+    )
+    app.add_url_rule(
+        "/api/rejection-list/list",
+        "api_rejection_list_list",
+        app._api_rejection_list_list,
+        methods=["GET"],
+    )
+    app.add_url_rule(
+        "/api/rejection-list/add",
+        "api_rejection_list_add",
+        app._api_rejection_list_add,
+        methods=["POST"],
+    )
+    app.add_url_rule(
+        "/api/rejection-list/update",
+        "api_rejection_list_update",
+        app._api_rejection_list_update,
+        methods=["POST"],
+    )
+    app.add_url_rule(
+        "/api/rejection-list/delete",
+        "api_rejection_list_delete",
+        app._api_rejection_list_delete,
+        methods=["POST"],
+    )
+    app.add_url_rule(
+        "/api/rejection-list/upload",
+        "api_rejection_list_upload",
+        app._api_rejection_list_upload,
+        methods=["POST"],
+    )
+    app.add_url_rule(
+        "/api/rejection-list/history/list",
+        "api_rejection_history_list",
+        app._api_rejection_history_list,
+        methods=["GET"],
+    )
+    app.add_url_rule(
+        "/api/rejection-list/history/get",
+        "api_rejection_history_get",
+        app._api_rejection_history_get,
+        methods=["GET"],
+    )
+    app.add_url_rule(
+        "/api/rejection-list/history/restore",
+        "api_rejection_history_restore",
+        app._api_rejection_history_restore,
+        methods=["POST"],
+    )
+    app.add_url_rule(
+        "/api/rejection-list/history/resolve",
+        "api_rejection_history_resolve",
+        app._api_rejection_history_resolve,
+        methods=["POST"],
+    )
+    app.add_url_rule(
+        "/api/rejection-list/history/delete",
+        "api_rejection_history_delete",
+        app._api_rejection_history_delete,
+        methods=["POST"],
+    )
+    app.add_url_rule(
+        "/api/rejection-list/history/clear",
+        "api_rejection_history_clear",
+        app._api_rejection_history_clear,
+        methods=["POST"],
+    )
+    app.add_url_rule(
+        "/api/astrometrics/history/get",
+        "api_astrometrics_history_get",
+        app._api_astrometrics_history_get,
+        methods=["GET", "POST"],
     )
     app.add_url_rule(
         "/api/astrometrics/update-field",
@@ -1174,6 +1300,24 @@ def register_data_portal_routes(app):
         methods=["POST"],
     )
     app.add_url_rule(
+        "/api/messages/<mid>/mark-unread",
+        "api_messages_mark_unread",
+        app._api_messages_mark_unread,
+        methods=["POST"],
+    )
+    app.add_url_rule(
+        "/api/messages/mark-all-read",
+        "api_messages_mark_all_read",
+        app._api_messages_mark_all_read,
+        methods=["POST"],
+    )
+    app.add_url_rule(
+        "/api/messages/delete-all",
+        "api_messages_delete_all",
+        app._api_messages_delete_all,
+        methods=["POST"],
+    )
+    app.add_url_rule(
         "/api/messages/<mid>/flag-as-issue",
         "api_messages_flag_as_issue",
         app._api_messages_flag_as_issue,
@@ -1189,6 +1333,11 @@ def register_data_portal_routes(app):
         "/user_portal/users",
         "user_portal_users_view",
         app._user_portal_users_view,
+    )
+    app.add_url_rule(
+        "/user_portal/users/<username>",
+        "user_portal_user_card_view",
+        app._user_portal_user_card_view,
     )
     app.add_url_rule(
         "/user_portal/messages",

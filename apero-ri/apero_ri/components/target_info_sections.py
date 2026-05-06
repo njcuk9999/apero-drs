@@ -40,6 +40,7 @@ Created on 2026-04-22
 @author: cook
 """
 from typing import Any, Callable, Dict, List, Optional
+from urllib.parse import quote
 
 from apero_ri.science import stellar_params as sp
 from apero_ri.components.target_info_citations import CITATIONS
@@ -425,12 +426,37 @@ def _build_status(entry: Dict[str, Any],
                      editable=True, flaggable=False))
     rows.append(_row(entry, 'FIRST_UPDATED', 'First updated',
                      editable=False, flaggable=False))
-    rows.append(_row(entry, 'FIRST_AUTHOR', 'First author',
-                     editable=False, flaggable=False))
+    first_author_row = _row(entry, 'FIRST_AUTHOR', 'First author',
+                            editable=False, flaggable=False)
+    first_author = str(entry.get('FIRST_AUTHOR') or '').strip()
+    if first_author:
+        first_author_row['value_url'] = (
+            '/user_portal/users/' + quote(first_author, safe='')
+        )
+    rows.append(first_author_row)
     rows.append(_row(entry, 'LAST_EDIT', 'Last edit',
                      editable=False, flaggable=False))
-    rows.append(_row(entry, 'LAST_AUTHOR', 'Last author',
-                     editable=False, flaggable=False))
+    last_author_row = _row(entry, 'LAST_AUTHOR', 'Last author',
+                           editable=False, flaggable=False)
+    last_author = str(entry.get('LAST_AUTHOR') or '').strip()
+    if last_author:
+        last_author_row['value_url'] = (
+            '/user_portal/users/' + quote(last_author, safe='')
+        )
+    rows.append(last_author_row)
+    verifier = str(entry.get('VERIFIER') or '').strip()
+    verifier_row = _row_literal(
+        'Verifier',
+        verifier or 'None',
+        key='VERIFIER',
+        editable=False,
+        flaggable=False,
+    )
+    if verifier and verifier.lower() not in ('none', 'null'):
+        verifier_row['value_url'] = (
+            '/user_portal/users/' + quote(verifier, safe='')
+        )
+    rows.append(verifier_row)
     return rows
 
 

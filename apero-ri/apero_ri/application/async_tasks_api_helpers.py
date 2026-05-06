@@ -11,7 +11,52 @@ from apero_ri.core.auth import (
     load_async_tasks,
     save_async_tasks,
 )
+from apero_ri.application import async_task_helpers
 from flask import jsonify, request
+
+
+def _instrument_profile_names(instrument):
+    """Return ordered APERO profile names for one instrument."""
+    profiles = load_apero_profiles().get(instrument, {})
+    if not isinstance(profiles, dict):
+        return []
+    return list(profiles.keys())
+
+
+def _validate_sync_profiles(raw, instrument):
+    """Validate and normalize per-profile sync settings from the client."""
+    if not isinstance(raw, dict):
+        raise ValueError("sync_profiles must be an object")
+
+    allowed = set(_instrument_profile_names(instrument))
+    cleaned = {}
+    for profile_name, entry in raw.items():
+        pname = str(profile_name or "").strip()
+        if not pname:
+            continue
+        if pname not in allowed:
+            raise ValueError(f"Unknown APERO profile: {pname}")
+        if not isinstance(entry, dict):
+            raise ValueError(
+                f"sync_profiles.{pname} must be an object"
+            )
+
+        mode = str(entry.get("mode", "run_server") or "run_server")
+        mode = mode.strip().lower()
+        if mode not in ["run_server", "fetch_precomputed"]:
+            raise ValueError(
+                f"Invalid sync mode for profile {pname}"
+            )
+        sync_source = str(entry.get("sync_source", "") or "").strip()
+        if mode == "fetch_precomputed" and not sync_source:
+            raise ValueError(
+                "Fetch pre-computed requires a directory for "
+                f"profile {pname}"
+            )
+        if mode == "run_server" and not sync_source:
+            continue
+        cleaned[pname] = dict(mode=mode, sync_source=sync_source)
+    return cleaned
 
 
 def api_async_tasks_save(app):
@@ -37,12 +82,14 @@ def api_async_tasks_save(app):
     has_mp_backend = "mp_backend" in data
     has_mp_start_method = "mp_start_method" in data or "mp_start_methd" in data
     has_sync_source = "sync_source" in data
+    has_sync_profiles = "sync_profiles" in data
     has_assets_mode = "assets_mode" in data
 
     ncores = None
     mp_backend = None
     mp_start_method = None
     sync_source = None
+    sync_profiles = None
     assets_mode = None
 
     if not instrument or not task_id:
@@ -108,13 +155,33 @@ def api_async_tasks_save(app):
     if has_sync_source:
         sync_source = str(data.get("sync_source", "") or "").strip()
 
+    if has_sync_profiles:
+        try:
+            sync_profiles = _validate_sync_profiles(
+                data.get("sync_profiles", {}),
+                instrument,
+            )
+        except ValueError as exc:
+            return jsonify(success=False, error=str(exc)), 400
+
     if has_assets_mode:
         assets_mode_raw = (
-            str(data.get("assets_mode") or "sync").strip().lower()
+            str(data.get("assets_mode") or "remote").strip().lower()
         )
-        if assets_mode_raw not in ("sync", "upload"):
-            assets_mode_raw = "sync"
+        # backwards compatibility: accept legacy values
+        if assets_mode_raw in ("sync", "upload", "remote"):
+            assets_mode_raw = "remote"
+        elif assets_mode_raw == "local":
+            assets_mode_raw = "local"
+        else:
+            assets_mode_raw = "remote"
         assets_mode = assets_mode_raw
+    has_assets_local_source = "assets_local_source_path" in data
+    assets_local_source = None
+    if has_assets_local_source:
+        assets_local_source = str(
+            data.get("assets_local_source_path") or ""
+        ).strip()
 
     all_tasks = load_async_tasks()
     inst_tasks, _ = app._merge_async_task_catalog(instrument, all_tasks)
@@ -177,6 +244,20 @@ def api_async_tasks_save(app):
         if task_key == "APERO_SYNC_ASSETS":
             if assets_mode is not None:
                 t["mode"] = assets_mode
+            if has_assets_local_source:
+                if assets_local_source:
+                    t["local_source_path"] = assets_local_source
+                else:
+                    t.pop("local_source_path", None)
+            if t.get("mode") == "local" and not t.get(
+                    "local_source_path"):
+                return jsonify(
+                    success=False,
+                    error=(
+                        "local mode requires a local source "
+                        "directory path."
+                    ),
+                ), 400
 
         supports_mp = bool(task_module.MULTI_PROCESS.get(task_key, False))
         supports_local_task = bool(task_module.LOCAL_TASK.get(task_key, False))
@@ -185,6 +266,17 @@ def api_async_tasks_save(app):
                 jsonify(
                     success=False,
                     error="sync_source is only supported for LOCAL_TASK tasks",
+                ),
+                400,
+            )
+        if sync_profiles is not None and sync_profiles and not supports_local_task:
+            return (
+                jsonify(
+                    success=False,
+                    error=(
+                        "sync_profiles is only supported for "
+                        "LOCAL_TASK tasks"
+                    ),
                 ),
                 400,
             )
@@ -253,12 +345,19 @@ def api_async_tasks_save(app):
             t.pop("mp_start_method", None)
 
         if supports_local_task:
-            if sync_source is not None:
+            if sync_profiles is not None:
+                if sync_profiles:
+                    t["sync_profiles"] = sync_profiles
+                else:
+                    t.pop("sync_profiles", None)
+                t.pop("sync_source", None)
+            elif sync_source is not None:
                 t["sync_source"] = sync_source
             else:
                 t.setdefault("sync_source", str(t.get("sync_source", "") or ""))
         else:
             t.pop("sync_source", None)
+            t.pop("sync_profiles", None)
         found = True
         break
 
@@ -285,6 +384,7 @@ def api_async_tasks_list(app):
 
     all_tasks = load_async_tasks()
     inst_tasks, changed = app._merge_async_task_catalog(instrument, all_tasks)
+    profile_names = _instrument_profile_names(instrument)
     if changed:
         save_async_tasks(all_tasks)
 
@@ -339,7 +439,12 @@ def api_async_tasks_list(app):
         result.append(entry)
 
     queue_status = task_runner.get_status()
-    return jsonify(success=True, tasks=result, queue=queue_status)
+    return jsonify(
+        success=True,
+        tasks=result,
+        queue=queue_status,
+        profile_names=profile_names,
+    )
 
 
 def api_async_tasks_global_list(app):

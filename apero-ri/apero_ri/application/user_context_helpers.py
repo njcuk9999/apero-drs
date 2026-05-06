@@ -1,5 +1,7 @@
 """User page context helper functions for ARIApp."""
 
+from urllib.parse import quote
+
 from flask import jsonify
 
 from apero_ri.core.auth import get_accessible_profiles
@@ -74,8 +76,11 @@ def build_user_support_context(app, user_info):
         instruments = list(all_instr)
 
     users = load_users()
-    role_order = ['admin', 'moderator', 'developer', 'monitor']
+    role_order = [
+        'super_admin', 'admin', 'moderator', 'developer', 'monitor'
+    ]
     role_to_key = {
+        'super_admin': 'super_admins',
         'admin': 'admins',
         'moderator': 'moderators',
         'developer': 'developers',
@@ -85,6 +90,7 @@ def build_user_support_context(app, user_info):
     support_rows = []
     for inst in instruments:
         grouped = {
+            'super_admins': [],
             'admins': [],
             'moderators': [],
             'developers': [],
@@ -104,7 +110,8 @@ def build_user_support_context(app, user_info):
                 user_data.get('groups', []),
                 app.ari_groups,
             )
-            if inst not in u_instr:
+            is_super_admin = 'super_admin' in all_groups
+            if not is_super_admin and inst not in u_instr:
                 continue
 
             role_name = None
@@ -124,11 +131,26 @@ def build_user_support_context(app, user_info):
             full_name = f'{first_names} {last_name}'.strip()
             if not full_name:
                 full_name = username
+            primary_email = str(
+                user_data.get('primary_email', '')
+            ).strip()
 
             grouped[role_to_key[role_name]].append({
                 'username': username,
+                'first_names': first_names,
+                'last_name': last_name,
                 'full_name': full_name,
-                'email': str(user_data.get('primary_email', '')).strip(),
+                'email': primary_email,
+                'role': role_name,
+                'can_show_email': role_name in (
+                    'super_admin',
+                    'admin',
+                    'moderator',
+                    'developer',
+                ),
+                'profile_url': (
+                    '/user_portal/users/' + quote(username, safe='')
+                ),
             })
 
         for key in grouped:

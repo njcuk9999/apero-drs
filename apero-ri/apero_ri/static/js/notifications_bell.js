@@ -66,14 +66,17 @@
       return r.json();
     }).then(function (j) {
       if (!j || !j.success) return;
-      setBadge((j.unread || 0) + (j.unread_messages || 0));
+      // Bell badge counts notifications only. Each new message
+      // also emits a notification, so the message would otherwise
+      // be counted twice (once as notif, once as unread message).
+      setBadge(j.unread || 0);
       // also fetch recent items so we can fire desktop popups
       // for items we have not seen yet
       return fetch('/api/notifications/list?limit=10').then(
         function (r) { return r.json(); });
     }).then(function (j) {
-      if (!j || !j.notifications) return;
-      var items = j.notifications;
+      if (!j || !j.success) return;
+      var items = j.items || j.notifications || [];
       if (panel && panel.classList.contains('is-open')) {
         renderPanel(items);
       }
@@ -98,7 +101,8 @@
       fetch('/api/notifications/list?limit=10').then(function (r) {
         return r.json();
       }).then(function (j) {
-        renderPanel((j && j.notifications) || []);
+        renderPanel(
+          (j && (j.items || j.notifications)) || []);
       });
     }
   }
@@ -115,6 +119,10 @@
       return;
     }
     panel.classList.remove('is-open');
+  });
+
+  window.addEventListener('ari:notif-refresh', function () {
+    pollUnread();
   });
 
   pollUnread();

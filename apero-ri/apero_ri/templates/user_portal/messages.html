@@ -4,11 +4,12 @@
 {% block extra_head %}
 {{ super() }}
 <link rel="stylesheet"
-      href="{{ url_for('static', filename='css/user_portal_messaging.css', v='20260424a') }}">
+    href="{{ url_for('static', filename='css/user_portal_messaging.css', v='20260501h') }}">
 {% endblock %}
 
 {% block doc_content %}
-<div class="ari-up-shell upm-page" data-username="{{ username }}">
+<div class="ari-up-shell upm-page upm-page--wide"
+     data-username="{{ username }}">
     <div class="ari-page-header">
         <h1><i class="{{ page_icon }}"></i> {{ page_label }}</h1>
         <p class="ari-page-header__sub">
@@ -26,51 +27,98 @@
                 aria-selected="false">
             <i class="fa-solid fa-paper-plane"></i> Sent
         </button>
+        <div class="upm-tab-tools">
+            <button class="ari-btn ari-btn--small" id="upm-mark-all-read"
+                    type="button">
+                <i class="fa-solid fa-envelope-open"></i>
+                Mark all read
+            </button>
+            <button class="ari-btn ari-btn--small ari-btn--danger"
+                    id="upm-delete-all" type="button">
+                <i class="fa-solid fa-trash"></i>
+                Delete all
+            </button>
+        </div>
         <button class="ari-btn ari-btn--primary upm-tab-action"
                 id="upm-compose-btn">
             <i class="fa-solid fa-pen-to-square"></i> Compose
         </button>
     </div>
 
-    <div class="upm-mailbox" id="upm-mailbox">
-        <div class="upm-empty">Loading...</div>
-    </div>
-</div>
-
-<!-- View / reply modal -->
-<div class="ari-modal upm-modal" id="upm-view-modal" hidden>
-    <div class="ari-modal__backdrop" data-upm-close></div>
-    <div class="ari-modal__content upm-view-modal__content">
-        <header class="ari-modal__header">
-            <h2 id="upm-view-subject">Message</h2>
-            <button type="button" class="ari-btn-icon"
-                    data-upm-close aria-label="Close">
-                <i class="fa-solid fa-xmark"></i>
-            </button>
-        </header>
-        <div class="upm-view-meta" id="upm-view-meta"></div>
-        <div class="upm-view-body" id="upm-view-body"></div>
-        <div class="upm-view-actions">
-            <button type="button" class="ari-btn"
-                    id="upm-view-flag">
-                <i class="fa-solid fa-flag"></i> Flag as issue
-            </button>
-            <button type="button" class="ari-btn ari-btn--danger"
-                    id="upm-view-delete">
-                <i class="fa-solid fa-trash"></i> Delete
-            </button>
-            <button type="button" class="ari-btn ari-btn--primary"
-                    id="upm-view-reply">
-                <i class="fa-solid fa-reply"></i> Reply
-            </button>
-        </div>
-        <div class="upm-form-status" id="upm-view-status"
-             aria-live="polite"></div>
+    <div class="upm-split">
+        <aside class="upm-list-pane" id="upm-list-pane">
+            <div class="upm-list-controls">
+                <label class="upm-page-size-wrap" for="upm-page-size">
+                    Show
+                    <select id="upm-page-size" class="ari-input upm-page-size">
+                        <option value="5">5</option>
+                        <option value="10" selected>10</option>
+                        <option value="50">50</option>
+                        <option value="100">100</option>
+                    </select>
+                    messages
+                </label>
+                <div class="upm-pager">
+                    <button class="ari-btn ari-btn--small" type="button"
+                            id="upm-prev-page">Previous</button>
+                    <span id="upm-page-info" class="upm-page-info"></span>
+                    <button class="ari-btn ari-btn--small" type="button"
+                            id="upm-next-page">Next</button>
+                </div>
+            </div>
+            <div class="upm-mailbox" id="upm-mailbox">
+                <div class="upm-empty">Loading...</div>
+            </div>
+        </aside>
+        <section class="upm-detail-pane" id="upm-detail-pane">
+            <div class="upm-detail__placeholder" id="upm-detail-empty">
+                <i class="fa-solid fa-envelope-open"></i>
+                <p>Select a message to read it here.</p>
+            </div>
+            <article class="upm-detail__view" id="upm-detail-view"
+                     hidden>
+                <header class="upm-detail__header">
+                    <button type="button"
+                            class="ari-btn-icon upm-detail__back"
+                            id="upm-detail-back"
+                            aria-label="Back to list">
+                        <i class="fa-solid fa-arrow-left"></i>
+                    </button>
+                    <h2 id="upm-view-subject">Message</h2>
+                </header>
+                <div class="upm-view-meta" id="upm-view-meta"></div>
+                <div class="upm-view-body" id="upm-view-body"></div>
+                <div class="upm-view-actions">
+                    <button type="button" class="ari-btn"
+                            id="upm-view-flag">
+                        <i class="fa-solid fa-flag"></i>
+                        Flag as issue
+                    </button>
+                    <button type="button"
+                            class="ari-btn ari-btn--danger"
+                            id="upm-view-delete">
+                        <i class="fa-solid fa-trash"></i> Delete
+                    </button>
+                    <button type="button" class="ari-btn"
+                            id="upm-view-mark-unread">
+                        <i class="fa-regular fa-envelope"></i>
+                        Mark unread
+                    </button>
+                    <button type="button"
+                            class="ari-btn ari-btn--primary"
+                            id="upm-view-reply">
+                        <i class="fa-solid fa-reply"></i> Reply
+                    </button>
+                </div>
+                <div class="upm-form-status" id="upm-view-status"
+                     aria-live="polite"></div>
+            </article>
+        </section>
     </div>
 </div>
 
 <!-- Compose modal -->
-<div class="ari-modal upm-modal" id="upm-send-modal" hidden>
+<div class="upm-modal" id="upm-send-modal" hidden>
     <div class="ari-modal__backdrop" data-upm-close></div>
     <div class="ari-modal__content">
         <header class="ari-modal__header">
@@ -83,10 +131,21 @@
         <form id="upm-send-form" class="upm-send-form">
             <label class="ari-form-row">
                 <span>Recipient</span>
-                <input type="text" name="recipient"
-                       id="upm-recipient" class="ari-input"
-                       list="upm-user-list" required>
-                <datalist id="upm-user-list"></datalist>
+                  <div class="upm-typeahead-wrap">
+                      <input type="text" id="upm-recipient-query"
+                          class="ari-input"
+                          placeholder="Type username or name"
+                          autocomplete="off" required>
+                      <input type="hidden" name="recipient"
+                          id="upm-recipient">
+                      <div id="upm-recipient-suggest"
+                        class="upm-typeahead-list" hidden></div>
+                  </div>
+                  <div class="upm-recipient-help">
+                      Need someone else? Browse
+                      <a href="{{ url_for('user_portal_users_view') }}"
+                      target="_blank" rel="noopener">all users</a>.
+                  </div>
             </label>
             <label class="ari-form-row">
                 <span>Subject</span>
@@ -114,5 +173,5 @@
 
 {% block extra_scripts %}
 {{ super() }}
-<script src="{{ url_for('static', filename='js/user_portal_messages.js', v='20260424a') }}"></script>
+<script src="{{ url_for('static', filename='js/user_portal_messages.js', v='20260501h') }}"></script>
 {% endblock %}

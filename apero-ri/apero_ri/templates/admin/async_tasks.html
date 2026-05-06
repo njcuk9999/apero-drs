@@ -75,6 +75,33 @@
     display: grid;
     gap: 0.75rem;
 }
+.at-sync-profiles__table {
+    width: 100%;
+    border-collapse: collapse;
+}
+.at-sync-profiles__table th,
+.at-sync-profiles__table td {
+    padding: 0.45rem 0.4rem;
+    border-top: 1px solid var(--ari-border, #d6d9de);
+    vertical-align: top;
+}
+.at-sync-profiles__table th {
+    text-align: left;
+    font-size: 0.82rem;
+    color: var(--ari-text-muted, #6b7280);
+}
+.at-sync-profiles__path-wrap {
+    display: flex;
+    gap: 0.45rem;
+    align-items: center;
+}
+.at-sync-profiles__path-wrap .ari-ap-input {
+    flex: 1;
+}
+.at-sync-profiles__alias {
+    font-size: 0.78rem;
+    color: var(--ari-text-muted, #6b7280);
+}
 #at-edit-modal #edit-run-count {
     padding: 0.4rem 0.6rem;
     border: 1px solid var(--ari-border, #d6d9de);
@@ -580,29 +607,47 @@
                     <div class="ari-ap-form__field">
                         <label for="edit-assets-mode">Mode</label>
                         <select id="edit-assets-mode" class="ari-ap-input">
-                            <option value="sync">sync &#8212; check checksums, download only if changed</option>
-                            <option value="upload">upload &#8212; push local assets to remote server</option>
+                            <option value="remote">remote &#8212; sync via apero_data_checksum.py (update-local then update-remote)</option>
+                            <option value="local">local &#8212; bidirectional newest-wins copy with a local folder</option>
                         </select>
-                        <div class="at-muted-hint">Servers and checksums are read from the installed apero package automatically.</div>
+                        <div class="at-muted-hint">remote uses the installed apero recipe with --indir set to {LOCAL_DATA_DIR}/apero-assets/.</div>
+                    </div>
+                    <div class="ari-ap-form__field" id="edit-assets-local-source-row" style="display:none;">
+                        <label for="edit-assets-local-source">Local source directory</label>
+                        <div style="display:flex; gap:6px; align-items:center;">
+                            <input type="text" id="edit-assets-local-source" class="ari-ap-input" style="flex:1 1 auto;" placeholder="/absolute/path/to/source/apero-assets">
+                            <button type="button" id="edit-assets-local-browse" class="ari-ap-btn ari-ap-btn--secondary">Browse&hellip;</button>
+                        </div>
+                        <div class="at-muted-hint">Files are mirrored newest-wins between this directory and {LOCAL_DATA_DIR}/apero-assets/.</div>
                     </div>
                 </div>
                 <div id="edit-local-sync-fields" style="display:none;">
-                    <div class="ari-ap-form__field" id="edit-sync-mode-row" style="display:none;">
-                        <label for="edit-sync-mode">Sync mode</label>
-                        <select id="edit-sync-mode" class="ari-ap-input">
-                            <option value="run_server">Run on server</option>
-                            <option value="fetch_precomputed">Fetch pre-computed</option>
-                        </select>
-                    </div>
-                    <div class="ari-ap-form__field" id="edit-sync-source-field" style="display:none;">
-                        <label for="edit-sync-source">Sync Source Path <span id="edit-sync-source-required" class="ari-required" style="display:none;">*</span></label>
-                        <input type="text" id="edit-sync-source" class="ari-ap-input"
-                               placeholder="/path/to/prebuilt/.ari">
+                    <div class="ari-ap-form__field">
+                        <label>Per-profile sync mode</label>
                         <div class="at-muted-hint">
-                            Required when Sync mode is set to Fetch pre-computed.
-                            Save with this path, then use Run Now (or Run All) to sync files instead of running the task.
-                            You can use either a root containing tasks/ (for example ~/.ari) or a direct tasks/&lt;instrument&gt; directory.
+                            Choose Run on server or Fetch pre-computed for
+                            each APERO profile. For Fetch pre-computed,
+                            browse to the directory that contains that
+                            profile's pre-built task output. The selected
+                            directory can have a different name than the
+                            APERO profile.
                         </div>
+                    </div>
+                    <div id="edit-sync-profiles-empty"
+                         class="at-muted-hint" style="display:none;">
+                        No APERO profiles are available for this instrument.
+                    </div>
+                    <div id="edit-sync-profiles-wrap" style="display:none;">
+                        <table class="at-sync-profiles__table">
+                            <thead>
+                                <tr>
+                                    <th>APERO profile</th>
+                                    <th>Mode</th>
+                                    <th>Pre-computed directory</th>
+                                </tr>
+                            </thead>
+                            <tbody id="edit-sync-profiles-body"></tbody>
+                        </table>
                     </div>
                 </div>
                 <div id="edit-mp-fields" style="display:none;">
@@ -654,6 +699,39 @@
             <button id="btn-edit-save" class="ari-btn ari-btn--primary">
                 <i class="fa-solid fa-floppy-disk"></i> Save
             </button>
+        </div>
+    </div>
+</div>
+
+<div id="at-sync-browse-modal" class="ari-modal-backdrop"
+     style="display:none;">
+    <div class="ari-modal ari-modal--wide">
+        <div class="ari-modal__header">
+            <h3>
+                <i class="fa-solid fa-folder-tree"></i>
+                Browse Sync Directory
+            </h3>
+            <button class="ari-modal__close" id="btn-sync-browse-close-x">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+        <div class="ari-modal__body">
+            <div class="ari-ap-browser__path">
+                <label for="sync-browse-path-input">Path</label>
+                <input type="text" id="sync-browse-path-input"
+                       class="ari-ap-input">
+                <button type="button" id="btn-sync-browse-go"
+                        class="ari-btn ari-btn--secondary">Go</button>
+            </div>
+            <div id="sync-browse-status" class="ari-ap-browser__status"
+                 style="display:none;"></div>
+            <div id="sync-browse-list" class="ari-ap-browser__list"></div>
+        </div>
+        <div class="ari-modal__footer">
+            <button id="btn-sync-browse-close"
+                    class="ari-btn ari-btn--secondary">Cancel</button>
+            <button id="btn-sync-browse-select"
+                    class="ari-btn ari-btn--primary">Use This Directory</button>
         </div>
     </div>
 </div>
@@ -783,9 +861,10 @@ window.ARI_ASYNC_TASKS = {
         cancelTask: '{{ url_for("api_async_tasks_cancel_task") }}',
         readFile: '{{ url_for("api_async_tasks_read_file") }}',
         downloadFile: '{{ url_for("api_async_tasks_download_file") }}',
+        browseProfiles: '{{ url_for("api_apero_profiles_browse") }}',
         purgeFiles: '/api/admin/async-tasks/purge-files',
     }
 };
 </script>
-    <script src="{{ url_for('static', filename='js/admin_async_tasks.js', v='20260423p') }}"></script>
+    <script src="{{ url_for('static', filename='js/admin_async_tasks.js', v='20260428a') }}"></script>
 {% endblock %}
