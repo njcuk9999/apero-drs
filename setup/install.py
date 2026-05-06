@@ -255,7 +255,8 @@ def validate(devmode: bool = False):
             imod = importlib.import_module(modname)
             # --------------------------------------------------------------
             # check the version
-            check_version(modname, imod, version.split('.'), suggested)
+            check_version(modname, imod, version.split('.'), suggested,
+                          operator=operator)
         # --------------------------------------------------------------
         except Exception as _:
             # Fatal Error: {0} requires module {1} to be installed
@@ -467,7 +468,8 @@ def save_args(args: argparse.Namespace):
 
 
 def check_version(module: str, imod: Any, rversionlist: Union[List[str], None],
-                  suggested: str, required: bool = True):
+                  suggested: str, required: bool = True,
+                  operator: str = '>='):
     """
     Check a module version
 
@@ -479,11 +481,35 @@ def check_version(module: str, imod: Any, rversionlist: Union[List[str], None],
     :param suggested: str, the suggested version
     :param required: bool, if True this module is required and code will exit
                      if version is not satisfied
+    :param operator: str, one of ==, >=, <=, >, <
 
     :raises SystemExit: if module is required and not valid
 
     :return: None, prints if module is valid or suggested
     """
+    def _version_to_int_list(vlist: List[str]) -> List[int]:
+        out = []
+        for value in vlist:
+            match = re.match(r'^\s*(\d+)', str(value))
+            if match:
+                out.append(int(match.group(1)))
+            else:
+                out.append(0)
+        return out
+
+    def _compare_versions(curr: List[str], req: List[str]) -> int:
+        curr_int = _version_to_int_list(curr)
+        req_int = _version_to_int_list(req)
+        maxlen = max(len(curr_int), len(req_int))
+        curr_int += [0] * (maxlen - len(curr_int))
+        req_int += [0] * (maxlen - len(req_int))
+        for cval, rval in zip(curr_int, req_int):
+            if cval > rval:
+                return 1
+            if cval < rval:
+                return -1
+        return 0
+
     # test version
     passed = False
     # ------------------------------------------------------------------
@@ -491,39 +517,25 @@ def check_version(module: str, imod: Any, rversionlist: Union[List[str], None],
     if rversionlist is None:
         return True, None
     # ------------------------------------------------------------------
-    # test minimum version of module
+    # test module version against operator
     if hasattr(imod, '__version__'):
         # get the version
         version = getattr(imod, '__version__').split('.')
-        # loop around rversion list
-        for v_it, rversion in enumerate(rversionlist):
-            # convert rversion to int
-            # noinspection PyBroadException
-            try:
-                rversion = int(rversion)
-            except Exception as _:
-                break
-            # if we don't have a level this deep break
-            if len(version) < (v_it - 1):
-                break
-            # try to make an integer
-            # noinspection PyBroadException
-            try:
-                version[v_it] = int(version[v_it])
-            except Exception as _:
-                break
-            # if version is higher pass
-            if version[v_it] > rversion:
-                passed = True
-                break
-            # if version is the same skip to lower level
-            elif version[v_it] == rversion:
-                passed = True
-                continue
-            # if version is lower fail
-            else:
-                passed = False
-                break
+        compare = _compare_versions(version, rversionlist)
+
+        if operator == '==':
+            passed = compare == 0
+        elif operator == '>=':
+            passed = compare >= 0
+        elif operator == '>':
+            passed = compare > 0
+        elif operator == '<=':
+            passed = compare <= 0
+        elif operator == '<':
+            passed = compare < 0
+        else:
+            # fallback to legacy behavior
+            passed = compare >= 0
         # --------------------------------------------------------------
         # get string lists
         rstrlist = list(map(lambda x: str(x), rversionlist))
