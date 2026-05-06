@@ -1649,6 +1649,11 @@ def clean_object(rawobjname: str) -> str:
     # if raw object name contains null text - return Null string
     if drs_text.null_text(rawobjname, NULL_TEXT):
         return 'Null'
+    # this is weird if this happens - but test for it any way
+    if not isinstance(rawobjname, str):
+        emsg = 'rawobjname={0} must be a string'
+        eargs = [rawobjname]
+        raise TypeError(emsg.format(*eargs))
     # strip spaces off raw object
     objectname = rawobjname.strip()
     # replace + and - with "p" and "m"

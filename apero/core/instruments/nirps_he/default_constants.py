@@ -127,7 +127,7 @@ IMAGE_FRAME_TIME.value = 5.57192
 # Define the time column (in the database) to use for filtering reference
 # files by
 REF_FIND_TIME_COL = REF_FIND_TIME_COL.copy(__NAME__)
-REF_FIND_TIME_COL.value = 'KW_ACQTIME'
+REF_FIND_TIME_COL.value = 'KW_MID_OBS_TIME'
 REF_FIND_TIME_COL.author = base.AUTHORS['NJC']
 
 # Define the start date for reference calibrations (date format must match
