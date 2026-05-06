@@ -964,6 +964,11 @@ def constuct_objname(params: Union[ParamDict, None], header,
     # check target name
     if kwrawobjname1 in header:
         rawobjname = header[kwrawobjname1]
+        # must be a string
+        if not isinstance(rawobjname, str):
+            rawobjname = None
+        elif rawobjname.upper() in ['', 'NONE', 'NUL']:
+            rawobjname = None
     # get raw object name
     if rawobjname is None and kwrawobjname not in header:
         eargs = [kwrawobjname, filename]
