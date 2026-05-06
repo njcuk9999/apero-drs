@@ -107,11 +107,9 @@ conda activate apero-env-07
 git clone git@github.com:njcuk9999/apero-drs.git -b developer
 git clone git@github.com:njcuk9999/lbl.git -b developer
 
-cd apero-drs
-pip install -r requirements_developer.txt
+pip install -r apero-drs/requirements_developer.txt
 
-cd ../lbl
-pip install -U -e .
+pip install -U -e './lbl'
 ```
 
 The follow the normal setup instructions for APERO (see documentation)
