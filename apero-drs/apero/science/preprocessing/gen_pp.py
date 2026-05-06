@@ -635,8 +635,13 @@ def get_areldate(params: ParamDict, header: drs_fits.Header,
             if run_id in list(adate_table['RUN_ID']):
                 # get positions in table
                 mask = adate_table['RUN_ID'] == str(run_id)
-                # get the last appearing row in googlesheet
-                areldate = adate_table[gsheet_acol][mask][-1]
+                # deal with astropy table being masked (and apply this mask)
+                if hasattr(adate_table[gsheet_acol], 'mask'):
+                    mask &= ~adate_table[gsheet_acol].mask
+                # don't try if the mask is empty
+                if not np.sum(mask) == 0:
+                    # get the last appearing row in googlesheet
+                    areldate = adate_table[gsheet_acol][mask][-1]
 
         # any exception here should return a warning and a empty array
         except Exception as e:
