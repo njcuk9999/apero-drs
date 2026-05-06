@@ -29,6 +29,16 @@ KW_IDENTIFIER.set(key='ARCFILE',
                   comment='filename anticipated by fitspipe server',
                   group='raw')
 
+# define the HEADER key for acquisition time
+#     Note datatype must be a astropy.Time.format
+#     'jd', 'mjd', 'decimalyear', 'unix', 'cxcsec', 'gps', 'plot_date',
+#     'datetime', 'iso', 'isot', 'yday', 'datetime64', 'fits', 'byear',
+#     'jyear', 'byear_str', 'jyear_str'
+KW_ACQTIME = KW_ACQTIME.copy(__NAME__)
+KW_ACQTIME.set(key='MJD-OBS', datatype='mjd', dataformat=float,
+               comment='Observation Start (Modified Julian Date)',
+               combine_method='maximum', group='raw')
+
 # define the MJ date HEADER key (only used for logging)
 KW_MJDATE = KW_MJDATE.copy(__NAME__)
 KW_MJDATE.set(key='MJD-OBS', datatype='mjd', dataformat=float,
