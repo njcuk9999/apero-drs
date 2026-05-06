@@ -286,7 +286,7 @@ CDict.add_group(cgroup, description='REF: GENERAL REF FILE SETTINGS')
 
 # Define the time column (in the database) to use for filtering reference
 # files by (start date and end date format must match this)
-CDict.add('FIND_TIMECOL', value=None, dtype=str, active=True, user=True,
+CDict.add('FIND_TIMECOL', value=None, dtype=str, active=False, user=True,
           source=__NAME__, group=cgroup,
           description='Define the time column (in the database) to use for '
                       'filtering reference files by (start date and end date '
