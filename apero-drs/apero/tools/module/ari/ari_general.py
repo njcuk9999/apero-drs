@@ -74,10 +74,18 @@ def load_ari_params(params: ParamDict) -> ParamDict:
     # get arguments from recipe call (via params['INPUTS'])
     profile_yaml = params['INPUTS']['profile']
     obs_dir = params['INPUTS']['obsdir']
+    # ari config path
+    ari_cpath = os.path.join(params['DRS_DATA_OTHER'], 'ari-config')
+    # ---------------------------------------------------------------------
+    # need to deal with current path having the same profile as in our
+    # ari-config directory
+    cond1 = profile_yaml in os.listdir(ari_cpath)
+    # check if profile exists
+    cond2 = not os.path.exists(profile_yaml)
     # ----------------------------------------------------------------------
     # if the profile yaml file does not exist try looking in the other
     #  directory
-    if not os.path.exists(profile_yaml):
+    if cond1 or cond2:
         # get yaml file basename
         profile_basename = os.path.basename(profile_yaml)
         # attempt to find the yaml profile file in the other/ari-config dir
