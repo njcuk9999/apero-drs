@@ -1125,6 +1125,74 @@ class ARIApp(Flask):
         return ih.api_issues_edit(self)
 
     # -----------------------------------------------------------------
+    # Monitor schedule subsystem
+    # -----------------------------------------------------------------
+
+    def _api_schedule_meta(self):
+        from apero_ri.application import schedule_api_helpers as sh
+        return sh.api_schedule_meta(self)
+
+    def _api_schedule_entries_list(self):
+        from apero_ri.application import schedule_api_helpers as sh
+        return sh.api_schedule_entries_list(self)
+
+    def _api_schedule_entries_add(self):
+        from apero_ri.application import schedule_api_helpers as sh
+        return sh.api_schedule_entries_add(self)
+
+    def _api_schedule_entries_edit(self):
+        from apero_ri.application import schedule_api_helpers as sh
+        return sh.api_schedule_entries_edit(self)
+
+    def _api_schedule_entries_delete(self):
+        from apero_ri.application import schedule_api_helpers as sh
+        return sh.api_schedule_entries_delete(self)
+
+    def _api_schedule_link_user_calendar(self):
+        from apero_ri.application import schedule_api_helpers as sh
+        return sh.api_schedule_link_user_calendar(self)
+
+    def _api_schedule_tasks_upsert(self):
+        from apero_ri.application import schedule_api_helpers as sh
+        return sh.api_schedule_tasks_upsert(self)
+
+    def _api_schedule_tasks_rename(self):
+        from apero_ri.application import schedule_api_helpers as sh
+        return sh.api_schedule_tasks_rename(self)
+
+    def _api_schedule_tasks_set_active(self):
+        from apero_ri.application import schedule_api_helpers as sh
+        return sh.api_schedule_tasks_set_active(self)
+
+    def _api_schedule_calendar_week(self):
+        from apero_ri.application import schedule_api_helpers as sh
+        return sh.api_schedule_calendar_week(self)
+
+    def _api_schedule_calendar_month(self):
+        from apero_ri.application import schedule_api_helpers as sh
+        return sh.api_schedule_calendar_month(self)
+
+    def _api_schedule_calendar_weeks(self):
+        from apero_ri.application import schedule_api_helpers as sh
+        return sh.api_schedule_calendar_weeks(self)
+
+    def _api_schedule_stats(self):
+        from apero_ri.application import schedule_api_helpers as sh
+        return sh.api_schedule_stats(self)
+
+    def _api_schedule_stats_visibility_set(self):
+        from apero_ri.application import schedule_api_helpers as sh
+        return sh.api_schedule_stats_visibility_set(self)
+
+    def _api_schedule_instrument_setting_set(self):
+        from apero_ri.application import schedule_api_helpers as sh
+        return sh.api_schedule_instrument_setting_set(self)
+
+    def _api_schedule_entries_bulk_add(self):
+        from apero_ri.application import schedule_api_helpers as sh
+        return sh.api_schedule_entries_bulk_add(self)
+
+    # -----------------------------------------------------------------
     # Notifications + messaging subsystem
     # -----------------------------------------------------------------
     def _api_notifications_list(self):
@@ -1206,6 +1274,10 @@ class ARIApp(Flask):
     def _monitor_issues_view(self):
         from apero_ri.application import monitor_view_helpers as mvh
         return mvh.monitor_issues_view(self)
+
+    def _monitor_schedule_view(self):
+        from apero_ri.application import monitor_view_helpers as mvh
+        return mvh.monitor_schedule_view(self)
 
     def _ri_obs_table_view(self, profile_id):
         kwargs = dict(profile_id=profile_id)

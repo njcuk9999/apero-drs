@@ -640,6 +640,17 @@ home.monitor_portal.issues:
     top-level: False
     show: True
 
+home.monitor_portal.schedule:
+  label: Schedule
+  parent: home.monitor_portal
+  view-permission: monitor
+  icon: fa-solid fa-calendar-week
+  quick-nav: False
+  side-nav:
+    pinned: False
+    top-level: False
+    show: True
+
 home.monitor_portal.rejection_list:
   label: Rejection list
   parent: home.monitor_portal
