@@ -23,7 +23,7 @@ chardet<6
 PyYAML==6.0.3
 pytz==2025.2
 scikit-image==0.26.0
-scipy==1.17.1
+scipy==1.17.0                  # should be 1.17.1
 tqdm==4.67.3
 yagmail==0.15.293
 # lbl @ git+https://github.com/njcuk9999/lbl.git@apero_v7
