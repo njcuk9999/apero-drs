@@ -279,8 +279,8 @@ class NirpsHe(instrument_mod.Instrument):
 
         :return: str, the cleaned object name
         """
-        return constuct_objname(params, self, header, filename, check_aliases,
-                                objdbm)
+        return construct_objname(params, self, header, filename, check_aliases,
+                                 objdbm)
 
     def DRS_DPRTYPE(self, params: ParamDict, header: Any,
                     filename: Union[Path, str]) -> str:
@@ -822,10 +822,10 @@ class NirpsHe(instrument_mod.Instrument):
 # =============================================================================
 # Functions used by pseudo const (instrument specific)
 # =============================================================================
-def constuct_objname(params: Union[ParamDict, None], pconst, header,
-                     filename: Union[None, str, Path] = None,
-                     check_aliases: bool = False,
-                     objdbm: Any = None) -> str:
+def construct_objname(params: Union[ParamDict, None], pconst, header,
+                      filename: Union[None, str, Path] = None,
+                      check_aliases: bool = False,
+                      objdbm: Any = None) -> str:
     """
     Construct the object name from the header (if objname is None)
 
@@ -845,7 +845,11 @@ def constuct_objname(params: Union[ParamDict, None], pconst, header,
     kwobjname = params['KW_OBJNAME'][0]
     # deal with output key already in header
     if kwobjname in header:
-        if not drs_text.null_text(header[kwobjname], NULL_TEXT):
+        # need to deal with NaN (any non string - should skip this header key)
+        if not isinstance(header[kwobjname], str):
+            pass
+        # otherwise we just test for null texts (None, Null, '' etc)
+        elif not drs_text.null_text(header[kwobjname], NULL_TEXT):
             return header[kwobjname]
     # start raw object name as None
     rawobjname = None
@@ -898,8 +902,8 @@ def clean_obj_name(params: ParamDict, pconst: NirpsHe, header: Any = None,
     # ---------------------------------------------------------------------
     # check KW_OBJNAME and then KW_OBJECTNAME2 and finally KW_OBJECTNAME
     # ---------------------------------------------------------------------
-    objectname = constuct_objname(params, pconst, header, filename,
-                                  check_aliases, objdbm)
+    objectname = construct_objname(params, pconst, header, filename,
+                                   check_aliases, objdbm)
     # -------------------------------------------------------------------------
     # deal with returning header
     # add it to the header with new keyword
@@ -1174,7 +1178,11 @@ def get_dprtype(params: ParamDict, pconst: NirpsHe, header: Any, hdict: Any,
     # deal with output key already in header
     if header is not None:
         if kwdprtype in header:
-            if not drs_text.null_text(header[kwdprtype], NULL_TEXT):
+            # need to deal with NaN (any non string - should skip this header key)
+            if not isinstance(header[kwdprtype], str):
+                pass
+            # otherwise we just test for null texts (None, Null, '' etc)
+            elif not drs_text.null_text(header[kwdprtype], NULL_TEXT):
                 return header, hdict
     # deal with no hdict
     if hdict is None:
