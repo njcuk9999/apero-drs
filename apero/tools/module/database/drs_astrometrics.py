@@ -183,52 +183,69 @@ class AstroObj:
 
         :return: None populates attributes
         """
+        def _get(col, *fallbacks, default=None):
+            """Case-insensitive column lookup with fallbacks."""
+            colnames_lower = {c.lower(): c for c in table_row.colnames}
+            for name in (col,) + fallbacks:
+                # exact match
+                if name in table_row.colnames:
+                    return table_row[name]
+                # case-insensitive match
+                if name.lower() in colnames_lower:
+                    return table_row[colnames_lower[name.lower()]]
+            # nothing found — return default and warn via a raised KeyError
+            # that includes available columns for diagnosis
+            raise KeyError(
+                f"Column {col!r} not found in SIMBAD result.\n"
+                f"  tried: {(col,) + fallbacks}\n"
+                f"  available: {list(table_row.colnames)}"
+            )
+
         pconst = constants.pload()
         # set objname as cleaned version of name
         self.objname = pconst.DRS_OBJ_NAME(self.name)
         # store the original name
         self.original_name = self.name
         # get the aliases from table row
-        self.aliases = clean_aliases(table_row['IDS'])
+        self.aliases = clean_aliases(_get('IDS', 'ids'))
         # get the ra and source from table row
         # astroquery>=0.4.7 returns 'RA'/'DEC' in degrees; older versions
         # returned 'RA_d'/'DEC_d' via the now-removed coo(d) field
-        ra_col = 'RA_d' if 'RA_d' in table_row.colnames else 'RA'
-        dec_col = 'DEC_d' if 'DEC_d' in table_row.colnames else 'DEC'
-        self.ra = table_row[ra_col]
-        self.ra_source = table_row['COO_BIBCODE']
+        self.ra = _get('RA_d', 'RA', 'ra')
+        self.ra_source = _get('COO_BIBCODE', 'coo_bibcode')
         # get the dec and source from table row
-        self.dec = table_row[dec_col]
-        self.dec_source = table_row['COO_BIBCODE']
+        self.dec = _get('DEC_d', 'DEC', 'dec')
+        self.dec_source = _get('COO_BIBCODE', 'coo_bibcode')
         # assume the epoch is J2000.0
         # Question: Is this a good assumption from SIMBAD?
         self.epoch = 2451545.0
         # set the pmra and source from table row
-        self.pmra = table_row['PMRA']
-        self.pmra_source = table_row['PM_BIBCODE']
+        self.pmra = _get('PMRA', 'pmra', 'PM_RA')
+        self.pmra_source = _get('PM_BIBCODE', 'pm_bibcode')
         # set the pmdec and source from table row
-        self.pmde = table_row['PMDEC']
-        self.pmde_source = table_row['PM_BIBCODE']
+        self.pmde = _get('PMDEC', 'pmdec', 'PM_DEC')
+        self.pmde_source = _get('PM_BIBCODE', 'pm_bibcode')
         # set the parallax and source from table row
-        self.plx = table_row['PLX_VALUE']
-        self.plx_source = table_row['PLX_BIBCODE']
+        self.plx = _get('PLX_VALUE', 'plx_value', 'PLX')
+        self.plx_source = _get('PLX_BIBCODE', 'plx_bibcode')
         # set the radial velocity and source from table row
-        if drs_text.null_text(str(table_row['RVZ_RADVEL']), NULL_TEXT):
+        rv_val = _get('RVZ_RADVEL', 'rvz_radvel', 'RV_VALUE')
+        if drs_text.null_text(str(rv_val), NULL_TEXT):
             self.rv = np.nan
             self.rv_source = ''
         else:
-            self.rv = table_row['RVZ_RADVEL']
-            self.rv_source = table_row['RVZ_BIBCODE']
+            self.rv = rv_val
+            self.rv_source = _get('RVZ_BIBCODE', 'rvz_bibcode', 'RV_BIBCODE')
         # set the spectral type from table row
-        self.sp_type = table_row['SP_TYPE']
-        self.sp_source = table_row['SP_BIBCODE']
+        self.sp_type = _get('SP_TYPE', 'sp_type')
+        self.sp_source = _get('SP_BIBCODE', 'sp_bibcode')
         # no temperature information
         self.teff = None
         self.teff_source = ''
         # add magnitudes
-        self.mags['J'] = table_row['FLUX_J']
-        self.mags['H'] = table_row['FLUX_H']
-        self.mags['K'] = table_row['FLUX_K']
+        self.mags['J'] = _get('FLUX_J', 'flux_J', 'flux(J)')
+        self.mags['H'] = _get('FLUX_H', 'flux_H', 'flux(H)')
+        self.mags['K'] = _get('FLUX_K', 'flux_K', 'flux(K)')
         # deal with notes
         if not update:
             nargs = [Time.now().iso, getpass.getuser(), socket.gethostname(),
@@ -978,6 +995,7 @@ def query_simbad(params: ParamDict, rawobjname: str,
             pass
         # query simbad - try a few times
         attempts, error = 0, ''
+        table = None
         while attempts < 10:
             try:
                 table = Simbad.query_object(rawobjname)
@@ -991,6 +1009,10 @@ def query_simbad(params: ParamDict, rawobjname: str,
                 time.sleep(1)
                 # add to attempts
                 attempts += 1
+    # always log the available column names to help diagnose API changes
+    if table is not None:
+        WLOG(params, 'debug',
+             'SIMBAD result columns: ' + ', '.join(table.colnames))
     # deal with max attempts
     if attempts == 10:
         emsg = 'Cannot run simbad query objects. \n\t Error {0}'
