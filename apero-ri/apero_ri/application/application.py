@@ -1271,6 +1271,10 @@ class ARIApp(Flask):
         from apero_ri.application import user_portal_view_helpers as uvh
         return uvh.user_portal_notifications_view(self)
 
+    def _monitor_portal_index_view(self):
+        from apero_ri.application import monitor_view_helpers as mvh
+        return mvh.monitor_portal_index_view(self)
+
     def _monitor_issues_view(self):
         from apero_ri.application import monitor_view_helpers as mvh
         return mvh.monitor_issues_view(self)
@@ -1279,7 +1283,45 @@ class ARIApp(Flask):
         from apero_ri.application import monitor_view_helpers as mvh
         return mvh.monitor_schedule_view(self)
 
-    def _ri_obs_table_view(self, profile_id):
+    def _monitor_processing_logs_view(self):
+        from apero_ri.application import monitor_view_helpers as mvh
+        return mvh.monitor_processing_logs_view(self)
+
+    def _monitor_processing_logs_profile_view(
+        self, profile_id
+    ):
+        from apero_ri.application import monitor_view_helpers as mvh
+        return mvh.monitor_processing_logs_profile_view(
+            self, profile_id
+        )
+
+    def _monitor_processing_logs_pid_view(
+        self, profile_id, pid
+    ):
+        from apero_ri.application import monitor_view_helpers as mvh
+        return mvh.monitor_processing_logs_pid_view(
+            self, profile_id, pid
+        )
+
+    def _api_processing_logs(self):
+        from apero_ri.application import (
+            processing_logs_api_helpers as plh,
+        )
+        return plh.api_processing_logs(self)
+
+    def _api_processing_logs_pid(self):
+        from apero_ri.application import (
+            processing_logs_api_helpers as plh,
+        )
+        return plh.api_processing_logs_pid(self)
+
+    def _api_processing_log_file(self):
+        from apero_ri.application import (
+            processing_logs_api_helpers as plh,
+        )
+        return plh.api_processing_log_file(self)
+
+
         kwargs = dict(profile_id=profile_id)
         return data_portal_view_helpers.ri_obs_table_view(self, **kwargs)
 

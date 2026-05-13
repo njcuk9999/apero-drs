@@ -661,3 +661,14 @@ home.monitor_portal.rejection_list:
     pinned: False
     top-level: False
     show: True
+
+home.monitor_portal.logs:
+  label: Processing Logs
+  parent: home.monitor_portal
+  view-permission: monitor
+  icon: fa-solid fa-scroll
+  quick-nav: False
+  side-nav:
+    pinned: False
+    top-level: False
+    show: True

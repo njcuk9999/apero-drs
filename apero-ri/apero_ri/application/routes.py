@@ -1440,6 +1440,11 @@ def register_data_portal_routes(app):
         app._user_portal_notifications_view,
     )
     app.add_url_rule(
+        "/monitor_portal",
+        "monitor_portal_index_view",
+        app._monitor_portal_index_view,
+    )
+    app.add_url_rule(
         "/monitor_portal/issues",
         "monitor_issues_view",
         app._monitor_issues_view,
@@ -1450,9 +1455,42 @@ def register_data_portal_routes(app):
         app._monitor_schedule_view,
     )
     app.add_url_rule(
+        "/monitor_portal/logs",
+        "monitor_processing_logs_view",
+        app._monitor_processing_logs_view,
+    )
+    app.add_url_rule(
+        "/monitor_portal/logs/<profile_id>",
+        "monitor_processing_logs_profile_view",
+        app._monitor_processing_logs_profile_view,
+    )
+    app.add_url_rule(
+        "/monitor_portal/logs/<profile_id>/<pid>",
+        "monitor_processing_logs_pid_view",
+        app._monitor_processing_logs_pid_view,
+    )
+    app.add_url_rule(
+        "/api/monitor/processing-logs",
+        "api_processing_logs",
+        app._api_processing_logs,
+        methods=["POST"],
+    )
+    app.add_url_rule(
+        "/api/monitor/processing-logs/pid",
+        "api_processing_logs_pid",
+        app._api_processing_logs_pid,
+        methods=["POST"],
+    )
+    app.add_url_rule(
+        "/api/monitor/processing-logs/logfile",
+        "api_processing_log_file",
+        app._api_processing_log_file,
+        methods=["POST"],
+    )
+    app.add_url_rule(
         "/data_portal/<profile_id>/observation-table",
         "ri_observation_table",
-        app._ri_obs_table_view,
+        app._ri_object_table_view,
     )
     app.add_url_rule(
         "/data_portal/<profile_id>/query-db",

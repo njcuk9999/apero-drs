@@ -438,6 +438,15 @@
     flex-wrap: wrap;
 }
 
+.ms-icon-btn {
+    width: 2rem;
+    height: 2rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+}
+
 /* Temporal entry row colours */
 .ms-row--past td {
     background-color: #f0f0f0;

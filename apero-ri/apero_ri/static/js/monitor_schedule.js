@@ -21,7 +21,8 @@
         calendarWeeks: 13,
         assignmentFilter: 'all',
         showNoHours: false,
-        savingEntry: false
+        savingEntry: false,
+        assignEntryId: 0
     };
 
     function el(id) {
@@ -35,6 +36,15 @@
         }
         node.textContent = text || '';
         node.style.color = isError ? '#a61b1b' : '';
+    }
+
+    function esc(text) {
+        return String(text || '')
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;');
     }
 
     async function apiGet(path, params) {
@@ -203,11 +213,94 @@
         if (!userNode || !whoNode) {
             return;
         }
-        const username = userNode.value;
+        const username = String(userNode.value || '').trim();
+        if (!username) {
+            whoNode.value = '';
+            return;
+        }
         const found = state.users.find((r) => r.username === username);
         if (found) {
             whoNode.value = found.who || username;
+            return;
         }
+        whoNode.value = username;
+    }
+
+    function updateAssignUserSelect() {
+        const node = el('ms-assign-username');
+        if (!node) {
+            return;
+        }
+        const filterNode = el('ms-assign-user-filter');
+        const filterText = String(
+            (filterNode && filterNode.value) || ''
+        ).toLowerCase().trim();
+        const prev = node.value;
+        const parts = [];
+        for (const row of state.users) {
+            const username = String(row.username || '');
+            const who = String(row.who || username);
+            const hay = (username + ' ' + who).toLowerCase();
+            if (filterText && hay.indexOf(filterText) === -1) {
+                continue;
+            }
+            parts.push(
+                '<option value="' + esc(username) + '">' +
+                esc(username + ' - ' + who) +
+                '</option>'
+            );
+        }
+        node.innerHTML = parts.join('');
+        if (prev && node.querySelector('option[value="' + prev + '"]')) {
+            node.value = prev;
+        }
+        if (!node.value && state.currentUsername) {
+            const sel = 'option[value="' + state.currentUsername + '"]';
+            const currentOpt = node.querySelector(sel);
+            if (currentOpt) {
+                node.value = state.currentUsername;
+            }
+        }
+        if (!node.value) {
+            const first = node.querySelector('option');
+            if (first) {
+                node.value = first.value;
+            }
+        }
+        applyAssignWhoFromUser();
+    }
+
+    function applyAssignWhoFromUser() {
+        const userNode = el('ms-assign-username');
+        const whoNode = el('ms-assign-who');
+        if (!userNode || !whoNode) {
+            return;
+        }
+        const username = String(userNode.value || '').trim();
+        if (!username) {
+            whoNode.value = '';
+            return;
+        }
+        const found = state.users.find((r) => r.username === username);
+        if (found) {
+            whoNode.value = found.who || username;
+            return;
+        }
+        whoNode.value = username;
+    }
+
+    function ensureUserOption(selectNode, username, who) {
+        if (!selectNode || !username) {
+            return;
+        }
+        const selector = 'option[value="' + username + '"]';
+        if (selectNode.querySelector(selector)) {
+            return;
+        }
+        const opt = document.createElement('option');
+        opt.value = username;
+        opt.textContent = username + ' - ' + String(who || username);
+        selectNode.appendChild(opt);
     }
 
     function renderInstrumentTabs() {
@@ -399,12 +492,31 @@
         const TODAY = new Date().toISOString().slice(0, 10);
 
         const rowsHtml = pageRows.map((row) => {
+            const rowId = Number(row.id || 0);
+            const rowUsername = String(row.username || '');
+            const rowWho = String(row.who || rowUsername || '');
+            const usernameCell = rowUsername
+                ? (
+                    '<button type="button" class="ms-link ms-username-link" ' +
+                    'data-assign-entry="' + rowId + '" ' +
+                    'title="Assign user">' + esc(rowUsername) + '</button>'
+                )
+                : (
+                    '<button type="button" class="ms-link ms-username-link" ' +
+                    'data-assign-entry="' + rowId + '" ' +
+                    'title="Assign user"><em>unassigned</em></button>'
+                );
             const actionBtns = (
                 '<div class="ms-inline-btns">' +
-                '<button type="button" class="ari-btn" '
-                + 'data-edit-entry="' + row.id + '">Edit</button>' +
-                '<button type="button" class="ari-btn ari-btn--alt" '
-                + 'data-delete-entry="' + row.id + '">Delete</button>' +
+                '<button type="button" class="ari-btn ms-icon-btn" '
+                + 'data-edit-entry="' + rowId + '" '
+                + 'aria-label="Edit entry" title="Edit entry">'
+                + '<i class="fas fa-pen"></i></button>' +
+                '<button type="button" '
+                + 'class="ari-btn ari-btn--alt ms-icon-btn" '
+                + 'data-delete-entry="' + rowId + '" '
+                + 'aria-label="Delete entry" title="Delete entry">'
+                + '<i class="fas fa-trash"></i></button>' +
                 '</div>'
             );
             const unassigned = !row.username;
@@ -424,19 +536,25 @@
                 .filter(Boolean).join(' ');
             return (
                 '<tr class="' + classes + '">' +
-                '<td>' + (row.task || '') + '</td>' +
-                '<td>' + (row.username || '<em>unassigned</em>') +
-                '</td>' +
-                '<td>' + (row.who || '') + '</td>' +
+                '<td>' + esc(row.task || '') + '</td>' +
+                '<td>' + usernameCell + '</td>' +
+                '<td>' + esc(rowWho) + '</td>' +
                 '<td>' + dateLinkCell(row.date_start) + '</td>' +
                 '<td>' + dateLinkCell(row.date_end) + '</td>' +
-                '<td>' + (row.hours || 0) + '</td>' +
-                '<td>' + (row.comment || '') + '</td>' +
+                '<td>' + esc(row.hours || 0) + '</td>' +
+                '<td>' + esc(row.comment || '') + '</td>' +
                 '<td>' + actionBtns + '</td>' +
                 '</tr>'
             );
         }).join('');
         body.innerHTML = addRow + rowsHtml;
+
+        for (const btn of body.querySelectorAll('button[data-assign-entry]')) {
+            btn.addEventListener('click', () => {
+                const entryId = Number(btn.dataset.assignEntry || '0');
+                openAssignOverlay(entryId);
+            });
+        }
 
         for (const btn of body.querySelectorAll('button[data-date]')) {
             btn.addEventListener('click', () => {
@@ -454,10 +572,24 @@
                 if (!found) {
                     return;
                 }
+                const userFilter = el('ms-add-user-filter');
+                if (userFilter) {
+                    userFilter.value = '';
+                }
+                updateUserSelect();
                 el('ms-add-entry-id').value = String(found.id || '');
                 el('ms-add-task').value = String(found.task || '');
-                el('ms-add-username').value = String(found.username || '');
-                applyWhoFromUser();
+                const userNode = el('ms-add-username');
+                const entryUser = String(found.username || '');
+                const entryWho = String(found.who || entryUser || '');
+                if (userNode) {
+                    ensureUserOption(userNode, entryUser, entryWho);
+                    userNode.value = entryUser;
+                }
+                const whoNode = el('ms-add-who');
+                if (whoNode) {
+                    whoNode.value = entryWho;
+                }
                 el('ms-add-date-start').value = String(found.date_start || '');
                 el('ms-add-date-end').value = String(found.date_end || '');
                 el('ms-add-hours').value = String(found.hours || 0);
@@ -586,6 +718,79 @@
             if (submitBtn) {
                 submitBtn.disabled = false;
             }
+        }
+    }
+
+    function openAssignOverlay(entryId) {
+        const found = (state.entryRows || []).find((row) => {
+            return Number(row.id || 0) === Number(entryId || 0);
+        });
+        if (!found) {
+            return;
+        }
+        state.assignEntryId = Number(found.id || 0);
+        const idNode = el('ms-assign-entry-id');
+        if (idNode) {
+            idNode.value = String(state.assignEntryId);
+        }
+        const filterNode = el('ms-assign-user-filter');
+        if (filterNode) {
+            filterNode.value = '';
+        }
+        updateAssignUserSelect();
+        const userNode = el('ms-assign-username');
+        const username = String(found.username || state.currentUsername || '');
+        if (userNode) {
+            ensureUserOption(userNode, username, found.who || username);
+            userNode.value = username;
+        }
+        applyAssignWhoFromUser();
+        overlay('assign', true);
+    }
+
+    async function submitAssignUser() {
+        const entryId = Number(
+            String((el('ms-assign-entry-id') || {}).value || '0')
+        );
+        const username = String(
+            (el('ms-assign-username') || {}).value || ''
+        ).trim();
+        if (!entryId) {
+            setStatus('Entry not found.', true);
+            return;
+        }
+        const found = (state.entryRows || []).find((row) => {
+            return Number(row.id || 0) === entryId;
+        });
+        if (!found) {
+            setStatus('Entry not found.', true);
+            return;
+        }
+        const userRow = state.users.find((row) => row.username === username);
+        const who = username
+            ? String((userRow && userRow.who) || username)
+            : '';
+        try {
+            await apiPost('/api/monitor-schedule/entries/edit', {
+                instrument: state.instrument,
+                entry_id: entryId,
+                task: String(found.task || ''),
+                username,
+                who,
+                date_start: String(found.date_start || ''),
+                date_end: String(found.date_end || ''),
+                hours: Number(found.hours || 0),
+                comment: String(found.comment || '')
+            });
+            overlay('assign', false);
+            setStatus('Entry reassigned successfully.');
+            await Promise.all([
+                loadEntries(true),
+                loadCalendar(),
+                loadStats()
+            ]);
+        } catch (err) {
+            setStatus(err.message, true);
         }
     }
 
@@ -933,7 +1138,8 @@
             tasks: 'ms-task-overlay',
             users: 'ms-user-overlay',
             add: 'ms-add-overlay',
-            bulk: 'ms-bulk-overlay'
+            bulk: 'ms-bulk-overlay',
+            assign: 'ms-assign-overlay'
         };
         const id = map[name] || 'ms-user-overlay';
         const node = el(id);
@@ -1003,6 +1209,47 @@
         const addUserFilter = el('ms-add-user-filter');
         if (addUserFilter) {
             addUserFilter.addEventListener('input', updateUserSelect);
+        }
+        const addUnassign = el('ms-add-unassign');
+        if (addUnassign) {
+            addUnassign.addEventListener('click', () => {
+                const userNode = el('ms-add-username');
+                const whoNode = el('ms-add-who');
+                if (userNode) {
+                    userNode.value = '';
+                }
+                if (whoNode) {
+                    whoNode.value = '';
+                }
+            });
+        }
+        const assignUser = el('ms-assign-username');
+        if (assignUser) {
+            assignUser.addEventListener('change', applyAssignWhoFromUser);
+        }
+        const assignUserFilter = el('ms-assign-user-filter');
+        if (assignUserFilter) {
+            assignUserFilter.addEventListener('input', updateAssignUserSelect);
+        }
+        const assignSubmit = el('ms-assign-submit');
+        if (assignSubmit) {
+            assignSubmit.addEventListener('click', () => {
+                submitAssignUser().catch((err) => setStatus(err.message, true));
+            });
+        }
+        const assignUnassign = el('ms-assign-unassign');
+        if (assignUnassign) {
+            assignUnassign.addEventListener('click', () => {
+                const userNode = el('ms-assign-username');
+                const whoNode = el('ms-assign-who');
+                if (userNode) {
+                    userNode.value = '';
+                }
+                if (whoNode) {
+                    whoNode.value = '';
+                }
+                submitAssignUser().catch((err) => setStatus(err.message, true));
+            });
         }
 
         const wprev = el('ms-week-prev');
@@ -1118,6 +1365,13 @@
                 overlay('add', false);
                 resetAddForm();
             });
+        }
+        for (const closeBtn of document.querySelectorAll(
+            '[data-close="assign"]'
+        )) {
+            closeBtn.addEventListener(
+                'click', () => overlay('assign', false)
+            );
         }
         for (const closeBtn of document.querySelectorAll(
             '[data-close="bulk"]'
