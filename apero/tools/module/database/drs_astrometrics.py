@@ -68,8 +68,11 @@ ObjectDatabase = drs_database.AstrometricDatabase
 # simbad additional columns
 SIMBAD_COLUMNS = ['ids', 'pmra', 'pmdec', 'pm_bibcode', 'plx',
                   'plx_bibcode', 'rvz_radvel', 'rvz_bibcode',
-                  'sp', 'sp_bibcode', 'coo(d)',
+                  'sp', 'sp_bibcode',
                   'coo_bibcode', 'flux(J)', 'flux(H)', 'flux(K)']
+# Note: 'coo(d)' was removed — astroquery>=0.4.7 always returns RA/DEC in
+# degrees (ICRS) by default and no longer supports coordinate formatting
+# arguments in add_votable_fields.
 # define sheet name
 GSHEET_NAME = 'pending_list'
 
@@ -188,10 +191,14 @@ class AstroObj:
         # get the aliases from table row
         self.aliases = clean_aliases(table_row['IDS'])
         # get the ra and source from table row
-        self.ra = table_row['RA_d']
+        # astroquery>=0.4.7 returns 'RA'/'DEC' in degrees; older versions
+        # returned 'RA_d'/'DEC_d' via the now-removed coo(d) field
+        ra_col = 'RA_d' if 'RA_d' in table_row.colnames else 'RA'
+        dec_col = 'DEC_d' if 'DEC_d' in table_row.colnames else 'DEC'
+        self.ra = table_row[ra_col]
         self.ra_source = table_row['COO_BIBCODE']
         # get the dec and source from table row
-        self.dec = table_row['DEC_d']
+        self.dec = table_row[dec_col]
         self.dec_source = table_row['COO_BIBCODE']
         # assume the epoch is J2000.0
         # Question: Is this a good assumption from SIMBAD?
@@ -963,7 +970,12 @@ def query_simbad(params: ParamDict, rawobjname: str,
         # add ids column
         for simbad_column in SIMBAD_COLUMNS:
             Simbad.add_votable_fields(simbad_column)
-        Simbad.remove_votable_fields('coordinates')
+        # 'coordinates' is not a valid field in astroquery>=0.4.7;
+        # RA/DEC are returned in degrees by default after reset_votable_fields
+        try:
+            Simbad.remove_votable_fields('coordinates')
+        except Exception:
+            pass
         # query simbad - try a few times
         attempts, error = 0, ''
         while attempts < 10:
