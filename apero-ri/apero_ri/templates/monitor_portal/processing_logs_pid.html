@@ -3,10 +3,10 @@
 
 {% block body_class %}ari-has-sidebar ari-pl-page{% endblock %}
 
-{% block extra_scripts %}
+{% block extra_head %}{{ super() }}
 <link rel="stylesheet"
     href="{{ url_for('static', filename='css/processing_logs.css') }}?v=20260512p">
-<script src="{{ url_for('static', filename='js/processing_logs.js') }}?v=20260512p"
+<script src="{{ url_for('static', filename='js/processing_logs.js') }}?v=20260513f"
         defer></script>
 {% endblock %}
 
@@ -23,10 +23,25 @@
         <span class="ot-breadcrumb-sep">/</span>
         <span id="pl-group-name">{{ pid }}</span>
     </h1>
+    <p class="ari-page-subtitle">
+        Recipe-level details for this processing PID.
+        Use filters to focus on unfinished or failed steps,
+        and open log files to inspect full execution output.
+    </p>
 </div>
 
 <div class="ot-meta-bar">
     <span id="pl-row-summary" class="ot-meta-bar__item ot-meta-bar__item--muted"></span>
+    <span id="pl-last-updated"
+          class="ot-meta-bar__item ot-meta-bar__item--muted">
+        Last updated --
+    </span>
+    <button id="pl-btn-refresh"
+            class="ari-btn ari-btn--sm ari-btn--secondary"
+            title="Refresh processing logs now (bypass cache)">
+        <i class="fa-solid fa-rotate-right"></i>
+        Update
+    </button>
 </div>
 
 <div class="ot-toolbar">

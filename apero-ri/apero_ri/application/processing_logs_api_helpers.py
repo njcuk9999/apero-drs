@@ -17,8 +17,10 @@ Exposes three JSON endpoints used by the monitor portal:
 from __future__ import annotations
 
 import re
+import threading
+from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Tuple
 
 from flask import jsonify, request, session
 
@@ -38,6 +40,56 @@ __NAME__ = (
 
 # Regex: only allow safe identifiers for table names
 _SAFE_ID_RE = re.compile(r'^[A-Za-z0-9_]+$')
+_PROC_LOG_CACHE_TTL = timedelta(hours=1)
+_PROC_LOG_CACHE: Dict[Tuple[str, str, str], Dict[str, Any]] = dict()
+_PROC_LOG_CACHE_LOCK = threading.Lock()
+
+
+def _is_truthy(value: Any) -> bool:
+    """Return True for common truthy JSON/form values."""
+    if isinstance(value, bool):
+        return value
+    text = str(value or '').strip().lower()
+    return text in {'1', 'true', 'yes', 'y', 'on'}
+
+
+def _cache_stamp(dt_value: datetime) -> str:
+    """Format cache update timestamp for UI display."""
+    return dt_value.strftime('%Y-%m-%d %H:%M:%S')
+
+
+def _cache_get(
+    cache_key: Tuple[str, str, str]
+) -> Tuple[Dict[str, Any] | None, str | None]:
+    """Return a cached payload if it is still within TTL."""
+    now = datetime.now()
+    with _PROC_LOG_CACHE_LOCK:
+        entry = _PROC_LOG_CACHE.get(cache_key)
+        if entry is None:
+            return None, None
+        updated_at = entry.get('updated_at')
+        payload = entry.get('payload')
+        if not isinstance(updated_at, datetime):
+            _PROC_LOG_CACHE.pop(cache_key, None)
+            return None, None
+        if now - updated_at > _PROC_LOG_CACHE_TTL:
+            _PROC_LOG_CACHE.pop(cache_key, None)
+            return None, None
+        if not isinstance(payload, dict):
+            _PROC_LOG_CACHE.pop(cache_key, None)
+            return None, None
+        return dict(payload), _cache_stamp(updated_at)
+
+
+def _cache_set(cache_key: Tuple[str, str, str], payload: Dict[str, Any]) -> str:
+    """Store payload and return the display timestamp."""
+    updated_at = datetime.now()
+    with _PROC_LOG_CACHE_LOCK:
+        _PROC_LOG_CACHE[cache_key] = dict(
+            updated_at=updated_at,
+            payload=dict(payload),
+        )
+    return _cache_stamp(updated_at)
 
 
 def _safe_table(name: str) -> str:
@@ -131,8 +183,17 @@ def api_processing_logs(app: Any):
 
     data = request.get_json(silent=True) or {}
     profile_id = str(data.get("profile_id", "") or "").strip()
+    force_refresh = _is_truthy(data.get('force_refresh', False))
     if not profile_id:
         return jsonify({"error": "profile_id required"}), 400
+
+    cache_key = ('profile', profile_id, '')
+    if not force_refresh:
+        cached_payload, cached_stamp = _cache_get(cache_key)
+        if cached_payload is not None and cached_stamp is not None:
+            cached_payload['last_updated'] = cached_stamp
+            cached_payload['from_cache'] = True
+            return jsonify(cached_payload), 200
 
     prof = _find_profile(app, user_info, profile_id)
     if not prof:
@@ -144,7 +205,15 @@ def api_processing_logs(app: Any):
     profile_data = prof["data"]
     log_table = _get_log_table(profile_data)
     if not log_table:
-        return jsonify({"rows": [], "columns": []}), 200
+        payload = dict(
+            rows=[],
+            columns=[],
+            dropdown_columns=[],
+        )
+        stamp = _cache_set(cache_key, payload)
+        payload['last_updated'] = stamp
+        payload['from_cache'] = False
+        return jsonify(payload), 200
 
     try:
         tbl = _safe_table(log_table)
@@ -157,6 +226,16 @@ def api_processing_logs(app: Any):
             main.RECIPE        AS `Recipe name`,
             main.START_TIME    AS `Start time`,
             main.END_TIME      AS `End time`,
+            CASE
+                WHEN main.START_TIME IS NULL THEN NULL
+                WHEN main.END_TIME IS NULL THEN NULL
+                WHEN main.END_TIME < main.START_TIME THEN NULL
+                ELSE TIMESTAMPDIFF(
+                    SECOND,
+                    main.START_TIME,
+                    main.END_TIME
+                )
+            END                AS `Time taken`,
             totals.FAILED      AS `Failed`,
             totals.GROUP_COUNT AS `Total run`,
             main.PID           AS `PID`,
@@ -184,7 +263,15 @@ def api_processing_logs(app: Any):
         return jsonify({"error": str(exc)}), 500
 
     if not rows:
-        return jsonify({"rows": [], "columns": []}), 200
+        payload = dict(
+            rows=[],
+            columns=[],
+            dropdown_columns=[],
+        )
+        stamp = _cache_set(cache_key, payload)
+        payload['last_updated'] = stamp
+        payload['from_cache'] = False
+        return jsonify(payload), 200
 
     rows = _rows_to_serializable(rows)
     columns = list(rows[0].keys()) if rows else []
@@ -198,11 +285,15 @@ def api_processing_logs(app: Any):
         if _unique_count(rows, col) < 5:
             dropdown_cols.append(col)
 
-    return jsonify({
-        "rows": rows,
-        "columns": columns,
-        "dropdown_columns": dropdown_cols,
-    }), 200
+    payload = dict(
+        rows=rows,
+        columns=columns,
+        dropdown_columns=dropdown_cols,
+    )
+    stamp = _cache_set(cache_key, payload)
+    payload['last_updated'] = stamp
+    payload['from_cache'] = False
+    return jsonify(payload), 200
 
 
 # =============================================================================
@@ -227,11 +318,20 @@ def api_processing_logs_pid(app: Any):
     data = request.get_json(silent=True) or {}
     profile_id = str(data.get("profile_id", "") or "").strip()
     pid = str(data.get("pid", "") or "").strip()
+    force_refresh = _is_truthy(data.get('force_refresh', False))
     if not profile_id or not pid:
         return (
             jsonify({"error": "profile_id and pid required"}),
             400,
         )
+
+    cache_key = ('pid', profile_id, pid)
+    if not force_refresh:
+        cached_payload, cached_stamp = _cache_get(cache_key)
+        if cached_payload is not None and cached_stamp is not None:
+            cached_payload['last_updated'] = cached_stamp
+            cached_payload['from_cache'] = True
+            return jsonify(cached_payload), 200
 
     prof = _find_profile(app, user_info, profile_id)
     if not prof:
@@ -243,7 +343,16 @@ def api_processing_logs_pid(app: Any):
     profile_data = prof["data"]
     log_table = _get_log_table(profile_data)
     if not log_table:
-        return jsonify({"rows": [], "columns": []}), 200
+        payload = dict(
+            rows=[],
+            columns=[],
+            dropdown_columns=[],
+            group_name=pid,
+        )
+        stamp = _cache_set(cache_key, payload)
+        payload['last_updated'] = stamp
+        payload['from_cache'] = False
+        return jsonify(payload), 200
 
     try:
         tbl = _safe_table(log_table)
@@ -259,6 +368,16 @@ def api_processing_logs_pid(app: Any):
             RECIPE   AS `Recipe name`,
             SHORTNAME AS `Short name`,
             RUNSTRING AS `Recipe call`,
+            CASE
+                WHEN START_TIME IS NULL THEN NULL
+                WHEN END_TIME IS NULL THEN NULL
+                WHEN END_TIME < START_TIME THEN NULL
+                ELSE TIMESTAMPDIFF(
+                    SECOND,
+                    START_TIME,
+                    END_TIME
+                )
+            END     AS `Time taken`,
             ENDED    AS `Finished`,
             SUBSTRING_INDEX(LOGFILE, '/msg/', -1) AS `Log file`
         FROM {tbl}
@@ -271,7 +390,16 @@ def api_processing_logs_pid(app: Any):
         return jsonify({"error": str(exc)}), 500
 
     if not rows:
-        return jsonify({"rows": [], "columns": []}), 200
+        payload = dict(
+            rows=[],
+            columns=[],
+            dropdown_columns=[],
+            group_name=pid,
+        )
+        stamp = _cache_set(cache_key, payload)
+        payload['last_updated'] = stamp
+        payload['from_cache'] = False
+        return jsonify(payload), 200
 
     rows = _rows_to_serializable(rows)
     columns = list(rows[0].keys()) if rows else []
@@ -303,12 +431,16 @@ def api_processing_logs_pid(app: Any):
     except Exception:
         pass
 
-    return jsonify({
-        "rows": rows,
-        "columns": columns,
-        "dropdown_columns": dropdown_cols,
-        "group_name": title,
-    }), 200
+    payload = dict(
+        rows=rows,
+        columns=columns,
+        dropdown_columns=dropdown_cols,
+        group_name=title,
+    )
+    stamp = _cache_set(cache_key, payload)
+    payload['last_updated'] = stamp
+    payload['from_cache'] = False
+    return jsonify(payload), 200
 
 
 # =============================================================================

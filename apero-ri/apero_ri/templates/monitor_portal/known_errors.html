@@ -1,0 +1,900 @@
+{% extends "general/sidebar_base.html" %}
+{% block title %}APERO RI – Known errors{% endblock %}
+
+{% block body_class %}ari-has-sidebar ari-ke-page{% endblock %}
+
+{% block extra_head %}
+{{ super() }}
+<link rel="stylesheet"
+      href="{{ url_for('static', filename='css/processing_logs.css') }}?v=20260512p">
+<style>
+/* ── Known errors: text-viewer overlay ─────────────────────── */
+.ke-tv-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 1200;
+    display: none;
+    align-items: center;
+    justify-content: center;
+}
+.ke-tv-overlay--open { display: flex; }
+.ke-tv-backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.70);
+}
+.ke-tv-panel {
+    position: relative;
+    z-index: 1;
+    width: min(96vw, 900px);
+    max-height: 80vh;
+    display: flex;
+    flex-direction: column;
+    background: #0a0a0a;
+    border: 1px solid #333;
+    border-radius: 6px;
+    overflow: hidden;
+}
+.ke-tv-toolbar {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 0.75rem;
+    background: #1a1a1a;
+    border-bottom: 1px solid #333;
+    flex-shrink: 0;
+}
+.ke-tv-title {
+    flex: 1;
+    font-family: var(--ari-font-mono, monospace);
+    font-size: 0.82rem;
+    color: #aaa;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.ke-tv-content {
+    flex: 1;
+    overflow: auto;
+    margin: 0;
+    padding: 0.75rem 1rem;
+    background: #0a0a0a;
+    color: #e0e0e0;
+    font-family: var(--ari-font-mono, monospace);
+    font-size: 0.82rem;
+    line-height: 1.6;
+    white-space: pre-wrap;
+    word-break: break-word;
+    user-select: text;
+    cursor: text;
+}
+/* ── Icon buttons inside cells ─────────────────────────────── */
+.ke-icon-btn {
+    background: none;
+    border: 1px solid var(--ari-border, #ccc);
+    border-radius: 4px;
+    padding: 0.18rem 0.42rem;
+    cursor: pointer;
+    color: var(--ari-primary, #3f51b5);
+    font-size: 0.82rem;
+    transition: background 0.12s;
+}
+.ke-icon-btn:hover {
+    background: var(--ari-primary-light, #e8eaf6);
+}
+.ke-icon-btn--empty {
+    color: var(--ari-text-muted, #bbb);
+    border-color: transparent;
+    cursor: default;
+    pointer-events: none;
+}
+.ke-global-search-wrap {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+}
+.ke-global-search-wrap .ot-filter-input {
+    min-width: 18rem;
+}
+/* ── CRUD edit modal grid ──────────────────────────────────── */
+#ke-edit-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 1300;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 1.2rem;
+    background: rgba(0, 0, 0, 0.42);
+}
+#ke-edit-overlay .mi-message-overlay__panel {
+    width: min(1120px, 97vw);
+    max-height: 90vh;
+    border-radius: 14px;
+    border: 1px solid #d6dbe6;
+    box-shadow: 0 24px 60px rgba(23, 31, 56, 0.22);
+    padding: 0;
+    overflow: hidden;
+}
+#ke-edit-overlay .mi-message-overlay__head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.9rem 1.1rem;
+    border-bottom: 1px solid #1e3a8a;
+    background: linear-gradient(180deg, #1e3a8a 0%, #1d4ed8 100%);
+}
+#ke-edit-overlay .mi-message-overlay__body {
+    padding: 1rem 1.1rem 1.15rem;
+    background: #fafbfe;
+}
+.ke-modal-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.65rem;
+}
+.ke-edit-panel-title {
+    margin: 0;
+    font-size: 1.04rem;
+    font-weight: 700;
+    letter-spacing: 0.01em;
+    color: #f8fbff;
+}
+.ke-modal-grid label {
+    display: grid;
+    gap: 0.25rem;
+    margin: 0;
+    padding: 0.58rem;
+    border: 1px solid #e5e9f2;
+    border-radius: 10px;
+    background: #ffffff;
+    font-weight: 600;
+    font-size: 0.86rem;
+    color: #334155;
+}
+.ke-modal-grid label:nth-last-child(-n + 3) {
+    grid-column: 1 / -1;
+}
+.ke-modal-grid input,
+.ke-modal-grid textarea {
+    width: 100%;
+    border: 1px solid #d6dce9;
+    border-radius: 8px;
+    padding: 0.5rem 0.58rem;
+    background: #fcfdff;
+    transition: border-color 0.14s, box-shadow 0.14s;
+}
+.ke-modal-grid input:focus,
+.ke-modal-grid textarea:focus {
+    outline: none;
+    border-color: #4f46e5;
+    box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.12);
+}
+.ke-modal-grid textarea {
+    min-height: 6rem;
+    resize: vertical;
+}
+.ke-modal-actions {
+    margin-top: 0.65rem;
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.45rem;
+}
+#ke-edit-save,
+#ke-edit-delete {
+    border-radius: 10px;
+    border: 1px solid transparent;
+    font-weight: 700;
+    padding: 0.5rem 0.9rem;
+    box-shadow: 0 6px 14px rgba(15, 23, 42, 0.18);
+    transition: transform 0.12s, box-shadow 0.12s, filter 0.12s;
+}
+#ke-edit-save {
+    background: linear-gradient(180deg, #22c55e 0%, #16a34a 100%);
+    border-color: #15803d;
+    color: #ffffff;
+}
+#ke-edit-delete {
+    background: linear-gradient(180deg, #ef4444 0%, #dc2626 100%);
+    border-color: #b91c1c;
+    color: #ffffff;
+}
+#ke-edit-save:hover,
+#ke-edit-delete:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 10px 18px rgba(15, 23, 42, 0.22);
+    filter: saturate(1.06);
+}
+#ke-edit-save:active,
+#ke-edit-delete:active {
+    transform: translateY(0);
+}
+
+[data-theme="dark"] #ke-edit-overlay {
+    background: rgba(2, 6, 23, 0.72);
+}
+[data-theme="dark"] #ke-edit-overlay .mi-message-overlay__panel {
+    border-color: #334155;
+    box-shadow: 0 28px 60px rgba(2, 6, 23, 0.55);
+}
+[data-theme="dark"] #ke-edit-overlay .mi-message-overlay__head {
+    border-bottom-color: #1e3a8a;
+    background: linear-gradient(180deg, #1e3a8a 0%, #1d4ed8 100%);
+}
+[data-theme="dark"] #ke-edit-overlay .mi-message-overlay__body {
+    background: #111827;
+}
+[data-theme="dark"] .ke-modal-grid label {
+    background: #1f2937;
+    border-color: #334155;
+    color: #e5e7eb;
+}
+[data-theme="dark"] .ke-modal-grid input,
+[data-theme="dark"] .ke-modal-grid textarea {
+    background: #0b1220;
+    color: #e5e7eb;
+    border-color: #334155;
+}
+[data-theme="dark"] .ke-modal-grid input:focus,
+[data-theme="dark"] .ke-modal-grid textarea:focus {
+    border-color: #60a5fa;
+    box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.18);
+}
+[data-theme="dark"] #ke-edit-close {
+    color: #e5e7eb;
+}
+
+@media (max-width: 980px) {
+    .ke-modal-grid {
+        grid-template-columns: 1fr;
+    }
+    .ke-modal-grid label:nth-last-child(-n + 3) {
+        grid-column: auto;
+    }
+}
+</style>
+{% endblock %}
+
+{% block doc_content %}
+<div class="ari-page-header">
+    <h1>
+        <i class="{{ page_icon }}"></i> {{ page_label }}
+    </h1>
+    <p class="ari-page-subtitle">
+        Monitor-managed known APERO errors.
+        See
+        <a href="/docs/known_errors">Known Errors documentation</a>
+        for table definitions and usage notes.
+    </p>
+</div>
+
+<div class="ot-toolbar">
+    <div class="ot-toolbar__left">
+        <div class="ke-global-search-wrap">
+            <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
+            <input id="ke-global-search"
+                   type="search"
+                   class="ot-filter-input"
+                   placeholder="Global filter across all columns"
+                   autocomplete="off">
+        </div>
+        <button id="ke-btn-clear"
+                class="ari-btn ari-btn--sm ari-btn--secondary"
+                title="Clear all column filters">
+            <i class="fa-solid fa-filter-circle-xmark"></i>
+            Clear Filters
+        </button>
+    </div>
+    <div class="ot-toolbar__right">
+        <a href="/docs/known_errors"
+           class="ari-btn ari-btn--sm ari-btn--secondary"
+           title="Open known errors documentation">
+            <i class="fa-solid fa-book"></i> Documentation
+        </a>
+        <button id="ke-refresh"
+                class="ari-btn ari-btn--sm ari-btn--secondary">
+            <i class="fa-solid fa-rotate-right"></i> Refresh
+        </button>
+        <button id="ke-new"
+                class="ari-btn ari-btn--sm ari-btn--primary">
+            <i class="fa-solid fa-plus"></i> New
+        </button>
+    </div>
+</div>
+
+<div class="ot-meta-bar">
+    <span id="ke-row-summary"
+          class="ot-meta-bar__item ot-meta-bar__item--muted"></span>
+</div>
+
+<div class="ot-table-wrap">
+    <table class="ot-table" id="ke-table">
+        <thead>
+            <tr id="ke-header-row" class="ot-header-row"></tr>
+            <tr id="ke-filter-row" class="ot-filter-row"></tr>
+        </thead>
+        <tbody id="ke-tbody">
+            <tr><td class="ot-loading" colspan="12">
+                <i class="fa-solid fa-spinner fa-spin"></i>
+                Loading&hellip;
+            </td></tr>
+        </tbody>
+    </table>
+</div>
+
+{# ── Text viewer overlay ─────────────────────────────────── #}
+<div id="ke-tv-overlay" class="ke-tv-overlay"
+     role="dialog" aria-modal="true" aria-label="Text viewer">
+    <div class="ke-tv-backdrop" id="ke-tv-backdrop"></div>
+    <div class="ke-tv-panel">
+        <div class="ke-tv-toolbar">
+            <span id="ke-tv-title" class="ke-tv-title"></span>
+            <button id="ke-tv-copy" type="button"
+                    class="ari-btn ari-btn--sm ari-btn--secondary"
+                    title="Copy to clipboard">
+                <i class="fa-solid fa-copy"></i> Copy
+            </button>
+            <button id="ke-tv-close" type="button"
+                    class="ari-btn ari-btn--sm ari-btn--alt"
+                    title="Close">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+        <pre id="ke-tv-content" class="ke-tv-content"></pre>
+    </div>
+</div>
+
+{# ── Edit / Create overlay ───────────────────────────────── #}
+<div id="ke-edit-overlay" class="mi-message-overlay"
+     style="display:none;" aria-hidden="true">
+    <div class="mi-message-overlay__panel" role="dialog" aria-modal="true">
+        <div class="mi-message-overlay__head">
+            <h3 id="ke-edit-title" class="ke-edit-panel-title">
+                Edit known error
+            </h3>
+            <button id="ke-edit-close" class="mi-btn mi-btn--ghost"
+                    type="button" title="Close">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+        <div class="mi-message-overlay__body">
+            <div class="ke-modal-grid">
+                <label>Date reported
+                    <input id="ke-edit-date" type="text"
+                           class="mi-input" placeholder="YYYY-MM-DD">
+                </label>
+                <label>Reported by
+                    <input id="ke-edit-by" type="text" class="mi-input">
+                </label>
+                <label>Instrument / Mode
+                    <input id="ke-edit-inst" type="text" class="mi-input">
+                </label>
+                <label>Recipe
+                    <input id="ke-edit-recipe" type="text" class="mi-input">
+                </label>
+                <label>Action
+                    <input id="ke-edit-action" type="text" class="mi-input">
+                </label>
+                <label>Type
+                    <input id="ke-edit-type" type="text" class="mi-input">
+                </label>
+                <label>Error code
+                    <input id="ke-edit-code" type="text" class="mi-input">
+                </label>
+                <label>GitHub issue
+                    <input id="ke-edit-gh" type="text" class="mi-input">
+                </label>
+                <label>Generic error
+                    <textarea id="ke-edit-generic"
+                              class="mi-input"></textarea>
+                </label>
+                <label>Comments
+                    <textarea id="ke-edit-comments"
+                              class="mi-input"></textarea>
+                </label>
+                <label>Full example error
+                    <textarea id="ke-edit-example"
+                              class="mi-input"></textarea>
+                </label>
+            </div>
+            <div class="ke-modal-actions">
+                <button id="ke-edit-save"
+                        class="mi-btn mi-btn--primary">Save</button>
+                <button id="ke-edit-delete"
+                        class="mi-btn mi-btn--danger">Delete</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+(function () {
+    'use strict';
+
+    /* ── Column definitions ────────────────────────────────── */
+    var COLS = [
+        {
+            key: 'date_reported', label: 'Date',
+            sortable: true, filterable: true, width: '7rem'
+        },
+        {
+            key: 'reported_by', label: 'Reported by',
+            sortable: true, filterable: true, width: '8rem'
+        },
+        {
+            key: 'instrument_mode', label: 'Instrument/Mode',
+            sortable: true, filterable: true, width: '9rem'
+        },
+        {
+            key: 'recipe', label: 'Recipe',
+            sortable: true, filterable: true, width: '10rem'
+        },
+        {
+            key: 'action', label: 'Action',
+            sortable: true, filterable: true, width: '7rem'
+        },
+        {
+            key: 'type', label: 'Type',
+            sortable: true, filterable: true, width: '7rem'
+        },
+        {
+            key: 'error_code', label: 'Error code',
+            sortable: true, filterable: true, width: '8rem'
+        },
+        {
+            key: 'github_issue', label: 'GitHub issue',
+            sortable: true, filterable: true, width: '8rem'
+        },
+        {
+            key: '_generic', label: 'Generic error',
+            sortable: false, filterable: true,
+            icon: 'fa-solid fa-terminal',
+            iconTitle: 'View generic error',
+            field: 'generic_error', width: '5.5rem'
+        },
+        {
+            key: '_comments', label: 'Comment',
+            sortable: false, filterable: true,
+            icon: 'fa-solid fa-comment-dots',
+            iconTitle: 'View comment',
+            field: 'comments', width: '5.5rem'
+        },
+        {
+            key: '_example', label: 'Full example',
+            sortable: false, filterable: true,
+            icon: 'fa-solid fa-file-lines',
+            iconTitle: 'View full example error',
+            field: 'full_example_error', width: '5.5rem'
+        },
+        {
+            key: '_actions', label: '',
+            sortable: false, filterable: false, width: '3rem'
+        }
+    ];
+
+    /* ── API config ────────────────────────────────────────── */
+    var cfg = {
+        listUrl: '/api/known-errors/list',
+        createUrl: '/api/known-errors/create',
+        updateUrl: '/api/known-errors/update',
+        deleteUrl: '/api/known-errors/delete'
+    };
+    var canEdit = {{ (can_edit|default(false))|tojson }};
+
+    /* ── State ─────────────────────────────────────────────── */
+    var rows = [];
+    var sortKey = 'date_reported';
+    var sortAsc = false;
+    var globalSearch = '';
+    var filterValues = {};  /* key → string */
+
+    /* ── DOM refs ──────────────────────────────────────────── */
+    var headerRow = document.getElementById('ke-header-row');
+    var filterRow = document.getElementById('ke-filter-row');
+    var tbody = document.getElementById('ke-tbody');
+    var rowSummary = document.getElementById('ke-row-summary');
+    var globalSearchInput = document.getElementById('ke-global-search');
+
+    var tvOverlay = document.getElementById('ke-tv-overlay');
+    var tvTitle = document.getElementById('ke-tv-title');
+    var tvContent = document.getElementById('ke-tv-content');
+    var tvClose = document.getElementById('ke-tv-close');
+    var tvCopy = document.getElementById('ke-tv-copy');
+    var tvBackdrop = document.getElementById('ke-tv-backdrop');
+
+    var editOverlay = document.getElementById('ke-edit-overlay');
+    var editTitle = document.getElementById('ke-edit-title');
+    var editClose = document.getElementById('ke-edit-close');
+    var editSave = document.getElementById('ke-edit-save');
+    var editDelete = document.getElementById('ke-edit-delete');
+    var editFields = {
+        id: null,
+        date_reported: document.getElementById('ke-edit-date'),
+        reported_by: document.getElementById('ke-edit-by'),
+        instrument_mode: document.getElementById('ke-edit-inst'),
+        recipe: document.getElementById('ke-edit-recipe'),
+        action: document.getElementById('ke-edit-action'),
+        type: document.getElementById('ke-edit-type'),
+        error_code: document.getElementById('ke-edit-code'),
+        github_issue: document.getElementById('ke-edit-gh'),
+        generic_error: document.getElementById('ke-edit-generic'),
+        comments: document.getElementById('ke-edit-comments'),
+        full_example_error: document.getElementById('ke-edit-example')
+    };
+
+    /* ── Utilities ─────────────────────────────────────────── */
+    function esc(t) {
+        return String(t == null ? '' : t)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;');
+    }
+
+    function cmp(a, b) {
+        var av = String(a[sortKey] || '').toLowerCase();
+        var bv = String(b[sortKey] || '').toLowerCase();
+        if (av < bv) return sortAsc ? -1 : 1;
+        if (av > bv) return sortAsc ? 1 : -1;
+        return 0;
+    }
+
+    function passFilters(row) {
+        if (globalSearch) {
+            var needleGlobal = globalSearch.toLowerCase();
+            var hasGlobalMatch = false;
+            for (var i = 0; i < COLS.length; i++) {
+                var col = COLS[i];
+                if (col.key === '_actions') continue;
+                var textVal = '';
+                if (col.field) {
+                    textVal = String(row[col.field] || '');
+                } else if (Object.prototype.hasOwnProperty.call(row, col.key)) {
+                    textVal = String(row[col.key] || '');
+                }
+                if (textVal.toLowerCase().indexOf(needleGlobal) !== -1) {
+                    hasGlobalMatch = true;
+                    break;
+                }
+            }
+            if (!hasGlobalMatch) return false;
+        }
+
+        for (var k in filterValues) {
+            var needle = filterValues[k].toLowerCase();
+            if (!needle) continue;
+            var colDef = null;
+            for (var j = 0; j < COLS.length; j++) {
+                if (COLS[j].key === k) {
+                    colDef = COLS[j];
+                    break;
+                }
+            }
+            var rawVal = '';
+            if (colDef && colDef.field) {
+                rawVal = row[colDef.field];
+            } else {
+                rawVal = row[k];
+            }
+            var haystack = String(rawVal || '').toLowerCase();
+            if (haystack.indexOf(needle) === -1) return false;
+        }
+        return true;
+    }
+
+    /* ── Build header + filter rows ────────────────────────── */
+    function buildHeader() {
+        headerRow.innerHTML = '';
+        filterRow.innerHTML = '';
+        COLS.forEach(function (col) {
+            /* Header cell */
+            var th = document.createElement('th');
+            th.className = 'ot-th' +
+                (col.sortable ? '' : ' ot-th--nonsortable');
+            if (col.width) th.style.minWidth = col.width;
+            var icon = 'fa-sort';
+            if (col.sortable && col.key === sortKey) {
+                icon = sortAsc ? 'fa-sort-up' : 'fa-sort-down';
+            }
+            th.innerHTML = '<span class="ot-th__label">' +
+                esc(col.label) +
+                '</span>' +
+                (col.sortable
+                    ? '<i class="fa-solid ' + icon +
+                      ' ot-th__sort-icon' +
+                      (col.key !== sortKey ? ' ot-sort-idle' : '') +
+                      '" aria-hidden="true"></i>'
+                    : '');
+            if (col.sortable) {
+                (function (k) {
+                    th.addEventListener('click', function () {
+                        if (sortKey === k) {
+                            sortAsc = !sortAsc;
+                        } else {
+                            sortKey = k;
+                            sortAsc = true;
+                        }
+                        buildHeader();
+                        renderBody();
+                    });
+                }(col.key));
+            }
+            headerRow.appendChild(th);
+
+            /* Filter cell */
+            var ftd = document.createElement('th');
+            ftd.className = 'ot-filter-cell';
+            if (col.filterable) {
+                var inp = document.createElement('input');
+                inp.type = 'search';
+                inp.className = 'ot-filter-input';
+                inp.placeholder = col.label;
+                inp.autocomplete = 'off';
+                inp.value = filterValues[col.key] || '';
+                inp.dataset.col = col.key;
+                inp.addEventListener('input', function (ev) {
+                    filterValues[ev.target.dataset.col] =
+                        ev.target.value;
+                    renderBody();
+                });
+                ftd.appendChild(inp);
+            }
+            filterRow.appendChild(ftd);
+        });
+    }
+
+    /* ── Render table body ──────────────────────────────────── */
+    function renderBody() {
+        var filtered = rows.filter(passFilters);
+        filtered.sort(cmp);
+
+        rowSummary.textContent =
+            filtered.length + ' / ' + rows.length + ' rows';
+
+        tbody.innerHTML = '';
+        if (!filtered.length) {
+            var empty = document.createElement('tr');
+            empty.innerHTML = '<td class="ot-loading" colspan="' +
+                COLS.length + '">No known errors match these filters.</td>';
+            tbody.appendChild(empty);
+            return;
+        }
+
+        filtered.forEach(function (row) {
+            var tr = document.createElement('tr');
+            tr.className = 'ot-row';
+            var html = '';
+            COLS.forEach(function (col) {
+                html += '<td class="ot-cell">';
+                if (col.key === '_actions') {
+                    if (canEdit) {
+                        html += '<button class="ari-btn ari-btn--xs"' +
+                            ' data-kind="edit"' +
+                            ' data-id="' + esc(row.id) + '"' +
+                            ' title="Edit">' +
+                            '<i class="fa-solid fa-pen"></i></button>';
+                    }
+                } else if (col.icon) {
+                    var val = row[col.field] || '';
+                    if (val.trim()) {
+                        html += '<button class="ke-icon-btn"' +
+                            ' data-kind="' + col.key + '"' +
+                            ' data-id="' + esc(row.id) + '"' +
+                            ' title="' + esc(col.iconTitle) + '">' +
+                            '<i class="' + col.icon + '"></i>' +
+                            '</button>';
+                    } else {
+                        html += '<button class="ke-icon-btn' +
+                            ' ke-icon-btn--empty"' +
+                            ' title="No content" disabled>' +
+                            '<i class="' + col.icon + '"></i>' +
+                            '</button>';
+                    }
+                } else {
+                    html += esc(row[col.key] || '');
+                }
+                html += '</td>';
+            });
+            tr.innerHTML = html;
+            tbody.appendChild(tr);
+        });
+    }
+
+    /* ── Text viewer ────────────────────────────────────────── */
+    function openTextViewer(title, text) {
+        tvTitle.textContent = title;
+        tvContent.textContent = text || '(empty)';
+        tvOverlay.classList.add('ke-tv-overlay--open');
+    }
+
+    function closeTextViewer() {
+        tvOverlay.classList.remove('ke-tv-overlay--open');
+    }
+
+    tvClose.addEventListener('click', closeTextViewer);
+    tvBackdrop.addEventListener('click', closeTextViewer);
+    tvCopy.addEventListener('click', function () {
+        navigator.clipboard.writeText(tvContent.textContent || '')
+            .catch(function () {});
+    });
+    document.addEventListener('keydown', function (ev) {
+        if (ev.key === 'Escape') closeTextViewer();
+    });
+
+    /* ── Table click delegation ─────────────────────────────── */
+    tbody.addEventListener('click', function (ev) {
+        var btn = ev.target.closest('button[data-kind]');
+        if (!btn) return;
+        var kind = btn.dataset.kind;
+        var id = btn.dataset.id;
+        var row = rows.find(function (r) {
+            return String(r.id) === String(id);
+        });
+        if (!row) return;
+
+        if (kind === '_generic') {
+            openTextViewer(
+                'Generic error  \u2014  ' +
+                (row.instrument_mode || 'ALL') + ' / ' +
+                (row.recipe || 'ALL'),
+                row.generic_error || ''
+            );
+            return;
+        }
+        if (kind === '_comments') {
+            openTextViewer(
+                'Comment  \u2014  ' +
+                (row.instrument_mode || 'ALL') + ' / ' +
+                (row.recipe || 'ALL'),
+                row.comments || ''
+            );
+            return;
+        }
+        if (kind === '_example') {
+            openTextViewer(
+                'Full example error  \u2014  ' +
+                (row.instrument_mode || 'ALL') + ' / ' +
+                (row.recipe || 'ALL'),
+                row.full_example_error || ''
+            );
+            return;
+        }
+        if (kind === 'edit') {
+            if (!canEdit) return;
+            openEdit(row, false);
+        }
+    });
+
+    /* ── Edit / Create overlay ──────────────────────────────── */
+    function openEdit(row, isNew) {
+        if (!canEdit) return;
+        editFields.id = row ? row.id : null;
+        editTitle.textContent = isNew
+            ? 'Create known error' : 'Edit known error';
+        editDelete.style.display = isNew ? 'none' : '';
+        Object.keys(editFields).forEach(function (k) {
+            if (k === 'id') return;
+            editFields[k].value = row && row[k] ? row[k] : '';
+        });
+        if (isNew && !editFields.date_reported.value) {
+            editFields.date_reported.value =
+                new Date().toISOString().slice(0, 10);
+        }
+        editOverlay.style.display = 'flex';
+        editOverlay.setAttribute('aria-hidden', 'false');
+    }
+
+    function closeEdit() {
+        editOverlay.style.display = 'none';
+        editOverlay.setAttribute('aria-hidden', 'true');
+    }
+
+    async function saveEdit() {
+        var payload = {};
+        Object.keys(editFields).forEach(function (k) {
+            if (k === 'id') return;
+            payload[k] = editFields[k].value || '';
+        });
+        if (editFields.id) payload.id = editFields.id;
+        if (!payload.generic_error.trim()) {
+            alert('Generic error is required.');
+            return;
+        }
+        var isNew = !payload.id;
+        var url = isNew ? cfg.createUrl : cfg.updateUrl;
+        var resp = await fetch(url, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(payload)
+        });
+        var data = await resp.json();
+        if (!resp.ok || !data.success) {
+            alert(data.error || 'Save failed');
+            return;
+        }
+        closeEdit();
+        await loadRows();
+    }
+
+    async function deleteRow() {
+        if (!editFields.id) return;
+        if (!window.confirm('Delete this known error?')) return;
+        var resp = await fetch(cfg.deleteUrl, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({id: editFields.id})
+        });
+        var data = await resp.json();
+        if (!resp.ok || !data.success) {
+            alert(data.error || 'Delete failed');
+            return;
+        }
+        closeEdit();
+        await loadRows();
+    }
+
+    editClose.addEventListener('click', closeEdit);
+    var editPanel = editOverlay.querySelector('.mi-message-overlay__panel');
+    if (editPanel) {
+        editPanel.addEventListener('click', function (ev) {
+            ev.stopPropagation();
+        });
+    }
+    editSave.addEventListener('click', saveEdit);
+    editDelete.addEventListener('click', deleteRow);
+
+    /* ── Load ───────────────────────────────────────────────── */
+    async function loadRows() {
+        rowSummary.textContent = 'Loading\u2026';
+        var resp = await fetch(cfg.listUrl);
+        var data = await resp.json();
+        if (!resp.ok || !data.success) {
+            tbody.innerHTML = '<tr><td class="ot-error" colspan="' +
+                COLS.length + '">Failed to load rows.</td></tr>';
+            rowSummary.textContent = '';
+            return;
+        }
+        rows = data.rows || [];
+        renderBody();
+    }
+
+    /* ── Toolbar buttons ────────────────────────────────────── */
+    document.getElementById('ke-btn-clear')
+        .addEventListener('click', function () {
+            globalSearch = '';
+            if (globalSearchInput) {
+                globalSearchInput.value = '';
+            }
+            filterValues = {};
+            buildHeader();
+            renderBody();
+        });
+    document.getElementById('ke-refresh')
+        .addEventListener('click', loadRows);
+    document.getElementById('ke-new')
+        .addEventListener('click', function () {
+            openEdit(null, true);
+        });
+
+    if (!canEdit) {
+        editOverlay.style.display = 'none';
+        editOverlay.setAttribute('aria-hidden', 'true');
+        var newBtn = document.getElementById('ke-new');
+        if (newBtn) {
+            newBtn.style.display = 'none';
+        }
+    }
+
+    if (globalSearchInput) {
+        globalSearchInput.addEventListener('input', function () {
+            globalSearch = String(globalSearchInput.value || '').trim();
+            renderBody();
+        });
+    }
+
+    /* ── Init ───────────────────────────────────────────────── */
+    buildHeader();
+    loadRows();
+}());
+</script>
+{% endblock %}

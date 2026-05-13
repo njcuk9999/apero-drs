@@ -1,0 +1,45 @@
+id: 947a2cca-b7cd-4d2a-bf57-ebadbff45d02
+slug: e-40-015-00009-error-fitting-sinc-to-blaze-order-order-num-fiber-fiber-iteration-iter-guess-amp-amp-pe
+date_reported: '2023-08-28'
+reported_by: Neil Cook
+instrument_mode: ALL
+recipe: apero_flat
+action: Check
+type: Expected
+error_code: 40-015-00009
+github_issue: '714.0'
+generic_error: 'E[40-015-00009]: Error fitting sinc to blaze. Order = {ORDER_NUM}
+  Fiber = {FIBER} Iteration = {ITER}
+
+  Guess: amp={AMP} period={PERIOD} lin={DC} slope={SLOPE} quad={QUAD} (cube={CUBE})
+
+  Lower: amp={AMP} period={PERIOD} lin={DC} slope={SLOPE} quad={QUAD} (cube={CUBE})
+
+  Upper: amp={AMP} period={PERIOD} lin={DC} slope={SLOPE} quad={QUAD} (cube={CUBE})
+
+  Error <class ''RuntimeError''>: Optimal parameters not found: Number of calls to
+
+  function has reached maxfev = 1200.
+
+  Function = science.extract.extraction.py.calculate_blaze_flat_sinc()'
+comments: This is due to scipy curve fit not converging. Ignore if happening to SPIRou  20BQ09-Nov04
+  (2020-11-04) report otherwise.
+full_example_error: 'E[40-015-00009]: Error fitting sinc to blaze. Order = 45 Fiber
+  = A Iteration =
+
+  -1
+
+  Guess: amp=192322.95727446376 period=7034.0 lin=1214.0 slope=0 quad=0 (cube=0)
+
+  Lower: amp=0 period=0.0 lin=0.0 slope=-inf quad=-inf (cube=-1e-20)
+
+  Upper: amp=288484.43591169565 period=inf lin=4087 slope=inf quad=inf
+
+  (cube=1e-20)
+
+  Error <class ''RuntimeError''>: Optimal parameters not found: Number of calls to
+
+  function has reached maxfev = 1200.
+
+  Function = science.extract.extraction.py.calculate_blaze_flat_sinc()'
+updated_at: '2026-05-13 15:54:29'

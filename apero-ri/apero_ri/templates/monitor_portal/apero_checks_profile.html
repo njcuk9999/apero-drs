@@ -1,0 +1,597 @@
+{% extends "general/sidebar_base.html" %}
+{% block title %}APERO RI – APERO Checks – {{ profile_id }}{% endblock %}
+
+{% block body_class %}ari-has-sidebar ari-apero-checks-page{% endblock %}
+
+{% block extra_head %}
+{{ super() }}
+<link rel="stylesheet"
+    href="{{ url_for('static', filename='css/apero_checks.css') }}?v=20260513b">
+<script src="{{ url_for('static', filename='js/apero_checks.js') }}?v=20260513b"
+        defer></script>
+<style>
+.ac-manage-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr);
+    gap: 1rem;
+}
+.ac-manage-panel {
+    border: 1px solid var(--ari-border);
+    border-radius: 1rem;
+    background: var(--ari-card-bg);
+    padding: 1rem;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.05);
+}
+.ac-manage-panel__head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    margin-bottom: 0.85rem;
+}
+.ac-manage-panel__title {
+    font-size: 1.02rem;
+    font-weight: 700;
+}
+.ac-manage-panel__subtitle {
+    color: var(--ari-text-muted);
+    font-size: 0.92rem;
+}
+.ac-manage-field {
+    display: grid;
+    gap: 0.45rem;
+}
+.ac-manage-field__label {
+    font-weight: 600;
+}
+.ac-manage-field__row {
+    display: flex;
+    gap: 0.5rem;
+    align-items: stretch;
+}
+.ac-manage-field__row input {
+    flex: 1;
+}
+.ac-manage-help {
+    color: var(--ari-text-muted);
+    font-size: 0.88rem;
+}
+.ac-check-list {
+    display: grid;
+    gap: 0.6rem;
+}
+.ac-check-card {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 0.5rem;
+    align-items: center;
+    padding: 0.75rem;
+    border: 1px solid var(--ari-border);
+    border-radius: 0.85rem;
+    background: var(--ari-surface-muted, #f8fafc);
+}
+.ac-check-card__meta {
+    color: var(--ari-text-muted);
+    font-size: 0.88rem;
+}
+.ac-check-card__input {
+    width: 100%;
+}
+.ac-manage-footer {
+    display: flex;
+    justify-content: space-between;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+    margin-top: 1rem;
+}
+.ac-dir-browser__list {
+    max-height: 46vh;
+    overflow: auto;
+    border: 1px solid var(--ari-border);
+    border-radius: 0.85rem;
+    background: var(--ari-surface-muted, #f8fafc);
+}
+.ac-dir-browser__row {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    width: 100%;
+    padding: 0.65rem 0.8rem;
+    border: 0;
+    background: transparent;
+    text-align: left;
+}
+.ac-dir-browser__row:hover {
+    background: color-mix(in srgb, var(--ari-primary, #4b7bec) 8%, white);
+}
+.ac-dir-browser__row--up {
+    border-bottom: 1px solid var(--ari-border);
+}
+.ac-dir-browser__path {
+    color: var(--ari-text-muted);
+    font-size: 0.88rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.ac-toggle-override-on {
+    background: #7c3aed;
+    border-color: #6d28d9;
+    color: #ffffff;
+}
+.ac-toggle-monitor-on {
+    background: #f59e0b;
+    border-color: #d97706;
+    color: #ffffff;
+}
+.ac-filter-stack {
+    display: flex;
+    flex-direction: column;
+    gap: 0.45rem;
+}
+.ac-filter-row {
+    display: flex;
+    align-items: center;
+    gap: 0.55rem;
+    flex-wrap: wrap;
+}
+.ac-filter-row__label {
+    color: var(--ari-text-muted);
+    font-size: 0.9rem;
+    font-weight: 600;
+}
+@media (max-width: 980px) {
+    .ac-manage-grid {
+        grid-template-columns: 1fr;
+    }
+}
+</style>
+{% endblock %}
+
+{% block doc_content %}
+<div class="ari-page-header">
+    <h1>
+        <i class="fa-solid fa-square-check"></i>
+        <a href="{{ url_for('monitor_apero_checks_view') }}"
+           class="ot-breadcrumb-link">APERO Checks</a>
+        <span class="ot-breadcrumb-sep">/</span>
+        {{ profile_id }}
+    </h1>
+    <p class="ari-page-subtitle">
+        Per-obsdir APERO check files for this profile.
+        Use the filters to focus on raw/red checks, overridden items, or monitored
+        items, then open a check to inspect details and history.
+        <br>
+        Symbols:
+        <i class="fa-solid fa-check" style="color:#1f9d55;" title="Overridden check"></i>
+        overridden,
+        <i class="fa-solid fa-xmark" style="color:#cc4b37;" title="Active failure"></i>
+        active failure,
+        <i class="fa-solid fa-bell" style="color:#7c3aed;" title="Monitored check"></i>
+        monitored,
+        <i class="fa-solid fa-triangle-exclamation" style="color:#f59e0b;" title="Overridden marker"></i>
+        overridden marker.
+    </p>
+</div>
+
+<div class="ot-meta-bar">
+    <span class="ot-meta-bar__item ot-meta-bar__item--muted">
+        YAML root: {{ checks_root }}
+    </span>
+    <span id="ac-page-info" class="ot-meta-bar__item ot-meta-bar__item--muted">
+        Page {{ current_page }} of {{ total_pages }}
+    </span>
+    {% if can_manage_checks %}
+    <button id="ac-btn-manage"
+            class="ari-btn ari-btn--sm ari-btn--secondary"
+            title="Manage APERO checks root and ignore list">
+        <i class="fa-solid fa-gear"></i> Manage
+    </button>
+    {% endif %}
+</div>
+
+<div class="ot-toolbar">
+    <div class="ot-toolbar__left">
+        <div class="ac-filter-stack">
+            <div class="ac-filter-row">
+                <span class="ac-filter-row__label">Observation directory:</span>
+                <span class="ac-filter-row__label">filter</span>
+                <input id="ac-obsdir-filter" class="ot-perpage-select"
+                       type="text"
+                       value="{{ obsdir_filter|default('') }}"
+                       placeholder="regex or text pattern">
+                <span class="ac-filter-row__label">sort</span>
+                <select id="ac-obsdir-sort" class="ot-perpage-select">
+                    <option value="asc"
+                        {% if obsdir_sort == 'asc' %}selected{% endif %}>
+                        Ascending
+                    </option>
+                    <option value="desc"
+                        {% if obsdir_sort == 'desc' %}selected{% endif %}>
+                        Descending
+                    </option>
+                </select>
+            </div>
+
+            <div class="ac-filter-row">
+                <span class="ac-filter-row__label">Type:</span>
+                <select id="ac-type" class="ot-perpage-select">
+                    <option value="all" {% if type_filter == 'all' %}selected{% endif %}>All</option>
+                    <option value="raw" {% if type_filter == 'raw' %}selected{% endif %}>Raw</option>
+                    <option value="red" {% if type_filter == 'red' %}selected{% endif %}>Red</option>
+                </select>
+            </div>
+
+            <div class="ac-filter-row">
+                <button id="ac-btn-overridden"
+                        class="ari-btn ari-btn--sm ari-btn--secondary {% if show_overridden %}ac-toggle-override-on{% endif %}"
+                        title="Toggle overridden checks visibility">
+                    <i class="fa-solid fa-layer-group"></i>
+                    {% if show_overridden %}
+                    Hide overridden checks
+                    {% else %}
+                    Show overridden checks
+                    {% endif %}
+                </button>
+                <button id="ac-btn-monitored"
+                        class="ari-btn ari-btn--sm ari-btn--secondary {% if show_monitored %}ac-toggle-monitor-on{% endif %}"
+                        title="Toggle monitored checks visibility">
+                    <i class="fa-solid fa-bell-concierge"></i>
+                    {% if show_monitored %}
+                    Hide monitored checks
+                    {% else %}
+                    Show monitored checks
+                    {% endif %}
+                </button>
+            </div>
+        </div>
+    </div>
+    <div class="ot-toolbar__right">
+        <label class="ot-perpage-label">
+            N per page
+            <select id="ac-perpage" class="ot-perpage-select">
+                <option value="10" {% if per_page == 10 %}selected{% endif %}>10</option>
+                <option value="50" {% if per_page == 50 %}selected{% endif %}>50</option>
+                <option value="100" {% if per_page == 100 %}selected{% endif %}>100</option>
+            </select>
+        </label>
+        <button id="ac-btn-refresh"
+                class="ari-btn ari-btn--sm ari-btn--secondary">
+            <i class="fa-solid fa-rotate-right"></i> Refresh
+        </button>
+    </div>
+</div>
+
+<div class="ot-pagination ac-pagination-top">
+    <div class="ot-page-info">Page {{ current_page }} of {{ total_pages }}</div>
+    <div class="ot-page-controls">
+        <a class="ari-btn ari-btn--sm ari-btn--secondary"
+           {% if current_page > 1 %}
+              href="?page={{ current_page - 1 }}&per_page={{ per_page }}&type={{ type_filter }}&obsdir_filter={{ obsdir_filter|default('')|urlencode }}&obsdir_sort={{ obsdir_sort|default('desc')|urlencode }}&show_overridden={{ 1 if show_overridden else 0 }}&show_monitored={{ 1 if show_monitored else 0 }}"
+           {% else %}aria-disabled="true" style="pointer-events:none;opacity:0.45;"{% endif %}>
+            <i class="fa-solid fa-angle-left"></i>
+        </a>
+        <a class="ari-btn ari-btn--sm ari-btn--secondary"
+           {% if current_page < total_pages %}
+              href="?page={{ current_page + 1 }}&per_page={{ per_page }}&type={{ type_filter }}&obsdir_filter={{ obsdir_filter|default('')|urlencode }}&obsdir_sort={{ obsdir_sort|default('desc')|urlencode }}&show_overridden={{ 1 if show_overridden else 0 }}&show_monitored={{ 1 if show_monitored else 0 }}"
+           {% else %}aria-disabled="true" style="pointer-events:none;opacity:0.45;"{% endif %}>
+            <i class="fa-solid fa-angle-right"></i>
+        </a>
+    </div>
+</div>
+
+<div class="ac-card-list" id="ac-card-list">
+    {% for card in profile_cards %}
+    <article class="ac-card ac-card--{{ card.status }}"
+             data-obsdir="{{ card.obsdir }}">
+        <div class="ac-card__row">
+            <span class="ac-card__row-status" title="Card status">
+                {% if card.status == 'ok' %}
+                <i class="fa-solid fa-check ac-i-ok"></i>
+                {% else %}
+                <i class="fa-solid fa-xmark ac-i-bad"></i>
+                {% endif %}
+            </span>
+            <div class="ac-card__date" title="Obsdir: {{ card.obsdir }}">
+                {{ card.obsdir }}
+            </div>
+
+            <div class="ac-card__checks">
+                {% for failure_key, failure in card.visible_failures %}
+                <button class="ac-check-pill"
+                        data-ac-action="failure"
+                        data-ac-failure='{{ failure|tojson }}'
+                        data-ac-failure-key="{{ failure_key }}"
+                        data-ac-obsdir="{{ card.obsdir }}"
+                        data-ac-card='{{ card|tojson }}'>
+                    <span class="ac-check-pill__label">
+                        {{ failure.type }}:{{ failure.name }}
+                    </span>
+                    <span class="ac-check-pill__icons">
+                        {% if failure.monitor %}
+                        <i class="fa-solid fa-bell ac-i-mon"
+                           title="Monitored check"></i>
+                        {% endif %}
+                        {% if failure.override %}
+                        <i class="fa-solid fa-triangle-exclamation ac-i-ovr"
+                           title="Overridden marker"></i>
+                        {% endif %}
+                    </span>
+                </button>
+                {% endfor %}
+                {% if not card.visible_failures %}
+                <span class="ac-check-empty">No visible checks</span>
+                {% endif %}
+            </div>
+
+            <div class="ac-card__actions">
+                <button class="ari-btn ari-btn--sm ari-btn--secondary"
+                        data-ac-action="history"
+                        data-ac-obsdir="{{ card.obsdir }}"
+                        data-ac-card='{{ card|tojson }}'
+                        title="Open history">
+                    <i class="fa-solid fa-clock-rotate-left"></i>
+                </button>
+                <button class="ari-btn ari-btn--sm ari-btn--secondary"
+                        data-ac-action="issue"
+                        data-ac-obsdir="{{ card.obsdir }}"
+                        data-ac-card='{{ card|tojson }}'
+                        title="Create issue">
+                    <i class="fa-solid fa-flag"></i>
+                </button>
+            </div>
+        </div>
+    </article>
+    {% endfor %}
+</div>
+
+<div id="ac-history-overlay" class="ac-overlay" hidden>
+    <div class="ac-overlay__backdrop" data-ac-close="history"></div>
+    <div class="ac-overlay__panel">
+        <div class="ac-overlay__header">
+            <h3 id="ac-history-title">History</h3>
+            <button type="button" class="ac-overlay__close"
+                    data-ac-close="history">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+        <div class="ac-overlay__tools">
+            <input id="ac-history-search" type="search"
+                   placeholder="Search history...">
+        </div>
+        <div class="ac-table-wrap">
+            <table class="ac-table" id="ac-history-table">
+                <thead>
+                    <tr>
+                        <th data-ac-sort="date">Date</th>
+                        <th data-ac-sort="user">User</th>
+                        <th data-ac-sort="source">Source</th>
+                        <th data-ac-sort="comment">Comment</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<div id="ac-failure-overlay" class="ac-overlay" hidden>
+    <div class="ac-overlay__backdrop" data-ac-close="failure"></div>
+    <div class="ac-overlay__panel ac-overlay__panel--wide">
+        <div class="ac-overlay__header ac-overlay__header--info">
+            <h3 id="ac-failure-title">APERO Check information</h3>
+            <button type="button" class="ac-overlay__close"
+                    data-ac-close="failure">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+        <div class="ac-failure-detail">
+            <div class="ac-failure-detail__meta" id="ac-failure-meta"></div>
+            <pre class="ac-failure-detail__message" id="ac-failure-message"></pre>
+            <div id="ac-failure-save-note" class="ac-save-note" hidden></div>
+            <div id="ac-failure-comment-editor"
+                 class="ac-failure-comment-editor" hidden>
+                <label class="ac-failure-detail__label">
+                    <span id="ac-failure-comment-label">Comment</span>
+                    <textarea id="ac-failure-comment" rows="3"
+                              placeholder="Enter comment"></textarea>
+                </label>
+                <div class="ac-failure-detail__actions">
+                    <button id="ac-btn-save-comment"
+                            class="ari-btn ari-btn--sm ari-btn--primary">
+                        Save
+                    </button>
+                    <button id="ac-btn-cancel-comment"
+                            class="ari-btn ari-btn--sm ari-btn--secondary">
+                        Cancel
+                    </button>
+                </div>
+            </div>
+            <div class="ac-failure-detail__actions">
+                <button id="ac-btn-override"
+                        class="ari-btn ari-btn--sm ari-btn--secondary">
+                    <i class="fa-solid fa-check"></i>
+                    <span id="ac-btn-override-label">Override: OFF</span>
+                </button>
+                <button id="ac-btn-monitor"
+                        class="ari-btn ari-btn--sm ari-btn--secondary">
+                    <i class="fa-solid fa-bell"></i>
+                    <span id="ac-btn-monitor-label">Monitor: OFF</span>
+                </button>
+                <button id="ac-btn-clear"
+                        class="ari-btn ari-btn--sm ari-btn--secondary">
+                    <i class="fa-solid fa-trash"></i> Clear
+                </button>
+                <button id="ac-btn-copy"
+                        class="ari-btn ari-btn--sm ari-btn--secondary">
+                    <i class="fa-solid fa-copy"></i> Copy report
+                </button>
+                <button id="ac-btn-close"
+                        class="ari-btn ari-btn--sm ari-btn--secondary"
+                        data-ac-close="failure">
+                    <i class="fa-solid fa-xmark"></i> Close
+                </button>
+            </div>
+            <div id="ac-failure-path" class="ac-failure-path"></div>
+        </div>
+    </div>
+</div>
+
+<div id="ac-issue-overlay" class="ac-overlay" hidden>
+    <div class="ac-overlay__backdrop" data-ac-close="issue"></div>
+    <div class="ac-overlay__panel ac-overlay__panel--wide">
+        <div class="ac-overlay__header">
+            <h3 id="ac-issue-title">APERO Check Issue</h3>
+            <button type="button" class="ac-overlay__close"
+                    data-ac-close="issue">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+        <div class="ac-issue-body">
+            <div class="ac-issue-body__cards" id="ac-issue-cards"></div>
+            <label class="ac-failure-detail__label">
+                Reason
+                <textarea id="ac-issue-reason" rows="3"
+                          maxlength="80"
+                          placeholder="80 characters or less"></textarea>
+            </label>
+            <div class="ac-failure-detail__actions">
+                <button id="ac-btn-create-issue"
+                        class="ari-btn ari-btn--sm ari-btn--primary">
+                    <i class="fa-solid fa-flag"></i> Create issue
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% if can_manage_checks %}
+<div id="ac-manage-overlay" class="ac-overlay" hidden>
+    <div class="ac-overlay__backdrop" data-ac-close="manage"></div>
+    <div class="ac-overlay__panel ac-overlay__panel--wide">
+        <div class="ac-overlay__header">
+            <div>
+                <h3>Manage APERO checks</h3>
+                <div class="ac-manage-help">
+                    Configure the YAML root and the list of ignored checks.
+                </div>
+            </div>
+            <button type="button" class="ac-overlay__close"
+                    data-ac-close="manage">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+        <div class="ac-manage-grid">
+            <section class="ac-manage-panel">
+                <div class="ac-manage-panel__head">
+                    <div>
+                        <div class="ac-manage-panel__title">YAML root</div>
+                        <div class="ac-manage-panel__subtitle">
+                            Browse the server filesystem and point APERO checks
+                            at the directory containing your YAML files.
+                        </div>
+                    </div>
+                </div>
+                <div class="ac-manage-help">
+                    Choose a server-side directory for the APERO checks YAML root.
+                </div>
+                <label class="ac-manage-field__label" for="ac-manage-root">
+                    Checks directory
+                </label>
+                <div class="ac-manage-field__row">
+                    <input id="ac-manage-root" type="text"
+                           value="{{ checks_root }}">
+                    <button type="button" id="ac-btn-browse-root"
+                            class="ari-btn ari-btn--secondary">
+                        <i class="fa-solid fa-folder-open"></i> Browse
+                    </button>
+                </div>
+                <div class="ac-manage-help">
+                    Current path: <span id="ac-manage-root-preview">{{ checks_root }}</span>
+                </div>
+            </section>
+
+            <section class="ac-manage-panel">
+                <div class="ac-manage-panel__head">
+                    <div>
+                        <div class="ac-manage-panel__title">Ignored checks</div>
+                        <div class="ac-manage-panel__subtitle">
+                            These checks will be hidden from the profile cards
+                            and the detail page.
+                        </div>
+                    </div>
+                    <button type="button" id="ac-btn-add-ignored"
+                            class="ari-btn ari-btn--secondary ari-btn--sm">
+                        <i class="fa-solid fa-plus"></i> Add check
+                    </button>
+                </div>
+                <div id="ac-ignored-checks" class="ac-check-list"></div>
+                <div class="ac-manage-help" style="margin-top:0.6rem;">
+                    Tip: make the check key match the failure key in the YAML.
+                </div>
+            </section>
+        </div>
+
+        <div class="ac-manage-footer">
+            <div class="ac-manage-help">
+                Saved changes update the monitor page immediately.
+            </div>
+            <button id="ac-btn-save-config"
+                    class="ari-btn ari-btn--sm ari-btn--primary">
+                <i class="fa-solid fa-floppy-disk"></i> Save changes
+            </button>
+        </div>
+    </div>
+</div>
+
+<div id="ac-browse-overlay" class="ac-overlay" hidden>
+    <div class="ac-overlay__backdrop" data-ac-close="browse"></div>
+    <div class="ac-overlay__panel ac-overlay__panel--wide">
+        <div class="ac-overlay__header">
+            <div>
+                <h3>Browse directories</h3>
+                <div class="ac-manage-help">Choose a server-side directory for the APERO checks YAML root.</div>
+            </div>
+            <button type="button" class="ac-overlay__close" data-ac-close="browse">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+        <div class="ac-failure-detail">
+            <div class="ac-manage-field__row">
+                <input id="ac-browse-path" type="text" placeholder="Path">
+                <button type="button" id="ac-browse-go"
+                        class="ari-btn ari-btn--secondary">Go</button>
+                <button type="button" id="ac-browse-up"
+                        class="ari-btn ari-btn--secondary">Up</button>
+            </div>
+            <div id="ac-browse-list" class="ac-dir-browser__list"></div>
+            <div class="ac-manage-footer" style="margin-top:0;">
+                <div class="ac-manage-help">
+                    The selected path will be copied back into the YAML root field.
+                </div>
+                <button type="button" id="ac-browse-select"
+                        class="ari-btn ari-btn--primary">Use this directory</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<script>
+window.ARI_APERO_CHECKS = {
+    profileId: {{ profile_id|tojson }},
+    page: {{ current_page|tojson }},
+    perPage: {{ per_page|tojson }},
+    typeFilter: {{ type_filter|tojson }},
+    showOverridden: {{ show_overridden|tojson }},
+    showMonitored: {{ show_monitored|tojson }},
+    cards: {{ profile_cards|tojson }},
+    canManage: {{ can_manage_checks|tojson }},
+    ignoredChecks: {{ ignored_checks|tojson }},
+    browseUrl: {{ url_for('api_apero_checks_browse_dirs')|tojson }},
+    apiUpdateUrl: {{ url_for('api_apero_checks_update_failure')|tojson }},
+    apiIssueUrl: {{ url_for('api_apero_checks_create_issue')|tojson }},
+    apiConfigUrl: {{ url_for('api_apero_checks_config_save')|tojson }},
+};
+</script>
+{% endblock %}

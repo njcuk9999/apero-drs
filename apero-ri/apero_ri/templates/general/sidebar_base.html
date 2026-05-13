@@ -14,7 +14,7 @@
                 {% for item in sidebar_tree %}
                 {% if item.pinned|default(false) %}
                 {% if item.url and not (item.disabled|default(false)) %}
-                <a href="{{ item.url }}{% if current_version is defined %}?v={{ current_version }}{% endif %}"
+                     <a href="{{ item.url }}{% if doc_query_suffix is defined %}{{ doc_query_suffix }}{% elif current_version is defined %}?v={{ current_version }}{% endif %}"
                    class="ari-sidebar__heading ari-sidebar__heading--pin{% if item.active %} ari-sidebar__heading--pin-active{% endif %}">
                     <i class="{{ item.icon }}"></i>
                     <span>{{ item.label }}</span>
@@ -74,7 +74,7 @@
                 {% endif %}
 
                 {% if item.url and not (item.disabled|default(false)) %}
-                <a href="{{ item.url }}{% if current_version is defined %}?v={{ current_version }}{% endif %}"
+                     <a href="{{ item.url }}{% if doc_query_suffix is defined %}{{ doc_query_suffix }}{% elif current_version is defined %}?v={{ current_version }}{% endif %}"
                    class="{{ item_classes }}"
                    data-page-id="{{ item.id }}"
                    {% if item.fav_toggle|default(false) %}data-fav-toggle="{{ item.fav_group }}" aria-expanded="{{ 'true' if item.fav_expanded|default(false) else 'false' }}"{% endif %}

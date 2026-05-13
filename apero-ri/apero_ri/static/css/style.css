@@ -776,8 +776,8 @@ a:hover {
 }
 
 .ari-up-section-body--scroll {
-    max-height: 42vh;
-    overflow-y: auto;
+    max-height: none;
+    overflow: visible;
 }
 
 .ari-up-token-grid {
@@ -789,6 +789,96 @@ a:hover {
 .ari-up-run-id {
     cursor: default;
     font-family: monospace;
+}
+
+.ari-up-group-card {
+    border: 1px solid var(--ari-border);
+    border-radius: 10px;
+    padding: 0.2rem 0.7rem 0.7rem;
+    background: #fff;
+}
+
+.ari-up-group-card__summary {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 0.8rem;
+    cursor: pointer;
+    list-style: none;
+    padding: 0.45rem 0;
+}
+
+.ari-up-group-card__summary::-webkit-details-marker {
+    display: none;
+}
+
+.ari-up-group-card__name {
+    font-weight: 600;
+}
+
+.ari-up-group-card__count {
+    color: var(--ari-text-muted);
+    font-size: 0.85rem;
+}
+
+.ari-up-group-card__body {
+    margin-top: 0.25rem;
+}
+
+.ari-up-request-body {
+    display: grid;
+    gap: 0.9rem;
+}
+
+.ari-up-request-field {
+    display: grid;
+    gap: 0.35rem;
+}
+
+.ari-up-request-field > span {
+    font-weight: 600;
+}
+
+.ari-up-request-field__head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 0.7rem;
+}
+
+.ari-up-request-field__head > span {
+    font-weight: 600;
+}
+
+.ari-up-request-runids {
+    display: grid;
+    gap: 0.5rem;
+}
+
+.ari-up-request-runid-card {
+    border: 1px solid var(--ari-border);
+    border-radius: 10px;
+    padding: 0.55rem;
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 0.5rem;
+    align-items: center;
+    background: #fff;
+}
+
+.ari-up-request-runid-card input {
+    min-width: 0;
+}
+
+@media (max-width: 720px) {
+    .ari-up-request-field__head {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .ari-up-request-runid-card {
+        grid-template-columns: 1fr;
+    }
 }
 
 .ari-up-contact-list {
@@ -1407,6 +1497,13 @@ a:hover {
     letter-spacing: 0.03em;
     color: #64748b;
     background: #f8fafc;
+}
+
+/* Dark theme: backup-table headers should also be dark. */
+[data-theme="dark"] .ari-ab-table thead th {
+    color: #cbd5e1;
+    background: #1f2937;
+    border-bottom-color: #334155;
 }
 
 .ari-ab-empty {
@@ -6336,6 +6433,38 @@ details.ot-howto[open] .ot-howto__chevron {
     outline: none;
     border-color: var(--ari-primary, #3f51b5);
     box-shadow: 0 0 0 2px rgba(63,81,181,0.15);
+}
+
+/* Dark theme: avoid light-blue headers on shared ot-tables. */
+[data-theme="dark"] .ot-th {
+    background: #1f2937;
+    color: #e5e7eb;
+    border-right-color: #334155;
+    border-bottom-color: #334155;
+}
+[data-theme="dark"] .ot-th:hover,
+[data-theme="dark"] .ot-th--asc,
+[data-theme="dark"] .ot-th--desc {
+    background: #2b3648;
+}
+[data-theme="dark"] .ot-th--nonsortable:hover {
+    background: #1f2937;
+}
+[data-theme="dark"] .ot-filter-cell {
+    background: #111827;
+    border-right-color: #334155;
+    border-bottom-color: #334155;
+}
+[data-theme="dark"] .ot-filter-input,
+[data-theme="dark"] .ot-filter-select {
+    background: #0b1220;
+    color: #e5e7eb;
+    border-color: #334155;
+}
+[data-theme="dark"] .ot-filter-input:focus,
+[data-theme="dark"] .ot-filter-select:focus {
+    border-color: #60a5fa;
+    box-shadow: 0 0 0 2px rgba(96,165,250,0.2);
 }
 
 .ot-row:nth-child(odd) td {

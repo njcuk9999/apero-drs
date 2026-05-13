@@ -494,6 +494,39 @@
         });
     }
 
+    function applyFindObjectQueryParams() {
+        var params = new URLSearchParams(window.location.search || '');
+        var requestedTab = (params.get('fo_tab') || '').trim();
+        var prop = (params.get('fo_property') || '').trim();
+        var value = (params.get('fo_value') || '').trim();
+        var runSearch = (params.get('fo_search') || '').trim();
+
+        if (requestedTab.toLowerCase() === 'advanced') {
+            var advTabBtn = document.getElementById('fo-tab-advanced');
+            if (advTabBtn) {
+                advTabBtn.click();
+            }
+        }
+
+        if (prop && foAdvProperty) {
+            foAdvProperty.value = prop;
+        }
+        if (value && foAdvValue) {
+            foAdvValue.value = value;
+        }
+
+        var shouldRun = runSearch === '1'
+            || runSearch.toLowerCase() === 'true'
+            || runSearch.toLowerCase() === 'yes';
+        if (shouldRun && foFindAdvanced && foAdvProperty && foAdvValue) {
+            if (foAdvProperty.value.trim() && foAdvValue.value.trim()) {
+                findAdvanced();
+            }
+        }
+    }
+
+    applyFindObjectQueryParams();
+
     /* -----------------------------------------------------------------------
        Section minimize/expand and pin functionality
     ----------------------------------------------------------------------- */

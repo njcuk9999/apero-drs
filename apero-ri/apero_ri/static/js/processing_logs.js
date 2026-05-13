@@ -14,6 +14,11 @@
 (function () {
     "use strict";
 
+    if (window.__ARI_PROC_LOGS_INIT__) {
+        return;
+    }
+    window.__ARI_PROC_LOGS_INIT__ = true;
+
     /* ----------------------------------------------------------
        Helpers
     ---------------------------------------------------------- */
@@ -110,6 +115,8 @@
         dom.btnNext   = document.getElementById("pl-btn-next");
         dom.btnLast   = document.getElementById("pl-btn-last");
         dom.btnClear  = document.getElementById("pl-btn-clear-filters");
+        dom.btnRefresh = document.getElementById("pl-btn-refresh");
+        dom.lastUpdated = document.getElementById("pl-last-updated");
         dom.scrollTop = document.getElementById("pl-scroll-top");
         dom.scrollSizer = document.getElementById("pl-scroll-sizer");
 
@@ -154,6 +161,46 @@
         });
     }
 
+    function normalizeFinishedValue(v) {
+        var s = String(v == null ? "" : v).trim().toLowerCase();
+        if (s === "1" || s === "true" || s === "yes") {
+            return "1";
+        }
+        if (s === "0" || s === "false" || s === "no") {
+            return "0";
+        }
+        return s;
+    }
+
+    function isUnfinishedFilterValue(v) {
+        return normalizeFinishedValue(v) === "0";
+    }
+
+    function formatDurationSeconds(v) {
+        if (v == null) {
+            return "";
+        }
+        var n = Number(v);
+        if (!isFinite(n) || n < 0) {
+            return "";
+        }
+        var secs = Math.floor(n);
+        if (secs < 60) {
+            return String(secs) + "s";
+        }
+        if (secs < 3600) {
+            var mm = Math.floor(secs / 60);
+            var ss = secs % 60;
+            return String(mm) + "m " + String(ss) + "s";
+        }
+        var hh = Math.floor(secs / 3600);
+        var rem = secs % 3600;
+        var m2 = Math.floor(rem / 60);
+        var s2 = rem % 60;
+        return String(hh) + "h " + String(m2) + "m " +
+            String(s2) + "s";
+    }
+
     /* ----------------------------------------------------------
        Filtering
     ---------------------------------------------------------- */
@@ -169,6 +216,13 @@
             rows = rows.filter(function (row) {
                 var v = row[col];
                 if (v == null) return false;
+                if (col === "Finished") {
+                    return normalizeFinishedValue(v) ===
+                        normalizeFinishedValue(fstr);
+                }
+                if (state.dropdownCols.indexOf(col) >= 0) {
+                    return String(v).trim().toLowerCase() === fstr;
+                }
                 return String(v).toLowerCase().indexOf(fstr) >= 0;
             });
         }
@@ -259,7 +313,7 @@
                             "pl-btn-unfinished"
                         );
                         if (ub) {
-                            if (sel.value === "0") {
+                            if (isUnfinishedFilterValue(sel.value)) {
                                 ub.classList.add(
                                     "ari-btn--primary"
                                 );
@@ -338,6 +392,10 @@
                 return "<span class=\"pl-finished-yes\">Yes</span>";
             }
             return "<span class=\"pl-finished-no\">No</span>";
+        }
+
+        if (col === "Time taken") {
+            return esc(formatDurationSeconds(val));
         }
 
         return esc(String(val));
@@ -760,16 +818,36 @@
         document.body.style.overflow = "";
     }
 
+    function setLastUpdatedText(lastUpdated) {
+        if (!dom.lastUpdated) return;
+        var txt = String(lastUpdated || "").trim();
+        if (txt) {
+            dom.lastUpdated.textContent = "Last updated " + txt;
+            return;
+        }
+        dom.lastUpdated.textContent = "Last updated --";
+    }
+
+    function setRefreshBusy(isBusy) {
+        if (!dom.btnRefresh) return;
+        dom.btnRefresh.disabled = !!isBusy;
+    }
+
     /* ----------------------------------------------------------
        Load data from server
     ---------------------------------------------------------- */
-    function loadData() {
+    function loadData(forceRefresh) {
+        var useForceRefresh = forceRefresh === true;
         var body = {};
         if (cfg.mode === "profile") {
             body = {profile_id: cfg.profileId};
         } else {
             body = {profile_id: cfg.profileId, pid: cfg.pid};
         }
+        if (useForceRefresh) {
+            body.force_refresh = true;
+        }
+        setRefreshBusy(true);
 
         fetch(cfg.apiUrl, {
             method: "POST",
@@ -788,6 +866,7 @@
             state.allRows      = data.rows || [];
             state.columns      = data.columns || [];
             state.dropdownCols = data.dropdown_columns || [];
+            setLastUpdatedText(data.last_updated || "");
 
             /* default sort: Start time desc on profile page */
             if (cfg.mode === "profile") {
@@ -821,6 +900,9 @@
                     "Error loading data: " + esc(String(err)) +
                     "</td></tr>";
             }
+        })
+        .then(function () {
+            setRefreshBusy(false);
         });
     }
 
@@ -853,7 +935,21 @@
         var btnUnfinished =
             document.getElementById("pl-btn-unfinished");
         if (btnUnfinished) {
-            btnUnfinished.addEventListener("click", function () {
+            console.log(
+                "[processing_logs] unfinished button bound",
+                {mode: cfg.mode}
+            );
+            btnUnfinished.addEventListener("click", function (event) {
+                if (event && event.__ariProcLogsHandled__) {
+                    console.log(
+                        "[processing_logs] unfinished duplicate " +
+                        "click handler ignored"
+                    );
+                    return;
+                }
+                if (event) {
+                    event.__ariProcLogsHandled__ = true;
+                }
                 var isActive =
                     btnUnfinished.classList.contains(
                         "ari-btn--primary"
@@ -864,6 +960,14 @@
                         '[data-col="Finished"]'
                     )
                     : null;
+                console.log(
+                    "[processing_logs] unfinished click",
+                    {
+                        isActive: isActive,
+                        hasFinishedSelect: !!finSel,
+                        beforeFilter: state.filters["Finished"],
+                    }
+                );
                 if (isActive) {
                     /* Deactivate: clear filter */
                     btnUnfinished.classList.remove(
@@ -873,7 +977,10 @@
                         "ari-btn--secondary"
                     );
                     delete state.filters["Finished"];
-                    if (finSel) finSel.value = "";
+                    filterRows();
+                    if (finSel) {
+                        finSel.value = "";
+                    }
                 } else {
                     /* Activate: filter to Finished = 0 ("No") */
                     btnUnfinished.classList.add(
@@ -883,10 +990,44 @@
                         "ari-btn--secondary"
                     );
                     state.filters["Finished"] = "0";
-                    if (finSel) finSel.value = "0";
+                    filterRows();
+                    if (finSel) {
+                        var unfinishedOpt = "";
+                        Array.from(finSel.options).forEach(function (opt) {
+                            if (!unfinishedOpt &&
+                                    isUnfinishedFilterValue(opt.value)) {
+                                unfinishedOpt = opt.value;
+                            }
+                        });
+                        if (!unfinishedOpt) {
+                            Array.from(finSel.options).forEach(
+                                function (opt) {
+                                    if (!unfinishedOpt &&
+                                            isUnfinishedFilterValue(
+                                                opt.textContent
+                                            )) {
+                                        unfinishedOpt = opt.value;
+                                    }
+                                }
+                            );
+                        }
+                        finSel.value = unfinishedOpt || "0";
+                    }
                 }
-                filterRows();
+                console.log(
+                    "[processing_logs] unfinished applied",
+                    {
+                        afterFilter: state.filters["Finished"],
+                        rowsShown: state.filteredRows.length,
+                        totalRows: state.allRows.length,
+                    }
+                );
             });
+        } else {
+            console.log(
+                "[processing_logs] unfinished button not found",
+                {mode: cfg.mode}
+            );
         }
 
         if (dom.perpage) {
@@ -894,6 +1035,12 @@
                 state.perPage = parseInt(dom.perpage.value, 10) || 0;
                 state.page = 1;
                 renderPage();
+            });
+        }
+
+        if (dom.btnRefresh) {
+            dom.btnRefresh.addEventListener("click", function () {
+                loadData(true);
             });
         }
 
@@ -1080,7 +1227,7 @@
     document.addEventListener("DOMContentLoaded", function () {
         initDom();
         wireEvents();
-        loadData();
+        loadData(false);
     });
 
 }());

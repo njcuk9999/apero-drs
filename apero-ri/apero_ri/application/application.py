@@ -213,6 +213,10 @@ class ARIApp(Flask):
         return _impls.ariapp_get_instrument_run_ids(instrument)
 
     @staticmethod
+    def _get_instrument_run_id_pi_names(instrument):
+        return _impls.ariapp_get_instrument_run_id_pi_names(instrument)
+
+    @staticmethod
     def _is_all_science_group(name: str) -> bool:
         """Return True when a science-group name is the reserved All group."""
         return str(name or "").strip().lower() == "all"
@@ -231,16 +235,25 @@ class ARIApp(Flask):
     def _page_template_meta(self, template_id: str, **tokens) -> dict:
         return _impls.ariapp_page_template_meta(self, template_id, **tokens)
 
-    def _build_data_portal_sidebar_tree(self,
-                                        accessible_profiles: list,
-                                        active_page_id: str,
-                                        user_permissions,
-                                        user_info=None,
-                                        current_profile_id: Optional[str] = None,
-                                        objname: Optional[str] = None,
-                                        include_children: bool = True) -> list:
-        args = (accessible_profiles, active_page_id, user_permissions,
-                user_info, current_profile_id, objname, include_children)
+    def _build_data_portal_sidebar_tree(
+        self,
+        accessible_profiles: list,
+        active_page_id: str,
+        user_permissions,
+        user_info=None,
+        current_profile_id: Optional[str] = None,
+        objname: Optional[str] = None,
+        include_children: bool = True,
+    ) -> list:
+        args = (
+            accessible_profiles,
+            active_page_id,
+            user_permissions,
+            user_info,
+            current_profile_id,
+            objname,
+            include_children,
+        )
         return _impls.ariapp_build_data_portal_sidebar_tree(self, *args)
 
     def _build_ri_context(self, user_info, user_permissions):
@@ -764,6 +777,9 @@ class ARIApp(Flask):
             self
         )
 
+    def _api_user_data_access_request(self):
+        return user_context_helpers.api_user_data_access_request(self)
+
     @staticmethod
     def _normalize_pinned_pages(value) -> List[dict]:
         return _impls.ariapp_normalize_pinned_pages(value)
@@ -878,6 +894,9 @@ class ARIApp(Flask):
     # -----------------------------------------------------------------
     def _doc_edit_view(self, page_ref: str):
         return doc_views_helpers.doc_edit_view(self, page_ref)
+
+    def _doc_dynamic_view(self, page_ref: str):
+        return doc_views_helpers.doc_dynamic_view(self, page_ref)
 
     def _doc_save_view(self, page_ref: str):
         return _impls.ariapp_doc_save_view(self, page_ref)
@@ -1124,6 +1143,22 @@ class ARIApp(Flask):
         from apero_ri.application import issues_api_helpers as ih
         return ih.api_issues_edit(self)
 
+    def _api_known_errors_list(self):
+        from apero_ri.application import known_errors_api_helpers as keh
+        return keh.api_known_errors_list(self)
+
+    def _api_known_errors_create(self):
+        from apero_ri.application import known_errors_api_helpers as keh
+        return keh.api_known_errors_create(self)
+
+    def _api_known_errors_update(self):
+        from apero_ri.application import known_errors_api_helpers as keh
+        return keh.api_known_errors_update(self)
+
+    def _api_known_errors_delete(self):
+        from apero_ri.application import known_errors_api_helpers as keh
+        return keh.api_known_errors_delete(self)
+
     # -----------------------------------------------------------------
     # Monitor schedule subsystem
     # -----------------------------------------------------------------
@@ -1279,6 +1314,22 @@ class ARIApp(Flask):
         from apero_ri.application import monitor_view_helpers as mvh
         return mvh.monitor_issues_view(self)
 
+    def _monitor_known_errors_view(self):
+        from apero_ri.application import monitor_view_helpers as mvh
+        return mvh.monitor_known_errors_view(self)
+
+    def _monitor_status_view(self):
+        from apero_ri.application import monitor_view_helpers as mvh
+        return mvh.monitor_status_view(self)
+
+    def _monitor_status_alliance_view(self):
+        from apero_ri.application import monitor_view_helpers as mvh
+        return mvh.monitor_status_alliance_view(self)
+
+    def _monitor_status_canfar_view(self):
+        from apero_ri.application import monitor_view_helpers as mvh
+        return mvh.monitor_status_canfar_view(self)
+
     def _monitor_schedule_view(self):
         from apero_ri.application import monitor_view_helpers as mvh
         return mvh.monitor_schedule_view(self)
@@ -1303,6 +1354,20 @@ class ARIApp(Flask):
             self, profile_id, pid
         )
 
+    def _monitor_apero_checks_view(self):
+        from apero_ri.application import monitor_view_helpers as mvh
+        return mvh.monitor_apero_checks_view(self)
+
+    def _monitor_apero_checks_profile_view(self, profile_id):
+        from apero_ri.application import monitor_view_helpers as mvh
+        return mvh.monitor_apero_checks_profile_view(self, profile_id)
+
+    def _monitor_apero_checks_obsdir_view(self, profile_id, obsdir):
+        from apero_ri.application import monitor_view_helpers as mvh
+        return mvh.monitor_apero_checks_obsdir_view(
+            self, profile_id, obsdir
+        )
+
     def _api_processing_logs(self):
         from apero_ri.application import (
             processing_logs_api_helpers as plh,
@@ -1320,6 +1385,30 @@ class ARIApp(Flask):
             processing_logs_api_helpers as plh,
         )
         return plh.api_processing_log_file(self)
+
+    def _api_apero_checks_update_failure(self):
+        from apero_ri.application import (
+            apero_checks_api_helpers as ach,
+        )
+        return ach.api_apero_checks_update_failure(self)
+
+    def _api_apero_checks_create_issue(self):
+        from apero_ri.application import (
+            apero_checks_api_helpers as ach,
+        )
+        return ach.api_apero_checks_create_issue(self)
+
+    def _api_apero_checks_config_save(self):
+        from apero_ri.application import (
+            apero_checks_api_helpers as ach,
+        )
+        return ach.api_apero_checks_config_save(self)
+
+    def _api_apero_checks_browse_dirs(self):
+        from apero_ri.application import (
+            apero_checks_api_helpers as ach,
+        )
+        return ach.api_apero_checks_browse_dirs(self)
 
 
         kwargs = dict(profile_id=profile_id)
@@ -1651,6 +1740,18 @@ class ARIApp(Flask):
     def _api_sci_groups_delete(self):
         return sci_groups_api_helpers.api_sci_groups_delete(self)
 
+    def _api_sci_groups_export(self):
+        return sci_groups_api_helpers.api_sci_groups_export(self)
+
+    def _api_sci_groups_import(self):
+        return sci_groups_api_helpers.api_sci_groups_import(self)
+
+    def _api_sci_groups_io_export(self):
+        return sci_groups_api_helpers.api_sci_groups_io_export(self)
+
+    def _api_sci_groups_io_import(self):
+        return sci_groups_api_helpers.api_sci_groups_io_import(self)
+
     # -----------------------------------------------------------------
     # APERO profiles API
     # -----------------------------------------------------------------
@@ -1712,7 +1813,11 @@ class ARIApp(Flask):
         return apero_profiles_api_helpers.profile_db_params(self, profile_cfg)
 
     def _resolve_db_payload_for_test(self, data: dict) -> dict:
-        return apero_profiles_api_helpers.resolve_db_payload_for_test(self, data)
+        return (
+            apero_profiles_api_helpers.resolve_db_payload_for_test(
+                self, data
+            )
+        )
 
     def _resolve_profile_db_test_target(self, mode: str, host: str,  port: str,
                                         username: str, password: str, 

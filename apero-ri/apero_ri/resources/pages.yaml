@@ -126,39 +126,6 @@ home.logout:
 # ==============================================================================
 # APERO RI: Documentation Pages
 # ==============================================================================
-home.docs.overview:
-  label: Overview
-  parent: home.docs
-  view-permission: view.doc
-  icon: fa-solid fa-eye
-  quick-nav: False
-  side-nav:
-    pinned: False
-    top-level: False
-    show: True
-  
-home.docs.install:
-  label: Installation
-  parent: home.docs
-  view-permission: view.doc
-  icon: fa-solid fa-download
-  quick-nav: True
-  side-nav:
-    pinned: False
-    top-level: False
-    show: True
-
-home.docs.api:
-  label: API & Downloads
-  parent: home.docs
-  view-permission: view.doc
-  icon: fa-solid fa-plug
-  quick-nav: True
-  side-nav:
-    pinned: False
-    top-level: False
-    show: True
-  
 # ==============================================================================
 # APERO RI: Data Portal Pages
 # ==============================================================================
@@ -640,6 +607,28 @@ home.monitor_portal.issues:
     top-level: False
     show: True
 
+home.monitor_portal.known_errors:
+  label: Known errors
+  parent: home.monitor_portal
+  view-permission: monitor
+  icon: fa-solid fa-bug
+  quick-nav: False
+  side-nav:
+    pinned: False
+    top-level: False
+    show: True
+
+home.monitor_portal.status:
+  label: Status
+  parent: home.monitor_portal
+  view-permission: monitor
+  icon: fa-solid fa-signal
+  quick-nav: False
+  side-nav:
+    pinned: False
+    top-level: False
+    show: True
+
 home.monitor_portal.schedule:
   label: Schedule
   parent: home.monitor_portal
@@ -662,7 +651,7 @@ home.monitor_portal.rejection_list:
     top-level: False
     show: True
 
-home.monitor_portal.logs:
+home.monitor_portal.proc_logs:
   label: Processing Logs
   parent: home.monitor_portal
   view-permission: monitor
@@ -673,11 +662,11 @@ home.monitor_portal.logs:
     top-level: False
     show: True
 
-home.monitor_portal.logs:
-  label: Processing Logs
+home.monitor_portal.apero_checks:
+  label: APERO Checks
   parent: home.monitor_portal
   view-permission: monitor
-  icon: fa-solid fa-scroll
+  icon: fa-solid fa-square-check
   quick-nav: False
   side-nav:
     pinned: False

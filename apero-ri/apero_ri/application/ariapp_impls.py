@@ -509,7 +509,15 @@ def ariapp_init(self, **kwargs):
         )
         for _line in _bad_tpls:
             print(f"  - {_line}", file=_sys.stderr, flush=True)
-        for _path in sorted(TEMPLATE_DIR.rglob("*.html")):
+        _flagged_rel = set()
+        for _line in _bad_tpls:
+            _rel_str = _line.split(":", 1)[0].strip()
+            if _rel_str:
+                _flagged_rel.add(_rel_str)
+        for _rel_str in sorted(_flagged_rel):
+            _path = TEMPLATE_DIR / _rel_str
+            if not _path.is_file():
+                continue
             try:
                 _txt = _path.read_text(
                     encoding="utf-8", errors="replace")
@@ -680,6 +688,105 @@ def ariapp_get_instrument_run_ids(instrument):
                 except Exception:
                     pass
     return sorted(run_ids)
+
+
+def ariapp_get_instrument_run_id_pi_names(instrument):
+    """Return run_id -> PI name map from object table JSON rows."""
+    import json as _json
+
+    all_profiles = auth.load_apero_profiles(hydrate=False)
+    current_profile_names = set()
+    if instrument in all_profiles:
+        inst_profiles = all_profiles[instrument]
+        if isinstance(inst_profiles, dict):
+            current_profile_names = set(inst_profiles.keys())
+
+    def _clean_pi_name(raw_value):
+        pi_name = str(raw_value or '').strip()
+        if not pi_name:
+            return ''
+        if pi_name.lower() in {'none', 'null', 'unknown'}:
+            return ''
+        return pi_name
+
+    def _split_multi(raw_value):
+        if isinstance(raw_value, list):
+            return [str(x).strip() for x in raw_value if str(x).strip()]
+        text = str(raw_value or '').strip()
+        if not text:
+            return []
+        if ';' in text:
+            parts = text.split(';')
+        else:
+            parts = text.split(',')
+        return [part.strip() for part in parts if part.strip()]
+
+    def _get_pi_raw(row):
+        pi_keys = (
+            'PI_NAMES',
+            'PI_NAME',
+            'KW_PI_NAMES',
+            'KW_PI_NAME',
+        )
+        for key in pi_keys:
+            if key in row:
+                return row.get(key, '')
+        return ''
+
+    def _update_map(run_id_map, rows):
+        for row in rows:
+            raw_run = row.get('RUN_ID', '')
+            raw_pi = _get_pi_raw(row)
+            run_parts = _split_multi(raw_run)
+            pi_parts = _split_multi(raw_pi)
+            for idx, run_id in enumerate(run_parts):
+                if run_id in run_id_map:
+                    continue
+                pi_candidate = ''
+                if pi_parts:
+                    if idx < len(pi_parts):
+                        pi_candidate = _clean_pi_name(pi_parts[idx])
+                    elif len(pi_parts) == 1:
+                        pi_candidate = _clean_pi_name(pi_parts[0])
+                if pi_candidate:
+                    run_id_map[run_id] = pi_candidate
+
+    tasks_dir = auth.ARI_DIR / 'tasks' / instrument
+    run_id_pi_names = dict()
+    if tasks_dir.exists():
+        for profile_dir in tasks_dir.iterdir():
+            if not profile_dir.is_dir():
+                continue
+            profile_name = profile_dir.name
+            if profile_name not in current_profile_names:
+                continue
+            jf = profile_dir / 'object_table.json'
+            if not jf.exists():
+                continue
+            try:
+                with open(jf, encoding='utf-8') as fhandle:
+                    data = _json.load(fhandle)
+                _update_map(run_id_pi_names, data.get('rows', []))
+            except Exception:
+                continue
+
+        for jf in tasks_dir.glob('object_table_*.json'):
+            fname = jf.name
+            if not fname.startswith('object_table_'):
+                continue
+            if not fname.endswith('.json'):
+                continue
+            profile_name = fname[len('object_table_'): -len('.json')]
+            if profile_name not in current_profile_names:
+                continue
+            try:
+                with open(jf, encoding='utf-8') as fhandle:
+                    data = _json.load(fhandle)
+                _update_map(run_id_pi_names, data.get('rows', []))
+            except Exception:
+                continue
+
+    return run_id_pi_names
 
 
 def ariapp_sync_all_science_group(self, instrument, groups, run_ids, persist):
@@ -2773,7 +2880,9 @@ def ariapp_build_admin_sshfs_context(self, perms):
         ssh_keys_data = []
 
     return {
-        "can_manage": "manage.admin.sshfs_setup" in perms or "view.admin" in perms,
+        "can_manage": (
+            "manage.admin.sshfs_setup" in perms or "view.admin" in perms
+        ),
         "mounts_data": mounts_data,
         "ssh_keys_data": ssh_keys_data,
     }
@@ -3809,15 +3918,22 @@ def ariapp_doc_save_view(self, page_ref):
     perms = permissions_mod.resolve_user_permissions(
         user_info["groups"], self.ari_groups
     )
-    if f"edit.doc.{page_ref}" not in perms:
+    clean_ref = str(page_ref or "").strip("/")
+    dot_ref = clean_ref.replace("/", ".")
+    leaf_ref = clean_ref.split("/")[-1] if clean_ref else ""
+    allowed = False
+    for perm_name in (f"edit.doc.{dot_ref}", f"edit.doc.{leaf_ref}"):
+        if perm_name in perms:
+            allowed = True
+            break
+    if not allowed:
         return jsonify(success=False, error="No permission"), 403
 
     data = request.get_json()
     if not data or "content" not in data or "version" not in data:
         return jsonify(success=False, error="Missing data"), 400
 
-    page_id = f"home.docs.{page_ref}"
-    docs.save_doc_content(page_id, data["version"], data["content"])
+    docs.save_doc_content(clean_ref, data["version"], data["content"])
     return jsonify(success=True)
 
 

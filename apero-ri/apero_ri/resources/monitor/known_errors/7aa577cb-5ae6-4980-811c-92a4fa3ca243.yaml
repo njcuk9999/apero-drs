@@ -1,0 +1,24 @@
+id: 7aa577cb-5ae6-4980-811c-92a4fa3ca243
+slug: class-apero-core-core-drs-exceptions-logexit-lbl-compile-exception-no-lblrv-files-found-in-path-objname-please
+date_reported: '2024-03-08'
+reported_by: Neil Cook
+instrument_mode: ALL
+recipe: apero_lbl_compile
+action: Check
+type: Expected
+error_code: LBL
+github_issue: ''
+generic_error: 'class apero.core.core.drs_exceptions.LogExit : LBL Compile Exception   No
+  lblrv files found in {path}/{OBJNAME}   Please run lbl_compute first.'
+comments: First check that lbl_compute completed for this object if not check the
+  log to see if there is an obvious reason for failure (i.e. SNR too low), if not
+  re-run lbl_compute for this object (maybe it was not run). apero_lbl_compute will
+  generate an error (see error here) if there is a problem. If apero_lbl_compute runs
+  then re-run apero_lbl_compile.
+full_example_error: "class apero.core.core.drs_exceptions.LogExit : LBL Compile Exception\
+  \ \n[BPS_CS_22881M0003_BPS_CS_22881M0003] class \nlbl.core.base_classes.LblException\
+  \ : No lblrv files found in \n/cosmos99/nirps/apero-data/nirps_he_offline/lbl/lblrv/BPS_CS_22881M0003_BPS_CS_22881M0003.\n\
+  \ Please run lbl_compute first. LBL Compile Exception \n[BPS_CS_22881M0003_GL699]\
+  \ class lbl.core.base_classes.LblException : No \nlblrv files found in \n/cosmos99/nirps/apero-data/nirps_he_offline/lbl/lblrv/BPS_CS_22881M0003_GL699.\n\
+  \ Please run lbl_compute first."
+updated_at: '2026-05-13 15:54:29'

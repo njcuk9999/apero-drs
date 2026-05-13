@@ -13,7 +13,11 @@ Created on 2026-04-23
 """
 from __future__ import annotations
 
-from flask import (flash, redirect, render_template,
+import re
+from datetime import datetime, timezone
+from html.parser import HTMLParser
+
+from flask import (flash, redirect, render_template, request,
                    session, url_for)
 
 from apero_ri.core.auth import (
@@ -21,12 +25,17 @@ from apero_ri.core.auth import (
     get_effective_user,
     get_public_permissions,
 )
+from apero_ri.core import apero_checks as checks_core
 from apero_ri.core.permissions import resolve_user_permissions
 from apero_ri.core import permissions as perms_mod
 from apero_ri.application import instrument_color_helpers
 
 
 __NAME__ = 'apero_ri.application.monitor_view_helpers'
+
+
+ALLIANCE_STATUS_URL = 'https://status.alliancecan.ca/'
+CANFAR_STATUS_URL = 'https://canfar.statuspage.io/'
 
 
 _MONITOR_PERMS = {'view.monitor_portal', 'view.monitor',
@@ -83,6 +92,277 @@ def _monitor_instruments(perms, groups, ari_groups):
     return sorted(list(instruments))
 
 
+class _AllianceStatusParser(HTMLParser):
+    """Collect visible tables, links, and paragraphs from the status page."""
+
+    def __init__(self):
+        super().__init__()
+        self.tables = []
+        self.links = []
+        self.paragraphs = []
+        self.text_chunks = []
+        self._table = None
+        self._row = None
+        self._cell = None
+        self._cell_tag = None
+        self._paragraph = None
+        self._link = None
+
+    def handle_starttag(self, tag, attrs):
+        attrs = dict(attrs)
+        if tag == 'table':
+            self._table = []
+        elif tag == 'tr' and self._table is not None:
+            self._row = []
+        elif tag in {'td', 'th'} and self._row is not None:
+            self._cell = []
+            self._cell_tag = tag
+        elif tag == 'p':
+            self._paragraph = []
+        elif tag == 'a':
+            self._link = {
+                'href': attrs.get('href', ''),
+                'text': [],
+            }
+
+    def handle_data(self, data):
+        self.text_chunks.append(data)
+        if self._cell is not None:
+            self._cell.append(data)
+        if self._paragraph is not None:
+            self._paragraph.append(data)
+        if self._link is not None:
+            self._link['text'].append(data)
+
+    def handle_endtag(self, tag):
+        if tag in {'td', 'th'} and self._cell is not None:
+            cell_text = ''.join(self._cell).strip()
+            cell_text = re.sub(r'\s*question\s*$', '', cell_text, flags=re.I)
+            self._row.append(cell_text)
+            self._cell = None
+            self._cell_tag = None
+        elif tag == 'tr' and self._row is not None:
+            if self._table is not None:
+                self._table.append(self._row)
+            self._row = None
+        elif tag == 'table' and self._table is not None:
+            if self._table:
+                self.tables.append(self._table)
+            self._table = None
+        elif tag == 'p' and self._paragraph is not None:
+            text = ' '.join(''.join(self._paragraph).split()).strip()
+            if text:
+                self.paragraphs.append(text)
+            self._paragraph = None
+        elif tag == 'a' and self._link is not None:
+            href = str(self._link.get('href', '') or '').strip()
+            text = ' '.join(''.join(self._link.get('text', [])).split()).strip()
+            if text or href:
+                self.links.append({'href': href, 'text': text})
+            self._link = None
+
+
+def _scrape_alliance_status_page():
+    """Fetch and parse the Digital Research Alliance status page."""
+    from urllib.parse import urljoin
+    from urllib.request import Request, urlopen
+
+    req = Request(
+        ALLIANCE_STATUS_URL,
+        headers={'User-Agent': 'APERO RI status page'},
+    )
+    with urlopen(req, timeout=20) as handle:
+        html = handle.read().decode('utf-8', errors='replace')
+
+    parser = _AllianceStatusParser()
+    parser.feed(html)
+
+    icon_tokens = re.findall(
+        r'\b(check|warning_amber|power_off)\b',
+        html.lower(),
+    )
+
+    visible_text = ' '.join(''.join(parser.text_chunks).split())
+
+    tables = []
+    for raw_table in parser.tables:
+        if not raw_table:
+            continue
+        headers = raw_table[0]
+        rows = []
+        for raw_row in raw_table[1:]:
+            if not raw_row:
+                continue
+            padded = list(raw_row) + [''] * max(0, len(headers) - len(raw_row))
+            rows.append({
+                headers[i] if i < len(headers) else f'col_{i}': padded[i]
+                for i in range(len(padded))
+            })
+        tables.append({'headers': headers, 'rows': rows})
+
+    tables.sort(key=lambda item: len(item.get('rows', [])), reverse=True)
+    service_table = tables[0] if tables else {'headers': [], 'rows': []}
+
+    summary = ''
+    for phrase in (
+        'Partially degraded service',
+        'Operational',
+        'Available with conditions',
+        'Outage',
+        'Decommissioned',
+    ):
+        idx = visible_text.lower().find(phrase.lower())
+        if idx >= 0:
+            summary = visible_text[idx: idx + 180].strip()
+            break
+    if not summary:
+        for text in parser.paragraphs:
+            lower = text.lower()
+            if (
+                'degraded service' in lower
+                or 'operational' in lower
+                or 'outage' in lower
+                or 'available with conditions' in lower
+            ):
+                summary = text
+                break
+    if not summary and parser.paragraphs:
+        summary = parser.paragraphs[0]
+
+    events = []
+    seen_events = set()
+    for link in parser.links:
+        href = str(link.get('href') or '').strip()
+        text = str(link.get('text') or '').strip()
+        if 'view_incident' not in href:
+            continue
+        full_url = urljoin(ALLIANCE_STATUS_URL, href)
+        if full_url in seen_events:
+            continue
+        seen_events.add(full_url)
+        events.append({
+            'text': text or full_url,
+            'url': full_url,
+        })
+
+    overall = 'Unknown'
+    if summary:
+        overall = summary.split('.')[0].strip()
+
+    return {
+        'title': 'Digital Research Alliance of Canada',
+        'url': ALLIANCE_STATUS_URL,
+        'summary': summary,
+        'overall_status': overall,
+        'icon_tokens': icon_tokens,
+        'service_table': service_table,
+        'scheduled_events': events,
+        'fetched_at': datetime.now(timezone.utc).strftime(
+            '%Y-%m-%d %H:%M UTC'
+        ),
+    }
+
+
+def _status_level_from_tokens(tokens):
+    """Return ok/warning/critical based on status icon tokens."""
+    cleaned = []
+    for token in list(tokens or []):
+        value = str(token or '').strip().lower()
+        if value:
+            cleaned.append(value)
+    if not cleaned:
+        return 'warning'
+    if 'power_off' in cleaned:
+        return 'critical'
+    for token in cleaned:
+        if token != 'check':
+            return 'warning'
+    return 'ok'
+
+
+def _extract_first_past_incident_text(text):
+    """Extract the most recent 'Past Incidents' body text snippet."""
+    normalized = ' '.join(str(text or '').split())
+    lower = normalized.lower()
+    marker = lower.find('past incidents')
+    if marker >= 0:
+        normalized = normalized[marker:]
+
+    date_pattern = (
+        r'(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\\s+'
+        r'\\d{1,2},\\s+\\d{4}'
+    )
+    first_date = re.search(date_pattern, normalized)
+    if first_date is None:
+        return ''
+
+    tail = normalized[first_date.end():].strip()
+    second_date = re.search(date_pattern, tail)
+    if second_date is None:
+        snippet = tail
+    else:
+        snippet = tail[:second_date.start()]
+    snippet = ' '.join(snippet.split()).strip()
+    return snippet
+
+
+def _scrape_canfar_status_page():
+    """Fetch and parse the CANFAR status page."""
+    from urllib.parse import urljoin
+    from urllib.request import Request, urlopen
+
+    req = Request(
+        CANFAR_STATUS_URL,
+        headers={'User-Agent': 'APERO RI status page'},
+    )
+    with urlopen(req, timeout=20) as handle:
+        html = handle.read().decode('utf-8', errors='replace')
+
+    parser = _AllianceStatusParser()
+    parser.feed(html)
+
+    visible_text = ' '.join(''.join(parser.text_chunks).split())
+    recent_entry = _extract_first_past_incident_text(visible_text)
+    has_no_incidents_today = (
+        'no incidents reported today' in recent_entry.lower()
+    )
+
+    incidents = []
+    seen = set()
+    for link in parser.links:
+        href = str(link.get('href') or '').strip()
+        text = str(link.get('text') or '').strip()
+        if '/incidents/' not in href:
+            continue
+        full_url = urljoin(CANFAR_STATUS_URL, href)
+        if full_url in seen:
+            continue
+        seen.add(full_url)
+        incidents.append({
+            'text': text or full_url,
+            'url': full_url,
+        })
+
+    level = 'ok' if has_no_incidents_today else 'warning'
+    if has_no_incidents_today:
+        overall = 'No incidents reported today'
+    else:
+        overall = 'Recent incidents present'
+
+    return {
+        'title': 'CANFAR',
+        'url': CANFAR_STATUS_URL,
+        'summary': recent_entry,
+        'overall_status': overall,
+        'status_level': level,
+        'most_recent_entry': recent_entry,
+        'scheduled_events': incidents,
+        'fetched_at': datetime.now(timezone.utc).strftime(
+            '%Y-%m-%d %H:%M UTC'
+        ),
+    }
+
+
 def monitor_issues_view(app):
     """Render the monitor portal issues management page."""
     user_info = get_effective_user(session)
@@ -123,6 +403,212 @@ def monitor_issues_view(app):
         pass
     return render_template('monitor_portal/issues.html',
                            **context)
+
+
+def monitor_known_errors_view(app):
+    """Render the monitor portal known errors page.
+
+    Read access is public. Write actions are controlled by the
+    API permission checks and the `can_edit` UI flag.
+    """
+    user_info = get_effective_user(session)
+    if user_info:
+        perms = resolve_user_permissions(
+            user_info['groups'], app.ari_groups)
+    else:
+        perms = get_public_permissions()
+    can_edit = _has_any_monitor_perm(perms)
+
+    page_id = 'home.monitor_portal.known_errors'
+    context = {
+        'page_id': page_id,
+        'page_label': 'Known errors',
+        'page_icon': 'fa-solid fa-bug',
+        'sidebar_root': 'home.monitor_portal',
+        'sidebar_label': 'Monitor Portal',
+        'sidebar_icon': 'fa-solid fa-chart-line',
+        'sidebar_url': '/monitor_portal',
+        'can_edit': can_edit,
+    }
+    try:
+        context.update(
+            app._build_sidebar_context(page_id, perms, user_info)
+        )
+    except Exception:
+        pass
+    return render_template('monitor_portal/known_errors.html',
+                           **context)
+
+
+def monitor_status_view(app):
+    """Render status index cards linking to individual status pages."""
+    user_info = get_effective_user(session)
+    if user_info:
+        perms = resolve_user_permissions(
+            user_info['groups'], app.ari_groups)
+    else:
+        perms = get_public_permissions()
+
+    page_id = 'home.monitor_portal.status'
+    cards = []
+    errors = []
+
+    try:
+        alliance = _scrape_alliance_status_page()
+        level = _status_level_from_tokens(alliance.get('icon_tokens', []))
+        cards.append({
+            'title': 'Digital Research Alliance of Canada',
+            'subtitle': alliance.get('overall_status', ''),
+            'status_level': level,
+            'url': '/monitor_portal/status/alliance',
+        })
+    except Exception as exc:
+        errors.append(
+            'Alliance status fetch failed: ' + str(exc)
+        )
+        cards.append({
+            'title': 'Digital Research Alliance of Canada',
+            'subtitle': 'Unavailable',
+            'status_level': 'warning',
+            'url': '/monitor_portal/status/alliance',
+        })
+
+    try:
+        canfar = _scrape_canfar_status_page()
+        cards.append({
+            'title': 'CANFAR',
+            'subtitle': canfar.get('overall_status', ''),
+            'status_level': canfar.get('status_level', 'warning'),
+            'url': '/monitor_portal/status/canfar',
+        })
+    except Exception as exc:
+        errors.append('CANFAR status fetch failed: ' + str(exc))
+        cards.append({
+            'title': 'CANFAR',
+            'subtitle': 'Unavailable',
+            'status_level': 'warning',
+            'url': '/monitor_portal/status/canfar',
+        })
+
+    context = {
+        'page_id': page_id,
+        'page_label': 'Status',
+        'page_icon': 'fa-solid fa-signal',
+        'sidebar_root': 'home.monitor_portal',
+        'sidebar_label': 'Monitor Portal',
+        'sidebar_icon': 'fa-solid fa-chart-line',
+        'sidebar_url': '/monitor_portal',
+        'status_cards': cards,
+        'status_error': ' | '.join(errors),
+    }
+    try:
+        context.update(
+            app._build_sidebar_context(page_id, perms, user_info)
+        )
+    except Exception:
+        pass
+    return render_template('monitor_portal/status.html', **context)
+
+
+def monitor_status_alliance_view(app):
+    """Render detailed Digital Research Alliance status content."""
+    user_info = get_effective_user(session)
+    if user_info:
+        perms = resolve_user_permissions(
+            user_info['groups'], app.ari_groups)
+    else:
+        perms = get_public_permissions()
+
+    page_id = 'home.monitor_portal.status'
+    try:
+        section = _scrape_alliance_status_page()
+        error = ''
+    except Exception as exc:
+        section = {
+            'title': 'Digital Research Alliance of Canada',
+            'url': ALLIANCE_STATUS_URL,
+            'summary': '',
+            'overall_status': 'Unavailable',
+            'service_table': {'headers': [], 'rows': []},
+            'scheduled_events': [],
+            'fetched_at': datetime.now(timezone.utc).strftime(
+                '%Y-%m-%d %H:%M UTC'
+            ),
+        }
+        error = str(exc)
+
+    context = {
+        'page_id': page_id,
+        'page_label': 'Status',
+        'page_icon': 'fa-solid fa-signal',
+        'sidebar_root': 'home.monitor_portal',
+        'sidebar_label': 'Monitor Portal',
+        'sidebar_icon': 'fa-solid fa-chart-line',
+        'sidebar_url': '/monitor_portal',
+        'status_title': 'Digital Research Alliance of Canada',
+        'status_section': section,
+        'status_error': error,
+        'status_back_url': '/monitor_portal/status',
+        'status_has_table': True,
+    }
+    try:
+        context.update(
+            app._build_sidebar_context(page_id, perms, user_info)
+        )
+    except Exception:
+        pass
+    return render_template('monitor_portal/status_detail.html', **context)
+
+
+def monitor_status_canfar_view(app):
+    """Render detailed CANFAR status content."""
+    user_info = get_effective_user(session)
+    if user_info:
+        perms = resolve_user_permissions(
+            user_info['groups'], app.ari_groups)
+    else:
+        perms = get_public_permissions()
+
+    page_id = 'home.monitor_portal.status'
+    try:
+        section = _scrape_canfar_status_page()
+        error = ''
+    except Exception as exc:
+        section = {
+            'title': 'CANFAR',
+            'url': CANFAR_STATUS_URL,
+            'summary': '',
+            'overall_status': 'Unavailable',
+            'status_level': 'warning',
+            'most_recent_entry': '',
+            'scheduled_events': [],
+            'fetched_at': datetime.now(timezone.utc).strftime(
+                '%Y-%m-%d %H:%M UTC'
+            ),
+        }
+        error = str(exc)
+
+    context = {
+        'page_id': page_id,
+        'page_label': 'Status',
+        'page_icon': 'fa-solid fa-signal',
+        'sidebar_root': 'home.monitor_portal',
+        'sidebar_label': 'Monitor Portal',
+        'sidebar_icon': 'fa-solid fa-chart-line',
+        'sidebar_url': '/monitor_portal',
+        'status_title': 'CANFAR',
+        'status_section': section,
+        'status_error': error,
+        'status_back_url': '/monitor_portal/status',
+        'status_has_table': False,
+    }
+    try:
+        context.update(
+            app._build_sidebar_context(page_id, perms, user_info)
+        )
+    except Exception:
+        pass
+    return render_template('monitor_portal/status_detail.html', **context)
 
 
 def monitor_portal_index_view(app):
@@ -253,7 +739,7 @@ def _accessible_profile_cards(app, user_info, perms):
             'instrument': instr,
             'profile_id': prof['profile_id'],
             'url': (
-                '/monitor_portal/logs/'
+                '/monitor_portal/proc_logs/'
                 + prof['profile_id']
             ),
             'color': color,
@@ -286,7 +772,7 @@ def monitor_processing_logs_view(app):
         app, user_info, perms
     )
 
-    page_id = 'home.monitor_portal.logs'
+    page_id = 'home.monitor_portal.proc_logs'
     context = {
         'page_id': page_id,
         'page_label': 'Processing Logs',
@@ -324,7 +810,7 @@ def monitor_processing_logs_profile_view(app, profile_id):
         return redirect(url_for('login'))
 
     page_id = (
-        'home.monitor_portal.logs.'
+        'home.monitor_portal.proc_logs.'
         + str(profile_id)
     )
     context = {
@@ -341,13 +827,13 @@ def monitor_processing_logs_profile_view(app, profile_id):
             '/api/monitor/processing-logs/logfile'
         ),
         'pid_base_url': (
-            '/monitor_portal/logs/' + profile_id
+            '/monitor_portal/proc_logs/' + profile_id
         ),
     }
     try:
         context.update(
             app._build_sidebar_context(
-                'home.monitor_portal.logs', perms, user_info
+                'home.monitor_portal.proc_logs', perms, user_info
             )
         )
     except Exception:
@@ -372,7 +858,7 @@ def monitor_processing_logs_pid_view(app, profile_id, pid):
         return redirect(url_for('login'))
 
     page_id = (
-        'home.monitor_portal.logs.'
+        'home.monitor_portal.proc_logs.'
         + str(profile_id)
     )
     context = {
@@ -393,7 +879,7 @@ def monitor_processing_logs_pid_view(app, profile_id, pid):
     try:
         context.update(
             app._build_sidebar_context(
-                'home.monitor_portal.logs', perms, user_info
+                'home.monitor_portal.proc_logs', perms, user_info
             )
         )
     except Exception:
@@ -402,3 +888,312 @@ def monitor_processing_logs_pid_view(app, profile_id, pid):
         'monitor_portal/processing_logs_pid.html',
         **context,
     )
+
+
+def _checks_profile_cards(app, user_info, perms):
+    """Return profile cards for the APERO checks landing page."""
+    groups = user_info.get('groups', []) if user_info else []
+    allowed_instruments = set(
+        _monitor_instruments(perms, groups, app.ari_groups)
+    )
+    colors = app._instrument_colors()
+    accessible = get_accessible_profiles(user_info, app.ari_groups)
+
+    cards = []
+    seen_instr = set()
+    for prof in accessible:
+        instr = prof['instrument']
+        if allowed_instruments and instr not in allowed_instruments:
+            continue
+        seen_instr.add(instr)
+        color = colors.get(
+            instr,
+            instrument_color_helpers.DEFAULT_INSTRUMENT_COLOR,
+        )
+        cards.append({
+            'instrument': instr,
+            'profile_id': prof['profile_id'],
+            'url': (
+                '/monitor_portal/apero_checks/'
+                + prof['profile_id']
+            ),
+            'color': color,
+            'apero_version': prof['data'].get('apero_version', ''),
+            'reduction_server': prof['data'].get(
+                'reduction_server', ''
+            ),
+        })
+
+    shown = sorted(seen_instr)
+    return cards, shown, colors
+
+
+def monitor_apero_checks_view(app):
+    """Render the APERO checks landing page."""
+    user_info = get_effective_user(session)
+    if user_info:
+        perms = resolve_user_permissions(
+            user_info['groups'], app.ari_groups
+        )
+    else:
+        perms = get_public_permissions()
+    if not _has_any_monitor_perm(perms):
+        flash('Monitor access required.', 'warning')
+        return redirect(url_for('login'))
+
+    cards, shown, colors = _checks_profile_cards(app, user_info, perms)
+    page_id = 'home.monitor_portal.apero_checks'
+    sidebar_page_id = 'home.monitor_portal.apero_checks'
+    context = {
+        'page_id': page_id,
+        'page_label': 'APERO Checks',
+        'page_icon': 'fa-solid fa-square-check',
+        'sidebar_root': 'home.monitor_portal',
+        'sidebar_label': 'Monitor Portal',
+        'sidebar_icon': 'fa-solid fa-chart-line',
+        'sidebar_url': '/monitor_portal',
+        'profile_cards': cards,
+        'shown_instruments': shown,
+        'instrument_colors': colors,
+    }
+    try:
+        context.update(
+            app._build_sidebar_context(sidebar_page_id, perms, user_info)
+        )
+    except Exception:
+        pass
+    return render_template('monitor_portal/apero_checks.html', **context)
+
+
+def _checks_root_for_profile(app, profile_data, overrides=None):
+    """Resolve the checks YAML root for one profile."""
+    local_data_dir = app._resolve_local_data_dir()
+    cfg = checks_core.load_config(local_data_dir)
+    configured = overrides or cfg.get('checks_root') or ''
+    return checks_core.resolve_checks_root(
+        local_data_dir=local_data_dir,
+        profile_data=profile_data,
+        configured_root=configured,
+    )
+
+
+def monitor_apero_checks_profile_view(app, profile_id):
+    """Render the APERO checks obsdir card page for one profile."""
+    user_info = get_effective_user(session)
+    if user_info:
+        perms = resolve_user_permissions(
+            user_info['groups'], app.ari_groups
+        )
+    else:
+        perms = get_public_permissions()
+    if not _has_any_monitor_perm(perms):
+        flash('Monitor access required.', 'warning')
+        return redirect(url_for('login'))
+
+    groups = user_info.get('groups', []) if user_info else []
+    prof = None
+    for item in get_accessible_profiles(user_info, app.ari_groups):
+        if item['profile_id'] == profile_id:
+            prof = item
+            break
+    if prof is None:
+        flash('Profile not found or access denied.', 'warning')
+        return redirect(url_for('monitor_apero_checks_view'))
+
+    q_page = request.args.get('page', '1')
+    q_per_page = request.args.get('per_page', '10')
+    q_type = str(request.args.get('type', 'all') or 'all').strip().lower()
+    q_obsdir_sort = str(
+        request.args.get('obsdir_sort', 'desc') or 'desc'
+    ).strip().lower()
+    show_overridden = str(
+        request.args.get('show_overridden', '0') or '0'
+    ).strip() in {'1', 'true', 'yes'}
+    show_monitored = str(
+        request.args.get('show_monitored', '0') or '0'
+    ).strip() in {'1', 'true', 'yes'}
+    if q_type not in {'all', 'raw', 'red'}:
+        q_type = 'all'
+    if q_obsdir_sort not in {'asc', 'desc'}:
+        q_obsdir_sort = 'desc'
+
+    try:
+        page_num = max(1, int(q_page))
+    except (TypeError, ValueError):
+        page_num = 1
+    try:
+        per_page = max(1, int(q_per_page))
+    except (TypeError, ValueError):
+        per_page = 10
+    if per_page not in {10, 50, 100}:
+        per_page = 10
+
+    profile_data = prof['data']
+    checks_root = _checks_root_for_profile(app, profile_data)
+    local_data_dir = app._resolve_local_data_dir()
+    checks_cfg = checks_core.load_config(local_data_dir)
+    ignored_checks = checks_core.load_ignored_checks(local_data_dir)
+    files = checks_core.list_yaml_files(checks_root)
+    summaries = []
+    for path in files:
+        try:
+            loaded = checks_core.load_check_file(path)
+            summary = checks_core.build_obsdir_summary(
+                loaded,
+                type_filter=q_type,
+                show_overridden=show_overridden,
+                show_monitored=show_monitored,
+                ignored_checks=ignored_checks,
+            )
+            summaries.append(summary)
+        except Exception as exc:
+            fail = dict()
+            fail['name'] = 'YAML_PARSE'
+            fail['type'] = 'raw'
+            fail['message'] = str(exc)
+            fail['override'] = dict()
+            fail['monitor'] = dict()
+
+            summary = dict()
+            summary['obsdir'] = str(path.stem)
+            summary['instrument'] = str(prof['instrument'])
+            summary['profile'] = str(profile_id)
+            summary['path'] = str(path)
+            summary['history'] = []
+            summary['visible_failures'] = [('parse_error', fail)]
+            summary['visible_failure_count'] = 1
+            summary['ignored_failures'] = []
+            summary['status'] = 'failed'
+            summaries.append(summary)
+
+    summaries.sort(
+        key=lambda item: item.get('obsdir', ''),
+        reverse=(q_obsdir_sort == 'desc'),
+    )
+    page_cards, total_pages = checks_core.paginate_items(
+        summaries, page_num, per_page
+    )
+
+    page_id = f'home.monitor_portal.apero_checks.{profile_id}'
+    sidebar_page_id = 'home.monitor_portal.apero_checks'
+    manage_mode = bool('manage.astrometrics' in set(perms or set()))
+    context = {
+        'page_id': page_id,
+        'page_label': f'APERO Checks - {profile_id}',
+        'page_icon': 'fa-solid fa-square-check',
+        'sidebar_root': 'home.monitor_portal',
+        'sidebar_label': 'Monitor Portal',
+        'sidebar_icon': 'fa-solid fa-chart-line',
+        'sidebar_url': '/monitor_portal',
+        'profile_id': profile_id,
+        'profile_cards': page_cards,
+        'current_page': page_num,
+        'total_pages': total_pages,
+        'per_page': per_page,
+        'type_filter': q_type,
+        'obsdir_filter': '',
+        'obsdir_sort': q_obsdir_sort,
+        'show_overridden': show_overridden,
+        'show_monitored': show_monitored,
+        'checks_root': str(checks_root),
+        'ignored_checks': ignored_checks,
+        'checks_config': checks_cfg,
+        'can_manage_checks': manage_mode,
+    }
+    try:
+        context.update(
+            app._build_sidebar_context(sidebar_page_id, perms, user_info)
+        )
+    except Exception:
+        pass
+    return render_template(
+        'monitor_portal/apero_checks_profile.html',
+        **context,
+    )
+
+
+def monitor_apero_checks_obsdir_view(app, profile_id, obsdir):
+    """Render the APERO checks detail page for one obsdir YAML."""
+    user_info = get_effective_user(session)
+    if user_info:
+        perms = resolve_user_permissions(
+            user_info['groups'], app.ari_groups
+        )
+    else:
+        perms = get_public_permissions()
+    if not _has_any_monitor_perm(perms):
+        flash('Monitor access required.', 'warning')
+        return redirect(url_for('login'))
+
+    prof = None
+    for item in get_accessible_profiles(user_info, app.ari_groups):
+        if item['profile_id'] == profile_id:
+            prof = item
+            break
+    if prof is None:
+        flash('Profile not found or access denied.', 'warning')
+        return redirect(url_for('monitor_apero_checks_view'))
+
+    profile_data = prof['data']
+    checks_root = _checks_root_for_profile(app, profile_data)
+    path = checks_root / f'{obsdir}.yaml'
+    if not path.exists():
+        path = checks_root / f'{obsdir}.yml'
+    if not path.exists():
+        flash('APERO check YAML not found.', 'warning')
+        return redirect(url_for('monitor_apero_checks_profile_view',
+                                profile_id=profile_id))
+
+    loaded = checks_core.load_check_file(path)
+    history = []
+    for key, value in loaded.get('history', {}).items():
+        row = dict(value)
+        row['id'] = key
+        history.append(row)
+    history.sort(key=lambda item: item.get('date', ''))
+
+    failure_cards = []
+    ignored_checks = set(checks_core.load_ignored_checks(
+        app._resolve_local_data_dir()
+    ))
+    for failure_key, failure in loaded.get('failures', {}).items():
+        if failure_key in ignored_checks:
+            continue
+        failure_cards.append({
+            'key': failure_key,
+            'name': failure.get('name', failure_key),
+            'type': failure.get('type', ''),
+            'message': failure.get('message', ''),
+            'override': failure.get('override', {}),
+            'monitor': failure.get('monitor', {}),
+            'is_overridden': bool(failure.get('override')),
+            'is_monitored': bool(failure.get('monitor')),
+        })
+
+    page_id = f'home.monitor_portal.apero_checks.{profile_id}.{obsdir}'
+    sidebar_page_id = 'home.monitor_portal.apero_checks'
+    can_manage = bool('manage.astrometrics' in set(perms or set()))
+    context = {
+        'page_id': page_id,
+        'page_label': f'APERO Checks - {profile_id}',
+        'page_icon': 'fa-solid fa-square-check',
+        'sidebar_root': 'home.monitor_portal',
+        'sidebar_label': 'Monitor Portal',
+        'sidebar_icon': 'fa-solid fa-chart-line',
+        'sidebar_url': '/monitor_portal',
+        'profile_id': profile_id,
+        'obsdir': obsdir,
+        'checks_file': str(path),
+        'check_history': history,
+        'failure_cards': failure_cards,
+        'ignored_checks': sorted(ignored_checks),
+        'can_manage_checks': can_manage,
+    }
+    try:
+        context.update(
+            app._build_sidebar_context(sidebar_page_id, perms, user_info)
+        )
+    except Exception:
+        pass
+    return render_template('monitor_portal/apero_checks_detail.html',
+                           **context)

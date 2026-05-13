@@ -1,0 +1,17 @@
+id: 0376b995-e912-4132-b1f1-b54b66516eb6
+slug: class-apero-core-core-drs-exceptions-logexit-e-00-090-00010-2-error-s-occurred-for-apero-postprocess-instrument
+date_reported: '2023-08-28'
+reported_by: Neil Cook
+instrument_mode: NIRPS-HE, NIRPS-HA
+recipe: apero_postprocess
+action: Ignore
+type: Expected
+error_code: 00-090-00010
+github_issue: ''
+generic_error: 'class apero.core.core.drs_exceptions.LogExit : E[00-090-00010]: 2
+  error(s) occurred for apero_postprocess_{instrument}'
+comments: postprocessing is not working for NIRPS-HE, NIRPS-HA yet. This will be fixed
+  later
+full_example_error: 'class apero.core.core.drs_exceptions.LogExit : E[00-090-00010]:
+  2 error(s) occurred for apero_postprocess_nirps_he'
+updated_at: '2026-05-13 15:54:29'

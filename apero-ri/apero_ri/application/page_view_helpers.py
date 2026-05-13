@@ -12,7 +12,8 @@ from apero_ri.core.auth import (
 )
 from apero_ri.core.docs import (
     get_default_version,
-    get_doc_content,
+    get_doc_cards,
+    get_doc_sidebar_tree,
     get_versions,
 )
 from apero_ri.core.permissions import (
@@ -37,7 +38,6 @@ def make_page_view(app, page_id: str, package_dir: Path):
     is_parent = is_parent_page(page_id, app.ari_pages) or template.endswith(
         "/index.html"
     )
-    is_doc = app._is_doc_leaf(page_id, app.ari_pages)
 
     def view_func():
         user_info = get_effective_user(session)
@@ -85,20 +85,37 @@ def make_page_view(app, page_id: str, package_dir: Path):
                 logged_in=(user_info is not None),
             )
 
-        if is_doc:
+        if page_id == "home.docs":
             version = context.get("current_version")
-            raw, html, current_ver = get_doc_content(page_id, version)
-            doc_short = page_id.split(".")[-1]
-            context.update(
-                {
-                    "doc_html": html,
-                    "doc_raw": raw,
-                    "current_version": current_ver,
-                    "can_edit": f"edit.doc.{doc_short}" in perms,
-                    "doc_ref": doc_short,
-                }
-            )
-            return render_template("docs/doc_page.html", **context)
+            view_mode = str(request.args.get('view', 'cards') or 'cards')
+            if view_mode not in {'cards', 'list'}:
+                view_mode = 'cards'
+
+            doc_cards, current_ver, _ = get_doc_cards("", version)
+            context["cards"] = doc_cards
+            context["current_version"] = current_ver
+            context['view_mode'] = view_mode
+            context['doc_self_url'] = '/docs'
+
+            docs_sidebar = get_doc_sidebar_tree('', current_ver)
+            context['docs_sidebar_tree'] = docs_sidebar
+            base_sidebar = list(context.get('sidebar_tree', []))
+            pinned = [
+                item for item in base_sidebar
+                if item.get('pinned', False)
+            ]
+            context['sidebar_tree'] = pinned + docs_sidebar
+
+            query_parts = []
+            if current_ver:
+                query_parts.append(f'v={current_ver}')
+            if view_mode == 'list':
+                query_parts.append('view=list')
+
+            query_suffix = ''
+            if query_parts:
+                query_suffix = '?' + '&'.join(query_parts)
+            context['doc_query_suffix'] = query_suffix
 
         if page_id == "home":
             context.update(app._build_home_page_context(user_info, perms))

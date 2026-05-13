@@ -1,0 +1,29 @@
+id: 91ac980a-b79a-4243-880a-ce83ffe74bc9
+slug: class-systemexit-or-systemexit
+date_reported: '2023-09-29'
+reported_by: Neil Cook
+instrument_mode: ALL
+recipe: apero_processing
+action: Check
+type: Expected
+error_code: W[10-503-00007]
+github_issue: '728.0'
+generic_error: 'class SystemExit : ||                or   SystemExit'
+comments: 'related to W[10-503-00007] but not given in SystemExit
+
+
+  If apero_processing was running and you got the message; W[10-503-00007]: No files
+  after whitelisting. Skipping. And you typed "N". This message is expected and can
+  be ignored (You should however probably report that there are no files for this
+  run (either due to the night used in the manual_trigger or the settings in the run.ini
+  file. If you get this message and did not have this prompt please report. Issue
+  on github to make this error more understandable (and not use a SystemExit).'
+full_example_error: "Traceback (most recent call last):\n  File \"/cosmos99/nirps/git-bin/apero-drs-online/apero/core/utils/drs_startup.py\"\
+  , line 433, in run\n    llmain = func(recipe, params)\n  File \"/cosmos99/nirps/git-bin/apero-drs-online/apero/tools/recipes/bin/apero_processing.py\"\
+  , line 230, in __main__\n    raise e\n  File \"/cosmos99/nirps/git-bin/apero-drs-online/apero/tools/recipes/bin/apero_processing.py\"\
+  , line 166, in __main__\n    rlist = drs_processing.generate_run_list(params, findexdbm,\
+  \ runtable,\n  File \"/cosmos99/nirps/git-bin/apero-drs-online/apero/tools/module/processing/drs_processing.py\"\
+  , line 887, in generate_run_list\n    ref_condition, req_obs_dirs = gen_global_condition(params,\
+  \ findexdbm,\n  File \"/cosmos99/nirps/git-bin/apero-drs-online/apero/tools/module/processing/drs_processing.py\"\
+  , line 2229, in gen_global_condition\n    sys.exit()\nSystemExit"
+updated_at: '2026-05-13 16:34:32'
