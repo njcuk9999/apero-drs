@@ -189,11 +189,38 @@ def ensure_default_user() -> None:
         create_user(DEFAULT_USER, DEFAULT_PASSWORD, DEFAULT_GROUPS)
 
 
-def authenticate(username: str, password: str) -> Optional[dict]:
-    """Authenticate a user. Returns user dict on success, None on failure."""
-    users = load_users()
-    if username not in users:
+def find_username_by_email(email: str) -> Optional[str]:
+    """Return the username whose emails list contains *email* (case-insensitive).
+
+    Returns None if no match found.
+    """
+    needle = email.lower().strip()
+    if not needle:
         return None
+    users = load_users()
+    for uname, udata in users.items():
+        stored = udata.get('emails') or []
+        if isinstance(stored, str):
+            stored = [stored]
+        for addr in stored:
+            if str(addr).lower().strip() == needle:
+                return uname
+    return None
+
+
+def authenticate(username: str, password: str) -> Optional[dict]:
+    """Authenticate a user.
+
+    *username* may be either a username or any registered email address.
+    Returns user dict on success, None on failure.
+    """
+    users = load_users()
+    # Allow login with an email address
+    if username not in users:
+        matched = find_username_by_email(username)
+        if matched is None:
+            return None
+        username = matched
     user = users[username]
     if not verify_password(password, user.get("password", "")):
         return None

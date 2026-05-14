@@ -1,0 +1,24 @@
+id: 06383336-4747-4cde-986d-e58836d54253
+slug: class-apero-core-core-drs-exceptions-logexit-e-09-001-00033-no-valid-input-files-files-after-qc-test-tcorr-file
+date_reported: '2023-08-28'
+reported_by: Neil Cook
+instrument_mode: ALL
+recipe: apero_ccf_nirps_he
+action: Check
+type: Expected
+error_code: 09-001-00033
+github_issue: ''
+generic_error: "class apero.core.core.drs_exceptions.LogExit : E[09-001-00033]: No\
+  \ valid\n input files files after QC test: - {tcorr file}: QCC_ALL = False"
+comments: 'This means that the input files for this observation failed QC. The input
+  files probably failed telluric correct. The most common case of this is extremely
+  low SNR on a science observation. You should check the input files and see what
+  failed QC. It may be worth reporting a target that has very low SNR (SNR<5) as this
+  target is probably not worth reducing. If it is extremely low SNR check with the
+  champion/observer that everything went as expected.
+
+  If this happens on a lot of different science objects for a night, report.'
+full_example_error: "class apero.core.core.drs_exceptions.LogExit : E[09-001-00033]:\
+  \ No valid\n input files files after QC test: - \n/cosmos99/nirps/apero-data/nirps_he_online/red/2023-08-27/NIRPS_2023-08-28T06_24_58_630_pp_e2dsff_tcorr_A.fits:\n\
+  \ QCC_ALL = False"
+updated_at: '2026-05-13 15:54:29'

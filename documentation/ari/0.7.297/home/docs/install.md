@@ -1,3 +1,8 @@
+---
+card_label: Install
+card_icon: fa-solid fa-download
+---
+
 # Installation 0.7.297 and later 0.7.XXX
 
 

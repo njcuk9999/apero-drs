@@ -4,6 +4,12 @@
 (function () {
     'use strict';
 
+    if (window.__ARI_SCI_GROUPS_INIT__) {
+        console.warn('admin_science_groups.js duplicate init ignored');
+        return;
+    }
+    window.__ARI_SCI_GROUPS_INIT__ = true;
+
     function init() {
     var cfg = window.ARI_SCI_GROUPS;
 
@@ -31,6 +37,26 @@
     var runidAvailCount = document.getElementById('runid-avail-count');
     var runidAddedCount = document.getElementById('runid-added-count');
     var btnRefreshRunIds = document.getElementById('btn-refresh-runids');
+    var btnGlobalIo = document.getElementById('btn-global-io');
+    var globalIoModal = document.getElementById('global-io-modal');
+    var globalIoKind = document.getElementById('global-io-kind');
+    var globalIoSelection = document.getElementById('global-io-selection');
+    var globalIoMode = document.getElementById('global-io-mode');
+    var globalIoFile = document.getElementById('global-io-file');
+    var btnGlobalExport = document.getElementById('btn-global-export');
+    var btnGlobalImport = document.getElementById('btn-global-import');
+    var btnGlobalIoClose = document.getElementById('btn-global-io-close');
+
+    var groupIoModal = document.getElementById('group-io-modal');
+    var groupIoSelectedName = document.getElementById(
+        'group-io-selected-name');
+    var groupIoMode = document.getElementById('group-io-mode');
+    var groupIoFile = document.getElementById('group-io-file');
+    var btnGroupIo = document.getElementById('btn-group-io');
+    var btnGroupIoTop = document.getElementById('btn-group-io-top');
+    var btnGroupExport = document.getElementById('btn-group-export');
+    var btnGroupImport = document.getElementById('btn-group-import');
+    var btnGroupIoClose = document.getElementById('btn-group-io-close');
     var btnAddAllRunIds = document.getElementById('btn-add-all-runids');
 
     var userSection = document.getElementById('user-section');
@@ -64,6 +90,7 @@
     var currentGroup = null;
     var allGroups = [];
     var allRunIds = [];
+    var runIdLabels = {};
     var allUsers = [];
     var selectedRunIds = [];
     var selectedUsers = [];
@@ -201,6 +228,7 @@
                 }
                 allGroups = data.groups || [];
                 allRunIds = data.run_ids || [];
+                runIdLabels = data.run_id_labels || {};
                 allUsers = data.available_users || [];
                 setScienceHealth(
                     data.health_status || 'warning',
@@ -225,6 +253,7 @@
                 if (!data.success) return;
                 allGroups = data.groups || [];
                 allRunIds = data.run_ids || [];
+                runIdLabels = data.run_id_labels || {};
                 allUsers = data.available_users || [];
                 setScienceHealth(
                     data.health_status || 'warning',
@@ -347,6 +376,7 @@
                 headerCount: runidCount,
                 availBadge: runidAvailCount,
                 addedBadge: runidAddedCount,
+                labelMap: runIdLabels,
                 icon: 'fa-hashtag'
             };
         }
@@ -360,6 +390,7 @@
             headerCount: userCount,
             availBadge: userAvailCount,
             addedBadge: userAddedCount,
+                labelMap: {},
             icon: 'fa-user'
         };
     }
@@ -392,7 +423,16 @@
 
         if (lower) {
             items = items.filter(function (it) {
-                return it.toLowerCase().indexOf(lower) !== -1;
+                // Check raw item
+                if (it.toLowerCase().indexOf(lower) !== -1) {
+                    return true;
+                }
+                // For runids, also check display label (includes PI name)
+                if (type === 'runid' && runIdLabels[it]) {
+                    return runIdLabels[it].toLowerCase()
+                        .indexOf(lower) !== -1;
+                }
+                return false;
             });
         }
 
@@ -406,7 +446,17 @@
         }
 
         capped.forEach(function (item) {
-            var card = createTransferCard(type, side, item, icon);
+            var displayName = item;
+            if (type === 'runid' && runIdLabels[item]) {
+                displayName = runIdLabels[item];
+            }
+            var card = createTransferCard(
+                type,
+                side,
+                item,
+                displayName,
+                icon
+            );
             container.appendChild(card);
         });
 
@@ -419,7 +469,7 @@
         }
     }
 
-    function createTransferCard(type, side, item, icon) {
+    function createTransferCard(type, side, item, displayName, icon) {
         var card = document.createElement('div');
         card.className = 'ari-sg-transfer-card';
         card.setAttribute('draggable', 'true');
@@ -445,7 +495,8 @@
             '<div class="ari-sg-transfer-card__icon">' +
                 '<i class="fa-solid ' + icon + '"></i>' +
             '</div>' +
-            '<div class="ari-sg-transfer-card__name">' + escapeHtml(item) + '</div>' +
+            '<div class="ari-sg-transfer-card__name">'
+            + escapeHtml(displayName) + '</div>' +
             '<button class="ari-sg-transfer-card__action ' + actionClass + '" title="' + actionTitle + '">' +
                 '<i class="fa-solid ' + actionIcon + '"></i>' +
             '</button>';
@@ -589,11 +640,16 @@
             '#btn-save-group, #btn-save-group-top');
         var deleteBtns = document.querySelectorAll(
             '#btn-delete-group, #btn-delete-group-top');
+        var ioBtns = document.querySelectorAll(
+            '#btn-group-io, #btn-group-io-top');
         saveBtns.forEach(function (b) {
             b.disabled = !(currentGroup && dirty);
         });
         deleteBtns.forEach(function (b) {
             b.disabled = !currentGroup || isAllGroupName(currentGroup);
+        });
+        ioBtns.forEach(function (b) {
+            b.disabled = !currentGroup;
         });
     }
 
@@ -717,6 +773,146 @@
             if (btnRefreshRunIds) btnRefreshRunIds.disabled = false;
             showToast('Run ID refresh failed', 'error');
         });
+    }
+
+    function buildIoExportUrl(scope, kind, selection, groupName) {
+        var params = new URLSearchParams();
+        params.set('instrument', currentInstrument || '');
+        params.set('scope', scope);
+        params.set('kind', kind);
+        if (selection) {
+            params.set('selection', selection);
+        }
+        if (groupName) {
+            params.set('group', groupName);
+        }
+        return cfg.ioExportUrl + '?' + params.toString();
+    }
+
+    function downloadIoExport(scope, kind, selection, groupName, done) {
+        if (!currentInstrument) {
+            showToast('Select an instrument first', 'warning');
+            return;
+        }
+        if (!cfg.ioExportUrl) {
+            showToast('Import/Export API is not configured', 'error');
+            return;
+        }
+        var url = buildIoExportUrl(scope, kind, selection, groupName);
+        fetch(url)
+            .then(function (response) {
+                if (!response.ok) {
+                    return response.json().then(function (body) {
+                        throw new Error(body.error || 'Export failed');
+                    });
+                }
+                return response.blob().then(function (blob) {
+                    return {
+                        blob: blob,
+                        disposition: response.headers.get(
+                            'Content-Disposition') || ''
+                    };
+                });
+            })
+            .then(function (payload) {
+                var filename = 'science_groups_export.yaml';
+                var match = /filename=([^;]+)/i.exec(payload.disposition);
+                if (match && match[1]) {
+                    filename = match[1].trim().replace(/^"|"$/g, '');
+                }
+                var objectUrl = window.URL.createObjectURL(payload.blob);
+                var link = document.createElement('a');
+                link.href = objectUrl;
+                link.download = filename;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                window.URL.revokeObjectURL(objectUrl);
+                showToast('YAML exported', 'success');
+                if (done) done();
+            })
+            .catch(function (err) {
+                showToast(err.message || 'YAML export failed', 'error');
+            });
+    }
+
+    function uploadIoImport(scope, kind, mode, groupName, file, done) {
+        if (!currentInstrument) {
+            showToast('Select an instrument first', 'warning');
+            return;
+        }
+        if (!cfg.ioImportUrl) {
+            showToast('Import/Export API is not configured', 'error');
+            return;
+        }
+        var body = new FormData();
+        body.append('instrument', currentInstrument);
+        body.append('scope', scope);
+        body.append('kind', kind);
+        body.append('mode', mode || 'merge');
+        if (groupName) {
+            body.append('group', groupName);
+        }
+        body.append('file', file);
+
+        fetch(cfg.ioImportUrl, {
+            method: 'POST',
+            body: body
+        })
+            .then(function (r) { return r.json(); })
+            .then(function (data) {
+                if (!data.success) {
+                    showToast(data.error || 'YAML import failed', 'error');
+                    return;
+                }
+                showToast('YAML imported (' + (mode || 'merge') + ')',
+                          'success');
+                loadGroupList();
+                if (currentGroup) {
+                    setTimeout(function () {
+                        selectGroup(currentGroup);
+                    }, 120);
+                }
+                if (done) done();
+            })
+            .catch(function () {
+                showToast('YAML import failed', 'error');
+            });
+    }
+
+    function openGlobalIoModal() {
+        if (!currentInstrument) {
+            showToast('Select an instrument first', 'warning');
+            return;
+        }
+        if (globalIoModal) {
+            globalIoModal.style.display = 'flex';
+        }
+    }
+
+    function closeGlobalIoModal() {
+        if (globalIoModal) {
+            globalIoModal.style.display = 'none';
+        }
+    }
+
+    function openGroupIoModal() {
+        if (!currentInstrument || !currentGroup) {
+            showToast('Select a science group first', 'warning');
+            return;
+        }
+        if (groupIoSelectedName) {
+            groupIoSelectedName.textContent = currentGroup;
+        }
+        if (groupIoModal) {
+            groupIoModal.style.display = 'flex';
+        }
+    }
+
+    function closeGroupIoModal() {
+        if (groupIoModal) {
+            groupIoModal.style.display = 'none';
+        }
     }
 
     /* -- Create group ---------------------------------------------------- */
@@ -888,6 +1084,77 @@
     if (btnRefreshRunIds) {
         btnRefreshRunIds.addEventListener('click', refreshRunIds);
     }
+    if (btnGlobalIo) {
+        btnGlobalIo.addEventListener('click', openGlobalIoModal);
+    }
+    if (btnGroupIo) {
+        btnGroupIo.addEventListener('click', openGroupIoModal);
+    }
+    if (btnGroupIoTop) {
+        btnGroupIoTop.addEventListener('click', openGroupIoModal);
+    }
+    if (btnGlobalExport) {
+        btnGlobalExport.addEventListener('click', function () {
+            var kind = globalIoKind ? globalIoKind.value : 'users';
+            var selection = globalIoSelection
+                ? globalIoSelection.value : 'all';
+            downloadIoExport('global', kind, selection, '', null);
+        });
+    }
+    if (btnGlobalImport) {
+        btnGlobalImport.addEventListener('click', function () {
+            if (!globalIoFile) return;
+            globalIoFile.click();
+        });
+    }
+    if (globalIoFile) {
+        globalIoFile.addEventListener('change', function () {
+            if (!globalIoFile.files || !globalIoFile.files[0]) return;
+            var kind = globalIoKind ? globalIoKind.value : 'users';
+            var mode = globalIoMode ? globalIoMode.value : 'merge';
+            var file = globalIoFile.files[0];
+            uploadIoImport('global', kind, mode, '', file, function () {
+                globalIoFile.value = '';
+            });
+        });
+    }
+    if (btnGlobalIoClose) {
+        btnGlobalIoClose.addEventListener('click', closeGlobalIoModal);
+    }
+    if (btnGroupExport) {
+        btnGroupExport.addEventListener('click', function () {
+            if (!currentGroup) {
+                showToast('Select a science group first', 'warning');
+                return;
+            }
+            downloadIoExport('group', 'group', '', currentGroup, null);
+        });
+    }
+    if (btnGroupImport) {
+        btnGroupImport.addEventListener('click', function () {
+            if (!groupIoFile) return;
+            groupIoFile.click();
+        });
+    }
+    if (groupIoFile) {
+        groupIoFile.addEventListener('change', function () {
+            if (!groupIoFile.files || !groupIoFile.files[0]) return;
+            if (!currentGroup) {
+                showToast('Select a science group first', 'warning');
+                groupIoFile.value = '';
+                return;
+            }
+            var mode = groupIoMode ? groupIoMode.value : 'merge';
+            var file = groupIoFile.files[0];
+            uploadIoImport('group', 'group', mode, currentGroup, file,
+                function () {
+                    groupIoFile.value = '';
+                });
+        });
+    }
+    if (btnGroupIoClose) {
+        btnGroupIoClose.addEventListener('click', closeGroupIoModal);
+    }
     btnAddAllRunIds.addEventListener('click', function () {
         addAllSelections('runid');
     });
@@ -908,6 +1175,20 @@
     deleteModal.addEventListener('click', function (e) {
         if (e.target === deleteModal) closeDeleteModal();
     });
+    if (globalIoModal) {
+        globalIoModal.addEventListener('click', function (e) {
+            if (e.target === globalIoModal) {
+                closeGlobalIoModal();
+            }
+        });
+    }
+    if (groupIoModal) {
+        groupIoModal.addEventListener('click', function (e) {
+            if (e.target === groupIoModal) {
+                closeGroupIoModal();
+            }
+        });
+    }
 
     // Enter key in create modal
     newGroupName.addEventListener('keydown', function (e) {

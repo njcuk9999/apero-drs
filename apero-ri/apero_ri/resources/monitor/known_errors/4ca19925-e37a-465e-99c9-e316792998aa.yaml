@@ -1,0 +1,51 @@
+id: 4ca19925-e37a-465e-99c9-e316792998aa
+slug: class-apero-core-core-drs-exceptions-logexit-lbl-mask-exception-objname-friend-class-lbl-core-base-classes-lbl
+date_reported: '2023-08-28'
+reported_by: Neil Cook
+instrument_mode: ALL
+recipe: apero_lbl_mask
+action: Check
+type: Expected
+error_code: LBL
+github_issue: ''
+generic_error: "class apero.core.core.drs_exceptions.LogExit : LBL Mask Exception\
+  \ \n[{OBJNAME}_{FRIEND}] class \nlbl.core.base_classes.LblException : File {TEMPLATE_PATH}\n\
+  \ cannot be found"
+comments: "This was caused by a missing tempalte file. \n1. Check that there is a\
+  \ template in the apero-data/{profile}/lbl/templates directory for {OBJNAME} and\
+  \ for {FRIEND}. If these both exist report this bug. \n2. If either template is\
+  \ missing in lbl/templates/ for this {OBJNAME} or {FRIEND} then check in the apero-data/{profile}/red/other/\
+  \ directory  for a template\n3. If the template is in the /red/other/ directory\
+  \ check the QCC values (dfits {template_name} | grep QCC) and see if the template\
+  \ failed quality control there should be a over all QCC_ALL that fails if any criteria\
+  \ fails and one or more QCCXXXP that fail (QCCXXXN give you the name, QCCXXXL gives\
+  \ you the logic for a failutre, QCCXXXV gives you the value that the file had, QCCXXXP\
+  \ is 1 for passed 0 for failed). Report that the template failed QC with the relevant\
+  \ QCCXXXP/L/V that failed. \n4. If the template passed report that the template\
+  \ passed and exists in red/other but not in lbl/template.\n5. If the template is\
+  \ not in the red/other directory check whether apero_mk_template_{instrument} had\
+  \ an error for this {OBJNAME} or {FRIEND} if it did report this error. Find the\
+  \ relevant apero_mk_template entries by searching object name in RUNSTRING for this\
+  \ recipe in the ARI table.\n6. If apero_mk_template_{instrument} did not have an\
+  \ error check in the log to see if it failed QC (this can happen). If it had an\
+  \ error report it. If it failed QC use the RUNSTRING column to run this recipe again\
+  \ (make sure you conda activate + load the correct apero profile). If it still fails\
+  \ QC then report that you tried to re-run the apero_mk_template code and that QC\
+  \ is still failing - it may be we have to wait for more observations and we have\
+  \ to ignore this error.\n7. If it did not fail QC use the RUNSTRING column to run\
+  \ this recipe again  (make sure you conda activate + load the correct apero profile).\
+  \ Report any problems that are found it there is an error/QC failure.\n8. Finally\
+  \ check if any telluric corrected files exist for this object (check in all directories\
+  \ for this {OBJANME} or {FRIEND}). You may need to go on to ARI and find out which\
+  \ nights had this object name. You can repeat the process from step 3 above to see\
+  \ how many tcorr files failed QC (report QCCXXXP/L/V) it is okay if a few fail but\
+  \ if many fail this could be the problem. Report that template was not in the red/other\
+  \ directory and report on how many tcorr files passed/failed (or report that you\
+  \ could not find any tcorr files). You can also use the recipe log to find out whether\
+  \ specific files failed telluric correction (apero_fit_tellu) maybe there were errors\
+  \ in every tcorr file (or many of them) report these errors."
+full_example_error: "class apero.core.core.drs_exceptions.LogExit : LBL Mask Exception\
+  \ \n[BPS_CS_22881M0003_BPS_CS_22881M0003] class \nlbl.core.base_classes.LblException\
+  \ : File \n/cosmos99/nirps/apero-data/nirps_he_offline/lbl/templates/Template_s1dv_BPS_CS_22881M0003_sc1d_v_file_A.fits\n\
+  \ cannot be found"
+updated_at: '2026-05-13 15:54:29'

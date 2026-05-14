@@ -44,6 +44,10 @@
     var btnSaveTop        = document.getElementById('btn-save-groups-top');
     var btnSaveBottom     = document.getElementById('btn-save-groups-bottom');
     var btnSaveBottomWrap = document.getElementById('btn-save-groups-bottom-wrap');
+    var btnNewViewCard    = document.getElementById('um-new-view-card');
+    var btnNewViewList    = document.getElementById('um-new-view-list');
+    var btnCurViewCard    = document.getElementById('um-cur-view-card');
+    var btnCurViewList    = document.getElementById('um-cur-view-list');
 
     // =====================================================================
     // State
@@ -55,6 +59,11 @@
     var selectedUser      = null;
     var openedAsNewMember = false;
     var activeGroupFilter = null;
+    var viewModeNew       =
+        localStorage.getItem('um-view-new') || 'card';
+    var viewModeCurrent   =
+        localStorage.getItem('um-view-current') || 'card';
+    var reverseMap        = {};
 
     // Batched-edit state
     var pendingGroups     = null;   // Set of group names (in-flight edits)
@@ -125,6 +134,35 @@
                 toast.style.display = 'none';
             }, 300);
         }, 3000);
+    }
+
+    // =====================================================================
+    // Effective groups / reverse inheritance
+    // =====================================================================
+    function computeReverseMap(inheritedMap) {
+        // reverseMap[g] = Set of groups that transitively include g
+        var rev = {};
+        Object.keys(inheritedMap).forEach(function (parent) {
+            (inheritedMap[parent] || []).forEach(function (child) {
+                if (!rev[child]) rev[child] = new Set();
+                rev[child].add(parent);
+            });
+        });
+        return rev;
+    }
+
+    function getEffectiveGroups(user) {
+        var inheritedMap =
+            (searchMeta && searchMeta.inherited_map) || {};
+        var direct = new Set(user.groups || []);
+        var inherited = new Set();
+        direct.forEach(function (g) {
+            (inheritedMap[g] || []).forEach(function (sub) {
+                inherited.add(sub);
+            });
+        });
+        direct.forEach(function (g) { inherited.delete(g); });
+        return { direct: direct, inherited: inherited };
     }
 
     // =====================================================================
@@ -203,6 +241,9 @@
                     return;
                 }
                 searchMeta = data;
+                reverseMap = computeReverseMap(
+                    searchMeta.inherited_map || {}
+                );
                 allUsers = data.users;
                 rebuildUserLists();
                 renderGroupFilterPills();
@@ -229,7 +270,9 @@
         var sel = '[data-username="'
             + user.username.replace(/"/g, '\\"') + '"]';
         var old = container.querySelector(sel);
-        var fresh = buildUserCard(user, isNew);
+        var mode = isNew ? viewModeNew : viewModeCurrent;
+        var builder = mode === 'list' ? buildUserRow : buildUserCard;
+        var fresh = builder(user, isNew);
         if (old) container.replaceChild(fresh, old);
     }
 
@@ -250,9 +293,14 @@
             newResults.style.display = 'none';
             newEmpty.style.display = '';
         }
+        newResults.classList.toggle(
+            'ari-user-results--list', viewModeNew === 'list'
+        );
         newResults.innerHTML = '';
+        var builder = viewModeNew === 'list'
+            ? buildUserRow : buildUserCard;
         newMembers.forEach(function (user) {
-            newResults.appendChild(buildUserCard(user, true));
+            newResults.appendChild(builder(user, true));
         });
     }
 
@@ -318,17 +366,28 @@
             });
         }
         if (activeGroupFilter !== null) {
+            var encompassing =
+                reverseMap[activeGroupFilter] || new Set();
             filtered = filtered.filter(function (u) {
-                return (
-                    (u.groups || []).indexOf(activeGroupFilter) !== -1
-                );
+                var uGroups = u.groups || [];
+                if (uGroups.indexOf(activeGroupFilter) !== -1) {
+                    return true;
+                }
+                return uGroups.some(function (g) {
+                    return encompassing.has(g);
+                });
             });
         }
         searchStatus.textContent =
             filtered.length + ' member(s) found.';
+        currentResults.classList.toggle(
+            'ari-user-results--list', viewModeCurrent === 'list'
+        );
         currentResults.innerHTML = '';
+        var builder = viewModeCurrent === 'list'
+            ? buildUserRow : buildUserCard;
         filtered.forEach(function (user) {
-            currentResults.appendChild(buildUserCard(user, false));
+            currentResults.appendChild(builder(user, false));
         });
     }
 
@@ -371,9 +430,15 @@
 
         var groupLine = document.createElement('div');
         groupLine.className = 'ari-user-result-card__groups';
-        groupLine.textContent = isNew
-            ? 'Awaiting assignment'
-            : ((user.groups || []).join(', ') || 'No groups');
+        if (isNew) {
+            groupLine.textContent = 'Awaiting assignment';
+        } else {
+            var eff = getEffectiveGroups(user);
+            var effAll = Array.from(eff.direct)
+                .concat(Array.from(eff.inherited));
+            groupLine.textContent =
+                effAll.join(', ') || 'No groups';
+        }
         info.appendChild(groupLine);
         card.appendChild(info);
 
@@ -388,6 +453,72 @@
             openDetail(user, isNew);
         });
         return card;
+    }
+
+    // =====================================================================
+    // User row builder (list view)
+    // =====================================================================
+    function buildUserRow(user, isNew) {
+        var row = document.createElement('div');
+        var highest = getHighestGroup(user);
+        var groupStyle = getGroupStyle(highest);
+        row.className = 'ari-user-result-row';
+        row.dataset.username = user.username;
+
+        var dot = document.createElement('span');
+        dot.className = 'ari-user-result-row__dot';
+        dot.style.background = groupStyle.avatarBg;
+        row.appendChild(dot);
+
+        var nameEl = document.createElement('span');
+        nameEl.className = 'ari-user-result-row__username';
+        nameEl.textContent = user.username;
+        row.appendChild(nameEl);
+
+        var fullEl = document.createElement('span');
+        fullEl.className = 'ari-user-result-row__fullname';
+        fullEl.textContent = [
+            user.first_names, user.last_name
+        ].filter(Boolean).join(' ');
+        row.appendChild(fullEl);
+
+        var groupsEl = document.createElement('div');
+        groupsEl.className = 'ari-user-result-row__groups';
+        if (isNew) {
+            var awaitPill = document.createElement('span');
+            awaitPill.className = 'ari-user-group-pill';
+            awaitPill.textContent = 'Awaiting assignment';
+            groupsEl.appendChild(awaitPill);
+        } else {
+            var eff = getEffectiveGroups(user);
+            eff.direct.forEach(function (g) {
+                var pill = document.createElement('span');
+                pill.className = 'ari-user-group-pill';
+                pill.textContent = g;
+                groupsEl.appendChild(pill);
+            });
+            eff.inherited.forEach(function (g) {
+                var pill = document.createElement('span');
+                pill.className =
+                    'ari-user-group-pill'
+                    + ' ari-user-group-pill--inherited';
+                pill.textContent = g;
+                pill.title = 'Inherited via direct group';
+                groupsEl.appendChild(pill);
+            });
+        }
+        row.appendChild(groupsEl);
+
+        if (isNew) {
+            var badge = document.createElement('span');
+            badge.className = 'ari-um-new-pill';
+            badge.textContent = 'New';
+            row.appendChild(badge);
+        }
+        row.addEventListener('click', function () {
+            openDetail(user, isNew);
+        });
+        return row;
     }
 
     // =====================================================================
@@ -759,6 +890,53 @@
     }
 
     // =====================================================================
+    // View toggle
+    // =====================================================================
+    function _applyViewBtns(cardBtn, listBtn, mode) {
+        if (cardBtn) cardBtn.classList.toggle(
+            'ari-um-view-btn--active', mode === 'card'
+        );
+        if (listBtn) listBtn.classList.toggle(
+            'ari-um-view-btn--active', mode === 'list'
+        );
+    }
+
+    function _setViewMode(mode, isNewPanel) {
+        if (isNewPanel) {
+            viewModeNew = mode;
+            localStorage.setItem('um-view-new', mode);
+            _applyViewBtns(btnNewViewCard, btnNewViewList, mode);
+            renderNewMembersTab();
+        } else {
+            viewModeCurrent = mode;
+            localStorage.setItem('um-view-current', mode);
+            _applyViewBtns(btnCurViewCard, btnCurViewList, mode);
+            renderCurrentMembersFiltered();
+        }
+    }
+
+    if (btnNewViewCard) {
+        btnNewViewCard.addEventListener('click', function () {
+            _setViewMode('card', true);
+        });
+    }
+    if (btnNewViewList) {
+        btnNewViewList.addEventListener('click', function () {
+            _setViewMode('list', true);
+        });
+    }
+    if (btnCurViewCard) {
+        btnCurViewCard.addEventListener('click', function () {
+            _setViewMode('card', false);
+        });
+    }
+    if (btnCurViewList) {
+        btnCurViewList.addEventListener('click', function () {
+            _setViewMode('list', false);
+        });
+    }
+
+    // =====================================================================
     // Danger zone / delete
     // =====================================================================
     function renderDangerZone(user) {
@@ -826,6 +1004,9 @@
     // =====================================================================
     // Init
     // =====================================================================
+    // Restore saved view-mode button states before first render
+    _applyViewBtns(btnNewViewCard, btnNewViewList, viewModeNew);
+    _applyViewBtns(btnCurViewCard, btnCurViewList, viewModeCurrent);
     loadAll();
     } // end _boot
 

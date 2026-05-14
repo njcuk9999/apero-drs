@@ -1,3 +1,8 @@
+---
+card_label: ARI API (Application Programming Interface)
+card_icon: fa-solid fa-plug-circle-bolt
+---
+
 # APERO RI API – User Guide
 
 Access APERO data programmatically using the **ari_api** Python client
@@ -175,12 +180,12 @@ downloaded = obj.get_data(
 These keyword arguments are shared by both `get_count()` and
 `get_data()` (except where noted):
 
-| Parameter   | Default     | Description |
-|-------------|-------------|-------------|
+| Parameter   | Default   | Description |
+|-------------|-----------|-------------|
 | `localdir`  | *(required)* | Local directory for downloaded files (`get_data` only) |
 | `preset`    | `'default'` | File filter preset |
-| `overwrite` | `False`     | Re-download existing files (`get_data` only) |
-| `**filters` | —           | Column-name=value filters on the file list |
+| `overwrite` | `False`   | Re-download existing files (`get_data` only) |
+| `**filters` | —         | Column-name=value filters on the file list |
 
 ---
 
@@ -258,20 +263,3 @@ authentication.
 | `/api/data-portal/object-table?profile_id=` | GET | Object table |
 | `/api/data-portal/obs-table?profile_id=` | GET | Observation table |
 | `/api/data-portal/object-page?profile_id=&objname=` | GET | Object details |
-| `/api/data-portal/file-browser?profile_id=&objname=` | GET | File list |
-| `/api/data-portal/basket/add` | POST | Add files to basket |
-| `/api/data-portal/basket/compile` | POST | Start archive compilation |
-| `/api/data-portal/basket/compile/<job_id>/status` | GET | Poll status |
-| `/api/data-portal/basket/download/<job_id>/<chunk>` | GET | Download chunk |
-| `/api/data-portal/basket/share-token` | POST | Create share link |
-| `/api/user/token/generate` | POST | Generate API token |
-| `/api/user/token/revoke` | POST | Revoke API token |
-
-### Common error responses
-
-| Status | Meaning |
-|--------|---------|
-| 401 | Not authenticated or token invalid |
-| 400 | Missing or invalid parameters |
-| 404 | Profile, object, or job not found |
-| 429 | Rate limited — wait `retry_after` seconds |

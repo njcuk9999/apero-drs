@@ -1,0 +1,27 @@
+id: da7fdb6f-b505-4a76-9973-3ed124220c42
+slug: none
+date_reported: '2024-08-13'
+reported_by: Thomas Vandal
+instrument_mode: ALL
+recipe: 'apero_ccf_nirps_he,
+
+  apero_ccf_nirps_ha'
+action: Check
+type: Unexpected
+error_code: None
+github_issue: '769.0'
+generic_error: None
+comments: 'ERRORMSGS is None means an error like went uncaught in APERO.
+
+  Check the file in the LOGFILE column for an error. If you find "ValueError: Residuals
+  are not finite in the initial point", this is the issue linked in the Github column
+  (769).
+
+  It should be fixed. If it happens again, report on github.
+
+  If you have a lot of those issues, contact Thomas: he has a way to report them in
+  a batch.
+
+  If the error message is something else. Report to Neil.'
+full_example_error: ''
+updated_at: '2026-05-13 15:54:29'

@@ -108,7 +108,7 @@
         {% for item in sidebar_tree %}
         {% if item.pinned|default(false) %}
         {% if item.url and not (item.disabled|default(false)) %}
-        <a href="{{ item.url }}{% if current_version is defined %}?v={{ current_version }}{% endif %}"
+        <a href="{{ item.url }}{% if doc_query_suffix is defined %}{{ doc_query_suffix }}{% elif current_version is defined %}?v={{ current_version }}{% endif %}"
            class="ari-mobile-menu__pin{% if item.active %} ari-mobile-menu__pin--active{% endif %}">
             <i class="{{ item.icon }}"></i>
             <span>{{ item.label }}</span>
@@ -136,7 +136,7 @@
         {% for item in sidebar_tree %}
                 {% if not item.pinned|default(false) %}
                 {% if item.url and not (item.disabled|default(false)) %}
-        <a href="{{ item.url }}{% if current_version is defined %}?v={{ current_version }}{% endif %}"
+        <a href="{{ item.url }}{% if doc_query_suffix is defined %}{{ doc_query_suffix }}{% elif current_version is defined %}?v={{ current_version }}{% endif %}"
            class="ari-mobile-menu__link{% if item.active %} ari-mobile-menu__link--active{% endif %}"
            style="padding-left: {{ 0.75 + item.depth * 1.0 }}rem;">
             <i class="{{ item.icon }}"></i>

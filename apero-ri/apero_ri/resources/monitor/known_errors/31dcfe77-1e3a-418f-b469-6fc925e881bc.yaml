@@ -1,0 +1,19 @@
+id: 31dcfe77-1e3a-418f-b469-6fc925e881bc
+slug: reference-dprtype-flat-flat-not-in-input-files-current-dprtypes-are-flat-dark-dark-flat-flat-dark-dark-flat-flat-da
+date_reported: '2023-09-29'
+reported_by: Neil Cook
+instrument_mode: ALL
+recipe: apero_flat
+action: Report
+type: Expected
+error_code: ''
+github_issue: ''
+generic_error: 'Reference DPRTYPE FLAT_FLAT not in input files Current DPRTYPES are:
+  FLAT_DARK, DARK_FLAT, FLAT_DARK, DARK_FLAT, FLAT_DARK, DARK_FLAT'
+comments: This is expected if the FLAT_FLAT is missing. APERO should not run flat
+  recipes on calibrations for this night without a valid FLAT_FLAT calibration. Note
+  if there are valid calibrations from another close by night reduction can continue.
+full_example_error: 'class apero.core.core.drs_exceptions.LogExit : Reference DPRTYPE
+  FLAT_FLAT not in input files Current DPRTYPES are: FLAT_DARK, DARK_FLAT, FLAT_DARK,
+  DARK_FLAT, FLAT_DARK, DARK_FLAT'
+updated_at: '2026-05-13 15:54:29'

@@ -6,7 +6,7 @@
 {% block extra_head %}
 {{ super() }}
 <link rel="stylesheet"
-    href="{{ url_for('static', filename='css/monitor_schedule.css') }}?v=20260505c">
+    href="{{ url_for('static', filename='css/monitor_schedule.css') }}?v=20260512a">
 <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
 {% endblock %}
 
@@ -251,43 +251,44 @@
         </div>
     </div>
 
-    <div id=\"ms-bulk-overlay\" class=\"ms-overlay\" hidden>
-        <div class=\"ms-overlay-backdrop\" data-close=\"bulk\"></div>
-        <div class=\"ms-overlay-panel\">
-            <div class=\"ms-overlay-head\">
+    <div id="ms-bulk-overlay" class="ms-overlay" hidden>
+        <div class="ms-overlay-backdrop" data-close="bulk"></div>
+        <div class="ms-overlay-panel">
+            <div class="ms-overlay-head">
                 <h3>Bulk add entries (unassigned)</h3>
-                <button data-close=\"bulk\" type=\"button\">X</button>
+                <button data-close="bulk" type="button">X</button>
             </div>
-            <div class=\"ms-overlay-body\">
-                <p class=\"ms-sub\">Select tasks and a date range to
+            <div class="ms-overlay-body">
+                <p class="ms-sub">Select tasks and a date range to
                     create unassigned placeholder entries.</p>
-                <div class=\"ms-form-grid\">
+                <div class="ms-form-grid">
                     <label>Date start
-                        <input id=\"ms-bulk-date-start\" type=\"date\">
+                        <input id="ms-bulk-date-start" type="date">
                     </label>
                     <label>Date end
-                        <input id=\"ms-bulk-date-end\" type=\"date\">
+                        <input id="ms-bulk-date-end" type="date">
                     </label>
                     <label>Hours
-                        <input id=\"ms-bulk-hours\" type=\"number\"
-                               min=\"0\" step=\"0.25\" value=\"0\">
+                        <input id="ms-bulk-hours" type="number"
+                               min="0" step="0.25" value="0">
                     </label>
-                    <label class=\"ms-wide\">Comment
-                        <input id=\"ms-bulk-comment\" type=\"text\"
-                               placeholder=\"Optional comment\">
+                    <label class="ms-wide">Comment
+                        <input id="ms-bulk-comment" type="text"
+                               placeholder="Optional comment">
                     </label>
                 </div>
-                <div id=\"ms-bulk-task-checkboxes\"
-                     class=\"ms-bulk-tasks\"></div>
+                <div id="ms-bulk-task-checkboxes"
+                     class="ms-bulk-tasks"></div>
                 <div>
-                    <button id=\"ms-bulk-submit\" class=\"ari-btn\"
-                            type=\"button\">Add entries</button>
+                    <button id="ms-bulk-submit" class="ari-btn"
+                            type="button">Add entries</button>
                 </div>
             </div>
         </div>
     </div>
 
-    <div id=\"ms-add-overlay\" class=\"ms-overlay\" hidden>
+    <div id="ms-add-overlay" class="ms-overlay" hidden>
+        <div class="ms-overlay-backdrop" data-close="add"></div>
         <div class="ms-overlay-panel">
             <div class="ms-overlay-head">
                 <h3 id="ms-add-title">Add new entry</h3>
@@ -304,11 +305,11 @@
                                placeholder="Search username or name">
                     </label>
                     <label>Username
-                        <select id="ms-add-username" required></select>
+                        <select id="ms-add-username"></select>
                     </label>
                     <label>Who
                         <input id="ms-add-who" type="text"
-                               required readonly>
+                               readonly>
                     </label>
                     <label>Date start
                         <input id="ms-add-date-start" type="date" required>
@@ -324,13 +325,48 @@
                         <input id="ms-add-comment" type="text"
                                placeholder="Optional comment">
                     </label>
-                    <div>
+                    <div class="ms-inline-actions">
                         <button id="ms-add-submit" class="ari-btn"
                                 type="submit">
                             Save entry
                         </button>
+                        <button id="ms-add-unassign" class="ari-btn ari-btn--alt"
+                                type="button">
+                            Unassign user
+                        </button>
                     </div>
                 </form>
+            </div>
+        </div>
+    </div>
+
+    <div id="ms-assign-overlay" class="ms-overlay" hidden>
+        <div class="ms-overlay-backdrop" data-close="assign"></div>
+        <div class="ms-overlay-panel">
+            <div class="ms-overlay-head">
+                <h3>Assign user</h3>
+                <button data-close="assign" type="button">X</button>
+            </div>
+            <div class="ms-overlay-body">
+                <input id="ms-assign-entry-id" type="hidden" value="">
+                <div class="ms-form-grid">
+                    <label>User filter
+                        <input id="ms-assign-user-filter" type="text"
+                               placeholder="Search username or name">
+                    </label>
+                    <label>Username
+                        <select id="ms-assign-username"></select>
+                    </label>
+                    <label>Who
+                        <input id="ms-assign-who" type="text" readonly>
+                    </label>
+                </div>
+                <div class="ms-inline-actions">
+                    <button id="ms-assign-submit" class="ari-btn"
+                            type="button">Assign user</button>
+                    <button id="ms-assign-unassign" class="ari-btn ari-btn--alt"
+                            type="button">Unassign user</button>
+                </div>
             </div>
         </div>
     </div>
@@ -344,5 +380,5 @@ window.AperoMonitorSchedule = {
     instruments: {{ monitor_instruments|tojson }}
 };
 </script>
-<script src="{{ url_for('static', filename='js/monitor_schedule.js') }}?v=20260505c"></script>
+<script src="{{ url_for('static', filename='js/monitor_schedule.js') }}?v=20260512b"></script>
 {% endblock %}

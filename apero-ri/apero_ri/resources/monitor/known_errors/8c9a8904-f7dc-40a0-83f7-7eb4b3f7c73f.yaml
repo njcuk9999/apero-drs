@@ -1,0 +1,25 @@
+id: 8c9a8904-f7dc-40a0-83f7-7eb4b3f7c73f
+slug: class-apero-core-core-drs-exceptions-logexit-e-09-001-00033-no-valid-input-files-files-after-qc-test-path-file-pp
+date_reported: '2024-09-14'
+reported_by: Alexandrine L'Heureux
+instrument_mode: ALL
+recipe: apero_ccf
+action: Check
+type: Expected
+error_code: None
+github_issue: ''
+generic_error: 'class apero.core.core.drs_exceptions.LogExit : E[09-001-00033]: No
+  valid input files files after QC test:{PATH+FILE}_pp_e2dsff_tcorr_A.fits: QCC_ALL
+  = False ||'
+comments: This means that the telluric correction for this object failed quality control.
+  If the target has very low SNR this is expected (do dfits {filename} | grep QCC
+  and you should see a list of QCC parameters, with QCC{num}P = 0 being the ones that
+  failed. QCC{num}N is the name of the quality control parameter, QCC{num}L is the
+  logic for failure i.e. X < 10  means if X is less than 10 this recipe fails quality
+  control, QCC{num}V is the value (i.e. the "X" from the logic). Have a quick check
+  and see what actually failed. You can bring this up at the next babysitter meeting
+  but if the SNR was low and it failed due to that you can ignore it.
+full_example_error: 'class apero.core.core.drs_exceptions.LogExit : E[09-001-00033]:
+  No valid input files files after QC test: - /cosmos99/nirps/apero-data/nirps_he_online/red/2022-11-26/NIRPS_2022-11-27T05_42_35_179_pp_e2dsff_tcorr_A.fits:
+  QCC_ALL = False ||'
+updated_at: '2026-05-13 15:54:29'
