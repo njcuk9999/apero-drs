@@ -12,8 +12,8 @@ gspread==5.12.4
 llvmlite==0.45.1
 numba==0.62.1
 numexpr==2.14.1
-numpy==2.3.4
-pandas==3.0.1
+numpy==2.3.3
+pandas==3.0.0
 pandastable==0.14.0
 pandasql==0.7.3
 Pillow==12.1.1
@@ -23,7 +23,7 @@ chardet<6
 PyYAML==6.0.3
 pytz==2025.2
 scikit-image==0.26.0
-scipy==1.17.1
+scipy==1.17.0
 tqdm==4.67.3
 yagmail==0.15.293
 # lbl @ git+https://github.com/njcuk9999/lbl.git@apero_v7
