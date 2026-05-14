@@ -66,10 +66,10 @@ display_func = drs_log.display_func
 FileIndexDatabase = drs_database.FileIndexDatabase
 ObjectDatabase = drs_database.AstrometricDatabase
 # simbad additional columns
-SIMBAD_COLUMNS = ['ids', 'pmra', 'pmdec', 'pm_bibcode', 'plx',
+SIMBAD_COLUMNS = ['ids', 'pmra', 'pmdec', 'pm_bibcode', 'plx_value',
                   'plx_bibcode', 'rvz_radvel', 'rvz_bibcode',
                   'sp', 'sp_bibcode',
-                  'coo_bibcode', 'flux(J)', 'flux(H)', 'flux(K)']
+                  'coo_bibcode', 'allfluxes']
 # Note: 'coo(d)' was removed — astroquery>=0.4.7 always returns RA/DEC in
 # degrees (ICRS) by default and no longer supports coordinate formatting
 # arguments in add_votable_fields.
@@ -183,75 +183,84 @@ class AstroObj:
 
         :return: None populates attributes
         """
-        def _get(col, *fallbacks, default=None):
-            """Case-insensitive column lookup with fallbacks."""
-            colnames_lower = {c.lower(): c for c in table_row.colnames}
-            for name in (col,) + fallbacks:
-                # exact match
-                if name in table_row.colnames:
-                    return table_row[name]
-                # case-insensitive match
-                if name.lower() in colnames_lower:
-                    return table_row[colnames_lower[name.lower()]]
-            # nothing found — return default and warn via a raised KeyError
-            # that includes available columns for diagnosis
-            raise KeyError(
-                f"Column {col!r} not found in SIMBAD result.\n"
-                f"  tried: {(col,) + fallbacks}\n"
-                f"  available: {list(table_row.colnames)}"
-            )
-
         pconst = constants.pload()
         # set objname as cleaned version of name
         self.objname = pconst.DRS_OBJ_NAME(self.name)
         # store the original name
         self.original_name = self.name
         # get the aliases from table row
-        self.aliases = clean_aliases(_get('IDS', 'ids'))
+        self.aliases = clean_aliases(table_row['ids'])
         # get the ra and source from table row
-        # astroquery>=0.4.7 returns 'RA'/'DEC' in degrees; older versions
-        # returned 'RA_d'/'DEC_d' via the now-removed coo(d) field
-        self.ra = _get('RA_d', 'RA', 'ra')
-        self.ra_source = _get('COO_BIBCODE', 'coo_bibcode')
+        self.ra = float(table_row['dec'])
+        self.ra_source = str(table_row['coo_bibcode'])
         # get the dec and source from table row
-        self.dec = _get('DEC_d', 'DEC', 'dec')
-        self.dec_source = _get('COO_BIBCODE', 'coo_bibcode')
+        self.dec = float(table_row['dec'])
+        self.dec_source = str(table_row['coo_bibcode'])
         # assume the epoch is J2000.0
         # Question: Is this a good assumption from SIMBAD?
         self.epoch = 2451545.0
         # set the pmra and source from table row
-        self.pmra = _get('PMRA', 'pmra', 'PM_RA')
-        self.pmra_source = _get('PM_BIBCODE', 'pm_bibcode')
+        self.pmra = self._get_tentry(table_row, 'pmra', float)
+        self.pmra_source = self._get_tentry(table_row, 'pm_bibcode')
         # set the pmdec and source from table row
-        self.pmde = _get('PMDEC', 'pmdec', 'PM_DEC')
-        self.pmde_source = _get('PM_BIBCODE', 'pm_bibcode')
+        self.pmde = self._get_tentry(table_row, 'pmdec', float)
+        self.pmde_source = self._get_tentry(table_row, 'pm_bibcode')
         # set the parallax and source from table row
-        self.plx = _get('PLX_VALUE', 'plx_value', 'PLX')
-        self.plx_source = _get('PLX_BIBCODE', 'plx_bibcode')
+        self.plx = self._get_tentry(table_row, 'plx_value', float)
+        self.plx_source = self._get_tentry(table_row, 'plx_bibcode')
         # set the radial velocity and source from table row
-        rv_val = _get('RVZ_RADVEL', 'rvz_radvel', 'RV_VALUE')
-        if drs_text.null_text(str(rv_val), NULL_TEXT):
-            self.rv = np.nan
-            self.rv_source = ''
-        else:
-            self.rv = rv_val
-            self.rv_source = _get('RVZ_BIBCODE', 'rvz_bibcode', 'RV_BIBCODE')
+        self.rv = self._get_tentry(table_row, 'rvz_radvel', float)
+        self.rv_source = self._get_tentry(table_row, 'rvz_bibcode')
         # set the spectral type from table row
-        self.sp_type = _get('SP_TYPE', 'sp_type')
-        self.sp_source = _get('SP_BIBCODE', 'sp_bibcode')
+        self.sp_type = self._get_tentry(table_row, 'sp_type')
+        self.sp_source = self._get_tentry(table_row, 'sp_bibcode')
         # no temperature information
         self.teff = None
         self.teff_source = ''
         # add magnitudes
-        self.mags['J'] = _get('FLUX_J', 'flux_J', 'flux(J)')
-        self.mags['H'] = _get('FLUX_H', 'flux_H', 'flux(H)')
-        self.mags['K'] = _get('FLUX_K', 'flux_K', 'flux(K)')
+        self.mags['J'] = self._get_tentry(table_row, 'J', float)
+        self.mags['H'] = self._get_tentry(table_row, 'H', float)
+        self.mags['K'] = self._get_tentry(table_row, 'K', float)
         # deal with notes
         if not update:
             nargs = [Time.now().iso, getpass.getuser(), socket.gethostname(),
                      __NAME__]
             note = ' Added on {0} by {1}@{2} using {3}'
             self.notes += note.format(*nargs)
+
+    @staticmethod
+    def _get_tentry(table_row, key: str, dtype: type = str) -> Any:
+        # internal function to return correct null value
+        def _null_value(dtype):
+            if dtype is float:
+                return np.nan
+            if dtype is int:
+                return -9999
+            if dtype is bool:
+                return False
+            else:
+                return ''
+        # deal with masked values
+        if hasattr(table_row[key], 'mask'):
+            # value is masked --> null value
+            if table_row[key].mask:
+                return _null_value(dtype)
+            else:
+                value = table_row[key]
+                # value is null --> null value
+                if drs_text.null_text(str(value), NULL_TEXT):
+                    return _null_value(dtype)
+                else:
+                    return dtype(table_row[key])
+        # deal with non masked values
+        else:
+            value = table_row[key]
+            # value is null --> null value
+            if drs_text.null_text(str(value), NULL_TEXT):
+                return _null_value(dtype)
+            else:
+                return dtype(table_row[key])
+
 
     def from_gsheet_table_row(self, table_row: Row):
         """
@@ -1382,28 +1391,28 @@ def identify_from_file(params: ParamDict) -> ParamDict:
     # get results
     with warnings.catch_warnings(record=True) as _:
         # add just H and V band mags
-        Simbad.add_votable_fields('flux(H)', 'flux(V)')
+        Simbad.add_votable_fields('allfluxes')
         # query region around coordinate
         result = Simbad.query_region(coord, radius='0d1m0s')
 
     # Set masked values to 99 for H and V bands
     masked = False
-    if 'FLUX_H' in result.colnames:
-        h_mask = result['FLUX_H'].mask
-        result['FLUX_H'][h_mask] = 99
+    if 'H' in result.colnames:
+        h_mask = result['H'].mask
+        result['H'][h_mask] = 99
         if np.sum(h_mask) > 0:
             masked = True
-    if 'FLUX_V' in result.colnames:
-        v_mask = result['FLUX_V'].mask
-        result['FLUX_V'][v_mask] = 99
+    if 'V' in result.colnames:
+        v_mask = result['V'].mask
+        result['V'][v_mask] = 99
         if np.sum(v_mask) > 0:
             masked = True
     # -------------------------------------------------------------------------
     # sort values by H flux and only keep brightest 10
-    sortmask = np.argsort(result['FLUX_H'])
+    sortmask = np.argsort(result['H'])
     names = result['MAIN_ID'][sortmask][:10]
-    hmags = result['FLUX_H'][sortmask][:10]
-    vmags = result['FLUX_V'][sortmask][:10]
+    hmags = result['H'][sortmask][:10]
+    vmags = result['V'][sortmask][:10]
     options = list(np.arange(1, len(names)+1).astype(int))
     # -------------------------------------------------------------------------
     # Find max width of the first column (names)
