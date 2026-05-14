@@ -15,6 +15,14 @@
     <p class="ari-page-subtitle">
         Select a reduction profile to view its processing logs.
     </p>
+    {% if can_manage_apero_profiles %}
+    <div style="margin-top:0.8rem; display:flex; gap:0.5rem; flex-wrap:wrap;">
+        <a class="ari-btn ari-btn--secondary ari-btn--sm"
+           href="{{ url_for('home_admin_portal_apero_profiles') }}">
+            <i class="fa-solid fa-gear"></i> Manage APERO profiles
+        </a>
+    </div>
+    {% endif %}
 </div>
 
 {# ── Instrument filter bar ── #}

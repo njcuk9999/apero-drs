@@ -115,6 +115,8 @@ def api_ri_profile_health(app):
         "PATH_TELLU",
         "PATH_LOG",
         "PATH_LBL",
+        "PATH_CHECK",
+        "PATH_OTHER",
     ]
     path_results = {}
     all_paths_ok = True

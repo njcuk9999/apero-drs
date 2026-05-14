@@ -181,12 +181,12 @@
     <span id="ac-page-info" class="ot-meta-bar__item ot-meta-bar__item--muted">
         Page {{ current_page }} of {{ total_pages }}
     </span>
-    {% if can_manage_checks %}
-    <button id="ac-btn-manage"
-            class="ari-btn ari-btn--sm ari-btn--secondary"
-            title="Manage APERO checks root and ignore list">
-        <i class="fa-solid fa-gear"></i> Manage
-    </button>
+    {% if can_manage_apero_profiles %}
+    <a href="{{ url_for('home_admin_portal_apero_profiles') }}#apero-checks-management"
+       class="ari-btn ari-btn--sm ari-btn--secondary"
+       title="Manage APERO checks policies in admin portal">
+        <i class="fa-solid fa-gear"></i> Manage APERO checks
+    </a>
     {% endif %}
 </div>
 
@@ -465,118 +465,6 @@
     </div>
 </div>
 
-{% if can_manage_checks %}
-<div id="ac-manage-overlay" class="ac-overlay" hidden>
-    <div class="ac-overlay__backdrop" data-ac-close="manage"></div>
-    <div class="ac-overlay__panel ac-overlay__panel--wide">
-        <div class="ac-overlay__header">
-            <div>
-                <h3>Manage APERO checks</h3>
-                <div class="ac-manage-help">
-                    Configure the YAML root and the list of ignored checks.
-                </div>
-            </div>
-            <button type="button" class="ac-overlay__close"
-                    data-ac-close="manage">
-                <i class="fa-solid fa-xmark"></i>
-            </button>
-        </div>
-        <div class="ac-manage-grid">
-            <section class="ac-manage-panel">
-                <div class="ac-manage-panel__head">
-                    <div>
-                        <div class="ac-manage-panel__title">YAML root</div>
-                        <div class="ac-manage-panel__subtitle">
-                            Browse the server filesystem and point APERO checks
-                            at the directory containing your YAML files.
-                        </div>
-                    </div>
-                </div>
-                <div class="ac-manage-help">
-                    Choose a server-side directory for the APERO checks YAML root.
-                </div>
-                <label class="ac-manage-field__label" for="ac-manage-root">
-                    Checks directory
-                </label>
-                <div class="ac-manage-field__row">
-                    <input id="ac-manage-root" type="text"
-                           value="{{ checks_root }}">
-                    <button type="button" id="ac-btn-browse-root"
-                            class="ari-btn ari-btn--secondary">
-                        <i class="fa-solid fa-folder-open"></i> Browse
-                    </button>
-                </div>
-                <div class="ac-manage-help">
-                    Current path: <span id="ac-manage-root-preview">{{ checks_root }}</span>
-                </div>
-            </section>
-
-            <section class="ac-manage-panel">
-                <div class="ac-manage-panel__head">
-                    <div>
-                        <div class="ac-manage-panel__title">Ignored checks</div>
-                        <div class="ac-manage-panel__subtitle">
-                            These checks will be hidden from the profile cards
-                            and the detail page.
-                        </div>
-                    </div>
-                    <button type="button" id="ac-btn-add-ignored"
-                            class="ari-btn ari-btn--secondary ari-btn--sm">
-                        <i class="fa-solid fa-plus"></i> Add check
-                    </button>
-                </div>
-                <div id="ac-ignored-checks" class="ac-check-list"></div>
-                <div class="ac-manage-help" style="margin-top:0.6rem;">
-                    Tip: make the check key match the failure key in the YAML.
-                </div>
-            </section>
-        </div>
-
-        <div class="ac-manage-footer">
-            <div class="ac-manage-help">
-                Saved changes update the monitor page immediately.
-            </div>
-            <button id="ac-btn-save-config"
-                    class="ari-btn ari-btn--sm ari-btn--primary">
-                <i class="fa-solid fa-floppy-disk"></i> Save changes
-            </button>
-        </div>
-    </div>
-</div>
-
-<div id="ac-browse-overlay" class="ac-overlay" hidden>
-    <div class="ac-overlay__backdrop" data-ac-close="browse"></div>
-    <div class="ac-overlay__panel ac-overlay__panel--wide">
-        <div class="ac-overlay__header">
-            <div>
-                <h3>Browse directories</h3>
-                <div class="ac-manage-help">Choose a server-side directory for the APERO checks YAML root.</div>
-            </div>
-            <button type="button" class="ac-overlay__close" data-ac-close="browse">
-                <i class="fa-solid fa-xmark"></i>
-            </button>
-        </div>
-        <div class="ac-failure-detail">
-            <div class="ac-manage-field__row">
-                <input id="ac-browse-path" type="text" placeholder="Path">
-                <button type="button" id="ac-browse-go"
-                        class="ari-btn ari-btn--secondary">Go</button>
-                <button type="button" id="ac-browse-up"
-                        class="ari-btn ari-btn--secondary">Up</button>
-            </div>
-            <div id="ac-browse-list" class="ac-dir-browser__list"></div>
-            <div class="ac-manage-footer" style="margin-top:0;">
-                <div class="ac-manage-help">
-                    The selected path will be copied back into the YAML root field.
-                </div>
-                <button type="button" id="ac-browse-select"
-                        class="ari-btn ari-btn--primary">Use this directory</button>
-            </div>
-        </div>
-    </div>
-</div>
-{% endif %}
-
 <script>
 window.ARI_APERO_CHECKS = {
     profileId: {{ profile_id|tojson }},
@@ -588,6 +476,7 @@ window.ARI_APERO_CHECKS = {
     cards: {{ profile_cards|tojson }},
     canManage: {{ can_manage_checks|tojson }},
     ignoredChecks: {{ ignored_checks|tojson }},
+    overrideAllowed: {{ override_allowed|default([], true)|tojson }},
     browseUrl: {{ url_for('api_apero_checks_browse_dirs')|tojson }},
     apiUpdateUrl: {{ url_for('api_apero_checks_update_failure')|tojson }},
     apiIssueUrl: {{ url_for('api_apero_checks_create_issue')|tojson }},

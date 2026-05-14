@@ -310,12 +310,25 @@ def build_ri_context(app, user_info, user_permissions):
         include_children=False,
     )
 
+    pset = set(user_permissions or set())
+    can_manage_apero_profiles = 'manage.apero_profile' in pset
+    can_manage_science_groups = (
+        'manage.sci_group' in pset
+        or any(
+            isinstance(item, str)
+            and item.startswith('manage.sci_group.')
+            for item in pset
+        )
+    )
+
     return {
         'profile_cards': profile_cards,
         'shown_instruments': shown,
         'instrument_colors': colors,
         'no_profile_instruments': no_profile,
         'sidebar_tree': sidebar_tree,
+        'can_manage_apero_profiles': can_manage_apero_profiles,
+        'can_manage_science_groups': can_manage_science_groups,
     }
 
 

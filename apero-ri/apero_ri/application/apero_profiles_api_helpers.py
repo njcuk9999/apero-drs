@@ -458,6 +458,8 @@ def api_apero_profiles_list(app):
         "PATH_TELLU",
         "PATH_LOG",
         "PATH_LBL",
+            "PATH_CHECK",
+            "PATH_OTHER",
     ]
 
     profiles = []
@@ -671,6 +673,8 @@ def build_apero_profiles_overview_status(app) -> dict:
         "PATH_TELLU",
         "PATH_LOG",
         "PATH_LBL",
+            "PATH_CHECK",
+            "PATH_OTHER",
     ]
 
     issues = []
@@ -798,6 +802,8 @@ def api_apero_profiles_save(app, package_dir: Path):
         "PATH_TELLU",
         "PATH_LOG",
         "PATH_LBL",
+        "PATH_CHECK",
+        "PATH_OTHER",
     ]
 
     values = {}

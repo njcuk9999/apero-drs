@@ -1527,6 +1527,8 @@ def build_run_params(
         "PATH_TELLU",
         "PATH_LOG",
         "PATH_LBL",
+        "PATH_CHECK",
+        "PATH_OTHER",
     ]
     for pname, pcfg in profiles.items():
         p = deepcopy(pcfg) if isinstance(pcfg, dict) else {}

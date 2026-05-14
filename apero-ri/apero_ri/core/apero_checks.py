@@ -16,6 +16,7 @@ from apero_ri.application import profile_utils
 
 CHECK_IGNORED_CHECKS = {'BAD_CCF'}
 CHECK_IGNORED_TESTS = CHECK_IGNORED_CHECKS
+CHECK_OVERRIDE_ALLOWED = set()
 CONFIG_SUBDIR = 'monitor_apero_checks'
 CONFIG_FILENAME = 'config.json'
 
@@ -93,10 +94,30 @@ def _normalize_ignored_checks(raw_checks: Any) -> List[str]:
     return sorted(checks)
 
 
+def _normalize_override_allowed(raw_checks: Any) -> List[str]:
+    """Normalize override-allowed checks into a sorted unique list."""
+    if not isinstance(raw_checks, list):
+        return sorted(CHECK_OVERRIDE_ALLOWED)
+    checks = {
+        str(item).strip()
+        for item in raw_checks
+        if str(item).strip()
+    }
+    if not checks:
+        checks = set(CHECK_OVERRIDE_ALLOWED)
+    return sorted(checks)
+
+
 def load_ignored_checks(local_data_dir: Path) -> List[str]:
     """Load the ignored-check list from config or fall back to defaults."""
     cfg = load_config(local_data_dir)
     return _normalize_ignored_checks(cfg.get('ignored_checks', []))
+
+
+def load_override_allowed(local_data_dir: Path) -> List[str]:
+    """Load override-allowed check keys from config."""
+    cfg = load_config(local_data_dir)
+    return _normalize_override_allowed(cfg.get('override_allowed', []))
 
 
 def resolve_checks_root(
@@ -111,6 +132,10 @@ def resolve_checks_root(
 
     if isinstance(profile_data, dict):
         for key in (
+            'PATH.CHECK',
+            'PATH_CHECK',
+            'PATHCHECK',
+            'CHECK',
             'PATH.OTHER',
             'PATH_OTHER',
             'PATHOTHER',
