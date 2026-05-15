@@ -5795,6 +5795,16 @@ CDict.add('RESET_DICT', value=ari_reset_dict,
                       'on installation/reset)')
 
 # =============================================================================
+# APERO CHECKS SETTINGS
+# =============================================================================
+cgroup = 'TOOLS.APERO_CHECK'
+# Path relative to PATH.OTHER where the apero check yamls are stored
+CDict.add('PATH', value='acheck', dtype=str,
+          source=__NAME__, group=cgroup,
+          description='Path relative to PATH.OTHER where the apero check '
+                      'yamls are stored')
+
+# =============================================================================
 # STATIC SETTINGS
 # =============================================================================
 cgroup = 'TOOLS.STATIC'
