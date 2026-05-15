@@ -42,6 +42,22 @@ _MONITOR_PERMS = {'view.monitor_portal', 'view.monitor',
                   'manage.astrometrics'}
 
 
+def _can_manage_apero_profiles(perms):
+    """Return True when user can manage APERO profiles."""
+    return 'manage.apero_profile' in set(perms or set())
+
+
+def _can_manage_sci_groups(perms):
+    """Return True when user can manage any science group."""
+    pset = set(perms or set())
+    if 'manage.sci_group' in pset:
+        return True
+    return any(
+        isinstance(item, str) and item.startswith('manage.sci_group.')
+        for item in pset
+    )
+
+
 def _has_any_monitor_perm(perms):
     """Return True if user has any monitor-level permission.
 
@@ -460,6 +476,7 @@ def monitor_status_view(app):
             'title': 'Digital Research Alliance of Canada',
             'subtitle': alliance.get('overall_status', ''),
             'status_level': level,
+            'fetched_at': alliance.get('fetched_at', ''),
             'url': '/monitor_portal/status/alliance',
         })
     except Exception as exc:
@@ -470,6 +487,9 @@ def monitor_status_view(app):
             'title': 'Digital Research Alliance of Canada',
             'subtitle': 'Unavailable',
             'status_level': 'warning',
+            'fetched_at': datetime.now(timezone.utc).strftime(
+                '%Y-%m-%d %H:%M UTC'
+            ),
             'url': '/monitor_portal/status/alliance',
         })
 
@@ -479,6 +499,7 @@ def monitor_status_view(app):
             'title': 'CANFAR',
             'subtitle': canfar.get('overall_status', ''),
             'status_level': canfar.get('status_level', 'warning'),
+            'fetched_at': canfar.get('fetched_at', ''),
             'url': '/monitor_portal/status/canfar',
         })
     except Exception as exc:
@@ -487,6 +508,9 @@ def monitor_status_view(app):
             'title': 'CANFAR',
             'subtitle': 'Unavailable',
             'status_level': 'warning',
+            'fetched_at': datetime.now(timezone.utc).strftime(
+                '%Y-%m-%d %H:%M UTC'
+            ),
             'url': '/monitor_portal/status/canfar',
         })
 
@@ -784,6 +808,7 @@ def monitor_processing_logs_view(app):
         'profile_cards': cards,
         'shown_instruments': shown,
         'instrument_colors': colors,
+        'can_manage_apero_profiles': _can_manage_apero_profiles(perms),
     }
     try:
         context.update(
@@ -955,6 +980,8 @@ def monitor_apero_checks_view(app):
         'profile_cards': cards,
         'shown_instruments': shown,
         'instrument_colors': colors,
+        'can_manage_apero_profiles': _can_manage_apero_profiles(perms),
+        'can_manage_science_groups': _can_manage_sci_groups(perms),
     }
     try:
         context.update(
@@ -1033,6 +1060,7 @@ def monitor_apero_checks_profile_view(app, profile_id):
     local_data_dir = app._resolve_local_data_dir()
     checks_cfg = checks_core.load_config(local_data_dir)
     ignored_checks = checks_core.load_ignored_checks(local_data_dir)
+    override_allowed = checks_core.load_override_allowed(local_data_dir)
     files = checks_core.list_yaml_files(checks_root)
     summaries = []
     for path in files:
@@ -1076,7 +1104,7 @@ def monitor_apero_checks_profile_view(app, profile_id):
 
     page_id = f'home.monitor_portal.apero_checks.{profile_id}'
     sidebar_page_id = 'home.monitor_portal.apero_checks'
-    manage_mode = bool('manage.astrometrics' in set(perms or set()))
+    manage_mode = _can_manage_apero_profiles(perms)
     context = {
         'page_id': page_id,
         'page_label': f'APERO Checks - {profile_id}',
@@ -1097,8 +1125,10 @@ def monitor_apero_checks_profile_view(app, profile_id):
         'show_monitored': show_monitored,
         'checks_root': str(checks_root),
         'ignored_checks': ignored_checks,
+        'override_allowed': override_allowed,
         'checks_config': checks_cfg,
         'can_manage_checks': manage_mode,
+        'can_manage_apero_profiles': _can_manage_apero_profiles(perms),
     }
     try:
         context.update(
@@ -1172,7 +1202,7 @@ def monitor_apero_checks_obsdir_view(app, profile_id, obsdir):
 
     page_id = f'home.monitor_portal.apero_checks.{profile_id}.{obsdir}'
     sidebar_page_id = 'home.monitor_portal.apero_checks'
-    can_manage = bool('manage.astrometrics' in set(perms or set()))
+    can_manage = _can_manage_apero_profiles(perms)
     context = {
         'page_id': page_id,
         'page_label': f'APERO Checks - {profile_id}',

@@ -3,6 +3,7 @@
 from pathlib import Path
 
 import yaml
+from apero_ri.core import apero_checks as checks_core
 from apero_ri.core import user_data as ud
 from apero_ri.core.auth import (
     get_effective_user,
@@ -180,6 +181,17 @@ def make_page_view(app, page_id: str, package_dir: Path):
                     except Exception:
                         pass
             context["sci_profiles"] = _sci_profiles
+            local_data_dir = app._resolve_local_data_dir()
+            checks_cfg = checks_core.load_config(local_data_dir)
+            context["apero_checks_config"] = {
+                "ignored_checks": checks_core.load_ignored_checks(
+                    local_data_dir
+                ),
+                "override_allowed": checks_core.load_override_allowed(
+                    local_data_dir
+                ),
+                "checks_root": str(checks_cfg.get("checks_root") or ""),
+            }
 
         if page_id == "home.admin_portal.user_db_access" and user_info:
             health, _, _ = app._get_admin_health(

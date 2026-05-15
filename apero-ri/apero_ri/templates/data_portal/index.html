@@ -11,6 +11,22 @@
 <div class="ari-page-header">
     <h1><i class="{{ page_icon }}"></i> {{ page_label }}</h1>
     <p class="ari-page-subtitle">Please choose an APERO reduction to start from.</p>
+    {% if can_manage_apero_profiles or can_manage_science_groups %}
+    <div style="margin-top:0.8rem; display:flex; gap:0.5rem; flex-wrap:wrap;">
+        {% if can_manage_apero_profiles %}
+        <a class="ari-btn ari-btn--secondary ari-btn--sm"
+           href="{{ url_for('home_admin_portal_apero_profiles') }}">
+            <i class="fa-solid fa-gear"></i> Manage APERO profiles
+        </a>
+        {% endif %}
+        {% if can_manage_science_groups %}
+        <a class="ari-btn ari-btn--secondary ari-btn--sm"
+           href="{{ url_for('home_admin_portal_apero_profiles') }}">
+            <i class="fa-solid fa-users"></i> Manage science groups
+        </a>
+        {% endif %}
+    </div>
+    {% endif %}
 </div>
 
 {# ── How-to banner ───────────────────────────────────────────── #}

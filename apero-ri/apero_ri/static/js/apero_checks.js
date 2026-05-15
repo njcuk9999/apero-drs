@@ -16,6 +16,8 @@
         selectedIssue: [],
         ignoredChecks: Array.isArray(cfg.ignoredChecks)
             ? cfg.ignoredChecks.slice() : [],
+        overrideAllowed: Array.isArray(cfg.overrideAllowed)
+            ? cfg.overrideAllowed.slice() : [],
         browsePath: '',
     };
 
@@ -188,6 +190,28 @@
         }
     }
 
+    function isOverrideAllowed(failureKey) {
+        if (!failureKey) return false;
+        return state.overrideAllowed.indexOf(String(failureKey)) >= 0;
+    }
+
+    function applyOverridePolicy(failureKey) {
+        var btn = document.getElementById('ac-btn-override');
+        var label = document.getElementById('ac-btn-override-label');
+        if (!btn || !label) return;
+        var allowed = isOverrideAllowed(failureKey);
+        btn.disabled = !allowed;
+        if (allowed) {
+            btn.removeAttribute('title');
+            return;
+        }
+        label.textContent = 'Override: DISABLED';
+        btn.setAttribute(
+            'title',
+            'Override is disabled by global policy for this check'
+        );
+    }
+
     function renderFailurePath(path) {
         var row = document.getElementById('ac-failure-path');
         if (!row) return;
@@ -278,6 +302,7 @@
         document.getElementById('ac-failure-message').textContent =
             failure.message || '';
         updateToggleLabels(failure);
+        applyOverridePolicy(key);
         updateCommentBoxState();
         renderFailurePath(
             loaded.__path__
@@ -536,6 +561,7 @@
         document.getElementById('ac-failure-message').textContent =
             failure.message || '';
         updateToggleLabels(failure || {});
+        applyOverridePolicy(failureKey);
         renderFailurePath(card && card.path ? card.path : '');
         setFailureNote('', false);
         toggleCommentEditor(false);
@@ -650,6 +676,13 @@
     if (btnOverride) {
         btnOverride.addEventListener('click', function () {
             if (!state.currentCard || !state.currentFailure) return;
+            if (!isOverrideAllowed(state.currentFailure.key)) {
+                setFailureNote(
+                    'Override is disabled by global policy for this check.',
+                    true
+                );
+                return;
+            }
             if (eventEnabled(state.currentFailure.data.override)) {
                 postJson(cfg.apiUpdateUrl, {
                     profile_id: cfg.profileId,

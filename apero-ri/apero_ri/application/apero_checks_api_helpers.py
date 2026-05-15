@@ -107,6 +107,18 @@ def api_apero_checks_update_failure(app):
     }:
         return jsonify(success=False, error='Invalid action'), 400
 
+    cfg = checks_core.load_config(app._resolve_local_data_dir())
+    override_allowed = set(
+        checks_core._normalize_override_allowed(
+            cfg.get('override_allowed', [])
+        )
+    )
+    if action == 'override' and failure_key not in override_allowed:
+        return jsonify(
+            success=False,
+            error='Override not allowed for this check',
+        ), 403
+
     try:
         path = _resolve_checks_path(
             app,
@@ -200,26 +212,30 @@ def api_apero_checks_config_save(app):
     perms = resolve_user_permissions(
         user_info['groups'], app.ari_groups
     )
-    if 'manage.astrometrics' not in set(perms or set()):
+    if 'manage.apero_profile' not in set(perms or set()):
         return jsonify(success=False, error='Admin access required'), 403
 
     body = request.get_json(silent=True) or {}
     root_path = str(body.get('checks_root') or '').strip()
     ignored_checks = body.get('ignored_checks') or []
-    if not root_path:
-        return jsonify(success=False, error='Missing checks_root'), 400
+    override_allowed = body.get('override_allowed') or []
 
     local_data_dir = app._resolve_local_data_dir()
     cfg = checks_core.load_config(local_data_dir)
-    cfg['checks_root'] = root_path
+    if root_path:
+        cfg['checks_root'] = root_path
     cfg['ignored_checks'] = checks_core._normalize_ignored_checks(
         ignored_checks
+    )
+    cfg['override_allowed'] = checks_core._normalize_override_allowed(
+        override_allowed
     )
     checks_core.save_config(local_data_dir, cfg)
     return jsonify(
         success=True,
-        checks_root=root_path,
+        checks_root=str(cfg.get('checks_root') or ''),
         ignored_checks=cfg['ignored_checks'],
+        override_allowed=cfg['override_allowed'],
     )
 
 
@@ -232,7 +248,7 @@ def api_apero_checks_browse_dirs(app):
     perms = resolve_user_permissions(
         user_info['groups'], app.ari_groups
     )
-    if 'manage.astrometrics' not in set(perms or set()):
+    if 'manage.apero_profile' not in set(perms or set()):
         return jsonify(success=False, error='Admin access required'), 403
 
     raw_path = str(request.args.get('path', '') or '').strip()

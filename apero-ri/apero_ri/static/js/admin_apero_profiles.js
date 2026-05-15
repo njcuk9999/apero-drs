@@ -16,6 +16,8 @@
         { key: 'PATH_TELLU', id: 'profile-path-tellu' },
         { key: 'PATH_LOG',   id: 'profile-path-log' },
         { key: 'PATH_LBL',   id: 'profile-path-lbl' },
+        { key: 'PATH_CHECK', id: 'profile-path-check' },
+        { key: 'PATH_OTHER', id: 'profile-path-other' },
     ];
 
     var DB_TEXT_FIELDS = [
@@ -101,6 +103,9 @@
     var btnConfirmDelete = document.getElementById('btn-confirm-delete');
 
     var toast = document.getElementById('toast');
+    var checksIgnoredInput = document.getElementById('apero-checks-ignored');
+    var checksOverrideAllowedInput = document.getElementById('apero-checks-override-allowed');
+    var btnSaveChecksConfig = document.getElementById('btn-save-apero-checks-config');
 
     // Build lookup for path input elements
     var pathInputs = {};
@@ -156,6 +161,53 @@
         toast._timer = setTimeout(function () {
             toast.style.display = 'none';
         }, 3000);
+    }
+
+    function splitCsv(raw) {
+        return String(raw || '')
+            .split(',')
+            .map(function (part) { return part.trim(); })
+            .filter(function (part) { return !!part; });
+    }
+
+    function saveAperoChecksConfig() {
+        if (!cfg.aperoChecksConfigUrl) return;
+        if (!checksIgnoredInput || !checksOverrideAllowedInput) return;
+
+        if (btnSaveChecksConfig) {
+            btnSaveChecksConfig.disabled = true;
+            btnSaveChecksConfig.innerHTML =
+                '<i class="fa-solid fa-spinner fa-spin"></i> Saving...';
+        }
+
+        fetch(cfg.aperoChecksConfigUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                ignored_checks: splitCsv(checksIgnoredInput.value),
+                override_allowed: splitCsv(checksOverrideAllowedInput.value),
+            }),
+        })
+            .then(function (r) { return r.json(); })
+            .then(function (data) {
+                if (!data.success) {
+                    showToast(data.error || 'Could not save APERO checks policy', 'error');
+                    return;
+                }
+                checksIgnoredInput.value = (data.ignored_checks || []).join(', ');
+                checksOverrideAllowedInput.value = (data.override_allowed || []).join(', ');
+                showToast('APERO checks policy saved', 'success');
+            })
+            .catch(function () {
+                showToast('Could not save APERO checks policy', 'error');
+            })
+            .finally(function () {
+                if (btnSaveChecksConfig) {
+                    btnSaveChecksConfig.disabled = false;
+                    btnSaveChecksConfig.innerHTML =
+                        '<i class="fa-solid fa-floppy-disk"></i> Save APERO Checks Policy';
+                }
+            });
     }
 
     /* -- Escape helper --------------------------------------------------- */
@@ -2197,6 +2249,10 @@
 
     btnCancelDelete.addEventListener('click', closeDeleteModal);
     btnConfirmDelete.addEventListener('click', doDelete);
+
+    if (btnSaveChecksConfig) {
+        btnSaveChecksConfig.addEventListener('click', saveAperoChecksConfig);
+    }
 
     browseModal.addEventListener('click', function (e) {
         if (e.target === browseModal) closeBrowseModal();
