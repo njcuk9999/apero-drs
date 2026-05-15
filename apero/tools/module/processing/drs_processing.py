@@ -1020,10 +1020,37 @@ def update_header_fix(params):
     elif params['REPROCESS_MP_FINDEX'].lower() == 'process' and cores > 1:
         _multi_process_headerfix_process(params, raw_obs_dirs, cores)
     else:
-        _multi_headerfix(params, raw_obs_dirs)
+        # Use return_entries=True so no per-row set() call is made inside
+        # the worker; the payload is flushed in one bulk UPDATE here,
+        # reducing N write-connections to ceil(N/chunk_size) connections.
+        payload = _multi_headerfix(params, raw_obs_dirs, return_entries=True)
+        _bulk_headerfix_updates(params, [payload])
+
+def _bulk_headerfix_updates(params: ParamDict,
+                            payloads: List[Optional[Dict[str, Any]]]):
+    """
+    Apply collected raw header-fix payloads in bulk from the parent process.
+
+    :param params: ParamDict, parameter dictionary of constants
+    :param payloads: list of payload dictionaries returned by _multi_headerfix
+
+    :return: None
+    """
+    updates = []
+    for payload in payloads:
+        if payload is None:
+            continue
+        updates += list(payload.get('updates', []))
+    if len(updates) == 0:
+        return
+    findexdbm = drs_database.FileIndexDatabase(params)
+    findexdbm.load_db()
+    findexdbm.set_entries(updates, key='ABSPATH', condition='BLOCK_KIND="RAW"',
+                          subkey='raw')
 
 
-def _multi_headerfix(params, obs_dirs, job: int = None, total_jobs: int = None):
+def _multi_headerfix(params, obs_dirs, job: int = None, total_jobs: int = None,
+                     return_entries: bool = False, return_list=None):
     # start a message if job and total_jobs given
     if (job is not None) and (total_jobs is not None):
         job_msg = ' [{0}/{1}] '.format(job, total_jobs)
@@ -1032,14 +1059,23 @@ def _multi_headerfix(params, obs_dirs, job: int = None, total_jobs: int = None):
     # load the object database
     objdbm = drs_database.AstrometricDatabase(params)
     objdbm.load_db()
+    # Pre-load all object names + aliases into the module-level
+    # _ASTROM_CLEANED_MAP so that find_objname() resolves every raw header
+    # object name with an O(1) dict look-up instead of 1–3 MySQL connections
+    # per unique name.  Cost: 2 connections once per worker process.
+    objdbm.warm_cache(objdbm.pconst)
     # construct the index database instance
     findexdbm = drs_database.FileIndexDatabase(params)
     findexdbm.load_db()
     # fix the header data (object name, dprtype, mjdmid and
     #     trg_type etc)
     WLOG(params, '', textentry('40-503-00043') + job_msg)
-    findexdbm.update_header_fix(objdbm=objdbm, obs_dirs=obs_dirs,
-                                job_msg=job_msg)
+    payload = findexdbm.update_header_fix(objdbm=objdbm, obs_dirs=obs_dirs,
+                                          job_msg=job_msg,
+                                          return_entries=return_entries)
+    if return_list is not None:
+        return_list.append(payload)
+    return payload
 
 
 def _multi_process_headerfix_pathos(params: ParamDict,
@@ -1054,6 +1090,8 @@ def _multi_process_headerfix_pathos(params: ParamDict,
                          search for files
     :param cores: int, the number of cores to use
     """
+    if len(raw_obs_dirs) == 0:
+        return
     # deal with Pool specific imports
     from pathos.pools import ParallelPool as Pool
     # set up the pool
@@ -1062,12 +1100,13 @@ def _multi_process_headerfix_pathos(params: ParamDict,
     params_per_process = []
     # populate params for each sub group
     for r_it, raw_obs_dir in enumerate(raw_obs_dirs):
-        args = [params, [raw_obs_dir], r_it + 1, len(raw_obs_dirs)]
+        args = [params, [raw_obs_dir], r_it + 1, len(raw_obs_dirs), True, None]
         params_per_process.append(args)
     # transpose the params axis
     params_per_process2 = list(zip(*params_per_process))
     # start parallel jobs
-    pool.map(_multi_headerfix, *params_per_process2)
+    payloads = pool.map(_multi_headerfix, *params_per_process2)
+    _bulk_headerfix_updates(params, payloads)
 
 
 def _multi_process_headerfix_pool(params: ParamDict,
@@ -1082,6 +1121,8 @@ def _multi_process_headerfix_pool(params: ParamDict,
                          search for files
     :param cores: int, the number of cores to use
     """
+    if len(raw_obs_dirs) == 0:
+        return
     # deal with Pool specific imports
     from multiprocessing import get_context
 
@@ -1089,11 +1130,12 @@ def _multi_process_headerfix_pool(params: ParamDict,
     params_per_process = []
     # populate params for each sub group
     for r_it, raw_obs_dir in enumerate(raw_obs_dirs):
-        args = [params, [raw_obs_dir], r_it + 1, len(raw_obs_dirs)]
+        args = [params, [raw_obs_dir], r_it + 1, len(raw_obs_dirs), True, None]
         params_per_process.append(args)
     # start parallel jobs
     with get_context('spawn').Pool(cores, maxtasksperchild=1) as pool:
-        pool.starmap(_multi_headerfix, params_per_process)
+        payloads = pool.starmap(_multi_headerfix, params_per_process)
+    _bulk_headerfix_updates(params, payloads)
 
 
 def _multi_process_headerfix_process(params: ParamDict,
@@ -1109,7 +1151,10 @@ def _multi_process_headerfix_process(params: ParamDict,
     :param cores: int, the number of cores to use
     """
     # import multiprocessing
-    from multiprocessing import Process
+    from multiprocessing import Manager, Process
+
+    if len(raw_obs_dirs) == 0:
+        return
 
     # split raw_obs_dirs into N=cores groups
     cores = min(cores, len(raw_obs_dirs))
@@ -1117,22 +1162,26 @@ def _multi_process_headerfix_process(params: ParamDict,
 
     grouped_raw_obs_dirs = [raw_obs_dirs[i:i + chunk_size]
                             for i in range(0, len(raw_obs_dirs), chunk_size)]
-    # process storage
-    jobs = []
-    # loop around each run
-    for g_it, grouped_raw_obs_dir in enumerate(grouped_raw_obs_dirs):
-        # get the arguments for this group
-        args = [params, grouped_raw_obs_dir, g_it + 1,
-                len(grouped_raw_obs_dirs)]
-        # get parallel process
-        process = Process(target=_multi_headerfix, args=args)
-        process.start()
-        jobs.append(process)
-    # do not continue until finished
-    for pit, proc in enumerate(jobs):
-        # debug log: MULTIPROCESS - joining job {0}
-        WLOG(params, 'debug', textentry('90-503-00021', args=[pit]))
-        proc.join()
+    with Manager() as manager:
+        payloads = manager.list()
+        # process storage
+        jobs = []
+        # loop around each run
+        for g_it, grouped_raw_obs_dir in enumerate(grouped_raw_obs_dirs):
+            # get the arguments for this group
+            args = [params, grouped_raw_obs_dir, g_it + 1,
+                    len(grouped_raw_obs_dirs), True, payloads]
+            # get parallel process
+            process = Process(target=_multi_headerfix, args=args)
+            process.start()
+            jobs.append(process)
+        # do not continue until finished
+        for pit, proc in enumerate(jobs):
+            # debug log: MULTIPROCESS - joining job {0}
+            WLOG(params, 'debug', textentry('90-503-00021', args=[pit]))
+            proc.join()
+        payloads = list(payloads)
+    _bulk_headerfix_updates(params, payloads)
 
 
 def generate_run_list(params: ParamDict, findexdbm: FileIndexDatabase,
@@ -1977,6 +2026,24 @@ def _multi_process_gen_ids_pool(params: ParamDict,
         pool.starmap(_multi_generate_id, params_per_process)
 
 
+def _bulk_findex_updates(params: ParamDict, block_kind: str,
+                         payloads: List[Optional[Dict[str, Any]]]):
+    """
+    Apply collected file index payloads in one parent-side bulk database write.
+
+    :param params: ParamDict, parameter dictionary of constants
+    :param block_kind: str, the block kind being updated
+    :param payloads: list of payload dictionaries returned by _multi_findex
+
+    :return: None
+    """
+    valid_payloads = [payload for payload in payloads if payload is not None]
+    if len(valid_payloads) == 0:
+        return
+    findexdbm = FileIndexDatabase(params)
+    findexdbm.load_db()
+    findexdbm.bulk_update_entries(block_kind, valid_payloads)
+
 
 def _multi_process_gen_ids_process(params: ParamDict,
                                    groupkeys: List[np.ndarray],
@@ -2027,8 +2094,9 @@ def _multi_process_gen_ids_process(params: ParamDict,
             proc.join()
 
 
-def _multi_findex(params: ParamDict, block_kind: str ,raw_obs_dirs: List[str],
-                  job: int = None, total_jobs: int = None):
+def _multi_findex(params: ParamDict, block_kind: str, raw_obs_dirs: List[str],
+                  job: int = None, total_jobs: int = None,
+                  return_entries: bool = False, return_list=None):
     # start a message if job and total_jobs given
     if (job is not None) and (total_jobs is not None):
         job_msg = ' [{0}/{1}] '.format(job, total_jobs)
@@ -2040,9 +2108,14 @@ def _multi_findex(params: ParamDict, block_kind: str ,raw_obs_dirs: List[str],
     # log block update
     WLOG(params, '', textentry('40-503-00044', args=[block_kind]) + job_msg)
     # update index database for block kind
-    drs_utils.update_index_db(params, block_kind=block_kind,
-                              includelist=raw_obs_dirs, findexdbm=findexdbm,
-                              job=job, total_jobs=total_jobs)
+    payload = drs_utils.update_index_db(params, block_kind=block_kind,
+                                        includelist=raw_obs_dirs,
+                                        findexdbm=findexdbm, job=job,
+                                        total_jobs=total_jobs,
+                                        return_entries=return_entries)
+    if return_list is not None:
+        return_list.append(payload)
+    return payload
 
 
 def _multi_process_findex_pathos(params: ParamDict, block_kind:str,
@@ -2057,6 +2130,8 @@ def _multi_process_findex_pathos(params: ParamDict, block_kind:str,
                          search for files
     :param cores: int, the number of cores to use
     """
+    if len(raw_obs_dirs) == 0:
+        return
     # deal with Pool specific imports
     from pathos.pools import ParallelPool as Pool
     # set up the pool
@@ -2065,12 +2140,14 @@ def _multi_process_findex_pathos(params: ParamDict, block_kind:str,
     params_per_process = []
     # populate params for each sub group
     for r_it, raw_obs_dir in enumerate(raw_obs_dirs):
-        args = [params, block_kind, [raw_obs_dir], r_it + 1, len(raw_obs_dirs)]
+        args = [params, block_kind, [raw_obs_dir], r_it + 1,
+                len(raw_obs_dirs), True, None]
         params_per_process.append(args)
     # transpose the params axis
     params_per_process2 = list(zip(*params_per_process))
     # start parallel jobs
-    pool.map(_multi_findex, *params_per_process2)
+    payloads = pool.map(_multi_findex, *params_per_process2)
+    _bulk_findex_updates(params, block_kind, payloads)
 
 
 
@@ -2086,6 +2163,8 @@ def _multi_process_findex_pool(params: ParamDict, block_kind:str,
                          search for files
     :param cores: int, the number of cores to use
     """
+    if len(raw_obs_dirs) == 0:
+        return
     # deal with Pool specific imports
     from multiprocessing import get_context
 
@@ -2093,11 +2172,13 @@ def _multi_process_findex_pool(params: ParamDict, block_kind:str,
     params_per_process = []
     # populate params for each sub group
     for r_it, raw_obs_dir in enumerate(raw_obs_dirs):
-        args = [params, block_kind, [raw_obs_dir], r_it + 1, len(raw_obs_dirs)]
+        args = [params, block_kind, [raw_obs_dir], r_it + 1,
+                len(raw_obs_dirs), True, None]
         params_per_process.append(args)
     # start parallel jobs
     with get_context('spawn').Pool(cores, maxtasksperchild=1) as pool:
-        pool.starmap(_multi_findex, params_per_process)
+        payloads = pool.starmap(_multi_findex, params_per_process)
+    _bulk_findex_updates(params, block_kind, payloads)
 
 
 def _multi_process_findex_process(params: ParamDict, block_kind:str,
@@ -2113,7 +2194,10 @@ def _multi_process_findex_process(params: ParamDict, block_kind:str,
     :param cores: int, the number of cores to use
     """
     # import multiprocessing
-    from multiprocessing import Process
+    from multiprocessing import Manager, Process
+
+    if len(raw_obs_dirs) == 0:
+        return
 
     # split raw_obs_dirs into N=cores groups
     cores = min(cores, len(raw_obs_dirs))
@@ -2121,22 +2205,26 @@ def _multi_process_findex_process(params: ParamDict, block_kind:str,
 
     grouped_raw_obs_dirs = [raw_obs_dirs[i:i + chunk_size]
                             for i in range(0, len(raw_obs_dirs), chunk_size)]
-    # process storage
-    jobs = []
-    # loop around each run
-    for g_it, grouped_raw_obs_dir in enumerate(grouped_raw_obs_dirs):
-        # get the arguments for this group
-        args = [params, block_kind, grouped_raw_obs_dir, g_it + 1,
-                len(grouped_raw_obs_dirs)]
-        # get parallel process
-        process = Process(target=_multi_findex, args=args)
-        process.start()
-        jobs.append(process)
-    # do not continue until finished
-    for pit, proc in enumerate(jobs):
-        # debug log: MULTIPROCESS - joining job {0}
-        WLOG(params, 'debug', textentry('90-503-00021', args=[pit]))
-        proc.join()
+    with Manager() as manager:
+        payloads = manager.list()
+        # process storage
+        jobs = []
+        # loop around each run
+        for g_it, grouped_raw_obs_dir in enumerate(grouped_raw_obs_dirs):
+            # get the arguments for this group
+            args = [params, block_kind, grouped_raw_obs_dir, g_it + 1,
+                    len(grouped_raw_obs_dirs), True, payloads]
+            # get parallel process
+            process = Process(target=_multi_findex, args=args)
+            process.start()
+            jobs.append(process)
+        # do not continue until finished
+        for pit, proc in enumerate(jobs):
+            # debug log: MULTIPROCESS - joining job {0}
+            WLOG(params, 'debug', textentry('90-503-00021', args=[pit]))
+            proc.join()
+        payloads = list(payloads)
+    _bulk_findex_updates(params, block_kind, payloads)
 
 
 def skip_run_object(params, runobj, skiptable, skip_storage, input_recipe):
