@@ -1,3 +1,8 @@
+---
+card_label: 'ENG: Enclosure Setpoint Offset'
+card_icon: fa-solid fa-gear
+---
+
 # raw: ENG: Enclosure Setpoint Offset
 
 ## Overview

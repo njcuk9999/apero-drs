@@ -1,3 +1,8 @@
+---
+card_label: Science Presence Check
+card_icon: fa-solid fa-gear
+---
+
 # raw: Science Presence Check
 
 ## Overview

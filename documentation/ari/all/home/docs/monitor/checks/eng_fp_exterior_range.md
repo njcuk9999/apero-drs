@@ -1,3 +1,8 @@
+---
+card_label: 'ENG: FP Exterior Range'
+card_icon: fa-solid fa-gear
+---
+
 # raw: ENG: FP Exterior Range
 
 ## Overview

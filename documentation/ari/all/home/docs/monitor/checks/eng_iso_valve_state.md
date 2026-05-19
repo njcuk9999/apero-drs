@@ -1,3 +1,8 @@
+---
+card_label: 'ENG: Isolation Valve State'
+card_icon: fa-solid fa-gear
+---
+
 # raw: ENG: Isolation Valve State
 
 ## Overview

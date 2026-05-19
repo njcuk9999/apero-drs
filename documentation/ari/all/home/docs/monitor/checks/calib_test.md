@@ -1,3 +1,8 @@
+---
+card_label: Calibration Presence Check
+card_icon: fa-solid fa-gear
+---
+
 # raw: Calibration Presence Check
 
 ## Overview

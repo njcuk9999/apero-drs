@@ -1,3 +1,8 @@
+---
+card_label: Calibration OB Name Check
+card_icon: fa-solid fa-gear
+---
+
 # raw: Calibration OB Name Check
 
 ## Overview

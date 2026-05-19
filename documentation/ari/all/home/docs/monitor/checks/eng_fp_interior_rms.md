@@ -1,3 +1,8 @@
+---
+card_label: 'ENG: FP Interior RMS'
+card_icon: fa-solid fa-gear
+---
+
 # raw: ENG: FP Interior RMS
 
 ## Overview

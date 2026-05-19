@@ -1,3 +1,8 @@
+---
+card_label: 'ENG: Stretcher Status State'
+card_icon: fa-solid fa-gear
+---
+
 # raw: ENG: Stretcher Status State
 
 ## Overview

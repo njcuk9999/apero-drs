@@ -9,6 +9,8 @@ import re
 from pathlib import Path
 from typing import Dict, List, Tuple
 
+import yaml
+
 from apero_ri.apero_monitoring import CHECKS
 
 
@@ -105,6 +107,17 @@ def _contact_lines(contact_list: Dict[object, object]) -> List[str]:
     return lines
 
 
+def _front_matter_lines(check_name: str) -> List[str]:
+    """Build the markdown front matter block for one check page."""
+    meta = dict(card_label=check_name, card_icon='fa-solid fa-gear')
+    dumped = yaml.safe_dump(
+        meta,
+        default_flow_style=False,
+        sort_keys=False,
+    ).strip().splitlines()
+    return ['---'] + dumped + ['---', '']
+
+
 def _check_page(check_key: str,
                 check_obj: object,
                 key_to_file: Dict[str, str]) -> str:
@@ -126,6 +139,7 @@ def _check_page(check_key: str,
     what_to_do = _replace_contact_refs(what_to_do, contact_keys)
 
     lines = []
+    lines.extend(_front_matter_lines(human))
     lines.append(f'# {check_type}: {human}')
     lines.append('')
     lines.append('## Overview')

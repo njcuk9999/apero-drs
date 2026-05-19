@@ -1,3 +1,8 @@
+---
+card_label: 'ENG: Vacuum Gauge Upper'
+card_icon: fa-solid fa-gear
+---
+
 # raw: ENG: Vacuum Gauge Upper
 
 ## Overview

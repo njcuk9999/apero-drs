@@ -1,3 +1,8 @@
+---
+card_label: 'ENG: Enclosure Temperature RMS'
+card_icon: fa-solid fa-gear
+---
+
 # raw: ENG: Enclosure Temperature RMS
 
 ## Overview

@@ -1,3 +1,8 @@
+---
+card_label: 'ENG: Warning Cryo2 State'
+card_icon: fa-solid fa-gear
+---
+
 # raw: ENG: Warning Cryo2 State
 
 ## Overview

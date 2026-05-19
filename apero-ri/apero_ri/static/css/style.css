@@ -2679,6 +2679,41 @@ body.ari-up-wide-page .ari-doc-main {
     gap: 1px;
 }
 
+.ari-doc-tree__row {
+    display: flex;
+    align-items: center;
+}
+
+.ari-doc-tree__row--hidden {
+    display: none;
+}
+
+.ari-doc-tree__toggle,
+.ari-doc-tree__toggle-spacer {
+    width: 1.6rem;
+    min-width: 1.6rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 0.2rem;
+}
+
+.ari-doc-tree__toggle {
+    border: none;
+    background: transparent;
+    color: inherit;
+    cursor: pointer;
+    padding: 0;
+}
+
+.ari-doc-tree__toggle i {
+    transition: transform 0.14s ease;
+}
+
+.ari-doc-tree__toggle[aria-expanded="true"] i {
+    transform: rotate(90deg);
+}
+
 .ari-sidebar__link {
     display: flex;
     align-items: center;

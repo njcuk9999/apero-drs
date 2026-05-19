@@ -1,3 +1,8 @@
+---
+card_label: 'ENG: Scrambling Status Science'
+card_icon: fa-solid fa-gear
+---
+
 # raw: ENG: Scrambling Status Science
 
 ## Overview

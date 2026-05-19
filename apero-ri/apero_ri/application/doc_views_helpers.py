@@ -33,6 +33,86 @@ def _doc_edit_allowed(perms, page_ref: str) -> bool:
     return False
 
 
+def _short_ref_from_norm(norm_ref: str) -> str:
+    """Return docs short ref from normalized ``home/docs/...`` ref."""
+    normalized = docs.normalize_doc_ref(norm_ref)
+    if normalized == 'home/docs':
+        return ''
+    return normalized[len('home/docs/'):]
+
+
+def _cards_to_sidebar_items(cards: list, raw_ref: str, depth: int) -> list:
+    """Convert docs cards into sidebar items at one visual depth."""
+    current_norm = docs.normalize_doc_ref(raw_ref)
+    items = []
+    for card in cards:
+        url = str(card.get('url') or '').strip()
+        if not url.startswith('/docs'):
+            continue
+        short_ref = ''
+        if url.startswith('/docs/'):
+            short_ref = url[len('/docs/'):]
+        card_norm = docs.normalize_doc_ref(short_ref)
+        item_id = 'home.docs'
+        if short_ref:
+            item_id = 'home.docs.' + short_ref.replace('/', '.')
+
+        item = dict()
+        item['id'] = item_id
+        item['label'] = str(card.get('label') or '').strip()
+        item['icon'] = str(
+            card.get('icon') or 'fa-solid fa-file-lines'
+        ).strip()
+        item['url'] = url
+        item['depth'] = depth
+        item['kind'] = 'file'
+        item['has_children'] = False
+        item['pinned'] = False
+        item['disabled'] = False
+        item['active'] = (card_norm == current_norm)
+        items.append(item)
+    return items
+
+
+def _resolve_docs_level(raw_ref: str, version: str):
+    """Resolve cards and branch-expanded sidebar for docs pages."""
+    cards, current_ver, _ = docs.get_doc_cards(raw_ref, version)
+    exists = docs.doc_exists(raw_ref, version)
+
+    nav_version = current_ver or version
+    root_cards, nav_version, _ = docs.get_doc_cards('', nav_version)
+    sidebar_items = _cards_to_sidebar_items(root_cards, raw_ref, depth=0)
+
+    short_ref = _short_ref_from_norm(docs.normalize_doc_ref(raw_ref))
+    tokens = [tok for tok in short_ref.split('/') if tok]
+    for idx in range(len(tokens)):
+        branch_short = '/'.join(tokens[: idx + 1])
+        branch_cards, nav_version, _ = docs.get_doc_cards(
+            branch_short,
+            nav_version,
+        )
+        if not branch_cards:
+            break
+        branch_items = _cards_to_sidebar_items(
+            branch_cards,
+            raw_ref,
+            depth=idx + 1,
+        )
+        sidebar_items.extend(branch_items)
+
+    if exists and not cards:
+        normalized = docs.normalize_doc_ref(raw_ref)
+        parts = normalized.split('/')
+        if len(parts) > 2:
+            parent_norm = '/'.join(parts[:-1])
+        else:
+            parent_norm = 'home/docs'
+        parent_short = _short_ref_from_norm(parent_norm)
+        cards, current_ver, _ = docs.get_doc_cards(parent_short, version)
+
+    return cards, current_ver, sidebar_items, exists
+
+
 def doc_dynamic_view(app, page_ref: str = ''):
     """Render a docs page or docs directory listing from path refs."""
     user_info = auth.get_effective_user(session)
@@ -61,9 +141,10 @@ def doc_dynamic_view(app, page_ref: str = ''):
     if view_mode not in {'cards', 'list'}:
         view_mode = 'cards'
 
-    cards, current_ver, _ = docs.get_doc_cards(raw_ref, version)
-    docs_sidebar = docs.get_doc_sidebar_tree(raw_ref, current_ver)
-    exists = docs.doc_exists(raw_ref, version)
+    cards, current_ver, docs_sidebar, exists = _resolve_docs_level(
+        raw_ref,
+        version,
+    )
 
     query_parts = []
     if current_ver:
@@ -154,7 +235,7 @@ def doc_edit_view(app, page_ref: str):
         "version_id": current_ver,
         "version_name": version_name,
         "view_url": view_url,
-        'docs_sidebar_tree': docs.get_doc_sidebar_tree(clean_ref, current_ver),
+        'docs_sidebar_tree': _resolve_docs_level(clean_ref, current_ver)[2],
     }
     context.update(app._build_sidebar_context('home.docs', perms, user_info))
     docs_sidebar = list(context.get('docs_sidebar_tree', []))

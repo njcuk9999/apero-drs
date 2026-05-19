@@ -1,3 +1,8 @@
+---
+card_label: Raw Quality Check
+card_icon: fa-solid fa-gear
+---
+
 # raw: Raw Quality Check
 
 ## Overview

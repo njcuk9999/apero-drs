@@ -1,3 +1,8 @@
+---
+card_label: 'ENG: Cryo1 State'
+card_icon: fa-solid fa-gear
+---
+
 # raw: ENG: Cryo1 State
 
 ## Overview

@@ -1,3 +1,8 @@
+---
+card_label: 'ENG: Enclosure Heater Power Max'
+card_icon: fa-solid fa-gear
+---
+
 # raw: ENG: Enclosure Heater Power Max
 
 ## Overview

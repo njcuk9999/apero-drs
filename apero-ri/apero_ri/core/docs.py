@@ -102,6 +102,34 @@ def _card_meta_from_markdown(path: Path) -> dict:
     return meta
 
 
+def _merge_doc_child_item(existing: dict, incoming: dict) -> dict:
+    """Merge one docs child item, preferring file metadata when present."""
+    merged = dict(existing)
+    merged['dir_present'] = bool(existing.get('dir_present')) or bool(
+        incoming.get('dir_present')
+    )
+    merged['file_present'] = bool(existing.get('file_present')) or bool(
+        incoming.get('file_present')
+    )
+
+    if incoming.get('file_present'):
+        merged['label'] = str(
+            incoming.get('label') or merged.get('label') or ''
+        ).strip()
+        merged['icon'] = str(
+            incoming.get('icon') or merged.get('icon') or ''
+        ).strip()
+    elif not merged.get('file_present'):
+        if incoming.get('label'):
+            merged['label'] = str(incoming.get('label') or '').strip()
+        if incoming.get('icon'):
+            merged['icon'] = str(incoming.get('icon') or '').strip()
+
+    merged['kind'] = 'dir' if merged['dir_present'] else 'file'
+    merged['has_children'] = bool(merged['dir_present'])
+    return merged
+
+
 def _get_doc_children(
     rel_doc_dir: str,
     version: Optional[str],
@@ -146,6 +174,8 @@ def _get_doc_children(
                         or ''
                     ).strip(),
                     rel_path=child_ref,
+                    dir_present=True,
+                    file_present=False,
                 )
             elif child.is_file() and child.suffix.lower() == '.md':
                 stem = child.stem
@@ -168,12 +198,20 @@ def _get_doc_children(
                         or ''
                     ).strip(),
                     rel_path=child_ref,
+                    dir_present=False,
+                    file_present=True,
                 )
             else:
                 continue
 
-            if not is_all_dir or item['key'] not in items_map:
+            existing = items_map.get(item['key'])
+            if existing is None:
                 items_map[item['key']] = item
+            else:
+                items_map[item['key']] = _merge_doc_child_item(
+                    existing,
+                    item,
+                )
 
     children = []
     for key in sorted(items_map.keys()):
@@ -224,7 +262,7 @@ def get_doc_sidebar_tree(
                     url=url,
                     depth=depth,
                     kind=child.get('kind', 'file'),
-                    has_children=False,
+                    has_children=bool(child.get('has_children')),
                     pinned=False,
                     disabled=False,
                     active=(rel_path == current_ref),

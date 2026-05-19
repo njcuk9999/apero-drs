@@ -670,6 +670,17 @@ def monitor_portal_index_view(app):
             'url': '/astrometrics',
             'has_children': False,
         })
+    docs_def = live_pages.get('home.docs')
+    if docs_def and perms_mod.has_view_permission(
+        docs_def.get('view-permission', ''), perms
+    ):
+        cards.append({
+            'id': 'home.monitor_portal.docs',
+            'label': 'Monitoring docs',
+            'icon': 'fa-solid fa-chart-line',
+            'url': '/docs/monitor',
+            'has_children': False,
+        })
     # Build sidebar context
     sidebar_ctx = {}
     try:

@@ -1,3 +1,8 @@
+---
+card_label: Observation Directory Check
+card_icon: fa-solid fa-gear
+---
+
 # raw: Observation Directory Check
 
 ## Overview

@@ -1,3 +1,8 @@
+---
+card_label: 'ENG: Backend Device Error State'
+card_icon: fa-solid fa-gear
+---
+
 # raw: ENG: Backend Device Error State
 
 ## Overview

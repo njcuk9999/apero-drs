@@ -1,3 +1,8 @@
+---
+card_label: Blank Check
+card_icon: fa-solid fa-gear
+---
+
 # raw: Blank Check
 
 ## Overview

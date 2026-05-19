@@ -1,3 +1,8 @@
+---
+card_label: 'ENG: Turbopump State'
+card_icon: fa-solid fa-gear
+---
+
 # raw: ENG: Turbopump State
 
 ## Overview
