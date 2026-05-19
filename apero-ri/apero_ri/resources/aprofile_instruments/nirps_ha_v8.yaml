@@ -334,6 +334,183 @@ calib-headers:
       key: WCAV000
       label: Wave cavity [intercept]
       dtype: float
+apero-checks:
+  common:
+    header_keys:
+      dpr_type: HIERARCH ESO DPR TYPE
+      obs_name: HIERARCH ESO OBS NAME
+      mjd_obs: MJD-OBS
+  calib_test:
+    enabled: true
+    required_dprtypes:
+      - DARK
+      - WAVE,FP,FP
+      - WAVE,UN1,FP
+      - WAVE,FP,UN1
+      - FLAT,DARK,LAMP
+      - FLAT,LAMP,DARK
+      - WAVE,UN1,UN1
+  calib_ob_test:
+    enabled: true
+    required_obnames:
+      Afternoon-Calibrations:
+        mjd_start: 60096
+        mjd_end: 99999
+      Daily-Calibrations-Full-Set:
+        mjd_start: 59895
+        mjd_end: 99999
+  no_sci:
+    enabled: true
+    dprtypes:
+      - OBJECT,SKY
+      - OBJECT,FP
+  qual_test:
+    enabled: true
+    dpr_groups:
+      FP:
+        - WAVE,FP,FP
+        - WAVE,UN1,UN1
+        - WAVE,FP,UN1
+        - WAVE,UN1,FP
+        - CONTAM,DARK,FP
+      FLAT:
+        - FLAT,LAMP,DARK
+        - FLAT,DARK,LAMP
+        - FLAT,LAMP,LAMP
+        - ORDERDEF,DARK,LAMP
+        - ORDERDEF,LAMP,DARK
+      TELLURIC:
+        - TELLURIC,SKY
+      SCIENCE:
+        - OBJECT,SKY
+        - OBJECT,FP
+    constraints:
+      OBJECT,SKY:
+        p99_min: 0
+        p99_max: 10000
+        sat_frac_max: 0.0004
+      OBJECT,FP:
+        p99_min: 0
+        p99_max: 10000
+        sat_frac_max: 0.0004
+      ORDERDEF,DARK,LAMP:
+        p99_min: 100
+        p99_max: 1000
+        sat_frac_max: 0.0004
+      ORDERDEF,LAMP,DARK:
+        p99_min: 100
+        p99_max: 1000
+        sat_frac_max: 0.0004
+      TELLURIC,SKY:
+        p99_min: 0
+        p99_max: 10000
+        sat_frac_max: 0.0004
+      FLAT,LAMP,DARK:
+        p99_min: 100
+        p99_max: 1000
+        sat_frac_max: 0.0004
+      FLAT,DARK,LAMP:
+        p99_min: 100
+        p99_max: 1000
+        sat_frac_max: 0.0004
+      FLAT,LAMP,LAMP:
+        p99_min: 100
+        p99_max: 1000
+        sat_frac_max: 0.0004
+      CONTAM,DARK,FP:
+        p99_min: 10
+        p99_max: 1000
+        sat_frac_max: 0.0004
+      WAVE,FP,FP:
+        p99_min: 10
+        p99_max: 1000
+        sat_frac_max: 0.0004
+      WAVE,UN1,UN1:
+        p99_min: 5
+        p99_max: 100
+        sat_frac_max: 0.0025
+      WAVE,FP,UN1:
+        p99_min: 5
+        p99_max: 100
+        sat_frac_max: 0.0012
+      WAVE,UN1,FP:
+        p99_min: 4
+        p99_max: 100
+        sat_frac_max: 0.0023
+  eng_test:
+    tests:
+      enclosure_temperature_rms:
+        enabled: true
+        key1: HIERARCH ESO INS TEMP185 VAL
+        key2: HIERARCH ESO INS TEMP187 VAL
+        val1: 0.1
+      enclosure_setpoint_offset:
+        enabled: true
+        key1: HIERARCH ESO INS TEMP185 VAL
+        key2: HIERARCH ESO INS TEMP187 VAL
+        val1: 0.1
+      vacuum_gauge_upper:
+        enabled: true
+        key1: HIERARCH ESO INS PRES104 VAL
+        val1: 1.0e-4
+      isolation_valve_state:
+        enabled: true
+        key1: HIERARCH ESO INS SENS100 STAT
+        val1: false
+      cryo1_status_state:
+        enabled: true
+        key1: HIERARCH ESO INS SENS126
+        val1: false
+      cryo2_status_state:
+        enabled: true
+        key1: HIERARCH ESO INS SENS127
+        val1: false
+      turbopump_status_state:
+        enabled: true
+        key1: HIERARCH ESO INS SENS102 STAT
+        val1: false
+      warning_cryo1_state:
+        enabled: true
+        key1: HIERARCH ESO INS SENS144 STAT
+        val1: ''
+      warning_cryo2_state:
+        enabled: true
+        key1: HIERARCH ESO INS SENS146 STAT
+        val1: ''
+      fp_interior_rms:
+        enabled: true
+        key1: HIERARCH ESO INS TEMP14 VAL
+        val1: 1.0e-2
+      fp_exterior_range:
+        enabled: true
+        key1: HIERARCH ESO INS TEMP13 VAL
+        val1: 23.496
+        val2: 24.504
+      fp_setpoint_rms:
+        enabled: true
+        key1: HIERARCH ESO INS TEMP14 VAL
+        key2: HIERARCH ESO INS TEMP188 VAL
+        val1: 0.005
+      enclosure_heater_power_max:
+        enabled: true
+        key1: HIERARCH ESO INS SENS121 VAL
+        val1: 90.0
+      scrambling_status_science:
+        enabled: true
+        key1: HIERARCH ESO INS2 AOS SCRAMB ST
+        val1: true
+        dprtypes:
+          - OBJECT,FP
+          - OBJECT,SKY
+          - TELLURIC,SKY
+      stretcher_status_state:
+        enabled: true
+        key1: HIERARCH ESO INS OPTI10 STAT
+        val1: ON
+      backend_device_error_state:
+        enabled: true
+        key1: HIERARCH ESO INS SENS129 STAT
+        val1: NOK
 finder:
   # define time in years before and after "obs date" to plot trail for
   DTMIN: -6

@@ -1607,6 +1607,12 @@ def register_data_portal_routes(app):
         methods=['GET'],
     )
     app.add_url_rule(
+        '/api/monitor/apero-checks/<profile_id>/page',
+        'api_apero_checks_profile_page',
+        app._api_apero_checks_profile_page,
+        methods=['GET'],
+    )
+    app.add_url_rule(
         "/data_portal/<profile_id>/observation-table",
         "ri_observation_table",
         app._ri_object_table_view,

@@ -71,6 +71,7 @@
 
     var btnSave = document.getElementById('btn-save-group');
     var btnDelete = document.getElementById('btn-delete-group');
+    var savingOverlay = document.getElementById('sg-saving-overlay');
 
     var createModal = document.getElementById('create-modal');
     var newGroupName = document.getElementById('new-group-name');
@@ -699,6 +700,10 @@
         var saveBtns = document.querySelectorAll(
             '#btn-save-group, #btn-save-group-top');
         saveBtns.forEach(function (b) { b.disabled = true; });
+        if (savingOverlay) {
+            savingOverlay.style.display = 'flex';
+            savingOverlay.setAttribute('aria-hidden', 'false');
+        }
         fetch(cfg.saveUrl, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -729,6 +734,12 @@
         .catch(function () {
             setSaveButtonsState();
             showToast('Save failed', 'error');
+        })
+        .finally(function () {
+            if (savingOverlay) {
+                savingOverlay.style.display = 'none';
+                savingOverlay.setAttribute('aria-hidden', 'true');
+            }
         });
     }
 

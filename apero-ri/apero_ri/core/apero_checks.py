@@ -12,6 +12,7 @@ from typing import Any, Dict, List, Optional, Tuple
 import yaml
 
 from apero_ri.application import profile_utils
+from apero_ri.core.permissions import load_parameters
 
 
 CHECK_IGNORED_CHECKS = {'BAD_CCF'}
@@ -120,6 +121,86 @@ def load_override_allowed(local_data_dir: Path) -> List[str]:
     return _normalize_override_allowed(cfg.get('override_allowed', []))
 
 
+def _configured_instrument_map() -> Dict[str, List[str]]:
+    """Return the configured instrument map from parameters.yaml."""
+    params = load_parameters() or dict()
+    raw_map = params.get('instrument_map', {})
+    out: Dict[str, List[str]] = dict()
+    if isinstance(raw_map, dict):
+        for key, value in raw_map.items():
+            map_key = str(key or '').strip().lower()
+            if not map_key:
+                continue
+            if isinstance(value, dict):
+                raw_values = value.get('value', [])
+            elif isinstance(value, list):
+                raw_values = value
+            else:
+                raw_values = [value]
+            aliases = []
+            for item in raw_values:
+                alias = str(item or '').strip().lower()
+                if alias and alias not in aliases:
+                    aliases.append(alias)
+            if aliases:
+                out[map_key] = aliases
+    return out
+
+
+def _profile_instrument_names(profile_data: Optional[dict]) -> List[str]:
+    """Return canonical instrument names and aliases for a profile."""
+    if not isinstance(profile_data, dict):
+        return []
+
+    raw_names = []
+    for key in ('INSTRUMENT', 'instrument'):
+        raw_names.append(profile_utils.profile_get_general(profile_data,
+                                                          key, ''))
+
+    preset_data = profile_data.get('APERO_INSTRUMENT_PROFILE_DATA', {})
+    if isinstance(preset_data, dict):
+        for key in ('INSTRUMENT', 'instrument'):
+            raw_names.append(profile_utils.profile_get_general(preset_data,
+                                                              key, ''))
+
+    mapped = []
+    inst_map = _configured_instrument_map()
+    for raw_name in raw_names:
+        name = str(raw_name or '').strip().lower()
+        if not name or name in mapped:
+            continue
+        mapped.append(name)
+        for map_key, aliases in inst_map.items():
+            if name == map_key or name in aliases:
+                if map_key not in mapped:
+                    mapped.append(map_key)
+                for alias in aliases:
+                    if alias not in mapped:
+                        mapped.append(alias)
+    return mapped
+
+
+def _extend_root_candidates(base_root: str,
+                            profile_data: Optional[dict]) -> List[str]:
+    """Return base-root candidates expanded by mapped instrument aliases."""
+    if not base_root:
+        return []
+
+    root = Path(base_root).expanduser()
+    candidates = []
+    for instrument in _profile_instrument_names(profile_data):
+        lower_path = str(root / instrument)
+        upper_path = str(root / instrument.upper())
+        if lower_path not in candidates:
+            candidates.append(lower_path)
+        if upper_path not in candidates:
+            candidates.append(upper_path)
+    root_str = str(root)
+    if root_str not in candidates:
+        candidates.append(root_str)
+    return candidates
+
+
 def resolve_checks_root(
     local_data_dir: Path,
     profile_data: Optional[dict] = None,
@@ -127,9 +208,6 @@ def resolve_checks_root(
 ) -> Path:
     """Resolve the YAML root directory for APERO checks."""
     candidates: List[str] = []
-    if configured_root:
-        candidates.append(str(configured_root))
-
     if isinstance(profile_data, dict):
         for key in (
             'PATH.CHECK',
@@ -148,7 +226,19 @@ def resolve_checks_root(
             if value:
                 candidates.append(str(value))
 
-    candidates.append(str(Path(local_data_dir) / 'apero_checks'))
+    # The profile-specific PATH.CHECK should be the primary source of truth.
+    # Fall back to the persisted config root only when the profile does not
+    # define a usable checks directory.
+    if configured_root:
+        candidates.extend(
+            _extend_root_candidates(str(configured_root), profile_data)
+        )
+
+    candidates.extend(
+        _extend_root_candidates(
+            str(Path(local_data_dir) / 'apero_checks'), profile_data
+        )
+    )
 
     for candidate in candidates:
         if not candidate:
@@ -184,6 +274,7 @@ def load_check_file(path: Path) -> dict:
     data['profile'] = str(data.get('profile') or '').strip()
     data['history'] = _normalise_history(data.get('history'))
     data['failures'] = _normalise_failures(data.get('failures'))
+    data['passes'] = _normalise_passes(data.get('passes'))
     return data
 
 
@@ -217,15 +308,37 @@ def _normalise_failures(raw_failures: Any) -> dict:
     return out
 
 
+def _normalise_passes(raw_passes: Any) -> dict:
+    """Normalise the passes mapping."""
+    if not isinstance(raw_passes, dict):
+        return dict()
+    out = dict()
+    for key, value in raw_passes.items():
+        if not isinstance(value, dict):
+            continue
+        row = dict(value)
+        row['name'] = str(row.get('name') or key).strip()
+        row['type'] = str(row.get('type') or 'all').strip().lower()
+        row['message'] = str(row.get('message') or '').strip()
+        out[str(key)] = row
+    return out
+
+
 def _normalise_event(value: Any) -> dict:
     """Normalise one override/monitor event mapping."""
     if not isinstance(value, dict):
         return dict()
+    date = str(value.get('date') or '').strip()
+    user = str(value.get('user') or '').strip()
+    source = str(value.get('source') or '').strip()
+    comment = str(value.get('comment') or '').strip()
+    if not any((date, user, source, comment)):
+        return dict()
     out = dict()
-    out['date'] = str(value.get('date') or '').strip()
-    out['user'] = str(value.get('user') or '').strip()
-    out['source'] = str(value.get('source') or '').strip()
-    out['comment'] = str(value.get('comment') or '').strip()
+    out['date'] = date
+    out['user'] = user
+    out['source'] = source
+    out['comment'] = comment
     return out
 
 
@@ -251,12 +364,15 @@ def build_obsdir_summary(
     type_filter: str = 'all',
     show_overridden: bool = False,
     show_monitored: bool = False,
+    show_passed: bool = False,
     ignored_checks: Optional[List[str]] = None,
 ) -> dict:
     """Build one obsdir card summary."""
     ignored_set = set(ignored_checks or CHECK_IGNORED_CHECKS)
     failures = data.get('failures', {})
+    passes = data.get('passes', {})
     visible = []
+    visible_passes = []
     ignored = []
     for key, failure in failures.items():
         if key in ignored_set:
@@ -268,6 +384,19 @@ def build_obsdir_summary(
             continue
         visible.append((key, failure))
 
+    # Always keep pass rows in the summary payload.
+    #
+    # The page defaults to hiding passed checks, but the client-side toggle
+    # needs the pass data to already exist on the card summary when the user
+    # switches that visibility on.
+    for key, check in passes.items():
+        if key in ignored_set:
+            continue
+        check_type = str(check.get('type') or '').strip().lower()
+        if type_filter and type_filter != 'all' and check_type != type_filter:
+            continue
+        visible_passes.append((key, check))
+
     failed = len(visible)
     return dict(
         obsdir=str(data.get('obsdir') or ''),
@@ -276,7 +405,9 @@ def build_obsdir_summary(
         path=str(data.get('__path__') or ''),
         history=list(data.get('history', {}).values()),
         visible_failures=visible,
+        visible_passes=visible_passes,
         visible_failure_count=failed,
+        visible_pass_count=len(visible_passes),
         ignored_failures=ignored,
         status='ok' if failed == 0 else 'failed',
     )

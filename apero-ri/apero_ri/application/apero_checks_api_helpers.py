@@ -10,6 +10,10 @@ from flask import jsonify, request
 
 from apero_ri.application.issues_api_helpers import _data_dir
 from apero_ri.application.monitor_view_helpers import _has_any_monitor_perm
+from apero_ri.application.monitor_view_helpers import (
+    _get_apero_check_page_payload,
+    _normalize_apero_checks_args,
+)
 from apero_ri.core import apero_checks as checks_core
 from apero_ri.core.auth import (
     get_accessible_profiles,
@@ -288,4 +292,59 @@ def api_apero_checks_browse_dirs(app):
         path=str(current),
         parent=str(current.parent),
         dirs=dirs[:500],
+    )
+
+
+def api_apero_checks_profile_page(app, profile_id):
+    """Return one or two pages of APERO-check cards as JSON."""
+    user_info, perms = _api_user(app)
+    if not _has_any_monitor_perm(perms):
+        return jsonify(success=False, error='Monitor access required'), 403
+
+    profile = None
+    for item in get_accessible_profiles(user_info, app.ari_groups):
+        if item['profile_id'] == profile_id:
+            profile = item
+            break
+    if profile is None:
+        return jsonify(
+            success=False,
+            error='Profile not found or access denied',
+        ), 404
+
+    page_args = _normalize_apero_checks_args(request.args)
+    try:
+        pages_to_load = max(1, min(int(request.args.get('pages', '2')), 2))
+    except (TypeError, ValueError):
+        pages_to_load = 2
+
+    payload = _get_apero_check_page_payload(
+        app,
+        profile['data'],
+        profile_id,
+        profile['instrument'],
+        page_args['page_num'],
+        page_args['per_page'],
+        page_args['type_filter'],
+        page_args['obsdir_filter'],
+        page_args['obsdir_sort'],
+        page_args['show_overridden'],
+        page_args['show_monitored'],
+        page_args['show_passed'],
+        pages_to_load=pages_to_load,
+    )
+
+    pages = dict()
+    for key, value in payload['pages'].items():
+        pages[str(key)] = value
+
+    return jsonify(
+        success=True,
+        profile_id=profile_id,
+        page=payload['page'],
+        per_page=payload['per_page'],
+        total_cards=payload['total_cards'],
+        total_pages=payload['total_pages'],
+        checks_root=payload['checks_root'],
+        pages=pages,
     )

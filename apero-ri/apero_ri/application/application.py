@@ -1410,6 +1410,12 @@ class ARIApp(Flask):
         )
         return ach.api_apero_checks_browse_dirs(self)
 
+    def _api_apero_checks_profile_page(self, profile_id):
+        from apero_ri.application import (
+            apero_checks_api_helpers as ach,
+        )
+        return ach.api_apero_checks_profile_page(self, profile_id)
+
 
         kwargs = dict(profile_id=profile_id)
         return data_portal_view_helpers.ri_obs_table_view(self, **kwargs)

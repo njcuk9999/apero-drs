@@ -11921,6 +11921,23 @@ button.ari-rp-section-card:hover {
     color: var(--ari-text-muted, #9ca3af);
     font-style: italic;
 }
+.ari-tinfo-chart--manual {
+    width: 100%;
+    display: block;
+    min-height: 0;
+    color: inherit;
+    font-style: normal;
+}
+.ari-tinfo-chart--manual .ari-tinfo-chart__controls {
+    width: 100%;
+}
+.ari-tinfo-chart--manual .ari-tinfo-chart__log-wrap {
+    width: 100%;
+}
+.ari-tinfo-chart--manual .ari-tinfo-chart__log-wrap pre {
+    width: 100%;
+    box-sizing: border-box;
+}
 .ari-tinfo-chart__placeholder {
     display: inline-flex;
     flex-direction: column;

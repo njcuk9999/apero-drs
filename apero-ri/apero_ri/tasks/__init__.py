@@ -101,7 +101,9 @@ def _register_task(
         outdict["multi_process"] = bool(getattr(module, "MULTI_PROCESS", False))
         outdict["filters"] = list(getattr(module, "FILTERS", []) or [])
 
-        outdict["local_task"] = bool(getattr(module, "LOCAL_TASK", False) or False)
+        outdict["local_task"] = bool(
+            getattr(module, "LOCAL_TASK", False) or False
+        )
 
         return outdict
 
@@ -240,6 +242,24 @@ USE_SUBPROCESS["APERO_QC_STATS"] = _entry["use_subprocess"]
 MULTI_PROCESS["APERO_QC_STATS"] = _entry["multi_process"]
 LOCAL_TASK["APERO_QC_STATS"] = _entry["local_task"]
 FILTERS["APERO_QC_STATS"] = _entry["filters"]
+
+# APERO_CHECK_TASK
+_entry = _register_task(
+    "APERO_CHECK_TASK",
+    "apero_check_task",
+    "AperoCheckTask",
+    "INSTRUMENT",
+)
+TASK_LIST["APERO_CHECK_TASK"] = _entry["task_cls"]
+P_LIST["APERO_CHECK_TASK"] = _entry["param_list"]
+AP_LIST["APERO_CHECK_TASK"] = _entry["ap_list"]
+FREQ["APERO_CHECK_TASK"] = _entry["frequency"]
+ENABLED["APERO_CHECK_TASK"] = _entry["enabled"]
+TYPE["APERO_CHECK_TASK"] = _entry["task_type"]
+USE_SUBPROCESS["APERO_CHECK_TASK"] = _entry["use_subprocess"]
+MULTI_PROCESS["APERO_CHECK_TASK"] = _entry["multi_process"]
+LOCAL_TASK["APERO_CHECK_TASK"] = _entry["local_task"]
+FILTERS["APERO_CHECK_TASK"] = _entry["filters"]
 
 # FAV_OBJECT_WATCHER
 _entry = _register_task(

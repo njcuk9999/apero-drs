@@ -3,6 +3,40 @@
 {% block body_class %}ari-has-sidebar ari-sg-page{% endblock %}
 
 {% block doc_content %}
+<style>
+.ari-sg-saving-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 10000;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    background: rgba(17, 24, 39, 0.45);
+    backdrop-filter: blur(1px);
+}
+
+.ari-sg-saving-overlay__card {
+    min-width: 220px;
+    padding: 1rem 1.2rem;
+    border-radius: 0.7rem;
+    border: 1px solid var(--ari-border, #d1d5db);
+    background: var(--ari-card-bg, #ffffff);
+    box-shadow: 0 12px 34px rgba(0, 0, 0, 0.22);
+    text-align: center;
+    color: var(--ari-text, #111827);
+}
+
+.ari-sg-saving-overlay__spinner {
+    font-size: 1.7rem;
+    color: var(--ari-primary, #2563eb);
+    margin-bottom: 0.5rem;
+}
+
+.ari-sg-saving-overlay__text {
+    font-weight: 600;
+}
+</style>
+
 <div class="ari-page-header">
     <h1><i class="{{ page_icon }}"></i> {{ page_label }}</h1>
 </div>
@@ -307,6 +341,16 @@
 
 <!-- Toast notification -->
 <div id="toast" class="ari-toast" style="display:none;"></div>
+
+<!-- Full-page saving overlay (shown while save is in progress) -->
+<div id="sg-saving-overlay" class="ari-sg-saving-overlay" aria-hidden="true">
+    <div class="ari-sg-saving-overlay__card" role="status" aria-live="polite">
+        <div class="ari-sg-saving-overlay__spinner">
+            <i class="fa-solid fa-spinner fa-spin"></i>
+        </div>
+        <div class="ari-sg-saving-overlay__text">Saving science group...</div>
+    </div>
+</div>
 {% endblock %}
 
 {% block extra_scripts %}

@@ -64,37 +64,58 @@
 }
 
 .ac-check-pill {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.45rem;
+    display: inline-grid;
+    grid-template-columns: auto auto auto;
+    align-items: start;
+    gap: 0.55rem;
+    width: fit-content;
+    max-width: 100%;
     border: 1px solid var(--ari-border);
-    border-radius: 0.42rem;
-    padding: 0.2rem 0.46rem;
+    border-radius: 0.55rem;
+    padding: 0.45rem 0.6rem;
     background: var(--ari-surface-muted, #f8fafc);
     color: var(--ari-text);
     cursor: pointer;
+    text-align: left;
 }
 
 .ac-check-pill:hover {
     border-color: var(--ari-primary, #4b7bec);
 }
 
+.ac-check-pill--failed {
+    border-color: #f3b1a7;
+    background: #fff3f2;
+}
+
+.ac-check-pill--passed {
+    border-color: #a7dfbc;
+    background: #effbf3;
+}
+
 .ac-check-pill__label {
-    font-size: 0.82rem;
-    line-height: 1.2;
-    max-width: 30rem;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+    font-size: 0.85rem;
+    line-height: 1.25;
+    min-width: 0;
+    overflow-wrap: anywhere;
 }
 
 .ac-check-pill__icons {
     display: inline-flex;
     align-items: center;
+    justify-content: flex-end;
     gap: 0.3rem;
 }
 
+.ac-check-pill__icons--start {
+    justify-content: flex-start;
+}
+
 .ac-i-ok {
+    color: #1f9d55;
+}
+
+.ac-i-pass {
     color: #1f9d55;
 }
 
@@ -246,8 +267,36 @@
     color: #ffffff;
 }
 
+.ac-overlay__header--pass {
+    background: #1f9d55;
+    color: #ffffff;
+}
+
+.ac-overlay__header--failure {
+    background: #cc4b37;
+    color: #ffffff;
+}
+
 .ac-overlay__header--info .ac-overlay__close {
     color: #ffffff;
+}
+
+.ac-overlay__title-state {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.55rem;
+}
+
+.ac-overlay__title-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.35rem;
+    min-width: 1.35rem;
+    height: 1.35rem;
+    border-radius: 999px;
+    border: 1px solid rgba(255, 255, 255, 0.35);
+    background: rgba(255, 255, 255, 0.16);
 }
 
 .ac-overlay__close {
@@ -380,6 +429,14 @@
     font-size: 0.83rem;
     line-height: 1.35;
     word-break: break-all;
+}
+
+.ac-failure-doc-link {
+    margin-top: 0.35rem;
+    padding: 0.65rem 0.75rem;
+    border-radius: 0.55rem;
+    border: 1px solid #bfdbfe;
+    background: #eff6ff;
 }
 
 .ac-issue-body {

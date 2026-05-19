@@ -8,9 +8,22 @@
 
     var cfg = window.ARI_APERO_CHECKS || {};
     var state = {
+        page: Number(cfg.page || 1),
+        perPage: Number(cfg.perPage || 10),
+        totalPages: Number(cfg.totalPages || 1),
+        totalCards: Number(cfg.totalCards || 0),
+        typeFilter: String(cfg.typeFilter || 'all'),
+        obsdirFilter: String(cfg.obsdirFilter || ''),
+        obsdirSort: String(cfg.obsdirSort || 'desc'),
+        showOverridden: !!cfg.showOverridden,
+        showMonitored: !!cfg.showMonitored,
+        showPassed: !!cfg.showPassed,
+        cardsByPage: {},
+        filterTimer: null,
         historyRows: [],
         historySort: { key: 'date', dir: 'desc' },
         currentFailure: null,
+        currentFailureKind: 'failure',
         currentCard: null,
         pendingAction: '',
         selectedIssue: [],
@@ -26,7 +39,8 @@
             .replace(/&/g, '&amp;')
             .replace(/</g, '&lt;')
             .replace(/>/g, '&gt;')
-            .replace(/"/g, '&quot;');
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;');
     }
 
     function query() {
@@ -38,7 +52,286 @@
         Object.keys(extra || {}).forEach(function (key) {
             qs.set(key, extra[key]);
         });
-        window.location.search = qs.toString();
+        var next = qs.toString();
+        var nextUrl = window.location.pathname + (next ? '?' + next : '');
+        window.history.replaceState({}, '', nextUrl);
+        syncStateFromQuery();
+        syncToggleButtons();
+        return loadAndRender(state.page, true);
+    }
+
+    function boolQuery(value) {
+        return value ? '1' : '0';
+    }
+
+    function syncStateFromQuery() {
+        var qs = query();
+        var page = parseInt(qs.get('page') || String(cfg.page || 1), 10);
+        var perPage = parseInt(
+            qs.get('per_page') || String(cfg.perPage || 10),
+            10
+        );
+        state.page = isNaN(page) ? 1 : Math.max(1, page);
+        state.perPage = isNaN(perPage) ? 10 : Math.max(1, perPage);
+        state.typeFilter = String(
+            qs.get('type') || cfg.typeFilter || 'all'
+        );
+        state.obsdirFilter = String(
+            qs.get('obsdir_filter') || cfg.obsdirFilter || ''
+        );
+        state.obsdirSort = String(
+            qs.get('obsdir_sort') || cfg.obsdirSort || 'desc'
+        );
+        state.showOverridden =
+            String(
+                qs.get('show_overridden')
+                || boolQuery(cfg.showOverridden)
+            ) === '1';
+        state.showMonitored =
+            String(
+                qs.get('show_monitored')
+                || boolQuery(cfg.showMonitored)
+            ) === '1';
+        state.showPassed =
+            String(
+                qs.get('show_passed')
+                || boolQuery(cfg.showPassed)
+            ) === '1';
+    }
+
+    function buildPageApiUrl(page, pagesToLoad) {
+        var qs = new URLSearchParams();
+        qs.set('page', String(page || 1));
+        qs.set('per_page', String(state.perPage || 10));
+        qs.set('type', state.typeFilter || 'all');
+        qs.set('obsdir_filter', state.obsdirFilter || '');
+        qs.set('obsdir_sort', state.obsdirSort || 'desc');
+        qs.set('show_overridden', boolQuery(state.showOverridden));
+        qs.set('show_monitored', boolQuery(state.showMonitored));
+        qs.set('show_passed', boolQuery(state.showPassed));
+        qs.set('pages', String(pagesToLoad || 2));
+        return String(cfg.pageApiUrl || '') + '?' + qs.toString();
+    }
+
+    function syncToggleButtons() {
+        var btnOverridden = document.getElementById('ac-btn-overridden');
+        var btnMonitored = document.getElementById('ac-btn-monitored');
+        var btnPassed = document.getElementById('ac-btn-passed');
+        var typeSel = document.getElementById('ac-type');
+        var obsdirFilter = document.getElementById('ac-obsdir-filter');
+        var obsdirSort = document.getElementById('ac-obsdir-sort');
+
+        if (btnOverridden) {
+            btnOverridden.classList.toggle(
+                'ac-toggle-override-on',
+                state.showOverridden
+            );
+            btnOverridden.innerHTML = state.showOverridden
+                ? '<i class="fa-solid fa-layer-group"></i>' +
+                  ' Hide overridden checks'
+                : '<i class="fa-solid fa-layer-group"></i>' +
+                  ' Show overridden checks';
+        }
+        if (btnMonitored) {
+            btnMonitored.classList.toggle(
+                'ac-toggle-monitor-on',
+                state.showMonitored
+            );
+            btnMonitored.innerHTML = state.showMonitored
+                ? '<i class="fa-solid fa-bell-concierge"></i>' +
+                  ' Hide monitored checks'
+                : '<i class="fa-solid fa-bell-concierge"></i>' +
+                  ' Show monitored checks';
+        }
+        if (btnPassed) {
+            btnPassed.classList.toggle(
+                'ac-toggle-pass-on',
+                state.showPassed
+            );
+            btnPassed.innerHTML = state.showPassed
+                ? '<i class="fa-solid fa-check"></i> Hide passed checks'
+                : '<i class="fa-solid fa-check"></i> Show passed checks';
+        }
+        if (typeSel) typeSel.value = state.typeFilter;
+        if (obsdirFilter) obsdirFilter.value = state.obsdirFilter;
+        if (obsdirSort) obsdirSort.value = state.obsdirSort;
+    }
+
+    function renderPageControls() {
+        var infoText = 'Page ' + state.page + ' of ' + state.totalPages;
+        ['ac-page-info', 'ac-page-info-top', 'ac-page-info-bottom']
+            .forEach(function (id) {
+                var el = document.getElementById(id);
+                if (el) el.textContent = infoText;
+            });
+        ['ac-page-prev-top', 'ac-page-prev-bottom']
+            .forEach(function (id) {
+                var btn = document.getElementById(id);
+                if (btn) btn.disabled = state.page <= 1;
+            });
+        ['ac-page-next-top', 'ac-page-next-bottom']
+            .forEach(function (id) {
+                var btn = document.getElementById(id);
+                if (btn) btn.disabled = state.page >= state.totalPages;
+            });
+        var select = document.getElementById('ac-page-select');
+        if (!select) return;
+        var html = '';
+        for (var page = 1; page <= state.totalPages; page++) {
+            html += '<option value="' + page + '"' +
+                (page === state.page ? ' selected' : '') + '>' +
+                'Page ' + page + ' of ' + state.totalPages +
+                '</option>';
+        }
+        select.innerHTML = html;
+    }
+
+    function jsonAttr(value) {
+        return esc(JSON.stringify(value || {}));
+    }
+
+    function renderCards(cards) {
+        var list = document.getElementById('ac-card-list');
+        if (!list) return;
+        var rows = Array.isArray(cards) ? cards : [];
+        if (!rows.length) {
+            list.innerHTML = '<article class="ac-card">' +
+                '<div class="ac-card__row">' +
+                '<span class="ac-check-empty">No matching YAML files</span>' +
+                '</div></article>';
+            return;
+        }
+        list.innerHTML = rows.map(function (card) {
+            var failures = Array.isArray(card.visible_failures)
+                ? card.visible_failures : [];
+            var passes = Array.isArray(card.visible_passes)
+                ? card.visible_passes : [];
+            var cardJson = jsonAttr(card);
+            var html = '<article class="ac-card ac-card--' +
+                esc(card.status || 'ok') + '" data-obsdir="' +
+                esc(card.obsdir || '') + '"><div class="ac-card__row">';
+            html += '<span class="ac-card__row-status" title="Card status">';
+            html += card.status === 'ok'
+                ? '<i class="fa-solid fa-check ac-i-ok"></i>'
+                : '<i class="fa-solid fa-xmark ac-i-bad"></i>';
+            html += '</span>';
+            html += '<div class="ac-card__date" title="Obsdir: ' +
+                esc(card.obsdir || '') + '">' +
+                esc(card.obsdir || '') + '</div>';
+            html += '<div class="ac-card__checks">';
+            failures.forEach(function (pair) {
+                var key = pair[0];
+                var failure = pair[1] || {};
+                html += '<button class="ac-check-pill ac-check-pill--failed"' +
+                    ' data-ac-action="failure"' +
+                    ' data-ac-failure="' + jsonAttr(failure) + '"' +
+                    ' data-ac-failure-key="' + esc(key || '') + '"' +
+                    ' data-ac-obsdir="' + esc(card.obsdir || '') + '"' +
+                    ' data-ac-card="' + cardJson + '">';
+                html += '<span class="ac-check-pill__icons ' +
+                    'ac-check-pill__icons--start">' +
+                    '<i class="fa-solid fa-xmark ac-i-bad" ' +
+                    'title="Failed check"></i></span>';
+                html += '<span class="ac-check-pill__label">' +
+                    esc((failure.type || '') + ':' +
+                    (failure.name || key || '')) + '</span>';
+                html += '<span class="ac-check-pill__icons">';
+                if (eventEnabled(failure.monitor)) {
+                    html += '<i class="fa-solid fa-bell ac-i-mon" ' +
+                        'title="Monitored check"></i>';
+                }
+                if (eventEnabled(failure.override)) {
+                    html += '<i class="fa-solid fa-triangle-exclamation ' +
+                        'ac-i-ovr" title="Overridden marker"></i>';
+                }
+                html += '</span></button>';
+            });
+            if (state.showPassed) {
+                passes.forEach(function (pair) {
+                    var key = pair[0];
+                    var passed = pair[1] || {};
+                    html += '<button class="ac-check-pill ' +
+                        'ac-check-pill--passed" data-ac-action="pass"' +
+                        ' data-ac-pass="' + jsonAttr(passed) + '"' +
+                        ' data-ac-pass-key="' + esc(key || '') + '"' +
+                        ' data-ac-obsdir="' + esc(card.obsdir || '') + '"' +
+                        ' data-ac-card="' + cardJson + '">';
+                    html += '<span class="ac-check-pill__icons ' +
+                        'ac-check-pill__icons--start">' +
+                        '<i class="fa-solid fa-check ac-i-pass" ' +
+                        'title="Passed check"></i></span>';
+                    html += '<span class="ac-check-pill__label">' +
+                        esc((passed.type || '') + ':' +
+                        (passed.name || key || '')) + '</span>';
+                    html += '<span class="ac-check-pill__icons"></span>';
+                    html += '</button>';
+                });
+            }
+            if (!failures.length && (!state.showPassed || !passes.length)) {
+                html += '<span class="ac-check-empty">No visible checks</span>';
+            }
+            html += '</div>';
+            html += '<div class="ac-card__actions">';
+            html += '<button class="ari-btn ari-btn--sm ari-btn--secondary"' +
+                ' data-ac-action="history" data-ac-obsdir="' +
+                esc(card.obsdir || '') + '" data-ac-card="' + cardJson + '"' +
+                ' title="Open history">' +
+                '<i class="fa-solid fa-clock-rotate-left"></i></button>';
+            html += '<button class="ari-btn ari-btn--sm ari-btn--secondary"' +
+                ' data-ac-action="issue" data-ac-obsdir="' +
+                esc(card.obsdir || '') + '" data-ac-card="' + cardJson + '"' +
+                ' title="Create issue">' +
+                '<i class="fa-solid fa-flag"></i></button>';
+            html += '</div></div></article>';
+            return html;
+        }).join('');
+    }
+
+    function storePagePayload(data) {
+        state.totalPages = Number(data.total_pages || 1);
+        state.totalCards = Number(data.total_cards || 0);
+        Object.keys(data.pages || {}).forEach(function (key) {
+            state.cardsByPage[String(key)] = data.pages[key] || [];
+        });
+    }
+
+    function fetchPageWindow(page) {
+        return fetch(buildPageApiUrl(page, 2))
+            .then(function (resp) { return resp.json(); })
+            .then(function (data) {
+                if (!data || data.success === false) {
+                    throw new Error((data && data.error) || 'Load failed');
+                }
+                storePagePayload(data);
+                return data;
+            });
+    }
+
+    function loadAndRender(page, forceReload) {
+        var targetPage = Math.max(1, Number(page || 1));
+        state.page = targetPage;
+        if (!forceReload && state.cardsByPage[String(targetPage)]) {
+            renderCards(state.cardsByPage[String(targetPage)] || []);
+            renderPageControls();
+            if (!state.cardsByPage[String(targetPage + 1)] &&
+                targetPage < state.totalPages) {
+                fetchPageWindow(targetPage).catch(function () {});
+            }
+            return Promise.resolve();
+        }
+        return fetchPageWindow(targetPage).then(function () {
+            renderCards(state.cardsByPage[String(targetPage)] || []);
+            renderPageControls();
+        }).catch(function (err) {
+            var list = document.getElementById('ac-card-list');
+            if (list) {
+                list.innerHTML = '<article class="ac-card">' +
+                    '<div class="ac-card__row">' +
+                    '<span class="ac-check-empty">' +
+                    esc(String(err || 'Load failed')) +
+                    '</span></div></article>';
+            }
+        });
     }
 
     function applyObsdirLiveFilter(pattern) {
@@ -83,13 +376,28 @@
 
     function eventEnabled(value) {
         if (!value || typeof value !== 'object') return false;
-        return Object.keys(value).length > 0;
+        var keys = ['date', 'user', 'source', 'comment'];
+        for (var i = 0; i < keys.length; i += 1) {
+            var key = keys[i];
+            if (String(value[key] || '').trim()) {
+                return true;
+            }
+        }
+        for (var prop in value) {
+            if (!Object.prototype.hasOwnProperty.call(value, prop)) continue;
+            if (keys.indexOf(prop) >= 0) continue;
+            if (String(value[prop] || '').trim()) {
+                return true;
+            }
+        }
+        return false;
     }
 
-    function renderFailureMeta(card, failureKey, failure) {
+    function renderFailureMeta(card, failureKey, failure, kind) {
         var meta = document.getElementById('ac-failure-meta');
         if (!meta) return;
 
+        var isPassed = kind === 'pass';
         var overridden = eventEnabled(failure && failure.override);
         var monitored = eventEnabled(failure && failure.monitor);
         var overrideIcon = overridden
@@ -104,6 +412,12 @@
         meta.innerHTML =
             '<div class="ac-failure-meta-row"><strong>Obsdir:</strong> ' +
             esc(card && card.obsdir ? card.obsdir : '') + '</div>' +
+            '<div class="ac-failure-meta-row"><strong>Result:</strong> ' +
+            '<span class="ac-failure-meta-state ' +
+            (isPassed
+                ? 'ac-failure-meta-state--true' :
+                  'ac-failure-meta-state--false') +
+            '">' + (isPassed ? 'Passed' : 'Failed') + '</span></div>' +
             '<div class="ac-failure-meta-row"><strong>Type:</strong> ' +
             esc(failure && failure.type ? failure.type : '') + '</div>' +
             '<div class="ac-failure-meta-row"><strong>Test:</strong> ' +
@@ -122,6 +436,35 @@
                   'ac-failure-meta-state--false') +
             '">' + (monitored ? 'True' : 'False') + '</span>' +
             monitorIcon + '</div>';
+    }
+
+    function renderFailureHeader(failureKey, failure, kind) {
+        var titleEl = document.getElementById('ac-failure-title');
+        if (!titleEl) return;
+
+        var header = titleEl.closest('.ac-overlay__header');
+        var isPassed = kind === 'pass';
+        var iconClass = isPassed ? 'fa-check' : 'fa-xmark';
+        var stateClass = isPassed
+            ? 'ac-overlay__header--pass'
+            : 'ac-overlay__header--failure';
+        var name = failure && failure.name ? failure.name : failureKey || '';
+
+        if (header) {
+            header.classList.remove(
+                'ac-overlay__header--pass',
+                'ac-overlay__header--failure'
+            );
+            header.classList.add(stateClass);
+        }
+
+        titleEl.innerHTML =
+            '<span class="ac-overlay__title-state">' +
+            '<span class="ac-overlay__title-icon">' +
+            '<i class="fa-solid ' + iconClass + '"></i>' +
+            '</span>' +
+            '<span>APERO Check information: ' + esc(name) + '</span>' +
+            '</span>';
     }
 
     function setFailureNote(message, isError) {
@@ -167,26 +510,36 @@
         var hasOverride = eventEnabled(data.override);
         var hasMonitor = eventEnabled(data.monitor);
         var canEdit = !!state.pendingAction;
+        var isPassed = state.currentFailureKind === 'pass';
 
-        input.disabled = !canEdit && !hasOverride && !hasMonitor;
+        input.disabled = isPassed || (!canEdit && !hasOverride && !hasMonitor);
         if (input.disabled) {
-            input.placeholder = 'Enable override or monitor to add comment';
+            input.placeholder = isPassed
+                ? 'Passed checks are read-only'
+                : 'Enable override or monitor to add comment';
         }
     }
 
-    function updateToggleLabels(failure) {
+    function updateToggleLabels(failure, kind) {
         var overrideLabel = document.getElementById('ac-btn-override-label');
         var monitorLabel = document.getElementById('ac-btn-monitor-label');
+        var clearBtn = document.getElementById('ac-btn-clear');
         var hasOverride = eventEnabled(failure && failure.override);
         var hasMonitor = eventEnabled(failure && failure.monitor);
+        var isPassed = kind === 'pass';
 
         if (overrideLabel) {
-            overrideLabel.textContent = hasOverride
-                ? 'Override: ON' : 'Override: OFF';
+            overrideLabel.textContent = isPassed
+                ? 'Override: N/A'
+                : (hasOverride ? 'Override: ON' : 'Override: OFF');
         }
         if (monitorLabel) {
-            monitorLabel.textContent = hasMonitor
-                ? 'Monitor: ON' : 'Monitor: OFF';
+            monitorLabel.textContent = isPassed
+                ? 'Monitor: N/A'
+                : (hasMonitor ? 'Monitor: ON' : 'Monitor: OFF');
+        }
+        if (clearBtn) {
+            clearBtn.disabled = isPassed;
         }
     }
 
@@ -195,10 +548,16 @@
         return state.overrideAllowed.indexOf(String(failureKey)) >= 0;
     }
 
-    function applyOverridePolicy(failureKey) {
+    function applyOverridePolicy(failureKey, kind) {
         var btn = document.getElementById('ac-btn-override');
         var label = document.getElementById('ac-btn-override-label');
         if (!btn || !label) return;
+        if (kind === 'pass') {
+            btn.disabled = true;
+            label.textContent = 'Override: N/A';
+            btn.setAttribute('title', 'Passed checks cannot be overridden');
+            return;
+        }
         var allowed = isOverrideAllowed(failureKey);
         btn.disabled = !allowed;
         if (allowed) {
@@ -212,6 +571,12 @@
         );
     }
 
+    function _docSlugFromCheckKey(checkKey) {
+        var key = String(checkKey || '').trim().toLowerCase();
+        if (!key) return '';
+        return key;
+    }
+
     function renderFailurePath(path) {
         var row = document.getElementById('ac-failure-path');
         if (!row) return;
@@ -219,6 +584,27 @@
         row.textContent = value
             ? 'Check file: ' + value
             : 'Check file: (unknown path)';
+    }
+
+    function renderFailureDocLink(checkKey, testName) {
+        var row = document.getElementById('ac-failure-doc-link');
+        if (!row) return;
+        var slug = _docSlugFromCheckKey(checkKey);
+        if (!slug) {
+            row.hidden = true;
+            row.innerHTML = '';
+            return;
+        }
+        var docUrl = '/docs/monitor/checks/' + encodeURIComponent(slug);
+        var label = String(testName || checkKey || 'this test');
+        row.innerHTML =
+            '<a class="ari-btn ari-btn--primary" ' +
+            'style="font-weight:700; width:100%; text-align:center;" ' +
+            'href="' + esc(docUrl) + '" target="_blank" ' +
+            'rel="noopener noreferrer">' +
+            'Quick link to documentation on ' + esc(label) +
+            '</a>';
+        row.hidden = false;
     }
 
     function openCommentEditor(action) {
@@ -230,10 +616,10 @@
 
         var data = state.currentFailure.data || {};
         var existing = '';
-        if (action === 'override' && data.override) {
+        if (action === 'override' && eventEnabled(data.override)) {
             existing = String(data.override.comment || '');
         }
-        if (action === 'monitor' && data.monitor) {
+        if (action === 'monitor' && eventEnabled(data.monitor)) {
             existing = String(data.monitor.comment || '');
         }
 
@@ -295,20 +681,24 @@
             );
         }
 
-        var title = 'APERO Check information: ' +
-            (failure.name || key || '');
-        document.getElementById('ac-failure-title').textContent = title;
-        renderFailureMeta(state.currentCard || loaded, key, failure);
+        renderFailureHeader(key, failure, state.currentFailureKind);
+        renderFailureMeta(
+            state.currentCard || loaded,
+            key,
+            failure,
+            state.currentFailureKind
+        );
         document.getElementById('ac-failure-message').textContent =
             failure.message || '';
-        updateToggleLabels(failure);
-        applyOverridePolicy(key);
+        updateToggleLabels(failure, state.currentFailureKind);
+        applyOverridePolicy(key, state.currentFailureKind);
         updateCommentBoxState();
         renderFailurePath(
             loaded.__path__
             || (state.currentCard && state.currentCard.path)
             || ''
         );
+        renderFailureDocLink(key, failure.name || key);
 
         document.querySelectorAll('[data-ac-action="failure"]')
             .forEach(function (btn) {
@@ -547,24 +937,41 @@
         }).join('');
     }
 
-    function showFailure(card, failureKey, failure) {
+    function showCheck(card, failureKey, failure, kind) {
         state.currentCard = card;
         state.currentFailure = {
             key: failureKey,
             data: failure,
         };
+        state.currentFailureKind = kind === 'pass' ? 'pass' : 'failure';
         state.pendingAction = '';
-        document.getElementById('ac-failure-title').textContent =
-            'APERO Check information: ' +
-            (failure.name || failureKey || '');
-        renderFailureMeta(card, failureKey, failure || {});
+        renderFailureHeader(
+            failureKey,
+            failure || {},
+            state.currentFailureKind
+        );
+        renderFailureMeta(
+            card,
+            failureKey,
+            failure || {},
+            state.currentFailureKind
+        );
         document.getElementById('ac-failure-message').textContent =
             failure.message || '';
-        updateToggleLabels(failure || {});
-        applyOverridePolicy(failureKey);
+        updateToggleLabels(failure || {}, state.currentFailureKind);
+        applyOverridePolicy(failureKey, state.currentFailureKind);
         renderFailurePath(card && card.path ? card.path : '');
+        renderFailureDocLink(failureKey, failure.name || failureKey);
         setFailureNote('', false);
         toggleCommentEditor(false);
+        if (state.currentFailureKind === 'pass') {
+            var btnOverride = document.getElementById('ac-btn-override');
+            var btnMonitor = document.getElementById('ac-btn-monitor');
+            var btnClear = document.getElementById('ac-btn-clear');
+            if (btnOverride) btnOverride.disabled = true;
+            if (btnMonitor) btnMonitor.disabled = true;
+            if (btnClear) btnClear.disabled = true;
+        }
         openOverlay('ac-failure-overlay');
     }
 
@@ -630,10 +1037,18 @@
         if (action === 'history') {
             showHistory(JSON.parse(btn.getAttribute('data-ac-card') || '{}'));
         } else if (action === 'failure') {
-            showFailure(
+            showCheck(
                 JSON.parse(btn.getAttribute('data-ac-card') || '{}'),
                 btn.getAttribute('data-ac-failure-key') || '',
-                JSON.parse(btn.getAttribute('data-ac-failure') || '{}')
+                JSON.parse(btn.getAttribute('data-ac-failure') || '{}'),
+                'failure'
+            );
+        } else if (action === 'pass') {
+            showCheck(
+                JSON.parse(btn.getAttribute('data-ac-card') || '{}'),
+                btn.getAttribute('data-ac-pass-key') || '',
+                JSON.parse(btn.getAttribute('data-ac-pass') || '{}'),
+                'pass'
             );
         } else if (action === 'issue') {
             showIssue(JSON.parse(btn.getAttribute('data-ac-card') || '{}'));
@@ -861,7 +1276,8 @@
     var btnRefresh = document.getElementById('ac-btn-refresh');
     if (btnRefresh) {
         btnRefresh.addEventListener('click', function () {
-            window.location.reload();
+            state.cardsByPage = {};
+            loadAndRender(state.page, true);
         });
     }
 
@@ -905,7 +1321,8 @@
     if (btnOverridden) {
         btnOverridden.addEventListener('click', function () {
             refreshUrl({
-                show_overridden: query().get('show_overridden') === '1' ? '0' : '1',
+                show_overridden: state.showOverridden ? '0' : '1',
+                page: '1',
             });
         });
     }
@@ -914,7 +1331,18 @@
     if (btnMonitored) {
         btnMonitored.addEventListener('click', function () {
             refreshUrl({
-                show_monitored: query().get('show_monitored') === '1' ? '0' : '1',
+                show_monitored: state.showMonitored ? '0' : '1',
+                page: '1',
+            });
+        });
+    }
+
+    var btnPassed = document.getElementById('ac-btn-passed');
+    if (btnPassed) {
+        btnPassed.addEventListener('click', function () {
+            refreshUrl({
+                show_passed: state.showPassed ? '0' : '1',
+                page: '1',
             });
         });
     }
@@ -922,15 +1350,22 @@
     var typeSel = document.getElementById('ac-type');
     if (typeSel) {
         typeSel.addEventListener('change', function () {
-            refreshUrl({ type: typeSel.value });
+            refreshUrl({ type: typeSel.value, page: '1' });
         });
     }
 
     var obsdirFilter = document.getElementById('ac-obsdir-filter');
     if (obsdirFilter) {
-        applyObsdirLiveFilter(obsdirFilter.value || '');
         obsdirFilter.addEventListener('input', function () {
-            applyObsdirLiveFilter(obsdirFilter.value || '');
+            if (state.filterTimer) {
+                window.clearTimeout(state.filterTimer);
+            }
+            state.filterTimer = window.setTimeout(function () {
+                refreshUrl({
+                    obsdir_filter: obsdirFilter.value || '',
+                    page: '1',
+                });
+            }, 250);
         });
     }
 
@@ -944,12 +1379,32 @@
         });
     }
 
-    var perSel = document.getElementById('ac-perpage');
-    if (perSel) {
-        perSel.addEventListener('change', function () {
-            refreshUrl({ per_page: perSel.value, page: '1' });
+    var pageSel = document.getElementById('ac-page-select');
+    if (pageSel) {
+        pageSel.addEventListener('change', function () {
+            refreshUrl({ page: pageSel.value || '1' });
         });
     }
+
+    ['ac-page-prev-top', 'ac-page-prev-bottom'].forEach(function (id) {
+        var btn = document.getElementById(id);
+        if (!btn) return;
+        btn.addEventListener('click', function () {
+            if (state.page > 1) {
+                refreshUrl({ page: String(state.page - 1) });
+            }
+        });
+    });
+
+    ['ac-page-next-top', 'ac-page-next-bottom'].forEach(function (id) {
+        var btn = document.getElementById(id);
+        if (!btn) return;
+        btn.addEventListener('click', function () {
+            if (state.page < state.totalPages) {
+                refreshUrl({ page: String(state.page + 1) });
+            }
+        });
+    });
 
     var rootInput = document.getElementById('ac-manage-root');
     if (rootInput) {
@@ -1011,4 +1466,11 @@
             }
         });
     }
+
+    state.cardsByPage[String(state.page)] = Array.isArray(cfg.cards)
+        ? cfg.cards.slice() : [];
+    syncStateFromQuery();
+    syncToggleButtons();
+    renderPageControls();
+    loadAndRender(state.page, false);
 }());
