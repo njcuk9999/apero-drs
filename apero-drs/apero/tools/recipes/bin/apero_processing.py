@@ -14,6 +14,7 @@ import traceback
 
 from aperocore import drs_lang
 from apero.core import drs_database
+from apero.core import drs_astrometrics
 from aperocore.core import drs_log
 from apero.utils import drs_startup
 from apero.tools.module.database import manage_databases
@@ -34,7 +35,7 @@ __release__ = apero_base.__release__
 WLOG = drs_log.wlog
 # Get index database
 FileIndexDatabase = drs_database.FileIndexDatabase
-AstrometricDatabase = drs_database.AstrometricDatabase
+AstrometricDatabase = drs_astrometrics.AstrometricDatabase
 # get text entry instance
 textentry = drs_lang.textentry
 
@@ -125,7 +126,7 @@ def __main__(recipe, params):
                                                            recipe.shortname)
         # update the database if required
         if params['UPDATE_OBJ_DATABASE'] or not has_entries:
-            manage_databases.update_object_database(params)
+            manage_databases.validate_astrometric_yaml_archive(params)
         # load the object database
         objdbm = AstrometricDatabase(params, recipe.shortname)
         objdbm.load_db()

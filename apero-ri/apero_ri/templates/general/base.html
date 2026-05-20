@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="{{ current_theme | default('default') }}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}APERO RI{% endblock %}</title>
+    <link rel="icon" href="{{ url_for('static', filename='images/favicon.ico') }}" type="image/x-icon">
+
+    <!-- Font Awesome (free CDN) -->
+    <link rel="stylesheet"
+          href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
+          integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA=="
+          crossorigin="anonymous" referrerpolicy="no-referrer" />
+
+    <!-- ARI stylesheet -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css', v='20260422c') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/mobile_overrides.css', v='20260424a') }}">
+    {% if logged_in %}
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/user_portal_messaging.css', v='20260424a') }}">
+    {% endif %}    <!-- Immediate theme application (before any render) -->
+    <script>(function(){
+        var ls=localStorage.getItem('ari-theme');
+        if(ls&&['light','dark','default'].indexOf(ls)>-1){
+            document.documentElement.setAttribute('data-theme',ls);
+        }
+    })();</script>
+
+    {% block extra_head %}{% endblock %}
+</head>
+<body class="{% block body_class %}{% endblock %}">
+    <!-- ================================================================== -->
+    <!-- Header                                                             -->
+    <!-- ================================================================== -->
+    <header class="ari-header">
+        <a href="{{ url_for('home') }}" class="ari-header__logo">
+            {% if logo_exists %}
+            <img src="{{ url_for('static', filename='images/apero_logo.png') }}"
+                 alt="APERO">
+            {% endif %}
+            <span>Reduction Interface</span>
+        </a>
+
+        <div class="ari-header__spacer"></div>
+
+        <!-- Desktop quick-nav -->
+        <nav class="ari-nav" aria-label="Quick navigation">
+            {% for page in nav_pages %}
+            <a href="{{ page.url }}" class="ari-nav__link"
+               {% if request.path == page.url %}aria-current="page"{% endif %}
+               title="{{ page.label }}">
+                <i class="{{ page.icon }}"></i>
+            </a>
+            {% endfor %}
+
+            <!-- Login / Logout link -->
+            {% if logged_in %}
+            <span class="ari-notif-wrap"
+                  style="position:relative; display:inline-block;">
+                <button type="button" class="ari-notif-bell ari-nav__link"
+                        id="ari-notif-bell"
+                        title="Notifications"
+                        aria-label="Notifications">
+                    <i class="fa-solid fa-bell"></i>
+                    <span class="ari-notif-badge"
+                          id="ari-notif-badge"></span>
+                </button>
+                <div class="ari-notif-panel" id="ari-notif-panel"
+                     role="dialog" aria-label="Notifications">
+                    <div class="ari-notif-panel__header">
+                        <strong>Notifications</strong>
+                        <a href="/user_portal/notifications"
+                           class="ari-btn ari-btn--small">Manage</a>
+                    </div>
+                    <div class="ari-notif-panel__list"
+                         id="ari-notif-panel-list">
+                        <div class="upm-empty">Loading...</div>
+                    </div>
+                    <div class="ari-notif-panel__footer">
+                        <a href="/user_portal/messages">
+                            <i class="fa-solid fa-envelope"></i>
+                            Messages
+                        </a>
+                    </div>
+                </div>
+            </span>
+            <a href="{{ url_for('logout') }}" class="ari-nav__link" title="Logout">
+                <i class="fa-solid fa-right-from-bracket"></i>
+            </a>
+            {% else %}
+            <a href="{{ url_for('login') }}" class="ari-nav__link" title="Login">
+                <i class="fa-solid fa-right-to-bracket"></i>
+            </a>
+            {% endif %}
+        </nav>
+
+        <!-- Hamburger (mobile) -->
+        <button class="ari-hamburger" id="ari-hamburger"
+                aria-label="Toggle navigation">
+            <i class="fa-solid fa-bars"></i>
+        </button>
+    </header>
+
+    <!-- Mobile menu -->
+    <div class="ari-backdrop" id="ari-backdrop"></div>
+    <aside class="ari-mobile-menu" id="ari-mobile-menu">
+        {% if sidebar_tree is defined and sidebar_tree %}
+        <!-- Mirror the current sidebar tree only -->
+        {% for item in sidebar_tree %}
+        {% if item.pinned|default(false) %}
+        {% if item.url and not (item.disabled|default(false)) %}
+        <a href="{{ item.url }}{% if doc_query_suffix is defined %}{{ doc_query_suffix }}{% elif current_version is defined %}?v={{ current_version }}{% endif %}"
+           class="ari-mobile-menu__pin{% if item.active %} ari-mobile-menu__pin--active{% endif %}">
+            <i class="{{ item.icon }}"></i>
+            <span>{{ item.label }}</span>
+        </a>
+        {% endif %}
+        {% endif %}
+        {% endfor %}
+
+        <div class="ari-mobile-menu__heading">
+            <i class="{{ sidebar_icon }}"></i> {{ sidebar_label }}
+        </div>
+        {% if doc_versions is defined and doc_versions|length > 1 %}
+        <div class="ari-mobile-menu__version">
+            <select id="mobile-version" class="ari-sidebar__version-select"
+                    onchange="ARI.switchVersion(this.value)">
+                {% for v in doc_versions %}
+                <option value="{{ v.id }}"
+                        {% if current_version is defined and v.id == current_version %}selected{% endif %}>
+                    {{ v.name }}
+                </option>
+                {% endfor %}
+            </select>
+        </div>
+        {% endif %}
+        {% for item in sidebar_tree %}
+                {% if not item.pinned|default(false) %}
+                {% if item.url and not (item.disabled|default(false)) %}
+        <a href="{{ item.url }}{% if doc_query_suffix is defined %}{{ doc_query_suffix }}{% elif current_version is defined %}?v={{ current_version }}{% endif %}"
+           class="ari-mobile-menu__link{% if item.active %} ari-mobile-menu__link--active{% endif %}"
+           style="padding-left: {{ 0.75 + item.depth * 1.0 }}rem;">
+            <i class="{{ item.icon }}"></i>
+            <span>{{ item.label }}</span>
+        </a>
+                {% else %}
+                <span class="ari-mobile-menu__link"
+                            style="padding-left: {{ 0.75 + item.depth * 1.0 }}rem; opacity: 0.55; pointer-events: none;">
+                        <i class="{{ item.icon }}"></i>
+                        <span>{{ item.label }}</span>
+                </span>
+                {% endif %}
+        {% endif %}
+        {% endfor %}
+
+        {% else %}
+        {% for page in nav_pages %}
+        <a href="{{ page.url }}" class="ari-mobile-menu__link">
+            <i class="{{ page.icon }}"></i>
+            <span>{{ page.label }}</span>
+        </a>
+        {% endfor %}
+
+        <div class="ari-mobile-menu__divider"></div>
+        {% if logged_in %}
+        <a href="{{ url_for('logout') }}" class="ari-mobile-menu__link">
+            <i class="fa-solid fa-right-from-bracket"></i>
+            <span>Logout ({{ username }})</span>
+        </a>
+        {% else %}
+        <a href="{{ url_for('login') }}" class="ari-mobile-menu__link">
+            <i class="fa-solid fa-right-to-bracket"></i>
+            <span>Login</span>
+        </a>
+        {% endif %}
+        {% endif %}
+    </aside>
+
+    <!-- ================================================================== -->
+    <!-- Main content                                                       -->
+    <!-- ================================================================== -->
+    <main class="ari-main">
+        {% if sidebar_tree is not defined %}
+        {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+        {% for category, message in messages %}
+        <div class="ari-flash ari-flash--{{ category }}">
+            <i class="fa-solid fa-circle-info"></i>
+            {{ message }}
+        </div>
+        {% endfor %}
+        {% endif %}
+        {% endwith %}
+        {% endif %}
+
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- ================================================================== -->
+    <!-- Footer                                                             -->
+    <!-- ================================================================== -->
+    <footer class="ari-footer">
+        APERO Data Portal &mdash;
+        <a href="https://apero.exoplanets.ca" target="_blank" rel="noopener">
+            apero.exoplanets.ca
+        </a>
+    </footer>
+
+    <!-- ARI JavaScript -->
+    <script>
+        window.ARI_PAGE_META = {
+            loggedIn: {{ logged_in | tojson }},
+            pageId: {% if page_id is defined %}{{ page_id | tojson }}{% else %}null{% endif %},
+            pageLabel: {% if page_label is defined %}{{ page_label | tojson }}{% else %}null{% endif %},
+            pageIcon: {% if page_icon is defined %}{{ page_icon | tojson }}{% else %}null{% endif %}
+        };
+    </script>
+    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/page_pins.js', v='20260424a') }}"></script>
+    <script>
+    /* ── How-to banner: persist open/closed state in localStorage ── */
+    (function () {
+        function initHowto() {
+            document.querySelectorAll('details.ot-howto[id]').forEach(function (el) {
+                var key = 'ari-howto-' + el.id;
+                var saved = localStorage.getItem(key);
+                /* Default is open (null = never saved). Only close if explicitly saved as '0'. */
+                if (saved === '0') el.removeAttribute('open');
+                el.addEventListener('toggle', function () {
+                    localStorage.setItem(key, el.open ? '1' : '0');
+                });
+            });
+        }
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initHowto);
+        } else {
+            initHowto();
+        }
+    }());
+    </script>
+    <script src="{{ url_for('static', filename='js/theme.js') }}" defer></script>
+    {% if logged_in %}
+    <script src="{{ url_for('static', filename='js/notifications_bell.js', v='20260430a') }}" defer></script>
+    {% endif %}
+    {% block extra_scripts %}{% endblock %}
+</body>
+</html>

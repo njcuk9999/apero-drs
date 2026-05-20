@@ -158,6 +158,10 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
     # ----------------------------------------------------------------------
     # Get all preprocessed fp files
     # ----------------------------------------------------------------------
+    # get the reference start and end date
+    start_date = params['REF.FIND_STARTDATE']
+    end_date = params['REF.FIND_ENDDATE']
+    find_time_col = params['REF.FIND_TIMECOL']
     # check file type
     filetype = fpprops['DPRTYPE']
     if filetype not in params['CAL.SHAPE.ALLOWED_FP_TYPES']:
@@ -168,7 +172,10 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
                                   targs=[filetype, mainname], message=emsg)
     # get all "filetype" filenames
     filenames = drs_utils.find_files(params, block_kind='tmp',
-                                     filters=dict(KW_DPRTYPE=filetype))
+                                     filters=dict(KW_DPRTYPE=filetype),
+                                     start_date=start_date,
+                                     end_date=end_date,
+                                     time_column=find_time_col)
     # convert to numpy array
     filenames = np.array(filenames)
 

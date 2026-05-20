@@ -1,0 +1,24 @@
+id: 2c68e678-4846-4bfe-9a50-7d967e115b19
+slug: class-apero-core-core-drs-exceptions-logexit-lbl-compute-exception-objname-friend-class-lbl-core-base-classes-l
+date_reported: '2023-08-28'
+reported_by: Neil Cook
+instrument_mode: ALL
+recipe: apero_lbl_compute
+action: Check
+type: Expected
+error_code: LBL
+github_issue: ''
+generic_error: "class apero.core.core.drs_exceptions.LogExit : LBL Compute Exception\
+  \ \n[{OBJNAME}_{FRIEND}] class lbl.core.base_classes.LblException : File {PATH}\n\
+  \ cannot be found LBL Compute Exception [{OBJNAME}_{FRIEND}]  class \nlbl.core.base_classes.LblException\
+  \ : Cannot load template fits file. \nFilename: {PATH}\n class FileNotFoundError\
+  \ : [Errno 2] No such file or directory: \n{PATH}"
+comments: This will depend on the object. You must check whether we have valid telluric
+  corrected (tcorr) files and a valid template - if we do then this needs reporting.
+  If we do not then this is normal.
+full_example_error: "class apero.core.core.drs_exceptions.LogExit : LBL Compute Exception\
+  \ \n[LP888M18_LP888M18] class lbl.core.base_classes.LblException : File \n/cosmos99/nirps/apero-data/nirps_he_offline/lbl/masks/LP888M18_full.fits\n\
+  \ cannot be found LBL Compute Exception [LP888M18_PROXIMA] class \nlbl.core.base_classes.LblException\
+  \ : Cannot load template fits file. \nFilename: \n/cosmos99/nirps/apero-data/nirps_he_offline/lbl/templates/Template_s1dv_LP888M18_sc1d_v_file_A.fits\n\
+  \ class FileNotFoundError : [Errno 2] No such file or directory: \n/cosmos99/nirps/apero-data/nirps_he_offline/lbl/templates/Template_s1dv_LP888M18_sc1d_v_file_A.fits"
+updated_at: '2026-05-13 15:54:29'

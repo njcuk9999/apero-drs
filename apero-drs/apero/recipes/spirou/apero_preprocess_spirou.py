@@ -18,7 +18,7 @@ from aperocore.base import base
 from aperocore.constants import param_functions
 from aperocore.constants import load_functions
 from aperocore import drs_lang
-from apero.core import drs_database
+from apero.core import drs_astrometrics
 from apero.core import drs_file
 from aperocore.core import drs_log
 from apero.instruments.spirou import file_definitions
@@ -52,7 +52,7 @@ textentry = drs_lang.textentry
 # Raw prefix
 RAW_PREFIX = file_definitions.raw_prefix
 # get the object database
-ObjectDatabase = drs_database.AstrometricDatabase
+ObjectDatabase = drs_astrometrics.AstrometricDatabase
 
 
 # =============================================================================
@@ -370,7 +370,10 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
         log1.add_qc(qc_params, passed)
         if passed:
             log1.update_flags(QCPASSED=True)
-
+        # ---------------------------------------------------------------------
+        # For this file figure out the APERO release date
+        # ---------------------------------------------------------------------
+        areldate = prep.get_areldate(params, header=infile.header)
         # ------------------------------------------------------------------
         # Save rotated image
         # ------------------------------------------------------------------
@@ -401,6 +404,8 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
         outfile.add_hkey('KW_PPC_NBAD_INTE', value=cprops['NUM_BAD_INTERCEPT'])
         outfile.add_hkey('KW_PPC_NBAD_SLOPE', value=cprops['NUM_BAD_SLOPE'])
         outfile.add_hkey('KW_PPC_NBAD_BOTH', value=cprops['NUM_BAD_BOTH'])
+        # update the areldate
+        outfile.add_hkey('KW_ARELDATE', value=areldate)
         # ------------------------------------------------------------------
         # copy data
         outfile.data = image

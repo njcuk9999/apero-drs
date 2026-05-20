@@ -1,0 +1,26 @@
+id: bcec67c8-5083-4203-b32b-17e0746181ea
+slug: class-apero-core-core-drs-exceptions-logexit-lbl-compile-exception-objname-friend-class-lbl-core-base-classes-l
+date_reported: '2023-08-28'
+reported_by: Neil Cook
+instrument_mode: ALL
+recipe: apero_lbl_compile
+action: Report
+type: Fixed
+error_code: LBL
+github_issue: 'LBL issue #67'
+generic_error: "class apero.core.core.drs_exceptions.LogExit : LBL Compile Exception\
+  \ \n[{OBJNAME}_{FRIEND}] class lbl.core.base_classes.LblException : \nUnexpected\
+  \ lbl_compile.py error: class ValueError : zero-size array to \nreduction operation\
+  \ minimum which has no identity LBL Compile Exception \n[{OBJNAME}_{FRIEND}]  class\
+  \ lbl.core.base_classes.LblException : Unexpected \nlbl_compile.py error: class\
+  \ ValueError : zero-size array to reduction \noperation minimum which has no identity"
+comments: This was caused by a bug - should be now reported as another error / fixed.
+  Seems to still happen (unfixed) report and add to LBL issue.
+full_example_error: "class apero.core.core.drs_exceptions.LogExit : LBL Compile Exception\
+  \ \n[NGC2345NO50_NGC2345NO50] class lbl.core.base_classes.LblException : \nUnexpected\
+  \ lbl_compile.py error: class ValueError : zero-size array to \nreduction operation\
+  \ minimum which has no identity LBL Compile Exception \n[NGC2345NO50_GL514] class\
+  \ lbl.core.base_classes.LblException : \nUnexpected lbl_compile.py error: class\
+  \ ValueError : zero-size array to \nreduction operation minimum which has no identity\
+  \ ||"
+updated_at: '2026-05-13 15:54:29'

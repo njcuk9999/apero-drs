@@ -18,9 +18,12 @@ import pandas as pd
 from astropy import units as uu
 from astropy.coordinates import EarthLocation, AltAz, ICRS
 from astropy.coordinates import SkyCoord, Distance
+from astropy.table import Table
 
 from apero.base import base as apero_base
 from apero.core import drs_database
+from apero.core import drs_astrometrics
+from apero.core import drs_rejection
 from apero.instruments import select
 from apero.instruments.default import instrument as instrument_mod
 from apero.io import drs_fits
@@ -33,6 +36,7 @@ from aperocore.constants import param_functions
 from aperocore.core import drs_log
 from aperocore.core import drs_misc
 from aperocore.core import drs_text
+from aperocore.io import drs_io
 
 # =============================================================================
 # Define variables
@@ -45,7 +49,7 @@ __authors__ = apero_base.__authors__
 __date__ = apero_base.__date__
 __release__ = apero_base.__release__
 # get time
-Time = base.Time
+Time, TimeDelta = base.Time, base.TimeDelta
 # Get Logging function
 WLOG = drs_log.wlog
 # get exceptions
@@ -55,7 +59,7 @@ display_func = drs_misc.display_func
 # Get the text types
 textentry = drs_lang.textentry
 # Get database
-ObjectDatabase = drs_database.AstrometricDatabase
+ObjectDatabase = drs_astrometrics.AstrometricDatabase
 # get param dict
 ParamDict = param_functions.ParamDict
 Instrument = instrument_mod.Instrument
@@ -116,64 +120,65 @@ def resolve_target(params: ParamDict, pconst: Instrument, shortname: str,
             raise AperoCodedException(params, '00-010-00012', targs=eargs)
     # -------------------------------------------------------------------------
     # find correct name in the database (via objname or aliases)
-    correct_objname, found = database.find_objname(pconst, objname)
+    correct_objname, found = database.find_objname(objname)
     # -------------------------------------------------------------------------
-    # update the sql object condition
-    sql_obj_cond = 'OBJNAME="{0}"'.format(correct_objname)
-    # get the full entry for this cobjname
-    table = database.get_entries('*', condition=sql_obj_cond)
+    # get the full yaml entry for this cleaned objname (resolves any name)
+    entry = database.get_entry(correct_objname)
+    # flatten the yaml entry into a {legacy_col: value} dict so the existing
+    # extraction logic below keeps working unchanged. Returns None if entry
+    # was not found.
+    legacy = drs_astrometrics.legacy_view(entry)
     # -------------------------------------------------------------------------
-    # remove entries that have NO_PM in the keywords
-    no_pm_mask = table['KEYWORDS'].str.contains('NO_PM', na=False)
-    table = table[~no_pm_mask]
-    # -------------------------------------------------------------------------
-    # check if key columns have null values - if they do remove these rows
-    #   from the table
-    if len(table) != 0:
-        nullmask = np.zeros(len(table), dtype=bool)
-        # loop around columns and look for nulls
+    # check if key columns have null values - if they do treat the entry as
+    #   missing (matches the old behaviour where NULL OBJNAME/RA/DEC/PMRA/
+    #   PMDE/EPOCH would drop the row)
+    if legacy is not None:
+        # if any of the required columns is null, drop the entry entirely
         for col in NON_NULL_OBJ_COLS:
-            nullmask |= table[col].isnull()
-        # filter table
-        table = pd.DataFrame(table[~nullmask])
+            if drs_text.null_text(legacy.get(col), ['None', '', 'Null']):
+                legacy = None
+                break
     # -------------------------------------------------------------------------
-    # now re-test table length and then use from table
-    if len(table) != 0:
+    # now extract values from the legacy dict (or fall through to header)
+    if legacy is not None:
         # ---------------------------------------------------------------------
-        # try to use table
+        # try to use the yaml entry
         try:
             # get properties from parameters
             # object name is the cleaned object name
-            objname = str(table['OBJNAME'].iloc[0])
-            original_name = str(table['ORIGINAL_NAME'].iloc[0])
+            objname = str(legacy['OBJNAME'])
+            original_name = str(legacy['ORIGINAL_NAME'])
             # right ascension and declination in degrees
-            ra_deg = float(table['RA_DEG'].iloc[0])
-            ra_source = str(table['RA_SOURCE'].iloc[0])
-            dec_deg = float(table['DEC_DEG'].iloc[0])
-            dec_source = str(table['DEC_SOURCE'].iloc[0])
+            ra_deg = float(legacy['RA_DEG'])
+            ra_source = str(legacy['RA_SOURCE'])
+            dec_deg = float(legacy['DEC_DEG'])
+            dec_source = str(legacy['DEC_SOURCE'])
             # epoch in JD
-            epoch = float(table['EPOCH'].iloc[0])
+            epoch = float(legacy['EPOCH'])
             # pmra and pmde in mas/yr
-            pmra = float(table['PMRA'].iloc[0])
-            pmra_source = str(table['PMRA_SOURCE'].iloc[0])
-            pmde = float(table['PMDE'].iloc[0])
-            pmde_source = str(table['PMDE_SOURCE'].iloc[0])
+            pmra = float(legacy['PMRA'])
+            pmra_source = str(legacy['PMRA_SOURCE'])
+            pmde = float(legacy['PMDE'])
+            pmde_source = str(legacy['PMDE_SOURCE'])
             # parallax in mas (may not be present)
-            plx = float(_target_set_value(table, 'PLX', null_value=np.nan))
-            plx_source = str(table['PLX_SOURCE'].iloc[0])
+            plx_val = legacy.get('PLX')
+            plx = float(plx_val) if plx_val is not None else np.nan
+            plx_source = str(legacy.get('PLX_SOURCE') or '')
             # RV in km/s (may not be present)
-            rv = float(_target_set_value(table, 'RV', null_value=np.nan))
-            rv_source = str(table['RV_SOURCE'].iloc[0])
+            rv_val = legacy.get('RV')
+            rv = float(rv_val) if rv_val is not None else np.nan
+            rv_source = str(legacy.get('RV_SOURCE') or '')
             # Teff in K (may not be present)
-            teff = float(_target_set_value(table, 'TEFF', null_value=np.nan))
-            teff_source = str(table['TEFF_SOURCE'].iloc[0])
+            teff_val = legacy.get('TEFF')
+            teff = float(teff_val) if teff_val is not None else np.nan
+            teff_source = str(legacy.get('TEFF_SOURCE') or '')
             # spectral type (may not be present)
-            sp_type = str(table['SP_TYPE'].iloc[0])
-            sp_source = str(table['SP_SOURCE'].iloc[0])
-            # data source is "database" and no date is the date the database
-            #   was last updated (times added when database downloaded last)
+            sp_type = str(legacy.get('SP_TYPE') or '')
+            sp_source = str(legacy.get('SP_SOURCE') or '')
+            # data source is "database" and the data_date column has no yaml
+            # equivalent yet (DATE_ADDED is not stored)
             data_source = 'database'
-            data_date = str(table['DATE_ADDED'].iloc[0])
+            data_date = str(legacy.get('DATE_ADDED') or '')
             # mark resolved as complete
             resolved = True
 
@@ -408,51 +413,53 @@ def get_geometric_airmass(ra: float, dec: float, plx: float, pmra: float,
 
 def get_obj_reject_list(params: ParamDict) -> np.ndarray:
     """
-    Get a list of rejected object names from the googlesheet object database
+    Get object names to reject from the local astrometric reject list.
+
+    This reads ``reject_list.yaml`` from the astrometric assets directory
+    and returns the union of object names and aliases (cleaned).
 
     :param params: ParamDict, parameter dictionary of constants
 
     :return: np.array 1D, the list of reject object names
     """
-    # get psuedo constants
-    pconst = load_functions.load_pconfig(select.INSTRUMENTS)
-    # get parameters from params
-    gsheet_url = params['OBJ.LIST.GSHEET_URL']
-    reject_id = params['OBJ.LIST.GSHEET_REJECTLIST_ID']
-    # get reject list google sheets
+    # load the astrometric database to discover the local path
+    objdbm = ObjectDatabase(params, shortname='OBJ-REJECT')
+    objdbm.load_db()
+    reject_path = os.path.join(objdbm.path, 'reject_list.yaml')
+    # no reject list file means no rejected objects
+    if not os.path.exists(reject_path):
+        return np.array([])
+    # read yaml reject list
     try:
-        rejecttable = drs_database.get_google_sheet(params, gsheet_url,
-                                                    reject_id)
-    # any exception here should return a warning and a empty array
+        reject_data = drs_astrometrics.AstrometricDatabase._read_yaml(
+            reject_path)
     except Exception as e:
-        # warning msg: Cannot read reject list {0}. Skipping rejection
-        wargs = [GOOGLE_BASE_URL.format(gsheet_url, reject_id),
-                 type(e), str(e)]
-        WLOG(params, 'warning', textentry('10-010-00007', args=wargs),
-             sublevel=3)
-        # return empty array
+        wmsg = 'Cannot read object reject list: {0}. {1}: {2}'
+        wargs = [reject_path, type(e).__name__, str(e)]
+        WLOG(params, 'warning', wmsg.format(*wargs), sublevel=3)
         return np.array([])
-    # if we have reject entries deal with them (and their aliases)
-    if len(rejecttable) > 0:
-        # only keep rows which should be used
-        mask = rejecttable['USED'] == 1
-        # cut down the reject table
-        rejecttable = rejecttable[mask]
-        # start the reject list with all object names in the reject list
-        reject_objs = list(rejecttable['OBJNAME'])
-        # loop around rows in the reject table
-        for row in range(len(rejecttable)):
-            # add all objects in the alias list
-            aliaslist = rejecttable['ALIASES'][row]
-            # loop around invidiual alias names
-            for alias in aliaslist.split('|'):
-                # clean alias name and add to reject list
-                reject_objs.append(pconst.DRS_OBJ_NAME(alias))
-        # return any unique rows in reject object list
-        return np.unique(reject_objs)
-    # else if we have no objects to reject just return an empty array
-    else:
+    objects = reject_data.get('OBJECTS', dict())
+    if not isinstance(objects, dict) or len(objects) == 0:
         return np.array([])
+    reject_objs = []
+    for apero_name, entry in objects.items():
+        clean_name = drs_astrometrics.clean_object(apero_name)
+        if clean_name not in ['', 'Null']:
+            reject_objs.append(clean_name)
+        aliases = ''
+        if isinstance(entry, dict):
+            aliases = entry.get('ALIASES', '')
+        if isinstance(aliases, list):
+            alias_list = aliases
+        else:
+            alias_list = str(aliases).split('|')
+        for alias in alias_list:
+            clean_alias = drs_astrometrics.clean_object(alias)
+            if clean_alias not in ['', 'Null']:
+                reject_objs.append(clean_alias)
+    if len(reject_objs) == 0:
+        return np.array([])
+    return np.unique(np.array(reject_objs, dtype=str))
 
 
 def reject_infile(params: ParamDict, recipe: DrsRecipe,
@@ -507,10 +514,16 @@ def reject_infile(params: ParamDict, recipe: DrsRecipe,
         return False
     # -------------------------------------------------------------------------
     # get reject database
-    rejectdbm = drs_database.RejectDatabase(params, recipe.shortname)
+    rejectdbm = drs_rejection.RejectDatabase(params, recipe.shortname)
     rejectdbm.load_db()
     # get reject table
     rtable = rejectdbm.get_entries('*')
+    if not isinstance(rtable, pd.DataFrame):
+        return False
+    if mask_col not in list(rtable.columns):
+        return False
+    if value_col not in list(rtable.columns):
+        return False
     # -------------------------------------------------------------------------
     # if we have no entries return False
     if len(rtable[mask_col]) == 0:
@@ -545,10 +558,14 @@ def get_file_reject_list(params: ParamDict, recipe: DrsRecipe,
     # set function name
     func_name = display_func('get_reject_list', __NAME__)
     # get reject database
-    rejectdbm = drs_database.RejectDatabase(params, recipe.shortname)
+    rejectdbm = drs_rejection.RejectDatabase(params, recipe.shortname)
     rejectdbm.load_db()
     # get reject table
     rtable = rejectdbm.get_entries('*')
+    if not isinstance(rtable, pd.DataFrame):
+        return np.array([])
+    if len(rtable) == 0:
+        return np.array([])
     # deal with bad kind
     if column not in list(rtable.columns):
         # log error
@@ -563,6 +580,127 @@ def get_file_reject_list(params: ParamDict, recipe: DrsRecipe,
         reject_list = drs_misc.clean_reject_list(_reject_list)
         # return rejection list
         return np.array(reject_list)
+
+
+def get_areldate(params: ParamDict, header: drs_fits.Header,
+                 release_type: str = 'apero') -> str:
+    """
+    Get the APERO release date from:
+
+    Option 1. The google sheet (based on run id)
+    Option 2. The pseudo const (raw + time delta)
+
+    :param params: ParamDict, parameter dictionary of constants
+    :param header: Header, fits header (required for KW_RUN_ID and KW_IRELDATE)
+
+    :return: str, the YYYY-MM-DD hh:mm:ss.ss representation of the apero
+             release date
+    """
+    # set function name
+    func_name = display_func('get_areldate', __NAME__)
+    # get psuedo constants
+    pconst = load_functions.load_pconfig(select.INSTRUMENTS)
+    # set apero release date to None to start
+    areldate = None
+    # get header key
+    run_id = header.get(params['KW_RUN_ID'][0], None)
+    # -------------------------------------------------------------------------
+    # deal with release type
+    if release_type == 'apero':
+        gsheet_acol = params['DATA.AREL_GSHEET_ACOL']
+        delta_key = 'DATA.AREL_ADELTA'
+    elif release_type == 'lbl':
+        gsheet_acol = params['DATA.AREL_GSHEET_LCOL']
+        delta_key = 'DATA.AREL_LDELTA'
+    else:
+        emsg = 'Invalid release type = {0} (function = {1})'
+        eargs = [release_type, func_name]
+        raise AperoCodedException(params, None, targs=eargs,
+                                  message=emsg.format(*eargs))
+    # -------------------------------------------------------------------------
+    # option 1: Check the google sheet for an entry
+    # -------------------------------------------------------------------------
+    # if we have no run id we can't do this
+    if run_id is not None:
+        # clean run id
+        run_id = str(run_id).strip()
+        # get parameters from params
+        gsheet_url = params['DATA.AREL_GSHEET_URL']
+        gsheet_id = params['DATA.AREL_GSHEET_ID']
+        # get areldate list google sheets
+        try:
+            adate_table = drs_database.get_google_sheet(params, gsheet_url,
+                                                        gsheet_id)
+            # set areldate if in table
+            if run_id in list(adate_table['RUN_ID']):
+                # get positions in table
+                mask = adate_table['RUN_ID'] == str(run_id)
+                # deal with astropy table being masked (and apply this mask)
+                if hasattr(adate_table[gsheet_acol], 'mask'):
+                    mask &= ~adate_table[gsheet_acol].mask
+                # don't try if the mask is empty
+                if not np.sum(mask) == 0:
+                    # get the last appearing row in googlesheet
+                    areldate = adate_table[gsheet_acol][mask][-1]
+
+        # any exception here should return a warning and a empty array
+        except Exception as e:
+            wmsg = 'Cannot read areldate list {0}.'
+            wargs = [GOOGLE_BASE_URL.format(gsheet_url, gsheet_id),
+                     type(e), str(e)]
+            WLOG(params, 'warning', wmsg.format(*wargs), sublevel=3)
+
+    # -------------------------------------------------------------------------
+    # option 2: If we have apero areldate + time delta
+    # -------------------------------------------------------------------------
+    if areldate is None:
+        areldate = reldate_convert(params, header, delta_key)
+
+    # -------------------------------------------------------------------------
+    # option 3: if not set from googlesheet set from raw areldate + time delta
+    # -------------------------------------------------------------------------
+    if areldate is None:
+        areldate = pconst.GET_AREL_DATE(params, header, delta_key=delta_key)
+
+    # -------------------------------------------------------------------------
+    # return the apero release date
+    return areldate
+
+
+def reldate_convert(params: ParamDict, header: drs_fits.Header,
+                    delta_key: str) -> Union[str, None]:
+    """
+    Take an APERO release date and push it to the new format
+
+    (back to raw then forward to new format) using the time delta
+
+    :param params: ParamDict, parameter dictionary of constants
+    :param header: fits header, to test for key frmo
+    :param delta_key: str, the constant containing the time delta required
+
+    :return:
+    """
+    # get keyword
+    kw_reldate = params['KW_ARELDATE'][0]
+    kw_areldate_datatype = 'iso'
+    # get the time delta from APERO
+    tdelta_in = params['DATA.AREL_ADELTA']
+    tdelta_out = params[delta_key]
+    # deal with no areldate in header --> return
+    if kw_reldate not in header:
+        return None
+    # deal with tdelta_in the same as tdelta_out (just return the current value)
+    if tdelta_in == tdelta_out:
+        return header[kw_reldate]
+    # get and convert reldate
+    _areldate = Time(header[kw_reldate], format=kw_areldate_datatype)
+    # get the default time to add to instrument release date
+    time_delta_in = TimeDelta(tdelta_in * uu.year)
+    time_delta_out = TimeDelta(tdelta_out * uu.year)
+    # convert the areldate to the new time delta
+    areldate = _areldate - time_delta_in + time_delta_out
+    # return the areldate in ISO format
+    return areldate.iso
 
 
 # =============================================================================

@@ -21,6 +21,7 @@ from aperocore.constants import param_functions
 from aperocore.constants import load_functions
 from aperocore import drs_lang
 from apero.core import drs_database
+from apero.core import drs_astrometrics
 from apero.core import drs_file
 from aperocore.core import drs_log
 from aperocore.core import drs_text
@@ -30,6 +31,7 @@ from apero.tools.recipes.bin import apero_get
 from apero.instruments import select
 from apero.base import base as apero_base
 from apero.science.calib import wave
+from apero.science.preprocessing import gen_pp
 
 
 # =============================================================================
@@ -258,13 +260,17 @@ def find_teff(params: ParamDict, shortname: str, objname: str) -> float:
 
     :return: float, the teff of this object in K
     """
-    # get the astrometric database
-    astromdbm = drs_database.AstrometricDatabase(params, shortname)
-    # get the teff from the database
-    teff = astromdbm.get_entries('TEFF',
-                                 condition='OBJNAME="{0}"'.format(objname),
-                                 nentries=1)
-    # try to convert to a float (may be a null)
+    # get the astrometric database (yaml-backed)
+    astromdbm = drs_astrometrics.AstrometricDatabase(params, shortname)
+    # resolve the entry by any name and pull TEFF from the yaml schema
+    entry = astromdbm.get_entry(objname)
+    # deal with no etff
+    if entry is None:
+        teff = None
+    else:
+        # TEFF lives at entry['TEFF']['value'] (nested) in the yaml schema
+        teff = drs_astrometrics.LEGACY_COL_MAP['TEFF'](entry)
+    # try to convert to a float (may be None)
     # noinspection PyBroadException
     try:
         teff = float(teff)
@@ -340,6 +346,11 @@ def add_output(params: ParamDict, recipe: DrsRecipe,
     # add file to index database
     findexdbm.add_entry(basefile, 'lbl', recipe.name,
                         runstring=recipe.runstring, hkeys=hkeys)
+    # update the files on disk with the hkeys
+    # (this will add the hkeys to the header if they don't exist and
+    #  update the values if they do)
+    drs_fits.update_fits(params, filename, hkeys)
+
 
 
 def lbl_ref_qc(params: ParamDict) -> Tuple[List[list], int]:
@@ -516,6 +527,10 @@ def fake_hkeys(params: ParamDict, filename: str,
         pkeys['KW_OBJECTNAME2'] = obj_temp
 
     # need to add KW_DPRTYPE, KW_PI_NAME, KW_RUN_ID, KW_FIBER
+
+    # get apero release date
+    areldate = gen_pp.get_areldate(params, hdr, release_type='lbl')
+    pkeys['KW_ARELDATE'] = areldate
 
     # overwrite keys
     pkeys['KW_OBJNAME'] = objname

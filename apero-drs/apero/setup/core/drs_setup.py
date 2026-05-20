@@ -520,7 +520,7 @@ def run_setup(params: ParamDict, sargs: Dict[str, SetupArgument]):
     create_yamls(params)
     # -------------------------------------------------------------------------
     # create the user_config.yaml and user_constants.yaml
-    msg = 'Creating user_config.yaml and user_constants.yaml'
+    msg = 'Creating user yamls'
     WLOG(None, 'info', msg)
     create_user_configs(params, sargs)
     # -------------------------------------------------------------------------
@@ -771,16 +771,6 @@ def create_yamls(params: Any):
     logdb['NAME'] = params.get('LOG_NAME', 'log')
     logdb['TABLE'] = params.get('LOG_DBTABLE', 'log_default')
     database_dict['LOG'] = logdb
-    # add object database
-    astromdb = dict()
-    astromdb['NAME'] = params.get('ASTROM_NAME', 'astrom')
-    astromdb['TABLE'] = params.get('ASTROM_DBTABLE', 'astrom_default')
-    database_dict['ASTROM'] = astromdb
-    # add reject database
-    rejectdb = dict()
-    rejectdb['NAME'] = params.get('REJECT_NAME', 'reject')
-    rejectdb['TABLE'] = params.get('REJECT_DBTABLE', 'reject_default')
-    database_dict['REJECT'] = rejectdb
     # print writing
     msg = '\tWriting database.yaml: {0}'.format(database_path)
     WLOG(None, '', msg, wrap=False)
@@ -797,16 +787,18 @@ def create_user_configs(params: ParamDict, sargs: Dict[str, SetupArgument]):
 
     :return: None, writes user_config.yaml and user_constants.yaml to file
     """
+    # set function name
+    func_name = f'{__NAME__}.create_user_configs()'
     # get config directory
     userconfig = Path(params['CONFIG_PATH'])
     # import modules here
-    from apero.instruments.default import config, constants
+    from apero.instruments.default import config, constants, keywords
     from apero.instruments import select
     # -------------------------------------------------------------------------
     # get the user scripts
     user_scripts = config.CDict['DRS.USER_SCRIPTS']
     # get the modules for CDicts (config, constants)
-    mod_scripts = [config, constants, None]
+    mod_scripts = [config, constants, keywords]
     # -------------------------------------------------------------------------
     # temporary load constants for this instrument
     apero_params = load_functions.load_config(select.INSTRUMENTS,
@@ -837,9 +829,20 @@ def create_user_configs(params: ParamDict, sargs: Dict[str, SetupArgument]):
         # print writing
         WLOG(None, '', '\tWriting {0}: {1}'.format(user_scripts[it], outpath),
              wrap=False)
+        # get the correct storage class
+        if hasattr(mod_scripts[it], 'CDict'):
+            SDict = mod_scripts[it].CDict
+        elif hasattr(mod_scripts[it], 'KDict'):
+            SDict = mod_scripts[it].KDict
+        else:
+            # TODO: Add to language database
+            emsg = 'Mod script {0} has no CDict or KDict class func_name={1}'
+            eargs = [user_scripts[it], func_name]
+            raise AperoCodedException(None, message=emsg.format(*eargs),
+                                      targs=eargs)
         # save the yaml file
-        mod_scripts[it].CDict.save_yaml(apero_params, outpath=outpath,
-                                        title_args=tkwargs, log=False)
+        SDict.save_yaml(apero_params, outpath=outpath, title_args=tkwargs,
+                        log=False)
 
 
 def create_setup_files(params: ParamDict):

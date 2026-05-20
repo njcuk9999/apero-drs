@@ -32,6 +32,15 @@ KDict.set('KW_IDENTIFIER', key='ARCFILE',
           comment='filename anticipated by fitspipe server',
           group='raw')
 
+# define the HEADER key for acquisition time
+#     Note datatype must be a astropy.Time.format
+#     'jd', 'mjd', 'decimalyear', 'unix', 'cxcsec', 'gps', 'plot_date',
+#     'datetime', 'iso', 'isot', 'yday', 'datetime64', 'fits', 'byear',
+#     'jyear', 'byear_str', 'jyear_str'
+KDict.set('KW_ACQTIME', key='MJD-OBS', datatype='mjd', dataformat=float,
+          comment='Observation Start (Modified Julian Date)',
+          combine_method='minimum', group='raw')
+
 # define the MJ date HEADER key (only used for logging)
 KDict.set('KW_MJDATE', key='MJD-OBS', datatype='mjd', dataformat=float,
           comment='Observation Start (Modified Julian Date)',
@@ -428,6 +437,17 @@ KDict.set('KW_MID_OBS_TIME', key='MJDMID',
 KDict.set('KW_MID_OBSTIME_METHOD', key='MJDMIDMD',
           comment='Mid Observation time calc method',
           group='ppraw')
+
+# Define the raw file release date
+KDict.set('KW_IRELDATE', key='MJDMID', comment='queue release date',
+          group='raw', datatype='mjd', dataformat=float,
+          combine_method='maximum')
+
+# Define the APERO Public Release date (YYYY-MM-DD) this may be different
+#  from raw file header's release date
+KDict.set('KW_ARELDATE', key='ARELDATE', combine_method='maximum',
+          comment='APERO determined public release date', group='ppraw')
+
 
 # -----------------------------------------------------------------------------
 # Define DRS input keywords

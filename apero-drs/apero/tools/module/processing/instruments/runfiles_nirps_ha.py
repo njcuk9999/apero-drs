@@ -63,6 +63,12 @@ def get_runfiles(params: ParamDict) -> List[RunIniFile]:
     mini_run_nirps_ha.modify('SKIP_LBLMASK_SCI', False)
     mini_run_nirps_ha.modify('SKIP_LBLCOMPUTE_SCI', False)
     mini_run_nirps_ha.modify('SKIP_LBLCOMPILE_SCI', False)
+    # mini runs need debug data
+    mini_run_nirps_ha.modify('DEBUG.OUTFILE.BCKGRD_FILE', True)
+    mini_run_nirps_ha.modify('DEBUG.OUTFILE.E2DSLL_FILE', True)
+    mini_run_nirps_ha.modify('DEBUG.OUTFILE.SHAPE_FILES', True)
+    mini_run_nirps_ha.modify('DEBUG.OUTFILE.UNCORR_EXT_FILES', True)
+
     run_files.append(mini_run_nirps_ha)
     # quick run
     quick_run_nirps_ha = RunIniFile(params, 'NIRPS_HA', 'quick_run')

@@ -101,13 +101,20 @@ def find_night_skyfiles(params: ParamDict, fiber: Union[str, None],
     # return None if fiber is None (should only be the case for cal fiber)
     if fiber is None:
         return None, None
+    # get the reference start and end date
+    start_date = params['REF_FIND_START_DATE']
+    end_date = params['REF_FIND_END_DATE']
+    find_time_col = params['REF_FIND_TIME_COL']
     # get the science fiber files for "SKY" files (which are night files)
     #    for the specific filetype
     sky_files = drs_utils.find_files(params, block_kind='red',
                                      filters=dict(KW_TARGET_TYPE='SKY',
                                                   KW_NIGHT_OBS='1',
                                                   KW_OUTPUT=filetype,
-                                                  KW_FIBER=fiber))
+                                                  KW_FIBER=fiber),
+                                     start_date=start_date,
+                                     end_date=end_date,
+                                     time_column=find_time_col)
     # deal with no science files
     if len(sky_files) == 0:
         # TODO: Add to language database

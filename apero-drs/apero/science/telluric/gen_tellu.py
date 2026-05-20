@@ -26,6 +26,7 @@ from aperocore import drs_lang
 from aperocore import math as mp
 from aperocore.core import drs_misc
 from apero.core import drs_database
+from apero.core import drs_astrometrics
 from apero.core import drs_file
 from apero.utils import drs_recipe
 from aperocore.core import drs_log
@@ -98,10 +99,8 @@ def get_tellu_include_list(params: ParamDict, recipe: DrsRecipe,
                            all_objects: Optional[List[str]] = None
                            ) -> List[str]:
     func_name = __NAME__ + '.get_whitelist()'
-    # get pseudo constants
-    pconst = load_functions.load_pconfig(select.INSTRUMENTS)
-    # get object database
-    objdbm = drs_database.AstrometricDatabase(params, recipe.shortname)
+    # get object database (yaml-backed)
+    objdbm = drs_astrometrics.AstrometricDatabase(params, recipe.shortname)
     objdbm.load_db()
     # get parameters from params/kwargs
     assetdir = pcheck(params, 'PATH.ASSETS', 'assetsdir', func=func_name,
@@ -116,7 +115,7 @@ def get_tellu_include_list(params: ParamDict, recipe: DrsRecipe,
     whitelist = drs_data.load_text_file(params, whitelistfile, func_name,
                                         dtype=str)
     # must clean names
-    whitelist, _ = objdbm.find_objnames(pconst, whitelist, allow_empty=True)
+    whitelist, _ = objdbm.find_objnames(whitelist, allow_empty=True)
 
     # deal with all objects filter
     if all_objects is not None:
@@ -132,10 +131,8 @@ def get_tellu_exclude_list(params: ParamDict, recipe: DrsRecipe,
                            tellu_exclude_file: Union[str, None] = None
                            ) -> Tuple[List[str], str]:
     func_name = __NAME__ + '.get_blacklist()'
-    # get pseudo constants
-    pconst = load_functions.load_pconfig(select.INSTRUMENTS)
-    # get object database
-    objdbm = drs_database.AstrometricDatabase(params, recipe.shortname)
+    # get object database (yaml-backed)
+    objdbm = drs_astrometrics.AstrometricDatabase(params, recipe.shortname)
     objdbm.load_db()
     # get parameters from params/kwargs
     assetdir = pcheck(params, 'PATH.ASSETS', 'assetsdir', func=func_name,
@@ -150,7 +147,7 @@ def get_tellu_exclude_list(params: ParamDict, recipe: DrsRecipe,
     blacklist = drs_data.load_text_file(params, blacklistfile, func_name,
                                         dtype=str)
     # must clean names and deal with aliases
-    blacklist, _ = objdbm.find_objnames(pconst, blacklist, allow_empty=True)
+    blacklist, _ = objdbm.find_objnames(blacklist, allow_empty=True)
     # return the whitelist
     return blacklist, blacklistfile
 
@@ -2003,20 +2000,27 @@ def tellu_preclean_write(params, recipe, infile, rawfiles, fiber, combine,
     for qc_it in range(len(qc_names)):
         # add name
         qkwn = ['TQCCN{0}'.format(qc_it), qc_names[qc_it],
-                'Name {0}'.format(qc_it)]
+                'Pre-clean QCC Name {0}'.format(qc_it)]
         tpclfile.add_hkey(key=qkwn)
         # add value
         qkwv = ['TQCCV{0}'.format(qc_it), qc_values[qc_it],
-                'Value {0}'.format(qc_it)]
+                'Pre-clean QCC Value {0}'.format(qc_it)]
         tpclfile.add_hkey(key=qkwv)
         # add logic
         qkwl = ['TQCCL{0}'.format(qc_it), qc_logic[qc_it],
-                'Logic {0}'.format(qc_it)]
+                'Pre-clean QCC Logic {0}'.format(qc_it)]
         tpclfile.add_hkey(key=qkwl)
         # add pass
         qkwp = ['TQCCP{0}'.format(qc_it), qc_pass[qc_it],
-                'Pass {0}'.format(qc_it)]
+                'Pre-clean QCC Pass {0}'.format(qc_it)]
         tpclfile.add_hkey(key=qkwp)
+    # ----------------------------------------------------------------------
+    # We also need to set the QCC_ALL param (otherwise this file will
+    #   not match other products)
+    passed_all_qc = np.all(props['QC_PARAMS'][3])
+    tpclfile.add_hkey('KW_DRS_QC',  value=passed_all_qc)
+    # We will have a special QCC param to link to the TQCC params
+    tpclfile.add_qckeys([['TQCCN'], ['TQCCVN'], ['TQCCLN'], [passed_all_qc]])
     # ----------------------------------------------------------------------
     # add constants used (can come from kwargs)
     tpclfile.add_hkey('KW_TELLUP_DO_PRECLEAN',
@@ -2323,7 +2327,7 @@ def load_templates(params: ParamDict, recipe: DrsRecipe,
                                filename=template_filename, n_entries=1,
                                required=False, fiber=fiber, objname=objname,
                                database=database, mode=None, get_header=True)
-    temp_image, temp_header, temp_filename = temp_out
+    temp_image, temp_header, temp_2d_filename = temp_out
     # -------------------------------------------------------------------------
     # deal with no files in database
     if temp_image is None:
@@ -2360,21 +2364,36 @@ def load_templates(params: ParamDict, recipe: DrsRecipe,
                                objname=objname,
                                database=database, mode=None,
                                get_header=True, kind='table')
-    s1d_table, _, temp_filename = temp_out
+    s1d_table, _, temp_1d_filename = temp_out
+    # -------------------------------------------------------------------------
+    # Need to deal with case where there is no s1d table
+    # deal with no files in database
+    if s1d_table is None:
+        # TODO: Add to language database
+        # log that we found no templates in database
+        emsg = ('2D Template exists ({0}) but S1D template does not. '
+                'Something went wrong in template creation.')
+        eargs = [temp_2d_filename]
+        WLOG(params, 'error', emsg.format(*eargs))
+        # return null entries
+        return ParamDict()
     # -------------------------------------------------------------------------
     # log which template we are using
-    wargs = [temp_filename]
+    wargs = [temp_2d_filename]
     WLOG(params, 'info', textentry('40-019-00005', args=wargs))
+    wargs = [temp_1d_filename]
+    WLOG(params, 'info', textentry('40-019-00005', args=wargs))
+    # -------------------------------------------------------------------------
     # store template properties
     temp_props = ParamDict()
     temp_props['HAS_TEMPLATE'] = True
     temp_props['TEMP_S2D'] = temp_image
-    temp_props['TEMP_FILE'] = temp_filename
+    temp_props['TEMP_FILE'] = temp_2d_filename
     temp_props['TEMP_NUM'] = temp_header[params['KW_MKTEMP_NFILES'][0]]
     temp_props['TEMP_HASH'] = temp_header[params['KW_MKTEMP_HASH'][0]]
     temp_props['TEMP_TIME'] = temp_header[params['KW_MKTEMP_TIME'][0]]
     temp_props['TEMP_S1D_TABLE'] = s1d_table
-    temp_props['TEMP_S1D_FILE'] = temp_filename
+    temp_props['TEMP_S1D_FILE'] = temp_1d_filename
     temp_props['APPROX_RV'] = np.nan
     temp_props['APPROX_RV_ERR'] = np.nan
     # we need a copy of the s2d, s1d (so if we modify we can reset)

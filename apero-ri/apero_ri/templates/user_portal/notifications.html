@@ -1,0 +1,71 @@
+{% extends "general/sidebar_base.html" %}
+{% block title %}APERO RI – Notifications{% endblock %}
+
+{% block extra_head %}
+{{ super() }}
+<link rel="stylesheet"
+      href="{{ url_for('static', filename='css/user_portal_messaging.css', v='20260424a') }}">
+{% endblock %}
+
+{% block doc_content %}
+<div class="ari-up-shell upn-page">
+    <div class="ari-page-header">
+        <h1><i class="{{ page_icon }}"></i> {{ page_label }}</h1>
+        <p class="ari-page-header__sub">
+            Manage notifications and choose which channels notify
+            you in-browser.
+        </p>
+    </div>
+
+    <section class="upn-section">
+        <div class="upn-section__header">
+            <h2><i class="fa-solid fa-bell"></i> Recent notifications</h2>
+            <div class="upn-section__actions">
+                <button class="ari-btn" id="upn-mark-all-read">
+                    <i class="fa-solid fa-check-double"></i>
+                    Mark all read
+                </button>
+                <button class="ari-btn ari-btn--danger"
+                        id="upn-dismiss-all">
+                    <i class="fa-solid fa-trash"></i> Dismiss all
+                </button>
+            </div>
+        </div>
+        <div class="upn-list" id="upn-list">
+            <div class="upm-empty">Loading...</div>
+        </div>
+    </section>
+
+    <section class="upn-section">
+        <div class="upn-section__header">
+            <h2>
+                <i class="fa-solid fa-sliders"></i> Channel preferences
+            </h2>
+        </div>
+        <p class="ari-page-header__sub">
+            Toggle whether each channel produces in-app notifications
+            and whether (when permitted by the browser) it also
+            triggers a desktop pop-up.
+        </p>
+        <div class="upn-prefs-grid" id="upn-prefs"></div>
+        <div class="upn-browser-perm" id="upn-browser-perm">
+            <p>
+                Desktop pop-ups need browser permission. Status:
+                <strong id="upn-browser-status">unknown</strong>.
+            </p>
+            <button class="ari-btn ari-btn--primary"
+                    id="upn-grant-browser">
+                <i class="fa-solid fa-shield-halved"></i>
+                Request browser permission
+            </button>
+        </div>
+        <div class="upm-form-status" id="upn-prefs-status"
+             aria-live="polite"></div>
+    </section>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+{{ super() }}
+<script src="{{ url_for('static', filename='js/user_portal_notifications.js', v='20260501a') }}"></script>
+{% endblock %}

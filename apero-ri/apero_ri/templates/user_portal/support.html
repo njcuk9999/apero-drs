@@ -1,0 +1,105 @@
+{% extends "general/sidebar_base.html" %}
+{% block title %}APERO RI – Support{% endblock %}
+
+{% block extra_head %}
+{{ super() }}
+<link rel="stylesheet"
+    href="{{ url_for('static', filename='css/user_portal_user_cards.css', v='20260501a') }}">
+{% endblock %}
+
+{% block doc_content %}
+<div class="ari-up-shell">
+<div class="ari-page-header">
+    <h1><i class="fa-solid fa-life-ring"></i> Support</h1>
+</div>
+
+<p class="ari-ap-groups-hint ari-up-hint">
+    If you think you are missing access, contact a support person for the relevant instrument.
+</p>
+
+{% if support_email %}
+<div class="ari-ae-support-email-notice">
+    <i class="fa-solid fa-envelope"></i>
+    You can also email the team directly at
+    <a href="mailto:{{ support_email }}">{{ support_email }}</a>.
+    We recommend contacting people directly where possible.
+</div>
+{% endif %}
+
+{% if support_by_instrument and support_by_instrument|length > 0 %}
+<div class="ari-sg-tabs" role="tablist" aria-label="Support by instrument">
+    {% for item in support_by_instrument %}
+    <button class="ari-sg-tab ari-up-tab{% if loop.first %} ari-sg-tab--active{% endif %}"
+            type="button"
+            role="tab"
+            data-tab-target="up-support-{{ loop.index0 }}"
+            aria-selected="{{ 'true' if loop.first else 'false' }}">
+        {{ item.instrument }}
+    </button>
+    {% endfor %}
+</div>
+
+{% for item in support_by_instrument %}
+<section id="up-support-{{ loop.index0 }}"
+         class="ari-up-panel{% if not loop.first %} ari-up-panel--hidden{% endif %}"
+         {% if not loop.first %}style="display:none;" hidden{% endif %}
+         role="tabpanel">
+    <div class="ari-sg-workspace ari-up-workspace">
+        {% set sections = [
+            ('super_admins', 'Super Admins', 'fa-solid fa-crown'),
+            ('admins', 'Admins', 'fa-solid fa-user-shield'),
+            ('moderators', 'Moderators', 'fa-solid fa-user-gear'),
+            ('developers', 'Developers', 'fa-solid fa-code'),
+            ('monitors', 'Monitors', 'fa-solid fa-chart-line')
+        ] %}
+        {% for key, label, icon in sections %}
+        <div class="upu-support-section">
+            <h3 class="upu-support-section__title">
+                <i class="{{ icon }}"></i> {{ label }}
+            </h3>
+            {% if item[key] %}
+            <div class="upu-cards-grid">
+                {% for person in item[key] %}
+                <a class="upu-user-card" href="{{ person.profile_url }}">
+                    <div class="upu-user-card__head">
+                        <div class="upu-user-card__name">
+                            <span class="upu-user-card__username">{{ person.username }}</span>
+                            <span class="upu-user-card__fullname">{{ person.first_names }} {{ person.last_name }}</span>
+                        </div>
+                    </div>
+                    <div class="upu-user-card__body">
+                        <div class="upu-user-card__line">
+                            <i class="fa-solid fa-user-tag"></i>
+                            <span>{{ label }}</span>
+                        </div>
+                        {% if person.can_show_email %}
+                        <div class="upu-user-card__line">
+                            <i class="fa-solid fa-envelope"></i>
+                            <span>{{ person.email or 'No primary email set' }}</span>
+                        </div>
+                        {% endif %}
+                    </div>
+                </a>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="ari-sg-empty-small">No {{ label|lower }} listed for this instrument.</div>
+            {% endif %}
+        </div>
+        {% endfor %}
+    </div>
+</section>
+{% endfor %}
+{% else %}
+<div class="ari-sg-empty">
+    <i class="fa-solid fa-circle-info"></i>
+    No instrument support contacts are available for your account.
+</div>
+{% endif %}
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="{{ url_for('static', filename='js/user_portal_tabs.js') }}"></script>
+<script src="{{ url_for('static', filename='js/user_portal_support_refresh.js', v='20260424a') }}" defer></script>
+{% endblock %}

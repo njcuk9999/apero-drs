@@ -63,7 +63,8 @@ textentry = drs_lang.textentry
 DEBUG = False
 # Recipe class
 DrsRecipe = drs_recipe.DrsRecipe
-
+# Define comman asset directories (to copy as well as the instrument specific ones)
+COMMON_ASSET_DIRS = ['core', 'astrometrics']
 
 # =============================================================================
 # Define reset functions
@@ -690,19 +691,24 @@ def reset_assets(params: ParamDict, recipe: DrsRecipe,
     asset_path1 = params['PATH.ASSETS']
     reset_path1 = os.path.join(params['IPATH.RESET_ASSETS'],
                                params['OBS.INSTRUMENT'].lower())
-    asset_path2 = os.path.join(params['PATH.ASSETS'], 'core')
-    reset_path2 = os.path.join(params['IPATH.RESET_ASSETS'], 'core')
     # get reset_path from apero module dir
     abs_reset_path1 = drs_data.construct_path(params, '', str(reset_path1))
-    abs_reset_path2 = drs_data.construct_path(params, '', str(reset_path2))
+    # -------------------------------------------------------------------------
     # loop around files and folders in assets dir
     #   we want to backup any new files the user as copied
     #   i.e. new masks etc
     reset_dbdir(params, name, asset_path1, abs_reset_path1, log=log,
                 relative_path='MODULE', backup=True)
-    # also copy the core files into the same path
-    reset_dbdir(params, name, asset_path2, abs_reset_path2, log=log,
-                relative_path='CORE')
+    # -------------------------------------------------------------------------
+    # loop aroound all common asset dirs
+    for common_dir in COMMON_ASSET_DIRS:
+        asset_path2 = os.path.join(params['PATH.ASSETS'], common_dir)
+        reset_path2 = os.path.join(params['IPATH.RESET_ASSETS'], common_dir)
+        # get reset_path from apero module dir
+        abs_reset_path2 = drs_data.construct_path(params, '', str(reset_path2))
+        # also copy the core files into the same path
+        reset_dbdir(params, name, asset_path2, abs_reset_path2, log=log,
+                    relative_path=common_dir)
     # if user wants to reset all databases we do this here
     if reset_dbs:
         # first reset the db_pending directory
@@ -711,7 +717,7 @@ def reset_assets(params: ParamDict, recipe: DrsRecipe,
         manage_databases.create_fileindex_database(params, pconst, databases)
         # create log database
         manage_databases.create_log_database(params, pconst, databases)
-        # create object database
+        # create object database (this is legacy we now just verify)
         manage_databases.create_object_database(params, pconst, databases)
         # create reject database
         manage_databases.create_reject_database(params, pconst, databases)

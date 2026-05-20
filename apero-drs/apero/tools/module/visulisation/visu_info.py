@@ -10,8 +10,10 @@ Created on 2025-12-12 at 11:52
 @author: cook
 """
 import glob
+import math
 import os
-from typing import Optional
+from typing import Any, Dict, List, Optional, Tuple, Union
+from tqdm import tqdm
 
 from apero.base import base as apero_base
 from apero.core import drs_file
@@ -23,6 +25,7 @@ from aperocore.constants import param_functions
 from aperocore.constants import load_functions
 from aperocore.core import drs_log
 from apero.instruments import select
+from apero.utils import drs_utils
 
 # =============================================================================
 # Define variables
@@ -112,14 +115,19 @@ def process_wildcards(params: ParamDict, path: str):
     margs = [len(all_files)]
     WLOG(params, 'info', msg.format(*margs))
     valid_files, valid_identity = [], []
-    # loop around all files
-    for filename in all_files:
-        # identify file type
-        identity = identify_file(params, filename)
-        # if identity is valid then append to valid list
-        if identity is not None:
-            valid_files.append(filename)
-            valid_identity.append(identity)
+    if _use_multiprocessing_identify(params, all_files):
+        valid_files, valid_identity = _collect_valid_files_mp(params,
+                                                              all_files,
+                                                              'wildcards')
+    else:
+        # loop around all files
+        for filename in all_files:
+            # identify file type
+            identity = identify_file(params, filename)
+            # if identity is valid then append to valid list
+            if identity is not None:
+                valid_files.append(filename)
+                valid_identity.append(identity)
     # ---------------------------------------------------------------------
     # display the number of valid files found
     msg = 'Found {0} valid files'
@@ -127,8 +135,14 @@ def process_wildcards(params: ParamDict, path: str):
     WLOG(params, 'info', msg.format(*margs))
     # ---------------------------------------------------------------------
     # loop around valid files and generate info plots
-    for identity, filename in zip(valid_identity, valid_files):
-        generate_info_plot(params, identity, filename)
+    if _use_multiprocessing_plot(params, valid_files):
+        _generate_info_plots_mp(params, valid_identity, valid_files,
+                                source='wildcards')
+    else:
+        for identity, filename in tqdm(zip(valid_identity, valid_files),
+                                       total=len(valid_files),
+                                       desc='Plot wildcards'):
+            generate_info_plot(params, identity, filename)
     # return here
     return
 
@@ -152,14 +166,19 @@ def process_directory(params: ParamDict, path: str):
     WLOG(params, 'info', msg.format(*margs))
     # -------------------------------------------------------------------------
     valid_files, valid_identity = [], []
-    # loop around all files
-    for filename in all_files:
-        # identify file type
-        identity = identify_file(params, filename)
-        # if identity is valid then append to valid list
-        if identity is not None:
-            valid_files.append(filename)
-            valid_identity.append(identity)
+    if _use_multiprocessing_identify(params, all_files):
+        valid_files, valid_identity = _collect_valid_files_mp(params,
+                                                              all_files,
+                                                              'directory')
+    else:
+        # loop around all files
+        for filename in all_files:
+            # identify file type
+            identity = identify_file(params, filename)
+            # if identity is valid then append to valid list
+            if identity is not None:
+                valid_files.append(filename)
+                valid_identity.append(identity)
     # -------------------------------------------------------------------------
     # display the number of valid files found
     msg = 'Found {0} valid files'
@@ -167,10 +186,286 @@ def process_directory(params: ParamDict, path: str):
     WLOG(params, 'info', msg.format(*margs))
     # -------------------------------------------------------------------------
     # loop around valid files and generate info plots
-    for identity, filename in zip(valid_identity, valid_files):
-        generate_info_plot(params, identity, filename)
+    if _use_multiprocessing_plot(params, valid_files):
+        _generate_info_plots_mp(params, valid_identity, valid_files,
+                                source='directory')
+    else:
+        for identity, filename in tqdm(zip(valid_identity, valid_files),
+                                       total=len(valid_files),
+                                       desc='Plot directory'):
+            generate_info_plot(params, identity, filename)
     # -------------------------------------------------------------------------
     return
+
+
+def _use_multiprocessing_identify(params: ParamDict, all_files: List[str]) -> bool:
+    if len(all_files) == 0:
+        return False
+    cores = drs_utils.get_cores(params)
+    mode = str(params['TOOLS.INFO_VISU.MP_MODE']).lower()
+    return mode in ['pathos', 'pool', 'process'] and cores > 1
+
+
+def _use_multiprocessing_plot(params: ParamDict, valid_files: List[str]) -> bool:
+    return _use_multiprocessing_identify(params, valid_files)
+
+
+def _collect_valid_files_mp(params: ParamDict, all_files: List[str],
+                            source: str) -> Tuple[List[str], List[str]]:
+    """Collect valid files and identities using configured multiprocessing."""
+    if len(all_files) == 0:
+        return [], []
+    cores = drs_utils.get_cores(params)
+    mode = str(params['TOOLS.INFO_VISU.MP_MODE']).lower()
+    if mode == 'pathos' and cores > 1:
+        return _multi_process_identify_pathos(params, all_files, cores, source)
+    elif mode == 'pool' and cores > 1:
+        return _multi_process_identify_pool(params, all_files, cores, source)
+    elif mode == 'process' and cores > 1:
+        return _multi_process_identify_process(params, all_files, cores, source)
+    else:
+        return _multi_identify(params, all_files, source=source)
+
+
+def _split_all_files(all_files: List[str], cores: int) -> List[List[str]]:
+    if len(all_files) == 0:
+        return []
+    cores = min(cores, len(all_files))
+    chunk_size = int(math.ceil(len(all_files) / cores))
+    return [all_files[it:it + chunk_size]
+            for it in range(0, len(all_files), chunk_size)]
+
+
+def _multi_identify(params: ParamDict, all_files: List[str],
+                    job: int = None, total_jobs: int = None,
+                    source: str = 'files') -> Tuple[List[str], List[str]]:
+    if (job is not None) and (total_jobs is not None):
+        label = '{0} [{1}/{2}]'.format(source, job, total_jobs)
+    else:
+        label = source
+    valid_files, valid_identity = [], []
+    for filename in tqdm(all_files, desc='Identify ' + label):
+        identity = identify_file(params, filename)
+        if identity is not None:
+            valid_files.append(filename)
+            valid_identity.append(identity)
+    return valid_files, valid_identity
+
+
+def _multi_process_identify_pathos(params: ParamDict, all_files: List[str],
+                                   cores: int, source: str
+                                   ) -> Tuple[List[str], List[str]]:
+    try:
+        from pathos.pools import ParallelPool as Pool
+    except ImportError:
+        WLOG(params, 'warning', 'pathos not available; using serial identify')
+        return _multi_identify(params, all_files, source=source)
+
+    grouped_files = _split_all_files(all_files, cores)
+    params_per_process = []
+    for g_it, grouped_file in enumerate(grouped_files):
+        params_per_process.append([params, grouped_file, g_it + 1,
+                                   len(grouped_files), source])
+    params_per_process2 = list(zip(*params_per_process))
+    pool = Pool(ncpus=min(cores, len(grouped_files)), maxtasksperchild=1)
+    grouped_results = pool.map(_multi_identify, *params_per_process2)
+    pool.close()
+    pool.join()
+    valid_files, valid_identity = [], []
+    for group_files, group_identity in grouped_results:
+        valid_files += list(group_files)
+        valid_identity += list(group_identity)
+    return valid_files, valid_identity
+
+
+def _multi_process_identify_pool(params: ParamDict, all_files: List[str],
+                                 cores: int, source: str
+                                 ) -> Tuple[List[str], List[str]]:
+    from multiprocessing import get_context
+
+    grouped_files = _split_all_files(all_files, cores)
+    params_per_process = []
+    for g_it, grouped_file in enumerate(grouped_files):
+        params_per_process.append([params, grouped_file, g_it + 1,
+                                   len(grouped_files), source])
+    with get_context('spawn').Pool(min(cores, len(grouped_files)),
+                                   maxtasksperchild=1) as pool:
+        grouped_results = pool.starmap(_multi_identify, params_per_process)
+    valid_files, valid_identity = [], []
+    for group_files, group_identity in grouped_results:
+        valid_files += list(group_files)
+        valid_identity += list(group_identity)
+    return valid_files, valid_identity
+
+
+def _process_identify_wrapper(params: ParamDict, all_files: List[str],
+                              job: int, total_jobs: int, source: str, queue):
+    queue.put((job, _multi_identify(params, all_files, job, total_jobs,
+                                    source=source)))
+
+
+def _multi_process_identify_process(params: ParamDict, all_files: List[str],
+                                    cores: int, source: str
+                                    ) -> Tuple[List[str], List[str]]:
+    from multiprocessing import Process
+    from multiprocessing import Queue
+
+    grouped_files = _split_all_files(all_files, cores)
+    queue = Queue()
+    jobs = []
+    for g_it, grouped_file in enumerate(grouped_files):
+        args = [params, grouped_file, g_it + 1, len(grouped_files), source,
+                queue]
+        process = Process(target=_process_identify_wrapper, args=args)
+        process.start()
+        jobs.append(process)
+
+    # Collect results from queue before joining processes (avoid deadlock)
+    ordered_results = {}
+    for _ in range(len(grouped_files)):
+        try:
+            group_id, group_result = queue.get(timeout=300)  # 5 minute timeout
+            ordered_results[group_id] = group_result
+        except Exception as e:
+            WLOG(params, 'warning', f'Failed to get result from queue: {e}')
+
+    # Now join processes with timeout to avoid hanging
+    for proc in jobs:
+        proc.join(timeout=30)  # 30 second timeout per process
+        if proc.is_alive():
+            emsg = f'Process {proc.pid} did not terminate, terminating forcefully'
+            WLOG(params, 'warning', emsg)
+            proc.terminate()
+            proc.join(timeout=5)
+            if proc.is_alive():
+                proc.kill()
+
+    valid_files, valid_identity = [], []
+    for g_it in range(1, len(grouped_files) + 1):
+        if g_it in ordered_results:
+            group_files, group_identity = ordered_results[g_it]
+            valid_files += list(group_files)
+            valid_identity += list(group_identity)
+    return valid_files, valid_identity
+
+
+def _split_plot_groups(valid_identity: List[str], valid_files: List[str],
+                       cores: int) -> List[Tuple[List[str], List[str]]]:
+    if len(valid_files) == 0:
+        return []
+    cores = min(cores, len(valid_files))
+    chunk_size = int(math.ceil(len(valid_files) / cores))
+    groups = []
+    for it in range(0, len(valid_files), chunk_size):
+        groups.append((valid_identity[it:it + chunk_size],
+                       valid_files[it:it + chunk_size]))
+    return groups
+
+
+def _multi_generate_plots(params: ParamDict, valid_identity: List[str],
+                          valid_files: List[str], job: int = None,
+                          total_jobs: int = None, source: str = 'files',
+                          verbose: bool = True) -> None:
+    if (job is not None) and (total_jobs is not None):
+        label = '{0} [{1}/{2}]'.format(source, job, total_jobs)
+    else:
+        label = source
+    iterator = zip(valid_identity, valid_files)
+    for identity, filename in tqdm(iterator, total=len(valid_files),
+                                   desc='Plot ' + label):
+        generate_info_plot(params, identity, filename, verbose=verbose)
+
+
+def _generate_info_plots_mp(params: ParamDict, valid_identity: List[str],
+                            valid_files: List[str], source: str) -> None:
+    if len(valid_files) == 0:
+        return
+    cores = drs_utils.get_cores(params)
+    mode = str(params['TOOLS.INFO_VISU.MP_MODE']).lower()
+    if mode == 'pathos' and cores > 1:
+        _multi_process_plot_pathos(params, valid_identity, valid_files,
+                                   cores, source, False)
+    elif mode == 'pool' and cores > 1:
+        _multi_process_plot_pool(params, valid_identity, valid_files,
+                                 cores, source)
+    elif mode == 'process' and cores > 1:
+        _multi_process_plot_process(params, valid_identity, valid_files,
+                                    cores, source)
+    else:
+        _multi_generate_plots(params, valid_identity, valid_files,
+                              source=source)
+
+
+def _multi_process_plot_pathos(params: ParamDict, valid_identity: List[str],
+                               valid_files: List[str], cores: int,
+                               source: str) -> None:
+    try:
+        from pathos.pools import ParallelPool as Pool
+    except ImportError:
+        WLOG(params, 'warning', 'pathos not available; using serial plotting')
+        _multi_generate_plots(params, valid_identity, valid_files,
+                              source=source)
+        return
+
+    grouped = _split_plot_groups(valid_identity, valid_files, cores)
+    params_per_process = []
+    for g_it, (group_identity, group_files) in enumerate(grouped):
+        params_per_process.append([params, group_identity, group_files,
+                                   g_it + 1, len(grouped), source, False])
+    params_per_process2 = list(zip(*params_per_process))
+    pool = Pool(ncpus=min(cores, len(grouped)), maxtasksperchild=1)
+    pool.map(_multi_generate_plots, *params_per_process2)
+    pool.close()
+    pool.join()
+
+
+def _multi_process_plot_pool(params: ParamDict, valid_identity: List[str],
+                             valid_files: List[str], cores: int,
+                             source: str) -> None:
+    from multiprocessing import get_context
+
+    grouped = _split_plot_groups(valid_identity, valid_files, cores)
+    params_per_process = []
+    for g_it, (group_identity, group_files) in enumerate(grouped):
+        params_per_process.append([params, group_identity, group_files,
+                                   g_it + 1, len(grouped), source, False])
+    with get_context('spawn').Pool(min(cores, len(grouped)),
+                                   maxtasksperchild=1) as pool:
+        pool.starmap(_multi_generate_plots, params_per_process)
+
+
+def _process_plot_wrapper(params: ParamDict, valid_identity: List[str],
+                          valid_files: List[str], job: int, total_jobs: int,
+                          source: str, verbose: bool = True) -> None:
+    _multi_generate_plots(params, valid_identity, valid_files,
+                          job=job, total_jobs=total_jobs, source=source,
+                          verbose=verbose)
+
+
+def _multi_process_plot_process(params: ParamDict, valid_identity: List[str],
+                                valid_files: List[str], cores: int,
+                                source: str) -> None:
+    from multiprocessing import Process
+
+    grouped = _split_plot_groups(valid_identity, valid_files, cores)
+    jobs = []
+    for g_it, (group_identity, group_files) in enumerate(grouped):
+        args = [params, group_identity, group_files, g_it + 1, len(grouped),
+                source, False]
+        process = Process(target=_process_plot_wrapper, args=args)
+        process.start()
+        jobs.append(process)
+
+    # Join processes with timeout to avoid hanging
+    for proc in jobs:
+        proc.join(timeout=300)  # 5 minute timeout per process
+        if proc.is_alive():
+            emsg = f'Process {proc.pid} did not terminate, terminating forcefully'
+            WLOG(params, 'warning', emsg)
+            proc.terminate()
+            proc.join(timeout=5)
+            if proc.is_alive():
+                proc.kill()
 
 
 # =============================================================================
@@ -273,7 +568,8 @@ def identify_via_file_definition(params: ParamDict, filename: str) -> Optional[s
 # =============================================================================
 # Plotting functions
 # =============================================================================
-def generate_info_plot(params: ParamDict, identity: str, filename: str):
+def generate_info_plot(params: ParamDict, identity: str, filename: str,
+                       verbose: bool = True) -> None:
     """
     Generate an info plot based on identity and filename
 
@@ -286,28 +582,48 @@ def generate_info_plot(params: ParamDict, identity: str, filename: str):
     """
     global UNKNOWN_IDENTITIES
     global NO_FUNC_IDENTITIES
+    # set func_name
+    func_name = f'{__NAME__}.generate_info_plot()'
+    # temporary parameter for verboseness
+    params.set('__VISU_VERBOSE', value=verbose, source=func_name)
     # if identity is known generate plot
     if identity in KNOWN_IDENTITIES:
         # log that we are generating info plot
-        WLOG(params, '',
-             f'Generating info plot for file: {filename}')
+        if verbose:
+            WLOG(params, '', f'Generating info plot for file: {filename}')
         # get plot function
         plot_func = KNOWN_IDENTITIES[identity]
         # if plot function is not defined then we return
         if plot_func is None:
             if identity not in NO_FUNC_IDENTITIES:
-                WLOG(params, 'warning',
-                     f'No plot function for {identity}')
+                if verbose:
+                    WLOG(params, 'warning', f'No plot function for {identity}')
                 NO_FUNC_IDENTITIES.append(identity)
             return
         # otherwise call the plot function
-        plot_func(params, filename, identity)
+        if params['INPUTS'].get('TEST', False):
+            if verbose:
+                WLOG(params, 'info',
+                     f'Test mode: would have generated plot for {filename} '
+                     f'using {str(plot_func)}')
+            return
+        else:
+            # catch errors
+            try:
+                plot_func(params, filename, identity)
+            except Exception as e:
+                emsg = ('Error rendering {0} [{1}]'
+                        '\n\t Filename = {2} \n\t {3}: {4}')
+                eargs = [str(plot_func), identity, filename,
+                         type(e), str(e)]
+                raise AperoCodedException(params, None, targs=eargs,
+                                          message=emsg.format(*eargs))
     # else
     else:
 
         if identity not in UNKNOWN_IDENTITIES:
-            WLOG(params, 'warning',
-                 f'Unknown identity: {identity}')
+            if verbose:
+                WLOG(params, 'warning', f'Unknown identity: {identity}')
             UNKNOWN_IDENTITIES.append(identity)
         return
 

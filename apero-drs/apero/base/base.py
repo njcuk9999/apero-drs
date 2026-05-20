@@ -99,7 +99,7 @@ DATABASE_FULLNAMES = ['calibration', 'telluric', 'file index', 'recipe log',
                       'astrometric', 'rejection']
 DATABASE_COL_CLASS = ['CALIBRATION_DB_COLUMNS', 'TELLURIC_DB_COLUMNS',
                       'FILEINDEX_DB_COLUMNS', 'LOG_DB_COLUMNS',
-                      'ASTROMETRIC_DB_COLUMNS', 'REJECT_DB_COLUMNS']
+                      None, None]
 # Support database types
 SUPPORTED_DATABASES = __YAML__['DB_MODES']
 # -----------------------------------------------------------------------------

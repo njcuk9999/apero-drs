@@ -26,19 +26,27 @@ Const = constant_functions.Const
 Keyword = constant_functions.Keyword
 KDict = constant_functions.KeywordDict(__NAME__)
 
+# set the title for output yaml files
+KDict.title = KDict.yaml_title('APERO[{INSTRUMENT}] keywords file',
+                               setup_program='apero_setup.py',
+                               version=__version__, date=__date__)
+
 # -----------------------------------------------------------------------------
 # Required header keys (general)
 # -----------------------------------------------------------------------------
 # Define the header key that uniquely identifies the file
 #     (i.e. an odometer code)
-KDict.add('KW_IDENTIFIER', key='NULL', value=None, source=__NAME__,
+#     Note we set
+KDict.add('KW_IDENTIFIER', key='NULL', value=None,
+          source=__NAME__, user=True, active=True,
           description=('Define the header key that uniquely '
                        'identifies the file (i.e. an odometer '
                        'code)'))
 
 # define the HEADER key for acquisition time
 #     Note must set the date format in KW_ACQTIME_FMT
-KDict.add('KW_ACQTIME', key='NULL', value=None, source=__NAME__,
+KDict.add('KW_ACQTIME', key='NULL', value=None,
+          source=__NAME__,
           description=('define the HEADER key for acquisition time '
                        'Note must set the date format in '
                        'KW_ACQTIME_FMT'))
@@ -453,6 +461,19 @@ KDict.add('KW_MID_OBSTIME_METHOD', key='NULL', dtype=str,
           source=__NAME__,
           description=('Define the method by which the '
                        'MJD was calculated'))
+
+# Define the raw file release date
+KDict.add('KW_IRELDATE', key='NULL', dtype=str, source=__NAME__,
+          description='Define the raw file release date',
+          combine_method='maximum')
+
+# Define the APERO Public Release date (YYYY-MM-DD) this may be different
+#  from raw file header's release date
+KDict.add('KW_ARELDATE', key='NULL', dtype=str, source=__NAME__,
+          combine_method='maximum',
+          description='Define the APERO Public Release date '
+                      '(YYYY-MM-DD) this may be different from '
+                      'raw file headers release date')
 
 # -----------------------------------------------------------------------------
 # Define DRS input keywords

@@ -24,6 +24,7 @@ from aperocore.core import drs_db
 from aperocore.core import drs_misc
 from aperocore.core import drs_text
 from apero.base import base as apero_base
+from apero.core import drs_astrometrics
 
 # =============================================================================
 # Define variables
@@ -79,8 +80,6 @@ class Instrument:
         self.calibration_cols: Optional[DatabaseColumns] = None
         self.telluric_cols: Optional[DatabaseColumns] = None
         self.logdb_cols: Optional[DatabaseColumns] = None
-        self.objdb_cols: Optional[DatabaseColumns] = None
-        self.rejectdb_cols: Optional[DatabaseColumns] = None
 
     def __getstate__(self) -> dict:
         """
@@ -220,7 +219,7 @@ class Instrument:
         object names - use:
             objdbm = drs_database.ObjectDatabase(params)
             objdbm.load_db()
-            objdbm.find_objname(pconst, objname)
+            objdbm.find_objname(objname)
         instead to deal with aliases
 
         :param objname: str, input object name
@@ -281,6 +280,19 @@ class Instrument:
         # raise implementation error
         self._not_implemented('DRS_MIDMJD')
 
+    def GET_AREL_DATE(self, params: Any, header: Any,
+                      delta_key: str):
+        """
+        Get the apero release date
+
+        :param delta_key: str, the key to use for the time delta
+        :return:
+        """
+        # cannot get mid mjd without header definitions
+        _ = params, header, delta_key
+        # raise implementation error
+        self._not_implemented('GET_AREL_DATE')
+
     def FRAME_TIME(self, params: Any, header: Any):
         """
         Get the frame time (either from header or constants depending on
@@ -323,7 +335,7 @@ class Instrument:
         """
         _ = params, header, wlog
         # raise implementation error
-        self._not_implemented('DRS_MIDMJD')
+        self._not_implemented('GET_STOKES_FROM_HEADER')
 
     # =========================================================================
     # INDEXING SETTINGS
@@ -1001,39 +1013,6 @@ class Instrument:
         # return column object
         return index_cols
 
-    def REJECT_DB_COLUMNS(self) -> DatabaseColumns:
-        """
-        Define the columns use in the reject database
-        :return: list of columns (strings)
-        """
-        # set function name
-        # _ = display_func('LOG_DB_COLUMNS', __NAME__,
-        #                  self.class_name)
-        # check for pre-existing values
-        if self.rejectdb_cols is not None:
-            return self.rejectdb_cols
-        # set columns (dictionary form for clarity
-        rejectdb_cols = DatabaseColumns(name_prefix='rlog.')
-        rejectdb_cols.add(name='IDENTIFIER', is_index=True,
-                          datatype=sqlalchemy.String(255),
-                          comment='Identifier column')
-        rejectdb_cols.add(name='PP', datatype=sqlalchemy.Integer,
-                          comment='Whether this file should not be '
-                                  'preprocessed')
-        rejectdb_cols.add(name='TEL', datatype=sqlalchemy.Integer,
-                          comment='Whether this file should be used for '
-                                  'telluric')
-        rejectdb_cols.add(name='RV', datatype=sqlalchemy.Integer,
-                          comment='Whether this file should be used for RV')
-        rejectdb_cols.add(name='USED', datatype=sqlalchemy.Integer,
-                          comment='Whether flags should be used')
-        rejectdb_cols.add(name='DATE_ADDED', datatype=sqlalchemy.String(30))
-        rejectdb_cols.add(name='COMMENT',
-                          datatype=sqlalchemy.TEXT)
-        # return columns and ctypes
-        self.rejectdb_cols = rejectdb_cols
-        return rejectdb_cols
-
     def LOG_DB_COLUMNS(self) -> DatabaseColumns:
         """
         Define the columns use in the log database
@@ -1167,67 +1146,6 @@ class Instrument:
         # return columns and ctypes
         self.logdb_cols = log_columns
         return log_columns
-
-    def ASTROMETRIC_DB_COLUMNS(self) -> DatabaseColumns:
-        """
-        Define the columns use in the object database
-        :return: list of columns (strings)
-        """
-        # set function name
-        # _ = display_func('ASTROMETRIC_DB_COLUMNS', __NAME__,
-        #                  self.class_name)
-        # check for pre-existing values
-        if self.objdb_cols is not None:
-            return self.objdb_cols
-        # set columns
-        obj_columns = DatabaseColumns()
-        obj_columns.add(name='OBJNAME', datatype=sqlalchemy.String(80),
-                        is_index=True, is_unique=True)
-        obj_columns.add(name='ORIGINAL_NAME', datatype=sqlalchemy.String(80))
-        obj_columns.add(name='ALIASES', datatype=sqlalchemy.Text)
-        obj_columns.add(name='RA_DEG', datatype=LONG_FLOAT)
-        obj_columns.add(name='RA_SOURCE', datatype=sqlalchemy.String(80))
-        obj_columns.add(name='DEC_DEG', datatype=LONG_FLOAT)
-        obj_columns.add(name='DEC_SOURCE', datatype=sqlalchemy.String(80))
-        obj_columns.add(name='EPOCH', datatype=LONG_FLOAT)
-        obj_columns.add(name='PMRA', datatype=LONG_FLOAT)
-        obj_columns.add(name='PMRA_SOURCE', datatype=sqlalchemy.String(80))
-        obj_columns.add(name='PMDE', datatype=LONG_FLOAT)
-        obj_columns.add(name='PMDE_SOURCE', datatype=sqlalchemy.String(80))
-        obj_columns.add(name='PLX', datatype=LONG_FLOAT)
-        obj_columns.add(name='PLX_SOURCE', datatype=sqlalchemy.String(80))
-        obj_columns.add(name='RV', datatype=LONG_FLOAT)
-        obj_columns.add(name='RV_SOURCE', datatype=sqlalchemy.String(80))
-        obj_columns.add(name='TEFF', datatype=SHORT_FLOAT)
-        obj_columns.add(name='TEFF_SOURCE', datatype=sqlalchemy.String(80))
-        obj_columns.add(name='SP_TYPE', datatype=sqlalchemy.String(80))
-        obj_columns.add(name='SP_SOURCE', datatype=sqlalchemy.String(80))
-        obj_columns.add(name='VSINI', datatype=LONG_FLOAT)
-        obj_columns.add(name='VSINI_ERR', datatype=LONG_FLOAT)
-        obj_columns.add(name='VSINI_SOURCE', datatype=sqlalchemy.String(80))
-        obj_columns.add(name='UMAG', datatype=LONG_FLOAT)
-        obj_columns.add(name='UMAG_SOURCE', datatype=sqlalchemy.String(80))
-        obj_columns.add(name='GMAG', datatype=LONG_FLOAT)
-        obj_columns.add(name='GMAG_SOURCE', datatype=sqlalchemy.String(80))
-        obj_columns.add(name='RMAG', datatype=LONG_FLOAT)
-        obj_columns.add(name='RMAG_SOURCE', datatype=sqlalchemy.String(80))
-        obj_columns.add(name='IMAG', datatype=LONG_FLOAT)
-        obj_columns.add(name='IMAG_SOURCE', datatype=sqlalchemy.String(80))
-        obj_columns.add(name='ZMAG', datatype=LONG_FLOAT)
-        obj_columns.add(name='ZMAG_SOURCE', datatype=sqlalchemy.String(80))
-        obj_columns.add(name='JMAG', datatype=LONG_FLOAT)
-        obj_columns.add(name='JMAG_SOURCE', datatype=sqlalchemy.String(80))
-        obj_columns.add(name='HMAG', datatype=LONG_FLOAT)
-        obj_columns.add(name='HMAG_SOURCE', datatype=sqlalchemy.String(80))
-        obj_columns.add(name='KMAG', datatype=LONG_FLOAT)
-        obj_columns.add(name='KMAG_SOURCE', datatype=sqlalchemy.String(80))
-        obj_columns.add(name='NOTES', datatype=sqlalchemy.Text)
-        obj_columns.add(name='USED', datatype=sqlalchemy.Integer)
-        obj_columns.add(name='KEYWORDS', datatype=sqlalchemy.Text)
-        obj_columns.add(name='DATE_ADDED', datatype=sqlalchemy.String(30))
-        # return columns and ctypes
-        self.objdb_cols = obj_columns
-        return obj_columns
 
     def GET_EPOCH(self, params, header):
         """
@@ -1420,31 +1338,17 @@ class Instrument:
 # =============================================================================
 def clean_object(rawobjname: str) -> str:
     """
-    Clean a 'rawobjname' to allow it to be consistent
+    Clean a 'rawobjname' to allow it to be consistent.
+
+    Thin delegation to :func:`apero.core.drs_astrometrics.clean_object` so
+    there is one canonical implementation across the DRS.
 
     :param rawobjname: str, the raw object name to clean
 
     :return: str, the cleaned object name
     """
-    # if raw object name contains null text - return Null string
-    if drs_text.null_text(rawobjname, NULL_TEXT):
-        return 'Null'
-    # strip spaces off raw object
-    objectname = rawobjname.strip()
-    # replace + and - with "p" and "m"
-    objectname = objectname.replace('+', 'p')
-    objectname = objectname.replace('-', 'm')
-    # now remove bad characters
-    for bad_char in BAD_OBJ_CHARS:
-        objectname = objectname.replace(bad_char, '_')
-    objectname = objectname.upper()
-    # deal with multiple underscores in a row
-    while '__' in objectname:
-        objectname = objectname.replace('__', '_')
-    # strip leading / trailing '_'
-    objectname = objectname.strip('_')
-    # return cleaned object name
-    return objectname
+    # delegate to the canonical core implementation
+    return drs_astrometrics.clean_object(rawobjname)
 
 
 def get_sun_altitude(params: Any, header: Any, hdict: Any) -> Tuple[Any, Any]:

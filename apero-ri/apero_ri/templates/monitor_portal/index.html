@@ -1,0 +1,30 @@
+{% extends "general/sidebar_cards.html" %}
+{% block title %}APERO RI – Monitor Portal{% endblock %}
+
+{% block pre_cards %}
+<details class="ot-howto" id="howto-monitor-portal" open>
+    <summary class="ot-howto__title">
+        <i class="fa-solid fa-circle-info"></i>
+        <span class="ot-howto__label-open">How to use the monitor portal</span>
+        <span class="ot-howto__label-closed">Info</span>
+        <i class="fa-solid fa-chevron-down ot-howto__chevron"></i>
+    </summary>
+    <div class="ot-howto__body">
+        <ol class="ot-howto__steps">
+            <li>
+                <span><strong>Issues:</strong> View and manage reduction issues flagged across all instruments and profiles.</span>
+            </li>
+            <li>
+                <span><strong>Schedule:</strong> See the upcoming and recent observation schedule for each instrument.</span>
+            </li>
+            <li>
+                <span><strong>Processing Logs:</strong> Browse per-profile processing runs, drill into individual PIDs, and inspect raw log files.</span>
+            </li>
+            <li>
+                <span><strong>Astrometrics:</strong> Access the astrometric reference catalogue and object matching tools.</span>
+            </li>
+        </ol>
+    </div>
+</details>
+{% endblock %}
+

@@ -3,7 +3,7 @@ requires = [
     "setuptools",
     "setuptools_scm[toml]>=3.4",
     "wheel",
-    "numpy==2.3.4"]
+    "numpy==2.3.3"]
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -12,7 +12,7 @@ name = 'aperocore'
 authors = [
     {name = 'Neil Cook', email = 'neil.james.cook@gmail.com'},
 ]
-description = 'APERO is a pipeline designed to reduce astrophysical observations (specifically from echelle spectrographs). It is the offical pipeline for SPIRou and is also used for NIRPS.'
+description = 'APERO core keeps all the core drs independent functions in one module for easy use internally and externally'
 readme = {file = "README.md", content-type = "text/markdown"}
 license = {file = 'LICENSE'}
 requires-python = ">=3.12,<3.13"
@@ -26,16 +26,18 @@ dependencies = [
     "llvmlite==0.45.1",
     "numba==0.62.1",
     "numexpr==2.14.1",
-    "numpy==2.3.4",
-    "pandas==3.0.1",
+    "numpy==2.3.3",
+    "pandas==3.0.0",
     "pandastable==0.14.0",
     "pandasql==0.7.3",
     "psutil==7.2.2",
     "PyYAML==6.0.3",
+    "requests==2.33.1",
+    "chardet<6",
     "PyMySQL==1.1.2",
     "pytz==2025.2",
     "ruamel.yaml==0.19.1",
-    "scipy==1.17.1",
+    "scipy==1.17.0",
     "SQLAlchemy==2.0.47",
     "sqlalchemy_utils==0.42.1",
     "statsmodels==0.14.6",

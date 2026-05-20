@@ -1,0 +1,13 @@
+# =============================================================================
+# APERO RI: Documentation versions
+#
+# Layout:  documentation/ari/{version}/{page_ref}/main.md
+# The first version listed here is the default (latest).
+# =============================================================================
+versions:
+  - id: "0.8.XXX"
+    name: "v0.8.XXX onwards"
+  - id: "0.7.297"
+    name: "v0.7.297 onwards"
+  - id: "0.7.296"
+    name: "v0.7.296 and previous"

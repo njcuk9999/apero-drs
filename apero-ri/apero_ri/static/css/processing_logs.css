@@ -1,0 +1,229 @@
+/* ============================================================
+   processing_logs.css  –  Monitor portal: processing logs pages
+   ============================================================ */
+
+/* ── Log file popup overlay ── */
+.pl-log-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 1200;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.pl-log-backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.70);
+}
+
+.pl-log-panel {
+    position: relative;
+    z-index: 1;
+    width: min(96vw, 1100px);
+    max-height: 88vh;
+    display: flex;
+    flex-direction: column;
+    background: #0a0a0a;
+    border: 1px solid #333;
+    border-radius: 6px;
+    overflow: hidden;
+}
+
+.pl-log-toolbar {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 0.75rem;
+    background: #1a1a1a;
+    border-bottom: 1px solid #333;
+    flex-shrink: 0;
+}
+
+.pl-log-filename {
+    flex: 1;
+    font-family: var(--ari-font-mono, monospace);
+    font-size: 0.82rem;
+    color: #aaa;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.pl-log-content {
+    flex: 1;
+    overflow: auto;
+    margin: 0;
+    padding: 0.75rem 1rem;
+    background: #0a0a0a;
+    color: #00ff00;
+    font-family: var(--ari-font-mono, monospace);
+    font-size: 0.80rem;
+    line-height: 1.55;
+    white-space: pre;
+    word-break: normal;
+    user-select: text;
+    cursor: text;
+}
+
+/* ── Find bar ── */
+.pl-log-findbar {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.35rem 0.75rem;
+    background: #111;
+    border-bottom: 1px solid #2a2a2a;
+    flex-shrink: 0;
+}
+
+.pl-log-find-icon {
+    color: #666;
+    font-size: 0.78rem;
+    flex-shrink: 0;
+}
+
+.pl-log-find-input {
+    flex: 1;
+    min-width: 0;
+    padding: 0.18rem 0.5rem;
+    background: #1e1e1e;
+    border: 1px solid #444;
+    border-radius: 3px;
+    color: #eee;
+    font-family: var(--ari-font-mono, monospace);
+    font-size: 0.80rem;
+    outline: none;
+}
+
+.pl-log-find-input:focus {
+    border-color: #888;
+}
+
+.pl-log-find-count {
+    font-size: 0.75rem;
+    color: #888;
+    min-width: 5rem;
+    text-align: right;
+    font-family: var(--ari-font-mono, monospace);
+    flex-shrink: 0;
+}
+
+/* ── Per-line find highlighting ── */
+.pl-log-line {
+    display: block;
+}
+
+.pl-log-line.pl-log-match-line {
+    background: rgba(255, 153, 0, 0.18);
+}
+
+.pl-log-line.pl-log-match-current {
+    background: rgba(255, 204, 0, 0.35);
+    outline: 1px solid rgba(255, 204, 0, 0.6);
+}
+
+.pl-log-content .pl-log-error {
+    color: #ff4444;
+}
+
+.pl-log-content .pl-log-warn {
+    color: #ff9900;
+}
+
+/* ── Log file link button in table ── */
+.pl-log-link {
+    background: none;
+    border: none;
+    padding: 0;
+    color: var(--ari-link, #60a0e0);
+    cursor: pointer;
+    font-size: inherit;
+    font-family: inherit;
+    text-decoration: underline;
+    text-align: left;
+}
+
+.pl-log-link:hover {
+    color: var(--ari-link-hover, #90c0ff);
+}
+
+/* ── PID link in table ── */
+.pl-pid-link {
+    background: none;
+    border: none;
+    padding: 0;
+    color: var(--ari-link, #60a0e0);
+    cursor: pointer;
+    font-size: inherit;
+    font-family: inherit;
+    text-decoration: underline;
+}
+
+.pl-pid-link:hover {
+    color: var(--ari-link-hover, #90c0ff);
+}
+
+/* ── Finished cell colouring ── */
+.pl-finished-yes {
+    color: var(--ari-success, #4caf50);
+    font-weight: 600;
+}
+
+.pl-finished-no {
+    color: var(--ari-error, #f44336);
+    font-weight: 600;
+}
+
+/* ── Copy toast ── */
+.pl-copy-toast {
+    position: fixed;
+    bottom: 2rem;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--ari-toast-bg, #333);
+    color: #fff;
+    padding: 0.5rem 1.25rem;
+    border-radius: 4px;
+    font-size: 0.88rem;
+    z-index: 2000;
+    pointer-events: none;
+    opacity: 1;
+    transition: opacity 0.4s ease;
+}
+
+.pl-copy-toast.pl-copy-toast--fade {
+    opacity: 0;
+}
+
+/* ── Recipe call (runstring) icon button in table ── */
+.pl-run-btn {
+    background: none;
+    border: 1px solid var(--ari-border, #ccc);
+    border-radius: 4px;
+    padding: 0.15rem 0.45rem;
+    color: var(--ari-primary, #3f51b5);
+    cursor: pointer;
+    font-size: 0.85rem;
+    transition: background 0.15s, color 0.15s;
+}
+
+.pl-run-btn:hover {
+    background: var(--ari-primary-light, #e8eaf6);
+    border-color: var(--ari-primary, #3f51b5);
+}
+
+/* ── Runstring popup pre override ── */
+.pl-rs-content {
+    color: #e0e0e0;
+    white-space: pre;
+    tab-size: 4;
+}
+
+/* Syntax colours inside runstring popup */
+.pl-rs-script  { color: #82aaff; font-weight: 600; }
+.pl-rs-flag    { color: #c3e88d; }
+.pl-rs-bool    { color: #f78c6c; font-weight: 600; }
+.pl-rs-number  { color: #f78c6c; }
+.pl-rs-string  { color: #c792ea; }

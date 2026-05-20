@@ -3324,7 +3324,27 @@ def write_wavesol(params: ParamDict, recipe: DrsRecipe, fiber: str,
     sargs = [recipe.name, params['DRS.VERSION']]
     wprops['WAVESOURCE'] = '{0} [{1}]'.format(*sargs)
     wprops['WFP_FILE'] = wavefile.basename
+    # ------------------------------------------------------------------
+    # Make wave table
+    # ------------------------------------------------------------------
+    # get number of orders
+    nbo = wprops['WAVEMAP'].shape[0]
+    # add order column
+    wave_cols = ['ORDER', 'ECHELLE_ORDER']
+    wave_vals = [np.arange(nbo), wprops['EORDERS']]
 
+    # add wave centers
+    cent_x = wprops['WAVEMAP'].shape[1] // 2
+    wave_cols.append('WAVE_CENT_X')
+    wave_vals.append(wprops['WAVEMAP'][:, cent_x])
+    # add min wave and max wave
+    wave_cols.append('WAVE_MIN')
+    wave_vals.append(np.nanmin(wprops['WAVEMAP'], axis=1))
+    wave_cols.append('WAVE_MAX')
+    wave_vals.append(np.nanmax(wprops['WAVEMAP'], axis=1))
+
+    # convert to table
+    wave_table = drs_table.make_table(columns=wave_cols, values=wave_vals)
     # ------------------------------------------------------------------
     # copy original keys from fp file
     wavefile.copy_original_keys(fpfile)
@@ -3372,9 +3392,9 @@ def write_wavesol(params: ParamDict, recipe: DrsRecipe, fiber: str,
     wargs = [fiber, wavefile.filename]
     WLOG(params, '', textentry('40-017-00037', args=wargs))
     # define multi lists
-    data_list = []
-    datatype_list = []
-    name_list = []
+    data_list = [wave_table]
+    datatype_list = ['table']
+    name_list = ['WAVE_TABLE']
     # snapshot of parameters
     if params['GLOBAL.PSNAPSHOT']:
         data_list += [params.snapshot_table(recipe, drsfitsfile=wavefile)]

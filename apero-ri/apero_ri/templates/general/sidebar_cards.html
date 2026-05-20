@@ -1,0 +1,40 @@
+{% extends "general/sidebar_base.html" %}
+{% block title %}APERO RI – Cards{% endblock %}
+
+{# Card grid inside a sidebar layout #}
+{% block doc_content %}
+<div class="ari-page-header">
+    <h1><i class="{{ page_icon }}"></i> {{ page_label }}</h1>
+</div>
+
+{% block pre_cards %}{% endblock %}
+
+{% if cards %}
+<div class="ari-cards">
+    {% for card in cards %}
+    {% set h = card_health[card.id] if card_health and card.id in card_health else None %}
+    <a href="{{ card.url }}" class="ari-card{% if h %} ari-card--{{ h.status }}{% endif %}">
+        <div class="ari-card__icon">
+            <i class="{{ card.icon }}"></i>
+        </div>
+        <span class="ari-card__label">{{ card.label }}</span>
+        {% if h %}
+        <span class="ari-card__health ari-card__health--{{ h.status }}"
+              title="{{ h.message }}">
+            {% if h.status == 'ok' %}
+            <i class="fa-solid fa-circle-check"></i>
+            {% elif h.status == 'warning' %}
+            <i class="fa-solid fa-circle-question"></i>
+            {% else %}
+            <i class="fa-solid fa-circle-xmark"></i>
+            {% endif %}
+        </span>
+        {% endif %}
+    </a>
+    {% endfor %}
+</div>
+{% else %}
+<p style="color: var(--ari-text-muted);">No sections available with your
+current permissions.</p>
+{% endif %}
+{% endblock %}

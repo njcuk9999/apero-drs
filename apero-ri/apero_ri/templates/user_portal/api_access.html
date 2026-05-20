@@ -1,0 +1,275 @@
+{% extends "general/sidebar_base.html" %}
+{% block title %}APERO RI – API Access{% endblock %}
+
+{% block doc_content %}
+<style>
+.ua-stat-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 0.8rem;
+    margin-bottom: 1.2rem;
+}
+.ua-stat-box {
+    background: var(--op-bg, #f4f7fb);
+    border: 1px solid var(--card-border, #d6d9de);
+    border-radius: 0.45rem;
+    padding: 0.8rem 1rem;
+    text-align: center;
+}
+.ua-stat-box .ua-val {
+    display: block;
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--op-primary, #0b66c3);
+    overflow-wrap: break-word;
+    word-break: break-word;
+}
+.ua-stat-box .ua-lbl {
+    display: block;
+    font-size: 0.78rem;
+    color: var(--op-muted, #5f6b78);
+    margin-top: 0.15rem;
+}
+.ua-section {
+    background: #fff;
+    border: 1px solid var(--card-border, #d6d9de);
+    border-radius: 0.6rem;
+    padding: 1.2rem 1.4rem;
+    margin-bottom: 1rem;
+}
+.ua-section h2 {
+    font-size: 1rem;
+    margin: 0 0 0.8rem 0;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+.ua-note {
+    font-size: 0.85rem;
+    color: var(--op-muted, #5f6b78);
+    margin-top: 0.6rem;
+}
+.ua-token-box {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    margin-bottom: 0.8rem;
+    flex-wrap: wrap;
+}
+.ua-token-display {
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 0.88rem;
+    background: var(--op-bg, #f4f7fb);
+    border: 1px solid var(--card-border, #d6d9de);
+    border-radius: 0.35rem;
+    padding: 0.5rem 0.8rem;
+    word-break: break-all;
+    flex: 1;
+    min-width: 200px;
+}
+.ua-token-meta {
+    font-size: 0.82rem;
+    color: var(--op-muted, #5f6b78);
+    margin-bottom: 0.5rem;
+}
+.ua-btn-row {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+.ua-toast {
+    position: fixed;
+    bottom: 1.5rem;
+    right: 1.5rem;
+    background: #333;
+    color: #fff;
+    padding: 0.6rem 1.2rem;
+    border-radius: 0.4rem;
+    font-size: 0.88rem;
+    z-index: 999;
+    opacity: 0;
+    transition: opacity 0.3s;
+    pointer-events: none;
+}
+.ua-toast.ua-show { opacity: 1; pointer-events: auto; }
+.ua-code {
+    background: #1e1e2e;
+    color: #cdd6f4;
+    border-radius: 0.5rem;
+    padding: 0.9rem 1rem;
+    font-family: 'Courier New', monospace;
+    font-size: 0.82rem;
+    overflow-x: auto;
+    line-height: 1.5;
+    margin-top: 0.5rem;
+}
+.ua-code .ua-kw { color: #89b4fa; }
+.ua-code .ua-str { color: #a6e3a1; }
+.ua-code .ua-cmt { color: #6c7086; }
+</style>
+
+<div class="ari-up-shell">
+<div class="ari-page-header">
+    <h1><i class="fa-solid fa-plug"></i> API Access</h1>
+    <p class="ari-page-subtitle">Manage your API token and view download usage.</p>
+</div>
+
+<!-- API Token -->
+<div class="ua-section">
+    <h2><i class="fa-solid fa-key"></i> API Token</h2>
+    <p class="ua-note" style="margin-top:0;margin-bottom:0.8rem;">
+        Your API token lets you access APERO RI data programmatically via
+        <code>from apero_ri import ari_api</code>.
+    </p>
+
+    {% if token_info %}
+    <div class="ua-token-meta">
+        Token <strong>{{ token_info.token_prefix }}…</strong>
+        created {{ token_info.created_at }}
+        {% if token_info.label %} · label: <em>{{ token_info.label }}</em>{% endif %}
+    </div>
+    {% else %}
+    <div class="ua-token-meta">No token generated yet.</div>
+    {% endif %}
+
+    <!-- Revealed token (only shown once after generation) -->
+    <div id="ua-new-token" style="display:none;">
+        <div class="ua-token-box">
+            <div class="ua-token-display" id="ua-token-value"></div>
+            <button class="ari-btn ari-btn--sm" onclick="uaCopyToken()" title="Copy to clipboard">
+                <i class="fa-solid fa-copy"></i>
+            </button>
+        </div>
+        <p class="ua-note" style="color:#e74c3c;">
+            <i class="fa-solid fa-triangle-exclamation"></i>
+            Copy this token now — it will not be shown again.
+        </p>
+    </div>
+
+    <div class="ua-btn-row">
+        <button class="ari-btn ari-btn--primary ari-btn--sm" onclick="uaGenerateToken()">
+            <i class="fa-solid fa-rotate"></i>
+            {{ 'Regenerate Token' if token_info else 'Generate Token' }}
+        </button>
+        {% if token_info %}
+        <button class="ari-btn ari-btn--sm" onclick="uaRevokeToken()" style="color:#c0392b;">
+            <i class="fa-solid fa-trash"></i> Revoke
+        </button>
+        {% endif %}
+    </div>
+
+    <!-- Quick-start snippet -->
+    <div style="margin-top:1rem;">
+        <h2 style="font-size:0.92rem;"><i class="fa-solid fa-terminal"></i> Quick Start</h2>
+        <div class="ua-code">
+<span class="ua-cmt"># Install (once)</span><br>
+pip install -U -e ./apero-ri<br><br>
+<span class="ua-cmt"># In Python</span><br>
+<span class="ua-kw">from</span> apero_ri <span class="ua-kw">import</span> ari_api<br><br>
+<span class="ua-cmt"># First time: paste your token when prompted</span><br>
+profiles = ari_api.list_profiles()<br>
+<span class="ua-kw">print</span>(profiles)<br>
+        </div>
+    </div>
+</div>
+
+<!-- API Usage -->
+<div class="ua-section">
+    <h2><i class="fa-solid fa-cloud-arrow-down"></i> API Downloads</h2>
+    <div class="ua-stat-grid">
+        <div class="ua-stat-box">
+            <span class="ua-val">{{ api_usage.total_size_fmt }}</span>
+            <span class="ua-lbl">Total downloaded</span>
+        </div>
+        <div class="ua-stat-box">
+            <span class="ua-val">{{ api_usage.total_files }}</span>
+            <span class="ua-lbl">Files downloaded</span>
+        </div>
+        <div class="ua-stat-box">
+            <span class="ua-val">{{ api_usage.last_download }}</span>
+            <span class="ua-lbl">Last download</span>
+        </div>
+    </div>
+</div>
+
+<!-- Basket Usage -->
+<div class="ua-section">
+    <h2><i class="fa-solid fa-basket-shopping"></i> Download Basket</h2>
+    <div class="ua-stat-grid">
+        <div class="ua-stat-box">
+            <span class="ua-val">{{ basket_usage.total_size_fmt }}</span>
+            <span class="ua-lbl">Total downloaded</span>
+        </div>
+        <div class="ua-stat-box">
+            <span class="ua-val">{{ basket_usage.total_files }}</span>
+            <span class="ua-lbl">Files downloaded</span>
+        </div>
+        <div class="ua-stat-box">
+            <span class="ua-val">{{ basket_usage.last_download }}</span>
+            <span class="ua-lbl">Last download</span>
+        </div>
+    </div>
+</div>
+
+<p class="ua-note">
+    <i class="fa-solid fa-circle-info"></i>
+    See <a href="{{ url_for('doc_dynamic_view', page_ref='api') }}">Docs → API &amp; Downloads</a>
+    for the full tutorial.
+</p>
+</div>
+
+<div class="ua-toast" id="uaToast"></div>
+
+<script>
+var UA_URLS = {
+    generate: {{ url_for('api_user_token_generate') | tojson }},
+    revoke:   {{ url_for('api_user_token_revoke') | tojson }},
+};
+
+function uaToast(msg, ms) {
+    var el = document.getElementById('uaToast');
+    el.textContent = msg;
+    el.classList.add('ua-show');
+    clearTimeout(el._tid);
+    el._tid = setTimeout(function(){ el.classList.remove('ua-show'); }, ms || 3000);
+}
+
+function uaGenerateToken() {
+    if (!confirm('Generate a new API token? Any existing token will be revoked.')) return;
+    fetch(UA_URLS.generate, {method: 'POST', headers: {'Content-Type': 'application/json'}})
+        .then(function(r) { return r.json(); })
+        .then(function(d) {
+            if (d.success) {
+                document.getElementById('ua-token-value').textContent = d.token;
+                document.getElementById('ua-new-token').style.display = 'block';
+                uaToast('Token generated – copy it now!');
+            } else {
+                uaToast('Error: ' + (d.error || 'unknown'));
+            }
+        })
+        .catch(function() { uaToast('Network error'); });
+}
+
+function uaRevokeToken() {
+    if (!confirm('Revoke your API token? You will need to generate a new one.')) return;
+    fetch(UA_URLS.revoke, {method: 'POST', headers: {'Content-Type': 'application/json'}})
+        .then(function(r) { return r.json(); })
+        .then(function(d) {
+            if (d.success) {
+                uaToast('Token revoked');
+                setTimeout(function() { location.reload(); }, 600);
+            } else {
+                uaToast('Error: ' + (d.error || 'unknown'));
+            }
+        })
+        .catch(function() { uaToast('Network error'); });
+}
+
+function uaCopyToken() {
+    var val = document.getElementById('ua-token-value').textContent;
+    navigator.clipboard.writeText(val).then(function() {
+        uaToast('Token copied to clipboard');
+    });
+}
+</script>
+{% endblock %}

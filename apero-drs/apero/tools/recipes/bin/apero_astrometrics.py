@@ -206,7 +206,7 @@ def __main__(recipe, params):
         # log progress
         WLOG(params, '', textentry('40-503-00039'))
         # update database
-        manage_databases.update_object_database(params, log=False)
+        manage_databases.validate_astrometric_yaml_archive(params, log=False)
 
     # ----------------------------------------------------------------------
     # End of main code

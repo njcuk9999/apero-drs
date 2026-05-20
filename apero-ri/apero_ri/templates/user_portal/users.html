@@ -1,0 +1,73 @@
+{% extends "general/sidebar_base.html" %}
+{% block title %}APERO RI – Users{% endblock %}
+
+{% block extra_head %}
+{{ super() }}
+<link rel="stylesheet"
+    href="{{ url_for('static', filename='css/user_portal_messaging.css', v='20260501h') }}">
+<link rel="stylesheet"
+    href="{{ url_for('static', filename='css/user_portal_user_cards.css', v='20260501a') }}">
+{% endblock %}
+
+{% block doc_content %}
+<div class="ari-up-shell upm-page">
+    <div class="ari-page-header">
+        <h1><i class="{{ page_icon }}"></i> {{ page_label }}</h1>
+        <p class="ari-page-header__sub">
+            Browse the ARI user directory and send a private message
+            to any user.
+        </p>
+    </div>
+
+    <div class="upu-toolbar">
+        <input type="text"
+               id="upm-search"
+               class="ari-input"
+               placeholder="Filter by username, name, group...">
+        <span class="upu-count" id="upm-count">0 users</span>
+    </div>
+
+    <div class="upu-users-grid" id="upm-users-grid"></div>
+</div>
+
+<!-- Send-message modal -->
+<div class="upm-modal" id="upm-send-modal" hidden>
+    <div class="ari-modal__backdrop" data-upm-close></div>
+    <div class="ari-modal__content">
+        <header class="ari-modal__header">
+            <h2 id="upm-send-title">Send message</h2>
+            <button type="button" class="ari-btn-icon"
+                    data-upm-close aria-label="Close">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </header>
+        <form id="upm-send-form" class="upm-send-form">
+            <input type="hidden" name="recipient" id="upm-recipient">
+            <label class="ari-form-row">
+                <span>Subject</span>
+                <input type="text" name="subject" id="upm-subject"
+                       class="ari-input" maxlength="200">
+            </label>
+            <label class="ari-form-row">
+                <span>Message</span>
+                <textarea name="body" id="upm-body" rows="6"
+                          class="ari-input" required></textarea>
+            </label>
+            <div class="upm-form-actions">
+                <button type="button" class="ari-btn"
+                        data-upm-close>Cancel</button>
+                <button type="submit" class="ari-btn ari-btn--primary">
+                    <i class="fa-solid fa-paper-plane"></i> Send
+                </button>
+            </div>
+            <div class="upm-form-status" id="upm-send-status"
+                 aria-live="polite"></div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+{{ super() }}
+<script src="{{ url_for('static', filename='js/user_portal_users.js', v='20260501a') }}"></script>
+{% endblock %}

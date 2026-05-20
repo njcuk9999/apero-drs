@@ -1,0 +1,828 @@
+{% extends "general/sidebar_base.html" %}
+{% block title %}APERO RI – Issues{% endblock %}
+
+{% block body_class %}ari-has-sidebar ari-issues-page{% endblock %}
+
+{% block extra_head %}
+{{ super() }}
+<link rel="stylesheet"
+    href="{{ url_for('static', filename='css/monitor_issues.css') }}?v=20260501b">
+{% endblock %}
+
+{% block doc_content %}
+<div class="mi-header">
+    <div>
+        <h1 class="mi-header__title">
+            <i class="{{ page_icon }}"></i> {{ page_label }}
+        </h1>
+        <p class="mi-header__sub">
+            User-reported flags and target requests across the
+            monitored APERO profiles.
+        </p>
+    </div>
+    <span class="mi-header__visibility"
+          title="Your issue visibility scope">
+        <i class="fa-solid fa-eye"></i> {{ visibility }}
+    </span>
+</div>
+
+<div class="mi-toolbar" role="search" aria-label="Issue filters">
+    <div class="mi-toolbar__group">
+        <label for="issues-filter-status" class="mi-toolbar__label">
+            Status
+        </label>
+        <select id="issues-filter-status" class="mi-select">
+            <option value="">All</option>
+            <option value="open" selected>Open</option>
+            <option value="resolved">Resolved</option>
+            <option value="invalid">Invalid</option>
+        </select>
+    </div>
+    <div class="mi-toolbar__group">
+        <label for="issues-filter-kind" class="mi-toolbar__label">
+            Kind
+        </label>
+        <select id="issues-filter-kind" class="mi-select">
+            <option value="">All</option>
+            <option value="astrometric">Astrometric</option>
+            <option value="ari">ARI</option>
+            <option value="message">Message</option>
+            <option value="flag">Flag</option>
+            <option value="target_request">Target request</option>
+            <option value="Data access">Data access</option>
+            <option value="other">Other</option>
+        </select>
+    </div>
+    <div class="mi-toolbar__group">
+        <label for="issues-filter-type" class="mi-toolbar__label">
+            Type
+        </label>
+        <select id="issues-filter-type" class="mi-select">
+            <option value="">All</option>
+            <option value="reported message">Reported message</option>
+            <option value="variable flag">Variable flag</option>
+            <option value="new object">New object</option>
+            <option value="Request">Request</option>
+            <option value="page">Page</option>
+        </select>
+    </div>
+    <div class="mi-toolbar__group">
+        <label for="issues-filter-label"
+               class="mi-toolbar__label">
+            Label
+        </label>
+        <select id="issues-filter-label" class="mi-select">
+            <option value="">All</option>
+            <option value="astrometric-verify">
+                astrometric-verify
+            </option>
+            <option value="astrometric-missing">
+                astrometric-missing
+            </option>
+            <option value="astrometrics-missing-required">
+                astrometrics-missing-required
+            </option>
+        </select>
+    </div>
+    <div class="mi-toolbar__group">
+        <label for="issues-filter-label"
+               class="mi-toolbar__label">
+            Label
+        </label>
+        <select id="issues-filter-label" class="mi-select">
+            <option value="">All</option>
+            <option value="astrometric-verify">
+                astrometric-verify
+            </option>
+            <option value="astrometric-missing">
+                astrometric-missing
+            </option>
+            <option value="astrometrics-missing-required">
+                astrometrics-missing-required
+            </option>
+        </select>
+    </div>
+    <div class="mi-toolbar__group">
+        <label for="issues-filter-instrument"
+               class="mi-toolbar__label">
+            Instrument
+        </label>
+        <input id="issues-filter-instrument" class="mi-input"
+               placeholder="e.g. NIRPS or SPIROU" />
+    </div>
+    <div class="mi-toolbar__group">
+        <label for="issues-filter-user" class="mi-toolbar__label">
+            User
+        </label>
+        <div class="mi-user-lookup-wrap">
+            <input id="issues-filter-user" class="mi-input"
+                   placeholder="username"
+                   style="min-width: 9rem;" />
+            <div id="issues-user-suggest"
+                 class="mi-user-lookup-list" hidden></div>
+        </div>
+    </div>
+    <div class="mi-toolbar__group">
+        <label for="issues-filter-user-role"
+               class="mi-toolbar__label">
+            Role
+        </label>
+        <select id="issues-filter-user-role" class="mi-select">
+            <option value="any">Created or assigned</option>
+            <option value="created_by">Created by</option>
+            <option value="assigned_to">Assigned to</option>
+            <option value="unassigned">Unassigned</option>
+        </select>
+    </div>
+    <div class="mi-toolbar__spacer"></div>
+    <button id="issues-refresh" class="mi-btn mi-btn--primary">
+        <i class="fa-solid fa-rotate"></i> Refresh
+    </button>
+</div>
+
+<div id="issues-status" class="mi-status"></div>
+
+<div class="mi-card">
+    <div class="mi-table-scroll-top" id="issues-scroll-top">
+        <div class="mi-table-scroll-top__inner"></div>
+    </div>
+    <div class="mi-table-wrap" id="issues-scroll-bottom">
+        <table class="mi-table mi-table--compact" id="issues-table">
+            <thead>
+                <tr>
+                    <th class="mi-col-id">#</th>
+                    <th class="mi-col-created">Created</th>
+                    <th class="mi-col-by">By / Assigned</th>
+                    <th class="mi-col-kind">Kind</th>
+                    <th class="mi-col-kind">Type</th>
+                    <th>Title</th>
+                    <th class="mi-col-reason">Reason</th>
+                    <th class="mi-col-status">Status</th>
+                    <th class="mi-col-actions">Actions</th>
+                </tr>
+            </thead>
+            <tbody id="issues-tbody">
+                <tr>
+                    <td colspan="9">
+                        <div class="mi-empty">
+                            <i class="fa-solid fa-spinner fa-spin"></i>
+                            <p class="mi-empty__msg">Loading issues…</p>
+                        </div>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div id="mi-message-overlay" class="mi-message-overlay"
+     style="display:none;" aria-hidden="true">
+    <div class="mi-message-overlay__panel" role="dialog"
+         aria-modal="true" aria-labelledby="mi-message-title">
+        <div class="mi-message-overlay__head">
+            <h3 id="mi-message-title">Flagged message</h3>
+            <button id="mi-message-close" class="mi-btn mi-btn--ghost"
+                    type="button" title="Close">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+        <div class="mi-message-overlay__meta" id="mi-message-meta"></div>
+        <div class="mi-message-overlay__body" id="mi-message-body"></div>
+    </div>
+</div>
+
+<script>
+(function () {
+    'use strict';
+    const VISIBILITY = {{ visibility|tojson }};
+    const tbody = document.getElementById('issues-tbody');
+    const statusEl = document.getElementById('issues-status');
+    const fStatus   = document.getElementById('issues-filter-status');
+    const fKind     = document.getElementById('issues-filter-kind');
+    const fInst     = document.getElementById('issues-filter-instrument');
+    const fUser     = document.getElementById('issues-filter-user');
+    const fUserRole = document.getElementById('issues-filter-user-role');
+    const userSuggest = document.getElementById('issues-user-suggest');
+    const refreshBtn = document.getElementById('issues-refresh');
+    const msgOverlay = document.getElementById('mi-message-overlay');
+    const msgCloseBtn = document.getElementById('mi-message-close');
+    const msgTitleEl = document.getElementById('mi-message-title');
+    const msgMetaEl = document.getElementById('mi-message-meta');
+    const msgBodyEl = document.getElementById('mi-message-body');
+    let focusIssueId = null;
+    let issueUsers = [];
+
+    try {
+        const qs = new URLSearchParams(window.location.search || '');
+        const raw = qs.get('id') || qs.get('issue_id');
+        const parsed = parseInt(raw, 10);
+        if (Number.isFinite(parsed) && parsed > 0) {
+            focusIssueId = parsed;
+            // Include non-open issues when deep-linking from
+            // notifications.
+            if (fStatus) fStatus.value = '';
+        }
+    } catch (_) {}
+
+    function escapeHtml(s) {
+        return String(s == null ? '' : s)
+            .replace(/&/g, '&amp;').replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
+
+    function kindClass(kind) {
+        const k = String(kind || '').toLowerCase();
+        const known = ['flag', 'target_request', 'other',
+                       'astrometric', 'ari'];
+        if (known.indexOf(k) !== -1) {
+            return 'mi-kind--' + k.replace(/[^a-z0-9_-]/g, '');
+        }
+        return '';
+    }
+
+    function statusClass(status) {
+        const s = String(status || 'open').toLowerCase();
+        return 'mi-badge--' + s;
+    }
+
+    function rowClass(status) {
+        const s = String(status || 'open').toLowerCase();
+        if (s === 'resolved' || s === 'invalid') {
+            return 'mi-row--' + s;
+        }
+        return '';
+    }
+
+    function synthesiseTitle(it) {
+        if (it.title) return String(it.title);
+        const bits = [];
+        if (it.apero_name) bits.push('Object: ' + it.apero_name);
+        if (it.field) bits.push('Field: ' + it.field);
+        if (it.value !== null && it.value !== undefined
+                && it.value !== '') {
+            const v = (typeof it.value === 'object')
+                ? JSON.stringify(it.value) : String(it.value);
+            bits.push('value: ' + v);
+        }
+        return bits.length ? bits.join(' ')
+            : (it.reason ? String(it.reason).slice(0, 80) : '');
+    }
+
+    function renderRow(it) {
+        const tr = document.createElement('tr');
+        tr.dataset.issueId = String(it.id);
+        const rc = rowClass(it.status);
+        if (rc) tr.classList.add(rc);
+        if (focusIssueId && Number(it.id) === focusIssueId) {
+            tr.classList.add('mi-row--focus');
+        }
+        const titleStr = synthesiseTitle(it);
+        const titleCell = titleStr
+            ? escapeHtml(titleStr)
+            : '<span style="color:var(--ari-text-muted);">—</span>';
+        const typeCell = it.type
+            ? escapeHtml(it.type)
+            : '<span style="color:var(--ari-text-muted);">—</span>';
+        const reasonCell = it.reason
+            ? escapeHtml(it.reason)
+            : '<span style="color:var(--ari-text-muted);">—</span>';
+        const isMessageIssue = String(it.kind || '') === 'message';
+        const goTitle = isMessageIssue
+            ? 'Go to flagged message'
+            : 'Open the page where this was flagged';
+        let goBtn = '';
+        if (isMessageIssue) {
+            goBtn = '<button class="mi-btn mi-btn--xs mi-btn--ghost"'
+                + ' data-action="view-message" data-id="'
+                + String(it.id) + '"'
+                + ' title="' + escapeHtml(goTitle) + '">'
+                + '<i class="fa-solid fa-envelope-open-text"></i>'
+                + '</button>';
+        } else if (it.origin_url) {
+            goBtn = '<a class="mi-btn mi-btn--xs mi-btn--ghost"'
+                + ' href="' + escapeHtml(it.origin_url) + '"'
+                + ' target="_blank" rel="noopener"'
+                + ' title="' + escapeHtml(goTitle) + '">'
+                + '<i class="fa-solid fa-up-right-from-square"></i>'
+                + '</a>';
+        }
+        tr.innerHTML = `
+            <td class="mi-col-id">#${it.id}</td>
+            <td class="mi-col-created">${
+                escapeHtml((it.created_at||'').slice(0, 19)
+                    .replace('T', ' '))}</td>
+            <td class="mi-col-by">
+                <span class="mi-user mi-user--created">
+                    <i class="fa-solid fa-user"></i>
+                    ${escapeHtml(it.created_by||'anonymous')}
+                </span><br>
+                ${it.assigned_to
+                    ? '<span class="mi-user mi-user--assigned">'
+                        + '<i class="fa-solid fa-user-check"></i> '
+                        + escapeHtml(it.assigned_to) + '</span>'
+                    : '<span class="mi-user mi-user--unassigned">'
+                        + '<i class="fa-solid fa-user-slash"></i>'
+                        + ' unassigned</span>'}
+            </td>
+            <td class="mi-col-kind">
+                <span class="mi-kind ${kindClass(it.kind)}">
+                    ${escapeHtml(it.kind||'')}
+                </span>
+            </td>
+            <td class="mi-col-kind">${typeCell}</td>
+            <td class="mi-cell-title">${titleCell}</td>
+            <td class="mi-col-reason">${reasonCell}</td>
+            <td class="mi-col-status">
+                <span class="mi-badge ${statusClass(it.status)}">
+                    ${escapeHtml(it.status||'open')}
+                </span>
+            </td>
+            <td class="mi-col-actions">
+                ${goBtn}
+                <button class="mi-btn mi-btn--xs"
+                    data-action="resolve" data-id="${it.id}"
+                    title="Mark as resolved">
+                    <i class="fa-solid fa-check"></i>
+                </button>
+                <button class="mi-btn mi-btn--xs mi-btn--danger"
+                    data-action="invalid" data-id="${it.id}"
+                    title="Mark as invalid">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+                <button class="mi-btn mi-btn--xs mi-btn--ghost"
+                    data-action="reopen" data-id="${it.id}"
+                    title="Reopen issue">
+                    <i class="fa-solid fa-rotate-left"></i>
+                </button>
+                ${VISIBILITY !== 'public'
+                    ? `<button class="mi-btn mi-btn--xs mi-btn--ghost"
+                        data-action="assign" data-id="${it.id}"
+                        title="Assign issue">
+                        <i class="fa-solid fa-user-plus"></i>
+                    </button>` : ''}
+                ${VISIBILITY === 'admin'
+                    ? `<button class="mi-btn mi-btn--xs mi-btn--ghost"
+                        data-action="edit" data-id="${it.id}"
+                        title="Edit issue (admin)">
+                        <i class="fa-solid fa-pen"></i>
+                    </button>
+                    <button class="mi-btn mi-btn--xs mi-btn--danger"
+                        data-action="delete" data-id="${it.id}"
+                        title="Delete issue (admin)">
+                        <i class="fa-solid fa-trash"></i>
+                    </button>`
+                    : ''}
+            </td>`;
+        return tr;
+    }
+
+    function renderEmpty() {
+        tbody.innerHTML = `
+            <tr><td colspan="9">
+                <div class="mi-empty">
+                    <i class="fa-solid fa-inbox"></i>
+                    <p class="mi-empty__title">No issues match
+                        these filters</p>
+                    <p class="mi-empty__msg">Try clearing the
+                        status, kind, or type filters.</p>
+                </div>
+            </td></tr>`;
+    }
+
+    function renderError(msg) {
+        tbody.innerHTML = `
+            <tr><td colspan="9">
+                <div class="mi-empty">
+                    <i class="fa-solid fa-triangle-exclamation"
+                        style="color: var(--ari-danger);"></i>
+                    <p class="mi-empty__title">Failed to load
+                        issues</p>
+                    <p class="mi-empty__msg">${escapeHtml(msg)}</p>
+                </div>
+            </td></tr>`;
+    }
+
+    async function load() {
+        statusEl.innerHTML = `
+            <span class="mi-status__pill">
+                <i class="fa-solid fa-spinner fa-spin"></i> Loading
+            </span>`;
+        const params = new URLSearchParams();
+        if (fStatus.value) params.set('status', fStatus.value);
+        if (fKind.value) params.set('kind', fKind.value);
+        if (fInst.value.trim()) {
+            params.set('instrument', fInst.value.trim());
+        }
+        try {
+            const resp = await fetch(
+                '/api/issues/list?' + params.toString());
+            const data = await resp.json();
+            if (!data.success) {
+                renderError(data.error || 'unknown error');
+                statusEl.textContent = '';
+                return;
+            }
+            // expose by id for admin edit / assign prompt
+            window._issuesById = {};
+            (data.issues || []).forEach(it => {
+                window._issuesById[it.id] = it;
+            });
+            // client-side user / role filter
+            const userVal = (fUser ? fUser.value : '').trim()
+                                                       .toLowerCase();
+            const roleVal = fUserRole ? fUserRole.value : '';
+            let toRender = (data.issues || []);
+            if (roleVal === 'unassigned') {
+                toRender = toRender.filter(
+                    it => !it.assigned_to);
+            } else if (userVal) {
+                if (roleVal === 'created_by') {
+                    toRender = toRender.filter(it =>
+                        (it.created_by||'').toLowerCase()
+                        === userVal);
+                } else if (roleVal === 'assigned_to') {
+                    toRender = toRender.filter(it =>
+                        (it.assigned_to||'').toLowerCase()
+                        === userVal);
+                } else {
+                    // 'any' or default: created or assigned
+                    toRender = toRender.filter(it =>
+                        (it.created_by||'').toLowerCase()
+                            === userVal
+                        || (it.assigned_to||'').toLowerCase()
+                            === userVal);
+                }
+            }
+            tbody.innerHTML = '';
+            toRender.forEach(it => {
+                tbody.appendChild(renderRow(it));
+            });
+            const n = toRender.length;
+            if (n === 0) {
+                renderEmpty();
+            }
+            let focused = false;
+            if (focusIssueId) {
+                const row = tbody.querySelector(
+                    'tr[data-issue-id="' + focusIssueId + '"]');
+                if (row) {
+                    focused = true;
+                    row.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'center'
+                    });
+                }
+            }
+            statusEl.innerHTML = `
+                <span class="mi-status__pill">
+                    <i class="fa-solid fa-list"></i>
+                    ${n} issue${n === 1 ? '' : 's'}
+                </span>
+                <span>visibility scope:
+                    <strong>${escapeHtml(VISIBILITY)}</strong></span>
+                ${focusIssueId
+                    ? `<span>${focused
+                        ? 'focused issue #' + focusIssueId
+                        : 'issue #' + focusIssueId
+                          + ' not in current results'}</span>`
+                    : ''}`;
+        } catch (err) {
+            renderError(err.message);
+            statusEl.textContent = '';
+        }
+    }
+
+    async function update(id, status) {
+        const note = window.prompt(
+            'Optional note (leave blank to skip):', '');
+        try {
+            const resp = await fetch('/api/issues/update', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({id: id, status: status,
+                                      note: note || undefined})
+            });
+            const data = await resp.json();
+            if (!data.success) {
+                alert('Error: ' + (data.error || 'unknown'));
+            } else {
+                load();
+            }
+        } catch (err) {
+            alert('Error: ' + err.message);
+        }
+    }
+
+    function closeMessageOverlay() {
+        if (!msgOverlay) return;
+        msgOverlay.style.display = 'none';
+        msgOverlay.setAttribute('aria-hidden', 'true');
+    }
+
+    function openMessageOverlay(issue) {
+        if (!msgOverlay || !msgTitleEl || !msgBodyEl || !msgMetaEl) return;
+        const safeIssue = issue || {};
+        const label = synthesizeIssueLabel(safeIssue);
+        msgTitleEl.textContent = label;
+        msgBodyEl.textContent = String(safeIssue.reason || '').trim()
+            || '(No message body available.)';
+
+        const metaBits = [];
+        if (safeIssue.id) metaBits.push('Issue #' + String(safeIssue.id));
+        if (safeIssue.created_by) {
+            metaBits.push('Flagged by ' + String(safeIssue.created_by));
+        }
+        if (safeIssue.created_at) {
+            const dt = String(safeIssue.created_at).slice(0, 19)
+                .replace('T', ' ');
+            metaBits.push(dt);
+        }
+        msgMetaEl.textContent = metaBits.join(' • ');
+
+        msgOverlay.style.display = 'flex';
+        msgOverlay.setAttribute('aria-hidden', 'false');
+    }
+
+    function synthesizeIssueLabel(issue) {
+        const rawTitle = String(issue.title || '').trim();
+        if (rawTitle) return rawTitle;
+        return 'Flagged message';
+    }
+
+    tbody.addEventListener('click', (ev) => {
+        const btn = ev.target.closest('button[data-action]');
+        if (!btn) return;
+        const id = parseInt(btn.dataset.id, 10);
+        const action = btn.dataset.action;
+        if (action === 'view-message') {
+            const issue = (window._issuesById || {})[id] || null;
+            openMessageOverlay(issue);
+            return;
+        }
+        if (action === 'delete') { adminDelete(id); return; }
+        if (action === 'edit')   { adminEdit(id);   return; }
+        if (action === 'assign') { adminAssign(id); return; }
+        const map = {resolve: 'resolved',
+                     invalid: 'invalid',
+                     reopen: 'open'};
+        update(id, map[action]);
+    });
+
+    async function adminDelete(id) {
+        if (!window.confirm(
+            'PERMANENTLY delete issue #' + id + '? '
+            + 'This cannot be undone.')) return;
+        try {
+            const resp = await fetch('/api/issues/delete', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({id: id}),
+            });
+            const j = await resp.json();
+            if (j && j.success) { load(); }
+            else { alert((j && j.error) || 'Delete failed'); }
+        } catch (e) { alert('Network error: ' + e.message); }
+    }
+
+    async function adminEdit(id) {
+        const cur = (window._issuesById || {})[id] || {};
+        const title = window.prompt(
+            'Edit title (blank = unchanged):',
+            cur.title || '');
+        if (title === null) return;
+        const reason = window.prompt(
+            'Edit reason / body (blank = unchanged):',
+            cur.reason || '');
+        if (reason === null) return;
+        const payload = {id: id};
+        if (title !== '') payload.title = title;
+        if (reason !== '') payload.reason = reason;
+        if (Object.keys(payload).length === 1) return;
+        try {
+            const resp = await fetch('/api/issues/edit', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(payload),
+            });
+            const j = await resp.json();
+            if (j && j.success) { load(); }
+            else { alert((j && j.error) || 'Edit failed'); }
+        } catch (e) { alert('Network error: ' + e.message); }
+    }
+
+    refreshBtn.addEventListener('click', load);
+    fStatus.addEventListener('change', load);
+    fKind.addEventListener('change', load);
+    let instTimer = null;
+    fInst.addEventListener('input', () => {
+        if (instTimer) clearTimeout(instTimer);
+        instTimer = setTimeout(load, 350);
+    });
+    if (fUser) {
+        let userTimer = null;
+        fUser.addEventListener('input', () => {
+            renderUserSuggest(fUser.value || '');
+            if (userTimer) clearTimeout(userTimer);
+            userTimer = setTimeout(load, 350);
+        });
+        fUser.addEventListener('focus', () => {
+            renderUserSuggest(fUser.value || '');
+        });
+        fUser.addEventListener('blur', () => {
+            setTimeout(() => {
+                if (userSuggest) userSuggest.hidden = true;
+            }, 120);
+        });
+    }
+    if (fUserRole) fUserRole.addEventListener('change', load);
+    if (msgCloseBtn) {
+        msgCloseBtn.addEventListener('click', closeMessageOverlay);
+    }
+    if (msgOverlay) {
+        msgOverlay.addEventListener('click', (e) => {
+            if (e.target === msgOverlay) closeMessageOverlay();
+        });
+    }
+    window.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') closeMessageOverlay();
+    });
+
+    async function loadUsers() {
+        try {
+            const resp = await fetch('/api/issues/users');
+            if (!resp.ok) return;
+            const data = await resp.json();
+            if (!data.success) return;
+            issueUsers = data.users || [];
+        } catch (_) {}
+    }
+
+    function renderUserSuggest(query) {
+        if (!userSuggest) return;
+        const q = String(query || '').trim().toLowerCase();
+        if (!q) {
+            userSuggest.hidden = true;
+            userSuggest.innerHTML = '';
+            return;
+        }
+        const rows = issueUsers.filter(u =>
+            String(u.username || '').toLowerCase().includes(q)
+        ).slice(0, 20);
+        if (!rows.length) {
+            userSuggest.innerHTML = '<div class="mi-user-lookup-empty">'
+                + 'No matching users.</div>';
+            userSuggest.hidden = false;
+            return;
+        }
+        userSuggest.innerHTML = rows.map(u =>
+            '<button type="button" class="mi-user-lookup-item"'
+            + ' data-username="' + escapeHtml(u.username) + '">'
+            + escapeHtml(u.username)
+            + '</button>'
+        ).join('');
+        userSuggest.hidden = false;
+    }
+
+    if (userSuggest) {
+        userSuggest.addEventListener('click', (e) => {
+            const item = e.target.closest('.mi-user-lookup-item');
+            if (!item || !fUser) return;
+            e.preventDefault();
+            fUser.value = item.dataset.username || '';
+            userSuggest.hidden = true;
+            load();
+        });
+    }
+
+    async function adminAssign(id) {
+        let users = [];
+        try {
+            const resp = await fetch('/api/issues/users');
+            if (resp.ok) {
+                const data = await resp.json();
+                if (data.success) users = data.users || [];
+            }
+        } catch (_) {}
+        const cur = (window._issuesById || {})[id] || {};
+        const curAssignee = cur.assigned_to || '';
+        const overlay = document.createElement('div');
+        overlay.className = 'mi-assign-overlay';
+        overlay.innerHTML = `
+            <div class="mi-assign-overlay__panel">
+                <p class="mi-assign-overlay__title">
+                    Assign issue #${id}
+                </p>
+                <div style="position:relative;">
+                <input id="mi-assign-input" class="mi-input"
+                       placeholder="username (blank to unassign)"
+                       value="${escapeHtml(curAssignee)}"
+                       style="width:100%;margin-bottom:0.6rem;">
+                <div id="mi-assign-suggest"
+                     style="display:none; position:absolute; left:0;
+                     right:0; top:calc(100% - 0.5rem); z-index:2;
+                     max-height:220px; overflow-y:auto;
+                     background:var(--ari-card-bg); border:1px solid
+                     var(--ari-border); border-radius:8px;
+                     box-shadow:0 8px 20px rgba(0,0,0,0.2);"></div>
+                </div>
+                <div style="display:flex;gap:0.5rem;
+                            justify-content:flex-end;">
+                    <button class="mi-btn mi-btn--ghost"
+                            id="mi-assign-cancel">Cancel</button>
+                    <button class="mi-btn mi-btn--primary"
+                            id="mi-assign-confirm">Assign</button>
+                </div>
+            </div>`;
+        document.body.appendChild(overlay);
+        const input = overlay.querySelector('#mi-assign-input');
+        const suggest = overlay.querySelector('#mi-assign-suggest');
+        const normalized = (s) => String(s || '').trim().toLowerCase();
+
+        const renderSuggest = (query) => {
+            if (!suggest) return;
+            const q = normalized(query);
+            if (!q) {
+                suggest.style.display = 'none';
+                suggest.innerHTML = '';
+                return;
+            }
+            const rows = users.filter(u =>
+                normalized(u.username).includes(q)
+            ).slice(0, 20);
+            if (!rows.length) {
+                suggest.innerHTML = '<div style="padding:0.45rem 0.55rem;'
+                    + ' color:var(--ari-text-muted); font-size:0.82rem;">'
+                    + 'No matching users.</div>';
+                suggest.style.display = 'block';
+                return;
+            }
+            suggest.innerHTML = rows.map(u =>
+                '<button type="button" class="mi-assign-item"'
+                + ' data-username="' + escapeHtml(u.username) + '"'
+                + ' style="display:block; width:100%; border:none;'
+                + ' background:transparent; text-align:left;'
+                + ' padding:0.42rem 0.55rem; cursor:pointer;">'
+                + escapeHtml(u.username)
+                + '</button>'
+            ).join('');
+            suggest.style.display = 'block';
+        };
+
+        input.focus();
+        input.addEventListener('input', () => {
+            renderSuggest(input.value || '');
+        });
+        input.addEventListener('focus', () => {
+            renderSuggest(input.value || '');
+        });
+        input.addEventListener('blur', () => {
+            setTimeout(() => {
+                if (suggest) suggest.style.display = 'none';
+            }, 120);
+        });
+        if (suggest) {
+            suggest.addEventListener('click', (e) => {
+                const item = e.target.closest('.mi-assign-item');
+                if (!item) return;
+                e.preventDefault();
+                input.value = item.dataset.username || '';
+                suggest.style.display = 'none';
+            });
+        }
+        overlay.querySelector('#mi-assign-cancel')
+            .addEventListener('click', () => overlay.remove());
+        overlay.addEventListener('click', (e) => {
+            if (e.target === overlay) overlay.remove();
+        });
+        overlay.querySelector('#mi-assign-confirm')
+            .addEventListener('click', async () => {
+                const username = input.value.trim();
+                overlay.remove();
+                try {
+                    const resp = await fetch(
+                        '/api/issues/update', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'},
+                        body: JSON.stringify({
+                            id: id,
+                            assigned_to: username || ''})
+                    });
+                    const data = await resp.json();
+                    if (!data.success) {
+                        alert('Error: '
+                              + (data.error || 'unknown'));
+                    } else {
+                        load();
+                    }
+                } catch (err) {
+                    alert('Error: ' + err.message);
+                }
+            });
+    }
+
+    load();
+    loadUsers();
+})();
+</script>
+{% endblock %}

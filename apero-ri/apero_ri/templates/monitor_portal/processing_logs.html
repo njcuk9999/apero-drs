@@ -1,0 +1,83 @@
+{% extends "general/sidebar_base.html" %}
+{% block title %}APERO RI – Processing Logs{% endblock %}
+
+{% block body_class %}ari-has-sidebar ari-db-index-page{% endblock %}
+
+{% block extra_scripts %}
+<script src="{{ url_for('static', filename='js/database.js') }}"></script>
+{% endblock %}
+
+{% block doc_content %}
+<div class="ari-page-header">
+    <h1>
+        <i class="fa-solid fa-scroll"></i> Processing Logs
+    </h1>
+    <p class="ari-page-subtitle">
+        Select a reduction profile to view its processing logs.
+    </p>
+</div>
+
+{# ── Instrument filter bar ── #}
+{% if shown_instruments is defined and shown_instruments|length > 0 %}
+<div class="ari-db-filter">
+    <button class="ari-db-filter__btn ari-db-filter__btn--active"
+            data-instrument="all"
+            onclick="ARI.Database.filter('all')">
+        All
+    </button>
+    {% for inst in shown_instruments %}
+    <button class="ari-db-filter__btn"
+            data-instrument="{{ inst }}"
+            style="--filter-bg: {{ instrument_colors[inst].bg }};
+                   --filter-text: {{ instrument_colors[inst].text }};
+                   --filter-border: {{ instrument_colors[inst].border }};"
+            onclick="ARI.Database.filter('{{ inst }}')">
+        {{ inst }}
+    </button>
+    {% endfor %}
+</div>
+{% endif %}
+
+{# ── Profile card grid ── #}
+<div class="ari-db-profiles" id="db-profiles">
+    {% if profile_cards is defined %}
+    {% for card in profile_cards %}
+    <a href="{{ card.url }}" class="ari-db-card"
+       data-instrument="{{ card.instrument }}"
+       style="--card-bg: {{ card.color.bg }};
+              --card-text: {{ card.color.text }};
+              --card-border: {{ card.color.border }};">
+        <div class="ari-db-card__header">
+            <span class="ari-db-card__instrument">
+                {{ card.instrument }}
+            </span>
+            <span class="ari-db-card__sep">|</span>
+            <span class="ari-db-card__name">
+                {{ card.profile_id }}
+            </span>
+        </div>
+        <div class="ari-db-card__meta">
+            {% if card.apero_version %}
+            <span>
+                <i class="fa-solid fa-code-branch"></i>
+                {{ card.apero_version }}
+            </span>
+            {% endif %}
+            {% if card.reduction_server %}
+            <span>
+                <i class="fa-solid fa-server"></i>
+                {{ card.reduction_server }}
+            </span>
+            {% endif %}
+        </div>
+    </a>
+    {% endfor %}
+    {% endif %}
+</div>
+
+{% if not profile_cards or profile_cards|length == 0 %}
+<p style="color: var(--ari-text-muted);">
+    No profiles available with your current permissions.
+</p>
+{% endif %}
+{% endblock %}

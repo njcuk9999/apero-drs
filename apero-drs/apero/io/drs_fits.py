@@ -24,7 +24,7 @@ import traceback
 import warnings
 from copy import deepcopy
 from pathlib import Path
-from typing import Any, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 import numpy as np
 from astropy.io import fits
@@ -58,6 +58,8 @@ Time, TimeDelta = base.AstropyTime, base.AstropyTimeDelta
 ParamDict = Any
 # exception
 AperoCodedException = drs_log.AperoCodedException
+# Get Logging function
+WLOG = drs_log.wlog
 # Get function string
 display_func = drs_misc.display_func
 # Get the text types
@@ -1150,6 +1152,43 @@ def update_extension(params: ParamDict, filename: str, extension: int,
             except Exception as e:
                 eargs = [os.path.basename(filename), type(e), e, func_name]
                 raise AperoCodedException(params, '01-001-00005', targs=eargs)
+
+
+def update_fits(params: ParamDict, filename: str, hkeys: Dict[str, str]):
+    """
+    Ypdate the files on disk with the hkeys
+
+    This will add the hkeys to the header if they don't exist and update the
+    values if they do
+    """
+    # first: check file exists
+    if not os.path.exists(filename):
+        return
+    # second: check that file is a fits file
+    if not filename.endswith('.fits'):
+        return
+    # store added keys
+    add_keys = []
+    # open the fits file and update the main header
+    with fits.open(filename, mode='update') as hdul:
+        header = hdul[0].header
+        # loop around header and add/update keys
+        for key in hkeys:
+            # deal with parameter keys
+            if key in params:
+                hkey = params[key][0]
+            else:
+                hkey = str(key)
+            # update the header
+            header[hkey] = hkeys[key]
+            # update added keys
+            add_keys.append(hkey)
+        # flush to make sure we are up-to-date
+        hdul.flush()
+    # print progress
+    msg = 'Updating header keys {0} in file {1}'
+    margs = [','.join(add_keys), filename]
+    WLOG(params, '', msg.format(*margs))
 
 
 # =============================================================================

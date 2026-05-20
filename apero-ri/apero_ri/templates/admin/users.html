@@ -1,0 +1,280 @@
+{% extends "general/sidebar_base.html" %}
+{% block title %}APERO RI – User Management{% endblock %}
+
+{% block extra_head %}{{ super() }}
+<style>
+/* ── List view ───────────────────────────────────────── */
+.ari-user-results--list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+}
+.ari-user-result-row {
+    display: flex;
+    align-items: center;
+    gap: 0.7rem;
+    padding: 0.38rem 0.75rem;
+    background: var(--ari-card-bg);
+    border: 1px solid var(--ari-border);
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background 0.12s;
+}
+.ari-user-result-row:hover {
+    background: var(--ari-primary-light, #e8eaf6);
+}
+.ari-user-result-row__dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+.ari-user-result-row__username {
+    font-weight: 600;
+    font-size: 0.88rem;
+    min-width: 9rem;
+    white-space: nowrap;
+}
+.ari-user-result-row__fullname {
+    font-size: 0.82rem;
+    color: var(--ari-text-muted, #666);
+    min-width: 8rem;
+    white-space: nowrap;
+}
+.ari-user-result-row__groups {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.25rem;
+    flex: 1;
+}
+.ari-user-group-pill {
+    font-size: 0.72rem;
+    padding: 0.2rem 0.55rem;
+    border-radius: 99px;
+    background: transparent;
+    white-space: nowrap;
+    border: 2px solid;
+    cursor: pointer;
+    transition: all 0.15s;
+}
+.ari-user-group-pill:hover {
+    opacity: 0.8;
+}
+/* Direct group assignment: purple ring */
+.ari-user-group-pill {
+    color: #7c3aed;
+    border-color: #7c3aed;
+}
+/* Inherited group: orange ring */
+.ari-user-group-pill--inherited {
+    color: #f97316;
+    border-color: #f97316;
+}
+/* ── View toggle ─────────────────────────────────────── */
+.ari-um-view-toggle {
+    display: flex;
+    gap: 0.25rem;
+    flex-shrink: 0;
+}
+.ari-um-view-btn {
+    background: var(--ari-card-bg, #fff);
+    border: 1px solid var(--ari-border, #ccc);
+    border-radius: 4px;
+    padding: 0.25rem 0.55rem;
+    cursor: pointer;
+    color: var(--ari-text-muted, #888);
+    font-size: 0.85rem;
+    line-height: 1;
+    transition: background 0.12s, color 0.12s;
+}
+.ari-um-view-btn--active {
+    background: var(--ari-primary-light, #e8eaf6);
+    color: var(--ari-primary, #3f51b5);
+    border-color: var(--ari-primary, #3f51b5);
+}
+.ari-um-view-btn:hover:not(.ari-um-view-btn--active) {
+    background: var(--ari-bg-hover, #f5f5f5);
+}
+</style>
+{% endblock %}
+
+{% block doc_content %}
+<div class="ari-page-header">
+    <h1><i class="{{ page_icon }}"></i> {{ page_label }}</h1>
+</div>
+
+<!-- =====================================================================
+     Tab bar
+     ===================================================================== -->
+<div class="ari-sg-tabs" role="tablist" aria-label="User management sections">
+    <button id="um-tab-new" class="ari-sg-tab ari-sg-tab--active" role="tab"
+            aria-selected="true" aria-controls="um-new">
+        <i class="fa-solid fa-user-plus"></i> New Members
+        <span class="ari-um-badge" id="um-new-badge">0</span>
+    </button>
+    <button id="um-tab-current" class="ari-sg-tab" role="tab"
+            aria-selected="false" aria-controls="um-current">
+        <i class="fa-solid fa-users"></i> Current Members
+        <span class="ari-um-badge ari-um-badge--current" id="um-current-badge">0</span>
+    </button>
+</div>
+
+<!-- Group legend ──────────────────────────────────────────────────── -->
+<div style="display:flex;align-items:center;gap:1rem;
+            margin:0.75rem 0;padding:0.6rem;
+            background:var(--ari-surface-muted,#f5f5f5);
+            border-radius:5px;font-size:0.85rem;
+            color:var(--ari-text-muted,#666);">
+    <div style="display:flex;align-items:center;gap:0.5rem;">
+        <span style="display:inline-block;width:6px;height:6px;
+                     border:2px solid #7c3aed;border-radius:50%;"></span>
+        <span><strong>Purple ring:</strong> Direct group assignment</span>
+    </div>
+    <div style="display:flex;align-items:center;gap:0.5rem;">
+        <span style="display:inline-block;width:6px;height:6px;
+                     border:2px solid #f97316;border-radius:50%;"></span>
+        <span><strong>Orange ring:</strong> Inherited via parent group</span>
+    </div>
+    <div style="margin-left:auto;color:var(--ari-text-muted,#888);
+                font-size:0.8rem;">
+        💡 Click a user to edit groups or delete
+    </div>
+</div>
+
+<!-- =====================================================================
+     New Members panel
+     ===================================================================== -->
+<div id="um-new" class="ari-um-panel" role="tabpanel">
+    <div id="um-new-banner" class="ari-um-new-banner" style="display:none;">
+        <i class="fa-solid fa-triangle-exclamation"></i>
+        Warning: <strong><span id="um-new-count">0</span> user(s)</strong>
+        have registered and are awaiting instrument and group assignment.
+    </div>
+    <div style="display:flex;justify-content:flex-end;
+                margin-bottom:0.5rem;">
+        <div class="ari-um-view-toggle">
+            <button id="um-new-view-card"
+                    class="ari-um-view-btn ari-um-view-btn--active"
+                    title="Card view" aria-label="Card view">
+                <i class="fa-solid fa-grip"></i>
+            </button>
+            <button id="um-new-view-list"
+                    class="ari-um-view-btn"
+                    title="List view" aria-label="List view">
+                <i class="fa-solid fa-list"></i>
+            </button>
+        </div>
+    </div>
+    <div id="um-new-results" class="ari-user-results"></div>
+    <div id="um-new-empty" class="ari-sg-empty" style="display:none;">
+        <i class="fa-solid fa-circle-check"></i> No new members waiting.
+    </div>
+</div>
+
+<!-- =====================================================================
+     Current Members panel
+     ===================================================================== -->
+<div id="um-current" class="ari-um-panel" role="tabpanel" style="display:none;">
+    <div class="ari-user-search"
+         style="display:flex;align-items:center;gap:0.75rem;">
+        <div class="ari-user-search__input-wrap" style="flex:1;">
+            <i class="fa-solid fa-magnifying-glass ari-user-search__icon"></i>
+            <input type="text" id="user-search" class="ari-user-search__input"
+                   placeholder="Filter by username…" autocomplete="off">
+        </div>
+        <div class="ari-um-view-toggle">
+            <button id="um-cur-view-card"
+                    class="ari-um-view-btn ari-um-view-btn--active"
+                    title="Card view" aria-label="Card view">
+                <i class="fa-solid fa-grip"></i>
+            </button>
+            <button id="um-cur-view-list"
+                    class="ari-um-view-btn"
+                    title="List view" aria-label="List view">
+                <i class="fa-solid fa-list"></i>
+            </button>
+        </div>
+    </div>
+    <div id="um-group-filter" class="ari-um-filter-pills"></div>
+    <div id="search-status" class="ari-user-search__status"></div>
+    <div id="um-current-results" class="ari-user-results"></div>
+</div>
+
+<!-- =====================================================================
+     Shared: User detail panel
+     ===================================================================== -->
+<div id="user-detail" class="ari-user-detail" style="display:none;">
+    <div class="ari-user-detail__header">
+        <div class="ari-user-detail__avatar" id="detail-avatar">
+            <i class="fa-solid fa-user"></i>
+        </div>
+        <div class="ari-user-detail__info">
+            <h2 id="detail-username"></h2>
+            <span id="detail-groups-summary" class="ari-user-detail__groups-summary"></span>
+        </div>
+        <button id="btn-close-detail" class="ari-user-detail__close" title="Close">
+            <i class="fa-solid fa-xmark"></i>
+        </button>
+    </div>
+
+    <!-- Groups section -->
+    <div class="ari-user-detail__section">
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:0.4rem;">
+            <h3 style="margin:0;"><i class="fa-solid fa-users-gear"></i> Groups</h3>
+            <button id="btn-save-groups-top" class="ari-btn ari-btn--primary ari-btn--sm" style="display:none;">
+                <i class="fa-solid fa-floppy-disk"></i> Save Groups
+            </button>
+        </div>
+        <div id="detail-groups" class="ari-toggle-cards"></div>
+        <div id="groups-no-perm" class="ari-user-detail__no-perm" style="display:none;">
+            <i class="fa-solid fa-lock"></i> You do not have permission to manage any groups.
+        </div>
+        <div id="btn-save-groups-bottom-wrap" style="display:none;text-align:right;margin-top:0.5rem;">
+            <button id="btn-save-groups-bottom" class="ari-btn ari-btn--primary ari-btn--sm">
+                <i class="fa-solid fa-floppy-disk"></i> Save Groups
+            </button>
+        </div>
+    </div>
+
+    <!-- Danger zone -->
+    <div class="ari-user-detail__section ari-user-detail__danger" id="danger-zone" style="display:none;">
+        <h3><i class="fa-solid fa-triangle-exclamation"></i> Danger Zone</h3>
+        <p>Permanently remove this user account.</p>
+        <button id="btn-delete-user" class="ari-btn ari-btn--danger">
+            <i class="fa-solid fa-trash"></i> Delete User
+        </button>
+    </div>
+</div>
+
+<!-- Delete confirmation modal -->
+<div id="delete-modal" class="ari-modal-backdrop" style="display:none;">
+    <div class="ari-modal">
+        <div class="ari-modal__header">
+            <i class="fa-solid fa-triangle-exclamation"></i> Confirm Deletion
+        </div>
+        <div class="ari-modal__body">
+            Are you sure you want to delete user <strong id="delete-modal-user"></strong>?
+            This action cannot be undone.
+        </div>
+        <div class="ari-modal__footer">
+            <button id="btn-cancel-delete" class="ari-btn ari-btn--secondary">Cancel</button>
+            <button id="btn-confirm-delete" class="ari-btn ari-btn--danger">Delete</button>
+        </div>
+    </div>
+</div>
+
+<!-- Toast notification -->
+<div id="toast" class="ari-toast" style="display:none;"></div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+window.ARI_ADMIN = {
+    searchUrl: {{ url_for('api_user_search')|tojson }},
+    updateGroupsUrl: {{ url_for('api_user_update_groups')|tojson }},
+    updateInstrumentsUrl: {{ url_for('api_user_update_instruments')|tojson }},
+    deleteUrl: {{ url_for('api_user_delete')|tojson }}
+};
+</script>
+<script src="{{ url_for('static', filename='js/admin_users.js') }}"></script>
+{% endblock %}

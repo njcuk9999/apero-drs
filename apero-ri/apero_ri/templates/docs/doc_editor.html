@@ -1,0 +1,136 @@
+{% extends "docs/doc_base.html" %}
+{% block title %}APERO RI – Editing: {{ page_label }}{% endblock %}
+
+{% block extra_head %}
+<link id="hljs-theme" rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github.min.css"
+      crossorigin="anonymous" referrerpolicy="no-referrer" />
+<script>
+(function(){
+    var dark = document.documentElement.getAttribute('data-theme') === 'dark'
+            || document.body && document.body.getAttribute('data-theme') === 'dark';
+    if (dark) {
+        var el = document.getElementById('hljs-theme');
+        if (el) el.href = 'https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css';
+    }
+})();
+</script>
+{% endblock %}
+
+{% block doc_content %}
+<div class="ari-page-header">
+    <h1>
+        <i class="fa-solid fa-pen-to-square"></i>
+        Editing: {{ page_label }}
+        <span class="ari-doc-version__label" style="margin-left:0.5rem;">
+            <i class="fa-solid fa-code-branch"></i> {{ version_name }}
+        </span>
+    </h1>
+</div>
+
+<!-- Markdown toolbar -->
+<div class="ari-editor-toolbar">
+    <div class="ari-editor-toolbar__group">
+        <button type="button" class="ari-editor-toolbar__btn" data-action="bold"
+                title="Bold (Ctrl+B)"><i class="fa-solid fa-bold"></i></button>
+        <button type="button" class="ari-editor-toolbar__btn" data-action="italic"
+                title="Italic (Ctrl+I)"><i class="fa-solid fa-italic"></i></button>
+        <button type="button" class="ari-editor-toolbar__btn" data-action="strikethrough"
+                title="Strikethrough"><i class="fa-solid fa-strikethrough"></i></button>
+    </div>
+    <div class="ari-editor-toolbar__sep"></div>
+    <div class="ari-editor-toolbar__group">
+        <button type="button" class="ari-editor-toolbar__btn" data-action="h1"
+                title="Heading 1"><b>H1</b></button>
+        <button type="button" class="ari-editor-toolbar__btn" data-action="h2"
+                title="Heading 2"><b>H2</b></button>
+        <button type="button" class="ari-editor-toolbar__btn" data-action="h3"
+                title="Heading 3"><b>H3</b></button>
+    </div>
+    <div class="ari-editor-toolbar__sep"></div>
+    <div class="ari-editor-toolbar__group">
+        <button type="button" class="ari-editor-toolbar__btn" data-action="link"
+                title="Insert Link"><i class="fa-solid fa-link"></i></button>
+        <button type="button" class="ari-editor-toolbar__btn" data-action="image"
+                title="Insert Image"><i class="fa-solid fa-image"></i></button>
+        <button type="button" class="ari-editor-toolbar__btn" data-action="upload"
+                title="Upload Image"><i class="fa-solid fa-upload"></i></button>
+    </div>
+    <div class="ari-editor-toolbar__sep"></div>
+    <div class="ari-editor-toolbar__group">
+        <button type="button" class="ari-editor-toolbar__btn" data-action="code"
+                title="Inline Code"><i class="fa-solid fa-code"></i></button>
+        <button type="button" class="ari-editor-toolbar__btn" data-action="codeblock"
+                title="Code Block"><i class="fa-solid fa-file-code"></i></button>
+        <button type="button" class="ari-editor-toolbar__btn" data-action="quote"
+                title="Block Quote"><i class="fa-solid fa-quote-left"></i></button>
+    </div>
+    <div class="ari-editor-toolbar__sep"></div>
+    <div class="ari-editor-toolbar__group">
+        <button type="button" class="ari-editor-toolbar__btn" data-action="ul"
+                title="Bullet List"><i class="fa-solid fa-list-ul"></i></button>
+        <button type="button" class="ari-editor-toolbar__btn" data-action="ol"
+                title="Numbered List"><i class="fa-solid fa-list-ol"></i></button>
+        <button type="button" class="ari-editor-toolbar__btn" data-action="table"
+                title="Insert Table"><i class="fa-solid fa-table"></i></button>
+    </div>
+    <div class="ari-editor-toolbar__sep"></div>
+    <div class="ari-editor-toolbar__group">
+        <button type="button" class="ari-editor-toolbar__btn" data-action="hr"
+                title="Horizontal Rule"><i class="fa-solid fa-minus"></i></button>
+    </div>
+
+    <!-- Spacer -->
+    <div style="flex:1"></div>
+
+    <!-- Save / Cancel -->
+    <div class="ari-editor-toolbar__group">
+        <button type="button" class="ari-btn ari-btn--primary ari-btn--sm" id="editor-save">
+            <i class="fa-solid fa-floppy-disk"></i> Save
+        </button>
+        <a href="{{ view_url }}?v={{ version_id }}"
+           class="ari-btn ari-btn--sm" style="background:var(--ari-text-muted);color:#fff;">
+            <i class="fa-solid fa-xmark"></i> Cancel
+        </a>
+    </div>
+</div>
+
+<!-- Split view editor -->
+<div class="ari-editor-split">
+    <div class="ari-editor-pane">
+        <div class="ari-editor-pane__header">
+            <i class="fa-solid fa-code"></i> Markdown
+        </div>
+        <textarea id="editor-textarea" class="ari-editor-textarea">{{ doc_raw }}</textarea>
+    </div>
+    <div class="ari-editor-pane ari-editor-pane--preview">
+        <div class="ari-editor-pane__header">
+            <i class="fa-solid fa-eye"></i> Preview
+        </div>
+        <div id="editor-preview" class="ari-doc-content ari-editor-preview"></div>
+    </div>
+</div>
+
+<!-- Hidden file input for image upload -->
+<input type="file" id="image-upload-input" accept="image/*" style="display:none">
+
+<!-- Data attributes for JS -->
+<script>
+window.ARI_EDITOR = {
+    saveUrl: {{ url_for('doc_save', page_ref=doc_ref)|tojson }},
+    uploadUrl: {{ url_for('doc_upload_image')|tojson }},
+    viewUrl: {{ (view_url ~ '?v=' ~ version_id)|tojson }},
+    versionId: {{ version_id|tojson }},
+    docRef: {{ doc_ref|tojson }},
+    csrfOk: true
+};
+</script>
+{% endblock doc_content %}
+
+{% block extra_scripts %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/marked/12.0.1/marked.min.js"
+        crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"
+        crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<script src="{{ url_for('static', filename='js/doc_editor.js') }}"></script>
+{% endblock %}

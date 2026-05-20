@@ -35,6 +35,7 @@ from astropy.table import Table
 from pandasql import sqldf
 
 from apero.base import base as apero_base
+from apero.core import drs_astrometrics
 from apero.core import drs_file
 from apero.instruments import select
 from apero.io import drs_fits
@@ -80,6 +81,8 @@ WLOG = drs_log.wlog
 # get drs header
 DrsHeader = drs_file.Header
 FitsHeader = drs_file.FitsHeader
+# keep legacy API path drs_database.AstrometricDatabase working
+AstrometricDatabase = drs_astrometrics.AstrometricDatabase
 # get file types
 DrsInputFile = drs_file.DrsInputFile
 DrsFitsFile = drs_file.DrsFitsFile
@@ -98,8 +101,6 @@ DealFilenameReturn = Union[Tuple[str, str], Tuple[Path, str, str, str]]
 OBS_PATHS = dict()
 FILEDBS = dict()
 OBS_NAMES = dict()
-# define reserved object names
-RESERVED_OBJ_NAMES = ['CALIB', 'SKY', 'TEST']
 # cache for google sheet
 GOOGLE_TABLES = dict()
 # define standard google base url
@@ -110,334 +111,6 @@ GOOGLE_BASE_URL = ('https://docs.google.com/spreadsheets/d/{}/gviz/'
 # =============================================================================
 # Define classes
 # =============================================================================
-
-
-# =============================================================================
-# Object database
-# =============================================================================
-class AstrometricDatabase(DatabaseManager):
-    def __init__(self, params: ParamDict, shortname: str,
-                 pconst: Any = None,
-                 dparams: Optional[dict] = None):
-        """
-        Constructor of the Astrometric Database class
-
-        :param params: ParamDict, parameter dictionary of constants
-        :param dparams: dict, optional, the database yaml dictionary
-                        (parse if preloaded, otherwise reloads)
-
-        :return: None
-        """
-        # save class name
-        self.classname = 'AstrometricDatabase'
-        # deal with no pconst
-        if pconst is None:
-            pconst = load_functions.load_pconfig(select.INSTRUMENTS)
-        # construct super class
-        DatabaseManager.__init__(self, params, pconst)
-        # set input recipe shortname
-        self.shortname = shortname
-        # set name
-        self.name = 'astrom'
-        self.kind = 'astrom'
-        self.columns = self.pconst.ASTROMETRIC_DB_COLUMNS()
-        self.colnames = self.columns.names
-        # set path
-        self.database_settings(kind=self.kind, dparams=dparams)
-
-    def get_entries(self, columns: str = '*',
-                    nentries: Union[int, None] = None,
-                    condition: Union[str, None] = None,
-                    ) -> Union[None, list, tuple, np.ndarray, pd.DataFrame]:
-        """
-        Get an entry from the object database (can set columns to return, or
-        filter by specific columns)
-
-        :param columns: str, the columns to return ('*' for all)
-        :param nentries: int or None, if set limits the number of entries to get
-                         back - sorted newest to oldest
-        :param condition: str or None, if set the SQL query to add
-
-        :return: the entries of columns, if nentries = 1 returns either that
-                 entry (as a tuple) or None, if len(columns) = 1, returns
-                 a np.ndarray, else returns a pandas table
-        """
-        # set function
-        # _ = display_func('get_entries', __NAME__, self.classname)
-        # deal with no instrument set
-        if self.instrument == 'None':
-            return None
-        # deal with no database loaded
-        if self.database is None:
-            self.load_db()
-        # deal with having the possibility of more than one column
-        colnames = self.database.colnames(columns)
-        # ------------------------------------------------------------------
-        # set up kwargs from database query
-        sql = dict()
-        # set up sql kwargs
-        sql['sort_by'] = None
-        sql['sort_descending'] = True
-        # condition for used
-        sql['condition'] = 'USED = 1'
-        # ------------------------------------------------------------------
-        if condition is not None:
-            sql['condition'] += ' AND {0}'.format(condition)
-        # ------------------------------------------------------------------
-        # add the number of entries to get
-        if isinstance(nentries, int):
-            sql['max_rows'] = nentries
-        # if we have one entry just get the tuple back
-        if nentries == 1:
-            # do sql query
-            entries = self.database.get(columns, **sql)
-            # return filename
-            if len(entries) == 1:
-                if len(colnames) == 1:
-                    return entries[0][0]
-                else:
-                    return entries[0]
-            else:
-                return None
-        # ------------------------------------------------------------------
-        # if we have one column return a list
-        if len(colnames) == 1:
-            # return array for ease
-            sql['return_array'] = True
-            # do sql query
-            entries = self.database.get(columns, **sql)
-            # return one list
-            if len(entries) == 0:
-                return []
-            else:
-                return entries[:, 0]
-        # else return a pandas table
-        else:
-            # return as pandas table
-            sql['return_pandas'] = True
-            # do sql query
-            entries = self.database.get(columns, **sql)
-            # return pandas table
-            return entries
-
-    def add_entry(self, objname: str, objname_s: str,
-                  ra: float, ra_s: str, dec: float, dec_s: str,
-                  pmra: Union[float, None] = None, pmra_s: str = 'None',
-                  pmde: Union[float, None] = None, pmde_s: str = 'None',
-                  plx: Union[float, None] = None, plx_s: str = 'None',
-                  rv: Union[float, None] = None, rv_s: str = 'None',
-                  epoch: Union[float, None] = None,
-                  teff: Union[float, None] = None, teff_s: str = 'None',
-                  sp_type: Union[str, None] = None, sp_type_s: str = 'None',
-                  aliases: Union[List[str], str, None] = None,
-                  used: int = 1, notes: str = ''):
-        """
-        Add an object to the object database
-
-        :param objname: str, the primary object name (SIMBAD name)
-        :param objname_s: str, source of objname
-        :param ra: float, the Gaia right ascension of an object (in degrees)
-        :param ra_s: str, source of ra
-        :param dec: float, the Gaia declination of an object (in degrees)
-        :param dec_s: str, source of dec
-        :param pmra: float, the Gaia proper motion in RA (in mas/yr)
-        :param pmra_s: str, source of pmra
-        :param pmde: float, the Gaia proper motion in Dec (in mas/yr)
-        :param pmde_s: str, source of pmde
-        :param plx: float, the Gaia parallax in mas
-        :param plx_s: str, source of plx
-        :param rv: float, the RV in km/s
-        :param rv_s: str, source of rv
-        :param epoch: float, the Gaia epoch (2015.5)
-        :param teff: float, the temperature in K
-        :param teff_s: str, the source of Teff
-        :param sp_type: str, the spectral type
-        :param sp_type_s: str, the source of sp_type
-        :param aliases: list of strings or string, any other names this
-                        target can have
-        :param used: int, whether to use entries or not (normally ste manually)
-        :param notes: str, any notes/comments about this object
-
-        :return: None - updates database
-        """
-        # deal with aliases
-        if isinstance(aliases, str):
-            daliases = aliases
-        elif isinstance(aliases, list):
-            daliases = '|'.join(aliases)
-        else:
-            daliases = 'None'
-        # create insert dict
-        insert_dict = dict()
-        insert_dict['OBJNAME'] = drs_db.deal_with_null(objname)
-        insert_dict['ORIGINAL_NAME'] = drs_db.deal_with_null(objname_s)
-        insert_dict['ALIASES'] = daliases
-        insert_dict['RA_DEG'] = ra
-        insert_dict['RA_SOURCE'] = ra_s
-        insert_dict['DEC_DEG'] = dec
-        insert_dict['DEC_SOURCE'] = dec_s
-        insert_dict['EPOCH'] = epoch
-        insert_dict['PMRA'] = pmra
-        insert_dict['PMRA_SOURCE'] = pmra_s
-        insert_dict['PMDE'] = pmde
-        insert_dict['PMDE_SOURCE'] = pmde_s
-        insert_dict['PLX'] = plx
-        insert_dict['PLX_SOURCE'] = plx_s
-        insert_dict['RV'] = rv
-        insert_dict['RV_SOURCE'] = rv_s
-        insert_dict['TEFF'] = teff
-        insert_dict['TEFF_SOURCE'] = teff_s
-        insert_dict['SP_TYPE'] = drs_db.deal_with_null(sp_type)
-        insert_dict['SP_TYPE_SOURCE'] = drs_db.deal_with_null(sp_type_s)
-        insert_dict['NOTES'] = drs_db.deal_with_null(notes)
-        insert_dict['USED'] = used
-        insert_dict['DATE_ADDED'] = Time.now().iso
-        # ------------------------------------------------------------------
-        # check that we are adding the correct columns (i.e. all columns
-        #   are in database)
-        self.check_columns(insert_dict)
-        # try to add a new row
-        if not self.params['DB.BATCH_QUERIES']:
-            self.database.add_row(insert_dict=insert_dict)
-        else:
-            db_send(self.params, self.database.tablename, self.shortname,
-                    insert_dict)
-
-    def count(self, condition: Union[str, None] = None) -> int:
-        """
-        Count the number of rows in the object database
-        """
-        return self.database.count(condition=condition)
-
-    def find_objnames(self, pconst: Any,
-                      objnames: Union[List[str], np.ndarray],
-                      allow_empty: bool,
-                      listname: Optional[str] = None,
-                      ) -> Tuple[List[str], List[str]]:
-        """
-        Wrapper around find_objname
-
-        :param pconst: psuedo constants - used to clean the object name
-        :param objnames: list of str, a list of object names to clean and fimd
-        :param allow_empty: bool, if True allows not objects to be found
-                            if False will raise an error
-        :param listname: str, the name of the objnames list (for error messages)
-        :return:
-        """
-        func_name = display_func('find_objnames', __NAME__, self.classname)
-        # deal with objnames not being a list or a
-        if not isinstance(objnames, (list, np.ndarray)):
-            objnames = [objnames]
-        # loop around objects
-        out_objnames = []
-        missing_objnames = []
-        for objname in objnames:
-            out_objname, found = self.find_objname(pconst, objname)
-            if found:
-                out_objnames.append(out_objname)
-            else:
-                missing_objnames.append(objname)
-        # ---------------------------------------------------------------------
-        # deal with no entries and not expecting an empty list return
-        if len(out_objnames) == 0 and not allow_empty:
-            # deal with name of object list
-            if listname is None:
-                listname = func_name
-            else:
-                listname = f'"{listname}" ({func_name})'
-            # log error: No objects found in astrometric database.
-            # TODO: Add to the language database
-            emsg = 'No objects found in astrometric database.'
-            emsg += '\n\tPlease add objects to the astrometric database.'
-            emsg += '\n\tListname={0}'
-            emsg += '\n\tObjnames: "{1}"'
-            eargs = [listname, ', '.join(objnames)]
-            # report the error
-            raise AperoCodedException(None, message=emsg.format(*eargs),
-                                      targs=eargs)
-        # ---------------------------------------------------------------------
-        # return the filled out list
-        return out_objnames, missing_objnames
-
-    def find_objname(self, pconst: Any,
-                     objname: str, return_flag: bool = False
-                     ) -> Tuple[str, Union[bool, int]]:
-        """
-        Find and clean the correct object name (as used by apero) this is
-        either:
-        1. from the OBJNAME column of the database directly
-        2. from the ALIAS column of the database (if not found in OBJNAME)
-        3. the cleaned input name (not found in the database)
-
-        :param pconst: psuedo constants - used to clean the object name
-        :param objname: str, the object name to clean and find
-        :param return_flag: bool, if True returns a flag (0, 1 or 2) showing
-                             where the object was found
-                             else returns a True/False )found or not found)
-
-        :return: Tuple, 1. str, the "correct" object name to use for the DRS,
-                 2. a flag on where object was found 0=not found, 1=found in
-                    OBJNAME, 2=found in ALIASES
-        """
-        # global to be updated so we don't do this more than once for the
-        #   same objname
-        global OBS_NAMES
-        # ---------------------------------------------------------------------
-        # check objname in global
-        if objname in OBS_NAMES:
-            return OBS_NAMES[objname]
-        # ---------------------------------------------------------------------
-        # deal with calib / sky / test
-        if objname in RESERVED_OBJ_NAMES:
-            return objname, True
-        # ---------------------------------------------------------------------
-        # assume we have not found our object name
-        found = 0
-        # clean the input objname
-        cobjname = pconst.DRS_OBJ_NAME(objname)
-        # deal with a null object (should not continue)
-        if cobjname == 'Null':
-            if return_flag:
-                return '', 0
-            else:
-                return '', False
-        # sql obj condition
-        sql_obj_cond = 'OBJNAME="{0}" AND USED=1'.format(cobjname)
-        # look for object name in database
-        count = self.count(condition=sql_obj_cond)
-        # if we have not found our object we must check aliases
-        if count == 0:
-            # condition - only use ones with USED
-            condition = 'USED=1'
-            # get the full database
-            full_table = self.get_entries('OBJNAME, ALIASES',
-                                          condition=condition)
-            aliases = full_table['ALIASES']
-            # set row to zero as a placeholder
-            row = 0
-            # loop around each row in the table
-            for row in range(len(aliases)):
-                # loop around aliases until we find the alias
-                for alias in str(aliases[row]).split('|'):
-                    if pconst.DRS_OBJ_NAME(alias) == cobjname:
-                        found = 2
-                        break
-                # stop looping if we have found our object
-                if found > 0:
-                    break
-            # get the cobjname for this target if found
-            if found > 0:
-                cobjname = full_table['OBJNAME'][row]
-        # if there is an entry we found the object
-        else:
-            found = 1
-        # store in global so we don't have to do this again
-        OBS_NAMES[objname] = [cobjname, found]
-        # return the correct object name
-        if return_flag:
-            return cobjname, found
-        else:
-            return cobjname, found > 0
 
 
 # =============================================================================
@@ -3621,7 +3294,7 @@ def get_google_sheet(params: ParamDict, sheet_id: str, worksheet: int = 0,
             # try to open table
             try:
                 table = drs_io.no_mask_table(Table.read(rawdata.text,
-                                                        format='ascii'))
+                                                        format='ascii.basic'))
                 break
             # if this fails try again (but with a limit
             except InconsistentTableError as _:

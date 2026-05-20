@@ -20,6 +20,7 @@ from typing import Any, Dict, List, Literal, Optional, Union
 from decimal import Decimal
 
 import time
+import random
 import numpy as np
 import pandas as pd
 import sqlalchemy
@@ -58,6 +59,8 @@ SA_TEXT = sqlalchemy.text
 MAX_STR_SIZE = 1024
 # wait time for retry operations (in seconds)
 WAIT_TIME = 10
+# batch size for bulk row updates
+SET_ROWS_BATCH_SIZE = 250
 # connection pool configuration
 POOL_SIZE = 5  # number of connections to maintain in pool
 MAX_OVERFLOW = 10  # max additional connections beyond pool_size
@@ -68,23 +71,64 @@ POOL_RECYCLE = 1200  # seconds before recycling connections (20 min)
 # =============================================================================
 # Define helper functions
 # =============================================================================
-def _retry_operation(func, max_retries: int = 5, retry_delay: float = None):
+def _is_transient_table_error(exception: Exception) -> bool:
     """
-    Retry a database operation on OperationalError or network errors
+    Detect transient table-missing errors (MySQL errno 1146).
+    
+    These are rare race conditions where MySQL briefly reports a table
+    doesn't exist despite it actually existing and the same query working
+    before/after.
+    
+    :param exception: Exception instance
+    :return: bool, True if this is a transient table error
+    """
+    error_str = str(exception).lower()
+    
+    # Check for MySQL errno 1146 (table doesn't exist)
+    # Pattern: (1146): Table 'db.table' doesn't exist
+    if '1146' in str(exception) or 'no such table' in error_str:
+        return True
+    
+    # Check for sqlalchemy NoSuchTableError
+    if exception.__class__.__name__ == 'NoSuchTableError':
+        return True
+    
+    return False
 
+
+def _retry_operation(func, max_retries: int = 5, retry_delay: float = None,
+                     retry_transient_table_errors: bool = True):
+    """
+    Retry a database operation with bounded exponential backoff.
+    
+    Handles:
+    1. Connection/network errors (existing behavior)
+    2. Transient table-missing errors (errno 1146 / NoSuchTableError)
+       - Only if retry_transient_table_errors=True
+    
+    Backoff strategy for transient table errors:
+    - Base delay: 0.05s, exponential growth with cap at 1.0s, random jitter
+    - Connection errors use original fixed delays
+    
     :param func: callable, the function to execute
-    :param max_retries: int, maximum number of retry attempts
-    :param retry_delay: float, delay in seconds between retries (defaults to WAIT_TIME)
+    :param max_retries: int, maximum number of retry attempts (default: 5)
+    :param retry_delay: float, delay in seconds for connection errors
+                        (defaults to WAIT_TIME)
+    :param retry_transient_table_errors: bool, retry on transient table errors
     :return: result from func
-    :raises: OperationalError or OSError if all retry attempts fail
+    :raises: Last exception encountered if all retry attempts fail
     """
     if retry_delay is None:
         retry_delay = WAIT_TIME
 
+    last_exception = None
+    
     for attempt in range(max_retries):
         try:
             return func()
         except (OperationalError, OSError) as e:
+            last_exception = e
+            
             # Check if it's a connection/network error
             error_msg = str(e).lower()
             is_connection_error = any(phrase in error_msg for phrase in [
@@ -103,6 +147,27 @@ def _retry_operation(func, max_retries: int = 5, retry_delay: float = None):
                 # For other operational errors, use shorter delay
                 time.sleep(2)
             else:
+                raise
+                
+        except Exception as e:
+            last_exception = e
+            
+            # Check if this is a transient table error we should retry
+            if (retry_transient_table_errors and 
+                _is_transient_table_error(e) and 
+                attempt < max_retries - 1):
+                
+                # Exponential backoff with jitter for transient table errors
+                # Base: 0.05s, grows exponentially, capped at 1.0s
+                base_delay = 0.05
+                exponential_delay = min(base_delay * (2 ** attempt), 1.0)
+                # Add small random jitter (0-20% of delay)
+                jitter = random.uniform(0, exponential_delay * 0.2)
+                sleep_time = exponential_delay + jitter
+                
+                time.sleep(sleep_time)
+            else:
+                # For non-transient errors or final attempt, fail fast
                 raise
 
 
@@ -302,21 +367,32 @@ class AperoDatabase:
             (current_time - self._metadata_cache_timestamp[cache_key]) < 300):
             return self._metadata_cache[cache_key]
 
-        # Refresh metadata from database
-        metadata = sqlalchemy.MetaData()
-        try:
+        # Refresh metadata from database with retry on transient errors
+        def _reflect_metadata():
+            metadata = sqlalchemy.MetaData()
             if tablename is not None:
                 # Reflect specific table only
                 # Use only=[tablename] to avoid reflecting all tables
-                _retry_operation(lambda: metadata.reflect(bind=self.engine,
-                                                         only=[tablename]))
+                metadata.reflect(bind=self.engine, only=[tablename])
             else:
                 # Reflect all tables
-                _retry_operation(lambda: metadata.reflect(bind=self.engine))
-        except NoSuchTableError:
-            # If table doesn't exist, just return empty metadata
-            # This allows operations to fail gracefully at the point of use
-            pass
+                metadata.reflect(bind=self.engine)
+            return metadata
+        
+        # Try to reflect with retries on transient table errors
+        # Use max 7 retries for metadata reflection (slightly higher than
+        # normal operations since this is a critical path)
+        try:
+            metadata = _retry_operation(_reflect_metadata, max_retries=7,
+                                       retry_transient_table_errors=True)
+        except NoSuchTableError as e:
+            # If table definitively doesn't exist after retries,
+            # just return empty metadata (allows operations to fail gracefully
+            # at point of use rather than during metadata fetch)
+            metadata = sqlalchemy.MetaData()
+        except Exception as e:
+            # For any other exception during metadata reflection, fail fast
+            raise
 
         # Cache the result
         self._metadata_cache[cache_key] = metadata
@@ -362,6 +438,10 @@ class AperoDatabase:
         """
 
         # ----------------------------------------------------------------------
+        # Normalize uniques early so downstream list operations are always safe.
+        # This avoids TypeError when callers pass uniques=None.
+        _uniques = [] if uniques is None else list(uniques)
+        # ----------------------------------------------------------------------
         # re-create the columns (just name and type)
         new_columns = []
         for col in columns:
@@ -383,17 +463,17 @@ class AperoDatabase:
             new_indexes = None
         # ----------------------------------------------------------------------
         # deal with uniques
-        if uniques is None:
+        if len(_uniques) == 0:
             new_uniques = []
         else:
-            constraint_name = 'uq_' + '_'.join(uniques)
-            new_uniques = [sqlalchemy.UniqueConstraint(*uniques,
+            constraint_name = 'uq_' + '_'.join(_uniques)
+            new_uniques = [sqlalchemy.UniqueConstraint(*_uniques,
                                                        name=constraint_name)]
         # ----------------------------------------------------------------------
         # get a list of unique columns
         unique_cols = self._unique_cols(columns=new_columns)
         # add the columsn from uniques
-        unique_cols = list(set(unique_cols + uniques))
+        unique_cols = list(set(unique_cols + _uniques))
         # deal with adding the hash columns
         if len(unique_cols) > 0:
             # create a hash column
@@ -924,45 +1004,178 @@ class AperoDatabase:
 
         # Get unique columns
         unique_cols = self._unique_cols(tablename)
+        # Flatten any comma-separated unique definitions to a plain column list.
+        # (Defensive; _unique_cols() usually returns simple names already.)
+        expanded_unique_cols = []
+        for unique_col in unique_cols:
+            for col in str(unique_col).split(','):
+                col = col.strip()
+                if len(col) > 0:
+                    expanded_unique_cols.append(col)
+        unique_cols = sorted(set(expanded_unique_cols))
+
+        def _normalize_update_row(update_dict: dict):
+            """
+            Normalize a single update row without mutating caller state.
+
+            Returns:
+                row_update: normalized update payload (columns to SET)
+                fallback_condition: SQL condition for non-batch execution
+                is_batchable: True when we can safely include this row in a
+                              UHASH-keyed executemany batch
+                where_uhash: identity hash used in WHERE clause for batch path
+            """
+            # Work on a shallow copy so caller-provided dict is never mutated.
+            row_update = dict(update_dict)
+            # Extract explicit SQL condition (if present); it is not a data column.
+            explicit_condition = row_update.pop('condition', None)
+            # Track whether caller explicitly provided UHASH in payload.
+            # If not provided, we do not inject/update UHASH unless needed.
+            caller_provided_uhash = UHASH_COL in row_update
+
+            # Normalize null-like values to Python None for DB portability.
+            for key, value in row_update.items():
+                try:
+                    # pd.isna handles NaN/None/pd.NA consistently.
+                    if pd.isna(value):
+                        row_update[key] = None
+                    elif isinstance(value, str):
+                        # Normalize string null markers used by upstream code.
+                        if value.lower() in ['null', 'none', 'nan']:
+                            row_update[key] = None
+                except (TypeError, ValueError):
+                    # Some objects are not compatible with pd.isna; keep fallback.
+                    if isinstance(value, str):
+                        if value.lower() in ['null', 'none', 'nan']:
+                            row_update[key] = None
+
+            # Determine whether we can safely recompute UHASH from this payload.
+            # We only do this when ALL unique columns are present in the row.
+            has_all_unique_cols = len(unique_cols) > 0
+            if has_all_unique_cols:
+                for unique_col in unique_cols:
+                    if unique_col not in row_update:
+                        has_all_unique_cols = False
+                        break
+
+            # Start without inferred identity; fill this only when safe.
+            where_uhash = None
+
+            # If caller gave explicit condition, respect it as the row selector.
+            # We still allow row_update payload, but we do not force recompute hash
+            # from partial unique data (this caused historical collisions).
+            if explicit_condition is not None:
+                if caller_provided_uhash:
+                    where_uhash = row_update.get(UHASH_COL)
+            else:
+                # No explicit condition: we must infer row identity safely.
+                # Priority 1: caller-supplied UHASH if present.
+                if caller_provided_uhash:
+                    where_uhash = row_update.get(UHASH_COL)
+                # Priority 2: recompute UHASH only when unique key set is complete.
+                elif has_all_unique_cols:
+                    where_uhash = _hash_col(dict(row_update), unique_cols,
+                                            return_string=True)
+                # If table has unique keys but payload is partial and no condition,
+                # updating would be ambiguous; fail fast instead of touching wrong rows.
+                elif len(unique_cols) > 0:
+                    emsg = ('set_rows requires either condition, explicit UHASH, '
+                            'or all unique columns to identify target row')
+                    raise AperoDatabaseError(message=emsg)
+
+            # Build fallback SQL condition used by non-batch execution path.
+            fallback_condition = explicit_condition
+            if fallback_condition is None and where_uhash is not None:
+                fallback_condition = f'{UHASH_COL}="{where_uhash}"'
+
+            # Batch only rows with inferred UHASH identity and no custom condition.
+            is_batchable = explicit_condition is None and where_uhash is not None
+            return row_update, fallback_condition, is_batchable, where_uhash
+
+        def _execute_row_update(row_update: dict, condition: Optional[str]):
+            # Build single-row UPDATE payload from normalized row dictionary.
+            update_query = sqlalchemy.update(sqltable).values(row_update)
+            # Apply WHERE clause only when supplied.
+            if condition is not None:
+                update_query = update_query.where(sqlalchemy.text(condition))
+            # Execute in its own transaction block for safety on fallback path.
+            with self.engine.begin() as conn:
+                conn.execute(update_query)
+
+        def _execute_batch_chunk(update_columns: List[str], rows: List[dict]):
+            # Build bindparam mapping for the SET clause once per chunk shape.
+            update_values = dict()
+            for column in update_columns:
+                update_values[column] = sqlalchemy.bindparam(column)
+
+            # Build one UPDATE statement keyed by UHASH in WHERE clause.
+            update_query = sqlalchemy.update(sqltable)
+            update_query = update_query.where(
+                sqltable.c[UHASH_COL] == sqlalchemy.bindparam('_where_uhash')
+            )
+            update_query = update_query.values(update_values)
+
+            # Expand each row payload with a dedicated WHERE identity bind.
+            # This enables SQLAlchemy executemany() for the whole chunk.
+            batch_params = []
+            for rowinfo in rows:
+                # rowinfo stores payload columns separately from row identity.
+                params = dict(rowinfo['row_update'])
+                params['_where_uhash'] = rowinfo['where_uhash']
+                batch_params.append(params)
+
+            # Execute the full chunk in a single transactional operation.
+            with self.engine.begin() as conn:
+                conn.execute(update_query, batch_params)
 
         def _execute_set_rows():
-            with self.engine.begin() as conn:
-                for update_dict in update_dicts:
-                    # Make a shallow copy to avoid mutating the caller's data
-                    row_update = dict(update_dict)
+            # Group rows by identical payload column shape.
+            # executemany requires one SQL statement shape per batch.
+            batch_groups = dict()
+            # Keep non-batchable rows here (explicit conditions, ambiguous identity,
+            # or any row shape that should stay on conservative single-row path).
+            fallback_rows = []
 
-                    # Extract explicit condition if provided
-                    condition = row_update.pop("condition", None)
+            # Normalize all rows first so we can separate batch/fallback paths.
+            for update_dict in update_dicts:
+                row_update, condition, is_batchable, where_uhash = (
+                    _normalize_update_row(update_dict)
+                )
+                if is_batchable:
+                    # Group by deterministic column ordering so rows share one SQL.
+                    update_columns = tuple(sorted(row_update.keys()))
+                    if update_columns not in batch_groups:
+                        batch_groups[update_columns] = []
+                    # Keep WHERE identity separate so auto-inferred UHASH does
+                    # not need to be written back into the row payload.
+                    batch_groups[update_columns].append(dict(
+                        row_update=row_update,
+                        where_uhash=where_uhash
+                    ))
+                else:
+                    # Non-batchable rows retain exact per-row condition semantics.
+                    fallback_rows.append((row_update, condition))
 
-                    # Handle NaN/None/null strings
-                    for key, value in row_update.items():
-                        # Check for NaN values using pandas isna (works reliably with NumPy 2.x)
-                        # Handles np.nan, float('nan'), None, pd.NA, etc.
-                        try:
-                            if pd.isna(value):
-                                row_update[key] = None
-                            elif isinstance(value, str):
-                                if value.lower() in ["null", "none", "nan"]:
-                                    row_update[key] = None
-                        except (TypeError, ValueError):
-                            # pd.isna can raise TypeError for some types
-                            if isinstance(value, str):
-                                if value.lower() in ["null", "none", "nan"]:
-                                    row_update[key] = None
+            # Execute each batch group in chunks to avoid oversized transactions.
+            for update_columns, grouped_rows in batch_groups.items():
+                for start in range(0, len(grouped_rows), SET_ROWS_BATCH_SIZE):
+                    # Slice a bounded chunk for one executemany operation.
+                    chunk_rows = grouped_rows[start:start + SET_ROWS_BATCH_SIZE]
+                    try:
+                        # Fast path: one SQL statement shape for many row params.
+                        _execute_batch_chunk(list(update_columns), chunk_rows)
+                    except Exception:
+                        # Fallback path: if chunk-level batch fails, retry each row
+                        # independently so one bad row does not lose entire chunk.
+                        for rowinfo in chunk_rows:
+                            _execute_row_update(
+                                rowinfo['row_update'],
+                                f'{UHASH_COL}="{rowinfo["where_uhash"]}"'
+                            )
 
-                    # Add hash column if needed
-                    if unique_cols:
-                        row_update = _hash_col(row_update, unique_cols)
-                        # Only use hash condition if not explicitly provided
-                        if condition is None and UHASH_COL in row_update:
-                            condition = f'{UHASH_COL}="{row_update[UHASH_COL]}"'
-
-                    # Build UPDATE query for this row
-                    update_query = sqlalchemy.update(sqltable).values(row_update)
-                    if condition is not None:
-                        update_query = update_query.where(sqlalchemy.text(condition))
-
-                    conn.execute(update_query)
+            # Execute explicit-condition / non-batch rows individually.
+            for row_update, condition in fallback_rows:
+                _execute_row_update(row_update, condition)
         _retry_operation(_execute_set_rows, max_retries=5)
         # make sure all rows are added an dpending connections closed
         time.sleep(5)

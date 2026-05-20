@@ -32,6 +32,7 @@ from aperocore import drs_lang
 from aperocore.core.drs_base_classes import Printer
 from apero.core import drs_argument
 from apero.core import drs_database
+from apero.core import drs_astrometrics
 from aperocore.core import drs_exceptions
 from aperocore.core import drs_base_classes as base_class
 from aperocore.core import drs_misc
@@ -2668,16 +2669,18 @@ def _multi_process_process(params, shortname, runlist, cores, groupname=None):
             # debug log: MULTIPROCESS - joining job {0}
             WLOG(params, 'debug', textentry('90-503-00021', args=[pit]))
             proc.join()
-        # ---------------------------------------------------------------------
-        # update the index database (taking into account include/exclude lists)
-        #    we have to loop around block kinds to prevent recipe from updating
-        #    the index database every time a new recipe starts
+        # -----------------------------------------------------------------
+        # push all pending db files to the database (after group is
+        # finished) group recipes are assumed independent of each other
+        # - so we can do this after only
         # this is really important as we have disabled updating for parallel
         #  runs to make it more efficient
+        # -----------------------------------------------------------------
         # do not update if we are running a test
         if not params['TEST_RUN']:
-            update_index_db(params, shortname)
-
+            # -----------------------------------------------------------------
+            # We should update the database here
+            drs_database.db_push(params)
     # return return_dict
     return dict(return_dict)
 
@@ -2738,16 +2741,18 @@ def _multi_process_pool(params, shortname, runlist, cores, groupname=None):
             if result is not None:
                 for key in result:
                     return_dict[key] = result[key]
-        # ---------------------------------------------------------------------
-        # update the index database (taking into account include/exclude lists)
-        #    we have to loop around block kinds to prevent recipe from updating
-        #    the index database every time a new recipe starts
+        # -----------------------------------------------------------------
+        # push all pending db files to the database (after group is
+        # finished) group recipes are assumed independent of each other
+        # - so we can do this after only
         # this is really important as we have disabled updating for parallel
         #  runs to make it more efficient
+        # -----------------------------------------------------------------
         # do not update if we are running a test
         if not params['TEST_RUN']:
-            update_index_db(params, shortname)
-
+            # -----------------------------------------------------------------
+            # We should update the database here
+            drs_database.db_push(params)
     # return return_dict
     return dict(return_dict)
 
@@ -2797,14 +2802,17 @@ def _multi_process_pathos(params, shortname, runlist, cores, groupname=None):
                     for key in result:
                         return_dict[key] = result[key]
             # -----------------------------------------------------------------
-            # update the index database (taking into account include/exclude lists)
-            #    we have to loop around block kinds to prevent recipe from updating
-            #    the index database every time a new recipe starts
+            # push all pending db files to the database (after group is
+            # finished) group recipes are assumed independent of each other
+            # - so we can do this after only
             # this is really important as we have disabled updating for parallel
             #  runs to make it more efficient
+            # -----------------------------------------------------------------
             # do not update if we are running a test
             if not params['TEST_RUN']:
-                update_index_db(params, shortname)
+                # -------------------------------------------------------------
+                # We should update the database here
+                drs_database.db_push(params)
         # return return_dict
         return dict(return_dict)
     except ImportError:
@@ -3285,9 +3293,12 @@ def _linear_headerfix(params, obs_dirs, shortname,
         job_msg = ' [{0}/{1}] '.format(job, total_jobs)
     else:
         job_msg = ''
-    # load the object database
-    objdbm = drs_database.AstrometricDatabase(params, shortname)
+    # load the object database (yaml-backed)
+    objdbm = drs_astrometrics.AstrometricDatabase(params, shortname)
     objdbm.load_db()
+    # warm_cache is now a no-op shim (yaml lookups are already in-memory);
+    # kept here as a marker for the legacy fork-pool pre-load behaviour
+    objdbm.warm_cache()
     # construct the index database instance
     findexdbm = drs_database.FileIndexDatabase(params, shortname)
     findexdbm.load_db()
@@ -4362,7 +4373,7 @@ def _check_runtable(params, runtable, recipemod):
 
 def _find_special_targets(params: ParamDict, pconst,
                           object_list: List[str], special_name: str,
-                          objdbm: drs_database.AstrometricDatabase,
+                          objdbm: drs_astrometrics.AstrometricDatabase,
                           ) -> List[str]:
     """
     Find special targets (i.e. telluric targets or science targets) in the
@@ -4386,7 +4397,7 @@ def _find_special_targets(params: ParamDict, pconst,
         if len(FOUND_SPECIAL_DICT[special_name]) > 0:
             return FOUND_SPECIAL_DICT[special_name]
     # Other wise make found / missing list
-    found_list, missing_list = objdbm.find_objnames(pconst, object_list,
+    found_list, missing_list = objdbm.find_objnames(object_list,
                                                     allow_empty=False,
                                                     listname=special_name)
     # -------------------------------------------------------------------------
@@ -4451,8 +4462,8 @@ def _get_filters(params: ParamDict, srecipe: DrsRecipe,
     func_name = __NAME__ + '._get_filters()'
     # get pseudo constatns
     pconst = load_functions.load_pconfig(select.INSTRUMENTS)
-    # need to load object database
-    objdbm = drs_database.AstrometricDatabase(params, srecipe.shortname)
+    # need to load object database (yaml-backed)
+    objdbm = drs_astrometrics.AstrometricDatabase(params, srecipe.shortname)
     objdbm.load_db()
     # set up filter storage
     filters = dict()
@@ -4507,7 +4518,7 @@ def _get_filters(params: ParamDict, srecipe: DrsRecipe,
                 user_filter = list(user_filter)
                 # note we need to update this list to match
                 # the cleaning that is done in preprocessing
-                clist, _ = objdbm.find_objnames(pconst, user_filter,
+                clist, _ = objdbm.find_objnames(user_filter,
                                                 allow_empty=True)
                 # add cleaned obj list to filters
                 filters[key] = list(np.unique(clist))

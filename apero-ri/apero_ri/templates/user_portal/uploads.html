@@ -1,0 +1,103 @@
+{% extends "general/sidebar_base.html" %}
+{% block title %}APERO RI – My Uploads{% endblock %}
+
+{% block doc_content %}
+<div class="ari-page-header">
+    <h1><i class="{{ page_icon }}"></i> {{ page_label }}</h1>
+</div>
+
+<div id="uu-no-dirs" class="ari-sg-empty" style="display:none;">
+    <i class="fa-solid fa-folder-open"></i>
+    No upload directories are available to you yet.
+    Contact an admin to request access.
+</div>
+
+<!-- Per-directory sections are injected here by JS -->
+<div id="uu-sections"></div>
+
+<!-- ================================================================
+     Per-directory upload modal
+     ================================================================ -->
+<div id="uu-upload-overlay" class="ari-modal-overlay" style="display:none;"
+     aria-modal="true" role="dialog" aria-labelledby="uu-upload-title">
+    <div class="ari-modal ari-modal--uu">
+        <div class="ari-modal__header ari-modal__header--normal">
+            <h2 id="uu-upload-title">
+                <i class="fa-solid fa-upload"></i>
+                Upload a file
+            </h2>
+            <button class="ari-modal__close" id="uu-upload-close"
+                    title="Close" aria-label="Close">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+        <div class="ari-modal__body">
+            <input type="hidden" id="uu-upload-dir-id">
+
+            <div id="uu-drop-zone" class="uu-drop-zone"
+                 tabindex="0" role="button"
+                 aria-label="Drop files here or click to browse">
+                <i class="fa-solid fa-cloud-arrow-up uu-drop-icon"></i>
+                <p class="uu-drop-text">
+                    Drag &amp; drop a file here, or
+                    <span class="uu-drop-link">click to browse</span>
+                </p>
+                <p class="uu-drop-hint" id="uu-quota-hint"></p>
+                <input type="file" id="uu-file-input"
+                       class="uu-file-input" aria-hidden="true">
+            </div>
+
+            <div id="uu-upload-progress" class="uu-progress-wrap"
+                 style="display:none;">
+                <div class="uu-progress">
+                    <div class="uu-progress__bar" id="uu-progress-bar"></div>
+                </div>
+                <span id="uu-progress-label">Uploading…</span>
+            </div>
+
+            <div id="uu-upload-error" class="ari-alert ari-alert--danger"
+                 style="display:none;"></div>
+            <div id="uu-upload-ok" class="ari-alert ari-alert--success"
+                 style="display:none;"></div>
+        </div>
+    </div>
+</div>
+
+<!-- Share link modal -->
+<div id="uu-share-overlay" class="ari-modal-overlay" style="display:none;"
+     aria-modal="true" role="dialog">
+    <div class="ari-modal ari-modal--uu-share">
+        <div class="ari-modal__header ari-modal__header--normal">
+            <h2><i class="fa-solid fa-share-nodes"></i> Share Link</h2>
+            <button class="ari-modal__close" id="uu-share-close"
+                    title="Close" aria-label="Close">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+        <div class="ari-modal__body">
+            <p class="uu-share-info">
+                Anyone with this link can download
+                <strong id="uu-share-filename"></strong>.
+            </p>
+            <div class="uu-share-row">
+                <input type="text" id="uu-share-url" class="ari-form-control"
+                       readonly>
+                <button id="uu-share-copy"
+                        class="ari-btn ari-btn--secondary">
+                    <i class="fa-solid fa-copy"></i> Copy
+                </button>
+            </div>
+            <div id="uu-share-copied" class="uu-share-copied"
+                 style="display:none;">
+                <i class="fa-solid fa-check"></i> Copied!
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="{{ url_for('static',
+    filename='js/user_uploads.js') }}?v=20260411a" defer></script>
+{% endblock %}

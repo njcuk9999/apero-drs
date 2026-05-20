@@ -23,6 +23,7 @@ from aperocore.base import base
 from aperocore.constants import param_functions
 from aperocore import drs_lang
 from apero.core import drs_database
+from apero.core import drs_astrometrics
 from aperocore.core import drs_log
 from aperocore.core import drs_misc
 from apero.io import drs_path
@@ -1231,11 +1232,12 @@ def add_recipe_tables(params: ParamDict, table: Table, machine_name: str):
 # Object index page
 # =============================================================================
 def make_finder_page(params: ParamDict):
-    # load object database
-    objdbm = drs_database.AstrometricDatabase(params, shortname='ARI')
+    # load object database (yaml-backed)
+    objdbm = drs_astrometrics.AstrometricDatabase(params, shortname='ARI')
     objdbm.load_db()
-    # get all objects
-    object_table = objdbm.get_entries()
+    # get all objects (returns list of dicts) and convert to DataFrame so
+    # the existing pandas-based logic below keeps working
+    object_table = pd.DataFrame(objdbm.get_entries())
     # sort object alphabetically
     object_table = object_table.sort_values('OBJNAME')
     # get list of object names

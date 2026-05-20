@@ -754,14 +754,20 @@ def database_tables(args: argparse.Namespace, all_params: ParamDict,
     # ----------------------------------------------------------------------
     # Individual database table settings
     # ----------------------------------------------------------------------
-    database_user = base.DATABASE_FULLNAMES
-    databases_raw = base.DATABASE_NAMES
+    db_map = [('calib', 'calibration'),
+              ('tellu', 'telluric'),
+              ('findex', 'file index'),
+              ('log', 'recipe log'),
+              ('lang', 'language')]
+    databases_raw = [row[0] for row in db_map]
+    database_user = [row[1] for row in db_map]
     if db_ask:
-        database_ask = [True, True, False, False, False, False, False]
+        database_ask = [True, True, False, False, False]
     else:
-        database_ask = [False] * 7
-    database_args = ['calibtable', 'tellutable', 'findextable', 'logtable',
-                     'astromtable', 'langtable', 'rejecttable']
+        database_ask = [False] * len(databases_raw)
+    database_args = ['calibtable', 'tellutable',
+                     'findextable', 'logtable',
+                     'langtable']
     # loop around databases
     for db_it in range(len(database_user)):
         # ---------------------------------------------------------------------
@@ -1949,6 +1955,8 @@ def update_db_settings(aparams: ParamDict) -> ParamDict:
     for dbname in base.DATABASE_NAMES:
         # yaml is upper case
         ydbname = dbname.upper()
+        if ydbname not in dparams:
+            continue
         # get correct dictionary
         sdict = dparams[ydbname]
         # add calib database

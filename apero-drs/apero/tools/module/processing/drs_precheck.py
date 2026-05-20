@@ -20,6 +20,7 @@ from aperocore.constants import load_functions
 from aperocore import drs_lang
 from aperocore import math as mp
 from apero.core import drs_argument
+from apero.core import drs_astrometrics
 from apero.core import drs_database
 from apero.core import drs_file
 from aperocore.core import drs_log
@@ -53,7 +54,7 @@ DrsFitsFile = drs_file.DrsFitsFile
 DrsInputFile = drs_file.DrsInputFile
 # Get index database
 FileIndexDatabase = drs_database.FileIndexDatabase
-ObjectDatabase = drs_database.AstrometricDatabase
+ObjectDatabase = drs_astrometrics.AstrometricDatabase
 # get text entry instance
 textentry = drs_lang.textentry
 
@@ -732,7 +733,7 @@ def obj_check(params: ParamDict, recipe: DrsRecipe,
         if log:
             WLOG(params, '', textentry('40-503-00039'))
         # update database
-        manage_databases.update_object_database(params, log=False)
+        manage_databases.validate_astrometric_yaml_archive(params, log=False)
     # ---------------------------------------------------------------------
     # load the object database after updating
     objdbm = ObjectDatabase(params, recipe.shortname)
@@ -766,7 +767,7 @@ def obj_check(params: ParamDict, recipe: DrsRecipe,
     # loop around index database unique object names and check for them
     for uobjname in uobjnames:
         # find correct name in the database (via objname or aliases)
-        correct_objname, found = objdbm.find_objname(pconst, uobjname)
+        correct_objname, found = objdbm.find_objname(uobjname)
         # ignore objects in the reject list
         if correct_objname in reject_list:
             continue

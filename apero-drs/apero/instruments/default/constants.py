@@ -46,6 +46,89 @@ CDict.add('DATA_ENGINEERING', value=None, dtype=str,
           source=__NAME__, group=cgroup,
           description='Define the data engineering path')
 
+# Define the time delta (in years) to add to the KW_IRELDATE key by default
+#   for raw files
+#   if there is no other way to determine the public release date (can be zero)
+CDict.add('AREL_RDELTA', value=None, dtype=float,
+          source=__NAME__, group=cgroup,  minimum=0.0, maximum=20.0,
+          description='Define the time delta (in years) to add to the '
+                      'KW_IRELDATE key by default for raw files if there is '
+                      'no other way to determine the public release '
+                      'date (can be zero)')
+
+# Define the time delta (in years) to add to the KW_IRELDATE key by default
+#   for APERO files
+#   if there is no other way to determine the public release date (can be zero)
+CDict.add('AREL_ADELTA', value=None, dtype=float,
+          source=__NAME__, group=cgroup,  minimum=0.0, maximum=20.0,
+          description='Define the time delta (in years) to add to the '
+                      'KW_IRELDATE key by default for APERO files if there is '
+                      'no other way to determine the public release '
+                      'date (can be zero)')
+
+# Define the time delta (in years) to add to the KW_IRELDATE key by default
+#   for LBL files
+#   if there is no other way to determine the public release date (can be zero)
+CDict.add('AREL_LDELTA', value=None, dtype=float,
+          source=__NAME__, group=cgroup,  minimum=0.0, maximum=20.0,
+          description='Define the time delta (in years) to add to the '
+                      'KW_IRELDATE key by default for LBL files if there is '
+                      'no other way to determine the public release '
+                      'date (can be zero)')
+
+
+# Define the googlesheet URL for the apero release date lookup
+CDict.add('AREL_GSHEET_URL', value=None, dtype=str,
+          source=__NAME__, group=cgroup,
+          description='Define the googlesheet URL for the apero release date '
+                      'lookup')
+
+# Define the googlesheet sheet id for the apero release date lookup
+# (there should be one sheet per instrument)
+CDict.add('AREL_GSHEET_ID', value=None, dtype=str, source=__NAME__,
+          group=cgroup,
+          description='Define the googlesheet sheet id for the apero release '
+                      'date lookup (there should be one sheet per instrument)')
+
+# Define the googlesheet sheet column for the apero release date
+CDict.add('AREL_GSHEET_ACOL', value=None, dtype=str, source=__NAME__,
+          group=cgroup,
+          description='Define the googlesheet sheet column for the '
+                      'apero release date')
+
+# Define the googlesheet sheet column for the lbl release date
+CDict.add('AREL_GSHEET_LCOL', value=None, dtype=str, source=__NAME__,
+          group=cgroup,
+          description='Define the googlesheet sheet column for the '
+                      'lbl release date')
+
+# =============================================================================
+# ASTROMETRIC DATABASE SETTINGS
+# =============================================================================
+cgroup = 'ASTROM'
+CDict.add_group(cgroup, description='ASTROMETRIC DATABASE SETTINGS')
+
+# Define the SIMBAD TAP URL for astrometric resolution
+CDict.add('SIMBAD_TAPURL',
+          value='https://simbad.cds.unistra.fr/simbad/sim-tap/sync',
+          dtype=str, source=__NAME__, group=cgroup,
+          description='Define the SIMBAD TAP endpoint URL for '
+                      'astrometric resolution')
+
+# Define the Gaia TAP URL for astrometric resolution
+CDict.add('GAIA_URL',
+          value='https://gea.esac.esa.int/tap-server/tap/sync',
+          dtype=str, source=__NAME__, group=cgroup,
+          description='Define the Gaia TAP endpoint URL for '
+                      'astrometric resolution')
+
+# Define the VizieR TAP URL for astrometric resolution
+CDict.add('VIZIER_TAPURL',
+          value='https://tapvizier.cds.unistra.fr/TAPVizieR/tap/sync',
+          dtype=str, source=__NAME__, group=cgroup,
+          description='Define the VizieR TAP endpoint URL for '
+                      'astrometric resolution')
+
 # =============================================================================
 # COMMON IMAGE SETTINGS
 # =============================================================================
@@ -193,6 +276,41 @@ CDict.add('POLAR_RHOMB_POS', value=None,
           dtype=list, dtypei=str,
           source=__NAME__, group=cgroup,
           description='Define all polar rhomb positions')
+
+
+# =========================================================================
+# GENERAL REFERENCE FILE SETTINGS
+# =========================================================================
+cgroup = 'REF'
+CDict.add_group(cgroup, description='REF: GENERAL REF FILE SETTINGS')
+
+# Define the time column (in the database) to use for filtering reference
+# files by (start date and end date format must match this)
+CDict.add('FIND_TIMECOL', value=None, dtype=str, active=False, user=True,
+          source=__NAME__, group=cgroup,
+          description='Define the time column (in the database) to use for '
+                      'filtering reference files by (start date and end date '
+                      'format must match this)')
+
+# Define the start date for reference calibrations (date format must match
+# that in REF.FIND_TIMECOL). This is used as the first date allowed for
+# reference files (i.e. any file before this date will be ignored)
+CDict.add('FIND_STARTDATE', value=None, dtype=str, active=True,
+          user=True, source=__NAME__, group=cgroup,
+          description='Define the start date for reference calibrations '
+                      '(date format must match that in REF.FIND_TIMECOL). '
+                      'This is used as the first date allowed for reference '
+                      'files (i.e. any file before this date will be ignored)')
+
+# Define the end date for reference calibrations (date format must match that in
+# REF_FIND_TIME_COL). This is used as the last date allowed for reference files
+# (i.e. any file after this date will be ignored)
+CDict.add('FIND_ENDDATE', value=None, dtype=str, active=True,
+          user=True, source=__NAME__, group=cgroup,
+          description='Define the end date for reference calibrations '
+                      '(date format must match that in REF.FIND_TIMECOL). '
+                      'This is used as the last date allowed for reference '
+                      'files (i.e. any file after this date will be ignored)')
 
 # =========================================================================
 # HEADER SETTINGS
@@ -3272,47 +3390,7 @@ cgroup = 'OBJ.LIST'
 CDict.add_group(cgroup, description='CALIBRATION.WAVE_NIGHT: '
                                     'CALIBRATION: WAVE NIGHT SETTINGS')
 
-# Define the SIMBAD TAP url
-CDict.add('SIMBAD_TAPURL', value=None, dtype=str, source=__NAME__,
-          group=cgroup,
-          description='Define the SIMBAD TAP url')
-
-# Define the TAP Gaia URL (for use in crossmatching to Gaia via astroquery)
-CDict.add('GAIA_URL', value=None, dtype=str,
-          source=__NAME__, group=cgroup,
-          description=('Define the TAP Gaia URL (for use in '
-                       'crossmatching to Gaia via astroquery)'))
-
-# Define the google sheet to use for crossmatch (may be set to a directory for
-#   completely offline reduction)
-CDict.add('GSHEET_URL', value=None,
-          dtype=str, source=__NAME__, group=cgroup,
-          description=('Define the google sheet to use '
-                       'for crossmatch'))
-
-# Define the google sheet objname list main list id number (may be set to a
-#     csv file for completely offline reduction)
-CDict.add('GSHEET_MAINLIST_ID', value=None,
-          dtype=str, source=__NAME__, group=cgroup,
-          description='Define the google sheet objname '
-                      'list main list id number')
-
-# Define the google sheet objname list pending list id number (may be set to a
-# #     csv file for completely offline reduction)
-CDict.add('GSHEET_PENDLIST_ID', value=None,
-          dtype=str, source=__NAME__, group=cgroup,
-          description='Define the google sheet '
-                      'objname list pending list '
-                      'id number')
-
-# Define the google sheet objname list reject list id number
-CDict.add('GSHEET_REJECTLIST_ID',
-          value=None, dtype=str, source=__NAME__,
-          group=cgroup,
-          description='Define the google sheet '
-                      'objname list reject list '
-                      'id number')
-
+ 
 # Define the bad list header key
 CDict.add('REJECT_DRS_HKEY', value=None, dtype=str,
           source=__NAME__, group=cgroup,
@@ -3330,109 +3408,6 @@ CDict.add('REJECT_MASKCOL', value=None, dtype=str,
           description='Define the bad list google '
                       'spreadsheet mask column for '
                       'preprocessing')
-
-
-# Define the google sheet bibcode id number
-CDict.add('GSHEET_BIBCODE_UD',
-          value=None, dtype=str, source=__NAME__,
-          group=cgroup,
-          description='Define the google sheet '
-                      'bibcode id number')
-
-# Define the google sheet user url object list (None for no user list)
-#     (may be set to a directory for completely offline reduction)
-CDict.add('GSHEET_USER_URL', value=None,
-          dtype=str, source=__NAME__, group=cgroup,
-          description='Define the google sheet user url '
-                      'object list (None for no user '
-                      'list)')
-
-# Define the google sheet user id object list id number (may be set to a
-#      csv file for completely offline reduction)
-CDict.add('GSHEET_USER_ID', value=None,
-          dtype=str, source=__NAME__, group=cgroup,
-          description='Define the google sheet user id '
-                      'object list id number')
-
-# Define whether to resolve from local database (via drs_database / drs_db)
-CDict.add('RESOLVE_FROM_DB',
-          value=None, dtype=bool, source=__NAME__,
-          group=cgroup,
-          description=('Define whether to resolve '
-                       'from local database '
-                       '(via drs_database / '
-                       'drs_db)'))
-
-# Define whether to resolve from gaia id (via TapPlus to Gaia) if False
-#    ra/dec/pmra/pmde/plx will always come from header
-CDict.add('RESOLVE_FROM_GAIAID',
-          value=None, dtype=bool, source=__NAME__,
-          group=cgroup,
-          description=('Define whether to resolve '
-                       'from gaia id (via TapPlus '
-                       'to Gaia) if False ra/dec/'
-                       'pmra/pmde/plx will always '
-                       'come from header'))
-
-# Define whether to get Gaia ID / Teff / RV from google sheets if False
-#    will try to resolve if gaia ID given otherwise will use ra/dec if
-#    OBJ_LIST_RESOLVE_FROM_COORDS = True else will default to header values
-CDict.add('RESOLVE_FROM_GLIST',
-          value=None, dtype=bool, source=__NAME__,
-          group=cgroup,
-          description=('Define whether to get Gaia '
-                       'ID / Teff / RV from google '
-                       'sheets if False will try to '
-                       'resolve if gaia ID given '
-                       'otherwise will use ra/dec if '
-                       'OBJ_LIST_RESOLVE_FROM_COORDS '
-                       '= True else will default to '
-                       'header values'))
-
-# Define whether to get Gaia ID from header RA and Dec (basically if all other
-#    option fails) - WARNING - this is a crossmatch so may lead to a bad
-#    identification of the gaia id - not recommended
-CDict.add('RESOLVE_FROM_COORDS',
-          value=None, dtype=bool, source=__NAME__,
-          group=cgroup,
-          description=('Define whether to get '
-                       'Gaia ID from header RA '
-                       'and Dec (basically if all '
-                       'other option fails) - '
-                       'WARNING - this is a '
-                       'crossmatch so may lead to a '
-                       'bad identification of the '
-                       'gaia id - not recommended'))
-
-# Define the gaia epoch to use in the gaia query
-CDict.add('GAIA_EPOCH', value=None, dtype=float,
-          source=__NAME__, minimum=2000.0, maximum=2100.0,
-          group=cgroup,
-          description=('Define the gaia epoch to use in '
-                       'the gaia query'))
-
-# Define the radius for crossmatching objects (in both lookup table and query)
-#   in arcseconds
-CDict.add('CM_RADIUS', value=None,
-          dtype=float, source=__NAME__, minimum=0.0,
-          group=cgroup,
-          description=('Define the radius for '
-                       'crossmatching objects (in '
-                       'both lookup table and '
-                       'query) in arcseconds'))
-
-# Define the gaia parallax limit for using gaia point
-CDict.add('GAIA_PLX_LIM', value=None, dtype=float,
-          source=__NAME__, minimum=0.0, group=cgroup,
-          description=('Define the gaia parallax limit '
-                       'for using gaia point'))
-
-# Define the gaia magnitude cut to use in the gaia query
-CDict.add('GAIA_MAGCUT', value=None, dtype=float,
-          source=__NAME__, minimum=10.0, maximum=25.0,
-          group=cgroup,
-          description=('Define the gaia magnitude cut to '
-                       'use in the gaia query'))
 
 # Define the google sheet to use for update the reject list
 CDict.add('RLIST_GSHEET_URL', value=None,
@@ -3454,41 +3429,6 @@ CDict.add('RLIST_GSHEET_SHEETNAME',
           description='Define the google sheet name'
                       ' to use for the reject list')
 
-# gaia col name in google sheet
-CDict.add('GAIA_COLNAME', value=None, dtype=str,
-          source=__NAME__, group=cgroup,
-          description='gaia col name in google sheet')
-# object col name in google sheet
-CDict.add('OBJ_COLNAME', value=None, dtype=str,
-          source=__NAME__, group=cgroup,
-          description='object col name in google sheet')
-# alias col name in google sheet
-CDict.add('ALIAS_COLNAME', value=None, dtype=str,
-          source=__NAME__, group=cgroup,
-          description='alias col name in google sheet')
-# rv col name in google sheet
-CDict.add('RV_COLNAME', value=None, dtype=str,
-          source=__NAME__, group=cgroup,
-          description='rv col name in google sheet')
-CDict.add('RVREF_COLNAME', value=None, dtype=str,
-          source=__NAME__, group=cgroup, description='')
-# teff col name in google sheet
-CDict.add('TEFF_COLNAME', value=None, dtype=str,
-          source=__NAME__, group=cgroup,
-          description='teff col name in google sheet')
-CDict.add('TEFFREFF_COLNAME', value=None, dtype=str,
-          source=__NAME__, group=cgroup,
-          description='teff source reference col name in google sheet')
-# Reject like google columns
-CDict.add('REJECT_IDENT_COLNAME', value=None, dtype=str,
-          source=__NAME__, group=cgroup,
-          description='Reject "idenfier" col name in  google sheet')
-CDict.add('REJECT_PP_COLNAME', value=None, dtype=str,
-          source=__NAME__, group=cgroup,
-          description='Reject "pp" col name in google sheet')
-CDict.add('REJECT_RV_COLNAME', value=None, dtype=str,
-          source=__NAME__, group=cgroup,
-          description='Reject "rv" col name in google sheet')
 
 # =============================================================================
 # OBJECT: SKY CORR SETTINGS
@@ -4928,7 +4868,7 @@ CDict.add_group(cgroup, description='DEBUG.OUTPUT_FILE: '
 
 # Whether to save background debug file (large 0.5 GB per file)
 #   one of these per extraction (lots)
-CDict.add('BCKGRD_FILE', value=True,
+CDict.add('BCKGRD_FILE', value=False,
           dtype=bool, source=__NAME__,
           user=True, active=False, group=cgroup,
           description='Whether to save background debug '
@@ -4937,7 +4877,7 @@ CDict.add('BCKGRD_FILE', value=True,
 
 # Whether to save the E2DSLL file (around 0.05 to 0.1 GB per file)
 #   one of these per fiber (lots)
-CDict.add('E2DSLL_FILE', value=True,
+CDict.add('E2DSLL_FILE', value=False,
           dtype=bool, source=__NAME__,
           user=True, active=False, group=cgroup,
           description='Whether to save the E2DSLL file '
@@ -4946,7 +4886,7 @@ CDict.add('E2DSLL_FILE', value=True,
 
 # Whether to save the shape in and out debug files (around 0.1 GB per file)
 #   but only one set of these per night
-CDict.add('SHAPE_FILES', value=True,
+CDict.add('SHAPE_FILES', value=False,
           dtype=bool, source=__NAME__,
           user=True, active=False, group=cgroup,
           description='Whether to save the shape in and '
@@ -4956,7 +4896,7 @@ CDict.add('SHAPE_FILES', value=True,
 
 # Whether to save the uncorrected for FP C fiber leak files
 #      (around 0.01 GB per file) one of these per fiber
-CDict.add('UNCORR_EXT_FILES', value=True,
+CDict.add('UNCORR_EXT_FILES', value=False,
           dtype=bool, source=__NAME__,
           user=True, active=False, group=cgroup,
           description='Whether to save the uncorrected '
@@ -5855,6 +5795,16 @@ CDict.add('RESET_DICT', value=ari_reset_dict,
                       'on installation/reset)')
 
 # =============================================================================
+# APERO CHECKS SETTINGS
+# =============================================================================
+cgroup = 'TOOLS.APERO_CHECK'
+# Path relative to PATH.OTHER where the apero check yamls are stored
+CDict.add('PATH', value='acheck', dtype=str,
+          source=__NAME__, group=cgroup,
+          description='Path relative to PATH.OTHER where the apero check '
+                      'yamls are stored')
+
+# =============================================================================
 # STATIC SETTINGS
 # =============================================================================
 cgroup = 'TOOLS.STATIC'
@@ -5902,6 +5852,16 @@ CDict.add('Z3', value=None, dtype=list, dtypei=float,
 # Plot order for LBL etc in info plots
 CDict.add('EXT_ORDER', value=None, dtype=int, source=__NAME__, group=cgroup,
           description='Plot order for LBL etc in info plots')
+
+# Define whether to use multiprocess "pool" or "process" or use "linear"
+#     mode when running visualization info plots
+CDict.add('MP_MODE', value='process', dtype=str,
+          source=__NAME__, group=cgroup,
+          user=True, active=True,
+          options=['linear', 'pool', 'process', 'pathos'],
+          description='Define whether to use multiprocess '
+                      '"pool" or "process" or use "linear" '
+                      'mode when running visualization info plots')
 
 # =============================================================================
 #  End of configuration file

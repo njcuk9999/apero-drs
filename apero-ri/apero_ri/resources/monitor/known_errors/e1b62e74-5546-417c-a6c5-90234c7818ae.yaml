@@ -1,0 +1,26 @@
+id: e1b62e74-5546-417c-a6c5-90234c7818ae
+slug: none
+date_reported: '2024-08-13'
+reported_by: Thomas Vandal
+instrument_mode: ALL
+recipe: 'apero_ccf_nirps_he,
+
+  apero_ccf_nirps_ha'
+action: Check
+type: Unexpected
+error_code: None
+github_issue: '768.0'
+generic_error: None
+comments: 'ERRORMSGS is None means an error like went uncaught in APERO.
+
+  Check the file in the LOGFILE column for an error. If you find "ValueError: x0 is
+  infeasible", this is the issue linked in the Github column (768).
+
+  It should be fixed. If it happens again, report on github.
+
+  If you have a lot of those issues, contact Thomas: he has a way to report them in
+  a batch.
+
+  If the error message is something else. Report to Neil.'
+full_example_error: ''
+updated_at: '2026-05-13 15:54:29'

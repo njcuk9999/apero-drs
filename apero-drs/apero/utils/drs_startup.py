@@ -662,6 +662,8 @@ def end_all(params: ParamDict = None, success: bool = True,
         msg = textentry('40-003-00001', args=iargs)
         if duration is not None:
             msg += f'\t({duration:.3f} seconds)'
+        # print the time now
+        msg += f'\n  Time now {Time.now().iso}'
         WLOG(params, 'info', msg)
         WLOG(params, 'info', params['LOG.HEADER'])
     elif not quiet:
@@ -670,6 +672,8 @@ def end_all(params: ParamDict = None, success: bool = True,
         msg = textentry('40-003-00005', args=wargs)
         if duration is not None:
             msg += f'\t({duration:.3f} seconds)'
+        # print the time now
+        msg += f'\n  Time now {Time.now().iso}'
         WLOG(params, 'warning', msg, colour='red', sublevel=8)
         WLOG(params, 'info', params['LOG.HEADER'], colour='red')
 
@@ -1625,6 +1629,8 @@ def _display_drs_title(params: ParamDict, group: Union[str, None] = None,
     title += '  py' + params['PYVERSION']
     if params['GIT_BRANCH'] != 'Unknown':
         title += '  git:' + params['GIT_BRANCH']
+    # print the time now
+    title += f'\n  Time now {Time.now().iso}'
     title += colors.ENDC
     # Log title
     _display_title(params, title, group, printonly, logonly)

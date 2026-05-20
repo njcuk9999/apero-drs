@@ -3210,6 +3210,8 @@ def get_objnames_headers(objname: str, indexdbm: Any) -> str:
     all_names = list(all_names)
     if None in all_names:
         all_names.remove(None)
+    if np.nan in all_names:
+        all_names.remove(np.nan)
     # return all the object names
     return ', '.join(all_names)
 

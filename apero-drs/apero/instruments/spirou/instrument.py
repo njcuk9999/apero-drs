@@ -14,6 +14,7 @@ from typing import Any, Dict, List, Optional, Tuple, Union
 
 import numpy as np
 import sqlalchemy
+from astropy import units as uu
 
 from aperocore.base import base
 from apero.base import base as apero_base
@@ -66,15 +67,13 @@ class Spirou(instrument_mod.Instrument):
         super().__init__(instrument_name)
         # storage of things we don't want to compute twice without need
         self.exclude = ['header_cols', 'index_cols', 'calibration_cols',
-                        'telluric_cols', 'logdb_cols', 'objdb_cols',
+                        'telluric_cols', 'logdb_cols',
                         'filemod', 'recipemod']
         self.header_cols: Optional[DatabaseColumns] = None
         self.index_cols: Optional[DatabaseColumns] = None
         self.calibration_cols: Optional[DatabaseColumns] = None
         self.telluric_cols: Optional[DatabaseColumns] = None
         self.logdb_cols: Optional[DatabaseColumns] = None
-        self.objdb_cols: Optional[DatabaseColumns] = None
-        self.rejectdb_cols: Optional[DatabaseColumns] = None
 
     def __getstate__(self) -> dict:
         """
@@ -234,6 +233,14 @@ class Spirou(instrument_mod.Instrument):
         # ------------------------------------------------------------------
         header, hdict = get_special_objname(params, header, hdict)
         # ------------------------------------------------------------------
+        # Deal with default DRS_QC header value
+        # ------------------------------------------------------------------
+        header, hdict = set_drs_qc(params, header, hdict)
+        # ------------------------------------------------------------------
+        # Deal with the default apero release date
+        # ------------------------------------------------------------------
+        header, hdict = manual_apero_reldate(params, header, hdict)
+        # ------------------------------------------------------------------
         # Return header
         # ------------------------------------------------------------------
         return header, hdict
@@ -247,7 +254,7 @@ class Spirou(instrument_mod.Instrument):
         object names - use:
             objdbm = drs_database.ObjectDatabase(params)
             objdbm.load_db()
-            objdbm.find_objname(pconst, objname)
+            objdbm.find_objname(objname)
         instead to deal with aliases
 
         :param objname: str, input object name
@@ -269,8 +276,8 @@ class Spirou(instrument_mod.Instrument):
 
         :return: str, the cleaned object name
         """
-        return constuct_objname(params, self, header, filename, check_aliases,
-                                objdbm)
+        return construct_objname(params, self, header, filename, check_aliases,
+                                 objdbm)
 
     def DRS_DPRTYPE(self, params: ParamDict, header: Any,
                     filename: Union[Path, str]) -> str:
@@ -306,6 +313,17 @@ class Spirou(instrument_mod.Instrument):
 
         header, _ = get_mid_obs_time(params, header, None, filename)
         return float(header[params['KW_MID_OBS_TIME']])
+
+    def GET_AREL_DATE(self, params: ParamDict, header: Any,
+                      delta_key: str) -> str:
+        """
+        Get the apero release date
+
+        :param delta_key: str, the key to use for the time delta
+        :return:
+        """
+        return manual_apero_reldate(params, header, delta_key=delta_key,
+                                 return_value=True)
 
     def FRAME_TIME(self, params: ParamDict, header: Any):
         """
@@ -461,6 +479,9 @@ class Spirou(instrument_mod.Instrument):
         header_cols.add(name='KW_FIBER', datatype=sqlalchemy.String(80))
         header_cols.add(name='KW_IDENTIFIER', datatype=sqlalchemy.String(80),
                         is_index=True)
+        header_cols.add(name='KW_IRELDATE', datatype=sqlalchemy.String(80))
+        header_cols.add(name='KW_ARELDATE', datatype=sqlalchemy.String(80))
+        header_cols.add(name='KW_DRS_QC', datatype=sqlalchemy.Integer)
         # check that filedef keys are present
         for fkey in self.FILEDEF_HEADER_KEYS():
             if fkey not in header_cols.names:
@@ -479,7 +500,8 @@ class Spirou(instrument_mod.Instrument):
         keys = ['KW_TARGET_TYPE', 'KW_OBJECTNAME', 'KW_OBSTYPE',
                 'KW_CCAS', 'KW_CREF', 'KW_CALIBWH', 'KW_INSTRUMENT',
                 'KW_DPRTYPE', 'KW_OUTPUT', 'KW_DRS_MODE', 'KW_POLAR_KEY_1',
-                'KW_POLAR_KEY_2', 'KW_NIGHT_OBS']
+                'KW_POLAR_KEY_2', 'KW_NIGHT_OBS',
+                'KW_IRELDATE', 'KW_ARELDATE', 'KW_DRS_QC']
         return keys
 
     # =========================================================================
@@ -891,11 +913,11 @@ class Spirou(instrument_mod.Instrument):
 # =============================================================================
 # Functions used by pseudo const (instrument specific)
 # =============================================================================
-def constuct_objname(params: Union[ParamDict, None], pconst, header,
-                     objname: Union[str, None] = None,
-                     filename: Union[None, str, Path] = None,
-                     check_aliases: bool = False,
-                     objdbm: Any = None) -> str:
+def construct_objname(params: Union[ParamDict, None], pconst, header,
+                      objname: Union[str, None] = None,
+                      filename: Union[None, str, Path] = None,
+                      check_aliases: bool = False,
+                      objdbm: Any = None) -> str:
     """
     Construct the object name from the header (if objname is None)
 
@@ -917,8 +939,13 @@ def constuct_objname(params: Union[ParamDict, None], pconst, header,
     if drs_text.null_text(objname, NULL_TEXT):
         # deal with output key already in header
         if kwobjname in header:
-            if not drs_text.null_text(header[kwobjname], NULL_TEXT):
+            # need to deal with NaN (any non string - should skip this header key)
+            if not isinstance(header[kwobjname], str):
+                pass
+            # otherwise we just test for null texts (None, Null, '' etc)
+            elif not drs_text.null_text(header[kwobjname], NULL_TEXT):
                 return header[kwobjname]
+
         # get raw object name
         if kwrawobjname not in header:
             eargs = [kwrawobjname, filename]
@@ -928,6 +955,11 @@ def constuct_objname(params: Union[ParamDict, None], pconst, header,
     # else just set up blank parameters
     else:
         rawobjname = str(objname)
+    # must be a string
+    if not isinstance(rawobjname, str):
+        rawobjname = None
+    elif rawobjname.upper() in ['', 'NONE', 'NUL']:
+        rawobjname = None
     # ---------------------------------------------------------------------
     # if object name is still None - check KW_OBJECTNAME2
     # ---------------------------------------------------------------------
@@ -943,7 +975,7 @@ def constuct_objname(params: Union[ParamDict, None], pconst, header,
     # -------------------------------------------------------------------------
     if check_aliases and objdbm is not None:
         # get clean / alias-safe version of object name
-        objectname, _ = objdbm.find_objname(pconst, rawobjname)
+        objectname, _ = objdbm.find_objname(rawobjname)
     else:
         objectname = instrument_mod.clean_object(rawobjname)
     # -------------------------------------------------------------------------
@@ -977,8 +1009,8 @@ def clean_obj_name(params: Union[ParamDict, None], pconst: Spirou, header,
     # ---------------------------------------------------------------------
     # check KW_OBJNAME and then KW_OBJECTNAME
     # ---------------------------------------------------------------------
-    objectname = constuct_objname(params, pconst, header, objname, filename,
-                                  check_aliases, objdbm)
+    objectname = construct_objname(params, pconst, header, objname, filename,
+                                   check_aliases, objdbm)
     # -------------------------------------------------------------------------
     # add it to the header with new keyword
     header[kwobjname] = (objectname, kwobjcomment)
@@ -1297,7 +1329,11 @@ def get_dprtype(params: ParamDict, pconst: Spirou, header: Any, hdict: Any,
     # deal with output key already in header
     if header is not None:
         if kwdprtype in header:
-            if not drs_text.null_text(header[kwdprtype], NULL_TEXT):
+            # need to deal with NaN (any non string - should skip this header key)
+            if not isinstance(header[kwdprtype], str):
+                pass
+            # otherwise we just test for null texts (None, Null, '' etc)
+            elif not drs_text.null_text(header[kwdprtype], NULL_TEXT):
                 return header, hdict
     # deal with no hdict
     if hdict is None:
@@ -1351,6 +1387,72 @@ def get_special_objname(params: ParamDict, header: Any,
     #  update header / hdict
     header[kwobjname] = (objname, kwobjcomment)
     hdict[kwobjname] = (objname, kwobjcomment)
+    # return header and hdict
+    return header, hdict
+
+
+def set_drs_qc(params: ParamDict, header: Any, hdict: Any) -> Tuple[Any, Any]:
+    """
+    We set the KW_DRS_QC to 1 by default
+
+    :param params: ParamDict, the parameter dictionary of constants
+    :param header: drs_fits.Header or astropy.io.fits.Header, the header to
+                   check for objname (if "objname" not set)
+    :param hdict: dict, the header dictionary to update with
+
+    :return:
+    """
+    # get parmaeters from params
+    kw_drs_qc = params['KW_DRS_QC'][0]
+    kw_drs_qc_comment = params['KW_DRS_QC'][2]
+    # set the qc by default to 1
+    drs_qc = 1
+    #  update header / hdict
+    header[kw_drs_qc] = (drs_qc, kw_drs_qc_comment)
+    hdict[kw_drs_qc] = (drs_qc, kw_drs_qc_comment)
+    # return header and hdict
+    return header, hdict
+
+
+def manual_apero_reldate(params: ParamDict, header: Any,
+                      hdict: Any = None,
+                      delta_key: str = 'DATA.AREL_RDELTA',
+                      return_value: bool = False
+                      ) -> Union[Tuple[Any, Any], str]:
+    """
+    Work out the APERO public release date (not based on special cases
+    but just based on the raw file)
+
+    :param params: ParamDict, the parameter dictionary of constants
+    :param header: drs_fits.Header or astropy.io.fits.Header, the header to
+                   check for objname (if "objname" not set)
+    :param hdict: dict, the header dictionary to update with
+
+    :return:
+    """
+    # get parameters from params
+    kw_ireldate = params['KW_IRELDATE'][0]
+    kw_areldate = params['KW_ARELDATE'][0]
+    kw_areldate_comment = params['KW_ARELDATE'][2]
+    kw_ireldate_datatype = params.instances['KW_IRELDATE'].datatype
+    # get the time delta from APERO
+    tdelta = params[delta_key]
+    # get the default time to add to instrument release date
+    time_delta = TimeDelta(tdelta * uu.year)
+    # deal with no IRELDATE in header -> fall back to KW_ACQTIME
+    if kw_ireldate not in header:
+        kw_ireldate = params['KW_ACQTIME'][0]
+        kw_ireldate_datatype = params.instances['KW_ACQTIME'].datatype
+    # get and convert ireldate
+    ireldate = Time(header[kw_ireldate], format=kw_ireldate_datatype)
+    # calculate relative date
+    areldate = ireldate + time_delta
+    # deal with returning just the value
+    if return_value:
+        return areldate.iso
+    #  update header / hdict
+    header[kw_areldate] = (areldate.iso, kw_areldate_comment)
+    hdict[kw_areldate] = (areldate.iso, kw_areldate_comment)
     # return header and hdict
     return header, hdict
 

@@ -190,6 +190,8 @@ class Const:
         # set whether this constant should be a latex argument
         #    (for snapshot table generation)
         self.tex_arg = tex_arg
+        # note used for const but used for keyword
+        self.comment = None
 
     def __getstate__(self) -> dict:
         """
@@ -257,9 +259,8 @@ class Const:
             return True
         # get true value (and test test_value)
         vargs = [self.name, self.dtype, value, self.dtypei, self.options,
-                 self.maximum, self.minimum, ]
-        vkwargs = dict(quiet=quiet, source=source)
-
+                 self.maximum, self.minimum]
+        vkwargs = dict(quiet=quiet, source=source, ckind='const')
         true_value, source = _validate_value(*vargs, **vkwargs)
         # deal with storing
         if test_value is None:
@@ -1090,7 +1091,9 @@ class Keyword(Const):
                  parent: Union[str, None] = None,
                  combine_method: Union[str, None] = None,
                  description: Union[str, None] = None,
-                 post_exclude: bool = False):
+                 post_exclude: bool = False,
+                 user: bool = False,
+                 active: bool = False):
         """
         Construct the keyword instance
 
@@ -1135,7 +1138,7 @@ class Keyword(Const):
         # Initialize the constant parameters (super)
         Const.__init__(self, name, value, dtype, None, options, maximum,
                        minimum, source, unit, default, datatype, dataformat,
-                       group, user=False, active=False,
+                       group, user=user, active=active,
                        description=description, author=author, parent=parent,
                        output=False)
         # set the header key associated with this keyword (8 characters only)
@@ -1333,9 +1336,11 @@ class Keyword(Const):
             source = self.source
         # get true value (and test test_value)
         vargs = [self.name, self.dtype, value, self.dtypei, self.options,
-                 self.maximum, self.minimum, ]
-        vkwargs = dict(quiet=quiet, source=source)
+                 self.maximum, self.minimum]
+        vkwargs = dict(quiet=quiet, source=source, ckind='keyword')
         true_value, source = _validate_value(*vargs, **vkwargs)
+        # update parameters based on validate value
+        self.key, key_value, self.comment = true_value
         # deal with no comment
         if self.comment is None:
             self.comment = ''
@@ -1343,7 +1348,7 @@ class Keyword(Const):
         if self.key is None:
             raise AperoCodedException(None, '00-003-00035', targs=[self.name])
         # construct true value as keyword store
-        true_value = [self.key, true_value, self.comment]
+        true_value = [self.key, key_value, self.comment]
         # deal with storing
         if test_value is None:
             self.true_value = true_value
@@ -1377,7 +1382,8 @@ class Keyword(Const):
                        author=self.author, parent=self.parent,
                        combine_method=self.combine_method,
                        description=self.description,
-                       post_exclude=self.post_exclude)
+                       post_exclude=self.post_exclude, active=self.active,
+                       user=self.user)
 
 
 class KeywordDict:
@@ -1385,6 +1391,8 @@ class KeywordDict:
     Basic container for constants
     """
     def __init__(self, source: str):
+        self.title = ' '
+        self.groups: Dict[str, str] = dict()
         self.storage: Dict[str, Keyword] = dict()
         self.source = source
 
@@ -1406,7 +1414,8 @@ class KeywordDict:
             parent: Union[str, None] = None,
             combine_method: Union[str, None] = None,
             description: Union[str, None] = None,
-            post_exclude: bool = False):
+            post_exclude: bool = False,
+            user: bool = False, active: bool = False):
         """
         Construct the keyword instance
 
@@ -1454,7 +1463,7 @@ class KeywordDict:
         constants = Keyword(name, key, true_value, dtype, comment, options,
                             maximum, minimum, source, unit, default, datatype,
                             dataformat, group, author, parent, combine_method,
-                            description, post_exclude)
+                            description, post_exclude, user, active)
         # add to storage
         self.storage[name] = constants
 
@@ -1477,7 +1486,8 @@ class KeywordDict:
             parent: Union[str, None] = None,
             combine_method: Union[str, None] = None,
             description: Union[str, None] = None,
-            post_exclude: Union[bool, None] = None):
+            post_exclude: Union[bool, None] = None,
+            user: bool = None, active: bool = None):
         """
         Set attributes of the Keyword instance
 
@@ -1581,6 +1591,11 @@ class KeywordDict:
         # update post_exclude
         if post_exclude is not None:
             self.storage[name].post_exclude = post_exclude
+        # deal with user and active
+        if user is not None:
+            self.storage[name].user = user
+        if active is not None:
+            self.storage[name].active = active
 
     def copy(self, source: str) -> 'KeywordDict':
         # create new storage
@@ -1615,6 +1630,213 @@ class KeywordDict:
                 instances[key] = self.storage[key]
         # return all values
         return values, sources, instances
+
+    # -------------------------------------------------------------------------
+    # yaml functionality
+    # -------------------------------------------------------------------------
+    def save_yaml(self, params: Any = None, log: bool = True,
+                  outpath: str = None, mode: str = None,
+                  title_args: Dict[str, Any] = None) -> str:
+        """
+        Create a yaml file from input parameters
+
+        :param params: Dict[str, Any], the input parameters
+        :param log: bool, if True print log messages
+        :param outpath: str, the output path for the yaml file
+        :param mode: str, the mode to use (if None uses all)
+        :param title_args: Dict[str, Any], the arguments to pass to the title
+                           set to None if none passed
+
+        :return: None writes yaml file
+        """
+        # ---------------------------------------------------------------------
+        # deal with no parameters
+        if params is None:
+            params = dict()
+        # ---------------------------------------------------------------------
+        # create a commented map instance
+        data = CommentedMap()
+        # deal with title
+        if self.title is None:
+            title = 'YAML file'
+        elif title_args is None:
+            title = self.title
+        else:
+            title = self.title.format(**title_args)
+        # add the start comment
+        data.yaml_set_start_comment(_comment_wrap(title))
+        # now we add the values / comments
+        #   This is in a sub-method as we may have to do this recursively
+        data = self.add_to_yaml(data, params, mode=mode)
+        # ---------------------------------------------------------------------
+        # print message
+        if log:
+            msg = '\tWriting yaml file: {0}'
+            margs = [outpath]
+            drs_text.cprint(msg.format(*margs), colour='g')
+        # initialize YAML object
+        yaml_inst = YAML(typ='rt')
+        base.enable_scientific_floats(yaml_inst)
+        # set the yaml width to a large number so we don't get line breaks
+        yaml_inst.width = 4096
+        # remove the yaml if it already exists
+        if os.path.exists(outpath):
+            os.remove(outpath)
+        # write files
+        with open(outpath, 'w') as y_file:
+            yaml_inst.dump(data, y_file)
+        # ---------------------------------------------------------------------
+        # return the yaml file path
+        return outpath
+
+    def add_to_yaml(self, data: CommentedMap, params: Any,
+                    mode: str = None) -> CommentedMap:
+        # loop around keys
+        for it, key in enumerate(params.keys()):
+            # -----------------------------------------------------------------
+            # if params have a key that is not in storage we skip
+            if key not in self.storage:
+                continue
+            # -----------------------------------------------------------------
+            # get the constant associated with this key
+            const = self.storage[key]
+            # -----------------------------------------------------------------
+            # if we don't have a constant we have a problem
+            if not isinstance(const, Keyword):
+                # TODO: Add to language database
+                emsg = 'Key "{0}" is not a keyword instance'
+                eargs = [key]
+                raise AperoCodedException(None, None,
+                                          message=emsg.format((eargs)))
+            # get comment
+            comment = self.storage[key].description
+            # if there is no comment don't add
+            if comment is None:
+                continue
+            # if this is not a user constant skip
+            if not self.storage[key].user:
+                continue
+            # -----------------------------------------------------------------
+            # remove new lines at start/end of comment
+            if not comment.startswith('\n\n'):
+                comment = comment.strip('\n')
+            # -----------------------------------------------------------------
+            # add the default value to the comment (if given)
+            #  do not add Constants Dicts default value
+            comment += '\n\tDefault value={0}'.format('[key, None, comment]')
+            # ---------------------------------------------------------------------
+            # get active
+            active = self.storage[key].active
+            # if the constant is not active skip
+            if not active:
+                continue
+            # -----------------------------------------------------------------
+            # get modes
+            modes = self.storage[key].modes
+            # deal with no mode
+            if modes is None or mode is None:
+                in_mode = True
+            else:
+                in_mode = mode in modes
+            # if we are not in the correct mode skip
+            if not in_mode:
+                continue
+            # -----------------------------------------------------------------
+            # push into params
+            if key in params:
+                value = params[key]
+            else:
+                value = const.value
+
+            # -----------------------------------------------------------------
+            # get the nested levels
+            nested_levels = key.split('.')
+            # set the sub data to data to start with
+            sub_data = data
+
+            # loop around levels
+            for n_it, nested_key in enumerate(nested_levels):
+                # if we are at the last level then set the value
+                if nested_key == nested_levels[-1]:
+
+                    sub_data[nested_key] = value
+                    # ---------------------------------------------------------
+                    # add the comment
+                    ckwargs = dict(key=nested_key,
+                                   before=_comment_wrap(comment),
+                                   indent=2 * n_it)
+                    sub_data.yaml_set_comment_before_after_key(**ckwargs)
+
+                else:
+                    # if the nested key is not in the sub data add it
+                    if nested_key not in sub_data:
+                        sub_data[nested_key] = CommentedMap()
+                        # get group key
+                        group_key = '.'.join(nested_levels[:n_it + 1])
+                        # get group description
+                        if group_key in self.groups:
+                            group_desc = self.groups[group_key]
+                            # modify the comment
+                            gcomment = self.add_yaml_section(group_desc)
+                        else:
+                            gcomment = None
+
+                        gkwargs = dict(key=nested_key,
+                                       before=_comment_wrap(gcomment),
+                                       indent=2 * n_it)
+                        # add the comment
+                        sub_data.yaml_set_comment_before_after_key(**gkwargs)
+                    # switch to the sub data
+                    sub_data = sub_data[nested_key]
+        # Return the commented map
+        return data
+
+    @staticmethod
+    def yaml_title(name: str, setup_program: Union[str, None], version: str,
+                   date: str) -> str:
+        """
+        Create the title for the yaml file
+
+        :param name: str, the name of the program
+        :param setup_program: str, the name of the setup program
+        :param version: str, the version of the program
+        :param date: str, the date of the program
+
+        :return: str, the title for the yaml file
+        """
+        comment = '#' * 77 + '\n' + name + '\n' + '#' * 77 + '\n'
+        comment += f'    Version = {version}\n'
+        comment += f'    Version Date    = {date}\n\n'
+        if setup_program is not None:
+            comment += (f'If using a different version it is recommended to \n'
+                        f'run {setup_program} to generate a new yaml file.\n\n')
+        return comment
+
+    @staticmethod
+    def add_yaml_section(section_title: str) -> str:
+        """
+        Add a section to the yaml file
+
+        :param section_title: str, the title of the section
+
+        :return: str, the section comment
+        """
+        comment = '\n\n' + '=' * 77 + '\n' + section_title
+        comment += '\n' + '=' * 77 + '\n'
+        return comment
+
+    def add_group(self, groupname, description, source: str = None,
+                  user: bool = False, active: bool = False):
+        """
+        Add a group for the yaml file
+
+        :param groupname: str, the name of the group
+        :param description: str, the description of the group
+
+        :return: None, updates self.groups
+        """
+        # finally add the full group and description to groups
+        self.groups[groupname] = description
 
 
 class CKCaseINSDict(base_class.CaseInsensitiveDict):
@@ -1985,7 +2207,8 @@ def _validate_value(name: str, dtype: Union[str, type, None],
                     value: Any, dtypei: Union[str, type, None],
                     options: list, maximum: Union[int, float, None],
                     minimum: Union[int, float, None], quiet: bool = False,
-                    source: Union[None, str] = None) -> Tuple[Any, str]:
+                    source: Union[None, str] = None,
+                    ckind: str = 'const') -> Tuple[Any, str]:
     """
     Checks whether a variable `value` is valid based on the specifications given
 
@@ -2017,6 +2240,34 @@ def _validate_value(name: str, dtype: Union[str, type, None],
     # deal with no source
     if source is None:
         source = 'Unknown ({0})'.format(func_name)
+    # ---------------------------------------------------------------------
+    # deal with ckind == keyword
+    if ckind == 'keyword':
+        # deal with keyword value not being a tuple/list
+        if not isinstance(value, (list, tuple)):
+            # TODO: Add to language database
+            emsg = ('Keyword Error: Keyword {0}={1} constant from {2} '
+                    'must be a tuple/list (key, value, comment)'
+                    '\n\tfunction = {2}')
+            eargs = [name, value, source, func_name]
+            if not quiet:
+                raise AperoCodedException(None, message=emsg.format(*eargs),
+                                          targs=eargs)
+            else:
+                return (name, value, 'No comment given.'), source
+        # deal with keyword value not being a length 3 tuple/list
+        if len(value) != 3:
+            # TODO: Add to language database
+            emsg = ('Keyword Error: Keyword {0}={1} constant from {2} '
+                    'must be a length 3 tuple/list (key, value, comment)'
+                    '\n\tfunction = {2}')
+            eargs = [name, value, source, func_name]
+            if not quiet:
+                raise AperoCodedException(None, message=emsg.format(*eargs),
+                                          targs=eargs)
+            else:
+                return (name, value, 'No comment given.'), source
+        return value, source
     # ---------------------------------------------------------------------
     # check that we only have simple dtype
     if dtype is None:
