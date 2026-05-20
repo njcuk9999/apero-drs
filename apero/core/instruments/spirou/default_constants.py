@@ -3475,6 +3475,12 @@ ARI_CAL_ORDERS = ARI_CAL_ORDERS.copy(__NAME__)
 ARI_CAL_ORDERS.value = '8, 35'
 
 # =============================================================================
+# APERO CHECKS SETTINGS
+# =============================================================================
+APERO_CHECK_PATH = APERO_CHECK_PATH.copy(__NAME__)
+APERO_CHECK_PATH.value = 'acheck'
+
+# =============================================================================
 # INFO VISUALATION SETTINGS
 # =============================================================================
 # Minimum zoom 1 value for info visu plots

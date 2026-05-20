@@ -399,6 +399,8 @@ __all__ = [
     'ARI_PROTECT', 'ARI_GROUP', 'ARI_RESET',
     'ARI_FILTER_OBJECTS', 'ARI_FILTER_OBJECTS_LIST', 'ARI_HEADER_PROPS',
     'ARI_FINDING_CHARTS', 'ARI_CAL_ORDERS', 'ARI_RESET_DICT',
+    # check constants
+    'APERO_CHECK_PATH',
     # visualization constants
     'INFO_VISU_Z1', 'INFO_VISU_Z2', 'INFO_VISU_Z3',
     'INFO_VISU_EXT_ORDER', 'VISU_MP_MODE',
@@ -6031,6 +6033,14 @@ ARI_RESET_DICT = Const('ARI_RESET_DICT', value=ari_reset_dict,
                                    'paths to copy into the "other" directory '
                                    'on installation/reset)')
 
+# =============================================================================
+# APERO CHECKS SETTINGS
+# =============================================================================
+# Path relative to DRS_DATA_OTHER where the apero check yamls are stored
+APERO_CHECK_PATH = Const('APERO_CHECK_PATH', value='acheck',
+                         dtype=str, source=__NAME__, group=cgroup,
+                         description='Path relative to DRS_DATA_OTHER where '
+                                     'the apero check yamls are stored')
 
 # =============================================================================
 # INFO VISUALATION SETTINGS
