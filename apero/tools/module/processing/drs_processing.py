@@ -14,8 +14,10 @@ Created on 2019-08-06 at 11:57
 """
 import itertools
 import os
+import queue
 import sys
 import time
+import traceback
 import warnings
 from collections import OrderedDict
 from copy import deepcopy
@@ -1078,6 +1080,66 @@ def _multi_headerfix(params, obs_dirs, job: int = None, total_jobs: int = None,
     return payload
 
 
+def _multi_headerfix_process_worker(params, obs_dirs, job, total_jobs,
+                                    return_entries, return_queue):
+    """Worker wrapper that always reports success/failure back to parent."""
+    try:
+        payload = _multi_headerfix(params, obs_dirs, job, total_jobs,
+                                   return_entries, None)
+        return_queue.put(dict(ok=True, job=job, payload=payload))
+    except Exception as e:
+        return_queue.put(dict(ok=False, job=job,
+                              error='{0}: {1}'.format(type(e).__name__, e),
+                              traceback=traceback.format_exc()))
+
+
+def _multi_headerfix_safe_worker(params, obs_dirs, job, total_jobs):
+    """Worker wrapper for map/starmap modes that never raises to parent."""
+    try:
+        payload = _multi_headerfix(params, obs_dirs, job, total_jobs,
+                                   return_entries=True, return_list=None)
+        return dict(ok=True, job=job, payload=payload)
+    except Exception as e:
+        return dict(ok=False, job=job,
+                    error='{0}: {1}'.format(type(e).__name__, e),
+                    traceback=traceback.format_exc())
+
+
+def _collect_headerfix_payloads(params: ParamDict,
+                                grouped_raw_obs_dirs: List[List[str]],
+                                results: List[Dict[str, Any]],
+                                failed_jobs: Optional[set] = None):
+    """Collect successful payloads and linearly recover failed/missing jobs."""
+    if failed_jobs is None:
+        failed_jobs = set()
+    payloads = []
+    expected_jobs = set(np.arange(1, len(grouped_raw_obs_dirs) + 1))
+    received_jobs = set()
+    for result in results:
+        if not isinstance(result, dict):
+            continue
+        job = result.get('job', None)
+        if job is not None:
+            received_jobs.add(job)
+        if result.get('ok', False):
+            payloads.append(result.get('payload', None))
+        else:
+            failed_jobs.add(job)
+            wmsg = 'Header-fix worker {0} failed: {1}'
+            wargs = [job, result.get('error', 'Unknown error')]
+            WLOG(params, 'warning', wmsg.format(*wargs), sublevel=4)
+    failed_jobs |= (expected_jobs - received_jobs)
+    for job in sorted([j for j in failed_jobs if j in expected_jobs]):
+        wmsg = ('Falling back to linear header-fix for missing/failed '
+                'worker job {0}')
+        WLOG(params, 'warning', wmsg.format(job), sublevel=4)
+        payload = _multi_headerfix(params, grouped_raw_obs_dirs[job - 1],
+                                   job, len(grouped_raw_obs_dirs),
+                                   return_entries=True)
+        payloads.append(payload)
+    return payloads
+
+
 def _multi_process_headerfix_pathos(params: ParamDict,
                                     raw_obs_dirs: List[str], cores: int):
     """
@@ -1096,16 +1158,26 @@ def _multi_process_headerfix_pathos(params: ParamDict,
     from pathos.pools import ParallelPool as Pool
     # set up the pool
     pool = Pool(ncpus=cores, maxtasksperchild=1)
+    # split into one directory per job for map workers
+    grouped_raw_obs_dirs = [[raw_obs_dir] for raw_obs_dir in raw_obs_dirs]
     # list of params for each entry
     params_per_process = []
     # populate params for each sub group
-    for r_it, raw_obs_dir in enumerate(raw_obs_dirs):
-        args = [params, [raw_obs_dir], r_it + 1, len(raw_obs_dirs), True, None]
+    for r_it, grouped_raw_obs_dir in enumerate(grouped_raw_obs_dirs):
+        args = [params, grouped_raw_obs_dir, r_it + 1, len(grouped_raw_obs_dirs)]
         params_per_process.append(args)
     # transpose the params axis
     params_per_process2 = list(zip(*params_per_process))
     # start parallel jobs
-    payloads = pool.map(_multi_headerfix, *params_per_process2)
+    try:
+        results = pool.map(_multi_headerfix_safe_worker, *params_per_process2)
+    except Exception as e:
+        wmsg = 'Header-fix pathos map failed; falling back to linear: {0}: {1}'
+        wargs = [type(e).__name__, str(e)]
+        WLOG(params, 'warning', wmsg.format(*wargs), sublevel=4)
+        results = []
+    payloads = _collect_headerfix_payloads(params, grouped_raw_obs_dirs,
+                                           list(results), failed_jobs=None)
     _bulk_headerfix_updates(params, payloads)
 
 
@@ -1126,15 +1198,26 @@ def _multi_process_headerfix_pool(params: ParamDict,
     # deal with Pool specific imports
     from multiprocessing import get_context
 
+    # split into one directory per job for starmap workers
+    grouped_raw_obs_dirs = [[raw_obs_dir] for raw_obs_dir in raw_obs_dirs]
     # list of params for each entry
     params_per_process = []
     # populate params for each sub group
-    for r_it, raw_obs_dir in enumerate(raw_obs_dirs):
-        args = [params, [raw_obs_dir], r_it + 1, len(raw_obs_dirs), True, None]
+    for r_it, grouped_raw_obs_dir in enumerate(grouped_raw_obs_dirs):
+        args = [params, grouped_raw_obs_dir, r_it + 1, len(grouped_raw_obs_dirs)]
         params_per_process.append(args)
     # start parallel jobs
     with get_context('spawn').Pool(cores, maxtasksperchild=1) as pool:
-        payloads = pool.starmap(_multi_headerfix, params_per_process)
+        try:
+            results = pool.starmap(_multi_headerfix_safe_worker,
+                                   params_per_process)
+        except Exception as e:
+            wmsg = 'Header-fix pool starmap failed; falling back to linear: {0}: {1}'
+            wargs = [type(e).__name__, str(e)]
+            WLOG(params, 'warning', wmsg.format(*wargs), sublevel=4)
+            results = []
+    payloads = _collect_headerfix_payloads(params, grouped_raw_obs_dirs,
+                                           list(results), failed_jobs=None)
     _bulk_headerfix_updates(params, payloads)
 
 
@@ -1151,7 +1234,7 @@ def _multi_process_headerfix_process(params: ParamDict,
     :param cores: int, the number of cores to use
     """
     # import multiprocessing
-    from multiprocessing import Manager, Process
+    from multiprocessing import get_context
 
     if len(raw_obs_dirs) == 0:
         return
@@ -1162,25 +1245,41 @@ def _multi_process_headerfix_process(params: ParamDict,
 
     grouped_raw_obs_dirs = [raw_obs_dirs[i:i + chunk_size]
                             for i in range(0, len(raw_obs_dirs), chunk_size)]
-    with Manager() as manager:
-        payloads = manager.list()
-        # process storage
-        jobs = []
-        # loop around each run
-        for g_it, grouped_raw_obs_dir in enumerate(grouped_raw_obs_dirs):
-            # get the arguments for this group
-            args = [params, grouped_raw_obs_dir, g_it + 1,
-                    len(grouped_raw_obs_dirs), True, payloads]
-            # get parallel process
-            process = Process(target=_multi_headerfix, args=args)
-            process.start()
-            jobs.append(process)
-        # do not continue until finished
-        for pit, proc in enumerate(jobs):
-            # debug log: MULTIPROCESS - joining job {0}
-            WLOG(params, 'debug', textentry('90-503-00021', args=[pit]))
-            proc.join()
-        payloads = list(payloads)
+    ctx = get_context('spawn')
+    return_queue = ctx.Queue()
+    # process storage
+    jobs = []
+    # loop around each run
+    for g_it, grouped_raw_obs_dir in enumerate(grouped_raw_obs_dirs):
+        # get the arguments for this group
+        args = [params, grouped_raw_obs_dir, g_it + 1,
+                len(grouped_raw_obs_dirs), True, return_queue]
+        # get parallel process
+        process = ctx.Process(target=_multi_headerfix_process_worker, args=args)
+        process.start()
+        jobs.append(process)
+    # do not continue until finished
+    exit_failures = []
+    for pit, proc in enumerate(jobs):
+        # debug log: MULTIPROCESS - joining job {0}
+        WLOG(params, 'debug', textentry('90-503-00021', args=[pit]))
+        proc.join()
+        if proc.exitcode not in [0, None]:
+            exit_failures.append(pit + 1)
+    # collect worker results and fall back to linear for any failed/missing jobs
+    results = []
+    while True:
+        try:
+            results.append(return_queue.get_nowait())
+        except queue.Empty:
+            break
+    try:
+        return_queue.close()
+    except Exception:
+        pass
+    payloads = _collect_headerfix_payloads(params, grouped_raw_obs_dirs,
+                                           results,
+                                           failed_jobs=set(exit_failures))
     _bulk_headerfix_updates(params, payloads)
 
 
