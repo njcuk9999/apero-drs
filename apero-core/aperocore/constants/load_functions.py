@@ -1242,6 +1242,8 @@ def download_data(params: ParamDict, demolocal: str = None,
             localpath = str(os.path.join(params[dparameter], value_it))
             # deal with files already existing -- don't re-download/copy
             if os.path.exists(localpath):
+                msg = '\t File exists: {0}'.format(localpath)
+                WLOG(params, '', msg)
                 continue
             # handle local copy vs remote download
             if demolocal is not None:
