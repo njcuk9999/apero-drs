@@ -6,6 +6,7 @@ from __future__ import annotations
 
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
+import os
 
 import numpy as np
 import yaml
@@ -17,6 +18,9 @@ from apero_ri.application import profile_utils
 _ACTIVE_OBSDIR = ''
 _HEADER_CACHE = dict()
 _FILE_LIST_CACHE = dict()
+
+# Number of failing files shown in check messages before truncation.
+FAIL_FILE_SAMPLE_SIZE = 8
 
 
 # =============================================================================
@@ -280,6 +284,88 @@ def load_header_table(files: List[Path],
         table[key] = np.array(table[key])
         masks[key] = np.array(masks[key]).astype(bool)
     return table, masks
+
+
+def files_from_mask(table: dict, mask: Any) -> List[Path]:
+    """Return file paths whose boolean mask entry is True.
+
+    :param table: Output table returned by ``load_header_table``.
+    :param mask: Boolean-like mask aligned with table rows.
+    :return: List of matching file paths.
+    """
+    # Get the aligned filename column used by every raw check table.
+    raw_names = np.array(table.get('filename', []), dtype=str)
+    # Convert the incoming mask to a strict boolean numpy array.
+    use = np.array(mask).astype(bool)
+    # Protect against malformed masks to keep checks robust.
+    if len(raw_names) == 0 or len(raw_names) != len(use):
+        return []
+    # Build Path objects to make basename/parent handling consistent.
+    out = []
+    for name in raw_names[use]:
+        out.append(Path(str(name)))
+    return out
+
+
+def format_failed_file_message(test_key: str,
+                               reason: str,
+                               obs_path: Path,
+                               fail_files: List[Path],
+                               sample_size: int = FAIL_FILE_SAMPLE_SIZE
+                               ) -> str:
+    """Create a verbose failure message with representative filenames.
+
+    The output is designed for monitor users so they can quickly identify
+    where failures came from and inspect specific files.
+
+    :param test_key: Logical check key used in APERO-check config.
+    :param reason: Human-readable failure reason.
+    :param obs_path: Observation directory path used by the check.
+    :param fail_files: Files that failed or contributed to the failure.
+    :param sample_size: Maximum number of files to list.
+    :return: Multiline failure message string.
+    """
+    # Normalize and de-duplicate file paths while preserving order.
+    unique = []
+    seen = set()
+    for item in fail_files:
+        text = str(item)
+        if text in seen:
+            continue
+        seen.add(text)
+        unique.append(Path(text))
+
+    # Resolve the shared folder shown to users.
+    common_path = str(obs_path)
+    if len(unique) > 0:
+        try:
+            parts = [str(path.parent) for path in unique]
+            common_path = os.path.commonpath(parts)
+        except Exception:
+            common_path = str(unique[0].parent)
+
+    # Start message with a concise summary.
+    lines = []
+    lines.append(f'{test_key} failed ({reason})')
+    lines.append('')
+    lines.append(f'Path: {common_path}')
+    lines.append('')
+
+    # Add a representative sample of failing files.
+    if len(unique) == 0:
+        lines.append('File 1: (no matching file rows found)')
+        return '\n'.join(lines)
+
+    count = min(max(int(sample_size), 1), len(unique))
+    for idx in range(count):
+        lines.append(f'File {idx + 1}: {unique[idx].name}')
+
+    # Show truncation when there are more failures than the sample size.
+    if len(unique) > count:
+        lines.append('...')
+        lines.append(f'File N: {unique[-1].name}')
+
+    return '\n'.join(lines)
 
 
 def build_report(obs_dir: str,

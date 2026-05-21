@@ -1026,6 +1026,9 @@ def _normalize_apero_checks_args(args):
     q_obsdir_sort = str(
         args.get('obsdir_sort', 'desc') or 'desc'
     ).strip().lower()
+    q_result_filter = str(
+        args.get('result_filter', 'all') or 'all'
+    ).strip().lower()
     show_overridden = str(
         args.get('show_overridden', '0') or '0'
     ).strip() in {'1', 'true', 'yes'}
@@ -1033,10 +1036,12 @@ def _normalize_apero_checks_args(args):
         args.get('show_monitored', '0') or '0'
     ).strip() in {'1', 'true', 'yes'}
     show_passed = str(
-        args.get('show_passed', '0') or '0'
+        args.get('show_passed', '1') or '1'
     ).strip() in {'1', 'true', 'yes'}
     if q_type not in {'all', 'raw', 'red'}:
         q_type = 'all'
+    if q_result_filter not in {'all', 'passed', 'failed'}:
+        q_result_filter = 'all'
     if q_obsdir_sort not in {'asc', 'desc'}:
         q_obsdir_sort = 'desc'
     try:
@@ -1053,6 +1058,7 @@ def _normalize_apero_checks_args(args):
     out['page_num'] = page_num
     out['per_page'] = per_page
     out['type_filter'] = q_type
+    out['result_filter'] = q_result_filter
     out['obsdir_filter'] = q_obsdir_filter
     out['obsdir_sort'] = q_obsdir_sort
     out['show_overridden'] = show_overridden
@@ -1119,6 +1125,8 @@ def _build_apero_check_summary(
         summary['instrument'] = str(instrument)
         summary['profile'] = str(profile_id)
         summary['path'] = str(path)
+        raw_last = checks_core._iso_from_mtime(str(path))
+        summary['last_run'] = checks_core.format_last_run_display(raw_last)
         summary['history'] = []
         summary['visible_failures'] = [('parse_error', fail)]
         summary['visible_failure_count'] = 1
@@ -1129,6 +1137,31 @@ def _build_apero_check_summary(
         return summary
 
 
+def _build_apero_check_minimal(path):
+    """Build a minimal obsdir card using file metadata only."""
+    raw_last = checks_core._iso_from_mtime(str(path))
+    last_run = checks_core.format_last_run_display(raw_last)
+    return {'obsdir': path.stem, 'last_run': last_run}
+
+
+def _apply_apero_check_result_filter(cards, result_filter):
+    """Filter APERO-check cards by computed visible result status."""
+    mode = str(result_filter or 'all').strip().lower()
+    if mode == 'all':
+        return list(cards)
+    if mode == 'passed':
+        return [
+            card for card in cards
+            if str(card.get('status') or 'ok') == 'ok'
+        ]
+    if mode == 'failed':
+        return [
+            card for card in cards
+            if str(card.get('status') or 'ok') == 'failed'
+        ]
+    return list(cards)
+
+
 def _get_apero_check_page_payload(
     app,
     profile_data,
@@ -1137,6 +1170,7 @@ def _get_apero_check_page_payload(
     page_num,
     per_page,
     type_filter,
+    result_filter,
     obsdir_filter,
     obsdir_sort,
     show_overridden,
@@ -1154,19 +1188,38 @@ def _get_apero_check_page_payload(
     filtered_paths = _filter_apero_check_paths(
         files, obsdir_filter, obsdir_sort
     )
-    total_cards = len(filtered_paths)
-    total_pages = max(1, (total_cards + per_page - 1) // per_page)
-    page_num = max(1, min(page_num, total_pages))
-    pages_to_load = max(1, min(int(pages_to_load or 1), 2))
-    page_cards = dict()
-    last_page = min(total_pages, page_num + pages_to_load - 1)
-    for current_page in range(page_num, last_page + 1):
-        start = (current_page - 1) * per_page
-        end = start + per_page
-        paths = filtered_paths[start:end]
-        cards = []
-        for path in paths:
-            cards.append(
+    # Fast path: default result filter does not need full-card precompute.
+    mode = str(result_filter or 'all').strip().lower()
+    if mode == 'all':
+        total_cards = len(filtered_paths)
+        total_pages = max(1, (total_cards + per_page - 1) // per_page)
+        page_num = max(1, min(page_num, total_pages))
+        pages_to_load = max(1, min(int(pages_to_load or 1), 2))
+        page_cards = dict()
+        last_page = min(total_pages, page_num + pages_to_load - 1)
+        for current_page in range(page_num, last_page + 1):
+            start = (current_page - 1) * per_page
+            end = start + per_page
+            paths = filtered_paths[start:end]
+            cards = []
+            for path in paths:
+                cards.append(
+                    _build_apero_check_summary(
+                        path,
+                        profile_id,
+                        instrument,
+                        type_filter,
+                        show_overridden,
+                        show_monitored,
+                        show_passed,
+                        ignored_checks,
+                    )
+                )
+            page_cards[current_page] = cards
+    else:
+        all_cards = []
+        for path in filtered_paths:
+            all_cards.append(
                 _build_apero_check_summary(
                     path,
                     profile_id,
@@ -1178,7 +1231,21 @@ def _get_apero_check_page_payload(
                     ignored_checks,
                 )
             )
-        page_cards[current_page] = cards
+        filtered_cards = _apply_apero_check_result_filter(
+            all_cards,
+            mode,
+        )
+        total_cards = len(filtered_cards)
+        total_pages = max(1, (total_cards + per_page - 1) // per_page)
+        page_num = max(1, min(page_num, total_pages))
+        pages_to_load = max(1, min(int(pages_to_load or 1), 2))
+        page_cards = dict()
+        last_page = min(total_pages, page_num + pages_to_load - 1)
+        for current_page in range(page_num, last_page + 1):
+            start = (current_page - 1) * per_page
+            end = start + per_page
+            cards = filtered_cards[start:end]
+            page_cards[current_page] = cards
     payload = dict()
     payload['checks_root'] = str(checks_root)
     payload['checks_config'] = checks_cfg
@@ -1190,6 +1257,39 @@ def _get_apero_check_page_payload(
     payload['total_pages'] = total_pages
     payload['pages'] = page_cards
     return payload
+
+
+def _get_apero_check_page_payload_minimal(
+    app,
+    profile_data,
+    per_page,
+    page_num,
+    obsdir_filter,
+    obsdir_sort,
+):
+    """Return paged minimal obsdir cards (file metadata only)."""
+    checks_root = _checks_root_for_profile(app, profile_data)
+    files = checks_core.list_yaml_files(checks_root)
+    filtered_paths = _filter_apero_check_paths(
+        files, obsdir_filter, obsdir_sort
+    )
+    total_cards = len(filtered_paths)
+    total_pages = max(
+        1, (total_cards + per_page - 1) // per_page
+    )
+    page_num = max(1, min(page_num, total_pages))
+    start = (page_num - 1) * per_page
+    end = start + per_page
+    paths = filtered_paths[start:end]
+    cards = [_build_apero_check_minimal(p) for p in paths]
+    return {
+        'checks_root': str(checks_root),
+        'page': page_num,
+        'per_page': per_page,
+        'total_cards': total_cards,
+        'total_pages': total_pages,
+        'cards': cards,
+    }
 
 
 def monitor_apero_checks_profile_view(app, profile_id):
@@ -1218,25 +1318,17 @@ def monitor_apero_checks_profile_view(app, profile_id):
     page_args = _normalize_apero_checks_args(request.args)
 
     profile_data = prof['data']
-    payload = _get_apero_check_page_payload(
+    payload = _get_apero_check_page_payload_minimal(
         app,
         profile_data,
-        profile_id,
-        prof['instrument'],
-        page_args['page_num'],
         page_args['per_page'],
-        page_args['type_filter'],
+        page_args['page_num'],
         page_args['obsdir_filter'],
         page_args['obsdir_sort'],
-        page_args['show_overridden'],
-        page_args['show_monitored'],
-        page_args['show_passed'],
-        pages_to_load=1,
     )
 
     page_id = f'home.monitor_portal.apero_checks.{profile_id}'
     sidebar_page_id = 'home.monitor_portal.apero_checks'
-    manage_mode = _can_manage_apero_profiles(perms)
     context = {
         'page_id': page_id,
         'page_label': f'APERO Checks - {profile_id}',
@@ -1246,22 +1338,14 @@ def monitor_apero_checks_profile_view(app, profile_id):
         'sidebar_icon': 'fa-solid fa-chart-line',
         'sidebar_url': '/monitor_portal',
         'profile_id': profile_id,
-        'profile_cards': payload['pages'][payload['page']],
+        'profile_cards': payload['cards'],
         'current_page': payload['page'],
         'total_pages': payload['total_pages'],
         'total_cards': payload['total_cards'],
         'per_page': payload['per_page'],
-        'type_filter': page_args['type_filter'],
         'obsdir_filter': page_args['obsdir_filter'],
         'obsdir_sort': page_args['obsdir_sort'],
-        'show_overridden': page_args['show_overridden'],
-        'show_monitored': page_args['show_monitored'],
-        'show_passed': page_args['show_passed'],
         'checks_root': payload['checks_root'],
-        'ignored_checks': payload['ignored_checks'],
-        'override_allowed': payload['override_allowed'],
-        'checks_config': payload['checks_config'],
-        'can_manage_checks': manage_mode,
         'can_manage_apero_profiles': _can_manage_apero_profiles(perms),
     }
     try:
@@ -1271,13 +1355,61 @@ def monitor_apero_checks_profile_view(app, profile_id):
     except Exception:
         pass
     return render_template(
-        'monitor_portal/apero_checks_profile.html',
+        'monitor_portal/apero_checks_profile_compact.html',
+        **context,
+    )
+
+
+def monitor_apero_checks_queue_view(app, profile_id):
+    """Render APERO-check queue and history page for one profile."""
+    user_info = get_effective_user(session)
+    if user_info:
+        perms = resolve_user_permissions(
+            user_info['groups'], app.ari_groups
+        )
+    else:
+        perms = get_public_permissions()
+    if not _has_any_monitor_perm(perms):
+        flash('Monitor access required.', 'warning')
+        return redirect(url_for('login'))
+
+    prof = None
+    for item in get_accessible_profiles(user_info, app.ari_groups):
+        if item['profile_id'] == profile_id:
+            prof = item
+            break
+    if prof is None:
+        flash('Profile not found or access denied.', 'warning')
+        return redirect(url_for('monitor_apero_checks_view'))
+
+    page_id = f'home.monitor_portal.apero_checks.{profile_id}.queue'
+    sidebar_page_id = 'home.monitor_portal.apero_checks'
+    context = {
+        'page_id': page_id,
+        'page_label': f'APERO Checks Queue - {profile_id}',
+        'page_icon': 'fa-solid fa-list-check',
+        'sidebar_root': 'home.monitor_portal',
+        'sidebar_label': 'Monitor Portal',
+        'sidebar_icon': 'fa-solid fa-chart-line',
+        'sidebar_url': '/monitor_portal',
+        'profile_id': profile_id,
+        'instrument': str(prof.get('instrument') or ''),
+        'can_manage_checks': _can_manage_apero_profiles(perms),
+    }
+    try:
+        context.update(
+            app._build_sidebar_context(sidebar_page_id, perms, user_info)
+        )
+    except Exception:
+        pass
+    return render_template(
+        'monitor_portal/apero_checks_queue.html',
         **context,
     )
 
 
 def monitor_apero_checks_obsdir_view(app, profile_id, obsdir):
-    """Render the APERO checks detail page for one obsdir YAML."""
+    """Render APERO-check information page for one obsdir YAML."""
     user_info = get_effective_user(session)
     if user_info:
         perms = resolve_user_permissions(
@@ -1309,6 +1441,7 @@ def monitor_apero_checks_obsdir_view(app, profile_id, obsdir):
                                 profile_id=profile_id))
 
     loaded = checks_core.load_check_file(path)
+    page_args = _normalize_apero_checks_args(request.args)
     history = []
     for key, value in loaded.get('history', {}).items():
         row = dict(value)
@@ -1316,14 +1449,19 @@ def monitor_apero_checks_obsdir_view(app, profile_id, obsdir):
         history.append(row)
     history.sort(key=lambda item: item.get('date', ''))
 
-    failure_cards = []
-    pass_cards = []
-    ignored_checks = set(checks_core.load_ignored_checks(
+    ignored_checks = checks_core.load_ignored_checks(
         app._resolve_local_data_dir()
-    ))
-    for failure_key, failure in loaded.get('failures', {}).items():
-        if failure_key in ignored_checks:
-            continue
+    )
+    summary = checks_core.build_obsdir_summary(
+        loaded,
+        type_filter=page_args['type_filter'],
+        show_overridden=page_args['show_overridden'],
+        show_monitored=page_args['show_monitored'],
+        show_passed=page_args['show_passed'],
+        ignored_checks=ignored_checks,
+    )
+    failure_cards = []
+    for failure_key, failure in summary.get('visible_failures', []):
         failure_cards.append({
             'key': failure_key,
             'name': failure.get('name', failure_key),
@@ -1334,9 +1472,8 @@ def monitor_apero_checks_obsdir_view(app, profile_id, obsdir):
             'is_overridden': bool(failure.get('override')),
             'is_monitored': bool(failure.get('monitor')),
         })
-    for pass_key, check in loaded.get('passes', {}).items():
-        if pass_key in ignored_checks:
-            continue
+    pass_cards = []
+    for pass_key, check in summary.get('visible_passes', []):
         pass_cards.append({
             'key': pass_key,
             'name': check.get('name', pass_key),
@@ -1344,6 +1481,7 @@ def monitor_apero_checks_obsdir_view(app, profile_id, obsdir):
             'message': check.get('message', ''),
             'is_passed': True,
         })
+    result_state = 'passed' if summary.get('status') == 'ok' else 'failed'
 
     page_id = f'home.monitor_portal.apero_checks.{profile_id}.{obsdir}'
     sidebar_page_id = 'home.monitor_portal.apero_checks'
@@ -1359,11 +1497,23 @@ def monitor_apero_checks_obsdir_view(app, profile_id, obsdir):
         'profile_id': profile_id,
         'obsdir': obsdir,
         'checks_file': str(path),
+        'result_state': result_state,
+        'last_run': summary.get('last_run', ''),
         'check_history': history,
         'failure_cards': failure_cards,
         'pass_cards': pass_cards,
         'ignored_checks': sorted(ignored_checks),
+        'type_filter': page_args['type_filter'],
+        'show_overridden': page_args['show_overridden'],
+        'show_monitored': page_args['show_monitored'],
+        'show_passed': page_args['show_passed'],
+        'current_page': page_args['page_num'],
+        'per_page': page_args['per_page'],
+        'obsdir_filter': page_args['obsdir_filter'],
+        'obsdir_sort': page_args['obsdir_sort'],
         'can_manage_checks': can_manage,
+        'api_rerun_night_url': url_for('api_apero_checks_rerun_night'),
+        'api_issue_url': url_for('api_apero_checks_create_issue'),
     }
     try:
         context.update(
@@ -1371,5 +1521,124 @@ def monitor_apero_checks_obsdir_view(app, profile_id, obsdir):
         )
     except Exception:
         pass
-    return render_template('monitor_portal/apero_checks_detail.html',
-                           **context)
+    return render_template(
+        'monitor_portal/apero_checks_obsdir_info.html',
+        **context,
+    )
+
+
+def monitor_apero_checks_check_view(
+    app,
+    profile_id,
+    obsdir,
+    check_key,
+):
+    """Render APERO-check information page for one check key."""
+    user_info = get_effective_user(session)
+    if user_info:
+        perms = resolve_user_permissions(
+            user_info['groups'], app.ari_groups
+        )
+    else:
+        perms = get_public_permissions()
+    if not _has_any_monitor_perm(perms):
+        flash('Monitor access required.', 'warning')
+        return redirect(url_for('login'))
+
+    prof = None
+    for item in get_accessible_profiles(user_info, app.ari_groups):
+        if item['profile_id'] == profile_id:
+            prof = item
+            break
+    if prof is None:
+        flash('Profile not found or access denied.', 'warning')
+        return redirect(url_for('monitor_apero_checks_view'))
+
+    profile_data = prof['data']
+    checks_root = _checks_root_for_profile(app, profile_data)
+    path = checks_root / f'{obsdir}.yaml'
+    if not path.exists():
+        path = checks_root / f'{obsdir}.yml'
+    if not path.exists():
+        flash('APERO check YAML not found.', 'warning')
+        return redirect(
+            url_for(
+                'monitor_apero_checks_obsdir_view',
+                profile_id=profile_id,
+                obsdir=obsdir,
+            )
+        )
+
+    loaded = checks_core.load_check_file(path)
+    key = str(check_key or '').strip()
+    ignored_checks = set(
+        checks_core.load_ignored_checks(app._resolve_local_data_dir())
+    )
+    if key in ignored_checks:
+        flash('This check is ignored by policy.', 'warning')
+        return redirect(
+            url_for(
+                'monitor_apero_checks_obsdir_view',
+                profile_id=profile_id,
+                obsdir=obsdir,
+            )
+        )
+
+    failure = loaded.get('failures', {}).get(key)
+    passed = loaded.get('passes', {}).get(key)
+    if not isinstance(failure, dict) and not isinstance(passed, dict):
+        flash('APERO check key not found.', 'warning')
+        return redirect(
+            url_for(
+                'monitor_apero_checks_obsdir_view',
+                profile_id=profile_id,
+                obsdir=obsdir,
+            )
+        )
+
+    page_id = (
+        f'home.monitor_portal.apero_checks.{profile_id}.{obsdir}.{key}'
+    )
+    sidebar_page_id = 'home.monitor_portal.apero_checks'
+    data = failure if isinstance(failure, dict) else passed
+    kind = 'failed' if isinstance(failure, dict) else 'passed'
+    override_allowed = checks_core.load_override_allowed(
+        app._resolve_local_data_dir()
+    )
+    context = {
+        'page_id': page_id,
+        'page_label': f'APERO Checks - {profile_id}',
+        'page_icon': 'fa-solid fa-square-check',
+        'sidebar_root': 'home.monitor_portal',
+        'sidebar_label': 'Monitor Portal',
+        'sidebar_icon': 'fa-solid fa-chart-line',
+        'sidebar_url': '/monitor_portal',
+        'profile_id': profile_id,
+        'obsdir': obsdir,
+        'check_key': key,
+        'check_data': data,
+        'check_kind': kind,
+        'checks_file': str(path),
+        'last_run': checks_core.format_last_run_display(
+            checks_core._latest_history_date(loaded.get('history', {}))
+            or checks_core._iso_from_mtime(str(path))
+        ),
+        'override_allowed': override_allowed,
+        'can_manage_checks': _can_manage_apero_profiles(perms),
+        'doc_url': url_for(
+            'doc_dynamic_view', page_ref='monitor'
+        ),
+        'api_update_url': url_for('api_apero_checks_update_failure'),
+        'api_rerun_check_url': url_for('api_apero_checks_rerun_single_check'),
+        'api_view_yaml_url': url_for('api_apero_checks_view_yaml'),
+    }
+    try:
+        context.update(
+            app._build_sidebar_context(sidebar_page_id, perms, user_info)
+        )
+    except Exception:
+        pass
+    return render_template(
+        'monitor_portal/apero_checks_check_info.html',
+        **context,
+    )

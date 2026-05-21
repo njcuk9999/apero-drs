@@ -29,6 +29,14 @@ def _description(cfg: dict) -> str:
 
 def check_function(instrument: str, obs_dir: str,
                    aparams: dict, dbparams: dict) -> Tuple[bool, str]:
+    """Run enclosure-heater max validation for one observation directory.
+
+    :param instrument: Active instrument key for the current profile.
+    :param obs_dir: Observation-directory/night identifier.
+    :param aparams: APERO runtime parameters and test configuration.
+    :param dbparams: Runtime/database context passed by monitor task.
+    :returns: Tuple ``(is_ok, message)`` for pass/skip/failure reporting.
+    """
     _ = instrument, dbparams
     cfg = raw_common.get_check_value(aparams,
                                      'eng_test',
@@ -43,19 +51,28 @@ def check_function(instrument: str, obs_dir: str,
     limit = float(cfg.get('val1', np.nan))
     if key1 == '':
         return False, f'{TEST_KEY} missing key1.'
-    _, files = raw_common.list_obsdir_files(aparams, obs_dir)
+    obs_path, files = raw_common.list_obsdir_files(aparams, obs_dir)
     if len(files) == 0:
         return False, f'No FITS files found in {obs_dir}.'
     defs = dict()
     defs[key1] = dict(key=key1, dtype='float')
     table, masks = raw_common.load_header_table(files, defs)
-    x = np.array(table[key1][masks[key1]], dtype=float)
+    use = masks[key1]
+    x = np.array(table[key1][use], dtype=float)
     if len(x) == 0:
         return True, f'Skipped {TEST_KEY}: no valid rows.'
     metric = float(np.nanmax(x))
     if metric < limit:
         return True, f'{TEST_KEY} okay ({metric:.1f} < {limit:.1f}).'
-    return False, f'{TEST_KEY} failed ({metric:.1f} >= {limit:.1f}).'
+    use_files = raw_common.files_from_mask(table, use)
+    reason = f'{metric:.1f} >= {limit:.1f}'
+    message = raw_common.format_failed_file_message(
+        TEST_KEY,
+        reason,
+        obs_path,
+        use_files,
+    )
+    return False, message
 
 
 CHECK.func = check_function

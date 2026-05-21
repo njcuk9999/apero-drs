@@ -65,6 +65,9 @@ FILTERS.append('APERO_PROFILE_EXCLUDE')
 FILTERS.append('OBS_DIR_INCLUDE')
 FILTERS.append('OBS_DIR_EXCLUDE')
 
+# Exclude non-night technical folders from raw-directory discovery.
+RAW_DIR_EXCLUDE = ['__pycache__']
+
 # Re-run recent nights by default for 48 hours.
 DEFAULT_RECENT_HOURS = 48.0
 
@@ -546,8 +549,19 @@ def _raw_dir_obsdir_rows(aparams: dict,
     if raw_dir is None or not raw_dir.exists() or not raw_dir.is_dir():
         return []
 
+    exclude_names = set()
+    for value in RAW_DIR_EXCLUDE:
+        name = str(value or '').strip().lower()
+        if name:
+            exclude_names.add(name)
+
     try:
-        children = sorted(path for path in raw_dir.iterdir() if path.is_dir())
+        children = sorted(
+            path
+            for path in raw_dir.iterdir()
+            if path.is_dir()
+            and str(path.name or '').strip().lower() not in exclude_names
+        )
     except Exception as exc:
         if callable(tlog):
             tlog(f'Could not list raw obsdirs in {raw_dir}: {exc}')

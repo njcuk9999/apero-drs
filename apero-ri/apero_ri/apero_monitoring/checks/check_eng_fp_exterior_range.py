@@ -31,6 +31,14 @@ def _description(cfg: dict) -> str:
 
 def check_function(instrument: str, obs_dir: str,
                    aparams: dict, dbparams: dict) -> Tuple[bool, str]:
+    """Run FP exterior-range validation for one observation directory.
+
+    :param instrument: Active instrument key for the current profile.
+    :param obs_dir: Observation-directory/night identifier.
+    :param aparams: APERO runtime parameters and test configuration.
+    :param dbparams: Runtime/database context passed by monitor task.
+    :returns: Tuple ``(is_ok, message)`` for pass/skip/failure reporting.
+    """
     _ = instrument, dbparams
     cfg = raw_common.get_check_value(aparams,
                                      'eng_test',
@@ -46,13 +54,14 @@ def check_function(instrument: str, obs_dir: str,
     high = float(cfg.get('val2', np.inf))
     if key1 == '':
         return False, f'{TEST_KEY} missing key1.'
-    _, files = raw_common.list_obsdir_files(aparams, obs_dir)
+    obs_path, files = raw_common.list_obsdir_files(aparams, obs_dir)
     if len(files) == 0:
         return False, f'No FITS files found in {obs_dir}.'
     defs = dict()
     defs[key1] = dict(key=key1, dtype='float')
     table, masks = raw_common.load_header_table(files, defs)
-    x = np.array(table[key1][masks[key1]], dtype=float)
+    use = masks[key1]
+    x = np.array(table[key1][use], dtype=float)
     if len(x) == 0:
         return True, f'Skipped {TEST_KEY}: no valid rows.'
     xmin = float(np.nanmin(x))
@@ -60,7 +69,15 @@ def check_function(instrument: str, obs_dir: str,
     ok = xmin > low and xmax < high
     if ok:
         return True, f'{TEST_KEY} okay ({xmin:.3f}-{xmax:.3f}).'
-    return False, f'{TEST_KEY} failed ({xmin:.3f}-{xmax:.3f}).'
+    use_files = raw_common.files_from_mask(table, use)
+    reason = f'range {xmin:.3f}-{xmax:.3f} outside {low:.3f}-{high:.3f}'
+    message = raw_common.format_failed_file_message(
+        TEST_KEY,
+        reason,
+        obs_path,
+        use_files,
+    )
+    return False, message
 
 
 CHECK.func = check_function

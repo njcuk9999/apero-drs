@@ -1,0 +1,564 @@
+{% extends "general/sidebar_base.html" %}
+{% block title %}APERO RI - APERO Check - {{ check_key }}{% endblock %}
+
+{% block body_class %}ari-has-sidebar ari-apero-checks-page{% endblock %}
+
+{% block extra_head %}
+{{ super() }}
+<link rel="stylesheet"
+    href="{{ url_for('static', filename='css/apero_checks.css') }}?v=20260520c">
+{% endblock %}
+
+{% block doc_content %}
+<div class="ot-meta-bar">
+    <a class="ari-btn ari-btn--sm ari-btn--secondary"
+       href="{{ url_for('monitor_apero_checks_profile_view', profile_id=profile_id) }}">
+        <i class="fa-solid fa-arrow-left"></i>
+        Back to observation directory list
+    </a>
+    <a class="ari-btn ari-btn--sm ari-btn--secondary"
+       href="{{ url_for('monitor_apero_checks_obsdir_view', profile_id=profile_id, obsdir=obsdir) }}">
+        <i class="fa-solid fa-arrow-left"></i>
+        Back to {{ obsdir }}
+    </a>
+</div>
+
+{% if check_data.override and check_data.override.date %}
+<div class="ac-check-banner ac-check-banner--overridden">
+    <span class="ac-check-banner__icon">
+        <i class="fa-solid fa-triangle-exclamation"></i>
+    </span>
+    <span class="ac-check-banner__text">Overridden</span>
+    <span class="ac-check-banner__name">{{ check_data.name or check_key }}</span>
+</div>
+{% elif check_data.monitor and check_data.monitor.date %}
+<div class="ac-check-banner ac-check-banner--monitored">
+    <span class="ac-check-banner__icon">
+        <i class="fa-solid fa-bell"></i>
+    </span>
+    <span class="ac-check-banner__text">Monitored</span>
+    <span class="ac-check-banner__name">{{ check_data.name or check_key }}</span>
+</div>
+{% elif check_kind == 'passed' %}
+<div class="ac-check-banner ac-check-banner--passed">
+    <span class="ac-check-banner__icon">
+        <i class="fa-solid fa-check"></i>
+    </span>
+    <span class="ac-check-banner__text">Passed</span>
+    <span class="ac-check-banner__name">{{ check_data.name or check_key }}</span>
+</div>
+{% else %}
+<div class="ac-check-banner ac-check-banner--failed">
+    <span class="ac-check-banner__icon">
+        <i class="fa-solid fa-xmark"></i>
+    </span>
+    <span class="ac-check-banner__text">Failed</span>
+    <span class="ac-check-banner__name">{{ check_data.name or check_key }}</span>
+</div>
+{% endif %}
+
+<div class="ac-card">
+    <div class="ac-failure-detail__meta">
+        <div class="ac-failure-meta-row">
+            <strong>obsdir:</strong> {{ obsdir }}
+        </div>
+        <div class="ac-failure-meta-row"><strong>result:</strong>
+            <span class="ac-failure-meta-state {% if check_kind == 'passed' %}ac-failure-meta-state--true{% else %}ac-failure-meta-state--false{% endif %}">
+                {{ check_kind|title }}
+            </span>
+        </div>
+        <div class="ac-failure-meta-row"><strong>type:</strong>
+            {{ check_data.type or '' }}
+        </div>
+        <div class="ac-failure-meta-row"><strong>monitored:</strong>
+            {% if check_data.monitor and check_data.monitor.date %}
+            <span style="color:#7c3aed;font-weight:700;">True</span>
+            {% else %}False{% endif %}
+        </div>
+        <div class="ac-failure-meta-row"><strong>overridden:</strong>
+            {% if check_data.override and check_data.override.date %}
+            <span style="color:#d97706;font-weight:700;">True</span>
+            {% else %}False{% endif %}
+        </div>
+        <div class="ac-failure-meta-row"><strong>test:</strong>
+            {{ check_key }}
+        </div>
+        <div class="ac-failure-meta-row"><strong>last run:</strong>
+            {{ last_run or 'n/a' }}
+        </div>
+    </div>
+
+    <pre class="ac-failure-detail__message"
+         style="margin-top:0.65rem;">{{ check_data.message or '' }}</pre>
+
+    <div id="ac-check-save-note" class="ac-save-note"
+         style="margin-top:0.65rem;" hidden></div>
+
+    <div class="ac-failure-path-row" style="margin-top:0.65rem;">
+        <div class="ac-failure-path">
+            <i class="fa-solid fa-file-code"></i>
+            {{ checks_file }}
+        </div>
+    </div>
+
+    <div class="ac-failure-doc-link" style="margin-top:0.4rem;">
+        <a href="{{ doc_url }}" target="_blank" rel="noopener">
+            <i class="fa-solid fa-book-open"></i>
+            Quick link to documentation
+        </a>
+    </div>
+
+    <div class="ac-failure-detail__actions" style="margin-top:0.85rem;">
+        <button id="ac-check-override"
+                class="ari-btn ari-btn--sm ari-btn--secondary"
+                type="button">
+            <i class="fa-solid fa-check"></i>
+            <span id="ac-check-override-label">Override: OFF</span>
+        </button>
+        <button id="ac-check-monitor"
+                class="ari-btn ari-btn--sm ari-btn--secondary"
+                type="button">
+            <i class="fa-solid fa-bell"></i>
+            <span id="ac-check-monitor-label">Monitor: OFF</span>
+        </button>
+        <button id="ac-check-clear"
+                class="ari-btn ari-btn--sm ari-btn--secondary"
+                type="button" hidden>
+            <i class="fa-solid fa-trash"></i>
+            Clear
+        </button>
+    </div>
+
+    <div class="ac-failure-detail__actions" style="margin-top:0.5rem;">
+        <button id="ac-check-copy"
+                class="ari-btn ari-btn--sm ac-btn--blue-bg"
+                type="button">
+            <i class="fa-solid fa-copy"></i>
+            Copy report
+        </button>
+        <button id="ac-check-rerun"
+                class="ari-btn ari-btn--sm ac-btn--red-bg"
+                type="button">
+            <i class="fa-solid fa-rotate-right"></i>
+            Re-run this check
+        </button>
+        <button id="ac-check-view-yaml"
+                class="ari-btn ari-btn--sm ari-btn--secondary"
+                type="button">
+            <i class="fa-solid fa-eye"></i>
+            View YAML
+        </button>
+    </div>
+</div>
+
+<div id="ac-comment-overlay" class="ac-overlay" hidden>
+    <div class="ac-overlay__backdrop" data-ac-close="comment"></div>
+    <div class="ac-overlay__panel" style="max-width:480px;">
+        <div class="ac-overlay__header">
+            <h3 id="ac-comment-overlay-title">Comment</h3>
+            <button type="button" class="ac-overlay__close"
+                    data-ac-close="comment">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+        <div style="padding:1rem;" class="ac-failure-comment-editor">
+            <label class="ac-failure-detail__label">
+                <span id="ac-check-comment-label">Comment</span>
+                <textarea id="ac-check-comment"
+                          rows="3"
+                          placeholder="Enter comment"></textarea>
+            </label>
+            <div class="ac-failure-detail__actions" style="margin-top:0.6rem;">
+                <button id="ac-check-save-comment"
+                        class="ari-btn ari-btn--sm ari-btn--primary"
+                        type="button">
+                    Save
+                </button>
+                <button id="ac-check-cancel-comment"
+                        class="ari-btn ari-btn--sm ari-btn--secondary"
+                        type="button"
+                        data-ac-close="comment">
+                    Cancel
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="ac-yaml-overlay" class="ac-overlay" hidden>
+    <div class="ac-overlay__backdrop" data-ac-close="yaml"></div>
+    <div class="ac-overlay__panel ac-overlay__panel--wide">
+        <div class="ac-overlay__header">
+            <h3>Check YAML view</h3>
+            <button type="button" class="ac-overlay__close"
+                    data-ac-close="yaml">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+        <div class="ac-overlay__tools ac-yaml-tools">
+            <input id="ac-yaml-search" type="search"
+                   placeholder="Search YAML...">
+            <span id="ac-yaml-match-count" class="ac-note"></span>
+            <button id="ac-btn-yaml-copy"
+                    class="ari-btn ari-btn--sm ari-btn--secondary"
+                    type="button">
+                <i class="fa-solid fa-copy"></i> Copy
+            </button>
+        </div>
+        <pre id="ac-yaml-content" class="ac-failure-detail__message"
+             style="margin: 1rem; max-height: 62vh;"></pre>
+    </div>
+</div>
+
+<script>
+(function () {
+    var state = {
+        checkKind: {{ check_kind|tojson }},
+        checkKey: {{ check_key|tojson }},
+        checkData: {{ check_data|tojson }},
+        checkPath: {{ checks_file|tojson }},
+        overrideAllowed: {{ override_allowed|tojson }},
+        pendingAction: '',
+    };
+
+    function eventEnabled(value) {
+        if (!value || typeof value !== 'object') return false;
+        var keys = ['date', 'user', 'source', 'comment'];
+        for (var i = 0; i < keys.length; i += 1) {
+            if (String(value[keys[i]] || '').trim()) return true;
+        }
+        return false;
+    }
+
+    function postJson(url, payload) {
+        return fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload || {}),
+        }).then(function (resp) {
+            return resp.json().then(function (data) {
+                if (!resp.ok || data.success === false) {
+                    throw new Error(data.error || 'Request failed');
+                }
+                return data;
+            });
+        });
+    }
+
+    function openOverlay(name) {
+        var el = document.getElementById('ac-' + name + '-overlay');
+        if (el) el.hidden = false;
+    }
+    function closeOverlay(name) {
+        var el = document.getElementById('ac-' + name + '-overlay');
+        if (el) el.hidden = true;
+        if (name === 'comment') state.pendingAction = '';
+    }
+    document.querySelectorAll('[data-ac-close]').forEach(function (el) {
+        el.addEventListener('click', function () {
+            closeOverlay(el.getAttribute('data-ac-close'));
+        });
+    });
+
+    function setCheckNote(message, isError) {
+        var note = document.getElementById('ac-check-save-note');
+        if (!note) return;
+        if (!message) {
+            note.hidden = true; note.textContent = '';
+            note.style.cssText = ''; return;
+        }
+        note.hidden = false;
+        note.textContent = message;
+        if (isError) {
+            note.style.borderColor = '#fecaca';
+            note.style.background = '#fef2f2';
+            note.style.color = '#b91c1c';
+        } else {
+            note.style.cssText = '';
+        }
+    }
+
+    function updateToggleLabels() {
+        var isPassed = state.checkKind === 'passed';
+        var hasOverride = eventEnabled(state.checkData.override);
+        var hasMonitor = eventEnabled(state.checkData.monitor);
+        var ol = document.getElementById('ac-check-override-label');
+        var ml = document.getElementById('ac-check-monitor-label');
+        if (ol) ol.textContent = isPassed ? 'Override: N/A'
+            : (hasOverride ? 'Override: ON' : 'Override: OFF');
+        if (ml) ml.textContent = isPassed ? 'Monitor: N/A'
+            : (hasMonitor ? 'Monitor: ON' : 'Monitor: OFF');
+    }
+
+    function applyControlPolicy() {
+        var isPassed = state.checkKind === 'passed';
+        var allowOverride = state.overrideAllowed.indexOf(
+            String(state.checkKey || '')
+        ) >= 0;
+        var hasOverride = eventEnabled(state.checkData.override);
+        var hasMonitor = eventEnabled(state.checkData.monitor);
+        var btnOverride = document.getElementById('ac-check-override');
+        var btnMonitor = document.getElementById('ac-check-monitor');
+        var btnClear = document.getElementById('ac-check-clear');
+        if (btnOverride) {
+            btnOverride.disabled = isPassed || !allowOverride;
+            btnOverride.title = (!isPassed && !allowOverride)
+                ? 'Override disabled by policy' : '';
+        }
+        if (btnMonitor) btnMonitor.disabled = isPassed;
+        if (btnClear) {
+            btnClear.hidden = isPassed || (!hasOverride && !hasMonitor);
+            btnClear.disabled = isPassed;
+        }
+    }
+
+    function openCommentEditor(action) {
+        if (state.checkKind === 'passed') return;
+        var label = document.getElementById('ac-check-comment-label');
+        var title = document.getElementById('ac-comment-overlay-title');
+        var input = document.getElementById('ac-check-comment');
+        var saveBtn = document.getElementById('ac-check-save-comment');
+        if (!label || !input || !saveBtn) return;
+        var existing = '';
+        if (action === 'override' && eventEnabled(state.checkData.override)) {
+            existing = String(state.checkData.override.comment || '');
+        }
+        if (action === 'monitor' && eventEnabled(state.checkData.monitor)) {
+            existing = String(state.checkData.monitor.comment || '');
+        }
+        state.pendingAction = action;
+        var t = action === 'override' ? 'Override comment' : 'Monitor comment';
+        if (label) label.textContent = t;
+        if (title) title.textContent = t;
+        if (saveBtn) saveBtn.textContent = action === 'override'
+            ? 'Save override' : 'Save monitor';
+        input.value = existing;
+        input.placeholder = action === 'override'
+            ? 'Enter override comment' : 'Enter monitor comment';
+        openOverlay('comment');
+        setTimeout(function () { input.focus(); }, 80);
+    }
+
+    function updateCheckData(loaded) {
+        var failures = loaded && loaded.failures ? loaded.failures : {};
+        var passes = loaded && loaded.passes ? loaded.passes : {};
+        var row = failures[state.checkKey] || passes[state.checkKey];
+        if (row && typeof row === 'object') state.checkData = row;
+        updateToggleLabels();
+        applyControlPolicy();
+    }
+
+    var rerunBtn = document.getElementById('ac-check-rerun');
+    if (rerunBtn) {
+        rerunBtn.addEventListener('click', function () {
+            postJson({{ api_rerun_check_url|tojson }}, {
+                profile_id: {{ profile_id|tojson }},
+                obsdir: {{ obsdir|tojson }},
+                check_key: {{ check_key|tojson }},
+            }).then(function (data) {
+                var taskId = String(data.task_id || '').trim();
+                window.alert(taskId
+                    ? 'Check queued (task: ' + taskId + ').'
+                    : 'Check queued.');
+            }).catch(function (err) {
+                window.alert(String(err || 'Could not queue this check.'));
+            });
+        });
+    }
+
+    var yamlBtn = document.getElementById('ac-check-view-yaml');
+    if (yamlBtn) {
+        yamlBtn.addEventListener('click', function () {
+            openOverlay('yaml');
+            var content = document.getElementById('ac-yaml-content');
+            if (content && !content.dataset.loaded) {
+                content.textContent = 'Loading YAML...';
+                postJson({{ api_view_yaml_url|tojson }}, {
+                    profile_id: {{ profile_id|tojson }},
+                    obsdir: {{ obsdir|tojson }},
+                    check_path: {{ checks_file|tojson }},
+                }).then(function (data) {
+                    content.textContent = String(data.content || '');
+                    content.dataset.loaded = '1';
+                }).catch(function (err) {
+                    content.textContent = String(err || 'Could not load YAML.');
+                });
+            }
+        });
+    }
+
+    var yamlSearch = document.getElementById('ac-yaml-search');
+    if (yamlSearch) {
+        yamlSearch.addEventListener('input', function () {
+            var content = document.getElementById('ac-yaml-content');
+            var matchCount = document.getElementById('ac-yaml-match-count');
+            if (!content) return;
+            var q = yamlSearch.value.trim();
+            if (!content.dataset.raw) content.dataset.raw = content.textContent;
+            var raw = content.dataset.raw;
+            if (!q) {
+                content.textContent = raw;
+                if (matchCount) matchCount.textContent = '';
+                return;
+            }
+            var escaped = raw.replace(/[&<>"']/g, function (c) {
+                return {'&':'&amp;','<':'&lt;','>':'&gt;',
+                    '"':'&quot;',"'":'&#39;'}[c];
+            });
+            var re = new RegExp(
+                q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi'
+            );
+            var count = 0;
+            var highlighted = escaped.replace(re, function (m) {
+                count += 1;
+                return '<mark class="ac-yaml-mark">' + m + '</mark>';
+            });
+            content.innerHTML = highlighted;
+            if (matchCount) matchCount.textContent = count
+                ? count + ' match' + (count > 1 ? 'es' : '') : 'No match';
+        });
+    }
+
+    var yamlCopyBtn = document.getElementById('ac-btn-yaml-copy');
+    if (yamlCopyBtn) {
+        yamlCopyBtn.addEventListener('click', function () {
+            var content = document.getElementById('ac-yaml-content');
+            if (!content) return;
+            navigator.clipboard.writeText(
+                content.dataset.raw || content.textContent
+            ).catch(function () {});
+        });
+    }
+
+    var overrideBtn = document.getElementById('ac-check-override');
+    if (overrideBtn) {
+        overrideBtn.addEventListener('click', function () {
+            if (state.checkKind === 'passed') return;
+            if (eventEnabled(state.checkData.override)) {
+                postJson({{ api_update_url|tojson }}, {
+                    profile_id: {{ profile_id|tojson }},
+                    obsdir: {{ obsdir|tojson }},
+                    check_path: state.checkPath,
+                    failure_key: state.checkKey,
+                    action: 'clear_override', comment: '',
+                }).then(function (data) {
+                    updateCheckData(data.check || {});
+                    closeOverlay('comment');
+                    setCheckNote('Override turned OFF and saved.', false);
+                }).catch(function (err) {
+                    setCheckNote(String(err || 'Save failed'), true);
+                });
+                return;
+            }
+            openCommentEditor('override');
+        });
+    }
+
+    var monitorBtn = document.getElementById('ac-check-monitor');
+    if (monitorBtn) {
+        monitorBtn.addEventListener('click', function () {
+            if (state.checkKind === 'passed') return;
+            if (eventEnabled(state.checkData.monitor)) {
+                postJson({{ api_update_url|tojson }}, {
+                    profile_id: {{ profile_id|tojson }},
+                    obsdir: {{ obsdir|tojson }},
+                    check_path: state.checkPath,
+                    failure_key: state.checkKey,
+                    action: 'clear_monitor', comment: '',
+                }).then(function (data) {
+                    updateCheckData(data.check || {});
+                    closeOverlay('comment');
+                    setCheckNote('Monitor turned OFF and saved.', false);
+                }).catch(function (err) {
+                    setCheckNote(String(err || 'Save failed'), true);
+                });
+                return;
+            }
+            openCommentEditor('monitor');
+        });
+    }
+
+    var clearBtn = document.getElementById('ac-check-clear');
+    if (clearBtn) {
+        clearBtn.addEventListener('click', function () {
+            if (state.checkKind === 'passed') return;
+            postJson({{ api_update_url|tojson }}, {
+                profile_id: {{ profile_id|tojson }},
+                obsdir: {{ obsdir|tojson }},
+                check_path: state.checkPath,
+                failure_key: state.checkKey,
+                action: 'clear', comment: '',
+            }).then(function (data) {
+                updateCheckData(data.check || {});
+                closeOverlay('comment');
+                setCheckNote('Override and monitor cleared.', false);
+            }).catch(function (err) {
+                setCheckNote(String(err || 'Clear failed'), true);
+            });
+        });
+    }
+
+    var saveCommentBtn = document.getElementById('ac-check-save-comment');
+    if (saveCommentBtn) {
+        saveCommentBtn.addEventListener('click', function () {
+            if (state.checkKind === 'passed') return;
+            var action = state.pendingAction;
+            if (action !== 'override' && action !== 'monitor') return;
+            var input = document.getElementById('ac-check-comment');
+            var comment = String(input && input.value || '');
+            postJson({{ api_update_url|tojson }}, {
+                profile_id: {{ profile_id|tojson }},
+                obsdir: {{ obsdir|tojson }},
+                check_path: state.checkPath,
+                failure_key: state.checkKey,
+                action: action, comment: comment,
+            }).then(function (data) {
+                updateCheckData(data.check || {});
+                closeOverlay('comment');
+                setCheckNote(action === 'override'
+                    ? 'Override saved to YAML.'
+                    : 'Monitor saved to YAML.', false);
+            }).catch(function (err) {
+                setCheckNote(String(err || 'Save failed'), true);
+            });
+        });
+    }
+
+    var copyBtn = document.getElementById('ac-check-copy');
+    if (copyBtn) {
+        copyBtn.addEventListener('click', function () {
+            var hasOverride = eventEnabled(state.checkData.override);
+            var hasMonitor = eventEnabled(state.checkData.monitor);
+            var divider = Array(81).join('=');
+            var payload =
+                divider + '\n' +
+                String(state.checkData.name || state.checkKey) + '\n' +
+                divider + '\n' +
+                'obsdir: {{ obsdir }}\n' +
+                'type: ' + String(state.checkData.type || '') + '\n' +
+                'test: ' + String(state.checkKey || '') + '\n' +
+                'overridden: ' + (hasOverride ? 'True' : 'False') + '\n' +
+                'overridden message: ' + (hasOverride
+                    ? String((state.checkData.override || {}).comment || '')
+                    : '') + '\n' +
+                'monitored: ' + (hasMonitor ? 'True' : 'False') + '\n' +
+                'monitored message: ' + (hasMonitor
+                    ? String((state.checkData.monitor || {}).comment || '')
+                    : '') + '\n' +
+                'check file: ' + String(state.checkPath || '') + '\n' +
+                divider + '\n' +
+                String(state.checkData.message || '') + '\n' +
+                divider;
+            navigator.clipboard.writeText(payload).then(function () {
+                setCheckNote('Copied report to clipboard.', false);
+            }).catch(function () {
+                setCheckNote('Could not copy to clipboard.', true);
+            });
+        });
+    }
+
+    updateToggleLabels();
+    applyControlPolicy();
+}());
+</script>
+{% endblock %}

@@ -1565,6 +1565,16 @@ def register_data_portal_routes(app):
         app._monitor_apero_checks_obsdir_view,
     )
     app.add_url_rule(
+        "/monitor_portal/apero_checks/<profile_id>/<obsdir>/check/<check_key>",
+        "monitor_apero_checks_check_view",
+        app._monitor_apero_checks_check_view,
+    )
+    app.add_url_rule(
+        "/monitor_portal/apero_checks/<profile_id>/queue",
+        "monitor_apero_checks_queue_view",
+        app._monitor_apero_checks_queue_view,
+    )
+    app.add_url_rule(
         "/api/monitor/processing-logs",
         "api_processing_logs",
         app._api_processing_logs,
@@ -1611,6 +1621,54 @@ def register_data_portal_routes(app):
         'api_apero_checks_profile_page',
         app._api_apero_checks_profile_page,
         methods=['GET'],
+    )
+    app.add_url_rule(
+        '/api/monitor/apero-checks/view-yaml',
+        'api_apero_checks_view_yaml',
+        app._api_apero_checks_view_yaml,
+        methods=['POST'],
+    )
+    app.add_url_rule(
+        '/api/monitor/apero-checks/rerun-night',
+        'api_apero_checks_rerun_night',
+        app._api_apero_checks_rerun_night,
+        methods=['POST'],
+    )
+    app.add_url_rule(
+        '/api/monitor/apero-checks/rerun-check',
+        'api_apero_checks_rerun_single_check',
+        app._api_apero_checks_rerun_single_check,
+        methods=['POST'],
+    )
+    app.add_url_rule(
+        '/api/monitor/apero-checks/delete-obsdir',
+        'api_apero_checks_delete_obsdir',
+        app._api_apero_checks_delete_obsdir,
+        methods=['POST'],
+    )
+    app.add_url_rule(
+        '/api/monitor/apero-checks/<profile_id>/queue-status',
+        'api_apero_checks_queue_status',
+        app._api_apero_checks_queue_status,
+        methods=['GET'],
+    )
+    app.add_url_rule(
+        '/api/monitor/apero-checks/<profile_id>/queue-cancel-task',
+        'api_apero_checks_queue_cancel_task',
+        app._api_apero_checks_queue_cancel_task,
+        methods=['POST'],
+    )
+    app.add_url_rule(
+        '/api/monitor/apero-checks/<profile_id>/queue-kill-profile',
+        'api_apero_checks_queue_kill_profile',
+        app._api_apero_checks_queue_kill_profile,
+        methods=['POST'],
+    )
+    app.add_url_rule(
+        '/api/monitor/apero-checks/<profile_id>/queue-clear-history',
+        'api_apero_checks_queue_clear_history',
+        app._api_apero_checks_queue_clear_history,
+        methods=['POST'],
     )
     app.add_url_rule(
         "/data_portal/<profile_id>/observation-table",

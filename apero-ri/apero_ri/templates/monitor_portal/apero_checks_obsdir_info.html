@@ -1,0 +1,384 @@
+{% extends "general/sidebar_base.html" %}
+{% block title %}APERO RI - APERO Checks - {{ profile_id }} / {{ obsdir }}{% endblock %}
+
+{% block body_class %}ari-has-sidebar ari-apero-checks-page{% endblock %}
+
+{% block extra_head %}
+{{ super() }}
+<link rel="stylesheet"
+    href="{{ url_for('static', filename='css/apero_checks.css') }}?v=20260520c">
+{% endblock %}
+
+{% block doc_content %}
+<div class="ari-page-header">
+    <h1>
+        <i class="fa-solid fa-square-check"></i>
+        APERO Check information: {{ obsdir }}
+    </h1>
+    <p class="ari-page-subtitle">
+        Profile {{ profile_id }}
+    </p>
+</div>
+
+<div class="ot-meta-bar">
+    <a class="ari-btn ari-btn--sm ari-btn--secondary"
+       href="{{ url_for('monitor_apero_checks_profile_view', profile_id=profile_id, page=current_page, per_page=per_page, obsdir_filter=obsdir_filter, obsdir_sort=obsdir_sort) }}">
+        <i class="fa-solid fa-arrow-left"></i>
+        Back to observation directory list
+    </a>
+    <span class="ot-meta-bar__item ot-meta-bar__item--muted">
+        Check file: {{ checks_file }}
+    </span>
+</div>
+
+<div class="ac-failure-detail__actions" style="margin-bottom:0.55rem;">
+    <span class="ac-filter-row__label">Type:</span>
+    <a class="ari-btn ari-btn--sm {% if type_filter == 'all' %}ari-btn--primary{% else %}ari-btn--secondary{% endif %}"
+       href="{{ url_for('monitor_apero_checks_obsdir_view', profile_id=profile_id, obsdir=obsdir, page=current_page, per_page=per_page, type='all', obsdir_filter=obsdir_filter, obsdir_sort=obsdir_sort, show_overridden=1 if show_overridden else 0, show_monitored=1 if show_monitored else 0, show_passed=1 if show_passed else 0) }}">
+        All
+    </a>
+    <a class="ari-btn ari-btn--sm {% if type_filter == 'raw' %}ari-btn--primary{% else %}ari-btn--secondary{% endif %}"
+       href="{{ url_for('monitor_apero_checks_obsdir_view', profile_id=profile_id, obsdir=obsdir, page=current_page, per_page=per_page, type='raw', obsdir_filter=obsdir_filter, obsdir_sort=obsdir_sort, show_overridden=1 if show_overridden else 0, show_monitored=1 if show_monitored else 0, show_passed=1 if show_passed else 0) }}">
+        Raw
+    </a>
+    <a class="ari-btn ari-btn--sm {% if type_filter == 'red' %}ari-btn--primary{% else %}ari-btn--secondary{% endif %}"
+       href="{{ url_for('monitor_apero_checks_obsdir_view', profile_id=profile_id, obsdir=obsdir, page=current_page, per_page=per_page, type='red', obsdir_filter=obsdir_filter, obsdir_sort=obsdir_sort, show_overridden=1 if show_overridden else 0, show_monitored=1 if show_monitored else 0, show_passed=1 if show_passed else 0) }}">
+        Red
+    </a>
+    <a class="ari-btn ari-btn--sm ari-btn--secondary {% if show_overridden %}ac-toggle-override-on{% endif %}"
+       href="{{ url_for('monitor_apero_checks_obsdir_view', profile_id=profile_id, obsdir=obsdir, page=current_page, per_page=per_page, type=type_filter, obsdir_filter=obsdir_filter, obsdir_sort=obsdir_sort, show_overridden=0 if show_overridden else 1, show_monitored=1 if show_monitored else 0, show_passed=1 if show_passed else 0) }}">
+        <i class="fa-solid fa-layer-group"></i>
+        {% if show_overridden %}Hide{% else %}Show{% endif %}
+        overridden checks
+    </a>
+    <a class="ari-btn ari-btn--sm ari-btn--secondary {% if show_monitored %}ac-toggle-monitor-on{% endif %}"
+       href="{{ url_for('monitor_apero_checks_obsdir_view', profile_id=profile_id, obsdir=obsdir, page=current_page, per_page=per_page, type=type_filter, obsdir_filter=obsdir_filter, obsdir_sort=obsdir_sort, show_overridden=1 if show_overridden else 0, show_monitored=0 if show_monitored else 1, show_passed=1 if show_passed else 0) }}">
+        <i class="fa-solid fa-bell-concierge"></i>
+        {% if show_monitored %}Hide{% else %}Show{% endif %}
+        monitored checks
+    </a>
+    <a class="ari-btn ari-btn--sm ari-btn--secondary {% if show_passed %}ac-toggle-pass-on{% endif %}"
+       href="{{ url_for('monitor_apero_checks_obsdir_view', profile_id=profile_id, obsdir=obsdir, page=current_page, per_page=per_page, type=type_filter, obsdir_filter=obsdir_filter, obsdir_sort=obsdir_sort, show_overridden=1 if show_overridden else 0, show_monitored=1 if show_monitored else 0, show_passed=0 if show_passed else 1) }}">
+        <i class="fa-solid fa-check"></i>
+        {% if show_passed %}Hide{% else %}Show{% endif %}
+        passed checks
+    </a>
+    {% if can_manage_checks %}
+    <button id="ac-obsdir-advanced"
+            class="ari-btn ari-btn--sm ari-btn--secondary"
+            type="button">
+        <i class="fa-solid fa-sliders"></i>
+        Advanced options
+    </button>
+    {% endif %}
+</div>
+
+<div class="ac-failure-detail__actions" style="margin-bottom:0.7rem;">
+    <button id="ac-obsdir-rerun"
+            class="ari-btn ari-btn--sm ac-btn--red-bg"
+            type="button">
+        <i class="fa-solid fa-rotate-right"></i>
+        Re-run obs dir
+    </button>
+    <button id="ac-obsdir-history-btn"
+            class="ari-btn ari-btn--sm ac-btn--blue-bg"
+            type="button">
+        <i class="fa-solid fa-clock-rotate-left"></i>
+        History
+    </button>
+    <button id="ac-obsdir-flag-btn"
+            class="ari-btn ari-btn--sm ac-btn--orange-bg"
+            type="button">
+        <i class="fa-solid fa-flag"></i>
+        Flag
+    </button>
+    {% if can_manage_checks %}
+    <button id="ac-obsdir-delete"
+            class="ari-btn ari-btn--sm ac-btn-danger ac-delete-only"
+            type="button">
+        <i class="fa-solid fa-trash"></i>
+        Delete YAML
+    </button>
+    {% endif %}
+</div>
+
+<div class="ac-failure-detail__meta" style="margin-bottom:0.8rem;">
+    <div class="ac-failure-meta-row"><strong>obsdir:</strong> {{ obsdir }}</div>
+    <div class="ac-failure-meta-row"><strong>result:</strong>
+        <span class="ac-failure-meta-state {% if result_state == 'passed' %}ac-failure-meta-state--true{% else %}ac-failure-meta-state--false{% endif %}">
+            {{ result_state|title }}
+        </span>
+    </div>
+    <div class="ac-failure-meta-row"><strong>last run:</strong>
+        {{ last_run or 'n/a' }}
+    </div>
+</div>
+
+<div class="ac-card">
+    <div class="ac-card__title" style="margin-bottom:0.55rem;">Tests</div>
+    <div class="ac-card__checks">
+        {% for failure in failure_cards %}
+        {% if failure.is_overridden %}
+        <a class="ac-check-pill ac-check-pill--overridden"
+           href="{{ url_for('monitor_apero_checks_check_view', profile_id=profile_id, obsdir=obsdir, check_key=failure.key) }}"
+           title="Open check info page">
+            <span class="ac-check-pill__icons ac-check-pill__icons--start">
+                <i class="fa-solid fa-triangle-exclamation ac-i-ovr"></i>
+            </span>
+        {% elif failure.is_monitored %}
+        <a class="ac-check-pill ac-check-pill--monitored"
+           href="{{ url_for('monitor_apero_checks_check_view', profile_id=profile_id, obsdir=obsdir, check_key=failure.key) }}"
+           title="Open check info page">
+            <span class="ac-check-pill__icons ac-check-pill__icons--start">
+                <i class="fa-solid fa-bell ac-i-mon"></i>
+            </span>
+        {% else %}
+        <a class="ac-check-pill ac-check-pill--failed"
+           href="{{ url_for('monitor_apero_checks_check_view', profile_id=profile_id, obsdir=obsdir, check_key=failure.key) }}"
+           title="Open check info page">
+            <span class="ac-check-pill__icons ac-check-pill__icons--start">
+                <i class="fa-solid fa-xmark ac-i-bad"></i>
+            </span>
+        {% endif %}
+            <span class="ac-check-pill__label">
+                {{ failure.type }}:{{ failure.name }}
+            </span>
+            <span class="ac-check-pill__icons">
+                {% if failure.is_monitored and not failure.is_overridden %}
+                <i class="fa-solid fa-bell ac-i-mon" title="Monitored"></i>
+                {% endif %}
+                {% if failure.is_overridden %}
+                <i class="fa-solid fa-triangle-exclamation ac-i-ovr"
+                   title="Overridden"></i>
+                {% endif %}
+            </span>
+        </a>
+        {% endfor %}
+        {% if show_passed %}
+        {% for passed in pass_cards %}
+        <a class="ac-check-pill ac-check-pill--passed"
+           href="{{ url_for('monitor_apero_checks_check_view', profile_id=profile_id, obsdir=obsdir, check_key=passed.key) }}"
+           title="Open check info page">
+            <span class="ac-check-pill__icons ac-check-pill__icons--start">
+                <i class="fa-solid fa-check ac-i-pass"></i>
+            </span>
+            <span class="ac-check-pill__label">
+                {{ passed.type }}:{{ passed.name }}
+            </span>
+            <span class="ac-check-pill__icons"></span>
+        </a>
+        {% endfor %}
+        {% endif %}
+        {% if not failure_cards and not (show_passed and pass_cards) %}
+        <span class="ac-check-empty">No visible tests</span>
+        {% endif %}
+    </div>
+</div>
+
+<div id="issue-section" class="ac-card" style="margin-top:0.85rem;">
+<div id="ac-issue-overlay" class="ac-overlay" hidden>
+    <div class="ac-overlay__backdrop" data-ac-close="issue"></div>
+    <div class="ac-overlay__panel">
+        <div class="ac-overlay__header">
+            <h3><i class="fa-solid fa-flag"></i> Flag issue</h3>
+            <button type="button" class="ac-overlay__close"
+                    data-ac-close="issue">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+        <div class="ac-issue-body">
+            <div class="ac-issue-body__cards" id="ac-issue-cards">
+                {% for failure in failure_cards %}
+                <label class="ac-issue-chip ac-issue-chip--selected">
+                    <input type="checkbox" class="ac-issue-check"
+                           value="{{ failure.key }}" checked>
+                    {{ failure.name }}
+                </label>
+                {% endfor %}
+            </div>
+            <label class="ac-failure-detail__label">
+                Reason
+                <textarea id="ac-issue-reason" rows="3" maxlength="80"
+                          placeholder="80 characters or less"></textarea>
+            </label>
+            <div class="ac-failure-detail__actions">
+                <button id="ac-create-issue"
+                        class="ari-btn ari-btn--sm ari-btn--primary"
+                        type="button">
+                    <i class="fa-solid fa-flag"></i>
+                    Create issue
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="ac-history-overlay" class="ac-overlay" hidden>
+    <div class="ac-overlay__backdrop" data-ac-close="history"></div>
+    <div class="ac-overlay__panel">
+        <div class="ac-overlay__header ac-btn--blue-bg"
+             style="border-radius:0.9rem 0.9rem 0 0;">
+            <h3 style="color:#fff;">
+                <i class="fa-solid fa-clock-rotate-left"></i> History
+            </h3>
+            <button type="button" class="ac-overlay__close"
+                    data-ac-close="history" style="color:#fff;">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+        <div style="padding:1rem;">
+            {% if check_history %}
+            <div class="ac-table-wrap">
+                <table class="ac-table">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>User</th>
+                            <th>Source</th>
+                            <th>Comment</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for row in check_history %}
+                        <tr>
+                            <td>{{ row.date }}</td>
+                            <td>{{ row.user }}</td>
+                            <td>{{ row.source }}</td>
+                            <td>{{ row.comment }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <span class="ac-check-empty">No history rows</span>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<script>
+(function () {
+    function postJson(url, payload) {
+        return fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload || {}),
+        }).then(function (resp) {
+            return resp.json().then(function (data) {
+                if (!resp.ok || data.success === false) {
+                    throw new Error(data.error || 'Request failed');
+                }
+                return data;
+            });
+        });
+    }
+
+    var rerunBtn = document.getElementById('ac-obsdir-rerun');
+    if (rerunBtn) {
+        rerunBtn.addEventListener('click', function () {
+            postJson({{ api_rerun_night_url|tojson }}, {
+                profile_id: {{ profile_id|tojson }},
+                obsdir: {{ obsdir|tojson }},
+                check_path: {{ checks_file|tojson }},
+            }).then(function (data) {
+                var taskId = String(data.task_id || '').trim();
+                if (taskId) {
+                    window.alert('Night queued (task: ' + taskId + ').');
+                } else {
+                    window.alert('Night queued.');
+                }
+            }).catch(function (err) {
+                window.alert(String(err || 'Could not queue this night.'));
+            });
+        });
+    }
+
+    function openOverlay(name) {
+        var el = document.getElementById('ac-' + name + '-overlay');
+        if (el) el.hidden = false;
+    }
+    function closeOverlay(name) {
+        var el = document.getElementById('ac-' + name + '-overlay');
+        if (el) el.hidden = true;
+    }
+    document.querySelectorAll('[data-ac-close]').forEach(function (el) {
+        el.addEventListener('click', function () {
+            closeOverlay(el.getAttribute('data-ac-close'));
+        });
+    });
+
+    var historyBtn = document.getElementById('ac-obsdir-history-btn');
+    if (historyBtn) {
+        historyBtn.addEventListener('click', function () {
+            openOverlay('history');
+        });
+    }
+
+    var flagBtn = document.getElementById('ac-obsdir-flag-btn');
+    if (flagBtn) {
+        flagBtn.addEventListener('click', function () {
+            openOverlay('issue');
+        });
+    }
+
+    var issueBtn = document.getElementById('ac-create-issue');
+    if (issueBtn) {
+        issueBtn.addEventListener('click', function () {
+            var reasonEl = document.getElementById('ac-issue-reason');
+            var reason = String(reasonEl && reasonEl.value || '').trim();
+            if (!reason) {
+                window.alert('Please provide a reason.');
+                return;
+            }
+            var checks = Array.prototype.slice.call(
+                document.querySelectorAll('.ac-issue-check:checked')
+            ).map(function (node) {
+                return String(node.value || '').trim();
+            }).filter(Boolean);
+            if (!checks.length) {
+                window.alert('Select at least one failed check.');
+                return;
+            }
+            postJson({{ api_issue_url|tojson }}, {
+                profile_id: {{ profile_id|tojson }},
+                obsdir: {{ obsdir|tojson }},
+                failures: checks,
+                reason: reason,
+                origin_url: window.location.href,
+            }).then(function () {
+                window.location.reload();
+            }).catch(function (err) {
+                window.alert(String(err || 'Could not create issue.'));
+            });
+        });
+    }
+
+    var advancedBtn = document.getElementById('ac-obsdir-advanced');
+    if (advancedBtn) {
+        advancedBtn.addEventListener('click', function () {
+            document.body.classList.toggle('ac-delete-mode');
+            advancedBtn.classList.toggle('ac-btn-danger');
+        });
+    }
+
+    var deleteBtn = document.getElementById('ac-obsdir-delete');
+    if (deleteBtn) {
+        deleteBtn.addEventListener('click', function () {
+            if (!window.confirm('Delete this obsdir YAML file?')) {
+                return;
+            }
+            postJson({{ url_for('api_apero_checks_delete_obsdir')|tojson }}, {
+                profile_id: {{ profile_id|tojson }},
+                obsdir: {{ obsdir|tojson }},
+                check_path: {{ checks_file|tojson }},
+            }).then(function () {
+                window.location.href = {{ url_for('monitor_apero_checks_profile_view', profile_id=profile_id)|tojson }};
+            }).catch(function (err) {
+                window.alert(String(err || 'Could not delete YAML file.'));
+            });
+        });
+    }
+}());
+</script>
+{% endblock %}

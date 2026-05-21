@@ -71,11 +71,11 @@
                 {% if item.active %}
                 {% set item_classes = item_classes + ' ari-sidebar__link--active' %}
                 {% endif %}
-                {% if item.has_children|default(false) %}
                 <div class="ari-doc-tree__row{% if item.depth > 0 %} ari-doc-tree__row--hidden{% endif %}"
                      data-depth="{{ item.depth }}"
                      data-doc-id="{{ item.id }}"
                      data-doc-open="false">
+                    {% if item.has_children|default(false) %}
                     <button type="button"
                             class="ari-doc-tree__toggle"
                             aria-label="Toggle section"
@@ -83,59 +83,26 @@
                             data-doc-toggle="{{ item.id }}">
                         <i class="fa-solid fa-chevron-right"></i>
                     </button>
-                    {% if item.url and not (item.disabled|default(false)) %}
-                    <a href="{{ item.url }}{% if doc_query_suffix is defined %}{{ doc_query_suffix }}{% elif current_version is defined %}?v={{ current_version }}{% endif %}"
-                       class="{{ item_classes }}"
-                       data-page-id="{{ item.id }}"
-                       style="padding-left: {{ 0.75 + item.depth * 1.0 }}rem;">
-                        <i class="{{ item.icon }}"></i>
-                        <span>{{ item.label }}</span>
-                    </a>
                     {% else %}
-                    <span class="{{ item_classes }} ari-sidebar__link--disabled"
-                          data-page-id="{{ item.id }}"
-                          style="padding-left: {{ 0.75 + item.depth * 1.0 }}rem;">
-                        <i class="{{ item.icon }}"></i>
-                        <span>{{ item.label }}</span>
-                    </span>
+                    <span class="ari-doc-tree__toggle-spacer"></span>
                     {% endif %}
-                </div>
-                {% else %}
                 {% if item.url and not (item.disabled|default(false)) %}
                 <a href="{{ item.url }}{% if doc_query_suffix is defined %}{{ doc_query_suffix }}{% elif current_version is defined %}?v={{ current_version }}{% endif %}"
                    class="{{ item_classes }}"
                    data-page-id="{{ item.id }}"
-                   {% if item.fav_toggle|default(false) %}data-fav-toggle="{{ item.fav_group }}" aria-expanded="{{ 'true' if item.fav_expanded|default(false) else 'false' }}"{% endif %}
-                   {% if item.fav_child|default(false) %}data-fav-group="{{ item.fav_group }}"{% endif %}
                    style="padding-left: {{ 0.75 + item.depth * 1.0 }}rem;">
-                    {% if item.fav_toggle|default(false) %}
-                    <i class="fa-solid fa-chevron-right ari-sidebar__fav-caret"></i>
-                    {% endif %}
                     <i class="{{ item.icon }}"></i>
                     <span>{{ item.label }}</span>
                 </a>
-                {% elif item.fav_toggle|default(false) %}
-                <button type="button"
-                        class="ari-sidebar__fav-toggle"
-                        data-fav-toggle="{{ item.fav_group }}"
-                        aria-expanded="{{ 'true' if item.fav_expanded|default(false) else 'false' }}"
-                        style="padding-left: {{ 0.75 + item.depth * 1.0 }}rem;">
-                    <span class="{{ item_classes }}" data-page-id="{{ item.id }}">
-                        <i class="fa-solid fa-chevron-right ari-sidebar__fav-caret"></i>
-                        <i class="{{ item.icon }}"></i>
-                        <span>{{ item.label }}</span>
-                    </span>
-                </button>
                 {% else %}
                 <span class="{{ item_classes }} ari-sidebar__link--disabled"
                       data-page-id="{{ item.id }}"
-                      {% if item.fav_child|default(false) %}data-fav-group="{{ item.fav_group }}"{% endif %}
                       style="padding-left: {{ 0.75 + item.depth * 1.0 }}rem;">
                     <i class="{{ item.icon }}"></i>
                     <span>{{ item.label }}</span>
                 </span>
                 {% endif %}
-                {% endif %}
+                                </div>
                 {% endif %}
                 {% endfor %}
             </nav>

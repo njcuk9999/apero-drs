@@ -13,11 +13,13 @@
         totalPages: Number(cfg.totalPages || 1),
         totalCards: Number(cfg.totalCards || 0),
         typeFilter: String(cfg.typeFilter || 'all'),
+        resultFilter: String(cfg.resultFilter || 'all'),
         obsdirFilter: String(cfg.obsdirFilter || ''),
         obsdirSort: String(cfg.obsdirSort || 'desc'),
         showOverridden: !!cfg.showOverridden,
         showMonitored: !!cfg.showMonitored,
         showPassed: !!cfg.showPassed,
+        showTests: false,
         cardsByPage: {},
         filterTimer: null,
         historyRows: [],
@@ -32,6 +34,13 @@
         overrideAllowed: Array.isArray(cfg.overrideAllowed)
             ? cfg.overrideAllowed.slice() : [],
         browsePath: '',
+        canManage: !!cfg.canManage,
+        advancedMode: false,
+        yamlRawText: '',
+        yamlPath: '',
+        yamlLastRun: '',
+        currentObsdirCard: null,
+        reopenObsdirOnRefresh: '',
     };
 
     function esc(value) {
@@ -41,6 +50,10 @@
             .replace(/>/g, '&gt;')
             .replace(/"/g, '&quot;')
             .replace(/'/g, '&#39;');
+    }
+
+    function escRegex(value) {
+        return String(value || '').replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
     }
 
     function query() {
@@ -76,6 +89,9 @@
         state.typeFilter = String(
             qs.get('type') || cfg.typeFilter || 'all'
         );
+        state.resultFilter = String(
+            qs.get('result_filter') || cfg.resultFilter || 'all'
+        );
         state.obsdirFilter = String(
             qs.get('obsdir_filter') || cfg.obsdirFilter || ''
         );
@@ -104,6 +120,7 @@
         qs.set('page', String(page || 1));
         qs.set('per_page', String(state.perPage || 10));
         qs.set('type', state.typeFilter || 'all');
+        qs.set('result_filter', state.resultFilter || 'all');
         qs.set('obsdir_filter', state.obsdirFilter || '');
         qs.set('obsdir_sort', state.obsdirSort || 'desc');
         qs.set('show_overridden', boolQuery(state.showOverridden));
@@ -117,7 +134,9 @@
         var btnOverridden = document.getElementById('ac-btn-overridden');
         var btnMonitored = document.getElementById('ac-btn-monitored');
         var btnPassed = document.getElementById('ac-btn-passed');
+        var btnShowTests = document.getElementById('ac-btn-show-tests');
         var typeSel = document.getElementById('ac-type');
+        var resultSel = document.getElementById('ac-result-filter');
         var obsdirFilter = document.getElementById('ac-obsdir-filter');
         var obsdirSort = document.getElementById('ac-obsdir-sort');
 
@@ -152,7 +171,17 @@
                 ? '<i class="fa-solid fa-check"></i> Hide passed checks'
                 : '<i class="fa-solid fa-check"></i> Show passed checks';
         }
+        if (btnShowTests) {
+            btnShowTests.classList.toggle(
+                'ac-toggle-tests-on',
+                !!state.showTests
+            );
+            btnShowTests.innerHTML = state.showTests
+                ? '<i class="fa-solid fa-vial"></i> Hide tests'
+                : '<i class="fa-solid fa-vial"></i> Show tests';
+        }
         if (typeSel) typeSel.value = state.typeFilter;
+        if (resultSel) resultSel.value = state.resultFilter || 'all';
         if (obsdirFilter) obsdirFilter.value = state.obsdirFilter;
         if (obsdirSort) obsdirSort.value = state.obsdirSort;
     }
@@ -209,7 +238,8 @@
             var cardJson = jsonAttr(card);
             var html = '<article class="ac-card ac-card--' +
                 esc(card.status || 'ok') + '" data-obsdir="' +
-                esc(card.obsdir || '') + '"><div class="ac-card__row">';
+                esc(card.obsdir || '') + '" data-ac-card="' +
+                cardJson + '"><div class="ac-card__row">';
             html += '<span class="ac-card__row-status" title="Card status">';
             html += card.status === 'ok'
                 ? '<i class="fa-solid fa-check ac-i-ok"></i>'
@@ -217,8 +247,11 @@
             html += '</span>';
             html += '<div class="ac-card__date" title="Obsdir: ' +
                 esc(card.obsdir || '') + '">' +
-                esc(card.obsdir || '') + '</div>';
-            html += '<div class="ac-card__checks">';
+                '<div>' + esc(card.obsdir || '') + '</div>' +
+                '<div class="ac-card__lastrun">Last run: ' +
+                esc(card.last_run || 'n/a') + '</div>' +
+                '</div>';
+            html += '<div class="ac-card__checks ac-card__checks-main">';
             failures.forEach(function (pair) {
                 var key = pair[0];
                 var failure = pair[1] || {};
@@ -273,6 +306,11 @@
             html += '</div>';
             html += '<div class="ac-card__actions">';
             html += '<button class="ari-btn ari-btn--sm ari-btn--secondary"' +
+                ' data-ac-action="rerun-night" data-ac-obsdir="' +
+                esc(card.obsdir || '') + '" data-ac-card="' + cardJson + '"' +
+                ' title="Re-run APERO checks for this night">' +
+                '<i class="fa-solid fa-rotate-right"></i></button>';
+            html += '<button class="ari-btn ari-btn--sm ari-btn--secondary"' +
                 ' data-ac-action="history" data-ac-obsdir="' +
                 esc(card.obsdir || '') + '" data-ac-card="' + cardJson + '"' +
                 ' title="Open history">' +
@@ -282,9 +320,130 @@
                 esc(card.obsdir || '') + '" data-ac-card="' + cardJson + '"' +
                 ' title="Create issue">' +
                 '<i class="fa-solid fa-flag"></i></button>';
+            if (state.canManage) {
+                html += '<button class="ari-btn ari-btn--sm ac-btn-danger ' +
+                    'ac-delete-only" data-ac-action="delete-night" ' +
+                    'data-ac-obsdir="' + esc(card.obsdir || '') + '" ' +
+                    'data-ac-card="' + cardJson + '" ' +
+                    'title="Delete this night YAML file">' +
+                    '<i class="fa-solid fa-trash"></i></button>';
+            }
             html += '</div></div></article>';
             return html;
         }).join('');
+        syncAdvancedModeUi();
+        syncShowTestsUi();
+    }
+
+    function syncShowTestsUi() {
+        var body = document.body;
+        if (!body) return;
+        body.classList.toggle('ac-hide-tests', !state.showTests);
+    }
+
+    function syncAdvancedModeUi() {
+        var body = document.body;
+        if (body) {
+            body.classList.toggle('ac-delete-mode', !!state.advancedMode);
+        }
+        var btn = document.getElementById('ac-btn-advanced');
+        if (!btn) return;
+        if (state.advancedMode) {
+            btn.classList.add('ac-btn-danger');
+            btn.innerHTML =
+                '<i class="fa-solid fa-sliders"></i> Advanced options: ON';
+        } else {
+            btn.classList.remove('ac-btn-danger');
+            btn.innerHTML =
+                '<i class="fa-solid fa-sliders"></i> Advanced options';
+        }
+    }
+
+    function cardForObsdir(obsdir) {
+        var target = String(obsdir || '').trim();
+        if (!target) return null;
+        var cards = state.cardsByPage[String(state.page)] || [];
+        for (var idx = 0; idx < cards.length; idx += 1) {
+            var card = cards[idx] || {};
+            if (String(card.obsdir || '').trim() === target) {
+                return card;
+            }
+        }
+        return null;
+    }
+
+    function waitForRerunCompletion(obsdir, baselineLastRun, onUpdated) {
+        var baseline = String(baselineLastRun || '').trim();
+        var tries = 0;
+        var maxTries = 24;
+
+        function tick() {
+            tries += 1;
+            state.cardsByPage = {};
+            loadAndRender(state.page, true).then(function () {
+                var card = cardForObsdir(obsdir);
+                var latest = String(
+                    card && card.last_run ? card.last_run : ''
+                ).trim();
+                if (latest && latest !== baseline) {
+                    if (typeof onUpdated === 'function') {
+                        onUpdated(latest);
+                    }
+                    return;
+                }
+                if (tries >= maxTries) {
+                    return;
+                }
+                window.setTimeout(tick, 5000);
+            }).catch(function () {
+                if (tries >= maxTries) {
+                    return;
+                }
+                window.setTimeout(tick, 5000);
+            });
+        }
+
+        window.setTimeout(tick, 5000);
+    }
+
+    function requestRerunNight(card) {
+        if (!card || !card.obsdir) return;
+        var baseline = String(card.last_run || '').trim();
+        postJson(cfg.apiRerunNightUrl, {
+            profile_id: cfg.profileId,
+            obsdir: card.obsdir,
+            check_path: card.path || '',
+        }).then(function (data) {
+            var taskId = String(data.task_id || '').trim();
+            if (taskId) {
+                window.alert('Night queued (task: ' + taskId + ').');
+            } else {
+                window.alert('Night queued.');
+            }
+            waitForRerunCompletion(card.obsdir, baseline, function (latest) {
+                window.alert('Night re-run finished. Last run: ' + latest);
+            });
+        }).catch(function (err) {
+            window.alert(String(err || 'Could not queue this night.'));
+        });
+    }
+
+    function requestDeleteNight(card) {
+        if (!card || !card.obsdir) return;
+        if (!state.canManage) return;
+        var path = String(card.path || '').trim() || card.obsdir;
+        if (!window.confirm('This will remove ' + path)) {
+            return;
+        }
+        postJson(cfg.apiDeleteObsdirUrl, {
+            profile_id: cfg.profileId,
+            obsdir: card.obsdir,
+            check_path: card.path || '',
+        }).then(function () {
+            window.location.reload();
+        }).catch(function (err) {
+            window.alert(String(err || 'Could not delete this YAML file.'));
+        });
     }
 
     function storePagePayload(data) {
@@ -400,6 +559,13 @@
         var isPassed = kind === 'pass';
         var overridden = eventEnabled(failure && failure.override);
         var monitored = eventEnabled(failure && failure.monitor);
+        var lastRun = '';
+        if (failure && failure.last_run) {
+            lastRun = String(failure.last_run || '').trim();
+        }
+        if (!lastRun && card && card.last_run) {
+            lastRun = String(card.last_run || '').trim();
+        }
         var overrideIcon = overridden
             ? '<i class="fa-solid fa-bell ac-failure-meta-icon--override" ' +
               'title="Overridden"></i>'
@@ -435,7 +601,9 @@
                 ? 'ac-failure-meta-state--true' :
                   'ac-failure-meta-state--false') +
             '">' + (monitored ? 'True' : 'False') + '</span>' +
-            monitorIcon + '</div>';
+                        monitorIcon + '</div>' +
+                        '<div class="ac-failure-meta-row"><strong>Last run:</strong> ' +
+                        esc(lastRun || 'n/a') + '</div>';
     }
 
     function renderFailureHeader(failureKey, failure, kind) {
@@ -605,6 +773,85 @@
             'Quick link to documentation on ' + esc(label) +
             '</a>';
         row.hidden = false;
+    }
+
+    function renderYamlText() {
+        var pre = document.getElementById('ac-yaml-content');
+        var search = document.getElementById('ac-yaml-search');
+        var count = document.getElementById('ac-yaml-match-count');
+        if (!pre) return;
+        var raw = String(state.yamlRawText || '');
+        var term = String(search && search.value ? search.value : '').trim();
+        if (!term) {
+            pre.textContent = raw;
+            if (count) count.textContent = '';
+            return;
+        }
+        var regex = null;
+        try {
+            regex = new RegExp(escRegex(term), 'gi');
+        } catch (_err) {
+            regex = null;
+        }
+        if (!regex) {
+            pre.textContent = raw;
+            if (count) count.textContent = 'Invalid search pattern';
+            return;
+        }
+        var matches = raw.match(regex);
+        var html = esc(raw).replace(
+            new RegExp(escRegex(term), 'gi'),
+            function (match) {
+                return '<mark class="ac-yaml-mark">' + esc(match) + '</mark>';
+            }
+        );
+        pre.innerHTML = html;
+        if (count) {
+            count.textContent = String((matches || []).length) + ' matches';
+        }
+    }
+
+    function openYamlViewer() {
+        if (!state.currentCard) return;
+        var title = document.getElementById('ac-yaml-title');
+        var count = document.getElementById('ac-yaml-match-count');
+        var search = document.getElementById('ac-yaml-search');
+        var pre = document.getElementById('ac-yaml-content');
+        if (pre) {
+            pre.textContent = 'Loading YAML...';
+        }
+        if (title) {
+            title.textContent = 'Check YAML view';
+        }
+        if (count) {
+            count.textContent = '';
+        }
+        if (search) {
+            search.value = '';
+        }
+        openOverlay('ac-yaml-overlay');
+        postJson(cfg.apiViewYamlUrl, {
+            profile_id: cfg.profileId,
+            obsdir: state.currentCard.obsdir,
+            check_path: state.currentCard.path || '',
+        }).then(function (data) {
+            state.yamlRawText = String(data.content || '');
+            state.yamlPath = String(data.path || '');
+            state.yamlLastRun = String(data.last_run || '');
+            if (title) {
+                title.textContent = 'Check YAML view: ' + state.yamlPath;
+                if (state.yamlLastRun) {
+                    title.textContent +=
+                        ' (last run: ' + state.yamlLastRun + ')';
+                }
+            }
+            renderYamlText();
+        }).catch(function (err) {
+            state.yamlRawText = '';
+            if (pre) {
+                pre.textContent = String(err || 'Could not load YAML file.');
+            }
+        });
     }
 
     function openCommentEditor(action) {
@@ -1015,6 +1262,141 @@
         openOverlay('ac-issue-overlay');
     }
 
+    function buildObsdirTestsHtml(card) {
+        var cardJson = jsonAttr(card || {});
+        var failures = Array.isArray(card && card.visible_failures)
+            ? card.visible_failures : [];
+        var passes = Array.isArray(card && card.visible_passes)
+            ? card.visible_passes : [];
+        var html = '';
+
+        failures.forEach(function (pair) {
+            var key = pair[0];
+            var failure = pair[1] || {};
+            html += '<button class="ac-check-pill ac-check-pill--failed"' +
+                ' data-ac-action="failure"' +
+                ' data-ac-failure="' + jsonAttr(failure) + '"' +
+                ' data-ac-failure-key="' + esc(key || '') + '"' +
+                ' data-ac-obsdir="' + esc(card.obsdir || '') + '"' +
+                ' data-ac-card="' + cardJson + '">';
+            html += '<span class="ac-check-pill__icons ' +
+                'ac-check-pill__icons--start">' +
+                '<i class="fa-solid fa-xmark ac-i-bad"></i></span>';
+            html += '<span class="ac-check-pill__label">' +
+                esc((failure.type || '') + ':' +
+                    (failure.name || key || '')) + '</span>';
+            html += '<span class="ac-check-pill__icons">';
+            if (eventEnabled(failure.monitor)) {
+                html += '<i class="fa-solid fa-bell ac-i-mon"></i>';
+            }
+            if (eventEnabled(failure.override)) {
+                html += '<i class="fa-solid fa-triangle-exclamation ' +
+                    'ac-i-ovr"></i>';
+            }
+            html += '</span></button>';
+        });
+
+        if (state.showPassed) {
+            passes.forEach(function (pair) {
+                var key = pair[0];
+                var passed = pair[1] || {};
+                html += '<button class="ac-check-pill ac-check-pill--passed"' +
+                    ' data-ac-action="pass"' +
+                    ' data-ac-pass="' + jsonAttr(passed) + '"' +
+                    ' data-ac-pass-key="' + esc(key || '') + '"' +
+                    ' data-ac-obsdir="' + esc(card.obsdir || '') + '"' +
+                    ' data-ac-card="' + cardJson + '">';
+                html += '<span class="ac-check-pill__icons ' +
+                    'ac-check-pill__icons--start">' +
+                    '<i class="fa-solid fa-check ac-i-pass"></i></span>';
+                html += '<span class="ac-check-pill__label">' +
+                    esc((passed.type || '') + ':' +
+                        (passed.name || key || '')) + '</span>';
+                html += '<span class="ac-check-pill__icons"></span>';
+                html += '</button>';
+            });
+        }
+
+        if (!html) {
+            html = '<span class="ac-check-empty">No visible checks</span>';
+        }
+        return html;
+    }
+
+    function renderObsdirOverlayButtons() {
+        function setButton(id, onClass, onLabel, offLabel, isOn, icon) {
+            var btn = document.getElementById(id);
+            if (!btn) return;
+            btn.classList.toggle(onClass, !!isOn);
+            btn.innerHTML = '<i class="fa-solid ' + icon + '"></i> ' +
+                (isOn ? onLabel : offLabel);
+        }
+        setButton(
+            'ac-obsdir-btn-overridden',
+            'ac-toggle-override-on',
+            'Hide overridden checks',
+            'Show overridden checks',
+            state.showOverridden,
+            'fa-layer-group'
+        );
+        setButton(
+            'ac-obsdir-btn-monitored',
+            'ac-toggle-monitor-on',
+            'Hide monitored checks',
+            'Show monitored checks',
+            state.showMonitored,
+            'fa-bell-concierge'
+        );
+        setButton(
+            'ac-obsdir-btn-passed',
+            'ac-toggle-pass-on',
+            'Hide passed checks',
+            'Show passed checks',
+            state.showPassed,
+            'fa-check'
+        );
+    }
+
+    function openObsdirOverlay(card) {
+        if (!card || !card.obsdir) return;
+        state.currentObsdirCard = card;
+        var title = document.getElementById('ac-obsdir-title');
+        var meta = document.getElementById('ac-obsdir-meta');
+        var tests = document.getElementById('ac-obsdir-tests');
+        if (title) {
+            title.textContent =
+                'APERO Check information: ' + String(card.obsdir || '');
+        }
+        if (meta) {
+            meta.innerHTML =
+                '<div class="ac-failure-meta-row"><strong>Obsdir:</strong> ' +
+                esc(card.obsdir || '') + '</div>' +
+                '<div class="ac-failure-meta-row"><strong>Result:</strong> ' +
+                esc(card.status === 'ok' ? 'Passed' : 'Failed') + '</div>' +
+                '<div class="ac-failure-meta-row"><strong>Last run:</strong> ' +
+                esc(card.last_run || 'n/a') + '</div>';
+        }
+        if (tests) {
+            tests.innerHTML = buildObsdirTestsHtml(card);
+        }
+        renderObsdirOverlayButtons();
+        syncAdvancedModeUi();
+        openOverlay('ac-obsdir-overlay');
+    }
+
+    function refreshAndReopenObsdir(extra, obsdir) {
+        state.reopenObsdirOnRefresh = String(obsdir || '').trim();
+        return refreshUrl(extra).then(function () {
+            var target = state.reopenObsdirOnRefresh;
+            state.reopenObsdirOnRefresh = '';
+            if (!target) return;
+            var card = cardForObsdir(target);
+            if (card) {
+                openObsdirOverlay(card);
+            }
+        });
+    }
+
     function postJson(url, payload) {
         return fetch(url, {
             method: 'POST',
@@ -1052,6 +1434,33 @@
             );
         } else if (action === 'issue') {
             showIssue(JSON.parse(btn.getAttribute('data-ac-card') || '{}'));
+        } else if (action === 'rerun-night') {
+            requestRerunNight(
+                JSON.parse(btn.getAttribute('data-ac-card') || '{}')
+            );
+        } else if (action === 'delete-night') {
+            requestDeleteNight(
+                JSON.parse(btn.getAttribute('data-ac-card') || '{}')
+            );
+        }
+    });
+
+    document.addEventListener('click', function (ev) {
+        var cardEl = ev.target.closest('#ac-card-list .ac-card');
+        if (!cardEl) return;
+        if (ev.target.closest('[data-ac-action]')) return;
+        if (ev.target.closest('a,button,input,select,textarea,label')) return;
+        var card = {};
+        try {
+            card = JSON.parse(cardEl.getAttribute('data-ac-card') || '{}');
+        } catch (_err) {
+            card = {};
+        }
+        if (!card.obsdir) {
+            card = cardForObsdir(cardEl.getAttribute('data-obsdir') || '');
+        }
+        if (card) {
+            openObsdirOverlay(card);
         }
     });
 
@@ -1256,6 +1665,87 @@
         });
     }
 
+    var btnViewYaml = document.getElementById('ac-btn-view-yaml');
+    if (btnViewYaml) {
+        btnViewYaml.addEventListener('click', function () {
+            openYamlViewer();
+        });
+    }
+
+    var yamlSearch = document.getElementById('ac-yaml-search');
+    if (yamlSearch) {
+        yamlSearch.addEventListener('input', function () {
+            renderYamlText();
+        });
+    }
+
+    var btnYamlCopy = document.getElementById('ac-btn-yaml-copy');
+    if (btnYamlCopy) {
+        btnYamlCopy.addEventListener('click', function () {
+            copyText(String(state.yamlRawText || '')).then(function () {
+                var count = document.getElementById('ac-yaml-match-count');
+                if (count) {
+                    count.textContent = 'YAML copied to clipboard';
+                }
+            }).catch(function () {
+                var count = document.getElementById('ac-yaml-match-count');
+                if (count) {
+                    count.textContent = 'Could not copy YAML';
+                }
+            });
+        });
+    }
+
+    var btnRerunCheck = document.getElementById('ac-btn-rerun-check');
+    if (btnRerunCheck) {
+        btnRerunCheck.addEventListener('click', function () {
+            if (!state.currentCard || !state.currentFailure) return;
+            var baseline = String(state.currentCard.last_run || '').trim();
+            postJson(cfg.apiRerunCheckUrl, {
+                profile_id: cfg.profileId,
+                obsdir: state.currentCard.obsdir,
+                check_key: state.currentFailure.key,
+            }).then(function (data) {
+                var taskId = String(data.task_id || '').trim();
+                if (taskId) {
+                    setFailureNote(
+                        'Check re-run queued (task: ' + taskId + ').',
+                        false
+                    );
+                } else {
+                    setFailureNote('Check re-run queued.', false);
+                }
+                waitForRerunCompletion(
+                    state.currentCard.obsdir,
+                    baseline,
+                    function (latest) {
+                        if (state.currentCard) {
+                            state.currentCard.last_run = latest;
+                        }
+                        if (state.currentFailure && state.currentFailure.data) {
+                            state.currentFailure.data.last_run = latest;
+                            renderFailureMeta(
+                                state.currentCard || {},
+                                state.currentFailure.key,
+                                state.currentFailure.data,
+                                state.currentFailureKind
+                            );
+                        }
+                        setFailureNote(
+                            'Check re-run finished. Last run: ' + latest,
+                            false
+                        );
+                    }
+                );
+            }).catch(function (err) {
+                setFailureNote(
+                    String(err || 'Could not queue this check.'),
+                    true
+                );
+            });
+        });
+    }
+
     var btnCreateIssue = document.getElementById('ac-btn-create-issue');
     if (btnCreateIssue) {
         btnCreateIssue.addEventListener('click', function () {
@@ -1278,6 +1768,91 @@
         btnRefresh.addEventListener('click', function () {
             state.cardsByPage = {};
             loadAndRender(state.page, true);
+        });
+    }
+
+    var btnShowTests = document.getElementById('ac-btn-show-tests');
+    if (btnShowTests) {
+        btnShowTests.addEventListener('click', function () {
+            state.showTests = !state.showTests;
+            syncToggleButtons();
+            syncShowTestsUi();
+        });
+    }
+
+    var obsBtnOverridden = document.getElementById('ac-obsdir-btn-overridden');
+    if (obsBtnOverridden) {
+        obsBtnOverridden.addEventListener('click', function () {
+            var card = state.currentObsdirCard;
+            if (!card || !card.obsdir) return;
+            refreshAndReopenObsdir({
+                show_overridden: state.showOverridden ? '0' : '1',
+                page: '1',
+            }, card.obsdir);
+        });
+    }
+
+    var obsBtnMonitored = document.getElementById('ac-obsdir-btn-monitored');
+    if (obsBtnMonitored) {
+        obsBtnMonitored.addEventListener('click', function () {
+            var card = state.currentObsdirCard;
+            if (!card || !card.obsdir) return;
+            refreshAndReopenObsdir({
+                show_monitored: state.showMonitored ? '0' : '1',
+                page: '1',
+            }, card.obsdir);
+        });
+    }
+
+    var obsBtnPassed = document.getElementById('ac-obsdir-btn-passed');
+    if (obsBtnPassed) {
+        obsBtnPassed.addEventListener('click', function () {
+            var card = state.currentObsdirCard;
+            if (!card || !card.obsdir) return;
+            refreshAndReopenObsdir({
+                show_passed: state.showPassed ? '0' : '1',
+                page: '1',
+            }, card.obsdir);
+        });
+    }
+
+    var obsBtnAdvanced = document.getElementById('ac-obsdir-btn-advanced');
+    if (obsBtnAdvanced) {
+        obsBtnAdvanced.addEventListener('click', function () {
+            state.advancedMode = !state.advancedMode;
+            syncAdvancedModeUi();
+        });
+    }
+
+    var obsBtnRerun = document.getElementById('ac-obsdir-btn-rerun');
+    if (obsBtnRerun) {
+        obsBtnRerun.addEventListener('click', function () {
+            if (!state.currentObsdirCard) return;
+            requestRerunNight(state.currentObsdirCard);
+        });
+    }
+
+    var obsBtnHistory = document.getElementById('ac-obsdir-btn-history');
+    if (obsBtnHistory) {
+        obsBtnHistory.addEventListener('click', function () {
+            if (!state.currentObsdirCard) return;
+            showHistory(state.currentObsdirCard);
+        });
+    }
+
+    var obsBtnIssue = document.getElementById('ac-obsdir-btn-issue');
+    if (obsBtnIssue) {
+        obsBtnIssue.addEventListener('click', function () {
+            if (!state.currentObsdirCard) return;
+            showIssue(state.currentObsdirCard);
+        });
+    }
+
+    var btnAdvanced = document.getElementById('ac-btn-advanced');
+    if (btnAdvanced) {
+        btnAdvanced.addEventListener('click', function () {
+            state.advancedMode = !state.advancedMode;
+            syncAdvancedModeUi();
         });
     }
 
@@ -1351,6 +1926,16 @@
     if (typeSel) {
         typeSel.addEventListener('change', function () {
             refreshUrl({ type: typeSel.value, page: '1' });
+        });
+    }
+
+    var resultSel = document.getElementById('ac-result-filter');
+    if (resultSel) {
+        resultSel.addEventListener('change', function () {
+            refreshUrl({
+                result_filter: resultSel.value || 'all',
+                page: '1',
+            });
         });
     }
 
@@ -1471,6 +2056,8 @@
         ? cfg.cards.slice() : [];
     syncStateFromQuery();
     syncToggleButtons();
+    syncShowTestsUi();
+    syncAdvancedModeUi();
     renderPageControls();
     loadAndRender(state.page, false);
 }());

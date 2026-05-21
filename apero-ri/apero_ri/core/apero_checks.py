@@ -342,6 +342,64 @@ def _normalise_event(value: Any) -> dict:
     return out
 
 
+def _iso_from_mtime(path_value: str) -> str:
+    """Return an ISO UTC timestamp from file mtime, when available."""
+    value = str(path_value or '').strip()
+    if value == '':
+        return ''
+    try:
+        stat = Path(value).stat()
+        stamp = datetime.fromtimestamp(stat.st_mtime, tz=timezone.utc)
+        return stamp.isoformat(timespec='seconds')
+    except Exception:
+        return ''
+
+
+def _format_last_run_utc(raw_value: str) -> str:
+    """Format a raw datetime-like value as UTC display text."""
+    text = str(raw_value or '').strip()
+    if text == '':
+        return ''
+    try:
+        value = text.replace('Z', '+00:00')
+        dtime = datetime.fromisoformat(value)
+        if dtime.tzinfo is None:
+            dtime = dtime.replace(tzinfo=timezone.utc)
+        else:
+            dtime = dtime.astimezone(timezone.utc)
+        out = dtime.strftime('%Y-%m-%d %H:%M:%S')
+        return out + ' (UTC)'
+    except Exception:
+        pass
+    try:
+        dtime = datetime.strptime(text, '%Y-%m-%d %H:%M:%S')
+        out = dtime.strftime('%Y-%m-%d %H:%M:%S')
+        return out + ' (UTC)'
+    except Exception:
+        return text
+
+
+def _latest_history_date(raw_history: Any) -> str:
+    """Return the newest non-empty history date string."""
+    if not isinstance(raw_history, dict):
+        return ''
+    dates = []
+    for value in raw_history.values():
+        if not isinstance(value, dict):
+            continue
+        date = str(value.get('date') or '').strip()
+        if date:
+            dates.append(date)
+    if not dates:
+        return ''
+    return sorted(dates)[-1]
+
+
+def format_last_run_display(raw_value: str) -> str:
+    """Public helper to format last-run strings for UI display."""
+    return _format_last_run_utc(raw_value)
+
+
 def failure_is_hidden(
     failure: dict,
     type_filter: str,
@@ -371,6 +429,10 @@ def build_obsdir_summary(
     ignored_set = set(ignored_checks or CHECK_IGNORED_CHECKS)
     failures = data.get('failures', {})
     passes = data.get('passes', {})
+    last_run_raw = _latest_history_date(data.get('history', {}))
+    if last_run_raw == '':
+        last_run_raw = _iso_from_mtime(str(data.get('__path__') or ''))
+    last_run = _format_last_run_utc(last_run_raw)
     visible = []
     visible_passes = []
     ignored = []
@@ -382,7 +444,9 @@ def build_obsdir_summary(
             failure, type_filter, show_overridden, show_monitored
         ):
             continue
-        visible.append((key, failure))
+        failure_row = dict(failure)
+        failure_row['last_run'] = str(last_run)
+        visible.append((key, failure_row))
 
     # Always keep pass rows in the summary payload.
     #
@@ -395,14 +459,42 @@ def build_obsdir_summary(
         check_type = str(check.get('type') or '').strip().lower()
         if type_filter and type_filter != 'all' and check_type != type_filter:
             continue
-        visible_passes.append((key, check))
+        check_row = dict(check)
+        check_row['last_run'] = str(last_run)
+        visible_passes.append((key, check_row))
 
     failed = len(visible)
+    # Compute card_color for color-coded obsdir cards.
+    all_non_ignored = {
+        k: v for k, v in failures.items() if k not in ignored_set
+    }
+    if type_filter and type_filter != 'all':
+        all_non_ignored = {
+            k: v for k, v in all_non_ignored.items()
+            if str(v.get('type') or '').strip().lower() == type_filter
+        }
+    if not all_non_ignored:
+        card_color = 'ok'
+    else:
+        real = [
+            v for v in all_non_ignored.values()
+            if not bool(v.get('override'))
+            and not bool(v.get('monitor'))
+        ]
+        if real:
+            card_color = 'failed'
+        elif any(
+            bool(v.get('override')) for v in all_non_ignored.values()
+        ):
+            card_color = 'overridden'
+        else:
+            card_color = 'monitored'
     return dict(
         obsdir=str(data.get('obsdir') or ''),
         instrument=str(data.get('instrument') or ''),
         profile=str(data.get('profile') or ''),
         path=str(data.get('__path__') or ''),
+        last_run=str(last_run),
         history=list(data.get('history', {}).values()),
         visible_failures=visible,
         visible_passes=visible_passes,
@@ -410,6 +502,7 @@ def build_obsdir_summary(
         visible_pass_count=len(visible_passes),
         ignored_failures=ignored,
         status='ok' if failed == 0 else 'failed',
+        card_color=card_color,
     )
 
 

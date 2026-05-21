@@ -1,0 +1,122 @@
+{% extends "general/sidebar_base.html" %}
+{% block title %}APERO RI - APERO Checks - {{ profile_id }}{% endblock %}
+
+{% block body_class %}ari-has-sidebar ari-apero-checks-page{% endblock %}
+
+{% block extra_head %}
+{{ super() }}
+<link rel="stylesheet"
+    href="{{ url_for('static', filename='css/apero_checks.css') }}?v=20260520c">
+{% endblock %}
+
+{% block doc_content %}
+<div class="ari-page-header">
+    <h1>
+        <i class="fa-solid fa-square-check"></i>
+        <a href="{{ url_for('monitor_apero_checks_view') }}"
+           class="ot-breadcrumb-link">APERO Checks</a>
+        <span class="ot-breadcrumb-sep">/</span>
+        {{ profile_id }}
+    </h1>
+    <p class="ari-page-subtitle">
+        Compact observation-directory list. Open a row to see tests,
+        controls, history, and flagging tools.
+    </p>
+</div>
+
+<div class="ot-meta-bar">
+    <span class="ot-meta-bar__item ot-meta-bar__item--muted">
+        YAML root: {{ checks_root }}
+    </span>
+    <span class="ot-meta-bar__item ot-meta-bar__item--muted">
+        Page {{ current_page }} of {{ total_pages }}
+    </span>
+    {% if can_manage_apero_profiles %}
+    <a href="{{ url_for('home_admin_portal_apero_profiles') }}#apero-checks-management"
+       class="ari-btn ari-btn--sm ari-btn--secondary"
+       title="Manage APERO checks policies in admin portal">
+        <i class="fa-solid fa-gear"></i> Manage APERO checks
+    </a>
+    {% endif %}
+    <a href="{{ url_for('monitor_apero_checks_queue_view', profile_id=profile_id) }}"
+       class="ari-btn ari-btn--sm ari-btn--secondary"
+       title="Open APERO checks queue and task history">
+        <i class="fa-solid fa-list-check"></i> Queue status
+    </a>
+</div>
+
+<form class="ot-toolbar" method="get"
+      action="{{ url_for('monitor_apero_checks_profile_view', profile_id=profile_id) }}">
+    <div class="ot-toolbar__left">
+        <div class="ac-filter-stack">
+            <div class="ac-filter-row">
+                <span class="ac-filter-row__label">Obsdir filter</span>
+                <input name="obsdir_filter"
+                       class="ot-perpage-select"
+                       type="text"
+                       value="{{ obsdir_filter|default('') }}"
+                       placeholder="regex or text pattern">
+                <span class="ac-filter-row__label">Sort</span>
+                <select name="obsdir_sort" class="ot-perpage-select">
+                    <option value="asc"
+                        {% if obsdir_sort == 'asc' %}selected{% endif %}>
+                        Ascending
+                    </option>
+                    <option value="desc"
+                        {% if obsdir_sort == 'desc' %}selected{% endif %}>
+                        Descending
+                    </option>
+                </select>
+                <button class="ari-btn ari-btn--sm ari-btn--secondary"
+                        type="submit">
+                    <i class="fa-solid fa-filter"></i> Apply
+                </button>
+            </div>
+        </div>
+    </div>
+</form>
+
+<div class="ac-card-list" id="ac-card-list">
+    {% for card in profile_cards %}
+    <a class="ac-card"
+       href="{{ url_for('monitor_apero_checks_obsdir_view', profile_id=profile_id, obsdir=card.obsdir, page=current_page, per_page=per_page, obsdir_filter=obsdir_filter, obsdir_sort=obsdir_sort) }}"
+       title="Open APERO Check information for {{ card.obsdir }}">
+        <div class="ac-card__row">
+            <div class="ac-card__date" title="Obsdir: {{ card.obsdir }}">
+                <div>{{ card.obsdir }}</div>
+                <div class="ac-card__lastrun">
+                    Last run: {{ card.last_run or 'n/a' }}
+                </div>
+            </div>
+        </div>
+    </a>
+    {% endfor %}
+    {% if not profile_cards %}
+    <article class="ac-card">
+        <div class="ac-card__row">
+            <span class="ac-check-empty">No matching observation directories</span>
+        </div>
+    </article>
+    {% endif %}
+</div>
+
+<div class="ot-pagination ac-pagination-bottom">
+    <div class="ot-page-info">
+        Page {{ current_page }} of {{ total_pages }}
+    </div>
+    <div class="ot-page-controls">
+        {% if current_page > 1 %}
+        <a class="ari-btn ari-btn--sm ari-btn--secondary"
+           href="{{ url_for('monitor_apero_checks_profile_view', profile_id=profile_id, page=current_page-1, per_page=per_page, obsdir_filter=obsdir_filter, obsdir_sort=obsdir_sort) }}">
+            <i class="fa-solid fa-angle-left"></i>
+        </a>
+        {% endif %}
+        {% if current_page < total_pages %}
+        <a class="ari-btn ari-btn--sm ari-btn--secondary"
+           href="{{ url_for('monitor_apero_checks_profile_view', profile_id=profile_id, page=current_page+1, per_page=per_page, obsdir_filter=obsdir_filter, obsdir_sort=obsdir_sort) }}">
+            <i class="fa-solid fa-angle-right"></i>
+        </a>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

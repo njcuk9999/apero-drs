@@ -38,7 +38,14 @@ def _description(cfg: dict) -> str:
 
 def check_function(instrument: str, obs_dir: str,
                    aparams: dict, dbparams: dict) -> Tuple[bool, str]:
-    """Check enclosure mean offset around its setpoint."""
+    """Run enclosure-setpoint offset validation for one obsdir.
+
+    :param instrument: Active instrument key for the current profile.
+    :param obs_dir: Observation-directory/night identifier.
+    :param aparams: APERO runtime parameters and test configuration.
+    :param dbparams: Runtime/database context passed by monitor task.
+    :returns: Tuple ``(is_ok, message)`` for pass/skip/failure reporting.
+    """
     _ = instrument, dbparams
     cfg = raw_common.get_check_value(aparams,
                                      'eng_test',
@@ -57,7 +64,7 @@ def check_function(instrument: str, obs_dir: str,
     if key1 == '' or key2 == '':
         return False, f'{TEST_KEY} missing key1 or key2.'
 
-    _, files = raw_common.list_obsdir_files(aparams, obs_dir)
+    obs_path, files = raw_common.list_obsdir_files(aparams, obs_dir)
     if len(files) == 0:
         return False, f'No FITS files found in {obs_dir}.'
 
@@ -75,7 +82,15 @@ def check_function(instrument: str, obs_dir: str,
     metric = float(np.abs(np.nanmean(x - y)))
     if metric < limit:
         return True, f'{TEST_KEY} okay ({metric:.2E} < {limit:.2E}).'
-    return False, f'{TEST_KEY} failed ({metric:.2E} >= {limit:.2E}).'
+    use_files = raw_common.files_from_mask(table, use)
+    reason = f'{metric:.2E} >= {limit:.2E}'
+    message = raw_common.format_failed_file_message(
+        TEST_KEY,
+        reason,
+        obs_path,
+        use_files,
+    )
+    return False, message
 
 
 CHECK.func = check_function
