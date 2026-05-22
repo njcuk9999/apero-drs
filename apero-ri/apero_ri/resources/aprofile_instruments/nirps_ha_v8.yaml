@@ -1,38 +1,31 @@
 general:
-  # instrument
   instrument: NIRPS_HA
-  # spectral bands to show in the UI
   bands:
-    - Y
-    - H
-  # has polarimetry
+  - Y
+  - H
   has_polarimetry: false
-  # query-db preset file (relative to resources/aprofile_qdb_presets/)
   db-query-preset-file: nirps_ha_v8.txt
 observatory:
-  # ESO 3.6m, La Silla, Chile
   lat: -29.2562
   lon: -70.7342
   alt: 2400
 plot:
-  # Spectrum wavelength ranges in nm
   SpecWave:
     limit0:
-      - 985
-      - 1810
+    - 985
+    - 1810
     limit1:
-      - 1082
-      - 1085
+    - 1082
+    - 1085
     limit2:
-      - 1575
-      - 1580
+    - 1575
+    - 1580
     limit3:
-      - 1666
-      - 1668
-  # Wavelength range of interest for debug telluric correction map
+    - 1666
+    - 1668
   TcorrMapWave:
-    - 1716
-    - 1726
+  - 1716
+  - 1726
 sci-headers:
   pp:
     PP_MJDMID:
@@ -74,15 +67,15 @@ sci-headers:
       timefmt: iso
     EXT_Y:
       key: EXTSN015
-      label: 'SNR[Order 15 (#134 1.08μm)]'
+      label: "SNR[Order 15 (#134 1.08\u03BCm)]"
       dtype: float
     EXT_H:
       key: EXTSN060
-      label: 'SNR[Order 60 (#89 1.63μm)]'
+      label: "SNR[Order 60 (#89 1.63\u03BCm)]"
       dtype: float
     EXT_DPRTYPE:
       key: DPRTYPE
-      label: 'DPR TYPE'
+      label: DPR TYPE
       dtype: str
     EXT_BERV:
       key: BERV
@@ -101,16 +94,16 @@ sci-headers:
       key: HIERARCH ESO TEL AMBI FWHM START
       label: Seeing at start
       dtype: float
-      fallback: Null
+      fallback: null
     EXT_AIRMASS:
       key: HIERARCH ESO TEL AIRM START
       label: Airmass at start
       dtype: float
-      fallback: Null
+      fallback: null
     EXT_EXPTIME:
-        key: EXPTIME
-        label: Exposure Time
-        dtype: float
+      key: EXPTIME
+      label: Exposure Time
+      dtype: float
     EXT_VERSION:
       key: VERSION
       label: Version [ext]
@@ -231,7 +224,7 @@ sci-headers:
       dtype: int
     TCORR_H:
       key: EXTSN060
-      label: 'SNR[Order 60 (#89 1.63μm)]'
+      label: "SNR[Order 60 (#89 1.63\u03BCm)]"
       dtype: float
     TCORR_PROC:
       key: DRSPDATE
@@ -279,7 +272,7 @@ sci-headers:
   lbl:
     EXT_H:
       key: EXTSN060
-      label: 'SNR[Order 60 (#89 1.63μm)]'
+      label: "SNR[Order 60 (#89 1.63\u03BCm)]"
       dtype: float
     LBL_VERSION:
       key: LBL_VERS
@@ -343,13 +336,13 @@ apero-checks:
   calib_test:
     enabled: true
     required_dprtypes:
-      - DARK
-      - WAVE,FP,FP
-      - WAVE,UN1,FP
-      - WAVE,FP,UN1
-      - FLAT,DARK,LAMP
-      - FLAT,LAMP,DARK
-      - WAVE,UN1,UN1
+    - DARK
+    - WAVE,FP,FP
+    - WAVE,UN1,FP
+    - WAVE,FP,UN1
+    - FLAT,DARK,LAMP
+    - FLAT,LAMP,DARK
+    - WAVE,UN1,UN1
   calib_ob_test:
     enabled: true
     required_obnames:
@@ -362,28 +355,28 @@ apero-checks:
   no_sci:
     enabled: true
     dprtypes:
-      - OBJECT,SKY
-      - OBJECT,FP
+    - OBJECT,SKY
+    - OBJECT,FP
   qual_test:
     enabled: true
     dpr_groups:
       FP:
-        - WAVE,FP,FP
-        - WAVE,UN1,UN1
-        - WAVE,FP,UN1
-        - WAVE,UN1,FP
-        - CONTAM,DARK,FP
+      - WAVE,FP,FP
+      - WAVE,UN1,UN1
+      - WAVE,FP,UN1
+      - WAVE,UN1,FP
+      - CONTAM,DARK,FP
       FLAT:
-        - FLAT,LAMP,DARK
-        - FLAT,DARK,LAMP
-        - FLAT,LAMP,LAMP
-        - ORDERDEF,DARK,LAMP
-        - ORDERDEF,LAMP,DARK
+      - FLAT,LAMP,DARK
+      - FLAT,DARK,LAMP
+      - FLAT,LAMP,LAMP
+      - ORDERDEF,DARK,LAMP
+      - ORDERDEF,LAMP,DARK
       TELLURIC:
-        - TELLURIC,SKY
+      - TELLURIC,SKY
       SCIENCE:
-        - OBJECT,SKY
-        - OBJECT,FP
+      - OBJECT,SKY
+      - OBJECT,FP
     constraints:
       OBJECT,SKY:
         p99_min: 0
@@ -441,125 +434,110 @@ apero-checks:
     tests:
       enclosure_temperature_rms:
         enabled: true
-        key1: HIERARCH ESO INS TEMP185 VAL
-        key2: HIERARCH ESO INS TEMP187 VAL
-        val1: 0.1
+        sensor_key: HIERARCH ESO INS TEMP185 VAL
+        reference_key: HIERARCH ESO INS TEMP187 VAL
+        limit: 0.1
       enclosure_setpoint_offset:
         enabled: true
-        key1: HIERARCH ESO INS TEMP185 VAL
-        key2: HIERARCH ESO INS TEMP187 VAL
-        val1: 0.1
+        sensor_key: HIERARCH ESO INS TEMP185 VAL
+        setpoint_key: HIERARCH ESO INS TEMP187 VAL
+        limit: 0.1
       vacuum_gauge_upper:
         enabled: true
-        key1: HIERARCH ESO INS PRES104 VAL
-        val1: 1.0e-4
+        metric_key: HIERARCH ESO INS PRES104 VAL
+        limit: 0.0001
       isolation_valve_state:
         enabled: true
-        key1: HIERARCH ESO INS SENS100 STAT
-        val1: false
+        status_key: HIERARCH ESO INS SENS100 STAT
+        target: false
       cryo1_status_state:
         enabled: true
-        key1: HIERARCH ESO INS SENS126
-        val1: false
+        status_key: HIERARCH ESO INS SENS126
+        target: false
       cryo2_status_state:
         enabled: true
-        key1: HIERARCH ESO INS SENS127
-        val1: false
+        status_key: HIERARCH ESO INS SENS127
+        target: false
       turbopump_status_state:
         enabled: true
-        key1: HIERARCH ESO INS SENS102 STAT
-        val1: false
+        status_key: HIERARCH ESO INS SENS102 STAT
+        target: false
       warning_cryo1_state:
         enabled: true
-        key1: HIERARCH ESO INS SENS144 STAT
-        val1: ''
+        status_key: HIERARCH ESO INS SENS144 STAT
+        target: ''
       warning_cryo2_state:
         enabled: true
-        key1: HIERARCH ESO INS SENS146 STAT
-        val1: ''
+        status_key: HIERARCH ESO INS SENS146 STAT
+        target: ''
       fp_interior_rms:
         enabled: true
-        key1: HIERARCH ESO INS TEMP14 VAL
-        val1: 1.0e-2
+        metric_key: HIERARCH ESO INS TEMP14 VAL
+        limit: 0.01
       fp_exterior_range:
         enabled: true
-        key1: HIERARCH ESO INS TEMP13 VAL
-        val1: 23.496
-        val2: 24.504
+        metric_key: HIERARCH ESO INS TEMP13 VAL
+        lower_limit: 23.496
+        upper_limit: 24.504
       fp_setpoint_rms:
         enabled: true
-        key1: HIERARCH ESO INS TEMP14 VAL
-        key2: HIERARCH ESO INS TEMP188 VAL
-        val1: 0.005
+        sensor_key: HIERARCH ESO INS TEMP14 VAL
+        setpoint_key: HIERARCH ESO INS TEMP188 VAL
+        limit: 0.005
       enclosure_heater_power_max:
         enabled: true
-        key1: HIERARCH ESO INS SENS121 VAL
-        val1: 90.0
+        metric_key: HIERARCH ESO INS SENS121 VAL
+        limit: 90.0
       scrambling_status_science:
         enabled: true
-        key1: HIERARCH ESO INS2 AOS SCRAMB ST
-        val1: true
         dprtypes:
-          - OBJECT,FP
-          - OBJECT,SKY
-          - TELLURIC,SKY
+        - OBJECT,FP
+        - OBJECT,SKY
+        - TELLURIC,SKY
+        status_key: HIERARCH ESO INS2 AOS SCRAMB ST
+        target: true
       stretcher_status_state:
         enabled: true
-        key1: HIERARCH ESO INS OPTI10 STAT
-        val1: ON
+        status_key: HIERARCH ESO INS OPTI10 STAT
+        target: true
       backend_device_error_state:
         enabled: true
-        key1: HIERARCH ESO INS SENS129 STAT
-        val1: NOK
+        status_key: HIERARCH ESO INS SENS129 STAT
+        blocked_value: NOK
 finder:
-  # define time in years before and after "obs date" to plot trail for
   DTMIN: -6
   DTMAX: 6
   DTVAL: 3
-  # define the field of view (in arcsec)
   FIELD_OF_VIEW:
     G:
-      - 77.6
-      - 77.6
+    - 77.6
+    - 77.6
     J:
-      - 18.2
-      - 18.2
-  # the scale factor of one band (others will be matched)
+    - 18.2
+    - 18.2
   SCALE_FACTOR:
     G: 1.5
-  # the pixel scale (in arcsec/pixel)
   PIXEL_SCALE:
     G: 0.1514
     J: 0.1514
-  # Transform the image (rotation) in degrees
   TRANSFORM_ROTATE:
-    #  180 + 90 - 37.4
     G: 232.6
-    #  180 + 90 - 37.4 + 90
     J: 322.6
-  # FWHM (arcsec)
   FWHM:
     G: 2.0
     J: 2.0
-  # 1-sgiam magnitude limit
   SIGMA_LIMIT:
     G: 18
     J: 15
     H: 15
     K: 15
-  # mag limit above 1-sigma limit for null sources
   MAG_LIMIT: -1
-  # max proper motion to search for (arcsec/yr)
   MAX_PM: 11
-  # scale bar size (arcsec)
   SCALE_SIZE: 10
-  # compass size (fraction of image)
   COMPASS_FRAC: 0.075
-  # flip the image in x
   FLIP_X:
-    G: True
-    J: True
-  # flip the image in y
+    G: true
+    J: true
   FLIP_Y:
-    G: False
-    J: False
+    G: false
+    J: false

@@ -261,6 +261,24 @@ MULTI_PROCESS["APERO_CHECK_TASK"] = _entry["multi_process"]
 LOCAL_TASK["APERO_CHECK_TASK"] = _entry["local_task"]
 FILTERS["APERO_CHECK_TASK"] = _entry["filters"]
 
+# GENERATE_CHECK_DOCS
+_entry = _register_task(
+    "GENERATE_CHECK_DOCS",
+    "apero_check_doc_tasks",
+    "GenerateCheckDocsTask",
+    "GLOBAL",
+)
+TASK_LIST["GENERATE_CHECK_DOCS"] = _entry["task_cls"]
+P_LIST["GENERATE_CHECK_DOCS"] = _entry["param_list"]
+AP_LIST["GENERATE_CHECK_DOCS"] = _entry["ap_list"]
+FREQ["GENERATE_CHECK_DOCS"] = _entry["frequency"]
+ENABLED["GENERATE_CHECK_DOCS"] = _entry["enabled"]
+TYPE["GENERATE_CHECK_DOCS"] = _entry["task_type"]
+USE_SUBPROCESS["GENERATE_CHECK_DOCS"] = _entry["use_subprocess"]
+MULTI_PROCESS["GENERATE_CHECK_DOCS"] = _entry["multi_process"]
+LOCAL_TASK["GENERATE_CHECK_DOCS"] = _entry["local_task"]
+FILTERS["GENERATE_CHECK_DOCS"] = _entry["filters"]
+
 # FAV_OBJECT_WATCHER
 _entry = _register_task(
     "FAV_OBJECT_WATCHER",

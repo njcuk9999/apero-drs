@@ -10,6 +10,11 @@ card_icon: fa-solid fa-gear
 This is a blank check used as an example. 
 It always passes and does not perform any actual checks.
 
+## Check logic
+
+This is a blank check used as an example. 
+It always passes and does not perform any actual checks.
+
 ## Requirements
 
 No dependencies.

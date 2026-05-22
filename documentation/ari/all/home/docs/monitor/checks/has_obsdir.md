@@ -10,6 +10,11 @@ card_icon: fa-solid fa-gear
 This test checks whether an observation night directory exists in the 
 raw directory.
 
+## Check logic
+
+This test checks whether an observation night directory exists in the 
+raw directory.
+
 ## Requirements
 
 - [BLANK](checks/blank.md)

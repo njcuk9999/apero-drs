@@ -2,94 +2,58 @@
 # -*- coding: utf-8 -*-
 """Engineering check: vacuum gauge upper limit."""
 
-from typing import Tuple
-
 import numpy as np
 
 import apero_ri.apero_monitoring.core.raw_common as raw_common
-from apero_ri.apero_monitoring.core.core import AperoCheck
+from apero_ri.apero_monitoring.core.core import AperoCheck, SimpleCheck
 
 # =============================================================================
 # Define variables
 # =============================================================================
+# Internal unique key used in YAML and monitor records.
 CHECK_NAME = 'ENG_VAC_GAUGE_UPPER'
+# Human readable title shown in UI views.
 CHECK_HUMAN_NAME = 'ENG: Vacuum Gauge Upper'
+# APERO check family (raw/red) used for routing and display.
 CHECK_TYPE = 'raw'
+# Instruments where this engineering check is valid.
 INSTRUMENTS = ['NIRPS_HE', 'NIRPS_HA']
+# Config test key under apero-checks.eng_test.tests.
 TEST_KEY = 'vacuum_gauge_upper'
 
+# Build the runnable check object from metadata above.
 CHECK = AperoCheck(CHECK_NAME, CHECK_HUMAN_NAME, CHECK_TYPE, INSTRUMENTS)
+# Require upstream checks before evaluating this test.
 CHECK.dependencies = ['BLANK', 'HAS_OBSDIR', 'CALIB_TEST']
+# Attach declarative SimpleCheck helper for runtime/docs/admin.
+SIMPLE_CHECK = SimpleCheck(CHECK, TEST_KEY)
+# Define one input variable and its YAML/header mapping.
+SIMPLE_CHECK.data['x'] = dict(
+    key=['metric_key', 'key1'],
+    dtype='float',
+    normalize='float',
+)
+# Define one input variable and its YAML/header mapping.
+SIMPLE_CHECK.data['limit'] = dict(
+    kind='config',
+    key=['limit', 'val1'],
+    cast='float',
+    default=1.0e-4,
+)
+# Define one derived variable used by the logic function.
+SIMPLE_CHECK.calc['metric'] = lambda x, **_: float(np.nanmax(x))
+# Core boolean logic: True means pass, False means fail.
+SIMPLE_CHECK.func = lambda metric, limit, **_: metric < limit
+# Pass message template displayed when logic passes.
+SIMPLE_CHECK.pmsg = '{test_key} okay ({metric:.2E} < {limit:.2E}).'
+# Fail reason template displayed when logic fails.
+SIMPLE_CHECK.fmsg = '{metric:.2E} >= {limit:.2E}'
+# Human-readable logic string for docs and admin displays.
+SIMPLE_CHECK.desc = 'np.nanmax({x}) < {limit}'
 
 
-def _description(cfg: dict) -> str:
-    """Build a concrete logic description from this test config."""
-    logic = (
-        'np.nanmax(' + str(cfg.get('key1', '')) + ') < '
-        + str(cfg.get('val1', ''))
-    )
-    out = 'Performs the following test\n\n'
-    out += '```python\n'
-    out += logic + '\n'
-    out += '```'
-    return out
-
-
-def check_function(instrument: str, obs_dir: str,
-                   aparams: dict, dbparams: dict) -> Tuple[bool, str]:
-    """Run vacuum-gauge upper-limit validation for one obsdir.
-
-    :param instrument: Active instrument key for the current profile.
-    :param obs_dir: Observation-directory/night identifier.
-    :param aparams: APERO runtime parameters and test configuration.
-    :param dbparams: Runtime/database context passed by monitor task.
-    :returns: Tuple ``(is_ok, message)`` for pass/skip/failure reporting.
-    """
-    _ = instrument, dbparams
-    cfg = raw_common.get_check_value(aparams,
-                                     'eng_test',
-                                     ['tests', TEST_KEY],
-                                     dict())
-    if not isinstance(cfg, dict) or len(cfg) == 0:
-        return True, f'Skipped {TEST_KEY}: not configured.'
-
-    CHECK.description = _description(cfg)
-    if not bool(cfg.get('enabled', True)):
-        return True, f'Skipped {TEST_KEY}: disabled.'
-
-    key1 = str(cfg.get('key1', '')).strip()
-    limit = float(cfg.get('val1', np.nan))
-    if key1 == '':
-        return False, f'{TEST_KEY} missing key1.'
-
-    obs_path, files = raw_common.list_obsdir_files(aparams, obs_dir)
-    if len(files) == 0:
-        return False, f'No FITS files found in {obs_dir}.'
-
-    header_defs = dict()
-    header_defs[key1] = dict(key=key1, dtype='float')
-    table, masks = raw_common.load_header_table(files, header_defs)
-
-    use = masks[key1]
-    x = np.array(table[key1][use], dtype=float)
-    if len(x) == 0:
-        return True, f'Skipped {TEST_KEY}: no valid rows.'
-
-    metric = float(np.nanmax(x))
-    if metric < limit:
-        return True, f'{TEST_KEY} okay ({metric:.2E} < {limit:.2E}).'
-    use_files = raw_common.files_from_mask(table, use)
-    reason = f'{metric:.2E} >= {limit:.2E}'
-    message = raw_common.format_failed_file_message(
-        TEST_KEY,
-        reason,
-        obs_path,
-        use_files,
-    )
-    return False, message
-
-
-CHECK.func = check_function
+# Register SimpleCheck runner as the check execution function.
+CHECK.func = SIMPLE_CHECK.run
 
 
 # =============================================================================

@@ -1,0 +1,45 @@
+{% extends "general/sidebar_base.html" %}
+{% block title %}APERO RI - Miscellaneous{% endblock %}
+
+{% block doc_content %}
+<div class="ari-page-header">
+    <h1><i class="{{ page_icon }}"></i> {{ page_label }}</h1>
+    <p class="ari-page-subtitle">
+        Configuration tools and advanced controls.
+    </p>
+</div>
+
+<div class="ari-sg-section">
+    <div class="ari-sg-section__header">
+        <h3>
+            <i class="fa-solid fa-brackets-curly"></i>
+            Expression Rules
+        </h3>
+    </div>
+    <p class="ari-page-subtitle" style="margin-top:0; margin-bottom:0.8rem;">
+        Manage expression rules used by custom summary columns.
+    </p>
+    <a class="ari-btn ari-btn--secondary"
+       href="{{ url_for('home_admin_portal_miscellaneous_allowed_python_expressions') }}">
+        <i class="fa-solid fa-code"></i>
+        Open Rule Editor
+    </a>
+</div>
+
+<div class="ari-sg-section">
+    <div class="ari-sg-section__header">
+        <h3>
+            <i class="fa-solid fa-table-columns"></i>
+            Custom Columns
+        </h3>
+    </div>
+    <p class="ari-page-subtitle" style="margin-top:0; margin-bottom:0.8rem;">
+        Manage reusable custom summary columns for all users.
+    </p>
+    <a class="ari-btn ari-btn--secondary"
+       href="{{ url_for('home_admin_portal_miscellaneous_custom_columns') }}">
+        <i class="fa-solid fa-sliders"></i>
+        Open Custom Columns
+    </a>
+</div>
+{% endblock %}

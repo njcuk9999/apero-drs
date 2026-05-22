@@ -303,41 +303,6 @@
     </div>
 </div>
 
-<div class="ari-sg-section" id="apero-checks-management">
-    <div class="ari-sg-section__header">
-        <h3><i class="fa-solid fa-shield"></i> APERO Checks Global Policy</h3>
-    </div>
-    <div class="ari-ap-form" style="padding-top:0.5rem;">
-        <div class="ari-ap-form__field">
-            <label for="apero-checks-ignored">Ignored checks
-                <span class="ari-ap-form__hint">Comma-separated check keys excluded globally from failures.</span>
-            </label>
-            <input type="text"
-                   id="apero-checks-ignored"
-                   class="ari-ap-input"
-                   value="{{ (apero_checks_config.ignored_checks or [])|join(', ') }}"
-                   placeholder="BAD_CCF, EXAMPLE_CHECK"
-                   autocomplete="off">
-        </div>
-        <div class="ari-ap-form__field">
-            <label for="apero-checks-override-allowed">Override allowed
-                <span class="ari-ap-form__hint">Comma-separated check keys that users are allowed to override in monitor pages.</span>
-            </label>
-            <input type="text"
-                   id="apero-checks-override-allowed"
-                   class="ari-ap-input"
-                   value="{{ (apero_checks_config.override_allowed or [])|join(', ') }}"
-                   placeholder="CHECK_A, CHECK_B"
-                   autocomplete="off">
-        </div>
-        <div class="ari-ap-form__actions" style="margin-top:0;">
-            <button id="btn-save-apero-checks-config" class="ari-btn ari-btn--primary" type="button">
-                <i class="fa-solid fa-floppy-disk"></i> Save APERO Checks Policy
-            </button>
-        </div>
-    </div>
-</div>
-
 <!-- Empty state -->
 <div id="ap-empty" class="ari-sg-empty" style="display:none;">
     <i class="fa-solid fa-circle-info"></i>
@@ -446,13 +411,11 @@ window.ARI_APERO_PROFILES = {
     sshTunnelSendUrl: {{ url_for('api_apero_profiles_ssh_tunnel_send')|tojson }},
     sshTunnelCloseUrl: {{ url_for('api_apero_profiles_ssh_tunnel_close')|tojson }},
     dbTunnelAdminUrl: {{ url_for('home_admin_portal_database_setup')|tojson }},
-    aperoChecksConfigUrl: {{ url_for('api_apero_checks_config_save')|tojson }},
     instruments: {{ instruments|tojson }},
     allGroups: {{ all_groups|tojson }},
     canManageGroups: {{ can_manage_groups|tojson }},
     inheritedMap: {{ inherited_map|tojson }},
-    sciProfileData: {{ sci_profiles|tojson }},
-    aperoChecksConfig: {{ apero_checks_config|tojson }}
+    sciProfileData: {{ sci_profiles|tojson }}
 };
 </script>
 <script src="{{ url_for('static', filename='js/admin_apero_profiles.js') }}"></script>

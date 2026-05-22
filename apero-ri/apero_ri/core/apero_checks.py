@@ -429,6 +429,54 @@ def build_obsdir_summary(
     ignored_set = set(ignored_checks or CHECK_IGNORED_CHECKS)
     failures = data.get('failures', {})
     passes = data.get('passes', {})
+    all_non_ignored = {
+        key: value for key, value in failures.items()
+        if key not in ignored_set
+    }
+    override_count = 0
+    monitor_count = 0
+    active_failure_count = 0
+    for failure in all_non_ignored.values():
+        has_override = bool((failure or {}).get('override'))
+        has_monitor = bool((failure or {}).get('monitor'))
+        if has_override:
+            override_count += 1
+        if has_monitor:
+            monitor_count += 1
+        if not has_override and not has_monitor:
+            active_failure_count += 1
+
+    if active_failure_count > 0:
+        status = 'failed'
+        result_state = 'failed'
+        status_detail = 'failed'
+        status_label = 'Failed'
+        card_color = 'failed'
+    else:
+        status = 'ok'
+        result_state = 'passed'
+        if override_count > 0 and monitor_count > 0:
+            status_detail = 'overrides_and_monitoring'
+            status_label = 'Passed (with overrides and monitoring)'
+            if override_count > monitor_count:
+                card_color = 'overridden'
+            elif monitor_count > override_count:
+                card_color = 'monitored'
+            else:
+                card_color = 'overridden_monitored'
+        elif override_count > 0:
+            status_detail = 'overrides'
+            status_label = 'Passed (with overrides)'
+            card_color = 'overridden'
+        elif monitor_count > 0:
+            status_detail = 'monitoring'
+            status_label = 'Passed (with monitoring)'
+            card_color = 'monitored'
+        else:
+            status_detail = 'passed'
+            status_label = 'Passed'
+            card_color = 'ok'
+
     last_run_raw = _latest_history_date(data.get('history', {}))
     if last_run_raw == '':
         last_run_raw = _iso_from_mtime(str(data.get('__path__') or ''))
@@ -464,31 +512,6 @@ def build_obsdir_summary(
         visible_passes.append((key, check_row))
 
     failed = len(visible)
-    # Compute card_color for color-coded obsdir cards.
-    all_non_ignored = {
-        k: v for k, v in failures.items() if k not in ignored_set
-    }
-    if type_filter and type_filter != 'all':
-        all_non_ignored = {
-            k: v for k, v in all_non_ignored.items()
-            if str(v.get('type') or '').strip().lower() == type_filter
-        }
-    if not all_non_ignored:
-        card_color = 'ok'
-    else:
-        real = [
-            v for v in all_non_ignored.values()
-            if not bool(v.get('override'))
-            and not bool(v.get('monitor'))
-        ]
-        if real:
-            card_color = 'failed'
-        elif any(
-            bool(v.get('override')) for v in all_non_ignored.values()
-        ):
-            card_color = 'overridden'
-        else:
-            card_color = 'monitored'
     return dict(
         obsdir=str(data.get('obsdir') or ''),
         instrument=str(data.get('instrument') or ''),
@@ -499,9 +522,15 @@ def build_obsdir_summary(
         visible_failures=visible,
         visible_passes=visible_passes,
         visible_failure_count=failed,
+        active_failure_count=active_failure_count,
         visible_pass_count=len(visible_passes),
         ignored_failures=ignored,
-        status='ok' if failed == 0 else 'failed',
+        status=status,
+        result_state=result_state,
+        status_detail=status_detail,
+        status_label=status_label,
+        override_count=override_count,
+        monitor_count=monitor_count,
         card_color=card_color,
     )
 
@@ -559,3 +588,48 @@ def clear_failure_event(path: Path, failure_key: str, event_key: str) -> dict:
     data['failures'] = failures
     _safe_write_yaml(path, data)
     return load_check_file(path)
+
+
+def delete_test_key(path: Path, test_key: str) -> dict:
+    """Delete one test key from failures and passes in one YAML file."""
+    key = str(test_key or '').strip()
+    if key == '':
+        return dict(
+            changed=False,
+            removed_failures=0,
+            removed_passes=0,
+        )
+
+    data = _safe_load_yaml(path)
+    failures = data.get('failures', dict())
+    passes = data.get('passes', dict())
+    key_upper = key.upper()
+
+    removed_failures = 0
+    removed_passes = 0
+
+    if isinstance(failures, dict):
+        for current_key in list(failures.keys()):
+            if str(current_key or '').strip().upper() != key_upper:
+                continue
+            failures.pop(current_key, None)
+            removed_failures += 1
+
+    if isinstance(passes, dict):
+        for current_key in list(passes.keys()):
+            if str(current_key or '').strip().upper() != key_upper:
+                continue
+            passes.pop(current_key, None)
+            removed_passes += 1
+
+    changed = (removed_failures + removed_passes) > 0
+    if changed:
+        data['failures'] = failures if isinstance(failures, dict) else dict()
+        data['passes'] = passes if isinstance(passes, dict) else dict()
+        _safe_write_yaml(path, data)
+
+    return dict(
+        changed=changed,
+        removed_failures=removed_failures,
+        removed_passes=removed_passes,
+    )

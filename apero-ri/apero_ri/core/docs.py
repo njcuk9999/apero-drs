@@ -421,6 +421,22 @@ def get_doc_content(
     return raw, html, version
 
 
+def get_doc_last_modified(
+    doc_ref: str,
+    version: Optional[str] = None,
+) -> str:
+    """Return last-modified timestamp text from the markdown file."""
+    rel_doc_path = normalize_doc_ref(doc_ref)
+    md_file, _ = _resolve_markdown_path(rel_doc_path, version)
+    if md_file is None:
+        return ''
+    try:
+        mtime = datetime.fromtimestamp(md_file.stat().st_mtime)
+    except Exception:
+        return ''
+    return mtime.strftime('%Y-%m-%d %H:%M:%S')
+
+
 def render_markdown(text: str) -> str:
     """Render markdown text to HTML."""
     md = markdown.Markdown(

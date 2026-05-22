@@ -1,0 +1,124 @@
+{% extends "general/sidebar_base.html" %}
+{% block title %}APERO RI - Custom Columns{% endblock %}
+
+{% block doc_content %}
+<div class="ari-page-header">
+    <h1><i class="{{ page_icon }}"></i> {{ page_label }}</h1>
+    <p class="ari-page-subtitle">
+        Reusable custom summary columns managed by admins.
+    </p>
+</div>
+
+<div style="display:flex;gap:0.55rem;align-items:center;margin-bottom:0.75rem;">
+    <label for="acc-profile"
+           style="display:flex;align-items:center;gap:0.4rem;margin-right:0.25rem;">
+        <span class="at-muted-hint" style="white-space:nowrap;">Profile</span>
+        <select id="acc-profile" class="ari-input ari-input--sm"
+                style="min-width:16rem;"></select>
+    </label>
+    <label for="acc-test-object"
+           style="display:flex;align-items:center;gap:0.4rem;margin-right:0.25rem;">
+        <span class="at-muted-hint" style="white-space:nowrap;">Test object</span>
+        <input id="acc-test-object" class="ari-input ari-input--sm"
+               type="text" placeholder="Optional object name"
+               style="min-width:16rem;">
+    </label>
+    <button id="acc-add" type="button" class="ari-btn ari-btn--secondary">
+        <i class="fa-solid fa-plus"></i> Add Custom Column
+    </button>
+    <button id="acc-test-all" type="button" class="ari-btn ari-btn--secondary">
+        <i class="fa-solid fa-vial-circle-check"></i> Test All
+    </button>
+    <button id="acc-save" type="button" class="ari-btn ari-btn--primary">
+        <i class="fa-solid fa-floppy-disk"></i> Save All
+    </button>
+    <span id="acc-status" class="at-muted-hint"></span>
+</div>
+
+<div class="ari-table-wrap">
+    <table class="ari-table" id="acc-table">
+        <thead>
+        <tr>
+            <th style="width:30%;">Column Name</th>
+            <th>Expression</th>
+            <th style="width:70px;">Action</th>
+        </tr>
+        </thead>
+        <tbody id="acc-rows"></tbody>
+    </table>
+</div>
+
+<div id="acc-custom-overlay" class="ogs-mini-overlay"
+     style="display:none;" role="dialog" aria-modal="true"
+     aria-labelledby="acc-custom-title">
+    <div id="acc-custom-backdrop" class="ogs-mini-overlay__backdrop"></div>
+    <div class="ogs-mini-overlay__dialog">
+        <div class="ogs-mini-overlay__header">
+            <h3 id="acc-custom-title">Custom Column Editor</h3>
+            <button type="button" id="acc-custom-close"
+                    class="ogs-overlay__close">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+        <p class="ogs-mini-overlay__hint">
+            This editor matches the summary-column custom expression flow.
+        </p>
+        <label class="ogs-search" for="acc-custom-name">
+            <span class="ogs-search__label">Column name</span>
+            <input id="acc-custom-name" class="ari-input" type="text"
+                   placeholder="Example: Timeframe">
+        </label>
+        <div class="ogs-filters ogs-filters--compact">
+            <select id="acc-custom-category" class="ari-input ari-input--sm"
+                    aria-label="Category filter">
+                <option value="">All categories</option>
+            </select>
+            <select id="acc-custom-subcategory"
+                    class="ari-input ari-input--sm"
+                    aria-label="Sub-category filter">
+                <option value="">All sub-categories</option>
+            </select>
+        </div>
+        <label class="ogs-search" for="acc-custom-search">
+            <span class="ogs-search__label">Filter properties</span>
+            <input id="acc-custom-search" class="ari-input" type="text"
+                   placeholder="Type 3+ chars to filter properties">
+        </label>
+        <div id="acc-custom-vars" class="ogs-rename-list"></div>
+        <div class="ogs-mini-overlay__footer">
+            <button type="button" id="acc-custom-add-var"
+                    class="ari-btn ari-btn--secondary">
+                Add variable
+            </button>
+        </div>
+        <label class="ogs-search" for="acc-custom-expr">
+            <span class="ogs-search__label">Expression</span>
+            <input id="acc-custom-expr" class="ari-input" type="text"
+                   placeholder="Example: round(Time(y, format='fits').mjd - Time(x, format='fits').mjd, 2)">
+        </label>
+        <div id="acc-custom-status" class="ogs-status"></div>
+        <div class="ogs-mini-overlay__footer">
+            <button type="button" id="acc-custom-test"
+                    class="ari-btn ari-btn--secondary">
+                Test
+            </button>
+            <button type="button" id="acc-custom-apply"
+                    class="ari-btn ari-btn--primary">
+                Apply
+            </button>
+            <button type="button" id="acc-custom-cancel"
+                    class="ari-btn ari-btn--secondary">
+                Cancel
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+window.ARI_ADMIN_CUSTOM_COLUMNS = {
+    apiUrl: {{ url_for('api_object_groups_admin_custom_columns')|tojson }},
+    testUrl: {{ url_for('api_object_groups_admin_custom_test')|tojson }}
+};
+</script>
+<script src="{{ url_for('static', filename='js/admin_custom_columns.js', v='20260522a') }}"></script>
+{% endblock %}

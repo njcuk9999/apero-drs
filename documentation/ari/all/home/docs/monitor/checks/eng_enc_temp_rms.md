@@ -9,6 +9,27 @@ card_icon: fa-solid fa-gear
 
 No overview available.
 
+## Check logic
+
+### generic
+
+Performs the following test
+
+```python
+np.nanstd(sensor_key - reference_key) < limit
+```
+
+#### Resolved values
+
+| Key | Value |
+| --- | --- |
+| TEST_KEY | enclosure_temperature_rms |
+| ENABLED | True |
+| SENSOR_KEY | sensor_key |
+| REFERENCE_KEY | reference_key |
+| LIMIT | limit |
+| METRIC | metric |
+
 ## Requirements
 
 - [BLANK](checks/blank.md)

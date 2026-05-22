@@ -9,6 +9,26 @@ card_icon: fa-solid fa-gear
 
 No overview available.
 
+## Check logic
+
+### generic
+
+Performs the following test
+
+```python
+np.all(status_key == target) on dprtypes ['dprtypes']
+```
+
+#### Resolved values
+
+| Key | Value |
+| --- | --- |
+| TEST_KEY | scrambling_status_science |
+| ENABLED | True |
+| STATUS_KEY | status_key |
+| TARGET | target |
+| DPRTYPES | dprtypes |
+
 ## Requirements
 
 - [BLANK](checks/blank.md)

@@ -625,14 +625,14 @@ body.ac-hide-tests .ac-card__checks-main {
         }
 
         .ac-btn--red-bg {
-            background: #cc4b37 !important;
-            border-color: #cc4b37 !important;
+            background: #991b1b !important;
+            border-color: #991b1b !important;
             color: #ffffff !important;
         }
 
         .ac-btn--red-bg:hover {
-            background: #b91c1c !important;
-            border-color: #b91c1c !important;
+            background: #7f1d1d !important;
+            border-color: #7f1d1d !important;
         }
 
         .ac-btn-danger,

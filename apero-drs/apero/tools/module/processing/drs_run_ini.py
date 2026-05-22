@@ -81,7 +81,15 @@ GROUPS['radial velocity'] = ['rv']
 GROUPS['polar'] = ['polar']
 GROUPS['lbl'] = ['lbl']
 GROUPS['postprocessing'] = ['post']
+# Define extra comment text to add to RUN_TEXT and SKIP_TEXT in the run.ini
+# files - this gives extra info for certain sections
+EXTRA_RUN_TEXT = dict()
 
+EXTRA_SKIP_TEXT = dict()
+EXTRA_SKIP_TEXT['lbl'] = ('Please note SKIP_XXX=True for LBL recipes skips '
+                          'any object that has been run before.\n'
+                          'LBL recipes manage skipping individual recipes '
+                          'themselves.\n')
 
 # =============================================================================
 # Define classes
@@ -288,7 +296,11 @@ class RunIniFile:
                 # add group comment
                 run_text = 'Run the {0} recipes\n'.format(group_name)
                 skip_text = 'Skip the {0} recipes\n'.format(group_name)
-
+                # deal with extra comments for run / skip based on group name
+                if group_name in EXTRA_RUN_TEXT:
+                    run_text += EXTRA_RUN_TEXT[group_name]
+                if group_name in EXTRA_SKIP_TEXT:
+                    skip_text += EXTRA_SKIP_TEXT[group_name]
 
                 # push into instances
                 run_inst = run_params.RunParam(name=shortname, value=run_value,

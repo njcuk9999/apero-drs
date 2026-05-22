@@ -1623,6 +1623,12 @@ def register_data_portal_routes(app):
         methods=['GET'],
     )
     app.add_url_rule(
+        '/api/monitor/apero-checks/policy-sections',
+        'api_apero_checks_policy_sections',
+        app._api_apero_checks_policy_sections,
+        methods=['GET'],
+    )
+    app.add_url_rule(
         '/api/monitor/apero-checks/view-yaml',
         'api_apero_checks_view_yaml',
         app._api_apero_checks_view_yaml,
@@ -1644,6 +1650,12 @@ def register_data_portal_routes(app):
         '/api/monitor/apero-checks/delete-obsdir',
         'api_apero_checks_delete_obsdir',
         app._api_apero_checks_delete_obsdir,
+        methods=['POST'],
+    )
+    app.add_url_rule(
+        '/api/monitor/apero-checks/delete-test-from-yamls',
+        'api_apero_checks_delete_test_from_yamls',
+        app._api_apero_checks_delete_test_from_yamls,
         methods=['POST'],
     )
     app.add_url_rule(
@@ -1694,6 +1706,18 @@ def register_data_portal_routes(app):
         "/data_portal/<profile_id>/object-groups",
         "ri_object_groups",
         app._ri_object_groups_view,
+    )
+    app.add_url_rule(
+        "/data_portal/<profile_id>/object-groups/<path:group_name>"
+        "/summary-table",
+        "ri_object_group_summary",
+        app._ri_object_group_summary_view,
+    )
+    app.add_url_rule(
+        "/data_portal/<profile_id>/fav-objects/<path:section_name>"
+        "/summary-table",
+        "ri_favourites_summary",
+        app._ri_favourites_summary_view,
     )
     app.add_url_rule(
         "/data_portal/<profile_id>/qc-graphs",
@@ -1807,6 +1831,16 @@ def register_data_portal_routes(app):
         "/api/data-portal/file-browser",
         "api_file_browser",
         app._api_file_browser,
+    )
+    app.add_url_rule(
+        '/api/data-portal/file-header',
+        'api_file_header',
+        app._api_file_header,
+    )
+    app.add_url_rule(
+        '/api/data-portal/file-header-download',
+        'api_file_header_download',
+        app._api_file_header_download,
     )
 
     app.add_url_rule(
@@ -1975,6 +2009,28 @@ def register_data_portal_routes(app):
         app._api_object_groups_objects,
     )
     app.add_url_rule(
+        "/api/data-portal/object-groups/summary-config",
+        "api_object_groups_summary_config",
+        app._api_object_groups_summary_config,
+        methods=["GET", "POST"],
+    )
+    app.add_url_rule(
+        "/api/data-portal/object-groups/summary-table",
+        "api_object_groups_summary_table",
+        app._api_object_groups_summary_table,
+    )
+    app.add_url_rule(
+        "/api/data-portal/object-groups/summary-export",
+        "api_object_groups_summary_export",
+        app._api_object_groups_summary_export,
+    )
+    app.add_url_rule(
+        "/api/data-portal/object-groups/summary-custom-test",
+        "api_object_groups_summary_custom_test",
+        app._api_object_groups_summary_custom_test,
+        methods=["POST"],
+    )
+    app.add_url_rule(
         "/api/data-portal/object-groups/create",
         "api_object_groups_create",
         app._api_object_groups_create,
@@ -2016,6 +2072,24 @@ def register_data_portal_routes(app):
         "api_object_groups_remove_object",
         app._api_object_groups_remove_object,
         methods=["POST"],
+    )
+    app.add_url_rule(
+        '/api/admin/allowed-python-expressions',
+        'api_object_groups_allowed_expressions',
+        app._api_object_groups_allowed_expressions,
+        methods=['GET', 'POST'],
+    )
+    app.add_url_rule(
+        '/api/admin/custom-columns',
+        'api_object_groups_admin_custom_columns',
+        app._api_object_groups_admin_custom_columns,
+        methods=['GET', 'POST'],
+    )
+    app.add_url_rule(
+        '/api/admin/custom-columns/test',
+        'api_object_groups_admin_custom_test',
+        app._api_object_groups_admin_custom_test,
+        methods=['POST'],
     )
 
     app.add_url_rule(

@@ -395,14 +395,23 @@ def _run_remote_sync(assets_dir: Path, tlog) -> List[str]:
                'installed apero package.')
         tlog('ERROR: ' + msg)
         raise FileNotFoundError(msg)
-    indir = str(assets_dir)
     base_cmd = [sys.executable, str(script)]
+    indir = str(assets_dir)
+    cmd_map = dict()
+    cmd_map['update-local'] = base_cmd + ['update-local']
+    cmd_map['update-remote'] = (
+        base_cmd + ['update-remote', '--indir', indir]
+    )
     for sub in ('update-local', 'update-remote'):
-        cmd = base_cmd + [sub, '--indir', indir]
-        rc, _ = _run_subprocess(cmd, tlog)
+        cmd = cmd_map[sub]
+        rc, output = _run_subprocess(cmd, tlog)
         if rc != 0:
             msg = ('apero_data_checksum.py {0} failed (exit {1}).'
                    ).format(sub, rc)
+            if output:
+                lines = output.splitlines()
+                tail = '\n'.join(lines[-8:])
+                msg = msg + '\nOutput tail:\n' + tail
             tlog('ERROR: ' + msg)
             summary.append('FAILED: ' + sub + ' (exit ' + str(rc) + ')')
             raise RuntimeError(msg)

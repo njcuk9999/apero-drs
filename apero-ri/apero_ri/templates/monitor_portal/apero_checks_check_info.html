@@ -7,10 +7,136 @@
 {{ super() }}
 <link rel="stylesheet"
     href="{{ url_for('static', filename='css/apero_checks.css') }}?v=20260520c">
+<style>
+.ac-title-banner {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.8rem 1.05rem;
+    border-radius: 0.8rem;
+    color: #fff;
+    box-shadow: 0 8px 20px rgba(15, 23, 42, 0.14);
+}
+.ac-title-banner--passed {
+    background: linear-gradient(135deg, #1f9d55, #157f43);
+}
+.ac-title-banner--failed {
+    background: linear-gradient(135deg, #cc4b37, #a33a2b);
+}
+.ac-title-banner--monitored {
+    background: linear-gradient(135deg, #7c3aed, #6d28d9);
+}
+.ac-title-banner--overridden {
+    background: linear-gradient(135deg, #f59e0b, #d97706);
+}
+.ac-title-banner__icon {
+    width: 2rem;
+    height: 2rem;
+    border-radius: 999px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255, 255, 255, 0.22);
+}
+.ac-title-banner__text {
+    font-size: 1.3rem;
+    font-weight: 800;
+    line-height: 1.1;
+}
+.ac-page-stack {
+    display: grid;
+    gap: 0.8rem;
+    margin-top: 0.8rem;
+}
+.ac-ui-panel {
+    border: 1px solid var(--ari-border);
+    border-radius: 0.9rem;
+    background: var(--ari-card-bg);
+    box-shadow: 0 2px 10px rgba(15, 23, 42, 0.06);
+    padding: 0.8rem 0.9rem;
+}
+.ac-ui-panel--soft {
+    background: linear-gradient(180deg, #f8fafc 0%, #ffffff 100%);
+}
+.ac-task-status {
+    display: inline-flex;
+    align-items: center;
+    min-height: 2.6rem;
+    padding: 0.55rem 0.8rem;
+    border: 1px solid var(--ari-border);
+    border-radius: 0.8rem;
+    background: #fff;
+    color: var(--ari-text-muted);
+    font-size: 0.92rem;
+}
+.ac-task-status--queued {
+    background: #eff6ff;
+    border-color: #93c5fd;
+    color: #1d4ed8;
+}
+.ac-task-status--running {
+    background: #fff7ed;
+    border-color: #fdba74;
+    color: #c2410c;
+}
+.ac-task-status--finished {
+    background: #ecfdf5;
+    border-color: #86efac;
+    color: #047857;
+}
+.ac-task-status--error {
+    background: #fef2f2;
+    border-color: #fca5a5;
+    color: #b91c1c;
+}
+</style>
 {% endblock %}
 
 {% block doc_content %}
-<div class="ot-meta-bar">
+<div class="ari-page-header">
+    {% if banner_state == 'overridden' %}
+    <div class="ac-title-banner ac-title-banner--overridden">
+        <span class="ac-title-banner__icon">
+            <i class="fa-solid fa-triangle-exclamation"></i>
+        </span>
+        <span class="ac-title-banner__text">
+            APERO Check information: {{ check_key }}
+        </span>
+    </div>
+    {% elif banner_state == 'monitored' %}
+    <div class="ac-title-banner ac-title-banner--monitored">
+        <span class="ac-title-banner__icon">
+            <i class="fa-solid fa-bell"></i>
+        </span>
+        <span class="ac-title-banner__text">
+            APERO Check information: {{ check_key }}
+        </span>
+    </div>
+    {% elif banner_state == 'passed' %}
+    <div class="ac-title-banner ac-title-banner--passed">
+        <span class="ac-title-banner__icon">
+            <i class="fa-solid fa-check"></i>
+        </span>
+        <span class="ac-title-banner__text">
+            APERO Check information: {{ check_key }}
+        </span>
+    </div>
+    {% else %}
+    <div class="ac-title-banner ac-title-banner--failed">
+        <span class="ac-title-banner__icon">
+            <i class="fa-solid fa-xmark"></i>
+        </span>
+        <span class="ac-title-banner__text">
+            APERO Check information: {{ check_key }}
+        </span>
+    </div>
+    {% endif %}
+    <p class="ari-page-subtitle">
+        Profile {{ profile_id }} / obsdir {{ obsdir }}
+    </p>
+</div>
+
+<div class="ot-meta-bar ac-ui-panel">
     <a class="ari-btn ari-btn--sm ari-btn--secondary"
        href="{{ url_for('monitor_apero_checks_profile_view', profile_id=profile_id) }}">
         <i class="fa-solid fa-arrow-left"></i>
@@ -23,41 +149,55 @@
     </a>
 </div>
 
-{% if check_data.override and check_data.override.date %}
-<div class="ac-check-banner ac-check-banner--overridden">
-    <span class="ac-check-banner__icon">
-        <i class="fa-solid fa-triangle-exclamation"></i>
-    </span>
-    <span class="ac-check-banner__text">Overridden</span>
-    <span class="ac-check-banner__name">{{ check_data.name or check_key }}</span>
-</div>
-{% elif check_data.monitor and check_data.monitor.date %}
-<div class="ac-check-banner ac-check-banner--monitored">
-    <span class="ac-check-banner__icon">
-        <i class="fa-solid fa-bell"></i>
-    </span>
-    <span class="ac-check-banner__text">Monitored</span>
-    <span class="ac-check-banner__name">{{ check_data.name or check_key }}</span>
-</div>
-{% elif check_kind == 'passed' %}
-<div class="ac-check-banner ac-check-banner--passed">
-    <span class="ac-check-banner__icon">
+<div class="ac-page-stack">
+<div class="ac-failure-detail__actions ac-ui-panel ac-ui-panel--soft"
+    style="margin-top:0;">
+    <button id="ac-check-override"
+            class="ari-btn ari-btn--sm ari-btn--secondary"
+            type="button">
         <i class="fa-solid fa-check"></i>
-    </span>
-    <span class="ac-check-banner__text">Passed</span>
-    <span class="ac-check-banner__name">{{ check_data.name or check_key }}</span>
+        <span id="ac-check-override-label">Override: OFF</span>
+    </button>
+    <button id="ac-check-monitor"
+            class="ari-btn ari-btn--sm ari-btn--secondary"
+            type="button">
+        <i class="fa-solid fa-bell"></i>
+        <span id="ac-check-monitor-label">Monitor: OFF</span>
+    </button>
+    <button id="ac-check-clear"
+            class="ari-btn ari-btn--sm ari-btn--secondary"
+            type="button" hidden>
+        <i class="fa-solid fa-trash"></i>
+        Clear
+    </button>
+    <button id="ac-check-copy"
+            class="ari-btn ari-btn--sm ac-btn--blue-bg"
+            type="button">
+        <i class="fa-solid fa-copy"></i>
+        Copy report
+    </button>
+    <button id="ac-check-view-yaml"
+            class="ari-btn ari-btn--sm ari-btn--secondary"
+            type="button">
+        <i class="fa-solid fa-eye"></i>
+        View YAML
+    </button>
 </div>
-{% else %}
-<div class="ac-check-banner ac-check-banner--failed">
-    <span class="ac-check-banner__icon">
-        <i class="fa-solid fa-xmark"></i>
-    </span>
-    <span class="ac-check-banner__text">Failed</span>
-    <span class="ac-check-banner__name">{{ check_data.name or check_key }}</span>
-</div>
-{% endif %}
 
-<div class="ac-card">
+<div class="ac-failure-detail__actions ac-ui-panel" style="margin-top:0;">
+    <button id="ac-check-rerun"
+            class="ari-btn ac-btn--red-bg"
+            style="font-size:1rem;padding:0.62rem 1.05rem;"
+            type="button">
+        <i class="fa-solid fa-rotate-right"></i>
+        Re-run this check
+    </button>
+    <div id="ac-check-task-status" class="ac-task-status">
+        Queue: idle
+    </div>
+</div>
+
+<div class="ac-card ac-ui-panel {% if check_kind == 'passed' %}ac-card--ok{% else %}ac-card--failed{% endif %}">
     <div class="ac-failure-detail__meta">
         <div class="ac-failure-meta-row">
             <strong>obsdir:</strong> {{ obsdir }}
@@ -93,62 +233,25 @@
 
     <div id="ac-check-save-note" class="ac-save-note"
          style="margin-top:0.65rem;" hidden></div>
+</div>
 
-    <div class="ac-failure-path-row" style="margin-top:0.65rem;">
-        <div class="ac-failure-path">
-            <i class="fa-solid fa-file-code"></i>
-            {{ checks_file }}
-        </div>
-    </div>
-
-    <div class="ac-failure-doc-link" style="margin-top:0.4rem;">
-        <a href="{{ doc_url }}" target="_blank" rel="noopener">
+<div class="ac-ui-panel ac-ui-panel--soft">
+    <div class="ac-failure-doc-link">
+        <a href="{{ doc_url }}" target="_blank" rel="noopener"
+           class="ari-btn ari-btn--sm ari-btn--secondary"
+           style="font-weight:700;">
             <i class="fa-solid fa-book-open"></i>
-            Quick link to documentation
+            Open monitoring documentation
         </a>
     </div>
+</div>
 
-    <div class="ac-failure-detail__actions" style="margin-top:0.85rem;">
-        <button id="ac-check-override"
-                class="ari-btn ari-btn--sm ari-btn--secondary"
-                type="button">
-            <i class="fa-solid fa-check"></i>
-            <span id="ac-check-override-label">Override: OFF</span>
-        </button>
-        <button id="ac-check-monitor"
-                class="ari-btn ari-btn--sm ari-btn--secondary"
-                type="button">
-            <i class="fa-solid fa-bell"></i>
-            <span id="ac-check-monitor-label">Monitor: OFF</span>
-        </button>
-        <button id="ac-check-clear"
-                class="ari-btn ari-btn--sm ari-btn--secondary"
-                type="button" hidden>
-            <i class="fa-solid fa-trash"></i>
-            Clear
-        </button>
-    </div>
+<div class="ot-meta-bar ac-ui-panel" style="margin-top:0;">
+    <span class="ot-meta-bar__item ot-meta-bar__item--muted">
+        YAML path: {{ checks_file }}
+    </span>
+</div>
 
-    <div class="ac-failure-detail__actions" style="margin-top:0.5rem;">
-        <button id="ac-check-copy"
-                class="ari-btn ari-btn--sm ac-btn--blue-bg"
-                type="button">
-            <i class="fa-solid fa-copy"></i>
-            Copy report
-        </button>
-        <button id="ac-check-rerun"
-                class="ari-btn ari-btn--sm ac-btn--red-bg"
-                type="button">
-            <i class="fa-solid fa-rotate-right"></i>
-            Re-run this check
-        </button>
-        <button id="ac-check-view-yaml"
-                class="ari-btn ari-btn--sm ari-btn--secondary"
-                type="button">
-            <i class="fa-solid fa-eye"></i>
-            View YAML
-        </button>
-    </div>
 </div>
 
 <div id="ac-comment-overlay" class="ac-overlay" hidden>
@@ -212,6 +315,15 @@
 
 <script>
 (function () {
+    if (window.location.search) {
+        window.history.replaceState({}, '', window.location.pathname);
+    }
+
+    var taskState = {
+        taskId: '',
+        timerId: null,
+    };
+
     var state = {
         checkKind: {{ check_kind|tojson }},
         checkKey: {{ check_key|tojson }},
@@ -243,6 +355,134 @@
                 return data;
             });
         });
+    }
+
+    function getJson(url) {
+        return fetch(url).then(function (resp) {
+            return resp.json().then(function (data) {
+                if (!resp.ok || data.success === false) {
+                    throw new Error(data.error || 'Request failed');
+                }
+                return data;
+            });
+        });
+    }
+
+    function setTaskStatus(kind, message) {
+        var box = document.getElementById('ac-check-task-status');
+        if (!box) {
+            return;
+        }
+        box.className = 'ac-task-status';
+        if (kind) {
+            box.classList.add('ac-task-status--' + kind);
+        }
+        box.textContent = message;
+    }
+
+    function dictResult(kind, row) {
+        return { kind: kind, row: row };
+    }
+
+    function matchTask(payload) {
+        var obsdir = {{ obsdir|tojson }};
+        var checkKey = {{ check_key|tojson }};
+        var taskId = String(taskState.taskId || '').trim();
+        var row = null;
+        (payload.running || []).some(function (item) {
+            var sameId = taskId && String(item.task_id || '') === taskId;
+            var sameObsdir = String(item.obsdir || '') === obsdir;
+            var sameCheck = String(item.check_key || '') === checkKey;
+            if (sameId || (sameObsdir && sameCheck)) {
+                row = item;
+                return true;
+            }
+            return false;
+        });
+        if (row) {
+            return dictResult('running', row);
+        }
+        (payload.queued || []).some(function (item) {
+            var sameId = taskId && String(item.task_id || '') === taskId;
+            var sameObsdir = String(item.obsdir || '') === obsdir;
+            var sameCheck = String(item.check_key || '') === checkKey;
+            if (sameId || (sameObsdir && sameCheck)) {
+                row = item;
+                return true;
+            }
+            return false;
+        });
+        if (row) {
+            return dictResult('queued', row);
+        }
+        (payload.history || []).some(function (item) {
+            var sameId = taskId && String(item.task_id || '') === taskId;
+            var sameObsdir = String(item.obsdir || '') === obsdir;
+            var sameCheck = String(item.check_key || '') === checkKey;
+            if (sameId || (sameObsdir && sameCheck)) {
+                row = item;
+                return true;
+            }
+            return false;
+        });
+        if (row) {
+            return dictResult('finished', row);
+        }
+        return null;
+    }
+
+    function renderTaskStatus(payload) {
+        var match = matchTask(payload || {});
+        var taskId = String(taskState.taskId || '').trim();
+        if (!match) {
+            if (taskId) {
+                setTaskStatus('queued', 'Queue: ' + taskId + ' (syncing)');
+            }
+            return false;
+        }
+        var row = match.row || {};
+        var rowTaskId = String(row.task_id || taskId).trim();
+        if (!taskState.taskId && rowTaskId) {
+            taskState.taskId = rowTaskId;
+        }
+        if (match.kind === 'queued') {
+            setTaskStatus('queued', 'Queue: ' + rowTaskId);
+            return false;
+        }
+        if (match.kind === 'running') {
+            setTaskStatus('running', 'Running: ' + rowTaskId);
+            return false;
+        }
+        setTaskStatus('finished', 'Finished: ' + rowTaskId);
+        return true;
+    }
+
+    function stopTaskPolling() {
+        if (taskState.timerId) {
+            window.clearInterval(taskState.timerId);
+            taskState.timerId = null;
+        }
+    }
+
+    function pollTaskStatus() {
+        return getJson(
+            {{ url_for('api_apero_checks_queue_status', profile_id=profile_id)|tojson }}
+        ).then(function (data) {
+            var done = renderTaskStatus(data || {});
+            if (done) {
+                stopTaskPolling();
+            }
+        }).catch(function () {
+            if (taskState.taskId) {
+                setTaskStatus('queued', 'Queue: ' + taskState.taskId);
+            }
+        });
+    }
+
+    function startTaskPolling() {
+        stopTaskPolling();
+        pollTaskStatus();
+        taskState.timerId = window.setInterval(pollTaskStatus, 4000);
     }
 
     function openOverlay(name) {
@@ -351,20 +591,25 @@
     var rerunBtn = document.getElementById('ac-check-rerun');
     if (rerunBtn) {
         rerunBtn.addEventListener('click', function () {
+            setTaskStatus('queued', 'Queue: submitting...');
             postJson({{ api_rerun_check_url|tojson }}, {
                 profile_id: {{ profile_id|tojson }},
                 obsdir: {{ obsdir|tojson }},
                 check_key: {{ check_key|tojson }},
             }).then(function (data) {
-                var taskId = String(data.task_id || '').trim();
-                window.alert(taskId
-                    ? 'Check queued (task: ' + taskId + ').'
-                    : 'Check queued.');
+                taskState.taskId = String(data.task_id || '').trim();
+                setTaskStatus('queued', 'Queue: ' + taskState.taskId);
+                startTaskPolling();
             }).catch(function (err) {
-                window.alert(String(err || 'Could not queue this check.'));
+                setTaskStatus(
+                    'error',
+                    String(err || 'Could not queue this check.')
+                );
             });
         });
     }
+
+    pollTaskStatus();
 
     var yamlBtn = document.getElementById('ac-check-view-yaml');
     if (yamlBtn) {

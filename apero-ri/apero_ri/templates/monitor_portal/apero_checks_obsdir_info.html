@@ -7,14 +7,142 @@
 {{ super() }}
 <link rel="stylesheet"
     href="{{ url_for('static', filename='css/apero_checks.css') }}?v=20260520c">
+<style>
+.ac-title-banner {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.8rem 1.05rem;
+    border-radius: 0.8rem;
+    color: #fff;
+    box-shadow: 0 8px 20px rgba(15, 23, 42, 0.14);
+}
+.ac-title-banner--passed {
+    background: linear-gradient(135deg, #1f9d55, #157f43);
+}
+.ac-title-banner--failed {
+    background: linear-gradient(135deg, #cc4b37, #a33a2b);
+}
+.ac-title-banner--monitored {
+    background: linear-gradient(135deg, #7c3aed, #6d28d9);
+}
+.ac-title-banner--overridden {
+    background: linear-gradient(135deg, #f59e0b, #d97706);
+}
+.ac-title-banner--overridden-monitored {
+    background: linear-gradient(135deg, #f59e0b, #7c3aed);
+}
+.ac-title-banner__icon {
+    width: 2rem;
+    height: 2rem;
+    border-radius: 999px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255, 255, 255, 0.22);
+}
+.ac-title-banner__text {
+    font-size: 1.35rem;
+    font-weight: 800;
+    line-height: 1.1;
+}
+.ac-page-stack {
+    display: grid;
+    gap: 0.8rem;
+    margin-top: 0.8rem;
+}
+.ac-ui-panel {
+    border: 1px solid var(--ari-border);
+    border-radius: 0.9rem;
+    background: var(--ari-card-bg);
+    box-shadow: 0 2px 10px rgba(15, 23, 42, 0.06);
+    padding: 0.8rem 0.9rem;
+}
+.ac-ui-panel--soft {
+    background: linear-gradient(180deg, #f8fafc 0%, #ffffff 100%);
+}
+.ac-task-status {
+    display: inline-flex;
+    align-items: center;
+    min-height: 2.6rem;
+    padding: 0.55rem 0.8rem;
+    border: 1px solid var(--ari-border);
+    border-radius: 0.8rem;
+    background: #fff;
+    color: var(--ari-text-muted);
+    font-size: 0.92rem;
+}
+.ac-task-status--queued {
+    background: #eff6ff;
+    border-color: #93c5fd;
+    color: #1d4ed8;
+}
+.ac-task-status--running {
+    background: #fff7ed;
+    border-color: #fdba74;
+    color: #c2410c;
+}
+.ac-task-status--finished {
+    background: #ecfdf5;
+    border-color: #86efac;
+    color: #047857;
+}
+.ac-task-status--error {
+    background: #fef2f2;
+    border-color: #fca5a5;
+    color: #b91c1c;
+}
+</style>
 {% endblock %}
 
 {% block doc_content %}
 <div class="ari-page-header">
-    <h1>
-        <i class="fa-solid fa-square-check"></i>
-        APERO Check information: {{ obsdir }}
-    </h1>
+    {% if banner_state == 'overridden' %}
+    <div class="ac-title-banner ac-title-banner--overridden">
+        <span class="ac-title-banner__icon">
+            <i class="fa-solid fa-triangle-exclamation"></i>
+        </span>
+        <span class="ac-title-banner__text">
+            APERO Check information: {{ obsdir }}
+        </span>
+    </div>
+    {% elif banner_state == 'monitored' %}
+    <div class="ac-title-banner ac-title-banner--monitored">
+        <span class="ac-title-banner__icon">
+            <i class="fa-solid fa-bell"></i>
+        </span>
+        <span class="ac-title-banner__text">
+            APERO Check information: {{ obsdir }}
+        </span>
+    </div>
+    {% elif banner_state == 'overridden_monitored' %}
+    <div class="ac-title-banner ac-title-banner--overridden-monitored">
+        <span class="ac-title-banner__icon">
+            <i class="fa-solid fa-bell"></i>
+        </span>
+        <span class="ac-title-banner__text">
+            APERO Check information: {{ obsdir }}
+        </span>
+    </div>
+    {% elif banner_state == 'passed' %}
+    <div class="ac-title-banner ac-title-banner--passed">
+        <span class="ac-title-banner__icon">
+            <i class="fa-solid fa-check"></i>
+        </span>
+        <span class="ac-title-banner__text">
+            APERO Check information: {{ obsdir }}
+        </span>
+    </div>
+    {% else %}
+    <div class="ac-title-banner ac-title-banner--failed">
+        <span class="ac-title-banner__icon">
+            <i class="fa-solid fa-xmark"></i>
+        </span>
+        <span class="ac-title-banner__text">
+            APERO Check information: {{ obsdir }}
+        </span>
+    </div>
+    {% endif %}
     <p class="ari-page-subtitle">
         Profile {{ profile_id }}
     </p>
@@ -22,16 +150,15 @@
 
 <div class="ot-meta-bar">
     <a class="ari-btn ari-btn--sm ari-btn--secondary"
-       href="{{ url_for('monitor_apero_checks_profile_view', profile_id=profile_id, page=current_page, per_page=per_page, obsdir_filter=obsdir_filter, obsdir_sort=obsdir_sort) }}">
+       href="{{ url_for('monitor_apero_checks_profile_view', profile_id=profile_id) }}">
         <i class="fa-solid fa-arrow-left"></i>
         Back to observation directory list
     </a>
-    <span class="ot-meta-bar__item ot-meta-bar__item--muted">
-        Check file: {{ checks_file }}
-    </span>
 </div>
 
-<div class="ac-failure-detail__actions" style="margin-bottom:0.55rem;">
+<div class="ac-page-stack">
+<div class="ac-failure-detail__actions ac-ui-panel ac-ui-panel--soft"
+    style="margin-bottom:0;">
     <span class="ac-filter-row__label">Type:</span>
     <a class="ari-btn ari-btn--sm {% if type_filter == 'all' %}ari-btn--primary{% else %}ari-btn--secondary{% endif %}"
        href="{{ url_for('monitor_apero_checks_obsdir_view', profile_id=profile_id, obsdir=obsdir, page=current_page, per_page=per_page, type='all', obsdir_filter=obsdir_filter, obsdir_sort=obsdir_sort, show_overridden=1 if show_overridden else 0, show_monitored=1 if show_monitored else 0, show_passed=1 if show_passed else 0) }}">
@@ -45,6 +172,10 @@
        href="{{ url_for('monitor_apero_checks_obsdir_view', profile_id=profile_id, obsdir=obsdir, page=current_page, per_page=per_page, type='red', obsdir_filter=obsdir_filter, obsdir_sort=obsdir_sort, show_overridden=1 if show_overridden else 0, show_monitored=1 if show_monitored else 0, show_passed=1 if show_passed else 0) }}">
         Red
     </a>
+</div>
+
+<div class="ac-failure-detail__actions ac-ui-panel ac-ui-panel--soft"
+    style="margin-bottom:0;">
     <a class="ari-btn ari-btn--sm ari-btn--secondary {% if show_overridden %}ac-toggle-override-on{% endif %}"
        href="{{ url_for('monitor_apero_checks_obsdir_view', profile_id=profile_id, obsdir=obsdir, page=current_page, per_page=per_page, type=type_filter, obsdir_filter=obsdir_filter, obsdir_sort=obsdir_sort, show_overridden=0 if show_overridden else 1, show_monitored=1 if show_monitored else 0, show_passed=1 if show_passed else 0) }}">
         <i class="fa-solid fa-layer-group"></i>
@@ -63,7 +194,21 @@
         {% if show_passed %}Hide{% else %}Show{% endif %}
         passed checks
     </a>
-    {% if can_manage_checks %}
+</div>
+
+<div class="ac-failure-detail__actions ac-ui-panel"
+    style="margin-bottom:0;">
+    <button id="ac-obsdir-rerun"
+            class="ari-btn ac-btn--red-bg"
+            style="font-size:1rem;padding:0.62rem 1.05rem;"
+            type="button">
+        <i class="fa-solid fa-rotate-right"></i>
+        Re-run obs dir
+    </button>
+    <div id="ac-obsdir-task-status" class="ac-task-status">
+        Queue: idle
+    </div>
+    {% if can_advanced_checks %}
     <button id="ac-obsdir-advanced"
             class="ari-btn ari-btn--sm ari-btn--secondary"
             type="button">
@@ -73,18 +218,19 @@
     {% endif %}
 </div>
 
-<div class="ac-failure-detail__actions" style="margin-bottom:0.7rem;">
-    <button id="ac-obsdir-rerun"
-            class="ari-btn ari-btn--sm ac-btn--red-bg"
-            type="button">
-        <i class="fa-solid fa-rotate-right"></i>
-        Re-run obs dir
-    </button>
+<div class="ac-failure-detail__actions ac-ui-panel"
+    style="margin-bottom:0;">
     <button id="ac-obsdir-history-btn"
             class="ari-btn ari-btn--sm ac-btn--blue-bg"
             type="button">
         <i class="fa-solid fa-clock-rotate-left"></i>
         History
+    </button>
+    <button id="ac-obsdir-view-yaml"
+            class="ari-btn ari-btn--sm ari-btn--secondary"
+            type="button">
+        <i class="fa-solid fa-eye"></i>
+        View YAML
     </button>
     <button id="ac-obsdir-flag-btn"
             class="ari-btn ari-btn--sm ac-btn--orange-bg"
@@ -92,7 +238,7 @@
         <i class="fa-solid fa-flag"></i>
         Flag
     </button>
-    {% if can_manage_checks %}
+    {% if can_delete_checks %}
     <button id="ac-obsdir-delete"
             class="ari-btn ari-btn--sm ac-btn-danger ac-delete-only"
             type="button">
@@ -102,11 +248,12 @@
     {% endif %}
 </div>
 
-<div class="ac-failure-detail__meta" style="margin-bottom:0.8rem;">
+<div class="ac-failure-detail__meta ac-ui-panel" style="margin-bottom:0;">
     <div class="ac-failure-meta-row"><strong>obsdir:</strong> {{ obsdir }}</div>
     <div class="ac-failure-meta-row"><strong>result:</strong>
-        <span class="ac-failure-meta-state {% if result_state == 'passed' %}ac-failure-meta-state--true{% else %}ac-failure-meta-state--false{% endif %}">
-            {{ result_state|title }}
+        <span class="ac-failure-meta-state {% if result_state == 'passed' %}ac-failure-meta-state--true{% else %}ac-failure-meta-state--false{% endif %}"
+              style="font-weight:700;{% if result_state == 'passed' %}color:#1f9d55;{% else %}color:#cc4b37;{% endif %}">
+            {{ result_label }}
         </span>
     </div>
     <div class="ac-failure-meta-row"><strong>last run:</strong>
@@ -114,7 +261,7 @@
     </div>
 </div>
 
-<div class="ac-card">
+<div class="ac-card ac-ui-panel ac-ui-panel--surface">
     <div class="ac-card__title" style="margin-bottom:0.55rem;">Tests</div>
     <div class="ac-card__checks">
         {% for failure in failure_cards %}
@@ -175,7 +322,23 @@
     </div>
 </div>
 
-<div id="issue-section" class="ac-card" style="margin-top:0.85rem;">
+<div class="ac-ui-panel ac-ui-panel--soft" style="margin-top:0;">
+    <a href="{{ monitor_doc_url }}" target="_blank" rel="noopener"
+       class="ari-btn ari-btn--sm ari-btn--secondary"
+       style="font-weight:700;">
+        <i class="fa-solid fa-book-open"></i>
+        Open monitoring documentation
+    </a>
+</div>
+
+<div class="ot-meta-bar ac-ui-panel"
+     style="margin-top:0.25rem;margin-bottom:0.2rem;">
+    <span class="ot-meta-bar__item ot-meta-bar__item--muted">
+        Check file: {{ checks_file }}
+    </span>
+</div>
+
+<div id="issue-section" class="ac-card ac-ui-panel" style="margin-top:0;">
 <div id="ac-issue-overlay" class="ac-overlay" hidden>
     <div class="ac-overlay__backdrop" data-ac-close="issue"></div>
     <div class="ac-overlay__panel">
@@ -257,8 +420,46 @@
     </div>
 </div>
 
+<div id="ac-yaml-overlay" class="ac-overlay" hidden>
+    <div class="ac-overlay__backdrop" data-ac-close="yaml"></div>
+    <div class="ac-overlay__panel ac-overlay__panel--wide">
+        <div class="ac-overlay__header">
+            <h3>Check YAML view</h3>
+            <button type="button" class="ac-overlay__close"
+                    data-ac-close="yaml">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+        <div class="ac-overlay__tools ac-yaml-tools">
+            <input id="ac-yaml-search" type="search"
+                   placeholder="Search YAML...">
+            <span id="ac-yaml-match-count" class="ac-note"></span>
+            <button id="ac-btn-yaml-copy"
+                    class="ari-btn ari-btn--sm ari-btn--secondary"
+                    type="button">
+                <i class="fa-solid fa-copy"></i> Copy
+            </button>
+        </div>
+        <pre id="ac-yaml-content" class="ac-failure-detail__message"
+             style="margin: 1rem; max-height: 62vh;"></pre>
+    </div>
+</div>
+
+    </div>
+
+    </div>
+
 <script>
 (function () {
+    if (window.location.search) {
+        window.history.replaceState({}, '', window.location.pathname);
+    }
+
+    var taskState = {
+        taskId: '',
+        timerId: null,
+    };
+
     function postJson(url, payload) {
         return fetch(url, {
             method: 'POST',
@@ -274,25 +475,155 @@
         });
     }
 
+    function getJson(url) {
+        return fetch(url).then(function (resp) {
+            return resp.json().then(function (data) {
+                if (!resp.ok || data.success === false) {
+                    throw new Error(data.error || 'Request failed');
+                }
+                return data;
+            });
+        });
+    }
+
+    function setTaskStatus(kind, message) {
+        var box = document.getElementById('ac-obsdir-task-status');
+        if (!box) {
+            return;
+        }
+        box.className = 'ac-task-status';
+        if (kind) {
+            box.classList.add('ac-task-status--' + kind);
+        }
+        box.textContent = message;
+    }
+
+    function matchTask(payload) {
+        var obsdir = {{ obsdir|tojson }};
+        var taskId = String(taskState.taskId || '').trim();
+        var row = null;
+        (payload.running || []).some(function (item) {
+            var sameId = taskId && String(item.task_id || '') === taskId;
+            var sameObsdir = String(item.obsdir || '') === obsdir;
+            var isNight = String(item.task_mode || '') === 'full_obsdir';
+            if (sameId || (sameObsdir && isNight)) {
+                row = item;
+                return true;
+            }
+            return false;
+        });
+        if (row) {
+            return dictResult('running', row);
+        }
+        (payload.queued || []).some(function (item) {
+            var sameId = taskId && String(item.task_id || '') === taskId;
+            var sameObsdir = String(item.obsdir || '') === obsdir;
+            var isNight = String(item.task_mode || '') === 'full_obsdir';
+            if (sameId || (sameObsdir && isNight)) {
+                row = item;
+                return true;
+            }
+            return false;
+        });
+        if (row) {
+            return dictResult('queued', row);
+        }
+        (payload.history || []).some(function (item) {
+            var sameId = taskId && String(item.task_id || '') === taskId;
+            var sameObsdir = String(item.obsdir || '') === obsdir;
+            var isNight = String(item.task_mode || '') === 'full_obsdir';
+            if (sameId || (sameObsdir && isNight)) {
+                row = item;
+                return true;
+            }
+            return false;
+        });
+        if (row) {
+            return dictResult('finished', row);
+        }
+        return null;
+    }
+
+    function dictResult(kind, row) {
+        return { kind: kind, row: row };
+    }
+
+    function renderTaskStatus(payload) {
+        var match = matchTask(payload || {});
+        var taskId = String(taskState.taskId || '').trim();
+        if (!match) {
+            if (taskId) {
+                setTaskStatus('queued', 'Queue: ' + taskId + ' (syncing)');
+            }
+            return false;
+        }
+        var row = match.row || {};
+        var rowTaskId = String(row.task_id || taskId).trim();
+        if (!taskState.taskId && rowTaskId) {
+            taskState.taskId = rowTaskId;
+        }
+        if (match.kind === 'queued') {
+            setTaskStatus('queued', 'Queue: ' + rowTaskId);
+            return false;
+        }
+        if (match.kind === 'running') {
+            setTaskStatus('running', 'Running: ' + rowTaskId);
+            return false;
+        }
+        setTaskStatus('finished', 'Finished: ' + rowTaskId);
+        return true;
+    }
+
+    function stopTaskPolling() {
+        if (taskState.timerId) {
+            window.clearInterval(taskState.timerId);
+            taskState.timerId = null;
+        }
+    }
+
+    function pollTaskStatus() {
+        return getJson(
+            {{ url_for('api_apero_checks_queue_status', profile_id=profile_id)|tojson }}
+        ).then(function (data) {
+            var done = renderTaskStatus(data || {});
+            if (done) {
+                stopTaskPolling();
+            }
+        }).catch(function () {
+            if (taskState.taskId) {
+                setTaskStatus('queued', 'Queue: ' + taskState.taskId);
+            }
+        });
+    }
+
+    function startTaskPolling() {
+        stopTaskPolling();
+        pollTaskStatus();
+        taskState.timerId = window.setInterval(pollTaskStatus, 4000);
+    }
+
     var rerunBtn = document.getElementById('ac-obsdir-rerun');
     if (rerunBtn) {
         rerunBtn.addEventListener('click', function () {
+            setTaskStatus('queued', 'Queue: submitting...');
             postJson({{ api_rerun_night_url|tojson }}, {
                 profile_id: {{ profile_id|tojson }},
                 obsdir: {{ obsdir|tojson }},
                 check_path: {{ checks_file|tojson }},
             }).then(function (data) {
-                var taskId = String(data.task_id || '').trim();
-                if (taskId) {
-                    window.alert('Night queued (task: ' + taskId + ').');
-                } else {
-                    window.alert('Night queued.');
-                }
+                taskState.taskId = String(data.task_id || '').trim();
+                setTaskStatus('queued', 'Queue: ' + taskState.taskId);
+                startTaskPolling();
             }).catch(function (err) {
-                window.alert(String(err || 'Could not queue this night.'));
+                setTaskStatus(
+                    'error',
+                    String(err || 'Could not queue this night.')
+                );
             });
         });
     }
+
+    pollTaskStatus();
 
     function openOverlay(name) {
         var el = document.getElementById('ac-' + name + '-overlay');
@@ -312,6 +643,84 @@
     if (historyBtn) {
         historyBtn.addEventListener('click', function () {
             openOverlay('history');
+        });
+    }
+
+    var yamlBtn = document.getElementById('ac-obsdir-view-yaml');
+    if (yamlBtn) {
+        yamlBtn.addEventListener('click', function () {
+            openOverlay('yaml');
+            var content = document.getElementById('ac-yaml-content');
+            if (content && !content.dataset.loaded) {
+                content.textContent = 'Loading YAML...';
+                postJson({{ api_view_yaml_url|tojson }}, {
+                    profile_id: {{ profile_id|tojson }},
+                    obsdir: {{ obsdir|tojson }},
+                    check_path: {{ checks_file|tojson }},
+                }).then(function (data) {
+                    content.textContent = String(data.content || '');
+                    content.dataset.loaded = '1';
+                }).catch(function (err) {
+                    content.textContent = String(
+                        err || 'Could not load YAML.'
+                    );
+                });
+            }
+        });
+    }
+
+    var yamlSearch = document.getElementById('ac-yaml-search');
+    if (yamlSearch) {
+        yamlSearch.addEventListener('input', function () {
+            var content = document.getElementById('ac-yaml-content');
+            var matchCount = document.getElementById(
+                'ac-yaml-match-count'
+            );
+            if (!content) return;
+            var q = yamlSearch.value.trim();
+            if (!content.dataset.raw) content.dataset.raw = content.textContent;
+            var raw = content.dataset.raw;
+            if (!q) {
+                content.textContent = raw;
+                if (matchCount) matchCount.textContent = '';
+                return;
+            }
+            var escaped = raw.replace(/[&<>"']/g, function (charValue) {
+                return {
+                    '&': '&amp;',
+                    '<': '&lt;',
+                    '>': '&gt;',
+                    '"': '&quot;',
+                    "'": '&#39;'
+                }[charValue];
+            });
+            var re = new RegExp(
+                q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'),
+                'gi'
+            );
+            var count = 0;
+            var highlighted = escaped.replace(re, function (matchValue) {
+                count += 1;
+                return '<mark class="ac-yaml-mark">'
+                    + matchValue + '</mark>';
+            });
+            content.innerHTML = highlighted;
+            if (matchCount) {
+                matchCount.textContent = count
+                    ? count + ' match' + (count > 1 ? 'es' : '')
+                    : 'No match';
+            }
+        });
+    }
+
+    var yamlCopyBtn = document.getElementById('ac-btn-yaml-copy');
+    if (yamlCopyBtn) {
+        yamlCopyBtn.addEventListener('click', function () {
+            var content = document.getElementById('ac-yaml-content');
+            if (!content) return;
+            navigator.clipboard.writeText(
+                content.dataset.raw || content.textContent
+            ).catch(function () {});
         });
     }
 

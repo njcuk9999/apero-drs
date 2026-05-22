@@ -179,11 +179,13 @@ def doc_dynamic_view(app, page_ref: str = ''):
 
     if exists:
         raw, html, _ = docs.get_doc_content(raw_ref, current_ver)
+        modified = docs.get_doc_last_modified(raw_ref, current_ver)
         context.update(
             {
                 'doc_html': html,
                 'doc_raw': raw,
                 'doc_ref': short_ref,
+                'doc_last_modified': modified,
                 'can_edit': _doc_edit_allowed(perms, short_ref),
             }
         )

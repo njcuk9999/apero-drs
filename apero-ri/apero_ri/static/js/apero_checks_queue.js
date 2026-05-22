@@ -58,6 +58,57 @@
         return '<span class="' + klass + '">' + esc(label) + '</span>';
     }
 
+    function obsdirHref(obsdir) {
+        var profileId = String(cfg.profileId || '').trim();
+        var value = String(obsdir || '').trim();
+        if (!profileId || !value) {
+            return '';
+        }
+        return '/monitor_portal/apero_checks/'
+            + encodeURIComponent(profileId)
+            + '/'
+            + encodeURIComponent(value);
+    }
+
+    function checkHref(obsdir, checkKey) {
+        var profileId = String(cfg.profileId || '').trim();
+        var night = String(obsdir || '').trim();
+        var key = String(checkKey || '').trim();
+        if (!profileId || !night) {
+            return '';
+        }
+        if (!key) {
+            return obsdirHref(night);
+        }
+        return '/monitor_portal/apero_checks/'
+            + encodeURIComponent(profileId)
+            + '/'
+            + encodeURIComponent(night)
+            + '/check/'
+            + encodeURIComponent(key);
+    }
+
+    function linkedObsdir(row) {
+        var value = String(row.obsdir || '').trim();
+        var href = obsdirHref(value);
+        if (!value || !href) {
+            return esc(value);
+        }
+        return '<a href="' + href + '">' + esc(value) + '</a>';
+    }
+
+    function linkedCheck(row) {
+        var raw = String(row.check_key || '').trim();
+        var label = raw || 'all checks';
+        var href = checkHref(row.obsdir || '', raw);
+        if (!href) {
+            return raw
+                ? esc(raw)
+                : '<span class="acq-note">all checks</span>';
+        }
+        return '<a href="' + href + '">' + esc(label) + '</a>';
+    }
+
     function updateLastRefresh() {
         var node = document.getElementById('acq-last-update');
         if (!node) return;
@@ -73,12 +124,11 @@
         }
         tbody.innerHTML = rows.map(function (row) {
             var taskId = esc(row.task_id || '');
-            var check = row.check_key ? esc(row.check_key) : '<span class="acq-note">all checks</span>';
             var progress = Number(row.progress || 0).toFixed(1) + '%';
             return '<tr>' +
                 '<td>' + modePill(row) + '</td>' +
-                '<td>' + esc(row.obsdir || '') + '</td>' +
-                '<td>' + check + '</td>' +
+                '<td>' + linkedObsdir(row) + '</td>' +
+                '<td>' + linkedCheck(row) + '</td>' +
                 '<td>' + esc(row.status || '') + '</td>' +
                 '<td>' + progress + '</td>' +
                 '<td><button class="ari-btn ari-btn--sm ari-btn--secondary" data-acq-cancel="' +
@@ -96,12 +146,11 @@
         }
         tbody.innerHTML = rows.map(function (row) {
             var taskId = esc(row.task_id || '');
-            var check = row.check_key ? esc(row.check_key) : '<span class="acq-note">all checks</span>';
             return '<tr>' +
                 '<td>' + esc(row.position || '') + '</td>' +
                 '<td>' + modePill(row) + '</td>' +
-                '<td>' + esc(row.obsdir || '') + '</td>' +
-                '<td>' + check + '</td>' +
+                '<td>' + linkedObsdir(row) + '</td>' +
+                '<td>' + linkedCheck(row) + '</td>' +
                 '<td>' + esc(row.status || '') + '</td>' +
                 '<td><button class="ari-btn ari-btn--sm ari-btn--secondary" data-acq-cancel="' +
                 taskId + '">Cancel</button></td>' +
@@ -117,12 +166,11 @@
             return;
         }
         tbody.innerHTML = rows.map(function (row) {
-            var check = row.check_key ? esc(row.check_key) : '<span class="acq-note">all checks</span>';
             return '<tr>' +
                 '<td>' + esc(row.timestamp || '') + '</td>' +
                 '<td>' + modePill(row) + '</td>' +
-                '<td>' + esc(row.obsdir || '') + '</td>' +
-                '<td>' + check + '</td>' +
+                '<td>' + linkedObsdir(row) + '</td>' +
+                '<td>' + linkedCheck(row) + '</td>' +
                 '<td>' + esc(row.status || '') + '</td>' +
                 '<td>' + esc(row.details || '') + '</td>' +
                 '</tr>';

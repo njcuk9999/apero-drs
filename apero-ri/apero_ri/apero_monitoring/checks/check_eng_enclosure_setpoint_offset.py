@@ -2,12 +2,8 @@
 # -*- coding: utf-8 -*-
 """Engineering check: enclosure setpoint offset."""
 
-from typing import Tuple
-
-import numpy as np
-
 import apero_ri.apero_monitoring.core.raw_common as raw_common
-from apero_ri.apero_monitoring.core.core import AperoCheck
+from apero_ri.apero_monitoring.core.core import AperoCheck, SimpleCheck
 
 # =============================================================================
 # Define variables
@@ -20,80 +16,33 @@ TEST_KEY = 'enclosure_setpoint_offset'
 
 CHECK = AperoCheck(CHECK_NAME, CHECK_HUMAN_NAME, CHECK_TYPE, INSTRUMENTS)
 CHECK.dependencies = ['BLANK', 'HAS_OBSDIR', 'CALIB_TEST']
+SIMPLE_CHECK = SimpleCheck(CHECK, TEST_KEY)
+SIMPLE_CHECK.data['x'] = dict(
+    key=['sensor_key', 'key1'],
+    dtype='float',
+    normalize='float',
+)
+SIMPLE_CHECK.data['y'] = dict(
+    key=['setpoint_key', 'key2'],
+    dtype='float',
+    normalize='float',
+)
+SIMPLE_CHECK.data['limit'] = dict(
+    kind='config',
+    key=['limit', 'val1'],
+    cast='float',
+    default=0.1,
+)
+SIMPLE_CHECK.calc['metric'] = (
+    lambda x, y, **_: float(np.abs(np.nanmean(x - y)))
+)
+SIMPLE_CHECK.func = lambda metric, limit, **_: metric < limit
+SIMPLE_CHECK.pmsg = '{test_key} okay ({metric:.2E} < {limit:.2E}).'
+SIMPLE_CHECK.fmsg = '{metric:.2E} >= {limit:.2E}'
+SIMPLE_CHECK.desc = 'np.abs(np.nanmean({x} - {y})) < {limit}'
 
 
-def _description(cfg: dict) -> str:
-    """Build a concrete logic description from this test config."""
-    logic = (
-        'np.abs(np.nanmean(' + str(cfg.get('key1', '')) + ' - '
-        + str(cfg.get('key2', '')) + ')) < '
-        + str(cfg.get('val1', ''))
-    )
-    out = 'Performs the following test\n\n'
-    out += '```python\n'
-    out += logic + '\n'
-    out += '```'
-    return out
-
-
-def check_function(instrument: str, obs_dir: str,
-                   aparams: dict, dbparams: dict) -> Tuple[bool, str]:
-    """Run enclosure-setpoint offset validation for one obsdir.
-
-    :param instrument: Active instrument key for the current profile.
-    :param obs_dir: Observation-directory/night identifier.
-    :param aparams: APERO runtime parameters and test configuration.
-    :param dbparams: Runtime/database context passed by monitor task.
-    :returns: Tuple ``(is_ok, message)`` for pass/skip/failure reporting.
-    """
-    _ = instrument, dbparams
-    cfg = raw_common.get_check_value(aparams,
-                                     'eng_test',
-                                     ['tests', TEST_KEY],
-                                     dict())
-    if not isinstance(cfg, dict) or len(cfg) == 0:
-        return True, f'Skipped {TEST_KEY}: not configured.'
-
-    CHECK.description = _description(cfg)
-    if not bool(cfg.get('enabled', True)):
-        return True, f'Skipped {TEST_KEY}: disabled.'
-
-    key1 = str(cfg.get('key1', '')).strip()
-    key2 = str(cfg.get('key2', '')).strip()
-    limit = float(cfg.get('val1', np.nan))
-    if key1 == '' or key2 == '':
-        return False, f'{TEST_KEY} missing key1 or key2.'
-
-    obs_path, files = raw_common.list_obsdir_files(aparams, obs_dir)
-    if len(files) == 0:
-        return False, f'No FITS files found in {obs_dir}.'
-
-    header_defs = dict()
-    header_defs[key1] = dict(key=key1, dtype='float')
-    header_defs[key2] = dict(key=key2, dtype='float')
-    table, masks = raw_common.load_header_table(files, header_defs)
-
-    use = masks[key1] & masks[key2]
-    x = np.array(table[key1][use], dtype=float)
-    y = np.array(table[key2][use], dtype=float)
-    if len(x) == 0:
-        return True, f'Skipped {TEST_KEY}: no valid rows.'
-
-    metric = float(np.abs(np.nanmean(x - y)))
-    if metric < limit:
-        return True, f'{TEST_KEY} okay ({metric:.2E} < {limit:.2E}).'
-    use_files = raw_common.files_from_mask(table, use)
-    reason = f'{metric:.2E} >= {limit:.2E}'
-    message = raw_common.format_failed_file_message(
-        TEST_KEY,
-        reason,
-        obs_path,
-        use_files,
-    )
-    return False, message
-
-
-CHECK.func = check_function
+CHECK.func = SIMPLE_CHECK.run
 
 
 # =============================================================================

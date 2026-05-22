@@ -6,84 +6,54 @@ This check validates that every file in one obsdir reports the same expected
 stretcher status value.
 """
 
-from typing import Tuple
-
-import numpy as np
-
 import apero_ri.apero_monitoring.core.raw_common as raw_common
-from apero_ri.apero_monitoring.core.core import AperoCheck
+from apero_ri.apero_monitoring.core.core import AperoCheck, SimpleCheck
 
+# Internal unique key used in YAML and monitor records.
 CHECK_NAME = 'ENG_STRETCHER_STATE'
+# Human readable title shown in UI views.
 CHECK_HUMAN_NAME = 'ENG: Stretcher Status State'
+# APERO check family (raw/red) used for routing and display.
 CHECK_TYPE = 'raw'
+# Instruments where this engineering check is valid.
 INSTRUMENTS = ['NIRPS_HE', 'NIRPS_HA']
+# Config test key under apero-checks.eng_test.tests.
 TEST_KEY = 'stretcher_status_state'
 
+# Build the runnable check object from metadata above.
 CHECK = AperoCheck(CHECK_NAME, CHECK_HUMAN_NAME, CHECK_TYPE, INSTRUMENTS)
+# Require upstream checks before evaluating this test.
 CHECK.dependencies = ['BLANK', 'HAS_OBSDIR', 'CALIB_TEST']
+# Attach declarative SimpleCheck helper for runtime/docs/admin.
+SIMPLE_CHECK = SimpleCheck(CHECK, TEST_KEY)
+# Define one input variable and its YAML/header mapping.
+SIMPLE_CHECK.data['x'] = dict(
+    key=['status_key', 'key1'],
+    dtype='str',
+    normalize='upper_strip',
+)
+# Define one input variable and its YAML/header mapping.
+SIMPLE_CHECK.data['target'] = dict(
+    kind='config',
+    key=['target', 'val1'],
+    cast='str',
+    default='ON',
+)
+# Core boolean logic: True means pass, False means fail.
+SIMPLE_CHECK.func = lambda x, target, **_: x == target
+# Pass message template displayed when logic passes.
+SIMPLE_CHECK.pmsg = "{test_key} okay (all == {target!r})."
+# Fail reason template displayed when logic fails.
+SIMPLE_CHECK.fmsg = "found values != {target!r}"
+# Human-readable logic string for docs and admin displays.
+SIMPLE_CHECK.desc = (
+    'np.all(np.char.upper(np.char.strip({x})) '
+    '== np.char.upper({target!r}))'
+)
 
 
-def _description(cfg: dict) -> str:
-    logic = (
-        'np.all(np.char.upper(np.char.strip(' + str(cfg.get('key1', ''))
-        + ')) == np.char.upper(' + repr(str(cfg.get('val1', ''))) + '))'
-    )
-    return 'Performs the following test\n\n```python\n' + logic + '\n```'
-
-
-def check_function(instrument: str, obs_dir: str,
-                   aparams: dict, dbparams: dict) -> Tuple[bool, str]:
-    """Run stretcher-status validation for one observation directory.
-
-    :param instrument: Active instrument key for the current profile.
-    :param obs_dir: Observation-directory/night identifier.
-    :param aparams: APERO runtime parameters and test configuration.
-    :param dbparams: Runtime/database context passed by monitor task.
-    :returns: Tuple ``(is_ok, message)`` for pass/skip/failure reporting.
-    """
-    _ = instrument, dbparams
-    cfg = raw_common.get_check_value(aparams,
-                                     'eng_test',
-                                     ['tests', TEST_KEY],
-                                     dict())
-    if not isinstance(cfg, dict) or len(cfg) == 0:
-        return True, f'Skipped {TEST_KEY}: not configured.'
-    CHECK.description = _description(cfg)
-    if not bool(cfg.get('enabled', True)):
-        return True, f'Skipped {TEST_KEY}: disabled.'
-    key1 = str(cfg.get('key1', '')).strip()
-    target = str(cfg.get('val1', '')).strip().upper()
-    if key1 == '':
-        return False, f'{TEST_KEY} missing key1.'
-    obs_path, files = raw_common.list_obsdir_files(aparams, obs_dir)
-    if len(files) == 0:
-        return False, f'No FITS files found in {obs_dir}.'
-    defs = dict()
-    defs[key1] = dict(key=key1, dtype='str')
-    table, masks = raw_common.load_header_table(files, defs)
-    values = np.char.upper(
-        np.char.strip(np.array(table[key1]).astype(str))
-    )
-    use = masks[key1]
-    x = values[use]
-    if len(x) == 0:
-        return True, f'Skipped {TEST_KEY}: no valid rows.'
-    ok = bool(np.all(x == target))
-    if ok:
-        return True, f'{TEST_KEY} okay (all == {target!r}).'
-    fail_use = use & (values != target)
-    fail_files = raw_common.files_from_mask(table, fail_use)
-    reason = f'found values != {target!r}'
-    message = raw_common.format_failed_file_message(
-        TEST_KEY,
-        reason,
-        obs_path,
-        fail_files,
-    )
-    return False, message
-
-
-CHECK.func = check_function
+# Register SimpleCheck runner as the check execution function.
+CHECK.func = SIMPLE_CHECK.run
 
 
 # =============================================================================

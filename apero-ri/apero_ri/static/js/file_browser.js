@@ -29,6 +29,13 @@
     var fbFilterTimers = {};
     var FB_FILTER_DEBOUNCE_MS = 550;
 
+    var fbHeaderRows = [];
+    var fbHeaderFilteredRows = [];
+    var fbHeaderSortCol = 'key';
+    var fbHeaderSortDir = 1;
+    var fbHeaderFilter = '';
+    var fbHeaderCurrentRow = null;
+
     /* Exact output types with a Bokeh plot (plots_filename.py). */
     /* Plot-type sets – populated from window.ARI_* injected by the
        template (data_portal_view_helpers.py → object_page.html).
@@ -63,6 +70,7 @@
         { key: 'BLOCK_KIND',    label: 'Block',        sortable: true,  filterable: true },
         { key: 'OBS_DIR',       label: 'Obs Dir',      sortable: true,  filterable: true },
         { key: 'FILENAME',      label: 'Filename',     sortable: true,  filterable: true },
+        { key: 'HEADER_ACTION', label: 'Header',       sortable: false, filterable: false },
         { key: 'KW_OUTPUT',     label: 'Output Type',  sortable: true,  filterable: true },
         { key: 'KW_FIBER',      label: 'Fiber',        sortable: true,  filterable: true },
         { key: 'KW_DPRTYPE',    label: 'DPRTYPE',      sortable: true,  filterable: true },
@@ -120,6 +128,28 @@
         if (!iso) return '--';
         try { return new Date(iso).toLocaleString(); }
         catch (e) { return String(iso); }
+    }
+
+    function getFileHeaderUrl(r) {
+        var baseUrl = pageCfg.fileHeaderApiUrl || '/api/data-portal/file-header';
+        return baseUrl
+            + '?profile_id=' + encodeURIComponent(pageCfg.profileId || '')
+            + '&block_kind=' + encodeURIComponent(r.BLOCK_KIND || '')
+            + '&obs_dir=' + encodeURIComponent(r.OBS_DIR || '')
+            + '&filename=' + encodeURIComponent(r.FILENAME || '')
+            + '&kw_run_id=' + encodeURIComponent(r.KW_RUN_ID || '');
+    }
+
+    function getFileHeaderDownloadUrl(r, outFmt) {
+        var baseUrl = pageCfg.fileHeaderDownloadApiUrl
+            || '/api/data-portal/file-header-download';
+        return baseUrl
+            + '?profile_id=' + encodeURIComponent(pageCfg.profileId || '')
+            + '&block_kind=' + encodeURIComponent(r.BLOCK_KIND || '')
+            + '&obs_dir=' + encodeURIComponent(r.OBS_DIR || '')
+            + '&filename=' + encodeURIComponent(r.FILENAME || '')
+            + '&kw_run_id=' + encodeURIComponent(r.KW_RUN_ID || '')
+            + '&format=' + encodeURIComponent(outFmt || 'csv');
     }
 
     function parseStrictNumber(value) {
@@ -550,6 +580,16 @@
                     openFilenamePlot(r);
                 });
                 td.appendChild(link);
+            } else if (col.key === 'HEADER_ACTION') {
+                var hdrBtn = document.createElement('button');
+                hdrBtn.type = 'button';
+                hdrBtn.className = 'fb-fn-header-link';
+                hdrBtn.textContent = '[Open]';
+                hdrBtn.title = 'Open FITS header';
+                hdrBtn.addEventListener('click', function () {
+                    openHeaderModal(r);
+                });
+                td.appendChild(hdrBtn);
             } else if (col.key === 'MID_OBS_TIME') {
                 td.textContent = formatDate(v);
             } else if (col.key === 'PASSED_ALL_QC') {
@@ -833,6 +873,247 @@
         if (bl) bl.addEventListener('click', function () { fbCurrentPage = fbTotalPages(); fbRenderPage(); fbUpdatePagination(); });
     }
 
+    function closeHeaderModal() {
+        var modal = el('fb-header-modal');
+        if (modal) {
+            modal.style.display = 'none';
+        }
+    }
+
+    function applyHeaderFilterSort() {
+        var filter = fbHeaderFilter;
+        var rows = fbHeaderRows.slice();
+
+        if (filter) {
+            rows = rows.filter(function (row) {
+                var key = String(row.key || '').toLowerCase();
+                var val = String(row.value || '').toLowerCase();
+                var com = String(row.comment || '').toLowerCase();
+                return key.indexOf(filter) !== -1
+                    || val.indexOf(filter) !== -1
+                    || com.indexOf(filter) !== -1;
+            });
+        }
+
+        rows.sort(function (a, b) {
+            var av = String(a[fbHeaderSortCol] || '');
+            var bv = String(b[fbHeaderSortCol] || '');
+            if (av < bv) return -fbHeaderSortDir;
+            if (av > bv) return fbHeaderSortDir;
+            return 0;
+        });
+
+        fbHeaderFilteredRows = rows;
+        renderHeaderTable();
+    }
+
+    function renderHeaderTable() {
+        var tbody = el('fb-header-tbody');
+        if (!tbody) return;
+
+        var countEl = el('fb-header-count');
+        if (countEl) {
+            countEl.textContent = fbHeaderFilteredRows.length
+                + ' cards';
+        }
+
+        var table = el('fb-header-table');
+        if (table) {
+            table.querySelectorAll('th[data-col]').forEach(function (th) {
+                var col = th.getAttribute('data-col');
+                th.classList.remove('ot-th--asc', 'ot-th--desc');
+                if (col === fbHeaderSortCol) {
+                    th.classList.add(
+                        fbHeaderSortDir > 0 ? 'ot-th--asc' : 'ot-th--desc'
+                    );
+                }
+            });
+        }
+
+        if (!fbHeaderFilteredRows.length) {
+            tbody.innerHTML =
+                '<tr><td colspan="3" class="ot-empty">No header cards found.'
+                + '</td></tr>';
+            return;
+        }
+
+        var frag = document.createDocumentFragment();
+        fbHeaderFilteredRows.forEach(function (row, idx) {
+            var tr = document.createElement('tr');
+            tr.className = idx % 2 === 0 ? 'bk-row--odd' : 'bk-row--even';
+
+            var tdKey = document.createElement('td');
+            tdKey.className = 'fb-header-key';
+            tdKey.textContent = valOrDash(row.key);
+            tr.appendChild(tdKey);
+
+            var tdVal = document.createElement('td');
+            tdVal.className = 'fb-header-value';
+            tdVal.textContent = valOrDash(row.value);
+            tr.appendChild(tdVal);
+
+            var tdCom = document.createElement('td');
+            tdCom.className = 'fb-header-comment';
+            tdCom.textContent = valOrDash(row.comment);
+            tr.appendChild(tdCom);
+
+            frag.appendChild(tr);
+        });
+
+        tbody.innerHTML = '';
+        tbody.appendChild(frag);
+    }
+
+    function openHeaderModal(r) {
+        var modal = el('fb-header-modal');
+        var titleEl = el('fb-header-title');
+        var loadingEl = el('fb-header-loading');
+        var errorEl = el('fb-header-error');
+        var tbody = el('fb-header-tbody');
+
+        if (!modal) return;
+
+        fbHeaderCurrentRow = r;
+        fbHeaderRows = [];
+        fbHeaderFilteredRows = [];
+        fbHeaderFilter = '';
+        fbHeaderSortCol = 'key';
+        fbHeaderSortDir = 1;
+
+        if (titleEl) {
+            titleEl.textContent = 'FITS Header: ' + (r.FILENAME || '');
+        }
+        if (errorEl) {
+            errorEl.style.display = 'none';
+            errorEl.textContent = '';
+        }
+        if (loadingEl) {
+            loadingEl.style.display = '';
+        }
+        if (tbody) {
+            tbody.innerHTML =
+                '<tr><td colspan="3" class="ot-empty">Loading&hellip;</td></tr>';
+        }
+        var filterInput = el('fb-header-filter');
+        if (filterInput) {
+            filterInput.value = '';
+        }
+
+        modal.style.display = 'flex';
+
+        fetch(getFileHeaderUrl(r))
+            .then(function (resp) {
+                var ctype = String(resp.headers.get('content-type') || '').toLowerCase();
+                if (ctype.indexOf('application/json') === -1) {
+                    return resp.text().then(function () {
+                        throw new Error('Header API returned non-JSON response.');
+                    });
+                }
+                return resp.json().then(function (data) {
+                    if (!resp.ok || !data.success) {
+                        var msg = data && data.error
+                            ? data.error
+                            : ('Header request failed (' + resp.status + ').');
+                        throw new Error(msg);
+                    }
+                    return data;
+                });
+            })
+            .then(function (data) {
+                if (loadingEl) {
+                    loadingEl.style.display = 'none';
+                }
+                fbHeaderRows = Array.isArray(data.rows) ? data.rows : [];
+                applyHeaderFilterSort();
+            })
+            .catch(function (err) {
+                if (loadingEl) {
+                    loadingEl.style.display = 'none';
+                }
+                if (errorEl) {
+                    errorEl.textContent = 'Failed to load header: ' + String(err);
+                    errorEl.style.display = '';
+                }
+                if (tbody) {
+                    tbody.innerHTML =
+                        '<tr><td colspan="3" class="ot-empty">No header cards found.'
+                        + '</td></tr>';
+                }
+            });
+    }
+
+    function bindHeaderModal() {
+        var modal = el('fb-header-modal');
+        var closeBtn = el('fb-header-close');
+        var filterInput = el('fb-header-filter');
+        var dlCsv = el('fb-header-download-csv');
+        var dlFits = el('fb-header-download-fits');
+
+        if (closeBtn) {
+            closeBtn.addEventListener('click', closeHeaderModal);
+        }
+
+        if (modal) {
+            modal.addEventListener('click', function (e) {
+                if (e.target === modal) {
+                    closeHeaderModal();
+                }
+            });
+        }
+
+        document.addEventListener('keydown', function (e) {
+            if (e.key === 'Escape') {
+                if (modal && modal.style.display !== 'none') {
+                    closeHeaderModal();
+                }
+            }
+        });
+
+        if (filterInput) {
+            filterInput.addEventListener('input', function () {
+                fbHeaderFilter = String(filterInput.value || '').trim().toLowerCase();
+                applyHeaderFilterSort();
+            });
+        }
+
+        var headerTable = el('fb-header-table');
+        if (headerTable) {
+            headerTable.querySelectorAll('th[data-col]').forEach(function (th) {
+                th.addEventListener('click', function () {
+                    var col = th.getAttribute('data-col');
+                    if (!col) return;
+                    if (fbHeaderSortCol === col) {
+                        fbHeaderSortDir = -fbHeaderSortDir;
+                    } else {
+                        fbHeaderSortCol = col;
+                        fbHeaderSortDir = 1;
+                    }
+                    applyHeaderFilterSort();
+                });
+            });
+        }
+
+        if (dlCsv) {
+            dlCsv.addEventListener('click', function () {
+                if (!fbHeaderCurrentRow) return;
+                window.open(
+                    getFileHeaderDownloadUrl(fbHeaderCurrentRow, 'csv'),
+                    '_blank'
+                );
+            });
+        }
+
+        if (dlFits) {
+            dlFits.addEventListener('click', function () {
+                if (!fbHeaderCurrentRow) return;
+                window.open(
+                    getFileHeaderDownloadUrl(fbHeaderCurrentRow, 'fits'),
+                    '_blank'
+                );
+            });
+        }
+    }
+
     /* -----------------------------------------------------------------------
        Tab activation hook – load data on first view
     ----------------------------------------------------------------------- */
@@ -848,6 +1129,7 @@
        Init (bind controls; actual data loads when tab is first visited)
     ----------------------------------------------------------------------- */
     bindPresets();
+     bindHeaderModal();
     /* -----------------------------------------------------------------------
        Filename-click plot modal
     ----------------------------------------------------------------------- */

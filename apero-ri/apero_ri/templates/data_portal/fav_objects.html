@@ -87,6 +87,11 @@
             <span class="ari-fav-section__name">{{ sec.name }}</span>
             <span class="ari-fav-section__count">({{ sec['items']|length }})</span>
             <div class="op-section-controls">
+                <a class="ari-btn ari-btn--sm ari-btn--secondary"
+                   href="{{ url_for('ri_favourites_summary', profile_id=profile.profile_id, section_name=sec.name) }}"
+                   title="Open summary table builder for this section">
+                    Summary Table
+                </a>
                 <button type="button"
                         class="ari-fav-section__remove-all-btn op-section-btn"
                         title="Remove all objects in this section"

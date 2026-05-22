@@ -5,6 +5,7 @@
     'use strict';
 
     var cfg = window.ARI_OBJ_TABLE;
+    var isSummaryMode = !!(cfg && cfg.summaryMode);
     var minNameChars = Math.max(1, Number((cfg && cfg.minNameChars) || 1));
 
     /* -----------------------------------------------------------------------
@@ -97,6 +98,58 @@
     var stgStatus    = document.getElementById('stg-status');
     var btnSendToGroup = document.getElementById('ot-btn-send-to-group');
 
+    // Summary-table controls
+    var summaryDownloadSelect = document.getElementById(
+        'ot-summary-download-format'
+    );
+    var summaryOverlay = document.getElementById('ots-overlay');
+    var summaryBackdrop = document.getElementById('ots-backdrop');
+    var summaryClose = document.getElementById('ots-close');
+    var summaryCloseBtn = document.getElementById('ots-close-btn');
+    var summarySearch = document.getElementById('ots-search');
+    var summaryRenameOpen = document.getElementById('ots-rename-open');
+    var summaryRenameOverlay = document.getElementById('ots-rename-overlay');
+    var summaryRenameBackdrop = document.getElementById('ots-rename-backdrop');
+    var summaryRenameClose = document.getElementById('ots-rename-close');
+    var summaryRenameCancel = document.getElementById('ots-rename-cancel');
+    var summaryRenameApply = document.getElementById('ots-rename-apply');
+    var summaryCustomOpen = document.getElementById('ots-custom-open');
+    var summaryCustomOverlay = document.getElementById('ots-custom-overlay');
+    var summaryCustomBackdrop = document.getElementById(
+        'ots-custom-backdrop'
+    );
+    var summaryCustomClose = document.getElementById('ots-custom-close');
+    var summaryCustomCancel = document.getElementById('ots-custom-cancel');
+    var summaryCustomAddVar = document.getElementById('ots-custom-add-var');
+    var summaryCustomName = document.getElementById('ots-custom-name');
+    var summaryCustomCategory = document.getElementById(
+        'ots-custom-category'
+    );
+    var summaryCustomSubcategory = document.getElementById(
+        'ots-custom-subcategory'
+    );
+    var summaryCustomSearch = document.getElementById(
+        'ots-custom-search'
+    );
+    var summaryCustomExpr = document.getElementById('ots-custom-expr');
+    var summaryCustomExprHelpToggle = document.getElementById(
+        'ots-custom-expr-help-toggle'
+    );
+    var summaryCustomExprHelp = document.getElementById(
+        'ots-custom-expr-help'
+    );
+    var summaryCustomVars = document.getElementById('ots-custom-vars');
+    var summaryCustomTest = document.getElementById('ots-custom-test');
+    var summaryCustomSave = document.getElementById('ots-custom-save');
+    var summaryCustomStatus = document.getElementById('ots-custom-status');
+    var summaryRenameList = document.getElementById('ots-rename-list');
+    var summaryCategory = document.getElementById('ots-category');
+    var summarySubcategory = document.getElementById('ots-subcategory');
+    var summaryList = document.getElementById('ots-list');
+    var summarySelected = document.getElementById('ots-selected');
+    var summaryStatus = document.getElementById('ots-status');
+    var summaryRegenerateBtn = document.getElementById('ots-regenerate');
+
     var hasFindControls = !!(
         findTabName && findTabCoords && findTabDate && findTabAdvanced
         && findTabGroup
@@ -127,6 +180,14 @@
         to: '',
     };
     var lastRequestId  = 0;
+    var summaryPropertyCatalog = [];
+    var summarySelectedColumns = [];
+    var summarySelectedAliases = {};
+    var summaryCustomColumns = [];
+    var summaryAllowedExpressionRows = [];
+    var summaryCustomDraftVars = [];
+    var summaryCustomTestPassed = false;
+    var summaryCustomEditIndex = -1;
 
     /* -----------------------------------------------------------------------
        Helpers
@@ -144,6 +205,563 @@
         } catch (e) {
             return iso;
         }
+    }
+
+    function hasSummaryColumn(propId) {
+        return summarySelectedColumns.indexOf(propId) !== -1;
+    }
+
+    function summaryCategoryValue(item) {
+        return String(item.category || item.section_title || 'other');
+    }
+
+    function summarySubcategoryValue(item) {
+        return String(item.subcategory || 'general');
+    }
+
+    function summaryLblCategoryValue(item) {
+        return String(item.lbl_category || '');
+    }
+
+    function summaryPropertyName(item) {
+        return String(item.property_name || item.label || item.id || '');
+    }
+
+    function summaryPath(item) {
+        return [
+            summaryCategoryValue(item),
+            summarySubcategoryValue(item),
+        ].join(' / ');
+    }
+
+    function uniqueSorted(values) {
+        var out = [];
+        values.forEach(function (val) {
+            if (!val || out.indexOf(val) !== -1) return;
+            out.push(val);
+        });
+        out.sort();
+        return out;
+    }
+
+    function setSelectOptions(selectEl, values, placeholder, keepValue) {
+        if (!selectEl) return;
+        var keep = String(keepValue || '');
+        selectEl.innerHTML = '';
+        var opt = document.createElement('option');
+        opt.value = '';
+        opt.textContent = placeholder;
+        selectEl.appendChild(opt);
+        values.forEach(function (value) {
+            var item = document.createElement('option');
+            item.value = value;
+            item.textContent = value;
+            if (value === keep) {
+                item.selected = true;
+            }
+            selectEl.appendChild(item);
+        });
+        if (keep && values.indexOf(keep) === -1) {
+            selectEl.value = '';
+        }
+    }
+
+    function renderSummaryFilters() {
+        var categoryKeep = String(
+            summaryCategory ? summaryCategory.value : ''
+        );
+        var subKeep = String(
+            summarySubcategory ? summarySubcategory.value : ''
+        );
+
+        var categoryValues = uniqueSorted(
+            summaryPropertyCatalog.map(summaryCategoryValue)
+        );
+        setSelectOptions(
+            summaryCategory,
+            categoryValues,
+            'All categories',
+            categoryKeep
+        );
+        var selectedCategory = String(
+            summaryCategory ? summaryCategory.value : ''
+        );
+
+        var subValues = uniqueSorted(
+            summaryPropertyCatalog
+                .filter(function (item) {
+                    return !selectedCategory
+                        || summaryCategoryValue(item) === selectedCategory;
+                })
+                .map(summarySubcategoryValue)
+        );
+        setSelectOptions(
+            summarySubcategory,
+            subValues,
+            'All sub-categories',
+            subKeep
+        );
+    }
+
+    function getSummaryLabel(item) {
+        var alias = String(summarySelectedAliases[item.id] || '').trim();
+        return alias || item.label;
+    }
+
+    function closeSummaryRenameOverlay() {
+        if (summaryRenameOverlay) {
+            summaryRenameOverlay.style.display = 'none';
+        }
+    }
+
+    function openSummaryRenameOverlay(focusPropId) {
+        if (!summaryRenameOverlay || !summaryRenameList) return;
+        if (!summarySelectedColumns.length) {
+            setSummaryStatus('Select at least one column first.', true);
+            return;
+        }
+        summaryRenameList.innerHTML = '';
+        summarySelectedColumns.forEach(function (propId) {
+            var item = summaryPropertyCatalog.find(function (entry) {
+                return entry.id === propId;
+            });
+            if (!item) return;
+            var row = document.createElement('div');
+            row.className = 'ogs-rename-row';
+            var original = '<div class="ogs-rename-original">'
+                + '<div class="ogs-rename-original-title">'
+                + escHtml(summaryPropertyName(item))
+                + '</div><div class="ogs-rename-original-meta">'
+                + escHtml(summaryPath(item))
+                + '</div></div>';
+            var input = '<input type="text" class="ari-input"'
+                + ' data-prop-id="' + escHtml(propId) + '"'
+                + ' placeholder="Optional custom column name"'
+                + ' value="'
+                + escHtml(summarySelectedAliases[propId] || '')
+                + '">';
+            row.innerHTML = original + input;
+            summaryRenameList.appendChild(row);
+        });
+        summaryRenameOverlay.style.display = '';
+        if (focusPropId) {
+            var target = summaryRenameList.querySelector(
+                'input[data-prop-id="' + focusPropId + '"]'
+            );
+            if (target) target.focus();
+        }
+    }
+
+    function applySummaryRenameOverlay() {
+        if (!summaryRenameList) return;
+        var nextAliases = {};
+        summaryRenameList.querySelectorAll('input[data-prop-id]')
+            .forEach(function (input) {
+                var propId = String(input.dataset.propId || '').trim();
+                var value = String(input.value || '').trim();
+                if (propId && value) {
+                    nextAliases[propId] = value;
+                }
+            });
+        summarySelectedAliases = nextAliases;
+        closeSummaryRenameOverlay();
+        renderSummaryPicker();
+    }
+
+    function setSummaryStatus(text, isError) {
+        if (!summaryStatus) return;
+        summaryStatus.textContent = text || '';
+        summaryStatus.style.color = isError
+            ? '#a54528' : '#4f613b';
+    }
+
+    function setSummaryCustomStatus(text, isError) {
+        if (!summaryCustomStatus) return;
+        summaryCustomStatus.textContent = text || '';
+        summaryCustomStatus.style.color = isError
+            ? '#a54528' : '#4f613b';
+    }
+
+    function moveSummaryCustomColumn(fromIndex, toIndex) {
+        if (fromIndex < 0 || toIndex < 0) return;
+        if (fromIndex >= summaryCustomColumns.length) return;
+        if (toIndex >= summaryCustomColumns.length) return;
+        if (fromIndex === toIndex) return;
+        var cols = summaryCustomColumns.slice();
+        var moved = cols.splice(fromIndex, 1)[0];
+        cols.splice(toIndex, 0, moved);
+        summaryCustomColumns = cols;
+        renderSummaryPicker();
+    }
+
+    function updateSummaryCustomSaveState() {
+        if (!summaryCustomSave) return;
+        summaryCustomSave.disabled = !summaryCustomTestPassed;
+    }
+
+    function invalidateSummaryCustomTest() {
+        summaryCustomTestPassed = false;
+        updateSummaryCustomSaveState();
+    }
+
+    function filteredCustomCatalog() {
+        var cat = String(
+            summaryCustomCategory ? summaryCustomCategory.value : ''
+        );
+        var sub = String(
+            summaryCustomSubcategory ? summaryCustomSubcategory.value : ''
+        );
+        var rawQuery = String(
+            summaryCustomSearch ? summaryCustomSearch.value : ''
+        ).trim().toLowerCase();
+        var query = rawQuery.length >= 3 ? rawQuery : '';
+        return summaryPropertyCatalog.filter(function (item) {
+            if (cat && summaryCategoryValue(item) !== cat) {
+                return false;
+            }
+            if (sub && summarySubcategoryValue(item) !== sub) {
+                return false;
+            }
+            if (query) {
+                var haystack = (
+                    summaryPropertyName(item)
+                    + ' ' + summaryCategoryValue(item)
+                    + ' ' + summarySubcategoryValue(item)
+                ).toLowerCase();
+                if (haystack.indexOf(query) === -1) {
+                    return false;
+                }
+            }
+            return true;
+        });
+    }
+
+    function renderSummaryCustomFilters() {
+        var keepCat = String(
+            summaryCustomCategory ? summaryCustomCategory.value : ''
+        );
+        var keepSub = String(
+            summaryCustomSubcategory ? summaryCustomSubcategory.value : ''
+        );
+        var catValues = uniqueSorted(
+            summaryPropertyCatalog.map(summaryCategoryValue)
+        );
+        setSelectOptions(
+            summaryCustomCategory,
+            catValues,
+            'All categories',
+            keepCat
+        );
+        var selectedCat = String(
+            summaryCustomCategory ? summaryCustomCategory.value : ''
+        );
+        var subValues = uniqueSorted(
+            summaryPropertyCatalog
+                .filter(function (item) {
+                    return !selectedCat
+                        || summaryCategoryValue(item) === selectedCat;
+                })
+                .map(summarySubcategoryValue)
+        );
+        setSelectOptions(
+            summaryCustomSubcategory,
+            subValues,
+            'All sub-categories',
+            keepSub
+        );
+    }
+
+    function customPropertyLabel(propId) {
+        var item = summaryPropertyCatalog.find(function (entry) {
+            return entry.id === propId;
+        });
+        if (!item) {
+            return String(propId);
+        }
+        return summaryPropertyName(item) + ' [' + summaryPath(item) + ']';
+    }
+
+    function renderSummaryCustomVars() {
+        if (!summaryCustomVars) return;
+        summaryCustomVars.innerHTML = '';
+        var options = filteredCustomCatalog();
+        summaryCustomDraftVars.forEach(function (row, idx) {
+            var line = document.createElement('div');
+            line.className = 'ogs-rename-row ogs-rename-row--triple';
+
+            var letter = document.createElement('input');
+            letter.type = 'text';
+            letter.className = 'ari-input';
+            letter.maxLength = 1;
+            letter.placeholder = 'x';
+            letter.value = row.letter || '';
+            letter.style.maxWidth = '4rem';
+            letter.addEventListener('input', function () {
+                summaryCustomDraftVars[idx].letter = String(
+                    letter.value || ''
+                ).toLowerCase().replace(/[^a-z]/g, '').slice(0, 1);
+                letter.value = summaryCustomDraftVars[idx].letter;
+                invalidateSummaryCustomTest();
+            });
+
+            var select = document.createElement('select');
+            select.className = 'ari-input';
+            var blank = document.createElement('option');
+            blank.value = '';
+            blank.textContent = 'Select property';
+            select.appendChild(blank);
+            options.forEach(function (item) {
+                var opt = document.createElement('option');
+                opt.value = item.id;
+                opt.textContent = summaryPropertyName(item)
+                    + ' [' + summaryPath(item) + ']';
+                if (item.id === row.propId) {
+                    opt.selected = true;
+                }
+                select.appendChild(opt);
+            });
+            select.addEventListener('change', function () {
+                summaryCustomDraftVars[idx].propId = String(
+                    select.value || ''
+                );
+                invalidateSummaryCustomTest();
+            });
+
+            var del = document.createElement('button');
+            del.type = 'button';
+            del.className = 'ogs-card__icon';
+            del.title = 'Remove variable';
+            del.innerHTML = '<i class="fa-solid fa-trash-can"></i>';
+            del.addEventListener('click', function () {
+                summaryCustomDraftVars.splice(idx, 1);
+                invalidateSummaryCustomTest();
+                renderSummaryCustomVars();
+            });
+
+            line.appendChild(letter);
+            line.appendChild(select);
+            line.appendChild(del);
+            summaryCustomVars.appendChild(line);
+        });
+    }
+
+    function closeSummaryCustomOverlay() {
+        if (!summaryCustomOverlay) return;
+        summaryCustomOverlay.style.display = 'none';
+        if (summaryCustomExprHelp) {
+            summaryCustomExprHelp.style.display = 'none';
+        }
+        summaryCustomEditIndex = -1;
+        setSummaryCustomStatus('', false);
+    }
+
+    function renderSummaryExprHelp() {
+        if (!summaryCustomExprHelp) return;
+        if (!summaryAllowedExpressionRows.length) {
+            summaryCustomExprHelp.innerHTML = '<div class="ogs-list__empty">'
+                + 'No configured expression rules.'
+                + '</div>';
+            return;
+        }
+        var body = summaryAllowedExpressionRows.map(function (row) {
+            var expr = escHtml(String(row.expression || ''));
+            var comment = escHtml(String(row.comment || ''));
+            return '<tr><td><code>' + expr + '</code></td><td>'
+                + comment + '</td></tr>';
+        }).join('');
+        summaryCustomExprHelp.innerHTML = '<table><thead><tr>'
+            + '<th>Expression</th><th>Comment</th></tr></thead><tbody>'
+            + body
+            + '</tbody></table>';
+    }
+
+    function toggleSummaryExprHelp() {
+        if (!summaryCustomExprHelp) return;
+        var isHidden = summaryCustomExprHelp.style.display === 'none';
+        if (isHidden) {
+            renderSummaryExprHelp();
+            summaryCustomExprHelp.style.display = '';
+            return;
+        }
+        summaryCustomExprHelp.style.display = 'none';
+    }
+
+    function openSummaryCustomOverlay(editIndex) {
+        if (!summaryCustomOverlay) return;
+        var isEdit = (
+            typeof editIndex === 'number'
+            && editIndex >= 0
+            && editIndex < summaryCustomColumns.length
+        );
+        summaryCustomEditIndex = isEdit ? editIndex : -1;
+
+        if (summaryCustomCategory) summaryCustomCategory.value = '';
+        if (summaryCustomSubcategory) summaryCustomSubcategory.value = '';
+        if (summaryCustomSearch) summaryCustomSearch.value = '';
+
+        if (isEdit) {
+            var row = summaryCustomColumns[editIndex] || {};
+            if (summaryCustomName) {
+                summaryCustomName.value = String(row.name || '');
+            }
+            if (summaryCustomExpr) {
+                summaryCustomExpr.value = String(row.expression || '');
+            }
+            summaryCustomDraftVars = Object.keys(row.variables || {})
+                .sort()
+                .map(function (key) {
+                    return {
+                        letter: String(key || '').toLowerCase(),
+                        propId: String(row.variables[key] || ''),
+                    };
+                });
+            if (!summaryCustomDraftVars.length) {
+                summaryCustomDraftVars = [{letter: 'x', propId: ''}];
+            }
+        } else {
+            if (summaryCustomName) summaryCustomName.value = '';
+            if (summaryCustomExpr) summaryCustomExpr.value = '';
+            summaryCustomDraftVars = [{letter: 'x', propId: ''}];
+        }
+
+        summaryCustomTestPassed = false;
+        renderSummaryCustomFilters();
+        renderSummaryCustomVars();
+        if (summaryCustomExprHelp) {
+            summaryCustomExprHelp.style.display = 'none';
+        }
+        updateSummaryCustomSaveState();
+        setSummaryCustomStatus('', false);
+        summaryCustomOverlay.style.display = '';
+        if (summaryCustomName) summaryCustomName.focus();
+    }
+
+    function summaryCustomVarsPayload() {
+        var vars = {};
+        var seen = {};
+        for (var i = 0; i < summaryCustomDraftVars.length; i += 1) {
+            var row = summaryCustomDraftVars[i];
+            var letter = String(row.letter || '').trim().toLowerCase();
+            var propId = String(row.propId || '').trim();
+            if (!letter || !propId || seen[letter]) {
+                return null;
+            }
+            if (!/^[a-z]$/.test(letter)) {
+                return null;
+            }
+            vars[letter] = propId;
+            seen[letter] = true;
+        }
+        return vars;
+    }
+
+    function testSummaryCustomColumn() {
+        if (!cfg.summaryCustomTestApiUrl) return;
+        var expression = String(
+            summaryCustomExpr ? summaryCustomExpr.value : ''
+        ).trim();
+        var vars = summaryCustomVarsPayload();
+        if (!expression || !vars) {
+            invalidateSummaryCustomTest();
+            setSummaryCustomStatus(
+                'Define variables and expression first.',
+                true
+            );
+            return;
+        }
+        setSummaryCustomStatus('Testing expression...', false);
+        var source = String(cfg.summarySource || 'group').trim();
+        fetch(cfg.summaryCustomTestApiUrl, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+                profile_id: cfg.profileId,
+                group: cfg.summaryGroupName,
+                source: source,
+                section: source === 'favourites'
+                    ? String(cfg.summarySectionName || cfg.summaryGroupName || '')
+                    : '',
+                expression: expression,
+                variables: vars,
+            }),
+        }).then(function (r) {
+            return r.json();
+        }).then(function (data) {
+            if (!data.success) {
+                invalidateSummaryCustomTest();
+                setSummaryCustomStatus(data.error || 'Test failed.', true);
+                return;
+            }
+            summaryCustomTestPassed = true;
+            updateSummaryCustomSaveState();
+            setSummaryCustomStatus(
+                'Test OK. Result: ' + String(data.sample_result),
+                false
+            );
+        }).catch(function () {
+            invalidateSummaryCustomTest();
+            setSummaryCustomStatus('Network error during test.', true);
+        });
+    }
+
+    function saveSummaryCustomColumn() {
+        var name = String(
+            summaryCustomName ? summaryCustomName.value : ''
+        ).trim();
+        var expression = String(
+            summaryCustomExpr ? summaryCustomExpr.value : ''
+        ).trim();
+        var vars = summaryCustomVarsPayload();
+        if (!name || !expression || !vars) {
+            setSummaryCustomStatus(
+                'Name, variables, and expression are required.',
+                true
+            );
+            return;
+        }
+        if (!summaryCustomTestPassed) {
+            setSummaryCustomStatus(
+                'Run Test successfully before saving.',
+                true
+            );
+            return;
+        }
+        var row = {
+            name: name,
+            expression: expression,
+            variables: vars,
+        };
+
+        if (summaryCustomEditIndex >= 0
+            && summaryCustomEditIndex < summaryCustomColumns.length) {
+            summaryCustomColumns[summaryCustomEditIndex] = row;
+        } else {
+            var key = name.toLowerCase();
+            var next = summaryCustomColumns.filter(function (entry) {
+                return String(entry.name || '').toLowerCase() !== key;
+            });
+            next.push(row);
+            summaryCustomColumns = next;
+        }
+        summaryCustomEditIndex = -1;
+        closeSummaryCustomOverlay();
+        renderSummaryPicker();
+    }
+
+    function summaryConfigParams() {
+        var params = new URLSearchParams();
+        var source = String(cfg.summarySource || 'group').trim();
+        params.set('profile_id', cfg.profileId);
+        params.set('source', source);
+        if (source === 'favourites') {
+            params.set(
+                'section',
+                String(cfg.summarySectionName || cfg.summaryGroupName || '')
+            );
+        } else {
+            params.set('group', cfg.summaryGroupName || '');
+        }
+        return params;
     }
 
     function normalizeColumnMeta(rawMeta) {
@@ -422,6 +1040,24 @@
     function buildApiQuery() {
         var params = new URLSearchParams();
         params.set('profile_id', cfg.profileId);
+
+        if (isSummaryMode) {
+            var source = String(cfg.summarySource || 'group').trim();
+            params.set('source', source);
+            if (source === 'favourites') {
+                params.set(
+                    'section',
+                    String(
+                        cfg.summarySectionName
+                        || cfg.summaryGroupName
+                        || ''
+                    )
+                );
+            } else {
+                params.set('group', cfg.summaryGroupName || '');
+            }
+            return { params: params, valid: true };
+        }
 
         if (!hasFindControls) {
             return { params: params, valid: true };
@@ -741,38 +1377,46 @@
     ----------------------------------------------------------------------- */
     function buildHeaders() {
         // Populate column toggle panel
-        colToggles.innerHTML = '';
-        columns.forEach(function (col) {
-            if (!isColumnRemovable(col)) {
-                hiddenCols[col] = false;
-            }
-
-            var label = document.createElement('label');
-            label.className = 'ot-col-toggle';
-
-            var cb = document.createElement('input');
-            cb.type    = 'checkbox';
-            cb.checked = !hiddenCols[col];
-            cb.dataset.col = col;
-            if (!isColumnRemovable(col)) {
-                cb.disabled = true;
-                hiddenCols[col] = false;
-            }
-            cb.addEventListener('change', function () {
+        if (colToggles) {
+            colToggles.innerHTML = '';
+            columns.forEach(function (col) {
                 if (!isColumnRemovable(col)) {
-                    this.checked = true;
                     hiddenCols[col] = false;
-                    return;
                 }
-                hiddenCols[col] = !this.checked;
-                renderHeaders();
-                renderPage();
-            });
 
-            label.appendChild(cb);
-            label.appendChild(document.createTextNode(' ' + col));
-            colToggles.appendChild(label);
-        });
+                var label = document.createElement('label');
+                label.className = 'ot-col-toggle';
+
+                var cb = document.createElement('input');
+                cb.type    = 'checkbox';
+                cb.checked = !hiddenCols[col];
+                cb.dataset.col = col;
+                if (!isColumnRemovable(col)) {
+                    cb.disabled = true;
+                    hiddenCols[col] = false;
+                }
+                cb.addEventListener('change', function () {
+                    if (!isColumnRemovable(col)) {
+                        this.checked = true;
+                        hiddenCols[col] = false;
+                        return;
+                    }
+                    hiddenCols[col] = !this.checked;
+                    renderHeaders();
+                    renderPage();
+                });
+
+                label.appendChild(cb);
+                label.appendChild(document.createTextNode(' ' + col));
+                colToggles.appendChild(label);
+            });
+        } else {
+            columns.forEach(function (col) {
+                if (!isColumnRemovable(col)) {
+                    hiddenCols[col] = false;
+                }
+            });
+        }
 
         renderHeaders();
     }
@@ -1188,52 +1832,65 @@
     /* -----------------------------------------------------------------------
        Column toggle panel
     ----------------------------------------------------------------------- */
-    btnColumns.addEventListener('click', function (e) {
-        e.stopPropagation();
-        colPanel.style.display = (colPanel.style.display === 'none')
-            ? 'block' : 'none';
-    });
-    colClose.addEventListener('click', function () {
-        colPanel.style.display = 'none';
-    });
+    if (btnColumns && !isSummaryMode && colPanel) {
+        btnColumns.addEventListener('click', function (e) {
+            e.stopPropagation();
+            colPanel.style.display = (colPanel.style.display === 'none')
+                ? 'block' : 'none';
+        });
+    }
+    if (colClose && colPanel) {
+        colClose.addEventListener('click', function () {
+            colPanel.style.display = 'none';
+        });
+    }
     document.addEventListener('click', function (e) {
+        if (!colPanel || !btnColumns || isSummaryMode) {
+            return;
+        }
         if (!colPanel.contains(e.target) && e.target !== btnColumns) {
             colPanel.style.display = 'none';
         }
     });
-    colAll.addEventListener('click', function () {
-        hiddenCols = {};
-        columns.forEach(function (col) {
-            hiddenCols[col] = false;
+    if (colAll && colToggles) {
+        colAll.addEventListener('click', function () {
+            hiddenCols = {};
+            columns.forEach(function (col) {
+                hiddenCols[col] = false;
+            });
+            colToggles.querySelectorAll('input[type=checkbox]').forEach(function (cb) {
+                cb.checked = true;
+            });
+            renderHeaders();
+            renderPage();
         });
-        colToggles.querySelectorAll('input[type=checkbox]').forEach(function (cb) {
-            cb.checked = true;
+    }
+    if (colNone && colToggles) {
+        colNone.addEventListener('click', function () {
+            columns.forEach(function (col) {
+                hiddenCols[col] = isColumnRemovable(col);
+            });
+            colToggles.querySelectorAll('input[type=checkbox]').forEach(function (cb) {
+                cb.checked = !hiddenCols[cb.dataset.col];
+            });
+            renderHeaders();
+            renderPage();
         });
-        renderHeaders();
-        renderPage();
-    });
-    colNone.addEventListener('click', function () {
-        columns.forEach(function (col) {
-            hiddenCols[col] = isColumnRemovable(col);
-        });
-        colToggles.querySelectorAll('input[type=checkbox]').forEach(function (cb) {
-            cb.checked = !hiddenCols[cb.dataset.col];
-        });
-        renderHeaders();
-        renderPage();
-    });
+    }
 
     /* -----------------------------------------------------------------------
        Clear filters
     ----------------------------------------------------------------------- */
-    btnClearFilter.addEventListener('click', function () {
-        colFilters = {};
-        filterRow.querySelectorAll('input.ot-filter-input').forEach(
-            function (inp) { inp.value = ''; }
-        );
-        currentPage = 1;
-        applyFilterSort();
-    });
+    if (btnClearFilter) {
+        btnClearFilter.addEventListener('click', function () {
+            colFilters = {};
+            filterRow.querySelectorAll('input.ot-filter-input').forEach(
+                function (inp) { inp.value = ''; }
+            );
+            currentPage = 1;
+            applyFilterSort();
+        });
+    }
 
     if (hasFindControls) {
         var debouncedLoad = debounce(function () {
@@ -1595,6 +2252,575 @@
                     stgStatus.textContent = 'Network error.';
                 }
             });
+        });
+    }
+
+    /* -----------------------------------------------------------------------
+       Summary-table overlay + exports
+    ----------------------------------------------------------------------- */
+    function moveSummarySelectedColumn(fromIndex, toIndex) {
+        var cols = summarySelectedColumns.slice();
+        if (fromIndex < 0 || toIndex < 0) return;
+        if (fromIndex >= cols.length || toIndex >= cols.length) return;
+        if (fromIndex === toIndex) return;
+        var moved = cols.splice(fromIndex, 1)[0];
+        cols.splice(toIndex, 0, moved);
+        summarySelectedColumns = cols;
+        renderSummaryPicker();
+    }
+
+    function renderSummarySelected() {
+        if (!summarySelected) return;
+        summarySelected.innerHTML = '';
+
+        var fixedCard = document.createElement('span');
+        fixedCard.className = 'ogs-card ogs-card--fixed';
+        fixedCard.textContent = 'OBJNAME';
+        summarySelected.appendChild(fixedCard);
+
+        summarySelectedColumns.forEach(function (propId, index) {
+            var item = summaryPropertyCatalog.find(function (entry) {
+                return entry.id === propId;
+            });
+            if (!item) return;
+            var card = document.createElement('div');
+            card.className = 'ogs-card';
+            card.draggable = true;
+            card.setAttribute('draggable', 'true');
+            card.dataset.dragIndex = String(index);
+            var metaText = summaryPath(item);
+            var oneLine = getSummaryLabel(item);
+            if (metaText) {
+                oneLine += ' - ' + metaText;
+            }
+            card.innerHTML = '<span class="ogs-card__text">'
+                + '<span class="ogs-card__title">'
+                + escHtml(oneLine)
+                + '</span>'
+                + '</span>'
+                + '<span class="ogs-card__actions">'
+                + '<button type="button" class="ogs-card__icon" '
+                + 'title="Move up">'
+                + '<i class="fa-solid fa-arrow-up"></i></button>'
+                + '<button type="button" class="ogs-card__icon" '
+                + 'title="Move down">'
+                + '<i class="fa-solid fa-arrow-down"></i></button>'
+                + '<span class="ogs-card__drag" '
+                + 'title="Drag to reorder">'
+                + '<i class="fa-solid fa-grip-vertical"></i></span>'
+                + '<button type="button" class="ogs-card__icon" '
+                + 'title="Remove column">'
+                + '<i class="fa-solid fa-xmark"></i></button>'
+                + '</span>';
+            var dragHandle = card.querySelector('.ogs-card__drag');
+            if (dragHandle) {
+                dragHandle.draggable = true;
+                dragHandle.setAttribute('draggable', 'true');
+            }
+            card.addEventListener('dragstart', function (event) {
+                var fromIndex = parseInt(
+                    card.dataset.dragIndex || '-1',
+                    10
+                );
+                if (isNaN(fromIndex) || fromIndex < 0) {
+                    event.preventDefault();
+                    return;
+                }
+                card.classList.add('ogs-card--dragging');
+                event.dataTransfer.effectAllowed = 'move';
+                event.dataTransfer.setData('text/plain', String(fromIndex));
+            });
+            if (dragHandle) {
+                dragHandle.addEventListener('dragstart', function (event) {
+                    var fromIndex = parseInt(
+                        card.dataset.dragIndex || '-1',
+                        10
+                    );
+                    if (isNaN(fromIndex) || fromIndex < 0) {
+                        event.preventDefault();
+                        return;
+                    }
+                    card.classList.add('ogs-card--dragging');
+                    event.dataTransfer.effectAllowed = 'move';
+                    event.dataTransfer.setData(
+                        'text/plain',
+                        String(fromIndex)
+                    );
+                });
+            }
+            card.addEventListener('dragend', function () {
+                card.classList.remove('ogs-card--dragging');
+                summarySelected.querySelectorAll('.ogs-card')
+                    .forEach(function (el) {
+                        el.classList.remove('ogs-card--drop-target');
+                    });
+            });
+            card.addEventListener('dragover', function (event) {
+                event.preventDefault();
+                card.classList.add('ogs-card--drop-target');
+            });
+            card.addEventListener('dragleave', function () {
+                card.classList.remove('ogs-card--drop-target');
+            });
+            card.addEventListener('drop', function (event) {
+                event.preventDefault();
+                card.classList.remove('ogs-card--drop-target');
+                var fromIndex = parseInt(
+                    event.dataTransfer.getData('text/plain'),
+                    10
+                );
+                var toIndex = parseInt(
+                    card.dataset.dragIndex || '-1',
+                    10
+                );
+                if (isNaN(fromIndex)) return;
+                if (isNaN(toIndex)) return;
+                moveSummarySelectedColumn(fromIndex, toIndex);
+            });
+            var actionBtns = card.querySelectorAll('.ogs-card__icon');
+            var upBtn = actionBtns[0];
+            var downBtn = actionBtns[1];
+            var removeBtn = actionBtns[2];
+            if (upBtn) {
+                upBtn.disabled = index === 0;
+                upBtn.addEventListener('click', function () {
+                    moveSummarySelectedColumn(index, index - 1);
+                });
+            }
+            if (downBtn) {
+                downBtn.disabled = index === summarySelectedColumns.length - 1;
+                downBtn.addEventListener('click', function () {
+                    moveSummarySelectedColumn(index, index + 1);
+                });
+            }
+            removeBtn.addEventListener('click', function () {
+                summarySelectedColumns = summarySelectedColumns.filter(
+                    function (value) {
+                        return value !== propId;
+                    }
+                );
+                delete summarySelectedAliases[propId];
+                renderSummaryPicker();
+            });
+            summarySelected.appendChild(card);
+        });
+
+        summaryCustomColumns.forEach(function (row, cIndex) {
+            var card = document.createElement('div');
+            card.className = 'ogs-card';
+            var varsText = Object.keys(row.variables || {})
+                .sort()
+                .map(function (key) {
+                    return key + '→' + customPropertyLabel(
+                        row.variables[key]
+                    );
+                })
+                .join(', ');
+            var customLine = String(row.name || 'Custom')
+                + ' - '
+                + String(row.expression || '')
+                + ' ('
+                + varsText
+                + ')';
+            card.innerHTML = '<span class="ogs-card__text">'
+                + '<span class="ogs-card__title">'
+                + escHtml(customLine)
+                + '</span>'
+                + '</span>'
+                + '<span class="ogs-card__actions">'
+                + '<button type="button" class="ogs-card__icon" '
+                + 'title="Move up">'
+                + '<i class="fa-solid fa-arrow-up"></i></button>'
+                + '<button type="button" class="ogs-card__icon" '
+                + 'title="Move down">'
+                + '<i class="fa-solid fa-arrow-down"></i></button>'
+                + '<button type="button" class="ogs-card__icon" '
+                + 'title="Edit custom column">'
+                + '<i class="fa-solid fa-pen"></i></button>'
+                + '<button type="button" class="ogs-card__icon" '
+                + 'title="Remove custom column">'
+                + '<i class="fa-solid fa-xmark"></i></button>'
+                + '</span>';
+            var actionBtns = card.querySelectorAll('.ogs-card__icon');
+            var upBtn = actionBtns[0];
+            var downBtn = actionBtns[1];
+            var editBtn = actionBtns[2];
+            var removeBtn = actionBtns[3];
+            if (upBtn) {
+                upBtn.disabled = cIndex === 0;
+                upBtn.addEventListener('click', function () {
+                    moveSummaryCustomColumn(cIndex, cIndex - 1);
+                });
+            }
+            if (downBtn) {
+                downBtn.disabled = cIndex === summaryCustomColumns.length - 1;
+                downBtn.addEventListener('click', function () {
+                    moveSummaryCustomColumn(cIndex, cIndex + 1);
+                });
+            }
+            if (editBtn) {
+                editBtn.addEventListener('click', function () {
+                    openSummaryCustomOverlay(cIndex);
+                });
+            }
+            removeBtn.addEventListener('click', function () {
+                var key = String(row.name || '').toLowerCase();
+                summaryCustomColumns = summaryCustomColumns.filter(
+                    function (entry) {
+                        return String(entry.name || '').toLowerCase() !== key;
+                    }
+                );
+                renderSummaryPicker();
+            });
+            summarySelected.appendChild(card);
+        });
+    }
+
+    function renderSummaryList() {
+        if (!summaryList) return;
+        var rawQuery = String(summarySearch ? summarySearch.value : '')
+            .trim().toLowerCase();
+        var query = rawQuery.length >= 3 ? rawQuery : '';
+        var selectedCategory = String(
+            summaryCategory ? summaryCategory.value : ''
+        );
+        var selectedSub = String(
+            summarySubcategory ? summarySubcategory.value : ''
+        );
+        var shown = 0;
+        var groupKey = '';
+        summaryList.innerHTML = '';
+
+        var items = summaryPropertyCatalog.slice();
+        items.sort(function (a, b) {
+            var ka = [
+                summaryCategoryValue(a),
+                summarySubcategoryValue(a),
+                summaryPropertyName(a),
+            ].join('||').toLowerCase();
+            var kb = [
+                summaryCategoryValue(b),
+                summarySubcategoryValue(b),
+                summaryPropertyName(b),
+            ].join('||').toLowerCase();
+            if (ka < kb) return -1;
+            if (ka > kb) return 1;
+            return 0;
+        });
+
+        items.forEach(function (item) {
+            var categoryText = summaryCategoryValue(item);
+            var subText = summarySubcategoryValue(item);
+            if (selectedCategory && categoryText !== selectedCategory) {
+                return;
+            }
+            if (selectedSub && subText !== selectedSub) {
+                return;
+            }
+            var haystack = (
+                summaryPropertyName(item)
+                + ' ' + categoryText
+                + ' ' + subText
+            ).toLowerCase();
+            if (query && haystack.indexOf(query) === -1) {
+                return;
+            }
+            var thisGroup = categoryText + ' / ' + subText;
+            if (thisGroup !== groupKey) {
+                groupKey = thisGroup;
+                var group = document.createElement('div');
+                group.className = 'ogs-list__group';
+                group.textContent = thisGroup;
+                summaryList.appendChild(group);
+            }
+            shown += 1;
+            var btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = 'ogs-list__item';
+            btn.disabled = hasSummaryColumn(item.id);
+            var itemLabel = hasSummaryColumn(item.id)
+                ? getSummaryLabel(item)
+                : summaryPropertyName(item);
+            var metaText = summaryPath(item);
+            btn.innerHTML = '<span class="ogs-list__label">'
+                + escHtml(itemLabel) + '</span>'
+                + (metaText
+                    ? ('<span class="ogs-list__meta">'
+                        + escHtml(metaText)
+                        + '</span>')
+                    : '');
+            btn.addEventListener('click', function () {
+                if (hasSummaryColumn(item.id)) return;
+                summarySelectedColumns.push(item.id);
+                renderSummaryPicker();
+            });
+            summaryList.appendChild(btn);
+        });
+
+        if (!shown) {
+            summaryList.innerHTML = '<div class="ogs-list__empty">'
+                + 'No properties match this search.'
+                + '</div>';
+        }
+    }
+
+    function renderSummaryPicker() {
+        renderSummaryFilters();
+        renderSummaryList();
+        renderSummarySelected();
+    }
+
+    function hideSummaryOverlay() {
+        if (summaryOverlay) summaryOverlay.style.display = 'none';
+        closeSummaryCustomOverlay();
+        setSummaryStatus('', false);
+    }
+
+    function loadSummaryConfig(callback) {
+        if (!isSummaryMode || !cfg.summaryConfigApiUrl) return;
+        setSummaryStatus('Loading summary properties...', false);
+        fetch(cfg.summaryConfigApiUrl + '?'
+            + summaryConfigParams().toString())
+            .then(function (r) { return r.json(); })
+            .then(function (data) {
+                if (!data.success) {
+                    setSummaryStatus(
+                        data.error || 'Failed to load summary config.',
+                        true
+                    );
+                    return;
+                }
+                summaryPropertyCatalog = data.property_catalog || [];
+                summarySelectedColumns = data.selected_columns || [];
+                summarySelectedAliases = data.selected_aliases || {};
+                summaryCustomColumns = data.custom_columns || [];
+                summaryAllowedExpressionRows =
+                    data.allowed_expression_rows || [];
+                if (summaryCategory) summaryCategory.value = '';
+                if (summarySubcategory) summarySubcategory.value = '';
+                renderSummaryPicker();
+                setSummaryStatus('', false);
+                if (callback) callback();
+            })
+            .catch(function () {
+                setSummaryStatus('Network error loading properties.', true);
+            });
+    }
+
+    function showSummaryOverlay() {
+        if (!summaryOverlay) return;
+        if (summaryList) {
+            summaryList.innerHTML = '<div class="ogs-list__empty">'
+                + 'Loading properties...'
+                + '</div>';
+        }
+        summaryOverlay.style.display = '';
+        closeSummaryRenameOverlay();
+        loadSummaryConfig(function () {
+            if (summarySearch) {
+                summarySearch.value = '';
+                renderSummaryList();
+                summarySearch.focus();
+            }
+        });
+    }
+
+    function saveSummaryColumns() {
+        if (!cfg.summaryConfigApiUrl || !summaryRegenerateBtn) return;
+        summaryRegenerateBtn.disabled = true;
+        setSummaryStatus('Saving summary columns...', false);
+        var source = String(cfg.summarySource || 'group').trim();
+        fetch(cfg.summaryConfigApiUrl, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+                profile_id: cfg.profileId,
+                group: cfg.summaryGroupName,
+                source: source,
+                section: source === 'favourites'
+                    ? String(cfg.summarySectionName || cfg.summaryGroupName || '')
+                    : '',
+                columns: summarySelectedColumns,
+                aliases: summarySelectedColumns.reduce(
+                    function (acc, propId) {
+                        var val = String(
+                            summarySelectedAliases[propId] || ''
+                        ).trim();
+                        if (val) {
+                            acc[propId] = val;
+                        }
+                        return acc;
+                    },
+                    {}
+                ),
+                custom_columns: summaryCustomColumns,
+            })
+        })
+        .then(function (r) { return r.json(); })
+        .then(function (data) {
+            summaryRegenerateBtn.disabled = false;
+            if (!data.success) {
+                setSummaryStatus(
+                    data.error || 'Failed to save summary columns.',
+                    true
+                );
+                return;
+            }
+            summarySelectedColumns = data.selected_columns || [];
+            summarySelectedAliases = data.selected_aliases || {};
+            summaryCustomColumns = data.custom_columns || [];
+            hideSummaryOverlay();
+            loadData();
+        })
+        .catch(function () {
+            summaryRegenerateBtn.disabled = false;
+            setSummaryStatus('Network error.', true);
+        });
+    }
+
+    function downloadSummary(format) {
+        if (!cfg.summaryExportApiUrl) return;
+        var params = summaryConfigParams();
+        params.set('format', format);
+        window.location = cfg.summaryExportApiUrl + '?'
+            + params.toString();
+    }
+
+    if (isSummaryMode && btnColumns) {
+        btnColumns.addEventListener('click', function () {
+            showSummaryOverlay();
+        });
+    }
+    if (summarySearch) {
+        summarySearch.addEventListener('input', renderSummaryList);
+    }
+    if (summaryRenameOpen) {
+        summaryRenameOpen.addEventListener('click', function () {
+            openSummaryRenameOverlay('');
+        });
+    }
+    if (summaryRenameApply) {
+        summaryRenameApply.addEventListener(
+            'click', applySummaryRenameOverlay
+        );
+    }
+    if (summaryRenameClose) {
+        summaryRenameClose.addEventListener(
+            'click', closeSummaryRenameOverlay
+        );
+    }
+    if (summaryRenameCancel) {
+        summaryRenameCancel.addEventListener(
+            'click', closeSummaryRenameOverlay
+        );
+    }
+    if (summaryRenameBackdrop) {
+        summaryRenameBackdrop.addEventListener(
+            'click', closeSummaryRenameOverlay
+        );
+    }
+    if (summaryCustomOpen) {
+        summaryCustomOpen.addEventListener(
+            'click', function () {
+                openSummaryCustomOverlay(-1);
+            }
+        );
+    }
+    if (summaryCustomClose) {
+        summaryCustomClose.addEventListener(
+            'click', closeSummaryCustomOverlay
+        );
+    }
+    if (summaryCustomCancel) {
+        summaryCustomCancel.addEventListener(
+            'click', closeSummaryCustomOverlay
+        );
+    }
+    if (summaryCustomBackdrop) {
+        summaryCustomBackdrop.addEventListener(
+            'click', closeSummaryCustomOverlay
+        );
+    }
+    if (summaryCustomAddVar) {
+        summaryCustomAddVar.addEventListener('click', function () {
+            summaryCustomDraftVars.push({letter: 'x', propId: ''});
+            invalidateSummaryCustomTest();
+            renderSummaryCustomVars();
+        });
+    }
+    if (summaryCustomName) {
+        summaryCustomName.addEventListener('input', function () {
+            invalidateSummaryCustomTest();
+        });
+    }
+    if (summaryCustomExpr) {
+        summaryCustomExpr.addEventListener('input', function () {
+            invalidateSummaryCustomTest();
+        });
+    }
+    if (summaryCustomExprHelpToggle) {
+        summaryCustomExprHelpToggle.addEventListener(
+            'click', toggleSummaryExprHelp
+        );
+    }
+    if (summaryCustomCategory) {
+        summaryCustomCategory.addEventListener('change', function () {
+            if (summaryCustomSubcategory) {
+                summaryCustomSubcategory.value = '';
+            }
+            invalidateSummaryCustomTest();
+            renderSummaryCustomFilters();
+            renderSummaryCustomVars();
+        });
+    }
+    if (summaryCustomSubcategory) {
+        summaryCustomSubcategory.addEventListener('change', function () {
+            invalidateSummaryCustomTest();
+            renderSummaryCustomVars();
+        });
+    }
+    if (summaryCustomSearch) {
+        summaryCustomSearch.addEventListener('input', function () {
+            renderSummaryCustomVars();
+        });
+    }
+    if (summaryCustomTest) {
+        summaryCustomTest.addEventListener(
+            'click', testSummaryCustomColumn
+        );
+    }
+    if (summaryCustomSave) {
+        summaryCustomSave.addEventListener(
+            'click', saveSummaryCustomColumn
+        );
+    }
+    if (summaryCategory) {
+        summaryCategory.addEventListener('change', function () {
+            if (summarySubcategory) summarySubcategory.value = '';
+            renderSummaryPicker();
+        });
+    }
+    if (summarySubcategory) {
+        summarySubcategory.addEventListener('change', renderSummaryPicker);
+    }
+    if (summaryClose) {
+        summaryClose.addEventListener('click', hideSummaryOverlay);
+    }
+    if (summaryCloseBtn) {
+        summaryCloseBtn.addEventListener('click', hideSummaryOverlay);
+    }
+    if (summaryBackdrop) {
+        summaryBackdrop.addEventListener('click', hideSummaryOverlay);
+    }
+    if (summaryRegenerateBtn) {
+        summaryRegenerateBtn.addEventListener('click', saveSummaryColumns);
+    }
+    if (summaryDownloadSelect) {
+        summaryDownloadSelect.addEventListener('change', function () {
+            var fmt = String(summaryDownloadSelect.value || '').trim();
+            if (!fmt) return;
+            downloadSummary(fmt);
+            summaryDownloadSelect.value = '';
         });
     }
 

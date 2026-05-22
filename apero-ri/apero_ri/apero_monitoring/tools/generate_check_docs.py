@@ -12,6 +12,7 @@ from typing import Dict, List, Tuple
 import yaml
 
 from apero_ri.apero_monitoring import CHECKS
+from apero_ri.core.auth import load_apero_profiles
 
 
 DEFAULT_DOCS_DIR = (
@@ -118,9 +119,76 @@ def _front_matter_lines(check_name: str) -> List[str]:
     return ['---'] + dumped + ['---', '']
 
 
+def _logic_value_text(value: object) -> str:
+    """Return a compact display string for one logic value."""
+    if isinstance(value, list):
+        parts = [str(item or '').strip() for item in value]
+        parts = [item for item in parts if item != '']
+        return ', '.join(parts) if len(parts) > 0 else '[]'
+    if value in [None, '']:
+        return 'None'
+    return str(value)
+
+
+def _logic_lines(check_obj: object, profiles_data: dict) -> List[str]:
+    """Build markdown lines for the check logic section."""
+    simple_check = getattr(check_obj, 'simple_check', None)
+    fallback = str(getattr(check_obj, 'description', '') or '').strip()
+    lines = ['## Check logic', '']
+
+    if simple_check is None:
+        lines.append(fallback if fallback else 'No logic available.')
+        lines.append('')
+        return lines
+
+    groups = list(simple_check.get_logic_tab_groups(profiles_data) or [])
+    if len(groups) == 0:
+        logic = str(simple_check.get_logic_markdown() or '').strip()
+        if logic == '':
+            logic = fallback
+        lines.append(logic if logic else 'No logic available.')
+        lines.append('')
+        return lines
+
+    for group in groups:
+        kind = str(group.get('kind') or '').strip()
+        title = str(group.get('title') or '').strip()
+        if kind == 'generic':
+            title = 'generic'
+        if title != '':
+            lines.append(f'### {title}')
+            lines.append('')
+
+        logic = str(group.get('logic_markdown') or '').strip()
+        if logic == '':
+            logic = str(simple_check.get_logic_markdown() or '').strip()
+        lines.append(logic if logic else 'No logic available.')
+        lines.append('')
+
+        rows = list(group.get('rows') or [])
+        if len(rows) == 0:
+            continue
+
+        lines.append('#### Resolved values')
+        lines.append('')
+        lines.append('| Key | Value |')
+        lines.append('| --- | --- |')
+        for row in rows:
+            key = str((row or {}).get('label') or '').strip()
+            if key == '':
+                continue
+            value = _logic_value_text((row or {}).get('value'))
+            value = value.replace('|', '\\|')
+            lines.append(f'| {key} | {value} |')
+        lines.append('')
+
+    return lines
+
+
 def _check_page(check_key: str,
                 check_obj: object,
-                key_to_file: Dict[str, str]) -> str:
+                key_to_file: Dict[str, str],
+                profiles_data: dict) -> str:
     """Build markdown content for one check."""
     check_type = str(getattr(check_obj, 'check_type', '') or '')
     human = str(getattr(check_obj, 'string_name', check_key) or check_key)
@@ -152,6 +220,7 @@ def _check_page(check_key: str,
     lines.append(what_to_do if what_to_do else 'No instructions provided.')
     lines.append('')
     lines.extend(_contact_lines(contact_list))
+    lines.extend(_logic_lines(check_obj, profiles_data))
     return '\n'.join(lines).rstrip() + '\n'
 
 
@@ -162,10 +231,17 @@ def generate_check_docs(output_dir: Path) -> Tuple[int, List[Path]]:
     for check_key in CHECKS:
         key_to_file[str(check_key)] = _doc_filename(str(check_key))
 
+    profiles_data = load_apero_profiles(hydrate=True)
+
     written = []
     for check_key, check_obj in CHECKS.items():
         filename = _doc_filename(str(check_key))
-        content = _check_page(str(check_key), check_obj, key_to_file)
+        content = _check_page(
+            str(check_key),
+            check_obj,
+            key_to_file,
+            profiles_data,
+        )
         out_path = output_dir / filename
         out_path.write_text(content, encoding='utf-8')
         written.append(out_path)

@@ -18,6 +18,7 @@ from apero_ri.application.monitor_view_helpers import (
     _get_apero_check_page_payload,
     _normalize_apero_checks_args,
 )
+from apero_ri.apero_monitoring.checks import CHECKS as MONITOR_CHECKS
 from apero_ri.core import apero_checks as checks_core
 from apero_ri.core.auth import (
     get_accessible_profiles,
@@ -106,6 +107,8 @@ def _queue_apero_check_run(
     profile_id: str,
     obsdir: str,
     check_names=None,
+    history_user: str = '',
+    history_source: str = '',
 ):
     """Queue one APERO check task for a specific night/check selection."""
     profile = _resolve_accessible_profile(app, profile_id)
@@ -149,6 +152,10 @@ def _queue_apero_check_run(
 
     if cleaned_checks:
         task_cfg['checks'] = cleaned_checks
+    if str(history_user or '').strip():
+        task_cfg['history_user'] = str(history_user).strip()
+    if str(history_source or '').strip():
+        task_cfg['history_source'] = str(history_source).strip()
 
     allowed, reason = task_runner.can_enqueue_now(task_cfg)
     if not allowed:
@@ -539,17 +546,28 @@ def api_apero_checks_config_save(app):
     root_path = str(body.get('checks_root') or '').strip()
     ignored_checks = body.get('ignored_checks') or []
     override_allowed = body.get('override_allowed') or []
+    valid_checks = {
+        str(key or '').strip()
+        for key in MONITOR_CHECKS
+        if str(key or '').strip() != ''
+    }
 
     local_data_dir = app._resolve_local_data_dir()
     cfg = checks_core.load_config(local_data_dir)
     if root_path:
         cfg['checks_root'] = root_path
-    cfg['ignored_checks'] = checks_core._normalize_ignored_checks(
-        ignored_checks
-    )
-    cfg['override_allowed'] = checks_core._normalize_override_allowed(
-        override_allowed
-    )
+    cfg['ignored_checks'] = [
+        key for key in checks_core._normalize_ignored_checks(
+            ignored_checks
+        )
+        if key in valid_checks
+    ]
+    cfg['override_allowed'] = [
+        key for key in checks_core._normalize_override_allowed(
+            override_allowed
+        )
+        if key in valid_checks
+    ]
     checks_core.save_config(local_data_dir, cfg)
     return jsonify(
         success=True,
@@ -667,6 +685,46 @@ def api_apero_checks_profile_page(app, profile_id):
     )
 
 
+def api_apero_checks_policy_sections(app):
+    """Return heavy APERO checks policy sections asynchronously."""
+    user_info = app._get_api_user()
+    if not user_info:
+        return jsonify(success=False, error='Login required'), 401
+
+    perms = resolve_user_permissions(
+        user_info['groups'], app.ari_groups
+    )
+    if 'manage.apero_profile' not in set(perms or set()):
+        return jsonify(success=False, error='Admin access required'), 403
+
+    local_data_dir = app._resolve_local_data_dir()
+    checks_cfg = checks_core.load_config(local_data_dir)
+    ignored_checks = checks_core.load_ignored_checks(local_data_dir)
+    override_allowed = checks_core.load_override_allowed(local_data_dir)
+
+    from apero_ri.application import page_view_helpers as pvh
+
+    payload = pvh._build_apero_policy_payload(
+        local_data_dir,
+        checks_cfg,
+        ignored_checks,
+        override_allowed,
+    )
+    checks_catalog = payload.get('checks_catalog', [])
+    checks_health = pvh._build_checks_policy_health(
+        checks_catalog,
+        ignored_checks,
+    )
+
+    return jsonify(
+        success=True,
+        checks_catalog=checks_catalog,
+        profile_summaries=payload.get('profile_summaries', []),
+        policy_last_updated=payload.get('policy_last_updated', ''),
+        checks_health=checks_health,
+    )
+
+
 def api_apero_checks_view_yaml(app):
     """Return one APERO check YAML file content in read-only mode."""
     user_info, perms = _api_user(app)
@@ -754,6 +812,8 @@ def api_apero_checks_rerun_night(app):
             profile_id,
             obsdir,
             check_names=[],
+            history_user=str(user_info.get('username') or '').strip(),
+            history_source='ARI:apero_checks',
         )
     except Exception as exc:
         return jsonify(success=False, error=str(exc)), 400
@@ -792,6 +852,8 @@ def api_apero_checks_rerun_single_check(app):
             profile_id,
             obsdir,
             check_names=[check_key],
+            history_user=str(user_info.get('username') or '').strip(),
+            history_source='ARI:apero_checks',
         )
     except Exception as exc:
         return jsonify(success=False, error=str(exc)), 400
@@ -841,6 +903,82 @@ def api_apero_checks_delete_obsdir(app):
         ), 500
 
     return jsonify(success=True, deleted_path=str(path))
+
+
+def api_apero_checks_delete_test_from_yamls(app):
+    """Delete one test key from failures/passes across profile YAML files."""
+    user_info = app._get_api_user()
+    if not user_info:
+        return jsonify(success=False, error='Login required'), 401
+
+    perms = resolve_user_permissions(
+        user_info['groups'], app.ari_groups
+    )
+    if 'manage.apero_profile' not in set(perms or set()):
+        return jsonify(success=False, error='Admin access required'), 403
+
+    body = request.get_json(silent=True) or {}
+    check_key = str(body.get('check_key') or '').strip().upper()
+    profile_scope = str(body.get('profile_scope') or 'all').strip()
+    if check_key == '':
+        return jsonify(success=False, error='Missing check_key'), 400
+
+    profiles = list(get_accessible_profiles(user_info, app.ari_groups) or [])
+    if profile_scope != 'all':
+        profiles = [
+            item for item in profiles
+            if str(item.get('profile_id') or '') == profile_scope
+        ]
+        if len(profiles) == 0:
+            return jsonify(
+                success=False,
+                error='Profile not found or access denied',
+            ), 404
+
+    local_data_dir = app._resolve_local_data_dir()
+    cfg = checks_core.load_config(local_data_dir)
+
+    all_files = []
+    seen_files = set()
+    selected_profiles = []
+    for profile in profiles:
+        profile_id = str(profile.get('profile_id') or '').strip()
+        if profile_id != '':
+            selected_profiles.append(profile_id)
+        root = checks_core.resolve_checks_root(
+            local_data_dir,
+            profile_data=profile.get('data'),
+            configured_root=cfg.get('checks_root', ''),
+        )
+        for path in checks_core.list_yaml_files(root):
+            path_key = str(path.resolve())
+            if path_key in seen_files:
+                continue
+            seen_files.add(path_key)
+            all_files.append(path)
+
+    scanned = 0
+    updated = 0
+    removed_failures = 0
+    removed_passes = 0
+    for path in all_files:
+        scanned += 1
+        outcome = checks_core.delete_test_key(path, check_key)
+        removed_failures += int(outcome.get('removed_failures') or 0)
+        removed_passes += int(outcome.get('removed_passes') or 0)
+        if bool(outcome.get('changed')):
+            updated += 1
+
+    return jsonify(
+        success=True,
+        check_key=check_key,
+        profile_scope=profile_scope,
+        selected_profiles=sorted(selected_profiles),
+        yaml_files_scanned=scanned,
+        yaml_files_updated=updated,
+        removed_failures=removed_failures,
+        removed_passes=removed_passes,
+    )
 
 
 def api_apero_checks_queue_status(app, profile_id):

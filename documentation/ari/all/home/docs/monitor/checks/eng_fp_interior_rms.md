@@ -9,6 +9,26 @@ card_icon: fa-solid fa-gear
 
 No overview available.
 
+## Check logic
+
+### generic
+
+Performs the following test
+
+```python
+np.nanstd(metric_key) < limit
+```
+
+#### Resolved values
+
+| Key | Value |
+| --- | --- |
+| TEST_KEY | fp_interior_rms |
+| ENABLED | True |
+| METRIC_KEY | metric_key |
+| LIMIT | limit |
+| METRIC | metric |
+
 ## Requirements
 
 - [BLANK](checks/blank.md)

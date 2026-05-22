@@ -220,6 +220,10 @@ def _init_run_context(params: Dict[str, Any]) -> dict:
         'create_output': _normalize_create_flag(
             task_config.get('create', params.get('create', True))
         ),
+        'history_user': str(task_config.get('history_user', '') or ''),
+        'history_source': str(
+            task_config.get('history_source', '') or ''
+        ),
         'slow_check_seconds': float(
             task_config.get('slow_check_seconds', 5.0)
         ),
@@ -406,7 +410,10 @@ def _run_profile(task: AperoCheckTask,
     # Results were already applied incrementally in _on_obsdir_result.
     # Create one shared history entry for this profile run.
     if ctx['create_output']:
-        history_entry = checks_core.build_history_entry()
+        history_entry = checks_core.build_history_entry(
+            user=ctx['history_user'],
+            source=ctx['history_source'],
+        )
         # Re-write every YAML once to append a shared run-history entry.
         for row in selected_rows:
             obs_dir = row['obs_dir']

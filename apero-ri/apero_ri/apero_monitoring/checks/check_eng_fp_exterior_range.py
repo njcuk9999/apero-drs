@@ -2,12 +2,8 @@
 # -*- coding: utf-8 -*-
 """Engineering check: FP exterior range."""
 
-from typing import Tuple
-
-import numpy as np
-
 import apero_ri.apero_monitoring.core.raw_common as raw_common
-from apero_ri.apero_monitoring.core.core import AperoCheck
+from apero_ri.apero_monitoring.core.core import AperoCheck, SimpleCheck
 
 CHECK_NAME = 'ENG_FP_EXTERIOR_RANGE'
 CHECK_HUMAN_NAME = 'ENG: FP Exterior Range'
@@ -17,70 +13,39 @@ TEST_KEY = 'fp_exterior_range'
 
 CHECK = AperoCheck(CHECK_NAME, CHECK_HUMAN_NAME, CHECK_TYPE, INSTRUMENTS)
 CHECK.dependencies = ['BLANK', 'HAS_OBSDIR', 'CALIB_TEST']
+SIMPLE_CHECK = SimpleCheck(CHECK, TEST_KEY)
+SIMPLE_CHECK.data['x'] = dict(
+    key=['metric_key', 'key1'],
+    dtype='float',
+    normalize='float',
+)
+SIMPLE_CHECK.data['low'] = dict(
+    kind='config',
+    key=['lower_limit', 'val1'],
+    cast='float',
+    default=23.496,
+)
+SIMPLE_CHECK.data['high'] = dict(
+    kind='config',
+    key=['upper_limit', 'val2'],
+    cast='float',
+    default=24.504,
+)
+SIMPLE_CHECK.calc['xmin'] = lambda x, **_: float(np.nanmin(x))
+SIMPLE_CHECK.calc['xmax'] = lambda x, **_: float(np.nanmax(x))
+SIMPLE_CHECK.func = (
+    lambda xmin, xmax, low, high, **_: (xmin > low) and (xmax < high)
+)
+SIMPLE_CHECK.pmsg = '{test_key} okay ({xmin:.3f}-{xmax:.3f}).'
+SIMPLE_CHECK.fmsg = (
+    'range {xmin:.3f}-{xmax:.3f} outside {low:.3f}-{high:.3f}'
+)
+SIMPLE_CHECK.desc = (
+    'np.nanmin({x}) > {low} and np.nanmax({x}) < {high}'
+)
 
 
-def _description(cfg: dict) -> str:
-    logic = (
-        'np.nanmin(' + str(cfg.get('key1', '')) + ') > '
-        + str(cfg.get('val1', '')) + ' and '
-        + 'np.nanmax(' + str(cfg.get('key1', '')) + ') < '
-        + str(cfg.get('val2', ''))
-    )
-    return 'Performs the following test\n\n```python\n' + logic + '\n```'
-
-
-def check_function(instrument: str, obs_dir: str,
-                   aparams: dict, dbparams: dict) -> Tuple[bool, str]:
-    """Run FP exterior-range validation for one observation directory.
-
-    :param instrument: Active instrument key for the current profile.
-    :param obs_dir: Observation-directory/night identifier.
-    :param aparams: APERO runtime parameters and test configuration.
-    :param dbparams: Runtime/database context passed by monitor task.
-    :returns: Tuple ``(is_ok, message)`` for pass/skip/failure reporting.
-    """
-    _ = instrument, dbparams
-    cfg = raw_common.get_check_value(aparams,
-                                     'eng_test',
-                                     ['tests', TEST_KEY],
-                                     dict())
-    if not isinstance(cfg, dict) or len(cfg) == 0:
-        return True, f'Skipped {TEST_KEY}: not configured.'
-    CHECK.description = _description(cfg)
-    if not bool(cfg.get('enabled', True)):
-        return True, f'Skipped {TEST_KEY}: disabled.'
-    key1 = str(cfg.get('key1', '')).strip()
-    low = float(cfg.get('val1', -np.inf))
-    high = float(cfg.get('val2', np.inf))
-    if key1 == '':
-        return False, f'{TEST_KEY} missing key1.'
-    obs_path, files = raw_common.list_obsdir_files(aparams, obs_dir)
-    if len(files) == 0:
-        return False, f'No FITS files found in {obs_dir}.'
-    defs = dict()
-    defs[key1] = dict(key=key1, dtype='float')
-    table, masks = raw_common.load_header_table(files, defs)
-    use = masks[key1]
-    x = np.array(table[key1][use], dtype=float)
-    if len(x) == 0:
-        return True, f'Skipped {TEST_KEY}: no valid rows.'
-    xmin = float(np.nanmin(x))
-    xmax = float(np.nanmax(x))
-    ok = xmin > low and xmax < high
-    if ok:
-        return True, f'{TEST_KEY} okay ({xmin:.3f}-{xmax:.3f}).'
-    use_files = raw_common.files_from_mask(table, use)
-    reason = f'range {xmin:.3f}-{xmax:.3f} outside {low:.3f}-{high:.3f}'
-    message = raw_common.format_failed_file_message(
-        TEST_KEY,
-        reason,
-        obs_path,
-        use_files,
-    )
-    return False, message
-
-
-CHECK.func = check_function
+CHECK.func = SIMPLE_CHECK.run
 
 
 # =============================================================================

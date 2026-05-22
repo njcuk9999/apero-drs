@@ -9,6 +9,25 @@ card_icon: fa-solid fa-gear
 
 No overview available.
 
+## Check logic
+
+### generic
+
+Performs the following test
+
+```python
+np.all(np.char.upper(np.char.strip(status_key)) != np.char.upper('blocked_value'))
+```
+
+#### Resolved values
+
+| Key | Value |
+| --- | --- |
+| TEST_KEY | backend_device_error_state |
+| ENABLED | True |
+| STATUS_KEY | status_key |
+| BLOCKED_VALUE | blocked_value |
+
 ## Requirements
 
 - [BLANK](checks/blank.md)

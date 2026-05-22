@@ -23,6 +23,11 @@
 {% block doc_content %}
 <div class="ari-page-header">
     <h1><i class="{{ page_icon }}"></i> {{ page_label }}</h1>
+    {% if doc_last_modified %}
+    <p class="ari-page-subtitle" style="font-size:0.82rem;">
+        Last modified: {{ doc_last_modified }}
+    </p>
+    {% endif %}
 </div>
 
 <!-- Rendered documentation content -->

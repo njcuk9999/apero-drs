@@ -9,6 +9,28 @@ card_icon: fa-solid fa-gear
 
 No overview available.
 
+## Check logic
+
+### generic
+
+Performs the following test
+
+```python
+np.nanmin(metric_key) > lower_limit and np.nanmax(metric_key) < upper_limit
+```
+
+#### Resolved values
+
+| Key | Value |
+| --- | --- |
+| TEST_KEY | fp_exterior_range |
+| ENABLED | True |
+| METRIC_KEY | metric_key |
+| LOWER_LIMIT | lower_limit |
+| UPPER_LIMIT | upper_limit |
+| XMIN | xmin |
+| XMAX | xmax |
+
 ## Requirements
 
 - [BLANK](checks/blank.md)
