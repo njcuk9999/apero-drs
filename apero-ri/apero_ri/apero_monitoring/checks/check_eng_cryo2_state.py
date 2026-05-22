@@ -2,6 +2,8 @@
 # -*- coding: utf-8 -*-
 """Engineering check: cryo2 status state."""
 
+import numpy as np
+
 import apero_ri.apero_monitoring.core.raw_common as raw_common
 from apero_ri.apero_monitoring.core.core import AperoCheck, SimpleCheck
 

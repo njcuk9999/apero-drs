@@ -6,6 +6,8 @@ This check validates that every file in one obsdir reports the same expected
 stretcher status value.
 """
 
+import numpy as np
+
 import apero_ri.apero_monitoring.core.raw_common as raw_common
 from apero_ri.apero_monitoring.core.core import AperoCheck, SimpleCheck
 
