@@ -3809,6 +3809,18 @@ body.ari-up-wide-page .ari-doc-main {
     gap: 0.5rem;
 }
 
+.ari-misc-workspace {
+    margin-top: 1rem;
+}
+
+.ari-misc-section__body {
+    padding: 1rem 1rem 1.1rem;
+}
+
+.ari-misc-section__subtitle {
+    margin: 0 0 0.95rem;
+}
+
 /* Filter input inside sections */
 .ari-sg-filter {
     padding: 0.75rem 1rem;
@@ -6732,6 +6744,111 @@ details.ot-howto[open] .ot-howto__chevron {
     gap: 0.45rem;
 }
 
+.acc-table-wrap {
+    max-height: 62vh;
+    overflow: auto;
+    border: 1px solid #d7e3fb;
+    border-radius: 8px;
+    background: #ffffff;
+}
+
+#acc-table {
+    width: 100%;
+    min-width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+}
+
+#acc-table thead th {
+    position: sticky;
+    top: 0;
+    z-index: 4;
+    background: linear-gradient(180deg, #1f6feb 0%, #1657bb 100%);
+    color: #ffffff;
+    border-bottom: 1px solid #0f4aa8;
+    box-shadow: 0 1px 0 rgba(10, 37, 85, 0.22);
+}
+
+#acc-table thead th + th {
+    border-left: 1px solid rgba(255, 255, 255, 0.32);
+}
+
+#acc-table tbody td {
+    border-bottom: 1px solid #d8e3f4;
+    background: #ffffff;
+    transition: background-color 0.14s ease, box-shadow 0.14s ease;
+}
+
+#acc-table tbody td + td {
+    border-left: 1px solid #d2def3;
+}
+
+#acc-table tbody tr:nth-child(even) td {
+    background: #f7faff;
+}
+
+#acc-table tbody tr:hover td {
+    background: #ddebff;
+    box-shadow: inset 0 1px 0 #bed4ff, inset 0 -1px 0 #bed4ff;
+}
+
+#acc-table tbody tr {
+    cursor: pointer;
+}
+
+#acc-table .acc-expr-code {
+    display: block;
+    font-family: "JetBrains Mono", "Fira Code", "Cascadia Mono", monospace;
+    font-size: 0.82rem;
+    line-height: 1.5;
+    white-space: pre-wrap;
+    word-break: break-word;
+}
+
+#acc-table .acc-vars-cell {
+    display: block;
+    white-space: pre-wrap;
+    word-break: break-word;
+}
+
+#acc-table .acc-action-icons {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    flex-wrap: nowrap;
+}
+
+#acc-table .acc-expr-empty {
+    color: var(--ari-text-muted, #6b7280);
+}
+
+#acc-table .acc-expr-token--kw {
+    color: #7c3aed;
+    font-weight: 600;
+}
+
+#acc-table .acc-expr-token--builtin {
+    color: #0f766e;
+    font-weight: 600;
+}
+
+#acc-table .acc-expr-token--module {
+    color: #1d4ed8;
+    font-weight: 600;
+}
+
+#acc-table .acc-expr-token--string {
+    color: #b45309;
+}
+
+#acc-table .acc-expr-token--number {
+    color: #0369a1;
+}
+
+#acc-table .acc-expr-token--name {
+    color: var(--ari-text, #111827);
+}
+
 @media (max-width: 760px) {
     .ogs-filters {
         grid-template-columns: 1fr;
@@ -8045,6 +8162,19 @@ details.ot-howto[open] .ot-howto__chevron {
     text-align: center;
     padding-left: 0.2rem;
     padding-right: 0.2rem;
+}
+
+/* File Browser: keep header/filter rows visible while scrolling */
+#op-tab-file_browser #fb-header-row th {
+    position: sticky;
+    top: 0;
+    z-index: 5;
+}
+
+#op-tab-file_browser #fb-filter-row th {
+    position: sticky;
+    top: 36px;
+    z-index: 4;
 }
 
 #op-tab-file_browser #fb-tbody .bk-cell-check {
@@ -9550,6 +9680,13 @@ details[open] .qdb-sql-summary::before { transform: rotate(90deg); }
 #fb-header-table .fb-header-comment {
     white-space: pre-wrap;
     word-break: break-word;
+}
+
+/* FITS Header viewer: keep header row visible while scrolling */
+#fb-header-table thead th {
+    position: sticky;
+    top: 0;
+    z-index: 4;
 }
 
 /* ==========================================================================
@@ -11675,6 +11812,59 @@ button.ari-rp-section-card:hover {
 
 [data-theme="dark"] .fb-fn-header-link:hover {
     color: #a7d1ff;
+}
+
+[data-theme="dark"] #acc-table .acc-expr-token--kw {
+    color: #c4b5fd;
+}
+
+[data-theme="dark"] #acc-table .acc-expr-token--builtin {
+    color: #5eead4;
+}
+
+[data-theme="dark"] #acc-table .acc-expr-token--module {
+    color: #93c5fd;
+}
+
+[data-theme="dark"] #acc-table .acc-expr-token--string {
+    color: #fbbf24;
+}
+
+[data-theme="dark"] #acc-table .acc-expr-token--number {
+    color: #67e8f9;
+}
+
+[data-theme="dark"] .acc-table-wrap {
+    border-color: #2d3c54;
+    background: #0d1117;
+}
+
+[data-theme="dark"] #acc-table thead th {
+    background: linear-gradient(180deg, #1f6feb 0%, #184ea8 100%);
+    color: #ffffff;
+    border-bottom-color: #234778;
+}
+
+[data-theme="dark"] #acc-table thead th + th {
+    border-left-color: rgba(201, 230, 255, 0.26);
+}
+
+[data-theme="dark"] #acc-table tbody td {
+    border-bottom-color: #2f3f57;
+    background: #111923;
+}
+
+[data-theme="dark"] #acc-table tbody td + td {
+    border-left-color: #314763;
+}
+
+[data-theme="dark"] #acc-table tbody tr:nth-child(even) td {
+    background: #152131;
+}
+
+[data-theme="dark"] #acc-table tbody tr:hover td {
+    background: #1f3250;
+    box-shadow: inset 0 1px 0 #2b4771, inset 0 -1px 0 #2b4771;
 }
 
 /* Groupby wrap and selects */

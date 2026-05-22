@@ -204,7 +204,7 @@
         var rawQuery = String(inputSearch ? inputSearch.value : '')
             .trim()
             .toLowerCase();
-        var query = rawQuery.length >= 3 ? rawQuery : '';
+        var query = rawQuery.length >= 1 ? rawQuery : '';
         return state.propertyCatalog.filter(function (item) {
             if (cat && summaryCategoryValue(item) !== cat) return false;
             if (sub && summarySubcategoryValue(item) !== sub) return false;
@@ -430,6 +430,46 @@
         });
     }
 
+    function testSingleRow(index) {
+        var profileId = String(state.profileId || '').trim();
+        if (!cfg.testUrl || !profileId) {
+            setStatus('Select a profile first.', true);
+            return;
+        }
+        if (index < 0 || index >= state.rows.length) {
+            setStatus('Invalid row selected.', true);
+            return;
+        }
+        var row = state.rows[index] || {};
+        setStatus(
+            'Testing ' + String(row.name || 'custom column') + '...',
+            false
+        );
+        postJson(cfg.testUrl, {
+            profile_id: profileId,
+            default_test_object: String(state.defaultTestObject || '').trim(),
+            expression: String(row.expression || ''),
+            variables: row.variables || {},
+        }).then(function (data) {
+            if (!data.success) {
+                setStatus(
+                    String(row.name || 'Column') + ' failed: '
+                    + String(data.error || 'Test failed.'),
+                    true
+                );
+                return;
+            }
+            setStatus(
+                String(row.name || 'Column')
+                + ' OK on ' + String(data.sample_object || 'sample')
+                + '. Result: ' + String(data.sample_result),
+                false
+            );
+        }).catch(function () {
+            setStatus('Network error during row test.', true);
+        });
+    }
+
     function applyDraft() {
         var name = String(inputName ? inputName.value : '').trim();
         var expression = String(inputExpr ? inputExpr.value : '').trim();
@@ -482,34 +522,81 @@
             }
             return key + '->' + summaryPropertyName(item)
                 + ' [' + summaryPath(item) + ']';
-        }).join(', ');
+        }).join('\n');
+    }
+
+    function highlightPythonExpr(expr) {
+        var text = String(expr || '');
+        if (!text) return '<span class="acc-expr-empty">--</span>';
+
+        var pattern = /("(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*'|\b\d+(?:\.\d+)?\b|\b(?:and|or|not|if|else|in|is|True|False|None)\b|\b(?:abs|round|len|min|max|int|float|str|bool|Time)\b|\b(?:math|np|astropy)\b)/g;
+        var out = '';
+        var last = 0;
+        var match;
+
+        while ((match = pattern.exec(text)) !== null) {
+            var start = match.index;
+            var token = match[0] || '';
+            if (start > last) {
+                out += esc(text.slice(last, start));
+            }
+            var cls = 'acc-expr-token--name';
+            if (/^['"]/.test(token)) {
+                cls = 'acc-expr-token--string';
+            } else if (/^\d/.test(token)) {
+                cls = 'acc-expr-token--number';
+            } else if (/^(and|or|not|if|else|in|is|True|False|None)$/.test(token)) {
+                cls = 'acc-expr-token--kw';
+            } else if (/^(abs|round|len|min|max|int|float|str|bool|Time)$/.test(token)) {
+                cls = 'acc-expr-token--builtin';
+            } else if (/^(math|np|astropy)$/.test(token)) {
+                cls = 'acc-expr-token--module';
+            }
+            out += '<span class="' + cls + '">' + esc(token) + '</span>';
+            last = start + token.length;
+        }
+
+        if (last < text.length) {
+            out += esc(text.slice(last));
+        }
+
+        return out;
     }
 
     function renderTable() {
         if (!tableBody) return;
         if (!state.rows.length) {
-            tableBody.innerHTML = '<tr><td colspan="3" class="at-muted-hint">'
+            tableBody.innerHTML = '<tr><td colspan="4" class="at-muted-hint">'
                 + 'No custom columns defined yet.</td></tr>';
             return;
         }
         tableBody.innerHTML = '';
         state.rows.forEach(function (row, index) {
             var tr = document.createElement('tr');
-            var mapText = mappingText(row);
-            var exprText = String(row.expression || '');
-            if (mapText) {
-                exprText += ' (' + mapText + ')';
-            }
+            var mapText = mappingText(row) || '--';
+            var exprHtml = highlightPythonExpr(String(row.expression || ''));
             tr.innerHTML = '<td>' + esc(String(row.name || '')) + '</td>'
-                + '<td><button type="button" class="ari-btn ari-btn--secondary"'
+                + '<td><span class="acc-expr-code">'
+                + exprHtml
+                + '</span>'
+                + '</td>'
+                + '<td><span class="acc-vars-cell">'
+                + esc(mapText)
+                + '</span></td>'
+                + '<td><div class="acc-action-icons">'
+                + '<button type="button" class="ari-btn ari-btn--secondary ari-btn--sm"'
                 + ' data-action="edit" data-index="' + String(index) + '"'
-                + ' style="text-align:left;max-width:100%;white-space:normal;">'
-                + esc(exprText)
-                + '</button></td>'
-                + '<td><button type="button" class="ari-btn ari-btn--danger"'
+                + ' title="Edit custom column">'
+                + '<i class="fa-solid fa-pen"></i></button>'
+                + '<button type="button" class="ari-btn ari-btn--secondary ari-btn--sm"'
+                + ' data-action="test" data-index="' + String(index) + '"'
+                + ' title="Test custom column">'
+                + '<i class="fa-solid fa-vial"></i></button>'
+                + '<button type="button" class="ari-btn ari-btn--danger ari-btn--sm"'
                 + ' data-action="remove" data-index="' + String(index) + '"'
                 + ' title="Remove custom column">'
-                + '<i class="fa-solid fa-trash"></i></button></td>';
+                + '<i class="fa-solid fa-trash"></i></button>'
+                + '</div></td>';
             tableBody.appendChild(tr);
         });
 
@@ -529,6 +616,14 @@
                     if (idx < 0 || idx >= state.rows.length) return;
                     state.rows.splice(idx, 1);
                     renderTable();
+                });
+            });
+
+        tableBody.querySelectorAll('button[data-action="test"]')
+            .forEach(function (btn) {
+                btn.addEventListener('click', function () {
+                    var idx = Number(btn.dataset.index || -1);
+                    testSingleRow(idx);
                 });
             });
     }

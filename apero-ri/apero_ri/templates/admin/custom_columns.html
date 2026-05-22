@@ -35,13 +35,14 @@
     <span id="acc-status" class="at-muted-hint"></span>
 </div>
 
-<div class="ari-table-wrap">
+<div class="ari-table-wrap acc-table-wrap">
     <table class="ari-table" id="acc-table">
         <thead>
         <tr>
-            <th style="width:30%;">Column Name</th>
-            <th>Expression</th>
-            <th style="width:70px;">Action</th>
+            <th style="width:22%;">Column Name</th>
+            <th style="width:38%;">Expression</th>
+            <th style="width:32%;">Variables</th>
+            <th style="width:170px;">Action</th>
         </tr>
         </thead>
         <tbody id="acc-rows"></tbody>
@@ -82,7 +83,7 @@
         <label class="ogs-search" for="acc-custom-search">
             <span class="ogs-search__label">Filter properties</span>
             <input id="acc-custom-search" class="ari-input" type="text"
-                   placeholder="Type 3+ chars to filter properties">
+                   placeholder="Type to filter properties">
         </label>
         <div id="acc-custom-vars" class="ogs-rename-list"></div>
         <div class="ogs-mini-overlay__footer">
@@ -120,5 +121,5 @@ window.ARI_ADMIN_CUSTOM_COLUMNS = {
     testUrl: {{ url_for('api_object_groups_admin_custom_test')|tojson }}
 };
 </script>
-<script src="{{ url_for('static', filename='js/admin_custom_columns.js', v='20260522a') }}"></script>
+<script src="{{ url_for('static', filename='js/admin_custom_columns.js', v='20260522d') }}"></script>
 {% endblock %}

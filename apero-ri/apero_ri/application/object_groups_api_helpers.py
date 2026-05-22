@@ -558,6 +558,8 @@ def _add_admin_custom_summary_properties(app, profile, props):
         pid = 'admin_custom::{0}'.format(name)
         catalog_map[pid] = dict(id=pid)
 
+    _seed_catalog_with_custom_var_ids(catalog_map, rows_raw)
+
     rows = _normalise_custom_columns(rows_raw, catalog_map)
     if not rows:
         return
@@ -1458,9 +1460,12 @@ def _validate_expr_node(node, var_names, rules):
                 if not ok:
                     return ok, msg
             return True, ''
-            # Python 3.9+ stores direct index nodes in node.slice
-            # (e.g. x[0], x['key']); validate index expression recursively.
-            return _validate_expr_node(node.slice, var_names, rules)
+        # Python 3.8 uses ast.Index around direct index expressions.
+        if hasattr(ast, 'Index') and isinstance(node.slice, ast.Index):
+            return _validate_expr_node(node.slice.value, var_names, rules)
+        # Python 3.9+ stores direct index nodes in node.slice
+        # (e.g. x[0], x['key']); validate index expression recursively.
+        return _validate_expr_node(node.slice, var_names, rules)
 
     if isinstance(node, (ast.List, ast.Tuple)):
         for elt in node.elts:
@@ -1629,6 +1634,27 @@ def _normalise_custom_columns(custom_columns, catalog_map):
         )
         seen.add(name_key)
     return result
+
+
+def _seed_catalog_with_custom_var_ids(catalog_map, custom_rows):
+    """Ensure variable property IDs exist in *catalog_map* placeholders."""
+    if not isinstance(catalog_map, dict):
+        return
+    if not isinstance(custom_rows, list):
+        return
+    for row in custom_rows:
+        if not isinstance(row, dict):
+            continue
+        variables = row.get('variables', dict())
+        if not isinstance(variables, dict):
+            continue
+        for prop_id in variables.values():
+            pid = str(prop_id or '').strip()
+            if not pid:
+                continue
+            if pid in catalog_map:
+                continue
+            catalog_map[pid] = dict(id=pid)
 
 
 def _load_astrometric_entry(app, objname):
@@ -3006,6 +3032,18 @@ def api_object_groups_summary_config(app):
         selected_custom,
         catalog_map,
     )
+    admin_custom_rows_raw = _admin_custom_profile_rows(
+        local_data_dir,
+        profile_id,
+    )
+    _seed_catalog_with_custom_var_ids(
+        catalog_map,
+        admin_custom_rows_raw,
+    )
+    admin_custom_rows = _normalise_custom_columns(
+        admin_custom_rows_raw,
+        catalog_map,
+    )
     temp_group = {'objects': objects_raw}
     visible_count = len(
         _filter_group_objects(
@@ -3040,6 +3078,7 @@ def api_object_groups_summary_config(app):
         selected_columns=selected,
         selected_aliases=selected_aliases,
         custom_columns=selected_custom,
+        admin_custom_columns=admin_custom_rows,
         property_catalog=catalog,
         allowed_expression_rows=_load_allowed_expression_rows(
             app._resolve_local_data_dir()
@@ -3471,6 +3510,11 @@ def api_object_groups_admin_custom_columns(app):
         for item in catalog
         if str(item.get('id', '')).strip()
     }
+    saved_rows = _admin_custom_profile_rows(
+        local_data_dir,
+        active_profile,
+    )
+    _seed_catalog_with_custom_var_ids(catalog_map, saved_rows)
 
     if request.method == 'POST':
         default_test_object = str(
@@ -3495,13 +3539,7 @@ def api_object_groups_admin_custom_columns(app):
             default_test_object=default_test_object,
         )
 
-    rows = _normalise_custom_columns(
-        _admin_custom_profile_rows(
-            local_data_dir,
-            active_profile,
-        ),
-        catalog_map,
-    )
+    rows = _normalise_custom_columns(saved_rows, catalog_map)
     return jsonify(
         success=True,
         rows=rows,
@@ -3550,6 +3588,7 @@ def api_object_groups_admin_custom_test(app):
         for item in catalog
         if str(item.get('id', '')).strip()
     }
+    _seed_catalog_with_custom_var_ids(catalog_map, rows)
     expr_rules, _, _ = _get_compiled_expression_rules(
         app._resolve_local_data_dir()
     )

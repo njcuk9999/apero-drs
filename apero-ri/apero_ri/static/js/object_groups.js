@@ -191,6 +191,7 @@
         selectedColumns: [],
         selectedAliases: {},
         customColumns: [],
+        adminCustomColumns: [],
         allowedExpressionRows: [],
         customEditIndex: -1,
         customDraftVars: [],
@@ -405,6 +406,34 @@
         summaryState.customTestPassed = false;
         updateSummaryCustomSaveState();
     }
+    function getAdminCustomDefinition(propId) {
+        var pid = String(propId || '').trim();
+        if (!pid || pid.indexOf('admin_custom::') !== 0) {
+            return null;
+        }
+        var name = pid.slice('admin_custom::'.length);
+        var rows = Array.isArray(summaryState.adminCustomColumns)
+            ? summaryState.adminCustomColumns
+            : [];
+        for (var i = 0; i < rows.length; i += 1) {
+            var row = rows[i] || {};
+            if (String(row.name || '').trim() === name) {
+                return row;
+            }
+        }
+        return null;
+    }
+    function cloneAdminCustomToUser(propId) {
+        var source = getAdminCustomDefinition(propId);
+        if (!source) {
+            setSummaryStatus(
+                'Admin custom definition could not be loaded.',
+                true
+            );
+            return;
+        }
+        openSummaryCustomOverlay(-1, source);
+    }
     function filteredCustomCatalog() {
         var cat = String(
             summaryCustomCategory ? summaryCustomCategory.value : ''
@@ -583,7 +612,7 @@
         summaryState.customEditIndex = -1;
         setSummaryCustomStatus('', false);
     }
-    function openSummaryCustomOverlay(editIndex) {
+    function openSummaryCustomOverlay(editIndex, seedRow) {
         if (!summaryCustomOverlay) return;
         var isEdit = (
             typeof editIndex === 'number'
@@ -612,6 +641,26 @@
                         propId: String(row.variables[key] || ''),
                     };
                 });
+            if (!summaryState.customDraftVars.length) {
+                summaryState.customDraftVars = [
+                    {letter: 'x', propId: ''},
+                ];
+            }
+        } else if (seedRow && typeof seedRow === 'object') {
+            if (summaryCustomName) {
+                summaryCustomName.value = String(seedRow.name || '');
+            }
+            if (summaryCustomExpr) {
+                summaryCustomExpr.value = String(seedRow.expression || '');
+            }
+            summaryState.customDraftVars = Object.keys(
+                seedRow.variables || {}
+            ).sort().map(function (key) {
+                return {
+                    letter: String(key || '').toLowerCase(),
+                    propId: String(seedRow.variables[key] || ''),
+                };
+            });
             if (!summaryState.customDraftVars.length) {
                 summaryState.customDraftVars = [
                     {letter: 'x', propId: ''},
@@ -1378,6 +1427,12 @@
                 + '<button type="button" class="ogs-card__icon" '
                 + 'title="Move down">'
                 + '<i class="fa-solid fa-arrow-down"></i></button>'
+                + (String(propId).indexOf('admin_custom::') === 0
+                    ? ('<button type="button" class="ogs-card__icon" '
+                        + 'title="Edit as user custom column">'
+                        + '<i class="fa-solid fa-pen-to-square"></i>'
+                        + '</button>')
+                    : '')
                 + '<span class="ogs-card__drag" '
                 + 'title="Drag to reorder">'
                 + '<i class="fa-solid fa-grip-vertical"></i></span>'
@@ -1453,7 +1508,14 @@
             var actionBtns = card.querySelectorAll('.ogs-card__icon');
             var upBtn = actionBtns[0];
             var downBtn = actionBtns[1];
-            var removeBtn = actionBtns[2];
+            var editCustomBtn = null;
+            var removeBtn = null;
+            if (String(propId).indexOf('admin_custom::') === 0) {
+                editCustomBtn = actionBtns[2] || null;
+                removeBtn = actionBtns[3] || null;
+            } else {
+                removeBtn = actionBtns[2] || null;
+            }
             if (upBtn) {
                 upBtn.disabled = index === 0;
                 upBtn.addEventListener('click', function () {
@@ -1465,6 +1527,15 @@
                 downBtn.addEventListener('click', function () {
                     moveSummarySelectedColumn(index, index + 1);
                 });
+            }
+            if (editCustomBtn) {
+                editCustomBtn.addEventListener('click', function () {
+                    cloneAdminCustomToUser(propId);
+                });
+            }
+            if (!removeBtn) {
+                summarySelected.appendChild(card);
+                return;
             }
             removeBtn.addEventListener('click', function () {
                 summaryState.selectedColumns =
@@ -1673,6 +1744,8 @@
             summaryState.selectedColumns = data.selected_columns || [];
             summaryState.selectedAliases = data.selected_aliases || {};
             summaryState.customColumns = data.custom_columns || [];
+            summaryState.adminCustomColumns =
+                data.admin_custom_columns || [];
             summaryState.allowedExpressionRows =
                 data.allowed_expression_rows || [];
             summaryState.pageUrl = data.summary_page_url || '';
