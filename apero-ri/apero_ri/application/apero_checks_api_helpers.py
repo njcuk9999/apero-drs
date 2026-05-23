@@ -147,7 +147,7 @@ def _queue_apero_check_run(
     task_cfg['create'] = True
 
     filters = dict()
-    filters['APERO_PROFILE_INCLUDE'] = [str(profile_id).strip()]
+    filters['APERO_PROFILE_INCLUDE'] = str(profile_id).strip()
     task_cfg['filters'] = filters
 
     if cleaned_checks:
@@ -223,6 +223,8 @@ def _manual_task_meta_from_task_cfg(task_cfg: dict) -> dict:
     include = filters.get('APERO_PROFILE_INCLUDE')
     if isinstance(include, list) and include:
         profile_id = str(include[0] or '')
+    elif isinstance(include, str):
+        profile_id = str(include or '').strip()
 
     mode = 'single_check' if check_key else 'full_obsdir'
     label = 'Individual test re-run' if check_key else 'Full obsdir re-run'
@@ -293,6 +295,12 @@ def _task_matches_profile(
     if isinstance(include, list) and include:
         include_values = [
             str(item or '').strip().lower() for item in include
+        ]
+        return target in include_values
+    if isinstance(include, str) and include.strip():
+        include_values = [
+            item.strip().lower() for item in include.split(',')
+            if item.strip()
         ]
         return target in include_values
 

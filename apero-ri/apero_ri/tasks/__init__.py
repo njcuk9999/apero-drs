@@ -297,6 +297,42 @@ MULTI_PROCESS["FAV_OBJECT_WATCHER"] = _entry["multi_process"]
 LOCAL_TASK["FAV_OBJECT_WATCHER"] = _entry["local_task"]
 FILTERS["FAV_OBJECT_WATCHER"] = _entry["filters"]
 
+# LEGACY_ASTROM_GSHEET
+_entry = _register_task(
+    'LEGACY_ASTROM_GSHEET',
+    'legacy_astrom_gsheet',
+    'LegacyAstromGSheetTask',
+    'GLOBAL',
+)
+TASK_LIST['LEGACY_ASTROM_GSHEET'] = _entry['task_cls']
+P_LIST['LEGACY_ASTROM_GSHEET'] = _entry['param_list']
+AP_LIST['LEGACY_ASTROM_GSHEET'] = _entry['ap_list']
+FREQ['LEGACY_ASTROM_GSHEET'] = _entry['frequency']
+ENABLED['LEGACY_ASTROM_GSHEET'] = _entry['enabled']
+TYPE['LEGACY_ASTROM_GSHEET'] = _entry['task_type']
+USE_SUBPROCESS['LEGACY_ASTROM_GSHEET'] = _entry['use_subprocess']
+MULTI_PROCESS['LEGACY_ASTROM_GSHEET'] = _entry['multi_process']
+LOCAL_TASK['LEGACY_ASTROM_GSHEET'] = _entry['local_task']
+FILTERS['LEGACY_ASTROM_GSHEET'] = _entry['filters']
+
+# LEGACY_REJECT_GSHEET
+_entry = _register_task(
+    'LEGACY_REJECT_GSHEET',
+    'lecacy_reject_gsheet',
+    'LegacyRejectGSheetTask',
+    'GLOBAL',
+)
+TASK_LIST['LEGACY_REJECT_GSHEET'] = _entry['task_cls']
+P_LIST['LEGACY_REJECT_GSHEET'] = _entry['param_list']
+AP_LIST['LEGACY_REJECT_GSHEET'] = _entry['ap_list']
+FREQ['LEGACY_REJECT_GSHEET'] = _entry['frequency']
+ENABLED['LEGACY_REJECT_GSHEET'] = _entry['enabled']
+TYPE['LEGACY_REJECT_GSHEET'] = _entry['task_type']
+USE_SUBPROCESS['LEGACY_REJECT_GSHEET'] = _entry['use_subprocess']
+MULTI_PROCESS['LEGACY_REJECT_GSHEET'] = _entry['multi_process']
+LOCAL_TASK['LEGACY_REJECT_GSHEET'] = _entry['local_task']
+FILTERS['LEGACY_REJECT_GSHEET'] = _entry['filters']
+
 # =============================================================================
 # Start of code
 # =============================================================================

@@ -241,8 +241,8 @@ def build_obsdir_payload(obs_dir: str,
     payload['instrument'] = str(instrument)
     payload['profile'] = str(profile)
     payload['history'] = dict(current.get('history', {}) or {})
-    payload['passes'] = dict()
-    payload['failures'] = dict()
+    payload['passes'] = dict(current.get('passes', {}) or {})
+    payload['failures'] = dict(current.get('failures', {}) or {})
     return payload
 
 

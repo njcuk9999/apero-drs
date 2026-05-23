@@ -1136,6 +1136,17 @@ def _build_admin_custom_catalog(app, user_info, profile_id=''):
             for pid, item in props.items():
                 if pid in catalog_map:
                     continue
+                section_id = str(item.get('section_id') or '').strip().lower()
+                category = str(
+                    item.get('category') or item.get('section_title') or ''
+                ).strip().lower()
+                subcategory = str(
+                    item.get('subcategory') or ''
+                ).strip().lower()
+                if section_id == 'lbl':
+                    continue
+                if category == 'lbl stats' or subcategory == 'flavors':
+                    continue
                 catalog_map[pid] = dict(
                     id=pid,
                     label=item.get('label') or pid,
@@ -1634,6 +1645,24 @@ def _normalise_custom_columns(custom_columns, catalog_map):
         )
         seen.add(name_key)
     return result
+
+
+def _find_duplicate_custom_column_name(rows):
+    """Return first duplicate custom column name (case-insensitive)."""
+    seen = set()
+    if not isinstance(rows, list):
+        return ''
+    for row in rows:
+        if not isinstance(row, dict):
+            continue
+        name = str(row.get('name', '')).strip()
+        if not name:
+            continue
+        key = name.lower()
+        if key in seen:
+            return name
+        seen.add(key)
+    return ''
 
 
 def _seed_catalog_with_custom_var_ids(catalog_map, custom_rows):
@@ -3520,6 +3549,17 @@ def api_object_groups_admin_custom_columns(app):
         default_test_object = str(
             body.get('default_test_object', default_test_object),
         ).strip()
+        duplicate_name = _find_duplicate_custom_column_name(
+            body.get('rows', []),
+        )
+        if duplicate_name:
+            return jsonify(
+                success=False,
+                error=(
+                    'Duplicate custom column name: {0}. '
+                    'Column names must be unique.'
+                ).format(duplicate_name),
+            ), 400
         rows = _normalise_custom_columns(
             body.get('rows', []),
             catalog_map,

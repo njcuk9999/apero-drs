@@ -9,10 +9,6 @@ card_icon: fa-solid fa-gear
 
 No overview available.
 
-## Check logic
-
-No logic available.
-
 ## Requirements
 
 - [BLANK](checks/blank.md)
@@ -25,3 +21,7 @@ No instructions provided.
 ## Contact
 
 No contacts.
+
+## Check logic
+
+No logic available.

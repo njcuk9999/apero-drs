@@ -15,6 +15,14 @@ from apero_ri.application import async_task_helpers
 from flask import jsonify, request
 
 
+def _coerce_bool(value):
+    """Coerce common JSON/UI values to bool."""
+    if isinstance(value, bool):
+        return value
+    text = str(value or '').strip().lower()
+    return text in ['1', 'true', 'yes', 'on', 'y']
+
+
 def _instrument_profile_names(instrument):
     """Return ordered APERO profile names for one instrument."""
     profiles = load_apero_profiles().get(instrument, {})
@@ -84,6 +92,7 @@ def api_async_tasks_save(app):
     has_sync_source = "sync_source" in data
     has_sync_profiles = "sync_profiles" in data
     has_assets_mode = "assets_mode" in data
+    has_dry_run = "dry_run" in data or "DRY_RUN" in data
 
     ncores = None
     mp_backend = None
@@ -91,6 +100,7 @@ def api_async_tasks_save(app):
     sync_source = None
     sync_profiles = None
     assets_mode = None
+    dry_run = False
 
     if not instrument or not task_id:
         return jsonify(success=False, error="Missing fields"), 400
@@ -176,6 +186,9 @@ def api_async_tasks_save(app):
         else:
             assets_mode_raw = "remote"
         assets_mode = assets_mode_raw
+    if has_dry_run:
+        dry_run_raw = data.get("dry_run", data.get("DRY_RUN", False))
+        dry_run = _coerce_bool(dry_run_raw)
     has_assets_local_source = "assets_local_source_path" in data
     assets_local_source = None
     if has_assets_local_source:
@@ -259,6 +272,15 @@ def api_async_tasks_save(app):
                     ),
                 ), 400
 
+        if task_key in [
+            "LEGACY_ASTROM_GSHEET",
+            "LEGACY_REJECT_GSHEET",
+        ]:
+            if has_dry_run:
+                t["DRY_RUN"] = bool(dry_run)
+            if "dry_run" in t:
+                t.pop("dry_run", None)
+
         supports_mp = bool(task_module.MULTI_PROCESS.get(task_key, False))
         supports_local_task = bool(task_module.LOCAL_TASK.get(task_key, False))
         if sync_source is not None and sync_source and not supports_local_task:
@@ -269,7 +291,11 @@ def api_async_tasks_save(app):
                 ),
                 400,
             )
-        if sync_profiles is not None and sync_profiles and not supports_local_task:
+        if (
+            sync_profiles is not None
+            and sync_profiles
+            and not supports_local_task
+        ):
             return (
                 jsonify(
                     success=False,

@@ -9,6 +9,20 @@ card_icon: fa-solid fa-gear
 
 No overview available.
 
+## Requirements
+
+- [BLANK](checks/blank.md)
+- [HAS_OBSDIR](checks/has_obsdir.md)
+- [CALIB_TEST](checks/calib_test.md)
+
+## What to do
+
+No instructions provided.
+
+## Contact
+
+No contacts.
+
 ## Check logic
 
 ### generic
@@ -31,16 +45,22 @@ np.nanmin(metric_key) > lower_limit and np.nanmax(metric_key) < upper_limit
 | XMIN | xmin |
 | XMAX | xmax |
 
-## Requirements
+### aprofile_instrument/nirps_he_rali.yaml
 
-- [BLANK](checks/blank.md)
-- [HAS_OBSDIR](checks/has_obsdir.md)
-- [CALIB_TEST](checks/calib_test.md)
+Performs the following test
 
-## What to do
+```python
+np.nanmin(HIERARCH ESO INS TEMP13 VAL) > 23.496 and np.nanmax(HIERARCH ESO INS TEMP13 VAL) < 24.504
+```
 
-No instructions provided.
+#### Resolved values
 
-## Contact
-
-No contacts.
+| Key | Value |
+| --- | --- |
+| TEST_KEY | fp_exterior_range |
+| ENABLED | True |
+| METRIC_KEY | HIERARCH ESO INS TEMP13 VAL |
+| LOWER_LIMIT | 23.496 |
+| UPPER_LIMIT | 24.504 |
+| XMIN | xmin |
+| XMAX | xmax |

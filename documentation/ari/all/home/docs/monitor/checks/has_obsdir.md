@@ -10,11 +10,6 @@ card_icon: fa-solid fa-gear
 This test checks whether an observation night directory exists in the 
 raw directory.
 
-## Check logic
-
-This test checks whether an observation night directory exists in the 
-raw directory.
-
 ## Requirements
 
 - [BLANK](checks/blank.md)
@@ -99,3 +94,8 @@ machines but was data on the ESO archive.
 | Thomas Vandal * | thomas.vandal@umontreal.ca |
 | Lison Malo | lison.malo@umontreal.ca |
 | Neil Cook | neil.cook@umontreal.ca |
+
+## Check logic
+
+This test checks whether an observation night directory exists in the 
+raw directory.

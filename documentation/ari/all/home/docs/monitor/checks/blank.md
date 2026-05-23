@@ -10,11 +10,6 @@ card_icon: fa-solid fa-gear
 This is a blank check used as an example. 
 It always passes and does not perform any actual checks.
 
-## Check logic
-
-This is a blank check used as an example. 
-It always passes and does not perform any actual checks.
-
 ## Requirements
 
 No dependencies.
@@ -29,3 +24,8 @@ If FALSE there is a problem. Please contact the contacts immediately.
 | --- | --- |
 | Neil Cook | neil.cook@umontreal.ca |
 | Lison Malo | lison.malo@umontreal.ca |
+
+## Check logic
+
+This is a blank check used as an example. 
+It always passes and does not perform any actual checks.

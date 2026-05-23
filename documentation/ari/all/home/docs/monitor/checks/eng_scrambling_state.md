@@ -9,6 +9,20 @@ card_icon: fa-solid fa-gear
 
 No overview available.
 
+## Requirements
+
+- [BLANK](checks/blank.md)
+- [HAS_OBSDIR](checks/has_obsdir.md)
+- [CALIB_TEST](checks/calib_test.md)
+
+## What to do
+
+No instructions provided.
+
+## Contact
+
+No contacts.
+
 ## Check logic
 
 ### generic
@@ -29,16 +43,20 @@ np.all(status_key == target) on dprtypes ['dprtypes']
 | TARGET | target |
 | DPRTYPES | dprtypes |
 
-## Requirements
+### aprofile_instrument/nirps_he_rali.yaml
 
-- [BLANK](checks/blank.md)
-- [HAS_OBSDIR](checks/has_obsdir.md)
-- [CALIB_TEST](checks/calib_test.md)
+Performs the following test
 
-## What to do
+```python
+np.all(HIERARCH ESO INS2 AOS SCRAMB ST == True) on dprtypes ['OBJECT,FP', 'OBJECT,SKY', 'TELLURIC,SKY']
+```
 
-No instructions provided.
+#### Resolved values
 
-## Contact
-
-No contacts.
+| Key | Value |
+| --- | --- |
+| TEST_KEY | scrambling_status_science |
+| ENABLED | True |
+| STATUS_KEY | HIERARCH ESO INS2 AOS SCRAMB ST |
+| TARGET | True |
+| DPRTYPES | OBJECT,FP, OBJECT,SKY, TELLURIC,SKY |

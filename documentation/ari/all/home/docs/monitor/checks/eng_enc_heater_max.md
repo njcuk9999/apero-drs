@@ -9,6 +9,20 @@ card_icon: fa-solid fa-gear
 
 No overview available.
 
+## Requirements
+
+- [BLANK](checks/blank.md)
+- [HAS_OBSDIR](checks/has_obsdir.md)
+- [CALIB_TEST](checks/calib_test.md)
+
+## What to do
+
+No instructions provided.
+
+## Contact
+
+No contacts.
+
 ## Check logic
 
 ### generic
@@ -29,16 +43,20 @@ np.nanmax(metric_key) < limit
 | LIMIT | limit |
 | METRIC | metric |
 
-## Requirements
+### aprofile_instrument/nirps_he_rali.yaml
 
-- [BLANK](checks/blank.md)
-- [HAS_OBSDIR](checks/has_obsdir.md)
-- [CALIB_TEST](checks/calib_test.md)
+Performs the following test
 
-## What to do
+```python
+np.nanmax(HIERARCH ESO INS SENS121 VAL) < 90.0
+```
 
-No instructions provided.
+#### Resolved values
 
-## Contact
-
-No contacts.
+| Key | Value |
+| --- | --- |
+| TEST_KEY | enclosure_heater_power_max |
+| ENABLED | True |
+| METRIC_KEY | HIERARCH ESO INS SENS121 VAL |
+| LIMIT | 90.0 |
+| METRIC | metric |

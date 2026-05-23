@@ -146,6 +146,9 @@
     var editPaneRun     = document.getElementById('edit-pane-run');
     var editPaneFilters = document.getElementById('edit-pane-filters');
     var editFrequency   = document.getElementById('edit-frequency');
+    var editLegacyGsheetFields = document.getElementById(
+        'edit-legacy-gsheet-fields');
+    var editDryRun      = document.getElementById('edit-dry-run');
     var editBackupFields= document.getElementById('edit-backup-fields');
     var editDailyCopies = document.getElementById('edit-daily-copies');
     var editWeeklyCopies= document.getElementById('edit-weekly-copies');
@@ -236,6 +239,8 @@
 
     var BACKUP_TASK_KEY = 'ARI_LOCAL_DATA_BACKUP';
     var ASSETS_TASK_KEY = 'APERO_SYNC_ASSETS';
+    var LEGACY_ASTROM_TASK_KEY = 'LEGACY_ASTROM_GSHEET';
+    var LEGACY_REJECT_TASK_KEY = 'LEGACY_REJECT_GSHEET';
     var currentInfoText = '';
     var currentErrorText = '';
     var currentTaskLogText = '';
@@ -1534,6 +1539,11 @@
         editTaskKey.value = task.task_key || '';
         editTaskKey.disabled = true;
         editFrequency.value = task.frequency || 24;
+        if (editDryRun) {
+            editDryRun.checked = !!(
+                task.DRY_RUN === true || task.dry_run === true
+            );
+        }
         editDailyCopies.value = task.daily_copies || 0;
         editWeeklyCopies.value = task.weekly_copies || 0;
         if (editBackupMaxSizeMb) {
@@ -2116,6 +2126,10 @@
         var key = editTaskKey.value;
         var cls = taskClasses.find(function (c) { return c.key === key; });
         var isBackup = key === BACKUP_TASK_KEY;
+        var isLegacyGsheet = (
+            key === LEGACY_ASTROM_TASK_KEY
+            || key === LEGACY_REJECT_TASK_KEY
+        );
         var currentTask = allTasks.find(function (t) {
             return t.id === editingTaskId;
         }) || {};
@@ -2137,6 +2151,9 @@
             editTaskInfoRow.style.display = 'none';
         }
         editBackupFields.style.display = isBackup ? '' : 'none';
+        if (editLegacyGsheetFields) {
+            editLegacyGsheetFields.style.display = isLegacyGsheet ? '' : 'none';
+        }
         var isAssets = key === ASSETS_TASK_KEY;
         if (editAssetsFields) editAssetsFields.style.display = isAssets ? '' : 'none';
         if (isAssets) updateAssetsLocalSrcVisibility();
@@ -2261,6 +2278,12 @@
             active: editActive.checked,
             filters: {},
         };
+        if (
+            taskKey === LEGACY_ASTROM_TASK_KEY
+            || taskKey === LEGACY_REJECT_TASK_KEY
+        ) {
+            payload.dry_run = !!(editDryRun && editDryRun.checked);
+        }
         if (taskKey === BACKUP_TASK_KEY && isFinite(backupMaxSizeMb)
                 && backupMaxSizeMb > 0) {
             payload.backup_max_size_mb = backupMaxSizeMb;

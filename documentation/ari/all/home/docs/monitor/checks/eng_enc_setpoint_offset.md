@@ -9,6 +9,20 @@ card_icon: fa-solid fa-gear
 
 No overview available.
 
+## Requirements
+
+- [BLANK](checks/blank.md)
+- [HAS_OBSDIR](checks/has_obsdir.md)
+- [CALIB_TEST](checks/calib_test.md)
+
+## What to do
+
+No instructions provided.
+
+## Contact
+
+No contacts.
+
 ## Check logic
 
 ### generic
@@ -30,16 +44,21 @@ np.abs(np.nanmean(sensor_key - setpoint_key)) < limit
 | LIMIT | limit |
 | METRIC | metric |
 
-## Requirements
+### aprofile_instrument/nirps_he_rali.yaml
 
-- [BLANK](checks/blank.md)
-- [HAS_OBSDIR](checks/has_obsdir.md)
-- [CALIB_TEST](checks/calib_test.md)
+Performs the following test
 
-## What to do
+```python
+np.abs(np.nanmean(HIERARCH ESO INS TEMP185 VAL - HIERARCH ESO INS TEMP187 VAL)) < 0.1
+```
 
-No instructions provided.
+#### Resolved values
 
-## Contact
-
-No contacts.
+| Key | Value |
+| --- | --- |
+| TEST_KEY | enclosure_setpoint_offset |
+| ENABLED | True |
+| SENSOR_KEY | HIERARCH ESO INS TEMP185 VAL |
+| SETPOINT_KEY | HIERARCH ESO INS TEMP187 VAL |
+| LIMIT | 0.1 |
+| METRIC | metric |

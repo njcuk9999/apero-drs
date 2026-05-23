@@ -486,6 +486,19 @@
             return;
         }
 
+        var dupIndex = state.rows.findIndex(function (entry, idx) {
+            if (idx === state.editIndex) return false;
+            return String(entry.name || '').trim().toLowerCase()
+                === name.toLowerCase();
+        });
+        if (dupIndex !== -1) {
+            setOverlayStatus(
+                'Column name already exists. Use a unique column name.',
+                true
+            );
+            return;
+        }
+
         var row = {
             name: name,
             expression: expression,
@@ -589,6 +602,10 @@
                 + ' title="Edit custom column">'
                 + '<i class="fa-solid fa-pen"></i></button>'
                 + '<button type="button" class="ari-btn ari-btn--secondary ari-btn--sm"'
+                + ' data-action="duplicate" data-index="' + String(index) + '"'
+                + ' title="Duplicate custom column">'
+                + '<i class="fa-solid fa-copy"></i></button>'
+                + '<button type="button" class="ari-btn ari-btn--secondary ari-btn--sm"'
                 + ' data-action="test" data-index="' + String(index) + '"'
                 + ' title="Test custom column">'
                 + '<i class="fa-solid fa-vial"></i></button>'
@@ -616,6 +633,49 @@
                     if (idx < 0 || idx >= state.rows.length) return;
                     state.rows.splice(idx, 1);
                     renderTable();
+                });
+            });
+
+        tableBody.querySelectorAll('button[data-action="duplicate"]')
+            .forEach(function (btn) {
+                btn.addEventListener('click', function () {
+                    var idx = Number(btn.dataset.index || -1);
+                    if (idx < 0 || idx >= state.rows.length) return;
+                    var src = state.rows[idx] || {};
+                    var usedNames = state.rows.map(function (entry) {
+                        return String(entry.name || '').trim().toLowerCase();
+                    });
+                    var base = String(src.name || '').trim() || 'Custom';
+                    var candidate = base + ' Copy';
+                    var ncopy = 2;
+                    while (usedNames.indexOf(candidate.toLowerCase()) !== -1) {
+                        candidate = base + ' Copy ' + String(ncopy);
+                        ncopy += 1;
+                    }
+
+                    openOverlay(-1);
+                    if (inputName) inputName.value = candidate;
+                    if (inputExpr) {
+                        inputExpr.value = String(src.expression || '');
+                    }
+
+                    state.draftVars = Object.keys(src.variables || {})
+                        .sort()
+                        .map(function (key) {
+                            return {
+                                letter: String(key || '').toLowerCase(),
+                                propId: String(src.variables[key] || ''),
+                            };
+                        });
+                    if (!state.draftVars.length) {
+                        state.draftVars = [{letter: 'x', propId: ''}];
+                    }
+                    state.testPassed = false;
+                    renderDraftVars();
+                    setOverlayStatus(
+                        'Duplicated. Test and apply to save as new column.',
+                        false
+                    );
                 });
             });
 

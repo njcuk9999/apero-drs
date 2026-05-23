@@ -90,7 +90,7 @@ def merge_async_task_catalog(
     for task_cfg in stored_tasks:
         if not isinstance(task_cfg, dict):
             continue
-        key = str(task_cfg.get("task_key", "")).strip()
+        key = str(task_cfg.get('task_key', '')).strip()
         if key and key not in by_key:
             by_key[key] = task_cfg
 
@@ -187,6 +187,22 @@ def merge_async_task_catalog(
             merged_cfg["force_download"] = bool(
                 task_cfg.get("force_download", False)
             )
+
+        if task_key in [
+            "LEGACY_ASTROM_GSHEET",
+            "LEGACY_REJECT_GSHEET",
+        ]:
+            for _key in [
+                "DRY_RUN",
+                "google_secret_name",
+                "sheet_id",
+                "sheet_name",
+                "sheet_names",
+                "resolve_tolerance_arcsec",
+                "created_by",
+            ]:
+                if _key in task_cfg:
+                    merged_cfg[_key] = task_cfg.get(_key)
 
         if bool(task_module.MULTI_PROCESS.get(task_key, False)):
             try:
