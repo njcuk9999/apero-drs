@@ -73,6 +73,15 @@ GROUPS['lbl'] = ['lbl']
 GROUPS['postprocessing'] = ['post']
 # define keys which should not be found as recipe RUN_ keys
 EXCLUDE_RUN_KEYS = ['RUN_NAME', 'RUN_OBS_DIR']
+# Define extra comment text to add to RUN_TEXT and SKIP_TEXT in the run.ini
+# files - this gives extra info for certain sections
+EXTRA_RUN_TEXT = dict()
+
+EXTRA_SKIP_TEXT = dict()
+EXTRA_SKIP_TEXT['lbl'] = ('\n# Please note SKIP_XXX=True for LBL recipes skips '
+                          'any object that has been run before. '
+                          '\n# LBL recipes manage skipping individual recipes '
+                          'themselves.')
 
 
 # =============================================================================
@@ -265,6 +274,11 @@ class RunIniFile:
             # add group comment
             run_text += '\n# Run the {0} recipes\n'.format(group_name)
             skip_text += '\n# Skip the {0} recipes\n'.format(group_name)
+            # deal with extra comments for run / skip based on group name
+            if group_name in EXTRA_RUN_TEXT:
+                run_text += EXTRA_RUN_TEXT[group_name]
+            if group_name in EXTRA_SKIP_TEXT:
+                skip_text += EXTRA_SKIP_TEXT[group_name]
             # loop around entries in group and add these rows
             for srecipe in group:
                 # get run and skip values

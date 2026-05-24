@@ -1258,16 +1258,48 @@ def _multi_process_headerfix_process(params: ParamDict,
         process = ctx.Process(target=_multi_headerfix_process_worker, args=args)
         process.start()
         jobs.append(process)
-    # do not continue until finished
-    exit_failures = []
+    # Drain results while workers are alive. Joining before draining can deadlock
+    # if a worker blocks trying to flush a large payload into the queue.
+    expected_results = len(grouped_raw_obs_dirs)
+    results = []
+    last_progress = time.time()
+    stall_timeout = 600.0
+    while len(results) < expected_results:
+        try:
+            results.append(return_queue.get(timeout=1.0))
+            last_progress = time.time()
+            continue
+        except queue.Empty:
+            pass
+        if not any(proc.is_alive() for proc in jobs):
+            break
+        if (time.time() - last_progress) > stall_timeout:
+            wmsg = ('Header-fix worker queue stalled for > {0:.0f} s; '
+                    'terminating remaining workers and recovering linearly')
+            WLOG(params, 'warning', wmsg.format(stall_timeout), sublevel=4)
+            break
+
+    # do not continue until finished; terminate any stuck worker so we can
+    # recover its missing payload linearly in the parent process.
+    exit_failures = set()
     for pit, proc in enumerate(jobs):
         # debug log: MULTIPROCESS - joining job {0}
         WLOG(params, 'debug', textentry('90-503-00021', args=[pit]))
-        proc.join()
+        proc.join(timeout=5.0)
+        if proc.is_alive():
+            wmsg = 'Header-fix worker {0} still alive at join; terminating'
+            WLOG(params, 'warning', wmsg.format(pit + 1), sublevel=4)
+            exit_failures.add(pit + 1)
+            try:
+                proc.terminate()
+                proc.join(timeout=5.0)
+            except Exception:
+                pass
         if proc.exitcode not in [0, None]:
-            exit_failures.append(pit + 1)
-    # collect worker results and fall back to linear for any failed/missing jobs
-    results = []
+            exit_failures.add(pit + 1)
+
+    # collect any late worker results and fall back to linear for failed/missing
+    # jobs.
     while True:
         try:
             results.append(return_queue.get_nowait())
@@ -1279,7 +1311,7 @@ def _multi_process_headerfix_process(params: ParamDict,
         pass
     payloads = _collect_headerfix_payloads(params, grouped_raw_obs_dirs,
                                            results,
-                                           failed_jobs=set(exit_failures))
+                                           failed_jobs=exit_failures)
     _bulk_headerfix_updates(params, payloads)
 
 
