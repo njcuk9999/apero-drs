@@ -6,6 +6,8 @@ from typing import Tuple
 
 import apero_ri.apero_monitoring.core.raw_common as raw_common
 from apero_ri.apero_monitoring.core.core import AperoCheck
+from apero_ri.apero_monitoring.core import contacts
+from apero_ri.apero_monitoring.core import links
 
 
 # =============================================================================
@@ -18,6 +20,46 @@ INSTRUMENTS = ['SPIROU', 'NIRPS_HE', 'NIRPS_HA']
 
 CHECK = AperoCheck(CHECK_NAME, CHECK_HUMAN_NAME, CHECK_TYPE, INSTRUMENTS)
 CHECK.dependencies = ['BLANK', 'HAS_OBSDIR']
+
+CHECK.description = """
+Check whether any science observations are present for the observation
+night.
+"""
+
+CHECK.what_to_do = f"""
+If FALSE please [re-run the check]({links.RUN_CHECK}) with
+--test=NO_SCI.
+
+If still FALSE, verify whether science data should exist and then check
+[ESO archives]({links.ESO_ARCHIVES}).
+
+If there is a good reason for no science data, override the check.
+
+If there is science data on ESO archives but not locally, contact
+<CONTACT:C1>.
+
+If there is no science data on ESO archives and no clear reason, contact
+<CONTACT:C2>.
+"""
+
+clist1 = contacts.AperoCheckContactList()
+clist1.add(contacts.TV, starred=True)
+clist1.add(contacts.LM)
+clist1.add(contacts.NJC)
+
+clist2 = contacts.AperoCheckContactList()
+clist2.add(contacts.CURRENT_OBSERVER, starred=True)
+clist2.add(contacts.TELESCOPE_3P6)
+clist2.add(contacts.TELESCOPE_DNOS)
+clist2.add(contacts.NJC)
+clist2.add(contacts.LM)
+clist2.add(contacts.FB)
+clist2.add(contacts.EA)
+clist2.add(contacts.LMI)
+clist2.add(contacts.RA)
+
+CHECK.contact_list['C1'] = clist1
+CHECK.contact_list['C2'] = clist2
 
 
 # =============================================================================

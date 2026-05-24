@@ -20,18 +20,18 @@ CHECK = AperoCheck(CHECK_NAME, CHECK_HUMAN_NAME, CHECK_TYPE, INSTRUMENTS)
 CHECK.dependencies = ['BLANK', 'HAS_OBSDIR', 'CALIB_TEST']
 SIMPLE_CHECK = SimpleCheck(CHECK, TEST_KEY)
 SIMPLE_CHECK.data['x'] = dict(
-    key=['sensor_key', 'key1'],
+    key='sensor_key',
     dtype='float',
     normalize='float',
 )
 SIMPLE_CHECK.data['y'] = dict(
-    key=['setpoint_key', 'key2'],
+    key='setpoint_key',
     dtype='float',
     normalize='float',
 )
 SIMPLE_CHECK.data['limit'] = dict(
     kind='config',
-    key=['limit', 'val1'],
+    key='limit',
     cast='float',
     default=0.1,
 )

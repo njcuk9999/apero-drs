@@ -28,6 +28,7 @@ from apero_ri.core.permissions import resolve_user_permissions
 HISTORY_DIRNAME = '.rejection_history'
 HISTORY_FILENAME = 'rejection_list.jsonl'
 HISTORY_LOCKNAME = 'rejection_list.lock'
+DEFAULT_SYNC_USER = 'googlesheet'
 
 
 # =============================================================================
@@ -193,6 +194,54 @@ def _utcnow_iso() -> str:
     return datetime.utcnow().isoformat(timespec='seconds')
 
 
+def _normalize_metadata_frame(df: pd.DataFrame,
+                              fallback_user: str,
+                              fallback_time: str) -> tuple[pd.DataFrame, bool]:
+    """Backfill WHO/LAST_UPDATE columns for old rejection rows."""
+    if len(df) == 0:
+        return df, False
+    frame = df.copy()
+    changed = False
+    if 'WHO' not in frame.columns:
+        frame['WHO'] = ''
+        changed = True
+    if 'LAST_UPDATE' not in frame.columns:
+        frame['LAST_UPDATE'] = ''
+        changed = True
+
+    who_values = [str(value or '').strip() for value in frame['WHO'].tolist()]
+    time_values = [
+        str(value or '').strip()
+        for value in frame['LAST_UPDATE'].tolist()
+    ]
+    for row_it in range(len(frame)):
+        if who_values[row_it] == '':
+            who_values[row_it] = str(fallback_user or DEFAULT_SYNC_USER)
+            changed = True
+        if time_values[row_it] == '':
+            time_values[row_it] = str(fallback_time or _utcnow_iso())
+            changed = True
+    frame['WHO'] = who_values
+    frame['LAST_UPDATE'] = time_values
+    return frame, changed
+
+
+def _ensure_tab_metadata_backfill(app, tab: dict) -> None:
+    """Ensure legacy rows have WHO/LAST_UPDATE across all mapped files."""
+    paths = _csv_paths(app, tab)
+    now_iso = _utcnow_iso()
+    with _lock_all(paths):
+        for path in paths:
+            df = _read_df(path)
+            updated_df, changed = _normalize_metadata_frame(
+                df,
+                DEFAULT_SYNC_USER,
+                now_iso,
+            )
+            if changed:
+                _write_df(path, updated_df)
+
+
 def _parse_binary_filter(raw_value: str) -> Optional[int]:
     """Parse one optional binary list-filter value from the request."""
     value = str(raw_value or '').strip()
@@ -283,7 +332,9 @@ def _parse_int_flag(value, default: int = 1) -> int:
 
 
 def _row_payload(raw_row: dict,
-                 date_added: Optional[str] = None) -> dict:
+                 date_added: Optional[str] = None,
+                 who: Optional[str] = None,
+                 last_update: Optional[str] = None) -> dict:
     """Normalize one request or CSV row into the reject schema."""
     mod = _rejection_mod()
     identifier = str(
@@ -299,6 +350,19 @@ def _row_payload(raw_row: dict,
         raw_row.get('DATE_ADDED', date_added or _utcnow_iso())
         or date_added or _utcnow_iso()
     ).strip()
+    payload['WHO'] = str(
+        raw_row.get('WHO', raw_row.get('who', who or ''))
+        or who or ''
+    ).strip()
+    payload['LAST_UPDATE'] = str(
+        raw_row.get('LAST_UPDATE',
+                    raw_row.get('last_update', last_update or ''))
+        or last_update or ''
+    ).strip()
+    if payload['WHO'] == '':
+        payload['WHO'] = str(who or DEFAULT_SYNC_USER).strip()
+    if payload['LAST_UPDATE'] == '':
+        payload['LAST_UPDATE'] = str(last_update or _utcnow_iso()).strip()
     payload['PP'] = _parse_int_flag(
         raw_row.get('PP', raw_row.get('pp', 1)), 1
     )
@@ -600,6 +664,7 @@ def api_rejection_list_list(app):
     )
     if err is not None:
         return err
+    _ensure_tab_metadata_backfill(app, tab)
     try:
         per_page = int(request.args.get('per_page', 50) or 50)
     except (TypeError, ValueError):
@@ -611,16 +676,32 @@ def api_rejection_list_list(app):
     except (TypeError, ValueError):
         page = 1
     sort_mode = str(
-        request.args.get('sort', 'identifier_asc') or 'identifier_asc'
+        request.args.get('sort', 'identifier_desc')
+        or 'identifier_desc'
     ).strip().lower()
     query = str(request.args.get('q', '') or '').strip().lower()
     df = _load_tab_df(app, tab)
     mod = _rejection_mod()
     if query and 'IDENTIFIER' in df.columns:
         mask = df['IDENTIFIER'].astype(str).str.lower().str.contains(
-            query, na=False
+            query, na=False, regex=False
         )
         df = df[mask].reset_index(drop=True)
+
+    text_filters = dict(
+        identifier='IDENTIFIER',
+        who='WHO',
+        last_update='LAST_UPDATE',
+        comment='COMMENT',
+    )
+    for req_key, colname in text_filters.items():
+        value = str(request.args.get(req_key, '') or '').strip().lower()
+        if value == '' or colname not in df.columns:
+            continue
+        series = df[colname].astype(str).str.lower()
+        mask = series.str.contains(value, na=False, regex=False)
+        df = df[mask].reset_index(drop=True)
+
     for column in mod.INT_COLUMNS:
         filter_value = _parse_binary_filter(
             request.args.get(column.lower(), '')
@@ -629,13 +710,40 @@ def api_rejection_list_list(app):
             continue
         series = pd.to_numeric(df[column], errors='coerce').fillna(0)
         df = df[series.astype(int) == filter_value].reset_index(drop=True)
-    if 'IDENTIFIER' in df.columns:
-        asc = sort_mode != 'identifier_desc'
+
+    allowed_sorts = dict(
+        identifier='IDENTIFIER',
+        pp='PP',
+        tel='TEL',
+        rv='RV',
+        used='USED',
+        who='WHO',
+        last_update='LAST_UPDATE',
+        comment='COMMENT',
+    )
+    if '_' in sort_mode:
+        sort_key, sort_dir = sort_mode.rsplit('_', 1)
+    else:
+        sort_key, sort_dir = 'identifier', 'asc'
+    if sort_key not in allowed_sorts:
+        sort_key = 'identifier'
+    if sort_dir not in ['asc', 'desc']:
+        sort_dir = 'asc'
+    sort_mode = f'{sort_key}_{sort_dir}'
+    sort_col = allowed_sorts.get(sort_key, 'IDENTIFIER')
+
+    if sort_col in df.columns:
+        asc = sort_dir == 'asc'
+        if sort_col in mod.INT_COLUMNS:
+            series = pd.to_numeric(df[sort_col], errors='coerce').fillna(0)
+        else:
+            series = df[sort_col].astype(str).str.lower()
+        df = df.assign(_sort_key=series)
         df = df.sort_values(
-            by='IDENTIFIER',
+            by='_sort_key',
             ascending=asc,
             kind='stable'
-        ).reset_index(drop=True)
+        ).drop(columns=['_sort_key']).reset_index(drop=True)
     total = len(df)
     start = (page - 1) * per_page
     end = start + per_page
@@ -664,7 +772,12 @@ def api_rejection_list_add(app):
     )
     if err is not None:
         return err
-    payload = _row_payload(body)
+    _ensure_tab_metadata_backfill(app, tab)
+    now_iso = _utcnow_iso()
+    username = user_info.get('username', 'unknown')
+    payload = _row_payload(body,
+                           who=username,
+                           last_update=now_iso)
     replace_existing = bool(body.get('replace_existing'))
     paths = _csv_paths(app, tab)
     with _lock_all(paths):
@@ -682,7 +795,7 @@ def api_rejection_list_add(app):
     append_history(
         app,
         tab['key'],
-        user_info.get('username', 'unknown'),
+        username,
         action,
         existing,
         payload,
@@ -698,6 +811,7 @@ def api_rejection_list_update(app):
     )
     if err is not None:
         return err
+    _ensure_tab_metadata_backfill(app, tab)
     old_identifier = str(body.get('old_identifier') or '').strip()
     if not old_identifier:
         return jsonify(
@@ -710,7 +824,12 @@ def api_rejection_list_update(app):
         before = _find_existing(current, old_identifier)
         if before is None:
             return jsonify(success=False, error='Identifier not found'), 404
-        payload = _row_payload(body, before.get('DATE_ADDED'))
+        payload = _row_payload(
+            body,
+            before.get('DATE_ADDED'),
+            who=user_info.get('username', 'unknown'),
+            last_update=_utcnow_iso(),
+        )
         other = _find_existing(current, payload['IDENTIFIER'])
         has_other = (
             other is not None
@@ -742,6 +861,7 @@ def api_rejection_list_delete(app):
     )
     if err is not None:
         return err
+    _ensure_tab_metadata_backfill(app, tab)
     identifier = str(body.get('identifier') or '').strip()
     if not identifier:
         return jsonify(
@@ -772,6 +892,7 @@ def api_rejection_list_upload(app):
     )
     if err is not None:
         return err
+    _ensure_tab_metadata_backfill(app, tab)
     uploaded = request.files.get('file')
     if uploaded is None:
         return jsonify(success=False, error='No file uploaded'), 400
@@ -785,9 +906,13 @@ def api_rejection_list_upload(app):
         return jsonify(success=False, error='CSV is empty'), 400
     rows = []
     errors = []
+    now_iso = _utcnow_iso()
+    username = user_info.get('username', 'unknown')
     for index, (_, row) in enumerate(incoming.iterrows(), start=2):
         try:
-            rows.append(_row_payload(dict(row)))
+            rows.append(_row_payload(dict(row),
+                                     who=username,
+                                     last_update=now_iso))
         except ValueError as exc:
             errors.append('row {0}: {1}'.format(index, exc))
     if errors:

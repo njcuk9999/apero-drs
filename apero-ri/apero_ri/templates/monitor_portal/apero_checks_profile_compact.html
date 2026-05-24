@@ -82,6 +82,21 @@
                        type="text"
                        value="{{ obsdir_filter|default('') }}"
                        placeholder="regex or text pattern">
+                <span class="ac-filter-row__label">Show</span>
+                <select name="result_filter" class="ot-perpage-select">
+                    <option value="all"
+                        {% if result_filter == 'all' %}selected{% endif %}>
+                        All
+                    </option>
+                    <option value="failed"
+                        {% if result_filter == 'failed' %}selected{% endif %}>
+                        Failed
+                    </option>
+                    <option value="passed"
+                        {% if result_filter == 'passed' %}selected{% endif %}>
+                        Passed
+                    </option>
+                </select>
                 <span class="ac-filter-row__label">Sort</span>
                 <select name="obsdir_sort" class="ot-perpage-select">
                     <option value="asc"
@@ -179,13 +194,13 @@
     <div class="ot-page-controls">
         {% if current_page > 1 %}
         <a class="ari-btn ari-btn--sm ari-btn--secondary"
-           href="{{ url_for('monitor_apero_checks_profile_view', profile_id=profile_id, page=current_page-1, per_page=per_page, obsdir_filter=obsdir_filter, obsdir_sort=obsdir_sort) }}">
+              href="{{ url_for('monitor_apero_checks_profile_view', profile_id=profile_id, page=current_page-1, per_page=per_page, obsdir_filter=obsdir_filter, obsdir_sort=obsdir_sort, result_filter=result_filter) }}">
             <i class="fa-solid fa-angle-left"></i>
         </a>
         {% endif %}
         {% if current_page < total_pages %}
         <a class="ari-btn ari-btn--sm ari-btn--secondary"
-           href="{{ url_for('monitor_apero_checks_profile_view', profile_id=profile_id, page=current_page+1, per_page=per_page, obsdir_filter=obsdir_filter, obsdir_sort=obsdir_sort) }}">
+              href="{{ url_for('monitor_apero_checks_profile_view', profile_id=profile_id, page=current_page+1, per_page=per_page, obsdir_filter=obsdir_filter, obsdir_sort=obsdir_sort, result_filter=result_filter) }}">
             <i class="fa-solid fa-angle-right"></i>
         </a>
         {% endif %}
@@ -222,8 +237,12 @@
     var pageInput = form.querySelector('select[name="page"]');
     var filterInput = form.querySelector('input[name="obsdir_filter"]');
     var sortSelect = form.querySelector('select[name="obsdir_sort"]');
+    var resultFilterSelect = form.querySelector(
+        'select[name="result_filter"]'
+    );
     var perPageSelect = form.querySelector('select[name="per_page"]');
-    if (!pageInput || !filterInput || !sortSelect || !perPageSelect) {
+    if (!pageInput || !filterInput || !sortSelect
+        || !resultFilterSelect || !perPageSelect) {
         return;
     }
 
@@ -245,6 +264,9 @@
 
     filterInput.addEventListener('input', submitDebounced);
     sortSelect.addEventListener('change', function () {
+        submitNow(true);
+    });
+    resultFilterSelect.addEventListener('change', function () {
         submitNow(true);
     });
     perPageSelect.addEventListener('change', function () {

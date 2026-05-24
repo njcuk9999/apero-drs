@@ -6,6 +6,8 @@ from typing import Tuple
 
 import apero_ri.apero_monitoring.core.raw_common as raw_common
 from apero_ri.apero_monitoring.core.core import AperoCheck
+from apero_ri.apero_monitoring.core import contacts
+from apero_ri.apero_monitoring.core import links
 
 
 # =============================================================================
@@ -18,6 +20,59 @@ INSTRUMENTS = ['SPIROU', 'NIRPS_HE', 'NIRPS_HA']
 
 CHECK = AperoCheck(CHECK_NAME, CHECK_HUMAN_NAME, CHECK_TYPE, INSTRUMENTS)
 CHECK.dependencies = ['BLANK', 'HAS_OBSDIR']
+
+CHECK.description = """
+This test checks for at least one file from each required calibration
+DPR type in the observation directory.
+"""
+
+CHECK.what_to_do = f"""
+If FALSE please [re-run the check]({links.RUN_CHECK}) with
+--test=CALIB_TEST.
+
+If HAS_OBSDIR is FALSE, resolve that first.
+
+Then [check the ESO archives]({links.ESO_ARCHIVES}) and compare archive
+files with the local observation directory.
+
+If calibrations are missing on the archive with a good reason, contact
+<CONTACT:C1> and ask whether additional calibrations should be rejected.
+
+If calibrations are missing on the archive with no good reason, contact
+<CONTACT:C2>.
+
+If calibrations exist on the archive but not on local disks, contact
+<CONTACT:C3>.
+"""
+
+clist1 = contacts.AperoCheckContactList()
+clist1.add(contacts.CURRENT_OBSERVER, starred=True)
+clist1.add(contacts.TELESCOPE_DNOS)
+clist1.add(contacts.LM)
+clist1.add(contacts.EA)
+clist1.add(contacts.NJC)
+clist1.add(contacts.FB)
+clist1.add(contacts.GLC)
+
+clist2 = contacts.AperoCheckContactList()
+clist2.add(contacts.CURRENT_OBSERVER, starred=True)
+clist2.add(contacts.TELESCOPE_3P6)
+clist2.add(contacts.TELESCOPE_DNOS)
+clist2.add(contacts.LM)
+clist2.add(contacts.EA)
+clist2.add(contacts.NJC)
+clist2.add(contacts.GLC)
+clist2.add(contacts.XD)
+
+clist3 = contacts.AperoCheckContactList()
+clist3.add(contacts.TV, starred=True)
+clist3.add(contacts.LM)
+clist3.add(contacts.NJC)
+clist3.add(contacts.EA)
+
+CHECK.contact_list['C1'] = clist1
+CHECK.contact_list['C2'] = clist2
+CHECK.contact_list['C3'] = clist3
 
 
 # =============================================================================

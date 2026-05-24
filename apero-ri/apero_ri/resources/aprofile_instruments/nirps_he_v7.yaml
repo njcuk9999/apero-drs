@@ -506,16 +506,12 @@ apero-checks:
         limit: 90.0
       scrambling_status_science:
         enabled: true
-        dprtypes:
-        - OBJECT,FP
-        - OBJECT,SKY
-        - TELLURIC,SKY
         status_key: HIERARCH ESO INS2 AOS SCRAMB ST
-        target: true
+        status_value: true
       stretcher_status_state:
         enabled: true
         status_key: HIERARCH ESO INS OPTI10 STAT
-        target: true
+        status_value: 'ON'
       backend_device_error_state:
         enabled: true
         status_key: HIERARCH ESO INS SENS129 STAT

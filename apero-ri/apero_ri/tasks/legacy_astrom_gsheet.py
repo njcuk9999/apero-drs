@@ -294,14 +294,12 @@ def _sheet_to_dataframe(worksheet) -> pd.DataFrame:
 
 
 def _write_dataframe_to_sheet(worksheet, dataframe: pd.DataFrame) -> None:
-    from gspread_dataframe import set_with_dataframe
-
     worksheet.clear()
-    set_with_dataframe(worksheet,
-                       dataframe.fillna(''),
-                       include_index=False,
-                       include_column_header=True,
-                       resize=True)
+    header = dataframe.columns.tolist()
+    rows = dataframe.fillna('').values.tolist()
+    values = [header] + rows
+    if values:
+        worksheet.update('A1', values)
 
 
 def _normalize_astrom_sheet_df(dataframe: pd.DataFrame) -> pd.DataFrame:

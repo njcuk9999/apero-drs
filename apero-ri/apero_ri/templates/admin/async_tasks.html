@@ -554,6 +554,18 @@
                             or monitor issues.
                         </div>
                     </div>
+                    <div class="ari-ap-form__field" id="edit-check-gsheet-url-fields" style="display:none;">
+                        <label for="edit-monitoring-sheet-url">Monitoring sheet URL</label>
+                        <input type="url" id="edit-monitoring-sheet-url" class="ari-ap-input"
+                               placeholder="https://docs.google.com/spreadsheets/d/.../edit?gid=...">
+                        <div class="at-muted-hint">Per-instrument monitoring tab URL (optional — overrides YAML preset).</div>
+                    </div>
+                    <div class="ari-ap-form__field" id="edit-override-sheet-url-field" style="display:none;">
+                        <label for="edit-override-sheet-url">Override sheet URL</label>
+                        <input type="url" id="edit-override-sheet-url" class="ari-ap-input"
+                               placeholder="https://docs.google.com/spreadsheets/d/.../edit?gid=...">
+                        <div class="at-muted-hint">Shared overrides tab URL (optional — overrides YAML preset).</div>
+                    </div>
                 </div>
                 <div id="edit-backup-fields" style="display:none;">
                     <div class="ari-ap-form__field">
@@ -879,5 +891,5 @@ window.ARI_ASYNC_TASKS = {
     }
 };
 </script>
-    <script src="{{ url_for('static', filename='js/admin_async_tasks.js', v='20260523d') }}"></script>
+    <script src="{{ url_for('static', filename='js/admin_async_tasks.js', v='20260523e') }}"></script>
 {% endblock %}

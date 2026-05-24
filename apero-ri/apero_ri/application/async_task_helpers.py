@@ -204,6 +204,16 @@ def merge_async_task_catalog(
                 if _key in task_cfg:
                     merged_cfg[_key] = task_cfg.get(_key)
 
+        if task_key == "LEGACY_CHECK_GSHEET":
+            for _key in [
+                "DRY_RUN",
+                "google_secret_name",
+                "monitoring_sheet_url",
+                "override_sheet_url",
+            ]:
+                if _key in task_cfg:
+                    merged_cfg[_key] = task_cfg.get(_key)
+
         if bool(task_module.MULTI_PROCESS.get(task_key, False)):
             try:
                 ncores = int(task_cfg.get("ncores", 1) or 1)

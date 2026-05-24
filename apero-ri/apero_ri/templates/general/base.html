@@ -13,7 +13,7 @@
           crossorigin="anonymous" referrerpolicy="no-referrer" />
 
     <!-- ARI stylesheet -->
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css', v='20260422c') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css', v='20260524a') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/mobile_overrides.css', v='20260424a') }}">
     {% if logged_in %}
     <link rel="stylesheet" href="{{ url_for('static', filename='css/user_portal_messaging.css', v='20260424a') }}">
@@ -51,6 +51,28 @@
                 <i class="{{ page.icon }}"></i>
             </a>
             {% endfor %}
+
+            <span class="ari-clock-wrap" id="ari-clock-wrap"
+                  style="position:relative; display:inline-block;">
+                <a href="{{ url_for('home_user_portal_clocks') }}"
+                   class="ari-nav__link"
+                   id="ari-clock-link"
+                   title="Clocks"
+                   aria-label="Clocks">
+                    <i class="fa-solid fa-clock"></i>
+                </a>
+                <div class="ari-clock-panel" id="ari-clock-panel"
+                     role="dialog" aria-label="Clocks">
+                    <div class="ari-clock-panel__header">
+                        <strong>Clocks</strong>
+                        <a href="{{ url_for('home_user_portal_clocks') }}"
+                           class="ari-btn ari-btn--small">Open</a>
+                    </div>
+                    <div class="ari-clock-panel__list" id="ari-clock-list">
+                        <div class="upm-empty">Loading...</div>
+                    </div>
+                </div>
+            </span>
 
             <!-- Login / Logout link -->
             {% if logged_in %}
@@ -258,6 +280,12 @@
     }());
     </script>
     <script src="{{ url_for('static', filename='js/theme.js') }}" defer></script>
+    <script>
+        window.ARI_NAV_CLOCKS = {
+            apiUrl: {{ url_for('api_clocks_get')|tojson }}
+        };
+    </script>
+    <script src="{{ url_for('static', filename='js/nav_clocks.js', v='20260524b') }}" defer></script>
     {% if logged_in %}
     <script src="{{ url_for('static', filename='js/notifications_bell.js', v='20260430a') }}" defer></script>
     {% endif %}

@@ -45,19 +45,25 @@ CHECK.dependencies = []
 
 # Define the description of this check (for displaying in documentation)
 CHECK.description = """
-This is a blank check used as an example. 
-It always passes and does not perform any actual checks.
+This test indicates whether raw checks were run at least once for the
+night.
+
+If the check pipeline ran, this should be TRUE even when other tests are
+FALSE.
 """
 
 # Define the what to do text for this check (for displaying in documentation)
 CHECK.what_to_do = """
-If FALSE there is a problem. Please contact the contacts immediately.
+If FALSE there is a problem with the check run itself.
+
+Please contact <CONTACT:C1> immediately.
 """
 
 # Define contact information for this check (for displaying in documentation)
 clist1 = contacts.AperoCheckContactList()
-clist1.add(contacts.NJC)
+clist1.add(contacts.NJC, starred=True)
 clist1.add(contacts.LM)
+clist1.add(contacts.EA)
 
 
 CHECK.contact_list = dict()

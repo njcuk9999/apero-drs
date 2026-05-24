@@ -7,8 +7,11 @@ card_icon: fa-solid fa-gear
 
 ## Overview
 
-This is a blank check used as an example. 
-It always passes and does not perform any actual checks.
+This test indicates whether raw checks were run at least once for the
+night.
+
+If the check pipeline ran, this should be TRUE even when other tests are
+FALSE.
 
 ## Requirements
 
@@ -16,16 +19,22 @@ No dependencies.
 
 ## What to do
 
-If FALSE there is a problem. Please contact the contacts immediately.
+If FALSE there is a problem with the check run itself.
+
+Please contact <CONTACT:C1> immediately.
 
 ## Contact
 
 | Name | Email |
 | --- | --- |
-| Neil Cook | neil.cook@umontreal.ca |
+| Neil Cook * | neil.cook@umontreal.ca |
 | Lison Malo | lison.malo@umontreal.ca |
+| Etienne Artigau | etienne.artigau@umontreal.ca |
 
 ## Check logic
 
-This is a blank check used as an example. 
-It always passes and does not perform any actual checks.
+This test indicates whether raw checks were run at least once for the
+night.
+
+If the check pipeline ran, this should be TRUE even when other tests are
+FALSE.

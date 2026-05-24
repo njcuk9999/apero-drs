@@ -34,8 +34,8 @@ If FALSE please [re-run the check]({links.RUN_CHECK}) with --test=HAS_OBSDIR.
 If still FALSE then the directory for that day/night has not been 
 created on our machine.
 
-Please check [here for when you should expect files on 
-our machines])[{links.OBS_TIMELINE}].
+Please check [here for when you should expect files on our
+machines]({links.OBS_TIMELINE}).
 
 Then you need to [check the ESO archives for data]({links.ESO_ARCHIVES}).
 

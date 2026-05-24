@@ -275,11 +275,30 @@ def api_async_tasks_save(app):
         if task_key in [
             "LEGACY_ASTROM_GSHEET",
             "LEGACY_REJECT_GSHEET",
+            "LEGACY_CHECK_GSHEET",
         ]:
             if has_dry_run:
                 t["DRY_RUN"] = bool(dry_run)
             if "dry_run" in t:
                 t.pop("dry_run", None)
+
+        if task_key == "LEGACY_CHECK_GSHEET":
+            if "monitoring_sheet_url" in data:
+                mon_url = str(
+                    data.get("monitoring_sheet_url") or ""
+                ).strip()
+                if mon_url:
+                    t["monitoring_sheet_url"] = mon_url
+                else:
+                    t.pop("monitoring_sheet_url", None)
+            if "override_sheet_url" in data:
+                over_url = str(
+                    data.get("override_sheet_url") or ""
+                ).strip()
+                if over_url:
+                    t["override_sheet_url"] = over_url
+                else:
+                    t.pop("override_sheet_url", None)
 
         supports_mp = bool(task_module.MULTI_PROCESS.get(task_key, False))
         supports_local_task = bool(task_module.LOCAL_TASK.get(task_key, False))

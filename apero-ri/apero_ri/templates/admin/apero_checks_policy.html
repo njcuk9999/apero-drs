@@ -193,6 +193,115 @@
     color: var(--ari-text-muted);
     font-size: 0.9rem;
 }
+.acp-run-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 0.7rem;
+}
+.acp-run-field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+}
+.acp-run-field label {
+    font-weight: 700;
+    font-size: 0.88rem;
+}
+.acp-run-field textarea,
+.acp-run-field input,
+.acp-run-field select {
+    border: 1px solid var(--ari-border);
+    border-radius: 0.55rem;
+    background: var(--ari-card-bg);
+    color: var(--ari-text);
+    padding: 0.45rem 0.55rem;
+    font-size: 0.9rem;
+}
+.acp-run-actions {
+    margin-top: 0.75rem;
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    flex-wrap: wrap;
+}
+.acp-run-status {
+    margin-top: 0.65rem;
+    font-size: 0.9rem;
+    color: var(--ari-text-muted);
+}
+.acp-run-subsection {
+    border: 1px solid var(--ari-border);
+    border-radius: 0.8rem;
+    padding: 0.72rem 0.78rem;
+    background: color-mix(in srgb, var(--ari-card-bg) 88%, #fff 12%);
+}
+.acp-run-subsection--danger {
+    border-color: color-mix(in srgb, var(--ari-danger) 45%, var(--ari-border));
+    background: color-mix(in srgb, var(--ari-danger) 6%, var(--ari-card-bg));
+}
+.acp-run-subsection__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.65rem;
+    margin-bottom: 0.6rem;
+}
+.acp-run-subsection__title {
+    font-weight: 800;
+    font-size: 0.95rem;
+}
+.acp-run-select {
+    width: 100%;
+    min-height: 170px;
+    border: 1px solid var(--ari-border);
+    border-radius: 0.55rem;
+    background: var(--ari-card-bg);
+    color: var(--ari-text);
+    padding: 0.35rem;
+    font-size: 0.88rem;
+}
+.acp-run-inline-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.45rem;
+    margin-top: 0.55rem;
+}
+.acp-run-selected {
+    margin-top: 0.55rem;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem;
+    min-height: 1.4rem;
+}
+.acp-run-selected__empty {
+    color: var(--ari-text-muted);
+    font-size: 0.85rem;
+}
+.acp-run-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    border: 1px solid var(--ari-border);
+    border-radius: 999px;
+    padding: 0.2rem 0.55rem;
+    background: var(--ari-card-bg);
+    font-size: 0.82rem;
+}
+.acp-run-chip button {
+    border: 0;
+    background: transparent;
+    color: var(--ari-text-muted);
+    cursor: pointer;
+    padding: 0;
+    line-height: 1;
+}
+.acp-run-submit {
+    font-size: 1rem;
+    font-weight: 800;
+    padding: 0.7rem 1.15rem;
+    background: linear-gradient(135deg, #2563eb, #1d4ed8);
+    border-color: #1d4ed8;
+}
 @media (max-width: 768px) {
     .acp-section__header {
         flex-direction: column;
@@ -316,11 +425,165 @@
     </div>
 </div>
 
+<div class="acp-section">
+    <div class="acp-section__header">
+        <h3 style="margin:0;">
+            <i class="fa-solid fa-play"></i>
+            Advanced Check Run
+        </h3>
+    </div>
+    <div class="acp-note" style="margin-bottom:0.55rem;">
+        Select one profile, then choose one or multiple checks and obs-dirs.
+        You can also toggle "all checks" or "all obs-dirs".
+    </div>
+    <div class="acp-run-grid">
+        <div class="acp-run-field">
+            <label for="acp-run-profile">Profile</label>
+            <select id="acp-run-profile" disabled>
+                <option value="">Select profile</option>
+            </select>
+        </div>
+    </div>
+
+    <div class="acp-run-subsection" style="margin-top:0.75rem;">
+        <div class="acp-run-subsection__header">
+            <span class="acp-run-subsection__title">Checks selection</span>
+            <label class="acp-note" style="display:flex;align-items:center;gap:0.35rem;">
+                <input id="acp-run-all-checks" type="checkbox" checked>
+                Run all checks
+            </label>
+        </div>
+        <div class="acp-run-field">
+            <label for="acp-run-check-search">Search checks</label>
+            <input id="acp-run-check-search"
+                   type="text"
+                   placeholder="Type to filter check keys"
+                   disabled>
+        </div>
+        <div class="acp-run-field" style="margin-top:0.55rem;">
+            <label for="acp-run-check-available">Available checks</label>
+            <select id="acp-run-check-available" class="acp-run-select"
+                    multiple disabled></select>
+        </div>
+        <div class="acp-run-inline-actions">
+            <button id="acp-run-check-add" class="ari-btn ari-btn--sm"
+                    type="button" disabled>
+                <i class="fa-solid fa-plus"></i>
+                Add check
+            </button>
+            <button id="acp-run-check-add-all" class="ari-btn ari-btn--sm"
+                    type="button" disabled>
+                Add all filtered
+            </button>
+            <button id="acp-run-check-remove" class="ari-btn ari-btn--sm"
+                    type="button" disabled>
+                Remove selected
+            </button>
+            <button id="acp-run-check-clear" class="ari-btn ari-btn--sm"
+                    type="button" disabled>
+                Clear checks
+            </button>
+        </div>
+        <div class="acp-note" style="margin-top:0.5rem;">Selected checks</div>
+        <div id="acp-run-check-selected" class="acp-run-selected">
+            <span class="acp-run-selected__empty">All checks</span>
+        </div>
+    </div>
+
+    <div class="acp-run-subsection" style="margin-top:0.75rem;">
+        <div class="acp-run-subsection__header">
+            <span class="acp-run-subsection__title">Obs-dir selection</span>
+            <label class="acp-note" style="display:flex;align-items:center;gap:0.35rem;">
+                <input id="acp-run-all-nights" type="checkbox" checked>
+                Run all obs-dirs
+            </label>
+        </div>
+        <div class="acp-run-field">
+            <label for="acp-run-obsdir-search">Search obs-dirs</label>
+            <input id="acp-run-obsdir-search"
+                   type="text"
+                   placeholder="Type to filter obs-dir values"
+                   disabled>
+        </div>
+        <div class="acp-run-field" style="margin-top:0.55rem;">
+            <label for="acp-run-obsdir-available">Available obs-dirs</label>
+            <select id="acp-run-obsdir-available" class="acp-run-select"
+                    multiple disabled></select>
+        </div>
+        <div class="acp-run-inline-actions">
+            <button id="acp-run-obsdir-refresh" class="ari-btn ari-btn--sm"
+                    type="button" disabled>
+                <i class="fa-solid fa-rotate"></i>
+                Reload list
+            </button>
+            <button id="acp-run-obsdir-add" class="ari-btn ari-btn--sm"
+                    type="button" disabled>
+                <i class="fa-solid fa-plus"></i>
+                Add obs-dir
+            </button>
+            <button id="acp-run-obsdir-add-all" class="ari-btn ari-btn--sm"
+                    type="button" disabled>
+                Add all filtered
+            </button>
+            <button id="acp-run-obsdir-remove" class="ari-btn ari-btn--sm"
+                    type="button" disabled>
+                Remove selected
+            </button>
+            <button id="acp-run-obsdir-clear" class="ari-btn ari-btn--sm"
+                    type="button" disabled>
+                Clear obs-dirs
+            </button>
+        </div>
+        <div class="acp-note" style="margin-top:0.5rem;">Selected obs-dirs</div>
+        <div id="acp-run-obsdir-selected" class="acp-run-selected">
+            <span class="acp-run-selected__empty">All obs-dirs</span>
+        </div>
+    </div>
+
+    <div class="acp-run-actions" style="margin-top:0.9rem;">
+        <button id="acp-run-submit"
+                class="ari-btn ari-btn--primary acp-run-submit"
+                type="button"
+                disabled>
+            <i class="fa-solid fa-play"></i>
+            Queue Run
+        </button>
+    </div>
+
+    <div class="acp-run-subsection acp-run-subsection--danger"
+         style="margin-top:0.95rem;">
+        <div class="acp-run-subsection__header">
+            <span class="acp-run-subsection__title">
+                <i class="fa-solid fa-triangle-exclamation"></i>
+                Destructive Action: Clean Reset
+            </span>
+        </div>
+        <div class="acp-note" style="color:var(--ari-danger);">
+            Warning: Clean reset deletes all APERO-check YAML files for the
+            selected profile and then queues a full rerun of all nights.
+        </div>
+        <div class="acp-run-actions" style="margin-top:0.55rem;">
+            <button id="acp-run-clean-reset"
+                    class="ari-btn ari-btn--danger"
+                    type="button"
+                    disabled>
+                <i class="fa-solid fa-triangle-exclamation"></i>
+                Clean Reset (Delete YAMLs + Re-run All)
+            </button>
+        </div>
+    </div>
+    <div id="acp-run-status" class="acp-run-status"></div>
+</div>
+
 <script>
 window.ARI_APERO_CHECKS_POLICY = {
     sectionsApiUrl: {{ policy_sections_api_url|tojson }},
     checkInfoBaseUrl: {{ url_for('home_admin_portal_apero_check_info')|tojson }},
+    rerunNightUrl: {{ url_for('api_apero_checks_rerun_night')|tojson }},
+    rerunCheckUrl: {{ url_for('api_apero_checks_rerun_single_check')|tojson }},
+    cleanResetUrl: {{ url_for('api_apero_checks_clean_reset_profile')|tojson }},
+    profilePageUrlTemplate: {{ url_for('api_apero_checks_profile_page', profile_id='__PROFILE_ID__')|tojson }},
 };
 </script>
-<script src="{{ url_for('static', filename='js/admin_apero_checks_policy.js', v='20260522a') }}"></script>
+<script src="{{ url_for('static', filename='js/admin_apero_checks_policy.js', v='20260524g') }}"></script>
 {% endblock %}

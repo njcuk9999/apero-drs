@@ -9,6 +9,8 @@ from astropy.io import fits
 
 import apero_ri.apero_monitoring.core.raw_common as raw_common
 from apero_ri.apero_monitoring.core.core import AperoCheck
+from apero_ri.apero_monitoring.core import contacts
+from apero_ri.apero_monitoring.core import links
 
 
 # =============================================================================
@@ -22,6 +24,29 @@ INSTRUMENTS = []
 
 CHECK = AperoCheck(CHECK_NAME, CHECK_HUMAN_NAME, CHECK_TYPE, INSTRUMENTS)
 CHECK.dependencies = ['BLANK', 'HAS_OBSDIR']
+
+CHECK.description = """
+Checks quality of configured raw file groups using percentile and
+saturation limits.
+"""
+
+CHECK.what_to_do = f"""
+If FALSE please [re-run the check]({links.RUN_CHECK}) with
+--test=QUAL_TEST.
+
+If HAS_OBSDIR or NO_SCI is FALSE, resolve those first.
+
+If still FALSE after re-run, send the full quality report to
+<CONTACT:C1>.
+"""
+
+clist1 = contacts.AperoCheckContactList()
+clist1.add(contacts.EA, starred=True)
+clist1.add(contacts.NJC)
+clist1.add(contacts.CC)
+clist1.add(contacts.LM)
+
+CHECK.contact_list['C1'] = clist1
 
 
 # =============================================================================

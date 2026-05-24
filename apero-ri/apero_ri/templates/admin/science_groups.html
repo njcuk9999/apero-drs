@@ -99,7 +99,7 @@
          style="display:none; margin-bottom:0.6rem;">
         <button id="btn-save-group-top" class="ari-btn ari-btn--primary"
                 disabled>
-            <i class="fa-solid fa-floppy-disk"></i> Save
+            <i class="fa-solid fa-floppy-disk"></i> Save all science groups
         </button>
         <button id="btn-group-io-top" class="ari-btn ari-btn--secondary"
                 disabled>
@@ -203,7 +203,7 @@
 <!-- Action bar -->
 <div id="sg-actions" class="ari-sg-actions" style="display:none;">
     <button id="btn-save-group" class="ari-btn ari-btn--primary" disabled>
-        <i class="fa-solid fa-floppy-disk"></i> Save
+        <i class="fa-solid fa-floppy-disk"></i> Save all science groups
     </button>
     <button id="btn-group-io" class="ari-btn ari-btn--secondary" disabled>
         <i class="fa-solid fa-right-left"></i> Import/Export
@@ -348,7 +348,9 @@
         <div class="ari-sg-saving-overlay__spinner">
             <i class="fa-solid fa-spinner fa-spin"></i>
         </div>
-        <div class="ari-sg-saving-overlay__text">Saving science group...</div>
+        <div class="ari-sg-saving-overlay__text">
+            Saving all science groups...
+        </div>
     </div>
 </div>
 {% endblock %}
@@ -367,5 +369,5 @@ window.ARI_SCI_GROUPS = {
     instruments: {{ instruments|tojson }}
 };
 </script>
-<script src="{{ url_for('static', filename='js/admin_science_groups.js') }}?v=20260513b"></script>
+<script src="{{ url_for('static', filename='js/admin_science_groups.js') }}?v=20260524a"></script>
 {% endblock %}

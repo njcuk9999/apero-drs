@@ -51,6 +51,7 @@ _POLICY_CACHE_TTL_S = 120
 # Keep a persistent cache on disk to avoid expensive cold-start scans.
 _POLICY_DISK_CACHE_TTL_S = 21600
 _POLICY_DISK_CACHE_FILE = 'apero_checks_policy_cache.json'
+_POLICY_DISK_CACHE_SCHEMA = '20260524a'
 
 
 def _policy_now_utc() -> str:
@@ -78,6 +79,18 @@ def _collect_policy_roots(local_data_dir, checks_cfg):
         for profile_id, profile_data in instr_profiles.items():
             if not isinstance(profile_data, dict):
                 continue
+            profile_inst = str(instrument or '').strip()
+            profile_preset = profile_data.get(
+                'APERO_INSTRUMENT_PROFILE_DATA',
+            )
+            if isinstance(profile_preset, dict):
+                profile_general = profile_preset.get('general', {})
+                if isinstance(profile_general, dict):
+                    apero_inst = str(
+                        profile_general.get('instrument') or ''
+                    ).strip()
+                    if apero_inst != '':
+                        profile_inst = apero_inst
             checks_root = checks_core.resolve_checks_root(
                 local_data_dir,
                 profile_data,
@@ -85,7 +98,7 @@ def _collect_policy_roots(local_data_dir, checks_cfg):
             )
             out.append(
                 {
-                    'instrument': str(instrument or '').strip(),
+                    'instrument': profile_inst,
                     'profile_id': str(profile_id or '').strip(),
                     'profile_data': profile_data,
                     'checks_root': Path(checks_root),
@@ -136,6 +149,10 @@ def _load_policy_disk_cache(local_data_dir: Path):
     if not isinstance(data, dict):
         return None
 
+    schema = str(data.get('schema') or '').strip()
+    if schema != _POLICY_DISK_CACHE_SCHEMA:
+        return None
+
     built_at = float(data.get('built_at_monotonic') or 0.0)
     if built_at <= 0:
         return None
@@ -157,6 +174,7 @@ def _save_policy_disk_cache(local_data_dir: Path, payload: dict) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     tmp_path = path.with_suffix(path.suffix + '.tmp')
     data = dict(
+        schema=_POLICY_DISK_CACHE_SCHEMA,
         built_at_monotonic=_time.monotonic(),
         payload=dict(payload),
     )

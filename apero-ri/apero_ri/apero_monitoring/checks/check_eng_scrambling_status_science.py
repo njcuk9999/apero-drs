@@ -26,14 +26,14 @@ CHECK.dependencies = ['BLANK', 'HAS_OBSDIR', 'CALIB_TEST']
 SIMPLE_CHECK = SimpleCheck(CHECK, TEST_KEY)
 # Define one input variable and its YAML/header mapping.
 SIMPLE_CHECK.data['x'] = dict(
-    key=['status_key', 'key1'],
+    key='status_key',
     dtype='bool',
     normalize='bool',
 )
 # Define one input variable and its YAML/header mapping.
-SIMPLE_CHECK.data['target'] = dict(
+SIMPLE_CHECK.data['status_value'] = dict(
     kind='config',
-    key=['target', 'val1'],
+    key='status_value',
     cast='bool',
     default=True,
 )
@@ -45,14 +45,14 @@ SIMPLE_CHECK.filters['dpr_type'] = dict(
     default=['OBJECT,FP', 'OBJECT,SKY', 'TELLURIC,SKY'],
 )
 # Core boolean logic: True means pass, False means fail.
-SIMPLE_CHECK.func = lambda x, target, **_: x == target
+SIMPLE_CHECK.func = lambda x, status_value, **_: x == status_value
 # Pass message template displayed when logic passes.
 SIMPLE_CHECK.pmsg = '{test_key} okay on filtered rows.'
 # Fail reason template displayed when logic fails.
-SIMPLE_CHECK.fmsg = 'filtered rows contain values != {target}'
+SIMPLE_CHECK.fmsg = 'filtered rows contain values != {status_value}'
 # Human-readable logic string for docs and admin displays.
 SIMPLE_CHECK.desc = (
-    'np.all({x} == {target}) on dprtypes {dpr_type}'
+    'np.all({x} == {status_value}) on dprtypes {dpr_type}'
 )
 
 

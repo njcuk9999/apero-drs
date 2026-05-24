@@ -241,6 +241,15 @@
     var ASSETS_TASK_KEY = 'APERO_SYNC_ASSETS';
     var LEGACY_ASTROM_TASK_KEY = 'LEGACY_ASTROM_GSHEET';
     var LEGACY_REJECT_TASK_KEY = 'LEGACY_REJECT_GSHEET';
+    var LEGACY_CHECK_TASK_KEY  = 'LEGACY_CHECK_GSHEET';
+        var editCheckGsheetUrlFields = document.getElementById(
+            'edit-check-gsheet-url-fields');
+        var editOverrideSheetUrlField = document.getElementById(
+            'edit-override-sheet-url-field');
+        var editMonitoringSheetUrl = document.getElementById(
+            'edit-monitoring-sheet-url');
+        var editOverrideSheetUrl = document.getElementById(
+            'edit-override-sheet-url');
     var currentInfoText = '';
     var currentErrorText = '';
     var currentTaskLogText = '';
@@ -1542,6 +1551,12 @@
         if (editDryRun) {
             editDryRun.checked = !!(
                 task.DRY_RUN === true || task.dry_run === true
+                    if (editMonitoringSheetUrl) {
+                        editMonitoringSheetUrl.value = task.monitoring_sheet_url || '';
+                    }
+                    if (editOverrideSheetUrl) {
+                        editOverrideSheetUrl.value = task.override_sheet_url || '';
+                    }
             );
         }
         editDailyCopies.value = task.daily_copies || 0;
@@ -2129,7 +2144,9 @@
         var isLegacyGsheet = (
             key === LEGACY_ASTROM_TASK_KEY
             || key === LEGACY_REJECT_TASK_KEY
+            || key === LEGACY_CHECK_TASK_KEY
         );
+        var isCheckGsheet = (key === LEGACY_CHECK_TASK_KEY);
         var currentTask = allTasks.find(function (t) {
             return t.id === editingTaskId;
         }) || {};
@@ -2153,6 +2170,12 @@
         editBackupFields.style.display = isBackup ? '' : 'none';
         if (editLegacyGsheetFields) {
             editLegacyGsheetFields.style.display = isLegacyGsheet ? '' : 'none';
+        }
+        if (editCheckGsheetUrlFields) {
+            editCheckGsheetUrlFields.style.display = isCheckGsheet ? '' : 'none';
+        }
+        if (editOverrideSheetUrlField) {
+            editOverrideSheetUrlField.style.display = isCheckGsheet ? '' : 'none';
         }
         var isAssets = key === ASSETS_TASK_KEY;
         if (editAssetsFields) editAssetsFields.style.display = isAssets ? '' : 'none';
@@ -2281,8 +2304,17 @@
         if (
             taskKey === LEGACY_ASTROM_TASK_KEY
             || taskKey === LEGACY_REJECT_TASK_KEY
+            || taskKey === LEGACY_CHECK_TASK_KEY
         ) {
             payload.dry_run = !!(editDryRun && editDryRun.checked);
+        }
+        if (taskKey === LEGACY_CHECK_TASK_KEY) {
+            payload.monitoring_sheet_url = editMonitoringSheetUrl
+                ? (editMonitoringSheetUrl.value || '').trim()
+                : '';
+            payload.override_sheet_url = editOverrideSheetUrl
+                ? (editOverrideSheetUrl.value || '').trim()
+                : '';
         }
         if (taskKey === BACKUP_TASK_KEY && isFinite(backupMaxSizeMb)
                 && backupMaxSizeMb > 0) {

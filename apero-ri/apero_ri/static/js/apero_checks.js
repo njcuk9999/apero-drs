@@ -422,6 +422,9 @@
             }
             waitForRerunCompletion(card.obsdir, baseline, function (latest) {
                 window.alert('Night re-run finished. Last run: ' + latest);
+                window.setTimeout(function () {
+                    window.location.reload();
+                }, 700);
             });
         }).catch(function (err) {
             window.alert(String(err || 'Could not queue this night.'));
@@ -1735,6 +1738,9 @@
                             'Check re-run finished. Last run: ' + latest,
                             false
                         );
+                        window.setTimeout(function () {
+                            window.location.reload();
+                        }, 900);
                     }
                 );
             }).catch(function (err) {

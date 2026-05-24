@@ -134,6 +134,101 @@ a:hover {
     font-size: 1.1rem;
 }
 
+.ari-clock-panel {
+    display: none;
+    position: absolute;
+    right: 0;
+    top: calc(100% + 0.3rem);
+    width: 320px;
+    max-width: min(92vw, 320px);
+    border: 1px solid var(--ari-border);
+    border-radius: 0.65rem;
+    background: var(--ari-card-bg);
+    color: var(--ari-text);
+    box-shadow: 0 12px 28px rgba(0, 0, 0, 0.2);
+    z-index: 1200;
+}
+
+.ari-clock-wrap--open .ari-clock-panel {
+    display: block;
+}
+
+.ari-clock-panel__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    padding: 0.55rem 0.65rem;
+    border-bottom: 1px solid var(--ari-border);
+}
+
+.ari-clock-panel__list {
+    max-height: 260px;
+    overflow: auto;
+    padding: 0;
+}
+
+.ari-clock-item {
+    display: grid;
+    grid-template-columns: var(--ari-clock-name-ch, 10ch) 1fr;
+    align-items: center;
+    column-gap: 0.55rem;
+    padding: 0.4rem 0.5rem;
+    border-radius: 0;
+    border-bottom: 1px solid var(--ari-border);
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 0.84rem;
+    color: var(--ari-text-muted);
+}
+
+.ari-clock-item:nth-child(odd) {
+    background: #dbeafe;
+    color: #0f172a;
+}
+
+.ari-clock-item:nth-child(even) {
+    background: #1d4ed8;
+    color: #ffffff;
+}
+
+.ari-clock-item:hover {
+    background: #2563eb;
+    color: #ffffff;
+}
+
+.ari-clock-item:last-child {
+    border-bottom: none;
+}
+
+.ari-clock-item__name {
+    white-space: nowrap;
+}
+
+.ari-clock-item__time {
+    white-space: nowrap;
+    text-align: left;
+}
+
+.ari-clock-item:nth-child(-n+2) .ari-clock-item__name,
+.ari-clock-item:nth-child(-n+2) .ari-clock-item__time {
+    font-weight: 700;
+}
+
+[data-theme="dark"] .ari-clock-item:nth-child(odd) {
+    background: #dbeafe;
+    color: #0f172a;
+}
+
+[data-theme="dark"] .ari-clock-item:nth-child(even) {
+    background: #1d4ed8;
+    color: #ffffff;
+}
+
+[data-theme="dark"] .ari-clock-item:hover {
+    background: #2563eb;
+    color: #ffffff;
+}
+
 /* Hamburger button (always visible) */
 .ari-hamburger {
     background: none;

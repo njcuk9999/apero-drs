@@ -1377,6 +1377,10 @@ def _scheduler_poll(local_data_dir: str) -> None:
                     continue
                 try:
                     instance = hydrate_runtime_state(task_cls(), task_cfg)
+                    instance.USE_SUBPROCESS = bool(
+                        task_module.USE_SUBPROCESS.get(task_key, False)
+                    )
+                    instance._task_key = task_key
                 except Exception:
                     task_cfg["last_status"] = "failed"
                     task_cfg["error"] = traceback.format_exc()

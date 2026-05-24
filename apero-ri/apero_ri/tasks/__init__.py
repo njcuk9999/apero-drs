@@ -333,6 +333,24 @@ MULTI_PROCESS['LEGACY_REJECT_GSHEET'] = _entry['multi_process']
 LOCAL_TASK['LEGACY_REJECT_GSHEET'] = _entry['local_task']
 FILTERS['LEGACY_REJECT_GSHEET'] = _entry['filters']
 
+# LEGACY_CHECK_GSHEET
+_entry = _register_task(
+    'LEGACY_CHECK_GSHEET',
+    'legacy_check_gsheet',
+    'LegacyCheckGSheetTask',
+    'GLOBAL',
+)
+TASK_LIST['LEGACY_CHECK_GSHEET'] = _entry['task_cls']
+P_LIST['LEGACY_CHECK_GSHEET'] = _entry['param_list']
+AP_LIST['LEGACY_CHECK_GSHEET'] = _entry['ap_list']
+FREQ['LEGACY_CHECK_GSHEET'] = _entry['frequency']
+ENABLED['LEGACY_CHECK_GSHEET'] = _entry['enabled']
+TYPE['LEGACY_CHECK_GSHEET'] = _entry['task_type']
+USE_SUBPROCESS['LEGACY_CHECK_GSHEET'] = _entry['use_subprocess']
+MULTI_PROCESS['LEGACY_CHECK_GSHEET'] = _entry['multi_process']
+LOCAL_TASK['LEGACY_CHECK_GSHEET'] = _entry['local_task']
+FILTERS['LEGACY_CHECK_GSHEET'] = _entry['filters']
+
 # =============================================================================
 # Start of code
 # =============================================================================

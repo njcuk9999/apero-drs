@@ -95,8 +95,91 @@
     var allUsers = [];
     var selectedRunIds = [];
     var selectedUsers = [];
+    var baselineGroups = {};
+    var draftGroups = {};
 
     var LAZY_BATCH = 80;
+
+    function makeGroupKey(instrument, groupName) {
+        return String(instrument || '').trim() + '||' +
+            String(groupName || '').trim();
+    }
+
+    function normalizeValues(values) {
+        var uniq = Object.create(null);
+        var out = [];
+        (Array.isArray(values) ? values : []).forEach(function (item) {
+            var value = String(item || '').trim();
+            if (!value || uniq[value]) return;
+            uniq[value] = true;
+            out.push(value);
+        });
+        out.sort();
+        return out;
+    }
+
+    function valuesEqual(a, b) {
+        var left = normalizeValues(a);
+        var right = normalizeValues(b);
+        if (left.length !== right.length) return false;
+        var i;
+        for (i = 0; i < left.length; i += 1) {
+            if (left[i] !== right[i]) return false;
+        }
+        return true;
+    }
+
+    function hasAnyDrafts() {
+        return Object.keys(draftGroups).length > 0;
+    }
+
+    function isCurrentSelectionDirty() {
+        if (!currentInstrument || !currentGroup) {
+            return false;
+        }
+        var key = makeGroupKey(currentInstrument, currentGroup);
+        var base = baselineGroups[key] || { run_ids: [], users: [] };
+        return !valuesEqual(selectedRunIds, base.run_ids) ||
+            !valuesEqual(selectedUsers, base.users);
+    }
+
+    function updateDirtyState() {
+        dirty = isCurrentSelectionDirty();
+        setSaveButtonsState();
+    }
+
+    function cacheCurrentDraft() {
+        if (!currentInstrument || !currentGroup) {
+            return;
+        }
+        var key = makeGroupKey(currentInstrument, currentGroup);
+        var base = baselineGroups[key] || { run_ids: [], users: [] };
+        var changed = !valuesEqual(selectedRunIds, base.run_ids) ||
+            !valuesEqual(selectedUsers, base.users);
+        if (changed) {
+            draftGroups[key] = {
+                instrument: currentInstrument,
+                name: currentGroup,
+                run_ids: normalizeValues(selectedRunIds),
+                users: normalizeValues(selectedUsers)
+            };
+        } else {
+            delete draftGroups[key];
+        }
+        updateDirtyState();
+    }
+
+    function applyDraftForCurrentIfAny() {
+        if (!currentInstrument || !currentGroup) {
+            return;
+        }
+        var key = makeGroupKey(currentInstrument, currentGroup);
+        var draft = draftGroups[key];
+        if (draft && typeof draft === 'object') {
+            selectedRunIds = normalizeValues(draft.run_ids || []);
+            selectedUsers = normalizeValues(draft.users || []);
+        }
+    }
 
     function isAllGroupName(name) {
         return String(name || '').trim().toLowerCase() === 'all';
@@ -196,10 +279,10 @@
     }
 
     function selectInstrument(inst) {
-        if (!confirmDiscard()) return;
+        cacheCurrentDraft();
         currentInstrument = inst;
         currentGroup = null;
-        markClean();
+        updateDirtyState();
         var tabs = tabsContainer.querySelectorAll('.ari-sg-tab');
         tabs.forEach(function (t) {
             t.classList.toggle('ari-sg-tab--active', t.textContent === inst);
@@ -297,8 +380,8 @@
 
     /* -- Select a group -------------------------------------------------- */
     function selectGroup(name) {
-        if (currentGroup && name !== currentGroup && !confirmDiscard()) {
-            return;
+        if (currentGroup && name !== currentGroup) {
+            cacheCurrentDraft();
         }
         currentGroup = name;
         var items = groupList.querySelectorAll('.ari-sg-item');
@@ -306,8 +389,7 @@
             it.classList.toggle('ari-sg-item--active',
                 it.textContent.trim() === name);
         });
-        // Save stays disabled until something actually changes.
-        markClean();
+        updateDirtyState();
         btnAddAllRunIds.disabled = isAllGroupName(name);
 
         // Capture instrument+group identity at fetch time so that a
@@ -322,12 +404,21 @@
                 if (requestedInstrument !== currentInstrument) return;
                 if (requestedGroup !== currentGroup) return;
                 if (!data.success) return;
-                selectedRunIds = data.group.run_ids || [];
-                selectedUsers = data.group.users || [];
+                var key = makeGroupKey(
+                    requestedInstrument,
+                    requestedGroup
+                );
+                baselineGroups[key] = {
+                    run_ids: normalizeValues(data.group.run_ids || []),
+                    users: normalizeValues(data.group.users || [])
+                };
+                selectedRunIds = baselineGroups[key].run_ids.slice();
+                selectedUsers = baselineGroups[key].users.slice();
+                applyDraftForCurrentIfAny();
                 showDetailSections();
                 refreshTransfer('runid');
                 refreshTransfer('user');
-                markClean();
+                updateDirtyState();
             })
             .catch(function () {
                 if (requestedInstrument !== currentInstrument) return;
@@ -576,7 +667,7 @@
             arr.push(item);
         }
         refreshTransfer(type);
-        markDirty();
+        cacheCurrentDraft();
     }
 
     function removeSelection(type, item) {
@@ -590,7 +681,7 @@
             selectedUsers = selectedUsers.filter(function (x) { return x !== item; });
         }
         refreshTransfer(type);
-        markDirty();
+        cacheCurrentDraft();
     }
 
     function addAllSelections(type) {
@@ -628,7 +719,7 @@
         }
 
         refreshTransfer(type);
-        markDirty();
+        cacheCurrentDraft();
     }
 
     /* -- Dirty tracking + unsaved-changes guard -------------------------- */
@@ -644,7 +735,7 @@
         var ioBtns = document.querySelectorAll(
             '#btn-group-io, #btn-group-io-top');
         saveBtns.forEach(function (b) {
-            b.disabled = !(currentGroup && dirty);
+            b.disabled = !hasAnyDrafts();
         });
         deleteBtns.forEach(function (b) {
             b.disabled = !currentGroup || isAllGroupName(currentGroup);
@@ -655,28 +746,25 @@
     }
 
     function markDirty() {
-        dirty = true;
-        setSaveButtonsState();
+        cacheCurrentDraft();
     }
 
     function markClean() {
-        dirty = false;
-        setSaveButtonsState();
+        updateDirtyState();
     }
 
     // Returns true if it is safe to navigate away from / replace
     // the current group editor state (no unsaved changes, or the
     // user explicitly confirmed discarding them).
     function confirmDiscard() {
-        if (!dirty) return true;
+        if (!hasAnyDrafts()) return true;
         return window.confirm(
-            'You have unsaved changes to "' + (currentGroup || '?') +
-            '". Discard them?'
+            'You have unsaved science-group edits. Discard them?'
         );
     }
 
     window.addEventListener('beforeunload', function (e) {
-        if (!dirty) return;
+        if (!hasAnyDrafts()) return;
         // Setting returnValue triggers the browser's native
         // "Leave site?" prompt. The exact message is fixed by
         // modern browsers but the prompt itself shows up.
@@ -696,49 +784,93 @@
 
     /* -- Save ------------------------------------------------------------ */
     function saveGroup() {
-        if (!currentInstrument || !currentGroup) return;
+        var pendingKeys = Object.keys(draftGroups);
+        if (!pendingKeys.length) {
+            showToast('No pending science-group edits to save', 'info');
+            return;
+        }
         var saveBtns = document.querySelectorAll(
             '#btn-save-group, #btn-save-group-top');
+        var saved = 0;
+        var failed = 0;
+        var failedNames = [];
         saveBtns.forEach(function (b) { b.disabled = true; });
         if (savingOverlay) {
             savingOverlay.style.display = 'flex';
             savingOverlay.setAttribute('aria-hidden', 'false');
         }
-        fetch(cfg.saveUrl, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                instrument: currentInstrument,
-                name: currentGroup,
-                run_ids: selectedRunIds,
-                users: selectedUsers
-            })
-        })
-        .then(function (r) { return r.json(); })
-        .then(function (data) {
-            if (data.success) {
-                if (data.group && typeof data.group === 'object') {
-                    selectedRunIds = data.group.run_ids || [];
-                    selectedUsers = data.group.users || [];
-                    refreshTransfer('runid');
-                    refreshTransfer('user');
+        var chain = Promise.resolve();
+        pendingKeys.forEach(function (key) {
+            chain = chain.then(function () {
+                var entry = draftGroups[key];
+                if (!entry) {
+                    return;
                 }
-                markClean();
-                showToast('Saved "' + currentGroup + '"', 'success');
-                refreshScienceHealthBanner();
-            } else {
-                setSaveButtonsState();
-                showToast(data.error || 'Save failed', 'error');
-            }
-        })
-        .catch(function () {
-            setSaveButtonsState();
-            showToast('Save failed', 'error');
-        })
-        .finally(function () {
+                return fetch(cfg.saveUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        instrument: entry.instrument,
+                        name: entry.name,
+                        run_ids: entry.run_ids,
+                        users: entry.users
+                    })
+                })
+                    .then(function (r) { return r.json(); })
+                    .then(function (data) {
+                        if (!data || !data.success) {
+                            failed += 1;
+                            failedNames.push(entry.instrument +
+                                '/' + entry.name);
+                            return;
+                        }
+                        var savedRunIds = normalizeValues(
+                            (data.group || {}).run_ids || entry.run_ids || []
+                        );
+                        var savedUsers = normalizeValues(
+                            (data.group || {}).users || entry.users || []
+                        );
+                        baselineGroups[key] = {
+                            run_ids: savedRunIds,
+                            users: savedUsers
+                        };
+                        delete draftGroups[key];
+                        if (
+                            entry.instrument === currentInstrument &&
+                            entry.name === currentGroup
+                        ) {
+                            selectedRunIds = savedRunIds.slice();
+                            selectedUsers = savedUsers.slice();
+                            refreshTransfer('runid');
+                            refreshTransfer('user');
+                        }
+                        saved += 1;
+                    })
+                    .catch(function () {
+                        failed += 1;
+                        failedNames.push(entry.instrument + '/' + entry.name);
+                    });
+            });
+        });
+
+        chain.finally(function () {
+            updateDirtyState();
             if (savingOverlay) {
                 savingOverlay.style.display = 'none';
                 savingOverlay.setAttribute('aria-hidden', 'true');
+            }
+            refreshScienceHealthBanner();
+            if (failed === 0) {
+                showToast(
+                    'Saved all science groups (' + saved + ')',
+                    'success'
+                );
+            } else {
+                showToast(
+                    'Saved ' + saved + ', failed ' + failed +
+                    ' (' + failedNames.join(', ') + ')',
+                    'error'
+                );
             }
         });
     }
@@ -1036,6 +1168,9 @@
             btnConfirmDelete.disabled = false;
             if (data.success) {
                 closeDeleteModal();
+                var deletedKey = makeGroupKey(currentInstrument, currentGroup);
+                delete baselineGroups[deletedKey];
+                delete draftGroups[deletedKey];
                 showToast('Deleted "' + currentGroup + '"', 'success');
                 markClean();
                 clearDetail();

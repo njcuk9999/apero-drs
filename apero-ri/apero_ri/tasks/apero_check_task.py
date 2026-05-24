@@ -770,17 +770,43 @@ def _valid_check_keys(instrument: str,
     """Return the ordered check keys valid for the current instrument."""
     # Keep the order defined in apero_ri.apero_monitoring.__init__.
     ordered = []
-    selected = {
-        str(name).strip().upper()
-        for name in list(selected_checks or [])
-        if str(name).strip()
-    }
+    selected = _selected_with_dependencies(selected_checks)
     for check_key, check_template in CHECKS.items():
         if instrument in list(getattr(check_template, 'instruments', [])):
             if selected and str(check_key).upper() not in selected:
                 continue
             ordered.append(str(check_key))
     return ordered
+
+
+def _selected_with_dependencies(
+        selected_checks: Optional[Sequence[str]] = None) -> set:
+    """Return selected check keys plus their recursive dependencies."""
+    selected = set()
+    to_scan = []
+    for name in list(selected_checks or []):
+        key = str(name or '').strip().upper()
+        if key == '':
+            continue
+        if key in selected:
+            continue
+        selected.add(key)
+        to_scan.append(key)
+
+    while to_scan:
+        key = to_scan.pop()
+        check_obj = CHECKS.get(key)
+        if check_obj is None:
+            continue
+        deps = list(getattr(check_obj, 'dependencies', []) or [])
+        for dep in deps:
+            dep_key = str(dep or '').strip().upper()
+            if dep_key == '' or dep_key in selected:
+                continue
+            selected.add(dep_key)
+            to_scan.append(dep_key)
+
+    return selected
 
 
 def _resolve_profile_instrument(aparams: dict,
@@ -825,9 +851,35 @@ def _prepare_obsdir_maps(rows: Sequence[dict],
         )
         # Store the payload and existing-data pair.
         payloads[obs_dir] = dict(payload=payload, existing=existing)
-        # Initialise the dependency state for this obsdir.
-        states[obs_dir] = dict()
+        # Seed dependency state from existing YAML for selective re-runs.
+        states[obs_dir] = _state_from_existing_yaml(existing)
     return payloads, states
+
+
+def _state_from_existing_yaml(existing: Optional[dict]) -> dict:
+    """Build check-state mapping from one obsdir YAML payload."""
+    state = dict()
+    if not isinstance(existing, dict):
+        return state
+
+    passes = existing.get('passes', {})
+    failures = existing.get('failures', {})
+
+    if isinstance(passes, dict):
+        for check_name in passes:
+            key = str(check_name or '').strip()
+            if key == '':
+                continue
+            state[key] = True
+
+    if isinstance(failures, dict):
+        for check_name in failures:
+            key = str(check_name or '').strip()
+            if key == '':
+                continue
+            state[key] = False
+
+    return state
 
 
 def _run_obsdirs(check_keys: Sequence[str],

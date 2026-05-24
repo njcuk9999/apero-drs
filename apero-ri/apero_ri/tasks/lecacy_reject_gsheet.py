@@ -161,20 +161,18 @@ def _sheet_to_dataframe(worksheet) -> pd.DataFrame:
     if not rows:
         return pd.DataFrame(
             columns=['IDENTIFIER', 'DATE_ADDED', 'PP', 'TEL',
-                     'RV', 'USED', 'COMMENT']
+                     'RV', 'USED', 'WHO', 'LAST_UPDATE', 'COMMENT']
         )
     return pd.DataFrame(rows)
 
 
 def _write_dataframe_to_sheet(worksheet, dataframe: pd.DataFrame) -> None:
-    from gspread_dataframe import set_with_dataframe
-
     worksheet.clear()
-    set_with_dataframe(worksheet,
-                       dataframe.fillna(''),
-                       include_index=False,
-                       include_column_header=True,
-                       resize=True)
+    header = dataframe.columns.tolist()
+    rows = dataframe.fillna('').values.tolist()
+    values = [header] + rows
+    if values:
+        worksheet.update('A1', values)
 
 
 def _normalize_reject_df(dataframe: pd.DataFrame,
@@ -201,8 +199,15 @@ def _normalize_reject_df(dataframe: pd.DataFrame,
     if 'DATE_ADDED' in frame.columns:
         frame['DATE_ADDED'] = [str(value or '').strip()
                                for value in frame['DATE_ADDED'].tolist()]
-    frame['COMMENT'] = [str(value or '').strip()
-                        for value in frame.get('COMMENT', '').tolist()]
+    if 'WHO' in frame.columns:
+        frame['WHO'] = [str(value or '').strip()
+                        for value in frame['WHO'].tolist()]
+    if 'LAST_UPDATE' in frame.columns:
+        frame['LAST_UPDATE'] = [str(value or '').strip()
+                                for value in frame['LAST_UPDATE'].tolist()]
+    if 'COMMENT' in frame.columns:
+        frame['COMMENT'] = [str(value or '').strip()
+                            for value in frame['COMMENT'].tolist()]
     frame = frame.drop_duplicates(subset=[mod.ID_COLUMN], keep='first')
     return frame.reset_index(drop=True)
 
@@ -240,9 +245,22 @@ def _merge_reject_frames(local_df: pd.DataFrame,
     for row_it, ident in enumerate(merged_ids, start=1):
         base = sheet_map.get(ident) or local_map.get(ident) or {}
         row = dict(base)
+        local_row = local_map.get(ident, {})
+        sheet_row = sheet_map.get(ident, {})
         row[mod.ID_COLUMN] = ident
         if not str(row.get('DATE_ADDED') or '').strip():
             row['DATE_ADDED'] = now
+        row['WHO'] = str(local_row.get('WHO') or '').strip()
+        if row['WHO'] == '':
+            row['WHO'] = str(sheet_row.get('WHO') or '').strip()
+        if row['WHO'] == '':
+            row['WHO'] = 'googlesheet'
+
+        row['LAST_UPDATE'] = str(local_row.get('LAST_UPDATE') or '').strip()
+        if row['LAST_UPDATE'] == '':
+            row['LAST_UPDATE'] = str(sheet_row.get('LAST_UPDATE') or '').strip()
+        if row['LAST_UPDATE'] == '':
+            row['LAST_UPDATE'] = now
         for int_col in mod.INT_COLUMNS:
             try:
                 row[int_col] = int(float(row.get(int_col, 0) or 0))

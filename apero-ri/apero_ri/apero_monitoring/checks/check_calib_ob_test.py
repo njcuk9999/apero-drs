@@ -8,6 +8,8 @@ import numpy as np
 
 import apero_ri.apero_monitoring.core.raw_common as raw_common
 from apero_ri.apero_monitoring.core.core import AperoCheck
+from apero_ri.apero_monitoring.core import contacts
+from apero_ri.apero_monitoring.core import links
 
 
 # =============================================================================
@@ -27,6 +29,31 @@ configured MJD spans. It scans all raw-file headers, enables each rule
 only inside its configured MJD range, and then checks that matching OB
 names occur at least once while the rule is active.
 """
+
+CHECK.what_to_do = f"""
+If FALSE please [re-run the check]({links.RUN_CHECK}) with
+--test=COB_TEST.
+
+If HAS_OBSDIR or CALIB_TEST is FALSE, resolve these first.
+
+If still FALSE, verify whether missing calibration OBs are expected
+timing-wise ([observation timeline]({links.OBS_TIMELINE})) and compare
+local files with [ESO archives]({links.ESO_ARCHIVES}).
+
+If the calibration OBs are abnormally late or missing, contact
+<CONTACT:C1> and include which OB name is missing.
+"""
+
+clist1 = contacts.AperoCheckContactList()
+clist1.add(contacts.CURRENT_OBSERVER, starred=True)
+clist1.add(contacts.TELESCOPE_DNOS)
+clist1.add(contacts.LM)
+clist1.add(contacts.EA)
+clist1.add(contacts.NJC)
+clist1.add(contacts.FB)
+clist1.add(contacts.GLC)
+
+CHECK.contact_list['C1'] = clist1
 
 # =============================================================================
 # Define check function

@@ -194,6 +194,84 @@ def _queue_apero_check_run(
     return dict(task_id=task_id, instrument=instrument)
 
 
+def _queue_apero_check_profile_run(
+    app,
+    profile_id: str,
+    history_user: str = '',
+    history_source: str = '',
+):
+    """Queue one full-profile APERO check rerun."""
+    profile = _resolve_accessible_profile(app, profile_id)
+    instrument = str(profile.get('instrument') or '').strip()
+    if not instrument:
+        raise RuntimeError('Profile instrument is missing')
+
+    all_profiles = load_apero_profiles()
+    task_id = (
+        'manual_apero_check__'
+        + _slug_task_token(profile_id)
+        + '__'
+        + _slug_task_token('all_nights')
+        + '__'
+        + _slug_task_token('full_profile')
+        + '__'
+        + _slug_task_token('all')
+        + '__'
+        + str(uuid.uuid4())
+    )
+    task_cfg = dict()
+    task_cfg['id'] = task_id
+    task_cfg['task_key'] = 'APERO_CHECK_TASK'
+    task_cfg['active'] = True
+    task_cfg['force_run'] = True
+    task_cfg['create'] = True
+
+    filters = dict()
+    filters['APERO_PROFILE_INCLUDE'] = str(profile_id).strip()
+    task_cfg['filters'] = filters
+
+    if str(history_user or '').strip():
+        task_cfg['history_user'] = str(history_user).strip()
+    if str(history_source or '').strip():
+        task_cfg['history_source'] = str(history_source).strip()
+
+    allowed, reason = task_runner.can_enqueue_now(task_cfg)
+    if not allowed:
+        raise RuntimeError(str(reason or 'Task cannot be enqueued'))
+
+    from apero_ri import tasks as task_module
+
+    task_cls = task_module.TASK_LIST.get('APERO_CHECK_TASK')
+    if task_cls is None:
+        raise RuntimeError('APERO_CHECK_TASK is not available')
+
+    run_params = task_runner.build_run_params(
+        instrument,
+        str(app._resolve_local_data_dir()),
+        all_profiles,
+        task_cfg,
+    )
+    try:
+        instance = task_runner.hydrate_runtime_state(task_cls(), task_cfg)
+        instance.USE_SUBPROCESS = bool(
+            task_module.USE_SUBPROCESS.get('APERO_CHECK_TASK', False)
+        )
+        instance._task_key = 'APERO_CHECK_TASK'
+    except Exception as exc:
+        raise RuntimeError(
+            'Task initialization failed: ' + str(exc)
+        ) from exc
+
+    task_runner.enqueue(
+        instrument,
+        task_id,
+        instance,
+        run_params,
+        prepend=True,
+    )
+    return dict(task_id=task_id, instrument=instrument)
+
+
 def _slug_task_token(value: str, max_len: int = 64) -> str:
     """Normalise one task-id token to a compact safe slug."""
     text = str(value or '').strip().lower()
@@ -640,7 +718,9 @@ def api_apero_checks_browse_dirs(app):
 def api_apero_checks_profile_page(app, profile_id):
     """Return one or two pages of APERO-check cards as JSON."""
     user_info, perms = _api_user(app)
-    if not _has_any_monitor_perm(perms):
+    can_monitor = _has_any_monitor_perm(perms)
+    can_manage = 'manage.apero_profile' in set(perms or set())
+    if not can_monitor and not can_manage:
         return jsonify(success=False, error='Monitor access required'), 403
 
     profile = None
@@ -868,6 +948,71 @@ def api_apero_checks_rerun_single_check(app):
 
     return jsonify(
         success=True,
+        task_id=str(queued.get('task_id') or ''),
+        instrument=str(queued.get('instrument') or ''),
+    )
+
+
+def api_apero_checks_clean_reset_profile(app):
+    """Delete all profile YAMLs and queue one full rerun."""
+    user_info = app._get_api_user()
+    if not user_info:
+        return jsonify(success=False, error='Login required'), 401
+    perms = resolve_user_permissions(
+        user_info['groups'], app.ari_groups
+    )
+    if 'manage.apero_profile' not in set(perms or set()):
+        return jsonify(success=False, error='Admin access required'), 403
+
+    body = request.get_json(silent=True) or {}
+    profile_id = str(body.get('profile_id') or '').strip()
+    if profile_id == '':
+        return jsonify(success=False, error='Missing profile_id'), 400
+
+    try:
+        profile = _resolve_accessible_profile(app, profile_id)
+    except Exception as exc:
+        return jsonify(success=False, error=str(exc)), 404
+
+    local_data_dir = app._resolve_local_data_dir()
+    cfg = checks_core.load_config(local_data_dir)
+    root = checks_core.resolve_checks_root(
+        local_data_dir,
+        profile_data=profile.get('data'),
+        configured_root=cfg.get('checks_root', ''),
+    )
+
+    deleted = 0
+    failures = []
+    for path in checks_core.list_yaml_files(root):
+        try:
+            path.unlink(missing_ok=False)
+            deleted += 1
+        except Exception as exc:
+            failures.append(f'{path.name}: {exc}')
+
+    if failures:
+        return jsonify(
+            success=False,
+            error='Failed to remove one or more YAML files',
+            deleted=deleted,
+            failed=len(failures),
+            details=failures[:10],
+        ), 500
+
+    try:
+        queued = _queue_apero_check_profile_run(
+            app,
+            profile_id,
+            history_user=str(user_info.get('username') or '').strip(),
+            history_source='ARI:apero_checks_clean_reset',
+        )
+    except Exception as exc:
+        return jsonify(success=False, error=str(exc), deleted=deleted), 400
+
+    return jsonify(
+        success=True,
+        deleted=deleted,
         task_id=str(queued.get('task_id') or ''),
         instrument=str(queued.get('instrument') or ''),
     )

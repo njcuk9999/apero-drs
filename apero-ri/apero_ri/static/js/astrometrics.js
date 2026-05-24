@@ -1590,91 +1590,95 @@
         if (!host) return;
         host.innerHTML = '';
 
-        // Always-first "Add" card
-        var addCard = document.createElement('div');
-        addCard.className = 'rej-card rej-card--add';
-        addCard.innerHTML = '<div class="rej-card__add-inner">'
-            + '<i class="fa-solid fa-plus"></i>'
-            + '<span>Add a new rejected name</span>'
-            + '</div>';
-        addCard.addEventListener('click', _openAddOverlay);
-        host.appendChild(addCard);
+        if (!rows.length) {
+            host.innerHTML = '<div class="rj-empty">'
+                + 'No rejected entries match this filter.</div>';
+            return;
+        }
 
+        var html = '<div class="rej-table-wrap">'
+            + '<table class="ari-dt rej-table">'
+            + '<thead class="ari-dt__header-row"><tr>'
+            + '<th class="ari-dt__th">APERO name</th>'
+            + '<th class="ari-dt__th">Aliases</th>'
+            + '<th class="ari-dt__th">Notes</th>'
+            + '<th class="ari-dt__th">First author</th>'
+            + '<th class="ari-dt__th">First updated</th>'
+            + '<th class="ari-dt__th">Actions</th>'
+            + '</tr></thead><tbody>';
         rows.forEach(function (row) {
-            var card = document.createElement('div');
-            card.className = 'rej-card';
-            var aliasArr = (row.ALIASES || []);
-            var aliases = aliasArr.map(_esc).join(', ');
-            var aliasesPlain = aliasArr.join(', ');
-            var html = '<header class="rej-card__head" title="'
-                + _esc(row.APERO_NAME) + '">'
-                + '<i class="fa-solid fa-ban"></i>'
-                + '<span class="rej-card__name">'
-                + _esc(row.APERO_NAME) + '</span>'
-                + '</header>';
-            if (aliases) {
-                html += '<div class="rej-card__field" title="'
-                    + _esc(aliasesPlain) + '">'
-                    + '<span class="rej-card__label">Aliases:</span>'
-                    + ' ' + aliases + '</div>';
-            }
-            if (row.NOTES) {
-                html += '<div class="rej-card__field" title="'
-                    + _esc(String(row.NOTES)) + '">'
-                    + '<span class="rej-card__label">Notes:</span>'
-                    + ' ' + _esc(row.NOTES) + '</div>';
-            }
-            var metaPlain = 'added by ' + (row.FIRST_AUTHOR || '')
-                + (row.FIRST_UPDATED
-                    ? (' on ' + row.FIRST_UPDATED) : '');
-            html += '<div class="rej-card__meta" title="'
-                + _esc(metaPlain) + '">'
-                + 'by <strong>' + _esc(row.FIRST_AUTHOR)
-                + '</strong>';
-            if (row.FIRST_UPDATED) {
-                html += ' ' + _esc(row.FIRST_UPDATED);
-            }
-            html += '</div>';
-            html += '<div class="rej-card__actions">'
-                + '<button type="button" class="rej-card__action"'
-                + ' data-rej-open-manual title="Open in Add manually">'
-                + '<i class="fa-solid fa-pen-to-square"></i>'
-                + '</button>';
+            var aliases = Array.isArray(row.ALIASES)
+                ? row.ALIASES.join(', ')
+                : '';
+            html += '<tr class="ari-dt__row">'
+                + '<td class="rej-cell-name">' + _esc(row.APERO_NAME)
+                + '</td>'
+                + '<td class="rej-cell-trunc" title="' + _esc(aliases)
+                + '">' + _esc(aliases || '—') + '</td>'
+                + '<td class="rej-cell-trunc" title="'
+                + _esc(row.NOTES || '') + '">' + _esc(row.NOTES || '—')
+                + '</td>'
+                + '<td>' + _esc(row.FIRST_AUTHOR || '—') + '</td>'
+                + '<td class="rej-cell-ts">'
+                + _esc(row.FIRST_UPDATED || '—') + '</td>'
+                + '<td class="rej-cell-actions">'
+                + '<button type="button" class="rej-card__action" '
+                + 'data-rej-open-manual data-name="'
+                + _esc(row.APERO_NAME) + '" '
+                + 'title="Open in Add manually">'
+                + '<i class="fa-solid fa-pen-to-square"></i></button>';
             if (canEditRejected) {
-                html += '<button type="button" class="rej-card__action"'
-                    + ' data-rej-edit title="Edit rejected entry">'
-                    + '<i class="fa-solid fa-pen"></i>'
-                    + '</button>'
-                    + '<button type="button" '
-                    + 'class="rej-card__action rej-card__action--danger"'
-                    + ' data-rej-delete title="Delete rejected entry">'
-                    + '<i class="fa-solid fa-trash"></i>'
-                    + '</button>';
+                html += ' <button type="button" class="rej-card__action" '
+                    + 'data-rej-edit data-name="' + _esc(row.APERO_NAME)
+                    + '" title="Edit rejected entry">'
+                    + '<i class="fa-solid fa-pen"></i></button>'
+                    + ' <button type="button" '
+                    + 'class="rej-card__action rej-card__action--danger" '
+                    + 'data-rej-delete data-name="'
+                    + _esc(row.APERO_NAME)
+                    + '" title="Delete rejected entry">'
+                    + '<i class="fa-solid fa-trash"></i></button>';
             }
-            html += '</div>';
-            card.innerHTML = html;
-            var openBtn = card.querySelector('[data-rej-open-manual]');
-            if (openBtn) {
-                openBtn.addEventListener('click', function () {
-                    _openManualEditor(row);
+            html += '</td></tr>';
+        });
+        html += '</tbody></table></div>';
+        host.innerHTML = html;
+
+        function byName(name) {
+            for (var i = 0; i < rows.length; i += 1) {
+                if (String(rows[i].APERO_NAME) === String(name)) {
+                    return rows[i];
+                }
+            }
+            return null;
+        }
+
+        host.querySelectorAll('[data-rej-open-manual]').forEach(
+            function (btn) {
+                btn.addEventListener('click', function () {
+                    var row = byName(btn.getAttribute('data-name'));
+                    if (row) _openManualEditor(row);
                 });
             }
-            if (canEditRejected) {
-                var editBtn = card.querySelector('[data-rej-edit]');
-                if (editBtn) {
-                    editBtn.addEventListener('click', function () {
-                        _openAddOverlay(row);
-                    });
-                }
-                var delBtn = card.querySelector('[data-rej-delete]');
-                if (delBtn) {
-                    delBtn.addEventListener('click', function () {
-                        _deleteRejected(row);
-                    });
-                }
+        );
+
+        host.querySelectorAll('[data-rej-edit]').forEach(
+            function (btn) {
+                btn.addEventListener('click', function () {
+                    var row = byName(btn.getAttribute('data-name'));
+                    if (row) _openAddOverlay(row);
+                });
             }
-            host.appendChild(card);
-        });
+        );
+
+        host.querySelectorAll('[data-rej-delete]').forEach(
+            function (btn) {
+                btn.addEventListener('click', function () {
+                    var row = byName(btn.getAttribute('data-name'));
+                    if (row) _deleteRejected(row);
+                });
+            }
+        );
     }
 
     function _setOverlayMode(mode, row) {
@@ -1821,6 +1825,14 @@
                     _page += 1;
                     _applyFilter();
                 }
+            });
+        }
+
+        var addBtn = document.getElementById('rej-open-add');
+        if (addBtn && !addBtn.dataset.wired) {
+            addBtn.dataset.wired = '1';
+            addBtn.addEventListener('click', function () {
+                _openAddOverlay(null);
             });
         }
     }

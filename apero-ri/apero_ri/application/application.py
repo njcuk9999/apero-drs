@@ -742,6 +742,12 @@ class ARIApp(Flask):
             .api_object_groups_admin_custom_test(self)
         )
 
+    def _api_clocks_get(self):
+        return _impls.ariapp_api_clocks_get(self)
+
+    def _api_admin_clocks(self):
+        return _impls.ariapp_api_admin_clocks(self)
+
     def _api_ri_profile_health(self):
         return data_portal_api_helpers.api_ri_profile_health(self)
 
@@ -1523,6 +1529,12 @@ class ARIApp(Flask):
             apero_checks_api_helpers as ach,
         )
         return ach.api_apero_checks_rerun_single_check(self)
+
+    def _api_apero_checks_clean_reset_profile(self):
+        from apero_ri.application import (
+            apero_checks_api_helpers as ach,
+        )
+        return ach.api_apero_checks_clean_reset_profile(self)
 
     def _api_apero_checks_delete_obsdir(self):
         from apero_ri.application import (

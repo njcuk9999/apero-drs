@@ -614,7 +614,7 @@ def register_static_routes(app):
         "doc_dynamic_view",
         app._doc_dynamic_view,
     )
-    app.add_url_rule("/doc-images/<filename>", "doc_image", app._doc_image_view)
+    app.add_url_rule("/doc-images/<path:filename>", "doc_image", app._doc_image_view)
 
     # Admin user management API routes
     app.add_url_rule(
@@ -1647,6 +1647,12 @@ def register_data_portal_routes(app):
         methods=['POST'],
     )
     app.add_url_rule(
+        '/api/monitor/apero-checks/clean-reset-profile',
+        'api_apero_checks_clean_reset_profile',
+        app._api_apero_checks_clean_reset_profile,
+        methods=['POST'],
+    )
+    app.add_url_rule(
         '/api/monitor/apero-checks/delete-obsdir',
         'api_apero_checks_delete_obsdir',
         app._api_apero_checks_delete_obsdir,
@@ -2090,6 +2096,18 @@ def register_data_portal_routes(app):
         'api_object_groups_admin_custom_test',
         app._api_object_groups_admin_custom_test,
         methods=['POST'],
+    )
+    app.add_url_rule(
+        '/api/clocks',
+        'api_clocks_get',
+        app._api_clocks_get,
+        methods=['GET'],
+    )
+    app.add_url_rule(
+        '/api/admin/clocks',
+        'api_admin_clocks',
+        app._api_admin_clocks,
+        methods=['GET', 'POST'],
     )
 
     app.add_url_rule(

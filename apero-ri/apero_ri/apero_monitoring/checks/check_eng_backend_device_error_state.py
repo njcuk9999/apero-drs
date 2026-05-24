@@ -26,14 +26,14 @@ CHECK.dependencies = ['BLANK', 'HAS_OBSDIR', 'CALIB_TEST']
 SIMPLE_CHECK = SimpleCheck(CHECK, TEST_KEY)
 # Define one input variable and its YAML/header mapping.
 SIMPLE_CHECK.data['x'] = dict(
-    key=['status_key', 'key1'],
+    key='status_key',
     dtype='str',
     normalize='upper_strip',
 )
 # Define one input variable and its YAML/header mapping.
 SIMPLE_CHECK.data['target'] = dict(
     kind='config',
-    key=['blocked_value', 'val1'],
+    key='blocked_value',
     cast='str',
     default='NOK',
 )

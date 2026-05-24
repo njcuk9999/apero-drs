@@ -7,7 +7,8 @@ card_icon: fa-solid fa-gear
 
 ## Overview
 
-No overview available.
+This engineering sub-test checks Fabry-Perot exterior temperature stays
+in range.
 
 ## Requirements
 
@@ -17,11 +18,22 @@ No overview available.
 
 ## What to do
 
-No instructions provided.
+If FALSE please [re-run the check](how_to/run_check.md) with
+--test=ENG_TEST.
+
+If still FALSE, report the failing ENG_TEST details and contact
+[Contact list C1](#contact-list-c1).
 
 ## Contact
 
-No contacts.
+### Contact list C1
+<a id="contact-list-c1"></a>
+
+| Name | Email |
+| --- | --- |
+| Lison Malo * | lison.malo@umontreal.ca |
+| Neil Cook | neil.cook@umontreal.ca |
+| Etienne Artigau | etienne.artigau@umontreal.ca |
 
 ## Check logic
 

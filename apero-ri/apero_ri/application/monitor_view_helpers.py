@@ -26,6 +26,7 @@ from apero_ri.core.auth import (
     get_public_permissions,
 )
 from apero_ri.apero_monitoring.checks import CHECKS as MONITOR_CHECKS
+from apero_ri.core.docs import render_markdown
 from apero_ri.core import apero_checks as checks_core
 from apero_ri.core.permissions import resolve_user_permissions
 from apero_ri.core import permissions as perms_mod
@@ -91,6 +92,42 @@ def _monitor_check_docs_url(check_key: str) -> str:
     if not slug:
         return _monitor_docs_url()
     return url_for('doc_dynamic_view', page_ref=f'monitor/checks/{slug}')
+
+
+def _monitor_profile_logic_payload(
+    check_key: str,
+    profile_data: dict,
+) -> dict:
+    """Return profile-specific logic markdown/html for one check."""
+    check_obj = MONITOR_CHECKS.get(str(check_key or '').strip())
+    if check_obj is None:
+        return dict(markdown='', html='')
+
+    simple_check = getattr(check_obj, 'simple_check', None)
+    if simple_check is None:
+        return dict(markdown='', html='')
+
+    from apero_ri.apero_monitoring.core import raw_common
+
+    cfg = raw_common.get_check_value(
+        profile_data,
+        simple_check.config_section,
+        ['tests', simple_check.test_key],
+        dict(),
+    )
+    if not isinstance(cfg, dict):
+        cfg = dict()
+
+    values = simple_check._display_cfg()
+    values['enabled'] = raw_common.to_bool(
+        cfg.get('enabled', True),
+        default=True,
+    )
+    values.update(simple_check._runtime_logic_values(cfg, profile_data))
+
+    logic_markdown = str(simple_check.get_logic_markdown(values) or '').strip()
+    logic_html = render_markdown(logic_markdown) if logic_markdown else ''
+    return dict(markdown=logic_markdown, html=logic_html)
 
 
 def _has_any_monitor_perm(perms):
@@ -1377,6 +1414,7 @@ def _get_apero_check_page_payload_minimal(
     page_num,
     obsdir_filter,
     obsdir_sort,
+    result_filter,
 ):
     """Return paged minimal obsdir cards (file metadata only)."""
     checks_root = _checks_root_for_profile(app, profile_data)
@@ -1387,18 +1425,37 @@ def _get_apero_check_page_payload_minimal(
     filtered_paths = _filter_apero_check_paths(
         files, obsdir_filter, obsdir_sort
     )
-    total_cards = len(filtered_paths)
-    total_pages = max(
-        1, (total_cards + per_page - 1) // per_page
-    )
-    page_num = max(1, min(page_num, total_pages))
-    start = (page_num - 1) * per_page
-    end = start + per_page
-    paths = filtered_paths[start:end]
-    cards = [
-        _build_apero_check_minimal_with_status(p, ignored_checks)
-        for p in paths
-    ]
+    mode = str(result_filter or 'all').strip().lower()
+    if mode == 'all':
+        total_cards = len(filtered_paths)
+        total_pages = max(
+            1, (total_cards + per_page - 1) // per_page
+        )
+        page_num = max(1, min(page_num, total_pages))
+        start = (page_num - 1) * per_page
+        end = start + per_page
+        paths = filtered_paths[start:end]
+        cards = [
+            _build_apero_check_minimal_with_status(p, ignored_checks)
+            for p in paths
+        ]
+    else:
+        all_cards = [
+            _build_apero_check_minimal_with_status(p, ignored_checks)
+            for p in filtered_paths
+        ]
+        filtered_cards = _apply_apero_check_result_filter(
+            all_cards,
+            mode,
+        )
+        total_cards = len(filtered_cards)
+        total_pages = max(
+            1, (total_cards + per_page - 1) // per_page
+        )
+        page_num = max(1, min(page_num, total_pages))
+        start = (page_num - 1) * per_page
+        end = start + per_page
+        cards = filtered_cards[start:end]
     return {
         'checks_root': str(checks_root),
         'page': page_num,
@@ -1442,6 +1499,7 @@ def monitor_apero_checks_profile_view(app, profile_id):
         page_args['page_num'],
         page_args['obsdir_filter'],
         page_args['obsdir_sort'],
+        page_args['result_filter'],
     )
 
     page_id = f'home.monitor_portal.apero_checks.{profile_id}'
@@ -1462,6 +1520,7 @@ def monitor_apero_checks_profile_view(app, profile_id):
         'per_page': payload['per_page'],
         'obsdir_filter': page_args['obsdir_filter'],
         'obsdir_sort': page_args['obsdir_sort'],
+        'result_filter': page_args['result_filter'],
         'checks_root': payload['checks_root'],
         'monitor_doc_url': _monitor_docs_url(),
         'can_manage_apero_profiles': _can_manage_apero_profiles(perms),
@@ -1793,6 +1852,20 @@ def monitor_apero_checks_check_view(
         'api_rerun_check_url': url_for('api_apero_checks_rerun_single_check'),
         'api_view_yaml_url': url_for('api_apero_checks_view_yaml'),
     }
+    context.update(
+        {
+            'check_logic_markdown': '',
+            'check_logic_html': '',
+        }
+    )
+    try:
+        logic_payload = _monitor_profile_logic_payload(key, profile_data)
+        context['check_logic_markdown'] = str(
+            logic_payload.get('markdown') or ''
+        )
+        context['check_logic_html'] = str(logic_payload.get('html') or '')
+    except Exception:
+        pass
     try:
         context.update(
             app._build_sidebar_context(sidebar_page_id, perms, user_info)

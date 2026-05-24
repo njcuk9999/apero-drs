@@ -309,6 +309,17 @@ home.user_portal.notifications:
     top-level: False
     show: True
 
+home.user_portal.clocks:
+  label: Clocks
+  parent: home.user_portal
+  view-permission: view.home
+  icon: fa-solid fa-clock
+  quick-nav: False
+  side-nav:
+    pinned: False
+    top-level: False
+    show: True
+
 home.user_portal.links:
   label: My Links
   parent: home.user_portal
@@ -482,6 +493,17 @@ home.admin_portal.miscellaneous.custom_columns:
   parent: home.admin_portal.miscellaneous
   view-permission: manage.apero_profile
   icon: fa-solid fa-table-columns
+  quick-nav: False
+  side-nav:
+    pinned: False
+    top-level: False
+    show: True
+
+home.admin_portal.miscellaneous.clock:
+  label: Clock Settings
+  parent: home.admin_portal.miscellaneous
+  view-permission: manage.apero_profile
+  icon: fa-solid fa-clock
   quick-nav: False
   side-nav:
     pinned: False

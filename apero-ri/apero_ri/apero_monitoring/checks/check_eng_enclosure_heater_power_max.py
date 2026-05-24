@@ -17,13 +17,13 @@ CHECK = AperoCheck(CHECK_NAME, CHECK_HUMAN_NAME, CHECK_TYPE, INSTRUMENTS)
 CHECK.dependencies = ['BLANK', 'HAS_OBSDIR', 'CALIB_TEST']
 SIMPLE_CHECK = SimpleCheck(CHECK, TEST_KEY)
 SIMPLE_CHECK.data['x'] = dict(
-    key=['metric_key', 'key1'],
+    key='metric_key',
     dtype='float',
     normalize='float',
 )
 SIMPLE_CHECK.data['limit'] = dict(
     kind='config',
-    key=['limit', 'val1'],
+    key='limit',
     cast='float',
     default=90.0,
 )

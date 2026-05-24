@@ -1,0 +1,61 @@
+{% extends "general/sidebar_base.html" %}
+{% block title %}APERO RI - Clocks{% endblock %}
+
+{% block doc_content %}
+<div class="ari-page-header">
+    <h1><i class="{{ page_icon }}"></i> {{ page_label }}</h1>
+    <p class="ari-page-subtitle">
+        Live clocks across configured timezones.
+    </p>
+</div>
+
+<style>
+.uc-clock-wrap {
+    border-radius: 0 0 4px 4px;
+}
+
+#clock-table .ot-th {
+    background: #d9ebff;
+    border-right-color: #9fc3ea;
+    border-bottom-color: #9fc3ea;
+}
+
+#clock-table .ot-th:hover {
+    background: #c6dfff;
+}
+
+[data-theme="dark"] #clock-table .ot-th {
+    background: #1f2937;
+    border-right-color: #334155;
+    border-bottom-color: #334155;
+}
+
+[data-theme="dark"] #clock-table .ot-th:hover {
+    background: #2b3648;
+}
+</style>
+
+<div class="ot-table-wrap uc-clock-wrap">
+    <table class="ot-table" id="clock-table">
+        <thead>
+        <tr class="ot-header-row">
+            <th class="ot-th ot-th--nonsortable">Name</th>
+            <th class="ot-th ot-th--nonsortable">Time</th>
+            <th class="ot-th ot-th--nonsortable">Difference to UTC</th>
+        </tr>
+        </thead>
+        <tbody id="clock-table-body">
+        <tr class="ot-row">
+            <td colspan="3" class="ot-cell ot-loading">Loading clocks...</td>
+        </tr>
+        </tbody>
+    </table>
+</div>
+
+<script>
+window.ARI_CLOCK_PAGE = {
+    apiUrl: {{ url_for('api_clocks_get')|tojson }}
+};
+</script>
+<script src="{{ url_for('static', filename='js/user_clocks_page.js', v='20260524b') }}"></script>
+{% endblock %}

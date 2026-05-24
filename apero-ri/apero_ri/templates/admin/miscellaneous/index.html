@@ -9,6 +9,12 @@
     </p>
 </div>
 
+<style>
+.ari-sg-section + .ari-sg-section {
+    margin-top: 0.7rem;
+}
+</style>
+
 <div class="ari-sg-section">
     <div class="ari-sg-section__header">
         <h3>
@@ -40,6 +46,23 @@
        href="{{ url_for('home_admin_portal_miscellaneous_custom_columns') }}">
         <i class="fa-solid fa-sliders"></i>
         Open Custom Columns
+    </a>
+</div>
+
+<div class="ari-sg-section">
+    <div class="ari-sg-section__header">
+        <h3>
+            <i class="fa-solid fa-clock"></i>
+            Clock Settings
+        </h3>
+    </div>
+    <p class="ari-page-subtitle" style="margin-top:0; margin-bottom:0.8rem;">
+        Configure quick-nav clocks shown in the top-bar hover panel.
+    </p>
+    <a class="ari-btn ari-btn--secondary"
+       href="{{ url_for('home_admin_portal_miscellaneous_clock') }}">
+        <i class="fa-solid fa-stopwatch"></i>
+        Open Clock Settings
     </a>
 </div>
 {% endblock %}

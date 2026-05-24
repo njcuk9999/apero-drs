@@ -252,6 +252,13 @@
     </span>
 </div>
 
+{% if check_logic_html %}
+<div class="ac-ui-panel ac-ui-panel--soft" style="margin-top:0;">
+    <div class="ac-failure-meta-row"><strong>Check logic:</strong></div>
+    <div class="ari-doc-content">{{ check_logic_html | safe }}</div>
+</div>
+{% endif %}
+
 </div>
 
 <div id="ac-comment-overlay" class="ac-overlay" hidden>
@@ -322,7 +329,16 @@
     var taskState = {
         taskId: '',
         timerId: null,
+        awaitingRefresh: false,
+        reloadScheduled: false,
     };
+
+    var finishedStateKey = [
+        'ac-check-rerun-finished',
+        {{ profile_id|tojson }},
+        {{ obsdir|tojson }},
+        {{ check_key|tojson }}
+    ].join('|');
 
     var state = {
         checkKind: {{ check_kind|tojson }},
@@ -378,6 +394,60 @@
             box.classList.add('ac-task-status--' + kind);
         }
         box.textContent = message;
+    }
+
+    function rememberFinished(taskId) {
+        var payload = {
+            task_id: String(taskId || '').trim(),
+            saved_at_ms: Date.now(),
+        };
+        try {
+            window.sessionStorage.setItem(
+                finishedStateKey,
+                JSON.stringify(payload)
+            );
+        } catch (e) {
+            void e;
+        }
+    }
+
+    function restoreFinishedStatus() {
+        var raw = '';
+        var payload = null;
+        var ageMs = 0;
+        try {
+            raw = String(
+                window.sessionStorage.getItem(finishedStateKey) || ''
+            );
+        } catch (e) {
+            raw = '';
+            void e;
+        }
+        if (!raw) {
+            return;
+        }
+        try {
+            payload = JSON.parse(raw);
+        } catch (e2) {
+            payload = null;
+            void e2;
+        }
+        if (!payload || typeof payload !== 'object') {
+            return;
+        }
+        ageMs = Date.now() - Number(payload.saved_at_ms || 0);
+        if (ageMs > 1800000) {
+            try {
+                window.sessionStorage.removeItem(finishedStateKey);
+            } catch (e3) {
+                void e3;
+            }
+            return;
+        }
+        setTaskStatus(
+            'finished',
+            'Finished: ' + String(payload.task_id || '').trim()
+        );
     }
 
     function dictResult(kind, row) {
@@ -454,6 +524,14 @@
             return false;
         }
         setTaskStatus('finished', 'Finished: ' + rowTaskId);
+        rememberFinished(rowTaskId);
+        if (taskState.awaitingRefresh && !taskState.reloadScheduled) {
+            taskState.awaitingRefresh = false;
+            taskState.reloadScheduled = true;
+            window.setTimeout(function () {
+                window.location.reload();
+            }, 1200);
+        }
         return true;
     }
 
@@ -598,9 +676,12 @@
                 check_key: {{ check_key|tojson }},
             }).then(function (data) {
                 taskState.taskId = String(data.task_id || '').trim();
+                taskState.awaitingRefresh = true;
+                taskState.reloadScheduled = false;
                 setTaskStatus('queued', 'Queue: ' + taskState.taskId);
                 startTaskPolling();
             }).catch(function (err) {
+                taskState.awaitingRefresh = false;
                 setTaskStatus(
                     'error',
                     String(err || 'Could not queue this check.')
@@ -609,6 +690,7 @@
         });
     }
 
+    restoreFinishedStatus();
     pollTaskStatus();
 
     var yamlBtn = document.getElementById('ac-check-view-yaml');
