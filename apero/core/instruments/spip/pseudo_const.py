@@ -1654,12 +1654,23 @@ def manual_apero_reldate(params: ParamDict, header: Any,
     tdelta = params[delta_key]
     # get the default time to add to instrument release date
     time_delta = TimeDelta(tdelta * uu.year)
-    # deal with no IRELDATE in header -> fall back to KW_ACQTIME
-    if kw_ireldate not in header:
+    # parse IRELDATE from header when possible; if missing/invalid, fall back
+    # to KW_ACQTIME (which has an explicit astropy Time format in constants).
+    ireldate = None
+    if kw_ireldate in header:
+        irel_value = header[kw_ireldate]
+        if not drs_text.null_text(irel_value, NULL_TEXT):
+            try:
+                if drs_text.null_text(kw_ireldate_datatype, NULL_TEXT):
+                    ireldate = Time(irel_value)
+                else:
+                    ireldate = Time(irel_value, format=kw_ireldate_datatype)
+            except Exception:
+                ireldate = None
+    if ireldate is None:
         kw_ireldate = params['KW_ACQTIME'][0]
         kw_ireldate_datatype = params.instances['KW_ACQTIME'].datatype
-    # get and convert ireldate
-    ireldate = Time(header[kw_ireldate], format=kw_ireldate_datatype)
+        ireldate = Time(header[kw_ireldate], format=kw_ireldate_datatype)
     # calculate relative date
     areldate = ireldate + time_delta
     # deal with returning just the value
