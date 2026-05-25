@@ -789,90 +789,93 @@
             showToast('No pending science-group edits to save', 'info');
             return;
         }
+        var saveUrl = String(cfg.saveAllUrl || cfg.saveUrl || '').trim();
+        if (!saveUrl) {
+            showToast('Save API is not configured', 'error');
+            return;
+        }
         var saveBtns = document.querySelectorAll(
             '#btn-save-group, #btn-save-group-top');
-        var saved = 0;
-        var failed = 0;
-        var failedNames = [];
+        var payloadEdits = [];
+        var savedMap = Object.create(null);
         saveBtns.forEach(function (b) { b.disabled = true; });
         if (savingOverlay) {
             savingOverlay.style.display = 'flex';
             savingOverlay.setAttribute('aria-hidden', 'false');
         }
-        var chain = Promise.resolve();
         pendingKeys.forEach(function (key) {
-            chain = chain.then(function () {
-                var entry = draftGroups[key];
-                if (!entry) {
-                    return;
-                }
-                return fetch(cfg.saveUrl, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        instrument: entry.instrument,
-                        name: entry.name,
-                        run_ids: entry.run_ids,
-                        users: entry.users
-                    })
-                })
-                    .then(function (r) { return r.json(); })
-                    .then(function (data) {
-                        if (!data || !data.success) {
-                            failed += 1;
-                            failedNames.push(entry.instrument +
-                                '/' + entry.name);
-                            return;
-                        }
-                        var savedRunIds = normalizeValues(
-                            (data.group || {}).run_ids || entry.run_ids || []
-                        );
-                        var savedUsers = normalizeValues(
-                            (data.group || {}).users || entry.users || []
-                        );
-                        baselineGroups[key] = {
-                            run_ids: savedRunIds,
-                            users: savedUsers
-                        };
-                        delete draftGroups[key];
-                        if (
-                            entry.instrument === currentInstrument &&
-                            entry.name === currentGroup
-                        ) {
-                            selectedRunIds = savedRunIds.slice();
-                            selectedUsers = savedUsers.slice();
-                            refreshTransfer('runid');
-                            refreshTransfer('user');
-                        }
-                        saved += 1;
-                    })
-                    .catch(function () {
-                        failed += 1;
-                        failedNames.push(entry.instrument + '/' + entry.name);
-                    });
+            var entry = draftGroups[key];
+            if (!entry) return;
+            payloadEdits.push({
+                instrument: entry.instrument,
+                name: entry.name,
+                run_ids: entry.run_ids,
+                users: entry.users
             });
         });
 
-        chain.finally(function () {
+        fetch(saveUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ edits: payloadEdits })
+        })
+            .then(function (r) { return r.json(); })
+            .then(function (data) {
+                if (!data || !data.success) {
+                    throw new Error(data && data.error
+                        ? data.error
+                        : 'Bulk save failed');
+                }
+                var savedRows = Array.isArray(data.saved)
+                    ? data.saved
+                    : [];
+                savedRows.forEach(function (row) {
+                    var key = makeGroupKey(
+                        row.instrument,
+                        row.name
+                    );
+                    savedMap[key] = row;
+                });
+
+                pendingKeys.forEach(function (key) {
+                    var entry = draftGroups[key];
+                    if (!entry) return;
+                    var row = savedMap[key] || entry;
+                    var savedRunIds = normalizeValues(row.run_ids || []);
+                    var savedUsers = normalizeValues(row.users || []);
+                    baselineGroups[key] = {
+                        run_ids: savedRunIds,
+                        users: savedUsers
+                    };
+                    delete draftGroups[key];
+                    if (
+                        entry.instrument === currentInstrument &&
+                        entry.name === currentGroup
+                    ) {
+                        selectedRunIds = savedRunIds.slice();
+                        selectedUsers = savedUsers.slice();
+                    }
+                });
+
+                refreshTransfer('runid');
+                refreshTransfer('user');
+                showToast(
+                    'Saved all science groups (' + payloadEdits.length + ')',
+                    'success'
+                );
+                refreshScienceHealthBanner();
+            })
+            .catch(function (err) {
+                showToast(String(err && err.message || 'Save failed'),
+                    'error');
+            })
+            .finally(function () {
             updateDirtyState();
             if (savingOverlay) {
                 savingOverlay.style.display = 'none';
                 savingOverlay.setAttribute('aria-hidden', 'true');
             }
-            refreshScienceHealthBanner();
-            if (failed === 0) {
-                showToast(
-                    'Saved all science groups (' + saved + ')',
-                    'success'
-                );
-            } else {
-                showToast(
-                    'Saved ' + saved + ', failed ' + failed +
-                    ' (' + failedNames.join(', ') + ')',
-                    'error'
-                );
-            }
-        });
+            });
     }
 
     function refreshRunIds() {

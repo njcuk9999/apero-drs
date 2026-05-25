@@ -676,6 +676,12 @@ def register_static_routes(app):
         methods=["POST"],
     )
     app.add_url_rule(
+        "/api/admin/sci-groups/save-all",
+        "api_sci_groups_save_all",
+        app._api_sci_groups_save_all,
+        methods=["POST"],
+    )
+    app.add_url_rule(
         "/api/admin/sci-groups/create",
         "api_sci_groups_create",
         app._api_sci_groups_create,

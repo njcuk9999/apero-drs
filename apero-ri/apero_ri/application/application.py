@@ -1902,6 +1902,9 @@ class ARIApp(Flask):
     def _api_sci_groups_save(self):
         return sci_groups_api_helpers.api_sci_groups_save(self)
 
+    def _api_sci_groups_save_all(self):
+        return sci_groups_api_helpers.api_sci_groups_save_all(self)
+
     def _api_sci_groups_create(self):
         return sci_groups_api_helpers.api_sci_groups_create(self)
 

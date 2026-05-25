@@ -361,6 +361,7 @@ window.ARI_SCI_GROUPS = {
     listUrl: {{ url_for('api_sci_groups_list')|tojson }},
     getUrl: {{ url_for('api_sci_groups_get')|tojson }},
     saveUrl: {{ url_for('api_sci_groups_save')|tojson }},
+    saveAllUrl: {{ url_for('api_sci_groups_save_all')|tojson }},
     createUrl: {{ url_for('api_sci_groups_create')|tojson }},
     deleteUrl: {{ url_for('api_sci_groups_delete')|tojson }},
     refreshRunIdsUrl: {{ url_for('api_sci_groups_refresh_run_ids')|tojson }},
@@ -369,5 +370,5 @@ window.ARI_SCI_GROUPS = {
     instruments: {{ instruments|tojson }}
 };
 </script>
-<script src="{{ url_for('static', filename='js/admin_science_groups.js') }}?v=20260524a"></script>
+<script src="{{ url_for('static', filename='js/admin_science_groups.js') }}?v=20260524b"></script>
 {% endblock %}
