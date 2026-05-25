@@ -554,6 +554,33 @@
                             or monitor issues.
                         </div>
                     </div>
+                    <div class="ari-ap-form__field">
+                        <label for="edit-google-secret-name">
+                            OAuth filename
+                        </label>
+                        <input type="text" id="edit-google-secret-name"
+                               class="ari-ap-input"
+                               placeholder="legacy_gsheet_oauth.json">
+                        <div class="at-muted-hint">
+                            Required location:
+                            <code>{LOCAL_DATA_DIR}/admin/&lt;filename&gt;</code>
+                        </div>
+                    </div>
+                    <div class="ari-ap-form__field">
+                        <label for="edit-google-oauth-file">
+                            Upload OAuth JSON
+                        </label>
+                        <input type="file" id="edit-google-oauth-file"
+                               class="ari-ap-input" accept=".json">
+                        <div class="at-muted-hint">
+                            Quick setup:
+                            1) In Google Cloud, create OAuth client credentials
+                            with Sheets/Drive access.
+                            2) Generate a refresh token.
+                            3) Export JSON with client_id, client_secret,
+                            refresh_token, token_uri.
+                        </div>
+                    </div>
                     <div class="ari-ap-form__field" id="edit-check-gsheet-url-fields" style="display:none;">
                         <label for="edit-monitoring-sheet-url">Monitoring sheet URL</label>
                         <input type="url" id="edit-monitoring-sheet-url" class="ari-ap-input"
@@ -891,5 +918,5 @@ window.ARI_ASYNC_TASKS = {
     }
 };
 </script>
-    <script src="{{ url_for('static', filename='js/admin_async_tasks.js', v='20260523e') }}"></script>
+    <script src="{{ url_for('static', filename='js/admin_async_tasks.js', v='20260525a') }}"></script>
 {% endblock %}

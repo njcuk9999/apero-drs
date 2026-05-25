@@ -149,6 +149,18 @@
     var editLegacyGsheetFields = document.getElementById(
         'edit-legacy-gsheet-fields');
     var editDryRun      = document.getElementById('edit-dry-run');
+    var editGoogleSecretName = document.getElementById(
+        'edit-google-secret-name');
+    var editGoogleOauthFile = document.getElementById(
+        'edit-google-oauth-file');
+    var editCheckGsheetUrlFields = document.getElementById(
+        'edit-check-gsheet-url-fields');
+    var editOverrideSheetUrlField = document.getElementById(
+        'edit-override-sheet-url-field');
+    var editMonitoringSheetUrl = document.getElementById(
+        'edit-monitoring-sheet-url');
+    var editOverrideSheetUrl = document.getElementById(
+        'edit-override-sheet-url');
     var editBackupFields= document.getElementById('edit-backup-fields');
     var editDailyCopies = document.getElementById('edit-daily-copies');
     var editWeeklyCopies= document.getElementById('edit-weekly-copies');
@@ -242,14 +254,6 @@
     var LEGACY_ASTROM_TASK_KEY = 'LEGACY_ASTROM_GSHEET';
     var LEGACY_REJECT_TASK_KEY = 'LEGACY_REJECT_GSHEET';
     var LEGACY_CHECK_TASK_KEY  = 'LEGACY_CHECK_GSHEET';
-        var editCheckGsheetUrlFields = document.getElementById(
-            'edit-check-gsheet-url-fields');
-        var editOverrideSheetUrlField = document.getElementById(
-            'edit-override-sheet-url-field');
-        var editMonitoringSheetUrl = document.getElementById(
-            'edit-monitoring-sheet-url');
-        var editOverrideSheetUrl = document.getElementById(
-            'edit-override-sheet-url');
     var currentInfoText = '';
     var currentErrorText = '';
     var currentTaskLogText = '';
@@ -1551,13 +1555,23 @@
         if (editDryRun) {
             editDryRun.checked = !!(
                 task.DRY_RUN === true || task.dry_run === true
-                    if (editMonitoringSheetUrl) {
-                        editMonitoringSheetUrl.value = task.monitoring_sheet_url || '';
-                    }
-                    if (editOverrideSheetUrl) {
-                        editOverrideSheetUrl.value = task.override_sheet_url || '';
-                    }
             );
+        }
+        if (editGoogleSecretName) {
+            editGoogleSecretName.value = String(
+                task.google_secret_name || 'legacy_gsheet_oauth.json'
+            );
+        }
+        if (editGoogleOauthFile) {
+            editGoogleOauthFile.value = '';
+        }
+        if (editMonitoringSheetUrl) {
+            editMonitoringSheetUrl.value =
+                task.monitoring_sheet_url || '';
+        }
+        if (editOverrideSheetUrl) {
+            editOverrideSheetUrl.value =
+                task.override_sheet_url || '';
         }
         editDailyCopies.value = task.daily_copies || 0;
         editWeeklyCopies.value = task.weekly_copies || 0;
@@ -2307,6 +2321,9 @@
             || taskKey === LEGACY_CHECK_TASK_KEY
         ) {
             payload.dry_run = !!(editDryRun && editDryRun.checked);
+            payload.google_secret_name = editGoogleSecretName
+                ? String(editGoogleSecretName.value || '').trim()
+                : 'legacy_gsheet_oauth.json';
         }
         if (taskKey === LEGACY_CHECK_TASK_KEY) {
             payload.monitoring_sheet_url = editMonitoringSheetUrl
@@ -2362,22 +2379,61 @@
         }
         payload.id = editingTaskId;
 
-        fetch(urls.save, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload),
-        }).then(function (r) { return r.json(); }).then(function (d) {
-            if (d.success) {
-                closeEditModal();
-                showToast('Task saved.', 'success');
-                if (Array.isArray(d.warnings) && d.warnings.length) {
-                    showToast(d.warnings.join(' '), 'error');
+        var doSave = function () {
+            fetch(urls.save, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload),
+            }).then(function (r) { return r.json(); }).then(function (d) {
+                if (d.success) {
+                    closeEditModal();
+                    showToast('Task saved.', 'success');
+                    if (Array.isArray(d.warnings) && d.warnings.length) {
+                        showToast(d.warnings.join(' '), 'error');
+                    }
+                    refreshCurrentTasks();
+                } else {
+                    showToast('Save failed: ' + d.error, 'error');
                 }
-                refreshCurrentTasks();
-            } else {
-                showToast('Save failed: ' + d.error, 'error');
+            });
+        };
+
+        var isLegacyGsheet = (
+            taskKey === LEGACY_ASTROM_TASK_KEY
+            || taskKey === LEGACY_REJECT_TASK_KEY
+            || taskKey === LEGACY_CHECK_TASK_KEY
+        );
+        var hasOauthFile = !!(
+            editGoogleOauthFile
+            && editGoogleOauthFile.files
+            && editGoogleOauthFile.files[0]
+        );
+        if (!isLegacyGsheet || !hasOauthFile) {
+            doSave();
+            return;
+        }
+
+        var reader = new FileReader();
+        reader.onload = function (evt) {
+            var text = String((evt && evt.target && evt.target.result) || '');
+            var parsed = null;
+            try {
+                parsed = JSON.parse(text);
+            } catch (err) {
+                showToast('Invalid OAuth JSON file.', 'error');
+                return;
             }
-        });
+            if (!parsed || typeof parsed !== 'object') {
+                showToast('Invalid OAuth JSON payload.', 'error');
+                return;
+            }
+            payload.google_oauth_upload = parsed;
+            doSave();
+        };
+        reader.onerror = function () {
+            showToast('Could not read OAuth JSON file.', 'error');
+        };
+        reader.readAsText(editGoogleOauthFile.files[0]);
     }
 
     /* -----------------------------------------------------------------------

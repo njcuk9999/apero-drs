@@ -32,6 +32,7 @@ from urllib.parse import parse_qs, urlparse
 
 import yaml
 
+from apero_ri.core.secret_store import get_ari_dir
 from apero_ri.tasks import apero_async
 
 # =============================================================================
@@ -142,27 +143,14 @@ def _parse_gsheet_url(url: str) -> Tuple[str, int]:
 def _load_google_oauth_payload(
     task_cfg: Dict[str, Any],
 ) -> Dict[str, Any]:
-    """Load OAuth2 payload from secret store or task config."""
-    from apero_ri.core import secret_store as ss
-
-    cfg_payload = task_cfg.get('google_oauth')
-    if isinstance(cfg_payload, dict):
-        return dict(cfg_payload)
+    """Load OAuth2 payload from LOCAL_DATA_DIR/admin only."""
 
     secret_name = str(
         task_cfg.get('google_secret_name', DEFAULT_GOOGLE_SECRET_NAME)
         or DEFAULT_GOOGLE_SECRET_NAME
     ).strip() or DEFAULT_GOOGLE_SECRET_NAME
 
-    legacy_paths = [
-        ss.get_ari_dir() / 'admin' / secret_name,
-        ss.get_ari_dir() / secret_name,
-    ]
-    secret_path = ss.resolve_secret_file(
-        secret_name,
-        legacy_paths=legacy_paths,
-        mode=0o600,
-    )
+    secret_path = get_ari_dir() / 'admin' / secret_name
 
     if secret_path.exists():
         try:
@@ -174,7 +162,7 @@ def _load_google_oauth_payload(
             pass
     raise FileNotFoundError(
         'Missing Google OAuth secret file. Add credentials to '
-        f'{secret_path} or pass TASK_CONFIG.google_oauth.'
+        f'{secret_path}. Upload this file in Async Task admin editor.'
     )
 
 
