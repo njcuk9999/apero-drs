@@ -974,11 +974,11 @@ def construct_objname(params: Union[ParamDict, None], header,
         elif rawobjname.upper() in ['', 'NONE', 'NUL']:
             rawobjname = None
     # get raw object name
-    if rawobjname is None and kwrawobjname not in header:
+    if rawobjname in [None, np.nan] and kwrawobjname not in header:
         eargs = [kwrawobjname, filename]
         raise DrsCodedException('01-001-00027', 'error', targs=eargs,
                                 func_name=func_name)
-    elif rawobjname is None:
+    elif rawobjname in [None, np.nan]:
         rawobjname = header[kwrawobjname]
     # -------------------------------------------------------------------------
     if check_aliases and objdbm is not None:
@@ -1142,7 +1142,7 @@ def get_mid_obs_time(params: ParamDict, header: Any, hdict: Any,
     method = 'mjdobs+exp/2'
     # -------------------------------------------------------------------
     # return time in requested format
-    if timefmt is None:
+    if timefmt in [None, np.nan]:
         header[kwmidobstime] = (obstime.iso, kwmidcomment)
         hdict[kwmidobstime] = (obstime.iso, kwmidcomment)
     elif timefmt == 'mjd':
@@ -1427,7 +1427,7 @@ def manual_apero_reldate(params: ParamDict, header: Any,
                     ireldate = Time(irel_value, format=kw_ireldate_datatype)
             except Exception:
                 ireldate = None
-    if ireldate is None:
+    if ireldate in [None, np.nan]:
         kw_ireldate = params['KW_ACQTIME'][0]
         kw_ireldate_datatype = params.instances['KW_ACQTIME'].datatype
         ireldate = Time(header[kw_ireldate], format=kw_ireldate_datatype)
