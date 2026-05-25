@@ -1289,9 +1289,10 @@ class SubParamDict():
 
         for key in self.param_dict.data.keys():
             if key.startswith(self.path):
-                param_dict.set(key[self.path_len:], self.param_dict[key],
-                               source=self.param_dict.sources[key],
-                               instance=self.param_dict.instances[key])
+                param_dict.set(key[self.path_len:],
+                               value=self.param_dict[key],
+                               source=self.param_dict.sources.get(key, None),
+                               instance=self.param_dict.instances.get(key, None))
         return param_dict
 
     def __str__(self) -> str:

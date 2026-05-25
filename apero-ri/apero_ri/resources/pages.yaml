@@ -309,6 +309,17 @@ home.user_portal.notifications:
     top-level: False
     show: True
 
+home.user_portal.clocks:
+  label: Clocks
+  parent: home.user_portal
+  view-permission: view.home
+  icon: fa-solid fa-clock
+  quick-nav: False
+  side-nav:
+    pinned: False
+    top-level: False
+    show: True
+
 home.user_portal.links:
   label: My Links
   parent: home.user_portal
@@ -427,6 +438,72 @@ home.admin_portal.apero_profiles:
   parent: home.admin_portal
   view-permission: manage.apero_profile
   icon: fa-solid fa-sliders
+  quick-nav: False
+  side-nav:
+    pinned: False
+    top-level: False
+    show: True
+
+home.admin_portal.apero_checks_policy:
+  label: APERO Checks Policy
+  parent: home.admin_portal
+  view-permission: manage.apero_profile
+  icon: fa-solid fa-shield
+  quick-nav: False
+  side-nav:
+    pinned: False
+    top-level: False
+    show: True
+
+home.admin_portal.apero_check_info:
+  label: APERO Check Information
+  parent: home.admin_portal
+  view-permission: manage.apero_profile
+  icon: fa-solid fa-circle-info
+  quick-nav: False
+  side-nav:
+    pinned: False
+    top-level: False
+    show: False
+
+home.admin_portal.miscellaneous:
+  label: Miscellaneous
+  parent: home.admin_portal
+  view-permission: manage.apero_profile
+  icon: fa-solid fa-screwdriver-wrench
+  quick-nav: False
+  side-nav:
+    pinned: False
+    top-level: False
+    show: True
+
+home.admin_portal.miscellaneous.allowed_python_expressions:
+  label: Allowed Python Expressions
+  parent: home.admin_portal.miscellaneous
+  view-permission: manage.apero_profile
+  icon: fa-solid fa-code
+  quick-nav: False
+  side-nav:
+    pinned: False
+    top-level: False
+    show: True
+
+home.admin_portal.miscellaneous.custom_columns:
+  label: Custom Columns
+  parent: home.admin_portal.miscellaneous
+  view-permission: manage.apero_profile
+  icon: fa-solid fa-table-columns
+  quick-nav: False
+  side-nav:
+    pinned: False
+    top-level: False
+    show: True
+
+home.admin_portal.miscellaneous.clock:
+  label: Clock Settings
+  parent: home.admin_portal.miscellaneous
+  view-permission: manage.apero_profile
+  icon: fa-solid fa-clock
   quick-nav: False
   side-nav:
     pinned: False

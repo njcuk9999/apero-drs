@@ -5,6 +5,8 @@
 
 {% block extra_head %}
 {{ super() }}
+<link rel="stylesheet"
+    href="{{ url_for('static', filename='css/ari_data_table.css', v='20260424e') }}">
 <style>
 .rj-header {
     display: flex;
@@ -47,12 +49,23 @@
 .rj-toolbar {
     display: flex;
     flex-wrap: wrap;
-    gap: 0.65rem;
-    align-items: center;
+    gap: 0.8rem;
+    align-items: flex-start;
+    justify-content: space-between;
     margin-bottom: 0.8rem;
 }
+.rj-toolbar__left,
+.rj-toolbar__right {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.65rem;
+}
+.rj-toolbar__right {
+    margin-left: auto;
+}
 .rj-search {
-    flex: 1 1 18rem;
+    flex: 1 1 20rem;
     display: flex;
     align-items: center;
     gap: 0.45rem;
@@ -83,7 +96,6 @@
     display: flex;
     align-items: center;
     gap: 0.4rem;
-    margin-left: auto;
 }
 .rj-page-info {
     min-width: 7rem;
@@ -127,81 +139,78 @@
     color: var(--ari-text-muted, #57606a);
     font-size: 0.9rem;
 }
-.rj-list {
-    display: flex;
-    flex-direction: column;
-    gap: 0.45rem;
-}
-.rj-card {
-    display: grid;
-    grid-template-columns: minmax(14rem, 22rem) minmax(13rem, 18rem)
-        minmax(0, 1fr) auto;
-    gap: 0.7rem;
-    align-items: start;
+.rj-table-wrap {
+    overflow-x: auto;
+    overflow-y: auto;
+    scrollbar-gutter: stable;
+    max-height: 62vh;
     border: 1px solid var(--ari-border, #d0d7de);
     border-radius: 0.5rem;
-    background: var(--ari-card-bg, #fff);
-    padding: 0.55rem 0.8rem;
+    margin-top: 0.5rem;
 }
-.rj-card--add {
-    cursor: pointer;
-    border-style: dashed;
-    justify-items: center;
-    text-align: center;
-    color: #8e1f1f;
+.rj-table {
+    width: 100%;
+    min-width: 1050px;
 }
-.rj-card--add:hover {
-    background: #fff2f2;
+.rj-table td {
+    vertical-align: middle;
 }
-.rj-card__name {
-    display: flex;
-    align-items: center;
-    gap: 0.45rem;
-    padding-top: 0.1rem;
-    min-width: 0;
-    font-weight: 700;
-    color: #8e1f1f;
-}
-.rj-card__name span {
+.rj-cell-id {
     font-family: monospace;
-    white-space: normal;
-    word-break: break-word;
+    color: #8e1f1f;
+    white-space: nowrap;
 }
-.rj-card__flags-col {
-    min-width: 0;
-}
-.rj-card__comment {
-    white-space: normal;
-    word-break: break-word;
-    line-height: 1.35;
-    max-height: 4.05em;
+.rj-cell-comment {
+    max-width: 28rem;
+    white-space: nowrap;
     overflow: hidden;
-    font-size: 0.92rem;
+    text-overflow: ellipsis;
 }
-.rj-card__flags {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.35rem;
+.rj-cell-ts {
+    font-family: monospace;
+    white-space: nowrap;
 }
-.rj-flag {
+.rj-cell-flg {
+    text-align: center;
+    font-weight: 700;
+}
+.rj-cell-actions {
+    white-space: nowrap;
+    text-align: center;
+}
+.rj-th-sort {
     display: inline-flex;
     align-items: center;
-    gap: 0.28rem;
-    font-size: 0.78rem;
-    border-radius: 999px;
-    border: 1px solid #d0d7de;
-    padding: 0.12rem 0.45rem;
-    color: #57606a;
-    background: #f6f8fa;
+    gap: 0.35rem;
+    border: 0;
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    cursor: pointer;
+    padding: 0;
 }
-.rj-flag--on {
-    border-color: #c4382b;
-    background: #fdecea;
-    color: #8e1f1f;
+.rj-th-sort i {
+    opacity: 0.45;
+    font-size: 0.75rem;
 }
-.rj-card__actions {
-    display: flex;
-    gap: 0.28rem;
+.rj-th-sort[data-sort-dir="asc"] i,
+.rj-th-sort[data-sort-dir="desc"] i {
+    opacity: 1;
+}
+.rj-filter-cell {
+    padding: 0.3rem 0.38rem;
+    background: var(--ari-bg, #f9f9f9);
+    border-bottom: 1px solid var(--ari-border, #d0d7de);
+}
+.rj-filter-input,
+.rj-filter-select {
+    width: 100%;
+    box-sizing: border-box;
+    border: 1px solid var(--ari-border, #d0d7de);
+    border-radius: 0.35rem;
+    padding: 0.22rem 0.4rem;
+    background: var(--ari-card-bg, #fff);
+    font-size: 0.8rem;
 }
 .rj-btn-icon {
     width: 1.9rem;
@@ -314,82 +323,7 @@
     grid-column: 1 / -1;
 }
 .rj-history-list {
-    display: flex;
-    flex-direction: column;
-    gap: 0.45rem;
     margin-top: 0.75rem;
-}
-.rj-history-card {
-    display: grid;
-    grid-template-columns: 11rem 9rem minmax(0, 1fr) auto;
-    gap: 0.6rem;
-    align-items: center;
-    border: 1px solid var(--ari-border, #d0d7de);
-    border-radius: 0.45rem;
-    padding: 0.45rem 0.7rem;
-    background: var(--ari-card-bg, #fff);
-    min-width: 0;
-}
-.rj-history-card__time {
-    font-family: monospace;
-    font-size: 0.82rem;
-    color: var(--ari-text-muted, #57606a);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-.rj-history-card__user {
-    font-weight: 600;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-.rj-history-card__what {
-    min-width: 0;
-    font-size: 0.85rem;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-}
-.rj-history-card__name {
-    font-family: monospace;
-    color: #8e1f1f;
-    margin-right: 0.4rem;
-}
-.rj-history-badge {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 999px;
-    padding: 0.15rem 0.5rem;
-    font-size: 0.75rem;
-    text-transform: uppercase;
-    background: #fdecea;
-    color: #8e1f1f;
-}
-.rj-history-badge--action {
-    background: #fff8db;
-    color: #7a5d00;
-}
-.rj-history-fields {
-    display: inline-flex;
-    flex-wrap: wrap;
-    gap: 0.2rem;
-    margin-left: 0.2rem;
-    vertical-align: middle;
-}
-.rj-history-fields span {
-    font-size: 0.75rem;
-    border-radius: 999px;
-    border: 1px solid #d0d7de;
-    padding: 0.1rem 0.4rem;
-    background: #f6f8fa;
-}
-.rj-history-card__actions {
-    display: flex;
-    align-items: center;
-    gap: 0.35rem;
-    flex-wrap: nowrap;
 }
 .rj-btn-small {
     border: 1px solid var(--ari-border, #d0d7de);
@@ -477,6 +411,15 @@
 [data-theme="dark"] .rj-btn-small:hover {
     background: var(--ari-surface-muted, #1c2128);
 }
+[data-theme="dark"] .rj-filter-cell {
+    background: var(--ari-surface-muted, #1c2128);
+}
+[data-theme="dark"] .rj-filter-input,
+[data-theme="dark"] .rj-filter-select {
+    background: var(--ari-card-bg, #161b22);
+    color: var(--ari-text, #c9d1d9);
+    border-color: var(--ari-border, #30363d);
+}
 [data-theme="dark"] .rj-diff-chip--neutral {
     background: rgba(210, 153, 34, 0.2);
     color: #f2cc60;
@@ -490,11 +433,10 @@
     color: #ffb3ad;
 }
 @media (max-width: 900px) {
-    .rj-card,
-    .rj-history-card {
-        grid-template-columns: 1fr;
+    .rj-toolbar {
+        align-items: stretch;
     }
-    .rj-pager {
+    .rj-toolbar__right {
         margin-left: 0;
     }
     .rj-form-grid {
@@ -548,80 +490,38 @@
 <div class="ari-card" id="rj-list-card">
     <div class="ari-card__body">
         <div class="rj-toolbar">
-            <div class="rj-search">
-                <i class="fa-solid fa-magnifying-glass"></i>
-                <input id="rj-filter-input" type="search"
-                       placeholder="Filter by identifier..."
-                       autocomplete="off">
-            </div>
-            <label class="rj-per-page">
-                <span>per page</span>
-                <select id="rj-per-page">
-                    <option value="50" selected>50</option>
-                    <option value="100">100</option>
-                    <option value="500">500</option>
-                </select>
-            </label>
-            <label class="rj-sort">
-                <span>sort</span>
-                <select id="rj-sort">
-                    <option value="identifier_asc" selected>
-                        Identifier A-Z
-                    </option>
-                    <option value="identifier_desc">
-                        Identifier Z-A
-                    </option>
-                </select>
-            </label>
-            <div class="rj-flag-filters" aria-label="Flag filters">
-                <label class="rj-flag-filter">
-                    <span>PP</span>
-                    <select id="rj-filter-pp">
-                        <option value="" selected>Any</option>
-                        <option value="1">1</option>
-                        <option value="0">0</option>
-                    </select>
-                </label>
-                <label class="rj-flag-filter">
-                    <span>TEL</span>
-                    <select id="rj-filter-tel">
-                        <option value="" selected>Any</option>
-                        <option value="1">1</option>
-                        <option value="0">0</option>
-                    </select>
-                </label>
-                <label class="rj-flag-filter">
-                    <span>RV</span>
-                    <select id="rj-filter-rv">
-                        <option value="" selected>Any</option>
-                        <option value="1">1</option>
-                        <option value="0">0</option>
-                    </select>
-                </label>
-                <label class="rj-flag-filter">
-                    <span>USED</span>
-                    <select id="rj-filter-used">
-                        <option value="" selected>Any</option>
-                        <option value="1">1</option>
-                        <option value="0">0</option>
-                    </select>
-                </label>
-            </div>
-            <button id="rj-open-upload" class="ari-btn ari-btn--secondary"
-                    type="button">
-                <i class="fa-solid fa-upload"></i>
-                Upload CSV
-            </button>
-            <div class="rj-pager">
-                <button id="rj-prev" class="ari-btn ari-btn--secondary"
+            <div class="rj-toolbar__left">
+                <button id="rj-open-upload" class="ari-btn ari-btn--secondary"
                         type="button">
-                    <i class="fa-solid fa-chevron-left"></i>
+                    <i class="fa-solid fa-upload"></i>
+                    Upload CSV
                 </button>
-                <span class="rj-page-info" id="rj-page-info"></span>
-                <button id="rj-next" class="ari-btn ari-btn--secondary"
+                <button id="rj-open-add" class="ari-btn ari-btn--primary"
                         type="button">
-                    <i class="fa-solid fa-chevron-right"></i>
+                    <i class="fa-solid fa-plus"></i>
+                    Add entry
                 </button>
+            </div>
+            <div class="rj-toolbar__right">
+                <label class="rj-per-page">
+                    <span>per page</span>
+                    <select id="rj-per-page">
+                        <option value="50" selected>50</option>
+                        <option value="100">100</option>
+                        <option value="500">500</option>
+                    </select>
+                </label>
+                <div class="rj-pager">
+                    <button id="rj-prev" class="ari-btn ari-btn--secondary"
+                            type="button">
+                        <i class="fa-solid fa-chevron-left"></i>
+                    </button>
+                    <span class="rj-page-info" id="rj-page-info"></span>
+                    <button id="rj-next" class="ari-btn ari-btn--secondary"
+                            type="button">
+                        <i class="fa-solid fa-chevron-right"></i>
+                    </button>
+                </div>
             </div>
         </div>
         <div class="rj-status" id="rj-status"></div>
@@ -757,7 +657,9 @@
             <p class="rj-header__sub" style="margin:0; max-width:none;">
                 Required columns:
                 <strong>IDENTIFIER, DATE_ADDED, PP, TEL, RV, USED,
-                COMMENT</strong>. Duplicate identifiers in the upload are
+                COMMENT</strong>. Optional metadata columns:
+                <strong>WHO, LAST_UPDATE</strong>. Duplicate identifiers
+                in the upload are
                 collapsed to the last row. Existing identifiers trigger a
                 confirmation step before replacement.
             </p>
@@ -804,7 +706,7 @@ window.AperoRejectionList = {
     canManageHistory: {{ rejection_list_can_manage_history|tojson }}
 };
 </script>
-<script src="{{ url_for('static', filename='js/rejection_list.js', v='20260501j') }}"></script>
+<script src="{{ url_for('static', filename='js/rejection_list.js', v='20260524c') }}"></script>
 {% else %}
 <div class="ari-card">
     <div class="ari-card__body">

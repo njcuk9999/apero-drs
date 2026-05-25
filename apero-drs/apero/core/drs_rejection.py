@@ -6,7 +6,8 @@ APERO rejection "database" (CSV-backed, no SQL)
 Drop-in replacement for ``drs_database.RejectDatabase`` using a plain CSV
 file instead of an SQL database.
 
-CSV schema: IDENTIFIER, DATE_ADDED, PP, TEL, RV, USED, COMMENT
+CSV schema: IDENTIFIER, DATE_ADDED, PP, TEL, RV, USED, WHO,
+LAST_UPDATE, COMMENT
 
 CSV location: os.path.join(params['PATH.ASSETS'], 'reject', 'reject.csv')
 
@@ -66,7 +67,7 @@ WLOG = drs_log.wlog
 # ---------------------------------------------------------------------------
 # ordered column list for the reject CSV
 CSV_COLUMNS = ['IDENTIFIER', 'DATE_ADDED', 'PP', 'TEL', 'RV', 'USED',
-               'COMMENT']
+               'WHO', 'LAST_UPDATE', 'COMMENT']
 # unique key used to avoid duplicate rows for the same identifier
 ID_COLUMN = 'IDENTIFIER'
 # columns that should be stored as integers
@@ -309,13 +310,16 @@ class RejectDatabase:
             if len(df) > 0 and ID_COLUMN in df.columns:
                 id_mask = df[ID_COLUMN].astype(str) == clean_identifier
                 df = df[~id_mask].reset_index(drop=True)
+            now_iso = Time.now().iso
             new_row = pd.DataFrame([{
                 ID_COLUMN: clean_identifier,
-                'DATE_ADDED': Time.now().iso,
+                'DATE_ADDED': now_iso,
                 'PP': int(pp_flag) if pp_flag is not None else 0,
                 'TEL': int(tel_flag) if tel_flag is not None else 0,
                 'RV': int(rv_flag) if rv_flag is not None else 0,
                 'USED': int(used) if used is not None else 1,
+                'WHO': 'drs',
+                'LAST_UPDATE': now_iso,
                 'COMMENT': str(comment) if comment is not None else '',
             }])
             df = pd.concat([df, new_row], ignore_index=True)

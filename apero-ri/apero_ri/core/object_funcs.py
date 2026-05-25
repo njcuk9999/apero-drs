@@ -1300,7 +1300,7 @@ def _load_json_rows(path: Path) -> List[Dict[str, Any]]:
     return rows
 
 
-# Instrument profile YAMLs live inside the installed package and never
+# Instrument profile YAMLs live inside the installed package atnd never
 # change at runtime, so a plain dict cache (populated on first access) is
 # sufficient — no TTL needed.
 _instrument_profile_cache: Dict[str, Dict[str, Any]] = {}

@@ -149,7 +149,7 @@ current permissions.</p>
         for (var i = idx + 1; i < rows.length; i++) {
             if (rowDepth(i) <= baseDepth) break;
             rows[i].classList.add('ari-doc-tree__row--hidden');
-            rows[i].setAttribute('data-open', 'false');
+            rows[i].setAttribute('data-doc-open', 'false');
             var btn = rows[i].querySelector('.ari-doc-tree__toggle');
             if (btn) btn.setAttribute('aria-expanded', 'false');
         }
@@ -168,18 +168,27 @@ current permissions.</p>
 
     function toggleAt(idx) {
         var row = rows[idx];
-        var isOpen = row.getAttribute('data-open') === 'true';
+        var isOpen = row.getAttribute('data-doc-open') === 'true';
         var btn = row.querySelector('.ari-doc-tree__toggle');
         if (isOpen) {
-            row.setAttribute('data-open', 'false');
+            row.setAttribute('data-doc-open', 'false');
             if (btn) btn.setAttribute('aria-expanded', 'false');
             hideDescendants(idx);
             return;
         }
-        row.setAttribute('data-open', 'true');
+        row.setAttribute('data-doc-open', 'true');
         if (btn) btn.setAttribute('aria-expanded', 'true');
         showDirectChildren(idx);
     }
+
+    rows.forEach(function (row, idx) {
+        row.setAttribute('data-doc-open', 'false');
+        if (rowDepth(idx) > 0) {
+            row.classList.add('ari-doc-tree__row--hidden');
+        }
+        var btn = row.querySelector('.ari-doc-tree__toggle');
+        if (btn) btn.setAttribute('aria-expanded', 'false');
+    });
 
     tree.querySelectorAll('.ari-doc-tree__toggle').forEach(function (btn) {
         btn.addEventListener('click', function () {

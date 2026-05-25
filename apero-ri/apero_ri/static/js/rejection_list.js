@@ -10,13 +10,16 @@
         tab: tabs[0].key,
         page: 1,
         perPage: 50,
-        sort: 'identifier_asc',
-        q: '',
+        sort: 'identifier_desc',
         filters: {
+            identifier: '',
             pp: '',
             tel: '',
             rv: '',
-            used: ''
+            used: '',
+            who: '',
+            last_update: '',
+            comment: ''
         },
         total: 0,
         pages: 0,
@@ -27,6 +30,31 @@
     };
     var filterTimer = null;
     var historyTimer = null;
+
+    function sortInfo() {
+        var raw = String(state.sort || 'identifier_desc');
+        var parts = raw.split('_');
+        if (parts.length < 2) {
+            return { key: 'identifier', dir: 'asc' };
+        }
+        var dir = parts.pop();
+        var key = parts.join('_');
+        if (dir !== 'asc' && dir !== 'desc') {
+            dir = 'asc';
+        }
+        return { key: key, dir: dir };
+    }
+
+    function sortIcon(sortKey) {
+        var info = sortInfo();
+        if (info.key !== sortKey) {
+            return '<i class="fa-solid fa-sort"></i>';
+        }
+        if (info.dir === 'desc') {
+            return '<i class="fa-solid fa-sort-down"></i>';
+        }
+        return '<i class="fa-solid fa-sort-up"></i>';
+    }
 
     function esc(value) {
         return String(value == null ? '' : value).replace(
@@ -123,13 +151,6 @@
         return state.tab.toUpperCase();
     }
 
-    function flagHtml(name, value) {
-        var on = Number(value || 0) === 1;
-        return '<span class="rj-flag' + (on ? ' rj-flag--on' : '') + '">'
-            + '<strong>' + esc(name) + '</strong> '
-            + esc(on ? '1' : '0') + '</span>';
-    }
-
     function renderRows(rows) {
         var host = document.getElementById('rj-list');
         var count = document.getElementById('rj-count');
@@ -151,64 +172,185 @@
         if (!host) return;
         host.innerHTML = '';
 
-        var addCard = document.createElement('button');
-        addCard.type = 'button';
-        addCard.className = 'rj-card rj-card--add';
-        addCard.innerHTML = '<div><i class="fa-solid fa-plus"></i> '
-            + 'Add rejection entry</div>';
-        addCard.addEventListener('click', function () {
-            openEditOverlay(null);
-        });
-        host.appendChild(addCard);
+        var identVal = esc(state.filters.identifier || '');
+        var whoVal = esc(state.filters.who || '');
+        var lastVal = esc(state.filters.last_update || '');
+        var commVal = esc(state.filters.comment || '');
+        var ppVal = String(state.filters.pp || '');
+        var telVal = String(state.filters.tel || '');
+        var rvVal = String(state.filters.rv || '');
+        var usedVal = String(state.filters.used || '');
 
-        if (!rows.length) {
-            var empty = document.createElement('div');
-            empty.className = 'rj-empty';
-            empty.textContent = 'No entries match this filter.';
-            host.appendChild(empty);
-            return;
+        function binaryFilterOptions(selected) {
+            var anySel = selected === '' ? ' selected' : '';
+            var oneSel = selected === '1' ? ' selected' : '';
+            var zeroSel = selected === '0' ? ' selected' : '';
+            return '<option value=""' + anySel + '>Any</option>'
+                + '<option value="1"' + oneSel + '>1</option>'
+                + '<option value="0"' + zeroSel + '>0</option>';
         }
 
-        rows.forEach(function (row) {
-            var card = document.createElement('div');
-            card.className = 'rj-card';
-            card.innerHTML = ''
-                + '<div class="rj-card__name">'
-                + '<i class="fa-solid fa-ban"></i>'
-                + '<span>' + esc(row.IDENTIFIER) + '</span>'
-                + '</div>'
-                + '<div class="rj-card__flags-col">'
-                + '<div class="rj-card__flags">'
-                + flagHtml('PP', row.PP)
-                + flagHtml('TEL', row.TEL)
-                + flagHtml('RV', row.RV)
-                + flagHtml('USED', row.USED)
-                + '</div></div>'
-                + '<div class="rj-card__comment" title="'
-                + esc(row.COMMENT || '') + '">' + esc(row.COMMENT || '—')
-                + '</div>'
-                + '<div class="rj-card__actions">'
-                + '<button type="button" class="rj-btn-icon" '
-                + 'data-action="edit" title="Edit entry">'
-                + '<i class="fa-solid fa-pen"></i></button>'
-                + '<button type="button" '
-                + 'class="rj-btn-icon rj-btn-icon--danger" '
-                + 'data-action="delete" title="Delete entry">'
-                + '<i class="fa-solid fa-trash"></i></button>'
-                + '</div>';
-            card.querySelector('[data-action="edit"]').addEventListener(
-                'click',
-                function () {
-                    openEditOverlay(row);
+        function sortHeader(label, key) {
+            var info = sortInfo();
+            var dir = info.key === key ? info.dir : '';
+            return '<button type="button" class="rj-th-sort" '
+                + 'data-sort-key="' + esc(key) + '" '
+                + 'data-sort-dir="' + esc(dir) + '">'
+                + '<span>' + esc(label) + '</span>'
+                + sortIcon(key)
+                + '</button>';
+        }
+
+        var html = '<div class="rj-table-wrap">'
+            + '<table class="ari-dt rj-table">'
+            + '<thead class="ari-dt__header-row"><tr>'
+            + '<th class="ari-dt__th">'
+            + sortHeader('Identifier', 'identifier') + '</th>'
+            + '<th class="ari-dt__th">' + sortHeader('PP', 'pp')
+            + '</th>'
+            + '<th class="ari-dt__th">' + sortHeader('TEL', 'tel')
+            + '</th>'
+            + '<th class="ari-dt__th">' + sortHeader('RV', 'rv')
+            + '</th>'
+            + '<th class="ari-dt__th">' + sortHeader('USED', 'used')
+            + '</th>'
+            + '<th class="ari-dt__th">' + sortHeader('Who', 'who')
+            + '</th>'
+            + '<th class="ari-dt__th">'
+            + sortHeader('Last update', 'last_update') + '</th>'
+            + '<th class="ari-dt__th">'
+            + sortHeader('Comment', 'comment') + '</th>'
+            + '<th class="ari-dt__th">Actions</th>'
+            + '</tr>'
+            + '<tr class="ari-dt__filter-row">'
+            + '<th class="rj-filter-cell">'
+            + '<input class="rj-filter-input" '
+            + 'data-filter-key="identifier" type="search" '
+            + 'placeholder="Filter" value="' + identVal + '"></th>'
+            + '<th class="rj-filter-cell">'
+            + '<select class="rj-filter-select" data-filter-key="pp">'
+            + binaryFilterOptions(ppVal) + '</select></th>'
+            + '<th class="rj-filter-cell">'
+            + '<select class="rj-filter-select" data-filter-key="tel">'
+            + binaryFilterOptions(telVal) + '</select></th>'
+            + '<th class="rj-filter-cell">'
+            + '<select class="rj-filter-select" data-filter-key="rv">'
+            + binaryFilterOptions(rvVal) + '</select></th>'
+            + '<th class="rj-filter-cell">'
+            + '<select class="rj-filter-select" data-filter-key="used">'
+            + binaryFilterOptions(usedVal) + '</select></th>'
+            + '<th class="rj-filter-cell">'
+            + '<input class="rj-filter-input" '
+            + 'data-filter-key="who" type="search" '
+            + 'placeholder="Filter" value="' + whoVal + '"></th>'
+            + '<th class="rj-filter-cell">'
+            + '<input class="rj-filter-input" '
+            + 'data-filter-key="last_update" type="search" '
+            + 'placeholder="Filter" value="' + lastVal + '"></th>'
+            + '<th class="rj-filter-cell">'
+            + '<input class="rj-filter-input" '
+            + 'data-filter-key="comment" type="search" '
+            + 'placeholder="Filter" value="' + commVal + '"></th>'
+            + '<th class="rj-filter-cell"></th>'
+            + '</tr></thead><tbody>';
+        if (!rows.length) {
+            html += '<tr class="ari-dt__row">'
+                + '<td class="rj-empty" colspan="9">'
+                + 'No entries match this filter.'
+                + '</td></tr>';
+        } else {
+            rows.forEach(function (row) {
+                html += '<tr class="ari-dt__row">'
+                    + '<td class="rj-cell-id">' + esc(row.IDENTIFIER)
+                    + '</td>'
+                    + '<td class="rj-cell-flg">' + esc(row.PP) + '</td>'
+                    + '<td class="rj-cell-flg">' + esc(row.TEL) + '</td>'
+                    + '<td class="rj-cell-flg">' + esc(row.RV) + '</td>'
+                    + '<td class="rj-cell-flg">' + esc(row.USED) + '</td>'
+                    + '<td>' + esc(row.WHO || '—') + '</td>'
+                    + '<td class="rj-cell-ts">'
+                    + esc(fmtTime(row.LAST_UPDATE || '—')) + '</td>'
+                    + '<td class="rj-cell-comment" title="'
+                    + esc(row.COMMENT || '') + '">'
+                    + esc(row.COMMENT || '—')
+                    + '</td>'
+                    + '<td class="rj-cell-actions">'
+                    + '<button type="button" class="rj-btn-icon" '
+                    + 'data-action="edit" data-ident="'
+                    + esc(row.IDENTIFIER) + '" title="Edit entry">'
+                    + '<i class="fa-solid fa-pen"></i></button> '
+                    + '<button type="button" '
+                    + 'class="rj-btn-icon rj-btn-icon--danger" '
+                    + 'data-action="delete" data-ident="'
+                    + esc(row.IDENTIFIER) + '" title="Delete entry">'
+                    + '<i class="fa-solid fa-trash"></i></button>'
+                    + '</td>'
+                    + '</tr>';
+            });
+        }
+        html += '</tbody></table></div>';
+        host.innerHTML = html;
+
+        host.querySelectorAll('[data-action="edit"]').forEach(
+            function (btn) {
+                btn.addEventListener('click', function () {
+                    var ident = btn.getAttribute('data-ident');
+                    for (var i = 0; i < rows.length; i += 1) {
+                        if (String(rows[i].IDENTIFIER) === String(ident)) {
+                            openEditOverlay(rows[i]);
+                            break;
+                        }
+                    }
+                });
+            }
+        );
+        host.querySelectorAll('[data-action="delete"]').forEach(
+            function (btn) {
+                btn.addEventListener('click', function () {
+                    var ident = btn.getAttribute('data-ident');
+                    for (var i = 0; i < rows.length; i += 1) {
+                        if (String(rows[i].IDENTIFIER) === String(ident)) {
+                            deleteRow(rows[i]);
+                            break;
+                        }
+                    }
+                });
+            }
+        );
+
+        host.querySelectorAll('[data-sort-key]').forEach(function (btn) {
+            btn.addEventListener('click', function () {
+                var key = String(btn.getAttribute('data-sort-key') || '');
+                if (!key) return;
+                var info = sortInfo();
+                var dir = 'asc';
+                if (info.key === key) {
+                    dir = info.dir === 'asc' ? 'desc' : 'asc';
                 }
-            );
-            card.querySelector('[data-action="delete"]').addEventListener(
-                'click',
-                function () {
-                    deleteRow(row);
+                state.sort = key + '_' + dir;
+                state.page = 1;
+                loadRows();
+            });
+        });
+
+        host.querySelectorAll('[data-filter-key]').forEach(function (input) {
+            var key = String(input.getAttribute('data-filter-key') || '');
+            if (!key) return;
+            var isText = input.tagName.toLowerCase() === 'input';
+            var eventName = isText ? 'input' : 'change';
+            input.addEventListener(eventName, function () {
+                var apply = function () {
+                    state.filters[key] = String(input.value || '').trim();
+                    state.page = 1;
+                    loadRows();
+                };
+                if (!isText) {
+                    apply();
+                    return;
                 }
-            );
-            host.appendChild(card);
+                if (filterTimer) window.clearTimeout(filterTimer);
+                filterTimer = window.setTimeout(apply, 250);
+            });
         });
     }
 
@@ -221,7 +363,6 @@
         params.set('page', state.page);
         params.set('per_page', state.perPage);
         params.set('sort', state.sort);
-        if (state.q) params.set('q', state.q);
         Object.keys(state.filters).forEach(function (key) {
             if (state.filters[key] !== '') {
                 params.set(key, state.filters[key]);
@@ -435,67 +576,77 @@
                 + 'No history entries match this filter.</div>';
             return;
         }
+
+        var html = '<div class="rj-table-wrap">'
+            + '<table class="ari-dt rj-table">'
+            + '<thead class="ari-dt__header-row"><tr>'
+            + '<th class="ari-dt__th">Timestamp</th>'
+            + '<th class="ari-dt__th">User</th>'
+            + '<th class="ari-dt__th">Instrument</th>'
+            + '<th class="ari-dt__th">Kind</th>'
+            + '<th class="ari-dt__th">Identifier</th>'
+            + '<th class="ari-dt__th">Fields</th>'
+            + '<th class="ari-dt__th">Actions</th>'
+            + '</tr></thead><tbody>';
         rows.forEach(function (row) {
-            var card = document.createElement('div');
-            var fieldHtml = (row.fields || []).map(function (field) {
-                return '<span>' + esc(field) + '</span>';
-            }).join('');
+            var fields = (row.fields || []).slice();
             if (row.previous_identifier) {
-                fieldHtml = '<span>' + esc('from ' + row.previous_identifier)
-                    + '</span>' + fieldHtml;
+                fields.unshift('from ' + row.previous_identifier);
             }
-            card.className = 'rj-history-card';
-            card.innerHTML = ''
-                + '<div class="rj-history-card__time">'
-                + esc(fmtTime(row.timestamp)) + '</div>'
-                + '<div class="rj-history-card__user">'
-                + esc(row.user || '') + '</div>'
-                + '<div class="rj-history-card__what">'
-                + '<span class="rj-history-badge rj-history-badge--action">'
-                + esc(prettyAction(row.action)) + '</span>'
-                + '<span class="rj-history-card__name">'
-                + esc(row.identifier || '') + '</span>'
-                + '<span class="rj-history-badge">'
-                + esc(row.instrument || '') + '</span>'
-                + '<span class="rj-history-fields">' + fieldHtml + '</span>'
-                + '</div>'
-                + '<div class="rj-history-card__actions">'
-                + '<button type="button" class="rj-btn-small" '
-                + 'data-action="view" title="View change">'
-                + '<i class="fa-solid fa-eye"></i> View</button>'
-                + '<button type="button" class="rj-btn-small" '
-                + 'data-action="restore" title="Restore this state">'
-                + '<i class="fa-solid fa-clock-rotate-left"></i> '
-                + 'Restore</button>'
+            html += '<tr class="ari-dt__row">'
+                + '<td class="rj-cell-ts">'
+                + esc(fmtTime(row.timestamp || '')) + '</td>'
+                + '<td>' + esc(row.user || '') + '</td>'
+                + '<td>' + esc(row.instrument || '') + '</td>'
+                + '<td>' + esc(prettyAction(row.action || '')) + '</td>'
+                + '<td class="rj-cell-id">' + esc(row.identifier || '')
+                + '</td>'
+                + '<td class="rj-cell-comment" title="'
+                + esc(fields.join(', ')) + '">'
+                + esc(fields.join(', ') || '—') + '</td>'
+                + '<td class="rj-cell-actions">'
+                + '<button type="button" class="rj-btn-icon" '
+                + 'data-action="view" data-hid="' + esc(row.id)
+                + '" title="View change">'
+                + '<i class="fa-solid fa-eye"></i></button> '
+                + '<button type="button" class="rj-btn-icon" '
+                + 'data-action="restore" data-hid="' + esc(row.id)
+                + '" title="Restore this state">'
+                + '<i class="fa-solid fa-clock-rotate-left"></i></button>'
                 + (canManageHistory
-                    ? '<button type="button" class="rj-btn-small" '
-                    + 'data-action="delete-history" '
-                    + 'title="Delete history entry">'
-                    + '<i class="fa-solid fa-trash"></i> Delete</button>'
+                    ? ' <button type="button" '
+                    + 'class="rj-btn-icon rj-btn-icon--danger" '
+                    + 'data-action="delete-history" data-hid="'
+                    + esc(row.id)
+                    + '" title="Delete history entry">'
+                    + '<i class="fa-solid fa-trash"></i></button>'
                     : '')
-                + '</div>';
-            card.querySelector('[data-action="view"]').addEventListener(
-                'click',
-                function () {
-                    openHistoryEntry(row.id);
-                }
-            );
-            card.querySelector('[data-action="restore"]').addEventListener(
-                'click',
-                function () {
-                    restoreHistoryEntry(row.id);
-                }
-            );
-            var deleteBtn = card.querySelector(
-                '[data-action="delete-history"]'
-            );
-            if (deleteBtn) {
-                deleteBtn.addEventListener('click', function () {
-                    deleteHistoryEntry(row.id);
+                + '</td></tr>';
+        });
+        html += '</tbody></table></div>';
+        host.innerHTML = html;
+
+        host.querySelectorAll('[data-action="view"]').forEach(
+            function (btn) {
+                btn.addEventListener('click', function () {
+                    openHistoryEntry(btn.getAttribute('data-hid'));
                 });
             }
-            host.appendChild(card);
-        });
+        );
+        host.querySelectorAll('[data-action="restore"]').forEach(
+            function (btn) {
+                btn.addEventListener('click', function () {
+                    restoreHistoryEntry(btn.getAttribute('data-hid'));
+                });
+            }
+        );
+        host.querySelectorAll('[data-action="delete-history"]').forEach(
+            function (btn) {
+                btn.addEventListener('click', function () {
+                    deleteHistoryEntry(btn.getAttribute('data-hid'));
+                });
+            }
+        );
     }
 
     function parseJsonSafe(resp) {
@@ -715,22 +866,17 @@
         }
     );
 
+    var openAddBtn = document.getElementById('rj-open-add');
+    if (openAddBtn) {
+        openAddBtn.addEventListener('click', function () {
+            openEditOverlay(null);
+        });
+    }
+
     document.getElementById('rj-upload-submit').addEventListener(
         'click',
         function () {
             submitUpload(false);
-        }
-    );
-
-    document.getElementById('rj-filter-input').addEventListener(
-        'input',
-        function (event) {
-            if (filterTimer) window.clearTimeout(filterTimer);
-            filterTimer = window.setTimeout(function () {
-                state.q = event.target.value || '';
-                state.page = 1;
-                loadRows();
-            }, 250);
         }
     );
 
@@ -742,25 +888,6 @@
             loadRows();
         }
     );
-
-    document.getElementById('rj-sort').addEventListener(
-        'change',
-        function (event) {
-            state.sort = String(event.target.value || 'identifier_asc');
-            state.page = 1;
-            loadRows();
-        }
-    );
-
-    ['pp', 'tel', 'rv', 'used'].forEach(function (key) {
-        var el = document.getElementById('rj-filter-' + key);
-        if (!el) return;
-        el.addEventListener('change', function (event) {
-            state.filters[key] = String(event.target.value || '');
-            state.page = 1;
-            loadRows();
-        });
-    });
 
     document.getElementById('rj-prev').addEventListener('click', function () {
         if (state.page > 1) {

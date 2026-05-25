@@ -15,13 +15,16 @@ Cache layout::
         sector_NNN_lc.csv    -- light-curve data per sector
 """
 import base64
+import inspect
 import io
 import json
 import logging
 import os
+import re
 import shutil
 import sys
 import tempfile
+import warnings
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
@@ -75,6 +78,32 @@ class _TeeWriter:
 __NAME__ = 'apero_ri.core.run_tessilator'
 
 log = logging.getLogger(__NAME__)
+
+
+def _suppress_tess_warnings() -> None:
+    """Suppress known third-party warning spam during tessilator runs."""
+    try:
+        from astropy.utils.exceptions import (  # type: ignore
+            AstropyDeprecationWarning,
+        )
+    except Exception:
+        AstropyDeprecationWarning = Warning
+
+    warnings.filterwarnings(
+        'ignore',
+        message=(
+            r"The column name '.*center' was deprecated in version 3\.0"
+        ),
+        category=AstropyDeprecationWarning,
+    )
+
+    try:
+        import photutils  # type: ignore
+
+        if hasattr(photutils, 'future_column_names'):
+            photutils.future_column_names = False
+    except Exception:
+        pass
 
 # -----------------------------------------------------------------------
 # Public high-level helpers
@@ -287,6 +316,24 @@ def _build_name_list(
     cleaned = objname.replace('_', ' ')
     if cleaned != objname:
         names.append(cleaned)
+    compact = re.sub(r'\s+', '', cleaned)
+    if compact and compact != cleaned:
+        names.append(compact)
+
+    # Insert a space between catalogue letters and number blocks
+    # (e.g. GL699 -> GL 699), then add title-case variant.
+    m = re.match(r'^([A-Za-z]{1,4})\s*([0-9].*)$', compact)
+    if m:
+        spaced = f'{m.group(1)} {m.group(2)}'
+        names.append(spaced)
+        names.append(f'{m.group(1).title()}{m.group(2)}')
+        names.append(f'{m.group(1).title()} {m.group(2)}')
+
+    # Common catalogue synonym: GL <n> is often indexed as GJ <n>.
+    if m and m.group(1).upper() == 'GL':
+        gj_num = m.group(2)
+        names.append(f'GJ{gj_num}')
+        names.append(f'GJ {gj_num}')
     # 3. Filtered aliases (skip instrument-specific ones)
     if aliases:
         for a in aliases:
@@ -299,7 +346,29 @@ def _build_name_list(
                 continue
             names.append(a)
     # Deduplicate while preserving order, cap at 10
-    return list(dict.fromkeys(names))[:10]
+    return list(dict.fromkeys(names))[:20]
+
+
+def _simbad_canonical_names(name: str) -> List[str]:
+    """Return SIMBAD-canonical names for one candidate name."""
+    try:
+        from astroquery.simbad import Simbad
+        row = Simbad.query_object(str(name))
+    except Exception:
+        return []
+    if row is None or len(row) == 0:
+        return []
+    try:
+        main_id = str(row[0]['MAIN_ID']).strip()
+    except Exception:
+        return []
+    if not main_id:
+        return []
+    out = [main_id]
+    compact = re.sub(r'\s+', '', main_id)
+    if compact and compact != main_id:
+        out.append(compact)
+    return list(dict.fromkeys(out))
 
 
 def _run_in_workdir(
@@ -332,6 +401,7 @@ def _run_in_workdir(
     orig_cwd = os.getcwd()
     os.chdir(str(work_dir))
     try:
+        _suppress_tess_warnings()
         return _try_names(work_dir, names_to_try, tess_mod)
     finally:
         os.chdir(orig_cwd)
@@ -340,8 +410,11 @@ def _run_in_workdir(
 def _patch_simbad_column_case():
     """Monkey-patch Simbad.query_objectids for tessilator.
 
-    Newer astroquery returns lowercase ``'id'`` column but
-    tessilator expects uppercase ``'ID'``.  Patch once.
+    Keep the identifier column name compatible with tessilator.
+
+    The installed tessilator implementation reads ``res['id']``
+    (lowercase), while some astroquery responses may expose ``ID``.
+    Patch once so the result always has lowercase ``id``.
     """
     from astroquery.simbad import Simbad
 
@@ -352,8 +425,11 @@ def _patch_simbad_column_case():
     @staticmethod
     def _fixed(*args, **kwargs):
         res = _orig(*args, **kwargs)
-        if res is not None and 'id' in res.colnames:
-            res.rename_column('id', 'ID')
+        if res is not None and 'ID' in res.colnames:
+            try:
+                res.rename_column('ID', 'id')
+            except Exception:
+                pass
         return res
 
     Simbad.query_objectids = _fixed
@@ -404,23 +480,53 @@ def _try_names(
     errors: List[str] = []
 
     for name in names:
-        t_targets, err = _resolve_target(
-            name, work_dir, tess_mod
-        )
-        if err:
+        candidates = [name]
+        canonical = _simbad_canonical_names(name)
+        for cname in canonical:
+            if cname not in candidates:
+                candidates.append(cname)
+
+        t_targets = None
+        resolved_name = ''
+        last_err = ''
+        for cname in candidates:
+            t_targets, err = _resolve_target(
+                cname, work_dir, tess_mod
+            )
+            if not err:
+                resolved_name = cname
+                break
+            last_err = err
+
+        if t_targets is None:
             log.info(
                 'SIMBAD resolve failed for %r: %s',
-                name, err,
+                name, last_err,
             )
-            errors.append(f'{name}: {err}')
+            errors.append(f'{name}: {last_err}')
             continue
 
         # Set up tessilator parameters manually to avoid
         # interactive prompts from setup_input_parameters().
+        # tessilator API changed across versions, so keep this
+        # setup tolerant to tuple/string return types.
         file_ref = 'ari_tess'
-        con_file, period_file = (
-            tess_mod.setup_filenames(file_ref)
-        )
+        setup_out = tess_mod.setup_filenames(file_ref)
+        con_file = ''
+        period_file = ''
+        if isinstance(setup_out, (tuple, list)):
+            if len(setup_out) >= 2:
+                con_file = str(setup_out[0])
+                period_file = str(setup_out[1])
+            elif len(setup_out) == 1:
+                period_file = str(setup_out[0])
+        else:
+            period_file = str(setup_out)
+        if not period_file:
+            errors.append(
+                f'{name}: setup_filenames returned no period file'
+            )
+            continue
 
         # Ensure contamination columns exist (tessilator
         # expects them but read_data doesn't add them).
@@ -435,16 +541,30 @@ def _try_names(
                 0, name='num_tot_bg'
             )
 
+        cutout = tess_mod.all_sources_cutout
+        sig = inspect.signature(cutout)
+        kwargs = dict()
+        if 't_targets' in sig.parameters:
+            kwargs['t_targets'] = t_targets
+        if 'period_file' in sig.parameters:
+            kwargs['period_file'] = period_file
+        if 'ref_name' in sig.parameters:
+            kwargs['ref_name'] = file_ref
+        if 'lc_con' in sig.parameters:
+            kwargs['lc_con'] = False
+        if 'flux_con' in sig.parameters:
+            kwargs['flux_con'] = False
+        if 'con_file' in sig.parameters:
+            kwargs['con_file'] = con_file
+        if 'choose_sec' in sig.parameters:
+            kwargs['choose_sec'] = None
+        if 'make_plots' in sig.parameters:
+            kwargs['make_plots'] = True
+        if 'make_plot' in sig.parameters:
+            kwargs['make_plot'] = True
+
         try:
-            tess_mod.all_sources_cutout(
-                t_targets,
-                period_file,
-                False,     # LC_con
-                False,     # flux_con
-                con_file,  # con_file
-                True,      # make_plots
-                choose_sec=None,
-            )
+            cutout(**kwargs)
         except Exception as exc:
             log.warning(
                 'tessilator failed for %r: %s',
@@ -453,7 +573,7 @@ def _try_names(
             errors.append(f'{name}: {exc}')
             continue
 
-        return _collect_results(work_dir, name)
+        return _collect_results(work_dir, resolved_name or name)
 
     # All names exhausted — build a user-friendly message
     msg = (

@@ -542,6 +542,58 @@
                     <input type="number" id="edit-frequency" class="ari-ap-input"
                            placeholder="e.g. 24" min="0.5" step="0.5" value="24">
                 </div>
+                <div id="edit-legacy-gsheet-fields" style="display:none;">
+                    <div class="ari-ap-form__field">
+                        <label>
+                            <input type="checkbox" id="edit-dry-run">
+                            Dry run (report-only, no writes)
+                        </label>
+                        <div class="at-muted-hint">
+                            When enabled, this task reads and reports changes
+                            but does not write local files, Google Sheets,
+                            or monitor issues.
+                        </div>
+                    </div>
+                    <div class="ari-ap-form__field">
+                        <label for="edit-google-secret-name">
+                            OAuth filename
+                        </label>
+                        <input type="text" id="edit-google-secret-name"
+                               class="ari-ap-input"
+                               placeholder="legacy_gsheet_oauth.json">
+                        <div class="at-muted-hint">
+                            Required location:
+                            <code>{LOCAL_DATA_DIR}/admin/&lt;filename&gt;</code>
+                        </div>
+                    </div>
+                    <div class="ari-ap-form__field">
+                        <label for="edit-google-oauth-file">
+                            Upload OAuth JSON
+                        </label>
+                        <input type="file" id="edit-google-oauth-file"
+                               class="ari-ap-input" accept=".json">
+                        <div class="at-muted-hint">
+                            Quick setup:
+                            1) In Google Cloud, create OAuth client credentials
+                            with Sheets/Drive access.
+                            2) Generate a refresh token.
+                            3) Export JSON with client_id, client_secret,
+                            refresh_token, token_uri.
+                        </div>
+                    </div>
+                    <div class="ari-ap-form__field" id="edit-check-gsheet-url-fields" style="display:none;">
+                        <label for="edit-monitoring-sheet-url">Monitoring sheet URL</label>
+                        <input type="url" id="edit-monitoring-sheet-url" class="ari-ap-input"
+                               placeholder="https://docs.google.com/spreadsheets/d/.../edit?gid=...">
+                        <div class="at-muted-hint">Per-instrument monitoring tab URL (optional — overrides YAML preset).</div>
+                    </div>
+                    <div class="ari-ap-form__field" id="edit-override-sheet-url-field" style="display:none;">
+                        <label for="edit-override-sheet-url">Override sheet URL</label>
+                        <input type="url" id="edit-override-sheet-url" class="ari-ap-input"
+                               placeholder="https://docs.google.com/spreadsheets/d/.../edit?gid=...">
+                        <div class="at-muted-hint">Shared overrides tab URL (optional — overrides YAML preset).</div>
+                    </div>
+                </div>
                 <div id="edit-backup-fields" style="display:none;">
                     <div class="ari-ap-form__field">
                         <label for="edit-daily-copies">Daily copies to keep</label>
@@ -866,5 +918,5 @@ window.ARI_ASYNC_TASKS = {
     }
 };
 </script>
-    <script src="{{ url_for('static', filename='js/admin_async_tasks.js', v='20260428a') }}"></script>
+    <script src="{{ url_for('static', filename='js/admin_async_tasks.js', v='20260525a') }}"></script>
 {% endblock %}

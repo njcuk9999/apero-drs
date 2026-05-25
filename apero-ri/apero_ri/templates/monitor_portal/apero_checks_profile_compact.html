@@ -1,0 +1,280 @@
+{% extends "general/sidebar_base.html" %}
+{% block title %}APERO RI - APERO Checks - {{ profile_id }}{% endblock %}
+
+{% block body_class %}ari-has-sidebar ari-apero-checks-page{% endblock %}
+
+{% block extra_head %}
+{{ super() }}
+<link rel="stylesheet"
+    href="{{ url_for('static', filename='css/apero_checks.css') }}?v=20260520c">
+<style>
+.ac-page-stack {
+    display: grid;
+    gap: 0.8rem;
+    margin-top: 0.8rem;
+}
+.ac-ui-panel {
+    border: 1px solid var(--ari-border);
+    border-radius: 0.9rem;
+    background: var(--ari-card-bg);
+    box-shadow: 0 2px 10px rgba(15, 23, 42, 0.06);
+    padding: 0.8rem 0.9rem;
+}
+.ac-ui-panel--soft {
+    background: linear-gradient(180deg, #f8fafc 0%, #ffffff 100%);
+}
+.ac-card--monitored {
+    border-left-color: #7c3aed;
+    background: #f5f3ff;
+}
+.ac-card--overridden {
+    border-left-color: #d97706;
+    background: #fffbeb;
+}
+.ac-card__row-markers {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+}
+</style>
+{% endblock %}
+
+{% block doc_content %}
+<div class="ari-page-header">
+    <h1>
+        <i class="fa-solid fa-square-check"></i>
+        <a href="{{ url_for('monitor_apero_checks_view') }}"
+           class="ot-breadcrumb-link">APERO Checks</a>
+        <span class="ot-breadcrumb-sep">/</span>
+        {{ profile_id }}
+    </h1>
+    <p class="ari-page-subtitle">
+        Compact observation-directory list. Open a row to see tests,
+        controls, history, and flagging tools.
+    </p>
+</div>
+
+<div class="ac-page-stack">
+
+<div class="ot-meta-bar ac-ui-panel">
+    {% if can_manage_apero_profiles %}
+    <a href="{{ url_for('home_admin_portal_apero_checks_policy') }}"
+       class="ari-btn ari-btn--sm ari-btn--secondary"
+       title="Manage APERO checks policies in admin portal">
+        <i class="fa-solid fa-gear"></i> Manage APERO checks
+    </a>
+    {% endif %}
+    <a href="{{ url_for('monitor_apero_checks_queue_view', profile_id=profile_id) }}"
+       class="ari-btn ari-btn--sm ari-btn--secondary"
+       title="Open APERO checks queue and task history">
+        <i class="fa-solid fa-list-check"></i> Queue status
+    </a>
+</div>
+
+<form class="ot-toolbar ac-ui-panel ac-ui-panel--soft" method="get"
+      action="{{ url_for('monitor_apero_checks_profile_view', profile_id=profile_id) }}">
+    <div class="ot-toolbar__left">
+        <div class="ac-filter-stack">
+            <div class="ac-filter-row">
+                <span class="ac-filter-row__label">Obsdir filter</span>
+                <input name="obsdir_filter"
+                       class="ot-perpage-select"
+                       type="text"
+                       value="{{ obsdir_filter|default('') }}"
+                       placeholder="regex or text pattern">
+                <span class="ac-filter-row__label">Show</span>
+                <select name="result_filter" class="ot-perpage-select">
+                    <option value="all"
+                        {% if result_filter == 'all' %}selected{% endif %}>
+                        All
+                    </option>
+                    <option value="failed"
+                        {% if result_filter == 'failed' %}selected{% endif %}>
+                        Failed
+                    </option>
+                    <option value="passed"
+                        {% if result_filter == 'passed' %}selected{% endif %}>
+                        Passed
+                    </option>
+                </select>
+                <span class="ac-filter-row__label">Sort</span>
+                <select name="obsdir_sort" class="ot-perpage-select">
+                    <option value="asc"
+                        {% if obsdir_sort == 'asc' %}selected{% endif %}>
+                        Ascending
+                    </option>
+                    <option value="desc"
+                        {% if obsdir_sort == 'desc' %}selected{% endif %}>
+                        Descending
+                    </option>
+                </select>
+            </div>
+        </div>
+    </div>
+    <div class="ot-toolbar__right">
+        <span class="ot-meta-bar__item ot-meta-bar__item--muted"
+              style="margin-right:0.5rem;">
+            Page {{ current_page }} of {{ total_pages }}
+        </span>
+        <label class="ot-perpage-label">
+            Cards / page
+            <select name="per_page" class="ot-perpage-select">
+                <option value="10"
+                    {% if per_page == 10 %}selected{% endif %}>10</option>
+                <option value="50"
+                    {% if per_page == 50 %}selected{% endif %}>50</option>
+                <option value="100"
+                    {% if per_page == 100 %}selected{% endif %}>100</option>
+            </select>
+        </label>
+        <label class="ot-perpage-label">
+            Page
+            <select name="page" class="ot-perpage-select">
+                {% for page_idx in range(1, total_pages + 1) %}
+                <option value="{{ page_idx }}"
+                    {% if page_idx == current_page %}selected{% endif %}>
+                    {{ page_idx }} / {{ total_pages }}
+                </option>
+                {% endfor %}
+            </select>
+        </label>
+    </div>
+</form>
+
+<div class="ac-card-list ac-ui-panel" id="ac-card-list">
+    {% for card in profile_cards %}
+    <a class="ac-card ac-card--{{ card.status if card.status else 'failed' }}"
+    href="{{ url_for('monitor_apero_checks_obsdir_view', profile_id=profile_id, obsdir=card.obsdir) }}"
+       title="Open APERO Check information for {{ card.obsdir }}">
+        <div class="ac-card__row">
+            <span class="ac-card__row-status" title="Card status">
+                {% if card.status == 'overridden' %}
+                <i class="fa-solid fa-triangle-exclamation ac-i-ovr"></i>
+                {% elif card.status == 'monitored' %}
+                <i class="fa-solid fa-bell ac-i-mon"></i>
+                {% elif card.status == 'ok' %}
+                <i class="fa-solid fa-check ac-i-ok"></i>
+                {% else %}
+                <i class="fa-solid fa-xmark ac-i-bad"></i>
+                {% endif %}
+            </span>
+            <div class="ac-card__date" title="Obsdir: {{ card.obsdir }}">
+                <div>{{ card.obsdir }}</div>
+                <div class="ac-card__lastrun">
+                    Last run: {{ card.last_run or 'n/a' }}
+                </div>
+            </div>
+            <span class="ac-card__row-markers" title="Obsdir markers">
+                {% if card.has_monitored %}
+                <i class="fa-solid fa-bell ac-i-mon"
+                   title="One or more checks are monitored"></i>
+                {% endif %}
+                {% if card.has_overridden %}
+                <i class="fa-solid fa-triangle-exclamation ac-i-ovr"
+                   title="One or more checks are overridden"></i>
+                {% endif %}
+            </span>
+        </div>
+    </a>
+    {% endfor %}
+    {% if not profile_cards %}
+    <article class="ac-card">
+        <div class="ac-card__row">
+            <span class="ac-check-empty">No matching observation directories</span>
+        </div>
+    </article>
+    {% endif %}
+</div>
+
+<div class="ot-pagination ac-pagination-bottom ac-ui-panel"
+    style="margin-bottom:0;">
+    <div class="ot-page-info">
+        Page {{ current_page }} of {{ total_pages }}
+    </div>
+    <div class="ot-page-controls">
+        {% if current_page > 1 %}
+        <a class="ari-btn ari-btn--sm ari-btn--secondary"
+              href="{{ url_for('monitor_apero_checks_profile_view', profile_id=profile_id, page=current_page-1, per_page=per_page, obsdir_filter=obsdir_filter, obsdir_sort=obsdir_sort, result_filter=result_filter) }}">
+            <i class="fa-solid fa-angle-left"></i>
+        </a>
+        {% endif %}
+        {% if current_page < total_pages %}
+        <a class="ari-btn ari-btn--sm ari-btn--secondary"
+              href="{{ url_for('monitor_apero_checks_profile_view', profile_id=profile_id, page=current_page+1, per_page=per_page, obsdir_filter=obsdir_filter, obsdir_sort=obsdir_sort, result_filter=result_filter) }}">
+            <i class="fa-solid fa-angle-right"></i>
+        </a>
+        {% endif %}
+    </div>
+</div>
+
+<div class="ac-ui-panel ac-ui-panel--soft" style="margin-top:0;">
+    <a href="{{ monitor_doc_url }}" target="_blank" rel="noopener"
+       class="ari-btn ari-btn--sm ari-btn--secondary"
+       style="font-weight:700;">
+        <i class="fa-solid fa-book-open"></i>
+        Open monitoring documentation
+    </a>
+</div>
+
+<div class="ot-meta-bar ac-ui-panel" style="margin-top:0;">
+    <span class="ot-meta-bar__item ot-meta-bar__item--muted">
+        YAML root: {{ checks_root }}
+    </span>
+</div>
+
+</div>
+
+<script>
+(function () {
+    if (window.location.search) {
+        window.history.replaceState({}, '', window.location.pathname);
+    }
+
+    var form = document.querySelector('.ot-toolbar');
+    if (!form) {
+        return;
+    }
+    var pageInput = form.querySelector('select[name="page"]');
+    var filterInput = form.querySelector('input[name="obsdir_filter"]');
+    var sortSelect = form.querySelector('select[name="obsdir_sort"]');
+    var resultFilterSelect = form.querySelector(
+        'select[name="result_filter"]'
+    );
+    var perPageSelect = form.querySelector('select[name="per_page"]');
+    if (!pageInput || !filterInput || !sortSelect
+        || !resultFilterSelect || !perPageSelect) {
+        return;
+    }
+
+    var timerId = null;
+    function submitNow(resetPage) {
+        if (resetPage) {
+            pageInput.value = '1';
+        }
+        form.submit();
+    }
+    function submitDebounced() {
+        if (timerId) {
+            window.clearTimeout(timerId);
+        }
+        timerId = window.setTimeout(function () {
+            submitNow(true);
+        }, 320);
+    }
+
+    filterInput.addEventListener('input', submitDebounced);
+    sortSelect.addEventListener('change', function () {
+        submitNow(true);
+    });
+    resultFilterSelect.addEventListener('change', function () {
+        submitNow(true);
+    });
+    perPageSelect.addEventListener('change', function () {
+        submitNow(true);
+    });
+    pageInput.addEventListener('change', function () {
+        submitNow(false);
+    });
+}());
+</script>
+{% endblock %}
