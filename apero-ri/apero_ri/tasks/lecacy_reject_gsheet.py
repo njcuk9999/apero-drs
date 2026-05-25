@@ -37,17 +37,6 @@ FILTERS: List[str] = []
 DEFAULT_REJECT_SHEET_ID = '1gvMp1nHmEcKCUpxsTxkx-5m115mLuQIGHhxJCyVoZCM'
 DEFAULT_GOOGLE_SECRET_NAME = 'legacy_gsheet_oauth.json'
 
-DEFAULT_GSP_CLIENT_ID = (
-    '241559402076-vbo2eu8sl64ehur7'
-    'n1qhqb0q9pfb5hei.apps.googleusercontent.com'
-)
-DEFAULT_GSP_PROJECT_ID = 'apero-data-manag-1602517149890'
-DEFAULT_GSP_CLIENT_SECRET = 'OE4_WF0Btk29Gmb8SrbTJ3UF'
-DEFAULT_GSP_REFRESH_TOKEN = (
-    '1//0dBWyhNqcGHgdCgYIARAAGA0SNwF-L9IrhXoPCjWJtD4f0EDxA'
-    'gFX75Q-f5TOfO1VQNFgSFQ_89IW7trN3B4I0UYvvbVfrGRXZZg'
-)
-
 _SCOPES = [
     'openid',
     'https://www.googleapis.com/auth/drive',
@@ -79,17 +68,6 @@ def _as_bool(value: Any) -> bool:
     return text in ['1', 'true', 'yes', 'y', 'on']
 
 
-def _legacy_oauth_default_payload() -> Dict[str, Any]:
-    payload = dict()
-    payload['client_id'] = DEFAULT_GSP_CLIENT_ID
-    payload['project_id'] = DEFAULT_GSP_PROJECT_ID
-    payload['client_secret'] = DEFAULT_GSP_CLIENT_SECRET
-    payload['refresh_token'] = DEFAULT_GSP_REFRESH_TOKEN
-    payload['token_uri'] = 'https://oauth2.googleapis.com/token'
-    payload['scopes'] = list(_SCOPES)
-    return payload
-
-
 def _load_google_oauth_payload(task_cfg: Dict[str, Any]) -> Dict[str, Any]:
     from apero_ri.core import secret_store as ss
 
@@ -119,16 +97,10 @@ def _load_google_oauth_payload(task_cfg: Dict[str, Any]) -> Dict[str, Any]:
                 return payload
         except Exception:
             pass
-
-    payload = _legacy_oauth_default_payload()
-    secret_path.parent.mkdir(parents=True, exist_ok=True)
-    with open(secret_path, 'w', encoding='utf-8') as outfile:
-        json.dump(payload, outfile, indent=2)
-    try:
-        secret_path.chmod(0o600)
-    except OSError:
-        pass
-    return payload
+    raise FileNotFoundError(
+        'Missing Google OAuth secret file. Add credentials to '
+        f'{secret_path} or pass TASK_CONFIG.google_oauth.'
+    )
 
 
 def _open_worksheet(payload: Dict[str, Any],
