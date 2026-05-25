@@ -1071,7 +1071,7 @@ def get_trg_type(params: ParamDict, header: Any, hdict: Any,
         trg_type = 'TARGET'
         for object_name in object_names:
             # skip None (can happen when header come from database table)
-            if object_name is None:
+            if object_name in [None, np.nan]:
                 continue
             # if sky is in one of these object names then we assume we have a
             #   sky frame
@@ -1147,7 +1147,7 @@ def get_mid_obs_time(params: ParamDict, header: Any, hdict: Any,
     method = 'mjdend-exp/2'
     # -------------------------------------------------------------------
     # return time in requested format
-    if timefmt is None:
+    if timefmt in [None, np.nan]:
         header[kwmidobstime] = (obstime.iso, kwmidcomment)
         hdict[kwmidobstime] = (obstime.iso, kwmidcomment)
     elif timefmt == 'mjd':
@@ -1452,7 +1452,7 @@ def manual_apero_reldate(params: ParamDict, header: Any,
                     ireldate = Time(irel_value, format=kw_ireldate_datatype)
             except Exception:
                 ireldate = None
-    if ireldate is None:
+    if ireldate in [None, np.nan]:
         kw_ireldate = params['KW_ACQTIME'][0]
         kw_ireldate_datatype = params.instances['KW_ACQTIME'].datatype
         ireldate = Time(header[kw_ireldate], format=kw_ireldate_datatype)
