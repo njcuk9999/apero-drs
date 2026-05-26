@@ -953,7 +953,7 @@ def apply_preset_filter(
     """
 
     def _qc(r: Dict) -> bool:
-        v = r.get("PASSED_ALL_QC")
+        v = r.get("PASSED_ALL_QC", 1)
         try:
             return int(v) == 1
         except (TypeError, ValueError):

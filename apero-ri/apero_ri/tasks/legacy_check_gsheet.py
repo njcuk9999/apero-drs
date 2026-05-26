@@ -499,7 +499,10 @@ class LegacyCheckGSheetTask(apero_async.AperoAsyncTask):
         self.progress = 0.0
 
         # ---- iterate over all hydrated profiles -------------------------
-        all_profiles = load_apero_profiles(hydrate=True)
+        all_profiles = load_apero_profiles(
+            hydrate=True,
+            enabled_only=True,
+        )
         total_applied = 0
         total_skipped = 0
         total_errors = 0

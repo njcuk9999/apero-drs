@@ -4217,6 +4217,33 @@ body.ari-up-wide-page .ari-doc-main {
     gap: 1.25rem;
 }
 
+.ari-busy-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 9100;
+    background: rgba(15, 23, 42, 0.35);
+    display: none;
+    align-items: center;
+    justify-content: center;
+}
+
+.ari-busy-overlay__panel {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 0.75rem 1rem;
+    border-radius: 8px;
+    border: 1px solid var(--ari-border);
+    background: var(--ari-card-bg);
+    color: var(--ari-text);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.18);
+    font-weight: 600;
+}
+
+.ari-busy-overlay__icon {
+    color: var(--ari-primary);
+}
+
 /* Legend bar */
 .ari-ap-legend {
     display: flex;
@@ -4238,6 +4265,10 @@ body.ari-up-wide-page .ari-doc-main {
 
 .ari-ap-legend__item--invalid {
     color: #e65100;
+}
+
+.ari-ap-legend__item--disabled {
+    color: #6b7280;
 }
 
 /* Profile card list */
@@ -4276,6 +4307,11 @@ body.ari-up-wide-page .ari-doc-main {
     background: rgba(255, 152, 0, 0.08);
 }
 
+.ari-ap-card--disabled {
+    border-left: 4px solid #6b7280;
+    background: rgba(107, 114, 128, 0.14);
+}
+
 .ari-ap-card--dragging {
     opacity: 0.35;
 }
@@ -4309,6 +4345,10 @@ body.ari-up-wide-page .ari-doc-main {
 
 .ari-ap-card--invalid .ari-ap-card__status {
     color: #e65100;
+}
+
+.ari-ap-card--disabled .ari-ap-card__status {
+    color: #6b7280;
 }
 
 .ari-ap-card__body {
@@ -4346,6 +4386,10 @@ body.ari-up-wide-page .ari-doc-main {
     color: #e65100;
 }
 
+.ari-ap-card--disabled .ari-ap-card__hint {
+    color: #4b5563;
+}
+
 .ari-ap-card__actions {
     display: flex;
     gap: 0.3rem;
@@ -4366,6 +4410,11 @@ body.ari-up-wide-page .ari-doc-main {
 .ari-ap-card__btn--edit:hover {
     color: var(--ari-primary);
     background: rgba(51, 102, 153, 0.1);
+}
+
+.ari-ap-card__btn--toggle:hover {
+    color: #4b5563;
+    background: rgba(107, 114, 128, 0.2);
 }
 
 .ari-ap-card__btn--delete:hover {
@@ -11680,6 +11729,10 @@ button.ari-rp-section-card:hover {
     background: rgba(255, 152, 0, 0.12);
     border-color: #30363d;
 }
+[data-theme="dark"] .ari-ap-card--disabled {
+    background: rgba(148, 163, 184, 0.15);
+    border-color: #30363d;
+}
 [data-theme="dark"] .ari-ap-sci-preview {
     background: #1c2128;
     border-color: #30363d;
@@ -11706,6 +11759,7 @@ button.ari-rp-section-card:hover {
 [data-theme="dark"] select.ari-ap-input    { background: #0d1117; }
 [data-theme="dark"] .ari-ap-legend__item--valid   { color: #bd93f9; }
 [data-theme="dark"] .ari-ap-legend__item--invalid { color: #f0883e; }
+[data-theme="dark"] .ari-ap-legend__item--disabled { color: #94a3b8; }
 
 /* ── Admin ab-* (backup / SSHFS) tabs & tables ── */
 [data-theme="dark"] .ari-ab-tabs {

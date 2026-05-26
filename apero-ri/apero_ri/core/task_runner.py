@@ -1165,7 +1165,7 @@ def _scheduler_poll(local_data_dir: str) -> None:
         import_errors = getattr(task_module, "IMPORT_ERRORS", {}) or {}
 
         all_tasks = load_async_tasks()
-        all_profiles = load_apero_profiles()
+        all_profiles = load_apero_profiles(enabled_only=True)
         now = datetime.now(timezone.utc)
         changed = False
 
@@ -1555,6 +1555,17 @@ def build_run_params(
     ]
     for pname, pcfg in profiles.items():
         p = deepcopy(pcfg) if isinstance(pcfg, dict) else {}
+        disabled = p.get('disabled', p.get('DISABLED', False))
+        if isinstance(disabled, str):
+            disabled = disabled.strip().lower() in [
+                '1',
+                'true',
+                'yes',
+                'on',
+                'y',
+            ]
+        if bool(disabled):
+            continue
 
         # Merge preset YAML referenced by APERO_INSTRUMENT_PROFILE so task
         # payloads include all instrument defaults without requiring code edits

@@ -25,7 +25,7 @@ def _coerce_bool(value):
 
 def _instrument_profile_names(instrument):
     """Return ordered APERO profile names for one instrument."""
-    profiles = load_apero_profiles().get(instrument, {})
+    profiles = load_apero_profiles(enabled_only=True).get(instrument, {})
     if not isinstance(profiles, dict):
         return []
     return list(profiles.keys())
@@ -779,7 +779,7 @@ def api_async_tasks_run_now(app):
     if not task_cls:
         return jsonify(success=False, error="Unknown task class"), 400
 
-    all_profiles = load_apero_profiles()
+    all_profiles = load_apero_profiles(enabled_only=True)
     run_task_cfg = dict(task_cfg)
     if force_run:
         run_task_cfg["force_run"] = True
@@ -910,7 +910,7 @@ def api_async_tasks_run_all(app):
 
     from apero_ri import tasks as task_module
 
-    all_profiles = load_apero_profiles()
+    all_profiles = load_apero_profiles(enabled_only=True)
 
     added = []
     blocked = []

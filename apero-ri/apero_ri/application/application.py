@@ -2056,6 +2056,11 @@ class ARIApp(Flask):
     def _api_apero_profiles_update_groups(self):
         return _impls.ariapp_api_apero_profiles_update_groups(self)
 
+    def _api_apero_profiles_toggle_disabled(self):
+        return apero_profiles_api_helpers.api_apero_profiles_toggle_disabled(
+            self
+        )
+
     def _api_apero_profiles_test_db(self):
         return _impls.ariapp_api_apero_profiles_test_db(self)
 

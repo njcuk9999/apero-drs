@@ -768,6 +768,12 @@ def register_static_routes(app):
         methods=["POST"],
     )
     app.add_url_rule(
+        '/api/admin/apero-profiles/toggle-disabled',
+        'api_apero_profiles_toggle_disabled',
+        app._api_apero_profiles_toggle_disabled,
+        methods=['POST'],
+    )
+    app.add_url_rule(
         "/api/admin/apero-profiles/test-db",
         "api_apero_profiles_test_db",
         app._api_apero_profiles_test_db,
