@@ -6,6 +6,8 @@ import numpy as np
 
 import apero_ri.apero_monitoring.core.raw_common as raw_common
 from apero_ri.apero_monitoring.core.core import AperoCheck, SimpleCheck
+from apero_ri.apero_monitoring.core import contacts
+from apero_ri.apero_monitoring.core import links
 
 # =============================================================================
 # Define variables
@@ -25,6 +27,26 @@ TEST_KEY = 'vacuum_gauge_upper'
 CHECK = AperoCheck(CHECK_NAME, CHECK_HUMAN_NAME, CHECK_TYPE, INSTRUMENTS)
 # Require upstream checks before evaluating this test.
 CHECK.dependencies = ['BLANK', 'HAS_OBSDIR', 'CALIB_TEST']
+
+CHECK.description = """
+This engineering sub-test checks that vacuum gauge pressure stays below
+limit.
+"""
+
+CHECK.what_to_do = f"""
+If FALSE please [re-run the check]({links.RUN_CHECK}) with
+--test=ENG_TEST.
+
+If still FALSE, report the failing ENG_TEST details and contact
+<CONTACT:C1>.
+"""
+
+clist1 = contacts.AperoCheckContactList()
+clist1.add(contacts.EA, starred=True)
+clist1.add(contacts.LM)
+clist1.add(contacts.NJC)
+CHECK.contact_list['C1'] = clist1
+
 # Attach declarative SimpleCheck helper for runtime/docs/admin.
 SIMPLE_CHECK = SimpleCheck(CHECK, TEST_KEY)
 # Define one input variable and its YAML/header mapping.

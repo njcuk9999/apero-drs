@@ -6,6 +6,10 @@ import numpy as np
 
 import apero_ri.apero_monitoring.core.raw_common as raw_common
 from apero_ri.apero_monitoring.core.core import AperoCheck, SimpleCheck
+from apero_ri.apero_monitoring.core import contacts
+from apero_ri.apero_monitoring.core import links
+from apero_ri.apero_monitoring.core import contacts
+from apero_ri.apero_monitoring.core import links
 
 CHECK_NAME = 'ENG_FP_SETPOINT_RMS'
 CHECK_HUMAN_NAME = 'ENG: FP Setpoint RMS'
@@ -15,20 +19,60 @@ TEST_KEY = 'fp_setpoint_rms'
 
 CHECK = AperoCheck(CHECK_NAME, CHECK_HUMAN_NAME, CHECK_TYPE, INSTRUMENTS)
 CHECK.dependencies = ['BLANK', 'HAS_OBSDIR', 'CALIB_TEST']
+
+CHECK.description = """
+This engineering sub-test checks Fabry-Perot interior temperature
+against setpoint.
+"""
+
+CHECK.what_to_do = f"""
+If FALSE please [re-run the check]({links.RUN_CHECK}) with
+--test=ENG_TEST.
+
+If still FALSE, report the failing ENG_TEST details and contact
+<CONTACT:C1>.
+"""
+
+clist1 = contacts.AperoCheckContactList()
+clist1.add(contacts.EA, starred=True)
+clist1.add(contacts.LM)
+clist1.add(contacts.NJC)
+CHECK.contact_list['C1'] = clist1
+
+SIMPLE_CHECK = SimpleCheck(CHECK, TEST_KEY)
+
+CHECK.description = """
+This engineering sub-test checks Fabry-Perot interior temperature
+against setpoint.
+"""
+
+CHECK.what_to_do = f"""
+If FALSE please [re-run the check]({links.RUN_CHECK}) with
+--test=ENG_TEST.
+
+If still FALSE, report the failing ENG_TEST details and contact
+<CONTACT:C1>.
+"""
+
+clist1 = contacts.AperoCheckContactList()
+clist1.add(contacts.EA, starred=True)
+clist1.add(contacts.LM)
+clist1.add(contacts.NJC)
+CHECK.contact_list['C1'] = clist1
 SIMPLE_CHECK = SimpleCheck(CHECK, TEST_KEY)
 SIMPLE_CHECK.data['x'] = dict(
-    key='sensor_key',
+    key=['sensor_key', 'key1'],
     dtype='float',
     normalize='float',
 )
 SIMPLE_CHECK.data['y'] = dict(
-    key='setpoint_key',
+    key=['setpoint_key', 'key2'],
     dtype='float',
     normalize='float',
 )
 SIMPLE_CHECK.data['limit'] = dict(
     kind='config',
-    key='limit',
+    key=['limit', 'val1'],
     cast='float',
     default=0.005,
 )

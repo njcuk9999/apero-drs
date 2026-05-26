@@ -7,8 +7,7 @@ card_icon: fa-solid fa-gear
 
 ## Overview
 
-This engineering sub-test checks Fabry-Perot interior temperature
-against setpoint.
+No overview available.
 
 ## Requirements
 
@@ -18,22 +17,11 @@ against setpoint.
 
 ## What to do
 
-If FALSE please [re-run the check](how_to/run_check.md) with
---test=ENG_TEST.
-
-If still FALSE, report the failing ENG_TEST details and contact
-[Contact list C1](#contact-list-c1).
+No instructions provided.
 
 ## Contact
 
-### Contact list C1
-<a id="contact-list-c1"></a>
-
-| Name | Email |
-| --- | --- |
-| Etienne Artigau * | etienne.artigau@umontreal.ca |
-| Lison Malo | lison.malo@umontreal.ca |
-| Neil Cook | neil.cook@umontreal.ca |
+No contacts.
 
 ## Check logic
 
@@ -56,7 +44,7 @@ np.nanstd(sensor_key - setpoint_key) < limit
 | LIMIT | limit |
 | METRIC | metric |
 
-### aprofile_instrument/nirps_he_rali.yaml
+### aprofile_instrument/nirps_ha_rali.yaml, aprofile_instrument/nirps_he_rali.yaml
 
 Performs the following test
 

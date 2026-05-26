@@ -7,7 +7,7 @@ card_icon: fa-solid fa-gear
 
 ## Overview
 
-This engineering sub-test checks backend device state does not report NOK.
+No overview available.
 
 ## Requirements
 
@@ -17,24 +17,11 @@ This engineering sub-test checks backend device state does not report NOK.
 
 ## What to do
 
-If FALSE please [re-run the check](how_to/run_check.md) with
---test=ENG_TEST.
-
-If still FALSE, report the failing ENG_TEST details and contact
-[Contact list C1](#contact-list-c1).
+No instructions provided.
 
 ## Contact
 
-### Contact list C1
-<a id="contact-list-c1"></a>
-
-| Name | Email |
-| --- | --- |
-| Lison Malo * | lison.malo@umontreal.ca |
-| La Silla Day and Night Staff | ls-dnos@eso.org |
-| NIRPS Support | nirps_support@listes.umontreal.ca |
-| Etienne Artigau | etienne.artigau@umontreal.ca |
-| Neil Cook | neil.cook@umontreal.ca |
+No contacts.
 
 ## Check logic
 
@@ -55,7 +42,7 @@ np.all(np.char.upper(np.char.strip(status_key)) != np.char.upper('blocked_value'
 | STATUS_KEY | status_key |
 | BLOCKED_VALUE | blocked_value |
 
-### aprofile_instrument/nirps_he_rali.yaml
+### aprofile_instrument/nirps_ha_rali.yaml, aprofile_instrument/nirps_he_rali.yaml
 
 Performs the following test
 

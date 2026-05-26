@@ -6,6 +6,8 @@ import numpy as np
 
 import apero_ri.apero_monitoring.core.raw_common as raw_common
 from apero_ri.apero_monitoring.core.core import AperoCheck, SimpleCheck
+from apero_ri.apero_monitoring.core import contacts
+from apero_ri.apero_monitoring.core import links
 
 # Internal unique key used in YAML and monitor records.
 CHECK_NAME = 'ENG_BACKEND_ERROR_STATE'
@@ -22,6 +24,28 @@ TEST_KEY = 'backend_device_error_state'
 CHECK = AperoCheck(CHECK_NAME, CHECK_HUMAN_NAME, CHECK_TYPE, INSTRUMENTS)
 # Require upstream checks before evaluating this test.
 CHECK.dependencies = ['BLANK', 'HAS_OBSDIR', 'CALIB_TEST']
+
+CHECK.description = """
+This engineering sub-test checks backend device state does not report
+NOK.
+"""
+
+CHECK.what_to_do = f"""
+If FALSE please [re-run the check]({links.RUN_CHECK}) with
+--test=ENG_TEST.
+
+If still FALSE, report the failing ENG_TEST details and contact
+<CONTACT:C1>.
+"""
+
+clist1 = contacts.AperoCheckContactList()
+clist1.add(contacts.LM, starred=True)
+clist1.add(contacts.TELESCOPE_DNOS)
+clist1.add(contacts.NIRPS_SUPPORT)
+clist1.add(contacts.EA)
+clist1.add(contacts.NJC)
+CHECK.contact_list['C1'] = clist1
+
 # Attach declarative SimpleCheck helper for runtime/docs/admin.
 SIMPLE_CHECK = SimpleCheck(CHECK, TEST_KEY)
 # Define one input variable and its YAML/header mapping.
