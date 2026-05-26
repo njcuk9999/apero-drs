@@ -104,7 +104,7 @@ Instrument = instrument_mod.Instrument
 # get numpy masked constant
 MaskedConstant = np.ma.core.MaskedConstant
 # Get pandas like database class
-PandasLikeDatabase = base_class.PandasLikeDatabaseDuckDB
+PandasLikeDatabase = base_class.PandasLikeDatabase
 # -----------------------------------------------------------------------------
 # define complex typing
 QCParamList = Union[Tuple[List[str], List[Any], List[str], List[int]],
