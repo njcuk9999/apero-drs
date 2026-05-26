@@ -400,7 +400,7 @@ CDict.add('DTIME_CHECK', value=None, dtype=bool,
 
 # define whether the user wants to bin the calibration times to a specific
 #   day fraction (i.e. midnight, midday) using CALIB_DB_DAYFRAC
-CDict.add('BIN_IN_TIME', value=None, dtype=str,
+CDict.add('BIN_IN_TIME', value=None, dtype=bool,
           source=__NAME__, group=cgroup,
           description=('define whether the user wants to '
                        'bin the calibration times to a '
