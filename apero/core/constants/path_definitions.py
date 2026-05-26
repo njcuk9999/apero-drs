@@ -236,7 +236,7 @@ class OutPath(BlockPath):
         :param check: if True raises error when path does not exist
         """
         super().__init__(params, self.name, self.key, indexing=True,
-                         logging=False, check=check)
+                         logging=True, check=check)
         self.has_obs_dirs = True
         self.fileset = 'out_file'
 
@@ -273,7 +273,7 @@ class LBLPath(BlockPath):
         :param check: if True raises error when path does not exist
         """
         super().__init__(params, self.name, self.key, indexing=True,
-                         logging=False, check=check)
+                         logging=True, check=check)
         self.has_obs_dirs = True
         self.fileset = 'out_file'
 

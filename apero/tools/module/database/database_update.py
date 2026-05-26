@@ -17,6 +17,7 @@ from typing import Any, List, Tuple
 import numpy as np
 from astropy.io import fits
 from astropy.table import Table
+from astropy.time import Time
 
 from apero import lang
 from apero.base import base
@@ -766,23 +767,18 @@ def _log_update_files(params: ParamDict, pconst: PseudoConstants,
     for filepath in tqdm(files):
         # get string version
         filename = str(filepath)
-        # get hdu names
-        with fits.open(filename) as hdus:
-            hdu_names = list(map(lambda x: x.name, hdus))
-        # deal with no param table - skip
-        if 'PARAM_TABLE' not in hdu_names:
-            continue
-        # load param table
-        ptable = drs_table.read_table(params, filename, fmt='fits',
-                                      hdu='PARAM_TABLE')
         # get all log update entries (per file)
-        logdict, lcode, lpid = _log_update(pconst, ptable)
+        log_result = _get_log_update_entry(params, pconst, filename)
+        if log_result is None:
+            continue
+        logdict, lcode, lpid = log_result
         # merge duplicate lcodes (same PID/LEVEL/SUBLEVEL) rather than
         # silently overwriting – products from the same run can differ in
         # QC fields such as PASSED_ALL_QC
         if lcode in logentries:
-            logentries[lcode] = _merge_log_entries(pconst, logentries[lcode],
-                                                   logdict)
+            logentries[lcode] = _combine_log_entries(pconst,
+                                                     logentries[lcode],
+                                                     logdict)
         else:
             logentries[lcode] = logdict
         # append to pids
@@ -816,23 +812,18 @@ def _log_update_files_batch(params: ParamDict, pconst: PseudoConstants,
     for filepath in tqdm(files, desc='Log DB batch' + batch_msg):
         # get string version
         filename = str(filepath)
-        # get hdu names
-        with fits.open(filename) as hdus:
-            hdu_names = list(map(lambda x: x.name, hdus))
-        # deal with no param table - skip
-        if 'PARAM_TABLE' not in hdu_names:
-            continue
-        # load param table
-        ptable = drs_table.read_table(params, filename, fmt='fits',
-                                      hdu='PARAM_TABLE')
         # get all log update entries (per file)
-        logdict, lcode, lpid = _log_update(pconst, ptable)
+        log_result = _get_log_update_entry(params, pconst, filename)
+        if log_result is None:
+            continue
+        logdict, lcode, lpid = log_result
         # merge duplicate lcodes (same PID/LEVEL/SUBLEVEL) rather than
         # silently overwriting – products from the same run can differ in
         # QC fields such as PASSED_ALL_QC
         if lcode in logentries:
-            logentries[lcode] = _merge_log_entries(pconst, logentries[lcode],
-                                                   logdict)
+            logentries[lcode] = _combine_log_entries(pconst,
+                                                     logentries[lcode],
+                                                     logdict)
         else:
             logentries[lcode] = logdict
         # append to pids
@@ -883,9 +874,9 @@ def _multi_process_logdb_pathos(params: ParamDict, pconst: PseudoConstants,
     for batch_logentries, batch_log_pids in results:
         for lcode, entry in batch_logentries.items():
             if lcode in logentries:
-                logentries[lcode] = _merge_log_entries(pconst,
-                                                       logentries[lcode],
-                                                       entry)
+                logentries[lcode] = _combine_log_entries(pconst,
+                                                         logentries[lcode],
+                                                         entry)
             else:
                 logentries[lcode] = entry
         log_pids.extend(batch_log_pids)
@@ -930,9 +921,9 @@ def _multi_process_logdb_pool(params: ParamDict, pconst: PseudoConstants,
     for batch_logentries, batch_log_pids in results:
         for lcode, entry in batch_logentries.items():
             if lcode in logentries:
-                logentries[lcode] = _merge_log_entries(pconst,
-                                                       logentries[lcode],
-                                                       entry)
+                logentries[lcode] = _combine_log_entries(pconst,
+                                                         logentries[lcode],
+                                                         entry)
             else:
                 logentries[lcode] = entry
         log_pids.extend(batch_log_pids)
@@ -986,9 +977,9 @@ def _multi_process_logdb_process(params: ParamDict, pconst: PseudoConstants,
     for batch_logentries, batch_log_pids in results_list:
         for lcode, entry in batch_logentries.items():
             if lcode in logentries:
-                logentries[lcode] = _merge_log_entries(pconst,
-                                                       logentries[lcode],
-                                                       entry)
+                logentries[lcode] = _combine_log_entries(pconst,
+                                                         logentries[lcode],
+                                                         entry)
             else:
                 logentries[lcode] = entry
         log_pids.extend(batch_log_pids)
@@ -1018,6 +1009,236 @@ def _log_update_files_batch_process(params: ParamDict, pconst: PseudoConstants,
                                                    batch_idx, total_batches)
     # append results to shared list
     results_list.append((logentries, log_pids))
+
+
+def _get_log_update_entry(params: ParamDict, pconst: PseudoConstants,
+                          filename: str):
+    """
+    Get the log database payload for a file.
+
+    Normal APERO products use the PARAM_TABLE. For older/special FITS files
+    without that extension we synthesize a minimal log entry from the header so
+    that the file still has a usable PID/PASSED_ALL_QC record in the log
+    database.
+
+    :param params: ParamDict, parameter dictionary of constants
+    :param pconst: PseudoConstants, pseudo constant object
+    :param filename: str, absolute path to a FITS file
+
+    :return: tuple or None, (logvalues, logcode, pid) when a payload can be
+             created, otherwise None
+    """
+    with fits.open(filename) as hdus:
+        hdu_names = list(map(lambda x: x.name, hdus))
+        if 'PARAM_TABLE' in hdu_names:
+            ptable = drs_table.read_table(params, filename, fmt='fits',
+                                          hdu='PARAM_TABLE')
+            return _log_update(pconst, ptable)
+        return _log_update_from_header(params, pconst, filename,
+                                       hdus[0].header)
+
+
+def _log_update_from_header(params: ParamDict, pconst: PseudoConstants,
+                            filename: str,
+                            header: fits.Header) -> Tuple[List[Any], str, str]:
+    """
+    Synthesize a minimal log database entry from FITS header keywords when a
+    file has no PARAM_TABLE extension.
+
+    :param params: ParamDict, parameter dictionary of constants
+    :param pconst: PseudoConstants, pseudo constant object
+    :param filename: str, absolute path to a FITS file
+    :param header: fits.Header, the primary FITS header
+
+    :return: tuple, 1. list of log entry values, 2. str unique log code,
+             3. str pid
+    """
+    # get the log database columns
+    ldb_cols = pconst.LOG_DB_COLUMNS()
+    logcols = list(ldb_cols.names)
+    # get the block kind from the filename
+    block_kind = _get_log_block_kind(params, filename)
+    # define keys for the header
+    pid_key = params.instances['KW_PID'].key
+    date_key = params.instances['KW_DRS_DATE_NOW'].key
+    # get the pid from the header (if it exists)
+    pid = header.get(pid_key, None)
+    # get the human time from the header (if it exists)
+    humantime = header.get(date_key, None)
+    # get the basename of the file
+    basename = os.path.basename(filename)
+    # deal with no PID
+    if pid in [None, '', 'NULL']:
+        pid = 'MISSINGPID::{0}'.format(basename)
+    # format the human time and get unix time
+    humantime, unixtime = _get_log_header_times(filename, humantime)
+    # push default values into the log database
+    defaults = dict(RECIPE='apero_database', SHORTNAME='DBUPDATE',
+                    BLOCK_KIND=block_kind, RECIPE_TYPE='unknown',
+                    RECIPE_KIND='unknown', PROGRAM_NAME='unknown', PID=pid,
+                    HUMANTIME=humantime, UNIXTIME=unixtime,
+                    GROUPNAME='unknown', LEVEL=0, SUBLEVEL=0,
+                    LEVELCRIT='unknown', INPATH='unknown',
+                    OUTPATH=basename, OBS_DIR='unknown',
+                    LOGFILE='unknown', PLOTDIR='unknown',
+                    RUNSTRING='apero_database.py --update --dbkind=log',
+                    ARGS='unknown', KWARGS=f'--filename={filename}',
+                    SKWARGS='unknown',
+                    START_TIME=humantime, END_TIME=humantime, STARTED=1,
+                    PASSED_ALL_QC=1, QC_STRING='', QC_NAMES='', QC_VALUES='',
+                    QC_LOGIC='', QC_PASS='', ERRORMSGS='', ENDED=1,
+                    FLAGNUM=0, FLAGSTR='', USED=1, RAM_USAGE_START=0.0,
+                    RAM_USAGE_END=0.0, RAW_TOTAL=0.0, SWAP_USAGE_START=0.0,
+                    SWAP_USAGE_END=0.0, SWAP_TOTAL=0.0,
+                    CPU_USAGE_START=0.0, CPU_USAGE_END=0.0, CPU_NUM=0,
+                    LOG_START=humantime, LOG_END=humantime)
+    # loop around default values and add them as a list
+    logvalues = []
+    for logkey in logcols:
+        logvalues.append(defaults.get(logkey, 'NULL'))
+    # default log code
+    logcode = '{0} 0 0'.format(pid)
+    # return same outputs as _log_update
+    return logvalues, logcode, pid
+
+
+def _get_log_header_times(filename: str, humantime: Any) -> Tuple[str, float]:
+    """
+    Derive a stable HUMANTIME/UNIXTIME pair for header-synthesized log rows.
+
+    :param filename: str, file path used for file-system fallback times
+    :param humantime: Any, candidate human-readable time from FITS header
+
+    :return: tuple, 1. HUMANTIME string, 2. UNIXTIME float
+    """
+    parsed_time = None
+    if humantime not in [None, '', 'NULL']:
+        humantime = str(humantime)
+        for timefmt in ['iso', 'isot', 'fits']:
+            try:
+                parsed_time = Time(humantime, format=timefmt)
+                break
+            except Exception:
+                continue
+        if parsed_time is None:
+            try:
+                parsed_time = Time(humantime)
+            except Exception:
+                parsed_time = None
+
+    if parsed_time is None:
+        parsed_time = Time(os.path.getmtime(filename), format='unix')
+
+    return parsed_time.iso, float(parsed_time.unix)
+
+
+def _get_log_block_kind(params: ParamDict, filename: str) -> str:
+    """
+    Resolve the block kind for a file from its absolute path.
+
+    :param params: ParamDict, parameter dictionary of constants
+    :param filename: str, absolute file path
+
+    :return: str, the block name or 'unknown' if no block matches
+    """
+    abspath = os.path.abspath(filename)
+    matched_block, matched_length = 'unknown', -1
+
+    for block in drs_file.DrsPath.get_blocks(params, check=False):
+        blockpath = os.path.abspath(block.path)
+        try:
+            commonpath = os.path.commonpath([abspath, blockpath])
+        except ValueError:
+            continue
+        if commonpath == blockpath and len(blockpath) > matched_length:
+            matched_block = block.name
+            matched_length = len(blockpath)
+
+    return matched_block
+
+
+def _combine_log_entries(pconst: PseudoConstants,
+                         existing: List[Any],
+                         new: List[Any]) -> List[Any]:
+    """
+    Combine two log entries with special handling for synthesized fallback
+    rows created from headers when PARAM_TABLE is missing.
+
+    For synthesized rows we keep only the newest UNIXTIME for a given
+    PID/LEVEL/SUBLEVEL. For normal PARAM_TABLE rows we preserve the existing QC
+    merge rules.
+
+    :param pconst: PseudoConst, pseudo constant object
+    :param existing: List, log entry values already stored for this logcode
+    :param new: List, log entry values from the current file
+
+    :return: List, combined log entry values
+    """
+    existing_fallback = _is_header_log_entry(pconst, existing)
+    new_fallback = _is_header_log_entry(pconst, new)
+
+    if existing_fallback and new_fallback:
+        return _select_newer_log_entry(pconst, existing, new)
+    if existing_fallback and not new_fallback:
+        return list(new)
+    if new_fallback and not existing_fallback:
+        return list(existing)
+    return _merge_log_entries(pconst, existing, new)
+
+
+def _is_header_log_entry(pconst: PseudoConstants, entry: List[Any]) -> bool:
+    """
+    Identify synthesized log rows created by `_log_update_from_header`.
+
+    :param pconst: PseudoConst, pseudo constant object
+    :param entry: List, log entry values
+
+    :return: bool, True when the entry is a synthesized fallback row
+    """
+    ldb_cols = pconst.LOG_DB_COLUMNS()
+    logcols = list(ldb_cols.names)
+
+    def _value(key: str, default: Any = None) -> Any:
+        if key not in logcols:
+            return default
+        return entry[logcols.index(key)]
+
+    return (_value('RECIPE') == 'apero_database'
+            and _value('SHORTNAME') == 'DBUPDATE'
+            and _value('RUNSTRING') == 'apero_database.py --update --dbkind=log'
+            and str(_value('LEVEL', '0')) == '0'
+            and str(_value('SUBLEVEL', '0')) == '0')
+
+
+def _select_newer_log_entry(pconst: PseudoConstants,
+                            existing: List[Any],
+                            new: List[Any]) -> List[Any]:
+    """
+    Select the entry with the newest UNIXTIME.
+
+    :param pconst: PseudoConst, pseudo constant object
+    :param existing: List, existing log entry values
+    :param new: List, new log entry values
+
+    :return: List, whichever entry is newest
+    """
+    ldb_cols = pconst.LOG_DB_COLUMNS()
+    logcols = list(ldb_cols.names)
+
+    if 'UNIXTIME' not in logcols:
+        return list(new)
+
+    idx = logcols.index('UNIXTIME')
+
+    def _to_float(value: Any) -> float:
+        try:
+            return float(value)
+        except (TypeError, ValueError):
+            return float('-inf')
+
+    if _to_float(new[idx]) >= _to_float(existing[idx]):
+        return list(new)
+    return list(existing)
 
 
 def _merge_log_entries(pconst: PseudoConstants,
