@@ -787,8 +787,6 @@ def _send_download_ready_email(
 # =============================================================================
 # File browser helpers
 # =============================================================================
-
-
 def load_ftable_rows(
     base_dir: Path,
     instrument: str,
@@ -938,8 +936,7 @@ def backfill_lbl_run_ids(
 
 
 def apply_preset_filter(
-    rows: List[Dict[str, Any]], preset: str
-) -> List[Dict[str, Any]]:
+    rows: List[Dict[str, Any]], preset: str) -> List[Dict[str, Any]]:
     """
     Filter rows by a named preset.
 

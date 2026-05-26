@@ -459,11 +459,12 @@ class FileType:
                 if filetypes[self.chain].num:
                     return
         # get the files
-        dbcols = 'BLOCK_KIND,OBS_DIR,FILENAME,KW_PID,KW_MID_OBS_TIME,KW_DRS_DATE_NOW'
+        dbcols = ('BLOCK_KIND,OBS_DIR,FILENAME,KW_PID,KW_MID_OBS_TIME,'
+                  'KW_DRS_DATE_NOW,KW_DRS_QC')
         findex_table = indexdbm.get_entries(dbcols, condition=cond)
         # get a mask of rows that passed QC (based on PID)
         if self.name != 'raw':
-            mask = _filter_pids(findex_table, logdbm)
+            mask = np.array(findex_table['KW_DRS_QC']).astype(bool)
             # get absolute file list
             files = drs_file.DrsPath.get_abs_paths(indexdbm.params,
                                                    block_kinds=findex_table['BLOCK_KIND'],
@@ -2733,56 +2734,6 @@ def time_series_stats_table(time_series_props: Dict[str, Any], stat_path: str):
 # =============================================================================
 # Define worker functions
 # =============================================================================
-def _filter_pids(findex_table: pd.DataFrame, logdbm: Any) -> np.ndarray:
-    """
-    Filter file index database by pid to find those that passed
-
-    :param findex_table: Table, the file index database
-    :param logdbm: the drs_database.LogDatabase instance
-
-    :return: numpy 1D array, a True/False mask the same length as findex_table
-    """
-    # assume everything failed
-    passed = np.zeros(len(findex_table)).astype(bool)
-    if len(findex_table) == 0:
-        return passed
-    # get the pids for these files
-    pids = np.array(findex_table['KW_PID'])
-    # get the pid
-    pid_conds = []
-    for pid in pids:
-        pid_conds.append(f'PID="{pid}"')
-    pid_condition = ' OR '.join(pid_conds)
-    # need to crossmatch again recipe log database for QC
-    ltable = logdbm.get_entries('PID,PASSED_ALL_QC', condition=pid_condition)
-    # get the columsn from the log table
-    all_pids = np.array(ltable['PID'])
-    # get the passed all qc value
-    passed_all_qc = np.array(ltable['PASSED_ALL_QC'])
-    # if value is None assume it passed
-    null_mask = ~(passed_all_qc == 1)
-    null_mask &= ~(passed_all_qc == 0)
-    passed_all_qc[null_mask] = 1
-    # push into True and False
-    all_pass = passed_all_qc.astype(bool)
-    # need to loop around all files
-    for row in range(len(findex_table)):
-        # get the pid for this row
-        pid = findex_table['KW_PID'].iloc[row]
-        # find all rows that have this pid
-        mask = all_pids == pid
-        # Deal with no pid match between file index and log database
-        #  These get set to True (as we don't know otherwise)
-        if np.sum(mask) == 0:
-            passed[row] = True
-            continue
-        # if all rows pass qc passed = 1
-        if np.sum(all_pass[mask]):
-            passed[row] = True
-    # return the passed mask
-    return passed
-
-
 def _match_file(reffile: str, files: List[str]):
     """
     Using a ref file split at the _pp level and try to locate the position
