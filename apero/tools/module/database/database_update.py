@@ -283,7 +283,7 @@ def log_update(params: ParamDict, pconst: PseudoConstants):
             continue
         # deal with block kind being an argument
         if not drs_text.null_text(block_kind_arg, ['None', 'Null', '', 'All']):
-            if block != block_kind_arg:
+            if block.name != block_kind_arg:
                 continue
         # ---------------------------------------------------------------------
         # print progress
