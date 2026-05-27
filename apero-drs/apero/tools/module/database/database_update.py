@@ -299,12 +299,18 @@ def log_update(params: ParamDict, recipe: DrsRecipe, pconst: Instrument):
     # get index database
     logdbm = drs_database.LogDatabase(params, recipe.shortname)
     logdbm.load_db()
+    # get block kind argument
+    block_kind_arg = params['INPUTS'].get('BLOCK_KIND', 'None')
     # -------------------------------------------------------------------------
     # loop around blocks
     for block in blocks:
         # skip non logging blocks
         if not block.logging:
             continue
+        # deal with block kind being an argument
+        if not drs_text.null_text(block_kind_arg, ['None', 'Null', '', 'All']):
+            if block == block_kind_arg:
+                continue
         # ---------------------------------------------------------------------
         # print progress
         msg = 'Updating {0} for log database'
@@ -678,6 +684,8 @@ def _index_update_blocks_batch(params: ParamDict, shortname: str,
     # get astrometric database
     astromdb = drs_astrometrics.AstrometricDatabase(params, shortname)
     astromdb.load_db()
+    # get a potential block kind argument from command line
+    block_kind_arg = params['INPUTS'].get('BLOCK_KIND', 'None')
     # start a message if batch_idx and total_batches given
     if (batch_idx is not None) and (total_batches is not None):
         batch_msg = ' [{0}/{1}] '.format(batch_idx, total_batches)
@@ -685,6 +693,10 @@ def _index_update_blocks_batch(params: ParamDict, shortname: str,
         batch_msg = ''
     # loop around block kinds (with the indexing filter)
     for block_kind in tqdm(block_kinds, desc='Index DB batch' + batch_msg):
+        # deal with block kind being an argument
+        if not drs_text.null_text(block_kind_arg, ['None', 'Null', '', 'All']):
+            if block_kind == block_kind_arg:
+                continue
         # log block update
         WLOG(params, '', textentry('40-503-00044', args=[block_kind]))
         # update index database for block kind

@@ -235,6 +235,8 @@ database_mgr.set_kwarg(name='--cores', dtype=int, default=0,
                                'yaml file). Use with --update to enable parallel '
                                'processing for calib, tellu, log, and index '
                                'databases.')
+database_mgr.set_kwarg(name='--block_kind', dtype='str', default='None',
+                       helpstr='Block kind filter (not always used)')
 # TODO: Add to language database
 database_mgr.set_kwarg(name='--keys', dtype='List[str]', default='None',
                        helpstr='Keyname of entries to remove (used in '
