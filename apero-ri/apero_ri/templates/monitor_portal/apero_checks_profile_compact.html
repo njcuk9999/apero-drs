@@ -6,7 +6,7 @@
 {% block extra_head %}
 {{ super() }}
 <link rel="stylesheet"
-    href="{{ url_for('static', filename='css/apero_checks.css') }}?v=20260520c">
+    href="{{ url_for('static', filename='css/apero_checks.css') }}?v=20260602b">
 <style>
 .ac-page-stack {
     display: grid;
@@ -74,6 +74,14 @@
        title="View summary statistics and histograms for this profile">
         <i class="fa-solid fa-chart-bar"></i> Stats
     </a>
+    {% if can_manage_apero_profiles %}
+    <button id="ac-profile-advanced"
+            class="ari-btn ari-btn--sm ari-btn--secondary"
+            type="button"
+            title="Toggle advanced options (shows delete controls on each night)">
+        <i class="fa-solid fa-sliders"></i> Advanced options
+    </button>
+    {% endif %}
 </div>
 
 <form class="ot-toolbar ac-ui-panel ac-ui-panel--soft" method="get"
@@ -148,6 +156,7 @@
 
 <div class="ac-card-list ac-ui-panel" id="ac-card-list">
     {% for card in profile_cards %}
+    <div class="ac-card-wrap">
     <a class="ac-card ac-card--{{ card.status if card.status else 'failed' }}"
     href="{{ url_for('monitor_apero_checks_obsdir_view', profile_id=profile_id, obsdir=card.obsdir) }}"
        title="Open APERO Check information for {{ card.obsdir }}">
@@ -181,6 +190,15 @@
             </span>
         </div>
     </a>
+    {% if can_manage_apero_profiles %}
+    <button class="ac-night-delete-btn ac-delete-only"
+            data-obsdir="{{ card.obsdir }}"
+            type="button"
+            title="Delete YAML for {{ card.obsdir }}">
+        <i class="fa-solid fa-trash"></i>
+    </button>
+    {% endif %}
+    </div>
     {% endfor %}
     {% if not profile_cards %}
     <article class="ac-card">
@@ -279,6 +297,54 @@
     });
     pageInput.addEventListener('change', function () {
         submitNow(false);
+    });
+}());
+
+(function () {
+    var advancedBtn = document.getElementById('ac-profile-advanced');
+    if (advancedBtn) {
+        advancedBtn.addEventListener('click', function () {
+            document.body.classList.toggle('ac-delete-mode');
+            advancedBtn.classList.toggle('ac-btn-danger');
+        });
+    }
+
+    document.querySelectorAll('.ac-night-delete-btn').forEach(function (btn) {
+        btn.addEventListener('click', function (e) {
+            e.preventDefault();
+            e.stopPropagation();
+            var obsdir = btn.getAttribute('data-obsdir');
+            if (!window.confirm(
+                'Delete YAML for night “' + obsdir
+                + '”?\nThis cannot be undone.'
+            )) {
+                return;
+            }
+            btn.disabled = true;
+            fetch({{ url_for('api_apero_checks_delete_obsdir')|tojson }}, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    profile_id: {{ profile_id|tojson }},
+                    obsdir: obsdir,
+                }),
+            }).then(function (resp) {
+                return resp.json().then(function (data) {
+                    if (!resp.ok || data.success === false) {
+                        throw new Error(data.error || 'Request failed');
+                    }
+                    return data;
+                });
+            }).then(function () {
+                var wrap = btn.closest('.ac-card-wrap');
+                if (wrap) {
+                    wrap.remove();
+                }
+            }).catch(function (err) {
+                window.alert(String(err || 'Could not delete YAML file.'));
+                btn.disabled = false;
+            });
+        });
     });
 }());
 </script>

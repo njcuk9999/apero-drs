@@ -1667,9 +1667,19 @@ def monitor_apero_checks_obsdir_view(app, profile_id, obsdir):
     if not path.exists():
         path = checks_root / f'{obsdir}.yml'
     if not path.exists():
-        flash('APERO check YAML not found.', 'warning')
-        return redirect(url_for('monitor_apero_checks_profile_view',
-                                profile_id=profile_id))
+        # Mirror list_yaml_files: search recursively under checks_root
+        root_resolved = checks_root.expanduser().resolve()
+        found = None
+        for suffix in ('.yaml', '.yml'):
+            matches = sorted(root_resolved.rglob(f'{obsdir}{suffix}'), key=str)
+            if matches:
+                found = matches[0]
+                break
+        if found is None:
+            flash('APERO check YAML not found.', 'warning')
+            return redirect(url_for('monitor_apero_checks_profile_view',
+                                    profile_id=profile_id))
+        path = found
 
     loaded = checks_core.load_check_file(path)
     page_args = _normalize_apero_checks_args(request.args)

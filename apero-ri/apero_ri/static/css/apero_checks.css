@@ -80,6 +80,46 @@ body.ac-hide-tests .ac-card__checks-main {
     color: #ffffff;
 }
 
+/* ── Advanced / delete-only visibility (global) ─────────────────────── */
+.ac-delete-only {
+    display: none !important;
+}
+
+body.ac-delete-mode .ac-delete-only {
+    display: inline-flex !important;
+}
+
+/* ── Night card wrapper (profile list page) ─────────────────────────── */
+.ac-card-wrap {
+    position: relative;
+}
+
+a.ac-card {
+    display: block;
+}
+
+.ac-night-delete-btn {
+    position: absolute;
+    right: 0.5rem;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 2;
+    background: #991b1b;
+    border: 1px solid #7f1d1d;
+    border-radius: 0.4rem;
+    color: #fff;
+    padding: 0.3rem 0.55rem;
+    cursor: pointer;
+    font-size: 0.85rem;
+    line-height: 1;
+    align-items: center;
+    gap: 0.3rem;
+}
+
+.ac-night-delete-btn:hover {
+    background: #7f1d1d;
+}
+
 .ac-check-pill {
     display: inline-grid;
     grid-template-columns: auto auto auto;

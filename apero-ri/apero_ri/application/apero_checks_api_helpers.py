@@ -86,6 +86,12 @@ def _resolve_checks_path(
     alt = root / f'{obsdir}.yml'
     if alt.exists():
         return alt
+    # Fall back to recursive search (mirrors list_yaml_files behaviour)
+    root_resolved = Path(root).expanduser().resolve()
+    for suffix in ('.yaml', '.yml'):
+        matches = sorted(root_resolved.rglob(f'{obsdir}{suffix}'), key=str)
+        if matches:
+            return matches[0]
     raise FileNotFoundError('APERO check file not found')
 
 
