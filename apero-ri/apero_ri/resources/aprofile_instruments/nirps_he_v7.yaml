@@ -409,6 +409,7 @@ apero-checks:
       dpr_type: HIERARCH ESO DPR TYPE
       obs_name: HIERARCH ESO OBS NAME
       mjd_obs: MJD-OBS
+      obj_name: ''
 
   # Calibration-presence check settings.
   calib_test:
@@ -606,6 +607,27 @@ apero-checks:
         enabled: true
         status_key: HIERARCH ESO INS SENS129 STAT
         blocked_value: NOK
+
+  # Astrometrics object-name check settings.
+  astrom_test:
+
+    # Enable or disable this check.
+    enabled: true
+
+    # FITS header keys to try (in order) for the object name.
+    obj_name_keys:
+      - OBJECT
+      - HIERARCH ESO OBS TARG NAME
+
+    # Only files whose DPRTYPE appears in this list are checked.
+    # An empty list means all files are checked regardless of DPRTYPE.
+    dprtypes:
+      - OBJECT,SKY
+      - OBJECT,FP
+
+    # When set, use filename suffix as the science filter instead of DPRTYPE.
+    # Leave empty to use the dprtypes list above.
+    sci_suffix: ''
 
 # Finder setting.
 finder:

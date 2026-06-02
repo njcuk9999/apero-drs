@@ -393,6 +393,7 @@ apero-checks:
       dpr_type: ''
       obs_name: ''
       mjd_obs: ''
+      obj_name: ''
 
   # Calibration-presence check settings.
   calib_test:
@@ -470,6 +471,25 @@ apero-checks:
         enabled: false
       backend_device_error_state:
         enabled: false
+
+  # Astrometrics object-name check settings.
+  astrom_test:
+
+    # Enable or disable this check.
+    enabled: true
+
+    # FITS header keys to try (in order) for the object name.
+    obj_name_keys:
+      - OBJECT
+      - OBJNAME
+
+    # Only files whose DPRTYPE appears in this list are checked.
+    # An empty list means all files are checked regardless of DPRTYPE.
+    dprtypes: []
+
+    # When set, use filename suffix as the science filter instead of DPRTYPE.
+    # e.g. 'o.fits' selects only SPIRou raw science frames by filename.
+    sci_suffix: o.fits
 
 # Finder setting.
 finder:

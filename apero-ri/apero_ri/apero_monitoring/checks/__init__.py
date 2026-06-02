@@ -71,6 +71,9 @@ HAS_OBSDIR_CHECK = _module(
 	'apero_ri.apero_monitoring.checks.check_obsdir_test'
 ).CHECK
 QUAL_CHECK = _module('apero_ri.apero_monitoring.checks.check_qual_test').CHECK
+ASTROM_CHECK = _module(
+    'apero_ri.apero_monitoring.checks.check_astrometrics'
+).CHECK
 
 
 # =============================================================================
@@ -104,3 +107,4 @@ CHECKS['ENG_STRETCHER_STATE'] = ENG_STRETCHER_STATE_CHECK
 CHECKS['ENG_BACKEND_ERROR_STATE'] = ENG_BACKEND_ERROR_STATE_CHECK
 CHECKS['NO_SCI'] = NO_SCI_CHECK
 CHECKS['QUAL_TEST'] = QUAL_CHECK
+CHECKS['ASTROM'] = ASTROM_CHECK
