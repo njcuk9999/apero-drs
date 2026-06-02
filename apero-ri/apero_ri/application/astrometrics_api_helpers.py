@@ -12,6 +12,171 @@ from apero_ri.core.permissions import resolve_user_permissions
 from flask import jsonify, request
 
 
+_FTABLE_KINDS = (
+    'raw',
+    'pp',
+    'ext',
+    'tcorr',
+    'ccf',
+    'lbl',
+    'lbl_rdb',
+)
+
+
+def _load_json_rows(path: Path):
+    """Load rows from a JSON file with top-level {'rows': [...]} or list."""
+    try:
+        with open(path, encoding='utf-8') as fhandle:
+            data = _json.load(fhandle)
+    except Exception:
+        return []
+    if isinstance(data, dict):
+        rows = data.get('rows', [])
+        return rows if isinstance(rows, list) else []
+    return data if isinstance(data, list) else []
+
+
+def _matches_advanced_value(raw_value, mode, value, value2):
+    """Apply advanced match mode to one candidate value."""
+    text = str(raw_value if raw_value is not None else '').strip()
+    mode = str(mode or 'value').strip().lower()
+    value = str(value or '').strip()
+    value2 = str(value2 or '').strip()
+
+    if mode == 'value':
+        return value.lower() in text.lower()
+
+    try:
+        num = float(text)
+    except Exception:
+        return False
+
+    if mode == 'between':
+        try:
+            low = float(value)
+            high = float(value2)
+        except Exception:
+            return False
+        if low > high:
+            low, high = high, low
+        return low <= num <= high
+
+    try:
+        pivot = float(value)
+    except Exception:
+        return False
+
+    if mode == 'greater_than':
+        return num > pivot
+    if mode == 'less_than':
+        return num < pivot
+    return False
+
+
+def _advanced_match_in_rows(rows, prop, mode, value, value2):
+    """Return True if any row has prop and passes match criteria."""
+    prop = str(prop or '').strip()
+    if prop == '':
+        return False
+    for row in rows:
+        if not isinstance(row, dict):
+            continue
+        if prop not in row:
+            continue
+        if _matches_advanced_value(row.get(prop), mode, value, value2):
+            return True
+    return False
+
+
+def _advanced_property_catalog(
+    app,
+    base_dir: Path,
+    accessible,
+    user_info,
+):
+    """Build source -> property catalog for find-object advanced mode."""
+    sources = {
+        'target_info': 'Target information',
+        'spectrum_info': 'Spectrum information',
+        'header': 'Header',
+    }
+    props = {
+        'target_info': set(),
+        'spectrum_info': set(),
+        'header': set(),
+    }
+
+    for profile in accessible:
+        profile_id = str(profile.get('profile_id', '') or '').strip()
+        instrument = str(profile.get('instrument', '') or '').strip()
+        if not profile_id or not instrument:
+            continue
+
+        run_ids = app._get_user_accessible_run_ids(user_info, instrument)
+        tasks_dir = base_dir / 'tasks' / instrument
+        object_table_path = tasks_dir / profile_id / 'object_table.json'
+        if not object_table_path.exists():
+            legacy = tasks_dir / f'object_table_{profile_id}.json'
+            if legacy.exists():
+                object_table_path = legacy
+
+        rows = _load_json_rows(object_table_path)
+        if not rows:
+            continue
+
+        accessible_objnames = []
+        for row in rows:
+            if not isinstance(row, dict):
+                continue
+            props['target_info'].update(str(k) for k in row.keys())
+            raw = str(row.get('RUN_ID', '') or '')
+            row_rids = {r.strip() for r in raw.split(',') if r.strip()}
+            if run_ids and not (row_rids & run_ids):
+                continue
+            name = str(row.get('OBJNAME', '') or '').strip()
+            if name:
+                accessible_objnames.append(name)
+
+        objects_dir = tasks_dir / profile_id / 'objects'
+        scan_names = accessible_objnames[:50]
+        for objname in scan_names:
+            hrows = _load_json_rows(objects_dir / f'htable_{objname}.json')
+            for hrow in hrows:
+                if isinstance(hrow, dict):
+                    props['header'].update(str(k) for k in hrow.keys())
+
+            for fkind in _FTABLE_KINDS:
+                fpath = objects_dir / f'ftable_{fkind}_{objname}.json'
+                frows = _load_json_rows(fpath)
+                for frow in frows:
+                    if isinstance(frow, dict):
+                        props['spectrum_info'].update(
+                            str(k) for k in frow.keys()
+                        )
+
+    property_rows = []
+    all_props = set().union(*props.values())
+    for prop in sorted(all_props):
+        srcs = []
+        for skey in ('target_info', 'spectrum_info', 'header'):
+            if prop in props[skey]:
+                srcs.append(skey)
+        property_rows.append(
+            {
+                'property': prop,
+                'sources': srcs,
+            }
+        )
+
+    return {
+        'sources': [
+            {'key': key, 'label': label}
+            for key, label in sources.items()
+        ],
+        'properties': property_rows,
+    }
+
+
 def api_astrometrics_find_object(app):
     """Find objects across accessible profiles by name, coordinates, or date."""
     base_dir = Path(app.args.data_dir or str(Path.home() / ".ari"))
@@ -259,16 +424,76 @@ def api_astrometrics_find_object(app):
         elif search_type == "advanced":
             prop = request.args.get("property", "").strip()
             val = request.args.get("value", "").strip()
+            source = request.args.get("source", "target_info").strip()
+            match_mode = request.args.get("match_mode", "value").strip()
+            val2 = request.args.get("value2", "").strip()
 
             if not prop or not val:
                 continue
 
+            source = source.lower()
+            if source not in {'target_info', 'spectrum_info', 'header'}:
+                source = 'target_info'
+
+            objects_dir = (
+                base_dir / 'tasks' / instrument / profile_id / 'objects'
+            )
+            ftable_cache = {}
+            htable_cache = {}
+
+            def _accessible_ftable_rows(obj):
+                rows = []
+                for fkind in _FTABLE_KINDS:
+                    key = (obj, fkind)
+                    if key not in ftable_cache:
+                        path = objects_dir / f'ftable_{fkind}_{obj}.json'
+                        ftable_cache[key] = _load_json_rows(path)
+                    rows.extend(ftable_cache[key])
+                return [
+                    row
+                    for row in rows
+                    if str(row.get('KW_RUN_ID', '') or '').strip()
+                    in accessible_run_ids
+                ]
+
+            def _accessible_htable_rows(obj):
+                if obj not in htable_cache:
+                    path = objects_dir / f'htable_{obj}.json'
+                    htable_cache[obj] = _load_json_rows(path)
+                hrows = htable_cache[obj]
+                ids = {
+                    str(r.get('IDENTIFIER', '') or '').strip()
+                    for r in _accessible_ftable_rows(obj)
+                    if str(r.get('IDENTIFIER', '') or '').strip()
+                }
+                if not ids:
+                    return hrows
+                return [
+                    row
+                    for row in hrows
+                    if str(row.get('IDENTIFIER', '') or '').strip() in ids
+                ]
+
             for row in filtered:
-                if prop not in row:
-                    continue
-                row_val = str(row.get(prop, "")).strip()
-                # Simple string matching
-                if val.lower() in row_val.lower():
+                obj = str(row.get('OBJNAME', '') or '').strip()
+                if source == 'target_info':
+                    rows_to_check = [row]
+                elif source == 'header':
+                    if not obj:
+                        continue
+                    rows_to_check = _accessible_htable_rows(obj)
+                else:
+                    if not obj:
+                        continue
+                    rows_to_check = _accessible_ftable_rows(obj)
+
+                if _advanced_match_in_rows(
+                    rows_to_check,
+                    prop,
+                    match_mode,
+                    val,
+                    val2,
+                ):
                     matching_rows.append(row)
 
         # Format results
@@ -598,7 +823,22 @@ def api_astrometrics_columns(app):
     except Exception as exc:  # noqa: BLE001
         return jsonify(success=False, error=str(exc)), 500
 
-    return jsonify(success=True, columns=cols)
+    base_dir = Path(app.args.data_dir or str(Path.home() / '.ari'))
+    user_info = app._get_api_user()
+    accessible = get_accessible_profiles(user_info, app.ari_groups)
+    catalog = _advanced_property_catalog(
+        app=app,
+        base_dir=base_dir,
+        accessible=accessible,
+        user_info=user_info,
+    )
+
+    return jsonify(
+        success=True,
+        columns=cols,
+        find_object_sources=catalog.get('sources', []),
+        find_object_properties=catalog.get('properties', []),
+    )
 
 
 def api_astrometrics_list_all(app):

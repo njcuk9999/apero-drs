@@ -1,22 +1,47 @@
+# General instrument configuration.
 general:
+
+  # Instrument code used by APERO/ARI.
   instrument: NIRPS_HE
+
+  # Science fiber identifier.
   science_fiber: A
+
+  # Science DPR/TYPES included in tools.
   science_types:
   - OBJ_FP
   - OBJ_DARK
   - OBJ_SKY
   - TELLU_SKY
   - FLUXSTD_SKY
+
+  # Spectral bands shown in the interface.
   bands:
   - Y
   - H
+
+  # Whether this instrument has polarimetry.
   has_polarimetry: false
+
+  # Default DB-query preset filename.
   db-query-preset-file: nirps_he_v7.txt
+
+# Observatory site metadata.
 observatory:
+
+  # Observatory latitude in degrees.
   lat: -29.2562
+
+  # Observatory longitude in degrees.
   lon: -70.7342
+
+  # Observatory altitude in meters.
   alt: 2400
+
+# Plot defaults and wavelength windows.
 plot:
+
+  # Main spectrum wavelength windows (nm).
   SpecWave:
     limit0:
     - 985
@@ -30,10 +55,25 @@ plot:
     limit3:
     - 1666
     - 1668
+
+  # Telluric map wavelength range (nm).
   TcorrMapWave:
   - 1716
   - 1726
+
+# Legacy checks Google Sheets configuration.
+legacy_checks_gsheet:
+
+  # Monitoring sheet URL for this profile/instrument.
+  monitoring_sheet_url: https://docs.google.com/spreadsheets/d/1zvU_XFA1ZOJE111qZKiav7v6ptYveWpDkMHjdhiN06M/edit?gid=68390787#gid=68390787
+
+  # Override sheet URL for this profile/instrument.
+  override_sheet_url: https://docs.google.com/spreadsheets/d/1zvU_XFA1ZOJE111qZKiav7v6ptYveWpDkMHjdhiN06M/edit?gid=1325511295#gid=1325511295
+
+# Header-key mappings shown in science views.
 sci-headers:
+
+  # Mappings for pp-level files.
   pp:
     PP_MJDMID:
       key: MJDMID
@@ -61,6 +101,8 @@ sci-headers:
       key: HIERARCH ESO OBS PROG ID
       label: Program ID
       dtype: str
+
+  # Mappings for ext-level files.
   ext:
     EXT_MJDMID:
       key: MJDMID
@@ -219,6 +261,8 @@ sci-headers:
       label: Wave sol
       dtype: float
       ref: false
+
+  # Mappings for tcorr-level files.
   tcorr:
     TCORR_MJDMID:
       key: MJDMID
@@ -251,6 +295,8 @@ sci-headers:
       key: VERSION
       label: APERO Version
       dtype: str
+
+  # Mappings for ccf-level files.
   ccf:
     CCF_MASK:
       key: CCFMASK
@@ -285,6 +331,8 @@ sci-headers:
       key: VERSION
       label: Version [ccf]
       dtype: str
+
+  # Mappings for lbl-level files.
   lbl:
     EXT_H:
       key: EXTSN060
@@ -294,7 +342,11 @@ sci-headers:
       key: LBL_VERS
       label: LBL Version
       dtype: str
+
+# Calib headers setting.
 calib-headers:
+
+  # SHAPEL setting.
   SHAPEL:
     KW_MID_OBS_TIME:
       key: MJDMID
@@ -325,6 +377,8 @@ calib-headers:
       key: SHAPE_D
       label: Shape D
       dtype: float
+
+  # WAVE NIGHT setting.
   WAVE_NIGHT:
     KW_MID_OBS_TIME:
       key: MJDMID
@@ -343,14 +397,26 @@ calib-headers:
       key: WCAV000
       label: Wave cavity [intercept]
       dtype: float
+
+# APERO checks and monitor defaults.
 apero-checks:
+
+  # Common APERO-check settings.
   common:
+
+    # Header key aliases used by this check group.
     header_keys:
       dpr_type: HIERARCH ESO DPR TYPE
       obs_name: HIERARCH ESO OBS NAME
       mjd_obs: MJD-OBS
+
+  # Calibration-presence check settings.
   calib_test:
+
+    # Enable or disable this check.
     enabled: true
+
+    # Required DPRTYPE entries for this check.
     required_dprtypes:
     - DARK
     - WAVE,FP,FP
@@ -359,8 +425,14 @@ apero-checks:
     - FLAT,DARK,LAMP
     - FLAT,LAMP,DARK
     - WAVE,UN1,UN1
+
+  # Calibration OB-name check settings.
   calib_ob_test:
+
+    # Enable or disable this check.
     enabled: true
+
+    # Required OB name windows for this check.
     required_obnames:
       Afternoon-Calibrations:
         mjd_start: 60096
@@ -368,13 +440,25 @@ apero-checks:
       Daily-Calibrations-Full-Set:
         mjd_start: 59895
         mjd_end: 99999
+
+  # No-science-night check settings.
   no_sci:
+
+    # Enable or disable this check.
     enabled: true
+
+    # DPRTYPE entries used by this check.
     dprtypes:
     - OBJECT,SKY
     - OBJECT,FP
+
+  # Quality-threshold check settings.
   qual_test:
+
+    # Enable or disable this check.
     enabled: true
+
+    # DPRTYPE groups used by this check.
     dpr_groups:
       FP:
       - WAVE,FP,FP
@@ -393,6 +477,8 @@ apero-checks:
       SCIENCE:
       - OBJECT,SKY
       - OBJECT,FP
+
+    # Constraints setting.
     constraints:
       OBJECT,SKY:
         p99_min: 0
@@ -446,7 +532,11 @@ apero-checks:
         p99_min: 4
         p99_max: 100
         sat_frac_max: 0.0023
+
+  # Engineering-night exclusion settings.
   eng_test:
+
+    # Tests setting.
     tests:
       enclosure_temperature_rms:
         enabled: true
@@ -516,10 +606,20 @@ apero-checks:
         enabled: true
         status_key: HIERARCH ESO INS SENS129 STAT
         blocked_value: NOK
+
+# Finder setting.
 finder:
+
+  # DTMIN setting.
   DTMIN: -6
+
+  # DTMAX setting.
   DTMAX: 6
+
+  # DTVAL setting.
   DTVAL: 3
+
+  # FIELD OF VIEW setting.
   FIELD_OF_VIEW:
     G:
     - 77.6
@@ -527,29 +627,51 @@ finder:
     J:
     - 18.2
     - 18.2
+
+  # SCALE FACTOR setting.
   SCALE_FACTOR:
     G: 1.5
+
+  # PIXEL SCALE setting.
   PIXEL_SCALE:
     G: 0.1514
     J: 0.1514
+
+  # TRANSFORM ROTATE setting.
   TRANSFORM_ROTATE:
     G: 232.6
     J: 322.6
+
+  # FWHM setting.
   FWHM:
     G: 2.0
     J: 2.0
+
+  # SIGMA LIMIT setting.
   SIGMA_LIMIT:
     G: 18
     J: 15
     H: 15
     K: 15
+
+  # MAG LIMIT setting.
   MAG_LIMIT: -1
+
+  # MAX PM setting.
   MAX_PM: 11
+
+  # SCALE SIZE setting.
   SCALE_SIZE: 10
+
+  # COMPASS FRAC setting.
   COMPASS_FRAC: 0.075
+
+  # FLIP X setting.
   FLIP_X:
     G: true
     J: true
+
+  # FLIP Y setting.
   FLIP_Y:
     G: false
     J: false

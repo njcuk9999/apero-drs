@@ -254,6 +254,27 @@
     var LEGACY_ASTROM_TASK_KEY = 'LEGACY_ASTROM_GSHEET';
     var LEGACY_REJECT_TASK_KEY = 'LEGACY_REJECT_GSHEET';
     var LEGACY_CHECK_TASK_KEY  = 'LEGACY_CHECK_GSHEET';
+
+    function normalizeInstrumentKey(value) {
+        return String(value || '')
+            .trim()
+            .toUpperCase()
+            .replace(/-/g, '_');
+    }
+
+    function getLegacyCheckUrl(task, mapKey, singleKey) {
+        if (!task || typeof task !== 'object') return '';
+        var mapObj = task[mapKey];
+        var instrumentKey = normalizeInstrumentKey(currentInstrument);
+        if (mapObj && typeof mapObj === 'object' && instrumentKey) {
+            var perInstrument = String(
+                mapObj[instrumentKey] || ''
+            ).trim();
+            if (perInstrument) return perInstrument;
+        }
+        return String(task[singleKey] || '').trim();
+    }
+
     var currentInfoText = '';
     var currentErrorText = '';
     var currentTaskLogText = '';
@@ -291,6 +312,7 @@
         bindTaskLogModal();
         bindSyncBrowseModal();
         bindSectionToggles();
+        bindOauthHelpModal();
 
         if (instruments.length === 0) {
             noInstrEl.style.display = '';
@@ -1566,12 +1588,18 @@
             editGoogleOauthFile.value = '';
         }
         if (editMonitoringSheetUrl) {
-            editMonitoringSheetUrl.value =
-                task.monitoring_sheet_url || '';
+            editMonitoringSheetUrl.value = getLegacyCheckUrl(
+                task,
+                'monitoring_sheet_urls',
+                'monitoring_sheet_url'
+            );
         }
         if (editOverrideSheetUrl) {
-            editOverrideSheetUrl.value =
-                task.override_sheet_url || '';
+            editOverrideSheetUrl.value = getLegacyCheckUrl(
+                task,
+                'override_sheet_urls',
+                'override_sheet_url'
+            );
         }
         editDailyCopies.value = task.daily_copies || 0;
         editWeeklyCopies.value = task.weekly_copies || 0;
@@ -2779,6 +2807,31 @@
         }
         document.body.removeChild(ta);
         return ok;
+    }
+
+    function bindOauthHelpModal() {
+        var openBtn = document.getElementById('at-oauth-info-btn');
+        var modal = document.getElementById('at-oauth-help-modal');
+        var closeBtn = document.getElementById('at-oauth-help-close');
+        var closeX = document.getElementById('at-oauth-help-close-x');
+        if (!openBtn || !modal) return;
+        function open() { modal.style.display = 'flex'; }
+        function close() { modal.style.display = 'none'; }
+        openBtn.addEventListener('click', function (ev) {
+            ev.preventDefault();
+            ev.stopPropagation();
+            open();
+        });
+        if (closeBtn) closeBtn.addEventListener('click', close);
+        if (closeX) closeX.addEventListener('click', close);
+        modal.addEventListener('click', function (ev) {
+            if (ev.target === modal) close();
+        });
+        document.addEventListener('keydown', function (ev) {
+            if (ev.key === 'Escape' && modal.style.display !== 'none') {
+                close();
+            }
+        });
     }
 
     var toastTimer = null;

@@ -320,6 +320,12 @@ class ARIApp(Flask):
     def _api_manage_instruments_rename(self):
         return _impls.ariapp_api_manage_instruments_rename(self)
 
+    def _api_manage_instruments_yaml_get(self):
+        return _impls.ariapp_api_manage_instruments_yaml_get(self)
+
+    def _api_manage_instruments_yaml_save(self):
+        return _impls.ariapp_api_manage_instruments_yaml_save(self)
+
     # -----------------------------------------------------------------
     # Vault API
     # -----------------------------------------------------------------
@@ -1458,6 +1464,20 @@ class ARIApp(Flask):
         from apero_ri.application import monitor_view_helpers as mvh
         return mvh.monitor_apero_checks_queue_view(self, profile_id)
 
+    def _monitor_apero_checks_stats_view(self, profile_id):
+        from apero_ri.application import (
+            apero_checks_stats_helpers as acsh,
+        )
+        return acsh.monitor_apero_checks_stats_view(
+            self, profile_id
+        )
+
+    def _api_apero_checks_stats(self, profile_id):
+        from apero_ri.application import (
+            apero_checks_stats_helpers as acsh,
+        )
+        return acsh.api_apero_checks_stats(self, profile_id)
+
     def _api_processing_logs(self):
         from apero_ri.application import (
             processing_logs_api_helpers as plh,
@@ -1582,6 +1602,9 @@ class ARIApp(Flask):
 
     def _api_object_page(self):
         return data_portal_api_helpers.api_object_page(self)
+
+    def _api_object_rejection_issue(self):
+        return data_portal_api_helpers.api_object_rejection_issue(self)
 
     @staticmethod
     def _rid_cache_tag(accessible_run_ids):

@@ -210,6 +210,8 @@ def merge_async_task_catalog(
                 "google_secret_name",
                 "monitoring_sheet_url",
                 "override_sheet_url",
+                "monitoring_sheet_urls",
+                "override_sheet_urls",
             ]:
                 if _key in task_cfg:
                     merged_cfg[_key] = task_cfg.get(_key)

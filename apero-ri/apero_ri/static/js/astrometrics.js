@@ -38,8 +38,13 @@
     var foClearDate = document.getElementById('fo-clear-find-date');
     
     // Advanced search
+    var foAdvSource = document.getElementById('fo-adv-source');
     var foAdvProperty = document.getElementById('fo-adv-property');
+    var foAdvPropertyList = document.getElementById('fo-adv-property-list');
+    var foAdvMatchMode = document.getElementById('fo-adv-match-mode');
     var foAdvValue = document.getElementById('fo-adv-value');
+    var foAdvValue2Wrap = document.getElementById('fo-adv-value2-wrap');
+    var foAdvValue2 = document.getElementById('fo-adv-value2');
     var foFindAdvanced = document.getElementById('fo-find-advanced');
     var foClearAdvanced = document.getElementById('fo-clear-find-adv');
     
@@ -52,6 +57,7 @@
     var pinnedSections = new Set();
     var currentSearchTab = 'name';
     var lastQuery = null;
+    var findObjectPropertyCatalog = [];
 
     /* -----------------------------------------------------------------------
        Tab switching
@@ -373,22 +379,43 @@
     }
 
     function findAdvanced() {
+        var source = (foAdvSource && foAdvSource.value)
+            ? foAdvSource.value
+            : 'target_info';
         var property = (foAdvProperty.value || '').trim();
+        var matchMode = (foAdvMatchMode && foAdvMatchMode.value)
+            ? foAdvMatchMode.value
+            : 'value';
         var value = (foAdvValue.value || '').trim();
+        var value2 = (foAdvValue2 && foAdvValue2.value || '').trim();
         
         if (!property || !value) {
             showError('Please enter property and value');
+            return;
+        }
+        if (matchMode === 'between' && !value2) {
+            showError('Please enter both Value 1 and Value 2');
             return;
         }
         
         showLoading();
         var params = new URLSearchParams({
             search_type: 'advanced',
+            source: source,
             property: property,
-            value: value
+            match_mode: matchMode,
+            value: value,
+            value2: value2
         });
         
-        lastQuery = { type: 'advanced', property: property, value: value };
+        lastQuery = {
+            type: 'advanced',
+            source: source,
+            property: property,
+            matchMode: matchMode,
+            value: value,
+            value2: value2
+        };
         
         fetch('/api/astrometrics/find-object?' + params.toString())
             .then(parseResponseJson)
@@ -419,6 +446,86 @@
             .catch(function (err) {
                 showError('Network error: ' + err.message);
             });
+    }
+
+    function loadFindAdvancedProperties() {
+        if (!foAdvPropertyList) return;
+        fetch('/api/astrometrics/columns')
+            .then(parseResponseJson)
+            .then(function (data) {
+                if (!data || !data.success) return;
+                findObjectPropertyCatalog =
+                    Array.isArray(data.find_object_properties)
+                        ? data.find_object_properties
+                        : [];
+                if (!findObjectPropertyCatalog.length) {
+                    findObjectPropertyCatalog = (data.columns || [])
+                        .map(function (col) {
+                            var prop = String(col || '').trim();
+                            if (!prop) return null;
+                            return {
+                                property: prop,
+                                sources: [
+                                    'target_info',
+                                    'spectrum_info',
+                                    'header'
+                                ]
+                            };
+                        })
+                        .filter(Boolean);
+                }
+                if (
+                    foAdvSource
+                    && Array.isArray(data.find_object_sources)
+                    && data.find_object_sources.length
+                ) {
+                    var selectedSource = String(
+                        foAdvSource.value || 'target_info'
+                    );
+                    foAdvSource.innerHTML = '';
+                    data.find_object_sources.forEach(function (src) {
+                        var key = String(src.key || '').trim();
+                        if (!key) return;
+                        var label = String(src.label || key).trim();
+                        var opt = document.createElement('option');
+                        opt.value = key;
+                        opt.textContent = label;
+                        foAdvSource.appendChild(opt);
+                    });
+                    foAdvSource.value = selectedSource;
+                    if (!foAdvSource.value && foAdvSource.options.length) {
+                        foAdvSource.value = foAdvSource.options[0].value;
+                    }
+                }
+                rebuildFindAdvancedPropertyList();
+            })
+            .catch(function () {
+                // Leave free-text input usable if column load fails.
+            });
+    }
+
+    function rebuildFindAdvancedPropertyList() {
+        if (!foAdvPropertyList) return;
+        var source = (foAdvSource && foAdvSource.value)
+            ? String(foAdvSource.value).trim()
+            : 'target_info';
+        foAdvPropertyList.innerHTML = '';
+        findObjectPropertyCatalog.forEach(function (entry) {
+            if (!entry || typeof entry !== 'object') return;
+            var prop = String(entry.property || '').trim();
+            if (!prop) return;
+            var srcs = Array.isArray(entry.sources) ? entry.sources : [];
+            if (srcs.indexOf(source) === -1) return;
+            var opt = document.createElement('option');
+            opt.value = prop;
+            foAdvPropertyList.appendChild(opt);
+        });
+    }
+
+    function syncFindAdvancedModeUi() {
+        if (!foAdvMatchMode || !foAdvValue2Wrap) return;
+        var mode = String(foAdvMatchMode.value || 'value');
+        foAdvValue2Wrap.style.display = mode === 'between' ? '' : 'none';
     }
 
     /* -----------------------------------------------------------------------
@@ -490,15 +597,30 @@
         foClearAdvanced.addEventListener('click', function () {
             if (foAdvProperty) foAdvProperty.value = '';
             if (foAdvValue) foAdvValue.value = '';
+            if (foAdvValue2) foAdvValue2.value = '';
             clearResults();
         });
+    }
+
+    if (foAdvSource) {
+        foAdvSource.addEventListener('change', function () {
+            rebuildFindAdvancedPropertyList();
+            if (foAdvProperty) foAdvProperty.value = '';
+        });
+    }
+
+    if (foAdvMatchMode) {
+        foAdvMatchMode.addEventListener('change', syncFindAdvancedModeUi);
     }
 
     function applyFindObjectQueryParams() {
         var params = new URLSearchParams(window.location.search || '');
         var requestedTab = (params.get('fo_tab') || '').trim();
+        var source = (params.get('fo_source') || '').trim();
         var prop = (params.get('fo_property') || '').trim();
+        var mode = (params.get('fo_match_mode') || '').trim();
         var value = (params.get('fo_value') || '').trim();
+        var value2 = (params.get('fo_value2') || '').trim();
         var runSearch = (params.get('fo_search') || '').trim();
 
         if (requestedTab.toLowerCase() === 'advanced') {
@@ -508,11 +630,22 @@
             }
         }
 
+        if (source && foAdvSource) {
+            foAdvSource.value = source;
+            rebuildFindAdvancedPropertyList();
+        }
         if (prop && foAdvProperty) {
             foAdvProperty.value = prop;
         }
+        if (mode && foAdvMatchMode) {
+            foAdvMatchMode.value = mode;
+            syncFindAdvancedModeUi();
+        }
         if (value && foAdvValue) {
             foAdvValue.value = value;
+        }
+        if (value2 && foAdvValue2) {
+            foAdvValue2.value = value2;
         }
 
         var shouldRun = runSearch === '1'
@@ -526,6 +659,8 @@
     }
 
     applyFindObjectQueryParams();
+    loadFindAdvancedProperties();
+    syncFindAdvancedModeUi();
 
     /* -----------------------------------------------------------------------
        Section minimize/expand and pin functionality

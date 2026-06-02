@@ -1292,6 +1292,60 @@ def _status_banner_state(base_state: str,
     return 'failed'
 
 
+def _monitoring_override_rows(loaded: dict, ignored_checks) -> list:
+    """Build table rows for active monitor/override check markers."""
+    rows = []
+    ignored_set = set(ignored_checks or [])
+    buckets = ('failures', 'passes')
+    for bucket in buckets:
+        checks = loaded.get(bucket, {})
+        if not isinstance(checks, dict):
+            continue
+        for check_key, value in checks.items():
+            if check_key in ignored_set:
+                continue
+            data = value if isinstance(value, dict) else dict()
+            for event_key, event_label in (
+                ('monitor', 'Monitor'),
+                ('override', 'Override'),
+            ):
+                event = data.get(event_key)
+                if not event:
+                    continue
+                if isinstance(event, dict):
+                    comment = str(event.get('comment') or '').strip()
+                    date = str(event.get('date') or '').strip()
+                    user = str(event.get('user') or '').strip()
+                else:
+                    comment = ''
+                    date = ''
+                    user = ''
+                rows.append(
+                    dict(
+                        event=event_key,
+                        event_label=event_label,
+                        check_type=str(data.get('type') or '').strip(),
+                        check_name=str(
+                            data.get('name')
+                            or check_key
+                        ).strip(),
+                        comment=comment,
+                        date=date,
+                        user=user,
+                    )
+                )
+    rows.sort(
+        key=lambda item: (
+            str(item.get('date') or ''),
+            str(item.get('check_type') or ''),
+            str(item.get('check_name') or ''),
+            str(item.get('event') or ''),
+        ),
+        reverse=True,
+    )
+    return rows
+
+
 def _apply_apero_check_result_filter(cards, result_filter):
     """Filter APERO-check cards by computed visible result status."""
     mode = str(result_filter or 'all').strip().lower()
@@ -1687,6 +1741,7 @@ def monitor_apero_checks_obsdir_view(app, profile_id, obsdir):
             banner_state = 'overridden'
         else:
             banner_state = 'monitored'
+    monitoring_rows = _monitoring_override_rows(loaded, ignored_checks)
 
     page_id = f'home.monitor_portal.apero_checks.{profile_id}.{obsdir}'
     sidebar_page_id = 'home.monitor_portal.apero_checks'
@@ -1725,6 +1780,7 @@ def monitor_apero_checks_obsdir_view(app, profile_id, obsdir):
         'can_advanced_checks': can_advanced,
         'can_delete_checks': can_delete,
         'monitor_doc_url': _monitor_docs_url(),
+        'monitoring_rows': monitoring_rows,
         'api_rerun_night_url': url_for('api_apero_checks_rerun_night'),
         'api_issue_url': url_for('api_apero_checks_create_issue'),
         'api_view_yaml_url': url_for('api_apero_checks_view_yaml'),

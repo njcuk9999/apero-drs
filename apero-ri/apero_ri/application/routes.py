@@ -1587,6 +1587,17 @@ def register_data_portal_routes(app):
         app._monitor_apero_checks_queue_view,
     )
     app.add_url_rule(
+        "/monitor_portal/apero_checks/<profile_id>/stats",
+        "monitor_apero_checks_stats_view",
+        app._monitor_apero_checks_stats_view,
+    )
+    app.add_url_rule(
+        "/api/monitor/apero-checks/<profile_id>/stats",
+        "api_apero_checks_stats",
+        app._api_apero_checks_stats,
+        methods=["GET"],
+    )
+    app.add_url_rule(
         "/api/monitor/processing-logs",
         "api_processing_logs",
         app._api_processing_logs,
@@ -1873,6 +1884,12 @@ def register_data_portal_routes(app):
     )
     app.add_url_rule(
         "/api/data-portal/object-page", "api_object_page", app._api_object_page
+    )
+    app.add_url_rule(
+        "/api/data-portal/object-rejection-issue",
+        "api_object_rejection_issue",
+        app._api_object_rejection_issue,
+        methods=["POST"],
     )
     app.add_url_rule(
         "/api/data-portal/object-plots",
@@ -2166,6 +2183,17 @@ def register_data_portal_routes(app):
         "/api/admin/instruments/rename",
         "api_manage_instruments_rename",
         app._api_manage_instruments_rename,
+        methods=["POST"],
+    )
+    app.add_url_rule(
+        "/api/admin/instruments/yaml/get",
+        "api_manage_instruments_yaml_get",
+        app._api_manage_instruments_yaml_get,
+    )
+    app.add_url_rule(
+        "/api/admin/instruments/yaml/save",
+        "api_manage_instruments_yaml_save",
+        app._api_manage_instruments_yaml_save,
         methods=["POST"],
     )
 

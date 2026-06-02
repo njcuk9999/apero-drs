@@ -101,7 +101,7 @@
         { id: 'rdb',      label: 'rdb',                           preset: 'rdb'     },
         { id: 'lbl',      label: 'All LBL products',              preset: 'lbl'     }
     );
-    var fbActivePreset = 'default';
+    var fbActivePreset = 'none';
 
     /* -----------------------------------------------------------------------
        DOM refs (resolved lazily since the tab is hidden on page load)
@@ -514,11 +514,40 @@
                     inp.placeholder = 'Filter\u2026';
                     inp.dataset.col = col.key;
                     inp.value = fbColFilters[col.key] || '';
-                    inp.addEventListener('input', function () {
-                        fbColFilters[col.key] = inp.value.trim().toLowerCase();
-                        fbCurrentPage = 1;
-                        fbApplyFilterSort();
-                    });
+                    (function (inputEl, colKey) {
+                        var timer = null;
+                        function doApply() {
+                            fbColFilters[colKey] = inputEl.value.trim().toLowerCase();
+                            fbCurrentPage = 1;
+                            fbApplyFilterSort();
+                        }
+                        // Debounce while typing — covers mobile keyboards too
+                        inputEl.addEventListener('input', function () {
+                            clearTimeout(timer);
+                            timer = setTimeout(doApply, FB_FILTER_DEBOUNCE_MS);
+                        });
+                        // Immediate apply on Enter
+                        inputEl.addEventListener('keydown', function (e) {
+                            if (e.key === 'Enter') {
+                                e.preventDefault();
+                                clearTimeout(timer);
+                                doApply();
+                            }
+                        });
+                        // Apply when focus leaves the box.
+                        // Deferred one tick so that blur events fired
+                        // synchronously by fbRenderHeaders() wiping
+                        // fr.innerHTML (DOM removal) are ignored — by
+                        // the time the callback runs the element will no
+                        // longer be in the document.
+                        inputEl.addEventListener('blur', function () {
+                            clearTimeout(timer);
+                            setTimeout(function () {
+                                if (!document.body.contains(inputEl)) return;
+                                doApply();
+                            }, 0);
+                        });
+                    }(inp, col.key));
                     tf.appendChild(inp);
                 }
             }

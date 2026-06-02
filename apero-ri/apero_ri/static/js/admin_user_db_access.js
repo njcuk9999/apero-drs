@@ -28,6 +28,157 @@
   let healthReport = (cfg && cfg.initialHealthReport && typeof cfg.initialHealthReport === 'object')
     ? cfg.initialHealthReport
     : null;
+  let basePayloadByProfile = {};
+  let draftPayloadByProfile = {};
+
+  function profileKey(profile) {
+    if (!profile) return '';
+    const inst = String(profile.instrument || '').trim();
+    const pid = String(profile.profile_id || '').trim();
+    if (!inst || !pid) return '';
+    return inst + '::' + pid;
+  }
+
+  function splitProfileKey(key) {
+    const value = String(key || '');
+    const parts = value.split('::');
+    if (parts.length !== 2) return null;
+    const instrument = String(parts[0] || '').trim();
+    const profile_id = String(parts[1] || '').trim();
+    if (!instrument || !profile_id) return null;
+    return { instrument, profile_id };
+  }
+
+  function normalizePayload(rawPayload) {
+    const payload = rawPayload && typeof rawPayload === 'object'
+      ? rawPayload
+      : {};
+    const groupsIn = payload.groups && typeof payload.groups === 'object'
+      ? payload.groups
+      : {};
+    const columnsIn = payload.columns && typeof payload.columns === 'object'
+      ? payload.columns
+      : {};
+
+    const tableSet = new Set();
+    Object.keys(groupsIn).forEach((k) => tableSet.add(String(k || '')));
+    Object.keys(columnsIn).forEach((k) => tableSet.add(String(k || '')));
+
+    const tables = Array.from(tableSet).filter((k) => k).sort();
+    const outGroups = {};
+    const outColumns = {};
+
+    for (const table of tables) {
+      const glist = Array.isArray(groupsIn[table]) ? groupsIn[table] : [];
+      const clist = Array.isArray(columnsIn[table]) ? columnsIn[table] : [];
+
+      outGroups[table] = Array.from(new Set(
+        glist.map((v) => String(v || '').trim()).filter((v) => v)
+      )).sort();
+      outColumns[table] = Array.from(new Set(
+        clist.map((v) => String(v || '').trim()).filter((v) => v)
+      )).sort();
+    }
+
+    return { groups: outGroups, columns: outColumns };
+  }
+
+  function payloadEqual(a, b) {
+    const aa = normalizePayload(a);
+    const bb = normalizePayload(b);
+    return JSON.stringify(aa) === JSON.stringify(bb);
+  }
+
+  function payloadFromSectionsData(sections) {
+    const groups = {};
+    const columns = {};
+    const rows = Array.isArray(sections) ? sections : [];
+
+    for (const sec of rows) {
+      const table = String((sec && sec.table) || '').trim();
+      if (!table) continue;
+
+      const secGroups = Array.isArray(sec.groups) ? sec.groups : [];
+      const secColumns = Array.isArray(sec.columns) ? sec.columns : [];
+
+      groups[table] = secGroups
+        .filter((g) => g && g.selected)
+        .map((g) => String(g.name || '').trim())
+        .filter((v) => v);
+
+      columns[table] = secColumns
+        .filter((c) => c && c.selected)
+        .map((c) => String(c.name || '').trim())
+        .filter((v) => v);
+    }
+
+    return normalizePayload({ groups, columns });
+  }
+
+  function applyPayloadToSections(sections, rawPayload) {
+    const payload = normalizePayload(rawPayload);
+    const rows = Array.isArray(sections) ? sections : [];
+
+    for (const sec of rows) {
+      const table = String((sec && sec.table) || '').trim();
+      if (!table) continue;
+
+      const groupSet = new Set(payload.groups[table] || []);
+      const colSet = new Set(payload.columns[table] || []);
+
+      if (Array.isArray(sec.groups)) {
+        for (const g of sec.groups) {
+          const gname = String((g && g.name) || '').trim();
+          g.selected = groupSet.has(gname);
+        }
+      }
+      if (Array.isArray(sec.columns)) {
+        for (const c of sec.columns) {
+          const cname = String((c && c.name) || '').trim();
+          c.selected = colSet.has(cname);
+        }
+      }
+    }
+  }
+
+  function getUnsavedProfileKeys() {
+    const keys = [];
+    for (const key of Object.keys(draftPayloadByProfile)) {
+      const draft = draftPayloadByProfile[key];
+      const base = basePayloadByProfile[key];
+      if (!base || !payloadEqual(draft, base)) {
+        keys.push(key);
+      }
+    }
+    keys.sort();
+    return keys;
+  }
+
+  function hasUnsavedChanges() {
+    return getUnsavedProfileKeys().length > 0;
+  }
+
+  function updateSaveAllButtonState() {
+    if (!saveBtn || !saveLabel) return;
+    const unsaved = getUnsavedProfileKeys().length;
+    const suffix = unsaved > 0 ? ' (' + unsaved + ')' : '';
+    saveLabel.innerHTML =
+      '<i class="fa-solid fa-floppy-disk"></i> Save all' + suffix;
+  }
+
+  function storeDraftForCurrentProfile() {
+    const key = profileKey(currentProfile);
+    if (!key || !sectionsEl) return;
+    const draft = normalizePayload(readUiPayload());
+    const base = basePayloadByProfile[key];
+
+    if (base && payloadEqual(draft, base)) {
+      delete draftPayloadByProfile[key];
+    } else {
+      draftPayloadByProfile[key] = draft;
+    }
+    updateSaveAllButtonState();
+  }
 
   function escapeHtml(value) {
     return String(value || '')
@@ -383,6 +534,7 @@
         b.addEventListener('click', () => {
           const on = b.dataset.selected === '1';
           setCardSelectedState(b, !on, 'group');
+          storeDraftForCurrentProfile();
         });
         groupsRow.appendChild(b);
       }
@@ -411,6 +563,7 @@
           b.addEventListener('click', () => {
             const on = b.dataset.selected === '1';
             setCardSelectedState(b, !on, 'column');
+            storeDraftForCurrentProfile();
           });
           colsRow.appendChild(b);
         }
@@ -455,12 +608,15 @@
   }
 
   function onProfileChange() {
+    storeDraftForCurrentProfile();
+
     const key = profileSelect.value;
     if (!key) {
       currentProfile = null;
       currentSections = [];
       workspace.style.display = 'none';
       applyHealth(null);
+      updateSaveAllButtonState();
       return;
     }
 
@@ -472,8 +628,16 @@
     apiGet(`${cfg.detailsUrl}?${q}`)
       .then((res) => {
         currentSections = Array.isArray(res.sections) ? res.sections : [];
+        const basePayload = payloadFromSectionsData(currentSections);
+        basePayloadByProfile[key] = basePayload;
+
+        if (draftPayloadByProfile[key]) {
+          applyPayloadToSections(currentSections, draftPayloadByProfile[key]);
+        }
+
         renderSections();
         workspace.style.display = '';
+        updateSaveAllButtonState();
         if (healthReport && Array.isArray(healthReport.profiles)) {
           const selected = healthReport.profiles.find((row) =>
             row && row.instrument === instrument && row.profile_id === profile_id
@@ -485,10 +649,13 @@
         workspace.style.display = 'none';
         currentSections = [];
         showToast(err.message || 'Failed to load profile details', 'error');
+        updateSaveAllButtonState();
       });
   }
 
-  function loadProfiles() {
+  function loadProfiles(preferredKey) {
+    storeDraftForCurrentProfile();
+
     workspace.style.display = 'none';
     currentProfile = null;
     currentSections = [];
@@ -497,8 +664,17 @@
       .then((res) => {
         profiles = Array.isArray(res.profiles) ? res.profiles : [];
         renderProfileOptions();
+        const wantedKey = String(preferredKey || '').trim();
+        if (wantedKey) {
+          const exists = profiles.some((p) => profileKey(p) === wantedKey);
+          if (exists) {
+            profileSelect.value = wantedKey;
+            onProfileChange();
+          }
+        }
         applyHealth(null);
         applyOverallProfileHealth();
+        updateSaveAllButtonState();
         return runHealthCheck();
       })
       .catch((err) => {
@@ -510,42 +686,54 @@
           [err.message || 'Failed to load profiles']
         );
         showToast(err.message || 'Failed to load profiles', 'error');
+        updateSaveAllButtonState();
       });
   }
 
-  function saveCurrent() {
-    if (!currentProfile) {
-      showToast('Choose a profile first.', 'error');
+  function saveAll() {
+    storeDraftForCurrentProfile();
+
+    const pendingKeys = getUnsavedProfileKeys();
+    if (!pendingKeys.length) {
+      showToast('No unsaved changes.', 'success');
       return;
     }
 
-    const payload = readUiPayload();
     setSaving(true);
-    apiPost(cfg.saveUrl, {
-      instrument: currentProfile.instrument,
-      profile_id: currentProfile.profile_id,
-      groups: payload.groups,
-      columns: payload.columns
-    })
+    const selectedKey = profileSelect ? String(profileSelect.value || '') : '';
+
+    let chain = Promise.resolve();
+    pendingKeys.forEach((key) => {
+      const parsed = splitProfileKey(key);
+      const payload = draftPayloadByProfile[key];
+      if (!parsed || !payload) {
+        return;
+      }
+
+      chain = chain.then(() => apiPost(cfg.saveUrl, {
+        instrument: parsed.instrument,
+        profile_id: parsed.profile_id,
+        groups: payload.groups,
+        columns: payload.columns
+      }));
+    });
+
+    chain
       .then(() => {
-        showToast('User DB access saved.', 'success');
-        return apiGet(cfg.profilesUrl);
-      })
-      .then((res) => {
-        profiles = Array.isArray(res.profiles) ? res.profiles : profiles;
-        const key = `${currentProfile.instrument}::${currentProfile.profile_id}`;
-        renderProfileOptions();
-        profileSelect.value = key;
-        currentProfile = profiles.find((p) => p.instrument === currentProfile.instrument && p.profile_id === currentProfile.profile_id) || currentProfile;
-        applyHealth(currentProfile);
-        applyOverallProfileHealth();
-        return runHealthCheck();
+        pendingKeys.forEach((key) => {
+          basePayloadByProfile[key] = normalizePayload(draftPayloadByProfile[key]);
+          delete draftPayloadByProfile[key];
+        });
+        showToast('Saved ' + pendingKeys.length + ' profile(s).', 'success');
+        updateSaveAllButtonState();
+        return loadProfiles(selectedKey);
       })
       .catch((err) => {
         showToast(err.message || 'Failed to save', 'error');
       })
       .finally(() => {
         setSaving(false);
+        updateSaveAllButtonState();
       });
   }
 
@@ -615,9 +803,20 @@
     }
     loadProfiles();
     profileSelect.addEventListener('change', onProfileChange);
-    refreshBtn.addEventListener('click', loadProfiles);
+    refreshBtn.addEventListener('click', () => {
+      const selectedKey = profileSelect ? String(profileSelect.value || '') : '';
+      loadProfiles(selectedKey);
+    });
     if (runCheckBtn) runCheckBtn.addEventListener('click', runHealthCheck);
-    saveBtn.addEventListener('click', saveCurrent);
+    saveBtn.addEventListener('click', saveAll);
+
+    window.addEventListener('beforeunload', function (event) {
+      if (!hasUnsavedChanges()) return;
+      event.preventDefault();
+      event.returnValue = '';
+    });
+
+    updateSaveAllButtonState();
   }
 
   if (document.readyState === 'loading') {

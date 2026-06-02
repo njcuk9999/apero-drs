@@ -92,6 +92,31 @@
     border-color: #fca5a5;
     color: #b91c1c;
 }
+.ac-mo-card-title {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    font-weight: 800;
+}
+.ac-mo-icon {
+    min-width: 4.8rem;
+    font-weight: 700;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+}
+.ac-mo-icon--monitor {
+    color: #6d28d9;
+}
+.ac-mo-icon--override {
+    color: #c2410c;
+}
+.ac-mo-row--monitor {
+    background: #faf5ff;
+}
+.ac-mo-row--override {
+    background: #fff7ed;
+}
 </style>
 {% endblock %}
 
@@ -336,6 +361,56 @@
     <span class="ot-meta-bar__item ot-meta-bar__item--muted">
         Check file: {{ checks_file }}
     </span>
+</div>
+
+<div class="ac-card ac-ui-panel" style="margin-top:0;">
+    <div class="ac-mo-card-title">
+        <i class="fa-solid fa-table-list"></i>
+        Monitoring and overrides
+    </div>
+    {% if monitoring_rows %}
+    <div class="ac-table-wrap" style="margin-top:0.6rem;">
+        <table class="ac-table">
+            <thead>
+                <tr>
+                    <th>Status</th>
+                    <th>Check type</th>
+                    <th>Check name</th>
+                    <th>Comment</th>
+                    <th>Date</th>
+                    <th>User</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in monitoring_rows %}
+                <tr class="ac-mo-row--{{ row.event }}">
+                    <td>
+                        {% if row.event == 'monitor' %}
+                        <span class="ac-mo-icon ac-mo-icon--monitor">
+                            <i class="fa-solid fa-bell"></i> Monitor
+                        </span>
+                        {% else %}
+                        <span class="ac-mo-icon ac-mo-icon--override">
+                            <i class="fa-solid fa-triangle-exclamation"></i>
+                            Override
+                        </span>
+                        {% endif %}
+                    </td>
+                    <td>{{ row.check_type }}</td>
+                    <td>{{ row.check_name }}</td>
+                    <td>{{ row.comment or 'n/a' }}</td>
+                    <td>{{ row.date or 'n/a' }}</td>
+                    <td>{{ row.user or 'n/a' }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <span class="ac-check-empty" style="margin-top:0.45rem;">
+        No monitored or overridden tests for this night.
+    </span>
+    {% endif %}
 </div>
 
 <div id="issue-section" class="ac-card ac-ui-panel" style="margin-top:0;">

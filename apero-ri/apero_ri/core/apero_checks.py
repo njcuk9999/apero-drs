@@ -583,6 +583,16 @@ def clear_failure_event(path: Path, failure_key: str, event_key: str) -> dict:
     failure = failures.get(failure_key)
     if not isinstance(failure, dict):
         raise KeyError(f'Unknown failure: {failure_key}')
+
+    # Keep the last comment so UI can prefill if event is re-enabled.
+    prev_event = failure.get(event_key)
+    last_comment = ''
+    if isinstance(prev_event, dict):
+        last_comment = str(prev_event.get('comment') or '').strip()
+    cache_key = f'{event_key}_last_comment'
+    if last_comment:
+        failure[cache_key] = last_comment
+
     failure.pop(event_key, None)
     failures[failure_key] = failure
     data['failures'] = failures

@@ -151,6 +151,31 @@
 .ac-delete-mode .ac-delete-only {
     display: inline-flex;
 }
+.ac-check-note-wrap {
+    margin: 0.2rem 0 0.55rem;
+    display: grid;
+    gap: 0.38rem;
+}
+.ac-check-note {
+    border-radius: 0.55rem;
+    padding: 0.45rem 0.6rem;
+    font-size: 0.82rem;
+    line-height: 1.35;
+    border: 1px solid transparent;
+}
+.ac-check-note strong {
+    font-weight: 700;
+}
+.ac-check-note--monitor {
+    background: #f3e8ff;
+    border-color: #c4b5fd;
+    color: #4c1d95;
+}
+.ac-check-note--override {
+    background: #fff7ed;
+    border-color: #fdba74;
+    color: #9a3412;
+}
 .ac-btn-danger {
     background: #b91c1c;
     border-color: #991b1b;
@@ -212,6 +237,11 @@
        class="ari-btn ari-btn--sm ari-btn--secondary"
        title="Open APERO checks queue and task history">
         <i class="fa-solid fa-list-check"></i> Queue status
+    </a>
+    <a href="{{ url_for('monitor_apero_checks_stats_view', profile_id=profile_id) }}"
+       class="ari-btn ari-btn--sm ari-btn--secondary"
+       title="View summary statistics and histograms for this profile">
+        <i class="fa-solid fa-chart-bar"></i> Stats
     </a>
 </div>
 
@@ -388,6 +418,24 @@
                         {% endif %}
                     </span>
                 </button>
+                {% set mon_event = failure.monitor if failure.monitor else None %}
+                {% set ovr_event = failure.override if failure.override else None %}
+                {% if mon_event or ovr_event %}
+                <div class="ac-check-note-wrap">
+                    {% if mon_event %}
+                    <div class="ac-check-note ac-check-note--monitor">
+                        <strong>Monitor:</strong>
+                        {{ mon_event.comment if mon_event.comment else 'No comment provided.' }}
+                    </div>
+                    {% endif %}
+                    {% if ovr_event %}
+                    <div class="ac-check-note ac-check-note--override">
+                        <strong>Override:</strong>
+                        {{ ovr_event.comment if ovr_event.comment else 'No comment provided.' }}
+                    </div>
+                    {% endif %}
+                </div>
+                {% endif %}
                 {% endfor %}
                 {% if show_passed %}
                 {% for pass_key, passed in card.visible_passes %}
@@ -406,6 +454,24 @@
                     </span>
                     <span class="ac-check-pill__icons"></span>
                 </button>
+                {% set mon_event = passed.monitor if passed.monitor else None %}
+                {% set ovr_event = passed.override if passed.override else None %}
+                {% if mon_event or ovr_event %}
+                <div class="ac-check-note-wrap">
+                    {% if mon_event %}
+                    <div class="ac-check-note ac-check-note--monitor">
+                        <strong>Monitor:</strong>
+                        {{ mon_event.comment if mon_event.comment else 'No comment provided.' }}
+                    </div>
+                    {% endif %}
+                    {% if ovr_event %}
+                    <div class="ac-check-note ac-check-note--override">
+                        <strong>Override:</strong>
+                        {{ ovr_event.comment if ovr_event.comment else 'No comment provided.' }}
+                    </div>
+                    {% endif %}
+                </div>
+                {% endif %}
                 {% endfor %}
                 {% endif %}
                 {% if not card.visible_failures and not (show_passed and card.visible_passes) %}

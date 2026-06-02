@@ -23,6 +23,12 @@ def _coerce_bool(value):
     return text in ['1', 'true', 'yes', 'on', 'y']
 
 
+def _normalize_instrument_key(value):
+    """Normalize instrument key for map-based task config lookups."""
+    text = str(value or '').strip().upper()
+    return text.replace('-', '_')
+
+
 def _instrument_profile_names(instrument):
     """Return ordered APERO profile names for one instrument."""
     profiles = load_apero_profiles(enabled_only=True).get(instrument, {})
@@ -63,8 +69,62 @@ def _validate_sync_profiles(raw, instrument):
             )
         if mode == "run_server" and not sync_source:
             continue
+        # Validate that the sync_source actually points at a profile
+        # directory containing an ``objects/`` subdir. Without this
+        # check the runtime resolver silently falls back to copying
+        # the whole tree at deep nested relative paths, leaving the
+        # local ftable JSONs stale forever (the file browser would
+        # then keep serving outdated rows).
+        if mode == "fetch_precomputed":
+            _validate_sync_source_path(pname, sync_source)
         cleaned[pname] = dict(mode=mode, sync_source=sync_source)
     return cleaned
+
+
+def _validate_sync_source_path(pname, sync_source):
+    """Ensure sync_source resolves to a dir that contains ``objects/``.
+
+    Mirrors the candidate resolution used at run time by
+    ``task_runner._resolve_sync_profile_source_dir`` but adds a hard
+    requirement: the resolved profile directory must contain an
+    ``objects/`` subdirectory. This refuses to save a misconfigured
+    path (the symptom is silent — sync runs, copies thousands of
+    files into the wrong nested destination, ftables never update).
+    """
+    # Expand and resolve user input
+    src = Path(sync_source).expanduser()
+    if not src.is_dir():
+        raise ValueError(
+            f"sync_source for profile {pname} is not an existing "
+            f"directory on the server: {sync_source}"
+        )
+    # Candidate profile directories under the source. If any of these
+    # contains ``objects/`` we accept it; otherwise we reject.
+    candidates = [src]
+    try:
+        for child in src.iterdir():
+            if child.is_dir():
+                candidates.append(child)
+                # one level deeper too (e.g. ``tasks/<instr>/<profile>``)
+                try:
+                    for grand in child.iterdir():
+                        if grand.is_dir():
+                            candidates.append(grand)
+                except OSError:
+                    continue
+    except OSError as exc:
+        raise ValueError(
+            f"sync_source for profile {pname} is not readable: {exc}"
+        )
+    for candidate in candidates:
+        if (candidate / "objects").is_dir():
+            return
+    raise ValueError(
+        f"sync_source for profile {pname} does not contain an "
+        "'objects/' subdirectory (looked in the path itself and "
+        "one or two levels below). Point it at the exact profile "
+        f"directory on the source server. Given: {sync_source}"
+    )
 
 
 LEGACY_GSHEET_TASK_KEYS = [
@@ -102,6 +162,25 @@ def _normalize_google_oauth_payload(raw_payload):
             raise ValueError('google_oauth_upload must be valid JSON') from exc
     if not isinstance(payload, dict):
         raise ValueError('google_oauth_upload must be a JSON object')
+
+    native_client = payload.get('installed') or payload.get('web')
+    if isinstance(native_client, dict):
+        for key in ['client_id', 'client_secret', 'token_uri']:
+            current = str(payload.get(key) or '').strip()
+            native_value = str(native_client.get(key) or '').strip()
+            if not current and native_value:
+                payload[key] = native_value
+
+    refresh_token = str(payload.get('refresh_token') or '').strip()
+    if not refresh_token:
+        raise ValueError(
+            'google_oauth_upload missing refresh_token. '
+            'Run the one-time OAuth auth flow and upload JSON '
+            'with client_id, client_secret, refresh_token, '
+            'and token_uri.'
+        )
+    payload['refresh_token'] = refresh_token
+
     for key in REQUIRED_GOOGLE_OAUTH_KEYS:
         value = str(payload.get(key) or '').strip()
         if not value:
@@ -143,7 +222,7 @@ def api_async_tasks_save(app):
     task_key = data.get("task_key", "").strip()
     frequency = float(data.get("frequency", 24))
     task_id = str(data.get("id", "")).strip()
-    active = bool(data.get("active", True))
+    active = _coerce_bool(data.get("active", True))
     daily_copies = int(data.get("daily_copies", 0) or 0)
     weekly_copies = int(data.get("weekly_copies", 0) or 0)
     has_backup_max_size_mb = "backup_max_size_mb" in data
@@ -387,7 +466,7 @@ def api_async_tasks_save(app):
                     outfile.write("\n")
                 os.chmod(secret_path, 0o600)
 
-            if not secret_path.exists():
+            if t.get("active", False) and not secret_path.exists():
                 return (
                     jsonify(
                         success=False,
@@ -401,22 +480,43 @@ def api_async_tasks_save(app):
                 )
 
         if task_key == "LEGACY_CHECK_GSHEET":
+            instrument_key = _normalize_instrument_key(instrument)
             if "monitoring_sheet_url" in data:
                 mon_url = str(
                     data.get("monitoring_sheet_url") or ""
                 ).strip()
+                mon_map = t.get("monitoring_sheet_urls")
+                if not isinstance(mon_map, dict):
+                    mon_map = {}
                 if mon_url:
-                    t["monitoring_sheet_url"] = mon_url
+                    mon_map[instrument_key] = mon_url
                 else:
-                    t.pop("monitoring_sheet_url", None)
+                    mon_map.pop(instrument_key, None)
+                if len(mon_map) > 0:
+                    t["monitoring_sheet_urls"] = mon_map
+                else:
+                    t.pop("monitoring_sheet_urls", None)
+                # Drop global legacy key to avoid URL bleed into
+                # instruments that should remain unset.
+                t.pop("monitoring_sheet_url", None)
             if "override_sheet_url" in data:
                 over_url = str(
                     data.get("override_sheet_url") or ""
                 ).strip()
+                over_map = t.get("override_sheet_urls")
+                if not isinstance(over_map, dict):
+                    over_map = {}
                 if over_url:
-                    t["override_sheet_url"] = over_url
+                    over_map[instrument_key] = over_url
                 else:
-                    t.pop("override_sheet_url", None)
+                    over_map.pop(instrument_key, None)
+                if len(over_map) > 0:
+                    t["override_sheet_urls"] = over_map
+                else:
+                    t.pop("override_sheet_urls", None)
+                # Drop global legacy key to avoid URL bleed into
+                # instruments that should remain unset.
+                t.pop("override_sheet_url", None)
 
         supports_mp = bool(task_module.MULTI_PROCESS.get(task_key, False))
         supports_local_task = bool(task_module.LOCAL_TASK.get(task_key, False))
@@ -555,6 +655,8 @@ def api_async_tasks_list(app):
     import_errors = getattr(task_module, "IMPORT_ERRORS", {}) or {}
     for tc in inst_tasks:
         entry = dict(tc)
+        entry["active"] = _coerce_bool(entry.get("active", True))
+        entry["active"] = _coerce_bool(entry.get("active", True))
         tid = tc.get("id", "")
         rt = task_runner.get_task_status(tid) if tid else {"found": False}
         if not rt.get("found"):

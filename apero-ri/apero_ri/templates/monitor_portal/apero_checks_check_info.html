@@ -89,6 +89,31 @@
     border-color: #fca5a5;
     color: #b91c1c;
 }
+.ac-check-comment-wrap {
+    margin-top: 0.6rem;
+    display: grid;
+    gap: 0.45rem;
+}
+.ac-check-comment-box {
+    border-radius: 0.6rem;
+    border: 1px solid transparent;
+    padding: 0.5rem 0.65rem;
+    font-size: 0.9rem;
+    line-height: 1.35;
+}
+.ac-check-comment-box strong {
+    font-weight: 700;
+}
+.ac-check-comment-box--monitor {
+    background: #f3e8ff;
+    border-color: #c4b5fd;
+    color: #4c1d95;
+}
+.ac-check-comment-box--override {
+    background: #fff7ed;
+    border-color: #fdba74;
+    color: #9a3412;
+}
 </style>
 {% endblock %}
 
@@ -198,6 +223,16 @@
 </div>
 
 <div class="ac-card ac-ui-panel {% if check_kind == 'passed' %}ac-card--ok{% else %}ac-card--failed{% endif %}">
+    {% set monitor_raw = check_data.monitor %}
+    {% set override_raw = check_data.override %}
+    {% set has_monitor = (monitor_raw is sameas true) or (monitor_raw and (monitor_raw.date or monitor_raw.user or monitor_raw.source or monitor_raw.comment)) %}
+    {% set has_override = (override_raw is sameas true) or (override_raw and (override_raw.date or override_raw.user or override_raw.source or override_raw.comment)) %}
+    {% set monitor_comment = monitor_raw.comment if (monitor_raw and monitor_raw.comment) else '' %}
+    {% set override_comment = override_raw.comment if (override_raw and override_raw.comment) else '' %}
+    {% set monitor_date = monitor_raw.date if (monitor_raw and monitor_raw.date) else '' %}
+    {% set override_date = override_raw.date if (override_raw and override_raw.date) else '' %}
+    {% set monitor_user = monitor_raw.user if (monitor_raw and monitor_raw.user) else '' %}
+    {% set override_user = override_raw.user if (override_raw and override_raw.user) else '' %}
     <div class="ac-failure-detail__meta">
         <div class="ac-failure-meta-row">
             <strong>obsdir:</strong> {{ obsdir }}
@@ -211,13 +246,13 @@
             {{ check_data.type or '' }}
         </div>
         <div class="ac-failure-meta-row"><strong>monitored:</strong>
-            {% if check_data.monitor and check_data.monitor.date %}
-            <span style="color:#7c3aed;font-weight:700;">True</span>
+            {% if has_monitor %}
+            <span id="ac-check-monitor-state" style="color:#7c3aed;font-weight:700;">True</span>
             {% else %}False{% endif %}
         </div>
         <div class="ac-failure-meta-row"><strong>overridden:</strong>
-            {% if check_data.override and check_data.override.date %}
-            <span style="color:#d97706;font-weight:700;">True</span>
+            {% if has_override %}
+            <span id="ac-check-override-state" style="color:#d97706;font-weight:700;">True</span>
             {% else %}False{% endif %}
         </div>
         <div class="ac-failure-meta-row"><strong>test:</strong>
@@ -227,6 +262,42 @@
             {{ last_run or 'n/a' }}
         </div>
     </div>
+
+    {% if has_monitor or has_override %}
+    <div id="ac-check-comment-wrap" class="ac-check-comment-wrap">
+        {% if has_monitor %}
+        <div id="ac-check-monitor-box" class="ac-check-comment-box ac-check-comment-box--monitor">
+            <strong>Monitor</strong>
+            <div>Comment: <span id="ac-check-monitor-comment">{{ monitor_comment if monitor_comment else 'n/a' }}</span></div>
+            <div>Date: <span id="ac-check-monitor-date">{{ monitor_date if monitor_date else 'n/a' }}</span></div>
+            <div>User: <span id="ac-check-monitor-user">{{ monitor_user if monitor_user else 'n/a' }}</span></div>
+        </div>
+        {% endif %}
+        {% if has_override %}
+        <div id="ac-check-override-box" class="ac-check-comment-box ac-check-comment-box--override">
+            <strong>Override</strong>
+            <div>Comment: <span id="ac-check-override-comment">{{ override_comment if override_comment else 'n/a' }}</span></div>
+            <div>Date: <span id="ac-check-override-date">{{ override_date if override_date else 'n/a' }}</span></div>
+            <div>User: <span id="ac-check-override-user">{{ override_user if override_user else 'n/a' }}</span></div>
+        </div>
+        {% endif %}
+    </div>
+    {% else %}
+    <div id="ac-check-comment-wrap" class="ac-check-comment-wrap" hidden>
+        <div id="ac-check-monitor-box" class="ac-check-comment-box ac-check-comment-box--monitor" hidden>
+            <strong>Monitor</strong>
+            <div>Comment: <span id="ac-check-monitor-comment"></span></div>
+            <div>Date: <span id="ac-check-monitor-date"></span></div>
+            <div>User: <span id="ac-check-monitor-user"></span></div>
+        </div>
+        <div id="ac-check-override-box" class="ac-check-comment-box ac-check-comment-box--override" hidden>
+            <strong>Override</strong>
+            <div>Comment: <span id="ac-check-override-comment"></span></div>
+            <div>Date: <span id="ac-check-override-date"></span></div>
+            <div>User: <span id="ac-check-override-user"></span></div>
+        </div>
+    </div>
+    {% endif %}
 
     <pre class="ac-failure-detail__message"
          style="margin-top:0.65rem;">{{ check_data.message or '' }}</pre>
@@ -350,12 +421,41 @@
     };
 
     function eventEnabled(value) {
+        if (value === true) return true;
         if (!value || typeof value !== 'object') return false;
         var keys = ['date', 'user', 'source', 'comment'];
         for (var i = 0; i < keys.length; i += 1) {
             if (String(value[keys[i]] || '').trim()) return true;
         }
         return false;
+    }
+
+    function eventComment(value) {
+        if (!value || typeof value !== 'object') {
+            return '';
+        }
+        return String(value.comment || '').trim();
+    }
+
+    function eventField(value, key) {
+        if (!value || typeof value !== 'object') {
+            return '';
+        }
+        return String(value[key] || '').trim();
+    }
+
+    function rememberedEventComment(action) {
+        if (action === 'override') {
+            return String(
+                state.checkData.override_last_comment || ''
+            ).trim();
+        }
+        if (action === 'monitor') {
+            return String(
+                state.checkData.monitor_last_comment || ''
+            ).trim();
+        }
+        return '';
     }
 
     function postJson(url, payload) {
@@ -608,6 +708,70 @@
             : (hasMonitor ? 'Monitor: ON' : 'Monitor: OFF');
     }
 
+    function renderCommentBoxes() {
+        var wrap = document.getElementById('ac-check-comment-wrap');
+        var monBox = document.getElementById('ac-check-monitor-box');
+        var ovrBox = document.getElementById('ac-check-override-box');
+        var monText = document.getElementById('ac-check-monitor-comment');
+        var ovrText = document.getElementById('ac-check-override-comment');
+        var monDate = document.getElementById('ac-check-monitor-date');
+        var ovrDate = document.getElementById('ac-check-override-date');
+        var monUser = document.getElementById('ac-check-monitor-user');
+        var ovrUser = document.getElementById('ac-check-override-user');
+        var monState = document.getElementById('ac-check-monitor-state');
+        var ovrState = document.getElementById('ac-check-override-state');
+
+        var hasMonitor = eventEnabled(state.checkData.monitor);
+        var hasOverride = eventEnabled(state.checkData.override);
+
+        if (monState) {
+            monState.textContent = hasMonitor ? 'True' : 'False';
+            monState.style.color = hasMonitor ? '#7c3aed' : '';
+            monState.style.fontWeight = hasMonitor ? '700' : '';
+        }
+        if (ovrState) {
+            ovrState.textContent = hasOverride ? 'True' : 'False';
+            ovrState.style.color = hasOverride ? '#d97706' : '';
+            ovrState.style.fontWeight = hasOverride ? '700' : '';
+        }
+
+        if (wrap) wrap.hidden = !(hasMonitor || hasOverride);
+        if (monBox) monBox.hidden = !hasMonitor;
+        if (ovrBox) ovrBox.hidden = !hasOverride;
+        if (monText) {
+            var mc = eventComment(state.checkData.monitor);
+            monText.textContent = mc || 'n/a';
+        }
+        if (ovrText) {
+            var oc = eventComment(state.checkData.override);
+            ovrText.textContent = oc || 'n/a';
+        }
+        if (monDate) {
+            monDate.textContent = eventField(
+                state.checkData.monitor,
+                'date'
+            ) || 'n/a';
+        }
+        if (ovrDate) {
+            ovrDate.textContent = eventField(
+                state.checkData.override,
+                'date'
+            ) || 'n/a';
+        }
+        if (monUser) {
+            monUser.textContent = eventField(
+                state.checkData.monitor,
+                'user'
+            ) || 'n/a';
+        }
+        if (ovrUser) {
+            ovrUser.textContent = eventField(
+                state.checkData.override,
+                'user'
+            ) || 'n/a';
+        }
+    }
+
     function applyControlPolicy() {
         var isPassed = state.checkKind === 'passed';
         var allowOverride = state.overrideAllowed.indexOf(
@@ -644,6 +808,9 @@
         if (action === 'monitor' && eventEnabled(state.checkData.monitor)) {
             existing = String(state.checkData.monitor.comment || '');
         }
+        if (!existing) {
+            existing = rememberedEventComment(action);
+        }
         state.pendingAction = action;
         var t = action === 'override' ? 'Override comment' : 'Monitor comment';
         if (label) label.textContent = t;
@@ -663,6 +830,7 @@
         var row = failures[state.checkKey] || passes[state.checkKey];
         if (row && typeof row === 'object') state.checkData = row;
         updateToggleLabels();
+        renderCommentBoxes();
         applyControlPolicy();
     }
 
@@ -692,6 +860,7 @@
 
     restoreFinishedStatus();
     pollTaskStatus();
+    renderCommentBoxes();
 
     var yamlBtn = document.getElementById('ac-check-view-yaml');
     if (yamlBtn) {

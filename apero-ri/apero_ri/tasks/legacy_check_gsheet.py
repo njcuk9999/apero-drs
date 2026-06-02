@@ -137,6 +137,33 @@ def _parse_gsheet_url(url: str) -> Tuple[str, int]:
     return sheet_id, gid
 
 
+def _normalize_instrument_key(value: str) -> str:
+    """Normalize an instrument name for config map lookups."""
+    text = str(value or '').strip().upper()
+    return text.replace('-', '_')
+
+
+def _resolve_task_url(
+    task_cfg: Dict[str, Any],
+    instrument: str,
+    single_key: str,
+    map_key: str,
+) -> str:
+    """Resolve per-instrument URL from task config.
+
+    Preference order:
+    1) map-based value for this instrument
+    2) legacy global scalar value
+    """
+    normalized = _normalize_instrument_key(instrument)
+    url_map = task_cfg.get(map_key)
+    if isinstance(url_map, dict):
+        value = str(url_map.get(normalized) or '').strip()
+        if value:
+            return value
+    return str(task_cfg.get(single_key) or '').strip()
+
+
 # =============================================================================
 # Google OAuth / gspread helpers (mirrored from legacy_astrom_gsheet)
 # =============================================================================
@@ -550,17 +577,23 @@ class LegacyCheckGSheetTask(apero_async.AperoAsyncTask):
                     str(
                         gsheet_cfg.get('monitoring_sheet_url') or ''
                     ).strip()
-                    or str(
-                        task_cfg.get('monitoring_sheet_url') or ''
-                    ).strip()
+                    or _resolve_task_url(
+                        task_cfg,
+                        str(instrument),
+                        'monitoring_sheet_url',
+                        'monitoring_sheet_urls',
+                    )
                 )
                 override_url = (
                     str(
                         gsheet_cfg.get('override_sheet_url') or ''
                     ).strip()
-                    or str(
-                        task_cfg.get('override_sheet_url') or ''
-                    ).strip()
+                    or _resolve_task_url(
+                        task_cfg,
+                        str(instrument),
+                        'override_sheet_url',
+                        'override_sheet_urls',
+                    )
                 )
 
                 if not monitoring_url or not override_url:

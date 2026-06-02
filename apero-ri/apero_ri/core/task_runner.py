@@ -657,7 +657,6 @@ def _copy_sync_profile_override(
     )
     dest_root = local_data_dir / "tasks" / instrument / profile_name
     synced = []
-    skipped = 0
     stop_event = run_params.get("STOP_EVENT")
 
     tlog(
@@ -684,31 +683,26 @@ def _copy_sync_profile_override(
         rel = src_file.relative_to(source_dir)
         dst_file = dest_root / rel
         dst_file.parent.mkdir(parents=True, exist_ok=True)
-        if dst_file.exists():
-            src_stat = src_file.stat()
-            dst_stat = dst_file.stat()
-            same_size = src_stat.st_size == dst_stat.st_size
-            same_time = src_stat.st_mtime_ns == dst_stat.st_mtime_ns
-            if same_size and same_time:
-                skipped += 1
-            else:
-                shutil.copy2(str(src_file), str(dst_file))
-                synced.append(str(dst_file))
-        else:
-            shutil.copy2(str(src_file), str(dst_file))
-            synced.append(str(dst_file))
+        # Always overwrite: a previously-synced destination can have the
+        # same size and mtime as the source even when the content has
+        # been regenerated (e.g. ftable JSON with the same row count
+        # but updated KW_OUTPUT values). Trusting size+mtime as a skip
+        # heuristic would leave stale rows on the local server forever
+        # once the first sync has run. fetch_precomputed must mean
+        # "the remote is authoritative — copy unconditionally".
+        shutil.copy2(str(src_file), str(dst_file))
+        synced.append(str(dst_file))
 
         if idx % 250 == 0 or idx == total:
             tlog(
                 "sync_source: profile "
                 f"{profile_name} progress {idx}/{total} "
-                f"(copied={len(synced)}, skipped={skipped})"
+                f"(copied={len(synced)})"
             )
 
     tlog(
         "sync_source: profile "
-        f"{profile_name} finished (copied={len(synced)}, "
-        f"skipped={skipped})"
+        f"{profile_name} finished (copied={len(synced)})"
     )
     return synced
 

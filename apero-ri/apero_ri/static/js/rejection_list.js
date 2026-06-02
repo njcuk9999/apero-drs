@@ -31,6 +31,25 @@
     var filterTimer = null;
     var historyTimer = null;
 
+    function applyStateFromUrl() {
+        var params = new URLSearchParams(window.location.search || '');
+        var instrument = String(params.get('instrument') || '')
+            .trim().toLowerCase();
+        if (instrument) {
+            for (var i = 0; i < tabs.length; i += 1) {
+                var key = String(tabs[i].key || '').toLowerCase();
+                if (instrument === key) {
+                    state.tab = tabs[i].key;
+                    break;
+                }
+            }
+        }
+        var identifier = String(params.get('identifier') || '').trim();
+        if (identifier) {
+            state.filters.identifier = identifier;
+        }
+    }
+
     function sortInfo() {
         var raw = String(state.sort || 'identifier_desc');
         var parts = raw.split('_');
@@ -79,6 +98,13 @@
         var action = String(value || '').trim().toLowerCase();
         if (!action) return 'Update';
         return action.charAt(0).toUpperCase() + action.slice(1);
+    }
+
+    function astrometricsIdentifierUrl(identifier) {
+        return '/astrometrics?fo_tab=advanced&fo_source=header'
+            + '&fo_property=IDENTIFIER'
+            + '&fo_value=' + encodeURIComponent(String(identifier || ''))
+            + '&fo_search=1';
     }
 
     function diffChipHtml(value, mode) {
@@ -260,9 +286,11 @@
                 + '</td></tr>';
         } else {
             rows.forEach(function (row) {
+                var ident = String(row.IDENTIFIER || '');
                 html += '<tr class="ari-dt__row">'
-                    + '<td class="rj-cell-id">' + esc(row.IDENTIFIER)
-                    + '</td>'
+                    + '<td class="rj-cell-id"><a href="'
+                    + esc(astrometricsIdentifierUrl(ident))
+                    + '">' + esc(ident) + '</a></td>'
                     + '<td class="rj-cell-flg">' + esc(row.PP) + '</td>'
                     + '<td class="rj-cell-flg">' + esc(row.TEL) + '</td>'
                     + '<td class="rj-cell-flg">' + esc(row.RV) + '</td>'
@@ -959,6 +987,7 @@
         }
     }
 
+    applyStateFromUrl();
     updateTabButtons(state.tab);
     loadRows();
 }());

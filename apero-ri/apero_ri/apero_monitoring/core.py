@@ -285,6 +285,8 @@ def write_obsdir_yaml(root_dir: Path,
         payload['history'] = append_history_entry(payload, history_entry)
     # Build the final output path for this obsdir.
     filename = make_obsdir_filename(root_dir, obs_dir)
+    # Ensure nested obsdir paths can be written safely.
+    filename.parent.mkdir(parents=True, exist_ok=True)
     # Write to a temporary file first so updates stay atomic.
     tmpname = filename.with_suffix(filename.suffix + '.tmp')
     with open(tmpname, 'w', encoding='utf-8') as handle:

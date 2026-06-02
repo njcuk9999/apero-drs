@@ -14,100 +14,454 @@
 </div>
 
 <div id="mi-msg" class="ari-ae-save-msg" style="display:none;"></div>
+<style>
+#mi-tab-buttons { margin-bottom: 12px; }
+.mi-tab-panel { display: none; }
+.mi-tab-panel--active { display: block; }
+.mi-ye-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: center;
+    margin-bottom: 10px;
+}
+.mi-ye-layout {
+    display: grid;
+    grid-template-columns: 280px 1fr;
+    gap: 12px;
+    height: calc(100vh - 260px);
+    min-height: 460px;
+}
+.mi-ye-sidebar,
+.mi-ye-main {
+    border: 1px solid var(--ari-border, #d9d9d9);
+    border-radius: 8px;
+    background: var(--ari-card-bg, #fff);
+}
+.mi-ye-sidebar {
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    height: 100%;
+    overflow: auto;
+}
+.mi-ye-sidebar h4 {
+    margin: 0;
+    font-size: 0.88rem;
+}
+.mi-ye-files,
+.mi-ye-sections {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+.mi-ye-section {
+    width: 100%;
+    text-align: left;
+    border: 1px solid transparent;
+    background: transparent;
+    border-radius: 6px;
+    padding: 5px 6px;
+    cursor: pointer;
+    font-size: 0.8rem;
+    color: var(--ari-text-muted, #5f6368);
+}
+.mi-ye-section:hover { background: var(--ari-surface-alt, #f5f5f5); }
+.mi-ye-main {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+.mi-ye-main__body {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+}
+#mi-yaml-editor-panel,
+#mi-yaml-diff-panel {
+    flex: 1;
+    min-height: 0;
+}
+.mi-ye-main__head {
+    padding: 8px 10px;
+    border-bottom: 1px solid var(--ari-border, #d9d9d9);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+}
+.mi-ye-main__title {
+    font-weight: 600;
+    font-size: 0.88rem;
+}
+.mi-ye-main__dirty {
+    color: var(--ari-danger, #c0392b);
+    display: none;
+    font-size: 0.78rem;
+}
+#mi-yaml-ace {
+    width: 100%;
+    height: 100%;
+    min-height: 0;
+}
+.mi-ye-main .ace_editor,
+.mi-ye-main .ace_scroller {
+    overflow: auto;
+}
+.mi-yd-panel {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+}
+.mi-yd-controls {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: center;
+    padding: 10px;
+    border-bottom: 1px solid var(--ari-border, #d9d9d9);
+}
+.mi-yd-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    height: 100%;
+    min-height: 0;
+    padding: 10px;
+}
+.mi-yd-col {
+    border: 1px solid var(--ari-border, #d9d9d9);
+    border-radius: 6px;
+    overflow: hidden;
+    background: var(--ari-bg, #fff);
+    display: flex;
+    flex-direction: column;
+}
+.mi-yd-head {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    padding: 6px 8px;
+    border-bottom: 1px solid var(--ari-border, #d9d9d9);
+    background: var(--ari-surface-alt, #f5f5f5);
+    font-weight: 600;
+    font-size: 0.82rem;
+}
+.mi-yd-lines {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 0.8rem;
+    line-height: 1.45;
+    overflow: auto;
+    min-height: 0;
+    flex: 1;
+}
+.mi-yd-line {
+    display: grid;
+    grid-template-columns: 52px 1fr auto;
+    gap: 8px;
+    padding: 0 8px;
+    white-space: pre-wrap;
+    align-items: start;
+}
+.mi-yd-ln {
+    color: var(--ari-text-muted, #6b7280);
+    text-align: right;
+    user-select: none;
+}
+.mi-yd-code {
+    white-space: pre-wrap;
+    word-break: break-word;
+}
+.mi-yd-op {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 32px;
+}
+.mi-yd-op--empty {
+    opacity: 0;
+    user-select: none;
+}
+.mi-yd-op-btn {
+    border: 1px solid var(--ari-border, #c9c9c9);
+    background: var(--ari-surface-alt, #f6f7f8);
+    color: var(--ari-text, #1f2937);
+    border-radius: 4px;
+    font-size: 0.72rem;
+    line-height: 1;
+    padding: 2px 6px;
+    cursor: pointer;
+}
+.mi-yd-op-btn:hover {
+    filter: brightness(0.97);
+}
+.mi-yd-line--add { background: #e8f8ef; }
+.mi-yd-line--del { background: #fdeaea; }
+.mi-yd-line--mod { background: #fff8e1; }
+[data-theme="dark"] .mi-yd-line--add { background: rgba(46, 160, 67, 0.2); }
+[data-theme="dark"] .mi-yd-line--del { background: rgba(248, 81, 73, 0.2); }
+[data-theme="dark"] .mi-yd-line--mod { background: rgba(210, 153, 34, 0.22); }
+[data-theme="dark"] .mi-yd-head {
+    background: #22272e;
+    border-bottom-color: #30363d;
+}
+[data-theme="dark"] .mi-yd-col { border-color: #30363d; }
+.mi-yd-inline-add {
+    background: rgba(46, 160, 67, 0.35);
+    border-radius: 2px;
+}
+.mi-yd-inline-del {
+    background: rgba(248, 81, 73, 0.35);
+    border-radius: 2px;
+}
+/* Stronger YAML key highlighting ({key}:) */
+.mi-ye-main .ace_editor .ace_entity.ace_name.ace_tag,
+.mi-ye-main .ace_editor .ace_meta.ace_tag,
+.mi-ye-main .ace_editor .ace_support.ace_type,
+.mi-ye-main .ace_editor .ace_keyword,
+.mi-ye-main .ace_editor .ace_punctuation.ace_operator {
+    color: #0b62c4 !important;
+    font-weight: 700;
+}
+[data-theme="dark"] .mi-ye-main .ace_editor .ace_entity.ace_name.ace_tag,
+[data-theme="dark"] .mi-ye-main .ace_editor .ace_meta.ace_tag,
+[data-theme="dark"] .mi-ye-main .ace_editor .ace_support.ace_type,
+[data-theme="dark"] .mi-ye-main .ace_editor .ace_keyword,
+[data-theme="dark"] .mi-ye-main .ace_editor .ace_punctuation.ace_operator {
+    color: #6cb6ff !important;
+    font-weight: 700;
+}
+@media (max-width: 980px) {
+    .mi-ye-layout {
+        grid-template-columns: 1fr;
+        height: auto;
+        min-height: 0;
+    }
+    .mi-ye-sidebar {
+        height: 220px;
+    }
+    .mi-ye-main {
+        min-height: 460px;
+    }
+    .mi-yd-grid {
+        grid-template-columns: 1fr;
+        height: auto;
+        min-height: 0;
+    }
+    .mi-yd-col {
+        min-height: 240px;
+    }
+}
+</style>
 
-{% if not instruments_data %}
-<div class="ari-sg-empty">
-    <i class="fa-solid fa-circle-info"></i>
-    No instruments found. Create APERO profiles to define instruments.
+<div id="mi-tab-buttons" class="ari-sg-tabs">
+    <button type="button" class="ari-sg-tab ari-sg-tab--active"
+            id="mi-tab-btn-groups" data-tab="groups">
+        <i class="fa-solid fa-users"></i> Group management
+    </button>
+    <button type="button" class="ari-sg-tab" id="mi-tab-btn-yamls"
+            data-tab="yamls">
+        <i class="fa-solid fa-file-code"></i> Instrument yamls
+    </button>
 </div>
-{% else %}
-<p class="ari-ae-help-text" style="margin-bottom:16px;">
-    Per-instrument groups (e.g. <code>monitor.SPIROU</code>) allow users to
-    be scoped to a specific instrument while inheriting all permissions of the
-    base group. Use the buttons below to create or remove these group
-    definitions for each instrument.
-</p>
 
-<div id="mi-instruments-list" style="display:grid; gap:16px;">
-{% for instr in instruments_data %}
-<div class="ari-ae-section" id="mi-instr-{{ instr.name }}">
-    <h2 class="ari-ae-section-title">
-        <i class="fa-solid fa-satellite-dish"></i>
-        {{ instr.name }}
-        {% if instr.groups_created %}
-        <span class="ari-health-badge ari-health-badge--ok"
-              style="margin-left:8px; font-size:0.75rem;">
-            <i class="fa-solid fa-circle-check"></i> groups&nbsp;active
-        </span>
-        {% else %}
-        <span class="ari-health-badge ari-health-badge--warn"
-              style="margin-left:8px; font-size:0.75rem;">
-            <i class="fa-solid fa-circle-xmark"></i> no groups
-        </span>
-        {% endif %}
-    </h2>
+<section id="mi-tab-groups" class="mi-tab-panel mi-tab-panel--active">
+    {% if not instruments_data %}
+    <div class="ari-sg-empty">
+        <i class="fa-solid fa-circle-info"></i>
+        No instruments found. Create APERO profiles to define instruments.
+    </div>
+    {% else %}
+    <p class="ari-ae-help-text" style="margin-bottom:16px;">
+        Per-instrument groups (e.g. <code>monitor.SPIROU</code>) allow users
+        to be scoped to a specific instrument while inheriting all permissions
+        of the base group. Use the buttons below to create or remove these
+        group definitions for each instrument.
+    </p>
 
-    <div style="display:grid; gap:8px; grid-template-columns:repeat(auto-fill,minmax(180px,1fr)); margin-bottom:12px;">
-    {% for grp in instr.groups %}
-    <div class="ari-ae-field"
-         style="background:var(--ari-surface-alt,#f5f5f5);
-                border-radius:6px; padding:8px 10px;">
-        <div style="font-weight:600; font-size:0.85rem; margin-bottom:4px;">
-            {{ grp.name }}
+    <div id="mi-instruments-list" style="display:grid; gap:16px;">
+    {% for instr in instruments_data %}
+    <div class="ari-ae-section" id="mi-instr-{{ instr.name }}">
+        <h2 class="ari-ae-section-title">
+            <i class="fa-solid fa-satellite-dish"></i>
+            {{ instr.name }}
+            {% if instr.groups_created %}
+            <span class="ari-health-badge ari-health-badge--ok"
+                  style="margin-left:8px; font-size:0.75rem;">
+                <i class="fa-solid fa-circle-check"></i> groups&nbsp;active
+            </span>
+            {% else %}
+            <span class="ari-health-badge ari-health-badge--warn"
+                  style="margin-left:8px; font-size:0.75rem;">
+                <i class="fa-solid fa-circle-xmark"></i> no groups
+            </span>
+            {% endif %}
+        </h2>
+
+        <div style="display:grid; gap:8px; grid-template-columns:repeat(auto-fill,minmax(180px,1fr)); margin-bottom:12px;">
+        {% for grp in instr.groups %}
+        <div class="ari-ae-field"
+             style="background:var(--ari-surface-alt,#f5f5f5);
+                    border-radius:6px; padding:8px 10px;">
+            <div style="font-weight:600; font-size:0.85rem; margin-bottom:4px;">
+                {{ grp.name }}
+            </div>
+            {% if grp.exists %}
+            <div style="font-size:0.8rem; color:var(--ari-text-muted,#666);">
+                <i class="fa-solid fa-users"></i>
+                {{ grp.user_count }} user{{ 's' if grp.user_count != 1 else '' }}
+            </div>
+            {% if grp.users %}
+            <div style="font-size:0.75rem; color:var(--ari-text-muted,#666);
+                        margin-top:4px; word-break:break-all;">
+                {{ grp.users | join(', ') }}
+            </div>
+            {% endif %}
+            {% else %}
+            <div style="font-size:0.8rem; color:var(--ari-text-muted,#666);">
+                <i class="fa-solid fa-minus"></i> not created
+            </div>
+            {% endif %}
         </div>
-        {% if grp.exists %}
-        <div style="font-size:0.8rem; color:var(--ari-text-muted,#666);">
-            <i class="fa-solid fa-users"></i>
-            {{ grp.user_count }} user{{ 's' if grp.user_count != 1 else '' }}
+        {% endfor %}
         </div>
-        {% if grp.users %}
-        <div style="font-size:0.75rem; color:var(--ari-text-muted,#666);
-                    margin-top:4px; word-break:break-all;">
-            {{ grp.users | join(', ') }}
-        </div>
-        {% endif %}
-        {% else %}
-        <div style="font-size:0.8rem; color:var(--ari-text-muted,#666);">
-            <i class="fa-solid fa-minus"></i> not created
+
+        {% if can_manage %}
+        <div style="display:flex; gap:8px; flex-wrap:wrap; margin-top:4px;">
+            {% if not instr.groups_created %}
+            <button class="ari-btn ari-btn--primary ari-btn--sm"
+                    type="button"
+                    onclick="miCreateGroups('{{ instr.name }}')">
+                <i class="fa-solid fa-circle-plus"></i> Create Groups
+            </button>
+            {% else %}
+            <button class="ari-btn ari-btn--danger ari-btn--sm"
+                    type="button"
+                    onclick="miDeleteGroups('{{ instr.name }}')">
+                <i class="fa-solid fa-trash"></i> Delete Groups
+            </button>
+            {% endif %}
+            {% if can_add %}
+            <button class="ari-btn ari-btn--secondary ari-btn--sm"
+                    type="button"
+                    onclick="miOpenRename('{{ instr.name }}')">
+                <i class="fa-solid fa-pen-to-square"></i> Rename
+            </button>
+            <button class="ari-btn ari-btn--danger ari-btn--sm"
+                    type="button"
+                    onclick="miRemoveInstrument('{{ instr.name }}')">
+                <i class="fa-solid fa-circle-minus"></i> Remove Instrument
+            </button>
+            {% endif %}
         </div>
         {% endif %}
     </div>
     {% endfor %}
     </div>
-
-    {% if can_manage %}
-    <div style="display:flex; gap:8px; flex-wrap:wrap; margin-top:4px;">
-        {% if not instr.groups_created %}
-        <button class="ari-btn ari-btn--primary ari-btn--sm"
-                type="button"
-                onclick="miCreateGroups('{{ instr.name }}')">
-            <i class="fa-solid fa-circle-plus"></i> Create Groups
-        </button>
-        {% else %}
-        <button class="ari-btn ari-btn--danger ari-btn--sm"
-                type="button"
-                onclick="miDeleteGroups('{{ instr.name }}')">
-            <i class="fa-solid fa-trash"></i> Delete Groups
-        </button>
-        {% endif %}
-        {% if can_add %}
-        <button class="ari-btn ari-btn--secondary ari-btn--sm"
-                type="button"
-                onclick="miOpenRename('{{ instr.name }}')">
-            <i class="fa-solid fa-pen-to-square"></i> Rename
-        </button>
-        <button class="ari-btn ari-btn--danger ari-btn--sm"
-                type="button"
-                onclick="miRemoveInstrument('{{ instr.name }}')">
-            <i class="fa-solid fa-circle-minus"></i> Remove Instrument
-        </button>
-        {% endif %}
-    </div>
     {% endif %}
-</div>
-{% endfor %}
-</div>
-{% endif %}
+</section>
+
+<section id="mi-tab-yamls" class="mi-tab-panel">
+    <p class="ari-ae-help-text" style="margin-bottom:10px;">
+        Open one or more instrument YAMLs, edit sections/variables,
+        then use <strong>Save all</strong>. Unsaved edits are cached in
+        this browser and you will be warned before leaving the page.
+    </p>
+    <div id="mi-yaml-msg" class="ari-ae-save-msg" style="display:none;"></div>
+    <div class="mi-ye-toolbar">
+        <label for="mi-yaml-select" style="font-weight:600;">YAML file</label>
+        <select id="mi-yaml-select" class="ari-form-control"
+                style="max-width:260px;">
+            {% for yfile in instrument_yaml_files %}
+            <option value="{{ yfile }}">{{ yfile }}</option>
+            {% endfor %}
+        </select>
+        <button id="mi-yaml-fold-all" class="ari-btn ari-btn--secondary ari-btn--sm"
+                type="button">
+            <i class="fa-solid fa-compress"></i> Fold all
+        </button>
+        <button id="mi-yaml-unfold-all" class="ari-btn ari-btn--secondary ari-btn--sm"
+                type="button">
+            <i class="fa-solid fa-expand"></i> Unfold all
+        </button>
+        <button id="mi-yaml-toggle-diff" class="ari-btn ari-btn--secondary ari-btn--sm"
+                type="button">
+            <i class="fa-solid fa-code-compare"></i> Diff
+        </button>
+        {% if can_edit_instrument_yamls %}
+        <button id="mi-yaml-save-all" class="ari-btn ari-btn--primary ari-btn--sm"
+                type="button">
+            <i class="fa-solid fa-floppy-disk"></i> Save all
+        </button>
+        <button id="mi-yaml-discard-all"
+                class="ari-btn ari-btn--danger ari-btn--sm" type="button">
+            <i class="fa-solid fa-rotate-left"></i> Discard unsaved
+        </button>
+        {% endif %}
+        <span id="mi-yaml-dirty-count" class="ari-ae-help-text"></span>
+    </div>
+    <div class="mi-ye-layout">
+        <aside class="mi-ye-sidebar">
+            <h4><i class="fa-solid fa-list-tree"></i> Sections</h4>
+            <div id="mi-yaml-sections" class="mi-ye-sections"></div>
+            <div class="ari-ae-help-text" style="font-size:0.76rem;">
+                Tip: use fold arrows in the left gutter to minimize sections.
+            </div>
+        </aside>
+        <section class="mi-ye-main">
+            <div class="mi-ye-main__head">
+                <span id="mi-yaml-current-file" class="mi-ye-main__title">
+                    No file open
+                </span>
+                <span id="mi-yaml-current-dirty" class="mi-ye-main__dirty">
+                    Unsaved
+                </span>
+            </div>
+            <div class="mi-ye-main__body">
+                <div id="mi-yaml-editor-panel">
+                    <div id="mi-yaml-ace"></div>
+                </div>
+                <div id="mi-yaml-diff-panel" class="mi-yd-panel"
+                     style="display:none;">
+                    <div class="mi-yd-controls">
+                        <label for="mi-yaml-diff-left"><strong>Left</strong></label>
+                        <select id="mi-yaml-diff-left" class="ari-form-control"
+                                style="max-width:240px;">
+                            {% for yfile in instrument_yaml_files %}
+                            <option value="{{ yfile }}">{{ yfile }}</option>
+                            {% endfor %}
+                        </select>
+                        <label for="mi-yaml-diff-right"><strong>Right</strong></label>
+                        <select id="mi-yaml-diff-right" class="ari-form-control"
+                                style="max-width:240px;">
+                            {% for yfile in instrument_yaml_files %}
+                            <option value="{{ yfile }}">{{ yfile }}</option>
+                            {% endfor %}
+                        </select>
+                        <button id="mi-yaml-run-diff" class="ari-btn ari-btn--secondary ari-btn--sm"
+                                type="button">
+                            <i class="fa-solid fa-arrows-left-right"></i> Compare
+                        </button>
+                    </div>
+                    <div class="mi-yd-grid">
+                        <div class="mi-yd-col">
+                            <div id="mi-yaml-diff-left-head" class="mi-yd-head"></div>
+                            <div id="mi-yaml-diff-left-body" class="mi-yd-lines"></div>
+                        </div>
+                        <div class="mi-yd-col">
+                            <div id="mi-yaml-diff-right-head" class="mi-yd-head"></div>
+                            <div id="mi-yaml-diff-right-body" class="mi-yd-lines"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+</section>
 
 <!-- Add Instrument modal -->
 {% if can_add %}
@@ -201,6 +555,10 @@
 </div>
 {% endif %}
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.36.4/ace.js"
+    crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jsdiff/8.0.2/diff.min.js"
+    crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 <script>
 (function () {
     var CREATE_URL = "{{ url_for('api_manage_instruments_groups_create') }}";
@@ -208,6 +566,11 @@
     var ADD_URL    = "{{ url_for('api_manage_instruments_add') }}";
     var REMOVE_URL = "{{ url_for('api_manage_instruments_remove') }}";
     var RENAME_URL = "{{ url_for('api_manage_instruments_rename') }}";
+    var YAML_GET_URL = "{{ url_for('api_manage_instruments_yaml_get') }}";
+    var YAML_SAVE_URL = "{{ url_for('api_manage_instruments_yaml_save') }}";
+    var YAML_FILES = {{ instrument_yaml_files | tojson }};
+    var CAN_EDIT_YAMLS = {{ can_edit_instrument_yamls | tojson }};
+    var YAML_DRAFT_CACHE_KEY = 'mi_yaml_editor_cache_v1';
 
     function showMsg(text, isError) {
         var el = document.getElementById('mi-msg');
@@ -366,7 +729,6 @@
     var addError   = document.getElementById('mi-add-error');
 
     function openAddModal() {
-        if (!addOverlay) { return; }
         if (addName) { addName.value = ''; }
         if (addError) { addError.style.display = 'none'; }
         addOverlay.style.display = 'flex';
@@ -376,7 +738,6 @@
         if (addOverlay) { addOverlay.style.display = 'none'; }
     }
     function showAddError(msg) {
-        if (!addError) { return; }
         addError.textContent = msg;
         addError.style.display = 'block';
     }
@@ -409,6 +770,970 @@
             });
         });
     }
+
+    // ------------------------------------------------------------------
+    // Tab switching
+    // ------------------------------------------------------------------
+    var tabBtnGroups = document.getElementById('mi-tab-btn-groups');
+    var tabBtnYamls = document.getElementById('mi-tab-btn-yamls');
+    var tabGroups = document.getElementById('mi-tab-groups');
+    var tabYamls = document.getElementById('mi-tab-yamls');
+
+    function selectTab(tabName) {
+        var isGroups = tabName === 'groups';
+        if (tabGroups) {
+            tabGroups.className = isGroups
+                ? 'mi-tab-panel mi-tab-panel--active'
+                : 'mi-tab-panel';
+        }
+        if (tabYamls) {
+            tabYamls.className = isGroups
+                ? 'mi-tab-panel'
+                : 'mi-tab-panel mi-tab-panel--active';
+        }
+        if (tabBtnGroups) {
+            tabBtnGroups.className = isGroups
+                ? 'ari-sg-tab ari-sg-tab--active'
+                : 'ari-sg-tab';
+        }
+        if (tabBtnYamls) {
+            tabBtnYamls.className = isGroups
+                ? 'ari-sg-tab'
+                : 'ari-sg-tab ari-sg-tab--active';
+        }
+    }
+
+    if (tabBtnGroups) {
+        tabBtnGroups.addEventListener('click', function () {
+            selectTab('groups');
+        });
+    }
+    if (tabBtnYamls) {
+        tabBtnYamls.addEventListener('click', function () {
+            selectTab('yamls');
+        });
+    }
+
+    // ------------------------------------------------------------------
+    // Instrument YAML editor (ACE + section navigator)
+    // ------------------------------------------------------------------
+    var yamlSelect = document.getElementById('mi-yaml-select');
+    var yamlFoldAllBtn = document.getElementById('mi-yaml-fold-all');
+    var yamlUnfoldAllBtn = document.getElementById('mi-yaml-unfold-all');
+    var yamlSaveAllBtn = document.getElementById('mi-yaml-save-all');
+    var yamlDiscardBtn = document.getElementById('mi-yaml-discard-all');
+    var yamlMsg = document.getElementById('mi-yaml-msg');
+    var yamlDirtyCount = document.getElementById('mi-yaml-dirty-count');
+    var yamlSections = document.getElementById('mi-yaml-sections');
+    var yamlCurrentFile = document.getElementById('mi-yaml-current-file');
+    var yamlCurrentDirty = document.getElementById('mi-yaml-current-dirty');
+    var yamlEditorPanel = document.getElementById('mi-yaml-editor-panel');
+    var yamlToggleDiffBtn = document.getElementById('mi-yaml-toggle-diff');
+    var yamlDiffPanel = document.getElementById('mi-yaml-diff-panel');
+    var yamlDiffLeftSel = document.getElementById('mi-yaml-diff-left');
+    var yamlDiffRightSel = document.getElementById('mi-yaml-diff-right');
+    var yamlRunDiffBtn = document.getElementById('mi-yaml-run-diff');
+    var yamlDiffLeftHead = document.getElementById('mi-yaml-diff-left-head');
+    var yamlDiffRightHead = document.getElementById('mi-yaml-diff-right-head');
+    var yamlDiffLeftBody = document.getElementById('mi-yaml-diff-left-body');
+    var yamlDiffRightBody = document.getElementById('mi-yaml-diff-right-body');
+    var yamlEditors = {};
+    var yamlDrafts = {};
+    var activeYaml = null;
+    var aceEditor = null;
+    var usingFallbackTextarea = false;
+    var yamlViewMode = 'editor';
+    var syncingDiffScroll = false;
+    var yamlDiffState = {
+        leftName: '',
+        rightName: '',
+        leftText: '',
+        rightText: '',
+        rows: [],
+    };
+
+    if (yamlSelect) {
+        yamlSelect.addEventListener('change', function () {
+            openYaml(yamlSelect.value || '');
+        });
+    }
+
+    function showYamlMsg(text, isError) {
+        if (!yamlMsg) { return; }
+        yamlMsg.textContent = text;
+        yamlMsg.style.display = 'block';
+        yamlMsg.style.color = isError
+            ? 'var(--ari-danger, #c0392b)'
+            : 'var(--ari-success, #27ae60)';
+        clearTimeout(yamlMsg._t);
+        yamlMsg._t = setTimeout(function () {
+            yamlMsg.style.display = 'none';
+        }, 5000);
+    }
+
+    function loadDraftCache() {
+        try {
+            var raw = localStorage.getItem(YAML_DRAFT_CACHE_KEY);
+            if (!raw) { return {}; }
+            var parsed = JSON.parse(raw);
+            if (!parsed || typeof parsed !== 'object') { return {}; }
+            return parsed;
+        } catch (e) {
+            return {};
+        }
+    }
+
+    function saveDraftCache() {
+        try {
+            localStorage.setItem(
+                YAML_DRAFT_CACHE_KEY,
+                JSON.stringify(yamlDrafts)
+            );
+        } catch (e) {
+            // Ignore storage quota errors.
+        }
+    }
+
+    function escapeHtml(text) {
+        return String(text || '')
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;');
+    }
+
+    function currentEditorText(name) {
+        if (!name || !yamlEditors[name]) { return null; }
+        if (name === activeYaml) {
+            yamlEditors[name].text = getEditorValue();
+        }
+        return String(yamlEditors[name].text || '');
+    }
+
+    function getYamlTextPromise(name) {
+        var inMemory = currentEditorText(name);
+        if (inMemory !== null) {
+            return Promise.resolve(inMemory);
+        }
+        return fetch(YAML_GET_URL + '?name=' + encodeURIComponent(name))
+            .then(function (r) { return r.json(); })
+            .then(function (data) {
+                if (!data.success) {
+                    throw new Error(data.error || 'Could not load YAML');
+                }
+                return String(data.yaml_text || '');
+            });
+    }
+
+    function addLineHtml(container, lineNo, html, className, opMeta) {
+        if (!container) { return; }
+        var row = document.createElement('div');
+        row.className = 'mi-yd-line' + (className ? (' ' + className) : '');
+        row.setAttribute('data-source-line', lineNo > 0 ? String(lineNo) : '');
+        var ln = document.createElement('span');
+        ln.className = 'mi-yd-ln';
+        ln.textContent = lineNo > 0 ? String(lineNo) : '';
+        var code = document.createElement('span');
+        code.className = 'mi-yd-code';
+        code.innerHTML = html;
+        var op = document.createElement('span');
+        op.className = 'mi-yd-op';
+        if (opMeta && opMeta.label && typeof opMeta.index === 'number') {
+            var btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = 'mi-yd-op-btn';
+            btn.textContent = opMeta.label;
+            btn.setAttribute('data-diff-op', String(opMeta.direction || ''));
+            btn.setAttribute('data-diff-index', String(opMeta.index));
+            op.appendChild(btn);
+        } else {
+            op.className += ' mi-yd-op--empty';
+            op.textContent = '0';
+        }
+        row.appendChild(ln);
+        row.appendChild(code);
+        row.appendChild(op);
+        container.appendChild(row);
+    }
+
+    function splitLinesKeepStructure(text) {
+        return String(text || '').split(/\r?\n/);
+    }
+
+    function splitDiffLines(text) {
+        var lines = String(text || '').split(/\r?\n/);
+        if (lines.length > 0 && lines[lines.length - 1] === '') {
+            lines.pop();
+        }
+        return lines;
+    }
+
+    function ensureDiffEditorState(name, newText, loadedText) {
+        if (!name) { return; }
+        var state = yamlEditors[name];
+        if (!state) {
+            yamlEditors[name] = {
+                text: String(newText || ''),
+                originalText: String(loadedText || ''),
+                dirty: String(newText || '') !== String(loadedText || ''),
+            };
+            state = yamlEditors[name];
+        } else {
+            state.text = String(newText || '');
+            state.dirty = state.text !== state.originalText;
+        }
+        if (state.dirty) {
+            yamlDrafts[name] = state.text;
+        } else {
+            delete yamlDrafts[name];
+        }
+        if (activeYaml === name && yamlViewMode === 'editor') {
+            setEditorValue(state.text);
+        }
+        markEditorDirty(name, state.dirty);
+    }
+
+    function applyDiffOperation(direction, diffIndex) {
+        var idx = Number(diffIndex);
+        if (!Number.isFinite(idx) || idx < 0) { return; }
+        var rows = Array.isArray(yamlDiffState.rows) ? yamlDiffState.rows : [];
+        var row = idx < rows.length ? rows[idx] : null;
+        if (!row) { return; }
+        var leftName = yamlDiffLeftSel ? yamlDiffLeftSel.value : '';
+        var rightName = yamlDiffRightSel ? yamlDiffRightSel.value : '';
+        if (!leftName || !rightName) { return; }
+
+        var leftLines = splitLinesKeepStructure(yamlDiffState.leftText);
+        var rightLines = splitLinesKeepStructure(yamlDiffState.rightText);
+        var nextLeft = leftLines.slice();
+        var nextRight = rightLines.slice();
+
+        function upsertLine(lines, replaceIndex, insertAt, value) {
+            if (typeof replaceIndex === 'number'
+                && replaceIndex >= 0
+                && replaceIndex < lines.length) {
+                lines[replaceIndex] = value;
+                return;
+            }
+            var at = typeof insertAt === 'number' ? insertAt : lines.length;
+            if (at < 0) { at = 0; }
+            if (at > lines.length) { at = lines.length; }
+            lines.splice(at, 0, value);
+        }
+
+        if (direction === 'to-right') {
+            if (row.leftText === null || row.leftText === undefined) { return; }
+            upsertLine(
+                nextRight,
+                row.rightIndex,
+                row.rightInsertAt,
+                row.leftText
+            );
+        } else if (direction === 'to-left') {
+            if (row.rightText === null || row.rightText === undefined) {
+                return;
+            }
+            upsertLine(
+                nextLeft,
+                row.leftIndex,
+                row.leftInsertAt,
+                row.rightText
+            );
+        } else {
+            return;
+        }
+
+        var leftText = nextLeft.join('\n');
+        var rightText = nextRight.join('\n');
+
+        ensureDiffEditorState(leftName, leftText, yamlDiffState.leftText);
+        ensureDiffEditorState(rightName, rightText, yamlDiffState.rightText);
+        saveDraftCache();
+        renderYamlDiff(leftName, rightName, leftText, rightText);
+        updateCurrentTitle();
+        renderSectionExplorer();
+        showYamlMsg('Applied diff change (' +
+            (direction === 'to-right' ? '>>' : '<<') + ').', false);
+    }
+
+    function buildAlignedDiffRows(leftText, rightText) {
+        var rows = [];
+        var leftNo = 0;
+        var rightNo = 0;
+        var leftIndex = 0;
+        var rightIndex = 0;
+        var parts = window.Diff && window.Diff.diffLines
+            ? window.Diff.diffLines(String(leftText || ''), String(rightText || ''))
+            : [{ value: String(leftText || ''), added: false, removed: false }];
+
+        function pushRow(leftVal, rightVal, kind) {
+            var leftInsertAt = leftIndex;
+            var rightInsertAt = rightIndex;
+            var leftLineNo = null;
+            var rightLineNo = null;
+            var rowLeftIndex = null;
+            var rowRightIndex = null;
+
+            if (leftVal !== null && leftVal !== undefined) {
+                leftNo += 1;
+                leftLineNo = leftNo;
+                rowLeftIndex = leftIndex;
+                leftIndex += 1;
+            }
+            if (rightVal !== null && rightVal !== undefined) {
+                rightNo += 1;
+                rightLineNo = rightNo;
+                rowRightIndex = rightIndex;
+                rightIndex += 1;
+            }
+            rows.push({
+                type: kind,
+                leftText: leftVal,
+                rightText: rightVal,
+                leftLineNo: leftLineNo,
+                rightLineNo: rightLineNo,
+                leftIndex: rowLeftIndex,
+                rightIndex: rowRightIndex,
+                leftInsertAt: leftInsertAt,
+                rightInsertAt: rightInsertAt,
+            });
+        }
+
+        for (var i = 0; i < parts.length; i++) {
+            var part = parts[i];
+            if (!part) { continue; }
+
+            if (part.removed) {
+                var removedLines = splitDiffLines(part.value);
+                var next = i + 1 < parts.length ? parts[i + 1] : null;
+                if (next && next.added) {
+                    var addedLines = splitDiffLines(next.value);
+                    var n = Math.max(removedLines.length, addedLines.length);
+                    for (var j = 0; j < n; j++) {
+                        var lv = j < removedLines.length
+                            ? removedLines[j]
+                            : null;
+                        var rv = j < addedLines.length
+                            ? addedLines[j]
+                            : null;
+                        if (lv === rv) {
+                            pushRow(lv, rv, 'equal');
+                        } else if (lv === null) {
+                            pushRow(null, rv, 'add');
+                        } else if (rv === null) {
+                            pushRow(lv, null, 'del');
+                        } else {
+                            pushRow(lv, rv, 'mod');
+                        }
+                    }
+                    i += 1;
+                    continue;
+                }
+                for (var r = 0; r < removedLines.length; r++) {
+                    pushRow(removedLines[r], null, 'del');
+                }
+                continue;
+            }
+
+            if (part.added) {
+                var addOnlyLines = splitDiffLines(part.value);
+                for (var a = 0; a < addOnlyLines.length; a++) {
+                    pushRow(null, addOnlyLines[a], 'add');
+                }
+                continue;
+            }
+
+            var sameLines = splitDiffLines(part.value);
+            for (var s = 0; s < sameLines.length; s++) {
+                pushRow(sameLines[s], sameLines[s], 'equal');
+            }
+        }
+
+        return rows;
+    }
+
+    function inlineDiffHtml(leftText, rightText) {
+        if (!window.Diff || !window.Diff.diffWordsWithSpace) {
+            return {
+                left: escapeHtml(leftText),
+                right: escapeHtml(rightText),
+            };
+        }
+        var parts = window.Diff.diffWordsWithSpace(
+            String(leftText || ''),
+            String(rightText || '')
+        );
+        var left = '';
+        var right = '';
+        parts.forEach(function (part) {
+            var esc = escapeHtml(part.value);
+            if (part.removed) {
+                left += '<span class="mi-yd-inline-del">' + esc + '</span>';
+                return;
+            }
+            if (part.added) {
+                right += '<span class="mi-yd-inline-add">' + esc + '</span>';
+                return;
+            }
+            left += esc;
+            right += esc;
+        });
+        return { left: left, right: right };
+    }
+
+    function setYamlViewMode(mode) {
+        yamlViewMode = mode === 'diff' ? 'diff' : 'editor';
+        if (yamlEditorPanel) {
+            yamlEditorPanel.style.display = yamlViewMode === 'editor'
+                ? 'block'
+                : 'none';
+        }
+        if (yamlDiffPanel) {
+            yamlDiffPanel.style.display = yamlViewMode === 'diff'
+                ? 'flex'
+                : 'none';
+        }
+        if (yamlToggleDiffBtn) {
+            yamlToggleDiffBtn.innerHTML = yamlViewMode === 'diff'
+                ? '<i class="fa-solid fa-file-code"></i> Editor'
+                : '<i class="fa-solid fa-code-compare"></i> Diff';
+        }
+        if (yamlCurrentDirty) {
+            yamlCurrentDirty.style.display = yamlViewMode === 'editor'
+                && activeYaml && yamlEditors[activeYaml]
+                && yamlEditors[activeYaml].dirty
+                ? 'inline'
+                : 'none';
+        }
+        updateCurrentTitle();
+        renderSectionExplorer();
+        if (yamlViewMode === 'editor' && aceEditor) {
+            aceEditor.resize();
+        }
+    }
+
+    function updateCurrentTitle() {
+        if (!yamlCurrentFile) { return; }
+        if (yamlViewMode === 'diff') {
+            var leftName = yamlDiffLeftSel ? yamlDiffLeftSel.value : '';
+            var rightName = yamlDiffRightSel ? yamlDiffRightSel.value : '';
+            yamlCurrentFile.textContent = leftName && rightName
+                ? leftName + '  vs  ' + rightName
+                : 'YAML diff';
+            return;
+        }
+        yamlCurrentFile.textContent = activeYaml || 'No file open';
+    }
+
+    function syncDiffScroll(source, target) {
+        if (!source || !target) { return; }
+        source.addEventListener('scroll', function () {
+            if (syncingDiffScroll) { return; }
+            syncingDiffScroll = true;
+            target.scrollTop = source.scrollTop;
+            target.scrollLeft = source.scrollLeft;
+            syncingDiffScroll = false;
+        });
+    }
+
+    function scrollDiffToLine(lineNo) {
+        if (!lineNo || yamlViewMode !== 'diff') { return; }
+        [yamlDiffLeftBody, yamlDiffRightBody].forEach(function (container) {
+            if (!container) { return; }
+            var row = container.querySelector(
+                '.mi-yd-line[data-source-line="' + String(lineNo) + '"]'
+            );
+            if (row) {
+                var top = row.offsetTop - 24;
+                container.scrollTop = top < 0 ? 0 : top;
+            }
+        });
+    }
+
+    function renderYamlDiff(leftName, rightName, leftText, rightText) {
+        yamlDiffState.leftName = leftName || '';
+        yamlDiffState.rightName = rightName || '';
+        yamlDiffState.leftText = String(leftText || '');
+        yamlDiffState.rightText = String(rightText || '');
+        if (yamlDiffLeftHead) { yamlDiffLeftHead.textContent = leftName; }
+        if (yamlDiffRightHead) { yamlDiffRightHead.textContent = rightName; }
+        if (yamlDiffLeftBody) { yamlDiffLeftBody.innerHTML = ''; }
+        if (yamlDiffRightBody) { yamlDiffRightBody.innerHTML = ''; }
+
+        if (!leftText && !rightText) {
+            yamlDiffState.rows = [];
+            addLineHtml(
+                yamlDiffLeftBody,
+                0,
+                escapeHtml('No YAML text available.'),
+                '',
+                null
+            );
+            addLineHtml(
+                yamlDiffRightBody,
+                0,
+                escapeHtml('No YAML text available.'),
+                '',
+                null
+            );
+            return;
+        }
+
+        var rows = buildAlignedDiffRows(leftText, rightText);
+        yamlDiffState.rows = rows;
+        for (var i = 0; i < rows.length; i++) {
+            var row = rows[i];
+            var leftClass = '';
+            var rightClass = '';
+            var leftHtml = row.leftText === null || row.leftText === undefined
+                ? ''
+                : escapeHtml(row.leftText);
+            var rightHtml = row.rightText === null || row.rightText === undefined
+                ? ''
+                : escapeHtml(row.rightText);
+            var leftOp = null;
+            var rightOp = null;
+
+            if (row.type === 'add') {
+                leftClass = 'mi-yd-line--add';
+                rightClass = 'mi-yd-line--add';
+                rightOp = { label: '<<', direction: 'to-left', index: i };
+            } else if (row.type === 'del') {
+                leftClass = 'mi-yd-line--del';
+                rightClass = 'mi-yd-line--del';
+                leftOp = { label: '>>', direction: 'to-right', index: i };
+            } else if (row.type === 'mod') {
+                var inl = inlineDiffHtml(row.leftText, row.rightText);
+                leftClass = 'mi-yd-line--mod';
+                rightClass = 'mi-yd-line--mod';
+                leftHtml = inl.left;
+                rightHtml = inl.right;
+                leftOp = { label: '>>', direction: 'to-right', index: i };
+                rightOp = { label: '<<', direction: 'to-left', index: i };
+            }
+
+            addLineHtml(
+                yamlDiffLeftBody,
+                row.leftLineNo || 0,
+                leftHtml,
+                leftClass,
+                leftOp
+            );
+            addLineHtml(
+                yamlDiffRightBody,
+                row.rightLineNo || 0,
+                rightHtml,
+                rightClass,
+                rightOp
+            );
+        }
+    }
+
+    function runYamlDiff() {
+        var leftName = yamlDiffLeftSel ? yamlDiffLeftSel.value : '';
+        var rightName = yamlDiffRightSel ? yamlDiffRightSel.value : '';
+        if (!leftName || !rightName) {
+            showYamlMsg('Select both YAML files for diff.', true);
+            return;
+        }
+        if (leftName === rightName) {
+            showYamlMsg('Comparing the same YAML file on both sides.', false);
+        }
+        Promise.all([
+            getYamlTextPromise(leftName),
+            getYamlTextPromise(rightName),
+        ])
+            .then(function (texts) {
+                renderYamlDiff(leftName, rightName, texts[0], texts[1]);
+                updateCurrentTitle();
+                renderSectionExplorer();
+            })
+            .catch(function (err) {
+                showYamlMsg('Diff failed: ' + err.message, true);
+            });
+    }
+
+    function updateDirtyCount() {
+        if (!yamlDirtyCount) { return; }
+        var count = 0;
+        Object.keys(yamlEditors).forEach(function (name) {
+            if (yamlEditors[name] && yamlEditors[name].dirty) {
+                count += 1;
+            }
+        });
+        yamlDirtyCount.textContent = count > 0
+            ? count + ' unsaved file(s)'
+            : 'No unsaved files';
+    }
+
+    function setEditorValue(text) {
+        if (aceEditor) {
+            aceEditor.setValue(text, -1);
+            return;
+        }
+        var ta = document.getElementById('mi-yaml-fallback-editor');
+        if (ta) { ta.value = text; }
+    }
+
+    function getEditorValue() {
+        if (aceEditor) {
+            return aceEditor.getValue();
+        }
+        var ta = document.getElementById('mi-yaml-fallback-editor');
+        return ta ? ta.value : '';
+    }
+
+    function gotoLine(row) {
+        if (yamlViewMode === 'diff') {
+            scrollDiffToLine(row + 1);
+            return;
+        }
+        if (!aceEditor) { return; }
+        aceEditor.scrollToLine(row + 1, true, true, function () {});
+        aceEditor.gotoLine(row + 1, 0, true);
+        aceEditor.focus();
+    }
+
+    function parseSectionRows(text) {
+        var out = [];
+        var lines = String(text || '').split(/\r?\n/);
+        for (var i = 0; i < lines.length; i++) {
+            var line = lines[i];
+            if (!line || /^\s*#/.test(line)) { continue; }
+            var mTop = /^([A-Za-z0-9_.-]+):\s*(#.*)?$/.exec(line);
+            var mSub = /^\s{2}([A-Za-z0-9_.-]+):\s*(#.*)?$/.exec(line);
+            if (mTop) {
+                out.push({ row: i, label: mTop[1], depth: 0 });
+            } else if (mSub) {
+                out.push({ row: i, label: mSub[1], depth: 1 });
+            }
+        }
+        return out;
+    }
+
+    function renderSectionExplorer() {
+        if (!yamlSections) { return; }
+        yamlSections.innerHTML = '';
+        var sectionText = '';
+        if (yamlViewMode === 'diff') {
+            sectionText = yamlDiffState.leftText || '';
+        } else if (activeYaml && yamlEditors[activeYaml]) {
+            sectionText = yamlEditors[activeYaml].text;
+        }
+        if (!sectionText) {
+            yamlSections.innerHTML =
+                '<div class="ari-ae-help-text">No file selected.</div>';
+            return;
+        }
+        var sections = parseSectionRows(sectionText);
+        if (sections.length === 0) {
+            yamlSections.innerHTML =
+                '<div class="ari-ae-help-text">No sections detected.</div>';
+            return;
+        }
+        sections.forEach(function (item) {
+            var btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = 'mi-ye-section';
+            btn.style.paddingLeft = item.depth === 0 ? '6px' : '16px';
+            btn.textContent = (item.depth === 0 ? '▸ ' : '• ') + item.label;
+            btn.addEventListener('click', function () {
+                gotoLine(item.row);
+            });
+            yamlSections.appendChild(btn);
+        });
+    }
+
+    function markEditorDirty(name, dirty) {
+        var state = yamlEditors[name];
+        if (!state) { return; }
+        state.dirty = !!dirty;
+        if (name === activeYaml && yamlCurrentDirty) {
+            yamlCurrentDirty.style.display = dirty ? 'inline' : 'none';
+        }
+        updateDirtyCount();
+    }
+
+    function onEditorChanged() {
+        if (!activeYaml || !yamlEditors[activeYaml]) { return; }
+        var state = yamlEditors[activeYaml];
+        state.text = getEditorValue();
+        var nowDirty = state.text !== state.originalText;
+        markEditorDirty(activeYaml, nowDirty);
+        if (nowDirty) {
+            yamlDrafts[activeYaml] = state.text;
+        } else {
+            delete yamlDrafts[activeYaml];
+        }
+        saveDraftCache();
+        renderSectionExplorer();
+    }
+
+    function ensureEditor() {
+        if (aceEditor || usingFallbackTextarea) { return; }
+        var host = document.getElementById('mi-yaml-ace');
+        if (!host) { return; }
+        if (window.ace) {
+            aceEditor = window.ace.edit('mi-yaml-ace');
+            aceEditor.session.setMode('ace/mode/yaml');
+            aceEditor.setTheme('ace/theme/github');
+            aceEditor.session.setUseSoftTabs(true);
+            aceEditor.session.setTabSize(2);
+            aceEditor.setOptions({
+                fontSize: '13px',
+                showPrintMargin: false,
+                wrap: true,
+                useWorker: false,
+            });
+            aceEditor.on('change', onEditorChanged);
+            return;
+        }
+        usingFallbackTextarea = true;
+        host.innerHTML = (
+            '<textarea id="mi-yaml-fallback-editor" '
+            + 'style="width:100%;height:100%;min-height:420px;'
+            + 'border:none;outline:none;resize:none;padding:10px;'
+            + 'font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;'
+            + 'font-size:13px;line-height:1.4;"></textarea>'
+        );
+        var ta = document.getElementById('mi-yaml-fallback-editor');
+        if (ta) {
+            ta.addEventListener('input', onEditorChanged);
+        }
+    }
+
+    function activateYaml(name) {
+        var state = yamlEditors[name];
+        if (!state) { return; }
+        activeYaml = name;
+        updateCurrentTitle();
+        if (yamlCurrentDirty) {
+            yamlCurrentDirty.style.display = state.dirty ? 'inline' : 'none';
+        }
+        setEditorValue(state.text);
+        renderSectionExplorer();
+    }
+
+    function openYaml(name) {
+        if (!name) {
+            showYamlMsg('Select a YAML file first.', true);
+            return;
+        }
+        if (yamlEditors[name]) {
+            setYamlViewMode('editor');
+            activateYaml(name);
+            return;
+        }
+        fetch(YAML_GET_URL + '?name=' + encodeURIComponent(name))
+            .then(function (r) { return r.json(); })
+            .then(function (data) {
+                if (!data.success) {
+                    showYamlMsg(data.error || 'Could not load YAML.', true);
+                    return;
+                }
+                var rawText = String(data.yaml_text || '');
+                var text = Object.prototype.hasOwnProperty.call(
+                    yamlDrafts,
+                    name
+                )
+                    ? String(yamlDrafts[name] || '')
+                    : rawText;
+                yamlEditors[name] = {
+                    text: text,
+                    originalText: rawText,
+                    dirty: text !== rawText,
+                };
+                updateDirtyCount();
+                setYamlViewMode('editor');
+                activateYaml(name);
+            })
+            .catch(function (err) {
+                showYamlMsg('Request failed: ' + err, true);
+            });
+    }
+
+    function saveAllYaml() {
+        if (!CAN_EDIT_YAMLS) {
+            showYamlMsg('You do not have permission to save YAMLs.', true);
+            return;
+        }
+        if (activeYaml && yamlEditors[activeYaml]) {
+            yamlEditors[activeYaml].text = getEditorValue();
+        }
+        var files = [];
+        Object.keys(yamlEditors).forEach(function (name) {
+            var state = yamlEditors[name];
+            if (state && state.dirty) {
+                files.push({ name: name, yaml_text: state.text });
+            }
+        });
+        if (files.length === 0) {
+            showYamlMsg('No unsaved YAML changes.', false);
+            return;
+        }
+        if (yamlSaveAllBtn) { yamlSaveAllBtn.disabled = true; }
+        fetch(YAML_SAVE_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ files: files }),
+        })
+        .then(function (r) { return r.json(); })
+        .then(function (data) {
+            if (yamlSaveAllBtn) { yamlSaveAllBtn.disabled = false; }
+            if (!data.success) {
+                showYamlMsg(data.error || 'Could not save YAML files.', true);
+                return;
+            }
+            Object.keys(yamlEditors).forEach(function (name) {
+                var state = yamlEditors[name];
+                if (!state || !state.dirty) { return; }
+                state.originalText = state.text;
+                markEditorDirty(name, false);
+                delete yamlDrafts[name];
+            });
+            if (activeYaml && yamlEditors[activeYaml] && yamlCurrentDirty) {
+                yamlCurrentDirty.style.display = 'none';
+            }
+            saveDraftCache();
+            showYamlMsg('Saved: ' + (data.saved || []).join(', '), false);
+        })
+        .catch(function (err) {
+            if (yamlSaveAllBtn) { yamlSaveAllBtn.disabled = false; }
+            showYamlMsg('Request failed: ' + err, true);
+        });
+    }
+
+    function discardAllYaml() {
+        Object.keys(yamlEditors).forEach(function (name) {
+            var state = yamlEditors[name];
+            if (!state) { return; }
+            state.text = state.originalText;
+            markEditorDirty(name, false);
+            delete yamlDrafts[name];
+        });
+        if (activeYaml && yamlEditors[activeYaml]) {
+            setEditorValue(yamlEditors[activeYaml].text);
+            renderSectionExplorer();
+        }
+        saveDraftCache();
+        showYamlMsg('Discarded unsaved changes.', false);
+    }
+
+    if (yamlFoldAllBtn) {
+        yamlFoldAllBtn.addEventListener('click', function () {
+            if (!aceEditor) { return; }
+            var last = Math.max(0, aceEditor.session.getLength() - 1);
+            aceEditor.session.foldAll(0, last);
+        });
+    }
+    if (yamlUnfoldAllBtn) {
+        yamlUnfoldAllBtn.addEventListener('click', function () {
+            if (!aceEditor) { return; }
+            var folds = aceEditor.session.getAllFolds();
+            for (var i = folds.length - 1; i >= 0; i--) {
+                aceEditor.session.removeFold(folds[i]);
+            }
+        });
+    }
+    if (yamlSaveAllBtn) {
+        yamlSaveAllBtn.addEventListener('click', saveAllYaml);
+    }
+    if (yamlDiscardBtn) {
+        yamlDiscardBtn.addEventListener('click', function () {
+            if (!confirm('Discard all unsaved YAML edits?')) {
+                return;
+            }
+            discardAllYaml();
+        });
+    }
+    if (yamlToggleDiffBtn) {
+        yamlToggleDiffBtn.addEventListener('click', function () {
+            var opening = yamlViewMode !== 'diff';
+            if (opening) {
+                if (yamlDiffLeftSel && yamlDiffRightSel
+                    && yamlDiffLeftSel.value === yamlDiffRightSel.value
+                    && Array.isArray(YAML_FILES) && YAML_FILES.length > 1) {
+                    yamlDiffRightSel.value = YAML_FILES[1];
+                }
+                if (yamlDiffLeftSel && activeYaml) {
+                    yamlDiffLeftSel.value = activeYaml;
+                }
+                setYamlViewMode('diff');
+                runYamlDiff();
+                return;
+            }
+            setYamlViewMode('editor');
+        });
+    }
+    if (yamlRunDiffBtn) {
+        yamlRunDiffBtn.addEventListener('click', runYamlDiff);
+    }
+    if (yamlDiffLeftSel) {
+        yamlDiffLeftSel.addEventListener('change', function () {
+            updateCurrentTitle();
+            runYamlDiff();
+        });
+    }
+    if (yamlDiffRightSel) {
+        yamlDiffRightSel.addEventListener('change', function () {
+            updateCurrentTitle();
+            runYamlDiff();
+        });
+    }
+
+    syncDiffScroll(yamlDiffLeftBody, yamlDiffRightBody);
+    syncDiffScroll(yamlDiffRightBody, yamlDiffLeftBody);
+    [yamlDiffLeftBody, yamlDiffRightBody].forEach(function (container) {
+        if (!container) { return; }
+        container.addEventListener('click', function (evt) {
+            var target = evt.target;
+            if (!target || !target.classList
+                || !target.classList.contains('mi-yd-op-btn')) {
+                return;
+            }
+            var direction = target.getAttribute('data-diff-op') || '';
+            var index = target.getAttribute('data-diff-index') || '';
+            applyDiffOperation(direction, Number(index));
+        });
+    });
+
+    yamlDrafts = loadDraftCache();
+    ensureEditor();
+    setYamlViewMode('editor');
+    renderSectionExplorer();
+    updateDirtyCount();
+
+    if (Array.isArray(YAML_FILES) && YAML_FILES.length > 0) {
+        if (yamlDiffLeftSel) {
+            yamlDiffLeftSel.value = YAML_FILES[0];
+        }
+        if (yamlDiffRightSel) {
+            var rightName = YAML_FILES.length > 1
+                ? YAML_FILES[1]
+                : YAML_FILES[0];
+            yamlDiffRightSel.value = rightName;
+        }
+    }
+
+    if ((!activeYaml) && Array.isArray(YAML_FILES) && YAML_FILES.length > 0) {
+        if (yamlSelect) {
+            yamlSelect.value = YAML_FILES[0];
+        }
+        openYaml(YAML_FILES[0]);
+    }
+
+    window.addEventListener('beforeunload', function (evt) {
+        var hasDirty = false;
+        Object.keys(yamlEditors).forEach(function (name) {
+            if (yamlEditors[name] && yamlEditors[name].dirty) {
+                hasDirty = true;
+            }
+        });
+        if (!hasDirty) { return; }
+        evt.preventDefault();
+        evt.returnValue = 'You have unsaved YAML changes.';
+    });
 }());
 </script>
 {% endblock %}

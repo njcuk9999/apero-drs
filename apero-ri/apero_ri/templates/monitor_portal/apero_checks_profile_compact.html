@@ -69,6 +69,11 @@
        title="Open APERO checks queue and task history">
         <i class="fa-solid fa-list-check"></i> Queue status
     </a>
+    <a href="{{ url_for('monitor_apero_checks_stats_view', profile_id=profile_id) }}"
+       class="ari-btn ari-btn--sm ari-btn--secondary"
+       title="View summary statistics and histograms for this profile">
+        <i class="fa-solid fa-chart-bar"></i> Stats
+    </a>
 </div>
 
 <form class="ot-toolbar ac-ui-panel ac-ui-panel--soft" method="get"

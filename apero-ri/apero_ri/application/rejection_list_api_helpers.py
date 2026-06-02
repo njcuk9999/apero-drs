@@ -134,6 +134,32 @@ def get_rejection_tabs(perms=None) -> List[dict]:
     return tabs
 
 
+def resolve_rejection_tab_key(instrument: str) -> str:
+    """Resolve an instrument name to one rejection-list tab key."""
+    target = str(instrument or '').strip().lower()
+    if target == '':
+        return ''
+    for row in _expanded_tabs():
+        key = str(row.get('key') or '').strip().lower()
+        perm_key = str(row.get('perm_key') or '').strip().lower()
+        if target in {key, perm_key}:
+            return key
+    return ''
+
+
+def get_rejection_rows_for_tab_key(app, tab_key: str) -> List[dict]:
+    """Return normalized rejection-list rows for one tab key."""
+    tab = _resolve_tab(tab_key)
+    if tab is None:
+        return []
+    _ensure_tab_metadata_backfill(app, tab)
+    df = _load_tab_df(app, tab)
+    rows = []
+    for _, row in df.iterrows():
+        rows.append(_row_to_dict(row))
+    return rows
+
+
 def _resolve_tab(raw_tab: str) -> Optional[dict]:
     """Resolve one logical tab from the configured map."""
     requested = str(raw_tab or '').strip().lower()

@@ -2935,9 +2935,26 @@ def ariapp_api_async_tasks_toggle(self):
 
     all_tasks = auth.load_async_tasks()
     inst_tasks, _ = self._merge_async_task_catalog(instrument, all_tasks)
+
+    def _as_bool(value, default=True):
+        if isinstance(value, bool):
+            return value
+        if isinstance(value, (int, float)):
+            return value != 0
+        if isinstance(value, str):
+            text = value.strip().lower()
+            if text in {"", "none", "null"}:
+                return default
+            if text in {"1", "true", "yes", "on", "y", "t"}:
+                return True
+            if text in {"0", "false", "no", "off", "n", "f"}:
+                return False
+        return default
+
     for t in inst_tasks:
         if t.get("id") == task_id:
-            t["active"] = not t.get("active", True)
+            current_active = _as_bool(t.get("active", True), True)
+            t["active"] = not current_active
             all_tasks[instrument] = inst_tasks
             auth.save_async_tasks(all_tasks)
             self._refresh_admin_health_after_change(user_info, perms)
@@ -5851,12 +5868,60 @@ def ariapp_api_admin_backups_test(self):
 
 #: Base group levels that get per-instrument variants
 _INSTRUMENT_GROUP_LEVELS = ["general", "monitor", "developer", "moderator"]
+_INSTRUMENT_YAML_DIR = (
+    PACKAGE_DIR / 'resources' / 'aprofile_instruments'
+)
+_INSTRUMENT_YAML_RE = re.compile(r'^[A-Za-z0-9_.-]+\.ya?ml$')
+
+
+def _list_instrument_yaml_files() -> List[str]:
+    """Return sorted instrument YAML basenames."""
+    if not _INSTRUMENT_YAML_DIR.is_dir():
+        return []
+    names: List[str] = []
+    for candidate in _INSTRUMENT_YAML_DIR.glob('*.yaml'):
+        if candidate.is_file():
+            names.append(candidate.name)
+    return sorted(names)
+
+
+def _resolve_instrument_yaml_path(name: str) -> Path:
+    """Resolve one instrument YAML path and guard against traversal."""
+    fname = str(name or '').strip()
+    if not _INSTRUMENT_YAML_RE.match(fname):
+        raise ValueError('Invalid YAML filename')
+    path = (_INSTRUMENT_YAML_DIR / fname).resolve()
+    base = _INSTRUMENT_YAML_DIR.resolve()
+    if not str(path).startswith(str(base) + os.sep):
+        raise ValueError('Invalid YAML filename')
+    if not path.is_file():
+        raise ValueError(f'YAML file not found: {fname}')
+    return path
+
+
+def _write_yaml_atomic(path: Path, payload: Any) -> None:
+    """Write YAML payload atomically."""
+    path.parent.mkdir(parents=True, exist_ok=True)
+    tmp_path = path.with_suffix(path.suffix + '.tmp')
+    with open(tmp_path, 'w', encoding='utf-8') as handle:
+        yaml.safe_dump(payload, handle, sort_keys=False)
+    os.replace(tmp_path, path)
+
+
+def _write_text_atomic(path: Path, text: str) -> None:
+    """Write text atomically while preserving formatting/comments."""
+    path.parent.mkdir(parents=True, exist_ok=True)
+    tmp_path = path.with_suffix(path.suffix + '.tmp')
+    with open(tmp_path, 'w', encoding='utf-8') as handle:
+        handle.write(text)
+    os.replace(tmp_path, path)
 
 
 def ariapp_build_admin_manage_instruments_context(self, perms):
     """Build context dict for the Manage Instruments admin page."""
     can_manage = "manage.instrument.super_admin" in (perms or set())
     can_add = "add.instrument" in (perms or set())
+    can_edit_instrument_yamls = can_add
     all_groups = permissions_mod.load_groups()
     profiles = auth.load_apero_profiles(hydrate=False)
     profile_instruments = (
@@ -5908,9 +5973,122 @@ def ariapp_build_admin_manage_instruments_context(self, perms):
     return {
         "instruments_data": instruments_data,
         "instrument_group_levels": _INSTRUMENT_GROUP_LEVELS,
+        "instrument_yaml_files": _list_instrument_yaml_files(),
+        "can_edit_instrument_yamls": can_edit_instrument_yamls,
         "can_manage": can_manage,
         "can_add": can_add,
     }
+
+
+def ariapp_api_manage_instruments_yaml_get(self):
+    """Return one instrument YAML file as text."""
+    user_info, cur_perms = self._require_admin_user()
+    if not user_info:
+        return jsonify(success=False, error='Unauthorized'), 401
+    if 'add.instrument' not in (cur_perms or set()):
+        return jsonify(
+            success=False, error='Insufficient permissions'
+        ), 403
+
+    name = str(request.args.get('name', '') or '').strip()
+    if not name:
+        return jsonify(success=False, error='name is required'), 400
+    try:
+        path = _resolve_instrument_yaml_path(name)
+        with open(path, 'r', encoding='utf-8') as handle:
+            text = handle.read()
+    except ValueError as exc:
+        return jsonify(success=False, error=str(exc)), 400
+    except Exception as exc:
+        return jsonify(
+            success=False,
+            error=f'Failed to read YAML: {exc}',
+        ), 500
+
+    return jsonify(success=True, name=name, yaml_text=text)
+
+
+def ariapp_api_manage_instruments_yaml_save(self):
+    """Save one or more instrument YAML files from editor text."""
+    user_info, cur_perms = self._require_admin_user()
+    if not user_info:
+        return jsonify(success=False, error='Unauthorized'), 401
+    if 'add.instrument' not in (cur_perms or set()):
+        return jsonify(
+            success=False, error='Insufficient permissions'
+        ), 403
+
+    body = request.get_json(silent=True) or {}
+    files_payload = body.get('files')
+    if not isinstance(files_payload, list):
+        name = body.get('name')
+        yaml_text = body.get('yaml_text')
+        files_payload = [dict(name=name, yaml_text=yaml_text)]
+
+    if len(files_payload) == 0:
+        return jsonify(success=False, error='No files to save'), 400
+
+    updates: List[Dict[str, Any]] = []
+    seen = set()
+    for row in files_payload:
+        if not isinstance(row, dict):
+            return jsonify(
+                success=False,
+                error='Each files[] entry must be an object',
+            ), 400
+        name = str(row.get('name', '') or '').strip()
+        if not name:
+            return jsonify(success=False, error='files[].name required'), 400
+        if name in seen:
+            return jsonify(
+                success=False,
+                error=f'Duplicate file in payload: {name}',
+            ), 400
+        seen.add(name)
+        text = row.get('yaml_text')
+        if text is None:
+            text = ''
+        text = str(text)
+        try:
+            path = _resolve_instrument_yaml_path(name)
+            loaded = yaml.safe_load(text)
+        except ValueError as exc:
+            return jsonify(success=False, error=str(exc)), 400
+        except yaml.YAMLError as exc:
+            return jsonify(
+                success=False,
+                error=f'YAML parse error in {name}: {exc}',
+            ), 400
+
+        if loaded is None:
+            loaded = {}
+        if not isinstance(loaded, dict):
+            return jsonify(
+                success=False,
+                error=(
+                    f'YAML top-level must be a mapping in {name}'
+                ),
+            ), 400
+        normalized_text = text
+        if not normalized_text.endswith('\n'):
+            normalized_text += '\n'
+        updates.append(
+            dict(name=name, path=path, text=normalized_text)
+        )
+
+    saved = []
+    try:
+        for item in updates:
+            _write_text_atomic(item['path'], item['text'])
+            saved.append(item['name'])
+    except Exception as exc:
+        return jsonify(
+            success=False,
+            error=f'Failed writing YAML: {exc}',
+            saved=saved,
+        ), 500
+
+    return jsonify(success=True, saved=saved)
 
 
 def ariapp_api_manage_instruments_groups_create(self):

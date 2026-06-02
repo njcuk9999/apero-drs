@@ -725,6 +725,10 @@
                         available in the data portal. Searches are
                         scoped to the profiles you have access to.
                     </p>
+                    <p class="at-muted-hint" style="margin-top:-0.35rem;">
+                        Note: this search covers science objects only;
+                        calibration targets are not resolved here.
+                    </p>
 
                     {# Sub-tabs: name / coords / date / advanced #}
                     <div class="ot-find-tabs" role="tablist"
@@ -896,16 +900,55 @@
                         </p>
                         <div class="ot-find-panel__grid">
                             <label class="ot-find-field">
+                                <span class="ot-find-field__label">Source</span>
+                                <select id="fo-adv-source"
+                                        class="ot-find-input">
+                                    <option value="target_info">
+                                        Target information
+                                    </option>
+                                    <option value="spectrum_info">
+                                        Spectrum information
+                                    </option>
+                                    <option value="header">
+                                        Header
+                                    </option>
+                                </select>
+                            </label>
+                            <label class="ot-find-field">
                                 <span class="ot-find-field__label">Property</span>
                                 <input id="fo-adv-property"
                                        class="ot-find-input" type="text"
+                                       list="fo-adv-property-list"
                                        placeholder="e.g. OBJNAME, RA_DEG, MAG">
+                                <datalist id="fo-adv-property-list"></datalist>
                             </label>
                             <label class="ot-find-field">
-                                <span class="ot-find-field__label">Value</span>
+                                <span class="ot-find-field__label">Value mode</span>
+                                <select id="fo-adv-match-mode"
+                                        class="ot-find-input">
+                                    <option value="value">Value</option>
+                                    <option value="between">Between</option>
+                                    <option value="greater_than">
+                                        Greater than
+                                    </option>
+                                    <option value="less_than">
+                                        Less than
+                                    </option>
+                                </select>
+                            </label>
+                            <label class="ot-find-field">
+                                <span class="ot-find-field__label">Value 1</span>
                                 <input id="fo-adv-value"
                                        class="ot-find-input" type="text"
                                        placeholder="e.g. 50 (numeric) or text">
+                            </label>
+                            <label class="ot-find-field"
+                                   id="fo-adv-value2-wrap"
+                                   style="display:none;">
+                                <span class="ot-find-field__label">Value 2</span>
+                                <input id="fo-adv-value2"
+                                       class="ot-find-input" type="text"
+                                       placeholder="Upper/lower bound">
                             </label>
                             <div class="ot-find-actions">
                                 <button id="fo-find-advanced"
