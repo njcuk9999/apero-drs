@@ -35,6 +35,8 @@ from apero_ri.application import (
 )
 from apero_ri.application import ariapp_impls as _impls
 from apero_ri.application import astrometrics_api_helpers
+from apero_ri.application import astrometrics_history
+from apero_ri.application import rejection_list_api_helpers
 from apero_ri.application import (
     async_task_helpers,
     async_tasks_api_helpers,
@@ -211,6 +213,10 @@ class ARIApp(Flask):
         return _impls.ariapp_get_instrument_run_ids(instrument)
 
     @staticmethod
+    def _get_instrument_run_id_pi_names(instrument):
+        return _impls.ariapp_get_instrument_run_id_pi_names(instrument)
+
+    @staticmethod
     def _is_all_science_group(name: str) -> bool:
         """Return True when a science-group name is the reserved All group."""
         return str(name or "").strip().lower() == "all"
@@ -229,16 +235,25 @@ class ARIApp(Flask):
     def _page_template_meta(self, template_id: str, **tokens) -> dict:
         return _impls.ariapp_page_template_meta(self, template_id, **tokens)
 
-    def _build_data_portal_sidebar_tree(self,
-                                        accessible_profiles: list,
-                                        active_page_id: str,
-                                        user_permissions,
-                                        user_info=None,
-                                        current_profile_id: Optional[str] = None,
-                                        objname: Optional[str] = None,
-                                        include_children: bool = True) -> list:
-        args = (accessible_profiles, active_page_id, user_permissions,
-                user_info, current_profile_id, objname, include_children)
+    def _build_data_portal_sidebar_tree(
+        self,
+        accessible_profiles: list,
+        active_page_id: str,
+        user_permissions,
+        user_info=None,
+        current_profile_id: Optional[str] = None,
+        objname: Optional[str] = None,
+        include_children: bool = True,
+    ) -> list:
+        args = (
+            accessible_profiles,
+            active_page_id,
+            user_permissions,
+            user_info,
+            current_profile_id,
+            objname,
+            include_children,
+        )
         return _impls.ariapp_build_data_portal_sidebar_tree(self, *args)
 
     def _build_ri_context(self, user_info, user_permissions):
@@ -304,6 +319,12 @@ class ARIApp(Flask):
 
     def _api_manage_instruments_rename(self):
         return _impls.ariapp_api_manage_instruments_rename(self)
+
+    def _api_manage_instruments_yaml_get(self):
+        return _impls.ariapp_api_manage_instruments_yaml_get(self)
+
+    def _api_manage_instruments_yaml_save(self):
+        return _impls.ariapp_api_manage_instruments_yaml_save(self)
 
     # -----------------------------------------------------------------
     # Vault API
@@ -584,6 +605,34 @@ class ARIApp(Flask):
             self, **kwargs
         )
 
+    def _ri_object_group_summary_view(
+        self,
+        profile_id,
+        group_name,
+    ):
+        kwargs = dict(
+            profile_id=profile_id,
+            group_name=group_name,
+        )
+        return data_portal_view_helpers.ri_object_group_summary_view(
+            self,
+            **kwargs,
+        )
+
+    def _ri_favourites_summary_view(
+        self,
+        profile_id,
+        section_name,
+    ):
+        kwargs = dict(
+            profile_id=profile_id,
+            section_name=section_name,
+        )
+        return data_portal_view_helpers.ri_favourites_summary_view(
+            self,
+            **kwargs,
+        )
+
     def _api_object_comments_list(self):
         return object_comments_api_helpers.api_object_comments_list(
             self
@@ -656,6 +705,54 @@ class ARIApp(Flask):
             object_groups_api_helpers
             .api_object_groups_remove_object(self)
         )
+
+    def _api_object_groups_summary_config(self):
+        return (
+            object_groups_api_helpers
+            .api_object_groups_summary_config(self)
+        )
+
+    def _api_object_groups_summary_table(self):
+        return (
+            object_groups_api_helpers
+            .api_object_groups_summary_table(self)
+        )
+
+    def _api_object_groups_summary_export(self):
+        return (
+            object_groups_api_helpers
+            .api_object_groups_summary_export(self)
+        )
+
+    def _api_object_groups_summary_custom_test(self):
+        return (
+            object_groups_api_helpers
+            .api_object_groups_summary_custom_test(self)
+        )
+
+    def _api_object_groups_allowed_expressions(self):
+        return (
+            object_groups_api_helpers
+            .api_object_groups_allowed_expressions(self)
+        )
+
+    def _api_object_groups_admin_custom_columns(self):
+        return (
+            object_groups_api_helpers
+            .api_object_groups_admin_custom_columns(self)
+        )
+
+    def _api_object_groups_admin_custom_test(self):
+        return (
+            object_groups_api_helpers
+            .api_object_groups_admin_custom_test(self)
+        )
+
+    def _api_clocks_get(self):
+        return _impls.ariapp_api_clocks_get(self)
+
+    def _api_admin_clocks(self):
+        return _impls.ariapp_api_admin_clocks(self)
 
     def _api_ri_profile_health(self):
         return data_portal_api_helpers.api_ri_profile_health(self)
@@ -761,6 +858,9 @@ class ARIApp(Flask):
         return user_account_api_helpers.api_user_account_confirm_primary_email(
             self
         )
+
+    def _api_user_data_access_request(self):
+        return user_context_helpers.api_user_data_access_request(self)
 
     @staticmethod
     def _normalize_pinned_pages(value) -> List[dict]:
@@ -877,6 +977,9 @@ class ARIApp(Flask):
     def _doc_edit_view(self, page_ref: str):
         return doc_views_helpers.doc_edit_view(self, page_ref)
 
+    def _doc_dynamic_view(self, page_ref: str):
+        return doc_views_helpers.doc_dynamic_view(self, page_ref)
+
     def _doc_save_view(self, page_ref: str):
         return _impls.ariapp_doc_save_view(self, page_ref)
 
@@ -937,9 +1040,58 @@ class ARIApp(Flask):
         return (astrometrics_api_helpers
                 .api_astrometrics_add_rejected(self))
 
-    def _api_astrometrics_add_manual(self):
+    def _api_astrometrics_update_rejected(self):
         return (astrometrics_api_helpers
-                .api_astrometrics_add_manual(self))
+                .api_astrometrics_update_rejected(self))
+
+    def _api_astrometrics_delete_rejected(self):
+        return (astrometrics_api_helpers
+                .api_astrometrics_delete_rejected(self))
+
+    def _api_astrometrics_add_manual(self):
+        try:
+            return (astrometrics_api_helpers
+                    .api_astrometrics_add_manual(self))
+        except Exception as exc:  # noqa: BLE001
+            import traceback as _tb
+            from flask import jsonify as _jsonify
+            tb = _tb.format_exc()
+            try:
+                from pathlib import Path as _P
+                base = _P(self.args.data_dir
+                          or str(_P.home() / ".ari"))
+                logf = base / "apero_ri_errors.log"
+                with logf.open("a", encoding="utf-8") as fp:
+                    fp.write("\n=== add-manual error ===\n")
+                    fp.write(tb)
+            except Exception:  # noqa: BLE001
+                pass
+            try:
+                self.log.error(
+                    "add-manual unhandled: %s\n%s", exc, tb)
+            except Exception:  # noqa: BLE001
+                pass
+            return _jsonify(
+                success=False,
+                error="Server exception: {0}: {1}".format(
+                    type(exc).__name__, exc),
+            ), 500
+
+    def _api_astrometrics_recompute_manual(self):
+        return (astrometrics_api_helpers
+                .api_astrometrics_recompute_manual(self))
+
+    def _api_astrometrics_lock_acquire(self):
+        return (astrometrics_api_helpers
+                .api_astrometrics_lock_acquire(self))
+
+    def _api_astrometrics_lock_heartbeat(self):
+        return (astrometrics_api_helpers
+                .api_astrometrics_lock_heartbeat(self))
+
+    def _api_astrometrics_lock_release(self):
+        return (astrometrics_api_helpers
+                .api_astrometrics_lock_release(self))
 
     def _api_astrometrics_update_field(self):
         return astrometrics_api_helpers.api_astrometrics_update_field(
@@ -973,6 +1125,78 @@ class ARIApp(Flask):
             astrometrics_api_helpers
             .api_astrometrics_resolve_online_by_coords(self))
 
+    # ----- astrometrics edit history -----
+    def _api_astrometrics_history_list(self):
+        return astrometrics_history.api_astrometrics_history_list(
+            self)
+
+    def _api_astrometrics_history_get(self):
+        return astrometrics_history.api_astrometrics_history_get(
+            self)
+
+    def _api_astrometrics_history_delete(self):
+        return astrometrics_history.api_astrometrics_history_delete(
+            self)
+
+    def _api_astrometrics_history_clear(self):
+        return astrometrics_history.api_astrometrics_history_clear(
+            self)
+
+    def _api_rejection_list_list(self):
+        return rejection_list_api_helpers.api_rejection_list_list(
+            self
+        )
+
+    def _api_rejection_list_add(self):
+        return rejection_list_api_helpers.api_rejection_list_add(
+            self
+        )
+
+    def _api_rejection_list_update(self):
+        return rejection_list_api_helpers.api_rejection_list_update(
+            self
+        )
+
+    def _api_rejection_list_delete(self):
+        return rejection_list_api_helpers.api_rejection_list_delete(
+            self
+        )
+
+    def _api_rejection_list_upload(self):
+        return rejection_list_api_helpers.api_rejection_list_upload(
+            self
+        )
+
+    def _api_rejection_history_list(self):
+        return rejection_list_api_helpers.api_rejection_history_list(
+            self
+        )
+
+    def _api_rejection_history_get(self):
+        return rejection_list_api_helpers.api_rejection_history_get(
+            self
+        )
+
+    def _api_rejection_history_restore(self):
+        return rejection_list_api_helpers.api_rejection_history_restore(
+            self
+        )
+
+    def _api_rejection_history_resolve(self):
+        return rejection_list_api_helpers.api_rejection_history_resolve(
+            self
+        )
+
+    def _api_rejection_history_delete(self):
+        return rejection_list_api_helpers.api_rejection_history_delete(
+            self
+        )
+
+    def _api_rejection_history_clear(self):
+        return rejection_list_api_helpers.api_rejection_history_clear(
+            self
+        )
+
     # -----------------------------------------------------------------
     # Issues subsystem
     # -----------------------------------------------------------------
@@ -1000,6 +1224,90 @@ class ARIApp(Flask):
     def _api_issues_edit(self):
         from apero_ri.application import issues_api_helpers as ih
         return ih.api_issues_edit(self)
+
+    def _api_known_errors_list(self):
+        from apero_ri.application import known_errors_api_helpers as keh
+        return keh.api_known_errors_list(self)
+
+    def _api_known_errors_create(self):
+        from apero_ri.application import known_errors_api_helpers as keh
+        return keh.api_known_errors_create(self)
+
+    def _api_known_errors_update(self):
+        from apero_ri.application import known_errors_api_helpers as keh
+        return keh.api_known_errors_update(self)
+
+    def _api_known_errors_delete(self):
+        from apero_ri.application import known_errors_api_helpers as keh
+        return keh.api_known_errors_delete(self)
+
+    # -----------------------------------------------------------------
+    # Monitor schedule subsystem
+    # -----------------------------------------------------------------
+
+    def _api_schedule_meta(self):
+        from apero_ri.application import schedule_api_helpers as sh
+        return sh.api_schedule_meta(self)
+
+    def _api_schedule_entries_list(self):
+        from apero_ri.application import schedule_api_helpers as sh
+        return sh.api_schedule_entries_list(self)
+
+    def _api_schedule_entries_add(self):
+        from apero_ri.application import schedule_api_helpers as sh
+        return sh.api_schedule_entries_add(self)
+
+    def _api_schedule_entries_edit(self):
+        from apero_ri.application import schedule_api_helpers as sh
+        return sh.api_schedule_entries_edit(self)
+
+    def _api_schedule_entries_delete(self):
+        from apero_ri.application import schedule_api_helpers as sh
+        return sh.api_schedule_entries_delete(self)
+
+    def _api_schedule_link_user_calendar(self):
+        from apero_ri.application import schedule_api_helpers as sh
+        return sh.api_schedule_link_user_calendar(self)
+
+    def _api_schedule_tasks_upsert(self):
+        from apero_ri.application import schedule_api_helpers as sh
+        return sh.api_schedule_tasks_upsert(self)
+
+    def _api_schedule_tasks_rename(self):
+        from apero_ri.application import schedule_api_helpers as sh
+        return sh.api_schedule_tasks_rename(self)
+
+    def _api_schedule_tasks_set_active(self):
+        from apero_ri.application import schedule_api_helpers as sh
+        return sh.api_schedule_tasks_set_active(self)
+
+    def _api_schedule_calendar_week(self):
+        from apero_ri.application import schedule_api_helpers as sh
+        return sh.api_schedule_calendar_week(self)
+
+    def _api_schedule_calendar_month(self):
+        from apero_ri.application import schedule_api_helpers as sh
+        return sh.api_schedule_calendar_month(self)
+
+    def _api_schedule_calendar_weeks(self):
+        from apero_ri.application import schedule_api_helpers as sh
+        return sh.api_schedule_calendar_weeks(self)
+
+    def _api_schedule_stats(self):
+        from apero_ri.application import schedule_api_helpers as sh
+        return sh.api_schedule_stats(self)
+
+    def _api_schedule_stats_visibility_set(self):
+        from apero_ri.application import schedule_api_helpers as sh
+        return sh.api_schedule_stats_visibility_set(self)
+
+    def _api_schedule_instrument_setting_set(self):
+        from apero_ri.application import schedule_api_helpers as sh
+        return sh.api_schedule_instrument_setting_set(self)
+
+    def _api_schedule_entries_bulk_add(self):
+        from apero_ri.application import schedule_api_helpers as sh
+        return sh.api_schedule_entries_bulk_add(self)
 
     # -----------------------------------------------------------------
     # Notifications + messaging subsystem
@@ -1044,6 +1352,18 @@ class ARIApp(Flask):
         from apero_ri.application import notifications_api_helpers as nh
         return nh.api_messages_delete(self, mid)
 
+    def _api_messages_mark_unread(self, mid):
+        from apero_ri.application import notifications_api_helpers as nh
+        return nh.api_messages_mark_unread(self, mid)
+
+    def _api_messages_mark_all_read(self):
+        from apero_ri.application import notifications_api_helpers as nh
+        return nh.api_messages_mark_all_read(self)
+
+    def _api_messages_delete_all(self):
+        from apero_ri.application import notifications_api_helpers as nh
+        return nh.api_messages_delete_all(self)
+
     def _api_messages_flag_as_issue(self, mid):
         from apero_ri.application import notifications_api_helpers as nh
         return nh.api_messages_flag_as_issue(self, mid)
@@ -1056,6 +1376,10 @@ class ARIApp(Flask):
         from apero_ri.application import user_portal_view_helpers as uvh
         return uvh.user_portal_users_view(self)
 
+    def _user_portal_user_card_view(self, username):
+        from apero_ri.application import user_portal_view_helpers as uvh
+        return uvh.user_portal_user_card_view(self, username)
+
     def _user_portal_messages_view(self):
         from apero_ri.application import user_portal_view_helpers as uvh
         return uvh.user_portal_messages_view(self)
@@ -1064,11 +1388,211 @@ class ARIApp(Flask):
         from apero_ri.application import user_portal_view_helpers as uvh
         return uvh.user_portal_notifications_view(self)
 
+    def _monitor_portal_index_view(self):
+        from apero_ri.application import monitor_view_helpers as mvh
+        return mvh.monitor_portal_index_view(self)
+
     def _monitor_issues_view(self):
         from apero_ri.application import monitor_view_helpers as mvh
         return mvh.monitor_issues_view(self)
 
-    def _ri_obs_table_view(self, profile_id):
+    def _monitor_known_errors_view(self):
+        from apero_ri.application import monitor_view_helpers as mvh
+        return mvh.monitor_known_errors_view(self)
+
+    def _monitor_status_view(self):
+        from apero_ri.application import monitor_view_helpers as mvh
+        return mvh.monitor_status_view(self)
+
+    def _monitor_status_alliance_view(self):
+        from apero_ri.application import monitor_view_helpers as mvh
+        return mvh.monitor_status_alliance_view(self)
+
+    def _monitor_status_canfar_view(self):
+        from apero_ri.application import monitor_view_helpers as mvh
+        return mvh.monitor_status_canfar_view(self)
+
+    def _monitor_schedule_view(self):
+        from apero_ri.application import monitor_view_helpers as mvh
+        return mvh.monitor_schedule_view(self)
+
+    def _monitor_processing_logs_view(self):
+        from apero_ri.application import monitor_view_helpers as mvh
+        return mvh.monitor_processing_logs_view(self)
+
+    def _monitor_processing_logs_profile_view(
+        self, profile_id
+    ):
+        from apero_ri.application import monitor_view_helpers as mvh
+        return mvh.monitor_processing_logs_profile_view(
+            self, profile_id
+        )
+
+    def _monitor_processing_logs_pid_view(
+        self, profile_id, pid
+    ):
+        from apero_ri.application import monitor_view_helpers as mvh
+        return mvh.monitor_processing_logs_pid_view(
+            self, profile_id, pid
+        )
+
+    def _monitor_apero_checks_view(self):
+        from apero_ri.application import monitor_view_helpers as mvh
+        return mvh.monitor_apero_checks_view(self)
+
+    def _monitor_apero_checks_profile_view(self, profile_id):
+        from apero_ri.application import monitor_view_helpers as mvh
+        return mvh.monitor_apero_checks_profile_view(self, profile_id)
+
+    def _monitor_apero_checks_obsdir_view(self, profile_id, obsdir):
+        from apero_ri.application import monitor_view_helpers as mvh
+        return mvh.monitor_apero_checks_obsdir_view(
+            self, profile_id, obsdir
+        )
+
+    def _monitor_apero_checks_check_view(
+        self,
+        profile_id,
+        obsdir,
+        check_key,
+    ):
+        from apero_ri.application import monitor_view_helpers as mvh
+        args = [self, profile_id, obsdir, check_key]
+        return mvh.monitor_apero_checks_check_view(*args)
+
+    def _monitor_apero_checks_queue_view(self, profile_id):
+        from apero_ri.application import monitor_view_helpers as mvh
+        return mvh.monitor_apero_checks_queue_view(self, profile_id)
+
+    def _monitor_apero_checks_stats_view(self, profile_id):
+        from apero_ri.application import (
+            apero_checks_stats_helpers as acsh,
+        )
+        return acsh.monitor_apero_checks_stats_view(
+            self, profile_id
+        )
+
+    def _api_apero_checks_stats(self, profile_id):
+        from apero_ri.application import (
+            apero_checks_stats_helpers as acsh,
+        )
+        return acsh.api_apero_checks_stats(self, profile_id)
+
+    def _api_processing_logs(self):
+        from apero_ri.application import (
+            processing_logs_api_helpers as plh,
+        )
+        return plh.api_processing_logs(self)
+
+    def _api_processing_logs_pid(self):
+        from apero_ri.application import (
+            processing_logs_api_helpers as plh,
+        )
+        return plh.api_processing_logs_pid(self)
+
+    def _api_processing_log_file(self):
+        from apero_ri.application import (
+            processing_logs_api_helpers as plh,
+        )
+        return plh.api_processing_log_file(self)
+
+    def _api_apero_checks_update_failure(self):
+        from apero_ri.application import (
+            apero_checks_api_helpers as ach,
+        )
+        return ach.api_apero_checks_update_failure(self)
+
+    def _api_apero_checks_create_issue(self):
+        from apero_ri.application import (
+            apero_checks_api_helpers as ach,
+        )
+        return ach.api_apero_checks_create_issue(self)
+
+    def _api_apero_checks_config_save(self):
+        from apero_ri.application import (
+            apero_checks_api_helpers as ach,
+        )
+        return ach.api_apero_checks_config_save(self)
+
+    def _api_apero_checks_browse_dirs(self):
+        from apero_ri.application import (
+            apero_checks_api_helpers as ach,
+        )
+        return ach.api_apero_checks_browse_dirs(self)
+
+    def _api_apero_checks_profile_page(self, profile_id):
+        from apero_ri.application import (
+            apero_checks_api_helpers as ach,
+        )
+        return ach.api_apero_checks_profile_page(self, profile_id)
+
+    def _api_apero_checks_policy_sections(self):
+        from apero_ri.application import (
+            apero_checks_api_helpers as ach,
+        )
+        return ach.api_apero_checks_policy_sections(self)
+
+    def _api_apero_checks_view_yaml(self):
+        from apero_ri.application import (
+            apero_checks_api_helpers as ach,
+        )
+        return ach.api_apero_checks_view_yaml(self)
+
+    def _api_apero_checks_rerun_night(self):
+        from apero_ri.application import (
+            apero_checks_api_helpers as ach,
+        )
+        return ach.api_apero_checks_rerun_night(self)
+
+    def _api_apero_checks_rerun_single_check(self):
+        from apero_ri.application import (
+            apero_checks_api_helpers as ach,
+        )
+        return ach.api_apero_checks_rerun_single_check(self)
+
+    def _api_apero_checks_clean_reset_profile(self):
+        from apero_ri.application import (
+            apero_checks_api_helpers as ach,
+        )
+        return ach.api_apero_checks_clean_reset_profile(self)
+
+    def _api_apero_checks_delete_obsdir(self):
+        from apero_ri.application import (
+            apero_checks_api_helpers as ach,
+        )
+        return ach.api_apero_checks_delete_obsdir(self)
+
+    def _api_apero_checks_delete_test_from_yamls(self):
+        from apero_ri.application import (
+            apero_checks_api_helpers as ach,
+        )
+        return ach.api_apero_checks_delete_test_from_yamls(self)
+
+    def _api_apero_checks_queue_status(self, profile_id):
+        from apero_ri.application import (
+            apero_checks_api_helpers as ach,
+        )
+        return ach.api_apero_checks_queue_status(self, profile_id)
+
+    def _api_apero_checks_queue_cancel_task(self, profile_id):
+        from apero_ri.application import (
+            apero_checks_api_helpers as ach,
+        )
+        return ach.api_apero_checks_queue_cancel_task(self, profile_id)
+
+    def _api_apero_checks_queue_kill_profile(self, profile_id):
+        from apero_ri.application import (
+            apero_checks_api_helpers as ach,
+        )
+        return ach.api_apero_checks_queue_kill_profile(self, profile_id)
+
+    def _api_apero_checks_queue_clear_history(self, profile_id):
+        from apero_ri.application import (
+            apero_checks_api_helpers as ach,
+        )
+        return ach.api_apero_checks_queue_clear_history(self, profile_id)
+
+
         kwargs = dict(profile_id=profile_id)
         return data_portal_view_helpers.ri_obs_table_view(self, **kwargs)
 
@@ -1078,6 +1602,9 @@ class ARIApp(Flask):
 
     def _api_object_page(self):
         return data_portal_api_helpers.api_object_page(self)
+
+    def _api_object_rejection_issue(self):
+        return data_portal_api_helpers.api_object_rejection_issue(self)
 
     @staticmethod
     def _rid_cache_tag(accessible_run_ids):
@@ -1293,6 +1820,12 @@ class ARIApp(Flask):
     def _api_file_browser(self):
         return query_db_api_helpers.api_file_browser(self)
 
+    def _api_file_header(self):
+        return query_db_api_helpers.api_file_header(self)
+
+    def _api_file_header_download(self):
+        return query_db_api_helpers.api_file_header_download(self)
+
     def _api_obs_table(self):
         return data_portal_api_helpers.api_obs_table(self)
 
@@ -1392,11 +1925,26 @@ class ARIApp(Flask):
     def _api_sci_groups_save(self):
         return sci_groups_api_helpers.api_sci_groups_save(self)
 
+    def _api_sci_groups_save_all(self):
+        return sci_groups_api_helpers.api_sci_groups_save_all(self)
+
     def _api_sci_groups_create(self):
         return sci_groups_api_helpers.api_sci_groups_create(self)
 
     def _api_sci_groups_delete(self):
         return sci_groups_api_helpers.api_sci_groups_delete(self)
+
+    def _api_sci_groups_export(self):
+        return sci_groups_api_helpers.api_sci_groups_export(self)
+
+    def _api_sci_groups_import(self):
+        return sci_groups_api_helpers.api_sci_groups_import(self)
+
+    def _api_sci_groups_io_export(self):
+        return sci_groups_api_helpers.api_sci_groups_io_export(self)
+
+    def _api_sci_groups_io_import(self):
+        return sci_groups_api_helpers.api_sci_groups_io_import(self)
 
     # -----------------------------------------------------------------
     # APERO profiles API
@@ -1459,7 +2007,11 @@ class ARIApp(Flask):
         return apero_profiles_api_helpers.profile_db_params(self, profile_cfg)
 
     def _resolve_db_payload_for_test(self, data: dict) -> dict:
-        return apero_profiles_api_helpers.resolve_db_payload_for_test(self, data)
+        return (
+            apero_profiles_api_helpers.resolve_db_payload_for_test(
+                self, data
+            )
+        )
 
     def _resolve_profile_db_test_target(self, mode: str, host: str,  port: str,
                                         username: str, password: str, 
@@ -1526,6 +2078,11 @@ class ARIApp(Flask):
 
     def _api_apero_profiles_update_groups(self):
         return _impls.ariapp_api_apero_profiles_update_groups(self)
+
+    def _api_apero_profiles_toggle_disabled(self):
+        return apero_profiles_api_helpers.api_apero_profiles_toggle_disabled(
+            self
+        )
 
     def _api_apero_profiles_test_db(self):
         return _impls.ariapp_api_apero_profiles_test_db(self)

@@ -40,6 +40,7 @@ Created on 2026-04-22
 @author: cook
 """
 from typing import Any, Callable, Dict, List, Optional
+from urllib.parse import quote
 
 from apero_ri.science import stellar_params as sp
 from apero_ri.components.target_info_citations import CITATIONS
@@ -425,12 +426,37 @@ def _build_status(entry: Dict[str, Any],
                      editable=True, flaggable=False))
     rows.append(_row(entry, 'FIRST_UPDATED', 'First updated',
                      editable=False, flaggable=False))
-    rows.append(_row(entry, 'FIRST_AUTHOR', 'First author',
-                     editable=False, flaggable=False))
+    first_author_row = _row(entry, 'FIRST_AUTHOR', 'First author',
+                            editable=False, flaggable=False)
+    first_author = str(entry.get('FIRST_AUTHOR') or '').strip()
+    if first_author:
+        first_author_row['value_url'] = (
+            '/user_portal/users/' + quote(first_author, safe='')
+        )
+    rows.append(first_author_row)
     rows.append(_row(entry, 'LAST_EDIT', 'Last edit',
                      editable=False, flaggable=False))
-    rows.append(_row(entry, 'LAST_AUTHOR', 'Last author',
-                     editable=False, flaggable=False))
+    last_author_row = _row(entry, 'LAST_AUTHOR', 'Last author',
+                           editable=False, flaggable=False)
+    last_author = str(entry.get('LAST_AUTHOR') or '').strip()
+    if last_author:
+        last_author_row['value_url'] = (
+            '/user_portal/users/' + quote(last_author, safe='')
+        )
+    rows.append(last_author_row)
+    verifier = str(entry.get('VERIFIER') or '').strip()
+    verifier_row = _row_literal(
+        'Verifier',
+        verifier or 'None',
+        key='VERIFIER',
+        editable=False,
+        flaggable=False,
+    )
+    if verifier and verifier.lower() not in ('none', 'null'):
+        verifier_row['value_url'] = (
+            '/user_portal/users/' + quote(verifier, safe='')
+        )
+    rows.append(verifier_row)
     return rows
 
 
@@ -584,6 +610,126 @@ def list_sections() -> List[Dict[str, Any]]:
             meta['chart_id'] = sec.get('chart_id')
         out.append(meta)
     return out
+
+
+def _summary_property_token(row: Dict[str, Any]) -> str:
+    """Return the stable property token for one target-info row."""
+    key = str(row.get('key') or '').strip()
+    if key:
+        return key
+    return str(row.get('label') or '').strip()
+
+
+def _summary_property_id(
+    section_id: str,
+    row: Dict[str, Any],
+) -> str:
+    """Return the persisted property ID for one target-info row."""
+    return '{0}::{1}'.format(
+        section_id,
+        _summary_property_token(row),
+    )
+
+
+def _skip_summary_property(row: Dict[str, Any]) -> bool:
+    """Return True for rows that should not be selectable."""
+    token = _summary_property_token(row).upper()
+    label = str(row.get('label') or '').strip().upper()
+    return token in {'OBJNAME', 'APERO_NAME'} or label == 'APERO NAME'
+
+
+def build_target_info_property_catalog() -> List[Dict[str, Any]]:
+    """Return selectable summary-table properties from target info."""
+    obj_row = dict(
+        OBJNAME='',
+        PP_VERSION='',
+        PP_PI_NAME='',
+        PP_PROG_ID='',
+    )
+    catalog: List[Dict[str, Any]] = []
+    seen = set()
+
+    for section in TARGET_INFO_SECTIONS:
+        if section.get('kind') != 'data':
+            continue
+        build = section.get('build')
+        if build is None:
+            continue
+        try:
+            rows = build(dict(), obj_row)
+        except Exception:  # noqa: BLE001
+            rows = []
+        for row in rows:
+            if not isinstance(row, dict):
+                continue
+            prop_id = _summary_property_id(section['id'], row)
+            if not _summary_property_token(row):
+                continue
+            if _skip_summary_property(row):
+                continue
+            if prop_id in seen:
+                continue
+            seen.add(prop_id)
+            catalog.append(dict(
+                id=prop_id,
+                label=str(
+                    row.get('label')
+                    or _summary_property_token(row)
+                ),
+                token=_summary_property_token(row),
+                section_id=section['id'],
+                section_title=section['title'],
+                section_description=(
+                    section.get('description') or ''
+                ),
+                units=str(row.get('units') or ''),
+            ))
+
+    return catalog
+
+
+def flatten_target_info_properties(
+    entry: Dict[str, Any],
+    obj_row: Optional[Dict[str, Any]] = None,
+) -> Dict[str, Dict[str, Any]]:
+    """Return summary-property values keyed by property ID."""
+    if not isinstance(entry, dict):
+        entry = {}
+    if obj_row is not None and not isinstance(obj_row, dict):
+        obj_row = None
+
+    values: Dict[str, Dict[str, Any]] = dict()
+    for section in TARGET_INFO_SECTIONS:
+        if section.get('kind') != 'data':
+            continue
+        build = section.get('build')
+        if build is None:
+            continue
+        try:
+            rows = build(entry, obj_row)
+        except Exception:  # noqa: BLE001
+            rows = []
+        for row in rows:
+            if not isinstance(row, dict):
+                continue
+            if not _summary_property_token(row):
+                continue
+            if _skip_summary_property(row):
+                continue
+            prop_id = _summary_property_id(section['id'], row)
+            values[prop_id] = dict(
+                id=prop_id,
+                label=str(
+                    row.get('label')
+                    or _summary_property_token(row)
+                ),
+                value=row.get('value'),
+                units=str(row.get('units') or ''),
+                section_id=section['id'],
+                section_title=section['title'],
+            )
+
+    return values
 
 
 def build_target_info_payload(

@@ -1,0 +1,384 @@
+{% extends "general/sidebar_base.html" %}
+{% block title %}APERO RI – Schedule{% endblock %}
+
+{% block body_class %}ari-has-sidebar ari-schedule-page{% endblock %}
+
+{% block extra_head %}
+{{ super() }}
+<link rel="stylesheet"
+    href="{{ url_for('static', filename='css/monitor_schedule.css') }}?v=20260512a">
+<script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+{% endblock %}
+
+{% block doc_content %}
+<div class="ms-head">
+    <div>
+        <h1 class="ms-title">
+            <i class="{{ page_icon }}"></i> {{ page_label }}
+        </h1>
+        <p class="ms-sub">
+            Instrument monitoring schedule with entries, weekly calendar,
+            per-user stats and interactive graphs.
+        </p>
+    </div>
+</div>
+
+<div id="ms-root" class="ms-root"
+     data-instruments='{{ monitor_instruments|tojson }}'>
+
+    <div id="ms-instruments" class="ms-tabs" aria-label="Instruments"></div>
+
+    <div id="ms-subtabs" class="ms-subtabs" aria-label="Schedule sections">
+        <button class="ms-subtab ms-subtab--active" data-ms-tab="entry"
+                type="button">Entry</button>
+        <button class="ms-subtab" data-ms-tab="calendar"
+                type="button">Calendar</button>
+        <button class="ms-subtab" data-ms-tab="stats"
+                type="button">Stats</button>
+        <button class="ms-subtab" data-ms-tab="graphs"
+                type="button">Graphs</button>
+    </div>
+
+    <div id="ms-status" class="ms-status"></div>
+
+    <section id="ms-tab-entry" class="ms-pane ms-pane--active"
+             data-ms-pane="entry">
+        <div class="ms-card">
+            <div class="ms-card-head ms-entries-head">
+                <span>Entries</span>
+                <div class="ms-inline-actions">
+                    <label>Show
+                        <select id="ms-entry-page-size">
+                            <option value="10" selected>10</option>
+                            <option value="50">50</option>
+                            <option value="100">100</option>
+                        </select>
+                    </label>
+                    <label>Assignment
+                        <select id="ms-assignment-filter">
+                            <option value="all" selected>Show all</option>
+                            <option value="assigned">Show assigned</option>
+                            <option value="unassigned">Show unassigned</option>
+                        </select>
+                    </label>
+                    <button id="ms-show-no-hours"
+                            class="ari-btn ms-filter-toggle"
+                            type="button">Show no hours</button>
+                    <button id="ms-bulk-add-btn"
+                            class="ari-btn ari-btn--alt"
+                            type="button" hidden>Bulk add</button>
+                    <button id="ms-manage-tasks" class="ari-btn ari-btn--alt"
+                            type="button" hidden>Manage tasks</button>
+                </div>
+            </div>
+            <div class="ms-table-wrap">
+                <table class="ms-table" id="ms-entry-table">
+                    <thead>
+                    <tr>
+                        <th>Task</th>
+                        <th>Username</th>
+                        <th>Who</th>
+                        <th>
+                            <button id="ms-sort-date-start"
+                                    class="ms-sort-btn"
+                                    type="button">
+                                Date start
+                                <span id="ms-sort-date-start-icon">▼</span>
+                            </button>
+                        </th>
+                        <th>Date end</th>
+                        <th>Hours</th>
+                        <th>Comment</th>
+                        <th>Actions</th>
+                    </tr>
+                    <tr class="ms-filter-row">
+                        <th><input data-f="task" type="text"></th>
+                        <th><input data-f="username" type="text"></th>
+                        <th><input data-f="who" type="text"></th>
+                        <th><input data-f="date_start" type="text"></th>
+                        <th><input data-f="date_end" type="text"></th>
+                        <th><input data-f="hours" type="text"></th>
+                        <th><input data-f="comment" type="text"></th>
+                        <th><button id="ms-entry-refresh" class="ari-btn"
+                                    type="button">Refresh</button></th>
+                    </tr>
+                    </thead>
+                    <tbody id="ms-entry-tbody"></tbody>
+                </table>
+            </div>
+            <div class="ms-pagination">
+                <button id="ms-entry-prev" class="ari-btn" type="button">
+                    Previous
+                </button>
+                <span id="ms-entry-page-info"></span>
+                <button id="ms-entry-next" class="ari-btn" type="button">
+                    Next
+                </button>
+            </div>
+        </div>
+    </section>
+
+    <section id="ms-tab-calendar" class="ms-pane" data-ms-pane="calendar">
+        <div class="ms-card">
+            <div class="ms-calendar-head">
+                <button id="ms-week-prev" class="ari-btn"
+                        type="button">Previous 13 weeks</button>
+                <div id="ms-week-label" class="ms-week-label"></div>
+                <button id="ms-week-next" class="ari-btn"
+                        type="button">Next 13 weeks</button>
+            </div>
+            <div id="ms-calendar-grid" class="ms-calendar-grid"></div>
+        </div>
+    </section>
+
+    <section id="ms-tab-stats" class="ms-pane" data-ms-pane="stats">
+        <div class="ms-card">
+            <div class="ms-form-grid ms-stats-filters">
+                <label>Since
+                    <input id="ms-stats-since" type="date">
+                </label>
+                <label>Until
+                    <input id="ms-stats-until" type="date">
+                </label>
+                <label>Task
+                    <select id="ms-stats-task"></select>
+                </label>
+                <div class="ms-inline-actions">
+                    <button id="ms-stats-refresh" class="ari-btn"
+                            type="button">Refresh</button>
+                    <button id="ms-stats-manage-users"
+                            class="ari-btn ari-btn--alt"
+                            type="button" hidden>Manage users</button>
+                </div>
+            </div>
+
+            <div class="ms-kpis">
+                <div class="ms-kpi">
+                    <div class="ms-kpi-label">Avg hours/day completed</div>
+                    <div id="ms-kpi-hd" class="ms-kpi-value">0.00</div>
+                </div>
+                <div class="ms-kpi">
+                    <div class="ms-kpi-label">Avg hours/week completed</div>
+                    <div id="ms-kpi-hw" class="ms-kpi-value">0.00</div>
+                </div>
+            </div>
+
+            <div class="ms-table-wrap">
+                <table class="ms-table" id="ms-stats-table">
+                    <thead>
+                    <tr>
+                        <th>Username</th>
+                        <th>Who</th>
+                        <th>Days completed</th>
+                        <th>Days proposed</th>
+                        <th>Total days</th>
+                        <th>Hours estimated</th>
+                    </tr>
+                    </thead>
+                    <tbody id="ms-stats-tbody"></tbody>
+                </table>
+            </div>
+        </div>
+    </section>
+
+    <section id="ms-tab-graphs" class="ms-pane" data-ms-pane="graphs">
+        <div class="ms-card">
+            <div class="ms-card-head">Total days by person</div>
+            <div id="ms-graph-days" class="ms-graph"></div>
+        </div>
+        <div class="ms-card">
+            <div class="ms-card-head">Hours by person</div>
+            <div id="ms-graph-hours" class="ms-graph"></div>
+        </div>
+    </section>
+
+    <div id="ms-task-overlay" class="ms-overlay" hidden>
+        <div class="ms-overlay-backdrop" data-close="tasks"></div>
+        <div class="ms-overlay-panel">
+            <div class="ms-overlay-head">
+                <h3>Manage tasks</h3>
+                <button data-close="tasks" type="button">X</button>
+            </div>
+            <div class="ms-overlay-body">
+                <div id="ms-task-scope-label" class="ms-sub"></div>
+                <div class="ms-form-grid ms-task-head-grid">
+                    <label>Instrument
+                        <select id="ms-task-instrument"></select>
+                    </label>
+                    <label>Week starts on
+                        <select id="ms-week-start-day">
+                            <option value="0">Monday</option>
+                            <option value="1">Tuesday</option>
+                            <option value="2">Wednesday</option>
+                            <option value="3">Thursday</option>
+                            <option value="4">Friday</option>
+                            <option value="5">Saturday</option>
+                            <option value="6">Sunday</option>
+                        </select>
+                    </label>
+                    <div>
+                        <button id="ms-week-start-save" class="ari-btn"
+                                type="button">Save week start</button>
+                    </div>
+                </div>
+                <div class="ms-form-grid">
+                    <label>Task name
+                        <input id="ms-task-name" type="text">
+                    </label>
+                    <label>Description
+                        <input id="ms-task-description" type="text">
+                    </label>
+                    <div>
+                        <button id="ms-task-add" class="ari-btn"
+                                type="button">Add / update</button>
+                    </div>
+                </div>
+                <div id="ms-task-list" class="ms-card-list"></div>
+            </div>
+        </div>
+    </div>
+
+    <div id="ms-user-overlay" class="ms-overlay" hidden>
+        <div class="ms-overlay-backdrop" data-close="users"></div>
+        <div class="ms-overlay-panel">
+            <div class="ms-overlay-head">
+                <h3>Stats visibility</h3>
+                <button data-close="users" type="button">X</button>
+            </div>
+            <div class="ms-overlay-body">
+                <div id="ms-user-list" class="ms-card-list"></div>
+            </div>
+        </div>
+    </div>
+
+    <div id="ms-bulk-overlay" class="ms-overlay" hidden>
+        <div class="ms-overlay-backdrop" data-close="bulk"></div>
+        <div class="ms-overlay-panel">
+            <div class="ms-overlay-head">
+                <h3>Bulk add entries (unassigned)</h3>
+                <button data-close="bulk" type="button">X</button>
+            </div>
+            <div class="ms-overlay-body">
+                <p class="ms-sub">Select tasks and a date range to
+                    create unassigned placeholder entries.</p>
+                <div class="ms-form-grid">
+                    <label>Date start
+                        <input id="ms-bulk-date-start" type="date">
+                    </label>
+                    <label>Date end
+                        <input id="ms-bulk-date-end" type="date">
+                    </label>
+                    <label>Hours
+                        <input id="ms-bulk-hours" type="number"
+                               min="0" step="0.25" value="0">
+                    </label>
+                    <label class="ms-wide">Comment
+                        <input id="ms-bulk-comment" type="text"
+                               placeholder="Optional comment">
+                    </label>
+                </div>
+                <div id="ms-bulk-task-checkboxes"
+                     class="ms-bulk-tasks"></div>
+                <div>
+                    <button id="ms-bulk-submit" class="ari-btn"
+                            type="button">Add entries</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="ms-add-overlay" class="ms-overlay" hidden>
+        <div class="ms-overlay-backdrop" data-close="add"></div>
+        <div class="ms-overlay-panel">
+            <div class="ms-overlay-head">
+                <h3 id="ms-add-title">Add new entry</h3>
+                <button data-close="add" type="button">X</button>
+            </div>
+            <div class="ms-overlay-body">
+                <form id="ms-add-form" class="ms-form-grid">
+                    <input id="ms-add-entry-id" type="hidden" value="">
+                    <label>Task
+                        <select id="ms-add-task" required></select>
+                    </label>
+                    <label>User filter
+                        <input id="ms-add-user-filter" type="text"
+                               placeholder="Search username or name">
+                    </label>
+                    <label>Username
+                        <select id="ms-add-username"></select>
+                    </label>
+                    <label>Who
+                        <input id="ms-add-who" type="text"
+                               readonly>
+                    </label>
+                    <label>Date start
+                        <input id="ms-add-date-start" type="date" required>
+                    </label>
+                    <label>Date end
+                        <input id="ms-add-date-end" type="date" required>
+                    </label>
+                    <label>Hours
+                        <input id="ms-add-hours" type="number"
+                               min="0" step="0.25" value="0">
+                    </label>
+                    <label class="ms-wide">Comment
+                        <input id="ms-add-comment" type="text"
+                               placeholder="Optional comment">
+                    </label>
+                    <div class="ms-inline-actions">
+                        <button id="ms-add-submit" class="ari-btn"
+                                type="submit">
+                            Save entry
+                        </button>
+                        <button id="ms-add-unassign" class="ari-btn ari-btn--alt"
+                                type="button">
+                            Unassign user
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div id="ms-assign-overlay" class="ms-overlay" hidden>
+        <div class="ms-overlay-backdrop" data-close="assign"></div>
+        <div class="ms-overlay-panel">
+            <div class="ms-overlay-head">
+                <h3>Assign user</h3>
+                <button data-close="assign" type="button">X</button>
+            </div>
+            <div class="ms-overlay-body">
+                <input id="ms-assign-entry-id" type="hidden" value="">
+                <div class="ms-form-grid">
+                    <label>User filter
+                        <input id="ms-assign-user-filter" type="text"
+                               placeholder="Search username or name">
+                    </label>
+                    <label>Username
+                        <select id="ms-assign-username"></select>
+                    </label>
+                    <label>Who
+                        <input id="ms-assign-who" type="text" readonly>
+                    </label>
+                </div>
+                <div class="ms-inline-actions">
+                    <button id="ms-assign-submit" class="ari-btn"
+                            type="button">Assign user</button>
+                    <button id="ms-assign-unassign" class="ari-btn ari-btn--alt"
+                            type="button">Unassign user</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+{{ super() }}
+<script>
+window.AperoMonitorSchedule = {
+    instruments: {{ monitor_instruments|tojson }}
+};
+</script>
+<script src="{{ url_for('static', filename='js/monitor_schedule.js') }}?v=20260512b"></script>
+{% endblock %}

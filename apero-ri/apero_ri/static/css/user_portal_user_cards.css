@@ -1,0 +1,196 @@
+/* Shared card UI for user directory, support cards, and user card page. */
+.upu-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.7rem;
+    align-items: center;
+    margin-bottom: 0.9rem;
+}
+
+.upu-toolbar .ari-input {
+    flex: 1 1 18rem;
+}
+
+.upu-count {
+    color: var(--ari-text-muted, #57606a);
+    font-size: 0.9rem;
+}
+
+.upu-users-grid,
+.upu-cards-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+    gap: 0.8rem;
+}
+
+.upu-user-card {
+    display: flex;
+    flex-direction: column;
+    gap: 0.45rem;
+    text-decoration: none;
+    color: inherit;
+    background: var(--ari-card-bg, #fff);
+    border: 1px solid var(--ari-border, #d0d7de);
+    border-radius: 0.65rem;
+    padding: 0.8rem;
+    transition: transform 0.14s ease, border-color 0.14s ease,
+        box-shadow 0.14s ease;
+}
+
+.upu-user-card:hover {
+    transform: translateY(-1px);
+    border-color: var(--ari-primary, #3f51b5);
+    box-shadow: 0 6px 14px rgba(0, 0, 0, 0.08);
+}
+
+.upu-user-card__head {
+    display: flex;
+    justify-content: space-between;
+    gap: 0.5rem;
+    align-items: flex-start;
+}
+
+.upu-user-card__name {
+    min-width: 0;
+}
+
+.upu-user-card__username {
+    display: block;
+    font-weight: 700;
+    letter-spacing: 0.01em;
+    word-break: break-word;
+}
+
+.upu-user-card__fullname {
+    display: block;
+    font-size: 0.82rem;
+    color: var(--ari-text-muted, #57606a);
+    margin-top: 0.05rem;
+}
+
+.upu-user-card__body {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+}
+
+.upu-user-card__line {
+    font-size: 0.85rem;
+    color: var(--ari-text-muted, #57606a);
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    min-width: 0;
+}
+
+.upu-user-card__line span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.upu-user-card__groups {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.22rem;
+}
+
+.upu-pill {
+    display: inline-flex;
+    align-items: center;
+    border: 1px solid var(--ari-border, #d0d7de);
+    background: var(--ari-bg-hover, #f6f8fa);
+    color: var(--ari-text-muted, #57606a);
+    border-radius: 999px;
+    padding: 0.12rem 0.42rem;
+    font-size: 0.74rem;
+}
+
+.upu-user-card__message {
+    flex: 0 0 auto;
+}
+
+.upu-empty {
+    border: 1px dashed var(--ari-border, #d0d7de);
+    border-radius: 0.6rem;
+    color: var(--ari-text-muted, #57606a);
+    padding: 1.2rem 1rem;
+    text-align: center;
+}
+
+.upu-support-section {
+    margin-top: 1rem;
+}
+
+.upu-support-section__title {
+    margin: 0 0 0.55rem;
+    display: flex;
+    align-items: center;
+    gap: 0.42rem;
+}
+
+.upu-user-detail {
+    display: grid;
+    grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr);
+    gap: 1rem;
+}
+
+.upu-user-detail__card {
+    background: var(--ari-card-bg, #fff);
+    border: 1px solid var(--ari-border, #d0d7de);
+    border-radius: 0.75rem;
+    padding: 1rem;
+}
+
+.upu-user-detail__title {
+    margin: 0 0 0.55rem;
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+}
+
+.upu-kv {
+    display: grid;
+    grid-template-columns: minmax(9rem, 12rem) minmax(0, 1fr);
+    gap: 0.42rem 0.7rem;
+}
+
+.upu-kv__key {
+    color: var(--ari-text-muted, #57606a);
+    font-size: 0.85rem;
+}
+
+.upu-kv__val {
+    font-size: 0.9rem;
+    word-break: break-word;
+}
+
+.upu-list {
+    margin: 0;
+    padding-left: 1.1rem;
+}
+
+.upu-list li {
+    margin: 0.16rem 0;
+}
+
+@media (max-width: 900px) {
+    .upu-user-detail {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 480px) {
+    .upu-users-grid,
+    .upu-cards-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* ── Dark theme ── */
+[data-theme="dark"] .upu-pill {
+    background: var(--ari-surface-muted, #1c2128);
+}
+[data-theme="dark"] .upu-user-card:hover {
+    box-shadow: 0 6px 14px rgba(0, 0, 0, 0.4);
+}

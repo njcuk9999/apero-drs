@@ -1,0 +1,24 @@
+id: a0a8ba70-7ea1-49d1-836a-b4e8220d37f9
+slug: e-01-001-00012-read-error-file-e2dsff-file-could-not-be-found-in-directory-drs-data-reduc-obs-dir-function
+date_reported: '2023-08-28'
+reported_by: Neil Cook
+instrument_mode: ALL
+recipe: apero_thermal
+action: Report
+type: Expected
+error_code: 01-001-00012
+github_issue: '712.0'
+generic_error: 'E[01-001-00012]: Read Error: File ''{E2DSFF file}'' could not be
+
+  found in directory ''{DRS_DATA_REDUC/OBS_DIR}''.
+
+  function = io.drs_fits.py.readfits()'
+comments: This should not happen, report. Has been shown that running recipe again
+  sometimes works.
+full_example_error: 'E[01-001-00012]: Read Error: File ''AC7554BC8C_pp_e2dsff_AB.fits''
+  could not be
+
+  found in directory ''/data/spirou4/apero-data/offline/reduced/22BQ13-Dec01''.
+
+  function = io.drs_fits.py.readfits()'
+updated_at: '2026-05-13 15:54:29'

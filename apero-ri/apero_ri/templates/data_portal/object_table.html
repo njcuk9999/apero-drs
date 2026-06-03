@@ -1,8 +1,8 @@
 {% extends "general/sidebar_base.html" %}
-{% block title %}APERO RI – {{ profile.profile_id }}: Object Table{% endblock %}
+{% block title %}APERO RI – {% if summary_mode %}{{ profile.profile_id }}: {{ summary_group_name }} Summary Table{% else %}{{ profile.profile_id }}: Object Table{% endif %}{% endblock %}
 
 {# Full-width layout for wide tables #}
-{% block body_class %}ari-has-sidebar ari-ot-page{% endblock %}
+{% block body_class %}ari-has-sidebar ari-ot-page{% if summary_mode %} ari-ot-summary-mode{% endif %}{% endblock %}
 
 {% block doc_content %}
 <div class="ari-page-header">
@@ -11,11 +11,27 @@
         <a href="{{ url_for('ri_profile', profile_id=profile.profile_id) }}"
            class="ot-breadcrumb-link">{{ profile.profile_id }}</a>
         <span class="ot-breadcrumb-sep">/</span>
+        {% if summary_mode %}
+        <a href="{{ object_groups_url }}"
+              class="ot-breadcrumb-link">{{ summary_parent_label | default('Object Groups') }}</a>
+        <span class="ot-breadcrumb-sep">/</span>
+        <span>{{ summary_group_name }}</span>
+        <span class="ot-breadcrumb-sep">/</span>
+        Summary Table
+        {% else %}
         Astrophysical Object Table
+        {% endif %}
     </h1>
+    {% if summary_mode %}
+    <p class="ari-page-subtitle">
+        Custom property summary for all objects in
+        <strong>{{ summary_group_name }}</strong>.
+    </p>
+    {% endif %}
 </div>
 
 {# ── How-to banner ─────────────────────────────────────────── #}
+{% if not summary_mode %}
 <details class="ot-howto" id="howto-object-table" open>
     <summary class="ot-howto__title">
         <i class="fa-solid fa-circle-info"></i>
@@ -49,8 +65,10 @@
         </div>
     </div>
 </details>
+{% endif %}
 
 {# ── Find Object (embedded) ──────────────────────────────────── #}
+{% if not summary_mode %}
 <details class="ot-howto ot-find-embed" id="find-object-embed">
     <summary class="ot-howto__title">
         <i class="fa-solid fa-magnifying-glass-location"></i>
@@ -227,6 +245,7 @@
         </div>
     </div>
 </details>
+{% endif %}
 
 {# ── Meta / status bar ─────────────────────────────────────────── #}
 <div class="ot-meta-bar">
@@ -239,6 +258,29 @@
 {# ── Toolbar ───────────────────────────────────────────────────── #}
 <div class="ot-toolbar">
     <div class="ot-toolbar__left">
+        {% if summary_mode %}
+        <label class="ot-summary-download" for="ot-summary-download-format">
+            <span class="ot-summary-download__label">
+                <i class="fa-solid fa-download"></i> Download as
+            </span>
+            <select id="ot-summary-download-format"
+                    class="ot-summary-download__select">
+                <option value="">Choose format...</option>
+                <option value="csv">CSV</option>
+                <option value="latex">LaTeX</option>
+                <option value="fits">Astropy table (FITS)</option>
+                <option value="pdf">PDF</option>
+                <option value="png">PNG</option>
+                <option value="html">HTML</option>
+            </select>
+        </label>
+        <button id="ot-btn-columns"
+                class="ari-btn ari-btn--sm ot-summary-action ot-summary-action--columns"
+                title="Choose summary columns"
+                type="button">
+            <i class="fa-solid fa-table-columns"></i> Columns
+        </button>
+        {% else %}
         <div class="ot-col-panel-wrap">
             <button id="ot-btn-columns" class="ari-btn ari-btn--sm ari-btn--secondary"
                     title="Show / hide columns">
@@ -264,17 +306,20 @@
                 </div>
             </div>
         </div>
+        {% endif %}
 
         <button id="ot-btn-clear-filters" class="ari-btn ari-btn--sm ari-btn--secondary"
                 title="Clear all column filters">
             <i class="fa-solid fa-filter-circle-xmark"></i> Clear Filters
         </button>
 
+        {% if not summary_mode %}
         <button id="ot-btn-send-to-group"
                 class="ari-btn ari-btn--sm ari-btn--secondary"
                 title="Add filtered objects to an object group">
             <i class="fa-solid fa-share-from-square"></i> Send to Group
         </button>
+        {% endif %}
     </div>
 
     <div class="ot-toolbar__right">
@@ -340,6 +385,7 @@
     </div>
 </div>
 
+{% if not summary_mode %}
 {# ── Send to Group overlay ──────────────────────────────────────── #}
 <div id="stg-overlay" class="stg-overlay" style="display:none;">
     <div class="stg-overlay__backdrop" id="stg-backdrop"></div>
@@ -391,6 +437,209 @@
         </div>
     </div>
 </div>
+{% endif %}
+
+{% if summary_mode %}
+<div id="ots-overlay" class="ogs-overlay" style="display:none;"
+     role="dialog" aria-modal="true" aria-labelledby="ots-overlay-title">
+    <div id="ots-backdrop" class="ogs-overlay__backdrop"></div>
+    <div class="ogs-overlay__dialog ogs-overlay__dialog--wide">
+        <div class="ogs-overlay__header">
+            <div>
+                <h3 id="ots-overlay-title">
+                    <i class="fa-solid fa-table-columns"></i>
+                    Summary Columns
+                </h3>
+                <p class="ogs-overlay__desc">
+                    Generate a summary table for all grouped objects.
+                </p>
+            </div>
+            <button id="ots-close" class="ogs-overlay__close"
+                    title="Close" type="button">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+        <div class="ogs-overlay__body">
+            <label class="ogs-search" for="ots-search">
+                <span class="ogs-search__label">Search properties</span>
+                <input id="ots-search" class="ari-input" type="text"
+                       placeholder="Type to filter properties">
+            </label>
+            <div class="ogs-filters ogs-filters--pair">
+                <select id="ots-category"
+                        class="ari-input ari-input--sm"
+                        aria-label="Category filter">
+                    <option value="">All categories</option>
+                </select>
+                <select id="ots-subcategory"
+                        class="ari-input ari-input--sm"
+                        aria-label="Sub-category filter">
+                    <option value="">All sub-categories</option>
+                </select>
+            </div>
+            <div id="ots-list" class="ogs-list"></div>
+            <div class="ogs-selected-wrap">
+                <div class="ogs-selected-wrap__header">
+                    Selected columns
+                    <button id="ots-custom-open"
+                            class="ari-btn ari-btn--sm ari-btn--secondary"
+                            type="button">
+                        <i class="fa-solid fa-calculator"></i>
+                        Add custom column
+                    </button>
+                    <button id="ots-rename-open"
+                            class="ari-btn ari-btn--sm ari-btn--secondary"
+                            type="button">
+                        <i class="fa-solid fa-pen"></i>
+                        Rename columns
+                    </button>
+                </div>
+                <div id="ots-selected" class="ogs-selected"></div>
+            </div>
+            <div id="ots-rename-overlay" class="ogs-mini-overlay"
+                 style="display:none;" role="dialog" aria-modal="true"
+                 aria-labelledby="ots-rename-title">
+                <div id="ots-rename-backdrop"
+                     class="ogs-mini-overlay__backdrop"></div>
+                <div class="ogs-mini-overlay__dialog">
+                    <div class="ogs-mini-overlay__header">
+                        <h3 id="ots-rename-title">Rename Columns</h3>
+                        <button id="ots-rename-close"
+                                class="ogs-overlay__close"
+                                type="button">
+                            <i class="fa-solid fa-xmark"></i>
+                        </button>
+                    </div>
+                    <p class="ogs-mini-overlay__hint">
+                        Keep the original property and optionally provide
+                        a custom column name for table and exports.
+                    </p>
+                    <div id="ots-rename-list" class="ogs-rename-list"></div>
+                    <div class="ogs-mini-overlay__footer">
+                        <button id="ots-rename-apply"
+                                class="ari-btn ari-btn--primary"
+                                type="button">
+                            Apply names
+                        </button>
+                        <button id="ots-rename-cancel"
+                                class="ari-btn ari-btn--secondary"
+                                type="button">
+                            Cancel
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div id="ots-custom-overlay" class="ogs-mini-overlay"
+                 style="display:none;" role="dialog" aria-modal="true"
+                 aria-labelledby="ots-custom-title">
+                <div id="ots-custom-backdrop"
+                     class="ogs-mini-overlay__backdrop"></div>
+                <div class="ogs-mini-overlay__dialog">
+                    <div class="ogs-mini-overlay__header">
+                        <h3 id="ots-custom-title">Add Custom Column</h3>
+                        <button id="ots-custom-close"
+                                class="ogs-overlay__close"
+                                type="button">
+                            <i class="fa-solid fa-xmark"></i>
+                        </button>
+                    </div>
+                    <p class="ogs-mini-overlay__hint">
+                        Use letters (x, y, z...) as variables and test before
+                        saving. Mixed numeric/text operators are supported.
+                    </p>
+                    <label class="ogs-search" for="ots-custom-name">
+                        <span class="ogs-search__label">Column name</span>
+                        <input id="ots-custom-name"
+                               class="ari-input"
+                               type="text"
+                               placeholder="Example: RV span">
+                    </label>
+                    <div class="ogs-filters ogs-filters--compact">
+                        <select id="ots-custom-category"
+                                class="ari-input ari-input--sm"
+                                aria-label="Category filter">
+                            <option value="">All categories</option>
+                        </select>
+                        <select id="ots-custom-subcategory"
+                                class="ari-input ari-input--sm"
+                                aria-label="Sub-category filter">
+                            <option value="">All sub-categories</option>
+                        </select>
+                    </div>
+                    <label class="ogs-search" for="ots-custom-search">
+                        <span class="ogs-search__label">
+                            Filter properties
+                        </span>
+                        <input id="ots-custom-search"
+                               class="ari-input"
+                               type="text"
+                               placeholder="Type 3+ chars to filter properties">
+                    </label>
+                    <div id="ots-custom-vars" class="ogs-rename-list"></div>
+                    <div class="ogs-mini-overlay__footer">
+                        <button id="ots-custom-add-var"
+                                class="ari-btn ari-btn--secondary"
+                                type="button">
+                            Add variable
+                        </button>
+                    </div>
+                    <label class="ogs-search" for="ots-custom-expr">
+                        <span class="ogs-search__label">
+                            Expression
+                            <button type="button"
+                                    id="ots-custom-expr-help-toggle"
+                                    class="ogs-help-btn"
+                                    title="Show allowed expression rules"
+                                    aria-label="Show allowed expression rules">
+                                ?
+                            </button>
+                        </span>
+                        <input id="ots-custom-expr"
+                               class="ari-input"
+                               type="text"
+                               placeholder="Example: str(x).split()[0]">
+                    </label>
+                    <div id="ots-custom-expr-help"
+                         class="ogs-expr-help"
+                         style="display:none;"></div>
+                    <div id="ots-custom-status" class="ogs-status"></div>
+                    <div class="ogs-mini-overlay__footer">
+                        <button id="ots-custom-test"
+                                class="ari-btn ari-btn--secondary"
+                                type="button">
+                            Test
+                        </button>
+                        <button id="ots-custom-save"
+                                class="ari-btn ari-btn--primary"
+                                type="button">
+                            Save custom column
+                        </button>
+                        <button id="ots-custom-cancel"
+                                class="ari-btn ari-btn--secondary"
+                                type="button">
+                            Cancel
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div id="ots-status" class="ogs-status"></div>
+        </div>
+        <div class="ogs-overlay__footer">
+            <button id="ots-regenerate"
+                    class="ari-btn ari-btn--primary"
+                    type="button">
+                <i class="fa-solid fa-rotate"></i>
+                Regenerate
+            </button>
+            <button id="ots-close-btn"
+                    class="ari-btn ari-btn--secondary"
+                    type="button">
+                Close
+            </button>
+        </div>
+    </div>
+</div>
+{% endif %}
 
 {# ── JS config ─────────────────────────────────────────────────── #}
 <script>
@@ -400,7 +649,14 @@ window.ARI_OBJ_TABLE = {
     instrument: {{ profile.instrument | tojson }},
     minNameChars: 1,
     groupsApiBase: '/api/data-portal/object-groups',
+    summaryMode: {{ summary_mode | default(false) | tojson }},
+    summaryGroupName: {{ summary_group_name | default('') | tojson }},
+    summarySource: {{ summary_source | default('group') | tojson }},
+    summarySectionName: {{ summary_section_name | default('') | tojson }},
+    summaryConfigApiUrl: {{ summary_config_api_url | default('') | tojson }},
+    summaryCustomTestApiUrl: {{ summary_custom_test_api_url | default('') | tojson }},
+    summaryExportApiUrl: {{ summary_export_api_url | default('') | tojson }},
 };
 </script>
-<script src="{{ url_for('static', filename='js/object_table.js', v='20260420') }}" defer></script>
+<script src="{{ url_for('static', filename='js/object_table.js', v='20260522f') }}" defer></script>
 {% endblock %}

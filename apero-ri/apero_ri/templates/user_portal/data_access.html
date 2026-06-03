@@ -10,8 +10,8 @@
 <p class="ari-ap-groups-hint ari-up-hint">
     This page summarizes your current data visibility by instrument, APERO profile,
     science-group membership, and run IDs.
-    If anything looks missing, please contact the admin via
-    <a href="{{ url_for('home_user_portal_support') }}">User Portal / Support</a>.
+    If you believe you should have access to data please
+    <a href="#" id="up-request-access-link">click here</a>.
 </p>
 
 {% if data_access and data_access|length > 0 %}
@@ -68,13 +68,29 @@
 
         <div class="ari-sg-section">
             <div class="ari-sg-section__header">
-                <h3><i class="fa-solid fa-hashtag"></i> Run IDs You Can Access</h3>
+                <h3><i class="fa-solid fa-hashtag"></i> Run IDs by Science Group</h3>
             </div>
-            <div class="ari-up-section-body ari-up-section-body--scroll">
-                {% if item.run_ids %}
-                <div class="ari-up-token-grid">
-                    {% for rid in item.run_ids %}
-                    <span class="ari-toggle-card ari-toggle-card--disabled ari-up-run-id">{{ rid }}</span>
+            <div class="ari-up-section-body">
+                {% if item.run_ids_by_group %}
+                <div style="display:grid; gap:0.8rem;">
+                    {% for gitem in item.run_ids_by_group %}
+                    <details class="ari-up-group-card" open>
+                        <summary class="ari-up-group-card__summary">
+                            <span class="ari-up-group-card__name">{{ gitem.name }}</span>
+                            <span class="ari-up-group-card__count">{{ gitem.run_ids|length }} run IDs</span>
+                        </summary>
+                        {% if gitem.run_ids %}
+                        <div class="ari-up-token-grid ari-up-group-card__body">
+                            {% for rid in gitem.run_ids %}
+                            <a class="ari-toggle-card ari-toggle-card--disabled ari-up-run-id"
+                               href="/astrometrics?fo_tab=advanced&fo_property=RUN_ID&fo_value={{ rid|urlencode }}&fo_search=1"
+                               title="Open astrometrics advanced search for RUN_ID={{ rid }}">{{ rid }}</a>
+                            {% endfor %}
+                        </div>
+                        {% else %}
+                        <div class="ari-sg-empty-small ari-up-group-card__body">No run IDs in this group.</div>
+                        {% endif %}
+                    </details>
                     {% endfor %}
                 </div>
                 {% else %}
@@ -85,6 +101,58 @@
     </div>
 </section>
 {% endfor %}
+
+<div id="up-access-request-modal" class="ari-modal-backdrop" style="display:none;">
+    <div class="ari-modal" style="max-width:760px;">
+        <div class="ari-modal__header">
+            <i class="fa-solid fa-unlock-keyhole"></i> Data Access Request
+        </div>
+        <div class="ari-modal__body ari-up-request-body">
+            <label class="ari-up-request-field" for="up-request-instrument">
+                <span>Instrument</span>
+                <select id="up-request-instrument" class="ari-user-search__input">
+                    {% for item in data_access %}
+                    <option value="{{ item.instrument }}">{{ item.instrument }}</option>
+                    {% endfor %}
+                </select>
+            </label>
+
+            <div class="ari-up-request-field">
+                <div class="ari-up-request-field__head">
+                    <span>Run IDs requested</span>
+                    <button id="up-request-add-runid" type="button"
+                            class="ari-btn ari-btn--secondary ari-btn--sm">
+                        <i class="fa-solid fa-plus"></i> Add run ID
+                    </button>
+                </div>
+                <div id="up-request-runids" class="ari-up-request-runids"></div>
+            </div>
+
+            <label class="ari-up-request-field" for="up-request-reason">
+                <span>Reason</span>
+                <input id="up-request-reason" type="text"
+                       class="ari-user-search__input"
+                       maxlength="80"
+                       placeholder="Why do you need access? (max 80 characters)">
+            </label>
+
+            <label class="ari-up-request-field" for="up-request-sci-group">
+                <span>Suggested science group</span>
+                <select id="up-request-sci-group" class="ari-user-search__input"></select>
+            </label>
+
+            <div id="up-request-feedback" class="ari-sg-empty-small"></div>
+        </div>
+        <div class="ari-modal__footer">
+            <button id="up-request-cancel" class="ari-btn ari-btn--secondary" type="button">
+                Cancel
+            </button>
+            <button id="up-request-submit" class="ari-btn ari-btn--primary" type="button">
+                Submit request
+            </button>
+        </div>
+    </div>
+</div>
 {% else %}
 <div class="ari-sg-empty">
     <i class="fa-solid fa-circle-info"></i>
@@ -95,5 +163,18 @@
 {% endblock %}
 
 {% block extra_scripts %}
+<script>
+window.ARI_USER_DATA_ACCESS = {
+    requestUrl: {{ url_for('api_user_data_access_request')|tojson }},
+    canManageSciGroup: {{ can_manage_sci_group|tojson }},
+    scienceGroupsUrl: {{ url_for('home_admin_portal_science_groups')|tojson }},
+    scienceGroupsByInstrument: {
+        {% for item in data_access %}
+        {{ item.instrument|tojson }}: {{ item.all_science_groups|tojson }}{% if not loop.last %},{% endif %}
+        {% endfor %}
+    }
+};
+</script>
 <script src="{{ url_for('static', filename='js/user_portal_tabs.js') }}"></script>
+<script src="{{ url_for('static', filename='js/user_data_access.js') }}?v=20260513a"></script>
 {% endblock %}

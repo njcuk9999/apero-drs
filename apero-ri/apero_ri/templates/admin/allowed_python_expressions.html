@@ -1,0 +1,55 @@
+{% extends "general/sidebar_base.html" %}
+{% block title %}APERO RI - Allowed Python Expressions{% endblock %}
+
+{% block doc_content %}
+<div class="ari-page-header">
+    <h1><i class="{{ page_icon }}"></i> {{ page_label }}</h1>
+    <p class="ari-page-subtitle">
+        Rules below control what custom summary expressions are allowed.
+    </p>
+</div>
+
+<div style="display:flex;gap:0.55rem;align-items:center;margin-bottom:0.75rem;">
+    <button id="ape-add-row" type="button" class="ari-btn ari-btn--secondary">
+        <i class="fa-solid fa-plus"></i> Add Rule
+    </button>
+    <button id="ape-save" type="button" class="ari-btn ari-btn--primary">
+        <i class="fa-solid fa-floppy-disk"></i> Save Rules
+    </button>
+    <span id="ape-status" class="at-muted-hint"></span>
+</div>
+
+<div class="ari-table-wrap">
+    <table class="ari-table" id="ape-table">
+        <thead>
+        <tr>
+            <th style="width:42%;">Expression</th>
+            <th>Comment</th>
+            <th style="width:68px;">Action</th>
+        </tr>
+        </thead>
+        <tbody id="ape-rows"></tbody>
+    </table>
+</div>
+
+<div style="margin-top:0.8rem;">
+    <details>
+        <summary><strong>Rule format help</strong></summary>
+        <div style="margin-top:0.5rem;">
+            <ul style="margin:0;padding-left:1rem;">
+                <li><code>alias = target</code> e.g. <code>Time = astropy.time.Time</code></li>
+                <li><code>.method</code> to allow string methods e.g. <code>.split</code></li>
+                <li><code>time.attr</code> for Time attributes e.g. <code>time.mjd</code></li>
+                <li><code>op:token</code> for operators e.g. <code>op:+</code>, <code>op:==</code>, <code>op:not</code></li>
+            </ul>
+        </div>
+    </details>
+</div>
+
+<script>
+window.ARI_ALLOWED_EXPR = {
+    apiUrl: {{ url_for('api_object_groups_allowed_expressions')|tojson }}
+};
+</script>
+<script src="{{ url_for('static', filename='js/admin_allowed_python_expressions.js', v='20260522a') }}"></script>
+{% endblock %}

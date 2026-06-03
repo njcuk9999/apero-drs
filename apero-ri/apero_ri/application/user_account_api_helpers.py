@@ -87,6 +87,27 @@ def api_auth_register_start(app):
     if username in users:
         return jsonify(success=False, error="Username already exists."), 409
 
+    # Reject registration if any supplied email is already registered
+    existing_emails = set()
+    for udata in users.values():
+        stored = udata.get('emails') or []
+        if isinstance(stored, str):
+            stored = [stored]
+        for addr in stored:
+            existing_emails.add(str(addr).lower().strip())
+    for addr in emails:
+        if addr.lower() in existing_emails:
+            return (
+                jsonify(
+                    success=False,
+                    error=(
+                        f"The email address {addr!r} is already "
+                        "associated with another account."
+                    ),
+                ),
+                409,
+            )
+
     code = f"{secrets.randbelow(1_000_000):06d}"
     expires_at = (
         (datetime.now(timezone.utc) + timedelta(minutes=15))

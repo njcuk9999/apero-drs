@@ -1,0 +1,521 @@
+{% extends "general/sidebar_base.html" %}
+{% block title %}APERO RI – APERO Checks Stats – {{ profile_id }}{% endblock %}
+
+{% block body_class %}ari-has-sidebar ari-apero-checks-stats-page{% endblock %}
+
+{% block extra_head %}
+{{ super() }}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"
+        crossorigin="anonymous"></script>
+<style>
+.acs-page-stack {
+    display: grid;
+    gap: 0.9rem;
+    margin-top: 0.8rem;
+}
+.acs-panel {
+    border: 1px solid var(--ari-border);
+    border-radius: 1rem;
+    background: var(--ari-card-bg);
+    padding: 1rem 1.1rem;
+    box-shadow: 0 2px 8px rgba(15,23,42,0.05);
+}
+/* ---- Tabs ---- */
+.acs-tabs {
+    display: flex;
+    gap: 0.35rem;
+    border-bottom: 2px solid var(--ari-border);
+    margin-bottom: 1rem;
+}
+.acs-tab-btn {
+    padding: 0.45rem 1rem;
+    font-size: 0.95rem;
+    font-weight: 600;
+    background: none;
+    border: none;
+    border-bottom: 3px solid transparent;
+    cursor: pointer;
+    color: var(--ari-text-muted);
+    margin-bottom: -2px;
+    border-radius: 0.4rem 0.4rem 0 0;
+    transition: color 0.15s, border-color 0.15s;
+}
+.acs-tab-btn.active {
+    color: var(--ari-accent, #2563eb);
+    border-bottom-color: var(--ari-accent, #2563eb);
+}
+.acs-tab-panel { display: none; }
+.acs-tab-panel.active { display: block; }
+/* ---- Summary cards ---- */
+.acs-summary-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 0.65rem;
+    margin-bottom: 1.1rem;
+}
+.acs-stat-card {
+    border: 1px solid var(--ari-border);
+    border-radius: 0.75rem;
+    padding: 0.65rem 0.85rem;
+    text-align: center;
+}
+.acs-stat-card__val {
+    font-size: 1.6rem;
+    font-weight: 700;
+    line-height: 1.2;
+}
+.acs-stat-card__label {
+    font-size: 0.8rem;
+    color: var(--ari-text-muted);
+    margin-top: 0.2rem;
+}
+.acs-stat-card--failed  { border-left: 4px solid #ef4444; }
+.acs-stat-card--passed  { border-left: 4px solid #22c55e; }
+.acs-stat-card--overridden { border-left: 4px solid #f59e0b; }
+.acs-stat-card--monitored  { border-left: 4px solid #7c3aed; }
+.acs-stat-card--total      { border-left: 4px solid var(--ari-border); }
+/* ---- Histogram controls ---- */
+.acs-ctrl-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    align-items: center;
+    margin-bottom: 0.75rem;
+}
+.acs-ctrl-label {
+    font-size: 0.88rem;
+    color: var(--ari-text-muted);
+    font-weight: 600;
+}
+.acs-bin-group, .acs-toggle-group {
+    display: inline-flex;
+    gap: 0.25rem;
+}
+.acs-bin-btn, .acs-toggle-btn {
+    padding: 0.28rem 0.7rem;
+    font-size: 0.82rem;
+    font-weight: 600;
+    border-radius: 999px;
+    border: 1px solid var(--ari-border);
+    background: var(--ari-surface-muted, #f4f4f5);
+    cursor: pointer;
+    color: var(--ari-text-muted);
+    transition: background 0.12s, color 0.12s;
+}
+.acs-bin-btn.active {
+    background: var(--ari-accent, #2563eb);
+    color: #fff;
+    border-color: var(--ari-accent, #2563eb);
+}
+.acs-toggle-btn[data-series="failed"].active  { background:#ef4444; color:#fff; border-color:#ef4444; }
+.acs-toggle-btn[data-series="passed"].active  { background:#22c55e; color:#fff; border-color:#22c55e; }
+.acs-toggle-btn[data-series="overridden"].active { background:#f59e0b; color:#fff; border-color:#f59e0b; }
+.acs-toggle-btn[data-series="monitored"].active  { background:#7c3aed; color:#fff; border-color:#7c3aed; }
+/* ---- Chart wrapper ---- */
+.acs-chart-wrap {
+    position: relative;
+    height: 320px;
+}
+/* ---- Check dropdown ---- */
+.acs-check-select {
+    padding: 0.3rem 0.6rem;
+    border: 1px solid var(--ari-border);
+    border-radius: 0.4rem;
+    font-size: 0.88rem;
+    background: var(--ari-card-bg);
+    max-width: 340px;
+    min-width: 200px;
+}
+.acs-check-table-wrap {
+    overflow-x: auto;
+    margin-bottom: 1rem;
+    max-height: 420px;
+    border: 1px solid var(--ari-border);
+    border-radius: 0.85rem;
+}
+.acs-check-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.9rem;
+}
+.acs-check-table th,
+.acs-check-table td {
+    padding: 0.42rem 0.72rem;
+    text-align: left;
+    border-top: 1px solid var(--ari-border);
+    border-right: 1px solid #d9dbe7;
+}
+.acs-check-table th:last-child,
+.acs-check-table td:last-child {
+    border-right: none;
+}
+.acs-check-table thead th {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    background: var(--ari-primary-light, #e8eaf6);
+    color: var(--ari-text, #222);
+    font-weight: 700;
+    font-size: 0.83rem;
+    border-top: none;
+    border-bottom: 2px solid var(--ari-border, #c5c9e0);
+    box-shadow: inset -1px 0 0 #c7cbe2;
+}
+.acs-check-table thead th:last-child {
+    box-shadow: none;
+}
+.acs-check-table tbody tr:nth-child(odd) {
+    background: #fffbeb;
+}
+.acs-check-table tbody tr:nth-child(even) {
+    background: #fff7ed;
+}
+.acs-check-table tbody tr:hover {
+    background: #ffedd5;
+}
+.acs-check-table__sort {
+    width: 100%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.45rem;
+    border: none;
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    padding: 0;
+    cursor: pointer;
+}
+.acs-check-table__sort-icon {
+    font-size: 0.74rem;
+    opacity: 0.45;
+}
+.acs-check-table__sort[data-sort-dir="asc"] .acs-check-table__sort-icon,
+.acs-check-table__sort[data-sort-dir="desc"] .acs-check-table__sort-icon {
+    opacity: 0.95;
+}
+.acs-check-table td[data-col="passed"],
+.acs-check-table td[data-col="failed"],
+.acs-check-table td[data-col="overridden"],
+.acs-check-table td[data-col="monitored"] {
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+}
+.acs-spinner {
+    display: inline-block;
+    width: 1.2rem;
+    height: 1.2rem;
+    border: 3px solid var(--ari-border);
+    border-top-color: var(--ari-accent, #2563eb);
+    border-radius: 50%;
+    animation: acs-spin 0.7s linear infinite;
+    vertical-align: middle;
+}
+@keyframes acs-spin { to { transform: rotate(360deg); } }
+.acs-error-msg {
+    color: #ef4444;
+    font-size: 0.9rem;
+    padding: 0.5rem 0;
+}
+.acs-tab-loading {
+    display: block;
+    border: 1px solid var(--ari-border);
+    border-radius: 0.75rem;
+    padding: 0.65rem 0.85rem;
+    margin-bottom: 0.9rem;
+    background: var(--ari-surface-muted, #fafafa);
+}
+.acs-tab-loading__row {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: var(--ari-text-muted);
+    font-size: 0.88rem;
+    margin-bottom: 0.5rem;
+}
+.acs-progress {
+    width: 100%;
+    height: 0.45rem;
+    border-radius: 999px;
+    background: #e5e7eb;
+    overflow: hidden;
+}
+.acs-progress__bar {
+    width: 38%;
+    height: 100%;
+    border-radius: 999px;
+    background: linear-gradient(90deg, #2563eb 0%, #60a5fa 100%);
+    animation: acs-progress-shift 1.2s ease-in-out infinite;
+}
+@keyframes acs-progress-shift {
+    0% { transform: translateX(-100%); }
+    50% { transform: translateX(110%); }
+    100% { transform: translateX(260%); }
+}
+</style>
+{% endblock %}
+
+{% block doc_content %}
+<div class="ari-page-header">
+    <h1>
+        <i class="fa-solid fa-square-check"></i>
+        <a href="{{ url_for('monitor_apero_checks_view') }}"
+           class="ot-breadcrumb-link">APERO Checks</a>
+        <span class="ot-breadcrumb-sep">/</span>
+        <a href="{{ profile_back_url }}"
+           class="ot-breadcrumb-link">{{ profile_id }}</a>
+        <span class="ot-breadcrumb-sep">/</span>
+        Stats
+    </h1>
+    <p class="ari-page-subtitle">
+        Summary statistics and histograms for observation directories
+        and individual checks.
+    </p>
+</div>
+
+<div class="acs-page-stack">
+
+    <!-- Meta bar -->
+    <div class="ot-meta-bar acs-panel" style="padding:0.6rem 1rem;">
+        <a href="{{ profile_back_url }}"
+           class="ari-btn ari-btn--sm ari-btn--secondary">
+            <i class="fa-solid fa-arrow-left"></i> Back to {{ profile_id }}
+        </a>
+        <a href="{{ url_for('monitor_apero_checks_queue_view', profile_id=profile_id) }}"
+           class="ari-btn ari-btn--sm ari-btn--secondary">
+            <i class="fa-solid fa-list-check"></i> Queue status
+        </a>
+        {% if can_manage_apero_profiles %}
+        <a href="{{ url_for('home_admin_portal_apero_checks_policy') }}"
+           class="ari-btn ari-btn--sm ari-btn--secondary">
+            <i class="fa-solid fa-gear"></i> Manage checks
+        </a>
+        {% endif %}
+        <span id="acs-loading-indicator" style="margin-left:auto;">
+            <span class="acs-spinner"></span>
+            <span style="font-size:0.88rem; color:var(--ari-text-muted);
+                         margin-left:0.35rem;">Loading stats…</span>
+        </span>
+        <span id="acs-error-indicator"
+              class="acs-error-msg" style="display:none;margin-left:auto;"></span>
+    </div>
+
+    <!-- Tabs -->
+    <div class="acs-panel">
+        <div class="acs-tabs" role="tablist">
+            <button class="acs-tab-btn active"
+                    data-tab="obsdir"
+                    role="tab"
+                    aria-selected="true">
+                <i class="fa-solid fa-folder-open"></i>
+                Observation directories
+            </button>
+            <button class="acs-tab-btn"
+                    data-tab="checks"
+                    role="tab"
+                    aria-selected="false">
+                <i class="fa-solid fa-list-check"></i>
+                APERO checks
+            </button>
+        </div>
+
+        <!-- ================================================================
+             Observation directories tab
+             ============================================================= -->
+        <div class="acs-tab-panel active" id="acs-panel-obsdir">
+
+            <div class="acs-tab-loading" id="acs-obsdir-loading" aria-live="polite">
+                <div class="acs-tab-loading__row">
+                    <span class="acs-spinner" aria-hidden="true"></span>
+                    <span>Loading observation directory stats…</span>
+                </div>
+                <div class="acs-progress" role="progressbar"
+                     aria-label="Loading observation directory stats"
+                     aria-valuetext="Loading">
+                    <div class="acs-progress__bar"></div>
+                </div>
+            </div>
+
+            <!-- Summary counts -->
+            <div class="acs-summary-grid" id="acs-obsdir-summary">
+                <div class="acs-stat-card acs-stat-card--total">
+                    <div class="acs-stat-card__val" id="acs-od-total">–</div>
+                    <div class="acs-stat-card__label">Total obs dirs</div>
+                </div>
+                <div class="acs-stat-card acs-stat-card--passed">
+                    <div class="acs-stat-card__val" id="acs-od-passed">–</div>
+                    <div class="acs-stat-card__label">Passed</div>
+                </div>
+                <div class="acs-stat-card acs-stat-card--failed">
+                    <div class="acs-stat-card__val" id="acs-od-failed">–</div>
+                    <div class="acs-stat-card__label">Failed</div>
+                </div>
+                <div class="acs-stat-card acs-stat-card--overridden">
+                    <div class="acs-stat-card__val" id="acs-od-overridden">–</div>
+                    <div class="acs-stat-card__label">With overrides</div>
+                </div>
+                <div class="acs-stat-card acs-stat-card--monitored">
+                    <div class="acs-stat-card__val" id="acs-od-monitored">–</div>
+                    <div class="acs-stat-card__label">Monitored</div>
+                </div>
+            </div>
+
+            <!-- Histogram controls -->
+            <div class="acs-ctrl-row">
+                <span class="acs-ctrl-label">Bin by:</span>
+                <div class="acs-bin-group" data-target="obsdir">
+                    <button class="acs-bin-btn" data-bin="week">Week</button>
+                    <button class="acs-bin-btn active" data-bin="month">Month</button>
+                    <button class="acs-bin-btn" data-bin="year">Year</button>
+                </div>
+                <span class="acs-ctrl-label" style="margin-left:0.75rem;">
+                    Show series:
+                </span>
+                <div class="acs-toggle-group" data-target="obsdir">
+                    <button class="acs-toggle-btn"
+                            data-series="passed">Passed</button>
+                    <button class="acs-toggle-btn active"
+                            data-series="failed">Failed</button>
+                    <button class="acs-toggle-btn"
+                            data-series="overridden">Overridden</button>
+                    <button class="acs-toggle-btn"
+                            data-series="monitored">Monitored</button>
+                </div>
+            </div>
+
+            <!-- Histogram -->
+            <div class="acs-chart-wrap">
+                <canvas id="acs-obsdir-chart"></canvas>
+            </div>
+
+        </div><!-- /obsdir tab -->
+
+        <!-- ================================================================
+             APERO checks tab
+             ============================================================= -->
+        <div class="acs-tab-panel" id="acs-panel-checks">
+
+            <!-- Per-check summary table -->
+            <div class="acs-check-table-wrap">
+                <table class="acs-check-table">
+                    <thead>
+                        <tr>
+                            <th>
+                                <button type="button"
+                                        class="acs-check-table__sort"
+                                        data-sort-key="check_key"
+                                        data-sort-dir="asc">
+                                    <span>Check key</span>
+                                    <i class="fa-solid fa-sort acs-check-table__sort-icon"></i>
+                                </button>
+                            </th>
+                            <th>
+                                <button type="button"
+                                        class="acs-check-table__sort"
+                                        data-sort-key="name"
+                                        data-sort-dir="none">
+                                    <span>Name</span>
+                                    <i class="fa-solid fa-sort acs-check-table__sort-icon"></i>
+                                </button>
+                            </th>
+                            <th>
+                                <button type="button"
+                                        class="acs-check-table__sort"
+                                        data-sort-key="passed"
+                                        data-sort-dir="none">
+                                    <span>Passed</span>
+                                    <i class="fa-solid fa-sort acs-check-table__sort-icon"></i>
+                                </button>
+                            </th>
+                            <th>
+                                <button type="button"
+                                        class="acs-check-table__sort"
+                                        data-sort-key="failed"
+                                        data-sort-dir="none">
+                                    <span>Failed</span>
+                                    <i class="fa-solid fa-sort acs-check-table__sort-icon"></i>
+                                </button>
+                            </th>
+                            <th>
+                                <button type="button"
+                                        class="acs-check-table__sort"
+                                        data-sort-key="overridden"
+                                        data-sort-dir="none">
+                                    <span>Overridden</span>
+                                    <i class="fa-solid fa-sort acs-check-table__sort-icon"></i>
+                                </button>
+                            </th>
+                            <th>
+                                <button type="button"
+                                        class="acs-check-table__sort"
+                                        data-sort-key="monitored"
+                                        data-sort-dir="none">
+                                    <span>Monitored</span>
+                                    <i class="fa-solid fa-sort acs-check-table__sort-icon"></i>
+                                </button>
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody id="acs-checks-table-body">
+                        <tr>
+                            <td colspan="6"
+                                style="color:var(--ari-text-muted);
+                                       font-size:0.9rem;">
+                                <span class="acs-spinner"></span>
+                                Loading…
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Histogram controls -->
+            <div class="acs-ctrl-row">
+                <span class="acs-ctrl-label">Check:</span>
+                <select class="acs-check-select"
+                        id="acs-check-select">
+                    <option value="">— select a check —</option>
+                </select>
+                <span class="acs-ctrl-label" style="margin-left:0.75rem;">
+                    Bin by:
+                </span>
+                <div class="acs-bin-group" data-target="checks">
+                    <button class="acs-bin-btn" data-bin="week">Week</button>
+                    <button class="acs-bin-btn active" data-bin="month">Month</button>
+                    <button class="acs-bin-btn" data-bin="year">Year</button>
+                </div>
+                <span class="acs-ctrl-label" style="margin-left:0.75rem;">
+                    Show series:
+                </span>
+                <div class="acs-toggle-group" data-target="checks">
+                    <button class="acs-toggle-btn"
+                            data-series="passed">Passed</button>
+                    <button class="acs-toggle-btn active"
+                            data-series="failed">Failed</button>
+                    <button class="acs-toggle-btn"
+                            data-series="overridden">Overridden</button>
+                    <button class="acs-toggle-btn"
+                            data-series="monitored">Monitored</button>
+                </div>
+            </div>
+
+            <!-- Histogram -->
+            <div class="acs-chart-wrap">
+                <canvas id="acs-checks-chart"></canvas>
+            </div>
+
+        </div><!-- /checks tab -->
+
+    </div><!-- /.acs-panel (tabs) -->
+
+</div><!-- /.acs-page-stack -->
+{% endblock %}
+
+{% block extra_scripts %}
+{{ super() }}
+<script
+    src="{{ url_for('static', filename='js/apero_checks_stats.js') }}?v=20260529c"
+    defer
+    data-api-url="{{ stats_api_url }}">
+</script>
+{% endblock %}

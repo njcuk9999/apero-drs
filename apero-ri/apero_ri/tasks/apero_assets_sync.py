@@ -4,32 +4,37 @@
 APERO RI - GLOBAL async task: sync the APERO assets directory.
 
 The task manages ``{LOCAL_DATA_DIR}/apero-assets/`` which mirrors the
-remote APERO data-assets bundle (calibration files, static tables, etc.)
-used by the ARI UI for "get" (download) and "set" (upload) operations.
+remote APERO data-assets bundle used by the ARI UI for the
+``data_get`` / ``data_set`` operations.
 
-Workflow (default ``mode='sync'``):
-  1. Read ``checksums.yaml`` from the installed apero package
-     (``apero/data/checksums.yaml``).  This file contains the server
-     list, the tar filename and per-file MD5 hashes.
-  2. Compare every listed file against the local copy in
-     ``{LOCAL_DATA_DIR}/apero-assets/``.
-  3. If anything is missing or stale (or ``force_download=True``),
-     download the versioned tar file from the first reachable server
-     listed in the checksum YAML and extract it.
+Two modes are supported:
 
-Workflow (``mode='upload'``):
-  1. Index all files under ``TASK_CONFIG['local_indir']`` and build a
-     fresh ``checksums.yaml`` + versioned tar file.
-  2. Upload both via rsync to the configured SSH host.
+``mode='remote'`` (default)
+    Drives the apero developer recipe ``apero_data_checksum.py`` as a
+    subprocess to keep the local ``{LOCAL_DATA_DIR}/apero-assets/``
+    directory in sync with the configured remote checksum/tar server:
+      * ``update-local --indir <assets_dir>``: download anything that is
+        missing or out-of-date.
+      * ``update-remote --indir <assets_dir>``: rebuild the tar /
+        checksums and push back to the remote when local files are
+        newer.
+
+``mode='local'``
+    Bidirectional newest-wins copy between a user-supplied local
+    directory (``TASK_CONFIG['local_source_path']``) and
+    ``{LOCAL_DATA_DIR}/apero-assets/``. Each file present on either
+    side is compared by mtime and copied to the side with the older
+    (or missing) copy.
+
+Legacy mode names (``sync``, ``upload``) are accepted and treated as
+``remote`` for backwards compatibility with existing
+``async_tasks.yaml`` files.
 
 Task config keys (all optional, set in ``async_tasks.yaml``):
-  ``force_download``  bool: re-extract even if checksums match.
-  ``mode``            ``'sync'`` (default) or ``'upload'``.
-  ``local_indir``     source directory for upload mode.
-  ``ssh_user``        SSH username for rsync upload.
-  ``ssh_host``        SSH hostname for rsync upload.
-  ``ssh_options``     extra SSH options string (e.g. ``'-p 22'``).
-  ``ssh_assets_path`` remote path to deploy assets to.
+  ``mode``                ``'remote'`` (default) or ``'local'``.
+  ``local_source_path``   absolute path used by ``mode='local'``.
+  ``force_download``      bool: kept for backwards compatibility (not
+                          used by ``mode='remote'`` subprocess).
 
 Created on 2026-04-22
 
@@ -38,12 +43,15 @@ Created on 2026-04-22
 
 import hashlib
 import os
+import shutil
+import subprocess
+import sys
 import tarfile as _tarfile
 import tempfile
 import time
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
 from urllib.error import URLError
 from urllib.request import Request, urlopen
 
@@ -320,6 +328,250 @@ def _build_local_checksums(assets_dir: Path,
     return {'setup': setup, 'data': data}
 
 
+# ---------------------------------------------------------------------------
+# Remote (apero_data_checksum.py) and local (bidirectional copy) helpers
+# ---------------------------------------------------------------------------
+_LEGACY_REMOTE_MODES = ('remote', 'sync', 'upload')
+_LEGACY_LOCAL_MODES = ('local',)
+
+
+def _normalise_mode(raw_mode: Any) -> str:
+    """Map task-config mode string to canonical ``remote``/``local``."""
+    val = str(raw_mode or 'remote').strip().lower()
+    if val in _LEGACY_LOCAL_MODES:
+        return 'local'
+    if val in _LEGACY_REMOTE_MODES:
+        return 'remote'
+    return 'remote'
+
+
+def _find_apero_data_checksum_script() -> Optional[Path]:
+    """Locate the installed ``apero_data_checksum.py`` recipe."""
+    try:
+        import apero as _apero_pkg
+    except ImportError:
+        return None
+    candidate = (Path(_apero_pkg.__file__).parent
+                 / 'tools' / 'recipes' / 'dev'
+                 / 'apero_data_checksum.py')
+    return candidate if candidate.is_file() else None
+
+
+def _run_subprocess(cmd: List[str], tlog) -> Tuple[int, str]:
+    """Run ``cmd`` capturing combined output; stream lines to ``tlog``."""
+    tlog('Running: ' + ' '.join(cmd))
+    try:
+        proc = subprocess.Popen(
+            cmd,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            text=True,
+            bufsize=1,
+        )
+    except OSError as exc:
+        tlog('ERROR: failed to launch subprocess: {0}'.format(exc))
+        return 127, str(exc)
+    captured: List[str] = []
+    assert proc.stdout is not None
+    for line in proc.stdout:
+        line = line.rstrip()
+        if line:
+            tlog('  ' + line)
+            captured.append(line)
+    rc = proc.wait()
+    return rc, '\n'.join(captured)
+
+
+def _run_remote_sync(assets_dir: Path, tlog) -> List[str]:
+    """Drive ``apero_data_checksum.py update-local`` then ``update-remote``.
+
+    :return: list of human-readable status lines for the task ``info``
+             panel.
+    """
+    summary: List[str] = []
+    script = _find_apero_data_checksum_script()
+    if script is None:
+        msg = ('Could not locate apero_data_checksum.py inside the '
+               'installed apero package.')
+        tlog('ERROR: ' + msg)
+        raise FileNotFoundError(msg)
+    base_cmd = [sys.executable, str(script)]
+    indir = str(assets_dir)
+    cmd_map = dict()
+    cmd_map['update-local'] = base_cmd + ['update-local']
+    cmd_map['update-remote'] = (
+        base_cmd + ['update-remote', '--indir', indir]
+    )
+    for sub in ('update-local', 'update-remote'):
+        cmd = cmd_map[sub]
+        rc, output = _run_subprocess(cmd, tlog)
+        if rc != 0:
+            msg = ('apero_data_checksum.py {0} failed (exit {1}).'
+                   ).format(sub, rc)
+            if output:
+                lines = output.splitlines()
+                tail = '\n'.join(lines[-8:])
+                msg = msg + '\nOutput tail:\n' + tail
+            tlog('ERROR: ' + msg)
+            summary.append('FAILED: ' + sub + ' (exit ' + str(rc) + ')')
+            raise RuntimeError(msg)
+        summary.append('OK: ' + sub)
+    return summary
+
+
+def _iter_files(root: Path):
+    """Yield ``(rel_posix_path, abs_path)`` for every file under root."""
+    for parent, _dirs, files in os.walk(root):
+        for fname in files:
+            ap = Path(parent) / fname
+            try:
+                rel = ap.relative_to(root).as_posix()
+            except ValueError:
+                continue
+            yield rel, ap
+
+
+def _copy_newer(src: Path, dst: Path) -> None:
+    """Atomically copy ``src`` to ``dst`` (creating parent dirs)."""
+    dst.parent.mkdir(parents=True, exist_ok=True)
+    fd, tmp = tempfile.mkstemp(
+        dir=str(dst.parent), prefix='.assets_tmp_'
+    )
+    os.close(fd)
+    try:
+        shutil.copy2(str(src), tmp)
+        os.replace(tmp, str(dst))
+    except Exception:
+        if os.path.exists(tmp):
+            try:
+                os.unlink(tmp)
+            except OSError:
+                pass
+        raise
+
+
+def _run_local_sync(source_dir: Path, assets_dir: Path,
+                    tlog, stop_event,
+                    progress_cb=None) -> Dict[str, int]:
+    """Bidirectional newest-wins copy between two local trees.
+
+    :param progress_cb: optional callable ``f(fraction)`` invoked with a
+        float in ``[0.1, 0.95]`` as files are processed, so the UI
+        progress bar can advance.
+    """
+    if not source_dir.is_dir():
+        raise FileNotFoundError(
+            'local_source_path does not exist or is not a directory: '
+            + str(source_dir)
+        )
+    assets_dir.mkdir(parents=True, exist_ok=True)
+
+    tlog(f'Scanning local source tree: {source_dir}')
+    src_files = dict(_iter_files(source_dir))
+    tlog(f'  source files found: {len(src_files)}')
+    tlog(f'Scanning assets tree: {assets_dir}')
+    dst_files = dict(_iter_files(assets_dir))
+    tlog(f'  assets files found: {len(dst_files)}')
+
+    all_rel = sorted(set(src_files) | set(dst_files))
+    total = len(all_rel)
+    tlog(
+        f'Comparing {total} unique relative paths '
+        f'({len(set(src_files) & set(dst_files))} in both, '
+        f'{len(set(src_files) - set(dst_files))} source-only, '
+        f'{len(set(dst_files) - set(src_files))} assets-only).'
+    )
+
+    stats = {
+        'src_to_dst': 0,
+        'dst_to_src': 0,
+        'unchanged': 0,
+        'total': total,
+    }
+    # Log every ~5% (and at least every 100 files) so progress is
+    # visible even on small trees.
+    log_every = max(1, min(500, total // 20 or 1))
+    last_logged = 0
+    bytes_copied = 0
+    for idx, rel in enumerate(all_rel, start=1):
+        if stop_event is not None and stop_event.is_set():
+            tlog('Cancellation requested; stopping local sync.')
+            break
+        sp = src_files.get(rel)
+        dp = dst_files.get(rel)
+        action = None
+        try:
+            if sp is None and dp is not None:
+                target = source_dir / rel
+                _copy_newer(dp, target)
+                stats['dst_to_src'] += 1
+                action = 'dst->src (new)'
+                try:
+                    bytes_copied += dp.stat().st_size
+                except OSError:
+                    pass
+            elif dp is None and sp is not None:
+                target = assets_dir / rel
+                _copy_newer(sp, target)
+                stats['src_to_dst'] += 1
+                action = 'src->dst (new)'
+                try:
+                    bytes_copied += sp.stat().st_size
+                except OSError:
+                    pass
+            elif sp is not None and dp is not None:
+                try:
+                    s_mt = sp.stat().st_mtime
+                    d_mt = dp.stat().st_mtime
+                except OSError:
+                    continue
+                if abs(s_mt - d_mt) <= 1.0:
+                    stats['unchanged'] += 1
+                else:
+                    if s_mt > d_mt:
+                        _copy_newer(sp, assets_dir / rel)
+                        stats['src_to_dst'] += 1
+                        action = 'src->dst (newer)'
+                        try:
+                            bytes_copied += sp.stat().st_size
+                        except OSError:
+                            pass
+                    else:
+                        _copy_newer(dp, source_dir / rel)
+                        stats['dst_to_src'] += 1
+                        action = 'dst->src (newer)'
+                        try:
+                            bytes_copied += dp.stat().st_size
+                        except OSError:
+                            pass
+        except Exception as exc:  # noqa: BLE001
+            tlog(f'  WARN: failed on {rel}: {exc}')
+            continue
+
+        if action is not None:
+            tlog(f'  [{idx}/{total}] {action}: {rel}')
+
+        if idx - last_logged >= log_every or idx == total:
+            pct = (idx / total * 100.0) if total else 100.0
+            tlog(
+                f'Progress: {idx}/{total} ({pct:.1f}%) - '
+                f'src->dst={stats["src_to_dst"]}, '
+                f'dst->src={stats["dst_to_src"]}, '
+                f'unchanged={stats["unchanged"]}, '
+                f'bytes copied={bytes_copied}'
+            )
+            last_logged = idx
+            if progress_cb is not None and total:
+                # map progress into [0.1, 0.95]
+                try:
+                    progress_cb(0.1 + 0.85 * (idx / total))
+                except Exception:
+                    pass
+
+    stats['bytes_copied'] = bytes_copied
+    return stats
+
+
 def _upload_via_rsync(tar_path: Path, ssh_user: str, ssh_host: str,
                        ssh_options: str, ssh_assets_path: str,
                        tlog) -> bool:
@@ -411,7 +663,7 @@ class AperoAssetsSyncTask(apero_async.AperoAsyncTask):
         tlog(f'Assets directory: {assets_dir}')
 
         # read task config
-        mode = str(task_cfg.get('mode') or 'sync').strip().lower()
+        mode = _normalise_mode(task_cfg.get('mode'))
         force_download = bool(task_cfg.get('force_download', False))
 
         # ---- reset info -----------------------------------------------------
@@ -424,200 +676,90 @@ class AperoAssetsSyncTask(apero_async.AperoAsyncTask):
         )
 
         # =====================================================================
-        # UPLOAD mode: push local assets to remote server
+        # LOCAL mode: bidirectional newest-wins copy with a local source
         # =====================================================================
-        if mode == 'upload':
-            # servers for upload come from the package checksums.yaml
-            _upload_pkg_path = _get_apero_checksums_path()
-            _upload_pkg_chk = (
-                _load_yaml(_upload_pkg_path)
-                if _upload_pkg_path else None
+        if mode == 'local':
+            local_src_raw = str(
+                task_cfg.get('local_source_path') or ''
+            ).strip()
+            if not local_src_raw:
+                msg = ("mode='local' requires TASK_CONFIG."
+                       "local_source_path to be set")
+                tlog('ERROR: ' + msg)
+                self.info += '\n**ERROR**: ' + msg + '\n'
+                self.progress = 1.0
+                raise ValueError(msg)
+            source_dir = Path(local_src_raw).expanduser().resolve()
+            self.info += (
+                f'**Local source**: `{source_dir}`  \n'
             )
-            _upload_servers: List[str] = []
-            if _upload_pkg_chk:
-                _raw = _upload_pkg_chk.get('setup', {}).get('servers') or []
-                _upload_servers = [
-                    str(s).strip() for s in _raw if str(s).strip()
-                ]
-            self._run_upload(
-                task_cfg=task_cfg,
-                assets_dir=assets_dir,
-                servers=_upload_servers,
-                checksum_file=CHECKSUM_FILE,
-                tlog=tlog,
-                stop_event=stop_event,
-            )
+            tlog(f'Local-sync source: {source_dir}')
+            self.progress = 0.1
+
+            def _progress_cb(frac: float) -> None:
+                try:
+                    f = float(frac)
+                except (TypeError, ValueError):
+                    return
+                if f < 0.0:
+                    f = 0.0
+                elif f > 0.99:
+                    f = 0.99
+                self.progress = f
+
+            try:
+                stats = _run_local_sync(
+                    source_dir, assets_dir, tlog, stop_event,
+                    progress_cb=_progress_cb,
+                )
+            except Exception as exc:  # noqa: BLE001
+                self.info += f'\n**ERROR**: {exc}\n'
+                self.progress = 1.0
+                raise
             self.progress = 1.0
-            tlog('APERO_SYNC_ASSETS completed (upload).')
+            self.info += (
+                '\n### Local sync\n'
+                f'- total compared: {stats.get("total", 0)}\n'
+                f'- source -> assets: {stats["src_to_dst"]}\n'
+                f'- assets -> source: {stats["dst_to_src"]}\n'
+                f'- unchanged: {stats["unchanged"]}\n'
+                f'- bytes copied: {stats.get("bytes_copied", 0)}\n'
+            )
+            tlog(
+                'APERO_SYNC_ASSETS completed (local): '
+                f'total={stats.get("total", 0)}, '
+                f'src->dst={stats["src_to_dst"]}, '
+                f'dst->src={stats["dst_to_src"]}, '
+                f'unchanged={stats["unchanged"]}, '
+                f'bytes copied={stats.get("bytes_copied", 0)}.'
+            )
             return
 
         # =====================================================================
-        # SYNC mode: read package-bundled checksums.yaml
+        # REMOTE mode: drive apero_data_checksum.py update-local + update-remote
         # =====================================================================
-        pkg_chk_path = _get_apero_checksums_path()
-        if pkg_chk_path is None:
-            msg = (
-                'Cannot find apero package checksums.yaml. '
-                'Ensure the apero package is installed and importable.'
-            )
-            tlog(f'ERROR: {msg}')
-            self.info += f'\n**ERROR**: {msg}\n'
-            self.progress = 1.0
-            return
-
-        tlog(f'Reading package checksums: {pkg_chk_path}')
-        pkg_chk = _load_yaml(pkg_chk_path)
-        if not pkg_chk:
-            msg = f'Failed to load {pkg_chk_path}'
-            tlog(f'ERROR: {msg}')
-            self.info += f'\n**ERROR**: {msg}\n'
-            self.progress = 1.0
-            return
-
-        # extract metadata from the package checksums
-        setup_info = pkg_chk.get('setup') or {}
-        pkg_version = str(setup_info.get('version') or 'unknown')
-        pkg_ts = str(setup_info.get('humantime') or 'unknown')
-        tar_filename = str(setup_info.get('tarfile') or '').strip()
-        servers: List[str] = [
-            str(s).strip()
-            for s in (setup_info.get('servers') or [])
-            if str(s).strip()
-        ]
-
-        self.info += (
-            f'**Package version**: `{pkg_version}`  \n'
-            f'**Package timestamp**: {pkg_ts}  \n'
-        )
-        tlog(
-            f'Package checksums: version={pkg_version}, '
-            f'ts={pkg_ts}, tar={tar_filename}.'
-        )
-
-        if not tar_filename:
-            msg = 'Package checksums.yaml has no tarfile entry.'
-            tlog(f'ERROR: {msg}')
-            self.info += f'\n**ERROR**: {msg}\n'
-            self.progress = 1.0
-            return
-
-        if not servers:
-            msg = 'Package checksums.yaml has no servers listed.'
-            tlog(f'ERROR: {msg}')
-            self.info += f'\n**ERROR**: {msg}\n'
-            self.progress = 1.0
-            return
-
-        _srv_preview = ', '.join(servers[:3])
-        _srv_more = '...' if len(servers) > 3 else ''
-        self.info += (
-            f'**Servers**: {_srv_preview}{_srv_more}  \n'
-        )
-
         self.progress = 0.1
-
-        if stop_event is not None and stop_event.is_set():
-            tlog('Cancellation requested. Exiting.')
-            return
-
-        # ---- probe server accessibility ------------------------------------
-        tlog('Probing server accessibility...')
-        reachable = _probe_servers(servers, tar_filename, tlog)
-        if reachable:
-            self.info += (
-                '**Accessible**: '
-                + ', '.join(f'`{s}`' for s in reachable) + '  \n'
-            )
-        else:
-            self.info += (
-                '**WARNING**: none of the servers listed in the package '
-                'checksums.yaml are currently reachable.  \n'
-            )
-
-        self.progress = 0.2
-
-        if stop_event is not None and stop_event.is_set():
-            tlog('Cancellation requested after probe. Exiting.')
-            return
-
-        # ---- compare checksums against local assets ------------------------
-        if force_download:
-            stale: List[str] = list(
-                (pkg_chk.get('data') or {}).keys()
-            )
-            tlog(
-                f'force_download=True: marking all {len(stale)} files stale.'
-            )
-        else:
-            stale = _check_assets(assets_dir, pkg_chk)
-            n_total = len(pkg_chk.get('data') or {})
-            tlog(
-                f'Checksum comparison: {len(stale)} file(s) missing/stale '
-                f'out of {n_total}.'
-            )
-
-        self.progress = 0.3
-
-        if not stale:
-            tlog('Assets are up-to-date. Nothing to download.')
-            self.info += (
-                '\n### Status\nAssets are **up-to-date**. '
-                'No download needed.\n'
-            )
-            self.output_files = [str(pkg_chk_path)]
+        try:
+            summary = _run_remote_sync(assets_dir, tlog)
+        except Exception as exc:  # noqa: BLE001
+            self.info += f'\n**ERROR**: {exc}\n'
             self.progress = 1.0
-            tlog('APERO_SYNC_ASSETS completed (no download needed).')
-            return
-
-        self.info += (
-            f'\n### Changed files\n'
-            f'{len(stale)} file(s) are missing or have changed.\n'
-        )
-        if stale[:5]:
-            for rel in stale[:5]:
-                self.info += f'- `{rel}`\n'
-            if len(stale) > 5:
-                self.info += f'- ...and {len(stale) - 5} more\n'
-
-        if stop_event is not None and stop_event.is_set():
-            tlog('Cancellation requested before download. Exiting.')
-            return
-
-        # ---- download and extract tar file ---------------------------------
-        self.progress = 0.4
-        ok = _download_and_extract(
-            servers=servers,
-            tar_filename=tar_filename,
-            assets_dir=assets_dir,
-            tlog=tlog,
-        )
-
-        self.progress = 0.9
-
-        if ok:
-            n_files = len(pkg_chk.get('data') or {})
-            self.info += (
-                f'\n### Download\n'
-                f'Extracted `{tar_filename}` '
-                f'({n_files} file(s) indexed).\n'
-            )
-            self.output_files = [str(pkg_chk_path)]
-            tlog(
-                f'APERO_SYNC_ASSETS completed: '
-                f'extracted {tar_filename} ({n_files} files).'
-            )
-        else:
-            self.info += '\n**ERROR**: download/extraction failed.\n'
-            tlog('APERO_SYNC_ASSETS failed: download/extraction error.')
-            raise RuntimeError(
-                'APERO assets sync failed: could not download or extract '
-                f'{tar_filename!r} from {servers}.'
-            )
-
+            raise
         self.progress = 1.0
+        self.info += '\n### Remote sync\n'
+        for line in summary:
+            self.info += f'- {line}\n'
+        if force_download:
+            self.info += (
+                '\n_Note: ``force_download`` is ignored in '
+                'remote mode (handled by apero_data_checksum.py).'
+                '_\n'
+            )
+        tlog('APERO_SYNC_ASSETS completed (remote).')
+        return
 
     # -------------------------------------------------------------------------
-    # Upload helper
+    # Legacy upload helper (kept for reference; no longer wired to run_job)
     # -------------------------------------------------------------------------
     def _run_upload(self,
                     task_cfg: Dict[str, Any],

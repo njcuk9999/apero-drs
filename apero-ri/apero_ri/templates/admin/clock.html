@@ -1,0 +1,44 @@
+{% extends "general/sidebar_base.html" %}
+{% block title %}APERO RI - Clock Settings{% endblock %}
+
+{% block doc_content %}
+<div class="ari-page-header">
+    <h1><i class="{{ page_icon }}"></i> {{ page_label }}</h1>
+    <p class="ari-page-subtitle">
+        Configure extra clocks for the quick-nav popup.
+    </p>
+</div>
+
+<div style="display:flex;gap:0.6rem;align-items:center;margin-bottom:0.8rem;">
+    <button id="clock-add" type="button" class="ari-btn ari-btn--secondary">
+        <i class="fa-solid fa-plus"></i> Add clock
+    </button>
+    <button id="clock-save" type="button" class="ari-btn ari-btn--primary">
+        <i class="fa-solid fa-floppy-disk"></i> Save
+    </button>
+    <span id="clock-status" class="at-muted-hint"></span>
+</div>
+
+<div class="ari-table-wrap">
+    <table class="ari-table" id="clock-admin-table">
+        <thead>
+        <tr>
+            <th style="width:24%;">Name</th>
+            <th style="width:36%;">Timezone</th>
+            <th style="width:20%;">Preview</th>
+            <th style="width:20%;">Actions</th>
+        </tr>
+        </thead>
+        <tbody id="clock-admin-body">
+        <tr><td colspan="4" class="at-muted-hint">Loading clocks...</td></tr>
+        </tbody>
+    </table>
+</div>
+
+<script>
+window.ARI_ADMIN_CLOCKS = {
+    apiUrl: {{ url_for('api_admin_clocks')|tojson }}
+};
+</script>
+<script src="{{ url_for('static', filename='js/admin_clocks.js', v='20260524b') }}"></script>
+{% endblock %}

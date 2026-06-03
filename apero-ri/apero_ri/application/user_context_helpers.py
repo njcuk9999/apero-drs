@@ -1,6 +1,9 @@
 """User page context helper functions for ARIApp."""
 
-from flask import jsonify
+from pathlib import Path
+from urllib.parse import quote
+
+from flask import jsonify, request
 
 from apero_ri.core.auth import get_accessible_profiles
 from apero_ri.core.auth import load_users
@@ -8,15 +11,22 @@ from apero_ri.core.auth import load_science_groups
 from apero_ri.core.permissions import get_inherited_groups
 from apero_ri.core.permissions import get_user_instruments
 from apero_ri.core.permissions import load_parameters
+from apero_ri.core.permissions import resolve_user_permissions
 from apero_ri.core import email_backend as eb
 from apero_ri.core import user_data as ud
 from apero_ri.core import download_tracker as dt
 from apero_ri.core import api_tokens as at
+from apero_ri.core.issues import create_issue, list_issues
 from apero_ri.application import instrument_color_helpers
 
 
 def build_user_data_access_context(app, user_info):
     """Build summary of user's data access by instrument."""
+    perms = resolve_user_permissions(
+        user_info.get('groups', []), app.ari_groups
+    )
+    can_manage_sci_group = 'manage.sci_group' in set(perms or ())
+
     instruments = get_user_instruments(
         user_info.get('groups', []), app.ari_groups
     )
@@ -41,26 +51,126 @@ def build_user_data_access_context(app, user_info):
     access_rows = []
     for inst in instruments:
         groups = load_science_groups(inst)
+        all_group_names = sorted(groups.keys(), key=lambda item: item.lower())
         member_groups = []
+        grouped_run_ids = []
         run_ids = set()
         for gname, gdata in groups.items():
             if username in gdata.get('users', []):
                 member_groups.append(gname)
+                group_run_ids = set()
                 for rid in gdata.get('run_ids', []):
                     rid_s = str(rid).strip()
                     if rid_s:
+                        group_run_ids.add(rid_s)
                         run_ids.add(rid_s)
+                grouped_run_ids.append(
+                    dict(name=gname, run_ids=sorted(group_run_ids))
+                )
+
+        grouped_run_ids.sort(key=lambda item: item['name'].lower())
 
         access_rows.append({
             'instrument': inst,
             'profiles': profiles_by_inst.get(inst, []),
             'science_groups': sorted(member_groups),
+            'all_science_groups': all_group_names,
+            'run_ids_by_group': grouped_run_ids,
             'run_ids': sorted(run_ids),
         })
 
     return {
         'data_access': access_rows,
+        'can_manage_sci_group': can_manage_sci_group,
     }
+
+
+def api_user_data_access_request(app):
+    """Create a monitor issue from user data-access request form."""
+    user_info = app._get_api_user()
+    if not user_info:
+        return jsonify(success=False, error='Login required'), 401
+
+    body = request.get_json(silent=True) or {}
+    instrument = str(body.get('instrument') or '').strip()
+    reason = str(body.get('reason') or '').strip()
+    suggested = str(body.get('suggested_science_group') or '').strip()
+    run_ids_raw = body.get('run_ids') or []
+
+    if not instrument:
+        return jsonify(success=False, error='Missing instrument'), 400
+    if not reason:
+        return jsonify(success=False, error='Missing reason'), 400
+    if len(reason) > 80:
+        return jsonify(
+            success=False,
+            error='Reason must be 80 characters or fewer',
+        ), 400
+
+    if isinstance(run_ids_raw, str):
+        run_ids_raw = [run_ids_raw]
+
+    normalized_run_ids = []
+    for raw in run_ids_raw:
+        for part in str(raw or '').split(','):
+            run_id = part.strip()
+            if run_id and run_id not in normalized_run_ids:
+                normalized_run_ids.append(run_id)
+
+    if not normalized_run_ids:
+        return jsonify(success=False, error='Add at least one run ID'), 400
+
+    reason_lines = [reason]
+    suggested_norm = suggested.strip()
+    if suggested_norm and suggested_norm.upper() != 'N/A':
+        reason_lines.append(
+            'Suggested science group: {0}'.format(suggested_norm)
+        )
+    issue_reason = '\n'.join(reason_lines)
+    issue_title = '{0}: {1}'.format(
+        instrument,
+        ', '.join(normalized_run_ids),
+    )
+
+    origin_url = '/admin_portal/science_groups'
+    issue_action = 'Go to Admin Science Groups'
+
+    data_dir = Path(app.args.data_dir or str(Path.home() / '.ari'))
+    created_by = user_info.get('username') or 'anonymous'
+    run_id_value = ', '.join(normalized_run_ids)
+
+    # De-dupe identical open requests from the same user.
+    existing = list_issues(
+        data_dir,
+        visibility='admin',
+        status='open',
+        instrument=instrument,
+        kind='Data access',
+        type_='Request',
+        created_by=created_by,
+    )
+    for row in existing:
+        same_title = str(row.get('title') or '').strip() == issue_title
+        same_reason = str(row.get('reason') or '').strip() == issue_reason
+        same_value = str(row.get('value') or '').strip() == run_id_value
+        if same_title and same_reason and same_value:
+            return jsonify(success=True, issue=row, deduped=True)
+
+    issue = create_issue(
+        data_dir,
+        kind='Data access',
+        type_='Request',
+        reason=issue_reason,
+        created_by=created_by,
+        instrument=instrument,
+        visibility='monitor',
+        title=issue_title,
+        origin_url=origin_url,
+        action=issue_action,
+        value=run_id_value,
+        label='data-access-request',
+    )
+    return jsonify(success=True, issue=issue)
 
 
 def build_user_support_context(app, user_info):
@@ -74,8 +184,11 @@ def build_user_support_context(app, user_info):
         instruments = list(all_instr)
 
     users = load_users()
-    role_order = ['admin', 'moderator', 'developer', 'monitor']
+    role_order = [
+        'super_admin', 'admin', 'moderator', 'developer', 'monitor'
+    ]
     role_to_key = {
+        'super_admin': 'super_admins',
         'admin': 'admins',
         'moderator': 'moderators',
         'developer': 'developers',
@@ -85,6 +198,7 @@ def build_user_support_context(app, user_info):
     support_rows = []
     for inst in instruments:
         grouped = {
+            'super_admins': [],
             'admins': [],
             'moderators': [],
             'developers': [],
@@ -104,7 +218,8 @@ def build_user_support_context(app, user_info):
                 user_data.get('groups', []),
                 app.ari_groups,
             )
-            if inst not in u_instr:
+            is_super_admin = 'super_admin' in all_groups
+            if not is_super_admin and inst not in u_instr:
                 continue
 
             role_name = None
@@ -124,11 +239,26 @@ def build_user_support_context(app, user_info):
             full_name = f'{first_names} {last_name}'.strip()
             if not full_name:
                 full_name = username
+            primary_email = str(
+                user_data.get('primary_email', '')
+            ).strip()
 
             grouped[role_to_key[role_name]].append({
                 'username': username,
+                'first_names': first_names,
+                'last_name': last_name,
                 'full_name': full_name,
-                'email': str(user_data.get('primary_email', '')).strip(),
+                'email': primary_email,
+                'role': role_name,
+                'can_show_email': role_name in (
+                    'super_admin',
+                    'admin',
+                    'moderator',
+                    'developer',
+                ),
+                'profile_url': (
+                    '/user_portal/users/' + quote(username, safe='')
+                ),
             })
 
         for key in grouped:
@@ -180,12 +310,25 @@ def build_ri_context(app, user_info, user_permissions):
         include_children=False,
     )
 
+    pset = set(user_permissions or set())
+    can_manage_apero_profiles = 'manage.apero_profile' in pset
+    can_manage_science_groups = (
+        'manage.sci_group' in pset
+        or any(
+            isinstance(item, str)
+            and item.startswith('manage.sci_group.')
+            for item in pset
+        )
+    )
+
     return {
         'profile_cards': profile_cards,
         'shown_instruments': shown,
         'instrument_colors': colors,
         'no_profile_instruments': no_profile,
         'sidebar_tree': sidebar_tree,
+        'can_manage_apero_profiles': can_manage_apero_profiles,
+        'can_manage_science_groups': can_manage_science_groups,
     }
 
 

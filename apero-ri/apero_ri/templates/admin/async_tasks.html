@@ -75,6 +75,33 @@
     display: grid;
     gap: 0.75rem;
 }
+.at-sync-profiles__table {
+    width: 100%;
+    border-collapse: collapse;
+}
+.at-sync-profiles__table th,
+.at-sync-profiles__table td {
+    padding: 0.45rem 0.4rem;
+    border-top: 1px solid var(--ari-border, #d6d9de);
+    vertical-align: top;
+}
+.at-sync-profiles__table th {
+    text-align: left;
+    font-size: 0.82rem;
+    color: var(--ari-text-muted, #6b7280);
+}
+.at-sync-profiles__path-wrap {
+    display: flex;
+    gap: 0.45rem;
+    align-items: center;
+}
+.at-sync-profiles__path-wrap .ari-ap-input {
+    flex: 1;
+}
+.at-sync-profiles__alias {
+    font-size: 0.78rem;
+    color: var(--ari-text-muted, #6b7280);
+}
 #at-edit-modal #edit-run-count {
     padding: 0.4rem 0.6rem;
     border: 1px solid var(--ari-border, #d6d9de);
@@ -118,6 +145,33 @@
 [data-theme="dark"] #at-edit-modal #edit-local-sync-fields {
     background: #1c2128;
     border-color: #30363d;
+}
+/* Keep error toast visible above the at-edit modal (modal z-index 1200) */
+#at-toast { z-index: 1400 !important; }
+/* Small inline info icon button next to form labels */
+.at-info-icon-btn {
+    background: none;
+    border: none;
+    padding: 0 0.15rem;
+    margin-left: 0.25rem;
+    color: var(--ari-primary, #1f6feb);
+    cursor: pointer;
+    font-size: 0.95em;
+    line-height: 1;
+    vertical-align: middle;
+}
+.at-info-icon-btn:hover { color: #0b53b6; }
+.at-pre-code {
+    background: #f6f7fb;
+    border-radius: 6px;
+    padding: 0.5rem 0.7rem;
+    margin: 0.3rem 0;
+    font-size: 0.82rem;
+    overflow-x: auto;
+}
+[data-theme="dark"] .at-pre-code {
+    background: #0d1117;
+    color: #e6edf3;
 }
 </style>
 {% endblock %}
@@ -515,6 +569,65 @@
                     <input type="number" id="edit-frequency" class="ari-ap-input"
                            placeholder="e.g. 24" min="0.5" step="0.5" value="24">
                 </div>
+                <div id="edit-legacy-gsheet-fields" style="display:none;">
+                    <div class="ari-ap-form__field">
+                        <label>
+                            <input type="checkbox" id="edit-dry-run">
+                            Dry run (report-only, no writes)
+                        </label>
+                        <div class="at-muted-hint">
+                            When enabled, this task reads and reports changes
+                            but does not write local files, Google Sheets,
+                            or monitor issues.
+                        </div>
+                    </div>
+                    <div class="ari-ap-form__field">
+                        <label for="edit-google-secret-name">
+                            OAuth filename
+                        </label>
+                        <input type="text" id="edit-google-secret-name"
+                               class="ari-ap-input"
+                               placeholder="legacy_gsheet_oauth.json">
+                        <div class="at-muted-hint">
+                            Required location:
+                            <code>{LOCAL_DATA_DIR}/admin/&lt;filename&gt;</code>
+                        </div>
+                    </div>
+                    <div class="ari-ap-form__field">
+                        <label for="edit-google-oauth-file">
+                            Upload OAuth JSON
+                            <button type="button"
+                                    id="at-oauth-info-btn"
+                                    class="at-info-icon-btn"
+                                    title="How to obtain this OAuth JSON file"
+                                    aria-label="How to obtain this OAuth JSON file">
+                                <i class="fa-solid fa-circle-info"></i>
+                            </button>
+                        </label>
+                        <input type="file" id="edit-google-oauth-file"
+                               class="ari-ap-input" accept=".json">
+                        <div class="at-muted-hint">
+                            Quick setup:
+                            1) In Google Cloud, create OAuth client credentials
+                            with Sheets/Drive access.
+                            2) Generate a refresh token.
+                            3) Export JSON with client_id, client_secret,
+                            refresh_token, token_uri.
+                        </div>
+                    </div>
+                    <div class="ari-ap-form__field" id="edit-check-gsheet-url-fields" style="display:none;">
+                        <label for="edit-monitoring-sheet-url">Monitoring sheet URL</label>
+                        <input type="url" id="edit-monitoring-sheet-url" class="ari-ap-input"
+                               placeholder="https://docs.google.com/spreadsheets/d/.../edit?gid=...">
+                        <div class="at-muted-hint">Per-instrument monitoring tab URL (optional — overrides YAML preset).</div>
+                    </div>
+                    <div class="ari-ap-form__field" id="edit-override-sheet-url-field" style="display:none;">
+                        <label for="edit-override-sheet-url">Override sheet URL</label>
+                        <input type="url" id="edit-override-sheet-url" class="ari-ap-input"
+                               placeholder="https://docs.google.com/spreadsheets/d/.../edit?gid=...">
+                        <div class="at-muted-hint">Shared overrides tab URL (optional — overrides YAML preset).</div>
+                    </div>
+                </div>
                 <div id="edit-backup-fields" style="display:none;">
                     <div class="ari-ap-form__field">
                         <label for="edit-daily-copies">Daily copies to keep</label>
@@ -580,29 +693,47 @@
                     <div class="ari-ap-form__field">
                         <label for="edit-assets-mode">Mode</label>
                         <select id="edit-assets-mode" class="ari-ap-input">
-                            <option value="sync">sync &#8212; check checksums, download only if changed</option>
-                            <option value="upload">upload &#8212; push local assets to remote server</option>
+                            <option value="remote">remote &#8212; sync via apero_data_checksum.py (update-local then update-remote)</option>
+                            <option value="local">local &#8212; bidirectional newest-wins copy with a local folder</option>
                         </select>
-                        <div class="at-muted-hint">Servers and checksums are read from the installed apero package automatically.</div>
+                        <div class="at-muted-hint">remote uses the installed apero recipe with --indir set to {LOCAL_DATA_DIR}/apero-assets/.</div>
+                    </div>
+                    <div class="ari-ap-form__field" id="edit-assets-local-source-row" style="display:none;">
+                        <label for="edit-assets-local-source">Local source directory</label>
+                        <div style="display:flex; gap:6px; align-items:center;">
+                            <input type="text" id="edit-assets-local-source" class="ari-ap-input" style="flex:1 1 auto;" placeholder="/absolute/path/to/source/apero-assets">
+                            <button type="button" id="edit-assets-local-browse" class="ari-ap-btn ari-ap-btn--secondary">Browse&hellip;</button>
+                        </div>
+                        <div class="at-muted-hint">Files are mirrored newest-wins between this directory and {LOCAL_DATA_DIR}/apero-assets/.</div>
                     </div>
                 </div>
                 <div id="edit-local-sync-fields" style="display:none;">
-                    <div class="ari-ap-form__field" id="edit-sync-mode-row" style="display:none;">
-                        <label for="edit-sync-mode">Sync mode</label>
-                        <select id="edit-sync-mode" class="ari-ap-input">
-                            <option value="run_server">Run on server</option>
-                            <option value="fetch_precomputed">Fetch pre-computed</option>
-                        </select>
-                    </div>
-                    <div class="ari-ap-form__field" id="edit-sync-source-field" style="display:none;">
-                        <label for="edit-sync-source">Sync Source Path <span id="edit-sync-source-required" class="ari-required" style="display:none;">*</span></label>
-                        <input type="text" id="edit-sync-source" class="ari-ap-input"
-                               placeholder="/path/to/prebuilt/.ari">
+                    <div class="ari-ap-form__field">
+                        <label>Per-profile sync mode</label>
                         <div class="at-muted-hint">
-                            Required when Sync mode is set to Fetch pre-computed.
-                            Save with this path, then use Run Now (or Run All) to sync files instead of running the task.
-                            You can use either a root containing tasks/ (for example ~/.ari) or a direct tasks/&lt;instrument&gt; directory.
+                            Choose Run on server or Fetch pre-computed for
+                            each APERO profile. For Fetch pre-computed,
+                            browse to the directory that contains that
+                            profile's pre-built task output. The selected
+                            directory can have a different name than the
+                            APERO profile.
                         </div>
+                    </div>
+                    <div id="edit-sync-profiles-empty"
+                         class="at-muted-hint" style="display:none;">
+                        No APERO profiles are available for this instrument.
+                    </div>
+                    <div id="edit-sync-profiles-wrap" style="display:none;">
+                        <table class="at-sync-profiles__table">
+                            <thead>
+                                <tr>
+                                    <th>APERO profile</th>
+                                    <th>Mode</th>
+                                    <th>Pre-computed directory</th>
+                                </tr>
+                            </thead>
+                            <tbody id="edit-sync-profiles-body"></tbody>
+                        </table>
                     </div>
                 </div>
                 <div id="edit-mp-fields" style="display:none;">
@@ -658,6 +789,39 @@
     </div>
 </div>
 
+<div id="at-sync-browse-modal" class="ari-modal-backdrop"
+     style="display:none;">
+    <div class="ari-modal ari-modal--wide">
+        <div class="ari-modal__header">
+            <h3>
+                <i class="fa-solid fa-folder-tree"></i>
+                Browse Sync Directory
+            </h3>
+            <button class="ari-modal__close" id="btn-sync-browse-close-x">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+        <div class="ari-modal__body">
+            <div class="ari-ap-browser__path">
+                <label for="sync-browse-path-input">Path</label>
+                <input type="text" id="sync-browse-path-input"
+                       class="ari-ap-input">
+                <button type="button" id="btn-sync-browse-go"
+                        class="ari-btn ari-btn--secondary">Go</button>
+            </div>
+            <div id="sync-browse-status" class="ari-ap-browser__status"
+                 style="display:none;"></div>
+            <div id="sync-browse-list" class="ari-ap-browser__list"></div>
+        </div>
+        <div class="ari-modal__footer">
+            <button id="btn-sync-browse-close"
+                    class="ari-btn ari-btn--secondary">Cancel</button>
+            <button id="btn-sync-browse-select"
+                    class="ari-btn ari-btn--primary">Use This Directory</button>
+        </div>
+    </div>
+</div>
+
 <!-- ====================================================================== -->
 <!-- Delete confirm modal                                                    -->
 <!-- ====================================================================== -->
@@ -708,6 +872,94 @@
 <!-- Toast notification                                                      -->
 <!-- ====================================================================== -->
 <div id="at-toast" class="ari-toast" style="display:none;"></div>
+
+<!-- OAuth setup help overlay (above the edit modal) -->
+<div id="at-oauth-help-modal"
+     class="ari-modal-backdrop"
+     style="display:none; z-index:1300;">
+    <div class="ari-modal"
+         style="max-width:640px; width:92%; padding:1.1rem 1.3rem;">
+        <div class="ari-modal__header"
+             style="display:flex; align-items:center;
+                    justify-content:space-between; gap:0.6rem;
+                    margin-bottom:0.6rem;">
+            <h3 style="margin:0; font-size:1.05rem;">
+                <i class="fa-solid fa-circle-info"></i>
+                How to get the OAuth JSON file
+            </h3>
+            <button type="button"
+                    class="ari-modal__close"
+                    id="at-oauth-help-close-x"
+                    aria-label="Close"
+                    style="background:none; border:none; cursor:pointer;
+                           font-size:1.1rem;">&times;</button>
+        </div>
+        <div class="ari-modal__body" style="font-size:0.92rem; line-height:1.55;">
+            <p>
+                APERO uses an <strong>OAuth2 user-authorized refresh
+                token</strong> to read and write the legacy Google
+                Sheets. Generate the JSON once and place it in
+                <code>{LOCAL_DATA_DIR}/admin/&lt;filename&gt;</code>
+                (the filename above must match).
+            </p>
+            <ol style="margin:0.4rem 0 0.8rem 1.1rem; padding:0;">
+                <li>
+                    Open the
+                    <a href="https://console.cloud.google.com/"
+                       target="_blank" rel="noopener">Google Cloud
+                    Console</a> and select (or create) a project.
+                </li>
+                <li>
+                    Enable the
+                    <strong>Google Sheets API</strong> and
+                    <strong>Google Drive API</strong> under
+                    “APIs &amp; Services → Library”.
+                </li>
+                <li>
+                    Under “APIs &amp; Services → Credentials”,
+                    create an <strong>OAuth client ID</strong>
+                    of type <em>Desktop app</em>. Download the
+                    client secret JSON.
+                </li>
+                <li>
+                    Add the Google account you want APERO to act as
+                    to the OAuth consent screen test users
+                    (or publish the app).
+                </li>
+                <li>
+                    Run a one-time auth flow to obtain a
+                    <strong>refresh_token</strong> with these scopes.
+                    This step opens a browser consent link once:
+<pre class="at-pre-code">https://www.googleapis.com/auth/spreadsheets
+https://www.googleapis.com/auth/drive</pre>
+                </li>
+                <li>
+                    Save a JSON file shaped like this and upload it via
+                    the field above:
+<pre class="at-pre-code">{
+  "client_id": "...apps.googleusercontent.com",
+  "client_secret": "...",
+  "refresh_token": "...",
+  "token_uri": "https://oauth2.googleapis.com/token"
+}</pre>
+                </li>
+            </ol>
+            <p style="margin:0.4rem 0 0;">
+                APERO stores the file with permissions
+                <code>0600</code> so only the service user can read
+                it. Test the task after upload to confirm the
+                credentials work.
+            </p>
+        </div>
+        <div class="ari-modal__footer"
+             style="display:flex; justify-content:flex-end;
+                    margin-top:0.8rem;">
+            <button type="button"
+                    class="ari-btn ari-btn--secondary"
+                    id="at-oauth-help-close">Close</button>
+        </div>
+    </div>
+</div>
 
 <!-- ====================================================================== -->
 <!-- Live task log modal                                                     -->
@@ -783,9 +1035,10 @@ window.ARI_ASYNC_TASKS = {
         cancelTask: '{{ url_for("api_async_tasks_cancel_task") }}',
         readFile: '{{ url_for("api_async_tasks_read_file") }}',
         downloadFile: '{{ url_for("api_async_tasks_download_file") }}',
+        browseProfiles: '{{ url_for("api_apero_profiles_browse") }}',
         purgeFiles: '/api/admin/async-tasks/purge-files',
     }
 };
 </script>
-    <script src="{{ url_for('static', filename='js/admin_async_tasks.js', v='20260423p') }}"></script>
+    <script src="{{ url_for('static', filename='js/admin_async_tasks.js', v='20260525a') }}"></script>
 {% endblock %}

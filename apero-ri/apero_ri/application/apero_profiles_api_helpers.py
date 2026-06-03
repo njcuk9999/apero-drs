@@ -10,6 +10,20 @@ from apero_ri.tasks import apero_async
 from flask import jsonify, request, url_for
 
 
+def _to_bool(value):
+    """Coerce request values to bool."""
+    if isinstance(value, bool):
+        return value
+    text = str(value or '').strip().lower()
+    return text in ['1', 'true', 'yes', 'on', 'y']
+
+
+def _profile_disabled(cfg: dict) -> bool:
+    """Return True if a profile is disabled."""
+    raw = cfg.get('disabled', cfg.get('DISABLED', False))
+    return _to_bool(raw)
+
+
 def resolve_db_payload_for_test(app, data: dict) -> dict:
     """Resolve request DB payload into concrete test connection params."""
     mode = str(data.get("DATABASE_MODE", "") or "").strip()
@@ -458,17 +472,21 @@ def api_apero_profiles_list(app):
         "PATH_TELLU",
         "PATH_LOG",
         "PATH_LBL",
+            "PATH_CHECK",
+            "PATH_OTHER",
     ]
 
     profiles = []
     profile_errors = []
     for name, cfg in inst_profiles.items():
+        disabled = _profile_disabled(cfg)
         entry = {
             "name": name,
             "DISPLAY_ORDER": cfg.get("DISPLAY_ORDER", 999),
             "groups": cfg.get("groups", []),
             "apero_version": cfg.get("apero_version", ""),
             "reduction_server": cfg.get("reduction_server", ""),
+            "disabled": disabled,
         }
 
         for key in db_keys:
@@ -490,6 +508,9 @@ def api_apero_profiles_list(app):
         for key in path_keys:
             val = app._profile_get_path(cfg, key, "")
             entry[key] = val
+            if disabled:
+                entry[key + "_exists"] = True
+                continue
             if val:
                 entry[key + "_exists"] = Path(val).is_dir()
                 if not entry[key + "_exists"]:
@@ -499,19 +520,25 @@ def api_apero_profiles_list(app):
                 all_paths_ok = False
         entry["all_paths_ok"] = all_paths_ok
 
-        db_check = app._validate_profile_database(cfg)
-        db_ok = bool(db_check.get("valid", False))
-        db_error = str(db_check.get("error", "")).strip()
+        if disabled:
+            db_ok = True
+            db_error = ''
+        else:
+            db_check = app._validate_profile_database(cfg)
+            db_ok = bool(db_check.get("valid", False))
+            db_error = str(db_check.get("error", "")).strip()
         entry["db_ok"] = db_ok
         entry["db_error"] = db_error
 
         reasons = []
+        if disabled:
+            reasons.append('disabled')
         if not db_ok:
             reasons.append(f'db: {db_error or "connection failed"}')
         if not all_paths_ok:
             reasons.append("paths: missing or invalid directory")
         entry["status_reasons"] = reasons
-        if reasons:
+        if reasons and not disabled:
             profile_errors.append(
                 f"Instrument {instrument} profile {name}: {'; '.join(reasons)}"
             )
@@ -671,6 +698,8 @@ def build_apero_profiles_overview_status(app) -> dict:
         "PATH_TELLU",
         "PATH_LOG",
         "PATH_LBL",
+            "PATH_CHECK",
+            "PATH_OTHER",
     ]
 
     issues = []
@@ -688,6 +717,9 @@ def build_apero_profiles_overview_status(app) -> dict:
                 continue
             total_profiles += 1
             inst_total += 1
+
+            if _profile_disabled(cfg):
+                continue
 
             reason_parts = []
 
@@ -798,6 +830,8 @@ def api_apero_profiles_save(app, package_dir: Path):
         "PATH_TELLU",
         "PATH_LOG",
         "PATH_LBL",
+        "PATH_CHECK",
+        "PATH_OTHER",
     ]
 
     values = {}
@@ -922,8 +956,10 @@ def api_apero_profiles_save(app, package_dir: Path):
 
     if name in inst_profiles:
         existing_groups = inst_profiles[name].get("groups", [])
+        existing_disabled = _profile_disabled(inst_profiles[name])
     else:
         existing_groups = []
+        existing_disabled = False
     new_groups = data.get("groups", existing_groups)
     if not isinstance(new_groups, list):
         return jsonify(success=False, error="groups must be a list"), 400
@@ -935,6 +971,9 @@ def api_apero_profiles_save(app, package_dir: Path):
         )
 
     profile_data = {"DISPLAY_ORDER": order, "groups": new_groups}
+    profile_data['disabled'] = _to_bool(
+        data.get('disabled', existing_disabled)
+    )
     profile_data.update(values)
     profile_data["database"] = dict(db_values)
     profile_data["paths"] = dict(path_values)
@@ -967,3 +1006,33 @@ def api_apero_profiles_save(app, package_dir: Path):
     save_apero_profiles(all_profiles)
     app._refresh_admin_health_after_change(user_info, perms)
     return jsonify(success=True)
+
+
+def api_apero_profiles_toggle_disabled(app):
+    """Toggle a profile's disabled flag."""
+    user_info, perms = app._require_apero_profile_perm()
+    if not user_info:
+        return jsonify(success=False, error='Unauthorized'), 401
+
+    data = request.get_json() or {}
+    instrument = str(data.get('instrument', '')).strip()
+    name = str(data.get('name', '')).strip()
+    if not instrument or not name:
+        return jsonify(success=False, error='Missing fields'), 400
+
+    all_profiles = load_apero_profiles(hydrate=False)
+    inst_profiles = all_profiles.get(instrument, {})
+    if name not in inst_profiles or not isinstance(inst_profiles[name], dict):
+        return jsonify(success=False, error='Profile not found'), 404
+
+    current = _profile_disabled(inst_profiles[name])
+    if 'disabled' in data:
+        new_value = _to_bool(data.get('disabled'))
+    else:
+        new_value = not current
+
+    inst_profiles[name]['disabled'] = new_value
+    all_profiles[instrument] = inst_profiles
+    save_apero_profiles(all_profiles)
+    app._refresh_admin_health_after_change(user_info, perms)
+    return jsonify(success=True, disabled=new_value)

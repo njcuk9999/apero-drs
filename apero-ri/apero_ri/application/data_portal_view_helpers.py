@@ -15,6 +15,7 @@ from apero_ri.core.object_funcs import (load_object_htable_rows,
                                         load_object_preset,
                                         load_object_table_row)
 from apero_ri.application import instrument_color_helpers
+from apero_ri.core import object_groups as og
 from apero_ri.plots.plot_manager import OBJ_PLOTS, DEBUG_PLOTS
 from apero_ri.plots.plots_filename import (
     PLOTABLE_OUTPUT_TYPES,
@@ -798,6 +799,210 @@ def ri_object_groups_view(app, profile_id):
     }
     return render_template(
         'data_portal/object_groups.html', **context
+    )
+
+
+def ri_object_group_summary_view(
+    app,
+    profile_id,
+    group_name,
+):
+    """Serve the summary-table page for one object group."""
+    user_info = get_effective_user(session)
+    if user_info:
+        perms = resolve_user_permissions(
+            user_info['groups'], app.ari_groups
+        )
+    else:
+        perms = get_public_permissions()
+
+    if 'view.data_portal' not in perms:
+        flash('You do not have permission to view this page.',
+              'warning')
+        return redirect(url_for('login'))
+
+    accessible = get_accessible_profiles(
+        user_info, app.ari_groups
+    )
+    profile = None
+    for prof in accessible:
+        if prof['profile_id'] == profile_id:
+            profile = prof
+            break
+
+    if not profile:
+        flash('Profile not found or access denied.',
+              'warning')
+        return redirect(url_for('home_data_portal'))
+
+    if og.get_group(profile_id, group_name) is None:
+        flash('Object group not found.', 'warning')
+        return redirect(url_for(
+            'ri_object_groups',
+            profile_id=profile_id,
+        ))
+
+    colors = app._instrument_colors()
+    color = colors.get(
+        profile['instrument'],
+        instrument_color_helpers.DEFAULT_INSTRUMENT_COLOR,
+    )
+    sidebar_tree = app._build_data_portal_sidebar_tree(
+        accessible_profiles=accessible,
+        active_page_id=(
+            f'home.data_portal.{profile_id}.object_groups'
+        ),
+        user_permissions=perms,
+        user_info=user_info,
+        current_profile_id=profile_id,
+    )
+
+    context = {
+        'page_id': (
+            f'home.data_portal.{profile_id}.object_groups'
+        ),
+        'page_label': (
+            f'{profile_id}: {group_name} Summary Table'
+        ),
+        'page_icon': 'fa-solid fa-table-list',
+        'is_parent': False,
+        'profile': profile,
+        'profile_color': color,
+        'api_url': '/api/data-portal/object-groups/summary-table',
+        'summary_mode': True,
+        'summary_group_name': group_name,
+        'summary_config_api_url': (
+            '/api/data-portal/object-groups/summary-config'
+        ),
+        'summary_custom_test_api_url': (
+            '/api/data-portal/object-groups/summary-custom-test'
+        ),
+        'summary_export_api_url': (
+            '/api/data-portal/object-groups/summary-export'
+        ),
+        'object_groups_url': url_for(
+            'ri_object_groups',
+            profile_id=profile_id,
+        ),
+        'summary_parent_label': 'Object Groups',
+        'sidebar_root': 'home.data_portal',
+        'sidebar_label': 'Data Portal',
+        'sidebar_icon': 'fa-solid fa-database',
+        'sidebar_url': '/data_portal',
+        'sidebar_tree': sidebar_tree,
+    }
+    return render_template(
+        'data_portal/object_table.html',
+        **context,
+    )
+
+
+def ri_favourites_summary_view(
+    app,
+    profile_id,
+    section_name,
+):
+    """Serve the summary-table page for one favourites section."""
+    user_info = get_effective_user(session)
+    if user_info:
+        perms = resolve_user_permissions(
+            user_info['groups'], app.ari_groups
+        )
+    else:
+        perms = get_public_permissions()
+
+    if 'view.data_portal' not in perms:
+        flash('You do not have permission to view this page.',
+              'warning')
+        return redirect(url_for('login'))
+
+    accessible = get_accessible_profiles(
+        user_info, app.ari_groups
+    )
+    profile = None
+    for prof in accessible:
+        if prof['profile_id'] == profile_id:
+            profile = prof
+            break
+
+    if not profile:
+        flash('Profile not found or access denied.',
+              'warning')
+        return redirect(url_for('home_data_portal'))
+
+    username = ''
+    if isinstance(user_info, dict):
+        username = str(user_info.get('username', '')).strip()
+    from apero_ri.core import user_data as ud
+    payload = ud.get_profile_fav_sections(username, profile_id)
+    sections = payload.get('sections', [])
+    found = False
+    for section in list(sections or []):
+        name = str(section.get('name', '')).strip()
+        if name == section_name:
+            found = True
+            break
+    if not found:
+        flash('Favourite section not found.', 'warning')
+        return redirect(url_for(
+            'ri_fav_objects',
+            profile_id=profile_id,
+        ))
+
+    colors = app._instrument_colors()
+    color = colors.get(
+        profile['instrument'],
+        instrument_color_helpers.DEFAULT_INSTRUMENT_COLOR,
+    )
+    sidebar_tree = app._build_data_portal_sidebar_tree(
+        accessible_profiles=accessible,
+        active_page_id=(
+            f'home.data_portal.{profile_id}.fav_objects'
+        ),
+        user_permissions=perms,
+        user_info=user_info,
+        current_profile_id=profile_id,
+    )
+
+    context = {
+        'page_id': (
+            f'home.data_portal.{profile_id}.fav_objects'
+        ),
+        'page_label': (
+            f'{profile_id}: {section_name} Summary Table'
+        ),
+        'page_icon': 'fa-solid fa-table-list',
+        'is_parent': False,
+        'profile': profile,
+        'profile_color': color,
+        'api_url': '/api/data-portal/object-groups/summary-table',
+        'summary_mode': True,
+        'summary_group_name': section_name,
+        'summary_source': 'favourites',
+        'summary_section_name': section_name,
+        'summary_config_api_url': (
+            '/api/data-portal/object-groups/summary-config'
+        ),
+        'summary_custom_test_api_url': (
+            '/api/data-portal/object-groups/summary-custom-test'
+        ),
+        'summary_export_api_url': (
+            '/api/data-portal/object-groups/summary-export'
+        ),
+        'object_groups_url': url_for(
+            'ri_fav_objects',
+            profile_id=profile_id,
+        ),
+        'summary_parent_label': 'Favourite Objects',
+        'sidebar_root': 'home.data_portal',
+        'sidebar_label': 'Data Portal',
+        'sidebar_icon': 'fa-solid fa-database',
+        'sidebar_url': '/data_portal',
+        'sidebar_tree': sidebar_tree,
+    }
+    return render_template(
+        'data_portal/object_table.html',
+        **context,
     )
 
 

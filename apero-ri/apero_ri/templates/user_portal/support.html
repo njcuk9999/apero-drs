@@ -1,6 +1,12 @@
 {% extends "general/sidebar_base.html" %}
 {% block title %}APERO RI – Support{% endblock %}
 
+{% block extra_head %}
+{{ super() }}
+<link rel="stylesheet"
+    href="{{ url_for('static', filename='css/user_portal_user_cards.css', v='20260501a') }}">
+{% endblock %}
+
 {% block doc_content %}
 <div class="ari-up-shell">
 <div class="ari-page-header">
@@ -39,101 +45,48 @@
          {% if not loop.first %}style="display:none;" hidden{% endif %}
          role="tabpanel">
     <div class="ari-sg-workspace ari-up-workspace">
-        <div class="ari-sg-section">
-            <div class="ari-sg-section__header">
-                <h3><i class="fa-solid fa-user-shield"></i> Admins</h3>
-            </div>
-            <div class="ari-up-section-body">
-                {% if item.admins %}
-                <ul class="ari-up-contact-list">
-                    {% for person in item.admins %}
-                    <li class="ari-up-contact-item">
-                        <span class="ari-up-contact-main">{{ person.username }} - {{ person.full_name }}</span>
-                        {% if person.email %}
-                        <a href="mailto:{{ person.email }}" class="ari-up-contact-email">{{ person.email }}</a>
-                        {% else %}
-                        <span class="ari-up-contact-email ari-up-contact-email--missing">No primary email set</span>
+        {% set sections = [
+            ('super_admins', 'Super Admins', 'fa-solid fa-crown'),
+            ('admins', 'Admins', 'fa-solid fa-user-shield'),
+            ('moderators', 'Moderators', 'fa-solid fa-user-gear'),
+            ('developers', 'Developers', 'fa-solid fa-code'),
+            ('monitors', 'Monitors', 'fa-solid fa-chart-line')
+        ] %}
+        {% for key, label, icon in sections %}
+        <div class="upu-support-section">
+            <h3 class="upu-support-section__title">
+                <i class="{{ icon }}"></i> {{ label }}
+            </h3>
+            {% if item[key] %}
+            <div class="upu-cards-grid">
+                {% for person in item[key] %}
+                <a class="upu-user-card" href="{{ person.profile_url }}">
+                    <div class="upu-user-card__head">
+                        <div class="upu-user-card__name">
+                            <span class="upu-user-card__username">{{ person.username }}</span>
+                            <span class="upu-user-card__fullname">{{ person.first_names }} {{ person.last_name }}</span>
+                        </div>
+                    </div>
+                    <div class="upu-user-card__body">
+                        <div class="upu-user-card__line">
+                            <i class="fa-solid fa-user-tag"></i>
+                            <span>{{ label }}</span>
+                        </div>
+                        {% if person.can_show_email %}
+                        <div class="upu-user-card__line">
+                            <i class="fa-solid fa-envelope"></i>
+                            <span>{{ person.email or 'No primary email set' }}</span>
+                        </div>
                         {% endif %}
-                    </li>
-                    {% endfor %}
-                </ul>
-                {% else %}
-                <div class="ari-sg-empty-small">No admins listed for this instrument.</div>
-                {% endif %}
+                    </div>
+                </a>
+                {% endfor %}
             </div>
+            {% else %}
+            <div class="ari-sg-empty-small">No {{ label|lower }} listed for this instrument.</div>
+            {% endif %}
         </div>
-
-        <div class="ari-sg-section">
-            <div class="ari-sg-section__header">
-                <h3><i class="fa-solid fa-user-gear"></i> Moderators</h3>
-            </div>
-            <div class="ari-up-section-body">
-                {% if item.moderators %}
-                <ul class="ari-up-contact-list">
-                    {% for person in item.moderators %}
-                    <li class="ari-up-contact-item">
-                        <span class="ari-up-contact-main">{{ person.username }} - {{ person.full_name }}</span>
-                        {% if person.email %}
-                        <a href="mailto:{{ person.email }}" class="ari-up-contact-email">{{ person.email }}</a>
-                        {% else %}
-                        <span class="ari-up-contact-email ari-up-contact-email--missing">No primary email set</span>
-                        {% endif %}
-                    </li>
-                    {% endfor %}
-                </ul>
-                {% else %}
-                <div class="ari-sg-empty-small">No moderators listed for this instrument.</div>
-                {% endif %}
-            </div>
-        </div>
-
-        <div class="ari-sg-section">
-            <div class="ari-sg-section__header">
-                <h3><i class="fa-solid fa-code"></i> Developers</h3>
-            </div>
-            <div class="ari-up-section-body">
-                {% if item.developers %}
-                <ul class="ari-up-contact-list">
-                    {% for person in item.developers %}
-                    <li class="ari-up-contact-item">
-                        <span class="ari-up-contact-main">{{ person.username }} - {{ person.full_name }}</span>
-                        {% if person.email %}
-                        <a href="mailto:{{ person.email }}" class="ari-up-contact-email">{{ person.email }}</a>
-                        {% else %}
-                        <span class="ari-up-contact-email ari-up-contact-email--missing">No primary email set</span>
-                        {% endif %}
-                    </li>
-                    {% endfor %}
-                </ul>
-                {% else %}
-                <div class="ari-sg-empty-small">No developers listed for this instrument.</div>
-                {% endif %}
-            </div>
-        </div>
-
-        <div class="ari-sg-section">
-            <div class="ari-sg-section__header">
-                <h3><i class="fa-solid fa-chart-line"></i> Monitors</h3>
-            </div>
-            <div class="ari-up-section-body">
-                {% if item.monitors %}
-                <ul class="ari-up-contact-list">
-                    {% for person in item.monitors %}
-                    <li class="ari-up-contact-item">
-                        <span class="ari-up-contact-main">{{ person.username }} - {{ person.full_name }}</span>
-                        {% if person.email %}
-                        <a href="mailto:{{ person.email }}" class="ari-up-contact-email">{{ person.email }}</a>
-                        {% else %}
-                        <span class="ari-up-contact-email ari-up-contact-email--missing">No primary email set</span>
-                        {% endif %}
-                    </li>
-                    {% endfor %}
-                </ul>
-                {% else %}
-                <div class="ari-sg-empty-small">No monitors listed for this instrument.</div>
-                {% endif %}
-            </div>
-        </div>
+        {% endfor %}
     </div>
 </section>
 {% endfor %}

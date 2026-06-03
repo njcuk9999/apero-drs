@@ -1,0 +1,205 @@
+{% extends "general/sidebar_base.html" %}
+{% block title %}APERO RI – APERO Checks Queue – {{ profile_id }}{% endblock %}
+
+{% block body_class %}ari-has-sidebar ari-apero-checks-queue-page{% endblock %}
+
+{% block extra_head %}
+{{ super() }}
+<style>
+.acq-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-bottom: 0.85rem;
+}
+.acq-note {
+    color: var(--ari-text-muted);
+    font-size: 0.9rem;
+}
+.acq-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 0.9rem;
+}
+.acq-card {
+    border: 1px solid var(--ari-border);
+    border-radius: 0.9rem;
+    background: var(--ari-card-bg);
+    padding: 0.9rem;
+}
+.acq-card__head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.65rem;
+    margin-bottom: 0.65rem;
+}
+.acq-card__title {
+    font-size: 1rem;
+    font-weight: 700;
+}
+.acq-table-wrap {
+    overflow: auto;
+}
+.acq-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.92rem;
+}
+.acq-table th,
+.acq-table td {
+    border-top: 1px solid var(--ari-border);
+    padding: 0.45rem 0.45rem;
+    text-align: left;
+    vertical-align: top;
+}
+.acq-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    border-radius: 999px;
+    padding: 0.15rem 0.5rem;
+    font-size: 0.78rem;
+    border: 1px solid var(--ari-border);
+    background: var(--ari-surface-muted, #f8fafc);
+}
+.acq-pill--night {
+    border-color: #93c5fd;
+    background: #eff6ff;
+    color: #1d4ed8;
+}
+.acq-pill--check {
+    border-color: #a7f3d0;
+    background: #ecfdf5;
+    color: #047857;
+}
+.acq-empty {
+    color: var(--ari-text-muted);
+    font-size: 0.92rem;
+    padding: 0.55rem 0;
+}
+</style>
+<script src="{{ url_for('static', filename='js/apero_checks_queue.js') }}?v=20260520a"
+        defer></script>
+{% endblock %}
+
+{% block doc_content %}
+<div class="ari-page-header">
+    <h1>
+        <i class="fa-solid fa-list-check"></i>
+        <a href="{{ url_for('monitor_apero_checks_view') }}"
+           class="ot-breadcrumb-link">APERO Checks</a>
+        <span class="ot-breadcrumb-sep">/</span>
+        <a href="{{ url_for('monitor_apero_checks_profile_view', profile_id=profile_id) }}"
+           class="ot-breadcrumb-link">{{ profile_id }}</a>
+        <span class="ot-breadcrumb-sep">/</span>
+        Queue Status
+    </h1>
+    <p class="ari-page-subtitle">
+        Track APERO check tasks for this profile, including whether each manual
+        run is a full obsdir re-run or a single-check re-run.
+    </p>
+</div>
+
+<div class="ot-meta-bar">
+    <span class="ot-meta-bar__item ot-meta-bar__item--muted">
+        Profile: {{ profile_id }}
+    </span>
+    <span class="ot-meta-bar__item ot-meta-bar__item--muted">
+        Instrument: {{ instrument }}
+    </span>
+    <span id="acq-last-update" class="ot-meta-bar__item ot-meta-bar__item--muted">
+        Last update: --
+    </span>
+</div>
+
+<div class="acq-toolbar">
+    <button id="acq-btn-refresh" class="ari-btn ari-btn--sm ari-btn--secondary">
+        <i class="fa-solid fa-rotate"></i> Refresh
+    </button>
+    <button id="acq-btn-kill" class="ari-btn ari-btn--sm ari-btn--danger">
+        <i class="fa-solid fa-hand"></i> Kill Profile Tasks
+    </button>
+    <button id="acq-btn-clear" class="ari-btn ari-btn--sm ari-btn--secondary">
+        <i class="fa-solid fa-eraser"></i> Clear History
+    </button>
+</div>
+<div class="acq-note">
+    Clear History uses the shared async task history file (global clear).
+</div>
+
+<div class="acq-grid">
+    <section class="acq-card">
+        <div class="acq-card__head">
+            <div class="acq-card__title">Running</div>
+        </div>
+        <div class="acq-table-wrap">
+            <table class="acq-table" id="acq-running-table">
+                <thead>
+                    <tr>
+                        <th>Type</th>
+                        <th>Obsdir</th>
+                        <th>Check</th>
+                        <th>Status</th>
+                        <th>Progress</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </div>
+    </section>
+
+    <section class="acq-card">
+        <div class="acq-card__head">
+            <div class="acq-card__title">Queued</div>
+        </div>
+        <div class="acq-table-wrap">
+            <table class="acq-table" id="acq-queued-table">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Type</th>
+                        <th>Obsdir</th>
+                        <th>Check</th>
+                        <th>Status</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </div>
+    </section>
+
+    <section class="acq-card">
+        <div class="acq-card__head">
+            <div class="acq-card__title">Recent Manual History</div>
+        </div>
+        <div class="acq-table-wrap">
+            <table class="acq-table" id="acq-history-table">
+                <thead>
+                    <tr>
+                        <th>Time</th>
+                        <th>Type</th>
+                        <th>Obsdir</th>
+                        <th>Check</th>
+                        <th>Status</th>
+                        <th>Details</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </div>
+    </section>
+</div>
+
+<script>
+window.ARI_APERO_CHECKS_QUEUE = {
+    profileId: {{ profile_id|tojson }},
+    statusUrl: {{ url_for('api_apero_checks_queue_status', profile_id=profile_id)|tojson }},
+    cancelUrl: {{ url_for('api_apero_checks_queue_cancel_task', profile_id=profile_id)|tojson }},
+    killUrl: {{ url_for('api_apero_checks_queue_kill_profile', profile_id=profile_id)|tojson }},
+    clearUrl: {{ url_for('api_apero_checks_queue_clear_history', profile_id=profile_id)|tojson }}
+};
+</script>
+{% endblock %}

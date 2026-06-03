@@ -54,6 +54,10 @@ admin:
     - manage.admin.sshfs_setup
     - manage.admin.database_setup
     - manage.admin.user_db_access
+    # astrometric history (read + restore) is admin/mod/dev only
+    - manage.astrometrics.history
+    # rejection-list history (read-only global audit log)
+    - manage.rejection_list.history
   groups:
     - moderator.SPIROU
     - moderator.NIRPS
@@ -89,6 +93,10 @@ moderator.SPIROU:
     - manage.admin.vault
     # astrometric catalogue: edit / rename existing yaml entries
     - manage.astrometrics
+    # astrometric catalogue: view + restore historical edits
+    - manage.astrometrics.history
+    # rejection-list page: global history tab
+    - manage.rejection_list.history
   groups:
     - monitor.SPIROU
 
@@ -118,6 +126,10 @@ moderator.NIRPS:
     - manage.admin.vault
     # astrometric catalogue: edit / rename existing yaml entries
     - manage.astrometrics
+    # astrometric catalogue: view + restore historical edits
+    - manage.astrometrics.history
+    # rejection-list page: global history tab
+    - manage.rejection_list.history
   groups:
     - monitor.NIRPS
 
@@ -133,6 +145,10 @@ developer.SPIROU:
     - manage.admin.calendar.SPIROU
     - view.admin.links
     - manage.admin.links.SPIROU
+    # astrometric history (read + restore)
+    - manage.astrometrics.history
+    # rejection-list history (read-only global audit log)
+    - manage.rejection_list.history
   groups:
     - monitor.SPIROU
 
@@ -145,6 +161,10 @@ developer.NIRPS:
     - manage.admin.calendar.NIRPS
     - view.admin.links
     - manage.admin.links.NIRPS
+    # astrometric history (read + restore)
+    - manage.astrometrics.history
+    # rejection-list history (read-only global audit log)
+    - manage.rejection_list.history
   groups:
     - monitor.NIRPS
 
@@ -158,6 +178,9 @@ monitor.SPIROU:
       - view.monitor_portal.SPIROU
       # astrometric catalogue: upload brand-new yaml entries
       - upload.astrometrics
+      # astrometric catalogue: edit / rename existing yaml entries
+      # (history viewing/restoration is intentionally NOT granted)
+      - manage.astrometrics
   groups:
     - general.SPIROU
 
@@ -166,6 +189,7 @@ monitor.NIRPS:
       - monitor.NIRPS
       - view.monitor_portal.NIRPS
       - upload.astrometrics
+      - manage.astrometrics
   groups:
     - general.NIRPS
 
