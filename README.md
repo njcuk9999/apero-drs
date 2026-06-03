@@ -210,3 +210,28 @@ git clone git@github.com:njcuk9999/lbl.git
 pip install -U -e './apero-drs/apero-core' -e './lbl' -e './apero-drs/apero-drs[dev]'
 
 ```
+
+### For Alliance:
+
+```bash
+module load StdEnv/2023 python/3.12 hdf5 cmake/3.31.0 gcc opencv/4.13.0
+mkdir apero-bin
+cd apero-bin
+virtualenv  apero-env-08
+pip install --no-index --upgrade pip
+
+git clone git@github.com:njcuk9999/apero-drs.git
+git clone git@github.com:njcuk9999/lbl.git
+
+source apero-env-08/bin/activate
+pip install -U -e './apero-drs/apero-core' -e './lbl' -e './apero-drs/apero-drs[dev]'
+
+```
+
+Before running apero scripts on alliance:
+```bash
+module load StdEnv/2023 python/3.12 hdf5 cmake/3.31.0 gcc opencv/4.13.0
+source apero-env-08/bin/activate
+```
+
+[Back to top](#apero---a-pipeline-to-reduce-observations)
