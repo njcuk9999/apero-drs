@@ -220,6 +220,73 @@
 [data-theme="dark"] .aci-warning-list {
     color: #ffa198;
 }
+/* Clickable count chips */
+.aci-chip--clickable {
+    cursor: pointer;
+    transition: box-shadow 0.12s, transform 0.1s;
+}
+.aci-chip--clickable:hover {
+    box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+    transform: translateY(-1px);
+}
+/* Results overlay */
+.aci-results-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 4000;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding-top: 5vh;
+}
+.aci-results-backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(0,0,0,0.55);
+}
+.aci-results-panel {
+    position: relative;
+    z-index: 1;
+    width: min(96vw, 860px);
+    max-height: 88vh;
+    display: flex;
+    flex-direction: column;
+    background: var(--ari-card-bg);
+    border: 1px solid var(--ari-border);
+    border-radius: 0.9rem;
+    overflow: hidden;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+}
+.aci-results-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    padding: 0.8rem 1rem;
+    border-bottom: 1px solid var(--ari-border);
+    flex-shrink: 0;
+}
+.aci-results-title {
+    font-weight: 700;
+    font-size: 1rem;
+    color: var(--ari-text);
+}
+.aci-results-body {
+    flex: 1;
+    overflow: auto;
+    padding: 0.75rem 0.9rem 0.6rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+}
+/* Use ot-* table classes for the results grid */
+.aci-results-table-wrap {
+    overflow-x: auto;
+    overflow-y: auto;
+    max-height: 52vh;
+    border: 1px solid var(--ari-border);
+    border-radius: 4px;
+}
 </style>
 
 {% set item = apero_check_item %}
@@ -241,21 +308,51 @@
             {% endif %}
         </div>
         <div class="aci-meta">
-            <span class="aci-chip aci-chip--passed">
+            {% if item.counts.passed %}
+            <button class="aci-chip aci-chip--passed aci-chip--clickable"
+                    type="button" data-state="passed"
+                    title="Click to see which nights passed">
                 Passed: {{ item.counts.passed }}
-            </span>
-            <span class="aci-chip aci-chip--overridden">
+            </button>
+            {% else %}
+            <span class="aci-chip aci-chip--passed">Passed: 0</span>
+            {% endif %}
+            {% if item.counts.overridden %}
+            <button class="aci-chip aci-chip--overridden aci-chip--clickable"
+                    type="button" data-state="overridden"
+                    title="Click to see which nights are overridden">
                 Overridden: {{ item.counts.overridden }}
-            </span>
-            <span class="aci-chip aci-chip--monitored">
+            </button>
+            {% else %}
+            <span class="aci-chip aci-chip--overridden">Overridden: 0</span>
+            {% endif %}
+            {% if item.counts.monitored %}
+            <button class="aci-chip aci-chip--monitored aci-chip--clickable"
+                    type="button" data-state="monitored"
+                    title="Click to see which nights are monitored">
                 Monitored: {{ item.counts.monitored }}
-            </span>
-            <span class="aci-chip aci-chip--mixed">
+            </button>
+            {% else %}
+            <span class="aci-chip aci-chip--monitored">Monitored: 0</span>
+            {% endif %}
+            {% if item.counts.mixed %}
+            <button class="aci-chip aci-chip--mixed aci-chip--clickable"
+                    type="button" data-state="mixed"
+                    title="Click to see which nights have mixed state">
                 Mixed: {{ item.counts.mixed }}
-            </span>
-            <span class="aci-chip aci-chip--failed">
+            </button>
+            {% else %}
+            <span class="aci-chip aci-chip--mixed">Mixed: 0</span>
+            {% endif %}
+            {% if item.counts.failed %}
+            <button class="aci-chip aci-chip--failed aci-chip--clickable"
+                    type="button" data-state="failed"
+                    title="Click to see which nights failed">
                 Failed: {{ item.counts.failed }}
-            </span>
+            </button>
+            {% else %}
+            <span class="aci-chip aci-chip--failed">Failed: 0</span>
+            {% endif %}
         </div>
         <div class="aci-actions">
             <button id="aci-toggle-ignore" class="ari-btn ari-btn--primary"
@@ -366,6 +463,91 @@
     </section>
 </div>
 
+{# ── Check-results overlay ── #}
+<div id="aci-results-overlay" class="aci-results-overlay" hidden>
+    <div class="aci-results-backdrop" id="aci-results-backdrop"></div>
+    <div class="aci-results-panel">
+        <div class="aci-results-header">
+            <span class="aci-results-title" id="aci-results-title">Results</span>
+            <button id="aci-results-close" type="button"
+                    class="ari-btn ari-btn--sm ari-btn--secondary"
+                    title="Close">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+        <div class="aci-results-body">
+            <div id="aci-results-loading">
+                <i class="fa-solid fa-spinner fa-spin"></i>
+                Loading&hellip;
+            </div>
+            <div id="aci-results-content" hidden>
+                <div class="ot-toolbar" style="margin-bottom:0.5rem;">
+                    <div class="ot-toolbar__left">
+                        <label class="ot-perpage-label">
+                            Rows per page
+                            <select id="aci-res-perpage"
+                                    class="ot-perpage-select">
+                                <option value="25">25</option>
+                                <option value="50" selected>50</option>
+                                <option value="100">100</option>
+                                <option value="0">All</option>
+                            </select>
+                        </label>
+                        <input id="aci-res-filter"
+                               type="search"
+                               class="ot-filter-input"
+                               placeholder="Filter profiles / obs-dirs"
+                               style="width:14rem;">
+                    </div>
+                    <span id="aci-res-summary"
+                          class="ot-page-info"></span>
+                </div>
+                <div class="aci-results-table-wrap">
+                    <table class="ot-table" id="aci-res-table">
+                        <thead>
+                            <tr class="ot-header-row">
+                                <th class="ot-th">Profile</th>
+                                <th class="ot-th">Obs-dir</th>
+                                <th class="ot-th">Link</th>
+                            </tr>
+                        </thead>
+                        <tbody id="aci-res-tbody"></tbody>
+                    </table>
+                </div>
+                <div class="ot-pagination" style="margin-top:0.6rem;">
+                    <span id="aci-res-page-info" class="ot-page-info"></span>
+                    <div class="ot-page-controls">
+                        <button id="aci-res-first"
+                                class="ari-btn ari-btn--sm ari-btn--secondary"
+                                disabled>
+                            <i class="fa-solid fa-angles-left"></i>
+                        </button>
+                        <button id="aci-res-prev"
+                                class="ari-btn ari-btn--sm ari-btn--secondary"
+                                disabled>
+                            <i class="fa-solid fa-angle-left"></i>
+                        </button>
+                        <span>Page <input id="aci-res-page-input"
+                                          class="ot-page-input"
+                                          type="number" min="1" value="1">
+                              of <span id="aci-res-page-total">1</span></span>
+                        <button id="aci-res-next"
+                                class="ari-btn ari-btn--sm ari-btn--secondary"
+                                disabled>
+                            <i class="fa-solid fa-angle-right"></i>
+                        </button>
+                        <button id="aci-res-last"
+                                class="ari-btn ari-btn--sm ari-btn--secondary"
+                                disabled>
+                            <i class="fa-solid fa-angles-right"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script>
 window.ARI_APERO_CHECK_INFO = {
     saveUrl: {{ url_for('api_apero_checks_config_save')|tojson }},
@@ -374,8 +556,156 @@ window.ARI_APERO_CHECK_INFO = {
     ignoredChecks: {{ (apero_checks_config.ignored_checks or [])|tojson }},
     overrideAllowed: {{ (apero_checks_config.override_allowed or [])|tojson }},
     profileOptions: {{ (apero_check_profile_options or [])|tojson }},
-    policyUrl: {{ url_for('home_admin_portal_apero_checks_policy')|tojson }}
+    policyUrl: {{ url_for('home_admin_portal_apero_checks_policy')|tojson }},
+    checkResultsUrl: '/api/monitor/apero-checks/check-results'
 };
+</script>
+<script>
+/* ── Check-results overlay wiring ── */
+(function () {
+    "use strict";
+    var cfg = window.ARI_APERO_CHECK_INFO || {};
+    var overlay   = document.getElementById('aci-results-overlay');
+    var backdrop  = document.getElementById('aci-results-backdrop');
+    var closeBtn  = document.getElementById('aci-results-close');
+    var title     = document.getElementById('aci-results-title');
+    var loading   = document.getElementById('aci-results-loading');
+    var content   = document.getElementById('aci-results-content');
+    var tbody     = document.getElementById('aci-res-tbody');
+    var summary   = document.getElementById('aci-res-summary');
+    var pageInfo  = document.getElementById('aci-res-page-info');
+    var pageInput = document.getElementById('aci-res-page-input');
+    var pageTotal = document.getElementById('aci-res-page-total');
+    var filterInp = document.getElementById('aci-res-filter');
+    var perpage   = document.getElementById('aci-res-perpage');
+    var btnFirst  = document.getElementById('aci-res-first');
+    var btnPrev   = document.getElementById('aci-res-prev');
+    var btnNext   = document.getElementById('aci-res-next');
+    var btnLast   = document.getElementById('aci-res-last');
+
+    var allRows = [], filteredRows = [], page = 1, pp = 50;
+
+    function esc(s) {
+        return String(s == null ? '' : s)
+            .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+            .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+
+    function renderPage() {
+        var total = filteredRows.length;
+        var totalPages = pp === 0 ? 1 : Math.max(1, Math.ceil(total / pp));
+        if (page > totalPages) page = totalPages;
+        if (page < 1) page = 1;
+        var start = pp === 0 ? 0 : (page - 1) * pp;
+        var end   = pp === 0 ? total : Math.min(start + pp, total);
+        var slice = filteredRows.slice(start, end);
+
+        var html = '';
+        slice.forEach(function (row, idx) {
+            var cls = (start + idx) % 2 === 0
+                ? 'background:var(--ari-card-bg)'
+                : 'background:var(--ari-bg,#f9fafb)';
+            var link = row.obsdir_url
+                ? '<a class="ari-link" href="' + esc(row.obsdir_url) +
+                  '" target="_blank" rel="noopener">' +
+                  '<i class="fa-solid fa-arrow-up-right-from-square"></i></a>'
+                : '';
+            html += '<tr class="ot-row" style="' + cls + '">' +
+                '<td class="ot-cell">' + esc(row.profile_id) + '</td>' +
+                '<td class="ot-cell">' + esc(row.obsdir) + '</td>' +
+                '<td class="ot-cell">' + link + '</td></tr>';
+        });
+        tbody.innerHTML = html || '<tr><td class="ot-cell" colspan="3"' +
+            ' style="color:var(--ari-text-muted);padding:1rem;">No results.</td></tr>';
+
+        if (pageInfo)  pageInfo.textContent  = start+1+' – '+end+' of '+total;
+        if (pageTotal) pageTotal.textContent = String(totalPages);
+        if (pageInput) pageInput.value        = String(page);
+        if (summary)   summary.textContent   = total + ' result(s)';
+        var atFirst = page <= 1, atLast = page >= totalPages;
+        if (btnFirst) btnFirst.disabled = atFirst;
+        if (btnPrev)  btnPrev.disabled  = atFirst;
+        if (btnNext)  btnNext.disabled  = atLast;
+        if (btnLast)  btnLast.disabled  = atLast;
+    }
+
+    function applyFilter() {
+        var q = (filterInp ? filterInp.value : '').trim().toLowerCase();
+        filteredRows = q
+            ? allRows.filter(function (r) {
+                  return (r.profile_id + ' ' + r.obsdir).toLowerCase()
+                      .indexOf(q) >= 0;
+              })
+            : allRows.slice();
+        page = 1;
+        renderPage();
+    }
+
+    function openOverlay(state) {
+        if (!overlay) return;
+        title.textContent = state.charAt(0).toUpperCase() + state.slice(1)
+            + ' — ' + esc(cfg.checkKey || '');
+        loading.hidden  = false;
+        content.hidden  = true;
+        overlay.hidden  = false;
+        document.body.style.overflow = 'hidden';
+        fetch(cfg.checkResultsUrl +
+              '?check_key=' + encodeURIComponent(cfg.checkKey || '') +
+              '&state='     + encodeURIComponent(state))
+            .then(function (r) { return r.json(); })
+            .then(function (data) {
+                allRows = (data.rows || []);
+                pp = perpage ? parseInt(perpage.value, 10) : 50;
+                applyFilter();
+                loading.hidden = true;
+                content.hidden = false;
+            })
+            .catch(function () {
+                if (tbody) tbody.innerHTML =
+                    '<tr><td colspan="3" style="color:red;padding:1rem">' +
+                    'Failed to load results.</td></tr>';
+                loading.hidden = true;
+                content.hidden = false;
+            });
+    }
+
+    function closeOverlay() {
+        if (overlay) overlay.hidden = true;
+        document.body.style.overflow = '';
+    }
+
+    /* Wire count chips */
+    document.querySelectorAll('.aci-chip--clickable[data-state]')
+        .forEach(function (btn) {
+            btn.addEventListener('click', function () {
+                openOverlay(btn.getAttribute('data-state'));
+            });
+        });
+
+    if (backdrop) backdrop.addEventListener('click', closeOverlay);
+    if (closeBtn) closeBtn.addEventListener('click', closeOverlay);
+    document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape') closeOverlay();
+    });
+
+    /* Pagination controls */
+    function go(n) { page = n; renderPage(); }
+    if (btnFirst) btnFirst.addEventListener('click', function () { go(1); });
+    if (btnLast)  btnLast.addEventListener('click', function () {
+        go(Math.max(1, Math.ceil(filteredRows.length / (pp||1))));
+    });
+    if (btnPrev)  btnPrev.addEventListener('click', function () { go(page - 1); });
+    if (btnNext)  btnNext.addEventListener('click', function () { go(page + 1); });
+    if (pageInput) pageInput.addEventListener('change', function () {
+        go(parseInt(pageInput.value, 10) || 1);
+    });
+    if (perpage) perpage.addEventListener('change', function () {
+        pp = parseInt(perpage.value, 10);
+        page = 1;
+        renderPage();
+    });
+    if (filterInp) filterInp.addEventListener('input', applyFilter);
+}());
 </script>
 <script src="{{ url_for('static', filename='js/admin_apero_check_info.js') }}"></script>
 {% endblock %}

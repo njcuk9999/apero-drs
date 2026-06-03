@@ -1616,6 +1616,24 @@ def register_data_portal_routes(app):
         methods=["POST"],
     )
     app.add_url_rule(
+        "/api/monitor/processing-logs/fail-report",
+        "api_processing_logs_fail_report",
+        app._api_processing_logs_fail_report,
+        methods=["POST"],
+    )
+    app.add_url_rule(
+        "/api/monitor/processing-logs/fail-report-info",
+        "api_processing_logs_fail_report_info",
+        app._api_processing_logs_fail_report_info,
+        methods=["GET"],
+    )
+    app.add_url_rule(
+        "/monitor_portal/proc_logs_report/<token>",
+        "monitor_processing_logs_report_download",
+        app._api_processing_logs_report_download,
+        methods=["GET"],
+    )
+    app.add_url_rule(
         "/api/monitor/apero-checks/update-failure",
         "api_apero_checks_update_failure",
         app._api_apero_checks_update_failure,
@@ -1686,6 +1704,12 @@ def register_data_portal_routes(app):
         'api_apero_checks_delete_test_from_yamls',
         app._api_apero_checks_delete_test_from_yamls,
         methods=['POST'],
+    )
+    app.add_url_rule(
+        '/api/monitor/apero-checks/check-results',
+        'api_apero_checks_check_results',
+        app._api_apero_checks_check_results,
+        methods=['GET'],
     )
     app.add_url_rule(
         '/api/monitor/apero-checks/<profile_id>/queue-status',

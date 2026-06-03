@@ -79,6 +79,31 @@
        State
     ---------------------------------------------------------- */
     var cfg = window.ARI_PROC_LOGS || {};
+
+    /* Synthetic column: a link to the known-errors page filtered by the
+       row's recipe name. Appended to both the profile and pid tables. */
+    var KNOWN_ERR_COL = "Check Known Errors";
+    var KNOWN_ERRORS_URL = "/monitor_portal/known_errors";
+
+    /* Trailing instrument suffixes stripped from recipe names before they
+       are used as the known-errors filter (longest first so e.g.
+       "_nirps_he" matches before a hypothetical "_nirps"). */
+    var INSTRUMENT_SUFFIXES = [
+        "_nirps_he", "_nirps_ha", "_nirps", "_spirou",
+    ];
+
+    function stripInstrumentSuffix(name) {
+        var out = String(name || "").trim();
+        var lower = out.toLowerCase();
+        for (var i = 0; i < INSTRUMENT_SUFFIXES.length; i++) {
+            var suf = INSTRUMENT_SUFFIXES[i];
+            if (lower.slice(-suf.length) === suf) {
+                return out.slice(0, out.length - suf.length);
+            }
+        }
+        return out;
+    }
+
     var state = {
         allRows: [],
         filteredRows: [],
@@ -137,8 +162,58 @@
         dom.logFindCount =
             document.getElementById("pl-log-find-count");
 
+        dom.logMaximize = document.getElementById("pl-log-maximize");
+
         if (cfg.mode === "pid") {
             dom.groupName   = document.getElementById("pl-group-name");
+            /* Summary cards */
+            dom.summaryCards = document.getElementById("pl-summary-cards");
+            dom.sumGroup   = document.getElementById("pl-sum-group");
+            dom.sumStart   = document.getElementById("pl-sum-start");
+            dom.sumEnd     = document.getElementById("pl-sum-end");
+            dom.sumTotal   = document.getElementById("pl-sum-total");
+            dom.sumFailed   = document.getElementById("pl-sum-failed");
+            dom.sumPassed   = document.getElementById("pl-sum-passed");
+            dom.cardFailed  = document.getElementById("pl-card-failed");
+            dom.cardPassed  = document.getElementById("pl-card-passed");
+            dom.sumProclog = document.getElementById("pl-sum-proclog");
+            /* Fail-report overlay */
+            dom.reportOverlay  = document.getElementById("pl-report-overlay");
+            dom.reportBackdrop =
+                document.getElementById("pl-report-backdrop");
+            dom.reportClose    = document.getElementById("pl-report-close");
+            dom.reportBtnOpen   =
+                document.getElementById("pl-btn-fail-report");
+            dom.reportGenerate  =
+                document.getElementById("pl-report-generate");
+            dom.reportRegenerate=
+                document.getElementById("pl-report-regenerate");
+            dom.reportUseCached =
+                document.getElementById("pl-report-use-cached");
+            dom.reportRetry     = document.getElementById("pl-report-retry");
+            dom.reportShare     = document.getElementById("pl-report-share");
+            dom.reportDownload  =
+                document.getElementById("pl-report-download");
+            dom.reportBack      = document.getElementById("pl-report-back");
+            dom.reportExpiry    =
+                document.getElementById("pl-report-expiry");
+            dom.reportErrorMsg  =
+                document.getElementById("pl-report-error-msg");
+            dom.reportAnalyserBody =
+                document.getElementById("pl-report-analyser-body");
+            dom.reportCacheBanner =
+                document.getElementById("pl-report-cache-banner");
+            dom.reportCacheAge  =
+                document.getElementById("pl-report-cache-age");
+            dom.reportDoneAge   =
+                document.getElementById("pl-report-done-age");
+            dom.reportSteps = {
+                checking: document.getElementById("pl-report-step-checking"),
+                start:    document.getElementById("pl-report-step-start"),
+                loading:  document.getElementById("pl-report-step-loading"),
+                done:     document.getElementById("pl-report-step-done"),
+                error:    document.getElementById("pl-report-step-error"),
+            };
         }
     }
 
@@ -240,6 +315,19 @@
         dom.filterRow.innerHTML = "";
 
         state.columns.forEach(function (col) {
+            /* Synthetic column: plain header + empty filter cell. */
+            if (col === KNOWN_ERR_COL) {
+                var thKE = document.createElement("th");
+                thKE.className = "ot-th";
+                thKE.dataset.col = col;
+                thKE.textContent = col;
+                dom.headerRow.appendChild(thKE);
+                var tdKE = document.createElement("td");
+                tdKE.className = "ot-filter-cell";
+                dom.filterRow.appendChild(tdKE);
+                return;
+            }
+
             /* header cell */
             var th = document.createElement("th");
             th.className = "ot-th ot-th--sortable";
@@ -307,7 +395,7 @@
                 sel.addEventListener("change", function () {
                     state.filters[col] = sel.value;
                     /* If user manually changes the Finished
-                       dropdown, keep the toggle in sync. */
+                       dropdown, keep the toggle and cards in sync. */
                     if (col === "Finished") {
                         var ub = document.getElementById(
                             "pl-btn-unfinished"
@@ -331,6 +419,9 @@
                         }
                     }
                     filterRows();
+                    if (col === "Finished") {
+                        syncSummaryCardStates();
+                    }
                 });
                 td.appendChild(sel);
             } else {
@@ -355,6 +446,24 @@
        Cell renderer
     ---------------------------------------------------------- */
     function renderCell(col, val, row) {
+        /* Synthetic "Check Known Errors" column → link filtered by recipe.
+           Handled before the null check (row[col] is undefined). */
+        if (col === KNOWN_ERR_COL) {
+            var recipe = stripInstrumentSuffix(
+                String((row && row["Recipe name"]) || "").trim()
+            );
+            var keUrl = KNOWN_ERRORS_URL;
+            if (recipe) {
+                keUrl += "?q=" + encodeURIComponent(recipe);
+            }
+            return "<a href=\"" + esc(keUrl) + "\" " +
+                   "class=\"pl-known-err-link\" target=\"_blank\" " +
+                   "rel=\"noopener\" title=\"Search known errors for " +
+                   esc(recipe) + "\">" +
+                   "<i class=\"fa-solid fa-circle-question\"></i> " +
+                   "Check</a>";
+        }
+
         if (val == null) return "";
 
         /* PID column on profile page → link */
@@ -804,9 +913,414 @@
         resetLogFind();
     }
 
+    /* ----------------------------------------------------------
+       Group summary cards (pid page)
+    ---------------------------------------------------------- */
+    function renderSummaryCards(summary, groupName) {
+        if (!dom.summaryCards) return;
+        if (!summary) {
+            dom.summaryCards.hidden = true;
+            return;
+        }
+        function setText(el, val) {
+            if (el) el.textContent = (val == null || val === "")
+                ? "n/a" : String(val);
+        }
+        setText(dom.sumGroup, groupName || cfg.pid);
+        setText(dom.sumStart, summary.start_time);
+        setText(dom.sumEnd, summary.end_time);
+        setText(dom.sumTotal, summary.total_time);
+        setText(dom.sumFailed, summary.n_failed);
+        setText(dom.sumPassed, summary.n_passed);
+        setText(dom.sumProclog, summary.processing_log);
+        dom.summaryCards.hidden = false;
+    }
+
+    /* ----------------------------------------------------------
+       Summary card filter toggle helpers (pid page)
+    ---------------------------------------------------------- */
+
+    /* Reflect the current Finished filter value onto the card highlights
+       and onto the "Unfinished only" toolbar button. */
+    function syncSummaryCardStates() {
+        var cur = String(state.filters["Finished"] || "");
+        /* Failed card: active when filter is "0" */
+        if (dom.cardFailed) {
+            dom.cardFailed.classList.toggle("pl-card--active-fail",
+                                            cur === "0");
+        }
+        /* Passed card: active when filter is "1" */
+        if (dom.cardPassed) {
+            dom.cardPassed.classList.toggle("pl-card--active-pass",
+                                            cur === "1");
+        }
+        /* Keep the "Unfinished only" button in sync */
+        var btnU = document.getElementById("pl-btn-unfinished");
+        if (btnU) {
+            if (cur === "0") {
+                btnU.classList.add("ari-btn--primary");
+                btnU.classList.remove("ari-btn--secondary");
+            } else {
+                btnU.classList.remove("ari-btn--primary");
+                btnU.classList.add("ari-btn--secondary");
+            }
+        }
+    }
+
+    /* Set the Finished column filter to filterVal (or clear it when ""),
+       sync the filter-row dropdown, the toolbar button, and card highlights. */
+    function setFinishedFilter(filterVal) {
+        var val = String(filterVal || "");
+        if (val) {
+            state.filters["Finished"] = val;
+        } else {
+            delete state.filters["Finished"];
+        }
+        /* Sync the filter-row dropdown */
+        if (dom.filterRow) {
+            var finSel = dom.filterRow.querySelector(
+                '[data-col="Finished"]');
+            if (finSel) {
+                finSel.value = val;
+            }
+        }
+        filterRows();
+        syncSummaryCardStates();
+    }
+
+    /* ----------------------------------------------------------
+       Fail report overlay (pid page)
+    ---------------------------------------------------------- */
+    function showReportStep(name) {
+        if (!dom.reportSteps) return;
+        Object.keys(dom.reportSteps).forEach(function (key) {
+            var el = dom.reportSteps[key];
+            if (el) el.hidden = (key !== name);
+        });
+    }
+
+    /* Format age in hours to a human string. */
+    function formatAgeHours(h) {
+        if (h < 0) return "unknown time ago";
+        if (h < 1) {
+            var m = Math.round(h * 60);
+            return m <= 1 ? "just now" : m + " min ago";
+        }
+        if (h < 24) return Math.round(h) + "h ago";
+        return Math.round(h / 24) + "d ago";
+    }
+
+    /* Populate the start-step UI from a cache-status response. */
+    function applyReportCacheStatus(status) {
+        var cached     = status && status.cached;
+        var ageHours   = cached ? (status.age_hours || 0) : -1;
+        var tokenValid = cached && status.token_valid;
+        var stale      = cached && ageHours >= 24;
+
+        /* Show / configure buttons */
+        if (dom.reportGenerate) {
+            dom.reportGenerate.hidden   = cached;
+        }
+        if (dom.reportRegenerate) {
+            dom.reportRegenerate.hidden = !cached;
+        }
+        if (dom.reportUseCached) {
+            dom.reportUseCached.hidden = !tokenValid;
+        }
+
+        /* Cache banner */
+        if (cached && dom.reportCacheBanner && dom.reportCacheAge) {
+            var ageText = formatAgeHours(ageHours);
+            dom.reportCacheAge.textContent =
+                "Last generated: " + ageText;
+            dom.reportCacheBanner.hidden = false;
+            dom.reportCacheBanner.className =
+                "pl-report-cache-banner" +
+                (stale ? " pl-report-cache-banner--stale" : "");
+            if (stale) {
+                dom.reportCacheAge.textContent +=
+                    " — report may be outdated, consider regenerating";
+            }
+        } else if (dom.reportCacheBanner) {
+            dom.reportCacheBanner.hidden = true;
+        }
+
+        /* Wire "use cached" button for this status */
+        if (dom.reportUseCached && tokenValid) {
+            dom.reportUseCached.onclick = function () {
+                applyReportResult({
+                    download_url: status.download_url || "#",
+                    share_url:    status.share_url || "",
+                    filename:     status.filename || "fail_report.pdf",
+                    age_hours:    ageHours,
+                    error_groups: [],   /* no analyser for cached */
+                    _from_cache: true,
+                });
+            };
+        }
+    }
+
+    function openReportOverlay() {
+        if (!dom.reportOverlay) return;
+        showReportStep("checking");
+        dom.reportOverlay.style.display = "flex";
+        document.body.style.overflow = "hidden";
+
+        /* Fetch cache status, then show start step. */
+        var infoUrl = cfg.failReportInfoUrl;
+        if (!infoUrl) {
+            showReportStep("start");
+            return;
+        }
+        fetch(infoUrl + "?profile_id=" +
+              encodeURIComponent(cfg.profileId || "") +
+              "&pid=" + encodeURIComponent(cfg.pid || ""))
+            .then(function (r) { return r.json(); })
+            .then(function (data) {
+                applyReportCacheStatus(data);
+                showReportStep("start");
+            })
+            .catch(function () {
+                showReportStep("start");
+            });
+    }
+
+    /* Populate the done step from a generation (or cache) result. */
+    function applyReportResult(data) {
+        var dlUrl = data.download_url || "#";
+        var dlFilename = data.filename || "fail_report.pdf";
+        if (dom.reportDownload) {
+            dom.reportDownload.href = dlUrl;
+            dom.reportDownload.setAttribute("download", dlFilename);
+            dom.reportDownload.onclick = function (e) {
+                e.preventDefault();
+                triggerFileDownload(dlUrl);
+            };
+        }
+        if (dom.reportShare) {
+            dom.reportShare.dataset.shareUrl = data.share_url || "";
+        }
+        if (dom.reportExpiry) {
+            dom.reportExpiry.textContent = data.expires_hours
+                ? ("Link valid for " + data.expires_hours + "h")
+                : "";
+        }
+        /* Show age banner in done step */
+        if (dom.reportDoneAge) {
+            var ageH = data.age_hours;
+            if (typeof ageH === "number" && ageH >= 0 && data._from_cache) {
+                var stale = ageH >= 24;
+                dom.reportDoneAge.textContent =
+                    "Using cached report from " + formatAgeHours(ageH) +
+                    (stale ? " (outdated)" : "");
+                dom.reportDoneAge.hidden = false;
+                dom.reportDoneAge.className =
+                    "pl-report-cache-banner" +
+                    (stale ? " pl-report-cache-banner--stale" : "");
+            } else {
+                dom.reportDoneAge.hidden = true;
+            }
+        }
+        if (!data._from_cache) {
+            renderAnalyserTable(data.error_groups || []);
+            var analyser = document.getElementById("pl-report-analyser");
+            if (analyser) analyser.hidden = false;
+        } else {
+            var analyser2 = document.getElementById("pl-report-analyser");
+            if (analyser2) analyser2.hidden = true;
+        }
+        showReportStep("done");
+    }
+
+    function closeReportOverlay() {
+        if (!dom.reportOverlay) return;
+        dom.reportOverlay.style.display = "none";
+        document.body.style.overflow = "";
+    }
+
+    /* Trigger a file download via a hidden iframe — works synchronously
+       inside a click handler so browsers don't block it as a popup, and
+       doesn't navigate away from the page.  The server must send
+       Content-Disposition: attachment for the save dialog to appear. */
+    function triggerFileDownload(url) {
+        var iframe = document.createElement("iframe");
+        iframe.style.display = "none";
+        iframe.src = url;
+        document.body.appendChild(iframe);
+        setTimeout(function () {
+            if (iframe.parentNode) {
+                iframe.parentNode.removeChild(iframe);
+            }
+        }, 10000);
+    }
+
+    /* Mirror of fail_report.build_display_template.
+       Returns {display, varUnique} where constants are inlined and
+       varying vars are renumbered sequentially from 1. */
+    function buildDisplayTemplate(template, varUnique) {
+        var constant = {};
+        var varyingKeys = [];
+        Object.keys(varUnique || {}).forEach(function (k) {
+            var vals = varUnique[k] || [];
+            if (vals.length === 1) {
+                constant[k] = vals[0];
+            } else if (vals.length > 1) {
+                varyingKeys.push(k);
+            }
+        });
+        varyingKeys.sort(function (a, b) {
+            return parseInt(a, 10) - parseInt(b, 10);
+        });
+        var renumber = {};
+        varyingKeys.forEach(function (k, i) {
+            renumber[k] = String(i + 1);
+        });
+        var display = (template || "").replace(
+            /\{\{(\d+)\}\}/g,
+            function (match, k) {
+                if (Object.prototype.hasOwnProperty.call(constant, k)) {
+                    return constant[k];
+                }
+                if (Object.prototype.hasOwnProperty.call(renumber, k)) {
+                    return "{{" + renumber[k] + "}}";
+                }
+                return match;
+            }
+        );
+        var newVarUnique = {};
+        varyingKeys.forEach(function (k, i) {
+            newVarUnique[String(i + 1)] = varUnique[k];
+        });
+        return { display: display, varUnique: newVarUnique };
+    }
+
+    function renderAnalyserTable(groups) {
+        if (!dom.reportAnalyserBody) return;
+        dom.reportAnalyserBody.innerHTML = "";
+        if (!groups || !groups.length) {
+            var tr = document.createElement("tr");
+            tr.innerHTML = "<td colspan=\"4\" class=\"pl-report-empty\">" +
+                "No grouped errors found.</td>";
+            dom.reportAnalyserBody.appendChild(tr);
+            return;
+        }
+        groups.forEach(function (grp, idx) {
+            var raw = buildDisplayTemplate(
+                grp.template || grp.message || "",
+                grp.var_unique || {}
+            );
+            var display   = raw.display;
+            var varUnique = raw.varUnique;
+            var varyingKeys = Object.keys(varUnique).sort(function (a, b) {
+                return parseInt(a, 10) - parseInt(b, 10);
+            });
+            var hasVars  = varyingKeys.length > 0;
+            var toggleId = "pl-blk-" + idx;
+
+            /* Summary row */
+            var tr = document.createElement("tr");
+            tr.innerHTML =
+                "<td>" + (idx + 1) + "</td>" +
+                "<td class=\"pl-report-num\">" + esc(grp.count) + "</td>" +
+                "<td class=\"pl-report-num\">" + esc(grp.recipe_count) + "</td>" +
+                "<td class=\"pl-report-msg\">" +
+                    "<code class=\"pl-report-template\">" +
+                        esc(display) + "</code>" +
+                    (hasVars
+                        ? " <button class=\"pl-blk-toggle ari-btn ari-btn--sm " +
+                          "ari-btn--secondary\" data-target=\"" + toggleId + "\">" +
+                          "show vars</button>"
+                        : "") +
+                "</td>";
+            dom.reportAnalyserBody.appendChild(tr);
+
+            /* Expandable variable-values row — show ALL values */
+            if (hasVars) {
+                var detailTr = document.createElement("tr");
+                detailTr.id = toggleId;
+                detailTr.className = "pl-blk-detail";
+                detailTr.hidden = true;
+                var varsHtml = varyingKeys.map(function (k) {
+                    var vals = varUnique[k] || [];
+                    return "<div class=\"pl-report-var\">" +
+                        "<span class=\"pl-report-var__key\">{{" + esc(k) +
+                        "}}</span> &rarr; " +
+                        vals.map(function (v) {
+                            return "<code>" + esc(v) + "</code>";
+                        }).join(", ") +
+                        "</div>";
+                }).join("");
+                detailTr.innerHTML =
+                    "<td></td><td></td><td></td>" +
+                    "<td class=\"pl-report-msg\">" + varsHtml + "</td>";
+                dom.reportAnalyserBody.appendChild(detailTr);
+            }
+        });
+
+        /* Wire toggle buttons */
+        if (dom.reportAnalyserBody) {
+            dom.reportAnalyserBody.addEventListener("click", function (e) {
+                var btn = e.target.closest(".pl-blk-toggle");
+                if (!btn) return;
+                var targetId = btn.getAttribute("data-target");
+                var detail = document.getElementById(targetId);
+                if (!detail) return;
+                detail.hidden = !detail.hidden;
+                btn.textContent = detail.hidden ? "show vars" : "hide vars";
+            });
+        }
+    }
+
+    function generateReport() {
+        showReportStep("loading");
+        fetch(cfg.failReportUrl, {
+            method: "POST",
+            headers: {"Content-Type": "application/json"},
+            body: JSON.stringify({
+                profile_id: cfg.profileId,
+                pid: cfg.pid,
+            }),
+        })
+        .then(function (r) {
+            if (!r.ok) {
+                return r.json().then(function (e) {
+                    throw new Error(e.error || r.statusText);
+                });
+            }
+            return r.json();
+        })
+        .then(function (data) {
+            applyReportResult(data);
+        })
+        .catch(function (err) {
+            if (dom.reportErrorMsg) {
+                dom.reportErrorMsg.textContent =
+                    "Report generation failed: " + String(err);
+            }
+            showReportStep("error");
+        });
+    }
+
+    function toggleLogMaximize() {
+        if (!dom.logOverlay) return;
+        var on = dom.logOverlay.classList.toggle("pl-log-overlay--max");
+        if (dom.logMaximize) {
+            var icon = dom.logMaximize.querySelector("i");
+            if (icon) {
+                icon.className = on
+                    ? "fa-solid fa-compress"
+                    : "fa-solid fa-expand";
+            }
+            dom.logMaximize.title = on
+                ? "Restore the log viewer"
+                : "Maximize the log viewer";
+        }
+    }
+
     function closeLogPopup() {
         if (!dom.logOverlay) return;
         dom.logOverlay.style.display = "none";
+        dom.logOverlay.classList.remove("pl-log-overlay--max");
         dom.logOverlay.dataset.currentLogfile = "";
         dom.logOverlay.dataset.currentLogPath = "";
         dom.logOverlay.dataset.currentLogText = "";
@@ -866,6 +1380,12 @@
             state.allRows      = data.rows || [];
             state.columns      = data.columns || [];
             state.dropdownCols = data.dropdown_columns || [];
+            /* Append the synthetic "Check Known Errors" column when the
+               table has a recipe-name column to key the search on. */
+            if (state.columns.indexOf("Recipe name") >= 0 &&
+                    state.columns.indexOf(KNOWN_ERR_COL) < 0) {
+                state.columns = state.columns.concat([KNOWN_ERR_COL]);
+            }
             setLastUpdatedText(data.last_updated || "");
 
             /* default sort: Start time desc on profile page */
@@ -886,6 +1406,11 @@
             if (cfg.mode === "pid" && data.group_name &&
                     dom.groupName) {
                 dom.groupName.textContent = data.group_name;
+            }
+
+            /* On pid page, render the group summary cards */
+            if (cfg.mode === "pid") {
+                renderSummaryCards(data.summary || null, data.group_name);
             }
 
             buildHeader();
@@ -920,7 +1445,7 @@
                     .forEach(function (el) {
                         el.value = "";
                     });
-                /* also reset unfinished toggle */
+                /* also reset unfinished toggle and card highlights */
                 var btn = document.getElementById(
                     "pl-btn-unfinished"
                 );
@@ -928,6 +1453,7 @@
                     btn.classList.remove("ari-btn--primary");
                     btn.classList.add("ari-btn--secondary");
                 }
+                syncSummaryCardStates();
             });
         }
 
@@ -978,6 +1504,7 @@
                     );
                     delete state.filters["Finished"];
                     filterRows();
+                    syncSummaryCardStates();
                     if (finSel) {
                         finSel.value = "";
                     }
@@ -991,6 +1518,7 @@
                     );
                     state.filters["Finished"] = "0";
                     filterRows();
+                    syncSummaryCardStates();
                     if (finSel) {
                         var unfinishedOpt = "";
                         Array.from(finSel.options).forEach(function (opt) {
@@ -1104,6 +1632,7 @@
                 if (e.key === "Escape") {
                     closeLogPopup();
                     closeRunstringPopup();
+                    closeReportOverlay();
                 }
             });
 
@@ -1184,7 +1713,80 @@
             }
         }
 
+        /* Log viewer maximize toggle (pid page) */
+        if (dom.logMaximize) {
+            dom.logMaximize.addEventListener("click", toggleLogMaximize);
+        }
+
         if (cfg.mode === "pid") {
+            /* Regenerate button (same action as Generate) */
+            if (dom.reportRegenerate) {
+                dom.reportRegenerate.addEventListener(
+                    "click", generateReport);
+            }
+            /* Back button on done step → return to start */
+            if (dom.reportBack) {
+                dom.reportBack.addEventListener("click", function () {
+                    /* Re-fetch status so buttons are current */
+                    fetch((cfg.failReportInfoUrl || "") +
+                          "?profile_id=" +
+                          encodeURIComponent(cfg.profileId || "") +
+                          "&pid=" + encodeURIComponent(cfg.pid || ""))
+                        .then(function (r) { return r.json(); })
+                        .then(function (d) {
+                            applyReportCacheStatus(d);
+                        })
+                        .catch(function () {})
+                        .then(function () {
+                            showReportStep("start");
+                        });
+                });
+            }
+
+            /* Summary card filter toggles */
+            if (dom.cardFailed) {
+                dom.cardFailed.addEventListener("click", function () {
+                    var active = state.filters["Finished"] === "0";
+                    setFinishedFilter(active ? "" : "0");
+                });
+            }
+            if (dom.cardPassed) {
+                dom.cardPassed.addEventListener("click", function () {
+                    var active = state.filters["Finished"] === "1";
+                    setFinishedFilter(active ? "" : "1");
+                });
+            }
+
+            /* Fail report overlay */
+            if (dom.reportBtnOpen) {
+                dom.reportBtnOpen.addEventListener(
+                    "click", openReportOverlay);
+            }
+            if (dom.reportClose) {
+                dom.reportClose.addEventListener(
+                    "click", closeReportOverlay);
+            }
+            if (dom.reportBackdrop) {
+                dom.reportBackdrop.addEventListener(
+                    "click", closeReportOverlay);
+            }
+            if (dom.reportGenerate) {
+                dom.reportGenerate.addEventListener(
+                    "click", generateReport);
+            }
+            if (dom.reportRetry) {
+                dom.reportRetry.addEventListener(
+                    "click", generateReport);
+            }
+            if (dom.reportShare) {
+                dom.reportShare.addEventListener("click", function () {
+                    var url = dom.reportShare.dataset.shareUrl || "";
+                    if (url) {
+                        copyToClipboard(url, "Share link copied");
+                    }
+                });
+            }
+
             /* runstring popup */
             var runOverlay  =
                 document.getElementById("pl-run-overlay");

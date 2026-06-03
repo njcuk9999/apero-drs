@@ -661,6 +661,10 @@ def api_apero_checks_config_save(app):
         if key in valid_checks
     ]
     checks_core.save_config(local_data_dir, cfg)
+    # Invalidate the in-memory and disk policy caches so the next page
+    # load reflects the newly saved ignored/override state immediately.
+    from apero_ri.application import page_view_helpers as pvh
+    pvh.invalidate_policy_cache(local_data_dir)
     return jsonify(
         success=True,
         checks_root=str(cfg.get('checks_root') or ''),
@@ -1229,3 +1233,74 @@ def api_apero_checks_queue_clear_history(app, profile_id):
         scope='global',
         result=result,
     )
+
+
+def api_apero_checks_check_results(app):
+    """Return all (profile_id, obsdir) rows where a check has a given state.
+
+    Used by the check-info page to show which nights failed/monitored/mixed
+    for a specific check key, in an overlay table.
+
+    Query parameters:
+        check_key  (required) – e.g. "ASTROM"
+        state      (required) – one of: failed, monitored, mixed, overridden, passed
+    """
+    user_info, perms = _api_user(app)
+    if not _has_any_monitor_perm(perms):
+        return jsonify(success=False, error='Monitor access required'), 403
+
+    check_key = str(request.args.get('check_key', '') or '').strip()
+    state_filter = str(request.args.get('state', '') or '').strip().lower()
+    if not check_key or not state_filter:
+        return jsonify(success=False, error='check_key and state required'), 400
+
+    from apero_ri.application import page_view_helpers as pvh
+    from flask import url_for as _flask_url_for
+
+    local_data_dir = app._resolve_local_data_dir()
+    checks_cfg = checks_core.load_config(local_data_dir)
+    ignored_checks = set(checks_core.load_ignored_checks(local_data_dir))
+
+    profile_rows = pvh._collect_policy_roots(local_data_dir, checks_cfg)
+
+    rows = []
+    for row in profile_rows:
+        profile_id = str(row.get('profile_id') or '')
+        checks_root = row.get('checks_root')
+        if not checks_root:
+            continue
+        for yaml_path in sorted(Path(checks_root).glob('*.yaml')):
+            obsdir = yaml_path.stem  # filename without .yaml
+            try:
+                loaded = checks_core.load_check_file(yaml_path)
+            except Exception:
+                continue
+            # Look in failures and passes for this check_key.
+            for bucket in ('failures', 'passes'):
+                bucket_data = loaded.get(bucket, {})
+                if not isinstance(bucket_data, dict):
+                    continue
+                check_row = bucket_data.get(check_key)
+                if check_row is None:
+                    continue
+                row_state = pvh._row_state(bucket, check_row or {})
+                if row_state == state_filter:
+                    try:
+                        obsdir_url = _flask_url_for(
+                            'monitor_apero_checks_obsdir_view',
+                            profile_id=profile_id,
+                            obsdir=obsdir,
+                        )
+                    except Exception:
+                        obsdir_url = ''
+                    rows.append(dict(
+                        profile_id=profile_id,
+                        obsdir=obsdir,
+                        state=row_state,
+                        obsdir_url=obsdir_url,
+                    ))
+                    break  # only one state per obsdir/check
+
+    rows.sort(key=lambda r: (r['profile_id'], r['obsdir']))
+    return jsonify(success=True, check_key=check_key, state=state_filter,
+                   rows=rows)

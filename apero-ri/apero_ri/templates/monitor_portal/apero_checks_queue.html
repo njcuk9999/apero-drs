@@ -78,6 +78,20 @@
     font-size: 0.92rem;
     padding: 0.55rem 0;
 }
+[data-theme="dark"] .acq-pill--night {
+    border-color: #1d4e89;
+    background: #0c1929;
+    color: #79b8ff;
+}
+[data-theme="dark"] .acq-pill--check {
+    border-color: #1a5c35;
+    background: #0d2818;
+    color: #3fb950;
+}
+[data-theme="dark"] .acq-table th {
+    background: var(--ari-surface-muted, #1c2128);
+    color: var(--ari-text-muted);
+}
 </style>
 <script src="{{ url_for('static', filename='js/apero_checks_queue.js') }}?v=20260520a"
         defer></script>

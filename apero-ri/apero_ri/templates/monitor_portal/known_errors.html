@@ -893,6 +893,26 @@
     }
 
     /* ── Init ───────────────────────────────────────────────── */
+    /* Honour a ?q=<text> URL parameter as an initial global filter
+       (used by the "Check Known Errors" links on the processing-logs
+       pages, which pass the recipe name). */
+    (function applyUrlQuery() {
+        var initialQ = '';
+        try {
+            initialQ = new URL(window.location.href)
+                .searchParams.get('q') || '';
+        } catch (_) {
+            initialQ = '';
+        }
+        initialQ = String(initialQ).trim();
+        if (initialQ) {
+            globalSearch = initialQ;
+            if (globalSearchInput) {
+                globalSearchInput.value = initialQ;
+            }
+        }
+    }());
+
     buildHeader();
     loadRows();
 }());

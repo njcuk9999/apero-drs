@@ -183,6 +183,26 @@ def _save_policy_disk_cache(local_data_dir: Path, payload: dict) -> None:
     tmp_path.replace(path)
 
 
+def invalidate_policy_cache(local_data_dir) -> None:
+    """Drop both the in-memory and disk policy caches.
+
+    Call this whenever the APERO-checks config is saved so the next
+    request to _build_apero_policy_payload() performs a full rebuild
+    instead of returning stale ignored/override state.
+    """
+    global _APERO_POLICY_CACHE
+    _APERO_POLICY_CACHE['signature'] = None
+    _APERO_POLICY_CACHE['payload'] = dict()
+    _APERO_POLICY_CACHE['updated_at'] = ''
+    _APERO_POLICY_CACHE['last_checked_at'] = 0.0
+    try:
+        path = _policy_disk_cache_path(Path(local_data_dir))
+        if path.exists():
+            path.unlink()
+    except Exception:
+        pass
+
+
 def _empty_check_stats():
     """Return a blank counters mapping for one check."""
     out = dict()

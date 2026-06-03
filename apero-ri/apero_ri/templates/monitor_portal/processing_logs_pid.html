@@ -5,8 +5,8 @@
 
 {% block extra_head %}{{ super() }}
 <link rel="stylesheet"
-    href="{{ url_for('static', filename='css/processing_logs.css') }}?v=20260512p">
-<script src="{{ url_for('static', filename='js/processing_logs.js') }}?v=20260513f"
+    href="{{ url_for('static', filename='css/processing_logs.css') }}?v=20260603j">
+<script src="{{ url_for('static', filename='js/processing_logs.js') }}?v=20260603j"
         defer></script>
 {% endblock %}
 
@@ -44,6 +44,44 @@
     </button>
 </div>
 
+{# ── Group summary cards ── #}
+<div id="pl-summary-cards" class="pl-summary-cards" hidden>
+    <div class="pl-card pl-card--wide">
+        <div class="pl-card__label">APERO group</div>
+        <div class="pl-card__value pl-card__value--mono"
+             id="pl-sum-group">--</div>
+    </div>
+    <div class="pl-card">
+        <div class="pl-card__label">Start time</div>
+        <div class="pl-card__value" id="pl-sum-start">--</div>
+    </div>
+    <div class="pl-card">
+        <div class="pl-card__label">End time</div>
+        <div class="pl-card__value" id="pl-sum-end">--</div>
+    </div>
+    <div class="pl-card">
+        <div class="pl-card__label">Total time</div>
+        <div class="pl-card__value" id="pl-sum-total">--</div>
+    </div>
+    <div class="pl-card pl-card--fail pl-card--clickable"
+         id="pl-card-failed"
+         title="Click to filter by failed recipes (toggle)">
+        <div class="pl-card__label">Recipes failed</div>
+        <div class="pl-card__value" id="pl-sum-failed">--</div>
+    </div>
+    <div class="pl-card pl-card--pass pl-card--clickable"
+         id="pl-card-passed"
+         title="Click to filter by passed recipes (toggle)">
+        <div class="pl-card__label">Recipes passed</div>
+        <div class="pl-card__value" id="pl-sum-passed">--</div>
+    </div>
+    <div class="pl-card pl-card--wide">
+        <div class="pl-card__label">Processing log</div>
+        <div class="pl-card__value pl-card__value--mono"
+             id="pl-sum-proclog">--</div>
+    </div>
+</div>
+
 <div class="ot-toolbar">
     <div class="ot-toolbar__left">
         <button id="pl-btn-clear-filters"
@@ -57,6 +95,12 @@
                 title="Show only unfinished recipes">
             <i class="fa-solid fa-circle-xmark"></i>
             Unfinished only
+        </button>
+        <button id="pl-btn-fail-report"
+                class="ari-btn ari-btn--sm ari-btn--primary"
+                title="Generate a downloadable/shareable PDF fail report">
+            <i class="fa-solid fa-file-pdf"></i>
+            Generate Fail Report
         </button>
     </div>
     <div class="ot-toolbar__right">
@@ -172,6 +216,11 @@
                     title="Copy log to clipboard">
                 <i class="fa-solid fa-copy"></i> Copy
             </button>
+            <button id="pl-log-maximize" type="button"
+                    class="ari-btn ari-btn--sm ari-btn--secondary"
+                    title="Maximize / restore the log viewer">
+                <i class="fa-solid fa-expand"></i>
+            </button>
             <button id="pl-log-close" type="button"
                     class="ari-btn ari-btn--sm ari-btn--alt"
                     title="Close">
@@ -201,13 +250,132 @@
     </div>
 </div>
 
+{# ── Generate Fail Report overlay ── #}
+<div id="pl-report-overlay" class="pl-log-overlay" style="display:none;"
+     role="dialog" aria-modal="true" aria-label="Generate fail report">
+    <div class="pl-log-backdrop" id="pl-report-backdrop"></div>
+    <div class="pl-log-panel pl-report-panel">
+        <div class="pl-log-toolbar">
+            <span class="pl-log-filename">
+                <i class="fa-solid fa-file-pdf"></i>
+                Generate Fail Report
+            </span>
+            <button id="pl-report-close" type="button"
+                    class="ari-btn ari-btn--sm ari-btn--alt"
+                    title="Close">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+        <div class="pl-report-body">
+            {# Checking cache state #}
+            <div id="pl-report-step-checking" class="pl-report-step">
+                <div class="pl-report-spinner">
+                    <i class="fa-solid fa-spinner fa-spin"></i>
+                    Checking for cached report&hellip;
+                </div>
+            </div>
+            {# Step 1: start (generate / use cached) #}
+            <div id="pl-report-step-start" class="pl-report-step" hidden>
+                <p class="pl-report-intro">
+                    Builds a PDF of all <strong>unfinished / failed</strong>
+                    recipes in this group, with grouped error analysis.
+                </p>
+                {# Last-updated banner (shown when cache exists) #}
+                <div id="pl-report-cache-banner"
+                     class="pl-report-cache-banner" hidden>
+                    <span id="pl-report-cache-age"></span>
+                </div>
+                <div class="pl-report-actions" style="margin-top:0.8rem;">
+                    <button id="pl-report-use-cached"
+                            class="ari-btn ari-btn--primary" hidden>
+                        <i class="fa-solid fa-download"></i>
+                        Download cached
+                    </button>
+                    <button id="pl-report-generate"
+                            class="ari-btn ari-btn--primary">
+                        <i class="fa-solid fa-gears"></i>
+                        Generate
+                    </button>
+                    <button id="pl-report-regenerate"
+                            class="ari-btn ari-btn--secondary" hidden>
+                        <i class="fa-solid fa-rotate-right"></i>
+                        Regenerate
+                    </button>
+                </div>
+            </div>
+            {# Step 2: spinner #}
+            <div id="pl-report-step-loading" class="pl-report-step" hidden>
+                <div class="pl-report-spinner">
+                    <i class="fa-solid fa-spinner fa-spin"></i>
+                    Generating report&hellip;
+                </div>
+            </div>
+            {# Step 3: result #}
+            <div id="pl-report-step-done" class="pl-report-step" hidden>
+                <div id="pl-report-done-age"
+                     class="pl-report-cache-banner" hidden></div>
+                <div class="pl-report-actions">
+                    <a id="pl-report-download"
+                       class="ari-btn ari-btn--primary" href="#"
+                       target="_blank" rel="noopener">
+                        <i class="fa-solid fa-download"></i>
+                        Download PDF
+                    </a>
+                    <button id="pl-report-share"
+                            class="ari-btn ari-btn--secondary">
+                        <i class="fa-solid fa-link"></i>
+                        Copy share link
+                    </button>
+                    <button id="pl-report-back"
+                            class="ari-btn ari-btn--secondary">
+                        <i class="fa-solid fa-arrow-left"></i>
+                        Back
+                    </button>
+                    <span id="pl-report-expiry"
+                          class="pl-report-expiry"></span>
+                </div>
+                <div id="pl-report-analyser" class="pl-report-analyser">
+                    <h3 class="pl-report-analyser__title">
+                        <i class="fa-solid fa-layer-group"></i>
+                        Error analyser
+                    </h3>
+                    <div class="pl-report-table-wrap">
+                        <table class="pl-report-table">
+                            <thead>
+                                <tr>
+                                    <th>#</th>
+                                    <th>Count</th>
+                                    <th>Recipes</th>
+                                    <th>Representative error</th>
+                                </tr>
+                            </thead>
+                            <tbody id="pl-report-analyser-body"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            {# Error state #}
+            <div id="pl-report-step-error" class="pl-report-step" hidden>
+                <div class="pl-report-error" id="pl-report-error-msg"></div>
+                <button id="pl-report-retry"
+                        class="ari-btn ari-btn--secondary">
+                    <i class="fa-solid fa-rotate-right"></i>
+                    Try again
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script>
 window.ARI_PROC_LOGS = {
-    mode:         "pid",
-    profileId:    {{ profile_id | tojson }},
-    pid:          {{ pid | tojson }},
-    apiUrl:       {{ api_url | tojson }},
-    logFileUrl:   {{ log_file_url | tojson }},
+    mode:              "pid",
+    profileId:         {{ profile_id | tojson }},
+    pid:               {{ pid | tojson }},
+    apiUrl:            {{ api_url | tojson }},
+    logFileUrl:        {{ log_file_url | tojson }},
+    failReportUrl:     "/api/monitor/processing-logs/fail-report",
+    failReportInfoUrl: "/api/monitor/processing-logs/fail-report-info",
 };
 </script>
 {% endblock %}

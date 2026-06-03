@@ -1496,6 +1496,24 @@ class ARIApp(Flask):
         )
         return plh.api_processing_log_file(self)
 
+    def _api_processing_logs_fail_report(self):
+        from apero_ri.application import (
+            processing_logs_api_helpers as plh,
+        )
+        return plh.api_processing_logs_fail_report(self)
+
+    def _api_processing_logs_fail_report_info(self):
+        from apero_ri.application import (
+            processing_logs_api_helpers as plh,
+        )
+        return plh.api_processing_logs_fail_report_info(self)
+
+    def _api_processing_logs_report_download(self, token):
+        from apero_ri.application import (
+            processing_logs_api_helpers as plh,
+        )
+        return plh.api_processing_logs_report_download(self, token)
+
     def _api_apero_checks_update_failure(self):
         from apero_ri.application import (
             apero_checks_api_helpers as ach,
@@ -1591,6 +1609,12 @@ class ARIApp(Flask):
             apero_checks_api_helpers as ach,
         )
         return ach.api_apero_checks_queue_clear_history(self, profile_id)
+
+    def _api_apero_checks_check_results(self):
+        from apero_ri.application import (
+            apero_checks_api_helpers as ach,
+        )
+        return ach.api_apero_checks_check_results(self)
 
 
         kwargs = dict(profile_id=profile_id)
