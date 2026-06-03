@@ -124,10 +124,11 @@ def check_function(instrument: str, obs_dir: str,
     sci_dprtypes = set(sci_dprtypes) if isinstance(sci_dprtypes, list) else set()
     dpr_key = raw_common.get_header_key(aparams, 'dpr_type')
 
-    # resolved_objects: ordered unique (obj_key, header_name, apero_name) tuples
-    resolved_objects = []
-    resolved_seen = set()
-    failed_lines = []
+    # resolved_counts: (obj_key, header_name, apero_name) -> file count
+    resolved_counts: dict = {}
+    resolved_order = []
+    # failed_entries: list of (obj_key, obj_name, filename) for failed files
+    failed_entries: list = []
     n_nonsci = 0
     n_no_objname = 0
 
@@ -164,18 +165,41 @@ def check_function(instrument: str, obs_dir: str,
         apero_name = _resolve_astrom(obj_name)
         if apero_name is not None:
             entry = (obj_key, obj_name, apero_name)
-            if entry not in resolved_seen:
-                resolved_seen.add(entry)
-                resolved_objects.append(entry)
+            if entry not in resolved_counts:
+                resolved_counts[entry] = 0
+                resolved_order.append(entry)
+            resolved_counts[entry] += 1
         else:
-            failed_lines.append(
-                f'\t{obj_key}: {obj_name}  (filename: {filename.name})'
-            )
+            failed_entries.append((obj_key, obj_name, filename.name))
 
-    # Build passed lines: one line per unique resolved (key, name, apero_name).
+    # Build passed lines: one per unique resolved object with file count.
     passed_lines = []
-    for obj_key, obj_name, apero_name in resolved_objects:
-        passed_lines.append(f'\t{obj_key}: {obj_name}  (APERO: {apero_name})')
+    for entry in resolved_order:
+        obj_key, obj_name, apero_name = entry
+        n = resolved_counts[entry]
+        passed_lines.append(
+            f'\t{obj_key}: {obj_name}  (APERO: {apero_name})    [N={n}]'
+        )
+
+    # Build failed lines: group by (obj_key, obj_name), list files with count.
+    failed_lines = []
+    # Collect filenames per (obj_key, obj_name) pair while preserving order.
+    fail_groups: dict = {}
+    fail_order = []
+    for obj_key, obj_name, fname in failed_entries:
+        key = (obj_key, obj_name)
+        if key not in fail_groups:
+            fail_groups[key] = []
+            fail_order.append(key)
+        fail_groups[key].append(fname)
+    for obj_key, obj_name in fail_order:
+        fnames = fail_groups[(obj_key, obj_name)]
+        n = len(fnames)
+        failed_lines.append(
+            f'\t{obj_key}: {obj_name}    [N={n}]'
+        )
+        for fname in fnames:
+            failed_lines.append(f'\t\t(filename: {fname})')
 
     # Append skipped-file summary to passed lines for visibility.
     if n_nonsci > 0:

@@ -513,4 +513,122 @@
     .ms-wide {
         grid-column: span 1;
     }
+    .ms-entries-head {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    .ms-card-row {
+        flex-wrap: wrap;
+    }
+    .ms-inline-btns {
+        flex-wrap: wrap;
+    }
+    .ms-inline-actions {
+        flex-wrap: wrap;
+    }
+}
+
+/* ── Dark theme overrides ────────────────────────────────────────────── */
+[data-theme="dark"] .ari-schedule-page {
+    --ms-bg: #0d1117;
+    --ms-card: #161b22;
+    --ms-line: #30363d;
+    --ms-text: #e6edf3;
+    --ms-soft: #8b949e;
+    background: var(--ms-bg);
+}
+
+[data-theme="dark"] .ms-tabs button,
+[data-theme="dark"] .ms-subtabs button {
+    background: #1c2128;
+    color: #e6edf3;
+    border-color: #30363d;
+}
+
+[data-theme="dark"] .ms-tabs button:hover,
+[data-theme="dark"] .ms-subtabs button:hover {
+    background: #21262d;
+}
+
+[data-theme="dark"] .ms-overlay-panel {
+    background: #161b22;
+    border-color: #30363d;
+    color: #e6edf3;
+}
+
+[data-theme="dark"] .ms-overlay-head button {
+    background: #21262d;
+    color: #e6edf3;
+    border-color: #30363d;
+}
+
+[data-theme="dark"] .ms-form-grid input,
+[data-theme="dark"] .ms-form-grid select,
+[data-theme="dark"] .ms-filter-row input,
+[data-theme="dark"] .ms-inline-actions select {
+    background: #0d1117;
+    color: #e6edf3;
+    border-color: #30363d;
+}
+
+[data-theme="dark"] #ms-add-who[readonly] {
+    background: #1c2128;
+    color: #8b949e;
+}
+
+[data-theme="dark"] .ms-add-row td {
+    background: #0d2818;
+    color: #8b949e;
+}
+
+[data-theme="dark"] .ms-day {
+    background: #1c2128;
+    border-color: #30363d;
+}
+
+[data-theme="dark"] .ms-day li {
+    background: #161b22;
+}
+
+[data-theme="dark"] .ms-week-box,
+[data-theme="dark"] .ms-week-box:nth-child(5n+1),
+[data-theme="dark"] .ms-week-box:nth-child(5n+2),
+[data-theme="dark"] .ms-week-box:nth-child(5n+3),
+[data-theme="dark"] .ms-week-box:nth-child(5n+4),
+[data-theme="dark"] .ms-week-box:nth-child(5n+5) {
+    background: #161b22;
+    border-color: #30363d;
+}
+
+[data-theme="dark"] .ms-week-list li {
+    background: rgba(255, 255, 255, 0.05);
+}
+
+[data-theme="dark"] .ms-kpi {
+    background: #161b22;
+    border-color: #30363d;
+}
+
+[data-theme="dark"] .ms-chip-p0 { background: #1d3d27; color: #7ee787; }
+[data-theme="dark"] .ms-chip-p1 { background: #0c2040; color: #79b8ff; }
+[data-theme="dark"] .ms-chip-p2 { background: #3a3119; color: #f2cc60; }
+[data-theme="dark"] .ms-chip-p3 { background: #3a1d20; color: #ff7b72; }
+[data-theme="dark"] .ms-chip-p4 { background: #1c1040; color: #c4b5fd; }
+
+[data-theme="dark"] .ms-row--past td {
+    background: #1c2128;
+    color: #6e7681;
+}
+
+[data-theme="dark"] .ms-row--current td {
+    background: #2e2e12;
+}
+
+[data-theme="dark"] .ms-row--future td {
+    background: #0c1929;
+}
+
+[data-theme="dark"] .ms-bulk-tasks label {
+    border-color: #30363d;
+    color: #e6edf3;
 }

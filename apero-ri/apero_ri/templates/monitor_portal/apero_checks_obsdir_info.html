@@ -117,6 +117,45 @@
 .ac-mo-row--override {
     background: #fff7ed;
 }
+[data-theme="dark"] .ac-ui-panel--soft {
+    background: var(--ari-surface-muted, #1c2128);
+}
+[data-theme="dark"] .ac-task-status {
+    background: var(--ari-surface-muted, #1c2128);
+    color: var(--ari-text-muted);
+}
+[data-theme="dark"] .ac-task-status--queued {
+    background: #0c1929;
+    border-color: #1d4e89;
+    color: #79b8ff;
+}
+[data-theme="dark"] .ac-task-status--running {
+    background: #2a1700;
+    border-color: #7c3b00;
+    color: #fdba74;
+}
+[data-theme="dark"] .ac-task-status--finished {
+    background: #0d2818;
+    border-color: #1a5c35;
+    color: #3fb950;
+}
+[data-theme="dark"] .ac-task-status--error {
+    background: #2a0d09;
+    border-color: #7c1d13;
+    color: #f85149;
+}
+[data-theme="dark"] .ac-mo-row--monitor {
+    background: #1a1040;
+}
+[data-theme="dark"] .ac-mo-row--override {
+    background: #2a1f05;
+}
+[data-theme="dark"] .ac-mo-icon--monitor {
+    color: #c4b5fd;
+}
+[data-theme="dark"] .ac-mo-icon--override {
+    color: #fdba74;
+}
 </style>
 {% endblock %}
 
@@ -287,12 +326,26 @@
 </div>
 
 <div class="ac-card ac-ui-panel ac-ui-panel--surface">
-    <div class="ac-card__title" style="margin-bottom:0.55rem;">Tests</div>
-    <div class="ac-card__checks">
+    <div class="ac-card__title" style="margin-bottom:0.4rem;">Tests</div>
+    <div class="ac-checks-toolbar">
+        <input id="ac-checks-filter-input"
+               class="ac-checks-filter"
+               type="search"
+               placeholder="Filter tests…"
+               aria-label="Filter tests by name">
+        <button id="ac-checks-list-toggle"
+                class="ari-btn ari-btn--sm ari-btn--secondary"
+                type="button"
+                title="Toggle list / card view">
+            <i class="fa-solid fa-list"></i>
+        </button>
+    </div>
+    <div class="ac-card__checks" id="ac-checks-container">
         {% for failure in failure_cards %}
         {% if failure.is_overridden %}
         <a class="ac-check-pill ac-check-pill--overridden"
            href="{{ url_for('monitor_apero_checks_check_view', profile_id=profile_id, obsdir=obsdir, check_key=failure.key) }}"
+           data-check-label="{{ failure.type }}:{{ failure.name }}"
            title="Open check info page">
             <span class="ac-check-pill__icons ac-check-pill__icons--start">
                 <i class="fa-solid fa-triangle-exclamation ac-i-ovr"></i>
@@ -300,6 +353,7 @@
         {% elif failure.is_monitored %}
         <a class="ac-check-pill ac-check-pill--monitored"
            href="{{ url_for('monitor_apero_checks_check_view', profile_id=profile_id, obsdir=obsdir, check_key=failure.key) }}"
+           data-check-label="{{ failure.type }}:{{ failure.name }}"
            title="Open check info page">
             <span class="ac-check-pill__icons ac-check-pill__icons--start">
                 <i class="fa-solid fa-bell ac-i-mon"></i>
@@ -307,6 +361,7 @@
         {% else %}
         <a class="ac-check-pill ac-check-pill--failed"
            href="{{ url_for('monitor_apero_checks_check_view', profile_id=profile_id, obsdir=obsdir, check_key=failure.key) }}"
+           data-check-label="{{ failure.type }}:{{ failure.name }}"
            title="Open check info page">
             <span class="ac-check-pill__icons ac-check-pill__icons--start">
                 <i class="fa-solid fa-xmark ac-i-bad"></i>
@@ -330,6 +385,7 @@
         {% for passed in pass_cards %}
         <a class="ac-check-pill ac-check-pill--passed"
            href="{{ url_for('monitor_apero_checks_check_view', profile_id=profile_id, obsdir=obsdir, check_key=passed.key) }}"
+           data-check-label="{{ passed.type }}:{{ passed.name }}"
            title="Open check info page">
             <span class="ac-check-pill__icons ac-check-pill__icons--start">
                 <i class="fa-solid fa-check ac-i-pass"></i>
@@ -342,8 +398,9 @@
         {% endfor %}
         {% endif %}
         {% if not failure_cards and not (show_passed and pass_cards) %}
-        <span class="ac-check-empty">No visible tests</span>
+        <span class="ac-check-empty" id="ac-checks-empty-base">No visible tests</span>
         {% endif %}
+        <span class="ac-check-empty" id="ac-checks-empty-filter" hidden>No tests match filter</span>
     </div>
 </div>
 
@@ -863,6 +920,61 @@
             });
         });
     }
+}());
+
+/* ── Tests filter + list/card view toggle ──────────────────────────── */
+(function () {
+    var LS_VIEW_KEY = 'ac_checks_view';
+    var container   = document.getElementById('ac-checks-container');
+    var filterInput = document.getElementById('ac-checks-filter-input');
+    var listToggle  = document.getElementById('ac-checks-list-toggle');
+    var emptyFilter = document.getElementById('ac-checks-empty-filter');
+    if (!container || !filterInput || !listToggle) { return; }
+
+    function getPills() {
+        return Array.prototype.slice.call(
+            container.querySelectorAll('.ac-check-pill'));
+    }
+
+    /* ── view toggle ── */
+    function applyView(isList) {
+        if (isList) {
+            container.classList.add('ac-checks--list');
+            listToggle.classList.add('ac-view-toggle-on');
+        } else {
+            container.classList.remove('ac-checks--list');
+            listToggle.classList.remove('ac-view-toggle-on');
+        }
+        try { localStorage.setItem(LS_VIEW_KEY, isList ? 'list' : 'card'); }
+        catch (e) {}
+    }
+
+    /* restore saved preference */
+    try {
+        applyView(localStorage.getItem(LS_VIEW_KEY) === 'list');
+    } catch (e) {}
+
+    listToggle.addEventListener('click', function () {
+        applyView(!container.classList.contains('ac-checks--list'));
+    });
+
+    /* ── text filter ── */
+    function applyFilter() {
+        var q = filterInput.value.trim().toLowerCase();
+        var pills = getPills();
+        var visible = 0;
+        pills.forEach(function (pill) {
+            var label = (pill.getAttribute('data-check-label') || '').toLowerCase();
+            var show  = !q || label.indexOf(q) !== -1;
+            pill.hidden = !show;
+            if (show) { visible++; }
+        });
+        if (emptyFilter) {
+            emptyFilter.hidden = (visible > 0 || !q);
+        }
+    }
+
+    filterInput.addEventListener('input', applyFilter);
 }());
 </script>
 {% endblock %}

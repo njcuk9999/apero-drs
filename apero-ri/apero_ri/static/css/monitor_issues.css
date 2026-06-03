@@ -803,3 +803,80 @@ body.ari-issues-page .ari-doc-main {
     background: var(--ari-surface-muted, #1c2128);
     border-color: var(--ari-border);
 }
+
+/* ── Additional gaps not covered by the original dark block ── */
+[data-theme="dark"] .mi-btn:hover {
+    background: var(--ari-surface-alt, #21262d);
+    border-color: var(--ari-border);
+}
+[data-theme="dark"] .mi-btn--ghost:hover {
+    background: rgba(88, 166, 255, 0.1);
+}
+[data-theme="dark"] .mi-btn--danger {
+    border-color: rgba(248, 81, 73, 0.35);
+}
+[data-theme="dark"] .mi-btn--danger:hover {
+    background: rgba(248, 81, 73, 0.1);
+    border-color: var(--ari-danger);
+}
+
+[data-theme="dark"] .mi-table tbody tr:hover {
+    background: #1c2128;
+}
+[data-theme="dark"] .mi-table tbody tr.mi-row--resolved td,
+[data-theme="dark"] .mi-table tbody tr.mi-row--invalid td {
+    background: #161b22;
+}
+[data-theme="dark"] .mi-table tbody tr.mi-row--focus td {
+    background: #2e2e12;
+}
+[data-theme="dark"] .mi-table tbody td {
+    border-bottom-color: #21262d;
+}
+
+[data-theme="dark"] .mi-cell-value code {
+    background: #1c2128;
+    border-color: #30363d;
+    color: #e6edf3;
+}
+
+[data-theme="dark"] .mi-kind {
+    background: #1c2128;
+    color: #79b8ff;
+    border-color: #30363d;
+}
+[data-theme="dark"] .mi-kind--flag {
+    background: #2a0d09;
+    color: #f85149;
+    border-color: #7c1d13;
+}
+[data-theme="dark"] .mi-kind--target_request {
+    background: #0d2818;
+    color: #7ee787;
+    border-color: #1a5c35;
+}
+[data-theme="dark"] .mi-kind--other {
+    background: #1a1040;
+    color: #c4b5fd;
+    border-color: #4c1d95;
+}
+
+[data-theme="dark"] .mi-badge--open {
+    background: #0d2818;
+    color: #7ee787;
+    border-color: #1a5c35;
+}
+[data-theme="dark"] .mi-badge--resolved {
+    background: #1a1040;
+    color: #c4b5fd;
+    border-color: #4c1d95;
+}
+[data-theme="dark"] .mi-badge--invalid {
+    background: #1c2128;
+    color: #8b949e;
+    border-color: #30363d;
+}
+
+[data-theme="dark"] .mi-empty i {
+    color: #30363d;
+}

@@ -161,6 +161,18 @@
     vertical-align: middle;
 }
 .at-info-icon-btn:hover { color: #0b53b6; }
+.at-pre-code {
+    background: #f6f7fb;
+    border-radius: 6px;
+    padding: 0.5rem 0.7rem;
+    margin: 0.3rem 0;
+    font-size: 0.82rem;
+    overflow-x: auto;
+}
+[data-theme="dark"] .at-pre-code {
+    background: #0d1117;
+    color: #e6edf3;
+}
 </style>
 {% endblock %}
 
@@ -918,15 +930,13 @@
                     Run a one-time auth flow to obtain a
                     <strong>refresh_token</strong> with these scopes.
                     This step opens a browser consent link once:
-<pre style="background:#f6f7fb; border-radius:6px; padding:0.5rem 0.7rem;
-margin:0.3rem 0; font-size:0.82rem; overflow-x:auto;">https://www.googleapis.com/auth/spreadsheets
+<pre class="at-pre-code">https://www.googleapis.com/auth/spreadsheets
 https://www.googleapis.com/auth/drive</pre>
                 </li>
                 <li>
                     Save a JSON file shaped like this and upload it via
                     the field above:
-<pre style="background:#f6f7fb; border-radius:6px; padding:0.5rem 0.7rem;
-margin:0.3rem 0; font-size:0.82rem; overflow-x:auto;">{
+<pre class="at-pre-code">{
   "client_id": "...apps.googleusercontent.com",
   "client_secret": "...",
   "refresh_token": "...",

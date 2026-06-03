@@ -193,6 +193,50 @@ a.ac-card {
     font-size: 0.82rem;
 }
 
+/* ── Tests filter / view-toggle toolbar ─────────────────────────────── */
+.ac-checks-toolbar {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    margin-bottom: 0.55rem;
+}
+
+.ac-checks-filter {
+    flex: 1 1 10rem;
+    min-width: 8rem;
+    padding: 0.3rem 0.55rem;
+    border: 1px solid var(--ari-border);
+    border-radius: 0.45rem;
+    background: var(--ari-surface-muted, #f8fafc);
+    color: var(--ari-text);
+    font-size: 0.82rem;
+}
+
+.ac-checks-filter:focus {
+    outline: none;
+    border-color: var(--ari-primary, #4b7bec);
+}
+
+/* ── List-view modifier on the checks container ─────────────────────── */
+.ac-card__checks.ac-checks--list {
+    flex-direction: column;
+    align-items: stretch;
+}
+
+.ac-card__checks.ac-checks--list .ac-check-pill {
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+}
+
+/* active state for the list-view toggle button */
+.ac-view-toggle-on {
+    background: #0f766e;
+    border-color: #0d9488;
+    color: #ffffff;
+}
+
 .ac-card__title-group {
     display: flex;
     gap: 0.75rem;
@@ -557,152 +601,144 @@ a.ac-card {
     gap: 0.45rem;
 }
 
+/* ── Card colour states (top-level, all screen sizes) ───────────────── */
+.ac-card--monitored {
+    border-left-color: #7c3aed;
+    background: #f5f3ff;
+}
+
+.ac-card--overridden {
+    border-left-color: #d97706;
+    background: #fffbeb;
+}
+
+/* Check pill colour states */
+.ac-check-pill--monitored {
+    border-color: #c4b5fd;
+    background: #f5f3ff;
+}
+
+.ac-check-pill--overridden {
+    border-color: #fde68a;
+    background: #fffbeb;
+}
+
+/* ── Header banner for check info page ──────────────────────────────── */
+.ac-check-banner {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.85rem 1.1rem;
+    border-radius: 0.65rem;
+    margin-bottom: 0.85rem;
+    font-weight: 700;
+    font-size: 1.05rem;
+}
+
+.ac-check-banner--passed {
+    background: #1f9d55;
+    color: #ffffff;
+}
+
+.ac-check-banner--failed {
+    background: #cc4b37;
+    color: #ffffff;
+}
+
+.ac-check-banner--monitored {
+    background: #7c3aed;
+    color: #ffffff;
+}
+
+.ac-check-banner--overridden {
+    background: #d97706;
+    color: #ffffff;
+}
+
+.ac-check-banner__icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2rem;
+    min-width: 2rem;
+    height: 2rem;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.2);
+    font-size: 1rem;
+}
+
+.ac-check-banner__text {
+    font-size: 0.88rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    opacity: 0.88;
+    min-width: 5rem;
+}
+
+.ac-check-banner__name {
+    font-size: 1rem;
+    font-weight: 700;
+}
+
+/* ── Button colour utilities ─────────────────────────────────────────── */
+.ac-btn--blue-bg {
+    background: #1d4ed8 !important;
+    border-color: #1d4ed8 !important;
+    color: #ffffff !important;
+}
+
+.ac-btn--blue-bg:hover {
+    background: #1e40af !important;
+    border-color: #1e40af !important;
+}
+
+.ac-btn--orange-bg {
+    background: #d97706 !important;
+    border-color: #d97706 !important;
+    color: #ffffff !important;
+}
+
+.ac-btn--orange-bg:hover {
+    background: #b45309 !important;
+    border-color: #b45309 !important;
+}
+
+.ac-btn--red-bg {
+    background: #991b1b !important;
+    border-color: #991b1b !important;
+    color: #ffffff !important;
+}
+
+.ac-btn--red-bg:hover {
+    background: #7f1d1d !important;
+    border-color: #7f1d1d !important;
+}
+
+.ac-btn-danger,
+.ac-btn--dark-red {
+    background: #7f1d1d !important;
+    border-color: #7f1d1d !important;
+    color: #ffffff !important;
+}
+
+/* ── Clickable card as <a> ───────────────────────────────────────────── */
+a.ac-card {
+    display: block;
+    color: inherit;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+a.ac-card:hover {
+    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.12);
+    border-left-width: 0.55rem;
+}
+
+/* ── Responsive layout: collapse multi-column grids at ≤840px ────────── */
 @media (max-width: 840px) {
     .ac-card__row {
         grid-template-columns: 1fr;
-
-        /* ── Card colour states ───────────────────────────────────────── */
-        .ac-card--monitored {
-            border-left-color: #7c3aed;
-            background: #f5f3ff;
-        }
-
-        .ac-card--overridden {
-            border-left-color: #d97706;
-            background: #fffbeb;
-        }
-
-        /* Check pill colour states */
-        .ac-check-pill--monitored {
-            border-color: #c4b5fd;
-            background: #f5f3ff;
-        }
-
-        .ac-check-pill--overridden {
-            border-color: #fde68a;
-            background: #fffbeb;
-        }
-
-        /* ── Header banner for check info page ───────────────────────── */
-        .ac-check-banner {
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-            padding: 0.85rem 1.1rem;
-            border-radius: 0.65rem;
-            margin-bottom: 0.85rem;
-            font-weight: 700;
-            font-size: 1.05rem;
-        }
-
-        .ac-check-banner--passed {
-            background: #1f9d55;
-            color: #ffffff;
-        }
-
-        .ac-check-banner--failed {
-            background: #cc4b37;
-            color: #ffffff;
-        }
-
-        .ac-check-banner--monitored {
-            background: #7c3aed;
-            color: #ffffff;
-        }
-
-        .ac-check-banner--overridden {
-            background: #d97706;
-            color: #ffffff;
-        }
-
-        .ac-check-banner__icon {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            width: 2rem;
-            min-width: 2rem;
-            height: 2rem;
-            border-radius: 999px;
-            background: rgba(255, 255, 255, 0.2);
-            font-size: 1rem;
-        }
-
-        .ac-check-banner__text {
-            font-size: 0.88rem;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 0.06em;
-            opacity: 0.88;
-            min-width: 5rem;
-        }
-
-        .ac-check-banner__name {
-            font-size: 1rem;
-            font-weight: 700;
-        }
-
-        /* ── Button colour utilities ─────────────────────────────────── */
-        .ac-btn--blue-bg {
-            background: #1d4ed8 !important;
-            border-color: #1d4ed8 !important;
-            color: #ffffff !important;
-        }
-
-        .ac-btn--blue-bg:hover {
-            background: #1e40af !important;
-            border-color: #1e40af !important;
-        }
-
-        .ac-btn--orange-bg {
-            background: #d97706 !important;
-            border-color: #d97706 !important;
-            color: #ffffff !important;
-        }
-
-        .ac-btn--orange-bg:hover {
-            background: #b45309 !important;
-            border-color: #b45309 !important;
-        }
-
-        .ac-btn--red-bg {
-            background: #991b1b !important;
-            border-color: #991b1b !important;
-            color: #ffffff !important;
-        }
-
-        .ac-btn--red-bg:hover {
-            background: #7f1d1d !important;
-            border-color: #7f1d1d !important;
-        }
-
-        .ac-btn-danger,
-        .ac-btn--dark-red {
-            background: #7f1d1d !important;
-            border-color: #7f1d1d !important;
-            color: #ffffff !important;
-        }
-
-        /* ── Advanced / delete-only visibility ───────────────────────── */
-        .ac-delete-only {
-            display: none !important;
-        }
-
-        body.ac-delete-mode .ac-delete-only {
-            display: inline-flex !important;
-        }
-
-        /* ── Clickable card as <a> ───────────────────────────────────── */
-        a.ac-card {
-            display: block;
-            color: inherit;
-            text-decoration: none;
-            cursor: pointer;
-        }
-
-        a.ac-card:hover {
-            box-shadow: 0 3px 8px rgba(0, 0, 0, 0.12);
-            border-left-width: 0.55rem;
-        }
         align-items: start;
     }
 
@@ -722,6 +758,7 @@ a.ac-card {
     .ac-failure {
         grid-template-columns: 1fr;
     }
+
     .ac-card__head {
         flex-direction: column;
     }
@@ -733,4 +770,92 @@ a.ac-card {
     .ac-failure-path-row {
         grid-template-columns: 1fr;
     }
+
+    .ac-failure-detail__actions {
+        flex-wrap: wrap;
+        gap: 0.4rem;
+    }
+
+    .ac-manage-grid {
+        grid-template-columns: 1fr !important;
+    }
+}
+
+/* ── Dark theme overrides ────────────────────────────────────────────── */
+[data-theme="dark"] .ac-card--ok {
+    background: #0d2818;
+    border-left-color: #2e9f5f;
+}
+
+[data-theme="dark"] .ac-card--failed {
+    background: #2a0d09;
+    border-left-color: #cc4b37;
+}
+
+[data-theme="dark"] .ac-card--monitored {
+    background: #1a1040;
+    border-left-color: #7c3aed;
+}
+
+[data-theme="dark"] .ac-card--overridden {
+    background: #2a1f05;
+    border-left-color: #d97706;
+}
+
+[data-theme="dark"] .ac-check-pill--failed {
+    border-color: #7c2718;
+    background: #2a0d09;
+    color: var(--ari-text);
+}
+
+[data-theme="dark"] .ac-check-pill--passed {
+    border-color: #1a5c35;
+    background: #0d2818;
+    color: var(--ari-text);
+}
+
+[data-theme="dark"] .ac-check-pill--monitored {
+    border-color: #4c1d95;
+    background: #1a1040;
+    color: var(--ari-text);
+}
+
+[data-theme="dark"] .ac-check-pill--overridden {
+    border-color: #78350f;
+    background: #2a1f05;
+    color: var(--ari-text);
+}
+
+[data-theme="dark"] .ac-card__lastrun {
+    color: var(--ari-primary);
+}
+
+[data-theme="dark"] .ac-failure-meta-state--true {
+    color: #3fb950;
+}
+
+[data-theme="dark"] .ac-save-note {
+    background: #0c1929;
+    border-color: #1d4e89;
+    color: #79b8ff;
+}
+
+[data-theme="dark"] .ac-failure-doc-link {
+    background: #0c1929;
+    border-color: #1d4e89;
+    color: var(--ari-text);
+}
+
+[data-theme="dark"] .ac-failure-doc-link a {
+    color: var(--ari-primary);
+}
+
+[data-theme="dark"] .ac-yaml-mark {
+    background: #4a2c0a;
+    color: #fde68a;
+}
+
+[data-theme="dark"] .ac-issue-chip--selected {
+    border-color: #2e9f5f;
+    background: rgba(46, 159, 95, 0.15);
 }
