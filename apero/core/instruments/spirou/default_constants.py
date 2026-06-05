@@ -2984,7 +2984,7 @@ DEBUG_BACKGROUND_FILE.value = False
 # Whether to save the E2DSLL file (around 0.05 to 0.1 GB per file)
 #   one of these per fiber (lots)
 DEBUG_E2DSLL_FILE = DEBUG_E2DSLL_FILE.copy(__NAME__)
-DEBUG_E2DSLL_FILE.value = True
+DEBUG_E2DSLL_FILE.value = False
 
 # Whether to save the shape in and out debug files (around 0.1 GB per file)
 #   but only one set of these per night
