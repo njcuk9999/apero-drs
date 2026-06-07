@@ -67,6 +67,11 @@
             <i class="{{ card.icon }}"></i>
         </div>
         <span class="ari-card__label">{{ card.label }}</span>
+        {% if card_health_badges and card_health_badges.get(card.id) %}
+        {% set _hb_status = card_health_badges.get(card.id) %}
+        <span class="ari-card__health-badge ari-card__health-badge--{{ _hb_status }}"
+              title="Admin health: {{ _hb_status }}"></span>
+        {% endif %}
     </a>
     {% endfor %}
 </div>

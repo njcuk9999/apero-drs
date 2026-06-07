@@ -2307,6 +2307,28 @@ body.ari-up-wide-page .ari-doc-main {
     position: relative;
 }
 
+.ari-card__health-badge {
+    position: absolute;
+    top: 0.5rem;
+    right: 0.5rem;
+    width: 0.6rem;
+    height: 0.6rem;
+    border-radius: 50%;
+    border: 1px solid var(--ari-card-bg);
+}
+
+.ari-card__health-badge--ok {
+    background: var(--ari-success, #28a745);
+}
+
+.ari-card__health-badge--warning {
+    background: var(--ari-warning, #ffc107);
+}
+
+.ari-card__health-badge--error {
+    background: var(--ari-danger, #dc3545);
+}
+
 .ari-card:hover {
     transform: translateY(-3px);
     box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);

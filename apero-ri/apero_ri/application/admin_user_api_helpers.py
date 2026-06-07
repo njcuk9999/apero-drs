@@ -1,5 +1,6 @@
 """Admin user management API helper functions for ARIApp."""
 
+from apero_ri.core import audit_log
 from apero_ri.core.auth import (
     get_effective_user,
     get_user_info,
@@ -206,6 +207,12 @@ def api_user_update_groups(app):
 
     if not update_user_groups(target, cleaned_groups):
         return jsonify(success=False, error="Update failed"), 500
+    audit_log.record(
+        actor=user_info.get("username", ""),
+        action="user.groups.update",
+        target=target,
+        detail={"before": sorted(old_groups), "after": sorted(cleaned_groups)},
+    )
     app._refresh_admin_health_after_change(user_info, perms)
     return jsonify(
         success=True,
@@ -293,6 +300,12 @@ def api_user_update_instruments(app):
 
     if not update_user_instruments(target, new_instruments):
         return jsonify(success=False, error="Update failed"), 500
+    audit_log.record(
+        actor=user_info.get("username", ""),
+        action="user.instruments.update",
+        target=target,
+        detail={"instruments": new_instruments},
+    )
     app._refresh_admin_health_after_change(user_info, perms)
     return jsonify(success=True)
 
@@ -366,4 +379,9 @@ def api_login_as_set(app):
         )
 
     session["login_as"] = target
+    audit_log.record(
+        actor=real_user,
+        action="user.login_as",
+        target=target,
+    )
     return jsonify(success=True, username=target)

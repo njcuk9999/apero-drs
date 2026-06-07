@@ -1440,6 +1440,73 @@ def remove_issue_todo(username: str, issue_id: Any) -> bool:
 
 
 # =============================================================================
+# Saved table filters (e.g. Processing Logs table)
+# =============================================================================
+_SAVED_FILTERS_DEFAULT: Dict = {"filters": []}
+
+
+def _saved_filters_path(username: str) -> Path:
+    return get_user_dir(username) / "saved_filters.yaml"
+
+
+def load_saved_filters(username: str, table_id: Optional[str] = None) -> List[Dict]:
+    """Return saved filter sets for a user, optionally scoped to one table_id."""
+    data = _load_yaml(_saved_filters_path(username), dict(_SAVED_FILTERS_DEFAULT))
+    items = data.get("filters") or []
+    if table_id:
+        items = [it for it in items if it.get("table_id") == table_id]
+    return items
+
+
+def save_filter_set(
+    username: str,
+    table_id: str,
+    name: str,
+    filters: Dict[str, Any],
+    sort_col: str = "",
+    sort_dir: str = "asc",
+) -> Dict:
+    """Create (or replace by name+table_id) a saved filter set. Returns the entry."""
+    path = _saved_filters_path(username)
+    data = _load_yaml(path, dict(_SAVED_FILTERS_DEFAULT))
+    items = data.get("filters") or []
+
+    # Replace existing entry with same table_id + name (case-insensitive).
+    items = [
+        it for it in items
+        if not (it.get("table_id") == table_id
+                and str(it.get("name", "")).strip().lower() == name.strip().lower())
+    ]
+
+    entry = {
+        "id": _new_id(),
+        "table_id": table_id,
+        "name": name.strip(),
+        "filters": filters or {},
+        "sort_col": sort_col,
+        "sort_dir": sort_dir,
+        "created": _now_iso(),
+    }
+    items.append(entry)
+    data["filters"] = items
+    _save_yaml(path, data)
+    return entry
+
+
+def delete_filter_set(username: str, filter_id: str) -> bool:
+    """Delete a saved filter set by id. Returns True if something was removed."""
+    path = _saved_filters_path(username)
+    data = _load_yaml(path, dict(_SAVED_FILTERS_DEFAULT))
+    items = data.get("filters") or []
+    new_items = [it for it in items if it.get("id") != filter_id]
+    if len(new_items) == len(items):
+        return False
+    data["filters"] = new_items
+    _save_yaml(path, data)
+    return True
+
+
+# =============================================================================
 # Start of code
 # =============================================================================
 if __name__ == "__main__":
