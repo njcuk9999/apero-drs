@@ -3,17 +3,19 @@
 
 def register_static_routes(app):
     """Register static auth/user/admin/docs API routes."""
-    # Registration and account APIs
+    _lim = app._limiter
+
+    # Registration and account APIs — rate-limited
     app.add_url_rule(
         "/api/auth/register/start",
         "api_auth_register_start",
-        app._api_auth_register_start,
+        _lim.limit("5 per minute; 20 per hour")(app._api_auth_register_start),
         methods=["POST"],
     )
     app.add_url_rule(
         "/api/auth/register/verify",
         "api_auth_register_verify",
-        app._api_auth_register_verify,
+        _lim.limit("10 per minute; 30 per hour")(app._api_auth_register_verify),
         methods=["POST"],
     )
     app.add_url_rule(
@@ -523,6 +525,18 @@ def register_static_routes(app):
         "/api/admin/health/update",
         "api_admin_health_update",
         app._api_admin_health_update,
+        methods=["POST"],
+    )
+    app.add_url_rule(
+        "/api/admin/audit-log",
+        "api_admin_audit_log",
+        app._api_admin_audit_log,
+        methods=["POST"],
+    )
+    app.add_url_rule(
+        "/api/admin/health-history",
+        "api_admin_health_history",
+        app._api_admin_health_history,
         methods=["POST"],
     )
     app.add_url_rule(
@@ -1634,6 +1648,30 @@ def register_data_portal_routes(app):
         methods=["GET"],
     )
     app.add_url_rule(
+        "/api/monitor/processing-logs/filters/list",
+        "api_processing_logs_filters_list",
+        app._api_processing_logs_filters_list,
+        methods=["POST"],
+    )
+    app.add_url_rule(
+        "/api/monitor/processing-logs/filters/save",
+        "api_processing_logs_filters_save",
+        app._api_processing_logs_filters_save,
+        methods=["POST"],
+    )
+    app.add_url_rule(
+        "/api/monitor/processing-logs/filters/delete",
+        "api_processing_logs_filters_delete",
+        app._api_processing_logs_filters_delete,
+        methods=["POST"],
+    )
+    app.add_url_rule(
+        "/api/monitor/processing-logs/pid/export",
+        "api_processing_logs_pid_export",
+        app._api_processing_logs_pid_export,
+        methods=["POST"],
+    )
+    app.add_url_rule(
         "/api/monitor/apero-checks/update-failure",
         "api_apero_checks_update_failure",
         app._api_apero_checks_update_failure,
@@ -1709,6 +1747,18 @@ def register_data_portal_routes(app):
         '/api/monitor/apero-checks/check-results',
         'api_apero_checks_check_results',
         app._api_apero_checks_check_results,
+        methods=['GET'],
+    )
+    app.add_url_rule(
+        '/api/admin/apero-checks/check-info-async',
+        'api_apero_checks_check_info_async',
+        app._api_apero_checks_check_info_async,
+        methods=['GET'],
+    )
+    app.add_url_rule(
+        '/api/admin/apero-checks/policy-build-status',
+        'api_apero_checks_policy_build_status',
+        app._api_apero_checks_policy_build_status,
         methods=['GET'],
     )
     app.add_url_rule(

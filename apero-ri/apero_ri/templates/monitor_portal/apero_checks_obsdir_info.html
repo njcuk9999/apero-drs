@@ -269,6 +269,12 @@
         <i class="fa-solid fa-rotate-right"></i>
         Re-run obs dir
     </button>
+    <label for="ac-obsdir-verbose" style="font-size:0.88rem;color:var(--ari-text-muted);margin-left:0.6rem;">Log verbosity:</label>
+    <select id="ac-obsdir-verbose" style="font-size:0.88rem;border:1px solid var(--ari-border);border-radius:0.3rem;padding:0.1rem 0.4rem;background:var(--ari-card-bg);color:var(--ari-text);">
+        <option value="0">0 — no log</option>
+        <option value="1" selected>1 — standard</option>
+        <option value="2">2 — verbose</option>
+    </select>
     <div id="ac-obsdir-task-status" class="ac-task-status">
         Queue: idle
     </div>
@@ -685,7 +691,7 @@
         var taskId = String(taskState.taskId || '').trim();
         if (!match) {
             if (taskId) {
-                setTaskStatus('queued', 'Queue: ' + taskId + ' (syncing)');
+                setTaskStatus('queued', 'Queue: ' + taskId + ' (pending…)');
             }
             return false;
         }
@@ -737,11 +743,14 @@
     var rerunBtn = document.getElementById('ac-obsdir-rerun');
     if (rerunBtn) {
         rerunBtn.addEventListener('click', function () {
+            var verbSel = document.getElementById('ac-obsdir-verbose');
+            var verbose = verbSel ? parseInt(verbSel.value, 10) : 1;
             setTaskStatus('queued', 'Queue: submitting...');
             postJson({{ api_rerun_night_url|tojson }}, {
                 profile_id: {{ profile_id|tojson }},
                 obsdir: {{ obsdir|tojson }},
                 check_path: {{ checks_file|tojson }},
+                verbose: verbose,
             }).then(function (data) {
                 taskState.taskId = String(data.task_id || '').trim();
                 setTaskStatus('queued', 'Queue: ' + taskState.taskId);

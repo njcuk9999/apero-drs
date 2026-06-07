@@ -191,10 +191,12 @@ def _pid_group_summary(
             TIMESTAMPDIFF(SECOND, MIN(START_TIME), MAX(END_TIME))
                             AS total_seconds
         FROM {tbl}
-        WHERE GROUPNAME LIKE '%{safe_pid}%'
+        WHERE GROUPNAME LIKE :pid_like
     """
     try:
-        agg_rows = apero_async.database_query(db_params, agg_query)
+        agg_rows = apero_async.database_query(
+            db_params, agg_query, bind_params={"pid_like": f"%{safe_pid}%"}
+        )
     except Exception:
         agg_rows = []
     if agg_rows:
@@ -215,24 +217,31 @@ def _pid_group_summary(
     # The apero_processing recipe's own log file — try matching on PID column
     # first (exact), then fall back to GROUPNAME LIKE (fuzzy).  Use the full
     # LOGFILE path rather than stripping a '/msg/' prefix that may not exist.
-    for _log_query in [
-        f"""
+    for _log_query, _bind in [
+        (
+            f"""
             SELECT LOGFILE AS log_file
             FROM {tbl}
-            WHERE PID = '{safe_pid}'
+            WHERE PID = :pid
               AND RECIPE LIKE '%processing%'
             LIMIT 1
-        """,
-        f"""
+            """,
+            {"pid": safe_pid},
+        ),
+        (
+            f"""
             SELECT LOGFILE AS log_file
             FROM {tbl}
-            WHERE GROUPNAME LIKE '%{safe_pid}%'
+            WHERE GROUPNAME LIKE :pid_like
               AND RECIPE LIKE '%processing%'
             LIMIT 1
-        """,
+            """,
+            {"pid_like": f"%{safe_pid}%"},
+        ),
     ]:
         try:
-            log_rows = apero_async.database_query(db_params, _log_query)
+            log_rows = apero_async.database_query(db_params, _log_query,
+                                                  bind_params=_bind)
             if log_rows:
                 val = str(log_rows[0].get("log_file", "") or "").strip()
                 if val:
@@ -441,9 +450,141 @@ def api_processing_logs_pid(app: Any):
         return jsonify({"error": str(exc)}), 400
 
     db_params = apero_async.get_db_params(profile_data)
-    # PID is user-supplied; use a parameterised-style escape by
-    # injecting only the hex-safe portion into the LIKE pattern.
     safe_pid = _safe_like_pid(pid)
+
+    # ── Server-side pagination mode ────────────────────────────────────────
+    # When the client sends paged=true it also sends page, per_page,
+    # sort_col, sort_dir, and filters.  We build SQL with LIMIT/OFFSET
+    # so only one page of rows is transferred, making large tables fast.
+    paged = _is_truthy(data.get('paged', False))
+
+    if paged:
+        page      = max(1, int(data.get('page', 1) or 1))
+        per_page  = max(1, min(500, int(data.get('per_page', 50) or 50)))
+        sort_col  = str(data.get('sort_col', '') or '').strip()
+        sort_dir  = str(data.get('sort_dir', 'asc') or 'asc').lower()
+        if sort_dir not in ('asc', 'desc'):
+            sort_dir = 'asc'
+        filters   = data.get('filters') or {}
+
+        # Map display column names → SQL expressions.
+        _col_sql = {
+            "Recipe name": "RECIPE",
+            "Short name":  "SHORTNAME",
+            "Recipe call": "RUNSTRING",
+            "Finished":    "ENDED",
+            "Log file":    "SUBSTRING_INDEX(LOGFILE, '/msg/', -1)",
+            "Time taken":  (
+                "CASE WHEN START_TIME IS NULL OR END_TIME IS NULL "
+                "OR END_TIME < START_TIME THEN NULL "
+                "ELSE TIMESTAMPDIFF(SECOND, START_TIME, END_TIME) END"
+            ),
+        }
+
+        # Build WHERE clauses from per-column filter values using bound params.
+        where_parts = ["GROUPNAME LIKE :pid_like"]
+        query_bind: Dict[str, Any] = {"pid_like": f"%{safe_pid}%"}
+        filter_idx = 0
+        for col, val in (filters or {}).items():
+            val_s = str(val or '').strip()
+            if not val_s:
+                continue
+            if col == "Finished":
+                # Dropdown: "1" or "0" — no user data in SQL, safe as literal
+                norm = val_s.lower()
+                if norm in ("1", "true", "yes"):
+                    where_parts.append("ENDED = 1")
+                elif norm in ("0", "false", "no"):
+                    where_parts.append("ENDED = 0")
+            elif col in ("Recipe name", "Short name", "Recipe call"):
+                sql_col = _col_sql.get(col, "RECIPE")
+                param_name = f"filter_val_{filter_idx}"
+                where_parts.append(f"{sql_col} LIKE :{param_name}")
+                query_bind[param_name] = f"%{val_s}%"
+                filter_idx += 1
+
+        where_clause = " AND ".join(where_parts)
+
+        # COUNT query (no LIMIT/OFFSET).
+        count_q = f"SELECT COUNT(*) AS cnt FROM {tbl} WHERE {where_clause}"
+        total = 0
+        try:
+            cnt_rows = apero_async.database_query(db_params, count_q,
+                                                  bind_params=query_bind)
+            if cnt_rows:
+                total = int(cnt_rows[0].get("cnt", 0) or 0)
+        except Exception:
+            pass
+
+        # ORDER BY clause.
+        order_expr = "RECIPE"
+        if sort_col and sort_col in _col_sql:
+            order_expr = _col_sql[sort_col]
+        order_dir_sql = "ASC" if sort_dir == "asc" else "DESC"
+
+        # Data query with LIMIT / OFFSET (LIMIT/OFFSET are integers, not user strings).
+        offset = (page - 1) * per_page
+        data_q = f"""
+            SELECT
+                RECIPE    AS `Recipe name`,
+                SHORTNAME AS `Short name`,
+                RUNSTRING AS `Recipe call`,
+                CASE
+                    WHEN START_TIME IS NULL THEN NULL
+                    WHEN END_TIME IS NULL THEN NULL
+                    WHEN END_TIME < START_TIME THEN NULL
+                    ELSE TIMESTAMPDIFF(SECOND, START_TIME, END_TIME)
+                END       AS `Time taken`,
+                ENDED     AS `Finished`,
+                SUBSTRING_INDEX(LOGFILE, '/msg/', -1) AS `Log file`
+            FROM {tbl}
+            WHERE {where_clause}
+            ORDER BY {order_expr} {order_dir_sql}
+            LIMIT {per_page} OFFSET {offset}
+        """
+        try:
+            rows = _rows_to_serializable(
+                apero_async.database_query(db_params, data_q,
+                                           bind_params=query_bind)
+            )
+        except Exception as exc:
+            return jsonify({"error": str(exc)}), 500
+
+        columns        = list(rows[0].keys()) if rows else [
+            "Recipe name", "Short name", "Recipe call",
+            "Time taken", "Finished", "Log file",
+        ]
+        dropdown_cols  = ["Finished"]   # always a dropdown in paged mode
+        title          = pid
+        summary        = _pid_group_summary(db_params, tbl, safe_pid)
+
+        # GROUPNAME lookup.
+        try:
+            gn_rows = apero_async.database_query(
+                db_params,
+                f"SELECT GROUPNAME FROM {tbl} WHERE GROUPNAME LIKE :pid_like LIMIT 1",
+                bind_params={"pid_like": f"%{safe_pid}%"},
+            )
+            if gn_rows:
+                title = str(gn_rows[0].get("GROUPNAME", pid) or pid)
+        except Exception:
+            pass
+
+        return jsonify(dict(
+            rows=rows,
+            columns=columns,
+            dropdown_columns=dropdown_cols,
+            group_name=title,
+            summary=summary,
+            total=total,
+            page=page,
+            per_page=per_page,
+            paged=True,
+            last_updated=_cache_stamp(datetime.now()),
+            from_cache=False,
+        )), 200
+
+    # ── Legacy full-fetch mode ────────────────────────────────────────────
     query = f"""
         SELECT
             RECIPE   AS `Recipe name`,
@@ -462,11 +603,13 @@ def api_processing_logs_pid(app: Any):
             ENDED    AS `Finished`,
             SUBSTRING_INDEX(LOGFILE, '/msg/', -1) AS `Log file`
         FROM {tbl}
-        WHERE GROUPNAME LIKE '%{safe_pid}%'
+        WHERE GROUPNAME LIKE :pid_like
         ORDER BY RECIPE
     """
     try:
-        rows = apero_async.database_query(db_params, query)
+        rows = apero_async.database_query(
+            db_params, query, bind_params={"pid_like": f"%{safe_pid}%"}
+        )
     except Exception as exc:
         return jsonify({"error": str(exc)}), 500
 
@@ -493,22 +636,19 @@ def api_processing_logs_pid(app: Any):
         if _unique_count(rows, col) < 5:
             dropdown_cols.append(col)
 
-    # Get page title = GROUPNAME for this PID
     title_query = f"""
         SELECT GROUPNAME
         FROM {tbl}
-        WHERE GROUPNAME LIKE '%{safe_pid}%'
+        WHERE GROUPNAME LIKE :pid_like
         LIMIT 1
     """
     title = pid
     try:
         title_rows = apero_async.database_query(
-            db_params, title_query
+            db_params, title_query, bind_params={"pid_like": f"%{safe_pid}%"}
         )
         if title_rows:
-            title = str(
-                title_rows[0].get("GROUPNAME", pid) or pid
-            )
+            title = str(title_rows[0].get("GROUPNAME", pid) or pid)
     except Exception:
         pass
 
@@ -600,15 +740,45 @@ def api_processing_log_file(app: Any):
             "looked_at": str(full),
         }), 200
 
+    # Optional line-range parameters so very large log files can be loaded
+    # in slices instead of all at once.  Negative from_line means "count
+    # from the end" (e.g. from_line=-500 → last 500 lines).
     try:
-        content = full.read_text(encoding="utf-8", errors="replace")
+        from_line = int(data.get("from_line", 0) or 0)
+        to_line   = int(data.get("to_line",   0) or 0)
+    except (TypeError, ValueError):
+        from_line = 0
+        to_line   = 0
+
+    try:
+        raw = full.read_text(encoding="utf-8", errors="replace")
     except Exception as exc:
         return jsonify({"error": str(exc)}), 500
+
+    all_lines  = raw.splitlines()
+    total_lines = len(all_lines)
+
+    # Resolve negative from_line (e.g. -500 → last 500 lines).
+    if from_line < 0:
+        from_line = max(0, total_lines + from_line)
+
+    # Default window: first 500 lines when caller passes zeros.
+    if from_line == 0 and to_line == 0:
+        to_line = min(500, total_lines)
+
+    # Clamp.
+    from_line = max(0, min(from_line, total_lines))
+    to_line   = max(from_line, min(to_line, total_lines))
+
+    content = "\n".join(all_lines[from_line:to_line])
 
     return jsonify({
         "exists": True,
         "content": content,
         "log_path": str(full),
+        "total_lines": total_lines,
+        "from_line": from_line,
+        "to_line": to_line,
     }), 200
 
 
@@ -700,13 +870,14 @@ def api_processing_logs_fail_report(app: Any):
             END       AS time_taken_seconds,
             SUBSTRING_INDEX(LOGFILE, '/msg/', -1) AS log_file
         FROM {tbl}
-        WHERE GROUPNAME LIKE '%{safe_pid}%'
+        WHERE GROUPNAME LIKE :pid_like
           AND (ENDED = 0 OR ENDED IS NULL)
         ORDER BY RECIPE
     """
     try:
         fail_rows = _rows_to_serializable(
-            apero_async.database_query(db_params, fail_query)
+            apero_async.database_query(db_params, fail_query,
+                                       bind_params={"pid_like": f"%{safe_pid}%"})
         )
     except Exception as exc:
         return jsonify({"error": str(exc)}), 500
@@ -892,3 +1063,202 @@ def api_processing_logs_fail_report_info(app: Any):
         "share_url": share_url,
         "download_url": download_url,
     }), 200
+
+
+# =============================================================================
+# API: saved filters for the processing-log table
+# =============================================================================
+PROC_LOGS_TABLE_ID = "processing_logs"
+
+
+def api_processing_logs_filters_list(app: Any):
+    """Return the current user's saved filter sets for the processing logs table."""
+    from apero_ri.core import user_data as ud
+
+    user_info = get_effective_user(session)
+    if not user_info:
+        return jsonify({"error": "Unauthorized"}), 401
+
+    items = ud.load_saved_filters(user_info["username"], table_id=PROC_LOGS_TABLE_ID)
+    return jsonify({"filters": items}), 200
+
+
+def api_processing_logs_filters_save(app: Any):
+    """Save (or replace by name) a filter set for the processing logs table."""
+    from apero_ri.core import user_data as ud
+
+    user_info = get_effective_user(session)
+    if not user_info:
+        return jsonify({"error": "Unauthorized"}), 401
+
+    data = request.get_json(silent=True) or {}
+    name = str(data.get("name", "") or "").strip()
+    if not name:
+        return jsonify({"error": "name required"}), 400
+    filters = data.get("filters") or {}
+    if not isinstance(filters, dict):
+        return jsonify({"error": "filters must be an object"}), 400
+    sort_col = str(data.get("sort_col", "") or "")
+    sort_dir = str(data.get("sort_dir", "asc") or "asc")
+    if sort_dir not in ("asc", "desc"):
+        sort_dir = "asc"
+
+    entry = ud.save_filter_set(
+        user_info["username"], PROC_LOGS_TABLE_ID, name, filters, sort_col, sort_dir
+    )
+    return jsonify({"success": True, "filter": entry}), 200
+
+
+def api_processing_logs_filters_delete(app: Any):
+    """Delete one of the current user's saved filter sets by id."""
+    from apero_ri.core import user_data as ud
+
+    user_info = get_effective_user(session)
+    if not user_info:
+        return jsonify({"error": "Unauthorized"}), 401
+
+    data = request.get_json(silent=True) or {}
+    filter_id = str(data.get("id", "") or "").strip()
+    if not filter_id:
+        return jsonify({"error": "id required"}), 400
+
+    removed = ud.delete_filter_set(user_info["username"], filter_id)
+    if not removed:
+        return jsonify({"error": "Filter not found"}), 404
+    return jsonify({"success": True}), 200
+
+
+# Display column → SQL expression, mirrors the paged-mode mapping in
+# api_processing_logs_pid so CSV export filters/sorts identically.
+_EXPORT_COL_SQL = {
+    "Recipe name": "RECIPE",
+    "Short name":  "SHORTNAME",
+    "Recipe call": "RUNSTRING",
+    "Finished":    "ENDED",
+    "Log file":    "SUBSTRING_INDEX(LOGFILE, '/msg/', -1)",
+    "Time taken":  (
+        "CASE WHEN START_TIME IS NULL OR END_TIME IS NULL "
+        "OR END_TIME < START_TIME THEN NULL "
+        "ELSE TIMESTAMPDIFF(SECOND, START_TIME, END_TIME) END"
+    ),
+}
+
+EXPORT_ROW_LIMIT = 20000
+
+
+def api_processing_logs_pid_export(app: Any):
+    """Stream a CSV export of one PID's recipe rows (filters/sort applied)."""
+    import csv
+    import io
+
+    from flask import Response
+
+    user_info = get_effective_user(session)
+    if user_info:
+        perms = resolve_user_permissions(user_info["groups"], app.ari_groups)
+    else:
+        perms = get_public_permissions()
+
+    from apero_ri.application.monitor_view_helpers import _has_any_monitor_perm
+    if not _has_any_monitor_perm(perms):
+        return jsonify({"error": "Forbidden"}), 403
+
+    data = request.get_json(silent=True) or {}
+    profile_id = str(data.get("profile_id", "") or "").strip()
+    pid = str(data.get("pid", "") or "").strip()
+    if not profile_id or not pid:
+        return jsonify({"error": "profile_id and pid required"}), 400
+
+    prof = _find_profile(app, user_info, profile_id)
+    if not prof:
+        return jsonify({"error": "Profile not found or access denied"}), 404
+
+    profile_data = prof["data"]
+    log_table = _get_log_table(profile_data)
+    if not log_table:
+        return jsonify({"error": "No log table configured for this profile"}), 404
+
+    try:
+        tbl = _safe_table(log_table)
+    except ValueError as exc:
+        return jsonify({"error": str(exc)}), 400
+
+    db_params = apero_async.get_db_params(profile_data)
+    safe_pid = _safe_like_pid(pid)
+
+    sort_col = str(data.get("sort_col", "") or "").strip()
+    sort_dir = str(data.get("sort_dir", "asc") or "asc").lower()
+    if sort_dir not in ("asc", "desc"):
+        sort_dir = "asc"
+    filters = data.get("filters") or {}
+
+    where_parts = ["GROUPNAME LIKE :pid_like"]
+    query_bind: Dict[str, Any] = {"pid_like": f"%{safe_pid}%"}
+    filter_idx = 0
+    for col, val in (filters or {}).items():
+        val_s = str(val or "").strip()
+        if not val_s:
+            continue
+        if col == "Finished":
+            norm = val_s.lower()
+            if norm in ("1", "true", "yes"):
+                where_parts.append("ENDED = 1")
+            elif norm in ("0", "false", "no"):
+                where_parts.append("ENDED = 0")
+        elif col in ("Recipe name", "Short name", "Recipe call"):
+            sql_col = _EXPORT_COL_SQL.get(col, "RECIPE")
+            param_name = f"filter_val_{filter_idx}"
+            where_parts.append(f"{sql_col} LIKE :{param_name}")
+            query_bind[param_name] = f"%{val_s}%"
+            filter_idx += 1
+
+    where_clause = " AND ".join(where_parts)
+
+    order_expr = "RECIPE"
+    if sort_col and sort_col in _EXPORT_COL_SQL:
+        order_expr = _EXPORT_COL_SQL[sort_col]
+    order_dir_sql = "ASC" if sort_dir == "asc" else "DESC"
+
+    data_q = f"""
+        SELECT
+            RECIPE    AS `Recipe name`,
+            SHORTNAME AS `Short name`,
+            RUNSTRING AS `Recipe call`,
+            CASE
+                WHEN START_TIME IS NULL THEN NULL
+                WHEN END_TIME IS NULL THEN NULL
+                WHEN END_TIME < START_TIME THEN NULL
+                ELSE TIMESTAMPDIFF(SECOND, START_TIME, END_TIME)
+            END       AS `Time taken`,
+            ENDED     AS `Finished`,
+            SUBSTRING_INDEX(LOGFILE, '/msg/', -1) AS `Log file`
+        FROM {tbl}
+        WHERE {where_clause}
+        ORDER BY {order_expr} {order_dir_sql}
+        LIMIT {EXPORT_ROW_LIMIT}
+    """
+    try:
+        rows = _rows_to_serializable(
+            apero_async.database_query(db_params, data_q, bind_params=query_bind)
+        )
+    except Exception as exc:
+        return jsonify({"error": str(exc)}), 500
+
+    columns = list(rows[0].keys()) if rows else [
+        "Recipe name", "Short name", "Recipe call",
+        "Time taken", "Finished", "Log file",
+    ]
+
+    buf = io.StringIO()
+    writer = csv.writer(buf)
+    writer.writerow(columns)
+    for row in rows:
+        writer.writerow([row.get(col, "") for col in columns])
+
+    safe_pid_name = re.sub(r"[^A-Za-z0-9_.-]", "_", pid) or "pid"
+    filename = f"processing_logs_{safe_pid_name}.csv"
+    return Response(
+        buf.getvalue(),
+        mimetype="text/csv",
+        headers={"Content-Disposition": f"attachment; filename={filename}"},
+    )

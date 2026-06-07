@@ -132,6 +132,12 @@ def check_function(instrument: str, obs_dir: str,
     n_nonsci = 0
     n_no_objname = 0
 
+    # Per-run resolve cache: maps obj_name -> apero_name (or None).
+    # This ensures each unique object name is queried at most once per obsdir,
+    # preventing the same name from appearing in both passed and failed if an
+    # API call succeeds on one attempt but not another (transient errors).
+    _resolve_cache: dict = {}
+
     for filename in files:
         # Science filter: suffix check takes priority over DPRTYPE header.
         if sci_suffix:
@@ -162,7 +168,18 @@ def check_function(instrument: str, obs_dir: str,
             n_no_objname += 1
             continue
 
-        apero_name = _resolve_astrom(obj_name)
+        # Use the per-run cache so each unique name is only resolved once.
+        # A successful result overrides a previous None (retry semantics):
+        # once we know the name resolves, all files with that name pass.
+        if obj_name not in _resolve_cache:
+            _resolve_cache[obj_name] = _resolve_astrom(obj_name)
+        elif _resolve_cache[obj_name] is None:
+            # Previous attempt failed — retry once in case of transient error.
+            result = _resolve_astrom(obj_name)
+            if result is not None:
+                _resolve_cache[obj_name] = result
+
+        apero_name = _resolve_cache[obj_name]
         if apero_name is not None:
             entry = (obj_key, obj_name, apero_name)
             if entry not in resolved_counts:

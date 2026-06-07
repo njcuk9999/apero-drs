@@ -859,3 +859,77 @@ a.ac-card:hover {
     border-color: #2e9f5f;
     background: rgba(46, 159, 95, 0.15);
 }
+
+/* ── Shared check-results overlay (aci_results_overlay.js) ─────────────── */
+.aci-results-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 4000;
+    /* display controlled via style.display in JS */
+    align-items: flex-start;
+    justify-content: center;
+    padding-top: 5vh;
+}
+.aci-results-backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(0,0,0,0.55);
+}
+.aci-results-panel {
+    position: relative;
+    z-index: 1;
+    width: min(96vw, 900px);
+    max-height: 88vh;
+    display: flex;
+    flex-direction: column;
+    background: var(--ari-card-bg);
+    border: 1px solid var(--ari-border);
+    border-radius: 0.9rem;
+    overflow: hidden;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+}
+.aci-results-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    padding: 0.8rem 1rem;
+    border-bottom: 1px solid var(--ari-border);
+    flex-shrink: 0;
+}
+.aci-results-title {
+    font-weight: 700;
+    font-size: 1rem;
+    color: var(--ari-text);
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.aci-results-body {
+    flex: 1;
+    overflow: auto;
+    padding: 0.75rem 0.9rem 0.6rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+}
+.aci-results-table-wrap {
+    overflow-x: auto;
+    overflow-y: auto;
+    max-height: 52vh;
+    border: 1px solid var(--ari-border);
+    border-radius: 4px;
+}
+
+/* Clickable summary chips on the policy page */
+.acp-chip--clickable {
+    cursor: pointer;
+    transition: box-shadow 0.12s, transform 0.1s;
+    background: unset; /* keep the color variant's bg */
+}
+.acp-chip--clickable:hover {
+    box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+    transform: translateY(-1px);
+}

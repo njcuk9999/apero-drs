@@ -234,7 +234,9 @@
     position: fixed;
     inset: 0;
     z-index: 4000;
-    display: flex;
+    /* display is controlled via style.display in JS — do NOT set display:flex
+       here because it overrides the [hidden] attribute and shows the overlay
+       on page load before any chip is clicked. */
     align-items: flex-start;
     justify-content: center;
     padding-top: 5vh;
@@ -307,52 +309,28 @@
             <span class="aci-chip aci-chip--active-ignored">Ignored</span>
             {% endif %}
         </div>
-        <div class="aci-meta">
-            {% if item.counts.passed %}
-            <button class="aci-chip aci-chip--passed aci-chip--clickable"
-                    type="button" data-state="passed"
-                    title="Click to see which nights passed">
-                Passed: {{ item.counts.passed }}
-            </button>
-            {% else %}
-            <span class="aci-chip aci-chip--passed">Passed: 0</span>
-            {% endif %}
-            {% if item.counts.overridden %}
-            <button class="aci-chip aci-chip--overridden aci-chip--clickable"
-                    type="button" data-state="overridden"
-                    title="Click to see which nights are overridden">
-                Overridden: {{ item.counts.overridden }}
-            </button>
-            {% else %}
-            <span class="aci-chip aci-chip--overridden">Overridden: 0</span>
-            {% endif %}
-            {% if item.counts.monitored %}
-            <button class="aci-chip aci-chip--monitored aci-chip--clickable"
-                    type="button" data-state="monitored"
-                    title="Click to see which nights are monitored">
-                Monitored: {{ item.counts.monitored }}
-            </button>
-            {% else %}
-            <span class="aci-chip aci-chip--monitored">Monitored: 0</span>
-            {% endif %}
-            {% if item.counts.mixed %}
-            <button class="aci-chip aci-chip--mixed aci-chip--clickable"
-                    type="button" data-state="mixed"
-                    title="Click to see which nights have mixed state">
-                Mixed: {{ item.counts.mixed }}
-            </button>
-            {% else %}
-            <span class="aci-chip aci-chip--mixed">Mixed: 0</span>
-            {% endif %}
-            {% if item.counts.failed %}
-            <button class="aci-chip aci-chip--failed aci-chip--clickable"
-                    type="button" data-state="failed"
-                    title="Click to see which nights failed">
-                Failed: {{ item.counts.failed }}
-            </button>
-            {% else %}
-            <span class="aci-chip aci-chip--failed">Failed: 0</span>
-            {% endif %}
+        {# Count chips — populated asynchronously after page load #}
+        <div class="aci-meta" id="aci-counts-row">
+            <span class="aci-chip aci-chip--passed"
+                  id="aci-count-passed">
+                Passed: <i class="fa-solid fa-spinner fa-spin" style="font-size:0.7em;"></i>
+            </span>
+            <span class="aci-chip aci-chip--overridden"
+                  id="aci-count-overridden">
+                Overridden: <i class="fa-solid fa-spinner fa-spin" style="font-size:0.7em;"></i>
+            </span>
+            <span class="aci-chip aci-chip--monitored"
+                  id="aci-count-monitored">
+                Monitored: <i class="fa-solid fa-spinner fa-spin" style="font-size:0.7em;"></i>
+            </span>
+            <span class="aci-chip aci-chip--mixed"
+                  id="aci-count-mixed">
+                Mixed: <i class="fa-solid fa-spinner fa-spin" style="font-size:0.7em;"></i>
+            </span>
+            <span class="aci-chip aci-chip--failed"
+                  id="aci-count-failed">
+                Failed: <i class="fa-solid fa-spinner fa-spin" style="font-size:0.7em;"></i>
+            </span>
         </div>
         <div class="aci-actions">
             <button id="aci-toggle-ignore" class="ari-btn ari-btn--primary"
@@ -464,11 +442,18 @@
 </div>
 
 {# ── Check-results overlay ── #}
-<div id="aci-results-overlay" class="aci-results-overlay" hidden>
+<div id="aci-results-overlay" class="aci-results-overlay" style="display:none;"
+     role="dialog" aria-modal="true" aria-label="Check results">
     <div class="aci-results-backdrop" id="aci-results-backdrop"></div>
     <div class="aci-results-panel">
         <div class="aci-results-header">
             <span class="aci-results-title" id="aci-results-title">Results</span>
+            <button id="aci-results-refresh" type="button"
+                    class="ari-btn ari-btn--sm ari-btn--secondary"
+                    title="Refresh results (re-reads the index after changes)">
+                <i class="fa-solid fa-rotate-right"></i>
+                Refresh
+            </button>
             <button id="aci-results-close" type="button"
                     class="ari-btn ari-btn--sm ari-btn--secondary"
                     title="Close">
@@ -506,9 +491,10 @@
                     <table class="ot-table" id="aci-res-table">
                         <thead>
                             <tr class="ot-header-row">
-                                <th class="ot-th">Profile</th>
-                                <th class="ot-th">Obs-dir</th>
-                                <th class="ot-th">Link</th>
+                                <th class="ot-th ot-th--nonsortable">Profile</th>
+                                <th class="ot-th ot-th--nonsortable">Obs-dir</th>
+                                <th class="ot-th ot-th--nonsortable">Check</th>
+                                <th class="ot-th ot-th--nonsortable">Link</th>
                             </tr>
                         </thead>
                         <tbody id="aci-res-tbody"></tbody>
@@ -557,155 +543,93 @@ window.ARI_APERO_CHECK_INFO = {
     overrideAllowed: {{ (apero_checks_config.override_allowed or [])|tojson }},
     profileOptions: {{ (apero_check_profile_options or [])|tojson }},
     policyUrl: {{ url_for('home_admin_portal_apero_checks_policy')|tojson }},
-    checkResultsUrl: '/api/monitor/apero-checks/check-results'
+    checkResultsUrl: '/api/monitor/apero-checks/check-results',
+    checkInfoBaseUrl: {{ url_for('home_admin_portal_apero_check_info')|tojson }},
+    checkInfoAsyncUrl: {{ (check_info_async_url or '')|tojson }}
 };
 </script>
 <script>
-/* ── Check-results overlay wiring ── */
+/* ── Async counts + profile-options loader ── */
 (function () {
     "use strict";
     var cfg = window.ARI_APERO_CHECK_INFO || {};
-    var overlay   = document.getElementById('aci-results-overlay');
-    var backdrop  = document.getElementById('aci-results-backdrop');
-    var closeBtn  = document.getElementById('aci-results-close');
-    var title     = document.getElementById('aci-results-title');
-    var loading   = document.getElementById('aci-results-loading');
-    var content   = document.getElementById('aci-results-content');
-    var tbody     = document.getElementById('aci-res-tbody');
-    var summary   = document.getElementById('aci-res-summary');
-    var pageInfo  = document.getElementById('aci-res-page-info');
-    var pageInput = document.getElementById('aci-res-page-input');
-    var pageTotal = document.getElementById('aci-res-page-total');
-    var filterInp = document.getElementById('aci-res-filter');
-    var perpage   = document.getElementById('aci-res-perpage');
-    var btnFirst  = document.getElementById('aci-res-first');
-    var btnPrev   = document.getElementById('aci-res-prev');
-    var btnNext   = document.getElementById('aci-res-next');
-    var btnLast   = document.getElementById('aci-res-last');
+    if (!cfg.checkInfoAsyncUrl || !cfg.checkKey) return;
 
-    var allRows = [], filteredRows = [], page = 1, pp = 50;
+    var STATES = ['passed','overridden','monitored','mixed','failed'];
 
-    function esc(s) {
-        return String(s == null ? '' : s)
-            .replace(/&/g,'&amp;').replace(/</g,'&lt;')
-            .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    function setChip(state, count) {
+        var el = document.getElementById('aci-count-' + state);
+        if (!el) return;
+        var label = state.charAt(0).toUpperCase() + state.slice(1) + ': ' + count;
+        if (count > 0) {
+            var btn = document.createElement('button');
+            btn.className = 'aci-chip aci-chip--' + state + ' aci-chip--clickable';
+            btn.type = 'button';
+            btn.setAttribute('data-state', state);
+            btn.title = 'Click to see which nights are ' + state;
+            btn.textContent = label;
+            el.parentNode.replaceChild(btn, el);
+        } else {
+            el.textContent = label;
+        }
     }
 
-    function renderPage() {
-        var total = filteredRows.length;
-        var totalPages = pp === 0 ? 1 : Math.max(1, Math.ceil(total / pp));
-        if (page > totalPages) page = totalPages;
-        if (page < 1) page = 1;
-        var start = pp === 0 ? 0 : (page - 1) * pp;
-        var end   = pp === 0 ? total : Math.min(start + pp, total);
-        var slice = filteredRows.slice(start, end);
+    fetch(cfg.checkInfoAsyncUrl + '?check=' + encodeURIComponent(cfg.checkKey))
+        .then(function (r) { return r.json(); })
+        .then(function (data) {
+            if (!data.success) return;
+            var counts = data.counts || {};
+            STATES.forEach(function (s) { setChip(s, counts[s] || 0); });
 
-        var html = '';
-        slice.forEach(function (row, idx) {
-            var cls = (start + idx) % 2 === 0
-                ? 'background:var(--ari-card-bg)'
-                : 'background:var(--ari-bg,#f9fafb)';
-            var link = row.obsdir_url
-                ? '<a class="ari-link" href="' + esc(row.obsdir_url) +
-                  '" target="_blank" rel="noopener">' +
-                  '<i class="fa-solid fa-arrow-up-right-from-square"></i></a>'
-                : '';
-            html += '<tr class="ot-row" style="' + cls + '">' +
-                '<td class="ot-cell">' + esc(row.profile_id) + '</td>' +
-                '<td class="ot-cell">' + esc(row.obsdir) + '</td>' +
-                '<td class="ot-cell">' + link + '</td></tr>';
-        });
-        tbody.innerHTML = html || '<tr><td class="ot-cell" colspan="3"' +
-            ' style="color:var(--ari-text-muted);padding:1rem;">No results.</td></tr>';
+            /* Re-wire click handlers now that chips may have been replaced */
+            document.querySelectorAll('.aci-chip--clickable[data-state]')
+                .forEach(function (btn) {
+                    btn.addEventListener('click', function () {
+                        if (typeof window.__aciOpenResults === 'function') {
+                            window.__aciOpenResults(btn.getAttribute('data-state'));
+                        }
+                    });
+                });
 
-        if (pageInfo)  pageInfo.textContent  = start+1+' – '+end+' of '+total;
-        if (pageTotal) pageTotal.textContent = String(totalPages);
-        if (pageInput) pageInput.value        = String(page);
-        if (summary)   summary.textContent   = total + ' result(s)';
-        var atFirst = page <= 1, atLast = page >= totalPages;
-        if (btnFirst) btnFirst.disabled = atFirst;
-        if (btnPrev)  btnPrev.disabled  = atFirst;
-        if (btnNext)  btnNext.disabled  = atLast;
-        if (btnLast)  btnLast.disabled  = atLast;
-    }
-
-    function applyFilter() {
-        var q = (filterInp ? filterInp.value : '').trim().toLowerCase();
-        filteredRows = q
-            ? allRows.filter(function (r) {
-                  return (r.profile_id + ' ' + r.obsdir).toLowerCase()
-                      .indexOf(q) >= 0;
-              })
-            : allRows.slice();
-        page = 1;
-        renderPage();
-    }
-
-    function openOverlay(state) {
-        if (!overlay) return;
-        title.textContent = state.charAt(0).toUpperCase() + state.slice(1)
-            + ' — ' + esc(cfg.checkKey || '');
-        loading.hidden  = false;
-        content.hidden  = true;
-        overlay.hidden  = false;
-        document.body.style.overflow = 'hidden';
-        fetch(cfg.checkResultsUrl +
-              '?check_key=' + encodeURIComponent(cfg.checkKey || '') +
-              '&state='     + encodeURIComponent(state))
-            .then(function (r) { return r.json(); })
-            .then(function (data) {
-                allRows = (data.rows || []);
-                pp = perpage ? parseInt(perpage.value, 10) : 50;
-                applyFilter();
-                loading.hidden = true;
-                content.hidden = false;
-            })
-            .catch(function () {
-                if (tbody) tbody.innerHTML =
-                    '<tr><td colspan="3" style="color:red;padding:1rem">' +
-                    'Failed to load results.</td></tr>';
-                loading.hidden = true;
-                content.hidden = false;
+            /* Populate profile-options dropdown */
+            var sel = document.getElementById('aci-delete-profile-scope');
+            if (sel && data.profile_options && data.profile_options.length) {
+                (data.profile_options || []).forEach(function (pid) {
+                    var opt = document.createElement('option');
+                    opt.value = pid;
+                    opt.textContent = pid;
+                    sel.appendChild(opt);
+                });
+            }
+        })
+        .catch(function () {
+            STATES.forEach(function (s) {
+                var el = document.getElementById('aci-count-' + s);
+                if (el) el.textContent = s.charAt(0).toUpperCase() + s.slice(1) + ': ?';
             });
-    }
+        });
+}());
 
-    function closeOverlay() {
-        if (overlay) overlay.hidden = true;
-        document.body.style.overflow = '';
-    }
-
-    /* Wire count chips */
+/* ── Check-results overlay — uses shared aci_results_overlay.js ── */
+document.addEventListener('DOMContentLoaded', function () {
+    var cfg = window.ARI_APERO_CHECK_INFO || {};
+    ACI_RESULTS_OVERLAY.init({
+        checkResultsUrl:  cfg.checkResultsUrl  || '',
+        checkInfoBaseUrl: cfg.checkInfoBaseUrl || '',
+    });
+    /* Expose open() for the async-loaded chips */
+    window.__aciOpenResults = function (state) {
+        ACI_RESULTS_OVERLAY.open(state, cfg.checkKey || '', '');
+    };
+    /* Wire chips already in the DOM at init time */
     document.querySelectorAll('.aci-chip--clickable[data-state]')
         .forEach(function (btn) {
             btn.addEventListener('click', function () {
-                openOverlay(btn.getAttribute('data-state'));
+                window.__aciOpenResults(btn.getAttribute('data-state'));
             });
         });
-
-    if (backdrop) backdrop.addEventListener('click', closeOverlay);
-    if (closeBtn) closeBtn.addEventListener('click', closeOverlay);
-    document.addEventListener('keydown', function (e) {
-        if (e.key === 'Escape') closeOverlay();
-    });
-
-    /* Pagination controls */
-    function go(n) { page = n; renderPage(); }
-    if (btnFirst) btnFirst.addEventListener('click', function () { go(1); });
-    if (btnLast)  btnLast.addEventListener('click', function () {
-        go(Math.max(1, Math.ceil(filteredRows.length / (pp||1))));
-    });
-    if (btnPrev)  btnPrev.addEventListener('click', function () { go(page - 1); });
-    if (btnNext)  btnNext.addEventListener('click', function () { go(page + 1); });
-    if (pageInput) pageInput.addEventListener('change', function () {
-        go(parseInt(pageInput.value, 10) || 1);
-    });
-    if (perpage) perpage.addEventListener('change', function () {
-        pp = parseInt(perpage.value, 10);
-        page = 1;
-        renderPage();
-    });
-    if (filterInp) filterInp.addEventListener('input', applyFilter);
-}());
+});
 </script>
+<script src="{{ url_for('static', filename='js/aci_results_overlay.js') }}?v=20260604a"></script>
 <script src="{{ url_for('static', filename='js/admin_apero_check_info.js') }}"></script>
 {% endblock %}

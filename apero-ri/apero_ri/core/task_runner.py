@@ -30,16 +30,55 @@ __NAME__ = "apero_ri.core.task_runner"
 # =============================================================================
 # task_id -> AperoAsyncTask instance
 _instances: Dict[str, Any] = {}
-# pending queue: list of (instrument, task_id)
-_queue: List[Tuple[str, str]] = []
-# currently executing entry, or None
-_current: Optional[Tuple[str, str]] = None
+
+# ── Named queues ──────────────────────────────────────────────────────────
+# Each queue name has its own worker thread so queues run truly in parallel.
+# Built-in queue names:
+#   'apero_checks'       – APERO_CHECK_TASK tasks (quick, profile-bound)
+#   'global'             – GLOBAL-type async tasks (backups, syncs, …)
+#   'instrument_{NAME}'  – per-instrument INSTRUMENT-type tasks; the NAME is
+#                          the uppercase instrument string, e.g. 'SPIROU'.
+#
+# Each queue is a list of (instrument, task_id) tuples (FIFO).
+_queues:         Dict[str, List[Tuple[str, str]]] = {}
+_currents:       Dict[str, Optional[Tuple[str, str]]] = {}
+_worker_threads: Dict[str, Optional[threading.Thread]] = {}
+
+# Legacy aliases kept so existing code that reads _queue / _current directly
+# still works.  They always point at the 'global' queue / current.
+def _global_queue() -> List[Tuple[str, str]]:
+    return _queues.setdefault("global", [])
+
 # task_id -> full traceback string on failure
 _errors: Dict[str, str] = {}
 
 _lock = threading.Lock()
-_worker_thread: Optional[threading.Thread] = None
 _scheduler_thread: Optional[threading.Thread] = None
+
+# ─────────────────────────────────────────────────────────────────────────
+# Back-compat shims – code that references _queue / _current / _worker_thread
+# directly will continue to work against the 'global' queue.
+# ─────────────────────────────────────────────────────────────────────────
+def _get_queue(name: str) -> List[Tuple[str, str]]:
+    """Return (creating if needed) the named queue list."""
+    return _queues.setdefault(name, [])
+
+def _get_current(name: str) -> Optional[Tuple[str, str]]:
+    return _currents.get(name)
+
+def _set_current(name: str, val: Optional[Tuple[str, str]]) -> None:
+    _currents[name] = val
+
+def _all_queued() -> List[Tuple[str, str]]:
+    """Return a flat list of every pending entry across all queues."""
+    out: List[Tuple[str, str]] = []
+    for q in _queues.values():
+        out.extend(q)
+    return out
+
+def _all_currents() -> List[Tuple[str, str]]:
+    """Return a list of all currently-executing entries (one per worker)."""
+    return [c for c in _currents.values() if c is not None]
 _scheduler_local_data_dir = str(Path.home() / ".ari")
 _scheduler_poll_seconds = 30.0
 _async_tasks_rel_dir = Path("admin") / "async_tasks"
@@ -224,6 +263,102 @@ def _safe_scope_name(value: str) -> str:
         return "unknown"
     cleaned = "".join(c if c.isalnum() or c in "-_." else "_" for c in text)
     return cleaned or "unknown"
+
+
+def _profile_history_file_path(profile_id: str) -> Path:
+    """Return the per-profile APERO-check history file path.
+
+    Stored separately from the global async history so profile history
+    is persistent across global clears and carries log_path.
+    """
+    safe = _safe_scope_name(str(profile_id or ""))
+    return (
+        Path(_scheduler_local_data_dir)
+        / _async_tasks_rel_dir
+        / f"apero_checks_{safe}.jsonl"
+    )
+
+
+def append_profile_check_history(
+    profile_id: str,
+    task_id: str,
+    task_name: str,
+    status: str,
+    details: str = "",
+    log_path: str = "",
+    duration_seconds: Optional[float] = None,
+    obsdir: str = "",
+    check_key: str = "",
+    task_mode: str = "",
+) -> None:
+    """Append one entry to the per-profile APERO-check history file."""
+    try:
+        path = _profile_history_file_path(profile_id)
+        path.parent.mkdir(parents=True, exist_ok=True)
+        payload: Dict[str, Any] = {
+            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "task_id": str(task_id or ""),
+            "task_name": str(task_name or task_id or ""),
+            "status": str(status or ""),
+            "details": str(details or ""),
+            "log_path": str(log_path or ""),
+            "obsdir": str(obsdir or ""),
+            "check_key": str(check_key or ""),
+            "task_mode": str(task_mode or ""),
+        }
+        if duration_seconds is not None:
+            payload["duration_seconds"] = round(float(duration_seconds), 3)
+        with path.open("a", encoding="utf-8") as handle:
+            handle.write(json.dumps(payload, ensure_ascii=False) + "\n")
+    except Exception:
+        pass
+
+
+def get_profile_check_history(profile_id: str,
+                               limit: int = 200) -> List[Dict[str, Any]]:
+    """Return newest per-profile APERO-check history entries (newest first)."""
+    try:
+        path = _profile_history_file_path(profile_id)
+        if not path.exists() or limit <= 0:
+            return []
+        lines = path.read_text(encoding="utf-8", errors="replace").splitlines()
+        out: List[Dict[str, Any]] = []
+        for line in reversed(lines):
+            if not line.strip():
+                continue
+            try:
+                row = json.loads(line)
+                out.append({
+                    "timestamp": str(row.get("timestamp", "")),
+                    "task_id": str(row.get("task_id", "")),
+                    "task_name": str(row.get("task_name", "") or row.get("task_id", "")),
+                    "status": str(row.get("status", "")),
+                    "details": str(row.get("details", "")),
+                    "log_path": str(row.get("log_path", "")),
+                    "obsdir": str(row.get("obsdir", "")),
+                    "check_key": str(row.get("check_key", "")),
+                    "task_mode": str(row.get("task_mode", "")),
+                    "duration_seconds": row.get("duration_seconds"),
+                })
+            except Exception:
+                continue
+            if len(out) >= limit:
+                break
+        return out
+    except Exception:
+        return []
+
+
+def clear_profile_check_history(profile_id: str) -> Dict[str, Any]:
+    """Clear the per-profile APERO-check history file."""
+    try:
+        path = _profile_history_file_path(profile_id)
+        if path.exists():
+            path.write_text("", encoding="utf-8")
+            return {"cleared": True, "path": str(path)}
+        return {"cleared": False, "reason": "file not found"}
+    except Exception as exc:
+        return {"cleared": False, "reason": str(exc)}
 
 
 def _task_log_file_path(instrument: str, task_id: str) -> Path:
@@ -763,196 +898,253 @@ def _append_sync_profile_info(
 # =============================================================================
 # Worker
 # =============================================================================
-def _run_worker() -> None:
-    """Daemon worker: pop tasks from the queue and execute them."""
-    global _current
-    while not _shutdown_event.is_set():
-        entry: Optional[Tuple[str, str]] = None
-        with _lock:
-            if _queue:
-                entry = _queue.pop(0)
-                _current = entry
+def _execute_task(_inst: str, task_id: str) -> None:
+    """Execute one task identified by instrument and task_id.
 
-        if entry is None:
-            _shutdown_event.wait(0.5)
-            continue
+    Called by both the general worker and the APERO-checks worker after
+    they pop an entry from their respective queues.
+    """
+    instance = _instances.get(task_id)
+    if instance is None:
+        return  # should not happen; caller clears current in finally
 
-        _inst, task_id = entry
-        instance = _instances.get(task_id)
-        if instance is None:
-            with _lock:
-                _current = None
-            continue
+    instance.status = "in_progress"
+    start_time = time.perf_counter()
+    run_params = dict(getattr(instance, "_run_params", {}) or {})
+    task_name = str(getattr(instance, "name", task_id) or task_id)
+    log_path = _prepare_task_log(_inst, task_id, task_name)
+    run_params["TASK_LOG_PATH"] = str(log_path)
+    run_params["TASK_LOGGER"] = _make_task_logger(log_path)
+    run_params["STOP_EVENT"] = _stop_events.get(task_id, threading.Event())
+    instance._run_params = run_params
+    instance._task_log_path = str(log_path)
+    _append_task_log_line(log_path, "Task execution started.")
+    try:
+        # Treat task output files as this-run artifacts.
+        instance.output_files = []
 
-        instance.status = "in_progress"
-        start_time = time.perf_counter()
-        run_params = dict(getattr(instance, "_run_params", {}) or {})
-        task_name = str(getattr(instance, "name", task_id) or task_id)
-        log_path = _prepare_task_log(_inst, task_id, task_name)
-        run_params["TASK_LOG_PATH"] = str(log_path)
-        run_params["TASK_LOGGER"] = _make_task_logger(log_path)
-        run_params["STOP_EVENT"] = _stop_events.get(task_id, threading.Event())
-        instance._run_params = run_params
-        instance._task_log_path = str(log_path)
-        _append_task_log_line(log_path, "Task execution started.")
+        # ── sync_source override ────────────────────────────────────
+        # When a task has sync_source configured, copy pre-built
+        # results from that path instead of running the task.
+        task_cfg = run_params.get("TASK_CONFIG", {})
+        sync_source = str(task_cfg.get("sync_source", "") or "").strip()
+        sync_profiles, run_server_profiles = _split_sync_profile_modes(
+            run_params,
+            task_cfg,
+        )
+        local_task_enabled = False
         try:
-            # Treat task output files as this-run artifacts.
-            instance.output_files = []
+            from apero_ri import tasks as task_module
 
-            # ── sync_source override ────────────────────────────────────
-            # When a task has sync_source configured, copy pre-built
-            # results from that path instead of running the task.
-            task_cfg = run_params.get("TASK_CONFIG", {})
-            sync_source = str(task_cfg.get("sync_source", "") or "").strip()
-            sync_profiles, run_server_profiles = _split_sync_profile_modes(
-                run_params,
-                task_cfg,
+            task_key = str(getattr(instance, "_task_key", "") or "").strip()
+            local_task_enabled = bool(
+                task_module.LOCAL_TASK.get(task_key, False)
             )
-            local_task_enabled = False
-            try:
-                from apero_ri import tasks as task_module
-
-                task_key = str(getattr(instance, "_task_key", "") or "").strip()
-                local_task_enabled = bool(
-                    task_module.LOCAL_TASK.get(task_key, False)
-                )
-            except Exception:
-                local_task_enabled = False
-
-            if sync_profiles and local_task_enabled:
-                synced_files = []
-                for profile_name, profile_source in sync_profiles:
-                    synced_files.extend(
-                        _copy_sync_profile_override(
-                            run_params,
-                            profile_source,
-                            _inst,
-                            profile_name,
-                            log_path,
-                        )
-                    )
-
-                if run_server_profiles:
-                    subset_params = dict(run_params)
-                    profile_map = dict(
-                        run_params.get("APERO_PROFILES", {}) or {}
-                    )
-                    subset_params["APERO_PROFILE_NAMES"] = list(
-                        run_server_profiles
-                    )
-                    subset_params["APERO_PROFILES"] = dict(
-                        (profile_name, profile_map[profile_name])
-                        for profile_name in run_server_profiles
-                        if profile_name in profile_map
-                    )
-                    stdout_tee = _TaskLogTeeStream(
-                        log_path, sink=sys.stdout, stream_tag="stdout"
-                    )
-                    stderr_tee = _TaskLogTeeStream(
-                        log_path, sink=sys.stderr, stream_tag="stderr"
-                    )
-                    with contextlib.redirect_stdout(
-                        stdout_tee
-                    ), contextlib.redirect_stderr(stderr_tee):
-                        instance.run_job(subset_params)
-                    stdout_tee.flush()
-                    stderr_tee.flush()
-
-                current_files = list(
-                    getattr(instance, "output_files", []) or []
-                )
-                current_files.extend(synced_files)
-                instance.output_files = _dedupe_strings(current_files)
-                _append_sync_profile_info(
-                    instance,
-                    sync_profiles,
-                    synced_files,
-                )
-            elif sync_source and local_task_enabled:
-                _run_sync_source_override(
-                    instance,
-                    run_params,
-                    sync_source,
-                    _inst,
-                    log_path,
-                )
-            elif sync_source and not local_task_enabled:
-                _append_task_log_line(
-                    log_path,
-                    "sync_source ignored: task does not support "
-                    "LOCAL_TASK override.",
-                )
-                stdout_tee = _TaskLogTeeStream(
-                    log_path, sink=sys.stdout, stream_tag="stdout"
-                )
-                stderr_tee = _TaskLogTeeStream(
-                    log_path, sink=sys.stderr, stream_tag="stderr"
-                )
-                with contextlib.redirect_stdout(
-                    stdout_tee
-                ), contextlib.redirect_stderr(stderr_tee):
-                    instance.run_job(run_params)
-                stdout_tee.flush()
-                stderr_tee.flush()
-            else:
-                stdout_tee = _TaskLogTeeStream(
-                    log_path, sink=sys.stdout, stream_tag="stdout"
-                )
-                stderr_tee = _TaskLogTeeStream(
-                    log_path, sink=sys.stderr, stream_tag="stderr"
-                )
-                with contextlib.redirect_stdout(
-                    stdout_tee
-                ), contextlib.redirect_stderr(stderr_tee):
-                    instance.run_job(run_params)
-                stdout_tee.flush()
-                stderr_tee.flush()
-
-            stop_ev = _stop_events.get(task_id)
-            if stop_ev is not None and stop_ev.is_set():
-                instance.status = "cancelled"
-                _append_task_log_line(
-                    log_path, "Task cancelled by user request."
-                )
-            else:
-                instance.status = "completed"
-                _append_task_log_line(
-                    log_path, "Task execution completed successfully."
-                )
         except Exception:
-            instance.status = "failed"
-            _append_task_log_line(
-                log_path, "Task execution failed. Traceback follows:"
+            local_task_enabled = False
+
+        if sync_profiles and local_task_enabled:
+            synced_files = []
+            for profile_name, profile_source in sync_profiles:
+                synced_files.extend(
+                    _copy_sync_profile_override(
+                        run_params,
+                        profile_source,
+                        _inst,
+                        profile_name,
+                        log_path,
+                    )
+                )
+
+            if run_server_profiles:
+                subset_params = dict(run_params)
+                profile_map = dict(
+                    run_params.get("APERO_PROFILES", {}) or {}
+                )
+                subset_params["APERO_PROFILE_NAMES"] = list(
+                    run_server_profiles
+                )
+                subset_params["APERO_PROFILES"] = dict(
+                    (profile_name, profile_map[profile_name])
+                    for profile_name in run_server_profiles
+                    if profile_name in profile_map
+                )
+                stdout_tee = _TaskLogTeeStream(
+                    log_path, sink=sys.stdout, stream_tag="stdout"
+                )
+                stderr_tee = _TaskLogTeeStream(
+                    log_path, sink=sys.stderr, stream_tag="stderr"
+                )
+                with contextlib.redirect_stdout(
+                    stdout_tee
+                ), contextlib.redirect_stderr(stderr_tee):
+                    instance.run_job(subset_params)
+                stdout_tee.flush()
+                stderr_tee.flush()
+
+            current_files = list(
+                getattr(instance, "output_files", []) or []
             )
-            for line in traceback.format_exc().splitlines():
-                if line.strip():
-                    _append_task_log_line(log_path, line)
-            with _lock:
-                _errors[task_id] = traceback.format_exc()
-        finally:
-            duration_seconds = max(0.0, time.perf_counter() - start_time)
+            current_files.extend(synced_files)
+            instance.output_files = _dedupe_strings(current_files)
+            _append_sync_profile_info(
+                instance,
+                sync_profiles,
+                synced_files,
+            )
+        elif sync_source and local_task_enabled:
+            _run_sync_source_override(
+                instance,
+                run_params,
+                sync_source,
+                _inst,
+                log_path,
+            )
+        elif sync_source and not local_task_enabled:
             _append_task_log_line(
                 log_path,
-                f"Task finished with status={instance.status} in "
-                f"{duration_seconds:.2f}s.",
+                "sync_source ignored: task does not support "
+                "LOCAL_TASK override.",
             )
-            instance.run_count = getattr(instance, "run_count", 0) + 1
-            instance.last_run = datetime.now(timezone.utc).isoformat()
-            _append_history_entry(
-                _inst,
-                task_id,
-                getattr(instance, "name", task_id),
-                getattr(instance, "status", ""),
-                (
-                    ""
-                    if getattr(instance, "status", "") != "failed"
-                    else _errors.get(task_id, "")
-                ),
-                duration_seconds=duration_seconds,
+            stdout_tee = _TaskLogTeeStream(
+                log_path, sink=sys.stdout, stream_tag="stdout"
             )
-            _persist_runtime_state(_inst, task_id, instance)
+            stderr_tee = _TaskLogTeeStream(
+                log_path, sink=sys.stderr, stream_tag="stderr"
+            )
+            with contextlib.redirect_stdout(
+                stdout_tee
+            ), contextlib.redirect_stderr(stderr_tee):
+                instance.run_job(run_params)
+            stdout_tee.flush()
+            stderr_tee.flush()
+        else:
+            stdout_tee = _TaskLogTeeStream(
+                log_path, sink=sys.stdout, stream_tag="stdout"
+            )
+            stderr_tee = _TaskLogTeeStream(
+                log_path, sink=sys.stderr, stream_tag="stderr"
+            )
+            with contextlib.redirect_stdout(
+                stdout_tee
+            ), contextlib.redirect_stderr(stderr_tee):
+                instance.run_job(run_params)
+            stdout_tee.flush()
+            stderr_tee.flush()
+
+        stop_ev = _stop_events.get(task_id)
+        if stop_ev is not None and stop_ev.is_set():
+            instance.status = "cancelled"
+            _append_task_log_line(
+                log_path, "Task cancelled by user request."
+            )
+        else:
+            instance.status = "completed"
+            _append_task_log_line(
+                log_path, "Task execution completed successfully."
+            )
+    except Exception:
+        instance.status = "failed"
+        _append_task_log_line(
+            log_path, "Task execution failed. Traceback follows:"
+        )
+        for line in traceback.format_exc().splitlines():
+            if line.strip():
+                _append_task_log_line(log_path, line)
+        with _lock:
+            _errors[task_id] = traceback.format_exc()
+    finally:
+        duration_seconds = max(0.0, time.perf_counter() - start_time)
+        _append_task_log_line(
+            log_path,
+            f"Task finished with status={instance.status} in "
+            f"{duration_seconds:.2f}s.",
+        )
+        instance.run_count = getattr(instance, "run_count", 0) + 1
+        instance.last_run = datetime.now(timezone.utc).isoformat()
+        task_status = getattr(instance, "status", "")
+        task_error = (
+            ""
+            if task_status != "failed"
+            else _errors.get(task_id, "")
+        )
+        _append_history_entry(
+            _inst,
+            task_id,
+            getattr(instance, "name", task_id),
+            task_status,
+            task_error,
+            duration_seconds=duration_seconds,
+        )
+        # Write per-profile history for manual APERO check tasks.
+        if str(task_id or "").startswith("manual_apero_check__"):
+            try:
+                task_cfg = dict(
+                    getattr(instance, "_run_params", {}).get("TASK_CONFIG", {}) or {}
+                )
+                filters = task_cfg.get("filters", {}) or {}
+                profile_id = str(
+                    filters.get("APERO_PROFILE_INCLUDE", "") or ""
+                ).strip()
+                if profile_id:
+                    # Decode obsdir/check from task_id slug
+                    # Format: manual_apero_check__{profile}__{obsdir}__{mode}__{check}__uuid
+                    parts = task_id.split("__")
+                    # parts[0]='manual_apero_check', parts[1]=profile_slug,
+                    # parts[2]=obsdir_slug, parts[3]=mode, parts[4]=check, parts[5]=uuid
+                    obs_dir = ""
+                    check_key = ""
+                    task_mode = ""
+                    if len(parts) >= 4:
+                        obs_dir = parts[2].replace("_", "-")
+                    if len(parts) >= 5:
+                        task_mode = parts[3]
+                    if len(parts) >= 6:
+                        check_key_raw = parts[4]
+                        check_key = "" if check_key_raw.lower() == "all" else check_key_raw.upper()
+                    append_profile_check_history(
+                        profile_id=profile_id,
+                        task_id=task_id,
+                        task_name=getattr(instance, "name", task_id),
+                        status=task_status,
+                        details=task_error[:2000] if task_error else "",
+                        log_path=str(log_path),
+                        duration_seconds=duration_seconds,
+                        obsdir=obs_dir,
+                        check_key=check_key,
+                        task_mode=task_mode,
+                    )
+            except Exception:
+                pass
+        _persist_runtime_state(_inst, task_id, instance)
+        # NOTE: the caller (worker loop) clears _current / _apero_check_current.
+
+
+def _make_worker(queue_name: str):
+    """Return a daemon-worker function that processes the named queue."""
+    def _worker() -> None:
+        while not _shutdown_event.is_set():
+            entry: Optional[Tuple[str, str]] = None
             with _lock:
-                _current = None
+                q = _queues.get(queue_name, [])
+                if q:
+                    entry = q.pop(0)
+                    _currents[queue_name] = entry
+            if entry is None:
+                _shutdown_event.wait(0.5)
+                continue
+            try:
+                _execute_task(*entry)
+            finally:
+                with _lock:
+                    _currents[queue_name] = None
+    _worker.__name__ = "ari-worker-%s" % queue_name
+    return _worker
+
+
+# Keep named functions for clarity in thread listings.
+_run_worker = _make_worker("global")
+_run_apero_check_worker = _make_worker("apero_checks")
 
 
 def _persist_runtime_state(
@@ -990,14 +1182,41 @@ def _persist_runtime_state(
         pass  # Never let persistence failures crash the worker
 
 
-def _ensure_worker() -> None:
-    """Start the worker thread if it is not already running."""
-    global _worker_thread
-    if _worker_thread is None or not _worker_thread.is_alive():
-        _worker_thread = threading.Thread(
-            target=_run_worker, daemon=True, name="ari-task-worker"
+_QUEUE_THREAD_NAMES = {
+    "apero_checks": "ari-apero-check-worker",
+    "global":       "ari-task-worker",
+}
+
+
+def _ensure_queue_worker(queue_name: str) -> None:
+    """Ensure a live worker thread exists for *queue_name*.
+
+    Worker threads are created on demand so new instrument queues appear
+    automatically the first time a task is routed to them.
+    """
+    t = _worker_threads.get(queue_name)
+    if t is None or not t.is_alive():
+        thread_name = _QUEUE_THREAD_NAMES.get(
+            queue_name,
+            "ari-worker-%s" % queue_name,
         )
-        _worker_thread.start()
+        _queues.setdefault(queue_name, [])
+        _currents.setdefault(queue_name, None)
+        new_t = threading.Thread(
+            target=_make_worker(queue_name),
+            daemon=True,
+            name=thread_name,
+        )
+        _worker_threads[queue_name] = new_t
+        new_t.start()
+
+
+# Back-compat shims
+def _ensure_worker() -> None:
+    _ensure_queue_worker("global")
+
+def _ensure_apero_check_worker() -> None:
+    _ensure_queue_worker("apero_checks")
 
 
 def _parse_last_run(value: Any) -> Optional[datetime]:
@@ -1040,11 +1259,11 @@ def hydrate_runtime_state(
 
 
 def _task_is_busy(task_id: str) -> bool:
-    """Return True if a task is already queued or running."""
+    """Return True if a task is already queued or running (any queue)."""
     with _lock:
-        if _current is not None and _current[1] == task_id:
+        if any(c[1] == task_id for c in _all_currents()):
             return True
-        return any(queued_id == task_id for _, queued_id in _queue)
+        return any(t == task_id for _, t in _all_queued())
 
 
 def _task_is_due(task_cfg: dict, now: datetime) -> bool:
@@ -1383,7 +1602,11 @@ def _scheduler_poll(local_data_dir: str) -> None:
                 run_params = build_run_params(
                     instrument, local_data_dir, all_profiles, task_cfg
                 )
-                enqueue(instrument, task_id, instance, run_params)
+                # Route APERO check tasks to their dedicated queue so they
+                # are never blocked by long-running general async tasks.
+                check_queue = "apero_checks" if task_key == "APERO_CHECK_TASK" else "default"
+                enqueue(instrument, task_id, instance, run_params,
+                        queue=check_queue)
 
         if changed:
             save_async_tasks(all_tasks)
@@ -1423,18 +1646,19 @@ def shutdown_background_services(
     """Request background worker/scheduler shutdown and join briefly."""
     import sys as _sys
 
-    global _worker_thread, _scheduler_thread, _current
+    global _scheduler_thread
 
     _debug = debug
 
     if _debug:
         with _lock:
-            queued = len(_queue)
-            current = _current
+            queued = sum(len(q) for q in _queues.values())
+            currents = _all_currents()
+        cur_str = ", ".join(c[1] for c in currents) or "none"
         print(
             f"[task_runner] Shutdown requested. "
             f"Queued tasks: {queued}. "
-            f'Current task: {current[1] if current else "none"}.',
+            f"Running tasks: {cur_str}.",
             file=_sys.stderr,
             flush=True,
         )
@@ -1451,7 +1675,8 @@ def shutdown_background_services(
             flush=True,
         )
 
-    for thread in [_scheduler_thread, _worker_thread]:
+    threads_to_join = [_scheduler_thread] + list(_worker_threads.values())
+    for thread in threads_to_join:
         if thread is None or not thread.is_alive():
             continue
         if _debug:
@@ -1474,9 +1699,10 @@ def shutdown_background_services(
             )
 
     with _lock:
-        if _current is None:
+        if not _all_currents():
             _instances.clear()
-            _queue.clear()
+            for q in _queues.values():
+                q.clear()
             _errors.clear()
             _stop_events.clear()
             _task_log_paths.clear()
@@ -1490,13 +1716,13 @@ def shutdown_background_services(
         else:
             if _debug:
                 print(
-                    "[task_runner] A task is still running; "
+                    "[task_runner] Tasks are still running; "
                     "in-memory state preserved.",
                     file=_sys.stderr,
                     flush=True,
                 )
 
-    _worker_thread = None
+    _worker_threads.clear()
     _scheduler_thread = None
 
 
@@ -1546,6 +1772,7 @@ def build_run_params(
         "PATH_LBL",
         "PATH_CHECK",
         "PATH_OTHER",
+        "PATH_TRIGGER",
     ]
     for pname, pcfg in profiles.items():
         p = deepcopy(pcfg) if isinstance(pcfg, dict) else {}
@@ -1649,18 +1876,61 @@ def build_run_params(
     }
 
 
+def _resolve_queue_name(queue: str, task_key: str, instrument: str) -> str:
+    """Return the queue name to use for a given task.
+
+    Routing rules (first match wins):
+    1. Explicit ``queue`` override (e.g. ``"apero_checks"``) is respected.
+    2. ``APERO_CHECK_TASK`` → ``"apero_checks"``.
+    3. Tasks whose type is ``"GLOBAL"`` → ``"global"``.
+    4. Tasks whose type is ``"INSTRUMENT"`` → ``"instrument_{INSTRUMENT}"``.
+    5. Anything else → ``"global"`` as a safe default.
+    """
+    if queue and queue not in ("default", "auto"):
+        return queue
+    if task_key == "APERO_CHECK_TASK":
+        return "apero_checks"
+    # Look up the task type from the registry.
+    try:
+        from apero_ri import tasks as _task_module
+        ttype = str(_task_module.TYPE.get(task_key, "") or "").upper().strip()
+    except Exception:
+        ttype = ""
+    if ttype == "INSTRUMENT":
+        inst = str(instrument or "unknown").strip().upper()
+        return "instrument_%s" % inst
+    # GLOBAL tasks (and anything unrecognised) go on the global queue.
+    return "global"
+
+
 def enqueue(
     instrument: str,
     task_id: str,
     instance: Any,
     run_params: dict,
     prepend: bool = False,
+    queue: str = "auto",
 ) -> None:
-    """Add a task instance to the execution queue.
+    """Add a task instance to the appropriate execution queue.
 
-    If the task_id is already queued it is moved to the new position.
+    Each queue has its own worker thread, so tasks on different queues run
+    truly in parallel:
+
+    * ``"apero_checks"``        — quick APERO check runs (per-profile)
+    * ``"global"``              — long-running GLOBAL tasks (backups, syncs…)
+    * ``"instrument_{NAME}"``   — per-instrument INSTRUMENT tasks (one thread
+                                  per instrument so SPIROU never blocks NIRPS)
+
+    Pass ``queue="auto"`` (the default) to have the queue chosen automatically
+    from the task key and type, or pass an explicit name to override.
+
+    If the task_id is already queued on any queue it is moved to the new
+    position in the target queue.
     """
-    _ensure_worker()
+    task_key = str(getattr(instance, "_task_key", "") or "").strip()
+    queue_name = _resolve_queue_name(queue, task_key, instrument)
+    _ensure_queue_worker(queue_name)
+
     instance._run_params = run_params
     instance.status = "queued"
     with _lock:
@@ -1668,24 +1938,28 @@ def enqueue(
         _task_instruments[task_id] = instrument
         _stop_events[task_id] = threading.Event()
         _errors.pop(task_id, None)
-        # Remove any existing entry for this task_id
-        updated = [(i, t) for i, t in _queue if t != task_id]
+        # Remove this task_id from whichever queue currently holds it.
+        for q in _queues.values():
+            updated = [(i, t) for i, t in q if t != task_id]
+            q[:] = updated
+        # Append / prepend to the target queue.
+        target = _queues.setdefault(queue_name, [])
         entry = (instrument, task_id)
         if prepend:
-            updated.insert(0, entry)
+            target.insert(0, entry)
         else:
-            updated.append(entry)
-        _queue[:] = updated
+            target.append(entry)
 
 
 def stop_and_clear() -> None:
-    """Clear the pending queue; does not interrupt the running task."""
+    """Clear all pending queues; does not interrupt any running task."""
     with _lock:
-        for _i, tid in _queue:
+        for _i, tid in _all_queued():
             inst = _instances.get(tid)
             if inst is not None:
                 inst.status = "cancelled"
-        _queue.clear()
+        for q in _queues.values():
+            q.clear()
 
 
 def kill_all() -> Dict[str, Any]:
@@ -1699,10 +1973,11 @@ def kill_all() -> Dict[str, Any]:
     killed_current = None
 
     with _lock:
-        # 1. Interrupt running task
-        if _current is not None:
-            cur_inst, cur_tid = _current
-            killed_current = cur_tid
+        # 1. Interrupt all running tasks
+        for cur in _all_currents():
+            cur_inst, cur_tid = cur
+            if killed_current is None:
+                killed_current = cur_tid
             ev = _stop_events.get(cur_tid)
             if ev is not None:
                 ev.set()
@@ -1712,12 +1987,13 @@ def kill_all() -> Dict[str, Any]:
 
         # 2. Cancel every queued task
         cancelled = []
-        for qi, qtid in _queue:
+        for qi, qtid in _all_queued():
             inst = _instances.get(qtid)
             if inst is not None:
                 inst.status = 'cancelled'
             cancelled.append(qtid)
-        _queue.clear()
+        for q in _queues.values():
+            q.clear()
 
     # 3. Apply cooldowns to prevent re-scheduling
     result = stop_all_with_cooldown()
@@ -1745,36 +2021,37 @@ def stop_all_with_cooldown(instrument: Optional[str] = None) -> Dict[str, Any]:
         instruments = list(all_tasks.keys())
 
     with _lock:
-        if instrument:
-            keep = []
-            for queued_instrument, queued_task_id in _queue:
-                if queued_instrument == instrument:
-                    inst = _instances.get(queued_task_id)
+        for q in _queues.values():
+            if instrument:
+                keep = []
+                for queued_instrument, queued_task_id in q:
+                    if queued_instrument == instrument:
+                        inst = _instances.get(queued_task_id)
+                        if inst is not None:
+                            inst.status = "cancelled"
+                            _append_history_entry(
+                                queued_instrument,
+                                queued_task_id,
+                                getattr(inst, "name", queued_task_id),
+                                "cancelled",
+                                "Cancelled from queue stop action.",
+                            )
+                    else:
+                        keep.append((queued_instrument, queued_task_id))
+                q[:] = keep
+            else:
+                for _i, tid in q:
+                    inst = _instances.get(tid)
                     if inst is not None:
                         inst.status = "cancelled"
                         _append_history_entry(
-                            queued_instrument,
-                            queued_task_id,
-                            getattr(inst, "name", queued_task_id),
+                            _i,
+                            tid,
+                            getattr(inst, "name", tid),
                             "cancelled",
                             "Cancelled from queue stop action.",
                         )
-                else:
-                    keep.append((queued_instrument, queued_task_id))
-            _queue[:] = keep
-        else:
-            for _i, tid in _queue:
-                inst = _instances.get(tid)
-                if inst is not None:
-                    inst.status = "cancelled"
-                    _append_history_entry(
-                        _i,
-                        tid,
-                        getattr(inst, "name", tid),
-                        "cancelled",
-                        "Cancelled from queue stop action.",
-                    )
-            _queue.clear()
+                q.clear()
 
     updated = 0
     for inst_key in instruments:
@@ -1818,27 +2095,32 @@ def cancel_task(task_id: str) -> Dict[str, Any]:
         inst = _instances.get(task_id)
         if inst is not None:
             task_name = str(getattr(inst, "name", task_id) or task_id)
-        # Is it currently running?
-        if _current and _current[1] == task_id:
+        # Is it currently running in any worker?
+        running_cur = next(
+            (c for c in _all_currents() if c[1] == task_id), None
+        )
+        if running_cur is not None:
             was_running = True
-            _inst = _current[0]
+            _inst = running_cur[0]
             stop_ev = _stop_events.get(task_id)
             if stop_ev is not None:
                 stop_ev.set()
             if inst is not None:
                 inst.status = "cancelling"
         else:
-            # Remove from queue
-            new_queue = [(i, t) for i, t in _queue if t != task_id]
-            if len(new_queue) < len(_queue):
-                was_queued = True
-                for i, t in _queue:
-                    if t == task_id:
-                        _inst = i
-                        break
-                _queue[:] = new_queue
-                if inst is not None:
-                    inst.status = "cancelled"
+            # Remove from whichever queue holds this task_id.
+            for target_queue in _queues.values():
+                new_queue = [(i, t) for i, t in target_queue if t != task_id]
+                if len(new_queue) < len(target_queue):
+                    was_queued = True
+                    for i, t in target_queue:
+                        if t == task_id:
+                            _inst = i
+                            break
+                    target_queue[:] = new_queue
+                    if inst is not None:
+                        inst.status = "cancelled"
+                    break
 
     if not was_running and not was_queued:
         return {
@@ -1884,8 +2166,9 @@ def clear_instance(task_id: str) -> None:
         _task_log_paths.pop(task_id, None)
         _task_instruments.pop(task_id, None)
         _stop_events.pop(task_id, None)
-        # Remove from queue if present
-        _queue[:] = [(i, t) for i, t in _queue if t != task_id]
+        # Remove from whichever queue holds this task_id
+        for q in _queues.values():
+            q[:] = [(i, t) for i, t in q if t != task_id]
 
 
 def get_task_log(task_id: str, lines: int = 400) -> Dict[str, Any]:
@@ -1913,46 +2196,73 @@ def get_task_log(task_id: str, lines: int = 400) -> Dict[str, Any]:
     }
 
 
+def _queue_entry_info(q_instrument: str, q_task_id: str) -> dict:
+    """Build a dict describing one queued entry."""
+    q_inst = _instances.get(q_task_id)
+    return {
+        "instrument": q_instrument,
+        "task_id": q_task_id,
+        "task_name": (
+            getattr(q_inst, "name", q_task_id) if q_inst else q_task_id
+        ),
+        "log_path": _log_path_for_task(q_task_id, q_instrument),
+    }
+
+
 def get_status() -> dict:
-    """Return current queue and running-task information."""
+    """Return current queue and running-task information for all queues."""
     with _lock:
-        current_info = None
-        if _current is not None:
-            curr_instrument, curr_task_id = _current
-            curr_inst = _instances.get(curr_task_id)
-            current_info = {
-                "instrument": curr_instrument,
-                "task_id": curr_task_id,
-                "task_name": (
-                    getattr(curr_inst, "name", curr_task_id)
-                    if curr_inst
-                    else curr_task_id
-                ),
-                "log_path": _log_path_for_task(curr_task_id, curr_instrument),
+        # Build a per-queue status dict.
+        named_queues: Dict[str, dict] = {}
+        for qname, q in _queues.items():
+            cur = _currents.get(qname)
+            cur_info = None
+            if cur is not None:
+                ci, ct = cur
+                ci_inst = _instances.get(ct)
+                cur_info = _queue_entry_info(ci, ct)
+            named_queues[qname] = {
+                "current": cur,
+                "current_info": cur_info,
+                "queue": list(q),
+                "queue_info": [_queue_entry_info(qi, qt) for qi, qt in q],
+                "queue_length": len(q),
             }
 
-        queue_info = []
-        for q_instrument, q_task_id in _queue:
-            q_inst = _instances.get(q_task_id)
-            queue_info.append(
-                {
-                    "instrument": q_instrument,
-                    "task_id": q_task_id,
-                    "task_name": (
-                        getattr(q_inst, "name", q_task_id)
-                        if q_inst
-                        else q_task_id
-                    ),
-                    "log_path": _log_path_for_task(q_task_id, q_instrument),
-                }
-            )
+        # Back-compat: expose global queue fields at the top level so
+        # existing API consumers that read "current_info" / "queue_info" etc.
+        # continue to work.
+        global_q = named_queues.get("global", {
+            "current": None,
+            "current_info": None,
+            "queue": [],
+            "queue_info": [],
+            "queue_length": 0,
+        })
+        apero_q = named_queues.get("apero_checks", {
+            "current": None,
+            "current_info": None,
+            "queue": [],
+            "queue_info": [],
+            "queue_length": 0,
+        })
 
         return {
-            "current": _current,
-            "current_info": current_info,
-            "queue": list(_queue),
-            "queue_info": queue_info,
-            "queue_length": len(_queue),
+            # Back-compat: global queue at top level
+            "current": global_q["current"],
+            "current_info": global_q["current_info"],
+            "queue": global_q["queue"],
+            "queue_info": global_q["queue_info"],
+            "queue_length": global_q["queue_length"],
+            # Back-compat: apero_checks queue at top level
+            "apero_check_current": apero_q["current"],
+            "apero_check_current_info": apero_q["current_info"],
+            "apero_check_queue": apero_q["queue"],
+            "apero_check_queue_info": apero_q["queue_info"],
+            "apero_check_queue_length": apero_q["queue_length"],
+            # Full named-queue status (new — includes instrument queues)
+            "named_queues": named_queues,
+            # Combined history
             "recent_history": get_recent_history(limit=50),
         }
 
@@ -1963,8 +2273,8 @@ def get_task_status(task_id: str) -> dict:
         instance = _instances.get(task_id)
         if instance is None:
             return {"found": False}
-        is_current = _current is not None and _current[1] == task_id
-        is_queued = any(t == task_id for _, t in _queue)
+        is_current = any(c[1] == task_id for c in _all_currents())
+        is_queued = any(t == task_id for _, t in _all_queued())
         error = _errors.get(task_id, "")
 
     return {

@@ -511,3 +511,34 @@
     border-color: #7c1d13;
     color: #f85149;
 }
+
+/* ── Log line-range picker ── */
+.pl-log-range-picker {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.35rem 0.75rem;
+    background: #1a1a1a;
+    border-bottom: 1px solid #333;
+    flex-shrink: 0;
+    flex-wrap: wrap;
+}
+.pl-log-range-label {
+    color: #aaa;
+    font-size: 0.78rem;
+    white-space: nowrap;
+}
+.pl-log-range-input {
+    width: 5.5rem;
+    padding: 0.2rem 0.4rem;
+    border: 1px solid #444;
+    border-radius: 4px;
+    background: #0d0d0d;
+    color: #e0e0e0;
+    font-size: 0.8rem;
+    font-family: var(--ari-font-mono, monospace);
+}
+.pl-log-range-input:focus {
+    outline: none;
+    border-color: #666;
+}

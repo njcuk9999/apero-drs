@@ -227,3 +227,97 @@ All existing tables use a self-contained IIFE pattern with a `state` object:
 ```
 
 See `static/js/processing_logs.js` for the reference implementation.
+
+---
+
+## 8. Server-side pagination for large tables
+
+**Rule: any table that may contain more than ~5 000 rows MUST use server-side
+pagination.**  Client-side pagination of 100 K+ rows causes unacceptable JSON
+transfer times, client memory exhaustion, and DOM rendering freezes.
+
+### When to apply
+
+- Processing-log recipe tables (can exceed 391 K rows).
+- Any table backed by a DB query without a narrow WHERE clause.
+- Any table whose JSON response may exceed ~5 MB.
+
+### API design
+
+Add optional parameters `paged`, `page`, `per_page`, `sort_col`, `sort_dir`,
+and `filters` to the POST endpoint.  When `paged=true`:
+
+1. Run a **COUNT** query with only the WHERE clause → return `total`.
+2. Run the data query with `ORDER BY … LIMIT {per_page} OFFSET {(page-1)*per_page}`.
+3. Return `{rows, columns, dropdown_columns, total, page, per_page, paged: true}`.
+
+Use `LIMIT / OFFSET` in MySQL/MariaDB.  With a proper index on the sorted column
+this is O(log N + per_page) — essentially free.
+
+Keep the original full-fetch path (no `paged` param) for backward compat with
+other callers or for tables that are never large.
+
+### JavaScript pattern
+
+```javascript
+var state = {
+    pagedMode: false,     // true after first paged response
+    serverTotal: 0,       // total matching rows from server
+    pageCache: {},        // key → rows (prefetch cache)
+};
+
+// Cache key must encode page + per_page + sort + filters.
+function cacheKey(page) {
+    return JSON.stringify({ p: page, pp: state.perPage,
+                            sc: state.sortCol, sd: state.sortDir,
+                            f: state.filters });
+}
+
+function loadPagedData(page, skipCache) {
+    var key = cacheKey(page);
+    if (!skipCache && state.pageCache[key]) {
+        applyData(state.pageCache[key], page);
+        prefetchPage(page + 1);
+        return;
+    }
+    fetchFromServer(page).then(function (data) {
+        state.pageCache[key] = data;
+        applyData(data, page);
+        prefetchPage(page + 1);   // look-ahead of 1 page
+    });
+}
+
+function prefetchPage(page) {
+    var key = cacheKey(page);
+    if (state.pageCache[key]) return;
+    var go = function () {
+        fetchFromServer(page).then(function (d) {
+            state.pageCache[key] = d;
+        }).catch(function () {});
+    };
+    if (typeof requestIdleCallback === "function") {
+        requestIdleCallback(go, { timeout: 2000 });
+    } else {
+        setTimeout(go, 300);
+    }
+}
+
+// Invalidate the page cache whenever filter or sort changes.
+function resetAndFetch() {
+    state.pageCache = {};
+    state.page = 1;
+    loadPagedData(1, true);
+}
+```
+
+**Rules:**
+- Filter-input changes must debounce (300 ms) then call `resetAndFetch()`.
+- Sort-header clicks must call `resetAndFetch()` with the new sort.
+- The per-page selector change must call `resetAndFetch()`.
+- The Refresh button must call `loadPagedData(state.page, true)` (skip cache, keep page).
+- Always pre-fetch the **next** page after rendering the current one.
+- Cache entries are tied to the current filter+sort state; invalidate on any change.
+- Do NOT pre-fetch more than 1 page ahead — it wastes DB queries for pages the
+  user may never visit.
+- The per-page `"All"` option (`value="0"`) is disabled in paged mode — always
+  enforce a finite `per_page` (max 500 recommended).

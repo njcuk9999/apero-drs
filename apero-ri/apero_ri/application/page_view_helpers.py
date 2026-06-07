@@ -3,6 +3,7 @@
 from datetime import datetime, timezone
 from pathlib import Path
 import json
+import threading
 import time as _time
 
 import yaml
@@ -51,7 +52,23 @@ _POLICY_CACHE_TTL_S = 120
 # Keep a persistent cache on disk to avoid expensive cold-start scans.
 _POLICY_DISK_CACHE_TTL_S = 21600
 _POLICY_DISK_CACHE_FILE = 'apero_checks_policy_cache.json'
-_POLICY_DISK_CACHE_SCHEMA = '20260524a'
+# Schema bumped: now uses wall-clock 'built_at' instead of 'built_at_monotonic'
+# so the TTL survives server restarts.
+_POLICY_DISK_CACHE_SCHEMA = '20260604a'
+
+# Maximum age of a stale disk cache that we'll still serve while rebuilding
+# in the background (7 days — keeps the UI usable even after a long outage).
+_POLICY_DISK_CACHE_STALE_MAX_S = 7 * 24 * 3600
+
+# Background build state — shared across requests in the same process.
+_POLICY_BUILD_LOCK = threading.Lock()
+_POLICY_BUILD_STATUS: dict = {
+    'is_building': False,
+    'step': '',
+    'pct': 0.0,
+    'started_at': None,
+    'error': None,
+}
 
 
 def _policy_now_utc() -> str:
@@ -134,48 +151,67 @@ def _policy_disk_cache_path(local_data_dir: Path) -> Path:
     return Path(local_data_dir) / 'cache' / _POLICY_DISK_CACHE_FILE
 
 
-def _load_policy_disk_cache(local_data_dir: Path):
-    """Load persistent policy payload when still fresh."""
+def _load_policy_disk_cache_raw(local_data_dir: Path) -> dict | None:
+    """Load disk cache file, returning raw data dict or None on any error."""
     path = _policy_disk_cache_path(local_data_dir)
-    if (not path.exists()) or (not path.is_file()):
+    if not path.exists() or not path.is_file():
         return None
-
     try:
         with open(path, 'r', encoding='utf-8') as handle:
-            data = json.load(handle) or dict()
+            data = json.load(handle) or {}
     except Exception:
         return None
-
     if not isinstance(data, dict):
         return None
-
-    schema = str(data.get('schema') or '').strip()
-    if schema != _POLICY_DISK_CACHE_SCHEMA:
+    if str(data.get('schema') or '').strip() != _POLICY_DISK_CACHE_SCHEMA:
         return None
-
-    built_at = float(data.get('built_at_monotonic') or 0.0)
-    if built_at <= 0:
-        return None
-    age = _time.monotonic() - built_at
-    if age < 0:
-        return None
-    if age >= _POLICY_DISK_CACHE_TTL_S:
-        return None
-
     payload = data.get('payload')
     if not isinstance(payload, dict):
         return None
-    return dict(payload)
+    return data  # caller checks age
+
+
+def _disk_cache_age_s(data: dict) -> float:
+    """Return age in seconds of a raw disk cache data dict (wall-clock)."""
+    built_at = float(data.get('built_at') or 0.0)
+    if built_at <= 0:
+        return float('inf')
+    return _time.time() - built_at
+
+
+def _load_policy_disk_cache(local_data_dir: Path):
+    """Load persistent policy payload when still fresh (within TTL)."""
+    data = _load_policy_disk_cache_raw(local_data_dir)
+    if data is None:
+        return None
+    age = _disk_cache_age_s(data)
+    if age < 0 or age >= _POLICY_DISK_CACHE_TTL_S:
+        return None
+    return dict(data['payload'])
+
+
+def _load_policy_disk_cache_stale(local_data_dir: Path) -> tuple:
+    """Load disk cache even if TTL-expired, up to the stale maximum age.
+
+    :return: (payload_dict, age_seconds) or (None, 0) when not usable.
+    """
+    data = _load_policy_disk_cache_raw(local_data_dir)
+    if data is None:
+        return None, 0.0
+    age = _disk_cache_age_s(data)
+    if age < 0 or age >= _POLICY_DISK_CACHE_STALE_MAX_S:
+        return None, 0.0
+    return dict(data['payload']), age
 
 
 def _save_policy_disk_cache(local_data_dir: Path, payload: dict) -> None:
-    """Persist policy payload for cold-start reuse."""
+    """Persist policy payload for cold-start reuse (wall-clock timestamp)."""
     path = _policy_disk_cache_path(local_data_dir)
     path.parent.mkdir(parents=True, exist_ok=True)
     tmp_path = path.with_suffix(path.suffix + '.tmp')
     data = dict(
         schema=_POLICY_DISK_CACHE_SCHEMA,
-        built_at_monotonic=_time.monotonic(),
+        built_at=_time.time(),   # wall-clock seconds — survives restarts
         payload=dict(payload),
     )
     with open(tmp_path, 'w', encoding='utf-8') as handle:
@@ -195,6 +231,7 @@ def invalidate_policy_cache(local_data_dir) -> None:
     _APERO_POLICY_CACHE['payload'] = dict()
     _APERO_POLICY_CACHE['updated_at'] = ''
     _APERO_POLICY_CACHE['last_checked_at'] = 0.0
+    _APERO_POLICY_CACHE['check_results_index'] = {}
     try:
         path = _policy_disk_cache_path(Path(local_data_dir))
         if path.exists():
@@ -497,6 +534,322 @@ def _build_checks_policy_health(
     )
 
 
+def _build_bootstrap_payload(
+    ignored_checks, override_allowed
+) -> dict:
+    """Return a minimal payload built from MONITOR_CHECKS (no file I/O).
+
+    Used when the disk cache is absent so the UI renders immediately while
+    the real payload is building in the background.
+    """
+    ignored_set = set(ignored_checks or [])
+    override_set = set(override_allowed or [])
+    checks_catalog = []
+    for check_key in sorted(MONITOR_CHECKS):
+        check_obj = MONITOR_CHECKS.get(check_key)
+        if check_obj is None:
+            continue
+        key = str(check_key or '').strip()
+        if not key:
+            continue
+        item = {
+            'check_key': key,
+            'check_name': str(getattr(check_obj, 'name', '') or key),
+            'check_human_name': str(
+                getattr(check_obj, 'string_name', '') or key
+            ),
+            'check_type': str(getattr(check_obj, 'check_type', '') or ''),
+            'instruments': sorted({
+                str(i or '').strip()
+                for i in list(getattr(check_obj, 'instruments', []) or [])
+                if str(i or '').strip()
+            }),
+            'dependencies': [],
+            'description': '',
+            'info_sections': [],
+            'logic_markdown': '',
+            'logic_html': '',
+            'is_ignored': key in ignored_set,
+            'override_allowed': key in override_set,
+            'doc_url': '',
+            'counts': _empty_check_stats(),
+        }
+        item.update(_check_metadata_status(check_obj))
+        item['dominant_state'] = _dominant_state(item['counts'])
+        checks_catalog.append(item)
+    return {
+        'checks_catalog': checks_catalog,
+        'profile_summaries': [],
+        'policy_last_updated': '(loading…)',
+    }
+
+
+def _run_policy_build(
+    local_data_dir, checks_cfg, ignored_checks, override_allowed
+) -> None:
+    """Execute the full YAML-scanning policy build and update the caches.
+
+    Runs in a background thread.  Updates _APERO_POLICY_CACHE and the
+    disk cache on success; records the error in _POLICY_BUILD_STATUS on
+    failure.
+    """
+    global _POLICY_BUILD_STATUS
+    try:
+        _POLICY_BUILD_STATUS['is_building'] = True
+        _POLICY_BUILD_STATUS['error'] = None
+        _POLICY_BUILD_STATUS['started_at'] = _time.time()
+        _POLICY_BUILD_STATUS['pct'] = 0.0
+
+        _POLICY_BUILD_STATUS['step'] = 'Loading profile roots…'
+        _POLICY_BUILD_STATUS['pct'] = 5.0
+        profile_rows = _collect_policy_roots(local_data_dir, checks_cfg)
+
+        _POLICY_BUILD_STATUS['step'] = 'Collecting check file list…'
+        _POLICY_BUILD_STATUS['pct'] = 15.0
+        profile_sig = tuple(sorted(
+            (
+                str(row.get('instrument') or ''),
+                str(row.get('profile_id') or ''),
+                str(row.get('checks_root') or ''),
+            )
+            for row in profile_rows
+        ))
+        root_sig, root_files = _collect_root_signatures(profile_rows)
+
+        ignore_sig = tuple(sorted(
+            str(item or '').strip()
+            for item in list(ignored_checks or [])
+            if str(item or '').strip()
+        ))
+        override_sig = tuple(sorted(
+            str(item or '').strip()
+            for item in list(override_allowed or [])
+            if str(item or '').strip()
+        ))
+        signature = (profile_sig, root_sig, ignore_sig, override_sig)
+
+        if signature == _APERO_POLICY_CACHE.get('signature'):
+            # Signature unchanged — update TTL and return without re-parsing.
+            _APERO_POLICY_CACHE['last_checked_at'] = _time.monotonic()
+            _POLICY_BUILD_STATUS['pct'] = 100.0
+            _POLICY_BUILD_STATUS['step'] = 'Up to date.'
+            return
+
+        _POLICY_BUILD_STATUS['step'] = 'Scanning check YAML files…'
+        ignored_set = set(ignored_checks or [])
+        override_set = set(override_allowed or [])
+        checks_data: dict = {}
+        for check_key in sorted(MONITOR_CHECKS):
+            check_obj = MONITOR_CHECKS.get(check_key)
+            if check_obj is None:
+                continue
+            key = str(check_key or '').strip()
+            if not key:
+                continue
+            checks_data[key] = {
+                'check_key': key,
+                'check_name': str(getattr(check_obj, 'name', '') or key),
+                'check_human_name': str(
+                    getattr(check_obj, 'string_name', '') or key
+                ),
+                'check_type': str(getattr(check_obj, 'check_type', '') or ''),
+                'instruments': sorted({
+                    str(i or '').strip()
+                    for i in list(
+                        getattr(check_obj, 'instruments', []) or []
+                    )
+                    if str(i or '').strip()
+                }),
+                'dependencies': [
+                    str(d or '').strip()
+                    for d in list(
+                        getattr(check_obj, 'dependencies', []) or []
+                    )
+                    if str(d or '').strip()
+                ],
+                'description': str(
+                    getattr(check_obj, 'description', '') or ''
+                ),
+                'info_sections': [],
+                'logic_markdown': '',
+                'logic_html': '',
+                'is_ignored': key in ignored_set,
+                'override_allowed': key in override_set,
+                'doc_url': '',
+                'counts': _empty_check_stats(),
+            }
+            checks_data[key].update(_check_metadata_status(check_obj))
+
+        from apero_ri.core import checks_index as _cidx
+
+        profile_summaries = []
+        # check_results_index[check_key][state] = [{profile_id, obsdir}]
+        check_results_index: dict = {}
+        total_profiles = len(profile_rows)
+
+        for prof_idx, row in enumerate(profile_rows):
+            counts = _empty_check_stats()
+            root_key = str(row.get('checks_root') or '')
+            profile_id = str(row.get('profile_id') or '')
+            checks_root = row.get('checks_root')
+
+            _POLICY_BUILD_STATUS['step'] = (
+                'Scanning %s (%d/%d)…'
+                % (profile_id, prof_idx + 1, total_profiles)
+            )
+            _POLICY_BUILD_STATUS['pct'] = (
+                15.0 + 80.0 * prof_idx / max(total_profiles, 1)
+            )
+
+            if not checks_root or not checks_root.exists():
+                profile_summaries.append({
+                    'profile_id': profile_id,
+                    'instrument': str(row.get('instrument') or ''),
+                    'checks_root': root_key,
+                    'counts': counts,
+                    'dominant_state': _dominant_state(counts),
+                })
+                continue
+
+            # Incremental scan: the index provides cached records for unchanged
+            # YAML files and only reads files whose mtime has changed.
+            loaded_cache: dict = {}
+            index_data, n_disk, n_cache = _cidx.incremental_update(
+                profile_id=profile_id,
+                checks_root=checks_root,
+                loaded_cache=loaded_cache,
+                ignored_set=ignored_set,
+                checks_registry=MONITOR_CHECKS,
+            )
+            _POLICY_BUILD_STATUS['step'] = (
+                'Indexed %s: %d read, %d cached'
+                % (profile_id, n_disk, n_cache)
+            )
+
+            entries = index_data.get('entries') or {}
+            for obsdir, record in entries.items():
+                color = str(record.get('c') or 'ok')
+                counts['total'] += 1
+                if color == 'failed':
+                    counts['failed'] += 1
+                elif color == 'overridden':
+                    counts['overridden'] += 1
+                elif color == 'monitored':
+                    counts['monitored'] += 1
+                elif color == 'overridden_monitored':
+                    counts['mixed'] += 1
+                else:
+                    counts['passed'] += 1
+
+                check_states = record.get('s') or {}
+                for check_key, state in check_states.items():
+                    if check_key in ignored_set:
+                        continue
+                    if check_key not in checks_data:
+                        checks_data[check_key] = {
+                            'check_key': check_key,
+                            'check_name': check_key,
+                            'check_human_name': check_key,
+                            'check_type': '',
+                            'instruments': [],
+                            'dependencies': [],
+                            'description': '',
+                            'info_sections': [],
+                            'logic_markdown': '',
+                            'logic_html': '',
+                            'is_ignored': check_key in ignored_set,
+                            'override_allowed': check_key in override_set,
+                            'doc_url': '',
+                            'counts': _empty_check_stats(),
+                            'missing_fields': [
+                                'CHECK.description',
+                                'CHECK.what_to_do',
+                                'CHECK.contact_list',
+                            ],
+                            'has_missing_metadata': True,
+                        }
+                    cdict = checks_data[check_key]['counts']
+                    cdict[state] = int(cdict.get(state, 0)) + 1
+                    cdict['total'] += 1
+                    # Also populate the in-memory results index.
+                    idx_key = check_results_index.setdefault(check_key, {})
+                    idx_key.setdefault(state, []).append({
+                        'profile_id': profile_id,
+                        'obsdir': obsdir,
+                    })
+
+                # For newly-read YAML files, also harvest check metadata
+                # (type, instruments) that may not be in MONITOR_CHECKS.
+                yaml_path = checks_root / (obsdir + '.yaml')
+                if yaml_path in loaded_cache:
+                    loaded = loaded_cache[yaml_path]
+                    for bucket in ('failures', 'passes'):
+                        bucket_rows = loaded.get(bucket) or {}
+                        for ck, check_row in bucket_rows.items():
+                            if ck in ignored_set or ck not in checks_data:
+                                continue
+                            if not isinstance(check_row, dict):
+                                continue
+                            if not checks_data[ck].get('check_type'):
+                                checks_data[ck]['check_type'] = str(
+                                    check_row.get('type') or ''
+                                )
+
+            profile_summaries.append({
+                'profile_id': profile_id,
+                'instrument': str(row.get('instrument') or ''),
+                'checks_root': root_key,
+                'counts': counts,
+                'dominant_state': _dominant_state(counts),
+            })
+
+        checks_catalog = []
+        for key in sorted(checks_data):
+            item = dict(checks_data[key])
+            item['dominant_state'] = _dominant_state(item['counts'])
+            checks_catalog.append(item)
+
+        payload: dict = {}
+        payload['checks_catalog'] = checks_catalog
+        payload['profile_summaries'] = profile_summaries
+        updated_at = _policy_now_utc()
+        payload['policy_last_updated'] = updated_at
+        _APERO_POLICY_CACHE['signature'] = signature
+        _APERO_POLICY_CACHE['payload'] = payload
+        _APERO_POLICY_CACHE['updated_at'] = updated_at
+        _APERO_POLICY_CACHE['last_checked_at'] = _time.monotonic()
+        _APERO_POLICY_CACHE['check_results_index'] = check_results_index
+        _save_policy_disk_cache(local_data_dir, payload)
+
+        _POLICY_BUILD_STATUS['pct'] = 100.0
+        _POLICY_BUILD_STATUS['step'] = 'Complete.'
+
+    except Exception as exc:
+        _POLICY_BUILD_STATUS['error'] = str(exc)
+        _POLICY_BUILD_STATUS['step'] = 'Build failed: ' + str(exc)
+    finally:
+        _POLICY_BUILD_STATUS['is_building'] = False
+
+
+def _start_background_build(
+    local_data_dir, checks_cfg, ignored_checks, override_allowed
+) -> None:
+    """Kick off a background thread to (re)build the policy payload.
+
+    No-ops if a build is already in progress.
+    """
+    if _POLICY_BUILD_LOCK.locked():
+        return  # already building
+    def _worker():
+        with _POLICY_BUILD_LOCK:
+            _run_policy_build(
+                local_data_dir, checks_cfg, ignored_checks, override_allowed
+            )
+    t = threading.Thread(target=_worker, daemon=True,
+                         name='ari-policy-build')
+    t.start()
+
+
 def _build_apero_policy_payload(
     local_data_dir,
     checks_cfg,
@@ -521,8 +874,8 @@ def _build_apero_policy_payload(
         )
         return payload
 
-    # Cold-start fast path: reuse a fresh disk cache built by a prior
-    # worker process to avoid immediate heavy YAML scanning.
+    # Cold-start fast path: reuse a fresh disk cache from a prior run.
+    # (Fixed: uses wall-clock time so it survives server restarts.)
     disk_payload = _load_policy_disk_cache(local_data_dir)
     if isinstance(disk_payload, dict) and disk_payload:
         _APERO_POLICY_CACHE['payload'] = dict(disk_payload)
@@ -532,175 +885,33 @@ def _build_apero_policy_payload(
         _APERO_POLICY_CACHE['last_checked_at'] = _time.monotonic()
         return dict(disk_payload)
 
-    profile_rows = _collect_policy_roots(local_data_dir, checks_cfg)
-    profile_sig = tuple(sorted(
-        (
-            str(row.get('instrument') or ''),
-            str(row.get('profile_id') or ''),
-            str(row.get('checks_root') or ''),
-        )
-        for row in profile_rows
-    ))
-    root_sig, root_files = _collect_root_signatures(profile_rows)
-    ignore_sig = tuple(sorted(
-        str(item or '').strip()
-        for item in list(ignored_checks or [])
-        if str(item or '').strip() != ''
-    ))
-    override_sig = tuple(sorted(
-        str(item or '').strip()
-        for item in list(override_allowed or [])
-        if str(item or '').strip() != ''
-    ))
-    signature = (profile_sig, root_sig, ignore_sig, override_sig)
-    if signature == _APERO_POLICY_CACHE.get('signature'):
-        payload = dict(_APERO_POLICY_CACHE.get('payload', {}))
-        payload['policy_last_updated'] = str(
-            _APERO_POLICY_CACHE.get('updated_at', '')
+    # Stale-while-revalidate: if we have an expired but structurally valid
+    # disk cache, return it immediately and rebuild in the background.
+    stale_payload, stale_age = _load_policy_disk_cache_stale(local_data_dir)
+    if stale_payload:
+        _APERO_POLICY_CACHE['payload'] = dict(stale_payload)
+        _APERO_POLICY_CACHE['updated_at'] = str(
+            stale_payload.get('policy_last_updated', '')
         )
         _APERO_POLICY_CACHE['last_checked_at'] = _time.monotonic()
-        return payload
-
-    ignored_set = set(ignored_checks or [])
-    override_set = set(override_allowed or [])
-    checks_data = dict()
-    for check_key in sorted(MONITOR_CHECKS):
-        check_obj = MONITOR_CHECKS.get(check_key)
-        if check_obj is None:
-            continue
-        key = str(check_key or '').strip()
-        if key == '':
-            continue
-        checks_data[key] = {
-            'check_key': key,
-            'check_name': str(getattr(check_obj, 'name', '') or key),
-            'check_human_name': str(
-                getattr(check_obj, 'string_name', '') or key
-            ),
-            'check_type': str(getattr(check_obj, 'check_type', '') or ''),
-            'instruments': sorted({
-                str(item or '').strip()
-                for item in list(
-                    getattr(check_obj, 'instruments', []) or []
-                )
-                if str(item or '').strip() != ''
-            }),
-            'dependencies': [
-                str(item or '').strip()
-                for item in list(
-                    getattr(check_obj, 'dependencies', []) or []
-                )
-                if str(item or '').strip() != ''
-            ],
-            'description': str(
-                getattr(check_obj, 'description', '') or ''
-            ),
-            'info_sections': [],
-            'logic_markdown': '',
-            'logic_html': '',
-            'is_ignored': key in ignored_set,
-            'override_allowed': key in override_set,
-            'doc_url': url_for(
-                'doc_dynamic_view',
-                page_ref=f'monitor/checks/{str(key).lower()}',
-            ),
-            'counts': _empty_check_stats(),
-        }
-        # Only compute cheap metadata on the policy list page.
-        # Full check info (logic tabs, info sections) is built separately
-        # on the individual check info page.
-        checks_data[key].update(_check_metadata_status(check_obj))
-    profile_summaries = []
-    for row in profile_rows:
-        counts = _empty_check_stats()
-        root_key = str(row.get('checks_root') or '')
-        for yaml_path in root_files.get(root_key, []):
-            loaded = checks_core.load_check_file(yaml_path)
-            summary = _policy_obsdir_counts(loaded, ignored_set)
-            counts['total'] += 1
-            color = str(summary.get('card_color') or 'ok')
-            if color == 'failed':
-                counts['failed'] += 1
-            elif color == 'overridden':
-                counts['overridden'] += 1
-            elif color == 'monitored':
-                counts['monitored'] += 1
-            elif color == 'overridden_monitored':
-                counts['mixed'] += 1
-            else:
-                counts['passed'] += 1
-
-            for bucket in ('failures', 'passes'):
-                rows = loaded.get(bucket, {})
-                if not isinstance(rows, dict):
-                    continue
-                for key, check_row in rows.items():
-                    check_key = str(key or '').strip()
-                    if check_key == '' or check_key in ignored_set:
-                        continue
-                    if check_key not in checks_data:
-                        checks_data[check_key] = {
-                            'check_key': check_key,
-                            'check_name': check_key,
-                            'check_human_name': check_key,
-                            'check_type': str(
-                                (check_row or {}).get('type') or ''
-                            ),
-                            'instruments': [],
-                            'dependencies': [],
-                            'description': '',
-                            'info_sections': [],
-                            'logic_markdown': '',
-                            'logic_html': '',
-                            'is_ignored': check_key in ignored_set,
-                            'override_allowed': check_key in override_set,
-                            'doc_url': url_for(
-                                'doc_dynamic_view',
-                                page_ref=(
-                                    'monitor/checks/'
-                                    f'{str(check_key).lower()}'
-                                ),
-                            ),
-                            'counts': _empty_check_stats(),
-                            'missing_fields': [
-                                'CHECK.description',
-                                'CHECK.what_to_do',
-                                'CHECK.contact_list',
-                            ],
-                            'has_missing_metadata': True,
-                        }
-                    state = _row_state(bucket, check_row)
-                    cdict = checks_data[check_key]['counts']
-                    cdict[state] += 1
-                    cdict['total'] += 1
-
-        profile_summaries.append(
-            {
-                'profile_id': str(row.get('profile_id') or ''),
-                'instrument': str(row.get('instrument') or ''),
-                'checks_root': root_key,
-                'counts': counts,
-                'dominant_state': _dominant_state(counts),
-            }
+        _start_background_build(
+            local_data_dir, checks_cfg, ignored_checks, override_allowed
         )
+        stale_result = dict(stale_payload)
+        stale_result['is_stale'] = True
+        stale_result['is_building'] = True
+        return stale_result
 
-    checks_catalog = []
-    for key in sorted(checks_data):
-        item = dict(checks_data[key])
-        item['dominant_state'] = _dominant_state(item['counts'])
-        checks_catalog.append(item)
-
-    payload = dict()
-    payload['checks_catalog'] = checks_catalog
-    payload['profile_summaries'] = profile_summaries
-    updated_at = _policy_now_utc()
-    payload['policy_last_updated'] = updated_at
-    _APERO_POLICY_CACHE['signature'] = signature
-    _APERO_POLICY_CACHE['payload'] = payload
-    _APERO_POLICY_CACHE['updated_at'] = updated_at
-    _APERO_POLICY_CACHE['last_checked_at'] = _time.monotonic()
-    _save_policy_disk_cache(local_data_dir, payload)
-    return payload
+    # Truly cold: no usable cache.  Start a background build and return a
+    # bootstrap payload (check names only, zero counts) immediately so the
+    # UI renders something straight away.
+    _start_background_build(
+        local_data_dir, checks_cfg, ignored_checks, override_allowed
+    )
+    bootstrap = _build_bootstrap_payload(ignored_checks, override_allowed)
+    bootstrap['is_stale'] = True
+    bootstrap['is_building'] = True
+    return bootstrap
 
 
 def make_page_view(app, page_id: str, package_dir: Path):
@@ -883,55 +1094,87 @@ def make_page_view(app, page_id: str, package_dir: Path):
             override_allowed = checks_core.load_override_allowed(
                 local_data_dir
             )
-            payload = _build_apero_policy_payload(
-                local_data_dir,
-                checks_cfg,
-                ignored_checks,
-                override_allowed,
-            )
             requested_key = str(
                 request.args.get('check', '') or ''
             ).strip().upper()
-            selected = None
-            for item in list(payload.get('checks_catalog', []) or []):
-                item_key = str(item.get('check_key') or '').strip().upper()
-                if item_key == requested_key and item_key != '':
-                    selected = dict(item)
-                    break
 
-            if selected is None:
+            # Validate the check key exists cheaply (in-memory registry).
+            check_obj = MONITOR_CHECKS.get(requested_key)
+            if check_obj is None:
+                # Try case-insensitive scan of MONITOR_CHECKS.
+                for k in MONITOR_CHECKS:
+                    if str(k or '').upper() == requested_key:
+                        check_obj = MONITOR_CHECKS[k]
+                        requested_key = k
+                        break
+
+            if check_obj is None:
                 flash('Please choose a valid APERO check.', 'warning')
                 return redirect(
                     url_for('home_admin_portal_apero_checks_policy')
                 )
 
-            check_obj = MONITOR_CHECKS.get(selected.get('check_key'))
-            profiles_data = load_apero_profiles(hydrate=True)
-            if check_obj is not None:
-                selected.update(
-                    _build_check_info_payload(
-                        check_obj,
-                        profiles_data=profiles_data,
-                    )
+            # Build the static (fast) portion of the check info.
+            # Only hydrate profiles when the check uses a SimpleCheck (which
+            # needs per-profile resolved values for its logic tabs).  For plain
+            # AperoCheck objects (like ASTROM) this is not needed and would be
+            # slow on a network-mounted profile directory.
+            needs_profiles = getattr(check_obj, 'simple_check', None) is not None
+            profiles_data = (
+                load_apero_profiles(hydrate=True)
+                if needs_profiles
+                else None
+            )
+
+            # Synthesise a minimal check item from the registry — counts and
+            # profile_options are NOT loaded here; the template loads them
+            # asynchronously via api_apero_checks_check_info_async.
+            selected = {
+                'check_key':        requested_key,
+                'check_name':       str(getattr(check_obj, 'name', '') or requested_key),
+                'check_human_name': str(getattr(check_obj, 'string_name', '') or requested_key),
+                'check_type':       str(getattr(check_obj, 'check_type', '') or ''),
+                'instruments':      sorted({
+                    str(i or '').strip()
+                    for i in list(getattr(check_obj, 'instruments', []) or [])
+                    if str(i or '').strip()
+                }),
+                'dependencies':     [
+                    str(d or '').strip()
+                    for d in list(getattr(check_obj, 'dependencies', []) or [])
+                    if str(d or '').strip()
+                ],
+                'description':      str(getattr(check_obj, 'description', '') or ''),
+                'is_ignored':       requested_key in set(ignored_checks or []),
+                'override_allowed': requested_key in set(override_allowed or []),
+                'doc_url':          url_for(
+                    'doc_dynamic_view',
+                    page_ref='monitor/checks/' + str(requested_key).lower(),
+                ),
+                # Counts deferred to async API — template shows spinners
+                # until JS replaces them.
+                'counts': _empty_check_stats(),
+            }
+            selected.update(_check_metadata_status(check_obj))
+            selected.update(
+                _build_check_info_payload(
+                    check_obj,
+                    profiles_data=profiles_data,
                 )
+            )
 
             context['apero_check_item'] = selected
-            profile_options = []
-            for row in list(payload.get('profile_summaries', []) or []):
-                profile_id = str(row.get('profile_id') or '').strip()
-                if profile_id == '':
-                    continue
-                profile_options.append(profile_id)
-            context['apero_check_profile_options'] = sorted(
-                set(profile_options)
-            )
+            # Profile options deferred to async API.
+            context['apero_check_profile_options'] = []
             context['apero_checks_config'] = {
                 'ignored_checks': ignored_checks,
                 'override_allowed': override_allowed,
                 'checks_root': str(checks_cfg.get('checks_root') or ''),
             }
-            context['policy_last_updated'] = payload.get(
-                'policy_last_updated', ''
+            context['policy_last_updated'] = ''
+            # URL for the async counts + profile_options load.
+            context['check_info_async_url'] = url_for(
+                'api_apero_checks_check_info_async'
             )
 
         if page_id == "home.admin_portal.user_db_access" and user_info:

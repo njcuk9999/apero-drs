@@ -188,9 +188,14 @@ def _init_run_context(params: Dict[str, Any]) -> dict:
     mp_cfg = _normalize_mp_config(task_config)
     # Extract the optional task logger callback.
     task_logger = params.get('TASK_LOGGER')
+    # Verbosity level: 0=no log, 1=async-level (profile/obsdir events),
+    # 2=verbose (every individual check result).  Default is 1.
+    verbose_level = int(task_config.get('verbose', 1) or 1)
 
-    def tlog(message: str) -> None:
-        """Write one task log line if a logger is available."""
+    def tlog(message: str, min_verbose: int = 1) -> None:
+        """Write one task log line if verbosity and logger allow it."""
+        if verbose_level < min_verbose:
+            return
         if callable(task_logger):
             try:
                 task_logger(message)
@@ -224,6 +229,7 @@ def _init_run_context(params: Dict[str, Any]) -> dict:
         'history_source': str(
             task_config.get('history_source', '') or ''
         ),
+        'verbose_level': verbose_level,
         'slow_check_seconds': float(
             task_config.get('slow_check_seconds', 5.0)
         ),
@@ -236,6 +242,10 @@ def _run_profile(task: AperoCheckTask,
     """Run the APERO-check workflow for one APERO profile."""
     # Get the profile configuration block.
     aparams = ctx['profiles'][profile_name]
+    # Expose the ARI profile name to checks (e.g. reduced manual-trigger checks
+    # locate their per-profile log file at PATH.TRIGGER/{apero_profile}.log).
+    if isinstance(aparams, dict):
+        aparams['apero_profile'] = profile_name
     # Resolve the concrete instrument for this profile.
     instrument = _resolve_profile_instrument(aparams, ctx['params'])
     # Skip profiles whose configured data paths are not accessible.
@@ -361,11 +371,19 @@ def _run_profile(task: AperoCheckTask,
                 check_result.get('entry'),
                 payloads[obs_dir]['existing'],
             )
+            passed_flag = bool(check_result.get('passed', False))
+            status_word = 'PASS' if passed_flag else 'FAIL'
             if dt >= float(ctx['slow_check_seconds']):
                 ctx['tlog'](
                     f'Profile {profile_name}: slow check night={obs_dir} '
-                    f'check={check_key} time={dt:.2f}s.'
+                    f'check={check_key} time={dt:.2f}s.',
+                    min_verbose=1,
                 )
+            # At verbosity=2 log every individual check result.
+            ctx['tlog'](
+                f'{obs_dir} | {check_key} | {status_word} | {dt:.2f}s',
+                min_verbose=2,
+            )
             report_lines.append(
                 f'{obs_dir} | {check_key} | {check_result["report"]}'
             )
@@ -375,15 +393,18 @@ def _run_profile(task: AperoCheckTask,
                     root_dir,
                     obs_dir,
                     payloads[obs_dir]['payload'],
+                    profile_id=profile_name,
                 )
                 ctx['tlog'](
                     f'Profile {profile_name}: wrote YAML {filename} '
-                    f'(night={obs_dir}).'
+                    f'(night={obs_dir}).',
+                    min_verbose=1,
                 )
             except Exception as exc:
                 ctx['tlog'](
                     f'Profile {profile_name}: failed writing YAML for '
-                    f'{obs_dir}: {exc}'
+                    f'{obs_dir}: {exc}',
+                    min_verbose=1,
                 )
 
     # Run complete obsdir workflows so each worker can reuse FITS headers.
@@ -422,6 +443,7 @@ def _run_profile(task: AperoCheckTask,
                 obs_dir,
                 payloads[obs_dir]['payload'],
                 history_entry=history_entry,
+                profile_id=profile_name,
             )
             task.output_files.append(str(filename))
             ctx['tlog'](
@@ -962,7 +984,8 @@ def _run_obsdirs_serial(check_keys: Sequence[str],
         obs_dir = str(row.get('obs_dir', '') or '')
         ctx['tlog'](
             f'Profile serial job {job_no}/{total}: night={obs_dir} '
-            'starting on main process.'
+            'starting on main process.',
+            min_verbose=2,
         )
         # Run all checks for the current obsdir in one worker call.
         result = _run_single_obsdir_all_checks(
@@ -979,7 +1002,8 @@ def _run_obsdirs_serial(check_keys: Sequence[str],
             result_hook(result)
         ctx['tlog'](
             f'Profile serial job {job_no}/{total}: night={obs_dir} '
-            f'completed on worker {result.get("worker", "unknown")}.'
+            f'completed on worker {result.get("worker", "unknown")}.',
+            min_verbose=2,
         )
         _update_night_progress(task, ctx, index + 1, total)
     return results

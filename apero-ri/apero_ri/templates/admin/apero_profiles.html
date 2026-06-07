@@ -242,20 +242,22 @@
                 </div>
             </div>
             {% set path_fields = [
-                ('profile-path-raw',   'PATH.RAW',   'formally DRS_DATA_RAW', 'SSH symlink paths are not supported; link the actual raw directory.'),
-                ('profile-path-pp',    'PATH.PP',    'formally DRS_DATA_WORKING', ''),
-                ('profile-path-red',   'PATH.RED',   'formally DRS_DATA_RED', ''),
-                ('profile-path-out',   'PATH.OUT',   'formally DRS_DATA_OUT', ''),
-                ('profile-path-calib', 'PATH.CALIB', 'formally DRS_CALIB_DB', ''),
-                ('profile-path-tellu', 'PATH.TELLU', 'formally DRS_TELLU_DB', ''),
-                ('profile-path-log',   'PATH.LOG',   'formally DRS_DATA_MSG', ''),
-                ('profile-path-lbl',   'PATH.LBL',   'formally LBL_PATH', ''),
-                ('profile-path-check', 'PATH.CHECK', 'APERO checks YAML directory', ''),
-                ('profile-path-other', 'PATH.OTHER', 'formally DRS_DATA_OTHER', ''),
+                ('profile-path-raw',   'PATH.RAW',   'formally DRS_DATA_RAW', 'SSH symlink paths are not supported; link the actual raw directory.', false),
+                ('profile-path-pp',    'PATH.PP',    'formally DRS_DATA_WORKING', '', false),
+                ('profile-path-red',   'PATH.RED',   'formally DRS_DATA_RED', '', false),
+                ('profile-path-out',   'PATH.OUT',   'formally DRS_DATA_OUT', '', false),
+                ('profile-path-calib', 'PATH.CALIB', 'formally DRS_CALIB_DB', '', false),
+                ('profile-path-tellu', 'PATH.TELLU', 'formally DRS_TELLU_DB', '', false),
+                ('profile-path-log',   'PATH.LOG',   'formally DRS_DATA_MSG', '', false),
+                ('profile-path-lbl',   'PATH.LBL',   'formally LBL_PATH', '', false),
+                ('profile-path-check', 'PATH.CHECK', 'APERO checks YAML directory', '', false),
+                ('profile-path-other', 'PATH.OTHER', 'formally DRS_DATA_OTHER', '', false),
+                ('profile-path-trigger', 'PATH.TRIGGER', 'path containing the trigger log file (optional; needed for reduced manual-trigger checks)', '', true),
             ] %}
-            {% for field_id, label, hint, extra_note in path_fields %}
+            {% for field_id, label, hint, extra_note, optional in path_fields %}
             <div class="ari-ap-form__field">
-                <label for="{{ field_id }}">{{ label }} <span class="ari-required">*</span>
+                <label for="{{ field_id }}">{{ label }}
+                    {% if optional %}<span class="ari-ap-form__hint">(optional)</span>{% else %}<span class="ari-required">*</span>{% endif %}
                     <span class="ari-ap-form__hint">{{ hint }}</span>
                     {% if extra_note %}
                     <span class="ari-ap-form__hint" style="color:#a64b00; font-weight:600;">{{ extra_note }}</span>

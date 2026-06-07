@@ -1176,6 +1176,9 @@ def _build_apero_check_summary(
     """Build one obsdir card payload from a YAML file."""
     try:
         loaded = checks_core.load_check_file(path)
+        checks_core.propagate_dependency_states(
+            loaded, MONITOR_CHECKS, set(ignored_checks or [])
+        )
         return checks_core.build_obsdir_summary(
             loaded,
             type_filter=type_filter,
@@ -1226,6 +1229,9 @@ def _build_apero_check_minimal_with_status(path, ignored_checks):
     ignored_set = set(ignored_checks or [])
     try:
         loaded = checks_core.load_check_file(path)
+        checks_core.propagate_dependency_states(
+            loaded, MONITOR_CHECKS, ignored_set
+        )
         failures = loaded.get('failures', {})
         passes = loaded.get('passes', {})
         has_overridden = False
@@ -1693,6 +1699,11 @@ def monitor_apero_checks_obsdir_view(app, profile_id, obsdir):
     ignored_checks = checks_core.load_ignored_checks(
         app._resolve_local_data_dir()
     )
+    # Propagate monitored/overridden state from failing dependencies so that
+    # dependent checks inherit the status of their blocked dependency.
+    checks_core.propagate_dependency_states(
+        loaded, MONITOR_CHECKS, set(ignored_checks)
+    )
     summary = checks_core.build_obsdir_summary(
         loaded,
         type_filter=page_args['type_filter'],
@@ -1853,6 +1864,9 @@ def monitor_apero_checks_check_view(
     key = str(check_key or '').strip()
     ignored_checks = set(
         checks_core.load_ignored_checks(app._resolve_local_data_dir())
+    )
+    checks_core.propagate_dependency_states(
+        loaded, MONITOR_CHECKS, ignored_checks
     )
     if key in ignored_checks:
         flash('This check is ignored by policy.', 'warning')

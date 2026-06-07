@@ -54,6 +54,8 @@ from apero_ri.application import (
     user_pins_api_helpers,
 )
 from apero_ri.core import api_tokens as at
+from apero_ri.core import audit_log
+from apero_ri.core import health_history
 from apero_ri.core import auth
 from apero_ri.core import backup_backend as bb
 from apero_ri.core import basket_funcs as bk
@@ -67,7 +69,10 @@ from apero_ri.core import sshfs_backend as sb
 from apero_ri.core import task_runner
 from apero_ri.core import upload_data as upd
 from apero_ri.core import user_data as ud
+from apero_ri.core.log import configure_logging, get_logger
 from apero_ri.tasks import apero_async
+
+log = get_logger(__name__)
 from flask import (
     Flask,
     flash,
@@ -479,12 +484,22 @@ def ariapp_run(self, host, port, debug, **kwargs):
 
 
 def ariapp_init(self, **kwargs):
+    configure_logging()
     Flask.__init__(
         self,
         __name__,
         template_folder=str(TEMPLATE_DIR),
         static_folder=str(STATIC_DIR),
         **kwargs,
+    )
+    # Rate limiter — applied selectively to auth endpoints.
+    from flask_limiter import Limiter
+    from flask_limiter.util import get_remote_address
+    self._limiter = Limiter(
+        app=self,
+        key_func=get_remote_address,
+        default_limits=[],          # no global limit; applied per-route
+        storage_uri="memory://",    # in-process; swap for redis:// in prod
     )
     # Install a self-healing wrapper around Flask's Jinja loader so a
     # template that was accidentally saved with duplicated content
@@ -574,6 +589,8 @@ def ariapp_init(self, **kwargs):
     )
     ud.set_ari_dir(self.args.data_dir or str(Path.home() / ".ari"))
     auth.set_ari_dir(self.args.data_dir or str(Path.home() / ".ari"))
+    audit_log.set_ari_dir(self.args.data_dir or str(Path.home() / ".ari"))
+    health_history.set_ari_dir(self.args.data_dir or str(Path.home() / ".ari"))
     dt.set_ari_dir(
         Path(self.args.data_dir).expanduser()
         if self.args.data_dir
@@ -1085,26 +1102,30 @@ def ariapp_reset_password_view(self, token):
 
 def ariapp_register_routes(self):
     """Register all routes from pages.yaml plus login/logout."""
-    # Login route (special)
+    _lim = self._limiter
+
+    # Login route — rate-limited to prevent brute-force attacks.
     self.add_url_rule(
-        "/login", "login", self._login_view, methods=["GET", "POST"]
+        "/login", "login",
+        _lim.limit("20 per minute; 100 per hour")(self._login_view),
+        methods=["GET", "POST"],
     )
     self.add_url_rule(
         "/forgot-password",
         "forgot_password",
-        self._forgot_password_view,
+        _lim.limit("5 per minute; 20 per hour")(self._forgot_password_view),
         methods=["GET", "POST"],
     )
     self.add_url_rule(
         "/reset-password/<token>",
         "reset_password",
-        self._reset_password_view,
+        _lim.limit("10 per minute")(self._reset_password_view),
         methods=["GET", "POST"],
     )
     self.add_url_rule(
         "/register", "register", self._register_view, methods=["GET"]
     )
-    # Logout route (special)
+    # Logout route (no limit needed)
     self.add_url_rule("/logout", "logout", self._logout_view)
 
     # Static route blocks are delegated to helper module to keep
@@ -1130,6 +1151,53 @@ def ariapp_register_routes(self):
             endpoint,
             self._make_page_view(page_id),
         )
+
+    # ------------------------------------------------------------------
+    # HTTP error handlers
+    # ------------------------------------------------------------------
+    @self.errorhandler(400)
+    def _handle_400(exc):
+        if _request_wants_json():
+            return jsonify({"error": "Bad Request", "detail": str(exc)}), 400
+        return render_template("general/error.html", code=400,
+                               title="Bad Request",
+                               message="The server could not understand the request."), 400
+
+    @self.errorhandler(403)
+    def _handle_403(exc):
+        if _request_wants_json():
+            return jsonify({"error": "Forbidden"}), 403
+        return render_template("general/error.html", code=403,
+                               title="Forbidden",
+                               message="You do not have permission to access this page."), 403
+
+    @self.errorhandler(404)
+    def _handle_404(exc):
+        if _request_wants_json():
+            return jsonify({"error": "Not Found"}), 404
+        return render_template("general/error.html", code=404,
+                               title="Page Not Found",
+                               message="The page you are looking for does not exist."), 404
+
+    @self.errorhandler(500)
+    def _handle_500(exc):
+        log.exception("Unhandled server error")
+        if _request_wants_json():
+            return jsonify({"error": "Internal Server Error"}), 500
+        return render_template("general/error.html", code=500,
+                               title="Internal Server Error",
+                               message="An unexpected error occurred. Please try again later."), 500
+
+
+def _request_wants_json() -> bool:
+    """Return True if the request prefers a JSON response."""
+    from flask import request as _req
+    best = _req.accept_mimetypes.best_match(["application/json", "text/html"])
+    return (
+        best == "application/json"
+        or _req.path.startswith("/api/")
+        or _req.is_json
+    )
 
 
 def ariapp_execute_db_query(self, profile_cfg, query, query_params):
@@ -1897,6 +1965,22 @@ def ariapp_build_home_page_context(self, user_info, perms):
         self.ari_pages,
         logged_in=(user_info is not None),
     )
+
+    # Surface admin-health status as small badges on matching home cards
+    # (e.g. the APERO profiles card shows a warning dot when a profile
+    # check is failing) — purely a glance-ahead, no extra computation.
+    if user_info and "view.admin" in perms:
+        cache_key = self._admin_health_cache_key(perms)
+        with self._admin_health_cache_lock:
+            cached = self._admin_health_cache.get(cache_key, {})
+        health = cached.get("health", {}) or {}
+        badges = {}
+        for card in context["cards"]:
+            entry = health.get(card.get("id", ""))
+            if isinstance(entry, dict) and entry.get("status"):
+                badges[card["id"]] = entry["status"]
+        context["card_health_badges"] = badges
+
     return context
 
 
@@ -3581,6 +3665,54 @@ def ariapp_api_admin_health_update(self):
     )
 
 
+def ariapp_api_admin_audit_log(self):
+    """Return recent admin audit log entries (super-admin only)."""
+    user_info = auth.get_effective_user(session)
+    if not user_info:
+        return jsonify(success=False, error="Unauthorized"), 401
+
+    perms = permissions_mod.resolve_user_permissions(
+        user_info["groups"], self.ari_groups
+    )
+    if "view.admin" not in perms or not auth.user_is_super_admin(
+        user_info.get("groups", [])
+    ):
+        return jsonify(success=False, error="Forbidden"), 403
+
+    data = request.get_json(silent=True) or {}
+    limit = max(1, min(1000, int(data.get("limit", 200) or 200)))
+    actor = str(data.get("actor", "") or "").strip() or None
+    action_prefix = str(data.get("action_prefix", "") or "").strip() or None
+    target = str(data.get("target", "") or "").strip() or None
+
+    entries = audit_log.query(
+        limit=limit, actor=actor, action_prefix=action_prefix, target=target
+    )
+    return jsonify(success=True, entries=entries, count=len(entries))
+
+
+def ariapp_api_admin_health_history(self):
+    """Return recent admin-health snapshots/trends (super-admin only)."""
+    user_info = auth.get_effective_user(session)
+    if not user_info:
+        return jsonify(success=False, error="Unauthorized"), 401
+
+    perms = permissions_mod.resolve_user_permissions(
+        user_info["groups"], self.ari_groups
+    )
+    if "view.admin" not in perms or not auth.user_is_super_admin(
+        user_info.get("groups", [])
+    ):
+        return jsonify(success=False, error="Forbidden"), 403
+
+    data = request.get_json(silent=True) or {}
+    limit = max(1, min(1000, int(data.get("limit", 200) or 200)))
+    key = str(data.get("key", "") or "").strip() or None
+
+    entries = health_history.query(limit=limit, key=key)
+    return jsonify(success=True, entries=entries, count=len(entries))
+
+
 # Whitelist of individual health keys that page-level checks are
 # allowed to patch directly.  Only keys that mirror a page-owned
 # check are listed here.
@@ -4322,6 +4454,10 @@ def ariapp_refresh_admin_health_entry(self, cache_key, user_info, perms):
         daemon=True,
         name="admin-health-disk-save",
     ).start()
+    try:
+        health_history.record_snapshot(health)
+    except Exception as exc:
+        log.warning("Failed to record health history snapshot: %s", exc)
 
 
 def ariapp_normalize_object_section_pins(value):
@@ -4482,6 +4618,12 @@ def ariapp_start_admin_health_refresher(self):
         name="admin-health-refresher",
     )
     thread.start()
+    digest_thread = threading.Thread(
+        target=self._admin_health_digest_loop,
+        daemon=True,
+        name="admin-health-digest",
+    )
+    digest_thread.start()
 
 
 def ariapp_editable_groups_for_editor(self, user_info, perms):
@@ -5542,6 +5684,69 @@ def ariapp_admin_health_refresher_loop(self):
             ]
         for key, perms in work_items:
             self._refresh_admin_health_entry(key, None, perms)
+
+
+def ariapp_admin_health_digest_loop(self):
+    """Send a daily admin-health digest email to super-admins.
+
+    Sleeps in short increments so it can react promptly to the first
+    health snapshot, then sends at most one digest per UTC calendar day
+    when any check is in 'warning' or 'error' state.
+    """
+    last_sent_date = None
+    while True:
+        time.sleep(900)
+        try:
+            today = datetime.now(timezone.utc).date()
+            if last_sent_date == today:
+                continue
+
+            with self._admin_health_cache_lock:
+                entries = list(self._admin_health_cache.values())
+            health: Dict[str, Any] = {}
+            for entry in entries:
+                health.update(entry.get("health", {}) or {})
+            if not health:
+                continue
+
+            problems = {
+                key: info
+                for key, info in health.items()
+                if isinstance(info, dict) and info.get("status") in ("warning", "error")
+            }
+            if not problems:
+                last_sent_date = today
+                continue
+
+            email_cfg = eb.load_email_config()
+            if not email_cfg.get("enabled", False):
+                last_sent_date = today
+                continue
+
+            recipients = [
+                u.get("email", "").strip()
+                for u in auth.load_users().values()
+                if auth.user_is_super_admin(u.get("groups", [])) and u.get("email", "").strip()
+            ]
+            if not recipients:
+                last_sent_date = today
+                continue
+
+            lines = [f"Admin health digest for {today.isoformat()} (UTC)", ""]
+            for key in sorted(problems):
+                info = problems[key]
+                lines.append(f"- [{info.get('status')}] {key}: {info.get('message', '')}")
+            body = "\n".join(lines)
+            subject = f"APERO RI: {len(problems)} admin health issue(s) - {today.isoformat()}"
+
+            for addr in recipients:
+                err = eb.send_email(addr, subject, body, cfg=email_cfg)
+                if err:
+                    log.warning("Failed to send health digest to %s: %s", addr, err)
+
+            last_sent_date = today
+        except Exception as exc:
+            log.warning("Admin health digest loop iteration failed: %s", exc)
 
 
 def ariapp_prune_forgot_pw_rate_limit(self, now_ts):

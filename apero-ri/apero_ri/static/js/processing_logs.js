@@ -119,6 +119,12 @@
         currentLogfile: "",
         currentLogPath: "",
         logAutoOpened: false,
+        /* ── Server-side pagination (pid page only) ── */
+        pagedMode: false,         /* true once first paged response received */
+        serverTotal: 0,           /* total rows matching current filters     */
+        pageCache: {},            /* key→rows cache for prefetch             */
+        pageCacheTimestamp: 0,    /* invalidated when filters/sort change    */
+        filterDebounceTimer: null,
     };
 
     /* ----------------------------------------------------------
@@ -349,11 +355,18 @@
                     state.sortCol = col;
                     state.sortDir = "asc";
                 }
-                state.filteredRows = sortRows(
-                    state.filteredRows, state.sortCol, state.sortDir
-                );
-                buildHeader();
-                renderPage();
+                if (state.pagedMode) {
+                    /* Sort server-side: reset to page 1. */
+                    _invalidatePageCache();
+                    state.page = 1;
+                    loadPagedData(1, true);
+                } else {
+                    state.filteredRows = sortRows(
+                        state.filteredRows, state.sortCol, state.sortDir
+                    );
+                    buildHeader();
+                    renderPage();
+                }
             });
             dom.headerRow.appendChild(th);
 
@@ -418,7 +431,11 @@
                             }
                         }
                     }
-                    filterRows();
+                    if (state.pagedMode) {
+                        _resetAndFetchPage();
+                    } else {
+                        filterRows();
+                    }
                     if (col === "Finished") {
                         syncSummaryCardStates();
                     }
@@ -433,7 +450,11 @@
                 inp.value = state.filters[col] || "";
                 inp.addEventListener("input", function () {
                     state.filters[col] = inp.value;
-                    filterRows();
+                    if (state.pagedMode) {
+                        _resetAndFetchPage();
+                    } else {
+                        filterRows();
+                    }
                 });
                 td.appendChild(inp);
             }
@@ -815,65 +836,84 @@
         openLogPopup(raw);
     }
 
-    function openLogPopup(cleanLogfile) {
-        if (!dom.logOverlay) return;
-        state.currentLogfile = String(cleanLogfile || "");
-        state.currentLogPath = "";
-        dom.logOverlay.dataset.currentLogfile =
-            state.currentLogfile;
-        dom.logOverlay.dataset.currentLogPath = "";
-        dom.logOverlay.dataset.currentLogText = "";
-        if (dom.logContent) {
-            dom.logContent.dataset.currentLogfile =
-                state.currentLogfile;
-            dom.logContent.dataset.currentLogPath = "";
-            dom.logContent.dataset.currentLogText = "";
-        }
+    /* Current line window (0-based, half-open [from, to)). */
+    var _logFromLine = 0;
+    var _logToLine   = 500;
+    var _logTotalLines = 0;
+
+    function _fetchLogRange(cleanLogfile, fromLine, toLine) {
         dom.logContent.innerHTML =
             "<i class=\"fa-solid fa-spinner fa-spin\"></i> " +
-            "Loading&hellip;";
-        var fname = cleanLogfile.split("/").pop();
-        dom.logFilename.textContent = fname;
-        dom.logOverlay.style.display = "flex";
-        document.body.style.overflow = "hidden";
-
+            "Loading lines " + (fromLine + 1) + "–" + toLine + "&hellip;";
         fetch(cfg.logFileUrl, {
             method: "POST",
             headers: {"Content-Type": "application/json"},
             body: JSON.stringify({
                 profile_id: cfg.profileId,
                 clean_logfile: cleanLogfile,
+                from_line: fromLine,
+                to_line: toLine,
             }),
         })
         .then(function (r) { return r.json(); })
         .then(function (data) {
             var resolvedPath = String(
-                data.log_path ||
-                data.logPath ||
-                data.looked_at ||
-                ""
+                data.log_path || data.logPath || data.looked_at || ""
             );
             state.currentLogPath = resolvedPath;
-            dom.logOverlay.dataset.currentLogPath =
-                resolvedPath;
+            dom.logOverlay.dataset.currentLogPath = resolvedPath;
             if (dom.logContent) {
-                dom.logContent.dataset.currentLogPath =
-                    resolvedPath;
+                dom.logContent.dataset.currentLogPath = resolvedPath;
             }
             if (!data.exists) {
                 var msg = "Log file does not exist.";
-                if (data.looked_at) {
-                    msg += "\n\nLooked at:\n" + 
-                        data.looked_at;
-                }
+                if (data.looked_at) msg += "\n\nLooked at:\n" + data.looked_at;
                 dom.logContent.textContent = msg;
                 return;
             }
+            _logTotalLines = parseInt(data.total_lines || 0, 10);
+            _logFromLine   = parseInt(data.from_line   || 0, 10);
+            _logToLine     = parseInt(data.to_line     || 0, 10);
+            _updateLogRangePicker();
             renderLogContent(data.content || "");
         })
         .catch(function (err) {
             dom.logContent.textContent = "Error: " + err;
         });
+    }
+
+    function _updateLogRangePicker() {
+        var picker = document.getElementById("pl-log-range-picker");
+        if (!picker) return;
+        var fromEl = document.getElementById("pl-log-from");
+        var toEl   = document.getElementById("pl-log-to");
+        var totalEl = document.getElementById("pl-log-total");
+        if (totalEl) totalEl.textContent = String(_logTotalLines);
+        if (fromEl)  fromEl.value = String(_logFromLine + 1);
+        if (toEl)    toEl.value   = String(_logToLine);
+        picker.hidden = (_logTotalLines <= 500);
+    }
+
+    function openLogPopup(cleanLogfile) {
+        if (!dom.logOverlay) return;
+        state.currentLogfile = String(cleanLogfile || "");
+        state.currentLogPath = "";
+        _logFromLine = 0;
+        _logToLine   = 500;
+        _logTotalLines = 0;
+        dom.logOverlay.dataset.currentLogfile = state.currentLogfile;
+        dom.logOverlay.dataset.currentLogPath = "";
+        dom.logOverlay.dataset.currentLogText = "";
+        if (dom.logContent) {
+            dom.logContent.dataset.currentLogfile = state.currentLogfile;
+            dom.logContent.dataset.currentLogPath = "";
+            dom.logContent.dataset.currentLogText = "";
+        }
+        var fname = cleanLogfile.split("/").pop();
+        dom.logFilename.textContent = fname;
+        dom.logOverlay.style.display = "flex";
+        document.body.style.overflow = "hidden";
+        _fetchLogRange(cleanLogfile, 0, 500);
     }
 
     function renderLogContent(text) {
@@ -984,7 +1024,11 @@
                 finSel.value = val;
             }
         }
-        filterRows();
+        if (state.pagedMode) {
+            _resetAndFetchPage();
+        } else {
+            filterRows();
+        }
         syncSummaryCardStates();
     }
 
@@ -1348,9 +1392,197 @@
     }
 
     /* ----------------------------------------------------------
+       Server-side pagination helpers (pid page only)
+    ---------------------------------------------------------- */
+
+    /** Build a cache key string from current page + sort + filters. */
+    function _pagedCacheKey(page) {
+        return JSON.stringify({
+            p: page,
+            pp: state.perPage,
+            sc: state.sortCol,
+            sd: state.sortDir,
+            f: state.filters,
+        });
+    }
+
+    /** Invalidate the page cache (called when filters or sort change). */
+    function _invalidatePageCache() {
+        state.pageCache = {};
+        state.pageCacheTimestamp = Date.now();
+    }
+
+    /** Fetch one page from the server; resolve with the data object. */
+    function _fetchPage(page) {
+        var body = {
+            profile_id: cfg.profileId,
+            pid: cfg.pid,
+            paged: true,
+            page: page,
+            per_page: state.perPage,
+            sort_col: state.sortCol || "",
+            sort_dir: state.sortDir || "asc",
+            filters: state.filters || {},
+        };
+        return fetch(cfg.apiUrl, {
+            method: "POST",
+            headers: {"Content-Type": "application/json"},
+            body: JSON.stringify(body),
+        }).then(function (r) {
+            if (!r.ok) {
+                return r.json().then(function (e) {
+                    throw new Error(e.error || r.statusText);
+                });
+            }
+            return r.json();
+        });
+    }
+
+    /**
+     * Load one page of results, update DOM, and pre-fetch the next page.
+     * @param {number} page
+     * @param {boolean} [skipCache]
+     */
+    function loadPagedData(page, skipCache) {
+        var key = _pagedCacheKey(page);
+        if (!skipCache && state.pageCache[key]) {
+            _applyPagedData(state.pageCache[key], page);
+            _prefetchPage(page + 1);
+            return;
+        }
+        setRefreshBusy(true);
+        _fetchPage(page)
+            .then(function (data) {
+                state.pageCache[key] = data;
+                _applyPagedData(data, page);
+                _prefetchPage(page + 1);
+            })
+            .catch(function (err) {
+                if (dom.tbody) {
+                    dom.tbody.innerHTML =
+                        "<tr><td colspan=\"10\" " +
+                        "style=\"color:var(--ari-error,#f44);padding:1rem\">" +
+                        "Error loading page: " + esc(String(err)) +
+                        "</td></tr>";
+                }
+            })
+            .then(function () { setRefreshBusy(false); });
+    }
+
+    /** Apply a paged API response: update state, rebuild header, render. */
+    function _applyPagedData(data, page) {
+        state.pagedMode  = true;
+        state.serverTotal = parseInt(data.total || 0, 10);
+        state.page        = page;
+        state.allRows     = data.rows || [];
+        state.filteredRows = data.rows || [];  /* server already filtered */
+
+        if (!state.columns.length) {
+            state.columns      = data.columns || [];
+            state.dropdownCols = data.dropdown_columns || [];
+        }
+
+        setLastUpdatedText(data.last_updated || "");
+
+        if (data.group_name && dom.groupName) {
+            dom.groupName.textContent = data.group_name;
+        }
+        renderSummaryCards(data.summary || null, data.group_name);
+        buildHeader();
+        _renderPagedPage();
+        openLogFromUrlParam();
+    }
+
+    /** Re-render the current page (rows already in state.allRows). */
+    function _renderPagedPage() {
+        var total      = state.serverTotal;
+        var pp         = state.perPage || 50;
+        var totalPages = pp === 0 ? 1 : Math.max(1, Math.ceil(total / pp));
+        var page       = state.page;
+
+        if (dom.tbody) {
+            if (!state.allRows.length) {
+                dom.tbody.innerHTML =
+                    "<tr><td colspan=\"" + state.columns.length +
+                    "\" class=\"ot-loading\">No results.</td></tr>";
+            } else {
+                var html = "";
+                state.allRows.forEach(function (row) {
+                    html += "<tr class=\"ot-row\">";
+                    state.columns.forEach(function (col) {
+                        html += "<td class=\"ot-cell\">" +
+                            renderCell(col, row[col], row) + "</td>";
+                    });
+                    html += "</tr>";
+                });
+                dom.tbody.innerHTML = html;
+            }
+        }
+
+        if (dom.rowSummary) {
+            var start = pp === 0 ? 1 : (page - 1) * pp + 1;
+            var end   = pp === 0 ? total : Math.min(page * pp, total);
+            dom.rowSummary.textContent =
+                start + "–" + end + " of " + total + " rows";
+        }
+        if (dom.pageInfo)  dom.pageInfo.textContent  =
+            "Page " + page + " of " + totalPages;
+        if (dom.pageTotal) dom.pageTotal.textContent = String(totalPages);
+        if (dom.pageInput) dom.pageInput.value        = String(page);
+
+        var atFirst = page <= 1, atLast = page >= totalPages;
+        if (dom.btnFirst) dom.btnFirst.disabled = atFirst;
+        if (dom.btnPrev)  dom.btnPrev.disabled  = atFirst;
+        if (dom.btnNext)  dom.btnNext.disabled  = atLast;
+        if (dom.btnLast)  dom.btnLast.disabled  = atLast;
+    }
+
+    /** Pre-fetch a page in the background (low-priority, no DOM update). */
+    function _prefetchPage(page) {
+        var key = _pagedCacheKey(page);
+        if (state.pageCache[key]) return;  /* already cached */
+        /* Use requestIdleCallback if available, else a short timeout. */
+        var go = function () {
+            if (state.pageCache[key]) return;
+            _fetchPage(page).then(function (data) {
+                state.pageCache[key] = data;
+            }).catch(function () {});
+        };
+        if (typeof requestIdleCallback === "function") {
+            requestIdleCallback(go, {timeout: 2000});
+        } else {
+            setTimeout(go, 300);
+        }
+    }
+
+    /**
+     * Reset to page 1 and reload (called when filter or sort changes).
+     * Uses a debounce so rapid keystrokes don't flood the server.
+     */
+    function _resetAndFetchPage() {
+        if (state.filterDebounceTimer) {
+            clearTimeout(state.filterDebounceTimer);
+        }
+        state.filterDebounceTimer = setTimeout(function () {
+            _invalidatePageCache();
+            state.page = 1;
+            loadPagedData(1, true);
+        }, 300);
+    }
+
+    /* ----------------------------------------------------------
        Load data from server
     ---------------------------------------------------------- */
     function loadData(forceRefresh) {
+        /* For the PID page: use server-side pagination so large tables
+           (e.g. 391 K rows) don't transfer all data at once. */
+        if (cfg.mode === "pid") {
+            _invalidatePageCache();
+            state.page = 1;
+            loadPagedData(1, true);
+            return;
+        }
+
         var useForceRefresh = forceRefresh === true;
         var body = {};
         if (cfg.mode === "profile") {
@@ -1560,58 +1792,92 @@
 
         if (dom.perpage) {
             dom.perpage.addEventListener("change", function () {
-                state.perPage = parseInt(dom.perpage.value, 10) || 0;
-                state.page = 1;
-                renderPage();
+                state.perPage = parseInt(dom.perpage.value, 10) || 50;
+                if (state.pagedMode) {
+                    _invalidatePageCache();
+                    state.page = 1;
+                    loadPagedData(1, true);
+                } else {
+                    state.page = 1;
+                    renderPage();
+                }
             });
         }
 
         if (dom.btnRefresh) {
             dom.btnRefresh.addEventListener("click", function () {
-                loadData(true);
+                if (state.pagedMode) {
+                    _invalidatePageCache();
+                    loadPagedData(state.page, true);
+                } else {
+                    loadData(true);
+                }
             });
         }
 
         if (dom.btnFirst) {
             dom.btnFirst.addEventListener("click", function () {
-                state.page = 1; renderPage();
+                if (state.pagedMode) { loadPagedData(1); }
+                else { state.page = 1; renderPage(); }
             });
         }
         if (dom.btnPrev) {
             dom.btnPrev.addEventListener("click", function () {
-                if (state.page > 1) { state.page--; renderPage(); }
+                if (state.pagedMode) {
+                    if (state.page > 1) loadPagedData(state.page - 1);
+                } else {
+                    if (state.page > 1) { state.page--; renderPage(); }
+                }
             });
         }
         if (dom.btnNext) {
             dom.btnNext.addEventListener("click", function () {
-                var perPage = state.perPage;
-                var totalPages = perPage === 0 ? 1
-                    : Math.max(1, Math.ceil(
-                        state.filteredRows.length / perPage));
-                if (state.page < totalPages) {
-                    state.page++; renderPage();
+                if (state.pagedMode) {
+                    var pp = state.perPage || 50;
+                    var tp = Math.max(1, Math.ceil(state.serverTotal / pp));
+                    if (state.page < tp) loadPagedData(state.page + 1);
+                } else {
+                    var perPage = state.perPage;
+                    var totalPages = perPage === 0 ? 1
+                        : Math.max(1, Math.ceil(
+                            state.filteredRows.length / perPage));
+                    if (state.page < totalPages) {
+                        state.page++; renderPage();
+                    }
                 }
             });
         }
         if (dom.btnLast) {
             dom.btnLast.addEventListener("click", function () {
-                var perPage = state.perPage;
-                state.page = perPage === 0 ? 1
-                    : Math.max(1, Math.ceil(
-                        state.filteredRows.length / perPage));
-                renderPage();
+                if (state.pagedMode) {
+                    var pp2 = state.perPage || 50;
+                    var last = Math.max(1, Math.ceil(state.serverTotal / pp2));
+                    loadPagedData(last);
+                } else {
+                    var perPage = state.perPage;
+                    state.page = perPage === 0 ? 1
+                        : Math.max(1, Math.ceil(
+                            state.filteredRows.length / perPage));
+                    renderPage();
+                }
             });
         }
 
         if (dom.pageInput) {
             dom.pageInput.addEventListener("change", function () {
                 var n = parseInt(dom.pageInput.value, 10);
-                var perPage = state.perPage;
-                var totalPages = perPage === 0 ? 1
-                    : Math.max(1, Math.ceil(
-                        state.filteredRows.length / perPage));
-                if (!isNaN(n) && n >= 1 && n <= totalPages) {
-                    state.page = n; renderPage();
+                if (state.pagedMode) {
+                    var pp3 = state.perPage || 50;
+                    var tp3 = Math.max(1, Math.ceil(state.serverTotal / pp3));
+                    if (!isNaN(n) && n >= 1 && n <= tp3) loadPagedData(n);
+                } else {
+                    var perPage = state.perPage;
+                    var totalPages = perPage === 0 ? 1
+                        : Math.max(1, Math.ceil(
+                            state.filteredRows.length / perPage));
+                    if (!isNaN(n) && n >= 1 && n <= totalPages) {
+                        state.page = n; renderPage();
+                    }
                 }
             });
         }
@@ -1716,6 +1982,34 @@
         /* Log viewer maximize toggle (pid page) */
         if (dom.logMaximize) {
             dom.logMaximize.addEventListener("click", toggleLogMaximize);
+        }
+
+        /* Log line-range picker */
+        var rangeGoBtn   = document.getElementById("pl-log-range-go");
+        var rangeTailBtn = document.getElementById("pl-log-range-tail");
+        if (rangeGoBtn) {
+            rangeGoBtn.addEventListener("click", function () {
+                var fromEl = document.getElementById("pl-log-from");
+                var toEl   = document.getElementById("pl-log-to");
+                var from1  = Math.max(1, parseInt((fromEl && fromEl.value) || "1", 10));
+                var to1    = Math.max(from1, parseInt((toEl && toEl.value) || "500", 10));
+                _fetchLogRange(
+                    state.currentLogfile,
+                    from1 - 1,   /* convert 1-based UI to 0-based API */
+                    to1
+                );
+            });
+        }
+        if (rangeTailBtn) {
+            rangeTailBtn.addEventListener("click", function () {
+                if (!_logTotalLines) return;
+                var window500 = Math.max(0, _logTotalLines - 500);
+                var fromEl = document.getElementById("pl-log-from");
+                var toEl   = document.getElementById("pl-log-to");
+                if (fromEl) fromEl.value = String(window500 + 1);
+                if (toEl)   toEl.value   = String(_logTotalLines);
+                _fetchLogRange(state.currentLogfile, window500, _logTotalLines);
+            });
         }
 
         if (cfg.mode === "pid") {

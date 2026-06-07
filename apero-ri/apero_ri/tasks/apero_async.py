@@ -149,7 +149,11 @@ def profile_filter_note(
 # =============================================================================
 # Define functions
 # =============================================================================
-def database_query(params: Dict[str, Any], query: str):
+def database_query(
+    params: Dict[str, Any],
+    query: str,
+    bind_params: Optional[Dict[str, Any]] = None,
+):
     """
     Execute a database query with the given parameters.
 
@@ -160,8 +164,9 @@ def database_query(params: Dict[str, Any], query: str):
     - DATABASE_PASSWORD: str, the database password, e.g. password
     - DATABASE_NAME: str, the database name to connect to
 
-    :param params: A dictionary of parameters for the query.
-    :param query: The database query string to execute.
+    :param params: A dictionary of connection parameters for the database.
+    :param query: The SQL query string (use :name placeholders for bound values).
+    :param bind_params: Optional dict of bound parameter values for the query.
     :return: For row-returning queries, a list of dictionaries.
              For non-row-returning queries, a dictionary with ``rowcount``.
     """
@@ -190,7 +195,10 @@ def database_query(params: Dict[str, Any], query: str):
 
     try:
         with engine.begin() as connection:
-            result = connection.execute(text(query))
+            stmt = text(query)
+            if bind_params:
+                stmt = stmt.bindparams(**bind_params)
+            result = connection.execute(stmt)
             if result.returns_rows:
                 return [dict(row) for row in result.mappings().all()]
             return {"rowcount": result.rowcount}

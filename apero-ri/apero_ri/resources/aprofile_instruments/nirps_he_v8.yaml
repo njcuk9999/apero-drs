@@ -620,6 +620,73 @@ apero-checks:
     # Leave empty to use the dprtypes list above.
     sci_suffix: ''
 
+  # ---------------------------------------------------------------------------
+  # Reduced (red) check settings.
+  # ---------------------------------------------------------------------------
+
+  # Manual-trigger log checks (MANUAL_START, MANUAL_END, APERO_START,
+  # APERO_END, ARI_START, ARI_END).
+  # These checks read a per-profile CSV log from PATH.TRIGGER.
+  # No extra configuration is required beyond setting PATH.TRIGGER in the
+  # admin portal profile editor.
+
+  # Preprocessed pixel-shift check settings (PIXEL_SHIFTS).
+  pixel_shifts:
+    enabled: true
+    dx_key: DETOFFDX
+    dy_key: DETOFFDY
+    file_pattern: '*pp.fits'
+
+  # Low-SNR check settings (LOW_SNR).
+  low_snr:
+    enabled: true
+    dpr_key: HIERARCH ESO DPR TYPE
+    obj_key: DRSOBJN
+    sci_dprtypes:
+      - OBJ_DARK
+      - OBJ_FP
+      - OBJ_SKY
+      - TELLU_SKY
+      - FLUXSTD_SKY
+    snr_keys:
+      - EXTSN015
+      - EXTSN060
+    snr_limit: 10.0
+    file_pattern: '*pp_e2dsff_A.fits'
+
+  # Excess modal noise check settings (EXCESS_MODAL).
+  excess_modal:
+    enabled: true
+    obj_key: DRSOBJN
+    mode_key: DRSMODE
+    sample_order: 58
+    threshold_ha: 0.015
+    threshold_he: 0.010
+    file_pattern: '*e2ds*tcorr_A.fits'
+    # Optional override list of vetted telluric stars.
+    # Leave empty to use the hard-coded default list.
+    vetted_stars: []
+
+  # Previous-reduction completeness check settings (PREV_REDUC).
+  prev_reduc:
+    enabled: true
+    lookback_days: 7
+    raw_suffix: '.fits'
+    pp_suffix: '_pp.fits'
+
+  # Outlier-CCF check settings (BAD_CCF).
+  bad_ccf:
+    enabled: true
+    sci_dprtypes:
+      - OBJ_DARK
+      - OBJ_FP
+      - OBJ_SKY
+    ccf_output: CCF_RV
+    sci_fiber: A
+    bad_nsig: 10.0
+    rv_key: RV_OBJ
+    fwhm_key: CCFMFWHM
+
 # Finder setting.
 finder:
 

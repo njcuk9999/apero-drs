@@ -254,6 +254,12 @@
         <i class="fa-solid fa-rotate-right"></i>
         Re-run this check
     </button>
+    <label for="ac-check-verbose" style="font-size:0.88rem;color:var(--ari-text-muted);margin-left:0.6rem;">Log verbosity:</label>
+    <select id="ac-check-verbose" style="font-size:0.88rem;border:1px solid var(--ari-border);border-radius:0.3rem;padding:0.1rem 0.4rem;background:var(--ari-card-bg);color:var(--ari-text);">
+        <option value="0">0 — no log</option>
+        <option value="1" selected>1 — standard</option>
+        <option value="2">2 — verbose</option>
+    </select>
     <div id="ac-check-task-status" class="ac-task-status">
         Queue: idle
     </div>
@@ -593,13 +599,13 @@
 
     function matchTask(payload) {
         var obsdir = {{ obsdir|tojson }};
-        var checkKey = {{ check_key|tojson }};
+        var checkKey = ({{ check_key|tojson }} || '').toUpperCase();
         var taskId = String(taskState.taskId || '').trim();
         var row = null;
         (payload.running || []).some(function (item) {
             var sameId = taskId && String(item.task_id || '') === taskId;
             var sameObsdir = String(item.obsdir || '') === obsdir;
-            var sameCheck = String(item.check_key || '') === checkKey;
+            var sameCheck = String(item.check_key || '').toUpperCase() === checkKey;
             if (sameId || (sameObsdir && sameCheck)) {
                 row = item;
                 return true;
@@ -612,7 +618,7 @@
         (payload.queued || []).some(function (item) {
             var sameId = taskId && String(item.task_id || '') === taskId;
             var sameObsdir = String(item.obsdir || '') === obsdir;
-            var sameCheck = String(item.check_key || '') === checkKey;
+            var sameCheck = String(item.check_key || '').toUpperCase() === checkKey;
             if (sameId || (sameObsdir && sameCheck)) {
                 row = item;
                 return true;
@@ -625,7 +631,7 @@
         (payload.history || []).some(function (item) {
             var sameId = taskId && String(item.task_id || '') === taskId;
             var sameObsdir = String(item.obsdir || '') === obsdir;
-            var sameCheck = String(item.check_key || '') === checkKey;
+            var sameCheck = String(item.check_key || '').toUpperCase() === checkKey;
             if (sameId || (sameObsdir && sameCheck)) {
                 row = item;
                 return true;
@@ -643,7 +649,7 @@
         var taskId = String(taskState.taskId || '').trim();
         if (!match) {
             if (taskId) {
-                setTaskStatus('queued', 'Queue: ' + taskId + ' (syncing)');
+                setTaskStatus('queued', 'Queue: ' + taskId + ' (pending…)');
             }
             return false;
         }
@@ -874,11 +880,14 @@
     var rerunBtn = document.getElementById('ac-check-rerun');
     if (rerunBtn) {
         rerunBtn.addEventListener('click', function () {
+            var verbSel = document.getElementById('ac-check-verbose');
+            var verbose = verbSel ? parseInt(verbSel.value, 10) : 1;
             setTaskStatus('queued', 'Queue: submitting...');
             postJson({{ api_rerun_check_url|tojson }}, {
                 profile_id: {{ profile_id|tojson }},
                 obsdir: {{ obsdir|tojson }},
                 check_key: {{ check_key|tojson }},
+                verbose: verbose,
             }).then(function (data) {
                 taskState.taskId = String(data.task_id || '').trim();
                 taskState.awaitingRefresh = true;

@@ -4,6 +4,8 @@
 
 from __future__ import annotations
 
+import threading
+import time
 import traceback
 import uuid
 import re
@@ -11,6 +13,11 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 from flask import jsonify, request
+
+# ── Per-call results cache for check_results endpoint ────────────────────────
+_RESULTS_CACHE: dict = {}
+_RESULTS_LOCK = threading.Lock()
+_RESULTS_TTL_S = 120  # 2 minutes
 
 from apero_ri.application.issues_api_helpers import _data_dir
 from apero_ri.application.monitor_view_helpers import _has_any_monitor_perm
@@ -115,6 +122,7 @@ def _queue_apero_check_run(
     check_names=None,
     history_user: str = '',
     history_source: str = '',
+    verbose: int = 1,
 ):
     """Queue one APERO check task for a specific night/check selection."""
     profile = _resolve_accessible_profile(app, profile_id)
@@ -162,6 +170,11 @@ def _queue_apero_check_run(
         task_cfg['history_user'] = str(history_user).strip()
     if str(history_source or '').strip():
         task_cfg['history_source'] = str(history_source).strip()
+    # Verbosity: 0=no log, 1=profile/obsdir events, 2=every check result.
+    try:
+        task_cfg['verbose'] = max(0, min(2, int(verbose or 1)))
+    except (TypeError, ValueError):
+        task_cfg['verbose'] = 1
 
     allowed, reason = task_runner.can_enqueue_now(task_cfg)
     if not allowed:
@@ -196,6 +209,7 @@ def _queue_apero_check_run(
         instance,
         run_params,
         prepend=True,
+        queue='apero_checks',
     )
     return dict(task_id=task_id, instrument=instrument)
 
@@ -274,6 +288,7 @@ def _queue_apero_check_profile_run(
         instance,
         run_params,
         prepend=True,
+        queue='apero_checks',
     )
     return dict(task_id=task_id, instrument=instrument)
 
@@ -302,7 +317,7 @@ def _manual_task_meta_from_task_cfg(task_cfg: dict) -> dict:
         obsdir = str(obs_dirs[0] or '')
     check_key = ''
     if isinstance(checks, list) and checks:
-        check_key = str(checks[0] or '')
+        check_key = str(checks[0] or '').upper()  # normalise to uppercase
     profile_id = ''
     include = filters.get('APERO_PROFILE_INCLUDE')
     if isinstance(include, list) and include:
@@ -343,7 +358,9 @@ def _manual_task_meta_from_id(task_id: str) -> dict:
     if mode == 'check':
         out['mode'] = 'single_check'
         out['label'] = 'Individual test re-run'
-        out['check_key'] = '' if check_key == 'all' else check_key
+        # Uppercase to match the URL parameter / template variable (e.g. 'ASTROM').
+        # The slug encodes lowercase so we normalise back here.
+        out['check_key'] = '' if check_key == 'all' else check_key.upper()
     elif mode == 'night':
         out['mode'] = 'full_obsdir'
         out['label'] = 'Full obsdir re-run'
@@ -404,8 +421,15 @@ def _queue_status_payload(app, profile_id: str) -> dict:
     running = []
     queued = []
 
-    current_info = status.get('current_info')
-    if isinstance(current_info, dict):
+    # Gather current running tasks from BOTH queues.
+    # APERO check tasks now run on the dedicated checks worker.
+    _current_candidates = [
+        status.get('current_info'),
+        status.get('apero_check_current_info'),
+    ]
+    for current_info in _current_candidates:
+        if not isinstance(current_info, dict):
+            continue
         task_id = str(current_info.get('task_id') or '')
         detail = task_runner.get_task_status(task_id)
         if detail.get('found') and _task_matches_profile(
@@ -432,7 +456,10 @@ def _queue_status_payload(app, profile_id: str) -> dict:
                 'check_key': task_meta.get('check_key'),
             })
 
-    for index, queue_item in enumerate(status.get('queue_info') or [], 1):
+    # Gather queued tasks from BOTH queues.
+    _all_queue_items = list(status.get('queue_info') or []) + \
+                       list(status.get('apero_check_queue_info') or [])
+    for index, queue_item in enumerate(_all_queue_items, 1):
         if not isinstance(queue_item, dict):
             continue
         task_id = str(queue_item.get('task_id') or '')
@@ -465,28 +492,35 @@ def _queue_status_payload(app, profile_id: str) -> dict:
             'check_key': task_meta.get('check_key'),
         })
 
+    # Use per-profile persistent history (separate from the global async file).
     history = []
-    for row in status.get('recent_history') or []:
+    for row in task_runner.get_profile_check_history(profile_id, limit=200):
         if not isinstance(row, dict):
             continue
         task_id = str(row.get('task_id') or '')
-        if not task_id.startswith('manual_apero_check__'):
-            continue
-        meta = _manual_task_meta_from_id(task_id)
-        expected = _slug_task_token(profile_id)
-        if str(meta.get('profile_id') or '') != expected:
-            continue
+        # Build display metadata from the stored fields (already decoded).
+        stored_mode = str(row.get('task_mode') or '')
+        stored_obsdir = str(row.get('obsdir') or '')
+        stored_check = str(row.get('check_key') or '')
+        # Derive label for the mode pill.
+        if stored_mode == 'check' and stored_check:
+            label = stored_check
+        elif stored_mode == 'night':
+            label = 'Full night'
+        else:
+            label = stored_mode or 'run'
         history.append({
             'timestamp': str(row.get('timestamp') or ''),
             'task_id': task_id,
             'task_name': str(row.get('task_name') or task_id),
             'status': str(row.get('status') or ''),
             'details': str(row.get('details') or ''),
+            'log_path': str(row.get('log_path') or ''),
             'duration_seconds': row.get('duration_seconds'),
-            'task_mode': meta.get('mode'),
-            'task_label': meta.get('label'),
-            'obsdir': meta.get('obsdir'),
-            'check_key': meta.get('check_key'),
+            'task_mode': stored_mode,
+            'task_label': label,
+            'obsdir': stored_obsdir,
+            'check_key': stored_check,
         })
 
     return {
@@ -573,6 +607,16 @@ def api_apero_checks_update_failure(app):
             )
     except Exception as exc:
         return jsonify(success=False, error=str(exc)), 500
+
+    # Keep the checks index in sync after every YAML mutation.
+    try:
+        from apero_ri.core import checks_index as _ci
+        from apero_ri.apero_monitoring.checks import CHECKS as _MC
+        _ci.update_obsdir(profile_id, obsdir, path, loaded,
+                          set(checks_core.load_ignored_checks(
+                              app._resolve_local_data_dir())))
+    except Exception:
+        pass  # index update is best-effort; never block the response
 
     return jsonify(success=True, check=loaded)
 
@@ -783,6 +827,26 @@ def api_apero_checks_profile_page(app, profile_id):
     )
 
 
+def api_apero_checks_policy_build_status(app):
+    """Return the current background policy-build status (lightweight poll)."""
+    user_info = app._get_api_user()
+    if not user_info:
+        return jsonify(success=False, error='Login required'), 401
+    perms = resolve_user_permissions(user_info['groups'], app.ari_groups)
+    if 'manage.apero_profile' not in set(perms or set()):
+        return jsonify(success=False, error='Admin access required'), 403
+
+    from apero_ri.application import page_view_helpers as pvh
+    st = pvh._POLICY_BUILD_STATUS
+    return jsonify(
+        success=True,
+        is_building=bool(st.get('is_building')),
+        step=str(st.get('step') or ''),
+        pct=float(st.get('pct') or 0.0),
+        error=st.get('error'),
+    )
+
+
 def api_apero_checks_policy_sections(app):
     """Return heavy APERO checks policy sections asynchronously."""
     user_info = app._get_api_user()
@@ -820,6 +884,8 @@ def api_apero_checks_policy_sections(app):
         profile_summaries=payload.get('profile_summaries', []),
         policy_last_updated=payload.get('policy_last_updated', ''),
         checks_health=checks_health,
+        is_stale=bool(payload.get('is_stale')),
+        is_building=bool(payload.get('is_building')),
     )
 
 
@@ -903,6 +969,10 @@ def api_apero_checks_rerun_night(app):
     obsdir = str(body.get('obsdir') or '').strip()
     if not profile_id or not obsdir:
         return jsonify(success=False, error='Missing profile_id or obsdir'), 400
+    try:
+        verbose = max(0, min(2, int(body.get('verbose', 1) or 1)))
+    except (TypeError, ValueError):
+        verbose = 1
 
     try:
         queued = _queue_apero_check_run(
@@ -912,6 +982,7 @@ def api_apero_checks_rerun_night(app):
             check_names=[],
             history_user=str(user_info.get('username') or '').strip(),
             history_source='ARI:apero_checks',
+            verbose=verbose,
         )
     except Exception as exc:
         return jsonify(success=False, error=str(exc)), 400
@@ -943,6 +1014,10 @@ def api_apero_checks_rerun_single_check(app):
             success=False,
             error='Missing profile_id, obsdir or check_key',
         ), 400
+    try:
+        verbose = max(0, min(2, int(body.get('verbose', 1) or 1)))
+    except (TypeError, ValueError):
+        verbose = 1
 
     try:
         queued = _queue_apero_check_run(
@@ -952,6 +1027,7 @@ def api_apero_checks_rerun_single_check(app):
             check_names=[check_key],
             history_user=str(user_info.get('username') or '').strip(),
             history_source='ARI:apero_checks',
+            verbose=verbose,
         )
     except Exception as exc:
         return jsonify(success=False, error=str(exc)), 400
@@ -1010,6 +1086,13 @@ def api_apero_checks_clean_reset_profile(app):
             details=failures[:10],
         ), 500
 
+    # Wipe the index for this profile since all YAMLs have been deleted.
+    try:
+        from apero_ri.core import checks_index as _ci
+        _ci.delete_all_obsdirs(profile_id)
+    except Exception:
+        pass
+
     try:
         queued = _queue_apero_check_profile_run(
             app,
@@ -1064,6 +1147,12 @@ def api_apero_checks_delete_obsdir(app):
             error='Failed to remove YAML file',
             traceback=traceback.format_exc(),
         ), 500
+
+    try:
+        from apero_ri.core import checks_index as _ci
+        _ci.delete_obsdir(profile_id, obsdir)
+    except Exception:
+        pass
 
     return jsonify(success=True, deleted_path=str(path))
 
@@ -1132,6 +1221,16 @@ def api_apero_checks_delete_test_from_yamls(app):
         if bool(outcome.get('changed')):
             updated += 1
 
+    # Invalidate the index for every affected profile so the next build
+    # re-scans the modified files.
+    if updated > 0:
+        try:
+            from apero_ri.core import checks_index as _ci
+            for _pid in selected_profiles:
+                _ci.invalidate_index(_pid)
+        except Exception:
+            pass
+
     return jsonify(
         success=True,
         check_key=check_key,
@@ -1162,6 +1261,21 @@ def api_apero_checks_queue_status(app, profile_id):
         ), 404
 
     payload = _queue_status_payload(app, profile_id)
+
+    # Include a compact debug snapshot so browser dev-tools can show why
+    # tasks are missing from running/queued/history.
+    if request.args.get('debug'):
+        raw = task_runner.get_status()
+        payload['_debug'] = {
+            'global_queue_len':        raw.get('queue_length', 0),
+            'apero_check_queue_len':   raw.get('apero_check_queue_length', 0),
+            'global_current':          raw.get('current'),
+            'apero_check_current':     raw.get('apero_check_current'),
+            'named_queue_names':       list((raw.get('named_queues') or {}).keys()),
+            'apero_check_queue_items': raw.get('apero_check_queue', []),
+            'apero_check_current_info': raw.get('apero_check_current_info'),
+        }
+
     return jsonify(success=True, **payload)
 
 
@@ -1221,17 +1335,69 @@ def api_apero_checks_queue_kill_profile(app, profile_id):
 
 
 def api_apero_checks_queue_clear_history(app, profile_id):
-    """Clear recent async history (global operation)."""
+    """Clear the per-profile APERO-check history for this profile."""
     user_info, perms = _api_user(app)
     if not _has_any_monitor_perm(perms):
         return jsonify(success=False, error='Monitor access required'), 403
 
-    result = task_runner.clear_recent_history()
+    result = task_runner.clear_profile_check_history(profile_id)
     return jsonify(
         success=True,
         profile_id=profile_id,
-        scope='global',
+        scope='profile',
         result=result,
+    )
+
+
+def api_apero_checks_check_info_async(app):
+    """Return counts + profile_options for one check key (async load).
+
+    Called by the check-info page after first paint so the page itself can
+    render immediately without waiting for the (potentially slow) full policy
+    payload scan.  Uses the cached policy payload when warm; triggers a build
+    only when the cache is cold.
+
+    Query parameter:  check  (required) — e.g. "ASTROM"
+    """
+    user_info, perms = _api_user(app)
+    if not _has_any_monitor_perm(perms):
+        return jsonify(success=False, error='Monitor access required'), 403
+
+    check_key = str(request.args.get('check', '') or '').strip().upper()
+    if not check_key:
+        return jsonify(success=False, error='check required'), 400
+
+    from apero_ri.application import page_view_helpers as pvh
+
+    local_data_dir = app._resolve_local_data_dir()
+    checks_cfg = checks_core.load_config(local_data_dir)
+    ignored_checks = checks_core.load_ignored_checks(local_data_dir)
+    override_allowed = checks_core.load_override_allowed(local_data_dir)
+    payload = pvh._build_apero_policy_payload(
+        local_data_dir, checks_cfg, ignored_checks, override_allowed,
+    )
+
+    counts = None
+    for item in list(payload.get('checks_catalog', []) or []):
+        if str(item.get('check_key') or '').upper() == check_key:
+            counts = dict(item.get('counts') or {})
+            break
+
+    if counts is None:
+        counts = pvh._empty_check_stats()
+
+    profile_options = sorted({
+        str(row.get('profile_id') or '').strip()
+        for row in list(payload.get('profile_summaries', []) or [])
+        if str(row.get('profile_id') or '').strip()
+    })
+
+    return jsonify(
+        success=True,
+        check_key=check_key,
+        counts=counts,
+        profile_options=profile_options,
+        policy_last_updated=payload.get('policy_last_updated', ''),
     )
 
 
@@ -1250,57 +1416,141 @@ def api_apero_checks_check_results(app):
         return jsonify(success=False, error='Monitor access required'), 403
 
     check_key = str(request.args.get('check_key', '') or '').strip()
+    profile_id_filter = str(request.args.get('profile_id', '') or '').strip()
     state_filter = str(request.args.get('state', '') or '').strip().lower()
-    if not check_key or not state_filter:
-        return jsonify(success=False, error='check_key and state required'), 400
+    if (not check_key and not profile_id_filter) or not state_filter:
+        return jsonify(
+            success=False,
+            error='(check_key or profile_id) and state required'
+        ), 400
 
     from apero_ri.application import page_view_helpers as pvh
     from flask import url_for as _flask_url_for
 
-    local_data_dir = app._resolve_local_data_dir()
-    checks_cfg = checks_core.load_config(local_data_dir)
-    ignored_checks = set(checks_core.load_ignored_checks(local_data_dir))
+    force_refresh = str(
+        request.args.get('force_refresh', '') or ''
+    ).strip().lower() in ('1', 'true', 'yes')
 
-    profile_rows = pvh._collect_policy_roots(local_data_dir, checks_cfg)
+    if not force_refresh and check_key and not profile_id_filter:
+        # Fast path: single-check, use the pre-built results index (O(1)).
+        index = pvh._APERO_POLICY_CACHE.get('check_results_index') or {}
+        if index:
+            raw_rows = (index.get(check_key) or {}).get(state_filter, [])
+            rows = []
+            for entry in raw_rows:
+                pid = entry.get('profile_id', '')
+                obs = entry.get('obsdir', '')
+                try:
+                    url = _flask_url_for(
+                        'monitor_apero_checks_obsdir_view',
+                        profile_id=pid, obsdir=obs,
+                    )
+                except Exception:
+                    url = ''
+                rows.append(dict(profile_id=pid, obsdir=obs,
+                                 check_key=check_key,
+                                 state=state_filter, obsdir_url=url))
+            rows.sort(key=lambda r: (r['profile_id'], r['obsdir']))
+            return jsonify(success=True, check_key=check_key,
+                           profile_id='', state=state_filter,
+                           rows=rows, has_check_column=False,
+                           from_cache=True)
 
-    rows = []
-    for row in profile_rows:
-        profile_id = str(row.get('profile_id') or '')
-        checks_root = row.get('checks_root')
-        if not checks_root:
-            continue
-        for yaml_path in sorted(Path(checks_root).glob('*.yaml')):
-            obsdir = yaml_path.stem  # filename without .yaml
-            try:
-                loaded = checks_core.load_check_file(yaml_path)
-            except Exception:
+    # force_refresh=true  OR  no in-memory index yet.
+    # Read directly from the per-profile disk index files (always current —
+    # updated on every YAML mutation) rather than triggering a full rebuild.
+    # This is fast: small local-disk reads, no YAML scanning required.
+    try:
+        from apero_ri.core import checks_index as _cidx
+        accessible = get_accessible_profiles(user_info, app.ari_groups) or []
+        # Narrow to a specific profile when profile_id_filter is set.
+        if profile_id_filter:
+            accessible = [
+                p for p in accessible
+                if str(p.get('profile_id') or '') == profile_id_filter
+            ]
+        rows = []
+        for prof in accessible:
+            pid = str(prof.get('profile_id') or '').strip()
+            if not pid:
                 continue
-            # Look in failures and passes for this check_key.
-            for bucket in ('failures', 'passes'):
-                bucket_data = loaded.get(bucket, {})
-                if not isinstance(bucket_data, dict):
-                    continue
-                check_row = bucket_data.get(check_key)
-                if check_row is None:
-                    continue
-                row_state = pvh._row_state(bucket, check_row or {})
-                if row_state == state_filter:
+            if check_key:
+                # Single-check mode: entries for this check across obsdirs.
+                for entry in _cidx.get_check_results(
+                        pid, check_key, state_filter):
+                    obs = entry.get('obsdir', '')
                     try:
-                        obsdir_url = _flask_url_for(
+                        url = _flask_url_for(
                             'monitor_apero_checks_obsdir_view',
-                            profile_id=profile_id,
-                            obsdir=obsdir,
+                            profile_id=pid, obsdir=obs,
                         )
                     except Exception:
-                        obsdir_url = ''
-                    rows.append(dict(
-                        profile_id=profile_id,
-                        obsdir=obsdir,
-                        state=row_state,
-                        obsdir_url=obsdir_url,
-                    ))
-                    break  # only one state per obsdir/check
+                        url = ''
+                    rows.append(dict(profile_id=pid, obsdir=obs,
+                                     check_key=check_key,
+                                     state=state_filter, obsdir_url=url))
+            else:
+                # Profile mode: all checks for this profile in this state.
+                idx = _cidx.load_index(pid)
+                for obsdir, record in (idx.get('entries') or {}).items():
+                    for ck, ck_state in (record.get('s') or {}).items():
+                        if ck_state != state_filter:
+                            continue
+                        try:
+                            url = _flask_url_for(
+                                'monitor_apero_checks_obsdir_view',
+                                profile_id=pid, obsdir=obsdir,
+                            )
+                        except Exception:
+                            url = ''
+                        rows.append(dict(
+                            profile_id=pid,
+                            obsdir=obsdir,
+                            check_key=ck,
+                            state=state_filter,
+                            obsdir_url=url,
+                        ))
+        rows.sort(key=lambda r: (
+            r['profile_id'], r['obsdir'], r.get('check_key', '')
+        ))
+        # Patch the in-memory check_results_index so the next single-check
+        # call is instant (profile-mode results are not cached).
+        if rows and check_key:
+            ci_ref = pvh._APERO_POLICY_CACHE.setdefault(
+                'check_results_index', {}
+            )
+            ci_ref.setdefault(check_key, {})[state_filter] = [
+                {'profile_id': r['profile_id'], 'obsdir': r['obsdir']}
+                for r in rows
+            ]
+        has_check_col = not check_key or bool(profile_id_filter)
+        return jsonify(success=True, check_key=check_key,
+                       profile_id=profile_id_filter,
+                       state=state_filter, rows=rows,
+                       has_check_column=has_check_col,
+                       from_cache=False, refreshed=True)
+    except Exception:
+        pass  # fall through to the building path below
 
-    rows.sort(key=lambda r: (r['profile_id'], r['obsdir']))
-    return jsonify(success=True, check_key=check_key, state=state_filter,
-                   rows=rows)
+    # Index not ready yet (build still running or no build started).
+    # Kick off a background build if one is not already running, and
+    # return a "building" response so the client can poll for readiness.
+    build_status = pvh._POLICY_BUILD_STATUS
+    is_building = bool(build_status.get('is_building'))
+    if not is_building:
+        local_data_dir = app._resolve_local_data_dir()
+        checks_cfg = checks_core.load_config(local_data_dir)
+        ignored_checks = checks_core.load_ignored_checks(local_data_dir)
+        override_allowed = checks_core.load_override_allowed(local_data_dir)
+        pvh._start_background_build(
+            local_data_dir, checks_cfg, ignored_checks, override_allowed
+        )
+    return jsonify(
+        success=True,
+        check_key=check_key,
+        state=state_filter,
+        rows=[],
+        is_building=True,
+        build_step=str(build_status.get('step') or 'Building index…'),
+        build_pct=float(build_status.get('pct') or 0.0),
+    )

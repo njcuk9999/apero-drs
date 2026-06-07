@@ -15,6 +15,18 @@
     var catalogWrap = document.getElementById('acp-check-catalog');
     var summaryLoading = document.getElementById('acp-summary-loading');
     var summaryWrap = document.getElementById('acp-profile-summaries');
+    /* Event delegation: clicks on profile-summary state chips open the overlay */
+    if (summaryWrap) {
+        summaryWrap.addEventListener('click', function (e) {
+            var chip = e.target.closest('[data-state][data-profile-id]');
+            if (!chip) return;
+            var state     = chip.getAttribute('data-state');
+            var profileId = chip.getAttribute('data-profile-id');
+            if (state && profileId && window.ACI_RESULTS_OVERLAY) {
+                ACI_RESULTS_OVERLAY.open(state, '', profileId);
+            }
+        });
+    }
     var updatedEl = document.getElementById('acp-last-updated');
     var runProfile = document.getElementById('acp-run-profile');
     var runAllChecks = document.getElementById('acp-run-all-checks');
@@ -197,18 +209,26 @@
             html += '<span class="acp-note">'
                 + escHtml(counts.total || 0) + ' nights</span>';
             html += '</summary>';
+            var pid = escHtml(row.profile_id);
             html += '<div class="acp-summary__counts">';
-            html += '<span class="acp-chip acp-chip--passed">Passed: '
-                + escHtml(counts.passed || 0) + '</span>';
-            html += '<span class="acp-chip acp-chip--overridden">'
-                + 'Overridden: ' + escHtml(counts.overridden || 0) + '</span>';
-            html += '<span class="acp-chip acp-chip--monitored">'
-                + 'Monitored: ' + escHtml(counts.monitored || 0) + '</span>';
-            html += '<span class="acp-chip acp-chip--mixed">'
-                + 'Overridden and monitored: '
-                + escHtml(counts.mixed || 0) + '</span>';
-            html += '<span class="acp-chip acp-chip--failed">'
-                + 'Failed: ' + escHtml(counts.failed || 0) + '</span>';
+            function chip(state, cls, label, count) {
+                if (!count) {
+                    return '<span class="acp-chip ' + cls + '">'
+                        + label + ': 0</span>';
+                }
+                return '<button class="acp-chip ' + cls
+                    + ' acp-chip--clickable" type="button"'
+                    + ' data-state="' + state + '"'
+                    + ' data-profile-id="' + pid + '"'
+                    + ' title="Click to see ' + label.toLowerCase()
+                    + ' nights for ' + pid + '">'
+                    + label + ': ' + escHtml(count) + '</button>';
+            }
+            html += chip('passed',    'acp-chip--passed',    'Passed',    counts.passed    || 0);
+            html += chip('overridden','acp-chip--overridden','Overridden', counts.overridden|| 0);
+            html += chip('monitored', 'acp-chip--monitored', 'Monitored', counts.monitored || 0);
+            html += chip('mixed',     'acp-chip--mixed',     'Overridden and monitored', counts.mixed || 0);
+            html += chip('failed',    'acp-chip--failed',    'Failed',    counts.failed    || 0);
             html += '</div>';
             html += '<div class="acp-summary__body">Checks root: '
                 + escHtml(row.checks_root || '') + '</div>';
@@ -736,6 +756,69 @@
         }
     }
 
+    var buildStatusUrl  = String(cfg.buildStatusUrl || '');
+    var _buildPollTimer = null;
+    var _buildBannerEl  = null;
+
+    function _getOrCreateBuildBanner() {
+        if (_buildBannerEl) return _buildBannerEl;
+        _buildBannerEl = document.createElement('div');
+        _buildBannerEl.id = 'acp-build-banner';
+        _buildBannerEl.className = 'acp-build-banner';
+        _buildBannerEl.hidden = true;
+        var header = document.querySelector('.ari-page-header') ||
+                     document.body.firstElementChild;
+        if (header && header.parentNode) {
+            header.parentNode.insertBefore(_buildBannerEl, header.nextSibling);
+        } else {
+            document.body.insertBefore(_buildBannerEl, document.body.firstChild);
+        }
+        return _buildBannerEl;
+    }
+
+    function _showBuildBanner(step, pct) {
+        var el = _getOrCreateBuildBanner();
+        var barWidth = Math.round(Math.max(4, Math.min(100, pct || 0)));
+        el.innerHTML =
+            '<span class="acp-build-banner__icon">' +
+            '<i class="fa-solid fa-spinner fa-spin"></i></span>' +
+            '<span class="acp-build-banner__text">' +
+            (step || 'Building index…') + '</span>' +
+            '<span class="acp-build-banner__bar-wrap">' +
+            '<span class="acp-build-banner__bar" style="width:' +
+            barWidth + '%"></span></span>';
+        el.hidden = false;
+    }
+
+    function _hideBuildBanner() {
+        var el = _getOrCreateBuildBanner();
+        el.hidden = true;
+        if (_buildPollTimer) {
+            clearTimeout(_buildPollTimer);
+            _buildPollTimer = null;
+        }
+    }
+
+    function _pollBuildStatus() {
+        if (!buildStatusUrl) return;
+        fetch(buildStatusUrl)
+            .then(function (r) { return r.json(); })
+            .then(function (st) {
+                if (!st.success) return;
+                if (st.is_building) {
+                    _showBuildBanner(st.step, st.pct);
+                    _buildPollTimer = setTimeout(_pollBuildStatus, 3000);
+                } else {
+                    // Build finished — refresh the catalog data.
+                    _hideBuildBanner();
+                    loadSections();
+                }
+            })
+            .catch(function () {
+                _buildPollTimer = setTimeout(_pollBuildStatus, 5000);
+            });
+    }
+
     function loadSections() {
         if (!sectionsApiUrl) {
             setLoading('Failed to load section.');
@@ -765,6 +848,14 @@
                 hideLoading();
                 applyCatalogFilter();
                 syncRunControlState();
+
+                // If the server returned stale / still-building data,
+                // start polling so the UI refreshes when the build finishes.
+                if (data.is_building) {
+                    _pollBuildStatus();
+                } else {
+                    _hideBuildBanner();
+                }
             })
             .catch(function () {
                 setLoading('Failed to load section.');

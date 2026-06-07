@@ -16,6 +16,45 @@
     color: var(--ari-text-muted);
     font-size: 0.9rem;
 }
+.acq-log-btn {
+    background: none;
+    border: none;
+    padding: 0.1rem 0.35rem;
+    cursor: pointer;
+    color: var(--ari-accent, #1d6fdb);
+    font-size: 0.88rem;
+    border-radius: 0.4rem;
+}
+.acq-log-btn:hover { background: var(--ari-surface-muted, #f0f4fa); }
+.acq-log-panel {
+    display: none;
+    margin-top: 0.5rem;
+    background: var(--ari-code-bg, #1a1d23);
+    color: var(--ari-code-text, #cdd9e5);
+    border-radius: 0.5rem;
+    padding: 0.6rem 0.8rem;
+    font-family: monospace;
+    font-size: 0.78rem;
+    max-height: 18rem;
+    overflow-y: auto;
+    white-space: pre-wrap;
+    word-break: break-all;
+}
+.acq-verbose-row {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.88rem;
+    color: var(--ari-text-muted);
+}
+.acq-verbose-row select {
+    border: 1px solid var(--ari-border);
+    border-radius: 0.35rem;
+    padding: 0.1rem 0.4rem;
+    font-size: 0.88rem;
+    background: var(--ari-card-bg);
+    color: var(--ari-text);
+}
 .acq-grid {
     display: grid;
     grid-template-columns: 1fr;
@@ -93,7 +132,7 @@
     color: var(--ari-text-muted);
 }
 </style>
-<script src="{{ url_for('static', filename='js/apero_checks_queue.js') }}?v=20260520a"
+<script src="{{ url_for('static', filename='js/apero_checks_queue.js') }}?v=20260606a"
         defer></script>
 {% endblock %}
 
@@ -137,9 +176,18 @@
     <button id="acq-btn-clear" class="ari-btn ari-btn--sm ari-btn--secondary">
         <i class="fa-solid fa-eraser"></i> Clear History
     </button>
+    <div class="acq-verbose-row">
+        <label for="acq-verbose-select">Log verbosity:</label>
+        <select id="acq-verbose-select">
+            <option value="0">0 — no log</option>
+            <option value="1" selected>1 — standard (profile &amp; obsdir events)</option>
+            <option value="2">2 — verbose (every check result)</option>
+        </select>
+    </div>
 </div>
 <div class="acq-note">
-    Clear History uses the shared async task history file (global clear).
+    Clear History removes this profile's APERO-check history only.
+    Log verbosity applies to the next queued check run.
 </div>
 
 <div class="acq-grid">
@@ -198,12 +246,14 @@
                         <th>Obsdir</th>
                         <th>Check</th>
                         <th>Status</th>
-                        <th>Details</th>
+                        <th>Duration</th>
+                        <th>Last Log</th>
                     </tr>
                 </thead>
                 <tbody></tbody>
             </table>
         </div>
+        <div id="acq-log-panel" class="acq-log-panel"></div>
     </section>
 </div>
 
@@ -213,7 +263,8 @@ window.ARI_APERO_CHECKS_QUEUE = {
     statusUrl: {{ url_for('api_apero_checks_queue_status', profile_id=profile_id)|tojson }},
     cancelUrl: {{ url_for('api_apero_checks_queue_cancel_task', profile_id=profile_id)|tojson }},
     killUrl: {{ url_for('api_apero_checks_queue_kill_profile', profile_id=profile_id)|tojson }},
-    clearUrl: {{ url_for('api_apero_checks_queue_clear_history', profile_id=profile_id)|tojson }}
+    clearUrl: {{ url_for('api_apero_checks_queue_clear_history', profile_id=profile_id)|tojson }},
+    taskLogUrl: {{ url_for('api_async_tasks_task_log')|tojson }}
 };
 </script>
 {% endblock %}

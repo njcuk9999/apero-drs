@@ -8,6 +8,7 @@ password hashing via the cryptography package, and Flask session login.
 """
 
 import base64
+import binascii
 import os
 import threading
 import time
@@ -17,6 +18,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional, Set
 
 import yaml
+from apero_ri.core.log import get_logger
 from apero_ri.core.permissions import (
     load_groups,
     load_pages,
@@ -24,6 +26,8 @@ from apero_ri.core.permissions import (
 )
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
+
+log = get_logger(__name__)
 
 # =============================================================================
 # Define variables
@@ -51,9 +55,8 @@ _PROFILES_TTL: float = 30.0  # seconds between re-reads
 _profiles_cache: dict = {}  # key: 'raw' or 'hydrated' -> {'expires', 'data'}
 _profiles_lock = threading.Lock()
 
-# Default admin account
-DEFAULT_USER = "neil"
-DEFAULT_PASSWORD = "1234"
+# Default admin account — username is fixed; password is generated on first run.
+DEFAULT_USER = "admin"
 DEFAULT_GROUPS = ["super_admin"]
 
 
@@ -116,7 +119,7 @@ def verify_password(password: str, stored_hash: str) -> bool:
         salt_b64, key_b64 = stored_hash.split(":")
         salt = base64.b64decode(salt_b64)
         stored_key = base64.b64decode(key_b64)
-    except (ValueError, Exception):
+    except (ValueError, binascii.Error):
         return False
 
     kdf = PBKDF2HMAC(
@@ -128,7 +131,7 @@ def verify_password(password: str, stored_hash: str) -> bool:
     try:
         kdf.verify(password.encode("utf-8"), stored_key)
         return True
-    except Exception:
+    except Exception:  # cryptography raises InvalidKey (not public API) on mismatch
         return False
 
 
@@ -151,8 +154,8 @@ def load_users() -> Dict[str, dict]:
     if not USERS_FILE.exists() and legacy_file.exists():
         try:
             USERS_FILE.write_bytes(legacy_file.read_bytes())
-        except Exception:
-            pass
+        except OSError as exc:
+            log.warning("Could not migrate legacy users file: %s", exc)
     if not USERS_FILE.exists():
         return {}
     with open(USERS_FILE, "r", encoding="utf-8") as f:
@@ -178,15 +181,34 @@ def create_user(username: str, password: str, groups: List[str]) -> None:
 
 
 def ensure_default_user() -> None:
-    """Ensure the default admin user exists."""
+    """Ensure at least one admin user exists.
+
+    If no admin account is found a new 'admin' account is created with a
+    randomly generated password.  The credentials are printed to stdout once
+    so the operator can log in and change them immediately.
+    """
+    import secrets as _secrets
+    import string as _string
+
     users = load_users()
     for user_data in users.values():
         if isinstance(user_data, dict) and user_has_admin_privileges(
             user_data.get("groups", [])
         ):
             return
-    if DEFAULT_USER not in users:
-        create_user(DEFAULT_USER, DEFAULT_PASSWORD, DEFAULT_GROUPS)
+
+    # No admin found — generate a secure random password and create the account.
+    alphabet = _string.ascii_letters + _string.digits + "!@#$%^&*"
+    password = "".join(_secrets.choice(alphabet) for _ in range(20))
+    create_user(DEFAULT_USER, password, DEFAULT_GROUPS)
+
+    border = "=" * 60
+    print(border, flush=True)
+    print("  APERO RI — first-run admin account created", flush=True)
+    print(f"  Username : {DEFAULT_USER}", flush=True)
+    print(f"  Password : {password}", flush=True)
+    print("  Change this password immediately after first login.", flush=True)
+    print(border, flush=True)
 
 
 def find_username_by_email(email: str) -> Optional[str]:

@@ -164,15 +164,22 @@ def build_fail_report_pdf(data: Dict[str, Any]) -> bytes:
     story.append(HRFlowable(width="100%", thickness=0.6, color=_BORDER))
 
     # ── Error analyser ─────────────────────────────────────────────────
+    _MAX_GROUPS_TABLE = 50   # cap analyser table rows to keep PDF manageable
+    _MAX_GROUPS_SECTIONS = 20  # cap per-group sections
     error_groups = data.get("error_groups", []) or []
     story.append(Paragraph("Error analyser", styles["h2"]))
     if not error_groups:
         story.append(Paragraph(
             "No grouped errors found.", styles["body"]))
     else:
+        n_grp = len(error_groups)
+        n_shown_grp = min(n_grp, _MAX_GROUPS_TABLE)
         story.append(Paragraph(
             "Similar error messages grouped together "
-            "(%d group(s))." % len(error_groups), styles["meta"]))
+            "(%d group(s)%s)." % (
+                n_grp,
+                " — showing top %d" % n_shown_grp if n_grp > n_shown_grp else "",
+            ), styles["meta"]))
         story.append(Spacer(1, 4))
         head = [
             Paragraph("<b>#</b>", styles["meta"]),
@@ -181,7 +188,7 @@ def build_fail_report_pdf(data: Dict[str, Any]) -> bytes:
             Paragraph("<b>Representative error</b>", styles["meta"]),
         ]
         table_data = [head]
-        for idx, grp in enumerate(error_groups, start=1):
+        for idx, grp in enumerate(error_groups[:n_shown_grp], start=1):
             from apero_ri.core.fail_report import build_display_template
             raw_template = str(grp.get("template") or grp.get("message", ""))
             var_unique = grp.get("var_unique") or {}
@@ -193,7 +200,11 @@ def build_fail_report_pdf(data: Dict[str, Any]) -> bytes:
             for k in sorted(varying_vars, key=lambda x: int(x)
                             if x.isdigit() else 0):
                 vals = varying_vars[k] or []
-                val_text = ", ".join(escape(v) for v in vals)
+                # Show at most 20 values to keep the cell height bounded.
+                shown = vals[:20]
+                suffix = (" +%d more" % (len(vals) - 20)
+                          if len(vals) > 20 else "")
+                val_text = ", ".join(escape(v) for v in shown) + suffix
                 cell_html += "<br/><b>{{%s}}</b> → %s" % (k, val_text)
             table_data.append([
                 Paragraph(str(idx), styles["meta"]),
@@ -221,7 +232,8 @@ def build_fail_report_pdf(data: Dict[str, Any]) -> bytes:
         story.append(Paragraph(
             "No failed recipes found for this group.", styles["body"]))
 
-    for grp_idx, grp in enumerate(error_groups, start=1):
+    for grp_idx, grp in enumerate(
+            error_groups[:_MAX_GROUPS_SECTIONS], start=1):
         from apero_ri.core.fail_report import build_display_template
         raw_template = str(grp.get("template") or grp.get("message", ""))
         var_unique = grp.get("var_unique") or {}
@@ -269,16 +281,25 @@ def build_fail_report_pdf(data: Dict[str, Any]) -> bytes:
                     styles["meta"],
                 ))
 
-        # Recipe sub-sections (one per affected recipe)
+        # Recipe sub-sections — cap at 10 per group so PDFs stay manageable.
+        # When there are more, show a note at the bottom.
+        _MAX_RECIPES_PER_GROUP = 10
         recipe_details = grp.get("recipe_details") or []
         n_rec = len(recipe_details)
+        n_shown = min(n_rec, _MAX_RECIPES_PER_GROUP)
         if recipe_details:
             block.append(Spacer(1, 4))
             block.append(Paragraph(
-                "<b>Affected recipes (%d)</b>" % n_rec, styles["meta"]))
-            for rec_idx, rd in enumerate(recipe_details, start=1):
+                "<b>Affected recipes (%d%s)</b>" % (
+                    n_rec,
+                    " — showing first %d" % n_shown if n_rec > n_shown else "",
+                ), styles["meta"]))
+            for rec_idx, rd in enumerate(
+                    recipe_details[:n_shown], start=1):
                 recipe_name = str(rd.get("recipe_name", "") or "unknown")
-                call = str(rd.get("recipe_call", "") or "")
+                # Truncate very long recipe calls so they fit in the table.
+                call_raw = str(rd.get("recipe_call", "") or "")
+                call = call_raw[:400] + ("…" if len(call_raw) > 400 else "")
                 log_url = str(rd.get("log_url", "") or "")
                 log_name = str(rd.get("log_name", "") or "")
                 time_taken = str(rd.get("time_taken", "") or "n/a")

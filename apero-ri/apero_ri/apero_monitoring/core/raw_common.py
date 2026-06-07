@@ -396,7 +396,7 @@ def load_example_aparams(instrument: str = 'NIRPS_HA') -> dict:
     )
     filename = mapping.get(str(instrument).upper(), 'nirps_ha_v7.yaml')
     profile_file = (
-        Path(__file__).resolve().parents[1]
+        Path(__file__).resolve().parents[2]
         / 'resources'
         / 'aprofile_instruments'
         / filename

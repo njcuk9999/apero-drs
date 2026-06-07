@@ -4,6 +4,7 @@ import os
 import re
 from pathlib import Path
 
+from apero_ri.core import audit_log
 from apero_ri.core.auth import load_apero_profiles, save_apero_profiles
 from apero_ri.core.permissions import load_parameters
 from apero_ri.tasks import apero_async
@@ -474,6 +475,7 @@ def api_apero_profiles_list(app):
         "PATH_LBL",
             "PATH_CHECK",
             "PATH_OTHER",
+            "PATH_TRIGGER",
     ]
 
     profiles = []
@@ -701,6 +703,9 @@ def build_apero_profiles_overview_status(app) -> dict:
             "PATH_CHECK",
             "PATH_OTHER",
     ]
+    # PATH_TRIGGER is intentionally excluded here: it is an optional path
+    # (only the reduced manual-trigger checks need it) so an empty value must
+    # not flag an otherwise-healthy profile as needing attention.
 
     issues = []
     total_profiles = 0
@@ -833,6 +838,10 @@ def api_apero_profiles_save(app, package_dir: Path):
         "PATH_CHECK",
         "PATH_OTHER",
     ]
+    # Optional path keys: not required, but validated as absolute when set.
+    _PATH_OPTIONAL_KEYS = [
+        "PATH_TRIGGER",
+    ]
 
     values = {}
     for k in _META_KEYS:
@@ -929,6 +938,18 @@ def api_apero_profiles_save(app, package_dir: Path):
                 400,
             )
         path_values[k] = val
+    # Optional paths: only validated (as absolute) when a value is provided.
+    for k in _PATH_OPTIONAL_KEYS:
+        val = data.get(k, "").strip()
+        if not val:
+            path_values[k] = ""
+            continue
+        if not os.path.isabs(val):
+            return (
+                jsonify(success=False, error=f"{k} must be an absolute path"),
+                400,
+            )
+        path_values[k] = val
 
     science_types_raw = data.get("SCIENCE_TYPES", [])
     if isinstance(science_types_raw, str):
@@ -1004,6 +1025,11 @@ def api_apero_profiles_save(app, package_dir: Path):
     inst_profiles[name] = profile_data
     all_profiles[instrument] = inst_profiles
     save_apero_profiles(all_profiles)
+    audit_log.record(
+        actor=user_info.get("username", ""),
+        action="apero_profile.save",
+        target=f"{instrument}/{name}",
+    )
     app._refresh_admin_health_after_change(user_info, perms)
     return jsonify(success=True)
 
@@ -1034,5 +1060,11 @@ def api_apero_profiles_toggle_disabled(app):
     inst_profiles[name]['disabled'] = new_value
     all_profiles[instrument] = inst_profiles
     save_apero_profiles(all_profiles)
+    audit_log.record(
+        actor=user_info.get("username", ""),
+        action="apero_profile.toggle_disabled",
+        target=f"{instrument}/{name}",
+        detail={"disabled": new_value},
+    )
     app._refresh_admin_health_after_change(user_info, perms)
     return jsonify(success=True, disabled=new_value)

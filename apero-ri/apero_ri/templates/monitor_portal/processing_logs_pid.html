@@ -5,8 +5,8 @@
 
 {% block extra_head %}{{ super() }}
 <link rel="stylesheet"
-    href="{{ url_for('static', filename='css/processing_logs.css') }}?v=20260603j">
-<script src="{{ url_for('static', filename='js/processing_logs.js') }}?v=20260603j"
+    href="{{ url_for('static', filename='css/processing_logs.css') }}?v=20260604b">
+<script src="{{ url_for('static', filename='js/processing_logs.js') }}?v=20260604b"
         defer></script>
 {% endblock %}
 
@@ -245,6 +245,27 @@
             </button>
             <span id="pl-log-find-count"
                   class="pl-log-find-count"></span>
+        </div>
+        {# Line-range picker — hidden for small files (≤500 lines) #}
+        <div id="pl-log-range-picker" class="pl-log-range-picker" hidden>
+            <span class="pl-log-range-label">Lines</span>
+            <input id="pl-log-from" class="pl-log-range-input"
+                   type="number" min="1" value="1" title="From line">
+            <span class="pl-log-range-label">to</span>
+            <input id="pl-log-to" class="pl-log-range-input"
+                   type="number" min="1" value="500" title="To line">
+            <span class="pl-log-range-label">of
+                <strong id="pl-log-total">?</strong></span>
+            <button id="pl-log-range-go"
+                    class="ari-btn ari-btn--sm ari-btn--secondary"
+                    type="button" title="Load this line range">
+                Go
+            </button>
+            <button id="pl-log-range-tail"
+                    class="ari-btn ari-btn--sm ari-btn--secondary"
+                    type="button" title="Jump to end of file">
+                <i class="fa-solid fa-angles-down"></i> Tail
+            </button>
         </div>
         <pre id="pl-log-content" class="pl-log-content"></pre>
     </div>

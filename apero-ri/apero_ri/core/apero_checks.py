@@ -324,6 +324,95 @@ def _normalise_passes(raw_passes: Any) -> dict:
     return out
 
 
+def propagate_dependency_states(
+    loaded: dict,
+    checks_registry: dict,
+    ignored_set: Optional[set] = None,
+) -> dict:
+    """Propagate monitored/overridden state from failing dependencies.
+
+    If check B depends on check A, and check A is in ``failures`` with an
+    ``override`` or ``monitor`` event, then check B also inherits that status
+    (provided B is not already overridden/monitored).  The failure message is
+    replaced with a human-readable explanation.
+
+    Runs up to 5 passes to handle transitive dependency chains
+    (e.g. C → B → A where A is monitored propagates to both B and C).
+
+    :param loaded: normalised dict from :func:`load_check_file`.
+    :param checks_registry: mapping of check_key → AperoCheck object
+                            (e.g. ``MONITOR_CHECKS`` from
+                            ``apero_ri.apero_monitoring.checks``).
+    :param ignored_set: check keys to skip.
+    :return: the same ``loaded`` dict with failures mutated in-place.
+    """
+    if not isinstance(checks_registry, dict):
+        return loaded
+    failures = loaded.get('failures')
+    if not isinstance(failures, dict):
+        return loaded
+    skip = set(ignored_set or [])
+
+    for _pass in range(5):
+        changed = False
+        for check_key, check_row in list(failures.items()):
+            if not isinstance(check_row, dict):
+                continue
+            if check_key in skip:
+                continue
+            # Skip if already has any override or monitor status.
+            if check_row.get('override') or check_row.get('monitor'):
+                continue
+            check_obj = checks_registry.get(check_key)
+            if check_obj is None:
+                continue
+            deps = list(getattr(check_obj, 'dependencies', []) or [])
+            for dep_key in deps:
+                dep_row = failures.get(dep_key)
+                if not isinstance(dep_row, dict):
+                    continue
+                dep_override = dep_row.get('override') or {}
+                dep_monitor = dep_row.get('monitor') or {}
+                if not dep_override and not dep_monitor:
+                    continue
+                # Dependency is monitored/overridden — inherit its status.
+                if dep_override:
+                    status_label = 'overridden'
+                    inherited_event = dict(dep_override)
+                    original_comment = str(dep_override.get('comment') or '')
+                else:
+                    status_label = 'monitored'
+                    inherited_event = dict(dep_monitor)
+                    original_comment = str(dep_monitor.get('comment') or '')
+
+                inherited_comment = (
+                    'Inherited from dependency %s.' % dep_key
+                    + (' Original: ' + original_comment if original_comment else '')
+                ).strip()
+                inherited_event['comment'] = inherited_comment
+                inherited_event['inherited_from'] = dep_key
+
+                new_message = (
+                    'Check failed due to failed dependency: %(dep)s '
+                    'but this check is %(status)s. '
+                    'This check is now %(status)s.'
+                ) % {'dep': dep_key, 'status': status_label}
+
+                failures[check_key] = dict(check_row)
+                if dep_override:
+                    failures[check_key]['override'] = inherited_event
+                else:
+                    failures[check_key]['monitor'] = inherited_event
+                failures[check_key]['message'] = new_message
+                changed = True
+                break  # only first matching dependency matters per check
+
+        if not changed:
+            break  # no more propagation needed
+
+    return loaded
+
+
 def _normalise_event(value: Any) -> dict:
     """Normalise one override/monitor event mapping."""
     if not isinstance(value, dict):

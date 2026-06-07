@@ -1,6 +1,10 @@
 {% extends "general/sidebar_base.html" %}
 {% block title %}APERO RI - APERO Checks Policy{% endblock %}
 
+{% block extra_head %}{{ super() }}
+<link rel="stylesheet"
+    href="{{ url_for('static', filename='css/apero_checks.css') }}?v=20260604a">
+{% endblock %}
 {% block doc_content %}
 <div class="ari-page-header">
     <h1><i class="{{ page_icon }}"></i> {{ page_label }}</h1>
@@ -153,6 +157,14 @@
     color: var(--ari-text-muted);
     margin-right: 0.18rem;
     margin-top: 0.18rem;
+    /* Reset <button> defaults so chip-styled buttons look identical to spans */
+    background: transparent;
+    font-family: inherit;
+    line-height: inherit;
+    cursor: default;
+}
+button.acp-chip {
+    cursor: pointer;
 }
 .acp-status {
     display: inline-flex;
@@ -391,6 +403,39 @@
 [data-theme="dark"] .acp-chip--override-allowed { color: #f2cc60; }
 [data-theme="dark"] .acp-chip--ignored    { color: #8b949e; }
 [data-theme="dark"] .acp-missing-icon     { color: #f85149; }
+/* Background build progress banner */
+.acp-build-banner {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    padding: 0.55rem 0.9rem;
+    margin: 0.5rem 0;
+    background: var(--ari-surface-muted, #f0f4ff);
+    border: 1px solid var(--ari-primary-light, #c7d2fe);
+    border-radius: 0.65rem;
+    font-size: 0.88rem;
+    color: var(--ari-text);
+}
+.acp-build-banner__icon { color: var(--ari-primary); }
+.acp-build-banner__text { flex: 1; }
+.acp-build-banner__bar-wrap {
+    width: 9rem;
+    height: 0.45rem;
+    border-radius: 999px;
+    background: var(--ari-border);
+    overflow: hidden;
+    flex-shrink: 0;
+}
+.acp-build-banner__bar {
+    height: 100%;
+    border-radius: 999px;
+    background: var(--ari-primary);
+    transition: width 0.4s ease;
+}
+[data-theme="dark"] .acp-build-banner {
+    background: #0c1929;
+    border-color: #1d4e89;
+}
 </style>
 
 <div class="acp-section">
@@ -589,12 +634,99 @@
 <script>
 window.ARI_APERO_CHECKS_POLICY = {
     sectionsApiUrl: {{ policy_sections_api_url|tojson }},
+    buildStatusUrl: '/api/admin/apero-checks/policy-build-status',
     checkInfoBaseUrl: {{ url_for('home_admin_portal_apero_check_info')|tojson }},
+    checkResultsUrl: '/api/monitor/apero-checks/check-results',
     rerunNightUrl: {{ url_for('api_apero_checks_rerun_night')|tojson }},
     rerunCheckUrl: {{ url_for('api_apero_checks_rerun_single_check')|tojson }},
     cleanResetUrl: {{ url_for('api_apero_checks_clean_reset_profile')|tojson }},
     profilePageUrlTemplate: {{ url_for('api_apero_checks_profile_page', profile_id='__PROFILE_ID__')|tojson }},
 };
 </script>
-<script src="{{ url_for('static', filename='js/admin_apero_checks_policy.js', v='20260524g') }}"></script>
+
+{# ── Shared check-results overlay (same component as apero_check_info page) ── #}
+<div id="aci-results-overlay" class="aci-results-overlay" style="display:none;"
+     role="dialog" aria-modal="true" aria-label="Check results">
+    <div class="aci-results-backdrop" id="aci-results-backdrop"></div>
+    <div class="aci-results-panel">
+        <div class="aci-results-header">
+            <span class="aci-results-title" id="aci-results-title">Results</span>
+            <button id="aci-results-refresh" type="button"
+                    class="ari-btn ari-btn--sm ari-btn--secondary"
+                    title="Refresh results">
+                <i class="fa-solid fa-rotate-right"></i> Refresh
+            </button>
+            <button id="aci-results-close" type="button"
+                    class="ari-btn ari-btn--sm ari-btn--secondary"
+                    title="Close">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+        <div class="aci-results-body">
+            <div id="aci-results-loading">
+                <i class="fa-solid fa-spinner fa-spin"></i> Loading&hellip;
+            </div>
+            <div id="aci-results-content" hidden>
+                <div class="ot-toolbar" style="margin-bottom:0.5rem;">
+                    <div class="ot-toolbar__left">
+                        <label class="ot-perpage-label">Rows per page
+                            <select id="aci-res-perpage" class="ot-perpage-select">
+                                <option value="25">25</option>
+                                <option value="50" selected>50</option>
+                                <option value="100">100</option>
+                                <option value="0">All</option>
+                            </select>
+                        </label>
+                        <input id="aci-res-filter" type="search"
+                               class="ot-filter-input"
+                               placeholder="Filter…" style="width:14rem;">
+                    </div>
+                    <span id="aci-res-summary" class="ot-page-info"></span>
+                </div>
+                <div class="aci-results-table-wrap">
+                    <table class="ot-table" id="aci-res-table">
+                        <thead>
+                            <tr class="ot-header-row">
+                                <th class="ot-th ot-th--nonsortable">Profile</th>
+                                <th class="ot-th ot-th--nonsortable">Obs-dir</th>
+                                <th class="ot-th ot-th--nonsortable">Check</th>
+                                <th class="ot-th ot-th--nonsortable">Link</th>
+                            </tr>
+                        </thead>
+                        <tbody id="aci-res-tbody"></tbody>
+                    </table>
+                </div>
+                <div class="ot-pagination" style="margin-top:0.6rem;">
+                    <span id="aci-res-page-info" class="ot-page-info"></span>
+                    <div class="ot-page-controls">
+                        <button id="aci-res-first" class="ari-btn ari-btn--sm ari-btn--secondary" disabled>
+                            <i class="fa-solid fa-angles-left"></i></button>
+                        <button id="aci-res-prev" class="ari-btn ari-btn--sm ari-btn--secondary" disabled>
+                            <i class="fa-solid fa-angle-left"></i></button>
+                        <span>Page <input id="aci-res-page-input" class="ot-page-input"
+                                          type="number" min="1" value="1">
+                              of <span id="aci-res-page-total">1</span></span>
+                        <button id="aci-res-next" class="ari-btn ari-btn--sm ari-btn--secondary" disabled>
+                            <i class="fa-solid fa-angle-right"></i></button>
+                        <button id="aci-res-last" class="ari-btn ari-btn--sm ari-btn--secondary" disabled>
+                            <i class="fa-solid fa-angles-right"></i></button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="{{ url_for('static', filename='js/aci_results_overlay.js') }}?v=20260604a"></script>
+<script>
+/* Initialise the shared overlay for the policy page */
+document.addEventListener('DOMContentLoaded', function () {
+    var cfg = window.ARI_APERO_CHECKS_POLICY || {};
+    ACI_RESULTS_OVERLAY.init({
+        checkResultsUrl:  cfg.checkResultsUrl  || '',
+        checkInfoBaseUrl: cfg.checkInfoBaseUrl || '',
+    });
+});
+</script>
+<script src="{{ url_for('static', filename='js/admin_apero_checks_policy.js', v='20260604a') }}"></script>
 {% endblock %}

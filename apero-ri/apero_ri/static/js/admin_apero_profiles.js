@@ -18,6 +18,7 @@
         { key: 'PATH_LBL',   id: 'profile-path-lbl' },
         { key: 'PATH_CHECK', id: 'profile-path-check' },
         { key: 'PATH_OTHER', id: 'profile-path-other' },
+        { key: 'PATH_TRIGGER', id: 'profile-path-trigger', optional: true },
     ];
 
     var DB_TEXT_FIELDS = [
@@ -1066,9 +1067,17 @@
     function testPaths() {
         var checks = [];
         var allFilled = true;
+        var requiredCount = 0;
 
         PATH_FIELDS.forEach(function (f) {
             var value = pathInputs[f.id].value.trim();
+            // Optional paths (e.g. PATH_TRIGGER) may be left blank.
+            if (f.optional && !value) {
+                var ovdiv = document.getElementById(f.id + '-validation');
+                if (ovdiv) { ovdiv.style.display = 'none'; }
+                return;
+            }
+            requiredCount += 1;
             if (!value) allFilled = false;
             checks.push(validatePathNow(f.id, value));
         });
@@ -1091,14 +1100,14 @@
         Promise.all(checks)
             .then(function (results) {
                 var okCount = results.filter(function (r) { return !!r; }).length;
-                pathsTestPassed = okCount === PATH_FIELDS.length;
+                pathsTestPassed = okCount === requiredCount;
                 if (pathsTestResult) {
                     if (pathsTestPassed) {
                         showFieldValidation(pathsTestResult, true,
-                            'All ' + String(PATH_FIELDS.length) + ' paths validated.');
+                            'All ' + String(requiredCount) + ' paths validated.');
                     } else {
                         showFieldValidation(pathsTestResult, false,
-                            String(okCount) + '/' + String(PATH_FIELDS.length)
+                            String(okCount) + '/' + String(requiredCount)
                             + ' paths validated. Fix invalid paths and test again.');
                     }
                 }

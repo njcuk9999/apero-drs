@@ -116,18 +116,30 @@ class ARIApp(Flask):
         _impls.ariapp_init(self, **kwargs)
 
     # -----------------------------------------------------------------
-    # Live-reloading group definitions
-    # Always read groups.yaml from disk so permission changes take
-    # effect immediately without restarting the server.
+    # Group definitions with TTL cache
+    # Groups are re-read from disk at most every _GROUPS_TTL seconds so
+    # permission changes propagate quickly without a per-request disk read.
     # -----------------------------------------------------------------
+    _groups_cache: dict = {}    # {'data': ..., 'expires': float}
+    _groups_lock: threading.Lock = threading.Lock()
+    _GROUPS_TTL: float = 30.0   # seconds
+
     @property
     def ari_groups(self):
-        return perms.load_groups()
+        now = time.monotonic()
+        with ARIApp._groups_lock:
+            cached = ARIApp._groups_cache
+            if cached and cached.get("expires", 0) > now:
+                return cached["data"]
+            data = perms.load_groups()
+            ARIApp._groups_cache = {"data": data, "expires": now + ARIApp._GROUPS_TTL}
+            return data
 
     @ari_groups.setter
     def ari_groups(self, _value):
-        # Ignore any cached assignment; the property always reads live.
-        pass
+        # Invalidate the cache so the next read fetches fresh data.
+        with ARIApp._groups_lock:
+            ARIApp._groups_cache = {}
 
     # -----------------------------------------------------------------
     # Argument parsing
@@ -536,6 +548,9 @@ class ARIApp(Flask):
     def _admin_health_refresher_loop(self) -> None:
         return _impls.ariapp_admin_health_refresher_loop(self)
 
+    def _admin_health_digest_loop(self) -> None:
+        return _impls.ariapp_admin_health_digest_loop(self)
+
     def _refresh_admin_health_entry(
         self, cache_key: str, user_info, perms
     ) -> None:
@@ -575,6 +590,12 @@ class ARIApp(Flask):
 
     def _api_admin_health_update(self):
         return _impls.ariapp_api_admin_health_update(self)
+
+    def _api_admin_audit_log(self):
+        return _impls.ariapp_api_admin_audit_log(self)
+
+    def _api_admin_health_history(self):
+        return _impls.ariapp_api_admin_health_history(self)
 
     def _api_admin_health_patch(self):
         return _impls.ariapp_api_admin_health_patch(self)
@@ -1514,6 +1535,30 @@ class ARIApp(Flask):
         )
         return plh.api_processing_logs_report_download(self, token)
 
+    def _api_processing_logs_filters_list(self):
+        from apero_ri.application import (
+            processing_logs_api_helpers as plh,
+        )
+        return plh.api_processing_logs_filters_list(self)
+
+    def _api_processing_logs_filters_save(self):
+        from apero_ri.application import (
+            processing_logs_api_helpers as plh,
+        )
+        return plh.api_processing_logs_filters_save(self)
+
+    def _api_processing_logs_filters_delete(self):
+        from apero_ri.application import (
+            processing_logs_api_helpers as plh,
+        )
+        return plh.api_processing_logs_filters_delete(self)
+
+    def _api_processing_logs_pid_export(self):
+        from apero_ri.application import (
+            processing_logs_api_helpers as plh,
+        )
+        return plh.api_processing_logs_pid_export(self)
+
     def _api_apero_checks_update_failure(self):
         from apero_ri.application import (
             apero_checks_api_helpers as ach,
@@ -1615,6 +1660,18 @@ class ARIApp(Flask):
             apero_checks_api_helpers as ach,
         )
         return ach.api_apero_checks_check_results(self)
+
+    def _api_apero_checks_check_info_async(self):
+        from apero_ri.application import (
+            apero_checks_api_helpers as ach,
+        )
+        return ach.api_apero_checks_check_info_async(self)
+
+    def _api_apero_checks_policy_build_status(self):
+        from apero_ri.application import (
+            apero_checks_api_helpers as ach,
+        )
+        return ach.api_apero_checks_policy_build_status(self)
 
 
         kwargs = dict(profile_id=profile_id)
