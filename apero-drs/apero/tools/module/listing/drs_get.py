@@ -236,7 +236,8 @@ def basic_filter(params: ParamDict, recipe: DrsRecipe, kw_objnames: List[str],
         if len(condition) == 0:
             condition = None
         # set columns to get
-        icolumns = ['BLOCK_KIND', 'OBS_DIR', 'FILENAME', 'KW_PID', 'KW_RUN_ID']
+        icolumns = ['BLOCK_KIND', 'OBS_DIR', 'FILENAME', 'KW_DRS_QC',
+                    'KW_RUN_ID']
         # get inpaths
         if params['INPUTS'].get('NODB', False):
             itable = get_disk_entries(params, icolumns, condition=condition)
@@ -249,8 +250,6 @@ def basic_filter(params: ParamDict, recipe: DrsRecipe, kw_objnames: List[str],
                                                  obs_dirs=itable['OBS_DIR'],
                                                  basenames=itable['FILENAME'])
         inpaths = np.array(inpaths)
-        # get APERO process ids
-        ipids = np.array(itable['KW_PID'])
         # get run ids from raw files
         run_ids = np.array(itable['KW_RUN_ID'])
         # ---------------------------------------------------------------------
@@ -261,14 +260,8 @@ def basic_filter(params: ParamDict, recipe: DrsRecipe, kw_objnames: List[str],
             # mask is easy in this case as we have QCC_ALL in the header
             mask = np.array(itable['KW_DRS_QC']).astype(bool)
         elif filter_qc:
-            # get all pids where passed_all_qc is PASSED_ALL_QC is True
-            ltable = logdbm.get_entries('PID, PASSED_ALL_QC')
-            # find all pids that are not zero (nulls, nans and 1s)
-            lmask = ~(ltable['PASSED_ALL_QC'] == 0)
-            # get a unique list of pids that do not fail QC
-            lpids = list(set(ltable[lmask]['PID']))
-            # mask out any files that fail qc
-            mask = np.isin(ipids, lpids)
+            # mask is easy in this case as we have QCC_ALL in the header
+            mask = np.array(itable['KW_DRS_QC']).astype(bool)
         else:
             mask = np.ones(len(inpaths), dtype=bool)
         # ---------------------------------------------------------------------

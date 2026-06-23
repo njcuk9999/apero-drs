@@ -45,6 +45,10 @@
     color: var(--ari-text-muted);
     font-size: 0.9rem;
 }
+.status-link-card__meta {
+    color: var(--ari-text-muted);
+    font-size: 0.84rem;
+}
 .status-badge {
     display: inline-flex;
     align-items: center;
@@ -115,6 +119,9 @@
             {% endif %}
         </div>
         <div class="status-link-card__subtitle">{{ card.subtitle }}</div>
+        <div class="status-link-card__meta">
+            Fetched {{ card.fetched_at }}
+        </div>
         <div class="status-link-card__go">
             Open status details <i class="fa-solid fa-arrow-right"></i>
         </div>

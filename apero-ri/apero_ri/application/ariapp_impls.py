@@ -20,6 +20,8 @@ from datetime import datetime, timedelta, timezone
 from email.message import EmailMessage
 from pathlib import Path
 from typing import Any, Dict, List, Optional
+from zoneinfo import ZoneInfo
+from zoneinfo import ZoneInfoNotFoundError
 
 import yaml
 from apero_ri.application import (
@@ -3097,19 +3099,19 @@ def ariapp_doc_upload_image(self):
     if not user_info:
         return jsonify(success=False, error="Not logged in"), 401
 
-    page_ref = request.form.get("page_ref", "unknown")
+    page_ref = str(request.form.get('page_ref', '') or '').strip('/')
     perms = permissions_mod.resolve_user_permissions(
-        user_info["groups"], self.ari_groups
+        user_info['groups'], self.ari_groups
     )
-    if f"edit.doc.{page_ref}" not in perms:
-        return jsonify(success=False, error="No permission"), 403
+    if not doc_views_helpers._doc_edit_allowed(perms, page_ref):
+        return jsonify(success=False, error='No permission'), 403
 
-    if "image" not in request.files:
-        return jsonify(success=False, error="No file"), 400
+    if 'image' not in request.files:
+        return jsonify(success=False, error='No file'), 400
 
-    img = request.files["image"]
+    img = request.files['image']
     if not img.filename:
-        return jsonify(success=False, error="Empty filename"), 400
+        return jsonify(success=False, error='Empty filename'), 400
 
     filename = docs.save_uploaded_image(page_ref, img.filename, img.read())
     return jsonify(success=True, filename=filename)
@@ -3919,14 +3921,7 @@ def ariapp_doc_save_view(self, page_ref):
         user_info["groups"], self.ari_groups
     )
     clean_ref = str(page_ref or "").strip("/")
-    dot_ref = clean_ref.replace("/", ".")
-    leaf_ref = clean_ref.split("/")[-1] if clean_ref else ""
-    allowed = False
-    for perm_name in (f"edit.doc.{dot_ref}", f"edit.doc.{leaf_ref}"):
-        if perm_name in perms:
-            allowed = True
-            break
-    if not allowed:
+    if not doc_views_helpers._doc_edit_allowed(perms, clean_ref):
         return jsonify(success=False, error="No permission"), 403
 
     data = request.get_json()
@@ -5648,6 +5643,166 @@ def ariapp_require_async_tasks_perm(self):
     if "manage.apero_profile" not in perms:
         return None, None
     return user_info, perms
+
+
+def _clock_config_path(local_data_dir: Path) -> Path:
+    """Return clock configuration path in local admin settings."""
+    return (
+        Path(local_data_dir).expanduser().resolve()
+        / "admin"
+        / "general"
+        / "clocks.yaml"
+    )
+
+
+def _default_clock_rows() -> list:
+    """Return locked default clock rows."""
+    return [
+        {"name": "UTC", "timezone": "UTC", "locked": True},
+        {"name": "Local", "timezone": "LOCAL", "locked": True},
+    ]
+
+
+def _normalise_custom_clock_rows(rows) -> list:
+    """Validate and normalize editable custom clock rows."""
+    clean = []
+    if not isinstance(rows, list):
+        return clean
+    for raw in rows:
+        if not isinstance(raw, dict):
+            continue
+        name = str(raw.get("name") or "").strip()
+        timezone_name = str(raw.get("timezone") or "").strip()
+        if not name or not timezone_name:
+            continue
+        if timezone_name in ["UTC", "LOCAL"]:
+            continue
+        if len(name) > 80:
+            name = name[:80].strip()
+        try:
+            ZoneInfo(timezone_name)
+        except ZoneInfoNotFoundError:
+            continue
+        except Exception:
+            continue
+        clean.append(
+            {
+                "name": name,
+                "timezone": timezone_name,
+                "locked": False,
+            }
+        )
+    return clean
+
+
+def _load_clock_rows(local_data_dir: Path) -> list:
+    """Load clock rows with UTC/local pinned first."""
+    defaults = _default_clock_rows()
+    path = _clock_config_path(local_data_dir)
+    if not path.exists():
+        return defaults
+    try:
+        with open(path, "r", encoding="utf-8") as f:
+            payload = yaml.safe_load(f) or {}
+    except Exception:
+        return defaults
+    custom = _normalise_custom_clock_rows(payload.get("custom", []))
+    return defaults + custom
+
+
+def _save_custom_clock_rows(local_data_dir: Path, custom_rows: list) -> None:
+    """Persist custom clock rows atomically."""
+    path = _clock_config_path(local_data_dir)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    payload = {
+        "custom": _normalise_custom_clock_rows(custom_rows),
+        "updated_at": datetime.now(timezone.utc).isoformat(),
+    }
+    tmp_path = path.with_suffix(path.suffix + ".tmp")
+    with open(tmp_path, "w", encoding="utf-8") as f:
+        yaml.safe_dump(payload, f, sort_keys=False)
+    os.replace(tmp_path, path)
+
+
+def ariapp_api_clocks_get(self):
+    """Return configured clock rows for nav/user pages."""
+    rows = _load_clock_rows(self._resolve_local_data_dir())
+    return jsonify(success=True, clocks=rows)
+
+
+def ariapp_api_admin_clocks(self):
+    """Admin API for reading/updating custom clock rows."""
+    user_info, perms = self._require_apero_profile_perm()
+    if not user_info:
+        return jsonify(success=False, error="Unauthorized"), 401
+    if "manage.apero_profile" not in (perms or set()):
+        return jsonify(success=False, error="Forbidden"), 403
+
+    local_data_dir = self._resolve_local_data_dir()
+    if request.method == "GET":
+        return jsonify(success=True, clocks=_load_clock_rows(local_data_dir))
+
+    body = request.get_json(silent=True) or {}
+    rows = body.get("clocks", [])
+    if not isinstance(rows, list):
+        return jsonify(success=False, error="clocks must be a list"), 400
+
+    # Persist only editable rows; defaults remain immutable.
+    custom_rows = []
+    for idx, row in enumerate(rows):
+        if not isinstance(row, dict):
+            continue
+        if idx < 2:
+            continue
+        name = str(row.get("name") or "").strip()
+        timezone_name = str(row.get("timezone") or "").strip()
+        row_num = idx + 1
+        if not name:
+            return (
+                jsonify(
+                    success=False,
+                    error=f"Row {row_num}: name is required",
+                ),
+                400,
+            )
+        if not timezone_name:
+            return (
+                jsonify(
+                    success=False,
+                    error=f"Row {row_num}: timezone is required",
+                ),
+                400,
+            )
+        if timezone_name in ["UTC", "LOCAL"]:
+            return (
+                jsonify(
+                    success=False,
+                    error=(
+                        f"Row {row_num}: UTC/LOCAL are reserved "
+                        "and cannot be edited"
+                    ),
+                ),
+                400,
+            )
+        try:
+            ZoneInfo(timezone_name)
+        except ZoneInfoNotFoundError:
+            return (
+                jsonify(
+                    success=False,
+                    error=f"Row {row_num}: unknown timezone {timezone_name}",
+                ),
+                400,
+            )
+        custom_rows.append(
+            {
+                "name": name,
+                "timezone": timezone_name,
+            }
+        )
+
+    _save_custom_clock_rows(local_data_dir, custom_rows)
+    return jsonify(success=True, clocks=_load_clock_rows(local_data_dir))
 
 
 def ariapp_api_user_links_remove(self):

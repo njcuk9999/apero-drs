@@ -15,9 +15,17 @@ from apero_ri.application import async_task_helpers
 from flask import jsonify, request
 
 
+def _coerce_bool(value):
+    """Coerce common JSON/UI values to bool."""
+    if isinstance(value, bool):
+        return value
+    text = str(value or '').strip().lower()
+    return text in ['1', 'true', 'yes', 'on', 'y']
+
+
 def _instrument_profile_names(instrument):
     """Return ordered APERO profile names for one instrument."""
-    profiles = load_apero_profiles().get(instrument, {})
+    profiles = load_apero_profiles(enabled_only=True).get(instrument, {})
     if not isinstance(profiles, dict):
         return []
     return list(profiles.keys())
@@ -59,6 +67,68 @@ def _validate_sync_profiles(raw, instrument):
     return cleaned
 
 
+LEGACY_GSHEET_TASK_KEYS = [
+    'LEGACY_ASTROM_GSHEET',
+    'LEGACY_REJECT_GSHEET',
+    'LEGACY_CHECK_GSHEET',
+]
+DEFAULT_GOOGLE_SECRET_NAME = 'legacy_gsheet_oauth.json'
+REQUIRED_GOOGLE_OAUTH_KEYS = [
+    'client_id',
+    'client_secret',
+    'refresh_token',
+]
+
+
+def _validate_google_secret_name(value):
+    """Validate oauth filename to prevent path traversal."""
+    secret_name = str(value or '').strip() or DEFAULT_GOOGLE_SECRET_NAME
+    if secret_name != Path(secret_name).name:
+        raise ValueError('google_secret_name must be a plain filename')
+    if '/' in secret_name or '\\' in secret_name:
+        raise ValueError('google_secret_name cannot contain path separators')
+    if not secret_name.lower().endswith('.json'):
+        raise ValueError('google_secret_name must end with .json')
+    return secret_name
+
+
+def _normalize_google_oauth_payload(raw_payload):
+    """Validate oauth payload shape and fill defaults."""
+    payload = raw_payload
+    if isinstance(payload, str):
+        try:
+            payload = json.loads(payload)
+        except Exception as exc:
+            raise ValueError('google_oauth_upload must be valid JSON') from exc
+    if not isinstance(payload, dict):
+        raise ValueError('google_oauth_upload must be a JSON object')
+    for key in REQUIRED_GOOGLE_OAUTH_KEYS:
+        value = str(payload.get(key) or '').strip()
+        if not value:
+            raise ValueError(f'google_oauth_upload missing {key}')
+        payload[key] = value
+
+    token_uri = str(payload.get('token_uri') or '').strip()
+    if not token_uri:
+        token_uri = 'https://oauth2.googleapis.com/token'
+    payload['token_uri'] = token_uri
+
+    scopes = payload.get('scopes')
+    if not isinstance(scopes, list) or len(scopes) == 0:
+        payload['scopes'] = [
+            'https://www.googleapis.com/auth/spreadsheets',
+            'https://www.googleapis.com/auth/drive',
+        ]
+    return payload
+
+
+def _legacy_admin_secret_path(app, secret_name):
+    """Return LOCAL_DATA_DIR/admin/<secret_name>."""
+    local_data_dir = Path(app._resolve_local_data_dir())
+    admin_dir = local_data_dir / 'admin'
+    return admin_dir / secret_name
+
+
 def api_async_tasks_save(app):
     """Update an async task configuration from the fixed task catalog."""
     user_info, perms = app._require_async_tasks_perm()
@@ -84,6 +154,9 @@ def api_async_tasks_save(app):
     has_sync_source = "sync_source" in data
     has_sync_profiles = "sync_profiles" in data
     has_assets_mode = "assets_mode" in data
+    has_dry_run = "dry_run" in data or "DRY_RUN" in data
+    has_google_secret_name = "google_secret_name" in data
+    has_google_oauth_upload = "google_oauth_upload" in data
 
     ncores = None
     mp_backend = None
@@ -91,6 +164,9 @@ def api_async_tasks_save(app):
     sync_source = None
     sync_profiles = None
     assets_mode = None
+    dry_run = False
+    google_secret_name = None
+    google_oauth_upload = None
 
     if not instrument or not task_id:
         return jsonify(success=False, error="Missing fields"), 400
@@ -176,6 +252,23 @@ def api_async_tasks_save(app):
         else:
             assets_mode_raw = "remote"
         assets_mode = assets_mode_raw
+    if has_dry_run:
+        dry_run_raw = data.get("dry_run", data.get("DRY_RUN", False))
+        dry_run = _coerce_bool(dry_run_raw)
+    if has_google_secret_name:
+        try:
+            google_secret_name = _validate_google_secret_name(
+                data.get("google_secret_name", DEFAULT_GOOGLE_SECRET_NAME)
+            )
+        except ValueError as exc:
+            return jsonify(success=False, error=str(exc)), 400
+    if has_google_oauth_upload:
+        try:
+            google_oauth_upload = _normalize_google_oauth_payload(
+                data.get("google_oauth_upload")
+            )
+        except ValueError as exc:
+            return jsonify(success=False, error=str(exc)), 400
     has_assets_local_source = "assets_local_source_path" in data
     assets_local_source = None
     if has_assets_local_source:
@@ -259,6 +352,72 @@ def api_async_tasks_save(app):
                     ),
                 ), 400
 
+        if task_key in LEGACY_GSHEET_TASK_KEYS:
+            if has_dry_run:
+                t["DRY_RUN"] = bool(dry_run)
+            if "dry_run" in t:
+                t.pop("dry_run", None)
+
+            resolved_secret_name = google_secret_name
+            if not resolved_secret_name:
+                try:
+                    resolved_secret_name = _validate_google_secret_name(
+                        t.get(
+                            "google_secret_name",
+                            DEFAULT_GOOGLE_SECRET_NAME,
+                        )
+                    )
+                except ValueError:
+                    resolved_secret_name = DEFAULT_GOOGLE_SECRET_NAME
+
+            t["google_secret_name"] = resolved_secret_name
+            secret_path = _legacy_admin_secret_path(
+                app,
+                resolved_secret_name,
+            )
+            if google_oauth_upload is not None:
+                secret_path.parent.mkdir(parents=True, exist_ok=True)
+                with open(secret_path, "w", encoding="utf-8") as outfile:
+                    json.dump(
+                        google_oauth_upload,
+                        outfile,
+                        indent=2,
+                        sort_keys=False,
+                    )
+                    outfile.write("\n")
+                os.chmod(secret_path, 0o600)
+
+            if not secret_path.exists():
+                return (
+                    jsonify(
+                        success=False,
+                        error=(
+                            "Missing OAuth JSON file in "
+                            "LOCAL_DATA_DIR/admin/. Upload one in the "
+                            "task editor before testing this task."
+                        ),
+                    ),
+                    400,
+                )
+
+        if task_key == "LEGACY_CHECK_GSHEET":
+            if "monitoring_sheet_url" in data:
+                mon_url = str(
+                    data.get("monitoring_sheet_url") or ""
+                ).strip()
+                if mon_url:
+                    t["monitoring_sheet_url"] = mon_url
+                else:
+                    t.pop("monitoring_sheet_url", None)
+            if "override_sheet_url" in data:
+                over_url = str(
+                    data.get("override_sheet_url") or ""
+                ).strip()
+                if over_url:
+                    t["override_sheet_url"] = over_url
+                else:
+                    t.pop("override_sheet_url", None)
+
         supports_mp = bool(task_module.MULTI_PROCESS.get(task_key, False))
         supports_local_task = bool(task_module.LOCAL_TASK.get(task_key, False))
         if sync_source is not None and sync_source and not supports_local_task:
@@ -269,7 +428,11 @@ def api_async_tasks_save(app):
                 ),
                 400,
             )
-        if sync_profiles is not None and sync_profiles and not supports_local_task:
+        if (
+            sync_profiles is not None
+            and sync_profiles
+            and not supports_local_task
+        ):
             return (
                 jsonify(
                     success=False,
@@ -616,7 +779,7 @@ def api_async_tasks_run_now(app):
     if not task_cls:
         return jsonify(success=False, error="Unknown task class"), 400
 
-    all_profiles = load_apero_profiles()
+    all_profiles = load_apero_profiles(enabled_only=True)
     run_task_cfg = dict(task_cfg)
     if force_run:
         run_task_cfg["force_run"] = True
@@ -747,7 +910,7 @@ def api_async_tasks_run_all(app):
 
     from apero_ri import tasks as task_module
 
-    all_profiles = load_apero_profiles()
+    all_profiles = load_apero_profiles(enabled_only=True)
 
     added = []
     blocked = []

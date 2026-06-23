@@ -1236,14 +1236,8 @@ def _file_col_query(
         FROM_UNIXTIME((fdb.KW_MID_OBS_TIME - 40587) * 86400) AS MID_OBS_TIME,
         FROM_UNIXTIME(fdb.LAST_MODIFIED) AS LAST_MODIFIED,
         fdb.KW_PID AS PID,
-        ldb.PASSED_ALL_QC AS PASSED_ALL_QC
+        fdb.KW_DRS_QC AS PASSED_ALL_QC
     FROM {FINDEX_TABLENAME} fdb
-    LEFT JOIN (
-        SELECT PID, MAX(PASSED_ALL_QC) AS PASSED_ALL_QC
-        FROM {LOG_TABLENAME}
-        GROUP BY PID
-    ) ldb
-            ON fdb.KW_PID = ldb.PID
     WHERE fdb.KW_OBJNAME = '{OBJNAME}' {CONDITION}
     """
     # construct the formatted query

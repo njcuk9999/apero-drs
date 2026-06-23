@@ -1,13 +1,18 @@
 """Data Portal API helper functions for ARIApp."""
 
 import json as _json
+import multiprocessing as mp
 import queue
 import threading
 import time
 from datetime import datetime, timezone
 from pathlib import Path
 
-from apero_ri.core.auth import get_accessible_profiles, get_public_permissions
+from apero_ri.core.auth import (
+    get_accessible_profiles,
+    get_public_permissions,
+    load_apero_profiles,
+)
 from apero_ri.core.object_funcs import (
     build_object_page_stats,
     load_object_ftable_rows,
@@ -34,6 +39,36 @@ from flask import (
 _OBJECT_PAGE_CACHE = {}
 _OBJECT_PAGE_CACHE_LOCK = threading.Lock()
 _OBJECT_PAGE_CACHE_TTL = 60.0  # seconds
+
+
+def _run_tessilator_stream_worker(
+    objname,
+    cache_root,
+    instrument,
+    aliases,
+    log_q,
+    result_q,
+):
+    """Run tessilator in an isolated process for clean log streaming."""
+    try:
+        from apero_ri.core.run_tessilator import run_tessilator
+
+        result = run_tessilator(
+            objname=objname,
+            cache_root=cache_root,
+            instrument=instrument,
+            aliases=aliases,
+            log_queue=log_q,
+        )
+    except Exception as exc:
+        result = dict(
+            success=False,
+            error=str(exc),
+        )
+    try:
+        result_q.put(result)
+    finally:
+        log_q.put(None)
 
 
 def _object_page_cache_get(key):
@@ -115,6 +150,8 @@ def api_ri_profile_health(app):
         "PATH_TELLU",
         "PATH_LOG",
         "PATH_LBL",
+        "PATH_CHECK",
+        "PATH_OTHER",
     ]
     path_results = {}
     all_paths_ok = True
@@ -592,11 +629,31 @@ def _resolve_target_context(app, user_info, accessible):
                 success=False,
                 error=f'No astrometric entry for {name_arg!r}'),
                 404)
-        if not accessible:
-            return False, (jsonify(
-                success=False,
-                error='No accessible profile'), 403)
-        profile = accessible[0]
+        profiles = list(accessible or [])
+        if not profiles:
+            # For public astrometrics usage (logged-out users), pick a
+            # deterministic fallback profile to source instrument presets.
+            all_profiles = load_apero_profiles(hydrate=True)
+            for inst in sorted(all_profiles.keys()):
+                inst_profiles = all_profiles.get(inst) or {}
+                for pid in sorted(inst_profiles.keys()):
+                    pdata = inst_profiles.get(pid) or {}
+                    profiles.append(
+                        dict(
+                            profile_id=pid,
+                            instrument=inst,
+                            data=pdata,
+                        )
+                    )
+            if not profiles:
+                return False, (
+                    jsonify(
+                        success=False,
+                        error='No APERO profiles available',
+                    ),
+                    404,
+                )
+        profile = profiles[0]
         profile_id = profile['profile_id']
         instrument = profile['instrument']
         profile_data = profile.get('data') or {}
@@ -661,7 +718,8 @@ def api_finder_chart(app):
         perms = resolve_user_permissions(user_info["groups"], app.ari_groups)
     else:
         perms = get_public_permissions()
-    if "view.data_portal" not in perms:
+    name_mode = bool((request.args.get('name') or '').strip())
+    if "view.data_portal" not in perms and not name_mode:
         return jsonify(success=False, error="Unauthorized"), 401
 
     accessible = get_accessible_profiles(user_info, app.ari_groups)
@@ -745,7 +803,8 @@ def api_finder_chart_stream(app):
         )
     else:
         perms = get_public_permissions()
-    if 'view.data_portal' not in perms:
+    name_mode = bool((request.args.get('name') or '').strip())
+    if 'view.data_portal' not in perms and not name_mode:
         return jsonify(
             success=False, error='Unauthorized'
         ), 401
@@ -2009,7 +2068,8 @@ def api_tess_rotation(app):
         )
     else:
         perms = get_public_permissions()
-    if 'view.data_portal' not in perms:
+    name_mode = bool((request.args.get('name') or '').strip())
+    if 'view.data_portal' not in perms and not name_mode:
         return jsonify(
             success=False, error='Unauthorized'
         ), 401
@@ -2031,10 +2091,7 @@ def api_tess_rotation(app):
         load_cache_config,
         resolve_cache_root,
     )
-    from apero_ri.core.run_tessilator import (
-        get_tess_cached,
-        run_tessilator,
-    )
+    from apero_ri.core.run_tessilator import get_tess_cached
 
     cfg = load_cache_config(base_dir)
     cache_root = resolve_cache_root(base_dir, cfg)
@@ -2237,7 +2294,8 @@ def api_tess_rotation_stream(app):
         )
     else:
         perms = get_public_permissions()
-    if 'view.data_portal' not in perms:
+    name_mode = bool((request.args.get('name') or '').strip())
+    if 'view.data_portal' not in perms and not name_mode:
         return jsonify(
             success=False, error='Unauthorized'
         ), 401
@@ -2296,32 +2354,24 @@ def api_tess_rotation_stream(app):
         if a.strip()
     ]
 
-    # Shared queue for real-time log lines
-    log_q = queue.Queue()
-    # Holder for result from the background thread
-    result_holder = [None]
-
-    def _worker():
-        try:
-            result_holder[0] = run_tessilator(
-                objname=objname,
-                cache_root=cache_root,
-                instrument=instrument,
-                aliases=aliases,
-                log_queue=log_q,
-            )
-        except Exception as exc:
-            result_holder[0] = dict(
-                success=False,
-                error=str(exc),
-            )
-        finally:
-            log_q.put(None)  # sentinel
-
-    t = threading.Thread(
-        target=_worker, daemon=True
+    # Use a separate process so stdout/stderr capture inside
+    # tessilator cannot leak unrelated request logs into this
+    # stream.
+    log_q = mp.Queue()
+    result_q = mp.Queue()
+    proc = mp.Process(
+        target=_run_tessilator_stream_worker,
+        args=(
+            objname,
+            cache_root,
+            instrument,
+            aliases,
+            log_q,
+            result_q,
+        ),
+        daemon=True,
     )
-    t.start()
+    proc.start()
 
     def _generate():
         while True:
@@ -2339,7 +2389,12 @@ def api_tess_rotation_stream(app):
             yield f'data: {evt}\n\n'
 
         # Final result
-        result = result_holder[0]
+        result = None
+        try:
+            result = result_q.get_nowait()
+        except queue.Empty:
+            pass
+
         if result is None:
             result = dict(
                 success=False,

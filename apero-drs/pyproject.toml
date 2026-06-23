@@ -21,7 +21,7 @@ dependencies = [
     "ipython==8.32.0",
     "ipdb==0.13.13",
     "Bottleneck==1.6.0",
-    "duckdb==1.4.4",
+    # "duckdb==1.4.4",
     "GitPython==3.1.46",
     "llvmlite==0.45.1",
     "numba==0.62.1",

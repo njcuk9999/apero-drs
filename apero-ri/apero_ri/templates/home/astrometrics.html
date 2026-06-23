@@ -180,6 +180,46 @@
     padding: 0.1rem 0.3rem;
 }
 .rej-filter__clear:hover { color: var(--ari-primary, #3f51b5); }
+.rej-table-wrap {
+    overflow-x: auto;
+    overflow-y: auto;
+    scrollbar-gutter: stable;
+    max-height: 62vh;
+    border: 1px solid var(--ari-border, #ddd);
+    border-radius: 0.45rem;
+    margin-top: 0.55rem;
+}
+.rej-table {
+    width: 100%;
+    min-width: 900px;
+}
+.rj-empty {
+    border: 1px dashed var(--ari-border, #d0d7de);
+    border-radius: 0.45rem;
+    padding: 1rem;
+    text-align: center;
+    color: var(--ari-text-muted, #57606a);
+    margin-top: 0.55rem;
+}
+.rej-cell-name {
+    font-family: monospace;
+    color: #922b21;
+    white-space: nowrap;
+}
+.rej-cell-ts {
+    font-family: monospace;
+    white-space: nowrap;
+}
+.rej-cell-trunc {
+    max-width: 24rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.rej-cell-actions {
+    white-space: nowrap;
+    text-align: center;
+}
 
 /* ----- History tab ----- */
 .hist-toolbar {
@@ -1479,10 +1519,10 @@
                         portal. Any incoming observation whose object
                         name resolves to one of these entries falls
                         back to the FITS header values rather than to
-                        a curated astrometric record. Use the card
-                        below to add a new rejected name. Users with
-                        edit permission can edit or delete rejected
-                        entries directly from the cards.
+                        a curated astrometric record. Use
+                        <strong>Add rejected name</strong> to create
+                        an entry. Users with edit permission can
+                        edit/delete directly from the table.
                     </p>
                     <div id="rej-status" class="ari-dt__count"></div>
                     <div class="rej-filter">
@@ -1500,6 +1540,13 @@
                         </button>
                     </div>
                     <div class="hist-toolbar">
+                        <button type="button"
+                                id="rej-open-add"
+                                class="ari-btn ari-btn--primary"
+                                title="Add rejected object name">
+                            <i class="fa-solid fa-plus"></i>
+                            Add rejected name
+                        </button>
                         <label class="hist-toolbar__per">
                             <span>per page</span>
                             <select id="rej-per-page">
@@ -1703,7 +1750,7 @@
 <script src="{{ url_for('static', filename='js/target_info_render.js', v='20260424e') }}"></script>
 <script src="{{ url_for('static', filename='js/ari_data_table.js', v='20260424c') }}"></script>
 <script src="{{ url_for('static', filename='js/astrometrics_lock.js', v='20260430a') }}"></script>
-<script src="{{ url_for('static', filename='js/astrometrics.js', v='20260501a') }}"></script>
+<script src="{{ url_for('static', filename='js/astrometrics.js', v='20260523b') }}"></script>
 {% if astrometrics_can_view_history %}
 <script src="{{ url_for('static', filename='js/astrometrics_history.js', v='20260501b') }}"></script>
 {% endif %}

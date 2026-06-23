@@ -87,7 +87,7 @@
         <div class="ari-modal__body">
             <div class="ari-form-group">
                 <label for="og-add-query">
-                    Object name
+                    Single object name
                 </label>
                 <div class="ari-fav-modal-row">
                     <input id="og-add-query" type="text"
@@ -103,6 +103,28 @@
                 </div>
                 <div id="og-add-single-result"
                      style="display:none;margin-top:0.4rem;">
+                </div>
+            </div>
+            <hr>
+            <div class="ari-form-group">
+                <label for="og-add-bulk-text">
+                    Bulk add text entry
+                </label>
+                <p class="at-muted-hint">
+                    Paste or type one object name per line.
+                </p>
+                <textarea id="og-add-bulk-text"
+                          class="ari-input og-bulk-textarea"
+                          rows="8"
+                          placeholder="GL436&#10;TRAPPIST-1&#10;HD 189733"></textarea>
+                <button id="og-add-text-btn"
+                        class="ari-btn ari-btn--secondary"
+                        style="margin-top:0.4rem;">
+                    <i class="fa-solid fa-paste"></i>
+                    Add From Text
+                </button>
+                <div id="og-add-text-result"
+                     style="display:none;margin-top:0.6rem;">
                 </div>
             </div>
             <hr>
@@ -126,6 +148,203 @@
                      style="display:none;margin-top:0.6rem;">
                 </div>
             </div>
+        </div>
+    </div>
+</div>
+
+{# ── Summary table overlay ───────────────────────────────────── #}
+<div id="og-summary-overlay" class="ogs-overlay"
+     style="display:none;" role="dialog" aria-modal="true"
+     aria-labelledby="og-summary-title">
+    <div class="ogs-overlay__backdrop" id="og-summary-backdrop"></div>
+    <div class="ogs-overlay__dialog">
+        <div class="ogs-overlay__header">
+            <div>
+                <h2 id="og-summary-title">
+                    <i class="fa-solid fa-table-list"></i>
+                    Summary Table
+                </h2>
+                <p class="ogs-overlay__desc">
+                    Generate a summary table for all grouped objects.
+                </p>
+            </div>
+            <button type="button" class="ogs-overlay__close"
+                    id="og-summary-close">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+        <div class="ogs-overlay__body">
+            <label class="ogs-search" for="og-summary-search">
+                <span class="ogs-search__label">Search properties</span>
+                <input id="og-summary-search" type="text"
+                       class="ari-input"
+                       placeholder="Type to filter properties">
+            </label>
+            <div class="ogs-filters ogs-filters--pair">
+                <select id="og-summary-category"
+                        class="ari-input ari-input--sm"
+                        aria-label="Category filter">
+                    <option value="">All categories</option>
+                </select>
+                <select id="og-summary-subcategory"
+                        class="ari-input ari-input--sm"
+                        aria-label="Sub-category filter">
+                    <option value="">All sub-categories</option>
+                </select>
+            </div>
+            <div id="og-summary-list" class="ogs-list"></div>
+            <div class="ogs-selected-wrap">
+                <div class="ogs-selected-wrap__header">
+                    Selected columns
+                    <button type="button" id="og-summary-custom-open"
+                            class="ari-btn ari-btn--sm ari-btn--secondary">
+                        <i class="fa-solid fa-calculator"></i>
+                        Add custom column
+                    </button>
+                    <button type="button" id="og-summary-rename-open"
+                            class="ari-btn ari-btn--sm ari-btn--secondary">
+                        <i class="fa-solid fa-pen"></i>
+                        Rename columns
+                    </button>
+                </div>
+                <div id="og-summary-selected" class="ogs-selected"></div>
+            </div>
+            <div id="og-summary-rename-overlay" class="ogs-mini-overlay"
+                 style="display:none;" role="dialog" aria-modal="true"
+                 aria-labelledby="og-summary-rename-title">
+                <div id="og-summary-rename-backdrop"
+                     class="ogs-mini-overlay__backdrop"></div>
+                <div class="ogs-mini-overlay__dialog">
+                    <div class="ogs-mini-overlay__header">
+                        <h3 id="og-summary-rename-title">Rename Columns</h3>
+                        <button type="button" id="og-summary-rename-close"
+                                class="ogs-overlay__close">
+                            <i class="fa-solid fa-xmark"></i>
+                        </button>
+                    </div>
+                    <p class="ogs-mini-overlay__hint">
+                        Keep the original property and optionally provide
+                        a custom column name for table and exports.
+                    </p>
+                    <div id="og-summary-rename-list"
+                         class="ogs-rename-list"></div>
+                    <div class="ogs-mini-overlay__footer">
+                        <button type="button" id="og-summary-rename-apply"
+                                class="ari-btn ari-btn--primary">
+                            Apply names
+                        </button>
+                        <button type="button" id="og-summary-rename-cancel"
+                                class="ari-btn ari-btn--secondary">
+                            Cancel
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div id="og-summary-custom-overlay" class="ogs-mini-overlay"
+                 style="display:none;" role="dialog" aria-modal="true"
+                 aria-labelledby="og-summary-custom-title">
+                <div id="og-summary-custom-backdrop"
+                     class="ogs-mini-overlay__backdrop"></div>
+                <div class="ogs-mini-overlay__dialog">
+                    <div class="ogs-mini-overlay__header">
+                        <h3 id="og-summary-custom-title">
+                            Add Custom Column
+                        </h3>
+                        <button type="button" id="og-summary-custom-close"
+                                class="ogs-overlay__close">
+                            <i class="fa-solid fa-xmark"></i>
+                        </button>
+                    </div>
+                    <p class="ogs-mini-overlay__hint">
+                        Use letters (x, y, z...) as variables and test before
+                        saving. Mixed numeric/text operators are supported.
+                    </p>
+                    <label class="ogs-search" for="og-summary-custom-name">
+                        <span class="ogs-search__label">Column name</span>
+                        <input id="og-summary-custom-name"
+                               class="ari-input"
+                               type="text"
+                               placeholder="Example: RV span">
+                    </label>
+                    <div class="ogs-filters ogs-filters--compact">
+                        <select id="og-summary-custom-category"
+                                class="ari-input ari-input--sm"
+                                aria-label="Category filter">
+                            <option value="">All categories</option>
+                        </select>
+                        <select id="og-summary-custom-subcategory"
+                                class="ari-input ari-input--sm"
+                                aria-label="Sub-category filter">
+                            <option value="">All sub-categories</option>
+                        </select>
+                    </div>
+                    <label class="ogs-search"
+                           for="og-summary-custom-search">
+                        <span class="ogs-search__label">
+                            Filter properties
+                        </span>
+                        <input id="og-summary-custom-search"
+                               class="ari-input"
+                               type="text"
+                               placeholder="Type 3+ chars to filter properties">
+                    </label>
+                    <div id="og-summary-custom-vars"
+                         class="ogs-rename-list"></div>
+                    <div class="ogs-mini-overlay__footer">
+                        <button type="button" id="og-summary-custom-add-var"
+                                class="ari-btn ari-btn--secondary">
+                            Add variable
+                        </button>
+                    </div>
+                       <label class="ogs-search" for="og-summary-custom-expr">
+                           <span class="ogs-search__label">
+                               Expression
+                               <button type="button"
+                                       id="og-summary-custom-expr-help-toggle"
+                                       class="ogs-help-btn"
+                                       title="Show allowed expression rules"
+                                       aria-label="Show allowed expression rules">
+                                   ?
+                               </button>
+                           </span>
+                           <input id="og-summary-custom-expr"
+                                  class="ari-input"
+                                  type="text"
+                                  placeholder="Example: str(x).split()[0]">
+                       </label>
+                       <div id="og-summary-custom-expr-help"
+                            class="ogs-expr-help"
+                            style="display:none;"></div>
+                    <div id="og-summary-custom-status"
+                         class="ogs-status"></div>
+                    <div class="ogs-mini-overlay__footer">
+                        <button type="button" id="og-summary-custom-test"
+                                class="ari-btn ari-btn--secondary">
+                            Test
+                        </button>
+                        <button type="button" id="og-summary-custom-save"
+                                class="ari-btn ari-btn--primary">
+                            Save custom column
+                        </button>
+                        <button type="button" id="og-summary-custom-cancel"
+                                class="ari-btn ari-btn--secondary">
+                            Cancel
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div id="og-summary-status" class="ogs-status"></div>
+        </div>
+        <div class="ogs-overlay__footer">
+            <button type="button" id="og-summary-generate"
+                    class="ari-btn ari-btn--primary">
+                <i class="fa-solid fa-table"></i>
+                Generate
+            </button>
+            <button type="button" id="og-summary-close-btn"
+                    class="ari-btn ari-btn--secondary">
+                Close
+            </button>
         </div>
     </div>
 </div>
@@ -175,9 +394,14 @@ window.ARI_OBJECT_GROUPS = {
     renameApiUrl: '/api/data-portal/object-groups/rename',
     addObjectApiUrl: '/api/data-portal/object-groups/add-object',
     addBulkApiUrl: '/api/data-portal/object-groups/add-objects-bulk',
+    addJsonApiUrl: '/api/data-portal/object-groups/add-objects-json',
     removeObjectApiUrl: '/api/data-portal/object-groups/remove-object',
+    summaryConfigApiUrl: '/api/data-portal/object-groups/summary-config',
+    summaryCustomTestApiUrl: (
+        '/api/data-portal/object-groups/summary-custom-test'
+    ),
     objectPageBaseUrl: '/data_portal/{{ profile.profile_id }}/'
 };
 </script>
-<script src="{{ url_for('static', filename='js/object_groups.js', v='20260609a') }}" defer></script>
+<script src="{{ url_for('static', filename='js/object_groups.js', v='20260522e') }}" defer></script>
 {% endblock %}

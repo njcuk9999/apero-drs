@@ -621,7 +621,10 @@ def _resolve_sync_profile_source_dir(
         if candidate.is_dir():
             return candidate
 
-    has_root_tree = (source / "tasks").exists() or (source / instrument).exists()
+    has_root_tree = (
+        (source / "tasks").exists()
+        or (source / instrument).exists()
+    )
     if not has_root_tree:
         return source
 
@@ -1162,7 +1165,7 @@ def _scheduler_poll(local_data_dir: str) -> None:
         import_errors = getattr(task_module, "IMPORT_ERRORS", {}) or {}
 
         all_tasks = load_async_tasks()
-        all_profiles = load_apero_profiles()
+        all_profiles = load_apero_profiles(enabled_only=True)
         now = datetime.now(timezone.utc)
         changed = False
 
@@ -1321,6 +1324,22 @@ def _scheduler_poll(local_data_dir: str) -> None:
                             "local_source_path"
                         ] = _local_src
 
+                if task_key in [
+                    "LEGACY_ASTROM_GSHEET",
+                    "LEGACY_REJECT_GSHEET",
+                ]:
+                    for _key in [
+                        "DRY_RUN",
+                        "google_secret_name",
+                        "sheet_id",
+                        "sheet_name",
+                        "sheet_names",
+                        "resolve_tolerance_arcsec",
+                        "created_by",
+                    ]:
+                        if _key in task_cfg:
+                            merged_cfg[_key] = task_cfg.get(_key)
+
                 for field in [
                     "last_run",
                     "run_count",
@@ -1358,6 +1377,10 @@ def _scheduler_poll(local_data_dir: str) -> None:
                     continue
                 try:
                     instance = hydrate_runtime_state(task_cls(), task_cfg)
+                    instance.USE_SUBPROCESS = bool(
+                        task_module.USE_SUBPROCESS.get(task_key, False)
+                    )
+                    instance._task_key = task_key
                 except Exception:
                     task_cfg["last_status"] = "failed"
                     task_cfg["error"] = traceback.format_exc()
@@ -1527,9 +1550,22 @@ def build_run_params(
         "PATH_TELLU",
         "PATH_LOG",
         "PATH_LBL",
+        "PATH_CHECK",
+        "PATH_OTHER",
     ]
     for pname, pcfg in profiles.items():
         p = deepcopy(pcfg) if isinstance(pcfg, dict) else {}
+        disabled = p.get('disabled', p.get('DISABLED', False))
+        if isinstance(disabled, str):
+            disabled = disabled.strip().lower() in [
+                '1',
+                'true',
+                'yes',
+                'on',
+                'y',
+            ]
+        if bool(disabled):
+            continue
 
         # Merge preset YAML referenced by APERO_INSTRUMENT_PROFILE so task
         # payloads include all instrument defaults without requiring code edits

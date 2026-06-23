@@ -104,7 +104,7 @@ Instrument = instrument_mod.Instrument
 # get numpy masked constant
 MaskedConstant = np.ma.core.MaskedConstant
 # Get pandas like database class
-PandasLikeDatabase = base_class.PandasLikeDatabaseDuckDB
+PandasLikeDatabase = base_class.PandasLikeDatabase
 # -----------------------------------------------------------------------------
 # define complex typing
 QCParamList = Union[Tuple[List[str], List[Any], List[str], List[int]],
@@ -7497,6 +7497,9 @@ class DrsOutFile(DrsInputFile):
         # self._remove_duplicate_keys(params)
         # add extension names as comments
         self._add_extensions_names_to_primary(params)
+        # ---------------------------------------------------------------------
+        # add apero core keys
+        self.add_core_hkeys(params)
 
     def check_header_skip(self, ext: int = 0) -> bool:
         """
@@ -7590,6 +7593,55 @@ class DrsOutFile(DrsInputFile):
                 infiles.append(rawinfile)
         # set the infiles
         self.infiles = list(infiles)
+
+    def add_core_hkeys(self, params: Optional[ParamDict] = None):
+        """
+        Add the core header keys to the header (every DRS fits file should
+        have at least these)
+
+        :param _params: Optional ParamDict, if we have the parameter dictionary
+                       use it to get the parameters, otherwise guess them
+
+        :return: None, updates the header
+        """
+        # get primary header
+        header = self.extensions[0].header
+
+        def _add_hkeys(key, value):
+            # get header key and header comment
+            hkey, _, hcomment = params[key]
+            # push into header
+            header[hkey] = (value, hcomment)
+        # ----------------------------------------------------------------------
+        # add version
+        version = params.get('DRS.VERSION', __version__)
+        _add_hkeys('KW_VERSION', value=version)
+        # ----------------------------------------------------------------------
+        # add drs date
+        drs_date = params.get('DRS.DATE', __date__)
+        _add_hkeys('KW_DRS_DATE', value=drs_date)
+        # ----------------------------------------------------------------------
+        # add date now
+        date_now = params.get('DATE_NOW', base.AstropyTime.now().iso)
+        _add_hkeys('KW_DRS_DATE_NOW', value=date_now)
+        # ----------------------------------------------------------------------
+        # add process id
+        pid = params.get('PID', 'Unknown')
+        _add_hkeys('KW_PID', value=pid)
+        # ----------------------------------------------------------------------
+        # add output tag
+        _add_hkeys('KW_OUTPUT', value=self.name)
+        # ----------------------------------------------------------------------
+        # add config run.ini file (if given)
+        if 'INPUTS' in params:
+            crunfile = params['INPUTS'].get('CRUNFILE', 'Not set')
+        else:
+            crunfile = 'Not set'
+        # still a change crunfile is None
+        if crunfile is None:
+            crunfile = 'Not set'
+        # finally set value in header
+        _add_hkeys('KW_CRUNFILE', value=crunfile)
 
     def _add_header_keys(self, params: ParamDict):
         """

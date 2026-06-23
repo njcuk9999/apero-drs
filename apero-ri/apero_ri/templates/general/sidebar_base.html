@@ -62,6 +62,51 @@
             <a href="{{ sidebar_url }}" class="ari-sidebar__heading">
                 <i class="{{ sidebar_icon }}"></i> {{ sidebar_label }}
             </a>
+            {% if docs_sidebar_tree is defined and docs_sidebar_tree %}
+            <nav class="ari-sidebar__nav" aria-label="Section navigation"
+                 data-doc-tree="1">
+                {% for item in sidebar_tree %}
+                {% if not item.pinned|default(false) %}
+                {% set item_classes = 'ari-sidebar__link' %}
+                {% if item.active %}
+                {% set item_classes = item_classes + ' ari-sidebar__link--active' %}
+                {% endif %}
+                <div class="ari-doc-tree__row{% if item.depth > 0 %} ari-doc-tree__row--hidden{% endif %}"
+                     data-depth="{{ item.depth }}"
+                     data-doc-id="{{ item.id }}"
+                     data-doc-open="false">
+                    {% if item.has_children|default(false) %}
+                    <button type="button"
+                            class="ari-doc-tree__toggle"
+                            aria-label="Toggle section"
+                            aria-expanded="false"
+                            data-doc-toggle="{{ item.id }}">
+                        <i class="fa-solid fa-chevron-right"></i>
+                    </button>
+                    {% else %}
+                    <span class="ari-doc-tree__toggle-spacer"></span>
+                    {% endif %}
+                {% if item.url and not (item.disabled|default(false)) %}
+                <a href="{{ item.url }}{% if doc_query_suffix is defined %}{{ doc_query_suffix }}{% elif current_version is defined %}?v={{ current_version }}{% endif %}"
+                   class="{{ item_classes }}"
+                   data-page-id="{{ item.id }}"
+                   style="padding-left: {{ 0.75 + item.depth * 1.0 }}rem;">
+                    <i class="{{ item.icon }}"></i>
+                    <span>{{ item.label }}</span>
+                </a>
+                {% else %}
+                <span class="{{ item_classes }} ari-sidebar__link--disabled"
+                      data-page-id="{{ item.id }}"
+                      style="padding-left: {{ 0.75 + item.depth * 1.0 }}rem;">
+                    <i class="{{ item.icon }}"></i>
+                    <span>{{ item.label }}</span>
+                </span>
+                {% endif %}
+                                </div>
+                {% endif %}
+                {% endfor %}
+            </nav>
+            {% else %}
             <nav class="ari-sidebar__nav" aria-label="Section navigation">
                 {% for item in sidebar_tree %}
                 {% if not item.pinned|default(false) %}
@@ -110,6 +155,7 @@
                 {% endif %}
                 {% endfor %}
             </nav>
+            {% endif %}
         </div>
         {% endif %}
     </aside>
@@ -119,60 +165,6 @@
     <!-- ================================================================ -->
     <div class="ari-doc-main">
         {% with messages = get_flashed_messages(with_categories=true) %}
-{% block extra_scripts %}{{ super() }}
-<script>
-(function () {
-    'use strict';
-    document.querySelectorAll('[data-fav-toggle]').forEach(function (btn) {
-        var group = String(btn.getAttribute('data-fav-toggle') || '').trim();
-        if (!group) return;
-        var toggle = function (forceState) {
-            var expanded = String(btn.getAttribute('aria-expanded') || '') === 'true';
-            if (typeof forceState === 'boolean') {
-                expanded = !!forceState;
-            } else {
-                expanded = !expanded;
-            }
-            btn.setAttribute('aria-expanded', expanded ? 'true' : 'false');
-            document.querySelectorAll('.ari-sidebar__link[data-fav-group="' + group + '"]').forEach(function (row) {
-                row.classList.toggle('ari-sidebar__link--fav-hidden', !expanded);
-            });
-        };
-        toggle(String(btn.getAttribute('aria-expanded') || '') === 'true');
-        btn.addEventListener('click', function (ev) {
-            ev.preventDefault();
-            toggle();
-        });
-    });
-}());
-</script>
-<script>
-(function () {
-    'use strict';
-    function initAdminInfoPanels() {
-        document.querySelectorAll('details.ari-admin-info[id]').forEach(function (el) {
-            var key = 'ari-admin-info-' + el.id;
-            var saved = null;
-            try { saved = localStorage.getItem(key); } catch (_) { saved = null; }
-            // Default to collapsed unless user explicitly opened it.
-            if (saved === '1') {
-                el.setAttribute('open', 'open');
-            } else {
-                el.removeAttribute('open');
-            }
-            el.addEventListener('toggle', function () {
-                try { localStorage.setItem(key, el.open ? '1' : '0'); } catch (_) {}
-            });
-        });
-    }
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', initAdminInfoPanels);
-    } else {
-        initAdminInfoPanels();
-    }
-}());
-</script>
-{% endblock %}
         {% if messages %}
         {% for category, message in messages %}
         <div class="ari-flash ari-flash--{{ category }}">
@@ -228,4 +220,150 @@
         {% block doc_content %}{% endblock %}
     </div>
 </div>
+{% endblock %}
+
+{% block extra_scripts %}{{ super() }}
+<script>
+(function () {
+    'use strict';
+    document.querySelectorAll('[data-fav-toggle]').forEach(function (btn) {
+        var group = String(btn.getAttribute('data-fav-toggle') || '').trim();
+        if (!group) return;
+        var toggle = function (forceState) {
+            var expanded = String(btn.getAttribute('aria-expanded') || '') === 'true';
+            if (typeof forceState === 'boolean') {
+                expanded = !!forceState;
+            } else {
+                expanded = !expanded;
+            }
+            btn.setAttribute('aria-expanded', expanded ? 'true' : 'false');
+            document.querySelectorAll('.ari-sidebar__link[data-fav-group="' + group + '"]').forEach(function (row) {
+                row.classList.toggle('ari-sidebar__link--fav-hidden', !expanded);
+            });
+        };
+        toggle(String(btn.getAttribute('aria-expanded') || '') === 'true');
+        btn.addEventListener('click', function (ev) {
+            ev.preventDefault();
+            toggle();
+        });
+    });
+}());
+</script>
+<script>
+(function () {
+    'use strict';
+
+    function initDocsTree(root) {
+        var rows = Array.from(root.querySelectorAll('.ari-doc-tree__row'));
+        if (!rows.length) return;
+
+        function depthOf(idx) {
+            return Number(rows[idx].getAttribute('data-depth') || '0');
+        }
+
+        function hideDescendants(idx) {
+            var baseDepth = depthOf(idx);
+            for (var i = idx + 1; i < rows.length; i += 1) {
+                if (depthOf(i) <= baseDepth) break;
+                rows[i].classList.add('ari-doc-tree__row--hidden');
+                rows[i].setAttribute('data-doc-open', 'false');
+                var childBtn = rows[i].querySelector('.ari-doc-tree__toggle');
+                if (childBtn) {
+                    childBtn.setAttribute('aria-expanded', 'false');
+                }
+            }
+        }
+
+        function showDirectChildren(idx) {
+            var baseDepth = depthOf(idx);
+            for (var i = idx + 1; i < rows.length; i += 1) {
+                var rowDepth = depthOf(i);
+                if (rowDepth <= baseDepth) break;
+                if (rowDepth === baseDepth + 1) {
+                    rows[i].classList.remove('ari-doc-tree__row--hidden');
+                    if (rows[i].getAttribute('data-doc-open') === 'true') {
+                        showDirectChildren(i);
+                    }
+                }
+            }
+        }
+
+        function setOpen(idx, open) {
+            rows[idx].setAttribute('data-doc-open', open ? 'true' : 'false');
+            var btn = rows[idx].querySelector('.ari-doc-tree__toggle');
+            if (btn) btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+            if (open) {
+                showDirectChildren(idx);
+            } else {
+                hideDescendants(idx);
+            }
+        }
+
+        rows.forEach(function (row, idx) {
+            row.setAttribute('data-doc-open', 'false');
+            if (depthOf(idx) > 0) {
+                row.classList.add('ari-doc-tree__row--hidden');
+            }
+            var btn = row.querySelector('.ari-doc-tree__toggle');
+            if (!btn) return;
+            btn.addEventListener('click', function (ev) {
+                ev.preventDefault();
+                setOpen(idx, row.getAttribute('data-doc-open') !== 'true');
+            });
+        });
+
+        var active = root.querySelector(
+            '.ari-sidebar__link--active, '
+            + '.ari-mobile-menu__link--active, '
+            + '.ari-doc-tree__link--active'
+        );
+        if (!active) return;
+
+        var activeRow = active.closest('.ari-doc-tree__row');
+        if (!activeRow) return;
+
+        var activeIdx = rows.indexOf(activeRow);
+        if (activeIdx < 0) return;
+
+        var targetDepth = depthOf(activeIdx);
+        for (var i = activeIdx - 1; i >= 0; i -= 1) {
+            if (depthOf(i) < targetDepth) {
+                setOpen(i, true);
+                targetDepth = depthOf(i);
+                if (targetDepth === 0) break;
+            }
+        }
+    }
+
+    document.querySelectorAll('[data-doc-tree="1"]').forEach(function (root) {
+        initDocsTree(root);
+    });
+}());
+</script>
+<script>
+(function () {
+    'use strict';
+    function initAdminInfoPanels() {
+        document.querySelectorAll('details.ari-admin-info[id]').forEach(function (el) {
+            var key = 'ari-admin-info-' + el.id;
+            var saved = null;
+            try { saved = localStorage.getItem(key); } catch (_) { saved = null; }
+            // Default to collapsed unless user explicitly opened it.
+            if (saved === '1') {
+                el.setAttribute('open', 'open');
+            } else {
+                el.removeAttribute('open');
+            }
+            el.addEventListener('toggle', function () {
+                try { localStorage.setItem(key, el.open ? '1' : '0'); } catch (_) {}
+            });
+        });
+    }
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initAdminInfoPanels);
+    } else {
+        initAdminInfoPanels();
+    }
+}());
+</script>
 {% endblock %}

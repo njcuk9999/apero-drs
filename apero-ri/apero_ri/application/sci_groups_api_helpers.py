@@ -222,6 +222,106 @@ def api_sci_groups_save(app):
     return jsonify(success=True, group=groups.get(canonical_name, {}))
 
 
+def api_sci_groups_save_all(app):
+    """Save multiple science-group edits in one request."""
+    user_info, perms = app._require_sci_group_perm()
+    if not user_info:
+        return jsonify(success=False, error='Unauthorized'), 401
+
+    data = request.get_json(silent=True) or {}
+    edits = data.get('edits', [])
+    if not isinstance(edits, list) or not edits:
+        return jsonify(success=False, error='Missing edits'), 400
+
+    validated = []
+    grouped = dict()
+    seen = dict()
+    for entry in edits:
+        if not isinstance(entry, dict):
+            return jsonify(success=False, error='Invalid edit payload'), 400
+
+        instrument = str(entry.get('instrument', '') or '').strip()
+        name = str(entry.get('name', '') or '').strip()
+        run_ids = entry.get('run_ids', [])
+        users = entry.get('users', [])
+
+        if not instrument or not name:
+            return jsonify(success=False, error='Missing edit fields'), 400
+
+        perm = f'manage.sci_group.{instrument}'
+        if perm not in (perms or set()):
+            return jsonify(success=False,
+                           error='Insufficient permissions'), 403
+
+        if not isinstance(run_ids, list):
+            run_ids = []
+        if not isinstance(users, list):
+            users = []
+
+        canonical_name = 'All' if app._is_all_science_group(name) else name
+        row = dict()
+        row['instrument'] = instrument
+        row['name'] = canonical_name
+        row['run_ids'] = sorted({
+            str(rid).strip()
+            for rid in run_ids
+            if str(rid).strip()
+        })
+        row['users'] = sorted({
+            str(user).strip()
+            for user in users
+            if str(user).strip()
+        })
+        key = f'{instrument}||{canonical_name}'
+        seen[key] = row
+
+    validated = list(seen.values())
+    for row in validated:
+        instrument = row['instrument']
+        grouped.setdefault(instrument, []).append(row)
+
+    saved_entries = []
+    for instrument, rows in grouped.items():
+        run_ids = app._get_instrument_run_ids(instrument)
+        groups = load_science_groups(instrument)
+        groups, all_run_ids = app._sync_all_science_group(
+            instrument,
+            groups=groups,
+            run_ids=run_ids,
+            persist=False,
+        )
+
+        for row in rows:
+            run_ids_clean = list(row['run_ids'])
+            users_clean = list(row['users'])
+            if app._is_all_science_group(row['name']):
+                run_ids_clean = list(all_run_ids)
+            groups[row['name']] = {
+                'run_ids': run_ids_clean,
+                'users': users_clean,
+            }
+
+        groups, _ = app._sync_all_science_group(
+            instrument,
+            groups=groups,
+            run_ids=all_run_ids,
+            persist=False,
+        )
+        save_science_groups(instrument, groups)
+
+        for row in rows:
+            saved = groups.get(row['name'], {'run_ids': [], 'users': []})
+            out = dict()
+            out['instrument'] = instrument
+            out['name'] = row['name']
+            out['run_ids'] = list(saved.get('run_ids', []) or [])
+            out['users'] = list(saved.get('users', []) or [])
+            saved_entries.append(out)
+
+    app._refresh_admin_health_after_change(user_info, perms)
+    return jsonify(success=True, saved=saved_entries)
+
+
 def api_sci_groups_create(app):
     """Create a new science group."""
     user_info, perms = app._require_sci_group_perm()

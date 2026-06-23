@@ -454,19 +454,54 @@ def save_async_tasks(tasks: dict) -> None:
 # =============================================================================
 # APERO profile management
 # =============================================================================
-def load_apero_profiles(hydrate: bool = True) -> dict:
+def _profile_is_disabled(profile_data: dict) -> bool:
+    """Return True when a profile config is marked disabled."""
+    if not isinstance(profile_data, dict):
+        return False
+    raw = profile_data.get('disabled', profile_data.get('DISABLED', False))
+    if isinstance(raw, bool):
+        return raw
+    text = str(raw or '').strip().lower()
+    return text in {'1', 'true', 'yes', 'on', 'y'}
+
+
+def _filter_enabled_profiles(profiles: Any) -> dict:
+    """Return a copy of profiles with disabled profiles removed."""
+    if not isinstance(profiles, dict):
+        return {}
+
+    out: Dict[str, dict] = {}
+    for instrument, instr_profiles in profiles.items():
+        if not isinstance(instr_profiles, dict):
+            continue
+        enabled: Dict[str, dict] = {}
+        for profile_id, profile_data in instr_profiles.items():
+            if _profile_is_disabled(profile_data):
+                continue
+            enabled[profile_id] = profile_data
+        out[instrument] = enabled
+    return out
+
+
+def load_apero_profiles(
+    hydrate: bool = True,
+    enabled_only: bool = False,
+) -> dict:
     """Load APERO profiles from apero_profiles.yaml.
 
     Args:
         hydrate: When True, merge APERO_INSTRUMENT_PROFILE defaults into each
             profile payload for runtime use. When False, return raw file
             content (useful before mutating/saving profiles).
+        enabled_only: When True, skip profiles marked as disabled.
 
     The loaded profiles are cached in-process for _PROFILES_TTL seconds so
     that repeated calls within the same server process (e.g. multiple
     simultaneous API requests) do not all hit the YAML file on disk.
     """
-    cache_key = "hydrated" if hydrate else "raw"
+    cache_key = 'hydrated' if hydrate else 'raw'
+    if enabled_only:
+        cache_key += '_enabled'
     now = time.monotonic()
     with _profiles_lock:
         entry = _profiles_cache.get(cache_key)
@@ -503,6 +538,9 @@ def load_apero_profiles(hydrate: bool = True) -> dict:
                 )
             hydrated[instrument] = hprofiles
         result = hydrated
+
+    if enabled_only:
+        result = _filter_enabled_profiles(result)
     with _profiles_lock:
         _profiles_cache[cache_key] = {
             "expires": now + _PROFILES_TTL,
@@ -1046,7 +1084,7 @@ def get_accessible_profiles(
     from apero_ri.core.permissions import get_inherited_groups
     from apero_ri.core.permissions import get_user_instruments
 
-    profiles_data = load_apero_profiles(hydrate=False)
+    profiles_data = load_apero_profiles(hydrate=False, enabled_only=True)
     if not profiles_data:
         return []
 

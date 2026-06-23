@@ -614,7 +614,7 @@ def register_static_routes(app):
         "doc_dynamic_view",
         app._doc_dynamic_view,
     )
-    app.add_url_rule("/doc-images/<filename>", "doc_image", app._doc_image_view)
+    app.add_url_rule("/doc-images/<path:filename>", "doc_image", app._doc_image_view)
 
     # Admin user management API routes
     app.add_url_rule(
@@ -673,6 +673,12 @@ def register_static_routes(app):
         "/api/admin/sci-groups/save",
         "api_sci_groups_save",
         app._api_sci_groups_save,
+        methods=["POST"],
+    )
+    app.add_url_rule(
+        "/api/admin/sci-groups/save-all",
+        "api_sci_groups_save_all",
+        app._api_sci_groups_save_all,
         methods=["POST"],
     )
     app.add_url_rule(
@@ -760,6 +766,12 @@ def register_static_routes(app):
         "api_apero_profiles_update_groups",
         app._api_apero_profiles_update_groups,
         methods=["POST"],
+    )
+    app.add_url_rule(
+        '/api/admin/apero-profiles/toggle-disabled',
+        'api_apero_profiles_toggle_disabled',
+        app._api_apero_profiles_toggle_disabled,
+        methods=['POST'],
     )
     app.add_url_rule(
         "/api/admin/apero-profiles/test-db",
@@ -1565,6 +1577,16 @@ def register_data_portal_routes(app):
         app._monitor_apero_checks_obsdir_view,
     )
     app.add_url_rule(
+        "/monitor_portal/apero_checks/<profile_id>/<obsdir>/check/<check_key>",
+        "monitor_apero_checks_check_view",
+        app._monitor_apero_checks_check_view,
+    )
+    app.add_url_rule(
+        "/monitor_portal/apero_checks/<profile_id>/queue",
+        "monitor_apero_checks_queue_view",
+        app._monitor_apero_checks_queue_view,
+    )
+    app.add_url_rule(
         "/api/monitor/processing-logs",
         "api_processing_logs",
         app._api_processing_logs,
@@ -1607,6 +1629,78 @@ def register_data_portal_routes(app):
         methods=['GET'],
     )
     app.add_url_rule(
+        '/api/monitor/apero-checks/<profile_id>/page',
+        'api_apero_checks_profile_page',
+        app._api_apero_checks_profile_page,
+        methods=['GET'],
+    )
+    app.add_url_rule(
+        '/api/monitor/apero-checks/policy-sections',
+        'api_apero_checks_policy_sections',
+        app._api_apero_checks_policy_sections,
+        methods=['GET'],
+    )
+    app.add_url_rule(
+        '/api/monitor/apero-checks/view-yaml',
+        'api_apero_checks_view_yaml',
+        app._api_apero_checks_view_yaml,
+        methods=['POST'],
+    )
+    app.add_url_rule(
+        '/api/monitor/apero-checks/rerun-night',
+        'api_apero_checks_rerun_night',
+        app._api_apero_checks_rerun_night,
+        methods=['POST'],
+    )
+    app.add_url_rule(
+        '/api/monitor/apero-checks/rerun-check',
+        'api_apero_checks_rerun_single_check',
+        app._api_apero_checks_rerun_single_check,
+        methods=['POST'],
+    )
+    app.add_url_rule(
+        '/api/monitor/apero-checks/clean-reset-profile',
+        'api_apero_checks_clean_reset_profile',
+        app._api_apero_checks_clean_reset_profile,
+        methods=['POST'],
+    )
+    app.add_url_rule(
+        '/api/monitor/apero-checks/delete-obsdir',
+        'api_apero_checks_delete_obsdir',
+        app._api_apero_checks_delete_obsdir,
+        methods=['POST'],
+    )
+    app.add_url_rule(
+        '/api/monitor/apero-checks/delete-test-from-yamls',
+        'api_apero_checks_delete_test_from_yamls',
+        app._api_apero_checks_delete_test_from_yamls,
+        methods=['POST'],
+    )
+    app.add_url_rule(
+        '/api/monitor/apero-checks/<profile_id>/queue-status',
+        'api_apero_checks_queue_status',
+        app._api_apero_checks_queue_status,
+        methods=['GET'],
+    )
+    app.add_url_rule(
+        '/api/monitor/apero-checks/<profile_id>/queue-cancel-task',
+        'api_apero_checks_queue_cancel_task',
+        app._api_apero_checks_queue_cancel_task,
+        methods=['POST'],
+    )
+    app.add_url_rule(
+        '/api/monitor/apero-checks/<profile_id>/queue-kill-profile',
+        'api_apero_checks_queue_kill_profile',
+        app._api_apero_checks_queue_kill_profile,
+        methods=['POST'],
+    )
+    app.add_url_rule(
+        '/api/monitor/apero-checks/<profile_id>/queue-clear-history',
+        'api_apero_checks_queue_clear_history',
+        app._api_apero_checks_queue_clear_history,
+        methods=['POST'],
+    )
+    app.add_url_rule(
         "/data_portal/<profile_id>/observation-table",
         "ri_observation_table",
         app._ri_object_table_view,
@@ -1630,6 +1724,18 @@ def register_data_portal_routes(app):
         "/data_portal/<profile_id>/object-groups",
         "ri_object_groups",
         app._ri_object_groups_view,
+    )
+    app.add_url_rule(
+        "/data_portal/<profile_id>/object-groups/<path:group_name>"
+        "/summary-table",
+        "ri_object_group_summary",
+        app._ri_object_group_summary_view,
+    )
+    app.add_url_rule(
+        "/data_portal/<profile_id>/fav-objects/<path:section_name>"
+        "/summary-table",
+        "ri_favourites_summary",
+        app._ri_favourites_summary_view,
     )
     app.add_url_rule(
         "/data_portal/<profile_id>/qc-graphs",
@@ -1743,6 +1849,16 @@ def register_data_portal_routes(app):
         "/api/data-portal/file-browser",
         "api_file_browser",
         app._api_file_browser,
+    )
+    app.add_url_rule(
+        '/api/data-portal/file-header',
+        'api_file_header',
+        app._api_file_header,
+    )
+    app.add_url_rule(
+        '/api/data-portal/file-header-download',
+        'api_file_header_download',
+        app._api_file_header_download,
     )
 
     app.add_url_rule(
@@ -1911,6 +2027,28 @@ def register_data_portal_routes(app):
         app._api_object_groups_objects,
     )
     app.add_url_rule(
+        "/api/data-portal/object-groups/summary-config",
+        "api_object_groups_summary_config",
+        app._api_object_groups_summary_config,
+        methods=["GET", "POST"],
+    )
+    app.add_url_rule(
+        "/api/data-portal/object-groups/summary-table",
+        "api_object_groups_summary_table",
+        app._api_object_groups_summary_table,
+    )
+    app.add_url_rule(
+        "/api/data-portal/object-groups/summary-export",
+        "api_object_groups_summary_export",
+        app._api_object_groups_summary_export,
+    )
+    app.add_url_rule(
+        "/api/data-portal/object-groups/summary-custom-test",
+        "api_object_groups_summary_custom_test",
+        app._api_object_groups_summary_custom_test,
+        methods=["POST"],
+    )
+    app.add_url_rule(
         "/api/data-portal/object-groups/create",
         "api_object_groups_create",
         app._api_object_groups_create,
@@ -1952,6 +2090,36 @@ def register_data_portal_routes(app):
         "api_object_groups_remove_object",
         app._api_object_groups_remove_object,
         methods=["POST"],
+    )
+    app.add_url_rule(
+        '/api/admin/allowed-python-expressions',
+        'api_object_groups_allowed_expressions',
+        app._api_object_groups_allowed_expressions,
+        methods=['GET', 'POST'],
+    )
+    app.add_url_rule(
+        '/api/admin/custom-columns',
+        'api_object_groups_admin_custom_columns',
+        app._api_object_groups_admin_custom_columns,
+        methods=['GET', 'POST'],
+    )
+    app.add_url_rule(
+        '/api/admin/custom-columns/test',
+        'api_object_groups_admin_custom_test',
+        app._api_object_groups_admin_custom_test,
+        methods=['POST'],
+    )
+    app.add_url_rule(
+        '/api/clocks',
+        'api_clocks_get',
+        app._api_clocks_get,
+        methods=['GET'],
+    )
+    app.add_url_rule(
+        '/api/admin/clocks',
+        'api_admin_clocks',
+        app._api_admin_clocks,
+        methods=['GET', 'POST'],
     )
 
     app.add_url_rule(

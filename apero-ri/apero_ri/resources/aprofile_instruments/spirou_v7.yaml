@@ -337,6 +337,59 @@ calib-headers:
       key: WCAV000
       label: Wave cavity [intercept]
       dtype: float
+apero-checks:
+  common:
+    header_keys:
+      dpr_type: ''
+      obs_name: ''
+      mjd_obs: ''
+  calib_test:
+    enabled: false
+    required_dprtypes: []
+  calib_ob_test:
+    enabled: false
+    required_obnames: {}
+  no_sci:
+    enabled: false
+    dprtypes: []
+  qual_test:
+    enabled: false
+    dpr_groups: {}
+    constraints: {}
+  eng_test:
+    tests:
+      enclosure_temperature_rms:
+        enabled: false
+      enclosure_setpoint_offset:
+        enabled: false
+      vacuum_gauge_upper:
+        enabled: false
+      isolation_valve_state:
+        enabled: false
+      cryo1_status_state:
+        enabled: false
+      cryo2_status_state:
+        enabled: false
+      turbopump_status_state:
+        enabled: false
+      warning_cryo1_state:
+        enabled: false
+      warning_cryo2_state:
+        enabled: false
+      fp_interior_rms:
+        enabled: false
+      fp_exterior_range:
+        enabled: false
+      fp_setpoint_rms:
+        enabled: false
+      enclosure_heater_power_max:
+        enabled: false
+      scrambling_status_science:
+        enabled: false
+      stretcher_status_state:
+        enabled: false
+      backend_device_error_state:
+        enabled: false
 finder:
   # define time in years before and after "obs date" to plot trail for
   DTMIN: -6

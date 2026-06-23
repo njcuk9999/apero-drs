@@ -17,6 +17,18 @@
     <p class="ari-page-subtitle">
         Select a reduction profile to inspect per-obsdir APERO check YAML files.
     </p>
+    {% if can_manage_apero_profiles %}
+    <div style="margin-top:0.8rem; display:flex; gap:0.5rem; flex-wrap:wrap;">
+        <a class="ari-btn ari-btn--secondary ari-btn--sm"
+           href="{{ url_for('home_admin_portal_apero_profiles') }}">
+            <i class="fa-solid fa-gear"></i> Manage APERO profiles
+        </a>
+        <a class="ari-btn ari-btn--secondary ari-btn--sm"
+              href="{{ url_for('home_admin_portal_apero_checks_policy') }}">
+            <i class="fa-solid fa-shield"></i> Manage APERO checks
+        </a>
+    </div>
+    {% endif %}
 </div>
 
 {% if shown_instruments is defined and shown_instruments|length > 0 %}

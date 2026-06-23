@@ -1040,6 +1040,8 @@ window.ARI_OBJECT_PAGE = {
     objectFavouriteApiToggle: '/api/user/favourite-objects/toggle',
     objectFavouriteApiLastOpened: '/api/user/favourite-objects/last-opened',
     filenamePlotApiUrl: '/api/data-portal/filename-plot',
+    fileHeaderApiUrl: '/api/data-portal/file-header',
+    fileHeaderDownloadApiUrl: '/api/data-portal/file-header-download',
     plotYAxisZoom: {{ plot_yaxis_zoom | tojson }},
     commentsListApiUrl: '/api/data-portal/object-comments/list',
     commentsAddApiUrl: '/api/data-portal/object-comments/add',
@@ -1075,7 +1077,7 @@ window.ARI_BASKET_CFG = {
 window.ARI_PLOTABLE_OUTPUTS = {{ plotable_output_types | tojson }};
 window.ARI_FRAME_PREFIXES   = {{ frame_output_prefixes | tojson }};
 </script>
-<script src="{{ url_for('static', filename='js/file_browser.js', v='20260410d') }}" defer></script>
+<script src="{{ url_for('static', filename='js/file_browser.js', v='20260610a') }}" defer></script>
 <script src="{{ url_for('static', filename='js/object_comments.js', v='20260609a') }}" defer></script>
 
 <!-- ──── Filename-click plot modal ──────────────────────────────────────── -->
@@ -1093,6 +1095,70 @@ window.ARI_FRAME_PREFIXES   = {{ frame_output_prefixes | tojson }};
             </div>
             <div id="fn-plot-error" class="fn-modal-error" style="display:none;"></div>
             <div id="fn-plot-div"></div>
+        </div>
+    </div>
+</div>
+
+<!-- ──── File header modal ──────────────────────────────────────────────── -->
+<div id="fb-header-modal" class="fn-modal-overlay" style="display:none;"
+     role="dialog" aria-modal="true" aria-labelledby="fb-header-title">
+    <div class="fn-modal-box fb-header-modal-box">
+        <div class="fn-modal-header">
+            <span id="fb-header-title" class="fn-modal-title">FITS Header</span>
+            <button id="fb-header-download-csv"
+                    class="ari-btn ari-btn--sm ari-btn--secondary"
+                    title="Download CSV">
+                <i class="fa-solid fa-file-csv"></i> CSV
+            </button>
+            <button id="fb-header-download-fits"
+                    class="ari-btn ari-btn--sm ari-btn--secondary"
+                    title="Download FITS header">
+                <i class="fa-solid fa-file-arrow-down"></i> FITS
+            </button>
+            <button id="fb-header-close"
+                    class="ari-btn ari-btn--sm ari-btn--secondary fn-modal-close"
+                    title="Close">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+        <div class="fn-modal-body">
+            <div class="fb-header-toolbar">
+                <input id="fb-header-filter" type="text"
+                       class="ari-input fb-header-filter"
+                       placeholder="Filter key/value/comment…">
+                <span id="fb-header-count" class="at-muted-hint">0 cards</span>
+            </div>
+            <div id="fb-header-loading" class="at-muted-hint"
+                 style="display:none;">
+                <i class="fa-solid fa-spinner fa-spin"></i>
+                Loading FITS header&hellip;
+            </div>
+            <div id="fb-header-error" class="fn-modal-error"
+                 style="display:none;"></div>
+            <div class="ot-table-wrap">
+                <table id="fb-header-table" class="ot-table">
+                    <thead>
+                        <tr>
+                            <th data-col="key" class="ot-th ot-th--sortable">
+                                Key
+                            </th>
+                            <th data-col="value" class="ot-th ot-th--sortable">
+                                Value
+                            </th>
+                            <th data-col="comment" class="ot-th ot-th--sortable">
+                                Comment
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody id="fb-header-tbody">
+                        <tr>
+                            <td colspan="3" class="ot-empty">
+                                Open a file header to view cards.
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
         </div>
     </div>
 </div>
