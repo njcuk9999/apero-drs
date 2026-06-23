@@ -914,12 +914,9 @@ class ConstantsDict:
 
     def add_to_yaml(self, data: CommentedMap, params: Any,
                     mode: str = None) -> CommentedMap:
-        # loop around keys
-        for it, key in enumerate(params.keys()):
-            # -----------------------------------------------------------------
-            # if params have a key that is not in storage we skip
-            if key not in self.storage:
-                continue
+        # loop around stored constants so user-active defaults are exported
+        # even when they are not explicitly present in params.
+        for it, key in enumerate(self.storage.keys()):
             # -----------------------------------------------------------------
             # get the constant associated with this key
             const = self.storage[key]
@@ -1691,12 +1688,9 @@ class KeywordDict:
 
     def add_to_yaml(self, data: CommentedMap, params: Any,
                     mode: str = None) -> CommentedMap:
-        # loop around keys
-        for it, key in enumerate(params.keys()):
-            # -----------------------------------------------------------------
-            # if params have a key that is not in storage we skip
-            if key not in self.storage:
-                continue
+        # loop around stored constants so user-active defaults are exported
+        # even when they are not explicitly present in params.
+        for it, key in enumerate(self.storage.keys()):
             # -----------------------------------------------------------------
             # get the constant associated with this key
             const = self.storage[key]
