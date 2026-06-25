@@ -74,6 +74,12 @@ QUAL_CHECK = _module('apero_ri.apero_monitoring.checks.check_qual_test').CHECK
 ASTROM_CHECK = _module(
     'apero_ri.apero_monitoring.checks.check_astrometrics'
 ).CHECK
+CRITICAL_CHECK = _module(
+    'apero_ri.apero_monitoring.checks.check_critical_test'
+).CHECK
+CRITICAL_SCI_CHECK = _module(
+    'apero_ri.apero_monitoring.checks.check_critical_sci_test'
+).CHECK
 
 # =============================================================================
 # Red checks
@@ -145,6 +151,8 @@ CHECKS['ENG_BACKEND_ERROR_STATE'] = ENG_BACKEND_ERROR_STATE_CHECK
 CHECKS['NO_SCI'] = NO_SCI_CHECK
 CHECKS['QUAL_TEST'] = QUAL_CHECK
 CHECKS['ASTROM'] = ASTROM_CHECK
+CHECKS['CRITICAL_TEST'] = CRITICAL_CHECK
+CHECKS['CRITICAL_SCI_TEST'] = CRITICAL_SCI_CHECK
 
 # =============================================================================
 # Red checks

@@ -58,15 +58,16 @@ def api_basket_share_email(app):
     if not meta:
         return jsonify(success=False, error="Job not found"), 404
 
-    created_str = meta.get("created_at", "")
     try:
-        created_at = datetime.fromisoformat(str(created_str))
+        created_at = datetime.fromisoformat(str(meta.get("created_at", "")))
         if created_at.tzinfo is None:
             created_at = created_at.replace(tzinfo=timezone.utc)
-        expires_at = created_at + timedelta(hours=24)
+        expires_at = created_at + timedelta(
+            hours=bk._normalize_expiry_hours(meta.get("expiry_hours", 24))
+        )
         expires_str = expires_at.strftime("%Y-%m-%d %H:%M:%S UTC")
     except Exception:
-        expires_str = "within 24 hours"
+        expires_str = "within the selected expiry period"
 
     share_url = request.host_url.rstrip("/") + url_for(
         "share_landing", token=token
@@ -106,6 +107,7 @@ def api_basket_compile(app):
             chunk_size_gb = float(chunk_size_gb)
         except (TypeError, ValueError):
             chunk_size_gb = None
+    expiry_hours = data.get("expiry_hours", 24)
     email_on_done = bool(data.get("email_on_done", False))
     profile_id = data.get("profile_id") or None
 
@@ -114,13 +116,14 @@ def api_basket_compile(app):
     profile_cfgs = app._build_profile_cfgs(user_info)
 
     usage = bk.get_downloads_usage(username)
-    quota_bytes = bk.get_downloads_storage_limit_bytes()
+    quota_bytes = bk.get_downloads_storage_limit_bytes(user_info.get("groups"))
     if usage.get("total_bytes", 0) >= quota_bytes:
+        limit_gb = quota_bytes // (1024 ** 3)
         return (
             jsonify(
                 success=False,
                 error=(
-                    "Download storage limit reached (5 GB). "
+                    f"Download storage limit reached ({limit_gb} GB). "
                     "Please remove old compilations in Recent compilations."
                 ),
                 quota_reached=True,
@@ -151,6 +154,7 @@ def api_basket_compile(app):
         email_on_done=email_on_done,
         user_email=user_email,
         profile_id=profile_id or "",
+        expiry_hours=expiry_hours,
     )
     return jsonify(success=True, job_id=job_id)
 

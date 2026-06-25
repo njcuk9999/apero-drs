@@ -110,6 +110,61 @@
     flex: 0 0 auto;
 }
 
+.upu-filter-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.5rem;
+}
+
+.upu-filter-row__label {
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: var(--ari-text-muted, #57606a);
+}
+
+.upu-filter-pills {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem;
+}
+
+.upu-filter-pill {
+    display: inline-flex;
+    align-items: center;
+    border: 1px solid var(--ari-border, #d0d7de);
+    background: var(--ari-card-bg, #fff);
+    color: var(--ari-text-muted, #57606a);
+    border-radius: 999px;
+    padding: 0.2rem 0.65rem;
+    font-size: 0.78rem;
+    cursor: pointer;
+    transition: background 0.12s, color 0.12s, border-color 0.12s;
+}
+
+.upu-filter-pill:hover {
+    border-color: var(--ari-primary, #3f51b5);
+}
+
+.upu-filter-pill--active {
+    background: var(--ari-primary, #3f51b5);
+    color: #fff;
+    border-color: var(--ari-primary, #3f51b5);
+}
+
+.upu-user-card__awards {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.25rem;
+    margin-top: 0.1rem;
+}
+
+.upu-user-card__awards .upu-medal {
+    margin-left: 0;
+    font-size: 0.95rem;
+}
+
 .upu-empty {
     border: 1px dashed var(--ari-border, #d0d7de);
     border-radius: 0.6rem;
@@ -193,4 +248,32 @@
 }
 [data-theme="dark"] .upu-user-card:hover {
     box-shadow: 0 6px 14px rgba(0, 0, 0, 0.4);
+}
+
+/* ── Monitoring statistics / awards ── */
+.upu-monitor-stats {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.92rem;
+}
+.upu-monitor-stats th,
+.upu-monitor-stats td {
+    text-align: left;
+    padding: 0.4rem 0.6rem;
+    border-bottom: 1px solid var(--ari-border-color, #e1e4e8);
+}
+.upu-monitor-stats__empty {
+    color: var(--ari-text-muted, #6a737d);
+}
+.upu-medal {
+    margin-left: 0.35rem;
+}
+.upu-medal--gold {
+    color: #d4af37;
+}
+.upu-medal--silver {
+    color: #a8a9ad;
+}
+.upu-medal--bronze {
+    color: #b08d57;
 }

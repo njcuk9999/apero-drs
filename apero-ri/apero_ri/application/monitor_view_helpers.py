@@ -13,9 +13,12 @@ Created on 2026-04-23
 """
 from __future__ import annotations
 
+import json
 import re
+import threading
 from datetime import datetime, timezone
 from html.parser import HTMLParser
+from pathlib import Path
 
 from flask import (flash, redirect, render_template, request,
                    session, url_for)
@@ -24,12 +27,14 @@ from apero_ri.core.auth import (
     get_accessible_profiles,
     get_effective_user,
     get_public_permissions,
+    load_users,
 )
 from apero_ri.apero_monitoring.checks import CHECKS as MONITOR_CHECKS
 from apero_ri.core.docs import render_markdown
 from apero_ri.core import apero_checks as checks_core
 from apero_ri.core.permissions import resolve_user_permissions
 from apero_ri.core import permissions as perms_mod
+from apero_ri.core import awards as awards_core
 from apero_ri.application import instrument_color_helpers
 
 
@@ -37,6 +42,10 @@ __NAME__ = 'apero_ri.application.monitor_view_helpers'
 
 
 ALLIANCE_STATUS_URL = 'https://status.alliancecan.ca/'
+# Per-file minimal-status cache: path_str -> (file_mtime, ignored_key, card_dict)
+_CARD_STATUS_CACHE: dict = {}
+_CARD_STATUS_LOCK = threading.Lock()
+
 CANFAR_STATUS_URL = 'https://canfar.statuspage.io/'
 
 
@@ -707,6 +716,59 @@ def monitor_status_canfar_view(app):
     return render_template('monitor_portal/status_detail.html', **context)
 
 
+def become_monitor_view(app):
+    """Render the public "Become a Monitor" landing/signup page.
+
+    Visible to everyone (including anonymous visitors). Monitors who
+    already have access are shown a short note plus a link back to the
+    Monitor Portal instead of the signup form.
+    """
+    user_info = get_effective_user(session)
+    if user_info:
+        perms = resolve_user_permissions(
+            user_info['groups'], app.ari_groups)
+    else:
+        perms = get_public_permissions()
+
+    is_monitor = _has_any_monitor_perm(perms)
+    if is_monitor:
+        flash("You're already a monitor!", 'info')
+        return redirect(url_for('monitor_portal_index_view'))
+
+    valid_instruments = perms_mod.load_parameters().get(
+        'instruments', {}).get('value', [])
+
+    profile = {}
+    if user_info:
+        record = load_users().get(user_info['username'], {})
+        profile = {
+            'first_names': record.get('first_names', ''),
+            'last_name': record.get('last_name', ''),
+            'email': record.get('primary_email', ''),
+            'institution': record.get('primary_institution', ''),
+            'instruments': record.get('instruments', []),
+        }
+
+    page_id = 'home.monitor_portal.become_monitor'
+    context = {
+        'page_id': page_id,
+        'page_label': 'Become a Monitor',
+        'page_icon': 'fa-solid fa-user-plus',
+        'is_monitor': is_monitor,
+        'logged_in': user_info is not None,
+        'profile': profile,
+        'instruments': valid_instruments,
+    }
+    try:
+        context.update(
+            app._build_sidebar_context(page_id, perms, user_info)
+        )
+    except Exception:
+        pass
+
+    return render_template('home/become_monitor.html', **context)
+
+
 def monitor_portal_index_view(app):
     """Render the monitor portal index page."""
     user_info = get_effective_user(session)
@@ -717,7 +779,7 @@ def monitor_portal_index_view(app):
         perms = get_public_permissions()
     if not _has_any_monitor_perm(perms):
         flash('Monitor access required.', 'warning')
-        return redirect(url_for('login'))
+        return redirect(url_for('become_monitor_view'))
 
     page_id = 'home.monitor_portal'
     # Read pages fresh from disk so newly-added pages are included
@@ -753,6 +815,20 @@ def monitor_portal_index_view(app):
             'url': '/docs/monitor',
             'has_children': False,
         })
+    # Always show "Become a Monitor" as the last card (e.g. so monitors
+    # can easily point colleagues/students to the signup page). Remove
+    # any existing entry first to avoid showing it twice.
+    cards = [
+        c for c in cards
+        if c.get('id') != 'home.monitor_portal.become_monitor'
+    ]
+    cards.append({
+        'id': 'home.monitor_portal.become_monitor',
+        'label': 'Become a Monitor',
+        'icon': 'fa-solid fa-user-plus',
+        'url': '/monitor_portal/become_monitor',
+        'has_children': False,
+    })
     # Build sidebar context
     sidebar_ctx = {}
     try:
@@ -791,6 +867,20 @@ def monitor_schedule_view(app):
         flash('No instrument monitor permissions were found.', 'warning')
         return redirect(url_for('monitor_issues_view'))
 
+    data_dir = Path(app.args.data_dir or str(Path.home() / '.ari'))
+    all_instruments = perms_mod.load_parameters().get(
+        'instruments', {}).get('value', [])
+    awards = awards_core.compute_awards(data_dir, all_instruments)
+    user_awards = {}
+    for username, entry in awards.items():
+        user_awards[username] = {
+            'instrument_medals': entry.get('instrument_medals', {}),
+            'service_medal': entry.get('service_medal'),
+            'issues_medal': entry.get('issues_medal'),
+            'total_hours': round(entry.get('total_hours', 0.0), 2),
+            'issues_resolved': entry.get('issues_resolved', 0),
+        }
+
     page_id = 'home.monitor_portal.schedule'
     context = {
         'page_id': page_id,
@@ -801,6 +891,7 @@ def monitor_schedule_view(app):
         'sidebar_icon': 'fa-solid fa-chart-line',
         'sidebar_url': '/monitor_portal',
         'monitor_instruments': instruments,
+        'user_awards_json': json.dumps(user_awards),
     }
     try:
         context.update(
@@ -811,6 +902,65 @@ def monitor_schedule_view(app):
 
     return render_template('monitor_portal/schedule.html',
                            **context)
+
+
+def monitor_awards_view(app):
+    """Render the monitor portal "Awards" leaderboard page."""
+    user_info = get_effective_user(session)
+    if user_info:
+        perms = resolve_user_permissions(
+            user_info['groups'], app.ari_groups)
+    else:
+        perms = get_public_permissions()
+    if not _has_any_monitor_perm(perms):
+        flash('Monitor access required.', 'warning')
+        return redirect(url_for('become_monitor_view'))
+
+    data_dir = Path(app.args.data_dir or str(Path.home() / '.ari'))
+    instruments = perms_mod.load_parameters().get(
+        'instruments', {}).get('value', [])
+    awards = awards_core.compute_awards(data_dir, instruments)
+
+    rows = []
+    for entry in awards.values():
+        row = {
+            'username': entry['username'],
+            'who': entry.get('who') or entry['username'],
+            'total_hours': round(entry.get('total_hours', 0.0), 2),
+            'service_medal': entry.get('service_medal'),
+            'issues_resolved': entry.get('issues_resolved', 0),
+            'issues_medal': entry.get('issues_medal'),
+            'instrument_medals': entry.get('instrument_medals', {}),
+            'instruments': {
+                inst: round(
+                    data.get('hours_estimated', 0.0), 2
+                )
+                for inst, data in entry.get('instruments', {}).items()
+            },
+        }
+        rows.append(row)
+    rows.sort(key=lambda r: r['total_hours'], reverse=True)
+
+    page_id = 'home.monitor_portal.awards'
+    context = {
+        'page_id': page_id,
+        'page_label': 'Awards',
+        'page_icon': 'fa-solid fa-trophy',
+        'sidebar_root': 'home.monitor_portal',
+        'sidebar_label': 'Monitor Portal',
+        'sidebar_icon': 'fa-solid fa-chart-line',
+        'sidebar_url': '/monitor_portal',
+        'instruments': instruments,
+        'awards_rows_json': json.dumps(rows),
+    }
+    try:
+        context.update(
+            app._build_sidebar_context(page_id, perms, user_info)
+        )
+    except Exception:
+        pass
+
+    return render_template('monitor_portal/awards.html', **context)
 
 
 # ==========================================================================
@@ -1224,7 +1374,35 @@ def _build_apero_check_minimal(path):
 
 
 def _build_apero_check_minimal_with_status(path, ignored_checks):
-    """Build minimal obsdir card and evaluate pass/fail quickly."""
+    """Build minimal obsdir card and evaluate pass/fail quickly (cached)."""
+    # Cache key: file path + mtime + ignored set fingerprint.
+    path_key = str(path)
+    ignored_key = tuple(sorted(ignored_checks or []))
+    file_mtime, _stat_err = checks_core._stat_mtime_with_timeout(
+        path, checks_core._DIR_STAT_TIMEOUT
+    )
+    # On timeout (mount hanging), serve the stale cached card immediately.
+    if isinstance(_stat_err, TimeoutError):
+        with _CARD_STATUS_LOCK:
+            stale = _CARD_STATUS_CACHE.get(path_key)
+        if stale is not None:
+            return dict(stale[2])
+        # No cached card either — return a minimal placeholder.
+        return {'obsdir': path.stem, 'last_run': '', 'status': 'failed',
+                'card_color': 'failed', 'has_overridden': False,
+                'has_monitored': False, 'active_failure_count': 1,
+                'override_count': 0, 'monitor_count': 0}
+    if file_mtime is None:
+        file_mtime = None  # genuine OSError — proceed to build without caching
+
+    if file_mtime is not None:
+        with _CARD_STATUS_LOCK:
+            entry = _CARD_STATUS_CACHE.get(path_key)
+            if (entry is not None
+                    and entry[0] == file_mtime
+                    and entry[1] == ignored_key):
+                return dict(entry[2])  # return a copy
+
     card = _build_apero_check_minimal(path)
     ignored_set = set(ignored_checks or [])
     try:
@@ -1253,20 +1431,39 @@ def _build_apero_check_minimal_with_status(path, ignored_checks):
                 continue
             has_overridden = has_overridden or bool(passed.get('override'))
             has_monitored = has_monitored or bool(passed.get('monitor'))
-        if has_overridden:
-            card['status'] = 'overridden'
-        elif has_monitored:
-            card['status'] = 'monitored'
-        elif has_active_failure:
+        if has_active_failure:
             card['status'] = 'failed'
+            card['card_color'] = 'failed'
+        elif has_overridden:
+            card['status'] = 'ok'
+            card['card_color'] = 'overridden'
+        elif has_monitored:
+            card['status'] = 'ok'
+            card['card_color'] = 'monitored'
         else:
             card['status'] = 'ok'
+            card['card_color'] = 'ok'
         card['has_overridden'] = has_overridden
         card['has_monitored'] = has_monitored
+        card['active_failure_count'] = 1 if has_active_failure else 0
+        card['override_count'] = 1 if has_overridden else 0
+        card['monitor_count'] = 1 if has_monitored else 0
     except Exception:
         card['status'] = 'failed'
         card['has_overridden'] = False
         card['has_monitored'] = False
+        card.setdefault('card_color', 'failed')
+        card.setdefault('active_failure_count', 1)
+        card.setdefault('override_count', 0)
+        card.setdefault('monitor_count', 0)
+    if file_mtime is not None:
+        with _CARD_STATUS_LOCK:
+            _CARD_STATUS_CACHE[path_key] = (file_mtime, ignored_key, dict(card))
+            # Evict oldest entries if cache grows large (one entry per obsdir YAML).
+            if len(_CARD_STATUS_CACHE) > 2000:
+                keys = list(_CARD_STATUS_CACHE)
+                for old_key in keys[:200]:
+                    _CARD_STATUS_CACHE.pop(old_key, None)
     return card
 
 
@@ -1393,6 +1590,12 @@ def _get_apero_check_page_payload(
     ignored_checks = checks_core.load_ignored_checks(local_data_dir)
     override_allowed = checks_core.load_override_allowed(local_data_dir)
     files = checks_core.list_yaml_files(checks_root)
+    if instrument:
+        excluded = checks_core.load_excluded_obsdirs(
+            local_data_dir, instrument
+        )
+        if excluded:
+            files = [p for p in files if p.stem not in excluded]
     filtered_paths = _filter_apero_check_paths(
         files, obsdir_filter, obsdir_sort
     )
@@ -1475,13 +1678,19 @@ def _get_apero_check_page_payload_minimal(
     obsdir_filter,
     obsdir_sort,
     result_filter,
+    instrument=None,
 ):
     """Return paged minimal obsdir cards (file metadata only)."""
     checks_root = _checks_root_for_profile(app, profile_data)
-    ignored_checks = checks_core.load_ignored_checks(
-        app._resolve_local_data_dir()
-    )
+    local_data_dir = app._resolve_local_data_dir()
+    ignored_checks = checks_core.load_ignored_checks(local_data_dir)
     files = checks_core.list_yaml_files(checks_root)
+    if instrument:
+        excluded = checks_core.load_excluded_obsdirs(
+            local_data_dir, instrument
+        )
+        if excluded:
+            files = [p for p in files if p.stem not in excluded]
     filtered_paths = _filter_apero_check_paths(
         files, obsdir_filter, obsdir_sort
     )
@@ -1560,6 +1769,7 @@ def monitor_apero_checks_profile_view(app, profile_id):
         page_args['obsdir_filter'],
         page_args['obsdir_sort'],
         page_args['result_filter'],
+        instrument=prof.get('instrument'),
     )
 
     page_id = f'home.monitor_portal.apero_checks.{profile_id}'
@@ -1704,9 +1914,12 @@ def monitor_apero_checks_obsdir_view(app, profile_id, obsdir):
     checks_core.propagate_dependency_states(
         loaded, MONITOR_CHECKS, set(ignored_checks)
     )
+    # Always pull both raw and reduced checks here — the page now renders
+    # them in separate "Raw tests" / "Reduced tests" sections rather than
+    # filtering by type, so there is no per-type query-string toggle.
     summary = checks_core.build_obsdir_summary(
         loaded,
-        type_filter=page_args['type_filter'],
+        type_filter='all',
         show_overridden=page_args['show_overridden'],
         show_monitored=page_args['show_monitored'],
         show_passed=page_args['show_passed'],
@@ -1741,6 +1954,10 @@ def monitor_apero_checks_obsdir_view(app, profile_id, obsdir):
             'message': check.get('message', ''),
             'is_passed': True,
         })
+    raw_failure_cards = [c for c in failure_cards if c['type'] != 'red']
+    red_failure_cards = [c for c in failure_cards if c['type'] == 'red']
+    raw_pass_cards = [c for c in pass_cards if c['type'] != 'red']
+    red_pass_cards = [c for c in pass_cards if c['type'] == 'red']
     result_state = str(base_summary.get('result_state') or 'failed')
     result_label = str(
         base_summary.get('status_label')
@@ -1789,8 +2006,11 @@ def monitor_apero_checks_obsdir_view(app, profile_id, obsdir):
         'check_history': history,
         'failure_cards': failure_cards,
         'pass_cards': pass_cards,
+        'raw_failure_cards': raw_failure_cards,
+        'red_failure_cards': red_failure_cards,
+        'raw_pass_cards': raw_pass_cards,
+        'red_pass_cards': red_pass_cards,
         'ignored_checks': sorted(ignored_checks),
-        'type_filter': page_args['type_filter'],
         'show_overridden': page_args['show_overridden'],
         'show_monitored': page_args['show_monitored'],
         'show_passed': page_args['show_passed'],

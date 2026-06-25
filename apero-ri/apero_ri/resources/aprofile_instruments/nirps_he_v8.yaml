@@ -626,8 +626,8 @@ apero-checks:
 
   # Manual-trigger log checks (MANUAL_START, MANUAL_END, APERO_START,
   # APERO_END, ARI_START, ARI_END).
-  # These checks read a per-profile CSV log from PATH.TRIGGER.
-  # No extra configuration is required beyond setting PATH.TRIGGER in the
+  # These checks read a manual-trigger CSV log from PATH.TRIGGER_LOG.
+  # No extra configuration is required beyond setting PATH.TRIGGER_LOG in the
   # admin portal profile editor.
 
   # Preprocessed pixel-shift check settings (PIXEL_SHIFTS).
@@ -686,6 +686,16 @@ apero-checks:
     bad_nsig: 10.0
     rv_key: RV_OBJ
     fwhm_key: CCFMFWHM
+
+  # Critical instrument and science checks (CRITICAL_TEST, CRITICAL_SCI_TEST).
+  # PATH.CRITICAL_CHECK must be set in the admin portal profile editor.
+  critical_check:
+
+    # CSV file with per-night pass/fail columns (relative to PATH.CRITICAL_CHECK).
+    critical csv file: check_status.csv
+
+    # CSV file listing check names, descriptions, and types.
+    critical desc file: critical_checks_description.csv
 
 # Finder setting.
 finder:

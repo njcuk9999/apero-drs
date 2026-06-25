@@ -1019,6 +1019,18 @@ def register_static_routes(app):
         "api_async_tasks_download_file",
         app._api_async_tasks_download_file,
     )
+    app.add_url_rule(
+        "/api/admin/async-tasks/gsheet-oauth-start",
+        "api_async_tasks_gsheet_oauth_start",
+        app._api_async_tasks_gsheet_oauth_start,
+        methods=["POST"],
+    )
+    app.add_url_rule(
+        "/api/admin/async-tasks/gsheet-oauth-callback",
+        "api_async_tasks_gsheet_oauth_callback",
+        app._api_async_tasks_gsheet_oauth_callback,
+        methods=["GET"],
+    )
 
 
 def register_data_portal_routes(app):
@@ -1526,6 +1538,11 @@ def register_data_portal_routes(app):
         app._user_portal_notifications_view,
     )
     app.add_url_rule(
+        "/monitor_portal/become_monitor",
+        "become_monitor_view",
+        app._become_monitor_view,
+    )
+    app.add_url_rule(
         "/monitor_portal",
         "monitor_portal_index_view",
         app._monitor_portal_index_view,
@@ -1559,6 +1576,11 @@ def register_data_portal_routes(app):
         "/monitor_portal/schedule",
         "monitor_schedule_view",
         app._monitor_schedule_view,
+    )
+    app.add_url_rule(
+        "/monitor_portal/awards",
+        "monitor_awards_view",
+        app._monitor_awards_view,
     )
     app.add_url_rule(
         "/monitor_portal/proc_logs",
@@ -1702,6 +1724,12 @@ def register_data_portal_routes(app):
         methods=['GET'],
     )
     app.add_url_rule(
+        '/api/admin/apero-checks/<profile_id>/obsdirs',
+        'api_apero_checks_list_obsdirs',
+        app._api_apero_checks_list_obsdirs,
+        methods=['GET'],
+    )
+    app.add_url_rule(
         '/api/monitor/apero-checks/policy-sections',
         'api_apero_checks_policy_sections',
         app._api_apero_checks_policy_sections,
@@ -1711,6 +1739,12 @@ def register_data_portal_routes(app):
         '/api/monitor/apero-checks/view-yaml',
         'api_apero_checks_view_yaml',
         app._api_apero_checks_view_yaml,
+        methods=['POST'],
+    )
+    app.add_url_rule(
+        '/api/monitor/apero-checks/validate-obsdir',
+        'api_apero_checks_validate_obsdir',
+        app._api_apero_checks_validate_obsdir,
         methods=['POST'],
     )
     app.add_url_rule(
@@ -1726,6 +1760,12 @@ def register_data_portal_routes(app):
         methods=['POST'],
     )
     app.add_url_rule(
+        '/api/monitor/apero-checks/advanced-run',
+        'api_apero_checks_advanced_run',
+        app._api_apero_checks_advanced_run,
+        methods=['POST'],
+    )
+    app.add_url_rule(
         '/api/monitor/apero-checks/clean-reset-profile',
         'api_apero_checks_clean_reset_profile',
         app._api_apero_checks_clean_reset_profile,
@@ -1735,6 +1775,24 @@ def register_data_portal_routes(app):
         '/api/monitor/apero-checks/delete-obsdir',
         'api_apero_checks_delete_obsdir',
         app._api_apero_checks_delete_obsdir,
+        methods=['POST'],
+    )
+    app.add_url_rule(
+        '/api/monitor/apero-checks/exclude-obsdir',
+        'api_apero_checks_exclude_obsdir',
+        app._api_apero_checks_exclude_obsdir,
+        methods=['POST'],
+    )
+    app.add_url_rule(
+        '/api/admin/apero-checks/excluded-obsdirs',
+        'api_apero_checks_list_excluded_obsdirs',
+        app._api_apero_checks_list_excluded_obsdirs,
+        methods=['GET'],
+    )
+    app.add_url_rule(
+        '/api/admin/apero-checks/excluded-obsdirs/remove',
+        'api_apero_checks_remove_excluded_obsdir',
+        app._api_apero_checks_remove_excluded_obsdir,
         methods=['POST'],
     )
     app.add_url_rule(
@@ -1844,6 +1902,12 @@ def register_data_portal_routes(app):
         app._api_query_db_run,
         methods=["POST"],
     )
+    app.add_url_rule(
+        "/api/data-portal/query-db/count",
+        "api_query_db_count",
+        app._api_query_db_count,
+        methods=["POST"],
+    )
 
     # Download basket page + APIs (must be before /<path:objname> catch-all)
     app.add_url_rule(
@@ -1893,6 +1957,18 @@ def register_data_portal_routes(app):
     )
     app.add_url_rule(
         "/api/data-portal/basket/jobs", "api_basket_jobs", app._api_basket_jobs
+    )
+    app.add_url_rule(
+        "/api/data-portal/basket/jobs/extend",
+        "api_basket_jobs_extend",
+        app._api_basket_jobs_extend,
+        methods=["POST"],
+    )
+    app.add_url_rule(
+        "/api/data-portal/basket/jobs/expiry",
+        "api_basket_jobs_expiry",
+        app._api_basket_jobs_expiry,
+        methods=["POST"],
     )
     app.add_url_rule(
         "/api/data-portal/basket/jobs/remove",

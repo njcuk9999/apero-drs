@@ -63,6 +63,13 @@ _SCOPES = [
 _TASK_SOURCE = 'LEGACY_CHECK_GSHEET'
 _TASK_USER = 'legacy_gsheet'
 
+# Translation table: sheet test_name -> ARI check key.
+# Keys are matched case-insensitively (after .upper()).
+# Extend this dict whenever the sheet uses a different name than ARI.
+_TEST_NAME_TRANSLATION: Dict[str, str] = {
+    'CRIT_SCI': 'CRITICAL_SCI_TEST',
+}
+
 
 # =============================================================================
 # Low-level YAML helpers (avoid importing private apero_checks symbols)
@@ -194,26 +201,32 @@ def _load_google_oauth_payload(
 
 
 def _open_spreadsheet(payload: Dict[str, Any], sheet_id: str):
-    """Open a gspread spreadsheet using OAuth2 credentials."""
+    """Open a gspread spreadsheet using service-account or OAuth2 credentials."""
     import gspread
-    from google.auth.transport.requests import Request
-    from google.oauth2.credentials import Credentials
 
     scopes = payload.get('scopes')
     if not isinstance(scopes, list) or not scopes:
         scopes = list(_SCOPES)
-    creds = Credentials(
-        token=None,
-        refresh_token=str(payload.get('refresh_token') or ''),
-        token_uri=str(
-            payload.get('token_uri')
-            or 'https://oauth2.googleapis.com/token'
-        ),
-        client_id=str(payload.get('client_id') or ''),
-        client_secret=str(payload.get('client_secret') or ''),
-        scopes=scopes,
-    )
-    creds.refresh(Request())
+
+    if payload.get('type') == 'service_account':
+        from google.oauth2.service_account import Credentials as SACredentials
+        creds = SACredentials.from_service_account_info(payload, scopes=scopes)
+    else:
+        from google.auth.transport.requests import Request
+        from google.oauth2.credentials import Credentials
+        creds = Credentials(
+            token=None,
+            refresh_token=str(payload.get('refresh_token') or ''),
+            token_uri=str(
+                payload.get('token_uri')
+                or 'https://oauth2.googleapis.com/token'
+            ),
+            client_id=str(payload.get('client_id') or ''),
+            client_secret=str(payload.get('client_secret') or ''),
+            scopes=scopes,
+        )
+        creds.refresh(Request())
+
     client = gspread.authorize(creds)
     return client.open_by_key(sheet_id)
 
@@ -282,6 +295,8 @@ def _sync_overrides(
         if not obsdir or not test_name or test_value != 'TRUE':
             row_skipped += 1
             continue
+        # Translate legacy sheet name -> ARI check key if needed.
+        test_name = _TEST_NAME_TRANSLATION.get(test_name, test_name)
         # Filter to this instrument only.
         if instrument_dash not in test_type:
             continue

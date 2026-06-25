@@ -197,7 +197,7 @@
         <div class="ms-overlay-panel">
             <div class="ms-overlay-head">
                 <h3>Manage tasks</h3>
-                <button data-close="tasks" type="button">X</button>
+                <button data-close="tasks" type="button" aria-label="Close"><i class="fa-solid fa-xmark"></i></button>
             </div>
             <div class="ms-overlay-body">
                 <div id="ms-task-scope-label" class="ms-sub"></div>
@@ -243,7 +243,7 @@
         <div class="ms-overlay-panel">
             <div class="ms-overlay-head">
                 <h3>Stats visibility</h3>
-                <button data-close="users" type="button">X</button>
+                <button data-close="users" type="button" aria-label="Close"><i class="fa-solid fa-xmark"></i></button>
             </div>
             <div class="ms-overlay-body">
                 <div id="ms-user-list" class="ms-card-list"></div>
@@ -256,7 +256,7 @@
         <div class="ms-overlay-panel">
             <div class="ms-overlay-head">
                 <h3>Bulk add entries (unassigned)</h3>
-                <button data-close="bulk" type="button">X</button>
+                <button data-close="bulk" type="button" aria-label="Close"><i class="fa-solid fa-xmark"></i></button>
             </div>
             <div class="ms-overlay-body">
                 <p class="ms-sub">Select tasks and a date range to
@@ -292,7 +292,7 @@
         <div class="ms-overlay-panel">
             <div class="ms-overlay-head">
                 <h3 id="ms-add-title">Add new entry</h3>
-                <button data-close="add" type="button">X</button>
+                <button data-close="add" type="button" aria-label="Close"><i class="fa-solid fa-xmark"></i></button>
             </div>
             <div class="ms-overlay-body">
                 <form id="ms-add-form" class="ms-form-grid">
@@ -345,7 +345,7 @@
         <div class="ms-overlay-panel">
             <div class="ms-overlay-head">
                 <h3>Assign user</h3>
-                <button data-close="assign" type="button">X</button>
+                <button data-close="assign" type="button" aria-label="Close"><i class="fa-solid fa-xmark"></i></button>
             </div>
             <div class="ms-overlay-body">
                 <input id="ms-assign-entry-id" type="hidden" value="">
@@ -379,6 +379,7 @@
 window.AperoMonitorSchedule = {
     instruments: {{ monitor_instruments|tojson }}
 };
+window.ARI_USER_AWARDS = {{ user_awards_json | safe }};
 </script>
 <script src="{{ url_for('static', filename='js/monitor_schedule.js') }}?v=20260512b"></script>
 {% endblock %}

@@ -357,9 +357,14 @@ def _find_apero_data_checksum_script() -> Optional[Path]:
     return candidate if candidate.is_file() else None
 
 
-def _run_subprocess(cmd: List[str], tlog) -> Tuple[int, str]:
+def _run_subprocess(cmd: List[str], tlog,
+                    extra_env: Optional[dict] = None) -> Tuple[int, str]:
     """Run ``cmd`` capturing combined output; stream lines to ``tlog``."""
     tlog('Running: ' + ' '.join(cmd))
+    env = None
+    if extra_env:
+        env = dict(os.environ)
+        env.update(extra_env)
     try:
         proc = subprocess.Popen(
             cmd,
@@ -367,6 +372,7 @@ def _run_subprocess(cmd: List[str], tlog) -> Tuple[int, str]:
             stderr=subprocess.STDOUT,
             text=True,
             bufsize=1,
+            env=env,
         )
     except OSError as exc:
         tlog('ERROR: failed to launch subprocess: {0}'.format(exc))
@@ -382,7 +388,8 @@ def _run_subprocess(cmd: List[str], tlog) -> Tuple[int, str]:
     return rc, '\n'.join(captured)
 
 
-def _run_remote_sync(assets_dir: Path, tlog) -> List[str]:
+def _run_remote_sync(assets_dir: Path, tlog,
+                     drs_uconfig: Optional[str] = None) -> List[str]:
     """Drive ``apero_data_checksum.py update-local`` then ``update-remote``.
 
     :return: list of human-readable status lines for the task ``info``
@@ -395,6 +402,27 @@ def _run_remote_sync(assets_dir: Path, tlog) -> List[str]:
                'installed apero package.')
         tlog('ERROR: ' + msg)
         raise FileNotFoundError(msg)
+
+    if not drs_uconfig:
+        msg = (
+            'DRS_UCONFIG is not set in the task configuration. '
+            'Please edit the APERO_SYNC_ASSETS task and set the '
+            'DRS_UCONFIG directory (the APERO user config directory '
+            'produced by apero_profile.sh).'
+        )
+        tlog('ERROR: ' + msg)
+        raise RuntimeError(msg)
+    uconfig_path = Path(drs_uconfig).expanduser()
+    if not uconfig_path.is_dir():
+        msg = (
+            f'DRS_UCONFIG path does not exist or is not a directory: '
+            f'{drs_uconfig}'
+        )
+        tlog('ERROR: ' + msg)
+        raise RuntimeError(msg)
+    tlog(f'DRS_UCONFIG: {uconfig_path}')
+    extra_env = {'DRS_UCONFIG': str(uconfig_path)}
+
     base_cmd = [sys.executable, str(script)]
     indir = str(assets_dir)
     cmd_map = dict()
@@ -404,7 +432,7 @@ def _run_remote_sync(assets_dir: Path, tlog) -> List[str]:
     )
     for sub in ('update-local', 'update-remote'):
         cmd = cmd_map[sub]
-        rc, output = _run_subprocess(cmd, tlog)
+        rc, output = _run_subprocess(cmd, tlog, extra_env=extra_env)
         if rc != 0:
             msg = ('apero_data_checksum.py {0} failed (exit {1}).'
                    ).format(sub, rc)
@@ -739,8 +767,11 @@ class AperoAssetsSyncTask(apero_async.AperoAsyncTask):
         # REMOTE mode: drive apero_data_checksum.py update-local + update-remote
         # =====================================================================
         self.progress = 0.1
+        drs_uconfig = str(task_cfg.get('drs_uconfig') or '').strip()
+        self.info += f'**DRS_UCONFIG**: `{drs_uconfig or "(not set)"}`  \n'
         try:
-            summary = _run_remote_sync(assets_dir, tlog)
+            summary = _run_remote_sync(assets_dir, tlog,
+                                       drs_uconfig=drs_uconfig or None)
         except Exception as exc:  # noqa: BLE001
             self.info += f'\n**ERROR**: {exc}\n'
             self.progress = 1.0

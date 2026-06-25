@@ -7,5 +7,6 @@ card_icon: fa-solid fa-chart-line
 
 ## Table of contents
 
+- [Being an APERO Monitor](monitor/being_a_monitor)
 - [Checks](monitor/checks/)
 - [How to guides](monitor/how_to)

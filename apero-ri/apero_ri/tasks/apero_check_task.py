@@ -23,6 +23,7 @@ from apero_ri.apero_monitoring import CHECKS
 from apero_ri.apero_monitoring import core as checks_core
 from apero_ri.apero_monitoring import raw_common
 from apero_ri.application import profile_utils
+from apero_ri.core import apero_checks as checks_config
 from apero_ri.tasks import apero_async
 
 # =============================================================================
@@ -242,8 +243,7 @@ def _run_profile(task: AperoCheckTask,
     """Run the APERO-check workflow for one APERO profile."""
     # Get the profile configuration block.
     aparams = ctx['profiles'][profile_name]
-    # Expose the ARI profile name to checks (e.g. reduced manual-trigger checks
-    # locate their per-profile log file at PATH.TRIGGER/{apero_profile}.log).
+    # Expose the ARI profile name to checks (some checks key off it directly).
     if isinstance(aparams, dict):
         aparams['apero_profile'] = profile_name
     # Resolve the concrete instrument for this profile.
@@ -311,6 +311,15 @@ def _run_profile(task: AperoCheckTask,
             f'Profile {profile_name}: found {len(obsdir_rows)} candidate '
             'obsdir(s) before filtering.'
         )
+        local_data_dir = str(ctx['params'].get('LOCAL_DATA_DIR', '') or '')
+        excluded_obsdirs = checks_config.load_excluded_obsdirs(
+            Path(local_data_dir).expanduser(), instrument
+        ) if local_data_dir else set()
+        if excluded_obsdirs:
+            ctx['tlog'](
+                f'Profile {profile_name}: {len(excluded_obsdirs)} '
+                'obsdir(s) permanently excluded for this instrument.'
+            )
         selected_rows = _select_obs_dirs(
             obsdir_rows,
             root_dir,
@@ -318,6 +327,7 @@ def _run_profile(task: AperoCheckTask,
             ctx['recent_hours'],
             ctx['force_run'],
             check_keys,
+            excluded_obsdirs,
         )
     ctx['tlog'](
         f'Profile {profile_name}: selected {len(selected_rows)} obsdir(s) '
@@ -713,11 +723,13 @@ def _select_obs_dirs(rows: Sequence[dict],
                      filters: Dict[str, str],
                      recent_hours: float,
                      force_run: bool,
-                     required_checks: Sequence[str]) -> List[dict]:
+                     required_checks: Sequence[str],
+                     excluded_obsdirs: Optional[set] = None) -> List[dict]:
     """Select obsdirs that should be processed in this task run."""
     # Normalise optional include and exclude filters.
     include_set = _parse_name_list(filters.get('OBS_DIR_INCLUDE', ''))
     exclude_set = _parse_name_list(filters.get('OBS_DIR_EXCLUDE', ''))
+    permanently_excluded = set(excluded_obsdirs or set())
     # Prepare the selected-row storage.
     selected = []
     # Loop over every grouped obsdir row from the database.
@@ -725,6 +737,10 @@ def _select_obs_dirs(rows: Sequence[dict],
         obs_dir = str(row.get('obs_dir', '') or '').strip()
         # Skip empty obsdir names.
         if obs_dir == '':
+            continue
+        # Permanently-excluded obsdirs are never processed, regardless of
+        # whether a YAML exists for them yet.
+        if obs_dir in permanently_excluded:
             continue
         # Apply explicit include and exclude filters.
         lname = obs_dir.lower()

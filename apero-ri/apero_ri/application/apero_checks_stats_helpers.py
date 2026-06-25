@@ -462,7 +462,14 @@ def api_apero_checks_stats(app, profile_id):
         obsdir=obsdir_stats,
         checks=checks_stats,
     )
-    _save_stats_cache(cache_path, signature, payload)
+    # Never persist an empty result to disk: list_yaml_files() can return
+    # [] when a network mount is briefly slow/disconnected (it serves a
+    # cached listing instead of blocking, but on a cold cache there is
+    # nothing to serve yet). Caching that transient [] would otherwise
+    # make the stats page look permanently empty until something else
+    # happens to change the (empty) signature.
+    if files:
+        _save_stats_cache(cache_path, signature, payload)
 
     out = dict(payload)
     out['cached'] = False

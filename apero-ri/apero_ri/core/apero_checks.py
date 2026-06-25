@@ -5,9 +5,12 @@
 from __future__ import annotations
 
 import json
+import os
+import threading
+import time
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Set, Tuple
 
 import yaml
 
@@ -21,6 +24,39 @@ CHECK_OVERRIDE_ALLOWED = set()
 CONFIG_SUBDIR = 'monitor_apero_checks'
 CONFIG_FILENAME = 'config.json'
 
+# ── In-process caches ─────────────────────────────────────────────────────────
+
+_CACHE_LOCK = threading.Lock()
+
+# Directory listing cache: root_str -> (mtime_of_root, [Path, ...], timestamp)
+_DIR_LISTING_CACHE: dict = {}
+_DIR_LISTING_TTL = 300   # seconds before we check for dir changes (5 min)
+# If the filesystem is slow/blocked (e.g. stale sshfs reconnecting), return the
+# cached result immediately rather than blocking the request thread.
+_DIR_STAT_TIMEOUT = 2.0  # seconds to wait for a dir stat before serving cached copy
+# Track which directories are currently being (re)scanned in the background so
+# we don't launch duplicate scan threads.
+_DIR_SCAN_RUNNING: set = set()
+
+# Per-file minimal status cache: path_str -> (file_mtime, status_dict)
+_FILE_STATUS_CACHE: dict = {}
+
+# Config/ignored-checks cache: path_str -> (file_mtime, value)
+_SMALL_FILE_CACHE: dict = {}
+
+
+def _safe_path_exists(path: Path) -> bool:
+    """Like Path.exists() but tolerant of stale/disconnected mounts.
+
+    A dropped sshfs/autofs mount raises OSError(107, 'Transport endpoint
+    is not connected') from stat() rather than just returning False, which
+    would otherwise crash page rendering.
+    """
+    try:
+        return path.exists()
+    except OSError:
+        return False
+
 
 def _now_iso() -> str:
     """Return the current UTC timestamp."""
@@ -29,13 +65,14 @@ def _now_iso() -> str:
 
 def _safe_load_yaml(path: Path) -> dict:
     """Load a YAML file into a dict."""
-    if not path.exists() or not path.is_file():
+    try:
+        with open(path, encoding='utf-8') as handle:
+            data = yaml.safe_load(handle) or dict()
+        if isinstance(data, dict):
+            return data
         return dict()
-    with open(path, encoding='utf-8') as handle:
-        data = yaml.safe_load(handle) or dict()
-    if isinstance(data, dict):
-        return data
-    return dict()
+    except (OSError, IOError):
+        return dict()
 
 
 def _safe_write_yaml(path: Path, data: dict) -> None:
@@ -58,16 +95,34 @@ def config_path(local_data_dir: Path) -> Path:
 
 
 def load_config(local_data_dir: Path) -> dict:
-    """Load persisted checks configuration."""
+    """Load persisted checks configuration (cached by file mtime)."""
     path = config_path(local_data_dir)
-    if not path.exists() or not path.is_file():
-        return dict()
+    return _load_small_json_cached(path, default=dict())
+
+
+def _load_small_json_cached(path: Path, default):
+    """Load a small JSON file, returning cached copy if mtime unchanged."""
+    key = str(path)
+    try:
+        mtime = path.stat().st_mtime  # single syscall; raises if missing
+    except OSError:
+        mtime = None
+    if mtime is None:
+        return default
+    with _CACHE_LOCK:
+        entry = _SMALL_FILE_CACHE.get(key)
+        if entry is not None and entry[0] == mtime:
+            return entry[1]
     try:
         with open(path, encoding='utf-8') as handle:
-            data = json.load(handle) or dict()
+            data = json.load(handle)
     except Exception:
-        return dict()
-    return data if isinstance(data, dict) else dict()
+        data = default
+    if not isinstance(data, type(default)):
+        data = default
+    with _CACHE_LOCK:
+        _SMALL_FILE_CACHE[key] = (mtime, data)
+    return data
 
 
 def save_config(local_data_dir: Path, data: dict) -> None:
@@ -79,6 +134,9 @@ def save_config(local_data_dir: Path, data: dict) -> None:
     with open(tmp_path, 'w', encoding='utf-8') as handle:
         json.dump(data, handle, indent=2, sort_keys=True)
     tmp_path.replace(path)
+    # Invalidate cache so next read picks up the new file.
+    with _CACHE_LOCK:
+        _SMALL_FILE_CACHE.pop(str(path), None)
 
 
 def _normalize_ignored_checks(raw_checks: Any) -> List[str]:
@@ -119,6 +177,72 @@ def load_override_allowed(local_data_dir: Path) -> List[str]:
     """Load override-allowed check keys from config."""
     cfg = load_config(local_data_dir)
     return _normalize_override_allowed(cfg.get('override_allowed', []))
+
+
+def _normalize_excluded_obsdirs(raw: Any) -> Dict[str, List[str]]:
+    """Normalize the excluded-obsdirs map into {instrument: [obsdir, ...]}."""
+    if not isinstance(raw, dict):
+        return {}
+    out: Dict[str, List[str]] = {}
+    for instrument, values in raw.items():
+        if not isinstance(values, list):
+            continue
+        names = sorted({
+            str(v).strip() for v in values if str(v).strip()
+        })
+        key = str(instrument or '').strip().upper()
+        if names and key:
+            out[key] = names
+    return out
+
+
+def load_excluded_obsdirs_all(local_data_dir: Path) -> Dict[str, List[str]]:
+    """Load the full excluded-obsdirs map (instrument -> obsdir names)."""
+    cfg = load_config(local_data_dir)
+    return _normalize_excluded_obsdirs(cfg.get('excluded_obsdirs', {}))
+
+
+def load_excluded_obsdirs(local_data_dir: Path, instrument: str) -> Set[str]:
+    """Load the permanently-excluded obsdir set for one instrument."""
+    all_excluded = load_excluded_obsdirs_all(local_data_dir)
+    key = str(instrument or '').strip().upper()
+    return set(all_excluded.get(key, []))
+
+
+def add_excluded_obsdir(
+    local_data_dir: Path, instrument: str, obsdir: str
+) -> None:
+    """Persist one obsdir as permanently excluded for an instrument."""
+    key = str(instrument or '').strip().upper()
+    name = str(obsdir or '').strip()
+    if not key or not name:
+        return
+    cfg = load_config(local_data_dir)
+    excluded = _normalize_excluded_obsdirs(cfg.get('excluded_obsdirs', {}))
+    names = set(excluded.get(key, []))
+    names.add(name)
+    excluded[key] = sorted(names)
+    cfg['excluded_obsdirs'] = excluded
+    save_config(local_data_dir, cfg)
+
+
+def remove_excluded_obsdir(
+    local_data_dir: Path, instrument: str, obsdir: str
+) -> None:
+    """Remove one obsdir from the permanently-excluded set for an instrument."""
+    key = str(instrument or '').strip().upper()
+    name = str(obsdir or '').strip()
+    cfg = load_config(local_data_dir)
+    excluded = _normalize_excluded_obsdirs(cfg.get('excluded_obsdirs', {}))
+    if key in excluded:
+        names = set(excluded[key])
+        names.discard(name)
+        if names:
+            excluded[key] = sorted(names)
+        else:
+            excluded.pop(key, None)
+    cfg['excluded_obsdirs'] = excluded
+    save_config(local_data_dir, cfg)
 
 
 def _configured_instrument_map() -> Dict[str, List[str]]:
@@ -208,6 +332,7 @@ def resolve_checks_root(
 ) -> Path:
     """Resolve the YAML root directory for APERO checks."""
     candidates: List[str] = []
+    profile_check_path = ''
     if isinstance(profile_data, dict):
         for key in (
             'PATH.CHECK',
@@ -224,9 +349,17 @@ def resolve_checks_root(
             except Exception:
                 value = ''
             if value:
+                if not profile_check_path:
+                    profile_check_path = str(value)
                 candidates.append(str(value))
 
-    # The profile-specific PATH.CHECK should be the primary source of truth.
+    # The profile-specific PATH.CHECK is the primary source of truth: use it
+    # even if the path is not currently reachable (e.g. a stale sshfs mount),
+    # so the UI reflects the configured location rather than silently
+    # switching to a local fallback directory.
+    if profile_check_path:
+        return Path(profile_check_path).expanduser()
+
     # Fall back to the persisted config root only when the profile does not
     # define a usable checks directory.
     if configured_root:
@@ -244,23 +377,133 @@ def resolve_checks_root(
         if not candidate:
             continue
         path = Path(candidate).expanduser()
-        if path.exists() or path.parent.exists():
+        if _safe_path_exists(path) or _safe_path_exists(path.parent):
             return path
     return Path(candidates[-1]).expanduser()
 
 
-def list_yaml_files(root_dir: Path) -> List[Path]:
-    """Return every YAML file under the checks root."""
-    if not root_dir.exists() or not root_dir.is_dir():
+def _scan_yaml_files(root_dir: Path) -> List[Path]:
+    """Scan the filesystem for YAML files under root_dir (uncached)."""
+    try:
+        # os.walk yields (dirpath_str, subdirs, filenames) from the OS readdir
+        # call — no per-file stat needed.  Avoid Path.resolve() here because
+        # that makes an lstat syscall per file on network mounts.
+        root_abs = str(root_dir.absolute())
+        found: List[Path] = []
+        for dirpath, _dirs, filenames in os.walk(root_abs):
+            dp = Path(dirpath)
+            for fname in filenames:
+                if fname.lower().endswith(('.yaml', '.yml')):
+                    found.append(dp / fname)
+        found.sort(key=lambda p: p.name)
+        return found
+    except OSError:
         return []
-    files = []
-    for path in root_dir.rglob('*'):
-        if not path.is_file():
-            continue
-        suffix = str(path.suffix or '').lower()
-        if suffix in {'.yaml', '.yml'}:
-            files.append(path)
-    return sorted({path.resolve() for path in files}, key=str)
+
+
+def _stat_mtime_with_timeout(path: Path, timeout: float):
+    """Return (mtime_float, error) by running stat in a daemon thread.
+
+    Returns (None, TimeoutError) if the stat blocks longer than *timeout*
+    seconds, or (None, OSError) if the path is inaccessible.
+    """
+    result: List = [None, None]  # [mtime, exception]
+
+    def _do_stat():
+        try:
+            result[0] = path.stat().st_mtime
+        except Exception as exc:
+            result[1] = exc
+
+    t = threading.Thread(target=_do_stat, daemon=True)
+    t.start()
+    t.join(timeout)
+    if t.is_alive():
+        return None, TimeoutError(f'stat timed out after {timeout}s: {path}')
+    return result[0], result[1]
+
+
+def _background_scan(root_dir: Path, expected_mtime: float) -> None:
+    """Scan root_dir in the background and update _DIR_LISTING_CACHE."""
+    key = str(root_dir)
+    try:
+        files = _scan_yaml_files(root_dir)
+    except Exception:
+        return
+    finally:
+        with _CACHE_LOCK:
+            _DIR_SCAN_RUNNING.discard(key)
+    with _CACHE_LOCK:
+        _DIR_LISTING_CACHE[key] = (expected_mtime, files, time.monotonic())
+        if len(_DIR_LISTING_CACHE) > 32:
+            oldest = min(_DIR_LISTING_CACHE, key=lambda k: _DIR_LISTING_CACHE[k][2])
+            _DIR_LISTING_CACHE.pop(oldest, None)
+
+
+def list_yaml_files(root_dir: Path) -> List[Path]:
+    """Return every YAML file under the checks root (stale-while-revalidate).
+
+    Strategy:
+    - Always serve the cached listing immediately if one exists.
+    - In the background, check the directory mtime (2 s timeout) and launch
+      a scan thread when the listing is stale (TTL expired or dir changed).
+    - If no cached listing exists, block for one scan (first call only).
+
+    This means a cold cache blocks once (on the first ever request) but every
+    subsequent request is fast regardless of how slow the network filesystem is.
+    """
+    key = str(root_dir)
+    now = time.monotonic()
+
+    with _CACHE_LOCK:
+        cached_entry = _DIR_LISTING_CACHE.get(key)
+        scan_running = key in _DIR_SCAN_RUNNING
+
+    # --- Fast path: fresh enough cache ---
+    if cached_entry is not None:
+        cached_mtime, cached_files, cached_at = cached_entry
+        if (now - cached_at) < _DIR_LISTING_TTL:
+            return cached_files  # definitely fresh — skip stat entirely
+
+    # --- Cache is stale or empty: check dir mtime (with timeout) ---
+    dir_mtime, stat_err = _stat_mtime_with_timeout(root_dir, _DIR_STAT_TIMEOUT)
+
+    if stat_err is not None:
+        # Filesystem is down or hanging — serve stale cache rather than blocking.
+        return cached_entry[1] if cached_entry is not None else []
+
+    # --- Mtime matches: just refresh the timestamp, no rescan needed ---
+    if cached_entry is not None:
+        cached_mtime, cached_files, _ = cached_entry
+        if cached_mtime == dir_mtime:
+            with _CACHE_LOCK:
+                _DIR_LISTING_CACHE[key] = (dir_mtime, cached_files, now)
+            return cached_files
+
+    # --- Need a rescan: directory changed or cold cache ---
+    if cached_entry is not None and not scan_running:
+        # Stale-while-revalidate: serve the old list and refresh in background.
+        with _CACHE_LOCK:
+            _DIR_SCAN_RUNNING.add(key)
+        t = threading.Thread(
+            target=_background_scan, args=(root_dir, dir_mtime), daemon=True
+        )
+        t.start()
+        return cached_entry[1]
+
+    if cached_entry is not None and scan_running:
+        # A background scan is already in progress — serve the stale list.
+        return cached_entry[1]
+
+    # Cold cache (first call ever): block until we have something.
+    files = _scan_yaml_files(root_dir)
+    with _CACHE_LOCK:
+        _DIR_LISTING_CACHE[key] = (dir_mtime, files, now)
+        _DIR_SCAN_RUNNING.discard(key)
+        if len(_DIR_LISTING_CACHE) > 32:
+            oldest = min(_DIR_LISTING_CACHE, key=lambda k: _DIR_LISTING_CACHE[k][2])
+            _DIR_LISTING_CACHE.pop(oldest, None)
+    return files
 
 
 def load_check_file(path: Path) -> dict:
@@ -547,12 +790,7 @@ def build_obsdir_summary(
         if override_count > 0 and monitor_count > 0:
             status_detail = 'overrides_and_monitoring'
             status_label = 'Passed (with overrides and monitoring)'
-            if override_count > monitor_count:
-                card_color = 'overridden'
-            elif monitor_count > override_count:
-                card_color = 'monitored'
-            else:
-                card_color = 'overridden_monitored'
+            card_color = 'overridden'
         elif override_count > 0:
             status_detail = 'overrides'
             status_label = 'Passed (with overrides)'

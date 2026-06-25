@@ -1174,14 +1174,18 @@
         pinBtn.setAttribute('data-op-pin-id', sectionId);
         pinBtn.innerHTML = '<i class="fa-solid fa-thumbtack" style="transform:rotate(45deg);opacity:0.45"></i>';
         pinBtn.title = 'Pin section to top';
-        pinBtn.addEventListener('click', function () {
+        pinBtn.addEventListener('click', function (evt) {
+            evt.preventDefault();
+            evt.stopPropagation();
             toggleSectionPinned(sectionId);
         });
 
         var toggleBtn = document.createElement('button');
         toggleBtn.type = 'button';
         toggleBtn.className = 'op-section-btn op-section-btn--toggle';
-        toggleBtn.addEventListener('click', function () {
+        toggleBtn.addEventListener('click', function (evt) {
+            evt.preventDefault();
+            evt.stopPropagation();
             var isCollapsed = cardEl.classList.contains('op-section--collapsed');
             var nextCollapsed = !isCollapsed;
             sectionUserState[sectionId] = !nextCollapsed; // true=open, false=closed
@@ -3626,6 +3630,9 @@
                 banner.setAttribute('data-apero-name', aperoName);
                 banner.style.display = '';
                 if (hasPerm) {
+                    var reviewMsg = document.getElementById(
+                        'op-verify-banner__review-msg');
+                    if (reviewMsg) reviewMsg.hidden = false;
                     btn.hidden = false;
                     btn.addEventListener('click', function () {
                         _onVerifyClick(banner, btn, aperoName,

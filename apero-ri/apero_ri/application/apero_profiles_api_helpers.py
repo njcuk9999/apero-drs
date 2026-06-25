@@ -475,7 +475,8 @@ def api_apero_profiles_list(app):
         "PATH_LBL",
             "PATH_CHECK",
             "PATH_OTHER",
-            "PATH_TRIGGER",
+            "PATH_TRIGGER_LOG",
+            "PATH_CRITICAL_CHECK",
     ]
 
     profiles = []
@@ -512,6 +513,14 @@ def api_apero_profiles_list(app):
             entry[key] = val
             if disabled:
                 entry[key + "_exists"] = True
+                continue
+            if key in ("PATH_TRIGGER_LOG", "PATH_CRITICAL_CHECK"):
+                # Optional paths: only check existence when set, never affect
+                # all_paths_ok.  TRIGGER_LOG is a file; CRITICAL_CHECK is a dir.
+                if key == "PATH_TRIGGER_LOG":
+                    entry[key + "_exists"] = bool(val) and Path(val).is_file()
+                else:
+                    entry[key + "_exists"] = bool(val) and Path(val).is_dir()
                 continue
             if val:
                 entry[key + "_exists"] = Path(val).is_dir()
@@ -703,7 +712,7 @@ def build_apero_profiles_overview_status(app) -> dict:
             "PATH_CHECK",
             "PATH_OTHER",
     ]
-    # PATH_TRIGGER is intentionally excluded here: it is an optional path
+    # PATH_TRIGGER_LOG is intentionally excluded here: it is an optional path
     # (only the reduced manual-trigger checks need it) so an empty value must
     # not flag an otherwise-healthy profile as needing attention.
 
@@ -840,7 +849,8 @@ def api_apero_profiles_save(app, package_dir: Path):
     ]
     # Optional path keys: not required, but validated as absolute when set.
     _PATH_OPTIONAL_KEYS = [
-        "PATH_TRIGGER",
+        "PATH_TRIGGER_LOG",
+        "PATH_CRITICAL_CHECK",
     ]
 
     values = {}

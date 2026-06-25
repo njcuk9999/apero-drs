@@ -16,6 +16,20 @@ from apero_ri.core.permissions import resolve_user_permissions
 from flask import jsonify, request, send_file
 
 
+def _render_sql_preview(sql: str, params: dict) -> str:
+    """Return SQL with all bound parameters substituted inline (for display only)."""
+    out = sql
+    # Substitute all params, longest keys first to avoid partial matches
+    for key in sorted(params.keys(), key=len, reverse=True):
+        val = params[key]
+        if isinstance(val, (list, tuple)):
+            rendered = "(" + ", ".join(repr(str(v)) for v in val) + ")"
+        else:
+            rendered = repr(str(val))
+        out = out.replace(f":{key}", rendered)
+    return out
+
+
 def api_query_db_run(app):
     """Execute a structured, user-driven SELECT query safely."""
     user_info = app._get_api_user()
@@ -68,14 +82,7 @@ def api_query_db_run(app):
     except ValueError as exc:
         return jsonify(success=False, error=str(exc)), 400
 
-    nrids = len(run_ids)
-    sql_preview = sql.replace(
-        ":_run_ids",
-        f'(/* {nrids} run ID{"s" if nrids != 1 else ""} */)',
-    )
-    params_preview = {k: v for k, v in params.items() if k != "_run_ids"}
-    for key, val in params_preview.items():
-        sql_preview = sql_preview.replace(f":{key}", repr(str(val)))
+    sql_preview = _render_sql_preview(sql, params)
 
     try:
         rows = app._execute_db_query(cfg, sql, params)
@@ -104,6 +111,92 @@ def api_query_db_run(app):
         columns=display_columns,
         table_for_col=table_for_col,
         total_rows=len(rows),
+        sql_preview=sql_preview,
+    )
+
+
+def api_query_db_count(app):
+    """Execute a COUNT(*) version of the query without ORDER BY or LIMIT."""
+    user_info = app._get_api_user()
+    if user_info:
+        perms = resolve_user_permissions(user_info["groups"], app.ari_groups)
+    else:
+        perms = get_public_permissions()
+
+    if "view.data_portal" not in perms:
+        return jsonify(success=False, error="Unauthorized"), 401
+
+    body = request.get_json(silent=True) or {}
+    profile_id = str(body.get("profile_id", "")).strip()
+    if not profile_id:
+        return jsonify(success=False, error="Missing profile_id"), 400
+
+    accessible = get_accessible_profiles(user_info, app.ari_groups)
+    profile = None
+    for prof in accessible:
+        if prof["profile_id"] == profile_id:
+            profile = prof
+            break
+    if not profile:
+        return jsonify(success=False, error="Profile not found"), 404
+
+    instrument = profile["instrument"]
+    cfg = (
+        profile.get("data", {}) if isinstance(profile.get("data"), dict) else {}
+    )
+
+    run_ids = app._get_user_accessible_run_ids(user_info, instrument)
+    table_access = app._get_user_table_access(user_info, profile)
+    if not table_access:
+        return (
+            jsonify(
+                success=False,
+                error="No database tables are accessible with your current permissions.",
+            ),
+            403,
+        )
+
+    try:
+        sql, params = app._build_safe_count_query(
+            table_access=table_access,
+            query_spec=body,
+            run_ids=run_ids,
+        )
+    except ValueError as exc:
+        return jsonify(success=False, error=str(exc)), 400
+
+    sql_preview = _render_sql_preview(sql, params)
+
+    try:
+        rows = app._execute_db_query(cfg, sql, params)
+    except Exception as exc:
+        return (
+            jsonify(
+                success=False,
+                error=f"Count query failed: {exc}",
+                sql_preview=sql_preview,
+            ),
+            500,
+        )
+
+    count = 0
+    if rows:
+        first = rows[0]
+        for v in first.values():
+            try:
+                count = int(v)
+                break
+            except (TypeError, ValueError):
+                pass
+
+    limit = int(body.get("limit", 500))
+    if limit != 0:
+        limit = min(max(1, limit), 2000)
+
+    return jsonify(
+        success=True,
+        count=count,
+        limit=limit,
         sql_preview=sql_preview,
     )
 
@@ -248,6 +341,19 @@ def api_file_browser(app):
         base_dir, instrument, profile_id, objname, "all"
     )
     total_m = len(all_rows)
+
+    # The LBL_RDB product row is written only to the separate
+    # ftable_lbl_rdb_{objname}.json file, never to ftable_all, so merge
+    # it in here too -- otherwise the "rdb"/"lbl" presets can never show
+    # the .rdb file in the file browser even though it exists on disk.
+    lbl_rdb_rows, _, _ = bk.load_ftable_rows(
+        base_dir, instrument, profile_id, objname, "lbl_rdb"
+    )
+    if lbl_rdb_rows:
+        existing_filenames = {r.get("FILENAME") for r in all_rows}
+        for r in lbl_rdb_rows:
+            if r.get("FILENAME") not in existing_filenames:
+                all_rows.append(r)
 
     # Backfill missing KW_RUN_ID/KW_PI_NAME on LBL rows from non-LBL rows
     # in the same set; without this, instruments where LBL files lack

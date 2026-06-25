@@ -153,6 +153,10 @@
         'edit-google-secret-name');
     var editGoogleOauthFile = document.getElementById(
         'edit-google-oauth-file');
+    var editGoogleOauthHint = document.getElementById(
+        'edit-google-oauth-hint');
+    var editGoogleOauthAuthBtn = document.getElementById(
+        'at-gsheet-oauth-authorize-btn');
     var editCheckGsheetUrlFields = document.getElementById(
         'edit-check-gsheet-url-fields');
     var editOverrideSheetUrlField = document.getElementById(
@@ -161,6 +165,10 @@
         'edit-monitoring-sheet-url');
     var editOverrideSheetUrl = document.getElementById(
         'edit-override-sheet-url');
+    var editKnownErrorsSheetUrlField = document.getElementById(
+        'edit-known-errors-sheet-url-field');
+    var editKnownErrorsSheetUrl = document.getElementById(
+        'edit-known-errors-sheet-url');
     var editBackupFields= document.getElementById('edit-backup-fields');
     var editDailyCopies = document.getElementById('edit-daily-copies');
     var editWeeklyCopies= document.getElementById('edit-weekly-copies');
@@ -184,6 +192,12 @@
         'edit-assets-local-source');
     var editAssetsLocalBrowse = document.getElementById(
         'edit-assets-local-browse');
+    var editAssetsDrsUconfigRow = document.getElementById(
+        'edit-assets-drs-uconfig-row');
+    var editAssetsDrsUconfig = document.getElementById(
+        'edit-assets-drs-uconfig');
+    var editAssetsDrsUconfigBrowse = document.getElementById(
+        'edit-assets-drs-uconfig-browse');
     var editMpFields    = document.getElementById('edit-mp-fields');
     var editNcores      = document.getElementById('edit-ncores');
     var editMpBackend   = document.getElementById('edit-mp-backend');
@@ -251,9 +265,10 @@
 
     var BACKUP_TASK_KEY = 'ARI_LOCAL_DATA_BACKUP';
     var ASSETS_TASK_KEY = 'APERO_SYNC_ASSETS';
-    var LEGACY_ASTROM_TASK_KEY = 'LEGACY_ASTROM_GSHEET';
-    var LEGACY_REJECT_TASK_KEY = 'LEGACY_REJECT_GSHEET';
-    var LEGACY_CHECK_TASK_KEY  = 'LEGACY_CHECK_GSHEET';
+    var LEGACY_ASTROM_TASK_KEY       = 'LEGACY_ASTROM_GSHEET';
+    var LEGACY_REJECT_TASK_KEY       = 'LEGACY_REJECT_GSHEET';
+    var LEGACY_CHECK_TASK_KEY        = 'LEGACY_CHECK_GSHEET';
+    var LEGACY_KNOWN_ERRORS_TASK_KEY = 'LEGACY_KNOWN_ERRORS_GSHEET';
 
     function normalizeInstrumentKey(value) {
         return String(value || '')
@@ -1219,6 +1234,110 @@
             .then(function (r) { return r.json(); });
     }
 
+    var taskLogFindState = { matches: [], idx: 0 };
+
+    function escForLog(value) {
+        return String(value == null ? '' : value)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;');
+    }
+
+    function _logContentHasSelection() {
+        try {
+            var sel = window.getSelection();
+            if (!sel || sel.isCollapsed) return false;
+            var node = sel.anchorNode;
+            return !!(node && taskLogModalContent && taskLogModalContent.contains(node));
+        } catch (_e) { return false; }
+    }
+
+    function renderTaskLogContent(text) {
+        currentTaskLogText = text;
+        // Don't clobber an active text selection inside the log panel.
+        if (_logContentHasSelection()) return;
+        var html = '';
+        text.split('\n').forEach(function (line, idx) {
+            if (!line) return;
+            var escaped = escForLog(line);
+            var open = '<span class="acq-log-line" id="atlog-' + idx +
+                '" data-line="' + idx + '">';
+            if (line.indexOf('-!!|') >= 0) {
+                html += open + '<span class="acq-log-error">' + escaped + '</span></span>';
+            } else if (line.indexOf('-@!|') >= 0) {
+                html += open + '<span class="acq-log-warn">' + escaped + '</span></span>';
+            } else {
+                html += open + escaped + '</span>';
+            }
+        });
+        taskLogModalContent.innerHTML = html || '(No log lines yet)';
+        taskLogModalContent.scrollTop = taskLogModalContent.scrollHeight;
+        updateTaskLogFind();
+    }
+
+    function taskLogScrollToMatch(el) {
+        if (!el || !taskLogModalContent) return;
+        var cr = taskLogModalContent.getBoundingClientRect();
+        var er = el.getBoundingClientRect();
+        taskLogModalContent.scrollTop +=
+            (er.top - cr.top) - taskLogModalContent.clientHeight / 2 + el.clientHeight / 2;
+    }
+
+    function updateTaskLogFind() {
+        var input = document.getElementById('task-log-find');
+        var count = document.getElementById('task-log-find-count');
+        if (!taskLogModalContent) return;
+        var query = input ? input.value.trim() : '';
+
+        var lines = taskLogModalContent.querySelectorAll('.acq-log-line');
+        lines.forEach(function (el) {
+            el.classList.remove('acq-log-match-line', 'acq-log-match-current');
+        });
+
+        if (!query) {
+            taskLogFindState.matches = [];
+            taskLogFindState.idx = 0;
+            if (count) count.textContent = '';
+            return;
+        }
+
+        var lq = query.toLowerCase();
+        var matches = [];
+        lines.forEach(function (el) {
+            if ((el.textContent || '').toLowerCase().indexOf(lq) >= 0) {
+                el.classList.add('acq-log-match-line');
+                matches.push(el);
+            }
+        });
+
+        taskLogFindState.matches = matches;
+        taskLogFindState.idx = 0;
+
+        if (matches.length > 0) {
+            matches[0].classList.add('acq-log-match-current');
+            taskLogScrollToMatch(matches[0]);
+        }
+
+        if (count) {
+            count.textContent = matches.length === 0 ? 'No matches' : '1 / ' + matches.length;
+        }
+    }
+
+    function taskLogFindNav(dir) {
+        var matches = taskLogFindState.matches;
+        var count = document.getElementById('task-log-find-count');
+        if (!matches || !matches.length) return;
+        matches[taskLogFindState.idx].classList.remove('acq-log-match-current');
+        taskLogFindState.idx = (taskLogFindState.idx + dir + matches.length) % matches.length;
+        matches[taskLogFindState.idx].classList.add('acq-log-match-current');
+        taskLogScrollToMatch(matches[taskLogFindState.idx]);
+        if (count) {
+            count.textContent = (taskLogFindState.idx + 1) + ' / ' + matches.length;
+        }
+    }
+
     function refreshOpenTaskLog() {
         if (!openTaskLogTaskId) return;
         fetchTaskLog(openTaskLogTaskId, 600)
@@ -1226,35 +1345,39 @@
                 if (!d || !d.success) {
                     // Keep last visible content on transient fetch/auth errors.
                     if (!currentTaskLogText) {
-                        taskLogModalContent.textContent = '(No log lines yet)';
+                        renderTaskLogContent('(No log lines yet)');
                     }
                     return;
                 }
-                var content = String(d.content || '');
-                currentTaskLogText = content;
-                taskLogModalContent.textContent = content || '(No log lines yet)';
-                taskLogModalContent.scrollTop = taskLogModalContent.scrollHeight;
+                renderTaskLogContent(String(d.content || ''));
             })
             .catch(function () {
                 // Keep existing log text instead of clobbering it.
                 if (!currentTaskLogText) {
-                    taskLogModalContent.textContent = '(No log lines yet)';
+                    renderTaskLogContent('(No log lines yet)');
                 }
             });
     }
 
-    function openLiveTaskLog(taskId, taskName) {
+    function openLiveTaskLog(taskId, taskName, isLive) {
         openTaskLogTaskId = String(taskId || '');
         if (!openTaskLogTaskId) return;
         taskLogModalTitle.textContent = 'Task Log - ' + String(taskName || openTaskLogTaskId);
-        taskLogModalContent.textContent = 'Loading...';
+        renderTaskLogContent('Loading...');
         taskLogModal.style.display = '';
         if (taskLogRefreshTimer) {
             clearInterval(taskLogRefreshTimer);
             taskLogRefreshTimer = null;
         }
         refreshOpenTaskLog();
-        taskLogRefreshTimer = setInterval(refreshOpenTaskLog, 1500);
+        if (isLive !== false) {
+            taskLogRefreshTimer = setInterval(refreshOpenTaskLog, 1500);
+        }
+    }
+
+    /* Open the log viewer for a finished (history) task without polling. */
+    function openTaskLogOverlay(taskId, taskName) {
+        openLiveTaskLog(taskId, taskName, false);
     }
 
     function closeLiveTaskLog() {
@@ -1284,8 +1407,29 @@
                 copyToClipboard(currentTaskLogText, 'Task log copied to clipboard.');
             });
         }
-        taskLogModal.addEventListener('click', function (e) {
-            if (e.target === taskLogModal) closeLiveTaskLog();
+        var backdrop = document.getElementById('at-task-log-backdrop');
+        if (backdrop) backdrop.addEventListener('click', closeLiveTaskLog);
+
+        var findInput = document.getElementById('task-log-find');
+        var findPrev = document.getElementById('task-log-find-prev');
+        var findNext = document.getElementById('task-log-find-next');
+        if (findInput) {
+            findInput.addEventListener('input', updateTaskLogFind);
+            findInput.addEventListener('keydown', function (e) {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    taskLogFindNav(e.shiftKey ? -1 : 1);
+                } else if (e.key === 'Escape') {
+                    closeLiveTaskLog();
+                }
+            });
+        }
+        if (findPrev) findPrev.addEventListener('click', function () { taskLogFindNav(-1); });
+        if (findNext) findNext.addEventListener('click', function () { taskLogFindNav(1); });
+
+        document.addEventListener('keydown', function (e) {
+            if (taskLogModal.style.display === 'none') return;
+            if (e.key === 'Escape') closeLiveTaskLog();
         });
     }
     if (detBtnToggle) {
@@ -1601,6 +1745,12 @@
                 'override_sheet_url'
             );
         }
+        if (editKnownErrorsSheetUrl) {
+            var keSheetId = String(task.sheet_id || '');
+            editKnownErrorsSheetUrl.value = keSheetId
+                ? 'https://docs.google.com/spreadsheets/d/' + keSheetId + '/edit'
+                : '';
+        }
         editDailyCopies.value = task.daily_copies || 0;
         editWeeklyCopies.value = task.weekly_copies || 0;
         if (editBackupMaxSizeMb) {
@@ -1666,6 +1816,9 @@
             editAssetsLocalSrc.value = String(
                 task.local_source_path || ''
             );
+        }
+        if (editAssetsDrsUconfig) {
+            editAssetsDrsUconfig.value = String(task.drs_uconfig || '');
         }
         updateAssetsLocalSrcVisibility();
         editNcores.value = task.ncores || 1;
@@ -2036,10 +2189,13 @@
     }
 
     function updateAssetsLocalSrcVisibility() {
-        if (!editAssetsLocalSrcRow) return;
         var mode = editAssetsMode ? editAssetsMode.value : 'remote';
-        editAssetsLocalSrcRow.style.display =
-            (mode === 'local') ? '' : 'none';
+        if (editAssetsLocalSrcRow) {
+            editAssetsLocalSrcRow.style.display = (mode === 'local') ? '' : 'none';
+        }
+        if (editAssetsDrsUconfigRow) {
+            editAssetsDrsUconfigRow.style.display = (mode === 'remote') ? '' : 'none';
+        }
     }
 
     if (editAssetsMode) {
@@ -2049,15 +2205,22 @@
     if (editAssetsLocalBrowse) {
         editAssetsLocalBrowse.addEventListener('click', function (ev) {
             ev.preventDefault();
-            aatOpenAssetsBrowseModal();
+            aatOpenAssetsBrowseModal(editAssetsLocalSrc);
+        });
+    }
+    if (editAssetsDrsUconfigBrowse) {
+        editAssetsDrsUconfigBrowse.addEventListener('click', function (ev) {
+            ev.preventDefault();
+            aatOpenAssetsBrowseModal(editAssetsDrsUconfig);
         });
     }
 
-    // ---- inline directory browser for assets local-source path ----
+    // ---- inline directory browser (shared for local-source and drs-uconfig) ----
     var aatBrowseModal = null;
     var aatBrowseList = null;
     var aatBrowseCurrent = null;
     var aatBrowseTitle = null;
+    var aatBrowseTargetInput = null; // which input to write the selected path into
 
     function aatEnsureBrowseModal() {
         if (aatBrowseModal) return;
@@ -2110,18 +2273,18 @@
             });
         box.querySelector('#aat-browse-select').addEventListener(
             'click', function () {
-                if (editAssetsLocalSrc && aatBrowseCurrent) {
-                    editAssetsLocalSrc.value = aatBrowseCurrent;
+                if (aatBrowseTargetInput && aatBrowseCurrent) {
+                    aatBrowseTargetInput.value = aatBrowseCurrent;
                 }
                 aatBrowseModal.style.display = 'none';
             });
     }
 
-    function aatOpenAssetsBrowseModal() {
+    function aatOpenAssetsBrowseModal(targetInput) {
+        aatBrowseTargetInput = targetInput || editAssetsLocalSrc;
         aatEnsureBrowseModal();
         aatBrowseModal.style.display = 'flex';
-        var startPath =
-            (editAssetsLocalSrc && editAssetsLocalSrc.value) || '';
+        var startPath = (aatBrowseTargetInput && aatBrowseTargetInput.value) || '';
         aatBrowseTo(startPath);
     }
 
@@ -2187,8 +2350,10 @@
             key === LEGACY_ASTROM_TASK_KEY
             || key === LEGACY_REJECT_TASK_KEY
             || key === LEGACY_CHECK_TASK_KEY
+            || key === LEGACY_KNOWN_ERRORS_TASK_KEY
         );
         var isCheckGsheet = (key === LEGACY_CHECK_TASK_KEY);
+        var isKnownErrorsGsheet = (key === LEGACY_KNOWN_ERRORS_TASK_KEY);
         var currentTask = allTasks.find(function (t) {
             return t.id === editingTaskId;
         }) || {};
@@ -2218,6 +2383,9 @@
         }
         if (editOverrideSheetUrlField) {
             editOverrideSheetUrlField.style.display = isCheckGsheet ? '' : 'none';
+        }
+        if (editKnownErrorsSheetUrlField) {
+            editKnownErrorsSheetUrlField.style.display = isKnownErrorsGsheet ? '' : 'none';
         }
         var isAssets = key === ASSETS_TASK_KEY;
         if (editAssetsFields) editAssetsFields.style.display = isAssets ? '' : 'none';
@@ -2277,6 +2445,12 @@
         editModal.addEventListener('click', function (e) {
             if (e.target === editModal) closeEditModal();
         });
+        if (editGoogleOauthFile) {
+            editGoogleOauthFile.addEventListener('change', onOauthFileChange);
+        }
+        if (editGoogleOauthAuthBtn) {
+            editGoogleOauthAuthBtn.addEventListener('click', startGsheetOauth);
+        }
     }
 
     function closeEditModal() {
@@ -2347,6 +2521,7 @@
             taskKey === LEGACY_ASTROM_TASK_KEY
             || taskKey === LEGACY_REJECT_TASK_KEY
             || taskKey === LEGACY_CHECK_TASK_KEY
+            || taskKey === LEGACY_KNOWN_ERRORS_TASK_KEY
         ) {
             payload.dry_run = !!(editDryRun && editDryRun.checked);
             payload.google_secret_name = editGoogleSecretName
@@ -2359,6 +2534,11 @@
                 : '';
             payload.override_sheet_url = editOverrideSheetUrl
                 ? (editOverrideSheetUrl.value || '').trim()
+                : '';
+        }
+        if (taskKey === LEGACY_KNOWN_ERRORS_TASK_KEY) {
+            payload.sheet_url = editKnownErrorsSheetUrl
+                ? (editKnownErrorsSheetUrl.value || '').trim()
                 : '';
         }
         if (taskKey === BACKUP_TASK_KEY && isFinite(backupMaxSizeMb)
@@ -2391,6 +2571,11 @@
                     editAssetsLocalSrc.value || ''
                 ).trim();
             }
+            if (editAssetsDrsUconfig) {
+                payload.assets_drs_uconfig = String(
+                    editAssetsDrsUconfig.value || ''
+                ).trim();
+            }
         }
         Object.keys(editFilterInputs || {}).forEach(function (keyName) {
             var inputEl = editFilterInputs[keyName];
@@ -2408,11 +2593,13 @@
         payload.id = editingTaskId;
 
         var doSave = function () {
+            setSaveBusy(true);
             fetch(urls.save, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload),
             }).then(function (r) { return r.json(); }).then(function (d) {
+                setSaveBusy(false);
                 if (d.success) {
                     closeEditModal();
                     showToast('Task saved.', 'success');
@@ -2423,6 +2610,9 @@
                 } else {
                     showToast('Save failed: ' + d.error, 'error');
                 }
+            }).catch(function () {
+                setSaveBusy(false);
+                showToast('Save failed: network or server error.', 'error');
             });
         };
 
@@ -2430,17 +2620,22 @@
             taskKey === LEGACY_ASTROM_TASK_KEY
             || taskKey === LEGACY_REJECT_TASK_KEY
             || taskKey === LEGACY_CHECK_TASK_KEY
+            || taskKey === LEGACY_KNOWN_ERRORS_TASK_KEY
         );
         var hasOauthFile = !!(
             editGoogleOauthFile
             && editGoogleOauthFile.files
             && editGoogleOauthFile.files[0]
         );
-        if (!isLegacyGsheet || !hasOauthFile) {
+        // If the selected file is a raw client_secret (handled by the
+        // OAuth flow), skip the upload — the credential is already saved.
+        var isClientSecret = hasOauthFile && !!_pendingClientSecret;
+        if (!isLegacyGsheet || !hasOauthFile || isClientSecret) {
             doSave();
             return;
         }
 
+        setSaveBusy(true);
         var reader = new FileReader();
         reader.onload = function (evt) {
             var text = String((evt && evt.target && evt.target.result) || '');
@@ -2448,10 +2643,12 @@
             try {
                 parsed = JSON.parse(text);
             } catch (err) {
+                setSaveBusy(false);
                 showToast('Invalid OAuth JSON file.', 'error');
                 return;
             }
             if (!parsed || typeof parsed !== 'object') {
+                setSaveBusy(false);
                 showToast('Invalid OAuth JSON payload.', 'error');
                 return;
             }
@@ -2459,9 +2656,128 @@
             doSave();
         };
         reader.onerror = function () {
+            setSaveBusy(false);
             showToast('Could not read OAuth JSON file.', 'error');
         };
         reader.readAsText(editGoogleOauthFile.files[0]);
+    }
+
+    var _pendingClientSecret = null;
+
+    function _isClientSecretFile(parsed) {
+        return parsed && typeof parsed === 'object'
+            && (parsed.installed || parsed.web)
+            && !parsed.refresh_token
+            && !parsed.private_key;
+    }
+
+    function onOauthFileChange() {
+        if (!editGoogleOauthFile || !editGoogleOauthFile.files
+                || !editGoogleOauthFile.files[0]) {
+            _pendingClientSecret = null;
+            if (editGoogleOauthAuthBtn) editGoogleOauthAuthBtn.style.display = 'none';
+            if (editGoogleOauthHint) editGoogleOauthHint.textContent = '';
+            return;
+        }
+        var reader = new FileReader();
+        reader.onload = function (evt) {
+            var text = String((evt && evt.target && evt.target.result) || '');
+            var parsed = null;
+            try { parsed = JSON.parse(text); } catch (_) {}
+            if (!parsed) {
+                _pendingClientSecret = null;
+                if (editGoogleOauthAuthBtn) editGoogleOauthAuthBtn.style.display = 'none';
+                return;
+            }
+            if (_isClientSecretFile(parsed)) {
+                _pendingClientSecret = parsed;
+                if (editGoogleOauthAuthBtn) {
+                    editGoogleOauthAuthBtn.style.display = '';
+                }
+                if (editGoogleOauthHint) {
+                    editGoogleOauthHint.textContent =
+                        'This is a client secret file — click "Authorize with Google"'
+                        + ' to complete the OAuth flow and get a refresh token.';
+                    editGoogleOauthHint.style.color = 'var(--ari-warning, #c07000)';
+                }
+            } else {
+                _pendingClientSecret = null;
+                if (editGoogleOauthAuthBtn) editGoogleOauthAuthBtn.style.display = 'none';
+                if (editGoogleOauthHint) {
+                    editGoogleOauthHint.textContent = '';
+                }
+            }
+        };
+        reader.readAsText(editGoogleOauthFile.files[0]);
+    }
+
+    function startGsheetOauth() {
+        if (!_pendingClientSecret) {
+            showToast('Select a client secret JSON file first.', 'error');
+            return;
+        }
+        var secretName = (editGoogleSecretName && editGoogleSecretName.value.trim())
+            || 'legacy_gsheet_oauth.json';
+        if (editGoogleOauthAuthBtn) {
+            editGoogleOauthAuthBtn.disabled = true;
+            editGoogleOauthAuthBtn.textContent = 'Opening…';
+        }
+        fetch('/api/admin/async-tasks/gsheet-oauth-start', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                client_secret: _pendingClientSecret,
+                secret_name: secretName,
+            }),
+        }).then(function (r) { return r.json(); })
+          .then(function (d) {
+            if (editGoogleOauthAuthBtn) {
+                editGoogleOauthAuthBtn.disabled = false;
+                editGoogleOauthAuthBtn.innerHTML =
+                    '<i class="fa-brands fa-google"></i> Authorize with Google';
+            }
+            if (!d.ok) {
+                showToast('OAuth start failed: ' + d.error, 'error');
+                return;
+            }
+            var popup = window.open(d.auth_url, 'gsheet_oauth',
+                'width=600,height=700,left=200,top=100');
+            if (!popup) {
+                showToast('Pop-up blocked — allow pop-ups and retry.', 'error');
+                return;
+            }
+            if (editGoogleOauthHint) {
+                editGoogleOauthHint.textContent =
+                    'Complete authorization in the pop-up window, then save the task.';
+                editGoogleOauthHint.style.color = 'var(--ari-success, #2a7a2a)';
+            }
+        }).catch(function () {
+            if (editGoogleOauthAuthBtn) {
+                editGoogleOauthAuthBtn.disabled = false;
+                editGoogleOauthAuthBtn.innerHTML =
+                    '<i class="fa-brands fa-google"></i> Authorize with Google';
+            }
+            showToast('OAuth start failed: network error.', 'error');
+        });
+    }
+
+    var _editSaveOrigHtml = null;
+
+    function setSaveBusy(busy) {
+        if (!btnEditSave) return;
+        if (busy) {
+            if (_editSaveOrigHtml === null) {
+                _editSaveOrigHtml = btnEditSave.innerHTML;
+            }
+            btnEditSave.disabled = true;
+            btnEditSave.innerHTML =
+                '<i class="fa-solid fa-spinner fa-spin"></i> Saving...';
+        } else {
+            btnEditSave.disabled = false;
+            if (_editSaveOrigHtml !== null) {
+                btnEditSave.innerHTML = _editSaveOrigHtml;
+            }
+        }
     }
 
     /* -----------------------------------------------------------------------
@@ -2671,11 +2987,24 @@
             var line = '[' + (item.status || 'unknown') + '] ' +
                 (item.instrument || '') + ' - ' + (item.task_name || item.task_id || '') +
                 durationText;
+            var taskId = item.task_id || '';
+            var taskName = item.task_name || taskId || '';
             return '<div class="at-queue-item">' +
                 '<span class="at-queue-item__inst">' + esc(stamp) + '</span>' +
                 '<span class="at-queue-item__id">' + esc(line) + '</span>' +
+                (taskId
+                    ? '<button class="ari-btn ari-btn--sm ari-btn--secondary at-queue-log-btn" ' +
+                      'data-task-id="' + esc(taskId) + '" data-task-name="' + esc(taskName) +
+                      '" style="margin-left:auto;" title="View log">' +
+                      '<i class="fa-solid fa-file-lines"></i> Log</button>'
+                    : '') +
                 '</div>';
         }).join('');
+        queueHistoryList.querySelectorAll('.at-queue-log-btn').forEach(function (btn) {
+            btn.addEventListener('click', function () {
+                openTaskLogOverlay(btn.dataset.taskId || '', btn.dataset.taskName || '');
+            });
+        });
     }
 
     /* -----------------------------------------------------------------------

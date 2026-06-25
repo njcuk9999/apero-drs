@@ -355,6 +355,15 @@
     </div>
 </div>
 
+{% if can_manage_checks %}
+<div id="ac-advanced-panel" class="ac-advanced-panel" hidden>
+    <button id="ac-btn-run-new-obsdir"
+            class="ari-btn ari-btn--sm ari-btn--secondary">
+        <i class="fa-solid fa-folder-plus"></i> Run new observation directory
+    </button>
+</div>
+{% endif %}
+
 <div class="ot-pagination ac-pagination-top">
     <div id="ac-page-info-top" class="ot-page-info">
         Page {{ current_page }} of {{ total_pages }}
@@ -375,14 +384,19 @@
 
 <div class="ac-card-list" id="ac-card-list">
     {% for card in profile_cards %}
-    <article class="ac-card ac-card--{{ card.status }}"
+    <article class="ac-card ac-card--{{ card.card_color or card.status }}"
              data-obsdir="{{ card.obsdir }}">
         <div class="ac-card__row">
             <span class="ac-card__row-status" title="Card status">
-                {% if card.status == 'ok' %}
+                {% set _has_fail = (card.active_failure_count or 0) > 0 %}
+                {% set _has_ovr  = (card.override_count or 0) > 0 %}
+                {% set _has_mon  = (card.monitor_count or 0) > 0 %}
+                {% if not _has_fail and not _has_ovr and not _has_mon %}
                 <i class="fa-solid fa-check ac-i-ok"></i>
                 {% else %}
-                <i class="fa-solid fa-xmark ac-i-bad"></i>
+                  {% if _has_fail %}<i class="fa-solid fa-xmark ac-i-bad"></i>{% endif %}
+                  {% if _has_ovr %}<i class="fa-solid fa-triangle-exclamation ac-i-ovr"></i>{% endif %}
+                  {% if _has_mon %}<i class="fa-solid fa-bell ac-i-mon"></i>{% endif %}
                 {% endif %}
             </span>
             <div class="ac-card__date" title="Obsdir: {{ card.obsdir }}">
@@ -756,6 +770,44 @@
     </div>
 </div>
 
+<div id="ac-new-obsdir-overlay" class="ac-overlay" hidden>
+    <div class="ac-overlay__backdrop" data-ac-close="new-obsdir"></div>
+    <div class="ac-overlay__panel">
+        <div class="ac-overlay__header">
+            <h3>Run new observation directory</h3>
+            <button type="button" class="ac-overlay__close"
+                    data-ac-close="new-obsdir">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+        <div class="ac-new-obsdir-body">
+            <p class="ac-note">
+                Enter an observation directory name (e.g. <code>2024-01-15</code>)
+                that has not yet been checked. ARI will verify it exists under
+                the profile's raw data directory before running.
+            </p>
+            <div class="ac-new-obsdir-input-row">
+                <input id="ac-new-obsdir-input" type="text"
+                       class="ac-new-obsdir-input"
+                       placeholder="e.g. 2024-01-15"
+                       autocomplete="off" spellcheck="false">
+                <button id="ac-btn-resolve-obsdir"
+                        class="ari-btn ari-btn--sm ari-btn--secondary">
+                    <i class="fa-solid fa-magnifying-glass"></i> Resolve obs dir
+                </button>
+            </div>
+            <div id="ac-new-obsdir-status" class="ac-new-obsdir-status" hidden></div>
+            <div class="ac-new-obsdir-actions" id="ac-new-obsdir-actions" hidden>
+                <button id="ac-btn-run-new-obsdir-confirm"
+                        class="ari-btn ari-btn--sm ari-btn--primary">
+                    <i class="fa-solid fa-play"></i>
+                    <span id="ac-run-new-obsdir-label">Run checks</span>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script>
 window.ARI_APERO_CHECKS = {
     profileId: {{ profile_id|tojson }},
@@ -779,6 +831,7 @@ window.ARI_APERO_CHECKS = {
     apiIssueUrl: {{ url_for('api_apero_checks_create_issue')|tojson }},
     apiConfigUrl: {{ url_for('api_apero_checks_config_save')|tojson }},
     apiRerunNightUrl: {{ url_for('api_apero_checks_rerun_night')|tojson }},
+    apiValidateObsdirUrl: {{ url_for('api_apero_checks_validate_obsdir')|tojson }},
     apiRerunCheckUrl: {{ url_for('api_apero_checks_rerun_single_check')|tojson }},
     apiDeleteObsdirUrl: {{ url_for('api_apero_checks_delete_obsdir')|tojson }},
     apiViewYamlUrl: {{ url_for('api_apero_checks_view_yaml')|tojson }},

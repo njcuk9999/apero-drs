@@ -18,7 +18,8 @@
         { key: 'PATH_LBL',   id: 'profile-path-lbl' },
         { key: 'PATH_CHECK', id: 'profile-path-check' },
         { key: 'PATH_OTHER', id: 'profile-path-other' },
-        { key: 'PATH_TRIGGER', id: 'profile-path-trigger', optional: true },
+        { key: 'PATH_TRIGGER_LOG', id: 'profile-path-trigger-log', optional: true },
+        { key: 'PATH_CRITICAL_CHECK', id: 'profile-path-critical-check', optional: true },
     ];
 
     var DB_TEXT_FIELDS = [
@@ -97,6 +98,11 @@
     var browseList = document.getElementById('browse-list');
     var btnBrowseCancel = document.getElementById('btn-browse-cancel');
     var btnBrowseSelect = document.getElementById('btn-browse-select');
+    var btnBrowseSelectLabel = document.getElementById('btn-browse-select-label');
+    var browseShowHidden = document.getElementById('browse-show-hidden');
+
+    // Field ids that browse for a specific file rather than a directory.
+    var BROWSE_FILE_FIELDS = ['profile-path-trigger-log'];
 
     var deleteModal = document.getElementById('delete-modal');
     var deleteModalName = document.getElementById('delete-modal-name');
@@ -136,6 +142,8 @@
     var dragSrcIndex = null;
     var browseTargetId = null;   // id of the input field being browsed for
     var lastBrowsePaths = {};    // remember last browsed path per field id
+    var browseFileMode = false;  // true when picking a file (not a directory)
+    var browseSelectedFile = null; // full path of the selected file, if any
     var formDirty = false;       // track unsaved changes
     var dbTestPassed = false;
     var tablesTestPassed = false;
@@ -1018,9 +1026,12 @@
         var vdiv = document.getElementById(fieldId + '-validation');
         if (!vdiv) return;
         if (!path) { vdiv.style.display = 'none'; return; }
+        var isFile = BROWSE_FILE_FIELDS.indexOf(fieldId) !== -1;
+        var label = isFile ? 'File' : 'Directory';
         clearTimeout(_pathTimers[fieldId]);
         _pathTimers[fieldId] = setTimeout(function () {
-            fetch(cfg.validateUrl + '?path=' + encodeURIComponent(path))
+            fetch(cfg.validateUrl + '?path=' + encodeURIComponent(path)
+                + (isFile ? '&kind=file' : ''))
                 .then(function (r) { return r.json(); })
                 .then(function (data) {
                     if (!data.success) {
@@ -1028,9 +1039,9 @@
                         return;
                     }
                     if (data.valid) {
-                        showFieldValidation(vdiv, true, 'Directory exists');
+                        showFieldValidation(vdiv, true, label + ' exists');
                     } else {
-                        showFieldValidation(vdiv, false, 'Directory does not exist');
+                        showFieldValidation(vdiv, false, label + ' does not exist');
                     }
                 })
                 .catch(function () {
@@ -1042,19 +1053,22 @@
     function validatePathNow(fieldId, path) {
         var vdiv = document.getElementById(fieldId + '-validation');
         if (!vdiv) return Promise.resolve(false);
+        var isFile = BROWSE_FILE_FIELDS.indexOf(fieldId) !== -1;
+        var label = isFile ? 'File' : 'Directory';
         if (!path) {
             showFieldValidation(vdiv, false, 'Path is required');
             return Promise.resolve(false);
         }
-        return fetch(cfg.validateUrl + '?path=' + encodeURIComponent(path))
+        return fetch(cfg.validateUrl + '?path=' + encodeURIComponent(path)
+            + (isFile ? '&kind=file' : ''))
             .then(function (r) { return r.json(); })
             .then(function (data) {
                 var ok = !!(data.success && data.valid);
                 if (ok) {
-                    showFieldValidation(vdiv, true, 'Directory exists');
+                    showFieldValidation(vdiv, true, label + ' exists');
                 } else {
                     showFieldValidation(vdiv, false,
-                        (data && data.error) ? data.error : 'Directory does not exist');
+                        (data && data.error) ? data.error : label + ' does not exist');
                 }
                 return ok;
             })
@@ -2009,15 +2023,34 @@
     /* -- File browser ---------------------------------------------------- */
     function openBrowseModal(targetFieldId) {
         browseTargetId = targetFieldId;
+        browseFileMode = BROWSE_FILE_FIELDS.indexOf(targetFieldId) !== -1;
+        browseSelectedFile = null;
+        if (btnBrowseSelectLabel) {
+            btnBrowseSelectLabel.textContent = browseFileMode
+                ? 'Select This File' : 'Select This Directory';
+        }
         var inputEl = pathInputs[targetFieldId];
+        var currentValue = (inputEl ? inputEl.value.trim() : '');
         // Use remembered path, or current field value, or /
-        var startPath = lastBrowsePaths[targetFieldId]
-                        || (inputEl ? inputEl.value.trim() : '')
-                        || '/';
+        var startPath = lastBrowsePaths[targetFieldId] || currentValue || '/';
+        // When browsing for a file and there is an existing value pointing
+        // at a file (not just a bare directory), pre-select it and start the
+        // listing at its parent directory.
+        if (browseFileMode) {
+            if (currentValue && currentValue !== '/') {
+                browseSelectedFile = currentValue;
+                var lastSlash = currentValue.replace(/\/$/, '').lastIndexOf('/');
+                startPath = lastSlash > 0 ? currentValue.slice(0, lastSlash) : '/';
+            } else {
+                browseSelectedFile = null;
+                startPath = '/';
+            }
+        }
         currentBrowsePath = startPath;
-        browsePathInput.value = startPath;
+        browsePathInput.value = browseFileMode && browseSelectedFile
+            ? browseSelectedFile : startPath;
         browseModal.style.display = 'flex';
-        btnBrowseSelect.disabled = false;
+        btnBrowseSelect.disabled = browseFileMode ? !browseSelectedFile : false;
         browseTo(startPath);
     }
 
@@ -2029,7 +2062,14 @@
         browseList.innerHTML = '<div class="ari-sg-loading">Loading...</div>';
         browseStatus.style.display = 'none';
 
-        fetch(cfg.browseUrl + '?path=' + encodeURIComponent(path))
+        var showHidden = !!(browseShowHidden && browseShowHidden.checked);
+        var url = cfg.browseUrl + '?path=' + encodeURIComponent(path)
+                + '&show_hidden=' + (showHidden ? '1' : '0');
+        if (browseFileMode) {
+            url += '&files=1';
+        }
+
+        fetch(url)
             .then(function (r) { return r.json(); })
             .then(function (data) {
                 if (!data.success) {
@@ -2040,20 +2080,26 @@
                 }
 
                 currentBrowsePath = data.path;
-                browsePathInput.value = data.path;
+                // In file mode, keep showing the selected file's full path
+                // (not just the directory) once one has been picked.
+                browsePathInput.value = (browseFileMode && browseSelectedFile)
+                    ? browseSelectedFile : data.path;
                 if (browseTargetId) lastBrowsePaths[browseTargetId] = data.path;
 
                 // Show exists status
-                if (data.validation) {
+                if (data.validation && !browseFileMode) {
                     browseStatus.style.display = 'block';
                     browseStatus.className = 'ari-ap-browser__status ari-ap-browser__status--valid';
                     browseStatus.innerHTML =
                         '<i class="fa-solid fa-circle-check"></i> Directory exists';
                 }
-                btnBrowseSelect.disabled = false;
+                if (!browseFileMode) {
+                    btnBrowseSelect.disabled = false;
+                }
 
                 browseList.innerHTML = '';
                 var dirs = data.dirs || [];
+                var files = data.files || [];
 
                 if (data.path !== '/') {
                     var parent = data.path.replace(/\/[^/]+\/?$/, '') || '/';
@@ -2064,19 +2110,48 @@
                     browseList.appendChild(upItem);
                 }
 
-                if (dirs.length === 0) {
+                if (dirs.length === 0 && (!browseFileMode || files.length === 0)) {
                     var empty = document.createElement('div');
                     empty.className = 'ari-sg-empty-small';
-                    empty.textContent = 'No subdirectories';
+                    empty.textContent = browseFileMode
+                        ? 'No subdirectories or files' : 'No subdirectories';
                     browseList.appendChild(empty);
-                } else {
-                    dirs.forEach(function (d) {
+                }
+
+                dirs.forEach(function (d) {
+                    var item = document.createElement('div');
+                    item.className = 'ari-ap-browser__item';
+                    item.innerHTML = '<i class="fa-solid fa-folder"></i> ' + escapeHtml(d);
+                    item.addEventListener('click', function () {
+                        var newPath = data.path.replace(/\/$/, '') + '/' + d;
+                        browseTo(newPath);
+                    });
+                    browseList.appendChild(item);
+                });
+
+                if (browseFileMode) {
+                    files.forEach(function (fname) {
+                        var fullPath = data.path.replace(/\/$/, '') + '/' + fname;
                         var item = document.createElement('div');
-                        item.className = 'ari-ap-browser__item';
-                        item.innerHTML = '<i class="fa-solid fa-folder"></i> ' + escapeHtml(d);
+                        item.className = 'ari-ap-browser__item ari-ap-browser__item--file';
+                        if (browseSelectedFile === fullPath) {
+                            item.classList.add('ari-ap-browser__item--selected');
+                        }
+                        item.innerHTML = '<i class="fa-solid fa-file"></i> ' + escapeHtml(fname);
                         item.addEventListener('click', function () {
-                            var newPath = data.path.replace(/\/$/, '') + '/' + d;
-                            browseTo(newPath);
+                            browseSelectedFile = fullPath;
+                            browsePathInput.value = fullPath;
+                            btnBrowseSelect.disabled = false;
+                            browseStatus.style.display = 'block';
+                            browseStatus.className = 'ari-ap-browser__status ari-ap-browser__status--valid';
+                            browseStatus.innerHTML =
+                                '<i class="fa-solid fa-circle-check"></i> Selected file: '
+                                + escapeHtml(fullPath);
+                            Array.prototype.forEach.call(
+                                browseList.querySelectorAll('.ari-ap-browser__item--file'),
+                                function (el) { el.classList.remove('ari-ap-browser__item--selected'); }
+                            );
+                            item.classList.add('ari-ap-browser__item--selected');
                         });
                         browseList.appendChild(item);
                     });
@@ -2088,9 +2163,11 @@
     }
 
     function selectBrowsePath() {
+        var chosen = (browseFileMode && browseSelectedFile)
+            ? browseSelectedFile : currentBrowsePath;
         if (browseTargetId && pathInputs[browseTargetId]) {
-            pathInputs[browseTargetId].value = currentBrowsePath;
-            lastBrowsePaths[browseTargetId] = currentBrowsePath;
+            pathInputs[browseTargetId].value = chosen;
+            lastBrowsePaths[browseTargetId] = chosen;
             pathsTestPassed = false;
             var vdiv = document.getElementById(browseTargetId + '-validation');
             if (vdiv) vdiv.style.display = 'none';
@@ -2357,6 +2434,11 @@
     browsePathInput.addEventListener('keydown', function (e) {
         if (e.key === 'Enter') browseTo(browsePathInput.value.trim() || '/');
     });
+    if (browseShowHidden) {
+        browseShowHidden.addEventListener('change', function () {
+            browseTo(currentBrowsePath);
+        });
+    }
 
     btnCancelDelete.addEventListener('click', closeDeleteModal);
     btnConfirmDelete.addEventListener('click', doDelete);

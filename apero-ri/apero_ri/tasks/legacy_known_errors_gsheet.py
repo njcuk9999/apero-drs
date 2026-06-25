@@ -162,10 +162,26 @@ def _open_worksheet(payload: Dict[str, Any],
 
 
 def _sheet_to_dataframe(worksheet) -> pd.DataFrame:
-    rows = worksheet.get_all_records(default_blank='')
-    if not rows:
+    all_values = worksheet.get_all_values()
+    if not all_values:
         return pd.DataFrame(columns=KNOWN_ERROR_COLUMNS)
-    return pd.DataFrame(rows)
+    header = all_values[0]
+    data_rows = all_values[1:]
+    # Drop trailing empty columns introduced by Google Sheets.
+    while header and str(header[-1]).strip() == '':
+        header = header[:-1]
+        data_rows = [row[:len(header)] for row in data_rows]
+    if not header:
+        return pd.DataFrame(columns=KNOWN_ERROR_COLUMNS)
+    # Pad or trim each data row to match header length.
+    ncols = len(header)
+    padded = [
+        (row + [''] * ncols)[:ncols] for row in data_rows
+    ]
+    df = pd.DataFrame(padded, columns=header)
+    # Drop rows that are entirely blank.
+    df = df[df.apply(lambda r: any(str(v).strip() for v in r), axis=1)]
+    return df.reset_index(drop=True)
 
 
 def _write_dataframe_to_sheet(worksheet, dataframe: pd.DataFrame) -> None:

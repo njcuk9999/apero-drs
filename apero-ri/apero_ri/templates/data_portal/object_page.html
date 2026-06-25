@@ -167,8 +167,10 @@
                 <i class="fa-solid fa-triangle-exclamation"></i>
                 This astrometric entry is
                 <strong>pending verification</strong>.
-                Please review every field below before marking it as
-                verified.
+                <span id="op-verify-banner__review-msg" hidden>
+                    Please review every field below before marking it as
+                    verified.
+                </span>
             </div>
             <button id="op-verify-btn" type="button"
                     class="ari-btn ari-btn--sm ari-btn--primary"
@@ -1171,7 +1173,7 @@ window.ARI_BASKET_CFG = {
     window.AperoRI.userPerms = {{ (user_permissions|list)|tojson }};
 </script>
 <script src="{{ url_for('static', filename='js/target_info_render.js', v='20260424e') }}"></script>
-<script src="{{ url_for('static', filename='js/object_page.js', v='20260424g') }}" defer></script>
+<script src="{{ url_for('static', filename='js/object_page.js', v='20260611b') }}" defer></script>
 <script>
 /* Plot-type constants – generated from Python; consumed by file_browser.js */
 window.ARI_PLOTABLE_OUTPUTS = {{ plotable_output_types | tojson }};

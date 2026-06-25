@@ -71,6 +71,12 @@
     background: #fff;
     color: var(--ari-text-muted);
     font-size: 0.92rem;
+    text-decoration: none;
+    cursor: pointer;
+}
+.ac-task-status:hover {
+    filter: brightness(0.97);
+    text-decoration: underline;
 }
 .ac-task-status--queued {
     background: #eff6ff;
@@ -223,37 +229,20 @@
 <div class="ac-page-stack">
 <div class="ac-failure-detail__actions ac-ui-panel ac-ui-panel--soft"
     style="margin-bottom:0;">
-    <span class="ac-filter-row__label">Type:</span>
-    <a class="ari-btn ari-btn--sm {% if type_filter == 'all' %}ari-btn--primary{% else %}ari-btn--secondary{% endif %}"
-       href="{{ url_for('monitor_apero_checks_obsdir_view', profile_id=profile_id, obsdir=obsdir, page=current_page, per_page=per_page, type='all', obsdir_filter=obsdir_filter, obsdir_sort=obsdir_sort, show_overridden=1 if show_overridden else 0, show_monitored=1 if show_monitored else 0, show_passed=1 if show_passed else 0) }}">
-        All
-    </a>
-    <a class="ari-btn ari-btn--sm {% if type_filter == 'raw' %}ari-btn--primary{% else %}ari-btn--secondary{% endif %}"
-       href="{{ url_for('monitor_apero_checks_obsdir_view', profile_id=profile_id, obsdir=obsdir, page=current_page, per_page=per_page, type='raw', obsdir_filter=obsdir_filter, obsdir_sort=obsdir_sort, show_overridden=1 if show_overridden else 0, show_monitored=1 if show_monitored else 0, show_passed=1 if show_passed else 0) }}">
-        Raw
-    </a>
-    <a class="ari-btn ari-btn--sm {% if type_filter == 'red' %}ari-btn--primary{% else %}ari-btn--secondary{% endif %}"
-       href="{{ url_for('monitor_apero_checks_obsdir_view', profile_id=profile_id, obsdir=obsdir, page=current_page, per_page=per_page, type='red', obsdir_filter=obsdir_filter, obsdir_sort=obsdir_sort, show_overridden=1 if show_overridden else 0, show_monitored=1 if show_monitored else 0, show_passed=1 if show_passed else 0) }}">
-        Red
-    </a>
-</div>
-
-<div class="ac-failure-detail__actions ac-ui-panel ac-ui-panel--soft"
-    style="margin-bottom:0;">
     <a class="ari-btn ari-btn--sm ari-btn--secondary {% if show_overridden %}ac-toggle-override-on{% endif %}"
-       href="{{ url_for('monitor_apero_checks_obsdir_view', profile_id=profile_id, obsdir=obsdir, page=current_page, per_page=per_page, type=type_filter, obsdir_filter=obsdir_filter, obsdir_sort=obsdir_sort, show_overridden=0 if show_overridden else 1, show_monitored=1 if show_monitored else 0, show_passed=1 if show_passed else 0) }}">
+       href="{{ url_for('monitor_apero_checks_obsdir_view', profile_id=profile_id, obsdir=obsdir, page=current_page, per_page=per_page, obsdir_filter=obsdir_filter, obsdir_sort=obsdir_sort, show_overridden=0 if show_overridden else 1, show_monitored=1 if show_monitored else 0, show_passed=1 if show_passed else 0) }}">
         <i class="fa-solid fa-layer-group"></i>
         {% if show_overridden %}Hide{% else %}Show{% endif %}
         overridden checks
     </a>
     <a class="ari-btn ari-btn--sm ari-btn--secondary {% if show_monitored %}ac-toggle-monitor-on{% endif %}"
-       href="{{ url_for('monitor_apero_checks_obsdir_view', profile_id=profile_id, obsdir=obsdir, page=current_page, per_page=per_page, type=type_filter, obsdir_filter=obsdir_filter, obsdir_sort=obsdir_sort, show_overridden=1 if show_overridden else 0, show_monitored=0 if show_monitored else 1, show_passed=1 if show_passed else 0) }}">
+       href="{{ url_for('monitor_apero_checks_obsdir_view', profile_id=profile_id, obsdir=obsdir, page=current_page, per_page=per_page, obsdir_filter=obsdir_filter, obsdir_sort=obsdir_sort, show_overridden=1 if show_overridden else 0, show_monitored=0 if show_monitored else 1, show_passed=1 if show_passed else 0) }}">
         <i class="fa-solid fa-bell-concierge"></i>
         {% if show_monitored %}Hide{% else %}Show{% endif %}
         monitored checks
     </a>
     <a class="ari-btn ari-btn--sm ari-btn--secondary {% if show_passed %}ac-toggle-pass-on{% endif %}"
-       href="{{ url_for('monitor_apero_checks_obsdir_view', profile_id=profile_id, obsdir=obsdir, page=current_page, per_page=per_page, type=type_filter, obsdir_filter=obsdir_filter, obsdir_sort=obsdir_sort, show_overridden=1 if show_overridden else 0, show_monitored=1 if show_monitored else 0, show_passed=0 if show_passed else 1) }}">
+       href="{{ url_for('monitor_apero_checks_obsdir_view', profile_id=profile_id, obsdir=obsdir, page=current_page, per_page=per_page, obsdir_filter=obsdir_filter, obsdir_sort=obsdir_sort, show_overridden=1 if show_overridden else 0, show_monitored=1 if show_monitored else 0, show_passed=0 if show_passed else 1) }}">
         <i class="fa-solid fa-check"></i>
         {% if show_passed %}Hide{% else %}Show{% endif %}
         passed checks
@@ -275,9 +264,11 @@
         <option value="1" selected>1 — standard</option>
         <option value="2">2 — verbose</option>
     </select>
-    <div id="ac-obsdir-task-status" class="ac-task-status">
+    <a id="ac-obsdir-task-status" class="ac-task-status"
+       href="{{ url_for('monitor_apero_checks_queue_view', profile_id=profile_id) }}"
+       title="Open queue status for this profile">
         Queue: idle
-    </div>
+    </a>
     {% if can_advanced_checks %}
     <button id="ac-obsdir-advanced"
             class="ari-btn ari-btn--sm ari-btn--secondary"
@@ -331,23 +322,22 @@
     </div>
 </div>
 
-<div class="ac-card ac-ui-panel ac-ui-panel--surface">
-    <div class="ac-card__title" style="margin-bottom:0.4rem;">Tests</div>
+{% macro tests_section(title, section_failures, section_passes) %}
+<div class="ac-card ac-ui-panel ac-ui-panel--surface ac-checks-section">
+    <div class="ac-card__title" style="margin-bottom:0.4rem;">{{ title }}</div>
     <div class="ac-checks-toolbar">
-        <input id="ac-checks-filter-input"
-               class="ac-checks-filter"
+        <input class="ac-checks-filter"
                type="search"
                placeholder="Filter tests…"
                aria-label="Filter tests by name">
-        <button id="ac-checks-list-toggle"
-                class="ari-btn ari-btn--sm ari-btn--secondary"
+        <button class="ari-btn ari-btn--sm ari-btn--secondary ac-checks-list-toggle"
                 type="button"
                 title="Toggle list / card view">
             <i class="fa-solid fa-list"></i>
         </button>
     </div>
-    <div class="ac-card__checks" id="ac-checks-container">
-        {% for failure in failure_cards %}
+    <div class="ac-card__checks ac-checks-container">
+        {% for failure in section_failures %}
         {% if failure.is_overridden %}
         <a class="ac-check-pill ac-check-pill--overridden"
            href="{{ url_for('monitor_apero_checks_check_view', profile_id=profile_id, obsdir=obsdir, check_key=failure.key) }}"
@@ -388,7 +378,7 @@
         </a>
         {% endfor %}
         {% if show_passed %}
-        {% for passed in pass_cards %}
+        {% for passed in section_passes %}
         <a class="ac-check-pill ac-check-pill--passed"
            href="{{ url_for('monitor_apero_checks_check_view', profile_id=profile_id, obsdir=obsdir, check_key=passed.key) }}"
            data-check-label="{{ passed.type }}:{{ passed.name }}"
@@ -403,16 +393,19 @@
         </a>
         {% endfor %}
         {% endif %}
-        {% if not failure_cards and not (show_passed and pass_cards) %}
-        <span class="ac-check-empty" id="ac-checks-empty-base">No visible tests</span>
+        {% if not section_failures and not (show_passed and section_passes) %}
+        <span class="ac-check-empty ac-checks-empty-base">No visible tests</span>
         {% endif %}
-        <span class="ac-check-empty" id="ac-checks-empty-filter" hidden>No tests match filter</span>
+        <span class="ac-check-empty ac-checks-empty-filter" hidden>No tests match filter</span>
     </div>
 </div>
+{% endmacro %}
+{{ tests_section('Raw tests', raw_failure_cards, raw_pass_cards) }}
+{{ tests_section('Reduced tests', red_failure_cards, red_pass_cards) }}
 
 <div class="ac-ui-panel ac-ui-panel--soft" style="margin-top:0;">
     <a href="{{ monitor_doc_url }}" target="_blank" rel="noopener"
-       class="ari-btn ari-btn--sm ari-btn--secondary"
+       class="ari-btn ari-btn--sm ari-btn--primary"
        style="font-weight:700;">
         <i class="fa-solid fa-book-open"></i>
         Open monitoring documentation
@@ -596,6 +589,7 @@
     var taskState = {
         taskId: '',
         timerId: null,
+        active: false,
     };
 
     function postJson(url, payload) {
@@ -701,14 +695,21 @@
             taskState.taskId = rowTaskId;
         }
         if (match.kind === 'queued') {
+            taskState.active = true;
             setTaskStatus('queued', 'Queue: ' + rowTaskId);
             return false;
         }
         if (match.kind === 'running') {
+            taskState.active = true;
             setTaskStatus('running', 'Running: ' + rowTaskId);
             return false;
         }
         setTaskStatus('finished', 'Finished: ' + rowTaskId);
+        if (taskState.active) {
+            window.setTimeout(function () {
+                window.location.reload();
+            }, 900);
+        }
         return true;
     }
 
@@ -753,6 +754,7 @@
                 verbose: verbose,
             }).then(function (data) {
                 taskState.taskId = String(data.task_id || '').trim();
+                taskState.active = true;
                 setTaskStatus('queued', 'Queue: ' + taskState.taskId);
                 startTaskPolling();
             }).catch(function (err) {
@@ -931,59 +933,65 @@
     }
 }());
 
-/* ── Tests filter + list/card view toggle ──────────────────────────── */
+/* ── Tests filter + list/card view toggle (per Raw/Reduced section) ── */
 (function () {
     var LS_VIEW_KEY = 'ac_checks_view';
-    var container   = document.getElementById('ac-checks-container');
-    var filterInput = document.getElementById('ac-checks-filter-input');
-    var listToggle  = document.getElementById('ac-checks-list-toggle');
-    var emptyFilter = document.getElementById('ac-checks-empty-filter');
-    if (!container || !filterInput || !listToggle) { return; }
 
-    function getPills() {
-        return Array.prototype.slice.call(
-            container.querySelectorAll('.ac-check-pill'));
-    }
+    Array.prototype.forEach.call(
+        document.querySelectorAll('.ac-checks-section'),
+        function (section) {
+            var container   = section.querySelector('.ac-checks-container');
+            var filterInput = section.querySelector('.ac-checks-filter');
+            var listToggle  = section.querySelector('.ac-checks-list-toggle');
+            var emptyFilter = section.querySelector('.ac-checks-empty-filter');
+            if (!container || !filterInput || !listToggle) { return; }
 
-    /* ── view toggle ── */
-    function applyView(isList) {
-        if (isList) {
-            container.classList.add('ac-checks--list');
-            listToggle.classList.add('ac-view-toggle-on');
-        } else {
-            container.classList.remove('ac-checks--list');
-            listToggle.classList.remove('ac-view-toggle-on');
+            function getPills() {
+                return Array.prototype.slice.call(
+                    container.querySelectorAll('.ac-check-pill'));
+            }
+
+            /* ── view toggle ── */
+            function applyView(isList) {
+                if (isList) {
+                    container.classList.add('ac-checks--list');
+                    listToggle.classList.add('ac-view-toggle-on');
+                } else {
+                    container.classList.remove('ac-checks--list');
+                    listToggle.classList.remove('ac-view-toggle-on');
+                }
+                try { localStorage.setItem(LS_VIEW_KEY, isList ? 'list' : 'card'); }
+                catch (e) {}
+            }
+
+            /* restore saved preference (shared across sections) */
+            try {
+                applyView(localStorage.getItem(LS_VIEW_KEY) === 'list');
+            } catch (e) {}
+
+            listToggle.addEventListener('click', function () {
+                applyView(!container.classList.contains('ac-checks--list'));
+            });
+
+            /* ── text filter ── */
+            function applyFilter() {
+                var q = filterInput.value.trim().toLowerCase();
+                var pills = getPills();
+                var visible = 0;
+                pills.forEach(function (pill) {
+                    var label = (pill.getAttribute('data-check-label') || '').toLowerCase();
+                    var show  = !q || label.indexOf(q) !== -1;
+                    pill.hidden = !show;
+                    if (show) { visible++; }
+                });
+                if (emptyFilter) {
+                    emptyFilter.hidden = (visible > 0 || !q);
+                }
+            }
+
+            filterInput.addEventListener('input', applyFilter);
         }
-        try { localStorage.setItem(LS_VIEW_KEY, isList ? 'list' : 'card'); }
-        catch (e) {}
-    }
-
-    /* restore saved preference */
-    try {
-        applyView(localStorage.getItem(LS_VIEW_KEY) === 'list');
-    } catch (e) {}
-
-    listToggle.addEventListener('click', function () {
-        applyView(!container.classList.contains('ac-checks--list'));
-    });
-
-    /* ── text filter ── */
-    function applyFilter() {
-        var q = filterInput.value.trim().toLowerCase();
-        var pills = getPills();
-        var visible = 0;
-        pills.forEach(function (pill) {
-            var label = (pill.getAttribute('data-check-label') || '').toLowerCase();
-            var show  = !q || label.indexOf(q) !== -1;
-            pill.hidden = !show;
-            if (show) { visible++; }
-        });
-        if (emptyFilter) {
-            emptyFilter.hidden = (visible > 0 || !q);
-        }
-    }
-
-    filterInput.addEventListener('input', applyFilter);
+    );
 }());
 </script>
 {% endblock %}

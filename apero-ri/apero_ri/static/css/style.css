@@ -4803,6 +4803,11 @@ select.ari-ap-input {
     font-weight: 500;
 }
 
+.ari-ap-browser__item--selected {
+    background: rgba(51, 102, 153, 0.16);
+    font-weight: 600;
+}
+
 .ari-ap-browser__item i {
     color: var(--ari-primary);
     width: 1rem;
@@ -7708,6 +7713,28 @@ details.ot-howto[open] .ot-howto__chevron {
     align-items: center;
 }
 
+.bk-expiry-select-wrap {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    margin-right: 0.45rem;
+    font-size: 0.88rem;
+    white-space: nowrap;
+}
+
+.bk-expiry-select-label {
+    font-weight: 600;
+    color: var(--ari-text-muted, #888);
+}
+
+.bk-expiry-select {
+    border: 1px solid var(--ari-border, #d6dbe6);
+    border-radius: 6px;
+    background: var(--ari-surface, #fff);
+    color: var(--ari-text, #1f2937);
+    padding: 0.24rem 0.5rem;
+}
+
 /* ── Share modal ── */
 .bk-modal {
     position: fixed;
@@ -8693,6 +8720,30 @@ body.ari-dp-profile-page .ari-rp-sections {
 }
 .qdb-remove-btn:hover { background: rgba(192, 57, 43, 0.1); }
 
+/* IN operator multi-value widget */
+.qdb-in-widget {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    flex: 1;
+    min-width: 0;
+}
+.qdb-in-entry {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+.qdb-in-val {
+    flex: 1;
+    min-width: 60px;
+}
+.qdb-in-add-btn {
+    align-self: flex-start;
+    margin-top: 0.1rem;
+    font-size: 0.78rem !important;
+    padding: 0.15rem 0.5rem !important;
+}
+
 .qdb-empty-add {
     width: 100%;
     border: none;
@@ -8746,13 +8797,32 @@ body.ari-dp-profile-page .ari-rp-sections {
     width: min(100%, 220px);
     display: flex;
 }
+.qdb-run-row {
+    display: flex;
+    gap: 0.5rem;
+    align-items: stretch;
+}
+
 .qdb-run-btn {
-    width: 100%;
+    flex: 1;
     justify-content: center;
-    height: 100%;
-    min-height: 3rem;
+    min-height: 2.6rem;
     max-height: none;
     padding: 0.6rem;
+}
+
+.qdb-count-popup {
+    position: absolute;
+    left: 0;
+    top: calc(100% + 0.4rem);
+    background: var(--ari-bg, #fff);
+    border: 1px solid var(--ari-border, #d8dcee);
+    border-radius: 6px;
+    padding: 0.5rem 0.9rem;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.12);
+    white-space: nowrap;
+    z-index: 200;
+    font-size: 0.92rem;
 }
 
 .qdb-basket-panel {
@@ -13425,3 +13495,79 @@ button.ari-rp-section-card:hover {
 /* status pill colours (tied to STATUS yaml field) */
 .ari-tinfo-row[data-row-key="STATUS"]
     .ari-tinfo-row__value { font-weight: 600; }
+
+/* The [hidden] attribute must win over .ari-btn's "display: inline-flex"
+   (same specificity, but .ari-btn is declared later in the cascade). */
+[hidden] {
+    display: none !important;
+}
+
+.ari-alert {
+    padding: 0.75rem 1rem;
+    border-radius: 6px;
+    margin: 1rem 0;
+    font-size: 0.95rem;
+}
+.ari-alert--danger {
+    background: #fdecea;
+    border: 1px solid #f5c2c0;
+    color: #842029;
+}
+.ari-alert--success {
+    background: #e9f7ef;
+    border: 1px solid #b7e4c7;
+    color: #1e4620;
+}
+
+/* "Become a Monitor" form */
+.bm-form-group--full {
+    grid-column: 1 / -1;
+}
+.bm-instrument-cards {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.6rem;
+    margin-top: 0.25rem;
+}
+.bm-instrument-card {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.6rem 1.2rem;
+    border-radius: 8px;
+    border: 1px solid var(--ari-border-color, #d0d5dd);
+    background: var(--ari-bg-muted, #f1f3f5);
+    color: inherit;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+.bm-instrument-card:hover {
+    border-color: #4a90d9;
+}
+.bm-instrument-card--selected {
+    background: #4a90d9;
+    border-color: #4a90d9;
+    color: #fff;
+}
+
+/* Dismissible "become a monitor" banner on the home page */
+.ari-bm-banner {
+    position: relative;
+}
+.ari-bm-banner__dismiss {
+    position: absolute;
+    top: 0.75rem;
+    right: 0.75rem;
+    background: none;
+    border: none;
+    font-size: 1.1rem;
+    line-height: 1;
+    color: inherit;
+    opacity: 0.6;
+    cursor: pointer;
+    padding: 0.25rem;
+}
+.ari-bm-banner__dismiss:hover {
+    opacity: 1;
+}

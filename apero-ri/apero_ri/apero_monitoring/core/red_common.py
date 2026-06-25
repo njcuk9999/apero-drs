@@ -4,7 +4,7 @@
 
 These helpers mirror :mod:`apero_ri.apero_monitoring.core.raw_common` but
 resolve the reduced-data directories (PATH.RED / PATH.PP), the manual-trigger
-log directory (PATH.TRIGGER) and provide reduced-file globbing.  The generic
+log file (PATH.TRIGGER_LOG) and provide reduced-file globbing.  The generic
 report / config / header helpers are re-exported from ``raw_common`` so a red
 check only needs to import this one module.
 """
@@ -57,26 +57,11 @@ def get_pp_dir(aparams: dict) -> Optional[Path]:
     return _resolve_path(aparams, ('PATH.PP', 'PATH_PP', 'pp', 'tmp'))
 
 
-def get_trigger_dir(aparams: dict) -> Optional[Path]:
-    """Resolve the manual-trigger log directory (PATH.TRIGGER)."""
-    return _resolve_path(aparams, ('PATH.TRIGGER', 'PATH_TRIGGER', 'trigger'))
-
-
-def get_profile_name(aparams: dict) -> str:
-    """Return the ARI apero-profile name for this run.
-
-    The profile name is injected into ``aparams`` by the check task runner
-    (see ``_run_profile``).  It is used to locate the per-profile manual
-    trigger log file ``{apero_profile}.log`` inside PATH.TRIGGER.
-
-    :param aparams: Hydrated APERO profile mapping.
-    :return: Profile name string, or empty string when unknown.
-    """
-    for key in ('apero_profile', 'APERO_PROFILE', 'profile_name', 'PROFILE'):
-        value = aparams.get(key) if isinstance(aparams, dict) else None
-        if str(value or '').strip():
-            return str(value).strip()
-    return ''
+def get_trigger_log(aparams: dict) -> Optional[Path]:
+    """Resolve the manual-trigger log file (PATH.TRIGGER_LOG)."""
+    return _resolve_path(
+        aparams, ('PATH.TRIGGER_LOG', 'PATH_TRIGGER_LOG', 'trigger_log')
+    )
 
 
 # =============================================================================
@@ -130,22 +115,19 @@ def check_manual_trigger_status(aparams: dict,
     appears in any row whose STATUS matches ``status`` (rows whose OBSDIRS list
     contains a ``*`` wildcard are skipped, matching the original behaviour).
 
-    The log file is located at ``PATH.TRIGGER/{apero_profile}.log``.
+    The log file is located at ``PATH.TRIGGER_LOG``.
 
     :param aparams: Hydrated APERO profile mapping.
     :param obs_dir: Obsdir identifier currently validated.
     :param status: Manual-trigger status token to look for (e.g. APERO_END).
     :return: Tuple of pass flag and message.
     """
-    trigger_dir = get_trigger_dir(aparams)
-    if trigger_dir is None:
-        return False, ('PATH.TRIGGER is not configured for this profile; set '
-                       'it in the admin portal to enable manual-trigger '
-                       'checks.')
-    profile_name = get_profile_name(aparams)
-    if not profile_name:
-        return False, 'Could not resolve the apero-profile name.'
-    logname = trigger_dir / f'{profile_name}.log'
+    logname = get_trigger_log(aparams)
+    if logname is None:
+        # PATH.TRIGGER_LOG is optional: profiles that don't configure it
+        # simply skip this check rather than failing it.
+        return True, ('PATH.TRIGGER_LOG is not configured for this profile; '
+                      'manual-trigger check skipped.')
     if not logname.exists():
         return False, f'Manual-trigger log {logname} does not exist.'
     obs_name = str(obs_dir or '').strip()

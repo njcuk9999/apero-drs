@@ -1,0 +1,93 @@
+{% extends "general/sidebar_base.html" %}
+{% block title %}APERO RI – Awards{% endblock %}
+
+{% block body_class %}ari-has-sidebar ari-awards-page{% endblock %}
+
+{% block extra_head %}
+{{ super() }}
+<link rel="stylesheet"
+    href="{{ url_for('static', filename='css/monitor_schedule.css') }}?v=20260512a">
+<link rel="stylesheet"
+    href="{{ url_for('static', filename='css/user_portal_user_cards.css') }}?v=20260501a">
+<link rel="stylesheet"
+    href="{{ url_for('static', filename='css/awards.css') }}?v=20260615b">
+{% endblock %}
+
+{% block doc_content %}
+<div class="ms-head">
+    <div>
+        <h1 class="ms-title">
+            <i class="{{ page_icon }}"></i> {{ page_label }}
+        </h1>
+        <p class="ms-sub">
+            Monitor leaderboard — lifetime hours of service per
+            instrument, total service hours, and resolved issues.
+            <i class="fa-solid fa-medal upu-medal upu-medal--gold"></i> /
+            <i class="fa-solid fa-medal upu-medal upu-medal--silver"></i> /
+            <i class="fa-solid fa-medal upu-medal upu-medal--bronze"></i>
+            mark the top 3 monitors per instrument by hours, and service
+            (50/100/200h) and resolved-issues (250/500/1000) milestones.
+        </p>
+    </div>
+</div>
+
+{# ── Table ───────────────────────────────────────────────────── #}
+<div id="aw-table-wrap" class="ot-table-wrap">
+    <table id="aw-table" class="ot-table">
+        <thead>
+            <tr id="aw-header-row"></tr>
+            <tr id="aw-filter-row"></tr>
+        </thead>
+        <tbody id="aw-tbody">
+            <tr><td class="ot-loading" colspan="20">
+                <i class="fa-solid fa-spinner fa-spin"></i> Loading&hellip;
+            </td></tr>
+        </tbody>
+    </table>
+</div>
+
+{# ── Pagination ───────────────────────────────────────────────── #}
+<div id="aw-pagination" class="ot-pagination">
+    <div id="aw-page-info" class="ot-page-info"></div>
+    <div class="ot-page-controls">
+        <button id="aw-btn-first" class="ari-btn ari-btn--sm ari-btn--secondary"
+                title="First page" disabled>
+            <i class="fa-solid fa-angles-left"></i>
+        </button>
+        <button id="aw-btn-prev" class="ari-btn ari-btn--sm ari-btn--secondary"
+                title="Previous page" disabled>
+            <i class="fa-solid fa-angle-left"></i>
+        </button>
+        <span class="ot-page-num">
+            Page&nbsp;<input id="aw-page-input" class="ot-page-input"
+                             type="number" min="1" value="1">
+            &nbsp;of&nbsp;<span id="aw-page-total">1</span>
+        </span>
+        <button id="aw-btn-next" class="ari-btn ari-btn--sm ari-btn--secondary"
+                title="Next page" disabled>
+            <i class="fa-solid fa-angle-right"></i>
+        </button>
+        <button id="aw-btn-last" class="ari-btn ari-btn--sm ari-btn--secondary"
+                title="Last page" disabled>
+            <i class="fa-solid fa-angles-right"></i>
+        </button>
+        <label class="ot-perpage-label">
+            Show
+            <select id="aw-perpage" class="ot-filter-select">
+                <option value="10">10</option>
+                <option value="50">50</option>
+                <option value="100">100</option>
+            </select>
+            entries
+        </label>
+    </div>
+</div>
+
+<script id="aw-data" type="application/json">{{ awards_rows_json | safe }}</script>
+<script>window.ARI_AWARDS_INSTRUMENTS = {{ instruments | tojson }};</script>
+{% endblock %}
+
+{% block extra_scripts %}
+{{ super() }}
+<script src="{{ url_for('static', filename='js/awards.js') }}?v=20260615b"></script>
+{% endblock %}

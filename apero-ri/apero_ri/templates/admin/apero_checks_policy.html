@@ -459,7 +459,13 @@ button.acp-chip {
     <div id="acp-catalog-loading" class="acp-note">
         Loading section...
     </div>
-    <div id="acp-check-catalog" class="acp-grid acp-grid--catalog">
+    <div id="acp-check-catalog">
+        <h4 style="margin:0.2rem 0 0.4rem;">Raw tests</h4>
+        <div id="acp-check-catalog-raw" class="acp-grid acp-grid--catalog">
+        </div>
+        <h4 style="margin:0.85rem 0 0.4rem;">Reduced tests</h4>
+        <div id="acp-check-catalog-red" class="acp-grid acp-grid--catalog">
+        </div>
     </div>
 </div>
 
@@ -531,6 +537,14 @@ button.acp-chip {
                     type="button" disabled>
                 Add all filtered
             </button>
+            <button id="acp-run-check-add-all-raw" class="ari-btn ari-btn--sm"
+                    type="button" disabled>
+                All raw checks
+            </button>
+            <button id="acp-run-check-add-all-red" class="ari-btn ari-btn--sm"
+                    type="button" disabled>
+                All red checks
+            </button>
             <button id="acp-run-check-remove" class="ari-btn ari-btn--sm"
                     type="button" disabled>
                 Remove selected
@@ -581,6 +595,12 @@ button.acp-chip {
                     type="button" disabled>
                 Add all filtered
             </button>
+            <button id="acp-run-obsdir-add-all-nights"
+                    class="ari-btn ari-btn--sm"
+                    type="button" disabled
+                    title="Equivalent to checking &quot;Run all obs-dirs&quot; above">
+                Add all obs-dirs
+            </button>
             <button id="acp-run-obsdir-remove" class="ari-btn ari-btn--sm"
                     type="button" disabled>
                 Remove selected
@@ -597,13 +617,35 @@ button.acp-chip {
     </div>
 
     <div class="acp-run-actions" style="margin-top:0.9rem;">
-        <button id="acp-run-submit"
-                class="ari-btn ari-btn--primary acp-run-submit"
-                type="button"
-                disabled>
-            <i class="fa-solid fa-play"></i>
-            Queue Run
-        </button>
+        <div style="display:flex;align-items:center;gap:0.65rem;flex-wrap:wrap;">
+            <button id="acp-run-submit"
+                    class="ari-btn ari-btn--primary acp-run-submit"
+                    type="button"
+                    disabled>
+                <i class="fa-solid fa-play"></i>
+                Queue Run
+            </button>
+            <a id="acp-run-queue-link"
+               class="ari-btn ari-btn--sm"
+               href="#"
+               style="display:none;"
+               target="_blank"
+               title="Open queue page for this profile">
+                <i class="fa-solid fa-list-check"></i>
+                Queue
+            </a>
+            <label style="display:flex;align-items:center;gap:0.35rem;font-size:0.85rem;">
+                <span>Cores</span>
+                <input id="acp-run-ncores"
+                       type="number"
+                       min="1"
+                       max="32"
+                       value=""
+                       placeholder="auto"
+                       style="width:5rem;"
+                       title="Number of parallel workers (leave blank for auto)">
+            </label>
+        </div>
     </div>
 
     <div class="acp-run-subsection acp-run-subsection--danger"
@@ -631,6 +673,32 @@ button.acp-chip {
     <div id="acp-run-status" class="acp-run-status"></div>
 </div>
 
+<div class="acp-section">
+    <div class="acp-section__header">
+        <h3 style="margin:0;">
+            <i class="fa-solid fa-ban"></i>
+            Excluded Directories
+        </h3>
+        <div style="display:flex;align-items:center;gap:0.45rem;">
+            <label class="acp-note" for="acp-excluded-filter">
+                Filter instrument
+            </label>
+            <select id="acp-excluded-filter" class="ot-perpage-select" disabled>
+                <option value="all">All instruments</option>
+            </select>
+        </div>
+    </div>
+    <div class="acp-note" style="margin-bottom:0.55rem;">
+        Observation directories listed here are permanently excluded for
+        their instrument: they are never shown on the APERO Checks pages
+        and are skipped by the APERO Check task, even if a check YAML does
+        not exist for them. Use the "Exclude" button on a profile's
+        observation-directory page (Advanced options) to add one.
+    </div>
+    <div id="acp-excluded-loading" class="acp-note">Loading section...</div>
+    <div id="acp-excluded-list"></div>
+</div>
+
 <script>
 window.ARI_APERO_CHECKS_POLICY = {
     sectionsApiUrl: {{ policy_sections_api_url|tojson }},
@@ -639,8 +707,13 @@ window.ARI_APERO_CHECKS_POLICY = {
     checkResultsUrl: '/api/monitor/apero-checks/check-results',
     rerunNightUrl: {{ url_for('api_apero_checks_rerun_night')|tojson }},
     rerunCheckUrl: {{ url_for('api_apero_checks_rerun_single_check')|tojson }},
+    advancedRunUrl: {{ url_for('api_apero_checks_advanced_run')|tojson }},
     cleanResetUrl: {{ url_for('api_apero_checks_clean_reset_profile')|tojson }},
     profilePageUrlTemplate: {{ url_for('api_apero_checks_profile_page', profile_id='__PROFILE_ID__')|tojson }},
+    queuePageUrlTemplate: {{ url_for('monitor_apero_checks_queue_view', profile_id='__PROFILE_ID__')|tojson }},
+    obsdirsListUrlTemplate: {{ url_for('api_apero_checks_list_obsdirs', profile_id='__PROFILE_ID__')|tojson }},
+    excludedObsdirsListUrl: {{ url_for('api_apero_checks_list_excluded_obsdirs')|tojson }},
+    excludedObsdirsRemoveUrl: {{ url_for('api_apero_checks_remove_excluded_obsdir')|tojson }},
 };
 </script>
 
@@ -728,5 +801,5 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 });
 </script>
-<script src="{{ url_for('static', filename='js/admin_apero_checks_policy.js', v='20260604a') }}"></script>
+<script src="{{ url_for('static', filename='js/admin_apero_checks_policy.js', v='20260621a') }}"></script>
 {% endblock %}

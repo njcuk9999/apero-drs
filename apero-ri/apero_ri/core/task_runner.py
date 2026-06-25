@@ -607,8 +607,48 @@ def get_recent_history(limit: int = 50) -> List[Dict[str, Any]]:
         return []
 
 
+def _prune_old_task_logs() -> int:
+    """Remove stale per-task log files, keeping the newest per scope.
+
+    Log files are named ``<scope>__<task_id>.log``. Scheduled tasks reuse
+    the same task_id (== task_key) on every run, so they keep a single,
+    continuously-updated file. One-off / manual runs get a fresh task_id
+    each time, so old files for the same scope can accumulate; keep only
+    the most recently modified file per scope and remove the rest.
+    """
+    removed = 0
+    try:
+        base = Path(_scheduler_local_data_dir) / _task_logs_rel_dir
+        if not base.is_dir():
+            return 0
+        by_scope: Dict[str, List[Path]] = {}
+        for fpath in base.glob("*.log"):
+            scope = fpath.name.split("__", 1)[0]
+            by_scope.setdefault(scope, []).append(fpath)
+        for files in by_scope.values():
+            if len(files) <= 1:
+                continue
+            files.sort(
+                key=lambda p: p.stat().st_mtime if p.exists() else 0,
+                reverse=True,
+            )
+            for stale in files[1:]:
+                try:
+                    stale.unlink()
+                    removed += 1
+                except Exception:
+                    pass
+    except Exception:
+        pass
+    return removed
+
+
 def clear_recent_history() -> Dict[str, Any]:
-    """Clear async history entries from async_history.txt."""
+    """Clear async history entries from async_history.txt.
+
+    Also prunes old per-task log files, keeping the most recent log per
+    task scope so it remains accessible from the task detail page.
+    """
     try:
         path = _history_file_path()
         legacy = _legacy_history_file_path()
@@ -638,7 +678,8 @@ def clear_recent_history() -> Dict[str, Any]:
                 legacy.unlink()
         except Exception:
             pass
-        return {"success": True, "removed": removed}
+        logs_removed = _prune_old_task_logs()
+        return {"success": True, "removed": removed, "logs_removed": logs_removed}
     except Exception as exc:
         return {"success": False, "error": str(exc)}
 
@@ -1533,9 +1574,12 @@ def _scheduler_poll(local_data_dir: str) -> None:
                         task_cfg.get("local_source_path") or ""
                     ).strip()
                     if _local_src:
-                        merged_cfg[
-                            "local_source_path"
-                        ] = _local_src
+                        merged_cfg["local_source_path"] = _local_src
+                    _drs_uconfig = str(
+                        task_cfg.get("drs_uconfig") or ""
+                    ).strip()
+                    if _drs_uconfig:
+                        merged_cfg["drs_uconfig"] = _drs_uconfig
 
                 if task_key in [
                     "LEGACY_ASTROM_GSHEET",
@@ -1772,7 +1816,8 @@ def build_run_params(
         "PATH_LBL",
         "PATH_CHECK",
         "PATH_OTHER",
-        "PATH_TRIGGER",
+        "PATH_TRIGGER_LOG",
+        "PATH_CRITICAL_CHECK",
     ]
     for pname, pcfg in profiles.items():
         p = deepcopy(pcfg) if isinstance(pcfg, dict) else {}

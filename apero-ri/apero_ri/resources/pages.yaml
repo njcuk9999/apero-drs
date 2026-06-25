@@ -89,6 +89,17 @@ home.user_portal:
     top-level: True
     show: True
 
+home.monitor_portal.become_monitor:
+  label: Become a Monitor
+  parent: home.monitor_portal
+  view-permission: view.home
+  icon: fa-solid fa-user-plus
+  quick-nav: False
+  side-nav:
+    pinned: False
+    top-level: False
+    show: True
+
 home.github:
   label: GitHub
   parent: home
@@ -711,6 +722,17 @@ home.monitor_portal.schedule:
   parent: home.monitor_portal
   view-permission: monitor
   icon: fa-solid fa-calendar-week
+  quick-nav: False
+  side-nav:
+    pinned: False
+    top-level: False
+    show: True
+
+home.monitor_portal.awards:
+  label: Awards
+  parent: home.monitor_portal
+  view-permission: monitor
+  icon: fa-solid fa-trophy
   quick-nav: False
   side-nav:
     pinned: False

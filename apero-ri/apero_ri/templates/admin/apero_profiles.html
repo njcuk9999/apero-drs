@@ -252,7 +252,8 @@
                 ('profile-path-lbl',   'PATH.LBL',   'formally LBL_PATH', '', false),
                 ('profile-path-check', 'PATH.CHECK', 'APERO checks YAML directory', '', false),
                 ('profile-path-other', 'PATH.OTHER', 'formally DRS_DATA_OTHER', '', false),
-                ('profile-path-trigger', 'PATH.TRIGGER', 'path containing the trigger log file (optional; needed for reduced manual-trigger checks)', '', true),
+                ('profile-path-trigger-log', 'PATH.TRIGGER_LOG', 'path to the manual-trigger log file (optional; needed for reduced manual-trigger checks)', '', true),
+                ('profile-path-critical-check', 'PATH.CRITICAL_CHECK', 'directory containing critical check CSV files (optional; needed for CRITICAL_TEST and CRITICAL_SCI_TEST raw checks)', '', true),
             ] %}
             {% for field_id, label, hint, extra_note, optional in path_fields %}
             <div class="ari-ap-form__field">
@@ -328,6 +329,10 @@
                            value="/" autocomplete="off">
                     <button id="btn-browse-go" class="ari-btn ari-btn--secondary ari-btn--sm">Go</button>
                 </div>
+                <label class="ari-ap-browser__hidden-toggle" style="display:flex;align-items:center;gap:0.4rem;margin:0.4rem 0;">
+                    <input type="checkbox" id="browse-show-hidden">
+                    Show hidden files/directories
+                </label>
                 <div id="browse-status" class="ari-ap-browser__status" style="display:none;"></div>
                 <div id="browse-list" class="ari-ap-browser__list"></div>
             </div>
@@ -335,7 +340,8 @@
         <div class="ari-modal__footer">
             <button id="btn-browse-cancel" class="ari-btn ari-btn--secondary">Cancel</button>
             <button id="btn-browse-select" class="ari-btn ari-btn--primary" disabled>
-                <i class="fa-solid fa-check"></i> Select This Directory
+                <i class="fa-solid fa-check"></i>
+                <span id="btn-browse-select-label">Select This Directory</span>
             </button>
         </div>
     </div>

@@ -491,6 +491,16 @@ apero-checks:
     # e.g. 'o.fits' selects only SPIRou raw science frames by filename.
     sci_suffix: o.fits
 
+  # Critical instrument and science checks (CRITICAL_TEST, CRITICAL_SCI_TEST).
+  # SPIRou does not use critical checks; blank values cause checks to pass.
+  critical_check:
+
+    # Blank = pass for SPIRou.
+    critical csv file: ''
+
+    # Blank = pass for SPIRou.
+    critical desc file: ''
+
 # Finder setting.
 finder:
 

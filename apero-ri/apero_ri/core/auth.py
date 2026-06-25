@@ -47,13 +47,17 @@ HASH_KEY_LENGTH = 32
 SALT_LENGTH = 16
 
 # ---------------------------------------------------------------------------
-# In-process TTL cache for apero_profiles.yaml.  The file is read on every
-# API call (via get_accessible_profiles).  A 30-second TTL gives immediate
-# visibility of admin UI changes while eliminating the bulk of SSHFS reads.
+# In-process mtime-gated cache for apero_profiles.yaml.
+# The file is large (~138 KB) and yaml.safe_load takes ~250 ms.
+# We re-read only when the file's mtime changes, so admin UI saves take
+# effect immediately while normal page loads never touch the disk.
 # ---------------------------------------------------------------------------
-_PROFILES_TTL: float = 30.0  # seconds between re-reads
-_profiles_cache: dict = {}  # key: 'raw' or 'hydrated' -> {'expires', 'data'}
+_profiles_cache: dict = {}  # key -> {'mtime': float, 'data': ...}
 _profiles_lock = threading.Lock()
+# One-time guard: ensure_ari_directory() does 5 mkdir calls on /mnt/h which
+# are slow on WSL/NTFS even when the dirs already exist.  After the first
+# successful call per process lifetime we skip it on every subsequent request.
+_ari_dir_ensured: bool = False
 
 # Default admin account — username is fixed; password is generated on first run.
 DEFAULT_USER = "admin"
@@ -139,12 +143,20 @@ def verify_password(password: str, stored_hash: str) -> bool:
 # User management
 # =============================================================================
 def ensure_ari_directory() -> None:
-    """Create the ~/.ari/admin directory if it doesn't exist."""
+    """Create the ~/.ari/admin directory if it doesn't exist.
+
+    On WSL/NTFS mounts every mkdir syscall is slow even with exist_ok=True.
+    We use a module-level flag so the work only happens once per process.
+    """
+    global _ari_dir_ensured
+    if _ari_dir_ensured:
+        return
     ADMIN_DIR.mkdir(parents=True, exist_ok=True)
     ADMIN_GENERAL_DIR.mkdir(parents=True, exist_ok=True)
     SCI_GROUPS_DIR.mkdir(parents=True, exist_ok=True)
     ASYNC_TASKS_FILE.parent.mkdir(parents=True, exist_ok=True)
     ADMIN_HEALTH_DIR.mkdir(parents=True, exist_ok=True)
+    _ari_dir_ensured = True
 
 
 def load_users() -> Dict[str, dict]:
@@ -524,12 +536,7 @@ def load_apero_profiles(
     cache_key = 'hydrated' if hydrate else 'raw'
     if enabled_only:
         cache_key += '_enabled'
-    now = time.monotonic()
-    with _profiles_lock:
-        entry = _profiles_cache.get(cache_key)
-        if entry is not None and now < entry["expires"]:
-            return entry["data"]
-    # Cache miss — read from disk outside the lock.
+
     ensure_ari_directory()
     legacy_file = ADMIN_DIR / "apero_profiles.yaml"
     if not APERO_PROFILES_FILE.exists() and legacy_file.exists():
@@ -539,6 +546,21 @@ def load_apero_profiles(
             pass
     if not APERO_PROFILES_FILE.exists():
         APERO_PROFILES_FILE.write_text("")
+
+    # Check file mtime without the lock (cheap stat call).
+    try:
+        current_mtime = APERO_PROFILES_FILE.stat().st_mtime
+    except OSError:
+        current_mtime = None
+
+    with _profiles_lock:
+        entry = _profiles_cache.get(cache_key)
+        if (entry is not None
+                and current_mtime is not None
+                and entry.get("mtime") == current_mtime):
+            return entry["data"]
+
+    # Cache miss or file changed — parse YAML outside the lock.
     with open(APERO_PROFILES_FILE, "r") as f:
         data = yaml.safe_load(f)
     profiles = data if data else {}
@@ -565,7 +587,7 @@ def load_apero_profiles(
         result = _filter_enabled_profiles(result)
     with _profiles_lock:
         _profiles_cache[cache_key] = {
-            "expires": now + _PROFILES_TTL,
+            "mtime": current_mtime,
             "data": result,
         }
     return result
@@ -956,13 +978,19 @@ def save_db_tunnels(data: dict) -> None:
         )
 
 
-def validate_path_exists(path_str: str) -> dict:
-    """Check whether a directory exists on disk.
+def validate_path_exists(path_str: str, kind: str = "dir") -> dict:
+    """Check whether a path exists on disk as a directory or file.
 
     Returns dict with 'valid' and 'exists'.
     """
     p = Path(path_str)
-    exists = p.is_dir()
+    if kind == "file":
+        # Match the directory browser's classification (anything that isn't
+        # a directory is listed as a file), so symlinks / special files that
+        # show up there also validate as "exists" here.
+        exists = p.exists() and not p.is_dir()
+    else:
+        exists = p.is_dir()
     return {"valid": exists, "exists": exists}
 
 

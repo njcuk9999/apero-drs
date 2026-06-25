@@ -417,6 +417,53 @@
     text-decoration: underline;
 }
 
+/* ── Actions column buttons (proc_logs tables) ── */
+.pl-actions {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    white-space: nowrap;
+}
+
+.pl-action-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 2rem;
+    min-height: 2rem;
+    padding: 0.2rem 0.45rem;
+    border: 1px solid var(--ari-border, #cfd8e3);
+    border-radius: 6px;
+    background: var(--ari-surface, #fff);
+    color: var(--ari-primary, #1d4ed8);
+    cursor: pointer;
+    text-decoration: none;
+    transition: background 0.15s ease, border-color 0.15s ease,
+        color 0.15s ease, transform 0.15s ease;
+}
+
+.pl-action-btn:hover {
+    background: var(--ari-surface-muted, #f3f6fb);
+    border-color: var(--ari-primary, #1d4ed8);
+    transform: translateY(-1px);
+}
+
+.pl-action-btn--github {
+    color: #24292f;
+}
+
+.pl-action-btn--github:hover {
+    color: #000;
+}
+
+.pl-action-btn--known {
+    color: var(--ari-warning, #b45309);
+}
+
+.pl-action-btn--known:hover {
+    color: #92400e;
+}
+
 /* ── Clickable summary cards (filter toggles) ── */
 .pl-card--clickable {
     cursor: pointer;

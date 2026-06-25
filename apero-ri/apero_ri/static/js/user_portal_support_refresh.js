@@ -37,6 +37,10 @@
       var newShell = doc.querySelector('.ari-up-shell');
       var oldShell = document.querySelector('.ari-up-shell');
       if (!newShell || !oldShell) return;
+      try {
+        var sel = window.getSelection();
+        if (sel && !sel.isCollapsed && sel.anchorNode && oldShell.contains(sel.anchorNode)) return;
+      } catch (_e) {}
       // Preserve currently-selected tab
       var activeTabIdx = -1;
       var activeTabs = oldShell.querySelectorAll(

@@ -385,6 +385,7 @@ def build_admin_card_health_uncached(app, user_info, perms) -> Dict[str, Any]:
             assigned_run_ids = set()
             groups_without_users = []
             groups_without_run_ids = []
+            run_id_pi_map = {}
             for inst in instruments:
                 inst_users = set(get_users_for_instrument(inst))
                 total_users |= inst_users
@@ -394,6 +395,9 @@ def build_admin_card_health_uncached(app, user_info, perms) -> Dict[str, Any]:
                     if str(rid).strip()
                 }
                 total_run_ids |= inst_run_ids
+                run_id_pi_map.update(
+                    app._get_instrument_run_id_pi_names(inst)
+                )
 
                 groups = load_science_groups(inst)
                 groups, _ = app._sync_all_science_group(
@@ -470,7 +474,12 @@ def build_admin_card_health_uncached(app, user_info, perms) -> Dict[str, Any]:
                     f"{len(unassigned_run_ids)} run ID(s) not "
                     "assigned to any science group"
                 )
-                details.extend([f"run_id: {rid}" for rid in unassigned_run_ids])
+                for rid in unassigned_run_ids:
+                    pi = run_id_pi_map.get(rid, '')
+                    if pi:
+                        details.append(f"run_id: {rid} [{pi}]")
+                    else:
+                        details.append(f"run_id: {rid}")
 
             if issue_parts:
                 health["home.admin_portal.science_groups"] = {

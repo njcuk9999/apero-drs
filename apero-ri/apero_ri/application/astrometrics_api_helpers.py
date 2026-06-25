@@ -2099,9 +2099,11 @@ def _has_monitor_perm(perms, instrument):
     ``view.monitor_portal.<INSTRUMENT>``, or
     ``view.monitor.<INSTRUMENT>`` (case-insensitive instrument).
 
-    When ``instrument`` is falsy the call is treated as a wildcard
-    request: any of ``manage.astrometrics``, ``monitor``, or
-    ``monitor.<X>`` (for any X) grants access.
+    When ``instrument`` is falsy, only ``manage.astrometrics``,
+    bare ``monitor``, or an ``...all`` perm (e.g.
+    ``monitor.all``/``view.monitor_portal.all``) grants access —
+    an instrument-scoped perm like ``view.monitor_portal.spirou``
+    does not.
 
     :param perms: iterable of permission strings the user holds
     :param instrument: str, the instrument name to verify against
@@ -2121,9 +2123,9 @@ def _has_monitor_perm(perms, instrument):
         for prefix in prefixes:
             if low.startswith(prefix):
                 tail = low[len(prefix):]
-                if not inst:
+                if tail == 'all':
                     return True
-                if tail == inst or tail == 'all':
+                if inst and tail == inst:
                     return True
     return False
 

@@ -7,8 +7,9 @@
 
     var cfg = window.ARI_APERO_CHECKS_QUEUE || {};
     var pollTimer = null;
-    // Track which log is currently expanded (task_id or log_path).
-    var _activeLogKey = '';
+    // Find-in-log state.
+    var findState = { matches: [], idx: 0 };
+    var currentLogText = '';
 
     function esc(value) {
         return String(value == null ? '' : value)
@@ -127,43 +128,187 @@
     }
 
     /* ------------------------------------------------------------------ */
-    /* Log panel                                                            */
+    /* Log overlay (full-screen, with find/filter)                         */
     /* ------------------------------------------------------------------ */
-    function showLogPanel(key, content) {
-        var panel = document.getElementById('acq-log-panel');
-        if (!panel) return;
-        _activeLogKey = key;
-        panel.textContent = content || '(no content)';
-        panel.style.display = 'block';
-        panel.scrollTop = panel.scrollHeight;
+    function logScrollToMatch(el) {
+        var content = document.getElementById('acq-log-content');
+        if (!el || !content) return;
+        var cr = content.getBoundingClientRect();
+        var er = el.getBoundingClientRect();
+        content.scrollTop +=
+            (er.top - cr.top) - content.clientHeight / 2 + el.clientHeight / 2;
     }
 
-    function hideLogPanel() {
-        var panel = document.getElementById('acq-log-panel');
-        if (panel) panel.style.display = 'none';
-        _activeLogKey = '';
+    function resetLogFind() {
+        findState.matches = [];
+        findState.idx = 0;
+        var input = document.getElementById('acq-log-find');
+        var count = document.getElementById('acq-log-find-count');
+        var content = document.getElementById('acq-log-content');
+        if (input) input.value = '';
+        if (count) count.textContent = '';
+        if (content) {
+            content.querySelectorAll('.acq-log-match-line,.acq-log-match-current')
+                .forEach(function (el) {
+                    el.classList.remove('acq-log-match-line', 'acq-log-match-current');
+                });
+        }
+    }
+
+    function updateLogFind() {
+        var content = document.getElementById('acq-log-content');
+        var input = document.getElementById('acq-log-find');
+        var count = document.getElementById('acq-log-find-count');
+        if (!content) return;
+        var query = input ? input.value.trim() : '';
+
+        var lines = content.querySelectorAll('.acq-log-line');
+        lines.forEach(function (el) {
+            el.classList.remove('acq-log-match-line', 'acq-log-match-current');
+        });
+
+        if (!query) {
+            findState.matches = [];
+            findState.idx = 0;
+            if (count) count.textContent = '';
+            return;
+        }
+
+        var lq = query.toLowerCase();
+        var matches = [];
+        lines.forEach(function (el) {
+            if ((el.textContent || '').toLowerCase().indexOf(lq) >= 0) {
+                el.classList.add('acq-log-match-line');
+                matches.push(el);
+            }
+        });
+
+        findState.matches = matches;
+        findState.idx = 0;
+
+        if (matches.length > 0) {
+            matches[0].classList.add('acq-log-match-current');
+            logScrollToMatch(matches[0]);
+        }
+
+        if (count) {
+            count.textContent = matches.length === 0
+                ? 'No matches'
+                : '1 / ' + matches.length;
+        }
+    }
+
+    function logFindNav(dir) {
+        var matches = findState.matches;
+        var count = document.getElementById('acq-log-find-count');
+        if (!matches || !matches.length) return;
+        matches[findState.idx].classList.remove('acq-log-match-current');
+        findState.idx = (findState.idx + dir + matches.length) % matches.length;
+        matches[findState.idx].classList.add('acq-log-match-current');
+        logScrollToMatch(matches[findState.idx]);
+        if (count) {
+            count.textContent = (findState.idx + 1) + ' / ' + matches.length;
+        }
+    }
+
+    function renderLogContent(text) {
+        var content = document.getElementById('acq-log-content');
+        if (!content) return;
+        currentLogText = text;
+        try {
+            var sel = window.getSelection();
+            if (sel && !sel.isCollapsed && sel.anchorNode && content.contains(sel.anchorNode)) return;
+        } catch (_e) {}
+
+        var html = '';
+        text.split('\n').forEach(function (line, idx) {
+            if (!line) return;
+            var escaped = esc(line);
+            var open = '<span class="acq-log-line" id="acql-' + idx +
+                '" data-line="' + idx + '">';
+            if (line.indexOf('-!!|') >= 0) {
+                html += open + '<span class="acq-log-error">' + escaped + '</span></span>';
+            } else if (line.indexOf('-@!|') >= 0) {
+                html += open + '<span class="acq-log-warn">' + escaped + '</span></span>';
+            } else {
+                html += open + escaped + '</span>';
+            }
+        });
+        content.innerHTML = html;
+        content.scrollTop = content.scrollHeight;
+        resetLogFind();
+    }
+
+    function openLogOverlay(filename) {
+        var overlay = document.getElementById('acq-log-overlay');
+        var nameEl = document.getElementById('acq-log-filename');
+        if (!overlay) return;
+        if (nameEl) nameEl.textContent = filename || '';
+        overlay.classList.add('acq-log-overlay--open');
+        document.body.style.overflow = 'hidden';
+    }
+
+    function closeLogOverlay() {
+        var overlay = document.getElementById('acq-log-overlay');
+        if (overlay) overlay.classList.remove('acq-log-overlay--open');
+        document.body.style.overflow = '';
+        currentLogText = '';
     }
 
     function fetchAndShowLog(taskId, logPath) {
-        // If already showing this task's log, toggle it off.
-        var key = taskId || logPath || '';
-        if (_activeLogKey === key) {
-            hideLogPanel();
-            return;
+        var label = logPath || taskId || '(log)';
+        openLogOverlay(label);
+        var content = document.getElementById('acq-log-content');
+        if (content) {
+            content.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Loading log&hellip;';
         }
         var logUrl = String(cfg.taskLogUrl || '');
         if (!logUrl || !taskId) {
-            // Fallback: show the raw path as text.
-            showLogPanel(key, logPath ? 'Log file: ' + logPath : '(no log available)');
+            renderLogContent(logPath ? 'Log file: ' + logPath : '(no log available)');
             return;
         }
         var url = logUrl + '?task_id=' + encodeURIComponent(taskId) + '&lines=300';
         getJson(url).then(function (data) {
-            var text = String(data.content || '(empty log)');
-            showLogPanel(key, text);
+            renderLogContent(String(data.content || '(empty log)'));
         }).catch(function () {
-            // Fall back to showing path if we can't fetch the content.
-            showLogPanel(key, logPath ? 'Log file: ' + logPath : '(could not load log)');
+            renderLogContent(logPath ? 'Log file: ' + logPath : '(could not load log)');
+        });
+    }
+
+    function initLogOverlay() {
+        var closeBtn = document.getElementById('acq-log-close');
+        var backdrop = document.getElementById('acq-log-backdrop');
+        var copyBtn = document.getElementById('acq-log-copy');
+        var findInput = document.getElementById('acq-log-find');
+        var findPrev = document.getElementById('acq-log-find-prev');
+        var findNext = document.getElementById('acq-log-find-next');
+
+        if (closeBtn) closeBtn.addEventListener('click', closeLogOverlay);
+        if (backdrop) backdrop.addEventListener('click', closeLogOverlay);
+        if (copyBtn) {
+            copyBtn.addEventListener('click', function () {
+                if (!navigator.clipboard) return;
+                navigator.clipboard.writeText(currentLogText || '');
+            });
+        }
+        if (findInput) {
+            findInput.addEventListener('input', updateLogFind);
+            findInput.addEventListener('keydown', function (e) {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    logFindNav(e.shiftKey ? -1 : 1);
+                } else if (e.key === 'Escape') {
+                    closeLogOverlay();
+                }
+            });
+        }
+        if (findPrev) findPrev.addEventListener('click', function () { logFindNav(-1); });
+        if (findNext) findNext.addEventListener('click', function () { logFindNav(1); });
+
+        document.addEventListener('keydown', function (e) {
+            var overlay = document.getElementById('acq-log-overlay');
+            if (!overlay || !overlay.classList.contains('acq-log-overlay--open')) return;
+            if (e.key === 'Escape') closeLogOverlay();
         });
     }
 
@@ -318,7 +463,7 @@
                 )) return;
                 postJson(String(cfg.clearUrl || ''), {})
                     .then(function () {
-                        hideLogPanel();
+                        closeLogOverlay();
                         return refresh();
                     })
                     .catch(function (err) {
@@ -336,6 +481,7 @@
     }
 
     initButtons();
+    initLogOverlay();
     refresh();
     startPolling();
 })();

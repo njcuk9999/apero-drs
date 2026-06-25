@@ -130,10 +130,11 @@ class AperoObservationTableTask(apero_async.AperoAsyncTask):
             tlog("No APERO profiles configured. Nothing to do.")
             return
 
+        profile_errors = []
         for a_it, apero_profile in enumerate(apero_profile_names):
             if stop_event is not None and stop_event.is_set():
                 tlog("Cancellation requested. Exiting before next profile.")
-                return
+                break
             # update the progress
             self.progress = (a_it + 1) / len(apero_profile_names)
             tlog(
@@ -166,92 +167,113 @@ class AperoObservationTableTask(apero_async.AperoAsyncTask):
                     f"- Skipped query run. {skip_reason}\n"
                 )
                 continue
-            # check that all required parameters are present
-            rparams = check_required(aparams)
-            # -----------------------------------------------------------------
-            # specific sub-commands to add to rparams (shorthand)
-            # -----------------------------------------------------------------
-            rparams = sub_commands(rparams)
-            # -----------------------------------------------------------------
-            rquery = construct_query(rparams)
-            # -----------------------------------------------------------------
-            # run the query and get results
-            db_params = apero_async.get_db_params(aparams)
-            start = time.time()
-            tlog(
-                f"Profile {apero_profile}: running database query "
-                "for observation table..."
-            )
-            results = apero_async.database_query(db_params, rquery)
-            tlog(
-                f"Profile {apero_profile}: query complete with {
-                    len(results)} rows " f"in {
-                    time.time() -
-                    start:.2f}s.")
-            if stop_event is not None and stop_event.is_set():
+
+            try:
+                # check that all required parameters are present
+                rparams = check_required(aparams)
+                # -------------------------------------------------------------
+                # specific sub-commands to add to rparams (shorthand)
+                # -------------------------------------------------------------
+                rparams = sub_commands(rparams)
+                # -------------------------------------------------------------
+                rquery = construct_query(rparams)
+                # -------------------------------------------------------------
+                # run the query and get results
+                db_params = apero_async.get_db_params(aparams)
+                start = time.time()
                 tlog(
-                    f"Profile {apero_profile}: cancellation requested "
-                    "after query. Exiting."
+                    f"Profile {apero_profile}: running database query "
+                    "for observation table..."
                 )
-                return
-            # -----------------------------------------------------------------
-            # time now
-            time_now = datetime.now(timezone.utc).isoformat()
-            metadata = dict()
-            metadata["GENERATED_AT"] = time_now
-            metadata["QUERY_TIME"] = time.time() - start
-            metadata["APERO_PROFILE"] = apero_profile
-            metadata["COLUMN_META"] = meta_columns()
-            # construct filename
-            instrument = aparams.get("general", {}).get("INSTRUMENT", "unknown")
-            local_dir = (
-                Path(params.get("LOCAL_DATA_DIR", str(ARI_DIR)))
-                / "tasks"
-                / instrument
-                / apero_profile
-            )
-            basename = "obs_table.json"
-            filename = local_dir / basename
-            # save results to JSON file for use in the UI
-            apero_async.save_results(filename, results, metadata)
-            tlog(
-                f"Profile {apero_profile}: saved observation table "
-                f"to {filename}."
-            )
-            if db_updates:
-                try:
+                results = apero_async.database_query(db_params, rquery)
+                tlog(
+                    f"Profile {apero_profile}: query complete with "
+                    f"{len(results)} rows in {time.time() - start:.2f}s."
+                )
+                if stop_event is not None and stop_event.is_set():
                     tlog(
-                        f"Profile {apero_profile}: persisting DB "
-                        "update fingerprint."
+                        f"Profile {apero_profile}: cancellation requested "
+                        "after query. Exiting."
                     )
-                    apero_async.save_profile_db_table_updates(
-                        instrument, apero_profile, db_updates
-                    )
-                except Exception as exc:
-                    tlog(
-                        f"Profile {apero_profile}: warning, failed to persist "
-                        f"database-update fingerprint: {exc}"
-                    )
-                    self.info += (
-                        f"\n- Warning: failed to persist database-update "
-                        f"fingerprint for {apero_profile}: {exc}\n"
-                    )
-            # -----------------------------------------------------------------
-            # update the info markdown with meta data
-            self.info += f"""
-            ## Object Table for APERO Profile: {apero_profile}
+                    break
+                # -------------------------------------------------------------
+                # time now
+                time_now = datetime.now(timezone.utc).isoformat()
+                metadata = dict()
+                metadata["GENERATED_AT"] = time_now
+                metadata["QUERY_TIME"] = time.time() - start
+                metadata["APERO_PROFILE"] = apero_profile
+                metadata["COLUMN_META"] = meta_columns()
+                # construct filename
+                instrument = aparams.get("general", {}).get(
+                    "INSTRUMENT", "unknown")
+                local_dir = (
+                    Path(params.get("LOCAL_DATA_DIR", str(ARI_DIR)))
+                    / "tasks"
+                    / instrument
+                    / apero_profile
+                )
+                basename = "obs_table.json"
+                filename = local_dir / basename
+                # save results to JSON file for use in the UI
+                apero_async.save_results(filename, results, metadata)
+                tlog(
+                    f"Profile {apero_profile}: saved observation table "
+                    f"to {filename}."
+                )
+                if db_updates:
+                    try:
+                        tlog(
+                            f"Profile {apero_profile}: persisting DB "
+                            "update fingerprint."
+                        )
+                        apero_async.save_profile_db_table_updates(
+                            instrument, apero_profile, db_updates
+                        )
+                    except Exception as exc:
+                        tlog(
+                            f"Profile {apero_profile}: warning, failed to "
+                            f"persist database-update fingerprint: {exc}"
+                        )
+                        self.info += (
+                            f"\n- Warning: failed to persist database-update "
+                            f"fingerprint for {apero_profile}: {exc}\n"
+                        )
+                # -------------------------------------------------------------
+                # update the info markdown with meta data
+                self.info += f"""
+            ## Observation Table for APERO Profile: {apero_profile}
 
             **Generated at**: {metadata['GENERATED_AT']}
             **Query time**: {metadata['QUERY_TIME']:.2f} seconds
             **APERO Profile**: {metadata['APERO_PROFILE']}
             """
-            # -----------------------------------------------------------------
-            # add to the output files for this task
-            self.output_files.append(str(filename))
-            # update the last run time
-            self.last_run = time_now
+                # -------------------------------------------------------------
+                # add to the output files for this task
+                self.output_files.append(str(filename))
+                # update the last run time
+                self.last_run = time_now
 
-        tlog("APERO_OBSERVATION_TABLE completed.")
+            except Exception as exc:
+                err_msg = (
+                    f"Profile {apero_profile}: database query failed — {exc}"
+                )
+                tlog(f"ERROR: {err_msg}")
+                self.info += (
+                    "\n## Observation Table for APERO Profile: "
+                    f"{apero_profile}\n\n"
+                    f"- **ERROR**: {err_msg}\n"
+                )
+                profile_errors.append(err_msg)
+
+        if profile_errors:
+            tlog(
+                "APERO_OBSERVATION_TABLE completed with errors in "
+                f"{len(profile_errors)} profile(s): "
+                + "; ".join(profile_errors)
+            )
+        else:
+            tlog("APERO_OBSERVATION_TABLE completed.")
 
     def test_query(self, params: Dict[str, Any]):
         """

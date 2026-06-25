@@ -371,6 +371,41 @@ def _check_template_inline_js(template_dir: Path) -> List[str]:
 
 
 
+_ISSUE_MONITOR_INTERVAL_S = 6 * 3600
+
+
+def _start_issue_monitor(app) -> None:
+    """Start a daemon thread that periodically scans for new issues.
+
+    Runs :func:`scan_pending_verification` (and any future scanners)
+    every :data:`_ISSUE_MONITOR_INTERVAL_S` seconds, so that the
+    per-request ``/api/issues/list`` handler never has to do this
+    scan itself.
+    """
+    import sys as _sys
+    from pathlib import Path as _Path
+    from apero_ri.core.astrometric_scanner import scan_pending_verification
+
+    data_dir = _Path(app.args.data_dir or str(_Path.home() / '.ari'))
+    astrom_root = data_dir / 'apero-assets' / 'astrometrics'
+
+    def _loop():
+        while True:
+            try:
+                scan_pending_verification(
+                    data_dir, astrom_root,
+                    created_by='astrometric-scanner',
+                    visibility='monitor')
+            except Exception as exc:  # noqa: BLE001
+                print(f'[apero_ri] issue monitor scan failed: {exc}',
+                      file=_sys.stderr, flush=True)
+            time.sleep(_ISSUE_MONITOR_INTERVAL_S)
+
+    t = threading.Thread(target=_loop, name='ari-issue-monitor',
+                          daemon=True)
+    t.start()
+
+
 def ariapp_run(self, host, port, debug, **kwargs):
     """Run the ARI Flask application.
 
@@ -399,6 +434,46 @@ def ariapp_run(self, host, port, debug, **kwargs):
     if port is None:
         port = self.args.port
     kwargs.setdefault("use_reloader", False)
+
+    _start_issue_monitor(self)
+
+    # Production mode: serve with waitress (multi-threaded, no dev-server
+    # warnings, robust connection handling) instead of the Flask dev server.
+    if getattr(self.args, "production", False):
+        import sys as _sys
+        try:
+            from waitress import serve as _waitress_serve
+        except ImportError:
+            print(
+                "[apero_ri] --production requires waitress "
+                "(pip install waitress); falling back to the "
+                "development server.",
+                file=_sys.stderr,
+                flush=True,
+            )
+        else:
+            threads = max(2, int(getattr(self.args, "threads", 16) or 16))
+            print(
+                f"[apero_ri] Starting production server (waitress) on "
+                f"{host}:{port} with {threads} threads",
+                file=_sys.stderr,
+                flush=True,
+            )
+            try:
+                if host == "::":
+                    # Bind both IPv6 and IPv4 stacks.
+                    _waitress_serve(
+                        self, listen=f"*:{port}", threads=threads
+                    )
+                else:
+                    _waitress_serve(
+                        self, host=host, port=port, threads=threads
+                    )
+            except KeyboardInterrupt:
+                pass
+            finally:
+                self.shutdown()
+            return
 
     if debug:
         print(
@@ -635,6 +710,7 @@ def ariapp_init(self, **kwargs):
     self.config["SESSION_COOKIE_HTTPONLY"] = True
     self.config["SESSION_COOKIE_SAMESITE"] = "Lax"
     self.config["SESSION_REFRESH_EACH_REQUEST"] = True
+    self._configure_production_hardening()
     # Register context processors and routes
     self._register_context_processors()
     self._register_routes()
@@ -1100,6 +1176,69 @@ def ariapp_reset_password_view(self, token):
     )
 
 
+def ariapp_configure_production_hardening(self):
+    """Apply production hardening: proxy support, limits, security headers.
+
+    Environment variables:
+      ARI_PROXY_COUNT  Number of trusted reverse proxies in front of the app
+                       (e.g. 1 for a single nginx).  Enables ProxyFix so
+                       request.remote_addr / scheme reflect the real client,
+                       which keeps rate-limit keys and HTTPS detection
+                       correct behind a proxy.  Default: 0 (disabled).
+      ARI_HTTPS        Set to 1 when the site is served over HTTPS (directly
+                       or via the proxy).  Marks session cookies Secure and
+                       enables HSTS.  Default: off.
+      ARI_MAX_CONTENT_MB  Maximum request body size in MB.  Default: 128.
+    """
+    # --- Reverse proxy support -------------------------------------------
+    try:
+        proxy_count = int(os.environ.get("ARI_PROXY_COUNT", "0") or "0")
+    except ValueError:
+        proxy_count = 0
+    if proxy_count > 0:
+        from werkzeug.middleware.proxy_fix import ProxyFix
+        self.wsgi_app = ProxyFix(
+            self.wsgi_app,
+            x_for=proxy_count,
+            x_proto=proxy_count,
+            x_host=proxy_count,
+            x_prefix=proxy_count,
+        )
+
+    # --- HTTPS cookie/transport hardening --------------------------------
+    https_on = str(os.environ.get("ARI_HTTPS", "") or "").strip().lower() in (
+        "1", "true", "yes", "on",
+    )
+    if https_on:
+        self.config["SESSION_COOKIE_SECURE"] = True
+        self.config["PREFERRED_URL_SCHEME"] = "https"
+
+    # --- Request body size limit ------------------------------------------
+    try:
+        max_mb = int(os.environ.get("ARI_MAX_CONTENT_MB", "128") or "128")
+    except ValueError:
+        max_mb = 128
+    self.config["MAX_CONTENT_LENGTH"] = max_mb * 1024 * 1024
+
+    # --- Security headers on every response --------------------------------
+    @self.after_request
+    def _security_headers(response):
+        hdrs = response.headers
+        hdrs.setdefault("X-Content-Type-Options", "nosniff")
+        hdrs.setdefault("X-Frame-Options", "SAMEORIGIN")
+        hdrs.setdefault("Referrer-Policy", "strict-origin-when-cross-origin")
+        hdrs.setdefault(
+            "Permissions-Policy",
+            "camera=(), microphone=(), geolocation=()",
+        )
+        if https_on:
+            hdrs.setdefault(
+                "Strict-Transport-Security",
+                "max-age=31536000; includeSubDomains",
+            )
+        return response
+
+
 def ariapp_register_routes(self):
     """Register all routes from pages.yaml plus login/logout."""
     _lim = self._limiter
@@ -1127,6 +1266,20 @@ def ariapp_register_routes(self):
     )
     # Logout route (no limit needed)
     self.add_url_rule("/logout", "logout", self._logout_view)
+
+    # Lightweight unauthenticated liveness probe for load balancers and
+    # uptime monitors.  Deliberately does no DB/disk work.
+    def _healthz():
+        return jsonify(status="ok"), 200
+
+    self.add_url_rule("/healthz", "healthz", _healthz)
+
+    # ARI is a private reduction interface — opt out of search indexing.
+    def _robots_txt():
+        body = "User-agent: *\nDisallow: /\n"
+        return body, 200, {"Content-Type": "text/plain; charset=utf-8"}
+
+    self.add_url_rule("/robots.txt", "robots_txt", _robots_txt)
 
     # Static route blocks are delegated to helper module to keep
     # _register_routes focused on orchestration.
@@ -1421,7 +1574,9 @@ def ariapp_share_landing(self, token):
         created_at = datetime.fromisoformat(str(meta.get("created_at", "")))
         if created_at.tzinfo is None:
             created_at = created_at.replace(tzinfo=timezone.utc)
-        expires_at = created_at + timedelta(hours=24)
+        expires_at = created_at + timedelta(
+            hours=bk._normalize_expiry_hours(meta.get("expiry_hours", 24))
+        )
         expires_str = expires_at.strftime("%Y-%m-%d %H:%M:%S UTC")
     except Exception:
         pass
@@ -1904,15 +2059,27 @@ def ariapp_api_apero_profiles_browse(self):
     if not target.is_dir():
         return jsonify(success=False, error="Not a directory"), 400
 
+    show_hidden = str(request.args.get("show_hidden", "0") or "0").strip() in (
+        "1", "true", "yes",
+    )
+    include_files = str(request.args.get("files", "0") or "0").strip() in (
+        "1", "true", "yes",
+    )
+
     dirs = []
+    files = []
     try:
         for entry in sorted(target.iterdir()):
+            if not show_hidden and entry.name.startswith("."):
+                continue
             try:
                 is_dir = entry.is_dir()
             except PermissionError:
                 continue
-            if is_dir and not entry.name.startswith("."):
+            if is_dir:
                 dirs.append(entry.name)
+            elif include_files:
+                files.append(entry.name)
     except PermissionError:
         return jsonify(success=False, error="Permission denied"), 403
 
@@ -1922,17 +2089,23 @@ def ariapp_api_apero_profiles_browse(self):
         success=True,
         path=str(target),
         dirs=dirs,
+        files=files,
         validation=validation,
     )
 
 
 def ariapp_build_home_page_context(self, user_info, perms):
     """Build the full context payload used by the home page."""
+    from apero_ri.application.monitor_view_helpers import (
+        _has_any_monitor_perm,
+    )
+
     context = {
         "page_id": "home",
         "page_label": "Home",
         "page_icon": "fa-solid fa-house",
         "is_parent": True,
+        "is_monitor": _has_any_monitor_perm(perms),
     }
     context.update(self._build_home_sidebar_context(perms, user_info))
 
@@ -2236,7 +2409,7 @@ def ariapp_api_basket_jobs(self):
     bk.cleanup_expired_downloads(username)
     jobs = bk.list_recent_jobs(username, limit=10)
     usage = bk.get_downloads_usage(username)
-    limit_bytes = bk.get_downloads_storage_limit_bytes()
+    limit_bytes = bk.get_downloads_storage_limit_bytes(user_info.get("groups"))
 
     # Strip internal paths from job metadata for security
     safe_jobs = []
@@ -3075,6 +3248,46 @@ def ariapp_api_user_favourite_objects_last_opened(self):
     return jsonify(success=True, favourite_objects=flat)
 
 
+def ariapp_api_basket_jobs_extend(self):
+    """Extend the expiry of a compilation job by 24 hours."""
+    user_info, err = self._basket_access_check()
+    if err:
+        return err
+
+    data = request.get_json(silent=True) or {}
+    job_id = str(data.get("job_id", "") or "").strip()
+    if not job_id:
+        return jsonify(success=False, error="job_id is required"), 400
+
+    expiry_hours = data.get("expiry_hours", None)
+    username = user_info["username"]
+    result = bk.extend_download_job(username, job_id)
+    if expiry_hours is not None:
+        result = bk.set_download_job_expiry(username, job_id, expiry_hours)
+    if not result.get("success"):
+        return jsonify(success=False, error=result.get("error", "Could not extend job")), 400
+    return jsonify(success=True, expires_at=result.get("expires_at"))
+
+
+def ariapp_api_basket_jobs_expiry(self):
+    """Set a compilation job's expiry duration."""
+    user_info, err = self._basket_access_check()
+    if err:
+        return err
+
+    data = request.get_json(silent=True) or {}
+    job_id = str(data.get("job_id", "") or "").strip()
+    expiry_hours = data.get("expiry_hours", "")
+    if not job_id:
+        return jsonify(success=False, error="job_id is required"), 400
+
+    username = user_info["username"]
+    result = bk.set_download_job_expiry(username, job_id, expiry_hours)
+    if not result.get("success"):
+        return jsonify(success=False, error=result.get("error", "Could not set expiry")), 400
+    return jsonify(success=True, expires_at=result.get("expires_at"))
+
+
 def ariapp_api_basket_jobs_remove(self):
     """Remove one completed/failed compilation job for the user."""
     user_info, err = self._basket_access_check()
@@ -3096,7 +3309,7 @@ def ariapp_api_basket_jobs_remove(self):
             400,
         )
     usage = bk.get_downloads_usage(username)
-    limit_bytes = bk.get_downloads_storage_limit_bytes()
+    limit_bytes = bk.get_downloads_storage_limit_bytes(user_info.get("groups"))
     return jsonify(
         success=True,
         removed=result.get("removed", 0),
@@ -4010,6 +4223,23 @@ def ariapp_get_arguments():
             "localhost, falls back to 0.0.0.0)"
         ),
     )
+    parser.add_argument(
+        "--production",
+        action="store_true",
+        help=(
+            "Serve with the waitress production WSGI server instead of "
+            "the Flask development server"
+        ),
+    )
+    parser.add_argument(
+        "--threads",
+        type=int,
+        default=16,
+        help=(
+            "Worker thread count for the production server "
+            "(default: 16; only used with --production)"
+        ),
+    )
     return parser.parse_args()
 
 
@@ -4283,6 +4513,15 @@ def ariapp_build_safe_select_query(table_access, query_spec, run_ids):
     )
 
 
+def ariapp_build_safe_count_query(table_access, query_spec, run_ids):
+    """Build a safe parameterized COUNT(*) query."""
+    return query_helpers.build_safe_count_query(
+        table_access=table_access,
+        query_spec=query_spec,
+        run_ids=run_ids,
+    )
+
+
 def ariapp_api_async_tasks_task_log(self):
     """Return current per-task async log content."""
     user_info, perms = self._require_async_tasks_perm()
@@ -4524,7 +4763,7 @@ def ariapp_api_basket_jobs_clear(self):
     username = user_info["username"]
     result = bk.clear_download_jobs(username)
     usage = bk.get_downloads_usage(username)
-    limit_bytes = bk.get_downloads_storage_limit_bytes()
+    limit_bytes = bk.get_downloads_storage_limit_bytes(user_info.get("groups"))
     return jsonify(
         success=True,
         removed=result.get("removed", 0),
@@ -4885,7 +5124,8 @@ def ariapp_api_apero_profiles_validate(self):
     if not os.path.isabs(path):
         return jsonify(success=False, error="Must be absolute"), 400
 
-    result = auth.validate_path_exists(path)
+    kind = "file" if request.args.get("kind", "") == "file" else "dir"
+    result = auth.validate_path_exists(path, kind=kind)
     return jsonify(success=True, **result)
 
 

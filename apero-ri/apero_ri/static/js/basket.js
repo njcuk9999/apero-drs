@@ -94,6 +94,11 @@
     var downloadUsageBytes = 0;
     var downloadLimitBytes = 0;
     var shareCurrentJobId  = null;
+    var EXPIRY_OPTIONS = [
+        { hours: 24, label: '24 hrs' },
+        { hours: 48, label: '48 hrs' },
+        { hours: 168, label: '1 week' },
+    ];
 
     /* -----------------------------------------------------------------------
        Helpers
@@ -116,6 +121,30 @@
         if (!iso) return '--';
         try { return new Date(iso).toLocaleString(); }
         catch (e) { return String(iso); }
+    }
+
+    function normalizeExpiryHours(value) {
+        var hours = parseInt(value, 10);
+        if (hours === 48 || hours === 168) return hours;
+        return 24;
+    }
+
+    function expiryLabel(hours) {
+        hours = normalizeExpiryHours(hours);
+        if (hours === 168) return '1 week';
+        if (hours === 48) return '48 hrs';
+        return '24 hrs';
+    }
+
+    function expiryOptionsHtml(selectedHours) {
+        selectedHours = normalizeExpiryHours(selectedHours);
+        var html = '';
+        EXPIRY_OPTIONS.forEach(function (opt) {
+            html += '<option value="' + opt.hours + '"'
+                + (opt.hours === selectedHours ? ' selected' : '')
+                + '>' + escHtml(opt.label) + '</option>';
+        });
+        return html;
     }
 
     function parseStrictNumber(value) {
@@ -221,6 +250,59 @@
         updateFormatOptions(summary.accessible_files || 0, summary.total_size_bytes || 0);
     }
 
+    function jobExpiresAt(job) {
+        if (!job || !job.created_at) return null;
+        try {
+            var created = new Date(job.created_at);
+            var hours = normalizeExpiryHours(job.expiry_hours);
+            return new Date(created.getTime() + hours * 60 * 60 * 1000);
+        } catch (e) {
+            return null;
+        }
+    }
+
+    function updateJobExpiry(jobId, expiryHours) {
+        var apiUrl = String(cfg.jobsExpiryApiUrl || cfg.jobsExtendApiUrl || '').trim();
+        if (!apiUrl) {
+            alert('Could not update expiry: missing API URL');
+            return;
+        }
+        fetch(apiUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                job_id: jobId,
+                expiry_hours: normalizeExpiryHours(expiryHours),
+            }),
+        })
+            .then(function (r) {
+                if (r.status === 404 && apiUrl !== cfg.jobsExtendApiUrl
+                    && cfg.jobsExtendApiUrl) {
+                    return fetch(cfg.jobsExtendApiUrl, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            job_id: jobId,
+                            expiry_hours: normalizeExpiryHours(expiryHours),
+                        }),
+                    }).then(function (r2) { return r2.json(); });
+                }
+                return r.json();
+            })
+            .then(function (data) {
+                if (!data.success) {
+                    alert('Could not update expiry: ' + (data.error || 'unknown error'));
+                    loadJobs();
+                    return;
+                }
+                loadJobs();
+            })
+            .catch(function (err) {
+                alert('Request failed: ' + String(err));
+                loadJobs();
+            });
+    }
+
     function updateFormatOptions(fileCount, totalBytes) {
         var oneFile = fileCount === 1;
         var underGb = totalBytes < 1024 * 1024 * 1024;
@@ -271,9 +353,9 @@
         var selectAll = document.createElement('input');
         selectAll.type = 'checkbox';
         selectAll.id = 'bk-select-all';
-        selectAll.title = 'Select / deselect all visible';
+        selectAll.title = 'Select / deselect all rows (all pages)';
         selectAll.addEventListener('change', function () {
-            pageRows().forEach(function (r) {
+            filteredRows.forEach(function (r) {
                 var id = r.id || r.group_value;
                 if (selectAll.checked) {
                     if (groupByCol) {
@@ -843,6 +925,26 @@
             .catch(function () {});
     }
 
+    function extendJob(jobId) {
+        if (!jobId) return;
+        fetch(cfg.jobsExtendApiUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ job_id: jobId }),
+        })
+            .then(function (r) { return r.json(); })
+            .then(function (data) {
+                if (!data.success) {
+                    alert('Could not extend compilation: ' + (data.error || 'unknown error'));
+                    return;
+                }
+                loadJobs();
+            })
+            .catch(function (err) {
+                alert('Request failed: ' + String(err));
+            });
+    }
+
     function removeJob(jobId) {
         if (!jobId) return;
         if (!confirm('Remove this compilation from Recent compilations?')) return;
@@ -909,12 +1011,11 @@
             + '<th>Size</th><th>Format</th><th>Downloads</th>'
             + '</tr></thead><tbody>';
         jobs.forEach(function (job) {
-            // Compute expiry from created_at + 24h
+            // Compute expiry from created_at + selected duration
             var expiresStr = '<span class="at-muted-hint">&mdash;</span>';
-            if (job.created_at) {
+            var expires = jobExpiresAt(job);
+            if (expires) {
                 try {
-                    var created = new Date(job.created_at);
-                    var expires = new Date(created.getTime() + 24 * 60 * 60 * 1000);
                     var now = new Date();
                     var diffMs = expires - now;
                     if (diffMs <= 0) {
@@ -937,6 +1038,12 @@
             html += '<td>' + escHtml(job.fmt || '--') + '</td>';
             html += '<td class="bk-jobs-actions">';
             if (job.status === 'done') {
+                html += '<label class="bk-expiry-select-wrap" title="Set how long this compiled file is kept">'
+                    + '<span class="bk-expiry-select-label">Expires:</span>'
+                    + '<select class="bk-expiry-select" data-job-id="' + escHtml(job.job_id || '') + '">'
+                    + expiryOptionsHtml(job.expiry_hours)
+                    + '</select>'
+                    + '</label> ';
                 (job.chunks || []).forEach(function (chunk) {
                     html += '<a class="ari-btn ari-btn--sm ari-btn--primary bk-dl-link" '
                         + 'href="' + escHtml(cfg.downloadBaseUrl + '/' + job.job_id + '/' + chunk.index) + '" '
@@ -950,6 +1057,11 @@
                     + 'data-job-id="' + escHtml(job.job_id || '') + '" '
                     + 'title="Share this download">'
                     + '<i class="fa-solid fa-share-nodes"></i> Share'
+                    + '</button> ';
+                html += '<button class="ari-btn ari-btn--sm ari-btn--secondary bk-job-extend" '
+                    + 'data-job-id="' + escHtml(job.job_id || '') + '" '
+                    + 'title="Extend expiry by 24 hours">'
+                    + '<i class="fa-solid fa-clock-rotate-left"></i> Extend'
                     + '</button> ';
                 html += '<button class="ari-btn ari-btn--sm ari-btn--danger bk-job-remove" '
                     + 'data-job-id="' + escHtml(job.job_id || '') + '" '
@@ -1069,8 +1181,15 @@
         jobsList.addEventListener('click', function (ev) {
             var removeBtn = ev.target.closest('.bk-job-remove');
             if (removeBtn) { removeJob(removeBtn.getAttribute('data-job-id') || ''); return; }
+            var extendBtn = ev.target.closest('.bk-job-extend');
+            if (extendBtn) { extendJob(extendBtn.getAttribute('data-job-id') || ''); return; }
             var shareBtn = ev.target.closest('.bk-job-share');
             if (shareBtn) { openShareModal(shareBtn.getAttribute('data-job-id') || ''); }
+        });
+        jobsList.addEventListener('change', function (ev) {
+            var select = ev.target.closest('.bk-expiry-select');
+            if (!select) return;
+            updateJobExpiry(select.getAttribute('data-job-id') || '', select.value);
         });
     }
     if (shareClose)    shareClose.addEventListener('click', closeShareModal);

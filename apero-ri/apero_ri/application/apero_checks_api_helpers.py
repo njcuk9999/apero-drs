@@ -827,6 +827,51 @@ def api_apero_checks_profile_page(app, profile_id):
     )
 
 
+def api_apero_checks_list_obsdirs(app, profile_id):
+    """Return every obs-dir name for a profile (admin run picker).
+
+    Unlike api_apero_checks_profile_page, this returns the full obs-dir
+    name list directly from the YAML directory listing rather than paged
+    card payloads, so it isn't limited to the {10, 50, 100} page-size
+    options and doesn't pay the per-card status-build cost.
+    """
+    user_info = app._get_api_user()
+    if not user_info:
+        return jsonify(success=False, error='Login required'), 401
+    perms = resolve_user_permissions(
+        user_info['groups'], app.ari_groups
+    )
+    if 'manage.apero_profile' not in set(perms or set()):
+        return jsonify(success=False, error='Admin access required'), 403
+
+    profile = None
+    for item in get_accessible_profiles(user_info, app.ari_groups):
+        if item['profile_id'] == profile_id:
+            profile = item
+            break
+    if profile is None:
+        return jsonify(
+            success=False,
+            error='Profile not found or access denied',
+        ), 404
+
+    local_data_dir = app._resolve_local_data_dir()
+    cfg = checks_core.load_config(local_data_dir)
+    checks_root = checks_core.resolve_checks_root(
+        local_data_dir,
+        profile_data=profile['data'],
+        configured_root=cfg.get('checks_root', ''),
+    )
+    files = checks_core.list_yaml_files(checks_root)
+    instrument = str(profile.get('instrument') or '').strip()
+    excluded = (
+        checks_core.load_excluded_obsdirs(local_data_dir, instrument)
+        if instrument else set()
+    )
+    obsdirs = sorted({p.stem for p in files if p.stem not in excluded})
+    return jsonify(success=True, profile_id=profile_id, obsdirs=obsdirs)
+
+
 def api_apero_checks_policy_build_status(app):
     """Return the current background policy-build status (lightweight poll)."""
     user_info = app._get_api_user()
@@ -1039,6 +1084,162 @@ def api_apero_checks_rerun_single_check(app):
     )
 
 
+def api_apero_checks_advanced_run(app):
+    """Queue ONE batch APERO-check task for multiple obs-dirs and checks.
+
+    Accepts a JSON body with:
+      - profile_id  (str, required)
+      - obs_dirs    (list[str], required — all selected obs-dirs)
+      - checks      (list[str], optional — empty means all checks)
+      - ncores      (int, optional — parallel workers, default auto)
+      - verbose     (int 0-2, optional, default 1)
+    """
+    user_info = app._get_api_user()
+    if not user_info:
+        return jsonify(success=False, error='Login required'), 401
+    perms = resolve_user_permissions(
+        user_info['groups'], app.ari_groups
+    )
+    if not _has_any_monitor_perm(perms):
+        return jsonify(
+            success=False, error='Monitor access required'
+        ), 403
+
+    body = request.get_json(silent=True) or {}
+    profile_id = str(body.get('profile_id') or '').strip()
+    if not profile_id:
+        return jsonify(
+            success=False, error='Missing profile_id'
+        ), 400
+
+    raw_obs_dirs = body.get('obs_dirs') or []
+    if not isinstance(raw_obs_dirs, list):
+        return jsonify(
+            success=False,
+            error='obs_dirs must be a list',
+        ), 400
+    obs_dirs = [
+        str(d).strip() for d in raw_obs_dirs if str(d).strip()
+    ]
+    if not obs_dirs:
+        return jsonify(
+            success=False, error='No obs_dirs provided'
+        ), 400
+
+    raw_checks = body.get('checks') or []
+    if not isinstance(raw_checks, list):
+        raw_checks = []
+    check_names = [
+        str(c).strip() for c in raw_checks if str(c).strip()
+    ]
+
+    try:
+        ncores = max(1, int(body.get('ncores') or 0))
+    except (TypeError, ValueError):
+        ncores = 0  # 0 → auto (handled by _normalize_mp_config)
+    try:
+        verbose = max(0, min(2, int(body.get('verbose', 1) or 1)))
+    except (TypeError, ValueError):
+        verbose = 1
+
+    try:
+        profile = _resolve_accessible_profile(app, profile_id)
+    except Exception as exc:
+        return jsonify(success=False, error=str(exc)), 404
+
+    instrument = str(profile.get('instrument') or '').strip()
+    if not instrument:
+        return jsonify(
+            success=False, error='Profile instrument is missing'
+        ), 400
+
+    all_profiles = load_apero_profiles()
+    mode = 'check' if check_names else 'night'
+    first_check = check_names[0] if check_names else 'all'
+    task_id = (
+        'manual_apero_check__'
+        + _slug_task_token(profile_id)
+        + '__batch__'
+        + _slug_task_token(mode)
+        + '__'
+        + _slug_task_token(first_check)
+        + '__'
+        + str(uuid.uuid4())
+    )
+    task_cfg: dict = {}
+    task_cfg['id'] = task_id
+    task_cfg['task_key'] = 'APERO_CHECK_TASK'
+    task_cfg['active'] = True
+    task_cfg['force_run'] = True
+    task_cfg['create'] = True
+    task_cfg['obs_dirs'] = obs_dirs
+    if check_names:
+        task_cfg['checks'] = check_names
+    if ncores > 0:
+        task_cfg['ncores'] = ncores
+    task_cfg['filters'] = {
+        'APERO_PROFILE_INCLUDE': str(profile_id).strip()
+    }
+    if str(user_info.get('username') or '').strip():
+        task_cfg['history_user'] = str(
+            user_info['username']
+        ).strip()
+    task_cfg['history_source'] = 'ARI:apero_checks'
+    task_cfg['verbose'] = verbose
+
+    allowed, reason = task_runner.can_enqueue_now(task_cfg)
+    if not allowed:
+        return jsonify(
+            success=False,
+            error=str(reason or 'Task cannot be enqueued'),
+        ), 400
+
+    from apero_ri import tasks as task_module
+
+    task_cls = task_module.TASK_LIST.get('APERO_CHECK_TASK')
+    if task_cls is None:
+        return jsonify(
+            success=False, error='APERO_CHECK_TASK is not available'
+        ), 500
+
+    run_params = task_runner.build_run_params(
+        instrument,
+        str(app._resolve_local_data_dir()),
+        all_profiles,
+        task_cfg,
+    )
+    try:
+        instance = task_runner.hydrate_runtime_state(
+            task_cls(), task_cfg
+        )
+        instance.USE_SUBPROCESS = bool(
+            task_module.USE_SUBPROCESS.get('APERO_CHECK_TASK', False)
+        )
+        instance._task_key = 'APERO_CHECK_TASK'
+    except Exception as exc:
+        return jsonify(
+            success=False,
+            error='Task initialization failed: ' + str(exc),
+        ), 500
+
+    task_runner.enqueue(
+        instrument,
+        task_id,
+        instance,
+        run_params,
+        prepend=True,
+        queue='apero_checks',
+    )
+    return jsonify(
+        success=True,
+        task_id=task_id,
+        instrument=instrument,
+        n_obs_dirs=len(obs_dirs),
+        n_checks=len(check_names),
+        ncores=ncores or 'auto',
+    )
+
+
 def api_apero_checks_clean_reset_profile(app):
     """Delete all profile YAMLs and queue one full rerun."""
     user_info = app._get_api_user()
@@ -1155,6 +1356,105 @@ def api_apero_checks_delete_obsdir(app):
         pass
 
     return jsonify(success=True, deleted_path=str(path))
+
+
+def api_apero_checks_exclude_obsdir(app):
+    """Permanently exclude an obsdir for a profile's instrument (admin only).
+
+    Deletes any existing YAML for the obsdir and records it in the
+    persisted excluded-obsdirs config so it is never re-checked or shown
+    again for that instrument.
+    """
+    user_info = app._get_api_user()
+    if not user_info:
+        return jsonify(success=False, error='Login required'), 401
+    perms = resolve_user_permissions(
+        user_info['groups'], app.ari_groups
+    )
+    if 'manage.apero_profile' not in set(perms or set()):
+        return jsonify(success=False, error='Admin access required'), 403
+
+    body = request.get_json(silent=True) or {}
+    profile_id = str(body.get('profile_id') or '').strip()
+    obsdir = str(body.get('obsdir') or '').strip()
+    check_path = str(body.get('check_path') or '').strip()
+    if not profile_id or not obsdir:
+        return jsonify(success=False, error='Missing profile_id or obsdir'), 400
+
+    profile = None
+    for item in get_accessible_profiles(user_info, app.ari_groups):
+        if item['profile_id'] == profile_id:
+            profile = item
+            break
+    if profile is None:
+        return jsonify(success=False, error='Profile not found or access denied'), 404
+    instrument = str(profile.get('instrument') or '').strip()
+    if not instrument:
+        return jsonify(success=False, error='Profile has no instrument'), 400
+
+    local_data_dir = app._resolve_local_data_dir()
+    checks_core.add_excluded_obsdir(local_data_dir, instrument, obsdir)
+
+    deleted_path = ''
+    try:
+        path = _resolve_checks_path(app, profile_id, obsdir, check_path)
+        path.unlink(missing_ok=False)
+        deleted_path = str(path)
+    except Exception:
+        pass
+
+    try:
+        from apero_ri.core import checks_index as _ci
+        _ci.delete_obsdir(profile_id, obsdir)
+    except Exception:
+        pass
+
+    return jsonify(
+        success=True,
+        excluded=True,
+        instrument=instrument,
+        obsdir=obsdir,
+        deleted_path=deleted_path,
+    )
+
+
+def api_apero_checks_list_excluded_obsdirs(app):
+    """Return the persisted excluded-obsdirs map (instrument -> [obsdir,...])."""
+    user_info = app._get_api_user()
+    if not user_info:
+        return jsonify(success=False, error='Login required'), 401
+    perms = resolve_user_permissions(
+        user_info['groups'], app.ari_groups
+    )
+    if 'manage.apero_profile' not in set(perms or set()):
+        return jsonify(success=False, error='Admin access required'), 403
+
+    local_data_dir = app._resolve_local_data_dir()
+    excluded = checks_core.load_excluded_obsdirs_all(local_data_dir)
+    return jsonify(success=True, excluded_obsdirs=excluded)
+
+
+def api_apero_checks_remove_excluded_obsdir(app):
+    """Remove one obsdir from the permanently-excluded set (admin only)."""
+    user_info = app._get_api_user()
+    if not user_info:
+        return jsonify(success=False, error='Login required'), 401
+    perms = resolve_user_permissions(
+        user_info['groups'], app.ari_groups
+    )
+    if 'manage.apero_profile' not in set(perms or set()):
+        return jsonify(success=False, error='Admin access required'), 403
+
+    body = request.get_json(silent=True) or {}
+    instrument = str(body.get('instrument') or '').strip()
+    obsdir = str(body.get('obsdir') or '').strip()
+    if not instrument or not obsdir:
+        return jsonify(success=False, error='Missing instrument or obsdir'), 400
+
+    local_data_dir = app._resolve_local_data_dir()
+    checks_core.remove_excluded_obsdir(local_data_dir, instrument, obsdir)
+    excluded = checks_core.load_excluded_obsdirs_all(local_data_dir)
+    return jsonify(success=True, excluded_obsdirs=excluded)
 
 
 def api_apero_checks_delete_test_from_yamls(app):
@@ -1553,4 +1853,73 @@ def api_apero_checks_check_results(app):
         is_building=True,
         build_step=str(build_status.get('step') or 'Building index…'),
         build_pct=float(build_status.get('pct') or 0.0),
+    )
+
+
+def api_apero_checks_validate_obsdir(app):
+    """Check whether a given obsdir name exists under the profile's raw dir."""
+    user_info = app._get_api_user()
+    if not user_info:
+        return jsonify(success=False, error='Login required'), 401
+    perms = resolve_user_permissions(user_info['groups'], app.ari_groups)
+    if not _has_any_monitor_perm(perms):
+        return jsonify(success=False, error='Monitor access required'), 403
+
+    body = request.get_json(silent=True) or {}
+    profile_id = str(body.get('profile_id') or '').strip()
+    obsdir = str(body.get('obsdir') or '').strip()
+    if not profile_id or not obsdir:
+        return jsonify(success=False, error='Missing profile_id or obsdir'), 400
+
+    try:
+        profile = _resolve_accessible_profile(app, profile_id)
+    except Exception as exc:
+        return jsonify(success=False, error=str(exc)), 400
+
+    # Locate the raw data directory from the profile paths config.
+    paths_cfg = profile.get('paths') or {}
+    raw_dir = None
+    for key in ('PATH.RAW', 'PATH_RAW', 'raw'):
+        val = str(paths_cfg.get(key) or '').strip()
+        if val:
+            raw_dir = Path(val).expanduser()
+            break
+
+    if raw_dir is None:
+        return jsonify(
+            success=False,
+            error='Profile has no raw directory configured (PATH_RAW).',
+        ), 400
+
+    obs_path = raw_dir / obsdir
+    if not obs_path.exists():
+        return jsonify(
+            success=False,
+            valid=False,
+            raw_dir=str(raw_dir),
+            obs_path=str(obs_path),
+            error=f'Directory does not exist: {obs_path}',
+        )
+
+    if not obs_path.is_dir():
+        return jsonify(
+            success=False,
+            valid=False,
+            raw_dir=str(raw_dir),
+            obs_path=str(obs_path),
+            error=f'Path exists but is not a directory: {obs_path}',
+        )
+
+    # Count .fits files as a quick sanity check.
+    try:
+        nfits = sum(1 for _ in obs_path.glob('*.fits'))
+    except Exception:
+        nfits = 0
+
+    return jsonify(
+        success=True,
+        valid=True,
+        raw_dir=str(raw_dir),
+        obs_path=str(obs_path),
+        nfits=nfits,
     )

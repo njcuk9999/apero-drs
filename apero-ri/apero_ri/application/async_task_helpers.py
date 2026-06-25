@@ -184,6 +184,11 @@ def merge_async_task_catalog(
             ).strip()
             if local_src:
                 merged_cfg["local_source_path"] = local_src
+            drs_uconfig = str(
+                task_cfg.get("drs_uconfig") or ""
+            ).strip()
+            if drs_uconfig:
+                merged_cfg["drs_uconfig"] = drs_uconfig
             merged_cfg["force_download"] = bool(
                 task_cfg.get("force_download", False)
             )

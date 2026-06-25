@@ -68,6 +68,12 @@
     background: #fff;
     color: var(--ari-text-muted);
     font-size: 0.92rem;
+    text-decoration: none;
+    cursor: pointer;
+}
+.ac-task-status:hover {
+    filter: brightness(0.97);
+    text-decoration: underline;
 }
 .ac-task-status--queued {
     background: #eff6ff;
@@ -260,9 +266,11 @@
         <option value="1" selected>1 — standard</option>
         <option value="2">2 — verbose</option>
     </select>
-    <div id="ac-check-task-status" class="ac-task-status">
+    <a id="ac-check-task-status" class="ac-task-status"
+       href="{{ url_for('monitor_apero_checks_queue_view', profile_id=profile_id) }}"
+       title="Open queue status for this profile">
         Queue: idle
-    </div>
+    </a>
 </div>
 
 <div class="ac-card ac-ui-panel {% if check_kind == 'passed' %}ac-card--ok{% else %}ac-card--failed{% endif %}">
@@ -352,7 +360,7 @@
 <div class="ac-ui-panel ac-ui-panel--soft">
     <div class="ac-failure-doc-link">
         <a href="{{ doc_url }}" target="_blank" rel="noopener"
-           class="ari-btn ari-btn--sm ari-btn--secondary"
+           class="ari-btn ari-btn--sm ari-btn--primary"
            style="font-weight:700;">
             <i class="fa-solid fa-book-open"></i>
             Open monitoring documentation

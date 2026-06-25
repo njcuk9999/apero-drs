@@ -234,7 +234,8 @@
         <span><i class="fa-solid fa-list-check"></i> Recent compilations</span>
         <span class="bk-jobs-expiry-hint">
             <i class="fa-solid fa-clock"></i>
-            Compiled files are automatically deleted after 24 hours.
+            Compiled files are deleted after the selected retention period
+            (default 24 hours).
         </span>
         <button id="bk-btn-clear-jobs" class="ari-btn ari-btn--sm ari-btn--danger"
                 style="margin-left:auto; margin-right:0.4rem;" title="Remove all completed/failed jobs">
@@ -271,7 +272,7 @@
                     <span class="bk-share-note__text">
                         This link will be <strong>public</strong> and will not require a login.<br>
                         Please only share with those who should have access to the data.<br>
-                        This link will expire when the compilation does (within 24 hours).
+                        This link will expire when the compilation does.
                     </span>
             </p>
             <div class="bk-share-link-row">
@@ -325,6 +326,8 @@ window.ARI_BASKET = {
     statusApiUrl:         '/api/data-portal/basket/compile-status',
     downloadBaseUrl:      '/api/data-portal/basket/download',
     jobsApiUrl:           '/api/data-portal/basket/jobs',
+    jobsExtendApiUrl:     '/api/data-portal/basket/jobs/extend',
+    jobsExpiryApiUrl:     '/api/data-portal/basket/jobs/expiry',
     jobsRemoveApiUrl:     '/api/data-portal/basket/jobs/remove',
     jobsClearApiUrl:      '/api/data-portal/basket/jobs/clear',
     shareTokenApiUrl:     '/api/data-portal/basket/share-token',

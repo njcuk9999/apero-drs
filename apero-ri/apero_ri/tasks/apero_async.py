@@ -917,7 +917,9 @@ def check_profile_paths_accessible(
         pstr = str(value or "").strip()
         if not pstr:
             continue
-        if not Path(pstr).is_dir():
+        p = Path(pstr)
+        accessible = p.is_dir() if not p.suffix else p.exists()
+        if not accessible:
             missing.append((str(key), pstr))
     return missing
 

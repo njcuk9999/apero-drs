@@ -80,10 +80,14 @@
     ---------------------------------------------------------- */
     var cfg = window.ARI_PROC_LOGS || {};
 
-    /* Synthetic column: a link to the known-errors page filtered by the
-       row's recipe name. Appended to both the profile and pid tables. */
-    var KNOWN_ERR_COL = "Check Known Errors";
+    /* Synthetic column: action buttons for known-errors lookup and
+       GitHub issue creation. Appended to both the profile and pid tables. */
+    var ACTIONS_COL = "Actions";
     var KNOWN_ERRORS_URL = "/monitor_portal/known_errors";
+    var GITHUB_ISSUE_BASE_URL =
+        "https://github.com/njcuk9999/apero-drs/issues/new";
+    var GITHUB_ISSUE_BODY_LIMIT = 40000;
+    var GITHUB_ISSUE_URL_MAX = 1800;
 
     /* Trailing instrument suffixes stripped from recipe names before they
        are used as the known-errors filter (longest first so e.g.
@@ -102,6 +106,164 @@
             }
         }
         return out;
+    }
+
+    function _issueField(label, value) {
+        var text = String(value == null ? "" : value).trim();
+        if (!text) return "";
+        return "**" + label + ":** " + text + "\n";
+    }
+
+    function _buildGithubIssueTitle(meta) {
+        var parts = ["APERO monitor log report"];
+        var groupName = String(meta.groupName || "").trim();
+        var pid = String(meta.pid || "").trim();
+        var recipe = String(meta.recipeName || meta.shortName || "").trim();
+        if (groupName) parts.push(groupName);
+        if (pid) parts.push("PID " + pid);
+        if (recipe) parts.push(recipe);
+        return parts.join(" - ");
+    }
+
+    function _buildGithubIssueBody(meta, logText) {
+        var body = [];
+        body.push("APERO monitor log report");
+        body.push("");
+        body.push(_issueField("Profile ID", meta.profileId));
+        body.push(_issueField("Group", meta.groupName));
+        body.push(_issueField("PID", meta.pid));
+        body.push(_issueField("Recipe name", meta.recipeName));
+        body.push(_issueField("Short name", meta.shortName));
+        body.push(_issueField("Recipe call", meta.recipeCall));
+        body.push(_issueField("Start time", meta.startTime));
+        body.push(_issueField("End time", meta.endTime));
+        body.push(_issueField("Time taken", meta.timeTaken));
+        body.push(_issueField("Finished", meta.finished));
+        body.push(_issueField("Failed", meta.failed));
+        body.push(_issueField("Total run", meta.totalRun));
+        body.push(_issueField("Log file", meta.logfile));
+        body.push("");
+        body.push("## Log");
+        body.push("```text");
+        body.push(String(logText || "").replace(/\r\n/g, "\n"));
+        body.push("```");
+
+        var out = body.join("\n");
+        if (out.length > GITHUB_ISSUE_BODY_LIMIT) {
+            out = out.slice(0, GITHUB_ISSUE_BODY_LIMIT) +
+                "\n\n[Log truncated because the issue body was too large.]";
+        }
+        return out;
+    }
+
+    function _buildGithubIssueSeedBody(meta, hadLogError) {
+        var body = [];
+        body.push("APERO monitor log report");
+        body.push("");
+        body.push(_issueField("Profile ID", meta.profileId));
+        body.push(_issueField("Group", meta.groupName));
+        body.push(_issueField("PID", meta.pid));
+        body.push(_issueField("Recipe name", meta.recipeName));
+        body.push(_issueField("Log file", meta.logfile));
+        body.push("");
+        body.push("A full issue body was copied to your clipboard by ARI.");
+        body.push("Paste it below this line.");
+        if (hadLogError) {
+            body.push("");
+            body.push("[Note] Log download failed. Paste any local details " +
+                "you have.");
+        }
+        return body.join("\n");
+    }
+
+    function _fetchFullLogText(profileId, cleanLogfile) {
+        return fetch(cfg.logFileUrl, {
+            method: "POST",
+            headers: {"Content-Type": "application/json"},
+            body: JSON.stringify({
+                profile_id: profileId,
+                clean_logfile: cleanLogfile,
+                from_line: 0,
+                to_line: 2147483647,
+            }),
+        })
+        .then(function (r) {
+            if (!r.ok) {
+                return r.json().then(function (e) {
+                    throw new Error(e.error || r.statusText);
+                });
+            }
+            return r.json();
+        })
+        .then(function (data) {
+            if (!data.exists) {
+                throw new Error("Log file does not exist");
+            }
+            return String(data.content || "");
+        });
+    }
+
+    function _openGithubIssue(meta) {
+        var profileId = String(meta.profileId || cfg.profileId || "").trim();
+        var cleanLogfile = String(meta.logfile || "").trim();
+        if (!profileId || !cleanLogfile) {
+            showToast("Missing log file information");
+            return;
+        }
+
+        var issueWindow = window.open("about:blank", "_blank");
+        if (issueWindow) {
+            try {
+                issueWindow.document.write(
+                    "<p style=\"font-family:sans-serif;padding:1rem\">" +
+                    "Preparing GitHub issue..." +
+                    "</p>"
+                );
+                issueWindow.document.close();
+            } catch (_err) {}
+        }
+
+        var title = _buildGithubIssueTitle(meta);
+
+        _fetchFullLogText(profileId, cleanLogfile)
+            .then(function (logText) {
+                var fullBody = _buildGithubIssueBody(meta, logText);
+                copyToClipboard(
+                    fullBody,
+                    "Full issue details copied. Paste into GitHub body."
+                );
+                var body = _buildGithubIssueSeedBody(meta, false);
+                var url = GITHUB_ISSUE_BASE_URL +
+                    "?title=" + encodeURIComponent(title) +
+                    "&body=" + encodeURIComponent(body);
+                if (url.length > GITHUB_ISSUE_URL_MAX) {
+                    url = GITHUB_ISSUE_BASE_URL +
+                        "?title=" + encodeURIComponent(title);
+                }
+                if (issueWindow) {
+                    issueWindow.location.href = url;
+                    issueWindow.focus();
+                } else {
+                    window.location.href = url;
+                }
+            })
+            .catch(function (err) {
+                var body = _buildGithubIssueSeedBody(meta, true);
+                var url = GITHUB_ISSUE_BASE_URL +
+                    "?title=" + encodeURIComponent(title) +
+                    "&body=" + encodeURIComponent(body);
+                if (url.length > GITHUB_ISSUE_URL_MAX) {
+                    url = GITHUB_ISSUE_BASE_URL +
+                        "?title=" + encodeURIComponent(title);
+                }
+                if (issueWindow) {
+                    issueWindow.location.href = url;
+                    issueWindow.focus();
+                } else {
+                    window.location.href = url;
+                }
+                showToast("Log fetch failed: " + err);
+            });
     }
 
     var state = {
@@ -322,7 +484,7 @@
 
         state.columns.forEach(function (col) {
             /* Synthetic column: plain header + empty filter cell. */
-            if (col === KNOWN_ERR_COL) {
+            if (col === ACTIONS_COL) {
                 var thKE = document.createElement("th");
                 thKE.className = "ot-th";
                 thKE.dataset.col = col;
@@ -380,12 +542,20 @@
             if (isDropdown) {
                 /* build unique value list */
                 var opts = {};
-                state.allRows.forEach(function (row) {
-                    var v = row[col];
-                    if (v != null) {
-                        opts[String(v)] = true;
-                    }
-                });
+                
+                /* For Finished column, always include 0 and 1 options */
+                if (col === "Finished") {
+                    opts["0"] = true;
+                    opts["1"] = true;
+                } else {
+                    state.allRows.forEach(function (row) {
+                        var v = row[col];
+                        if (v != null) {
+                            opts[String(v)] = true;
+                        }
+                    });
+                }
+                
                 var sel = document.createElement("select");
                 sel.className = "ot-filter-select";
                 sel.dataset.col = col;
@@ -467,9 +637,9 @@
        Cell renderer
     ---------------------------------------------------------- */
     function renderCell(col, val, row) {
-        /* Synthetic "Check Known Errors" column → link filtered by recipe.
+        /* Synthetic Actions column → known-errors link plus GitHub issue.
            Handled before the null check (row[col] is undefined). */
-        if (col === KNOWN_ERR_COL) {
+        if (col === ACTIONS_COL) {
             var recipe = stripInstrumentSuffix(
                 String((row && row["Recipe name"]) || "").trim()
             );
@@ -477,12 +647,50 @@
             if (recipe) {
                 keUrl += "?q=" + encodeURIComponent(recipe);
             }
-            return "<a href=\"" + esc(keUrl) + "\" " +
-                   "class=\"pl-known-err-link\" target=\"_blank\" " +
-                   "rel=\"noopener\" title=\"Search known errors for " +
-                   esc(recipe) + "\">" +
-                   "<i class=\"fa-solid fa-circle-question\"></i> " +
-                   "Check</a>";
+            var meta = {
+                profileId: cfg.profileId,
+                groupName: dom.groupName ? dom.groupName.textContent : "",
+                pid: (cfg.mode === "pid") ? cfg.pid : (row && row.PID) || "",
+                recipeName: row && row["Recipe name"],
+                shortName: row && row["Short name"],
+                recipeCall: row && row["Recipe call"],
+                startTime: row && row["Start time"],
+                endTime: row && row["End time"],
+                timeTaken: row && row["Time taken"],
+                finished: row && row["Finished"],
+                failed: row && row["Failed"],
+                totalRun: row && row["Total run"],
+                logfile: row && row["Log file"],
+            };
+            return "<div class=\"pl-actions\">" +
+                   "<a href=\"" + esc(keUrl) + "\" " +
+                   "class=\"pl-action-btn pl-action-btn--known\" " +
+                   "target=\"_blank\" rel=\"noopener\" " +
+                   "title=\"check known errors\" " +
+                   "aria-label=\"check known errors\">" +
+                   "<i class=\"fa-solid fa-circle-question\"></i>" +
+                   "</a>" +
+                   "<button type=\"button\" " +
+                   "class=\"pl-action-btn pl-action-btn--github\" " +
+                   "data-github-issue=\"1\" " +
+                   "data-profile-id=\"" + esc(String(meta.profileId || "")) +
+                   "\" data-group-name=\"" + esc(String(meta.groupName || "")) +
+                   "\" data-pid=\"" + esc(String(meta.pid || "")) +
+                   "\" data-recipe-name=\"" + esc(String(meta.recipeName || "")) +
+                   "\" data-short-name=\"" + esc(String(meta.shortName || "")) +
+                   "\" data-recipe-call=\"" + esc(String(meta.recipeCall || "")) +
+                   "\" data-start-time=\"" + esc(String(meta.startTime || "")) +
+                   "\" data-end-time=\"" + esc(String(meta.endTime || "")) +
+                   "\" data-time-taken=\"" + esc(String(meta.timeTaken || "")) +
+                   "\" data-finished=\"" + esc(String(meta.finished || "")) +
+                   "\" data-failed=\"" + esc(String(meta.failed || "")) +
+                   "\" data-total-run=\"" + esc(String(meta.totalRun || "")) +
+                   "\" data-logfile=\"" + esc(String(meta.logfile || "")) +
+                   "\" title=\"create a github issue\" " +
+                   "aria-label=\"create a github issue\">" +
+                   "<i class=\"fa-brands fa-github\"></i>" +
+                   "</button>" +
+                   "</div>";
         }
 
         if (val == null) return "";
@@ -599,6 +807,7 @@
         if (dom.logOverlay) {
             wireLogButtons();
         }
+        wireActionButtons();
         if (cfg.mode === "pid") {
             wireRunstringButtons();
         }
@@ -693,6 +902,16 @@
             btn.addEventListener("click", function () {
                 var lf = btn.dataset.logfile || "";
                 openLogPopup(lf);
+            });
+        });
+    }
+
+    function wireActionButtons() {
+        if (!dom.tbody) return;
+        var btns = dom.tbody.querySelectorAll("[data-github-issue]");
+        btns.forEach(function (btn) {
+            btn.addEventListener("click", function () {
+                _openGithubIssue(btn.dataset);
             });
         });
     }
@@ -920,9 +1139,13 @@
         /* Colour special marker lines, escape everything else.
            Each line is wrapped in a <span> with a data-line index
            so the find bar can target individual lines. */
-        var html = "";
         dom.logOverlay.dataset.currentLogText = text;
         dom.logContent.dataset.currentLogText = text;
+        try {
+            var sel = window.getSelection();
+            if (sel && !sel.isCollapsed && sel.anchorNode && dom.logContent.contains(sel.anchorNode)) return;
+        } catch (_e) {}
+        var html = "";
         text.split("\n").forEach(function (line, idx) {
             if (!line) {
                 return;
@@ -1480,6 +1703,10 @@
         if (!state.columns.length) {
             state.columns      = data.columns || [];
             state.dropdownCols = data.dropdown_columns || [];
+            if (state.columns.indexOf("Recipe name") >= 0 &&
+                    state.columns.indexOf(ACTIONS_COL) < 0) {
+                state.columns = state.columns.concat([ACTIONS_COL]);
+            }
         }
 
         setLastUpdatedText(data.last_updated || "");
@@ -1535,6 +1762,13 @@
         if (dom.btnPrev)  dom.btnPrev.disabled  = atFirst;
         if (dom.btnNext)  dom.btnNext.disabled  = atLast;
         if (dom.btnLast)  dom.btnLast.disabled  = atLast;
+
+        /* wire log-file popup buttons and runstring buttons */
+        if (dom.logOverlay) {
+            wireLogButtons();
+        }
+        wireActionButtons();
+        wireRunstringButtons();
     }
 
     /** Pre-fetch a page in the background (low-priority, no DOM update). */
@@ -1612,11 +1846,10 @@
             state.allRows      = data.rows || [];
             state.columns      = data.columns || [];
             state.dropdownCols = data.dropdown_columns || [];
-            /* Append the synthetic "Check Known Errors" column when the
-               table has a recipe-name column to key the search on. */
+            /* Append the synthetic Actions column when recipe rows exist. */
             if (state.columns.indexOf("Recipe name") >= 0 &&
-                    state.columns.indexOf(KNOWN_ERR_COL) < 0) {
-                state.columns = state.columns.concat([KNOWN_ERR_COL]);
+                    state.columns.indexOf(ACTIONS_COL) < 0) {
+                state.columns = state.columns.concat([ACTIONS_COL]);
             }
             setLastUpdatedText(data.last_updated || "");
 

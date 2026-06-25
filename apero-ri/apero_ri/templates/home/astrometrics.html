@@ -1220,8 +1220,10 @@
                             <i class="fa-solid fa-triangle-exclamation"></i>
                             This astrometric entry is
                             <strong>pending verification</strong>.
+                            {% if astrometrics_can_manage_rejects %}
                             Please review every field below before
                             marking it as verified.
+                            {% endif %}
                         </div>
                         <div id="rt-target-info-sections"
                              class="ari-target-info__sections"></div>

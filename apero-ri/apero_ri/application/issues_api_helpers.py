@@ -125,7 +125,7 @@ def api_issues_create(app):
     body = request.get_json(silent=True) or {}
     kind = (body.get('kind') or '').strip()
     if kind not in ('astrometric', 'flag', 'target_request',
-                    'ari', 'other'):
+                    'ari', 'other', 'monitor_application'):
         return jsonify(success=False,
                        error="Invalid 'kind'"), 400
     reason = (body.get('reason') or '').strip()

@@ -236,14 +236,22 @@
             var passes = Array.isArray(card.visible_passes)
                 ? card.visible_passes : [];
             var cardJson = jsonAttr(card);
+            var cardColor = String(card.card_color || card.status || 'ok');
+            var hasFail = Number(card.active_failure_count || 0) > 0;
+            var hasOvr  = Number(card.override_count || 0) > 0;
+            var hasMon  = Number(card.monitor_count || 0) > 0;
             var html = '<article class="ac-card ac-card--' +
-                esc(card.status || 'ok') + '" data-obsdir="' +
+                esc(cardColor) + '" data-obsdir="' +
                 esc(card.obsdir || '') + '" data-ac-card="' +
                 cardJson + '"><div class="ac-card__row">';
             html += '<span class="ac-card__row-status" title="Card status">';
-            html += card.status === 'ok'
-                ? '<i class="fa-solid fa-check ac-i-ok"></i>'
-                : '<i class="fa-solid fa-xmark ac-i-bad"></i>';
+            if (!hasFail && !hasOvr && !hasMon) {
+                html += '<i class="fa-solid fa-check ac-i-ok"></i>';
+            } else {
+                if (hasFail) html += '<i class="fa-solid fa-xmark ac-i-bad"></i>';
+                if (hasOvr)  html += '<i class="fa-solid fa-triangle-exclamation ac-i-ovr"></i>';
+                if (hasMon)  html += '<i class="fa-solid fa-bell ac-i-mon"></i>';
+            }
             html += '</span>';
             html += '<div class="ac-card__date" title="Obsdir: ' +
                 esc(card.obsdir || '') + '">' +
@@ -347,16 +355,98 @@
             body.classList.toggle('ac-delete-mode', !!state.advancedMode);
         }
         var btn = document.getElementById('ac-btn-advanced');
-        if (!btn) return;
-        if (state.advancedMode) {
-            btn.classList.add('ac-btn-danger');
-            btn.innerHTML =
-                '<i class="fa-solid fa-sliders"></i> Advanced options: ON';
-        } else {
-            btn.classList.remove('ac-btn-danger');
-            btn.innerHTML =
-                '<i class="fa-solid fa-sliders"></i> Advanced options';
+        if (btn) {
+            if (state.advancedMode) {
+                btn.classList.add('ac-btn-danger');
+                btn.innerHTML =
+                    '<i class="fa-solid fa-sliders"></i> Advanced options: ON';
+            } else {
+                btn.classList.remove('ac-btn-danger');
+                btn.innerHTML =
+                    '<i class="fa-solid fa-sliders"></i> Advanced options';
+            }
         }
+        var panel = document.getElementById('ac-advanced-panel');
+        if (panel) {
+            panel.hidden = !state.advancedMode;
+        }
+    }
+
+    // ── New obs dir overlay ───────────────────────────────────────────────────
+
+    var _newObsdirResolved = null; // obsdir string that passed validation
+
+    function openNewObsdirOverlay() {
+        _newObsdirResolved = null;
+        var input = document.getElementById('ac-new-obsdir-input');
+        var status = document.getElementById('ac-new-obsdir-status');
+        var actions = document.getElementById('ac-new-obsdir-actions');
+        if (input) input.value = '';
+        if (status) { status.textContent = ''; status.hidden = true; status.className = 'ac-new-obsdir-status'; }
+        if (actions) actions.hidden = true;
+        openOverlay('ac-new-obsdir-overlay');
+        if (input) input.focus();
+    }
+
+    function resolveNewObsdir() {
+        var input = document.getElementById('ac-new-obsdir-input');
+        var status = document.getElementById('ac-new-obsdir-status');
+        var actions = document.getElementById('ac-new-obsdir-actions');
+        var resolveBtn = document.getElementById('ac-btn-resolve-obsdir');
+        var label = document.getElementById('ac-run-new-obsdir-label');
+        var obsdir = String((input ? input.value : '') || '').trim();
+        if (!obsdir) {
+            if (status) { status.textContent = 'Please enter an observation directory name.'; status.hidden = false; status.className = 'ac-new-obsdir-status ac-new-obsdir-status--error'; }
+            return;
+        }
+        _newObsdirResolved = null;
+        if (actions) actions.hidden = true;
+        if (status) { status.textContent = 'Checking…'; status.hidden = false; status.className = 'ac-new-obsdir-status'; }
+        if (resolveBtn) { resolveBtn.disabled = true; resolveBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Resolving…'; }
+
+        postJson(cfg.apiValidateObsdirUrl, {
+            profile_id: cfg.profileId,
+            obsdir: obsdir,
+        }).then(function (data) {
+            if (resolveBtn) { resolveBtn.disabled = false; resolveBtn.innerHTML = '<i class="fa-solid fa-magnifying-glass"></i> Resolve obs dir'; }
+            if (data.valid) {
+                var nfits = Number(data.nfits || 0);
+                var msg = '✓ Valid: ' + data.obs_path;
+                if (nfits > 0) msg += ' (' + nfits + ' FITS file' + (nfits !== 1 ? 's' : '') + ')';
+                if (status) { status.textContent = msg; status.hidden = false; status.className = 'ac-new-obsdir-status ac-new-obsdir-status--ok'; }
+                _newObsdirResolved = obsdir;
+                if (label) label.textContent = 'Run checks for “' + obsdir + '”';
+                if (actions) actions.hidden = false;
+            } else {
+                if (status) { status.textContent = '✗ ' + (data.error || 'Not valid.'); status.hidden = false; status.className = 'ac-new-obsdir-status ac-new-obsdir-status--error'; }
+                if (actions) actions.hidden = true;
+            }
+        }).catch(function (err) {
+            if (resolveBtn) { resolveBtn.disabled = false; resolveBtn.innerHTML = '<i class="fa-solid fa-magnifying-glass"></i> Resolve obs dir'; }
+            if (status) { status.textContent = 'Error: ' + String(err || 'Unknown error'); status.hidden = false; status.className = 'ac-new-obsdir-status ac-new-obsdir-status--error'; }
+        });
+    }
+
+    function runNewObsdir() {
+        if (!_newObsdirResolved) return;
+        var obsdir = _newObsdirResolved;
+        postJson(cfg.apiRerunNightUrl, {
+            profile_id: cfg.profileId,
+            obsdir: obsdir,
+        }).then(function (data) {
+            closeOverlay('ac-new-obsdir-overlay');
+            var taskId = String(data.task_id || '').trim();
+            var msg = taskId
+                ? 'Queued obs dir "' + obsdir + '" (task: ' + taskId + ').'
+                : 'Queued obs dir "' + obsdir + '".';
+            window.alert(msg);
+            waitForRerunCompletion(obsdir, '', function (latest) {
+                window.alert('Checks finished for "' + obsdir + '". Last run: ' + latest);
+                window.setTimeout(function () { window.location.reload(); }, 700);
+            });
+        }).catch(function (err) {
+            window.alert(String(err || 'Could not queue this obs dir.'));
+        });
     }
 
     function cardForObsdir(obsdir) {
@@ -1859,6 +1949,34 @@
         btnAdvanced.addEventListener('click', function () {
             state.advancedMode = !state.advancedMode;
             syncAdvancedModeUi();
+        });
+    }
+
+    var btnRunNewObsdir = document.getElementById('ac-btn-run-new-obsdir');
+    if (btnRunNewObsdir) {
+        btnRunNewObsdir.addEventListener('click', function () {
+            openNewObsdirOverlay();
+        });
+    }
+
+    var btnResolveObsdir = document.getElementById('ac-btn-resolve-obsdir');
+    if (btnResolveObsdir) {
+        btnResolveObsdir.addEventListener('click', function () {
+            resolveNewObsdir();
+        });
+    }
+
+    var inputNewObsdir = document.getElementById('ac-new-obsdir-input');
+    if (inputNewObsdir) {
+        inputNewObsdir.addEventListener('keydown', function (ev) {
+            if (ev.key === 'Enter') resolveNewObsdir();
+        });
+    }
+
+    var btnRunNewObsdirConfirm = document.getElementById('ac-btn-run-new-obsdir-confirm');
+    if (btnRunNewObsdirConfirm) {
+        btnRunNewObsdirConfirm.addEventListener('click', function () {
+            runNewObsdir();
         });
     }
 
