@@ -7,6 +7,10 @@
 
     var cfg = window.ARI_APERO_CHECKS_QUEUE || {};
     var pollTimer = null;
+    var logRefreshTimer = null;
+    var logPauseEnabled = false;
+    var currentTaskId = null;
+    var currentLogPath = null;
     // Find-in-log state.
     var findState = { matches: [], idx: 0 };
     var currentLogText = '';
@@ -215,10 +219,7 @@
         var content = document.getElementById('acq-log-content');
         if (!content) return;
         currentLogText = text;
-        try {
-            var sel = window.getSelection();
-            if (sel && !sel.isCollapsed && sel.anchorNode && content.contains(sel.anchorNode)) return;
-        } catch (_e) {}
+        if (logPauseEnabled) return;
 
         var html = '';
         text.split('\n').forEach(function (line, idx) {
@@ -246,6 +247,9 @@
         if (nameEl) nameEl.textContent = filename || '';
         overlay.classList.add('acq-log-overlay--open');
         document.body.style.overflow = 'hidden';
+        logPauseEnabled = false;
+        updateLogPauseButton();
+        startLogRefreshing();
     }
 
     function closeLogOverlay() {
@@ -253,31 +257,73 @@
         if (overlay) overlay.classList.remove('acq-log-overlay--open');
         document.body.style.overflow = '';
         currentLogText = '';
+        stopLogRefreshing();
+        currentTaskId = null;
+        currentLogPath = null;
     }
 
     function fetchAndShowLog(taskId, logPath) {
         var label = logPath || taskId || '(log)';
+        currentTaskId = taskId;
+        currentLogPath = logPath;
         openLogOverlay(label);
         var content = document.getElementById('acq-log-content');
         if (content) {
             content.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Loading log&hellip;';
         }
+        logRefreshContent();
+    }
+
+    function logRefreshContent() {
         var logUrl = String(cfg.taskLogUrl || '');
-        if (!logUrl || !taskId) {
-            renderLogContent(logPath ? 'Log file: ' + logPath : '(no log available)');
+        if (!logUrl || !currentTaskId) {
+            renderLogContent(currentLogPath ? 'Log file: ' + currentLogPath : '(no log available)');
             return;
         }
-        var url = logUrl + '?task_id=' + encodeURIComponent(taskId) + '&lines=300';
+        var url = logUrl + '?task_id=' + encodeURIComponent(currentTaskId) + '&lines=300';
         getJson(url).then(function (data) {
             renderLogContent(String(data.content || '(empty log)'));
         }).catch(function () {
-            renderLogContent(logPath ? 'Log file: ' + logPath : '(could not load log)');
+            renderLogContent(currentLogPath ? 'Log file: ' + currentLogPath : '(could not load log)');
         });
+    }
+
+    function updateLogPauseButton() {
+        var pauseBtn = document.getElementById('acq-log-pause');
+        if (!pauseBtn) return;
+        if (logPauseEnabled) {
+            pauseBtn.classList.add('ari-btn--active');
+            pauseBtn.innerHTML = '<i class="fa-solid fa-play"></i> Resume Refresh';
+        } else {
+            pauseBtn.classList.remove('ari-btn--active');
+            pauseBtn.innerHTML = '<i class="fa-solid fa-pause"></i> Pause Refresh';
+        }
+    }
+
+    function toggleLogPause() {
+        logPauseEnabled = !logPauseEnabled;
+        updateLogPauseButton();
+        if (!logPauseEnabled) {
+            logRefreshContent();
+        }
+    }
+
+    function startLogRefreshing() {
+        if (logRefreshTimer) clearInterval(logRefreshTimer);
+        logRefreshTimer = setInterval(logRefreshContent, 1000);
+    }
+
+    function stopLogRefreshing() {
+        if (logRefreshTimer) {
+            clearInterval(logRefreshTimer);
+            logRefreshTimer = null;
+        }
     }
 
     function initLogOverlay() {
         var closeBtn = document.getElementById('acq-log-close');
         var backdrop = document.getElementById('acq-log-backdrop');
+        var pauseBtn = document.getElementById('acq-log-pause');
         var copyBtn = document.getElementById('acq-log-copy');
         var findInput = document.getElementById('acq-log-find');
         var findPrev = document.getElementById('acq-log-find-prev');
@@ -285,6 +331,7 @@
 
         if (closeBtn) closeBtn.addEventListener('click', closeLogOverlay);
         if (backdrop) backdrop.addEventListener('click', closeLogOverlay);
+        if (pauseBtn) pauseBtn.addEventListener('click', toggleLogPause);
         if (copyBtn) {
             copyBtn.addEventListener('click', function () {
                 if (!navigator.clipboard) return;
