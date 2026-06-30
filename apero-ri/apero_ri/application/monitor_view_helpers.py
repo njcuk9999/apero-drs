@@ -1375,6 +1375,19 @@ def _build_apero_check_minimal(path):
 
 def _build_apero_check_minimal_with_status(path, ignored_checks):
     """Build minimal obsdir card and evaluate pass/fail quickly (cached)."""
+    def _init_type_counts():
+        """Return default per-type pass/total counters."""
+        out = dict()
+        raw = dict()
+        raw['passed'] = 0
+        raw['total'] = 0
+        out['raw'] = raw
+        red = dict()
+        red['passed'] = 0
+        red['total'] = 0
+        out['red'] = red
+        return out
+
     # Cache key: file path + mtime + ignored set fingerprint.
     path_key = str(path)
     ignored_key = tuple(sorted(ignored_checks or []))
@@ -1391,7 +1404,8 @@ def _build_apero_check_minimal_with_status(path, ignored_checks):
         return {'obsdir': path.stem, 'last_run': '', 'status': 'failed',
                 'card_color': 'failed', 'has_overridden': False,
                 'has_monitored': False, 'active_failure_count': 1,
-                'override_count': 0, 'monitor_count': 0}
+                'override_count': 0, 'monitor_count': 0,
+                'type_counts': _init_type_counts()}
     if file_mtime is None:
         file_mtime = None  # genuine OSError — proceed to build without caching
 
@@ -1404,6 +1418,7 @@ def _build_apero_check_minimal_with_status(path, ignored_checks):
                 return dict(entry[2])  # return a copy
 
     card = _build_apero_check_minimal(path)
+    card['type_counts'] = _init_type_counts()
     ignored_set = set(ignored_checks or [])
     try:
         loaded = checks_core.load_check_file(path)
@@ -1418,19 +1433,27 @@ def _build_apero_check_minimal_with_status(path, ignored_checks):
         for key, failure in failures.items():
             if key in ignored_set:
                 continue
-            is_overridden = bool(failure.get('override'))
-            is_monitored = bool(failure.get('monitor'))
+            data = failure if isinstance(failure, dict) else dict()
+            kind = str(data.get('type') or '').strip().lower()
+            if kind in {'raw', 'red'}:
+                card['type_counts'][kind]['total'] += 1
+            is_overridden = bool(data.get('override'))
+            is_monitored = bool(data.get('monitor'))
             has_overridden = has_overridden or is_overridden
             has_monitored = has_monitored or is_monitored
             if is_overridden or is_monitored:
                 continue
             has_active_failure = True
-            break
         for key, passed in passes.items():
             if key in ignored_set:
                 continue
-            has_overridden = has_overridden or bool(passed.get('override'))
-            has_monitored = has_monitored or bool(passed.get('monitor'))
+            data = passed if isinstance(passed, dict) else dict()
+            kind = str(data.get('type') or '').strip().lower()
+            if kind in {'raw', 'red'}:
+                card['type_counts'][kind]['total'] += 1
+                card['type_counts'][kind]['passed'] += 1
+            has_overridden = has_overridden or bool(data.get('override'))
+            has_monitored = has_monitored or bool(data.get('monitor'))
         if has_active_failure:
             card['status'] = 'failed'
             card['card_color'] = 'failed'

@@ -37,6 +37,68 @@
     align-items: center;
     gap: 0.35rem;
 }
+.ac-card__type-summary {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.8rem;
+    flex-wrap: nowrap;
+    margin-left: 0.25rem;
+}
+.ac-card__type-chip {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 0.2rem;
+    font-size: 0.8rem;
+    color: var(--ari-text-muted);
+    white-space: nowrap;
+}
+.ac-card__type-chip strong {
+    font-weight: 700;
+    color: var(--ari-text);
+}
+body:not(.ac-view-grid) .ac-card__row {
+    grid-template-columns: auto auto minmax(0, 1fr);
+    gap: 0.9rem;
+}
+body:not(.ac-view-grid) .ac-card__date {
+    min-width: 0;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1.4rem;
+}
+.ac-card__date {
+    font-weight: 500;
+}
+.ac-card__obsdir {
+    font-weight: 500;
+    font-size: 0.92rem;
+    color: var(--ari-text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+body:not(.ac-view-grid) .ac-card__lastrun {
+    margin-top: 0;
+    white-space: nowrap;
+}
+body.ac-view-grid .ac-card__type-summary {
+    gap: 0.4rem;
+}
+body.ac-view-grid .ac-card__date {
+    display: block;
+}
+body.ac-view-grid .ac-card__obsdir,
+body.ac-view-grid .ac-card__lastrun {
+    display: block;
+}
+body.ac-view-grid .ac-card__lastrun {
+    margin-top: 0.2rem;
+}
+[data-theme="dark"] .ac-card__obsdir {
+    color: var(--ari-text);
+}
 [data-theme="dark"] .ac-ui-panel--soft {
     background: var(--ari-surface-muted, #1c2128);
 }
@@ -210,11 +272,21 @@
                   {% if _has_mon %}<i class="fa-solid fa-bell ac-i-mon"></i>{% endif %}
                 {% endif %}
             </span>
+            <span class="ac-card__type-summary" title="Passed tests by type">
+                <span class="ac-card__type-chip">
+                    <strong>raw:</strong>
+                    {{ card.type_counts.raw.passed if card.type_counts is defined and card.type_counts.raw is defined else 0 }}/{{ card.type_counts.raw.total if card.type_counts is defined and card.type_counts.raw is defined else 0 }}
+                </span>
+                <span class="ac-card__type-chip">
+                    <strong>red:</strong>
+                    {{ card.type_counts.red.passed if card.type_counts is defined and card.type_counts.red is defined else 0 }}/{{ card.type_counts.red.total if card.type_counts is defined and card.type_counts.red is defined else 0 }}
+                </span>
+            </span>
             <div class="ac-card__date" title="Obsdir: {{ card.obsdir }}">
-                <div>{{ card.obsdir }}</div>
-                <div class="ac-card__lastrun">
+                <span class="ac-card__obsdir">{{ card.obsdir }}</span>
+                <span class="ac-card__lastrun">
                     Last run: {{ card.last_run or 'n/a' }}
-                </div>
+                </span>
             </div>
         </div>
     </a>

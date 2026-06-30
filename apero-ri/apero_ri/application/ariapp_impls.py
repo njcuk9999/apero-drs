@@ -97,6 +97,10 @@ PACKAGE_DIR = Path(__file__).parent.parent
 TEMPLATE_DIR = PACKAGE_DIR / "templates"
 STATIC_DIR = PACKAGE_DIR / "static"
 
+_SIDEBAR_CTX_CACHE_LOCK = threading.Lock()
+_SIDEBAR_CTX_CACHE = dict()
+_SIDEBAR_CTX_CACHE_TTL_S = 20.0
+
 
 def _heal_duplicated_template(text: str) -> Optional[str]:
     """Best-effort repair of a duplicated/corrupted Jinja template.
@@ -1220,6 +1224,16 @@ def ariapp_configure_production_hardening(self):
         max_mb = 128
     self.config["MAX_CONTENT_LENGTH"] = max_mb * 1024 * 1024
 
+    # --- Static asset cache policy ---------------------------------------
+    try:
+        static_cache_s = int(
+            os.environ.get('ARI_STATIC_CACHE_SECONDS', '604800')
+            or '604800'
+        )
+    except ValueError:
+        static_cache_s = 604800
+    static_cache_s = max(0, static_cache_s)
+
     # --- Security headers on every response --------------------------------
     @self.after_request
     def _security_headers(response):
@@ -1235,6 +1249,11 @@ def ariapp_configure_production_hardening(self):
             hdrs.setdefault(
                 "Strict-Transport-Security",
                 "max-age=31536000; includeSubDomains",
+            )
+        req_path = str(getattr(request, 'path', '') or '')
+        if static_cache_s > 0 and req_path.startswith('/static/'):
+            hdrs['Cache-Control'] = (
+                f'public, max-age={static_cache_s}, immutable'
             )
         return response
 
@@ -2596,9 +2615,34 @@ def ariapp_api_async_tasks_reorder(self):
 
 def ariapp_build_sidebar_context(self, page_id, perms, user_info):
     """Build sidebar context dict for pages with side-nav top-level."""
+    username = ''
+    if isinstance(user_info, dict):
+        username = str(user_info.get('username') or '').strip()
+    perms_key = tuple(sorted(
+        str(item) for item in set(perms or set())
+    ))
+    cache_key = (
+        str(page_id or ''),
+        perms_key,
+        bool(user_info),
+        username,
+    )
+    now = time.monotonic()
+    with _SIDEBAR_CTX_CACHE_LOCK:
+        cached = _SIDEBAR_CTX_CACHE.get(cache_key)
+        if cached is not None and cached.get('expires', 0.0) > now:
+            return cached.get('value', dict())
+
     nav_root = permissions_mod.find_full_nav_root(page_id, self.ari_pages)
     if not nav_root:
-        return {}
+        payload = {}
+        with _SIDEBAR_CTX_CACHE_LOCK:
+            _SIDEBAR_CTX_CACHE[cache_key] = dict(
+                expires=now + _SIDEBAR_CTX_CACHE_TTL_S,
+                value=payload,
+            )
+        return payload
+
     root_def = self.ari_pages[nav_root]
     section_tree = permissions_mod.get_sidebar_tree(
         nav_root, perms, self.ari_pages, page_id
@@ -2618,13 +2662,21 @@ def ariapp_build_sidebar_context(self, page_id, perms, user_info):
             continue
         seen.add(item_id)
         sidebar_tree.append(item)
-    return {
+    payload = {
         "sidebar_root": nav_root,
         "sidebar_label": root_def.get("label", ""),
         "sidebar_icon": root_def.get("icon", ""),
         "sidebar_url": permissions_mod.page_id_to_url(nav_root),
         "sidebar_tree": sidebar_tree,
     }
+    with _SIDEBAR_CTX_CACHE_LOCK:
+        if len(_SIDEBAR_CTX_CACHE) > 2048:
+            _SIDEBAR_CTX_CACHE.clear()
+        _SIDEBAR_CTX_CACHE[cache_key] = dict(
+            expires=now + _SIDEBAR_CTX_CACHE_TTL_S,
+            value=payload,
+        )
+    return payload
 
 
 def ariapp_normalize_pinned_pages(value):
