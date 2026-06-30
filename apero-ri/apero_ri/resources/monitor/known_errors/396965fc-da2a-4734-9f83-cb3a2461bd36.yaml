@@ -1,0 +1,28 @@
+id: 396965fc-da2a-4734-9f83-cb3a2461bd36
+slug: none
+date_reported: '2024-08-13'
+reported_by: Thomas Vandal
+instrument_mode: ALL
+recipe: 'apero_ccf_nirps_he,
+
+  apero_ccf_nirps_ha'
+action: Check
+type: Unexpected
+error_code: None
+github_issue: '770.0'
+generic_error: None
+comments: 'ERRORMSGS is None means an error like went uncaught in APERO.
+
+  Check the file in the LOGFILE column for an error. If you find "IndexError: index
+  0 is out of bounds for axis 0 with size 0", this is the issue linked in the Github
+  column (770).
+
+  We could not reproduce after fixing 768 and 769, but report on Github if it happens
+  again.
+
+  If you have a lot of those issues, contact Thomas: he has a way to report them in
+  a batch.
+
+  If the error message is something else. Report to Neil.'
+full_example_error: ''
+updated_at: '2026-05-13 15:54:29'

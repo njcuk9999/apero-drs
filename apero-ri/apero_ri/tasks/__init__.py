@@ -101,7 +101,9 @@ def _register_task(
         outdict["multi_process"] = bool(getattr(module, "MULTI_PROCESS", False))
         outdict["filters"] = list(getattr(module, "FILTERS", []) or [])
 
-        outdict["local_task"] = bool(getattr(module, "LOCAL_TASK", False) or False)
+        outdict["local_task"] = bool(
+            getattr(module, "LOCAL_TASK", False) or False
+        )
 
         return outdict
 
@@ -241,6 +243,42 @@ MULTI_PROCESS["APERO_QC_STATS"] = _entry["multi_process"]
 LOCAL_TASK["APERO_QC_STATS"] = _entry["local_task"]
 FILTERS["APERO_QC_STATS"] = _entry["filters"]
 
+# APERO_CHECK_TASK
+_entry = _register_task(
+    "APERO_CHECK_TASK",
+    "apero_check_task",
+    "AperoCheckTask",
+    "INSTRUMENT",
+)
+TASK_LIST["APERO_CHECK_TASK"] = _entry["task_cls"]
+P_LIST["APERO_CHECK_TASK"] = _entry["param_list"]
+AP_LIST["APERO_CHECK_TASK"] = _entry["ap_list"]
+FREQ["APERO_CHECK_TASK"] = _entry["frequency"]
+ENABLED["APERO_CHECK_TASK"] = _entry["enabled"]
+TYPE["APERO_CHECK_TASK"] = _entry["task_type"]
+USE_SUBPROCESS["APERO_CHECK_TASK"] = _entry["use_subprocess"]
+MULTI_PROCESS["APERO_CHECK_TASK"] = _entry["multi_process"]
+LOCAL_TASK["APERO_CHECK_TASK"] = _entry["local_task"]
+FILTERS["APERO_CHECK_TASK"] = _entry["filters"]
+
+# GENERATE_CHECK_DOCS
+_entry = _register_task(
+    "GENERATE_CHECK_DOCS",
+    "apero_check_doc_tasks",
+    "GenerateCheckDocsTask",
+    "GLOBAL",
+)
+TASK_LIST["GENERATE_CHECK_DOCS"] = _entry["task_cls"]
+P_LIST["GENERATE_CHECK_DOCS"] = _entry["param_list"]
+AP_LIST["GENERATE_CHECK_DOCS"] = _entry["ap_list"]
+FREQ["GENERATE_CHECK_DOCS"] = _entry["frequency"]
+ENABLED["GENERATE_CHECK_DOCS"] = _entry["enabled"]
+TYPE["GENERATE_CHECK_DOCS"] = _entry["task_type"]
+USE_SUBPROCESS["GENERATE_CHECK_DOCS"] = _entry["use_subprocess"]
+MULTI_PROCESS["GENERATE_CHECK_DOCS"] = _entry["multi_process"]
+LOCAL_TASK["GENERATE_CHECK_DOCS"] = _entry["local_task"]
+FILTERS["GENERATE_CHECK_DOCS"] = _entry["filters"]
+
 # FAV_OBJECT_WATCHER
 _entry = _register_task(
     "FAV_OBJECT_WATCHER",
@@ -258,6 +296,60 @@ USE_SUBPROCESS["FAV_OBJECT_WATCHER"] = _entry["use_subprocess"]
 MULTI_PROCESS["FAV_OBJECT_WATCHER"] = _entry["multi_process"]
 LOCAL_TASK["FAV_OBJECT_WATCHER"] = _entry["local_task"]
 FILTERS["FAV_OBJECT_WATCHER"] = _entry["filters"]
+
+# LEGACY_ASTROM_GSHEET
+_entry = _register_task(
+    'LEGACY_ASTROM_GSHEET',
+    'legacy_astrom_gsheet',
+    'LegacyAstromGSheetTask',
+    'GLOBAL',
+)
+TASK_LIST['LEGACY_ASTROM_GSHEET'] = _entry['task_cls']
+P_LIST['LEGACY_ASTROM_GSHEET'] = _entry['param_list']
+AP_LIST['LEGACY_ASTROM_GSHEET'] = _entry['ap_list']
+FREQ['LEGACY_ASTROM_GSHEET'] = _entry['frequency']
+ENABLED['LEGACY_ASTROM_GSHEET'] = _entry['enabled']
+TYPE['LEGACY_ASTROM_GSHEET'] = _entry['task_type']
+USE_SUBPROCESS['LEGACY_ASTROM_GSHEET'] = _entry['use_subprocess']
+MULTI_PROCESS['LEGACY_ASTROM_GSHEET'] = _entry['multi_process']
+LOCAL_TASK['LEGACY_ASTROM_GSHEET'] = _entry['local_task']
+FILTERS['LEGACY_ASTROM_GSHEET'] = _entry['filters']
+
+# LEGACY_REJECT_GSHEET
+_entry = _register_task(
+    'LEGACY_REJECT_GSHEET',
+    'lecacy_reject_gsheet',
+    'LegacyRejectGSheetTask',
+    'GLOBAL',
+)
+TASK_LIST['LEGACY_REJECT_GSHEET'] = _entry['task_cls']
+P_LIST['LEGACY_REJECT_GSHEET'] = _entry['param_list']
+AP_LIST['LEGACY_REJECT_GSHEET'] = _entry['ap_list']
+FREQ['LEGACY_REJECT_GSHEET'] = _entry['frequency']
+ENABLED['LEGACY_REJECT_GSHEET'] = _entry['enabled']
+TYPE['LEGACY_REJECT_GSHEET'] = _entry['task_type']
+USE_SUBPROCESS['LEGACY_REJECT_GSHEET'] = _entry['use_subprocess']
+MULTI_PROCESS['LEGACY_REJECT_GSHEET'] = _entry['multi_process']
+LOCAL_TASK['LEGACY_REJECT_GSHEET'] = _entry['local_task']
+FILTERS['LEGACY_REJECT_GSHEET'] = _entry['filters']
+
+# LEGACY_CHECK_GSHEET
+_entry = _register_task(
+    'LEGACY_CHECK_GSHEET',
+    'legacy_check_gsheet',
+    'LegacyCheckGSheetTask',
+    'GLOBAL',
+)
+TASK_LIST['LEGACY_CHECK_GSHEET'] = _entry['task_cls']
+P_LIST['LEGACY_CHECK_GSHEET'] = _entry['param_list']
+AP_LIST['LEGACY_CHECK_GSHEET'] = _entry['ap_list']
+FREQ['LEGACY_CHECK_GSHEET'] = _entry['frequency']
+ENABLED['LEGACY_CHECK_GSHEET'] = _entry['enabled']
+TYPE['LEGACY_CHECK_GSHEET'] = _entry['task_type']
+USE_SUBPROCESS['LEGACY_CHECK_GSHEET'] = _entry['use_subprocess']
+MULTI_PROCESS['LEGACY_CHECK_GSHEET'] = _entry['multi_process']
+LOCAL_TASK['LEGACY_CHECK_GSHEET'] = _entry['local_task']
+FILTERS['LEGACY_CHECK_GSHEET'] = _entry['filters']
 
 # =============================================================================
 # Start of code

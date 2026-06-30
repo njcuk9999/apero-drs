@@ -179,3 +179,18 @@
         grid-template-columns: 1fr;
     }
 }
+
+@media (max-width: 480px) {
+    .upu-users-grid,
+    .upu-cards-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* ── Dark theme ── */
+[data-theme="dark"] .upu-pill {
+    background: var(--ari-surface-muted, #1c2128);
+}
+[data-theme="dark"] .upu-user-card:hover {
+    box-shadow: 0 6px 14px rgba(0, 0, 0, 0.4);
+}

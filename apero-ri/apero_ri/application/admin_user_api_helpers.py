@@ -19,6 +19,40 @@ from apero_ri.core.permissions import (
 from flask import jsonify, request, session
 
 
+def _clean_redundant_groups(groups_list, ari_groups):
+    """
+    Remove redundant group assignments.
+
+    If a user has a group G and also inherits it via group H
+    (where H.groups contains G), remove G from the list since
+    it's already inherited by H.
+
+    Args:
+        groups_list: list of group names to clean
+        ari_groups: dict of group definitions from groups.yaml
+
+    Returns:
+        cleaned list with redundant inherited groups removed
+    """
+    if not groups_list:
+        return groups_list
+
+    groups_set = set(groups_list)
+    to_remove = set()
+
+    # For each pair (g1, g2) in groups_set, if g1 inherits g2,
+    # then g2 is redundant and should be removed
+    for g1 in list(groups_set):
+        inherited_by_g1 = get_inherited_groups(g1, ari_groups)
+        for g2 in groups_set:
+            if g1 != g2 and g2 in inherited_by_g1:
+                # g1 inherits g2, so g2 is redundant
+                to_remove.add(g2)
+
+    result = sorted(groups_set - to_remove)
+    return result
+
+
 def api_user_search(app):
     """Search users by username substring."""
     user_info, perms = app._require_admin_user()
@@ -164,10 +198,20 @@ def api_user_update_groups(app):
                 403,
             )
 
-    if not update_user_groups(target, new_groups):
+    # Clean redundant groups: if assigning a higher group that
+    # inherits lower groups, remove the lower ones automatically
+    cleaned_groups = _clean_redundant_groups(
+        new_groups, app.ari_groups
+    )
+
+    if not update_user_groups(target, cleaned_groups):
         return jsonify(success=False, error="Update failed"), 500
     app._refresh_admin_health_after_change(user_info, perms)
-    return jsonify(success=True)
+    return jsonify(
+        success=True,
+        groups=cleaned_groups,
+        note="Redundant inherited groups were removed"
+    )
 
 
 def api_user_update_instruments(app):

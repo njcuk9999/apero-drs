@@ -47,6 +47,9 @@
             <span class="ari-ap-legend__item ari-ap-legend__item--invalid">
                 <i class="fa-solid fa-circle-xmark"></i> Needs attention
             </span>
+            <span class="ari-ap-legend__item ari-ap-legend__item--disabled">
+                <i class="fa-solid fa-circle-minus"></i> Disabled
+            </span>
         </div>
         <div id="profile-list" class="ari-ap-profile-list">
             <div class="ari-sg-empty-small">No profiles yet</div>
@@ -247,6 +250,8 @@
                 ('profile-path-tellu', 'PATH.TELLU', 'formally DRS_TELLU_DB', ''),
                 ('profile-path-log',   'PATH.LOG',   'formally DRS_DATA_MSG', ''),
                 ('profile-path-lbl',   'PATH.LBL',   'formally LBL_PATH', ''),
+                ('profile-path-check', 'PATH.CHECK', 'APERO checks YAML directory', ''),
+                ('profile-path-other', 'PATH.OTHER', 'formally DRS_DATA_OTHER', ''),
             ] %}
             {% for field_id, label, hint, extra_note in path_fields %}
             <div class="ari-ap-form__field">
@@ -389,6 +394,14 @@
 <!-- Toast notification -->
 <div id="toast" class="ari-toast" style="display:none;"></div>
 
+<!-- Busy overlay -->
+<div id="ari-busy-overlay" class="ari-busy-overlay" style="display:none;">
+    <div class="ari-busy-overlay__panel" role="status" aria-live="polite">
+        <i class="fa-solid fa-spinner fa-spin ari-busy-overlay__icon"></i>
+        <span id="ari-busy-overlay-text">Loading...</span>
+    </div>
+</div>
+
 <script>
 window.ARI_APERO_PROFILES = {
     listUrl: {{ url_for('api_apero_profiles_list')|tojson }},
@@ -399,6 +412,7 @@ window.ARI_APERO_PROFILES = {
     validateUrl: {{ url_for('api_apero_profiles_validate')|tojson }},
     browseUrl: {{ url_for('api_apero_profiles_browse')|tojson }},
     updateGroupsUrl: {{ url_for('api_apero_profiles_update_groups')|tojson }},
+    toggleDisabledUrl: {{ url_for('api_apero_profiles_toggle_disabled')|tojson }},
     testDbUrl: {{ url_for('api_apero_profiles_test_db')|tojson }},
     listTablesUrl: {{ url_for('api_apero_profiles_list_tables')|tojson }},
     testTablesUrl: {{ url_for('api_apero_profiles_test_tables')|tojson }},

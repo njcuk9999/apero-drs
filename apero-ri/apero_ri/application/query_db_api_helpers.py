@@ -1,15 +1,19 @@
 """Query DB API helper functions for ARIApp."""
 
+import csv
+import io
 import time as _time
 from pathlib import Path
 
+import astropy.io.fits as fits
+from apero_ri.base.base import BLOCK_KIND as block_kind_map
 from apero_ri.core.auth import (
     get_accessible_profiles,
     get_public_permissions,
     load_db_access,
 )
 from apero_ri.core.permissions import resolve_user_permissions
-from flask import jsonify, request
+from flask import jsonify, request, send_file
 
 
 def api_query_db_run(app):
@@ -268,4 +272,192 @@ def api_file_browser(app):
         preset=preset,
         generated_at=generated_at,
         query_time=round(query_time, 3),
+    )
+
+
+def _resolve_file_header_request(app):
+    """Resolve and validate a file-header request for the file browser."""
+    user_info = app._get_api_user()
+    if user_info:
+        perms = resolve_user_permissions(user_info['groups'], app.ari_groups)
+    else:
+        perms = get_public_permissions()
+
+    if 'view.data_portal' not in perms:
+        return None, None, (jsonify(success=False, error='Unauthorized'), 401)
+
+    profile_id = request.args.get('profile_id', '').strip()
+    block_kind = request.args.get('block_kind', '').strip().lower()
+    obs_dir = request.args.get('obs_dir', '').strip()
+    filename = request.args.get('filename', '').strip()
+    kw_run_id = request.args.get('kw_run_id', '').strip()
+
+    if not profile_id or not block_kind or not filename:
+        return (
+            None,
+            None,
+            (
+                jsonify(success=False, error='Missing required params'),
+                400,
+            ),
+        )
+
+    accessible = get_accessible_profiles(user_info, app.ari_groups)
+    profile = None
+    for prof in accessible:
+        if prof['profile_id'] == profile_id:
+            profile = prof
+            break
+    if profile is None:
+        return (
+            None,
+            None,
+            (jsonify(success=False, error='Profile not found'), 404),
+        )
+
+    instrument = profile['instrument']
+    accessible_run_ids = app._get_user_accessible_run_ids(user_info, instrument)
+    if kw_run_id and kw_run_id not in accessible_run_ids:
+        return (
+            None,
+            None,
+            (
+                jsonify(success=False, error='Access denied for this run_id'),
+                403,
+            ),
+        )
+
+    path_key = block_kind_map.get(block_kind)
+    if not path_key:
+        err = f'Unknown block_kind: {block_kind}'
+        return None, None, (jsonify(success=False, error=err), 400)
+
+    profile_data = profile.get('data') or {}
+    base_path_raw = str(
+        app._profile_get_path(profile_data, path_key, '') or ''
+    ).strip()
+    if not base_path_raw:
+        err = f'No path configured for {path_key}'
+        return None, None, (jsonify(success=False, error=err), 400)
+
+    try:
+        base_path = Path(base_path_raw).resolve()
+        obs_part = Path(obs_dir.strip('/')) if obs_dir else Path('')
+        file_path = (base_path / obs_part / filename).resolve()
+        file_path.relative_to(base_path)
+    except (ValueError, OSError) as exc:
+        err = f'Path error: {exc}'
+        return None, None, (jsonify(success=False, error=err), 400)
+
+    if not file_path.is_file():
+        err = f'File not found: {filename}'
+        return None, None, (jsonify(success=False, error=err), 404)
+
+    context = dict(
+        profile_id=profile_id,
+        block_kind=block_kind,
+        obs_dir=obs_dir,
+        filename=filename,
+    )
+    return file_path, context, None
+
+
+def _extract_fits_header_rows(file_path):
+    """Extract FITS header cards as serializable rows."""
+    header = fits.getheader(str(file_path), ext=0)
+    rows = []
+    for idx, card in enumerate(header.cards):
+        key = str(card.keyword or '')
+        val = '' if card.value is None else str(card.value)
+        com = '' if card.comment is None else str(card.comment)
+        rows.append(
+            dict(
+                index=idx,
+                key=key,
+                value=val,
+                comment=com,
+            )
+        )
+    return header, rows
+
+
+def api_file_header(app):
+    """Return FITS header rows for a file-browser row."""
+    file_path, context, error_response = _resolve_file_header_request(app)
+    if error_response is not None:
+        return error_response
+
+    try:
+        header, rows = _extract_fits_header_rows(file_path)
+    except Exception as exc:  # noqa: BLE001
+        err = f'Failed to read FITS header: {exc}'
+        return jsonify(success=False, error=err), 500
+
+    return jsonify(
+        success=True,
+        rows=rows,
+        card_count=len(rows),
+        extension=0,
+        summary=dict(
+            simple=bool(header.get('SIMPLE', False)),
+            bitpix=str(header.get('BITPIX', '')),
+            naxis=str(header.get('NAXIS', '')),
+        ),
+        **context,
+    )
+
+
+def api_file_header_download(app):
+    """Download a file header in CSV or FITS format."""
+    file_path, context, error_response = _resolve_file_header_request(app)
+    if error_response is not None:
+        return error_response
+
+    out_fmt = request.args.get('format', 'csv').strip().lower() or 'csv'
+    if out_fmt not in {'csv', 'fits'}:
+        return jsonify(success=False, error='Invalid format'), 400
+
+    try:
+        header, rows = _extract_fits_header_rows(file_path)
+    except Exception as exc:  # noqa: BLE001
+        err = f'Failed to read FITS header: {exc}'
+        return jsonify(success=False, error=err), 500
+
+    stem = Path(context['filename']).name
+    safe_stem = stem.replace('.fits', '').replace('.fit', '')
+    safe_stem = safe_stem or 'header'
+
+    if out_fmt == 'csv':
+        stream = io.StringIO()
+        writer = csv.writer(stream)
+        writer.writerow(['index', 'key', 'value', 'comment'])
+        for row in rows:
+            writer.writerow([
+                row['index'],
+                row['key'],
+                row['value'],
+                row['comment'],
+            ])
+        data = io.BytesIO(stream.getvalue().encode('utf-8'))
+        stream.close()
+        dl_name = f'{safe_stem}_header.csv'
+        return send_file(
+            data,
+            mimetype='text/csv',
+            as_attachment=True,
+            download_name=dl_name,
+            max_age=0,
+        )
+
+    hdu = fits.PrimaryHDU(header=header)
+    fits_bytes = io.BytesIO()
+    hdu.writeto(fits_bytes, overwrite=True)
+    fits_bytes.seek(0)
+    dl_name = f'{safe_stem}_header.fits'
+    return send_file(
+        fits_bytes,
+        mimetype='application/fits',
+        as_attachment=True,
+        download_name=dl_name,
+        max_age=0,
     )

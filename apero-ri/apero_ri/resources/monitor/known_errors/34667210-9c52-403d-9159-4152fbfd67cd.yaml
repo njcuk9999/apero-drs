@@ -1,0 +1,22 @@
+id: 34667210-9c52-403d-9159-4152fbfd67cd
+slug: class-apero-core-core-drs-exceptions-logexit-lbl-compute-exception-objname-friend-class-lbl-core-base-classes-l
+date_reported: '2023-08-28'
+reported_by: Neil Cook
+instrument_mode: ALL
+recipe: apero_lbl_compute
+action: Check
+type: Expected
+error_code: LBL
+github_issue: ''
+generic_error: "class apero.core.core.drs_exceptions.LogExit : LBL Compute Exception\
+  \ \n[{OBJNAME}_{FRIEND}] class lbl.core.base_classes.LblException : File \n{MASK_FILE}\
+  \ cannot be found LBL Compute Exception[{OBJNAME}_{FRIEND}]  class \nlbl.core.base_classes.LblException\
+  \ : No science objects found for \n{OBJNAME}. Search string={SCIENCE FILE PATH}"
+comments: This will depend on the object. You must check whether we have valid telluric
+  corrected (tcorr) files and a valid template - if we do then this needs reporting.
+  If we do not then this is normal.
+full_example_error: "class apero.core.core.drs_exceptions.LogExit : LBL Compute Exception\
+  \ \n[HIP_65_A_HIP_65_A] class lbl.core.base_classes.LblException : File \n/cosmos99/nirps/apero-data/nirps_he_offline/lbl/masks/HIP_65_A_full.fits\n\
+  \ cannot be found LBL Compute Exception [HIP_65_A_HD85512] class \nlbl.core.base_classes.LblException\
+  \ : No science objects found for \nHIP_65_A. Search \nstring=/cosmos99/nirps/apero-data/nirps_he_offline/lbl/science/HIP_65_A/*.fits"
+updated_at: '2026-05-13 15:54:29'

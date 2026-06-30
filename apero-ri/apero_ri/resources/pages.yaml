@@ -126,39 +126,6 @@ home.logout:
 # ==============================================================================
 # APERO RI: Documentation Pages
 # ==============================================================================
-home.docs.overview:
-  label: Overview
-  parent: home.docs
-  view-permission: view.doc
-  icon: fa-solid fa-eye
-  quick-nav: False
-  side-nav:
-    pinned: False
-    top-level: False
-    show: True
-  
-home.docs.install:
-  label: Installation
-  parent: home.docs
-  view-permission: view.doc
-  icon: fa-solid fa-download
-  quick-nav: True
-  side-nav:
-    pinned: False
-    top-level: False
-    show: True
-
-home.docs.api:
-  label: API & Downloads
-  parent: home.docs
-  view-permission: view.doc
-  icon: fa-solid fa-plug
-  quick-nav: True
-  side-nav:
-    pinned: False
-    top-level: False
-    show: True
-  
 # ==============================================================================
 # APERO RI: Data Portal Pages
 # ==============================================================================
@@ -342,6 +309,17 @@ home.user_portal.notifications:
     top-level: False
     show: True
 
+home.user_portal.clocks:
+  label: Clocks
+  parent: home.user_portal
+  view-permission: view.home
+  icon: fa-solid fa-clock
+  quick-nav: False
+  side-nav:
+    pinned: False
+    top-level: False
+    show: True
+
 home.user_portal.links:
   label: My Links
   parent: home.user_portal
@@ -460,6 +438,72 @@ home.admin_portal.apero_profiles:
   parent: home.admin_portal
   view-permission: manage.apero_profile
   icon: fa-solid fa-sliders
+  quick-nav: False
+  side-nav:
+    pinned: False
+    top-level: False
+    show: True
+
+home.admin_portal.apero_checks_policy:
+  label: APERO Checks Policy
+  parent: home.admin_portal
+  view-permission: manage.apero_profile
+  icon: fa-solid fa-shield
+  quick-nav: False
+  side-nav:
+    pinned: False
+    top-level: False
+    show: True
+
+home.admin_portal.apero_check_info:
+  label: APERO Check Information
+  parent: home.admin_portal
+  view-permission: manage.apero_profile
+  icon: fa-solid fa-circle-info
+  quick-nav: False
+  side-nav:
+    pinned: False
+    top-level: False
+    show: False
+
+home.admin_portal.miscellaneous:
+  label: Miscellaneous
+  parent: home.admin_portal
+  view-permission: manage.apero_profile
+  icon: fa-solid fa-screwdriver-wrench
+  quick-nav: False
+  side-nav:
+    pinned: False
+    top-level: False
+    show: True
+
+home.admin_portal.miscellaneous.allowed_python_expressions:
+  label: Allowed Python Expressions
+  parent: home.admin_portal.miscellaneous
+  view-permission: manage.apero_profile
+  icon: fa-solid fa-code
+  quick-nav: False
+  side-nav:
+    pinned: False
+    top-level: False
+    show: True
+
+home.admin_portal.miscellaneous.custom_columns:
+  label: Custom Columns
+  parent: home.admin_portal.miscellaneous
+  view-permission: manage.apero_profile
+  icon: fa-solid fa-table-columns
+  quick-nav: False
+  side-nav:
+    pinned: False
+    top-level: False
+    show: True
+
+home.admin_portal.miscellaneous.clock:
+  label: Clock Settings
+  parent: home.admin_portal.miscellaneous
+  view-permission: manage.apero_profile
+  icon: fa-solid fa-clock
   quick-nav: False
   side-nav:
     pinned: False
@@ -640,11 +684,66 @@ home.monitor_portal.issues:
     top-level: False
     show: True
 
+home.monitor_portal.known_errors:
+  label: Known errors
+  parent: home.monitor_portal
+  view-permission: monitor
+  icon: fa-solid fa-bug
+  quick-nav: False
+  side-nav:
+    pinned: False
+    top-level: False
+    show: True
+
+home.monitor_portal.status:
+  label: Status
+  parent: home.monitor_portal
+  view-permission: monitor
+  icon: fa-solid fa-signal
+  quick-nav: False
+  side-nav:
+    pinned: False
+    top-level: False
+    show: True
+
+home.monitor_portal.schedule:
+  label: Schedule
+  parent: home.monitor_portal
+  view-permission: monitor
+  icon: fa-solid fa-calendar-week
+  quick-nav: False
+  side-nav:
+    pinned: False
+    top-level: False
+    show: True
+
 home.monitor_portal.rejection_list:
   label: Rejection list
   parent: home.monitor_portal
   view-permission: monitor
   icon: fa-solid fa-ban
+  quick-nav: False
+  side-nav:
+    pinned: False
+    top-level: False
+    show: True
+
+home.monitor_portal.proc_logs:
+  label: Processing Logs
+  parent: home.monitor_portal
+  view-permission: monitor
+  icon: fa-solid fa-scroll
+  quick-nav: False
+  side-nav:
+    pinned: False
+    top-level: False
+    show: True
+
+home.monitor_portal.apero_checks:
+  label: APERO Checks
+  parent: home.monitor_portal
+  view-permission: monitor
+  icon: fa-solid fa-square-check
   quick-nav: False
   side-nav:
     pinned: False

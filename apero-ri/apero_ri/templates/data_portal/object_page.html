@@ -64,6 +64,21 @@
     color: #c08400;
     margin-right: 0.35rem;
 }
+.op-jump-highlight {
+    box-shadow: 0 0 0 3px rgba(31, 42, 68, 0.25);
+    transition: box-shadow 0.5s ease;
+}
+[data-theme="dark"] .op-verify-banner {
+    background: #2e2e12;
+    border-color: #5b4a00;
+    color: #f2cc60;
+}
+[data-theme="dark"] .op-verify-banner i.fa-triangle-exclamation {
+    color: #d29922;
+}
+[data-theme="dark"] .op-jump-highlight {
+    box-shadow: 0 0 0 3px rgba(88, 166, 255, 0.35);
+}
 </style>
 {% endblock %}
 
@@ -312,6 +327,42 @@
             </div>
             <div class="at-section-card__body">
                 <div id="op-spectrum-grid" class="op-kv-grid"></div>
+            </div>
+        </div>
+           <div id="op-rejected-observations"
+               class="at-section-card"
+             data-op-section-id="spectrum.rejected_observations">
+            <div class="at-section-card__header">
+                <span>
+                    <i class="fa-solid fa-triangle-exclamation"
+                       style="color:var(--ari-primary, #1f2a44);"></i>
+                    Rejected observations
+                </span>
+            </div>
+            <div class="at-section-card__body">
+                <div id="op-rejected-empty" class="at-muted-hint">
+                    No rejected observations were found for this object.
+                </div>
+                <div id="op-rejected-wrap"
+                     class="ot-table-wrap"
+                     style="display:none;">
+                    <table class="ot-table">
+                        <thead>
+                            <tr class="ot-header-row">
+                                <th class="ot-th ot-th--nonsortable">Identifier</th>
+                                <th class="ot-th ot-th--nonsortable">PP</th>
+                                <th class="ot-th ot-th--nonsortable">TEL</th>
+                                <th class="ot-th ot-th--nonsortable">RV</th>
+                                <th class="ot-th ot-th--nonsortable">USED</th>
+                                <th class="ot-th ot-th--nonsortable">Who</th>
+                                <th class="ot-th ot-th--nonsortable">Last update</th>
+                                <th class="ot-th ot-th--nonsortable">Comment</th>
+                                <th class="ot-th ot-th--nonsortable">Flag</th>
+                            </tr>
+                        </thead>
+                        <tbody id="op-rejected-tbody"></tbody>
+                    </table>
+                </div>
             </div>
         </div>
         <div class="at-section-card" data-op-section-id="spectrum.snr_plot">
@@ -607,9 +658,9 @@
                 <div class="fb-presets">
                     <span class="fb-presets__label">Presets:</span>
                     <button class="ari-btn ari-btn--sm ari-btn--secondary fb-preset-btn fb-preset-btn--active"
-                            data-preset="default">All processed (out, QC&ge;1)</button>
+                            data-preset="none">All files</button>
                     <button class="ari-btn ari-btn--sm ari-btn--secondary fb-preset-btn"
-                        data-preset="none">All files</button>
+                            data-preset="default">All processed (out, QC&ge;1)</button>
                     <button class="ari-btn ari-btn--sm ari-btn--secondary fb-preset-btn"
                             data-preset="ext2d">Extracted 2D spectra</button>
                     <button class="ari-btn ari-btn--sm ari-btn--secondary fb-preset-btn"
@@ -1005,6 +1056,54 @@
             </div>
         </div>
     </section>
+
+    <div id="op-reject-issue-overlay"
+         style="display:none;position:fixed;inset:0;
+                background:rgba(15,23,42,0.45);z-index:1200;
+                align-items:center;justify-content:center;">
+        <div style="width:min(32rem,92vw);background:#fff;
+                    border:1px solid #d7dde7;border-radius:0.65rem;
+                    box-shadow:0 18px 40px rgba(0,0,0,0.2);
+                    padding:1rem 1rem 0.85rem;">
+            <h4 style="margin:0 0 0.55rem;font-size:1.02rem;">
+                Flag rejected observation
+            </h4>
+            <p class="at-muted-hint" style="margin:0 0 0.7rem;">
+                This creates an issue linked to the rejection list entry.
+            </p>
+            <div style="font-size:0.9rem;margin-bottom:0.45rem;">
+                <strong>Identifier:</strong>
+                <span id="op-reject-issue-id"></span>
+            </div>
+            <label for="op-reject-issue-comment"
+                   style="display:block;font-size:0.84rem;
+                          margin-bottom:0.25rem;">
+                Comment
+            </label>
+            <textarea id="op-reject-issue-comment"
+                      rows="4"
+                      style="width:100%;resize:vertical;
+                             border:1px solid #cbd5e1;
+                             border-radius:0.35rem;padding:0.5rem;"
+                      placeholder="Describe why this entry should be reviewed."></textarea>
+            <div id="op-reject-issue-status"
+                 class="at-muted-hint"
+                 style="margin-top:0.45rem;display:none;"></div>
+            <div style="display:flex;justify-content:flex-end;gap:0.45rem;
+                        margin-top:0.75rem;">
+                <button id="op-reject-issue-cancel"
+                        class="ari-btn ari-btn--sm ari-btn--secondary"
+                        type="button">
+                    Cancel
+                </button>
+                <button id="op-reject-issue-submit"
+                        class="ari-btn ari-btn--sm ari-btn--primary"
+                        type="button">
+                    Create issue
+                </button>
+            </div>
+        </div>
+    </div>
 </div>
 
 <script>
@@ -1013,6 +1112,7 @@ window.ARI_OBJECT_PAGE = {
     objectPlotsApiUrl: '/api/data-portal/object-plots',
     objectLblPlotsApiUrl: '/api/data-portal/object-lbl-plots',
     objectDownloadApiUrl: '/api/data-portal/object-download',
+    objectRejectionIssueApiUrl: '/api/data-portal/object-rejection-issue',
     finderChartApiUrl: '/api/data-portal/finder-chart',
     finderChartStreamUrl: '/api/data-portal/finder-chart-stream',
     finderChartCached: {{ (finder_chart_cached | default(false)) | tojson }},
@@ -1040,6 +1140,8 @@ window.ARI_OBJECT_PAGE = {
     objectFavouriteApiToggle: '/api/user/favourite-objects/toggle',
     objectFavouriteApiLastOpened: '/api/user/favourite-objects/last-opened',
     filenamePlotApiUrl: '/api/data-portal/filename-plot',
+    fileHeaderApiUrl: '/api/data-portal/file-header',
+    fileHeaderDownloadApiUrl: '/api/data-portal/file-header-download',
     plotYAxisZoom: {{ plot_yaxis_zoom | tojson }},
     commentsListApiUrl: '/api/data-portal/object-comments/list',
     commentsAddApiUrl: '/api/data-portal/object-comments/add',
@@ -1075,7 +1177,7 @@ window.ARI_BASKET_CFG = {
 window.ARI_PLOTABLE_OUTPUTS = {{ plotable_output_types | tojson }};
 window.ARI_FRAME_PREFIXES   = {{ frame_output_prefixes | tojson }};
 </script>
-<script src="{{ url_for('static', filename='js/file_browser.js', v='20260410d') }}" defer></script>
+<script src="{{ url_for('static', filename='js/file_browser.js', v='20260610a') }}" defer></script>
 <script src="{{ url_for('static', filename='js/object_comments.js', v='20260609a') }}" defer></script>
 
 <!-- ──── Filename-click plot modal ──────────────────────────────────────── -->
@@ -1093,6 +1195,70 @@ window.ARI_FRAME_PREFIXES   = {{ frame_output_prefixes | tojson }};
             </div>
             <div id="fn-plot-error" class="fn-modal-error" style="display:none;"></div>
             <div id="fn-plot-div"></div>
+        </div>
+    </div>
+</div>
+
+<!-- ──── File header modal ──────────────────────────────────────────────── -->
+<div id="fb-header-modal" class="fn-modal-overlay" style="display:none;"
+     role="dialog" aria-modal="true" aria-labelledby="fb-header-title">
+    <div class="fn-modal-box fb-header-modal-box">
+        <div class="fn-modal-header">
+            <span id="fb-header-title" class="fn-modal-title">FITS Header</span>
+            <button id="fb-header-download-csv"
+                    class="ari-btn ari-btn--sm ari-btn--secondary"
+                    title="Download CSV">
+                <i class="fa-solid fa-file-csv"></i> CSV
+            </button>
+            <button id="fb-header-download-fits"
+                    class="ari-btn ari-btn--sm ari-btn--secondary"
+                    title="Download FITS header">
+                <i class="fa-solid fa-file-arrow-down"></i> FITS
+            </button>
+            <button id="fb-header-close"
+                    class="ari-btn ari-btn--sm ari-btn--secondary fn-modal-close"
+                    title="Close">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+        <div class="fn-modal-body">
+            <div class="fb-header-toolbar">
+                <input id="fb-header-filter" type="text"
+                       class="ari-input fb-header-filter"
+                       placeholder="Filter key/value/comment…">
+                <span id="fb-header-count" class="at-muted-hint">0 cards</span>
+            </div>
+            <div id="fb-header-loading" class="at-muted-hint"
+                 style="display:none;">
+                <i class="fa-solid fa-spinner fa-spin"></i>
+                Loading FITS header&hellip;
+            </div>
+            <div id="fb-header-error" class="fn-modal-error"
+                 style="display:none;"></div>
+            <div class="ot-table-wrap">
+                <table id="fb-header-table" class="ot-table">
+                    <thead>
+                        <tr>
+                            <th data-col="key" class="ot-th ot-th--sortable">
+                                Key
+                            </th>
+                            <th data-col="value" class="ot-th ot-th--sortable">
+                                Value
+                            </th>
+                            <th data-col="comment" class="ot-th ot-th--sortable">
+                                Comment
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody id="fb-header-tbody">
+                        <tr>
+                            <td colspan="3" class="ot-empty">
+                                Open a file header to view cards.
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
         </div>
     </div>
 </div>

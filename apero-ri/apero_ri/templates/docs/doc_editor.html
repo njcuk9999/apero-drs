@@ -88,7 +88,7 @@
         <button type="button" class="ari-btn ari-btn--primary ari-btn--sm" id="editor-save">
             <i class="fa-solid fa-floppy-disk"></i> Save
         </button>
-        <a href="{{ url_for(page_endpoint) }}?v={{ version_id }}"
+        <a href="{{ view_url }}?v={{ version_id }}"
            class="ari-btn ari-btn--sm" style="background:var(--ari-text-muted);color:#fff;">
             <i class="fa-solid fa-xmark"></i> Cancel
         </a>
@@ -119,7 +119,7 @@
 window.ARI_EDITOR = {
     saveUrl: {{ url_for('doc_save', page_ref=doc_ref)|tojson }},
     uploadUrl: {{ url_for('doc_upload_image')|tojson }},
-    viewUrl: {{ url_for(page_endpoint, v=version_id)|tojson }},
+    viewUrl: {{ (view_url ~ '?v=' ~ version_id)|tojson }},
     versionId: {{ version_id|tojson }},
     docRef: {{ doc_ref|tojson }},
     csrfOk: true

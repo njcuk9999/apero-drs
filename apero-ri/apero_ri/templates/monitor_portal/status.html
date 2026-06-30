@@ -1,0 +1,131 @@
+{% extends "general/sidebar_base.html" %}
+{% block title %}APERO RI - Status{% endblock %}
+
+{% block body_class %}ari-has-sidebar ari-status-index-page{% endblock %}
+
+{% block extra_head %}
+{{ super() }}
+<style>
+.status-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1rem;
+    margin-top: 1rem;
+}
+.status-link-card {
+    display: grid;
+    gap: 0.75rem;
+    padding: 1rem;
+    border: 1px solid var(--ari-border);
+    border-radius: 1rem;
+    background: var(--ari-card-bg);
+    text-decoration: none;
+    color: inherit;
+    box-shadow: 0 8px 20px rgba(15, 23, 42, 0.06);
+    transition: transform 0.14s ease, box-shadow 0.14s ease;
+}
+.status-link-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 14px 28px rgba(15, 23, 42, 0.1);
+}
+.status-link-card__head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 0.75rem;
+}
+.status-link-card__title {
+    font-size: 1.05rem;
+    font-weight: 700;
+}
+.status-link-card__subtitle {
+    color: var(--ari-text-muted);
+}
+.status-link-card__go {
+    color: var(--ari-text-muted);
+    font-size: 0.9rem;
+}
+.status-link-card__meta {
+    color: var(--ari-text-muted);
+    font-size: 0.84rem;
+}
+.status-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.6rem;
+    height: 1.6rem;
+    border-radius: 999px;
+}
+.status-badge--ok {
+    color: #15803d;
+    background: #dcfce7;
+}
+.status-badge--warning {
+    color: #b45309;
+    background: #ffedd5;
+}
+.status-badge--critical {
+    color: #b91c1c;
+    background: #fee2e2;
+}
+.status-error {
+    margin-top: 0.9rem;
+    padding: 0.8rem 0.9rem;
+    border-radius: 0.75rem;
+    border: 1px solid #f59e0b;
+    background: #fff7ed;
+    color: #9a3412;
+}
+</style>
+{% endblock %}
+
+{% block doc_content %}
+<div class="ari-page-header">
+    <h1><i class="fa-solid fa-signal"></i> Status</h1>
+    <p class="ari-page-subtitle">
+        Select a status source to view details. Card symbols summarize
+        the current state.
+    </p>
+</div>
+
+{% if status_error %}
+<div class="status-error">
+    <strong>Some live sources could not be refreshed.</strong>
+    <div>{{ status_error }}</div>
+</div>
+{% endif %}
+
+<div class="status-cards">
+    {% for card in status_cards %}
+    <a href="{{ card.url }}" class="status-link-card">
+        <div class="status-link-card__head">
+            <div class="status-link-card__title">{{ card.title }}</div>
+            {% if card.status_level == 'critical' %}
+            <span class="status-badge status-badge--critical"
+                  title="Critical issue">
+                <i class="fa-solid fa-triangle-exclamation"></i>
+            </span>
+            {% elif card.status_level == 'warning' %}
+            <span class="status-badge status-badge--warning"
+                  title="Warning issue">
+                <i class="fa-solid fa-triangle-exclamation"></i>
+            </span>
+            {% else %}
+            <span class="status-badge status-badge--ok"
+                  title="OK">
+                <i class="fa-solid fa-check"></i>
+            </span>
+            {% endif %}
+        </div>
+        <div class="status-link-card__subtitle">{{ card.subtitle }}</div>
+        <div class="status-link-card__meta">
+            Fetched {{ card.fetched_at }}
+        </div>
+        <div class="status-link-card__go">
+            Open status details <i class="fa-solid fa-arrow-right"></i>
+        </div>
+    </a>
+    {% endfor %}
+</div>
+{% endblock %}

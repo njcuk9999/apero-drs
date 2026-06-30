@@ -621,3 +621,20 @@
         flex-wrap: wrap;
     }
 }
+
+/* ── Dark theme ── */
+[data-theme="dark"] .upm-form-status.is-error  { color: #f85149; }
+[data-theme="dark"] .upm-form-status.is-success { color: #3fb950; }
+
+[data-theme="dark"] .ari-notif-panel__item.is-unread {
+    background: rgba(88, 166, 255, 0.08);
+}
+[data-theme="dark"] .upm-row {
+    box-shadow: none;
+}
+[data-theme="dark"] .upm-row:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+}
+[data-theme="dark"] .upm-typeahead-item:hover {
+    background: var(--ari-surface-muted, #1c2128);
+}

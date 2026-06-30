@@ -1,29 +1,46 @@
+# General instrument configuration.
 general:
-  # instrument
+
+  # Instrument code used by APERO/ARI.
   instrument: SPIROU
-  # science fiber
+
+  # Science fiber identifier.
   science_fiber: AB
-  # science types
+
+  # Science DPR/TYPES included in tools.
   science_types:
     - OBJ_DARK
     - OBJ_FP
     - POLAR_DARK
     - POLAR_FP
-  # spectral bands to show in the UI
+
+  # Spectral bands shown in the interface.
   bands:
     - Y
     - H
-  # has polarimetry
+
+  # Whether this instrument has polarimetry.
   has_polarimetry: true
-  # query-db preset file (relative to resources/aprofile_qdb_presets/)
+
+  # Default DB-query preset filename.
   db-query-preset-file: spirou_v7.txt
+
+# Observatory site metadata.
 observatory:
-  # CFHT, Mauna Kea, Hawaii
+
+  # Observatory latitude in degrees.
   lat: 19.8283
+
+  # Observatory longitude in degrees.
   lon: -155.4683
+
+  # Observatory altitude in meters.
   alt: 4204
+
+# Plot defaults and wavelength windows.
 plot:
-  # Spectrum wavelength ranges in nm
+
+  # Main spectrum wavelength windows (nm).
   SpecWave:
     limit0:
       - 965
@@ -37,12 +54,25 @@ plot:
     limit3:
       - 2164
       - 2169
-  # Wavelength range of interest for debug telluric correction map
+
+  # Telluric map wavelength range (nm).
   TcorrMapWave:
     - 1716
     - 1726
-# Header keys
+
+# Legacy checks Google Sheets configuration.
+legacy_checks_gsheet:
+
+  # Monitoring sheet URL for this profile/instrument.
+  monitoring_sheet_url: ''
+
+  # Override sheet URL for this profile/instrument.
+  override_sheet_url: ''
+
+# Header-key mappings shown in science views.
 sci-headers:
+
+  # Mappings for pp-level files.
   pp:
     PP_MJDMID:
       key: MJDMID
@@ -66,6 +96,8 @@ sci-headers:
       key: RUNID
       label: Program ID
       dtype: str
+
+  # Mappings for ext-level files.
   ext:
     EXT_MJDMID:
       key: MJDMID
@@ -213,6 +245,8 @@ sci-headers:
       key: WAVETIME
       label: Wave sol
       dtype: float
+
+  # Mappings for tcorr-level files.
   tcorr:
     TCORR_MJDMID:
       key: MJDMID
@@ -245,6 +279,8 @@ sci-headers:
       key: VERSION
       label: APERO Version
       dtype: str
+
+  # Mappings for ccf-level files.
   ccf:
     CCF_MASK:
       key: CCFMASK
@@ -279,6 +315,8 @@ sci-headers:
       key: VERSION
       label: Version [ccf]
       dtype: str
+
+  # Mappings for lbl-level files.
   lbl:
     EXT_H:
       key: EXTSN035
@@ -288,7 +326,11 @@ sci-headers:
       key: LBL_VERS
       label: LBL Version
       dtype: str
+
+# Calib headers setting.
 calib-headers:
+
+  # SHAPEL setting.
   SHAPEL:
     KW_MID_OBS_TIME:
       key: MJDMID
@@ -319,6 +361,8 @@ calib-headers:
       key: SHAPE_D
       label: Shape D
       dtype: float
+
+  # WAVE NIGHT setting.
   WAVE_NIGHT:
     KW_MID_OBS_TIME:
       key: MJDMID
@@ -337,12 +381,129 @@ calib-headers:
       key: WCAV000
       label: Wave cavity [intercept]
       dtype: float
+
+# APERO checks and monitor defaults.
+apero-checks:
+
+  # Common APERO-check settings.
+  common:
+
+    # Header key aliases used by this check group.
+    header_keys:
+      dpr_type: ''
+      obs_name: ''
+      mjd_obs: ''
+      obj_name: ''
+
+  # Calibration-presence check settings.
+  calib_test:
+
+    # Enable or disable this check.
+    enabled: false
+
+    # Required DPRTYPE entries for this check.
+    required_dprtypes: []
+
+  # Calibration OB-name check settings.
+  calib_ob_test:
+
+    # Enable or disable this check.
+    enabled: false
+
+    # Required OB name windows for this check.
+    required_obnames: {}
+
+  # No-science-night check settings.
+  no_sci:
+
+    # Enable or disable this check.
+    enabled: false
+
+    # DPRTYPE entries used by this check.
+    dprtypes: []
+
+  # Quality-threshold check settings.
+  qual_test:
+
+    # Enable or disable this check.
+    enabled: false
+
+    # DPRTYPE groups used by this check.
+    dpr_groups: {}
+
+    # Constraints setting.
+    constraints: {}
+
+  # Engineering-night exclusion settings.
+  eng_test:
+
+    # Tests setting.
+    tests:
+      enclosure_temperature_rms:
+        enabled: false
+      enclosure_setpoint_offset:
+        enabled: false
+      vacuum_gauge_upper:
+        enabled: false
+      isolation_valve_state:
+        enabled: false
+      cryo1_status_state:
+        enabled: false
+      cryo2_status_state:
+        enabled: false
+      turbopump_status_state:
+        enabled: false
+      warning_cryo1_state:
+        enabled: false
+      warning_cryo2_state:
+        enabled: false
+      fp_interior_rms:
+        enabled: false
+      fp_exterior_range:
+        enabled: false
+      fp_setpoint_rms:
+        enabled: false
+      enclosure_heater_power_max:
+        enabled: false
+      scrambling_status_science:
+        enabled: false
+      stretcher_status_state:
+        enabled: false
+      backend_device_error_state:
+        enabled: false
+
+  # Astrometrics object-name check settings.
+  astrom_test:
+
+    # Enable or disable this check.
+    enabled: true
+
+    # FITS header keys to try (in order) for the object name.
+    obj_name_keys:
+      - OBJECT
+      - OBJNAME
+
+    # Only files whose DPRTYPE appears in this list are checked.
+    # An empty list means all files are checked regardless of DPRTYPE.
+    dprtypes: []
+
+    # When set, use filename suffix as the science filter instead of DPRTYPE.
+    # e.g. 'o.fits' selects only SPIRou raw science frames by filename.
+    sci_suffix: o.fits
+
+# Finder setting.
 finder:
-  # define time in years before and after "obs date" to plot trail for
+
+  # DTMIN setting.
   DTMIN: -6
+
+  # DTMAX setting.
   DTMAX: 6
+
+  # DTVAL setting.
   DTVAL: 3
-  # define the field of view (in arcsec)
+
+  # FIELD OF VIEW setting.
   FIELD_OF_VIEW:
     G:
       - 77.6
@@ -350,42 +511,51 @@ finder:
     J:
       - 18.2
       - 18.2
-  # the scale factor of one band (others will be matched)
+
+  # SCALE FACTOR setting.
   SCALE_FACTOR:
     G: 1.5
-  # the pixel scale (in arcsec/pixel)
+
+  # PIXEL SCALE setting.
   PIXEL_SCALE:
     G: 0.1514
     J: 0.1514
-  # Transform the image (rotation) in degrees
+
+  # TRANSFORM ROTATE setting.
   TRANSFORM_ROTATE:
-    #  180 + 90 - 37.4
     G: 232.6
-    #  180 + 90 - 37.4 + 90
     J: 322.6
-  # FWHM (arcsec)
+
+  # FWHM setting.
   FWHM:
     G: 2.0
     J: 2.0
-  # 1-sgiam magnitude limit
+
+  # SIGMA LIMIT setting.
   SIGMA_LIMIT:
     G: 18
     J: 15
     H: 15
     K: 15
-  # mag limit above 1-sigma limit for null sources
+
+  # MAG LIMIT setting.
   MAG_LIMIT: -1
-  # max proper motion to search for (arcsec/yr)
+
+  # MAX PM setting.
   MAX_PM: 11
-  # scale bar size (arcsec)
+
+  # SCALE SIZE setting.
   SCALE_SIZE: 10
-  # compass size (fraction of image)
+
+  # COMPASS FRAC setting.
   COMPASS_FRAC: 0.075
-  # flip the image in x
+
+  # FLIP X setting.
   FLIP_X:
     G: True
     J: True
-  # flip the image in y
+
+  # FLIP Y setting.
   FLIP_Y:
     G: False
     J: False

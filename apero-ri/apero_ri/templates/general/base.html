@@ -13,7 +13,7 @@
           crossorigin="anonymous" referrerpolicy="no-referrer" />
 
     <!-- ARI stylesheet -->
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css', v='20260422c') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css', v='20260524a') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/mobile_overrides.css', v='20260424a') }}">
     {% if logged_in %}
     <link rel="stylesheet" href="{{ url_for('static', filename='css/user_portal_messaging.css', v='20260424a') }}">
@@ -51,6 +51,28 @@
                 <i class="{{ page.icon }}"></i>
             </a>
             {% endfor %}
+
+            <span class="ari-clock-wrap" id="ari-clock-wrap"
+                  style="position:relative; display:inline-block;">
+                <a href="{{ url_for('home_user_portal_clocks') }}"
+                   class="ari-nav__link"
+                   id="ari-clock-link"
+                   title="Clocks"
+                   aria-label="Clocks">
+                    <i class="fa-solid fa-clock"></i>
+                </a>
+                <div class="ari-clock-panel" id="ari-clock-panel"
+                     role="dialog" aria-label="Clocks">
+                    <div class="ari-clock-panel__header">
+                        <strong>Clocks</strong>
+                        <a href="{{ url_for('home_user_portal_clocks') }}"
+                           class="ari-btn ari-btn--small">Open</a>
+                    </div>
+                    <div class="ari-clock-panel__list" id="ari-clock-list">
+                        <div class="upm-empty">Loading...</div>
+                    </div>
+                </div>
+            </span>
 
             <!-- Login / Logout link -->
             {% if logged_in %}
@@ -104,11 +126,12 @@
     <div class="ari-backdrop" id="ari-backdrop"></div>
     <aside class="ari-mobile-menu" id="ari-mobile-menu">
         {% if sidebar_tree is defined and sidebar_tree %}
+        {% if docs_sidebar_tree is defined and docs_sidebar_tree %}
         <!-- Mirror the current sidebar tree only -->
         {% for item in sidebar_tree %}
         {% if item.pinned|default(false) %}
         {% if item.url and not (item.disabled|default(false)) %}
-        <a href="{{ item.url }}{% if current_version is defined %}?v={{ current_version }}{% endif %}"
+        <a href="{{ item.url }}{% if doc_query_suffix is defined %}{{ doc_query_suffix }}{% elif current_version is defined %}?v={{ current_version }}{% endif %}"
            class="ari-mobile-menu__pin{% if item.active %} ari-mobile-menu__pin--active{% endif %}">
             <i class="{{ item.icon }}"></i>
             <span>{{ item.label }}</span>
@@ -133,24 +156,42 @@
             </select>
         </div>
         {% endif %}
-        {% for item in sidebar_tree %}
-                {% if not item.pinned|default(false) %}
+        <div class="ari-mobile-menu__docs-tree" data-doc-tree="1">
+            {% for item in sidebar_tree %}
+            {% if not item.pinned|default(false) %}
+            <div class="ari-doc-tree__row{% if item.depth > 0 %} ari-doc-tree__row--hidden{% endif %}"
+                 data-depth="{{ item.depth }}"
+                 data-doc-id="{{ item.id }}"
+                 data-doc-open="false">
+                {% if item.has_children|default(false) %}
+                <button type="button"
+                        class="ari-doc-tree__toggle"
+                        aria-label="Toggle section"
+                        aria-expanded="false"
+                        data-doc-toggle="{{ item.id }}">
+                    <i class="fa-solid fa-chevron-right"></i>
+                </button>
+                {% else %}
+                <span class="ari-doc-tree__toggle-spacer"></span>
+                {% endif %}
                 {% if item.url and not (item.disabled|default(false)) %}
-        <a href="{{ item.url }}{% if current_version is defined %}?v={{ current_version }}{% endif %}"
-           class="ari-mobile-menu__link{% if item.active %} ari-mobile-menu__link--active{% endif %}"
-           style="padding-left: {{ 0.75 + item.depth * 1.0 }}rem;">
-            <i class="{{ item.icon }}"></i>
-            <span>{{ item.label }}</span>
-        </a>
+                <a href="{{ item.url }}{% if doc_query_suffix is defined %}{{ doc_query_suffix }}{% elif current_version is defined %}?v={{ current_version }}{% endif %}"
+                   class="ari-mobile-menu__link{% if item.active %} ari-mobile-menu__link--active{% endif %}"
+                   style="padding-left: {{ 0.75 + item.depth * 1.0 }}rem;">
+                    <i class="{{ item.icon }}"></i>
+                    <span>{{ item.label }}</span>
+                </a>
                 {% else %}
                 <span class="ari-mobile-menu__link"
-                            style="padding-left: {{ 0.75 + item.depth * 1.0 }}rem; opacity: 0.55; pointer-events: none;">
-                        <i class="{{ item.icon }}"></i>
-                        <span>{{ item.label }}</span>
+                      style="padding-left: {{ 0.75 + item.depth * 1.0 }}rem; opacity: 0.55; pointer-events: none;">
+                    <i class="{{ item.icon }}"></i>
+                    <span>{{ item.label }}</span>
                 </span>
                 {% endif %}
-        {% endif %}
-        {% endfor %}
+            </div>
+            {% endif %}
+            {% endfor %}
+        </div>
 
         {% else %}
         {% for page in nav_pages %}
@@ -171,6 +212,7 @@
             <i class="fa-solid fa-right-to-bracket"></i>
             <span>Login</span>
         </a>
+        {% endif %}
         {% endif %}
         {% endif %}
     </aside>
@@ -238,6 +280,12 @@
     }());
     </script>
     <script src="{{ url_for('static', filename='js/theme.js') }}" defer></script>
+    <script>
+        window.ARI_NAV_CLOCKS = {
+            apiUrl: {{ url_for('api_clocks_get')|tojson }}
+        };
+    </script>
+    <script src="{{ url_for('static', filename='js/nav_clocks.js', v='20260524b') }}" defer></script>
     {% if logged_in %}
     <script src="{{ url_for('static', filename='js/notifications_bell.js', v='20260430a') }}" defer></script>
     {% endif %}

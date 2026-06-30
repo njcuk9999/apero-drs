@@ -2856,8 +2856,12 @@ class DrsFitsFile(DrsInputFile):
             # get value and required value
             if isinstance(header[key], str):
                 value = header[key].strip()
+            else:
+                value = header[key]
             if isinstance(rkeys[drskey], str):
                 rvalue = rkeys[drskey].strip()
+            else:
+                rvalue = rkeys[drskey]
             # check if key is valid
             if rvalue != value:
                 dargs = [argname, key, rvalue]

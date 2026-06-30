@@ -1,0 +1,22 @@
+id: 03479b7b-d408-42d0-8eaa-e57ee7bac91f
+slug: e-00-001-00054-no-good-calibrations-filename1-dprtype1-metric-value1-filename2-dprtype2-metric-value2
+date_reported: '2023-09-29'
+reported_by: Neil Cook
+instrument_mode: ALL
+recipe: apero_loc
+action: Report
+type: Expected
+error_code: 00-001-00054
+github_issue: ''
+generic_error: 'E[00-001-00054]: No good calibrations: {filename1} ({DPRTYPE1}) METRIC={value1}
+  {filename2} ({DPRTYPE2}) METRIC={value2} ...'
+comments: This means that something is very wrong with the files inputted to apero_loc
+  (either DPRTYPE=DARK_FLAT or FLAT_DARK). APERO calibrations should not be continued
+  on this night (unless someone adds some of the calibrations to the reject list and
+  only keeps "good" ones - but this may not be possible). Note if there are valid
+  calibrations from another close by night reduction can continue.
+full_example_error: 'class apero.core.core.drs_exceptions.LogExit : E[00-001-00054]:
+  No good calibrations: NIRPS_2023-09-28T17_46_28_090_pp.fits (DARK_FLAT) METRIC=0.77233522284833
+  NIRPS_2023-09-28T19_15_46_064_pp.fits (DARK_FLAT) METRIC=0.9065181215297938 NIRPS_2023-09-28T19_40_04_437_pp.fits
+  (DARK_FLAT) METRIC=0.7433919685744974 ||'
+updated_at: '2026-05-13 15:54:29'
