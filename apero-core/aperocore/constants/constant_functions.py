@@ -19,7 +19,7 @@ from typing import Any, Dict, List, Optional, Tuple, Union
 import numpy as np
 from astropy import units as uu
 from ruamel.yaml import YAML
-from ruamel.yaml.comments import CommentedMap
+from ruamel.yaml.comments import CommentedMap, CommentedSeq
 from ruamel.yaml.scalarstring import PreservedScalarString as PSS
 from ruamel.yaml.resolver import Resolver
 
@@ -53,6 +53,36 @@ SIMPLE_STYPES = base.SIMPLE_STYPES
 VALID_CHARS = base.VALID_CHARS
 # get display function
 display_func = drs_misc.display_func
+
+
+# =============================================================================
+# Define helper functions
+# =============================================================================
+def _yaml_value(value: Any) -> Any:
+    """Convert a Python value to a YAML-friendly representation.
+
+    Lists (or tuples) whose elements are themselves lists/tuples are
+    serialised with the inner sequences in flow-style so they appear as::
+
+        outer_key:
+        - [0, 0]
+        - [0, 0]
+
+    rather than the deeply-nested block form that ruamel.yaml normally produces.
+    All other values are returned unchanged.
+    """
+    if isinstance(value, (list, tuple)):
+        if any(isinstance(v, (list, tuple)) for v in value):
+            outer = CommentedSeq()
+            for item in value:
+                if isinstance(item, (list, tuple)):
+                    inner = CommentedSeq(list(item))
+                    inner.fa.set_flow_style()
+                    outer.append(inner)
+                else:
+                    outer.append(item)
+            return outer
+    return value
 
 
 # =============================================================================
@@ -914,12 +944,9 @@ class ConstantsDict:
 
     def add_to_yaml(self, data: CommentedMap, params: Any,
                     mode: str = None) -> CommentedMap:
-        # loop around keys
-        for it, key in enumerate(params.keys()):
-            # -----------------------------------------------------------------
-            # if params have a key that is not in storage we skip
-            if key not in self.storage:
-                continue
+        # loop around stored constants so user-active defaults are exported
+        # even when they are not explicitly present in params.
+        for it, key in enumerate(self.storage.keys()):
             # -----------------------------------------------------------------
             # get the constant associated with this key
             const = self.storage[key]
@@ -933,13 +960,13 @@ class ConstantsDict:
                                           message=emsg.format((eargs)))
             # get comment
             comment = self.storage[key].description
-            # if there is no comment don't add
-            if comment is None:
-                continue
             # if this is not a user constant skip
             if not self.storage[key].user:
                 continue
             # -----------------------------------------------------------------
+            # deal with no comment (description can be None)
+            if comment is None:
+                comment = ''
             # remove new lines at start/end of comment
             if not comment.startswith('\n\n'):
                 comment = comment.strip('\n')
@@ -984,13 +1011,14 @@ class ConstantsDict:
                 # if we are at the last level then set the value
                 if nested_key == nested_levels[-1]:
 
-                    sub_data[nested_key] = value
+                    sub_data[nested_key] = _yaml_value(value)
                     # ---------------------------------------------------------
-                    # add the comment
-                    ckwargs = dict(key=nested_key,
-                                   before=_comment_wrap(comment),
-                                   indent=2 * n_it)
-                    sub_data.yaml_set_comment_before_after_key(**ckwargs)
+                    # add the comment (if present)
+                    if comment is not None:
+                        ckwargs = dict(key=nested_key,
+                                       before=_comment_wrap(comment),
+                                       indent=2 * n_it)
+                        sub_data.yaml_set_comment_before_after_key(**ckwargs)
 
                 else:
                     # if the nested key is not in the sub data add it
@@ -1691,12 +1719,9 @@ class KeywordDict:
 
     def add_to_yaml(self, data: CommentedMap, params: Any,
                     mode: str = None) -> CommentedMap:
-        # loop around keys
-        for it, key in enumerate(params.keys()):
-            # -----------------------------------------------------------------
-            # if params have a key that is not in storage we skip
-            if key not in self.storage:
-                continue
+        # loop around stored constants so user-active defaults are exported
+        # even when they are not explicitly present in params.
+        for it, key in enumerate(self.storage.keys()):
             # -----------------------------------------------------------------
             # get the constant associated with this key
             const = self.storage[key]
@@ -1710,13 +1735,13 @@ class KeywordDict:
                                           message=emsg.format((eargs)))
             # get comment
             comment = self.storage[key].description
-            # if there is no comment don't add
-            if comment is None:
-                continue
             # if this is not a user constant skip
             if not self.storage[key].user:
                 continue
             # -----------------------------------------------------------------
+            # deal with no comment (description can be None)
+            if comment is None:
+                comment = ''
             # remove new lines at start/end of comment
             if not comment.startswith('\n\n'):
                 comment = comment.strip('\n')
@@ -1759,13 +1784,14 @@ class KeywordDict:
                 # if we are at the last level then set the value
                 if nested_key == nested_levels[-1]:
 
-                    sub_data[nested_key] = value
+                    sub_data[nested_key] = _yaml_value(value)
                     # ---------------------------------------------------------
-                    # add the comment
-                    ckwargs = dict(key=nested_key,
-                                   before=_comment_wrap(comment),
-                                   indent=2 * n_it)
-                    sub_data.yaml_set_comment_before_after_key(**ckwargs)
+                    # add the comment (if present)
+                    if comment is not None:
+                        ckwargs = dict(key=nested_key,
+                                       before=_comment_wrap(comment),
+                                       indent=2 * n_it)
+                        sub_data.yaml_set_comment_before_after_key(**ckwargs)
 
                 else:
                     # if the nested key is not in the sub data add it
