@@ -197,7 +197,7 @@ def make_template_cubes(params: ParamDict, recipe: DrsRecipe,
     upbins = np.unique(pbins)
     # set up flat size
     dims = [reffile.shape[0], reffile.shape[1], len(upbins)]
-    flatsize = np.product(dims)
+    flatsize = np.prod(dims)
     # create NaN filled storage
     big_cube = np.repeat([np.nan], flatsize).reshape(*dims)
     big_cube0 = np.repeat([np.nan], flatsize).reshape(*dims)
@@ -215,7 +215,7 @@ def make_template_cubes(params: ParamDict, recipe: DrsRecipe,
         # ----------------------------------------------------------------------
         # set up flat size fpr the binned median
         dims_tmp = [reffile.shape[0], reffile.shape[1], np.sum(pmask)]
-        flatsize_tmp = np.product(dims_tmp)
+        flatsize_tmp = np.prod(dims_tmp)
         # create NaN filled storage for the binned median
         big_cube_tmp = np.repeat([np.nan], flatsize_tmp).reshape(*dims_tmp)
         big_cube0_tmp = np.repeat([np.nan], flatsize_tmp).reshape(*dims_tmp)
@@ -689,7 +689,7 @@ def make_1d_template_cube(params, recipe, filenames, reffile, fiber, header,
     upbins = np.unique(pbins)
     # set up flat size
     dims = [reffile.shape[0], len(upbins)]
-    flatsize = np.product(dims)
+    flatsize = np.prod(dims)
     # create NaN filled storage
     big_cube = np.repeat([np.nan], flatsize).reshape(*dims)
     big_errors = np.repeat([np.nan], flatsize).reshape(*dims)
@@ -708,7 +708,7 @@ def make_1d_template_cube(params, recipe, filenames, reffile, fiber, header,
         # ----------------------------------------------------------------------
         # set up flat size fpr the binned median
         dims_tmp = [reffile.shape[0], np.sum(pmask)]
-        flatsize_tmp = np.product(dims_tmp)
+        flatsize_tmp = np.prod(dims_tmp)
         # create NaN filled storage for the binned median
         big_cube_tmp = np.repeat([np.nan], flatsize_tmp).reshape(*dims_tmp)
         # ----------------------------------------------------------------------
@@ -971,7 +971,7 @@ def list_current_templates(params: ParamDict,
     uobjnames = np.array(list(set(objnames)))
     # deal with all objects filter
     if all_objects is not None:
-        mask = np.in1d(uobjnames, all_objects)
+        mask = np.isin(uobjnames, all_objects)
         uobjnames = list(np.array(uobjnames)[mask])
     # return the unique set of object names
     return uobjnames
@@ -1026,7 +1026,7 @@ def calculate_berv_coverage(params: ParamDict, recipe: Union[DrsRecipe, None],
     # calculate coverage
     coverage = 1 - anticoverage
     # calculate berv coverage (integral of coverage) in km/s
-    berv_cov = float(np.trapz(coverage, velo_range))
+    berv_cov = float(np.trapezoid(coverage, velo_range))
     # log coverage
     if log:
         WLOG(params, 'info', textentry('40-019-00051', args=[berv_cov]))

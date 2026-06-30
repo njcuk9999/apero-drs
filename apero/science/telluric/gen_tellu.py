@@ -111,7 +111,7 @@ def get_tellu_include_list(params: ParamDict,
 
     # deal with all objects filter
     if all_objects is not None:
-        mask = np.in1d(whitelist, all_objects)
+        mask = np.isin(whitelist, all_objects)
         whitelist = list(np.array(whitelist)[mask])
     # return the whitelist
     return whitelist
@@ -2463,6 +2463,7 @@ def load_templates(params: ParamDict,
     WLOG(params, 'info', textentry('40-019-00005', args=wargs))
     wargs = [temp_1d_filename]
     WLOG(params, 'info', textentry('40-019-00005', args=wargs))
+    # -------------------------------------------------------------------------
     # store template properties
     temp_props = ParamDict()
     temp_props['HAS_TEMPLATE'] = True
@@ -2502,7 +2503,7 @@ def shift_template(params: ParamDict, recipe: DrsRecipe,
     # ------------------------------------------------------------------
     # reset the 2d and 1d templates (to their pre-shifted values)
     tprops['TEMP_S2D'] = np.array(tprops['ORIG_TEMP_S2D'])
-    tprops['TEMP_S1D_TABLE'] = np.array(tprops['ORIG_TEMP_S1D_TABLE'])
+    tprops['TEMP_S1D_TABLE'] = Table(tprops['ORIG_TEMP_S1D_TABLE'])
     # ------------------------------------------------------------------
     # get data from property dictionaries
     # ------------------------------------------------------------------

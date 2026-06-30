@@ -103,8 +103,9 @@ def plotend(params: ParamDict, filename: str, thumbnail: bool = False):
             else:
                 savename = filename + ext
             # print progress
-            msg = '\tSaving plot to {0}'
-            WLOG(params, '', msg.format(savename))
+            if params.get('__VISU_VERBOSE', True):
+                msg = '\tSaving plot to {0}'
+                WLOG(params, '', msg.format(savename))
             # save file to disk
             plt.savefig(savename)
         plt.close()
@@ -240,6 +241,11 @@ def plot_spectrum(params: ParamDict, filename: str,
         # get parameters for each dataset to plot
         x = dataset[label]['x']
         y = dataset[label]['y']
+        # skip plotting if we don't have any points
+        mask = np.isfinite(x) & np.isfinite(y)
+        if np.sum(mask) == 0:
+            continue
+        # get plot kwargs from dataset kwargs
         pkwargs = dataset[label]['kwargs']
         # plot the main plot
         frames['MAIN'].plot(x, y, **pkwargs, label=label)
@@ -268,6 +274,11 @@ def plot_spectrum_thumbnail(params: ParamDict, filename: str,
         # get parameters for each dataset to plot
         x = dataset[label]['x']
         y = dataset[label]['y']
+        # skip plotting if we don't have any points
+        mask = np.isfinite(x) & np.isfinite(y)
+        if np.sum(mask) == 0:
+            continue
+        # get plot kwargs from dataset kwargs
         pkwargs = dataset[label]['kwargs']
         frame.plot(x, y, **pkwargs)
     # force a tight layout for thumbnails
@@ -549,8 +560,9 @@ def lbl_trumpet_plot(frame, wavemap: np.ndarray, y: np.ndarray,
                    marker='o', alpha=0.5, color=on_color,
                    label=mask_on_label, ls='None')
     # set limits to 5 sigma away from median
-    median = np.nanmedian(y)
-    low, high = np.nanpercentile(y, [low_percentile, high_percentile])
+    with warnings.catch_warnings(record=True) as _:
+        median = np.nanmedian(y)
+        low, high = np.nanpercentile(y, [low_percentile, high_percentile])
     frame.set(ylim=[low, high])
     # plot the median line
     frame.axhline(median, color='red', ls='--',
@@ -665,13 +677,19 @@ def post_drs_post_s(params: ParamDict, filename: str, identity: str = ''):
     # get main fiber
     fiber = get_main_fiber()
     # get the header
-    header = fits.getheader(filename, extname='UniformVelocity'.format(fiber))
+    header = fits.getheader(filename, extname='UniformVelocity')
     # get the data for this plot
     table = Table.read(filename, hdu='UniformVelocity')
     # get columns from table
     wave = np.array(table['Wave'])
     spectrum = np.array(table['Flux{0}'.format(fiber)])
-    tcorr = np.array(table['Flux{0}TelluCorrected'.format(fiber)])
+    # note tcorr may not be present (if it failed QC)
+    tcorr_key = 'Flux{0}TelluCorrected'.format(fiber)
+    if tcorr_key in table:
+        tcorr = np.array(table[tcorr_key])
+    # if we don't have any tcorr data then just fill with nans
+    else:
+        tcorr = np.full_like(spectrum, np.nan)
     # set up dataset
     dataset = dict()
     dataset['Extracted 1D Spectrum'] = {
@@ -754,7 +772,8 @@ def post_drs_post_v(params: ParamDict, filename: str, identity: str = ''):
         # get the combined CCF for this file
         ccf_row = np.asarray(table['CCF{0:02d}'.format(row)], dtype=float)
         # normalize ccf
-        ccf_row = ccf_row / np.nanmedian(ccf_row)
+        with warnings.catch_warnings(record=True) as _:
+            ccf_row = ccf_row / np.nanmedian(ccf_row)
         # push into vector
         all_ccf[row] = ccf_row
     # -----------------------------------------------------------------
@@ -775,7 +794,8 @@ def post_drs_post_v(params: ParamDict, filename: str, identity: str = ''):
         # y2 1sig is the 84th percentile of all ccfs
         ccf_props['y2_2sig'] = np.nanpercentile(all_ccf, upper_sig2, axis=0)
         # med ccf is the median ccf (50th percentile)
-        ccf_props['med_ccf'] = np.nanmedian(all_ccf, axis=0)
+        with warnings.catch_warnings(record=True) as _:
+            ccf_props['med_ccf'] = np.nanmedian(all_ccf, axis=0)
         # get other properties using the ari core function
         ccf_props = ari_core.fit_ccf(ccf_props)
     # plot ccf

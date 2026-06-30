@@ -1,0 +1,58 @@
+# ============================================
+# Telluric white list file
+# ============================================
+#
+# The OBJNAME of the whitelisted file
+#
+74PscB
+31Cas
+gamTri
+HR875
+HR1314
+pi.02Ori
+HR1832
+zetLep
+HR2180
+HR2209
+24Lyn
+HR3131
+33Lyn
+etaPyx
+23LMi
+lLeo
+phiLeo
+HR4687
+HR4722
+zetVir
+82UMa
+HD130917
+betSer
+HR6025
+HD159170
+gamSct
+51Dra
+iotCyg
+omiCapA
+chiCap
+17Peg
+HR8489
+59Peg
+
+# NIRPS extras?
+mu.For
+HR1075
+HR2160
+alfPic
+HD71043
+KCen
+HR4977
+tauCen
+c02Cen
+HD129422
+HR5494
+HD131625
+lamNor
+HD154310
+alfCrA
+HR8366
+mu.PsA

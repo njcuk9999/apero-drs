@@ -116,7 +116,7 @@ def gen_abso_pca_calc(params, recipe, image, transfiles, fiber, refprops,
         dargs = [abso_npy, type(e), e]
         WLOG(params, 'debug', textentry('90-019-00001', args=dargs))
         # set up storage for the absorption
-        abso = np.zeros([len(transfiles), np.product(image.shape)])
+        abso = np.zeros([len(transfiles), np.prod(image.shape)])
         abso1 = np.zeros([len(transfiles), 2])
         # storage for transfile used
         transfiles_used = []
@@ -126,7 +126,7 @@ def gen_abso_pca_calc(params, recipe, image, transfiles, fiber, refprops,
             tout = drs_fits.readfits(params, filename, gethdr=True)
             transimage, transhdr = tout
             # test whether whole transimage is NaNs
-            if np.sum(np.isnan(transimage)) == np.product(transimage):
+            if np.sum(np.isnan(transimage)) == np.prod(transimage):
                 # log that we are removing a trans file
                 wargs = [transfiles[it]]
                 WLOG(params, '', textentry('40-019-00014', args=wargs))
@@ -140,7 +140,7 @@ def gen_abso_pca_calc(params, recipe, image, transfiles, fiber, refprops,
                 WLOG(params, '', textentry('40-019-00050', args=wargs))
             else:
                 # push data into abso array
-                abso[it, :] = transimage.reshape(np.product(image.shape))
+                abso[it, :] = transimage.reshape(np.prod(image.shape))
                 # get header keys
                 abso1[it, 0] = transhdr[params['KW_TELLUP_EXPO_WATER'][0]]
                 abso1[it, 1] = transhdr[params['KW_TELLUP_EXPO_OTHERS'][0]]
@@ -237,10 +237,10 @@ def gen_abso_pca_calc(params, recipe, image, transfiles, fiber, refprops,
     if add_deriv_pc:
         # the npc+1 term will be the derivative of the first PC
         # the npc+2 term will be the broadening factor the first PC
-        pc = np.zeros([np.product(image.shape), npc + 2])
+        pc = np.zeros([np.prod(image.shape), npc + 2])
     else:
         # create pc image
-        pc = np.zeros([np.product(image.shape), npc])
+        pc = np.zeros([np.prod(image.shape), npc])
     # fill pc image
     with warnings.catch_warnings(record=True) as _:
         for it in range(npc):
@@ -335,7 +335,7 @@ def shift_all_to_frame(params, recipe, image, template, bprops, refprops, wprops
         # Log that we are shifting the template
         WLOG(params, '', textentry('40-019-00017'))
         # set up storage for template
-        template2 = np.zeros(np.product(image.shape))
+        template2 = np.zeros(np.prod(image.shape))
         ydim, xdim = image.shape
         # loop around orders
         for order_num in range(ydim):
@@ -494,7 +494,7 @@ def calc_recon_and_correct(params, recipe, image, wprops, pca_props, sprops,
     # ----------------------------------------------------------------------
     # set storage
     # ----------------------------------------------------------------------
-    recon_abso = np.ones(np.product(image.shape))
+    recon_abso = np.ones(np.prod(image.shape))
     amps_abso_total = np.zeros(npc)
     # ----------------------------------------------------------------------
     # construct keep mask
@@ -526,7 +526,7 @@ def calc_recon_and_correct(params, recipe, image, wprops, pca_props, sprops,
         # ------------------------------------------------------------------
         if no_template_flag:
             # define template2 to fill
-            template2 = np.zeros(np.product(image.shape))
+            template2 = np.zeros(np.prod(image.shape))
             # loop around orders
             for order_num in range(nbo):
                 # get start and end points

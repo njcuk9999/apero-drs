@@ -1,0 +1,2258 @@
+/* ==========================================================================
+   Admin Async Tasks page logic
+   ========================================================================== */
+(function () {
+    'use strict';
+
+    var cfg = window.ARI_ASYNC_TASKS;
+    var instruments = cfg.instruments || [];
+    var urls = cfg.urls;
+    var GLOBAL_SCOPE = '__GLOBAL__';
+
+    /* -----------------------------------------------------------------------
+       State
+    ----------------------------------------------------------------------- */
+    var currentInstrument = null;
+    var currentView = 'instruments';
+    var allTasks = [];          // task configs for currentInstrument
+    var taskClasses = [];       // available task classes from server
+    var selectedTaskId = null;
+    var editingTaskId = null;   // null = add, string = edit
+    var pendingDeleteId = null;
+    var pollTimer = null;
+    var POLL_FAST_MS = 1000;
+    var POLL_SLOW_MS = 5000;
+    var OUTPUT_PREVIEW_PER_TYPE = 3;
+    var pollIntervalMs = POLL_SLOW_MS;
+    var dragSrcId = null;
+
+    /* -----------------------------------------------------------------------
+       DOM refs
+    ----------------------------------------------------------------------- */
+    var tabsEl          = document.getElementById('at-tabs');
+    var instrumentPicker = document.getElementById('at-instrument-picker');
+    var instrumentCards = document.getElementById('at-instrument-cards');
+    var instrWs         = document.getElementById('at-instrument-workspace');
+    var queueWs         = document.getElementById('at-queue-workspace');
+    var noInstrEl       = document.getElementById('at-no-instruments');
+
+    var btnRunAll       = document.getElementById('btn-run-all');
+    var btnForceRunAll  = document.getElementById('btn-force-run-all');
+    var runningBadge    = document.getElementById('at-running-badge');
+
+    var activeList      = document.getElementById('active-task-list');
+    var inactiveList    = document.getElementById('inactive-task-list');
+    var activeCount     = document.getElementById('active-count');
+    var inactiveCount   = document.getElementById('inactive-count');
+
+    var detailEmpty     = document.getElementById('at-detail-empty');
+    var detailCard      = document.getElementById('at-detail');
+
+    var detName         = document.getElementById('det-name');
+    var detStatusBadge  = document.getElementById('det-status-badge');
+    var detTaskKey      = document.getElementById('det-task-key');
+    var detDesc         = document.getElementById('det-description');
+    var detFreq         = document.getElementById('det-frequency');
+    var detParallelRow  = document.getElementById('det-parallel-row');
+    var detParallel     = document.getElementById('det-parallel');
+    var detSyncModeRow  = document.getElementById('det-sync-mode-row');
+    var detSyncMode     = document.getElementById('det-sync-mode');
+    var detBackupRetentionRow = document.getElementById(
+        'det-backup-retention-row');
+    var detBackupRetention    = document.getElementById(
+        'det-backup-retention');
+    var detBackupMaxSizeRow   = document.getElementById(
+        'det-backup-max-size-row');
+    var detBackupMaxSize      = document.getElementById(
+        'det-backup-max-size');
+    var detBackupExcludeDirsRow = document.getElementById(
+        'det-backup-exclude-dirs-row');
+    var detBackupExcludeDirs    = document.getElementById(
+        'det-backup-exclude-dirs');
+    var detBackupExcludePathsRow = document.getElementById(
+        'det-backup-exclude-paths-row');
+    var detBackupExcludePaths    = document.getElementById(
+        'det-backup-exclude-paths');
+    var detKvList       = document.getElementById('det-kv-list');
+    var detProgressRow  = document.getElementById('det-progress-row');
+    var detProgressFill = document.getElementById('det-progress-fill');
+    var detProgressPct  = document.getElementById('det-progress-pct');
+    var detSubprogressRow  = document.getElementById('det-subprogress-row');
+    var detSubprogressFill = document.getElementById('det-subprogress-fill');
+    var detSubprogressPct  = document.getElementById('det-subprogress-pct');
+    var detLastRun      = document.getElementById('det-last-run');
+    var detRunCount     = document.getElementById('det-run-count');
+    var detFiltersWarning = document.getElementById('det-filters-warning');
+    var detFiltersWarningList = document.getElementById(
+        'det-filters-warning-list'
+    );
+    // Section cards
+    var detInfoSection  = document.getElementById('det-info-section');
+    var detInfoBody     = document.getElementById('det-info-body');
+    var detInfoEl       = document.getElementById('det-info');
+    var detInfoEmpty    = document.getElementById('det-info-empty');
+    var detBtnToggleInfo= document.getElementById('det-btn-toggle-info');
+    var detBtnCopyInfo  = document.getElementById('det-btn-copy-info');
+    var detErrorSection = document.getElementById('det-error-section');
+    var detErrorBody    = document.getElementById('det-error-body');
+    var detError        = document.getElementById('det-error');
+    var detBtnToggleError = document.getElementById('det-btn-toggle-error');
+    var detBtnCopyError = document.getElementById('det-btn-copy-error');
+    var detParamsSection      = document.getElementById('det-params-section');
+    var detParamsBody         = document.getElementById('det-params-body');
+    var detParamsBreadcrumb   = document.getElementById('det-params-breadcrumb');
+    var detParamsExplorer     = document.getElementById('det-params-explorer');
+    var detBtnToggleParams    = document.getElementById('det-btn-toggle-params');
+    var detFilesSection = document.getElementById('det-files-section');
+    var detBtnPurgeFiles = document.getElementById('det-btn-purge-files');
+    var detOutputFiles  = document.getElementById('det-output-files');
+
+    var detBtnToggle    = document.getElementById('det-btn-toggle');
+    var detBtnEdit      = document.getElementById('det-btn-edit');
+    var detBtnDelete    = document.getElementById('det-btn-delete');
+    var detBtnRunNow    = document.getElementById('det-btn-run-now');
+    var detBtnForceRun  = document.getElementById('det-btn-force-run');
+    var detBtnStop      = document.getElementById('det-btn-stop');
+    var detBtnViewLog   = document.getElementById('det-btn-view-log');
+
+    // Queue tab
+    var btnStopAll          = document.getElementById('btn-stop-all');
+    var btnKillAll          = document.getElementById('btn-kill-all');
+    var btnClearHistory     = document.getElementById('btn-clear-history');
+    var queueRunning        = document.getElementById('queue-running');
+    var queueRunningName    = document.getElementById('queue-running-name');
+    var queueRunningInstr   = document.getElementById('queue-running-instrument');
+    var queueProgressFill   = document.getElementById('queue-progress-fill');
+    var queueProgressPct    = document.getElementById('queue-progress-pct');
+    var queueSubprogressRow = document.getElementById('queue-subprogress-row');
+    var queueSubprogressFill= document.getElementById('queue-subprogress-fill');
+    var queueSubprogressPct = document.getElementById('queue-subprogress-pct');
+    var queueRunningInfo    = document.getElementById('queue-running-info');
+    var queueBtnViewLog     = document.getElementById('queue-btn-view-log');
+    var queueBtnStop        = document.getElementById('queue-btn-stop');
+    var queuePendingList    = document.getElementById('queue-pending-list');
+    var queueHistoryList    = document.getElementById('queue-history-list');
+
+    // Edit modal
+    var editModal       = document.getElementById('at-edit-modal');
+    var editModalTitle  = document.getElementById('edit-modal-title');
+    var editTaskKey     = document.getElementById('edit-task-key');
+    var editTaskInfoRow = document.getElementById('edit-task-info-row');
+    var editTaskName    = document.getElementById('edit-task-name');
+    var editTaskDesc    = document.getElementById('edit-task-desc');
+    var editTabRunBtn   = document.getElementById('edit-tab-run');
+    var editTabFiltersBtn = document.getElementById('edit-tab-filters');
+    var editPaneRun     = document.getElementById('edit-pane-run');
+    var editPaneFilters = document.getElementById('edit-pane-filters');
+    var editFrequency   = document.getElementById('edit-frequency');
+    var editBackupFields= document.getElementById('edit-backup-fields');
+    var editDailyCopies = document.getElementById('edit-daily-copies');
+    var editWeeklyCopies= document.getElementById('edit-weekly-copies');
+    var editBackupMaxSizeMb = document.getElementById(
+        'edit-backup-max-size-mb');
+    var editBackupMaxSizeSaved = document.getElementById(
+        'edit-backup-max-size-saved');
+    var editBackupExcludeDirs = document.getElementById(
+        'edit-backup-exclude-dirs');
+    var editBackupExcludePaths = document.getElementById(
+        'edit-backup-exclude-paths');
+    var editBackupExcludeDirsDefault = document.getElementById(
+        'edit-backup-exclude-dirs-default');
+    var editBackupExcludePathsDefault = document.getElementById(
+        'edit-backup-exclude-paths-default');
+    var editAssetsFields= document.getElementById('edit-assets-fields');
+    var editAssetsMode  = document.getElementById('edit-assets-mode');
+    var editMpFields    = document.getElementById('edit-mp-fields');
+    var editNcores      = document.getElementById('edit-ncores');
+    var editMpBackend   = document.getElementById('edit-mp-backend');
+    var editMpStartMethod = document.getElementById('edit-mp-start-method');
+    var editMpWarn      = document.getElementById('edit-mp-warn');
+    var editLocalSyncFields = document.getElementById('edit-local-sync-fields');
+    var editSyncModeRow = document.getElementById('edit-sync-mode-row');
+    var editSyncMode    = document.getElementById('edit-sync-mode');
+    var editSyncSourceField = document.getElementById('edit-sync-source-field');
+    var editSyncSourceRequired = document.getElementById('edit-sync-source-required');
+    var editSyncSource  = document.getElementById('edit-sync-source');
+    var editRunCountRow = document.getElementById('edit-run-count-row');
+    var editRunCount    = document.getElementById('edit-run-count');
+    var editActive      = document.getElementById('edit-active');
+    var editFiltersEmpty = document.getElementById('edit-filters-empty');
+    var editFiltersContainer = document.getElementById('edit-filters-container');
+    var btnEditCancel   = document.getElementById('btn-edit-cancel');
+    var btnEditSave     = document.getElementById('btn-edit-save');
+    var btnEditClose    = document.getElementById('btn-edit-modal-close');
+
+    // Delete modal
+    var deleteModal     = document.getElementById('at-delete-modal');
+    var deleteModalName = document.getElementById('delete-modal-name');
+    var btnDeleteCancel = document.getElementById('btn-delete-cancel');
+    var btnDeleteConfirm= document.getElementById('btn-delete-confirm');
+
+    // Run All modal
+    var runAllModal     = document.getElementById('at-runall-modal');
+    var btnRunAllReplace= document.getElementById('btn-runall-replace');
+    var btnRunAllAdd    = document.getElementById('btn-runall-add');
+    var btnRunAllCancel = document.getElementById('btn-runall-cancel');
+    var runAllForceMode = false;
+    var editFilterInputs = {};
+
+    // File viewer modal
+    var fileModal       = document.getElementById('at-file-modal');
+    var fileModalTitle  = document.getElementById('file-modal-title');
+    var fileModalContent= document.getElementById('file-modal-content');
+    var btnFileModalClose= document.getElementById('btn-file-modal-close');
+    var btnFileModalOk  = document.getElementById('btn-file-modal-ok');
+
+    var taskLogModal = document.getElementById('at-task-log-modal');
+    var taskLogModalTitle = document.getElementById('task-log-modal-title');
+    var taskLogModalContent = document.getElementById('task-log-modal-content');
+    var btnTaskLogClose = document.getElementById('btn-task-log-close');
+    var btnTaskLogCloseX = document.getElementById('btn-task-log-close-x');
+    var btnTaskLogRefresh = document.getElementById('btn-task-log-refresh');
+    var btnTaskLogCopy = document.getElementById('btn-task-log-copy');
+
+    var BACKUP_TASK_KEY = 'ARI_LOCAL_DATA_BACKUP';
+    var ASSETS_TASK_KEY = 'APERO_SYNC_ASSETS';
+    var currentInfoText = '';
+    var currentErrorText = '';
+    var currentTaskLogText = '';
+    var currentParamsData = null;   // { 'Task Params': {...}, 'Input Params': {...} }
+    var currentParamsExpanded = new Set();
+    var currentParamsOwnerTaskId = null;
+    var openTaskLogTaskId = null;
+    var taskLogRefreshTimer = null;
+    var mpConfig = {
+        max_cores: 1,
+        recommended_max_cores: 1,
+        backends: ['threads', 'processes'],
+        start_methods: ['default', 'spawn', 'fork', 'forkserver'],
+    };
+
+    var toast = document.getElementById('at-toast');
+
+    /* -----------------------------------------------------------------------
+       Initialisation
+    ----------------------------------------------------------------------- */
+    function init() {
+        // If the page skeleton is not present, skip binding to avoid hard JS errors.
+        if (!tabsEl || !instrWs || !queueWs || !detailEmpty || !detailCard) {
+            return;
+        }
+        renderTabs();
+        renderInstrumentCards();
+        loadTaskClasses();
+        bindEditModal();
+        bindDeleteModal();
+        bindRunAllModal();
+        bindQueue();
+        bindRunAll();
+        bindFileModal();
+        bindTaskLogModal();
+        bindSectionToggles();
+
+        if (instruments.length === 0) {
+            noInstrEl.style.display = '';
+        } else {
+            selectTab('instruments');
+        }
+    }
+
+    /* -----------------------------------------------------------------------
+       Tabs
+    ----------------------------------------------------------------------- */
+    function renderTabs() {
+        if (!tabsEl) return;
+        tabsEl.innerHTML = '';
+        [
+            { value: 'global', label: '<i class="fa-solid fa-globe"></i> Global' },
+            { value: 'instruments', label: '<i class="fa-solid fa-satellite-dish"></i> Instruments' },
+            { value: 'queue', label: '<i class="fa-solid fa-layer-group"></i> Queue' },
+        ].forEach(function (tabDef) {
+            var btn = document.createElement('button');
+            btn.className = 'ari-sg-tab';
+            btn.innerHTML = tabDef.label;
+            btn.dataset.value = tabDef.value;
+            btn.addEventListener('click', function () { selectTab(tabDef.value); });
+            tabsEl.appendChild(btn);
+        });
+    }
+
+    function renderInstrumentCards() {
+        if (!instrumentCards) return;
+        instrumentCards.innerHTML = '';
+        instruments.forEach(function (inst) {
+            var btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = 'at-instrument-card';
+            btn.textContent = inst;
+            btn.dataset.instrument = inst;
+            btn.addEventListener('click', function () {
+                currentInstrument = inst;
+                highlightInstrumentCard();
+                loadTasks();
+            });
+            instrumentCards.appendChild(btn);
+        });
+        highlightInstrumentCard();
+    }
+
+    function highlightInstrumentCard() {
+        if (!instrumentCards) return;
+        Array.from(instrumentCards.querySelectorAll('.at-instrument-card')).forEach(function (btn) {
+            btn.classList.toggle('at-instrument-card--active', btn.dataset.instrument === currentInstrument);
+        });
+    }
+
+    function selectTab(value) {
+        if (!tabsEl) return;
+        // Update active styling
+        Array.from(tabsEl.querySelectorAll('.ari-sg-tab')).forEach(function (b) {
+            b.classList.toggle('ari-sg-tab--active', b.dataset.value === value);
+        });
+
+        stopPoll();
+        currentView = value;
+
+        if (value === 'queue') {
+            currentInstrument = null;
+            if (instrumentPicker) instrumentPicker.style.display = 'none';
+            instrWs.style.display = 'none';
+            queueWs.style.display = '';
+            noInstrEl.style.display = 'none';
+            refreshQueueView();
+            startPoll();
+            return;
+        }
+
+        queueWs.style.display = 'none';
+        instrWs.style.display = '';
+        noInstrEl.style.display = 'none';
+        selectedTaskId = null;
+        showDetail(null);
+
+        if (value === 'global') {
+            currentInstrument = GLOBAL_SCOPE;
+            if (instrumentPicker) instrumentPicker.style.display = 'none';
+            if (btnRunAll) {
+                btnRunAll.innerHTML = '<i class="fa-solid fa-play"></i> Run All Global';
+            }
+            loadGlobalTasks();
+            startPoll();
+            return;
+        }
+
+        if (instrumentPicker) instrumentPicker.style.display = '';
+        if (!currentInstrument || currentInstrument === GLOBAL_SCOPE) {
+            currentInstrument = instruments[0] || null;
+        }
+        highlightInstrumentCard();
+        if (btnRunAll) {
+            btnRunAll.innerHTML = '<i class="fa-solid fa-play"></i> Run All';
+        }
+        queueWs.style.display = 'none';
+        noInstrEl.style.display = 'none';
+        loadTasks();
+        startPoll();
+    }
+
+    /* -----------------------------------------------------------------------
+       Task list
+    ----------------------------------------------------------------------- */
+    function loadTasks() {
+        if (!currentInstrument || currentInstrument === GLOBAL_SCOPE) return;
+        fetch(urls.list + '?instrument=' + encodeURIComponent(currentInstrument))
+            .then(function (r) { return r.json(); })
+            .then(function (data) {
+                if (!data.success) { showToast('Failed to load tasks: ' + data.error, 'error'); return; }
+                allTasks = data.tasks || [];
+                renderTaskLists();
+                updateRunningBadge(data.queue);
+                if (selectedTaskId) {
+                    var selected = allTasks.find(function (t) { return t.id === selectedTaskId; });
+                    if (selected) {
+                        showDetail(selected);
+                    } else {
+                        showDetail(null);
+                    }
+                }
+            });
+    }
+
+    function loadGlobalTasks() {
+        fetch(urls.globalList)
+            .then(function (r) { return r.json(); })
+            .then(function (data) {
+                if (!data.success) { showToast('Failed to load global tasks: ' + data.error, 'error'); return; }
+                allTasks = data.tasks || [];
+                renderTaskLists();
+                updateRunningBadge(data.queue);
+                if (selectedTaskId) {
+                    var selected = allTasks.find(function (t) { return t.id === selectedTaskId; });
+                    if (selected) {
+                        showDetail(selected);
+                    } else {
+                        showDetail(null);
+                    }
+                }
+            });
+    }
+
+    function refreshCurrentTasks() {
+        if (currentInstrument === GLOBAL_SCOPE) {
+            loadGlobalTasks();
+            return;
+        }
+        loadTasks();
+    }
+
+    function renderTaskLists() {
+        if (!activeList || !inactiveList || !activeCount || !inactiveCount) return;
+        var active   = allTasks.filter(function (t) { return t.active !== false; });
+        var inactive = allTasks.filter(function (t) { return t.active === false; });
+        var draggable = (currentInstrument !== GLOBAL_SCOPE);
+
+        activeCount.textContent   = active.length;
+        inactiveCount.textContent = inactive.length;
+
+        renderList(activeList, active, draggable);
+        renderList(inactiveList, inactive, false);
+    }
+
+    function renderList(container, tasks, draggable) {
+        container.innerHTML = '';
+        if (tasks.length === 0) {
+            container.innerHTML = '<div class="ari-sg-empty-small">None</div>';
+            return;
+        }
+        tasks.forEach(function (task) {
+            var card = buildTaskCard(task, draggable);
+            container.appendChild(card);
+        });
+    }
+
+    function buildTaskCard(task, draggable) {
+        var rt = task.runtime || {};
+        var status = rt.found ? rt.status : 'not_started';
+        var isRunning = (status === 'in_progress');
+        var isQueued  = rt.is_queued;
+        var hasError = (status === 'failed') || !!String(rt.error || '').trim();
+
+        var card = document.createElement('div');
+        card.className = 'at-task-card' +
+            (task.active !== false ? ' at-task-card--active' : '') +
+            (task.id === selectedTaskId ? ' at-task-card--selected' : '') +
+            (task.active === false ? ' at-task-card--inactive' : '') +
+            (hasError ? ' at-task-card--error' : '');
+        card.dataset.id = task.id;
+
+        var grip = draggable
+            ? '<span class="at-task-card__grip" title="Drag to reorder">' +
+              '<i class="fa-solid fa-grip-vertical"></i></span>'
+            : '';
+
+        var statusDot = '<span class="at-task-dot at-task-dot--' + statusClass(status) + '"></span>';
+
+        var progressHtml = (isRunning || isQueued)
+            ? '<div class="at-card-progress"><div class="at-card-progress__fill" style="width:' +
+              Math.round((rt.progress || 0) * 100) + '%;"></div></div>'
+            : '';
+
+        var tags = '';
+        if (isQueued) {
+            tags += '<span class="at-tag at-tag--queued">queued</span>';
+        } else if (isRunning) {
+            tags += '<span class="at-tag at-tag--running">running</span>';
+        }
+        if (hasError) {
+            tags += '<span class="at-tag at-tag--error">ERROR</span>';
+        }
+
+        var instLabel = (currentInstrument && currentInstrument !== GLOBAL_SCOPE)
+            ? '<span class="at-task-card__inst">' + esc(currentInstrument) + ':</span> '
+            : '';
+
+        card.innerHTML =
+            grip + statusDot +
+            '<div class="at-task-card__body">' +
+                '<span class="at-task-card__name">' + instLabel + esc(task.name || task.task_key) + '</span>' +
+                '<span class="at-task-card__freq">' + (task.frequency ? esc(task.frequency) + ' hrs' : '') + '</span>' +
+                tags +
+            '</div>' +
+            progressHtml;
+
+        card.addEventListener('click', function () {
+            selectedTaskId = task.id;
+            highlightSelected();
+            showDetail(task);
+        });
+
+        if (draggable) {
+            card.setAttribute('draggable', 'true');
+            card.addEventListener('dragstart', function (e) {
+                dragSrcId = task.id;
+                e.dataTransfer.effectAllowed = 'move';
+                card.classList.add('at-task-card--dragging');
+            });
+            card.addEventListener('dragend', function () {
+                card.classList.remove('at-task-card--dragging');
+                activeList.querySelectorAll('.at-task-card--dragover').forEach(function (c) {
+                    c.classList.remove('at-task-card--dragover');
+                });
+                dragSrcId = null;
+            });
+            card.addEventListener('dragover', function (e) {
+                e.preventDefault();
+                e.dataTransfer.dropEffect = 'move';
+                card.classList.add('at-task-card--dragover');
+            });
+            card.addEventListener('dragleave', function () {
+                card.classList.remove('at-task-card--dragover');
+            });
+            card.addEventListener('drop', function (e) {
+                e.preventDefault();
+                card.classList.remove('at-task-card--dragover');
+                if (dragSrcId && dragSrcId !== task.id) {
+                    reorderTasks(dragSrcId, task.id);
+                }
+            });
+        }
+
+        return card;
+    }
+
+    function highlightSelected() {
+        document.querySelectorAll('.at-task-card').forEach(function (c) {
+            c.classList.toggle('at-task-card--selected', c.dataset.id === selectedTaskId);
+        });
+    }
+
+    /* -----------------------------------------------------------------------
+       Drag reorder
+    ----------------------------------------------------------------------- */
+    function reorderTasks(srcId, targetId) {
+        var active = allTasks.filter(function (t) { return t.active !== false; });
+        var srcIdx = active.findIndex(function (t) { return t.id === srcId; });
+        var tgtIdx = active.findIndex(function (t) { return t.id === targetId; });
+        if (srcIdx < 0 || tgtIdx < 0) return;
+
+        var moved = active.splice(srcIdx, 1)[0];
+        active.splice(tgtIdx, 0, moved);
+
+        var inactive = allTasks.filter(function (t) { return t.active === false; });
+        allTasks = active.concat(inactive);
+        renderTaskLists();
+
+        var orderList = active.map(function (t) { return t.id; });
+        fetch(urls.reorder, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ instrument: currentInstrument, order: orderList }),
+        }).then(function (r) { return r.json(); }).then(function (d) {
+            if (!d.success) { showToast('Reorder failed: ' + d.error, 'error'); }
+        });
+    }
+
+    /* -----------------------------------------------------------------------
+       Detail panel
+    ----------------------------------------------------------------------- */
+    function restripeKvList() {
+        if (!detKvList) return;
+        var rows = detKvList.querySelectorAll('.at-kv-row');
+        var i = 0;
+        rows.forEach(function (row) {
+            // Skip rows hidden via inline display:none
+            if (row.style.display === 'none') {
+                row.classList.remove('at-kv-row--alt');
+                return;
+            }
+            if (i % 2 === 1) {
+                row.classList.add('at-kv-row--alt');
+            } else {
+                row.classList.remove('at-kv-row--alt');
+            }
+            i += 1;
+        });
+    }
+
+    function showDetail(task) {
+        if (!task) {
+            detailCard.style.display = 'none';
+            detailEmpty.style.display = '';
+            return;
+        }
+
+        detailEmpty.style.display = 'none';
+        detailCard.style.display = '';
+
+        var cls = taskClasses.find(function (c) { return c.key === task.task_key; }) || {};
+        detName.textContent = cls.name || task.task_key;
+        detTaskKey.textContent = task.task_key;
+        detDesc.textContent = cls.description || '';
+        detFreq.textContent = task.frequency ? task.frequency + ' hrs' : '';
+        if (detParallelRow && detParallel) {
+            var supportsMp = !!cls.multi_process
+                || ('ncores' in task)
+                || ('mp_backend' in task)
+                || ('mp_start_method' in task);
+            if (supportsMp) {
+                var ncores = parseInt(task.ncores, 10) || 1;
+                var backend = String(task.mp_backend || 'threads');
+                var method = String(task.mp_start_method || 'default');
+                detParallel.textContent = 'NCORES=' + ncores + ', backend=' + backend + ', method=' + method;
+                detParallelRow.style.display = '';
+            } else {
+                detParallel.textContent = '';
+                detParallelRow.style.display = 'none';
+            }
+        }
+        if (detSyncModeRow && detSyncMode) {
+            var supportsLocalTask = !!cls.local_task
+                || !!task.local_task
+                || ('sync_source' in task);
+            if (supportsLocalTask) {
+                var syncSource = String(task.sync_source || '').trim();
+                detSyncMode.textContent = syncSource
+                    ? ('Sync from: ' + syncSource)
+                    : 'Run task (no sync source set)';
+                detSyncModeRow.style.display = '';
+            } else {
+                detSyncMode.textContent = '';
+                detSyncModeRow.style.display = 'none';
+            }
+        }
+
+        // Backup-task specific rows (retention + max archive size)
+        var isBackupTask = (task.task_key === BACKUP_TASK_KEY);
+        if (detBackupRetentionRow && detBackupRetention) {
+            if (isBackupTask) {
+                var dc = parseInt(task.daily_copies, 10);
+                var wc = parseInt(task.weekly_copies, 10);
+                if (!isFinite(dc)) dc = 0;
+                if (!isFinite(wc)) wc = 0;
+                detBackupRetention.textContent =
+                    dc + ' daily, ' + wc + ' weekly';
+                detBackupRetentionRow.style.display = '';
+            } else {
+                detBackupRetention.textContent = '';
+                detBackupRetentionRow.style.display = 'none';
+            }
+        }
+        if (detBackupMaxSizeRow && detBackupMaxSize) {
+            if (isBackupTask) {
+                var maxMb = parseFloat(task.backup_max_size_mb);
+                if (!isFinite(maxMb) || maxMb <= 0) {
+                    maxMb = 1024;
+                }
+                var maxMbStr = (maxMb % 1 === 0)
+                    ? String(maxMb)
+                    : maxMb.toFixed(2).replace(/\.?0+$/, '');
+                detBackupMaxSize.textContent = maxMbStr + ' MB';
+                detBackupMaxSize.title = maxMbStr + ' MB ('
+                    + (maxMb / 1024).toFixed(2) + ' GiB)';
+                detBackupMaxSizeRow.style.display = '';
+            } else {
+                detBackupMaxSize.textContent = '';
+                detBackupMaxSize.title = '';
+                detBackupMaxSizeRow.style.display = 'none';
+            }
+        }
+        // Backup exclude lists. Display the effective list:
+        // admin override if set, otherwise the built-in defaults.
+        var renderExcludeRow = function (rowEl, valEl, override, defaults) {
+            if (!rowEl || !valEl) return;
+            if (!isBackupTask) {
+                valEl.textContent = '';
+                valEl.title = '';
+                rowEl.style.display = 'none';
+                return;
+            }
+            var ov = Array.isArray(override) ? override : [];
+            var df = Array.isArray(defaults) ? defaults : [];
+            var effective = ov.length ? ov : df;
+            var suffix = ov.length ? ' (custom)' : ' (default)';
+            valEl.textContent = (effective.length
+                ? effective.join(', ')
+                : '(none)') + suffix;
+            valEl.title = effective.join('\n');
+            rowEl.style.display = '';
+        };
+        renderExcludeRow(
+            detBackupExcludeDirsRow, detBackupExcludeDirs,
+            task.exclude_dirs, task.default_exclude_dirs);
+        renderExcludeRow(
+            detBackupExcludePathsRow, detBackupExcludePaths,
+            task.exclude_paths, task.default_exclude_paths);
+
+        if (detFiltersWarning && detFiltersWarningList) {
+            var rawFilters = (task.filters && typeof task.filters === 'object')
+                ? task.filters
+                : {};
+            var appliedKeys = Object.keys(rawFilters).filter(function (key) {
+                var value = String(rawFilters[key] || '').trim();
+                return value.length > 0;
+            });
+
+            if (appliedKeys.length > 0) {
+                var items = appliedKeys.map(function (key) {
+                    var value = String(rawFilters[key] || '').trim();
+                    return '<li><strong>' + esc(key) + ':</strong> '
+                        + '<code>' + esc(value) + '</code></li>';
+                });
+                detFiltersWarningList.innerHTML = items.join('');
+                detFiltersWarning.style.display = '';
+            } else {
+                detFiltersWarningList.innerHTML = '';
+                detFiltersWarning.style.display = 'none';
+            }
+        }
+
+        var isActive = task.active !== false;
+        detBtnToggle.querySelector('i').className =
+            'fa-solid ' + (isActive ? 'fa-toggle-on' : 'fa-toggle-off');
+        detBtnToggle.title = isActive ? 'Deactivate task' : 'Activate task';
+
+        restripeKvList();
+        updateDetailRuntime();
+    }
+
+    function updateDetailRuntime() {
+        var task = allTasks.find(function (t) { return t.id === selectedTaskId; });
+        if (!task) return;
+
+        var rt = task.runtime || {};
+        var status = rt.found ? rt.status : 'not_started';
+        var progress = rt.found ? (rt.progress || 0) : 0;
+        var subprogress = rt.found ? (rt.subprogress || 0) : 0;
+        var useSubprocess = !!rt.use_subprocess;
+
+        detStatusBadge.textContent = status.replace(/_/g, ' ');
+        detStatusBadge.className = 'at-status-badge at-status-badge--' + statusClass(status);
+
+        var isActive = (status === 'in_progress' || status === 'queued' || status === 'cancelling');
+        detProgressRow.style.display = isActive ? '' : 'none';
+        if (isActive) {
+            var pct = (progress * 100).toFixed(2);
+            detProgressFill.style.width = pct + '%';
+            detProgressPct.textContent = pct + '%';
+        }
+
+        if (detSubprogressRow) {
+            var showSub = isActive && useSubprocess;
+            detSubprogressRow.style.display = showSub ? '' : 'none';
+            if (showSub) {
+                var subPct = (subprogress * 100).toFixed(2);
+                detSubprogressFill.style.width = subPct + '%';
+                detSubprogressPct.textContent = subPct + '%';
+            }
+        }
+
+        // Stop button: show when running, queued, or cancelling
+        var canStop = (status === 'in_progress' || status === 'queued' || status === 'cancelling');
+        if (detBtnStop) {
+            detBtnStop.style.display = canStop ? '' : 'none';
+            detBtnStop.disabled = (status === 'cancelling');
+            detBtnStop.title = (status === 'cancelling') ? 'Cancellation requested…' : 'Stop this task';
+        }
+
+        detLastRun.textContent = (rt.last_run && rt.last_run !== 'Never') ? rt.last_run : 'Never';
+        detRunCount.textContent = (rt.run_count !== undefined) ? rt.run_count : 0;
+
+        // Info section
+        if (rt.info) {
+            currentInfoText = String(rt.info);
+            detInfoEl.style.display = '';
+            detInfoEmpty.style.display = 'none';
+            if (window.marked) {
+                detInfoEl.innerHTML = window.marked.parse(rt.info);
+            } else {
+                detInfoEl.innerHTML = '<pre>' + esc(rt.info) + '</pre>';
+            }
+        } else {
+            currentInfoText = '';
+            detInfoEl.style.display = 'none';
+            detInfoEmpty.style.display = '';
+        }
+
+        // Error section
+        if (rt.error) {
+            currentErrorText = String(rt.error);
+            detErrorSection.style.display = '';
+            detError.textContent = rt.error;
+        } else {
+            currentErrorText = '';
+            detErrorSection.style.display = 'none';
+        }
+
+        // Params section
+        var runParams = (rt.run_params && typeof rt.run_params === 'object') ? rt.run_params : {};
+        var taskConfig = (runParams.TASK_CONFIG && typeof runParams.TASK_CONFIG === 'object')
+            ? runParams.TASK_CONFIG
+            : {};
+        var taskParams = {};
+        Object.keys(runParams).forEach(function (key) {
+            if (key === 'TASK_CONFIG') return;
+            taskParams[key] = runParams[key];
+        });
+        if (Object.keys(taskParams).length || Object.keys(taskConfig).length) {
+            detParamsSection.style.display = '';
+            currentParamsData = {};
+            if (Object.keys(taskParams).length) { currentParamsData['Task Params'] = taskParams; }
+            if (Object.keys(taskConfig).length)  { currentParamsData['Input Params'] = taskConfig; }
+            if (currentParamsOwnerTaskId !== selectedTaskId) {
+                // Start with top-level folders collapsed for less visual noise.
+                currentParamsExpanded = new Set();
+                currentParamsOwnerTaskId = selectedTaskId;
+            }
+            renderParamsExplorer();
+        } else {
+            detParamsSection.style.display = 'none';
+            currentParamsData = null;
+            currentParamsExpanded = new Set();
+            currentParamsOwnerTaskId = null;
+        }
+
+        // Files section
+        var files = rt.output_files || [];
+        if (files.length) {
+            detFilesSection.style.display = '';
+            if (detBtnPurgeFiles) {
+                detBtnPurgeFiles.disabled = false;
+            }
+            detOutputFiles.innerHTML = renderOutputFileList(files);
+            detOutputFiles.querySelectorAll('.at-file-preview-btn').forEach(function (btn) {
+                btn.addEventListener('click', function () {
+                    previewFile(btn.dataset.path);
+                });
+            });
+            detOutputFiles.querySelectorAll('.at-file-download-btn').forEach(function (btn) {
+                btn.addEventListener('click', function () {
+                    downloadFile(btn.dataset.path);
+                });
+            });
+        } else {
+            detFilesSection.style.display = 'none';
+            if (detBtnPurgeFiles) {
+                detBtnPurgeFiles.disabled = true;
+            }
+        }
+    }
+
+    function bindSectionToggles() {
+        bindSectionToggle(detBtnToggleInfo, detInfoBody);
+        bindSectionToggle(detBtnToggleError, detErrorBody);
+        bindSectionToggle(detBtnToggleParams, detParamsBody);
+    }
+
+    function bindSectionToggle(button, body) {
+        if (!button || !body) return;
+        button.addEventListener('click', function () {
+            var isHidden = body.style.display === 'none';
+            body.style.display = isHidden ? '' : 'none';
+            var icon = button.querySelector('i');
+            if (icon) {
+                icon.className = 'fa-solid ' + (isHidden ? 'fa-chevron-up' : 'fa-chevron-down');
+            }
+        });
+    }
+
+    function formatJson(value) {
+        try {
+            return JSON.stringify(value || {}, null, 2);
+        } catch (_err) {
+            return String(value || '{}');
+        }
+    }
+
+    /* -----------------------------------------------------------------------
+       Params tree-explorer
+    ----------------------------------------------------------------------- */
+
+    function pxIsPrimitive(val) {
+        return val === null || typeof val !== 'object';
+    }
+
+    function pxLabel(val) {
+        if (val === null) { return 'null'; }
+        if (typeof val === 'boolean') { return val ? 'true' : 'false'; }
+        return String(val);
+    }
+
+    // Short (≤5 items) array or dict whose values are all primitive → show inline
+    function pxIsShortSimple(val) {
+        if (pxIsPrimitive(val)) return true;
+        var items = Array.isArray(val) ? val : Object.values(val);
+        return items.length <= 5 && items.every(pxIsPrimitive);
+    }
+
+    function pxInlineFormat(val) {
+        if (Array.isArray(val)) {
+            return '[ ' + val.map(pxLabel).join(', ') + ' ]';
+        }
+        return '{ ' + Object.keys(val).map(function (k) {
+            return k + ': ' + pxLabel(val[k]);
+        }).join(', ') + ' }';
+    }
+
+    function pxNodeId(path) {
+        return path.join('::');
+    }
+
+    function pxRows(node, path, depth) {
+        if (node === undefined || node === null) {
+            return '<div class="at-px-empty">No data</div>';
+        }
+        if (pxIsPrimitive(node)) {
+            return '<div class="at-px-row at-px-row--leaf" style="padding-left:'
+                + (0.55 + depth * 1.1) + 'rem;">'
+                + '<span class="at-px-row__icon"><i class="fa-solid fa-tag"></i></span>'
+                + '<span class="at-px-row__key">value</span>'
+                + '<span class="at-px-row__val">' + esc(pxLabel(node)) + '</span>'
+                + '</div>';
+        }
+
+        var entries = Array.isArray(node)
+            ? node.map(function (v, i) { return [String(i), v]; })
+            : Object.keys(node).map(function (k) { return [k, node[k]]; });
+        if (entries.length === 0) {
+            return '<div class="at-px-empty" style="padding-left:'
+                + (0.55 + depth * 1.1) + 'rem;">(empty)</div>';
+        }
+
+        var html = '';
+        entries.forEach(function (e) {
+            var k = e[0], v = e[1];
+            if (pxIsShortSimple(v)) {
+                var display = pxIsPrimitive(v) ? pxLabel(v) : pxInlineFormat(v);
+                html += '<div class="at-px-row at-px-row--leaf" style="padding-left:'
+                    + (0.55 + depth * 1.1) + 'rem;">'
+                    + '<span class="at-px-row__icon"><i class="fa-solid fa-tag"></i></span>'
+                    + '<span class="at-px-row__key">' + esc(k) + '</span>'
+                    + '<span class="at-px-row__val">' + esc(display) + '</span>'
+                    + '</div>';
+            } else {
+                var childPath = path.concat([k]);
+                var id = pxNodeId(childPath);
+                var expanded = currentParamsExpanded.has(id);
+                var hint = Array.isArray(v)
+                    ? ('[ ' + v.length + ' ]')
+                    : ('{ ' + Object.keys(v).length + ' }');
+                html += '<div class="at-px-row at-px-row--folder at-px-tree-toggle" data-node="'
+                    + esc(id) + '" style="padding-left:' + (0.55 + depth * 1.1) + 'rem;">'
+                    + '<span class="at-px-row__icon"><i class="fa-solid fa-'
+                    + (expanded ? 'folder-open' : 'folder') + '"></i></span>'
+                    + '<span class="at-px-row__key">' + esc(k) + '</span>'
+                    + '<span class="at-px-row__val at-px-row__val--hint">' + hint + '</span>'
+                    + '<span class="at-px-row__chevron"><i class="fa-solid fa-chevron-'
+                    + (expanded ? 'down' : 'right') + '"></i></span>'
+                    + '</div>';
+                if (expanded) {
+                    html += pxRows(v, childPath, depth + 1);
+                }
+            }
+        });
+        return html;
+    }
+
+    function renderParamsExplorer() {
+        if (detParamsBreadcrumb) {
+            detParamsBreadcrumb.innerHTML = '<span class="at-px-crumb at-px-crumb--active">Parameters Tree</span>';
+        }
+        detParamsExplorer.innerHTML = pxRows(currentParamsData, [], 0);
+        detParamsExplorer.querySelectorAll('.at-px-tree-toggle').forEach(function (el) {
+            el.addEventListener('click', function () {
+                var id = el.getAttribute('data-node') || '';
+                if (currentParamsExpanded.has(id)) {
+                    currentParamsExpanded.delete(id);
+                } else {
+                    currentParamsExpanded.add(id);
+                }
+                renderParamsExplorer();
+            });
+        });
+    }
+
+    function previewFile(path) {
+        var fname = path.split('/').pop();
+        fileModalTitle.textContent = fname + ' preview';
+        fileModalContent.innerHTML = '<div class="ari-sg-loading" style="padding:1.5rem;">Loading…</div>';
+        fileModal.style.display = '';
+
+        fetch(urls.readFile + '?path=' + encodeURIComponent(path) + '&lines=50')
+            .then(function (r) { return r.json(); })
+            .then(function (d) {
+                if (!d.success) {
+                    fileModalContent.innerHTML = '<div class="ari-sg-error" style="padding:1rem;">' +
+                        esc(d.error || 'Error loading file') + '</div>';
+                    return;
+                }
+                var html = '<div class="at-file-preview-meta">';
+                if (d.is_binary) {
+                    html += '<span>Binary file</span>';
+                } else {
+                    html += '<span>Showing first ' + esc(String(d.preview_lines || 50)) + ' lines</span>';
+                    if (d.truncated) {
+                        html += '<span>Preview truncated from ' + esc(String(d.line_count || 0)) + ' lines</span>';
+                    }
+                    if (d.is_json && d.json_table) {
+                        html += '<span>JSON table rows: ' + esc(String(d.json_table.row_count || 0)) + '</span>';
+                        if (d.json_table.truncated) {
+                            html += '<span>Table limited to first ' + esc(String((d.json_table.rows || []).length)) + ' rows</span>';
+                        }
+                    }
+                }
+                html += '</div>';
+
+                if (d.is_json && d.json_table) {
+                    html += renderJsonPreviewTable(d.json_table);
+                } else {
+                    html += '<pre class="at-file-preview">' + esc(d.preview || '') + '</pre>';
+                }
+                fileModalContent.innerHTML = html;
+            })
+            .catch(function () {
+                fileModalContent.innerHTML = '<div class="ari-sg-error" style="padding:1rem;">Request failed</div>';
+            });
+    }
+
+    function renderJsonPreviewTable(table) {
+        var columns = Array.isArray(table.columns) ? table.columns.slice() : [];
+        var rows = Array.isArray(table.rows) ? table.rows : [];
+
+        if (!columns.length && rows.length) {
+            var seen = {};
+            rows.forEach(function (row) {
+                if (!row || typeof row !== 'object' || Array.isArray(row)) return;
+                Object.keys(row).forEach(function (key) {
+                    if (!seen[key]) {
+                        seen[key] = true;
+                        columns.push(key);
+                    }
+                });
+            });
+        }
+
+        if (!columns.length || !rows.length) {
+            return '<pre class="at-file-preview">(JSON has no tabular rows to display)</pre>';
+        }
+
+        var html = '<div class="at-file-preview-wrap"><table class="at-file-table"><thead><tr>';
+        columns.forEach(function (col) {
+            html += '<th>' + esc(String(col)) + '</th>';
+        });
+        html += '</tr></thead><tbody>';
+
+        rows.forEach(function (row) {
+            html += '<tr>';
+            columns.forEach(function (col) {
+                var value = row && row[col] !== undefined ? row[col] : '';
+                html += '<td>' + esc(String(value)) + '</td>';
+            });
+            html += '</tr>';
+        });
+
+        html += '</tbody></table></div>';
+        return html;
+    }
+
+    function outputFileType(path) {
+        var name = String(path || '').split('/').pop() || '';
+        var lower = name.toLowerCase();
+        if (lower.endsWith('.fits.gz')) return '.fits.gz';
+        if (lower.endsWith('.tar.gz')) return '.tar.gz';
+        var idx = lower.lastIndexOf('.');
+        if (idx <= 0 || idx === lower.length - 1) return '(no extension)';
+        return lower.slice(idx);
+    }
+
+    function outputFileGroups(paths) {
+        var order = [];
+        var groups = {};
+        (paths || []).forEach(function (path) {
+            var key = outputFileType(path);
+            if (!groups[key]) {
+                groups[key] = [];
+                order.push(key);
+            }
+            groups[key].push(path);
+        });
+        return { order: order, groups: groups };
+    }
+
+    function renderOutputFileList(paths) {
+        var grouped = outputFileGroups(paths);
+        var html = '';
+
+        grouped.order.forEach(function (key) {
+            var files = grouped.groups[key] || [];
+            var visible = files.slice(0, OUTPUT_PREVIEW_PER_TYPE);
+            var hiddenCount = Math.max(files.length - visible.length, 0);
+
+            html += '<li class="at-file-list__item" style="padding-top:0.45rem;">'
+                + '<strong>' + esc(key) + '</strong>'
+                + '<span class="at-muted-hint" style="font-style:normal;">'
+                + ' (' + files.length + ' file' + (files.length === 1 ? '' : 's') + ')</span>'
+                + '</li>';
+
+            visible.forEach(function (f) {
+                html += '<li class="at-file-list__item">'
+                    + '<code class="at-file-list__path">' + esc(f) + '</code>'
+                    + '<button class="ari-btn ari-btn--sm ari-btn--secondary at-file-preview-btn"'
+                    + ' data-path="' + esc(f) + '">'
+                    + '<i class="fa-solid fa-file-lines"></i> Preview</button>'
+                    + '<button class="ari-btn ari-btn--sm ari-btn--secondary at-file-download-btn"'
+                    + ' data-path="' + esc(f) + '">'
+                    + '<i class="fa-solid fa-download"></i> Download</button>'
+                    + '</li>';
+            });
+
+            if (hiddenCount > 0) {
+                html += '<li class="at-file-list__item">'
+                    + '<span class="at-muted-hint" style="font-style:normal;">'
+                    + '... ' + hiddenCount + ' more ' + esc(key) + ' file'
+                    + (hiddenCount === 1 ? '' : 's') + '</span>'
+                    + '</li>';
+            }
+        });
+        return html;
+    }
+
+    function downloadFile(path) {
+        window.location.href = urls.downloadFile + '?path=' + encodeURIComponent(path);
+    }
+
+    function bindFileModal() {
+        [btnFileModalClose, btnFileModalOk].forEach(function (btn) {
+            btn.addEventListener('click', function () { fileModal.style.display = 'none'; });
+        });
+        fileModal.addEventListener('click', function (e) {
+            if (e.target === fileModal) fileModal.style.display = 'none';
+        });
+    }
+
+    function fetchTaskLog(taskId, lines) {
+        return fetch(urls.taskLog + '?task_id=' + encodeURIComponent(taskId) + '&lines=' + encodeURIComponent(lines || 400))
+            .then(function (r) { return r.json(); });
+    }
+
+    function refreshOpenTaskLog() {
+        if (!openTaskLogTaskId) return;
+        fetchTaskLog(openTaskLogTaskId, 600)
+            .then(function (d) {
+                if (!d || !d.success) {
+                    // Keep last visible content on transient fetch/auth errors.
+                    if (!currentTaskLogText) {
+                        taskLogModalContent.textContent = '(No log lines yet)';
+                    }
+                    return;
+                }
+                var content = String(d.content || '');
+                currentTaskLogText = content;
+                taskLogModalContent.textContent = content || '(No log lines yet)';
+                taskLogModalContent.scrollTop = taskLogModalContent.scrollHeight;
+            })
+            .catch(function () {
+                // Keep existing log text instead of clobbering it.
+                if (!currentTaskLogText) {
+                    taskLogModalContent.textContent = '(No log lines yet)';
+                }
+            });
+    }
+
+    function openLiveTaskLog(taskId, taskName) {
+        openTaskLogTaskId = String(taskId || '');
+        if (!openTaskLogTaskId) return;
+        taskLogModalTitle.textContent = 'Task Log - ' + String(taskName || openTaskLogTaskId);
+        taskLogModalContent.textContent = 'Loading...';
+        taskLogModal.style.display = '';
+        if (taskLogRefreshTimer) {
+            clearInterval(taskLogRefreshTimer);
+            taskLogRefreshTimer = null;
+        }
+        refreshOpenTaskLog();
+        taskLogRefreshTimer = setInterval(refreshOpenTaskLog, 1500);
+    }
+
+    function closeLiveTaskLog() {
+        if (taskLogRefreshTimer) {
+            clearInterval(taskLogRefreshTimer);
+            taskLogRefreshTimer = null;
+        }
+        openTaskLogTaskId = null;
+        taskLogModal.style.display = 'none';
+    }
+
+    function bindTaskLogModal() {
+        if (!taskLogModal) return;
+        [btnTaskLogClose, btnTaskLogCloseX].forEach(function (btn) {
+            if (!btn) return;
+            btn.addEventListener('click', closeLiveTaskLog);
+        });
+        if (btnTaskLogRefresh) {
+            btnTaskLogRefresh.addEventListener('click', refreshOpenTaskLog);
+        }
+        if (btnTaskLogCopy) {
+            btnTaskLogCopy.addEventListener('click', function () {
+                if (!currentTaskLogText) {
+                    showToast('No log to copy.', 'error');
+                    return;
+                }
+                copyToClipboard(currentTaskLogText, 'Task log copied to clipboard.');
+            });
+        }
+        taskLogModal.addEventListener('click', function (e) {
+            if (e.target === taskLogModal) closeLiveTaskLog();
+        });
+    }
+    if (detBtnToggle) {
+        detBtnToggle.addEventListener('click', function () {
+            if (!selectedTaskId) return;
+            fetch(urls.toggle, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ instrument: currentInstrument, id: selectedTaskId }),
+            }).then(function (r) { return r.json(); }).then(function (d) {
+                if (d.success) { refreshCurrentTasks(); } else { showToast('Toggle failed: ' + d.error, 'error'); }
+            });
+        });
+    }
+
+    if (detBtnEdit) {
+        detBtnEdit.addEventListener('click', function () {
+            if (!selectedTaskId) return;
+            var task = allTasks.find(function (t) { return t.id === selectedTaskId; });
+            if (!task) return;
+            openEditModal(task);
+        });
+    }
+
+    if (detBtnDelete) {
+        detBtnDelete.addEventListener('click', function () {
+            if (!selectedTaskId) return;
+            var task = allTasks.find(function (t) { return t.id === selectedTaskId; });
+            if (!task) return;
+            pendingDeleteId = task.id;
+            if (deleteModalName) {
+                deleteModalName.textContent = task.name || task.task_key;
+            }
+            if (deleteModal) {
+                deleteModal.style.display = '';
+            }
+        });
+    }
+
+    function queueSelectedTask(forceRun) {
+        if (!selectedTaskId) return;
+        var localDir = (window.location.search.match(/local_data_dir=([^&]+)/) || [])[1]
+                    || window.ARI_LOCAL_DATA_DIR || '';
+        fetch(urls.runNow, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                instrument: currentInstrument,
+                id: selectedTaskId,
+                local_data_dir: localDir,
+                force_run: !!forceRun,
+            }),
+        }).then(function (r) { return r.json(); }).then(function (d) {
+            if (d.success) {
+                showToast(forceRun
+                    ? 'Task force-queued for immediate execution.'
+                    : 'Task queued for immediate execution.', 'success');
+                refreshCurrentTasks();
+            } else {
+                showToast('Run failed: ' + d.error, 'error');
+            }
+        });
+    }
+
+    if (detBtnRunNow) {
+        detBtnRunNow.addEventListener('click', function () {
+            queueSelectedTask(false);
+        });
+    }
+
+    if (detBtnForceRun) {
+        detBtnForceRun.addEventListener('click', function () {
+            queueSelectedTask(true);
+        });
+    }
+
+    function cancelTask(taskId, taskName) {
+        if (!taskId) return;
+        var label = taskName || taskId;
+        if (!confirm('Stop task "' + label + '"?\n\nRunning tasks will be signalled to stop; they may take a moment to finish.')) return;
+        fetch(urls.cancelTask, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ task_id: taskId }),
+        }).then(function (r) { return r.json(); }).then(function (d) {
+            if (d.success) {
+                var msg = d.was_running
+                    ? 'Stop signal sent. Task will finish current operation then cancel.'
+                    : 'Task removed from queue.';
+                showToast(msg, 'success');
+                refreshCurrentTasks();
+            } else {
+                showToast('Cancel failed: ' + (d.error || 'unknown error'), 'error');
+            }
+        }).catch(function () {
+            showToast('Cancel request failed.', 'error');
+        });
+    }
+
+    if (detBtnStop) {
+        detBtnStop.addEventListener('click', function () {
+            if (!selectedTaskId) return;
+            var task = allTasks.find(function (t) { return t.id === selectedTaskId; });
+            var name = task ? (task.name || task.task_key || selectedTaskId) : selectedTaskId;
+            cancelTask(selectedTaskId, name);
+        });
+    }
+
+    if (detBtnViewLog) {
+        detBtnViewLog.addEventListener('click', function () {
+            if (!selectedTaskId) return;
+            var task = allTasks.find(function (t) { return t.id === selectedTaskId; });
+            var name = task ? (task.name || task.task_key || selectedTaskId) : selectedTaskId;
+            openLiveTaskLog(selectedTaskId, name);
+        });
+    }
+
+    if (detBtnCopyInfo) {
+        detBtnCopyInfo.addEventListener('click', function () {
+            if (!currentInfoText) {
+                showToast('No info to copy.', 'error');
+                return;
+            }
+            copyToClipboard(currentInfoText, 'Info copied to clipboard.');
+        });
+    }
+
+    if (detBtnCopyError) {
+        detBtnCopyError.addEventListener('click', function () {
+            if (!currentErrorText) {
+                showToast('No error to copy.', 'error');
+                return;
+            }
+            copyToClipboard(currentErrorText, 'Error copied to clipboard.');
+        });
+    }
+
+    if (detBtnPurgeFiles) {
+        detBtnPurgeFiles.addEventListener('click', function () {
+            if (!selectedTaskId) return;
+            var task = allTasks.find(function (t) { return t.id === selectedTaskId; });
+            if (!task) return;
+            var rt = task.runtime || {};
+            var files = Array.isArray(rt.output_files) ? rt.output_files : [];
+            if (!files.length) {
+                showToast('No output files to purge.', 'error');
+                return;
+            }
+
+            var label = task.name || task.task_key || selectedTaskId;
+            if (!confirm('Purge ' + files.length + ' output file(s) for "' + label + '"?\n\nThis will delete files from disk and clear them from task output files.')) {
+                return;
+            }
+
+            fetch(urls.purgeFiles, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    instrument: currentInstrument,
+                    id: selectedTaskId,
+                }),
+            }).then(function (r) { return r.json(); }).then(function (d) {
+                if (!d.success) {
+                    showToast('Purge failed: ' + (d.error || 'unknown error'), 'error');
+                    return;
+                }
+
+                var deleted = Array.isArray(d.deleted) ? d.deleted.length : 0;
+                var missing = Array.isArray(d.missing) ? d.missing.length : 0;
+                var failed = Array.isArray(d.failed) ? d.failed.length : 0;
+                showToast(
+                    'Purge complete: deleted ' + deleted + ', missing ' + missing + ', failed ' + failed + '.',
+                    failed > 0 ? 'error' : 'success'
+                );
+                refreshCurrentTasks();
+            }).catch(function () {
+                showToast('Purge request failed.', 'error');
+            });
+        });
+    }
+
+    /* -----------------------------------------------------------------------
+       Run All
+    ----------------------------------------------------------------------- */
+    function bindRunAll() {
+        function queueRunAll(forceRun) {
+            runAllForceMode = !!forceRun;
+            // Check if queue is non-empty
+            fetch(urls.status)
+                .then(function (r) { return r.json(); })
+                .then(function (d) {
+                    if (!d.success) return;
+                    var q = d.queue || {};
+                    var busy = q.queue_length > 0 || q.current;
+                    if (busy) {
+                        runAllModal.style.display = '';
+                    } else {
+                        doRunAll('add', runAllForceMode);
+                    }
+                });
+        }
+
+        if (btnRunAll) {
+            btnRunAll.addEventListener('click', function () {
+                queueRunAll(false);
+            });
+        }
+        if (btnForceRunAll) {
+            btnForceRunAll.addEventListener('click', function () {
+                queueRunAll(true);
+            });
+        }
+        if (!btnRunAll && !btnForceRunAll) return;
+    }
+
+    function doRunAll(action, forceRun) {
+        var localDir = window.ARI_LOCAL_DATA_DIR || '';
+        fetch(urls.runAll, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                instrument: currentInstrument,
+                action: action,
+                force_run: !!forceRun,
+                local_data_dir: localDir,
+            }),
+        }).then(function (r) { return r.json(); }).then(function (d) {
+            if (d.success) {
+                var msgPrefix = forceRun ? 'Force-queued ' : 'Added ';
+                showToast(msgPrefix + (d.added || []).length + ' task(s) to queue.', 'success');
+                refreshCurrentTasks();
+            } else {
+                showToast('Run All failed: ' + d.error, 'error');
+            }
+        });
+    }
+
+    function bindRunAllModal() {
+        if (!btnRunAllReplace || !btnRunAllAdd || !btnRunAllCancel || !runAllModal) {
+            return;
+        }
+        btnRunAllReplace.addEventListener('click', function () {
+            runAllModal.style.display = 'none';
+            doRunAll('replace', runAllForceMode);
+        });
+        btnRunAllAdd.addEventListener('click', function () {
+            runAllModal.style.display = 'none';
+            doRunAll('add', runAllForceMode);
+        });
+        btnRunAllCancel.addEventListener('click', function () {
+            runAllModal.style.display = 'none';
+        });
+    }
+
+    /* -----------------------------------------------------------------------
+       Edit / Add modal
+    ----------------------------------------------------------------------- */
+    function loadTaskClasses() {
+        fetch(urls.taskList)
+            .then(function (r) { return r.json(); })
+            .then(function (d) {
+                if (!d.success) return;
+                taskClasses = d.tasks || [];
+                mpConfig = d.multiprocessing || mpConfig;
+                populateTaskKeySelect();
+            });
+    }
+
+    function populateTaskKeySelect() {
+        // Keep the default placeholder
+        while (editTaskKey.options.length > 1) editTaskKey.remove(1);
+        taskClasses.forEach(function (cls) {
+            var opt = document.createElement('option');
+            opt.value = cls.key;
+            opt.textContent = cls.key + ' — ' + cls.name;
+            editTaskKey.appendChild(opt);
+        });
+    }
+
+    function openEditModal(task) {
+        if (!task) return;
+
+        editingTaskId = task.id;
+        editModalTitle.innerHTML = '<i class="fa-solid fa-pen"></i> Edit Task';
+
+        editTaskKey.value = task.task_key || '';
+        editTaskKey.disabled = true;
+        editFrequency.value = task.frequency || 24;
+        editDailyCopies.value = task.daily_copies || 0;
+        editWeeklyCopies.value = task.weekly_copies || 0;
+        if (editBackupMaxSizeMb) {
+            var maxMb = parseFloat(task.backup_max_size_mb);
+            if (!isFinite(maxMb) || maxMb <= 0) {
+                maxMb = 1024;
+            }
+            // Render integers without trailing zeros for whole MB.
+            editBackupMaxSizeMb.value = (maxMb % 1 === 0)
+                ? String(parseInt(maxMb, 10))
+                : String(maxMb);
+            // Make the on-disk value visible so the admin can tell
+            // that the field reflects the persisted value (not a
+            // stale HTML default).
+            if (editBackupMaxSizeSaved) {
+                editBackupMaxSizeSaved.textContent =
+                    ' Currently saved: '
+                    + ((maxMb % 1 === 0)
+                        ? String(parseInt(maxMb, 10))
+                        : String(maxMb))
+                    + ' MB.';
+            }
+        }
+        // Populate exclude lists + show the built-in defaults so
+        // the admin knows what kicks in when the override is empty.
+        if (editBackupExcludeDirs) {
+            var excDirs = Array.isArray(task.exclude_dirs)
+                ? task.exclude_dirs
+                : [];
+            editBackupExcludeDirs.value = excDirs.join('\n');
+        }
+        if (editBackupExcludePaths) {
+            var excPaths = Array.isArray(task.exclude_paths)
+                ? task.exclude_paths
+                : [];
+            editBackupExcludePaths.value = excPaths.join('\n');
+        }
+        if (editBackupExcludeDirsDefault) {
+            var defDirs = Array.isArray(task.default_exclude_dirs)
+                ? task.default_exclude_dirs
+                : [];
+            editBackupExcludeDirsDefault.textContent =
+                defDirs.length ? defDirs.join(', ') : '(none)';
+        }
+        if (editBackupExcludePathsDefault) {
+            var defPaths = Array.isArray(task.default_exclude_paths)
+                ? task.default_exclude_paths
+                : [];
+            editBackupExcludePathsDefault.textContent =
+                defPaths.length ? defPaths.join(', ') : '(none)';
+        }
+        if (editAssetsMode) {
+            editAssetsMode.value = String(task.mode || 'sync');
+        }
+        editNcores.value = task.ncores || 1;
+        editMpBackend.value = task.mp_backend || 'threads';
+        editMpStartMethod.value = task.mp_start_method || 'default';
+        if (editSyncSource) {
+            editSyncSource.value = String(task.sync_source || '');
+        }
+        if (editSyncMode) {
+            var taskKey = String(task.task_key || '').trim();
+            var supportsLocalTask = !!task.local_task
+                || ('sync_source' in task)
+                || taskKey === 'APERO_OBJECT_QUERY';
+            if (!supportsLocalTask) {
+                editSyncMode.value = 'run_server';
+            } else {
+                editSyncMode.value = String(task.sync_source || '').trim()
+                    ? 'fetch_precomputed'
+                    : '';
+            }
+        }
+        editRunCount.textContent = task.runtime ? (task.runtime.run_count || 0) : 0;
+        editActive.checked = task.active !== false;
+        selectEditTab('run');
+        onTaskKeyChange();
+        editModal.style.display = '';
+    }
+
+    function selectEditTab(tabName) {
+        var showRun = (tabName !== 'filters');
+        if (editPaneRun) {
+            editPaneRun.classList.toggle('at-edit-tab-pane--active', showRun);
+        }
+        if (editPaneFilters) {
+            editPaneFilters.classList.toggle('at-edit-tab-pane--active', !showRun);
+        }
+        if (editTabRunBtn) {
+            editTabRunBtn.classList.toggle('at-edit-tab--active', showRun);
+        }
+        if (editTabFiltersBtn) {
+            editTabFiltersBtn.classList.toggle('at-edit-tab--active', !showRun);
+        }
+    }
+
+    function taskFilterKeys(taskKey) {
+        var cls = taskClasses.find(function (c) { return c.key === taskKey; }) || {};
+        var values = Array.isArray(cls.filters) ? cls.filters : [];
+        return values
+            .map(function (x) { return String(x || '').trim(); })
+            .filter(function (x) { return !!x; });
+    }
+
+    function renderTaskFilters(taskKey, taskConfig) {
+        if (!editFiltersContainer || !editFiltersEmpty) return;
+        editFiltersContainer.innerHTML = '';
+        editFilterInputs = {};
+
+        var keys = taskFilterKeys(taskKey);
+        var currentFilters = (taskConfig && typeof taskConfig.filters === 'object')
+            ? taskConfig.filters
+            : {};
+
+        if (!keys.length) {
+            editFiltersEmpty.style.display = '';
+            return;
+        }
+
+        editFiltersEmpty.style.display = 'none';
+        keys.forEach(function (key) {
+            var field = document.createElement('div');
+            field.className = 'ari-ap-form__field';
+
+            var label = document.createElement('label');
+            label.setAttribute('for', 'edit-filter-' + key);
+            label.textContent = key;
+
+            var input = document.createElement('input');
+            input.type = 'text';
+            input.id = 'edit-filter-' + key;
+            input.className = 'ari-ap-input';
+            input.value = String(currentFilters[key] || '');
+            if (key.toUpperCase() === 'OBJNAME_INCLUDE') {
+                input.placeholder = 'Comma-separated object names to include only';
+            }
+            if (key.toUpperCase() === 'OBJNAME_EXCLUDE') {
+                input.placeholder = 'Comma-separated object names to exclude';
+            }
+            if (key.toUpperCase() === 'APERO_PROFILE_INCLUDE') {
+                input.placeholder =
+                    'Comma-separated APERO profile names to include only';
+            }
+            if (key.toUpperCase() === 'APERO_PROFILE_EXCLUDE') {
+                input.placeholder =
+                    'Comma-separated APERO profile names to exclude';
+            }
+
+            field.appendChild(label);
+            field.appendChild(input);
+            editFiltersContainer.appendChild(field);
+            editFilterInputs[key] = input;
+        });
+    }
+
+    function onTaskKeyChange() {
+        var key = editTaskKey.value;
+        var cls = taskClasses.find(function (c) { return c.key === key; });
+        var isBackup = key === BACKUP_TASK_KEY;
+        var currentTask = allTasks.find(function (t) {
+            return t.id === editingTaskId;
+        }) || {};
+        var supportsMp = !!(cls && cls.multi_process)
+            || ('ncores' in currentTask)
+            || ('mp_backend' in currentTask)
+            || ('mp_start_method' in currentTask);
+        var supportsLocalTask = !!(cls && cls.local_task)
+            || !!currentTask.local_task
+            || ('sync_source' in currentTask)
+            || key === 'APERO_OBJECT_QUERY';
+        var inferredMode = (editSyncSource && String(editSyncSource.value || '').trim())
+            ? 'fetch_precomputed'
+            : 'run_server';
+        var selectedMode = editSyncMode
+            ? String(editSyncMode.value || '').trim()
+            : '';
+        if (!supportsLocalTask) {
+            selectedMode = 'run_server';
+        } else if (selectedMode !== 'run_server' && selectedMode !== 'fetch_precomputed') {
+            selectedMode = '';
+        }
+        if (cls) {
+            editTaskInfoRow.style.display = '';
+            editTaskName.textContent = cls.name;
+            editTaskDesc.textContent = cls.description;
+        } else {
+            editTaskInfoRow.style.display = 'none';
+        }
+        editBackupFields.style.display = isBackup ? '' : 'none';
+        var isAssets = key === ASSETS_TASK_KEY;
+        if (editAssetsFields) editAssetsFields.style.display = isAssets ? '' : 'none';
+
+        if (editLocalSyncFields) {
+            editLocalSyncFields.style.display = key ? '' : 'none';
+        }
+        if (editSyncModeRow && editSyncMode) {
+            if (key) {
+                if (supportsLocalTask) {
+                    editSyncMode.disabled = false;
+                    editSyncMode.innerHTML = ''
+                        + '<option value="">Select mode</option>'
+                        + '<option value="run_server">Run on server</option>'
+                        + '<option value="fetch_precomputed">Fetch pre-computed</option>';
+                } else {
+                    editSyncMode.disabled = true;
+                    editSyncMode.innerHTML = '<option value="run_server">Run on server</option>';
+                }
+                editSyncMode.value = selectedMode;
+                editSyncModeRow.style.display = '';
+            } else {
+                editSyncModeRow.style.display = 'none';
+            }
+        }
+
+        var runOnServer = (selectedMode === 'run_server');
+        editMpFields.style.display = (supportsMp && runOnServer) ? '' : 'none';
+        if (editSyncSourceField) {
+            var showSyncSource = !!(supportsLocalTask && selectedMode === 'fetch_precomputed');
+            editSyncSourceField.style.display = showSyncSource ? '' : 'none';
+            if (editSyncSource) {
+                editSyncSource.required = showSyncSource;
+            }
+            if (editSyncSourceRequired) {
+                editSyncSourceRequired.style.display = showSyncSource ? '' : 'none';
+            }
+        }
+
+        if (supportsMp && runOnServer) {
+            renderNcoresWarning();
+        }
+        editRunCountRow.style.display = editingTaskId ? '' : 'none';
+        renderTaskFilters(key, currentTask);
+    }
+
+    function renderNcoresWarning() {
+        if (!editMpWarn) return;
+        var ncores = parseInt(editNcores.value, 10) || 1;
+        var rec = parseInt(mpConfig.recommended_max_cores, 10) || 1;
+        if (ncores > rec) {
+            editMpWarn.style.display = '';
+            var hint = editMpWarn.querySelector('.at-muted-hint');
+            if (hint) {
+                hint.textContent = 'Warning: this server recommends <= ' + rec + ' cores (N-1). You can still save this value.';
+            }
+        } else {
+            editMpWarn.style.display = 'none';
+        }
+    }
+
+    if (editTaskKey) {
+        editTaskKey.addEventListener('change', onTaskKeyChange);
+    }
+
+    function bindEditModal() {
+        if (!btnEditCancel || !btnEditClose || !btnEditSave || !editModal) {
+            return;
+        }
+        btnEditCancel.addEventListener('click', closeEditModal);
+        btnEditClose.addEventListener('click', closeEditModal);
+        btnEditSave.addEventListener('click', saveTask);
+        if (editTabRunBtn) {
+            editTabRunBtn.addEventListener('click', function () { selectEditTab('run'); });
+        }
+        if (editTabFiltersBtn) {
+            editTabFiltersBtn.addEventListener('click', function () { selectEditTab('filters'); });
+        }
+        if (editNcores) {
+            editNcores.addEventListener('input', renderNcoresWarning);
+        }
+        if (editSyncMode) {
+            editSyncMode.addEventListener('change', onTaskKeyChange);
+        }
+        // Close on backdrop click
+        editModal.addEventListener('click', function (e) {
+            if (e.target === editModal) closeEditModal();
+        });
+    }
+
+    function closeEditModal() {
+        editModal.style.display = 'none';
+        editTaskKey.disabled = false;
+        editingTaskId = null;
+    }
+
+    function saveTask() {
+        var taskKey = editTaskKey.value.trim();
+        var cls = taskClasses.find(function (c) { return c.key === taskKey; }) || {};
+        var currentTask = allTasks.find(function (t) {
+            return t.id === editingTaskId;
+        }) || {};
+        var supportsMp = !!cls.multi_process
+            || ('ncores' in currentTask)
+            || ('mp_backend' in currentTask)
+            || ('mp_start_method' in currentTask);
+        var supportsLocalTask = !!cls.local_task
+            || !!currentTask.local_task
+            || ('sync_source' in currentTask)
+            || taskKey === 'APERO_OBJECT_QUERY';
+        var syncMode = editSyncMode
+            ? String(editSyncMode.value || '').trim()
+            : '';
+        if (!supportsLocalTask) {
+            syncMode = 'run_server';
+        } else if (syncMode !== 'run_server' && syncMode !== 'fetch_precomputed') {
+            syncMode = '';
+        }
+        var runOnServer = (syncMode === 'run_server');
+        var frequency = parseFloat(editFrequency.value);
+        var dailyCopies = parseInt(editDailyCopies.value, 10) || 0;
+        var weeklyCopies = parseInt(editWeeklyCopies.value, 10) || 0;
+        var backupMaxSizeMb = null;
+        if (editBackupMaxSizeMb) {
+            backupMaxSizeMb = parseFloat(editBackupMaxSizeMb.value);
+        }
+        var ncores = parseInt(editNcores.value, 10) || 1;
+        var mpBackend = (editMpBackend.value || 'threads').trim();
+        var mpStartMethod = (editMpStartMethod.value || 'default').trim();
+        var syncSource = editSyncSource ? String(editSyncSource.value || '').trim() : '';
+        if (!taskKey) { showToast('Missing task key.', 'error'); return; }
+        if (isNaN(frequency) || frequency <= 0) { showToast('Frequency must be a positive number of hours.', 'error'); return; }
+        if (dailyCopies < 0 || weeklyCopies < 0) { showToast('Backup copy counts must be non-negative.', 'error'); return; }
+        if (supportsMp && runOnServer && ncores <= 0) { showToast('NCORES must be >= 1.', 'error'); return; }
+        if (taskKey === BACKUP_TASK_KEY && dailyCopies + weeklyCopies <= 0) {
+            showToast('Backup task needs at least one retained daily or weekly copy.', 'error');
+            return;
+        }
+        if (taskKey === BACKUP_TASK_KEY) {
+            if (!isFinite(backupMaxSizeMb) || backupMaxSizeMb <= 0) {
+                showToast('Max archive input size (MB) must be a positive number.', 'error');
+                return;
+            }
+        }
+        if (supportsLocalTask && !syncMode) {
+            showToast('Please choose a Sync mode.', 'error');
+            return;
+        }
+        if (supportsLocalTask && !runOnServer && !syncSource) {
+            showToast('Sync Source Path is required when Fetch pre-computed is selected.', 'error');
+            return;
+        }
+
+        var payload = {
+            instrument: currentInstrument,
+            task_key: taskKey,
+            frequency: frequency,
+            daily_copies: dailyCopies,
+            weekly_copies: weeklyCopies,
+            active: editActive.checked,
+            filters: {},
+        };
+        if (taskKey === BACKUP_TASK_KEY && isFinite(backupMaxSizeMb)
+                && backupMaxSizeMb > 0) {
+            payload.backup_max_size_mb = backupMaxSizeMb;
+        }
+        if (taskKey === BACKUP_TASK_KEY) {
+            // Always send the exclude lists (even if empty) so an
+            // admin can remove a previously-set override and revert
+            // to the built-in defaults.
+            var splitLines = function (el) {
+                if (!el) return [];
+                var raw = String(el.value || '').split(/\r?\n/);
+                var out = [];
+                for (var i = 0; i < raw.length; i++) {
+                    var s = raw[i].trim();
+                    if (s && out.indexOf(s) === -1) out.push(s);
+                }
+                return out;
+            };
+            payload.exclude_dirs = splitLines(editBackupExcludeDirs);
+            payload.exclude_paths = splitLines(editBackupExcludePaths);
+        }
+        if (taskKey === ASSETS_TASK_KEY) {
+            payload.assets_mode = editAssetsMode ? editAssetsMode.value : 'sync';
+        }
+        Object.keys(editFilterInputs || {}).forEach(function (keyName) {
+            var inputEl = editFilterInputs[keyName];
+            if (!inputEl) return;
+            payload.filters[keyName] = String(inputEl.value || '').trim();
+        });
+        if (supportsMp && runOnServer) {
+            payload.ncores = ncores;
+            payload.mp_backend = mpBackend;
+            payload.mp_start_method = mpStartMethod;
+        }
+        if (supportsLocalTask) {
+            payload.sync_source = runOnServer ? '' : syncSource;
+        }
+        payload.id = editingTaskId;
+
+        fetch(urls.save, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload),
+        }).then(function (r) { return r.json(); }).then(function (d) {
+            if (d.success) {
+                closeEditModal();
+                showToast('Task saved.', 'success');
+                if (Array.isArray(d.warnings) && d.warnings.length) {
+                    showToast(d.warnings.join(' '), 'error');
+                }
+                refreshCurrentTasks();
+            } else {
+                showToast('Save failed: ' + d.error, 'error');
+            }
+        });
+    }
+
+    /* -----------------------------------------------------------------------
+       Delete modal
+    ----------------------------------------------------------------------- */
+    function bindDeleteModal() {
+        if (!btnDeleteCancel || !btnDeleteConfirm || !deleteModal) {
+            return;
+        }
+        btnDeleteCancel.addEventListener('click', function () {
+            deleteModal.style.display = 'none';
+            pendingDeleteId = null;
+        });
+        btnDeleteConfirm.addEventListener('click', function () {
+            if (!pendingDeleteId) return;
+            fetch(urls.delete, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ instrument: currentInstrument, id: pendingDeleteId }),
+            }).then(function (r) { return r.json(); }).then(function (d) {
+                deleteModal.style.display = 'none';
+                if (d.success) {
+                    showToast('Task deleted.', 'success');
+                    if (selectedTaskId === pendingDeleteId) {
+                        selectedTaskId = null;
+                        showDetail(null);
+                    }
+                    pendingDeleteId = null;
+                    refreshCurrentTasks();
+                } else {
+                    showToast('Delete failed: ' + d.error, 'error');
+                }
+            });
+        });
+        // Close on backdrop click
+        deleteModal.addEventListener('click', function (e) {
+            if (e.target === deleteModal) {
+                deleteModal.style.display = 'none';
+                pendingDeleteId = null;
+            }
+        });
+    }
+
+    /* -----------------------------------------------------------------------
+       Queue tab
+    ----------------------------------------------------------------------- */
+    function bindQueue() {
+        if (!btnStopAll) return;
+        btnStopAll.addEventListener('click', function () {
+            fetch(urls.stop, { method: 'POST' })
+                .then(function (r) { return r.json(); })
+                .then(function (d) {
+                    if (d.success) {
+                        showToast('Queue cleared.', 'success');
+                        refreshQueueView();
+                    } else {
+                        showToast('Stop failed: ' + d.error, 'error');
+                    }
+                });
+        });
+
+        if (btnKillAll) {
+            btnKillAll.addEventListener('click', function () {
+                if (!confirm('Kill ALL async tasks immediately? This will interrupt the running task and clear the queue.')) return;
+                fetch(urls.killAll, { method: 'POST' })
+                    .then(function (r) { return r.json(); })
+                    .then(function (d) {
+                        if (d.success) {
+                            showToast('All tasks killed. Queue cleared.', 'success');
+                            refreshQueueView();
+                            refreshCurrentTasks();
+                        } else {
+                            showToast('Kill failed: ' + (d.error || 'Unknown error'), 'error');
+                        }
+                    });
+            });
+        }
+
+        if (btnClearHistory) {
+            btnClearHistory.addEventListener('click', function () {
+                if (!confirm('Clear recent async task history? This cannot be undone.')) return;
+                fetch(urls.clearHistory, { method: 'POST' })
+                    .then(function (r) { return r.json(); })
+                    .then(function (d) {
+                        if (d.success) {
+                            showToast('Recent history cleared.', 'success');
+                            refreshQueueView();
+                        } else {
+                            showToast('Clear history failed: ' + (d.error || 'Unknown error'), 'error');
+                        }
+                    });
+            });
+        }
+    }
+
+    function refreshQueueView() {
+        return fetch(urls.status)
+            .then(function (r) { return r.json(); })
+            .then(function (d) {
+                if (!d.success) return;
+                updatePollCadence(d.queue);
+                renderQueuePanel(d.queue, d.statuses || {});
+            });
+    }
+
+    function renderQueuePanel(queue, statuses) {
+        if (!queue) return;
+        var current = queue.current;
+        var pending = queue.queue || [];
+
+        if (current) {
+            var currentInfo = queue.current_info || {};
+            var tid = currentInfo.task_id || current[1];
+            var inst = currentInfo.instrument || current[0];
+            var tname = currentInfo.task_name || tid;
+            var st = statuses[tid] || {};
+            var useSubprocess = !!st.use_subprocess;
+            queueRunning.style.display = '';
+            queueRunningName.textContent = tname;
+            queueRunningInstr.textContent = inst;
+            var pct = ((st.progress || 0) * 100).toFixed(2);
+            queueProgressFill.style.width = pct + '%';
+            queueProgressPct.textContent = pct + '%';
+            if (queueSubprogressRow) {
+                var subPct = ((st.subprogress || 0) * 100).toFixed(2);
+                queueSubprogressRow.style.display = useSubprocess ? '' : 'none';
+                queueSubprogressFill.style.width = subPct + '%';
+                queueSubprogressPct.textContent = subPct + '%';
+            }
+            if (st.info && window.marked) {
+                queueRunningInfo.innerHTML = window.marked.parse(st.info);
+            } else {
+                queueRunningInfo.innerHTML = '';
+            }
+            if (queueBtnStop) {
+                var isCancelling = (st.status === 'cancelling');
+                queueBtnStop.disabled = isCancelling;
+                queueBtnStop.title = isCancelling ? 'Cancellation requested…' : 'Stop this task';
+                queueBtnStop.onclick = function () { cancelTask(tid, tname); };
+            }
+            if (queueBtnViewLog) {
+                queueBtnViewLog.onclick = function () {
+                    openLiveTaskLog(tid, tname);
+                };
+            }
+        } else {
+            queueRunning.style.display = 'none';
+            if (queueSubprogressRow) {
+                queueSubprogressRow.style.display = 'none';
+            }
+            if (queueBtnStop) {
+                queueBtnStop.onclick = null;
+            }
+            if (queueBtnViewLog) {
+                queueBtnViewLog.onclick = null;
+            }
+        }
+
+        if (pending.length === 0) {
+            queuePendingList.innerHTML = '<div class="ari-sg-empty-small">Queue is empty</div>';
+        } else {
+            var pendingInfo = Array.isArray(queue.queue_info) ? queue.queue_info : [];
+            queuePendingList.innerHTML = pending.map(function (entry, idx) {
+                var info = pendingInfo[idx] || {};
+                var instrument = info.instrument || entry[0] || '';
+                var taskName = info.task_name || info.task_id || entry[1] || '';
+                var taskId = info.task_id || entry[1] || '';
+                return '<div class="at-queue-item">' +
+                    '<span class="at-queue-item__inst">' + esc(instrument) + '</span>' +
+                    '<span class="at-queue-item__id">' + esc(taskName) + '</span>' +
+                    (taskId && taskId !== taskName
+                        ? '<span class="at-queue-item__id" style="opacity:0.7;">' + esc(taskId) + '</span>'
+                        : '') +
+                    (taskId
+                        ? '<button class="ari-btn ari-btn--sm ari-btn--danger at-queue-cancel-btn" data-task-id="' + esc(taskId) + '" data-task-name="' + esc(taskName) + '" style="margin-left:auto;">'
+                          + '<i class="fa-solid fa-stop"></i> Stop</button>'
+                          + '<button class="ari-btn ari-btn--sm ari-btn--secondary at-queue-log-btn" data-task-id="' + esc(taskId) + '" data-task-name="' + esc(taskName) + '">'
+                          + '<i class="fa-solid fa-file-lines"></i> Log</button>'
+                        : '') +
+                    '</div>';
+            }).join('');
+            queuePendingList.querySelectorAll('.at-queue-cancel-btn').forEach(function (btn) {
+                btn.addEventListener('click', function () {
+                    cancelTask(btn.dataset.taskId || '', btn.dataset.taskName || '');
+                });
+            });
+            queuePendingList.querySelectorAll('.at-queue-log-btn').forEach(function (btn) {
+                btn.addEventListener('click', function () {
+                    openLiveTaskLog(btn.dataset.taskId || '', btn.dataset.taskName || '');
+                });
+            });
+        }
+
+        var history = Array.isArray(queue.recent_history) ? queue.recent_history : [];
+        if (!queueHistoryList) return;
+        if (!history.length) {
+            queueHistoryList.innerHTML = '<div class="ari-sg-empty-small">No recent history yet</div>';
+            return;
+        }
+        queueHistoryList.innerHTML = history.map(function (item) {
+            var ts = item.timestamp || '';
+            var stamp = ts ? ts.replace('T', ' ').replace('Z', ' UTC') : '';
+            var duration = Number(item.duration_seconds);
+            var durationText = Number.isFinite(duration)
+                ? (' (' + duration.toFixed(2) + 's)')
+                : '';
+            var line = '[' + (item.status || 'unknown') + '] ' +
+                (item.instrument || '') + ' - ' + (item.task_name || item.task_id || '') +
+                durationText;
+            return '<div class="at-queue-item">' +
+                '<span class="at-queue-item__inst">' + esc(stamp) + '</span>' +
+                '<span class="at-queue-item__id">' + esc(line) + '</span>' +
+                '</div>';
+        }).join('');
+    }
+
+    /* -----------------------------------------------------------------------
+       Running badge
+    ----------------------------------------------------------------------- */
+    function updateRunningBadge(queue) {
+        var busy = queue && (queue.queue_length > 0 || queue.current);
+        runningBadge.style.display = busy ? '' : 'none';
+    }
+
+    /* -----------------------------------------------------------------------
+       Polling
+    ----------------------------------------------------------------------- */
+    function startPoll() {
+        stopPoll();
+        pollIntervalMs = POLL_SLOW_MS;
+        scheduleNextPoll(pollIntervalMs);
+    }
+
+    function stopPoll() {
+        if (pollTimer) { clearTimeout(pollTimer); pollTimer = null; }
+    }
+
+    function scheduleNextPoll(delayMs) {
+        stopPoll();
+        pollTimer = setTimeout(pollStatus, Math.max(250, Number(delayMs) || POLL_SLOW_MS));
+    }
+
+    function updatePollCadence(queue) {
+        var busy = !!(queue && (queue.queue_length > 0 || queue.current));
+        pollIntervalMs = busy ? POLL_FAST_MS : POLL_SLOW_MS;
+    }
+
+    function pollStatus() {
+        if (currentInstrument === null) {
+            // queue tab
+            refreshQueueView()
+                .catch(function () {})
+                .finally(function () {
+                    scheduleNextPoll(pollIntervalMs);
+                });
+            return;
+        }
+        if (!allTasks.length) {
+            pollIntervalMs = POLL_SLOW_MS;
+            scheduleNextPoll(pollIntervalMs);
+            return;
+        }
+
+        var ids = allTasks.map(function (t) { return t.id; }).filter(Boolean).join(',');
+        fetch(urls.status + '?ids=' + encodeURIComponent(ids))
+            .then(function (r) { return r.json(); })
+            .then(function (d) {
+                if (!d.success) return;
+                updatePollCadence(d.queue);
+                // Merge runtime statuses back into allTasks
+                allTasks.forEach(function (t) {
+                    if (d.statuses[t.id]) t.runtime = d.statuses[t.id];
+                });
+                renderTaskLists();
+                updateRunningBadge(d.queue);
+                if (selectedTaskId) updateDetailRuntime();
+            })
+            .catch(function () {
+                pollIntervalMs = POLL_SLOW_MS;
+            })
+            .finally(function () {
+                scheduleNextPoll(pollIntervalMs);
+            });
+    }
+
+    /* -----------------------------------------------------------------------
+       Utility
+    ----------------------------------------------------------------------- */
+    function statusClass(status) {
+        switch (status) {
+            case 'completed':   return 'ok';
+            case 'in_progress': return 'running';
+            case 'cancelling':  return 'queued';
+            case 'queued':      return 'queued';
+            case 'failed':      return 'error';
+            case 'cancelled':   return 'cancelled';
+            default:            return 'idle';
+        }
+    }
+
+    function esc(str) {
+        return String(str)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;');
+    }
+
+    function copyToClipboard(text, okMessage) {
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(text)
+                .then(function () { showToast(okMessage || 'Copied to clipboard.', 'success'); })
+                .catch(function () {
+                    if (_copyWithExecCommand(text)) {
+                        showToast(okMessage || 'Copied to clipboard.', 'success');
+                    } else {
+                        showToast('Copy failed.', 'error');
+                    }
+                });
+            return;
+        }
+        if (_copyWithExecCommand(text)) {
+            showToast(okMessage || 'Copied to clipboard.', 'success');
+        } else {
+            showToast('Copy failed.', 'error');
+        }
+    }
+
+    function _copyWithExecCommand(text) {
+        var ta = document.createElement('textarea');
+        ta.value = text;
+        ta.setAttribute('readonly', '');
+        ta.style.position = 'fixed';
+        ta.style.left = '-9999px';
+        document.body.appendChild(ta);
+        ta.select();
+        ta.setSelectionRange(0, ta.value.length);
+        var ok = false;
+        try {
+            ok = document.execCommand('copy');
+        } catch (_err) {
+            ok = false;
+        }
+        document.body.removeChild(ta);
+        return ok;
+    }
+
+    var toastTimer = null;
+    function showToast(msg, type) {
+        toast.textContent = msg;
+        toast.className = 'ari-toast ari-toast--' + (type || 'info');
+        toast.style.display = '';
+        if (toastTimer) clearTimeout(toastTimer);
+        toastTimer = setTimeout(function () { toast.style.display = 'none'; }, 3500);
+    }
+
+    /* -----------------------------------------------------------------------
+       Bootstrap
+    ----------------------------------------------------------------------- */
+    document.addEventListener('DOMContentLoaded', init);
+
+}());

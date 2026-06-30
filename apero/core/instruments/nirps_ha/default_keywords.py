@@ -446,6 +446,19 @@ KW_MID_OBSTIME_METHOD.set(key='MJDMIDMD',
                           comment='Mid Observation time calc method',
                           group='ppraw')
 
+# Define the raw file release date
+KW_IRELDATE = KW_IRELDATE.copy(__NAME__)
+KW_IRELDATE.set(key='MJDMID', comment='queue release date', group='raw',
+                datatype='mjd', dataformat=float,
+                combine_method='maximum')
+
+# Define the APERO Public Release date (YYYY-MM-DD) this may be different
+#  from raw file header's release date
+KW_ARELDATE = KW_ARELDATE.copy(__NAME__)
+KW_ARELDATE.set(key='ARELDATE', combine_method='maximum',
+                comment='APERO determined public release date',
+                group='ppraw')
+
 # -----------------------------------------------------------------------------
 # Define DRS input keywords
 # -----------------------------------------------------------------------------
@@ -585,7 +598,7 @@ KW_CRUNFILE.set(key='CRUNFILE', comment='Config run file used')
 # Define qc variables
 # -----------------------------------------------------------------------------
 KW_DRS_QC = KW_DRS_QC.copy(__NAME__)
-KW_DRS_QC.set(key='QCC_ALL', comment='All quality control passed',
+KW_DRS_QC.set(key='QCC_ALL', comment='All APERO quality control passed',
               post_exclude=True)
 KW_DRS_QC_VAL = KW_DRS_QC_VAL.copy(__NAME__)
 KW_DRS_QC_VAL.set(key='QCC{0:03d}V', comment='Quality control measured value',

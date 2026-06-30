@@ -1645,6 +1645,8 @@ class SQLiteDatabase(Database):
         func_name = __NAME__ + '.SQLiteDatabase.add_from_pandas()'
         # infer table name
         table = self._infer_table_(table)
+        # Clean NaN values from dataframe - convert to None for database
+        df = _clean_nans(df)
         # deal with empty unique column list
         if unique_cols is not None and len(unique_cols) == 0:
             unique_cols = None
@@ -1666,7 +1668,8 @@ class SQLiteDatabase(Database):
         try:
             conargs = dict(func=func_name, kind='_TO_SQL:SQLiteDatabase')
             with closing(self.connection(**conargs)) as tmpconn:
-                df.to_sql(table, tmpconn, if_exists=if_exists, index=index)
+                df.to_sql(table, tmpconn, if_exists=if_exists, index=index,
+                          chunksize=1000)
                 tmpconn.close()
             # pandas removes uniqueness of columns - need to readd this
             #   constraint if unique_cols is not None
@@ -1745,8 +1748,9 @@ class SQLiteDatabase(Database):
             conn.close()
             # log error: {0}: {1} \n\t Command: {2} \n\t Function: {3}
             ecode = '00-002-00040'
+            ecmd = f'Table={table} Path={self.path} {command}'
             emsg = drs_base.BETEXT[ecode]
-            eargs = [type(e), str(e), self.path, table, func_name]
+            eargs = [type(e), str(e), ecmd, func_name]
             # log base error
             raise drs_base.base_error(ecode, emsg, 'error', args=eargs,
                                       exceptionname='DatabaseError',
@@ -2472,6 +2476,8 @@ class MySQLDatabase(Database):
         func_name = __NAME__ + '.Database.add_from_pandas()'
         # infer table name
         table = self._infer_table_(table)
+        # Clean NaN values from dataframe - convert to None for database
+        df = _clean_nans(df)
         # deal with empty unique column list
         if unique_cols is not None and len(unique_cols) == 0:
             unique_cols = None
@@ -2493,7 +2499,8 @@ class MySQLDatabase(Database):
         try:
             conargs = dict(func=func_name, kind='TO_SQL:SQLALCHEMY')
             with closing(self.connection(connect_kind='sqlalchemy', **conargs)) as dconn:
-                df.to_sql(table, dconn, if_exists=if_exists, index=index)
+                df.to_sql(table, dconn, if_exists=if_exists, index=index,
+                          chunksize=1000)
                 dconn.close()
                 # pandas removes uniqueness of columns - need to readd this
                 #   constraint if unique_cols is not None
@@ -2844,6 +2851,24 @@ def _is_mysql_table_missing_error(error: Exception) -> bool:
     # fall back to message parsing for wrapped exceptions
     emsg = str(error).lower()
     return '1146' in emsg and 'table' in emsg and "doesn't exist" in emsg
+
+
+def _clean_nans(df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Replace NaN values with None in a pandas dataframe.
+    MySQL/MariaDB does not accept NaN values - they must be NULL (None in Python).
+
+    This function replaces all NaN values in the dataframe with None, which will be
+    converted to NULL when inserted into the database.
+
+    :param df: pandas dataframe to clean
+    :return: dataframe with NaN values replaced by None
+    """
+    # Create a copy to avoid modifying the original
+    df = df.copy()
+    # Replace all NaN values with None
+    df = df.where(pd.notna(df), None)
+    return df
 
 
 def _hash_df(df: pd.DataFrame, unique_cols: List[str]) -> pd.DataFrame:

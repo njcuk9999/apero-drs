@@ -18,7 +18,7 @@ from apero.tools.module.processing import drs_run_ini
 # =============================================================================
 # Define variables
 # =============================================================================
-__NAME__ = 'instruments.runfiles_nirps_ha.ini.py'
+__NAME__ = 'instruments.runfiles_nirps_ha.py'
 __INSTRUMENT__ = 'NIRPS_HA'
 __PACKAGE__ = base.__PACKAGE__
 __version__ = base.__version__
@@ -62,6 +62,12 @@ def get_runfiles(params: ParamDict) -> List[RunIniFile]:
     mini_run_nirps_ha.modify('SKIP_LBLMASK_SCI', False)
     mini_run_nirps_ha.modify('SKIP_LBLCOMPUTE_SCI', False)
     mini_run_nirps_ha.modify('SKIP_LBLCOMPILE_SCI', False)
+    # mini runs need debug data
+    mini_run_nirps_ha.modify('DEBUG_BACKGROUND_FILE', True)
+    mini_run_nirps_ha.modify('DEBUG_E2DSLL_FILE', True)
+    mini_run_nirps_ha.modify('DEBUG_SHAPE_FILES', True)
+    mini_run_nirps_ha.modify('DEBUG_UNCORR_EXT_FILES', True)
+
     run_files.append(mini_run_nirps_ha)
     # quick run
     quick_run_nirps_ha = RunIniFile(params, 'NIRPS_HA', 'quick_run')

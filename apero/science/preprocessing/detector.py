@@ -705,7 +705,8 @@ def construct_led_cube(params: ParamDict, led_files: np.ndarray,
 
 
 def create_led_flat(params: ParamDict, recipe: DrsRecipe, led_file: DrsFitsFile,
-                    dark_file: DrsFitsFile) -> DrsFitsFile:
+                    dark_file: DrsFitsFile, start_date: float = None,
+                    end_date: float = None, time_col: str = None) -> DrsFitsFile:
     """
     Creates the LED flats for use in preprocessing
 
@@ -713,6 +714,15 @@ def create_led_flat(params: ParamDict, recipe: DrsRecipe, led_file: DrsFitsFile,
     :param recipe: DrsRecipe, the recipe class that called this function
     :param led_file: DrsFitsFile class describing the LED file
     :param dark_file: DrsFitsFile class describing the DARK file
+    :param start_date: float, the start date for led files
+                       (no files will be used before this date, date format
+                       should match time_col)
+    :param end_date: float, the end date for led files
+                     (no files will be used after this date, date format
+                     should match time_col)
+    :param time_col: str, the column in the file index database that contains
+                     the time information
+
     :return:
     """
     # get the required header keys for led and dark files
@@ -720,13 +730,21 @@ def create_led_flat(params: ParamDict, recipe: DrsRecipe, led_file: DrsFitsFile,
     dark_hkeys = dict(dark_file.required_header_keys)
     # remove INST_MODE filter
     # TODO: remove once we have LEDs for HA and HE
-    del led_hkeys['KW_INST_MODE']
-    del dark_hkeys['KW_INST_MODE']
+    if 'KW_INST_MODE' in led_hkeys:
+        del led_hkeys['KW_INST_MODE']
+    if 'KW_INST_MODE' in dark_hkeys:
+        del dark_hkeys['KW_INST_MODE']
     # get all files that match these raw file definitions
     raw_led_files = drs_utils.find_files(params, block_kind='raw',
-                                         filters=led_hkeys)
+                                         filters=led_hkeys,
+                                         start_date=start_date,
+                                         end_date=end_date,
+                                         time_column=time_col)
     raw_dark_files = drs_utils.find_files(params, block_kind='raw',
-                                          filters=dark_hkeys)
+                                          filters=dark_hkeys,
+                                          start_date=start_date,
+                                          end_date=end_date,
+                                          time_column=time_col)
     # check that we have files
     if len(raw_led_files) == 0:
         emsg = 'No LED files found for {0}'
@@ -1462,7 +1480,60 @@ def nirps_order_mask(params: ParamDict, mask_image: np.ndarray,
     image2 = nirps_correction(params, image, mask_header)
     # generate a better estimate of the mask (after correction)
     with warnings.catch_warnings(record=True):
-        mask = image2 < 0
+        mask = image2 <= 0
+    # set properties
+    props = ParamDict()
+    props['PPM_MASK_NSIG'] = 0
+    props.set_source('PPM_MASK_NSIG', func_name)
+    # return mask
+    return mask, props
+
+
+# TODO: Merge with nirps order mask at some point?
+def ilocater_order_mask(params: ParamDict, mask_image: np.ndarray,
+                       mask_header: drs_fits.Header
+                       ) -> Tuple[np.ndarray, ParamDict]:
+    """
+    Calculate the mask used for removing the orders (preprocessing correction)
+    for iLocater
+
+    :param params: ParamDict - the parameter dictionary of constants
+    :param mask_image: np.array, the image to be masked
+    :param mask_header: fits.Header, the header for the image to be masked
+
+    :return: tuple, 1. the mask for the image, 2. ParamDict - statistics from
+             mask building
+    """
+
+    # set function name
+    func_name = __NAME__ + '.nirps_order_mask()'
+    # number of amplifiers in total
+    namps = params['PP_TOTAL_AMP_NUM']
+    # shape of the image
+    nbypix, nbxpix = mask_image.shape
+
+    image = np.array(mask_image)
+    # normalise by the median
+    for iamp in range(namps):
+        pix1 = (nbxpix // namps) * iamp
+        pix2 = (nbxpix // namps) * (iamp + 1)
+        image[:, pix1:pix2] -= np.nanmedian(image[:, pix1:pix2])
+
+    # find pixels that are more than nsig absolute deviations from the image
+    # median
+    # with warnings.catch_warnings(record=True):
+    #     mask = image > nsig * sig_image
+    # correct the image (as in preprocessing)
+    # image2 = nirps_correction(params, image, mask_header)
+    image2 = np.array(image)
+    # generate a better estimate of the mask (after correction)
+    with warnings.catch_warnings(record=True):
+        mask = image2 <= 0
+    # don't mask side pixels
+    mask[:4] = True
+    mask[-4:] = True
+    mask[:, :4] = True
+    mask[:, -4:] = True
     # set properties
     props = ParamDict()
     props['PPM_MASK_NSIG'] = 0

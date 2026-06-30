@@ -107,7 +107,10 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
     # Get all preprocessed dark files
     # ----------------------------------------------------------------------
     filenames = []
-
+    # get the reference start and end date
+    start_date = params['REF_FIND_START_DATE']
+    end_date = params['REF_FIND_END_DATE']
+    find_time_col = params['REF_FIND_TIME_COL']
     # check file type
     for filetype in filetypes:
         if filetype not in allowedtypes:
@@ -117,7 +120,9 @@ def __main__(recipe: DrsRecipe, params: ParamDict) -> Dict[str, Any]:
             WLOG(params, 'error', emsg)
         # get all "filetype" filenames
         files = drs_utils.find_files(params, block_kind='tmp',
-                                     filters=dict(KW_DPRTYPE=filetype))
+                                     filters=dict(KW_DPRTYPE=filetype),
+                                     start_date=start_date, end_date=end_date,
+                                     time_column=find_time_col)
         # append to filenames
         filenames += list(files)
     # convert to numpy array

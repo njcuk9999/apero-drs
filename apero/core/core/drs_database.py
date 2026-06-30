@@ -1883,14 +1883,20 @@ class FileIndexDatabase(DatabaseManager):
         if hkeys is None:
             hkeys = dict()
         # loop around allowed header keys and check for them in headers
+        #  keys - if not there set to 'None'
         for h_it, hkey in enumerate(rkeys):
             if hkey in hkeys:
+                # noinspection PyBroadException
                 try:
+                    # get data type
                     dtype = rtypes[h_it]
+                    # get value
                     value = hkeys[hkey]
+                    # deal with a null value
                     if drs_text.null_text(value, ['None', 'Null']):
                         hvalues.append('NULL')
                     else:
+                        # try to case and append
                         hvalues.append(dtype(value))
                 except Exception as _:
                     wargs = [self.name, hkey, hkeys[hkey], rtypes[h_it],
@@ -3670,7 +3676,7 @@ def get_google_sheet(params: ParamDict, sheet_id: str, worksheet: int = 0,
         while tries < 10:
             # try to open table
             try:
-                table = Table.read(rawdata.text, format='ascii')
+                table = Table.read(rawdata.text, format='ascii.basic')
                 break
             # if this fails try again (but with a limit
             except InconsistentTableError as _:

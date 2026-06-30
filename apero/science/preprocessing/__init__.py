@@ -41,6 +41,8 @@ get_obj_reject_list = gen_pp.get_obj_reject_list
 
 get_file_reject_list = gen_pp.get_file_reject_list
 
+get_areldate = gen_pp.get_areldate
+
 intercept_correct = detector.intercept_correct
 
 load_led_flat = detector.load_led_flat
@@ -52,6 +54,8 @@ median_one_over_f_noise = detector.median_one_over_f_noise
 nirps_correction = detector.nirps_correction
 
 nirps_order_mask = detector.nirps_order_mask
+
+ilocater_order_mask = detector.ilocater_order_mask
 
 quality_control1 = gen_pp.quality_control1
 

@@ -77,6 +77,10 @@ INPUT_COMBINE_IMAGES.value = True
 INPUT_FLIP_IMAGE = INPUT_FLIP_IMAGE.copy(__NAME__)
 INPUT_FLIP_IMAGE.value = True
 
+# Defines how to flip the image
+INPUT_FLIP_HOW = INPUT_FLIP_HOW.copy(__NAME__)
+INPUT_FLIP_HOW.value = 'both'
+
 # Defines whether to, by default, resize images that are inputted
 INPUT_RESIZE_IMAGE = INPUT_RESIZE_IMAGE.copy(__NAME__)
 INPUT_RESIZE_IMAGE.value = True
@@ -95,6 +99,16 @@ IMAGE_Y_HIGH.value = 3350
 #    also used for the median sampling size in tellu correction
 IMAGE_PIXEL_SIZE = IMAGE_PIXEL_SIZE.copy(__NAME__)
 IMAGE_PIXEL_SIZE.value = 2.28
+
+# Define whether we apply an upper bound when calibrating pp images
+# This sets values above saturate / frmtime
+CAL_APPLY_UPPER_BOUND = CAL_APPLY_UPPER_BOUND.copy(__NAME__)
+CAL_APPLY_UPPER_BOUND.value = True
+
+# Define whether we apply a lower bound when calibrating pp images
+# This sets values below  -10 * (sigdet * gain) / frmtime to nans
+CAL_APPLY_LOWER_BOUND = CAL_APPLY_LOWER_BOUND.copy(__NAME__)
+CAL_APPLY_LOWER_BOUND.value = True
 
 # Define mean line width expressed in pix
 FWHM_PIXEL_LSF = FWHM_PIXEL_LSF.copy(__NAME__)
@@ -147,7 +161,10 @@ CAVITY_1M_FILE.value = 'cavity_length_m_fit.dat'
 CAVITY_LL_FILE = CAVITY_LL_FILE.copy(__NAME__)
 CAVITY_LL_FILE.value = 'cavity_length_ll_fit.dat'
 
-# define the check FP percentile level
+# Assuming that the FPs peaks cover a certain fraction of the frame
+# (5% in SPIRou+NIRPS, 1% in ILocater), we check that the 1-FP_coverage is
+# far higher (defined as N times the readout noise in reference pixels;
+# variable name X) than the median of frame.
 CALIB_CHECK_FP_PERCENTILE = CALIB_CHECK_FP_PERCENTILE.copy(__NAME__)
 CALIB_CHECK_FP_PERCENTILE.value = 95
 
@@ -373,6 +390,10 @@ PP_DARK_MED_BINNUM.value = 32
 PP_HOTPIX_FILE = PP_HOTPIX_FILE.copy(__NAME__)
 PP_HOTPIX_FILE.value = 'hotpix_pp.csv'
 
+# Define the pp hot pixel format
+PP_HOTPIX_FMT = PP_HOTPIX_FMT.copy(__NAME__)
+PP_HOTPIX_FMT.value = 'csv'
+
 #   Defines the pp amplifier bias model (located in the data folder)
 PP_AMP_ERROR_MODEL = PP_AMP_ERROR_MODEL.copy(__NAME__)
 PP_AMP_ERROR_MODEL.value = 'amplifier_bias_model_spirou.fits'
@@ -473,6 +494,10 @@ PP_COR_XTALK_AMP_D2FLUX.author = base.AUTHORS['EA']
 PP_NOSCI_CAPC_DPRTYPES = PP_NOSCI_CAPC_DPRTYPES.copy(__NAME__)
 PP_NOSCI_CAPC_DPRTYPES.value = 'HCONE,HCTWO'
 
+# Define the default file type for pp_ref (used as --filtetype argument)
+PP_REF_FILETYPE = PP_REF_FILETYPE.copy(__NAME__)
+PP_REF_FILETYPE.value = 'FLAT_FLAT'
+
 # =============================================================================
 # CALIBRATION: ASTROMETRIC DATABASE SETTINGS
 # =============================================================================
@@ -568,6 +593,10 @@ HISTO_RANGE_HIGH.value = 0.8
 ALLOWED_DARK_TYPES = ALLOWED_DARK_TYPES.copy(__NAME__)
 ALLOWED_DARK_TYPES.value = 'DARK_DARK_TEL, DARK_DARK_INT'
 
+#    Define the file type to use by default in the dark reference code
+DARK_REF_FILETYPE = DARK_REF_FILETYPE.copy(__NAME__)
+DARK_REF_FILETYPE.value = 'DARK_DARK_TEL, DARK_DARK_INT'
+
 #   Define the maximum time span to combine dark files over (in hours)
 DARK_REF_MATCH_TIME = DARK_REF_MATCH_TIME.copy(__NAME__)
 DARK_REF_MATCH_TIME.value = 2
@@ -584,6 +613,64 @@ DARK_REF_MAX_FILES.value = 100
 #    dark ref
 DARK_REF_MIN_EXPTIME = DARK_REF_MIN_EXPTIME.copy(__NAME__)
 DARK_REF_MIN_EXPTIME.value = 10
+
+# Define the time column (in the database) to use for filtering reference
+# files by
+REF_FIND_TIME_COL = REF_FIND_TIME_COL.copy(__NAME__)
+REF_FIND_TIME_COL.value = 'KW_ACQTIME'
+REF_FIND_TIME_COL.author = base.AUTHORS['NJC']
+
+# Define the start date for reference calibrations (date format must match
+# that in REF_FIND_TIME_COL). This is used as the first date allowed for
+# reference files (i.e. any file before this date will be ignored)
+REF_FIND_START_DATE = REF_FIND_START_DATE.copy(__NAME__)
+REF_FIND_START_DATE.value = 58362 # 2018-09-01
+REF_FIND_START_DATE.author = base.AUTHORS['NJC']
+
+# Define the end date for reference calibrations (date format must match that in
+# REF_FIND_TIME_COL). This is used as the last date allowed for reference files
+# (i.e. any file after this date will be ignored)
+REF_FIND_END_DATE = REF_FIND_END_DATE.copy(__NAME__)
+REF_FIND_END_DATE.value = 'None'
+REF_FIND_END_DATE.author = base.AUTHORS['NJC']
+
+# Define the time delta (in years) to add to the KW_IRELDATE key by default
+#   for raw files
+#   if there is no other way to determine the public release date (can be zero)
+AREL_RDELTA = AREL_RDELTA.copy(__NAME__)
+AREL_RDELTA.value = 0.0
+AREL_RDELTA.author = base.AUTHORS['NJC']
+
+# Define the time delta (in years) to add to the KW_IRELDATE key by default
+#   for APERO files
+#   if there is no other way to determine the public release date (can be zero)
+AREL_ADELTA = AREL_ADELTA.copy(__NAME__)
+AREL_ADELTA.value = 0.0
+AREL_ADELTA.author = base.AUTHORS['NJC']
+
+# Define the time delta (in years) to add to the KW_IRELDATE key by default
+#   for raw files
+#   if there is no other way to determine the public release date (can be zero)
+AREL_LDELTA = AREL_LDELTA.copy(__NAME__)
+AREL_LDELTA.value = 1.0
+AREL_LDELTA.author = base.AUTHORS['NJC']
+
+# Define the googlesheet URL for the apero release date lookup
+ARELDATE_GSHEET_URL = ARELDATE_GSHEET_URL.copy(__NAME__)
+ARELDATE_GSHEET_URL.value = '1BcUdQZx0RcLEK4zuVPUWUK3I6gT78cRukl_LuoIhAgw'
+
+# Define the googlesheet sheet id for the apero release date lookup
+# (there should be one sheet per instrument)
+ARELDATE_GSHEET_ID = ARELDATE_GSHEET_ID.copy(__NAME__)
+ARELDATE_GSHEET_ID.value = '352080580'
+
+# Define the googlesheet sheet column for the apero release date
+ARELDATE_GSHEET_ACOL = ARELDATE_GSHEET_ACOL.copy(__NAME__)
+ARELDATE_GSHEET_ACOL.value = 'APERO_REL_DATE'
+
+# Define the googlesheet sheet column for the apero release date
+ARELDATE_GSHEET_LCOL = ARELDATE_GSHEET_LCOL.copy(__NAME__)
+ARELDATE_GSHEET_LCOL.value = 'LBL_REL_DATE'
 
 # =============================================================================
 # CALIBRATION: BAD PIXEL MAP SETTINGS

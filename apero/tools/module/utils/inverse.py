@@ -75,7 +75,7 @@ def e2ds_to_simage(e2ds, xpixels, ypixels, centers, widths,
     ishape = xpixels.shape
     # define output input
     if simage is None:
-        simage = np.repeat([fill], np.product(ishape)).reshape(ishape)
+        simage = np.repeat([fill], np.prod(ishape)).reshape(ishape)
     # loop around orders
     for order_num in range(e2ds.shape[0]):
         # get order e2ds values
@@ -107,7 +107,7 @@ def drs_to_pp(params, image, fill=0.0):
     # construct shape of output image
     oshape = (full_y, full_x)
     # make zero filled map
-    outmap = np.repeat([fill], np.product(oshape)).reshape(oshape)
+    outmap = np.repeat([fill], np.prod(oshape)).reshape(oshape)
     # add map to pp out map
     outmap[ylow:yhigh, xlow:xhigh] = image
     # now flip it
@@ -153,11 +153,11 @@ def main():
     yimage, ximage = np.indices(ishape)
 
     # e2ds order map
-    order_map = np.repeat([-1], np.product(eshape)).reshape(eshape)
+    order_map = np.repeat([-1], np.prod(eshape)).reshape(eshape)
     for order_num in range(nbo):
         order_map[order_num] = order_num
 
-    x_map = np.repeat([np.nan], np.product(eshape)).reshape(eshape)
+    x_map = np.repeat([np.nan], np.prod(eshape)).reshape(eshape)
     for order_num in range(nbo):
         x_map[order_num] = np.arange(nbxpix)
 

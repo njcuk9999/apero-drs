@@ -1,0 +1,85 @@
+{% extends "general/sidebar_base.html" %}
+{% block title %}APERO RI – {{ page_label }}{% endblock %}
+
+{% block doc_content %}
+<div class="ari-page-header">
+    <h1><i class="{{ page_icon }}"></i> {{ page_label }}</h1>
+    <p class="ari-page-subtitle">Our Lil Nest style links with section management popup.</p>
+</div>
+
+<div class="ari-oln-toolbar">
+    <button class="ari-btn ari-btn--primary ari-btn--sm" id="toggle-add-link-btn">
+        <i class="fa-solid fa-plus"></i> Add Link
+    </button>
+    <button class="ari-btn ari-btn--secondary ari-btn--sm" id="manage-sections-btn">
+        <i class="fa-solid fa-gear"></i> Manage Sections
+    </button>
+    {% if instruments %}
+    <select id="links-instr-select" class="ari-ud-select">
+        <option value="__all__" selected>— All links (personal + instruments) —</option>
+        <option value="">— Personal links only —</option>
+        {% for instr in instruments %}
+        <option value="{{ instr }}">{{ instr }} (include instrument links)</option>
+        {% endfor %}
+    </select>
+    {% endif %}
+</div>
+
+<div id="add-link-container" class="ari-oln-panel" style="display:none;">
+    <h3>Add New Link</h3>
+    <form id="add-link-form" class="ari-oln-form-grid">
+        <div class="ari-form-group">
+            <label for="link-section">Section</label>
+            <select id="link-section"></select>
+        </div>
+        <div class="ari-form-group">
+            <label for="link-name">Link Name</label>
+            <input type="text" id="link-name" placeholder="e.g. Data portal">
+        </div>
+        <div class="ari-form-group">
+            <label for="link-url">URL</label>
+            <input type="url" id="link-url" placeholder="https://...">
+        </div>
+        <div class="ari-form-group">
+            <label for="link-desc">Description (optional)</label>
+            <input type="text" id="link-desc" placeholder="Short description">
+        </div>
+        <div class="ari-form-group">
+            <button class="ari-btn ari-btn--primary" type="submit">Save Link</button>
+        </div>
+    </form>
+</div>
+
+<div id="links-container" class="ari-oln-sections ari-ud-empty">
+    <i class="fa-solid fa-link"></i>
+    <p>No links yet. Add a section to get started.</p>
+</div>
+
+<div id="sections-modal" class="ari-ud-modal" style="display:none;">
+    <div class="ari-ud-modal-box ari-oln-modal-box">
+        <h3>Manage Sections</h3>
+        <div id="sections-list" class="ari-oln-manage-list"></div>
+        <div class="ari-oln-manage-add">
+            <input type="text" id="new-section-name" placeholder="Section name">
+            <button class="ari-btn ari-btn--primary" id="add-section-btn">Add</button>
+        </div>
+        <div class="ari-ud-modal-actions">
+            <button class="ari-btn ari-btn--secondary" id="close-sections-modal">Close</button>
+        </div>
+    </div>
+</div>
+
+<div id="links-toast" class="ari-toast" style="display:none;"></div>
+
+<script>
+window.ARI_LINKS = {
+    getUrl: {{ url_for('api_user_links_get')|tojson }},
+    addUrl: {{ url_for('api_user_links_add')|tojson }},
+    updateUrl: {{ url_for('api_user_links_update')|tojson }},
+    removeUrl: {{ url_for('api_user_links_remove')|tojson }},
+    addSectionUrl: {{ url_for('api_user_links_add_section')|tojson }},
+    removeSectionUrl: {{ url_for('api_user_links_remove_section')|tojson }},
+};
+</script>
+<script src="{{ url_for('static', filename='js/user_links.js') }}"></script>
+{% endblock %}

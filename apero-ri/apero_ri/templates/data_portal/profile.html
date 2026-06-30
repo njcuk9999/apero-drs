@@ -1,0 +1,139 @@
+{% extends "general/sidebar_base.html" %}
+{% block title %}APERO RI – {{ profile.profile_id }}{% endblock %}
+
+{% block body_class %}ari-has-sidebar ari-dp-profile-page{% endblock %}
+
+{% block doc_content %}
+<div class="ari-page-header">
+    <h1><i class="fa-solid fa-laptop-code"></i> {{ profile.profile_id }}</h1>
+</div>
+
+{# ── Summary banner ──────────────────────────────────────────── #}
+<div class="ari-rp-summary">
+
+    <div class="ari-rp-summary__badge"
+         style="--card-bg: {{ profile_color.bg }};
+                --card-text: {{ profile_color.text }};
+                --card-border: {{ profile_color.border }};">
+        <span class="ari-db-card__instrument">{{ profile.instrument }}</span>
+    </div>
+
+    <div class="ari-rp-summary__meta">
+        {% if profile.data.apero_version %}
+        <span class="ari-rp-summary__item">
+            <i class="fa-solid fa-code-branch"></i>
+            v{{ profile.data.apero_version }}
+        </span>
+        {% endif %}
+        {% if profile.data.reduction_server %}
+        <span class="ari-rp-summary__item">
+            <i class="fa-solid fa-server"></i>
+            {{ profile.data.reduction_server }}
+        </span>
+        {% endif %}
+    </div>
+
+    {# ── Health indicators ── #}
+    <div class="ari-rp-summary__health">
+        <span id="health-db" class="ari-rp-health ari-rp-health--pending"
+              title="Database connection">
+            <i class="fa-solid fa-spinner fa-spin"></i>
+            <span class="ari-rp-health__label">Database</span>
+        </span>
+        <span id="health-paths" class="ari-rp-health ari-rp-health--pending"
+              title="Data paths">
+            <i class="fa-solid fa-spinner fa-spin"></i>
+            <span class="ari-rp-health__label">Paths</span>
+        </span>
+    </div>
+</div>
+
+{# ── How-to banner ───────────────────────────────────────────── #}
+<details class="ot-howto" id="howto-profile" open>
+    <summary class="ot-howto__title">
+        <i class="fa-solid fa-circle-info"></i>
+        <span class="ot-howto__label-open">How to use this page</span>
+        <span class="ot-howto__label-closed">Info</span>
+        <i class="fa-solid fa-chevron-down ot-howto__chevron"></i>
+    </summary>
+    <div class="ot-howto__body">
+        <ol class="ot-howto__steps">
+            <li>
+                <span><strong>Choose a section:</strong> Click any card below to open that data view for this reduction profile.</span>
+            </li>
+            <li>
+                <span><strong>Object Table:</strong> Browse and filter all astrophysical targets, navigate to individual object pages, and add files to your download basket.</span>
+            </li>
+            <li>
+                <span><strong>Observation Table:</strong> View observation-level summaries aggregated per object name across all run IDs.</span>
+            </li>
+            <li>
+                <span><strong>Database Query:</strong> Run custom read-only SQL queries against the reduced data tables accessible to your groups.</span>
+            </li>
+            <li>
+                <span><strong>Download Basket:</strong> Review and download files you have selected across your browsing sessions.</span>
+            </li>
+        </ol>
+        <div class="ot-howto__notes">
+            <strong><i class="fa-solid fa-circle-exclamation"></i> Notes</strong>
+            <ul>
+                <li>Please contact the admin via
+                    <a href="{{ url_for('home_user_portal_support') }}">User Portal / Support</a>
+                    if you think you are missing access.</li>
+            </ul>
+        </div>
+    </div>
+</details>
+{# ── Section cards ───────────────────────────────────────────── #}
+<div class="ari-rp-sections">
+{% for card in section_cards %}
+    {% if card.url is defined and card.url %}
+    <a href="{{ card.url }}"
+       class="ari-rp-section-card ari-rp-section-card--active"
+       data-key="{{ card.key }}">
+        <div class="ari-rp-section-card__icon">
+            <i class="{{ card.icon }}"></i>
+        </div>
+        <div class="ari-rp-section-card__body">
+            <h3>{{ card.label }}</h3>
+            <p>{{ card.description }}</p>
+        </div>
+        <div class="ari-rp-section-card__arrow">
+            <i class="fa-solid fa-arrow-right"></i>
+        </div>
+    </a>
+    {% else %}
+    <div class="ari-rp-section-card ari-rp-section-card--disabled"
+         data-key="{{ card.key }}">
+        <div class="ari-rp-section-card__icon">
+            <i class="{{ card.icon }}"></i>
+        </div>
+        <div class="ari-rp-section-card__body">
+            <h3>{{ card.label }}</h3>
+            <p>{{ card.description }}</p>
+        </div>
+        <div class="ari-rp-section-card__arrow">
+            <i class="fa-solid fa-arrow-right"></i>
+        </div>
+    </div>
+    {% endif %}
+{% endfor %}
+</div>
+
+{% if section_cards | selectattr('url', 'undefined') | list or
+      section_cards | rejectattr('url', 'defined') | list %}
+<p class="ari-rp-note">
+    <i class="fa-solid fa-circle-info"></i>
+    Some sections are not yet available.
+</p>
+{% endif %}
+
+{# ── Config for JS ───────────────────────────────────────────── #}
+<script>
+window.ARI_PROFILE_PAGE = {
+    healthUrl: {{ health_url | tojson }},
+    profileId: {{ profile.profile_id | tojson }},
+};
+</script>
+<script src="{{ url_for('static', filename='js/ri_profile.js') }}" defer></script>
+{% endblock %}

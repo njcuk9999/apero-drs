@@ -1,0 +1,309 @@
+/* ==========================================================================
+   ARI — Mobile / Small-screen overrides
+   Global responsive layer applied AFTER style.css. Targets common
+   patterns (tables, modals, forms, sidebars, tap targets) so most
+   pages get reasonable mobile behaviour without per-page edits.
+   See .github/instructions/ari-new-page.instructions.md §4 for the
+   contract every new page must honour.
+   ========================================================================== */
+
+/* ---------- Universal: prevent horizontal overflow + box sizing ----- */
+html, body {
+    max-width: 100%;
+    overflow-x: hidden;
+}
+
+img, svg, video, canvas, table {
+    max-width: 100%;
+}
+
+/* ---------- Tap targets at small widths (>=44x44 CSS px) ------------ */
+@media (max-width: 768px) {
+    button,
+    .ari-btn,
+    .ari-nav__link,
+    .ari-sidebar__link,
+    .ari-sidebar__heading,
+    .ari-mobile-menu__link,
+    .ari-mobile-menu__pin,
+    a.ari-card,
+    .ari-tab,
+    .ari-pill,
+    .ari-badge--btn {
+        min-height: 44px;
+        min-width: 44px;
+    }
+    /* Slightly larger fonts in dense lists for legibility */
+    .ari-doc-content,
+    .ari-card,
+    .ari-table {
+        font-size: 0.95rem;
+    }
+}
+
+/* ---------- Tables: horizontal-scroll wrapper at <=768px ------------- */
+@media (max-width: 768px) {
+    /* Wrap any large table that didn't get its own per-page mobile
+       collapse. Authors should ideally stack rows to cards but a
+       scroll wrapper guarantees the table is at least reachable. */
+    .ari-table-wrap,
+    .ari-data-table-wrap,
+    .at-table-wrap,
+    .ari-doc-content table {
+        max-width: 100%;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+    table.ari-data-table,
+    table.at-table,
+    .ari-doc-content table {
+        min-width: 480px;
+    }
+}
+
+/* ---------- Modals: cap height, allow internal scroll --------------- */
+@media (max-width: 768px) {
+    .ari-modal__content,
+    .ari-ap-modal,
+    .ari-modal,
+    .at-modal,
+    .at-modal__panel,
+    .ap-modal__panel {
+        max-width: 96vw !important;
+        max-height: 90vh;
+        overflow-y: auto;
+        padding: 0.75rem !important;
+    }
+    .ari-modal__body,
+    .at-modal__body,
+    .ap-modal__body {
+        max-height: calc(90vh - 4rem);
+        overflow-y: auto;
+    }
+}
+
+/* ---------- Forms: stack label/input vertically --------------------- */
+@media (max-width: 768px) {
+    .ari-form__row,
+    .ari-ap-form__row,
+    .ari-form__grid,
+    .ari-form-grid {
+        display: block !important;
+        grid-template-columns: 1fr !important;
+    }
+    .ari-form__row > *,
+    .ari-ap-form__row > * {
+        width: 100% !important;
+        margin-bottom: 0.5rem;
+    }
+    .ari-form__field input[type="text"],
+    .ari-form__field input[type="number"],
+    .ari-form__field input[type="email"],
+    .ari-form__field input[type="search"],
+    .ari-form__field select,
+    .ari-form__field textarea,
+    .ari-ap-input,
+    .ari-input {
+        width: 100% !important;
+        max-width: 100% !important;
+    }
+}
+
+/* ---------- Sidebar: drawer pattern at <=980px ---------------------- */
+@media (max-width: 980px) {
+    .ari-doc-layout,
+    .ari-portal-layout {
+        display: block !important;
+    }
+    .ari-sidebar {
+        position: fixed;
+        top: var(--ari-header-height);
+        left: 0;
+        bottom: 0;
+        z-index: 1080;
+        width: min(86vw, 320px);
+        transform: translateX(-100%);
+        transition: transform 0.18s ease-out;
+        overflow-y: auto;
+        background: var(--ari-card-bg);
+        box-shadow: 2px 0 12px rgba(0, 0, 0, 0.18);
+    }
+    .ari-sidebar.is-open {
+        transform: translateX(0);
+    }
+    .ari-doc-content,
+    .ari-portal-content {
+        margin-left: 0 !important;
+        max-width: 100% !important;
+    }
+}
+
+/* ---------- Cards / grids: 1 column on small screens ---------------- */
+@media (max-width: 768px) {
+    .ari-card-grid,
+    .ari-cards-grid,
+    .ari-section-grid,
+    .ari-kv-grid {
+        grid-template-columns: 1fr !important;
+    }
+    .ari-card {
+        padding: 0.75rem !important;
+    }
+}
+
+/* ---------- Bokeh / canvas plot wrappers: full width ---------------- */
+.ari-plot-wrap,
+.bk-root,
+.bk {
+    max-width: 100%;
+}
+@media (max-width: 768px) {
+    .ari-plot-wrap,
+    .bk-root,
+    .bk {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+}
+
+/* ---------- Header on small screens --------------------------------- */
+@media (max-width: 768px) {
+    .ari-header {
+        padding: 0 0.5rem;
+    }
+    .ari-header__logo span {
+        display: none; /* Logo image only on small phones */
+    }
+    .ari-nav {
+        display: none; /* Hamburger handles nav on mobile */
+    }
+}
+
+/* ---------- "Safe area" for buttons in fixed bars on iOS ------------ */
+@supports (padding: env(safe-area-inset-bottom)) {
+    .ari-mobile-menu,
+    .ari-modal {
+        padding-bottom: max(0.75rem, env(safe-area-inset-bottom));
+    }
+}
+
+/* ==========================================================================
+   Cross-cutting dark-theme polish
+   Applied to common patterns shipped after the original style.css was
+   written. New components should use the CSS vars in :root and add
+   matching [data-theme="dark"] selectors here or in their own file.
+   ========================================================================== */
+
+[data-theme="dark"] {
+    --ari-bg: #0d1117;
+    --ari-card-bg: #161b22;
+    --ari-text: #e6edf3;
+    --ari-text-muted: #8b949e;
+    --ari-border: #30363d;
+}
+
+/* Generic surfaces — covers most "card-like" panels created post-launch */
+[data-theme="dark"] .ari-card,
+[data-theme="dark"] .ari-panel,
+[data-theme="dark"] .ari-section,
+[data-theme="dark"] .ari-modal__content,
+[data-theme="dark"] .at-modal__panel,
+[data-theme="dark"] .ap-modal__panel,
+[data-theme="dark"] .ari-ap-modal {
+    background: var(--ari-card-bg);
+    color: var(--ari-text);
+    border-color: var(--ari-border);
+}
+
+[data-theme="dark"] .ari-table,
+[data-theme="dark"] .ari-data-table,
+[data-theme="dark"] .at-table {
+    color: var(--ari-text);
+    background: var(--ari-card-bg);
+}
+[data-theme="dark"] .ari-table th,
+[data-theme="dark"] .ari-data-table th,
+[data-theme="dark"] .at-table th {
+    background: #1f242c;
+    color: var(--ari-text);
+    border-color: var(--ari-border);
+}
+[data-theme="dark"] .ari-table td,
+[data-theme="dark"] .ari-data-table td,
+[data-theme="dark"] .at-table td {
+    border-color: var(--ari-border);
+}
+[data-theme="dark"] .ari-table tr:nth-child(even),
+[data-theme="dark"] .ari-data-table tr:nth-child(even),
+[data-theme="dark"] .at-table tr:nth-child(even) {
+    background: rgba(255, 255, 255, 0.02);
+}
+
+[data-theme="dark"] input[type="text"],
+[data-theme="dark"] input[type="number"],
+[data-theme="dark"] input[type="email"],
+[data-theme="dark"] input[type="search"],
+[data-theme="dark"] input[type="password"],
+[data-theme="dark"] textarea,
+[data-theme="dark"] select,
+[data-theme="dark"] .ari-input,
+[data-theme="dark"] .ari-ap-input {
+    background: #0d1117;
+    color: var(--ari-text);
+    border-color: var(--ari-border);
+}
+
+[data-theme="dark"] code,
+[data-theme="dark"] pre {
+    background: #0a0d11;
+    color: #e6edf3;
+    border-color: var(--ari-border);
+}
+
+/* Pills / chips / badges */
+[data-theme="dark"] .ari-pill,
+[data-theme="dark"] .ari-chip,
+[data-theme="dark"] .ari-badge {
+    background: #21262d;
+    color: var(--ari-text);
+    border-color: var(--ari-border);
+}
+
+/* Tabs */
+[data-theme="dark"] .ari-tab,
+[data-theme="dark"] .ari-tabs__tab {
+    color: var(--ari-text-muted);
+    border-color: transparent;
+}
+[data-theme="dark"] .ari-tab--active,
+[data-theme="dark"] .ari-tabs__tab--active,
+[data-theme="dark"] .ari-tab[aria-selected="true"] {
+    color: var(--ari-text);
+    border-bottom-color: var(--ari-primary-light);
+}
+
+/* Hover/focus */
+[data-theme="dark"] a:hover,
+[data-theme="dark"] .ari-link:hover {
+    color: var(--ari-primary-light);
+}
+
+/* Status pills (open/resolved/invalid etc — used by issues + astrometrics) */
+[data-theme="dark"] .ari-status--open,
+[data-theme="dark"] .ari-status--pending {
+    background: #3d2e10;
+    color: #f0c674;
+    border-color: #5b440f;
+}
+[data-theme="dark"] .ari-status--resolved,
+[data-theme="dark"] .ari-status--verified {
+    background: #1c3621;
+    color: #79d493;
+    border-color: #2f5d3c;
+}
+[data-theme="dark"] .ari-status--invalid,
+[data-theme="dark"] .ari-status--rejected {
+    background: #3a1d20;
+    color: #f5848a;
+    border-color: #6b2a30;
+}

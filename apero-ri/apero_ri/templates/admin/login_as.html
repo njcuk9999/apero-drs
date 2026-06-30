@@ -1,0 +1,48 @@
+{% extends "general/sidebar_base.html" %}
+{% block title %}APERO RI – Login As{% endblock %}
+
+{% block doc_content %}
+<div class="ari-page-header">
+    <h1><i class="{{ page_icon }}"></i> {{ page_label }}</h1>
+</div>
+
+<!-- Current impersonation banner -->
+<div id="impersonation-banner" class="ari-impersonation-banner" style="display:none;">
+    <div class="ari-impersonation-banner__info">
+        <i class="fa-solid fa-user-secret"></i>
+        Currently logged in as: <strong id="impersonation-target"></strong>
+    </div>
+    <button id="btn-clear-impersonation" class="ari-btn ari-btn--secondary">
+        <i class="fa-solid fa-arrow-rotate-left"></i> Revert to my account
+    </button>
+</div>
+
+<!-- Search bar -->
+<div class="ari-user-search">
+    <div class="ari-user-search__input-wrap">
+        <i class="fa-solid fa-magnifying-glass ari-user-search__icon"></i>
+        <input type="text" id="login-as-search" class="ari-user-search__input"
+               placeholder="Filter users..."
+               autocomplete="off">
+    </div>
+    <div id="search-status" class="ari-user-search__status"></div>
+</div>
+
+<!-- Search results -->
+<div id="login-as-results" class="ari-user-results"></div>
+
+<!-- Toast notification -->
+<div id="toast" class="ari-toast" style="display:none;"></div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+window.ARI_LOGIN_AS = {
+    searchUrl: {{ url_for('api_login_as_search')|tojson }},
+    setUrl: {{ url_for('api_login_as_set')|tojson }},
+    clearUrl: {{ url_for('api_login_as_clear')|tojson }},
+    homeUrl: {{ url_for('home')|tojson }}
+};
+</script>
+<script src="{{ url_for('static', filename='js/admin_login_as.js') }}"></script>
+{% endblock %}

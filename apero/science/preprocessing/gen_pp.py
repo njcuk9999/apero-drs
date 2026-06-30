@@ -40,7 +40,7 @@ __author__ = base.__author__
 __date__ = base.__date__
 __release__ = base.__release__
 # get time
-Time = base.Time
+Time, TimeDelta = base.Time, base.TimeDelta
 # Get Logging function
 WLOG = drs_log.wlog
 # Get function string
@@ -554,6 +554,122 @@ def get_file_reject_list(params: ParamDict, column: str = 'PP') -> np.ndarray:
         reject_list = drs_misc.clean_reject_list(_reject_list)
         # return rejection list
         return np.array(reject_list)
+
+
+def get_areldate(params: ParamDict, header: drs_fits.Header,
+                 release_type: str = 'apero') -> str:
+    """
+    Get the APERO release date from:
+
+    Option 1. The google sheet (based on run id)
+    Option 2. The pseudo const (raw + time delta)
+
+    :param params: ParamDict, parameter dictionary of constants
+    :param header: Header, fits header (required for KW_RUN_ID and KW_IRELDATE)
+
+    :return: str, the YYYY-MM-DD hh:mm:ss.ss representation of the apero
+             release date
+    """
+    # set function name
+    func_name = display_func('get_areldate', __NAME__)
+    # get psuedo constants
+    pconst = constants.pload()
+    # set apero release date to None to start
+    areldate = None
+    # get header key
+    run_id = header.get(params['KW_RUN_ID'][0], None)
+    # -------------------------------------------------------------------------
+    # deal with release type
+    if release_type == 'apero':
+        gsheet_acol = params['ARELDATE_GSHEET_ACOL']
+        delta_key = 'AREL_ADELTA'
+    elif release_type == 'lbl':
+        gsheet_acol = params['ARELDATE_GSHEET_LCOL']
+        delta_key = 'AREL_LDELTA'
+    else:
+        emsg = 'Invalid release type = {0} (function = {1})'
+        eargs = [release_type, func_name]
+        WLOG(params, 'error', emsg.format(*eargs))
+        return 'Unknown'
+    # -------------------------------------------------------------------------
+    # option 1: Check the google sheet for an entry
+    # -------------------------------------------------------------------------
+    # if we have no run id we can't do this
+    if run_id is not None:
+        # clean run id
+        run_id = str(run_id).strip()
+        # get parameters from params
+        gsheet_url = params['ARELDATE_GSHEET_URL']
+        gsheet_id = params['ARELDATE_GSHEET_ID']
+        # get areldate list google sheets
+        try:
+            adate_table = drs_database.get_google_sheet(params, gsheet_url,
+                                                        gsheet_id)
+            # set areldate if in table
+            if run_id in list(adate_table['RUN_ID']):
+                # get positions in table
+                mask = adate_table['RUN_ID'] == str(run_id)
+                # get the last appearing row in googlesheet
+                areldate = adate_table[gsheet_acol][mask][-1]
+
+        # any exception here should return a warning and a empty array
+        except Exception as e:
+            wmsg = 'Cannot read areldate list {0}.'
+            wargs = [GOOGLE_BASE_URL.format(gsheet_url, gsheet_id),
+                     type(e), str(e)]
+            WLOG(params, 'warning', wmsg.format(*wargs), sublevel=3)
+
+    # -------------------------------------------------------------------------
+    # option 2: If we have apero areldate + time delta
+    # -------------------------------------------------------------------------
+    if areldate is None:
+        areldate = reldate_convert(params, header, delta_key)
+
+    # -------------------------------------------------------------------------
+    # option 3: if not set from googlesheet set from raw areldate + time delta
+    # -------------------------------------------------------------------------
+    if areldate is None:
+        areldate = pconst.GET_AREL_DATE(params, header, delta_key=delta_key)
+
+    # -------------------------------------------------------------------------
+    # return the apero release date
+    return areldate
+
+
+def reldate_convert(params: ParamDict, header: drs_fits.Header,
+                    delta_key: str) -> Union[str, None]:
+    """
+    Take an APERO release date and push it to the new format
+
+    (back to raw then forward to new format) using the time delta
+
+    :param params: ParamDict, parameter dictionary of constants
+    :param header: fits header, to test for key frmo
+    :param delta_key: str, the constant containing the time delta required
+
+    :return:
+    """
+    # get keyword
+    kw_reldate = params['KW_ARELDATE'][0]
+    kw_areldate_datatype = 'iso'
+    # get the time delta from APERO
+    tdelta_in = params['AREL_ADELTA']
+    tdelta_out = params[delta_key]
+    # deal with no areldate in header --> return
+    if kw_reldate not in header:
+        return None
+    # deal with tdelta_in the same as tdelta_out (just return the current value)
+    if tdelta_in == tdelta_out:
+        return header[kw_reldate]
+    # get and convert reldate
+    _areldate = Time(header[kw_reldate], format=kw_areldate_datatype)
+    # get the default time to add to instrument release date
+    time_delta_in = TimeDelta(tdelta_in * uu.year)
+    time_delta_out = TimeDelta(tdelta_out * uu.year)
+    # convert the areldate to the new time delta
+    areldate = _areldate - time_delta_in + time_delta_out
+    # return the areldate in ISO format
+    return areldate.iso
 
 
 # =============================================================================

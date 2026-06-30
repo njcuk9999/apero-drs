@@ -11,6 +11,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple, Union
 
 import numpy as np
+from astropy import units as uu
 
 from apero.base import base
 from apero.base import drs_db
@@ -382,6 +383,17 @@ class PseudoConstants(pseudo_const.DefaultPseudoConstants):
         header, _ = get_mid_obs_time(params, header, None, filename)
         return float(header[params['KW_MID_OBS_TIME']])
 
+    def GET_AREL_DATE(self, params: ParamDict, header: Any,
+                      delta_key: str) -> str:
+        """
+        Get the apero release date
+
+        :param delta_key: str, the key to use for the time delta
+        :return:
+        """
+        return manual_apero_reldate(params, header, delta_key=delta_key,
+                                 return_value=True)
+
     def FRAME_TIME(self, params: ParamDict, header: Any):
         """
         Get the frame time (either from header or constants depending on
@@ -463,6 +475,9 @@ class PseudoConstants(pseudo_const.DefaultPseudoConstants):
         header_cols.add(name='KW_FIBER', datatype='VARCHAR(80)')
         header_cols.add(name='KW_IDENTIFIER', datatype='VARCHAR(80)',
                         is_index=True)
+        header_cols.add(name='KW_IRELDATE', datatype='DOUBLE')
+        header_cols.add(name='KW_ARELDATE', datatype='VARCHAR(80)')
+        header_cols.add(name='KW_DRS_QC', datatype='INT')
         # check that filedef keys are present
         for fkey in self.FILEDEF_HEADER_KEYS():
             if fkey not in header_cols.names:
@@ -480,7 +495,8 @@ class PseudoConstants(pseudo_const.DefaultPseudoConstants):
         """
         keys = ['KW_TARGET_TYPE', 'KW_OBJECTNAME', 'KW_OBSTYPE',
                 'KW_RAW_DPRTYPE', 'KW_RAW_DPRCATG', 'KW_INSTRUMENT',
-                'KW_INST_MODE', 'KW_DPRTYPE', 'KW_OUTPUT', 'KW_OBJECTNAME2']
+                'KW_INST_MODE', 'KW_DPRTYPE', 'KW_OUTPUT', 'KW_OBJECTNAME2',
+                'KW_IRELDATE', 'KW_ARELDATE', 'KW_DRS_QC']
         return keys
 
     # =========================================================================
@@ -1313,7 +1329,7 @@ def get_special_objname(params: ParamDict, header: Any,
     # if target type is sky make the object name sky
     if cond2:
         objname = 'SKY'
-    if cond3:
+    elif cond3:
         objname = 'NIGHT-SKY'
     # otherwise we assume we have a calibration
     elif cond4:
@@ -1325,6 +1341,72 @@ def get_special_objname(params: ParamDict, header: Any,
     #  update header / hdict
     header[kwobjname] = (objname, kwobjcomment)
     hdict[kwobjname] = (objname, kwobjcomment)
+    # return header and hdict
+    return header, hdict
+
+
+def set_drs_qc(params: ParamDict, header: Any, hdict: Any) -> Tuple[Any, Any]:
+    """
+    We set the KW_DRS_QC to 1 by default
+
+    :param params: ParamDict, the parameter dictionary of constants
+    :param header: drs_fits.Header or astropy.io.fits.Header, the header to
+                   check for objname (if "objname" not set)
+    :param hdict: dict, the header dictionary to update with
+
+    :return:
+    """
+    # get parmaeters from params
+    kw_drs_qc = params['KW_DRS_QC'][0]
+    kw_drs_qc_comment = params['KW_DRS_QC'][2]
+    # set the qc by default to 1
+    drs_qc = 1
+    #  update header / hdict
+    header[kw_drs_qc] = (drs_qc, kw_drs_qc_comment)
+    hdict[kw_drs_qc] = (drs_qc, kw_drs_qc_comment)
+    # return header and hdict
+    return header, hdict
+
+
+def manual_apero_reldate(params: ParamDict, header: Any,
+                      hdict: Any = None,
+                      delta_key: str = 'AREL_RDELTA',
+                      return_value: bool = False
+                      ) -> Union[Tuple[Any, Any], str]:
+    """
+    Work out the APERO public release date (not based on special cases
+    but just based on the raw file)
+
+    :param params: ParamDict, the parameter dictionary of constants
+    :param header: drs_fits.Header or astropy.io.fits.Header, the header to
+                   check for objname (if "objname" not set)
+    :param hdict: dict, the header dictionary to update with
+
+    :return:
+    """
+    # get parameters from params
+    kw_ireldate = params['KW_IRELDATE'][0]
+    kw_areldate = params['KW_ARELDATE'][0]
+    kw_areldate_comment = params['KW_ARELDATE'][2]
+    kw_ireldate_datatype = params.instances['KW_IRELDATE'].datatype
+    # get the time delta from APERO
+    tdelta = params[delta_key]
+    # get the default time to add to instrument release date
+    time_delta = TimeDelta(tdelta * uu.year)
+    # deal with no IRELDATE in header -> fall back to KW_ACQTIME
+    if kw_ireldate not in header:
+        kw_ireldate = params['KW_ACQTIME'][0]
+        kw_ireldate_datatype = params.instances['KW_ACQTIME'].datatype
+    # get and convert ireldate
+    ireldate = Time(header[kw_ireldate], format=kw_ireldate_datatype)
+    # calculate relative date
+    areldate = ireldate + time_delta
+    # deal with returning just the value
+    if return_value:
+        return areldate.iso
+    #  update header / hdict
+    header[kw_areldate] = (areldate.iso, kw_areldate_comment)
+    hdict[kw_areldate] = (areldate.iso, kw_areldate_comment)
     # return header and hdict
     return header, hdict
 

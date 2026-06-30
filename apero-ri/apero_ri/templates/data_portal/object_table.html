@@ -1,0 +1,406 @@
+{% extends "general/sidebar_base.html" %}
+{% block title %}APERO RI – {{ profile.profile_id }}: Object Table{% endblock %}
+
+{# Full-width layout for wide tables #}
+{% block body_class %}ari-has-sidebar ari-ot-page{% endblock %}
+
+{% block doc_content %}
+<div class="ari-page-header">
+    <h1>
+        <i class="{{ page_icon }}"></i>
+        <a href="{{ url_for('ri_profile', profile_id=profile.profile_id) }}"
+           class="ot-breadcrumb-link">{{ profile.profile_id }}</a>
+        <span class="ot-breadcrumb-sep">/</span>
+        Astrophysical Object Table
+    </h1>
+</div>
+
+{# ── How-to banner ─────────────────────────────────────────── #}
+<details class="ot-howto" id="howto-object-table" open>
+    <summary class="ot-howto__title">
+        <i class="fa-solid fa-circle-info"></i>
+        <span class="ot-howto__label-open">How to use this table</span>
+        <span class="ot-howto__label-closed">Info</span>
+        <i class="fa-solid fa-chevron-down ot-howto__chevron"></i>
+    </summary>
+    <div class="ot-howto__body">
+        <ol class="ot-howto__steps">
+            <li>
+                <span><strong>Filter columns:</strong> Click on the input fields below each column header to filter by text or values. Use these to find specific objects or narrow down your results.</span>
+            </li>
+            <li>
+                <span><strong>Show or hide columns:</strong> Click the <strong><i class="fa-solid fa-table-columns"></i> Columns</strong> button to customize which columns are visible in the table.</span>
+            </li>
+            <li>
+                <span><strong>Navigate to object page:</strong> Click on any <strong>object name</strong> to view detailed information about that object, including its spectrum data and file browser.</span>
+            </li>
+            <li>
+                <span><strong>Add files to download basket:</strong> On the object page, select the <strong><i class="fa-solid fa-folder-open"></i> File Browser</strong> tab, then use the basket icons to add files to your download basket.</span>
+            </li>
+        </ol>
+        <div class="ot-howto__notes">
+            <strong><i class="fa-solid fa-circle-exclamation"></i> Notes</strong>
+            <ul>
+                <li>If a target is missing, review your current permissions in
+                    <a href="{{ url_for('home_user_portal_data_access') }}">User Portal / Data Access</a>.</li>
+                <li>File counts show <strong>N&nbsp;(M)</strong> where N is the number of files
+                    accessible to you and M is the total across all run IDs.</li>
+            </ul>
+        </div>
+    </div>
+</details>
+
+{# ── Find Object (embedded) ──────────────────────────────────── #}
+<details class="ot-howto ot-find-embed" id="find-object-embed">
+    <summary class="ot-howto__title">
+        <i class="fa-solid fa-magnifying-glass-location"></i>
+        <span class="ot-howto__label-open">Find Object</span>
+        <span class="ot-howto__label-closed">Find Object</span>
+        <i class="fa-solid fa-chevron-down ot-howto__chevron"></i>
+    </summary>
+    <div class="ot-howto__body">
+        <div class="ot-find-tabs" role="tablist" aria-label="Find object mode">
+            <button id="fo-tab-name" class="ot-find-tab ot-find-tab--active"
+                    type="button" role="tab" aria-selected="true"
+                    aria-controls="fo-panel-name">
+                Find by name
+            </button>
+            <button id="fo-tab-coords" class="ot-find-tab"
+                    type="button" role="tab" aria-selected="false"
+                    aria-controls="fo-panel-coords">
+                Find by coordinates
+            </button>
+            <button id="fo-tab-date" class="ot-find-tab"
+                    type="button" role="tab" aria-selected="false"
+                    aria-controls="fo-panel-date">
+                Date
+            </button>
+            <button id="fo-tab-advanced" class="ot-find-tab"
+                    type="button" role="tab" aria-selected="false"
+                    aria-controls="fo-panel-advanced">
+                Advanced
+            </button>
+            <button id="fo-tab-group" class="ot-find-tab"
+                    type="button" role="tab" aria-selected="false"
+                    aria-controls="fo-panel-group">
+                Group
+            </button>
+        </div>
+
+        <div id="fo-panel-name" class="ot-find-tab-panel ot-find-tab-panel--active"
+             role="tabpanel" aria-labelledby="fo-tab-name">
+            <p class="ot-find-desc">
+                Search for an object name based on all currently known aliases.
+            </p>
+            <div class="ot-find-panel__grid">
+                <label class="ot-find-field">
+                    <span class="ot-find-field__label">Object / alias</span>
+                    <input id="fo-name-query" class="ot-find-input" type="text"
+                           placeholder="Type object name">
+                </label>
+            </div>
+        </div>
+
+        <div id="fo-panel-coords" class="ot-find-tab-panel"
+             role="tabpanel" aria-labelledby="fo-tab-coords" hidden>
+            <p class="ot-find-desc">
+                Search for an object using its database coordinates (usually Gaia).
+            </p>
+            <div class="ot-find-panel__grid">
+                <label class="ot-find-field ot-find-field--unit">
+                    <span class="ot-find-field__label">Coordinate format</span>
+                    <select id="fo-coord-format" class="ot-find-select">
+                        <option value="deg" selected>Deg</option>
+                        <option value="hms">HH:MM:SS / DD:MM:SS</option>
+                    </select>
+                </label>
+                <label class="ot-find-field">
+                    <span id="fo-ra-label" class="ot-find-field__label">RA [deg]</span>
+                    <input id="fo-ra" class="ot-find-input" type="text"
+                           placeholder="e.g. 328.1243">
+                </label>
+                <label class="ot-find-field">
+                    <span id="fo-dec-label" class="ot-find-field__label">Dec [deg]</span>
+                    <input id="fo-dec" class="ot-find-input" type="text"
+                           placeholder="e.g. 28.7933">
+                </label>
+                <label class="ot-find-field">
+                    <span class="ot-find-field__label">Separation</span>
+                    <input id="fo-sep" class="ot-find-input" type="number" step="any"
+                           min="0" placeholder="e.g. 30">
+                </label>
+                <label class="ot-find-field ot-find-field--unit">
+                    <span class="ot-find-field__label">Unit</span>
+                    <select id="fo-unit" class="ot-find-select">
+                        <option value="arcsec" selected>arcsec</option>
+                        <option value="arcmin">arcmin</option>
+                        <option value="deg">deg</option>
+                    </select>
+                </label>
+                <div class="ot-find-actions">
+                    <button id="fo-find-coords" class="ari-btn ari-btn--sm ari-btn--secondary"
+                            type="button">
+                        <i class="fa-solid fa-crosshairs"></i> Find
+                    </button>
+                    <button id="fo-clear-find" class="ari-btn ari-btn--sm ari-btn--secondary"
+                            type="button">
+                        <i class="fa-solid fa-eraser"></i> Clear Find
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div id="fo-panel-date" class="ot-find-tab-panel"
+             role="tabpanel" aria-labelledby="fo-tab-date" hidden>
+            <p class="ot-find-desc">
+                Filter objects by observation date using the object table latest observation date.
+            </p>
+            <div class="ot-find-panel__grid">
+                <label class="ot-find-field">
+                    <span class="ot-find-field__label">First observed</span>
+                    <input id="fo-date-first" class="ot-find-input" type="date">
+                </label>
+                <label class="ot-find-field">
+                    <span class="ot-find-field__label">Last observed</span>
+                    <input id="fo-date-last" class="ot-find-input" type="date">
+                </label>
+                <div class="ot-find-actions">
+                    <button id="fo-date-apply" class="ari-btn ari-btn--sm ari-btn--secondary"
+                            type="button">
+                        <i class="fa-solid fa-filter"></i> Apply
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div id="fo-panel-advanced" class="ot-find-tab-panel"
+             role="tabpanel" aria-labelledby="fo-tab-advanced" hidden>
+            <p class="ot-find-desc">
+                Advanced query based on a property of the object.
+            </p>
+            <div class="ot-find-panel__grid">
+                <label class="ot-find-field">
+                    <span class="ot-find-field__label">Property</span>
+                    <select id="fo-adv-column" class="ot-find-select">
+                        <option value="">Select a property</option>
+                    </select>
+                </label>
+                <div id="fo-adv-inputs" class="ot-find-adv-inputs"></div>
+                <div class="ot-find-actions">
+                    <button id="fo-adv-apply" class="ari-btn ari-btn--sm ari-btn--secondary"
+                            type="button">
+                        <i class="fa-solid fa-filter"></i> Apply
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div id="fo-panel-group" class="ot-find-tab-panel"
+             role="tabpanel" aria-labelledby="fo-tab-group" hidden>
+            <p class="ot-find-desc">
+                Filter the table by an object group.
+            </p>
+            <div class="ot-find-panel__grid">
+                <label class="ot-find-field">
+                    <span class="ot-find-field__label">Group</span>
+                    <select id="fo-group-select" class="ot-find-select">
+                        <option value="">Loading groups&hellip;</option>
+                    </select>
+                </label>
+                <div class="ot-find-actions">
+                    <button id="fo-group-apply"
+                            class="ari-btn ari-btn--sm ari-btn--secondary"
+                            type="button">
+                        <i class="fa-solid fa-filter"></i> Apply
+                    </button>
+                    <button id="fo-group-clear"
+                            class="ari-btn ari-btn--sm ari-btn--secondary"
+                            type="button">
+                        <i class="fa-solid fa-eraser"></i> Clear
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div id="fo-status" class="ot-find-status" aria-live="polite">
+            Expand this panel to find objects by name or coordinates.
+        </div>
+    </div>
+</details>
+
+{# ── Meta / status bar ─────────────────────────────────────────── #}
+<div class="ot-meta-bar">
+    <span id="ot-last-updated" class="ot-meta-bar__item">
+        <i class="fa-solid fa-clock"></i> Loading&hellip;
+    </span>
+    <span id="ot-row-summary" class="ot-meta-bar__item ot-meta-bar__item--muted"></span>
+</div>
+
+{# ── Toolbar ───────────────────────────────────────────────────── #}
+<div class="ot-toolbar">
+    <div class="ot-toolbar__left">
+        <div class="ot-col-panel-wrap">
+            <button id="ot-btn-columns" class="ari-btn ari-btn--sm ari-btn--secondary"
+                    title="Show / hide columns">
+                <i class="fa-solid fa-table-columns"></i> Columns
+            </button>
+            {# Column toggle dropdown #}
+            <div id="ot-col-panel" class="ot-col-panel" style="display:none;">
+                <div class="ot-col-panel__hdr">
+                    <span><i class="fa-solid fa-table-columns"></i> Toggle Columns</span>
+                    <button id="ot-col-close" class="ot-col-panel__close"
+                            title="Close"><i class="fa-solid fa-xmark"></i></button>
+                </div>
+                <div id="ot-col-toggles" class="ot-col-panel__body">
+                    {# Filled by JS #}
+                </div>
+                <div class="ot-col-panel__footer">
+                    <button id="ot-col-all" class="ari-btn ari-btn--sm ari-btn--secondary">
+                        Show all
+                    </button>
+                    <button id="ot-col-none" class="ari-btn ari-btn--sm ari-btn--secondary">
+                        Hide all
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <button id="ot-btn-clear-filters" class="ari-btn ari-btn--sm ari-btn--secondary"
+                title="Clear all column filters">
+            <i class="fa-solid fa-filter-circle-xmark"></i> Clear Filters
+        </button>
+
+        <button id="ot-btn-send-to-group"
+                class="ari-btn ari-btn--sm ari-btn--secondary"
+                title="Add filtered objects to an object group">
+            <i class="fa-solid fa-share-from-square"></i> Send to Group
+        </button>
+    </div>
+
+    <div class="ot-toolbar__right">
+        <label class="ot-perpage-label">
+            Rows per page
+            <select id="ot-perpage" class="ot-perpage-select">
+                <option value="25">25</option>
+                <option value="50" selected>50</option>
+                <option value="100">100</option>
+                <option value="250">250</option>
+                <option value="0">All</option>
+            </select>
+        </label>
+    </div>
+</div>
+
+{# ── Top horizontal scroll mirror ─────────────────────────────── #}
+<div id="ot-scroll-top" class="ot-scroll-top">
+    <div id="ot-scroll-sizer" class="ot-scroll-sizer"></div>
+</div>
+
+{# ── Table container ───────────────────────────────────────────── #}
+<div id="ot-table-wrap" class="ot-table-wrap">
+    <table id="ot-table" class="ot-table">
+        <thead>
+            <tr id="ot-header-row" class="ot-header-row"></tr>
+            <tr id="ot-filter-row" class="ot-filter-row"></tr>
+        </thead>
+        <tbody id="ot-tbody">
+            <tr><td class="ot-loading" colspan="20">
+                <i class="fa-solid fa-spinner fa-spin"></i> Loading data&hellip;
+            </td></tr>
+        </tbody>
+    </table>
+</div>
+
+{# ── Pagination bar ────────────────────────────────────────────── #}
+<div id="ot-pagination" class="ot-pagination">
+    <div id="ot-page-info" class="ot-page-info"></div>
+    <div class="ot-page-controls">
+        <button id="ot-btn-first" class="ari-btn ari-btn--sm ari-btn--secondary"
+                title="First page" disabled>
+            <i class="fa-solid fa-angles-left"></i>
+        </button>
+        <button id="ot-btn-prev" class="ari-btn ari-btn--sm ari-btn--secondary"
+                title="Previous page" disabled>
+            <i class="fa-solid fa-angle-left"></i>
+        </button>
+        <span class="ot-page-num">
+            Page&nbsp;<input id="ot-page-input" class="ot-page-input"
+                             type="number" min="1" value="1"
+                             title="Jump to page">
+            &nbsp;of&nbsp;<span id="ot-page-total">1</span>
+        </span>
+        <button id="ot-btn-next" class="ari-btn ari-btn--sm ari-btn--secondary"
+                title="Next page" disabled>
+            <i class="fa-solid fa-angle-right"></i>
+        </button>
+        <button id="ot-btn-last" class="ari-btn ari-btn--sm ari-btn--secondary"
+                title="Last page" disabled>
+            <i class="fa-solid fa-angles-right"></i>
+        </button>
+    </div>
+</div>
+
+{# ── Send to Group overlay ──────────────────────────────────────── #}
+<div id="stg-overlay" class="stg-overlay" style="display:none;">
+    <div class="stg-overlay__backdrop" id="stg-backdrop"></div>
+    <div class="stg-overlay__dialog">
+        <div class="stg-overlay__header">
+            <h3>
+                <i class="fa-solid fa-share-from-square"></i>
+                Send to Group
+            </h3>
+            <button id="stg-close" class="stg-overlay__close"
+                    title="Close">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+        <div class="stg-overlay__body">
+            <p id="stg-count" class="stg-count"></p>
+            <label class="ot-find-field">
+                <span class="ot-find-field__label">
+                    Choose a group
+                </span>
+                <select id="stg-group-select"
+                        class="ot-find-select">
+                    <option value="">Loading&hellip;</option>
+                </select>
+            </label>
+            <div class="stg-new-group">
+                <label class="ot-find-field">
+                    <span class="ot-find-field__label">
+                        Or create a new group
+                    </span>
+                    <input id="stg-new-name"
+                           class="ot-find-input" type="text"
+                           placeholder="New group name">
+                </label>
+                <button id="stg-create-btn"
+                        class="ari-btn ari-btn--sm ari-btn--secondary"
+                        type="button">
+                    <i class="fa-solid fa-plus"></i> Create
+                </button>
+            </div>
+        </div>
+        <div class="stg-overlay__footer">
+            <span id="stg-status" class="stg-status"></span>
+            <button id="stg-send-btn"
+                    class="ari-btn ari-btn--sm ari-btn--primary"
+                    type="button">
+                <i class="fa-solid fa-paper-plane"></i> Send
+            </button>
+        </div>
+    </div>
+</div>
+
+{# ── JS config ─────────────────────────────────────────────────── #}
+<script>
+window.ARI_OBJ_TABLE = {
+    apiUrl:    {{ api_url | tojson }},
+    profileId: {{ profile.profile_id | tojson }},
+    instrument: {{ profile.instrument | tojson }},
+    minNameChars: 1,
+    groupsApiBase: '/api/data-portal/object-groups',
+};
+</script>
+<script src="{{ url_for('static', filename='js/object_table.js', v='20260420') }}" defer></script>
+{% endblock %}

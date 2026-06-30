@@ -1108,12 +1108,16 @@ def calc_wave_lines(params: ParamDict, recipe: DrsRecipe,
     # ----------------------------------------------------------------------
     # Fit the peaks
     # ----------------------------------------------------------------------
+    length = len(list_pixels)
     # set up storage
-    pixel_m = np.array(list_pixels)
-    wave_m = np.zeros_like(list_waves)
-    ewidth = np.zeros_like(list_pixels)
-    amp = np.zeros_like(list_pixels)
-    nsig = np.repeat(np.nan, len(list_pixels))
+    pixel_m = np.full(length, np.nan)
+    wave_m = np.full(length, np.nan)
+    ewidth = np.full(length, np.nan)
+    amp = np.full(length, np.nan)
+    nsig = np.full(length, np.nan)
+    period_meas = np.full(length, np.nan)
+    shape_meas = np.full(length, np.nan)
+    offset_meas = np.full(length, np.nan)
     # ----------------------------------------------------------------------
     # TODO: this loop is super slow
     # loop around orders
@@ -1200,8 +1204,14 @@ def calc_wave_lines(params: ParamDict, recipe: DrsRecipe,
                         wcoeffs = np.polyfit([midpoint, midpoint + 1],
                                              owave[[midpoint, midpoint + 1]], 1)
                         wave_m[good[it]] = np.polyval(wcoeffs, popt[1])
-                        ewidth[good[it]] = popt[2]
                         nsig[good[it]] = np.abs(popt[0]) / rms
+                        if fibtype not in hcfibtypes:
+                            ewidth[good[it]] = velocity.fwhm_fp_airy(popt)
+                            period_meas[good[it]] = popt[2]
+                            shape_meas[good[it]] = popt[3]
+                            offset_meas[good[it]] = popt[4]
+                        else:
+                            ewidth[good[it]] = popt[2]
                         # line is valid
                         valid_lines += 1
                 # ignore any bad lines
@@ -1247,10 +1257,12 @@ def calc_wave_lines(params: ParamDict, recipe: DrsRecipe,
     # Create table to store them in
     # ----------------------------------------------------------------------
     columnnames = ['WAVE_REF', 'WAVE_MEAS', 'PIXEL_REF', 'PIXEL_MEAS',
-                   'ORDER', 'WFIT', 'EWIDTH_MEAS', 'AMP_MEAS', 'NSIG',
-                   'DIFF', 'PEAK_NUMBER']
+                   'ORDER', 'WFIT', 'FWHM_MEAS', 'AMP_MEAS', 'NSIG',
+                   'DIFF', 'PEAK_NUMBER', 'PERIOD_MEAS', 'SHAPE_MEAS',
+                   'OFFSET_MEAS', 'FLAG_NSIG_BAD']
     columnvalues = [list_waves, wave_m, list_pixels, pixel_m, list_orders,
-                    list_wfit, ewidth, amp, nsig, diffpix, peak_number]
+                    list_wfit, ewidth, amp, nsig, diffpix, peak_number,
+                    period_meas, shape_meas, offset_meas, bad]
     # make table
     table = drs_table.make_table(params, columnnames, columnvalues)
     # return table
@@ -1459,8 +1471,20 @@ def calc_wave_sol(params: ParamDict, recipe: DrsRecipe,
         # fp peaks afterward
         xfit1 = ordfp_pix_meas[1:]
         yfit1 = ordfp_pix_meas[1:] - ordfp_pix_meas[:-1]
+
+        # get the step before and after each FP peak (except the first and last)
+        step_before = np.roll(ordfp_pix_meas, -1) - ordfp_pix_meas
+        step_after = ordfp_pix_meas - np.roll(ordfp_pix_meas, 1)
+        # calculate the change in step for each peak
+        step_change = (step_after / step_before)[1:]
+        # good peaks should have a step change close to 1
+        # (we allow 5% variation). This is used to mask out bad peaks
+        # before fitting the step as a function of pixel position
+        good_peaks = (step_change > 0.95) & (step_change < 1.05)
+
         # fit the step between FP lines
-        fit_step, _ = mp.robust_chebyfit(xfit1, yfit1, wavesol_fit_degree,
+        fit_step, _ = mp.robust_chebyfit(xfit1[good_peaks], yfit1[good_peaks],
+                                         wavesol_fit_degree,
                                          nsig_cut, domain=[0, nbxpix])
         # ---------------------------------------------------------------------
         # counting steps backward
@@ -1477,6 +1501,11 @@ def calc_wave_sol(params: ParamDict, recipe: DrsRecipe,
                                 domain=[0, nbxpix])
 
             dnum = diff / np.mean(dfit)
+
+            if np.abs(dnum - np.round(dnum)) > 0.1:
+                wmsg = 'Order {0}: FP peaks inconsistent with regular spacing'
+                wargs = [order_num]
+                WLOG(params, 'warning', wmsg.format(*wargs))
             # dnum is always very close to an integer value, we round it
             # we subtract the steps, FP peaks go in decreasing number
             rdnum = np.round(dnum)
@@ -3259,17 +3288,29 @@ def write_wavesol(params: ParamDict, recipe: DrsRecipe, fiber: str,
     wprops['WFP_FILE'] = wavefile.basename
 
     # ------------------------------------------------------------------
-    # Make wave coefficient table
+    # Make wave table
     # ------------------------------------------------------------------
     # get number of orders
     nbo = wprops['COEFFS'].shape[0]
     # add order column
-    wave_cols = ['ORDER']
-    wave_vals = [np.arange(nbo)]
+    wave_cols = ['ORDER', 'ECHELLE_ORDER']
+    wave_vals = [np.arange(nbo), wprops['EORDERS']]
+
+    # add wave centers
+    cent_x = wprops['WAVEMAP'].shape[1] // 2
+    wave_cols.append('WAVE_CENT_X')
+    wave_vals.append(wprops['WAVEMAP'][:, cent_x])
+    # add min wave and max wave
+    wave_cols.append('WAVE_MIN')
+    wave_vals.append(np.nanmin(wprops['WAVEMAP'], axis=1))
+    wave_cols.append('WAVE_MAX')
+    wave_vals.append(np.nanmax(wprops['WAVEMAP'], axis=1))
+
     # add coefficients columns
     for w_it in range(wprops['COEFFS'].shape[1]):
-        wave_cols.append('COEFFS_{0}'.format(w_it))
+        wave_cols.append('WAVE_COEFFS_{0}'.format(w_it))
         wave_vals.append(wprops['COEFFS'][:, w_it])
+    # convert to table
     wave_table = drs_table.make_table(params, columns=wave_cols,
                                       values=wave_vals)
     # ----------------------------------------------------------------------
@@ -3311,7 +3352,7 @@ def write_wavesol(params: ParamDict, recipe: DrsRecipe, fiber: str,
     # define multi lists
     data_list = [wave_table]
     datatype_list = ['table']
-    name_list = ['COEFF_TABLE']
+    name_list = ['WAVE_TABLE']
     # snapshot of parameters
     if params['PARAMETER_SNAPSHOT']:
         data_list += [params.snapshot_table(recipe, drsfitsfile=wavefile)]

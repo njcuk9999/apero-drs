@@ -3308,6 +3308,7 @@ def _multi_process_pathos(params, runlist, cores, groupname=None,
         for row in range(len(results)):
             for key in results[row]:
                 return_dict[key] = results[row][key]
+
     # return return_dict
     return dict(return_dict)
 
@@ -4676,7 +4677,7 @@ def _remove_engineering(params, indexdb, condition):
     #   night
     allowed_objtypes = params.listp('REPROCESS_OBJECT_TYPES', separator=' ',
                                     dtype=str)
-    objmask = np.in1d(obstypes, np.array(allowed_objtypes))
+    objmask = np.isin(obstypes, np.array(allowed_objtypes))
     # define empty keep mask
     reject_obs_dirs = ''
     rejected_dirs = []
@@ -5123,7 +5124,7 @@ def _find_next_group(argname: str, drstable: Table,
     # get the arg group for this arg name
     arggroup = list(usedgroups[argname])
     # find all ugroups not in arggroup
-    mask = np.in1d(ugroups, arggroup)
+    mask = np.isin(ugroups, arggroup)
     # deal with all groups already found
     if np.sum(~mask) == 0:
         return None, usedgroups

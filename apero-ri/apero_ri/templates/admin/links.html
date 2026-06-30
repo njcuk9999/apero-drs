@@ -1,0 +1,100 @@
+{% extends "general/sidebar_base.html" %}
+{% block title %}APERO RI – {{ page_label }}{% endblock %}
+
+{% block doc_content %}
+<div class="ari-page-header">
+    <h1><i class="{{ page_icon }}"></i> {{ page_label }}</h1>
+    <p class="ari-page-subtitle">
+        Manage instrument-level bookmarks that are shared with all users of an instrument.
+    </p>
+</div>
+
+{% if instruments %}
+<div class="ari-ud-toolbar">
+    <select id="admin-links-instr" class="ari-ud-select" style="min-width:180px;">
+        {% for instr in instruments %}
+        <option value="{{ instr }}">{{ instr }}</option>
+        {% endfor %}
+    </select>
+    {% if can_manage %}
+    <button class="ari-btn ari-btn--primary ari-btn--sm" id="admin-links-add-section-btn">
+        <i class="fa-solid fa-folder-plus"></i> New Section
+    </button>
+    <button class="ari-btn ari-btn--secondary ari-btn--sm" id="admin-links-add-link-btn">
+        <i class="fa-solid fa-plus"></i> Add Link
+    </button>
+    {% endif %}
+</div>
+
+<div id="admin-links-container" class="ari-ud-empty">
+    <i class="fa-solid fa-bookmark"></i>
+    <p>Select an instrument above to view its links.</p>
+</div>
+
+{% if can_manage %}
+<!-- Add/edit link modal -->
+<div id="admin-links-modal" class="ari-ud-modal" style="display:none;">
+    <div class="ari-ud-modal-box">
+        <h3 id="admin-links-modal-title">Add Link</h3>
+        <div class="ari-form-group">
+            <label>Section</label>
+            <select id="admin-links-modal-section"></select>
+        </div>
+        <div class="ari-form-group">
+            <label>Name</label>
+            <input type="text" id="admin-links-modal-name" placeholder="Link name">
+        </div>
+        <div class="ari-form-group">
+            <label>URL</label>
+            <input type="url" id="admin-links-modal-url" placeholder="https://...">
+        </div>
+        <div class="ari-form-group">
+            <label>Description (optional)</label>
+            <input type="text" id="admin-links-modal-desc" placeholder="Short description">
+        </div>
+        <div class="ari-ud-modal-actions">
+            <button class="ari-btn ari-btn--primary" id="admin-links-modal-save">Save</button>
+            <button class="ari-btn ari-btn--secondary" id="admin-links-modal-cancel">Cancel</button>
+        </div>
+    </div>
+</div>
+
+<!-- Add section modal -->
+<div id="admin-links-section-modal" class="ari-ud-modal" style="display:none;">
+    <div class="ari-ud-modal-box">
+        <h3>New Section</h3>
+        <div class="ari-form-group">
+            <label>Section Name</label>
+            <input type="text" id="admin-links-section-name" placeholder="e.g. Documentation, Tools...">
+        </div>
+        <div class="ari-ud-modal-actions">
+            <button class="ari-btn ari-btn--primary" id="admin-links-section-save">Create</button>
+            <button class="ari-btn ari-btn--secondary" id="admin-links-section-cancel">Cancel</button>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+{% else %}
+<div class="ari-ud-empty">
+    <i class="fa-solid fa-bookmark"></i>
+    <p>No instruments are assigned to your account.</p>
+</div>
+{% endif %}
+
+<div id="admin-links-toast" class="ari-toast" style="display:none;"></div>
+
+<script>
+window.ARI_ADMIN_LINKS = {
+    getUrl: {{ url_for('api_admin_links_get')|tojson }},
+    addUrl: {{ url_for('api_admin_links_add')|tojson }},
+    updateUrl: {{ url_for('api_admin_links_update')|tojson }},
+    removeUrl: {{ url_for('api_admin_links_remove')|tojson }},
+    addSectionUrl: {{ url_for('api_admin_links_add_section')|tojson }},
+    removeSectionUrl: {{ url_for('api_admin_links_remove_section')|tojson }},
+    canManage: {{ can_manage|tojson }},
+    manageableInstruments: {{ manageable_instruments|tojson }},
+};
+</script>
+<script src="{{ url_for('static', filename='js/admin_links.js') }}"></script>
+{% endblock %}

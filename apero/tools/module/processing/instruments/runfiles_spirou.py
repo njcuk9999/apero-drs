@@ -18,7 +18,7 @@ from apero.tools.module.processing import drs_run_ini
 # =============================================================================
 # Define variables
 # =============================================================================
-__NAME__ = 'instruments.runfiles_spirou.ini.py'
+__NAME__ = 'instruments.runfiles_spirou.py'
 __INSTRUMENT__ = 'SPIROU'
 __PACKAGE__ = base.__PACKAGE__
 __version__ = base.__version__
@@ -63,6 +63,12 @@ def get_runfiles(params: ParamDict) -> List[RunIniFile]:
     mini_run1_spirou.modify('SKIP_LBLMASK_SCI', False)
     mini_run1_spirou.modify('SKIP_LBLCOMPUTE_SCI', False)
     mini_run1_spirou.modify('SKIP_LBLCOMPILE_SCI', False)
+    # mini runs need debug data
+    mini_run1_spirou.modify('DEBUG_BACKGROUND_FILE', True)
+    mini_run1_spirou.modify('DEBUG_E2DSLL_FILE', True)
+    mini_run1_spirou.modify('DEBUG_SHAPE_FILES', True)
+    mini_run1_spirou.modify('DEBUG_UNCORR_EXT_FILES', True)
+
     run_files.append(mini_run1_spirou)
     # mini run 2
     mini_run2_spirou = RunIniFile(params, 'SPIROU', 'mini_run2')
@@ -71,7 +77,12 @@ def get_runfiles(params: ParamDict) -> List[RunIniFile]:
     mini_run2_spirou.modify('SKIP_LBLREF', False)
     mini_run2_spirou.modify('SKIP_LBLMASK_SCI', False)
     mini_run2_spirou.modify('SKIP_LBLCOMPUTE_SCI', False)
-    mini_run2_spirou.modify('SKIP_LBLCOMPILE_SCI', False)
+    mini_run2_spirou.modify('SKIP_LBLCOMPILE_SCI', False)\
+    # mini runs need debug data
+    mini_run2_spirou.modify('DEBUG_BACKGROUND_FILE', True)
+    mini_run2_spirou.modify('DEBUG_E2DSLL_FILE', True)
+    mini_run2_spirou.modify('DEBUG_SHAPE_FILES', True)
+    mini_run2_spirou.modify('DEBUG_UNCORR_EXT_FILES', True)
     run_files.append(mini_run2_spirou)
     # quick run
     quick_run_spirou = RunIniFile(params, 'SPIROU', 'quick_run')

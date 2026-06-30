@@ -25,8 +25,8 @@ __all__ = [
     'PP_OBJ_DPRTYPES', 'PP_BADLIST_SSID',
     'PP_BADLIST_SSWB', 'PP_BADLIST_DRS_HKEY', 'PP_BADLIST_SS_VALCOL',
     'PP_BADLIST_SS_MASKCOL', 'PP_HOTPIX_BOXSIZE', 'PP_CORRUPT_HOT_THRES',
-    'PP_NUM_DARK_AMP', 'PP_HOTPIX_FILE', 'PP_AMP_ERROR_MODEL',
-    'PP_LED_FLAT_FILE', 'PP_TOTAL_AMP_NUM',
+    'PP_NUM_DARK_AMP', 'PP_HOTPIX_FILE', 'PP_HOTPIX_FMT',
+    'PP_AMP_ERROR_MODEL', 'PP_LED_FLAT_FILE', 'PP_TOTAL_AMP_NUM',
     'PP_CORRUPT_MED_SIZE', 'PP_NUM_REF_TOP', 'PP_NUM_REF_BOTTOM',
     'PP_NUM_REF_LEFT', 'PP_NUM_REF_RIGHT',
     'PP_RMS_PERCENTILE', 'PP_LOWEST_RMS_PERCENTILE', 'PP_CORRUPT_SNR_HOTPIX',
@@ -37,18 +37,24 @@ __all__ = [
     'PP_BAD_EXPTIME_FRACTION', 'PP_DARK_DPRTYPES', 'PP_DARK_THRES',
     'PP_CORR_XTALK_AMP_FLUX', 'PP_COR_XTALK_AMP_DFLUX',
     'PP_COR_XTALK_AMP_D2FLUX', 'PP_NOSCI_CAPC_DPRTYPES',
+    'PP_REF_FILETYPE',
     # object database settings
     'GL_GAIA_COL_NAME', 'GL_OBJ_COL_NAME', 'GL_ALIAS_COL_NAME',
     'GL_RV_COL_NAME', 'GL_RVREF_COL_NAME', 'GL_TEFF_COL_NAME',
     'GL_TEFFREF_COL_NAME', 'GL_R_ODO_COL', 'GL_R_PP_COL', 'GL_R_RV_COL',
     # image constants
     'FIBER_TYPES', 'IMAGE_X_FULL', 'IMAGE_Y_FULL',
-    'INPUT_COMBINE_IMAGES', 'INPUT_FLIP_IMAGE', 'INPUT_RESIZE_IMAGE',
-    'IMAGE_X_LOW', 'IMAGE_X_HIGH',
+    'INPUT_COMBINE_IMAGES', 'INPUT_FLIP_IMAGE', 'INPUT_FLIP_HOW',
+    'INPUT_RESIZE_IMAGE', 'IMAGE_X_LOW', 'IMAGE_X_HIGH',
     'IMAGE_Y_LOW', 'IMAGE_Y_HIGH', 'IMAGE_X_LOW', 'IMAGE_X_HIGH',
     'IMAGE_Y_LOW', 'IMAGE_Y_HIGH', 'IMAGE_X_BLUE_LOW',
-    'IMAGE_PIXEL_SIZE', 'FWHM_PIXEL_LSF', 'IMAGE_SATURATION',
+    'IMAGE_PIXEL_SIZE', 'CAL_APPLY_UPPER_BOUND', 'CAL_APPLY_LOWER_BOUND',
+    'FWHM_PIXEL_LSF', 'IMAGE_SATURATION',
     'IMAGE_FRAME_TIME', 'ALL_POLAR_RHOMB_POS',
+    'REF_FIND_TIME_COL', 'REF_FIND_START_DATE', 'REF_FIND_END_DATE',
+    'AREL_RDELTA', 'AREL_ADELTA', 'AREL_LDELTA',
+    'ARELDATE_GSHEET_URL', 'ARELDATE_GSHEET_ID',
+    'ARELDATE_GSHEET_ACOL', 'ARELDATE_GSHEET_LCOL',
     # general calib constants
     'COMBINE_METRIC_THRESHOLD1', 'CAVITY_1M_FILE', 'CAVITY_LL_FILE',
     'SIMBAD_TAP_URL',
@@ -84,6 +90,7 @@ __all__ = [
     'IMAGE_Y_RED_HIGH', 'DARK_CUTLIMIT', 'QC_MAX_DARKLEVEL',
     'HISTO_BINS', 'HISTO_RANGE_LOW', 'HISTO_RANGE_HIGH',
     'USE_SKYDARK_CORRECTION', 'USE_SKYDARK_ONLY', 'ALLOWED_DARK_TYPES',
+    'DARK_REF_FILETYPE',
     'DARK_REF_MATCH_TIME', 'DARK_REF_MED_SIZE', 'DARK_REF_MAX_FILES',
     'DARK_REF_MIN_EXPTIME',
     # badpix constants
@@ -394,7 +401,7 @@ __all__ = [
     'ARI_FINDING_CHARTS', 'ARI_CAL_ORDERS', 'ARI_RESET_DICT',
     # visualization constants
     'INFO_VISU_Z1', 'INFO_VISU_Z2', 'INFO_VISU_Z3',
-    'INFO_VISU_EXT_ORDER',
+    'INFO_VISU_EXT_ORDER', 'VISU_MP_MODE',
 ]
 
 # set name
@@ -506,6 +513,13 @@ INPUT_FLIP_IMAGE = Const('INPUT_FLIP_IMAGE', dtype=bool, value=True,
                          description=('Defines whether to, by default, '
                                       'flip images that are inputted'))
 
+# Defines how to flip the image
+INPUT_FLIP_HOW = Const('INPUT_FLIP_HOW', dtype=str, value=None,
+                       options=['None', 'x', 'y', 'both'],
+                       source=__NAME__, group=cgroup,
+                       description=('Defines whether to, by default, '
+                                    'flip images that are inputted'))
+
 # Defines whether to, by default, resize images that are inputted
 INPUT_RESIZE_IMAGE = Const('INPUT_RESIZE_IMAGE', dtype=bool, value=True,
                            source=__NAME__, group=cgroup,
@@ -530,6 +544,23 @@ IMAGE_PIXEL_SIZE = Const('IMAGE_PIXEL_SIZE', value=None, dtype=float,
                          description=('Define the pixel size in km/s / pix '
                                       'also used for the median sampling '
                                       'size in tellu correction'))
+# Define whether we apply an upper bound when calibrating pp images
+# This sets values above saturate / frmtime
+CAL_APPLY_UPPER_BOUND = Const('CAL_APPLY_UPPER_BOUND', value=True, dtype=bool,
+                              source=__NAME__, group=cgroup,
+                              description=('Define whether we apply an upper '
+                                           'bound when calibrating pp images. '
+                                           'This sets values above '
+                                           'saturate / frmtime'))
+
+# Define whether we apply a lower bound when calibrating pp images
+# This sets values below  -10 * (sigdet * gain) / frmtime to nans
+CAL_APPLY_LOWER_BOUND = Const('CAL_APPLY_LOWER_BOUND', value=True,
+                                dtype=bool, source=__NAME__, group=cgroup,
+                                description=('Define whether we apply a lower '
+                                             'bound when calibrating pp images. '
+                                             'This sets values below  -10 * '
+                                             '(sigdet * gain) / frmtime to nans'))
 
 # Define mean line width expressed in pix
 FWHM_PIXEL_LSF = Const('FWHM_PIXEL_LSF', value=None, dtype=float,
@@ -551,6 +582,100 @@ IMAGE_FRAME_TIME = Const('IMAGE_FRAME_TIME', value=None, dtype=float,
 ALL_POLAR_RHOMB_POS = Const('ALL_POLAR_RHOMB_POS', value=None, dtype=str,
                             source=__NAME__, group=cgroup,
                             description='Define all polar rhomb positions')
+
+# Define the time column (in the database) to use for filtering reference
+# files by (start date and end date format must match this)
+REF_FIND_TIME_COL = Const('REF_FIND_TIME_COL', value=None, dtype=str,
+                          source=__NAME__, group=cgroup, active=True, user=True,
+                          description='Define the time column (in the database)'
+                                      ' to use for filtering reference files '
+                                      'by (start date and end date format must '
+                                      'match this)')
+
+# Define the start date for reference calibrations (date format must match
+# that in REF_FIND_TIME_COL). This is used as the first date allowed for
+# reference files (i.e. any file before this date will be ignored)
+REF_FIND_START_DATE = Const('REF_FIND_START_DATE', value=None, dtype=str,
+                            source=__NAME__, group=cgroup, active=True, user=True,
+                            description='Define the start date for reference '
+                                        'calibrations (date format must match'
+                                        'that in REF_FIND_TIME_COL). '
+                                        'This is used as the first date '
+                                        'allowed for reference files (i.e. '
+                                        'any file before this date will be '
+                                        'ignored)')
+
+# Define the end date for reference calibrations (date format must match that in
+# REF_FIND_TIME_COL). This is used as the last date allowed for reference files
+# (i.e. any file after this date will be ignored)
+REF_FIND_END_DATE = Const('REF_FIND_END_DATE', value=None, dtype=str,
+                          source=__NAME__, group=cgroup, active=True, user=True,
+                          description='Define the end date for reference '
+                                      'calibrations (date format must match '
+                                      'that in REF_FIND_TIME_COL). This is '
+                                      'used as the last date allowed for '
+                                      'reference files ')
+
+# Define the time delta (in years) to add to the KW_IRELDATE key by default
+#   for raw files
+#   if there is no other way to determine the public release date (can be zero)
+AREL_RDELTA = Const('AREL_RDELTA', value=None, dtype=float,
+                    source=__NAME__, group=cgroup,
+                    minimum=0.0, maximum=20.0,
+                    description='Define the time delta (in years) to add to '
+                                'the KW_IRELDATE key by default for raw files'
+                                ' if there is no other way to determine the '
+                                'public release date (can be zero)')
+
+# Define the time delta (in years) to add to the KW_IRELDATE key by default
+#   for APERO files
+#   if there is no other way to determine the public release date (can be zero)
+AREL_ADELTA = Const('AREL_ADELTA', value=None, dtype=float,
+                    source=__NAME__, group=cgroup,
+                    minimum=0.0, maximum=20.0,
+                    description='Define the time delta (in years) to add to '
+                                'the KW_IRELDATE key by default for APERO files'
+                                ' if there is no other way to determine the '
+                                'public release date (can be zero)')
+
+# Define the time delta (in years) to add to the KW_IRELDATE key by default
+#   for LBL files
+#   if there is no other way to determine the public release date (can be zero)
+AREL_LDELTA = Const('AREL_LDELTA', value=None, dtype=float,
+                    source=__NAME__, group=cgroup,
+                    minimum=0.0, maximum=20.0,
+                    description='Define the time delta (in years) to add to '
+                                'the KW_IRELDATE key by default for LBL files'
+                                ' if there is no other way to determine the '
+                                'public release date (can be zero)')
+
+# Define the googlesheet URL for the apero release date lookup
+ARELDATE_GSHEET_URL = Const('ARELDATE_GSHEET_URL',
+                            value=None, dtype=str,
+                            source=__NAME__, group=cgroup,
+                            description='Define the googlesheet URL for the '
+                                        'apero release date lookup')
+
+# Define the googlesheet sheet id for the apero release date lookup
+# (there should be one sheet per instrument)
+ARELDATE_GSHEET_ID = Const('ARELDATE_GSHEET_ID',
+                           value=None, dtype=str,
+                           source=__NAME__, group=cgroup,
+                           description='Define the googlesheet sheet id for '
+                                       'the apero release date lookup (there '
+                                       'should be one sheet per instrument)')
+
+# Define the googlesheet sheet column for the apero release date
+ARELDATE_GSHEET_ACOL = Const('ARELDATE_GSHEET_ACOL', value=None, dtype=str,
+                             source=__NAME__, group=cgroup,
+                             description='Define the googlesheet sheet '
+                                         'column for the apero release date')
+
+# Define the googlesheet sheet column for the lbl release date
+ARELDATE_GSHEET_LCOL = Const('ARELDATE_GSHEET_LCOL', value=None, dtype=str,
+                             source=__NAME__, group=cgroup,
+                             description='Define the googlesheet sheet '
+                                         'column for the lbl release date')
 
 # =============================================================================
 # CALIBRATION: GENERAL SETTINGS
@@ -625,12 +750,22 @@ CAVITY_LL_FILE = Const('CAVITY_LL_FILE', value=None, dtype=str, source=__NAME__,
                        description=('Define the coefficients of the fit of '
                                     'wavelength vs d'))
 
-# define the check FP percentile level
+# Assuming that the FPs peaks cover a certain fraction of the frame
+# (5% in SPIRou+NIRPS, 1% in ILocater), we check that the 1-FP_coverage is
+# far higher (defined as N times the readout noise in reference pixels;
+# variable name X) than the median of frame.
 CALIB_CHECK_FP_PERCENTILE = Const('CALIB_CHECK_FP_PERCENTILE', value=None,
                                   dtype=int, minimum=0, source=__NAME__,
                                   group=cgroup,
-                                  description=('define the check FP percentile '
-                                               'level'))
+                                  description='Assuming that the FPs peaks '
+                                              'cover a certain fraction of the '
+                                              'frame (5% in SPIRou+NIRPS, '
+                                              '1% in ILocater), we check that '
+                                              'the 1-FP_coverage is far higher '
+                                              '(defined as N times the readout '
+                                              'noise in reference pixels; '
+                                              'variable name X) than the '
+                                              'median of frame.')
 
 # define the check FP threshold qc parameter
 CALIB_CHECK_FP_THRES = Const('CALIB_CHECK_FP_THRES', value=None,
@@ -971,6 +1106,12 @@ PP_HOTPIX_FILE = Const('PP_HOTPIX_FILE', value=None, dtype=str, source=__NAME__,
                        description='Defines the pp hot pixel file (located in '
                                    'the data folder)')
 
+# Define the pp hot pixel format
+PP_HOTPIX_FMT = Const('PP_HOTPIX_FMT', value=None, dtype=str,
+                      source=__NAME__, group=cgroup,
+                      options=['csv', 'fits'],
+                      description='Define the pp hot pixel format')
+
 #   Defines the pp amplifier bias model (located in the data folder)
 PP_AMP_ERROR_MODEL = Const('PP_AMP_ERROR_MODEL', value=None, dtype=str,
                            source=__NAME__, group=cgroup,
@@ -1153,6 +1294,12 @@ PP_NOSCI_CAPC_DPRTYPES = Const('PP_NOSCI_CAPC_DPRTYPES', value=None,
                                            'which we should not do the '
                                            'science capacitive coupling')
 
+# Define the default file type for pp_ref (used as --filtetype argument)
+PP_REF_FILETYPE = Const('PP_REF_FILETYPE', value=None, dtype=str,
+                        source=__NAME__, group=cgroup,
+                        description='Define the default file type for pp_ref '
+                                    '(used as --filtetype argument)')
+
 # =============================================================================
 # CALIBRATION: ASTROMETRIC DATABASE SETTINGS
 # =============================================================================
@@ -1284,6 +1431,12 @@ ALLOWED_DARK_TYPES = Const('ALLOWED_DARK_TYPES', value=None, dtype=str,
                                         'filetype but filetype must be one '
                                         'of theses (strings separated by '
                                         'commas)'))
+
+#    Define the file type to use by default in the dark reference code
+DARK_REF_FILETYPE = Const('DARK_REF_FILETYPE', value=None, dtype=str,
+                          source=__NAME__, group=cgroup,
+                          description=('Define the file type to use by '
+                                       'default in the dark reference code'))
 
 # Define the maximum time span to combine dark files over (in hours)
 DARK_REF_MATCH_TIME = Const('DARK_REF_MATCH_TIME', value=None,
@@ -4895,7 +5048,7 @@ POLAR_LSD_RES_POWER_GUESS = Const('POLAR_LSD_RES_POWER_GUESS', value=None,
 cgroup = 'DEBUG OUTPUT FILE SETTINGS'
 # Whether to save background debug file (large 0.5 GB per file)
 #   one of these per extraction (lots)
-DEBUG_BACKGROUND_FILE = Const('DEBUG_BACKGROUND_FILE', value=True,
+DEBUG_BACKGROUND_FILE = Const('DEBUG_BACKGROUND_FILE', value=False,
                               dtype=bool, source=__NAME__,
                               user=True, active=False, group=cgroup,
                               description='Whether to save background debug '
@@ -4904,7 +5057,7 @@ DEBUG_BACKGROUND_FILE = Const('DEBUG_BACKGROUND_FILE', value=True,
 
 # Whether to save the E2DSLL file (around 0.05 to 0.1 GB per file)
 #   one of these per fiber (lots)
-DEBUG_E2DSLL_FILE = Const('DEBUG_E2DSLL_FILE', value=True,
+DEBUG_E2DSLL_FILE = Const('DEBUG_E2DSLL_FILE', value=False,
                           dtype=bool, source=__NAME__,
                           user=True, active=False, group=cgroup,
                           description='Whether to save the E2DSLL file '
@@ -4913,7 +5066,7 @@ DEBUG_E2DSLL_FILE = Const('DEBUG_E2DSLL_FILE', value=True,
 
 # Whether to save the shape in and out debug files (around 0.1 GB per file)
 #   but only one set of these per night
-DEBUG_SHAPE_FILES = Const('DEBUG_SHAPE_FILES', value=True,
+DEBUG_SHAPE_FILES = Const('DEBUG_SHAPE_FILES', value=False,
                           dtype=bool, source=__NAME__,
                           user=True, active=False, group=cgroup,
                           description='Whether to save the shape in and '
@@ -4923,7 +5076,7 @@ DEBUG_SHAPE_FILES = Const('DEBUG_SHAPE_FILES', value=True,
 
 # Whether to save the uncorrected for FP C fiber leak files
 #      (around 0.01 GB per file) one of these per fiber
-DEBUG_UNCORR_EXT_FILES = Const('DEBUG_UNCORR_EXT_FILES', value=True,
+DEBUG_UNCORR_EXT_FILES = Const('DEBUG_UNCORR_EXT_FILES', value=False,
                                dtype=bool, source=__NAME__,
                                user=True, active=False, group=cgroup,
                                description='Whether to save the uncorrected '
@@ -5900,6 +6053,16 @@ INFO_VISU_Z3= Const('INFO_VISU_Z3', value=None, dtype=str,
 INFO_VISU_EXT_ORDER = Const('INFO_VISU_EXT_ORDER', value=None, dtype=int,
                             source=__NAME__, group=cgroup,
                             description='Plot order for LBL etc in info plots')
+
+# Define whether to use multiprocess "pool" or "process" or use "linear"
+#     mode when running visualization info plots
+VISU_MP_MODE= Const('VISU_MP_MODE', value='process', dtype=str,
+                    source=__NAME__, group=cgroup,
+                    user=True, active=True,
+                    options=['linear', 'pool', 'process', 'pathos'],
+                    description='Define whether to use multiprocess '
+                                '"pool" or "process" or use "linear" '
+                                'mode when running visualization info plots')
 
 # =============================================================================
 #  End of configuration file

@@ -24,6 +24,7 @@ from apero.core.core import drs_log
 from apero.core.utils import drs_recipe
 from apero.io import drs_fits
 from apero.tools.recipes.bin import apero_get
+from apero.science.preprocessing import gen_pp
 
 # =============================================================================
 # Define variables
@@ -183,11 +184,16 @@ def find_teff(params: ParamDict, objname: str) -> float:
 
     :return: float, the teff of this object in K
     """
+    # get the pseduo constants
+    pconst = constants.pload()
     # get the astrometric database
     astromdbm = drs_database.AstrometricDatabase(params)
+    astromdbm.load_db()
+    # make sure we have the correct object name (i.e. not an alias)
+    cobjname, _ = astromdbm.find_objname(pconst, objname)
     # get the teff from the database
     teff = astromdbm.get_entries('TEFF',
-                                 condition='OBJNAME="{0}"'.format(objname),
+                                 condition='OBJNAME="{0}"'.format(cobjname),
                                  nentries=1)
     # try to convert to a float (may be a null)
     try:
@@ -261,6 +267,10 @@ def add_output(params: ParamDict, recipe: DrsRecipe,
     # add file to index database
     findexdbm.add_entry(basefile, 'lbl', recipe.name,
                         runstring=recipe.runstring, hkeys=hkeys)
+    # update the files on disk with the hkeys
+    # (this will add the hkeys to the header if they don't exist and
+    #  update the values if they do)
+    drs_fits.update_fits(params, filename, hkeys)
 
 
 def lbl_ref_qc(params: ParamDict) -> Tuple[List[list], int]:
@@ -436,6 +446,9 @@ def fake_hkeys(params: ParamDict, filename: str,
 
     # need to add KW_DPRTYPE, KW_PI_NAME, KW_RUN_ID, KW_FIBER
 
+    # get apero release date
+    areldate = gen_pp.get_areldate(params, hdr, release_type='lbl')
+    pkeys['KW_ARELDATE'] = areldate
 
     # overwrite keys
     pkeys['KW_OBJNAME'] = objname
