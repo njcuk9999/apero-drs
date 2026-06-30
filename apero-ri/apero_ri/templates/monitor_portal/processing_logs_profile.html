@@ -1,0 +1,178 @@
+{% extends "general/sidebar_base.html" %}
+{% block title %}Processing Logs – {{ profile_id }}{% endblock %}
+
+{% block body_class %}ari-has-sidebar ari-pl-page{% endblock %}
+
+{% block extra_head %}{{ super() }}
+<link rel="stylesheet"
+    href="{{ url_for('static', filename='css/processing_logs.css') }}?v=20260512p">
+<script src="{{ url_for('static', filename='js/processing_logs.js') }}?v=20260513f"
+        defer></script>
+{% endblock %}
+
+{% block doc_content %}
+<div class="ari-page-header">
+    <h1>
+        <i class="fa-solid fa-scroll"></i>
+        <a href="{{ url_for('monitor_processing_logs_view') }}"
+           class="ot-breadcrumb-link">Processing Logs</a>
+        <span class="ot-breadcrumb-sep">/</span>
+        {{ profile_id }}
+    </h1>
+    <p class="ari-page-subtitle">
+        Processing-run summary for this APERO profile.
+        Filter by PID, status, or time fields to find specific runs,
+        then open a PID to inspect recipe-level logs.
+    </p>
+</div>
+
+<div class="ot-meta-bar">
+    <span id="pl-row-summary" class="ot-meta-bar__item ot-meta-bar__item--muted"></span>
+    <span id="pl-last-updated"
+          class="ot-meta-bar__item ot-meta-bar__item--muted">
+        Last updated --
+    </span>
+    <button id="pl-btn-refresh"
+            class="ari-btn ari-btn--sm ari-btn--secondary"
+            title="Refresh processing logs now (bypass cache)">
+        <i class="fa-solid fa-rotate-right"></i>
+        Update
+    </button>
+</div>
+
+<div class="ot-toolbar">
+    <div class="ot-toolbar__left">
+        <button id="pl-btn-clear-filters"
+                class="ari-btn ari-btn--sm ari-btn--secondary"
+                title="Clear all filters">
+            <i class="fa-solid fa-filter-circle-xmark"></i>
+            Clear Filters
+        </button>
+    </div>
+    <div class="ot-toolbar__right">
+        <label class="ot-perpage-label">
+            Rows per page
+            <select id="pl-perpage" class="ot-perpage-select">
+                <option value="25">25</option>
+                <option value="50" selected>50</option>
+                <option value="100">100</option>
+                <option value="250">250</option>
+                <option value="0">All</option>
+            </select>
+        </label>
+    </div>
+</div>
+
+<div id="pl-scroll-top" class="ot-scroll-top">
+    <div id="pl-scroll-sizer" class="ot-scroll-sizer"></div>
+</div>
+
+<div id="pl-table-wrap" class="ot-table-wrap">
+    <table id="pl-table" class="ot-table">
+        <thead>
+            <tr id="pl-header-row" class="ot-header-row"></tr>
+            <tr id="pl-filter-row" class="ot-filter-row"></tr>
+        </thead>
+        <tbody id="pl-tbody">
+            <tr><td class="ot-loading" colspan="10">
+                <i class="fa-solid fa-spinner fa-spin"></i>
+                Loading data&hellip;
+            </td></tr>
+        </tbody>
+    </table>
+</div>
+
+<div id="pl-pagination" class="ot-pagination">
+    <div id="pl-page-info" class="ot-page-info"></div>
+    <div class="ot-page-controls">
+        <button id="pl-btn-first"
+                class="ari-btn ari-btn--sm ari-btn--secondary"
+                title="First page" disabled>
+            <i class="fa-solid fa-angles-left"></i>
+        </button>
+        <button id="pl-btn-prev"
+                class="ari-btn ari-btn--sm ari-btn--secondary"
+                title="Previous page" disabled>
+            <i class="fa-solid fa-angle-left"></i>
+        </button>
+        <span class="ot-page-num">
+            Page&nbsp;<input id="pl-page-input"
+                             class="ot-page-input"
+                             type="number" min="1" value="1"
+                             title="Jump to page">
+            &nbsp;of&nbsp;<span id="pl-page-total">1</span>
+        </span>
+        <button id="pl-btn-next"
+                class="ari-btn ari-btn--sm ari-btn--secondary"
+                title="Next page" disabled>
+            <i class="fa-solid fa-angle-right"></i>
+        </button>
+        <button id="pl-btn-last"
+                class="ari-btn ari-btn--sm ari-btn--secondary"
+                title="Last page" disabled>
+            <i class="fa-solid fa-angles-right"></i>
+        </button>
+    </div>
+</div>
+
+{# ── Log file popup ── #}
+<div id="pl-log-overlay" class="pl-log-overlay" style="display:none;"
+     role="dialog" aria-modal="true" aria-label="Log file viewer">
+    <div class="pl-log-backdrop" id="pl-log-backdrop"></div>
+    <div class="pl-log-panel">
+        <div class="pl-log-toolbar">
+            <span id="pl-log-filename" class="pl-log-filename"></span>
+            <button id="pl-log-copy-path" type="button"
+                    class="ari-btn ari-btn--sm ari-btn--secondary"
+                    title="Copy resolved log file path">
+                <i class="fa-solid fa-folder-tree"></i> Path
+            </button>
+            <button id="pl-log-copy-url" type="button"
+                    class="ari-btn ari-btn--sm ari-btn--secondary"
+                    title="Copy shareable URL for this log viewer">
+                <i class="fa-solid fa-link"></i> URL
+            </button>
+            <button id="pl-log-copy" type="button"
+                    class="ari-btn ari-btn--sm ari-btn--secondary"
+                    title="Copy log to clipboard">
+                <i class="fa-solid fa-copy"></i> Copy
+            </button>
+            <button id="pl-log-close" type="button"
+                    class="ari-btn ari-btn--sm ari-btn--alt"
+                    title="Close">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+        <div class="pl-log-findbar" id="pl-log-findbar">
+            <i class="fa-solid fa-magnifying-glass pl-log-find-icon"></i>
+            <input type="search" id="pl-log-find"
+                   class="pl-log-find-input"
+                   placeholder="Find in log..."
+                   autocomplete="off" spellcheck="false">
+            <button id="pl-log-find-prev"
+                    class="ari-btn ari-btn--sm ari-btn--secondary"
+                    title="Previous match">
+                <i class="fa-solid fa-chevron-up"></i>
+            </button>
+            <button id="pl-log-find-next"
+                    class="ari-btn ari-btn--sm ari-btn--secondary"
+                    title="Next match">
+                <i class="fa-solid fa-chevron-down"></i>
+            </button>
+            <span id="pl-log-find-count"
+                  class="pl-log-find-count"></span>
+        </div>
+        <pre id="pl-log-content" class="pl-log-content"></pre>
+    </div>
+</div>
+
+<script>
+window.ARI_PROC_LOGS = {
+    mode:      "profile",
+    profileId: {{ profile_id | tojson }},
+    apiUrl:    {{ api_url | tojson }},
+    logFileUrl: {{ log_file_url | tojson }},
+    pidBaseUrl: {{ pid_base_url | tojson }},
+};
+</script>
+{% endblock %}

@@ -4,6 +4,13 @@ instruments:
     - SPIROU
     - NIRPS
 
+instrument_map:
+  spirou:
+    - spirou
+  nirps:
+    - nirps_he
+    - nirps_ha
+
 # specific information on the instruments
 spirou:
   homepage: https://www.cfht.hawaii.edu/Instruments/SPIRou/

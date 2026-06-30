@@ -519,6 +519,37 @@ def build_admin_card_health_uncached(app, user_info, perms) -> Dict[str, Any]:
             time.monotonic() - _t0, 2
         )
 
+    _t0 = time.monotonic()
+    if "manage.apero_profile" in perms:
+        try:
+            from apero_ri.application.page_view_helpers import (
+                _build_apero_policy_payload,
+                _build_checks_policy_health,
+            )
+            from apero_ri.core import apero_checks as checks_core
+            local_data_dir = app._resolve_local_data_dir()
+            chk_cfg = checks_core.load_config(local_data_dir)
+            ignored = checks_core.load_ignored_checks(local_data_dir)
+            override = checks_core.load_override_allowed(local_data_dir)
+            payload = _build_apero_policy_payload(
+                local_data_dir, chk_cfg, ignored, override,
+            )
+            chk_health = _build_checks_policy_health(
+                payload.get('checks_catalog', []),
+                ignored,
+            )
+            health["home.admin_portal.apero_checks_policy"] = {
+                "status": chk_health["status"],
+                "message": chk_health["message"],
+                "details": chk_health.get("details", []),
+            }
+        except Exception:
+            pass
+    if "home.admin_portal.apero_checks_policy" in health:
+        health["home.admin_portal.apero_checks_policy"]["duration_s"] = round(
+            time.monotonic() - _t0, 2
+        )
+
     return health
 
 
@@ -552,6 +583,19 @@ def build_admin_health_rows(app, health: dict) -> list:
             "ok": "All APERO profiles pass database and path checks.",
             "warning": "Some APERO profile checks need attention.",
             "error": "One or more APERO profiles failed validation checks.",
+        },
+        "home.admin_portal.apero_checks_policy": {
+            "ok": (
+                "All active checks are passing with complete "
+                "documentation."
+            ),
+            "warning": (
+                "Some checks have incomplete documentation metadata."
+            ),
+            "error": (
+                "One or more active checks have more failures "
+                "than passes."
+            ),
         },
         "home.admin_portal.user_db_access": {
             "ok": "All APERO profiles have complete DB table access rules.",

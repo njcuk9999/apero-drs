@@ -46,24 +46,53 @@
     font-size: 0.88rem;
 }
 
-/* Rejected-names tab: card grid + overlay */
+/* Rejected-names tab: one-per-row compact list */
 .rej-cards {
-    display: grid;
-    grid-template-columns: repeat(auto-fill,
-                                  minmax(240px, 1fr));
-    gap: 0.75rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
     margin-top: 0.5rem;
 }
 .rej-card {
     background: var(--ari-card-bg, #fff);
     border: 1px solid var(--ari-border, #ddd);
-    border-radius: 0.5rem;
-    padding: 0.7rem 0.85rem;
+    border-radius: 0.4rem;
+    padding: 0.35rem 0.6rem;
     display: flex;
-    flex-direction: column;
-    gap: 0.35rem;
+    flex-direction: row;
+    align-items: center;
+    gap: 0.6rem;
     box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
     transition: box-shadow 0.15s, transform 0.15s;
+    min-width: 0;
+}
+.rej-card__actions {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    flex: 0 0 auto;
+}
+.rej-card__action {
+    border: 1px solid var(--ari-border, #ddd);
+    background: var(--ari-card-bg, #fff);
+    color: var(--ari-text-muted, #57606a);
+    border-radius: 0.35rem;
+    width: 1.6rem;
+    height: 1.6rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 0.8rem;
+}
+.rej-card__action:hover {
+    border-color: var(--ari-primary, #3f51b5);
+    color: var(--ari-primary, #3f51b5);
+}
+.rej-card__action--danger:hover {
+    border-color: #c0392b;
+    color: #c0392b;
 }
 .rej-card:hover {
     box-shadow: 0 3px 8px rgba(0, 0, 0, 0.10);
@@ -71,40 +100,302 @@
 .rej-card__head {
     display: flex;
     align-items: center;
-    gap: 0.4rem;
+    gap: 0.35rem;
     font-weight: 600;
     color: #922b21;
+    flex: 0 0 auto;
+    max-width: 35%;
+    min-width: 0;
 }
-.rej-card__name { font-family: monospace; }
-.rej-card__field { font-size: 0.85rem; }
+.rej-card__name {
+    font-family: monospace;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.rej-card__field {
+    font-size: 0.8rem;
+    flex: 1 1 0;
+    min-width: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
 .rej-card__label { color: var(--ari-text-muted, #57606a); }
 .rej-card__meta {
-    margin-top: auto;
-    font-size: 0.75rem;
+    font-size: 0.72rem;
     color: var(--ari-text-muted, #57606a);
+    flex: 0 0 auto;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 30%;
 }
 .rej-card--add {
     cursor: pointer;
     border-style: dashed;
     background: var(--ari-bg, #f4f6ff);
     color: var(--ari-primary, #3f51b5);
-    align-items: center;
     justify-content: center;
     text-align: center;
-    min-height: 110px;
+    padding: 0.4rem 0.6rem;
 }
 .rej-card--add:hover {
     background: var(--ari-primary-light, #e8eaf6);
 }
 .rej-card__add-inner {
     display: flex;
-    flex-direction: column;
+    flex-direction: row;
     align-items: center;
-    gap: 0.4rem;
+    gap: 0.45rem;
     font-weight: 600;
 }
-.rej-card__add-inner i { font-size: 1.6rem; }
+.rej-card__add-inner i { font-size: 1rem; }
+.rej-filter {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    margin: 0.4rem 0 0.5rem;
+    padding: 0.3rem 0.55rem;
+    border: 1px solid var(--ari-border, #ddd);
+    border-radius: 0.4rem;
+    background: var(--ari-card-bg, #fff);
+}
+.rej-filter i { color: var(--ari-text-muted, #57606a); }
+.rej-filter__input {
+    flex: 1 1 auto;
+    border: 0;
+    outline: none;
+    background: transparent;
+    font-size: 0.9rem;
+    padding: 0.15rem 0;
+    min-width: 0;
+}
+.rej-filter__clear {
+    border: 0;
+    background: transparent;
+    color: var(--ari-text-muted, #57606a);
+    cursor: pointer;
+    font-size: 0.9rem;
+    padding: 0.1rem 0.3rem;
+}
+.rej-filter__clear:hover { color: var(--ari-primary, #3f51b5); }
+.rej-table-wrap {
+    overflow-x: auto;
+    overflow-y: auto;
+    scrollbar-gutter: stable;
+    max-height: 62vh;
+    border: 1px solid var(--ari-border, #ddd);
+    border-radius: 0.45rem;
+    margin-top: 0.55rem;
+}
+.rej-table {
+    width: 100%;
+    min-width: 900px;
+}
+.rj-empty {
+    border: 1px dashed var(--ari-border, #d0d7de);
+    border-radius: 0.45rem;
+    padding: 1rem;
+    text-align: center;
+    color: var(--ari-text-muted, #57606a);
+    margin-top: 0.55rem;
+}
+.rej-cell-name {
+    font-family: monospace;
+    color: #922b21;
+    white-space: nowrap;
+}
+.rej-cell-ts {
+    font-family: monospace;
+    white-space: nowrap;
+}
+.rej-cell-trunc {
+    max-width: 24rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.rej-cell-actions {
+    white-space: nowrap;
+    text-align: center;
+}
 
+/* ----- History tab ----- */
+.hist-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.6rem;
+    align-items: center;
+    margin: 0.4rem 0 0.7rem;
+}
+.hist-toolbar__filter {
+    flex: 1 1 240px;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.3rem 0.55rem;
+    border: 1px solid var(--ari-border, #ddd);
+    border-radius: 0.4rem;
+    background: var(--ari-card-bg, #fff);
+    min-width: 0;
+}
+.hist-toolbar__filter i {
+    color: var(--ari-text-muted, #57606a);
+}
+.hist-filter__input {
+    flex: 1 1 auto;
+    border: 0;
+    outline: none;
+    background: transparent;
+    font-size: 0.9rem;
+    min-width: 0;
+}
+.hist-toolbar__per {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    font-size: 0.85rem;
+    color: var(--ari-text-muted, #57606a);
+}
+.hist-toolbar__per select {
+    padding: 0.2rem 0.4rem;
+    border: 1px solid var(--ari-border, #ddd);
+    border-radius: 0.35rem;
+    background: var(--ari-card-bg, #fff);
+}
+.hist-toolbar__pager {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+}
+.hist-page-info {
+    font-size: 0.85rem;
+    color: var(--ari-text-muted, #57606a);
+    min-width: 8em;
+    text-align: center;
+}
+.hist-cards {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+}
+.hist-card {
+    display: grid;
+    grid-template-columns: 11rem 9rem 1fr auto;
+    gap: 0.6rem;
+    align-items: center;
+    background: var(--ari-card-bg, #fff);
+    border: 1px solid var(--ari-border, #ddd);
+    border-radius: 0.4rem;
+    padding: 0.4rem 0.6rem;
+    min-width: 0;
+}
+.hist-card__time {
+    font-family: monospace;
+    font-size: 0.8rem;
+    color: var(--ari-text-muted, #57606a);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.hist-card__user {
+    font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.hist-card__what {
+    min-width: 0;
+    font-size: 0.85rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.hist-card__name {
+    font-family: monospace;
+    color: var(--ari-primary, #3f51b5);
+    margin-right: 0.4rem;
+}
+.hist-card__field {
+    display: inline-block;
+    background: var(--ari-bg-hover, #f1f3f5);
+    border: 1px solid var(--ari-border, #dee2e6);
+    border-radius: 0.7rem;
+    padding: 0 0.45rem;
+    margin: 0 0.15rem;
+    font-size: 0.75rem;
+    color: var(--ari-text-muted, #495057);
+}
+.hist-card__action {
+    display: inline-block;
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    padding: 1px 6px;
+    border-radius: 0.7rem;
+    margin-right: 0.4rem;
+    border: 1px solid transparent;
+}
+.hist-card__action--create {
+    background: #e6f4ea; color: #1e7e34;
+    border-color: #b6dcc1;
+}
+.hist-card__action--edit {
+    background: #fff8db; color: #7a5d00;
+    border-color: #f1d97a;
+}
+.hist-card__action--restore {
+    background: #e7e9fb; color: #2c3a8a;
+    border-color: #b9c0ee;
+}
+.hist-card__buttons {
+    display: flex;
+    gap: 0.25rem;
+}
+.hist-card__btn {
+    border: 1px solid var(--ari-border, #ddd);
+    background: var(--ari-card-bg, #fff);
+    color: var(--ari-text-muted, #57606a);
+    border-radius: 0.35rem;
+    width: 1.7rem;
+    height: 1.7rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+}
+.hist-card__btn:hover {
+    border-color: var(--ari-primary, #3f51b5);
+    color: var(--ari-primary, #3f51b5);
+}
+[data-theme="dark"] .hist-card__field {
+    background: var(--ari-surface-muted, #1c2128);
+    border-color: var(--ari-border, #30363d);
+    color: var(--ari-text-muted, #8b949e);
+}
+[data-theme="dark"] .hist-card__action--create {
+    background: rgba(63, 185, 80, 0.14);
+    color: #7ee787;
+    border-color: rgba(63, 185, 80, 0.4);
+}
+[data-theme="dark"] .hist-card__action--edit {
+    background: rgba(210, 153, 34, 0.2);
+    color: #f2cc60;
+    border-color: rgba(210, 153, 34, 0.45);
+}
+[data-theme="dark"] .hist-card__action--restore {
+    background: rgba(187, 128, 255, 0.14);
+    color: #d2a8ff;
+    border-color: rgba(187, 128, 255, 0.4);
+}
+[data-theme="dark"] .hist-card__btn {
+    background: var(--ari-card-bg, #161b22);
+    border-color: var(--ari-border, #30363d);
+    color: var(--ari-text-muted, #8b949e);
+}
+[data-theme="dark"] .hist-card__btn:hover {
+    background: var(--ari-surface-muted, #1c2128);
+}
 /* lightweight overlay (modal) */
 .ari-overlay {
     position: fixed;
@@ -186,25 +477,52 @@
  * the card. */
 #astro-tab-add-manually .am-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
+    grid-template-columns: 1fr;
     gap: 1rem;
     width: 100%;
 }
-#astro-tab-add-manually .ari-card {
+#astro-tab-add-manually .at-section-card {
     align-items: stretch;
     text-align: left;
 }
-#astro-tab-add-manually .ari-card__body {
+#astro-tab-add-manually .at-section-card__body {
     width: 100%;
     display: flex;
     flex-direction: column;
     gap: 0.65rem;
     align-items: stretch;
 }
+#astro-tab-add-manually .am-manual-card {
+    border-color: #e7bf72;
+    background: #fff6dd;
+}
+#astro-tab-add-manually .am-manual-card > .at-section-card__header {
+    color: #8f5a06;
+    background: #ffe9bf;
+    border-bottom-color: rgba(206, 146, 43, 0.35);
+}
+#astro-tab-add-manually .am-manual-card > .at-section-card__body {
+    background: #fff9ea;
+}
+#astro-tab-add-manually .am-extra-card {
+    border-color: #edc987;
+    background: #fff8e6;
+}
+#astro-tab-add-manually .am-extra-card > .at-section-card__header {
+    color: #8f5a06;
+    background: #ffefcf;
+    border-bottom-color: rgba(206, 146, 43, 0.3);
+}
+#astro-tab-add-manually .am-extra-card > .at-section-card__body {
+    background: #fffdf4;
+}
 #astro-tab-add-manually .am-row {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
     gap: 0.65rem;
+}
+#astro-tab-add-manually #am-man-extra-fields {
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
 }
 #astro-tab-add-manually .am-checkbox {
     display: flex;
@@ -216,6 +534,86 @@
 #astro-tab-add-manually .am-checkbox span {
     font-size: 0.85rem;
     color: var(--ari-text-muted, #57606a);
+}
+#astro-tab-add-manually .am-calc-input {
+    background: #f1f3f5;
+    color: #7a7f86;
+    border-color: #cdd3da;
+    cursor: not-allowed;
+}
+#astro-tab-add-manually .am-calc-label {
+    color: #8a6b2a;
+}
+#astro-tab-add-manually .am-calc-note {
+    font-size: 0.82rem;
+    color: #8f6e2a;
+    margin-top: -0.3rem;
+}
+#astro-tab-add-manually .am-btn-update {
+    background: #d97706;
+    border-color: #b45309;
+    color: #fff;
+}
+#astro-tab-add-manually .am-btn-update:hover {
+    background: #c66d05;
+}
+#astro-tab-add-manually #am-man-pmra:disabled,
+#astro-tab-add-manually #am-man-pmde:disabled {
+    background: #edf1f5;
+    color: #8a9098;
+    border-color: #d2d8de;
+    cursor: not-allowed;
+}
+[data-theme="dark"] #astro-tab-add-manually .am-manual-card {
+    border-color: #7a5d2b;
+    background: #2d2415;
+}
+[data-theme="dark"] #astro-tab-add-manually .am-manual-card
+    > .at-section-card__header {
+    color: #f0d59c;
+    background: #3a2c16;
+    border-bottom-color: #7a5d2b;
+}
+[data-theme="dark"] #astro-tab-add-manually .am-manual-card
+    > .at-section-card__body {
+    background: #2a2214;
+}
+[data-theme="dark"] #astro-tab-add-manually .am-extra-card {
+    border-color: #7a5d2b;
+    background: #2b2315;
+}
+[data-theme="dark"] #astro-tab-add-manually .am-extra-card
+    > .at-section-card__header {
+    color: #f0d59c;
+    background: #3b2d18;
+    border-bottom-color: #7a5d2b;
+}
+[data-theme="dark"] #astro-tab-add-manually .am-extra-card
+    > .at-section-card__body {
+    background: #272011;
+}
+[data-theme="dark"] #astro-tab-add-manually .am-calc-input {
+    background: #1b1f24;
+    color: #9aa4af;
+    border-color: #3a4048;
+}
+[data-theme="dark"] #astro-tab-add-manually .am-calc-label,
+[data-theme="dark"] #astro-tab-add-manually .am-calc-note {
+    color: #d6b878;
+}
+[data-theme="dark"] #astro-tab-add-manually .am-btn-update {
+    background: #b96a08;
+    border-color: #9b5606;
+    color: #fff;
+}
+[data-theme="dark"] #astro-tab-add-manually .am-btn-update:hover {
+    background: #a76007;
+}
+[data-theme="dark"] #astro-tab-add-manually #am-man-pmra:disabled,
+[data-theme="dark"] #astro-tab-add-manually #am-man-pmde:disabled {
+    background: #1c2229;
+    color: #8f99a4;
+    border-color: #37414b;
 }
 </style>
 {% endblock %}
@@ -282,7 +680,7 @@
                 data-htab="add-manually"
                 aria-controls="astro-tab-add-manually">
             <i class="fa-solid fa-pen-to-square"></i>
-            <span>Add manually</span>
+            <span>Add/Edit manual target</span>
         </button>
         <button class="ari-htab"
                 type="button" role="tab"
@@ -291,6 +689,16 @@
                 aria-controls="astro-tab-rejected">
             <i class="fa-solid fa-ban"></i>
             <span>Rejected object names</span>
+        </button>
+        {% endif %}
+        {% if astrometrics_can_view_history %}
+        <button class="ari-htab"
+                type="button" role="tab"
+                aria-selected="false"
+                data-htab="history"
+                aria-controls="astro-tab-history">
+            <i class="fa-solid fa-clock-rotate-left"></i>
+            <span>History</span>
         </button>
         {% endif %}
     </nav>
@@ -316,6 +724,10 @@
                         already been processed and is currently
                         available in the data portal. Searches are
                         scoped to the profiles you have access to.
+                    </p>
+                    <p class="at-muted-hint" style="margin-top:-0.35rem;">
+                        Note: this search covers science objects only;
+                        calibration targets are not resolved here.
                     </p>
 
                     {# Sub-tabs: name / coords / date / advanced #}
@@ -488,16 +900,55 @@
                         </p>
                         <div class="ot-find-panel__grid">
                             <label class="ot-find-field">
+                                <span class="ot-find-field__label">Source</span>
+                                <select id="fo-adv-source"
+                                        class="ot-find-input">
+                                    <option value="target_info">
+                                        Target information
+                                    </option>
+                                    <option value="spectrum_info">
+                                        Spectrum information
+                                    </option>
+                                    <option value="header">
+                                        Header
+                                    </option>
+                                </select>
+                            </label>
+                            <label class="ot-find-field">
                                 <span class="ot-find-field__label">Property</span>
                                 <input id="fo-adv-property"
                                        class="ot-find-input" type="text"
+                                       list="fo-adv-property-list"
                                        placeholder="e.g. OBJNAME, RA_DEG, MAG">
+                                <datalist id="fo-adv-property-list"></datalist>
                             </label>
                             <label class="ot-find-field">
-                                <span class="ot-find-field__label">Value</span>
+                                <span class="ot-find-field__label">Value mode</span>
+                                <select id="fo-adv-match-mode"
+                                        class="ot-find-input">
+                                    <option value="value">Value</option>
+                                    <option value="between">Between</option>
+                                    <option value="greater_than">
+                                        Greater than
+                                    </option>
+                                    <option value="less_than">
+                                        Less than
+                                    </option>
+                                </select>
+                            </label>
+                            <label class="ot-find-field">
+                                <span class="ot-find-field__label">Value 1</span>
                                 <input id="fo-adv-value"
                                        class="ot-find-input" type="text"
                                        placeholder="e.g. 50 (numeric) or text">
+                            </label>
+                            <label class="ot-find-field"
+                                   id="fo-adv-value2-wrap"
+                                   style="display:none;">
+                                <span class="ot-find-field__label">Value 2</span>
+                                <input id="fo-adv-value2"
+                                       class="ot-find-input" type="text"
+                                       placeholder="Upper/lower bound">
                             </label>
                             <div class="ot-find-actions">
                                 <button id="fo-find-advanced"
@@ -736,6 +1187,14 @@
                                 <span id="rt-target-name">--</span>
                             </h2>
                             <div class="ari-target-info__actions">
+                                <button id="rt-target-edit"
+                                        class="ari-btn ari-btn--sm ari-btn--secondary"
+                                        type="button"
+                                        title="Edit all target parameters"
+                                        hidden>
+                                    <i class="fa-solid fa-pen-to-square"></i>
+                                    Edit object
+                                </button>
                                 {% if astrometrics_can_manage_rejects %}
                                 <button id="rt-target-verify"
                                         class="ari-btn ari-btn--sm ari-btn--primary"
@@ -812,14 +1271,15 @@
             <div class="am-grid">
 
                 {# ---- Add manual target ---- #}
-                <div class="ari-card">
-                    <div class="ari-card__header">
-                        <h2 class="ari-card__title">
+                <div class="at-section-card at-section-card--warning
+                            am-manual-card">
+                    <header class="at-section-card__header">
+                        <h2>
                             <i class="fa-solid fa-star"></i>
-                            Add manual target
+                            Add/Edit manual target
                         </h2>
-                    </div>
-                    <div class="ari-card__body">
+                    </header>
+                    <div class="at-section-card__body">
                         <p class="ari-section-intro">
                             Add a brand-new astrometric entry. Use
                             this only when SIMBAD / Vizier / the
@@ -1013,6 +1473,15 @@
                         </label>
                         <label class="ot-find-field">
                             <span class="ot-find-field__label">
+                                Keywords (one per line)
+                            </span>
+                            <textarea id="am-man-keywords"
+                                      class="ot-find-input"
+                                      rows="2"
+                                      placeholder="e.g. TELLURIC"></textarea>
+                        </label>
+                        <label class="ot-find-field">
+                            <span class="ot-find-field__label">
                                 Notes
                             </span>
                             <textarea id="am-man-notes"
@@ -1020,14 +1489,48 @@
                                       rows="2"></textarea>
                         </label>
 
+                        <div class="at-section-card at-section-card--warning
+                                    am-extra-card"
+                             style="margin-top: 1rem;">
+                            <header class="at-section-card__header">
+                                <h3>
+                                    <i class="fa-solid fa-sliders"></i>
+                                    Additional resolve-target fields
+                                </h3>
+                            </header>
+                            <div class="at-section-card__body">
+                                <p class="ari-section-intro">
+                                    Optional advanced fields shown in
+                                    <strong>Resolve target</strong>.
+                                    Leave blank to skip.
+                                </p>
+                                <p class="am-calc-note">
+                                    Grey fields are calculated from
+                                    editable values. Use
+                                    <strong>Recompute values</strong>
+                                    to preview them; save also
+                                    recomputes.
+                                </p>
+                                <div id="am-man-extra-fields"
+                                     class="am-grid"></div>
+                            </div>
+                        </div>
+
                         <div id="am-man-status"
                              class="ari-dt__count"></div>
                         <div>
+                            <button id="am-man-recompute"
+                                    type="button"
+                                    class="ari-btn ari-btn--ghost"
+                                    style="margin-right:0.5rem;">
+                                <i class="fa-solid fa-rotate"></i>
+                                Recompute values
+                            </button>
                             <button id="am-man-save"
                                     type="button"
                                     class="ari-btn ari-btn--primary">
                                 <i class="fa-solid fa-plus"></i>
-                                Add manual target
+                                Save manual target
                             </button>
                         </div>
                     </div>
@@ -1059,16 +1562,141 @@
                         portal. Any incoming observation whose object
                         name resolves to one of these entries falls
                         back to the FITS header values rather than to
-                        a curated astrometric record. Use the card
-                        below to add a new rejected name; existing
-                        entries are managed via the standard
-                        astrometric database tools.
+                        a curated astrometric record. Use
+                        <strong>Add rejected name</strong> to create
+                        an entry. Users with edit permission can
+                        edit/delete directly from the table.
                     </p>
                     <div id="rej-status" class="ari-dt__count"></div>
+                    <div class="rej-filter">
+                        <i class="fa-solid fa-magnifying-glass"
+                           aria-hidden="true"></i>
+                        <input type="search" id="rej-filter-input"
+                               class="rej-filter__input"
+                               placeholder="Filter by name or alias..."
+                               autocomplete="off" />
+                        <button type="button"
+                                id="rej-filter-clear"
+                                class="rej-filter__clear"
+                                title="Clear filter" hidden>
+                            <i class="fa-solid fa-xmark"></i>
+                        </button>
+                    </div>
+                    <div class="hist-toolbar">
+                        <button type="button"
+                                id="rej-open-add"
+                                class="ari-btn ari-btn--primary"
+                                title="Add rejected object name">
+                            <i class="fa-solid fa-plus"></i>
+                            Add rejected name
+                        </button>
+                        <label class="hist-toolbar__per">
+                            <span>per page</span>
+                            <select id="rej-per-page">
+                                <option value="50" selected>50</option>
+                                <option value="100">100</option>
+                                <option value="500">500</option>
+                            </select>
+                        </label>
+                        <div class="hist-toolbar__pager">
+                            <button type="button"
+                                    id="rej-prev"
+                                    class="ari-btn ari-btn--secondary"
+                                    title="Previous page">
+                                <i class="fa-solid fa-chevron-left"></i>
+                            </button>
+                            <span id="rej-page-info"
+                                  class="hist-page-info"></span>
+                            <button type="button"
+                                    id="rej-next"
+                                    class="ari-btn ari-btn--secondary"
+                                    title="Next page">
+                                <i class="fa-solid fa-chevron-right"></i>
+                            </button>
+                        </div>
+                    </div>
                     <div id="rej-cards" class="rej-cards"></div>
                 </div>
             </div>
         </section>
+
+        {% if astrometrics_can_view_history %}
+        {# ---------------------------------------------------------- #}
+        {# Tab 5: History (admin / moderator / developer)             #}
+        {# ---------------------------------------------------------- #}
+        <section id="astro-tab-history"
+                 class="ari-htab-panel"
+                 role="tabpanel" aria-labelledby="history" hidden>
+            <div class="ari-card">
+                <div class="ari-card__header">
+                    <h2 class="ari-card__title">
+                        <i class="fa-solid fa-clock-rotate-left"></i>
+                        Astrometric edit history
+                    </h2>
+                    <span id="hist-count"
+                          class="ari-dt__count"></span>
+                </div>
+                <div class="ari-card__body">
+                    <p class="ari-section-intro">
+                        Append-only log of every edit made to the
+                        astrometric catalogue. Click
+                        <i class="fa-solid fa-eye"></i> to diff the
+                        before/after snapshot, or
+                        <i class="fa-solid fa-rotate-left"></i> to
+                        load that snapshot into the
+                        <strong>Add/Edit manual target</strong> tab
+                        for review &amp; restoration.
+                    </p>
+                    <div class="hist-toolbar">
+                        <div class="hist-toolbar__filter">
+                            <i class="fa-solid fa-magnifying-glass"
+                               aria-hidden="true"></i>
+                            <input type="search"
+                                   id="hist-filter-input"
+                                   class="hist-filter__input"
+                                   placeholder="Filter by APERO_NAME..."
+                                   autocomplete="off" />
+                        </div>
+                        <label class="hist-toolbar__per">
+                            <span>per page</span>
+                            <select id="hist-per-page">
+                                <option value="50" selected>50</option>
+                                <option value="100">100</option>
+                                <option value="500">500</option>
+                            </select>
+                        </label>
+                        <div class="hist-toolbar__pager">
+                            <button type="button"
+                                    id="hist-prev"
+                                    class="ari-btn ari-btn--secondary"
+                                    title="Previous page">
+                                <i class="fa-solid fa-chevron-left"></i>
+                            </button>
+                            <span id="hist-page-info"
+                                  class="hist-page-info"></span>
+                            <button type="button"
+                                    id="hist-next"
+                                    class="ari-btn ari-btn--secondary"
+                                    title="Next page">
+                                <i class="fa-solid fa-chevron-right"></i>
+                            </button>
+                        </div>
+                        {% if astrometrics_can_manage_history %}
+                        <button type="button"
+                                id="hist-clear"
+                                class="ari-btn ari-btn--secondary"
+                                title="Clear all astrometrics history">
+                            <i class="fa-solid fa-trash-can"></i>
+                            Clear history
+                        </button>
+                        {% endif %}
+                    </div>
+                    <div id="hist-status" class="ari-dt__count"></div>
+                    <div id="hist-cards" class="hist-cards"></div>
+                </div>
+            </div>
+        </section>
+        {% endif %}
 
         {# Add-rejection overlay #}
         <div id="rej-add-overlay" class="ari-overlay" hidden>
@@ -1076,7 +1704,7 @@
                  data-rej-overlay-close></div>
             <div class="ari-overlay__panel">
                 <header class="ari-overlay__header">
-                    <h3>
+                    <h3 id="rej-overlay-title">
                         <i class="fa-solid fa-ban"></i>
                         Add a rejected object name
                     </h3>
@@ -1087,6 +1715,10 @@
                     </button>
                 </header>
                 <div class="ari-overlay__body">
+                      <input id="rej-add-mode" type="hidden"
+                          value="add">
+                      <input id="rej-add-original" type="hidden"
+                          value="">
                     <label class="ot-find-field">
                         <span class="ot-find-field__label">
                             Object name to reject
@@ -1126,8 +1758,10 @@
                     </button>
                     <button id="rej-add-save" type="button"
                             class="ari-btn ari-btn--primary">
-                        <i class="fa-solid fa-plus"></i>
-                        Add rejection
+                        <i class="fa-solid fa-floppy-disk"></i>
+                        <span id="rej-overlay-save-label">
+                            Save rejection
+                        </span>
                     </button>
                 </footer>
             </div>
@@ -1150,10 +1784,17 @@
         profileId: '',
         instrument: ''
     };
+    window.AriAstrometricsHistoryConfig = {
+        canManageHistory: {{ astrometrics_can_manage_history|tojson }}
+    };
 </script>
 <script src="https://cdn.bokeh.org/bokeh/release/bokeh-3.8.2.min.js"></script>
 <script src="https://cdn.bokeh.org/bokeh/release/bokeh-widgets-3.8.2.min.js"></script>
 <script src="{{ url_for('static', filename='js/target_info_render.js', v='20260424e') }}"></script>
 <script src="{{ url_for('static', filename='js/ari_data_table.js', v='20260424c') }}"></script>
-<script src="{{ url_for('static', filename='js/astrometrics.js', v='20260424e') }}"></script>
+<script src="{{ url_for('static', filename='js/astrometrics_lock.js', v='20260430a') }}"></script>
+<script src="{{ url_for('static', filename='js/astrometrics.js', v='20260523b') }}"></script>
+{% if astrometrics_can_view_history %}
+<script src="{{ url_for('static', filename='js/astrometrics_history.js', v='20260501b') }}"></script>
+{% endif %}
 {% endblock %}

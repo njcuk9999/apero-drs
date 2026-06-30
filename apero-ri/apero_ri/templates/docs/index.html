@@ -6,10 +6,51 @@
     <h1><i class="{{ page_icon }}"></i> {{ page_label }}</h1>
 </div>
 
+<div class="ari-doc-view-toggle" role="group" aria-label="Docs view mode">
+    <a href="{{ doc_self_url }}{% if current_version %}?v={{ current_version }}&view=cards{% else %}?view=cards{% endif %}"
+       class="ari-btn ari-btn--sm {% if view_mode != 'list' %}ari-btn--primary{% else %}ari-btn--secondary{% endif %}">
+        <i class="fa-solid fa-grip"></i> Cards
+    </a>
+    <a href="{{ doc_self_url }}{% if current_version %}?v={{ current_version }}&view=list{% else %}?view=list{% endif %}"
+       class="ari-btn ari-btn--sm {% if view_mode == 'list' %}ari-btn--primary{% else %}ari-btn--secondary{% endif %}">
+        <i class="fa-solid fa-list"></i> List
+    </a>
+</div>
+
 {% if cards %}
+{% if view_mode == 'list' and docs_sidebar_tree is defined and docs_sidebar_tree %}
+<div class="ari-doc-tree" id="ari-doc-tree">
+    {% for item in docs_sidebar_tree %}
+    <div class="ari-doc-tree__row{% if item.depth > 0 %} ari-doc-tree__row--hidden{% endif %}"
+         data-index="{{ loop.index0 }}"
+         data-depth="{{ item.depth }}"
+         data-kind="{{ item.kind|default('file') }}"
+         data-open="false">
+        {% if item.has_children|default(false) %}
+        <button type="button"
+                class="ari-doc-tree__toggle"
+                aria-label="Toggle sub-pages"
+                aria-expanded="false"
+                data-toggle-index="{{ loop.index0 }}">
+            <i class="fa-solid fa-chevron-right"></i>
+        </button>
+        {% else %}
+        <span class="ari-doc-tree__toggle-spacer"></span>
+        {% endif %}
+
+        <a href="{{ item.url }}{{ doc_query_suffix|default('') }}"
+           class="ari-doc-tree__link{% if item.active %} ari-doc-tree__link--active{% endif %}"
+           style="--doc-depth: {{ item.depth }};">
+            <i class="{{ item.icon }}"></i>
+            <span>{{ item.label }}</span>
+        </a>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
 <div class="ari-cards">
     {% for card in cards %}
-    <a href="{{ card.url }}{% if current_version is defined %}?v={{ current_version }}{% endif %}"
+    <a href="{{ card.url }}{{ doc_query_suffix|default('') }}"
        class="ari-card">
         <div class="ari-card__icon">
             <i class="{{ card.icon }}"></i>
@@ -18,8 +59,165 @@
     </a>
     {% endfor %}
 </div>
+{% endif %}
 {% else %}
 <p style="color: var(--ari-text-muted);">No sections available with your
 current permissions.</p>
+{% endif %}
+
+<style>
+.ari-doc-view-toggle {
+    margin: 0 0 0.8rem 0;
+    display: flex;
+    gap: 0.45rem;
+}
+
+.ari-doc-tree {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+}
+
+.ari-doc-tree__row {
+    display: flex;
+    align-items: center;
+}
+
+.ari-doc-tree__row--hidden {
+    display: none;
+}
+
+.ari-doc-tree__toggle,
+.ari-doc-tree__toggle-spacer {
+    width: 1.6rem;
+    min-width: 1.6rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 0.2rem;
+}
+
+.ari-doc-tree__toggle {
+    border: 0;
+    background: transparent;
+    color: var(--ari-text-muted);
+    cursor: pointer;
+}
+
+.ari-doc-tree__toggle[aria-expanded="true"] i {
+    transform: rotate(90deg);
+}
+
+.ari-doc-tree__link {
+    width: 100%;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.55rem;
+    padding: 0.5rem 0.7rem;
+    margin-left: calc(var(--doc-depth, 0) * 1.0rem);
+    border: 1px solid var(--ari-border);
+    border-radius: 0.5rem;
+    color: var(--ari-text);
+    text-decoration: none;
+    background: var(--ari-surface-muted, #f8fafc);
+}
+
+.ari-doc-tree__link--active {
+    border-color: var(--ari-primary, #4b7bec);
+    background: color-mix(in srgb, var(--ari-primary, #4b7bec) 10%, white);
+}
+
+.ari-doc-tree__link:hover {
+    border-color: var(--ari-primary, #4b7bec);
+}
+</style>
+
+{% if view_mode == 'list' %}
+<script>
+(function () {
+    var tree = document.getElementById('ari-doc-tree');
+    if (!tree) return;
+
+    var rows = Array.from(tree.querySelectorAll('.ari-doc-tree__row'));
+
+    function rowDepth(idx) {
+        return Number(rows[idx].getAttribute('data-depth') || '0');
+    }
+
+    function hideDescendants(idx) {
+        var baseDepth = rowDepth(idx);
+        for (var i = idx + 1; i < rows.length; i++) {
+            if (rowDepth(i) <= baseDepth) break;
+            rows[i].classList.add('ari-doc-tree__row--hidden');
+            rows[i].setAttribute('data-doc-open', 'false');
+            var btn = rows[i].querySelector('.ari-doc-tree__toggle');
+            if (btn) btn.setAttribute('aria-expanded', 'false');
+        }
+    }
+
+    function showDirectChildren(idx) {
+        var baseDepth = rowDepth(idx);
+        for (var i = idx + 1; i < rows.length; i++) {
+            var d = rowDepth(i);
+            if (d <= baseDepth) break;
+            if (d === baseDepth + 1) {
+                rows[i].classList.remove('ari-doc-tree__row--hidden');
+            }
+        }
+    }
+
+    function toggleAt(idx) {
+        var row = rows[idx];
+        var isOpen = row.getAttribute('data-doc-open') === 'true';
+        var btn = row.querySelector('.ari-doc-tree__toggle');
+        if (isOpen) {
+            row.setAttribute('data-doc-open', 'false');
+            if (btn) btn.setAttribute('aria-expanded', 'false');
+            hideDescendants(idx);
+            return;
+        }
+        row.setAttribute('data-doc-open', 'true');
+        if (btn) btn.setAttribute('aria-expanded', 'true');
+        showDirectChildren(idx);
+    }
+
+    rows.forEach(function (row, idx) {
+        row.setAttribute('data-doc-open', 'false');
+        if (rowDepth(idx) > 0) {
+            row.classList.add('ari-doc-tree__row--hidden');
+        }
+        var btn = row.querySelector('.ari-doc-tree__toggle');
+        if (btn) btn.setAttribute('aria-expanded', 'false');
+    });
+
+    tree.querySelectorAll('.ari-doc-tree__toggle').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+            var idx = Number(btn.getAttribute('data-toggle-index') || '-1');
+            if (idx >= 0) toggleAt(idx);
+        });
+    });
+
+    var active = tree.querySelector('.ari-doc-tree__link--active');
+    if (active) {
+        var activeRow = active.closest('.ari-doc-tree__row');
+        if (activeRow) {
+            var activeIdx = Number(activeRow.getAttribute('data-index') || '-1');
+            if (activeIdx >= 0) {
+                var chain = [];
+                var targetDepth = rowDepth(activeIdx);
+                for (var i = activeIdx - 1; i >= 0; i--) {
+                    var d = rowDepth(i);
+                    if (d < targetDepth) {
+                        chain.push(i);
+                        targetDepth = d;
+                        if (targetDepth === 0) break;
+                    }
+                }
+                chain.reverse().forEach(function (idx) { toggleAt(idx); });
+            }
+        }
+    }
+}());
+</script>
 {% endif %}
 {% endblock %}

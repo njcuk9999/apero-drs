@@ -82,11 +82,18 @@ def _load_yaml(path: Path, default: Any = None) -> Any:
 
 def _save_yaml(path: Path, data: Any) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
-    with open(path, 'w', encoding='utf-8') as f:
-        yaml.dump(
-            data, f, default_flow_style=False,
+    tmp_path = path.with_name(
+        '{0}.{1}.tmp'.format(path.name, uuid.uuid4().hex)
+    )
+    with open(tmp_path, 'w', encoding='utf-8') as f:
+        yaml.safe_dump(
+            data,
+            f,
+            default_flow_style=False,
             allow_unicode=True,
+            sort_keys=False,
         )
+    tmp_path.replace(path)
 
 
 def _now_iso() -> str:
@@ -127,6 +134,15 @@ def list_groups(profile_id: str) -> List[dict]:
     """Return all groups for a profile."""
     data = _load_groups_data(profile_id)
     return data['groups']
+
+
+def get_group(
+    profile_id: str,
+    name: str,
+) -> Optional[dict]:
+    """Return one group for a profile or None when missing."""
+    data = _load_groups_data(profile_id)
+    return _find_group(data['groups'], name)
 
 
 def create_group(
@@ -283,5 +299,181 @@ def remove_object_from_group(
     ]
     if len(group['objects']) == original_len:
         return False
+    _save_groups_data(profile_id, data)
+    return True
+
+
+def get_summary_columns(
+    profile_id: str,
+    group_name: str,
+) -> List[str]:
+    """Return persisted summary-table column IDs for a group."""
+    group = get_group(profile_id, group_name)
+    if not isinstance(group, dict):
+        return []
+    columns = group.get('summary_columns', [])
+    if not isinstance(columns, list):
+        return []
+    result = []
+    seen = set()
+    for column in columns:
+        text = str(column).strip()
+        if not text or text in seen:
+            continue
+        seen.add(text)
+        result.append(text)
+    return result
+
+
+def set_summary_columns(
+    profile_id: str,
+    group_name: str,
+    columns: List[str],
+) -> bool:
+    """Persist summary-table column IDs for a group."""
+    data = _load_groups_data(profile_id)
+    group = _find_group(data['groups'], group_name)
+    if group is None:
+        return False
+
+    clean = []
+    seen = set()
+    for column in columns:
+        text = str(column).strip()
+        if not text or text in seen:
+            continue
+        seen.add(text)
+        clean.append(text)
+
+    group['summary_columns'] = clean
+    _save_groups_data(profile_id, data)
+    return True
+
+
+def get_summary_aliases(
+    profile_id: str,
+    group_name: str,
+) -> Dict[str, str]:
+    """Return persisted summary-table aliases keyed by property ID."""
+    group = get_group(profile_id, group_name)
+    if not isinstance(group, dict):
+        return dict()
+    aliases = group.get('summary_aliases', dict())
+    if not isinstance(aliases, dict):
+        return dict()
+    clean = dict()
+    for key, value in aliases.items():
+        pkey = str(key).strip()
+        pval = str(value).strip()
+        if pkey and pval:
+            clean[pkey] = pval
+    return clean
+
+
+def set_summary_aliases(
+    profile_id: str,
+    group_name: str,
+    aliases: Dict[str, str],
+) -> bool:
+    """Persist summary-table aliases keyed by property ID."""
+    data = _load_groups_data(profile_id)
+    group = _find_group(data['groups'], group_name)
+    if group is None:
+        return False
+
+    clean = dict()
+    if isinstance(aliases, dict):
+        for key, value in aliases.items():
+            pkey = str(key).strip()
+            pval = str(value).strip()
+            if pkey and pval:
+                clean[pkey] = pval
+
+    group['summary_aliases'] = clean
+    _save_groups_data(profile_id, data)
+    return True
+
+
+def get_summary_custom_columns(
+    profile_id: str,
+    group_name: str,
+) -> List[dict]:
+    """Return persisted custom summary columns for a group."""
+    group = get_group(profile_id, group_name)
+    if not isinstance(group, dict):
+        return []
+    rows = group.get('summary_custom_columns', [])
+    if not isinstance(rows, list):
+        return []
+    clean = []
+    for row in rows:
+        if not isinstance(row, dict):
+            continue
+        name = str(row.get('name', '')).strip()
+        expr = str(row.get('expression', '')).strip()
+        vars_map = row.get('variables', dict())
+        if not name or not expr:
+            continue
+        if not isinstance(vars_map, dict):
+            continue
+        vars_clean = dict()
+        for key, value in vars_map.items():
+            vkey = str(key).strip().lower()
+            vval = str(value).strip()
+            if len(vkey) == 1 and vkey.isalpha() and vval:
+                vars_clean[vkey] = vval
+        if not vars_clean:
+            continue
+        entry = dict()
+        entry['name'] = name
+        entry['expression'] = expr
+        entry['variables'] = vars_clean
+        clean.append(entry)
+    return clean
+
+
+def set_summary_custom_columns(
+    profile_id: str,
+    group_name: str,
+    custom_columns: List[dict],
+) -> bool:
+    """Persist custom summary columns for a group."""
+    data = _load_groups_data(profile_id)
+    group = _find_group(data['groups'], group_name)
+    if group is None:
+        return False
+
+    clean = []
+    seen = set()
+    if isinstance(custom_columns, list):
+        for row in custom_columns:
+            if not isinstance(row, dict):
+                continue
+            name = str(row.get('name', '')).strip()
+            expr = str(row.get('expression', '')).strip()
+            vars_map = row.get('variables', dict())
+            if not name or not expr:
+                continue
+            name_key = name.lower()
+            if name_key in seen:
+                continue
+            if not isinstance(vars_map, dict):
+                continue
+            vars_clean = dict()
+            for key, value in vars_map.items():
+                vkey = str(key).strip().lower()
+                vval = str(value).strip()
+                if len(vkey) == 1 and vkey.isalpha() and vval:
+                    vars_clean[vkey] = vval
+            if not vars_clean:
+                continue
+            entry = dict()
+            entry['name'] = name
+            entry['expression'] = expr
+            entry['variables'] = vars_clean
+            clean.append(entry)
+            seen.add(name_key)
+
+    group['summary_custom_columns'] = clean
     _save_groups_data(profile_id, data)
     return True

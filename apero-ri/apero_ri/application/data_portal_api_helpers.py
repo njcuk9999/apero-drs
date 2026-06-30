@@ -1,13 +1,19 @@
 """Data Portal API helper functions for ARIApp."""
 
 import json as _json
+import multiprocessing as mp
 import queue
 import threading
 import time
 from datetime import datetime, timezone
 from pathlib import Path
+from urllib.parse import quote
 
-from apero_ri.core.auth import get_accessible_profiles, get_public_permissions
+from apero_ri.core.auth import (
+    get_accessible_profiles,
+    get_public_permissions,
+    load_apero_profiles,
+)
 from apero_ri.core.object_funcs import (
     build_object_page_stats,
     load_object_ftable_rows,
@@ -16,6 +22,7 @@ from apero_ri.core.object_funcs import (
     load_object_table_row,
 )
 from apero_ri.core.permissions import resolve_user_permissions
+from apero_ri.core.issues import create_issue
 from flask import (
     Response,
     jsonify,
@@ -34,6 +41,36 @@ from flask import (
 _OBJECT_PAGE_CACHE = {}
 _OBJECT_PAGE_CACHE_LOCK = threading.Lock()
 _OBJECT_PAGE_CACHE_TTL = 60.0  # seconds
+
+
+def _run_tessilator_stream_worker(
+    objname,
+    cache_root,
+    instrument,
+    aliases,
+    log_q,
+    result_q,
+):
+    """Run tessilator in an isolated process for clean log streaming."""
+    try:
+        from apero_ri.core.run_tessilator import run_tessilator
+
+        result = run_tessilator(
+            objname=objname,
+            cache_root=cache_root,
+            instrument=instrument,
+            aliases=aliases,
+            log_queue=log_q,
+        )
+    except Exception as exc:
+        result = dict(
+            success=False,
+            error=str(exc),
+        )
+    try:
+        result_q.put(result)
+    finally:
+        log_q.put(None)
 
 
 def _object_page_cache_get(key):
@@ -115,6 +152,8 @@ def api_ri_profile_health(app):
         "PATH_TELLU",
         "PATH_LOG",
         "PATH_LBL",
+        "PATH_CHECK",
+        "PATH_OTHER",
     ]
     path_results = {}
     all_paths_ok = True
@@ -592,11 +631,31 @@ def _resolve_target_context(app, user_info, accessible):
                 success=False,
                 error=f'No astrometric entry for {name_arg!r}'),
                 404)
-        if not accessible:
-            return False, (jsonify(
-                success=False,
-                error='No accessible profile'), 403)
-        profile = accessible[0]
+        profiles = list(accessible or [])
+        if not profiles:
+            # For public astrometrics usage (logged-out users), pick a
+            # deterministic fallback profile to source instrument presets.
+            all_profiles = load_apero_profiles(hydrate=True)
+            for inst in sorted(all_profiles.keys()):
+                inst_profiles = all_profiles.get(inst) or {}
+                for pid in sorted(inst_profiles.keys()):
+                    pdata = inst_profiles.get(pid) or {}
+                    profiles.append(
+                        dict(
+                            profile_id=pid,
+                            instrument=inst,
+                            data=pdata,
+                        )
+                    )
+            if not profiles:
+                return False, (
+                    jsonify(
+                        success=False,
+                        error='No APERO profiles available',
+                    ),
+                    404,
+                )
+        profile = profiles[0]
         profile_id = profile['profile_id']
         instrument = profile['instrument']
         profile_data = profile.get('data') or {}
@@ -661,7 +720,8 @@ def api_finder_chart(app):
         perms = resolve_user_permissions(user_info["groups"], app.ari_groups)
     else:
         perms = get_public_permissions()
-    if "view.data_portal" not in perms:
+    name_mode = bool((request.args.get('name') or '').strip())
+    if "view.data_portal" not in perms and not name_mode:
         return jsonify(success=False, error="Unauthorized"), 401
 
     accessible = get_accessible_profiles(user_info, app.ari_groups)
@@ -745,7 +805,8 @@ def api_finder_chart_stream(app):
         )
     else:
         perms = get_public_permissions()
-    if 'view.data_portal' not in perms:
+    name_mode = bool((request.args.get('name') or '').strip())
+    if 'view.data_portal' not in perms and not name_mode:
         return jsonify(
             success=False, error='Unauthorized'
         ), 401
@@ -1779,6 +1840,19 @@ def api_object_page(app):
     )
     labels = sections.pop("labels", {})
 
+    sections["rejected_observations"] = _build_rejected_section(
+        app=app,
+        base_dir=base_dir,
+        profile_id=profile_id,
+        objname=objname,
+        instrument=instrument,
+        accessible_run_ids=accessible_run_ids,
+    )
+    rejected_count = len(sections["rejected_observations"].get("rows", []))
+    if isinstance(sections.get("spectrum"), dict):
+        sections["spectrum"]["raw_rejected_count"] = rejected_count
+        sections["spectrum"]["raw_rejected"] = str(rejected_count)
+
     # ------------------------------------------------------------
     # Target Information shared payload (single source of truth).
     # The shared component in apero_ri.components.target_info_sections
@@ -1870,6 +1944,173 @@ def api_object_page(app):
     )
     _object_page_cache_set(cache_key, response_payload)
     return jsonify(**response_payload)
+
+
+def _build_rejected_section(
+    app,
+    base_dir: Path,
+    profile_id: str,
+    objname: str,
+    instrument: str,
+    accessible_run_ids,
+):
+    from apero_ri.application import rejection_list_api_helpers as _rlh
+
+    section = dict(
+        tab_key='',
+        rows=[],
+    )
+
+    tab_key = _rlh.resolve_rejection_tab_key(instrument)
+    if tab_key == '':
+        return section
+
+    objects_dir = base_dir / 'tasks' / instrument / profile_id / 'objects'
+
+    ftable_rows = []
+    for fkind in ('raw', 'pp', 'ext', 'tcorr', 'ccf', 'lbl', 'lbl_rdb'):
+        rows = load_object_ftable_rows(objects_dir, objname, fkind)
+        if isinstance(rows, list):
+            ftable_rows.extend(rows)
+
+    accessible_ids = set()
+    for row in ftable_rows:
+        run_id = str(row.get('KW_RUN_ID', '') or '').strip()
+        if run_id not in accessible_run_ids:
+            continue
+        ident = str(row.get('IDENTIFIER', '') or '').strip()
+        if ident:
+            accessible_ids.add(ident)
+
+    htable_rows = load_object_htable_rows(objects_dir, objname)
+    if not isinstance(htable_rows, list):
+        htable_rows = []
+
+    obj_identifiers = set()
+    for row in htable_rows:
+        ident = str(row.get('IDENTIFIER', '') or '').strip()
+        if ident == '':
+            continue
+        if accessible_ids and ident not in accessible_ids:
+            continue
+        obj_identifiers.add(ident)
+
+    if not obj_identifiers:
+        return section
+
+    all_rejected = _rlh.get_rejection_rows_for_tab_key(app, tab_key)
+    rows = []
+    for row in all_rejected:
+        identifier = str(row.get('IDENTIFIER', '') or '').strip()
+        if identifier == '' or identifier not in obj_identifiers:
+            continue
+        out = dict(row)
+        out['ASTROMETRICS_URL'] = (
+            '/astrometrics?fo_tab=advanced'
+            '&fo_source=header'
+            f'&fo_property=IDENTIFIER&fo_value={quote(identifier)}'
+            '&fo_search=1'
+        )
+        out['REJECTION_LIST_URL'] = (
+            '/monitor_portal/rejection_list'
+            f'?instrument={quote(tab_key)}&identifier={quote(identifier)}'
+        )
+        rows.append(out)
+
+    rows.sort(key=lambda r: str(r.get('IDENTIFIER', '') or '').lower())
+    section['tab_key'] = tab_key
+    section['rows'] = rows
+    return section
+
+
+def api_object_rejection_issue(app):
+    """Create an issue from a rejected observation flag action."""
+    from apero_ri.application import issues_api_helpers as _ih
+    from apero_ri.application import rejection_list_api_helpers as _rlh
+
+    base_dir = Path(app.args.data_dir or str(Path.home() / '.ari'))
+
+    user_info = app._require_user()
+    if not user_info:
+        return jsonify(success=False, error='Unauthorized'), 401
+
+    perms = resolve_user_permissions(user_info['groups'], app.ari_groups)
+    if 'view.data_portal' not in perms:
+        return jsonify(success=False, error='Unauthorized'), 401
+
+    data = request.get_json(silent=True) or {}
+    profile_id = str(data.get('profile_id', '') or '').strip()
+    objname = str(data.get('objname', '') or '').strip()
+    identifier = str(data.get('identifier', '') or '').strip()
+    comment = str(data.get('comment', '') or '').strip()
+
+    if not profile_id or not objname or not identifier:
+        return (
+            jsonify(
+                success=False,
+                error='Missing profile_id, objname, or identifier',
+            ),
+            400,
+        )
+
+    accessible = get_accessible_profiles(user_info, app.ari_groups)
+    profile = None
+    for prof in accessible:
+        if prof.get('profile_id') == profile_id:
+            profile = prof
+            break
+    if not profile:
+        return jsonify(success=False, error='Profile not found'), 404
+
+    instrument = str(profile.get('instrument', '') or '').strip()
+    tab_key = _rlh.resolve_rejection_tab_key(instrument)
+    if tab_key == '':
+        return jsonify(success=False, error='No rejection tab for profile'), 400
+
+    found = False
+    for row in _rlh.get_rejection_rows_for_tab_key(app, tab_key):
+        cand = str(row.get('IDENTIFIER', '') or '').strip()
+        if cand == identifier:
+            found = True
+            break
+    if not found:
+        return jsonify(success=False, error='Identifier not in list'), 404
+
+    username = str(
+        user_info.get('username')
+        or user_info.get('name')
+        or user_info.get('email')
+        or 'unknown'
+    )
+    title = f'{profile_id} {objname}'
+    reason = '\n'.join([
+        f'identifier: {identifier}',
+        f'Comment: {comment}',
+        f'Username: {username}',
+    ])
+    action_url = (
+        '/monitor_portal/rejection_list'
+        f'?instrument={quote(tab_key)}&identifier={quote(identifier)}'
+    )
+
+    issue = create_issue(
+        data_dir=base_dir,
+        kind='object',
+        reason=reason,
+        created_by=username,
+        apero_name=objname,
+        value=dict(identifier=identifier, comment=comment),
+        instrument=instrument,
+        profile_id=profile_id,
+        visibility=_ih._user_visibility(perms),
+        title=title,
+        type_='rejected_observation',
+        origin_url=action_url,
+        label='rejected_observation',
+        action='Open rejection list',
+    )
+
+    return jsonify(success=True, issue=issue, action_url=action_url)
 
 
 def api_obs_table(app):
@@ -2009,7 +2250,8 @@ def api_tess_rotation(app):
         )
     else:
         perms = get_public_permissions()
-    if 'view.data_portal' not in perms:
+    name_mode = bool((request.args.get('name') or '').strip())
+    if 'view.data_portal' not in perms and not name_mode:
         return jsonify(
             success=False, error='Unauthorized'
         ), 401
@@ -2031,10 +2273,7 @@ def api_tess_rotation(app):
         load_cache_config,
         resolve_cache_root,
     )
-    from apero_ri.core.run_tessilator import (
-        get_tess_cached,
-        run_tessilator,
-    )
+    from apero_ri.core.run_tessilator import get_tess_cached
 
     cfg = load_cache_config(base_dir)
     cache_root = resolve_cache_root(base_dir, cfg)
@@ -2237,7 +2476,8 @@ def api_tess_rotation_stream(app):
         )
     else:
         perms = get_public_permissions()
-    if 'view.data_portal' not in perms:
+    name_mode = bool((request.args.get('name') or '').strip())
+    if 'view.data_portal' not in perms and not name_mode:
         return jsonify(
             success=False, error='Unauthorized'
         ), 401
@@ -2296,32 +2536,24 @@ def api_tess_rotation_stream(app):
         if a.strip()
     ]
 
-    # Shared queue for real-time log lines
-    log_q = queue.Queue()
-    # Holder for result from the background thread
-    result_holder = [None]
-
-    def _worker():
-        try:
-            result_holder[0] = run_tessilator(
-                objname=objname,
-                cache_root=cache_root,
-                instrument=instrument,
-                aliases=aliases,
-                log_queue=log_q,
-            )
-        except Exception as exc:
-            result_holder[0] = dict(
-                success=False,
-                error=str(exc),
-            )
-        finally:
-            log_q.put(None)  # sentinel
-
-    t = threading.Thread(
-        target=_worker, daemon=True
+    # Use a separate process so stdout/stderr capture inside
+    # tessilator cannot leak unrelated request logs into this
+    # stream.
+    log_q = mp.Queue()
+    result_q = mp.Queue()
+    proc = mp.Process(
+        target=_run_tessilator_stream_worker,
+        args=(
+            objname,
+            cache_root,
+            instrument,
+            aliases,
+            log_q,
+            result_q,
+        ),
+        daemon=True,
     )
-    t.start()
+    proc.start()
 
     def _generate():
         while True:
@@ -2339,7 +2571,12 @@ def api_tess_rotation_stream(app):
             yield f'data: {evt}\n\n'
 
         # Final result
-        result = result_holder[0]
+        result = None
+        try:
+            result = result_q.get_nowait()
+        except queue.Empty:
+            pass
+
         if result is None:
             result = dict(
                 success=False,

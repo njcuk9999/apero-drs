@@ -20,6 +20,8 @@ from datetime import datetime, timedelta, timezone
 from email.message import EmailMessage
 from pathlib import Path
 from typing import Any, Dict, List, Optional
+from zoneinfo import ZoneInfo
+from zoneinfo import ZoneInfoNotFoundError
 
 import yaml
 from apero_ri.application import (
@@ -509,7 +511,15 @@ def ariapp_init(self, **kwargs):
         )
         for _line in _bad_tpls:
             print(f"  - {_line}", file=_sys.stderr, flush=True)
-        for _path in sorted(TEMPLATE_DIR.rglob("*.html")):
+        _flagged_rel = set()
+        for _line in _bad_tpls:
+            _rel_str = _line.split(":", 1)[0].strip()
+            if _rel_str:
+                _flagged_rel.add(_rel_str)
+        for _rel_str in sorted(_flagged_rel):
+            _path = TEMPLATE_DIR / _rel_str
+            if not _path.is_file():
+                continue
             try:
                 _txt = _path.read_text(
                     encoding="utf-8", errors="replace")
@@ -680,6 +690,105 @@ def ariapp_get_instrument_run_ids(instrument):
                 except Exception:
                     pass
     return sorted(run_ids)
+
+
+def ariapp_get_instrument_run_id_pi_names(instrument):
+    """Return run_id -> PI name map from object table JSON rows."""
+    import json as _json
+
+    all_profiles = auth.load_apero_profiles(hydrate=False)
+    current_profile_names = set()
+    if instrument in all_profiles:
+        inst_profiles = all_profiles[instrument]
+        if isinstance(inst_profiles, dict):
+            current_profile_names = set(inst_profiles.keys())
+
+    def _clean_pi_name(raw_value):
+        pi_name = str(raw_value or '').strip()
+        if not pi_name:
+            return ''
+        if pi_name.lower() in {'none', 'null', 'unknown'}:
+            return ''
+        return pi_name
+
+    def _split_multi(raw_value):
+        if isinstance(raw_value, list):
+            return [str(x).strip() for x in raw_value if str(x).strip()]
+        text = str(raw_value or '').strip()
+        if not text:
+            return []
+        if ';' in text:
+            parts = text.split(';')
+        else:
+            parts = text.split(',')
+        return [part.strip() for part in parts if part.strip()]
+
+    def _get_pi_raw(row):
+        pi_keys = (
+            'PI_NAMES',
+            'PI_NAME',
+            'KW_PI_NAMES',
+            'KW_PI_NAME',
+        )
+        for key in pi_keys:
+            if key in row:
+                return row.get(key, '')
+        return ''
+
+    def _update_map(run_id_map, rows):
+        for row in rows:
+            raw_run = row.get('RUN_ID', '')
+            raw_pi = _get_pi_raw(row)
+            run_parts = _split_multi(raw_run)
+            pi_parts = _split_multi(raw_pi)
+            for idx, run_id in enumerate(run_parts):
+                if run_id in run_id_map:
+                    continue
+                pi_candidate = ''
+                if pi_parts:
+                    if idx < len(pi_parts):
+                        pi_candidate = _clean_pi_name(pi_parts[idx])
+                    elif len(pi_parts) == 1:
+                        pi_candidate = _clean_pi_name(pi_parts[0])
+                if pi_candidate:
+                    run_id_map[run_id] = pi_candidate
+
+    tasks_dir = auth.ARI_DIR / 'tasks' / instrument
+    run_id_pi_names = dict()
+    if tasks_dir.exists():
+        for profile_dir in tasks_dir.iterdir():
+            if not profile_dir.is_dir():
+                continue
+            profile_name = profile_dir.name
+            if profile_name not in current_profile_names:
+                continue
+            jf = profile_dir / 'object_table.json'
+            if not jf.exists():
+                continue
+            try:
+                with open(jf, encoding='utf-8') as fhandle:
+                    data = _json.load(fhandle)
+                _update_map(run_id_pi_names, data.get('rows', []))
+            except Exception:
+                continue
+
+        for jf in tasks_dir.glob('object_table_*.json'):
+            fname = jf.name
+            if not fname.startswith('object_table_'):
+                continue
+            if not fname.endswith('.json'):
+                continue
+            profile_name = fname[len('object_table_'): -len('.json')]
+            if profile_name not in current_profile_names:
+                continue
+            try:
+                with open(jf, encoding='utf-8') as fhandle:
+                    data = _json.load(fhandle)
+                _update_map(run_id_pi_names, data.get('rows', []))
+            except Exception:
+                continue
+
+    return run_id_pi_names
 
 
 def ariapp_sync_all_science_group(self, instrument, groups, run_ids, persist):
@@ -2773,7 +2882,9 @@ def ariapp_build_admin_sshfs_context(self, perms):
         ssh_keys_data = []
 
     return {
-        "can_manage": "manage.admin.sshfs_setup" in perms or "view.admin" in perms,
+        "can_manage": (
+            "manage.admin.sshfs_setup" in perms or "view.admin" in perms
+        ),
         "mounts_data": mounts_data,
         "ssh_keys_data": ssh_keys_data,
     }
@@ -2824,9 +2935,26 @@ def ariapp_api_async_tasks_toggle(self):
 
     all_tasks = auth.load_async_tasks()
     inst_tasks, _ = self._merge_async_task_catalog(instrument, all_tasks)
+
+    def _as_bool(value, default=True):
+        if isinstance(value, bool):
+            return value
+        if isinstance(value, (int, float)):
+            return value != 0
+        if isinstance(value, str):
+            text = value.strip().lower()
+            if text in {"", "none", "null"}:
+                return default
+            if text in {"1", "true", "yes", "on", "y", "t"}:
+                return True
+            if text in {"0", "false", "no", "off", "n", "f"}:
+                return False
+        return default
+
     for t in inst_tasks:
         if t.get("id") == task_id:
-            t["active"] = not t.get("active", True)
+            current_active = _as_bool(t.get("active", True), True)
+            t["active"] = not current_active
             all_tasks[instrument] = inst_tasks
             auth.save_async_tasks(all_tasks)
             self._refresh_admin_health_after_change(user_info, perms)
@@ -2988,19 +3116,19 @@ def ariapp_doc_upload_image(self):
     if not user_info:
         return jsonify(success=False, error="Not logged in"), 401
 
-    page_ref = request.form.get("page_ref", "unknown")
+    page_ref = str(request.form.get('page_ref', '') or '').strip('/')
     perms = permissions_mod.resolve_user_permissions(
-        user_info["groups"], self.ari_groups
+        user_info['groups'], self.ari_groups
     )
-    if f"edit.doc.{page_ref}" not in perms:
-        return jsonify(success=False, error="No permission"), 403
+    if not doc_views_helpers._doc_edit_allowed(perms, page_ref):
+        return jsonify(success=False, error='No permission'), 403
 
-    if "image" not in request.files:
-        return jsonify(success=False, error="No file"), 400
+    if 'image' not in request.files:
+        return jsonify(success=False, error='No file'), 400
 
-    img = request.files["image"]
+    img = request.files['image']
     if not img.filename:
-        return jsonify(success=False, error="Empty filename"), 400
+        return jsonify(success=False, error='Empty filename'), 400
 
     filename = docs.save_uploaded_image(page_ref, img.filename, img.read())
     return jsonify(success=True, filename=filename)
@@ -3809,15 +3937,15 @@ def ariapp_doc_save_view(self, page_ref):
     perms = permissions_mod.resolve_user_permissions(
         user_info["groups"], self.ari_groups
     )
-    if f"edit.doc.{page_ref}" not in perms:
+    clean_ref = str(page_ref or "").strip("/")
+    if not doc_views_helpers._doc_edit_allowed(perms, clean_ref):
         return jsonify(success=False, error="No permission"), 403
 
     data = request.get_json()
     if not data or "content" not in data or "version" not in data:
         return jsonify(success=False, error="Missing data"), 400
 
-    page_id = f"home.docs.{page_ref}"
-    docs.save_doc_content(page_id, data["version"], data["content"])
+    docs.save_doc_content(clean_ref, data["version"], data["content"])
     return jsonify(success=True)
 
 
@@ -5534,6 +5662,166 @@ def ariapp_require_async_tasks_perm(self):
     return user_info, perms
 
 
+def _clock_config_path(local_data_dir: Path) -> Path:
+    """Return clock configuration path in local admin settings."""
+    return (
+        Path(local_data_dir).expanduser().resolve()
+        / "admin"
+        / "general"
+        / "clocks.yaml"
+    )
+
+
+def _default_clock_rows() -> list:
+    """Return locked default clock rows."""
+    return [
+        {"name": "UTC", "timezone": "UTC", "locked": True},
+        {"name": "Local", "timezone": "LOCAL", "locked": True},
+    ]
+
+
+def _normalise_custom_clock_rows(rows) -> list:
+    """Validate and normalize editable custom clock rows."""
+    clean = []
+    if not isinstance(rows, list):
+        return clean
+    for raw in rows:
+        if not isinstance(raw, dict):
+            continue
+        name = str(raw.get("name") or "").strip()
+        timezone_name = str(raw.get("timezone") or "").strip()
+        if not name or not timezone_name:
+            continue
+        if timezone_name in ["UTC", "LOCAL"]:
+            continue
+        if len(name) > 80:
+            name = name[:80].strip()
+        try:
+            ZoneInfo(timezone_name)
+        except ZoneInfoNotFoundError:
+            continue
+        except Exception:
+            continue
+        clean.append(
+            {
+                "name": name,
+                "timezone": timezone_name,
+                "locked": False,
+            }
+        )
+    return clean
+
+
+def _load_clock_rows(local_data_dir: Path) -> list:
+    """Load clock rows with UTC/local pinned first."""
+    defaults = _default_clock_rows()
+    path = _clock_config_path(local_data_dir)
+    if not path.exists():
+        return defaults
+    try:
+        with open(path, "r", encoding="utf-8") as f:
+            payload = yaml.safe_load(f) or {}
+    except Exception:
+        return defaults
+    custom = _normalise_custom_clock_rows(payload.get("custom", []))
+    return defaults + custom
+
+
+def _save_custom_clock_rows(local_data_dir: Path, custom_rows: list) -> None:
+    """Persist custom clock rows atomically."""
+    path = _clock_config_path(local_data_dir)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    payload = {
+        "custom": _normalise_custom_clock_rows(custom_rows),
+        "updated_at": datetime.now(timezone.utc).isoformat(),
+    }
+    tmp_path = path.with_suffix(path.suffix + ".tmp")
+    with open(tmp_path, "w", encoding="utf-8") as f:
+        yaml.safe_dump(payload, f, sort_keys=False)
+    os.replace(tmp_path, path)
+
+
+def ariapp_api_clocks_get(self):
+    """Return configured clock rows for nav/user pages."""
+    rows = _load_clock_rows(self._resolve_local_data_dir())
+    return jsonify(success=True, clocks=rows)
+
+
+def ariapp_api_admin_clocks(self):
+    """Admin API for reading/updating custom clock rows."""
+    user_info, perms = self._require_apero_profile_perm()
+    if not user_info:
+        return jsonify(success=False, error="Unauthorized"), 401
+    if "manage.apero_profile" not in (perms or set()):
+        return jsonify(success=False, error="Forbidden"), 403
+
+    local_data_dir = self._resolve_local_data_dir()
+    if request.method == "GET":
+        return jsonify(success=True, clocks=_load_clock_rows(local_data_dir))
+
+    body = request.get_json(silent=True) or {}
+    rows = body.get("clocks", [])
+    if not isinstance(rows, list):
+        return jsonify(success=False, error="clocks must be a list"), 400
+
+    # Persist only editable rows; defaults remain immutable.
+    custom_rows = []
+    for idx, row in enumerate(rows):
+        if not isinstance(row, dict):
+            continue
+        if idx < 2:
+            continue
+        name = str(row.get("name") or "").strip()
+        timezone_name = str(row.get("timezone") or "").strip()
+        row_num = idx + 1
+        if not name:
+            return (
+                jsonify(
+                    success=False,
+                    error=f"Row {row_num}: name is required",
+                ),
+                400,
+            )
+        if not timezone_name:
+            return (
+                jsonify(
+                    success=False,
+                    error=f"Row {row_num}: timezone is required",
+                ),
+                400,
+            )
+        if timezone_name in ["UTC", "LOCAL"]:
+            return (
+                jsonify(
+                    success=False,
+                    error=(
+                        f"Row {row_num}: UTC/LOCAL are reserved "
+                        "and cannot be edited"
+                    ),
+                ),
+                400,
+            )
+        try:
+            ZoneInfo(timezone_name)
+        except ZoneInfoNotFoundError:
+            return (
+                jsonify(
+                    success=False,
+                    error=f"Row {row_num}: unknown timezone {timezone_name}",
+                ),
+                400,
+            )
+        custom_rows.append(
+            {
+                "name": name,
+                "timezone": timezone_name,
+            }
+        )
+
+    _save_custom_clock_rows(local_data_dir, custom_rows)
+    return jsonify(success=True, clocks=_load_clock_rows(local_data_dir))
+
+
 def ariapp_api_user_links_remove(self):
     user_info = self._require_user()
     if not user_info:
@@ -5580,12 +5868,60 @@ def ariapp_api_admin_backups_test(self):
 
 #: Base group levels that get per-instrument variants
 _INSTRUMENT_GROUP_LEVELS = ["general", "monitor", "developer", "moderator"]
+_INSTRUMENT_YAML_DIR = (
+    PACKAGE_DIR / 'resources' / 'aprofile_instruments'
+)
+_INSTRUMENT_YAML_RE = re.compile(r'^[A-Za-z0-9_.-]+\.ya?ml$')
+
+
+def _list_instrument_yaml_files() -> List[str]:
+    """Return sorted instrument YAML basenames."""
+    if not _INSTRUMENT_YAML_DIR.is_dir():
+        return []
+    names: List[str] = []
+    for candidate in _INSTRUMENT_YAML_DIR.glob('*.yaml'):
+        if candidate.is_file():
+            names.append(candidate.name)
+    return sorted(names)
+
+
+def _resolve_instrument_yaml_path(name: str) -> Path:
+    """Resolve one instrument YAML path and guard against traversal."""
+    fname = str(name or '').strip()
+    if not _INSTRUMENT_YAML_RE.match(fname):
+        raise ValueError('Invalid YAML filename')
+    path = (_INSTRUMENT_YAML_DIR / fname).resolve()
+    base = _INSTRUMENT_YAML_DIR.resolve()
+    if not str(path).startswith(str(base) + os.sep):
+        raise ValueError('Invalid YAML filename')
+    if not path.is_file():
+        raise ValueError(f'YAML file not found: {fname}')
+    return path
+
+
+def _write_yaml_atomic(path: Path, payload: Any) -> None:
+    """Write YAML payload atomically."""
+    path.parent.mkdir(parents=True, exist_ok=True)
+    tmp_path = path.with_suffix(path.suffix + '.tmp')
+    with open(tmp_path, 'w', encoding='utf-8') as handle:
+        yaml.safe_dump(payload, handle, sort_keys=False)
+    os.replace(tmp_path, path)
+
+
+def _write_text_atomic(path: Path, text: str) -> None:
+    """Write text atomically while preserving formatting/comments."""
+    path.parent.mkdir(parents=True, exist_ok=True)
+    tmp_path = path.with_suffix(path.suffix + '.tmp')
+    with open(tmp_path, 'w', encoding='utf-8') as handle:
+        handle.write(text)
+    os.replace(tmp_path, path)
 
 
 def ariapp_build_admin_manage_instruments_context(self, perms):
     """Build context dict for the Manage Instruments admin page."""
     can_manage = "manage.instrument.super_admin" in (perms or set())
     can_add = "add.instrument" in (perms or set())
+    can_edit_instrument_yamls = can_add
     all_groups = permissions_mod.load_groups()
     profiles = auth.load_apero_profiles(hydrate=False)
     profile_instruments = (
@@ -5637,9 +5973,122 @@ def ariapp_build_admin_manage_instruments_context(self, perms):
     return {
         "instruments_data": instruments_data,
         "instrument_group_levels": _INSTRUMENT_GROUP_LEVELS,
+        "instrument_yaml_files": _list_instrument_yaml_files(),
+        "can_edit_instrument_yamls": can_edit_instrument_yamls,
         "can_manage": can_manage,
         "can_add": can_add,
     }
+
+
+def ariapp_api_manage_instruments_yaml_get(self):
+    """Return one instrument YAML file as text."""
+    user_info, cur_perms = self._require_admin_user()
+    if not user_info:
+        return jsonify(success=False, error='Unauthorized'), 401
+    if 'add.instrument' not in (cur_perms or set()):
+        return jsonify(
+            success=False, error='Insufficient permissions'
+        ), 403
+
+    name = str(request.args.get('name', '') or '').strip()
+    if not name:
+        return jsonify(success=False, error='name is required'), 400
+    try:
+        path = _resolve_instrument_yaml_path(name)
+        with open(path, 'r', encoding='utf-8') as handle:
+            text = handle.read()
+    except ValueError as exc:
+        return jsonify(success=False, error=str(exc)), 400
+    except Exception as exc:
+        return jsonify(
+            success=False,
+            error=f'Failed to read YAML: {exc}',
+        ), 500
+
+    return jsonify(success=True, name=name, yaml_text=text)
+
+
+def ariapp_api_manage_instruments_yaml_save(self):
+    """Save one or more instrument YAML files from editor text."""
+    user_info, cur_perms = self._require_admin_user()
+    if not user_info:
+        return jsonify(success=False, error='Unauthorized'), 401
+    if 'add.instrument' not in (cur_perms or set()):
+        return jsonify(
+            success=False, error='Insufficient permissions'
+        ), 403
+
+    body = request.get_json(silent=True) or {}
+    files_payload = body.get('files')
+    if not isinstance(files_payload, list):
+        name = body.get('name')
+        yaml_text = body.get('yaml_text')
+        files_payload = [dict(name=name, yaml_text=yaml_text)]
+
+    if len(files_payload) == 0:
+        return jsonify(success=False, error='No files to save'), 400
+
+    updates: List[Dict[str, Any]] = []
+    seen = set()
+    for row in files_payload:
+        if not isinstance(row, dict):
+            return jsonify(
+                success=False,
+                error='Each files[] entry must be an object',
+            ), 400
+        name = str(row.get('name', '') or '').strip()
+        if not name:
+            return jsonify(success=False, error='files[].name required'), 400
+        if name in seen:
+            return jsonify(
+                success=False,
+                error=f'Duplicate file in payload: {name}',
+            ), 400
+        seen.add(name)
+        text = row.get('yaml_text')
+        if text is None:
+            text = ''
+        text = str(text)
+        try:
+            path = _resolve_instrument_yaml_path(name)
+            loaded = yaml.safe_load(text)
+        except ValueError as exc:
+            return jsonify(success=False, error=str(exc)), 400
+        except yaml.YAMLError as exc:
+            return jsonify(
+                success=False,
+                error=f'YAML parse error in {name}: {exc}',
+            ), 400
+
+        if loaded is None:
+            loaded = {}
+        if not isinstance(loaded, dict):
+            return jsonify(
+                success=False,
+                error=(
+                    f'YAML top-level must be a mapping in {name}'
+                ),
+            ), 400
+        normalized_text = text
+        if not normalized_text.endswith('\n'):
+            normalized_text += '\n'
+        updates.append(
+            dict(name=name, path=path, text=normalized_text)
+        )
+
+    saved = []
+    try:
+        for item in updates:
+            _write_text_atomic(item['path'], item['text'])
+            saved.append(item['name'])
+    except Exception as exc:
+        return jsonify(
+            success=False,
+            error=f'Failed writing YAML: {exc}',
+            saved=saved,
+        ), 500
+
+    return jsonify(success=True, saved=saved)
 
 
 def ariapp_api_manage_instruments_groups_create(self):

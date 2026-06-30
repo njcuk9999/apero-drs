@@ -1,0 +1,381 @@
+{% extends "general/sidebar_base.html" %}
+{% block title %}APERO RI - APERO Check Information{% endblock %}
+
+{% block doc_content %}
+<div class="ari-page-header">
+    <h1><i class="fa-solid fa-circle-info"></i> Admin Check Information</h1>
+    <p class="ari-page-subtitle">
+        Review logic and resolved profile values for one APERO check.
+    </p>
+</div>
+
+<div class="ot-meta-bar" style="margin-bottom:0.8rem;">
+    <a class="ari-btn ari-btn--sm ari-btn--secondary"
+       href="{{ url_for('home_admin_portal_apero_checks_policy') }}">
+        <i class="fa-solid fa-arrow-left"></i>
+        Back to APERO Checks Policy
+    </a>
+</div>
+
+<style>
+.aci-wrap {
+    display: grid;
+    gap: 0.9rem;
+}
+.aci-card {
+    border: 1px solid var(--ari-border);
+    border-radius: 0.9rem;
+    background: var(--ari-card-bg);
+    padding: 0.9rem 1rem;
+}
+.aci-head {
+    display: grid;
+    gap: 0.35rem;
+}
+.aci-title {
+    margin: 0;
+    font-size: 1.2rem;
+}
+.aci-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+}
+.aci-chip {
+    display: inline-flex;
+    align-items: center;
+    border: 1px solid var(--ari-border);
+    border-radius: 999px;
+    padding: 0.16rem 0.58rem;
+    font-size: 0.8rem;
+    color: var(--ari-text-muted);
+}
+.aci-chip--passed {
+    border-color: #22c55e;
+    color: #166534;
+    background: color-mix(in srgb, #22c55e 16%, var(--ari-card-bg));
+}
+.aci-chip--overridden {
+    border-color: #7c3aed;
+    color: #5b21b6;
+    background: color-mix(in srgb, #7c3aed 16%, var(--ari-card-bg));
+}
+.aci-chip--monitored {
+    border-color: #f59e0b;
+    color: #b45309;
+    background: color-mix(in srgb, #f59e0b 16%, var(--ari-card-bg));
+}
+.aci-chip--mixed {
+    border-color: #7c3aed;
+    color: #6d28d9;
+    background: linear-gradient(
+        130deg,
+        color-mix(in srgb, #7c3aed 18%, var(--ari-card-bg)) 0%,
+        color-mix(in srgb, #f59e0b 18%, var(--ari-card-bg)) 100%
+    );
+}
+.aci-chip--failed {
+    border-color: #ef4444;
+    color: #b91c1c;
+    background: color-mix(in srgb, #ef4444 16%, var(--ari-card-bg));
+}
+.aci-chip--active-override {
+    border-color: #f59e0b;
+    color: #b45309;
+    background: color-mix(in srgb, #f59e0b 18%, var(--ari-card-bg));
+}
+.aci-chip--active-ignored {
+    border-color: #94a3b8;
+    color: #475569;
+    background: color-mix(in srgb, #94a3b8 20%, var(--ari-card-bg));
+}
+.aci-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.55rem;
+    margin-top: 0.55rem;
+}
+.aci-delete-test-tools {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.55rem;
+    margin-top: 0.45rem;
+    align-items: center;
+}
+.aci-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    margin-top: 0.55rem;
+    color: var(--ari-text-muted);
+    font-size: 0.86rem;
+}
+.aci-section-title {
+    margin: 0 0 0.55rem 0;
+}
+.aci-tabs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.42rem;
+    margin-bottom: 0.65rem;
+}
+.aci-tab {
+    border: 1px solid var(--ari-border);
+    background: var(--ari-card-bg);
+    color: var(--ari-text);
+    border-radius: 0.62rem;
+    padding: 0.4rem 0.55rem;
+    cursor: pointer;
+    font-size: 0.84rem;
+}
+.aci-tab.is-active {
+    border-color: #2563eb;
+    color: #1d4ed8;
+    background: color-mix(in srgb, #2563eb 12%, var(--ari-card-bg));
+}
+.aci-tab-panel {
+    display: none;
+}
+.aci-tab-panel.is-active {
+    display: block;
+}
+.aci-logic {
+    border: 1px solid var(--ari-border);
+    border-radius: 0.8rem;
+    padding: 0.78rem 0.85rem;
+    background: color-mix(in srgb, var(--ari-card-bg) 88%, #eef4ff 12%);
+}
+.aci-logic pre {
+    margin: 0.7rem 0 0;
+    padding: 0.78rem 0.85rem;
+    border-radius: 0.75rem;
+    overflow: auto;
+    background: #0f172a;
+    color: #e2e8f0;
+}
+.aci-kv {
+    margin-top: 0.72rem;
+    border: 1px solid var(--ari-border);
+    border-radius: 0.8rem;
+    overflow: hidden;
+}
+.aci-kv-row {
+    display: grid;
+    grid-template-columns: minmax(0, 190px) minmax(0, 1fr);
+    border-top: 1px solid var(--ari-border);
+}
+.aci-kv-row:first-child {
+    border-top: none;
+}
+.aci-kv-label {
+    padding: 0.55rem 0.68rem;
+    font-weight: 700;
+    font-size: 0.78rem;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: #334155;
+    background: linear-gradient(135deg, #dbeafe, #e0e7ff);
+}
+.aci-kv-value {
+    padding: 0.55rem 0.68rem;
+    word-break: break-word;
+}
+.aci-full-section {
+    margin-top: 0.72rem;
+}
+.aci-warning {
+    border: 1px solid #fca5a5;
+    background: color-mix(in srgb, #fecaca 55%, var(--ari-card-bg));
+    border-radius: 0.82rem;
+    padding: 0.72rem 0.8rem;
+}
+.aci-warning-title {
+    margin: 0 0 0.45rem 0;
+    color: #991b1b;
+}
+.aci-warning-list {
+    margin: 0;
+    color: #7f1d1d;
+    padding-left: 1.1rem;
+}
+@media (max-width: 768px) {
+    .aci-kv-row {
+        grid-template-columns: 1fr;
+    }
+}
+[data-theme="dark"] .aci-logic pre {
+    background: #0d1117;
+    color: #e6edf3;
+}
+[data-theme="dark"] .aci-kv-label {
+    color: #79b8ff;
+    background: linear-gradient(135deg, #0c2040, #1a1040);
+}
+[data-theme="dark"] .aci-warning {
+    border-color: #7c1d13;
+}
+[data-theme="dark"] .aci-warning-title {
+    color: #f85149;
+}
+[data-theme="dark"] .aci-warning-list {
+    color: #ffa198;
+}
+</style>
+
+{% set item = apero_check_item %}
+<div class="aci-wrap">
+    <section class="aci-card aci-head">
+        <h2 class="aci-title">{{ item.check_human_name }}</h2>
+        <div class="aci-meta">
+            <span class="aci-chip">{{ item.check_name }}</span>
+            <span class="aci-chip">{{ item.check_type|upper }}</span>
+            <span class="aci-chip">
+                {{ item.instruments|join(', ') if item.instruments else 'No instruments' }}
+            </span>
+            <span class="aci-chip">Total: {{ item.counts.total }}</span>
+            {% if item.override_allowed %}
+            <span class="aci-chip aci-chip--active-override">Override allowed</span>
+            {% endif %}
+            {% if item.is_ignored %}
+            <span class="aci-chip aci-chip--active-ignored">Ignored</span>
+            {% endif %}
+        </div>
+        <div class="aci-meta">
+            <span class="aci-chip aci-chip--passed">
+                Passed: {{ item.counts.passed }}
+            </span>
+            <span class="aci-chip aci-chip--overridden">
+                Overridden: {{ item.counts.overridden }}
+            </span>
+            <span class="aci-chip aci-chip--monitored">
+                Monitored: {{ item.counts.monitored }}
+            </span>
+            <span class="aci-chip aci-chip--mixed">
+                Mixed: {{ item.counts.mixed }}
+            </span>
+            <span class="aci-chip aci-chip--failed">
+                Failed: {{ item.counts.failed }}
+            </span>
+        </div>
+        <div class="aci-actions">
+            <button id="aci-toggle-ignore" class="ari-btn ari-btn--primary"
+                    type="button"></button>
+            <button id="aci-toggle-override" class="ari-btn ari-btn--primary"
+                    type="button"></button>
+            <a class="ari-btn ari-btn--secondary"
+               href="{{ item.doc_url }}"
+               target="_blank"
+               rel="noopener">
+                <i class="fa-solid fa-book-open"></i>
+                Open check documentation
+            </a>
+        </div>
+        <div class="aci-delete-test-tools">
+            <span class="aci-chip">Delete this test from YAMLs</span>
+            <select id="aci-delete-profile-scope"
+                    class="ot-perpage-select">
+                <option value="all">All APERO profiles</option>
+                {% for profile_id in (apero_check_profile_options or []) %}
+                <option value="{{ profile_id }}">{{ profile_id }}</option>
+                {% endfor %}
+            </select>
+            <button id="aci-delete-test-all-yamls"
+                    class="ari-btn ari-btn--danger"
+                    type="button">
+                <i class="fa-solid fa-trash"></i>
+                Delete test from YAMLs
+            </button>
+        </div>
+        <div id="aci-save-status" class="aci-status"></div>
+    </section>
+
+    {% if item.has_missing_metadata %}
+    <section class="aci-card aci-warning">
+        <h3 class="aci-warning-title">
+            <i class="fa-solid fa-triangle-exclamation"></i>
+            Missing check documentation metadata
+        </h3>
+        <ul class="aci-warning-list">
+            {% for field_name in item.missing_fields %}
+            <li>{{ field_name }}</li>
+            {% endfor %}
+        </ul>
+    </section>
+    {% endif %}
+
+    <section class="aci-card">
+        <h3 class="aci-section-title">Check logic</h3>
+        {% if item.logic_tabs and item.logic_tabs|length > 0 %}
+        <div class="aci-tabs" id="aci-logic-tabs">
+            {% for tab in item.logic_tabs %}
+            <button class="aci-tab{% if loop.first %} is-active{% endif %}"
+                    type="button"
+                    data-aci-tab="{{ loop.index0 }}">
+                {% if tab.kind == 'generic' %}
+                Generic
+                {% else %}
+                {{ (tab.title if tab.title else 'Profile group ' ~ loop.index) | replace('aprofile_instrument/', '') | replace('.yaml', '') }}
+                {% endif %}
+            </button>
+            {% endfor %}
+        </div>
+        <div id="aci-logic-panels">
+            {% for tab in item.logic_tabs %}
+            <div class="aci-tab-panel{% if loop.first %} is-active{% endif %}"
+                 data-aci-panel="{{ loop.index0 }}">
+                {% if tab.logic_html %}
+                <div class="aci-logic">{{ tab.logic_html|safe }}</div>
+                {% else %}
+                <div class="aci-logic">No logic available.</div>
+                {% endif %}
+                {% if tab.rows and tab.rows|length > 0 %}
+                <div class="aci-kv">
+                    {% for row in tab.rows %}
+                    <div class="aci-kv-row">
+                        <div class="aci-kv-label">{{ row.label }}</div>
+                        <div class="aci-kv-value">{{ row.value }}</div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+        {% elif item.logic_html %}
+        <div class="aci-logic">{{ item.logic_html|safe }}</div>
+        {% else %}
+        <div class="aci-logic">No logic available.</div>
+        {% endif %}
+    </section>
+
+    <section class="aci-card">
+        <h3 class="aci-section-title">Sections</h3>
+        {% for section in item.info_sections %}
+        <div class="aci-full-section">
+            <h4 class="aci-section-title">{{ section.title }}</h4>
+            <div class="aci-kv">
+                {% for row in section.rows %}
+                <div class="aci-kv-row">
+                    <div class="aci-kv-label">{{ row.label }}</div>
+                    <div class="aci-kv-value">{{ row.value }}</div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endfor %}
+    </section>
+</div>
+
+<script>
+window.ARI_APERO_CHECK_INFO = {
+    saveUrl: {{ url_for('api_apero_checks_config_save')|tojson }},
+    deleteTestUrl: {{ url_for('api_apero_checks_delete_test_from_yamls')|tojson }},
+    checkKey: {{ item.check_key|tojson }},
+    ignoredChecks: {{ (apero_checks_config.ignored_checks or [])|tojson }},
+    overrideAllowed: {{ (apero_checks_config.override_allowed or [])|tojson }},
+    profileOptions: {{ (apero_check_profile_options or [])|tojson }},
+    policyUrl: {{ url_for('home_admin_portal_apero_checks_policy')|tojson }}
+};
+</script>
+<script src="{{ url_for('static', filename='js/admin_apero_check_info.js') }}"></script>
+{% endblock %}

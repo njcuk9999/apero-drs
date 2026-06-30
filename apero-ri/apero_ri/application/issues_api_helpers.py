@@ -380,15 +380,17 @@ def create_issue_internal(
         from pathlib import Path as _P
         data_dir = _P.home() / '.ari'
         meta = meta or {}
+        issue_kind = str(kind or 'message')
+        issue_type = str(meta.get('type') or 'reported message')
         issue = create_issue(
             data_dir,
-            kind=str(kind or 'flag'),
+            kind=issue_kind,
             reason=str(body or ''),
             created_by=str(created_by or 'system'),
             title=str(title or '')[:200] or None,
-            type_=str(meta.get('source') or 'message'),
+            type_=issue_type,
             origin_url=str(meta.get('origin_url') or '') or None,
-            label='message-flag',
+            label='reported-message',
             visibility='monitor',
         )
         return str(issue.get('id')) if issue else None

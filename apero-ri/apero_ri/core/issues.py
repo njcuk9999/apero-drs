@@ -334,6 +334,39 @@ def update_issue(
             })
         _save(data_dir, issues)
         new_assignee = target.get('assigned_to')
+        # Notify the assignee when an issue is assigned/reassigned.
+        # Skip if assignment is unchanged or cleared.
+        if new_assignee and new_assignee != old_assignee:
+            try:
+                from apero_ri.core import notifications as _notif
+                issue_title = str(target.get('title') or '').strip()
+                if not issue_title:
+                    issue_title = 'Issue #' + str(target.get('id'))
+                notify_title = (
+                    'Issue #' + str(target.get('id'))
+                    + ' assigned to you'
+                )
+                assigner = str(author or 'system')
+                notify_body = (
+                    issue_title + '\nAssigned by: ' + assigner
+                )
+                issue_url = (
+                    '/monitor_portal/issues?id='
+                    + str(target.get('id'))
+                )
+                _notif.emit_notification(
+                    username=str(new_assignee),
+                    channel='issue',
+                    title=notify_title,
+                    body=notify_body,
+                    url=issue_url,
+                    payload={
+                        'issue_id': target.get('id'),
+                        'assigned_by': assigner,
+                    },
+                )
+            except Exception:
+                pass
         # Sync the assignee's user-portal todo list.
         try:
             from apero_ri.core import user_data as _ud

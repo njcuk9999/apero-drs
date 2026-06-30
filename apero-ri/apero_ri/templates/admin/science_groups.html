@@ -3,6 +3,40 @@
 {% block body_class %}ari-has-sidebar ari-sg-page{% endblock %}
 
 {% block doc_content %}
+<style>
+.ari-sg-saving-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 10000;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    background: rgba(17, 24, 39, 0.45);
+    backdrop-filter: blur(1px);
+}
+
+.ari-sg-saving-overlay__card {
+    min-width: 220px;
+    padding: 1rem 1.2rem;
+    border-radius: 0.7rem;
+    border: 1px solid var(--ari-border, #d1d5db);
+    background: var(--ari-card-bg, #ffffff);
+    box-shadow: 0 12px 34px rgba(0, 0, 0, 0.22);
+    text-align: center;
+    color: var(--ari-text, #111827);
+}
+
+.ari-sg-saving-overlay__spinner {
+    font-size: 1.7rem;
+    color: var(--ari-primary, #2563eb);
+    margin-bottom: 0.5rem;
+}
+
+.ari-sg-saving-overlay__text {
+    font-weight: 600;
+}
+</style>
+
 <div class="ari-page-header">
     <h1><i class="{{ page_icon }}"></i> {{ page_label }}</h1>
 </div>
@@ -26,6 +60,10 @@
         <button id="btn-refresh-runids" class="ari-btn ari-btn--secondary ari-btn--sm"
                 title="Re-scan object tables and refresh available run IDs (only All auto-syncs)">
             <i class="fa-solid fa-rotate"></i> Refresh Run IDs
+        </button>
+        <button id="btn-global-io" class="ari-btn ari-btn--secondary ari-btn--sm"
+                title="Import or export global users/run IDs YAML">
+            <i class="fa-solid fa-right-left"></i> Import/Export
         </button>
     </div>
 
@@ -61,7 +99,11 @@
          style="display:none; margin-bottom:0.6rem;">
         <button id="btn-save-group-top" class="ari-btn ari-btn--primary"
                 disabled>
-            <i class="fa-solid fa-floppy-disk"></i> Save
+            <i class="fa-solid fa-floppy-disk"></i> Save all science groups
+        </button>
+        <button id="btn-group-io-top" class="ari-btn ari-btn--secondary"
+                disabled>
+            <i class="fa-solid fa-right-left"></i> Import/Export
         </button>
         <button id="btn-delete-group-top" class="ari-btn ari-btn--danger"
                 disabled>
@@ -161,7 +203,10 @@
 <!-- Action bar -->
 <div id="sg-actions" class="ari-sg-actions" style="display:none;">
     <button id="btn-save-group" class="ari-btn ari-btn--primary" disabled>
-        <i class="fa-solid fa-floppy-disk"></i> Save
+        <i class="fa-solid fa-floppy-disk"></i> Save all science groups
+    </button>
+    <button id="btn-group-io" class="ari-btn ari-btn--secondary" disabled>
+        <i class="fa-solid fa-right-left"></i> Import/Export
     </button>
     <button id="btn-delete-group" class="ari-btn ari-btn--danger" disabled>
         <i class="fa-solid fa-trash"></i> Delete Group
@@ -211,8 +256,103 @@
     </div>
 </div>
 
+<!-- Global import/export modal -->
+<div id="global-io-modal" class="ari-modal-backdrop" style="display:none;">
+    <div class="ari-modal" style="max-width:740px;">
+        <div class="ari-modal__header">
+            <i class="fa-solid fa-right-left"></i> Global Import/Export
+        </div>
+        <div class="ari-modal__body">
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.8rem;">
+                <label>
+                    <span class="ari-sg-empty-small" style="display:block; margin-bottom:0.35rem;">Entity</span>
+                    <select id="global-io-kind" class="ari-user-search__input">
+                        <option value="users">Users</option>
+                        <option value="run_ids">Run IDs</option>
+                    </select>
+                </label>
+                <label>
+                    <span class="ari-sg-empty-small" style="display:block; margin-bottom:0.35rem;">Selection</span>
+                    <select id="global-io-selection" class="ari-user-search__input">
+                        <option value="all" selected>All</option>
+                        <option value="unassigned">Unassigned</option>
+                    </select>
+                </label>
+                <label>
+                    <span class="ari-sg-empty-small" style="display:block; margin-bottom:0.35rem;">Import mode</span>
+                    <select id="global-io-mode" class="ari-user-search__input">
+                        <option value="merge" selected>Merge</option>
+                        <option value="replace">Replace</option>
+                    </select>
+                </label>
+            </div>
+            <input id="global-io-file" type="file" accept=".yaml,.yml"
+                   style="display:none;">
+            <div id="global-io-hint" class="ari-sg-empty-small" style="margin-top:0.7rem;">
+                Export or import users/run IDs with group assignments.
+            </div>
+        </div>
+        <div class="ari-modal__footer">
+            <button id="btn-global-export" class="ari-btn ari-btn--secondary">
+                <i class="fa-solid fa-download"></i> Export YAML
+            </button>
+            <button id="btn-global-import" class="ari-btn ari-btn--primary">
+                <i class="fa-solid fa-upload"></i> Import YAML
+            </button>
+            <button id="btn-global-io-close" class="ari-btn ari-btn--secondary">Close</button>
+        </div>
+    </div>
+</div>
+
+<!-- Group import/export modal -->
+<div id="group-io-modal" class="ari-modal-backdrop" style="display:none;">
+    <div class="ari-modal" style="max-width:700px;">
+        <div class="ari-modal__header">
+            <i class="fa-solid fa-right-left"></i> Group Import/Export
+        </div>
+        <div class="ari-modal__body">
+            <div class="ari-sg-empty-small" style="margin-bottom:0.6rem;">
+                Selected group: <strong id="group-io-selected-name">-</strong>
+            </div>
+            <label>
+                <span class="ari-sg-empty-small" style="display:block; margin-bottom:0.35rem;">Import mode</span>
+                <select id="group-io-mode" class="ari-user-search__input">
+                    <option value="merge" selected>Merge</option>
+                    <option value="replace">Replace</option>
+                </select>
+            </label>
+            <input id="group-io-file" type="file" accept=".yaml,.yml"
+                   style="display:none;">
+            <div class="ari-sg-empty-small" style="margin-top:0.7rem;">
+                YAML format for this group: runids + users.
+            </div>
+        </div>
+        <div class="ari-modal__footer">
+            <button id="btn-group-export" class="ari-btn ari-btn--secondary">
+                <i class="fa-solid fa-download"></i> Export YAML
+            </button>
+            <button id="btn-group-import" class="ari-btn ari-btn--primary">
+                <i class="fa-solid fa-upload"></i> Import YAML
+            </button>
+            <button id="btn-group-io-close" class="ari-btn ari-btn--secondary">Close</button>
+        </div>
+    </div>
+</div>
+
 <!-- Toast notification -->
 <div id="toast" class="ari-toast" style="display:none;"></div>
+
+<!-- Full-page saving overlay (shown while save is in progress) -->
+<div id="sg-saving-overlay" class="ari-sg-saving-overlay" aria-hidden="true">
+    <div class="ari-sg-saving-overlay__card" role="status" aria-live="polite">
+        <div class="ari-sg-saving-overlay__spinner">
+            <i class="fa-solid fa-spinner fa-spin"></i>
+        </div>
+        <div class="ari-sg-saving-overlay__text">
+            Saving all science groups...
+        </div>
+    </div>
+</div>
 {% endblock %}
 
 {% block extra_scripts %}
@@ -221,11 +361,14 @@ window.ARI_SCI_GROUPS = {
     listUrl: {{ url_for('api_sci_groups_list')|tojson }},
     getUrl: {{ url_for('api_sci_groups_get')|tojson }},
     saveUrl: {{ url_for('api_sci_groups_save')|tojson }},
+    saveAllUrl: {{ url_for('api_sci_groups_save_all')|tojson }},
     createUrl: {{ url_for('api_sci_groups_create')|tojson }},
     deleteUrl: {{ url_for('api_sci_groups_delete')|tojson }},
     refreshRunIdsUrl: {{ url_for('api_sci_groups_refresh_run_ids')|tojson }},
+    ioExportUrl: {{ url_for('api_sci_groups_io_export')|tojson }},
+    ioImportUrl: {{ url_for('api_sci_groups_io_import')|tojson }},
     instruments: {{ instruments|tojson }}
 };
 </script>
-<script src="{{ url_for('static', filename='js/admin_science_groups.js') }}?v=20260423n"></script>
+<script src="{{ url_for('static', filename='js/admin_science_groups.js') }}?v=20260524b"></script>
 {% endblock %}

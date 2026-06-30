@@ -12,6 +12,15 @@
     var updatedEl = document.getElementById('op-last-updated');
 
     var spectrumGrid = document.getElementById('op-spectrum-grid');
+    var rejectedWrap = document.getElementById('op-rejected-wrap');
+    var rejectedEmpty = document.getElementById('op-rejected-empty');
+    var rejectedTbody = document.getElementById('op-rejected-tbody');
+    var rejectIssueOverlay = document.getElementById('op-reject-issue-overlay');
+    var rejectIssueId = document.getElementById('op-reject-issue-id');
+    var rejectIssueComment = document.getElementById('op-reject-issue-comment');
+    var rejectIssueStatus = document.getElementById('op-reject-issue-status');
+    var rejectIssueCancel = document.getElementById('op-reject-issue-cancel');
+    var rejectIssueSubmit = document.getElementById('op-reject-issue-submit');
     var finderChartEl = document.getElementById('op-finder-chart');
     var finderGenerateBtn = document.getElementById('op-finder-generate-btn');
     var finderLoading = document.getElementById('op-finder-loading');
@@ -101,6 +110,7 @@
     // sectionUserState[sid] = false → user explicitly closed this section
     // sectionUserState[sid] = undefined → follow default (pinned=open)
     var sectionUserState = {};
+    var rejectIssueIdentifier = '';
 
     function median(values) {
         if (!values.length) return null;
@@ -1670,6 +1680,7 @@
             var value = Object.prototype.hasOwnProperty.call(row, 'value')
                 ? row.value : row[1];
             var filterable = !!row.filterable;
+            var allowHtml = !!row.allowHtml;
             var displayValue = valOrDash(value);
 
             var item = document.createElement('div');
@@ -1690,6 +1701,8 @@
             if (filterable) {
                 val.classList.add('op-kv-value--no-scroll');
                 val.innerHTML = renderFilterableList(displayValue, '--');
+            } else if (allowHtml) {
+                val.innerHTML = String(value || '--');
             } else {
                 val.innerHTML = escHtml(displayValue);
             }
@@ -2390,7 +2403,7 @@
         }
     }());
 
-    function renderSpectrum(spec) {
+    function renderSpectrum(spec, rejectedSection) {
         // helper: wrap a header-derived list into a row that the kv
         // renderer will turn into chips + filter when len > 5.
         function listRow(label, arr) {
@@ -2401,6 +2414,27 @@
                 filterable: lst.length > 0
             };
         }
+        var rejectedRows = (rejectedSection
+            && Array.isArray(rejectedSection.rows))
+            ? rejectedSection.rows
+            : [];
+        var rejectedCount = rejectedRows.length;
+        if (!isFinite(rejectedCount) || rejectedCount < 0) {
+            rejectedCount = Number(
+                spec.raw_rejected_count != null
+                    ? spec.raw_rejected_count
+                    : spec.raw_rejected
+            );
+        }
+        var rejectedValue = spec.raw_rejected;
+        if (isFinite(rejectedCount) && rejectedCount > 0) {
+            rejectedValue = '<a class="op-jump-rejected-link" '
+                + 'href="#op-rejected-observations">'
+                + escHtml(String(rejectedCount)) + '</a>';
+        } else if (isFinite(rejectedCount) && rejectedCount === 0) {
+            rejectedValue = '0';
+        }
+
         var rows = [
             ['DPRTYPES', spec.dprtypes],
             listRow('OBJECT name(s) in headers',
@@ -2412,7 +2446,11 @@
             listRow('Project / Run ID(s) in headers',
                     spec.project_run_names_in_headers),
             ['Total number raw files', spec.raw_total],
-            ['Number of rejected files', spec.raw_rejected],
+            {
+                label: 'Number of rejected files',
+                value: rejectedValue,
+                allowHtml: true
+            },
             ['First raw files', spec.raw_first_mid],
             ['Last raw files', spec.raw_last_mid],
             ['Total number PP files', spec.pp_total],
@@ -2440,6 +2478,190 @@
             ['Median SNR H', spec.median_snr_h]
         ];
         renderKvGrid(spectrumGrid, rows);
+    }
+
+    function jumpToRejectedObservations() {
+        activateTab('spectrum');
+        var card = document.getElementById('op-rejected-observations');
+        if (!card) return;
+
+        var sid = String(card.getAttribute('data-op-section-id') || '').trim();
+        if (sid) {
+            sectionUserState[sid] = true;
+        }
+        setSectionCollapsed(card, false);
+
+        card.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        card.classList.add('op-jump-highlight');
+        window.setTimeout(function () {
+            card.classList.remove('op-jump-highlight');
+        }, 1400);
+    }
+
+    function bindSpectrumInlineLinks() {
+        if (!spectrumGrid) return;
+        if (spectrumGrid.getAttribute('data-op-jump-bound') === '1') return;
+        spectrumGrid.setAttribute('data-op-jump-bound', '1');
+
+        spectrumGrid.addEventListener('click', function (event) {
+            var link = event.target.closest('a.op-jump-rejected-link');
+            if (!link) return;
+            event.preventDefault();
+            jumpToRejectedObservations();
+        });
+    }
+
+    function _buildAstrometricsLink(row, identifier) {
+        var url = String(row.ASTROMETRICS_URL || '').trim();
+        if (url) return url;
+        return '/astrometrics?fo_tab=advanced&fo_source=header'
+            + '&fo_property=IDENTIFIER'
+            + '&fo_value=' + encodeURIComponent(identifier)
+            + '&fo_search=1';
+    }
+
+    function renderRejectedObservations(section) {
+        if (!rejectedWrap || !rejectedEmpty || !rejectedTbody) return;
+        var rows = Array.isArray(section.rows) ? section.rows : [];
+        if (!rows.length) {
+            rejectedWrap.style.display = 'none';
+            rejectedEmpty.style.display = '';
+            rejectedTbody.innerHTML = '';
+            return;
+        }
+
+        var html = '';
+        for (var i = 0; i < rows.length; i += 1) {
+            var row = rows[i] || {};
+            var identifier = String(row.IDENTIFIER || '').trim();
+            var identUrl = _buildAstrometricsLink(row, identifier);
+            var pp = String(row.PP == null ? '' : row.PP);
+            var tel = String(row.TEL == null ? '' : row.TEL);
+            var rv = String(row.RV == null ? '' : row.RV);
+            var used = String(row.USED == null ? '' : row.USED);
+            var who = String(row.WHO || row.MODIFIED_BY || '').trim();
+            var modDate = String(row.LAST_UPDATE || row.DATE_MODIFIED || '');
+            var comment = String(row.COMMENT || '');
+            html += '<tr class="ot-row">'
+                + '<td class="ot-cell"><a href="' + escHtml(identUrl) + '">'
+                + escHtml(identifier) + '</a></td>'
+                + '<td class="ot-cell">' + escHtml(pp) + '</td>'
+                + '<td class="ot-cell">' + escHtml(tel) + '</td>'
+                + '<td class="ot-cell">' + escHtml(rv) + '</td>'
+                + '<td class="ot-cell">' + escHtml(used) + '</td>'
+                + '<td class="ot-cell">' + escHtml(who || '—') + '</td>'
+                + '<td class="ot-cell">' + escHtml(modDate) + '</td>'
+                + '<td class="ot-cell" title="' + escHtml(comment) + '">'
+                + escHtml(comment || '—') + '</td>'
+                + '<td class="ot-cell">'
+                + '<button type="button" '
+                + 'class="ari-btn ari-btn--sm ari-btn--secondary '
+                + 'op-rejected-flag-btn" '
+                + 'data-identifier="' + escHtml(identifier) + '">'
+                + '<i class="fa-solid fa-flag"></i> Flag</button>'
+                + '</td>'
+                + '</tr>';
+        }
+
+        rejectedTbody.innerHTML = html;
+        rejectedWrap.style.display = '';
+        rejectedEmpty.style.display = 'none';
+    }
+
+    function setRejectIssueStatus(msg, isError) {
+        if (!rejectIssueStatus) return;
+        var text = String(msg || '').trim();
+        if (!text) {
+            rejectIssueStatus.style.display = 'none';
+            rejectIssueStatus.textContent = '';
+            return;
+        }
+        rejectIssueStatus.style.display = '';
+        rejectIssueStatus.style.color = isError
+            ? 'var(--ari-danger, #b42318)'
+            : 'var(--ari-success, #15803d)';
+        rejectIssueStatus.textContent = text;
+    }
+
+    function closeRejectIssueOverlay() {
+        rejectIssueIdentifier = '';
+        if (rejectIssueOverlay) rejectIssueOverlay.style.display = 'none';
+        if (rejectIssueId) rejectIssueId.textContent = '';
+        if (rejectIssueComment) rejectIssueComment.value = '';
+        setRejectIssueStatus('', false);
+    }
+
+    function openRejectIssueOverlay(identifier) {
+        rejectIssueIdentifier = String(identifier || '').trim();
+        if (!rejectIssueIdentifier || !rejectIssueOverlay) return;
+        if (rejectIssueId) rejectIssueId.textContent = rejectIssueIdentifier;
+        if (rejectIssueComment) rejectIssueComment.value = '';
+        setRejectIssueStatus('', false);
+        rejectIssueOverlay.style.display = 'flex';
+        if (rejectIssueComment) rejectIssueComment.focus();
+    }
+
+    function submitRejectIssue() {
+        if (!cfg.objectRejectionIssueApiUrl || !rejectIssueIdentifier) return;
+        var comment = rejectIssueComment ? rejectIssueComment.value : '';
+        if (rejectIssueSubmit) rejectIssueSubmit.disabled = true;
+        setRejectIssueStatus('Creating issue...', false);
+
+        fetch(cfg.objectRejectionIssueApiUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                profile_id: cfg.profileId,
+                objname: cfg.objname,
+                identifier: rejectIssueIdentifier,
+                comment: comment,
+            }),
+        })
+            .then(function (r) { return r.json(); })
+            .then(function (data) {
+                if (!data || !data.success) {
+                    setRejectIssueStatus(
+                        (data && data.error)
+                            ? data.error
+                            : 'Failed to create issue.',
+                        true
+                    );
+                    return;
+                }
+                setRejectIssueStatus('Issue created.', false);
+                window.setTimeout(closeRejectIssueOverlay, 600);
+            })
+            .catch(function (err) {
+                setRejectIssueStatus('Network error: ' + String(err), true);
+            })
+            .finally(function () {
+                if (rejectIssueSubmit) rejectIssueSubmit.disabled = false;
+            });
+    }
+
+    function bindRejectIssueUi() {
+        if (rejectedTbody) {
+            rejectedTbody.addEventListener('click', function (event) {
+                var btn = event.target.closest('.op-rejected-flag-btn');
+                if (!btn) return;
+                event.preventDefault();
+                var identifier = btn.getAttribute('data-identifier') || '';
+                openRejectIssueOverlay(identifier);
+            });
+        }
+        if (rejectIssueCancel) {
+            rejectIssueCancel.addEventListener('click', closeRejectIssueOverlay);
+        }
+        if (rejectIssueSubmit) {
+            rejectIssueSubmit.addEventListener('click', submitRejectIssue);
+        }
+        if (rejectIssueOverlay) {
+            rejectIssueOverlay.addEventListener('click', function (event) {
+                if (event.target === rejectIssueOverlay) {
+                    closeRejectIssueOverlay();
+                }
+            });
+        }
     }
 
     function _makeLblFlavorRows(flavor) {
@@ -3268,7 +3490,11 @@
                 }
                 updatePlotMaxLinks();
                 renderTarget(s.target_info || {});
-                renderSpectrum(s.spectrum || {});
+                renderSpectrum(
+                    s.spectrum || {},
+                    s.rejected_observations || {}
+                );
+                renderRejectedObservations(s.rejected_observations || {});
                 renderLbl(s.lbl || {});
                 renderCcf(s.ccf || {});
                 renderTimeSeries(s.time_series || []);
@@ -3287,6 +3513,8 @@
         syncLastOpenedObject();
         refreshTabOrderMap();
         bindTabs();
+        bindSpectrumInlineLinks();
+        bindRejectIssueUi();
         bindCcfRangeControls();
         bindTimeSeriesDualScroll();
         activateTab('target_info');

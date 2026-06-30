@@ -52,6 +52,28 @@ def task_keys_for_scope(instrument: str) -> List[str]:
     return keys
 
 
+def normalize_sync_profiles(raw: Any) -> Dict[str, Dict[str, str]]:
+    """Normalize per-profile sync settings from task config."""
+    out: Dict[str, Dict[str, str]] = {}
+    if not isinstance(raw, dict):
+        return out
+
+    for profile_name, entry in raw.items():
+        pname = str(profile_name or "").strip()
+        if not pname or not isinstance(entry, dict):
+            continue
+
+        mode = str(entry.get("mode", "run_server") or "run_server")
+        mode = mode.strip().lower()
+        if mode not in ["run_server", "fetch_precomputed"]:
+            mode = "run_server"
+        sync_source = str(entry.get("sync_source", "") or "").strip()
+        if mode == "run_server" and not sync_source:
+            continue
+        out[pname] = dict(mode=mode, sync_source=sync_source)
+    return out
+
+
 def merge_async_task_catalog(
     instrument: str, all_tasks: Dict[str, Any]
 ) -> Tuple[List[Dict[str, Any]], bool]:
@@ -68,7 +90,7 @@ def merge_async_task_catalog(
     for task_cfg in stored_tasks:
         if not isinstance(task_cfg, dict):
             continue
-        key = str(task_cfg.get("task_key", "")).strip()
+        key = str(task_cfg.get('task_key', '')).strip()
         if key and key not in by_key:
             by_key[key] = task_cfg
 
@@ -145,13 +167,54 @@ def merge_async_task_catalog(
                         merged_cfg[_key] = cleaned
 
         if task_key == "APERO_SYNC_ASSETS":
-            mode_val = str(task_cfg.get("mode") or "sync").strip().lower()
-            merged_cfg["mode"] = (
-                mode_val if mode_val in ("sync", "upload") else "sync"
+            mode_val = (
+                str(task_cfg.get("mode") or "remote").strip().lower()
             )
+            # Backwards compatibility: legacy values "sync"/"upload"
+            # both mean "remote" (download from rsync share). The
+            # only other supported value is "local" (copy from a
+            # local source directory).
+            if mode_val in ("sync", "upload", "remote"):
+                mode_val = "remote"
+            elif mode_val != "local":
+                mode_val = "remote"
+            merged_cfg["mode"] = mode_val
+            local_src = str(
+                task_cfg.get("local_source_path") or ""
+            ).strip()
+            if local_src:
+                merged_cfg["local_source_path"] = local_src
             merged_cfg["force_download"] = bool(
                 task_cfg.get("force_download", False)
             )
+
+        if task_key in [
+            "LEGACY_ASTROM_GSHEET",
+            "LEGACY_REJECT_GSHEET",
+        ]:
+            for _key in [
+                "DRY_RUN",
+                "google_secret_name",
+                "sheet_id",
+                "sheet_name",
+                "sheet_names",
+                "resolve_tolerance_arcsec",
+                "created_by",
+            ]:
+                if _key in task_cfg:
+                    merged_cfg[_key] = task_cfg.get(_key)
+
+        if task_key == "LEGACY_CHECK_GSHEET":
+            for _key in [
+                "DRY_RUN",
+                "google_secret_name",
+                "monitoring_sheet_url",
+                "override_sheet_url",
+                "monitoring_sheet_urls",
+                "override_sheet_urls",
+            ]:
+                if _key in task_cfg:
+                    merged_cfg[_key] = task_cfg.get(_key)
 
         if bool(task_module.MULTI_PROCESS.get(task_key, False)):
             try:
@@ -213,8 +276,16 @@ def merge_async_task_catalog(
             merged_cfg["sync_source"] = str(
                 task_cfg.get("sync_source", "") or ""
             ).strip()
+            sync_profiles = normalize_sync_profiles(
+                task_cfg.get("sync_profiles", {})
+            )
+            if sync_profiles:
+                merged_cfg["sync_profiles"] = sync_profiles
+            else:
+                merged_cfg.pop("sync_profiles", None)
         else:
             merged_cfg.pop("sync_source", None)
+            merged_cfg.pop("sync_profiles", None)
 
         for field in [
             "last_run",

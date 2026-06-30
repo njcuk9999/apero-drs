@@ -272,7 +272,7 @@ def _qc_counts(rows: Iterable[Dict[str, Any]]) -> Dict[str, int]:
     """
     rows_list = list(rows)
     total = len(rows_list)
-    passed = sum(1 for r in rows_list if int(r.get("PASSED_ALL_QC") or 0) == 1)
+    passed = sum(1 for r in rows_list if int(r.get("PASSED_ALL_QC", 1) or 0) == 1)
     return {
         "total": total,
         "passed": passed,
@@ -1253,7 +1253,7 @@ def _fmt_count(n_accessible: int, n_total: int) -> str:
 def _qc_counts(rows: Iterable[Dict[str, Any]]) -> Dict[str, int]:
     rows_list = list(rows)
     total = len(rows_list)
-    passed = sum(1 for r in rows_list if int(r.get("PASSED_ALL_QC") or 0) == 1)
+    passed = sum(1 for r in rows_list if int(r.get("PASSED_ALL_QC", 1) or 0) == 1)
     return {
         "total": total,
         "passed": passed,
@@ -1300,7 +1300,7 @@ def _load_json_rows(path: Path) -> List[Dict[str, Any]]:
     return rows
 
 
-# Instrument profile YAMLs live inside the installed package and never
+# Instrument profile YAMLs live inside the installed package atnd never
 # change at runtime, so a plain dict cache (populated on first access) is
 # sufficient — no TTL needed.
 _instrument_profile_cache: Dict[str, Dict[str, Any]] = {}

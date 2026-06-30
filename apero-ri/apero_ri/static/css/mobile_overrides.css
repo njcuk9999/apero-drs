@@ -188,6 +188,65 @@ img, svg, video, canvas, table {
 }
 
 /* ==========================================================================
+   Cross-cutting mobile fixes for specific page patterns
+   ========================================================================== */
+
+/* Monitor portal: obsdir filter bar button rows wrap on small phones */
+@media (max-width: 600px) {
+    .ac-failure-detail__actions {
+        flex-wrap: wrap;
+        gap: 0.35rem;
+    }
+    /* Collapse the two-column manage grid on the profile page */
+    .ac-manage-grid {
+        grid-template-columns: 1fr !important;
+    }
+    /* Check pills always wrap on very small screens */
+    .ac-card__checks {
+        flex-wrap: wrap;
+    }
+    /* Queue / status page: stack KPI cards */
+    .ms-kpis {
+        grid-template-columns: 1fr !important;
+    }
+    /* Schedule page: ensure calendar wrapper scrolls */
+    .ms-calendar-grid,
+    .ms-table-wrap {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+    /* Rejection / known-error tables */
+    .ari-rejection-table-wrap,
+    .ari-known-error-table-wrap {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+    /* Long pre/code blocks in check messages */
+    .ac-failure-detail__message,
+    .ac-failure-path {
+        overflow-x: auto;
+        word-break: break-word;
+    }
+}
+
+/* Ensure any flex row of buttons wraps rather than overflows */
+@media (max-width: 480px) {
+    .ari-btn-row,
+    .ac-failure-detail__actions,
+    .ac-card__actions,
+    .ms-inline-btns,
+    .ms-entries-head {
+        flex-wrap: wrap !important;
+        gap: 0.35rem !important;
+    }
+    /* Prevent very long check names from blowing out pill width */
+    .ac-check-pill {
+        max-width: calc(100vw - 2rem);
+        word-break: break-all;
+    }
+}
+
+/* ==========================================================================
    Cross-cutting dark-theme polish
    Applied to common patterns shipped after the original style.css was
    written. New components should use the CSS vars in :root and add
@@ -306,4 +365,63 @@ img, svg, video, canvas, table {
     background: #3a1d20;
     color: #f5848a;
     border-color: #6b2a30;
+}
+
+/* ── Monitor portal / apero_checks page panels ── */
+/* Hardcoded inline background values used on obsdir / check-info pages */
+[data-theme="dark"] .ac-failure-meta-row strong {
+    color: var(--ari-text);
+}
+
+/* ── Quality-size / QC badges in style.css that use hardcoded light bg ── */
+[data-theme="dark"] .ari-qc-size--small,
+[data-theme="dark"] .ari-qsize-small {
+    background: #3a3119 !important;
+    color: #f2cc60 !important;
+}
+[data-theme="dark"] .ari-qc-size--medium,
+[data-theme="dark"] .ari-qsize-medium {
+    background: #2a1700 !important;
+    color: #fdba74 !important;
+}
+[data-theme="dark"] .ari-qc-size--large,
+[data-theme="dark"] .ari-qsize-large {
+    background: #2a0d09 !important;
+    color: #f85149 !important;
+}
+
+/* ── Admin pages: async_tasks pre blocks, health-status borders ── */
+[data-theme="dark"] .ari-async-log,
+[data-theme="dark"] .ari-task-log {
+    background: #0a0d11 !important;
+    color: #e6edf3 !important;
+    border-color: #30363d !important;
+}
+
+/* ── Inline-style hardcoded colors override via attribute selector ── */
+/* These appear in admin/apero_profiles.html, admin/database_setup.html etc. */
+[data-theme="dark"] [style*="background:#f8fbff"],
+[data-theme="dark"] [style*="background: #f8fbff"] {
+    background: var(--ari-surface-muted) !important;
+    color: var(--ari-text) !important;
+}
+[data-theme="dark"] [style*="background:#f6f7fb"],
+[data-theme="dark"] [style*="background: #f6f7fb"] {
+    background: var(--ari-surface-muted) !important;
+    color: var(--ari-text) !important;
+}
+[data-theme="dark"] [style*="border-top:1px solid #ddd"],
+[data-theme="dark"] [style*="border: 1px solid #e0e5ef"] {
+    border-color: var(--ari-border) !important;
+}
+
+/* ── Timeline cards ── */
+[data-theme="dark"] .ari-timeline-card {
+    background: var(--ari-card-bg);
+    border-color: var(--ari-border);
+    color: var(--ari-text);
+}
+[data-theme="dark"] .ari-timeline-card__header {
+    background: var(--ari-surface-muted);
+    border-bottom-color: var(--ari-border);
 }

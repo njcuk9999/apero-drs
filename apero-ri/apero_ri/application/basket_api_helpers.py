@@ -206,7 +206,7 @@ def api_basket_add_from_ftable(app):
             "kw_fiber": r.get("KW_FIBER", ""),
             "kw_pi_name": r.get("KW_PI_NAME", ""),
             "mid_obs_time": r.get("MID_OBS_TIME", ""),
-            "passed_all_qc": r.get("PASSED_ALL_QC"),
+            "passed_all_qc": r.get("PASSED_ALL_QC", 1),
             "identifier": r.get("IDENTIFIER", ""),
         }
         for r in rows

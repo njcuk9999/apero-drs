@@ -1,0 +1,161 @@
+{% extends "general/sidebar_base.html" %}
+{% block title %}APERO RI – User Card{% endblock %}
+
+{% block extra_head %}
+{{ super() }}
+<link rel="stylesheet"
+      href="{{ url_for('static', filename='css/user_portal_user_cards.css', v='20260501a') }}">
+{% endblock %}
+
+{% block doc_content %}
+<div class="ari-up-shell upm-page">
+    <div class="ari-page-header">
+        <h1><i class="fa-solid fa-id-card"></i> User Card</h1>
+        <p class="ari-page-header__sub">
+            Profile information for
+            <strong>{{ target_user.username }}</strong>.
+        </p>
+    </div>
+
+    <div class="upu-user-detail">
+        {% set _privileged_groups = ['super_admin', 'admin', 'moderator', 'developer'] %}
+        {% set _ns = namespace(show_sensitive=false) %}
+        {% for _group in target_user.groups or [] %}
+            {% if _group in _privileged_groups %}
+                {% set _ns.show_sensitive = true %}
+            {% endif %}
+        {% endfor %}
+
+        <section class="upu-user-detail__card">
+            <h3 class="upu-user-detail__title">
+                <i class="fa-solid fa-user"></i>
+                Identity
+            </h3>
+            <div class="upu-kv">
+                <div class="upu-kv__key">Username</div>
+                <div class="upu-kv__val">{{ target_user.username }}</div>
+
+                <div class="upu-kv__key">First name(s)</div>
+                <div class="upu-kv__val">{{ target_user.first_names or '—' }}</div>
+
+                <div class="upu-kv__key">Last name</div>
+                <div class="upu-kv__val">{{ target_user.last_name or '—' }}</div>
+
+                <div class="upu-kv__key">Full name</div>
+                <div class="upu-kv__val">{{ target_user.full_name or '—' }}</div>
+
+                <div class="upu-kv__key">Message</div>
+                <div class="upu-kv__val">
+                    {% if target_user.is_self %}
+                    <span class="upu-pill">This is you</span>
+                    {% else %}
+                    <a class="ari-btn ari-btn--small ari-btn--primary"
+                       href="{{ url_for('user_portal_messages_view') }}?compose={{ target_user.username|urlencode }}">
+                        <i class="fa-solid fa-envelope"></i>
+                        Message user
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+        </section>
+
+        {% if _ns.show_sensitive %}
+        <section class="upu-user-detail__card">
+            <h3 class="upu-user-detail__title">
+                <i class="fa-solid fa-address-card"></i>
+                Contact
+            </h3>
+            <div class="upu-kv">
+                {% if target_user.viewer_can_view_contact %}
+                <div class="upu-kv__key">Primary email</div>
+                <div class="upu-kv__val">
+                    {% if target_user.primary_email %}
+                    <a href="mailto:{{ target_user.primary_email }}">{{ target_user.primary_email }}</a>
+                    {% else %}
+                    —
+                    {% endif %}
+                </div>
+
+                <div class="upu-kv__key">All emails</div>
+                <div class="upu-kv__val">
+                    {% if target_user.emails %}
+                    <ul class="upu-list">
+                        {% for email in target_user.emails %}
+                        <li><a href="mailto:{{ email }}">{{ email }}</a></li>
+                        {% endfor %}
+                    </ul>
+                    {% else %}
+                    —
+                    {% endif %}
+                </div>
+                {% endif %}
+
+                <div class="upu-kv__key">Primary institution</div>
+                <div class="upu-kv__val">{{ target_user.primary_institution or '—' }}</div>
+
+                <div class="upu-kv__key">Institutions</div>
+                <div class="upu-kv__val">
+                    {% if target_user.institutions %}
+                    <ul class="upu-list">
+                        {% for inst in target_user.institutions %}
+                        <li>{{ inst }}</li>
+                        {% endfor %}
+                    </ul>
+                    {% else %}
+                    —
+                    {% endif %}
+                </div>
+            </div>
+        </section>
+
+        <section class="upu-user-detail__card">
+            <h3 class="upu-user-detail__title">
+                <i class="fa-solid fa-users-gear"></i>
+                Permissions
+            </h3>
+            <div class="upu-kv">
+                <div class="upu-kv__key">Groups</div>
+                <div class="upu-kv__val">
+                    {% if target_user.groups %}
+                    <div class="upu-user-card__groups">
+                        {% for group in target_user.groups %}
+                        <span class="upu-pill">{{ group }}</span>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    —
+                    {% endif %}
+                </div>
+
+                <div class="upu-kv__key">Instruments</div>
+                <div class="upu-kv__val">
+                    {% if target_user.instruments %}
+                    <div class="upu-user-card__groups">
+                        {% for inst in target_user.instruments %}
+                        <span class="upu-pill">{{ inst }}</span>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    —
+                    {% endif %}
+                </div>
+            </div>
+        </section>
+        {% endif %}
+
+        <section class="upu-user-detail__card">
+            <h3 class="upu-user-detail__title">
+                <i class="fa-solid fa-clock-rotate-left"></i>
+                Account Activity
+            </h3>
+            <div class="upu-kv">
+                <div class="upu-kv__key">Created</div>
+                <div class="upu-kv__val">{{ target_user.created_at or '—' }}</div>
+
+                <div class="upu-kv__key">Last login</div>
+                <div class="upu-kv__val">{{ target_user.last_login or 'Never' }}</div>
+            </div>
+        </section>
+    </div>
+</div>
+{% endblock %}

@@ -179,8 +179,14 @@
                 + items.length + " entries"
                 + "</span>";
         } else {
-            valueInner = '<span class="ari-tinfo-value">'
-                + fmt.html + "</span>";
+            if (row.value_url && !fmt.missing) {
+                valueInner = '<a class="ari-tinfo-value" href="'
+                    + escapeHtml(row.value_url) + '">'
+                    + fmt.html + "</a>";
+            } else {
+                valueInner = '<span class="ari-tinfo-value">'
+                    + fmt.html + "</span>";
+            }
             if (row.units && !fmt.missing) {
                 valueInner += ' <span class="ari-tinfo-units">'
                     + escapeHtml(row.units) + "</span>";
@@ -286,6 +292,11 @@
         // Finder/rotation are slow + heavy: keep the explicit
         // Generate button so the user can opt in.
         var autoRender = (ctype === 'sed' || ctype === 'hr_diagram');
+        var hasLog = (ctype === 'finder' || ctype === 'rotation');
+        var chartClass = 'ari-tinfo-chart';
+        if (!autoRender) {
+            chartClass += ' ari-tinfo-chart--manual';
+        }
         var btnHtml = '';
         if (!autoRender) {
             var btnLabel = ({
@@ -299,8 +310,22 @@
                 + '<i class="' + escapeHtml(icon) + '"></i> '
                 + escapeHtml(btnLabel) + '</button>';
         }
+        var logHtml = '';
+        if (hasLog) {
+            logHtml = ''
+                + '<details class="ari-tinfo-chart__log-wrap"'
+                + ' data-chart-log-wrap style="display:none;'
+                + ' margin-top:0.5rem; margin-bottom:0.5rem; width:100%;">'
+                + '<summary>Log</summary>'
+                + '<pre data-chart-log style="max-height:240px;'
+                + ' overflow:auto; white-space:pre-wrap; width:100%;'
+                + ' background:var(--ari-bg-soft);'
+                + ' padding:0.5rem; border-radius:4px;'
+                + ' font-size:12px;"></pre>'
+                + "</details>";
+        }
         var widget = ''
-            + '<div class="ari-tinfo-chart"'
+            + '<div class="' + escapeHtml(chartClass) + '"'
             + ' id="' + escapeHtml(chartId) + '"'
             + ' data-chart-type="' + escapeHtml(ctype) + '">'
             + '<div class="ari-tinfo-chart__controls"'
@@ -315,19 +340,10 @@
             + ' data-chart-error'
             + ' style="display:none; color:var(--ari-danger);'
             + ' margin-bottom:0.5rem;"></div>'
+            + logHtml
             + '<div class="ari-tinfo-chart__images"'
             + ' data-chart-images'
             + ' style="display:block; width:100%;"></div>'
-            + '<details class="ari-tinfo-chart__log-wrap"'
-            + ' data-chart-log-wrap style="display:none;'
-            + ' margin-top:0.5rem;">'
-            + '<summary>Log</summary>'
-            + '<pre data-chart-log style="max-height:240px;'
-            + ' overflow:auto; white-space:pre-wrap;'
-            + ' background:var(--ari-bg-soft);'
-            + ' padding:0.5rem; border-radius:4px;'
-            + ' font-size:12px;"></pre>'
-            + "</details>"
             + "</div>";
         return wrapSection(section, icon, "chart", desc + widget);
     }
@@ -429,20 +445,22 @@
             }
         });
 
-        // edit button click
-        container.addEventListener("click", function (ev) {
-            var btn = ev.target.closest(".ari-tinfo-edit-btn");
-            if (!btn) return;
-            ev.stopPropagation();
-            ev.preventDefault();
-            var key = btn.getAttribute("data-edit-key");
-            var rowEl = btn.closest("[data-row-key]");
-            if (typeof opts.onEdit === "function") {
-                opts.onEdit(key, rowEl, btn);
-            } else {
-                _defaultInlineEdit(container, key, rowEl, opts);
-            }
-        });
+        // edit button click (only if editing is enabled)
+        if (!opts.disableInlineEdit) {
+            container.addEventListener("click", function (ev) {
+                var btn = ev.target.closest(".ari-tinfo-edit-btn");
+                if (!btn) return;
+                ev.stopPropagation();
+                ev.preventDefault();
+                var key = btn.getAttribute("data-edit-key");
+                var rowEl = btn.closest("[data-row-key]");
+                if (typeof opts.onEdit === "function") {
+                    opts.onEdit(key, rowEl, btn);
+                } else {
+                    _defaultInlineEdit(container, key, rowEl, opts);
+                }
+            });
+        }
 
         // flag button click
         container.addEventListener("click", function (ev) {
@@ -592,6 +610,14 @@
         });
     }
 
+    function hideInlineEditButtons(container) {
+        if (!container) return;
+        var btns = container.querySelectorAll(".ari-tinfo-edit-btn");
+        btns.forEach(function (btn) {
+            btn.setAttribute("hidden", "");
+        });
+    }
+
     function render(container, payload, opts) {
         if (!container) return;
         opts = opts || {};
@@ -617,6 +643,9 @@
         if (opts.userPerms) {
             applyPermissionVisibility(container, opts.userPerms);
         }
+        if (opts.disableInlineEdit) {
+            hideInlineEditButtons(container);
+        }
         if (typeof opts.mountChartsCb === "function") {
             sections.forEach(function (sec) {
                 if (sec.kind !== "chart") return;
@@ -637,6 +666,11 @@
         rotation: "/api/data-portal/tess-rotation",
         sed: "/api/astrometrics/sed",
         hr_diagram: "/api/astrometrics/hr-diagram"
+    };
+
+    var CHART_STREAM_API = {
+        finder: "/api/data-portal/finder-chart-stream",
+        rotation: "/api/data-portal/tess-rotation-stream"
     };
 
     function setChartStatus(host, msg) {
@@ -773,6 +807,49 @@
         pre.scrollTop = pre.scrollHeight;
     }
 
+    function runChartStream(host, url, done) {
+        var es;
+        try {
+            es = new EventSource(url);
+        } catch (err) {
+            done(err);
+            return;
+        }
+        var closed = false;
+
+        function finish(err, payload) {
+            if (closed) return;
+            closed = true;
+            try { es.close(); } catch (_) { /* ignore */ }
+            done(err, payload);
+        }
+
+        es.onmessage = function (ev) {
+            var msg;
+            try {
+                msg = JSON.parse(ev.data || '{}');
+            } catch (err) {
+                finish(new Error('Invalid stream payload'));
+                return;
+            }
+            if (msg.type === 'log') {
+                appendChartLog(host, msg.text || '');
+                return;
+            }
+            if (msg.type === 'done') {
+                finish(null, msg.result || {});
+                return;
+            }
+            if (msg.type === 'error') {
+                finish(new Error(msg.error || 'Failed'));
+            }
+        };
+
+        es.onerror = function () {
+            finish(new Error('Stream connection failed'));
+        };
+    }
+
     function runChartFetch(host, ctype, opts) {
         var name = (opts && opts.apero_name) || '';
         if (!name) {
@@ -786,10 +863,50 @@
         }
         setChartError(host, '');
         setChartStatus(host, 'Generating...');
+        var logWrap = host.querySelector('[data-chart-log-wrap]');
+        var logPre = host.querySelector('[data-chart-log]');
+        if (logWrap) {
+            logWrap.style.display = '';
+            logWrap.open = true;
+        }
+        if (logPre) {
+            logPre.textContent = '';
+        }
         var qs = '?name=' + encodeURIComponent(name)
             + '&_ts=' + Date.now();
         var btn = host.querySelector('[data-chart-action="run"]');
         if (btn) btn.disabled = true;
+
+        var streamUrl = CHART_STREAM_API[ctype];
+        if (streamUrl && typeof EventSource !== 'undefined') {
+            runChartStream(host, streamUrl + qs, function (err, data) {
+                if (err) {
+                    setChartError(host,
+                        'Stream error: '
+                            + (err && err.message ? err.message : err));
+                    setChartStatus(host, '');
+                    if (btn) btn.disabled = false;
+                    return;
+                }
+                if (!data || data.success === false) {
+                    setChartError(host,
+                        (data && data.error) || 'Failed.');
+                    setChartStatus(host, '');
+                    if (btn) btn.disabled = false;
+                    return;
+                }
+                if (data.script || data.div) {
+                    renderChartBokeh(host, data);
+                } else {
+                    renderChartImages(host, data);
+                }
+                if (data.log) appendChartLog(host, data.log);
+                setChartStatus(host, '');
+                if (btn) btn.disabled = false;
+            });
+            return;
+        }
+
         fetch(url + qs).then(function (r) {
             return r.json();
         }).then(function (data) {
@@ -852,6 +969,7 @@
     var __api = Object.freeze({
         render: render,
         applyPermissionVisibility: applyPermissionVisibility,
+        hideInlineEditButtons: hideInlineEditButtons,
     });
     try {
         Object.defineProperty(window, "AperoTargetInfo", {

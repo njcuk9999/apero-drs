@@ -1,0 +1,20 @@
+id: 84c3df37-e602-4855-a9dd-e3ea7f910139
+slug: none
+date_reported: '2023-10-31'
+reported_by: Thomas Vandal
+instrument_mode: ALL
+recipe: 'apero_mk_tellu_nirps_ha,
+
+  apero_fit_tellu'
+action: Report
+type: Unexpected
+error_code: None
+github_issue: '813.0'
+generic_error: None
+comments: 'If ERRORMSGS is None, it''s hard to know the cause, but so far this has
+  happened because of missing keywords in TELLURIC files.
+
+  Look at the file in the LOGFILE columns (with nano, more, less, vim, or cat, for
+  .e.g.) to report any error in there in your email.'
+full_example_error: ''
+updated_at: '2026-05-13 15:54:29'

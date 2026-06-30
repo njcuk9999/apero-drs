@@ -16,6 +16,8 @@
         { key: 'PATH_TELLU', id: 'profile-path-tellu' },
         { key: 'PATH_LOG',   id: 'profile-path-log' },
         { key: 'PATH_LBL',   id: 'profile-path-lbl' },
+        { key: 'PATH_CHECK', id: 'profile-path-check' },
+        { key: 'PATH_OTHER', id: 'profile-path-other' },
     ];
 
     var DB_TEXT_FIELDS = [
@@ -101,6 +103,11 @@
     var btnConfirmDelete = document.getElementById('btn-confirm-delete');
 
     var toast = document.getElementById('toast');
+    var checksIgnoredInput = document.getElementById('apero-checks-ignored');
+    var checksOverrideAllowedInput = document.getElementById('apero-checks-override-allowed');
+    var btnSaveChecksConfig = document.getElementById('btn-save-apero-checks-config');
+    var busyOverlay = document.getElementById('ari-busy-overlay');
+    var busyOverlayText = document.getElementById('ari-busy-overlay-text');
 
     // Build lookup for path input elements
     var pathInputs = {};
@@ -146,6 +153,7 @@
     };
     var sciParamsData = null;    // full YAML data for selected instrument profile
     var sciParamsExpanded = new Set();
+    var busyOverlayCount = 0;
 
     /* -- Toast ----------------------------------------------------------- */
     function showToast(msg, type) {
@@ -156,6 +164,85 @@
         toast._timer = setTimeout(function () {
             toast.style.display = 'none';
         }, 3000);
+    }
+
+    function showBusy(message) {
+        busyOverlayCount += 1;
+        if (!busyOverlay) return;
+        if (busyOverlayText) {
+            busyOverlayText.textContent = message || 'Loading...';
+        }
+        busyOverlay.style.display = 'flex';
+    }
+
+    function hideBusy() {
+        busyOverlayCount = Math.max(0, busyOverlayCount - 1);
+        if (!busyOverlay) return;
+        if (busyOverlayCount === 0) {
+            busyOverlay.style.display = 'none';
+        }
+    }
+
+    function withBusy(message, fn) {
+        showBusy(message);
+        return Promise.resolve()
+            .then(fn)
+            .finally(function () {
+                hideBusy();
+            });
+    }
+
+    function fetchWithBusy(url, options, message) {
+        return withBusy(message, function () {
+            return fetch(url, options);
+        });
+    }
+
+    function splitCsv(raw) {
+        return String(raw || '')
+            .split(',')
+            .map(function (part) { return part.trim(); })
+            .filter(function (part) { return !!part; });
+    }
+
+    function saveAperoChecksConfig() {
+        if (!cfg.aperoChecksConfigUrl) return;
+        if (!checksIgnoredInput || !checksOverrideAllowedInput) return;
+
+        if (btnSaveChecksConfig) {
+            btnSaveChecksConfig.disabled = true;
+            btnSaveChecksConfig.innerHTML =
+                '<i class="fa-solid fa-spinner fa-spin"></i> Saving...';
+        }
+
+        fetchWithBusy(cfg.aperoChecksConfigUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                ignored_checks: splitCsv(checksIgnoredInput.value),
+                override_allowed: splitCsv(checksOverrideAllowedInput.value),
+            }),
+        }, 'Saving...')
+            .then(function (r) { return r.json(); })
+            .then(function (data) {
+                if (!data.success) {
+                    showToast(data.error || 'Could not save APERO checks policy', 'error');
+                    return;
+                }
+                checksIgnoredInput.value = (data.ignored_checks || []).join(', ');
+                checksOverrideAllowedInput.value = (data.override_allowed || []).join(', ');
+                showToast('APERO checks policy saved', 'success');
+            })
+            .catch(function () {
+                showToast('Could not save APERO checks policy', 'error');
+            })
+            .finally(function () {
+                if (btnSaveChecksConfig) {
+                    btnSaveChecksConfig.disabled = false;
+                    btnSaveChecksConfig.innerHTML =
+                        '<i class="fa-solid fa-floppy-disk"></i> Save APERO Checks Policy';
+                }
+            });
     }
 
     /* -- Escape helper --------------------------------------------------- */
@@ -363,7 +450,14 @@
     /* -- Load profiles --------------------------------------------------- */
     function loadProfiles() {
         profileList.innerHTML = '<div class="ari-sg-loading">Loading...</div>';
-        fetch(cfg.listUrl + '?instrument=' + encodeURIComponent(currentInstrument))
+        var listUrl = cfg.listUrl
+            + '?instrument=' + encodeURIComponent(currentInstrument)
+            + '&_ts=' + String(Date.now());
+        fetchWithBusy(
+            listUrl,
+            { cache: 'no-store' },
+            'Loading profiles...'
+        )
             .then(function (r) { return r.json(); })
             .then(function (data) {
                 if (!data.success) {
@@ -481,7 +575,12 @@
     }
 
     function loadGlobalStatus() {
-        fetch(cfg.statusOverviewUrl)
+        var statusUrl = cfg.statusOverviewUrl + '?_ts=' + String(Date.now());
+        fetchWithBusy(
+            statusUrl,
+            { cache: 'no-store' },
+            'Loading status...'
+        )
             .then(function (r) { return r.json(); })
             .then(function (data) {
                 if (!data.success) {
@@ -521,20 +620,27 @@
         }
 
         profiles.forEach(function (p, idx) {
+            var isDisabled = !!p.disabled;
             var hasGroups = p.groups && p.groups.length > 0;
             var isOk = p.all_paths_ok && hasGroups;
+            var stateClass = isDisabled
+                ? ' ari-ap-card--disabled'
+                : (isOk ? ' ari-ap-card--valid' : ' ari-ap-card--invalid');
             var card = document.createElement('div');
-            card.className = 'ari-ap-card' +
-                (isOk ? ' ari-ap-card--valid' : ' ari-ap-card--invalid');
+            card.className = 'ari-ap-card' + stateClass;
             card.setAttribute('draggable', 'true');
             card.setAttribute('data-index', idx);
 
-            var statusIcon = isOk
-                ? '<i class="fa-solid fa-circle-check"></i>'
-                : '<i class="fa-solid fa-circle-xmark"></i>';
+            var statusIcon = isDisabled
+                ? '<i class="fa-solid fa-circle-minus"></i>'
+                : (isOk
+                    ? '<i class="fa-solid fa-circle-check"></i>'
+                    : '<i class="fa-solid fa-circle-xmark"></i>');
 
             var statusText = '';
-            if (isOk) {
+            if (isDisabled) {
+                statusText = 'Disabled';
+            } else if (isOk) {
                 statusText = 'Ready';
             } else if (!hasGroups) {
                 statusText = 'Needs group assignment';
@@ -546,9 +652,15 @@
             if (p.apero_version) metaParts.push('v' + escapeHtml(p.apero_version));
             if (p.reduction_server) metaParts.push(escapeHtml(p.reduction_server));
             if (p.groups && p.groups.length > 0) metaParts.push(escapeHtml(p.groups.join(', ')));
+            if (isDisabled) metaParts.push('disabled');
             var metaHtml = metaParts.length > 0
                 ? '<div class="ari-ap-card__meta">' + metaParts.join(' &middot; ') + '</div>'
                 : '';
+
+            var toggleTitle = isDisabled ? 'Enable' : 'Disable';
+            var toggleIcon = isDisabled
+                ? '<i class="fa-solid fa-play"></i>'
+                : '<i class="fa-solid fa-ban"></i>';
 
             card.innerHTML =
                 '<div class="ari-ap-card__grip" title="Drag to reorder">' +
@@ -561,6 +673,13 @@
                     '<div class="ari-ap-card__hint">' + escapeHtml(statusText) + '</div>' +
                 '</div>' +
                 '<div class="ari-ap-card__actions">' +
+                    '<button class="ari-ap-card__btn ari-ap-card__btn--toggle" title="'
+                        + toggleTitle + '">' +
+                        toggleIcon +
+                    '</button>' +
+                    '<button class="ari-ap-card__btn ari-ap-card__btn--duplicate" title="Duplicate">' +
+                        '<i class="fa-solid fa-copy"></i>' +
+                    '</button>' +
                     '<button class="ari-ap-card__btn ari-ap-card__btn--edit" title="Edit">' +
                         '<i class="fa-solid fa-pen"></i>' +
                     '</button>' +
@@ -568,6 +687,21 @@
                         '<i class="fa-solid fa-trash"></i>' +
                     '</button>' +
                 '</div>';
+
+            card.querySelector('.ari-ap-card__btn--toggle').addEventListener('click', function (e) {
+                e.stopPropagation();
+                toggleProfileDisabled(p);
+            });
+
+            card.querySelector(
+                '.ari-ap-card__btn--duplicate'
+            ).addEventListener('click', function (e) {
+                e.stopPropagation();
+                if (!guardUnsaved()) return;
+                var newName = promptDuplicateName(p.name);
+                if (!newName) return;
+                enterDuplicateMode(p, newName);
+            });
 
             card.querySelector('.ari-ap-card__btn--edit').addEventListener('click', function (e) {
                 e.stopPropagation();
@@ -618,14 +752,47 @@
         });
     }
 
+    function toggleProfileDisabled(profile) {
+        if (!cfg.toggleDisabledUrl) {
+            showToast('Disable toggle endpoint is not configured', 'error');
+            return;
+        }
+        var nextDisabled = !profile.disabled;
+        fetchWithBusy(cfg.toggleDisabledUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                instrument: currentInstrument,
+                name: profile.name,
+                disabled: nextDisabled,
+            })
+        }, nextDisabled ? 'Disabling profile...' : 'Enabling profile...')
+        .then(function (r) { return r.json(); })
+        .then(function (data) {
+            if (!data.success) {
+                showToast(data.error || 'Could not toggle profile state', 'error');
+                return;
+            }
+            profile.disabled = !!data.disabled;
+            var msg = profile.disabled
+                ? 'Profile disabled: ' + profile.name
+                : 'Profile enabled: ' + profile.name;
+            showToast(msg, 'success');
+            loadProfiles();
+        })
+        .catch(function () {
+            showToast('Could not toggle profile state', 'error');
+        });
+    }
+
     /* -- Save order after drag ------------------------------------------- */
     function saveOrder() {
         var order = profiles.map(function (p) { return p.name; });
-        fetch(cfg.reorderUrl, {
+        fetchWithBusy(cfg.reorderUrl, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ instrument: currentInstrument, order: order })
-        })
+        }, 'Saving order...')
         .then(function (r) { return r.json(); })
         .then(function (data) {
             if (data.success) showToast('Order updated', 'success');
@@ -733,6 +900,115 @@
         );
         syncTunnelVisibility();
         updateWorkflowState();
+    }
+
+    function suggestDuplicateName(sourceName) {
+        var base = String(sourceName || '').trim() || 'profile_copy';
+        var candidate = base + '_copy';
+        var suffix = 2;
+
+        while (profiles.some(function (prof) {
+            return String(prof.name || '') === candidate;
+        })) {
+            candidate = base + '_copy_' + String(suffix);
+            suffix += 1;
+        }
+        return candidate;
+    }
+
+    function promptDuplicateName(sourceName) {
+        var defaultName = suggestDuplicateName(sourceName);
+        var promptMsg = 'Enter new profile name';
+
+        while (true) {
+            var input = window.prompt(promptMsg, defaultName);
+            if (input === null) return null;
+
+            var nextName = String(input || '').trim();
+            if (!nextName) {
+                showToast('Profile name is required', 'error');
+                continue;
+            }
+            if (profiles.some(function (prof) {
+                return String(prof.name || '') === nextName;
+            })) {
+                showToast('A profile with this name already exists', 'error');
+                defaultName = nextName;
+                continue;
+            }
+            return nextName;
+        }
+    }
+
+    function enterDuplicateMode(profile, newName) {
+        editingProfile = null;
+        formDirty = false;
+        dbTestPassed = true;
+        tablesTestPassed = true;
+        pathsTestPassed = true;
+
+        profileNameInput.value = String(newName || '').trim();
+        profileNameInput.disabled = false;
+        profileVersionInput.value = profile.apero_version || '';
+        profileServerInput.value = profile.reduction_server || '';
+
+        if (profileDbSource) {
+            profileDbSource.value = profile.DATABASE_SOURCE || 'local';
+        }
+        if (profileDbDefinitionName) {
+            profileDbDefinitionName.value = profile.DATABASE_SOURCE
+                === 'db_ssh_tunnel'
+                ? (profile.DATABASE_TUNNEL_NAME || '')
+                : (profile.DATABASE_LOCAL_NAME || '');
+        }
+
+        DB_TEXT_FIELDS.forEach(function (f) {
+            dbInputs[f.id].value = profile[f.key] || '';
+        });
+
+        clearTableOptions(false);
+        TABLE_FIELDS.forEach(function (f) {
+            setSingleTableValue(f.id, profile[f.key] || '');
+        });
+
+        PATH_FIELDS.forEach(function (f) {
+            pathInputs[f.id].value = profile[f.key] || '';
+            var vdiv = document.getElementById(f.id + '-validation');
+            if (vdiv) vdiv.style.display = 'none';
+        });
+
+        if (aprofileSelect) {
+            aprofileSelect.value = profile.APERO_INSTRUMENT_PROFILE || '';
+        }
+        updateSciPreview();
+
+        draftGroups = Array.isArray(profile.groups)
+            ? profile.groups.slice()
+            : [];
+
+        dbTestResult.style.display = 'none';
+        tablesTestResult.style.display = 'none';
+        if (pathsTestResult) pathsTestResult.style.display = 'none';
+
+        formTitle.innerHTML = '<i class="fa-solid fa-copy"></i> Duplicate: '
+            + escapeHtml(profile.name)
+            + ' → '
+            + escapeHtml(String(newName || '').trim());
+        formSection.style.display = '';
+        formTitle.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+        renderDraftGroups();
+
+        loadDbDefinitionOptions(
+            profile.DATABASE_SOURCE || 'local',
+            profile.DATABASE_SOURCE === 'db_ssh_tunnel'
+                ? (profile.DATABASE_TUNNEL_NAME || '')
+                : (profile.DATABASE_LOCAL_NAME || '')
+        );
+        syncTunnelVisibility();
+        updateWorkflowState();
+        profileNameInput.focus();
+        profileNameInput.select();
     }
 
     /* -- Path validation (directory exists) ------------------------------ */
@@ -1431,11 +1707,11 @@
 
         btnTestDb.disabled = true;
         btnTestDb.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Testing...';
-        fetch(cfg.testDbUrl, {
+        fetchWithBusy(cfg.testDbUrl, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(payload)
-        })
+        }, 'Testing database...')
         .then(function (r) { return r.json(); })
         .then(function (data) {
             btnTestDb.disabled = false;
@@ -1496,11 +1772,11 @@
 
         btnTestTables.disabled = true;
         btnTestTables.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Testing...';
-        fetch(cfg.testTablesUrl, {
+        fetchWithBusy(cfg.testTablesUrl, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(payload)
-        })
+        }, 'Testing table names...')
         .then(function (r) { return r.json(); })
         .then(function (data) {
             btnTestTables.innerHTML =
@@ -1636,11 +1912,11 @@
         if (!payload) return;
 
         btnSaveProfile.disabled = true;
-        fetch(cfg.saveUrl, {
+        fetchWithBusy(cfg.saveUrl, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(payload)
-        })
+        }, 'Saving profile...')
         .then(function (r) {
             return r.text().then(function (text) {
                 var data = null;
@@ -1696,11 +1972,11 @@
     function doDelete() {
         if (!pendingDelete) return;
         btnConfirmDelete.disabled = true;
-        fetch(cfg.deleteUrl, {
+        fetchWithBusy(cfg.deleteUrl, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ instrument: currentInstrument, name: pendingDelete })
-        })
+        }, 'Deleting profile...')
         .then(function (r) { return r.json(); })
         .then(function (data) {
             btnConfirmDelete.disabled = false;
@@ -1900,7 +2176,7 @@
         if (idx >= 0) groups.splice(idx, 1);
         else groups.push(group);
 
-        fetch(cfg.updateGroupsUrl, {
+        fetchWithBusy(cfg.updateGroupsUrl, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -1908,7 +2184,7 @@
                 name: profile.name,
                 groups: groups
             })
-        })
+        }, 'Saving groups...')
         .then(function (r) { return r.json(); })
         .then(function (data) {
             if (data.success) {
@@ -2075,6 +2351,10 @@
 
     btnCancelDelete.addEventListener('click', closeDeleteModal);
     btnConfirmDelete.addEventListener('click', doDelete);
+
+    if (btnSaveChecksConfig) {
+        btnSaveChecksConfig.addEventListener('click', saveAperoChecksConfig);
+    }
 
     browseModal.addEventListener('click', function (e) {
         if (e.target === browseModal) closeBrowseModal();
